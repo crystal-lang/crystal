@@ -1,5 +1,6 @@
 require "spec"
 require "process"
+require "tempfile"
 
 describe Process do
   it "runs true" do
@@ -169,7 +170,22 @@ describe Process do
     end
     buffer.to_s.lines.size.should eq(1000)
   end
- 
+
+  it "executes the new process with exec" do
+    tmpfile = Tempfile.new("crystal-spec-exec")
+    tmpfile.close
+    tmpfile.unlink
+    File.exists?(tmpfile.path).should be_false
+
+    fork = Process.fork do
+      Process.exec("/usr/bin/touch", {tmpfile.path})
+    end
+    fork.wait
+
+    File.exists?(tmpfile.path).should be_true
+    tmpfile.unlink
+  end
+
   it "checks for existence" do
     # We can't reliably check whether it ever returns false, since we can't predict
     # how PIDs are used by the system, a new process might be spawned in between

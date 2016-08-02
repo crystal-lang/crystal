@@ -13,8 +13,8 @@ class Process
   # Executes a process and waits for it to complete.
   #
   # By default the process is configured without input, output or error.
-  def self.run(cmd : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = false, output : Stdio = false, error : Stdio = false, chdir : String? = nil) : Process::Status
-    status = new(cmd, args, env, clear_env, shell, input, output, error, chdir).wait
+  def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = false, output : Stdio = false, error : Stdio = false, chdir : String? = nil) : Process::Status
+    status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
     $? = status
     status
   end
@@ -25,8 +25,8 @@ class Process
   # will be closed automatically at the end of the block.
   #
   # Returns the block's value.
-  def self.run(cmd : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = nil, output : Stdio = nil, error : Stdio = nil, chdir : String? = nil)
-    process = new(cmd, args, env, clear_env, shell, input, output, error, chdir)
+  def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = nil, output : Stdio = nil, error : Stdio = nil, chdir : String? = nil)
+    process = new(command, args, env, clear_env, shell, input, output, error, chdir)
     begin
       value = yield process
       $? = process.wait
@@ -35,6 +35,17 @@ class Process
       process.kill
       raise ex
     end
+  end
+
+  # Replaces the current process with a new one.
+  #
+  # The possible values for *input*, *output* and *error* are:
+  # * `false`: no IO (`/dev/null`)
+  # * `true`: inherit from parent
+  # * `IO`: use the given IO
+  def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Bool | IO::FileDescriptor = true, output : Bool | IO::FileDescriptor = true, error : Bool | IO::FileDescriptor = true, chdir : String? = nil)
+    command, argv = prepare_argv(command, args, shell)
+    exec_internal(command, argv, env, clear_env, input, output, error, chdir)
   end
 
   getter pid : Int32
@@ -56,31 +67,7 @@ class Process
   #
   # By default the process is configured without input, output or error.
   def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = false, output : Stdio = false, error : Stdio = false, chdir : String? = nil)
-    if shell
-      command = %(#{command} "${@}") unless command.includes?(' ')
-      shell_args = ["-c", command, "--"]
-
-      if args
-        unless command.includes?(%("${@}"))
-          raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
-        end
-
-        {% if flag?(:freebsd) %}
-          shell_args << ""
-        {% end %}
-
-        shell_args.concat(args)
-      end
-
-      command = "/bin/sh"
-      args = shell_args
-    end
-
-    argv = [command.to_unsafe]
-    args.try &.each do |arg|
-      argv << arg.to_unsafe
-    end
-    argv << Pointer(UInt8).null
+    command, argv = Process.prepare_argv(command, args, shell)
 
     @wait_count = 0
 
@@ -116,26 +103,19 @@ class Process
 
     @pid = Process.fork_internal(run_hooks: false) do
       begin
-        # File.umask(umask) if umask
-
-        reopen_io(fork_input || input, STDIN, "r")
-        reopen_io(fork_output || output, STDOUT, "w")
-        reopen_io(fork_error || error, STDERR, "w")
-
-        ENV.clear if clear_env
-        env.try &.each do |key, val|
-          if val
-            ENV[key] = val
-          else
-            ENV.delete key
-          end
-        end
-
-        Dir.cd(chdir) if chdir
-
-        LibC.execvp(command, argv)
+        Process.exec_internal(
+          command,
+          argv,
+          env,
+          clear_env,
+          fork_input || input,
+          fork_output || output,
+          fork_error || error,
+          chdir
+        )
       rescue ex
         ex.inspect_with_backtrace STDERR
+        LibC._exit 127 # TODO: remove after 0.19
       ensure
         LibC._exit 127
       end
@@ -191,6 +171,37 @@ class Process
     close_io @error
   end
 
+  # :nodoc:
+  protected def self.prepare_argv(command, args, shell)
+    if shell
+      command = %(#{command} "${@}") unless command.includes?(' ')
+      shell_args = ["-c", command, "--"]
+
+      if args
+        unless command.includes?(%("${@}"))
+          raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
+        end
+
+        {% if flag?(:freebsd) %}
+          shell_args << ""
+        {% end %}
+
+        shell_args.concat(args)
+      end
+
+      command = "/bin/sh"
+      args = shell_args
+    end
+
+    argv = [command.to_unsafe]
+    args.try &.each do |arg|
+      argv << arg.to_unsafe
+    end
+    argv << Pointer(UInt8).null
+
+    {command, argv}
+  end
+
   private def channel
     @channel ||= Channel(Exception?).new
   end
@@ -222,7 +233,29 @@ class Process
     end
   end
 
-  private def reopen_io(src_io, dst_io, mode)
+  # :nodoc:
+  protected def self.exec_internal(command : String, argv, env, clear_env, input, output, error, chdir)
+    reopen_io(input, STDIN, "r")
+    reopen_io(output, STDOUT, "w")
+    reopen_io(error, STDERR, "w")
+
+    ENV.clear if clear_env
+    env.try &.each do |key, val|
+      if val
+        ENV[key] = val
+      else
+        ENV.delete key
+      end
+    end
+
+    Dir.cd(chdir) if chdir
+
+    if LibC.execvp(command, argv) == -1
+      raise Errno.new("execvp")
+    end
+  end
+
+  private def self.reopen_io(src_io, dst_io, mode)
     case src_io
     when IO::FileDescriptor
       src_io.blocking = true
@@ -235,7 +268,7 @@ class Process
         dst_io.reopen(file)
       end
     else
-      raise "unknown object type #{src_io}"
+      raise "Bug: unknown object type #{src_io}"
     end
 
     dst_io.close_on_exec = false
