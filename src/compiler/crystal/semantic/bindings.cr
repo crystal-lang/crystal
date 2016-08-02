@@ -3,7 +3,7 @@ module Crystal
     property! dependencies : Array(ASTNode)
     property freeze_type : Type?
     property observers : Array(ASTNode)?
-    property input_observer : Call?
+    property enclosing_call : Call?
 
     @dirty = false
     @propagating_after_cleanup = false
@@ -136,20 +136,20 @@ module Crystal
       @observers.try &.reject! &.same?(observer)
     end
 
-    def add_input_observer(observer)
-      raise "Bug: already had input observer" if @input_observer
-      @input_observer = observer
+    def set_enclosing_call(enclosing_call)
+      raise "Bug: already had enclosing call" if @enclosing_call
+      @enclosing_call = enclosing_call
     end
 
-    def remove_input_observer(observer)
-      @input_observer = nil if @input_observer.same?(observer)
+    def remove_enclosing_call(enclosing_call)
+      @enclosing_call = nil if @enclosing_call.same?(enclosing_call)
     end
 
     def notify_observers
       @observers.try &.each &.update self
-      @input_observer.try &.update_input self
+      @enclosing_call.try &.recalculate
       @observers.try &.each &.propagate
-      @input_observer.try &.propagate
+      @enclosing_call.try &.propagate
     end
 
     def update(from = nil)

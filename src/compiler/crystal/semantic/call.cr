@@ -28,10 +28,6 @@ class Crystal::Call
     ::raise "Zero target defs for #{self}"
   end
 
-  def update_input(from)
-    recalculate
-  end
-
   def recalculate
     obj = @obj
     obj_type = obj.type? if obj
@@ -520,7 +516,7 @@ class Crystal::Call
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
           new_args << tuple_indexer
-          arg.remove_input_observer(self)
+          arg.remove_enclosing_call(self)
         end
       when DoubleSplat
         arg_type = arg.type
@@ -536,7 +532,7 @@ class Crystal::Call
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
           new_args << tuple_indexer
-          arg.remove_input_observer(self)
+          arg.remove_enclosing_call(self)
         end
       else
         new_args << arg
@@ -847,8 +843,8 @@ class Crystal::Call
       # Because the block's type might be used as a free variable, we bind
       # ourself to the block so when its type changes we recalculate ourself.
       if output
-        block.try &.remove_input_observer(self)
-        block.try &.add_input_observer(self)
+        block.try &.remove_enclosing_call(self)
+        block.try &.set_enclosing_call(self)
       end
     else
       block.accept parent_visitor

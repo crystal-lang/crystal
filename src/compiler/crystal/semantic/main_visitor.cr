@@ -1107,10 +1107,10 @@ module Crystal
         named_args.try &.each &.value.accept self
       end
 
-      obj.try &.add_input_observer(node)
-      args.each &.add_input_observer(node)
-      block_arg.try &.add_input_observer node
-      named_args.try &.each &.value.add_input_observer(node)
+      obj.try &.set_enclosing_call(node)
+      args.each &.set_enclosing_call(node)
+      block_arg.try &.set_enclosing_call node
+      named_args.try &.each &.value.set_enclosing_call(node)
 
       check_super_in_initialize node
 
