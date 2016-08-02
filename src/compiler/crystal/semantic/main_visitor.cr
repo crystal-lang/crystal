@@ -2054,9 +2054,7 @@ module Crystal
         # Already typed
       when "argv"
         # Already typed
-      when "struct_set"
-        visit_struct_or_union_set node
-      when "union_set"
+      when "struct_or_union_set"
         visit_struct_or_union_set node
       when "external_var_set"
         # Nothing to do

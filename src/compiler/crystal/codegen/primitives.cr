@@ -37,10 +37,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_pointer_add node, target_def, call_args
             when "pointer_diff"
               codegen_primitive_pointer_diff node, target_def, call_args
-            when "struct_set"
-              codegen_primitive_struct_set node, target_def, call_args
-            when "union_set"
-              codegen_primitive_union_set node, target_def, call_args
+            when "struct_or_union_set"
+              codegen_primitive_struct_or_union_set node, target_def, call_args
             when "external_var_set"
               codegen_primitive_external_var_set node, target_def, call_args
             when "external_var_get"
@@ -454,22 +452,20 @@ class Crystal::CodeGenVisitor
     gep call_args[0], call_args[1]
   end
 
-  def codegen_primitive_struct_set(node, target_def, call_args)
-    set_aggregate_field(node, target_def, call_args) do
-      type = context.type.as(NonGenericClassType)
-      name = target_def.name.chop
-      struct_field_ptr(type, name, call_args[0])
-    end
-  end
-
   def struct_field_ptr(type, field_name, pointer)
     index = type.index_of_instance_var('@' + field_name)
     aggregate_index pointer, index
   end
 
-  def codegen_primitive_union_set(node, target_def, call_args)
+  def codegen_primitive_struct_or_union_set(node, target_def, call_args)
     set_aggregate_field(node, target_def, call_args) do |field_type|
-      union_field_ptr(field_type, call_args[0])
+      type = context.type.as(NonGenericClassType)
+      if type.extern_union?
+        union_field_ptr(field_type, call_args[0])
+      else
+        name = target_def.name.chop
+        struct_field_ptr(type, name, call_args[0])
+      end
     end
   end
 
