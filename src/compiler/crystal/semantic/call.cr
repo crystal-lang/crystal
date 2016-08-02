@@ -810,7 +810,7 @@ class Crystal::Call
         block_arg_type = fun_literal_type
         block_type = fun_literal_type.as(ProcInstanceType).return_type
         if output
-          matched = MatchesLookup.match_arg(block_type, output, match.context)
+          matched = block_type.restrict(output, match.context)
           if !matched && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
               block_type = lookup_node_type(match.context, output).virtual_type
@@ -869,7 +869,7 @@ class Crystal::Call
           end
         else
           block_type = block.type
-          matched = MatchesLookup.match_arg(block_type, output, match.context)
+          matched = block_type.restrict(output, match.context)
           if (!matched || (matched && !block_type.implements?(matched))) && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore)
               begin

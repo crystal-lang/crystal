@@ -195,7 +195,7 @@ module Crystal
           next
         end
 
-        match_arg_type = match_arg(arg_type, arg, context)
+        match_arg_type = arg_type.restrict(arg, context)
         if match_arg_type
           matched_arg_types ||= [] of Type
           matched_arg_types.push match_arg_type
@@ -208,7 +208,7 @@ module Crystal
       # Match splat arguments against splat restriction
       if splat_arg_types && splat_restriction.is_a?(Splat)
         tuple_type = context.instantiated_type.program.tuple_of(splat_arg_types)
-        match_arg_type = match_arg(tuple_type, splat_restriction.exp, context)
+        match_arg_type = tuple_type.restrict(splat_restriction.exp, context)
         unless match_arg_type
           return nil
         end
@@ -243,7 +243,7 @@ module Crystal
               end
             end
 
-            match_arg_type = match_arg(named_arg.type, a_def.args[found_index], context)
+            match_arg_type = named_arg.type.restrict(a_def.args[found_index], context)
             unless match_arg_type
               return nil
             end
@@ -260,7 +260,7 @@ module Crystal
                 if double_splat_entries
                   double_splat_entries << named_arg
                 else
-                  match_arg_type = match_arg(named_arg.type, double_splat_restriction, context)
+                  match_arg_type = named_arg.type.restrict(double_splat_restriction, context)
                   unless match_arg_type
                     return nil
                   end
@@ -282,7 +282,7 @@ module Crystal
       # Match double splat arguments against double splat restriction
       if double_splat_entries && double_splat_restriction.is_a?(DoubleSplat)
         named_tuple_type = context.instantiated_type.program.named_tuple_of(double_splat_entries)
-        value = match_arg(named_tuple_type, double_splat_restriction.exp, context)
+        value = named_tuple_type.restrict(double_splat_restriction.exp, context)
         unless value
           return nil
         end
@@ -309,15 +309,6 @@ module Crystal
       context = context.clone if context.free_vars
 
       Match.new(a_def, (matched_arg_types || arg_types), context, matched_named_arg_types)
-    end
-
-    def self.match_arg(arg_type, arg : Arg, context : MatchContext)
-      restriction = arg.type? || arg.restriction
-      match_arg arg_type, restriction, context
-    end
-
-    def self.match_arg(arg_type, restriction, context : MatchContext)
-      arg_type.not_nil!.restrict restriction, context
     end
   end
 

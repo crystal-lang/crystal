@@ -369,6 +369,10 @@ module Crystal
       self
     end
 
+    def restrict(other : Arg, context)
+      restrict (other.type? || other.restriction), context
+    end
+
     def restrict(other : ASTNode, context)
       raise "Bug: unsupported restriction: #{self} vs. #{other}"
     end
