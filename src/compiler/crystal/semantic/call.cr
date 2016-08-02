@@ -58,8 +58,6 @@ class Crystal::Call
     unbind_from @target_defs if @target_defs
     unbind_from block.break if block
 
-    block.try &.args.each &.unbind_all
-
     @target_defs = nil
 
     if block_arg = @block_arg
@@ -155,11 +153,11 @@ class Crystal::Call
     if obj = @obj
       lookup_matches_in(obj.type, arg_types, named_args_types)
     elsif name == "super"
-      lookup_matches_in_super(arg_types, named_args_types)
+      lookup_super_matches(arg_types, named_args_types)
     elsif name == "previous_def"
       lookup_previous_def_matches(arg_types, named_args_types)
     elsif with_scope = @with_scope
-      lookup_matches_in_with_scope with_scope, arg_types, named_args_types
+      lookup_matches_with_scope_in with_scope, arg_types, named_args_types
     else
       lookup_matches_in scope, arg_types, named_args_types
     end
@@ -211,11 +209,10 @@ class Crystal::Call
     lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents)
   end
 
-  def lookup_matches_in_with_scope(owner, arg_types, named_args_types)
+  def lookup_matches_with_scope_in(owner, arg_types, named_args_types)
     signature = CallSignature.new(name, arg_types, block, named_args_types)
 
-    matches = check_tuple_indexer(owner, name, args, arg_types)
-    matches ||= lookup_matches_checking_expansion(owner, signature)
+    matches = lookup_matches_checking_expansion(owner, signature)
 
     if matches.empty? && owner.class? && owner.abstract?
       matches = owner.virtual_type.lookup_matches(signature)
@@ -224,10 +221,6 @@ class Crystal::Call
     if matches.empty?
       @uses_with_scope = false
       return lookup_matches_in scope, arg_types, named_args_types
-    end
-
-    if matches.empty?
-      raise_matches_not_found(matches.owner || owner, name, arg_types, named_args_types, matches)
     end
 
     @uses_with_scope = true
@@ -336,9 +329,6 @@ class Crystal::Call
     typed_defs = Array(Def).new(matches.size)
 
     matches.each do |match|
-      # Discard abstract defs for abstract classes
-      next if match.def.abstract? && match.context.instantiated_type.abstract?
-
       check_visibility match
 
       yield_vars, block_arg_type = match_block_arg(match)
@@ -559,7 +549,7 @@ class Crystal::Call
     end
   end
 
-  def lookup_matches_in_super(arg_types, named_args_types)
+  def lookup_super_matches(arg_types, named_args_types)
     if scope.is_a?(Program)
       raise "there's no superclass in this scope"
     end
@@ -645,7 +635,6 @@ class Crystal::Call
   end
 
   def on_new_subclass
-    # @types_signature = nil
     recalculate
   end
 
@@ -953,21 +942,10 @@ class Crystal::Call
     block_arg = @block_arg
     named_args = @named_args
 
-    unless args.all? &.type?
-      return false
-    end
-
-    if obj && !obj.type?
-      return false
-    end
-
-    if block_arg && !block_arg.type?
-      return false
-    end
-
-    if named_args && named_args.any? { |arg| !arg.value.type? }
-      return false
-    end
+    return false unless args.all? &.type?
+    return false if obj && !obj.type?
+    return false if block_arg && !block_arg.type?
+    return false if named_args && named_args.any? { |arg| !arg.value.type? }
 
     true
   end
@@ -995,8 +973,6 @@ class Crystal::Call
       untyped_def.body = body.clone if body.is_a?(Primitive)
     end
 
-    args_start_index = 0
-
     typed_def = untyped_def.clone
     typed_def.owner = owner
     typed_def.original_owner = untyped_def.owner
@@ -1015,7 +991,7 @@ class Crystal::Call
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]
-      type = arg_types[args_start_index + index]
+      type = arg_types[index]
       var = MetaVar.new(arg.name, type).at(arg.location)
       var.bind_to(var)
       args[arg.name] = var
@@ -1074,13 +1050,9 @@ class Crystal::Call
   end
 
   def attach_subclass_observer(type : ModuleType)
-    detach_subclass_observer
+    @subclass_notifier.try &.remove_subclass_observer(self)
     type.add_subclass_observer(self)
     @subclass_notifier = type
-  end
-
-  def detach_subclass_observer
-    @subclass_notifier.try &.remove_subclass_observer(self)
   end
 
   def raises=(value)
