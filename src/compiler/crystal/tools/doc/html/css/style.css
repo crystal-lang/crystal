@@ -257,12 +257,15 @@ h1.type-name {
   color: #6C518B;
 }
 
-.methods-inherited .tooltip span {
+.methods-inherited .tooltip>span {
   background: #D5CAE3;
-  color: #47266E;
   padding: 4px 8px;
   border-radius: 3px;
   margin: -4px -8px;
+}
+
+.methods-inherited .tooltip * {
+    color: #47266E;
 }
 
 pre {
@@ -280,14 +283,14 @@ code {
   font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
 }
 
-.tooltip span {
+.tooltip>span {
   position: absolute;
   opacity: 0;
   display: none;
   pointer-events: none;
 }
 
-.tooltip:hover span {
+.tooltip:hover>span {
   display: inline-block;
   opacity: 1;
 }
