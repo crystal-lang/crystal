@@ -3,8 +3,13 @@ require "../program"
 module Crystal
   class Program
     def type_merge(types : Array(Type?))
-      # Merging two types is the most common case, so we optimize it
-      if types.size == 2
+      case types.size
+      when 0
+        return nil
+      when 1
+        return types.first
+      when 2
+        # Merging two types is the most common case, so we optimize it
         first, second = types
         did_merge, merged_type = type_merge_two(first, second)
         return merged_type if did_merge
@@ -14,8 +19,13 @@ module Crystal
     end
 
     def type_merge(nodes : Array(ASTNode))
-      # Merging two types is the most common case, so we optimize it
-      if nodes.size == 2
+      case nodes.size
+      when 0
+        return nil
+      when 1
+        return nodes.first.type?
+      when 2
+        # Merging two types is the most common case, so we optimize it
         first, second = nodes
         did_merge, merged_type = type_merge_two(first.type?, second.type?)
         return merged_type if did_merge

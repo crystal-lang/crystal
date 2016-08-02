@@ -1100,7 +1100,7 @@ module Crystal
     include DefInstanceContainer
 
     def initialize_metaclass(metaclass)
-      metaclass.add_def Def.new("allocate", body: Primitive.new(:allocate))
+      metaclass.add_def Def.new("allocate", body: Primitive.new("allocate"))
     end
 
     def virtual_type
@@ -1466,7 +1466,7 @@ module Crystal
     end
 
     def initialize_metaclass(metaclass)
-      metaclass.add_def Def.new("allocate", body: Primitive.new(:allocate))
+      metaclass.add_def Def.new("allocate", body: Primitive.new("allocate"))
     end
 
     def type_desc
@@ -2023,11 +2023,11 @@ module Crystal
     end
 
     def add_var(name, type, real_name, thread_local)
-      setter = External.new("#{name}=", [Arg.new("value", type: type)], Primitive.new(:external_var_set, type), real_name)
+      setter = External.new("#{name}=", [Arg.new("value", type: type)], Primitive.new("external_var_set", type), real_name)
       setter.set_type(type)
       setter.thread_local = thread_local
 
-      getter = External.new("#{name}", [] of Arg, Primitive.new(:external_var_get, type), real_name)
+      getter = External.new("#{name}", [] of Arg, Primitive.new("external_var_get", type), real_name)
       getter.set_type(type)
       getter.thread_local = thread_local
 
@@ -2156,8 +2156,8 @@ module Crystal
 
       @flags = !!flags
 
-      add_def Def.new("value", [] of Arg, Primitive.new(:enum_value, @base_type))
-      metaclass.add_def Def.new("new", [Arg.new("value", type: @base_type)], Primitive.new(:enum_new, self))
+      add_def Def.new("value", [] of Arg, Primitive.new("enum_value", @base_type))
+      metaclass.add_def Def.new("new", [Arg.new("value", type: @base_type)], Primitive.new("enum_new", self))
     end
 
     def parents

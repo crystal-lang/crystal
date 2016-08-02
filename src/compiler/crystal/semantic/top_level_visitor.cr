@@ -144,10 +144,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attach_doc type, node
 
     pushing_type(type) do
-      if created_new_type
-        run_hooks(superclass.metaclass, type, :inherited, node)
-      end
-
+      run_hooks(superclass.metaclass, type, :inherited, node) if created_new_type
       node.body.accept self
     end
 
@@ -447,7 +444,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       scope.types[name] = enum_type
-      node.created_new_type = true
     end
 
     false

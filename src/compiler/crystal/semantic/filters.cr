@@ -6,8 +6,8 @@ module Crystal
       update(@node)
     end
 
-    def update(from)
-      from_type = from.type?
+    def update(from = nil)
+      from_type = from.try &.type?
 
       if from_type
         self.type = @filter.apply(from_type)

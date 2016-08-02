@@ -1058,7 +1058,8 @@ module Crystal
       end
 
       node.call = call
-      node.bind_to call
+      call.add_observer node
+      node.update
 
       false
     end
@@ -1988,7 +1989,6 @@ module Crystal
         bind_vars @vars, block.after_vars, block.args
       elsif target_while = @while_stack.last?
         node.target = target_while
-        target_while.has_breaks = true
 
         break_vars = (target_while.break_vars ||= [] of MetaVars)
         break_vars.push @vars.dup
@@ -2220,6 +2220,8 @@ module Crystal
     end
 
     def visit(node : PointerOf)
+      node.exp.accept self
+
       var = case node_exp = node.exp
             when Var
               meta_var = @meta_vars[node_exp.name]
@@ -2232,7 +2234,6 @@ module Crystal
             when Global
               visit_global node_exp
             when Path
-              node_exp.accept self
               if const = node_exp.target_const
                 const.value
               else
@@ -2245,6 +2246,7 @@ module Crystal
               node_exp.raise "can't take address of #{node_exp}"
             end
       node.bind_to var
+      false
     end
 
     def visit(node : TypeOf)
@@ -2263,7 +2265,8 @@ module Crystal
 
       @in_type_args = old_in_type_args
 
-      node.bind_to node.expressions
+      node.expressions.each &.add_observer(node)
+      node.update
 
       @vars = old_vars
 
