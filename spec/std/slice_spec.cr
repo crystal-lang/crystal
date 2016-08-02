@@ -231,28 +231,28 @@ describe "Slice" do
 
   it "does hexdump" do
     ascii_table = <<-EOF
-      2021 2223 2425 2627 2829 2a2b 2c2d 2e2f   !"#$%&'()*+,-./
-      3031 3233 3435 3637 3839 3a3b 3c3d 3e3f  0123456789:;<=>?
-      4041 4243 4445 4647 4849 4a4b 4c4d 4e4f  @ABCDEFGHIJKLMNO
-      5051 5253 5455 5657 5859 5a5b 5c5d 5e5f  PQRSTUVWXYZ[\\]^_
-      6061 6263 6465 6667 6869 6a6b 6c6d 6e6f  `abcdefghijklmno
-      7071 7273 7475 7677 7879 7a7b 7c7d 7e7f  pqrstuvwxyz{|}~.
+      00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
+      00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
+      00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
+      00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
+      00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
+      00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.
       EOF
 
-    slice = StaticArray(UInt8, 96).new(&.to_u8.+(32)).to_slice
+    slice = Slice(UInt8).new(96) { |i| i.to_u8 + 32 }
     slice.hexdump.should eq(ascii_table)
 
     ascii_table_plus = <<-EOF
-      2021 2223 2425 2627 2829 2a2b 2c2d 2e2f   !"#$%&'()*+,-./
-      3031 3233 3435 3637 3839 3a3b 3c3d 3e3f  0123456789:;<=>?
-      4041 4243 4445 4647 4849 4a4b 4c4d 4e4f  @ABCDEFGHIJKLMNO
-      5051 5253 5455 5657 5859 5a5b 5c5d 5e5f  PQRSTUVWXYZ[\\]^_
-      6061 6263 6465 6667 6869 6a6b 6c6d 6e6f  `abcdefghijklmno
-      7071 7273 7475 7677 7879 7a7b 7c7d 7e7f  pqrstuvwxyz{|}~.
-      8081 8283 84                             .....
+      00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
+      00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
+      00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
+      00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
+      00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
+      00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.
+      00000060  80 81 82 83 84                                    .....
       EOF
 
-    plus = StaticArray(UInt8, 101).new(&.to_u8.+(32)).to_slice
+    plus = Slice(UInt8).new(101) { |i| i.to_u8 + 32 }
     plus.hexdump.should eq(ascii_table_plus)
   end
 
