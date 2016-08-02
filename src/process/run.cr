@@ -173,6 +173,17 @@ class Process
     close
   end
 
+  # Whether the process is still registered in the system.
+  # Note that this returns true for processes in the zombie or similar state.
+  def exists?
+    !terminated?
+  end
+
+  # Whether this process is already terminated.
+  def terminated?
+    @waitpid_future.completed? || !Process.exists?(@pid)
+  end
+
   # Closes any pipes to the child process.
   def close
     close_io @input

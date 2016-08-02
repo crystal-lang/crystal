@@ -45,6 +45,19 @@ class Process
     nil
   end
 
+  # Returns true if the process identified by *pid* is valid for
+  # a currently registered process, false otherwise. Note that this
+  # returns true for a process in the zombie or similar state.
+  def self.exists?(pid : Int)
+    ret = LibC.kill(pid, 0)
+    if ret == 0
+      true
+    else
+      return false if Errno.value == Errno::ESRCH
+      raise Errno.new("kill")
+    end
+  end
+
   # A struct representing the CPU current times of the process, in fractions of seconds.
   #
   # * *utime* CPU time a process spent in userland.
