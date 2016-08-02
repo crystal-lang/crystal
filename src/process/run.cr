@@ -153,7 +153,7 @@ class Process
     @wait_count = 0
   end
 
-  # See Process.kill
+  # See `Process.kill`
   def kill(sig = Signal::TERM)
     Process.kill sig, @pid
   end
