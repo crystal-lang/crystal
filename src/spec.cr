@@ -93,10 +93,12 @@ module Spec
     end
   end
 
+  # :nodoc:
   def self.use_colors?
     @@use_colors
   end
 
+  # :nodoc:
   def self.use_colors=(@@use_colors)
   end
 
@@ -126,13 +128,16 @@ module Spec
   def self.line=(@@line : Int32)
   end
 
+  # :nodoc:
   def self.slowest=(@@slowest : Int32)
   end
 
+  # :nodoc:
   def self.slowest
     @@slowest
   end
 
+  # :nodoc:
   def self.to_human(span : Time::Span)
     total_milliseconds = span.total_milliseconds
     if total_milliseconds < 1
@@ -153,6 +158,7 @@ module Spec
     "#{minutes}:#{seconds < 10 ? "0" : ""}#{seconds} minutes"
   end
 
+  # :nodoc:
   def self.add_location(file, line)
     locations = @@locations ||= {} of String => Array(Int32)
     lines = locations[File.expand_path(file)] ||= [] of Int32
