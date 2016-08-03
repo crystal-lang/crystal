@@ -612,20 +612,6 @@ module Crystal
         case @token.type
         when :SPACE
           next_token
-        when :IDENT
-          if @token.keyword?(:as)
-            check_void_value atomic, location
-            next_token_skip_space
-            to = parse_single_type(allow_commas: false)
-            atomic = Cast.new(atomic, to).at(location)
-          elsif @token.keyword?(:as?)
-            check_void_value atomic, location
-            next_token_skip_space
-            to = parse_single_type(allow_commas: false)
-            atomic = NilableCast.new(atomic, to).at(location)
-          else
-            break
-          end
         when :NEWLINE
           # In these cases we don't want to chain a call
           case atomic
@@ -854,12 +840,14 @@ module Crystal
         type = parse_single_type
         skip_space
         check :")"
+        end_location = token_end_location
         next_token_skip_space
       else
         type = parse_single_type(allow_commas: false)
+        end_location = token_end_location
       end
 
-      klass.new(atomic, type)
+      klass.new(atomic, type).at_end(end_location)
     end
 
     def parse_as?(atomic)

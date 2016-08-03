@@ -573,7 +573,7 @@ describe "Parser" do
     assert_syntax_error "1 if #{keyword}", "void value expression"
     assert_syntax_error "1 unless #{keyword}", "void value expression"
     assert_syntax_error "#{keyword}.foo", "void value expression"
-    assert_syntax_error "#{keyword} as Int32", "void value expression"
+    assert_syntax_error "#{keyword}.as(Int32)", "void value expression"
     assert_syntax_error "#{keyword}[]", "void value expression"
     assert_syntax_error "#{keyword}[0]", "void value expression"
     assert_syntax_error "#{keyword}[0]= 1", "void value expression"
@@ -997,10 +997,8 @@ describe "Parser" do
 
   it_parses "def foo\n1\nend\nif 1\nend", [Def.new("foo", body: 1.int32), If.new(1.int32)] of ASTNode
 
-  it_parses "1 as Bar", Cast.new(1.int32, "Bar".path)
-  it_parses "foo as Bar", Cast.new("foo".call, "Bar".path)
-  it_parses "foo.bar as Bar", Cast.new(Call.new("foo".call, "bar"), "Bar".path)
-  it_parses "call(foo as Bar, Baz)", Call.new(nil, "call", args: [Cast.new("foo".call, "Bar".path), "Baz".path])
+  assert_syntax_error "1 as Bar"
+  assert_syntax_error "1 as? Bar"
 
   it_parses "1.as Bar", Cast.new(1.int32, "Bar".path)
   it_parses "1.as(Bar)", Cast.new(1.int32, "Bar".path)
@@ -1475,7 +1473,7 @@ describe "Parser" do
     assert_end_location "yield 1"
     assert_end_location "include Foo"
     assert_end_location "extend Foo"
-    assert_end_location "1 as Int32"
+    assert_end_location "1.as(Int32)"
     assert_end_location "puts obj.foo"
 
     it "gets corrects of ~" do

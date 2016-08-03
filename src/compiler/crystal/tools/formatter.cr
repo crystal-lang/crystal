@@ -3255,48 +3255,17 @@ module Crystal
     end
 
     def visit(node : Cast)
-      # This is for the case `&.as(...)`
-      if node.obj.is_a?(Nop)
-        write_keyword :as
-        write_token :"("
-        accept node.to
-        write_token :")"
-        return false
-      end
-
-      accept node.obj
-      skip_space
-      if @token.type == :"."
-        write "."
-        next_token_skip_space_or_newline
-        write_keyword :as
-        skip_space
-        if @token.type == :"("
-          write_token :"("
-          skip_space_or_newline
-          accept node.to
-          skip_space_or_newline
-          write_token :")"
-        else
-          skip_space
-          write " "
-          accept node.to
-        end
-      else
-        write "."
-        write_keyword :as
-        write "("
-        skip_space
-        accept node.to
-        write ")"
-      end
-      false
+      format_cast node, :as
     end
 
     def visit(node : NilableCast)
-      # This is for the case `&.as?(...)`
+      format_cast node, :as?
+    end
+
+    def format_cast(node, keyword)
+      # This is for the case `&.as(...)`
       if node.obj.is_a?(Nop)
-        write_keyword :as?
+        write_keyword keyword
         write_token :"("
         accept node.to
         write_token :")"
@@ -3305,10 +3274,9 @@ module Crystal
 
       accept node.obj
       skip_space
-      check :"."
-      write "."
-      next_token_skip_space_or_newline
-      write_keyword :as?
+      write_token :"."
+      skip_space_or_newline
+      write_keyword keyword
       skip_space
       if @token.type == :"("
         write_token :"("
