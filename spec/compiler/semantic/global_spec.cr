@@ -223,7 +223,7 @@ describe "Global inference" do
         1
       end
 
-      $x = foo as Int32
+      $x = foo.as(Int32)
       $x
       )) { int32 }
   end

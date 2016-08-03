@@ -216,7 +216,7 @@ describe "Semantic: is_a?" do
         include Moo
       end
 
-      a = 1 == 1 ? 1 : (Foo.new as Moo)
+      a = 1 == 1 ? 1 : Foo.new.as(Moo)
       unless a.is_a?(Moo)
         a.foo
       else

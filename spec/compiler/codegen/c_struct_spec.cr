@@ -56,7 +56,7 @@ describe "Code gen: struct" do
       end
 
       foo = Pointer(LibC::Foo).malloc(1_u64)
-      ((foo as Int32*) + 1_i64).value = 2
+      (foo.as(Int32*) + 1_i64).value = 2
 
       foo.value.bar.y
       ").to_i.should eq(2)

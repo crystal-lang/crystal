@@ -211,7 +211,7 @@ describe "Semantic: struct" do
         end
       end
 
-      Bar.new as Foo
+      Bar.new.as(Foo)
       )) { types["Foo"].virtual_type! }
   end
 

@@ -168,9 +168,9 @@ describe "Code gen: proc" do
       end
 
       ary = [3, 1, 4, 2]
-      LibC.qsort((ary.to_unsafe as Void*), LibC::SizeT.new(ary.size), LibC::SizeT.new(sizeof(Int32)), ->(a : Void*, b : Void*) {
-        a = a as Int32*
-        b = b as Int32*
+      LibC.qsort(ary.to_unsafe.as(Void*), LibC::SizeT.new(ary.size), LibC::SizeT.new(sizeof(Int32)), ->(a : Void*, b : Void*) {
+        a = a.as(Int32*)
+        b = b.as(Int32*)
         a.value <=> b.value
       })
       ary[0]

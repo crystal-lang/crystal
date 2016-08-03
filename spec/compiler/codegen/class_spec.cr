@@ -434,7 +434,7 @@ describe "Code gen: class" do
           1
         end
 
-        $x = self.foo as Int32
+        $x = self.foo.as(Int32)
       end
 
       $x
@@ -448,7 +448,7 @@ describe "Code gen: class" do
           1
         end
 
-        $x = self as Foo.class
+        $x = self.as(Foo.class)
       end
 
       $x.foo

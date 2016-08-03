@@ -346,7 +346,7 @@ describe "Restrictions" do
         1
       end
 
-      foo(Baz.new as Bar)
+      foo(Baz.new.as(Bar))
       )) { int32 }
   end
 
@@ -367,7 +367,7 @@ describe "Restrictions" do
 
       alias Rec = Nil | Array(Rec)
 
-      Foo.new { nil as Rec }.t
+      Foo.new { nil.as(Rec)}.t
       )) { types["Rec"].metaclass }
   end
 end

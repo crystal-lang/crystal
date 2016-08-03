@@ -386,7 +386,7 @@ describe "Code gen: def" do
         end
       end
 
-      foo = 1 == 1 ? Foo.new : (Pointer(Int32).new(0_u64) as Bar)
+      foo = 1 == 1 ? Foo.new : Pointer(Int32).new(0_u64).as(Bar)
       foo.bar
       ").to_i.should eq(1)
   end
@@ -407,7 +407,7 @@ describe "Code gen: def" do
         2
       end
 
-      foo = 1 == 1 ? Foo.new : (Pointer(Int32).new(0_u64) as Bar)
+      foo = 1 == 1 ? Foo.new : Pointer(Int32).new(0_u64).as(Bar)
       something(foo)
       ").to_i.should eq(1)
   end

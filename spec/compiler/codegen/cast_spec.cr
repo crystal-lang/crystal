@@ -13,8 +13,8 @@ describe "Code gen: cast" do
       end
 
       f = Foo.new(1)
-      p = f as Void*
-      f = p as Foo
+      p = f.as(Void*)
+      f = p.as(Foo)
       f.x
       )).to_i.should eq(1)
   end
@@ -24,7 +24,7 @@ describe "Code gen: cast" do
       require "prelude"
 
       a = 1
-      b = a as Int32
+      b = a.as(Int32)
       b.abs
       )).to_i.should eq(1)
   end
@@ -34,7 +34,7 @@ describe "Code gen: cast" do
       require "prelude"
 
       a = 1 || 'a'
-      b = a as Int32
+      b = a.as(Int32)
       b.abs
       )).to_i.should eq(1)
   end
@@ -45,7 +45,7 @@ describe "Code gen: cast" do
 
       a = 1 || 'a'
       begin
-        a as Char
+        a.as(Char)
         false
       rescue ex
         ex.message.not_nil!.includes?("cast from Int32 to Char failed") && (ex.class == TypeCastError)
@@ -58,7 +58,7 @@ describe "Code gen: cast" do
       require "prelude"
 
       a = 1 || 1.5 || 'a'
-      b = a as Int32 | Float64
+      b = a.as(Int32 | Float64)
       b.abs.to_i
       )).to_i.should eq(1)
   end
@@ -69,7 +69,7 @@ describe "Code gen: cast" do
 
       a = 1 || 1.5 || 'a'
       begin
-        a as Float64 | Char
+        a.as(Float64 | Char)
         false
       rescue ex
         ex.message.not_nil!.includes?("cast from Int32 to (Char | Float64) failed") && (ex.class == TypeCastError)
@@ -94,7 +94,7 @@ describe "Code gen: cast" do
       end
 
       a = CastSpecBar.new || CastSpecFoo.new || CastSpecBaz.new
-      b = a as CastSpecBar
+      b = a.as(CastSpecBar)
       b.bar
       )).to_i.should eq(1)
   end
@@ -117,7 +117,7 @@ describe "Code gen: cast" do
 
       a = CastSpecBar.new || CastSpecFoo.new || CastSpecBaz.new
       begin
-        a as CastSpecBaz
+        a.as(CastSpecBaz)
         false
       rescue ex
         ex.message.not_nil!.includes?("cast from CastSpecBar to CastSpecBaz failed") && (ex.class == TypeCastError)
@@ -130,7 +130,7 @@ describe "Code gen: cast" do
       require "prelude"
 
       a = 1_i64
-      (pointerof(a) as Int32*).value
+      pointerof(a).as(Int32*).value
       )).to_i.should eq(1)
   end
 
@@ -163,7 +163,7 @@ describe "Code gen: cast" do
       end
 
       a = CastSpecBar.new || CastSpecFoo.new || CastSpecBaz.new || CastSpecBan.new
-      m = a as CastSpecMoo
+      m = a.as(CastSpecMoo)
       m.moo
       )).to_i.should eq(2)
   end
@@ -173,7 +173,7 @@ describe "Code gen: cast" do
       require "prelude"
 
       a = 1 == 2 ? Reference.new : nil
-      c = a as Nil
+      c = a.as(Nil)
       c == nil
       )).to_b.should be_true
   end
@@ -184,7 +184,7 @@ describe "Code gen: cast" do
 
       a = 1 == 1 ? Reference.new : nil
       begin
-        a as Nil
+        a.as(Nil)
         false
       rescue ex
         ex.message.not_nil!.includes?("cast from Reference to Nil failed") && (ex.class == TypeCastError)
@@ -207,35 +207,35 @@ describe "Code gen: cast" do
       end
 
       bar = Bar.new
-      x = (bar as Foo).foo
+      x = bar.as(Foo).foo
       x.to_i
       )).to_i.should eq(1)
   end
 
   it "casts to bigger union" do
     run(%(
-      x = 1.5 as Int32 | Float64
+      x = 1.5.as(Int32 | Float64)
       x.to_i
       )).to_i.should eq(1)
   end
 
   it "allows casting nil to Void*" do
     run(%(
-      (nil as Void*).address
+      nil.as(Void*).address
       )).to_i.should eq(0)
   end
 
   it "allows casting nilable type to Void* (1)" do
     run(%(
       a = 1 == 1 ? Reference.new : nil
-      (a as Void*).address
+      a.as(Void*).address
       )).to_i.should_not eq(0)
   end
 
   it "allows casting nilable type to Void* (2)" do
     run(%(
       a = 1 == 2 ? Reference.new : nil
-      (a as Void*).address
+      a.as(Void*).address
       )).to_i.should eq(0)
   end
 
@@ -244,14 +244,14 @@ describe "Code gen: cast" do
       class Foo
       end
       a = 1 == 1 ? Reference.new : (1 == 2 ? Foo.new : nil)
-      (a as Void*).address
+      a.as(Void*).address
       )).to_i.should_not eq(0)
   end
 
   it "casts (bug)" do
     run(%(
       require "prelude"
-      (1 || 1.1) as Int32
+      (1 || 1.1).as(Int32)
       123
       )).to_i.should eq(123)
   end

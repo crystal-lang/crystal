@@ -2,16 +2,16 @@ require "../../spec_helper"
 
 describe "Semantic: cast" do
   it "casts to same type is ok" do
-    assert_type("1 as Int32 ") { int32 }
+    assert_type("1.as(Int32)") { int32 }
   end
 
   it "casts to incompatible type gives error" do
-    assert_error "1 as Float64",
+    assert_error "1.as(Float64)",
       "can't cast Int32 to Float64"
   end
 
   pending "casts from union to incompatible union gives error" do
-    assert_error "(1 || 1.5) as Int32 | Char",
+    assert_error "(1 || 1.5).as(Int32 | Char)",
       "can't cast Int32 | Float64 to Int32 | Char"
   end
 
@@ -21,13 +21,13 @@ describe "Semantic: cast" do
       end
 
       a = 1
-      pointerof(a) as Foo
+      pointerof(a).as(Foo)
       ",
       "can't cast Pointer(Int32) to Foo(T)"
   end
 
   it "casts from union to compatible union" do
-    assert_type("(1 || 1.5 || 'a') as Int32 | Float64") { union_of(int32, float64) }
+    assert_type("(1 || 1.5 || 'a').as(Int32 | Float64)") { union_of(int32, float64) }
   end
 
   it "casts to compatible type and use it" do
@@ -42,7 +42,7 @@ describe "Semantic: cast" do
       end
 
       a = Foo.new || Bar.new
-      b = a as Bar
+      b = a.as(Bar)
       b.coco
     ") { int32 }
   end
@@ -51,7 +51,7 @@ describe "Semantic: cast" do
     assert_type("
       a = 1
       p = pointerof(a)
-      p as Float64*
+      p.as(Float64*)
     ") { pointer_of(float64) }
   end
 
@@ -59,7 +59,7 @@ describe "Semantic: cast" do
     assert_type("
       a = 1
       p = pointerof(a)
-      p as String
+      p.as(String)
     ") { types["String"] }
   end
 
@@ -80,7 +80,7 @@ describe "Semantic: cast" do
       end
 
       f = Foo.new || Bar.new || Baz.new
-      f as Moo
+      f.as(Moo)
       ") { union_of(types["Bar"].virtual_type, types["Baz"].virtual_type) }
   end
 
@@ -89,7 +89,7 @@ describe "Semantic: cast" do
       class Foo
       end
 
-      Foo.new as Void*
+      Foo.new.as(Void*)
       ") { pointer_of(void) }
   end
 
@@ -102,13 +102,13 @@ describe "Semantic: cast" do
       end
 
       foo = Foo.new || Bar.new
-      foo as Void*
+      foo.as(Void*)
       ") { pointer_of(void) }
   end
 
   it "disallows casting int to pointer" do
     assert_error %(
-      1 as Void*
+      1.as(Void*)
       ),
       "can't cast Int32 to Pointer(Void)"
   end
@@ -116,7 +116,7 @@ describe "Semantic: cast" do
   it "disallows casting fun to pointer" do
     assert_error %(
       f = ->{ 1 }
-      f as Void*
+      f.as(Void*)
       ),
       "can't cast Proc(Int32) to Pointer(Void)"
   end
@@ -124,7 +124,7 @@ describe "Semantic: cast" do
   it "disallows casting pointer to fun" do
     assert_error %(
       a = uninitialized Void*
-      a as -> Int32
+      a.as(-> Int32)
       ),
       "can't cast Pointer(Void) to Proc(Int32)"
   end
@@ -135,7 +135,7 @@ describe "Semantic: cast" do
       end
 
       foo = Foo(Int32).new
-      foo as Foo
+      foo.as(Foo)
       )) { generic_class "Foo", int32 }
   end
 
@@ -147,7 +147,7 @@ describe "Semantic: cast" do
       class Bar < Foo
       end
 
-      Bar.new as Foo
+      Bar.new.as(Foo)
       )) { types["Foo"].virtual_type! }
   end
 
@@ -166,13 +166,13 @@ describe "Semantic: cast" do
       end
 
       bar = Bar.new
-      (bar as Foo).foo
+      bar.as(Foo).foo
       )) { union_of(int32, char) }
   end
 
   it "casts to bigger union" do
     assert_type(%(
-      1 as Int32 | Char
+      1.as(Int32 | Char)
       )) { union_of(int32, char) }
   end
 
@@ -181,7 +181,7 @@ describe "Semantic: cast" do
       def foo(x)
       end
 
-      foo(1 as Bool)
+      foo 1.as(Bool)
       ),
       "can't cast Int32 to Bool"
   end
@@ -195,7 +195,7 @@ describe "Semantic: cast" do
       end
 
       a = [1, 2, 3]
-      b = a.map { Foo.new.x as Int32 }
+      b = a.map { Foo.new.x.as(Int32) }
 
       Foo.new.x = 1
       b
@@ -210,14 +210,14 @@ describe "Semantic: cast" do
       class Bar < Foo
       end
 
-      Foo.new as Bar
+      Foo.new.as(Bar)
       ),
       "can't cast Foo to Bar"
   end
 
   it "can cast to metaclass (bug)" do
     assert_type(%(
-      Int32 as Int32.class
+      Int32.as(Int32.class)
       )) { int32.metaclass }
   end
 
@@ -225,7 +225,7 @@ describe "Semantic: cast" do
   # similar to casting to Void*, but for now it's useless.
   it "disallows casting to Object (#815)" do
     assert_error %(
-      nil as Object
+      nil.as(Object)
       ),
       "can't cast to Object yet"
   end
@@ -242,7 +242,7 @@ describe "Semantic: cast" do
       end
 
       Gen(Foo).new
-      Gen(Bar).new as Gen(Foo)
+      Gen(Bar).new.as(Gen(Foo))
       ), "can't cast Gen(Bar) to Gen(Foo)"
   end
 
@@ -252,7 +252,7 @@ describe "Semantic: cast" do
         foo
       end
 
-      foo as Int32
+      foo.as(Int32)
       )) { no_return }
   end
 
@@ -260,21 +260,21 @@ describe "Semantic: cast" do
     assert_error %(
       require "prelude"
 
-      puts(typeof(nil as Object))
+      puts(typeof(nil.as(Object)))
       ),
       "can't cast to Object yet"
   end
 
   it "disallows casting to Reference" do
     assert_error %(
-      "foo" as Reference
+      "foo".as(Reference)
       ),
       "can't cast to Reference yet"
   end
 
   it "disallows casting to Class" do
     assert_error %(
-      nil as Class
+      nil.as(Class)
       ),
       "can't cast to Class yet"
   end

@@ -43,8 +43,8 @@ describe "Code gen: alias" do
 
       alias Foo = Int32 | Bar(Foo)
 
-      a = 1 as Foo
-      b = a as Int32
+      a = 1.as(Foo)
+      b = a.as(Int32)
       b
       )).to_i.should eq(1)
   end
@@ -66,7 +66,7 @@ describe "Code gen: alias" do
         if n == 0
           1
         else
-          foo(n - 1) as Foo
+          foo(n - 1).as(Foo)
         end
       end
 
@@ -96,7 +96,7 @@ describe "Code gen: alias" do
       Foo(Type).new
 
       ptr = Pointer(Type).malloc(1_u64)
-      ptr.value = 1 as Type
+      ptr.value = 1.as(Type)
       ptr.value = 1
       ))
   end
@@ -128,7 +128,7 @@ describe "Code gen: alias" do
     run(%(
       alias Foo = Bool | Array(Foo)
 
-      a = false as Foo
+      a = false.as(Foo)
       if a
         1
       else

@@ -179,7 +179,7 @@ describe "Semantic: proc" do
   it "disallows casting a proc type to one accepting more arguments" do
     assert_error("
       f = ->(x : Int32) { x.to_f }
-      f as (Int32, Int32 -> Float64)
+      f.as(Int32, Int32 -> Float64)
       ",
       "can't cast")
   end
@@ -187,14 +187,14 @@ describe "Semantic: proc" do
   it "allows casting a proc type to one with void argument" do
     assert_type("
       f = ->(x : Int32) { x.to_f }
-      f as Int32 -> Void
+      f.as(Int32 -> Void)
       ") { proc_of [int32, void] }
   end
 
   it "disallows casting a proc type to one accepting less arguments" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
-      f as -> Float64
+      f.as(-> Float64)
       ",
       "can't cast Proc(Int32, Float64) to Proc(Float64)"
   end
@@ -202,7 +202,7 @@ describe "Semantic: proc" do
   it "disallows casting a proc type to one accepting same size argument but different output" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
-      f as Int32 -> Int32
+      f.as(Int32 -> Int32)
       ",
       "can't cast Proc(Int32, Float64) to Proc(Int32, Int32)"
   end
@@ -210,7 +210,7 @@ describe "Semantic: proc" do
   it "disallows casting a proc type to one accepting same size argument but different input" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
-      f as Float64 -> Float64
+      f.as(Float64 -> Float64)
       ",
       "can't cast Proc(Int32, Float64) to Proc(Float64, Float64)"
   end
@@ -629,7 +629,7 @@ describe "Semantic: proc" do
         block
       end
 
-      block = foo { |elems| Bar.new((elems[0] as Bar).value) }
+      block = foo { |elems| Bar.new(elems[0].as(Bar).value) }
       elems = [Foo.new, Bar.new(1)]
       block
       )) { proc_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }

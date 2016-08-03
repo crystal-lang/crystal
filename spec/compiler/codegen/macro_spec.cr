@@ -1354,7 +1354,7 @@ describe "Code gen: macro" do
       class Bar < Foo
       end
 
-      (Bar.new as Foo).method
+      Bar.new.as(Foo).method
       )).to_string.should eq("Bar")
   end
 

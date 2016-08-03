@@ -171,7 +171,7 @@ describe "Code gen: c union" do
       end
 
       str = "00XX0"
-      foo = str.to_unsafe as LibFoo::Bar*
+      foo = str.to_unsafe.as(LibFoo::Bar*)
       foo.value.b.short.to_i
       )).to_i.should eq(0x5858)
   end

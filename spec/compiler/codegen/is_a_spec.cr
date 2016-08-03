@@ -667,7 +667,7 @@ describe "Codegen: is_a?" do
         end
       end
 
-      io = (Foo.new as Moo) || 1
+      io = Foo.new.as(Moo) || 1
       foo(io)
       )).to_i.should eq(2)
   end

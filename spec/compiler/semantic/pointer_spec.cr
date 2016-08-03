@@ -26,11 +26,11 @@ describe "Semantic: pointer" do
   end
 
   it "type pointer casting" do
-    assert_type("a = 1; pointerof(a) as Char*") { pointer_of(char) }
+    assert_type("a = 1; pointerof(a).as(Char*)") { pointer_of(char) }
   end
 
   it "type pointer casting of object type" do
-    assert_type("a = 1; pointerof(a) as String") { string }
+    assert_type("a = 1; pointerof(a).as(String)") { string }
   end
 
   it "pointer malloc creates new type" do

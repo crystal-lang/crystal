@@ -55,7 +55,7 @@ module IO::ByteFormat
     module {{mod.id}}
       {% for type, i in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64) %}
         def self.encode(int : {{type.id}}, io : IO)
-          buffer = (pointerof(int) as UInt8[{{2 ** (i / 2)}}]*).value
+          buffer = pointerof(int).as(UInt8[{{2 ** (i / 2)}}]*).value
           buffer.reverse! unless SystemEndian == self
           io.write(buffer.to_slice)
         end
@@ -64,7 +64,7 @@ module IO::ByteFormat
           buffer = uninitialized UInt8[{{2 ** (i / 2)}}]
           io.read_fully(buffer.to_slice)
           buffer.reverse! unless SystemEndian == self
-          (buffer.to_unsafe as Pointer({{type.id}})).value
+          buffer.to_unsafe.as(Pointer({{type.id}})).value
         end
       {% end %}
     end
