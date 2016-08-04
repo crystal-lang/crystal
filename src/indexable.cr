@@ -290,6 +290,7 @@ module Indexable(T)
   # ```
   def index(offset : Int = 0)
     offset += size if offset < 0
+    return nil if offset < 0
 
     offset.upto(size - 1) do |i|
       if yield unsafe_at(i)
@@ -369,6 +370,7 @@ module Indexable(T)
   # ```
   def rindex(offset = size - 1)
     offset += size if offset < 0
+    return nil if offset >= size
 
     offset.downto(0) do |i|
       if yield unsafe_at(i)
