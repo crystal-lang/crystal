@@ -62,8 +62,8 @@
 # tuple # => {1, "hello", 'x'} (Tuple(Int32, String, Char))
 # ```
 struct Tuple
-  include Enumerable(typeof((i = 0; self[i])))
-  include Iterable
+  include Enumerable(Union(*T))
+  include Indexable(Union(*T))
   include Comparable(Tuple)
 
   # Creates a tuple that will contain the given arguments.
@@ -118,6 +118,11 @@ struct Tuple
     {% end %}
     )
     {% end %}
+  end
+
+  # :nodoc:
+  def unsafe_at(index : Int)
+    self[index]
   end
 
   # Returns the element at the given index. Read the type docs to understand
@@ -175,16 +180,6 @@ struct Tuple
     yield
   end
 
-  # Returns a tuple populated with the elements at the given indexes.
-  # Raises if any index is invalid.
-  #
-  # ```
-  # {"a", "b", "c", "d"}.values_at(0, 2) # => {"a", "c"}
-  # ```
-  def values_at(*indexes : Int)
-    indexes.map { |index| self[index] }
-  end
-
   # Yields each of the elements in this tuple.
   #
   # ```
@@ -206,15 +201,6 @@ struct Tuple
       yield self[{{i}}]
     {% end %}
     self
-  end
-
-  # Returns an `Iterator` for the elements in this tuple.
-  #
-  # ```
-  # {1, 'a'}.each.cycle.first(3).to_a # => [1, 'a', 1]
-  # ```
-  def each
-    ItemIterator(self, typeof((i = 0; self[i]))).new(self)
   end
 
   # Returns `true` if this tuple has the same size as the other tuple
@@ -369,16 +355,6 @@ struct Tuple
     {% end %}
   end
 
-  # Returns true if this tuple is empty.
-  #
-  # ```
-  # Tuple.new.empty? # => true
-  # {1, 2}.empty?    # => false
-  # ```
-  def empty?
-    size == 0
-  end
-
   # Returns the number of elements in this tuple.
   #
   # ```
@@ -470,15 +446,6 @@ struct Tuple
     self
   end
 
-  # Returns an `Iterator` for the elements in this tuple.
-  #
-  # ```
-  # {1, 'a'}.reverse_each.cycle.first(3).to_a # => [1, 'a', 1]
-  # ```
-  def reverse_each
-    ReverseIterator(self, typeof((i = 0; self[i]))).new(self)
-  end
-
   # Returns the first element of this tuple. Doesn't compile
   # if the tuple is empty.
   #
@@ -536,50 +503,5 @@ struct Tuple
     {% else %}
       self[{{T.size - 1}}]
     {% end %}
-  end
-
-  class ItemIterator(I, T)
-    include Iterator(T)
-
-    @tuple : I
-    @index : Int32
-
-    def initialize(@tuple, @index = 0)
-    end
-
-    def next
-      value = @tuple.at(@index) { stop }
-      @index += 1
-      value
-    end
-
-    def rewind
-      @index = 0
-      self
-    end
-  end
-
-  # :nodoc:
-  class ReverseIterator(I, T)
-    include Iterator(T)
-
-    @tuple : I
-    @index : Int32
-
-    def initialize(@tuple, @index = tuple.size - 1)
-    end
-
-    def next
-      return stop if @index < 0
-
-      value = @tuple.at(@index) { stop }
-      @index -= 1
-      value
-    end
-
-    def rewind
-      @index = @tuple.size - 1
-      self
-    end
   end
 end

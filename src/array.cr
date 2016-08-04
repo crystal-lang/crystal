@@ -45,7 +45,7 @@
 # ```
 class Array(T)
   include Enumerable(T)
-  include Iterable
+  include Indexable(T)
   include Comparable(Array)
 
   # Returns the number of elements in the array.
@@ -304,46 +304,6 @@ class Array(T)
     push(value)
   end
 
-  # Returns the element at the given index.
-  #
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to access an element outside the array's range.
-  #
-  # ```
-  # ary = ['a', 'b', 'c']
-  # ary[0]  # => 'a'
-  # ary[2]  # => 'c'
-  # ary[-1] # => 'c'
-  # ary[-2] # => 'b'
-  #
-  # ary[3]  # raises IndexError
-  # ary[-4] # raises IndexError
-  # ```
-  @[AlwaysInline]
-  def [](index : Int)
-    at(index)
-  end
-
-  # Returns the element at the given index.
-  #
-  # Negative indices can be used to start counting from the end of the array.
-  # Returns `nil` if trying to access an element outside the array's range.
-  #
-  # ```
-  # ary = ['a', 'b', 'c']
-  # ary[0]?  # => 'a'
-  # ary[2]?  # => 'c'
-  # ary[-1]? # => 'c'
-  # ary[-2]? # => 'b'
-  #
-  # ary[3]?  # nil
-  # ary[-4]? # nil
-  # ```
-  @[AlwaysInline]
-  def []?(index : Int)
-    at(index) { nil }
-  end
-
   # Sets the given value at the given index.
   #
   # Negative indices can be used to start counting from the end of the array.
@@ -536,82 +496,10 @@ class Array(T)
     end
   end
 
-  # Returns the element at the given index, if in bounds,
-  # otherwise raises `IndexError`.
-  #
-  # ```
-  # a = [:foo, :bar]
-  # a.at(0) # => :foo
-  # a.at(2) # => IndexError
-  # ```
+  # :nodoc:
   @[AlwaysInline]
-  def at(index : Int)
-    at(index) { raise IndexError.new }
-  end
-
-  # Returns the element at the given index, if in bounds,
-  # otherwise executes the given block and returns its value.
-  #
-  # ```
-  # a = [:foo, :bar]
-  # a.at(0) { :baz } # => :foo
-  # a.at(2) { :baz } # => :baz
-  # ```
-  def at(index : Int)
-    index += size if index < 0
-    if 0 <= index < size
-      @buffer[index]
-    else
-      yield
-    end
-  end
-
-  # Returns a tuple populated with the elements at the given indexes.
-  # Raises `IndexError` if any index is invalid.
-  #
-  # ```
-  # ["a", "b", "c", "d"].values_at(0, 2) # => {"a", "c"}
-  # ```
-  def values_at(*indexes : Int)
-    indexes.map { |index| self[index] }
-  end
-
-  # By using binary search, returns the first element
-  # for which the passed block returns `true`.
-  #
-  # If the block returns `false`, the finding element exists
-  # behind. If the block returns `true`, the finding element
-  # is itself or exists infront.
-  #
-  # Binary search needs sorted array, so self has to be sorted.
-  #
-  # Returns `nil` if the block didn't return `true` for any element.
-  #
-  # ```
-  # [2, 5, 7, 10].bsearch { |x| x >= 4 } # => 5
-  # [2, 5, 7, 10].bsearch { |x| x > 10 } # => nil
-  # ```
-  def bsearch
-    bsearch_index { |value| yield value }.try { |index| self[index] }
-  end
-
-  # By using binary search, returns the index of the first element
-  # for which the passed block returns `true`.
-  #
-  # If the block returns `false`, the finding element exists
-  # behind. If the block returns `true`, the finding element
-  # is itself or exists infront.
-  #
-  # Binary search needs sorted array, so self has to be sorted.
-  #
-  # Returns `nil` if the block didn't return `true` for any element.
-  #
-  # ```
-  # [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 } # => 1
-  # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
-  # ```
-  def bsearch_index
-    (0...size).bsearch { |index| yield self[index], index }
+  def unsafe_at(index : Int)
+    @buffer[index]
   end
 
   # Removes all elements from self.
@@ -796,108 +684,6 @@ class Array(T)
     end
   end
 
-  # Calls the given block once for each element in `self`, passing that
-  # element as a parameter.
-  #
-  # ```
-  # a = ["a", "b", "c"]
-  # a.each { |x| print x, " -- " }
-  # ```
-  #
-  # produces:
-  #
-  # ```text
-  # a -- b -- c --
-  # ```
-  def each
-    each_index do |i|
-      yield @buffer[i]
-    end
-  end
-
-  # Returns an `Iterator` for the elements of `self`.
-  #
-  # ```
-  # a = ["a", "b", "c"]
-  # iter = a.each
-  # iter.next # => "a"
-  # iter.next # => "b"
-  # ```
-  #
-  # The returned iterator keeps a reference to `self`: if the array
-  # changes, the returned values of the iterator change as well.
-  def each
-    ItemIterator.new(self)
-  end
-
-  # Calls the given block once for each index in `self`, passing that
-  # index as a parameter.
-  #
-  # ```
-  # a = ["a", "b", "c"]
-  # a.each_index { |x| print x, " -- " }
-  # ```
-  #
-  # produces:
-  #
-  # ```text
-  # 0 -- 1 -- 2 --
-  # ```
-  def each_index
-    i = 0
-    while i < size
-      yield i
-      i += 1
-    end
-    self
-  end
-
-  # Returns an `Iterator` for each index in `self`.
-  #
-  # ```
-  # a = ["a", "b", "c"]
-  # iter = a.each_index
-  # iter.next # => 0
-  # iter.next # => 1
-  # ```
-  #
-  # The returned iterator keeps a reference to `self`. If the array
-  # changes, the returned values of the iterator will change as well.
-  def each_index
-    IndexIterator.new(self)
-  end
-
-  # Returns *true* if `self` is empty, *false* otherwise.
-  #
-  # ```
-  # ([] of Int32).empty? # => true
-  # ([1]).empty?         # => false
-  # ```
-  def empty?
-    @size == 0
-  end
-
-  # Determines if `self` equals *other* according to a comparison
-  # done by the given block.
-  #
-  # If `self`'s size is the same as *other*'s size, this method yields
-  # elements from `self` and *other* in tandem: if the block returns true
-  # for all of them, this method returns *true*. Otherwise it returns *false*.
-  #
-  # ```
-  # a = [1, 2, 3]
-  # b = ["a", "ab", "abc"]
-  # a.equals?(b) { |x, y| x == y.size } # => true
-  # a.equals?(b) { |x, y| x == y }      # => false
-  # ```
-  def equals?(other : Array)
-    return false if @size != other.size
-    each_with_index do |item, i|
-      return false unless yield(item, other[i])
-    end
-    true
-  end
-
   # Yields each index of `self` to the given block and then assigns
   # the block's value in that position. Returns `self`.
   #
@@ -1014,26 +800,6 @@ class Array(T)
     fill(range) { value }
   end
 
-  # Returns the first element of `self` if it's not empty, or raises `IndexError`.
-  #
-  # ```
-  # ([1, 2, 3]).first   # => 1
-  # ([] of Int32).first # => raises IndexError
-  # ```
-  def first
-    first { raise IndexError.new }
-  end
-
-  # Returns the first element of `self` if it's not empty, or the given block's value.
-  #
-  # ```
-  # ([1, 2, 3]).first { 4 }   # => 1
-  # ([] of Int32).first { 4 } # => 4
-  # ```
-  def first
-    @size == 0 ? yield : @buffer[0]
-  end
-
   # Returns the first `n` elements of the array.
   #
   # ```
@@ -1042,25 +808,6 @@ class Array(T)
   # ```
   def first(n : Int)
     self[0, n]
-  end
-
-  # Returns the first element of `self` if it's not empty, or `nil`.
-  #
-  # ```
-  # ([1, 2, 3]).first?   # => 1
-  # ([] of Int32).first? # => nil
-  # ```
-  def first?
-    first { nil }
-  end
-
-  # Returns a hash code based on `self`'s size and elements.
-  #
-  # See `Object#hash`.
-  def hash
-    reduce(31 * @size) do |memo, elem|
-      31 * memo + elem.hash
-    end
   end
 
   # Insert *object* before the element at *index* and shifting successive elements, if any.
@@ -1096,26 +843,6 @@ class Array(T)
     to_s io
   end
 
-  # Returns the last element of `self` if it's not empty, or raises `IndexError`.
-  #
-  # ```
-  # ([1, 2, 3]).last   # => 3
-  # ([] of Int32).last # => raises IndexError
-  # ```
-  def last
-    last { raise IndexError.new }
-  end
-
-  # Returns the last element of `self` if it's not empty, or the given block's value.
-  #
-  # ```
-  # ([1, 2, 3]).last { 4 }   # => 3
-  # ([] of Int32).last { 4 } # => 4
-  # ```
-  def last
-    @size == 0 ? yield : @buffer[@size - 1]
-  end
-
   # Returns the last `n` elements of the array.
   #
   # ```
@@ -1128,16 +855,6 @@ class Array(T)
     else
       dup
     end
-  end
-
-  # Returns the last element of `self` if it's not empty, or `nil`.
-  #
-  # ```
-  # ([1, 2, 3]).last?   # => 1
-  # ([] of Int32).last? # => nil
-  # ```
-  def last?
-    last { nil }
   end
 
   # :nodoc:
@@ -1581,51 +1298,8 @@ class Array(T)
 
   # Reverses in-place all the elements of `self`.
   def reverse!
-    i = 0
-    j = size - 1
-    while i < j
-      @buffer.swap i, j
-      i += 1
-      j -= 1
-    end
+    Slice.new(@buffer, size).reverse!
     self
-  end
-
-  # Calls the given block once for each element in `self` in reverse order,
-  # passing that element as a parameter.
-  #
-  # ```
-  # a = ["a", "b", "c"]
-  # a.reverse_each { |x| print x, " -- " }
-  # ```
-  #
-  # produces:
-  #
-  # ```text
-  # c -- b -- a --
-  # ```
-  def reverse_each
-    (size - 1).downto(0) do |i|
-      yield @buffer[i]
-    end
-    self
-  end
-
-  def reverse_each
-    ReverseIterator.new(self)
-  end
-
-  def rindex(value)
-    rindex { |elem| elem == value }
-  end
-
-  def rindex
-    (size - 1).downto(0) do |i|
-      if yield @buffer[i]
-        return i
-      end
-    end
-    nil
   end
 
   def rotate!(n = 1)
@@ -1657,20 +1331,6 @@ class Array(T)
     res
   end
 
-  # Returns a random element from `self`, using the given *random* number generator.
-  # Raises IndexError if `self` is empty.
-  #
-  # ```
-  # a = [1, 2, 3]
-  # a.sample                # => 2
-  # a.sample                # => 1
-  # a.sample(Random.new(1)) # => 3
-  # ```
-  def sample(random = Random::DEFAULT)
-    raise IndexError.new if @size == 0
-    @buffer[random.rand(@size)]
-  end
-
   # Returns *n* number of random elements from `self`, using the given *random* number generator.
   # Raises IndexError if `self` is empty.
   #
@@ -1690,14 +1350,14 @@ class Array(T)
     when 1
       return [sample] of T
     else
-      if n >= @size
+      if n >= size
         return dup.shuffle!
       end
 
       ary = Array(T).new(n) { |i| @buffer[i] }
       buffer = ary.to_unsafe
 
-      n.upto(@size - 1) do |i|
+      n.upto(size - 1) do |i|
         j = random.rand(i + 1)
         if j <= n
           buffer[j] = @buffer[i]
@@ -2086,14 +1746,6 @@ class Array(T)
     quicksort!(l, (a + n) - l) unless l == a
   end
 
-  private def check_index_out_of_bounds(index)
-    index += size if index < 0
-    unless 0 <= index < size
-      raise IndexError.new
-    end
-    index
-  end
-
   protected def to_lookup_hash
     to_lookup_hash { |elem| elem }
   end
@@ -2119,76 +1771,6 @@ class Array(T)
     size = 0 if size < 0
 
     {from, size}
-  end
-
-  # :nodoc:
-  class ItemIterator(T)
-    include Iterator(T)
-
-    @array : Array(T)
-    @index : Int32
-
-    def initialize(@array : Array(T), @index = 0)
-    end
-
-    def next
-      value = @array.at(@index) { stop }
-      @index += 1
-      value
-    end
-
-    def rewind
-      @index = 0
-      self
-    end
-  end
-
-  # :nodoc:
-  class IndexIterator(T)
-    include Iterator(Int32)
-
-    @array : Array(T)
-    @index : Int32
-
-    def initialize(@array : Array(T), @index = 0)
-    end
-
-    def next
-      return stop if @index >= @array.size
-
-      value = @index
-      @index += 1
-      value
-    end
-
-    def rewind
-      @index = 0
-      self
-    end
-  end
-
-  # :nodoc:
-  class ReverseIterator(T)
-    include Iterator(T)
-
-    @array : Array(T)
-    @index : Int32
-
-    def initialize(@array : Array(T), @index = array.size - 1)
-    end
-
-    def next
-      return stop if @index < 0
-
-      value = @array.at(@index) { stop }
-      @index -= 1
-      value
-    end
-
-    def rewind
-      @index = @array.size - 1
-      self
-    end
   end
 
   # :nodoc:

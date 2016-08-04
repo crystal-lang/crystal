@@ -7,7 +7,7 @@ require "c/string"
 # In this way, a slice is a safe alternative to Pointer.
 struct Slice(T)
   include Enumerable(T)
-  include Iterable
+  include Indexable(T)
 
   # Create a new `Slice` with the given *args*. The type of the
   # slice will be the union of the type of the given *args*.
@@ -124,23 +124,6 @@ struct Slice(T)
     Slice.new(@pointer + offset, @size - offset)
   end
 
-  # Returns the element at the given *index*.
-  #
-  # Negative indices can be used to start counting from the end of the slice.
-  # Raises `IndexError` if trying to access an element outside the slice's range.
-  #
-  # ```
-  # slice = Slice.new(5) { |i| i + 10 }
-  # slice[0]  # => 10
-  # slice[4]  # => 14
-  # slice[-1] # => 14
-  # slice[5]  # => IndexError
-  # ```
-  @[AlwaysInline]
-  def [](index : Int)
-    at(index)
-  end
-
   # Sets the given value at the given index.
   #
   # Negative indices can be used to start counting from the end of the slice.
@@ -188,48 +171,22 @@ struct Slice(T)
     Slice.new(@pointer + start, count)
   end
 
+  # :nodoc:
   @[AlwaysInline]
-  def at(index : Int)
-    at(index) { raise IndexError.new }
+  def unsafe_at(index : Int)
+    @pointer[index]
   end
 
-  def at(index : Int)
-    index += size if index < 0
-    if 0 <= index < size
-      @pointer[index]
-    else
-      yield
+  # Reverses in-place all the elements of `self`.
+  def reverse!
+    i = 0
+    j = size - 1
+    while i < j
+      @pointer.swap i, j
+      i += 1
+      j -= 1
     end
-  end
-
-  def empty?
-    @size == 0
-  end
-
-  # Pass each element of slice to block.
-  def each(&block)
-    size.times do |i|
-      yield @pointer[i]
-    end
-
     self
-  end
-
-  def each
-    ItemIterator(T).new(self)
-  end
-
-  # Same as `#each`, but works in reverse.
-  def reverse_each(&block)
-    (size - 1).downto(0) do |i|
-      yield @pointer[i]
-    end
-
-    self
-  end
-
-  def reverse_each
-    ReverseIterator(T).new(self)
   end
 
   def pointer(size)
@@ -238,6 +195,10 @@ struct Slice(T)
     end
 
     @pointer
+  end
+
+  def shuffle!(random = Random::DEFAULT)
+    @pointer.shuffle!(size, random)
   end
 
   def copy_from(source : Pointer(T), count)
@@ -407,19 +368,6 @@ struct Slice(T)
     end
   end
 
-  def rindex(value)
-    rindex { |elem| elem == value }
-  end
-
-  def rindex
-    (size - 1).downto(0) do |i|
-      if yield @pointer[i]
-        return i
-      end
-    end
-    nil
-  end
-
   private def to_hex(c)
     ((c < 10 ? 48_u8 : 87_u8) + c)
   end
@@ -458,49 +406,6 @@ struct Slice(T)
   # ```
   def to_unsafe : Pointer(T)
     @pointer
-  end
-
-  # :nodoc:
-  class ItemIterator(T)
-    include Iterator(T)
-
-    @slice : ::Slice(T)
-    @index : Int32
-
-    def initialize(@slice : ::Slice(T), @index = 0)
-    end
-
-    def next
-      return stop if @index >= @slice.size
-      @index += 1
-      @slice.at(@index - 1)
-    end
-
-    def rewind
-      @index = 0
-      self
-    end
-  end
-
-  class ReverseIterator(T)
-    include Iterator(T)
-
-    @slice : ::Slice(T)
-    @index : Int32
-
-    def initialize(@slice : ::Slice(T), @index = slice.size)
-    end
-
-    def next
-      return stop if @index <= 0
-      @index -= 1
-      @slice.at(@index)
-    end
-
-    def rewind
-      @index = @slice.size
-      self
-    end
   end
 end
 

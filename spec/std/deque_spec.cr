@@ -601,6 +601,20 @@ describe "Deque" do
     end
   end
 
+  describe "reverse each iterator" do
+    it "does next" do
+      a = Deque{1, 2, 3}
+      iter = a.reverse_each
+      iter.next.should eq(3)
+      iter.next.should eq(2)
+      iter.next.should eq(1)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(3)
+    end
+  end
+
   describe "cycle" do
     it "cycles" do
       a = [] of Int32

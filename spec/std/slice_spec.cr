@@ -266,6 +266,9 @@ describe "Slice" do
 
     iter.rewind
     iter.next.should eq(1)
+
+    iter.rewind
+    iter.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
   end
 
   it "does reverse iterator" do
@@ -278,6 +281,17 @@ describe "Slice" do
 
     iter.rewind
     iter.next.should eq(3)
+  end
+
+  it "does index iterator" do
+    slice = Slice(Int32).new(2) { |i| i + 1 }
+    iter = slice.each_index
+    iter.next.should eq(0)
+    iter.next.should eq(1)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(0)
   end
 
   it "does to_a" do
@@ -324,6 +338,19 @@ describe "Slice" do
     slices = itself(Slice[1, 2], Slice[3])
     slices[0].to_a.should eq([1, 2])
     slices[1].to_a.should eq([3])
+  end
+
+  it "reverses" do
+    slice = Bytes[1, 2, 3]
+    slice.reverse!
+    slice.to_a.should eq([3, 2, 1])
+  end
+
+  it "shuffles" do
+    a = Bytes[1, 2, 3]
+    a.shuffle!
+    b = [1, 2, 3]
+    3.times { a.includes?(b.shift).should be_true }
   end
 end
 
