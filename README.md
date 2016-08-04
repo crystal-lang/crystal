@@ -6,7 +6,7 @@
 
 ---
 
-[![born-and-raised](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)](http://www.manas.com.ar)
+[![born-and-raised](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)](http://manas.com.ar/)
 
 Crystal is a programming language with the following goals:
 
@@ -40,12 +40,12 @@ Status
 Installing
 ----------
 
-[Follow these instructions](http://crystal-lang.org/docs/installation/index.html)
+[Follow these instructions](https://crystal-lang.org/docs/installation/index.html)
 
 Try it online
 -------------
 
-[play.crystal-lang.org](http://play.crystal-lang.org/)
+[play.crystal-lang.org](https://play.crystal-lang.org/)
 
 Documentation
 ----------
@@ -53,7 +53,7 @@ Documentation
 Both in progress:
 
 * [Official docs](http://crystal-lang.org/docs)
-* [Standard library API](http://crystal-lang.org/api)
+* [Standard library API](https://crystal-lang.org/api)
 
 Community
 ---------
