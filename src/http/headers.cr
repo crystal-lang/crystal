@@ -75,7 +75,7 @@ struct HTTP::Headers
   # The `word` is expected to match between word boundaries (i.e. non-alphanumeric chars).
   #
   # ```
-  # headers = HTTP::Headers{"Connection": "keep-alive, Upgrade"}
+  # headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
   # headers.includes_word?("Connection", "Upgrade") # => true
   # ```
   def includes_word?(key, word)
