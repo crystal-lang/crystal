@@ -314,12 +314,35 @@ module Indexable(T)
     ReverseItemIterator(self, T).new(self)
   end
 
-  def rindex(value)
-    rindex { |elem| elem == value }
+  # Returns the index of the last appearance of *value* in `self`, or
+  # `nil` if the value is not in `self`.
+  #
+  # If *offset* is given, it defines the position to _end_ the search
+  # (elements beyond this point are ignored).
+  #
+  # ```
+  # [1, 2, 3, 2, 3].rindex(2)            # => 3
+  # [1, 2, 3, 2, 3].rindex(2, offset: 2) # => 1
+  # ```
+  def rindex(value, offset = size - 1)
+    rindex(offset) { |elem| elem == value }
   end
 
-  def rindex
-    (size - 1).downto(0) do |i|
+  # Returns the index of the first object in `self` for which the block
+  # returns `true`, starting from the last object, or `nil` if no match
+  # is found.
+  #
+  # If *offset* is given, the search starts from that index towards the
+  # first elements in `self`.
+  #
+  # ```
+  # [1, 2, 3, 2, 3].rindex { |x| x < 3 }            # => 3
+  # [1, 2, 3, 2, 3].rindex(offset: 2) { |x| x < 3 } # => 1
+  # ```
+  def rindex(offset = size - 1)
+    offset += size if offset < 0
+
+    offset.downto(0) do |i|
       if yield unsafe_at(i)
         return i
       end

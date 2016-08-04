@@ -821,10 +821,27 @@ describe "Array" do
       a.rindex(7).should be_nil
     end
 
+    it "performs without a block and an offset" do
+      a = [1, 2, 3, 4, 5, 3, 6]
+      a.rindex(3, offset: 4).should eq(2)
+      a.rindex(6, offset: 4).should be_nil
+      a.rindex(3, offset: -2).should eq(5)
+      a.rindex(3, offset: -3).should eq(2)
+      a.rindex(3, offset: -100).should be_nil
+    end
+
     it "performs with a block" do
       a = [1, 2, 3, 4, 5, 3, 6]
       a.rindex { |i| i > 1 }.should eq(6)
       a.rindex { |i| i > 6 }.should be_nil
+    end
+
+    it "performs with a block and offset" do
+      a = [1, 2, 3, 4, 5, 3, 6]
+      a.rindex { |i| i > 1 }.should eq(6)
+      a.rindex { |i| i > 6 }.should be_nil
+      a.rindex(offset: 4) { |i| i == 3 }.should eq(2)
+      a.rindex(offset: -3) { |i| i == 3 }.should eq(2)
     end
   end
 
