@@ -295,4 +295,28 @@ describe "Semantic: NoReturn" do
       end
       )) { no_return }
   end
+
+  it "types as NoReturn even if Nil return type is forced (#3096)" do
+    assert_type(%(
+      lib LibC
+        fun exit(Int32) : NoReturn
+      end
+
+      def foo : Nil
+        LibC.exit(0)
+        yield
+      end
+
+      def bar(x)
+        x
+      end
+
+      def baz
+        foo { }
+        bar 0
+      end
+
+      baz
+      )) { no_return }
+  end
 end

@@ -243,7 +243,13 @@ module Crystal
   class Def
     def update(from = nil)
       if freeze_type.try &.nil_type?
-        # Nothing
+        # When we have Nil forced as a return type, NoReturn still
+        # wins, so we must account for this case.
+        # Otherwise we simply keep having the Nil type.
+        computed_type = Type.merge(dependencies)
+        if computed_type.try &.no_return?
+          super
+        end
       else
         super
       end
