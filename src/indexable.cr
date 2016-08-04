@@ -271,6 +271,34 @@ module Indexable(T)
     end
   end
 
+  # Returns the index of the first appearance of *value* in `self`
+  # starting from the given *offset*, or `nil` if the value is not in `self`.
+  #
+  # ```
+  # [1, 2, 3, 1, 2, 3].index(2, offset: 2) # => 4
+  # ```
+  def index(object, offset : Int = 0)
+    index(offset) { |e| e == object }
+  end
+
+  # Returns the index of the first object in `self` for which the block
+  # returns `true`, starting from the given *offset*, or `nil` if no match
+  # is found.
+  #
+  # ```
+  # [1, 2, 3, 1, 2, 3].rindex(offset: 4) { |x| x < 2 } # => 4
+  # ```
+  def index(offset : Int = 0)
+    offset += size if offset < 0
+
+    offset.upto(size - 1) do |i|
+      if yield unsafe_at(i)
+        return i
+      end
+    end
+    nil
+  end
+
   # Returns the last element of `self` if it's not empty, or raises `IndexError`.
   #
   # ```

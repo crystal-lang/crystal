@@ -620,10 +620,22 @@ describe "Array" do
       a.index(4).should be_nil
     end
 
+    it "performs without a block and offset" do
+      a = [1, 2, 3, 1, 2, 3]
+      a.index(3, offset: 3).should eq(5)
+      a.index(3, offset: -3).should eq(5)
+    end
+
     it "performs with a block" do
       a = [1, 2, 3]
       a.index { |i| i > 1 }.should eq(1)
       a.index { |i| i > 3 }.should be_nil
+    end
+
+    it "performs with a block and offset" do
+      a = [1, 2, 3, 1, 2, 3]
+      a.index(offset: 3) { |i| i > 1 }.should eq(4)
+      a.index(offset: -3) { |i| i > 1 }.should eq(4)
     end
 
     it "raises if out of bounds" do
