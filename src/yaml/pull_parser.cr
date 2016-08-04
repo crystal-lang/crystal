@@ -223,15 +223,19 @@ class YAML::PullParser
   end
 
   def problem_line_number
-    problem_mark.line
+    problem? ? problem_mark.line : line_number
   end
 
   def problem_column_number
-    problem_mark.column
+    problem? ? problem_mark.column : column_number
   end
 
   def problem_mark
     @parser.as(LibYAML::InternalParser*).value.problem_mark
+  end
+
+  private def problem?
+    @parser.as(LibYAML::InternalParser*).value.problem
   end
 
   def close

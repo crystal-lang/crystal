@@ -92,6 +92,25 @@ describe "YAML" do
           ex.column_number.should eq(3)
         end
       end
+
+      it "has correct line/number info (2)" do
+        begin
+          parser = YAML::PullParser.new <<-MSG
+
+              authors:
+                - [foo] bar
+            MSG
+
+          parser.read_stream do
+            parser.read_document do
+              parser.read_scalar
+            end
+          end
+        rescue ex : YAML::ParseException
+          ex.line_number.should eq(1)
+          ex.column_number.should eq(2)
+        end
+      end
     end
   end
 
