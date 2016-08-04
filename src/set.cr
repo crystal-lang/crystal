@@ -75,7 +75,7 @@ struct Set(T)
   #     s = Set.new [1,5]
   #     s.includes? 5  # => true
   #     s.includes? 9  # => false
-  def includes?(object)
+  def includes?(object : T)
     @hash.has_key?(object)
   end
 
@@ -85,7 +85,7 @@ struct Set(T)
   #     s.includes? 5  # => true
   #     s.delete 5
   #     s.includes? 5  # => false
-  def delete(object)
+  def delete(object : T)
     @hash.delete(object)
     self
   end
@@ -136,7 +136,7 @@ struct Set(T)
   #
   #     Set.new([1,1,3,5]) & Set.new([1,2,3])               #=> Set{1, 3}
   #     Set.new(['a','b','b','z']) & Set.new(['a','b','c']) #=> Set{'a', 'b'}
-  def &(other : Set)
+  def &(other : Set(T))
     set = Set(T).new
     each do |value|
       set.add value if other.includes?(value)
@@ -160,7 +160,7 @@ struct Set(T)
   #
   #     Set.new([1,2,3,4,5]) - Set.new([2,4])               #=> Set{1, 3, 5}
   #     Set.new(['a','b','b','z']) - Set.new(['a','b','c']) #=> Set{'z'}
-  def -(other : Set)
+  def -(other : Set(T))
     set = Set(T).new
     each do |value|
       set.add value unless other.includes?(value)
@@ -182,8 +182,8 @@ struct Set(T)
   #
   #     Set.new([1,2,3,4,5]) ^ Set.new([2,4,6])             #=> Set{1, 3, 5, 6}
   #     Set.new(['a','b','b','z']) ^ Set.new(['a','b','c']) #=> Set{'z', 'c'}
-  def ^(other : Set(U))
-    set = Set(T | U).new
+  def ^(other : Set)
+    set = Set(T).new
     each do |value|
       set.add value unless other.includes?(value)
     end
@@ -198,8 +198,8 @@ struct Set(T)
   #
   #     Set.new([1,2,3,4,5]) ^ [2,4,6]             #=> Set{1, 3, 5, 6}
   #     Set.new(['a','b','b','z']) ^ ['a','b','c'] #=> Set{'z', 'c'}
-  def ^(other : Enumerable(U))
-    set = Set(T | U).new.merge(self)
+  def ^(other : Enumerable)
+    set = Set(T).new.merge(self)
     other.each do |value|
       if includes?(value)
         set.delete value
@@ -266,7 +266,7 @@ struct Set(T)
   # Set{1, 2, 3}.intersects? Set{4, 5} # => false
   # Set{1, 2, 3}.intersects? Set{3, 4} # => true
   # ```
-  def intersects?(other : Set)
+  def intersects?(other : Set(T))
     if size < other.size
       any? { |o| other.includes?(o) }
     else
@@ -288,7 +288,7 @@ struct Set(T)
   #
   #     Set.new([1,5]).subset? Set.new([1,3,5])   # => true
   #     Set.new([1,3,5]).subset? Set.new([1,3,5]) # => true
-  def subset?(other : Set)
+  def subset?(other : Set(T))
     return false if other.size < size
     all? { |value| other.includes?(value) }
   end
@@ -300,7 +300,7 @@ struct Set(T)
   #
   #     Set.new([1,5]).subset? Set.new([1,3,5])   # => true
   #     Set.new([1,3,5]).subset? Set.new([1,3,5]) # => false
-  def proper_subset?(other : Set)
+  def proper_subset?(other : Set(T))
     return false if other.size <= size
     all? { |value| other.includes?(value) }
   end
@@ -312,7 +312,7 @@ struct Set(T)
   #
   #     Set.new([1,3,5]).superset? Set.new([1,5])   # => true
   #     Set.new([1,3,5]).superset? Set.new([1,3,5]) # => true
-  def superset?(other : Set)
+  def superset?(other : Set(T))
     other.subset?(self)
   end
 
@@ -323,7 +323,7 @@ struct Set(T)
   #
   #     Set.new([1,3,5]).superset? Set.new([1,5])   # => true
   #     Set.new([1,3,5]).superset? Set.new([1,3,5]) # => false
-  def proper_superset?(other : Set)
+  def proper_superset?(other : Set(T))
     other.proper_subset?(self)
   end
 

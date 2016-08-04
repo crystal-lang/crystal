@@ -139,7 +139,7 @@ class MemoryIO
 
     raise ArgumentError.new "negative limit" if limit < 0
 
-    index = (@buffer + @pos).to_slice(@bytesize - @pos).index(delimiter.ord)
+    index = (@buffer + @pos).to_slice(@bytesize - @pos).index(delimiter.ord.to_u8)
     if index
       if index > limit
         index = limit

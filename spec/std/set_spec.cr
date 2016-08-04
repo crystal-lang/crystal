@@ -123,9 +123,9 @@ describe "Set" do
 
   it "does |" do
     set1 = Set{1, 2, 3}
-    set2 = Set{4, 2, 5, "3"}
+    set2 = Set{4, 2, 5, 9}
     set3 = set1 | set2
-    set3.should eq(Set{1, 2, 3, 4, 5, "3"})
+    set3.should eq(Set{1, 2, 3, 4, 5, 9})
   end
 
   it "does -" do
@@ -137,37 +137,9 @@ describe "Set" do
 
   it "does -" do
     set1 = Set{1, 2, 3, 4, 5}
-    set2 = Set{2, 4, 'a'}
-    set3 = set1 - set2
-    set3.should eq(Set{1, 3, 5})
-  end
-
-  it "does -" do
-    set1 = Set{1, 2, 3, 4, 'b'}
-    set2 = Set{2, 4, 5}
-    set3 = set1 - set2
-    set3.should eq(Set{1, 3, 'b'})
-  end
-
-  it "does -" do
-    set1 = Set{1, 2, 3, 4, 5}
     set2 = [2, 4, 6]
     set3 = set1 - set2
     set3.should eq(Set{1, 3, 5})
-  end
-
-  it "does -" do
-    set1 = Set{1, 2, 3, 4, 5}
-    set2 = [2, 4, 'a']
-    set3 = set1 - set2
-    set3.should eq(Set{1, 3, 5})
-  end
-
-  it "does -" do
-    set1 = Set{1, 2, 3, 4, 'b'}
-    set2 = [2, 4, 5]
-    set3 = set1 - set2
-    set3.should eq(Set{1, 3, 'b'})
   end
 
   it "does ^" do
@@ -179,37 +151,9 @@ describe "Set" do
 
   it "does ^" do
     set1 = Set{1, 2, 3, 4, 5}
-    set2 = Set{2, 4, 'a'}
-    set3 = set1 ^ set2
-    set3.should eq(Set{1, 3, 5, 'a'})
-  end
-
-  it "does ^" do
-    set1 = Set{1, 2, 3, 4, 'b'}
-    set2 = Set{2, 4, 5}
-    set3 = set1 ^ set2
-    set3.should eq(Set{1, 3, 5, 'b'})
-  end
-
-  it "does ^" do
-    set1 = Set{1, 2, 3, 4, 5}
     set2 = [2, 4, 6]
     set3 = set1 ^ set2
     set3.should eq(Set{1, 3, 5, 6})
-  end
-
-  it "does ^" do
-    set1 = Set{1, 2, 3, 4, 5}
-    set2 = [2, 4, 'a']
-    set3 = set1 ^ set2
-    set3.should eq(Set{1, 3, 5, 'a'})
-  end
-
-  it "does ^" do
-    set1 = Set{1, 2, 3, 4, 'b'}
-    set2 = [2, 4, 5]
-    set3 = set1 ^ set2
-    set3.should eq(Set{1, 3, 5, 'b'})
   end
 
   it "does subtract" do
@@ -221,37 +165,9 @@ describe "Set" do
 
   it "does subtract" do
     set1 = Set{1, 2, 3, 4, 5}
-    set2 = Set{2, 4, 'a'}
-    set1.subtract set2
-    set1.should eq(Set{1, 3, 5})
-  end
-
-  it "does subtract" do
-    set1 = Set{1, 2, 3, 4, 'b'}
-    set2 = Set{2, 4, 5}
-    set1.subtract set2
-    set1.should eq(Set{1, 3, 'b'})
-  end
-
-  it "does subtract" do
-    set1 = Set{1, 2, 3, 4, 5}
     set2 = [2, 4, 6]
     set1.subtract set2
     set1.should eq(Set{1, 3, 5})
-  end
-
-  it "does subtract" do
-    set1 = Set{1, 2, 3, 4, 5}
-    set2 = [2, 4, 'a']
-    set1.subtract set2
-    set1.should eq(Set{1, 3, 5})
-  end
-
-  it "does subtract" do
-    set1 = Set{1, 2, 3, 4, 'b'}
-    set2 = [2, 4, 5]
-    set1.subtract set2
-    set1.should eq(Set{1, 3, 'b'})
   end
 
   it "does to_a" do
@@ -311,7 +227,6 @@ describe "Set" do
     empty_set = Set(Int32).new
 
     set.subset?(Set{1, 2, 3, 4}).should be_true
-    set.subset?(Set{1, 2, 3, "4"}).should be_true
     set.subset?(Set{1, 2, 3}).should be_true
     set.subset?(Set{1, 2}).should be_false
     set.subset?(empty_set).should be_false
@@ -325,7 +240,6 @@ describe "Set" do
     empty_set = Set(Int32).new
 
     set.proper_subset?(Set{1, 2, 3, 4}).should be_true
-    set.proper_subset?(Set{1, 2, 3, "4"}).should be_true
     set.proper_subset?(Set{1, 2, 3}).should be_false
     set.proper_subset?(Set{1, 2}).should be_false
     set.proper_subset?(empty_set).should be_false
@@ -335,12 +249,11 @@ describe "Set" do
   end
 
   it "check superset" do
-    set = Set{1, 2, "3"}
+    set = Set{1, 2, 33}
     empty_set = Set(Int32).new
 
     set.superset?(empty_set).should be_true
     set.superset?(Set{1, 2}).should be_true
-    set.superset?(Set{1, 2, "3"}).should be_true
     set.superset?(Set{1, 2, 3}).should be_false
     set.superset?(Set{1, 2, 3, 4}).should be_false
     set.superset?(Set{1, 4}).should be_false
@@ -349,12 +262,11 @@ describe "Set" do
   end
 
   it "check proper_superset" do
-    set = Set{1, 2, "3"}
+    set = Set{1, 2, 33}
     empty_set = Set(Int32).new
 
     set.proper_superset?(empty_set).should be_true
     set.proper_superset?(Set{1, 2}).should be_true
-    set.proper_superset?(Set{1, 2, "3"}).should be_false
     set.proper_superset?(Set{1, 2, 3}).should be_false
     set.proper_superset?(Set{1, 2, 3, 4}).should be_false
     set.proper_superset?(Set{1, 4}).should be_false

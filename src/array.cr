@@ -200,7 +200,7 @@ class Array(T)
   # ```
   #
   # See also: `#uniq`.
-  def &(other : Array(U))
+  def &(other : Array(T))
     return Array(T).new if self.empty? || other.empty?
 
     hash = other.to_lookup_hash
@@ -272,7 +272,7 @@ class Array(T)
   # ```
   # [1, 2, 3] - [2, 1] # => [3]
   # ```
-  def -(other : Array(U))
+  def -(other : Array(T))
     ary = Array(T).new(Math.max(size - other.size, 0))
     hash = other.to_lookup_hash
     each do |obj|
@@ -663,7 +663,16 @@ class Array(T)
   # ary # => ["a", "b", "c"]
   # ```
   def compact!
-    delete nil
+    found = false
+    reject! do |obj|
+      if obj.nil?
+        found = true
+        true
+      else
+        false
+      end
+    end
+    found
   end
 
   # Appends the elements of *other* to `self`, and returns `self`.
@@ -715,7 +724,7 @@ class Array(T)
   # a.delete("b")
   # a # => ["a", "c"]
   # ```
-  def delete(obj)
+  def delete(obj : T)
     reject! { |e| e == obj } != nil
   end
 
@@ -1615,7 +1624,7 @@ class Array(T)
     ReverseIterator.new(self)
   end
 
-  def rindex(value)
+  def rindex(value : T)
     rindex { |elem| elem == value }
   end
 
