@@ -262,7 +262,7 @@ class URI
       char = byte.unsafe_chr
       if char == ' ' && space_to_plus
         io.write_byte '+'.ord.to_u8
-      elsif byte < 0x80 && yield(byte) && (!space_to_plus || char != '+')
+      elsif char.ascii? && yield(byte) && (!space_to_plus || char != '+')
         io.write_byte byte
       else
         io.write_byte '%'.ord.to_u8

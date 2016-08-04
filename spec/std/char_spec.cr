@@ -344,6 +344,13 @@ describe "Char" do
     '\u0019'.control?.should be_true
   end
 
+  it "does ascii?" do
+    'a'.ascii?.should be_true
+    127.chr.ascii?.should be_true
+    128.chr.ascii?.should be_false
+    '酒'.ascii?.should be_false
+  end
+
   describe "clone" do
     assert { 'a'.clone.should eq('a') }
   end

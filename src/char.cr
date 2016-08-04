@@ -98,6 +98,12 @@ struct Char
     self - other
   end
 
+  # Returns `true` if this char is an ASCII character
+  # (codepoint is in (0..127))
+  def ascii?
+    ord < 128
+  end
+
   # Returns `true` if this char is an ASCII digit in specified base.
   #
   # Base can be from 0 to 36 with digits from '0' to '9' and 'a' to 'z' or 'A' to 'Z'.

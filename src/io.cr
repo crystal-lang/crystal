@@ -588,7 +588,7 @@ module IO
 
     # # If the char's representation is a single byte and we have an encoding,
     # search the delimiter in the buffer
-    if delimiter.ord < 0x80 && (decoder = decoder())
+    if delimiter.ascii? && (decoder = decoder())
       return decoder.gets(self, delimiter.ord.to_u8, limit)
     end
 
