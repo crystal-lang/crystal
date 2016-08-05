@@ -48,6 +48,14 @@ module Crystal
       end
     end
 
+    def self.or(type_filter1, type_filter2)
+      if type_filter1 == type_filter2
+        return type_filter1
+      else
+        OrTypeFilter.new(type_filter1, type_filter2)
+      end
+    end
+
     def not
       NotFilter.new(self)
     end
@@ -95,6 +103,36 @@ module Crystal
     def to_s(io)
       io << "("
       @filters.join " && ", io
+      io << ")"
+    end
+  end
+
+  class OrTypeFilter < TypeFilter
+    getter filter1, filter2
+
+    def initialize(@filter1 : TypeFilter, @filter2 : TypeFilter)
+    end
+
+    def apply(other)
+      type1 = @filter1.apply(other)
+      type2 = @filter2.apply(other)
+      res = if type1 && type2
+              type1.program.type_merge_union_of([type1, type2])
+            else
+              type1 || type2
+            end
+      res
+    end
+
+    def ==(other : self)
+      @filter1 == other.filter1 && @filter2 == other.filter2
+    end
+
+    def to_s(io)
+      io << "("
+      @filter1.to_s(io)
+      io << " || "
+      @filter2.to_s(io)
       io << ")"
     end
   end
@@ -271,8 +309,29 @@ module Crystal
       end
     end
 
+    def self.or(filters1, filters2)
+      if filters1 && filters2
+        new_filters = TypeFilters.new
+        all_keys = (filters1.keys + filters2.keys).uniq!
+        all_keys.each do |name|
+          filter1 = filters1[name]?
+          filter2 = filters2[name]?
+          if filter1 && filter2
+            new_filters[name] = TypeFilter.or(filter1, filter2)
+          end
+        end
+        new_filters
+      else
+        nil
+      end
+    end
+
     def self.and(filters1, filters2, filters3)
       and(filters1, and(filters2, filters3))
+    end
+
+    def self.or(filters1, filters2, filters3)
+      or(filters1, or(filters2, filters3))
     end
 
     def [](name)

@@ -1702,11 +1702,11 @@ module Crystal
       merge_if_vars node, cond_vars, then_vars, else_vars, then_unreachable, else_unreachable
 
       if needs_type_filters?
-        if node.and?
+        case node
+        when .and?
           @type_filters = TypeFilters.and(cond_type_filters, then_type_filters, else_type_filters)
-          # TODO: or type filters
-          # elsif node.or?
-          #   node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
+        when .or?
+          @type_filters = TypeFilters.or(cond_type_filters, then_type_filters, else_type_filters)
         end
       end
 
