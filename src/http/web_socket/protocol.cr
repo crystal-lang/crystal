@@ -138,8 +138,8 @@ class HTTP::WebSocket::Protocol
     @io.write mask_array.to_slice
 
     data.each_with_index do |byte, index|
-      mask = mask_array[index % 4]
-      @io.write_byte(byte ^ mask_array[index % 4])
+      mask = mask_array[index & 0b11] # x & 0b11 == x % 4
+      @io.write_byte(byte ^ mask_array[index & 0b11])
     end
   end
 
@@ -193,7 +193,7 @@ class HTTP::WebSocket::Protocol
     @io.read_fully(buffer[0, count])
     if masked?
       count.times do |i|
-        buffer[i] ^= @mask[@mask_offset % 4]
+        buffer[i] ^= @mask[@mask_offset & 0b11] # x & 0b11 == x % 4
         @mask_offset += 1
       end
     end
