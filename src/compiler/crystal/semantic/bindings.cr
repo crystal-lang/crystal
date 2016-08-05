@@ -104,7 +104,17 @@ module Crystal
 
       node = yield dependencies
 
-      update(from)
+      if dependencies.size == 1
+        new_type = node.type?
+      else
+        new_type = Type.merge dependencies
+      end
+
+      return if @type.same? new_type
+      return unless new_type
+
+      set_type_from(map_type(new_type), from)
+      @dirty = true
       propagate
     end
 
@@ -182,7 +192,7 @@ module Crystal
 
           new_type = Type.merge dependencies
           if new_type
-            set_type_from(new_type, from)
+            set_type_from(map_type(new_type), from)
           else
             unless @type
               @propagating_after_cleanup = false
@@ -201,7 +211,7 @@ module Crystal
       end
 
       if new_type
-        set_type_from(new_type, from)
+        set_type_from(map_type(new_type), from)
       else
         return unless @type
 
@@ -216,6 +226,10 @@ module Crystal
         @dirty = false
         notify_observers
       end
+    end
+
+    def map_type(type)
+      type
     end
 
     def find_owner_trace(owner)
@@ -241,34 +255,27 @@ module Crystal
   end
 
   class Def
-    def update(from = nil)
-      if freeze_type.try &.nil_type?
-        # When we have Nil forced as a return type, NoReturn still
-        # wins, so we must account for this case.
-        # Otherwise we simply keep having the Nil type.
-        computed_type = Type.merge(dependencies)
-        if computed_type.try &.no_return?
-          super
-        end
+    def map_type(type)
+      # When we have Nil forced as a return type, NoReturn still
+      # wins, so we must account for this case.
+      # Otherwise we simply keep having the Nil type.
+      if freeze_type.try &.nil_type? && !type.no_return?
+        freeze_type
       else
-        super
+        type
       end
     end
   end
 
   class PointerOf
-    def update(from = nil)
-      type = self.dependencies.first.type?
-      return unless type
-
+    def map_type(type)
       old_type = self.type?
-      new_type = type.program.pointer_of(type)
-
+      new_type = type.try &.program.pointer_of(type)
       if old_type && grew?(old_type, new_type)
         raise "recursive pointerof expansion: #{old_type}, #{new_type}, ..."
       end
 
-      self.type = new_type
+      new_type
     end
 
     def grew?(old_type, new_type)
@@ -294,24 +301,22 @@ module Crystal
   class TypeOf
     property? in_type_args = false
 
+    def map_type(type)
+      @in_type_args ? type : type.metaclass
+    end
+
     def update(from = nil)
-      type = Type.merge expressions
-      return unless type
-
-      type = type.metaclass unless @in_type_args
-
-      self.type = type
-
+      super
       propagate
     end
   end
 
   class ExceptionHandler
-    def update(from = nil)
+    def map_type(type)
       if (ensure_type = @ensure.try &.type?).try &.is_a?(NoReturnType)
-        self.type = ensure_type
+        ensure_type
       else
-        super
+        type
       end
     end
   end
@@ -408,13 +413,13 @@ module Crystal
   class ProcPointer
     property! call : Call
 
-    def update(from = nil)
+    def map_type(type)
       return nil unless call.type?
 
       arg_types = call.args.map &.type
       arg_types.push call.type
 
-      self.type = call.type.program.proc_of(arg_types)
+      call.type.program.proc_of(arg_types)
     end
   end
 

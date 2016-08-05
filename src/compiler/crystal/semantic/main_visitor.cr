@@ -1058,8 +1058,7 @@ module Crystal
       end
 
       node.call = call
-      call.add_observer node
-      node.update
+      node.bind_to call
 
       false
     end
@@ -2218,8 +2217,6 @@ module Crystal
     end
 
     def visit(node : PointerOf)
-      node.exp.accept self
-
       var = case node_exp = node.exp
             when Var
               meta_var = @meta_vars[node_exp.name]
@@ -2232,6 +2229,7 @@ module Crystal
             when Global
               visit_global node_exp
             when Path
+              node_exp.accept self
               if const = node_exp.target_const
                 const.value
               else
@@ -2244,7 +2242,7 @@ module Crystal
               node_exp.raise "can't take address of #{node_exp}"
             end
       node.bind_to var
-      false
+      true
     end
 
     def visit(node : TypeOf)
@@ -2263,8 +2261,7 @@ module Crystal
 
       @in_type_args = old_in_type_args
 
-      node.expressions.each &.add_observer(node)
-      node.update
+      node.bind_to node.expressions
 
       @vars = old_vars
 
