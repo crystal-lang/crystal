@@ -72,10 +72,8 @@ class Crypto::MD5
         if mdi == 0x40
           ii = 0
           16.times do |i|
-            in[i] = (@in[ii + 3].to_u32 << 24) |
-              (@in[ii + 2].to_u32 << 16) |
-              (@in[ii + 1].to_u32 << 8) |
-              (@in[ii])
+            # TODO (formatter) split in multiple lines
+            in[i] = (@in[ii + 3].to_u32 << 24) | (@in[ii + 2].to_u32 << 16) | (@in[ii + 1].to_u32 << 8) | (@in[ii])
             ii += 4
           end
           transform in
@@ -252,10 +250,8 @@ class Crypto::MD5
       # append length in bits and transform
       ii = 0
       14.times do |i|
-        in[i] = (@in[ii + 3].to_u32 << 24) |
-          (@in[ii + 2].to_u32 << 16) |
-          (@in[ii + 1].to_u32 << 8) |
-          (@in[ii])
+        # TODO (formatter) split in multiple lines
+        in[i] = (@in[ii + 3].to_u32 << 24) | (@in[ii + 2].to_u32 << 16) | (@in[ii + 1].to_u32 << 8) | (@in[ii])
         ii += 4
       end
       transform in

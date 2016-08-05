@@ -99,8 +99,9 @@ end
   hot_day = Array.new(hours_in_day, 92)
   cold_day = Array.new(hours_in_day, 37)
 
-  temperatures = Array.new((days_in_year / 2.0).floor.to_i, hot_day) + # 182 hot days
-    Array.new((days_in_year / 2.0).ceil.to_i, cold_day)                # 183 cold days
+  # TODO (formatter) separate in two lines
+  # 182 hot days + 183 cold days
+  temperatures = Array.new((days_in_year / 2.0).floor.to_i, hot_day) + Array.new((days_in_year / 2.0).ceil.to_i, cold_day)
 
   degree_days = DegreeDays.new(temperatures)
   res = degree_days.calculate

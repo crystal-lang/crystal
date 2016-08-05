@@ -292,8 +292,10 @@ describe Crystal::Formatter do
   assert_format "a+1", "a + 1"
   assert_format "1 + \n2", "1 +\n  2"
   assert_format "1 +  # foo\n2", "1 + # foo\n  2"
-  assert_format "a = 1 +  #    foo\n2", "a = 1 + #    foo\n  2"
+  assert_format "a = 1 +  #    foo\n2", "a = 1 + #    foo\n    2"
   assert_format "1+2*3", "1 + 2*3"
+
+  assert_format "foo(1 + \n2)", "foo(1 +\n    2)"
 
   assert_format "foo[]", "foo[]"
   assert_format "foo[ 1 , 2 ]", "foo[1, 2]"
@@ -969,4 +971,6 @@ describe Crystal::Formatter do
 
   assert_format %(foo("bar" \\\n"baz")), %(foo("bar" \\\n    "baz"))
   assert_format %(foo("b\#{1}" \\\n"baz")), %(foo("b\#{1}" \\\n    "baz"))
+
+  assert_format "foo(A |\nB |\nC)", "foo(A |\n    B |\n    C)"
 end

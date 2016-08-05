@@ -122,6 +122,7 @@ module Crystal
       @last_is_heredoc = false
       @last_arg_is_skip = false
       @string_continuation = 0
+      @inside_call_or_assign = 0
     end
 
     def end_visit_any(node)
@@ -2051,6 +2052,7 @@ module Crystal
       end
 
       obj = node.obj
+      column = @column
 
       # Special case: $1, $2, ...
       if @token.type == :GLOBAL_MATCH_DATA_INDEX && node.name == "[]" && obj.is_a?(Global)
@@ -2155,7 +2157,9 @@ module Crystal
               skip_space_or_newline
               write_token " ", :"=", " "
               skip_space_or_newline
-              accept node.args.last
+              inside_call_or_assign do
+                accept node.args.last
+              end
             end
 
             @dot_column = old_dot_column
@@ -2177,10 +2181,16 @@ module Crystal
           if found_comment || @token.type == :NEWLINE
             skip_space_write_line
             skip_space_or_newline
-            write_indent(@indent + 2, node.args.last)
+            if @inside_call_or_assign == 0
+              write_indent(@indent + 2, node.args.last)
+            else
+              write_indent(column == 0 ? 2 : column, node.args.last)
+            end
           else
             write " " if needs_space
-            accept node.args.last
+            inside_call_or_assign do
+              accept node.args.last
+            end
           end
 
           @dot_column = old_dot_column
@@ -2321,6 +2331,7 @@ module Crystal
     def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = @indent + 2, do_consume_newlines = false)
       has_newlines = false
       found_comment = false
+      @inside_call_or_assign += 1
 
       unless args.empty?
         has_newlines, found_comment, needed_indent = format_args_simple(args, needed_indent, do_consume_newlines)
@@ -2334,6 +2345,8 @@ module Crystal
       if block_arg
         has_newlines = format_block_arg(block_arg, needed_indent)
       end
+
+      @inside_call_or_assign -= 1
 
       {has_newlines, found_comment, needed_indent}
     end
@@ -2879,7 +2892,9 @@ module Crystal
       if @token.keyword?(:if) || @token.keyword?(:case)
         indent(@column, value)
       else
-        accept value
+        inside_call_or_assign do
+          accept value
+        end
       end
       check_assign_align before_column, value if check_align
     end
@@ -4400,6 +4415,12 @@ module Crystal
       @inside_cond += 1
       yield
       @inside_cond -= 1
+    end
+
+    def inside_call_or_assign
+      @inside_call_or_assign += 1
+      yield
+      @inside_call_or_assign -= 1
     end
   end
 end

@@ -244,16 +244,17 @@ abstract class OpenSSL::SSL::Context
     OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
   end
 
+  # TODO (formatetr) enclose the next doc in ```...```
+
   # Adds options to the TLS context.
   #
   # Example:
-  # ```
+  #
   # context.add_options(
   #   OpenSSL::SSL::Options::ALL |        # various workarounds
-  #     OpenSSL::SSL::Options::NO_SSLV2 | # disable overly deprecated SSLv2
-  #     OpenSSL::SSL::Options::NO_SSLV3   # disable deprecated SSLv3
+  #   OpenSSL::SSL::Options::NO_SSLV2 | # disable overly deprecated SSLv2
+  #   OpenSSL::SSL::Options::NO_SSLV3   # disable deprecated SSLv3
   # )
-  # ```
   def add_options(options : OpenSSL::SSL::Options)
     OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
   end
