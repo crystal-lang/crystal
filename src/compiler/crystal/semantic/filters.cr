@@ -30,21 +30,11 @@ module Crystal
   end
 
   abstract class TypeFilter
-    def self.and(filters)
-      set = Set.new(filters)
-      uniq = set.to_a
-      if uniq.size == 1
-        return uniq.first
-      else
-        AndTypeFilter.new(uniq)
-      end
-    end
-
     def self.and(type_filter1, type_filter2)
       if type_filter1 == type_filter2
         return type_filter1
       else
-        AndTypeFilter.new([type_filter1, type_filter2])
+        AndTypeFilter.new(type_filter1, type_filter2)
       end
     end
 
@@ -83,33 +73,26 @@ module Crystal
   end
 
   class AndTypeFilter < TypeFilter
-    getter filters : Array(TypeFilter)
-
-    def initialize(@filters : Array(TypeFilter))
+    def initialize(@filter1 : TypeFilter, @filter2 : TypeFilter)
     end
 
     def apply(other)
       type = other
-      @filters.each do |filter|
-        type = filter.apply(type)
-      end
+      type = @filter1.apply(type)
+      type = @filter2.apply(type)
       type
     end
 
     def ==(other : self)
-      @filters == other.filters
+      @filter1 == other.@filter1 && @filter2 == other.@filter2
     end
 
     def to_s(io)
-      io << "("
-      @filters.join " && ", io
-      io << ")"
+      io << "(" << @filter1 << " && " << @filter2 << ")"
     end
   end
 
   class OrTypeFilter < TypeFilter
-    getter filter1, filter2
-
     def initialize(@filter1 : TypeFilter, @filter2 : TypeFilter)
     end
 
@@ -125,15 +108,11 @@ module Crystal
     end
 
     def ==(other : self)
-      @filter1 == other.filter1 && @filter2 == other.filter2
+      @filter1 == other.@filter1 && @filter2 == other.@filter2
     end
 
     def to_s(io)
-      io << "("
-      @filter1.to_s(io)
-      io << " || "
-      @filter2.to_s(io)
-      io << ")"
+      io << "(" << @filter1 << " || " << @filter2 << ")"
     end
   end
 
@@ -162,7 +141,7 @@ module Crystal
     end
 
     def to_s(io)
-      io << "not-nil"
+      io << "truthy"
     end
   end
 
@@ -238,9 +217,7 @@ module Crystal
     end
 
     def to_s(io)
-      io << "responds_to?("
-      @name.to_s(io)
-      io << ")"
+      io << "responds_to?(" << @name << ")"
     end
   end
 
