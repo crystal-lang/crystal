@@ -966,4 +966,7 @@ describe Crystal::Formatter do
   assert_format %(puts <<-FOO\n1\nFOO, 2)
 
   assert_format "x : Int32 |\nString", "x : Int32 |\n    String"
+
+  assert_format %(foo("bar" \\\n"baz")), %(foo("bar" \\\n    "baz"))
+  assert_format %(foo("b\#{1}" \\\n"baz")), %(foo("b\#{1}" \\\n    "baz"))
 end

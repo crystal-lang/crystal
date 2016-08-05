@@ -121,6 +121,7 @@ module Crystal
       @heredoc_fixes = [] of HeredocFix
       @last_is_heredoc = false
       @last_arg_is_skip = false
+      @string_continuation = 0
     end
 
     def end_visit_any(node)
@@ -388,6 +389,8 @@ module Crystal
     def visit(node : StringLiteral)
       @last_is_heredoc = false
 
+      column = @column
+
       if @token.type == :__FILE__ || @token.type == :__DIR__
         write @token.type
         next_token
@@ -432,10 +435,16 @@ module Crystal
       end
 
       if space_slash_newline?
+        old_indent = @indent
+        @indent = column if @string_continuation == 0
+        @string_continuation += 1
         write " \\"
         write_line
+        write_indent
         next_token_skip_space_or_newline
         visit(node)
+        @indent = old_indent
+        @string_continuation -= 1
       else
         next_token
       end
@@ -445,6 +454,10 @@ module Crystal
 
     def visit(node : StringInterpolation)
       check :DELIMITER_START
+
+      column = @column
+      old_indent = @indent
+      old_string_continuation = @string_continuation
       is_regex = @token.delimiter_state.kind == :regex
       indent_difference = @token.column_number - (@column + 1)
 
@@ -465,6 +478,9 @@ module Crystal
 
           # This is for " ... " \
           #     " ... "
+          @indent = column if @string_continuation == 0
+          @string_continuation += 1
+
           write @token.raw
           write " \\"
           write_line
@@ -515,6 +531,9 @@ module Crystal
 
       format_regex_modifiers if is_regex
       next_token
+
+      @string_continuation = old_string_continuation
+      @indent = old_indent
 
       false
     end
