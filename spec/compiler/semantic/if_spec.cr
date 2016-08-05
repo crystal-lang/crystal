@@ -101,4 +101,15 @@ describe "Semantic: if" do
       !a.is_a?(Int32) || a + 2
       )) { union_of bool, int32 }
   end
+
+  it "restricts with && always falsey" do
+    assert_type(%(
+      x = 1
+      if (x.is_a?(String) && x.is_a?(String)) && x.is_a?(String)
+        true
+      else
+        2
+      end
+      )) { int32 }
+  end
 end

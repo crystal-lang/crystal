@@ -166,9 +166,14 @@ module Crystal
         exps << nop
       end
 
-      node.expressions = exps
-      rebind_node node, exps.last
-      node
+      if simple = simplify_exps(exps)
+        rebind_node node, simple
+        simple
+      else
+        node.expressions = exps
+        rebind_node node, exps.last
+        node
+      end
     end
 
     def flatten_collect(exp, exps)
@@ -577,14 +582,46 @@ module Crystal
       exp_nodes = [node.cond] of ASTNode
       exp_nodes << branch
 
-      exp = Expressions.new(exp_nodes)
-      if branch
-        exp.bind_to branch
-        rebind_node node, branch
+      if simple = simplify_exps(exp_nodes)
+        rebind_node node, simple
+        simple
       else
-        exp.bind_to @program.nil_var
+        exp = Expressions.new(exp_nodes)
+        if branch
+          exp.bind_to branch
+          rebind_node node, branch
+        else
+          exp.bind_to @program.nil_var
+        end
+
+        exp
       end
-      exp
+    end
+
+    # Check if it's something like:
+    #
+    # ```
+    # __temp = value
+    # __temp
+    # ```
+    #
+    # In that case we simply use `value` as the result.
+    def simplify_exps(exps)
+      return unless exps.size == 2
+
+      first, second = exps
+
+      if first.is_a?(Assign) && (target = first.target).is_a?(Var) && second.is_a?(Var) &&
+         target.name == second.name && target.name.starts_with?("__")
+        value = first.value
+        if (value.is_a?(Expressions)) && (simple = simplify_exps(value.expressions))
+          simple
+        else
+          value
+        end
+      else
+        nil
+      end
     end
 
     def transform(node : IsA)
