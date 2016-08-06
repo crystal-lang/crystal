@@ -109,11 +109,12 @@ module Crystal
       else
         new_type = Type.merge dependencies
       end
+      new_type = map_type(new_type) if new_type
 
       return if @type.same? new_type
       return unless new_type
 
-      set_type_from(map_type(new_type), from)
+      set_type_from(new_type, from)
       @dirty = true
       propagate
     end
@@ -167,6 +168,7 @@ module Crystal
       return if @type && @type.same? from.try &.type?
 
       new_type = Type.merge dependencies
+      new_type = map_type(new_type) if new_type
 
       if @type.same? new_type
         # If we are in the cleanup phase it might happen that a dependency's
@@ -192,7 +194,7 @@ module Crystal
 
           new_type = Type.merge dependencies
           if new_type
-            set_type_from(map_type(new_type), from)
+            set_type_from(new_type, from)
           else
             unless @type
               @propagating_after_cleanup = false
@@ -211,7 +213,7 @@ module Crystal
       end
 
       if new_type
-        set_type_from(map_type(new_type), from)
+        set_type_from(new_type, from)
       else
         return unless @type
 
