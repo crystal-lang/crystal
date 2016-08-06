@@ -941,6 +941,7 @@ module Crystal
       @str << "i" if node.options.includes? Regex::Options::IGNORE_CASE
       @str << "m" if node.options.includes? Regex::Options::MULTILINE
       @str << "x" if node.options.includes? Regex::Options::EXTENDED
+      false
     end
 
     def visit(node : TupleLiteral)
