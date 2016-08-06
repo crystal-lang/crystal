@@ -3,7 +3,7 @@ require "html"
 require "uri"
 
 # A simple handler that lists directories and serves files under a given public directory.
-class HTTP::StaticFileHandler < HTTP::Handler
+class HTTP::StaticFileHandler < HTTP::Server::Handler
   @public_dir : String
 
   # Creates a handler that will serve files in the given *public_dir*, after

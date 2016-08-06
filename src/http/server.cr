@@ -20,7 +20,7 @@ require "./common"
 # in it.
 #
 # The handler given to a server can simply be a block that receives an `HTTP::Server::Context`,
-# or it can be an `HTTP::Handler`. An `HTTP::Handler` has an optional `next` handler,
+# or it can be an `HTTP::Server::Handler`. An `HTTP::Server::Handler` has an optional `next` handler,
 # so handlers can be chained. For example, an initial handler may handle exceptions
 # in a subsequent handler and return a 500 status code (see `HTTP::ErrorHandler`),
 # the next handler might log the incoming request (see `HTTP::LogHandler`), and
@@ -56,7 +56,7 @@ require "./common"
 # server.listen
 # ```
 #
-# ### Add handlers
+# ### Add server handlers
 #
 # A series of handlers are chained.
 #
@@ -71,7 +71,7 @@ require "./common"
 # ]).listen
 # ```
 #
-# ### Add handlers and block
+# ### Add server handlers and block
 #
 # A series of handlers is chained, the last one being the given block.
 #
@@ -100,11 +100,11 @@ class HTTP::Server
     new("127.0.0.1", port, &handler)
   end
 
-  def self.new(port, handlers : Array(HTTP::Handler), &handler : Context ->)
+  def self.new(port, handlers : Array(HTTP::Server::Handler), &handler : Context ->)
     new("127.0.0.1", port, handlers, &handler)
   end
 
-  def self.new(port, handlers : Array(HTTP::Handler))
+  def self.new(port, handlers : Array(HTTP::Server::Handler))
     new("127.0.0.1", port, handlers)
   end
 
@@ -116,17 +116,17 @@ class HTTP::Server
     @processor = RequestProcessor.new(handler)
   end
 
-  def initialize(@host : String, @port : Int32, handlers : Array(HTTP::Handler), &handler : Context ->)
+  def initialize(@host : String, @port : Int32, handlers : Array(HTTP::Server::Handler), &handler : Context ->)
     handler = HTTP::Server.build_middleware handlers, handler
     @processor = RequestProcessor.new(handler)
   end
 
-  def initialize(@host : String, @port : Int32, handlers : Array(HTTP::Handler))
+  def initialize(@host : String, @port : Int32, handlers : Array(HTTP::Server::Handler))
     handler = HTTP::Server.build_middleware handlers
     @processor = RequestProcessor.new(handler)
   end
 
-  def initialize(@host : String, @port : Int32, handler : HTTP::Handler | HTTP::Handler::Proc)
+  def initialize(@host : String, @port : Int32, handler : HTTP::Server::Handler | HTTP::Server::Handler::Proc)
     @processor = RequestProcessor.new(handler)
   end
 
@@ -175,7 +175,7 @@ class HTTP::Server
 
   # Builds all handlers as the middleware for HTTP::Server.
   def self.build_middleware(handlers, last_handler : Context -> = nil)
-    raise ArgumentError.new "You must specify at least one HTTP Handler." if handlers.empty?
+    raise ArgumentError.new "You must specify at least one HTTP Server Handler." if handlers.empty?
     0.upto(handlers.size - 2) { |i| handlers[i].next = handlers[i + 1] }
     handlers.last.next = last_handler if last_handler
     handlers.first

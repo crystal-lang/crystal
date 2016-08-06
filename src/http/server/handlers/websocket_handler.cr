@@ -7,7 +7,7 @@ require "../../web_socket"
   require "openssl/sha1"
 {% end %}
 
-class HTTP::WebSocketHandler < HTTP::Handler
+class HTTP::WebSocketHandler < HTTP::Server::Handler
   def initialize(&@proc : WebSocket, Server::Context ->)
   end
 

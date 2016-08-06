@@ -4,7 +4,7 @@
 #  In verbose mode prints the exception with its backtrace to the response,
 #  else a generic error message is returned to the client. Use the LogHandler before this
 #  to log the exception on the server side.
-class HTTP::ErrorHandler < HTTP::Handler
+class HTTP::ErrorHandler < HTTP::Server::Handler
   def initialize(@verbose : Bool = false)
   end
 

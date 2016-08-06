@@ -4,7 +4,7 @@
 
 # A handler that configures an `HTTP::Server::Response` to compress the response
 # output, either using gzip or deflate, depending on the `Accept-Encoding` request header.
-class HTTP::DeflateHandler < HTTP::Handler
+class HTTP::DeflateHandler < HTTP::Server::Handler
   def call(context)
     {% if flag?(:without_zlib) %}
       call_next(context)

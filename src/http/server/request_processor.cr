@@ -1,11 +1,11 @@
 require "../server"
 
 class HTTP::Server::RequestProcessor
-  def initialize(&@handler : HTTP::Handler::Proc)
+  def initialize(&@handler : HTTP::Server::Handler::Proc)
     @wants_close = false
   end
 
-  def initialize(@handler : HTTP::Handler | HTTP::Handler::Proc)
+  def initialize(@handler : HTTP::Server::Handler | HTTP::Server::Handler::Proc)
     @wants_close = false
   end
 
@@ -40,7 +40,7 @@ class HTTP::Server::RequestProcessor
         rescue ex
           response.respond_with_error
           response.close
-          error.puts "Unhandled exception on HTTP::Handler"
+          error.puts "Unhandled exception on HTTP::Server::Handler"
           ex.inspect_with_backtrace(error)
           return
         end

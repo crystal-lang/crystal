@@ -260,7 +260,7 @@ module Crystal::Playground
     end
   end
 
-  class PageHandler < HTTP::Handler
+  class PageHandler < HTTP::Server::Handler
     @page : PlaygroundPage
 
     def initialize(@path : String, filename : String)
@@ -281,7 +281,7 @@ module Crystal::Playground
     end
   end
 
-  class WorkbookHandler < HTTP::Handler
+  class WorkbookHandler < HTTP::Server::Handler
     def call(context)
       case {context.request.method, context.request.resource}
       when {"GET", /\/workbook\/playground\/(.*)/}
@@ -311,7 +311,7 @@ module Crystal::Playground
     end
   end
 
-  class EnvironmentHandler < HTTP::Handler
+  class EnvironmentHandler < HTTP::Server::Handler
     def initialize(@server : Playground::Server)
     end
 
