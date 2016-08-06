@@ -96,13 +96,16 @@ class HTTP::Client
   @connect_timeout : Float64?
   @read_timeout : Float64?
 
+  getter handlers : HTTP::Client::Handler?
+
   # Creates a new HTTP client with the given *host*, *port* and *tls*
   # configurations. If no port is given, the default one will
   # be used depending on the *tls* arguments: 80 for if *tls* is `false`,
   # 443 if *tls* is truthy. If *tls* is `true` a new `OpenSSL::SSL::Context::Client` will
   # be used, else the given one. In any case the active context can be accessed through `tls`.
   {% if flag?(:without_openssl) %}
-    def initialize(@host, port = nil, tls : Bool = false)
+    def initialize(host : String, port = nil, tls : Bool = false, handlers = [] of Handler)
+      @host = host
       @tls = nil
       if tls
         raise "HTTP::Client TLS is disabled because `-D without_openssl` was passed at compile time"
@@ -110,9 +113,11 @@ class HTTP::Client
 
       @port = (port || (@tls ? 443 : 80)).to_i
       @compress = true
+      @handlers = HTTP::Client.build_middleware(handlers)
     end
   {% else %}
-    def initialize(@host, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
+    def initialize(host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false, handlers = [] of Handler)
+      @host = host
       @tls = case tls
              when true
                OpenSSL::SSL::Context::Client.new
@@ -124,6 +129,7 @@ class HTTP::Client
 
       @port = (port || (@tls ? 443 : 80)).to_i
       @compress = true
+      @handlers = HTTP::Client.build_middleware(handlers)
     end
   {% end %}
 
@@ -148,10 +154,10 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI, tls = nil)
+  def self.new(uri : URI, tls = nil, handlers = [] of Handler)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
-    new(host, uri.port, tls)
+    new(host, uri.port, tls, handlers)
   end
 
   # Creates a new HTTP client, yields it to the block, and closes
@@ -162,8 +168,8 @@ class HTTP::Client
   #   client.get "/"
   # end
   # ```
-  def self.new(host, port = nil, tls = false)
-    client = new(host, port, tls)
+  def self.new(host, port = nil, tls = false, handlers = [] of Handler)
+    client = new(host, port, tls, handlers)
     begin
       yield client
     ensure
@@ -326,8 +332,8 @@ class HTTP::Client
     # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil) : HTTP::Client::Response
-      exec {{method.upcase}}, url, headers, body, tls
+    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil, handlers = [] of HTTP::Client::Handler) : HTTP::Client::Response
+      exec {{method.upcase}}, url, headers, body, tls, handlers
     end
 
     # Executes a {{method.id.upcase}} request and yields the response to the block.
@@ -338,8 +344,8 @@ class HTTP::Client
     #   response.body_io.gets #=> "..."
     # end
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil)
-      exec {{method.upcase}}, url, headers, body, tls do |response|
+    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil, handlers = [] of HTTP::Client::Handler)
+      exec {{method.upcase}}, url, headers, body, tls, handlers do |response|
         yield response
       end
     end
@@ -411,8 +417,8 @@ class HTTP::Client
   # ```
   # response = HTTP::Client.post_form "http://www.example.com", "foo=bar"
   # ```
-  def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil, tls = nil) : HTTP::Client::Response
-    exec(url, tls) do |client, path|
+  def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil, tls = nil, handlers = [] of HTTP::Client::Handler) : HTTP::Client::Response
+    exec(url, tls, handlers) do |client, path|
       client.post_form(path, form, headers)
     end
   end
@@ -426,8 +432,8 @@ class HTTP::Client
   #   response.body_io.gets
   # end
   # ```
-  def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil, tls = nil)
-    exec(url, tls) do |client, path|
+  def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil, tls = nil, handlers = [] of HTTP::Client::Handler)
+    exec(url, tls, handlers) do |client, path|
       client.post_form(path, form, headers) do |response|
         yield response
       end
@@ -451,9 +457,11 @@ class HTTP::Client
     decompress = set_defaults request
     request.to_io(socket)
     socket.flush
-    HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress).tap do |response|
+    response = HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress).tap do |response|
       close unless response.keep_alive?
     end
+
+    response
   end
 
   # Executes a request request and yields an `HTTP::Client::Response` to the block.
@@ -498,6 +506,12 @@ class HTTP::Client
     {% end %}
   end
 
+  def self.build_middleware(handlers)
+    return nil if handlers.empty?
+    0.upto(handlers.size - 2) { |i| handlers[i].next = handlers[i + 1] }
+    handlers.first
+  end
+
   # Executes a request.
   # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
   #
@@ -532,8 +546,8 @@ class HTTP::Client
   # response = HTTP::Client.exec "GET", "http://www.example.com"
   # response.body # => "..."
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil) : HTTP::Client::Response
-    exec(url, tls) do |client, path|
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil, handlers = [] of HTTP::Client::Handler) : HTTP::Client::Response
+    exec(url, tls, handlers) do |client, path|
       client.exec method, path, headers, body
     end
   end
@@ -546,8 +560,8 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil)
-    exec(url, tls) do |client, path|
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil, handlers = [] of HTTP::Client::Handler)
+    exec(url, tls, handlers) do |client, path|
       client.exec(method, path, headers, body) do |response|
         yield response
       end
@@ -568,6 +582,12 @@ class HTTP::Client
 
   private def execute_callbacks(request)
     @before_request.try &.each &.call(request)
+  end
+
+  private def execute_handler(context)
+    @handlers.each do |handler|
+      context = handler.call(context)
+    end
   end
 
   private def socket
@@ -597,7 +617,7 @@ class HTTP::Client
     end
   end
 
-  private def self.exec(string : String, tls = nil)
+  private def self.exec(string : String, tls = nil, handlers = [] of HTTP::Client::Handler)
     uri = URI.parse(string)
 
     unless uri.scheme && uri.host
@@ -605,7 +625,7 @@ class HTTP::Client
       uri = URI.parse("http://#{string}")
     end
 
-    exec(uri, tls) do |client, path|
+    exec(uri, tls, handlers) do |client, path|
       yield client, path
     end
   end
@@ -651,7 +671,7 @@ class HTTP::Client
     raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))
   end
 
-  private def self.exec(uri : URI, tls = nil)
+  private def self.exec(uri : URI, tls = nil, handlers = [] of HTTP::Client::Handler)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
 
@@ -660,7 +680,7 @@ class HTTP::Client
     user = uri.user
     password = uri.password
 
-    HTTP::Client.new(host, port, tls) do |client|
+    HTTP::Client.new(host, port, tls, handlers) do |client|
       if user && password
         client.basic_auth(user, password)
       end
@@ -676,4 +696,5 @@ require "socket"
 require "uri"
 require "base64"
 require "./client/response"
+require "./client/handler"
 require "./common"
