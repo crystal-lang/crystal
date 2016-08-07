@@ -459,9 +459,9 @@ class HTTP::Client
     request.to_io(socket)
     socket.flush
     response = HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress).tap do |response|
+      @handler.try &.call(response)
       close unless response.keep_alive?
     end
-    @handler.try &.call(response)
 
     response
   end
@@ -488,6 +488,7 @@ class HTTP::Client
     request.to_io(socket)
     socket.flush
     HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+      @handler.try &.call(response)
       value = yield response
       response.body_io.try &.close
       close unless response.keep_alive?
