@@ -459,7 +459,7 @@ class HTTP::Client
     request.to_io(socket)
     socket.flush
     response = HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress).tap do |response|
-      @handler.try &.call(response)
+      handler.try &.call(response)
       close unless response.keep_alive?
     end
 
@@ -488,7 +488,7 @@ class HTTP::Client
     request.to_io(socket)
     socket.flush
     HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
-      @handler.try &.call(response)
+      handler.try &.call(response)
       value = yield response
       response.body_io.try &.close
       close unless response.keep_alive?
@@ -586,12 +586,6 @@ class HTTP::Client
 
   private def execute_callbacks(request)
     @before_request.try &.each &.call(request)
-  end
-
-  private def execute_handler(context)
-    @handlers.each do |handler|
-      context = handler.call(context)
-    end
   end
 
   private def socket
