@@ -466,7 +466,7 @@ describe "Semantic: macro" do
       end
 
       me
-      )) { symbol }
+      )) { nilable symbol }
   end
 
   it "errors if declares macro inside if" do

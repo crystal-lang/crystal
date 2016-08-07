@@ -465,7 +465,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { no_return }
+      )) { int32 }
   end
 
   it "doesn't type instance var as nilable if not used in method call" do

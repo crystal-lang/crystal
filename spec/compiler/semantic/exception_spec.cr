@@ -215,9 +215,9 @@ describe "Semantic: exception" do
         p n
       end
       n
-      )) { no_return }
+      )) { int32 }
     mod = result.program
-    eh = result.node.as(Expressions).expressions[-1]
+    eh = result.node.as(Expressions).expressions[-2]
     call_p_n = eh.as(ExceptionHandler).ensure.not_nil!.as(Call)
     call_p_n.args.first.type.should eq(mod.nilable(mod.int32))
   end
@@ -233,9 +233,9 @@ describe "Semantic: exception" do
         p n
       end
       n
-      )) { no_return }
+      )) { int32 }
     mod = result.program
-    eh = result.node.as(Expressions).expressions[-1]
+    eh = result.node.as(Expressions).expressions[-2]
     call_p_n = eh.as(ExceptionHandler).ensure.not_nil!.as(Call)
     call_p_n.args.first.type.should eq(mod.nilable(mod.int32))
   end

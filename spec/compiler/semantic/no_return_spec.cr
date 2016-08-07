@@ -317,6 +317,6 @@ describe "Semantic: NoReturn" do
       end
 
       baz
-      )) { no_return }
+      )) { int32 }
   end
 end

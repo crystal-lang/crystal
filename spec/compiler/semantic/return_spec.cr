@@ -6,7 +6,7 @@ describe "Semantic: return" do
   end
 
   it "infers return type with many returns (1)" do
-    assert_type("def foo; if true; return 1; end; 'a'; end; foo") { int32 }
+    assert_type("def foo; if true; return 1; end; 'a'; end; foo") { union_of(int32, char) }
   end
 
   it "infers return type with many returns (2)" do
@@ -26,7 +26,7 @@ describe "Semantic: return" do
       end
 
       bar
-      )) { nil_type }
+      )) { nilable int32 }
   end
 
   it "can use type var as return type (#1226)" do
@@ -130,7 +130,7 @@ describe "Semantic: return" do
 
       foo = Foo.new
       foo.bar
-      )) { no_return }
+      )) { int32 }
   end
 
   it "types bug (#1823)" do
@@ -166,7 +166,7 @@ describe "Semantic: return" do
       end
 
       test
-      )) { types["Bar"] }
+      )) { nilable types["Bar"] }
   end
 
   it "can use free var in return type (#2492)" do

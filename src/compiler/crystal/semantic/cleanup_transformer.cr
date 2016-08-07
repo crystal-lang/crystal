@@ -4,13 +4,9 @@ require "../types"
 
 module Crystal
   class Program
-    getter? in_cleanup_phase = false
-
     def cleanup(node)
       transformer = CleanupTransformer.new(self)
-      @in_cleanup_phase = true
-      node = transformer.transform_loop(node)
-      @in_cleanup_phase = false
+      node = node.transform(transformer)
       puts node if ENV["AFTER"]? == "1"
       node
     end
@@ -18,18 +14,15 @@ module Crystal
     def cleanup_types
       transformer = CleanupTransformer.new(self)
 
-      @in_cleanup_phase = true
       after_inference_types.each do |type|
         cleanup_type type, transformer
       end
 
       self.class_var_and_const_initializers.each do |initializer|
         if initializer.is_a?(ClassVarInitializer)
-          initializer.node = transformer.transform_loop(initializer.node)
+          initializer.node = initializer.node.transform(transformer)
         end
       end
-
-      @in_cleanup_phase = false
     end
 
     def cleanup_type(type, transformer)
@@ -47,7 +40,7 @@ module Crystal
 
     def cleanup_single_type(type, transformer)
       type.instance_vars_initializers.try &.each do |initializer|
-        initializer.value = transformer.transform_loop(initializer.value)
+        initializer.value = initializer.value.transform(transformer)
       end
     end
 
@@ -71,20 +64,6 @@ module Crystal
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
-      @changed = false
-    end
-
-    def transform_loop(node)
-      # We keep transforming the node as long as this produced a change
-      # (this might trigger recalculations and changed that would
-      # need to be transformed too)
-      loop do
-        @changed = false
-        @transformed.clear
-        node = node.transform(self)
-        break unless @changed
-      end
-      node
     end
 
     def after_transform(node)
@@ -160,20 +139,8 @@ module Crystal
         break if flatten_collect(new_exp, exps)
       end
 
-      if exps.empty?
-        nop = Nop.new
-        nop.set_type(@program.nil)
-        exps << nop
-      end
-
-      if simple = simplify_exps(exps)
-        rebind_node node, simple
-        simple
-      else
-        node.expressions = exps
-        rebind_node node, exps.last
-        node
-      end
+      node.expressions = exps
+      node
     end
 
     def flatten_collect(exp, exps)
@@ -235,7 +202,6 @@ module Crystal
       # We don't want to transform constant assignments into no return
       unless node.target.is_a?(Path)
         if node.value.type?.try &.no_return?
-          rebind_node node, node.value
           return node.value
         end
       end
@@ -343,23 +309,9 @@ module Crystal
             @transformed.add(target_def.object_id)
 
             node.bubbling_exception do
-              old_body = target_def.body
-              old_type = target_def.body.type?
-
               @def_nest_count += 1
               target_def.body = target_def.body.transform(self)
               @def_nest_count -= 1
-
-              new_type = target_def.body.type?
-
-              # It can happen that the body of the function changed, and as
-              # a result the type changed. In that case we need to rebind the
-              # def to the new body, unbinding it from the previous one.
-              if new_type != old_type
-                @changed = true
-                target_def.unbind_from old_body
-                target_def.bind_to target_def.body
-              end
             end
           end
         end
@@ -464,8 +416,6 @@ module Crystal
       body = node.def.body
       if node.def.no_returns? && !body.type?
         node.def.body = untyped_expression(body)
-        rebind_node node.def, node.def.body
-        node.update
       else
         node.def.body = node.def.body.transform(self)
       end
@@ -536,92 +486,47 @@ module Crystal
         return node_cond
       end
 
-      if node_cond.true_literal?
+      case
+      when node_cond.true_literal?
+        node.truthy = true
+      when node_cond.false_literal?
+        node.falsey = true
+      when (cond_type = node_cond.type?) && cond_type.nil_type?
+        node.falsey = true
+      when cond_is_truthy
+        node.truthy = true
+      when cond_is_falsey
+        node.falsey = true
+      end
+
+      if node.falsey?
+        then_is_truthy = false
+        then_is_falsey = false
+      else
         node.then = node.then.transform(self)
-        rebind_node node, node.then
-        return node.then
+        then_is_truthy, then_is_falsey = @last_is_truthy, @last_is_falsey
       end
 
-      if node_cond.false_literal?
+      if node.truthy?
+        else_is_truthy = false
+        else_is_falsey = false
+      else
         node.else = node.else.transform(self)
-        rebind_node node, node.else
-        return node.else
+        else_is_truthy, else_is_falsey = @last_is_truthy, @last_is_falsey
       end
-
-      if (cond_type = node_cond.type?) && cond_type.nil_type?
-        node.else = node.else.transform(self)
-        return replace_if_with_branch(node, node.else)
-      end
-
-      if cond_is_truthy
-        node.then = node.then.transform(self)
-        return replace_if_with_branch(node, node.then)
-      end
-
-      if cond_is_falsey
-        node.else = node.else.transform(self)
-        return replace_if_with_branch(node, node.else)
-      end
-
-      node.then = node.then.transform(self)
-      then_is_truthy, then_is_falsey = @last_is_truthy, @last_is_falsey
-
-      node.else = node.else.transform(self)
 
       reset_last_status
 
-      if node.and?
+      case node
+      when .and?
         @last_is_truthy = cond_is_truthy && then_is_truthy
         @last_is_falsey = cond_is_falsey || then_is_falsey
+      when .or?
+        @last_is_truthy = (cond_is_truthy && then_is_truthy) || (cond_is_falsey && else_is_truthy)
+        @last_is_falsey = cond_is_falsey && else_is_falsey
       end
 
       node
-    end
-
-    def replace_if_with_branch(node, branch)
-      exp_nodes = [node.cond] of ASTNode
-      exp_nodes << branch
-
-      if simple = simplify_exps(exp_nodes)
-        rebind_node node, simple
-        simple
-      else
-        exp = Expressions.new(exp_nodes)
-        if branch
-          exp.bind_to branch
-          rebind_node node, branch
-        else
-          exp.bind_to @program.nil_var
-        end
-
-        exp
-      end
-    end
-
-    # Check if it's something like:
-    #
-    # ```
-    # __temp = value
-    # __temp
-    # ```
-    #
-    # In that case we simply use `value` as the result.
-    def simplify_exps(exps)
-      return unless exps.size == 2
-
-      first, second = exps
-
-      if first.is_a?(Assign) && (target = first.target).is_a?(Var) && second.is_a?(Var) &&
-         target.name == second.name && target.name.starts_with?("__")
-        value = first.value
-        if (value.is_a?(Expressions)) && (simple = simplify_exps(value.expressions))
-          simple
-        else
-          value
-        end
-      else
-        nil
-      end
     end
 
     def transform(node : IsA)
@@ -708,6 +613,10 @@ module Crystal
       obj_type = node.obj.type?
       return node unless obj_type
 
+      if node.obj.no_returns?
+        return node.obj
+      end
+
       to_type = node.to.type
 
       if to_type.pointer?
@@ -722,8 +631,6 @@ module Crystal
         unless to_type.pointer? || to_type.reference_like?
           node.raise "can't cast #{obj_type} to #{to_type}"
         end
-      elsif obj_type.no_return?
-        rebind_type node, @program.no_return
       else
         resulting_type = obj_type.filter_by(to_type)
         unless resulting_type
@@ -737,27 +644,8 @@ module Crystal
     def transform(node : NilableCast)
       node = super
 
-      obj_type = node.obj.type?
-      return node unless obj_type
-
-      to_type = node.to.type
-
-      if obj_type.no_return?
-        rebind_type node, @program.no_return
-        return node
-      end
-
-      # If there's no way to cast obj to the given type,
-      # just return `obj; nil`
-      resulting_type = obj_type.filter_by(to_type)
-      unless resulting_type
-        nil_literal = NilLiteral.new
-        nil_literal.set_type(@program.nil)
-        exps = Expressions.new([node.obj, nil_literal] of ASTNode)
-        exps.set_type(@program.nil)
-        @changed = true
-        rebind_node(node, @program.nil_var)
-        return exps
+      if node.obj.no_returns?
+        return node.obj
       end
 
       node
@@ -819,25 +707,6 @@ module Crystal
         node.extra = extra.transform(self)
       end
       node
-    end
-
-    def rebind_node(node, dependency)
-      if node.type? != dependency.type?
-        @changed = true
-      end
-
-      node.unbind_from node.dependencies?
-      if dependency.type?
-        node.bind_to dependency
-      else
-        node.set_type(nil)
-      end
-    end
-
-    def rebind_type(node, type)
-      node.unbind_from node.dependencies?
-      @changed = node.type? != type
-      node.type = type
     end
 
     @false_literal : BoolLiteral?

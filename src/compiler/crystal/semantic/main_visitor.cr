@@ -627,7 +627,11 @@ module Crystal
     end
 
     def end_visit(node : Expressions)
-      node.bind_to node.last unless node.empty?
+      if node.empty?
+        node.set_type(@program.nil)
+      else
+        node.bind_to node.last
+      end
     end
 
     def visit(node : Assign)
@@ -1070,9 +1074,10 @@ module Crystal
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
         # with its expantion) was cloned.
-        if (expanded = node.expanded) && !node.dependencies?
+        if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
           node.bind_to(expanded)
         end
+
         return false
       end
 

@@ -150,8 +150,8 @@ def assert_type(str, flags = nil, inject_primitives = true)
   result
 end
 
-def semantic(code : String, wants_doc = false)
-  code = inject_primitives(code)
+def semantic(code : String, wants_doc = false, inject_primitives = true)
+  code = inject_primitives(code) if inject_primitives
   semantic parse(code, wants_doc: wants_doc), wants_doc: wants_doc
 end
 

@@ -1024,8 +1024,8 @@ describe "Code gen: macro" do
         nil
       end
 
-      me
-      )).to_i.should eq(123)
+      me || 0
+      ), inject_primitives: false).to_i.should eq(123)
   end
 
   it "passes #826" do

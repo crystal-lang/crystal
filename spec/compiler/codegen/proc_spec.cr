@@ -679,12 +679,13 @@ describe "Code gen: proc" do
   it "doesn't crash on #2196" do
     run(%(
       x = 42
-      if x.is_a?(Int32)
+      z = if x.is_a?(Int32)
         x
       else
         y = x
         ->{ y }
       end
+      z.is_a?(Int32) ? z : 0
       )).to_i.should eq(42)
   end
 

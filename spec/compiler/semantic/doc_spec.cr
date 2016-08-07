@@ -286,7 +286,7 @@ describe "Semantic: doc" do
 
       # Hello
       foo
-    ), wants_doc: true
+    ), wants_doc: true, inject_primitives: false
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")

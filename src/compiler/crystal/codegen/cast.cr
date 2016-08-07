@@ -70,6 +70,8 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   def assign(target_pointer, target_type, value_type, value)
+    return if @builder.end
+
     target_type = target_type.remove_indirection
     value_type = value_type.remove_indirection
 
@@ -271,6 +273,8 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast(value, to_type, from_type : Type, already_loaded)
+    return llvm_nil if @builder.end
+
     from_type = from_type.remove_indirection
     to_type = to_type.remove_indirection
 
@@ -397,6 +401,8 @@ class Crystal::CodeGenVisitor
   end
 
   def upcast(value, to_type, from_type)
+    return llvm_nil if @builder.end
+
     from_type = from_type.remove_indirection
     to_type = to_type.remove_indirection
 

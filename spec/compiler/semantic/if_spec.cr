@@ -78,7 +78,7 @@ describe "Semantic: if" do
         n
       end
       n
-      )) { int32 }
+      )) { union_of(int32, float64) }
   end
 
   it "restricts the type of the right hand side of an || when using is_a? (#1728)" do
@@ -198,6 +198,6 @@ describe "Semantic: if" do
       else
         2
       end
-      )) { int32 }
+      )) { union_of(bool, int32) }
   end
 end

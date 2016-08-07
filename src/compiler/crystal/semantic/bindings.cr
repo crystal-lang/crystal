@@ -6,7 +6,6 @@ module Crystal
     property enclosing_call : Call?
 
     @dirty = false
-    @propagating_after_cleanup = false
 
     @type : Type?
 
@@ -164,53 +163,12 @@ module Crystal
     end
 
     def update(from = nil)
-      return if @propagating_after_cleanup
       return if @type && @type.same? from.try &.type?
 
       new_type = Type.merge dependencies
       new_type = map_type(new_type) if new_type
 
-      if @type.same? new_type
-        # If we are in the cleanup phase it might happen that a dependency's
-        # type changed (from) but our type didn't. This might happen if
-        # there's a circular dependencies in nodes (while and blocks can
-        # cause this), so we basically need to recompute all types in the
-        # cycle (and depending types).
-        #
-        # To solve this, we set our type to NoReturn so observers
-        # compute their type without taking this note into account.
-        # Later, we compute our type from our dependencies and propagate
-        # types as usual.
-        #
-        # To avoid infinite recursion we use the `@propagating_after_cleanup`
-        # flag, which prevents computing and propagating types for this
-        # node while we are doing the above logic.
-        if dependencies.size > 0 && (from_type = from.try &.type?) && from_type.program.in_cleanup_phase?
-          set_type(from_type.program.no_return)
-
-          @propagating_after_cleanup = true
-          @dirty = true
-          propagate
-
-          new_type = Type.merge dependencies
-          if new_type
-            set_type_from(new_type, from)
-          else
-            unless @type
-              @propagating_after_cleanup = false
-              return
-            end
-            set_type(nil)
-          end
-
-          @dirty = true
-          propagate
-          @propagating_after_cleanup = false
-          return
-        else
-          return
-        end
-      end
+      return if @type.same? new_type
 
       if new_type
         set_type_from(new_type, from)
@@ -331,6 +289,11 @@ module Crystal
       to_type = to.type
 
       if obj_type && !(obj_type.pointer? || to_type.pointer?)
+        if obj_type.no_return?
+          self.type = obj_type
+          return
+        end
+
         filtered_type = obj_type.filter_by(to_type)
 
         # If the filtered type didn't change it means that an
@@ -361,6 +324,11 @@ module Crystal
       to_type = to.type
 
       if obj_type
+        if obj_type.no_return?
+          self.type = obj_type
+          return
+        end
+
         filtered_type = obj_type.filter_by(to_type)
 
         # If the filtered type didn't change it means that an

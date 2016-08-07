@@ -338,6 +338,12 @@ module Crystal
     # This is set to `true` for an `If` that was created from an `||` expression.
     property? or = false
 
+    # This is set to `true` when the compiler is sure that the condition is truthy
+    property? truthy = false
+
+    # This is set to `true` when the compiler is sure that the condition is falsey
+    property? falsey = false
+
     def clone_without_location
       a_if = previous_def
       a_if.and = and?

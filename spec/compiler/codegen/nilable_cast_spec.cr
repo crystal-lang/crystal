@@ -70,4 +70,19 @@ describe "Code gen: nilable cast" do
       x ? 10 : 20
       )).to_i.should eq(20)
   end
+
+  it "codegens with NoReturn" do
+    codegen(%(
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      def foo
+        LibC.exit.as?(Int32)
+        10
+      end
+
+      foo
+      ))
+  end
 end

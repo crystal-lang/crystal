@@ -262,6 +262,10 @@ module Crystal
       node.accept visitor
     end
 
+    def visit_any(node)
+      !@builder.end
+    end
+
     def type
       context.type.not_nil!
     end
@@ -564,6 +568,8 @@ module Crystal
     end
 
     def codegen_return(type : Type)
+      return if @builder.end
+
       method_type = context.return_type.not_nil!
       if method_type.void?
         ret
@@ -659,6 +665,24 @@ module Crystal
     end
 
     def visit(node : If)
+      if node.truthy?
+        node.cond.accept self
+        node.then.accept self
+        if (node_type = node.type?) && (then_type = node.then.type?)
+          @last = upcast(@last, node_type, then_type)
+        end
+        return false
+      end
+
+      if node.falsey?
+        node.cond.accept self
+        node.else.accept self
+        if (node_type = node.type?) && (else_type = node.else.type?)
+          @last = upcast(@last, node_type, else_type)
+        end
+        return false
+      end
+
       then_block, else_block = new_blocks "then", "else"
 
       request_value do
@@ -1114,7 +1138,11 @@ module Crystal
       resulting_type = node.type
       non_nilable_type = node.non_nilable_type
 
-      if node.upcast?
+      filtered_type = obj_type.filter_by(to_type)
+
+      if !filtered_type
+        @last = upcast llvm_nil, resulting_type, @program.nil
+      elsif node.upcast?
         @last = upcast last_value, non_nilable_type, obj_type
         @last = upcast @last, resulting_type, non_nilable_type
       elsif obj_type != non_nilable_type

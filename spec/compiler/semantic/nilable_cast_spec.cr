@@ -4,7 +4,7 @@ describe "Semantic: nilable cast" do
   it "types as?" do
     assert_type(%(
       1.as?(Float64)
-      )) { nil_type }
+      )) { nilable float64 }
   end
 
   it "types as? with union" do

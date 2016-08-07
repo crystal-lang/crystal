@@ -230,4 +230,41 @@ describe "Code gen: if" do
       1
       )).to_i.should eq(1)
   end
+
+  it "restricts with || always falsey" do
+    run(%(
+      t = 1
+      if t.is_a?(String) || t.is_a?(String)
+        t
+      else
+        2
+      end
+      )).to_i.should eq(2)
+  end
+
+  it "considers or truthy/falsey right" do
+    run(%(
+      t = 1 || 'a'
+      if t.is_a?(Char) || t.is_a?(Char)
+        1
+      else
+        2
+      end
+      )).to_i.should eq(2)
+  end
+
+  it "codegens #3104" do
+    codegen(%(
+      def foo
+        yield
+      end
+
+      x = typeof(nil && 1)
+      foo do
+        if x
+        end
+      end
+      x
+      ))
+  end
 end
