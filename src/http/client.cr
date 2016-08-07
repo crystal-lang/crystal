@@ -96,7 +96,7 @@ class HTTP::Client
   @connect_timeout : Float64?
   @read_timeout : Float64?
 
-  getter handlers : HTTP::Client::Handler?
+  getter handler : HTTP::Client::Handler?
 
   # Creates a new HTTP client with the given *host*, *port* and *tls*
   # configurations. If no port is given, the default one will
@@ -113,7 +113,7 @@ class HTTP::Client
 
       @port = (port || (@tls ? 443 : 80)).to_i
       @compress = true
-      @handlers = HTTP::Client.build_middleware(handlers)
+      @handler = HTTP::Client.build_middleware(handlers)
     end
   {% else %}
     def initialize(host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false, handlers = [] of Handler)
@@ -129,7 +129,7 @@ class HTTP::Client
 
       @port = (port || (@tls ? 443 : 80)).to_i
       @compress = true
-      @handlers = HTTP::Client.build_middleware(handlers)
+      @handler = HTTP::Client.build_middleware(handlers)
     end
   {% end %}
 
@@ -450,6 +450,7 @@ class HTTP::Client
   # ```
   def exec(request : HTTP::Request) : HTTP::Client::Response
     execute_callbacks(request)
+    @handler.try &.call(request)
     exec_internal(request)
   end
 
@@ -460,6 +461,7 @@ class HTTP::Client
     response = HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress).tap do |response|
       close unless response.keep_alive?
     end
+    @handler.try &.call(response)
 
     response
   end
@@ -475,6 +477,7 @@ class HTTP::Client
   # ```
   def exec(request : HTTP::Request, &block)
     execute_callbacks(request)
+    @handler.try &.call(request)
     exec_internal(request) do |response|
       yield response
     end

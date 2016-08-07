@@ -17,14 +17,14 @@ abstract class HTTP::Client::Handler
   property next : Handler | Nil
 
   def call(request : HTTP::Request) : HTTP::Request
-    call_next(response)
+    call_next(request)
   end
 
   def call(response : HTTP::Client::Response) : HTTP::Client::Response
     call_next(response)
   end
 
-  def call_next(context)
+  def call_next(context : HTTP::Client::Response | HTTP::Request)
     if next_handler = @next
       next_handler.call(context)
     else
