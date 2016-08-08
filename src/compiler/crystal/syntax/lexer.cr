@@ -1808,7 +1808,7 @@ module Crystal
           old_pos = current_pos
           old_column = @column_number
 
-          while current_char == ' '
+          while current_char == ' ' || current_char == '\t'
             next_char
           end
 

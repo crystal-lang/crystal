@@ -1145,6 +1145,8 @@ describe "Parser" do
   it_parses "<<-FOO\n1\nFOO.bar", Call.new("1".string, "bar")
   it_parses "<<-FOO\n1\nFOO + 2", Call.new("1".string, "+", 2.int32)
 
+  it_parses "<<-FOO\n\t1\n\tFOO", StringLiteral.new("1")
+
   it_parses "enum Foo; A\nB, C\nD = 1; end", EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)
   it_parses "enum Foo; A = 1, B; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)
   it_parses "enum Foo : UInt16; end", EnumDef.new("Foo".path, base_type: "UInt16".path)
