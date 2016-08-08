@@ -143,22 +143,6 @@ describe HTTP::WebSocket do
       String.new(buffer[0, 1023]).should eq("x" * 1023)
     end
 
-    it "read longer packet" do
-      data_slice = Slice(UInt8).new(4 + 0x0100)
-      header = packet(0x82, 126_u8, 0x01, 0x00)
-      data_slice.copy_from(header,4)
-
-      data = data_slice.pointer(data_slice.bytesize)
-
-      io = PointerIO.new(pointerof(data))
-      ws = HTTP::WebSocket::Protocol.new(io)
-
-      buffer = Slice(UInt8).new(0x0100)
-
-      result = ws.receive(buffer)
-      assert_binary_packet result, 0x0100, final: true
-    end
-
     it "read very long packet" do
       data_slice = Slice(UInt8).new(10 + 0x010000)
       header = packet(0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00)
