@@ -146,7 +146,7 @@ describe HTTP::WebSocket do
     it "read very long packet" do
       data_slice = Slice(UInt8).new(10 + 0x010000)
       header = packet(0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00)
-      data_slice.copy_from(header,10)
+      data_slice.copy_from(header, 10)
 
       data = data_slice.pointer(data_slice.bytesize)
 
