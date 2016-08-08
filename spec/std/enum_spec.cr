@@ -8,6 +8,7 @@ end
 
 enum SpecEnum2
   FourtyTwo
+  FOURTY_FOUR
 end
 
 @[Flags]
@@ -104,7 +105,17 @@ describe Enum do
     SpecEnum.parse("Two").should eq(SpecEnum::Two)
     SpecEnum2.parse("FourtyTwo").should eq(SpecEnum2::FourtyTwo)
     SpecEnum2.parse("fourty_two").should eq(SpecEnum2::FourtyTwo)
-    expect_raises(Exception, "Unknown enum SpecEnum value: Four") { SpecEnum.parse("Four") }
+    expect_raises(ArgumentError, "Unknown enum SpecEnum value: Four") { SpecEnum.parse("Four") }
+
+    SpecEnum.parse("TWO").should eq(SpecEnum::Two)
+    SpecEnum.parse("TwO").should eq(SpecEnum::Two)
+    SpecEnum2.parse("FOURTY_TWO").should eq(SpecEnum2::FourtyTwo)
+
+    SpecEnum2.parse("FOURTY_FOUR").should eq(SpecEnum2::FOURTY_FOUR)
+    SpecEnum2.parse("fourty_four").should eq(SpecEnum2::FOURTY_FOUR)
+    SpecEnum2.parse("FourtyFour").should eq(SpecEnum2::FOURTY_FOUR)
+    SpecEnum2.parse("FOURTYFOUR").should eq(SpecEnum2::FOURTY_FOUR)
+    SpecEnum2.parse("fourtyfour").should eq(SpecEnum2::FOURTY_FOUR)
   end
 
   it "parses?" do
