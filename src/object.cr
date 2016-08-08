@@ -584,21 +584,19 @@ class Object
   # ```
   macro setter(*names)
     {% for name in names %}
-      {% for name in names %}
-        {% if name.is_a?(TypeDeclaration) %}
-          @{{name}}
+      {% if name.is_a?(TypeDeclaration) %}
+        @{{name}}
 
-          def {{name.var.id}}=(@{{name.var.id}} : {{name.type}})
-          end
-        {% elsif name.is_a?(Assign) %}
-          @{{name}}
+        def {{name.var.id}}=(@{{name.var.id}} : {{name.type}})
+        end
+      {% elsif name.is_a?(Assign) %}
+        @{{name}}
 
-          def {{name.target.id}}=(@{{name.target.id}})
-          end
-        {% else %}
-          def {{name.id}}=(@{{name.id}})
-          end
-        {% end %}
+        def {{name.target.id}}=(@{{name.target.id}})
+        end
+      {% else %}
+        def {{name.id}}=(@{{name.id}})
+        end
       {% end %}
     {% end %}
   end
