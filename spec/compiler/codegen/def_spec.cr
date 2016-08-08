@@ -229,7 +229,7 @@ describe "Code gen: def" do
   end
 
   it "codegens recursive nasty code" do
-    run("
+    codegen("
       class Foo
         def initialize(x)
         end
