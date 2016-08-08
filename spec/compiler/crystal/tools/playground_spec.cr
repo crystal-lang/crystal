@@ -131,6 +131,8 @@ describe Playground::AgentInstrumentorTransformer do
   it "instrument puts with args" do
     assert_agent %(puts 3), %(puts($p.i(1) { 3 }))
     assert_agent %(puts a, 2, b), %(puts(*$p.i(1, ["a", "2", "b"]) { {a, 2, b} }))
+    assert_agent %(puts *{3}), %(puts(*$p.i(1, ["3"]) { {3} }))
+    assert_agent %(puts *{3,a}), %(puts(*$p.i(1, ["3", "a"]) { {3,a} }))
     assert_agent_eq %(puts), %(puts)
   end
 
