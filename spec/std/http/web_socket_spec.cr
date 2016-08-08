@@ -318,7 +318,3 @@ describe HTTP::WebSocket do
   typeof(HTTP::WebSocket.new("localhost", "/"))
   typeof(HTTP::WebSocket.new("ws://localhost"))
 end
-
-describe HTTP::WebSocket::Protocol do
-
-end
