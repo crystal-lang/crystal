@@ -90,6 +90,20 @@ module Crystal
     def varargs?
       false
     end
+
+    # Returns `self` as an `External` if this Def must be considered
+    # an external in the codegen, meaning we need to respect the C ABI.
+    # The only case where this is not true if for LLVM instrinsics.
+    # For example overflow intrincis return a tuple, like {i32, i1}:
+    # in C ABI that is represented as i64, but we need to keep the original
+    # type here, respecting LLVM types, not the C ABI.
+    def considered_external?
+      if self.is_a?(External) && !self.real_name.starts_with?("llvm.")
+        self
+      else
+        nil
+      end
+    end
   end
 
   class External

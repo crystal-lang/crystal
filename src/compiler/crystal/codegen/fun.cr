@@ -135,8 +135,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
-    if target_def.is_a?(External)
-      codegen_fun_signature_external(mangled_name, target_def)
+    if external = target_def.considered_external?
+      codegen_fun_signature_external(mangled_name, external)
     else
       codegen_fun_signature_non_external(mangled_name, target_def, self_type, is_fun_literal, is_closure)
     end
@@ -184,7 +184,7 @@ class Crystal::CodeGenVisitor
 
     setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
 
-    if @single_module && !target_def.no_inline?
+    if @single_module && !target_def.no_inline? && target_def.considered_external?
       context.fun.linkage = LLVM::Linkage::Internal
     end
 

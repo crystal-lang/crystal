@@ -176,4 +176,15 @@ describe "Code gen: primitives" do
       $x
       )).to_i.should eq(2)
   end
+
+  it "uses built-in llvm function that returns a tuple" do
+    run(%(
+      lib Intrinsics
+        fun sadd_i32_with_overlow = "llvm.sadd.with.overflow.i32"(a : Int32, b : Int32) : {Int32, Bool}
+      end
+
+      x, o = Intrinsics.sadd_i32_with_overlow(1, 2)
+      x
+      )).to_i.should eq(3)
+  end
 end
