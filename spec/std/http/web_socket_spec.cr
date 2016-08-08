@@ -9,6 +9,10 @@ private def assert_text_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
 end
 
+private def assert_binary_packet(packet, size, final = false)
+  assert_packet packet, HTTP::WebSocket::Protocol::Opcode::BINARY, size, final: final
+end
+
 private def assert_ping_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::PING, size, final: final
 end
@@ -137,6 +141,22 @@ describe HTTP::WebSocket do
       result = ws.receive(buffer)
       assert_text_packet result, 1023, final: true
       String.new(buffer[0, 1023]).should eq("x" * 1023)
+    end
+
+    it "read very long packet" do
+      data_slice = Slice(UInt8).new(10 + 0x010000)
+      header = packet(0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00)
+      data_slice.copy_from(header, 10)
+
+      data = data_slice.pointer(data_slice.bytesize)
+
+      io = PointerIO.new(pointerof(data))
+      ws = HTTP::WebSocket::Protocol.new(io)
+
+      buffer = Slice(UInt8).new(0x010000)
+
+      result = ws.receive(buffer)
+      assert_binary_packet result, 0x010000, final: true
     end
 
     it "can read a close packet" do

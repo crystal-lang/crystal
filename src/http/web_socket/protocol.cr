@@ -38,7 +38,7 @@ class HTTP::WebSocket::Protocol
     @mask = uninitialized UInt8[4]
     @mask_offset = 0
     @opcode = Opcode::CONTINUATION
-    @remaining = 0
+    @remaining = 0_u64
     @masked = !!masked
   end
 
@@ -177,13 +177,13 @@ class HTTP::WebSocket::Protocol
   end
 
   private def read_size
-    size = (@header[1] & 0x7f_u8).to_i
+    size = (@header[1] & 0x7f_u8).to_u64
     if size == 126
-      size = 0
+      size = 0_u64
       2.times { size <<= 8; size += @io.read_byte.not_nil! }
     elsif size == 127
-      size = 0
-      4.times { size <<= 8; size += @io.read_byte.not_nil! }
+      size = 0_u64
+      8.times { size <<= 8; size += @io.read_byte.not_nil! }
     end
     size
   end
