@@ -20,179 +20,179 @@ end
 # This class is the exception thrown when errno errors are encountered.
 class Errno < Exception
   # Operation not permitted
-  EPERM           = LibC::EPERM
+  EPERM = LibC::EPERM
   # No such file or directory
-  ENOENT          = LibC::ENOENT
+  ENOENT = LibC::ENOENT
   # No such process
-  ESRCH           = LibC::ESRCH
+  ESRCH = LibC::ESRCH
   # Interrupted system call
-  EINTR           = LibC::EINTR
+  EINTR = LibC::EINTR
   # Input/output error
-  EIO             = LibC::EIO
+  EIO = LibC::EIO
   # Device not configured
-  ENXIO           = LibC::ENXIO
+  ENXIO = LibC::ENXIO
   # Exec format error
-  ENOEXEC         = LibC::ENOEXEC
+  ENOEXEC = LibC::ENOEXEC
   # Bad file descriptor
-  EBADF           = LibC::EBADF
+  EBADF = LibC::EBADF
   # No child processes
-  ECHILD          = LibC::ECHILD
+  ECHILD = LibC::ECHILD
   # Resource deadlock avoided
-  EDEADLK         = LibC::EDEADLK
+  EDEADLK = LibC::EDEADLK
   # Cannot allocate memory
-  ENOMEM          = LibC::ENOMEM
+  ENOMEM = LibC::ENOMEM
   # Permission denied
-  EACCES          = LibC::EACCES
+  EACCES = LibC::EACCES
   # Bad address
-  EFAULT          = LibC::EFAULT
+  EFAULT = LibC::EFAULT
   # Block device required
-  ENOTBLK         = LibC::ENOTBLK
+  ENOTBLK = LibC::ENOTBLK
   # Device / Resource busy
-  EBUSY           = LibC::EBUSY
+  EBUSY = LibC::EBUSY
   # File exists
-  EEXIST          = LibC::EEXIST
+  EEXIST = LibC::EEXIST
   # Cross-device link
-  EXDEV           = LibC::EXDEV
+  EXDEV = LibC::EXDEV
   # Operation not supported by device
-  ENODEV          = LibC::ENODEV
+  ENODEV = LibC::ENODEV
   # Not a directory
-  ENOTDIR         = LibC::ENOTDIR
+  ENOTDIR = LibC::ENOTDIR
   # Is a directory
-  EISDIR          = LibC::EISDIR
+  EISDIR = LibC::EISDIR
   # Invalid argument
-  EINVAL          = LibC::EINVAL
+  EINVAL = LibC::EINVAL
   # Too many open files in system
-  ENFILE          = LibC::ENFILE
+  ENFILE = LibC::ENFILE
   # Too many open files
-  EMFILE          = LibC::EMFILE
+  EMFILE = LibC::EMFILE
   # Inappropriate ioctl for device
-  ENOTTY          = LibC::ENOTTY
+  ENOTTY = LibC::ENOTTY
   # Text file busy
-  ETXTBSY         = LibC::ETXTBSY
+  ETXTBSY = LibC::ETXTBSY
   # File too large
-  EFBIG           = LibC::EFBIG
+  EFBIG = LibC::EFBIG
   # No space left on device
-  ENOSPC          = LibC::ENOSPC
+  ENOSPC = LibC::ENOSPC
   # Illegal seek
-  ESPIPE          = LibC::ESPIPE
+  ESPIPE = LibC::ESPIPE
   # Read-only file system
-  EROFS           = LibC::EROFS
+  EROFS = LibC::EROFS
   # Too many links
-  EMLINK          = LibC::EMLINK
+  EMLINK = LibC::EMLINK
   # Broken pipe
-  EPIPE           = LibC::EPIPE
+  EPIPE = LibC::EPIPE
   # Numerical argument out of domain
-  EDOM            = LibC::EDOM
+  EDOM = LibC::EDOM
   # Result too large
-  ERANGE          = LibC::ERANGE
+  ERANGE = LibC::ERANGE
   # Resource temporarily unavailable
-  EAGAIN          = LibC::EAGAIN
+  EAGAIN = LibC::EAGAIN
   # Operation would block
-  EWOULDBLOCK     = LibC::EWOULDBLOCK
+  EWOULDBLOCK = LibC::EWOULDBLOCK
   # Operation now in progress
-  EINPROGRESS     = LibC::EINPROGRESS
+  EINPROGRESS = LibC::EINPROGRESS
   # Operation already in progress
-  EALREADY        = LibC::EALREADY
+  EALREADY = LibC::EALREADY
   # Socket operation on non-socket
-  ENOTSOCK        = LibC::ENOTSOCK
+  ENOTSOCK = LibC::ENOTSOCK
   # Destination address required
-  EDESTADDRREQ    = LibC::EDESTADDRREQ
+  EDESTADDRREQ = LibC::EDESTADDRREQ
   # Message too long
-  EMSGSIZE        = LibC::EMSGSIZE
+  EMSGSIZE = LibC::EMSGSIZE
   # Protocol wrong type for socket
-  EPROTOTYPE      = LibC::EPROTOTYPE
+  EPROTOTYPE = LibC::EPROTOTYPE
   # Protocol not available
-  ENOPROTOOPT     = LibC::ENOPROTOOPT
+  ENOPROTOOPT = LibC::ENOPROTOOPT
   # Protocol not supported
   EPROTONOSUPPORT = LibC::EPROTONOSUPPORT
   # Socket type not supported
   ESOCKTNOSUPPORT = LibC::ESOCKTNOSUPPORT
   # Protocol family not supported
-  EPFNOSUPPORT    = LibC::EPFNOSUPPORT
+  EPFNOSUPPORT = LibC::EPFNOSUPPORT
   # Address family not supported by protocol family
-  EAFNOSUPPORT    = LibC::EAFNOSUPPORT
+  EAFNOSUPPORT = LibC::EAFNOSUPPORT
   # Address already in use
-  EADDRINUSE      = LibC::EADDRINUSE
+  EADDRINUSE = LibC::EADDRINUSE
   # Can't assign requested address
-  EADDRNOTAVAIL   = LibC::EADDRNOTAVAIL
+  EADDRNOTAVAIL = LibC::EADDRNOTAVAIL
   # Network is down
-  ENETDOWN        = LibC::ENETDOWN
+  ENETDOWN = LibC::ENETDOWN
   # Network is unreachable
-  ENETUNREACH     = LibC::ENETUNREACH
+  ENETUNREACH = LibC::ENETUNREACH
   # Network dropped connection on reset
-  ENETRESET       = LibC::ENETRESET
+  ENETRESET = LibC::ENETRESET
   # Software caused connection abort
-  ECONNABORTED    = LibC::ECONNABORTED
+  ECONNABORTED = LibC::ECONNABORTED
   # Connection reset by peer
-  ECONNRESET      = LibC::ECONNRESET
+  ECONNRESET = LibC::ECONNRESET
   # No buffer space available
-  ENOBUFS         = LibC::ENOBUFS
+  ENOBUFS = LibC::ENOBUFS
   # Socket is already connected
-  EISCONN         = LibC::EISCONN
+  EISCONN = LibC::EISCONN
   # Socket is not connected
-  ENOTCONN        = LibC::ENOTCONN
+  ENOTCONN = LibC::ENOTCONN
   # Can't send after socket shutdown
-  ESHUTDOWN       = LibC::ESHUTDOWN
+  ESHUTDOWN = LibC::ESHUTDOWN
   # Too many references: can't splice
-  ETOOMANYREFS    = LibC::ETOOMANYREFS
+  ETOOMANYREFS = LibC::ETOOMANYREFS
   # Operation timed out
-  ETIMEDOUT       = LibC::ETIMEDOUT
+  ETIMEDOUT = LibC::ETIMEDOUT
   # Connection refused
-  ECONNREFUSED    = LibC::ECONNREFUSED
+  ECONNREFUSED = LibC::ECONNREFUSED
   # Too many levels of symbolic links
-  ELOOP           = LibC::ELOOP
+  ELOOP = LibC::ELOOP
   # File name too long
-  ENAMETOOLONG    = LibC::ENAMETOOLONG
+  ENAMETOOLONG = LibC::ENAMETOOLONG
   # Host is down
-  EHOSTDOWN       = LibC::EHOSTDOWN
+  EHOSTDOWN = LibC::EHOSTDOWN
   # No route to host
-  EHOSTUNREACH    = LibC::EHOSTUNREACH
+  EHOSTUNREACH = LibC::EHOSTUNREACH
   # Directory not empty
-  ENOTEMPTY       = LibC::ENOTEMPTY
+  ENOTEMPTY = LibC::ENOTEMPTY
   # Too many users
-  EUSERS          = LibC::EUSERS
+  EUSERS = LibC::EUSERS
   # Disc quota exceeded
-  EDQUOT          = LibC::EDQUOT
+  EDQUOT = LibC::EDQUOT
   # Stale NFS file handle
-  ESTALE          = LibC::ESTALE
+  ESTALE = LibC::ESTALE
   # Too many levels of remote in path
-  EREMOTE         = LibC::EREMOTE
+  EREMOTE = LibC::EREMOTE
   # No locks available
-  ENOLCK          = LibC::ENOLCK
+  ENOLCK = LibC::ENOLCK
   # Function not implemented
-  ENOSYS          = LibC::ENOSYS
+  ENOSYS = LibC::ENOSYS
   # Value too large to be stored in data type
-  EOVERFLOW       = LibC::EOVERFLOW
+  EOVERFLOW = LibC::EOVERFLOW
   # Operation canceled
-  ECANCELED       = LibC::ECANCELED
+  ECANCELED = LibC::ECANCELED
   # Identifier removed
-  EIDRM           = LibC::EIDRM
+  EIDRM = LibC::EIDRM
   # No message of desired type
-  ENOMSG          = LibC::ENOMSG
+  ENOMSG = LibC::ENOMSG
   # Illegal byte sequence
-  EILSEQ          = LibC::EILSEQ
+  EILSEQ = LibC::EILSEQ
   # Bad message
-  EBADMSG         = LibC::EBADMSG
+  EBADMSG = LibC::EBADMSG
   # Reserved
-  EMULTIHOP       = LibC::EMULTIHOP
+  EMULTIHOP = LibC::EMULTIHOP
   # No message available on STREAM
-  ENODATA         = LibC::ENODATA
+  ENODATA = LibC::ENODATA
   # Reserved
-  ENOLINK         = LibC::ENOLINK
+  ENOLINK = LibC::ENOLINK
   # No STREAM resources
-  ENOSR           = LibC::ENOSR
+  ENOSR = LibC::ENOSR
   # Not a STREAM
-  ENOSTR          = LibC::ENOSTR
+  ENOSTR = LibC::ENOSTR
   # Protocol error
-  EPROTO          = LibC::EPROTO
+  EPROTO = LibC::EPROTO
   # STREAM ioctl timeout
-  ETIME           = LibC::ETIME
+  ETIME = LibC::ETIME
   # Operation not supported on socket
-  EOPNOTSUPP      = LibC::EOPNOTSUPP
+  EOPNOTSUPP = LibC::EOPNOTSUPP
   # State not recoverable
   ENOTRECOVERABLE = LibC::ENOTRECOVERABLE
   # Previous owner died
-  EOWNERDEAD      = LibC::EOWNERDEAD
+  EOWNERDEAD = LibC::EOWNERDEAD
 
   # Returns the numeric value of errno.
   getter errno : Int32
