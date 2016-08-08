@@ -289,11 +289,6 @@ module Crystal
       to_type = to.type
 
       if obj_type && !(obj_type.pointer? || to_type.pointer?)
-        if obj_type.no_return?
-          self.type = obj_type
-          return
-        end
-
         filtered_type = obj_type.filter_by(to_type)
 
         # If the filtered type didn't change it means that an
@@ -324,11 +319,6 @@ module Crystal
       to_type = to.type
 
       if obj_type
-        if obj_type.no_return?
-          self.type = obj_type
-          return
-        end
-
         filtered_type = obj_type.filter_by(to_type)
 
         # If the filtered type didn't change it means that an
