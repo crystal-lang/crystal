@@ -286,9 +286,8 @@ module Enumerable(T)
   def in_groups_of(size : Int, filled_up_with : U = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
 
-    ary = Array(Array(T|U)).new
-    each_slice(size) do |slice|
-      group = slice.size < size ? slice + [filled_up_with] : slice
+    ary = Array(Array(T | U)).new
+    in_groups_of(size, filled_up_with) do |group|
       ary << group
     end
     ary
@@ -300,7 +299,7 @@ module Enumerable(T)
   #     #=> 3
   #     #=> 4
   #
-  def in_groups_of(size : Int, filled_up_with : U = nil)
+  def in_groups_of(size : Int, filled_up_with : U = nil, &block)
     raise ArgumentError.new("size must be positive") if size <= 0
 
     each_slice(size) do |slice|
