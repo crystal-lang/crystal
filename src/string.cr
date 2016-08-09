@@ -1187,9 +1187,9 @@ class String
   # "aabbcc".tr("a", "xyz")   # => "xxbbcc"
   # ```
   def tr(from : String, to : String)
+    raise ArgumentError.new("missing replacement") if to.empty?
     multi = nil
     table = StaticArray(Int32, 256).new(-1)
-    raise ArgumentError.new("to can't be empty") if to.empty?
     reader = Char::Reader.new(to)
     char = reader.current_char
     next_char = reader.next_char
