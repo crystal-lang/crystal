@@ -17,9 +17,9 @@ module Crystal
     filename
   end
 
-  def self.error(msg, color, exit_code = 1)
-    STDERR.print "Error: ".colorize.toggle(color).red.bold
-    STDERR.puts msg.colorize.toggle(color).bright
+  def self.error(msg, color, exit_code = 1, stderr = STDERR)
+    stderr.print "Error: ".colorize.toggle(color).red.bold
+    stderr.puts msg.colorize.toggle(color).bright
     exit(exit_code) if exit_code
   end
 

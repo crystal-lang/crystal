@@ -102,6 +102,9 @@ module Crystal
     # The constant for ARGV_UNSAFE
     getter! argv : Const
 
+    # Default standard output to use in a program, while compiling.
+    property stdout : IO = STDOUT
+
     def initialize
       super(self, self, "main")
 

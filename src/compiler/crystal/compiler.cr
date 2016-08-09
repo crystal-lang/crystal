@@ -69,7 +69,7 @@ module Crystal
     # one LLVM module is created for each type in a program.
     property? single_module = false
 
-    # If `true`, prints time and memory stats to STDOUT.
+    # If `true`, prints time and memory stats to `stdout`.
     property? stats = false
 
     # Target triple to use in the compilation.
@@ -99,6 +99,12 @@ module Crystal
     # to keep the most recent 10 directories used. If this is set
     # to `false` that cleanup is not performed.
     property? cleanup = true
+
+    # Default standard output to use in a compilation.
+    property stdout : IO = STDOUT
+
+    # Default standard error to use in a compilation.
+    property stderr : IO = STDERR
 
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
@@ -143,6 +149,7 @@ module Crystal
       program.flags.merge @flags
       program.wants_doc = wants_doc?
       program.color = color?
+      program.stdout = stdout
       program
     end
 
@@ -170,9 +177,9 @@ module Crystal
       parser.wants_doc = wants_doc?
       parser.parse
     rescue ex : InvalidByteSequenceError
-      print colorize("Error: ").red.bold
-      print colorize("file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ").bold
-      puts "#{ex.message}"
+      stdout.print colorize("Error: ").red.bold
+      stdout.print colorize("file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ").bold
+      stdout.puts "#{ex.message}"
       exit 1
     end
 
@@ -227,7 +234,7 @@ module Crystal
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
-      puts "#{CC} #{object_name} -o #{output_filename} #{@link_flags} #{lib_flags}"
+      stdout.puts "#{CC} #{object_name} -o #{output_filename} #{@link_flags} #{lib_flags}"
     end
 
     private def codegen(program, units : Array(CompilationUnit), lib_flags, output_filename, output_dir)
@@ -312,9 +319,9 @@ module Crystal
         TargetMachine.create(triple, @mcpu || "", @release)
       end
     rescue ex : ArgumentError
-      print colorize("Error: ").red.bold
-      print "llc: "
-      puts "#{ex.message}"
+      stdout.print colorize("Error: ").red.bold
+      stdout.print "llc: "
+      stdout.puts "#{ex.message}"
       exit 1
     end
 
@@ -353,7 +360,7 @@ module Crystal
     end
 
     private def system(command, args = nil)
-      puts "#{command} #{args.join " "}" if verbose?
+      stdout.puts "#{command} #{args.join " "}" if verbose?
 
       ::system(command, args)
       unless $?.success?
@@ -364,7 +371,7 @@ module Crystal
     end
 
     private def error(msg, exit_code = 1)
-      Crystal.error msg, @color, exit_code
+      Crystal.error msg, @color, exit_code, stderr: stderr
     end
 
     private def colorize(obj)
