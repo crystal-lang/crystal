@@ -30,7 +30,7 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   # The special constants ARGC_UNSAFE and ARGV_UNSAFE need to be initialized
-  # as soon as the program starts, because we have access to argc and arv
+  # as soon as the program starts, because we have access to argc and argv
   # in the main function
   def initialize_argv_and_argc
     {"ARGC_UNSAFE", "ARGV_UNSAFE"}.each do |name|
