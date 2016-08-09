@@ -1391,18 +1391,26 @@ describe "String" do
     s.bytesize.should eq(3)
   end
 
-  it "tr" do
-    "bla".tr("a", "h").should eq("blh")
-    "bla".tr("a", "⊙").should eq("bl⊙")
-    "bl⊙a".tr("⊙", "a").should eq("blaa")
-    "bl⊙a".tr("⊙", "ⓧ").should eq("blⓧa")
-    "bl⊙a⊙asdfd⊙dsfsdf⊙⊙⊙".tr("a⊙", "ⓧt").should eq("bltⓧtⓧsdfdtdsfsdfttt")
-    "hello".tr("aeiou", "*").should eq("h*ll*")
-    "hello".tr("el", "ip").should eq("hippo")
-    "Lisp".tr("Lisp", "Crys").should eq("Crys")
-    "hello".tr("helo", "1212").should eq("12112")
-    "this".tr("this", "ⓧ").should eq("ⓧⓧⓧⓧ")
-    "über".tr("ü", "u").should eq("uber")
+  describe "tr" do
+    it "translates" do
+      "bla".tr("a", "h").should eq("blh")
+      "bla".tr("a", "⊙").should eq("bl⊙")
+      "bl⊙a".tr("⊙", "a").should eq("blaa")
+      "bl⊙a".tr("⊙", "ⓧ").should eq("blⓧa")
+      "bl⊙a⊙asdfd⊙dsfsdf⊙⊙⊙".tr("a⊙", "ⓧt").should eq("bltⓧtⓧsdfdtdsfsdfttt")
+      "hello".tr("aeiou", "*").should eq("h*ll*")
+      "hello".tr("el", "ip").should eq("hippo")
+      "Lisp".tr("Lisp", "Crys").should eq("Crys")
+      "hello".tr("helo", "1212").should eq("12112")
+      "this".tr("this", "ⓧ").should eq("ⓧⓧⓧⓧ")
+      "über".tr("ü", "u").should eq("uber")
+    end
+
+    context "given no replacement characters" do
+      it "raises" do
+        expect_raises(ArgumentError) { "foo".tr "o", "" }
+      end
+    end
   end
 
   describe "compare" do
