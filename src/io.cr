@@ -350,11 +350,29 @@ module IO
   # Writes the formatted string to this IO. The format can include
   # format specifiers(subsequences beginning with %). The arguments
   # replace the format specifiers in the format string.
+  # The specifiers that can be supplied to the method are
+  # %s => strings
+  # %b => binary
+  # %o => octal
+  # %d => decimal
+  # %i => decimal
+  # %x => hexadecimal
+  # %X => hexadecimal
+  # %a, %A, %e, %E, %f, %g, %G => char
   #
   # ```
   # io = MemoryIO.new
   # io.printf("Hello %s", "Crystal")
   # io.to_s # => "Hello Crystal"
+  # ```
+  #
+  # When the number of arguments supplied are less than the
+  # number of format specifiers, an ArgumentError is thrown
+  #
+  # ```
+  # io = MemoryIO.new
+  # io.printf("Hello %s %s", "Crystal")
+  # => too few arguments (ArgumentError)
   # ```
   def printf(format_string, *args) : Nil
     printf format_string, args
