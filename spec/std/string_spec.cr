@@ -1407,8 +1407,8 @@ describe "String" do
     end
 
     context "given no replacement characters" do
-      it "raises" do
-        expect_raises(ArgumentError) { "foo".tr "o", "" }
+      it "acts as #delete" do
+        "foo".tr("o", "").should eq("foo".delete("o"))
       end
     end
   end
