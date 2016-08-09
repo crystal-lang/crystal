@@ -308,17 +308,10 @@ module Enumerable(T)
   #
   def in_groups_of(size : Int, filled_up_with : U = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
-    ary = Array(T | U).new(size, filled_up_with)
 
-    # TODO: this consumes the enumerable twice, fix
-    count = self.size
-
-    each_with_index do |e, i|
-      ary[i % size] = e
-      if i % size == size - 1 || i == count - 1
-        yield ary
-        ary = Array(T | U).new(size, filled_up_with)
-      end
+    each_slice(size) do |slice|
+      group = slice.size < size ? slice + [filled_up_with] : slice
+      yield group
     end
   end
 
