@@ -1030,6 +1030,8 @@ module Crystal
           check_type_declaration { parse_require }
         when :case
           check_type_declaration { parse_case }
+        when :select
+          check_type_declaration { parse_select }
         when :if
           check_type_declaration { parse_if }
         when :ifdef
@@ -2480,6 +2482,76 @@ module Crystal
         call
       else
         parse_op_assign_no_control
+      end
+    end
+
+    def parse_select
+      slash_is_regex!
+      next_token_skip_space
+      skip_statement_end
+
+      whens = [] of Select::When
+
+      while true
+        case @token.type
+        when :IDENT
+          case @token.value
+          when :when
+            slash_is_regex!
+            next_token_skip_space_or_newline
+
+            location = @token.location
+            condition = parse_op_assign_no_control
+            unless valid_select_when?(condition)
+              raise "invalid select when expression: must be an assignment or call", location
+            end
+
+            skip_space
+            unless when_expression_end
+              unexpected_token @token.to_s, "expecting then, ';' or newline"
+            end
+            skip_statement_end
+
+            body = parse_expressions
+            skip_space_or_newline
+
+            whens << Select::When.new(condition, body)
+          when :else
+            if whens.size == 0
+              unexpected_token @token.to_s, "expecting when"
+            end
+            slash_is_regex!
+            next_token_skip_statement_end
+            a_else = parse_expressions
+            skip_statement_end
+            check_ident :end
+            next_token
+            break
+          when :end
+            if whens.empty?
+              unexpected_token @token.to_s, "expecting when, else or end"
+            end
+            next_token
+            break
+          else
+            unexpected_token @token.to_s, "expecting when, else or end"
+          end
+        else
+          unexpected_token @token.to_s, "expecting when, else or end"
+        end
+      end
+
+      Select.new(whens, a_else)
+    end
+
+    def valid_select_when?(node)
+      case node
+      when Assign
+        node.value.is_a?(Call)
+      when Call
+        true
+      else
+        false
       end
     end
 

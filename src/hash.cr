@@ -526,7 +526,7 @@ class Hash(K, V)
   end
 
   def select(*keys)
-    select(keys)
+    self.select(keys)
   end
 
   # Removes every element except the given ones.

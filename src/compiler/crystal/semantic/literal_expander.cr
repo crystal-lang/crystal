@@ -467,6 +467,67 @@ module Crystal
       final_exp
     end
 
+    def expand(node : Select)
+      index_name = @program.new_temp_var_name
+      value_name = @program.new_temp_var_name
+
+      targets = [Var.new(index_name).at(node), Var.new(value_name).at(node)] of ASTNode
+      channel = Path.global("Channel").at(node)
+
+      tuple_values = [] of ASTNode
+      case_whens = [] of When
+
+      node.whens.each_with_index do |a_when, index|
+        condition = a_when.condition
+        case condition
+        when Call
+          cloned_call = condition.clone
+          cloned_call.name = select_action_name(cloned_call.name)
+          tuple_values << cloned_call
+
+          case_whens << When.new([NumberLiteral.new(index).at(node)] of ASTNode, a_when.body.clone)
+        when Assign
+          cloned_call = condition.value.as(Call).clone
+          cloned_call.name = select_action_name(cloned_call.name)
+          tuple_values << cloned_call
+
+          typeof_node = TypeOf.new([condition.value.clone] of ASTNode).at(node)
+          cast = Cast.new(Var.new(value_name).at(node), typeof_node).at(node)
+          new_assign = Assign.new(condition.target.clone, cast).at(node)
+          new_body = Expressions.new([new_assign, a_when.body.clone] of ASTNode)
+          case_whens << When.new([NumberLiteral.new(index).at(node)] of ASTNode, new_body)
+        else
+          node.raise "Bug: expected select when expression to be Assign or Call, not #{condition}"
+        end
+      end
+
+      if node_else = node.else
+        case_else = node_else.clone
+      else
+        case_else = Call.new(nil, "raise", args: [StringLiteral.new("Bug: invalid select index")] of ASTNode, global: true).at(node)
+      end
+
+      call_args = [TupleLiteral.new(tuple_values).at(node)] of ASTNode
+      call_args << BoolLiteral.new(true) if node.else
+
+      call = Call.new(channel, "select", call_args).at(node)
+      multi = MultiAssign.new(targets, [call] of ASTNode)
+      case_cond = Var.new(index_name).at(node)
+      a_case = Case.new(case_cond, case_whens, case_else).at(node)
+      Expressions.from([multi, a_case] of ASTNode).at(node)
+    end
+
+    def select_action_name(name)
+      case name
+      when .ends_with? "!"
+        name[0...-1] + "_select_action!"
+      when .ends_with? "?"
+        name[0...-1] + "_select_action?"
+      else
+        name + "_select_action"
+      end
+    end
+
     # Transform a multi assign into many assigns.
     def expand(node : MultiAssign)
       # From:

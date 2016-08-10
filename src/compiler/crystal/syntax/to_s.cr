@@ -1263,6 +1263,25 @@ module Crystal
       false
     end
 
+    def visit(node : Select)
+      @str << keyword("select")
+      newline
+      node.whens.each do |a_when|
+        @str << "when "
+        a_when.condition.accept self
+        newline
+        accept_with_indent a_when.body
+      end
+      if a_else = node.else
+        @str << "else"
+        newline
+        accept_with_indent a_else
+      end
+      @str << keyword("end")
+      newline
+      false
+    end
+
     def visit(node : ImplicitObj)
       false
     end

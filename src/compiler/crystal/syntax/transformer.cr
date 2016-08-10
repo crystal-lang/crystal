@@ -220,6 +220,18 @@ module Crystal
       node
     end
 
+    def transform(node : Select)
+      node.whens.map! do |a_when|
+        Select::When.new(a_when.condition.transform(self), a_when.body.transform(self))
+      end
+
+      if node_else = node.else
+        node.else = node_else.transform(self)
+      end
+
+      node
+    end
+
     def transform(node : ImplicitObj)
       node
     end

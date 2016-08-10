@@ -1,6 +1,13 @@
 require "fiber"
 
 abstract class Channel(T)
+  module SelectAction
+    abstract def ready?
+    abstract def execute
+    abstract def wait
+    abstract def unwait
+  end
+
   class ClosedError < Exception
     def initialize(msg = "Channel is closed")
       super(msg)
@@ -69,7 +76,7 @@ abstract class Channel(T)
   end
 
   def self.receive_first(channels : Tuple | Array)
-    select(channels.map(&.receive_op))[1]
+    self.select(channels.map(&.receive_select_action))[1]
   end
 
   def self.send_first(value, *channels)
@@ -77,15 +84,15 @@ abstract class Channel(T)
   end
 
   def self.send_first(value, channels : Tuple | Array)
-    select(channels.map(&.send_op(value)))
+    self.select(channels.map(&.send_select_action(value)))
     nil
   end
 
-  def self.select(*ops : SendOp | ReceiveOp)
-    select ops
+  def self.select(*ops : SelectAction)
+    self.select ops
   end
 
-  def self.select(ops : Tuple | Array)
+  def self.select(ops : Tuple | Array, has_else = false)
     loop do
       ops.each_with_index do |op, index|
         if op.ready?
@@ -94,21 +101,27 @@ abstract class Channel(T)
         end
       end
 
+      if has_else
+        return ops.size, nil
+      end
+
       ops.each &.wait
       Scheduler.reschedule
       ops.each &.unwait
     end
   end
 
-  def send_op(value : T)
-    SendOp(self, T).new(self, value)
+  def send_select_action(value : T)
+    SendAction.new(self, value)
   end
 
-  def receive_op
-    ReceiveOp(self, T).new(self)
+  def receive_select_action
+    ReceiveAction.new(self)
   end
 
-  struct ReceiveOp(C, T)
+  struct ReceiveAction(C)
+    include SelectAction
+
     def initialize(@channel : C)
     end
 
@@ -129,7 +142,9 @@ abstract class Channel(T)
     end
   end
 
-  struct SendOp(C, T)
+  struct SendAction(C, T)
+    include SelectAction
+
     def initialize(@channel : C, @value : T)
     end
 

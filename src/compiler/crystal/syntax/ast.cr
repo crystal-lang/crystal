@@ -1147,6 +1147,30 @@ module Crystal
     def_equals_and_hash @cond, @whens, @else
   end
 
+  class Select < ASTNode
+    record When, condition : ASTNode, body : ASTNode
+
+    property whens : Array(When)
+    property else : ASTNode?
+
+    def initialize(@whens, @else = nil)
+    end
+
+    def accept_children(visitor)
+      @whens.each do |select_when|
+        select_when.condition.accept visitor
+        select_when.body.accept visitor
+      end
+      @else.try &.accept visitor
+    end
+
+    def clone_without_location
+      Select.new(@whens.clone, @else.clone)
+    end
+
+    def_equals_and_hash @whens, @else
+  end
+
   # Node that represents an implicit obj in:
   #
   #     case foo

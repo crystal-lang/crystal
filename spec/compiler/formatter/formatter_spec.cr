@@ -449,6 +449,13 @@ describe Crystal::Formatter do
   assert_format "case 1\nwhen 1 then\n2\nwhen 3\n4\nend", "case 1\nwhen 1\n  2\nwhen 3\n  4\nend"
   assert_format "case  1 \n when 2 \n 3 \n else 4 \n end", "case 1\nwhen 2\n  3\nelse 4\nend"
 
+  assert_format "select   \n when  foo \n 2 \n end", "select\nwhen foo\n  2\nend"
+  assert_format "select   \n when  foo \n 2 \n when bar \n 3 \n end", "select\nwhen foo\n  2\nwhen bar\n  3\nend"
+  assert_format "select   \n when  foo  then  2 \n end", "select\nwhen foo then 2\nend"
+  assert_format "select   \n when  foo  ;  2 \n end", "select\nwhen foo; 2\nend"
+  assert_format "select   \n when  foo \n 2 \n else \n 3 \n end", "select\nwhen foo\n  2\nelse\n  3\nend"
+  assert_format "def foo\nselect   \n when  foo \n 2 \n else \n 3 \nend\nend", "def foo\n  select\n  when foo\n    2\n  else\n    3\n  end\nend"
+
   assert_format "foo.@bar"
 
   assert_format "@[Foo]"

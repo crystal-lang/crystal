@@ -257,7 +257,7 @@ module Enumerable(T)
   #     ["Alice", "Bob"].grep(/^A/)  #=> ["Alice"]
   #
   def grep(pattern)
-    select { |elem| pattern === elem }
+    self.select { |elem| pattern === elem }
   end
 
   # Returns a `Hash` whose keys are each different value that the passed block returned when run for each element in the
