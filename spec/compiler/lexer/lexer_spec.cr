@@ -128,7 +128,7 @@ describe "Lexer" do
   it_lexes_keywords [:def, :if, :else, :elsif, :end, :true, :false, :class, :module, :include,
     :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break,
     :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-    :case, :when, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
+    :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
     :pointerof, :sizeof, :instance_sizeof, :ifdef, :as, :as?, :typeof, :for, :in,
     :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",

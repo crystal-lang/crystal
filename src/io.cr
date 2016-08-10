@@ -86,7 +86,7 @@ module IO
   end
 
   def self.select(read_ios, write_ios = nil, error_ios = nil)
-    select(read_ios, write_ios, error_ios, nil).not_nil!
+    self.select(read_ios, write_ios, error_ios, nil).not_nil!
   end
 
   # Returns an array of all given IOs that are

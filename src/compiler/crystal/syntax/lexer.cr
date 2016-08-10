@@ -926,8 +926,15 @@ module Crystal
       when 's'
         case next_char
         when 'e'
-          if next_char == 'l' && next_char == 'f'
-            return check_ident_or_keyword(:self, start)
+          if next_char == 'l'
+            case next_char
+            when 'e'
+              if next_char == 'c' && next_char == 't'
+                return check_ident_or_keyword(:select, start)
+              end
+            when 'f'
+              return check_ident_or_keyword(:self, start)
+            end
           end
         when 'i'
           if next_char == 'z' && next_char == 'e' && next_char == 'o' && next_char == 'f'
