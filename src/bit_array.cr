@@ -30,7 +30,6 @@ struct BitArray
     @bits = Pointer(UInt32).malloc(malloc_size, value)
   end
 
-  # :nodoc:
   def unsafe_at(index : Int)
     bit_index, sub_index = index.divmod(32)
     (@bits[bit_index] & (1 << sub_index)) > 0

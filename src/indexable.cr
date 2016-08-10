@@ -22,7 +22,11 @@ module Indexable(T)
   #
   # Clients never invoke this method directly. Instead, they access
   # elements with `#[](index)` and `#[]?(index)`.
-  protected abstract def unsafe_at(index : Int)
+  #
+  # This method should only be directly invoked if you are absolutely
+  # sure the index is in bounds, to avoid a bounds check for a small boost
+  # of performance.
+  abstract def unsafe_at(index : Int)
 
   # Returns the element at the given index, if in bounds,
   # otherwise executes the given block and returns its value.

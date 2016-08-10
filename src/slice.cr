@@ -171,7 +171,6 @@ struct Slice(T)
     Slice.new(@pointer + start, count)
   end
 
-  # :nodoc:
   @[AlwaysInline]
   def unsafe_at(index : Int)
     @pointer[index]

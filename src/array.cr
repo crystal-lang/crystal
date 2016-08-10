@@ -496,7 +496,6 @@ class Array(T)
     end
   end
 
-  # :nodoc:
   @[AlwaysInline]
   def unsafe_at(index : Int)
     @buffer[index]

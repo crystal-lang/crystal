@@ -75,7 +75,6 @@ struct StaticArray(T, N)
     false
   end
 
-  # :nodoc:
   @[AlwaysInline]
   def unsafe_at(index : Int)
     to_unsafe[index]

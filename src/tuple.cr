@@ -120,7 +120,6 @@ struct Tuple
     {% end %}
   end
 
-  # :nodoc:
   def unsafe_at(index : Int)
     self[index]
   end

@@ -150,7 +150,6 @@ class Deque(T)
     @buffer[index] = value
   end
 
-  # :nodoc:
   def unsafe_at(index : Int)
     index += @start
     index -= @capacity if index >= @capacity
