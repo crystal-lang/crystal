@@ -22,7 +22,6 @@ module Crystal
   class Program < NonGenericModuleType
     include DefContainer
     include DefInstanceContainer
-    include MatchesLookup
 
     # All symbols (:foo, :bar) found in the program
     getter symbols = Set(String).new

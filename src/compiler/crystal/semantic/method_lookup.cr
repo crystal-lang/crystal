@@ -3,19 +3,44 @@ require "../types"
 module Crystal
   class Type
     def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil)
-      raise "Bug: #{self} doesn't implement lookup_matches"
+      matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array)
+      return matches if matches.cover_all?
+
+      matches_array = matches.matches
+
+      cover = matches.cover
+
+      is_new = owner.metaclass? && signature.name == "new"
+      if is_new
+        # For a `new` method we need to do this in case a `new` is defined
+        # in a module type
+        my_parents = instance_type.parents.try &.map(&.metaclass)
+      else
+        my_parents = parents
+      end
+
+      # `new` must only be searched in ancestors if this type itself doesn't define
+      # an `initialize` or `self.new` method. This was already computed in `new.cr`
+      # and can be known by invoking `lookup_new_in_ancestors?`
+      if my_parents && !(!lookup_new_in_ancestors? && is_new)
+        my_parents.each do |parent|
+          # If this is a generic instance type and our parent is the generic class, use
+          # this type as the type lookup (so we can find type arguments)
+          path_lookup = parent
+          path_lookup = self if self.is_a?(GenericClassInstanceType) && path_lookup == self.generic_class
+
+          matches = parent.lookup_matches(signature, owner, path_lookup, matches_array)
+          if matches.cover_all?
+            return matches
+          else
+            matches_array = matches.matches
+          end
+        end
+      end
+
+      Matches.new(matches_array, cover, owner, false)
     end
 
-    def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = nil)
-      raise "Bug: #{self} doesn't implement lookup_matches_without_parents"
-    end
-
-    def lookup_matches_with_modules(signature, owner = self, path_lookup = self, matches_array = nil)
-      raise "Bug: #{self} doesn't implement lookup_matches_with_modules"
-    end
-  end
-
-  module MatchesLookup
     def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = nil)
       if defs = self.defs.try &.[signature.name]?
         context = MatchContext.new(owner, path_lookup)
@@ -30,7 +55,7 @@ module Crystal
           macro_owner = item.def.macro_owner?
           context.defining_type = macro_owner if macro_owner
 
-          match = MatchesLookup.match_def(signature, item, context)
+          match = signature.match(item, context)
 
           context.defining_type = path_lookup if macro_owner
 
@@ -96,47 +121,12 @@ module Crystal
 
       Matches.new(matches_array, Cover.create(signature, matches_array), owner, false)
     end
+  end
 
-    def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil)
-      matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array)
-      return matches if matches.cover_all?
+  struct CallSignature
+    def match(def_metadata, context)
+      signature = self
 
-      matches_array = matches.matches
-
-      cover = matches.cover
-
-      is_new = owner.metaclass? && signature.name == "new"
-      if is_new
-        # For a `new` method we need to do this in case a `new` is defined
-        # in a module type
-        my_parents = instance_type.parents.try &.map(&.metaclass)
-      else
-        my_parents = parents
-      end
-
-      # `new` must only be searched in ancestors if this type itself doesn't define
-      # an `initialize` or `self.new` method. This was already computed in `new.cr`
-      # and can be known by invoking `lookup_new_in_ancestors?`
-      if my_parents && !(!lookup_new_in_ancestors? && is_new)
-        my_parents.each do |parent|
-          # If this is a generic instance type and our parent is the generic class, use
-          # this type as the type lookup (so we can find type arguments)
-          path_lookup = parent
-          path_lookup = self if self.is_a?(GenericClassInstanceType) && path_lookup == self.generic_class
-
-          matches = parent.lookup_matches(signature, owner, path_lookup, matches_array)
-          if matches.cover_all?
-            return matches
-          else
-            matches_array = matches.matches
-          end
-        end
-      end
-
-      Matches.new(matches_array, cover, owner, false)
-    end
-
-    def self.match_def(signature, def_metadata, context)
       # If yieldness isn't the same there's no match
       if def_metadata.yields != !!signature.block
         return nil

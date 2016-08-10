@@ -610,7 +610,7 @@ class Crystal::Call
     match = Match.new(previous, arg_types, context, named_args_types)
     matches = Matches.new([match] of Match, true)
 
-    unless MatchesLookup.match_def(signature, previous_item, context)
+    unless signature.match(previous_item, context)
       raise_matches_not_found scope, previous.name, arg_types, named_args_types, matches
     end
 

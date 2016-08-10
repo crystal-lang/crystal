@@ -324,8 +324,17 @@ module Crystal
       all_defs
     end
 
-    def lookup_defs(name : String, all_defs : Array(Def), lookup_ancestors_for_new : Bool = false)
-      raise "Bug: #{self} doesn't implement lookup_defs"
+    def lookup_defs(name : String, all_defs : Array(Def), lookup_ancestors_for_new : Bool? = false)
+      self.defs.try &.[name]?.try &.each do |item|
+        all_defs << item.def unless all_defs.find(&.same?(item.def))
+      end
+
+      if lookup_ancestors_for_new || self.lookup_new_in_ancestors? ||
+         !(name == "new" || name == "initialize")
+        parents.try &.each do |parent|
+          parent.lookup_defs(name, all_defs, lookup_ancestors_for_new)
+        end
+      end
     end
 
     def lookup_defs_without_parents(name : String)
@@ -335,15 +344,32 @@ module Crystal
     end
 
     def lookup_defs_without_parents(name : String, all_defs : Array(Def))
-      raise "Bug: #{self} doesn't implement lookup_defs_without_parents"
+      self.defs.try &.[name]?.try &.each do |item|
+        all_defs << item.def unless all_defs.find(&.same?(item.def))
+      end
     end
 
     def lookup_defs_with_modules(name)
-      raise "Bug: #{self} doesn't implement lookup_defs_with_modules"
+      if (list = self.defs.try &.[name]?) && !list.empty?
+        return list.map(&.def)
+      end
+
+      parents.try &.each do |parent|
+        next unless parent.module?
+
+        parent_defs = parent.lookup_defs_with_modules(name)
+        return parent_defs unless parent_defs.empty?
+      end
+
+      [] of Def
     end
 
     def lookup_first_def(name, block)
-      raise "Bug: #{self} doesn't implement lookup_first_def"
+      block = !!block
+      if (defs = self.defs) && (list = defs[name]?)
+        value = list.find { |item| item.yields == block }
+        value.try &.def
+      end
     end
 
     def macros
@@ -359,11 +385,30 @@ module Crystal
     end
 
     def lookup_macro(name, args : Array, named_args)
-      raise "Bug: #{self} doesn't implement lookup_macro"
+      if macros = self.macros.try &.[name]?
+        match = macros.find &.matches?(args, named_args)
+        return match if match
+      end
+
+      instance_type.parents.try &.each do |parent|
+        parent_macro = parent.metaclass.lookup_macro(name, args, named_args)
+        return parent_macro if parent_macro
+      end
+
+      nil
     end
 
     def lookup_macros(name)
-      raise "Bug: #{self} doesn't implement lookup_macros"
+      if macros = self.macros.try &.[name]?
+        return macros
+      end
+
+      parents.try &.each do |parent|
+        parent_macros = parent.lookup_macros(name)
+        return parent_macros if parent_macros
+      end
+
+      nil
     end
 
     def add_including_type(mod)
@@ -525,77 +570,6 @@ module Crystal
     block : Block?,
     named_args : Array(NamedArgumentType)?
 
-  module MatchesLookup
-    def lookup_first_def(name, block)
-      block = !!block
-      if (defs = self.defs) && (list = defs[name]?)
-        value = list.find { |item| item.yields == block }
-        value.try &.def
-      end
-    end
-
-    def lookup_defs(name : String, all_defs : Array(Def), lookup_ancestors_for_new : Bool? = false)
-      self.defs.try &.[name]?.try &.each do |item|
-        all_defs << item.def unless all_defs.find(&.same?(item.def))
-      end
-
-      if lookup_ancestors_for_new || self.lookup_new_in_ancestors? ||
-         !(name == "new" || name == "initialize")
-        parents.try &.each do |parent|
-          parent.lookup_defs(name, all_defs, lookup_ancestors_for_new)
-        end
-      end
-    end
-
-    def lookup_defs_without_parents(name : String, all_defs : Array(Def))
-      self.defs.try &.[name]?.try &.each do |item|
-        all_defs << item.def unless all_defs.find(&.same?(item.def))
-      end
-    end
-
-    def lookup_defs_with_modules(name)
-      if (list = self.defs.try &.[name]?) && !list.empty?
-        return list.map(&.def)
-      end
-
-      parents.try &.each do |parent|
-        next unless parent.module?
-
-        parent_defs = parent.lookup_defs_with_modules(name)
-        return parent_defs unless parent_defs.empty?
-      end
-
-      [] of Def
-    end
-
-    def lookup_macro(name, args : Array, named_args)
-      if macros = self.macros.try &.[name]?
-        match = macros.find &.matches?(args, named_args)
-        return match if match
-      end
-
-      instance_type.parents.try &.each do |parent|
-        parent_macro = parent.metaclass.lookup_macro(name, args, named_args)
-        return parent_macro if parent_macro
-      end
-
-      nil
-    end
-
-    def lookup_macros(name)
-      if macros = self.macros.try &.[name]?
-        return macros
-      end
-
-      parents.try &.each do |parent|
-        parent_macros = parent.lookup_macros(name)
-        return parent_macros if parent_macros
-      end
-
-      nil
-    end
-  end
-
   record DefWithMetadata,
     min_size : Int32,
     max_size : Int32,
@@ -608,8 +582,6 @@ module Crystal
   end
 
   module DefContainer
-    include MatchesLookup
-
     record Hook,
       kind : Symbol,
       macro : Macro
@@ -1513,7 +1485,6 @@ module Crystal
     include InstanceVarInitializerContainer
     include ClassVarContainer
     include DefInstanceContainer
-    include MatchesLookup
 
     getter program : Program
     getter generic_class : GenericClassType
@@ -1893,8 +1864,6 @@ module Crystal
   end
 
   class IncludedGenericModule < Type
-    include MatchesLookup
-
     getter program : Program
     getter module : GenericModuleType
     getter including_class : Type
@@ -1938,8 +1907,6 @@ module Crystal
   end
 
   class InheritedGenericClass < Type
-    include MatchesLookup
-
     getter program : Program
     getter extended_class : Type
     property! extending_class : Type
@@ -2042,7 +2009,6 @@ module Crystal
 
   class TypeDefType < NamedType
     include DefInstanceContainer
-    include MatchesLookup
 
     getter typedef : Type
 
@@ -2246,7 +2212,6 @@ module Crystal
   end
 
   class GenericClassInstanceMetaclassType < Type
-    include MatchesLookup
     include DefInstanceContainer
 
     getter program : Program

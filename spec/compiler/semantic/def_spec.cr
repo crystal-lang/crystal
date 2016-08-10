@@ -195,14 +195,14 @@ describe "Semantic: def" do
     assert_type("
       require \"prelude\"
 
-      module MatchesLookup
+      module Foo
         def lookup_matches(x = 1)
           1
         end
       end
 
-      module DefContainer
-        include MatchesLookup
+      module Bar
+        include Foo
       end
 
       abstract class Type
@@ -212,7 +212,7 @@ describe "Semantic: def" do
       end
 
       abstract class MType < CType
-        include DefContainer
+        include Bar
       end
 
       class NonGenericMType < MType

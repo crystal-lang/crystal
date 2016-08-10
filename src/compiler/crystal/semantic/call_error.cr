@@ -341,7 +341,7 @@ class Crystal::Call
     signature = CallSignature.new(def_name, args.map(&.type), block, named_args_types)
     defs.each do |a_def|
       context = MatchContext.new(owner, a_def.owner)
-      match = MatchesLookup.match_def(signature, DefWithMetadata.new(a_def), context)
+      match = signature.match(DefWithMetadata.new(a_def), context)
       next unless match
 
       if a_def.owner == owner
