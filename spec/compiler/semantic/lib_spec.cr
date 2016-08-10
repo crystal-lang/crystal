@@ -480,7 +480,7 @@ describe "Semantic: lib" do
       def LibC.foo
       end
       ),
-      "can't define 'def' for lib"
+      "can't define method in lib LibC"
   end
 
   it "reopens lib and adds more link attributes" do

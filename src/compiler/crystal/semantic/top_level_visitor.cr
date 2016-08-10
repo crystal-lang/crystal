@@ -242,10 +242,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
                     end
                     current_type.metaclass
                   else
-                    type = lookup_type(receiver).metaclass
-                    node.raise "can't define 'def' for lib" if type.is_a?(LibType)
-                    type
+                    type = lookup_type(receiver)
+                    metaclass = type.metaclass
+                    case metaclass
+                    when LibType
+                      receiver.raise "can't define method in lib #{metaclass}"
+                    when GenericClassInstanceMetaclassType
+                      receiver.raise "can't define method in generic instance #{metaclass}"
+                    end
+                    metaclass
                   end
+
+    target_type = target_type.as(ModuleType)
 
     process_def_attributes node, attributes
 

@@ -1425,6 +1425,8 @@ describe "Parser" do
   assert_syntax_error "require 1", "expected string literal for require"
   assert_syntax_error %(def foo("bar \#{1} qux" y); y; end), "interpolation not allowed in external name"
 
+  assert_syntax_error "def Foo(Int32).bar;end"
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"

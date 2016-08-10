@@ -399,4 +399,17 @@ describe "Semantic: def" do
       ),
       "undefined constant T::String"
   end
+
+  it "errors if trying to declare method on generic class instance" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      alias Bar = Foo(Int32)
+
+      def Bar.foo
+      end
+      ),
+      "can't define method in generic instance"
+  end
 end

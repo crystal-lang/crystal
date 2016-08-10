@@ -3064,7 +3064,7 @@ module Crystal
       end_location = token_end_location
 
       if @token.type == :CONST
-        receiver = parse_ident
+        receiver = parse_ident(allow_type_vars: false)
       elsif @token.type == :IDENT
         check_valid_def_name
         name = @token.value.to_s
