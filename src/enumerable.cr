@@ -303,16 +303,14 @@ module Enumerable(T)
     raise ArgumentError.new("size must be positive") if size <= 0
 
     each_slice(size) do |slice|
-      if slice.size < size
-        paddings = Array(T | U).new
-        (size - slice.size).times do
-          paddings << filled_up_with
-        end
-        group = slice + paddings
-        yield group
+      if slice.size == size
+        group = slice
       else
-        yield slice
+        group = Array(T | U).new(size, filled_up_with)
+        slice.each_with_index { |item, index| group[index] = item }
       end
+
+      yield group
     end
   end
 
