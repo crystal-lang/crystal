@@ -273,8 +273,8 @@ describe "Enumerable" do
 
     it "takes a block" do
       sums = [] of Int32
-      [1, 2, 4, 5].in_groups_of(3, 0) { |a| sums << a.sum }
-      sums.should eq([7, 5])
+      [1, 2, 4, 5].in_groups_of(3, 10) { |a| sums << a.sum }
+      sums.should eq([7, 25])
     end
   end
 
