@@ -44,7 +44,7 @@ class Crystal::Doc::Type
     when VoidType
       "Void"
     when InheritedGenericClass
-      type.extended_class.name
+      type.extended_class.as(NamedType).name
     when IncludedGenericModule
       type.module.name
     when Const

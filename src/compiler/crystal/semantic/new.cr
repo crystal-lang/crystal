@@ -88,7 +88,7 @@ module Crystal
               end
             end
           else
-            type.lookup_new_in_ancestors = true
+            type.as(ClassType).lookup_new_in_ancestors = true
           end
         end
       end

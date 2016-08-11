@@ -745,21 +745,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def run_hooks(type_with_hooks, current_type, kind, node, call = nil)
-    hooks = type_with_hooks.hooks
-    if hooks
-      hooks.each do |hook|
-        next if hook.kind != kind
+    type_with_hooks.as?(ModuleType).try &.hooks.try &.each do |hook|
+      next if hook.kind != kind
 
-        expansion = expand_macro(hook.macro, node) do
-          if call
-            @program.expand_macro hook.macro, call, current_type.instance_type
-          else
-            @program.expand_macro hook.macro.body, current_type.instance_type
-          end
+      expansion = expand_macro(hook.macro, node) do
+        if call
+          @program.expand_macro hook.macro, call, current_type.instance_type
+        else
+          @program.expand_macro hook.macro.body, current_type.instance_type
         end
-
-        node.add_hook_expansion(expansion)
       end
+
+      node.add_hook_expansion(expansion)
     end
 
     if kind == :inherited && (superclass = type_with_hooks.instance_type.superclass)

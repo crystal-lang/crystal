@@ -309,7 +309,7 @@ module Crystal
     end
 
     def restrict(other : VirtualType, context)
-      subclass_of?(other.base_type) ? self : nil
+      implements?(other.base_type) ? self : nil
     end
 
     def restrict(other : Union, context)
@@ -394,7 +394,7 @@ module Crystal
     end
 
     def restriction_of?(other : VirtualType, owner)
-      subclass_of? other.base_type
+      implements? other.base_type
     end
 
     def restriction_of?(other : Type, owner)
@@ -773,7 +773,7 @@ module Crystal
   class VirtualType
     def restriction_of?(other : Type, owner)
       other = other.base_type if other.is_a?(VirtualType)
-      base_type.subclass_of?(other) || other.subclass_of?(base_type)
+      base_type.implements?(other) || other.implements?(base_type)
     end
 
     def restrict(other : Type, context)
@@ -789,9 +789,9 @@ module Crystal
       elsif other.is_a?(VirtualType)
         result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
         result ? result.virtual_type : nil
-      elsif other.subclass_of?(self.base_type)
+      elsif other.implements?(self.base_type)
         other.virtual_type
-      elsif self.base_type.subclass_of?(other)
+      elsif self.base_type.implements?(other)
         self
       elsif other.module?
         if base_type.implements?(other)

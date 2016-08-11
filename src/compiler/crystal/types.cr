@@ -7,8 +7,6 @@ module Crystal
     # Returns the program where this type belongs.
     getter program
 
-    setter metaclass : Type?
-
     def initialize(@program : Program)
     end
 
@@ -95,28 +93,45 @@ module Crystal
       nil
     end
 
-    getter(metaclass) do
+    # Returns this type's metaclass, which holds class methods for this type.
+    getter metaclass : Type do
       metaclass = MetaclassType.new(program, self)
       initialize_metaclass(metaclass)
       metaclass
     end
 
-    def initialize_metaclass(metaclass)
+    # Initializes a metaclass.
+    # Some subtypes (classes) add an `allocate` method so a class can be instantiated.
+    protected def initialize_metaclass(metaclass)
       # Nothing
     end
 
+    # Returns `true` if this type can be used in a generic type argument.
     def allowed_in_generics?
       true
     end
 
-    def subclasses
+    # Returns direct subclasses of this type.
+    def subclasses : Array(Type)
       [] of Type
     end
 
+    # Returns all subclasses of this type, including subclasses of
+    # subclasses recursively.
     def all_subclasses
-      [] of Type
+      subclasses = [] of Type
+      append_subclasses(self, subclasses)
+      subclasses
     end
 
+    private def append_subclasses(type, subclasses)
+      type.subclasses.each do |subclass|
+        subclasses << subclass
+        append_subclasses subclass, subclasses
+      end
+    end
+
+    # Returns `true` if this type has no subclasses.
     def leaf?
       subclasses.size == 0
     end
@@ -130,7 +145,12 @@ module Crystal
     end
 
     def metaclass?
-      false
+      case self
+      when MetaclassType, GenericClassInstanceMetaclassType, VirtualMetaclassType
+        true
+      else
+        false
+      end
     end
 
     def pointer?
@@ -185,10 +205,6 @@ module Crystal
       self == type
     end
 
-    def instance_of?(type)
-      self == type
-    end
-
     def remove_typedef
       self
     end
@@ -210,10 +226,6 @@ module Crystal
       else
         true
       end
-    end
-
-    def lookup_new_in_ancestors=(value)
-      raise "Bug: #{self} doesn't implement lookup_new_in_ancestors="
     end
 
     # Should `new` be looked up in ancestors?
@@ -259,24 +271,12 @@ module Crystal
       end
     end
 
-    def subclass_of?(type)
-      self == type
-    end
-
     def filter_by(other_type)
       restrict other_type, MatchContext.new(self, self, strict: true)
     end
 
     def filter_by_responds_to(name)
       nil
-    end
-
-    def lookup_def_instance(key)
-      raise "Bug: #{self} doesn't implement lookup_def_instance"
-    end
-
-    def add_def_instance(key, typed_def)
-      raise "Bug: #{self} doesn't implement add_def_instance"
     end
 
     def add_instance_var_initializer(name, value, meta_vars)
@@ -305,15 +305,16 @@ module Crystal
       ancestors
     end
 
-    def collect_ancestors(ancestors)
+    protected def collect_ancestors(ancestors)
       parents.try &.each do |parent|
         ancestors << parent
         parent.collect_ancestors(ancestors)
       end
     end
 
-    def superclass
-      raise "Bug: #{self} doesn't implement superclass"
+    # Returns this type's superclass, or `nil` if it doesn't have one
+    def superclass : Type?
+      nil
     end
 
     def append_to_expand_union_types(types)
@@ -379,14 +380,7 @@ module Crystal
 
     def lookup_first_def(name, block)
       block = !!block
-      if (defs = self.defs) && (list = defs[name]?)
-        value = list.find { |item| item.yields == block }
-        value.try &.def
-      end
-    end
-
-    def hooks
-      nil
+      defs.try &.[name]?.try &.find(&.yields.==(block)).try &.def
     end
 
     def lookup_macro(name, args : Array, named_args)
@@ -422,14 +416,6 @@ module Crystal
 
     def including_types
       raise "Bug: #{self} doesn't implement including_types"
-    end
-
-    def add_subclass_observer(observer)
-      raise "Bug: #{self} doesn't implement add_subclass_observer"
-    end
-
-    def remove_subclass_observer(observer)
-      raise "Bug: #{self} doesn't implement remove_subclass_observer"
     end
 
     def instance_vars
@@ -469,11 +455,7 @@ module Crystal
     end
 
     def has_def?(name)
-      raise "Bug: #{self} doesn't implement has_def?"
-    end
-
-    def has_def_without_parents?(name)
-      raise "Bug: #{self} doesn't implement has_def_without_parents?"
+      defs.try(&.has_key?(name)) || parents.try(&.any?(&.has_def?(name)))
     end
 
     def all_instance_vars_count
@@ -484,16 +466,8 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_subclass"
     end
 
-    def notify_subclass_added
-      raise "Bug: #{self} doesn't implement notify_subclass_added"
-    end
-
     def depth
-      raise "Bug: #{self} doesn't implement depth"
-    end
-
-    def name
-      raise "Bug: #{self} doesn't implement name"
+      0
     end
 
     def type_desc
@@ -650,6 +624,7 @@ module Crystal
         end
       end
       list << item
+
       nil
     end
 
@@ -697,20 +672,6 @@ module Crystal
 
     def filter_by_responds_to(name)
       has_def?(name) ? self : nil
-    end
-
-    def has_def?(name)
-      return true if has_def_without_parents?(name)
-
-      parents.try &.each do |parent|
-        return true if parent.has_def?(name)
-      end
-
-      false
-    end
-
-    def has_def_without_parents?(name)
-      self.defs.try &.has_key?(name)
     end
 
     def include(mod)
@@ -922,6 +883,7 @@ module Crystal
     include SubclassObservable
     include InstanceVarInitializerContainer
 
+    setter metaclass : Type?
     getter superclass : Type?
     getter subclasses = [] of Type
     getter depth : Int32
@@ -946,7 +908,7 @@ module Crystal
       notify_subclass_added
 
       superclass = superclass()
-      while superclass
+      while superclass.is_a?(SubclassObservable)
         superclass.notify_subclass_added
         superclass = superclass.superclass
       end
@@ -954,29 +916,6 @@ module Crystal
 
     def force_add_subclass
       superclass.try &.add_subclass(self)
-    end
-
-    def all_subclasses
-      subclasses = [] of Type
-      append_subclasses(self, subclasses)
-      subclasses
-    end
-
-    def append_subclasses(type, subclasses)
-      type.subclasses.each do |subclass|
-        subclasses << subclass
-        append_subclasses subclass, subclasses
-      end
-    end
-
-    def subclass_of?(type)
-      super || superclass.try &.subclass_of?(type)
-    end
-
-    def add_def(a_def)
-      super
-
-      a_def
     end
 
     def struct?
@@ -1079,7 +1018,7 @@ module Crystal
     include InstanceVarContainer
     include ClassVarContainer
 
-    def initialize_metaclass(metaclass)
+    protected def initialize_metaclass(metaclass)
       metaclass.add_def Def.new("allocate", body: Primitive.new("allocate"))
     end
 
@@ -1121,7 +1060,7 @@ module Crystal
 
     def covariant?(other_type)
       other_type = other_type.base_type if other_type.is_a?(VirtualType)
-      subclass_of?(other_type) || super
+      implements?(other_type) || super
     end
 
     def add_instance_var_initializer(name, value, meta_vars)
@@ -1443,7 +1382,7 @@ module Crystal
       end
     end
 
-    def initialize_metaclass(metaclass)
+    protected def initialize_metaclass(metaclass)
       metaclass.add_def Def.new("allocate", body: Primitive.new("allocate"))
     end
 
@@ -1545,10 +1484,6 @@ module Crystal
     end
 
     getter(metaclass) { GenericClassInstanceMetaclassType.new(self.program, self) }
-
-    def subclass_of?(type)
-      super || generic_class.subclass_of?(type)
-    end
 
     def implements?(other_type)
       other_type = other_type.remove_alias
@@ -1885,10 +1820,6 @@ module Crystal
       lookup_defs_with_modules, lookup_macro, lookup_macros, has_def?,
       metaclass, to: @module
 
-    def instance_of?(type)
-      type == @module
-    end
-
     def parents
       @module.parents.map do |t|
         case t
@@ -1926,14 +1857,10 @@ module Crystal
       mapping.keys
     end
 
-    def instance_of?(type)
-      type == @extended_class
-    end
-
     delegate depth, superclass, add_subclass, namespace, name,
       defs, macros, implements?, lookup_defs, lookup_defs_with_modules,
-      lookup_macro, lookup_macros, has_def?, notify_subclass_added,
-      has_def_without_parents?, to: @extended_class
+      lookup_macro, lookup_macros, has_def?,
+      notify_subclass_added, to: @extended_class
 
     def lookup_instance_var?(name, create = false)
       nil
@@ -2062,7 +1989,6 @@ module Crystal
     end
 
     delegate lookup_defs, lookup_defs_with_modules, lookup_first_def,
-      def_instances, add_def_instance, lookup_def_instance,
       lookup_macro, lookup_macros, types, types?, to: aliased_type
 
     def remove_alias
@@ -2189,10 +2115,6 @@ module Crystal
       instance_type
     end
 
-    def metaclass?
-      true
-    end
-
     def virtual_type
       instance_type.virtual_type.metaclass
     end
@@ -2234,10 +2156,6 @@ module Crystal
 
     delegate defs, macros, to: instance_type.generic_class.metaclass
     delegate type_vars, abstract?, generic_nest, lookup_new_in_ancestors?, to: instance_type
-
-    def metaclass?
-      true
-    end
 
     def class_var_owner
       instance_type
@@ -2312,7 +2230,7 @@ module Crystal
     end
 
     def generic_nest
-      @union_types.max_of &.generic_nest
+      union_types.max_of &.generic_nest
     end
 
     def includes_type?(other_type)
@@ -2324,30 +2242,8 @@ module Crystal
     end
 
     def filter_by_responds_to(name)
-      apply_filter &.filter_by_responds_to(name)
-    end
-
-    def apply_filter
-      filtered_types = @union_types.compact_map do |union_type|
-        yield union_type
-      end
-
-      case filtered_types.size
-      when 0
-        nil
-      when 1
-        filtered_types.first
-      else
-        program.type_merge_union_of(filtered_types)
-      end
-    end
-
-    def has_def?(name)
-      union_types.any? &.has_def?(name)
-    end
-
-    def has_def_without_parents?(name)
-      union_types.any? &.has_def_without_parents?(name)
+      filtered_types = union_types.compact_map &.filter_by_responds_to(name)
+      program.type_merge_union_of filtered_types
     end
 
     def each_concrete_type
@@ -2538,7 +2434,7 @@ module Crystal
       lookup_defs_with_modules, lookup_instance_var, lookup_instance_var?,
       lookup_instance_var_with_owner, lookup_instance_var_with_owner?,
       index_of_instance_var, lookup_macro, lookup_macros, all_instance_vars,
-      abstract?, subclass_of?, implements?, covariant?, ancestors, struct?, to: base_type
+      abstract?, implements?, covariant?, ancestors, struct?, to: base_type
 
     def remove_indirection
       if struct?
@@ -2629,18 +2525,6 @@ module Crystal
     end
 
     delegate base_type, lookup_first_def, to: instance_type
-
-    def lookup_macro(name, args : Array, named_args)
-      nil
-    end
-
-    def lookup_macros(name)
-      nil
-    end
-
-    def metaclass?
-      true
-    end
 
     def each_concrete_type
       instance_type.subtypes.each do |type|

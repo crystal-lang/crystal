@@ -71,7 +71,13 @@ module Crystal
 
       owner = self
       owner = owner.base_type if owner.is_a?(VirtualType)
-      owner.add_def(a_def) if owner.is_a?(ModuleType)
+
+      if owner.is_a?(ModuleType)
+        owner.add_def(a_def)
+        true
+      else
+        false
+      end
     end
   end
 

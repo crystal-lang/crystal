@@ -142,7 +142,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
     if current_type.is_a?(Program)
       key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil, nil
-      current_type.add_def_instance key, external
+      program.add_def_instance key, external
     end
 
     node.type = @program.nil
