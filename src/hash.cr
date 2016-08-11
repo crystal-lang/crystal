@@ -338,8 +338,8 @@ class Hash(K, V)
   #
   # ```
   # h = {"foo" => "bar"}
-  # h.each_value do |key|
-  #   key # => "bar"
+  # h.each_value do |value|
+  #   value # => "bar"
   # end
   # ```
   def each_value
