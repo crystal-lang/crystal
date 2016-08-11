@@ -69,7 +69,7 @@ class Crystal::RecursiveStructChecker
         instance variables are always behind a pointer, which makes
         it possible to always compute a size for them.
         MSG
-      location = target.locations.first?
+      location = target.locations.try &.first?
       if location
         raise TypeException.new(msg, location)
       else

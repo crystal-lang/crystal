@@ -174,12 +174,12 @@ class Crystal::Doc::Type
 
   def instance_methods
     @instance_methods ||= begin
-      case type = @type
+      case @type
       when Program
         [] of Method
-      when DefContainer
+      else
         defs = [] of Method
-        type.defs.try &.each do |def_name, defs_with_metadata|
+        @type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
             case def_with_metadata.def.visibility
             when .private?, .protected?
@@ -192,8 +192,6 @@ class Crystal::Doc::Type
           end
         end
         defs.sort_by! &.name.downcase
-      else
-        [] of Method
       end
     end
   end
@@ -202,53 +200,44 @@ class Crystal::Doc::Type
 
   def class_methods
     @class_methods ||= begin
-      class_methods =
-        case type = @type.metaclass
-        when DefContainer
-          defs = [] of Method
-          type.defs.try &.each_value do |defs_with_metadata|
-            defs_with_metadata.each do |def_with_metadata|
-              a_def = def_with_metadata.def
-              case a_def.visibility
-              when .private?, .protected?
-                next
-              end
-
-              body = a_def.body
-
-              # Skip auto-generated allocate method
-              if body.is_a?(Crystal::Primitive) && body.name == "allocate"
-                next
-              end
-
-              # Skip auto-generated new methods from initialize
-              if a_def.name == "new" && !a_def.location
-                next
-              end
-
-              if @generator.must_include? a_def
-                defs << method(a_def, true)
-              end
-            end
+      class_methods = [] of Method
+      @type.metaclass.defs.try &.each_value do |defs_with_metadata|
+        defs_with_metadata.each do |def_with_metadata|
+          a_def = def_with_metadata.def
+          case a_def.visibility
+          when .private?, .protected?
+            next
           end
-          defs.sort_by! &.name.downcase
-        else
-          [] of Method
+
+          body = a_def.body
+
+          # Skip auto-generated allocate method
+          if body.is_a?(Crystal::Primitive) && body.name == "allocate"
+            next
+          end
+
+          # Skip auto-generated new methods from initialize
+          if a_def.name == "new" && !a_def.location
+            next
+          end
+
+          if @generator.must_include? a_def
+            class_methods << method(a_def, true)
+          end
         end
+      end
+      class_methods.sort_by! &.name.downcase
 
       # Also get `initialize` methods from instance type,
       # but show them as `new`
-      case type = @type
-      when DefContainer
-        type.defs.try &.each_value do |defs_with_metadata|
-          defs_with_metadata.each do |def_with_metadata|
-            a_def = def_with_metadata.def
-            if a_def.name == "initialize" && @generator.must_include?(a_def)
-              initialize = a_def.clone
-              initialize.doc = a_def.doc
-              initialize.name = "new"
-              class_methods << method(initialize, true)
-            end
+      @type.metaclass.defs.try &.each_value do |defs_with_metadata|
+        defs_with_metadata.each do |def_with_metadata|
+          a_def = def_with_metadata.def
+          if a_def.name == "initialize" && @generator.must_include?(a_def)
+            initialize = a_def.clone
+            initialize.doc = a_def.doc
+            initialize.name = "new"
+            class_methods << method(initialize, true)
           end
         end
       end
@@ -261,20 +250,15 @@ class Crystal::Doc::Type
 
   def macros
     @macros ||= begin
-      case type = @type.metaclass
-      when DefContainer
-        macros = [] of Macro
-        type.macros.try &.each_value do |the_macros|
-          the_macros.each do |a_macro|
-            if @generator.must_include? a_macro
-              macros << self.macro(a_macro)
-            end
+      macros = [] of Macro
+      @type.metaclass.macros.try &.each_value do |the_macros|
+        the_macros.each do |a_macro|
+          if @generator.must_include? a_macro
+            macros << self.macro(a_macro)
           end
         end
-        macros.sort_by! &.name.downcase
-      else
-        [] of Macro
       end
+      macros.sort_by! &.name.downcase
     end
   end
 

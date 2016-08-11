@@ -71,7 +71,7 @@ module Crystal
 
       owner = self
       owner = owner.base_type if owner.is_a?(VirtualType)
-      owner.add_def(a_def) if owner.is_a?(DefContainer)
+      owner.add_def(a_def) if owner.is_a?(ModuleType)
     end
   end
 
@@ -95,7 +95,7 @@ module Crystal
       defined = false
 
       base_type.subclasses.each do |subclass|
-        next unless subclass.is_a?(DefContainer)
+        next unless subclass.is_a?(ModuleType)
 
         # First check if we can find the method
         existing_def = subclass.lookup_first_def(signature.name, signature.block)

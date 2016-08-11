@@ -10,7 +10,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.size.should eq(1)
+    foo.locations.not_nil!.size.should eq(1)
   end
 
   it "stores doc for abstract class" do
@@ -33,7 +33,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.size.should eq(1)
+    foo.locations.not_nil!.size.should eq(1)
   end
 
   it "stores doc for module" do
@@ -45,7 +45,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.size.should eq(1)
+    foo.locations.not_nil!.size.should eq(1)
   end
 
   it "stores doc for def" do
@@ -170,7 +170,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.size.should eq(1)
+    foo.locations.not_nil!.size.should eq(1)
   end
 
   it "stores doc for flags enum with base type" do
@@ -184,7 +184,7 @@ describe "Semantic: doc" do
     foo = program.types["Foo"]
     foo.has_attribute?("Flags").should be_true
     foo.doc.should eq("Hello")
-    foo.locations.size.should eq(1)
+    foo.locations.not_nil!.size.should eq(1)
   end
 
   it "stores doc for enum and doesn't mix with value" do
@@ -198,7 +198,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.size.should eq(1)
+    foo.locations.not_nil!.size.should eq(1)
   end
 
   it "stores doc for enum with @[Flags]" do
@@ -224,7 +224,7 @@ describe "Semantic: doc" do
     foo = program.types["Foo"]
     a = foo.types["A"]
     a.doc.should eq("Hello")
-    a.locations.size.should eq(1)
+    a.locations.not_nil!.size.should eq(1)
   end
 
   it "stores doc for constant" do
@@ -235,7 +235,7 @@ describe "Semantic: doc" do
     program = result.program
     a = program.types["A"]
     a.doc.should eq("Hello")
-    a.locations.size.should eq(1)
+    a.locations.not_nil!.size.should eq(1)
   end
 
   it "stores doc for alias" do
@@ -246,7 +246,7 @@ describe "Semantic: doc" do
     program = result.program
     a = program.types["A"]
     a.doc.should eq("Hello")
-    a.locations.size.should eq(1)
+    a.locations.not_nil!.size.should eq(1)
   end
 
   it "stores doc for nodes defined in macro call" do
@@ -304,7 +304,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.size.should eq(2)
+    foo.locations.not_nil!.size.should eq(2)
   end
 
   it "stores doc for module if reopening" do
@@ -328,6 +328,6 @@ describe "Semantic: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.locations.size.should eq(1)
+    foo.locations.not_nil!.size.should eq(1)
   end
 end

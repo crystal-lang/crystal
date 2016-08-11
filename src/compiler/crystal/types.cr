@@ -4,24 +4,27 @@ require "./syntax/ast"
 module Crystal
   # Abstract base class of all types
   abstract class Type
-    property doc : String?
-    getter locations : Array(Location)?
+    # Returns the program where this type belongs.
+    getter program
+
     setter metaclass : Type?
 
+    def initialize(@program : Program)
+    end
+
+    # Returns any doc comments associated to this type.
+    def doc : String?
+      nil
+    end
+
+    # Returns all locations where this type is declared
+    def locations : Array(Location)?
+      nil
+    end
+
+    # Returns `true` if this type has the give attribute.
     def has_attribute?(name)
       false
-    end
-
-    getter(locations) { [] of Location }
-
-    getter(metaclass) do
-      metaclass = MetaclassType.new(program, self)
-      initialize_metaclass(metaclass)
-      metaclass
-    end
-
-    def initialize_metaclass(metaclass)
-      # Nothing
     end
 
     # An opaque id of every type. 0 for Nil, non zero for others, so we can
@@ -30,14 +33,18 @@ module Crystal
       self.is_a?(NilType) ? 0_u64 : object_id
     end
 
-    def namespace : Type
+    # The namespace this type belongs to. Every type belongs to
+    # a namespace, and, when not explicit, the namespace is the `Program` itself.
+    def namespace : ModuleType
       program
     end
 
+    # Returns `true` if this type is abstract.
     def abstract?
       false
     end
 
+    # Returns `true` if this type is a struct.
     def struct?
       false
     end
@@ -58,6 +65,46 @@ module Crystal
       false
     end
 
+    # Returns `true` if this type inherits from `Reference` or if this
+    # is a union type where all types are reference types or nil.
+    # In this case this type can be represented with a single pointer.
+    def reference_like?
+      case self
+      when NilType, NilableType, NilableReferenceUnionType, ReferenceUnionType
+        true
+      when NonGenericClassType
+        !self.struct?
+      when GenericClassInstanceType
+        !self.struct?
+      when VirtualType
+        !self.struct?
+      else
+        false
+      end
+    end
+
+    # Returns the methods defined in this type, indexed by their name.
+    # This does not include methods defined in ancestors.
+    def defs : Hash(String, Array(DefWithMetadata))?
+      nil
+    end
+
+    # Returns all macros defines in this type, indexed by their name.
+    # This does not inlcude methods defined in ancestors.
+    def macros : Hash(String, Array(Macro))?
+      nil
+    end
+
+    getter(metaclass) do
+      metaclass = MetaclassType.new(program, self)
+      initialize_metaclass(metaclass)
+      metaclass
+    end
+
+    def initialize_metaclass(metaclass)
+      # Nothing
+    end
+
     def allowed_in_generics?
       true
     end
@@ -72,14 +119,6 @@ module Crystal
 
     def leaf?
       subclasses.size == 0
-    end
-
-    def integer?
-      self.is_a?(IntegerType)
-    end
-
-    def float?
-      self.is_a?(FloatType)
     end
 
     def class?
@@ -124,24 +163,6 @@ module Crystal
 
     def void?
       self.is_a?(VoidType)
-    end
-
-    # Returns `true` if this type inherits from `Reference` or if this
-    # is a union type where all types are reference types or nil.
-    # In this case this type can be represented with a single pointer.
-    def reference_like?
-      case self
-      when NilType, NilableType, NilableReferenceUnionType, ReferenceUnionType
-        true
-      when NonGenericClassType
-        !self.struct?
-      when GenericClassInstanceType
-        !self.struct?
-      when VirtualType
-        !self.struct?
-      else
-        false
-      end
     end
 
     def virtual_type
@@ -310,14 +331,6 @@ module Crystal
       Type.merge!(types)
     end
 
-    def defs
-      nil
-    end
-
-    def add_def(a_def)
-      raise "Bug: #{self} doesn't implement add_def"
-    end
-
     def lookup_defs(name : String, lookup_ancestors_for_new : Bool = false)
       all_defs = [] of Def
       lookup_defs(name, all_defs, lookup_ancestors_for_new)
@@ -372,16 +385,8 @@ module Crystal
       end
     end
 
-    def macros
-      raise "Bug: #{self} doesn't implement macros"
-    end
-
     def hooks
       nil
-    end
-
-    def add_macro(a_def)
-      raise "Bug: #{self} doesn't implement add_macro"
     end
 
     def lookup_macro(name, args : Array, named_args)
@@ -528,11 +533,19 @@ module Crystal
   # There are other types that have a name but it can be deduced from other(s) type(s),
   # so they don't inherit NamedType: a union type, a metaclass, etc.
   abstract class NamedType < Type
-    getter program : Program
-    getter namespace : Type
+    getter namespace : ModuleType
     getter name : String
+    getter locations : Array(Location)?
+    property doc : String?
 
-    def initialize(@program, @namespace, @name)
+    def initialize(program, @namespace, @name)
+      super(program)
+    end
+
+    # Adds a location to this type.
+    def add_location(location : Location)
+      locations = @locations ||= [] of Location
+      locations << location
     end
 
     getter(types) { {} of String => NamedType }
@@ -570,6 +583,11 @@ module Crystal
     block : Block?,
     named_args : Array(NamedArgumentType)?
 
+  # A Def with some metadata to speed up matching it against
+  # a call signature, or against other defs:
+  # - max_size: the maxinum number of arguments that can be passed to the method
+  # - min_size: the minimum number of arguments that can be passed to the method
+  # - yields: whether the method has a block
   record DefWithMetadata,
     min_size : Int32,
     max_size : Int32,
@@ -581,14 +599,31 @@ module Crystal
     end
   end
 
-  module DefContainer
-    record Hook,
-      kind : Symbol,
-      macro : Macro
+  record Hook, kind : Symbol, macro : Macro
 
+  record DefInstanceKey,
+    def_object_id : UInt64,
+    arg_types : Array(Type),
+    block_type : Type?,
+    named_args : Array(NamedArgumentType)?
+
+  module DefInstanceContainer
+    getter(def_instances) { {} of DefInstanceKey => Def }
+
+    def add_def_instance(key, typed_def)
+      def_instances[key] = typed_def
+    end
+
+    def lookup_def_instance(key)
+      def_instances[key]?
+    end
+  end
+
+  abstract class ModuleType < NamedType
     getter defs : Hash(String, Array(DefWithMetadata))?
     getter macros : Hash(String, Array(Macro))?
     getter hooks : Array(Hook)?
+    getter(parents) { [] of Type }
 
     def add_def(a_def)
       a_def.owner = self
@@ -677,30 +712,6 @@ module Crystal
     def has_def_without_parents?(name)
       self.defs.try &.has_key?(name)
     end
-  end
-
-  record DefInstanceKey,
-    def_object_id : UInt64,
-    arg_types : Array(Type),
-    block_type : Type?,
-    named_args : Array(NamedArgumentType)?
-
-  module DefInstanceContainer
-    getter(def_instances) { {} of DefInstanceKey => Def }
-
-    def add_def_instance(key, typed_def)
-      def_instances[key] = typed_def
-    end
-
-    def lookup_def_instance(key)
-      def_instances[key]?
-    end
-  end
-
-  abstract class ModuleType < NamedType
-    include DefContainer
-
-    getter(parents) { [] of Type }
 
     def include(mod)
       if mod == self
@@ -1486,13 +1497,13 @@ module Crystal
     include ClassVarContainer
     include DefInstanceContainer
 
-    getter program : Program
     getter generic_class : GenericClassType
     getter type_vars : Hash(String, ASTNode)
     getter subclasses = [] of Type
     getter generic_nest : Int32
 
-    def initialize(@program, @generic_class, @type_vars, generic_nest = nil)
+    def initialize(program, @generic_class, @type_vars, generic_nest = nil)
+      super(program)
       @generic_nest = generic_nest || (1 + @type_vars.values.max_of { |node| node.type?.try(&.generic_nest) || 0 })
     end
 
@@ -1864,12 +1875,12 @@ module Crystal
   end
 
   class IncludedGenericModule < Type
-    getter program : Program
     getter module : GenericModuleType
     getter including_class : Type
     getter mapping : Hash(String, ASTNode)
 
-    def initialize(@program, @module, @including_class, @mapping)
+    def initialize(program, @module, @including_class, @mapping)
+      super(program)
     end
 
     def add_including_type(type)
@@ -1907,12 +1918,12 @@ module Crystal
   end
 
   class InheritedGenericClass < Type
-    getter program : Program
     getter extended_class : Type
     property! extending_class : Type
     getter mapping : Hash(String, ASTNode)
 
-    def initialize(@program, @extended_class, @mapping, @extending_class = nil)
+    def initialize(program, @extended_class, @mapping, @extending_class = nil)
+      super(program)
     end
 
     getter(metaclass) { InheritedGenericClass.new(@program, @extended_class.metaclass, @mapping, @extending_class) }
@@ -1928,7 +1939,7 @@ module Crystal
     delegate depth, superclass, add_subclass, namespace, name,
       defs, macros, implements?, lookup_defs, lookup_defs_with_modules,
       lookup_macro, lookup_macros, has_def?, notify_subclass_added,
-      has_def_without_parents?, add_def, to: @extended_class
+      has_def_without_parents?, to: @extended_class
 
     def lookup_instance_var?(name, create = false)
       nil
@@ -2109,8 +2120,7 @@ module Crystal
     end
   end
 
-  class EnumType < NamedType
-    include DefContainer
+  class EnumType < ModuleType
     include DefInstanceContainer
     include ClassVarContainer
 
@@ -2123,7 +2133,7 @@ module Crystal
       @flags = !!flags
 
       add_def Def.new("value", [] of Arg, Primitive.new("enum_value", @base_type))
-      metaclass.add_def Def.new("new", [Arg.new("value", type: @base_type)], Primitive.new("enum_new", self))
+      metaclass.as(ModuleType).add_def Def.new("new", [Arg.new("value", type: @base_type)], Primitive.new("enum_new", self))
     end
 
     def parents
@@ -2151,7 +2161,6 @@ module Crystal
   end
 
   class MetaclassType < ClassType
-    include DefContainer
     include DefInstanceContainer
     include ClassVarContainer
     include InstanceVarContainer
@@ -2214,10 +2223,10 @@ module Crystal
   class GenericClassInstanceMetaclassType < Type
     include DefInstanceContainer
 
-    getter program : Program
     getter instance_type : Type
 
-    def initialize(@program, @instance_type)
+    def initialize(program, @instance_type)
+      super(program)
     end
 
     @parents : Array(Type)?
@@ -2230,7 +2239,7 @@ module Crystal
       end
     end
 
-    delegate add_def, defs, macros, to: instance_type.generic_class.metaclass
+    delegate defs, macros, to: instance_type.generic_class.metaclass
     delegate type_vars, abstract?, generic_nest, lookup_new_in_ancestors?, to: instance_type
 
     def metaclass?
@@ -2287,10 +2296,10 @@ module Crystal
   abstract class UnionType < Type
     include MultiType
 
-    getter program : Program
     getter union_types : Array(Type)
 
-    def initialize(@program, @union_types)
+    def initialize(program, @union_types)
+      super(program)
     end
 
     def parents
@@ -2474,8 +2483,6 @@ module Crystal
   end
 
   module VirtualTypeLookup
-    record Change, type : Type, def : Def
-
     def filter_by_responds_to(name)
       filtered = virtual_lookup(base_type).filter_by_responds_to(name)
       return filtered.virtual_type if filtered
@@ -2528,10 +2535,10 @@ module Crystal
     include InstanceVarContainer
     include ClassVarContainer
 
-    getter program : Program
     getter base_type : NonGenericClassType
 
-    def initialize(@program, @base_type)
+    def initialize(program, @base_type)
+      super(program)
     end
 
     delegate leaf?, superclass, lookup_first_def, lookup_defs,
@@ -2614,10 +2621,10 @@ module Crystal
     include VirtualTypeLookup
     include ClassVarContainer
 
-    getter program : Program
     getter instance_type : VirtualType
 
-    def initialize(@program, @instance_type)
+    def initialize(program, @instance_type)
+      super(program)
     end
 
     def parents

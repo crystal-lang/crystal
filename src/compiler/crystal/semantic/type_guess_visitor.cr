@@ -32,6 +32,8 @@ module Crystal
     # (a type like Class or Reference is used)
     @error : Error?
 
+    @type_override : Type?
+
     def initialize(mod,
                    @explicit_instance_vars : Hash(Type, Hash(String, TypeDeclarationWithLocation)),
                    @guessed_instance_vars : Hash(Type, Hash(String, InstanceVarTypeInfo)),
@@ -793,11 +795,14 @@ module Crystal
       # Try to guess from the method's body, but now
       # the current lookup type is obj_type
       type = nil
-      pushing_type(obj_type) do
-        # Wrap everything in Expressions to check for explicit `return`
-        exps = Expressions.new([body] of ASTNode)
-        type = guess_type_in_method_body(exps)
-      end
+      old_type_override = @type_override
+      @type_override = obj_type
+
+      # Wrap everything in Expressions to check for explicit `return`
+      exps = Expressions.new([body] of ASTNode)
+      type = guess_type_in_method_body(exps)
+
+      @type_override = old_type_override
 
       @methods_being_checked.pop
 
@@ -1373,6 +1378,10 @@ module Crystal
       gatherer = ReturnGatherer.new
       node.accept gatherer
       gatherer.returns
+    end
+
+    def current_type
+      @type_override || @current_type
     end
   end
 

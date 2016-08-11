@@ -2092,7 +2092,7 @@ module Crystal
       when "+", "-", "*", "/", "unsafe_div"
         t1 = scope.remove_typedef
         t2 = typed_def.args[0].type
-        node.type = t1.integer? && t2.float? ? t2 : scope
+        node.type = t1.is_a?(IntegerType) && t2.is_a?(FloatType) ? t2 : scope
       when "==", "<", "<=", ">", ">=", "!="
         node.type = @program.bool
       when "%", "unsafe_shl", "unsafe_shr", "|", "&", "^", "unsafe_mod"

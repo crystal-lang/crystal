@@ -168,6 +168,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       unless type.module?
         node.raise "#{type} is not a module, it's a #{type.type_desc}"
       end
+
+      type = type.as(ModuleType)
     else
       if type_vars = node.type_vars
         type = GenericModuleType.new @program, scope, name, type_vars
@@ -214,7 +216,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare macro"
 
     begin
-      current_type.metaclass.add_macro node
+      current_type.metaclass.as(ModuleType).add_macro node
     rescue ex : Crystal::Exception
       node.raise ex.message
     end
@@ -282,7 +284,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # to find this method.
       if node.name == "initialize"
         new_method = node.expand_new_signature_from_initialize(target_type)
-        target_type.metaclass.add_def(new_method)
+        target_type.metaclass.as(ModuleType).add_def(new_method)
 
         # And we register it to later complete it
         new_expansions << {original: node, expanded: new_method}
@@ -513,7 +515,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       check_ditto const_member
 
       if member_location = member.location
-        const_member.locations << member_location
+        const_member.add_location(member_location)
       end
 
       const_value.type = enum_type
@@ -806,7 +808,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     if node_location = node.location
-      type.locations << node_location
+      type.add_location(node_location)
     end
   end
 
@@ -844,7 +846,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       name = path.names.pop
       scope = lookup_type_def_name_creating_modules path
     end
-    {scope, name}
+    {scope.as(ModuleType), name}
   end
 
   def lookup_type_name(node)
@@ -865,9 +867,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
             path.raise "execpted #{name} to be a type"
           end
         else
-          next_type = NonGenericModuleType.new(@program, base_type, name)
+          next_type = NonGenericModuleType.new(@program, base_type.as(ModuleType), name)
           if (location = path.location)
-            next_type.locations << location
+            next_type.add_location(location)
           end
           base_type.types[name] = next_type
         end
@@ -876,6 +878,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       target_type = next_type
     end
 
-    target_type
+    target_type.as(NamedType)
   end
 end

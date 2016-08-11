@@ -151,6 +151,25 @@ module Crystal
       end
     end
 
+    # Returns the minimum and maximum number of arguments that must
+    # be passed to this method.
+    def min_max_args_sizes
+      max_size = args.size
+      default_value_index = args.index(&.default_value)
+      min_size = default_value_index || max_size
+      splat_index = self.splat_index
+      if splat_index
+        if args[splat_index].name.empty?
+          min_size = {default_value_index || splat_index, splat_index}.min
+          max_size = splat_index
+        else
+          min_size -= 1 unless default_value_index && default_value_index < splat_index
+          max_size = Int32::MAX
+        end
+      end
+      {min_size, max_size}
+    end
+
     def clone_without_location
       a_def = previous_def
       a_def.previous = previous
@@ -530,7 +549,7 @@ module Crystal
   end
 
   class ModuleDef
-    property! resolved_type : Type
+    property! resolved_type : ModuleType
   end
 
   class LibDef
