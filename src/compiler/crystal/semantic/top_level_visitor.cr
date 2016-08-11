@@ -149,7 +149,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     if created_new_type
-      raise "Bug" unless type.is_a?(InheritableClass)
       type.force_add_subclass
     end
 

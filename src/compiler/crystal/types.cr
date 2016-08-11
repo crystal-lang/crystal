@@ -787,21 +787,6 @@ module Crystal
     end
   end
 
-  module InheritableClass
-    include SubclassObservable
-
-    def add_subclass(subclass)
-      subclasses << subclass
-      notify_subclass_added
-
-      superclass = superclass()
-      while superclass
-        superclass.notify_subclass_added
-        superclass = superclass.superclass
-      end
-    end
-  end
-
   module InstanceVarInitializerContainer
     class InstanceVarInitializer
       getter name : String
@@ -828,7 +813,6 @@ module Crystal
   end
 
   class NonGenericModuleType < ModuleType
-    include DefInstanceContainer
     include ClassVarContainer
     include SubclassObservable
 
@@ -924,6 +908,8 @@ module Crystal
 
   # A module that is related to a file and contains its private defs.
   class FileModule < NonGenericModuleType
+    include DefInstanceContainer
+
     getter(vars) { MetaVars.new }
 
     def vars?
@@ -932,7 +918,8 @@ module Crystal
   end
 
   abstract class ClassType < ModuleType
-    include InheritableClass
+    include DefInstanceContainer
+    include SubclassObservable
     include InstanceVarInitializerContainer
 
     getter superclass : Type?
@@ -952,6 +939,17 @@ module Crystal
       @depth = superclass ? (superclass.depth + 1) : 0
       parents.push superclass if superclass
       force_add_subclass if add_subclass
+    end
+
+    def add_subclass(subclass)
+      subclasses << subclass
+      notify_subclass_added
+
+      superclass = superclass()
+      while superclass
+        superclass.notify_subclass_added
+        superclass = superclass.superclass
+      end
     end
 
     def force_add_subclass
@@ -1080,7 +1078,6 @@ module Crystal
   class NonGenericClassType < ClassType
     include InstanceVarContainer
     include ClassVarContainer
-    include DefInstanceContainer
 
     def initialize_metaclass(metaclass)
       metaclass.add_def Def.new("allocate", body: Primitive.new("allocate"))
@@ -1138,7 +1135,6 @@ module Crystal
   end
 
   class PrimitiveType < ClassType
-    include DefInstanceContainer
     include ClassVarContainer
 
     getter bytes : Int32
@@ -1395,7 +1391,6 @@ module Crystal
 
   class GenericClassType < ClassType
     include GenericType
-    include DefInstanceContainer
 
     def initialize(program, namespace, name, superclass, @type_vars : Array(String), add_subclass = true)
       super(program, namespace, name, superclass, add_subclass)
@@ -1491,7 +1486,6 @@ module Crystal
   end
 
   class GenericClassInstanceType < Type
-    include InheritableClass
     include InstanceVarContainer
     include InstanceVarInitializerContainer
     include ClassVarContainer
@@ -2161,7 +2155,6 @@ module Crystal
   end
 
   class MetaclassType < ClassType
-    include DefInstanceContainer
     include ClassVarContainer
     include InstanceVarContainer
 

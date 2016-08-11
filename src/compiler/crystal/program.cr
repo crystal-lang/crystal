@@ -20,6 +20,8 @@ module Crystal
   # can also include other modules (this happens when you do `include Module`
   # at the top-level).
   class Program < NonGenericModuleType
+    include DefInstanceContainer
+
     # All symbols (:foo, :bar) found in the program
     getter symbols = Set(String).new
 
