@@ -76,6 +76,8 @@ Creates a library skeleton
 .It Sy app
 Creates an application skeleton
 .El
+
+This initializes the lib/app project folder as a git repository, with a license file, a readme file, a .travis.yml file for Travis CI integration, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
 .Bd -literal -offset
 NAME - name of project to be generated, eg: example
 .Pp
@@ -150,7 +152,7 @@ Generate documentation from comments using a subset of markdown. The output is s
 .Pp
 .It Cm eval
 .Pp
-Evaluate code from arguments or, if no arguments are passed, from the standard input.
+Evaluate code from arguments or, if no arguments are passed, from the standard input. Useful for experiments.
 .Pp
 .It
 .Cm play
