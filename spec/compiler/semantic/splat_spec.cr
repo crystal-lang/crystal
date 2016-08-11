@@ -499,6 +499,34 @@ describe "Semantic: splat" do
     )) { tuple_of([int32, int32]) }
   end
 
+  it "matches typed before non-typed (1) (#3134)" do
+    assert_type(%(
+      def bar(*args)
+        "free"
+      end
+
+      def bar(*args : Int32)
+        1
+      end
+
+      {bar(1, 2), bar('a', 1)}
+      )) { tuple_of([int32, string]) }
+  end
+
+  it "matches typed before non-typed (1) (#3134)" do
+    assert_type(%(
+      def bar(*args : Int32)
+        1
+      end
+
+      def bar(*args)
+        "free"
+      end
+
+      {bar(1, 2), bar('a', 1)}
+      )) { tuple_of([int32, string]) }
+  end
+
   describe Splat do
     it "without splat" do
       a_def = Def.new("foo", args: [Arg.new("x"), Arg.new("y")])

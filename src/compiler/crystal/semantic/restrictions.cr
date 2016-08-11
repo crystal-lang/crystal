@@ -114,9 +114,18 @@ module Crystal
         if self_splat_index == other_splat_index
           self_arg = self.def.args[self_splat_index]
           other_arg = other.def.args[other_splat_index]
+          self_restriction = self_arg.restriction
+          other_restriction = other_arg.restriction
 
-          if (self_restriction = self_arg.restriction) && (other_restriction = other_arg.restriction)
+          if self_restriction && other_restriction
+            # If both splat have restrictions, check which one is stricter
             return false unless self_restriction.restriction_of?(other_restriction, owner)
+          elsif self_restriction
+            # If only self has a restriction, it's stricter than the other
+            return true
+          elsif other_restriction
+            # If only the other has a restriction, it's stricter than self
+            return false
           end
         elsif self_splat_index < other_splat_index
           return false
@@ -159,12 +168,15 @@ module Crystal
       self_double_splat_restriction = self.def.double_splat.try &.restriction
       other_double_splat_restriction = other.def.double_splat.try &.restriction
 
+      # If both double splat have restrictions, check which one is stricter
       if self_double_splat_restriction && other_double_splat_restriction
         return false unless self_double_splat_restriction.restriction_of?(other_double_splat_restriction, owner)
       elsif self_double_splat_restriction
-        true
+        # If only self has a restriction, it's stricter than the other
+        return true
       elsif other_double_splat_restriction
-        false
+        # If only the other has a restriction, it's stricter than self
+        return false
       end
 
       true
