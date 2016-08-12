@@ -323,10 +323,14 @@ struct Slice(T)
       lines = full_lines + 1
     end
 
-    String.new(str_size) do |buffer|
+    String.new(str_size) do |buf|
       index_offset = 0
       hex_offset = 10
       ascii_offset = 60
+
+      # Ensure we don't write outside the buffer:
+      # slower, but safer (speed is not very important when hexdump is used)
+      buffer = Slice.new(buf, str_size)
 
       each_with_index do |v, i|
         if i % 16 == 0
@@ -351,7 +355,7 @@ struct Slice(T)
           hex_offset += 1
         end
 
-        if i % 16 == 15
+        if i % 16 == 15 && ascii_offset < str_size
           buffer[ascii_offset] = '\n'.ord.to_u8
           hex_offset += 27
           ascii_offset += 61
