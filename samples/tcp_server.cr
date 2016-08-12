@@ -11,7 +11,7 @@ def process(client)
     client << msg
   end
 rescue IO::EOFError
-  puts "#{client_addr} dissconnected"
+  puts "#{client_addr} disconnected"
 ensure
   client.close
 end
