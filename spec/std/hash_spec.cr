@@ -204,6 +204,18 @@ describe "Hash" do
     end
   end
 
+  describe "has_value?" do
+    it "returns true if contains the value" do
+      a = {1 => 2, 3 => 4, 5 => 6}
+      a.has_value?(4).should be_true
+    end
+
+    it "returns false if does not contain the value" do
+      a = {1 => 2, 3 => 4, 5 => 6}
+      a.has_value?(3).should be_false
+    end
+  end
+
   describe "delete" do
     it "deletes key in the beginning" do
       a = {1 => 2, 3 => 4, 5 => 6}

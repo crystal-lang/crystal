@@ -85,6 +85,20 @@ class Hash(K, V)
     !!find_entry(key)
   end
 
+  # Returns `true` when value given by *value* exists, otherwise `false`.
+  #
+  # ```
+  # h = {"foo" => "bar"}
+  # h.has_value?("foo") # => false
+  # h.has_value?("bar") # => true
+  # ```
+  def has_value?(val)
+    each_value do |value|
+      return true if value == val
+    end
+    false
+  end
+
   # Returns the value for the key given by *key*.
   # If not found, returns the default value given by `Hash.new`, otherwise raises `KeyError`.
   #
