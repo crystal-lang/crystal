@@ -1765,10 +1765,16 @@ describe "String" do
     it "substitutes one placeholder" do
       res = "change %{this}" % {"this" => "nothing"}
       res.should eq "change nothing"
+
+      res = "change %{this}" % {this: "nothing"}
+      res.should eq "change nothing"
     end
 
     it "substitutes multiple placeholder" do
       res = "change %{this} and %{more}" % {"this" => "nothing", "more" => "something"}
+      res.should eq "change nothing and something"
+
+      res = "change %{this} and %{more}" % {this: "nothing", more: "something"}
       res.should eq "change nothing and something"
     end
 
@@ -1776,10 +1782,14 @@ describe "String" do
       expect_raises KeyError do
         "change %{this}" % {"that" => "wrong key"}
       end
+
+      expect_raises KeyError do
+        "change %{this}" % {that: "wrong key"}
+      end
     end
 
-    it "raises if expecting hash but not given" do
-      expect_raises(ArgumentError, "one hash required") do
+    it "raises if expecting hash or named tuple but not given" do
+      expect_raises(ArgumentError, "one hash or named tuple required") do
         "change %{this}" % "this"
       end
     end
@@ -1792,6 +1802,9 @@ describe "String" do
 
     it "applies formatting to %<...> placeholder" do
       res = "change %<this>.2f" % {"this" => 23.456}
+      res.should eq "change 23.46"
+
+      res = "change %<this>.2f" % {this: 23.456}
       res.should eq "change 23.46"
     end
   end
