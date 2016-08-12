@@ -1,5 +1,5 @@
 class YAML::Parser
-  def initialize(content)
+  def initialize(content : String | IO)
     @pull_parser = PullParser.new(content)
     @anchors = {} of String => YAML::Type
   end

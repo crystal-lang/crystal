@@ -83,7 +83,7 @@ module YAML
   # # => "paragraph" => "foo\nbar\n"
   # # => }
   # ```
-  def self.parse(data : String) : Any
+  def self.parse(data : String | IO) : Any
     parser = YAML::Parser.new(data)
     begin
       parser.parse

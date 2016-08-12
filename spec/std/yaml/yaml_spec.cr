@@ -111,6 +111,10 @@ describe "YAML" do
           ex.column_number.should eq(2)
         end
       end
+
+      it "parses from IO" do
+        YAML.parse(MemoryIO.new("- foo\n- bar")).should eq(["foo", "bar"])
+      end
     end
   end
 
