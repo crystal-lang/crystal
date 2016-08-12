@@ -467,15 +467,22 @@ class Crystal::Call
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
     arg = args.first
-    if arg.is_a?(SymbolLiteral)
+
+    case arg # TODO: use || after 0.19
+    when SymbolLiteral
       name = arg.value
+    when StringLiteral
+      name = arg.value
+    end
+
+    if name
       index = instance_type.name_index(name)
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       else
-        raise "missing key '#{arg.value}' for named tuple #{owner}"
+        raise "missing key '#{name}' for named tuple #{owner}"
       end
     end
     nil
