@@ -118,6 +118,8 @@ class URI
   # Sets the opaque component of the URI.
   setter opaque : String?
 
+  def_equals_and_hash scheme, host, port, path, query, user, password, fragment, opaque
+
   def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
   end
 
