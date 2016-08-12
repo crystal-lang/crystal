@@ -131,7 +131,10 @@ lib LibYAML
     end_mark : Mark
   end
 
+  alias ReadHandler = Void*, LibC::UChar*, LibC::SizeT, LibC::SizeT* -> LibC::Int
+
   fun yaml_parser_initialize(parser : Parser*) : Int
+  fun yaml_parser_set_input(parser : Parser*, handler : ReadHandler, data : Void*)
   fun yaml_parser_set_input_string(parser : Parser*, input : UInt8*, length : LibC::SizeT)
   fun yaml_parser_parse(parser : Parser*, event : Event*) : Int
   fun yaml_parser_delete(parser : Parser*)
