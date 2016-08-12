@@ -1679,7 +1679,7 @@ class String
   # # but "o" is not and so is not included
   # "hello".gsub(/(he|l|o)/, {"he": "ha", "l": "la"}) # => "halala"
   # ```
-  def gsub(pattern : Regex, hash : Hash(String, _))
+  def gsub(pattern : Regex, hash : Hash(String, _) | NamedTuple)
     gsub(pattern) do |match|
       hash[match]?
     end
@@ -1739,6 +1739,18 @@ class String
   def gsub(hash : Hash(Char, _))
     gsub do |char|
       hash[char]? || char
+    end
+  end
+
+  # Returns a string where all chars in the given hash are replaced
+  # by the corresponding *tuple* values.
+  #
+  # ```
+  # "hello".gsub({'e' => 'a', 'l' => 'd'}) # => "haddo"
+  # ```
+  def gsub(tuple : NamedTuple)
+    gsub do |char|
+      tuple[char.to_s]? || char
     end
   end
 
