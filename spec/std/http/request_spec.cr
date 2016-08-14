@@ -168,6 +168,12 @@ module HTTP
         request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
         request.path.should eq("/api/v3/some/resource")
       end
+
+      it "falls back to /" do
+        request = Request.new("GET", "/foo")
+        request.path = nil
+        request.path.should eq("/")
+      end
     end
 
     describe "#path=" do

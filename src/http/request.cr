@@ -77,7 +77,7 @@ class HTTP::Request
 
   # Lazily parses and return the request's path component.
   def path
-    uri.path
+    uri.path || "/"
   end
 
   # Sets request's path component.
