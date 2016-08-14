@@ -67,24 +67,8 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
         value.accept ivar_visitor
       end
 
-      case current_type
-      when NonGenericModuleType
-        unless current_type.known_instance_vars.includes?(target.name)
-          ivar_visitor.undefined_instance_variable(current_type, target)
-        end
-      when GenericModuleType
-        unless current_type.known_instance_vars.includes?(target.name)
-          ivar_visitor.undefined_instance_variable(current_type, target)
-        end
-      when GenericClassType
-        unless current_type.known_instance_vars.includes?(target.name)
-          ivar_visitor.undefined_instance_variable(current_type, target)
-        end
-      else
-        ivar = current_type.lookup_instance_var?(target.name)
-        unless ivar
-          ivar_visitor.undefined_instance_variable(current_type, target)
-        end
+      unless current_type.lookup_instance_var_with_owner?(target.name)
+        ivar_visitor.undefined_instance_variable(current_type, target)
       end
 
       current_type.add_instance_var_initializer(target.name, value, meta_vars)

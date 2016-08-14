@@ -208,8 +208,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
   end
 
-  def lookup_type(node : ASTNode)
-    current_type.lookup_type(node, allow_typeof: false)
+  def lookup_type(node : ASTNode, free_vars = nil)
+    current_type.lookup_type(node, free_vars: free_vars, allow_typeof: false)
   end
 
   def check_outside_exp(node, op)

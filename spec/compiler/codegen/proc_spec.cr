@@ -714,4 +714,17 @@ describe "Code gen: proc" do
       Foo.new.@f.call
       )).to_i.should eq(42)
   end
+
+  it "codegens proc of generic type" do
+    codegen(%(
+      class Gen(T)
+      end
+
+      class Foo < Gen(Int32)
+      end
+
+      f = ->(x : Gen(Int32)) {}
+      f.call(Foo.new)
+      ))
+  end
 end

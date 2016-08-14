@@ -79,8 +79,7 @@ class Crystal::RecursiveStructChecker
 
     return if checked.includes?(type)
 
-    case type
-    when VirtualType
+    if type.is_a?(VirtualType)
       if type.struct?
         path.push type
         type.subtypes.each do |subtype|
@@ -90,15 +89,9 @@ class Crystal::RecursiveStructChecker
         end
         path.pop
       end
-    when InstanceVarContainer
-      if struct?(type)
-        check_recursive_instance_var_container(target, type, checked, path)
-      end
-    when UnionType
-      type.union_types.each do |union_type|
-        check_recursive(target, union_type, checked, path)
-      end
-    when NonGenericModuleType
+    end
+
+    if type.is_a?(NonGenericModuleType)
       path.push type
       # Check if the module is composed, recursively, of the target struct
       type.raw_including_types.try &.each do |module_type|
@@ -107,6 +100,18 @@ class Crystal::RecursiveStructChecker
         path.pop
       end
       path.pop
+    end
+
+    if type.is_a?(InstanceVarContainer)
+      if struct?(type)
+        check_recursive_instance_var_container(target, type, checked, path)
+      end
+    end
+
+    if type.is_a?(UnionType)
+      type.union_types.each do |union_type|
+        check_recursive(target, union_type, checked, path)
+      end
     end
   end
 

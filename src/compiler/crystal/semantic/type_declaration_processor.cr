@@ -11,7 +11,7 @@
 # are defined in a superclass, if super is called, etc.
 struct Crystal::TypeDeclarationProcessor
   record TypeDeclarationWithLocation,
-    type : TypeVar,
+    type : Type,
     location : Location,
     uninitialized : Bool
 
@@ -53,12 +53,11 @@ struct Crystal::TypeDeclarationProcessor
   # keep a list of all types and nodes, and we eventually resolve them
   # all when a generic type is instantiated.
   class InstanceVarTypeInfo
-    getter type_vars
+    property type : Type
     property outside_def
     getter location
 
-    def initialize(@location : Location)
-      @type_vars = [] of TypeVar
+    def initialize(@location : Location, @type : Type)
       @outside_def = false
     end
   end
@@ -170,6 +169,8 @@ struct Crystal::TypeDeclarationProcessor
 
     remove_error owner, name
 
+    type = replace_type_parameters(owner, type)
+
     var = MetaTypeVar.new(name)
     var.owner = owner
     var.type = type
@@ -186,7 +187,7 @@ struct Crystal::TypeDeclarationProcessor
     declare_meta_type_var(vars, owner, name, type)
   end
 
-  private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation, instance_var = false)
+  private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation, instance_var = false, check_nilable = true)
     if instance_var && !owner.allows_instance_vars?
       raise_cant_declare_instance_var(owner, info.location)
     end
@@ -200,13 +201,20 @@ struct Crystal::TypeDeclarationProcessor
     # If the variable is gueseed to be nilable because it is not initialized
     # in all of the initialize methods, and the explicit type is not nilable,
     # give an error right now
-    if instance_var && !var.type.includes_type?(@program.nil)
+    if check_nilable && instance_var && !var.type.includes_type?(@program.nil)
       if nilable_instance_var?(owner, name)
         raise_not_initialized_in_all_initialize(var, name, owner)
       end
     end
 
     var
+  end
+
+  private def replace_type_parameters(owner, type)
+    if owner.is_a?(NonGenericModuleType) || owner.is_a?(NonGenericClassType)
+      type = type.replace_type_parameters(owner)
+    end
+    type
   end
 
   private def raise_cant_declare_instance_var(owner, location)
@@ -236,56 +244,50 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def process_owner_instance_var_declaration(owner, name, type_decl)
-    case owner
-    when NonGenericClassType
-      # Check if a superclass already defined this variable
-      supervar = owner.lookup_instance_var_with_owner?(name)
-      if supervar && supervar.owner != owner
-        # Redeclaring a variable with the same type is OK
-        unless supervar.instance_var.type.same?(type_decl.type)
-          raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.instance_var.type}", type_decl.location)
-        end
-      else
-        declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true)
+    # Check if a superclass already defined this variable
+    supervar = owner.lookup_instance_var_with_owner?(name)
+
+    if supervar && supervar.owner != owner
+      # Redeclaring a variable with the same type is OK
+      unless supervar.instance_var.type.same?(type_decl.type)
+        raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.instance_var.type} (trying to re-declare as #{type_decl.type})", type_decl.location)
       end
-    when NonGenericModuleType
-      # Transfer this declaration to including types, recursively
-      owner.known_instance_vars << name
+    else
+      declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true, check_nilable: !owner.module?)
       remove_error owner, name
-      owner.raw_including_types.try &.each do |including_type|
-        process_owner_instance_var_declaration(including_type, name, type_decl)
-      end
-    when GenericClassType
-      # If the variable is guessed to be nilable because it's not initialized in all
-      # of the initialize method, use a syntactic heuristic to check that the declared type
-      # is or not non-nilable.
-      if nilable_instance_var?(owner, name)
-        if !has_syntax_nil?(type_decl.type)
-          raise_not_initialized_in_all_initialize(type_decl.location, name, owner)
+
+      if owner.is_a?(GenericType)
+        owner.generic_types.each_value do |generic_type|
+          new_type = type_decl.type.replace_type_parameters(generic_type)
+          new_type_decl = TypeDeclarationWithLocation.new(new_type, type_decl.location, type_decl.uninitialized)
+          declare_meta_type_var(generic_type.instance_vars, generic_type, name, new_type_decl, instance_var: true, check_nilable: false)
         end
       end
 
-      owner.known_instance_vars << name
-      owner.declare_instance_var(name, type_decl.type)
-      remove_error owner, name
-    when GenericModuleType
-      owner.known_instance_vars << name
-      owner.declare_instance_var(name, type_decl.type)
-      remove_error owner, name
-      check_non_nilable_for_generic_module(owner, name, type_decl)
+      if owner.is_a?(NonGenericModuleType)
+        # Transfer this declaration to including types, recursively
+        owner.raw_including_types.try &.each do |including_type|
+          process_owner_instance_var_declaration(including_type, name, type_decl)
+        end
+      end
+
+      if owner.is_a?(GenericModuleType)
+        # Transfer this declaration to including types, recursively
+        owner.raw_including_types.try &.each do |including_type|
+          process_owner_instance_var_declaration(including_type, name, type_decl)
+        end
+      end
     end
   end
 
   private def check_non_nilable_for_generic_module(owner, name, type_decl)
     case owner
     when GenericModuleType
-      owner.known_instance_vars << name
       remove_error owner, name
       owner.inherited.try &.each do |inherited|
         check_non_nilable_for_generic_module(inherited, name, type_decl)
       end
     when NonGenericModuleType
-      owner.known_instance_vars << name
       remove_error owner, name
       owner.raw_including_types.try &.each do |inherited|
         check_non_nilable_for_generic_module(inherited, name, type_decl)
@@ -326,7 +328,7 @@ struct Crystal::TypeDeclarationProcessor
       supervar = owner.lookup_instance_var_with_owner?(name)
       return if supervar
 
-      type = Type.merge!(type_info.type_vars.map { |t| t.as(Type) })
+      type = type_info.type
       if nilable_instance_var?(owner, name)
         type = Type.merge!(type, @program.nil)
       end
@@ -341,33 +343,53 @@ struct Crystal::TypeDeclarationProcessor
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
     when NonGenericModuleType
-      # Transfer this guess to including types, recursively
-      owner.known_instance_vars << name
-      remove_error owner, name
-      owner.raw_including_types.try &.each do |including_type|
-        process_owner_guessed_instance_var_declaration(including_type, name, type_info)
-      end
-    when GenericClassType
+      type = type_info.type
       if nilable_instance_var?(owner, name)
-        type_info.type_vars << @program.nil
+        type = Type.merge!([type, @program.nil])
       end
 
       # Same as above, only Nil makes no sense
-      if type_info.type_vars.all? { |t| t.is_a?(NilType) }
+      if type.nil_type?
         return
       end
 
-      owner.known_instance_vars << name
-      owner.declare_instance_var(name, type_info.type_vars.uniq)
+      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
       remove_error owner, name
-    when GenericModuleType
+      owner.raw_including_types.try &.each do |including_type|
+        process_owner_guessed_instance_var_declaration(including_type, name, type_info)
+        remove_error including_type, name
+      end
+    when GenericClassType
+      type = type_info.type
       if nilable_instance_var?(owner, name)
-        type_info.type_vars << @program.nil
+        type = Type.merge!([type, @program.nil])
       end
 
-      owner.known_instance_vars << name
-      owner.declare_instance_var(name, type_info.type_vars.uniq)
+      # Same as above, only Nil makes no sense
+      if type.nil_type?
+        return
+      end
+
+      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
+
+      owner.generic_types.each_value do |generic_type|
+        new_type = type.replace_type_parameters(generic_type)
+        declare_meta_type_var(generic_type.instance_vars, generic_type, name, new_type, type_info.location, instance_var: true)
+      end
+
       remove_error owner, name
+    when GenericModuleType
+      type = type_info.type
+      if nilable_instance_var?(owner, name)
+        type = Type.merge!([type, @program.nil])
+      end
+
+      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
+      remove_error owner, name
+      owner.raw_including_types.try &.each do |including_type|
+        process_owner_guessed_instance_var_declaration(including_type, name, type_info)
+        remove_error including_type, name
+      end
     end
   end
 
@@ -414,11 +436,8 @@ struct Crystal::TypeDeclarationProcessor
   private def compute_non_nilable_instance_vars_multi(owner, infos)
     # Get ancestor's non-nilable variables
     ancestor = owner.ancestors.first?
-    case ancestor
-    when IncludedGenericModule
-      ancestor = ancestor.module
-    when InheritedGenericClass
-      ancestor = ancestor.extended_class
+    if ancestor.is_a?(GenericInstanceType)
+      ancestor = ancestor.generic_type
     end
     if ancestor
       ancestor_non_nilable = @non_nilable_instance_vars[ancestor]?
@@ -513,6 +532,10 @@ struct Crystal::TypeDeclarationProcessor
     return infos if infos && !infos.empty?
 
     owner.ancestors.each do |ancestor|
+      if ancestor.is_a?(GenericInstanceType)
+        ancestor = ancestor.generic_type
+      end
+
       infos = @initialize_infos[ancestor]?
       return infos if infos && !infos.empty?
     end
@@ -523,32 +546,22 @@ struct Crystal::TypeDeclarationProcessor
   private def check_nilable_instance_vars
     @nilable_instance_vars.each do |owner, vars|
       vars.each do |name, info|
-        case owner
-        when NonGenericClassType
-          ivar = owner.lookup_instance_var_with_owner?(name)
-          if ivar
-            if ivar.instance_var.type.includes_type?(@program.nil)
-              # If the variable is nilable because it was not initialized
-              # in all of the initialize methods, and it's not explicitly nil,
-              # give an error and ask to be explicit.
-              if nilable_instance_var?(owner, name)
-                raise_doesnt_explicitly_initializes(info, name, ivar)
-              end
-            elsif owner == ivar.owner
+        ivar = owner.lookup_instance_var_with_owner?(name)
+        if ivar
+          if ivar.instance_var.type.includes_type?(@program.nil)
+            # If the variable is nilable because it was not initialized
+            # in all of the initialize methods, and it's not explicitly nil,
+            # give an error and ask to be explicit.
+            if nilable_instance_var?(owner, name)
               raise_doesnt_explicitly_initializes(info, name, ivar)
-            else
-              info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}' of #{ivar.owner}, with #{owner} < #{ivar.owner}, rendering it nilable"
             end
+          elsif owner == ivar.owner
+            raise_doesnt_explicitly_initializes(info, name, ivar)
           else
-            info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}', rendering it nilable"
+            info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}' of #{ivar.owner}, with #{owner} < #{ivar.owner}, rendering it nilable"
           end
-        when GenericClassType
-          type_vars = owner.declared_instance_vars.try &.[name]?
-          if type_vars
-            unless type_vars.any? { |type_var| has_syntax_nil?(type_var) }
-              info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}', rendering it nilable"
-            end
-          end
+        else
+          info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}', rendering it nilable"
         end
       end
     end

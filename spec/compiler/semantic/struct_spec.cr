@@ -130,7 +130,7 @@ describe "Semantic: struct" do
 
       Foo::Test(Int32).new(Foo::Test(Int32).new(nil))
       ),
-      "recursive struct Foo::Test(Int32) detected: `@test : (Foo::Test(Int32) | Nil)`"
+      "recursive struct Foo::Test(T) detected: `@test : (Foo::Test(T) | Nil)`"
   end
 
   it "errors on mutually recursive struct" do

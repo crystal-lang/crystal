@@ -1700,12 +1700,8 @@ module Crystal
     end
 
     def run_instance_vars_initializers(real_type, type : GenericClassInstanceType, type_ptr)
-      run_instance_vars_initializers(real_type, type.generic_class, type_ptr)
+      run_instance_vars_initializers(real_type, type.generic_type, type_ptr)
       run_instance_vars_initializers_non_recursive real_type, type, type_ptr
-    end
-
-    def run_instance_vars_initializers(real_type, type : InheritedGenericClass, type_ptr)
-      run_instance_vars_initializers real_type, type.extended_class, type_ptr
     end
 
     def run_instance_vars_initializers(real_type, type : ClassType | GenericClassType, type_ptr)

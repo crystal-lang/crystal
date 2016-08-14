@@ -559,6 +559,10 @@ class Crystal::CodeGenVisitor
     target_ptr
   end
 
+  def upcast_distinct(value, to_type : GenericClassInstanceType, from_type : Type)
+    cast_to value, to_type
+  end
+
   def upcast_distinct(value, to_type : Type, from_type : Type)
     raise "Bug: trying to upcast #{to_type} <- #{from_type}"
   end

@@ -79,14 +79,6 @@ module Crystal
     end
   end
 
-  class IncludedGenericModule
-    delegate lookup_similar_def, lookup_similar_path, to: @module
-  end
-
-  class InheritedGenericClass
-    delegate lookup_similar_def, lookup_similar_path, to: @extended_class
-  end
-
   class AliasType
     delegate lookup_similar_def, to: aliased_type
   end

@@ -1,6 +1,18 @@
 require "../types"
 
 module Crystal
+  record NamedArgumentType, name : String, type : Type do
+    def self.from_args(named_args : Array(NamedArgument)?)
+      named_args.try &.map { |named_arg| new(named_arg.name, named_arg.value.type) }
+    end
+  end
+
+  record CallSignature,
+    name : String,
+    arg_types : Array(Type),
+    block : Block?,
+    named_args : Array(NamedArgumentType)?
+
   class Type
     def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil)
       matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array)
@@ -24,12 +36,7 @@ module Crystal
       # and can be known by invoking `lookup_new_in_ancestors?`
       if my_parents && !(!lookup_new_in_ancestors? && is_new)
         my_parents.each do |parent|
-          # If this is a generic instance type and our parent is the generic class, use
-          # this type as the type lookup (so we can find type arguments)
-          path_lookup = parent
-          path_lookup = self if self.is_a?(GenericClassInstanceType) && path_lookup == self.generic_class
-
-          matches = parent.lookup_matches(signature, owner, path_lookup, matches_array)
+          matches = parent.lookup_matches(signature, owner, parent, matches_array)
           if matches.cover_all?
             return matches
           else
@@ -107,14 +114,9 @@ module Crystal
       # and can be known by invoking `lookup_new_in_ancestors?`
       if my_parents && !(!lookup_new_in_ancestors? && is_new)
         my_parents.each do |parent|
-          break unless parent.is_a?(IncludedGenericModule) || parent.module?
+          break unless parent.module?
 
-          # If this is a generic instance type and our parent is the generic class, use
-          # this type as the type lookup (so we can find type arguments)
-          path_lookup = parent
-          path_lookup = self if self.is_a?(GenericClassInstanceType) && path_lookup == self.generic_class
-
-          matches = parent.lookup_matches_with_modules(signature, owner, path_lookup, matches_array)
+          matches = parent.lookup_matches_with_modules(signature, owner, parent, matches_array)
           return matches unless matches.empty?
         end
       end

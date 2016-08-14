@@ -25,7 +25,7 @@ module Crystal
       when NonGenericModuleType
         self.including_types.try &.passed_by_value?
       when GenericClassInstanceType
-        self.generic_class.passed_by_value?
+        self.generic_type.passed_by_value?
       when TypeDefType
         self.typedef.passed_by_value?
       when AliasType

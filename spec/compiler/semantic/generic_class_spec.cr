@@ -9,7 +9,7 @@ describe "Semantic: generic class" do
       class Bar < Foo(T)
       end
       ),
-      "Foo is not a generic class, it's a class"
+      "Foo is not a generic type, it's a class"
   end
 
   it "errors if inheriting from generic and incorrect number of type vars" do
@@ -50,7 +50,7 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.t
-      )) { int32.metaclass }
+      ), inject_primitives: false) { int32.metaclass }
   end
 
   it "inhertis from generic with forwarding (2)" do
@@ -86,7 +86,7 @@ describe "Semantic: generic class" do
       )) { int32 }
   end
 
-  pending "inherits twice" do
+  it "inherits twice" do
     assert_type(%(
       class Foo
         def initialize

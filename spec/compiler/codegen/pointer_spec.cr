@@ -457,4 +457,29 @@ describe "Code gen: pointer" do
       foo.value
       )).to_i.should eq(3)
   end
+
+  it "compares pointers through typedef" do
+    run(%(
+      module Comparable(T)
+        def ==(other : T)
+          (self <=> other) == 0
+        end
+      end
+
+      struct Pointer(T)
+        include Comparable(Pointer)
+
+        def <=>(other : Pointer)
+          0
+        end
+      end
+
+      lib LibFoo
+        type Ptr = Void*
+      end
+
+      ptr = Pointer(Void).malloc(1_u64).as(LibFoo::Ptr)
+      ptr == ptr
+      )).to_b.should be_true
+  end
 end

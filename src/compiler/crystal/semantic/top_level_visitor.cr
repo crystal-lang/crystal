@@ -43,37 +43,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : ClassDef)
     check_outside_exp node, "declare class"
 
-    node_superclass = node.superclass
-
-    if node_superclass
-      superclass = lookup_type_name(node_superclass)
-    else
-      superclass = node.struct? ? program.struct : program.reference
-    end
-
-    if node_superclass.is_a?(Generic)
-      unless superclass.is_a?(GenericClassType)
-        node_superclass.raise "#{superclass} is not a generic class, it's a #{superclass.type_desc}"
-      end
-
-      if node_superclass.type_vars.size != superclass.type_vars.size
-        node_superclass.wrong_number_of "type vars", superclass, node_superclass.type_vars.size, superclass.type_vars.size
-      end
-    end
-
     scope, name = lookup_type_def_name(node.name)
 
     type = scope.types[name]?
-
-    if !type && superclass
-      if node.struct? != superclass.struct?
-        node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
-      end
-
-      if superclass.struct? && !superclass.abstract?
-        node.raise "can't extend non-abstract struct #{superclass}"
-      end
-    end
 
     created_new_type = false
 
@@ -86,10 +58,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if node.struct? != type.struct?
         node.raise "#{name} is not a #{node.struct? ? "struct" : "class"}, it's a #{type.type_desc}"
-      end
-
-      if node.superclass && type.superclass != superclass
-        node.raise "superclass mismatch for class #{type} (#{superclass} for #{type.superclass})"
       end
 
       if type_vars = node.type_vars
@@ -107,38 +75,60 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         end
       end
     else
-      case superclass
-      when NonGenericClassType
-        # OK
-      when GenericClassType
-        if node_superclass.is_a?(Generic)
-          mapping = Hash.zip(superclass.type_vars, node_superclass.type_vars)
-          superclass = InheritedGenericClass.new(@program, superclass, mapping)
-        else
-          node_superclass.not_nil!.wrong_number_of "type vars", superclass, 0, superclass.type_vars.size
-        end
-      else
-        node_superclass.not_nil!.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
-      end
-
       created_new_type = true
       if type_vars = node.type_vars
-        type = GenericClassType.new @program, scope, name, superclass, type_vars, false
+        type = GenericClassType.new @program, scope, name, nil, type_vars, false
         type.splat_index = node.splat_index
       else
-        type = NonGenericClassType.new @program, scope, name, superclass, false
+        type = NonGenericClassType.new @program, scope, name, nil, false
       end
       type.abstract = node.abstract?
       type.struct = node.struct?
-
-      if superclass.is_a?(InheritedGenericClass)
-        superclass.extending_class = type
-        superclass.extended_class.as(GenericClassType).add_inherited(type)
-      end
-
-      scope.types[name] = type
     end
 
+    node_superclass = node.superclass
+    if node_superclass
+      if type_vars = node.type_vars
+        free_vars = {} of String => TypeVar
+        type_vars.each do |type_var|
+          free_vars[type_var] = TypeParameter.new(program, type.as(GenericType), type_var)
+        end
+      else
+        free_vars = nil
+      end
+
+      superclass = lookup_type(node_superclass, free_vars: free_vars)
+      case superclass
+      when GenericClassType
+        node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
+      when NonGenericClassType, GenericClassInstanceType
+        # OK
+      else
+        node_superclass.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
+      end
+    else
+      superclass = node.struct? ? program.struct : program.reference
+    end
+
+    if node.superclass && !created_new_type && type.superclass != superclass
+      node.raise "superclass mismatch for class #{type} (#{superclass} for #{type.superclass})"
+    end
+
+    if created_new_type && superclass
+      if node.struct? != superclass.struct?
+        node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
+      end
+
+      if superclass.struct? && !superclass.abstract?
+        node.raise "can't extend non-abstract struct #{superclass}"
+      end
+    end
+
+    if created_new_type
+      type.superclass = superclass
+    end
+
+    scope.types[name] = type if created_new_type
     node.resolved_type = type
 
     attach_doc type, node
@@ -688,56 +678,19 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def include_in(current_type, node, kind)
     node_name = node.name
-    type = lookup_type_name(node_name)
 
-    unless type.module?
+    type = lookup_type(node_name)
+    case type
+    when GenericModuleType
+      node.raise "wrong number of type vars for #{type} (given 0, expected #{type.type_vars.size})"
+    when .module?
+      # OK
+    else
       node_name.raise "#{type} is not a module, it's a #{type.type_desc}"
     end
 
-    if node_name.is_a?(Generic)
-      unless type.is_a?(GenericModuleType)
-        node_name.raise "#{type} is not a generic module"
-      end
-
-      if !type.splat_index && type.type_vars.size != node_name.type_vars.size
-        node_name.wrong_number_of "type vars", type, node_name.type_vars.size, type.type_vars.size
-      end
-
-      node_name_type_vars = node_name.type_vars
-
-      if splat_index = type.splat_index
-        new_type_vars = Array(ASTNode).new(node_name_type_vars.size)
-        type_var_index = 0
-        type.type_vars.each_index do |index|
-          if index == splat_index
-            tuple_elements = [] of ASTNode
-            (node_name_type_vars.size - (type.type_vars.size - 1)).times do
-              tuple_elements << node_name_type_vars[type_var_index]
-              type_var_index += 1
-            end
-            new_type_vars << TupleLiteral.new(tuple_elements)
-          else
-            new_type_vars << node_name_type_vars[type_var_index]
-            type_var_index += 1
-          end
-        end
-        node_name_type_vars = new_type_vars
-      end
-
-      mapping = Hash.zip(type.type_vars, node_name_type_vars)
-      module_to_include = IncludedGenericModule.new(@program, type, current_type, mapping)
-
-      type.add_inherited(current_type)
-    else
-      if type.is_a?(GenericModuleType)
-        node_name.raise "#{type} is a generic module"
-      else
-        module_to_include = type
-      end
-    end
-
     begin
-      current_type.as(ModuleType).include module_to_include
+      current_type.as(ModuleType).include type
       run_hooks type.metaclass, current_type, kind, node
     rescue ex : TypeException
       node.raise "at '#{kind}' hook", ex
@@ -843,11 +796,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope = lookup_type_def_name_creating_modules path
     end
     {scope.as(ModuleType), name}
-  end
-
-  def lookup_type_name(node)
-    node = node.name if node.is_a?(Generic)
-    lookup_type(node)
   end
 
   def lookup_type_def_name_creating_modules(path : Path)

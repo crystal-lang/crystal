@@ -216,13 +216,13 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
     case owner = current_type
     when NonGenericClassType
-      declare_instance_var_on_non_generic(owner, node, var)
+      declare_instance_var(owner, node, var)
       return
     when GenericClassType
-      declare_instance_var_on_generic(owner, node, var)
+      declare_instance_var(owner, node, var)
       return
     when GenericModuleType
-      declare_instance_var_on_generic(owner, node, var)
+      declare_instance_var(owner, node, var)
       return
     when GenericClassInstanceType
       # OK
@@ -230,26 +230,18 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     when Program, FileModule
       # Error, continue
     when NonGenericModuleType
-      declare_instance_var_on_non_generic(owner, node, var)
+      declare_instance_var(owner, node, var)
       return
     end
 
     node.raise "can only declare instance variables of a non-generic class, not a #{owner.type_desc} (#{owner})"
   end
 
-  def declare_instance_var_on_non_generic(owner, node, var)
-    # For non-generic types we can solve the type now
+  def declare_instance_var(owner, node, var)
     var_type = lookup_type(node.declared_type)
     var_type = check_declare_var_type(node, var_type, "an instance variable")
     owner_vars = @instance_vars[owner] ||= {} of String => TypeDeclarationWithLocation
     type_decl = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, false)
-    owner_vars[var.name] = type_decl
-  end
-
-  def declare_instance_var_on_generic(owner, node, var)
-    # For generic types we must delay the type resolution
-    owner_vars = @instance_vars[owner] ||= {} of String => TypeDeclarationWithLocation
-    type_decl = TypeDeclarationWithLocation.new(node.declared_type, node.location.not_nil!, false)
     owner_vars[var.name] = type_decl
   end
 

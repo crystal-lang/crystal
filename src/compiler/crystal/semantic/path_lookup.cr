@@ -89,7 +89,7 @@ module Crystal
     end
   end
 
-  class GenericClassInstanceType
+  class GenericInstanceType
     def lookup_path_item(name : String, lookup_in_namespace)
       # Check if *name* is a type variable
       if type_var = type_vars[name]?
@@ -99,52 +99,8 @@ module Crystal
           type_var
         end
       else
-        generic_class.lookup_path_item(name, lookup_in_namespace)
+        generic_type.lookup_path_item(name, lookup_in_namespace)
       end
-    end
-  end
-
-  class IncludedGenericModule
-    def lookup_path_item(name : String, lookup_in_namespace)
-      if m = @mapping[name]?
-        # Case of a variadic tuple
-        if m.is_a?(TupleLiteral)
-          types = m.elements.map do |element|
-            @including_class.lookup_type(element).as(Type)
-          end
-          return program.tuple_of(types)
-        end
-
-        case @including_class
-        when GenericClassType, GenericModuleType
-          # skip
-        else
-          return @including_class.lookup_type(m)
-        end
-      end
-
-      @module.lookup_path_item(name, lookup_in_namespace)
-    end
-  end
-
-  class InheritedGenericClass
-    def lookup_path_item(name : String, lookup_in_namespace)
-      if m = @mapping[name]?
-        extending_class = self.extending_class
-        case extending_class
-        when GenericClassType
-          # skip
-        else
-          if extending_class.is_a?(NamedType)
-            self_type = extending_class.namespace
-          else
-            self_type = extending_class.program
-          end
-          return extending_class.lookup_type(m, self_type: self_type)
-        end
-      end
-
-      @extended_class.lookup_path_item(name, lookup_in_namespace)
     end
   end
 

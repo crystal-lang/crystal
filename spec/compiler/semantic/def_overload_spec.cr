@@ -741,7 +741,7 @@ describe "Semantic: def overload" do
       end
 
       class Foo
-        include Moo(T)
+        include Moo(Int32)
 
         def foo(x)
           1

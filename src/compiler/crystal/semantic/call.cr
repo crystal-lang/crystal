@@ -552,6 +552,7 @@ class Crystal::Call
 
     # TODO: do this better
     lookup = enclosing_def.owner
+
     case lookup
     when VirtualType
       parents = lookup.base_type.ancestors
@@ -561,11 +562,11 @@ class Crystal::Call
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericModuleType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(IncludedGenericModule) && ancestor.module == lookup }.not_nil!
+      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == lookup }.not_nil!
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(InheritedGenericClass) && ancestor.extended_class == lookup }
+      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(GenericClassInstanceType) && ancestor.generic_type == lookup }
       if index_of_ancestor
         parents = ancestors[index_of_ancestor + 1..-1]
       else

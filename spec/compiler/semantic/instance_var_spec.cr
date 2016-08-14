@@ -154,6 +154,181 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
+  it "declares instance var of generic type, with no type parameter" do
+    assert_type(%(
+      class Foo(T)
+        @x : Int32
+
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Char).new(1).x
+      )) { int32 }
+  end
+
+  it "declares instance var of generic type, with generic type" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      class Foo(T)
+        @x : Gen(T)
+
+        def initialize(@x : Gen(T))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(Gen(Int32).new).x
+      )) { generic_class "Gen", int32 }
+  end
+
+  it "declares instance var of generic type, with union" do
+    assert_type(%(
+      class Foo(T)
+        @x : T | Char
+
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new(1).x
+      )) { union_of int32, char }
+  end
+
+  it "declares instance var of generic type, with proc" do
+    assert_type(%(
+      class Foo(T)
+        @x : T, T -> Int32
+
+        def initialize(@x : T, T -> Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Char).new(->(x : Char, y : Char) { 1 }).x
+      )) { proc_of([char, char, int32]) }
+  end
+
+  it "declares instance var of generic type, with tuple" do
+    assert_type(%(
+      class Foo(T)
+        @x : {T, Int32, T}
+
+        def initialize(@x : {T, Int32, T})
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Char).new({'a', 1, 'b'}).x
+      )) { tuple_of([char, int32, char]) }
+  end
+
+  it "declares instance var of generic type, with metaclass" do
+    assert_type(%(
+      class Foo(T)
+        @x : T.class
+
+        def initialize(@x : T.class)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new(Int32).x
+      )) { int32.metaclass }
+  end
+
+  it "declares instance var of generic type, with virtual metaclass" do
+    assert_type(%(
+      class Bar; end
+      class Baz < Bar; end
+
+      class Foo(T)
+        @x : T.class
+
+        def initialize(@x : T.class)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Bar).new(Bar).x
+      )) { types["Bar"].virtual_type!.metaclass }
+  end
+
+  it "declares instance var of generic type, with static array" do
+    assert_type(%(
+      class Foo(T)
+        @x : UInt8[T]
+
+        def initialize(@x : UInt8[T])
+        end
+
+        def x
+          @x
+        end
+      end
+
+      z = uninitialized UInt8[3]
+      Foo(3).new(z).x
+      )) { static_array_of(uint8, 3) }
+  end
+
+  it "declares instance var with self, on generic" do
+    assert_type(%(
+      class Foo(T)
+        @x : self | Nil
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new.x
+      )) { nilable generic_class("Foo", int32) }
+  end
+
+  it "errors if declaring variable with number" do
+    assert_error %(
+      class Foo(T)
+        @x : T
+
+        def initialize(@x : T)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(3).new(3).x
+      ),
+      "can't declare variable with NumberLiteral"
+  end
+
   it "declares instance var of generic type through module" do
     assert_type(%(
       module Moo
@@ -220,10 +395,36 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
+  it "declares instance var of generic module (2)" do
+    assert_type(%(
+      module Moo(U)
+        @x : U
+
+        def x
+          @x
+        end
+      end
+
+      class Foo(T)
+        include Moo(T)
+
+        def initialize
+          a = 1
+          @x = a
+        end
+      end
+
+      Foo(Int32).new.x
+      )) { int32 }
+  end
+
   it "declares instance var of generic module from non-generic module" do
     assert_type(%(
       module Moo
         @x : Int32
+
+        def initialize(@x)
+        end
 
         def x
           @x
@@ -238,6 +439,7 @@ describe "Semantic: instance var" do
         include Moo2(T)
 
         def initialize
+          super(1)
           a = 1
           @x = a
         end
@@ -1046,7 +1248,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
+      "this 'initialize' doesn't initialize instance variable '@x' of Foo(T), with Bar(T) < Foo(T), rendering it nilable"
   end
 
   it "doesn't error if not calling super but initializing all variables" do
@@ -2023,9 +2225,6 @@ describe "Semantic: instance var" do
   it "doesn't infer generic type without type argument inside generic" do
     assert_error %(
       class Bar(T)
-        def self.new
-          1
-        end
       end
 
       class Foo(T)
@@ -2040,7 +2239,7 @@ describe "Semantic: instance var" do
 
       Foo(Int32).new.bar
       ),
-      "Can't infer the type of instance variable '@bar' of Foo"
+      "can't use Bar(T) as the type of instance variable @bar of Foo(T), use a more specific type"
   end
 
   it "doesn't crash on missing var on subclass, with superclass not specifying a type" do
@@ -2647,6 +2846,7 @@ describe "Semantic: instance var" do
         end
 
         def initialize(@arg : T)
+          @foo = [bar]
           yield 3
         end
 

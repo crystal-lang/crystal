@@ -395,14 +395,10 @@ module Crystal
           case path_lookup
           when UnionType
             produce_tuple = node.names.first == "T"
-          when GenericClassInstanceType
+          when GenericInstanceType
             produce_tuple = ((splat_index = path_lookup.splat_index) &&
               path_lookup.type_vars.keys.index(node.names.first) == splat_index) ||
               (path_lookup.double_variadic? && path_lookup.type_vars.first_key == node.names.first)
-          when IncludedGenericModule
-            a_module = path_lookup.module
-            produce_tuple = (splat_index = a_module.splat_index) &&
-              path_lookup.mapping.keys.index(node.names.first) == splat_index
           else
             produce_tuple = false
           end

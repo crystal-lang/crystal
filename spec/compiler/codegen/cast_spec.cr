@@ -271,4 +271,22 @@ describe "Code gen: cast" do
       B.new.as(Void*).as(A).hi
       )).to_i.should eq(42)
   end
+
+  it "upcasts from non-generic to generic" do
+    run(%(
+      class Foo(T)
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo(Int32)
+        def foo
+          2
+        end
+      end
+
+      Bar.new.as(Foo(Int32)).foo
+      )).to_i.should eq(2)
+  end
 end

@@ -1041,4 +1041,15 @@ describe "Semantic: class" do
     instance_vars = result.program.types["Foo"].instance_vars.to_a.map(&.[0])
     instance_vars.should eq(%w(@x @y))
   end
+
+  it "errors if inherits from module" do
+    assert_error %(
+      module Moo
+      end
+
+      class Foo < Moo
+      end
+      ),
+      "Moo is not a class, it's a module"
+  end
 end
