@@ -340,16 +340,20 @@ Playground.Session = function(options) {
         case "exception":
           this._triggerFinish();
 
+          var last_line = this.editor.lastLine() + 1;
           this._fullError = message.exception.message;
           if (message.exception.payload) {
             for (var i = 0; i < message.exception.payload.length; i++) {
               var ex = message.exception.payload[i];
               if (ex.file == "play" || ex.file == "") {
-                this._showEditorError(ex.line, ex.column, ex.message, i);
+                // if there is an issue with the reported line,
+                // let's make sure the error is displayed
+                var ex_line = Math.min(ex.line, last_line);
+                this._showEditorError(ex_line, ex.column, ex.message, i);
               }
             }
           } else {
-            this._showEditorError(this.editor.lastLine(), 1, "Compiler error", 0);
+            this._showEditorError(last_line, 1, "Compiler error", 0);
           }
           break;
         case "bug":
