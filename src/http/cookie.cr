@@ -246,7 +246,7 @@ module HTTP
     # `Cookie` headers in it.
     def add_request_headers(headers)
       headers.delete("Cookie")
-      headers.add("Cookie", map(&.to_cookie_header).join("; "))
+      headers.add("Cookie", map(&.to_cookie_header).join("; ")) unless empty?
 
       headers
     end
