@@ -33,6 +33,12 @@ describe "Int" do
       end
     end
 
+    it "should work with large integers" do
+      x = 51_i64 ** 11
+      x.should eq(6071163615208263051_i64)
+      x.should be_a(Int64)
+    end
+
     describe "with float" do
       assert { (2 ** 2.0).should be_close(4, 0.0001) }
       assert { (2 ** 2.5_f32).should be_close(5.656854249492381, 0.0001) }
