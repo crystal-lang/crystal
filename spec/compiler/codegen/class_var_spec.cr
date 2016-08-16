@@ -74,7 +74,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(1)
   end
 
-  it "accesses class var from fun literal" do
+  it "accesses class var from proc literal" do
     run("
       class Foo
         @@a = 1
@@ -177,24 +177,6 @@ describe "Codegen: class var" do
 
       Foo.var.size
       )).to_i.should eq(3)
-  end
-
-  it "initializes class var conditionally" do
-    run(%(
-      class Foo
-        if 1 == 2
-          @@x = 3
-        else
-          @@x = 4
-        end
-
-        def self.x
-          @@x
-        end
-      end
-
-      Foo.x
-      )).to_i.should eq(4)
   end
 
   it "codegens second class var initializer" do
@@ -372,5 +354,175 @@ describe "Codegen: class var" do
 
       z
       )).to_i.should eq(10)
+  end
+
+  it "doesn't inherit class var value in subclass" do
+    run(%(
+      class Foo
+        @@var = 1
+
+        def self.var
+          @@var
+        end
+
+        def self.var=(@@var)
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.var = 2
+
+      Bar.var
+      )).to_i.should eq(1)
+  end
+
+  it "doesn't inherit class var value in module" do
+    run(%(
+      module Moo
+        @@var = 1
+
+        def var
+          @@var
+        end
+
+        def self.var=(@@var)
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      Moo.var = 2
+
+      Foo.new.var
+      )).to_i.should eq(1)
+  end
+
+  it "reads class var from virtual type" do
+    run(%(
+      class Foo
+        @@var = 1
+
+        def self.var=(@@var)
+        end
+
+        def self.var
+          @@var
+        end
+
+        def var
+          @@var
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.var = 2
+
+      ptr = Pointer(Foo).malloc(1_u64)
+      ptr.value = Bar.new
+      ptr.value.var
+      )).to_i.should eq(2)
+  end
+
+  it "reads class var from virtual type metaclass" do
+    run(%(
+      class Foo
+        @@var = 1
+
+        def self.var=(@@var)
+        end
+
+        def self.var
+          @@var
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.var = 2
+
+      ptr = Pointer(Foo.class).malloc(1_u64)
+      ptr.value = Bar
+      ptr.value.var
+      )).to_i.should eq(2)
+  end
+
+  it "writes class var from virtual type" do
+    run(%(
+      class Foo
+        @@var = 1
+
+        def self.var=(@@var)
+        end
+
+        def self.var
+          @@var
+        end
+
+        def var=(@@var)
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      ptr = Pointer(Foo).malloc(1_u64)
+      ptr.value = Bar.new
+      ptr.value.var = 2
+
+      Bar.var
+      )).to_i.should eq(2)
+  end
+
+  it "declares var as uninitialized and initializes it unsafely" do
+    run(%(
+      class Foo
+        @@x = uninitialized Int32
+        @@x = Foo.bar
+
+        def self.bar
+          if 1 == 2
+            @@x
+          else
+            10
+          end
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x
+      )).to_i.should eq(10)
+  end
+
+  it "doesn't crash with pointerof from another module" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        @@x : Int32?
+        @@x = 1
+
+        def self.x
+          pointerof(@@x).value
+        end
+      end
+
+      class Bar
+        def self.bar
+          Foo.x
+        end
+      end
+
+      Bar.bar
+      )).to_i.should eq(1)
   end
 end

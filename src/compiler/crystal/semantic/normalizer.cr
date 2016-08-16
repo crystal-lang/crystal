@@ -5,17 +5,12 @@ require "../syntax/transformer"
 module Crystal
   class Program
     def normalize(node, inside_exp = false)
-      normalizer = Normalizer.new(self)
-      normalizer.exp_nest = 1 if inside_exp
-      node = normalizer.normalize(node)
-      puts node if ENV["SSA"]? == "1"
-      node
+      node.transform Normalizer.new(self)
     end
   end
 
   class Normalizer < Transformer
     getter program : Program
-    property exp_nest : Int32
 
     @dead_code : Bool
     @current_def : Def?
@@ -23,21 +18,13 @@ module Crystal
     def initialize(@program)
       @dead_code = false
       @current_def = nil
-      @exp_nest = 0
-    end
-
-    def normalize(node)
-      node.transform(self)
     end
 
     def before_transform(node)
       @dead_code = false
-      @exp_nest += 1 if nesting_exp?(node)
     end
 
     def after_transform(node)
-      @exp_nest -= 1 if nesting_exp?(node)
-
       case node
       when Return, Break, Next
         @dead_code = true
@@ -45,15 +32,6 @@ module Crystal
         # Skip
       else
         @dead_code = false
-      end
-    end
-
-    def nesting_exp?(node)
-      case node
-      when Expressions, VisibilityModifier, MacroFor, MacroIf, MacroExpression, Require, IfDef
-        false
-      else
-        true
       end
     end
 
@@ -85,7 +63,7 @@ module Crystal
       # Copy enclosing def's args to super/previous_def without parenthesis
       case node.name
       when "super", "previous_def"
-        if node.args.empty? && !node.has_parenthesis
+        if node.args.empty? && !node.has_parentheses?
           if current_def = @current_def
             current_def.args.each_with_index do |arg, i|
               arg = Var.new(arg.name)
@@ -93,7 +71,7 @@ module Crystal
               node.args.push arg
             end
           end
-          node.has_parenthesis = true
+          node.has_parentheses = true
         end
       end
 
@@ -105,7 +83,7 @@ module Crystal
           left = obj
           right = Call.new(middle.clone, node.name, node.args)
         else
-          temp_var = new_temp_var
+          temp_var = program.new_temp_var
           temp_assign = Assign.new(temp_var.clone, middle)
           left = Call.new(obj.obj, obj.name, temp_assign)
           right = Call.new(temp_var.clone, node.name, node.args)
@@ -137,9 +115,9 @@ module Crystal
       # and it doesn't use it, we remove it because it's useless
       # and the semantic code won't have to bother checking it
       block_arg = node.block_arg
-      if !node.uses_block_arg && block_arg
+      if !node.uses_block_arg? && block_arg
         block_arg_restriction = block_arg.restriction
-        if block_arg_restriction.is_a?(Fun) && !block_arg_restriction.inputs && !block_arg_restriction.output
+        if block_arg_restriction.is_a?(ProcNotation) && !block_arg_restriction.inputs && !block_arg_restriction.output
           node.block_arg = nil
         elsif !block_arg_restriction
           node.block_arg = nil
@@ -210,41 +188,12 @@ module Crystal
     # If they hold, keep the "then" part.
     # If they don't, keep the "else" part.
     def transform(node : IfDef)
-      cond_value = program.eval_flags(node.cond)
+      cond_value = eval_flags(node.cond)
       if cond_value
         node.then.transform(self)
       else
         node.else.transform(self)
       end
-    end
-
-    # Transform require to its source code.
-    # The source code can be a Nop if the file was already required.
-    def transform(node : Require)
-      if @exp_nest > 0
-        node.raise "can't require dynamically"
-      end
-
-      location = node.location
-      filenames = @program.find_in_path(node.string, location.try &.filename)
-      if filenames
-        nodes = Array(ASTNode).new(filenames.size)
-        filenames.each do |filename|
-          if @program.add_to_requires(filename)
-            parser = Parser.new File.read(filename), @program.string_pool
-            parser.filename = filename
-            parser.wants_doc = @program.wants_doc?
-            nodes << FileNode.new(parser.parse.transform(self), filename)
-          end
-        end
-        Expressions.from(nodes)
-      else
-        Nop.new
-      end
-    rescue ex : Crystal::Exception
-      node.raise "while requiring \"#{node.string}\"", ex
-    rescue ex
-      node.raise "while requiring \"#{node.string}\": #{ex.message}"
     end
 
     # Check if the right hand side is dead code
@@ -258,8 +207,48 @@ module Crystal
       end
     end
 
-    def new_temp_var
-      program.new_temp_var
+    def eval_flags(node)
+      evaluator = FlagsEvaluator.new(program)
+      node.accept evaluator
+      evaluator.value
+    end
+
+    class FlagsEvaluator < Visitor
+      getter value : Bool
+
+      def initialize(@program : Program)
+        @value = false
+      end
+
+      def visit(node : Var)
+        @value = @program.has_flag?(node.name)
+      end
+
+      def visit(node : Not)
+        node.exp.accept self
+        @value = !@value
+        false
+      end
+
+      def visit(node : And)
+        node.left.accept self
+        left_value = @value
+        node.right.accept self
+        @value = left_value && @value
+        false
+      end
+
+      def visit(node : Or)
+        node.left.accept self
+        left_value = @value
+        node.right.accept self
+        @value = left_value || @value
+        false
+      end
+
+      def visit(node : ASTNode)
+        raise "Bug: shouldn't visit #{node} in FlagsEvaluator"
+      end
     end
   end
 end

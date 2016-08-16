@@ -44,7 +44,7 @@ class Crystal::Doc::Type
     when VoidType
       "Void"
     when InheritedGenericClass
-      type.extended_class.name
+      type.extended_class.as(NamedType).name
     when IncludedGenericModule
       type.module.name
     when Const
@@ -74,7 +74,7 @@ class Crystal::Doc::Type
   def parents_of?(type)
     return false unless type
 
-    while type = type.container
+    while type = type.namespace
       return true if type.full_name == full_name
     end
 
@@ -174,12 +174,12 @@ class Crystal::Doc::Type
 
   def instance_methods
     @instance_methods ||= begin
-      case type = @type
+      case @type
       when Program
         [] of Method
-      when DefContainer
+      else
         defs = [] of Method
-        type.defs.try &.each do |def_name, defs_with_metadata|
+        @type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
             case def_with_metadata.def.visibility
             when .private?, .protected?
@@ -192,8 +192,6 @@ class Crystal::Doc::Type
           end
         end
         defs.sort_by! &.name.downcase
-      else
-        [] of Method
       end
     end
   end
@@ -202,53 +200,44 @@ class Crystal::Doc::Type
 
   def class_methods
     @class_methods ||= begin
-      class_methods =
-        case type = @type.metaclass
-        when DefContainer
-          defs = [] of Method
-          type.defs.try &.each_value do |defs_with_metadata|
-            defs_with_metadata.each do |def_with_metadata|
-              a_def = def_with_metadata.def
-              case a_def.visibility
-              when .private?, .protected?
-                next
-              end
-
-              body = a_def.body
-
-              # Skip auto-generated allocate method
-              if body.is_a?(Crystal::Primitive) && body.name == "allocate"
-                next
-              end
-
-              # Skip auto-generated new methods from initialize
-              if a_def.name == "new" && !a_def.location
-                next
-              end
-
-              if @generator.must_include? a_def
-                defs << method(a_def, true)
-              end
-            end
+      class_methods = [] of Method
+      @type.metaclass.defs.try &.each_value do |defs_with_metadata|
+        defs_with_metadata.each do |def_with_metadata|
+          a_def = def_with_metadata.def
+          case a_def.visibility
+          when .private?, .protected?
+            next
           end
-          defs.sort_by! &.name.downcase
-        else
-          [] of Method
+
+          body = a_def.body
+
+          # Skip auto-generated allocate method
+          if body.is_a?(Crystal::Primitive) && body.name == "allocate"
+            next
+          end
+
+          # Skip auto-generated new methods from initialize
+          if a_def.name == "new" && !a_def.location
+            next
+          end
+
+          if @generator.must_include? a_def
+            class_methods << method(a_def, true)
+          end
         end
+      end
+      class_methods.sort_by! &.name.downcase
 
       # Also get `initialize` methods from instance type,
       # but show them as `new`
-      case type = @type
-      when DefContainer
-        type.defs.try &.each_value do |defs_with_metadata|
-          defs_with_metadata.each do |def_with_metadata|
-            a_def = def_with_metadata.def
-            if a_def.name == "initialize" && @generator.must_include?(a_def)
-              initialize = a_def.clone
-              initialize.doc = a_def.doc
-              initialize.name = "new"
-              class_methods << method(initialize, true)
-            end
+      @type.metaclass.defs.try &.each_value do |defs_with_metadata|
+        defs_with_metadata.each do |def_with_metadata|
+          a_def = def_with_metadata.def
+          if a_def.name == "initialize" && @generator.must_include?(a_def)
+            initialize = a_def.clone
+            initialize.doc = a_def.doc
+            initialize.name = "new"
+            class_methods << method(initialize, true)
           end
         end
       end
@@ -261,20 +250,15 @@ class Crystal::Doc::Type
 
   def macros
     @macros ||= begin
-      case type = @type.metaclass
-      when DefContainer
-        macros = [] of Macro
-        type.macros.try &.each_value do |the_macros|
-          the_macros.each do |a_macro|
-            if @generator.must_include? a_macro
-              macros << self.macro(a_macro)
-            end
+      macros = [] of Macro
+      @type.metaclass.macros.try &.each_value do |the_macros|
+        the_macros.each do |a_macro|
+          if @generator.must_include? a_macro
+            macros << self.macro(a_macro)
           end
         end
-        macros.sort_by! &.name.downcase
-      else
-        [] of Macro
       end
+      macros.sort_by! &.name.downcase
     end
   end
 
@@ -325,8 +309,10 @@ class Crystal::Doc::Type
         subclasses = [] of Type
         type.subclasses.each do |subclass|
           case subclass
-          when GenericClassInstanceType, CStructOrUnionType
+          when GenericClassInstanceType
             next
+          when NonGenericClassType
+            next if subclass.extern?
           end
 
           next unless @generator.must_include?(subclass)
@@ -365,19 +351,19 @@ class Crystal::Doc::Type
     including_types.uniq!.sort_by! &.full_name.downcase
   end
 
-  def container
+  def namespace
     case type = @type
     when NamedType
-      container = type.container
-      if container.is_a?(Program)
+      namespace = type.namespace
+      if namespace.is_a?(Program)
         nil
       else
-        @generator.type(container)
+        @generator.type(namespace)
       end
     when IncludedGenericModule
-      @generator.type(type.module).container
+      @generator.type(type.module).namespace
     when InheritedGenericClass
-      @generator.type(type.extended_class).container
+      @generator.type(type.extended_class).namespace
     else
       nil
     end
@@ -397,8 +383,8 @@ class Crystal::Doc::Type
   end
 
   def full_name_without_type_vars(io)
-    if container = container()
-      container.full_name_without_type_vars(io)
+    if namespace = self.namespace
+      namespace.full_name_without_type_vars(io)
       io << "::"
     end
     io << name
@@ -407,8 +393,8 @@ class Crystal::Doc::Type
   def path
     if program?
       "toplevel.html"
-    elsif container = container()
-      "#{container.dir}/#{name}.html"
+    elsif namespace = self.namespace
+      "#{namespace.dir}/#{name}.html"
     else
       "#{name}.html"
     end
@@ -428,8 +414,8 @@ class Crystal::Doc::Type
 
   def path_to(type : Type)
     if type.const?
-      container = type.container || @generator.program_type
-      "#{path_to(container)}##{type.name}"
+      namespace = type.namespace || @generator.program_type
+      "#{path_to(namespace)}##{type.name}"
     else
       path_to(type.path)
     end
@@ -440,16 +426,16 @@ class Crystal::Doc::Type
   end
 
   def dir
-    if container = container()
-      "#{container.dir}/#{name}"
+    if namespace = self.namespace
+      "#{namespace.dir}/#{name}"
     else
       name.to_s
     end
   end
 
   def nesting
-    if container = container()
-      1 + container.nesting
+    if namespace = self.namespace
+      1 + namespace.nesting
     else
       0
     end
@@ -459,8 +445,8 @@ class Crystal::Doc::Type
     @type.doc
   end
 
-  def lookup_type(path_or_names)
-    match = @type.lookup_type(path_or_names)
+  def lookup_path(path_or_names)
+    match = @type.lookup_path(path_or_names)
     return unless match.is_a?(Crystal::Type)
 
     @generator.type(match)
@@ -520,9 +506,12 @@ class Crystal::Doc::Type
     type = @type
     if type_vars = type_vars()
       io << '('
-      io << '*' if type.is_a?(GenericType) && type.variadic
-      io << "**" if type.is_a?(GenericType) && type.double_variadic
-      type_vars.join(", ", io)
+      io << "**" if type.is_a?(GenericType) && type.double_variadic?
+      type_vars.each_with_index do |type_var, i|
+        io << ", " if i > 0
+        io << '*' if type.is_a?(GenericType) && type.splat_index == i
+        io << type_var
+      end
       io << ')'
     end
   end
@@ -533,11 +522,11 @@ class Crystal::Doc::Type
 
   def node_to_html(node : Path, io, links = true)
     # We don't want "::" prefixed in from of paths in the docs
-    old_global = node.global
+    old_global = node.global?
     node.global = false
 
     begin
-      match = lookup_type(node)
+      match = lookup_path(node)
       if match
         type_to_html match, io, node.to_s, links: links
       else
@@ -549,7 +538,7 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Generic, io, links = true)
-    match = lookup_type(node.name)
+    match = lookup_path(node.name)
     if match
       if match.must_be_included?
         if links
@@ -574,7 +563,7 @@ class Crystal::Doc::Type
     io << ")"
   end
 
-  def node_to_html(node : Fun, io, links = true)
+  def node_to_html(node : ProcNotation, io, links = true)
     if inputs = node.inputs
       inputs.join(", ", io) do |input|
         node_to_html input, io, links: links
@@ -606,7 +595,7 @@ class Crystal::Doc::Type
     end
   end
 
-  def type_to_html(type : Crystal::FunInstanceType, io, text = nil, links = true)
+  def type_to_html(type : Crystal::ProcInstanceType, io, text = nil, links = true)
     type.arg_types.join(", ", io) do |arg_type|
       type_to_html arg_type, io, links: links
     end
@@ -619,6 +608,20 @@ class Crystal::Doc::Type
     io << "{"
     type.tuple_types.join(", ", io) do |tuple_type|
       type_to_html tuple_type, io, links: links
+    end
+    io << "}"
+  end
+
+  def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, links = true)
+    io << "{"
+    type.entries.join(", ", io) do |entry|
+      if Symbol.needs_quotes?(entry.name)
+        entry.name.inspect(io)
+      else
+        io << entry.name
+      end
+      io << ": "
+      type_to_html entry.type, io, links: links
     end
     io << "}"
   end
@@ -716,8 +719,8 @@ class Crystal::Doc::Type
     "#{@generator.repository_name}/" + (
       if program?
         "toplevel"
-      elsif container = container()
-        "#{container.dir}/#{name}"
+      elsif namespace = self.namespace
+        "#{namespace.dir}/#{name}"
       else
         "#{name}"
       end

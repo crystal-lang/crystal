@@ -95,7 +95,7 @@ describe "Code gen: c union" do
 
       color = LibNVG::Color.new
       color.to_s
-      )).to_string.should eq("LibNVG::Color()")
+      )).to_string.should eq("LibNVG::Color(@array=0)")
   end
 
   it "automatically converts numeric type in field assignment" do
@@ -171,7 +171,7 @@ describe "Code gen: c union" do
       end
 
       str = "00XX0"
-      foo = str.to_unsafe as LibFoo::Bar*
+      foo = str.to_unsafe.as(LibFoo::Bar*)
       foo.value.b.short.to_i
       )).to_i.should eq(0x5858)
   end
@@ -192,5 +192,26 @@ describe "Code gen: c union" do
 
       sizeof(LibFoo::Bar)
       )).to_i.should eq(6)
+  end
+
+  it "reads union instance var" do
+    run(%(
+      lib LibFoo
+        union Foo
+          char : Char
+          int : Int32
+        end
+      end
+
+      struct LibFoo::Foo
+        def read_int
+          @int
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.int = 42
+      foo.read_int
+      )).to_i.should eq(42)
   end
 end

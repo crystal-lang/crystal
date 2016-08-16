@@ -1,6 +1,7 @@
 # A fixed-size, stack allocated array.
 struct StaticArray(T, N)
   include Enumerable(T)
+  include Indexable(T)
 
   # Create a new `StaticArray` with the given *args*. The type of the
   # static array will be the union of the type of the given *args*,
@@ -74,33 +75,8 @@ struct StaticArray(T, N)
     false
   end
 
-  # Calls the given block once for each element in `self`, passing that element as a parameter
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new 0     # => [0, 0, 0]
-  # puts array.each { |x| print x, " -- " } # => 0 -- 0 -- 0 -- 3
-  # ```
-  def each
-    N.times do |i|
-      yield to_unsafe[i]
-    end
-  end
-
-  # Returns the element at the given index.
-  #
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to set an element outside the array's range.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 } # => [1 ,2 ,3]
-  # array[0]                                        # => 1
-  # array[1]                                        # => 2
-  # array[2]                                        # => 3
-  # array[4]                                        # => IndexError
-  # ```
   @[AlwaysInline]
-  def [](index : Int)
-    index = check_index_out_of_bounds index
+  def unsafe_at(index : Int)
     to_unsafe[index]
   end
 
@@ -118,17 +94,6 @@ struct StaticArray(T, N)
   def []=(index : Int, value : T)
     index = check_index_out_of_bounds index
     to_unsafe[index] = value
-  end
-
-  # Returns a tuple populated with the elements at the given indexes.
-  # Raises if any index is invalid.
-  #
-  # ```
-  # a = StaticArray(Int32, 4).new { |i| i + 1 }
-  # a.values_at(0, 2) # => {1, 3}
-  # ```
-  def values_at(*indexes : Int)
-    indexes.map { |index| self[index] }
   end
 
   # Yields the current element at the given index and updates the value at the given index with the block's value
@@ -176,7 +141,7 @@ struct StaticArray(T, N)
   # a                                           # => [3, 2, 1]
   # ```
   def shuffle!(random = Random::DEFAULT)
-    to_unsafe.shuffle!(size, random)
+    to_slice.shuffle!(random)
     self
   end
 
@@ -199,13 +164,7 @@ struct StaticArray(T, N)
   # array.reverse! # => [3, 2, 1]
   # ```
   def reverse!
-    i = 0
-    j = size - 1
-    while i < j
-      to_unsafe.swap i, j
-      i += 1
-      j -= 1
-    end
+    to_slice.reverse!
     self
   end
 
@@ -220,15 +179,6 @@ struct StaticArray(T, N)
   # ```
   def to_slice
     Slice.new(to_unsafe, size)
-  end
-
-  # Returns a hash code based on `self`'s size and elements.
-  #
-  # See `Object#hash`.
-  def hash
-    reduce(31 * size) do |memo, elem|
-      31 * memo + elem.hash
-    end
   end
 
   # Returns a pointer to this static array's data.
@@ -260,13 +210,5 @@ struct StaticArray(T, N)
       array.to_unsafe[i] = to_unsafe[i].clone
     end
     array
-  end
-
-  private def check_index_out_of_bounds(index)
-    index += size if index < 0
-    unless 0 <= index < size
-      raise IndexError.new
-    end
-    index
   end
 end

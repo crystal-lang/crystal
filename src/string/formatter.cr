@@ -198,7 +198,9 @@ struct String::Formatter(A)
   def string(flags, arg, arg_specified)
     arg = next_arg unless arg_specified
 
-    arg = arg.to_s[0...(flags.precision || arg.to_s.size)]
+    if precision = flags.precision
+      arg = arg.to_s[0...precision]
+    end
 
     pad arg.to_s.size, flags if flags.left_padding?
     @io << arg

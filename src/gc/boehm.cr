@@ -1,9 +1,10 @@
 @[Link("pthread")]
-ifdef freebsd
+{% if flag?(:freebsd) %}
   @[Link("gc-threaded")]
-else
+{% else %}
   @[Link("gc")]
-end
+{% end %}
+
 lib LibGC
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
@@ -89,7 +90,15 @@ module GC
     LibGC.free(pointer)
   end
 
-  def self.add_finalizer(object : T)
+  def self.add_finalizer(object : Reference)
+    add_finalizer_impl(object)
+  end
+
+  def self.add_finalizer(object)
+    # Nothing
+  end
+
+  private def self.add_finalizer_impl(object : T)
     LibGC.register_finalizer_ignore_self(object.as(Void*),
       ->(obj, data) { obj.as(T).finalize },
       nil, nil, nil)

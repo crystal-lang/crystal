@@ -5,20 +5,20 @@ class Object
     end
   end
 
-  def to_pretty_json
+  def to_pretty_json(indent : String = "  ")
     String.build do |str|
-      to_pretty_json str
+      to_pretty_json str, indent: indent
     end
   end
 
-  def to_pretty_json(io : IO)
-    to_json JSON::PrettyWriter.new(io)
+  def to_pretty_json(io : IO, indent : String = "  ")
+    to_json JSON::PrettyWriter.new(io, indent: indent)
   end
 end
 
 # Handly struct to write JSON objects
 struct JSON::ObjectBuilder(T)
-  def initialize(@io : T, @indent = 0)
+  def initialize(@io : T, @indent : String = "  ", @indent_level : Int32 = 0)
     @count = 0
   end
 
@@ -32,12 +32,12 @@ struct JSON::ObjectBuilder(T)
   def field(name)
     if @count > 0
       @io << ","
-      @io << '\n' if @indent > 0
+      @io << '\n' if @indent_level > 0
     end
-    @indent.times { @io << "  " }
+    @indent_level.times { @io << @indent }
     name.to_s.to_json(@io)
     @io << ":"
-    @io << " " if @indent > 0
+    @io << " " if @indent_level > 0
     yield
     @count += 1
   end
@@ -45,7 +45,7 @@ end
 
 # Handly struct to write JSON arrays
 struct JSON::ArrayBuilder(T)
-  def initialize(@io : T, @indent = 0)
+  def initialize(@io : T, @indent : String = "  ", @indent_level : Int32 = 0)
     @count = 0
   end
 
@@ -64,9 +64,9 @@ struct JSON::ArrayBuilder(T)
   def push
     if @count > 0
       @io << ","
-      @io << '\n' if @indent > 0
+      @io << '\n' if @indent_level > 0
     end
-    @indent.times { @io << "  " }
+    @indent_level.times { @io << @indent }
     yield
     @count += 1
   end
@@ -116,30 +116,30 @@ end
 class JSON::PrettyWriter
   include IO
 
-  def initialize(@io : IO)
-    @indent = 0
+  def initialize(@io : IO, @indent : String)
+    @indent_level = 0
   end
 
-  delegate read, @io
-  delegate write, @io
+  delegate read, to: @io
+  delegate write, to: @io
 
   def json_object
     self << "{\n"
-    @indent += 1
-    yield JSON::ObjectBuilder.new(self, @indent)
-    @indent -= 1
+    @indent_level += 1
+    yield JSON::ObjectBuilder.new(self, @indent, @indent_level)
+    @indent_level -= 1
     self << '\n'
-    @indent.times { @io << "  " }
+    @indent_level.times { @io << @indent }
     self << "}"
   end
 
   def json_array
     self << "[\n"
-    @indent += 1
-    yield JSON::ArrayBuilder.new(self, @indent)
-    @indent -= 1
+    @indent_level += 1
+    yield JSON::ArrayBuilder.new(self, @indent, @indent_level)
+    @indent_level -= 1
     self << '\n'
-    @indent.times { @io << "  " }
+    @indent_level.times { @io << @indent }
     self << ']'
   end
 end
@@ -334,7 +334,7 @@ end
 # Converter to be used with `JSON.mapping` to read the raw
 # value of a JSON object property as a String.
 #
-# It can be useful to read ints and floats without loosing precision,
+# It can be useful to read ints and floats without losing precision,
 # or to read an object and deserialize it later based on some
 # condition.
 #

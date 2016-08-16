@@ -37,18 +37,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_pointer_add node, target_def, call_args
             when "pointer_diff"
               codegen_primitive_pointer_diff node, target_def, call_args
-            when "struct_new"
-              codegen_primitive_struct_new node, target_def, call_args
-            when "struct_set"
-              codegen_primitive_struct_set node, target_def, call_args
-            when "struct_get"
-              codegen_primitive_struct_get node, target_def, call_args
-            when "union_new"
-              codegen_primitive_union_new node, target_def, call_args
-            when "union_set"
-              codegen_primitive_union_set node, target_def, call_args
-            when "union_get"
-              codegen_primitive_union_get node, target_def, call_args
+            when "struct_or_union_set"
+              codegen_primitive_struct_or_union_set node, target_def, call_args
             when "external_var_set"
               codegen_primitive_external_var_set node, target_def, call_args
             when "external_var_get"
@@ -61,8 +51,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_symbol_to_s node, target_def, call_args
             when "class"
               codegen_primitive_class node, target_def, call_args
-            when "fun_call"
-              codegen_primitive_fun_call node, target_def, call_args
+            when "proc_call"
+              codegen_primitive_proc_call node, target_def, call_args
             when "tuple_indexer_known_index"
               codegen_primitive_tuple_indexer_known_index node, target_def, call_args
             when "enum_value", "enum_new"
@@ -381,7 +371,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_cast(from_type : IntegerType, to_type : CharType, arg)
-    codegen_cast from_type, @mod.int32, arg
+    codegen_cast from_type, @program.int32, arg
   end
 
   def codegen_cast(from_type : CharType, to_type : IntegerType, arg)
@@ -422,7 +412,6 @@ class Crystal::CodeGenVisitor
     type = node.type.as(PointerInstanceType)
     llvm_type = llvm_embedded_type(type.element_type)
     last = array_malloc(llvm_type, call_args[1])
-    memset last, int8(0), llvm_type.size
     last
   end
 
@@ -463,45 +452,21 @@ class Crystal::CodeGenVisitor
     gep call_args[0], call_args[1]
   end
 
-  def codegen_primitive_struct_new(node, target_def, call_args)
-    allocate_aggregate node.type
-  end
-
-  def codegen_primitive_struct_set(node, target_def, call_args)
-    set_aggregate_field(node, target_def, call_args) do
-      type = context.type.as(CStructOrUnionType)
-      name = target_def.name[0..-2]
-
-      struct_field_ptr(type, name, call_args[0])
-    end
-  end
-
-  def codegen_primitive_struct_get(node, target_def, call_args)
-    type = context.type.as(CStructType)
-    value = to_lhs struct_field_ptr(type, target_def.name, call_args[0]), node.type
-    value = check_c_fun node.type, value
-    value
-  end
-
   def struct_field_ptr(type, field_name, pointer)
-    index = type.index_of_var(field_name)
+    index = type.index_of_instance_var('@' + field_name)
     aggregate_index pointer, index
   end
 
-  def codegen_primitive_union_new(node, target_def, call_args)
-    allocate_aggregate node.type
-  end
-
-  def codegen_primitive_union_set(node, target_def, call_args)
+  def codegen_primitive_struct_or_union_set(node, target_def, call_args)
     set_aggregate_field(node, target_def, call_args) do |field_type|
-      union_field_ptr(field_type, call_args[0])
+      type = context.type.as(NonGenericClassType)
+      if type.extern_union?
+        union_field_ptr(field_type, call_args[0])
+      else
+        name = target_def.name.chop
+        struct_field_ptr(type, name, call_args[0])
+      end
     end
-  end
-
-  def codegen_primitive_union_get(node, target_def, call_args)
-    value = to_lhs union_field_ptr(node.type, call_args[0]), node.type
-    value = check_c_fun node.type, value
-    value
   end
 
   def set_aggregate_field(node, target_def, call_args)
@@ -517,17 +482,17 @@ class Crystal::CodeGenVisitor
       context.vars["value"] = existing_value if existing_value
     end
 
-    var_name = target_def.name[0...-1]
-    scope = context.type.as(CStructOrUnionType)
-    field_type = scope.vars[var_name].type
+    var_name = '@' + target_def.name.chop
+    scope = context.type.as(NonGenericClassType)
+    field_type = scope.instance_vars[var_name].type
 
     # Check nil to pointer
-    if node.type.nil_type? && (field_type.pointer? || field_type.fun?)
+    if node.type.nil_type? && (field_type.pointer? || field_type.proc?)
       call_arg = llvm_c_type(field_type).null
     end
 
-    if field_type.fun?
-      call_arg = check_fun_is_not_closure(call_arg, field_type)
+    if field_type.proc?
+      call_arg = check_proc_is_not_closure(call_arg, field_type)
     end
 
     value = to_rhs call_arg, field_type
@@ -538,8 +503,8 @@ class Crystal::CodeGenVisitor
 
   def union_field_ptr(field_type, pointer)
     ptr = aggregate_index pointer, 0
-    if field_type.is_a?(FunInstanceType)
-      bit_cast ptr, @llvm_typer.fun_type(field_type).pointer
+    if field_type.is_a?(ProcInstanceType)
+      bit_cast ptr, @llvm_typer.proc_type(field_type).pointer
     else
       cast_to_pointer ptr, field_type
     end
@@ -548,7 +513,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_external_var_set(node, target_def, call_args)
     external = target_def.as(External)
     name = external.real_name
-    var = declare_lib_var name, node.type, external.attributes
+    var = declare_lib_var name, node.type, external.thread_local?
 
     @last = call_args[0]
 
@@ -566,7 +531,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_external_var_get(node, target_def, call_args)
     external = target_def.as(External)
     name = target_def.as(External).real_name
-    var = declare_lib_var name, node.type, external.attributes
+    var = declare_lib_var name, node.type, external.thread_local?
 
     if external.type.passed_by_value?
       @last = var
@@ -641,16 +606,16 @@ class Crystal::CodeGenVisitor
     type_id(type)
   end
 
-  def codegen_primitive_fun_call(node, target_def, call_args)
+  def codegen_primitive_proc_call(node, target_def, call_args)
     closure_ptr = call_args[0]
     args = call_args[1..-1]
 
-    fun_type = context.type.as(FunInstanceType)
+    proc_type = context.type.as(ProcInstanceType)
     0.upto(target_def.args.size - 1) do |i|
       arg = args[i]
-      fun_arg_type = fun_type.fun_types[i]
+      proc_arg_type = proc_type.arg_types[i]
       target_def_arg_type = target_def.args[i].type
-      args[i] = upcast arg, fun_arg_type, target_def_arg_type
+      args[i] = upcast arg, proc_arg_type, target_def_arg_type
     end
 
     fun_ptr = builder.extract_value closure_ptr, 0
@@ -667,14 +632,14 @@ class Crystal::CodeGenVisitor
 
     phi_value = Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
-      real_fun_ptr = bit_cast fun_ptr, llvm_fun_type(context.type)
-      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, false, fun_type)
+      real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
+      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, false, proc_type)
       phi.add value, node.type
 
       position_at_end ctx_is_not_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
       args.insert(0, ctx_ptr)
-      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true, fun_type)
+      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
     end
 
@@ -690,25 +655,26 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)
-    type = context.type
+    index = node.as(TupleIndexer).index
+    codegen_tuple_indexer(context.type, call_args[0], index)
+  end
+
+  def codegen_tuple_indexer(type, value, index)
     case type
     when TupleInstanceType
-      index = node.as(TupleIndexer).index
-      ptr = aggregate_index call_args[0], index
+      ptr = aggregate_index value, index
       to_lhs ptr, type.tuple_types[index]
     when NamedTupleInstanceType
-      index = node.as(TupleIndexer).index
-      ptr = aggregate_index call_args[0], index
+      ptr = aggregate_index value, index
       to_lhs ptr, type.entries[index].type
     else
       type = (type.instance_type.as(TupleInstanceType))
-      index = node.as(TupleIndexer).index
       type_id(type.tuple_types[index].as(Type).metaclass)
     end
   end
 
   def check_c_fun(type, value)
-    if type.fun?
+    if type.proc?
       make_fun(type, bit_cast(value, LLVM::VoidPointer), LLVM::VoidPointer.null)
     else
       value

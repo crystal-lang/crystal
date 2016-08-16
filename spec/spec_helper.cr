@@ -1,5 +1,4 @@
 ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
-ENV["VERIFY"] = "1"
 
 require "spec"
 require "../src/compiler/crystal/**"
@@ -125,12 +124,12 @@ class Crystal::Program
     union_of([type1, type2, type3] of Type).not_nil!
   end
 
-  def fun_of(type1 : Type)
-    fun_of([type1] of Type)
+  def proc_of(type1 : Type)
+    proc_of([type1] of Type)
   end
 
-  def fun_of(type1 : Type, type2 : Type)
-    fun_of([type1, type2] of Type)
+  def proc_of(type1 : Type, type2 : Type)
+    proc_of([type1, type2] of Type)
   end
 
   def generic_class(name, *type_vars)
@@ -138,41 +137,41 @@ class Crystal::Program
   end
 end
 
-record InferTypeResult,
+record SemanticResult,
   program : Program,
   node : ASTNode,
   type : Type
 
 def assert_type(str, flags = nil, inject_primitives = true)
-  result = infer_type_result(str, flags, inject_primitives: inject_primitives)
+  result = semantic_result(str, flags, inject_primitives: inject_primitives)
   program = result.program
   expected_type = with program yield program
   result.type.should eq(expected_type)
   result
 end
 
-def infer_type(code : String, wants_doc = false)
-  code = inject_primitives(code)
-  infer_type parse(code, wants_doc: wants_doc), wants_doc: wants_doc
+def semantic(code : String, wants_doc = false, inject_primitives = true)
+  code = inject_primitives(code) if inject_primitives
+  semantic parse(code, wants_doc: wants_doc), wants_doc: wants_doc
 end
 
-def infer_type(node : ASTNode, wants_doc = false)
+def semantic(node : ASTNode, wants_doc = false)
   program = Program.new
   program.wants_doc = wants_doc
   node = program.normalize node
-  node = program.infer_type node
-  InferTypeResult.new(program, node, node.type)
+  node = program.semantic node
+  SemanticResult.new(program, node, node.type)
 end
 
-def infer_type_result(str, flags = nil, inject_primitives = true)
+def semantic_result(str, flags = nil, inject_primitives = true)
   str = inject_primitives(str) if inject_primitives
   program = Program.new
   program.flags = flags if flags
   input = parse str
   input = program.normalize input
-  input = program.infer_type input
+  input = program.semantic input
   input_type = input.is_a?(Expressions) ? input.last.type : input.type
-  InferTypeResult.new(program, input, input_type)
+  SemanticResult.new(program, input, input_type)
 end
 
 def assert_normalize(from, to, flags = nil)
@@ -180,7 +179,7 @@ def assert_normalize(from, to, flags = nil)
   program.flags = flags if flags
   normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
-  to_nodes = normalizer.normalize(from_nodes)
+  to_nodes = program.normalize(from_nodes)
   to_nodes.to_s.strip.should eq(to.strip)
 end
 
@@ -206,7 +205,7 @@ end
 def assert_after_cleanup(before, after)
   # before = inject_primitives(before)
   node = Parser.parse(before)
-  result = infer_type node
+  result = semantic node
   result.node.to_s.strip.should eq(after.strip)
 end
 
@@ -216,9 +215,21 @@ def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile =
       parse str
       fail "expected SyntaxException to be raised", metafile, metaline
     rescue ex : SyntaxException
-      ex.message.not_nil!.includes?(message.not_nil!).should be_true, metafile, metaline if message
-      ex.line_number.should eq(line.not_nil!), metafile, metaline if line
-      ex.column_number.should eq(column.not_nil!), metafile, metaline if column
+      if message
+        unless ex.message.not_nil!.includes?(message.not_nil!)
+          fail "expected message to include #{message.inspect} but got #{ex.message.inspect}", metafile, metaline
+        end
+      end
+      if line
+        unless ex.line_number == line
+          fail "expected line number to be #{line} but got #{ex.line_number}", metafile, metaline
+        end
+      end
+      if column
+        unless ex.column_number == column
+          fail "expected column number to be #{column} but got #{ex.column_number}", metafile, metaline
+        end
+      end
     end
   end
 end
@@ -227,7 +238,7 @@ def assert_error(str, message, inject_primitives = true)
   str = inject_primitives(str) if inject_primitives
   nodes = parse str
   expect_raises TypeException, message do
-    infer_type nodes
+    semantic nodes
   end
 end
 
@@ -248,8 +259,7 @@ def assert_macro_internal(program, sub_node, macro_args, macro_body, expected)
 
   call = Call.new(nil, "", sub_node)
   result = program.expand_macro a_macro, call, program, program
-  result = result.source
-  result = result[0..-2] if result.ends_with?(';')
+  result = result.chomp(';')
   result.should eq(expected)
 end
 
@@ -262,7 +272,7 @@ end
 def codegen(code)
   code = inject_primitives(code)
   node = parse code
-  result = infer_type node
+  result = semantic node
   result.program.codegen result.node, single_module: false
 end
 
@@ -276,11 +286,7 @@ class Crystal::SpecRunOutput
     @output
   end
 
-  delegate to_i, @output
-  delegate to_u64, @output
-  delegate to_f, @output
-  delegate to_f32, @output
-  delegate to_f64, @output
+  delegate to_i, to_u64, to_f, to_f32, to_f64, to: @output
 
   def to_b
     @output == "true"

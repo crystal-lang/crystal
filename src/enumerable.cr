@@ -27,6 +27,12 @@
 # producing an `Array` as the result. For a lazy alternative refer to
 # the `Iterator` and `Iterable` modules.
 module Enumerable(T)
+  class EmptyError < Exception
+    def initialize(message = "Empty enumerable")
+      super(message)
+    end
+  end
+
   # Must yield this collection's elements to the block.
   abstract def each(&block : T -> _)
 
@@ -251,7 +257,7 @@ module Enumerable(T)
   #     ["Alice", "Bob"].grep(/^A/)  #=> ["Alice"]
   #
   def grep(pattern)
-    select { |elem| pattern === elem }
+    self.select { |elem| pattern === elem }
   end
 
   # Returns a `Hash` whose keys are each different value that the passed block returned when run for each element in the

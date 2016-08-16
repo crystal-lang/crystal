@@ -7,21 +7,22 @@ matrix:
   include:
     - env: ARCH=i386 ARCH_CMD=linux32
       os: linux
-    - env: ARCH=x86_64 ARCH_CMD=linux64
+    - env: ARCH=x86_64 ARCH_CMD=linux64 DEPLOY=true
       os: linux
     - os: osx
     - os: osx
       osx_image: xcode7.3
-before_install: bin/ci prepare_system
-install: bin/ci prepare_build
+before_install:
+  - bin/ci prepare_system
+install:
+  - bin/ci prepare_build
 script:
-  - bin/ci with_build_env 'make crystal std_spec compiler_spec doc'
-  - bin/ci with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
-  - bin/ci with_build_env './bin/crystal tool format --check'
+  - bin/ci build
+after_success:
+  - bin/ci deploy
 branches:
   only:
     - master
-    - gh-pages
     - /\Arelease\/.+\z/
 notifications:
   irc:
@@ -33,3 +34,7 @@ notifications:
       - "%{repository_slug}#%{commit} (%{branch} - %{commit_subject}): %{message} %{build_url}"
   slack:
     secure: Ng3nTqGWY+9p1pS6yjGqDhmRvdgbIZgTNpMWbO/ngwpCyicmD3jafZkShqqXbULZTJJr3OxIGzi6GHGusT0Ic/Pi9JCM3X3v/xuBruKIR+EnNyPo7IL4ZYAlwnXyJHlCHHDBq0gSHGvGJwsXn6IgZBPRfeIq+CCyQHVPyvc9EHE=
+env:
+  global:
+    - AWS_ACCESS_KEY_ID=AKIAIRL4BWFPN7P54TBQ
+    - secure: Zd/tZVmV2dRMao9z+ky5BywSKuWOF3MiKsZetwd1upZ+uj9qzfbOZMnWFW9dlA+Co4MyYqP/I6ADzRpoKLINUqEIPcAPNYQB1qG79SafrRAvTqcjtEHTn2wXh2ZGu3f1T+SCK0ZD3xx1ML8502ENzXjvq+dEmi4kknqmPudkb6k=

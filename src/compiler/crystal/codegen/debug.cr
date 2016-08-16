@@ -22,7 +22,7 @@ module Crystal
       @fun_metadatas ||= {} of LLVM::Function => LibLLVMExt::Metadata
     end
 
-    def fun_type
+    def fun_metadata_type
       int = di_builder.create_basic_type("int", 32, 32, LLVM::DwarfTypeEncoding::Signed)
       int1 = di_builder.get_or_create_type_array([int])
       di_builder.create_subroutine_type(nil, int1)
@@ -56,8 +56,8 @@ module Crystal
 
     def create_debug_type(type : EnumType)
       elements = type.types.map do |name, item|
-        value = if item.is_a?(Const) && (value = item.value).is_a?(NumberLiteral)
-                  value.value.to_i64 rescue value.value.to_u64
+        value = if item.is_a?(Const) && (value2 = item.value).is_a?(NumberLiteral)
+                  value2.value.to_i64 rescue value2.value.to_u64
                 else
                   0
                 end
@@ -75,16 +75,19 @@ module Crystal
       tmp_debug_type = di_builder.temporary_md_node(LLVM::Context.global)
       debug_type_cache[type] = tmp_debug_type
 
-      ivars.each_with_index do |name, ivar, idx|
+      # TOOD: use each_with_index
+      idx = 0
+      ivars.each do |name, ivar|
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
-          offset = @mod.target_machine.data_layout.offset_of_element(struct_type, idx + (type.struct? ? 0 : 1))
-          size = @mod.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
+          offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx + (type.struct? ? 0 : 1))
+          size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
           member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, offset * 8, 0, ivar_debug_type)
           element_types << member
         end
+        idx += 1
       end
 
-      size = @mod.target_machine.data_layout.size_in_bits(struct_type)
+      size = @program.target_machine.data_layout.size_in_bits(struct_type)
       debug_type = di_builder.create_struct_type(nil, type.to_s, nil, 1, size, size, 0, nil, di_builder.get_or_create_type_array(element_types))
       unless type.struct?
         debug_type = di_builder.create_pointer_type(debug_type, llvm_typer.pointer_size * 8, llvm_typer.pointer_size * 8, type.to_s)
@@ -123,8 +126,14 @@ module Crystal
         scope, var_name, file, location.line_number, debug_type
       expr = di_builder.create_expression(nil, 0)
 
+      {% begin %}
+      {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
       declare = di_builder.insert_declare_at_end(alloca, var, expr, alloca_block)
+      {% else %}
+      declare = di_builder.insert_declare_at_end(alloca, var, expr, builder.current_debug_location, alloca_block)
+      {% end %}
       builder.set_metadata(declare, @dbg_kind, builder.current_debug_location)
+      {% end %}
     end
 
     def file_and_dir(file)
@@ -201,9 +210,16 @@ module Crystal
     def emit_main_def_debug_metadata(main_fun, filename)
       file, dir = file_and_dir(filename)
       scope = di_builder.create_file(file, dir)
+      {% begin %}
+      {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
       fn_metadata = di_builder.create_function(scope, MAIN_NAME, MAIN_NAME, scope,
-        0, fun_type, 1, 1, 0, 0_u32, 0, main_fun)
+        0, fun_metadata_type, 1, 1, 0, 0_u32, 0, main_fun)
+      {% else %}
+      fn_metadata = di_builder.create_function(scope, MAIN_NAME, MAIN_NAME, scope,
+        0, fun_metadata_type, true, true, 0, 0_u32, false, main_fun)
+      {% end %}
       fun_metadatas[main_fun] = fn_metadata
+      {% end %}
     end
 
     def emit_def_debug_metadata(target_def)
@@ -212,9 +228,16 @@ module Crystal
 
       file, dir = file_and_dir(location.filename)
       scope = di_builder.create_file(file, dir)
+      {% begin %}
+      {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
       fn_metadata = di_builder.create_function(scope, target_def.name, target_def.name, scope,
-        location.line_number, fun_type, 1, 1, location.line_number, 0_u32, 0, context.fun)
+        location.line_number, fun_metadata_type, 1, 1, location.line_number, 0_u32, 0, context.fun)
+      {% else %}
+      fn_metadata = di_builder.create_function(scope, target_def.name, target_def.name, scope,
+        location.line_number, fun_metadata_type, true, true, location.line_number, 0_u32, false, context.fun)
+      {% end %}
       fun_metadatas[context.fun] = fn_metadata
+      {% end %}
     end
   end
 end

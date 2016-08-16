@@ -2,8 +2,8 @@ require "spec"
 
 module ObjectSpec
   class StringWrapper
-    delegate downcase, @string
-    delegate upcase, capitalize, @string
+    delegate downcase, to: @string
+    delegate upcase, capitalize, at, scan, to: @string
 
     @string : String
 
@@ -27,6 +27,14 @@ module ObjectSpec
     getter? getter9 : Bool = true
     getter? getter10 = true
 
+    getter(getter11) { 11 }
+
+    @@getter12_value = 12
+    getter getter12 : Int32 { @@getter12_value }
+
+    def self.getter12_value=(@@getter12_value)
+    end
+
     setter setter1
     setter setter2 : Int32
     setter setter3 : Int32 = 3
@@ -46,6 +54,9 @@ module ObjectSpec
     property? property8 : Bool
     property? property9 : Bool = true
     property? property10 = true
+
+    property(property11) { 11 }
+    property property12 : Int32 { 10 + 2 }
 
     def initialize
       @getter1 = 1
@@ -95,6 +106,17 @@ describe Object do
       wrapper.downcase.should eq("hello")
       wrapper.upcase.should eq("HELLO")
       wrapper.capitalize.should eq("Hello")
+
+      wrapper.at(0).should eq('H')
+      wrapper.at(index: 1).should eq('e')
+
+      wrapper.at(10) { 20 }.should eq(20)
+
+      matches = [] of String
+      wrapper.scan(/l/) do |match|
+        matches << match[0]
+      end
+      matches.should eq(["l", "l"])
     end
   end
 
@@ -125,6 +147,17 @@ describe Object do
       obj.getter4.should eq(4)
       typeof(obj.@getter4).should eq(Int32)
       typeof(obj.getter4).should eq(Int32)
+    end
+
+    it "defines lazy getter with block" do
+      obj = ObjectSpec::TestObject.new
+      obj.getter11.should eq(11)
+      obj.getter12.should eq(12)
+      ObjectSpec::TestObject.getter12_value = 24
+      obj.getter12.should eq(12)
+
+      obj2 = ObjectSpec::TestObject.new
+      obj2.getter12.should eq(24)
     end
   end
 
@@ -239,6 +272,17 @@ describe Object do
       obj.property4.should eq(4)
       obj.property4 = 5
       obj.property4.should eq(5)
+    end
+
+    it "defines lazy property with block" do
+      obj = ObjectSpec::TestObject.new
+      obj.property11.should eq(11)
+      obj.property11 = 12
+      obj.property11.should eq(12)
+
+      obj.property12.should eq(12)
+      obj.property12 = 13
+      obj.property12.should eq(13)
     end
   end
 

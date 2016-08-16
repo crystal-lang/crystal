@@ -2,12 +2,14 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
+  @is_crystal_repo : Bool
 
   def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
     compute_repository
+    @is_crystal_repo = @repo_name == "github.com/crystal-lang/crystal"
   end
 
   def run
@@ -50,15 +52,15 @@ class Crystal::Doc::Generator
       Markdown.parse body, MarkdownDocRenderer.new(program_type, io)
     end
 
-    write_template "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
+    File.write "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
   end
 
   def copy_files
     Dir.mkdir_p "#{@dir}/css"
     Dir.mkdir_p "#{@dir}/js"
 
-    write_template "#{@dir}/css/style.css", StyleTemplate.new
-    write_template "#{@dir}/js/doc.js", JsTypeTemplate.new
+    File.write "#{@dir}/css/style.css", StyleTemplate.new
+    File.write "#{@dir}/js/doc.js", JsTypeTemplate.new
   end
 
   def generate_types_docs(types, dir, all_types)
@@ -69,7 +71,7 @@ class Crystal::Doc::Generator
         filename = "#{dir}/#{type.name}.html"
       end
 
-      write_template filename, TypeTemplate.new(type, all_types)
+      File.write filename, TypeTemplate.new(type, all_types)
 
       next if type.program?
 
@@ -79,12 +81,6 @@ class Crystal::Doc::Generator
         Dir.mkdir_p dirname
         generate_types_docs subtypes, dirname, all_types
       end
-    end
-  end
-
-  def write_template(filename, template)
-    File.open(filename, "w") do |file|
-      template.to_s file
     end
   end
 
@@ -102,8 +98,9 @@ class Crystal::Doc::Generator
 
   def must_include?(type : Crystal::Type)
     return false if nodoc?(type)
+    return true if crystal_builtin?(type)
 
-    type.locations.any? do |type_location|
+    type.locations.try &.any? do |type_location|
       must_include? type_location
     end
   end
@@ -149,6 +146,24 @@ class Crystal::Doc::Generator
 
   def nodoc?(obj)
     nodoc? obj.doc.try &.strip
+  end
+
+  def crystal_builtin?(type)
+    return false unless @is_crystal_repo
+    return false unless type.is_a?(Const) || type.is_a?(NonGenericModuleType)
+
+    crystal_type = @program.types["Crystal"]
+    return true if type == crystal_type
+
+    return false unless type.is_a?(Const)
+    return false unless type.namespace == crystal_type
+
+    {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
+      "DESCRIPTION", "PATH", "VERSION"}.each do |name|
+      return true if type == crystal_type.types[name]?
+    end
+
+    false
   end
 
   def type(type)

@@ -79,35 +79,35 @@ describe "Char::Reader" do
   end
 
   it "errors if 0x80 <= first_byte < 0xC2" do
-    expect_raises { Char::Reader.new(String.new UInt8.slice(0x80)) }
-    expect_raises { Char::Reader.new(String.new UInt8.slice(0xC1)) }
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0x80]) }
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xC1]) }
   end
 
   it "errors if (second_byte & 0xC0) != 0x80" do
-    expect_raises { Char::Reader.new(String.new UInt8.slice(0xd0, 0)) }
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xd0, 0]) }
   end
 
   it "errors if first_byte == 0xE0 && second_byte < 0xA0" do
-    expect_raises { Char::Reader.new(String.new UInt8.slice(0xe0, 0x9F, 0xA0)) }
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xe0, 0x9F, 0xA0]) }
   end
 
   it "errors if first_byte < 0xF0 && (third_byte & 0xC0) != 0x80" do
-    expect_raises { Char::Reader.new(String.new UInt8.slice(0xe0, 0xA0, 0)) }
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xe0, 0xA0, 0]) }
   end
 
   it "errors if first_byte == 0xF0 && second_byte < 0x90" do
-    expect_raises { Char::Reader.new(String.new UInt8.slice(0xf0, 0x8F, 0xA0)) }
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xf0, 0x8F, 0xA0]) }
   end
 
   it "errors if first_byte == 0xF4 && second_byte >= 0x90" do
-    expect_raises { Char::Reader.new(String.new UInt8.slice(0xf4, 0x90, 0xA0)) }
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xf4, 0x90, 0xA0]) }
   end
 
   it "errors if first_byte < 0xF5 && (fourth_byte & 0xC0) != 0x80" do
-    expect_raises { Char::Reader.new(String.new UInt8.slice(0xf4, 0x8F, 0xA0, 0)) }
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xf4, 0x8F, 0xA0, 0]) }
   end
 
   it "errors if first_byte >= 0xF5" do
-    expect_raises { Char::Reader.new(String.new UInt8.slice(0xf5, 0x8F, 0xA0, 0xA0)) }
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xf5, 0x8F, 0xA0, 0xA0]) }
   end
 end

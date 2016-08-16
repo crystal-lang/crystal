@@ -155,6 +155,23 @@ describe IO do
     dst.to_s.should eq(string)
   end
 
+  it "copies with limit" do
+    string = "abcあぼ"
+    src = MemoryIO.new(string)
+    dst = MemoryIO.new
+    IO.copy(src, dst, 3).should eq(3)
+    dst.to_s.should eq("abc")
+  end
+
+  it "raises on copy with negative limit" do
+    string = "abcあぼ"
+    src = MemoryIO.new(string)
+    dst = MemoryIO.new
+    expect_raises(ArgumentError, "negative limit") do
+      IO.copy(src, dst, -10)
+    end
+  end
+
   it "reopens" do
     File.open("#{__DIR__}/../data/test_file.txt") do |file1|
       File.open("#{__DIR__}/../data/test_file.ini") do |file2|
@@ -265,6 +282,16 @@ describe IO do
       io.read_char.should eq('世')
       io.read_char.should eq('界')
       io.read_char.should be_nil
+
+      io.write Bytes[0xf8, 0xff, 0xff, 0xff]
+      expect_raises(InvalidByteSequenceError) do
+        io.read_char
+      end
+
+      io.write_byte 0x81_u8
+      expect_raises(InvalidByteSequenceError) do
+        io.read_char
+      end
     end
 
     it "reads byte" do
@@ -643,6 +670,18 @@ describe IO do
         expect_raises ArgumentError, "invalid encoding: FOO" do
           io.puts "a"
         end
+      end
+    end
+
+    describe "#encoding" do
+      it "returns \"UTF-8\" if the encoding is not manually set" do
+        SimpleMemoryIO.new.encoding.should eq("UTF-8")
+      end
+
+      it "returns the name of the encoding set via #set_encoding" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("UTF-16LE")
+        io.encoding.should eq("UTF-16LE")
       end
     end
   end

@@ -1,3 +1,5 @@
+require "./lib_llvm"
+
 struct LLVM::DIBuilder
   def initialize(llvm_module)
     @unwrap = LibLLVMExt.create_di_builder(llvm_module)
@@ -41,9 +43,15 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_create_expression(self, addr, length)
   end
 
+  {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
   def insert_declare_at_end(storage, var_info, expr, block)
     LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, block)
   end
+  {% else %}
+  def insert_declare_at_end(storage, var_info, expr, dl, block)
+    LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, dl, block)
+  end
+  {% end %}
 
   def get_or_create_array(elements : Array(LibLLVMExt::Metadata))
     LibLLVMExt.di_builder_get_or_create_array(self, elements, elements.size)

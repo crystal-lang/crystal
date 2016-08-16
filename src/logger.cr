@@ -70,7 +70,9 @@ class Logger
     progname : String,
     message : String
 
-  def initialize(@io : IO)
+  # Creates a new logger that will log to the given *io*.
+  # If *io* is `nil` then all log calls will be silently ignored.
+  def initialize(@io : IO?)
     @level = Severity::INFO
     @formatter = DEFAULT_FORMATTER
     @progname = ""
@@ -113,7 +115,7 @@ class Logger
   # Logs *message* if *severity* is higher or equal with the logger's current
   # severity. *progname* overrides a default progname set in this logger.
   def log(severity, message, progname = nil)
-    return if severity < level
+    return if severity < level || !@io
     write(severity, Time.now, progname || @progname, message)
   end
 
@@ -121,18 +123,21 @@ class Logger
   # is higher or equal with the loggers current severity. The block is not run
   # if *severity* is lower. *progname* overrides a default progname set in this logger.
   def log(severity, progname = nil)
-    return if severity < level
+    return if severity < level || !@io
     write(severity, Time.now, progname || @progname, yield)
   end
 
   private def write(severity, datetime, progname, message)
+    io = @io
+    return unless io
+
     label = severity == Severity::UNKNOWN ? "ANY" : severity.to_s
     progname_to_s = progname.to_s
     message_to_s = message.to_s
     @mutex.synchronize do
-      formatter.call(label, datetime, progname_to_s, message_to_s, @io)
-      @io.puts
-      @io.flush
+      formatter.call(label, datetime, progname_to_s, message_to_s, io)
+      io.puts
+      io.flush
     end
   end
 end

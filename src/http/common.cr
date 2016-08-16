@@ -1,4 +1,6 @@
-require "zlib" ifdef !without_zlib
+{% if !flag?(:without_zlib) %}
+  require "zlib"
+{% end %}
 
 module HTTP
   # :nodoc:
@@ -33,9 +35,9 @@ module HTTP
         end
 
         if decompress && body
-          ifdef without_zlib
+          {% if flag?(:without_zlib) %}
             raise "Can't decompress because `-D without_zlib` was passed at compile time"
-          else
+          {% else %}
             encoding = headers["Content-Encoding"]?
             case encoding
             when "gzip"
@@ -43,7 +45,7 @@ module HTTP
             when "deflate"
               body = Zlib::Inflate.new(body, sync_close: true)
             end
-          end
+          {% end %}
         end
 
         check_content_type_charset(body, headers)
@@ -85,7 +87,7 @@ module HTTP
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
-    while middle_index < bytesize && cstr[middle_index].chr.whitespace?
+    while middle_index < bytesize && cstr[middle_index].unsafe_chr.whitespace?
       middle_index += 1
     end
 
@@ -199,7 +201,7 @@ module HTTP
   def self.parse_time(time_str : String) : Time?
     DATE_PATTERNS.each do |pattern|
       begin
-        return Time.parse(time_str, pattern)
+        return Time.parse(time_str, pattern, kind: Time::Kind::Utc)
       rescue Time::Format::Error
       end
     end

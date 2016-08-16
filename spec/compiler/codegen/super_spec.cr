@@ -396,4 +396,30 @@ describe "Codegen: super" do
       z.to_i
       )).to_i.should eq(3)
   end
+
+  it "calls super from virtual metaclass type (#2841)" do
+    run(%(
+      require "prelude"
+
+      abstract class Foo
+        def self.bar(x : Bool)
+          x
+        end
+      end
+
+      class Bar < Foo
+        def self.bar(x : Bool)
+          super
+        end
+      end
+
+      class Baz < Foo
+        def self.bar(x : Bool)
+          super
+        end
+      end
+
+      (Foo || Bar).bar(true)
+      ))
+  end
 end

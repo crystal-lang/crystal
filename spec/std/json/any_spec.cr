@@ -46,8 +46,8 @@ describe JSON::Any do
     end
 
     it "gets hash" do
-      JSON.parse(%({"foo": "bar"})).as_h.should eq({"foo": "bar"})
-      JSON.parse(%({"foo": "bar"})).as_h?.should eq({"foo": "bar"})
+      JSON.parse(%({"foo": "bar"})).as_h.should eq({"foo" => "bar"})
+      JSON.parse(%({"foo": "bar"})).as_h?.should eq({"foo" => "bar"})
       JSON.parse("true").as_h?.should be_nil
     end
   end

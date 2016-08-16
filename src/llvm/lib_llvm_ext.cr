@@ -1,3 +1,4 @@
+require "./lib_llvm"
 @[Link(ldflags: "#{__DIR__}/ext/llvm_ext.o")]
 lib LibLLVMExt
   type DIBuilder = Void*
@@ -5,11 +6,19 @@ lib LibLLVMExt
 
   fun create_di_builder = LLVMNewDIBuilder(LibLLVM::ModuleRef) : DIBuilder
   fun di_builder_finalize = LLVMDIBuilderFinalize(DIBuilder)
+  {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
   fun di_builder_create_function = LLVMDIBuilderCreateFunction(
                                                                builder : DIBuilder, scope : Metadata, name : LibC::Char*,
                                                                linkage_name : LibC::Char*, file : Metadata, line : LibC::UInt,
                                                                composite_type : Metadata, is_local_to_unit : LibC::Int, is_definition : LibC::Int,
                                                                scope_line : LibC::UInt, flags : LibC::UInt, is_optimized : LibC::Int, func : LibLLVM::ValueRef) : Metadata
+{% else %}
+  fun di_builder_create_function = LLVMDIBuilderCreateFunction(
+                                                               builder : DIBuilder, scope : Metadata, name : LibC::Char*,
+                                                               linkage_name : LibC::Char*, file : Metadata, line : LibC::UInt,
+                                                               composite_type : Metadata, is_local_to_unit : Bool, is_definition : Bool,
+                                                               scope_line : LibC::UInt, flags : LibC::UInt, is_optimized : Bool, func : LibLLVM::ValueRef) : Metadata
+{% end %}
   fun di_builder_create_file = LLVMDIBuilderCreateFile(builder : DIBuilder, file : LibC::Char*, dir : LibC::Char*) : Metadata
   fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit(builder : DIBuilder,
                                                                       lang : LibC::UInt, file : LibC::Char*,
@@ -34,11 +43,20 @@ lib LibLLVMExt
                                                                           name : LibC::Char*, file : Metadata, line : LibC::UInt, type : Metadata,
                                                                           always_preserve : LibC::Int, flags : LibC::UInt, arg_no : LibC::UInt) : Metadata
 
+  {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
   fun di_builder_insert_declare_at_end = LLVMDIBuilderInsertDeclareAtEnd(builder : DIBuilder,
                                                                          storage : LibLLVM::ValueRef,
                                                                          var_info : Metadata,
                                                                          expr : Metadata,
                                                                          block : LibLLVM::BasicBlockRef) : LibLLVM::ValueRef
+{% else %}
+  fun di_builder_insert_declare_at_end = LLVMDIBuilderInsertDeclareAtEnd(builder : DIBuilder,
+                                                                         storage : LibLLVM::ValueRef,
+                                                                         var_info : Metadata,
+                                                                         expr : Metadata,
+                                                                         dl : LibLLVM::ValueRef,
+                                                                         block : LibLLVM::BasicBlockRef) : LibLLVM::ValueRef
+{% end %}
 
   fun di_builder_create_expression = LLVMDIBuilderCreateExpression(builder : DIBuilder,
                                                                    addr : Int64*, length : LibC::SizeT) : Metadata

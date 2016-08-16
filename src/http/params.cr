@@ -3,6 +3,8 @@ require "uri"
 module HTTP
   # Represents a collection of http parameters and their respective values.
   struct Params
+    include Enumerable({String, String})
+
     # Parses an HTTP query string into a `HTTP::Params`
     #
     #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo")
@@ -31,7 +33,7 @@ module HTTP
       bytesize = query.bytesize
       while i < bytesize
         byte = query.unsafe_byte_at(i)
-        char = byte.chr
+        char = byte.unsafe_chr
 
         case char
         when '='
@@ -59,6 +61,16 @@ module HTTP
         yield key.not_nil!, buffer.to_s
       else
         yield buffer.to_s, ""
+      end
+    end
+
+    # Creates an HTTP::Params instance from the key-value
+    # pairs of the given *hash*.
+    def self.from_hash(hash : Hash)
+      build do |builder|
+        hash.each do |key, value|
+          builder.add key, value
+        end
       end
     end
 
@@ -121,7 +133,7 @@ module HTTP
     # params.has_key?("email")   # => true
     # params.has_key?("garbage") # => false
     # ```
-    delegate has_key?, raw_params
+    delegate has_key?, to: raw_params
 
     # Sets first value for specified param name.
     #
@@ -214,7 +226,7 @@ module HTTP
     def each
       raw_params.each do |name, values|
         values.each do |value|
-          yield(name, value)
+          yield({name, value})
         end
       end
     end

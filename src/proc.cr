@@ -10,9 +10,10 @@
 # # A proc with two arguments:
 # ->(x : Int32, y : Int32) { x + y } # Proc(Int32, Int32, Int32)
 # ```
-# The types of the arguments are mandatory, except when directly sending a proc literal to a lib fun in C bindings.
 #
-# The return type is inferred from the proc's body.
+# The types of the arguments (T) are mandatory, except when directly sending a proc literal to a lib fun in C bindings.
+#
+# The return type (R) is inferred from the proc's body.
 #
 # A special new method is provided too:
 #
@@ -93,6 +94,52 @@ struct Proc
     func = {pointer, closure_data}
     ptr = pointerof(func).as(self*)
     ptr.value
+  end
+
+  # Returns a new Proc that has its first arguments fixed to the values given by *args*.
+  #
+  # See [Wikipedia, Partial application](https://en.wikipedia.org/wiki/Partial_application)
+  #
+  # ```
+  # add = ->(x : Int32, y : Int32) { x + y }
+  # add.call(1, 2) # => 3
+  #
+  # add_one = add.partial(1)
+  # add_one.call(2)  # => 3
+  # add_one.call(10) # => 11
+  #
+  # add_one_and_two = add_one.partial(2)
+  # add_one_and_two.call # => 3
+  # ```
+  def partial(*args : *U)
+    {% begin %}
+      {% remaining = (T.size - U.size) %}
+      ->(
+          {% for i in 0...remaining %}
+            arg{{i}} : {{T[i + U.size]}},
+          {% end %}
+        ) {
+        call(
+          *args,
+          {% for i in 0...remaining %}
+            arg{{i}},
+          {% end %}
+        )
+      }
+    {% end %}
+  end
+
+  # Returns the number of arguments of this Proc.
+  #
+  # ```
+  # add = ->(x : Int32, y : Int32) { x + y }
+  # add.arity # => 2
+  #
+  # neg = ->(x : Int32) { -x }
+  # neg.arity # => 1
+  # ```
+  def arity
+    {{T.size}}
   end
 
   def pointer

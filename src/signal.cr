@@ -2,7 +2,7 @@ require "c/signal"
 require "c/stdio"
 require "c/unistd"
 
-ifdef linux
+{% if flag?(:linux) %}
   enum Signal
     HUP    = LibC::SIGHUP
     INT    = LibC::SIGINT
@@ -38,7 +38,7 @@ ifdef linux
     STKFLT = LibC::SIGSTKFLT
     UNUSED = LibC::SIGUNUSED
   end
-else
+{% else %}
   enum Signal
     HUP    = LibC::SIGHUP
     INT    = LibC::SIGINT
@@ -70,7 +70,7 @@ else
     USR2   = LibC::SIGUSR2
     WINCH  = LibC::SIGWINCH
   end
-end
+{% end %}
 
 # Signals are processed through the event loop and run in their own Fiber.
 # Signals may be lost if the event loop doesn't run before exit.

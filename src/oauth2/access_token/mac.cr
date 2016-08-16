@@ -4,6 +4,10 @@ require "base64"
 require "./access_token"
 
 class OAuth2::AccessToken::Mac < OAuth2::AccessToken
+  def self.new(pull : JSON::PullParser)
+    OAuth2::AccessToken.new(pull).as(self)
+  end
+
   property mac_algorithm : String
   property mac_key : String
   property issued_at : Int64
@@ -16,12 +20,12 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
     "Mac"
   end
 
-  def authenticate(request : HTTP::Request, ssl)
+  def authenticate(request : HTTP::Request, tls)
     ts = Time.now.epoch
     nonce = "#{ts - @issued_at}:#{SecureRandom.hex}"
     method = request.method
     uri = request.resource
-    host, port = host_and_port request, ssl
+    host, port = host_and_port request, tls
     ext = ""
 
     mac = Mac.signature ts, nonce, method, uri, host, port, ext, mac_algorithm, mac_key
@@ -55,14 +59,14 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
 
   def_equals_and_hash access_token, expires_in, mac_algorithm, mac_key, refresh_token, scope
 
-  private def host_and_port(request, ssl)
+  private def host_and_port(request, tls)
     host_header = request.headers["Host"]
     if colon_index = host_header.index ':'
       host = host_header[0...colon_index]
       port = host_header[colon_index + 1..-1].to_i
     else
       host = host_header
-      port = ssl ? 443 : 80
+      port = tls ? 443 : 80
     end
     {host, port}
   end

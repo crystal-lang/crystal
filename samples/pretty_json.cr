@@ -53,7 +53,7 @@ class PrettyPrinter
     print "[\n"
     @indent += 1
     i = 0
-    @pull.read_array do |obj|
+    @pull.read_array do
       if i > 0
         print ','
         print '\n' if @indent > 0

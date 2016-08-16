@@ -19,8 +19,12 @@ def Array.from_yaml(string : String)
 end
 
 def Nil.new(pull : YAML::PullParser)
-  pull.read_scalar
-  nil
+  value = pull.read_scalar
+  if value.empty?
+    nil
+  else
+    raise YAML::ParseException.new("expected nil, not #{value}", 0, 0)
+  end
 end
 
 def Bool.new(pull : YAML::PullParser)
@@ -137,19 +141,17 @@ def Enum.new(pull : YAML::PullParser)
   end
 end
 
-{% if Crystal::VERSION == "0.18.0" %}
-  def Union.new(pull : YAML::PullParser)
-    string = pull.read_raw
-    \{% for type in T %}
-      begin
-        return \{{type}}.from_yaml(string)
-      rescue YAML::ParseException
-        # Ignore
-      end
-    \{% end %}
-    raise YAML::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
-  end
-{% end %}
+def Union.new(pull : YAML::PullParser)
+  string = pull.read_raw
+  {% for type in T %}
+    begin
+      return {{type}}.from_yaml(string)
+    rescue YAML::ParseException
+      # Ignore
+    end
+  {% end %}
+  raise YAML::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
+end
 
 struct Time::Format
   def from_yaml(pull : YAML::PullParser)

@@ -51,6 +51,16 @@ class Class
     typeof(t, u)
   end
 
+  # Returns `true` if this class is `Nil`.
+  #
+  # ```
+  # Int32.nilable? # => false
+  # Nil.nilable?   # => true
+  # ```
+  def nilable?
+    self == ::Nil
+  end
+
   def to_s(io)
     io << name
   end

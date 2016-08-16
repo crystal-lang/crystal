@@ -1,11 +1,15 @@
 require "./access_token"
 
 class OAuth2::AccessToken::Bearer < OAuth2::AccessToken
+  def self.new(pull : JSON::PullParser)
+    OAuth2::AccessToken.new(pull).as(self)
+  end
+
   def token_type
     "Bearer"
   end
 
-  def authenticate(request : HTTP::Request, ssl)
+  def authenticate(request : HTTP::Request, tls)
     request.headers["Authorization"] = "Bearer #{access_token}"
   end
 

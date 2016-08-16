@@ -75,29 +75,29 @@ describe "Regex::MatchData" do
 
   describe "#post_match" do
     it "returns an empty string when there's nothing after" do
-      "Crystal".match(/ystal/) { |md| md.post_match.should eq "" }
+      "Crystal".match(/ystal/).not_nil!.post_match.should eq ""
     end
 
     it "returns the part of the string after the match" do
-      "Crystal".match(/yst/) { |md| md.post_match.should eq "al" }
+      "Crystal".match(/yst/).not_nil!.post_match.should eq "al"
     end
 
     it "works with unicode" do
-      "há日本語".match(/本/) { |md| md.post_match.should eq "語" }
+      "há日本語".match(/本/).not_nil!.post_match.should eq "語"
     end
   end
 
   describe "#pre_match" do
     it "returns an empty string when there's nothing before" do
-      "Crystal".match(/Cryst/) { |md| md.pre_match.should eq "" }
+      "Crystal".match(/Cryst/).not_nil!.pre_match.should eq ""
     end
 
     it "returns the part of the string before the match" do
-      "Crystal".match(/yst/) { |md| md.pre_match.should eq "Cr" }
+      "Crystal".match(/yst/).not_nil!.pre_match.should eq "Cr"
     end
 
     it "works with unicode" do
-      "há日本語".match(/本/) { |md| md.pre_match.should eq "há日" }
+      "há日本語".match(/本/).not_nil!.pre_match.should eq "há日"
     end
   end
 end

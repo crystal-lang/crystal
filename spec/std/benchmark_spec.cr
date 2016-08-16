@@ -9,7 +9,7 @@ typeof(begin
 end)
 
 describe Benchmark::IPS::Job do
-  it "generally works" do
+  it "works in general / integration test" do
     # test several things to avoid running a benchmark over and over again in
     # the specs
     j = Benchmark::IPS::Job.new(0.001, 0.001, interactive: false)
@@ -21,9 +21,12 @@ describe Benchmark::IPS::Job do
     # the mean should be calculated
     a.mean.should be > 10
 
-    # one of the reports should be normalized to the fastest
-    a.slower.should eq(1)
-    b.slower.should be > 1
+    # one of the reports should be normalized to the fastest but do to the
+    # timer precisison sleep 0.001 may not always be faster than 0.002 so we
+    # don't care which
+    first, second = [a.slower, b.slower].sort
+    first.should eq(1)
+    second.should be > 1
   end
 end
 

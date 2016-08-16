@@ -56,7 +56,7 @@ describe "Code gen: struct" do
       end
 
       foo = Pointer(LibC::Foo).malloc(1_u64)
-      ((foo as Int32*) + 1_i64).value = 2
+      (foo.as(Int32*) + 1_i64).value = 2
 
       foo.value.bar.y
       ").to_i.should eq(2)
@@ -252,34 +252,6 @@ describe "Code gen: struct" do
       ))
   end
 
-  it "allows forward declarations" do
-    run(%(
-      lib LibC
-        struct A; end
-        struct B; end
-
-        struct A
-          x : B*
-          y : Int32
-        end
-
-        struct B
-          x : A*
-          y : Int32
-        end
-      end
-
-      a = LibC::A.new
-      a.y = 1
-
-      b = Pointer(LibC::B).malloc(1_u64)
-      b.value.y = 2
-      a.x = b
-
-      a.y + a.x.value.y
-      )).to_i.should eq(3)
-  end
-
   it "allows using named arguments for new" do
     run(%(
       lib LibC
@@ -384,5 +356,27 @@ describe "Code gen: struct" do
       foo.x = Foo.new
       foo.x
       )).to_i.should eq(123)
+  end
+
+  it "sets instance var to proc" do
+    run(%(
+      require "prelude"
+
+      lib LibFoo
+        struct Foo
+          x : Int32 -> Int32
+        end
+      end
+
+      struct LibFoo::Foo
+        def set(f)
+          @x = f
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.set(->(x : Int32) { x + 1 })
+      foo.x.call(1)
+      )).to_i.should eq(2)
   end
 end

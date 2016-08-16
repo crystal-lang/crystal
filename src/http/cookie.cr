@@ -145,14 +145,12 @@ module HTTP
         values.each do |header|
           Cookie::Parser.parse_cookies(header) { |cookie| self << cookie }
         end
-        headers.delete "Cookie"
       end
 
       if values = headers.get?("Set-Cookie")
         values.each do |header|
           Cookie::Parser.parse_set_cookie(header).try { |cookie| self << cookie }
         end
-        headers.delete "Set-Cookie"
       end
       self
     end
@@ -248,7 +246,7 @@ module HTTP
     # `Cookie` headers in it.
     def add_request_headers(headers)
       headers.delete("Cookie")
-      headers.add("Cookie", map(&.to_cookie_header).join("; "))
+      headers.add("Cookie", map(&.to_cookie_header).join("; ")) unless empty?
 
       headers
     end

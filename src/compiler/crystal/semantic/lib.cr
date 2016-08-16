@@ -29,7 +29,7 @@ class Crystal::Call
     self.unbind_from old_target_defs if old_target_defs
     self.bind_to untyped_defs
 
-    if (parent_visitor = @parent_visitor) && (ptyped_def = parent_visitor.typed_def?) && untyped_defs.try(&.any?(&.raises))
+    if (parent_visitor = @parent_visitor) && (ptyped_def = parent_visitor.typed_def?) && untyped_defs.try(&.any?(&.raises?))
       ptyped_def.raises = true
     end
   end
@@ -38,7 +38,7 @@ class Crystal::Call
     named_args = self.named_args
     return unless named_args
 
-    if external.varargs
+    if external.varargs?
       raise "can't use named args with variadic function"
     end
 
@@ -97,7 +97,7 @@ class Crystal::Call
     call_args_count = args.size
     all_args_count = external.args.size
 
-    if external.varargs && call_args_count >= all_args_count
+    if external.varargs? && call_args_count >= all_args_count
       return
     end
 
@@ -133,7 +133,7 @@ class Crystal::Call
     end
 
     # Check that there are no out args more then the number of arguments in the fun
-    if untyped_def.varargs
+    if untyped_def.varargs?
       untyped_def.args.size.upto(self.args.size - 1) do |i|
         self_arg = self.args[i]
         if self_arg.is_a?(Out)
@@ -150,12 +150,12 @@ class Crystal::Call
     end
 
     # Need to call to_unsafe on variadic args too
-    if typed_def.varargs
+    if typed_def.varargs?
       typed_def.args.size.upto(self.args.size - 1) do |i|
         self_arg = self.args[i]
         self_arg_type = self_arg.type?
         if self_arg_type
-          unless self_arg_type.nil_type? || self_arg_type.primitive_like?
+          unless self_arg_type.nil_type? || self_arg_type.allowed_in_lib?
             implicit_call = Conversions.try_to_unsafe(self_arg.clone, parent_visitor) do |ex|
               if Conversions.to_unsafe_lookup_failed?(ex)
                 self_arg.raise "argument ##{i + 1} of '#{full_name(obj_type)}' is not a primitive type and no #{self_arg_type}#to_unsafe method found"
@@ -165,7 +165,7 @@ class Crystal::Call
             end
             implicit_call_type = implicit_call.type?
             if implicit_call_type
-              if implicit_call_type.primitive_like?
+              if implicit_call_type.allowed_in_lib?
                 self.args[i] = implicit_call
               else
                 self_arg.raise "converted #{self_arg_type} invoking to_unsafe, but #{implicit_call_type} is not a primitive type"
@@ -184,7 +184,7 @@ class Crystal::Call
   def check_fun_arg_type_matches(obj_type, self_arg, typed_def_arg, index)
     expected_type = typed_def_arg.type
     actual_type = self_arg.type
-    actual_type = mod.pointer_of(actual_type) if self_arg.is_a?(Out)
+    actual_type = program.pointer_of(actual_type) if self_arg.is_a?(Out)
     return if actual_type.compatible_with?(expected_type)
     return if actual_type.implicitly_converted_in_c_to?(expected_type)
 
@@ -200,10 +200,10 @@ class Crystal::Call
       if Conversions.to_unsafe_lookup_failed?(ex)
         arg_name = lib_arg_name(typed_def_arg, index)
 
-        if expected_type.is_a?(FunInstanceType) &&
-           actual_type.is_a?(FunInstanceType) &&
+        if expected_type.is_a?(ProcInstanceType) &&
+           actual_type.is_a?(ProcInstanceType) &&
            expected_type.arg_types == actual_type.arg_types
-          self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be a function returning #{expected_type.return_type}, not #{actual_type.return_type}"
+          self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be a Proc returning #{expected_type.return_type}, not #{actual_type.return_type}"
         else
           self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
         end
@@ -250,6 +250,60 @@ class Crystal::Call
 
     self.args[index] = convert_call
     true
+  end
+end
+
+class Crystal::Type
+  # Returns `true` if this type can be used in a lib declaration:
+  # in a fun, struct/union member, or typedef.
+  def allowed_in_lib?
+    case self
+    when NilType
+      false
+    when PrimitiveType, NoReturnType, VoidType, TypeDefType, EnumType
+      true
+    when PointerInstanceType
+      self.element_type.allowed_in_lib?
+    when TupleInstanceType
+      self.tuple_types.all? &.allowed_in_lib?
+    when NamedTupleInstanceType
+      self.entries.all? &.type.allowed_in_lib?
+    when NilableType
+      self.not_nil_type.allowed_in_lib?
+    when NilableProcType
+      self.proc_type.allowed_in_lib?
+    when NilablePointerType
+      self.pointer_type.allowed_in_lib?
+    when ProcInstanceType
+      self.arg_types.all?(&.allowed_in_lib?) && (self.return_type.allowed_in_lib? || self.return_type.nil_type?)
+    when StaticArrayInstanceType
+      self.element_type.allowed_in_lib?
+    else
+      self.extern?
+    end
+  end
+
+  # Returns `true` if this type can be implicitly converted to
+  # `expected_type` when this is a lib fun argument, without
+  # involving `to_unsafe` or numeric conversions.
+  # For example `nil` can be passed to an argument of type pointer.
+  def implicitly_converted_in_c_to?(expected_type)
+    case self
+    when NilType
+      # nil will be sent as pointer
+      expected_type.pointer? || expected_type.proc?
+    when ProcInstanceType
+      # fun will be cast to return nil
+      expected_type.is_a?(ProcInstanceType) && expected_type.return_type == program.nil && expected_type.arg_types == self.arg_types
+    when NilablePointerType
+      # nilable pointer is just a pointer
+      self.pointer_type == expected_type
+    when PointerInstanceType
+      # any pointer matches a void*
+      expected_type.is_a?(PointerInstanceType) && expected_type.element_type.void?
+    else
+      false
+    end
   end
 end
 

@@ -93,9 +93,9 @@ class JSON::Parser
     object
   end
 
-  private delegate token, @lexer
-  private delegate next_token, @lexer
-  private delegate next_token_expect_object_key, @lexer
+  private delegate token, to: @lexer
+  private delegate next_token, to: @lexer
+  private delegate next_token_expect_object_key, to: @lexer
 
   private def value_and_next_token(value)
     next_token

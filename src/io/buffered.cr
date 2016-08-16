@@ -124,28 +124,28 @@ module IO::Buffered
     first = @in_buffer_rem[0].to_u32
     if first < 0x80
       @in_buffer_rem += 1
-      return first.chr, 1
+      return first.unsafe_chr, 1
     end
 
     second = (@in_buffer_rem[1] & 0x3f).to_u32
     if first < 0xe0
       @in_buffer_rem += 2
-      return ((first & 0x1f) << 6 | second).chr, 2
+      return ((first & 0x1f) << 6 | second).unsafe_chr, 2
     end
 
     third = (@in_buffer_rem[2] & 0x3f).to_u32
     if first < 0xf0
       @in_buffer_rem += 3
-      return ((first & 0x0f) << 12 | (second << 6) | third).chr, 3
+      return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3
     end
 
     fourth = (@in_buffer_rem[3] & 0x3f).to_u32
     if first < 0xf8
       @in_buffer_rem += 4
-      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr, 4
+      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4
     end
 
-    raise InvalidByteSequenceError.new
+    raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
   end
 
   # Buffered implementation of `IO#read(slice)`.
@@ -240,8 +240,6 @@ module IO::Buffered
   # will be done (that is, writing to this IO is immediately synced to the
   # underlying IO).
   def sync=(sync)
-    # TODO: maybe instead of `sync=` we should rename this to `buffer=`,
-    # because otherwise you have to think in a reversed way.
     flush if sync && !@sync
     @sync = !!sync
   end

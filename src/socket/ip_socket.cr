@@ -1,4 +1,5 @@
 class IPSocket < Socket
+  # Returns the `IPAddress` for the local end of the IP socket.
   def local_address
     sockaddr = uninitialized LibC::SockaddrIn6
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
@@ -10,6 +11,7 @@ class IPSocket < Socket
     IPAddress.new(sockaddr, addrlen)
   end
 
+  # Returns the `IPAddress` for the remote end of the IP socket.
   def remote_address
     sockaddr = uninitialized LibC::SockaddrIn6
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
@@ -40,13 +42,42 @@ class IPSocket < Socket
   # The block must return true if it succeeded using that addressinfo
   # (to connect or bind, for example), and false otherwise. If it returns false and
   # the LibC::Addrinfo has a next LibC::Addrinfo, it is yielded to the block, and so on.
-  private def getaddrinfo(host, port, family, socktype, protocol = LibC::IPPROTO_IP, timeout = nil)
-    IPSocket.getaddrinfo(host, port, family, socktype, protocol, timeout) { |ai| yield ai }
+  private def getaddrinfo(host, port, family, socktype, protocol = Protocol::IP, timeout = nil)
+    # Using getaddrinfo from libevent doesn't work well,
+    # see https://github.com/crystal-lang/crystal/issues/2660
+    #
+    # For now it's better to have this working well but maybe a bit slow than
+    # having it working fast but something working bad or not seeing some networks.
+    IPSocket.getaddrinfo_c_call(host, port, family, socktype, protocol, timeout) { |ai| yield ai }
   end
 
-  def self.getaddrinfo(host, port, family, socktype, protocol = LibC::IPPROTO_IP, timeout = nil)
+  # :nodoc:
+  def self.getaddrinfo_c_call(host, port, family, socktype, protocol = Protocol::IP, timeout = nil)
     hints = LibC::Addrinfo.new
-    hints.ai_family = (family || LibC::AF_UNSPEC).to_i32
+    hints.ai_family = (family || Family::UNSPEC).to_i32
+    hints.ai_socktype = socktype
+    hints.ai_protocol = protocol
+    hints.ai_flags = 0
+
+    ret = LibC.getaddrinfo(host, port.to_s, pointerof(hints), out addrinfo)
+    raise Socket::Error.new("getaddrinfo: #{String.new(LibC.gai_strerror(ret))}") if ret != 0
+
+    begin
+      current_addrinfo = addrinfo
+      while current_addrinfo
+        success = yield current_addrinfo.value
+        break if success
+        current_addrinfo = current_addrinfo.value.ai_next
+      end
+    ensure
+      LibC.freeaddrinfo(addrinfo)
+    end
+  end
+
+  # :nodoc:
+  def self.getaddrinfo_libevent(host, port, family, socktype, protocol = Protocol::IP, timeout = nil)
+    hints = LibC::Addrinfo.new
+    hints.ai_family = (family || Family::UNSPEC).to_i32
     hints.ai_socktype = socktype
     hints.ai_protocol = protocol
     hints.ai_flags = 0

@@ -204,10 +204,7 @@ describe "Codegen: const" do
       ").to_i.should eq(3)
   end
 
-  # Constants are actually initialized before main code, so this should
-  # probably give an error. Since this code is very unlikely to happen,
-  # we'll fix it later.
-  pending "works with const initialized after global variable" do
+  it "works with const initialized after global variable" do
     run(%(
       $a = 1
       COCO = $a

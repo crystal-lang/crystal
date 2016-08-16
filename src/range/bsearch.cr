@@ -7,9 +7,9 @@
     # number and negative number. It fixes this problem.
     if i < 0
       i = -i
-      -(pointerof(i) as Pointer(Float{{ p }})).value
+      -pointerof(i).as(Pointer(Float{{ p }})).value
     else
-      (pointerof(i) as Pointer(Float{{ p }})).value
+      pointerof(i).as(Pointer(Float{{ p }})).value
     end
   end
 
@@ -17,9 +17,9 @@
   private def float_as_int(f : Float{{ p }})
     if f < 0
       f = -f
-      -(pointerof(f) as Pointer(Int{{ p }})).value
+      -pointerof(f).as(Pointer(Int{{ p }})).value
     else
-      (pointerof(f) as Pointer(Int{{ p }})).value
+      pointerof(f).as(Pointer(Int{{ p }})).value
     end
   end
 

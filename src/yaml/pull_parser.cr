@@ -1,10 +1,24 @@
 class YAML::PullParser
-  def initialize(content)
+  protected getter content
+
+  def initialize(@content : String | IO)
     @parser = Pointer(Void).malloc(LibYAML::PARSER_SIZE).as(LibYAML::Parser*)
     @event = LibYAML::Event.new
 
     LibYAML.yaml_parser_initialize(@parser)
-    LibYAML.yaml_parser_set_input_string(@parser, content, content.bytesize)
+
+    if content.is_a?(String)
+      LibYAML.yaml_parser_set_input_string(@parser, content, content.bytesize)
+    else
+      LibYAML.yaml_parser_set_input(@parser, ->(data, buffer, size, size_read) {
+        parser = data.as(YAML::PullParser)
+        io = parser.content.as(IO)
+        slice = Slice.new(buffer, size)
+        actual_read_bytes = io.read(slice)
+        size_read.value = LibC::SizeT.new(actual_read_bytes)
+        LibC::Int.new(1)
+      }, self.as(Void*))
+    end
 
     read_next
     parse_exception "Expected STREAM_START" unless kind == LibYAML::EventType::STREAM_START
@@ -223,15 +237,19 @@ class YAML::PullParser
   end
 
   def problem_line_number
-    problem_mark.line
+    problem? ? problem_mark.line : line_number
   end
 
   def problem_column_number
-    problem_mark.column
+    problem? ? problem_mark.column : column_number
   end
 
   def problem_mark
     @parser.as(LibYAML::InternalParser*).value.problem_mark
+  end
+
+  private def problem?
+    @parser.as(LibYAML::InternalParser*).value.problem
   end
 
   def close

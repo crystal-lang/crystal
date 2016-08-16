@@ -220,6 +220,18 @@ module Crystal
       node
     end
 
+    def transform(node : Select)
+      node.whens.map! do |a_when|
+        Select::When.new(a_when.condition.transform(self), a_when.body.transform(self))
+      end
+
+      if node_else = node.else
+        node.else = node_else.transform(self)
+      end
+
+      node
+    end
+
     def transform(node : ImplicitObj)
       node
     end
@@ -300,7 +312,7 @@ module Crystal
       node
     end
 
-    def transform(node : Fun)
+    def transform(node : ProcNotation)
       transform_many node.inputs
 
       if output = node.output
@@ -316,12 +328,12 @@ module Crystal
       node
     end
 
-    def transform(node : FunLiteral)
+    def transform(node : ProcLiteral)
       node.def.body = node.def.body.transform(self)
       node
     end
 
-    def transform(node : FunPointer)
+    def transform(node : ProcPointer)
       if obj = node.obj
         node.obj = obj.transform(self)
       end
@@ -455,12 +467,7 @@ module Crystal
       node
     end
 
-    def transform(node : StructDef)
-      node.body = node.body.transform(self)
-      node
-    end
-
-    def transform(node : UnionDef)
+    def transform(node : CStructOrUnionDef)
       node.body = node.body.transform(self)
       node
     end
@@ -558,10 +565,6 @@ module Crystal
       node
     end
 
-    def transform(node : MacroId)
-      node
-    end
-
     def transform(node : MacroVar)
       node
     end
@@ -578,11 +581,6 @@ module Crystal
 
     def transform(node : AsmOperand)
       node.exp = node.exp.transform self
-      node
-    end
-
-    def transform(node : FileNode)
-      node.node = node.node.transform self
       node
     end
 

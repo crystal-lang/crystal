@@ -25,11 +25,10 @@ describe "Regex" do
     "Crystal".match(/(?<bar>C)#{/(?<foo>R)/i}/).should be_truthy
     "Crystal".match(/(?<bar>C)#{/(?<foo>R)/}/i).should be_falsey
 
-    "Crystal".match(/(?<bar>.)#{/(?<foo>.)/}/) do |md|
-      md[0].should eq("Cr")
-      md["bar"].should eq("C")
-      md["foo"].should eq("r")
-    end
+    md = "Crystal".match(/(?<bar>.)#{/(?<foo>.)/}/).not_nil!
+    md[0].should eq("Cr")
+    md["bar"].should eq("C")
+    md["foo"].should eq("r")
   end
 
   it "doesn't crash when PCRE tries to free some memory (#771)" do

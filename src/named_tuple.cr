@@ -47,7 +47,7 @@ struct NamedTuple
   # ```
   def self.from(hash : Hash)
     {% begin %}
-    NamedTuple.new(**{{@type.type_vars.first}}).from(hash)
+    NamedTuple.new(**{{T}}).from(hash)
     {% end %}
   end
 
@@ -72,7 +72,7 @@ struct NamedTuple
     {% begin %}
       NamedTuple.new(
       {% for key, value in T %}
-        {{key}}: self[{{key.symbolize}}].cast(hash.fetch(:{{key}}) { hash["{{key}}"] }),
+        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash["{{key}}"] }),
       {% end %}
       )
     {% end %}
@@ -208,7 +208,12 @@ struct NamedTuple
       {% if i > 0 %}
         io << ", "
       {% end %}
-      io << {{key.stringify}}
+      key = {{key.stringify}}
+      if Symbol.needs_quotes?(key)
+        key.inspect(io)
+      else
+        io << key
+      end
       io << ": "
       self[{{key.symbolize}}].inspect(io)
     {% end %}
@@ -412,7 +417,7 @@ struct NamedTuple
     {% begin %}
       {
         {% for key in T %}
-          {{key}}: self[{{key.symbolize}}].clone,
+          {{key.stringify}}: self[{{key.symbolize}}].clone,
         {% end %}
       }
     {% end %}

@@ -434,7 +434,7 @@ describe "Code gen: class" do
           1
         end
 
-        $x = self.foo as Int32
+        $x = self.foo.as(Int32)
       end
 
       $x
@@ -448,7 +448,7 @@ describe "Code gen: class" do
           1
         end
 
-        $x = self as Foo.class
+        $x = self.as(Foo.class)
       end
 
       $x.foo
@@ -839,5 +839,51 @@ describe "Code gen: class" do
 
       crash
       ))
+  end
+
+  it "doesn't crash on abstract class never instantiated (#2840)" do
+    codegen(%(
+      require "prelude"
+
+      abstract class Foo
+      end
+
+      if 1 == 2
+        true
+      else
+        Pointer(Foo).malloc(1_u64).value.foo
+      end
+      ))
+  end
+
+  it "can assign virtual metaclass to virtual metaclass (#3007)" do
+    run(%(
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.foo
+          2
+        end
+      end
+
+      class Baz < Bar
+        def self.foo
+          3
+        end
+      end
+
+      class Gen(T)
+        def initialize(x : T)
+        end
+      end
+
+      ptr = Pointer(Foo.class).malloc(1_u64)
+      ptr.value = Bar || Baz
+      ptr.value.foo
+      )).to_i.should eq(2)
   end
 end

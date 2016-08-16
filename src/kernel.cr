@@ -28,13 +28,13 @@ def loop
 end
 
 # Reads a line from STDIN. See `IO#gets`.
-def gets(*args)
-  STDIN.gets(*args)
+def gets(*args, **options)
+  STDIN.gets(*args, **options)
 end
 
 # Reads a line from STDIN. See `IO#read_line`.
-def read_line(*args)
-  STDIN.read_line(*args)
+def read_line(*args, **options)
+  STDIN.read_line(*args, **options)
 end
 
 # Prints objects to STDOUT and then invokes `STDOUT.flush`. See `IO#print`.

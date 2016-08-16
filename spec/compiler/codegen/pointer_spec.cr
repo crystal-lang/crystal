@@ -61,7 +61,7 @@ describe "Code gen: pointer" do
   end
 
   it "codegens pointer cast" do
-    run("a = 1_i64; (pointerof(a) as Int32*).value").to_i.should eq(1)
+    run("a = 1_i64; pointerof(a).as(Int32*).value").to_i.should eq(1)
   end
 
   it "codegens pointer as if condition" do
@@ -405,5 +405,56 @@ describe "Code gen: pointer" do
 
       LibFoo.foo(Foo.new)
       ))
+  end
+
+  it "uses correct llvm module for typedef metaclass (#2877)" do
+    run(%(
+      require "prelude"
+
+      lib LibFoo
+        type Foo = Void*
+        type Bar = Void*
+      end
+
+      class Class
+        def foo
+          foo(1)
+        end
+
+        def foo(x)
+        end
+      end
+
+      struct Pointer
+        def foo
+          T.foo
+        end
+      end
+
+      foo = uninitialized LibFoo::Foo*
+      bar = uninitialized LibFoo::Bar*
+      foo.foo
+      bar.foo
+      1
+      ))
+  end
+
+  it "generates correct code for Pointer.malloc(0) (#2905)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def initialize(@value : Int32)
+        end
+
+        def value
+          @value
+        end
+      end
+
+      foo = Foo.new(3)
+      Pointer(Int32 | UInt8[9]).malloc(0_u64)
+      foo.value
+      )).to_i.should eq(3)
   end
 end

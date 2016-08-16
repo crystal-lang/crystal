@@ -11,25 +11,23 @@ abstract class OpenSSL::SSL::Socket
           LibSSL::TLSExt::NAMETYPE_host_name,
           hostname.to_unsafe.as(Pointer(Void))
         )
-      end
 
-      {% if LibSSL::OPENSSL_102 %}
-      if hostname
-        param = LibSSL.ssl_get0_param(@ssl)
+        {% if LibSSL::OPENSSL_102 %}
+          param = LibSSL.ssl_get0_param(@ssl)
 
-        if hostname.match(/^(?:[0-9]{1,3}\.[0-9\.]+[0-9]{1,3}|[0-9a-fA-F]{1,4}:[0-9a-fA-F:]+[0-9a-fA-F]{1,4})$/)
-          # Enable verification for OpenSSL 1.0.2
-          unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
-            raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
+          if ::Socket.ip?(hostname)
+            unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
+              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
+            end
+          else
+            unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
+              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
+            end
           end
-        else
-          # Enable verification for OpenSSL 1.0.2
-          unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
-            raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
-          end
-        end
+        {% else %}
+          context.set_cert_verify_callback(hostname)
+        {% end %}
       end
-      {% end %}
 
       ret = LibSSL.ssl_connect(@ssl)
       unless ret == 1
@@ -118,6 +116,15 @@ abstract class OpenSSL::SSL::Socket
   def flush
     @bio.io.flush
   end
+
+  {% if LibSSL::OPENSSL_102 %}
+  # Returns the negotiated ALPN protocol (eg: "h2") of nil if no protocol was
+  # negotiated.
+  def alpn_protocol
+    LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
+    String.new(protocol, len) unless protocol.null?
+  end
+  {% end %}
 
   def close
     return if @closed

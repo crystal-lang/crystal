@@ -1,5 +1,5 @@
 class OAuth::Consumer
-  @ssl : Bool
+  @tls : Bool
 
   def initialize(@host : String, @consumer_key : String, @consumer_secret : String,
                  @port : Int32 = 443,
@@ -7,11 +7,11 @@ class OAuth::Consumer
                  @request_token_uri : String = "/oauth/request_token",
                  @authorize_uri : String = "/oauth/authorize",
                  @access_token_uri : String = "/oauth/access_token")
-    @ssl = @scheme == "https"
+    @tls = @scheme == "https"
   end
 
   def get_request_token(oauth_callback = "oob")
-    with_new_http_client(nil, nil, {"oauth_callback": oauth_callback}) do |client|
+    with_new_http_client(nil, nil, {"oauth_callback" => oauth_callback}) do |client|
       response = client.post @request_token_uri
       handle_response(response) do
         RequestToken.from_response(response.body)
@@ -46,7 +46,7 @@ class OAuth::Consumer
   end
 
   private def with_new_http_client(oauth_token, token_shared_secret, extra_params)
-    client = HTTP::Client.new @host, @port, ssl: @ssl
+    client = HTTP::Client.new @host, @port, tls: @tls
     authenticate client, oauth_token, token_shared_secret, extra_params
     begin
       yield client
@@ -70,7 +70,7 @@ class OAuth::Consumer
     nonce = SecureRandom.hex
 
     signature = Signature.new @consumer_key, @consumer_secret, oauth_token, token_shared_secret, extra_params
-    signature.authorization_header request, client.ssl?, ts, nonce
+    signature.authorization_header request, client.tls?, ts, nonce
   end
 
   private def handle_response(response)

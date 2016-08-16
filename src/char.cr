@@ -52,6 +52,12 @@ struct Char
   # The character representing the end of a C string.
   ZERO = '\0'
 
+  # The maximum character
+  MAX = 0x10ffff.unsafe_chr
+
+  # The maximum valid codepoint for a character
+  MAX_CODEPOINT = 0x10ffff
+
   # Returns the difference of the codepoint values of this char and *other*.
   #
   # ```
@@ -69,7 +75,7 @@ struct Char
   # 'f' + "oo" # => "foo"
   # ```
   def +(str : String)
-    bytesize = str.bytesize + bytesize
+    bytesize = str.bytesize + self.bytesize
     String.new(bytesize) do |buffer|
       count = 0
       each_byte do |byte|
@@ -92,6 +98,12 @@ struct Char
     self - other
   end
 
+  # Returns `true` if this char is an ASCII character
+  # (codepoint is in (0..127))
+  def ascii?
+    ord < 128
+  end
+
   # Returns `true` if this char is an ASCII digit in specified base.
   #
   # Base can be from 0 to 36 with digits from '0' to '9' and 'a' to 'z' or 'A' to 'Z'.
@@ -102,7 +114,7 @@ struct Char
   # 'z'.digit?(36) # => true
   # ```
   def digit?(base : Int = 10)
-    !!to_i(base) { false }
+    !!to_i?(base)
   end
 
   # Returns `true` if this char is a lowercase ASCII letter.
@@ -259,7 +271,7 @@ struct Char
   # ```
   def downcase
     if uppercase?
-      (self.ord + 32).chr
+      (self.ord + 32).unsafe_chr
     else
       self
     end
@@ -274,7 +286,7 @@ struct Char
   # ```
   def upcase
     if lowercase?
-      (self.ord - 32).chr
+      (self.ord - 32).unsafe_chr
     else
       self
     end
@@ -398,70 +410,114 @@ struct Char
     end
   end
 
-  # Returns the integer value of this char if it's an ASCII char denoting a digit,
-  # 0 otherwise.
+  # Returns the integer value of this char if it's an ASCII char denoting a digit
+  # in *base*, raises otherwise.
   #
   # ```
-  # '1'.to_i # => 1
-  # '8'.to_i # => 8
-  # 'c'.to_i # => 0
+  # '1'.to_i     # => 1
+  # '8'.to_i     # => 8
+  # 'c'.to_i     # => ArgumentError
+  # '1'.to_i(16) # => 1
+  # 'a'.to_i(16) # => 10
+  # 'f'.to_i(16) # => 15
+  # 'z'.to_i(16) # => ArgumentError
   # ```
-  def to_i
-    to_i { 0 }
+  def to_i(base : Int = 10)
+    to_i?(base) || raise ArgumentError.new("Invalid integer: #{self}")
   end
 
-  # Returns the integer value of this char if it's an ASCII char denoting a digit,
-  # otherwise the value returned by the block.
+  # Returns the integer value of this char if it's an ASCII char denoting a digit
+  # in *base*,  `nil` otherwise.
   #
   # ```
-  # '1'.to_i { 10 } # => 1
-  # '8'.to_i { 10 } # => 8
-  # 'c'.to_i { 10 } # => 10
+  # '1'.to_i     # => 1
+  # '8'.to_i     # => 8
+  # 'c'.to_i     # => ArgumentError
+  # '1'.to_i(16) # => 1
+  # 'a'.to_i(16) # => 10
+  # 'f'.to_i(16) # => 15
+  # 'z'.to_i(16) # => ArgumentError
   # ```
-  def to_i
-    if digit?
-      self - '0'
-    else
-      yield
-    end
-  end
-
-  # Returns the integer value of this char if it's an ASCII char denoting a digit in *base*,
-  # otherwise the value of *or_else*.
-  #
-  # ```
-  # '1'.to_i(16)     # => 1
-  # 'a'.to_i(16)     # => 10
-  # 'f'.to_i(16)     # => 15
-  # 'z'.to_i(16)     # => 0
-  # 'z'.to_i(16, 20) # => 20
-  # ```
-  def to_i(base, or_else = 0)
-    to_i(base) { or_else }
-  end
-
-  # Returns the integer value of this char if it's an ASCII char denoting a digit in *base*,
-  # otherwise the value return by the given block.
-  #
-  # ```
-  # '1'.to_i(16) { 20 } # => 1
-  # 'a'.to_i(16) { 20 } # => 10
-  # 'f'.to_i(16) { 20 } # => 15
-  # 'z'.to_i(16) { 20 } # => 20
-  # ```
-  def to_i(base)
+  def to_i?(base : Int = 10)
     raise ArgumentError.new "invalid base #{base}, expected 2 to 36" unless 2 <= base <= 36
 
-    ord = ord()
-    if 0 <= ord < 256
-      digit = String::CHAR_TO_DIGIT.to_unsafe[ord]
-      if digit == -1 || digit >= base
-        return yield
-      end
-      digit
+    if base == 10
+      return unless '0' <= self <= '9'
+      self - '0'
     else
-      return yield
+      ord = ord()
+      if 0 <= ord < 256
+        digit = String::CHAR_TO_DIGIT.to_unsafe[ord]
+        return if digit == -1 || digit >= base
+        digit
+      end
     end
+  end
+
+  # Same as `to_i`
+  def to_i32(base : Int = 10)
+    to_i(base)
+  end
+
+  # Same as `to_i?`
+  def to_i32?(base : Int = 10)
+    to_i?(base)
+  end
+
+  {% for type in %w(i8 i16 i64 u8 u16 u32 u64) %}
+    # See `to_i`
+    def to_{{type.id}}(base : Int = 10)
+      to_i(base).to_{{type.id}}
+    end
+
+    # See `to_i?`
+    def to_{{type.id}}?(base : Int = 10)
+      to_i?(base).try &.to_{{type.id}}
+    end
+  {% end %}
+
+  # Returns the integer value of this char as a float if it's an ASCII char denoting a digit,
+  # raises otherwise.
+  #
+  # ```
+  # '1'.to_i # => 1.0
+  # '8'.to_i # => 8.0
+  # 'c'.to_i # => ArgumentError
+  # ```
+  def to_f
+    to_f64
+  end
+
+  # Returns the integer value of this char as a float if it's an ASCII char denoting a digit,
+  # `nil` otherwise.
+  #
+  # ```
+  # '1'.to_i # => 1.0
+  # '8'.to_i # => 8.0
+  # 'c'.to_i # => ArgumentError
+  # ```
+  def to_f?
+    to_f64?
+  end
+
+  # See `to_f`
+  def to_f32
+    to_i.to_f32
+  end
+
+  # See `to_f?`
+  def to_f32?
+    to_i?.try &.to_f32
+  end
+
+  # Same as `to_f`
+  def to_f64
+    to_i.to_f64
+  end
+
+  # Same as `to_f?`
+  def to_f64?
+    to_i?.try &.to_f64
   end
 
   # Yields each of the bytes of this char as encoded by UTF-8.
@@ -506,14 +562,14 @@ struct Char
       yield (0xe0 | (c >> 12)).to_u8
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
-    elsif c <= 0x10ffff
+    elsif c <= MAX_CODEPOINT
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       yield (0xf0 | (c >> 18)).to_u8
       yield (0x80 | ((c >> 12) & 0x3f)).to_u8
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
     else
-      raise "Invalid char value"
+      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 
@@ -536,11 +592,11 @@ struct Char
     elsif c <= 0xffff
       # 1110xxxx  10xxxxxx  10xxxxxx
       3
-    elsif c <= 0x10ffff
+    elsif c <= MAX_CODEPOINT
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       4
     else
-      raise "Invalid char value"
+      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 

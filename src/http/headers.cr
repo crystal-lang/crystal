@@ -3,6 +3,8 @@
 # Two headers are considered the same if their downcase representation is the same
 # (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
+  include Enumerable({String, Array(String)})
+
   # :nodoc:
   record Key, name : String do
     forward_missing_to @name
@@ -36,7 +38,7 @@ struct HTTP::Headers
     end
 
     private def normalize_byte(byte)
-      char = byte.chr
+      char = byte.unsafe_chr
 
       return byte if char.lowercase? || char == '-' # Optimize the common case
       return byte + 32 if char.uppercase?
@@ -73,7 +75,7 @@ struct HTTP::Headers
   # The `word` is expected to match between word boundaries (i.e. non-alphanumeric chars).
   #
   # ```
-  # headers = HTTP::Headers{"Connection": "keep-alive, Upgrade"}
+  # headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
   # headers.includes_word?("Connection", "Upgrade") # => true
   # ```
   def includes_word?(key, word)
@@ -178,7 +180,7 @@ struct HTTP::Headers
 
   def each
     @hash.each do |key, value|
-      yield key.name, value
+      yield({key.name, value})
     end
   end
 
@@ -208,7 +210,7 @@ struct HTTP::Headers
 
   def to_s(io : IO)
     io << "HTTP::Headers{"
-    @hash.each_with_index do |key, values, index|
+    @hash.each_with_index do |(key, values), index|
       io << ", " if index > 0
       key.name.inspect(io)
       io << " => "
@@ -255,9 +257,9 @@ struct HTTP::Headers
     # are '\t', ' ', all US-ASCII printable characters and
     # range from '\x80' to '\xff' (but the last is obsoleted.)
     value.each_byte do |byte|
-      char = byte.chr
+      char = byte.unsafe_chr
       next if char == '\t'
-      if char < ' ' || char > '\u{ff}' || char == '\u{7e}'
+      if char < ' ' || char > '\u{ff}' || char == '\u{7f}'
         raise ArgumentError.new("header content contains invalid character #{char.inspect}")
       end
     end

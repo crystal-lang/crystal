@@ -70,6 +70,8 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   def assign(target_pointer, target_type, value_type, value)
+    return if @builder.end
+
     target_type = target_type.remove_indirection
     value_type = value_type.remove_indirection
 
@@ -206,16 +208,20 @@ class Crystal::CodeGenVisitor
     store value, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : NilType, value)
+  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : VirtualMetaclassType, value)
+    store value, target_pointer
+  end
+
+  def assign_distinct(target_pointer, target_type : NilableProcType, value_type : NilType, value)
     nilable_fun = make_nilable_fun target_type
     store nilable_fun, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : FunInstanceType, value)
+  def assign_distinct(target_pointer, target_type : NilableProcType, value_type : ProcInstanceType, value)
     store value, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : TypeDefType, value)
+  def assign_distinct(target_pointer, target_type : NilableProcType, value_type : TypeDefType, value)
     assign_distinct target_pointer, target_type, value_type.typedef, value
   end
 
@@ -253,7 +259,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def assign_distinct(target_pointer, target_type : FunInstanceType, value_type : FunInstanceType, value)
+  def assign_distinct(target_pointer, target_type : ProcInstanceType, value_type : ProcInstanceType, value)
     # Cast of a non-void proc to a void proc
     store to_rhs(value, target_type), target_pointer
   end
@@ -267,6 +273,8 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast(value, to_type, from_type : Type, already_loaded)
+    return llvm_nil if @builder.end
+
     from_type = from_type.remove_indirection
     to_type = to_type.remove_indirection
 
@@ -313,11 +321,11 @@ class Crystal::CodeGenVisitor
     value
   end
 
-  def downcast_distinct(value, to_type : FunInstanceType, from_type : NilableFunType)
+  def downcast_distinct(value, to_type : ProcInstanceType, from_type : NilableProcType)
     value
   end
 
-  def downcast_distinct(value, to_type : TypeDefType, from_type : NilableFunType)
+  def downcast_distinct(value, to_type : TypeDefType, from_type : NilableProcType)
     downcast_distinct value, to_type.typedef, from_type
   end
 
@@ -372,7 +380,7 @@ class Crystal::CodeGenVisitor
 
   def downcast_distinct(value, to_type : BoolType, from_type : MixedUnionType)
     value_ptr = union_value(value)
-    value = cast_to_pointer(value_ptr, @mod.int8)
+    value = cast_to_pointer(value_ptr, @program.int8)
     value = load(value)
     trunc value, LLVM::Int1
   end
@@ -383,7 +391,7 @@ class Crystal::CodeGenVisitor
     to_lhs value, to_type
   end
 
-  def downcast_distinct(value, to_type : FunInstanceType, from_type : FunInstanceType)
+  def downcast_distinct(value, to_type : ProcInstanceType, from_type : ProcInstanceType)
     # Nothing to do
     value
   end
@@ -393,6 +401,8 @@ class Crystal::CodeGenVisitor
   end
 
   def upcast(value, to_type, from_type)
+    return llvm_nil if @builder.end
+
     from_type = from_type.remove_indirection
     to_type = to_type.remove_indirection
 
@@ -426,15 +436,15 @@ class Crystal::CodeGenVisitor
     cast_to value, to_type
   end
 
-  def upcast_distinct(value, to_type : NilableFunType, from_type : NilType)
+  def upcast_distinct(value, to_type : NilableProcType, from_type : NilType)
     make_nilable_fun to_type
   end
 
-  def upcast_distinct(value, to_type : NilableFunType, from_type : FunInstanceType)
+  def upcast_distinct(value, to_type : NilableProcType, from_type : ProcInstanceType)
     value
   end
 
-  def upcast_distinct(value, to_type : NilableFunType, from_type : TypeDefType)
+  def upcast_distinct(value, to_type : NilableProcType, from_type : TypeDefType)
     upcast_distinct value, to_type, from_type.typedef
   end
 
@@ -560,7 +570,7 @@ class Crystal::CodeGenVisitor
   end
 
   def store_bool_in_union(union_type, union_pointer, value)
-    store type_id(value, @mod.bool), union_type_id(union_pointer)
+    store type_id(value, @program.bool), union_type_id(union_pointer)
 
     # To store a boolean in a union
     # we sign-extend it to the size in bits of the union
@@ -577,7 +587,7 @@ class Crystal::CodeGenVisitor
     union_value_type = llvm_union_value_type(target_type)
     value = union_value_type.null
 
-    store type_id(value, @mod.nil), union_type_id(union_pointer)
+    store type_id(value, @program.nil), union_type_id(union_pointer)
     casted_value_ptr = bit_cast union_value(union_pointer), union_value_type.pointer
     store value, casted_value_ptr
   end

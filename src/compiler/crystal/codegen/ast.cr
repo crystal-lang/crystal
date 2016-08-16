@@ -39,14 +39,14 @@ module Crystal
 
         if owner = @owner
           if owner.metaclass?
-            owner.instance_type.llvm_name(str)
+            self_type.instance_type.llvm_name(str)
             if original_owner != self_type
               str << "@"
               original_owner.instance_type.llvm_name(str)
             end
             str << "::"
           elsif !owner.is_a?(Crystal::Program)
-            owner.llvm_name(str)
+            self_type.llvm_name(str)
             if original_owner != self_type
               str << "@"
               original_owner.llvm_name(str)
@@ -55,7 +55,7 @@ module Crystal
           end
         end
 
-        str << name.gsub('@', '.')
+        str << self.name.gsub('@', '.')
 
         next_def = self.next
         while next_def
@@ -63,22 +63,16 @@ module Crystal
           next_def = next_def.next
         end
 
-        needs_self_type = self_type.try &.passed_as_self?
-
-        if args.size > 0 || needs_self_type || uses_block_arg
+        if args.size > 0 || uses_block_arg?
           str << "<"
-          if needs_self_type
-            self_type.not_nil!.llvm_name(str)
-          end
           if args.size > 0
-            str << ", " if needs_self_type
             args.each_with_index do |arg, i|
               str << ", " if i > 0
               arg.type.llvm_name(str)
             end
           end
-          if uses_block_arg
-            str << ", " if needs_self_type || args.size > 0
+          if uses_block_arg?
+            str << ", " if args.size > 0
             str << "&"
             block_arg.not_nil!.type.llvm_name(str)
           end
@@ -93,8 +87,22 @@ module Crystal
       Crystal.safe_mangling(program, name)
     end
 
-    def varargs
+    def varargs?
       false
+    end
+
+    # Returns `self` as an `External` if this Def must be considered
+    # an external in the codegen, meaning we need to respect the C ABI.
+    # The only case where this is not true if for LLVM instrinsics.
+    # For example overflow intrincis return a tuple, like {i32, i1}:
+    # in C ABI that is represented as i64, but we need to keep the original
+    # type here, respecting LLVM types, not the C ABI.
+    def considered_external?
+      if self.is_a?(External) && !self.real_name.starts_with?("llvm.")
+        self
+      else
+        nil
+      end
     end
   end
 

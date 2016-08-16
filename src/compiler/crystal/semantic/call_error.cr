@@ -21,27 +21,6 @@ class Crystal::ASTNode
 end
 
 class Crystal::Call
-  def raise_matches_not_found(owner : CStructType, def_name, arg_types, named_args_types, matches = nil)
-    raise_struct_or_union_field_not_found owner, def_name
-  end
-
-  def raise_matches_not_found(owner : CUnionType, def_name, arg_types, named_args_types, matches = nil)
-    raise_struct_or_union_field_not_found owner, def_name
-  end
-
-  def raise_struct_or_union_field_not_found(owner, def_name)
-    if def_name.ends_with?('=')
-      def_name = def_name[0..-2]
-    end
-
-    var = owner.vars[def_name]?
-    if var
-      args[0].raise "field '#{def_name}' of #{owner.type_desc} #{owner} has type #{var.type}, not #{args[0].type}"
-    else
-      raise "#{owner.type_desc} #{owner} has no field '#{def_name}'"
-    end
-  end
-
   def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil)
     # Special case: Foo+:Class#new
     if owner.is_a?(VirtualMetaclassType) && def_name == "new"
@@ -74,10 +53,10 @@ class Crystal::Call
 
     # Check if this is a `foo` call and we actually find it in the Program
     if !obj && defs.empty?
-      program_defs = mod.lookup_defs(def_name)
+      program_defs = program.lookup_defs(def_name)
       unless program_defs.empty?
         defs = program_defs
-        owner = mod
+        owner = program
       end
     end
 
@@ -88,9 +67,12 @@ class Crystal::Call
       similar_name = owner.lookup_similar_def_name(def_name, self.args.size, block)
 
       error_msg = String.build do |msg|
-        if obj && owner != mod
+        if obj && owner != program
           msg << "undefined method '#{def_name}' for #{owner}"
-        elsif args.size > 0 || has_parenthesis
+        elsif convert_to_logical_operator(def_name)
+          msg << "undefined method '#{def_name}'"
+          similar_name = convert_to_logical_operator(def_name)
+        elsif args.size > 0 || has_parentheses?
           msg << "undefined method '#{def_name}'"
         else
           similar_name = parent_visitor.lookup_similar_var_name(def_name) unless similar_name
@@ -117,10 +99,10 @@ class Crystal::Call
 
         # Check if it's an instance variable that was never assigned a value
         if obj.is_a?(InstanceVar)
-          scope = scope.as(InstanceVarContainer)
+          scope = self.scope.as(InstanceVarContainer)
           ivar = scope.lookup_instance_var(obj.name)
           deps = ivar.dependencies?
-          if deps && deps.size == 1 && deps.first.same?(mod.nil_var)
+          if deps && deps.size == 1 && deps.first.same?(program.nil_var)
             similar_name = scope.lookup_similar_instance_var_name(ivar.name)
             if similar_name
               msg << colorize(" (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)").yellow.bold
@@ -191,7 +173,7 @@ class Crystal::Call
           str << ")\n"
         end
         str << "Overloads are:"
-        append_matches(defs, str)
+        append_matches(defs, arg_types, str)
       end, inner: inner_exception)
     end
 
@@ -208,14 +190,14 @@ class Crystal::Call
 
         if named_args_types
           defs_matching_args_size.each do |a_def|
-            check_named_args_mismatch owner, named_args_types, a_def
+            check_named_args_mismatch owner, arg_types, named_args_types, a_def
           end
         end
       end
     end
 
-    if args.size == 1 && args.first.type.includes_type?(mod.nil)
-      owner_trace = args.first.find_owner_trace(mod.nil)
+    if args.size == 1 && args.first.type.includes_type?(program.nil)
+      owner_trace = args.first.find_owner_trace(program.nil)
     end
 
     arg_names = [] of Array(String)
@@ -247,7 +229,7 @@ class Crystal::Call
       end
 
       msg << "Overloads are:"
-      append_matches(defs, msg)
+      append_matches(defs, arg_types, msg)
 
       if matches
         cover = matches.cover
@@ -280,6 +262,15 @@ class Crystal::Call
     end
 
     raise message, owner_trace
+  end
+
+  def convert_to_logical_operator(def_name)
+    case def_name
+    when "and"; "&&"
+    when "or" ; "||"
+    when "not"; "!"
+    else        nil
+    end
   end
 
   # If there's only one def that could match, and there are named
@@ -350,27 +341,35 @@ class Crystal::Call
     signature = CallSignature.new(def_name, args.map(&.type), block, named_args_types)
     defs.each do |a_def|
       context = MatchContext.new(owner, a_def.owner)
-      match = MatchesLookup.match_def(signature, DefWithMetadata.new(a_def), context)
+      match = signature.match(DefWithMetadata.new(a_def), context)
       next unless match
 
       if a_def.owner == owner
         owner.all_subclasses.each do |subclass|
           submatches = subclass.lookup_matches(signature)
           if submatches.empty?
-            raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{subclass}"
+            raise_abstract_method_must_be_implemented a_def, subclass
           end
         end
-        raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{owner}"
+        raise_abstract_method_must_be_implemented a_def, owner
       else
-        raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{owner}"
+        raise_abstract_method_must_be_implemented a_def, owner
       end
     end
   end
 
-  def append_matches(defs, str, matched_def = nil, argument_name = nil)
+  def raise_abstract_method_must_be_implemented(a_def, owner)
+    if owner.abstract?
+      raise "undefined method '#{def_full_name(a_def.owner, a_def)}'"
+    else
+      raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{owner}"
+    end
+  end
+
+  def append_matches(defs, arg_types, str, *, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
       str << "\n - "
-      append_def_full_name a_def.owner, a_def, str
+      append_def_full_name a_def.owner, a_def, arg_types, str
       if defs.size > 1 && a_def.same?(matched_def)
         str << colorize(" (trying this one)").blue
       end
@@ -380,19 +379,19 @@ class Crystal::Call
     end
   end
 
-  def def_full_name(owner, a_def)
-    Call.def_full_name(owner, a_def)
+  def def_full_name(owner, a_def, arg_types = nil)
+    Call.def_full_name(owner, a_def, arg_types = nil)
   end
 
-  def self.def_full_name(owner, a_def)
-    String.build { |io| append_def_full_name(owner, a_def, io) }
+  def self.def_full_name(owner, a_def, arg_types = nil)
+    String.build { |io| append_def_full_name(owner, a_def, arg_types, io) }
   end
 
-  def append_def_full_name(owner, a_def, str)
-    Call.append_def_full_name(owner, a_def, str)
+  def append_def_full_name(owner, a_def, arg_types, str)
+    Call.append_def_full_name(owner, a_def, arg_types, str)
   end
 
-  def self.append_def_full_name(owner, a_def, str)
+  def self.append_def_full_name(owner, a_def, arg_types, str)
     str << full_name(owner, a_def.name)
     str << '('
     printed = false
@@ -407,24 +406,29 @@ class Crystal::Call
 
       str << arg.name
 
-      if arg_default = arg.default_value
-        str << " = "
-        str << arg.default_value
-      end
       if arg_type = arg.type?
         str << " : "
         str << arg_type
       elsif res = arg.restriction
         str << " : "
-        if owner.is_a?(GenericClassInstanceType) && res.is_a?(Path) && res.names.size == 1
-          if type_var = owner.type_vars[res.names[0]]?
-            str << type_var.type
-          else
-            str << res
-          end
+        if owner.is_a?(GenericClassInstanceType) && res.is_a?(Path) && res.names.size == 1 &&
+           (type_var = owner.type_vars[res.names[0]]?)
+          str << type_var.type
         else
-          str << res
+          # Try to use the full name if the argument type and the call
+          # argument type have the same string representation
+          res_to_s = res.to_s
+          if (arg_type = arg_types.try &.[i]?) && arg_type.to_s == res_to_s &&
+             (matching_type = a_def.owner.lookup_type?(res))
+            str << matching_type
+          else
+            str << res_to_s
+          end
         end
+      end
+      if arg_default = arg.default_value
+        str << " = "
+        str << arg.default_value
       end
       printed = true
     end
@@ -510,7 +514,7 @@ class Crystal::Call
     wrong_number_of_arguments "macro '#{def_name}'", args.size, all_arguments_sizes.join(", ")
   end
 
-  def check_named_args_mismatch(owner, named_args, a_def)
+  def check_named_args_mismatch(owner, arg_types, named_args, a_def)
     named_args.each do |named_arg|
       found_index = a_def.args.index { |arg| arg.name == named_arg.name }
       if found_index
@@ -533,7 +537,7 @@ class Crystal::Call
 
           str << "\n"
           str << "Matches are:"
-          append_matches defs, str, matched_def: a_def, argument_name: named_arg.name
+          append_matches defs, arg_types, str, matched_def: a_def, argument_name: named_arg.name
         end
         raise msg
       end
@@ -575,24 +579,24 @@ class Crystal::Call
   end
 
   def in_same_namespace?(scope, target)
-    top_container(scope) == top_container(target) ||
+    top_namespace(scope) == top_namespace(target) ||
       scope.parents.try &.any? { |parent| in_same_namespace?(parent, target) }
   end
 
-  def top_container(type)
-    container = case type
+  def top_namespace(type)
+    namespace = case type
                 when NamedType
-                  type.container
+                  type.namespace
                 when GenericClassInstanceType
-                  type.container
+                  type.namespace
                 else
                   nil
                 end
-    case container
+    case namespace
     when Program
       type
     when NamedType, GenericClassInstanceType
-      top_container(container)
+      top_namespace(namespace)
     else
       type
     end
@@ -601,14 +605,14 @@ class Crystal::Call
   def check_recursive_splat_call(a_def, args)
     if a_def.splat_index
       current_splat_type = args.values.last.type
-      if previous_splat_type = mod.splat_expansions[a_def.object_id]?
+      if previous_splat_type = program.splat_expansions[a_def.object_id]?
         if current_splat_type.has_in_type_vars?(previous_splat_type)
           raise "recursive splat expansion: #{previous_splat_type}, #{current_splat_type}, ..."
         end
       end
-      mod.splat_expansions[a_def.object_id] = current_splat_type
+      program.splat_expansions[a_def.object_id] = current_splat_type
       yield
-      mod.splat_expansions.delete a_def.object_id
+      program.splat_expansions.delete a_def.object_id
     else
       yield
     end
@@ -618,11 +622,18 @@ class Crystal::Call
     Call.full_name(owner, def_name)
   end
 
-  def self.full_name(owner, def_name = name)
-    owner.to_s_with_method_name(def_name)
+  def self.full_name(owner, method_name = name)
+    case owner
+    when Program
+      method_name
+    when .metaclass?
+      "#{owner.instance_type}.#{method_name}"
+    else
+      "#{owner}##{method_name}"
+    end
   end
 
   private def colorize(obj)
-    mod.colorize(obj)
+    program.colorize(obj)
   end
 end

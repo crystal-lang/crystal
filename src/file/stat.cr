@@ -12,11 +12,11 @@ class File
     end
 
     def atime
-      ifdef darwin
+      {% if flag?(:darwin) %}
         time @stat.st_atimespec
-      else
+      {% else %}
         time @stat.st_atim
-      end
+      {% end %}
     end
 
     def blksize
@@ -28,11 +28,11 @@ class File
     end
 
     def ctime
-      ifdef darwin
+      {% if flag?(:darwin) %}
         time @stat.st_ctimespec
-      else
+      {% else %}
         time @stat.st_ctim
-      end
+      {% end %}
     end
 
     def dev
@@ -57,11 +57,11 @@ class File
     end
 
     def mtime
-      ifdef darwin
+      {% if flag?(:darwin) %}
         time @stat.st_mtimespec
-      else
+      {% else %}
         time @stat.st_mtim
-      end
+      {% end %}
     end
 
     def nlink

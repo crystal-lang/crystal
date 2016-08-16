@@ -1,27 +1,19 @@
 module HTTP
   # :nodoc:
-  abstract class Content
+  module Content
     include IO
 
     def close
       buffer = uninitialized UInt8[1024]
       while read(buffer.to_slice) > 0
       end
+      super
     end
   end
 
   # :nodoc:
-  class FixedLengthContent < Content
-    def initialize(@io : IO, size : UInt64)
-      @remaining = size
-    end
-
-    def read(slice : Slice(UInt8))
-      count = Math.min(slice.size.to_u64, @remaining)
-      bytes_read = @io.read slice[0, count]
-      @remaining -= bytes_read
-      bytes_read
-    end
+  class FixedLengthContent < IO::Sized
+    include Content
 
     def write(slice : Slice(UInt8))
       raise IO::Error.new "Can't write to FixedLengthContent"
@@ -29,7 +21,9 @@ module HTTP
   end
 
   # :nodoc:
-  class UnknownLengthContent < Content
+  class UnknownLengthContent
+    include Content
+
     def initialize(@io : IO)
     end
 
@@ -43,7 +37,8 @@ module HTTP
   end
 
   # :nodoc:
-  class ChunkedContent < Content
+  class ChunkedContent
+    include Content
     @chunk_remaining : Int32
 
     def initialize(@io : IO)

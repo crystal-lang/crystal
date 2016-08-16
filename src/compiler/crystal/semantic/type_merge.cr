@@ -3,8 +3,13 @@ require "../program"
 module Crystal
   class Program
     def type_merge(types : Array(Type?))
-      # Merging two types is the most common case, so we optimize it
-      if types.size == 2
+      case types.size
+      when 0
+        return nil
+      when 1
+        return types.first
+      when 2
+        # Merging two types is the most common case, so we optimize it
         first, second = types
         did_merge, merged_type = type_merge_two(first, second)
         return merged_type if did_merge
@@ -13,20 +18,14 @@ module Crystal
       combined_union_of compact_types(types)
     end
 
-    def type_merge(nodes : Dependencies)
-      # Merging two types is the most common case, so we optimize it
-      if nodes.size == 2
-        first, second = nodes.two!
-        did_merge, merged_type = type_merge_two(first.type?, second.type?)
-        return merged_type if did_merge
-      end
-
-      combined_union_of compact_types(nodes, &.type?)
-    end
-
     def type_merge(nodes : Array(ASTNode))
-      # Merging two types is the most common case, so we optimize it
-      if nodes.size == 2
+      case nodes.size
+      when 0
+        return nil
+      when 1
+        return nodes.first.type?
+      when 2
+        # Merging two types is the most common case, so we optimize it
         first, second = nodes
         did_merge, merged_type = type_merge_two(first.type?, second.type?)
         return merged_type if did_merge
@@ -89,6 +88,12 @@ module Crystal
       add_type types, type.remove_alias
     end
 
+    # When Void participates in a union, it becomes Nil
+    # (users shouldn't deal with real Void values)
+    def add_type(types, type : VoidType)
+      add_type(types, nil_type)
+    end
+
     def add_type(types, type : Type)
       types << type unless types.includes? type
     end
@@ -131,7 +136,7 @@ module Crystal
   end
 
   class Type
-    def self.merge(nodes : Dependencies)
+    def self.merge(nodes : Array(ASTNode))
       nodes.find(&.type?).try &.type.program.type_merge(nodes)
     end
 
@@ -248,6 +253,20 @@ module Crystal
     def common_ancestor(other : MetaclassType | VirtualMetaclassType)
       common = instance_type.base_type.metaclass.common_ancestor(other)
       common.try &.virtual_type!
+    end
+  end
+
+  class ProcInstanceType
+    def common_ancestor(other : ProcInstanceType)
+      if return_type.no_return? && arg_types == other.arg_types
+        return other
+      end
+
+      if other.return_type.no_return? && arg_types == other.arg_types
+        return self
+      end
+
+      nil
     end
   end
 

@@ -300,7 +300,7 @@ describe "Code gen: module" do
       end
 
       x = Foo.new
-      y = x as Moo
+      y = x.as(Moo)
 
       x.method(y)
       )).to_i.should eq(1)
@@ -330,7 +330,7 @@ describe "Code gen: module" do
       end
 
       file = File2.new
-      file2 = file as IO2
+      file2 = file.as(IO2)
 
       file.method(file2)
       )).to_i.should eq(1)
@@ -360,7 +360,7 @@ describe "Code gen: module" do
       end
 
       x = Bar.new
-      y = x as Moo
+      y = x.as(Moo)
 
       x.method(y)
       )).to_i.should eq(2)
@@ -383,7 +383,7 @@ describe "Code gen: module" do
       end
 
       def moo
-        (Foo.new || Bar.new) as Moo
+        (Foo.new || Bar.new).as(Moo)
       end
 
       moo = moo()
@@ -410,12 +410,28 @@ describe "Code gen: module" do
       end
 
       Foo.new
-      a = false as Moo
+      a = false.as(Moo)
       if a
         1
       else
         2
       end
       )).to_i.should eq(2)
+  end
+
+  it "declares and includes generic module, in macros T is a tuple literal" do
+    run(%(
+      module Moo(*T)
+        def t
+          {{T.class_name}}
+        end
+      end
+
+      class Foo
+        include Moo(Int32, Char)
+      end
+
+      Foo.new.t
+      )).to_string.should eq("TupleLiteral")
   end
 end

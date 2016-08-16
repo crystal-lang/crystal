@@ -7,11 +7,11 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = ULong
 
-  ifdef x86_64
+  {% if flag?(:x86_64) %}
     alias MpExp = Int64
-  else
+  {% else %}
     alias MpExp = Int32
-  end
+  {% end %}
 
   struct MPZ
     _mp_alloc : Int32
@@ -83,6 +83,13 @@ lib LibGMP
   fun cmp_si = __gmpz_cmp_si(op1 : MPZ*, op2 : Long) : Int
   fun cmp_ui = __gmpz_cmp_ui(op1 : MPZ*, op2 : ULong) : Int
   fun cmp_d = __gmpz_cmp_d(op1 : MPZ*, op2 : Double) : Int
+
+  # # Number Theoretic Functions
+
+  fun gcd = __gmpz_gcd(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+  fun gcd_ui = __gmpz_gcd_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong) : ULong
+  fun lcm = __gmpz_lcm(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+  fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
 
   # MPQ
   struct MPQ

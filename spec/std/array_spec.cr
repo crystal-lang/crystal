@@ -620,10 +620,22 @@ describe "Array" do
       a.index(4).should be_nil
     end
 
+    it "performs without a block and offset" do
+      a = [1, 2, 3, 1, 2, 3]
+      a.index(3, offset: 3).should eq(5)
+      a.index(3, offset: -3).should eq(5)
+    end
+
     it "performs with a block" do
       a = [1, 2, 3]
       a.index { |i| i > 1 }.should eq(1)
       a.index { |i| i > 3 }.should be_nil
+    end
+
+    it "performs with a block and offset" do
+      a = [1, 2, 3, 1, 2, 3]
+      a.index(offset: 3) { |i| i > 1 }.should eq(4)
+      a.index(offset: -3) { |i| i > 1 }.should eq(4)
     end
 
     it "raises if out of bounds" do
@@ -821,10 +833,27 @@ describe "Array" do
       a.rindex(7).should be_nil
     end
 
+    it "performs without a block and an offset" do
+      a = [1, 2, 3, 4, 5, 3, 6]
+      a.rindex(3, offset: 4).should eq(2)
+      a.rindex(6, offset: 4).should be_nil
+      a.rindex(3, offset: -2).should eq(5)
+      a.rindex(3, offset: -3).should eq(2)
+      a.rindex(3, offset: -100).should be_nil
+    end
+
     it "performs with a block" do
       a = [1, 2, 3, 4, 5, 3, 6]
       a.rindex { |i| i > 1 }.should eq(6)
       a.rindex { |i| i > 6 }.should be_nil
+    end
+
+    it "performs with a block and offset" do
+      a = [1, 2, 3, 4, 5, 3, 6]
+      a.rindex { |i| i > 1 }.should eq(6)
+      a.rindex { |i| i > 6 }.should be_nil
+      a.rindex(offset: 4) { |i| i == 3 }.should eq(2)
+      a.rindex(offset: -3) { |i| i == 3 }.should eq(2)
     end
   end
 
@@ -1010,7 +1039,7 @@ describe "Array" do
       calls = Hash(String, Int32).new(0)
       a = ["foo", "a", "hello"]
       a.sort_by! { |e| calls[e] += 1; e.size }
-      calls.should eq({"foo": 1, "a": 1, "hello": 1})
+      calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
     end
   end
 

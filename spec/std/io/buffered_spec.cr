@@ -44,10 +44,6 @@ class IO::BufferedWrapper
     @io.closed?
   end
 
-  def to_fd_io
-    @io.to_fd_io
-  end
-
   private def unbuffered_rewind
     @io.rewind
   end
@@ -132,6 +128,23 @@ describe "IO::Buffered" do
     io.read_char.should eq('世')
     io.read_char.should eq('界')
     io.read_char.should be_nil
+
+    io = MemoryIO.new
+    io.write Bytes[0xf8, 0xff, 0xff, 0xff]
+    io.rewind
+    io = IO::BufferedWrapper.new(io)
+
+    expect_raises(InvalidByteSequenceError) do
+      io.read_char
+    end
+
+    io = MemoryIO.new
+    io.write_byte 0x81_u8
+    io.rewind
+    io = IO::BufferedWrapper.new(io)
+    expect_raises(InvalidByteSequenceError) do
+      p io.read_char
+    end
   end
 
   it "reads byte" do

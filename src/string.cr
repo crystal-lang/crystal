@@ -483,7 +483,7 @@ class String
 
     # Skip leading whitespace
     if whitespace
-      while ptr.value.chr.whitespace?
+      while ptr.value.unsafe_chr.whitespace?
         ptr += 1
       end
     end
@@ -493,7 +493,7 @@ class String
     mul_overflow = ~0_u64 / base
 
     # Check + and -
-    case ptr.value.chr
+    case ptr.value.unsafe_chr
     when '+'
       ptr += 1
     when '-'
@@ -502,11 +502,11 @@ class String
     end
 
     # Check leading zero
-    if ptr.value.chr == '0'
+    if ptr.value.unsafe_chr == '0'
       ptr += 1
 
       if prefix
-        case ptr.value.chr
+        case ptr.value.unsafe_chr
         when 'b'
           base = 2
           ptr += 1
@@ -528,7 +528,7 @@ class String
 
     digits = (base == 62 ? CHAR_TO_DIGIT62 : CHAR_TO_DIGIT).to_unsafe
     while ptr.value != 0
-      if ptr.value.chr == '_' && underscore
+      if ptr.value.unsafe_chr == '_' && underscore
         break if last_is_underscore
         last_is_underscore = true
         ptr += 1
@@ -562,7 +562,7 @@ class String
     if found_digit
       unless ptr.value == 0
         if whitespace
-          while ptr.value.chr.whitespace?
+          while ptr.value.unsafe_chr.whitespace?
             ptr += 1
           end
         end
@@ -578,31 +578,95 @@ class String
     ToU64Info.new value, negative, invalid
   end
 
-  # Returns the result of interpreting leading characters in this string as a floating point number (`Float64`).
-  # Extraneous characters past the end of a valid number are ignored. If there is not a valid number at the start of str,
-  # 0.0 is returned. This method never raises an exception.
+  # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
+  # This method raises an exception if the string is not a valid float representation.
+  #
+  # Options:
+  # * **whitespace**: if true, leading and trailing whitespaces are allowed
+  # * **strict**: if true, extraneous characters past the end of the number are disallowed
   #
   # ```
-  # "123.45e1".to_f      # => 1234.5
-  # "45.67 degrees".to_f # => 45.67
-  # "thx1138".to_f       # => 0.0
+  # "123.45e1".to_f                # => 1234.5
+  # "45.67 degrees".to_f           # => 45.67
+  # "thx1138".to_f                 # => ArgumentError
+  # " 1.2".to_f(whitespace: false) # => ArgumentError
+  # "1.2foo".to_f(strict: false)   # => 1.2
   # ```
-  def to_f
-    to_f64
+  def to_f(whitespace = true, strict = true)
+    to_f64(whitespace: whitespace, strict: strict)
   end
 
-  # Returns the result of interpreting leading characters in this string as a floating point number (`Float32`).
-  # Extraneous characters past the end of a valid number are ignored. If there is not a valid number at the start of str,
-  # 0.0 is returned. This method never raises an exception.
+  # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
+  # This method returns `nil` if the string is not a valid float representation.
   #
-  # See `#to_f`.
-  def to_f32
-    LibC.strtof self, nil
+  # Options:
+  # * **whitespace**: if true, leading and trailing whitespaces are allowed
+  # * **strict**: if true, extraneous characters past the end of the number are disallowed
+  #
+  # ```
+  # "123.45e1".to_f?                # => 1234.5
+  # "45.67 degrees".to_f?           # => 45.67
+  # "thx1138".to_f?                 # => nil
+  # " 1.2".to_f?(whitespace: false) # => nil
+  # "1.2foo".to_f?(strict: false)   # => 1.2
+  # ```
+  def to_f?(whitespace = true, strict = true)
+    to_f64?(whitespace: whitespace, strict: strict)
+  end
+
+  # Same as `#to_f` but returns a Float32.
+  def to_f32(whitespace = true, strict = true)
+    to_f32?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float32: #{self}")
+  end
+
+  # Same as `#to_f?` but returns a Float32.
+  def to_f32?(whitespace = true, strict = true)
+    to_f_impl(whitespace: whitespace, strict: strict) do
+      v = LibC.strtof self, out endptr
+      {v, endptr}
+    end
   end
 
   # Same as `#to_f`.
-  def to_f64
-    LibC.atof self
+  def to_f64(whitespace = true, strict = true)
+    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self}")
+  end
+
+  # Same as `#to_f?`.
+  def to_f64?(whitespace = true, strict = true)
+    to_f_impl(whitespace: whitespace, strict: strict) do
+      v = LibC.strtod self, out endptr
+      {v, endptr}
+    end
+  end
+
+  private def to_f_impl(whitespace = true, strict = true)
+    return unless whitespace || '0' <= self[0] <= '9' || self[0] == '-' || self[0] == '+'
+
+    v, endptr = yield
+    string_end = to_unsafe + bytesize
+
+    # blank string
+    return if endptr == to_unsafe
+
+    if strict
+      if whitespace
+        while endptr < string_end && endptr.value.chr.whitespace?
+          endptr += 1
+        end
+      end
+      # reached the end of the string
+      v if endptr == string_end
+    else
+      ptr = to_unsafe
+      if whitespace
+        while ptr < string_end && ptr.value.chr.whitespace?
+          ptr += 1
+        end
+      end
+      # consumed some bytes
+      v if endptr > ptr
+    end
   end
 
   # Returns the `Char` at the given *index*, or raises `IndexError` if out of bounds.
@@ -633,15 +697,7 @@ class String
   # "hello"[1...-1] # "ell"
   # ```
   def [](range : Range(Int, Int))
-    from = range.begin
-    from += size if from < 0
-    raise IndexError.new if from < 0
-
-    to = range.end
-    to += size if to < 0
-    to -= 1 if range.excludes_end?
-    size = to - from + 1
-    size = 0 if size < 0
+    from, size = range_to_index_and_size(range)
     self[from, size]
   end
 
@@ -655,7 +711,7 @@ class String
   #
   # Raises `ArgumentError` if `count` is negative.
   def [](start : Int, count : Int)
-    if single_byte_optimizable?
+    if ascii_only?
       return byte_slice(start, count)
     end
 
@@ -685,6 +741,8 @@ class String
       return "" if count == 0
 
       count = end_pos - start_pos
+      return self if count == bytesize
+
       String.new(count) do |buffer|
         buffer.copy_from(to_unsafe + start_pos, count)
         {count, 0}
@@ -730,13 +788,13 @@ class String
   end
 
   def at(index : Int)
-    at(index) { raise IndexError }
+    at(index) { raise IndexError.new }
   end
 
   def at(index : Int)
-    if single_byte_optimizable?
+    if ascii_only?
       byte = byte_at?(index)
-      return byte ? byte.chr : yield
+      return byte ? byte.unsafe_chr : yield
     end
 
     index += size if index < 0
@@ -752,13 +810,14 @@ class String
 
   def byte_slice(start : Int, count : Int)
     start += bytesize if start < 0
-    single_byte_optimizable = single_byte_optimizable?
+    single_byte_optimizable = ascii_only?
 
     if 0 <= start < bytesize
       raise ArgumentError.new "negative count" if count < 0
 
       count = bytesize - start if start + count > bytesize
       return "" if count == 0
+      return self if count == bytesize
 
       String.new(count) do |buffer|
         buffer.copy_from(to_unsafe + start, count)
@@ -875,12 +934,12 @@ class String
     case to_unsafe[bytesize - 1]
     when '\n'
       if bytesize > 1 && to_unsafe[bytesize - 2] === '\r'
-        byte_slice 0, bytesize - 2
+        unsafe_byte_slice_string(0, bytesize - 2)
       else
-        byte_slice 0, bytesize - 1
+        unsafe_byte_slice_string(0, bytesize - 1)
       end
     when '\r'
-      byte_slice 0, bytesize - 1
+      unsafe_byte_slice_string(0, bytesize - 1)
     else
       self
     end
@@ -894,7 +953,7 @@ class String
   # ```
   def chomp(char : Char)
     if ends_with?(char)
-      String.new(unsafe_byte_slice(0, bytesize - char.bytesize))
+      unsafe_byte_slice_string(0, bytesize - char.bytesize)
     else
       self
     end
@@ -908,7 +967,7 @@ class String
   # ```
   def chomp(str : String)
     if ends_with?(str)
-      String.new(unsafe_byte_slice(0, bytesize - str.bytesize))
+      unsafe_byte_slice_string(0, bytesize - str.bytesize)
     else
       self
     end
@@ -931,11 +990,11 @@ class String
     return "" if bytesize <= 1
 
     if bytesize >= 2 && to_unsafe[bytesize - 1] === '\n' && to_unsafe[bytesize - 2] === '\r'
-      return byte_slice(0, bytesize - 2)
+      return unsafe_byte_slice_string(0, bytesize - 2)
     end
 
-    if to_unsafe[bytesize - 1] < 128 || single_byte_optimizable?
-      return byte_slice(0, bytesize - 1)
+    if to_unsafe[bytesize - 1] < 128 || ascii_only?
+      return unsafe_byte_slice_string(0, bytesize - 1)
     end
 
     self[0, size - 1]
@@ -1004,7 +1063,7 @@ class String
     bytes, count = String.char_bytes_and_bytesize(other)
 
     new_bytesize = bytesize + count
-    new_size = single_byte_optimizable? ? new_bytesize : 0
+    new_size = ascii_only? ? new_bytesize : 0
 
     insert_impl(byte_index, bytes.to_unsafe, count, new_bytesize, new_size)
   end
@@ -1033,7 +1092,7 @@ class String
     raise IndexError.new unless byte_index
 
     new_bytesize = bytesize + other.bytesize
-    new_size = single_byte_optimizable? && other.single_byte_optimizable? ? new_bytesize : 0
+    new_size = ascii_only? && other.ascii_only? ? new_bytesize : 0
 
     insert_impl(byte_index, other.to_unsafe, other.bytesize, new_bytesize, new_size)
   end
@@ -1066,7 +1125,7 @@ class String
     if excess_right == 0 && excess_left == 0
       self
     else
-      String.new(unsafe_byte_slice excess_left, bytesize - excess_left - excess_right)
+      unsafe_byte_slice_string(excess_left, bytesize - excess_left - excess_right)
     end
   end
 
@@ -1104,7 +1163,7 @@ class String
 
   private def calc_excess_right
     excess_right = 0
-    while to_unsafe[bytesize - 1 - excess_right].chr.whitespace?
+    while to_unsafe[bytesize - 1 - excess_right].unsafe_chr.whitespace?
       excess_right += 1
     end
     excess_right
@@ -1112,7 +1171,7 @@ class String
 
   private def calc_excess_left
     excess_left = 0
-    while to_unsafe[excess_left].chr.whitespace?
+    while to_unsafe[excess_left].unsafe_chr.whitespace?
       excess_left += 1
     end
     excess_left
@@ -1120,7 +1179,7 @@ class String
 
   # Returns a new string _tr_anslating characters using *from* and *to* as a
   # map. If *to* is shorter than *from*, the last character in *to* is used for
-  # the rest.
+  # the rest. If *to* is empty, this acts like `String#delete`.
   #
   # ```
   # "aabbcc".tr("abc", "xyz") # => "xxyyzz"
@@ -1128,6 +1187,7 @@ class String
   # "aabbcc".tr("a", "xyz")   # => "xxbbcc"
   # ```
   def tr(from : String, to : String)
+    return delete(from) if to.empty?
     multi = nil
     table = StaticArray(Int32, 256).new(-1)
     reader = Char::Reader.new(to)
@@ -1151,7 +1211,7 @@ class String
       each_char do |ch|
         if ch.ord < 256
           if (a = table[ch.ord]) >= 0
-            buffer << a.chr
+            buffer << a.unsafe_chr
           else
             buffer << ch
           end
@@ -1360,6 +1420,111 @@ class String
     end
   end
 
+  # Returns a new String with the character at the given index
+  # replaced by *replacement*.
+  #
+  # ```
+  # "hello".sub(1, 'a') # => "hallo"
+  # ```
+  def sub(index : Int, replacement : Char)
+    sub_index(index.to_i, replacement) do |buffer|
+      replacement.each_byte do |byte|
+        buffer.value = byte
+        buffer += 1
+      end
+      {buffer, @length}
+    end
+  end
+
+  # Returns a new String with the character at the given index
+  # replaced by *replacement*.
+  #
+  # ```
+  # "hello".sub(1, "eee") # => "heeello"
+  # ```
+  def sub(index : Int, replacement : String)
+    sub_index(index.to_i, replacement) do |buffer|
+      buffer.copy_from(replacement.to_unsafe, replacement.bytesize)
+      buffer += replacement.bytesize
+      {buffer, self.size_known? && replacement.size_known? ? self.size + replacement.size - 1 : 0}
+    end
+  end
+
+  private def sub_index(index, replacement)
+    index += size + 1 if index < 0
+
+    byte_index = char_index_to_byte_index(index)
+    raise IndexError.new unless byte_index
+
+    reader = Char::Reader.new(self)
+    reader.pos = byte_index
+    width = reader.current_char_width
+    replacement_width = replacement.bytesize
+    new_bytesize = bytesize - width + replacement_width
+
+    String.new(new_bytesize) do |buffer|
+      buffer.copy_from(to_unsafe, byte_index)
+      buffer += byte_index
+      buffer, length = yield buffer
+      buffer.copy_from(to_unsafe + byte_index + width, bytesize - byte_index - width)
+      {new_bytesize, length}
+    end
+  end
+
+  # Returns a new String with characters at the given range
+  # replaced by *replacement*.
+  #
+  # ```
+  # "hello".sub(1..2, 'a') # => "halo"
+  # ```
+  def sub(range : Range(Int, Int), replacement : Char)
+    sub_range(range, replacement) do |buffer, from_index, to_index|
+      replacement.each_byte do |byte|
+        buffer.value = byte
+        buffer += 1
+      end
+      {buffer, ascii_only? ? bytesize - (to_index - from_index) + 1 : 0}
+    end
+  end
+
+  # Returns a new String with characters at the given range
+  # replaced by *replacement*.
+  #
+  # ```
+  # "hello".sub(1..2, "eee") # => "heeelo"
+  # ```
+  def sub(range : Range(Int, Int), replacement : String)
+    sub_range(range, replacement) do |buffer|
+      buffer.copy_from(replacement.to_unsafe, replacement.bytesize)
+      buffer += replacement.bytesize
+      {buffer, 0}
+    end
+  end
+
+  private def sub_range(range, replacement)
+    from, size = range_to_index_and_size(range)
+
+    from_index = char_index_to_byte_index(from)
+    raise IndexError.new unless from_index
+
+    if size == 0
+      to_index = from_index
+    else
+      to_index = char_index_to_byte_index(from + size)
+      raise IndexError.new unless to_index
+    end
+
+    new_bytesize = bytesize - (to_index - from_index) + replacement.bytesize
+
+    String.new(new_bytesize) do |buffer|
+      buffer.copy_from(to_unsafe, from_index)
+      buffer += from_index
+      buffer, length = yield buffer, from_index, to_index
+      buffer.copy_from(to_unsafe + to_index, bytesize - to_index)
+      {new_bytesize, length}
+    end
+  end
+
   # This returns true if this string has '\\' in it. It might not be a back reference,
   # but '\\' is probably used for back references, so this check is faster than parsing
   # the whole thing.
@@ -1378,7 +1543,7 @@ class String
 
     while index = replacement.byte_index('\\'.ord.to_u8, index)
       index += 1
-      chr = replacement.to_unsafe[index].chr
+      chr = replacement.to_unsafe[index].unsafe_chr
       case chr
       when '\\'
         buffer.write(replacement.unsafe_byte_slice(first_index, index - first_index))
@@ -1391,7 +1556,7 @@ class String
         first_index = index
       when 'k'
         index += 1
-        chr = replacement.to_unsafe[index].chr
+        chr = replacement.to_unsafe[index].unsafe_chr
         next unless chr == '<'
 
         buffer.write(replacement.unsafe_byte_slice(first_index, index - 2 - first_index))
@@ -1836,6 +2001,9 @@ class String
   # "abc" + 'd'   # => "abcd"
   # ```
   def +(other : self)
+    return self if other.empty?
+    return other if self.empty?
+
     size = bytesize + other.bytesize
     String.new(size) do |buffer|
       buffer.copy_from(to_unsafe, bytesize)
@@ -1908,6 +2076,11 @@ class String
   # "Hello, World".index("H", 2) # => nil
   # ```
   def index(search : Char, offset = 0)
+    # If it's ASCII we can delegate to slice
+    if search.ascii?
+      return to_slice.index(search.ord.to_u8, offset)
+    end
+
     offset += size if offset < 0
     return nil if offset < 0
 
@@ -1952,6 +2125,11 @@ class String
   # "Hello, World".rindex("H", 2) # => nil
   # ```
   def rindex(search : Char, offset = size - 1)
+    # If it's ASCII we can delegate to slice
+    if search.ascii?
+      return to_slice.rindex(search.ord.to_u8, offset)
+    end
+
     offset += size if offset < 0
     return nil if offset < 0
 
@@ -2021,7 +2199,7 @@ class String
   # "こんにちは".char_index_to_byte_index(5) # => 15
   # ```
   def char_index_to_byte_index(index)
-    if single_byte_optimizable?
+    if ascii_only?
       return 0 <= index <= bytesize ? index : nil
     end
 
@@ -2037,7 +2215,7 @@ class String
   # It is valid to pass `bytesize` to *index*, and in this case the answer
   # will be the size of this string.
   def byte_index_to_char_index(index)
-    if single_byte_optimizable?
+    if ascii_only?
       return 0 <= index <= bytesize ? index : nil
     end
 
@@ -2078,7 +2256,7 @@ class String
     end
 
     ary = Array(String).new
-    single_byte_optimizable = single_byte_optimizable?
+    single_byte_optimizable = ascii_only?
     index = 0
     i = 0
     looking_for_space = false
@@ -2088,7 +2266,7 @@ class String
         while i < bytesize
           c = to_unsafe[i]
           i += 1
-          if c.chr.whitespace?
+          if c.unsafe_chr.whitespace?
             piece_bytesize = i - 1 - index
             piece_size = single_byte_optimizable ? piece_bytesize : 0
             ary.push String.new(to_unsafe + index, piece_bytesize, piece_size)
@@ -2105,7 +2283,7 @@ class String
         while i < bytesize
           c = to_unsafe[i]
           i += 1
-          unless c.chr.whitespace?
+          unless c.unsafe_chr.whitespace?
             index = i - 1
             looking_for_space = true
             break
@@ -2140,7 +2318,7 @@ class String
     ary = Array(String).new
 
     byte_offset = 0
-    single_byte_optimizable = single_byte_optimizable?
+    single_byte_optimizable = ascii_only?
 
     reader = Char::Reader.new(self)
     reader.each_with_index do |char, i|
@@ -2186,7 +2364,7 @@ class String
     byte_offset = 0
     separator_bytesize = separator.bytesize
 
-    single_byte_optimizable = single_byte_optimizable?
+    single_byte_optimizable = ascii_only?
 
     i = 0
     stop = bytesize - separator.bytesize + 1
@@ -2312,12 +2490,12 @@ class String
     offset = 0
 
     while byte_index = byte_index('\n'.ord.to_u8, offset)
-      yield String.new(unsafe_byte_slice(offset, byte_index + 1 - offset))
+      yield unsafe_byte_slice_string(offset, byte_index + 1 - offset)
       offset = byte_index + 1
     end
 
     unless offset == bytesize
-      yield String.new(unsafe_byte_slice(offset))
+      yield unsafe_byte_slice_string(offset)
     end
   end
 
@@ -2552,30 +2730,10 @@ class String
   end
 
   # Finds match of *regex*, starting at *pos*.
-  def match(regex : Regex, pos = 0)
+  def match(regex : Regex, pos = 0) : Regex::MatchData?
     match = regex.match self, pos
     $~ = match
     match
-  end
-
-  # Searches the string for *regex* starting at *pos*, yielding the match if there is one.
-  #
-  # ```
-  # "Pine".match(/P/) do |match|
-  #   puts match
-  # end
-  # # => #<Regex::MatchData "P">
-  #
-  # "Oak".match(/P/) do |match|
-  #   # This is never invoked.
-  #   puts match
-  # end
-  # ```
-  def match(regex : Regex, pos = 0)
-    match = self.match(regex, pos)
-    if match
-      yield match
-    end
   end
 
   # Searches the string for instances of *pattern*, yielding a `Regex::MatchData` for each match.
@@ -2634,9 +2792,9 @@ class String
   # end
   # ```
   def each_char
-    if single_byte_optimizable?
+    if ascii_only?
       each_byte do |byte|
-        yield byte.chr
+        yield byte.unsafe_chr
       end
     else
       Char::Reader.new(self).each do |char|
@@ -2886,7 +3044,7 @@ class String
   def ends_with?(char : Char)
     return false unless bytesize > 0
 
-    if char.ord < 0x80 || single_byte_optimizable?
+    if char.ascii? || ascii_only?
       return to_unsafe[bytesize - 1] == char.ord
     end
 
@@ -2935,11 +3093,7 @@ class String
   end
 
   def ascii_only?
-    @bytesize == 0 || size == @bytesize
-  end
-
-  protected def single_byte_optimizable?
-    @bytesize == @length
+    @bytesize == size
   end
 
   protected def size_known?
@@ -3003,6 +3157,14 @@ class String
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset)
   end
 
+  protected def unsafe_byte_slice_string(byte_offset)
+    String.new(unsafe_byte_slice(byte_offset))
+  end
+
+  protected def unsafe_byte_slice_string(byte_offset, count)
+    String.new(unsafe_byte_slice(byte_offset, count))
+  end
+
   protected def self.char_bytes_and_bytesize(char : Char)
     bytes = uninitialized UInt8[4]
 
@@ -3013,6 +3175,20 @@ class String
     end
 
     {bytes, bytesize}
+  end
+
+  private def range_to_index_and_size(range)
+    from = range.begin
+    from += size if from < 0
+    raise IndexError.new if from < 0
+
+    to = range.end
+    to += size if to < 0
+    to -= 1 if range.excludes_end?
+    size = to - from + 1
+    size = 0 if size < 0
+
+    {from, size}
   end
 
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.
@@ -3085,13 +3261,13 @@ class String
 
       byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
       if byte_index
-        value = String.new(@string.unsafe_byte_slice(@offset, byte_index + 1 - @offset))
+        value = @string.unsafe_byte_slice_string(@offset, byte_index + 1 - @offset)
         @offset = byte_index + 1
       else
         if @offset == @string.bytesize
           value = stop
         else
-          value = String.new(@string.unsafe_byte_slice(@offset))
+          value = @string.unsafe_byte_slice_string(@offset)
         end
         @end = true
       end

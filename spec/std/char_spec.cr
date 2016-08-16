@@ -124,7 +124,38 @@ describe "Char" do
     ('0'..'9').each_with_index do |c, i|
       c.to_i.should eq(i)
     end
-    'a'.to_i.should eq(0)
+    expect_raises(ArgumentError) { 'a'.to_i }
+    'a'.to_i?.should be_nil
+
+    '1'.to_i8.should eq(1i8)
+    '1'.to_i16.should eq(1i16)
+    '1'.to_i32.should eq(1i32)
+    '1'.to_i64.should eq(1i64)
+
+    expect_raises(ArgumentError) { 'a'.to_i8 }
+    expect_raises(ArgumentError) { 'a'.to_i16 }
+    expect_raises(ArgumentError) { 'a'.to_i32 }
+    expect_raises(ArgumentError) { 'a'.to_i64 }
+
+    'a'.to_i8?.should be_nil
+    'a'.to_i16?.should be_nil
+    'a'.to_i32?.should be_nil
+    'a'.to_i64?.should be_nil
+
+    '1'.to_u8.should eq(1u8)
+    '1'.to_u16.should eq(1u16)
+    '1'.to_u32.should eq(1u32)
+    '1'.to_u64.should eq(1u64)
+
+    expect_raises(ArgumentError) { 'a'.to_u8 }
+    expect_raises(ArgumentError) { 'a'.to_u16 }
+    expect_raises(ArgumentError) { 'a'.to_u32 }
+    expect_raises(ArgumentError) { 'a'.to_u64 }
+
+    'a'.to_u8?.should be_nil
+    'a'.to_u16?.should be_nil
+    'a'.to_u32?.should be_nil
+    'a'.to_u64?.should be_nil
   end
 
   it "does to_i with 16 base" do
@@ -137,8 +168,8 @@ describe "Char" do
     ('A'..'F').each_with_index do |c, i|
       c.to_i(16).should eq(10 + i)
     end
-    'Z'.to_i(16).should eq(0)
-    'Z'.to_i(16, or_else: -1).should eq(-1)
+    expect_raises(ArgumentError) { 'Z'.to_i(16) }
+    'Z'.to_i?(16).should be_nil
   end
 
   it "does to_i with base 36" do
@@ -159,6 +190,18 @@ describe "Char" do
     expect_raises ArgumentError, "invalid base 37" do
       '0'.to_i(37)
     end
+  end
+
+  it "does to_f" do
+    ('0'..'9').each.zip((0..9).each).each do |c, i|
+      c.to_f.should eq(i.to_f)
+    end
+    expect_raises(ArgumentError) { 'A'.to_f }
+    '1'.to_f32.should eq(1.0f32)
+    '1'.to_f64.should eq(1.0f64)
+    'a'.to_f?.should be_nil
+    'a'.to_f32?.should be_nil
+    'a'.to_f64?.should be_nil
   end
 
   it "does ord for multibyte char" do
@@ -207,6 +250,12 @@ describe "Char" do
     it "does for unicode" do
       '青'.bytesize.should eq(3)
     end
+
+    it "raises on codepoint bigger than 0x10ffff" do
+      expect_raises InvalidByteSequenceError do
+        (0x10ffff + 1).unsafe_chr.bytesize
+      end
+    end
   end
 
   describe "in_set?" do
@@ -254,8 +303,8 @@ describe "Char" do
   end
 
   it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
-    expect_raises do
-      (0x10ffff + 1).chr.each_byte { |b| }
+    expect_raises InvalidByteSequenceError do
+      (0x10ffff + 1).unsafe_chr.each_byte { |b| }
     end
   end
 
@@ -293,6 +342,13 @@ describe "Char" do
     'ù'.control?.should be_false
     'a'.control?.should be_false
     '\u0019'.control?.should be_true
+  end
+
+  it "does ascii?" do
+    'a'.ascii?.should be_true
+    127.chr.ascii?.should be_true
+    128.chr.ascii?.should be_false
+    '酒'.ascii?.should be_false
   end
 
   describe "clone" do

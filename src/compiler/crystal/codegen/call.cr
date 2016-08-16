@@ -46,8 +46,8 @@ class Crystal::CodeGenVisitor
 
   def prepare_call_args(node, owner)
     target_def = node.target_def
-    if target_def.is_a?(External)
-      prepare_call_args_external(node, target_def, owner)
+    if external = target_def.considered_external?
+      prepare_call_args_external(node, external, owner)
     else
       prepare_call_args_non_external(node, target_def, owner)
     end
@@ -128,7 +128,7 @@ class Crystal::CodeGenVisitor
   def call_abi_info(target_def, node)
     # For varargs we need to compute abi info for the arguments, which may be more
     # than those specified in the function definition
-    if target_def.varargs
+    if target_def.varargs?
       abi_info(target_def, node)
     else
       abi_info(target_def)
@@ -172,7 +172,7 @@ class Crystal::CodeGenVisitor
           call_arg = @last
           call_arg = llvm_nil if arg.type.nil_type?
 
-          if def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
+          if def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.proc?)
             # Nil to pointer
             call_arg = llvm_c_type(def_arg.type).null
           else
@@ -188,10 +188,10 @@ class Crystal::CodeGenVisitor
         end
       end
 
-      if arg.type.fun?
-        # Try first with the def arg type (might be a fun pointer that return void,
-        # while the argument's type a fun pointer that return something else)
-        call_arg = check_fun_is_not_closure(call_arg, def_arg.try(&.type) || arg.type)
+      if arg.type.proc?
+        # Try first with the def arg type (might be a proc pointer that return void,
+        # while the argument's type a proc pointer that return something else)
+        call_arg = check_proc_is_not_closure(call_arg, def_arg.try(&.type) || arg.type)
       end
 
       abi_arg_type = abi_info.arg_types[i]
@@ -259,7 +259,7 @@ class Crystal::CodeGenVisitor
             accept target_def.body
           end
 
-          phi.add_last @last, target_def.body.type?
+          phi.add @last, target_def.body.type?, last: true
         end
       end
     end
@@ -272,7 +272,7 @@ class Crystal::CodeGenVisitor
     fun_literal.accept self
     call_args.push @last
 
-    codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
+    codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises?, target_def.type)
   end
 
   def codegen_dispatch(node, target_defs)
@@ -344,7 +344,7 @@ class Crystal::CodeGenVisitor
             call_arg.set_type(a_def_arg.type)
           end
           if (node_block = node.block) && node_block.break.type?
-            call.set_type(@mod.type_merge [a_def.type, node_block.break.type] of Type)
+            call.set_type(@program.type_merge [a_def.type, node_block.break.type] of Type)
           else
             call.set_type(a_def.type)
           end
@@ -379,7 +379,7 @@ class Crystal::CodeGenVisitor
     end
 
     func = target_def_fun(target_def, self_type)
-    codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
+    codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises?, target_def.type)
   end
 
   # If a method's body is just a simple literal, "self", or an instance variable,
@@ -435,17 +435,19 @@ class Crystal::CodeGenVisitor
 
     set_call_attributes node, target_def, self_type, is_closure, fun_type
 
-    if target_def.is_a?(External) && (target_def.type.fun? || target_def.type.is_a?(NilableFunType))
+    external = target_def.try &.considered_external?
+
+    if external && (external.type.proc? || external.type.is_a?(NilableProcType))
       fun_ptr = bit_cast(@last, LLVM::VoidPointer)
       ctx_ptr = LLVM::VoidPointer.null
-      return @last = make_fun(target_def.type, fun_ptr, ctx_ptr)
+      return @last = make_fun(external.type, fun_ptr, ctx_ptr)
     end
 
-    if target_def.is_a?(External)
+    if external
       if type.no_return?
         unreachable
       else
-        abi_return = abi_info(target_def).return_type
+        abi_return = abi_info(external).return_type
         case abi_return.kind
         when LLVM::ABI::ArgKind::Direct
           if cast = abi_return.cast
@@ -484,8 +486,8 @@ class Crystal::CodeGenVisitor
   end
 
   def set_call_attributes(node : Call, target_def, self_type, is_closure, fun_type)
-    if target_def.is_a?(External)
-      set_call_attributes_external(node, target_def)
+    if external = target_def.considered_external?
+      set_call_attributes_external(node, external)
     else
       set_call_attributes_non_external(node, target_def, self_type, is_closure, fun_type)
     end

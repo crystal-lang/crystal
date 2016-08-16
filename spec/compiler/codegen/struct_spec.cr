@@ -404,8 +404,7 @@ describe "Code gen: struct" do
       struct Baz < Foo
       end
 
-      (Bar.new as Foo).x
-      # (Bar || Baz).new.x
+      Bar.new.as(Foo).x
       )).to_i.should eq(42)
   end
 
@@ -426,7 +425,7 @@ describe "Code gen: struct" do
       struct Baz < Foo
       end
 
-      (Bar.new as Foo).@x
+      Bar.new.as(Foo).@x
       )).to_i.should eq(42)
   end
 
@@ -451,7 +450,7 @@ describe "Code gen: struct" do
       struct Baz < Foo
       end
 
-      (Bar.new as Foo).x
+      Bar.new.as(Foo).x
       )).to_i.should eq(42)
   end
 
@@ -505,7 +504,7 @@ describe "Code gen: struct" do
       struct Baz < Foo
       end
 
-      foo = Bar.new as Foo
+      foo = Bar.new.as(Foo)
       foo.x = 84
       foo.x
       )).to_i.should eq(84)
@@ -539,8 +538,8 @@ describe "Code gen: struct" do
         end
       end
 
-      foo = Bar.new as Foo
-      foo2 = Bar2.new as Foo2
+      foo = Bar.new.as(Foo)
+      foo2 = Bar2.new.as(Foo2)
 
       f = foo || foo2
       f.x
@@ -575,8 +574,8 @@ describe "Code gen: struct" do
         end
       end
 
-      foo = Bar.new as Foo
-      foo2 = Bar2.new as Foo2
+      foo = Bar.new.as(Foo)
+      foo2 = Bar2.new.as(Foo2)
 
       f = foo2 || foo
       f.x
@@ -605,5 +604,24 @@ describe "Code gen: struct" do
        x = Bar.new || Baz.new
        x.as(Bar).foo
        )).to_i.should eq(1)
+  end
+
+  it "casts virtual struct to base type, only one subclass (#2885)" do
+    run(%(
+      abstract struct Entry
+        def initialize(@uid : String, @country : String)
+        end
+
+        def uid
+          @uid
+        end
+      end
+
+      struct MyEntry < Entry
+      end
+
+      entry = MyEntry.new("1", "GER")
+      entry.as(Entry).uid
+      )).to_string.should eq("1")
   end
 end

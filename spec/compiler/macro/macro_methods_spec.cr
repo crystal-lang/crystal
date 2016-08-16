@@ -2,6 +2,30 @@ require "../../spec_helper"
 
 describe "macro methods" do
   describe "node methods" do
+    describe "location" do
+      location = Location.new("foo.cr", 1, 2)
+
+      it "filename" do
+        assert_macro "x", "{{x.filename}}", ["hello".string.tap { |n| n.location = location }] of ASTNode, %("foo.cr")
+      end
+
+      it "line_number" do
+        assert_macro "x", "{{x.line_number}}", ["hello".string.tap { |n| n.location = location }] of ASTNode, %(1)
+      end
+
+      it "column number" do
+        assert_macro "x", "{{x.column_number}}", ["hello".string.tap { |n| n.location = location }] of ASTNode, %(2)
+      end
+
+      it "end line_number" do
+        assert_macro "x", "{{x.end_line_number}}", ["hello".string.tap { |n| n.end_location = location }] of ASTNode, %(1)
+      end
+
+      it "end column number" do
+        assert_macro "x", "{{x.end_column_number}}", ["hello".string.tap { |n| n.end_location = location }] of ASTNode, %(2)
+      end
+    end
+
     describe "stringify" do
       it "expands macro with stringify call on string" do
         assert_macro "x", "{{x.stringify}}", ["hello".string] of ASTNode, "\"\\\"hello\\\"\""
@@ -202,6 +226,16 @@ describe "macro methods" do
   end
 
   describe "string methods" do
+    it "executes string == string" do
+      assert_macro "", %({{"foo" == "foo"}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"foo" == "bar"}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string != string" do
+      assert_macro "", %({{"foo" != "foo"}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"foo" != "bar"}}), [] of ASTNode, %(true)
+    end
+
     it "executes split without arguments" do
       assert_macro "", %({{"1 2 3".split}}), [] of ASTNode, %(["1", "2", "3"])
     end
@@ -252,6 +286,10 @@ describe "macro methods" do
 
     it "executes string [Range] exclusive" do
       assert_macro "", %({{"hello"[1...-2]}}), [] of ASTNode, %("el")
+    end
+
+    it "executes string [Range] inclusive (computed)" do
+      assert_macro "", %({{"hello"[[1].size..-2]}}), [] of ASTNode, %("ell")
     end
 
     it "executes string chomp" do
@@ -306,6 +344,26 @@ describe "macro methods" do
       assert_macro "", %({{"hello" =~ /ell/}}), [] of ASTNode, %(true)
     end
 
+    it "executes string > string" do
+      assert_macro "", %({{"fooa" > "foo"}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"foo" > "fooa"}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string > macroid" do
+      assert_macro "", %({{"fooa" > "foo".id}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"foo" > "fooa".id}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string < string" do
+      assert_macro "", %({{"fooa" < "foo"}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"foo" < "fooa"}}), [] of ASTNode, %(true)
+    end
+
+    it "executes string < macroid" do
+      assert_macro "", %({{"fooa" < "foo".id}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"foo" < "fooa".id}}), [] of ASTNode, %(true)
+    end
+
     it "executes tr" do
       assert_macro "", %({{"hello".tr("e", "o")}}), [] of ASTNode, %("hollo")
     end
@@ -343,11 +401,29 @@ describe "macro methods" do
     it "compares with string" do
       assert_macro "x", %({{x == "foo"}}), [MacroId.new("foo")] of ASTNode, %(true)
       assert_macro "x", %({{"foo" == x}}), [MacroId.new("foo")] of ASTNode, %(true)
+
+      assert_macro "x", %({{x == "bar"}}), [MacroId.new("foo")] of ASTNode, %(false)
+      assert_macro "x", %({{"bar" == x}}), [MacroId.new("foo")] of ASTNode, %(false)
+
+      assert_macro "x", %({{x != "foo"}}), [MacroId.new("foo")] of ASTNode, %(false)
+      assert_macro "x", %({{"foo" != x}}), [MacroId.new("foo")] of ASTNode, %(false)
+
+      assert_macro "x", %({{x != "bar"}}), [MacroId.new("foo")] of ASTNode, %(true)
+      assert_macro "x", %({{"bar" != x}}), [MacroId.new("foo")] of ASTNode, %(true)
     end
 
     it "compares with symbol" do
       assert_macro "x", %({{x == :foo}}), [MacroId.new("foo")] of ASTNode, %(true)
       assert_macro "x", %({{:foo == x}}), [MacroId.new("foo")] of ASTNode, %(true)
+
+      assert_macro "x", %({{x == :bar}}), [MacroId.new("foo")] of ASTNode, %(false)
+      assert_macro "x", %({{:bar == x}}), [MacroId.new("foo")] of ASTNode, %(false)
+
+      assert_macro "x", %({{x != :foo}}), [MacroId.new("foo")] of ASTNode, %(false)
+      assert_macro "x", %({{:foo != x}}), [MacroId.new("foo")] of ASTNode, %(false)
+
+      assert_macro "x", %({{x != :bar}}), [MacroId.new("foo")] of ASTNode, %(true)
+      assert_macro "x", %({{:bar != x}}), [MacroId.new("foo")] of ASTNode, %(true)
     end
   end
 
@@ -358,6 +434,16 @@ describe "macro methods" do
       assert_macro "x", %({{x.starts_with?("hel")}}), ["hello".symbol] of ASTNode, %(true)
       assert_macro "x", %({{x.chomp}}), [SymbolLiteral.new("hello\n")] of ASTNode, %(:hello)
       assert_macro "x", %({{x.upcase}}), ["hello".symbol] of ASTNode, %(:HELLO)
+    end
+
+    it "executes symbol == symbol" do
+      assert_macro "", %({{:foo == :foo}}), [] of ASTNode, %(true)
+      assert_macro "", %({{:foo == :bar}}), [] of ASTNode, %(false)
+    end
+
+    it "executes symbol != symbol" do
+      assert_macro "", %({{:foo != :foo}}), [] of ASTNode, %(false)
+      assert_macro "", %({{:foo != :bar}}), [] of ASTNode, %(true)
     end
   end
 
@@ -523,6 +609,18 @@ describe "macro methods" do
 
     it "executes +" do
       assert_macro "", %({{ [1, 2] + [3, 4, 5] }}), [] of ASTNode, %([1, 2, 3, 4, 5])
+    end
+
+    it "executes [] with range" do
+      assert_macro "", %({{ [1, 2, 3, 4][1...-1] }}), [] of ASTNode, %([2, 3])
+    end
+
+    it "executes [] with computed range" do
+      assert_macro "", %({{ [1, 2, 3, 4][[1].size...-1] }}), [] of ASTNode, %([2, 3])
+    end
+
+    it "executes [] with two numbers" do
+      assert_macro "", %({{ [1, 2, 3, 4, 5][1, 3] }}), [] of ASTNode, %([2, 3, 4])
     end
   end
 
@@ -840,6 +938,66 @@ describe "macro methods" do
         [TypeNode.new(program.string)] of ASTNode
       end
     end
+
+    it "executes instance" do
+      assert_macro("x", "{{x.class.instance}}", "String") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes ==" do
+      assert_macro("x", "{{x == Reference}}", "false") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+      assert_macro("x", "{{x == String}}", "true") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes !=" do
+      assert_macro("x", "{{x != Reference}}", "true") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+      assert_macro("x", "{{x != String}}", "false") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes <" do
+      assert_macro("x", "{{x < Reference}}", "true") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+      assert_macro("x", "{{x < String}}", "false") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes <=" do
+      assert_macro("x", "{{x <= Reference}}", "true") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+      assert_macro("x", "{{x <= String}}", "true") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes >" do
+      assert_macro("x", "{{x > Reference}}", "false") do |program|
+        [TypeNode.new(program.reference)] of ASTNode
+      end
+      assert_macro("x", "{{x > String}}", "true") do |program|
+        [TypeNode.new(program.reference)] of ASTNode
+      end
+    end
+
+    it "executes >=" do
+      assert_macro("x", "{{x >= Reference}}", "true") do |program|
+        [TypeNode.new(program.reference)] of ASTNode
+      end
+      assert_macro("x", "{{x >= String}}", "true") do |program|
+        [TypeNode.new(program.reference)] of ASTNode
+      end
+    end
   end
 
   describe "type declaration methods" do
@@ -974,6 +1132,44 @@ describe "macro methods" do
   describe "splat methods" do
     it "executes exp" do
       assert_macro "x", %({{x.exp}}), [2.int32.splat] of ASTNode, "2"
+    end
+  end
+
+  describe "generic methods" do
+    it "executes name" do
+      assert_macro "x", %({{x.name}}), [Generic.new("Foo".path, ["T".path] of ASTNode)] of ASTNode, "Foo"
+    end
+
+    it "executes type_vars" do
+      assert_macro "x", %({{x.type_vars}}), [Generic.new("Foo".path, ["T".path, "U".path] of ASTNode)] of ASTNode, "[T, U]"
+    end
+
+    it "executes named_args" do
+      assert_macro "x", %({{x.named_args}}), [Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path), NamedArgument.new("y", "V".path)])] of ASTNode, "{x: U, y: V}"
+    end
+  end
+
+  describe "range methods" do
+    it "executes begin" do
+      assert_macro "x", %({{x.begin}}), [RangeLiteral.new(1.int32, 2.int32, true)] of ASTNode, "1"
+    end
+
+    it "executes end" do
+      assert_macro "x", %({{x.end}}), [RangeLiteral.new(1.int32, 2.int32, true)] of ASTNode, "2"
+    end
+
+    it "executes excludes_end?" do
+      assert_macro "x", %({{x.excludes_end?}}), [RangeLiteral.new(1.int32, 2.int32, true)] of ASTNode, "true"
+    end
+
+    it "executes map" do
+      assert_macro "x", %({{x.map(&.stringify)}}), [RangeLiteral.new(1.int32, 3.int32, false)] of ASTNode, %(["1", "2", "3"])
+      assert_macro "x", %({{x.map(&.stringify)}}), [RangeLiteral.new(1.int32, 3.int32, true)] of ASTNode, %(["1", "2"])
+    end
+
+    it "executes to_a" do
+      assert_macro "x", %({{x.to_a}}), [RangeLiteral.new(1.int32, 3.int32, false)] of ASTNode, %([1, 2, 3])
+      assert_macro "x", %({{x.to_a}}), [RangeLiteral.new(1.int32, 3.int32, true)] of ASTNode, %([1, 2])
     end
   end
 

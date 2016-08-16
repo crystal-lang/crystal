@@ -75,11 +75,11 @@ class LLVM::Builder
 
   {% for method_name in %w(gep inbounds_gep) %}
     def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.to_unsafe as LibLLVM::ValueRef*), indices.size, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
     end
 
     def {{method_name.id}}(value, index : LLVM::Value, name = "")
-      indices = pointerof(index) as LibLLVM::ValueRef*
+      indices = pointerof(index).as(LibLLVM::ValueRef*)
       Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1, name)
     end
 
@@ -87,7 +87,7 @@ class LLVM::Builder
       indices = uninitialized LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.to_unsafe as LibLLVM::ValueRef*), 2, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
     end
   {% end %}
 

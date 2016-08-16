@@ -14,7 +14,7 @@ ch2 = generator(1.5)
 ch3 = generator(5)
 
 loop do
-  index, value = Channel.select(ch1.receive_op, ch2.receive_op, ch3.receive_op)
+  index, value = Channel.select(ch1.receive_select_action, ch2.receive_select_action, ch3.receive_select_action)
   case index
   when 0
     int = value.as(typeof(ch1.receive))

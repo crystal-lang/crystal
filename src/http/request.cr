@@ -11,7 +11,8 @@ class HTTP::Request
   @query_params : Params?
   @uri : URI?
 
-  def initialize(@method : String, @resource : String, @headers : Headers = Headers.new, @body = nil, @version = "HTTP/1.1")
+  def initialize(@method : String, @resource : String, headers : Headers? = nil, @body = nil, @version = "HTTP/1.1")
+    @headers = headers.try(&.dup) || Headers.new
     if body = @body
       @headers["Content-Length"] = body.bytesize.to_s
     elsif @method == "POST" || @method == "PUT"
@@ -51,11 +52,19 @@ class HTTP::Request
     HTTP.serialize_headers_and_body(io, headers, @body, nil, @version)
   end
 
+  # :nodoc:
+  record BadRequest
+
+  # Returns:
+  # * nil: EOF
+  # * BadRequest: bad request
+  # * HTTP::Request: successfully parsed
   def self.from_io(io)
     request_line = io.gets
     return unless request_line
+
     parts = request_line.split
-    return unless parts.size == 3
+    return BadRequest.new unless parts.size == 3
 
     method, resource, http_version = parts
     HTTP.parse_headers_and_body(io) do |headers, body|
@@ -63,12 +72,12 @@ class HTTP::Request
     end
 
     # Unexpected end of http request
-    nil
+    BadRequest.new
   end
 
   # Lazily parses and return the request's path component.
   def path
-    uri.path
+    uri.path || "/"
   end
 
   # Sets request's path component.

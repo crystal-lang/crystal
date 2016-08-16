@@ -1,10 +1,10 @@
 require "spec"
 
 describe "JUnit Formatter" do
-  it "reports succesful results" do
+  it "reports successful results" do
     output = build_report do |f|
-      f.report Spec::Result.new(:success, "should do something", "spec/some_spec.cr", 33, nil)
-      f.report Spec::Result.new(:success, "should do something else", "spec/some_spec.cr", 50, nil)
+      f.report Spec::Result.new(:success, "should do something", "spec/some_spec.cr", 33, nil, nil)
+      f.report Spec::Result.new(:success, "should do something else", "spec/some_spec.cr", 50, nil, nil)
     end
 
     expected = <<-XML
@@ -21,7 +21,7 @@ describe "JUnit Formatter" do
 
   it "reports failures" do
     output = build_report do |f|
-      f.report Spec::Result.new(:fail, "should do something", "spec/some_spec.cr", 33, nil)
+      f.report Spec::Result.new(:fail, "should do something", "spec/some_spec.cr", 33, nil, nil)
     end
 
     expected = <<-XML
@@ -37,7 +37,7 @@ describe "JUnit Formatter" do
 
   it "reports errors" do
     output = build_report do |f|
-      f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil)
+      f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, nil)
     end
 
     expected = <<-XML
@@ -53,10 +53,10 @@ describe "JUnit Formatter" do
 
   it "reports mixed results" do
     output = build_report do |f|
-      f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, nil)
-      f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, nil)
-      f.report Spec::Result.new(:error, "should do something3", "spec/some_spec.cr", 65, nil)
-      f.report Spec::Result.new(:error, "should do something4", "spec/some_spec.cr", 80, nil)
+      f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, 2.seconds, nil)
+      f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, 0.5.seconds, nil)
+      f.report Spec::Result.new(:error, "should do something3", "spec/some_spec.cr", 65, nil, nil)
+      f.report Spec::Result.new(:error, "should do something4", "spec/some_spec.cr", 80, nil, nil)
     end
 
     expected = <<-XML
@@ -80,7 +80,7 @@ describe "JUnit Formatter" do
 
   it "escapes spec names" do
     output = build_report do |f|
-      f.report Spec::Result.new(:success, "complicated \" <n>'&ame", __FILE__, __LINE__, nil)
+      f.report Spec::Result.new(:success, "complicated \" <n>'&ame", __FILE__, __LINE__, nil, nil)
     end
 
     name = XML.parse(output).xpath_string("string(//testsuite/testcase[1]/@name)")
@@ -91,7 +91,7 @@ describe "JUnit Formatter" do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
-      f.report Spec::Result.new(:fail, "foo", __FILE__, __LINE__, cause)
+      f.report Spec::Result.new(:fail, "foo", __FILE__, __LINE__, nil, cause)
     end
 
     xml = XML.parse(output)
@@ -106,7 +106,7 @@ describe "JUnit Formatter" do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
-      f.report Spec::Result.new(:error, "foo", __FILE__, __LINE__, cause)
+      f.report Spec::Result.new(:error, "foo", __FILE__, __LINE__, nil, cause)
     end
 
     xml = XML.parse(output)

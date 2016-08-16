@@ -193,4 +193,67 @@ describe "Code gen: generic class type" do
       Hello(MAX_RANGE).t
       )).to_u64.should eq(2374623294237463578)
   end
+
+  it "doesn't use virtual + in type arguments (#2839)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Gen(T)
+      end
+
+      Gen(Foo).name
+      )).to_string.should eq("Gen(Foo)")
+  end
+
+  it "doesn't use virtual + in type arguments for Tuple (#2839)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Gen(T)
+      end
+
+      Tuple(Foo).name
+      )).to_string.should eq("Tuple(Foo)")
+  end
+
+  it "doesn't use virtual + in type arguments for NamedTuple (#2839)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Gen(T)
+      end
+
+      NamedTuple(x: Foo).name
+      )).to_string.should eq("NamedTuple(x: Foo)")
+  end
 end

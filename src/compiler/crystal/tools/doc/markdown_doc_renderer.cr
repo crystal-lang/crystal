@@ -1,3 +1,5 @@
+require "markdown"
+
 class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
   def self.new(obj : Constant | Macro | Method, io)
     new obj.type, io
@@ -69,7 +71,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
           method_args = ""
         end
 
-        another_type = @type.lookup_type(type_name.split("::"))
+        another_type = @type.lookup_path(type_name.split("::"))
         if another_type && @type.must_be_included?
           method = lookup_method another_type, method_name, method_args, kind
           if method
@@ -80,7 +82,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
       # Type
       if match[2]?
-        another_type = @type.lookup_type(match_text.split("::"))
+        another_type = @type.lookup_path(match_text.split("::"))
         if another_type && another_type.must_be_included?
           next type_link another_type, match_text
         end

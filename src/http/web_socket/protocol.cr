@@ -1,7 +1,9 @@
 require "socket"
 require "http"
 require "base64"
-require "openssl" ifdef !without_openssl
+{% if !flag?(:without_openssl) %}
+  require "openssl"
+{% end %}
 require "uri"
 
 # :nodoc:
@@ -36,7 +38,7 @@ class HTTP::WebSocket::Protocol
     @mask = uninitialized UInt8[4]
     @mask_offset = 0
     @opcode = Opcode::CONTINUATION
-    @remaining = 0
+    @remaining = 0_u64
     @masked = !!masked
   end
 
@@ -136,8 +138,8 @@ class HTTP::WebSocket::Protocol
     @io.write mask_array.to_slice
 
     data.each_with_index do |byte, index|
-      mask = mask_array[index % 4]
-      @io.write_byte(byte ^ mask_array[index % 4])
+      mask = mask_array[index & 0b11] # x & 0b11 == x % 4
+      @io.write_byte(byte ^ mask_array[index & 0b11])
     end
   end
 
@@ -175,13 +177,13 @@ class HTTP::WebSocket::Protocol
   end
 
   private def read_size
-    size = (@header[1] & 0x7f_u8).to_i
+    size = (@header[1] & 0x7f_u8).to_u64
     if size == 126
-      size = 0
+      size = 0_u64
       2.times { size <<= 8; size += @io.read_byte.not_nil! }
     elsif size == 127
-      size = 0
-      4.times { size <<= 8; size += @io.read_byte.not_nil! }
+      size = 0_u64
+      8.times { size <<= 8; size += @io.read_byte.not_nil! }
     end
     size
   end
@@ -191,7 +193,7 @@ class HTTP::WebSocket::Protocol
     @io.read_fully(buffer[0, count])
     if masked?
       count.times do |i|
-        buffer[i] ^= @mask[@mask_offset % 4]
+        buffer[i] ^= @mask[@mask_offset & 0b11] # x & 0b11 == x % 4
         @mask_offset += 1
       end
     end
@@ -219,27 +221,27 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def self.new(host : String, path : String, port = nil, ssl = false)
-    ifdef without_openssl
-      if ssl
-        raise "WebSocket ssl is disabled because `-D without_openssl` was passed at compile time"
+  def self.new(host : String, path : String, port = nil, tls = false)
+    {% if flag?(:without_openssl) %}
+      if tls
+        raise "WebSocket TLS is disabled because `-D without_openssl` was passed at compile time"
       end
-    end
+    {% end %}
 
-    port = port || (ssl ? 443 : 80)
+    port = port || (tls ? 443 : 80)
 
     socket = TCPSocket.new(host, port)
 
-    ifdef !without_openssl
-      if ssl
-        if ssl.is_a?(Bool) # true, but we want to get rid of the union
+    {% if !flag?(:without_openssl) %}
+      if tls
+        if tls.is_a?(Bool) # true, but we want to get rid of the union
           context = OpenSSL::SSL::Context::Client.new
         else
-          context = ssl
+          context = tls
         end
         socket = OpenSSL::SSL::Socket::Client.new(socket, context: context, sync_close: true)
       end
-    end
+    {% end %}
 
     headers = HTTP::Headers.new
     headers["Host"] = "#{host}:#{port}"
@@ -263,8 +265,8 @@ class HTTP::WebSocket::Protocol
     uri = URI.parse(uri) if uri.is_a?(String)
 
     if (host = uri.host) && (path = uri.path)
-      ssl = uri.scheme == "https" || uri.scheme == "wss"
-      return new(host, path, uri.port, ssl)
+      tls = uri.scheme == "https" || uri.scheme == "wss"
+      return new(host, path, uri.port, tls)
     end
 
     raise ArgumentError.new("No host or path specified which are required.")

@@ -71,11 +71,11 @@ module Math
   # Math.log(Math.gamma(x).abs)
   # ```
   def lgamma(value : Float32)
-    ifdef darwin
+    {% if flag?(:darwin) %}
       LibM.gamma_f64(value).to_f32
-    else
+    {% else %}
       LibM.gamma_f32(value)
-    end
+    {% end %}
   end
 
   # ditto
