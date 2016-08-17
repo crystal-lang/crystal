@@ -70,6 +70,11 @@ module XML
       end
     end
 
+    it "returns nil with invalid xpath" do
+      doc = doc()
+      doc.xpath_node("//invalid").should be_nil
+    end
+
     it "finds with namespace" do
       doc = XML.parse(%(\
         <?xml version="1.0" encoding="UTF-8"?>

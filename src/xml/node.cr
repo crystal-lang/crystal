@@ -473,12 +473,13 @@ struct XML::Node
   end
 
   # Searches this node for XPath *path* for nodes and returns the first one.
-  #
+  # or nil if not found
   # ```
   # node.xpath_node("//person")
   # ```
   def xpath_node(path, namespaces = nil, variables = nil)
-    xpath_nodes(path, namespaces).first
+    xpath = xpath_nodes(path, namespaces)
+    xpath.empty? ? nil : xpath.first
   end
 
   # Searches this node for XPath *path* and restricts the return type to `String`.
