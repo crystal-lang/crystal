@@ -478,8 +478,7 @@ struct XML::Node
   # node.xpath_node("//person")
   # ```
   def xpath_node(path, namespaces = nil, variables = nil)
-    xpath = xpath_nodes(path, namespaces)
-    xpath.empty? ? nil : xpath.first
+    xpath_nodes(path, namespaces).first?
   end
 
   # Searches this node for XPath *path* and restricts the return type to `String`.
