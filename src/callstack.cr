@@ -1,4 +1,5 @@
 require "callstack/lib_unwind"
+require "callstack/addr2line"
 
 def caller
   CallStack.new.backtrace
@@ -109,17 +110,32 @@ struct CallStack
   end
 
   private def decode_backtrace
-    backtrace = Array(String).new(@callstack.size)
-    @callstack.each do |ip|
-      frame = CallStack.decode_frame(ip)
-      if frame
-        offset, sname = frame
-        backtrace << "[#{ip.address}] #{String.new(sname)} +#{offset}"
-      else
-        backtrace << "[#{ip.address}] ???"
+    addr_size = {% if flag?(:i686) %}8{% else %}16{% end %}
+
+    Addr2line.open do |addr2line|
+      @callstack.compact_map do |ip|
+        file, line = addr2line.decode(ip)
+        addr = ip.address.to_s(16).rjust(addr_size, '0')
+
+        if frame = CallStack.decode_frame(ip)
+          offset, sname = frame
+          fname = demangle_function(String.new(sname))
+          "0x#{addr}: #{fname} at #{file}:#{line}"
+        else
+          "0x#{addr}: ??? at #{file}:#{line}"
+        end
       end
     end
-    backtrace
+  end
+
+  private def demangle_function(name)
+    if name[0] == '*' || name[0] == '~'
+      name = name[1..-1]
+    end
+    if pos = name.rindex(':')
+      name = name[0...pos]
+    end
+    name
   end
 
   protected def self.decode_frame(ip, original_ip = ip)
