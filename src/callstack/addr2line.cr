@@ -2,6 +2,8 @@ require "../process"
 
 # :nodoc:
 struct CallStack
+  skip(__FILE__)
+
   struct Addr2line
     @@has_command : Bool?
     @@command_path : String?

@@ -7,6 +7,14 @@ end
 
 # :nodoc:
 struct CallStack
+  @@skip = [] of String
+
+  def self.skip(filename)
+    @@skip << filename
+  end
+
+  skip(__FILE__)
+
   @callstack : Array(Void*)
   @backtrace : Array(String)?
 
@@ -115,6 +123,8 @@ struct CallStack
     Addr2line.open do |addr2line|
       @callstack.compact_map do |ip|
         file, line = addr2line.decode(ip)
+        next if @@skip.includes?(file)
+
         addr = ip.address.to_s(16).rjust(addr_size, '0')
 
         if frame = CallStack.decode_frame(ip)
