@@ -197,20 +197,6 @@ describe "Semantic: const" do
       )) { types["LibC"].types["Foo"] }
   end
 
-  it "doesn't error if constant depends on a global var that is never initialized" do
-    assert_type(%(
-      A = foo
-
-      $b : Nil
-
-      def foo
-        $b
-      end
-
-      A
-      )) { nil_type }
-  end
-
   it "errors on dynamic constant assignment inside block" do
     assert_error %(
       def foo

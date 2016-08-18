@@ -219,15 +219,24 @@ describe "Code gen: proc" do
 
   it "automatically casts proc that returns something to proc that returns void" do
     run("
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo(x : ->)
         x.call
       end
 
-      foo ->{ $a = 1 }
+      foo ->{ Global.x = 1 }
 
-      $a
+      Global.x
       ").to_i.should eq(1)
   end
 
@@ -664,15 +673,24 @@ describe "Code gen: proc" do
         end
       end
 
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       Foo.add("foo") do |a|
-        $x = a.foo
+        Global.x = a.foo
       end
 
       Foo.call
 
-      $x
+      Global.x
       )).to_i.should eq(2)
   end
 

@@ -29,7 +29,18 @@ module Crystal::Playground
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
-        $p = Crystal::Playground::Agent.new("ws://localhost:#{@port}/agent/#{@session_key}/#{tag}", #{tag})
+
+        class Crystal::Playground::Agent
+          @@instance = Crystal::Playground::Agent.new("ws://localhost:#{@port}/agent/#{@session_key}/#{tag}", #{tag})
+
+          def self.instance
+            @@instance
+          end
+        end
+
+        def _p
+          Crystal::Playground::Agent.instance
+        end
         )
 
       sources = [
@@ -352,7 +363,6 @@ module Crystal::Playground
   end
 
   class Server
-    $sockets = [] of HTTP::WebSocket
     @sessions = {} of Int32 => Session
     @sessions_key = 0
 

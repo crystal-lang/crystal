@@ -204,14 +204,6 @@ describe "Codegen: const" do
       ").to_i.should eq(3)
   end
 
-  it "works with const initialized after global variable" do
-    run(%(
-      $a = 1
-      COCO = $a
-      COCO
-      )).to_i.should eq(1)
-  end
-
   it "works with variable declared inside if" do
     run(%(
       FOO = begin
@@ -325,31 +317,6 @@ describe "Codegen: const" do
 
       x
       )).to_i.should eq(3)
-  end
-
-  it "initializes const the moment it reaches it" do
-    run(%(
-      $x = 10
-      FOO = begin
-        a = $x
-        a
-      end
-      w = FOO
-      z = FOO
-      z
-      )).to_i.should eq(10)
-  end
-
-  it "initializes const when read" do
-    run(%(
-      $x = 10
-      z = FOO
-      FOO = begin
-        a = $x
-        a
-      end
-      z
-      )).to_i.should eq(10)
   end
 
   it "initializes simple const" do

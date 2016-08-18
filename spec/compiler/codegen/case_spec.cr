@@ -34,10 +34,8 @@ describe "Code gen: case" do
     run("
       require \"prelude\"
 
-      $a = 0
-
       def foo
-        $a += 1
+        1
       end
 
       case foo

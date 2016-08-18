@@ -166,15 +166,6 @@ describe "Semantic: named tuples" do
       )) { named_tuple_of({"x": int32, "y": char}) }
   end
 
-  it "can assign two global var" do
-    assert_type(%(
-      $x = {name: "Foo", age: 20}
-      $y = {age: 40, name: "Bar"}
-      $x = $y
-      $x
-      )) { named_tuple_of({"name": string, "age": int32}) }
-  end
-
   it "can assign to union of compatible named tuple" do
     assert_type(%(
       tup1 = {x: 1, y: "foo"}

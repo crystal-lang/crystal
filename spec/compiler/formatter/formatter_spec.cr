@@ -384,7 +384,6 @@ describe Crystal::Formatter do
 
   assert_format "@a", "@a"
   assert_format "@@a", "@@a"
-  assert_format "$a", "$a"
   assert_format "$~", "$~"
   assert_format "$~.bar", "$~.bar"
   assert_format "$~ = 1", "$~ = 1"

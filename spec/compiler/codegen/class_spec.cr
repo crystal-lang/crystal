@@ -434,10 +434,14 @@ describe "Code gen: class" do
           1
         end
 
-        $x = self.foo.as(Int32)
+        @@x = self.foo.as(Int32)
+
+        def self.x
+          @@x
+        end
       end
 
-      $x
+      Foo.x
       )).to_i.should eq(1)
   end
 
@@ -448,10 +452,14 @@ describe "Code gen: class" do
           1
         end
 
-        $x = self.as(Foo.class)
+        @@x = self.as(Foo.class)
+
+        def self.x
+          @@x
+        end
       end
 
-      $x.foo
+      Foo.x.foo
       )).to_i.should eq(1)
   end
 

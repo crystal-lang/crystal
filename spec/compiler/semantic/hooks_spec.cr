@@ -101,7 +101,11 @@ describe "Semantic: hooks" do
     assert_type(%(
       abstract class Foo
         macro inherited
-          $bar = new
+          @@bar = new
+
+          def self.bar
+            @@bar
+          end
         end
       end
 
@@ -114,7 +118,7 @@ describe "Semantic: hooks" do
         end
       end
 
-      $bar.name
+      Bar.bar.name
       )) { string }
   end
 

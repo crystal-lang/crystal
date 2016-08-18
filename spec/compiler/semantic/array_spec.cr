@@ -20,14 +20,4 @@ describe "Semantic: array" do
   it "types array literal size correctly" do
     assert_type("require \"prelude\"; [1].size") { int32 }
   end
-
-  it "recalculates array literal type after element type changes" do
-    assert_type(%(
-      require "prelude"
-      $a = 1
-      x = [$a]
-      $a = 1.1
-      x
-      )) { array_of(union_of int32, float64) }
-  end
 end

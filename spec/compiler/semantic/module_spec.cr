@@ -337,11 +337,15 @@ describe "Semantic: module" do
       module Foo
         class Bar; end
 
-        $x : Bar.class
-        $x = foo { Bar }
+        @@x : Bar.class
+        @@x = foo { Bar }
+
+        def self.x
+          @@x
+        end
       end
 
-      $x
+      Foo.x
       ") { types["Foo"].types["Bar"].metaclass }
   end
 
@@ -356,11 +360,15 @@ describe "Semantic: module" do
           1
         end
 
-        $x : Int32
-        $x = foo { bar }
+        @@x : Int32
+        @@x = foo { bar }
+
+        def self.x
+          @@x
+        end
       end
 
-      $x
+      Foo.x
       ") { int32 }
   end
 

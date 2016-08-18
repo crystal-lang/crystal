@@ -45,20 +45,29 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         raise "foo"
       rescue
-        $x += 1
+        Global.x += 1
         return
       ensure
-        $x += 1
+        Global.x += 1
       end
 
       foo
 
-      $x
+      Global.x
       )).to_i.should eq(2)
   end
 
@@ -764,14 +773,30 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $a = 0
-      $b = 0
+      class Global
+        @@a = 0
+        @@b = 0
+
+        def self.a=(@@a)
+        end
+
+        def self.a
+          @@a
+        end
+
+        def self.b=(@@b)
+        end
+
+        def self.b
+          @@b
+        end
+      end
 
       def bar
         begin
           yield
         ensure
-          $a = 1
+          Global.a = 1
         end
       end
 
@@ -779,10 +804,10 @@ describe "Code gen: exception" do
         while true
           break
         end
-        $b = $a
+        Global.b = Global.a
       end
 
-      $b
+      Global.b
       )).to_i.should eq(0)
   end
 
@@ -844,24 +869,33 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         begin
           begin
             raise "foo"
           rescue
-            $a += 1
+            Global.x += 1
             return
           end
         ensure
-          $a += 1
+          Global.x += 1
         end
       end
 
       foo
 
-      $a
+      Global.x
       )).to_i.should eq(2)
   end
 
@@ -890,13 +924,22 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         begin
           yield
         ensure
-          $a += 1
+          Global.x += 1
         end
       end
 
@@ -906,13 +949,13 @@ describe "Code gen: exception" do
             return
           end
         ensure
-          $a += 1
+          Global.x += 1
         end
       end
 
       bar
 
-      $a
+      Global.x
       )).to_i.should eq(2)
   end
 
@@ -948,15 +991,31 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $a = 0
-      $b = 0
+      class Global
+        @@a = 0
+        @@b = 0
+
+        def self.a=(@@a)
+        end
+
+        def self.a
+          @@a
+        end
+
+        def self.b=(@@b)
+        end
+
+        def self.b
+          @@b
+        end
+      end
 
       def foo
         begin
           yield
-          $b = $a
+          Global.b = Global.a
         ensure
-          $a += 1
+          Global.a += 1
         end
       end
 
@@ -965,14 +1024,14 @@ describe "Code gen: exception" do
           begin
             next
           ensure
-            $a += 1
+            Global.a += 1
           end
         end
       ensure
-        $a += 1
+        Global.a += 1
       end
 
-      $b
+      Global.b
       )).to_i.should eq(1)
   end
 
@@ -1008,19 +1067,28 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         yield
       ensure
-        $a = 123
+        Global.x = 123
       end
 
       foo do
         break
       end
 
-      $a
+      Global.x
       )).to_i.should eq(123)
   end
 

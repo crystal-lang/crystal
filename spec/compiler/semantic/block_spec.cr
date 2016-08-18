@@ -935,24 +935,6 @@ describe "Block inference" do
       "can't use `yield` outside a method"
   end
 
-  it "rebinds yield -> block arguments" do
-    assert_type(%(
-      def foo(x)
-        buffer = Pointer(typeof(x)).malloc(1_u64)
-        yield buffer
-      end
-
-      $a = 1
-      x = nil
-      foo($a) do |buffer|
-        buffer.value = $a
-        x = buffer
-      end
-      $a = 1.1
-      x
-      )) { nilable(pointer_of(union_of(int32, float64))) }
-  end
-
   it "errors on recursive yield" do
     assert_error %(
       def foo

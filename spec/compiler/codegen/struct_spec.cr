@@ -201,11 +201,11 @@ describe "Code gen: struct" do
       FOO = Foo.new(1)
 
       if 1 == 2
-        $foo = Foo.new(1)
+        foo = Foo.new(1)
       else
-        $foo = FOO
+        foo = FOO
       end
-      $foo.x
+      foo.x
       ").to_i.should eq(1)
   end
 

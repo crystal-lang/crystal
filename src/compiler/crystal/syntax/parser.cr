@@ -935,7 +935,7 @@ module Crystal
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :GLOBAL
-        new_node_check_type_declaration Global
+        raise "$global_variables are not supported, use @@class_variables instead"
       when :"$~", :"$?"
         location = @token.location
         var = Var.new(@token.to_s).at(location)

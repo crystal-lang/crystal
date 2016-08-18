@@ -156,11 +156,20 @@ describe "Code gen: generic class type" do
 
   it "invokes super in generic class (#2354)" do
     run(%(
-      $x = 1
+      class Global
+        @@x = 1
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       class Foo
         def foo
-          $x = 2
+          Global.x = 2
         end
       end
 
@@ -173,7 +182,7 @@ describe "Code gen: generic class type" do
       b = Bar(Int32).new
       b.foo
 
-      $x
+      Global.x
       )).to_i.should eq(2)
   end
 

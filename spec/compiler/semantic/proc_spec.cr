@@ -105,9 +105,9 @@ describe "Semantic: proc" do
 
   it "binds proc literal to arguments and body" do
     assert_type("
-      $x = 1
-      f = -> { $x }
-      $x = 'a'
+      x = 1
+      f = -> { x }
+      x = 'a'
       f
     ") { proc_of(union_of(int32, char)) }
   end

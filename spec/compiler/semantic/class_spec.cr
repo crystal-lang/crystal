@@ -705,10 +705,14 @@ describe "Semantic: class" do
           1
         end
 
-        $x = self.foo.as(Int32)
+        @@x = self.foo.as(Int32)
+
+        def self.x
+          @@x
+        end
       end
 
-      $x
+      Foo.x
       )) { int32 }
   end
 

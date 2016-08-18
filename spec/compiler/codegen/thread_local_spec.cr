@@ -1,29 +1,6 @@
 require "../../spec_helper"
 
 describe "Codegen: thread local" do
-  it "works with global variables" do
-    run(%(
-      require "prelude"
-
-      @[ThreadLocal]
-      $var = 123
-
-      Thread.new { $var = 456 }.join
-
-      $var
-    )).to_i.should eq(123)
-  end
-
-  it "works with global variable in main thread" do
-    run(%(
-      require "prelude"
-
-      @[ThreadLocal]
-      $a = 123
-      $a
-      )).to_i.should eq(123)
-  end
-
   it "works with class variables" do
     run(%(
       require "prelude"

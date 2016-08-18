@@ -145,11 +145,20 @@ describe "Code gen: splat" do
 
   it "evaluates splat argument just once (#2677)" do
     run(%(
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def data
-        $a += 1
-        {$a, $a, $a}
+        Global.x += 1
+        {Global.x, Global.x, Global.x}
       end
 
       def test(x, y, z)
@@ -158,7 +167,7 @@ describe "Code gen: splat" do
 
       v = test(*data)
 
-      $a
+      Global.x
       )).to_i.should eq(1)
   end
 end

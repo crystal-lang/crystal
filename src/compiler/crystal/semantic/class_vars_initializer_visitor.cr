@@ -67,7 +67,9 @@ module Crystal
           had_class_var = false
         end
 
-        node.accept main_visitor
+        main_visitor.pushing_type(owner.as(ModuleType)) do
+          node.accept main_visitor
+        end
 
         unless had_class_var
           main_visitor.undefined_class_variable(class_var, owner)
