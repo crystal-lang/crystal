@@ -189,8 +189,14 @@ struct Int
       raise ArgumentError.new "cannot raise an integer to a negative integer power, use floats for that"
     end
 
-    # TODO: this can probably be optimized by not using float pow
-    self.class.new(to_f ** exponent)
+    result = self.class.new(1)
+    k = self
+    while exponent > 0
+      result *= k if exponent & 0b1 != 0
+      k *= k
+      exponent = exponent.unsafe_shr(1)
+    end
+    result
   end
 
   # Returns the value of raising *self* to the power of *exponent*.
