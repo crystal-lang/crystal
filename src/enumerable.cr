@@ -307,7 +307,11 @@ module Enumerable(T)
     raise ArgumentError.new("size must be positive") if size <= 0
 
     each_slice_internal(size, Array(T | U)) do |slice|
-      yield slice.concat(Array(T | U).new(size - slice.size, filled_up_with))
+      unless slice.size == size
+        slice.concat(Array(T | U).new(size - slice.size, filled_up_with))
+      end
+
+      yield slice
     end
   end
 
