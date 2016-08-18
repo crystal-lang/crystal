@@ -111,9 +111,9 @@ class SimpleLoop
   end
 end
 
-$loop_counter = 0
-
 class LSG
+  @@loop_counter = 0
+
   @root : SimpleLoop
 
   def initialize
@@ -125,7 +125,7 @@ class LSG
 
   def create_new_loop
     s = SimpleLoop.new
-    s.counter = $loop_counter += 1
+    s.counter = @@loop_counter += 1
     s
   end
 
@@ -402,15 +402,15 @@ end
 
 def build_diamond(start)
   bb0 = start
-  BasicBlockEdge.add($cfg, bb0, bb0 + 1)
-  BasicBlockEdge.add($cfg, bb0, bb0 + 2)
-  BasicBlockEdge.add($cfg, bb0 + 1, bb0 + 3)
-  BasicBlockEdge.add($cfg, bb0 + 2, bb0 + 3)
+  BasicBlockEdge.add(TOP_CFG, bb0, bb0 + 1)
+  BasicBlockEdge.add(TOP_CFG, bb0, bb0 + 2)
+  BasicBlockEdge.add(TOP_CFG, bb0 + 1, bb0 + 3)
+  BasicBlockEdge.add(TOP_CFG, bb0 + 2, bb0 + 3)
   bb0 + 3
 end
 
 def build_connect(_start, _end)
-  BasicBlockEdge.add($cfg, _start, _end)
+  BasicBlockEdge.add(TOP_CFG, _start, _end)
 end
 
 def build_straight(start, n)
@@ -433,28 +433,28 @@ def build_base_loop(from)
   build_straight(footer, 1)
 end
 
-$cfg = CFG.new
+TOP_CFG = CFG.new
 
 puts "Welcome to LoopTesterApp, Crystal edition"
 
 puts "Constructing Simple CFG..."
 
-$cfg.create_node(0) # top
+TOP_CFG.create_node(0) # top
 build_base_loop(0)
-$cfg.create_node(1) # bottom
+TOP_CFG.create_node(1) # bottom
 build_connect(0, 2)
 
 # execute loop recognition 15000 times to force compilation
 puts "15000 dummy loops"
 15000.times do
-  HavlakLoopFinder.new($cfg, LSG.new).find_loops
+  HavlakLoopFinder.new(TOP_CFG, LSG.new).find_loops
 end
 
 puts "Constructing CFG..."
 n = 2
 
 10.times do |parlooptrees|
-  $cfg.create_node(n + 1)
+  TOP_CFG.create_node(n + 1)
   build_connect(2, n + 1)
   n = n + 1
   100.times do |i|
@@ -471,14 +471,14 @@ n = 2
 end
 
 puts "Performing Loop Recognition\n1 Iteration"
-loops = HavlakLoopFinder.new($cfg, LSG.new).find_loops
+loops = HavlakLoopFinder.new(TOP_CFG, LSG.new).find_loops
 
 puts "Another 50 iterations..."
 
 sum = 0
 50.times do |i|
   print "."
-  sum += HavlakLoopFinder.new($cfg, LSG.new).find_loops
+  sum += HavlakLoopFinder.new(TOP_CFG, LSG.new).find_loops
 end
 
 puts "\nFound #{loops} loops (including artificial root node) (#{sum})\n"

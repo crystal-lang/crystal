@@ -31,7 +31,7 @@ class RedBlackTree
 
   class NilNode < Node
     def self.instance
-      $inst
+      @@instance ||= RedBlackTree::NilNode.new
     end
 
     def initialize
@@ -382,8 +382,6 @@ class RedBlackTreeRunner
     s
   end
 end
-
-$inst = RedBlackTree::NilNode.new
 
 def bench(name, n = 1)
   t = Time.now
