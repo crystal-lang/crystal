@@ -95,6 +95,44 @@ describe "NamedTuple" do
     typeof(val).should eq(Int32 | Char | Nil)
   end
 
+  it "does [] with string" do
+    tup = {a: 1, b: 'a'}
+
+    key = "a"
+    val = tup[key]
+    val.should eq(1)
+    typeof(val).should eq(Int32 | Char)
+
+    key = "b"
+    val = tup[key]
+    val.should eq('a')
+    typeof(val).should eq(Int32 | Char)
+
+    expect_raises(KeyError) do
+      key = "c"
+      tup[key]
+    end
+  end
+
+  it "does []? with string" do
+    tup = {a: 1, b: 'a'}
+
+    key = "a"
+    val = tup[key]?
+    val.should eq(1)
+    typeof(val).should eq(Int32 | Char | Nil)
+
+    key = "b"
+    val = tup[key]?
+    val.should eq('a')
+    typeof(val).should eq(Int32 | Char | Nil)
+
+    key = "c"
+    val = tup[key]?
+    val.should be_nil
+    typeof(val).should eq(Int32 | Char | Nil)
+  end
+
   it "computes a hash value" do
     tup1 = {a: 1, b: 'a'}
     tup1.hash.should_not eq(0)

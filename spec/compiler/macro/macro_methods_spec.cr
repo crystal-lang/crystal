@@ -682,10 +682,12 @@ describe "macro methods" do
 
     it "executes []" do
       assert_macro "", %({{{a: 1}[:a]}}), [] of ASTNode, "1"
+      assert_macro "", %({{{a: 1}["a"]}}), [] of ASTNode, "1"
     end
 
     it "executes [] not found" do
       assert_macro "", %({{{a: 1}[:b]}}), [] of ASTNode, "nil"
+      assert_macro "", %({{{a: 1}["b"]}}), [] of ASTNode, "nil"
     end
 
     it "executes keys" do
@@ -706,7 +708,8 @@ describe "macro methods" do
     end
 
     it "executes []=" do
-      assert_macro "", %({% a = {} of Nil => Nil; a[1] = 2 %}{{a[1]}}), [] of ASTNode, "2"
+      assert_macro "", %({% a = {a: 1}; a[:a] = 2 %}{{a[:a]}}), [] of ASTNode, "2"
+      assert_macro "", %({% a = {a: 1}; a["a"] = 2 %}{{a["a"]}}), [] of ASTNode, "2"
     end
 
     it "creates a named tuple literal with a var" do

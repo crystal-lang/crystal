@@ -27,6 +27,20 @@ describe "Semantic: named tuples" do
       )) { char }
   end
 
+  it "types named tuple access (3)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t["x"]
+      )) { int32 }
+  end
+
+  it "types named tuple access (4)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t["y"]
+      )) { char }
+  end
+
   it "types nilable named tuple access (1)" do
     assert_type(%(
       t = {x: 1, y: 'a'}
@@ -45,6 +59,27 @@ describe "Semantic: named tuples" do
     assert_type(%(
       t = {x: 1, y: 'a'}
       t[:foo]?
+      )) { nil_type }
+  end
+
+  it "types nilable named tuple access (4)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t["x"]?
+      )) { int32 }
+  end
+
+  it "types nilable named tuple access (5)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t["y"]?
+      )) { char }
+  end
+
+  it "types nilable named tuple access (6)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t["foo"]?
       )) { nil_type }
   end
 

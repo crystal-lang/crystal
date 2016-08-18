@@ -86,10 +86,13 @@ struct NamedTuple
   # key = :name
   # tuple[key] # => "Crystal"
   #
+  # key = "year"
+  # tuple[key] # => 2011
+  #
   # key = :other
   # tuple[key] # # => KeyError
   # ```
-  def [](key : Symbol)
+  def [](key : Symbol | String)
     fetch(key) { raise KeyError.new "Missing named tuple key: #{key.inspect}" }
   end
 
@@ -101,10 +104,13 @@ struct NamedTuple
   # key = :name
   # tuple[key]? # => "Crystal"
   #
+  # key = "year"
+  # tuple[key] # => 2011
+  #
   # key = :other
   # tuple[key]? # => nil
   # ```
-  def []?(key : Symbol)
+  def []?(key : Symbol | String)
     fetch(key, nil)
   end
 
@@ -113,9 +119,10 @@ struct NamedTuple
   # ```
   # tuple = {name: "Crystal", year: 2011}
   # tuple.fetch(:name, "Unknown") # => "Crystal"
+  # tuple.fetch("year", 0)        # => 2011
   # tuple.fetch(:other, 0)        # => 0
   # ```
-  def fetch(key : Symbol, default_value)
+  def fetch(key : Symbol | String, default_value)
     fetch(key) { default_value }
   end
 
@@ -129,6 +136,20 @@ struct NamedTuple
   def fetch(key : Symbol, &block)
     {% for key in T %}
       return self[{{key.symbolize}}] if {{key.symbolize}} == key
+    {% end %}
+    yield
+  end
+
+  # Returns the value for the given *key*, if there's such key, otherwise the value returned by the block.
+  #
+  # ```
+  # tuple = {name: "Crystal", year: 2011}
+  # tuple.fetch("name") { "Unknown" } # => "Crystal"
+  # tuple.fetch("other") { 0 }        # => 0
+  # ```
+  def fetch(key : String, &block)
+    {% for key in T %}
+      return self[{{key.symbolize}}] if {{key.stringify}} == key
     {% end %}
     yield
   end

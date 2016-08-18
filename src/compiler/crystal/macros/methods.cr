@@ -724,6 +724,8 @@ module Crystal
             key = key.value
           when MacroId
             key = key.value
+          when StringLiteral
+            key = key.value
           else
             return NilLiteral.new
           end
@@ -742,6 +744,8 @@ module Crystal
           when SymbolLiteral
             key = key.value
           when MacroId
+            key = key.value
+          when StringLiteral
             key = key.value
           else
             raise "expected 'NamedTupleLiteral#[]=' first argument to be a SymbolLiteral or MacroId, not #{key.class_desc}"
