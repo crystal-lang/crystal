@@ -83,10 +83,11 @@ class Logger
   # Calls the *close* method on the object passed to `initialize`
   def close
     return if @closed
+    return unless io = @io
     @closed = true
 
     @mutex.synchronize do
-      @io.close
+      io.close
     end
   end
 
