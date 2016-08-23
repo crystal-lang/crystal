@@ -12,33 +12,33 @@ describe "Semantic: module" do
 
   it "includes module in a module" do
     assert_type("
-      module A
+      module Moo
         def foo
           1
         end
       end
 
-      module B
-        include A
+      module Boo
+        include Moo
       end
 
-      class X
-        include B
+      class Foo
+        include Boo
       end
 
-      X.new.foo
+      Foo.new.foo
       ") { int32 }
   end
 
   it "finds in module when included" do
     assert_type("
-      module A
+      module Moo
         class B
           def foo; 1; end
         end
       end
 
-      include A
+      include Moo
 
       B.new.foo
     ") { int32 }
@@ -651,18 +651,18 @@ describe "Semantic: module" do
 
   it "finds inner class from inherited one (#476)" do
     assert_type(%(
-      class A
-        class B
-          class C
+      class Foo
+        class Bar
+          class Baz
           end
         end
       end
 
-      class D < A
+      class Quz < Foo
       end
 
-      D::B::C
-      )) { types["A"].types["B"].types["C"].metaclass }
+      Quz::Bar::Baz
+      )) { types["Foo"].types["Bar"].types["Baz"].metaclass }
   end
 
   it "correctly types type var in included module, with a restriction with a free var (bug)" do
@@ -729,11 +729,11 @@ describe "Semantic: module" do
 
   it "uses :Module name for modules in errors" do
     assert_error %(
-      module A; end
+      module Moo; end
 
-      A.new
+      Moo.new
       ),
-      "undefined method 'new' for A:Module"
+      "undefined method 'new' for Moo:Module"
   end
 
   it "uses type declaration inside module" do
@@ -965,20 +965,20 @@ describe "Semantic: module" do
   it "doesn't lookup type in ancestor when matches in current type (#2982)" do
     assert_error %(
       module Foo
-        module X
+        module Qux
           class Bar
           end
         end
       end
 
-      class X
+      class Qux
       end
 
       include Foo
 
-      X::Bar
+      Qux::Bar
       ),
-      "undefined constant X::Bar"
+      "undefined constant Qux::Bar"
   end
 
   it "can restrict module with module (#3029)" do

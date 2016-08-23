@@ -85,10 +85,10 @@ describe "Semantic: alias" do
 
   it "errors if alias already defined" do
     assert_error %(
-      alias A = String
-      alias A = Int32
+      alias Alias = String
+      alias Alias = Int32
       ),
-      "alias A is already defined"
+      "alias Alias is already defined"
   end
 
   it "errors if alias is already defined as another type" do
@@ -100,18 +100,18 @@ describe "Semantic: alias" do
 
   it "errors if defining infinite recursive alias" do
     assert_error %(
-      alias A = A
-      A
+      alias Alias = Alias
+      Alias
       ),
-      "infinite recursive definition of alias A"
+      "infinite recursive definition of alias Alias"
   end
 
   it "errors if defining infinite recursive alias in union" do
     assert_error %(
-      alias A = Int32 | A
-      A
+      alias Alias = Int32 | Alias
+      Alias
       ),
-      "infinite recursive definition of alias A"
+      "infinite recursive definition of alias Alias"
   end
 
   it "allows using generic type of recursive alias as restriction (#488)" do
@@ -132,12 +132,12 @@ describe "Semantic: alias" do
 
   it "resolves type through alias (#563)" do
     assert_type(%(
-      module A
+      module Moo
         Foo = 1
       end
 
-      alias B = A
-      B::Foo
+      alias Alias = Moo
+      Alias::Foo
       )) { int32 }
   end
 

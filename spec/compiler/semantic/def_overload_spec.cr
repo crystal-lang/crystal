@@ -74,59 +74,59 @@ describe "Semantic: def overload" do
 
   it "types a call with overload matches virtual" do
     assert_type("
-      class A; end
+      class Foo; end
 
       def foo(x : Object)
         1
       end
 
-      foo(A.new)
+      foo(Foo.new)
     ") { int32 }
   end
 
   it "types a call with overload matches virtual 2" do
     assert_type("
-      class A
+      class Foo
       end
 
-      class B < A
+      class Bar < Foo
       end
 
-      def foo(x : A)
+      def foo(x : Foo)
         1
       end
 
-      def foo(x : B)
+      def foo(x : Bar)
         1.5
       end
 
-      foo(B.new)
+      foo(Bar.new)
     ") { float64 }
   end
 
   it "types a call with overload matches virtual 3" do
     assert_type("
-      class A
+      class Foo
       end
 
-      class B < A
+      class Bar < Foo
       end
 
-      def foo(x : A)
+      def foo(x : Foo)
         1
       end
 
-      def foo(x : B)
+      def foo(x : Bar)
         1.5
       end
 
-      foo(A.new)
+      foo(Foo.new)
     ") { int32 }
   end
 
   it "types a call with overload self" do
     assert_type("
-      class A
+      class Foo
         def foo(x : self)
           1
         end
@@ -136,14 +136,14 @@ describe "Semantic: def overload" do
         end
       end
 
-      a = A.new
+      a = Foo.new
       a.foo(a)
     ") { int32 }
   end
 
   it "types a call with overload self other match" do
     assert_type("
-      class A
+      class Foo
         def foo(x : self)
           1
         end
@@ -153,7 +153,7 @@ describe "Semantic: def overload" do
         end
       end
 
-      a = A.new
+      a = Foo.new
       a.foo(1)
     ") { float64 }
   end
@@ -166,17 +166,17 @@ describe "Semantic: def overload" do
         end
       end
 
-      class A
+      class Bar
         def foo(x)
           1.5
         end
       end
 
-      class B < A
+      class Baz < Bar
         include Foo
       end
 
-      b = B.new
+      b = Baz.new
       b.foo(b)
     ") { int32 }
   end
@@ -189,34 +189,34 @@ describe "Semantic: def overload" do
         end
       end
 
-      class A
+      class Bar
         def foo(x)
           1.5
         end
       end
 
-      class B < A
+      class Baz < Bar
         include Foo
       end
 
-      b = B.new
-      b.foo(A.new)
+      b = Baz.new
+      b.foo(Bar.new)
     ") { float64 }
   end
 
   it "types a call with overload self with inherited type" do
     assert_type("
-      class A
+      class Foo
         def foo(x : self)
           1
         end
       end
 
-      class B < A
+      class Bar < Foo
       end
 
-      a = A.new
-      a.foo(B.new)
+      a = Foo.new
+      a.foo(Bar.new)
     ") { int32 }
   end
 
@@ -837,15 +837,15 @@ describe "Semantic: def overload" do
 
   it "uses long name when no overload matches and name is the same (#1030)" do
     assert_error %(
-      module A::String
+      module Moo::String
         def self.foo(a : String, b : Bool)
           puts a if b
         end
       end
 
-      A::String.foo("Hello, World!", true)
+      Moo::String.foo("Hello, World!", true)
       ),
-      " - A::String.foo(a : A::String, b : Bool)"
+      " - Moo::String.foo(a : Moo::String, b : Bool)"
   end
 
   it "overloads on metaclass (#2916)" do

@@ -89,14 +89,14 @@ describe "Semantic: yield with scope" do
 
   it "doesn't explode if specifying &block but never using it (#181)" do
     codegen(%(
-      class A
+      class Foo
         def a(&block)
           with self yield
         end
         def aa
         end
       end
-      a = A.new
+      a = Foo.new
       a.a { aa }
       a.a { aa }
       ))

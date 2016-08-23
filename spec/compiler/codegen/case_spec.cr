@@ -90,9 +90,9 @@ describe "Code gen: case" do
         end
       end
 
-      A = nil
+      CONST = nil
       case nil
-      when A
+      when CONST
         1
       else
         2

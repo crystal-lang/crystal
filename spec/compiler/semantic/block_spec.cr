@@ -362,14 +362,14 @@ describe "Block inference" do
     assert_type("
       require \"prelude\"
 
-      class A
+      class Foo
       end
 
-      class B < A
+      class Bar < Foo
       end
 
-      a = [] of A
-      a << B.new
+      a = [] of Foo
+      a << Bar.new
 
       a.map { |x| x.to_s }
 

@@ -88,8 +88,8 @@ describe "Code gen: def" do
 
   it "codegens recursive type with union" do
     run("
-      class A
-        @next : A?
+      class Foo
+        @next : Foo?
 
         def next=(n)
           @next = n
@@ -100,16 +100,16 @@ describe "Code gen: def" do
         end
       end
 
-      a = A.allocate
-      a.next = A.allocate
+      a = Foo.allocate
+      a.next = Foo.allocate
       a = a.next
       ")
   end
 
   it "codegens with related types" do
     run("
-      class A
-        @next : A | B | Nil
+      class Foo
+        @next : Foo | Bar | Nil
 
         def next=(n)
           @next = n
@@ -120,8 +120,8 @@ describe "Code gen: def" do
         end
       end
 
-      class B
-        @next : A | B | Nil
+      class Bar
+        @next : Foo | Bar | Nil
 
         def next=(n)
           @next = n
@@ -138,13 +138,13 @@ describe "Code gen: def" do
         end
       end
 
-      a = A.allocate
-      a.next = B.allocate
+      a = Foo.allocate
+      a.next = Bar.allocate
 
-      foo(a, B.allocate)
+      foo(a, Bar.allocate)
 
-      c = A.allocate
-      c.next = B.allocate
+      c = Foo.allocate
+      c.next = Bar.allocate
 
       foo(c, c.next)
       ")

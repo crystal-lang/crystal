@@ -345,16 +345,16 @@ describe "Semantic: generic class" do
 
   it "errors if using Number in alias" do
     assert_error %(
-      alias T = Number | String
-      T
+      alias Alias = Number | String
+      Alias
       ),
       "can't use Number in unions yet, use a more specific type"
   end
 
   it "errors if using Number in recursive alias" do
     assert_error %(
-      alias T = Number | Pointer(T)
-      T
+      alias Alias = Number | Pointer(Alias)
+      Alias
       ),
       "can't use Number in unions yet, use a more specific type"
   end
@@ -568,27 +568,6 @@ describe "Semantic: generic class" do
       foo = ClsA.new
       foo.c.pos
       )) { int64 }
-  end
-
-  it "class doesn't conflict with generic type arg" do
-    assert_type(%(
-      class Foo(X)
-        def initialize(b : X)
-        end
-
-        def x
-          1
-        end
-      end
-
-      class Bar(Y)
-      end
-
-      class X
-      end
-
-      Foo.new(Bar(Int32).new).x
-      )) { int32 }
   end
 
   it "inherits instance var type annotation from generic to concrete" do

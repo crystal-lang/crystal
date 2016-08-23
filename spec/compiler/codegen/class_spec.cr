@@ -372,8 +372,8 @@ describe "Code gen: class" do
 
   it "codegens bug #168" do
     run("
-      class A
-        @x : A?
+      class Foo
+        @x : Foo?
 
         def foo
           x = @x
@@ -385,12 +385,12 @@ describe "Code gen: class" do
         end
       end
 
-      class B < A
+      class Bar < Foo
         def initialize(@x)
         end
       end
 
-      B.new(A.new).foo
+      Bar.new(Foo.new).foo
       ").to_i.should eq(1)
   end
 
@@ -481,10 +481,10 @@ describe "Code gen: class" do
       require "prelude"
 
       class Foo; end
-      class A < Foo; end
-      class B < Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
 
-      a = Foo || A || B
+      a = Foo || Bar || Baz
       a.to_s
       )).to_string.should eq("Foo")
   end
@@ -494,12 +494,12 @@ describe "Code gen: class" do
       require "prelude"
 
       class Foo; end
-      class A < Foo; end
-      class B < Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
 
-      a = A || Foo || B
+      a = Bar || Foo || Baz
       a.to_s
-      )).to_string.should eq("A")
+      )).to_string.should eq("Bar")
   end
 
   it "does to_s for virtual metaclass type (3)" do
@@ -507,12 +507,12 @@ describe "Code gen: class" do
       require "prelude"
 
       class Foo; end
-      class A < Foo; end
-      class B < Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
 
-      a = B || A || Foo
+      a = Baz || Bar || Foo
       a.to_s
-      )).to_string.should eq("B")
+      )).to_string.should eq("Baz")
   end
 
   it "builds generic class bug" do
@@ -590,25 +590,25 @@ describe "Code gen: class" do
         end
       end
 
-      class A
+      class Foo
       end
 
-      ptr = Pointer(A.class).malloc(1_u64)
-      ptr.value = A
+      ptr = Pointer(Foo.class).malloc(1_u64)
+      ptr.value = Foo
       ptr.value.foo
 
-      class B < A; end
-      ptr.value = B
+      class Bar < Foo; end
+      ptr.value = Bar
       ptr.value.foo
 
-      class C < B; end
-      ptr.value = C
+      class Baz < Bar; end
+      ptr.value = Baz
       ptr.value.foo
 
-      class D < C; end
-      ptr.value = D
+      class Qux < Baz; end
+      ptr.value = Qux
       ptr.value.foo
-      )).to_string.should eq("D")
+      )).to_string.should eq("Qux")
   end
 
   it "works with array in variable initializer in non-generic type (#855)" do
@@ -673,13 +673,13 @@ describe "Code gen: class" do
         end
       end
 
-      class A
+      class Foo
         def test
-          A.class
+          Foo.class
         end
       end
 
-      x = A.new.test
+      x = Foo.new.test
       x.bar
       )).to_i.should eq(123)
   end
@@ -799,7 +799,7 @@ describe "Code gen: class" do
 
   it "doesn't crash on #1216" do
     codegen(%(
-      class A
+      class Foo
         def initialize(@ivar : Int32)
           meth
         end
@@ -810,13 +810,13 @@ describe "Code gen: class" do
         end
       end
 
-      A.new(6)
+      Foo.new(6)
       ))
   end
 
   it "doesn't crash on #1216 with pointerof" do
     codegen(%(
-      class A
+      class Foo
         def initialize(@ivar : Int32)
           meth
         end
@@ -827,7 +827,7 @@ describe "Code gen: class" do
         end
       end
 
-      A.new(6)
+      Foo.new(6)
       ))
   end
 

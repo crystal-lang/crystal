@@ -75,6 +75,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         end
       end
     else
+      check_not_free_var_name(scope, name, node.name)
+
       created_new_type = true
       if type_vars = node.type_vars
         type = GenericClassType.new @program, scope, name, nil, type_vars, false
@@ -160,6 +162,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       type = type.as(ModuleType)
     else
+      check_not_free_var_name(scope, name, node.name)
+
       if type_vars = node.type_vars
         type = GenericModuleType.new @program, scope, name, type_vars
         type.splat_index = node.splat_index
@@ -191,6 +195,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.raise "can't alias #{node.name} because it's already defined as a #{existing_type.type_desc}"
       end
     end
+
+    check_not_free_var_name(current_type, node.name, node)
 
     alias_type = AliasType.new(@program, current_type, node.name, node.value)
     attach_doc alias_type, node
@@ -325,6 +331,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     if type
       node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
     else
+      check_not_free_var_name(current_type, node.name, node)
+
       type = LibType.new @program, current_type, node.name
       current_type.types[node.name] = type
     end
@@ -410,7 +418,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     is_flags = Attribute.any?(attributes, "Flags")
     all_value = interpret_enum_value(NumberLiteral.new(0), enum_base_type)
     existed = !!enum_type
-    enum_type ||= EnumType.new(@program, scope, name, enum_base_type, is_flags)
+    enum_type ||= begin
+      check_not_free_var_name(scope, name, node.name)
+      EnumType.new(@program, scope, name, enum_base_type, is_flags)
+    end
 
     node.resolved_type = enum_type
     attach_doc enum_type, node
@@ -543,6 +554,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     if type
       target.raise "already initialized constant #{type}"
     end
+
+    check_not_free_var_name(current_type, target.names.first, target)
 
     const = Const.new(@program, current_type, target.names.first, value)
     attach_doc const, node
@@ -811,6 +824,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
             path.raise "execpted #{name} to be a type"
           end
         else
+          check_not_free_var_name(base_type, name, path)
           next_type = NonGenericModuleType.new(@program, base_type.as(ModuleType), name)
           if (location = path.location)
             next_type.add_location(location)
@@ -823,5 +837,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     target_type.as(NamedType)
+  end
+
+  def check_not_free_var_name(target_type, name, node)
+    if target_type.is_a?(Program) && Parser.free_var_name?(name)
+      node.raise "can't use #{name} as a top-level type name: it's reserved for type arguments and free variables"
+    end
   end
 end

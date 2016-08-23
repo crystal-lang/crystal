@@ -44,25 +44,25 @@ describe "Restrictions" do
     it "restricts virtual type with included module 1" do
       mod = Program.new
       mod.semantic parse("
-        module M; end
-        class A; include M; end
+        module Moo; end
+        class Foo; include Moo; end
       ")
 
-      mod.t("A+").restrict(mod.t("M"), MatchContext.new(mod, mod)).should eq(mod.t("A+"))
+      mod.t("Foo+").restrict(mod.t("Moo"), MatchContext.new(mod, mod)).should eq(mod.t("Foo+"))
     end
 
     it "restricts virtual type with included module 2" do
       mod = Program.new
       mod.semantic parse("
-        module M; end
-        class A; end
-        class B < A; include M; end
-        class C < A; include M; end
-        class D < C; end
-        class E < A; end
+        module Mxx; end
+        class Axx; end
+        class Bxx < Axx; include Mxx; end
+        class Cxx < Axx; include Mxx; end
+        class Dxx < Cxx; end
+        class Exx < Axx; end
       ")
 
-      mod.t("A+").restrict(mod.t("M"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("B+"), mod.t("C+")))
+      mod.t("Axx+").restrict(mod.t("Mxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Bxx+"), mod.t("Cxx+")))
     end
   end
 
@@ -313,16 +313,16 @@ describe "Restrictions" do
 
   it "makes metaclass subclass pass parent metaclass restriction (#2079)" do
     assert_type(%(
-      class A; end
+      class Foo; end
 
-      class B < A; end
+      class Bar < Foo; end
 
-      def foo : A.class # offending return type restriction
-        B
+      def foo : Foo.class # offending return type restriction
+        Bar
       end
 
       foo
-      )) { types["B"].metaclass }
+      )) { types["Bar"].metaclass }
   end
 
   it "matches virtual type against alias" do

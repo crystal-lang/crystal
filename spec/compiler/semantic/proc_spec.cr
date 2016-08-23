@@ -304,8 +304,8 @@ describe "Semantic: proc" do
 
   it "allows new on proc type" do
     assert_type("
-      alias F = Int32 -> Int32
-      F.new { |x| x + 1 }
+      alias Func = Int32 -> Int32
+      Func.new { |x| x + 1 }
       ") { proc_of(int32, int32) }
   end
 
@@ -321,23 +321,23 @@ describe "Semantic: proc" do
 
   it "allows new on proc type with less block args" do
     assert_type("
-      alias F = Int32 -> Int32
-      F.new { 1 }
+      alias Func = Int32 -> Int32
+      Func.new { 1 }
       ") { proc_of(int32, int32) }
   end
 
   it "says wrong number of block args in new on proc type" do
     assert_error "
-      alias F = Int32 -> Int32
-      F.new { |x, y| }
+      alias Alias = Int32 -> Int32
+      Alias.new { |x, y| }
       ",
       "wrong number of block arguments for Proc(Int32, Int32)#new (given 2, expected 1)"
   end
 
   it "says wrong return type in new on proc type" do
     assert_error "
-      alias F = Int32 -> Int32
-      F.new &.to_f
+      alias Alias = Int32 -> Int32
+      Alias.new &.to_f
       ",
       "expected block to return Int32, not Float64"
   end

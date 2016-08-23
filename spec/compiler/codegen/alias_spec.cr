@@ -5,9 +5,9 @@ describe "Code gen: alias" do
     run(%(
       require "prelude"
 
-      alias X = Array(X)
+      alias Alias = Array(Alias)
 
-      a = [] of X
+      a = [] of Alias
       b = a.map(&.to_s).join
       )).to_string.should eq("")
   end
@@ -16,9 +16,9 @@ describe "Code gen: alias" do
     run(%(
       require "prelude"
 
-      alias X = Nil | Array(X)
+      alias Alias = Nil | Array(Alias)
 
-      a = [] of X
+      a = [] of Alias
       b = a.map(&.to_s).join
       )).to_string.should eq("")
   end
@@ -27,9 +27,9 @@ describe "Code gen: alias" do
     run(%(
       require "prelude"
 
-      alias X = Nil | Array(X)
+      alias Alias = Nil | Array(Alias)
 
-      a = [] of X
+      a = [] of Alias
       b = a.map(&.to_s).join
       )).to_string.should eq("")
   end
@@ -78,9 +78,9 @@ describe "Code gen: alias" do
     result = semantic(%(
       alias Foo = Int32
 
-      module B
+      module Moo
         alias Bar = Foo
-        alias Foo = B
+        alias Foo = Moo
       end
       ))
     result.program.link_attributes

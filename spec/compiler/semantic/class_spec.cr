@@ -585,7 +585,7 @@ describe "Semantic: class" do
 
   it "types bug #168 (it inherits instance var even if not mentioned in initialize)" do
     assert_error "
-      class A
+      class Foo
         def foo
           x = @x
           if x
@@ -596,14 +596,14 @@ describe "Semantic: class" do
         end
       end
 
-      class B < A
-        def initialize(@x : A)
+      class Bar < Foo
+        def initialize(@x : Foo)
         end
       end
 
-      B.new(A.new).foo
+      Bar.new(Foo.new).foo
       ",
-      "Can't infer the type of instance variable '@x' of A"
+      "Can't infer the type of instance variable '@x' of Foo"
   end
 
   it "doesn't mark instance variable as nilable if calling another initialize" do
@@ -729,20 +729,6 @@ describe "Semantic: class" do
       Bar.new
       ),
       "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
-  end
-
-  it "instantiates types inferring generic type when there a type argument has the same name as an existing type" do
-    assert_type(%(
-      class B
-      end
-
-      class Foo(B)
-        def initialize(x : B)
-        end
-      end
-
-      Foo.new(0)
-      )) { generic_class "Foo", int32 }
   end
 
   it "doesn't error on new on abstract virtual type class" do
@@ -954,13 +940,13 @@ describe "Semantic: class" do
       class Baz
       end
 
-      class A::Baz::B
+      class Moo::Baz::B
         def self.foo
           1
         end
       end
 
-      A::Baz::B.foo
+      Moo::Baz::B.foo
       )) { int32 }
   end
 
@@ -1055,5 +1041,13 @@ describe "Semantic: class" do
       end
       ),
       "Moo is not a class, it's a module"
+  end
+
+  it "disallows using free-var name for top-level type" do
+    assert_error %(
+      class T
+      end
+      ),
+      "can't use T as a top-level type name: it's reserved for type arguments and free variables"
   end
 end

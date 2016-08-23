@@ -230,10 +230,10 @@ describe "Semantic: doc" do
   it "stores doc for constant" do
     result = semantic %(
       # Hello
-      A = 1
+      CONST = 1
     ), wants_doc: true
     program = result.program
-    a = program.types["A"]
+    a = program.types["CONST"]
     a.doc.should eq("Hello")
     a.locations.not_nil!.size.should eq(1)
   end
@@ -241,10 +241,10 @@ describe "Semantic: doc" do
   it "stores doc for alias" do
     result = semantic %(
       # Hello
-      alias A = Int32
+      alias Alias = Int32
     ), wants_doc: true
     program = result.program
-    a = program.types["A"]
+    a = program.types["Alias"]
     a.doc.should eq("Hello")
     a.locations.not_nil!.size.should eq(1)
   end

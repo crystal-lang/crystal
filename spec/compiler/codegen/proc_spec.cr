@@ -96,7 +96,7 @@ describe "Code gen: proc" do
     run("
       require \"prelude\"
 
-      class B
+      class Bar
         def initialize(@x : Int32)
         end
 
@@ -105,25 +105,25 @@ describe "Code gen: proc" do
         end
       end
 
-      class A
+      class Foo
         def on_something
-          B.new(1)
+          Bar.new(1)
         end
       end
 
-      def _on_(p : A*)
+      def _on_(p : Foo*)
         p.value.on_something.x
       end
 
-      c = ->_on_(A*)
-      a = A.new
+      c = ->_on_(Foo*)
+      a = Foo.new
       c.call(pointerof(a))
       ").to_i.should eq(1)
   end
 
   it "binds function pointer to associated call" do
     run("
-      class A
+      class Foo
         def initialize(@e : Int32)
         end
 
@@ -132,12 +132,12 @@ describe "Code gen: proc" do
         end
       end
 
-      def _on_(p : A*)
+      def _on_(p : Foo*)
         p.value.on_something
       end
 
-      c = ->_on_(A*)
-      a = A.new(12)
+      c = ->_on_(Foo*)
+      a = Foo.new(12)
       a.on_something
 
       c.call(pointerof(a))
@@ -179,13 +179,13 @@ describe "Code gen: proc" do
 
   it "allows proc pointer where self is a class" do
     run("
-      class A
+      class Foo
         def self.bla
           1
         end
       end
 
-      f = ->A.bla
+      f = ->Foo.bla
       f.call
       ").to_i.should eq(1)
   end
@@ -387,10 +387,10 @@ describe "Code gen: proc" do
 
   it "does new on proc type" do
     run("
-      alias F = Int32 -> Int32
+      alias Func = Int32 -> Int32
 
       a = 2
-      f = F.new { |x| x + a }
+      f = Func.new { |x| x + a }
       f.call(1)
       ").to_i.should eq(3)
   end
@@ -624,24 +624,24 @@ describe "Code gen: proc" do
 
   it "gets proc pointer using virtual type (#1337)" do
     run(%(
-      class A
+      class Foo
         def foo
           1
         end
       end
 
-      class B < A
+      class Bar < Foo
         def foo
           2
         end
       end
 
-      def foo(a : A)
+      def foo(a : Foo)
         a.foo
       end
 
-      bar = ->foo(A)
-      bar.call(B.new)
+      bar = ->foo(Foo)
+      bar.call(Bar.new)
       )).to_i.should eq(2)
   end
 
@@ -649,27 +649,27 @@ describe "Code gen: proc" do
     run(%(
       require "prelude"
 
-      class A
+      class Class1
         def foo
           1
         end
       end
 
-      class B < A
+      class Class2 < Class1
         def foo
           2
         end
       end
 
       module Foo
-        alias Callback = A ->
+        alias Callback = Class1 ->
         @@callbacks = Hash(String, Callback).new
         def self.add(name, &block : Callback)
           @@callbacks[name] = block
         end
 
         def self.call
-          @@callbacks.each_value(&.call(B.new))
+          @@callbacks.each_value(&.call(Class2.new))
         end
       end
 

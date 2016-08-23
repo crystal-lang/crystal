@@ -2134,7 +2134,7 @@ describe "Semantic: instance var" do
 
   it "ignores redefined initialize (#456)" do
     assert_type(%(
-      class A
+      class Foo
         def initialize
           @a = 1
         end
@@ -2153,21 +2153,21 @@ describe "Semantic: instance var" do
         end
       end
 
-      a = A.new
+      a = Foo.new
       a.a + a.b
       )) { int32 }
   end
 
   it "ignores super module initialize (#456)" do
     assert_type(%(
-      module B
+      module Moo
         def initialize
           @a = 1
         end
       end
 
-      class A
-        include B
+      class Foo
+        include Moo
 
         def initialize
           @a = 1
@@ -2183,14 +2183,14 @@ describe "Semantic: instance var" do
         end
       end
 
-      a = A.new
+      a = Foo.new
       a.a + a.b
       )) { int32 }
   end
 
   it "obeys super module initialize (#456)" do
     assert_type(%(
-      module A
+      module Moo
         def initialize
           @a = 1
         end
@@ -2200,8 +2200,8 @@ describe "Semantic: instance var" do
         end
       end
 
-      class B
-        include A
+      class Foo
+        include Moo
 
         def initialize
           @b = 2
@@ -2213,7 +2213,7 @@ describe "Semantic: instance var" do
         end
       end
 
-      b = B.new
+      b = Foo.new
       b.a + b.b
       )) { int32 }
   end
@@ -3619,7 +3619,7 @@ describe "Semantic: instance var" do
     assert_error %(
       require "prelude"
 
-      class A(T)
+      class Foo(T)
         def initialize(@arg : T)
           @foo = [bar]
         end
@@ -3634,9 +3634,9 @@ describe "Semantic: instance var" do
         end
       end
 
-      A.new(3).foo
+      Foo.new(3).foo
       ),
-      "Can't infer the type of instance variable '@foo' of A(Int32)"
+      "Can't infer the type of instance variable '@foo' of Foo(Int32)"
   end
 
   it "doesn't crash when inferring from new without matches (#2538)" do

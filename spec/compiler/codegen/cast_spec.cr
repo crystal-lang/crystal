@@ -258,17 +258,17 @@ describe "Code gen: cast" do
 
   it "can cast from Void* to virtual type (#3014)" do
     run(%(
-      abstract class A
+      abstract class Foo
         abstract def hi
       end
 
-      class B < A
+      class Bar < Foo
         def hi
           42
         end
       end
 
-      B.new.as(Void*).as(A).hi
+      Bar.new.as(Void*).as(Foo).hi
       )).to_i.should eq(42)
   end
 

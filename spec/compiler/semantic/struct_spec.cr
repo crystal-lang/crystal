@@ -153,13 +153,13 @@ describe "Semantic: struct" do
 
   it "can't extend struct from non-abstract struct" do
     assert_error %(
-      struct A
+      struct Foo
       end
 
-      struct B < A
+      struct Bar < Foo
       end
       ),
-      "can't extend non-abstract struct A"
+      "can't extend non-abstract struct Foo"
   end
 
   it "unifies type to virtual type" do
@@ -232,13 +232,13 @@ describe "Semantic: struct" do
 
   it "detects recursive struct through inheritance (#3071)" do
     assert_error %(
-      abstract struct X
+      abstract struct Foo
       end
 
-      struct A < X
-        @value = uninitialized X
+      struct Bar < Foo
+        @value = uninitialized Foo
       end
       ),
-      "recursive struct A detected: `@value : X` -> `X` -> `A`"
+      "recursive struct Bar detected: `@value : Foo` -> `Foo` -> `Bar`"
   end
 end

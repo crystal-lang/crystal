@@ -241,7 +241,7 @@ describe "Semantic: enum" do
 
   it "errors if using instance var inside enum (#991)" do
     assert_error %(
-      enum X
+      enum Foo
         A
 
         def meth
@@ -249,9 +249,9 @@ describe "Semantic: enum" do
         end
       end
 
-      X::A.meth
+      Foo::A.meth
       ),
-      "can't use instance variables inside enums (at enum X)"
+      "can't use instance variables inside enums (at enum Foo)"
   end
 
   it "marks as flags with base type (#2185)" do

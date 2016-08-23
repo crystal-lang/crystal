@@ -2,18 +2,18 @@ require "../../spec_helper"
 
 describe "Semantic: const" do
   it "types a constant" do
-    input = parse("A = 1").as(Assign)
+    input = parse("CONST = 1").as(Assign)
     result = semantic input
     mod = result.program
     input.target.type?.should be_nil # Don't type value until needed
   end
 
   it "types a constant reference" do
-    assert_type("A = 1; A") { int32 }
+    assert_type("CONST = 1; CONST") { int32 }
   end
 
   it "types a nested constant" do
-    assert_type("class B; A = 1; end; B::A") { int32 }
+    assert_type("class Foo; A = 1; end; Foo::A") { int32 }
   end
 
   it "types a constant inside a def" do
@@ -32,13 +32,13 @@ describe "Semantic: const" do
 
   it "finds nearest constant first" do
     assert_type("
-      A = 1
+      CONST = 1
 
       class Foo
-        A = 2.5
+        CONST = 2.5
 
         def foo
-          A
+          CONST
         end
       end
 
@@ -66,38 +66,38 @@ describe "Semantic: const" do
 
   it "types a global constant reference in method" do
     assert_type("
-      A = 2.5
+      FOO = 2.5
 
-      class B
-        A = 1
+      class Bar
+        FOO = 1
 
         def foo
-          ::A
+          ::FOO
         end
       end
 
-      B.new.foo
+      Bar.new.foo
       ") { float64 }
   end
 
   it "types a global constant reference in static method" do
     assert_type("
-      A = 2.5
+      CONST = 2.5
 
-      class B
-        A = 1
+      class Bar
+        CONST = 1
 
         def self.foo
-          A
+          CONST
         end
       end
 
-      B.foo
+      Bar.foo
       ") { int32 }
   end
 
   it "doesn't share variables with global scope" do
-    assert_error "a = 1; A = a; A",
+    assert_error "a = 1; CONST = a; CONST",
       "undefined local variable or method 'a'"
   end
 
@@ -137,35 +137,35 @@ describe "Semantic: const" do
 
   it "finds constant in module that includes module (#205)" do
     assert_type(%(
-      module A
+      module Foo
         CONSTANT = true
       end
 
-      module B
-        include A
+      module Moo
+        include Foo
       end
 
-      B::CONSTANT
+      Moo::CONSTANT
       )) { bool }
   end
 
   it "finds constant in class that extends class (#205)" do
     assert_type(%(
-      class A
+      class Foo
         CONSTANT = true
       end
 
-      class B < A
+      class Bar < Foo
       end
 
-      B::CONSTANT
+      Bar::CONSTANT
       )) { bool }
   end
 
-  ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2", "1 + 2", "1 + Z"].each do |node|
+  ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2", "1 + 2", "1 + ZED"].each do |node|
     it "doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})" do
       semantic(%(
-        Z = 10
+        ZED = 10
 
         struct Int32
           def +; 0; end
@@ -173,14 +173,14 @@ describe "Semantic: const" do
           def -; 0; end
         end
 
-        A = foo
-        B = #{node}
+        CONST1 = foo
+        CONST2 = #{node}
 
         def foo
-          B
+          CONST2
         end
 
-        A
+        CONST1
         ))
     end
   end
@@ -204,7 +204,7 @@ describe "Semantic: const" do
       end
 
       foo do
-        A = 1
+        CONST = 1
       end
       ),
       "can't declare constant dynamically"
@@ -213,7 +213,7 @@ describe "Semantic: const" do
   it "errors on dynamic constant assignment inside if" do
     assert_error %(
       if 1 == 1
-        A = 1
+        CONST = 1
       end
       ),
       "can't declare constant dynamically"

@@ -60,12 +60,12 @@ describe "implementations" do
 
   it "find implementors of different classes" do
     assert_implementations %(
-      class A
+      class Foo
         ༓def foo
         end
       end
 
-      class B
+      class Bar
         ༓def foo
         end
       end
@@ -74,19 +74,19 @@ describe "implementations" do
         o.f‸oo
       end
 
-      bar(A.new)
-      bar(B.new)
+      bar(Foo.new)
+      bar(Bar.new)
     )
   end
 
   it "find implementors of classes that are only used" do
     assert_implementations %(
-      class A
+      class Foo
         ༓def foo
         end
       end
 
-      class B
+      class Bar
         def foo
         end
       end
@@ -95,8 +95,8 @@ describe "implementations" do
         o.f‸oo
       end
 
-      bar(A.new)
-      B.new
+      bar(Foo.new)
+      Bar.new
     )
   end
 
@@ -274,12 +274,12 @@ describe "implementations" do
 
   it "find implementation in generic class" do
     assert_implementations %(
-    class A
+    class Foo
       ༓def self.foo
       end
     end
 
-    class B
+    class Baz
       ༓def self.foo
       end
     end
@@ -290,8 +290,8 @@ describe "implementations" do
       end
     end
 
-    Bar(A).new.bar
-    Bar(B).new.bar
+    Bar(Foo).new.bar
+    Bar(Baz).new.bar
     )
   end
 

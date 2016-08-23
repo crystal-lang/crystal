@@ -14,7 +14,7 @@ describe "Semantic: union" do
   end
 
   it "types union of classes" do
-    assert_type("class A; end; class B; end; a = A.new || B.new; a") { union_of(types["A"], types["B"]) }
+    assert_type("class Foo; end; class Bar; end; a = Foo.new || Bar.new; a") { union_of(types["Foo"], types["Bar"]) }
   end
 
   it "assigns to union and keeps new union type in call" do
