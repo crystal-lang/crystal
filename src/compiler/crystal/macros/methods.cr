@@ -84,11 +84,16 @@ module Crystal
     end
 
     def interpret_pp(node)
+      strings = [] of {String, String}
+
       node.args.each do |arg|
         arg.accept self
-        print arg
-        print " = "
-        @program.stdout.puts @last
+        strings.push({arg.to_s, @last.to_s})
+      end
+
+      max_size = strings.max_of &.[0].size
+      strings.each do |left, right|
+        @program.stdout.puts "#{left.ljust(max_size)} # => #{right}"
       end
 
       @last = Nop.new
