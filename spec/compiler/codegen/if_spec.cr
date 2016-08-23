@@ -267,4 +267,23 @@ describe "Code gen: if" do
       x
       ))
   end
+
+  it "doesn't generate truthy if branch if doesn't need value (bug)" do
+    codegen(%(
+      class Foo
+      end
+
+      x = nil
+      if x
+        nil
+      else
+        if 2 == 2
+          Foo.new
+        else
+          ""
+        end
+      end
+      1
+      ))
+  end
 end

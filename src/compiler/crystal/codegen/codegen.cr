@@ -668,7 +668,7 @@ module Crystal
       if node.truthy?
         node.cond.accept self
         node.then.accept self
-        if (node_type = node.type?) && (then_type = node.then.type?)
+        if @needs_value && (node_type = node.type?) && (then_type = node.then.type?)
           @last = upcast(@last, node_type, then_type)
         end
         return false
@@ -677,7 +677,7 @@ module Crystal
       if node.falsey?
         node.cond.accept self
         node.else.accept self
-        if (node_type = node.type?) && (else_type = node.else.type?)
+        if @needs_value && (node_type = node.type?) && (else_type = node.else.type?)
           @last = upcast(@last, node_type, else_type)
         end
         return false
