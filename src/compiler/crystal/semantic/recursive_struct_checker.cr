@@ -117,7 +117,7 @@ class Crystal::RecursiveStructChecker
 
   def check_recursive_instance_var_container(target, type, checked, path)
     checked.add type
-    type.as(InstanceVarContainer).all_instance_vars.each_value do |var|
+    type.all_instance_vars.each_value do |var|
       var_type = var.type?
       next unless var_type
 

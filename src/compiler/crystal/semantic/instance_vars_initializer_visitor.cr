@@ -67,7 +67,7 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
         value.accept ivar_visitor
       end
 
-      unless current_type.lookup_instance_var_with_owner?(target.name)
+      unless current_type.lookup_instance_var?(target.name)
         ivar_visitor.undefined_instance_variable(current_type, target)
       end
 

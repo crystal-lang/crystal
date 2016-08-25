@@ -72,10 +72,10 @@ describe "Semantic: class" do
     foo = mod.types["Foo"].as(GenericClassType)
 
     node[1].type.should eq(foo.instantiate([mod.int32] of TypeVar))
-    node[1].type.as(InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.nilable(mod.int32))
+    node[1].type.instance_vars["@coco"].type.should eq(mod.nilable(mod.int32))
 
     node[3].type.should eq(foo.instantiate([mod.float64] of TypeVar))
-    node[3].type.as(InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.nilable(mod.float64))
+    node[3].type.instance_vars["@coco"].type.should eq(mod.nilable(mod.float64))
   end
 
   it "types instance variable on getter" do

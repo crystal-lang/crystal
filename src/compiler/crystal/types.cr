@@ -1,4 +1,3 @@
-require "levenshtein"
 require "./syntax/ast"
 
 module Crystal
@@ -217,17 +216,6 @@ module Crystal
       false
     end
 
-    def allows_instance_vars?
-      case self
-      when program.object, program.value,
-           program.number, program.int, program.float,
-           PrimitiveType, program.reference
-        false
-      else
-        true
-      end
-    end
-
     # Should `new` be looked up in ancestors?
     #
     # This is `true` if this type doesn't define any
@@ -283,8 +271,13 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_instance_var_initializer"
     end
 
-    def declare_instance_var(name, type_var)
-      raise "Bug: #{self} doesn't implement declare_instance_var"
+    def declare_instance_var(name, type : Type)
+      var = MetaTypeVar.new(name)
+      var.owner = self
+      var.type = type
+      var.bind_to var
+      var.freeze_type = type
+      instance_vars[name] = var
     end
 
     def types
@@ -315,21 +308,6 @@ module Crystal
     # Returns this type's superclass, or `nil` if it doesn't have one
     def superclass : Type?
       nil
-    end
-
-    def append_to_expand_union_types(types)
-      types << self
-    end
-
-    def solve_type_vars(type_vars : Array(TypeVar))
-      types = type_vars.map do |type_var|
-        if type_var.is_a?(ASTNode)
-          self.lookup_type(type_var).virtual_type
-        else
-          type_var
-        end
-      end
-      Type.merge!(types)
     end
 
     def lookup_defs(name : String, lookup_ancestors_for_new : Bool = false)
@@ -383,6 +361,10 @@ module Crystal
       defs.try &.[name]?.try &.find(&.yields.==(block)).try &.def
     end
 
+    def has_def?(name)
+      defs.try(&.has_key?(name)) || parents.try(&.any?(&.has_def?(name)))
+    end
+
     def lookup_macro(name, args : Array, named_args)
       if macros = self.macros.try &.[name]?
         match = macros.find &.matches?(args, named_args)
@@ -418,48 +400,65 @@ module Crystal
       raise "Bug: #{self} doesn't implement including_types"
     end
 
+    # Returns `true` if this type can have instance vars.
+    # Primitive types, and types like Reference and Object,
+    # can't have instance vars.
+    def allows_instance_vars?
+      case self
+      when program.object, program.value, program.struct,
+           program.number, program.int, program.float,
+           PrimitiveType, program.reference
+        false
+      else
+        true
+      end
+    end
+
     def instance_vars
       raise "Bug: #{self} doesn't implement instance_vars"
     end
 
     def all_instance_vars
-      raise "Bug: #{self} doesn't implement all_instance_vars"
+      if superclass = self.superclass
+        superclass.all_instance_vars.merge(instance_vars)
+      else
+        instance_vars
+      end
     end
 
     def index_of_instance_var(name)
-      raise "Bug: #{self} doesn't implement index_of_instance_var"
+      if superclass = self.superclass
+        index = superclass.index_of_instance_var(name)
+        if index
+          index
+        else
+          index = instance_vars.key_index(name)
+          if index
+            superclass.all_instance_vars_count + index
+          else
+            nil
+          end
+        end
+      else
+        instance_vars.key_index(name)
+      end
     end
 
-    def index_of_instance_var?(name)
-      raise "Bug: #{self} doesn't implement index_of_instance_var?"
+    def lookup_instance_var(name)
+      lookup_instance_var?(name).not_nil!
     end
 
-    def lookup_instance_var(name, create = true)
-      raise "Bug: #{self} doesn't implement lookup_instance_var"
-    end
-
-    def lookup_instance_var?(name, create = false)
-      raise "Bug: #{self} doesn't implement lookup_instance_var?"
-    end
-
-    def lookup_instance_var_with_owner(name)
-      lookup_instance_var_with_owner?(name).not_nil!
-    end
-
-    def lookup_instance_var_with_owner?(name)
-      raise "Bug: #{self} doesn't implement lookup_instance_var_with_owner?"
+    def lookup_instance_var?(name)
+      superclass.try(&.lookup_instance_var?(name)) ||
+        instance_vars[name]?
     end
 
     def has_instance_var_initializer?(name)
       false
     end
 
-    def has_def?(name)
-      defs.try(&.has_key?(name)) || parents.try(&.any?(&.has_def?(name)))
-    end
-
     def all_instance_vars_count
-      raise "Bug: #{self} doesn't implement all_instance_vars_count"
+      (superclass.try(&.all_instance_vars_count) || 0) + instance_vars.size
     end
 
     def add_subclass(subclass)
@@ -804,77 +803,6 @@ module Crystal
   # A type that can have instance variables.
   module InstanceVarContainer
     getter(instance_vars) { {} of String => MetaTypeVar }
-
-    def lookup_instance_var(name, create = true)
-      lookup_instance_var?(name, create).not_nil!
-    end
-
-    def lookup_instance_var?(name, create = false)
-      if var = superclass.try &.lookup_instance_var?(name, false)
-        return var
-      end
-
-      ivar = instance_vars[name]?
-      if !ivar && create
-        ivar = MetaTypeVar.new(name)
-        ivar.owner = self
-        instance_vars[name] = ivar
-      end
-      ivar
-    end
-
-    record InstanceVarWithOwner, instance_var : MetaTypeVar, owner : Type
-
-    def lookup_instance_var_with_owner?(name)
-      if result = superclass.try &.lookup_instance_var_with_owner?(name)
-        return result
-      end
-
-      ivar = instance_vars[name]?
-      if ivar
-        InstanceVarWithOwner.new(ivar, self)
-      else
-        nil
-      end
-    end
-
-    def index_of_instance_var(name)
-      index_of_instance_var?(name).not_nil!
-    end
-
-    def index_of_instance_var?(name)
-      if sup = superclass
-        index = sup.index_of_instance_var?(name)
-        if index
-          index
-        else
-          index = instance_vars.key_index(name)
-          if index
-            sup.all_instance_vars_count + index
-          else
-            nil
-          end
-        end
-      else
-        instance_vars.key_index(name)
-      end
-    end
-
-    def all_instance_vars
-      if sup = superclass
-        sup.all_instance_vars.merge(instance_vars)
-      else
-        instance_vars
-      end
-    end
-
-    def all_instance_vars_count
-      if sup = superclass
-        sup.all_instance_vars_count + instance_vars.size
-      else
-        instance_vars.size
-      end
-    end
   end
 
   # A non generic module type, like IO.
@@ -906,14 +834,6 @@ module Crystal
       @including_types
     end
 
-    def append_to_expand_union_types(types)
-      if including_types = @including_types
-        including_types.each &.append_to_expand_union_types(types)
-      else
-        types << self
-      end
-    end
-
     def remove_indirection
       if including_types = self.including_types
         including_types.remove_indirection
@@ -942,19 +862,6 @@ module Crystal
 
     def module?
       true
-    end
-
-    def declare_instance_var(name, var_type : Type)
-      @including_types.try &.each do |type|
-        case type
-        when Program, FileModule
-          # skip
-        when NonGenericModuleType
-          type.declare_instance_var(name, var_type)
-        when NonGenericClassType
-          type.declare_instance_var(name, var_type)
-        end
-      end
     end
 
     def add_instance_var_initializer(name, value, meta_vars)
@@ -1079,22 +986,6 @@ module Crystal
       true
     end
 
-    def declare_instance_var(name, type : Type)
-      ivar = lookup_instance_var(name)
-      ivar.type = type
-      ivar.bind_to ivar
-      ivar.freeze_type = type
-    end
-
-    def declare_instance_var(name, type_vars : Array(TypeVar))
-      type = solve_type_vars(type_vars)
-
-      ivar = lookup_instance_var(name, create: true)
-      ivar.type = type
-      ivar.bind_to ivar
-      ivar.freeze_type = type
-    end
-
     def covariant?(other_type)
       other_type = other_type.base_type if other_type.is_a?(VirtualType)
       implements?(other_type) || super
@@ -1103,7 +994,7 @@ module Crystal
     def add_instance_var_initializer(name, value, meta_vars)
       super
 
-      var = lookup_instance_var(name, true)
+      var = lookup_instance_var(name)
       var.bind_to(value)
 
       program.after_inference_types << self
@@ -1264,8 +1155,6 @@ module Crystal
 
       run_instance_vars_initializers self, self, instance
 
-      initialize_instance instance
-
       instance.after_initialize
 
       # Notify modules that an instance was added
@@ -1332,10 +1221,6 @@ module Crystal
     end
 
     def run_instance_var_initializer(initializer, instance)
-      # Nothing
-    end
-
-    def initialize_instance(instance)
       # Nothing
     end
 
@@ -1467,21 +1352,6 @@ module Crystal
       @including_types
     end
 
-    getter declared_instance_vars : Hash(String, Array(TypeVar))?
-
-    def declare_instance_var(name, type_var : TypeVar)
-      declare_instance_var(name, [type_var] of TypeVar)
-    end
-
-    def declare_instance_var(name, type_vars : Array(TypeVar))
-      declared_instance_vars = (@declared_instance_vars ||= {} of String => Array(TypeVar))
-      declared_instance_vars[name] = type_vars
-
-      @inherited.try &.each do |inherited|
-        inherited.declare_instance_var(name, type_vars)
-      end
-    end
-
     def new_generic_instance(program, generic_type, type_vars)
       GenericModuleInstanceType.new program, generic_type, type_vars
     end
@@ -1517,39 +1387,6 @@ module Crystal
 
     def new_generic_instance(program, generic_type, type_vars)
       GenericClassInstanceType.new program, generic_type, nil, type_vars
-    end
-
-    getter declared_instance_vars : Hash(String, Array(TypeVar))?
-
-    def declare_instance_var(name, type_var : TypeVar)
-      declare_instance_var(name, [type_var] of TypeVar)
-    end
-
-    def declare_instance_var(name, type_vars : Array(TypeVar))
-      declared_instance_vars = (@declared_instance_vars ||= {} of String => Array(TypeVar))
-      declared_instance_vars[name] = type_vars
-
-      generic_types.each do |key, instance|
-        instance.declare_instance_var(name, type_vars)
-      end
-
-      @inherited.try &.each do |inherited|
-        inherited.declare_instance_var(name, type_vars)
-      end
-    end
-
-    def initialize_instance(instance)
-      if decl_ivars = @declared_instance_vars
-        decl_ivars.each do |name, type_vars|
-          type = instance.solve_type_vars(type_vars)
-
-          ivar = MetaTypeVar.new(name, type)
-          ivar.owner = instance
-          ivar.bind_to ivar
-          ivar.freeze_type = type
-          instance.instance_vars[name] = ivar
-        end
-      end
     end
 
     protected def initialize_metaclass(metaclass)
@@ -1738,23 +1575,6 @@ module Crystal
       type_desc, namespace, lookup_new_in_ancestors?,
       splat_index, double_variadic?, to: @generic_type
 
-    def declare_instance_var(name, type : Type)
-      ivar = lookup_instance_var(name)
-      ivar.type = type
-      ivar.bind_to ivar
-      ivar.freeze_type = type
-    end
-
-    def declare_instance_var(name, type_vars : Array(TypeVar))
-      type = solve_type_vars(type_vars)
-
-      ivar = MetaTypeVar.new(name, type)
-      ivar.owner = self
-      ivar.bind_to ivar
-      ivar.freeze_type = type
-      self.instance_vars[name] = ivar
-    end
-
     def filter_by_responds_to(name)
       @generic_type.filter_by_responds_to(name) ? self : nil
     end
@@ -1800,13 +1620,6 @@ module Crystal
     delegate leaf?, depth, defs, macros,
       type_desc, namespace, lookup_new_in_ancestors?,
       splat_index, double_variadic?, to: @generic_type
-
-    def declare_instance_var(name, type : Type)
-      ivar = lookup_instance_var(name)
-      ivar.type = type
-      ivar.bind_to ivar
-      ivar.freeze_type = type
-    end
 
     def filter_by_responds_to(name)
       @generic_type.filter_by_responds_to(name) ? self : nil
@@ -1905,7 +1718,6 @@ module Crystal
       return_type = types.pop
       instance = ProcInstanceType.new(program, types, return_type)
       generic_types[type_vars] = instance
-      initialize_instance instance
       instance.after_initialize
       instance
     end
@@ -1984,7 +1796,6 @@ module Crystal
       end
       instance = TupleInstanceType.new(program, types)
       generic_types[type_vars] = instance
-      initialize_instance instance
       instance.after_initialize
       instance
     end
@@ -2602,16 +2413,6 @@ module Crystal
       end
     end
 
-    def expand_union_types
-      if union_types.any?(&.is_a?(NonGenericModuleType))
-        types = [] of Type
-        union_types.each &.append_to_expand_union_types(types)
-        types
-      else
-        union_types
-      end
-    end
-
     def implements?(other_type : Type)
       other_type = other_type.remove_alias
       self == other_type || union_types.all?(&.implements?(other_type))
@@ -2806,7 +2607,6 @@ module Crystal
 
     delegate leaf?, superclass, lookup_first_def, lookup_defs,
       lookup_defs_with_modules, lookup_instance_var, lookup_instance_var?,
-      lookup_instance_var_with_owner, lookup_instance_var_with_owner?,
       index_of_instance_var, lookup_macro, lookup_macros, all_instance_vars,
       abstract?, implements?, covariant?, ancestors, struct?, to: base_type
 

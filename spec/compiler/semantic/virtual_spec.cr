@@ -201,10 +201,10 @@ describe "Semantic: virtual" do
     result = semantic nodes
     mod = result.program
 
-    var = mod.types["Var"].as(InstanceVarContainer)
+    var = mod.types["Var"]
     var.instance_vars.size.should eq(0)
 
-    base = mod.types["Base"].as(InstanceVarContainer)
+    base = mod.types["Base"]
     base.instance_vars["@x"].type.should eq(mod.nilable(mod.int32))
   end
 

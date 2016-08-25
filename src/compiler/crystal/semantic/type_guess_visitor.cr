@@ -1,7 +1,7 @@
 require "./semantic_visitor"
 
 module Crystal
-  # Guess the type of global, class and instance variables
+  # Guess the type of class and instance variables
   # from assignments to them.
   class TypeGuessVisitor < SemanticVisitor
     alias TypeDeclarationWithLocation = TypeDeclarationProcessor::TypeDeclarationWithLocation
@@ -9,7 +9,6 @@ module Crystal
     alias InstanceVarTypeInfo = TypeDeclarationProcessor::InstanceVarTypeInfo
     alias Error = TypeDeclarationProcessor::Error
 
-    getter globals
     getter class_vars
     getter initialize_infos
     getter errors
@@ -42,7 +41,6 @@ module Crystal
                    @errors : Hash(Type, Hash(String, Error)))
       super(mod)
 
-      @globals = {} of String => TypeInfo
       @class_vars = {} of ClassVarContainer => Hash(String, TypeInfo)
 
       # Was `self` access found? If so, instance variables assigned after it
@@ -185,8 +183,6 @@ module Crystal
 
       result =
         case target
-        when Global
-          process_assign_global(target, value)
         when ClassVar
           process_assign_class_var(target, value)
         when InstanceVar
@@ -251,28 +247,11 @@ module Crystal
 
                 owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
                 add_type_info(owner_vars, target.name, tuple_type, target)
-              when Global
-                next if @program.global_vars[target.name]?
-
-                add_type_info(@globals, target.name, tuple_type, target)
               end
             end
           end
         end
       end
-    end
-
-    def process_assign_global(target, value)
-      # If the global variable already exists no need to guess its type
-      if global = @program.global_vars[target.name]?
-        return global.type
-      end
-
-      type = guess_type(value)
-      if type
-        add_type_info(@globals, target.name, type, target)
-      end
-      type
     end
 
     def process_assign_class_var(target, value)

@@ -612,15 +612,12 @@ module Crystal
       when .metaclass?
         node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
       when InstanceVarContainer
-        var_with_owner = scope.lookup_instance_var_with_owner?(node.name)
-        unless var_with_owner
-          undefined_instance_variable(scope, node)
-        end
-        if !var_with_owner.instance_var.type?
+        var = scope.lookup_instance_var?(node.name)
+        unless var
           undefined_instance_variable(scope, node)
         end
         check_self_closured
-        var_with_owner.instance_var
+        var
       else
         node.raise "Bug: #{scope} is not an InstanceVarContainer"
       end
@@ -2785,7 +2782,6 @@ module Crystal
     end
 
     def lookup_var_or_instance_var(var : InstanceVar)
-      scope = @scope.as(InstanceVarContainer)
       scope.lookup_instance_var(var.name)
     end
 

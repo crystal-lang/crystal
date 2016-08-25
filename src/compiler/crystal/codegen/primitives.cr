@@ -453,7 +453,7 @@ class Crystal::CodeGenVisitor
   end
 
   def struct_field_ptr(type, field_name, pointer)
-    index = type.index_of_instance_var('@' + field_name)
+    index = type.index_of_instance_var('@' + field_name).not_nil!
     aggregate_index pointer, index
   end
 

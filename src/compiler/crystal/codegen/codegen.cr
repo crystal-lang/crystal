@@ -428,7 +428,7 @@ module Crystal
               when Var
                 context.vars[node_exp.name].pointer
               when InstanceVar
-                instance_var_ptr (context.type.remove_typedef.as(InstanceVarContainer)), node_exp.name, llvm_self_ptr
+                instance_var_ptr context.type.remove_typedef, node_exp.name, llvm_self_ptr
               when ClassVar
                 # Make sure the class var is initializer before taking a pointer of it
                 if node_exp.var.initializer
@@ -868,7 +868,7 @@ module Crystal
       set_current_debug_location node if @debug
       ptr = case target
             when InstanceVar
-              instance_var_ptr (context.type.as(InstanceVarContainer)), target.name, llvm_self_ptr
+              instance_var_ptr context.type, target.name, llvm_self_ptr
             when Global
               get_global target.name, target_type, target.var
             when ClassVar
@@ -1068,7 +1068,7 @@ module Crystal
     end
 
     def read_instance_var(node_type, type, name, value)
-      ivar = type.lookup_instance_var_with_owner(name).instance_var
+      ivar = type.lookup_instance_var(name)
       ivar_ptr = instance_var_ptr type, name, value
       @last = downcast ivar_ptr, node_type, ivar.type, false
       if type.extern?
@@ -1827,7 +1827,7 @@ module Crystal
         return union_field_ptr(type.instance_vars[name].type, pointer)
       end
 
-      index = type.index_of_instance_var(name)
+      index = type.index_of_instance_var(name).not_nil!
 
       unless type.struct?
         index += 1

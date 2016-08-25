@@ -1,3 +1,4 @@
+require "levenshtein"
 require "../types"
 
 module Crystal
@@ -71,9 +72,7 @@ module Crystal
     def lookup_similar_def_name(name, args_size, block)
       lookup_similar_def(name, args_size, block).try &.name
     end
-  end
 
-  module InstanceVarContainer
     def lookup_similar_instance_var_name(name)
       Levenshtein.find(name, all_instance_vars.keys.select { |key| key != name })
     end

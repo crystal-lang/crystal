@@ -118,11 +118,6 @@ struct Crystal::TypeDeclarationProcessor
     # First check type declarations
     node.accept type_decl_visitor
 
-    # Use the last type found for global variables to declare them
-    type_decl_visitor.globals.each do |name, type|
-      declare_meta_type_var(@program.global_vars, @program, name, type)
-    end
-
     # Use the last type found for class variables to declare them
     type_decl_visitor.class_vars.each do |owner, vars|
       vars.each do |name, type|
@@ -133,11 +128,6 @@ struct Crystal::TypeDeclarationProcessor
     # Then use several syntactic rules to infer the types of
     # variables that don't have an explicit type set
     node.accept type_guess_visitor
-
-    # Process global variables
-    type_guess_visitor.globals.each do |name, info|
-      declare_meta_type_var(@program.global_vars, @program, name, info)
-    end
 
     # Process class variables
     type_guess_visitor.class_vars.each do |owner, vars|
@@ -245,12 +235,12 @@ struct Crystal::TypeDeclarationProcessor
 
   private def process_owner_instance_var_declaration(owner, name, type_decl)
     # Check if a superclass already defined this variable
-    supervar = owner.lookup_instance_var_with_owner?(name)
+    supervar = owner.lookup_instance_var?(name)
 
     if supervar && supervar.owner != owner
       # Redeclaring a variable with the same type is OK
-      unless supervar.instance_var.type.same?(type_decl.type)
-        raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.instance_var.type} (trying to re-declare as #{type_decl.type})", type_decl.location)
+      unless supervar.type.same?(type_decl.type)
+        raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.type} (trying to re-declare as #{type_decl.type})", type_decl.location)
       end
     else
       declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true, check_nilable: !owner.module?)
@@ -293,7 +283,7 @@ struct Crystal::TypeDeclarationProcessor
         check_non_nilable_for_generic_module(inherited, name, type_decl)
       end
     when NonGenericClassType
-      var = owner.lookup_instance_var_with_owner(name).instance_var
+      var = owner.lookup_instance_var(name).instance_var
       if !var.type.includes_type?(@program.nil)
         if nilable_instance_var?(owner, name)
           raise_not_initialized_in_all_initialize(var, name, owner)
@@ -325,7 +315,7 @@ struct Crystal::TypeDeclarationProcessor
     when NonGenericClassType
       # If a superclass already defines this variable we ignore
       # the guessed type information for subclasses
-      supervar = owner.lookup_instance_var_with_owner?(name)
+      supervar = owner.lookup_instance_var?(name)
       return if supervar
 
       type = type_info.type
@@ -546,9 +536,9 @@ struct Crystal::TypeDeclarationProcessor
   private def check_nilable_instance_vars
     @nilable_instance_vars.each do |owner, vars|
       vars.each do |name, info|
-        ivar = owner.lookup_instance_var_with_owner?(name)
+        ivar = owner.lookup_instance_var?(name)
         if ivar
-          if ivar.instance_var.type.includes_type?(@program.nil)
+          if ivar.type.includes_type?(@program.nil)
             # If the variable is nilable because it was not initialized
             # in all of the initialize methods, and it's not explicitly nil,
             # give an error and ask to be explicit.
@@ -658,7 +648,7 @@ struct Crystal::TypeDeclarationProcessor
 
       Or declare it as nilable outside at the type level:
 
-        #{name} : (#{ivar.instance_var.type})?
+        #{name} : (#{ivar.type})?
       MSG
   end
 

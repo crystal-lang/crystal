@@ -26,16 +26,12 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
   alias TypeDeclarationWithLocation = TypeDeclarationProcessor::TypeDeclarationWithLocation
 
-  getter globals
   getter class_vars
   getter instance_vars
 
   def initialize(mod,
                  @instance_vars : Hash(Type, Hash(String, TypeDeclarationWithLocation)))
     super(mod)
-
-    # The type of global variables. The last one wins.
-    @globals = {} of String => TypeDeclarationWithLocation
 
     # The type of class variables. The last one wins.
     # This is type => variables.
@@ -163,8 +159,6 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       declare_instance_var(node, var)
     when ClassVar
       declare_class_var(node, var, false)
-    when Global
-      declare_global_var(node, var, false)
     end
 
     false
@@ -253,12 +247,6 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     owner_vars[var.name] = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, uninitialized)
   end
 
-  def declare_global_var(node, var, uninitialized)
-    var_type = lookup_type(node.declared_type)
-    var_type = check_declare_var_type(node, var_type, "a global variable")
-    @globals[var.name] = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, uninitialized)
-  end
-
   def visit(node : UninitializedVar)
     var = node.var
     case var
@@ -266,8 +254,6 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       declare_instance_var(node, var)
     when ClassVar
       declare_class_var(node, var, true)
-    when Global
-      declare_global_var(node, var, true)
     end
     false
   end
