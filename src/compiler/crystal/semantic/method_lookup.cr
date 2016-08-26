@@ -373,7 +373,14 @@ module Crystal
                 # We want to add this cloned def at the end, because if we search subtype matches
                 # in the next iteration we will find it, and we don't want that.
                 changes ||= [] of Change
-                changes << Change.new(subtype_lookup.as(ModuleType), cloned_def)
+
+                # On a generic instance type, we must add the macro method to the
+                # generic type, not the instance (this will make it so that the method
+                # is found on any generic instance type)
+                change_owner = subtype_lookup
+                change_owner = change_owner.generic_type if change_owner.is_a?(GenericInstanceType)
+
+                changes << Change.new(change_owner.as(ModuleType), cloned_def)
 
                 new_subtype_matches ||= [] of Match
                 new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)

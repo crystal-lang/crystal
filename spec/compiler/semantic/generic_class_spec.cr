@@ -848,4 +848,24 @@ describe "Semantic: generic class" do
       baz.foo
       )) { union_of(int32, char) }
   end
+
+  it "types macro def with generic instance" do
+    assert_type(%(
+      class Reference
+        def foo
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class At
+      end
+
+      class Bt(T) < At
+      end
+
+      a = Pointer(At).malloc(1_u64)
+      a.value = Bt(Int32).new
+      a.value.foo
+      )) { string }
+  end
 end
