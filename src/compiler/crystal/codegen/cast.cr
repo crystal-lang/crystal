@@ -291,7 +291,7 @@ class Crystal::CodeGenVisitor
     llvm_nil
   end
 
-  def downcast_distinct(value, to_type, from_type : MetaclassType | GenericClassInstanceMetaclassType | VirtualMetaclassType)
+  def downcast_distinct(value, to_type, from_type : MetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType | VirtualMetaclassType)
     value
   end
 
@@ -412,7 +412,7 @@ class Crystal::CodeGenVisitor
     value
   end
 
-  def upcast_distinct(value, to_type : MetaclassType | GenericClassInstanceMetaclassType | VirtualMetaclassType, from_type)
+  def upcast_distinct(value, to_type : MetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType | VirtualMetaclassType, from_type)
     value
   end
 

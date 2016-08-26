@@ -856,6 +856,20 @@ module Crystal
     end
   end
 
+  class GenericModuleInstanceMetaclassType
+    def restrict(other : Metaclass, context)
+      restricted = instance_type.restrict(other.name, context)
+      instance_type == restricted ? self : nil
+    end
+
+    def restrict(other : MetaclassType, context)
+      return self if instance_type.generic_type.metaclass == other
+
+      restricted = instance_type.restrict(other.instance_type, context)
+      restricted ? self : nil
+    end
+  end
+
   class ProcInstanceType
     def restrict(other : ProcNotation, context)
       inputs = other.inputs

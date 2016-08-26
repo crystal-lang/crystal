@@ -297,7 +297,7 @@ module Crystal
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
         if obj_type == filtered_type && obj_type != to_type &&
-           !to_type.is_a?(GenericClassType) && !to_type.is_a?(GenericClassInstanceType)
+           !to_type.is_a?(GenericClassType)
           filtered_type = to_type
           @upcast = true
         end
@@ -328,7 +328,7 @@ module Crystal
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
         if obj_type == filtered_type && obj_type != to_type &&
-           !to_type.is_a?(GenericClassType) && !to_type.is_a?(GenericClassInstanceType)
+           !to_type.is_a?(GenericClassType)
           filtered_type = to_type.virtual_type
           @upcast = true
         end
@@ -386,7 +386,7 @@ module Crystal
   end
 
   class Generic
-    property! instance_type : GenericClassType
+    property! instance_type : GenericType
     property scope : Type?
     property? in_type_args = false
 
@@ -471,7 +471,7 @@ module Crystal
         end
 
         begin
-          generic_type = instance_type.instantiate(type_vars_types)
+          generic_type = instance_type.as(GenericType).instantiate(type_vars_types)
         rescue ex : Crystal::Exception
           raise ex.message
         end

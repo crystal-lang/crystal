@@ -246,6 +246,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
                       receiver.raise "can't define method in lib #{metaclass}"
                     when GenericClassInstanceMetaclassType
                       receiver.raise "can't define method in generic instance #{metaclass}"
+                    when GenericModuleInstanceMetaclassType
+                      receiver.raise "can't define method in generic instance #{metaclass}"
                     end
                     metaclass
                   end

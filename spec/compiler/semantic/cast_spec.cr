@@ -290,4 +290,16 @@ describe "Semantic: cast" do
       Bar.new.as(Void*).as(Foo)
       )) { types["Foo"].virtual_type! }
   end
+
+  it "casts to generic virtual type" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      Bar(Int32).new.as(Foo(Int32))
+      )) { generic_class("Foo", int32).virtual_type! }
+  end
 end

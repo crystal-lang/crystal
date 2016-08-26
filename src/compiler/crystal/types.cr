@@ -145,7 +145,9 @@ module Crystal
 
     def metaclass?
       case self
-      when MetaclassType, GenericClassInstanceMetaclassType, VirtualMetaclassType
+      when MetaclassType,
+           GenericClassInstanceMetaclassType, GenericModuleInstanceMetaclassType,
+           VirtualMetaclassType
         true
       else
         false
@@ -503,6 +505,18 @@ module Crystal
       0
     end
 
+    def double_variadic?
+      false
+    end
+
+    def splat_index
+      nil
+    end
+
+    def type_vars
+      raise "Bug: #{self} doesn't implement type_vars"
+    end
+
     def inspect(io)
       to_s(io)
     end
@@ -843,20 +857,6 @@ module Crystal
       else
         self
       end
-    end
-
-    def add_to_including_types(type : GenericType, all_types)
-      type.generic_types.each_value do |generic_type|
-        all_types << generic_type unless all_types.includes?(generic_type)
-      end
-      type.subclasses.each do |subclass|
-        add_to_including_types subclass, all_types
-      end
-    end
-
-    def add_to_including_types(type, all_types)
-      virtual_type = type.virtual_type
-      all_types << virtual_type unless all_types.includes?(virtual_type)
     end
 
     def filter_by_responds_to(name)
@@ -1550,7 +1550,6 @@ module Crystal
   class GenericClassInstanceType < GenericInstanceType
     include InstanceVarContainer
     include InstanceVarInitializerContainer
-    include ClassVarContainer
     include DefInstanceContainer
     include SubclassObservable
 
@@ -1565,6 +1564,9 @@ module Crystal
 
     def after_initialize
       superclass.not_nil!.add_subclass(self)
+      ancestors.each do |ancestor|
+        ancestor.add_including_type(self) if ancestor.is_a?(GenericModuleInstanceType)
+      end
     end
 
     def add_subclass(subclass)
@@ -1620,16 +1622,13 @@ module Crystal
     include InstanceVarContainer
     include InstanceVarInitializerContainer
     include DefInstanceContainer
+    include SubclassObservable
 
     getter generic_nest : Int32
 
     def initialize(program, generic_type, type_vars, generic_nest = nil)
       super(program, generic_type, type_vars)
       @generic_nest = generic_nest || (1 + @type_vars.values.max_of { |node| node.type?.try(&.generic_nest) || 0 })
-    end
-
-    def add_including_type(type)
-      @generic_type.add_including_type(type)
     end
 
     def after_initialize
@@ -1643,6 +1642,43 @@ module Crystal
     delegate leaf?, depth, defs, macros,
       type_desc, namespace, lookup_new_in_ancestors?,
       splat_index, double_variadic?, to: @generic_type
+
+    def add_including_type(type)
+      @generic_type.add_including_type(type)
+
+      including_types = @including_types ||= [] of Type
+      including_types.push type
+
+      notify_subclass_added
+    end
+
+    def including_types
+      if including_types = @including_types
+        all_types = Array(Type).new(including_types.size)
+        including_types.each do |including_type|
+          add_to_including_types(including_type, all_types)
+        end
+        program.type_merge_union_of(all_types)
+      else
+        nil
+      end
+    end
+
+    def raw_including_types
+      @including_types
+    end
+
+    def remove_indirection
+      if including_types = self.including_types
+        including_types.remove_indirection
+      else
+        self
+      end
+    end
+
+    def filter_by_responds_to(name)
+      including_types.try &.filter_by_responds_to(name)
+    end
 
     def filter_by_responds_to(name)
       @generic_type.filter_by_responds_to(name) ? self : nil
@@ -2756,4 +2792,18 @@ module Crystal
       io << ":Class"
     end
   end
+end
+
+private def add_to_including_types(type : Crystal::GenericType, all_types)
+  type.generic_types.each_value do |generic_type|
+    all_types << generic_type unless all_types.includes?(generic_type)
+  end
+  type.subclasses.each do |subclass|
+    add_to_including_types subclass, all_types
+  end
+end
+
+private def add_to_including_types(type, all_types)
+  virtual_type = type.virtual_type
+  all_types << virtual_type unless all_types.includes?(virtual_type)
 end

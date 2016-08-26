@@ -90,6 +90,10 @@ module Crystal
     delegate lookup_similar_path, to: instance_type
   end
 
+  class GenericModuleInstanceMetaclassType
+    delegate lookup_similar_path, to: instance_type
+  end
+
   class VirtualType
     delegate lookup_similar_def, lookup_similar_path, to: base_type
   end

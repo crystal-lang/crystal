@@ -24,6 +24,8 @@ module Crystal
         self.struct?
       when NonGenericModuleType
         self.including_types.try &.passed_by_value?
+      when GenericModuleInstanceType
+        self.including_types.try &.passed_by_value?
       when GenericClassInstanceType
         self.generic_type.passed_by_value?
       when TypeDefType
@@ -76,6 +78,16 @@ module Crystal
   end
 
   class NonGenericModuleType
+    def append_to_expand_union_types(types)
+      if including_types = @including_types
+        including_types.each &.append_to_expand_union_types(types)
+      else
+        types << self
+      end
+    end
+  end
+
+  class GenericModuleInstanceType
     def append_to_expand_union_types(types)
       if including_types = @including_types
         including_types.each &.append_to_expand_union_types(types)

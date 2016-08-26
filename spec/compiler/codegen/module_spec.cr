@@ -434,4 +434,100 @@ describe "Code gen: module" do
       Foo.new.t
       )).to_string.should eq("TupleLiteral")
   end
+
+  it "can instantiate generic module" do
+    run(%(
+      struct Int32
+        def self.foo
+          10
+        end
+      end
+
+      module Foo(T)
+        def self.foo
+          T.foo
+        end
+      end
+
+      Foo(Int32).foo
+      )).to_i.should eq(10)
+  end
+
+  it "can use generic module as instance variable type" do
+    run(%(
+      module Moo(T)
+        def foo
+          1
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      class Bar
+        include Moo(Int32)
+
+        def foo
+          2
+        end
+      end
+
+      class Mooer
+        def initialize(@moo : Moo(Int32))
+        end
+
+        def moo
+          @moo.foo
+        end
+      end
+
+      mooer = Mooer.new(Foo.new)
+      x = mooer.moo
+
+      mooer = Mooer.new(Bar.new)
+      y = mooer.moo
+
+      x + y
+      )).to_i.should eq(3)
+  end
+
+  it "can use generic module as instance variable type (2)" do
+    run(%(
+      module Moo(T)
+        def foo
+          1
+        end
+      end
+
+      class Foo(T)
+        include Moo(T)
+      end
+
+      class Bar(T)
+        include Moo(T)
+
+        def foo
+          2
+        end
+      end
+
+      class Mooer
+        def initialize(@moo : Moo(Int32))
+        end
+
+        def moo
+          @moo.foo
+        end
+      end
+
+      mooer = Mooer.new(Foo(Int32).new)
+      x = mooer.moo
+
+      mooer = Mooer.new(Bar(Int32).new)
+      y = mooer.moo
+
+      x + y
+      )).to_i.should eq(3)
+  end
 end

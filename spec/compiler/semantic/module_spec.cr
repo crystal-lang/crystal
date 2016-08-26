@@ -996,4 +996,82 @@ describe "Semantic: module" do
       foo(Gen(Foo).new)
       )) { int32 }
   end
+
+  it "can instantiate generic module" do
+    assert_type(%(
+      module Foo(T)
+      end
+
+      Foo(Int32)
+      )) { generic_module("Foo", int32).metaclass }
+  end
+
+  it "can use generic module as instance variable type" do
+    assert_type(%(
+      module Moo(T)
+        def foo
+          1
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      class Bar
+        include Moo(Int32)
+
+        def foo
+          'a'
+        end
+      end
+
+      class Mooer
+        def initialize(@moo : Moo(Int32))
+        end
+
+        def moo
+          @moo.foo
+        end
+      end
+
+      mooer = Mooer.new(Foo.new)
+      mooer.moo
+      )) { union_of int32, char }
+  end
+
+  it "can use generic module as instance variable type (2)" do
+    assert_type(%(
+      module Moo(T)
+        def foo
+          1
+        end
+      end
+
+      class Foo(T)
+        include Moo(T)
+      end
+
+      class Bar(T)
+        include Moo(T)
+
+        def foo
+          'a'
+        end
+      end
+
+      class Mooer
+        def initialize(@moo : Moo(Int32))
+        end
+
+        def moo
+          @moo.foo
+        end
+      end
+
+      mooer = Mooer.new(Foo(Int32).new)
+      mooer = Mooer.new(Bar(Int32).new)
+      mooer.moo
+      )) { union_of int32, char }
+  end
 end

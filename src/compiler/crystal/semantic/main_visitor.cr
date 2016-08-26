@@ -172,8 +172,8 @@ module Crystal
       return false if node.type?
 
       instance_type = node.name.type.instance_type
-      unless instance_type.is_a?(GenericClassType)
-        node.raise "#{instance_type} is not a generic class, it's a #{instance_type.type_desc}"
+      unless instance_type.is_a?(GenericType)
+        node.raise "#{instance_type} is not a generic type, it's a #{instance_type.type_desc}"
       end
 
       if instance_type.double_variadic?
@@ -215,7 +215,7 @@ module Crystal
         end
       end
 
-      node.instance_type = instance_type
+      node.instance_type = instance_type.as(GenericType)
       node.type_vars.each &.add_observer(node)
       node.named_args.try &.each &.value.add_observer(node)
       node.update

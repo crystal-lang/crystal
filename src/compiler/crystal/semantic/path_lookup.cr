@@ -127,6 +127,10 @@ module Crystal
     delegate lookup_path, to: instance_type
   end
 
+  class GenericModuleInstanceMetaclassType
+    delegate lookup_path, to: instance_type
+  end
+
   class VirtualType
     delegate lookup_path, to: base_type
   end

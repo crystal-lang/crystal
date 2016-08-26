@@ -179,7 +179,7 @@ class Crystal::Call
     lookup_matches_in program, arg_types, named_args_types, search_in_parents: search_in_parents
   end
 
-  def lookup_matches_in(owner : NonGenericModuleType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true)
+  def lookup_matches_in(owner : NonGenericModuleType | GenericModuleInstanceType | GenericType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true)
     attach_subclass_observer owner
 
     including_types = owner.including_types
@@ -187,17 +187,6 @@ class Crystal::Call
       lookup_matches_in(including_types, arg_types, named_args_types, search_in_parents: search_in_parents)
     else
       [] of Def
-    end
-  end
-
-  def lookup_matches_in(owner : GenericClassType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true)
-    including_types = owner.including_types
-    if including_types
-      attach_subclass_observer owner
-
-      lookup_matches_in(including_types, arg_types, named_args_types, search_in_parents: search_in_parents)
-    else
-      raise "no type inherits #{owner}"
     end
   end
 

@@ -85,7 +85,12 @@ module Crystal
     end
 
     def add_type(types, type : AliasType)
-      add_type types, type.remove_alias
+      aliased = type.remove_alias
+      if aliased == type
+        types << type unless types.includes? type
+      else
+        add_type types, aliased
+      end
     end
 
     # When Void participates in a union, it becomes Nil
@@ -171,6 +176,16 @@ module Crystal
     end
   end
 
+  class GenericModuleInstanceType
+    def common_ancestor(other : Type)
+      if other.implements?(self)
+        self
+      else
+        nil
+      end
+    end
+  end
+
   class GenericClassType
     def common_ancestor(other : Type)
       if other.implements?(self)
@@ -190,7 +205,7 @@ module Crystal
       common_ancestor(other.base_type)
     end
 
-    def common_ancestor(other : NonGenericModuleType)
+    def common_ancestor(other : NonGenericModuleType | GenericModuleInstanceType)
       other.common_ancestor(self)
     end
   end
@@ -204,7 +219,7 @@ module Crystal
       common_ancestor(other.base_type)
     end
 
-    def common_ancestor(other : NonGenericModuleType)
+    def common_ancestor(other : NonGenericModuleType | GenericModuleInstanceType)
       other.common_ancestor(self)
     end
   end
