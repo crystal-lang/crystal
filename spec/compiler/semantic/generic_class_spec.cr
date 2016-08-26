@@ -783,4 +783,69 @@ describe "Semantic: generic class" do
       gen.foo(Child || Child1)
       )) { int32 }
   end
+
+  it "can use virtual type for generic class" do
+    assert_type(%(
+      class Foo(T)
+        def foo
+          1
+        end
+      end
+
+      class Bar(T) < Foo(T)
+        def foo
+          'a'
+        end
+      end
+
+      class Baz
+        def initialize(@foo : Foo(Int32))
+        end
+
+        def foo
+          @foo.foo
+        end
+      end
+
+      baz = Baz.new(Bar(Int32).new)
+      baz.foo
+      )) { union_of int32, char }
+  end
+
+  it "recomputes on new subclass" do
+    assert_type(%(
+      class Foo(T)
+        def foo
+          1
+        end
+      end
+
+      class Bar(T) < Foo(T)
+        def foo
+          1
+        end
+      end
+
+      class Qux(T) < Bar(T)
+        def foo
+          'a'
+        end
+      end
+
+      class Baz
+        def initialize(@foo : Foo(Int32))
+        end
+
+        def foo
+          @foo.foo
+        end
+      end
+
+      baz = Baz.new(Bar(Int32).new)
+      baz.foo
+
+      baz = Baz.new(Qux(Int32).new)
+      baz.foo
+      )) { union_of(int32, char) }
+  end
 end

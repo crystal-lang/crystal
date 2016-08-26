@@ -182,39 +182,22 @@ module Crystal
   end
 
   class ClassType
-    def common_ancestor(other : ClassType)
-      # This discards Object, Reference and Value
-      if depth <= 1
-        return nil
-      end
+    def common_ancestor(other : ClassType | GenericClassInstanceType)
+      class_common_ancestor(self, other)
+    end
 
-      case self
-      when program.struct, program.int, program.float
-        return nil
-      when other
-        return self
-      end
+    def common_ancestor(other : VirtualType)
+      common_ancestor(other.base_type)
+    end
 
-      if depth == other.depth
-        my_superclass = @superclass
-        other_superclass = other.superclass
+    def common_ancestor(other : NonGenericModuleType)
+      other.common_ancestor(self)
+    end
+  end
 
-        if my_superclass && other_superclass
-          return my_superclass.common_ancestor(other_superclass)
-        end
-      elsif depth > other.depth
-        my_superclass = @superclass
-        if my_superclass
-          return my_superclass.common_ancestor(other)
-        end
-      elsif depth < other.depth
-        other_superclass = other.superclass
-        if other_superclass
-          return common_ancestor(other_superclass)
-        end
-      end
-
-      nil
+  class GenericClassInstanceType
+    def common_ancestor(other : ClassType | GenericClassInstanceType)
+      class_common_ancestor(self, other)
     end
 
     def common_ancestor(other : VirtualType)
@@ -305,4 +288,39 @@ module Crystal
       program.named_tuple_of(merged_entries)
     end
   end
+end
+
+private def class_common_ancestor(t1, t2)
+  # This discards Object, Reference and Value
+  if t1.depth <= 1
+    return nil
+  end
+
+  case t1
+  when t1.program.struct, t1.program.int, t1.program.float
+    return nil
+  when t2
+    return t1
+  end
+
+  if t1.depth == t2.depth
+    t1_superclass = t1.superclass
+    t2_superclass = t2.superclass
+
+    if t1_superclass && t2_superclass
+      return t1_superclass.common_ancestor(t2_superclass)
+    end
+  elsif t1.depth > t2.depth
+    t1_superclass = t1.superclass
+    if t1_superclass
+      return t1_superclass.common_ancestor(t2)
+    end
+  elsif t1.depth < t2.depth
+    t2_superclass = t2.superclass
+    if t2_superclass
+      return t1.common_ancestor(t2_superclass)
+    end
+  end
+
+  nil
 end

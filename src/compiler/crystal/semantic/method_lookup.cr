@@ -339,78 +339,76 @@ module Crystal
 
       # Traverse all subtypes
       instance_type.subtypes(base_type).each do |subtype|
-        unless subtype.is_a?(PrimitiveType)
-          subtype_lookup = virtual_lookup(subtype)
-          subtype_virtual_lookup = virtual_lookup(subtype.virtual_type)
+        subtype_lookup = virtual_lookup(subtype)
+        subtype_virtual_lookup = virtual_lookup(subtype.virtual_type)
 
-          # Check matches but without parents: only included modules
-          subtype_matches = subtype_lookup.lookup_matches_with_modules(signature, subtype_virtual_lookup, subtype_virtual_lookup)
+        # Check matches but without parents: only included modules
+        subtype_matches = subtype_lookup.lookup_matches_with_modules(signature, subtype_virtual_lookup, subtype_virtual_lookup)
 
-          # For Foo+:Class#new we need to check that this subtype doesn't define
-          # an incompatible initialize: if so, we return empty matches, because
-          # all subtypes must have an initialize with the same number of arguments.
-          if is_new && subtype_matches.empty?
-            other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules("initialize")
-            unless other_initializers.empty?
-              return Matches.new(nil, false)
-            end
+        # For Foo+:Class#new we need to check that this subtype doesn't define
+        # an incompatible initialize: if so, we return empty matches, because
+        # all subtypes must have an initialize with the same number of arguments.
+        if is_new && subtype_matches.empty?
+          other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules("initialize")
+          unless other_initializers.empty?
+            return Matches.new(nil, false)
           end
+        end
 
-          # If we didn't find a match in a subclass, and the base type match is a macro
-          # def, we need to copy it to the subclass so that @name, @instance_vars and other
-          # macro vars resolve correctly.
-          if subtype_matches.empty?
-            new_subtype_matches = nil
+        # If we didn't find a match in a subclass, and the base type match is a macro
+        # def, we need to copy it to the subclass so that @name, @instance_vars and other
+        # macro vars resolve correctly.
+        if subtype_matches.empty?
+          new_subtype_matches = nil
 
-            base_type_matches.each do |base_type_match|
-              if base_type_match.def.macro_def?
-                # We need to copy each submatch if it's a macro def
-                full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup)
-                full_subtype_matches.each do |full_subtype_match|
-                  cloned_def = full_subtype_match.def.clone
-                  cloned_def.macro_owner = full_subtype_match.def.macro_owner
-                  cloned_def.owner = subtype_lookup
+          base_type_matches.each do |base_type_match|
+            if base_type_match.def.macro_def?
+              # We need to copy each submatch if it's a macro def
+              full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup)
+              full_subtype_matches.each do |full_subtype_match|
+                cloned_def = full_subtype_match.def.clone
+                cloned_def.macro_owner = full_subtype_match.def.macro_owner
+                cloned_def.owner = subtype_lookup
 
-                  # We want to add this cloned def at the end, because if we search subtype matches
-                  # in the next iteration we will find it, and we don't want that.
-                  changes ||= [] of Change
-                  changes << Change.new(subtype_lookup.as(ModuleType), cloned_def)
+                # We want to add this cloned def at the end, because if we search subtype matches
+                # in the next iteration we will find it, and we don't want that.
+                changes ||= [] of Change
+                changes << Change.new(subtype_lookup.as(ModuleType), cloned_def)
 
-                  new_subtype_matches ||= [] of Match
-                  new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
-                end
+                new_subtype_matches ||= [] of Match
+                new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
               end
             end
-
-            if new_subtype_matches
-              subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature, new_subtype_matches))
-            end
           end
 
-          if !subtype.leaf? && subtype_matches.size > 0
-            type_to_matches ||= {} of Type => Matches
-            type_to_matches[subtype] = subtype_matches
+          if new_subtype_matches
+            subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature, new_subtype_matches))
           end
+        end
 
-          # If the subtype is non-abstract but doesn't cover all,
-          # we need to check if a parent covers it
-          if !subtype.abstract? && !base_type_covers_all && !subtype_matches.cover_all?
-            unless covered_by_superclass?(subtype, type_to_matches)
-              return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
-            end
+        if !subtype.leaf? && subtype_matches.size > 0
+          type_to_matches ||= {} of Type => Matches
+          type_to_matches[subtype] = subtype_matches
+        end
+
+        # If the subtype is non-abstract but doesn't cover all,
+        # we need to check if a parent covers it
+        if !subtype.abstract? && !base_type_covers_all && !subtype_matches.cover_all?
+          unless covered_by_superclass?(subtype, type_to_matches)
+            return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
           end
+        end
 
-          if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
-            if subtype.abstract? && !self.is_a?(VirtualMetaclassType) && subtype.subclasses.empty?
-              # No need to add matches if for an abstract class without subclasses
-            else
-              # We need to insert the matches before the previous ones
-              # because subtypes are more specific matches
-              if matches
-                subtype_matches_matches.concat matches
-              end
-              matches = subtype_matches_matches
+        if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
+          if subtype.abstract? && !self.is_a?(VirtualMetaclassType) && subtype.subclasses.empty?
+            # No need to add matches if for an abstract class without subclasses
+          else
+            # We need to insert the matches before the previous ones
+            # because subtypes are more specific matches
+            if matches
+              subtype_matches_matches.concat matches
             end
+            matches = subtype_matches_matches
           end
         end
       end

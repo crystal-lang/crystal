@@ -242,7 +242,7 @@ module Crystal
       when VirtualMetaclassType
         implements?(other_type.base_type.metaclass)
       else
-        self == other_type
+        parents.try &.any? &.implements?(other_type)
       end
     end
 
@@ -451,6 +451,14 @@ module Crystal
     def lookup_instance_var?(name)
       superclass.try(&.lookup_instance_var?(name)) ||
         instance_vars[name]?
+    end
+
+    def lookup_class_var?(name)
+      nil
+    end
+
+    def lookup_class_var(name)
+      raise "Bug: #{self} doesn't implement lookup_class_var"
     end
 
     def has_instance_var_initializer?(name)
@@ -699,11 +707,6 @@ module Crystal
           mod.add_including_type(self)
         end
       end
-    end
-
-    def implements?(other_type)
-      other_type = other_type.remove_alias
-      super || parents.any? &.implements?(other_type)
     end
 
     def covariant?(other_type)
@@ -1549,6 +1552,7 @@ module Crystal
     include InstanceVarInitializerContainer
     include ClassVarContainer
     include DefInstanceContainer
+    include SubclassObservable
 
     property superclass : Type?
     getter subclasses = [] of Type
@@ -1560,18 +1564,37 @@ module Crystal
     end
 
     def after_initialize
-      @generic_type.superclass.not_nil!.add_subclass(self)
+      superclass.not_nil!.add_subclass(self)
     end
 
     def add_subclass(subclass)
       subclasses << subclass
+      notify_subclass_added
+
+      superclass = superclass()
+      while superclass.is_a?(SubclassObservable)
+        superclass.notify_subclass_added
+        superclass = superclass.superclass
+      end
     end
 
     def virtual_type
-      self
+      if leaf? && !abstract?
+        self
+      elsif struct? && abstract? && !leaf?
+        virtual_type!
+      elsif struct?
+        self
+      else
+        virtual_type!
+      end
     end
 
-    delegate leaf?, depth, defs, superclass, macros, abstract?, struct?,
+    def virtual_type!
+      @virtual_type ||= VirtualType.new(program, self)
+    end
+
+    delegate depth, defs, superclass, macros, abstract?, struct?,
       type_desc, namespace, lookup_new_in_ancestors?,
       splat_index, double_variadic?, to: @generic_type
 
@@ -2599,7 +2622,7 @@ module Crystal
     include InstanceVarContainer
     include ClassVarContainer
 
-    getter base_type : NonGenericClassType
+    getter base_type : Type
 
     def initialize(program, @base_type)
       super(program)

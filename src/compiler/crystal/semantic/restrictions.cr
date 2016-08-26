@@ -476,7 +476,7 @@ module Crystal
     end
 
     def restriction_of?(other : GenericInstanceType, owner)
-      return false unless generic_type == other.generic_type
+      return super unless generic_type == other.generic_type
 
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[name]

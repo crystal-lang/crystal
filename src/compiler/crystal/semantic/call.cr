@@ -1051,12 +1051,12 @@ class Crystal::Call
     {typed_def, args}
   end
 
-  def attach_subclass_observer(type : SubclassObservable)
-    if (subclass_notifier = @subclass_notifier).is_a?(SubclassObservable)
-      subclass_notifier.remove_subclass_observer(self)
+  def attach_subclass_observer(type : Type)
+    if subclass_notifier = @subclass_notifier
+      subclass_notifier.as(SubclassObservable).remove_subclass_observer(self)
     end
 
-    type.add_subclass_observer(self)
+    type.as(SubclassObservable).add_subclass_observer(self)
     @subclass_notifier = type
   end
 
