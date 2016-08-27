@@ -1,6 +1,30 @@
 require "../types"
 
 module Crystal
+  # This class assigns a pair of IDs `{min, max}` to every type in the program.
+  #
+  # For a regular class or struct (not metaclass), this pair
+  # of ids is such that `min` is the minimum ID of its subtypes,
+  # and `max` is 1 + the maximum ID of its subtypes. In this way
+  # we can quickly know if a type implements another type: its ID
+  # must be between {min, max} of such type.
+  #
+  # For example, ids could be assigned like this:
+  #
+  # - Foo: {1, 8}
+  #   - Bar: {1, 2}
+  #     - Baz: {1, 1}
+  #   - Qux: {3, 3}
+  #   - Gen(T): {5, 7}
+  #     - Gen(Int32): {4, 4}
+  #     - Gen2(T): {5, 6}
+  #       - Gen2(Char): {5, 5}
+  #
+  # Note that generic instances and generic subtypes are considered
+  # as subtypes of a generic type.
+  #
+  # For metaclasses IDs are assigned sequentially as they are needed,
+  # because dispatch on metaclasses is less often.
   class LLVMId
     getter id_to_metaclass : Hash(Int32, Int32)
 
@@ -31,31 +55,46 @@ module Crystal
       @ids[type]?
     end
 
-    private def assign_id(type : NonGenericClassType)
-      assign_id_from_subtypes type, type.subclasses
+    private def assign_id(type)
+      min_max_type_id = min_max_type_id(type)
+      if min_max_type_id
+        min_max_type_id[1]
+      else
+        assign_id_impl(type)
+      end
     end
 
-    private def assign_id(type : MetaclassType)
+    private def assign_id_impl(type : NonGenericClassType)
+      assign_id_from_subtypes type, subclasses_of(type)
+    end
+
+    private def assign_id_impl(type : MetaclassType)
       # Skip for now
       0
     end
 
-    private def assign_id(type : GenericClassType)
-      assign_id_from_subtypes type, type.generic_types.values
+    private def assign_id_impl(type : GenericClassType)
+      subtypes = type.generic_types.values.reject(&.unbound?)
+      subtypes.concat(subclasses_of(type))
+      assign_id_from_subtypes type, subtypes
     end
 
-    private def assign_id(type : GenericClassInstanceType | PrimitiveType)
+    private def assign_id_impl(type : PrimitiveType)
       id = next_id
       put_id type, id, id
       id
     end
 
-    private def assign_id(type : NilType)
+    private def assign_id_impl(type : GenericClassInstanceType)
+      assign_id_from_subtypes type, type.subclasses
+    end
+
+    private def assign_id_impl(type : NilType)
       put_id type, 0, 0
       0
     end
 
-    private def assign_id(type)
+    private def assign_id_impl(type)
       raise "Bug: unhandled type in assign id: #{type}"
     end
 
@@ -89,12 +128,18 @@ module Crystal
 
     private def assign_id_to_metaclass(type : GenericClassInstanceType | PrimitiveType)
       assign_id_to_metaclass(type, type.metaclass)
+      type.subclasses.each do |subclass|
+        assign_id_to_metaclass(subclass)
+      end
     end
 
     private def assign_id_to_metaclass(type : GenericClassType)
       assign_id_to_metaclass(type, type.metaclass)
       type.generic_types.values.each do |generic_type|
         assign_id_to_metaclass(generic_type)
+      end
+      type.subclasses.each do |subclass|
+        assign_id_to_metaclass(subclass)
       end
     end
 
@@ -116,6 +161,10 @@ module Crystal
 
     private def next_id
       @next_id += 1
+    end
+
+    private def subclasses_of(type)
+      type.subclasses.reject(&.is_a?(GenericInstanceType))
     end
   end
 end

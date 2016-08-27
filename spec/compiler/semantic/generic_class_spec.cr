@@ -868,4 +868,16 @@ describe "Semantic: generic class" do
       a.value.foo
       )) { string }
   end
+
+  it "unifies generic metaclass types" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      Foo(Int32) || Bar(Int32)
+      )) { generic_class("Foo", int32).metaclass.virtual_type! }
+  end
 end

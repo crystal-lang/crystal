@@ -517,6 +517,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement type_vars"
     end
 
+    def unbound?
+      false
+    end
+
     def inspect(io)
       to_s(io)
     end
@@ -829,6 +833,8 @@ module Crystal
     include SubclassObservable
 
     def add_including_type(type)
+      return if type.unbound?
+
       including_types = @including_types ||= [] of Type
       including_types.push type
 
@@ -925,6 +931,8 @@ module Crystal
     end
 
     def add_subclass(subclass)
+      return if subclass.unbound?
+
       subclasses << subclass
       notify_subclass_added
 
@@ -1292,6 +1300,10 @@ module Crystal
       ancestor.type_vars[name]
     end
 
+    def unbound?
+      true
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << @name
     end
@@ -1435,6 +1447,29 @@ module Crystal
   end
 
   # An instantiated generic type (like Array(String) or Enumerable(Int32)).
+  #
+  # To represent generic superclasses and generic included modules,
+  # GenericInstanceType is also used. For example, in:
+  #
+  # ```
+  # class Foo(T); end
+  #
+  # class Bar(T) < Foo(T); end
+  # ```
+  #
+  # The GenericClassType `Bar(T)` will have a GenericClassInstanceType
+  # `Foo(T)` as a superclass, with `T` being a `TypeParameter`. We can't
+  # simply have the generic type `Foo(T)` be the superclass (maybe in this
+  # particular example yes) but we could also have:
+  #
+  # ```
+  # class Foo(X, Y); end
+  #
+  # class Bar(T) < Foo(Int32, T); end
+  # ```
+  #
+  # In that case `Foo(X, Y)` is not quite the superclass, because
+  # the superclass has a fixed type `Int32` as the first parameter.
   abstract class GenericInstanceType < Type
     getter generic_type : GenericType
     getter type_vars : Hash(String, ASTNode)
@@ -1508,11 +1543,17 @@ module Crystal
 
     def has_in_type_vars?(type)
       type_vars.each_value do |type_var|
-        case type_var
-        when Var
+        if type_var.is_a?(Var)
           return true if type_var.type.includes_type?(type) || type_var.type.has_in_type_vars?(type)
-        when Type
-          return true if type_var.includes_type?(type) || type_var.has_in_type_vars?(type)
+        end
+      end
+      false
+    end
+
+    def unbound?
+      type_vars.each_value do |type_var|
+        if type_var.is_a?(Var)
+          return true if type_var.type.unbound?
         end
       end
       false
@@ -1570,6 +1611,8 @@ module Crystal
     end
 
     def add_subclass(subclass)
+      return if subclass.unbound?
+
       subclasses << subclass
       notify_subclass_added
 
@@ -1644,6 +1687,8 @@ module Crystal
       splat_index, double_variadic?, to: @generic_type
 
     def add_including_type(type)
+      return if type.unbound?
+
       @generic_type.add_including_type(type)
 
       including_types = @including_types ||= [] of Type
@@ -1932,6 +1977,10 @@ module Crystal
       program.tuple_of(new_tuple_types)
     end
 
+    def unbound?
+      tuple_types.any? &.unbound?
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << "Tuple("
       @tuple_types.each_with_index do |tuple_type, i|
@@ -2035,6 +2084,10 @@ module Crystal
         NamedArgumentType.new(entry.name, entry.type.replace_type_parameters(instance))
       end
       program.named_tuple_of(new_entries)
+    end
+
+    def unbound?
+      entries.any? &.type.unbound?
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
@@ -2617,7 +2670,7 @@ module Crystal
 
     def collect_filtered_by_responds_to(name, type, result)
       type.subclasses.each do |subclass|
-        unless subclass.is_a?(GenericClassType)
+        unless subclass.is_a?(GenericType) || subclass.unbound?
           filtered = virtual_lookup(subclass).filter_by_responds_to(name)
           if filtered
             result << virtual_lookup(subclass).virtual_type
@@ -2702,9 +2755,7 @@ module Crystal
     end
 
     def collect_subtypes(type, subtypes)
-      unless type.is_a?(GenericClassType)
-        subtypes << type
-      end
+      subtypes << type unless type.is_a?(GenericType) || type.unbound?
       type.subclasses.each do |subclass|
         collect_subtypes subclass, subtypes
       end

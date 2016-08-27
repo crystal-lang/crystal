@@ -730,6 +730,7 @@ module Crystal
 
     def restrict(other : Type, context)
       other = other.remove_alias
+      base_type = self.base_type
 
       if self == other
         self
@@ -741,9 +742,9 @@ module Crystal
       elsif other.is_a?(VirtualType)
         result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
         result ? result.virtual_type : nil
-      elsif other.implements?(self.base_type)
+      elsif other.implements?(base_type)
         other.virtual_type
-      elsif self.base_type.implements?(other)
+      elsif base_type.implements?(other)
         self
       elsif other.module?
         if base_type.implements?(other)
@@ -754,6 +755,15 @@ module Crystal
           end
           program.type_merge_union_of types
         end
+      elsif base_type.is_a?(GenericInstanceType) && other.is_a?(GenericType)
+        # Consider the case of Foo(Int32) vs. Bar(T), with Bar(T) < Foo(T):
+        # we want to return Bar(Int32), so we search in Bar's generic instantiations
+        other.generic_types.values.each do |instance|
+          if instance.implements?(base_type)
+            return instance
+          end
+        end
+        nil
       else
         nil
       end

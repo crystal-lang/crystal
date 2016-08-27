@@ -671,4 +671,19 @@ describe "Codegen: is_a?" do
       foo(io)
       )).to_i.should eq(2)
   end
+
+  it "does is_a? for virtual generic instance type against generic" do
+    run(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      def foo(x : Bar)
+      end
+
+      Bar(Int32).new.as(Foo(Int32)).is_a?(Bar) ? 2 : 3
+      )).to_i.should eq(2)
+  end
 end

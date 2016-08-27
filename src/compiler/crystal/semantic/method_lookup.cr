@@ -380,7 +380,9 @@ module Crystal
                 change_owner = subtype_lookup
                 change_owner = change_owner.generic_type if change_owner.is_a?(GenericInstanceType)
 
-                changes << Change.new(change_owner.as(ModuleType), cloned_def)
+                if change_owner.is_a?(ModuleType)
+                  changes << Change.new(change_owner, cloned_def)
+                end
 
                 new_subtype_matches ||= [] of Match
                 new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)

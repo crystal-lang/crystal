@@ -128,6 +128,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     if created_new_type
       type.superclass = superclass
+
+      # If it's SomeClass(T) < Foo(T), or SomeClass < Foo(Int32),
+      # we want to add SomeClass as a subclass of Foo(T)
+      if superclass.is_a?(GenericClassInstanceType)
+        superclass.generic_type.add_subclass(type)
+      end
     end
 
     scope.types[name] = type if created_new_type
