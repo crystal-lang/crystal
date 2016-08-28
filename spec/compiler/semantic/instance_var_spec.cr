@@ -4285,4 +4285,30 @@ describe "Semantic: instance var" do
       Some.new.some
       )) { hash_of(generic_class("Foo", int32).virtual_type!, generic_class("Foo", int32).virtual_type!) }
   end
+
+  it "guesses from splat (#3149)" do
+    assert_type(%(
+      class Args(*T)
+        def initialize(*@args : *T)
+        end
+      end
+
+      Args.new(1, 'a')
+      )) { generic_class "Args", int32, char }
+  end
+
+  it "guesses from splat (2) (#3149)" do
+    assert_type(%(
+      class Args(*T)
+        def initialize(*@args : *T)
+        end
+
+        def args
+          @args
+        end
+      end
+
+      Args.new(1, 'a').args
+      )) { tuple_of([int32, char]) }
+  end
 end

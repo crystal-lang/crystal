@@ -342,6 +342,19 @@ class Crystal::Type
       program.type_merge expressions
     end
 
+    def lookup(node : Splat)
+      splat_type = in_generic_args { lookup(node.exp) }
+      case splat_type
+      when TypeParameter
+        # Consider the case of *T, where T is a type parameter
+        TypeSplat.new(@root.program, splat_type)
+      else
+        return if !@raise
+
+        node.raise "can only splat tuple type, not #{splat_type}"
+      end
+    end
+
     def lookup(node : Underscore)
       node.raise "can't use underscore as generic type argument" if @raise
     end

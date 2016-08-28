@@ -1160,7 +1160,16 @@ module Crystal
       end
 
       self.instance_vars.each do |name, ivar|
-        instance_var_type = ivar.type.replace_type_parameters(instance)
+        ivar_type = ivar.type
+        if ivar_type.is_a?(TypeSplat)
+          # Consider the case of @x : *T
+          instance_var_type = ivar_type.splatted_type.replace_type_parameters(instance)
+          unless instance_var_type.is_a?(TupleInstanceType)
+            raise "expected splatted type to be a tuple type, not #{instance_var_type}"
+          end
+        else
+          instance_var_type = ivar_type.replace_type_parameters(instance)
+        end
         instance.declare_instance_var(name, instance_var_type)
       end
 
