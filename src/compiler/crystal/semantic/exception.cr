@@ -23,7 +23,8 @@ module Crystal
           name_size = 0
           column_number = location.column_number
         end
-        new message, location.line_number, column_number, location.filename, name_size, inner
+        ex = new message, location.line_number, column_number, location.filename, name_size, inner
+        wrap_macro_expression(ex, location)
       else
         new message, nil, 0, nil, 0, inner
       end
@@ -38,7 +39,16 @@ module Crystal
     end
 
     def self.new(message : String, location : Location)
-      new message, location.line_number, location.column_number, location.filename, 0
+      ex = new message, location.line_number, location.column_number, location.filename, 0
+      wrap_macro_expression(ex, location)
+    end
+
+    protected def self.wrap_macro_expression(ex, location)
+      filename = location.filename
+      if filename.is_a?(VirtualFile) && (expanded_location = filename.expanded_location)
+        ex = new "expanding macro", expanded_location.line_number, expanded_location.column_number, expanded_location.filename, 0, ex
+      end
+      ex
     end
 
     def json_obj(ar, io)
