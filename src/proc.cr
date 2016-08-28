@@ -62,13 +62,15 @@
 # ```
 # module Ticker
 #   # The callback for the user doesn't have a Void*
+#   @@box : Box(Int32 ->)
+
 #   def self.on_tick(&callback : Int32 ->)
-#     # We must save this in Crystal-land so the GC doesn't collect it (*)
-#     @@callback = callback
-#
 #     # Since Proc is a {Void*, Void*}, we can't turn that into a Void*, so we
 #     # "box" it: we allocate memory and store the Proc there
 #     boxed_data = Box.box(callback)
+#
+#     # We must save this in Crystal-land so the GC doesn't collect it (*)
+#     @@box = boxed_data
 #
 #     # We pass a callback that doesn't form a closure, and pass the boxed_data as
 #     # the callback data
@@ -86,9 +88,9 @@
 # end
 # ```
 #
-# Note that we save the callback in `@@callback`. The reason is that if we don't do it, and our code doesn't
-# reference it anymore, the GC will collect it. The C library will of course store the callback, but Crystal's
-# GC has no way of knowing that.
+# Note that we save the box in `@@box`. The reason is that if we don't do it, and our code doesn't
+# reference it anymore, the GC will collect it. The C library will of course store the callback,
+# but Crystal's GC has no way of knowing that.
 struct Proc
   def self.new(pointer : Void*, closure_data : Void*)
     func = {pointer, closure_data}
