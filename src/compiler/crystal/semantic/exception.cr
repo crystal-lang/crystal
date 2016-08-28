@@ -98,7 +98,7 @@ module Crystal
         end
       when VirtualFile
         io << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
-        io << Crystal.with_line_numbers(filename.source)
+        io << Crystal.with_line_numbers(filename.source, @line, @color)
         is_macro = true
       else
         lines = source ? source.lines.to_a : nil
