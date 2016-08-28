@@ -173,7 +173,7 @@ struct Proc
   end
 
   def hash
-    object_id.hash
+    internal_representation.hash
   end
 
   def clone
