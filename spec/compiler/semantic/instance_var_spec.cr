@@ -4245,4 +4245,44 @@ describe "Semantic: instance var" do
       Foo.new.foo
       )) { types["Foo"] }
   end
+
+  it "guesses from array literal with of, with subclass" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      class Some
+        @some = [] of Foo(Int32)
+
+        def some
+          @some
+        end
+      end
+
+      Some.new.some
+      )) { array_of(generic_class("Foo", int32).virtual_type!) }
+  end
+
+  it "guesses from hash literal with of, with subclass" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      class Some
+        @some = {} of Foo(Int32) => Foo(Int32)
+
+        def some
+          @some
+        end
+      end
+
+      Some.new.some
+      )) { hash_of(generic_class("Foo", int32).virtual_type!, generic_class("Foo", int32).virtual_type!) }
+  end
 end

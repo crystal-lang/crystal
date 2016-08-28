@@ -423,7 +423,7 @@ module Crystal
       elsif node_of = node.of
         type = lookup_type?(node_of)
         if type
-          return program.array_of(type)
+          return program.array_of(type.virtual_type)
         end
       else
         element_types = guess_array_literal_element_types(node)
@@ -465,7 +465,7 @@ module Crystal
         value_type = lookup_type?(node_of.value)
         return nil unless value_type
 
-        return program.hash_of(key_type, value_type)
+        return program.hash_of(key_type.virtual_type, value_type.virtual_type)
       else
         key_types, value_types = guess_hash_literal_key_value_types(node)
         if key_types && value_types
