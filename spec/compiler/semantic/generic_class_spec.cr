@@ -880,4 +880,29 @@ describe "Semantic: generic class" do
       Foo(Int32) || Bar(Int32)
       )) { generic_class("Foo", int32).metaclass.virtual_type! }
   end
+
+  it "doesn't crash when matching restriction against number literal (#3157)" do
+    assert_error %(
+      class Gen(T)
+        @value : String?
+
+        def initialize(@value : T)
+        end
+      end
+
+      Gen(3).new("a")
+      ),
+      "no overload matches"
+  end
+
+  it "doesn't crash when matching restriction against number literal (2) (#3157)" do
+    assert_error %(
+      class Cls(T)
+        @a : T?
+      end
+
+      Cls(3).new
+      ),
+      "expected type, not NumberLiteral"
+  end
 end

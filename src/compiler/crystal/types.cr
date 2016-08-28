@@ -1165,7 +1165,7 @@ module Crystal
           # Consider the case of @x : *T
           instance_var_type = ivar_type.splatted_type.replace_type_parameters(instance)
           unless instance_var_type.is_a?(TupleInstanceType)
-            raise "expected splatted type to be a tuple type, not #{instance_var_type}"
+            raise TypeException.new "expected splatted type to be a tuple type, not #{instance_var_type}"
           end
         else
           instance_var_type = ivar_type.replace_type_parameters(instance)
@@ -2548,14 +2548,14 @@ module Crystal
           if replacement.is_a?(Var)
             new_union_types << replacement.type
           else
-            raise "expected type, not #{replacement.class_desc}"
+            raise TypeException.new "expected type, not #{replacement.class_desc}"
           end
         when TypeSplat
           type_var = type.splatted_type.replace_type_parameters(instance)
           if type_var.is_a?(TupleInstanceType)
             new_union_types.concat(type_var.tuple_types)
           else
-            raise "expected tuple type, not #{type_var}"
+            raise TypeException.new "expected tuple type, not #{type_var}"
           end
         else
           new_union_types << type.replace_type_parameters(instance)
