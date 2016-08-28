@@ -123,6 +123,9 @@ module Crystal
       @last_arg_is_skip = false
       @string_continuation = 0
       @inside_call_or_assign = 0
+
+      # Lines that must not be rstripped (HEREDOC lines)
+      @no_rstrip_lines = Set(Int32).new
     end
 
     def end_visit_any(node)
@@ -405,6 +408,7 @@ module Crystal
 
       indent_difference = @token.column_number - (@column + 1)
       heredoc_line = @line
+      heredoc_end = @line
 
       write @token.raw
       next_string_token
@@ -424,6 +428,7 @@ module Crystal
           write "}"
           next_string_token
         when :DELIMITER_END
+          heredoc_end = @line
           break
         end
       end
@@ -431,8 +436,13 @@ module Crystal
       write @token.raw
       format_regex_modifiers if is_regex
 
-      if is_heredoc && indent_difference > 0
-        @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
+      if is_heredoc
+        if indent_difference > 0
+          @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
+        end
+        (heredoc_line...heredoc_end).each do |line|
+          @no_rstrip_lines.add line
+        end
       end
 
       if space_slash_newline?
@@ -470,6 +480,7 @@ module Crystal
       @last_is_heredoc = is_heredoc
 
       heredoc_line = @line
+      heredoc_end = @line
 
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
@@ -523,11 +534,18 @@ module Crystal
 
       skip_strings
 
+      heredoc_end = @line
+
       check :DELIMITER_END
       write @token.raw
 
-      if is_heredoc && indent_difference > 0
-        @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
+      if is_heredoc
+        if indent_difference > 0
+          @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
+        end
+        (heredoc_line...heredoc_end).each do |line|
+          @no_rstrip_lines.add line
+        end
       end
 
       format_regex_modifiers if is_regex
@@ -4210,7 +4228,15 @@ module Crystal
       align_infos(lines, @assign_infos)
       align_comments(lines)
       format_doc_comments(lines)
-      lines.map!(&.rstrip)
+      line_number = -1
+      lines.map! do |line|
+        line_number += 1
+        if @no_rstrip_lines.includes?(line_number)
+          line
+        else
+          line.rstrip
+        end
+      end
       result = lines.join("\n") + '\n'
       result = "" if result == "\n"
       if @shebang

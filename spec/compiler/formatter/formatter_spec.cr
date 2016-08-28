@@ -828,6 +828,10 @@ describe Crystal::Formatter do
   assert_format "  <<-HTML\n  \#{1} \#{2}\n  HTML", "<<-HTML\n\#{1} \#{2}\nHTML"
   assert_format "  <<-HTML\n  foo\nHTML", "<<-HTML\nfoo\nHTML"
 
+  assert_format "<<-HTML\n  hello \n  HTML"
+  assert_format "<<-HTML\n  hello \n  world   \n  HTML"
+  assert_format "  <<-HTML\n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
+
   assert_format "#!shebang\n1 + 2"
 
   assert_format "   {{\n1 + 2 }}", "{{\n  1 + 2\n}}"
