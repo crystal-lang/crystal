@@ -46,7 +46,7 @@ module Crystal
     protected def self.wrap_macro_expression(ex, location)
       filename = location.filename
       if filename.is_a?(VirtualFile) && (expanded_location = filename.expanded_location)
-        ex = new "expanding macro", expanded_location.line_number, expanded_location.column_number, expanded_location.filename, 0, ex
+        ex = TypeException.new "expanding macro", expanded_location.line_number, expanded_location.column_number, expanded_location.filename, 0, ex
       end
       ex
     end
