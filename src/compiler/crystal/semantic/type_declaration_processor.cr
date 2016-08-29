@@ -468,6 +468,10 @@ struct Crystal::TypeDeclarationProcessor
         # all instance vars, because the other initialize will have to do that
         next if info.def.calls_initialize?
 
+        # Similarly, calling previous_def would have the vars initialized
+        # in the other def
+        next if info.def.calls_previous_def?
+
         # It's non-nilable if it's initialized outside
         next if initialized_outside?(owner, instance_var)
 

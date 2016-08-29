@@ -1113,7 +1113,7 @@ module Crystal
       block_arg.try &.set_enclosing_call node
       named_args.try &.each &.value.set_enclosing_call(node)
 
-      check_super_in_initialize node
+      check_super_or_previous_def_in_initialize node
 
       # If the call has a block we need to create a copy of the variables
       # and bind them to the current variables. Then, when visiting
@@ -1226,12 +1226,13 @@ module Crystal
       return false
     end
 
-    # If it's a super call inside an initialize we treat
-    # set instance vars from superclasses to not-nil
-    def check_super_in_initialize(node)
-      if @is_initialize && node.name == "super" && !node.obj
-        superclass_vars = scope.all_instance_vars.keys - scope.instance_vars.keys
-        superclass_vars.each do |name|
+    # If it's a super or previous_def call inside an initialize we treat
+    # set instance vars from superclasses to not-nil.
+    def check_super_or_previous_def_in_initialize(node)
+      if @is_initialize && !node.obj && (node.name == "super" || node.name == "previous_def")
+        all_vars = scope.all_instance_vars.keys
+        all_vars -= scope.instance_vars.keys if node.name == "super"
+        all_vars.each do |name|
           instance_var = scope.lookup_instance_var(name)
 
           # If a variable was used before this supercall, it becomes nilable

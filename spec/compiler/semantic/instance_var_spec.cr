@@ -1959,6 +1959,52 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
+  it "doesn't error if not initializing variables but calling previous_def (#3210)" do
+    assert_type(%(
+      class Some
+        def initialize
+          @a = 1
+        end
+
+        def initialize
+          previous_def
+        end
+
+        def a
+          @a
+        end
+      end
+
+      Some.new.a
+      )) { int32 }
+  end
+
+  it "doesn't error if not initializing variables but calling previous_def (2) (#3210)" do
+    assert_type(%(
+      class Some
+        def initialize
+          @a = 1
+          @b = 2
+        end
+
+        def initialize
+          previous_def
+          @b = @a
+        end
+
+        def a
+          @a
+        end
+
+        def b
+          @b
+        end
+      end
+
+      Some.new.a + Some.new.b
+      )) { int32 }
+  end
+
   it "errors if not initializing super variables" do
     assert_error %(
       class Foo
