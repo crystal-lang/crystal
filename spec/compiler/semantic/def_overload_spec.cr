@@ -301,6 +301,21 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
+  it "can call overload with aliased generic restriction" do
+    assert_type("
+      class Foo(T)
+      end
+
+      alias FooAlias = Foo
+
+      def foo(x : FooAlias(T))
+        1
+      end
+
+      foo(Foo(Int32).new)
+    ") { int32 }
+  end
+
   it "restrict matches to minimum necessary 1" do
     assert_type("
       def coco(x : Int, y); 1; end

@@ -506,6 +506,7 @@ module Crystal
 
     def restrict(other : Generic, context)
       generic_type = context.defining_type.lookup_path other.name
+      generic_type = generic_type.remove_alias if generic_type.is_a? AliasType
       return super unless generic_type == self.generic_type
 
       generic_type = generic_type.as(GenericType)
