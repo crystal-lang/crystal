@@ -291,7 +291,7 @@ describe "Semantic: module" do
       ", "cyclic include detected"
   end
 
-  pending "gives error with cyclic include" do
+  it "gives error with cyclic include" do
     assert_error "
       module Foo
       end

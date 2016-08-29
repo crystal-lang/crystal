@@ -719,6 +719,8 @@ module Crystal
     def include(mod)
       if mod == self
         raise TypeException.new "cyclic include detected"
+      elsif mod.ancestors.includes?(self)
+        raise TypeException.new "cyclic include detected"
       else
         unless parents.includes?(mod)
           parents.insert 0, mod
