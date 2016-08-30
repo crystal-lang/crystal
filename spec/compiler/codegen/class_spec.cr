@@ -894,4 +894,58 @@ describe "Code gen: class" do
       ptr.value.foo
       )).to_i.should eq(2)
   end
+
+  it "transfers initializer from module to generic class" do
+    run(%(
+      module Moo
+        @x = 123
+
+        def x
+          @x
+        end
+      end
+
+      class Foo(T)
+        include Moo
+      end
+
+      Foo(Int32).new.x
+      )).to_i.should eq(123)
+  end
+
+  it "transfers initializer from generic module to non-generic class" do
+    run(%(
+      module Moo(T)
+        @x = 123
+
+        def x
+          @x
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      Foo.new.x
+      )).to_i.should eq(123)
+  end
+
+  it "transfers initializer from generic module to generic class" do
+    run(%(
+      module Moo(T)
+        @x = 123
+
+        def x
+          @x
+        end
+      end
+
+      class Foo(T)
+        include Moo(T)
+      end
+
+      Foo(Int32).new.x
+      )).to_i.should eq(123)
+  end
 end

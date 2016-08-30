@@ -71,7 +71,7 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
         ivar_visitor.undefined_instance_variable(current_type, target)
       end
 
-      current_type.add_instance_var_initializer(target.name, value, meta_vars)
+      current_type.add_instance_var_initializer(target.name, value, current_type.is_a?(GenericType) ? nil : meta_vars)
       node.type = @program.nil
       return
     end

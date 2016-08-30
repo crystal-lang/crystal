@@ -812,8 +812,27 @@ module Crystal
 
     def add_instance_var_initializer(name, value, meta_vars)
       initializers = @instance_vars_initializers ||= [] of InstanceVarInitializer
+
+      # No meta vars means this initializer came from a generic type,
+      # so we must type it now that we are defining it in a concrete type
+      unless meta_vars
+        meta_vars = MetaVars.new
+        visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
+        visitor.scope = self
+        value = value.clone
+        value.accept visitor
+      end
+
+      unless self.is_a?(GenericType)
+        instance_var = lookup_instance_var(name)
+        instance_var.bind_to(value)
+      end
+
       initializer = InstanceVarInitializer.new(name, value, meta_vars)
       initializers << initializer
+
+      program.after_inference_types << self
+
       initializer
     end
 
@@ -876,16 +895,7 @@ module Crystal
     end
 
     def add_instance_var_initializer(name, value, meta_vars)
-      @including_types.try &.each do |type|
-        case type
-        when Program, FileModule
-          # skip
-        when NonGenericModuleType
-          type.add_instance_var_initializer(name, value, meta_vars)
-        when NonGenericClassType
-          type.add_instance_var_initializer(name, value, meta_vars)
-        end
-      end
+      add_instance_var_initializer @including_types, name, value, meta_vars
     end
   end
 
@@ -1002,15 +1012,6 @@ module Crystal
     def covariant?(other_type)
       other_type = other_type.base_type if other_type.is_a?(VirtualType)
       implements?(other_type) || super
-    end
-
-    def add_instance_var_initializer(name, value, meta_vars)
-      super
-
-      var = lookup_instance_var(name)
-      var.bind_to(value)
-
-      program.after_inference_types << self
     end
   end
 
@@ -1382,6 +1383,10 @@ module Crystal
       GenericModuleInstanceType.new program, generic_type, type_vars
     end
 
+    def add_instance_var_initializer(name, value, meta_vars)
+      add_instance_var_initializer @including_types, name, value, meta_vars
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       super
       if generic_args
@@ -1663,12 +1668,6 @@ module Crystal
     end
 
     getter(metaclass) { GenericClassInstanceMetaclassType.new(self.program, self) }
-
-    def add_instance_var_initializer(name, value, meta_vars)
-      super
-
-      program.after_inference_types << self
-    end
   end
 
   # An instantiated genric module, like Enumerable(Int32).
@@ -1745,12 +1744,6 @@ module Crystal
     end
 
     getter(metaclass) { GenericModuleInstanceMetaclassType.new(self.program, self) }
-
-    def add_instance_var_initializer(name, value, meta_vars)
-      super
-
-      program.after_inference_types << self
-    end
   end
 
   # The non-instantiated Pointer(T) type.
@@ -2868,4 +2861,21 @@ end
 private def add_to_including_types(type, all_types)
   virtual_type = type.virtual_type
   all_types << virtual_type unless all_types.includes?(virtual_type)
+end
+
+private def add_instance_var_initializer(including_types, name, value, meta_vars)
+  including_types.try &.each do |type|
+    case type
+    when Crystal::Program, Crystal::FileModule
+      # skip
+    when Crystal::NonGenericModuleType
+      type.add_instance_var_initializer(name, value, meta_vars)
+    when Crystal::NonGenericClassType
+      type.add_instance_var_initializer(name, value, meta_vars)
+    when Crystal::GenericClassType
+      type.add_instance_var_initializer(name, value, meta_vars)
+    when Crystal::GenericModuleType
+      type.add_instance_var_initializer(name, value, meta_vars)
+    end
+  end
 end

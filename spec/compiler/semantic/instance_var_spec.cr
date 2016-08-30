@@ -4357,4 +4357,40 @@ describe "Semantic: instance var" do
       Args.new(1, 'a').args
       )) { tuple_of([int32, char]) }
   end
+
+  it "transfers initializer from generic module to class" do
+    assert_type(%(
+      module Moo(T)
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "transfers initializer from module to generic class" do
+    assert_type(%(
+      module Moo
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      class Foo(T)
+        include Moo
+      end
+
+      Foo(Int32).new.x
+      )) { int32 }
+  end
 end

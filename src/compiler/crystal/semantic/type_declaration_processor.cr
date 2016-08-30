@@ -426,9 +426,7 @@ struct Crystal::TypeDeclarationProcessor
   private def compute_non_nilable_instance_vars_multi(owner, infos)
     # Get ancestor's non-nilable variables
     ancestor = owner.ancestors.first?
-    if ancestor.is_a?(GenericInstanceType)
-      ancestor = ancestor.generic_type
-    end
+    ancestor = uninstantiate(ancestor)
     if ancestor
       ancestor_non_nilable = @non_nilable_instance_vars[ancestor]?
     end
@@ -504,6 +502,7 @@ struct Crystal::TypeDeclarationProcessor
     non_nilable_outisde = nil
     non_nilable_outisde = compute_non_nilable_outside_single(owner, non_nilable_outisde)
     owner.ancestors.each do |ancestor|
+      ancestor = uninstantiate(ancestor)
       non_nilable_outisde = compute_non_nilable_outside_single(ancestor, non_nilable_outisde)
     end
     non_nilable_outisde
@@ -526,10 +525,7 @@ struct Crystal::TypeDeclarationProcessor
     return infos if infos && !infos.empty?
 
     owner.ancestors.each do |ancestor|
-      if ancestor.is_a?(GenericInstanceType)
-        ancestor = ancestor.generic_type
-      end
-
+      ancestor = uninstantiate(ancestor)
       infos = @initialize_infos[ancestor]?
       return infos if infos && !infos.empty?
     end
@@ -673,6 +669,14 @@ struct Crystal::TypeDeclarationProcessor
       else
         t1.depth <=> t2.depth
       end
+    end
+  end
+
+  private def uninstantiate(type)
+    if type.is_a?(GenericInstanceType)
+      type.generic_type
+    else
+      type
     end
   end
 end
