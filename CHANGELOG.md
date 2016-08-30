@@ -1,3 +1,44 @@
+## 0.19.0
+
+* **(breaking change)** Added `select` keyword
+* **(breaking change)** Removed $global variables. Use @@class variables instead.
+* **(breaking change)** Heredoc now ends when the matching identifier is found, either followed by a space or by a non-identifier
+* **(breaking change)** Assignment to a local variable inside an assignment to that same variable is now an error
+* **(breaking change)** Type names like `T`, `T1`, `U`, etc., are now disallowed at the top level, to avoid conflicts with free variables
+* **(breaking change)** Type lookup (`Foo::Bar::Baz`) had some incorrect behaviour that now is fixed. This can break existing code that relied on this incorrect behaviour. The fix is to fully qualify types (`::Foo::Bar::Baz`)
+* **(breaking change)** Removed the deprecated syntax `x as T`
+* **(breaking change)** Removed block form of `String#match`
+* **(breaking change)** Removed `IO#read_nonblock`
+* Added support for LLVM 3.8 (thanks @omarroth)
+* `||` now does type filtering
+* Generic inheritance should now work well, and (instantiated) generic modules can now be used as the type of instance variables
+* `NamedTuple` can now be accessed with strings too (thanks @jhass)
+* `Base64` can now encode and decode directly to an `IO` (thanks @kostya)
+* `BigInt` now uses GMP implementation of gcd and lcm (thanks @endSly)
+* `ECR` now supports removing leading and trailing whitespace (`<%-`, `-%>`)
+* `HTTP::Request#path` now never returns `nil`: it fallbacks to `"/"` (thanks @jhass)
+* `String#tr(..., "")` is now the same as `String#delete`
+* `tool hierarchy` now supports `--format json` (thanks @bmulvihill)
+* Added `Char#ascii?`
+* Added `Class#nilable?` and `Union#nilable?`
+* Added `Hash#has_value?` (thanks @kachick)
+* Added `IO::Sized` and `IO::Delimited` (thanks @RX14)
+* Added `IO::Hexdump` (thanks @ysbaddaden)
+* Added `IO#noecho` and `IO#noecho!` (thanks @jhass)
+* Added `Logger.new(nil)` to create a null logger
+* Added `OptionParser#missing_option` and `OptionParser#invalid_option` (thanks @jhass)
+* Added `Process.exists?`, `Process#exists?` and `Process#terminated?` (thanks @jhass)
+* Added `Process.exec` (thanks @jhass)
+* Added `Slice#copy_to`, `Slice#copy_from`, `Slice#move_to` and `Slice#move_from` (thanks @RX14)
+* Added `URI#==` and `URI#hash` (thanks @timcraft)
+* Added `YAML#parse(IO)`
+* Added `Indexable` module that `Array`, `Slice`, `Tuple` and `StaticArray` include
+* Added `indent` parameetr to `to_pretty_json`
+* Added lazy form of `getter` and `property` macros
+* Added macro methods to access an ASTNode's location
+* Unified String and Char to integer/float conversion API (thanks @jhass)
+* [Lots of bug fixes](https://github.com/crystal-lang/crystal/milestone/5?closed=1)
+
 ## 0.18.7 (03-07-2016)
 
 * The `compile` command was renamed back to `build`. The `compile` command is deprecated and will be removed in a future version
