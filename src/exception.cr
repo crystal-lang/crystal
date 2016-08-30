@@ -157,7 +157,7 @@ class Exception
   end
 
   def to_s(io : IO)
-    io << @message
+    io << message
   end
 
   def inspect_with_backtrace
@@ -167,8 +167,8 @@ class Exception
   end
 
   def inspect_with_backtrace(io : IO)
-    io << @message << " (" << self.class << ")\n"
-    backtrace.try &.each do |frame|
+    io << message << " (" << self.class << ")\n"
+    backtrace?.try &.each do |frame|
       io.puts frame
     end
     io.flush
