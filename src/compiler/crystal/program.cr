@@ -425,6 +425,22 @@ module Crystal
       @hash_type.not_nil!
     end
 
+    def type_from_literal_kind(kind)
+      case kind
+      when :i8  then int8
+      when :i16 then int16
+      when :i32 then int32
+      when :i64 then int64
+      when :u8  then uint8
+      when :u16 then uint16
+      when :u32 then uint32
+      when :u64 then uint64
+      when :f32 then float32
+      when :f64 then float64
+      else           raise "Invalid node kind: #{kind}"
+      end
+    end
+
     # Returns the `IntegerType` that matches the given Int value
     def int?(int)
       case int
