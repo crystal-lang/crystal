@@ -376,12 +376,16 @@ class File < IO::FileDescriptor
   # File.write("bar", "foo")
   # File.read("bar") # => "foo"
   # ```
+  # Note: this method can't be used to read files bigger than `Int32::MAX` (2GB)
   def self.read(filename, encoding = nil, invalid = nil) : String
     File.open(filename, "r") do |file|
       if encoding
         file.set_encoding(encoding, invalid: invalid)
         file.gets_to_end
       else
+        if file.size > Int32::MAX
+          raise ArgumentError.new("The file is too big")
+        end
         size = file.size.to_i
         String.new(size) do |buffer|
           file.read Slice.new(buffer, size)
