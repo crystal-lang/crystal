@@ -1676,6 +1676,8 @@ module Crystal
 
       filter_vars cond_type_filters
 
+      before_then_vars = @vars.dup
+
       node.then.accept self
 
       then_vars = @vars
@@ -1695,6 +1697,7 @@ module Crystal
         filter_vars cond_type_filters, &.not
       end
 
+      before_else_vars = @vars.dup
       node.else.accept self
 
       else_vars = @vars
@@ -1702,7 +1705,7 @@ module Crystal
       @type_filters = nil
       else_unreachable = @unreachable
 
-      merge_if_vars node, cond_vars, then_vars, else_vars, then_unreachable, else_unreachable
+      merge_if_vars node, cond_vars, then_vars, else_vars, before_then_vars, before_else_vars, then_unreachable, else_unreachable
 
       if needs_type_filters?
         case node
@@ -1728,7 +1731,7 @@ module Crystal
     #     before the 'if' and it doesn't appear in one of the branches.
     #   - Don't use the type of a branch that is unreachable (ends with return,
     #     break or with a call that is NoReturn)
-    def merge_if_vars(node, cond_vars, then_vars, else_vars, then_unreachable, else_unreachable)
+    def merge_if_vars(node, cond_vars, then_vars, else_vars, before_then_vars, before_else_vars, then_unreachable, else_unreachable)
       all_vars_names = Set(String).new
       then_vars.each_key do |name|
         all_vars_names << name
@@ -1740,12 +1743,21 @@ module Crystal
       all_vars_names.each do |name|
         cond_var = cond_vars[name]?
         then_var = then_vars[name]?
+        before_then_var = before_then_vars[name]?
         else_var = else_vars[name]?
+        before_else_var = before_else_vars[name]?
 
         # Check whether the var didn't change at all
         next if then_var.same?(else_var)
 
         if_var = MetaVar.new(name)
+
+        # Check if no types were changes in either then 'then' and 'else' branches
+        if cond_var && then_var.same?(before_then_var) && else_var.same?(before_else_var) && !then_unreachable && !else_unreachable
+          @vars[name] = cond_var
+          next
+        end
+
         if_var.nil_if_read = !!(then_var.try(&.nil_if_read?) || else_var.try(&.nil_if_read?))
 
         if then_var && else_var

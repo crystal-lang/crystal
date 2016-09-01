@@ -159,7 +159,9 @@ struct Crystal::TypeDeclarationProcessor
 
     remove_error owner, name
 
-    type = replace_type_parameters(owner, type)
+    if owner.is_a?(NonGenericModuleType) || owner.is_a?(NonGenericClassType)
+      type = type.replace_type_parameters(owner)
+    end
 
     var = MetaTypeVar.new(name)
     var.owner = owner
@@ -198,13 +200,6 @@ struct Crystal::TypeDeclarationProcessor
     end
 
     var
-  end
-
-  private def replace_type_parameters(owner, type)
-    if owner.is_a?(NonGenericModuleType) || owner.is_a?(NonGenericClassType)
-      type = type.replace_type_parameters(owner)
-    end
-    type
   end
 
   private def raise_cant_declare_instance_var(owner, location)

@@ -200,4 +200,31 @@ describe "Semantic: if" do
       end
       )) { union_of(bool, int32) }
   end
+
+  it "doesn't filter and recombine when variables don't change in if" do
+    assert_type(%(
+      module Moo
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+        include Moo
+      end
+
+      class Baz < Foo
+        include Moo
+      end
+
+      def foo(x : Foo)
+        1
+      end
+
+      x = Bar.new.as(Moo)
+      if x.is_a?(Bar) || x.is_a?(Baz)
+      end
+      foo(x)
+      )) { int32 }
+  end
 end
