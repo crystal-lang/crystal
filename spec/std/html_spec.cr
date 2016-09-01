@@ -27,4 +27,30 @@ describe "HTML" do
       str.should eq("nbsp&nbsp;space ")
     end
   end
+
+  describe ".unescape" do
+    it "it does not change a safe string" do
+      str = HTML.unescape("safe_string")
+
+      str.should eq("safe_string")
+    end
+
+    it "unescapes characters from a string" do
+      str = HTML.unescape("&lt; &amp; &gt;")
+
+      str.should eq("< & >")
+    end
+
+    it "unescapes javascript" do
+      str = HTML.unescape("&lt;script&gt;alert&#40;&#39;You are being hacked&#39;&#41;&lt;/script&gt;")
+
+      str.should eq("<script>alert('You are being hacked')</script>")
+    end
+
+    it "unescapes nonbreakable space but not normal space" do
+      str = HTML.unescape("nbsp&nbsp;space ")
+
+      str.should eq("nbsp space ")
+    end
+  end
 end
