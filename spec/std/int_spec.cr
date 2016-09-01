@@ -328,9 +328,47 @@ describe "Int" do
     UInt64.new(1).should eq(1)
   end
 
+  it "divides negative numbers" do
+    (7 / 2).should eq(3)
+    (-7 / 2).should eq(-4)
+    (7 / -2).should eq(-4)
+    (-7 / -2).should eq(3)
+
+    (6 / 2).should eq(3)
+    (-6 / 2).should eq(-3)
+    (6 / -2).should eq(-3)
+    (-6 / -2).should eq(3)
+  end
+
+  it "tdivs" do
+    5.tdiv(3).should eq(1)
+    -5.tdiv(3).should eq(-1)
+    5.tdiv(-3).should eq(-1)
+    -5.tdiv(-3).should eq(1)
+  end
+
+  it "holds true that x == q*y + r" do
+    [5, -5, 6, -6, 10, -10].each do |x|
+      [3, -3].each do |y|
+        q = x / y
+        r = x % y
+        (q*y + r).should eq(x)
+      end
+    end
+  end
+
   it "raises when divides by zero" do
     expect_raises(DivisionByZero) { 1 / 0 }
     (4 / 2).should eq(2)
+  end
+
+  it "raises when divides Int::MIN by -1" do
+    expect_raises(ArgumentError) { Int8::MIN / -1 }
+    expect_raises(ArgumentError) { Int16::MIN / -1 }
+    expect_raises(ArgumentError) { Int32::MIN / -1 }
+    expect_raises(ArgumentError) { Int64::MIN / -1 }
+
+    (UInt8::MIN / -1).should eq(0)
   end
 
   it "raises when mods by zero" do

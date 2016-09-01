@@ -78,18 +78,80 @@ struct Int
     self ^ -1
   end
 
-  def /(x : Int)
-    if x == 0
+  # Divides `self` by *other* using floored division.
+  #
+  # In floored division, given two integers x and y:
+  # * q = x / y is rounded toward negative infinity
+  # * r = x % y has the sign of the second argument
+  # * x == q*y + r
+  #
+  # For example:
+  #
+  # ```text
+  #  x     y     x / y     x % y
+  #  5     3       1         2
+  # -5     3      -2         1
+  #  5    -3      -2        -1
+  # -5    -3       1        -2
+  # ```
+  #
+  # Raises if *other* is zero, or if *other* is -1 and
+  # `self` is signed and is the minimum value for that
+  # integer type.
+  def /(other : Int)
+    check_div_argument other
+
+    div = unsafe_div other
+    mod = unsafe_mod other
+    div -= 1 if other > 0 ? mod < 0 : mod > 0
+    div
+  end
+
+  # Divides `self` by *other* using truncated division.
+  #
+  # In truncated division, given two integers x and y:
+  # * q = x.tdiv(y) is rounded toward zero
+  # * r = x.remainder(y) has the sign of the first argument
+  # * x == q*y + r
+  #
+  # For example:
+  #
+  # ```text
+  #  x     y     x / y     x % y
+  #  5     3       1         2
+  # -5     3      -1        -2
+  #  5    -3      -1         2
+  # -5    -3       1        -2
+  # ```
+  #
+  # Raises if *other* is zero, or if *other* is -1 and
+  # `self` is signed and is the minimum value for that
+  # integer type.
+  def tdiv(other : Int)
+    check_div_argument other
+
+    unsafe_div other
+  end
+
+  private def check_div_argument(other)
+    if other == 0
       raise DivisionByZero.new
     end
 
-    unsafe_div x
+    {% begin %}
+      if self < 0 && self == {{@type}}::MIN && other == -1
+        raise ArgumentError.new "overflow: {{@type}}::MIN / -1"
+      end
+    {% end %}
   end
 
   def fdiv(other)
     to_f / other
   end
 
+  # Returns `self` modulo *other*.
+  #
+  # This uses floored division. See `Int#/` for more details.
   def %(other : Int)
     if other == 0
       raise DivisionByZero.new
@@ -101,6 +163,9 @@ struct Int
     end
   end
 
+  # Returns `self` remainder *other*.
+  #
+  # This uses truncated division. See `Int#div` for more details.
   def remainder(other : Int)
     if other == 0
       raise DivisionByZero.new
@@ -379,7 +444,7 @@ struct Int
     while num != 0
       ptr -= 1
       ptr.value = digits[num.remainder(base).abs]
-      num /= base
+      num = num.tdiv(base)
     end
 
     if neg

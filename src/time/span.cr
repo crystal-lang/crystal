@@ -128,23 +128,23 @@ struct Time::Span
   end
 
   def days
-    (ticks / TicksPerDay).to_i32
+    (ticks.tdiv TicksPerDay).to_i32
   end
 
   def hours
-    (ticks.remainder(TicksPerDay) / TicksPerHour).to_i32
+    (ticks.remainder(TicksPerDay).tdiv TicksPerHour).to_i32
   end
 
   def minutes
-    (ticks.remainder(TicksPerHour) / TicksPerMinute).to_i32
+    (ticks.remainder(TicksPerHour).tdiv TicksPerMinute).to_i32
   end
 
   def seconds
-    (ticks.remainder(TicksPerMinute) / TicksPerSecond).to_i32
+    (ticks.remainder(TicksPerMinute).tdiv TicksPerSecond).to_i32
   end
 
   def milliseconds
-    (ticks.remainder(TicksPerSecond) / TicksPerMillisecond).to_i32
+    (ticks.remainder(TicksPerSecond).tdiv TicksPerMillisecond).to_i32
   end
 
   def total_weeks

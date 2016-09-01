@@ -9,6 +9,7 @@
 * **(breaking change)** Removed the deprecated syntax `x as T`
 * **(breaking change)** Removed block form of `String#match`
 * **(breaking change)** Removed `IO#read_nonblock`
+* **(breaking change)** `Int#/` now performs floored division. Use `Int#tdiv` for truncated division (see their docs to learn the difference)
 * Added support for LLVM 3.8 (thanks @omarroth)
 * `||` now does type filtering
 * Generic inheritance should now work well, and (instantiated) generic modules can now be used as the type of instance variables

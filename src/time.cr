@@ -179,8 +179,8 @@ struct Time
 
   private def add_months(months)
     day = self.day
-    month = self.month + months.remainder(12)
-    year = self.year + (months / 12)
+    month = self.month + months.remainder(2)
+    year = self.year + months.tdiv(12)
 
     if month < 1
       month = 12 + month

@@ -91,15 +91,58 @@ describe "BigInt" do
   it "divides" do
     (10.to_big_i / 3.to_big_i).should eq(3.to_big_i)
     (10.to_big_i / 3).should eq(3.to_big_i)
-    (10.to_big_i / -3).should eq(-3.to_big_i)
     (10 / 3.to_big_i).should eq(3.to_big_i)
+  end
+
+  it "divides with negative numbers" do
+    (7.to_big_i / 2).should eq(3.to_big_i)
+    (7.to_big_i / 2.to_big_i).should eq(3.to_big_i)
+    (7.to_big_i / -2).should eq(-4.to_big_i)
+    (7.to_big_i / -2.to_big_i).should eq(-4.to_big_i)
+    (-7.to_big_i / 2).should eq(-4.to_big_i)
+    (-7.to_big_i / 2.to_big_i).should eq(-4.to_big_i)
+    (-7.to_big_i / -2).should eq(3.to_big_i)
+    (-7.to_big_i / -2.to_big_i).should eq(3.to_big_i)
+
+    (-6.to_big_i / 2).should eq(-3.to_big_i)
+    (6.to_big_i / -2).should eq(-3.to_big_i)
+    (-6.to_big_i / -2).should eq(3.to_big_i)
+  end
+
+  it "tdivs" do
+    5.to_big_i.tdiv(3).should eq(1)
+    -5.to_big_i.tdiv(3).should eq(-1)
+    5.to_big_i.tdiv(-3).should eq(-1)
+    -5.to_big_i.tdiv(-3).should eq(1)
   end
 
   it "does modulo" do
     (10.to_big_i % 3.to_big_i).should eq(1.to_big_i)
     (10.to_big_i % 3).should eq(1.to_big_i)
-    (10.to_big_i % -3).should eq(1.to_big_i)
     (10 % 3.to_big_i).should eq(1.to_big_i)
+  end
+
+  it "does modulo with negative numbers" do
+    (7.to_big_i % 2).should eq(1.to_big_i)
+    (7.to_big_i % 2.to_big_i).should eq(1.to_big_i)
+    (7.to_big_i % -2).should eq(-1.to_big_i)
+    (7.to_big_i % -2.to_big_i).should eq(-1.to_big_i)
+    (-7.to_big_i % 2).should eq(1.to_big_i)
+    (-7.to_big_i % 2.to_big_i).should eq(1.to_big_i)
+    (-7.to_big_i % -2).should eq(-1.to_big_i)
+    (-7.to_big_i % -2.to_big_i).should eq(-1.to_big_i)
+
+    (6.to_big_i % 2).should eq(0.to_big_i)
+    (6.to_big_i % -2).should eq(0.to_big_i)
+    (-6.to_big_i % 2).should eq(0.to_big_i)
+    (-6.to_big_i % -2).should eq(0.to_big_i)
+  end
+
+  it "does remainder with negative numbers" do
+    5.to_big_i.remainder(3).should eq(2)
+    -5.to_big_i.remainder(3).should eq(-2)
+    5.to_big_i.remainder(-3).should eq(2)
+    -5.to_big_i.remainder(-3).should eq(-2)
   end
 
   it "does bitwise and" do
