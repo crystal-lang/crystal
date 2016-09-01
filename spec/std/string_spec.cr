@@ -1069,6 +1069,11 @@ describe "String" do
       str.gsub({'e' => 'a', 'l' => 'd'}).should eq("haddo")
     end
 
+    it "gsubs with string hash" do
+      str = "hello"
+      str.gsub({"e" => 'a', "l" => 'd'}).should eq("haddo")
+    end
+
     it "gsubs with char named tuple" do
       str = "hello"
       str.gsub({e: 'a', l: 'd'}).should eq("haddo")

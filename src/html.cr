@@ -1,5 +1,5 @@
 module HTML
-  SUBSTITUTIONS = {
+  ESCAPE_SUBSTITUTIONS = {
     '!'      => "&#33;",
     '"'      => "&quot;",
     '$'      => "&#36;",
@@ -21,13 +21,19 @@ module HTML
     '\u{a0}' => "&nbsp;",
   }
 
+  UNESCAPE_SUBSTITUTIONS = ESCAPE_SUBSTITUTIONS.invert
+
   def self.escape(string : String) : String
-    string.gsub(SUBSTITUTIONS)
+    string.gsub(ESCAPE_SUBSTITUTIONS)
   end
 
   def self.escape(string : String, io : IO)
     string.each_char do |char|
-      io << SUBSTITUTIONS.fetch(char, char)
+      io << ESCAPE_SUBSTITUTIONS.fetch(char, char)
     end
+  end
+
+  def self.unescape(string : String) : String
+    string.gsub(UNESCAPE_SUBSTITUTIONS)
   end
 end

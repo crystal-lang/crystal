@@ -1743,6 +1743,21 @@ class String
     end
   end
 
+  # Relturns a string where all strings in the given hash are replaced.
+  # by the corresponding *hash* values.
+  #
+  # ```
+  # "hello".gsub({"e" => 'a', "l" => 'd'}) # "haddo"
+  # ```
+  def gsub(hash : Hash(String, _))
+    string = self
+    hash.each do |key, value|
+      string = string.gsub(key, value)
+    end
+
+    string
+  end
+
   # Returns a string where all chars in the given hash are replaced
   # by the corresponding *tuple* values.
   #
