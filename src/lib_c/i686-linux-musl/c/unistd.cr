@@ -32,6 +32,7 @@ lib LibC
   fun read(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
   fun rmdir(x0 : Char*) : Int
   fun symlink(x0 : Char*, x1 : Char*) : Int
+  fun syscall(x0 : Long, ...) : Long
   fun sysconf(x0 : Int) : Long
   fun unlink(x0 : Char*) : Int
   fun write(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
