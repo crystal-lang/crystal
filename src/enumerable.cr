@@ -157,12 +157,16 @@ module Enumerable(T)
   #
   # Note that the last one can be smaller.
   def each_slice(count : Int)
-    slice = Array(T).new(count)
+    each_slice_internal(count, Array(T)) { |slice| yield slice }
+  end
+
+  private def each_slice_internal(count : Int, type)
+    slice = type.new(count)
     each do |elem|
       slice << elem
       if slice.size == count
         yield slice
-        slice = Array(T).new(count)
+        slice = type.new(count)
       end
     end
     yield slice unless slice.empty?
@@ -286,17 +290,10 @@ module Enumerable(T)
   def in_groups_of(size : Int, filled_up_with : U = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
 
-    # TODO: this consumes the enumerable twice, fix
-    parts_count = (self.size.to_f / size).ceil.to_i
-    ary = Array(Array(T | U)).new(parts_count)
-    parts_count.times do |i|
-      ary << Array(T | U).new(size, filled_up_with)
+    ary = Array(Array(T | U)).new
+    in_groups_of(size, filled_up_with) do |group|
+      ary << group
     end
-
-    each_with_index do |e, i|
-      ary[i / size][i % size] = e
-    end
-
     ary
   end
 
@@ -306,19 +303,15 @@ module Enumerable(T)
   #     #=> 3
   #     #=> 4
   #
-  def in_groups_of(size : Int, filled_up_with : U = nil)
+  def in_groups_of(size : Int, filled_up_with : U = nil, &block)
     raise ArgumentError.new("size must be positive") if size <= 0
-    ary = Array(T | U).new(size, filled_up_with)
 
-    # TODO: this consumes the enumerable twice, fix
-    count = self.size
-
-    each_with_index do |e, i|
-      ary[i % size] = e
-      if i % size == size - 1 || i == count - 1
-        yield ary
-        ary = Array(T | U).new(size, filled_up_with)
+    each_slice_internal(size, Array(T | U)) do |slice|
+      unless slice.size == size
+        slice.concat(Array(T | U).new(size - slice.size, filled_up_with))
       end
+
+      yield slice
     end
   end
 

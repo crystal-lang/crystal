@@ -261,6 +261,7 @@ describe "Enumerable" do
   describe "in_groups_of" do
     assert { [1, 2, 3].in_groups_of(1).should eq([[1], [2], [3]]) }
     assert { [1, 2, 3].in_groups_of(2).should eq([[1, 2], [3, nil]]) }
+    assert { [1, 2, 3, 4].in_groups_of(3).should eq([[1, 2, 3], [4, nil, nil]]) }
     assert { ([] of Int32).in_groups_of(2).should eq([] of Array(Array(Int32 | Nil))) }
     assert { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
 
@@ -272,8 +273,8 @@ describe "Enumerable" do
 
     it "takes a block" do
       sums = [] of Int32
-      [1, 2, 4].in_groups_of(2, 0) { |a| sums << a.sum }
-      sums.should eq([3, 4])
+      [1, 2, 4, 5].in_groups_of(3, 10) { |a| sums << a.sum }
+      sums.should eq([7, 25])
     end
   end
 
