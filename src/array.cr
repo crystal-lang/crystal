@@ -550,7 +550,7 @@ class Array(T)
   # ary # => ["a", "b", "c"]
   # ```
   def compact!
-    delete nil
+    !!(reject! &.nil?)
   end
 
   # Appends the elements of *other* to `self`, and returns `self`.
@@ -597,13 +597,19 @@ class Array(T)
 
   # Removes all items from `self` that are equal to *obj*.
   #
+  # Returns the last found element that was equal to *obj*,
+  # if any, or `nil` if not found.
+  #
   # ```
   # a = ["a", "b", "b", "b", "c"]
-  # a.delete("b")
-  # a # => ["a", "c"]
+  # a.delete("b") # => "b"
+  # a             # => ["a", "c"]
+  #
+  # a.delete("x") # => nil
+  # a             # => ["a", "c"]
   # ```
   def delete(obj)
-    reject! { |e| e == obj } != nil
+    internal_delete { |e| e == obj }[1]
   end
 
   # Removes the element at *index*, returning that element.
@@ -892,11 +898,21 @@ class Array(T)
   #
   # See also `Array#reject`
   def reject!
+    internal_delete { |e| yield e }[0]
+  end
+
+  # `reject!` and `delete` implementation: returns a tuple {x, y}
+  # with x being self/nil (modified, not modified)
+  # and y being the last matching element, or nil
+  private def internal_delete
     i1 = 0
     i2 = 0
+    match = nil
     while i1 < @size
       e = @buffer[i1]
-      unless yield e
+      if yield e
+        match = e
+      else
         if i1 != i2
           @buffer[i2] = e
         end
@@ -910,9 +926,9 @@ class Array(T)
       count = i1 - i2
       @size -= count
       (@buffer + @size).clear(count)
-      self
+      {self, match}
     else
-      nil
+      {nil, match}
     end
   end
 

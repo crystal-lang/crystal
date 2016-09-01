@@ -398,13 +398,13 @@ describe "Array" do
   describe "delete" do
     it "deletes many" do
       a = [1, 2, 3, 1, 2, 3]
-      a.delete(2).should be_true
+      a.delete(2).should eq(2)
       a.should eq([1, 3, 1, 3])
     end
 
     it "delete not found" do
       a = [1, 2]
-      a.delete(4).should be_false
+      a.delete(4).should be_nil
       a.should eq([1, 2])
     end
   end
