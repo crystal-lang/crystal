@@ -1438,4 +1438,32 @@ describe "Code gen: macro" do
       a
       )).to_i.should eq(2)
   end
+
+  it "initializes instance var in macro" do
+    run(%(
+      class Foo
+        {% begin %}
+          @x = 1
+        {% end %}
+      end
+
+      Foo.new.@x
+      ), inject_primitives: false).to_i.should eq(1)
+  end
+
+  it "initializes class var in macro" do
+    run(%(
+      class Foo
+        {% begin %}
+          @@x = 1
+        {% end %}
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x
+      ), inject_primitives: false).to_i.should eq(1)
+  end
 end

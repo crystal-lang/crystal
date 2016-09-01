@@ -32,7 +32,8 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
       node.target.is_a?(InstanceVar)
     when TypeDeclaration
       node.var.is_a?(InstanceVar)
-    when FileNode, Expressions, ClassDef, ModuleDef, Alias, Include, Extend, LibDef, Def, Macro, Call, Require
+    when FileNode, Expressions, ClassDef, ModuleDef, Alias, Include, Extend, LibDef, Def, Macro, Call, Require,
+         MacroExpression, MacroIf, MacroFor
       true
     else
       false
