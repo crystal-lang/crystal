@@ -2,6 +2,14 @@
 
 class Crystal::Command
   private def eval
+
+    OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal eval <code>"
+      opts.on("-h", "--help", "Show this help") do
+        puts opts
+        exit
+      end
+    end
     if options.empty?
       program_source = STDIN.gets_to_end
       program_args = [] of String
