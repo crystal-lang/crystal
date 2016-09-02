@@ -1,5 +1,6 @@
 require "spec"
 require "big_int"
+require "base64"
 
 # This is a non-optimized version of MemoryIO so we can test
 # raw IO. Optimizations for specific IOs are tested separately
@@ -560,6 +561,12 @@ describe IO do
         expect_raises ArgumentError, "invalid encoding: FOO" do
           io.gets_to_end
         end
+      end
+
+      it "does skips when converting to UTF-8" do
+        io = SimpleMemoryIO.new(Base64.decode_string("ey8qx+Tl8fwg7+Dw4Ozl8vD7IOLo5+jy4CovfQ=="))
+        io.set_encoding("UTF-8", invalid: :skip)
+        io.gets_to_end.should eq "{/*  */}"
       end
     end
 
