@@ -859,7 +859,7 @@ module IO
   # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
   # `printf`) will use this encoding.
   def set_encoding(encoding : String, invalid : Symbol? = nil)
-    if encoding == "UTF-8"
+    if (encoding == "UTF-8") && (invalid != :skip)
       @encoding = nil
     else
       @encoding = EncodingOptions.new(encoding, invalid)
