@@ -6,6 +6,7 @@
 * **(breaking change)** Assignment to a local variable inside an assignment to that same variable is now an error
 * **(breaking change)** Type names like `T`, `T1`, `U`, etc., are now disallowed at the top level, to avoid conflicts with free variables
 * **(breaking change)** Type lookup (`Foo::Bar::Baz`) had some incorrect behaviour that now is fixed. This can break existing code that relied on this incorrect behaviour. The fix is to fully qualify types (`::Foo::Bar::Baz`)
+* **(breaking change)** In relationships like `class Bar < Foo(Baz)` and `include Moo(Baz)`, all of `Foo`, `Moo` and `Baz` must be defined before that point (this was not always the case in previous versions)
 * **(breaking change)** Removed the deprecated syntax `x as T`
 * **(breaking change)** Removed block form of `String#match`
 * **(breaking change)** Removed `IO#read_nonblock`
@@ -34,7 +35,7 @@
 * Added `URI#==` and `URI#hash` (thanks @timcraft)
 * Added `YAML#parse(IO)`
 * Added `Indexable` module that `Array`, `Slice`, `Tuple` and `StaticArray` include
-* Added `indent` parameetr to `to_pretty_json`
+* Added `indent` parameter to `to_pretty_json`
 * Added lazy form of `getter` and `property` macros
 * Added macro methods to access an ASTNode's location
 * Unified String and Char to integer/float conversion API (thanks @jhass)
