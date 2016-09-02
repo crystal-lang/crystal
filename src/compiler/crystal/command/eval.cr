@@ -2,7 +2,6 @@
 
 class Crystal::Command
   private def eval
-
     OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal eval <code>"
       opts.on("-h", "--help", "Show this help") do
