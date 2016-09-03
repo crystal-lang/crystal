@@ -209,4 +209,19 @@ describe "Semantic: new" do
       Bar.new('a')
       )) { types["Bar"] }
   end
+
+  it "doesn't have default new for inherited class from generic type" do
+    assert_error %(
+      class Foo(T)
+        def initialize(x : Int32)
+        end
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      Bar.new
+      ),
+      "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
+  end
 end
