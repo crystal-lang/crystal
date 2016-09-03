@@ -2783,6 +2783,10 @@ module Crystal
       nil
     end
 
+    def replace_type_parameters(instance)
+      base_type.replace_type_parameters(instance).virtual_type
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       base_type.to_s(io)
       io << "+"

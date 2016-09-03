@@ -905,4 +905,29 @@ describe "Semantic: generic class" do
       ),
       "expected type, not NumberLiteral"
   end
+
+  it "replaces type parameters for virtual types (#3235)" do
+    assert_type(%(
+      abstract class Packet(T)
+      end
+
+      abstract class OutgoingPacket(T) < Packet(T)
+      end
+
+      class Client
+      end
+
+      class Connection(T)
+        def initialize
+          @packets = Array(OutgoingPacket(T)).new
+        end
+
+        def packets
+          @packets
+        end
+      end
+
+      Connection(Client).new.packets
+      )) { generic_class "Array", generic_class("OutgoingPacket", types["Client"]).virtual_type! }
+  end
 end
