@@ -86,6 +86,13 @@ module Crystal
                 new_method = initialize.expand_new_from_initialize(type)
                 type.metaclass.as(ModuleType).add_def(new_method)
               end
+
+              # Copy non-generated `new` methods from parent to child
+              new_methods.each do |new_method|
+                next if new_method.new?
+
+                type.metaclass.as(ModuleType).add_def(new_method.clone)
+              end
             end
           else
             type.as(ClassType).lookup_new_in_ancestors = true

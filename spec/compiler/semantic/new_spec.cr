@@ -191,4 +191,22 @@ describe "Semantic: new" do
       ),
       "instance variable '@caps' of My was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
+
+  it "inherits initialize and new methods if doesn't define new (#3238)" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(x : Int32)
+        end
+
+        def self.new(x : Char)
+          new(1)
+        end
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      Bar.new('a')
+      )) { types["Bar"] }
+  end
 end
