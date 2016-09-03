@@ -231,7 +231,7 @@ describe "Semantic: macro" do
       ), "wrong number of arguments for macro 'foo' (given 1, expected 0)"
   end
 
-  it "executs raise inside macro" do
+  it "executes raise inside macro" do
     assert_error %(
       macro foo
         {{ raise "OH NO" }}
