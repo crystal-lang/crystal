@@ -63,6 +63,7 @@ module Crystal
       @methods_being_checked = [] of Def
 
       @outside_def = true
+      @inside_class_method = false
     end
 
     def visit(node : Var)
@@ -83,6 +84,10 @@ module Crystal
     def visit(node : UninitializedVar)
       var = node.var
       if var.is_a?(InstanceVar)
+        if @inside_class_method
+          node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+        end
+
         @error = nil
 
         add_to_initialize_info(var.name)
@@ -186,6 +191,10 @@ module Crystal
         when ClassVar
           process_assign_class_var(target, value)
         when InstanceVar
+          if @inside_class_method
+            target.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+          end
+
           process_assign_instance_var(target, value)
         when Path
           # Don't guess anything from constant values
@@ -218,6 +227,10 @@ module Crystal
 
         node.targets.each do |target|
           if target.is_a?(InstanceVar)
+            if @inside_class_method
+              target.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+            end
+
             add_to_initialize_info(target.name)
           end
         end
@@ -1009,11 +1022,15 @@ module Crystal
       @args = node.args
       @block_arg = node.block_arg
 
-      if node.name == "initialize" && !current_type.is_a?(Program)
+      if !node.receiver && node.name == "initialize" && !current_type.is_a?(Program)
         initialize_info = @initialize_info = InitializeInfo.new(node)
       end
 
+      @inside_class_method = !!node.receiver
+
       node.body.accept self
+
+      @inside_class_method = false
 
       if initialize_info
         @initialize_infos[current_type] << initialize_info

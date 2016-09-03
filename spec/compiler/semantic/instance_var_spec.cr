@@ -4393,4 +4393,21 @@ describe "Semantic: instance var" do
       Foo(Int32).new.x
       )) { int32 }
   end
+
+  it "doesn't consider self.initialize as initializer (#3239)" do
+    assert_error %(
+      class Foo
+        def self.initialize
+          @d = 5
+        end
+
+        def test
+          @d
+        end
+      end
+
+      Foo.new.test
+      ),
+      "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+  end
 end
