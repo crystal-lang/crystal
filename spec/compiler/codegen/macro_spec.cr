@@ -669,7 +669,7 @@ describe "Code gen: macro" do
       ))
   end
 
-  it "executs subclasses" do
+  it "executes subclasses" do
     run(%(
       require "prelude"
 
@@ -690,7 +690,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar-Baz")
   end
 
-  it "executs all_subclasses" do
+  it "executes all_subclasses" do
     run(%(
       require "prelude"
 
