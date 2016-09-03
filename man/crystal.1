@@ -112,9 +112,9 @@ Format of output. Defaults to text. The json format can be used to get a more pa
 .It Fl -ll
 Dump LLVM assembly file to output directory.
 .It Fl -link-flags FLAGS
-Additional flags to pass to the linker.
+Pass additional flags to the linker. Though you can specify those flags on the source code, this is useful for passing environment specific information directly to the linker, like non-standard library paths or names. For more information on specifying linker flags on source, you can read the "C bindings" section of the documentation available on the official web site.
 .It Fl -mcpu CPU
-Specify the name of the processor.
+Specify the name of the processor. This will pass a -mcpu flag to LLVM, and is only intended to be used for cross-compilation.
 .It Fl -no-color
 Disable colored output.
 .It Fl -no-codegen
@@ -122,9 +122,9 @@ Don't do code generation, just parse the file.
 .It Fl o
 Specify filename of output.
 .It Fl -prelude
-Use given file as prelude.
+Specify prelude to use. The default one initializes the garbage collector. You can also use --prelude=empty to use no preludes. This can be useful for checking code generation for a specific source code file.
 .It Fl -release
-Generate optimized output.
+Turn on optimizations for the generated code, which are disabled by default.
 .It Fl s, -stats
 Print runtime statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
 .It Fl -single-module
@@ -132,9 +132,9 @@ Generate a single LLVM module.
 .It Fl -threads
 Maximum number of threads to use for code generation. The default is 8 threads.
 .It Fl -target Ar TRIPLE
-Enable target triple. See llvm documentation for more information about target triple.
+Enable target triple; intended to use for cross-compilation. See llvm documentation for more information about target triple.
 .It Fl -verbose
-Display executed system commands.
+Display the commands executed by the system.
 .El
 
 .Pp
