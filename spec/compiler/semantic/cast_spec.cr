@@ -302,4 +302,10 @@ describe "Semantic: cast" do
       Bar(Int32).new.as(Foo(Int32))
       )) { generic_class("Foo", int32).virtual_type! }
   end
+
+  it "doesn't cast to virtual primitive (bug)" do
+    assert_type(%(
+      1.as(Int)
+      )) { int32 }
+  end
 end
