@@ -2851,7 +2851,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "instance variable @x of Foo was inferred to be Nil, but Nil alone provides no information"
   end
 
   it "says can't infer type if only nil was assigned, in generic type" do
@@ -2868,7 +2868,7 @@ describe "Semantic: instance var" do
 
       Foo(Int32).new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "instance variable @x of Foo(T) was inferred to be Nil, but Nil alone provides no information"
   end
 
   it "allows nil instance var because it's a generic type" do

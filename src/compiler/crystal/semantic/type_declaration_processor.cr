@@ -323,7 +323,7 @@ struct Crystal::TypeDeclarationProcessor
       # Nil is not useful and is the same as not having it at all, at
       # least for non-generic types)
       if type.nil_type?
-        return
+        raise_nil_instance_var owner, name, type_info.location
       end
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
@@ -352,7 +352,7 @@ struct Crystal::TypeDeclarationProcessor
 
       # Same as above, only Nil makes no sense
       if type.nil_type?
-        return
+        raise_nil_instance_var owner, name, type_info.location
       end
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
@@ -381,6 +381,10 @@ struct Crystal::TypeDeclarationProcessor
   private def nilable_instance_var?(owner, name)
     non_nilable_vars = @non_nilable_instance_vars[owner]?
     !non_nilable_vars || (non_nilable_vars && !non_nilable_vars.includes?(name))
+  end
+
+  private def raise_nil_instance_var(owner, name, location)
+    raise TypeException.new("instance variable #{name} of #{owner} was inferred to be Nil, but Nil alone provides no information", location)
   end
 
   private def compute_non_nilable_instance_vars
