@@ -371,7 +371,47 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast_distinct(value, to_type : MixedUnionType, from_type : MixedUnionType)
-    cast_to_pointer value, to_type
+    # It might happen that some types inside the union `from_type` are not inside `to_type`,
+    # for example with named tuple of same keys with different order. In that case we need cast
+    # those value to the correct type before finally storing them in the target union.
+    needs_union_value_cast = from_type.union_types.any? do |vt|
+      needs_value_cast_inside_union?(vt, to_type)
+    end
+
+    if needs_union_value_cast
+      # Compute the values that need a cast
+      types_needing_cast = from_type.union_types.select do |vt|
+        needs_value_cast_inside_union?(vt, to_type)
+      end
+
+      # Fetch the value's type id
+      from_type_id = type_id(value, from_type)
+
+      Phi.open(self, to_type, @needs_value) do |phi|
+        types_needing_cast.each_with_index do |type_needing_cast, i|
+          # Find compatible type
+          compatible_type = to_type.union_types.find { |ut| ut.implements?(type_needing_cast) }.not_nil!
+
+          matches_label, doesnt_match_label = new_blocks "matches", "doesnt_match_label"
+          cmp_result = equal?(from_type_id, type_id(type_needing_cast))
+          cond cmp_result, matches_label, doesnt_match_label
+
+          position_at_end matches_label
+
+          casted_value = cast_to_pointer(union_value(value), type_needing_cast)
+          downcasted_value = downcast(casted_value, compatible_type, type_needing_cast, true)
+          final_value = upcast(downcasted_value, to_type, compatible_type)
+          phi.add final_value, to_type
+
+          position_at_end doesnt_match_label
+        end
+
+        final_value = cast_to_pointer value, to_type
+        phi.add final_value, to_type, last: true
+      end
+    else
+      cast_to_pointer value, to_type
+    end
   end
 
   def downcast_distinct(value, to_type : NilableType, from_type : MixedUnionType)
@@ -386,6 +426,18 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast_distinct(value, to_type : Type, from_type : MixedUnionType)
+    # It might happen that to_type is not of the union but it's compatible with one of them.
+    # We need to first cast the value to the compatible type and to to_type
+    case to_type
+    when TupleInstanceType, NamedTupleInstanceType
+      unless from_type.union_types.any? &.==(to_type)
+        compatible_type = from_type.union_types.find { |ut| to_type.implements?(ut) }.not_nil!
+        value = downcast(value, compatible_type, from_type, true)
+        value = downcast(value, to_type, compatible_type, true)
+        return value
+      end
+    end
+
     value_ptr = union_value(value)
     value = cast_to_pointer(value_ptr, to_type)
     to_lhs value, to_type
@@ -394,6 +446,33 @@ class Crystal::CodeGenVisitor
   def downcast_distinct(value, to_type : ProcInstanceType, from_type : ProcInstanceType)
     # Nothing to do
     value
+  end
+
+  def downcast_distinct(value, to_type : TupleInstanceType, from_type : TupleInstanceType)
+    target_pointer = alloca(llvm_type(to_type))
+    index = 0
+    to_type.tuple_types.zip(from_type.tuple_types) do |target_tuple_type, value_tuple_type|
+      target_ptr = gep target_pointer, 0, index
+      value_ptr = gep value, 0, index
+      loaded_value = to_lhs(value_ptr, value_tuple_type)
+      downcasted_value = downcast(loaded_value, target_tuple_type, value_tuple_type, true)
+      store downcasted_value, target_ptr
+      index += 1
+    end
+    target_pointer
+  end
+
+  def downcast_distinct(value, to_type : NamedTupleInstanceType, from_type : NamedTupleInstanceType)
+    target_pointer = alloca(llvm_type(to_type))
+    from_type.entries.each_with_index do |entry, index|
+      value_ptr = aggregate_index(value, index)
+      value_at_index = to_lhs(value_ptr, entry.type)
+      target_index = to_type.name_index(entry.name).not_nil!
+      target_index_type = to_type.name_type(entry.name)
+      downcasted_value = downcast(value_at_index, target_index_type, entry.type, true)
+      store downcasted_value, aggregate_index(target_pointer, target_index)
+    end
+    target_pointer
   end
 
   def downcast_distinct(value, to_type : Type, from_type : Type)

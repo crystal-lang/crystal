@@ -324,4 +324,31 @@ describe "Code gen: tuple" do
       bar
       ))
   end
+
+  it "assigns two same-size tuple types to a same var (#3132)" do
+    run(%(
+      t = {true}
+      t
+      t = {2}
+      t[0]
+      )).to_i.should eq(2)
+  end
+
+  it "downcasts union to mixed tuple type" do
+    run(%(
+      t = {1} || 2 || {true}
+      t = {1}
+      t[0]
+      )).to_i.should eq(1)
+  end
+
+  it "downcasts union to mixed union with mixed tuple types" do
+    run(%(
+      require "prelude"
+
+      t = {1} || 2 || {true}
+      t = {1} || 2
+      t.as(Tuple)[0]
+      )).to_i.should eq(1)
+  end
 end
