@@ -20,6 +20,9 @@ describe "Array" do
     it "creates with default value in block" do
       ary = Array.new(5) { |i| i * 2 }
       ary.should eq([0, 2, 4, 6, 8])
+
+      ary = Array.new(5_u32) { |i| i * 2 }
+      ary.should eq([0, 2, 4, 6, 8])
     end
 
     it "raises on negative count" do

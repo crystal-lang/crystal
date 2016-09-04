@@ -127,7 +127,7 @@ class Array(T)
   # ```
   def self.new(size : Int, &block : Int32 -> T)
     Array(T).build(size) do |buffer|
-      size.times do |i|
+      size.to_i.times do |i|
         buffer[i] = yield i
       end
       size
