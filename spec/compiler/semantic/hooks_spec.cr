@@ -147,4 +147,39 @@ describe "Semantic: hooks" do
       ),
       "undefined macro method 'MacroId#unknown'"
   end
+
+  it "does included macro for generic module" do
+    assert_type(%(
+      module Mod(T)
+        macro included
+          def self.method
+            1
+          end
+        end
+      end
+
+      class Klass
+        include Mod(Nil)
+      end
+
+      Klass.method
+      )) { int32 }
+  end
+
+  it "does inherited macro for generic class" do
+    assert_type(%(
+      class Foo(T)
+        macro inherited
+          def self.method
+            1
+          end
+        end
+      end
+
+      class Klass < Foo(Int32)
+      end
+
+      Klass.method
+      )) { int32 }
+  end
 end

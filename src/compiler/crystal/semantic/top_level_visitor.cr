@@ -142,7 +142,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attach_doc type, node
 
     pushing_type(type) do
-      run_hooks(superclass.metaclass, type, :inherited, node) if created_new_type
+      run_hooks(hook_type(superclass), type, :inherited, node) if created_new_type
       node.body.accept self
     end
 
@@ -712,7 +712,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     begin
       current_type.as(ModuleType).include type
-      run_hooks type.metaclass, current_type, kind, node
+      run_hooks hook_type(type), current_type, kind, node
     rescue ex : TypeException
       node.raise "at '#{kind}' hook", ex
     end
@@ -736,6 +736,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     if kind == :inherited && (superclass = type_with_hooks.instance_type.superclass)
       run_hooks(superclass.metaclass, current_type, kind, node)
     end
+  end
+
+  private def hook_type(type)
+    type = type.generic_type if type.is_a?(GenericInstanceType)
+    type.metaclass
   end
 
   def check_call_convention_attributes(node)
