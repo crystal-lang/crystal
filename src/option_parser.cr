@@ -107,6 +107,13 @@ class OptionParser
   # See the other definition of `on` for examples.
   def on(short_flag, long_flag, description, &block : String ->)
     append_flag "#{short_flag}, #{long_flag}", description
+
+    has_argument = /([ =].+)/
+    if long_flag =~ has_argument
+      argument = $1
+      short_flag += argument unless short_flag =~ has_argument
+    end
+
     @handlers << Handler.new(short_flag, block)
     @handlers << Handler.new(long_flag, block)
   end
