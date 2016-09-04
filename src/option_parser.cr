@@ -146,14 +146,7 @@ class OptionParser
   end
 
   private def append_flag(flag, description)
-    @flags << String.build do |str|
-      str << "    "
-      str << flag
-      (33 - flag.size).times do
-        str << " "
-      end
-      str << description
-    end
+    @flags << "    #{flag}#{" " * (33 - flag.size)}#{description}"
   end
 
   # Parses the passed *args*, running the handlers associated to each option.
