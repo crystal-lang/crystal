@@ -28,7 +28,6 @@ module Crystal
     ValidGlobalAttributes   = %w(ThreadLocal)
     ValidClassVarAttributes = %w(ThreadLocal)
 
-    property! scope
     getter! typed_def
     property! untyped_def : Def
     setter untyped_def

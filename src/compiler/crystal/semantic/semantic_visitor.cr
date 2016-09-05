@@ -9,9 +9,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   # a class definition is visited this changes to that type, and so on.
   property current_type : ModuleType
 
+  property! scope : Type
+  setter scope
+
   @free_vars : Hash(String, TypeVar)?
   @path_lookup : Type?
-  @scope : Type?
   @typed_def : Def?
   @block : Block?
 
@@ -429,6 +431,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
 
     scope.as(ClassVarContainer)
+  end
+
+  def interpret_enum_value(node : ASTNode, target_type = nil)
+    interpreter = MathInterpreter.new(current_type, self)
+    interpreter.interpret(node, target_type)
   end
 
   def inside_exp?

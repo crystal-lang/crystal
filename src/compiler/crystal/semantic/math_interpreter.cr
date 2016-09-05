@@ -1,7 +1,12 @@
 require "./semantic_visitor"
 
-class Crystal::SemanticVisitor
-  def interpret_enum_value(node : NumberLiteral, target_type = nil)
+# Interprets math expressions like 1 + 2 for enum values and
+# constant values that are being used for the N of a StaticArray.
+struct Crystal::MathInterpreter
+  def initialize(@path_lookup : Type, @visitor : SemanticVisitor? = nil)
+  end
+
+  def interpret(node : NumberLiteral, target_type = nil)
     case node.kind
     when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64, :i64
       target_kind = target_type.try(&.kind) || node.kind
@@ -22,17 +27,17 @@ class Crystal::SemanticVisitor
     end
   end
 
-  def interpret_enum_value(node : Call, target_type = nil)
+  def interpret(node : Call, target_type = nil)
     obj = node.obj
     if obj
       if obj.is_a?(Path)
-        value = interpret_enum_value_call_macro?(node, target_type)
+        value = interpret_call_macro?(node, target_type)
         return value if value
       end
 
       case node.args.size
       when 0
-        left = interpret_enum_value(obj, target_type)
+        left = interpret(obj, target_type)
 
         case node.name
         when "+" then +left
@@ -43,15 +48,15 @@ class Crystal::SemanticVisitor
           when Int32 then -left
           when Int64 then -left
           else
-            interpret_enum_value_call_macro(node, target_type)
+            interpret_call_macro(node, target_type)
           end
         when "~" then ~left
         else
-          interpret_enum_value_call_macro(node, target_type)
+          interpret_call_macro(node, target_type)
         end
       when 1
-        left = interpret_enum_value(obj, target_type)
-        right = interpret_enum_value(node.args.first, target_type)
+        left = interpret(obj, target_type)
+        right = interpret(node.args.first, target_type)
 
         case node.name
         when "+"  then left + right
@@ -64,54 +69,57 @@ class Crystal::SemanticVisitor
         when ">>" then left >> right
         when "%"  then left % right
         else
-          interpret_enum_value_call_macro(node, target_type)
+          interpret_call_macro(node, target_type)
         end
       else
         node.raise "invalid constant value"
       end
     else
-      interpret_enum_value_call_macro(node, target_type)
+      interpret_call_macro(node, target_type)
     end
   end
 
-  def interpret_enum_value_call_macro(node : Call, target_type = nil)
-    interpret_enum_value_call_macro?(node, target_type) ||
+  def interpret_call_macro(node : Call, target_type = nil)
+    interpret_call_macro?(node, target_type) ||
       node.raise("invalid constant value")
   end
 
-  def interpret_enum_value_call_macro?(node : Call, target_type = nil)
+  def interpret_call_macro?(node : Call, target_type = nil)
+    visitor = @visitor
+    return unless visitor
+
     if node.global?
-      node.scope = @program
+      node.scope = visitor.program
     else
-      node.scope = @scope || current_type.metaclass
+      node.scope = visitor.scope? || visitor.current_type.metaclass
     end
 
-    if expand_macro(node, raise_on_missing_const: false, first_pass: true)
-      return interpret_enum_value(node.expanded.not_nil!, target_type)
+    if visitor.expand_macro(node, raise_on_missing_const: false, first_pass: true)
+      return interpret(node.expanded.not_nil!, target_type)
     end
 
     nil
   end
 
-  def interpret_enum_value(node : Path, target_type = nil)
-    type = lookup_type(node)
+  def interpret(node : Path, target_type = nil)
+    type = @path_lookup.lookup_type(node, allow_typeof: false)
     case type
     when Const
-      interpret_enum_value(type.value, target_type)
+      interpret(type.value, target_type)
     else
       node.raise "invalid constant value"
     end
   end
 
-  def interpret_enum_value(node : Expressions, target_type = nil)
+  def interpret(node : Expressions, target_type = nil)
     if node.expressions.size == 1
-      interpret_enum_value(node.expressions.first)
+      interpret(node.expressions.first)
     else
       node.raise "invalid constant value"
     end
   end
 
-  def interpret_enum_value(node : ASTNode, target_type = nil)
+  def interpret(node : ASTNode, target_type = nil)
     node.raise "invalid constant value"
   end
 end

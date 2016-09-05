@@ -229,7 +229,17 @@ class Crystal::Type
           # Check the case of T resolving to a number
           if type_var.is_a?(Path) && type_var.names.size == 1
             type = @root.lookup_path(type_var)
-            if type.is_a?(ASTNode)
+            case type
+            when Const
+              interpreter = MathInterpreter.new(@root)
+              begin
+                num = interpreter.interpret(type.value)
+                type_vars << NumberLiteral.new(num)
+              rescue ex : Crystal::Exception
+                type_var.raise "expanding constant value for a number value", inner: ex
+              end
+              next
+            when ASTNode
               type_vars << type
               next
             end

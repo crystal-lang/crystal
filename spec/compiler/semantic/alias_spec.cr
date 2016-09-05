@@ -232,4 +232,20 @@ describe "Semantic: alias" do
       Foo
       )) { union_of(int32.metaclass, string.metaclass).metaclass }
   end
+
+  it "uses constant in alias (#3259)" do
+    assert_type(%(
+      CONST = 10
+      alias Alias = UInt8[CONST]
+      Alias
+      )) { static_array_of(uint8, 10).metaclass }
+  end
+
+  it "uses constant in alias with math (#3259)" do
+    assert_type(%(
+      CONST = 2*3 + 4
+      alias Alias = UInt8[CONST]
+      Alias
+      )) { static_array_of(uint8, 10).metaclass }
+  end
 end
