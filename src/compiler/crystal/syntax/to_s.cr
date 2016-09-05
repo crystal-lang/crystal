@@ -933,7 +933,7 @@ module Crystal
       @str << "/"
       case exp = node.value
       when StringLiteral
-        @str << exp.value
+        @str << exp.value.gsub('/', "\\/")
       when StringInterpolation
         visit_interpolation exp, &.gsub('/', "\\/")
       end
