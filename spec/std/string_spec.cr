@@ -845,6 +845,10 @@ describe "String" do
       "fここ bここr bここここz".sub("ここ", "そこ").should eq("fそこ bここr bここここz")
     end
 
+    it "subs with string and string (#3258)" do
+      "私は日本人です".sub("日本", "スペイン").should eq("私はスペイン人です")
+    end
+
     it "subs with string and block" do
       result = "foo boo".sub("oo") { |value|
         value.should eq("oo")

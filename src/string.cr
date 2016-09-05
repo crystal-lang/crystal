@@ -1366,7 +1366,7 @@ class String
   # "hello yellow".sub("ll") { "dd" } # => "heddo yellow"
   # ```
   def sub(string : String, &block)
-    index = self.index(string)
+    index = self.byte_index(string)
     return self unless index
 
     String.build(bytesize) do |buffer|
