@@ -136,4 +136,42 @@ describe "Code gen: alias" do
       end
       )).to_i.should eq(2)
   end
+
+  it "overloads alias against generic (1) (#3261)" do
+    run(%(
+      class Foo(T)
+      end
+
+      alias FooString = Foo(String)
+
+      def take(foo : Foo(String))
+        1
+      end
+
+      def take(foo : FooString)
+        2
+      end
+
+      take(Foo(String).new)
+      ), inject_primitives: false).to_i.should eq(2)
+  end
+
+  it "overloads alias against generic (2) (#3261)" do
+    run(%(
+      class Foo(T)
+      end
+
+      alias FooString = Foo(String)
+
+      def take(foo : FooString)
+        2
+      end
+
+      def take(foo : Foo(String))
+        1
+      end
+
+      take(Foo(String).new)
+      ), inject_primitives: false).to_i.should eq(1)
+  end
 end

@@ -224,6 +224,18 @@ module Crystal
       other.types.any? { |o| self.restriction_of?(o, owner) }
     end
 
+    def restriction_of?(other : Generic, owner)
+      self_type = owner.lookup_path(self)
+      if self_type
+        other_type = owner.lookup_type?(other)
+        if other_type
+          return self_type.restriction_of?(other_type, owner)
+        end
+      end
+
+      false
+    end
+
     def restriction_of?(other, owner)
       false
     end
@@ -240,6 +252,18 @@ module Crystal
   end
 
   class Generic
+    def restriction_of?(other : Path, owner)
+      other_type = owner.lookup_type?(self)
+      if other_type
+        self_type = owner.lookup_path(other)
+        if self_type
+          return self_type.restriction_of?(other_type, owner)
+        end
+      end
+
+      false
+    end
+
     def restriction_of?(other : Generic, owner)
       return true if self == other
       return false unless name == other.name && type_vars.size == other.type_vars.size
