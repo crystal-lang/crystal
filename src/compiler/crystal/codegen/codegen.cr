@@ -131,8 +131,8 @@ module Crystal
       @abi = @program.target_machine.abi
       @llvm_typer = @program.llvm_typer
       @llvm_id = LLVMId.new(@program)
-      @main_ret_type = node.type
-      ret_type = @llvm_typer.llvm_return_type(node.type)
+      @main_ret_type = node.type? || @program.nil_type
+      ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM::VoidPointer.pointer], ret_type)
       @main.linkage = LLVM::Linkage::Internal unless expose_crystal_main
 
