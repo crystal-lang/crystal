@@ -948,4 +948,40 @@ describe "Code gen: class" do
       Foo(Int32).new.x
       )).to_i.should eq(123)
   end
+
+  it "doesn't skip false initializers (#3272)" do
+    run(%(
+      class Parent
+        @foo = true
+
+        def foo
+          @foo
+        end
+      end
+
+      class Child < Parent
+        @foo = false
+      end
+
+      Child.new.foo ? 10 : 20
+      )).to_i.should eq(20)
+  end
+
+  it "doesn't skip zero initializers (#3272)" do
+    run(%(
+      class Parent
+        @foo = 123
+
+        def foo
+          @foo
+        end
+      end
+
+      class Child < Parent
+        @foo = 0
+      end
+
+      Child.new.foo
+      )).to_i.should eq(0)
+  end
 end
