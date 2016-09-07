@@ -43,21 +43,36 @@ module HTTP
 
     def initialize(@io : IO)
       @chunk_remaining = io.gets.not_nil!.to_i(16)
+      @read_chunk_start = false
       check_last_chunk
     end
 
     def read(slice : Slice(UInt8))
       count = slice.size
-      return 0 if @chunk_remaining == 0 || count == 0
+      return 0 if count == 0
+
+      # Check if the last read consumed a chunk and we
+      # need to start consuming the next one.
+      if @read_chunk_start
+        read_chunk_end
+        @chunk_remaining = @io.gets.not_nil!.to_i(16)
+        check_last_chunk
+        @read_chunk_start = false
+      end
+
+      return 0 if @chunk_remaining == 0
 
       to_read = Math.min(slice.size, @chunk_remaining)
 
       bytes_read = @io.read slice[0, to_read]
       @chunk_remaining -= bytes_read
+
+      # As soon as we finish reading a chunk we return,
+      # in case the next content is delayed (see #3270).
+      # We set @read_chunk_start to true so we read the next
+      # chunk start on the next call to `read`.
       if @chunk_remaining == 0
-        read_chunk_end
-        @chunk_remaining = @io.gets.not_nil!.to_i(16)
-        check_last_chunk
+        @read_chunk_start = true
       end
 
       bytes_read
