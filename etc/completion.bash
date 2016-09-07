@@ -74,7 +74,15 @@ _crystal()
                 COMPREPLY=($(_crystal_compgen_files $cur))
             fi
             ;;
-        docs|eval|spec|version|help)
+        eval)
+            if [[ ${cur} == -* ]] ; then
+                local opts="--help"
+                COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            else
+                COMPREPLY=($(_crystal_compgen_files $cur))
+            fi
+            ;;
+        docs|spec|version|help)
             # These commands do not accept any options nor subcommands
             COMPREPLY=( $(compgen -f ${cur}) )
             ;;
