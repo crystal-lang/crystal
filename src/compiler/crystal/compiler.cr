@@ -386,12 +386,18 @@ module Crystal
       def initialize(@compiler : Compiler, @name : String, @llvm_mod : LLVM::Module,
                      @output_dir : String, @bc_flags_changed : Bool)
         @name = "_main" if @name == ""
-        @name = @name.gsub do |char|
-          case char
-          when 'a'..'z', 'A'..'Z', '0'..'9', '_'
-            char
-          else
-            char.ord
+        @name = String.build do |str|
+          @name.each_char do |char|
+            case char
+            when 'a'..'z', '0'..'9', '_'
+              str << char
+            when 'A'..'Z'
+              # Because OSX has case insensitive filenames, try to avoid
+              # clash of 'a' and 'A' by using 'A-' for 'A'.
+              str << char << '-'
+            else
+              str << char.ord
+            end
           end
         end
 
