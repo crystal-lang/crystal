@@ -43,7 +43,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : ClassDef)
     check_outside_exp node, "declare class"
 
-    scope, name = lookup_type_def_name(node.name)
+    scope, name = lookup_type_def_name(node)
 
     type = scope.types[name]?
 
@@ -136,7 +136,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
     end
 
-    scope.types[name] = type if created_new_type
+    scope.types[name] = type
     node.resolved_type = type
 
     attach_doc type, node
@@ -156,7 +156,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : ModuleDef)
     check_outside_exp node, "declare module"
 
-    scope, name = lookup_type_def_name(node.name)
+    scope, name = lookup_type_def_name(node)
 
     type = scope.types[name]?
     if type
@@ -405,7 +405,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attributes = check_valid_attributes node, ValidEnumDefAttributes, "enum"
     attributes_doc = attributes_doc()
 
-    scope, name = lookup_type_def_name(node.name)
+    scope, name = lookup_type_def_name(node)
 
     enum_type = scope.types[name]?
     if enum_type
@@ -582,8 +582,19 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.exp.visibility = node.modifier
     node.exp.accept self
 
-    # Can only apply visibility modifier to def, macro or a macro call
+    # Can only apply visibility modifier to def, type, macro or a macro call
     case exp = node.exp
+    when ClassDef, ModuleDef, EnumDef
+      # Only for top-level types
+      if current_type.is_a?(Program)
+        if node.modifier.private?
+          return false
+        else
+          node.raise "can only use 'private' for file-level types"
+        end
+      else
+        node.raise "can only apply visibility modifier to file-level types, not #{current_type}"
+      end
     when Def
       return false
     when Macro
@@ -812,7 +823,13 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def lookup_type_def_name(path)
+  def lookup_type_def_name(node : ASTNode)
+    scope, name = lookup_type_def_name(node.name)
+    scope = program.check_private(node) || scope
+    {scope, name}
+  end
+
+  def lookup_type_def_name(path : Path)
     if path.names.size == 1 && !path.global?
       scope = current_type
       name = path.names.first
@@ -831,7 +848,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     unless target_type
       next_type = base_type
       path.names.each do |name|
-        next_type = base_type.lookup_path_item(name, lookup_in_namespace: false)
+        next_type = base_type.lookup_path_item(name, lookup_in_namespace: false, location: path.location)
         if next_type
           if next_type.is_a?(ASTNode)
             path.raise "execpted #{name} to be a type"
