@@ -1220,6 +1220,7 @@ module Crystal
     property splat_index : Int32?
     property? abstract : Bool
     property? struct : Bool
+    property visibility = Visibility::Public
 
     def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = 0, @splat_index = nil)
       @body = Expressions.from body
@@ -1250,6 +1251,7 @@ module Crystal
     property splat_index : Int32?
     property name_column_number : Int32
     property doc : String?
+    property visibility = Visibility::Public
 
     def initialize(@name, body = nil, @type_vars = nil, @name_column_number = 0, @splat_index = nil)
       @body = Expressions.from body
@@ -1719,6 +1721,7 @@ module Crystal
     property members : Array(ASTNode)
     property base_type : ASTNode?
     property doc : String?
+    property visibility = Visibility::Public
 
     def initialize(@name, @members = [] of ASTNode, @base_type = nil)
     end
