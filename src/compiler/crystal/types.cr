@@ -521,6 +521,13 @@ module Crystal
       false
     end
 
+    def private?
+      false
+    end
+
+    def private=(set_private)
+    end
+
     def inspect(io)
       to_s(io)
     end
@@ -542,6 +549,7 @@ module Crystal
     getter name : String
     getter locations : Array(Location)?
     property doc : String?
+    property? private : Bool = false
 
     def initialize(program, @namespace, @name)
       super(program)

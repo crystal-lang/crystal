@@ -20,6 +20,22 @@ class Crystal::ASTNode
   end
 end
 
+class Crystal::Path
+  def raise_undefined_constant(type)
+    private_const = type.lookup_path(self, include_private: true)
+    if private_const
+      self.raise("private constant #{private_const} referenced")
+    end
+
+    similar_name = type.lookup_similar_path(self)
+    if similar_name
+      self.raise("undefined constant #{self} #{type.program.colorize("(did you mean '#{similar_name}')").yellow.bold}")
+    else
+      self.raise("undefined constant #{self}")
+    end
+  end
+end
+
 class Crystal::Call
   def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil)
     # Special case: Foo+:Class#new

@@ -361,18 +361,21 @@ module Crystal
         ident_type = context.get_free_var(other.names.first)
       end
 
+      had_ident_type = !!ident_type
       ident_type ||= context.defining_type.lookup_path other
 
       if ident_type
-        restrict ident_type, context
-      elsif single_name
-        if Parser.free_var_name?(other.names.first)
-          context.set_free_var(other.names.first, self)
-        else
-          other.raise "undefined constant #{other}"
-        end
-      else
+        return restrict ident_type, context
+      end
+
+      if single_name && Parser.free_var_name?(other.names.first)
+        return context.set_free_var(other.names.first, self)
+      end
+
+      if had_ident_type
         other.raise "undefined constant #{other}"
+      else
+        other.raise_undefined_constant(context.defining_type)
       end
     end
 
@@ -830,7 +833,7 @@ module Crystal
           if Parser.free_var_name?(other.names.first)
             return context.set_free_var(other.names.first, self)
           else
-            other.raise "undefined constant #{other}"
+            other.raise_undefined_constant(context.defining_type)
           end
         end
       end
