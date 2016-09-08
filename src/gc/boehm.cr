@@ -22,6 +22,9 @@ lib LibGC
   fun disable = GC_disable
   fun set_handle_fork = GC_set_handle_fork(value : Int)
 
+  fun base = GC_base(displaced_pointer : Void*) : Void*
+  fun general_register_disappearing_link = GC_general_register_disappearing_link(link : Void**, obj : Void*) : Int
+
   type Finalizer = Void*, Void* ->
   fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun register_finalizer_ignore_self = GC_register_finalizer_ignore_self(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
@@ -108,6 +111,11 @@ module GC
   def self.add_root(object : Reference)
     roots = @@roots ||= [] of Pointer(Void)
     roots << Pointer(Void).new(object.object_id)
+  end
+
+  def self.register_disappearing_link(pointer : Void**)
+    base = LibGC.base(pointer.value)
+    LibGC.general_register_disappearing_link(pointer, base)
   end
 
   record Stats,
