@@ -129,6 +129,8 @@ module Crystal
       new_def.yields = yields
       new_def.visibility = Visibility::Private if visibility.private?
       new_def.new = true
+      new_def.location = location
+      new_def.doc = doc
 
       # Forward block argument if any
       if uses_block_arg?

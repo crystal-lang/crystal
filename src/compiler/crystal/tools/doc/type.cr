@@ -196,33 +196,12 @@ class Crystal::Doc::Type
             next
           end
 
-          # Skip auto-generated new methods from initialize
-          if a_def.name == "new" && !a_def.location
-            next
-          end
-
           if @generator.must_include? a_def
             class_methods << method(a_def, true)
           end
         end
       end
       class_methods.sort_by! &.name.downcase
-
-      # Also get `initialize` methods from instance type,
-      # but show them as `new`
-      @type.metaclass.defs.try &.each_value do |defs_with_metadata|
-        defs_with_metadata.each do |def_with_metadata|
-          a_def = def_with_metadata.def
-          if a_def.name == "initialize" && @generator.must_include?(a_def)
-            initialize = a_def.clone
-            initialize.doc = a_def.doc
-            initialize.name = "new"
-            class_methods << method(initialize, true)
-          end
-        end
-      end
-
-      class_methods
     end
   end
 
