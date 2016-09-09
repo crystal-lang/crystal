@@ -1,4 +1,10 @@
-## 0.19.0
+## 0.19.1  (09-09-2016)
+
+* Types (class, module, etc.) can now be marked as `private`.
+* Added `WeakRef`  (thanks @bcardiff)
+* [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.1)
+
+## 0.19.0  (02-09-2016)
 
 * **(breaking change)** Added `select` keyword
 * **(breaking change)** Removed $global variables. Use @@class variables instead.
