@@ -10,6 +10,9 @@ module Crystal
       # We also need to define empty `new` methods for types
       # that don't have any `initialize` methods.
       define_default_new(self)
+      file_modules.each_value do |file_module|
+        define_default_new(file_module)
+      end
     end
 
     def define_default_new(type)

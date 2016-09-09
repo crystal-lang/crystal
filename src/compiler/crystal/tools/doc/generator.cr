@@ -89,6 +89,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(type : Crystal::Type)
+    return false if type.private?
     return false if nodoc?(type)
     return true if crystal_builtin?(type)
 

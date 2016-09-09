@@ -1,7 +1,7 @@
 require "../../spec_helper"
 require "tempfile"
 
-describe "Codegen: private def" do
+describe "Codegen: private" do
   it "codegens private def in same file" do
     compiler = Compiler.new
     sources = [
