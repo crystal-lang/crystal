@@ -38,6 +38,7 @@ class Crystal::Command
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         implementations          show implementations for given call in location
+        unreachable              show code that is never used
         types                    show type of main variables
         --help, -h               show this help
     USAGE
@@ -146,6 +147,9 @@ class Crystal::Command
       when "implementations".starts_with?(tool)
         options.shift
         implementations
+      when "unreachable".starts_with?(tool)
+        options.shift
+        unreachable
       when "types".starts_with?(tool)
         options.shift
         types

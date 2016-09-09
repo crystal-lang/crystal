@@ -7,7 +7,7 @@ module Crystal
     JSON.mapping({
       status:          {type: String},
       message:         {type: String},
-      implementations: {type: Array(ImplementationTrace), nilable: true},
+      implementations: {type: Array(LocationTrace), nilable: true},
     })
 
     def initialize(@status, @message)
@@ -31,13 +31,13 @@ module Crystal
   # Contains information regarding where an implementation is defined.
   # It keeps track of macro expansion in a human friendly way and
   # pointing to the exact line an expansion and method definition occurs.
-  class ImplementationTrace
+  class LocationTrace
     JSON.mapping({
       line:     {type: Int32},
       column:   {type: Int32},
       filename: {type: String},
       macro:    {type: String, nilable: true},
-      expands:  {type: ImplementationTrace, nilable: true},
+      expands:  {type: LocationTrace, nilable: true},
     })
 
     def initialize(loc : Location)
@@ -129,7 +129,7 @@ module Crystal
         return ImplementationResult.new("failed", "no implementations or method call found")
       else
         res = ImplementationResult.new("ok", "#{@locations.size} implementation#{@locations.size > 1 ? "s" : ""} found")
-        res.implementations = @locations.map { |loc| ImplementationTrace.build(loc) }
+        res.implementations = @locations.map { |loc| LocationTrace.build(loc) }
         return res
       end
     end
