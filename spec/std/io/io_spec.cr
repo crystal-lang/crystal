@@ -568,6 +568,13 @@ describe IO do
         io.set_encoding("UTF-8", invalid: :skip)
         io.gets_to_end.should eq "{/*  */}"
       end
+
+      it "decodes incomplete multibyte sequence with skip (#3285)" do
+        bytes = Bytes[195, 229, 237, 229, 240, 224, 246, 232, 255, 32, 241, 234, 240, 232, 239, 242, 224, 32, 48, 46, 48, 49, 50, 54, 32, 241, 229, 234, 243, 237, 228, 10]
+        m = MemoryIO.new(bytes)
+        m.set_encoding("UTF-8", invalid: :skip)
+        m.gets_to_end.should eq("  0.0126 \n")
+      end
     end
 
     describe "encode" do

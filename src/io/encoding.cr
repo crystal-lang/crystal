@@ -102,7 +102,8 @@ module IO
       result = @iconv.convert(pointerof(@in_buffer), pointerof(@in_buffer_left), pointerof(out_buffer), pointerof(out_buffer_left))
       @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
       if result == -1
-        if Errno.value == Errno::EILSEQ
+        case Errno.value
+        when Errno::EILSEQ, Errno::EINVAL
           @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
         end
 
