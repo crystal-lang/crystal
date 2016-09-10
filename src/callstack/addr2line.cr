@@ -4,79 +4,56 @@ require "../process"
 struct CallStack
   skip(__FILE__)
 
-  struct Addr2line
+  # :nodoc:
+  module Addr2line
     @@has_command : Bool?
-    @@command_path : String?
+    @@command : String?
 
-    def self.command_path?
-      {% if flag?(:darwin) || flag?(:freebsd) || flag?(:linux) %}
-        if @@has_command.nil?
-          {% if flag?(:darwin) %}
-            name = "atos"
-          {% else %}
-            name = "addr2line"
-          {% end %}
-
-          process = Process.new("command -v #{name}", shell: true, output: nil)
-
-          begin
-            if output = process.output.gets
-              @@command_path = output.strip
-              @@has_command = true
-            else
-              @@has_command = false
-            end
-          ensure
-            process.close
-          end
-        end
-        @@command_path
+    def self.command?
+      {% if flag?(:darwin) %}
+        name = "atos"
+      {% elsif flag?(:linux) || flag?(:freebsd) %}
+        name = "addr2line"
+      {% else %}
+        nil
       {% end %}
     end
 
-    def self.open
-      addr2line = new
-      begin
-        yield addr2line
-      ensure
-        addr2line.close
-      end
-    end
+    def self.decode(addresses)
+      symbols = Array(Tuple(String, String)).new(addresses.size)
 
-    @process : Process?
+      if command = command?
+        args = Array(String).new(addresses.size + 2)
 
-    def initialize
-      if cmd = Addr2line.command_path?
         {% if flag?(:darwin) %}
-          @process = Process.new(cmd, {"-o", PROGRAM_NAME}, input: nil, output: nil)
+          args << "-o"
         {% else %}
-          @process = Process.new(cmd, {"-e", PROGRAM_NAME}, input: nil, output: nil)
+          args << "-e"
         {% end %}
-      end
-    end
 
-    def finalize
-      close
-    end
+        args << PROGRAM_NAME
 
-    def close
-      @process.try(&.close)
-    end
+        addresses.each do |ip|
+          args << ip.address.to_s(16)
+        end
 
-    def decode(ip)
-      if process = @process
-        process.input << ip.address.to_s(16) << '\n'
-        if output = process.output.gets
-          if pos = output.index(':')
-            file = output[0, pos]
-            line = output[pos + 1...-1]
-            return {file, line}
-          else
-            {output, "?"}
+        Process.run(command, args, output: nil) do |process|
+          while output = process.output.gets
+            if pos = output.index(':')
+              file = output[0, pos]
+              line = output[pos + 1...-1]
+              symbols << {file, line}
+              next
+            else
+              symbols << {output, "?"}
+              next
+            end
+            symbols << {"??", "?"}
           end
         end
       end
-      {"??", "?"}
+
+      symbols
     end
   end
 end

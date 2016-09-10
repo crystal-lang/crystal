@@ -1,6 +1,11 @@
 require "callstack/lib_unwind"
 require "callstack/addr2line"
 
+{% if flag?(:linux) || flag?(:freebsd) %}
+  require "callstack/elf"
+  require "callstack/dwarf"
+{% end %}
+
 def caller
   CallStack.new.backtrace
 end
@@ -101,18 +106,19 @@ struct CallStack
 
   private def self.print_frame(repeated_frame)
     frame = decode_frame(repeated_frame.ip)
+    ip16 = repeated_frame.ip.address.to_s(16)
     if frame
       offset, sname = frame
       if repeated_frame.count == 0
-        LibC.printf "[%ld] %s +%ld\n", repeated_frame.ip, sname, offset
+        LibC.printf "0x%s: %s +%ld\n", ip16, sname, offset
       else
-        LibC.printf "[%ld] %s +%ld (%ld times)\n", repeated_frame.ip, sname, offset, repeated_frame.count + 1
+        LibC.printf "0x%s: %s +%ld (%ld times)\n", ip16, sname, offset, repeated_frame.count + 1
       end
     else
       if repeated_frame.count == 0
-        LibC.printf "[%ld] ???\n", repeated_frame.ip
+        LibC.printf "0x%s: ???\n", ip16
       else
-        LibC.printf "[%ld] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
+        LibC.printf "0x%s: ??? (%ld times)\n", ip16, repeated_frame.count + 1
       end
     end
   end
@@ -120,33 +126,54 @@ struct CallStack
   private def decode_backtrace
     addr_size = {% if flag?(:i686) %}8{% else %}16{% end %}
 
-    Addr2line.open do |addr2line|
-      @callstack.compact_map do |ip|
-        file, line = addr2line.decode(ip)
-        next if @@skip.includes?(file)
+    @callstack.map_with_index do |ip, index|
+      path, line, column = decode_line_number(ip.address)
+      next if @@skip.includes?(path)
 
-        addr = ip.address.to_s(16).rjust(addr_size, '0')
+      addr = ip.address.to_s(16).rjust(addr_size, '0')
 
-        if frame = CallStack.decode_frame(ip)
-          offset, sname = frame
-          fname = demangle_function(String.new(sname))
-          "0x#{addr}: #{fname} at #{file}:#{line}"
-        else
-          "0x#{addr}: ??? at #{file}:#{line}"
+      if frame = CallStack.decode_frame(ip)
+        offset, sname = frame
+        fname = String.new(sname)
+      else
+        fname = "???"
+      end
+
+      "0x#{addr}: #{fname} at #{path} #{line}:#{column}"
+    end.compact
+  end
+
+  {% if flag?(:linux) || flag?(:freebsd)%}
+    @dwarf_line_numbers : DWARF::LineNumbers?
+
+    private def dwarf_line_numbers
+      @dwarf_line_numbers ||= begin
+        File.open(PROGRAM_NAME, "r") do |file|
+          elf = ELF.new(file)
+          elf.read_section?(".debug_line") do |sh, io|
+            DWARF::LineNumbers.new(io, sh.size)
+          end
         end
       end
     end
-  end
 
-  private def demangle_function(name)
-    if name[0] == '*' || name[0] == '~'
-      name = name[1..-1]
+    private def decode_line_number(address)
+      if ln = dwarf_line_numbers
+        if row = ln.find(address)
+          path = ln.files[row.file]? || "??"
+          if dirname = ln.directories[row.directory]?
+            path = "#{dirname}/#{path}"
+          end
+          return {path, row.line, row.column}
+        end
+      end
+      {"??", 0, 0}
     end
-    if pos = name.rindex(':')
-      name = name[0...pos]
+  {% else %}
+    private def decode_line_number(address)
+      {"??", 0, 0}
     end
-    name
-  end
+  {% end %}
 
   protected def self.decode_frame(ip, original_ip = ip)
     if LibC.dladdr(ip, out info) != 0
