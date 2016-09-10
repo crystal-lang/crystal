@@ -11,6 +11,7 @@ module IO::Buffered
 
   @in_buffer_rem = Slice(UInt8).new(Pointer(UInt8).null, 0)
   @out_count = 0
+  @readed_size = 0
   @sync = false
   @flush_on_newline = false
 
@@ -271,10 +272,15 @@ module IO::Buffered
     self
   end
 
+  # Rewinds buffer to start position.
+  def rewind_buffer
+    @in_buffer_rem = Slice.new(in_buffer, @readed_size)
+  end
+
   private def fill_buffer
     in_buffer = in_buffer()
-    size = unbuffered_read(Slice.new(in_buffer, BUFFER_SIZE)).to_i
-    @in_buffer_rem = Slice.new(in_buffer, size)
+    @readed_size = unbuffered_read(Slice.new(in_buffer, BUFFER_SIZE)).to_i
+    @in_buffer_rem = Slice.new(in_buffer, @readed_size)
   end
 
   private def in_buffer
