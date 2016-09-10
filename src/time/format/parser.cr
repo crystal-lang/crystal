@@ -164,7 +164,15 @@ struct Time::Format
     end
 
     def milliseconds
-      @millisecond = consume_number(3)
+      # Consume more than 3 digits (12 seems a good maximum),
+      # and later just use the first 3 digits because Time
+      # only has microsecond precision.
+      pos = @reader.pos
+      @millisecond = consume_number(12)
+      digits = @reader.pos - pos
+      if digits > 3
+        @millisecond /= 10 ** (digits - 3)
+      end
     end
 
     def am_pm

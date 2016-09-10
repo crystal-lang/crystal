@@ -459,6 +459,12 @@ describe Time do
     time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
   end
 
+  it "parses microseconds" do
+    time = Time.parse("2016-09-09T17:03:28.456789+01:00", "%FT%T.%L%z").to_utc
+    time.to_s.should eq("2016-09-09 16:03:28 UTC")
+    time.millisecond.should eq(456)
+  end
+
   it "parses the correct amount of digits (#853)" do
     time = Time.parse("20150624", "%Y%m%d")
     time.year.should eq(2015)
