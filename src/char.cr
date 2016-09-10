@@ -633,9 +633,15 @@ struct Char
   #
   # This appends this char's bytes as encoded by UTF-8 to the given `IO`.
   def to_s(io : IO)
-    if ord <= 0x7f
+    if ascii?
       byte = ord.to_u8
-      io.write_utf8 Slice.new(pointerof(byte), 1)
+
+      # Optimization: writing a slice is much slower than writing a byte
+      if io.@encoding
+        io.write_utf8 Slice.new(pointerof(byte), 1)
+      else
+        io.write_byte byte
+      end
     else
       chars = uninitialized UInt8[4]
       i = 0
