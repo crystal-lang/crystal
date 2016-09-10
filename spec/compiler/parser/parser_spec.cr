@@ -824,6 +824,8 @@ describe "Parser" do
   it_parses "{/ /, / /}", TupleLiteral.new([regex(" "), regex(" ")] of ASTNode)
   it_parses "begin; / /; end", Expressions.new([regex(" ")] of ASTNode)
   it_parses "begin\n/ /\nend", Expressions.new([regex(" ")] of ASTNode)
+  it_parses "/\\//", regex("/")
+  it_parses "%r(/)", regex("/")
 
   it_parses "1 =~ 2", Call.new(1.int32, "=~", 2.int32)
   it_parses "1.=~(2)", Call.new(1.int32, "=~", 2.int32)

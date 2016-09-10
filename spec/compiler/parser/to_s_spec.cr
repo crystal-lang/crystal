@@ -24,7 +24,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(/\\s/)
   expect_to_s %(/\\?/)
   expect_to_s %(/\\(group\\)/)
-  expect_to_s %(/\\//), "/\\\\//"
+  expect_to_s %(/\\//), "/\\//"
   expect_to_s %(/\#{1 / 2}/)
   expect_to_s %<%r(/)>, %(/\\//)
   expect_to_s %(foo &.bar), %(foo(&.bar))

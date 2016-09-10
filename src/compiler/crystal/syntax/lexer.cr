@@ -1722,7 +1722,11 @@ module Crystal
             char = next_char
             next_char
             @token.type = :STRING
-            @token.value = "\\#{char}"
+            if string_end == '/' && char == '/'
+              @token.value = "/"
+            else
+              @token.value = "\\#{char}"
+            end
           else
             case char = next_char
             when 'b'
