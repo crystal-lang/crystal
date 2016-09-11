@@ -361,7 +361,7 @@ struct Float64
         # Need to add one and carry to the left
         len = max_run_start
         index = len - 1
-        while index > 0
+        while index >= 0
           byte = slice.to_unsafe[index]
           case byte
           when '.'
