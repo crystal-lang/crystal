@@ -370,4 +370,15 @@ describe "Restrictions" do
       Foo.new { nil.as(Rec)}.t
       )) { types["Rec"].metaclass }
   end
+
+  it "matches free variable for type variable" do
+    assert_type(%(
+      class Foo(Type)
+        def initialize(x : Type)
+        end
+      end
+
+      Foo.new(1)
+      )) { generic_class "Foo", int32 }
+  end
 end
