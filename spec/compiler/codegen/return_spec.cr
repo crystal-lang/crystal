@@ -61,4 +61,14 @@ describe "Code gen: return" do
       test
       )).to_i.should eq(2)
   end
+
+  it "doesn't crash when method returns nil and can be inlined" do
+    codegen(%(
+      def foo : Nil
+        1
+      end
+
+      foo
+      ))
+  end
 end

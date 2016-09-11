@@ -393,25 +393,33 @@ class Crystal::CodeGenVisitor
       return true unless @needs_value
 
       accept body
-      @last = upcast(@last, target_def.type, body.type)
+      inline_call_return_value target_def, body
       return true
     when Var
       if body.name == "self"
         return true unless @needs_value
 
         @last = self_type.passed_as_self? ? call_args.first : type_id(self_type)
-        @last = upcast(@last, target_def.type, body.type)
+        inline_call_return_value target_def, body
         return true
       end
     when InstanceVar
       return true unless @needs_value
 
       read_instance_var(body.type, self_type, body.name, call_args.first)
-      @last = upcast(@last, target_def.type, body.type)
+      inline_call_return_value target_def, body
       return true
     end
 
     false
+  end
+
+  def inline_call_return_value(target_def, body)
+    if target_def.type.nil_type?
+      @last = llvm_nil
+    else
+      @last = upcast(@last, target_def.type, body.type)
+    end
   end
 
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
