@@ -30,7 +30,6 @@ class Crystal::Command
         exit
       end
       opts.invalid_option { }
-      opts.missing_option { }
     end
 
     # Assume spec files end with ".cr" and optionally with a colon and a number
