@@ -209,65 +209,72 @@ module Crystal::Macros
     def <=>(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#+
+    # Same as `Number#+`
     def +(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#-
+    # Same as `Number#-`
     def -(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#*
+    # Same as `Number#*`
     def *(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#/
+    # Same as `Number#/`
     def /(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#%
+    # Same as `Number#%`
     def %(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#&
+    # Same as `Number#&`
     def &(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#|
+    # Same as `Number#|`
     def |(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#^
+    # Same as `Number#^`
     def ^(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#**
+    # Same as `Number#**`
     def **(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#<<
+    # Same as `Number#<<`
     def <<(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#>>
+    # Same as `Number#>>`
     def >>(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as Number#+
+    # Same as `Number#+`
     def + : NumberLiteral
     end
 
-    # Same as Number#-
+    # Same as `Number#-`
     def - : NumberLiteral
     end
 
-    # Same as Number#~
+    # Same as `Number#~`
     def ~ : NumberLiteral
+    end
+
+    # The type of the literal: `:i32`, `:u16`, `:f32`, `:f64`, etc.
+    def kind : SymbolLiteral
     end
   end
 
-  # A char literal.
+  # A character literal.
   class CharLiteral < ASTNode
+    # Returns a `MacroId` for this character's contents.
+    def id : MacroId
+    end
   end
 
   # A string literal.
@@ -369,8 +376,15 @@ module Crystal::Macros
     end
   end
 
-  # class StringInterpolation < ASTNode
-  # end
+  # An interpolated string like `"Hello, #{name}!"`.
+  class StringInterpolation < ASTNode
+    # Returns a list of expressions that comprise the interpolated string.
+    #
+    # These alternate between `StringLiteral` for the plaintext parts and
+    # `ASTNode`s of any type for the interpolated expressions.
+    def expressions : ArrayLiteral(ASTNode)
+    end
+  end
 
   # A symbol literal.
   class SymbolLiteral < ASTNode
@@ -525,6 +539,18 @@ module Crystal::Macros
     # Similar to `Array#+`.
     def +(other : ArrayLiteral) : ArrayLiteral
     end
+
+    # Returns the type specified at the end of the array literal, if any.
+    #
+    # This refers to the part after brackets in `[] of String`.
+    def of : ASTNode | Nop
+    end
+
+    # Returns the type that receives the items of the array.
+    #
+    # This refers to the part before brackets in `MyArray{1, 2, 3}`
+    def type : Path | Nop
+    end
   end
 
   # A hash literal.
@@ -559,6 +585,24 @@ module Crystal::Macros
 
     # Similar to `Hash#[]=`
     def []=(key : ASTNode) : ASTNode
+    end
+
+    # Returns the type specified at the end of the Hash literal, if any.
+    #
+    # This refers to the key type after brackets in `{} of String => Int32`.
+    def of_key : ASTNode | Nop
+    end
+
+    # Returns the type specified at the end of the Hash literal, if any.
+    #
+    # This refers to the value type after brackets in `{} of String => Int32`.
+    def of_value : ASTNode | Nop
+    end
+
+    # Returns the type that receives the items of the array.
+    #
+    # This refers to the part before brackets in `MyHash{'a' => 1, 'b' => 2}`
+    def type : Path | Nop
     end
   end
 
@@ -622,8 +666,16 @@ module Crystal::Macros
     end
   end
 
-  # A regex literal.
+  # A regular expression literal.
   class RegexLiteral < ASTNode
+    # Similar to `Regex#source`.
+    def source : StringLiteral | StringInterpolation
+    end
+
+    # Similar to `Regex#options`,
+    # but returns an array of symbols such as [:i, :m, :x]
+    def options : ArrayLiteral(SymbolLiteral)
+    end
   end
 
   # A tuple literal.
@@ -655,7 +707,7 @@ module Crystal::Macros
 
   # A local variable or block argument.
   class Var < ASTNode
-    # Returns this vars's name as a `MacroId`.
+    # Returns this var's name as a `MacroId`.
     def id : MacroId
     end
   end
@@ -669,10 +721,15 @@ module Crystal::Macros
     # Returns the blocks arguments.
     def args : ArrayLiteral(MacroId)
     end
+
+    # Returns the index of the argument with a *splat, if any.
+    def splat_index : NumberLiteral | NilLiteral
+    end
   end
 
+  # A group of expressions.
   class Expressions < ASTNode
-    # Returns the expressions' expressions
+    # Returns the list of expressions in this node
     def expressions : ArrayLiteral(ASTNode)
     end
   end
@@ -687,20 +744,24 @@ module Crystal::Macros
     def name : MacroId
     end
 
+    # Returns this call's receiver, if any.
+    def receiver : ASTNode | Nop
+    end
+
     # Returns this call's arguments.
     def args : ArrayLiteral
     end
 
-    # Returns this call's receiver, if any.
-    def receiver : ASTNode | Nop
+    # Returns this call's named arguments.
+    def named_args : ArrayLiteral(NamedArgument)
     end
 
     # Returns this call's block, if any.
     def block : Block | Nop
     end
 
-    # Returns this call's named arguments, if any.
-    def named_args : ArrayLiteral(NamedArgument) | Nop
+    # Returns this call's block argument, if any
+    def block_arg : ASTNode | Nop
     end
   end
 
@@ -716,8 +777,19 @@ module Crystal::Macros
   end
 
   # An if expression.
-  # class If < ASTNode
-  # end
+  class If < ASTNode
+    # Returns this if's condition.
+    def cond : ASTNode
+    end
+
+    # Returns this if's "then" clause's body.
+    def then : ASTNode
+    end
+
+    # Returns this if's "else" clause's body.
+    def else : ASTNode
+    end
+  end
 
   # class Unless < ASTNode
   # end
@@ -737,40 +809,80 @@ module Crystal::Macros
     end
   end
 
-  # Assign expression.
-  # class MultiAssign < ASTNode
-  # end
+  # Multiple assign expression.
+  class MultiAssign < ASTNode
+    # Returns the targets assigned to.
+    def targets : ArrayLiteral(ASTNode)
+    end
+
+    # Returns the values that are being assigned.
+    def values : ArrayLiteral(ASTNode)
+    end
+  end
 
   # An instance variable.
-  # class InstanceVar < ASTNode
-  # end
+  class InstanceVar < ASTNode
+    # Returns the name of this variable.
+    def name : MacroId
+    end
+  end
 
-  # class ReadInstanceVar < ASTNode
-  # end
+  # Access to an instance variable, e.g. `obj.@var`.
+  class ReadInstanceVar < ASTNode
+    # Returns the object whose variable is being accessed.
+    def obj : ASTNode
+    end
+
+    # Returns the name of the instance variable being accessed.
+    def name : MacroId
+    end
+  end
 
   # A class variable.
-  # class ClassVar < ASTNode
-  # end
+  class ClassVar < ASTNode
+    # Returns the name of this variable.
+    def name : MacroId
+    end
+  end
 
   # A global variable.
-  # class Global < ASTNode
-  # end
+  class Global < ASTNode
+    # Returns the name of this variable.
+    def name : MacroId
+    end
+  end
 
-  # abstract class BinaryOp < ASTNode
-  # end
+  # A binary expression like `And` and `Or`.
+  abstract class BinaryOp < ASTNode
+    # Returns the left hand side of this node.
+    def left : ASTNode
+    end
 
-  # Expressions and.
-  # class And < BinaryOp
-  # end
+    # Returns the left hand side of this node.
+    def right : ASTNode
+    end
+  end
 
-  # Expressions or.
-  # class Or < BinaryOp
-  # end
+  # An `&&` (and) expression
+  class And < BinaryOp
+  end
+
+  # An `||` (or) expression
+  class Or < BinaryOp
+  end
 
   # A def argument.
   class Arg < ASTNode
-    # Returns the name of this argument.
+    # Returns the external name of this argument.
+    #
+    # For example, for `def write(to file)` this returns "to".
     def name : MacroId
+    end
+
+    # Returns the internal name of this argument.
+    #
+    # For example, for `def write(to file)` this returns "file".
+    def internal_name : MacroId
     end
 
     # Returns the default value of this argument, if any.
@@ -791,12 +903,28 @@ module Crystal::Macros
     def name : MacroId
     end
 
-    # Returns the body of this method.
-    def body : ASTNode
-    end
-
     # Returns the arguments of this method.
     def args : ArrayLiteral(Arg)
+    end
+
+    # Returns the index of the argument with a *splat, if any.
+    def splat_index : NumberLiteral | NilLiteral
+    end
+
+    # Returns the double splat argument, if any.
+    def double_splat : Arg | Nop
+    end
+
+    # Returns the block argument, if any.
+    def block_arg : Arg | Nop
+    end
+
+    # Returns the return type of the method, if specified.
+    def return_type : ASTNode | Nop
+    end
+
+    # Returns the body of this method.
+    def body : ASTNode
     end
 
     # Returns the receiver (for example `self`) of this method definition,
@@ -810,40 +938,104 @@ module Crystal::Macros
   end
 
   # A macro definition.
-  # class Macro < ASTNode
-  # end
+  class Macro < ASTNode
+    # Returns the name of this macro.
+    def name : MacroId
+    end
 
-  # abstract class UnaryExpression < ASTNode
-  # end
+    # Returns the arguments of this macro.
+    def args : ArrayLiteral(Arg)
+    end
 
-  # class Not < UnaryExpression
-  # end
+    # Returns the index of the argument with a *splat, if any.
+    def splat_index : NumberLiteral | NilLiteral
+    end
 
-  # class PointerOf < UnaryExpression
-  # end
+    # Returns the double splat argument, if any.
+    def double_splat : Arg | Nop
+    end
 
-  # class SizeOf < UnaryExpression
-  # end
+    # Returns the block argument, if any.
+    def block_arg : Arg | Nop
+    end
 
-  # class InstanceSizeOf < UnaryExpression
-  # end
+    # Returns the body of this macro.
+    def body : ASTNode
+    end
 
-  # class Out < UnaryExpression
-  # end
+    # Returns the visibility of this macro: `:public`, `:protected` or `:private`.
+    def visibility : SymbolLiteral
+    end
+  end
 
-  # class VisibilityModifier < ASTNode
-  # end
+  # An unary expression
+  abstract class UnaryExpression < ASTNode
+    # Returns the expression that this unary operation is applied to.
+    def exp : ASTNode
+    end
+  end
 
-  # class IsA < ASTNode
-  # end
+  # An unary "not" (`!`).
+  class Not < UnaryExpression
+  end
 
-  # class RespondsTo < ASTNode
-  # end
+  # A `pointerof` expression.
+  class PointerOf < UnaryExpression
+  end
 
-  # class Require < ASTNode
-  # end
+  # A `sizeof` expression.
+  class SizeOf < UnaryExpression
+  end
 
-  # A `when` inside a `case`
+  # An `instance_sizeof` expression.
+  class InstanceSizeOf < UnaryExpression
+  end
+
+  # An `out` expression.
+  class Out < UnaryExpression
+  end
+
+  # A visibility modifier
+  class VisibilityModifier < ASTNode
+    # Returns the visibility of this modifier: `:public`, `:protected` or `:private`.
+    def visibility : SymbolLiteral
+    end
+
+    # Returns the expression that the modifier is applied to.
+    def exp : ASTNode
+    end
+  end
+
+  # An `.is_a?` or `.nil?` call.
+  class IsA < ASTNode
+    # Returns this call's receiver.
+    def receiver : ASTNode
+    end
+
+    # Returns this call's argument.
+    def arg : ASTNode
+    end
+  end
+
+  # A `.responds_to?` call.
+  class RespondsTo < ASTNode
+    # Returns this call's receiver.
+    def receiver : ASTNode
+    end
+
+    # Returns the method name that is being checked for.
+    def name : StringLiteral
+    end
+  end
+
+  # A `require` statement.
+  class Require < ASTNode
+    # Returns the argument of the `require`.
+    def path : StringLiteral
+    end
+  end
+
+  # A `when` inside a `case`.
   class When < ASTNode
     # Returns the conditions of this `when`.
     def conds : ArrayLiteral
@@ -854,7 +1046,7 @@ module Crystal::Macros
     end
   end
 
-  # A `case` expression
+  # A `case` expression.
   class Case < ASTNode
     # Returns the condition (target) of this `case`.
     def cond : ASTNode
@@ -869,11 +1061,28 @@ module Crystal::Macros
     end
   end
 
-  # class ImplicitObj < ASTNode
+  # A `select` expression.
+  # class Select < ASTNode
   # end
+
+  # Node that represents an implicit object in:
+  #
+  #     case foo
+  #     when .bar? # this is a call with an implicit object
+  #     end
+  class ImplicitObj < ASTNode
+  end
 
   # A Path to a constant or type, like `Foo` or `Foo::Bar::Baz`.
   class Path < ASTNode
+    # Returns an array with each separate part of this path.
+    def names : ArrayLiteral(MacroId)
+    end
+
+    # Returns true if this is a global path (starts with `::`)
+    def global? : BoolLiteral
+    end
+
     # Resolves this path to a `TypeNode` if it denotes a type, to
     # the value of a constant if it denotes a constant, or otherwise
     # gives a compile-time error.
@@ -882,25 +1091,59 @@ module Crystal::Macros
   end
 
   # A class definition.
-  # class ClassDef < ASTNode
-  # end
+  class ClassDef < ASTNode
+  end
 
   # A module definition.
   # class ModuleDef < ASTNode
   # end
 
-  # class While < ASTNode
-  # end
+  # A `while` expression
+  class While < ASTNode
+    # Returns this while's condition.
+    def cond : ASTNode
+    end
+
+    # Returns this while's body.
+    def body : ASTNode
+    end
+  end
 
   # class Until < ASTNode
   # end
 
   # A generic instantiation, like `Foo(T)` or `Foo::Bar::Baz(T)`
-  # class Generic < ASTNode
-  # end
+  class Generic < ASTNode
+    # Returns the path to the generic.
+    def name : Path
+    end
+
+    # Returns the arguments (the type variables) of this instantiation.
+    def type_vars : ArrayLiteral(ASTNode)
+    end
+
+    # Returns the named arguments of this instantiation, if any.
+    def named_args : NamedTupleLiteral | NilLiteral
+    end
+  end
 
   # A type declaration like `x : Int32`
   class TypeDeclaration < ASTNode
+    # Returns the variable part of the declaration.
+    def var : MacroId
+    end
+
+    # Returns the type part of the declaration.
+    def type : ASTNode
+    end
+
+    # The value assigned to the variable, if any.
+    def value : ASTNode | Nop
+    end
+  end
+
+  # An uninitialized variable declaration: `a = uninitialized Int32`
+  class UninitializedVar < ASTNode
     # Returns the variable part of the declaration.
     def var : MacroId
     end
@@ -922,8 +1165,12 @@ module Crystal::Macros
   # class ProcPointer < ASTNode
   # end
 
-  # class Union < ASTNode
-  # end
+  # A type union, like `(Int32 | String)`.
+  class Union < ASTNode
+    # Returns the types of this union.
+    def types : ArrayLiteral(ASTNode)
+    end
+  end
 
   # class Self < ASTNode
   # end
@@ -958,13 +1205,13 @@ module Crystal::Macros
   # class TypeDef < ASTNode
   # end
 
-  # abstract class StructOrUnionDef < ASTNode
+  # abstract class CStructOrUnionDef < ASTNode
   # end
 
-  # class StructDef < StructOrUnionDef
+  # class StructDef < CStructOrUnionDef
   # end
 
-  # class UnionDef < StructOrUnionDef
+  # class UnionDef < CStructOrUnionDef
   # end
 
   # class EnumDef < ASTNode
@@ -979,7 +1226,19 @@ module Crystal::Macros
   # class Metaclass < ASTNode
   # end
 
+  # A cast call: `obj.as(to)`
   class Cast < ASTNode
+    # Returns the object part of the cast.
+    def obj : ASTNode
+    end
+
+    # Returns the target type of the cast.
+    def to : ASTNode
+    end
+  end
+
+  # A cast call: `obj.as?(to)`
+  class NilableCast < ASTNode
     # Returns the object part of the cast.
     def obj : ASTNode
     end
@@ -1207,7 +1466,7 @@ module Crystal::Macros
 
     # Returns the instance methods defined by this type, without including
     # inherited methods.
-    def methods : Array(Def)
+    def methods : ArrayLiteral(Def)
     end
 
     # Returns true if this type has an attribute. For example `@[Flags]`
@@ -1258,24 +1517,5 @@ module Crystal::Macros
     # `self` is an ancestor of *other*.
     def >=(other : TypeNode) : BoolLiteral
     end
-  end
-
-  # A binary expression like `And` and `Or`.
-  class BinaryOp < ASTNode
-    # Returns the left hand side of this node.
-    def left : ASTNode
-    end
-
-    # Returns the left hand side of this node.
-    def right : ASTNode
-    end
-  end
-
-  # An `&&` (and) expression
-  class And < BinaryOp
-  end
-
-  # An `||` (or) expression
-  class Or < BinaryOp
   end
 end
