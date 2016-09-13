@@ -930,4 +930,24 @@ describe "Semantic: generic class" do
       Connection(Client).new.packets
       )) { generic_class "Array", generic_class("OutgoingPacket", types["Client"]).virtual_type! }
   end
+
+  it "nests generics with the same type var (#3297)" do
+    assert_type(%(
+      class Foo(A)
+        @a : A
+
+        def initialize(@a : A)
+        end
+
+        def a
+          @a
+        end
+
+        class Bar(A) < Foo(A)
+        end
+      end
+
+      Foo::Bar.new(:a).a
+      ), inject_primitives: false) { symbol }
+  end
 end

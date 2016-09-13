@@ -67,9 +67,9 @@ class Crystal::Type
       # for example Hash(K, V), we want to find K and V as type parameters
       # of that type.
       if root.is_a?(GenericType)
-        free_vars = {} of String => TypeVar
+        free_vars ||= {} of String => TypeVar
         root.type_vars.each do |type_var|
-          free_vars[type_var] = TypeParameter.new(program, root, type_var)
+          free_vars[type_var] ||= TypeParameter.new(program, root, type_var)
         end
         @free_vars = free_vars
       end
