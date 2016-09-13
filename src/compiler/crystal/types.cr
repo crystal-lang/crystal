@@ -528,6 +528,11 @@ module Crystal
     def private=(set_private)
     end
 
+    # Returns true if *name* if an unbound type variable in this (generic) type.
+    def type_var?(name)
+      false
+    end
+
     def inspect(io)
       to_s(io)
     end
@@ -1261,6 +1266,10 @@ module Crystal
         superclass = superclass.replace_type_parameters(instance)
       end
       superclass
+    end
+
+    def type_var?(name)
+      type_vars.includes? name
     end
   end
 
@@ -2338,7 +2347,8 @@ module Crystal
       program.class_type
     end
 
-    delegate abstract?, generic_nest, lookup_new_in_ancestors?, to: instance_type
+    delegate abstract?, generic_nest, lookup_new_in_ancestors?,
+      type_var?, to: instance_type
 
     def class_var_owner
       instance_type
@@ -2732,7 +2742,8 @@ module Crystal
     delegate leaf?, superclass, lookup_first_def, lookup_defs,
       lookup_defs_with_modules, lookup_instance_var, lookup_instance_var?,
       index_of_instance_var, lookup_macro, lookup_macros, all_instance_vars,
-      abstract?, implements?, covariant?, ancestors, struct?, to: base_type
+      abstract?, implements?, covariant?, ancestors, struct?,
+      type_var?, to: base_type
 
     def remove_indirection
       if struct?

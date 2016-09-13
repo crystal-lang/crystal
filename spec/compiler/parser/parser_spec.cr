@@ -420,6 +420,7 @@ describe "Parser" do
   it_parses "class Foo < Bar; end", ClassDef.new("Foo".path, superclass: "Bar".path)
   it_parses "class Foo(T); end", ClassDef.new("Foo".path, type_vars: ["T"])
   it_parses "class Foo(T1); end", ClassDef.new("Foo".path, type_vars: ["T1"])
+  it_parses "class Foo(Type); end", ClassDef.new("Foo".path, type_vars: ["Type"])
   it_parses "abstract class Foo; end", ClassDef.new("Foo".path, abstract: true)
   it_parses "abstract struct Foo; end", ClassDef.new("Foo".path, abstract: true, struct: true)
 
@@ -1328,9 +1329,6 @@ describe "Parser" do
     "can't change the value of self"
 
   assert_syntax_error "macro foo(x : Int32); end"
-
-  assert_syntax_error "class Foo(Something); end", "type variables can only be single letters"
-  assert_syntax_error "module Foo(Something); end", "type variables can only be single letters"
 
   assert_syntax_error "/foo)/", "invalid regex"
   assert_syntax_error "def =\nend"

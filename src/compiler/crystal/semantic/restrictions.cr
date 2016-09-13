@@ -368,8 +368,11 @@ module Crystal
         return restrict ident_type, context
       end
 
-      if single_name && Parser.free_var_name?(other.names.first)
-        return context.set_free_var(other.names.first, self)
+      if single_name
+        first_name = other.names.first
+        if context.defining_type.type_var?(first_name) || Parser.free_var_name?(first_name)
+          return context.set_free_var(first_name, self)
+        end
       end
 
       if had_ident_type
@@ -830,8 +833,9 @@ module Crystal
       else
         single_name = other.names.size == 1
         if single_name
-          if Parser.free_var_name?(other.names.first)
-            return context.set_free_var(other.names.first, self)
+          first_name = other.names.first
+          if context.defining_type.type_var?(first_name) || Parser.free_var_name?(first_name)
+            return context.set_free_var(first_name, self)
           else
             other.raise_undefined_constant(context.defining_type)
           end

@@ -1582,10 +1582,6 @@ module Crystal
           end
           type_var_name = check_const
 
-          unless Parser.free_var_name?(type_var_name)
-            raise "type variables can only be single letters optionally followed by a digit", @token
-          end
-
           if type_vars.includes? type_var_name
             raise "duplicated type var name: #{type_var_name}", @token
           end
