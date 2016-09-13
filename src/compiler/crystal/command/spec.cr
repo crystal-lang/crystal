@@ -10,6 +10,29 @@
 
 class Crystal::Command
   private def spec
+    compiler = Compiler.new
+    OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal spec [options] [files]\n\nOptions:"
+      opts.on("-d", "--debug", "Add symbolic debug info") do
+        compiler.debug = true
+      end
+      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+        compiler.flags << flag
+      end
+      opts.on("--release", "Compile in release mode") do
+        compiler.release = true
+      end
+      opts.on("-s", "--stats", "Enable statistics output") do
+        compiler.stats = true
+      end
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
+      opts.invalid_option { }
+      opts.missing_option { }
+    end
+
     # Assume spec files end with ".cr" and optionally with a colon and a number
     # (for the target line number). Everything else is an option we forward.
     filenames = options.select { |option| option =~ /\.cr(\:\d+)?\Z/ }
@@ -59,7 +82,6 @@ class Crystal::Command
 
     output_filename = Crystal.tempfile "spec"
 
-    compiler = Compiler.new
     result = compiler.compile sources, output_filename
     execute output_filename, options
   end
