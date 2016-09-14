@@ -193,6 +193,24 @@ describe "OptionParser" do
       "Type G flags:",
       "    -g[FLAG]                         some other flag",
     ].join "\n")
+
+  it "does to_s with very long flag (#3305)" do
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("--very_long_option_kills=formatter", "long") do
+      end
+      opts.on("-f", "--flag", "some flag") do
+      end
+      opts.on("-g[FLAG]", "some other flag") do
+      end
+    end
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+          --very_long_option_kills=formatter
+                                           long
+          -f, --flag                       some flag
+          -g[FLAG]                         some other flag
+      USAGE
   end
 
   it "raises on invalid option" do

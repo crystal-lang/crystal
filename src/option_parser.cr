@@ -153,7 +153,11 @@ class OptionParser
   end
 
   private def append_flag(flag, description)
-    @flags << "    #{flag}#{" " * (33 - flag.size)}#{description}"
+    if flag.size >= 33
+      @flags << "    #{flag}\n#{" " * 37}#{description}"
+    else
+      @flags << "    #{flag}#{" " * (33 - flag.size)}#{description}"
+    end
   end
 
   # Parses the passed *args*, running the handlers associated to each option.
