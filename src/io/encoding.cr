@@ -91,7 +91,6 @@ module IO
         # Convert bytes using iconv
         out_buffer = @out_buffer.to_unsafe
         out_buffer_left = LibC::SizeT.new(OUT_BUFFER_SIZE)
-        old_in_buffer_left = @in_buffer_left
         result = @iconv.convert(pointerof(@in_buffer), pointerof(@in_buffer_left), pointerof(out_buffer), pointerof(out_buffer_left))
         @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
 
@@ -103,6 +102,7 @@ module IO
             @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
           when Errno::EINVAL
             # EINVAL means "An incomplete multibyte sequence has been encountered in the input."
+            old_in_buffer_left = @in_buffer_left
 
             # On invalid multibyte sequence we try to read more bytes
             # to see if they complete the sequence
