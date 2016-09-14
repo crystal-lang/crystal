@@ -217,4 +217,8 @@ struct StaticArray(T, N)
     end
     array
   end
+
+  private def initialize
+    # Never used.
+  end
 end
