@@ -289,4 +289,46 @@ describe "Code gen: cast" do
       Bar.new.as(Foo(Int32)).foo
       )).to_i.should eq(2)
   end
+
+  it "upcasts type to virtual (#3304)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      Foo.new.as(Foo).foo
+      )).to_i.should eq(1)
+  end
+
+  it "upcasts type to virtual (2) (#3304)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      class Gen(T)
+        def self.cast(x)
+          x.as(T)
+        end
+      end
+
+      Gen(Foo).cast(Foo.new).foo
+      )).to_i.should eq(1)
+  end
 end
