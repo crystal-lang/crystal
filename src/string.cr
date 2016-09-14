@@ -1911,6 +1911,10 @@ class String
     bytesize == 0
   end
 
+  def blank?
+    each_char.all? &.blank?
+  end
+
   def ==(other : self)
     return true if same?(other)
     return false unless bytesize == other.bytesize
