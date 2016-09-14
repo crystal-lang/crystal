@@ -361,6 +361,8 @@ module Crystal
         else
           wrong_number_of_arguments "NumberLiteral#~", args.size, 0
         end
+      when "kind"
+        SymbolLiteral.new(kind.to_s)
       else
         super
       end
@@ -421,6 +423,12 @@ module Crystal
       else
         raise "Unknown kind: #{@kind}"
       end
+    end
+  end
+
+  class CharLiteral
+    def to_macro_id
+      @value.to_s
     end
   end
 
@@ -625,10 +633,28 @@ module Crystal
     end
   end
 
+  class StringInterpolation
+    def interpret(method, args, block, interpreter)
+      case method
+      when "expressions"
+        interpret_argless_method(method, args) { ArrayLiteral.new(expressions) }
+      else
+        super
+      end
+    end
+  end
+
   class ArrayLiteral
     def interpret(method, args, block, interpreter)
-      value = intepret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
-      value || super
+      case method
+      when "of"
+        interpret_argless_method(method, args) { @of || Nop.new }
+      when "type"
+        interpret_argless_method(method, args) { @name || Nop.new }
+      else
+        value = intepret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
+        value || super
+      end
     end
   end
 
@@ -685,6 +711,12 @@ module Crystal
         else
           wrong_number_of_arguments "HashLiteral#[]=", args.size, 2
         end
+      when "of_key"
+        interpret_argless_method(method, args) { @of.try(&.key) || Nop.new }
+      when "of_value"
+        interpret_argless_method(method, args) { @of.try(&.value) || Nop.new }
+      when "type"
+        interpret_argless_method(method, args) { @name || Nop.new }
       else
         super
       end
@@ -837,6 +869,25 @@ module Crystal
     end
   end
 
+  class RegexLiteral
+    def interpret(method, args, block, interpreter)
+      case method
+      when "source"
+        interpret_argless_method(method, args) { @value }
+      when "options"
+        interpret_argless_method(method, args) do
+          options = [] of Symbol
+          options << :i if @options.ignore_case?
+          options << :m if @options.multiline?
+          options << :x if @options.extended?
+          ArrayLiteral.map(options) { |opt| SymbolLiteral.new(opt.to_s) }
+        end
+      else
+        super
+      end
+    end
+  end
+
   class MetaVar < ASTNode
     def to_macro_id
       @name
@@ -868,6 +919,10 @@ module Crystal
       when "args"
         interpret_argless_method(method, args) do
           ArrayLiteral.map(@args) { |arg| MacroId.new(arg.name) }
+        end
+      when "splat_index"
+        interpret_argless_method(method, args) do
+          @splat_index ? NumberLiteral.new(@splat_index.not_nil!) : NilLiteral.new
         end
       else
         super
@@ -920,28 +975,28 @@ module Crystal
     end
   end
 
-  class Def
+  class UninitializedVar
     def interpret(method, args, block, interpreter)
       case method
-      when "name"
-        MacroId.new(name)
-      when "body"
-        body
-      when "args"
-        ArrayLiteral.map(self.args) { |arg| arg }
-      when "receiver"
-        receiver || Nop.new
-      when "visibility"
-        visibility_name =
-          case visibility
-          when .private?
-            "private"
-          when .protected?
-            "protected"
-          else
-            "public"
-          end
-        SymbolLiteral.new(visibility_name)
+      when "var"
+        interpret_argless_method(method, args) do
+          var = @var
+          var = MacroId.new(var.name) if var.is_a?(Var)
+          var
+        end
+      when "type"
+        interpret_argless_method(method, args) { @declared_type }
+      else
+        super
+      end
+    end
+  end
+
+  class Union
+    def interpret(method, args, block, interpreter)
+      case method
+      when "types"
+        interpret_argless_method(method, args) { ArrayLiteral.new(@types) }
       else
         super
       end
@@ -952,11 +1007,134 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when "name"
+        interpret_argless_method(method, args) { MacroId.new(external_name) }
+      when "internal_name"
         interpret_argless_method(method, args) { MacroId.new(name) }
       when "default_value"
         interpret_argless_method(method, args) { default_value || Nop.new }
       when "restriction"
         interpret_argless_method(method, args) { restriction || Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class Def
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        interpret_argless_method(method, args) { MacroId.new(@name) }
+      when "args"
+        interpret_argless_method(method, args) { ArrayLiteral.map @args, &.itself }
+      when "splat_index"
+        interpret_argless_method(method, args) do
+          @splat_index ? NumberLiteral.new(@splat_index.not_nil!) : NilLiteral.new
+        end
+      when "double_splat"
+        interpret_argless_method(method, args) { @double_splat || Nop.new }
+      when "block_arg"
+        interpret_argless_method(method, args) { @block_arg || Nop.new }
+      when "return_type"
+        interpret_argless_method(method, args) { @return_type || Nop.new }
+      when "body"
+        interpret_argless_method(method, args) { @body }
+      when "receiver"
+        interpret_argless_method(method, args) { @receiver || Nop.new }
+      when "visibility"
+        interpret_argless_method(method, args) do
+          visibility_to_symbol(@visibility)
+        end
+      else
+        super
+      end
+    end
+  end
+
+  class Macro
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        interpret_argless_method(method, args) { MacroId.new(@name) }
+      when "args"
+        interpret_argless_method(method, args) { ArrayLiteral.map @args, &.itself }
+      when "splat_index"
+        interpret_argless_method(method, args) do
+          @splat_index ? NumberLiteral.new(@splat_index.not_nil!) : NilLiteral.new
+        end
+      when "double_splat"
+        interpret_argless_method(method, args) { @double_splat || Nop.new }
+      when "block_arg"
+        interpret_argless_method(method, args) { @block_arg || Nop.new }
+      when "body"
+        interpret_argless_method(method, args) { @body }
+      when "visibility"
+        interpret_argless_method(method, args) do
+          visibility_to_symbol(@visibility)
+        end
+      else
+        super
+      end
+    end
+  end
+
+  class UnaryExpression
+    def interpret(method, args, block, interpreter)
+      case method
+      when "exp"
+        interpret_argless_method(method, args) { @exp }
+      else
+        super
+      end
+    end
+  end
+
+  class VisibilityModifier
+    def interpret(method, args, block, interpreter)
+      case method
+      when "exp"
+        interpret_argless_method(method, args) { @exp }
+      when "visibility"
+        interpret_argless_method(method, args) do
+          visibility_to_symbol(@modifier)
+        end
+      else
+        super
+      end
+    end
+  end
+
+  class IsA
+    def interpret(method, args, block, interpreter)
+      case method
+      when "receiver"
+        interpret_argless_method(method, args) { @obj }
+      when "arg"
+        interpret_argless_method(method, args) { @const }
+      else
+        super
+      end
+    end
+  end
+
+  class RespondsTo
+    def interpret(method, args, block, interpreter)
+      case method
+      when "receiver"
+        interpret_argless_method(method, args) { @obj }
+      when "name"
+        interpret_argless_method(method, args) { StringLiteral.new(@name) }
+      else
+        super
+      end
+    end
+  end
+
+  class Require
+    def interpret(method, args, block, interpreter)
+      case method
+      when "path"
+        interpret_argless_method(method, args) { StringLiteral.new(@string) }
       else
         super
       end
@@ -1249,12 +1427,10 @@ module Crystal
       case method
       when "name"
         interpret_argless_method(method, args) { MacroId.new(name) }
-      when "args"
-        interpret_argless_method(method, args) { ArrayLiteral.map(self.args) { |arg| arg } }
       when "receiver"
         interpret_argless_method(method, args) { obj || Nop.new }
-      when "block"
-        interpret_argless_method(method, args) { self.block || Nop.new }
+      when "args"
+        interpret_argless_method(method, args) { ArrayLiteral.map self.args, &.itself }
       when "named_args"
         interpret_argless_method(method, args) do
           if named_args = self.named_args
@@ -1263,6 +1439,10 @@ module Crystal
             Nop.new
           end
         end
+      when "block"
+        interpret_argless_method(method, args) { self.block || Nop.new }
+      when "block_arg"
+        interpret_argless_method(method, args) { self.block_arg || Nop.new }
       else
         super
       end
@@ -1284,6 +1464,21 @@ module Crystal
         interpret_argless_method(method, args) { MacroId.new(name) }
       when "value"
         interpret_argless_method(method, args) { value }
+      else
+        super
+      end
+    end
+  end
+
+  class If
+    def interpret(method, args, block, interpreter)
+      case method
+      when "cond"
+        interpret_argless_method(method, args) { @cond }
+      when "then"
+        interpret_argless_method(method, args) { @then }
+      when "else"
+        interpret_argless_method(method, args) { @else }
       else
         super
       end
@@ -1331,15 +1526,86 @@ module Crystal
     end
   end
 
+  class MultiAssign
+    def interpret(method, args, block, interpreter)
+      case method
+      when "targets"
+        interpret_argless_method(method, args) { ArrayLiteral.new(targets) }
+      when "values"
+        interpret_argless_method(method, args) { ArrayLiteral.new(values) }
+      else
+        super
+      end
+    end
+  end
+
   class InstanceVar
     def to_macro_id
       @name
+    end
+
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        interpret_argless_method(method, args) { MacroId.new(@name) }
+      else
+        super
+      end
+    end
+  end
+
+  class ReadInstanceVar
+    def interpret(method, args, block, interpreter)
+      case method
+      when "obj"
+        interpret_argless_method(method, args) { @obj }
+      when "name"
+        interpret_argless_method(method, args) { MacroId.new(@name) }
+      else
+        super
+      end
+    end
+  end
+
+  class ClassVar
+    def to_macro_id
+      @name
+    end
+
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        interpret_argless_method(method, args) { MacroId.new(@name) }
+      else
+        super
+      end
+    end
+  end
+
+  class Global
+    def to_macro_id
+      @name
+    end
+
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        interpret_argless_method(method, args) { MacroId.new(@name) }
+      else
+        super
+      end
     end
   end
 
   class Path
     def interpret(method, args, block, interpreter)
       case method
+      when "names"
+        interpret_argless_method(method, args) do
+          ArrayLiteral.map(@names) { |name| MacroId.new(name) }
+        end
+      when "global"
+        interpret_argless_method(method, args) { BoolLiteral.new(@global) }
       when "resolve"
         interpret_argless_method(method, args) { interpreter.resolve(self) }
       else
@@ -1352,7 +1618,33 @@ module Crystal
     end
   end
 
+  class While
+    def interpret(method, args, block, interpreter)
+      case method
+      when "cond"
+        interpret_argless_method(method, args) { @cond }
+      when "body"
+        interpret_argless_method(method, args) { @body }
+      else
+        super
+      end
+    end
+  end
+
   class Cast
+    def interpret(method, args, block, interpreter)
+      case method
+      when "obj"
+        interpret_argless_method(method, args) { obj }
+      when "to"
+        interpret_argless_method(method, args) { to }
+      else
+        super
+      end
+    end
+  end
+
+  class NilableCast
     def interpret(method, args, block, interpreter)
       case method
       when "obj"
@@ -1555,6 +1847,19 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
   else
     nil
   end
+end
+
+private def visibility_to_symbol(visibility)
+  visibility_name =
+    case visibility
+    when .private?
+      "private"
+    when .protected?
+      "protected"
+    else
+      "public"
+    end
+  Crystal::SymbolLiteral.new(visibility_name)
 end
 
 def filter(object, klass, block, interpreter, keep = true)
