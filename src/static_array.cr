@@ -47,6 +47,12 @@ struct StaticArray(T, N)
     new { value }
   end
 
+  # Disallow creating an uninitialized StaticArray with new.
+  # If this is desired, one can use `array = uninitialized ...`
+  # which makes it clear that it's unsafe.
+  private def initialize
+  end
+
   # Equality. Returns *true* if each element in `self` is equal to each
   # corresponding element in *other*.
   #
