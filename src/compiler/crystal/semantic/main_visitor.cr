@@ -1340,7 +1340,7 @@ module Crystal
         when ProcInstanceType
           return special_proc_type_new_call(node, instance_type)
         when .extern?
-          if named_args = node.named_args
+          if instance_type.namespace.is_a?(LibType) && (named_args = node.named_args)
             return special_c_struct_or_union_new_with_named_args(node, instance_type, named_args)
           end
         end

@@ -159,6 +159,10 @@ struct Crystal::TypeDeclarationProcessor
 
     remove_error owner, name
 
+    if owner.extern? && !type.allowed_in_lib?
+      raise TypeException.new("only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations, not #{type}", location.not_nil!)
+    end
+
     if owner.is_a?(NonGenericModuleType) || owner.is_a?(NonGenericClassType)
       type = type.replace_type_parameters(owner)
     end
@@ -184,7 +188,7 @@ struct Crystal::TypeDeclarationProcessor
       raise_cant_declare_instance_var(owner, info.location)
     end
 
-    var = declare_meta_type_var(vars, owner, name, info.type.as(Type))
+    var = declare_meta_type_var(vars, owner, name, info.type.as(Type), info.location)
     var.location = info.location
 
     # Check if var is uninitialized
