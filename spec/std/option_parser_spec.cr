@@ -165,11 +165,11 @@ describe "OptionParser" do
       opts.on("-g[FLAG]", "some other flag") do
       end
     end
-    parser.to_s.should eq([
-      "Usage: foo",
-      "    -f, --flag                       some flag",
-      "    -g[FLAG]                         some other flag",
-    ].join "\n")
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+          -f, --flag                       some flag
+          -g[FLAG]                         some other flag
+      USAGE
   end
 
   it "does to_s with separators" do
@@ -184,15 +184,16 @@ describe "OptionParser" do
       opts.on("-g[FLAG]", "some other flag") do
       end
     end
-    parser.to_s.should eq([
-      "Usage: foo",
-      "",
-      "Type F flags:",
-      "    -f, --flag                       some flag",
-      "",
-      "Type G flags:",
-      "    -g[FLAG]                         some other flag",
-    ].join "\n")
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+
+      Type F flags:
+          -f, --flag                       some flag
+
+      Type G flags:
+          -g[FLAG]                         some other flag
+      USAGE
+  end
 
   it "does to_s with very long flag (#3305)" do
     parser = OptionParser.parse([] of String) do |opts|
