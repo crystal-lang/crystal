@@ -619,6 +619,13 @@ describe Time do
     end
   end
 
+  it "does diff of utc vs local time" do
+    local = Time.now
+    utc = local.to_utc
+    (utc - local).should eq(0.seconds)
+    (local - utc).should eq(0.seconds)
+  end
+
   typeof(Time.now.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)

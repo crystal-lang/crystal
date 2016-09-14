@@ -213,7 +213,13 @@ struct Time
   end
 
   def -(other : Time)
-    Span.new(ticks - other.ticks)
+    if local? && other.utc?
+      self - other.to_local
+    elsif utc? && other.local?
+      self - other.to_utc
+    else
+      Span.new(ticks - other.ticks)
+    end
   end
 
   def self.now : self
