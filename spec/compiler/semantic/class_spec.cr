@@ -1043,11 +1043,12 @@ describe "Semantic: class" do
       "Moo is not a class, it's a module"
   end
 
-  it "disallows using free-var name for top-level type" do
-    assert_error %(
+  it "can use short name for top-level type" do
+    assert_type(%(
       class T
       end
-      ),
-      "can't use T as a top-level type name: it's reserved for type arguments and free variables"
+
+      T.new
+      )) { types["T"] }
   end
 end
