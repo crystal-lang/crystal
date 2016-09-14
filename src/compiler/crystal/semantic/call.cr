@@ -597,7 +597,7 @@ class Crystal::Call
     previous = previous_item.def
 
     signature = CallSignature.new(previous.name, arg_types, block, named_args_types)
-    context = MatchContext.new(scope, scope)
+    context = MatchContext.new(scope, scope, def_free_vars: previous.free_vars)
     match = Match.new(previous, arg_types, context, named_args_types)
     matches = Matches.new([match] of Match, true)
 
@@ -786,6 +786,7 @@ class Crystal::Call
         block_arg_type = fun_literal_type
         block_type = fun_literal_type.as(ProcInstanceType).return_type
         if output
+          match.context.def_free_vars = match.def.free_vars
           matched = block_type.restrict(output, match.context)
           if !matched && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
@@ -845,6 +846,7 @@ class Crystal::Call
           end
         else
           block_type = block.type
+          match.context.def_free_vars = match.def.free_vars
           matched = block_type.restrict(output, match.context)
           if (!matched || (matched && !block_type.implements?(matched))) && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore)

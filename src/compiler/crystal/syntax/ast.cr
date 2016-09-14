@@ -892,6 +892,7 @@ module Crystal
   #     'end'
   #
   class Def < ASTNode
+    property free_vars : Array(String)?
     property receiver : ASTNode?
     property name : String
     property args : Array(Arg)
@@ -913,7 +914,7 @@ module Crystal
     property? assigns_special_var = false
     property? abstract : Bool
 
-    def initialize(@name, @args = [] of Arg, body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @macro_def = false, @yields = nil, @abstract = false, @splat_index = nil, @double_splat = nil)
+    def initialize(@name, @args = [] of Arg, body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @macro_def = false, @yields = nil, @abstract = false, @splat_index = nil, @double_splat = nil, @free_vars = nil)
       @body = Expressions.from body
     end
 
@@ -931,7 +932,7 @@ module Crystal
     end
 
     def clone_without_location
-      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @yields, @abstract, @splat_index, @double_splat.clone)
+      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @yields, @abstract, @splat_index, @double_splat.clone, @free_vars)
       a_def.calls_super = calls_super?
       a_def.calls_initialize = calls_initialize?
       a_def.calls_previous_def = calls_previous_def?

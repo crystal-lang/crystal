@@ -522,7 +522,7 @@ describe "Code gen: def" do
 
   it "can match N type argument of static array (#1203)" do
     run(%(
-      def fn(a : StaticArray(T, N))
+      def fn(a : StaticArray(T, N)) forall T, N
         N
       end
 

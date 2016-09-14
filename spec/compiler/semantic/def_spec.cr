@@ -391,7 +391,7 @@ describe "Semantic: def" do
 
   it "doesn't find type in namespace through free var" do
     assert_error %(
-      def foo(x : T)
+      def foo(x : T) forall T
         T::String
       end
 
@@ -411,5 +411,39 @@ describe "Semantic: def" do
       end
       ),
       "can't define method in generic instance"
+  end
+
+  it "uses free variable" do
+    assert_type(%(
+      def foo(x : Free) forall Free
+        Free
+      end
+
+      foo(1)
+      )) { int32.metaclass }
+  end
+
+  it "uses free variable as block return type" do
+    assert_type(%(
+      def foo(&block : -> Free) forall Free
+        yield
+        Free
+      end
+
+      foo { 1 }
+      )) { int32.metaclass }
+  end
+
+  it "uses free variable and doesn't conflict with top-level type" do
+    assert_type(%(
+      class Free
+      end
+
+      def foo(x : Free) forall Free
+        Free
+      end
+
+      foo(1)
+      )) { int32.metaclass }
   end
 end

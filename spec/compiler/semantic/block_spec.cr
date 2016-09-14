@@ -130,7 +130,7 @@ describe "Block inference" do
         end
       end
 
-      def bar(&block : Int32 -> U)
+      def bar(&block : Int32 -> U) forall U
         Foo(U).new(yield 1)
       end
 
@@ -150,7 +150,7 @@ describe "Block inference" do
         end
       end
 
-      def foo(x : U, &block: U -> T)
+      def foo(x : U, &block: U -> T) forall T, U
         Foo(T).new(yield x)
       end
 
@@ -250,7 +250,7 @@ describe "Block inference" do
       class Foo(T)
       end
 
-      def foo(&block: Int32 -> Foo(T))
+      def foo(&block: Int32 -> Foo(T)) forall T
         yield 1
         Foo(T).new
       end
@@ -838,7 +838,7 @@ describe "Block inference" do
 
   it "recalculates call that uses block arg output as free var" do
     assert_type(%(
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block
         U
       end
@@ -871,7 +871,7 @@ describe "Block inference" do
         end
 
         class Bar
-          def initialize(&block : Int32 -> U)
+          def initialize(&block : Int32 -> U) forall U
             block
           end
         end
@@ -951,7 +951,7 @@ describe "Block inference" do
 
   it "binds to proc, not only to its body (#1796)" do
     assert_type(%(
-      def yielder(&block : Int32 -> U)
+      def yielder(&block : Int32 -> U) forall U
         yield 1
         U
       end
@@ -962,7 +962,7 @@ describe "Block inference" do
 
   it "binds block return type free variable even if there are no block arguments (#1797)" do
     assert_type(%(
-      def yielder(&block : -> U)
+      def yielder(&block : -> U) forall U
         yield
         U
       end
@@ -1031,7 +1031,7 @@ describe "Block inference" do
 
   it "does next from captured block" do
     assert_type(%(
-      def foo(&block : -> T)
+      def foo(&block : -> T) forall T
         block
       end
 
@@ -1073,7 +1073,7 @@ describe "Block inference" do
       class Foo(T)
       end
 
-      def foo(&block : -> Foo(T))
+      def foo(&block : -> Foo(T)) forall T
         block
         T
       end

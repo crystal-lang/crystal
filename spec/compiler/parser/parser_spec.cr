@@ -265,6 +265,12 @@ describe "Parser" do
   assert_syntax_error "def foo @@var, &block; end", "parentheses are mandatory for def arguments"
   assert_syntax_error "def foo *y; 1; end", "parentheses are mandatory for def arguments"
 
+  it_parses "def foo(x : U) forall U; end", Def.new("foo", args: [Arg.new("x", restriction: "U".path)], free_vars: %w(U))
+  it_parses "def foo(x : U) forall T, U; end", Def.new("foo", args: [Arg.new("x", restriction: "U".path)], free_vars: %w(T U))
+  it_parses "def foo(x : U) : Int32 forall T, U; end", Def.new("foo", args: [Arg.new("x", restriction: "U".path)], return_type: "Int32".path, free_vars: %w(T U))
+  assert_syntax_error "def foo(x : U) forall; end"
+  assert_syntax_error "def foo(x : U) forall U,; end"
+
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call
   it_parses "foo(1)", "foo".call(1.int32)

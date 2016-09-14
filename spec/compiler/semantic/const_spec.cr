@@ -107,7 +107,7 @@ describe "Semantic: const" do
         FOO = 'a'
       end
 
-      def foo(x : U)
+      def foo(x : U) forall U
         U::FOO
       end
 

@@ -171,7 +171,7 @@ describe "Semantic: return" do
 
   it "can use free var in return type (#2492)" do
     assert_type(%(
-      def self.demo(a : A, &block : A -> B) : B
+      def self.demo(a : A, &block : A -> B) : B forall A, B
         block.call(a)
       end
 

@@ -185,7 +185,7 @@ describe "Semantic: named tuples" do
 
   it "matches in type restriction and gets free var" do
     assert_type(%(
-      def foo(x : {x: T, y: T})
+      def foo(x : {x: T, y: T}) forall T
         T
       end
 

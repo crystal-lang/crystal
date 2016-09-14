@@ -202,7 +202,7 @@ describe "Semantic: generic class" do
       class Bar < Foo(Int32)
       end
 
-      def foo(x : Foo(T))
+      def foo(x : Foo(T)) forall T
         T
       end
 
@@ -218,7 +218,7 @@ describe "Semantic: generic class" do
       class Bar(T) < Foo(T)
       end
 
-      def foo(x : Foo(T))
+      def foo(x : Foo(T)) forall T
         T
       end
 

@@ -673,7 +673,7 @@ describe "Semantic: module" do
       class Foo(T)
         include Moo(T)
 
-        def foo(x : Moo(U))
+        def foo(x : Moo(U)) forall U
           T
         end
       end

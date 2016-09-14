@@ -35,7 +35,7 @@ describe "Semantic: union" do
       class Bar(T)
       end
 
-      def foo(x : T)
+      def foo(x : T) forall T
         Bar(T).new
       end
 

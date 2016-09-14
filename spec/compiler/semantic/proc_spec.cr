@@ -415,7 +415,7 @@ describe "Semantic: proc" do
 
   it "allows using Proc as restriction (3)" do
     assert_type(%(
-      def foo(x : Proc(T, U))
+      def foo(x : Proc(T, U)) forall T, U
         T
       end
 
@@ -823,7 +823,7 @@ describe "Semantic: proc" do
   it "can match *T in block argument" do
     assert_type(%(
       struct Tuple
-        def foo(&block : *T -> U)
+        def foo(&block : *T -> U) forall T, U
           yield self[0], self[1]
           U
         end
@@ -854,7 +854,7 @@ describe "Semantic: proc" do
 
   it "accesses T inside variadic generic" do
     assert_type(%(
-      def foo(proc : Proc(*T, R))
+      def foo(proc : Proc(*T, R)) forall T, R
         {T, R}
       end
 
@@ -864,7 +864,7 @@ describe "Semantic: proc" do
 
   it "accesses T inside variadic generic (2)" do
     assert_type(%(
-      def foo(proc : Proc(*T, R))
+      def foo(proc : Proc(*T, R)) forall T, R
         {T, R}
       end
 
@@ -874,7 +874,7 @@ describe "Semantic: proc" do
 
   it "accesses T inside variadic generic, in proc notation" do
     assert_type(%(
-      def foo(proc : *T -> R)
+      def foo(proc : *T -> R) forall T, R
         {T, R}
       end
 

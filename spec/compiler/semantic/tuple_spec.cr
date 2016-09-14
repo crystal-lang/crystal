@@ -222,7 +222,7 @@ describe "Semantic: tuples" do
 
   it "matches tuple with splat (#2932)" do
     assert_type(%(
-      def foo(x : Tuple(*T))
+      def foo(x : Tuple(*T)) forall T
         T
       end
 
@@ -232,7 +232,7 @@ describe "Semantic: tuples" do
 
   it "matches tuple with splat (2) (#2932)" do
     assert_type(%(
-      def foo(x : Tuple(A, *B, C))
+      def foo(x : Tuple(A, *B, C)) forall A, B, C
         {A, B, C}
       end
 
@@ -242,7 +242,7 @@ describe "Semantic: tuples" do
 
   it "errors if using two splat indices on restriction" do
     assert_error %(
-      def foo(x : Tuple(*A, *B))
+      def foo(x : Tuple(*A, *B)) forall A, B
       end
 
       foo({1, 'a'})

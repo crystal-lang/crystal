@@ -292,7 +292,7 @@ describe "Code gen: proc" do
 
   it "codegens nilable proc type dispatch (1)" do
     run("
-      def foo(x : -> U)
+      def foo(x : -> U) forall U
         x.call
       end
 
@@ -307,7 +307,7 @@ describe "Code gen: proc" do
 
   it "codegens nilable proc type dispatch (2)" do
     run("
-      def foo(x : -> U)
+      def foo(x : -> U) forall U
         x.call
       end
 
@@ -428,7 +428,7 @@ describe "Code gen: proc" do
         end
       end
 
-      def func(&block : Foo -> U)
+      def func(&block : Foo -> U) forall U
         block
       end
 

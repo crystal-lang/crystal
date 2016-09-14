@@ -48,7 +48,10 @@ module Crystal
 
     getter? strict : Bool
 
-    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @strict = false)
+    # Def free variables, unbound (`def (X, Y) ...`)
+    property def_free_vars : Array(String)?
+
+    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @strict = false, @def_free_vars = nil)
     end
 
     def get_free_var(name)
@@ -84,7 +87,7 @@ module Crystal
     end
 
     def clone
-      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @strict)
+      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @strict, @def_free_vars.dup)
     end
   end
 

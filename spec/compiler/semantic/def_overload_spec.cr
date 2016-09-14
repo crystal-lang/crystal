@@ -223,7 +223,7 @@ describe "Semantic: def overload" do
   it "matches types with free variables" do
     assert_type("
       require \"prelude\"
-      def foo(x : Array(T), y : T)
+      def foo(x : Array(T), y : T) forall T
         1
       end
 
@@ -280,7 +280,7 @@ describe "Semantic: def overload" do
       class Foo(T)
       end
 
-      def foo(x : T)
+      def foo(x : T) forall T
         Foo(T).new
       end
 
@@ -308,7 +308,7 @@ describe "Semantic: def overload" do
 
       alias FooAlias = Foo
 
-      def foo(x : FooAlias(T))
+      def foo(x : FooAlias(T)) forall T
         1
       end
 
@@ -424,7 +424,7 @@ describe "Semantic: def overload" do
 
   it "restrict virtual type with virtual type" do
     assert_type("
-      def foo(x : T, y : T)
+      def foo(x : T, y : T) forall T
         1
       end
 
@@ -444,7 +444,7 @@ describe "Semantic: def overload" do
       class Foo(T)
       end
 
-      def foo(x : Foo(T))
+      def foo(x : Foo(T)) forall T
         1
       end
 
@@ -547,7 +547,7 @@ describe "Semantic: def overload" do
 
   it "gets free variable from union restriction" do
     assert_type("
-      def foo(x : Nil | U)
+      def foo(x : Nil | U) forall U
         U
       end
 
@@ -557,7 +557,7 @@ describe "Semantic: def overload" do
 
   it "gets free variable from union restriction (2)" do
     assert_type("
-      def foo(x : Nil | U)
+      def foo(x : Nil | U) forall U
         U
       end
 
@@ -567,7 +567,7 @@ describe "Semantic: def overload" do
 
   it "gets free variable from union restriction without a union" do
     assert_type("
-      def foo(x : Nil | U)
+      def foo(x : Nil | U) forall U
         U
       end
 
@@ -601,7 +601,7 @@ describe "Semantic: def overload" do
         include Bar(Int32)
       end
 
-      def foo(x : Bar(T))
+      def foo(x : Bar(T)) forall T
         T
       end
 
@@ -618,7 +618,7 @@ describe "Semantic: def overload" do
         include Bar(T)
       end
 
-      def foo(x : Bar(T))
+      def foo(x : Bar(T)) forall T
         T
       end
 
@@ -659,11 +659,11 @@ describe "Semantic: def overload" do
 
   it "matches tuples of different sizes" do
     assert_type("
-      def foo(x : {X, Y})
+      def foo(x : {X, Y}) forall X, Y
         1
       end
 
-      def foo(x : {X, Y, Z})
+      def foo(x : {X, Y, Z}) forall X, Y, Z
         'a'
       end
 
@@ -674,7 +674,7 @@ describe "Semantic: def overload" do
 
   it "matches tuples and uses free var" do
     assert_type("
-      def foo(x : {X, Y})
+      def foo(x : {X, Y}) forall X, Y
         Y
       end
 

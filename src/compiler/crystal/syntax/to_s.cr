@@ -623,6 +623,12 @@ module Crystal
         @str << " : "
         return_type.accept self
       end
+
+      if free_vars = node.free_vars
+        @str << " forall "
+        free_vars.join(", ", @str)
+      end
+
       newline
 
       unless node.abstract?

@@ -66,7 +66,7 @@ describe "Code gen: tuple" do
         end
       end
 
-      def foo(x : T)
+      def foo(x : T) forall T
         p = Pointer(T).malloc(1)
         p.value = x
         p

@@ -189,6 +189,7 @@ describe Crystal::Formatter do
   assert_format "def %(x)\n  1\nend"
   assert_format "def `(x)\n  1\nend"
   assert_format "def /(x)\n  1\nend"
+  assert_format "def foo(x : X)  forall   X ,   Y; end", "def foo(x : X) forall X, Y\nend"
 
   assert_format "foo"
   assert_format "foo()"

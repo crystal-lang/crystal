@@ -3203,6 +3203,12 @@ module Crystal
         end_location = return_type.end_location
       end
 
+      skip_space
+      if @token.keyword?("forall")
+        next_token_skip_space
+        free_vars = parse_def_free_vars
+      end
+
       if is_abstract
         body = Nop.new
       else
@@ -3234,7 +3240,7 @@ module Crystal
       @doc_enabled = !!@wants_doc
       pop_def
 
-      node = Def.new name, args, body, receiver, block_arg, return_type, (is_macro_def || @is_macro_def), @yields, is_abstract, splat_index, double_splat: double_splat
+      node = Def.new name, args, body, receiver, block_arg, return_type, (is_macro_def || @is_macro_def), @yields, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
       node.name_column_number = name_column_number
       set_visibility node
       node.end_location = end_location
@@ -3251,6 +3257,23 @@ module Crystal
       if @token.type == :"!"
         raise "'!' is a pseudo-method and can't be redefined", @token
       end
+    end
+
+    def parse_def_free_vars
+      free_vars = [] of String
+      while true
+        check :CONST
+        free_vars << @token.value.to_s
+
+        next_token_skip_space
+        if @token.type == :","
+          next_token_skip_space
+          check :CONST
+        else
+          break
+        end
+      end
+      free_vars
     end
 
     def compute_block_arg_yields(block_arg)

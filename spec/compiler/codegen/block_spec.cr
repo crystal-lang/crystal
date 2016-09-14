@@ -1300,7 +1300,7 @@ describe "Code gen: block" do
 
   it "does next from captured block" do
     run(%(
-      def foo(&block : -> T)
+      def foo(&block : -> T) forall T
         block
       end
 

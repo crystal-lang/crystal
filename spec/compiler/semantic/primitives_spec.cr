@@ -76,7 +76,7 @@ describe "Semantic: primitives" do
       class Hash(K, V)
       end
 
-      def foo(x : K, y : V)
+      def foo(x : K, y : V) forall K, V
         {} of K => V
       end
 

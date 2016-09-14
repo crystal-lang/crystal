@@ -163,7 +163,7 @@ describe "Semantic: double splat" do
 
   it "uses double splat restriction" do
     assert_type(%(
-      def foo(**options : **T)
+      def foo(**options : **T) forall T
         T
       end
 
@@ -173,7 +173,7 @@ describe "Semantic: double splat" do
 
   it "uses double splat restriction, matches empty" do
     assert_type(%(
-      def foo(**options : **T)
+      def foo(**options : **T) forall T
         T
       end
 

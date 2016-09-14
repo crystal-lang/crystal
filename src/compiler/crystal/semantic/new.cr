@@ -134,6 +134,7 @@ module Crystal
       new_def.new = true
       new_def.location = location
       new_def.doc = doc
+      new_def.free_vars = free_vars
 
       # Forward block argument if any
       if uses_block_arg?

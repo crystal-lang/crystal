@@ -387,7 +387,7 @@ describe "Semantic: splat" do
 
   it "uses splat restriction" do
     assert_type(%(
-      def foo(*args : *T)
+      def foo(*args : *T) forall T
         T
       end
 
@@ -397,7 +397,7 @@ describe "Semantic: splat" do
 
   it "uses splat restriction, matches empty" do
     assert_type(%(
-      def foo(*args : *T)
+      def foo(*args : *T) forall T
         T
       end
 
@@ -462,7 +462,7 @@ describe "Semantic: splat" do
       class Foo(*T)
       end
 
-      def method(x : Foo(A, *B, C))
+      def method(x : Foo(A, *B, C)) forall A, B, C
         {A, B, C}
       end
 
@@ -476,7 +476,7 @@ describe "Semantic: splat" do
       class Foo(*T)
       end
 
-      def method(x : Foo(A, *B, *C))
+      def method(x : Foo(A, *B, *C)) forall A, B, C
         {A, B, C}
       end
 
@@ -488,7 +488,7 @@ describe "Semantic: splat" do
 
   it "matches with splat" do
     assert_type(%(
-    def foo(&block : *{Int32, Int32} -> U)
+    def foo(&block : *{Int32, Int32} -> U) forall U
       tup = {1, 2}
       yield *tup
     end

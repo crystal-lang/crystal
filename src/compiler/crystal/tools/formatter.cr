@@ -1401,6 +1401,24 @@ module Crystal
         accept node.return_type.not_nil!
       end
 
+      if free_vars = node.free_vars
+        skip_space_or_newline
+        write " forall "
+        next_token
+        free_vars.each_with_index do |free_var, i|
+          skip_space_or_newline
+          check :CONST
+          write free_var
+          next_token_skip_space_or_newline
+          if @token.type == :","
+            write ", "
+            next_token_skip_space_or_newline
+          end
+        end
+        skip_space
+        write " "
+      end
+
       remove_to_skip node, to_skip
 
       unless node.abstract?

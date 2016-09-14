@@ -356,7 +356,7 @@ class Crystal::Call
     named_args_types = NamedArgumentType.from_args(named_args)
     signature = CallSignature.new(def_name, args.map(&.type), block, named_args_types)
     defs.each do |a_def|
-      context = MatchContext.new(owner, a_def.owner)
+      context = MatchContext.new(owner, a_def.owner, def_free_vars: a_def.free_vars)
       match = signature.match(DefWithMetadata.new(a_def), context)
       next unless match
 

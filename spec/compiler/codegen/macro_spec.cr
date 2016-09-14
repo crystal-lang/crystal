@@ -1201,7 +1201,7 @@ describe "Code gen: macro" do
 
   it "can access free variables" do
     run(%(
-      def foo(x : T)
+      def foo(x : T) forall T
         {{ T.stringify }}
       end
 
@@ -1346,7 +1346,7 @@ describe "Code gen: macro" do
   it "uses tuple T in method with free vars" do
     run(%(
       struct Tuple
-        def foo(x : U)
+        def foo(x : U) forall U
           {{T.size}}
         end
       end
