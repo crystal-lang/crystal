@@ -575,6 +575,13 @@ describe IO do
         m.set_encoding("UTF-8", invalid: :skip)
         m.gets_to_end.should eq("  0.0126 \n")
       end
+
+      it "decodes incomplete multibyte sequence with skip (2) (#3285)" do
+        str = File.read("#{__DIR__}/../data/io_data_incomplete_multibyte_sequence.txt")
+        m = MemoryIO.new(Base64.decode_string str)
+        m.set_encoding("UTF-8", invalid: :skip)
+        m.gets_to_end.bytesize.should eq(4277)
+      end
     end
 
     describe "encode" do
