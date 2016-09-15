@@ -197,17 +197,7 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]
       case abi_arg_type.kind
       when LLVM::ABI::ArgKind::Direct
-        if (cast = abi_arg_type.cast) && !arg.is_a?(NilLiteral)
-          final_value = alloca cast
-          final_value_casted = bit_cast final_value, LLVM::VoidPointer
-          gep_call_arg = bit_cast gep(call_arg, 0, 0), LLVM::VoidPointer
-          size = @abi.size(abi_arg_type.type)
-          align = @abi.align(abi_arg_type.type)
-          memcpy(final_value_casted, gep_call_arg, int32(size), int32(align), int1(0))
-          call_arg = load final_value
-        else
-          # Keep same call arg
-        end
+        call_arg = codegen_direct_abi_call(call_arg, abi_arg_type) unless arg.is_a?(NilLiteral)
         call_args << call_arg
       when LLVM::ABI::ArgKind::Indirect
         # Pass argument as is (will be passed byval)
@@ -220,6 +210,21 @@ class Crystal::CodeGenVisitor
     @needs_value = old_needs_value
 
     {call_args, has_out}
+  end
+
+  def codegen_direct_abi_call(call_arg, abi_arg_type)
+    if cast = abi_arg_type.cast
+      final_value = alloca cast
+      final_value_casted = bit_cast final_value, LLVM::VoidPointer
+      gep_call_arg = bit_cast gep(call_arg, 0, 0), LLVM::VoidPointer
+      size = @abi.size(abi_arg_type.type)
+      align = @abi.align(abi_arg_type.type)
+      memcpy(final_value_casted, gep_call_arg, int32(size), int32(align), int1(0))
+      call_arg = load final_value
+    else
+      # Keep same call arg
+    end
+    call_arg
   end
 
   def codegen_call_with_block(node, block, self_type, call_args)
@@ -515,7 +520,7 @@ class Crystal::CodeGenVisitor
   def set_call_attributes_external(node, target_def)
     abi_info = call_abi_info(target_def, node)
 
-    sret = abi_info.return_type.attr == LLVM::Attribute::StructRet
+    sret = sret?(abi_info)
     arg_offset = 1
     arg_offset += 1 if sret
 
@@ -544,11 +549,23 @@ class Crystal::CodeGenVisitor
 
   # This is for function pointer calls and exception handler re-raise
   def set_call_attributes(node, target_def, self_type, is_closure, fun_type)
+    abi_info = target_def.abi_info if target_def
+
     arg_offset = is_closure ? 2 : 1
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
     arg_types.try &.each_with_index do |arg_type, i|
-      next unless arg_type.passed_by_value?
-      @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
+      if abi_info && (abi_arg_type = abi_info.arg_types[i]?)
+        if (attr = abi_arg_type.attr)
+          @last.add_instruction_attribute(i + arg_offset, attr)
+        end
+      else
+        next unless arg_type.passed_by_value?
+        @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
+      end
     end
+  end
+
+  def sret?(abi_info)
+    abi_info.return_type.attr == LLVM::Attribute::StructRet
   end
 end
