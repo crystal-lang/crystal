@@ -35,7 +35,7 @@ module Crystal
       # See if we can find where the mismatched type came from
       if from && !ex.inner && (freeze_type = @freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.size == 2
         other_type = type.union_types.find { |type| type != freeze_type }
-        trace = from.find_owner_trace(other_type)
+        trace = from.find_owner_trace(freeze_type.program, other_type)
         ex.inner = trace
       end
 
@@ -50,7 +50,7 @@ module Crystal
       if !freeze_type.includes_type?(invalid_type.program.nil) && invalid_type.includes_type?(invalid_type.program.nil)
         # This means that an instance variable become nil
         if self.is_a?(MetaTypeVar) && (nil_reason = self.nil_reason)
-          inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason)
+          inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason, freeze_type.program.show_error_trace?)
         end
       end
 
@@ -192,7 +192,7 @@ module Crystal
       type
     end
 
-    def find_owner_trace(owner)
+    def find_owner_trace(program, owner)
       owner_trace = [] of ASTNode
       node = self
 
@@ -210,7 +210,7 @@ module Crystal
         end
       end
 
-      MethodTraceException.new(owner, owner_trace, nil_reason)
+      MethodTraceException.new(owner, owner_trace, nil_reason, program.show_error_trace?)
     end
   end
 

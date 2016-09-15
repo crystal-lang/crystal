@@ -304,6 +304,10 @@ class Crystal::Command
         output_format = f
       end
 
+      opts.on("--error-trace", "Show full error trace") do
+        compiler.show_error_trace = true
+      end
+
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit

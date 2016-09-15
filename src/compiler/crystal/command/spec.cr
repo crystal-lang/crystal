@@ -19,6 +19,9 @@ class Crystal::Command
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
         compiler.flags << flag
       end
+      opts.on("--error-trace", "Show full error trace") do
+        compiler.show_error_trace = true
+      end
       opts.on("--release", "Compile in release mode") do
         compiler.release = true
       end

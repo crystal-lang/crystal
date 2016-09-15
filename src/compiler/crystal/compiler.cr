@@ -106,6 +106,9 @@ module Crystal
     # Default standard error to use in a compilation.
     property stderr : IO = STDERR
 
+    # Whether to show error trace
+    property? show_error_trace = false
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -150,6 +153,7 @@ module Crystal
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
+      program.show_error_trace = show_error_trace?
       program
     end
 
