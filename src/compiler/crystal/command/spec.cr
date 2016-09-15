@@ -33,8 +33,10 @@ class Crystal::Command
     end
 
     # Assume spec files end with ".cr" and optionally with a colon and a number
-    # (for the target line number). Everything else is an option we forward.
-    filenames = options.select { |option| option =~ /\.cr(\:\d+)?\Z/ }
+    # (for the target line number), or is a directory. Everything else is an option we forward.
+    filenames = options.select do |option|
+      option =~ /\.cr(\:\d+)?\Z/ || Dir.exists?(option)
+    end
     options.reject! { |option| filenames.includes?(option) }
 
     locations = [] of {String, String}
