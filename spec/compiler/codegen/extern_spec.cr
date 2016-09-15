@@ -61,7 +61,7 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(1069547520)
   end
 
-  it "declares extern struct, sets and gets insance var" do
+  it "declares extern struct, sets and gets instance var" do
     run(%(
       @[Extern]
       struct Foo
@@ -78,7 +78,7 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(42)
   end
 
-  it "declares extern union, sets and gets insance var" do
+  it "declares extern union, sets and gets instance var" do
     run(%(
       @[Extern(union: true)]
       struct Foo
