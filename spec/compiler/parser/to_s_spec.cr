@@ -75,4 +75,8 @@ describe "ASTNode#to_s" do
   expect_to_s %(def foo("bar baz" qux)\nend)
   expect_to_s "foo()"
   expect_to_s "/a/x"
+  expect_to_s "1_f32", "1_f32"
+  expect_to_s "1_f64", "1_f64"
+  expect_to_s "1.0", "1.0"
+  expect_to_s "1e10_f64", "1e10"
 end
