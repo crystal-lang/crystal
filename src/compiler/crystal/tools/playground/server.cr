@@ -225,13 +225,19 @@ module Crystal::Playground
         end
         content
       rescue e
-        e.message
+        e.message || "Error: generating content for #{@filename}"
       end
     end
 
     def to_s(io)
-      render_with_layout(io) do
-        content
+      body = content
+      # avoid the layout if the file is a full html
+      if File.extname(@filename).starts_with?(".htm") && content.starts_with?("<!")
+        io << body
+      else
+        render_with_layout(io) do
+          body
+        end
       end
     end
 
