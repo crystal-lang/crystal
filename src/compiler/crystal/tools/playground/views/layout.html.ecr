@@ -7,7 +7,9 @@
     <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/theme/neat.css">
     <link rel="stylesheet" href="/vendor/octicons-3.5.0/octicons.css">
     <link rel="stylesheet" type="text/css" href="/application.css">
-
+    <% each_resource(:css) do |res| %>
+      <link rel="stylesheet" type="text/css" href="<%= res.src %>">
+    <% end %>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
     <title>Crystal Playground</title>
@@ -54,5 +56,8 @@
     <script type="text/javascript" src="/settings.js"></script>
     <script type="text/javascript" src="/session.js"></script>
     <script type="text/javascript" src="/application.js"></script>
+    <% each_resource(:js) do |res| %>
+      <script type="text/javascript" src="<%= res.src %>"></script>
+    <% end %>
   </body>
 </html>

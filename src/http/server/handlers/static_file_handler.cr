@@ -30,7 +30,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
 
     original_path = context.request.path.not_nil!
     is_dir_path = original_path.ends_with? "/"
-    request_path = URI.unescape(original_path)
+    request_path = self.request_path(URI.unescape(original_path))
 
     # File path cannot contains '\0' (NUL) because all filesystem I know
     # don't accept '\0' character as file name.
@@ -65,6 +65,12 @@ class HTTP::StaticFileHandler < HTTP::Handler
     else
       call_next(context)
     end
+  end
+
+  # given a full path of the request, returns the path
+  # of the file that should be expanded at the public_dir
+  protected def request_path(path : String) : String
+    path
   end
 
   private def redirect_to(context, url)
