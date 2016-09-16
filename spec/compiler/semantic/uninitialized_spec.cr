@@ -112,4 +112,18 @@ describe "Semantic: uninitialized" do
         "use a more specific type"
     end
   end
+
+  it "works with uninitialized NoReturn (#3314)" do
+    assert_type(%(
+      def foo
+        x = uninitialized typeof(yield)
+      end
+
+      def bar
+        foo { return }
+      end
+
+      bar
+      )) { nil_type }
+  end
 end

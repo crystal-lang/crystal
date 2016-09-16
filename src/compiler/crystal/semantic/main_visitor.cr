@@ -374,8 +374,13 @@ module Crystal
         node.declared_type.accept self
         @in_type_args -= 1
 
-        var_type = check_declare_var_type node, node.declared_type.type, "a variable"
-        var.type = var_type
+        # TOOD: should we be using a binding here to recompute the type?
+        if declared_type = node.declared_type.type?
+          var_type = check_declare_var_type node, declared_type, "a variable"
+          var.type = var_type
+        else
+          var.type = program.no_return
+        end
 
         meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
         if (existing_type = meta_var.type?) && existing_type != var_type
