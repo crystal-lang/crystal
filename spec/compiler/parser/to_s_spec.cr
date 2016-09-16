@@ -75,4 +75,6 @@ describe "ASTNode#to_s" do
   expect_to_s %(def foo("bar baz" qux)\nend)
   expect_to_s "foo()"
   expect_to_s "/a/x"
+  expect_to_s "!(1 < 2)"
+  expect_to_s "!true"
 end
