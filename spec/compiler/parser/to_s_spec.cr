@@ -79,4 +79,6 @@ describe "ASTNode#to_s" do
   expect_to_s "1_f64", "1_f64"
   expect_to_s "1.0", "1.0"
   expect_to_s "1e10_f64", "1e10"
+  expect_to_s "!a"
+  expect_to_s "!(1 < 2)"
 end

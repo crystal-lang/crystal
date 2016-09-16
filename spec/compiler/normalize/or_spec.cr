@@ -22,6 +22,6 @@ describe "Normalize: or" do
   end
 
   it "normalizes or with ! on var.is_a?(...)" do
-    assert_expand_second "a = 1; !a.is_a?(Int32) || b", "if !a.is_a?(Int32)\n  !a.is_a?(Int32)\nelse\n  b\nend"
+    assert_expand_second "a = 1; !a.is_a?(Int32) || b", "if !(a.is_a?(Int32))\n  !(a.is_a?(Int32))\nelse\n  b\nend"
   end
 end
