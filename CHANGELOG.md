@@ -1,3 +1,18 @@
+## 0.19.2  (16-09-2016)
+
+* Generic type variables no longer need to be single-letter names (for example `class Gen(Foo)` is now possible)
+* Added syntax to denote free variables: `def foo(x : T) forall T`. The old rule of single-letter name still applies but will be removed in the future.
+* Removed the restriction that top-level types and constants can't have single-letter names
+* Added `@[Extern]` attribute to mark regular Crystal structs as being able to be used in C bindings
+* Faster `Char#to_s` when it's ASCII: this improves the performance of JSON and CSV parsing
+* `crystal spec`: allow passing `--release` and other options
+* `crystal spec`: allow running all specs in a given directory
+* `crystal playground`: support custom workbook resources (thanks @bcardiff)
+* `crystal playground`: standard output now understands ANSI colors (thanks @bcardiff)
+* Added many more macro methods to traverse AST nodes (thanks @BlaXpirit)
+* Error messages no longer include a type trace by default, pass `--error-trace` to show the full trace (the trace is often useless and makes it harder to understand error messages)
+* [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.2)
+
 ## 0.19.1  (09-09-2016)
 
 * Types (class, module, etc.) can now be marked as `private`.
