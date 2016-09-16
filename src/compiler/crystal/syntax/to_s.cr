@@ -1029,7 +1029,9 @@ module Crystal
 
     def visit(node : Not)
       @str << "!"
-      node.exp.accept self
+
+      needs_parens = need_parens(node.exp)
+      in_parenthesis(needs_parens, node.exp)
       false
     end
 
