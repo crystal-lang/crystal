@@ -188,9 +188,23 @@ module Crystal::Playground
   end
 
   abstract class PlaygroundPage
+    @resources = [] of Resource
+
     def render_with_layout(io, &block)
       ECR.embed "#{__DIR__}/views/layout.html.ecr", io
     end
+
+    protected def add_resource(kind, src)
+      @resources << Resource.new(kind, src)
+    end
+
+    def each_resource(kind)
+      @resources.each do |res|
+        yield res if res.kind == kind
+      end
+    end
+
+    record Resource, kind : Symbol, src : String
   end
 
   class FileContentPage < PlaygroundPage
@@ -299,12 +313,41 @@ module Crystal::Playground
         files = Dir["playground/#{$1}.{md,html,cr}"]
         if files.size > 0
           context.response.headers["Content-Type"] = "text/html"
-          context.response << FileContentPage.new(files[0])
+          page = FileContentPage.new(files[0])
+          load_resources page
+          context.response << page
           return
         end
       end
 
       call_next(context)
+    end
+
+    def load_resources(page : PlaygroundPage)
+      Dir["playground/resources/*.css"].each do |file|
+        page.add_resource :css, "/workbook/#{file}"
+      end
+      Dir["playground/resources/*.js"].each do |file|
+        page.add_resource :js, "/workbook/#{file}"
+      end
+    end
+  end
+
+  class PathStaticFileHandler < HTTP::StaticFileHandler
+    def initialize(@path : String, public_dir : String, fallthrough = true)
+      super(public_dir, fallthrough)
+    end
+
+    def call(context)
+      if context.request.path.try &.starts_with?(@path)
+        super
+      else
+        call_next(context)
+      end
+    end
+
+    def request_path(path : String) : String
+      path[@path.size..-1]
     end
   end
 
@@ -426,6 +469,7 @@ module Crystal::Playground
         PageHandler.new("/about", File.join(views_dir, "_about.html")),
         PageHandler.new("/settings", File.join(views_dir, "_settings.html")),
         PageHandler.new("/workbook", WorkbookIndexPage.new),
+        PathStaticFileHandler.new("/workbook/playground/resources", "playground/resources", false),
         WorkbookHandler.new,
         EnvironmentHandler.new(self),
         HTTP::StaticFileHandler.new(public_dir),
