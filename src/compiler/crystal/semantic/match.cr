@@ -63,6 +63,11 @@ module Crystal
       free_vars[name] = type
     end
 
+    def has_def_free_var?(name)
+      return false if get_free_var(name)
+      !!(@def_free_vars.try &.includes?(name))
+    end
+
     # Returns the type that corresponds to using `self` when looking
     # a type relative to this context.
     #

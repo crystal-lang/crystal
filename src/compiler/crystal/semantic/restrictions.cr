@@ -347,7 +347,7 @@ module Crystal
       single_name = other.names.size == 1
       if single_name
         first_name = other.names.first
-        if context.def_free_vars.try(&.includes?(first_name))
+        if context.has_def_free_var?(first_name)
           return context.set_free_var(first_name, self)
         end
       end
@@ -835,7 +835,7 @@ module Crystal
       single_name = other.names.size == 1
       if single_name
         first_name = other.names.first
-        if context.def_free_vars.try(&.includes?(first_name))
+        if context.has_def_free_var?(first_name)
           return context.set_free_var(first_name, self)
         end
       end

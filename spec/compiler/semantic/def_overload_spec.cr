@@ -921,4 +921,27 @@ describe "Semantic: def overload" do
       {foo(1), foo(nil)}
       )) { tuple_of([char, bool]) }
   end
+
+  it "errors when binding free variable to different types" do
+    assert_error %(
+      def foo(x : T, y : T) forall T
+      end
+
+      foo(1, 'a')
+      ),
+      "no overload matches"
+  end
+
+  it "errors when binding free variable to different types (2)" do
+    assert_error %(
+      class Gen(T)
+      end
+
+      def foo(x : T, y : Gen(T)) forall T
+      end
+
+      foo(1, Gen(Char).new)
+      ),
+      "no overload matches"
+  end
 end
