@@ -308,7 +308,7 @@ module Crystal::Playground
 
   class WorkbookHandler < HTTP::Handler
     def call(context)
-      case {context.request.method, context.request.resource}
+      case {context.request.method, context.request.path}
       when {"GET", /\/workbook\/playground\/(.*)/}
         files = Dir["playground/#{$1}.{md,html,cr}"]
         if files.size > 0
