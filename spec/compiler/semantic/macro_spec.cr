@@ -908,4 +908,14 @@ describe "Semantic: macro" do
       ->{ foo }.call
       )) { int32 }
   end
+
+  it "finds var in proc for macros" do
+    assert_type(%(
+      macro foo(x)
+        {{x}}
+      end
+
+      ->(x : Int32) { foo(x) }.call(1)
+      )) { int32 }
+  end
 end

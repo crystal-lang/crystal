@@ -642,7 +642,19 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : ProcLiteral)
+    old_vars_keys = @vars.keys
+
+    node.def.args.each do |arg|
+      @vars[arg.name] = MetaVar.new(arg.name)
+    end
+
     node.def.body.accept self
+
+    # Now remove these vars, but only if they weren't vars before
+    node.def.args.each do |arg|
+      @vars.delete(arg.name) unless old_vars_keys.includes?(arg.name)
+    end
+
     false
   end
 
