@@ -25,6 +25,8 @@ module Crystal
                  {triple[0], "macosx", "darwin"}.join('-')
                elsif triple.any?(&.includes?("freebsd"))
                  {triple[0], triple[1], "freebsd"}.join('-')
+               elsif triple.any?(&.includes?("openbsd"))
+                 {triple[0], triple[1], "openbsd"}.join('-')
                else
                  triple.join('-')
                end

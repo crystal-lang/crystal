@@ -25,6 +25,8 @@ class Crystal::Program
     set = flags_name.map(&.downcase).to_set
     set.add "darwin" if set.any?(&.starts_with?("macosx"))
     set.add "freebsd" if set.any?(&.starts_with?("freebsd"))
+    set.add "openbsd" if set.any?(&.starts_with?("openbsd"))
+    set.add "x86_64" if set.any?(&.starts_with?("amd64"))
     set.add "i686" if set.any? { |flag| %w(i586 i486 i386).includes?(flag) }
     set
   end
