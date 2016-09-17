@@ -530,4 +530,70 @@ describe "Code gen: module" do
       x + y
       )).to_i.should eq(3)
   end
+
+  it "casts to union of module that is included in other module (#3323)" do
+    run(%(
+      require "prelude"
+
+      module Moo
+        def moo
+          0
+        end
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      class Foo
+        include Moo2
+      end
+
+      class Bar < Foo
+        def moo
+          10
+        end
+      end
+
+      struct Baz
+        include Moo
+      end
+
+      bar = Bar.new.as(Int32 | Moo)
+      bar.as(Moo).moo
+      )).to_i.should eq(10)
+  end
+
+  it "casts to union of generic module that is included in other module (#3323)" do
+    run(%(
+      require "prelude"
+
+      module Moo(T)
+        def moo
+          0
+        end
+      end
+
+      module Moo2(T)
+        include Moo(T)
+      end
+
+      class Foo
+        include Moo2(Char)
+      end
+
+      class Bar < Foo
+        def moo
+          10
+        end
+      end
+
+      struct Baz
+        include Moo(Char)
+      end
+
+      bar = Bar.new.as(Int32 | Moo(Char))
+      bar.as(Moo(Char)).moo
+      )).to_i.should eq(10)
+  end
 end

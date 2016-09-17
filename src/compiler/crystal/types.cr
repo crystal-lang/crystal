@@ -878,12 +878,18 @@ module Crystal
     def including_types
       if including_types = @including_types
         all_types = Array(Type).new(including_types.size)
-        including_types.each do |including_type|
-          add_to_including_types(including_type, all_types)
-        end
+        add_to_including_types(all_types)
         program.type_merge_union_of(all_types)
       else
         nil
+      end
+    end
+
+    def add_to_including_types(all_types)
+      if including_types = @including_types
+        including_types.each do |including_type|
+          add_to_including_types(including_type, all_types)
+        end
       end
     end
 
@@ -1702,7 +1708,9 @@ module Crystal
     end
 
     def after_initialize
-      # Nothing
+      ancestors.each do |ancestor|
+        ancestor.add_including_type(self) if ancestor.is_a?(GenericModuleInstanceType)
+      end
     end
 
     def virtual_type
@@ -1727,12 +1735,18 @@ module Crystal
     def including_types
       if including_types = @including_types
         all_types = Array(Type).new(including_types.size)
-        including_types.each do |including_type|
-          add_to_including_types(including_type, all_types)
-        end
+        add_to_including_types(all_types)
         program.type_merge_union_of(all_types)
       else
         nil
+      end
+    end
+
+    def add_to_including_types(all_types)
+      if including_types = @including_types
+        including_types.each do |including_type|
+          add_to_including_types(including_type, all_types)
+        end
       end
     end
 
@@ -2879,6 +2893,10 @@ private def add_to_including_types(type : Crystal::GenericType, all_types)
   type.subclasses.each do |subclass|
     add_to_including_types subclass, all_types
   end
+end
+
+private def add_to_including_types(type : Crystal::NonGenericModuleType | Crystal::GenericModuleInstanceType, all_types)
+  type.add_to_including_types(all_types)
 end
 
 private def add_to_including_types(type, all_types)
