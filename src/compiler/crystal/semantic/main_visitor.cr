@@ -55,8 +55,8 @@ module Crystal
 
     # Here we store the cummulative types of variables as we traverse the nodes.
     getter meta_vars : MetaVars
-
     property is_initialize : Bool
+    property exception_handler_vars : MetaVars? = nil
 
     @unreachable = false
     @is_initialize = false
@@ -70,7 +70,6 @@ module Crystal
     @used_ivars_in_calls_in_initialize : Hash(String, Array(ASTNode))?
     @block_context : Block?
     @file_module : FileModule?
-    @exception_handler_vars : MetaVars?
     @while_vars : MetaVars?
 
     def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
@@ -919,6 +918,7 @@ module Crystal
       block_visitor.fun_literal_context = @fun_literal_context
       block_visitor.parent = self
       block_visitor.with_scope = node.scope || with_scope
+      block_visitor.exception_handler_vars = @exception_handler_vars
 
       block_scope = @scope
       block_scope ||= current_type.metaclass unless current_type.is_a?(Program)

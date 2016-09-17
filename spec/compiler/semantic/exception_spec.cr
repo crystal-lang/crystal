@@ -428,4 +428,21 @@ describe "Semantic: exception" do
       ex
       )) { nilable types["Exception"].virtual_type }
   end
+
+  it "types var assignment inside block inside exception handler (#3324)" do
+    assert_type(%(
+      def foo
+        yield
+      end
+
+      var = 1
+      begin
+        foo do
+          var = "foo"
+        end
+      rescue
+      end
+      var
+      )) { union_of(int32, string) }
+  end
 end
