@@ -257,7 +257,7 @@ class Socket < IO::FileDescriptor
   private def nonblocking_connect(host, port, addrinfo, timeout = nil)
     loop do
       ret =
-        {% if flag?(:freebsd) %}
+        {% if flag?(:freebsd) || flag?(:openbsd) %}
           LibC.connect(@fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
         {% else %}
           LibC.connect(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
