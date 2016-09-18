@@ -1,14 +1,13 @@
 require "../../spec_helper"
 
+{% if !flag?(:openbsd) %}
 describe "Codegen: thread local" do
   it "works with class variables" do
     run(%(
       require "prelude"
 
       class Foo
-        {% if !flag?(:openbsd) %}
         @[ThreadLocal]
-        {% end %}
         @@var = 123
 
         def self.var
@@ -30,9 +29,7 @@ describe "Codegen: thread local" do
       require "prelude"
 
       class Foo
-        {% if !flag?(:openbsd) %}
         @[ThreadLocal]
-        {% end %}
         @@a = 123
 
         def self.a
@@ -49,9 +46,7 @@ describe "Codegen: thread local" do
       require "prelude"
 
       class Foo
-        {% if !flag?(:openbsd) %}
         @[ThreadLocal]
-        {% end %}
         @@x : Foo?
         @@x = nil
 
@@ -68,3 +63,4 @@ describe "Codegen: thread local" do
     ))
   end
 end
+{% end %}

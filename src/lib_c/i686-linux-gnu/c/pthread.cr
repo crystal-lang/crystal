@@ -14,4 +14,5 @@ lib LibC
   fun pthread_mutex_lock(mutex : PthreadMutexT*) : Int
   fun pthread_mutex_trylock(mutex : PthreadMutexT*) : Int
   fun pthread_mutex_unlock(mutex : PthreadMutexT*) : Int
+  fun pthread_self : PthreadT
 end
