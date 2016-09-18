@@ -500,6 +500,8 @@ describe Crystal::Formatter do
   assert_format "class Foo\ndef foo\n1\nensure\n2\nend\nend", "class Foo\n  def foo\n    1\n  ensure\n    2\n  end\nend"
   assert_format "def run\n\nrescue\n  2\n  3\nend"
 
+  assert_format "def foo(@x)\n\nrescue\nend"
+
   assert_format "macro foo\nend"
   assert_format "macro foo()\nend", "macro foo\nend"
   assert_format "macro foo( x , y )\nend", "macro foo(x, y)\nend"
