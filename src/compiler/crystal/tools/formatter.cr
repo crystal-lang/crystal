@@ -2776,17 +2776,20 @@ module Crystal
         if body.is_a?(Expressions)
           body.expressions = body.expressions[to_skip..-1]
           if body.expressions.empty?
-            case node
-            when Def, ExceptionHandler
-              node.body = Nop.new
-            end
+            set_body(node, Nop.new)
           end
         else
-          case node
-          when Def, ExceptionHandler
-            node.body = Nop.new
-          end
+          set_body(node, Nop.new)
         end
+      end
+    end
+
+    def set_body(node, body)
+      case node
+      when Def
+        node.body = body
+      when ExceptionHandler
+        node.body = body
       end
     end
 
