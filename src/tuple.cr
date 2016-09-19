@@ -341,7 +341,7 @@ struct Tuple
     plus_implementation(other)
   end
 
-  private def plus_implementation(other : U)
+  private def plus_implementation(other : U) forall U
     {% begin %}
       Tuple.new(
         {% for i in 0...@type.size %}

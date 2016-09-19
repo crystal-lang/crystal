@@ -1298,4 +1298,37 @@ describe "Block inference" do
       end
       )) { union_of(int32, int64) }
   end
+
+  it "uses free var in return type in captured block" do
+    assert_type(%(
+      class U
+      end
+
+      def foo(&block : -> U) forall U
+        block
+        U
+      end
+
+      foo { 1 }
+      )) { int32.metaclass }
+  end
+
+  it "uses free var in return type with tuple type" do
+    assert_type(%(
+      class T; end
+
+      class U; end
+
+      class Foo(T)
+        def initialize(@x : T)
+        end
+
+        def foo(&block : T -> U) forall U
+          {yield(@x), U}
+        end
+      end
+
+      Foo.new(1).foo { |x| {x, x} }
+      )) { tuple_of([tuple_of([int32, int32]), tuple_of([int32, int32]).metaclass]) }
+  end
 end

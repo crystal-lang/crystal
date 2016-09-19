@@ -532,15 +532,6 @@ module Crystal
       true
     end
 
-    def restrict(other : Path, context)
-      ident_type = context.defining_type.lookup_path other
-      if ident_type
-        restrict(ident_type, context)
-      else
-        super
-      end
-    end
-
     def restrict(other : GenericType, context)
       generic_type == other ? self : super
     end
