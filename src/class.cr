@@ -45,7 +45,7 @@ class Class
   # ```
   # Int32 | Char # => (Int32 | Char)
   # ```
-  def self.|(other : U.class)
+  def self.|(other : U.class) forall U
     t = uninitialized self
     u = uninitialized U
     typeof(t, u)

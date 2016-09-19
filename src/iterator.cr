@@ -163,7 +163,7 @@ module Iterator(T)
   #     iter.next # => 'b'
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def chain(other : Iterator(U))
+  def chain(other : Iterator(U)) forall U
     Chain(typeof(self), typeof(other), T, U).new(self, other)
   end
 
@@ -204,7 +204,7 @@ module Iterator(T)
   #     iter.next # => 4
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def compact_map(&func : T -> U)
+  def compact_map(&func : T -> _)
     CompactMap(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
   end
 
@@ -518,7 +518,7 @@ module Iterator(T)
   #     iter.next # => 6
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def map(&func : T -> U)
+  def map(&func : T -> U) forall U
     Map(typeof(self), T, U).new(self, func)
   end
 
@@ -543,7 +543,7 @@ module Iterator(T)
   #     iter.next # => 2
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def reject(&func : T -> U)
+  def reject(&func : T -> U) forall U
     Reject(typeof(self), T, U).new(self, func)
   end
 
@@ -573,7 +573,7 @@ module Iterator(T)
   #     iter.next # => 3
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def select(&func : T -> U)
+  def select(&func : T -> U) forall U
     Select(typeof(self), T, U).new(self, func)
   end
 
@@ -639,7 +639,7 @@ module Iterator(T)
   #     iter.next # => 0
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def skip_while(&func : T -> U)
+  def skip_while(&func : T -> U) forall U
     SkipWhile(typeof(self), T, U).new(self, func)
   end
 
@@ -787,7 +787,7 @@ module Iterator(T)
   #     iter.next # => 2
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def take_while(&func : T -> U)
+  def take_while(&func : T -> U) forall U
     TakeWhile(typeof(self), T, U).new(self, func)
   end
 
@@ -870,7 +870,7 @@ module Iterator(T)
   #     iter.next # => ["b", "a"]
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def uniq(&func : T -> U)
+  def uniq(&func : T -> U) forall U
     Uniq(typeof(self), T, U).new(self, func)
   end
 
@@ -971,7 +971,7 @@ module Iterator(T)
   #    iter.next # => {6, 9}
   #    iter.next # => Iterator::Stop::INSTANCE
   #
-  def zip(other : Iterator(U))
+  def zip(other : Iterator(U)) forall U
     Zip(typeof(self), typeof(other), T, U).new(self, other)
   end
 

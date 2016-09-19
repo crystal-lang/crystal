@@ -113,7 +113,7 @@ struct Proc
   # add_one_and_two = add_one.partial(2)
   # add_one_and_two.call # => 3
   # ```
-  def partial(*args : *U)
+  def partial(*args : *U) forall U
     {% begin %}
       {% remaining = (T.size - U.size) %}
       ->(

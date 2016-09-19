@@ -421,7 +421,7 @@ struct NamedTuple
     compare_with_other_named_tuple(other)
   end
 
-  private def compare_with_other_named_tuple(other : U)
+  private def compare_with_other_named_tuple(other : U) forall U
     {% if T.keys.sort == U.keys.sort %}
       {% for key in T %}
         return false unless self[{{key.symbolize}}] == other[{{key.symbolize}}]

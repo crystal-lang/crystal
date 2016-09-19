@@ -428,14 +428,14 @@ class Hash(K, V)
   # hash
   # # => {"foo" => "bar"}
   # ```
-  def merge(other : Hash(L, W))
+  def merge(other : Hash(L, W)) forall L, W
     hash = Hash(K | L, V | W).new
     hash.merge! self
     hash.merge! other
     hash
   end
 
-  def merge(other : Hash(L, W), &block : K, V, W -> V | W)
+  def merge(other : Hash(L, W), &block : K, V, W -> V | W) forall L, W
     hash = Hash(K | L, V | W).new
     hash.merge! self
     hash.merge!(other) { |k, v1, v2| yield k, v1, v2 }
@@ -473,12 +473,12 @@ class Hash(K, V)
   # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
   # h.select { |k, v| v < 200 } # => {"a" => 100}
   # ```
-  def select(&block : K, V -> U)
+  def select(&block : K, V -> _)
     reject { |k, v| !yield(k, v) }
   end
 
   # Equivalent to `Hash#select` but makes modification on the current object rather that returning a new one. Returns nil if no changes were made
-  def select!(&block : K, V -> U)
+  def select!(&block : K, V -> _)
     reject! { |k, v| !yield(k, v) }
   end
 
@@ -488,14 +488,14 @@ class Hash(K, V)
   # h.reject { |k, v| k > "a" } # => {"a" => 100}
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
-  def reject(&block : K, V -> U)
+  def reject(&block : K, V -> _)
     each_with_object({} of K => V) do |(k, v), memo|
       memo[k] = v unless yield k, v
     end
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather that returning a new one. Returns nil if no changes were made.
-  def reject!(&block : K, V -> U)
+  def reject!(&block : K, V -> _)
     num_entries = size
     each do |key, value|
       delete(key) if yield(key, value)

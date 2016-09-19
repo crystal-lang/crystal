@@ -250,7 +250,7 @@ module Enumerable(T)
   #     ["Alice", "Bob"].flat_map do |user|
   #       user.chars
   #     end  #=> ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
-  def flat_map(&block : T -> Array(U))
+  def flat_map(&block : T -> Array(U)) forall U
     ary = [] of U
     each { |e| ary.concat(yield e) }
     ary
@@ -269,7 +269,7 @@ module Enumerable(T)
   #
   #     ["Alice", "Bob", "Ary"].group_by { |name| name.size }  #=> {5 => ["Alice"], 3 => ["Bob", "Ary"]}
   #
-  def group_by(&block : T -> U)
+  def group_by(&block : T -> U) forall U
     h = Hash(U, Array(T)).new
     each do |e|
       v = yield e
@@ -287,7 +287,7 @@ module Enumerable(T)
   #     [1, 2, 3].in_groups_of(2, 0) #=> [[1, 2], [3, 0]]
   #     [1, 2, 3].in_groups_of(2) #=> [[1, 2], [3, nil]]
   #
-  def in_groups_of(size : Int, filled_up_with : U = nil)
+  def in_groups_of(size : Int, filled_up_with : U = nil) forall U
     raise ArgumentError.new("size must be positive") if size <= 0
 
     ary = Array(Array(T | U)).new
@@ -303,7 +303,7 @@ module Enumerable(T)
   #     #=> 3
   #     #=> 4
   #
-  def in_groups_of(size : Int, filled_up_with : U = nil, &block)
+  def in_groups_of(size : Int, filled_up_with : U = nil, &block) forall U
     raise ArgumentError.new("size must be positive") if size <= 0
 
     each_slice_internal(size, Array(T | U)) do |slice|
@@ -357,7 +357,7 @@ module Enumerable(T)
   #     # => {4=>"Anna", 3=>"Bob", 5=>"Alice"}
   #
   #
-  def index_by(&block : T -> U)
+  def index_by(&block : T -> U) forall U
     hash = {} of U => T
     each do |elem|
       hash[yield elem] = elem
@@ -453,7 +453,7 @@ module Enumerable(T)
   #
   #     [1, 2, 3].map { |i| i * 10 }  #=> [10, 20, 30]
   #
-  def map(&block : T -> U)
+  def map(&block : T -> U) forall U
     ary = [] of U
     each { |e| ary << yield e }
     ary
@@ -493,19 +493,19 @@ module Enumerable(T)
   #     ["Alice", "Bob"].max_by { |name| name.size }  #=> "Alice"
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def max_by(&block : T -> U)
+  def max_by(&block : T -> U) forall U
     found, value = max_by_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `max_by` but returns nil if the collection is empty.
-  def max_by?(&block : T -> U)
+  def max_by?(&block : T -> U) forall U
     found, value = max_by_internal { |value| yield value }
     found ? value : nil
   end
 
-  private def max_by_internal(&block : T -> U)
+  private def max_by_internal(&block : T -> U) forall U
     max = uninitialized U
     obj = uninitialized T
     found = false
@@ -526,19 +526,19 @@ module Enumerable(T)
   #
   #     ["Alice", "Bob"].max_of { |name| name.size }  #=> 5 (Alice's size)
   #
-  def max_of(&block : T -> U)
+  def max_of(&block : T -> U) forall U
     found, value = max_of_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `max_of` but returns nil if the collection is empty.
-  def max_of?(&block : T -> U)
+  def max_of?(&block : T -> U) forall U
     found, value = max_of_internal { |value| yield value }
     found ? value : nil
   end
 
-  private def max_of_internal(&block : T -> U)
+  private def max_of_internal(&block : T -> U) forall U
     max = uninitialized U
     found = false
 
@@ -577,19 +577,19 @@ module Enumerable(T)
   #     ["Alice", "Bob"].min_by { |name| name.size }  #=> "Bob"
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def min_by(&block : T -> U)
+  def min_by(&block : T -> U) forall U
     found, value = min_by_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `min_by` but returns nil if the collection is empty.
-  def min_by?(&block : T -> U)
+  def min_by?(&block : T -> U) forall U
     found, value = min_by_internal { |value| yield value }
     found ? value : nil
   end
 
-  private def min_by_internal(&block : T -> U)
+  private def min_by_internal(&block : T -> U) forall U
     min = uninitialized U
     obj = uninitialized T
     found = false
@@ -610,19 +610,19 @@ module Enumerable(T)
   #
   #     ["Alice", "Bob"].min_of { |name| name.size }  #=> 3 (Bob's size)
   #
-  def min_of(&block : T -> U)
+  def min_of(&block : T -> U) forall U
     found, value = min_of_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `min_of` but returns nil if the collection is empty.
-  def min_of?(&block : T -> U)
+  def min_of?(&block : T -> U) forall U
     found, value = min_of_internal { |value| yield value }
     found ? value : nil
   end
 
-  private def min_of_internal(&block : T -> U)
+  private def min_of_internal(&block : T -> U) forall U
     min = uninitialized U
     found = false
 
@@ -656,19 +656,19 @@ module Enumerable(T)
   #     ["Alice", "Bob", "Carl"].minmax_by { |name| name.size }  #=> {"Bob", "Alice"}
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def minmax_by(&block : T -> U)
+  def minmax_by(&block : T -> U) forall U
     found, value = minmax_by_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `minmax_by` but returns `{nil, nil}` if the collection is empty.
-  def minmax_by?(&block : T -> U)
+  def minmax_by?(&block : T -> U) forall U
     found, value = minmax_by_internal { |value| yield value }
     found ? value : {nil, nil}
   end
 
-  private def minmax_by_internal(&block : T -> U)
+  private def minmax_by_internal(&block : T -> U) forall U
     min = uninitialized U
     max = uninitialized U
     objmin = uninitialized T
@@ -697,19 +697,19 @@ module Enumerable(T)
   #     ["Alice", "Bob", "Carl"].minmax_of { |name| name.size }  #=> {3, 5}
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def minmax_of(&block : T -> U)
+  def minmax_of(&block : T -> U) forall U
     found, value = minmax_of_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `minmax_of` but returns `{nil, nil}` if the collection is empty.
-  def minmax_of?(&block : T -> U)
+  def minmax_of?(&block : T -> U) forall U
     found, value = minmax_of_internal { |value| yield value }
     found ? value : {nil, nil}
   end
 
-  private def minmax_of_internal(&block : T -> U)
+  private def minmax_of_internal(&block : T -> U) forall U
     min = uninitialized U
     max = uninitialized U
     found = false
