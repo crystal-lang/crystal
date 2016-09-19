@@ -17,6 +17,7 @@ class Crystal::Command
 
     Command:
         init                     generate a new project
+        install                  install a crystal project into your path
         build                    build an executable
         deps                     install project dependencies
         docs                     generate documentation
