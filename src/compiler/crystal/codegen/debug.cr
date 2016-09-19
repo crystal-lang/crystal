@@ -68,7 +68,7 @@ module Crystal
     end
 
     def create_debug_type(type : NonGenericModuleType)
-      puts "Unsupported type for debugging: #{type} (#{type.class})"
+      # puts "Unsupported type for debugging: #{type} (#{type.class})"
     end
 
     def create_debug_type(type : InstanceVarContainer)
@@ -107,11 +107,11 @@ module Crystal
     end
 
     def create_debug_type(type : StaticArrayInstanceType)
-      puts "Unsupported type for debugging: #{type} (#{type.class})"
+      # puts "Unsupported type for debugging: #{type} (#{type.class})"
     end
 
     def create_debug_type(type)
-      puts "Unsupported type for debugging: #{type} (#{type.class})"
+      # puts "Unsupported type for debugging: #{type} (#{type.class})"
     end
 
     def declare_variable(var_name, var_type, alloca, target_def)
