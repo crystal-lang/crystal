@@ -753,6 +753,10 @@ module Crystal
     end
 
     def visit(node : MacroLiteral)
+      # These two can only come from an escaped sequence like \{ or \{%
+      if node.value == "{" || node.value.starts_with?("{%")
+        @str << "\\"
+      end
       @str << node.value
       false
     end

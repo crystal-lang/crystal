@@ -82,4 +82,8 @@ describe "ASTNode#to_s" do
   expect_to_s "!a"
   expect_to_s "!(1 < 2)"
   expect_to_s "(1 + 2)..3"
+  expect_to_s "macro foo\n{{ @type }}\nend"
+  expect_to_s "macro foo\n\\{{ @type }}\nend"
+  expect_to_s "macro foo\n{% @type %}\nend"
+  expect_to_s "macro foo\n\\{%@type %}\nend"
 end
