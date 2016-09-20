@@ -4,7 +4,7 @@
 
 module HTTP
   # :nodoc:
-  DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
+  DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
 
   # :nodoc:
   enum BodyType
@@ -269,6 +269,24 @@ module HTTP
     when 506 then "Variant Also Negotiates"
     when 510 then "Not Extended"
     else          ""
+    end
+  end
+
+  # Dequotes a RFC2616 quoted-string
+  def self.dequote_string(str)
+    data = str.to_slice
+    quoted_pair_index = data.index('\\'.ord)
+    return str unless quoted_pair_index
+
+    String.build do |io|
+      while quoted_pair_index
+        io.write(data[0, quoted_pair_index])
+        io << data[quoted_pair_index + 1].chr
+
+        data += quoted_pair_index + 2
+        quoted_pair_index = data.index('\\'.ord)
+      end
+      io.write(data)
     end
   end
 end
