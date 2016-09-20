@@ -918,4 +918,20 @@ describe "Semantic: macro" do
       ->(x : Int32) { foo(x) }.call(1)
       )) { int32 }
   end
+
+  it "applies visibility modifier only to first level" do
+    assert_type(%(
+      macro foo
+        class Foo
+          def self.foo
+            1
+          end
+        end
+      end
+
+      private foo
+
+      Foo.foo
+      ), inject_primitives: false) { int32 }
+  end
 end
