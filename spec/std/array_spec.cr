@@ -1,8 +1,8 @@
 require "spec"
 
-alias RecursiveArray = Array(RecursiveArray)
+private alias RecursiveArray = Array(RecursiveArray)
 
-class BadSortingClass
+private class BadSortingClass
   include Comparable(self)
 
   def <=>(other)

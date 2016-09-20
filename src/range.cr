@@ -275,8 +275,7 @@ struct Range(B, E)
     Range.new(@begin.clone, @end.clone, @exclusive)
   end
 
-  # :nodoc:
-  class ItemIterator(B, E)
+  private class ItemIterator(B, E)
     include Iterator(B)
 
     @range : Range(B, E)
@@ -311,8 +310,7 @@ struct Range(B, E)
     end
   end
 
-  # :nodoc:
-  class ReverseIterator(B, E)
+  private class ReverseIterator(B, E)
     include Iterator(E)
 
     @range : Range(B, E)
@@ -338,8 +336,7 @@ struct Range(B, E)
     end
   end
 
-  # :nodoc:
-  class StepIterator(R, B, N)
+  private class StepIterator(R, B, N)
     include Iterator(B)
 
     @range : R

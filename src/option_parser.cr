@@ -170,8 +170,7 @@ class OptionParser
     parse ARGV
   end
 
-  # :nodoc:
-  struct ParseTask
+  private struct ParseTask
     @double_dash_index : Int32?
 
     def initialize(@parser : OptionParser, @args : Array(String))

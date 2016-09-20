@@ -1,7 +1,7 @@
 require "spec"
 require "json"
 
-class JSONPerson
+private class JSONPerson
   JSON.mapping({
     name: {type: String},
     age:  {type: Int32, nilable: true},
@@ -13,31 +13,31 @@ class JSONPerson
   end
 end
 
-class StrictJSONPerson
+private class StrictJSONPerson
   JSON.mapping({
     name: {type: String},
     age:  {type: Int32, nilable: true},
   }, true)
 end
 
-class JSONPersonEmittingNull
+private class JSONPersonEmittingNull
   JSON.mapping({
     name: {type: String},
     age:  {type: Int32, nilable: true, emit_null: true},
   })
 end
 
-class JSONWithBool
+private class JSONWithBool
   JSON.mapping value: Bool
 end
 
-class JSONWithTime
+private class JSONWithTime
   JSON.mapping({
     value: {type: Time, converter: Time::Format.new("%F %T")},
   })
 end
 
-class JSONWithNilableTime
+private class JSONWithNilableTime
   JSON.mapping({
     value: {type: Time, nilable: true, converter: Time::Format.new("%F")},
   })
@@ -46,7 +46,7 @@ class JSONWithNilableTime
   end
 end
 
-class JSONWithNilableTimeEmittingNull
+private class JSONWithNilableTimeEmittingNull
   JSON.mapping({
     value: {type: Time, nilable: true, converter: Time::Format.new("%F"), emit_null: true},
   })
@@ -55,30 +55,30 @@ class JSONWithNilableTimeEmittingNull
   end
 end
 
-class JSONWithSimpleMapping
+private class JSONWithSimpleMapping
   JSON.mapping({name: String, age: Int32})
 end
 
-class JSONWithKeywordsMapping
+private class JSONWithKeywordsMapping
   JSON.mapping({end: Int32, abstract: Int32})
 end
 
-class JSONWithAny
+private class JSONWithAny
   JSON.mapping({name: String, any: JSON::Any})
 end
 
-class JsonWithProblematicKeys
+private class JsonWithProblematicKeys
   JSON.mapping({
     key:  Int32,
     pull: Int32,
   })
 end
 
-class JsonWithSet
+private class JsonWithSet
   JSON.mapping({set: Set(String)})
 end
 
-class JsonWithDefaults
+private class JsonWithDefaults
   JSON.mapping({
     a: {type: Int32, default: 11},
     b: {type: String, default: "Haha"},
@@ -91,56 +91,56 @@ class JsonWithDefaults
   })
 end
 
-class JSONWithSmallIntegers
+private class JSONWithSmallIntegers
   JSON.mapping({
     foo: Int16,
     bar: Int8,
   })
 end
 
-class JSONWithTimeEpoch
+private class JSONWithTimeEpoch
   JSON.mapping({
     value: {type: Time, converter: Time::EpochConverter},
   })
 end
 
-class JSONWithTimeEpochMillis
+private class JSONWithTimeEpochMillis
   JSON.mapping({
     value: {type: Time, converter: Time::EpochMillisConverter},
   })
 end
 
-class JSONWithRaw
+private class JSONWithRaw
   JSON.mapping({
     value: {type: String, converter: String::RawConverter},
   })
 end
 
-class JSONWithRoot
+private class JSONWithRoot
   JSON.mapping({
     result: {type: Array(JSONPerson), root: "heroes"},
   })
 end
 
-class JSONWithNilableRoot
+private class JSONWithNilableRoot
   JSON.mapping({
     result: {type: Array(JSONPerson), root: "heroes", nilable: true},
   })
 end
 
-class JSONWithNilableRootEmitNull
+private class JSONWithNilableRootEmitNull
   JSON.mapping({
     result: {type: Array(JSONPerson), root: "heroes", nilable: true, emit_null: true},
   })
 end
 
-class JSONWithNilableUnion
+private class JSONWithNilableUnion
   JSON.mapping({
     value: Int32 | Nil,
   })
 end
 
-class JSONWithNilableUnion2
+private class JSONWithNilableUnion2
   JSON.mapping({
     value: Int32?,
   })

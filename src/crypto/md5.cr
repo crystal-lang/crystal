@@ -24,8 +24,7 @@ class Crypto::MD5
     context.hex
   end
 
-  # :nodoc:
-  class ContextWrapper
+  private class ContextWrapper
     getter context : Context
     delegate update, final, hex, to: context
 
@@ -34,8 +33,7 @@ class Crypto::MD5
     end
   end
 
-  # :nodoc:
-  struct Context
+  private struct Context
     def initialize
       @i = StaticArray(UInt32, 2).new(0_u32)
       @buf = StaticArray(UInt32, 4).new(0_u32)

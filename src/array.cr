@@ -1788,8 +1788,7 @@ class Array(T)
     {from, size}
   end
 
-  # :nodoc:
-  class PermutationIterator(T)
+  private class PermutationIterator(T)
     include Iterator(Array(T))
 
     @array : Array(T)
@@ -1848,8 +1847,7 @@ class Array(T)
     end
   end
 
-  # :nodoc:
-  class CombinationIterator(T)
+  private class CombinationIterator(T)
     include Iterator(Array(T))
 
     @size : Int32
@@ -1910,8 +1908,7 @@ class Array(T)
     end
   end
 
-  # :nodoc:
-  class RepeatedCombinationIterator(T)
+  private class RepeatedCombinationIterator(T)
     include Iterator(Array(T))
 
     @size : Int32
@@ -1971,8 +1968,7 @@ class Array(T)
     end
   end
 
-  # :nodoc:
-  struct FlattenHelper(T)
+  private struct FlattenHelper(T)
     def self.flatten(ary)
       result = [] of T
       flatten ary, result

@@ -3222,8 +3222,7 @@ class String
     end
   end
 
-  # :nodoc:
-  class CharIterator
+  private class CharIterator
     include Iterator(Char)
 
     @reader : Char::Reader
@@ -3255,8 +3254,7 @@ class String
     end
   end
 
-  # :nodoc:
-  class LineIterator
+  private class LineIterator
     include Iterator(String)
 
     @string : String

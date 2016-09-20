@@ -382,12 +382,9 @@ struct Int
     self % other
   end
 
-  # :nodoc:
-  DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
-  # :nodoc:
-  DIGITS_UPCASE = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  # :nodoc:
-  DIGITS_BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  private DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
+  private DIGITS_UPCASE = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  private DIGITS_BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
   def to_s
     to_s(10)
@@ -478,8 +475,7 @@ struct Int
   # ```
   abstract def popcount
 
-  # :nodoc:
-  class TimesIterator(T)
+  private class TimesIterator(T)
     include Iterator(T)
 
     @n : T
@@ -504,8 +500,7 @@ struct Int
     end
   end
 
-  # :nodoc:
-  class UptoIterator(T, N)
+  private class UptoIterator(T, N)
     include Iterator(T)
 
     @from : T
@@ -532,8 +527,7 @@ struct Int
     end
   end
 
-  # :nodoc:
-  class DowntoIterator(T, N)
+  private class DowntoIterator(T, N)
     include Iterator(T)
 
     @from : T

@@ -918,8 +918,7 @@ module IO
     limit - remaining
   end
 
-  # :nodoc:
-  struct LineIterator(I, A)
+  private struct LineIterator(I, A)
     include Iterator(String)
 
     def initialize(@io : I, @args : A)
@@ -935,8 +934,7 @@ module IO
     end
   end
 
-  # :nodoc:
-  struct CharIterator(I)
+  private struct CharIterator(I)
     include Iterator(Char)
 
     def initialize(@io : I)
@@ -952,8 +950,7 @@ module IO
     end
   end
 
-  # :nodoc:
-  struct ByteIterator(I)
+  private struct ByteIterator(I)
     include Iterator(UInt8)
 
     def initialize(@io : I)

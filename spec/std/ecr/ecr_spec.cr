@@ -2,7 +2,7 @@ require "spec"
 require "ecr"
 require "ecr/processor"
 
-class ECRSpecHelloView
+private class ECRSpecHelloView
   @msg : String
 
   def initialize(@msg)

@@ -5,7 +5,7 @@ require "base64"
 # This is a non-optimized version of MemoryIO so we can test
 # raw IO. Optimizations for specific IOs are tested separately
 # (for example in buffered_io_spec)
-class SimpleMemoryIO
+private class SimpleMemoryIO
   include IO
 
   getter buffer : UInt8*

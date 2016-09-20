@@ -33,15 +33,11 @@ class Crypto::Bcrypt
   PASSWORD_RANGE = 1..51
   SALT_SIZE      = 16
 
-  # :nodoc:
-  BLOWFISH_ROUNDS = 16
-
-  # :nodoc:
-  DIGEST_SIZE = 31
+  private BLOWFISH_ROUNDS = 16
+  private DIGEST_SIZE = 31
 
   # bcrypt IV: "OrpheanBeholderScryDoubt"
-  # :nodoc:
-  CIPHER_TEXT = Int32[
+  private CIPHER_TEXT = Int32[
     0x4f727068, 0x65616e42, 0x65686f6c,
     0x64657253, 0x63727944, 0x6f756274,
   ]

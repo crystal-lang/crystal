@@ -1,7 +1,7 @@
 require "spec"
 require "http/server"
 
-class EmptyHTTPHandler < HTTP::Handler
+private class EmptyHTTPHandler < HTTP::Handler
   def call(context)
     call_next(context)
   end

@@ -114,8 +114,7 @@ module Iterator(T)
     Singleton(T).new(element)
   end
 
-  # :nodoc:
-  struct Singleton(T)
+  private struct Singleton(T)
     include Iterator(T)
 
     def initialize(@element : T)
@@ -134,8 +133,7 @@ module Iterator(T)
     SingletonProc(T).new(block)
   end
 
-  # :nodoc:
-  struct SingletonProc(T)
+  private struct SingletonProc(T)
     include Iterator(T)
 
     def initialize(@proc : -> T)
@@ -167,8 +165,7 @@ module Iterator(T)
     Chain(typeof(self), typeof(other), T, U).new(self, other)
   end
 
-  # :nodoc:
-  class Chain(I1, I2, T1, T2)
+  private class Chain(I1, I2, T1, T2)
     include Iterator(T1 | T2)
 
     def initialize(@iterator1 : I1, @iterator2 : I2)
@@ -208,8 +205,7 @@ module Iterator(T)
     CompactMap(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
   end
 
-  # :nodoc:
-  struct CompactMap(I, T, U)
+  private struct CompactMap(I, T, U)
     include Iterator(U)
     include IteratorWrapper
 
@@ -239,8 +235,7 @@ module Iterator(T)
     Cons(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  struct Cons(I, T, N)
+  private struct Cons(I, T, N)
     include Iterator(Array(T))
     include IteratorWrapper
 
@@ -280,8 +275,7 @@ module Iterator(T)
     Cycle(typeof(self), T).new(self)
   end
 
-  # :nodoc:
-  struct Cycle(I, T)
+  private struct Cycle(I, T)
     include Iterator(T)
     include IteratorWrapper
 
@@ -315,8 +309,7 @@ module Iterator(T)
     CycleN(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  class CycleN(I, T, N)
+  private class CycleN(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -392,8 +385,7 @@ module Iterator(T)
   #   Flatten(self, typeof(Flatten.element_type(self))).new(self)
   # end
 
-  # :nodoc:
-  # class Flatten(I, T1)
+  # private class Flatten(I, T1)
   #   include Iterator(T1)
 
   #   @iterator : I
@@ -487,8 +479,7 @@ module Iterator(T)
     InGroupsOf(typeof(self), T, typeof(size), typeof(filled_up_with)).new(self, size, filled_up_with)
   end
 
-  # :nodoc:
-  struct InGroupsOf(I, T, N, U)
+  private struct InGroupsOf(I, T, N, U)
     include Iterator(Array(T | U))
     include IteratorWrapper
 
@@ -522,8 +513,7 @@ module Iterator(T)
     Map(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  struct Map(I, T, U)
+  private struct Map(I, T, U)
     include Iterator(U)
     include IteratorWrapper
 
@@ -547,8 +537,7 @@ module Iterator(T)
     Reject(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  struct Reject(I, T, B)
+  private struct Reject(I, T, B)
     include Iterator(T)
     include IteratorWrapper
 
@@ -577,8 +566,7 @@ module Iterator(T)
     Select(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  struct Select(I, T, B)
+  private struct Select(I, T, B)
     include Iterator(T)
     include IteratorWrapper
 
@@ -607,8 +595,7 @@ module Iterator(T)
     Skip(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  class Skip(I, T, N)
+  private class Skip(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -643,8 +630,7 @@ module Iterator(T)
     SkipWhile(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  class SkipWhile(I, T, U)
+  private class SkipWhile(I, T, U)
     include Iterator(T)
     include IteratorWrapper
 
@@ -683,8 +669,7 @@ module Iterator(T)
     Slice(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  struct Slice(I, T, N)
+  private struct Slice(I, T, N)
     include Iterator(Array(T))
     include IteratorWrapper
 
@@ -721,8 +706,7 @@ module Iterator(T)
     Step(self, T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  struct Step(I, T, N)
+  private struct Step(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -755,8 +739,7 @@ module Iterator(T)
     First(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  class First(I, T, N)
+  private class First(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -791,8 +774,7 @@ module Iterator(T)
     TakeWhile(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  class TakeWhile(I, T, U)
+  private class TakeWhile(I, T, U)
     include Iterator(T)
     include IteratorWrapper
 
@@ -834,8 +816,7 @@ module Iterator(T)
     Tap(typeof(self), T).new(self, block)
   end
 
-  # :nodoc:
-  struct Tap(I, T)
+  private struct Tap(I, T)
     include Iterator(T)
     include IteratorWrapper
 
@@ -874,8 +855,7 @@ module Iterator(T)
     Uniq(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  struct Uniq(I, T, U)
+  private struct Uniq(I, T, U)
     include Iterator(T)
     include IteratorWrapper
 
@@ -913,8 +893,7 @@ module Iterator(T)
     WithIndex(typeof(self), T, typeof(offset)).new(self, offset)
   end
 
-  # :nodoc:
-  class WithIndex(I, T, O)
+  private class WithIndex(I, T, O)
     include Iterator({T, Int32})
     include IteratorWrapper
 
@@ -946,8 +925,7 @@ module Iterator(T)
     WithObject(typeof(self), T, typeof(obj)).new(self, obj)
   end
 
-  # :nodoc:
-  struct WithObject(I, T, O)
+  private struct WithObject(I, T, O)
     include Iterator({T, O})
     include IteratorWrapper
 
@@ -975,8 +953,7 @@ module Iterator(T)
     Zip(typeof(self), typeof(other), T, U).new(self, other)
   end
 
-  # :nodoc:
-  struct Zip(I1, I2, T1, T2)
+  private struct Zip(I1, I2, T1, T2)
     include Iterator({T1, T2})
 
     def initialize(@iterator1 : I1, @iterator2 : I2)

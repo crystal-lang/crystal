@@ -1,6 +1,6 @@
 require "spec"
 
-class FooError < Exception
+private class FooError < Exception
   def message
     "#{super || ""} -- bar!"
   end

@@ -58,8 +58,7 @@ class Crystal::Type
     TypeLookup.new(self, self.instance_type, raise, false, free_vars).lookup_type_var?(node)
   end
 
-  # :nodoc:
-  struct TypeLookup
+  private struct TypeLookup
     def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(String, TypeVar)? = nil)
       @in_generic_args = 0
 

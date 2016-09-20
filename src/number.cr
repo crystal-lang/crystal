@@ -238,8 +238,7 @@ struct Number
     self
   end
 
-  # :nodoc:
-  class StepIterator(T, L, B)
+  private class StepIterator(T, L, B)
     include Iterator(T)
 
     @n : T

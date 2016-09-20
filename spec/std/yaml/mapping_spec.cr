@@ -1,7 +1,7 @@
 require "spec"
 require "yaml"
 
-class YAMLPerson
+private class YAMLPerson
   YAML.mapping({
     name: String,
     age:  {type: Int32, nilable: true},
@@ -13,24 +13,24 @@ class YAMLPerson
   end
 end
 
-class StrictYAMLPerson
+private class StrictYAMLPerson
   YAML.mapping({
     name: {type: String},
     age:  {type: Int32, nilable: true},
   }, true)
 end
 
-class YAMLWithBool
+private class YAMLWithBool
   YAML.mapping value: Bool
 end
 
-class YAMLWithTime
+private class YAMLWithTime
   YAML.mapping({
     value: {type: Time, converter: Time::Format.new("%F %T")},
   })
 end
 
-class YAMLWithKey
+private class YAMLWithKey
   YAML.mapping({
     key:   String,
     value: Int32,
@@ -38,7 +38,7 @@ class YAMLWithKey
   })
 end
 
-class YAMLWithDefaults
+private class YAMLWithDefaults
   YAML.mapping({
     a: {type: Int32, default: 11},
     b: {type: String, default: "Haha"},
@@ -52,7 +52,7 @@ class YAMLWithDefaults
   })
 end
 
-class YAMLWithAny
+private class YAMLWithAny
   YAML.mapping({
     obj: YAML::Any,
   })
@@ -61,20 +61,20 @@ class YAMLWithAny
   end
 end
 
-class YAMLWithSmallIntegers
+private class YAMLWithSmallIntegers
   YAML.mapping({
     foo: Int16,
     bar: Int8,
   })
 end
 
-class YAMLWithTimeEpoch
+private class YAMLWithTimeEpoch
   YAML.mapping({
     value: {type: Time, converter: Time::EpochConverter},
   })
 end
 
-class YAMLWithTimeEpochMillis
+private class YAMLWithTimeEpochMillis
   YAML.mapping({
     value: {type: Time, converter: Time::EpochMillisConverter},
   })

@@ -1,6 +1,6 @@
 require "spec"
 
-class SpecEnumerable
+private class SpecEnumerable
   include Enumerable(Int32)
 
   def each

@@ -845,8 +845,7 @@ class Hash(K, V)
     raise "Hash table too big"
   end
 
-  # :nodoc:
-  class Entry(K, V)
+  private class Entry(K, V)
     getter key : K
     property value : V
 
@@ -863,8 +862,7 @@ class Hash(K, V)
     end
   end
 
-  # :nodoc:
-  module BaseIterator
+  private module BaseIterator
     def initialize(@hash, @current)
     end
 
@@ -883,39 +881,36 @@ class Hash(K, V)
     end
   end
 
-  # :nodoc:
-  class EntryIterator(K, V)
+  private class EntryIterator(K, V)
     include BaseIterator
     include Iterator({K, V})
 
     @hash : Hash(K, V)
-    @current : Hash::Entry(K, V)?
+    @current : Entry(K, V)?
 
     def next
       base_next { |entry| {entry.key, entry.value} }
     end
   end
 
-  # :nodoc:
-  class KeyIterator(K, V)
+  private class KeyIterator(K, V)
     include BaseIterator
     include Iterator(K)
 
     @hash : Hash(K, V)
-    @current : Hash::Entry(K, V)?
+    @current : Entry(K, V)?
 
     def next
       base_next &.key
     end
   end
 
-  # :nodoc:
-  class ValueIterator(K, V)
+  private class ValueIterator(K, V)
     include BaseIterator
     include Iterator(V)
 
     @hash : Hash(K, V)
-    @current : Hash::Entry(K, V)?
+    @current : Entry(K, V)?
 
     def next
       base_next &.value

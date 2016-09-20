@@ -15,8 +15,7 @@ module IO
     end
   end
 
-  # :nodoc:
-  class Encoder
+  private class Encoder
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
       @closed = false
@@ -48,8 +47,7 @@ module IO
     end
   end
 
-  # :nodoc:
-  class Decoder
+  private class Decoder
     BUFFER_SIZE     = 4 * 1024
     OUT_BUFFER_SIZE = 4 * 1024
 

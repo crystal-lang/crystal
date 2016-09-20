@@ -1,20 +1,18 @@
 require "spec"
 
-module HashSpec
-  alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
+private alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
 
-  class HashBreaker
-    getter x : Int32
+private class HashBreaker
+  getter x : Int32
 
-    def initialize(@x)
-    end
+  def initialize(@x)
   end
-
-  class NeverInstantiated
-  end
-
-  alias RecursiveType = String | Int32 | Array(RecursiveType) | Hash(Symbol, RecursiveType)
 end
+
+private class NeverInstantiated
+end
+
+private alias RecursiveType = String | Int32 | Array(RecursiveType) | Hash(Symbol, RecursiveType)
 
 describe "Hash" do
   describe "empty" do
@@ -284,7 +282,7 @@ describe "Hash" do
     assert { {1 => 2, 3 => 4}.to_s.should eq("{1 => 2, 3 => 4}") }
 
     assert do
-      h = {} of HashSpec::RecursiveHash => HashSpec::RecursiveHash
+      h = {} of RecursiveHash => RecursiveHash
       h[h] = h
       h.to_s.should eq("{{...} => {...}}")
     end
@@ -342,7 +340,7 @@ describe "Hash" do
   end
 
   it "merges recursive type (#1693)" do
-    hash = {:foo => "bar"} of Symbol => HashSpec::RecursiveType
+    hash = {:foo => "bar"} of Symbol => RecursiveType
     result = hash.merge({:foobar => "foo"})
     result.should eq({:foo => "bar", :foobar => "foo"})
   end
@@ -516,13 +514,13 @@ describe "Hash" do
   end
 
   it "fetches from empty hash with default value" do
-    x = {} of Int32 => HashSpec::HashBreaker
-    breaker = x.fetch(10) { HashSpec::HashBreaker.new(1) }
+    x = {} of Int32 => HashBreaker
+    breaker = x.fetch(10) { HashBreaker.new(1) }
     breaker.x.should eq(1)
   end
 
   it "does to to_s with instance that was never instantiated" do
-    x = {} of Int32 => HashSpec::NeverInstantiated
+    x = {} of Int32 => NeverInstantiated
     x.to_s.should eq("{}")
   end
 

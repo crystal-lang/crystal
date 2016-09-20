@@ -19,20 +19,12 @@ module Base64
 
   class Error < Exception; end
 
-  # :nodoc:
-  CHARS_STD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-  # :nodoc:
-  CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-  # :nodoc:
-  LINE_SIZE = 60
-  # :nodoc:
-  PAD = '='.ord.to_u8
-  # :nodoc:
-  NL = '\n'.ord.to_u8
-  # :nodoc:
-  NR = '\r'.ord.to_u8
-
-  class Error < Exception; end
+  private CHARS_STD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  private CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+  private LINE_SIZE = 60
+  private PAD = '='.ord.to_u8
+  private NL = '\n'.ord.to_u8
+  private NR = '\r'.ord.to_u8
 
   # Returns the Base64-encoded version of `data`.
   # This method complies with RFC 2045.
@@ -288,8 +280,7 @@ module Base64
     res
   end
 
-  # :nodoc:
-  DECODE_TABLE = Array(Int8).new(256) do |i|
+  private DECODE_TABLE = Array(Int8).new(256) do |i|
     case i.unsafe_chr
     when 'A'..'Z' then (i - 0x41).to_i8
     when 'a'..'z' then (i - 0x47).to_i8

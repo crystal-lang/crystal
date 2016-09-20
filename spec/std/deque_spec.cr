@@ -1,6 +1,6 @@
 require "spec"
 
-class DequeTester
+private class DequeTester
   # Execute the same actions on an Array and a Deque and compare them at each step.
 
   @deque : Deque(Int32)
@@ -34,7 +34,7 @@ class DequeTester
   end
 end
 
-alias RecursiveDeque = Deque(RecursiveDeque)
+private alias RecursiveDeque = Deque(RecursiveDeque)
 
 describe "Deque" do
   describe "implementation" do
