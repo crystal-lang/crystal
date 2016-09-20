@@ -572,9 +572,19 @@ module Crystal
       @types
     end
 
-    def append_full_name(io)
-      unless namespace.is_a?(Program)
-        namespace.to_s_with_options(io, generic_args: false)
+    def append_full_name(io, codegen = false)
+      case namespace
+      when Program
+        # Skip
+      when FileModule
+        # For codegen we need the filename to distinguish it from other
+        # types, but in macros we can't use that because it won't parse
+        if codegen
+          namespace.to_s_with_options(io, generic_args: false, codegen: codegen)
+          io << "::"
+        end
+      else
+        namespace.to_s_with_options(io, generic_args: false, codegen: codegen)
         io << "::"
       end
       io << @name
@@ -585,7 +595,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
-      append_full_name(io)
+      append_full_name(io, codegen: codegen)
     end
   end
 

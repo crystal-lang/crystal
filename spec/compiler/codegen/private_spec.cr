@@ -46,4 +46,16 @@ describe "Codegen: private" do
 
     compiler.compile sources, output_filename
   end
+
+  it "doesn't include filename for private types" do
+    run(%(
+      private class Foo
+        def foo
+          {{@type.stringify}}
+        end
+      end
+
+      Foo.new.foo
+      ), filename: "foo").to_string.should eq("Foo")
+  end
 end
