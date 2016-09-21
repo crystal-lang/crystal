@@ -210,7 +210,7 @@ class String
   def self.new(capacity : Int)
     check_capacity_in_bounds(capacity)
 
-    str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32).as(UInt8*)
+    str = GC.malloc_atomic(capacity.to_u32 + HEADER_SIZE + 1).as(UInt8*)
     buffer = str.as(String).to_unsafe
     bytesize, size = yield buffer
     str_header = str.as({Int32, Int32, Int32}*)

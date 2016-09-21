@@ -1979,4 +1979,11 @@ describe "String" do
       "foo".at(4)
     end
   end
+
+  it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
+    String.new(255_u8) do |buffer|
+      LibGC.size(buffer).should be >= 255
+      {255, 0}
+    end
+  end
 end
