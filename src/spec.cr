@@ -269,6 +269,13 @@ OptionParser.parse! do |opts|
   opts.on("--no-color", "Disable colored output") do
     Spec.use_colors = false
   end
+  opts.unknown_args do |args|
+  end
+end
+
+unless ARGV.empty?
+  puts "Error: unknown argument '#{ARGV.first}'"
+  exit 1
 end
 
 Signal::INT.trap { Spec.abort! }
