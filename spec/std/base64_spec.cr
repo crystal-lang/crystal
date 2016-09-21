@@ -143,7 +143,7 @@ describe "Base64" do
       end
     end
 
-    it "decode bug" do
+    it "decode small tail after last \n, was a bug" do
       s = "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g\nnA==\n"
       Base64.decode(s).should eq Bytes[78, 111, 119, 32, 105, 115, 32, 116, 104, 101, 32, 116, 105, 109, 101, 32, 102, 111, 114, 32, 97, 108, 108, 32, 103, 111, 111, 100, 32, 99, 111, 100, 101, 114, 115, 10, 116, 111, 32, 108, 101, 97, 114, 110, 32, 156]
     end
