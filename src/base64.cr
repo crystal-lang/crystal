@@ -237,6 +237,7 @@ module Base64
     size = data.size
     dt = DECODE_TABLE.to_unsafe
     cstr = data.pointer(size)
+    start_cstr = cstr
     while (size > 0) && (sym = cstr[size - 1]) && (sym == NL || sym == NR || sym == PAD)
       size -= 1
     end
@@ -254,6 +255,10 @@ module Base64
       yield (a << 2 | b >> 4).to_u8
       yield (b << 4 | c >> 2).to_u8
       yield (c << 6 | d).to_u8
+    end
+
+    while (cstr < endcstr + 4) && (cstr.value == NL || cstr.value == NR)
+      cstr += 1
     end
 
     mod = (endcstr - cstr) % 4
@@ -275,7 +280,7 @@ module Base64
     res = dt[sym]
     cstr += 1
     if res < 0
-      raise Error.new("Unexpected symbol '#{sym.chr}'")
+      raise Error.new("Unexpected byte 0x#{sym.to_s(16)} at #{cstr - start_cstr - 1}")
     end
     res
   end

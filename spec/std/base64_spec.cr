@@ -3,7 +3,7 @@ require "base64"
 require "crypto/md5"
 
 describe "Base64" do
-  it "simple test" do
+  context "simple test" do
     eqs = {"" => "", "a" => "YQ==\n", "ab" => "YWI=\n", "abc" => "YWJj\n",
       "abcd" => "YWJjZA==\n", "abcde" => "YWJjZGU=\n", "abcdef" => "YWJjZGVm\n",
       "abcdefg" => "YWJjZGVmZw==\n"}
@@ -11,6 +11,18 @@ describe "Base64" do
       it "encode #{a.inspect} to #{b.inspect}" do
         Base64.encode(a).should eq(b)
       end
+      it "decode from #{b.inspect} to #{a.inspect}" do
+        Base64.decode(b).should eq(a.to_slice)
+        Base64.decode_string(b).should eq(a)
+      end
+    end
+  end
+
+  context "\n in multiple places" do
+    eqs = {"abcd" => "YWJj\nZA==\n", "abcde" => "YWJj\nZGU=\n", "abcdef" => "YWJj\nZGVm\n",
+      "abcdefg" => "YWJj\nZGVmZw==\n", "abcdefg" => "YWJj\nZGVm\nZw==\n",
+    }
+    eqs.each do |a, b|
       it "decode from #{b.inspect} to #{a.inspect}" do
         Base64.decode(b).should eq(a.to_slice)
         Base64.decode_string(b).should eq(a)
@@ -129,6 +141,11 @@ describe "Base64" do
       expect_raises Base64::Error do
         Base64.decode_string("a")
       end
+    end
+
+    it "decode small tail after last \n, was a bug" do
+      s = "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g\nnA==\n"
+      Base64.decode(s).should eq Bytes[78, 111, 119, 32, 105, 115, 32, 116, 104, 101, 32, 116, 105, 109, 101, 32, 102, 111, 114, 32, 97, 108, 108, 32, 103, 111, 111, 100, 32, 99, 111, 100, 101, 114, 115, 10, 116, 111, 32, 108, 101, 97, 114, 110, 32, 156]
     end
   end
 
