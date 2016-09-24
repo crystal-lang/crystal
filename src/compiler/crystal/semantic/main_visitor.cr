@@ -960,8 +960,6 @@ module Crystal
 
       node.bind_to node.body
 
-      # pp node, @vars
-
       false
     end
 
