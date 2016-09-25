@@ -1162,15 +1162,17 @@ class String
   end
 
   private def calc_excess_right
-    excess_right = 0
-    while to_unsafe[bytesize - 1 - excess_right].unsafe_chr.whitespace?
-      excess_right += 1
+    i = bytesize - 1
+    while i >= 0 && to_unsafe[i].unsafe_chr.whitespace?
+      i -= 1
     end
-    excess_right
+    bytesize - 1 - i
   end
 
   private def calc_excess_left
     excess_left = 0
+    # All strings end with '\0', and it's not a whitespace
+    # so it's safe to access past 1 byte beyond the string data
     while to_unsafe[excess_left].unsafe_chr.whitespace?
       excess_left += 1
     end
