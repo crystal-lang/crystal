@@ -72,6 +72,11 @@ describe "Slice" do
     slice.to_s.should eq("Slice[1, 2, 3, 4]")
   end
 
+  it "does to_s for bytes" do
+    slice = Bytes[1, 2, 3]
+    slice.to_s.should eq("Bytes[1, 2, 3]")
+  end
+
   it "gets pointer" do
     slice = Slice.new(4, 0)
     expect_raises(IndexError) { slice.pointer(5) }
