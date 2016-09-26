@@ -8,9 +8,6 @@ class OpenSSL::HMAC
           when :md4       then LibCrypto.evp_md4
           when :md5       then LibCrypto.evp_md5
           when :ripemd160 then LibCrypto.evp_ripemd160
-          {% if !flag?(:openbsd) %}
-          when :sha       then LibCrypto.evp_sha
-          {% end %}
           when :sha1      then LibCrypto.evp_sha1
           when :sha224    then LibCrypto.evp_sha224
           when :sha256    then LibCrypto.evp_sha256
@@ -21,7 +18,7 @@ class OpenSSL::HMAC
     key_slice = key.to_slice
     data_slice = data.to_slice
     buffer = Slice(UInt8).new(128)
-    LibCrypto.hmac(evp.not_nil!, key_slice, key_slice.size, data_slice, data_slice.size, buffer, out buffer_len)
+    LibCrypto.hmac(evp, key_slice, key_slice.size, data_slice, data_slice.size, buffer, out buffer_len)
     buffer[0, buffer_len.to_i]
   end
 
