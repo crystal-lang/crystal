@@ -1756,6 +1756,9 @@ module Crystal
 
       if @token.type == :","
         next_token_skip_space_or_newline
+      else
+        skip_space_or_newline
+        check :")"
       end
 
       Arg.new name, restriction: type
@@ -2098,7 +2101,7 @@ module Crystal
       open("array literal") do
         next_token_skip_space_or_newline
         while @token.type != :"]"
-          exps << parse_expression
+          exps << parse_op_assign_no_control
           end_location = token_end_location
           skip_space
           if @token.type == :NEWLINE
@@ -2110,6 +2113,10 @@ module Crystal
           if @token.type == :","
             slash_is_regex!
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :"]"
+            break
           end
         end
         next_token_skip_space
@@ -2144,7 +2151,7 @@ module Crystal
           end
           return parse_named_tuple(location)
         else
-          first_key = parse_op_assign
+          first_key = parse_op_assign_no_control
           case @token.type
           when :":"
             if first_key.is_a?(StringLiteral)
@@ -2190,10 +2197,13 @@ module Crystal
           if @token.type == :","
             slash_is_regex!
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :"}"
           end
 
           while @token.type != :"}"
-            key = parse_op_assign
+            key = parse_op_assign_no_control
             skip_space_or_newline
             if @token.type == :":" && key.is_a?(StringLiteral)
               # Nothing: it's a string key
@@ -2212,6 +2222,10 @@ module Crystal
             if @token.type == :","
               slash_is_regex!
               next_token_skip_space_or_newline
+            else
+              skip_space_or_newline
+              check :"}"
+              break
             end
           end
           end_location = token_end_location
@@ -2237,10 +2251,14 @@ module Crystal
       open("tuple literal", location) do
         exps << first_exp
         while @token.type != :"}"
-          exps << parse_expression
+          exps << parse_op_assign_no_control
           skip_space_or_newline
           if @token.type == :","
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :"}"
+            break
           end
         end
         end_location = token_end_location
@@ -2312,7 +2330,7 @@ module Crystal
           slash_is_regex!
           next_token_skip_space
 
-          value = parse_op_assign
+          value = parse_op_assign_no_control
           skip_space
 
           entries << NamedTupleLiteral::Entry.new(key, value)

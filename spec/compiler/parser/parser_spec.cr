@@ -1251,15 +1251,10 @@ describe "Parser" do
   assert_syntax_error "def foo(x = 1, y); end",
     "argument must have a default value"
 
-  assert_syntax_error " [1, 2, 3 end",
-    "unterminated array literal", 1, 2
+  assert_syntax_error " [1, 2, 3 end"
+  assert_syntax_error " {1 => end"
 
-  assert_syntax_error " {1 => end",
-    "unterminated hash literal", 1, 2
-
-  assert_syntax_error " {1, 2, 3 end",
-    "unterminated tuple literal", 1, 2
-
+  assert_syntax_error " {1, 2, 3 end"
   assert_syntax_error " (1, 2, 3 end",
     "unterminated parenthesized expression", 1, 2
 
@@ -1428,6 +1423,21 @@ describe "Parser" do
   assert_syntax_error %(def foo("bar \#{1} qux" y); y; end), "interpolation not allowed in external name"
 
   assert_syntax_error "def Foo(Int32).bar;end"
+
+  assert_syntax_error "[1 1]"
+  assert_syntax_error "{1 => 2 3 => 4}"
+  assert_syntax_error "{1 => 2, 3 => 4 5 => 6}"
+  assert_syntax_error "{a: 1 b: 2}"
+  assert_syntax_error "{a: 1, b: 2 c: 3}"
+  assert_syntax_error "{1 2}"
+  assert_syntax_error "{1, 2 3}"
+  assert_syntax_error "(1, 2 3)"
+  assert_syntax_error "Foo(T U)"
+  assert_syntax_error "Foo(T, U V)"
+  assert_syntax_error "class Foo(T U)"
+  assert_syntax_error "class Foo(T, U V)"
+  assert_syntax_error "->(x y) { }"
+  assert_syntax_error "->(x, y z) { }"
 
   describe "end locations" do
     assert_end_location "nil"
