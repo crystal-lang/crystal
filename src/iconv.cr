@@ -13,15 +13,19 @@ struct Iconv
       to = "#{to}//IGNORE"
     end
 
-    Errno.value = 0
     @iconv = LibC.iconv_open(to, from)
-    if Errno.value != 0
-      if original_from == "UTF-8"
-        raise ArgumentError.new("invalid encoding: #{original_to}")
-      elsif original_to == "UTF-8"
-        raise ArgumentError.new("invalid encoding: #{original_from}")
+
+    if @iconv.address == LibC::SizeT.new(-1)
+      if Errno.value == Errno::EINVAL
+        if original_from == "UTF-8"
+          raise ArgumentError.new("invalid encoding: #{original_to}")
+        elsif original_to == "UTF-8"
+          raise ArgumentError.new("invalid encoding: #{original_from}")
+        else
+          raise ArgumentError.new("invalid encoding: #{original_from} -> #{original_to}")
+        end
       else
-        raise ArgumentError.new("invalid encoding: #{original_from} -> #{original_to}")
+        raise Errno.new("iconv_open")
       end
     end
   end
@@ -58,6 +62,8 @@ struct Iconv
   end
 
   def close
-    LibC.iconv_close(@iconv)
+    if LibC.iconv_close(@iconv) == -1
+      raise Errno.new("iconv_close")
+    end
   end
 end
