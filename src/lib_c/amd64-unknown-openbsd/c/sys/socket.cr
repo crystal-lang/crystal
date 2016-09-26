@@ -19,14 +19,13 @@ lib LibC
   PF_LOCAL       = LibC::AF_LOCAL
   AF_INET        =  2
   AF_INET6       = 24
-  AF_MPLS        = 33
-  AF_UNIX        =  1
-  AF_UNSPEC      =  0
-  AF_LOCAL       = LibC::AF_UNIX
-  SHUT_RD        =          0
-  SHUT_RDWR      =          2
-  SHUT_WR        =          1
-  SOCK_CLOEXEC   = 0x10000000
+  AF_UNIX        = LibC::AF_LOCAL
+  AF_UNSPEC      =      0
+  AF_LOCAL       =      1
+  SHUT_RD        =      0
+  SHUT_RDWR      =      2
+  SHUT_WR        =      1
+  SOCK_CLOEXEC   = 0x8000
 
   alias SocklenT = UInt
   alias SaFamilyT = Char

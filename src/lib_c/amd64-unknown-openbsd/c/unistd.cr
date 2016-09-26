@@ -20,7 +20,7 @@ lib LibC
   fun ftruncate(x0 : Int, x1 : OffT) : Int
   fun getcwd(x0 : Char*, x1 : SizeT) : Char*
   fun gethostname(x0 : Char*, x1 : SizeT) : Int
-  fun getpgid(pid : PidT) : Int
+  fun getpgid(x0 : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
   fun isatty(x0 : Int) : Int
@@ -32,6 +32,7 @@ lib LibC
   fun read(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
   fun rmdir(x0 : Char*) : Int
   fun symlink(x0 : Char*, x1 : Char*) : Int
+  fun syscall(x0 : Int, ...) : Int
   fun sysconf(x0 : Int) : Long
   fun unlink(x0 : Char*) : Int
   fun write(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT

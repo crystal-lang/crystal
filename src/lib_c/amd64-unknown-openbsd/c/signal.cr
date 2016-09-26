@@ -9,7 +9,6 @@ lib LibC
   SIGTRAP   = 5
   SIGIOT    = LibC::SIGABRT
   SIGABRT   =  6
-  SIGEMT    =  7
   SIGFPE    =  8
   SIGKILL   =  9
   SIGBUS    = 10
@@ -29,11 +28,11 @@ lib LibC
   SIGXCPU   = 24
   SIGXFSZ   = 25
   SIGVTALRM = 26
-  SIGPROP   = 27
-  SIGWINCH  = 28
-  SIGINFO   = 29
   SIGUSR1   = 30
   SIGUSR2   = 31
+  SIGEMT    =  7
+  SIGINFO   = 29
+  SIGWINCH  = 28
 
   fun kill(x0 : PidT, x1 : Int) : Int
   fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void

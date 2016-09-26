@@ -40,8 +40,9 @@ lib LibC
     st_size : OffT
     st_blocks : BlkcntT
     st_blksize : BlksizeT
-    st_flags : UInt32
-    st_gen : UInt32
+    st_flags : UInt32T
+    st_gen : UInt32T
+    __st_birthtim : Timespec
   end
 
   fun chmod(x0 : Char*, x1 : ModeT) : Int

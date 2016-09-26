@@ -4,7 +4,7 @@ require "./stddef"
 lib LibC
   type IconvT = Void*
 
-  fun iconv = libiconv(x0 : IconvT, x1 : Char**, x2 : SizeT*, x3 : Char**, x4 : SizeT*) : SizeT
-  fun iconv_close = libiconv_close(x0 : IconvT) : Int
-  fun iconv_open = libiconv_open(x0 : Char*, x1 : Char*) : IconvT
+  fun iconv = libiconv(cd : IconvT, inbuf : Char**, inbytesleft : SizeT*, outbuf : Char**, outbytesleft : SizeT*) : SizeT
+  fun iconv_close = libiconv_close(cd : IconvT) : Int
+  fun iconv_open = libiconv_open(tocode : Char*, fromcode : Char*) : IconvT
 end

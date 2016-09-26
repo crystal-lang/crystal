@@ -8,8 +8,8 @@ lib LibC
   IPPROTO_TCP  =   6
   IPPROTO_UDP  =  17
 
-  alias InPortT = UInt16T
-  alias InAddrT = UInt32T
+  alias InPortT = UShort
+  alias InAddrT = UInt
 
   struct InAddr
     s_addr : InAddrT

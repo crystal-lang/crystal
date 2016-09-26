@@ -25,14 +25,9 @@ lib LibC
   PARMRK    = 0x00000008
   OPOST     = 0x00000001
   ONLCR     = 0x00000002
-  OXTABS    = 0x00000004
-  ONOEOT    = 0x00000008
   OCRNL     = 0x00000010
-  OLCUC     = 0x00000020
   ONOCR     = 0x00000040
   ONLRET    = 0x00000080
-
-  TABDLY    = 0x00000004
   B0        =          0
   B50       =         50
   B75       =         75
@@ -90,8 +85,8 @@ lib LibC
     c_cflag : TcflagT
     c_lflag : TcflagT
     c_cc : StaticArray(CcT, 20)
-    c_ispeed : SpeedT
-    c_ospeed : SpeedT
+    c_ispeed : Int
+    c_ospeed : Int
   end
 
   fun tcgetattr(x0 : Int, x1 : Termios*) : Int

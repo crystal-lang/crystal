@@ -1,7 +1,7 @@
 require "./sys/types"
 
 lib LibC
-  CLOCK_MONOTONIC = 4
+  CLOCK_MONOTONIC = 3
   CLOCK_REALTIME  = 0
 
   struct Tm
@@ -31,6 +31,7 @@ lib LibC
   fun tzset : Void
   fun timegm(x0 : Tm*) : TimeT
 
-  fun timezone(x0 : Int, x1 : Int) : Char*
-  $tzname : Char**
+  $daylight : Int
+  $timezone : Long
+  $tzname : StaticArray(Char*, 2)
 end

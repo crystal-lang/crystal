@@ -37,9 +37,6 @@ module Termios
       OCRNL  = LibC::OCRNL
       ONOCR  = LibC::ONOCR
       ONLRET = LibC::ONLRET
-      OXTABS = LibC::OXTABS
-      ONOEOT = LibC::ONOEOT
-      OLCUC  = LibC::OLCUC
     end
   {% else %}
     @[Flags]

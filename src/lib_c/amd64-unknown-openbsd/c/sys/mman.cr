@@ -16,11 +16,11 @@ lib LibC
   POSIX_MADV_RANDOM     = 1
   POSIX_MADV_SEQUENTIAL = 2
   POSIX_MADV_WILLNEED   = 3
-  MADV_DONTNEED         = 4
-  MADV_NORMAL           = 0
-  MADV_RANDOM           = 1
-  MADV_SEQUENTIAL       = 2
-  MADV_WILLNEED         = 3
+  MADV_DONTNEED         = LibC::POSIX_MADV_DONTNEED
+  MADV_NORMAL           = LibC::POSIX_MADV_NORMAL
+  MADV_RANDOM           = LibC::POSIX_MADV_RANDOM
+  MADV_SEQUENTIAL       = LibC::POSIX_MADV_SEQUENTIAL
+  MADV_WILLNEED         = LibC::POSIX_MADV_WILLNEED
 
   fun mmap(x0 : Void*, x1 : SizeT, x2 : Int, x3 : Int, x4 : Int, x5 : OffT) : Void*
   fun mprotect(x0 : Void*, x1 : SizeT, x2 : Int) : Int
