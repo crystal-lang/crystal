@@ -950,4 +950,20 @@ describe "Semantic: generic class" do
       Foo::Bar.new(:a).a
       ), inject_primitives: false) { symbol }
   end
+
+  it "restricts virtual generic instance type against generic (#3351)" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      class Sub < Gen(String)
+      end
+
+      def foo(x : Gen(String))
+        1
+      end
+
+      foo(Gen(String).new.as(Gen(String)))
+      )) { int32 }
+  end
 end

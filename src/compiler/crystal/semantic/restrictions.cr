@@ -802,6 +802,12 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
+      # Restrict first against the base type
+      restricted = base_type.restrict(other, context)
+      if restricted
+        return restricted.virtual_type
+      end
+
       types = base_type.subclasses.compact_map do |subclass|
         subclass.virtual_type.restrict(other, context).as(Type?)
       end
