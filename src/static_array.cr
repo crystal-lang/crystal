@@ -163,6 +163,17 @@ struct StaticArray(T, N)
     self
   end
 
+  # Like `map`, but the block gets passed both the element and its index.
+  def map_with_index!
+    i = 0
+    to_unsafe.map!(size) do |e|
+      res = yield e, i
+      i += 1
+      res
+    end
+    self
+  end
+
   # Reverses the elements of this array in-place, then returns `self`
   #
   # ```

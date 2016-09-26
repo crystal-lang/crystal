@@ -101,7 +101,7 @@ describe "StaticArray" do
     end
   end
 
-  it "reverse" do
+  it "reverse!" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.reverse!
     a[0].should eq(3)
@@ -109,12 +109,21 @@ describe "StaticArray" do
     a[2].should eq(1)
   end
 
-  it "maps!" do
+  it "map!" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.map! { |i| i + 1 }
     a[0].should eq(2)
     a[1].should eq(3)
     a[2].should eq(4)
+  end
+
+  it "map_with_index!" do
+    a = StaticArray(Int32, 3).new { |i| i + 1 }
+    a.map_with_index! { |e, i| i * 2 }
+    a[0].should eq(0)
+    a[1].should eq(2)
+    a[2].should eq(4)
+    a.should be_a(StaticArray(Int32, 3))
   end
 
   it "updates value" do
