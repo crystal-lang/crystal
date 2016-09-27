@@ -245,11 +245,11 @@ class YAML::PullParser
   end
 
   def problem_mark
-    @parser.as(LibYAML::InternalParser*).value.problem_mark
+    @parser.value.problem_mark
   end
 
   private def problem?
-    @parser.as(LibYAML::InternalParser*).value.problem
+    @parser.value.problem
   end
 
   def close

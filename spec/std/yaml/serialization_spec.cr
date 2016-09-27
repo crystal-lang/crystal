@@ -132,6 +132,10 @@ describe "YAML serialization" do
       String.from_yaml("hello".to_yaml).should eq("hello")
     end
 
+    it "does for String withs stars (#3353)" do
+      String.from_yaml("***".to_yaml).should eq("***")
+    end
+
     it "does for String with quote" do
       String.from_yaml("hel\"lo".to_yaml).should eq("hel\"lo")
     end
@@ -191,7 +195,7 @@ describe "YAML serialization" do
         :null  => nil,
       }
 
-      expected = "--- \nhello: World\ninteger: 2\nfloat: 3.5\nhash: \n  a: 1\n  b: 2\narray: \n  - 1\n  - 2\n  - 3\nnull: "
+      expected = "---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: \n"
 
       data.to_yaml.should eq(expected)
     end
@@ -200,7 +204,7 @@ describe "YAML serialization" do
       string = String.build do |str|
         %w(a b c).to_yaml(str)
       end
-      string.should eq("--- \n- a\n- b\n- c")
+      string.should eq("---\n- a\n- b\n- c\n")
     end
   end
 end
