@@ -422,6 +422,29 @@ class Crystal::Command
     end
   end
 
+  private def setup_simple_compiler_options(compiler, opts)
+    opts.on("-d", "--debug", "Add symbolic debug info") do
+      compiler.debug = true
+    end
+    opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+      compiler.flags << flag
+    end
+    opts.on("--error-trace", "Show full error trace") do
+      compiler.show_error_trace = true
+    end
+    opts.on("--release", "Compile in release mode") do
+      compiler.release = true
+    end
+    opts.on("-s", "--stats", "Enable statistics output") do
+      compiler.stats = true
+    end
+    opts.on("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+    opts.invalid_option { }
+  end
+
   private def validate_emit_values(values)
     values.each do |value|
       unless VALID_EMIT_VALUES.includes?(value)
