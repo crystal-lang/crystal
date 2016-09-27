@@ -85,7 +85,7 @@ class File
       io << " dev=0x"
       dev.to_s(16, io)
       io << ", ino=" << ino
-      io << ", mode=0"
+      io << ", mode=0o"
       mode.to_s(8, io)
       io << ", nlink=" << nlink
       io << ", uid=" << uid
