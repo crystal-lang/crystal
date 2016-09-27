@@ -396,7 +396,7 @@ module Crystal
           if atomic.is_a?(Call) && atomic.name != "[]" && !@def_vars.last.includes?(atomic.name)
             raise "'#{@token.type}' before definition of '#{atomic.name}'"
 
-            atomic = Var.new(atomic.name)
+            atomic = Var.new(atomic.name).at(location)
           end
 
           push_var atomic
@@ -704,7 +704,11 @@ module Crystal
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
-              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, name_column_number: name_column_number), method, [value] of ASTNode, name_column_number: name_column_number)] of ASTNode, name_column_number: name_column_number).at(location)
+              atomic = Call.new(atomic, "#{name}=", [
+                Call.new(
+                  Call.new(atomic.clone, name, name_column_number: name_column_number).at(location),
+                  method, [value] of ASTNode, name_column_number: name_column_number).at(location),
+              ] of ASTNode, name_column_number: name_column_number).at(location)
               next
             when :"||="
               # Rewrite 'f.x ||= value' as 'f.x || f.x=(value)'
