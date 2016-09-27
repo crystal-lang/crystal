@@ -184,6 +184,56 @@ describe "File" do
     File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
   end
 
+  assert "chown" do
+    # changing owners requires special privileges, so we test that method calls do compile
+    typeof(File.chown("/tmp/test"))
+    typeof(File.chown("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
+  end
+
+  describe "chmod" do
+    it "changes file permissions" do
+      path = "#{__DIR__}/data/chmod.txt"
+      begin
+        File.write(path, "")
+        File.chmod(path, 0o775)
+        File.stat(path).perm.should eq(0o775)
+      ensure
+        File.delete(path) if File.exists?(path)
+      end
+    end
+
+    it "changes dir permissions" do
+      path = "#{__DIR__}/data/chmod"
+      begin
+        Dir.mkdir(path, 0o775)
+        File.chmod(path, 0o664)
+        File.stat(path).perm.should eq(0o664)
+      ensure
+        Dir.rmdir(path) if Dir.exists?(path)
+      end
+    end
+
+    it "follows symlinks" do
+      path = "#{__DIR__}/data/chmod_destination.txt"
+      link = "#{__DIR__}/data/chmod.txt"
+      begin
+        File.write(path, "")
+        File.symlink(path, link)
+        File.chmod(link, 0o775)
+        File.stat(link).perm.should eq(0o775)
+      ensure
+        File.delete(path) if File.exists?(path)
+        File.delete(link) if File.symlink?(link)
+      end
+    end
+
+    it "raises when destination doesn't exist" do
+      expect_raises(Errno) do
+        File.chmod("#{__DIR__}/data/unknown_chmod_path.txt", 0o664)
+      end
+    end
+  end
+
   it "gets stat for this file" do
     stat = File.stat(__FILE__)
     stat.blockdev?.should be_false
