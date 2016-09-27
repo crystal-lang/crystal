@@ -132,7 +132,7 @@ describe "YAML serialization" do
       String.from_yaml("hello".to_yaml).should eq("hello")
     end
 
-    it "does for String withs stars (#3353)" do
+    it "does for String with stars (#3353)" do
       String.from_yaml("***".to_yaml).should eq("***")
     end
 
