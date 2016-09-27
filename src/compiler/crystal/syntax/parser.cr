@@ -3939,6 +3939,7 @@ module Crystal
       yield
 
       end_location = token_end_location
+      slash_is_not_regex!
       next_token_skip_space
 
       Block.new(block_args, block_body, splat_index).at(location).at_end(end_location)
