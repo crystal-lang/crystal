@@ -15,8 +15,7 @@ class YAML::Emitter
 
   def self.new(io : IO)
     emitter = new(io)
-    yield emitter
-    emitter.close
+    yield emitter ensure emitter.close
   end
 
   def stream_start
