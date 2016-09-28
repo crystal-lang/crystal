@@ -88,7 +88,7 @@ class Crystal::Command
     rescue ex : InvalidByteSequenceError
       print "Error: ".colorize.toggle(@color).red.bold
       print "source is not a valid Crystal source file: ".colorize.toggle(@color).bold
-      puts "#{ex.message}"
+      puts ex.message
       exit 1
     rescue ex : Crystal::SyntaxException
       if @format == "json"
@@ -116,7 +116,7 @@ class Crystal::Command
     rescue ex : InvalidByteSequenceError
       print "Error: ".colorize.toggle(@color).red.bold
       print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.toggle(@color).bold
-      puts "#{ex.message}"
+      puts ex.message
       exit 1
     rescue ex : Crystal::SyntaxException
       if @format == "json"
@@ -170,7 +170,7 @@ class Crystal::Command
       else
         print "Error: ".colorize.toggle(@color).red.bold
         print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.toggle(@color).bold
-        puts "#{ex.message}"
+        puts ex.message
       end
     rescue ex : Crystal::SyntaxException
       if check_files

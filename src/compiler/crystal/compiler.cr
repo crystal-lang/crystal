@@ -183,7 +183,7 @@ module Crystal
     rescue ex : InvalidByteSequenceError
       stdout.print colorize("Error: ").red.bold
       stdout.print colorize("file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ").bold
-      stdout.puts "#{ex.message}"
+      stdout.puts ex.message
       exit 1
     end
 
@@ -325,7 +325,7 @@ module Crystal
     rescue ex : ArgumentError
       stdout.print colorize("Error: ").red.bold
       stdout.print "llc: "
-      stdout.puts "#{ex.message}"
+      stdout.puts ex.message
       exit 1
     end
 
