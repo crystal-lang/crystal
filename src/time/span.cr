@@ -278,6 +278,10 @@ struct Time::Span
     val = (value < 0 ? (value - 0.5) : (value + 0.5)).to_i64 # round away from zero
     Span.new(val * TicksPerMillisecond)
   end
+
+  def self.zero
+    new(0)
+  end
 end
 
 struct Int
