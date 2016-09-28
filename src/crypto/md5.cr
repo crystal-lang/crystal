@@ -3,7 +3,7 @@ class Crypto::MD5
   #
   #     Crypto::MD5.hex_digest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
   def self.hex_digest(data : String | Slice(UInt8)) : String
-    context = Context.new
+    context = ContextImpl.new
     context.update data
     context.final
     context.hex
@@ -18,22 +18,22 @@ class Crypto::MD5
   #        ctx.update "oo"
   #     end                            # => "acbd18db4cc2f85cedef654fccc4a4d8"
   def self.hex_digest : String
-    context = ContextWrapper.new
+    context = Context.new
     yield context
     context.final
     context.hex
   end
 
-  private class ContextWrapper
-    getter context : Context
+  class Context
+    getter context : ContextImpl
     delegate update, final, hex, to: context
 
     def initialize
-      @context = Context.new
+      @context = ContextImpl.new
     end
   end
 
-  private struct Context
+  private struct ContextImpl
     def initialize
       @i = StaticArray(UInt32, 2).new(0_u32)
       @buf = StaticArray(UInt32, 4).new(0_u32)
