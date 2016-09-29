@@ -1544,6 +1544,8 @@ module Crystal
       typed_def.bind_to(node.exp || program.nil_var)
       @unreachable = true
 
+      node.type = @program.no_return
+
       false
     end
 
@@ -2029,6 +2031,8 @@ module Crystal
         node.raise "Invalid break"
       end
 
+      node.type = @program.no_return
+
       @unreachable = true
     end
 
@@ -2053,6 +2057,8 @@ module Crystal
           node.raise "Invalid next"
         end
       end
+
+      node.type = @program.no_return
 
       @unreachable = true
     end

@@ -1468,4 +1468,29 @@ describe "Code gen: block" do
       end
       )).to_i.should eq(3)
   end
+
+  it "breaks in var assignment (#3364)" do
+    run(%(
+      def foo
+        yield
+        456
+      end
+
+      foo do
+        a = nil || break 123
+      end
+      )).to_i.should eq(123)
+  end
+
+  it "nexts in var assignment (#3364)" do
+    run(%(
+      def foo
+        yield
+      end
+
+      foo do
+        a = nil || next 123
+      end
+      )).to_i.should eq(123)
+  end
 end
