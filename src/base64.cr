@@ -38,7 +38,7 @@ module Base64
   # ```text
   # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
   # ```
-  def encode(data)
+  def encode(data) : String
     slice = data.to_slice
     String.new(encode_size(slice.size, new_lines: true)) do |buf|
       appender = buf.appender
@@ -91,7 +91,7 @@ module Base64
   # ```text
   # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==
   # ```
-  def strict_encode(data)
+  def strict_encode(data) : String
     strict_encode data, CHARS_STD, pad: true
   end
 
@@ -134,7 +134,7 @@ module Base64
   #
   # The `padding` parameter defaults to false. When true, enough `=` characters
   # are added to make the output divisible by 3.
-  def urlsafe_encode(data, padding = false)
+  def urlsafe_encode(data, padding = false) : String
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -158,7 +158,7 @@ module Base64
 
   # Returns the Base64-decoded version of `data` as a *Slice(UInt8)*.
   # This will decode either the normal or urlsafe alphabets.
-  def decode(data)
+  def decode(data) : Bytes
     slice = data.to_slice
     buf = Pointer(UInt8).malloc(decode_size(slice.size))
     appender = buf.appender
@@ -182,7 +182,7 @@ module Base64
   # If the data doesn't decode to a valid UTF8 string,
   # *InvalidByteSequenceError* will be raised.
   # This will decode either the normal or urlsafe alphabets.
-  def decode_string(data)
+  def decode_string(data) : String
     slice = data.to_slice
     String.new(decode_size(slice.size)) do |buf|
       appender = buf.appender
