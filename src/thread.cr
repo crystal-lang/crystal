@@ -61,10 +61,10 @@ class Thread
       
       @@threads.each do |thread|
         if LibC.pthread_main_np() == 1
-	  return thread
-	else
-	  return thread if thread.pthread_id == pthread_self_id
-	end
+          return thread
+        else
+          return thread if thread.pthread_id == pthread_self_id
+        end
       end
     {% end %}
 
