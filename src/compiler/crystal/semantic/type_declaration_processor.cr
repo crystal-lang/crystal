@@ -617,7 +617,7 @@ struct Crystal::TypeDeclarationProcessor
           owner.ancestors.each do |ancestor|
             next unless ancestor.is_a?(ClassVarContainer)
 
-            ancestor_class_var = ancestor.class_vars?.try &.[name]?
+            ancestor_class_var = ancestor.lookup_class_var?(name)
             next unless ancestor_class_var
 
             if owner_class_var.type != ancestor_class_var.type
