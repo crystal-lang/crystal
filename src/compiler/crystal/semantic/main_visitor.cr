@@ -2480,7 +2480,7 @@ module Crystal
         end
       end
 
-      old_exception_handler_vars = @exception_handler_vars
+      @exception_handler_vars = old_exception_handler_vars
 
       false
     end
