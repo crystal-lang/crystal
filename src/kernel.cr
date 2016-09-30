@@ -153,7 +153,7 @@ def abort(message, status = 1)
 end
 
 def log(msg, *args)
-  # LibC.printf "(%ld) #{msg}\n", LibPThread.self, *args
+  # LibC.printf "(%ld) #{msg}\n", LibC.pthread_self, *args
 end
 
 class Process

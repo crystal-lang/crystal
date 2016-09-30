@@ -15,6 +15,7 @@ class Fiber
   @@first_fiber : Fiber? = nil
   @@last_fiber : Fiber? = nil
   @@stack_pool = [] of Void*
+  @@stack_pool_mutex = Thread::Mutex.new
   @@fiber_list_mutex = Thread::Mutex.new
   @thread : Void*
   @callback : (->)?
@@ -64,6 +65,7 @@ class Fiber
       {{ raise "Unsupported platform, only x86_64 and i686 are supported." }}
     {% end %}
 
+    Fiber.gc_read_lock
     @@fiber_list_mutex.synchronize do
       if last_fiber = @@last_fiber
         @prev_fiber = last_fiber
@@ -72,6 +74,7 @@ class Fiber
         @@first_fiber = @@last_fiber = self
       end
     end
+    Fiber.gc_read_unlock
   end
 
   def initialize
@@ -85,6 +88,7 @@ class Fiber
 
     Fiber.gc_register_thread
 
+    Fiber.gc_read_lock
     @@fiber_list_mutex.synchronize do
       if last_fiber = @@last_fiber
         @prev_fiber = last_fiber
@@ -93,10 +97,11 @@ class Fiber
         @@first_fiber = @@last_fiber = self
       end
     end
+    Fiber.gc_read_unlock
   end
 
   protected def self.allocate_stack
-    @@stack_pool.pop? || LibC.mmap(nil, Fiber::STACK_SIZE,
+    @@stack_pool_mutex.synchronize { @@stack_pool.pop? } || LibC.mmap(nil, Fiber::STACK_SIZE,
       LibC::PROT_READ | LibC::PROT_WRITE,
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
       -1, 0).tap do |pointer|
@@ -109,11 +114,13 @@ class Fiber
   end
 
   def self.stack_pool_collect
-    return if @@stack_pool.size == 0
-    free_count = @@stack_pool.size > 1 ? @@stack_pool.size / 2 : 1
-    free_count.times do
-      stack = @@stack_pool.pop
-      LibC.munmap(stack, Fiber::STACK_SIZE)
+    @@stack_pool_mutex.synchronize do
+      return if @@stack_pool.size == 0
+      free_count = @@stack_pool.size > 1 ? @@stack_pool.size / 2 : 1
+      free_count.times do
+        stack = @@stack_pool.pop
+        LibC.munmap(stack, Fiber::STACK_SIZE)
+      end
     end
   end
 
@@ -131,27 +138,39 @@ class Fiber
     ex.inspect_with_backtrace STDERR
     STDERR.flush
   ensure
-    @@stack_pool << @stack
+    # LibC.printf "bye\n"
+    @@stack_pool_mutex.synchronize { @@stack_pool << @stack }
 
-    # Remove the current fiber from the linked list
-    @@fiber_list_mutex.synchronize do
-      if prev_fiber = @prev_fiber
-        prev_fiber.next_fiber = @next_fiber
-      else
-        @@first_fiber = @next_fiber
-      end
-
-      if next_fiber = @next_fiber
-        next_fiber.prev_fiber = @prev_fiber
-      else
-        @@last_fiber = @prev_fiber
-      end
-    end
+    set_callback
 
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free
+    @resume_event = nil
 
     Scheduler.current.reschedule
+  end
+
+  def set_callback
+    @callback = ->{
+      # Remove the current fiber from the linked list
+      Fiber.gc_read_lock
+      @@fiber_list_mutex.synchronize do
+        if prev_fiber = @prev_fiber
+          prev_fiber.next_fiber = @next_fiber
+        else
+          @@first_fiber = @next_fiber
+        end
+
+        if next_fiber = @next_fiber
+          next_fiber.prev_fiber = @prev_fiber
+        else
+          @@last_fiber = @prev_fiber
+        end
+      end
+      Fiber.gc_read_unlock
+
+      nil
+    }
   end
 
   protected def self.gc_register_thread
@@ -265,18 +284,24 @@ class Fiber
 
   def sleep(time)
     # LibC.printf "a %ld\n", LibPThread.self
-    event = @resume_event ||= EventLoop.create_resume_event(self)
+    # event = @resume_event ||= EventLoop.create_resume_event(self)
+    event = EventLoop.create_resume_event(self)
     @callback = ->{
       log "Register sleep timer for '%s'", @name
       event.add(time)
       nil
     }
     EventLoop.wait
+    event.free
     log "Resumed '%s' from sleep", @name
   end
 
   def yield
-    sleep(0)
+    # sleep(0)
+    @callback = ->{
+      Scheduler.current.enqueue self
+    }
+    Scheduler.current.reschedule
   end
 
   def self.sleep(time)
@@ -333,7 +358,6 @@ class Fiber
     fiber = @@first_fiber
     while fiber
       if thread = fiber.@thread
-        # LibC.printf "%lx\n", thread
         LibGC.set_stackbottom thread, fiber.@stack_bottom
       else
         fiber.push_gc_roots

@@ -96,7 +96,7 @@ class IO::FileDescriptor
   # :nodoc:
   def resume_read
     if reader = @readers.try &.shift?
-      Scheduler.current.enqueue reader, force: true
+      Scheduler.current.enqueue reader
       # reader.resume
     end
   end
@@ -104,7 +104,7 @@ class IO::FileDescriptor
   # :nodoc:
   def resume_write
     if writer = @writers.try &.shift?
-      Scheduler.current.enqueue writer, force: true
+      Scheduler.current.enqueue writer
       # writer.resume
     end
   end
@@ -284,6 +284,7 @@ class IO::FileDescriptor
     event = @read_event ||= EventLoop.create_fd_read_event(self)
     Fiber.current.callback = ->{
       event.add @read_timeout
+      nil
     }
     nil
   end

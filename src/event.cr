@@ -60,7 +60,7 @@ module Event
     def initialize
       LibEvent2.evthread_use_pthreads
       @base = LibEvent2.event_base_new
-      # LibEvent2.evthread_make_base_notifiable(@base)
+      LibEvent2.evthread_make_base_notifiable(@base)
       # LibEvent2.event_enable_debug_mode
     end
 

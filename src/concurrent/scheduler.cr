@@ -1,40 +1,48 @@
 require "event"
 require "thread"
 
+class Thread
+  property! scheduler : Scheduler
+end
+
+Thread.current.scheduler = Scheduler.new(true)
+
 # :nodoc:
 class Scheduler
   @runnables : Deque(Fiber)
 
   @@idle = [] of Scheduler
   @@all = [] of Scheduler
+  @@all_mutex = Thread::Mutex.new
   @@idle_mutex = Thread::Mutex.new
-  @[ThreadLocal]
-  @@current = uninitialized Scheduler
-  @@current = new(true)
   @thread : UInt64
+  @reschedule_fiber : Fiber?
 
   def initialize(@own_event_loop = false)
     @runnables = Deque(Fiber).new
     @thread = LibC.pthread_self.address
     @wait_mutex = Thread::Mutex.new
     @wait_cv = Thread::ConditionVariable.new
-    @reschedule_fiber = Fiber.new("reschedule #{LibC.pthread_self.address}") { loop { reschedule(true) } }
     @victim = 0
-    @@all << self
+
+    unless @own_event_loop
+      @reschedule_fiber = Fiber.current
+      @@all_mutex.synchronize do
+        @@all << self
+      end
+    end
   end
 
   def self.start
     scheduler = new
-    @@current = scheduler
-    @@idle_mutex.synchronize do
-      @@idle << scheduler
+    Thread.current.scheduler = scheduler
+    loop do
+      scheduler.reschedule(true)
     end
-    scheduler.wait
-    scheduler.reschedule
   end
 
   def self.current
-    @@current.not_nil!
+    Thread.current.scheduler
   end
 
   protected def wait
@@ -52,42 +60,41 @@ class Scheduler
         log "Found in queue '#{runnable.name}'"
         runnable.resume
         break
-      elsif @own_event_loop
-        EventLoop.resume
-        break
-      else
-        @@idle_mutex.synchronize do
-          @@idle << self
-        end
+      elsif reschedule_fiber = @reschedule_fiber
         if is_reschedule_fiber
+          @@idle_mutex.synchronize do
+            @@idle << self
+          end
           wait
         else
-          log "Switching to rescheduling fiber %ld", @reschedule_fiber.object_id
-          @reschedule_fiber.resume
+          log "Switching to rescheduling fiber %ld", reschedule_fiber.object_id
+          reschedule_fiber.resume
           break
         end
+      else
+        EventLoop.resume
+        break
       end
     end
     nil
   end
 
-  def enqueue(fiber : Fiber, force = false)
+  def enqueue(fiber : Fiber)
     log "Enqueue '#{fiber.name}'"
     if idle_scheduler = @@idle_mutex.synchronize { @@idle.pop? }
       log "Found idle scheduler '%ld'", idle_scheduler.@thread
       idle_scheduler.enqueue_and_notify fiber
-    elsif force
-      # fiber.resume
+    else
       loop do
         @victim += 1
-        @victim = 1 if @victim >= @@all.size
-        sched = @@all[@victim]
-        next if sched == self
-        sched.enqueue_and_notify fiber
+        @@all_mutex.synchronize do
+          @victim = 0 if @victim >= @@all.size
+          sched = @@all[@victim]
+          # next if sched == self
+          sched.enqueue_and_notify fiber
+        end
         break
       end
-    else
-      @wait_mutex.synchronize { @runnables << fiber }
     end
   end
 
