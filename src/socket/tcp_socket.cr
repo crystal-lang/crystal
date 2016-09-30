@@ -58,43 +58,45 @@ class TCPSocket < IPSocket
     setsockopt_bool LibC::TCP_NODELAY, val, level: Protocol::TCP
   end
 
-  # The amount of time in seconds the connection must be idle before sending keepalive probes.
-  def tcp_keepalive_idle
-    optname = {% if flag?(:darwin) %}
-      LibC::TCP_KEEPALIVE
-    {% else %}
-      LibC::TCP_KEEPIDLE
-    {% end %}
-    getsockopt optname, 0, level: Protocol::TCP
-  end
+  {% unless flag?(:openbsd) %}
+    # The amount of time in seconds the connection must be idle before sending keepalive probes.
+    def tcp_keepalive_idle
+      optname = {% if flag?(:darwin) %}
+        LibC::TCP_KEEPALIVE
+      {% else %}
+        LibC::TCP_KEEPIDLE
+      {% end %}
+      getsockopt optname, 0, level: Protocol::TCP
+    end
 
-  def tcp_keepalive_idle=(val : Int)
-    optname = {% if flag?(:darwin) %}
-      LibC::TCP_KEEPALIVE
-    {% else %}
-      LibC::TCP_KEEPIDLE
-    {% end %}
-    setsockopt optname, val, level: Protocol::TCP
-    val
-  end
+    def tcp_keepalive_idle=(val : Int)
+      optname = {% if flag?(:darwin) %}
+        LibC::TCP_KEEPALIVE
+      {% else %}
+        LibC::TCP_KEEPIDLE
+      {% end %}
+      setsockopt optname, val, level: Protocol::TCP
+      val
+    end
 
-  # The amount of time in seconds between keepalive probes.
-  def tcp_keepalive_interval
-    getsockopt LibC::TCP_KEEPINTVL, 0, level: Protocol::TCP
-  end
+    # The amount of time in seconds between keepalive probes.
+    def tcp_keepalive_interval
+      getsockopt LibC::TCP_KEEPINTVL, 0, level: Protocol::TCP
+    end
 
-  def tcp_keepalive_interval=(val : Int)
-    setsockopt LibC::TCP_KEEPINTVL, val, level: Protocol::TCP
-    val
-  end
+    def tcp_keepalive_interval=(val : Int)
+      setsockopt LibC::TCP_KEEPINTVL, val, level: Protocol::TCP
+      val
+    end
 
-  # The number of probes sent, without response before dropping the connection.
-  def tcp_keepalive_count
-    getsockopt LibC::TCP_KEEPCNT, 0, level: Protocol::TCP
-  end
+    # The number of probes sent, without response before dropping the connection.
+    def tcp_keepalive_count
+      getsockopt LibC::TCP_KEEPCNT, 0, level: Protocol::TCP
+    end
 
-  def tcp_keepalive_count=(val : Int)
-    setsockopt LibC::TCP_KEEPCNT, val, level: Protocol::TCP
-    val
-  end
+    def tcp_keepalive_count=(val : Int)
+      setsockopt LibC::TCP_KEEPCNT, val, level: Protocol::TCP
+      val
+    end
+  {% end %}
 end
