@@ -151,6 +151,10 @@ describe Time do
     t = Time.new 2014, 10, 31, 21, 18, 13
     t2 = t - 1.month
     t2.to_s.should eq("2014-09-30 21:18:13")
+
+    t = Time.new 2014, 10, 31, 21, 18, 13
+    t2 = t + 6.month
+    t2.to_s.should eq("2015-04-30 21:18:13")
   end
 
   it "add years" do

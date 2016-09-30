@@ -227,4 +227,16 @@ describe "Semantic: if" do
       foo(x)
       )) { int32 }
   end
+
+  it "types variable after unreachable else of && (#3360)" do
+    assert_type(%(
+      def test
+        foo = 1 if 1
+        return 1 unless foo && foo
+        foo
+      end
+
+      test
+      ), inject_primitives: false) { int32 }
+  end
 end

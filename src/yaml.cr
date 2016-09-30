@@ -40,8 +40,11 @@ require "./yaml/*"
 # File.open("file.yml", "w") { |f| {hello: "world"}.to_yaml(f) } # => writes it to the file
 # ```
 module YAML
+  class Error < Exception
+  end
+
   # Exception thrown on a YAML parse error.
-  class ParseException < Exception
+  class ParseException < Error
     getter line_number : Int32
     getter column_number : Int32
 
@@ -84,12 +87,7 @@ module YAML
   # # => }
   # ```
   def self.parse(data : String | IO) : Any
-    parser = YAML::Parser.new(data)
-    begin
-      parser.parse
-    ensure
-      parser.close
-    end
+    YAML::Parser.new data, &.parse
   end
 
   # Deserializes multiple YAML documents.
@@ -108,12 +106,7 @@ module YAML
   # # => [{"foo" => "bar"}, {"hello" => "world"}]
   # ```
   def self.parse_all(data : String) : Array(Any)
-    parser = YAML::Parser.new(data)
-    begin
-      parser.parse_all
-    ensure
-      parser.close
-    end
+    YAML::Parser.new data, &.parse_all
   end
 
   # Serializes an object to YAML, returning it as a string.

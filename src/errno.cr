@@ -19,6 +19,8 @@ end
 #
 # This class is the exception thrown when errno errors are encountered.
 class Errno < Exception
+  # Argument list too long
+  E2BIG = LibC::E2BIG
   # Operation not permitted
   EPERM = LibC::EPERM
   # No such file or directory

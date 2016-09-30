@@ -1331,4 +1331,18 @@ describe "Block inference" do
       Foo.new(1).foo { |x| {x, x} }
       )) { tuple_of([tuple_of([int32, int32]), tuple_of([int32, int32]).metaclass]) }
   end
+
+  it "correctly types unpacked tuple block arg after block (#3339)" do
+    assert_type(%(
+      def foo
+        yield({""})
+      end
+
+      i = 1
+      foo do |(i)|
+
+      end
+      i
+      ), inject_primitives: false) { int32 }
+  end
 end

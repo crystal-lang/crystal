@@ -288,6 +288,8 @@ module Crystal
       obj_type = obj.type?
       to_type = to.type
 
+      @upcast = false
+
       if obj_type && !(obj_type.pointer? || to_type.pointer?)
         filtered_type = obj_type.filter_by(to_type)
 
@@ -318,6 +320,8 @@ module Crystal
     def update(from = nil)
       obj_type = obj.type?
       to_type = to.type
+
+      @upcast = false
 
       if obj_type
         filtered_type = obj_type.filter_by(to_type)

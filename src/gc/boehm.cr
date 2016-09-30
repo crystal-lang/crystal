@@ -50,6 +50,8 @@ lib LibGC
   # GC_on_collection_event isn't exported.  Can't collect totals without it.
   # bytes_allocd, heap_size, unmapped_bytes are macros
 
+  fun size = GC_size(addr : Void*) : LibC::SizeT
+
   # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
   fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : Void*, start : Void* ->, arg : Void*) : LibC::Int
   fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int

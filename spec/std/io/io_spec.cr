@@ -713,4 +713,7 @@ describe IO do
       end
     end
   end
+
+  typeof(STDIN.cooked { })
+  typeof(STDIN.cooked!)
 end

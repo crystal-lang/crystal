@@ -515,6 +515,9 @@ describe "String" do
     assert { "".strip.should eq("") }
     assert { "\n".strip.should eq("") }
     assert { "\n\t  ".strip.should eq("") }
+
+    # TODO: add spec tags so this can be run with tag:slow
+    # assert { (" " * 167772160).strip.should eq("") }
   end
 
   describe "rstrip" do
@@ -1977,6 +1980,13 @@ describe "String" do
 
     expect_raises(IndexError) do
       "foo".at(4)
+    end
+  end
+
+  it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
+    String.new(255_u8) do |buffer|
+      LibGC.size(buffer).should be >= 255
+      {255, 0}
     end
   end
 end

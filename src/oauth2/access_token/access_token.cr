@@ -1,3 +1,6 @@
+# Base class for the two possible access tokens: Bearer and Mac.
+#
+# Use `#authenticate` to authenticate an `HTTP::Client`.
 abstract class OAuth2::AccessToken
   def self.new(pull : JSON::PullParser)
     token_type = nil

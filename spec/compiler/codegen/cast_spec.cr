@@ -331,4 +331,22 @@ describe "Code gen: cast" do
       Gen(Foo).cast(Foo.new).foo
       )).to_i.should eq(1)
   end
+
+  it "casts with block var that changes type (#3341)" do
+    codegen(%(
+      require "prelude"
+
+      class Object
+        def try
+          yield self
+        end
+      end
+
+      class Foo
+      end
+
+      x = Foo.new.as(Int32 | Foo)
+      x.try &.as(Foo)
+      ))
+  end
 end

@@ -1,18 +1,20 @@
 def Object.from_yaml(string : String) : self
-  parser = YAML::PullParser.new(string)
-  parser.read_stream do
-    parser.read_document do
-      new parser
+  YAML::PullParser.new(string) do |parser|
+    parser.read_stream do
+      parser.read_document do
+        new parser
+      end
     end
   end
 end
 
 def Array.from_yaml(string : String)
-  parser = YAML::PullParser.new(string)
-  parser.read_stream do
-    parser.read_document do
-      new(parser) do |element|
-        yield element
+  YAML::PullParser.new(string) do |parser|
+    parser.read_stream do
+      parser.read_document do
+        new(parser) do |element|
+          yield element
+        end
       end
     end
   end

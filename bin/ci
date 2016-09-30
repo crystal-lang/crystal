@@ -147,7 +147,7 @@ EOF
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_linux docker pull "jhass/crystal-build-$ARCH:llvm38"
+  on_linux docker pull "jhass/crystal-build-$ARCH"
 
   on_osx brew install llvm libevent pcre crystal-lang
 }
@@ -165,7 +165,7 @@ with_build_env() {
     -v $(pwd):/mnt \
     -w /mnt \
     -e LIBRARY_PATH="/opt/crystal/embedded/lib/" \
-    "jhass/crystal-build-$ARCH:llvm38" \
+    "jhass/crystal-build-$ARCH" \
     "$ARCH_CMD" /bin/bash -c "'$command'"
 
   on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
