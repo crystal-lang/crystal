@@ -322,7 +322,7 @@ describe TCPSocket do
       (server.linger = 42).should eq 42
       server.linger.should eq 42
 
-      TCPSocket.open("::", server.local_address.port) do |client|
+      TCPSocket.open("localhost", server.local_address.port) do |client|
         # The commented lines are actually dependent on the system configuration,
         # so for now we keep it commented. Once we can force the family
         # we can uncomment them.
