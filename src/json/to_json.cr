@@ -164,7 +164,14 @@ end
 
 struct Float
   def to_json(io)
-    to_s io
+    case self
+    when .nan?
+      raise JSON::Error.new("NaN not allowed in JSON")
+    when .infinite?
+      raise JSON::Error.new("Infinity not allowed in JSON")
+    else
+      to_s io
+    end
   end
 end
 
