@@ -1745,11 +1745,11 @@ class String
     end
   end
 
-  # Returns a string where all chars in the given hash are replaced
+  # Returns a string where all chars in the given named tuple are replaced
   # by the corresponding *tuple* values.
   #
   # ```
-  # "hello".gsub({'e' => 'a', 'l' => 'd'}) # => "haddo"
+  # "hello".gsub(e: 'a', l: 'd'}) # => "haddo"
   # ```
   def gsub(tuple : NamedTuple)
     gsub do |char|
