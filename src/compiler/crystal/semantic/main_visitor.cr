@@ -960,8 +960,6 @@ module Crystal
 
       node.bind_to node.body
 
-      # pp node, @vars
-
       false
     end
 
@@ -1546,6 +1544,8 @@ module Crystal
       typed_def.bind_to(node.exp || program.nil_var)
       @unreachable = true
 
+      node.type = @program.no_return
+
       false
     end
 
@@ -1768,14 +1768,14 @@ module Crystal
         next if then_var.same?(else_var)
 
         if_var = MetaVar.new(name)
+        if_var.nil_if_read = !!(then_var.try(&.nil_if_read?) || else_var.try(&.nil_if_read?))
 
         # Check if no types were changes in either then 'then' and 'else' branches
         if cond_var && then_var.same?(before_then_var) && else_var.same?(before_else_var) && !then_unreachable && !else_unreachable
+          cond_var.nil_if_read = if_var.nil_if_read?
           @vars[name] = cond_var
           next
         end
-
-        if_var.nil_if_read = !!(then_var.try(&.nil_if_read?) || else_var.try(&.nil_if_read?))
 
         if then_var && else_var
           if then_unreachable
@@ -2031,6 +2031,8 @@ module Crystal
         node.raise "Invalid break"
       end
 
+      node.type = @program.no_return
+
       @unreachable = true
     end
 
@@ -2055,6 +2057,8 @@ module Crystal
           node.raise "Invalid next"
         end
       end
+
+      node.type = @program.no_return
 
       @unreachable = true
     end
@@ -2482,7 +2486,7 @@ module Crystal
         end
       end
 
-      old_exception_handler_vars = @exception_handler_vars
+      @exception_handler_vars = old_exception_handler_vars
 
       false
     end

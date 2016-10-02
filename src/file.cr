@@ -240,6 +240,45 @@ class File < IO::FileDescriptor
     basename(path).chomp(suffix)
   end
 
+  # Changes the owner of the specified file.
+  #
+  # ```
+  # File.chown("/foo/bar/baz.cr", 1001, 100)
+  # File.chown("/foo/bar", gid: 100)
+  # ```
+  #
+  # Unless *follow_symlinks* is set to true, then the owner symlink itself will
+  # be changed, otherwise the owner of the symlink destination file will be
+  # changed. For example, assuming symlinks as `foo -> bar -> baz`:
+  #
+  # ```
+  # File.chown("foo", gid: 100)                        # changes foo's gid
+  # File.chown("foo", gid: 100, follow_symlinks: true) # changes baz's gid
+  # ```
+  def self.chown(path, uid : Int? = -1, gid : Int = -1, follow_symlinks = false)
+    ret = if !follow_symlinks && symlink?(path)
+            LibC.lchown(path, uid, gid)
+          else
+            LibC.chown(path, uid, gid)
+          end
+    raise Errno.new("Error changing owner of '#{path}'") if ret == -1
+  end
+
+  # Changes the permissions of the specified file.
+  #
+  # Symlinks are dereferenced, so that only the permissions of the symlink
+  # destination are changed, never the permissions of the symlink itself.
+  #
+  # ```
+  # File.chmod("foo/bin", 0o755)
+  # File.chmod("foo/bin/exec", 0o700)
+  # ```
+  def self.chmod(path, mode : Int)
+    if LibC.chmod(path, mode) == -1
+      raise Errno.new("Error changing permissions of '#{path}'")
+    end
+  end
+
   # Delete the file at *path*. Deleting non-existent file will raise an exception.
   #
   # ```

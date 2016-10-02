@@ -1,3 +1,11 @@
+## 0.19.3  (30-09-2016)
+
+* `crystal eval` now accepts some flags like `--stats`, `--release` and `--help`
+* Added `File.chown` and `File.chmod` (thanks @ysbaddaden)
+* Added `Time::Span.zero` (useful for doing `sum`) (thanks @RX14)
+* Added docs to `OAuth` and `OAuth2`
+* [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.3)
+
 ## 0.19.2  (16-09-2016)
 
 * Generic type variables no longer need to be single-letter names (for example `class Gen(Foo)` is now possible)

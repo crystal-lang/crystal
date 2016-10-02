@@ -71,4 +71,14 @@ describe "Code gen: return" do
       foo
       ))
   end
+
+  it "returns in var assignment (#3364)" do
+    run(%(
+      def bar
+        a = nil || return 123
+      end
+
+      bar
+      )).to_i.should eq(123)
+  end
 end

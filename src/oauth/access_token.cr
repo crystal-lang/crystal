@@ -5,20 +5,26 @@ class OAuth::AccessToken
   def initialize(@token : String, @secret : String, @extra : Hash(String, String)? = nil)
   end
 
+  def authenticate(client, consumer_key, consumer_secret, extra_params = nil)
+    OAuth.authenticate(client, @token, @secret, consumer_key, consumer_secret, extra_params)
+  end
+
   def extra
     @extra ||= {} of String => String
   end
 
-  def self.from_response(response) : self
+  def self.from_response(response : String) : self
     token = nil
     secret = nil
-    extra = {} of String => String
+    extra = nil
 
     HTTP::Params.parse(response) do |key, value|
       case key
       when "oauth_token"        then token = value
       when "oauth_token_secret" then secret = value
-      else                           extra[key] = value
+      else
+        extra ||= {} of String => String
+        extra[key] = value
       end
     end
 
@@ -28,7 +34,7 @@ class OAuth::AccessToken
   def self.new(pull : JSON::PullParser)
     token = nil
     secret = nil
-    extra = {} of String => String
+    extra = nil
 
     pull.read_object do |key|
       case key
@@ -38,6 +44,7 @@ class OAuth::AccessToken
         secret = pull.read_string
       else
         if pull.kind == :STRING
+          extra ||= {} of String => String
           extra[key] = pull.read_string
         else
           pull.skip

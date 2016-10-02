@@ -154,6 +154,18 @@ describe "JSON serialization" do
       1.5.to_json.should eq("1.5")
     end
 
+    it "raises if Float is NaN" do
+      expect_raises JSON::Error, "NaN not allowed in JSON" do
+        (0.0/0.0).to_json
+      end
+    end
+
+    it "raises if Float is infinity" do
+      expect_raises JSON::Error, "Infinity not allowed in JSON" do
+        Float64::INFINITY.to_json
+      end
+    end
+
     it "does for String" do
       "hello".to_json.should eq("\"hello\"")
     end

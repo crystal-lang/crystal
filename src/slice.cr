@@ -389,7 +389,12 @@ struct Slice(T)
   end
 
   def to_s(io)
-    io << "Slice["
+    if T == UInt8
+      io << "Bytes"
+    else
+      io << "Slice"
+    end
+    io << "["
     join ", ", io, &.inspect(io)
     io << "]"
   end

@@ -396,7 +396,7 @@ module Crystal
           if atomic.is_a?(Call) && atomic.name != "[]" && !@def_vars.last.includes?(atomic.name)
             raise "'#{@token.type}' before definition of '#{atomic.name}'"
 
-            atomic = Var.new(atomic.name)
+            atomic = Var.new(atomic.name).at(location)
           end
 
           push_var atomic
@@ -704,7 +704,11 @@ module Crystal
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
-              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, name_column_number: name_column_number), method, [value] of ASTNode, name_column_number: name_column_number)] of ASTNode, name_column_number: name_column_number).at(location)
+              atomic = Call.new(atomic, "#{name}=", [
+                Call.new(
+                  Call.new(atomic.clone, name, name_column_number: name_column_number).at(location),
+                  method, [value] of ASTNode, name_column_number: name_column_number).at(location),
+              ] of ASTNode, name_column_number: name_column_number).at(location)
               next
             when :"||="
               # Rewrite 'f.x ||= value' as 'f.x || f.x=(value)'
@@ -1756,6 +1760,9 @@ module Crystal
 
       if @token.type == :","
         next_token_skip_space_or_newline
+      else
+        skip_space_or_newline
+        check :")"
       end
 
       Arg.new name, restriction: type
@@ -2098,7 +2105,7 @@ module Crystal
       open("array literal") do
         next_token_skip_space_or_newline
         while @token.type != :"]"
-          exps << parse_expression
+          exps << parse_op_assign_no_control
           end_location = token_end_location
           skip_space
           if @token.type == :NEWLINE
@@ -2110,6 +2117,10 @@ module Crystal
           if @token.type == :","
             slash_is_regex!
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :"]"
+            break
           end
         end
         next_token_skip_space
@@ -2144,7 +2155,7 @@ module Crystal
           end
           return parse_named_tuple(location)
         else
-          first_key = parse_op_assign
+          first_key = parse_op_assign_no_control
           case @token.type
           when :":"
             if first_key.is_a?(StringLiteral)
@@ -2190,10 +2201,13 @@ module Crystal
           if @token.type == :","
             slash_is_regex!
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :"}"
           end
 
           while @token.type != :"}"
-            key = parse_op_assign
+            key = parse_op_assign_no_control
             skip_space_or_newline
             if @token.type == :":" && key.is_a?(StringLiteral)
               # Nothing: it's a string key
@@ -2212,6 +2226,10 @@ module Crystal
             if @token.type == :","
               slash_is_regex!
               next_token_skip_space_or_newline
+            else
+              skip_space_or_newline
+              check :"}"
+              break
             end
           end
           end_location = token_end_location
@@ -2237,10 +2255,14 @@ module Crystal
       open("tuple literal", location) do
         exps << first_exp
         while @token.type != :"}"
-          exps << parse_expression
+          exps << parse_op_assign_no_control
           skip_space_or_newline
           if @token.type == :","
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :"}"
+            break
           end
         end
         end_location = token_end_location
@@ -2312,7 +2334,7 @@ module Crystal
           slash_is_regex!
           next_token_skip_space
 
-          value = parse_op_assign
+          value = parse_op_assign_no_control
           skip_space
 
           entries << NamedTupleLiteral::Entry.new(key, value)
@@ -3917,6 +3939,7 @@ module Crystal
       yield
 
       end_location = token_end_location
+      slash_is_not_regex!
       next_token_skip_space
 
       Block.new(block_args, block_body, splat_index).at(location).at_end(end_location)

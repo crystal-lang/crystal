@@ -515,6 +515,9 @@ describe "String" do
     assert { "".strip.should eq("") }
     assert { "\n".strip.should eq("") }
     assert { "\n\t  ".strip.should eq("") }
+
+    # TODO: add spec tags so this can be run with tag:slow
+    # assert { (" " * 167772160).strip.should eq("") }
   end
 
   describe "rstrip" do

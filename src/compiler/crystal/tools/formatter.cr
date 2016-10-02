@@ -3214,7 +3214,7 @@ module Crystal
       skip_space_write_line
 
       node.whens.each_with_index do |a_when, i|
-        write_indent { format_when(node, a_when, last?(i, node.whens)) }
+        format_when(node, a_when, last?(i, node.whens))
         indent(@indent + 2) { skip_space_or_newline }
       end
 
@@ -3253,6 +3253,7 @@ module Crystal
       skip_space_or_newline
 
       slash_is_regex!
+      write_indent
       write_keyword :when, " "
       base_indent = @column
       when_start_line = @line

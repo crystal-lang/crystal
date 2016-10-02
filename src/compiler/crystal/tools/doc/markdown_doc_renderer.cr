@@ -54,7 +54,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       /x do |match_text, match|
       sharp_index = match_text.index('#')
       dot_index = match_text.index('.')
-      kind = sharp_index ? :instnace : :class
+      kind = sharp_index ? :instance : :class
 
       # Type#method(...)
       if match[1]?

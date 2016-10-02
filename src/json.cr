@@ -39,8 +39,12 @@
 # need to define `to_json(IO)` for custom objects, either manually or using
 # `JSON#mapping`.
 module JSON
+  # Generic JSON error
+  class Error < Exception
+  end
+
   # Exception thrown on a JSON parse error.
-  class ParseException < Exception
+  class ParseException < Error
     getter line_number : Int32
     getter column_number : Int32
 

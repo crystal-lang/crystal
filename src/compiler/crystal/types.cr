@@ -780,7 +780,7 @@ module Crystal
       ancestors.each do |ancestor|
         next unless ancestor.is_a?(ClassVarContainer)
 
-        class_var = ancestor.class_vars?.try &.[name]?
+        class_var = ancestor.lookup_class_var?(name)
         if class_var
           var = MetaTypeVar.new(name, class_var.type)
           var.owner = self
