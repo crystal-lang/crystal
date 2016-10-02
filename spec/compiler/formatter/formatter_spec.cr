@@ -986,4 +986,5 @@ describe Crystal::Formatter do
   assert_format %(foo("b\#{1}" \\\n"baz")), %(foo("b\#{1}" \\\n    "baz"))
 
   assert_format "foo(A |\nB |\nC)", "foo(A |\n    B |\n    C)"
+  assert_format "def foo\n  case x\n  # z\n  when 1\n  end\nend"
 end
