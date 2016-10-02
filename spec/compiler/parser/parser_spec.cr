@@ -1197,6 +1197,9 @@ describe "Parser" do
   it_parses "a.b /2/", Call.new("a".call, "b", regex("2"))
   it_parses "a.b / 2", Call.new(Call.new("a".call, "b"), "/", 2.int32)
   it_parses "a/b", Call.new("a".call, "/", "b".call)
+  it_parses "T/1", Call.new("T".path, "/", 1.int32)
+  it_parses "T::U/1", Call.new(Path.new(%w(T U)), "/", 1.int32)
+  it_parses "::T/1", Call.new(Path.global("T"), "/", 1.int32)
 
   it_parses %(asm("nop" \n)), Asm.new("nop")
   it_parses %(asm("nop" : : )), Asm.new("nop")
