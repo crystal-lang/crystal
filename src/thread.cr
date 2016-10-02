@@ -58,7 +58,7 @@ class Thread
   def self.current
     {% if flag?(:openbsd) %}
       pthread_self_id = LibC.pthread_self().as(UInt64*).address
-      
+
       @@threads.each do |thread|
         if LibC.pthread_main_np() == 1
           return thread
@@ -76,7 +76,6 @@ class Thread
       @th ? @th.not_nil!.address.as(UInt64) : nil
     end
   {% end %}
-  
   protected def start
     @@current = self
     begin
