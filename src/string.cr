@@ -1749,7 +1749,7 @@ class String
   # by the corresponding *tuple* values.
   #
   # ```
-  # "hello".gsub(e: 'a', l: 'd'}) # => "haddo"
+  # "hello".gsub({e: 'a', l: 'd'}) # => "haddo"
   # ```
   def gsub(tuple : NamedTuple)
     gsub do |char|
