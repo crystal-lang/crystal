@@ -207,4 +207,34 @@ describe Process do
     process.exists?.should be_false
     process.terminated?.should be_true
   end
+
+  describe "executable_path" do
+    it "searches executable" do
+      Process.executable_path.should be_a(String | Nil)
+    end
+  end
+
+  describe "find_executable" do
+    pwd = Process::INITIAL_PWD
+    crystal_path = File.join(pwd, "bin", "crystal")
+
+    it "resolves absolute executable" do
+      Process.find_executable(File.join(pwd, "bin", "crystal")).should eq(crystal_path)
+    end
+
+    it "resolves relative executable" do
+      Process.find_executable(File.join("bin", "crystal")).should eq(crystal_path)
+      Process.find_executable(File.join("..", File.basename(pwd), "bin", "crystal")).should eq(crystal_path)
+    end
+
+    it "searches within PATH" do
+      (path = Process.find_executable("ls")).should_not be_nil
+      path.not_nil!.should match(/#{File::SEPARATOR}ls$/)
+
+      (path = Process.find_executable("crystal")).should_not be_nil
+      path.not_nil!.should match(/#{File::SEPARATOR}crystal$/)
+
+      Process.find_executable("some_very_unlikely_file_to_exist").should be_nil
+    end
+  end
 end
