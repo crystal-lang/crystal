@@ -155,8 +155,13 @@ class Crystal::CodeGenVisitor
   end
 
   def needs_value_cast_inside_union?(value_type, union_type)
+    # A type needs a special cast if:
+    # 1. It's a tuple or named tuple
+    # 2. It's not inside the target union
+    # 3. There's a compatible type inside the target union
     return false unless value_type.is_a?(TupleInstanceType) || value_type.is_a?(NamedTupleInstanceType)
-    !union_type.union_types.any? &.==(value_type)
+    !union_type.union_types.any?(&.==(value_type)) &&
+      union_type.union_types.any? { |ut| value_type.implements?(ut) || ut.implements?(value_type) }
   end
 
   def assign_distinct_union_types(target_pointer, target_type, value_type, value)
