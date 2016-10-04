@@ -19,7 +19,6 @@ class Fiber
   @@fiber_list_mutex = Thread::Mutex.new
   @thread : Void*
   @callback : (->)?
-  property name
 
   # @@gc_lock = LibCK.rwlock_init
   @@gc_lock = LibCK.brlock_init
@@ -84,7 +83,6 @@ class Fiber
     @stack = Pointer(Void).null
     @stack_top = _fiber_get_stack_top
     @stack_bottom = LibGC.get_stackbottom
-    @name = "main"
 
     Fiber.gc_register_thread
 
@@ -98,6 +96,10 @@ class Fiber
       end
     end
     Fiber.gc_read_unlock
+  end
+
+  def name!
+    name || "?"
   end
 
   protected def self.allocate_stack
@@ -139,7 +141,6 @@ class Fiber
     STDERR.flush
   ensure
     # LibC.printf "bye\n"
-    @@stack_pool_mutex.synchronize { @@stack_pool << @stack }
 
     set_callback
 
@@ -152,6 +153,8 @@ class Fiber
 
   def set_callback
     @callback = ->{
+      @@stack_pool_mutex.synchronize { @@stack_pool << @stack }
+
       # Remove the current fiber from the linked list
       Fiber.gc_read_lock
       @@fiber_list_mutex.synchronize do
@@ -253,7 +256,7 @@ class Fiber
   end
 
   def resume
-    log "Resume '%s' -> '%s'", Fiber.current.name, self.name
+    log "Resume '%s' -> '%s'", Fiber.current.name!, self.name!
     Fiber.gc_read_lock
     current, Thread.current.current_fiber = Thread.current.current_fiber, self
     @callback = current.transfer_callback
@@ -283,21 +286,15 @@ class Fiber
   end
 
   def sleep(time)
-    # LibC.printf "a %ld\n", LibPThread.self
-    # event = @resume_event ||= EventLoop.create_resume_event(self)
-    event = EventLoop.create_resume_event(self)
+    event = @resume_event ||= EventLoop.create_resume_event(self)
     @callback = ->{
-      log "Register sleep timer for '%s'", @name
       event.add(time)
       nil
     }
     EventLoop.wait
-    event.free
-    log "Resumed '%s' from sleep", @name
   end
 
   def yield
-    # sleep(0)
     @callback = ->{
       Scheduler.current.enqueue self
     }

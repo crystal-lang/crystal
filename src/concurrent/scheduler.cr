@@ -47,7 +47,7 @@ class Scheduler
 
   protected def wait
     @wait_mutex.synchronize do
-      log "Waiting"
+      log "Waiting (runnables: %d)", @runnables.size
       @wait_cv.wait(@wait_mutex) if @runnables.empty?
       log "Received signal"
     end
@@ -57,7 +57,7 @@ class Scheduler
     log "Reschedule"
     while true
       if runnable = @wait_mutex.synchronize { @runnables.shift? }
-        log "Found in queue '#{runnable.name}'"
+        log "Found in queue '%s'", runnable.name!
         runnable.resume
         break
       elsif reschedule_fiber = @reschedule_fiber
@@ -85,15 +85,17 @@ class Scheduler
       log "Found idle scheduler '%ld'", idle_scheduler.@thread
       idle_scheduler.enqueue_and_notify fiber
     else
+      sched = choose_other_sched
+      log "Enqueue in scheduler '%ld'", sched.@thread
+      sched.enqueue_and_notify fiber
+    end
+  end
+
+  private def choose_other_sched
+    @@all_mutex.synchronize do
       loop do
-        @victim += 1
-        @@all_mutex.synchronize do
-          @victim = 0 if @victim >= @@all.size
-          sched = @@all[@victim]
-          # next if sched == self
-          sched.enqueue_and_notify fiber
-        end
-        break
+        sched = @@all[@@all.size.remainder(Intinsics.read_cycle_counter)]
+        break sched unless sched == self && @@all.size > 1
       end
     end
   end

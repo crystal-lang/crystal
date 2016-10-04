@@ -3,21 +3,12 @@ require "./scheduler"
 
 class EventLoop
   @@eb = Event::Base.new
+  @@loop_fiber = Fiber.new(name: "event-loop") do
+    inf_event = @@eb.new_event(-1, LibEvent2::EventFlags::Persist, nil) { }
+    inf_event.add(86400)
 
-  # def self.resume
-  #   @@loop_fiber.resume
-  # end
-
-  @@loop_fiber : Fiber?
-  @@loop_fiber = uninitialized Fiber?
-  # @@loop_fiber = Fiber.new { @@eb.run_loop }
-  @@loop_fiber = Fiber.new do
-    Fiber.current.name = "loop-fiber"
-    # inf_event = @@eb.new_event(-1, LibEvent2::EventFlags::Persist, nil) { log(".") }
-    # inf_event.add(1)
-
-    loop { @@eb.run_loop }
-    log "END!???"
+    @@eb.run_loop
+    LibC.printf "FATAL: Event loop has exited"
   end
 
   def self.resume
@@ -35,7 +26,6 @@ class EventLoop
 
   def self.create_resume_event(fiber)
     @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      log "Resume event raised for '%s'", data.as(Fiber).name
       Scheduler.current.enqueue data.as(Fiber)
       # (data as Fiber).resume
     end
