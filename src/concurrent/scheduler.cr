@@ -94,7 +94,7 @@ class Scheduler
   private def choose_other_sched
     @@all_mutex.synchronize do
       loop do
-        sched = @@all[@@all.size.remainder(Intinsics.read_cycle_counter)]
+        sched = @@all[Intrinsics.read_cycle_counter.remainder(@@all.size)]
         break sched unless sched == self && @@all.size > 1
       end
     end
