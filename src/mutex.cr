@@ -20,8 +20,11 @@ class Mutex
       @thread_mutex.unlock
     else
       queue = @queue ||= Deque(Fiber).new
-      queue << current_fiber
-      @thread_mutex.unlock
+      current_fiber.callback = ->{
+        queue << current_fiber
+        @thread_mutex.unlock
+        nil
+      }
       Scheduler.current.reschedule
     end
 
