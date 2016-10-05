@@ -2113,6 +2113,16 @@ module Crystal
         # Nothing to do
       when "enum_new"
         # Nothing to do
+      when "cmpxchg"
+        node.type = program.tuple_of([typed_def.args[1].type, program.bool])
+      when "atomicrmw"
+        node.type = typed_def.args[2].type
+      when "fence"
+        node.type = program.nil_type
+      when "load_atomic"
+        node.type = typed_def.args.first.type.as(PointerInstanceType).element_type
+      when "store_atomic"
+        node.type = program.nil_type
       else
         node.raise "Bug: unhandled primitive in MainVisitor: #{node.name}"
       end

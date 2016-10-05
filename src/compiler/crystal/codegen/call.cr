@@ -378,7 +378,7 @@ class Crystal::CodeGenVisitor
       # Change context type: faster then creating a new context
       old_type = context.type
       context.type = self_type
-      codegen_primitive(body, target_def, call_args)
+      codegen_primitive(node, body, target_def, call_args)
       context.type = old_type
       return true
     end

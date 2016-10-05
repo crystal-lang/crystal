@@ -391,4 +391,13 @@ void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,
       DebugLoc::get(Line, Col, Scope ? unwrap<MDNode>(Scope) : nullptr,
                     InlinedAt ? unwrap<MDNode>(InlinedAt) : nullptr));
 }
+
+LLVMValueRef LLVMBuildCmpxchg(LLVMBuilderRef B,
+                               LLVMValueRef PTR, LLVMValueRef Cmp, LLVMValueRef New,
+                               LLVMAtomicOrdering SuccessOrdering,
+                               LLVMAtomicOrdering FailureOrdering) {
+  return wrap(unwrap(B)->CreateAtomicCmpXchg(unwrap(PTR), unwrap(Cmp), unwrap(New),
+    (llvm::AtomicOrdering)SuccessOrdering, (llvm::AtomicOrdering)FailureOrdering));
+}
+
 }
