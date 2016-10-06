@@ -7,7 +7,6 @@ describe OpenSSL::HMAC do
     {:dss1, "46b4ec586117154dacd49d664e5d63fdc88efb51"},
     {:md4, "f3593b56f00b25c8af31d02ddef6d2d0"},
     {:md5, "0c7a250281315ab863549f66cd8a3a53"},
-    {:sha, "df3c18b162b0c3b1884ba1b8eaf60559c41abc50"},
     {:sha1, "46b4ec586117154dacd49d664e5d63fdc88efb51"},
     {:sha224, "4c1f774863acb63b7f6e9daa9b5c543fa0d5eccf61e3ffc3698eacdd"},
     {:sha256, "f9320baf0249169e73850cd6156ded0106e2bb6ad8cab01b7bbbebe6d1065317"},

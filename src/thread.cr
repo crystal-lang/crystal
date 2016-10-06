@@ -50,13 +50,32 @@ class Thread
   # All threads, so the GC can see them (GC doesn't scan thread locals)
   @@threads = Set(Thread).new
 
-  @[ThreadLocal]
+  {% if !flag?(:openbsd) %}
+    @[ThreadLocal]
+  {% end %}
   @@current = new
 
   def self.current
+    {% if flag?(:openbsd) %}
+      pthread_self_id = LibC.pthread_self().as(UInt64*).address
+
+      @@threads.each do |thread|
+        if LibC.pthread_main_np() == 1
+          return thread
+        else
+          return thread if thread.pthread_id == pthread_self_id
+        end
+      end
+    {% end %}
+
     @@current
   end
 
+  {% if flag?(:openbsd) %}
+    protected def pthread_id
+      @th ? @th.not_nil!.address.as(UInt64) : nil
+    end
+  {% end %}
   protected def start
     @@current = self
     begin
