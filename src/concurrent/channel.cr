@@ -1,6 +1,8 @@
 require "fiber"
 
 abstract class Channel(T)
+  @mutex = Thread::Mutex.new
+
   module SelectAction
     abstract def ready?
     abstract def execute
@@ -67,8 +69,18 @@ abstract class Channel(T)
     @senders.delete Fiber.current
   end
 
+  protected def unlock_after_context_switch
+    Fiber.current.callback = ->{
+      @mutex.unlock
+      nil
+    }
+  end
+
   protected def raise_if_closed
-    raise ClosedError.new if @closed
+    if @closed
+      @mutex.unlock
+      raise ClosedError.new
+    end
   end
 
   def self.receive_first(*channels)
@@ -220,10 +232,14 @@ class Channel::Unbuffered(T) < Channel(T)
   end
 
   def send(value : T)
+    @mutex.lock
+
     while @has_value
       raise_if_closed
       @senders << Fiber.current
+      unlock_after_context_switch
       Scheduler.current.reschedule
+      @mutex.lock
     end
 
     raise_if_closed
@@ -232,7 +248,10 @@ class Channel::Unbuffered(T) < Channel(T)
     @has_value = true
     @sender = Fiber.current
 
-    if receiver = @receivers.shift?
+    receiver = @receivers.shift?
+    unlock_after_context_switch
+
+    if receiver
       receiver.resume
     else
       Scheduler.current.reschedule
@@ -240,21 +259,37 @@ class Channel::Unbuffered(T) < Channel(T)
   end
 
   private def receive_impl
+    @mutex.lock
+
     until @has_value
-      yield if @closed
+      if @closed
+        @mutex.unlock
+        yield
+      end
+
       @receivers << Fiber.current
-      if sender = @senders.shift?
+      sender = @senders.shift?
+
+      unlock_after_context_switch
+
+      if sender
         sender.resume
       else
         Scheduler.current.reschedule
       end
+
+      @mutex.lock
     end
 
-    yield if @closed
+    if @closed
+      @mutex.unlock
+      yield
+    end
 
     @value.tap do
       @has_value = false
       Scheduler.current.enqueue @sender.not_nil!
+      @mutex.unlock
     end
   end
 
