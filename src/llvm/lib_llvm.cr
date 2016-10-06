@@ -275,6 +275,5 @@ lib LibLLVM
   fun dispose_target_data = LLVMDisposeTargetData(TargetDataRef)
   fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
   fun set_volatile = LLVMSetVolatile(value : ValueRef, volatile : UInt32)
-  fun set_ordering = LLVMSetOrdering(value : ValueRef, ordering : LLVM::AtomicOrdering)
   fun set_alignment = LLVMSetAlignment(value : ValueRef, bytes : UInt32)
 end

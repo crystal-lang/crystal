@@ -392,12 +392,21 @@ void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,
                     InlinedAt ? unwrap<MDNode>(InlinedAt) : nullptr));
 }
 
-LLVMValueRef LLVMBuildCmpxchg(LLVMBuilderRef B,
+LLVMValueRef LLVMExtBuildCmpxchg(LLVMBuilderRef B,
                                LLVMValueRef PTR, LLVMValueRef Cmp, LLVMValueRef New,
                                LLVMAtomicOrdering SuccessOrdering,
                                LLVMAtomicOrdering FailureOrdering) {
   return wrap(unwrap(B)->CreateAtomicCmpXchg(unwrap(PTR), unwrap(Cmp), unwrap(New),
     (llvm::AtomicOrdering)SuccessOrdering, (llvm::AtomicOrdering)FailureOrdering));
+}
+
+void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering) {
+  Value *P = unwrap<Value>(MemAccessInst);
+  AtomicOrdering O = (AtomicOrdering) Ordering;
+
+  if (LoadInst *LI = dyn_cast<LoadInst>(P))
+    return LI->setOrdering(O);
+  return cast<StoreInst>(P)->setOrdering(O);
 }
 
 }
