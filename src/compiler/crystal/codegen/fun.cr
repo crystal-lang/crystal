@@ -368,13 +368,16 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def create_local_copy_of_block_args(target_def, self_type, call_args)
+  def create_local_copy_of_block_self(self_type, call_args)
     args_base_index = 0
     if self_type.passed_as_self?
       context.vars["self"] = LLVMVar.new(call_args[0], self_type, true)
       args_base_index = 1
     end
+    args_base_index
+  end
 
+  def create_local_copy_of_block_args(target_def, self_type, call_args, args_base_index)
     target_def.args.each_with_index do |arg, i|
       create_local_copy_of_arg(target_def, target_def.vars, arg, call_args[args_base_index + i])
     end

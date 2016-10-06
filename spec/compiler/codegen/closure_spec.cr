@@ -639,4 +639,26 @@ describe "Code gen: closure" do
       coco
       )).to_i.should eq(1)
   end
+
+  it "codegens closured self in block (#3388)" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+
+        def foo
+          yield
+          ->{ self }
+        end
+      end
+
+      foo = Foo.new(42)
+      foo2 = foo.foo { }
+      foo2.call.x
+      )).to_i.should eq(42)
+  end
 end
