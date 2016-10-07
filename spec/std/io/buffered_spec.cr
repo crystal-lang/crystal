@@ -176,7 +176,7 @@ describe "IO::Buffered" do
     s = String.build do |str|
       900.times do
         10.times do |i|
-          str << ('a'.ord + i).chr
+          str << ('a' + i)
         end
       end
     end
@@ -197,7 +197,7 @@ describe "IO::Buffered" do
     s = String.build do |str|
       900.times do
         10.times do |i|
-          str << ('a'.ord + i).chr
+          str << ('a' + i)
         end
       end
     end

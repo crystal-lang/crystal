@@ -89,6 +89,26 @@ struct Char
     end
   end
 
+  # Returns a char that has this char's codepoint plus *other*.
+  #
+  # ```
+  # 'a' + 1 # => 'b'
+  # 'a' + 2 # => 'c'
+  # ```
+  def +(other : Int) : Char
+    (ord + other).chr
+  end
+
+  # Returns a char that has this char's codepoint minus *other*.
+  #
+  # ```
+  # 'c' - 1 # => 'b'
+  # 'c' - 2 # => 'a'
+  # ```
+  def -(other : Int) : Char
+    (ord - other).chr
+  end
+
   # Implements the comparison operator.
   #
   # ```

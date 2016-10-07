@@ -1232,8 +1232,8 @@ class String
   # block and replaced by its return value.
   #
   # ```
-  # "hello".sub { |x| (x.ord + 1).chr } # => "iello"
-  # "hello".sub { "hi" }                # => "hiello"
+  # "hello".sub { |char| char + 1 } # => "iello"
+  # "hello".sub { "hi" }            # => "hiello"
   # ```
   def sub(&block : Char -> _)
     return self if empty?
@@ -1587,8 +1587,8 @@ class String
   # is replaced by the block's return value.
   #
   # ```
-  # "hello".gsub { |x| (x.ord + 1).chr } # => "ifmmp"
-  # "hello".gsub { "hi" }                # => "hihihihihi"
+  # "hello".gsub { |char| char + 1 } # => "ifmmp"
+  # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
   def gsub(&block : Char -> _)
     String.build(bytesize) do |buffer|
