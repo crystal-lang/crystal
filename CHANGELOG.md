@@ -1,7 +1,7 @@
 ## 0.19.4  (07-10-2016)
 
 * Added support for OpenBSD (thanks @wmoxam and @ysbaddaden)
-* Added partial support for FreeBSD (thanks @ysbaddaden)
+* More iconv fixes for FreeBSD (thanks @ysbaddaden)
 * Changed how `require` works for the upcoming `shards` release (this is backwards compatible). See https://github.com/crystal-lang/crystal/pull/2788
 * Added `Atomic` and exposed all LLVM atomic instructions to Crystal (needed to implemented multiple-thread support)
 * Added `Process.executable_path` (thanks @kostya, @whereami and @ysbaddaden)
