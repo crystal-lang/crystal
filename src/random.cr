@@ -184,6 +184,37 @@ module Random
           end
         end
       end
+
+      private def rand_range(range : Range({{type}}, {{type}})) : {{type}}
+        span = {{utype}}.new(range.end - range.begin)
+        if range.excludes_end?
+          unless range.begin < range.end
+            raise ArgumentError.new "incorrect rand value: #{range}"
+          end
+        else
+          unless range.begin <= range.end
+            raise ArgumentError.new "incorrect rand value: #{range}"
+          end
+          if range.begin == {{type}}::MIN && range.end == {{type}}::MAX
+            return rand_type({{type}})
+          end
+          span += 1
+        end
+        range.begin + {{type}}.new(rand_int(span))
+      end
+
+      # Generates a random integer in range `{{type}}::MIN..{{type}}::MAX`.
+      private def rand_type(type : {{type}}.class) : {{type}}
+        needed_parts = {{size/8}} / sizeof(typeof(next_u))
+
+        # Build up the number combining multiple outputs from the RNG.
+        result = {{utype}}.new(next_u)
+        (needed_parts - 1).times do
+          result <<= sizeof(typeof(next_u))*8
+          result |= {{utype}}.new(next_u)
+        end
+        {{type}}.new(result)
+      end
     {% end %}
   {% end %}
 
@@ -201,19 +232,13 @@ module Random
     rand(max_prec) / max_prec.to_f64 * max
   end
 
-  # Returns a random `Int32` in the given *range*.
+  # Returns a random integer in the given *range*.
   #
   # ```
   # Random.new.rand(10..20) # => 14
   # ```
-  def rand(range : Range(Int, Int)) : Int32
-    span = range.end - range.begin
-    span += 1 unless range.excludes_end?
-    if span > 0
-      range.begin + rand(span)
-    else
-      raise ArgumentError.new "incorrect rand value: #{range}"
-    end
+  def rand(range : Range(Int, Int)) : Int
+    rand_range(range)
   end
 
   # Returns a random `Float64` in the given *range*.
@@ -223,10 +248,16 @@ module Random
   # ```
   def rand(range : Range(Float, Float)) : Float64
     span = range.end - range.begin
-    if span > 0 || !range.excludes_end?
-      range.begin + (range.excludes_end? ? rand(span) : rand * span)
+    if range.excludes_end?
+      unless range.begin < range.end
+        raise ArgumentError.new "incorrect rand value: #{range}"
+      end
+      range.begin + rand(span)
     else
-      raise ArgumentError.new "incorrect rand value: #{range}"
+      unless range.begin <= range.end
+        raise ArgumentError.new "incorrect rand value: #{range}"
+      end
+      range.begin + rand * span
     end
   end
 
