@@ -342,7 +342,7 @@ describe "Random::ISAAC" do
 
     m = Random::ISAAC.new seed
     numbers.each do |n|
-      m.next_u32.should eq(n)
+      m.next_u.should eq(n)
     end
   end
 end

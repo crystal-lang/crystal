@@ -37,8 +37,8 @@ module Random
     MT19937.new(seed)
   end
 
-  # Generates a random `UInt32`.
-  abstract def next_u32
+  # Generates a random unsigned integer.
+  abstract def next_u : UInt
 
   # Generates a random `Bool`.
   #
@@ -46,23 +46,18 @@ module Random
   # Random.new.next_bool # => true
   # ```
   def next_bool : Bool
-    next_u32.even?
+    next_u.odd?
   end
 
-  # Generates a random `Int32`.
-  #
-  # ```
-  # Random.new.next_int # => 440038499
-  # Random.new.next_int # => -1848788484
-  # ```
+  # Same as `rand(Int32::MIN..Int32::MAX)`
   def next_int : Int32
-    next_u32.to_i32
+    rand_type(Int32)
   end
 
   # see `#rand`
   def next_float : Float64
     # Divided by 2^32-1
-    next_u32 * (1.0/4294967295.0)
+    rand_type(UInt32) * (1.0/4294967295.0)
   end
 
   # Generates a random `Float64` between 0 and 1.
@@ -76,19 +71,121 @@ module Random
     next_float
   end
 
-  # Returns a random `Int32` which is greater than or equal to 0 and less than *max*.
+  # Generates a random integer which is greater than or equal to 0 and less than *max*.
   #
   # ```
   # Random.new.rand(10)   # => 5
   # Random.new.rand(5000) # => 2243
   # ```
-  def rand(max : Int) : Int32
-    if max > 0
-      (next_u32 % max).to_i32
-    else
-      raise ArgumentError.new "incorrect rand value: #{max}"
-    end
+  def rand(max : Int) : Int
+    rand_int(max)
   end
+
+  {% for size in [8, 16, 32, 64] %}
+    {% utype = "UInt#{size}".id %}
+    {% for type in ["Int#{size}".id, utype] %}
+      private def rand_int(max : {{type}}) : {{type}}
+        unless max > 0
+          raise ArgumentError.new "incorrect rand value: #{max}"
+        end
+
+        # The basic ideas of the algorithm are best illustrated with examples.
+        #
+        # Let's say we have a random number generator that gives uniformly distributed random
+        # numbers between 0 and 15. We need to get a uniformly distributed random number between
+        # 0 and 5 (`max` = 6). The typical mistake made in this case is to just use `rand() % 6`,
+        # but it is clear that some results will appear more often than others. So, the surefire
+        # approach is to make the RNG spit out numbers until it gives one inside our desired range.
+        # That is really wasteful though. So the approach taken here is to discard only a small
+        # range of the possible generated numbers, and use the modulo operation on the "valid" ones,
+        # like this (where X means "discard and try again"):
+        #
+        # Generated number:  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+        #           Result:  0  1  2  3  4  5  0  1  2  3  4  5  X  X  X  X
+        #
+        # 12 is the `limit` here - the highest number divisible by `max` while still being within
+        # bounds of what the RNG can produce.
+        #
+        # On the other side of the spectrum is the problem of generating a random number in a higher
+        # range than what the RNG can produce. Let's say we have the same mentioned RNG, but we need
+        # a uniformly distributed random number between 0 and 255. All that needs to be done is to
+        # generate two random numbers between 0 and 15, and combine their bits
+        # (i.e. `rand()*16 + rand()`).
+        #
+        # Using a combination of these tricks, any RNG can be turned into any RNG, however, there
+        # are several difficult parts about this. The code below uses as few calls to the underlying
+        # RNG as possible, meaning that (with the above example) with `max` being 257, it would call
+        # the RNG 3 times. (Of course, it doesn't actually deal with RNGs that produce numbers
+        # 0 to 15, only with the `UInt8`, `UInt16`, `UInt32` and `UInt64` ranges.
+        #
+        # Another problem is how to actually compute the `limit`. The obvious way to do it, which is
+        # `(RAND_MAX + 1) / max * max`, fails because `RAND_MAX` is usually already the highest
+        # number that an integer type can hold. And even the `limit` itself will often be
+        # `RAND_MAX + 1`, meaning that we don't have to discard anything. The ways to deal with this
+        # are described below.
+
+        # if max - 1 <= typeof(next_u)::MAX
+        if typeof(next_u).new(max - 1) == max - 1
+          # One number from the RNG will be enough.
+          # All the computations will (almost) fit into `typeof(next_u)`.
+
+          # Relies on integer overflow + wraparound to find the highest number divisible by `max`.
+          limit = typeof(next_u).new(0) - (typeof(next_u).new(0) - max) % max
+          # `limit` might be 0, which means it would've been ``typeof(next_u)::MAX + 1``, but didn't
+          # fit into the integer type.
+
+          loop do
+            result = next_u
+
+            # For a uniform distribution we may need to throw away some numbers
+            if result < limit || limit == 0
+              return {{type}}.new(result % max)
+            end
+          end
+        else
+          # We need to find out how many random numbers need to be combined to be able to generate a
+          # random number of this magnitude.
+          # All the computations will be based on `{{utype}}` as the larger type.
+
+          # `rand_max - 1` is the maximal number we can get from combining `needed_parts` random
+          # numbers.
+          # Compute `rand_max` as `(typeof(next_u)::MAX + 1) ** needed_parts)`.
+          # If `rand_max` overflows, that means it has reached ``high({{utype}}) + 1``.
+          rand_max = {{utype}}.new(1) << (sizeof(typeof(next_u))*8)
+          needed_parts = 1
+          while rand_max < max && rand_max > 0
+            rand_max <<= sizeof(typeof(next_u))*8
+            needed_parts += 1
+          end
+
+          limit =
+            if rand_max > 0
+              # `rand_max` didn't overflow, so we can calculate the `limit` the straightforward way.
+              rand_max / max * max
+            else
+              # `rand_max` is ``{{utype}}::MAX + 1``, need the same wraparound trick. `limit` might
+              # overflow, which means it would've been ``{{utype}}::MAX + 1``, but didn't fit into
+              # the integer type.
+              {{utype}}.new(0) - ({{utype}}.new(0) - max) % max
+            end
+
+          loop do
+            # Build up the number combining multiple outputs from the RNG.
+            result = {{utype}}.new(next_u)
+            (needed_parts - 1).times do
+              result <<= sizeof(typeof(next_u))*8
+              result |= {{utype}}.new(next_u)
+            end
+
+            # For a uniform distribution we may need to throw away some numbers.
+            if result < limit || limit == 0
+              return {{type}}.new(result % max)
+            end
+          end
+        end
+      end
+    {% end %}
+  {% end %}
 
   # Returns a random `Float64` which is greater than or equal to 0 and less than *max*.
   #
@@ -98,7 +195,7 @@ module Random
   # ```
   def rand(max : Float) : Float64
     if max > 0
-      next_u32 * (1 / (UInt32::MAX.to_f64 + 1)) * max
+      rand_type(UInt32) * (1 / (UInt32::MAX.to_f64 + 1)) * max
     else
       raise ArgumentError.new "incorrect rand value: #{max}"
     end
