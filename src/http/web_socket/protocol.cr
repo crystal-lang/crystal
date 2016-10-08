@@ -251,7 +251,7 @@ class HTTP::WebSocket::Protocol
     headers["Sec-WebSocket-Key"] = Base64.strict_encode(StaticArray(UInt8, 16).new { rand(256).to_u8 })
 
     path = "/" if path.empty?
-    handshake = HTTP::Request.new("GET", path, headers)
+    handshake = HTTP::Client::Request.new("GET", path, headers)
     handshake.to_io(socket)
     handshake_response = HTTP::Client::Response.from_io(socket)
     unless handshake_response.status_code == 101

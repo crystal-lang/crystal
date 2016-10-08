@@ -286,8 +286,8 @@ class HTTP::Client
   # end
   # client.get "/"
   # ```
-  def before_request(&callback : HTTP::Request ->)
-    before_request = @before_request ||= [] of (HTTP::Request ->)
+  def before_request(&callback : Request ->)
+    before_request = @before_request ||= [] of (Request ->)
     before_request << callback
   end
 
@@ -439,10 +439,10 @@ class HTTP::Client
   #
   # ```
   # client = HTTP::Client.new "www.example.com"
-  # response = client.exec HTTP::Request.new("GET", "/")
+  # response = client.exec HTTP::Client::Request.new("GET", "/")
   # response.body # => "..."
   # ```
-  def exec(request : HTTP::Request) : HTTP::Client::Response
+  def exec(request : Request) : Response
     execute_callbacks(request)
     exec_internal(request)
   end
@@ -461,11 +461,11 @@ class HTTP::Client
   #
   # ```
   # client = HTTP::Client.new "www.example.com"
-  # client.exec(HTTP::Request.new("GET", "/")) do |response|
+  # client.exec(HTTP::Client::Request.new("GET", "/")) do |response|
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def exec(request : HTTP::Request, &block)
+  def exec(request : Request, &block)
     execute_callbacks(request)
     exec_internal(request) do |response|
       yield response
@@ -476,7 +476,7 @@ class HTTP::Client
     decompress = set_defaults request
     request.to_io(socket)
     socket.flush
-    HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+    Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       value = yield response
       response.body_io.try &.close
       close unless response.keep_alive?
@@ -561,7 +561,7 @@ class HTTP::Client
   end
 
   private def new_request(method, path, headers, body)
-    HTTP::Request.new(method, path, headers, body).tap do |request|
+    Request.new(method, path, headers, body).tap do |request|
       request.headers["Host"] ||= host_header
     end
   end
@@ -675,5 +675,6 @@ end
 require "socket"
 require "uri"
 require "base64"
+require "./client/request"
 require "./client/response"
 require "./common"

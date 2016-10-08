@@ -16,7 +16,7 @@ describe OAuth::Signature do
 
   describe "base string" do
     it "computes without port in host" do
-      request = HTTP::Request.new "POST", "/some/path"
+      request = HTTP::Client::Request.new "POST", "/some/path"
       request.headers["Host"] = "some.host"
       tls = false
       ts = "1234"
@@ -29,7 +29,7 @@ describe OAuth::Signature do
     end
 
     it "computes with port in host" do
-      request = HTTP::Request.new "POST", "/some/path"
+      request = HTTP::Client::Request.new "POST", "/some/path"
       request.headers["Host"] = "some.host:5678"
       tls = false
       ts = "1234"
@@ -42,7 +42,7 @@ describe OAuth::Signature do
     end
 
     it "computes when TLS" do
-      request = HTTP::Request.new "POST", "/some/path"
+      request = HTTP::Client::Request.new "POST", "/some/path"
       request.headers["Host"] = "some.host"
       tls = true
       ts = "1234"
@@ -57,7 +57,7 @@ describe OAuth::Signature do
 
   # https://dev.twitter.com/oauth/overview/creating-signatures
   it "does twitter sample" do
-    request = HTTP::Request.new "POST", "/1/statuses/update.json?include_entities=true", body: "status=Hello%20Ladies%20%2b%20Gentlemen%2c%20a%20signed%20OAuth%20request%21"
+    request = HTTP::Client::Request.new "POST", "/1/statuses/update.json?include_entities=true", body: "status=Hello%20Ladies%20%2b%20Gentlemen%2c%20a%20signed%20OAuth%20request%21"
     request.headers["Host"] = "api.twitter.com"
     request.headers["Content-type"] = "application/x-www-form-urlencoded"
     tls = true

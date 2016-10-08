@@ -20,7 +20,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
     "Mac"
   end
 
-  def authenticate(request : HTTP::Request, tls)
+  def authenticate(request : HTTP::Client::Request, tls)
     ts = Time.now.epoch
     nonce = "#{ts - @issued_at}:#{SecureRandom.hex}"
     method = request.method

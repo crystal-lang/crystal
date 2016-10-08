@@ -1,7 +1,7 @@
 require "spec"
-require "http/request"
+require "http/client/request"
 
-module HTTP
+class HTTP::Server
   describe Request do
     it "serialize GET" do
       headers = HTTP::Headers.new
@@ -68,10 +68,10 @@ module HTTP
     end
 
     it "serialize POST (with body)" do
-      request = Request.new "POST", "/", body: "thisisthebody"
+      request = Request.new "POST", "/", body_io: MemoryIO.new("thisisthebody")
       io = MemoryIO.new
       request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+      io.to_s.should eq("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nd\r\nthisisthebody\r\n0\r\n\r\n")
     end
 
     it "parses GET" do

@@ -4,7 +4,7 @@ require "http/server"
 describe HTTP::WebSocketHandler do
   it "returns not found if the request is not an websocket upgrade" do
     io = MemoryIO.new
-    request = HTTP::Request.new("GET", "/")
+    request = HTTP::Server::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
@@ -26,7 +26,7 @@ describe HTTP::WebSocketHandler do
         "Connection" =>        {{connection}},
         "Sec-WebSocket-Key" => "dGhlIHNhbXBsZSBub25jZQ==",
       }
-      request = HTTP::Request.new("GET", "/", headers: headers)
+      request = HTTP::Server::Request.new("GET", "/", headers: headers)
       response = HTTP::Server::Response.new(io)
       context = HTTP::Server::Context.new(request, response)
 
