@@ -29,11 +29,11 @@ module Math
   {% for name in %w(besselj0 besselj1 bessely0 bessely1) %}
     # Calculates the {{name.id}} function of *value*
     def {{name.id}}(value : Float32)
-      {{:ifdef.id}} darwin
+      {% if flag?(:darwin) %}
         LibM.{{name.id}}_f64(value).to_f32
-      else
+      {% else %}
         LibM.{{name.id}}_f32(value)
-      {{:end.id}}
+      {% end %}
     end
 
     # ditto
@@ -174,11 +174,11 @@ module Math
   {% for name in %w(besselj bessely) %}
     # Calculates {{name.id}} with parameters *value1* and *value2*
     def {{name.id}}(value1 : Int32, value2 : Float32)
-      {{:ifdef.id}} darwin
+      {% if flag?(:darwin) %}
         LibM.{{name.id}}_f64(value1, value2).to_f32
-      else
+      {% else %}
         LibM.{{name.id}}_f32(value1, value2)
-      {{:end.id}}
+      {% end %}
     end
 
     # ditto

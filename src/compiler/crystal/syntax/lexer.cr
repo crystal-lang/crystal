@@ -795,14 +795,7 @@ module Crystal
       when 'i'
         case next_char
         when 'f'
-          if peek_next_char == 'd'
-            next_char
-            if next_char == 'e' && next_char == 'f'
-              return check_ident_or_keyword(:ifdef, start)
-            end
-          else
-            return check_ident_or_keyword(:if, start)
-          end
+          return check_ident_or_keyword(:if, start)
         when 'n'
           if ident_part_or_end?(peek_next_char)
             case next_char
@@ -2219,10 +2212,7 @@ module Crystal
         next_char == 'u' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :fun
       when 'i'
         beginning_of_line && next_char == 'f' &&
-          (char = next_char) && (
-          (!ident_part_or_end?(char) && :if) ||
-            (char == 'd' && next_char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :ifdef)
-        )
+          (char = next_char) && (!ident_part_or_end?(char) && :if)
       when 'l'
         next_char == 'i' && next_char == 'b' && peek_not_ident_part_or_end_next_char && :lib
       when 'm'

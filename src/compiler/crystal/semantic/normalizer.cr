@@ -184,18 +184,6 @@ module Crystal
       While.new(not_exp, node.body).at(node)
     end
 
-    # Evaluate the ifdef's flags.
-    # If they hold, keep the "then" part.
-    # If they don't, keep the "else" part.
-    def transform(node : IfDef)
-      cond_value = eval_flags(node.cond)
-      if cond_value
-        node.then.transform(self)
-      else
-        node.else.transform(self)
-      end
-    end
-
     # Check if the right hand side is dead code
     def transform(node : Assign)
       super
@@ -204,50 +192,6 @@ module Crystal
         node.value
       else
         node
-      end
-    end
-
-    def eval_flags(node)
-      evaluator = FlagsEvaluator.new(program)
-      node.accept evaluator
-      evaluator.value
-    end
-
-    class FlagsEvaluator < Visitor
-      getter value : Bool
-
-      def initialize(@program : Program)
-        @value = false
-      end
-
-      def visit(node : Var)
-        @value = @program.has_flag?(node.name)
-      end
-
-      def visit(node : Not)
-        node.exp.accept self
-        @value = !@value
-        false
-      end
-
-      def visit(node : And)
-        node.left.accept self
-        left_value = @value
-        node.right.accept self
-        @value = left_value && @value
-        false
-      end
-
-      def visit(node : Or)
-        node.left.accept self
-        left_value = @value
-        node.right.accept self
-        @value = left_value || @value
-        false
-      end
-
-      def visit(node : ASTNode)
-        raise "Bug: shouldn't visit #{node} in FlagsEvaluator"
       end
     end
   end

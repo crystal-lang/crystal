@@ -403,14 +403,6 @@ describe "Parser" do
   it_parses "if foo\n1\nelse\n2\nend", If.new("foo".call, 1.int32, 2.int32)
   it_parses "if foo; 1; elsif bar; 2; else 3; end", If.new("foo".call, 1.int32, If.new("bar".call, 2.int32, 3.int32))
 
-  it_parses "ifdef foo; 1; end", IfDef.new("foo".var, 1.int32)
-  it_parses "ifdef foo; 1; else; 2; end", IfDef.new("foo".var, 1.int32, 2.int32)
-  it_parses "ifdef foo; 1; elsif bar; 2; else 3; end", IfDef.new("foo".var, 1.int32, IfDef.new("bar".var, 2.int32, 3.int32))
-  it_parses "ifdef (!a || b) && c; 1; end", IfDef.new(And.new(Or.new(Not.new("a".var), "b".var), "c".var), 1.int32)
-  it_parses "ifdef !(a || b) && c; 1; end", IfDef.new(And.new(Not.new(Or.new("a".var, "b".var)), "c".var), 1.int32)
-
-  it_parses "1 ifdef foo", IfDef.new("foo".var, 1.int32)
-
   it_parses "include Foo", Include.new("Foo".path)
   it_parses "include Foo\nif true; end", [Include.new("Foo".path), If.new(true.bool)]
   it_parses "extend Foo", Extend.new("Foo".path)
@@ -692,11 +684,7 @@ describe "Parser" do
   it_parses "lib LibC\n$errno : B, C -> D\nend", LibDef.new("LibC", [ExternalVar.new("errno", ProcNotation.new(["B".path, "C".path] of ASTNode, "D".path))] of ASTNode)
   it_parses "lib LibC\n$errno = Foo : Int32\nend", LibDef.new("LibC", [ExternalVar.new("errno", "Int32".path, "Foo")] of ASTNode)
   it_parses "lib LibC\nalias Foo = Bar\nend", LibDef.new("LibC", [Alias.new("Foo", "Bar".path)] of ASTNode)
-  it_parses "lib LibC; struct Foo; ifdef cond; a : Int32; else; b : Float64; end; end; end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", IfDef.new("cond".var, TypeDeclaration.new("a".var, "Int32".path), TypeDeclaration.new("b".var, "Float64".path)))] of ASTNode)
-  it_parses "lib LibC\nstruct Foo\nifdef cond\na : Int32\nelse\nb : Float64\nend\nend\nend", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", IfDef.new("cond".var, TypeDeclaration.new("a".var, "Int32".path), TypeDeclaration.new("b".var, "Float64".path)))] of ASTNode)
   it_parses "lib LibC; struct Foo; include Bar; end; end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", Include.new("Bar".path))] of ASTNode)
-
-  it_parses "lib LibC\nifdef foo\ntype A = B\nend\nend", LibDef.new("LibC", [IfDef.new("foo".var, TypeDef.new("A", "B".path))] of ASTNode)
 
   it_parses "fun foo(x : Int32) : Int64\nx\nend", FunDef.new("foo", [Arg.new("x", restriction: "Int32".path)], "Int64".path, body: "x".var)
 
@@ -1036,8 +1024,6 @@ describe "Parser" do
 
   it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", block: Block.new(body: Assign.new("a".var, 1.int32))), "a".call] of ASTNode
 
-  it_parses "lib LibC; ifdef foo; $foo : Int32; else; $foo : Float64; end; end", LibDef.new("LibC", IfDef.new("foo".var, ExternalVar.new("foo", "Int32".path), ExternalVar.new("foo", "Float64".path)))
-
   it_parses "foo.bar(1).baz", Call.new(Call.new("foo".call, "bar", 1.int32), "baz")
 
   it_parses "b.c ||= 1", Or.new(Call.new("b".call, "c"), Call.new("b".call, "c=", 1.int32))
@@ -1217,7 +1203,7 @@ describe "Parser" do
   it_parses "foo 1.bar do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)
   it_parses "return 1.bar do\nend", Return.new(Call.new(1.int32, "bar", block: Block.new))
 
-  %w(begin nil true false yield with abstract def macro require case if ifdef unless include extend class struct module enum while
+  %w(begin nil true false yield with abstract def macro require case if unless include extend class struct module enum while
     until return next break lib fun alias pointerof sizeof instance_sizeof typeof private protected asm end do else elsif when rescue ensure).each do |keyword|
     it_parses "#{keyword} : Int32", TypeDeclaration.new(keyword.var, "Int32".path)
     it_parses "property #{keyword} : Int32", Call.new(nil, "property", TypeDeclaration.new(keyword.var, "Int32".path))
@@ -1466,7 +1452,6 @@ describe "Parser" do
     assert_end_location "if 1; else; 2; end"
     assert_end_location "if 1; elseif; 2; end"
     assert_end_location "unless 1; 2; end"
-    assert_end_location "ifdef foo; 2; end"
     assert_end_location "a = 123"
     assert_end_location "a, b = 1, 2"
     assert_end_location "@foo"

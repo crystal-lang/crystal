@@ -214,7 +214,6 @@ module Crystal
           next_exp = node.expressions[i + 1]
           needs_two_lines = !last?(i, node.expressions) && !exp.is_a?(Attribute) &&
             !exp.is_a?(MacroIf) &&
-            (!(exp.is_a?(IfDef) && next_exp.is_a?(LibDef))) &&
             (!(exp.is_a?(Def) && exp.abstract? && next_exp.is_a?(Def) && next_exp.abstract?)) &&
             (needs_two_lines?(exp) || needs_two_lines?(next_exp))
         end
@@ -1132,40 +1131,13 @@ module Crystal
       visit_if_or_unless node, :unless
     end
 
-    def visit(node : IfDef)
-      visit_if_or_unless node, :ifdef
-    end
-
     def visit_if_or_unless(node, keyword)
       if !@token.keyword?(keyword) && node.else.is_a?(Nop)
-        # Suffix if/unless/ifdef
-        if keyword == :ifdef
-          old_output = @output
-          @output = MemoryIO.new
-          accept node.then
-          string = @output.to_s
-          @output = old_output
-          skip_space
-          check_keyword :ifdef
-          next_token_skip_space_or_newline
-          write "{% if "
-          inside_cond do
-            format_ifdef_cond(node.cond)
-            write " %}"
-          end
-          write_line
-          indent do
-            write_indent
-            write string
-          end
-          write_line
-          write "{% end %}"
-        else
-          accept node.then
-          write_keyword " ", keyword, " "
-          inside_cond do
-            indent(@column, node.cond)
-          end
+        # Suffix if/unless
+        accept node.then
+        write_keyword " ", keyword, " "
+        inside_cond do
+          indent(@column, node.cond)
         end
         return false
       end
@@ -1184,14 +1156,7 @@ module Crystal
         return false
       end
 
-      # We write `ifdef x` to {% if flag?(:x) %}
-      if keyword == :ifdef
-        write "{% if "
-        next_token
-        skip_space_or_newline
-      else
-        write_keyword keyword, " "
-      end
+      write_keyword keyword, " "
       format_if_at_cond node, keyword
 
       false
@@ -1199,12 +1164,7 @@ module Crystal
 
     def format_if_at_cond(node, keyword, check_end = true)
       inside_cond do
-        if keyword == :ifdef
-          format_ifdef_cond(node.cond)
-          write " %}"
-        else
-          indent(@column, node.cond)
-        end
+        indent(@column, node.cond)
       end
 
       indent(@indent + 2) { skip_space }
@@ -1217,77 +1177,25 @@ module Crystal
 
       if @token.keyword?(:else)
         write_indent
-        if keyword == :ifdef
-          write "{% else %}"
-        else
-          write "else"
-        end
+        write "else"
         next_token
         indent(@indent + 2) { skip_space }
         skip_semicolon
         format_nested node.else
       elsif node_else.is_a?(If) && @token.keyword?(:elsif)
         format_elsif node_else, keyword
-      elsif node_else.is_a?(IfDef) && @token.keyword?(:elsif)
-        format_elsif node_else, keyword
       end
 
       if check_end
-        format_end @indent, ifdef: keyword == :ifdef
+        format_end @indent
       end
     end
 
     def format_elsif(node_else, keyword)
       write_indent
-      if keyword == :ifdef
-        write "{% elsif "
-      else
-        write "elsif "
-      end
+      write "elsif "
       next_token_skip_space_or_newline
       format_if_at_cond node_else, keyword, check_end: false
-    end
-
-    def format_ifdef_cond(cond : And)
-      format_ifdef_binary_cond cond, :"&&"
-    end
-
-    def format_ifdef_cond(cond : Or)
-      format_ifdef_binary_cond cond, :"||"
-    end
-
-    def format_ifdef_binary_cond(cond, op)
-      format_ifdef_nested_cond cond.left
-      skip_space_or_newline
-      write " "
-      write_token op
-      write " "
-      skip_space_or_newline
-      format_ifdef_nested_cond cond.right
-    end
-
-    def format_ifdef_cond(cond : Not)
-      write_token :"!"
-      format_ifdef_nested_cond(cond.exp)
-    end
-
-    def format_ifdef_cond(cond : Var)
-      write "flag?(:"
-      write cond.name
-      write ")"
-      next_token
-    end
-
-    def format_ifdef_cond(cond : ASTNode)
-      raise "Bug: unexpected node in ifdef condition"
-    end
-
-    def format_ifdef_nested_cond(cond)
-      needs_parens = !(cond.is_a?(Var) || cond.is_a?(Not))
-
-      write "(" if needs_parens
-      format_ifdef_cond cond
-      write ")" if needs_parens
     end
 
     def visit(node : While)
@@ -1349,15 +1257,11 @@ module Crystal
       format_end(column)
     end
 
-    def format_end(column, ifdef is_ifdef = false)
+    def format_end(column)
       indent(column + 2) { skip_space_or_newline last: true }
       check_end
       write_indent(column)
-      if is_ifdef
-        write "{% end %}"
-      else
-        write "end"
-      end
+      write "end"
       next_token
     end
 

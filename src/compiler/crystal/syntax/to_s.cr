@@ -217,10 +217,6 @@ module Crystal
       visit_if_or_unless "unless", node
     end
 
-    def visit(node : IfDef)
-      visit_if_or_unless "ifdef", node
-    end
-
     def visit_if_or_unless(prefix, node)
       @str << keyword(prefix)
       @str << " "

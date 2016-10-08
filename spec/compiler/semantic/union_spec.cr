@@ -43,15 +43,15 @@ describe "Semantic: union" do
     ") { generic_class "Bar", union_of(int32, char) }
   end
 
-  it "supports ifdef inside union" do
+  it "supports macro if inside union" do
     assert_type(%(
       lib LibC
         union Foo
-          ifdef some_flag
+          {% if flag?(:some_flag) %}
             a : Int32
-          else
+          {% else %}
             a : Float64
-          end
+          {% end %}
         end
       end
 

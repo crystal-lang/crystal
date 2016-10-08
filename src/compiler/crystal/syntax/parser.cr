@@ -266,10 +266,6 @@ module Crystal
             else
               atomic = ExceptionHandler.new(atomic, ensure: ensure_body).at(location).tap { |e| e.suffix = true }
             end
-          when :ifdef
-            next_token_skip_statement_end
-            exp = parse_flags_or
-            atomic = IfDef.new(exp, atomic).at(location)
           else
             break
           end
@@ -1038,8 +1034,6 @@ module Crystal
           check_type_declaration { parse_select }
         when :if
           check_type_declaration { parse_if }
-        when :ifdef
-          check_type_declaration { parse_ifdef }
         when :unless
           check_type_declaration { parse_unless }
         when :include
@@ -3598,77 +3592,6 @@ module Crystal
       Unless.new(cond, a_then, a_else).at_end(end_location)
     end
 
-    def parse_ifdef(check_end = true, mode = :normal)
-      next_token_skip_space_or_newline
-
-      cond = parse_flags_or
-      skip_statement_end
-
-      a_then = parse_ifdef_body(mode)
-      skip_statement_end
-
-      a_else = nil
-      if @token.type == :IDENT
-        case @token.value
-        when :else
-          next_token_skip_statement_end
-          a_else = parse_ifdef_body(mode)
-        when :elsif
-          a_else = parse_ifdef check_end: false, mode: mode
-        end
-      end
-
-      end_location = token_end_location
-
-      if check_end
-        check_ident :end
-        next_token_skip_space
-      end
-
-      IfDef.new(cond, a_then, a_else).at_end(end_location)
-    end
-
-    def parse_ifdef_body(mode)
-      case mode
-      when :lib
-        parse_lib_body_expressions
-      when :struct_or_union
-        parse_c_struct_or_union_body_expressions
-      else
-        parse_expressions
-      end
-    end
-
-    parse_operator :flags_or, :flags_and, "Or.new left, right", ":\"||\""
-    parse_operator :flags_and, :flags_atomic, "And.new left, right", ":\"&&\""
-
-    def parse_flags_atomic
-      case @token.type
-      when :"("
-        next_token_skip_space
-        if @token.type == :")"
-          raise "unexpected token: #{@token}"
-        end
-
-        atomic = parse_flags_or
-        skip_space
-
-        check :")"
-        next_token_skip_space
-
-        atomic
-      when :"!"
-        next_token_skip_space
-        Not.new(parse_flags_atomic)
-      when :IDENT
-        str = @token.to_s
-        next_token_skip_space
-        Var.new(str)
-      else
-        raise "unexpected token: #{@token}"
-      end
-    end
-
     def set_visibility(node)
       if visibility = @visibility
         node.visibility = visibility
@@ -4924,8 +4847,6 @@ module Crystal
           parse_c_struct_or_union union: true
         when :enum
           parse_enum_def
-        when :ifdef
-          parse_ifdef check_end: true, mode: :lib
         else
           unexpected_token
         end
@@ -5163,8 +5084,6 @@ module Crystal
         case @token.type
         when :IDENT
           case @token.value
-          when :ifdef
-            exps << parse_ifdef(mode: :struct_or_union)
           when :include
             if @inside_c_struct
               location = @token.location
