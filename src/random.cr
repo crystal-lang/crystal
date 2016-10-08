@@ -56,8 +56,8 @@ module Random
 
   # see `#rand`
   def next_float : Float64
-    # Divided by 2^32-1
-    rand_type(UInt32) * (1.0/4294967295.0)
+    max_prec = 1u64 << 53 # Float64, excluding mantissa, has 2^53 values
+    rand(max_prec) / (max_prec - 1).to_f64
   end
 
   # Generates a random `Float64` between 0 and 1.
@@ -194,11 +194,11 @@ module Random
   # Random.new.rand(10.725) # => 7.70147
   # ```
   def rand(max : Float) : Float64
-    if max > 0
-      rand_type(UInt32) * (1 / (UInt32::MAX.to_f64 + 1)) * max
-    else
+    unless max > 0
       raise ArgumentError.new "incorrect rand value: #{max}"
     end
+    max_prec = 1u64 << 53 # Float64, excluding mantissa, has 2^53 values
+    rand(max_prec) / max_prec.to_f64 * max
   end
 
   # Returns a random `Int32` in the given *range*.
