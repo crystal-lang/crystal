@@ -1,8 +1,6 @@
 module HTTP
   # :nodoc:
   module Content
-    include IO
-
     def close
       buffer = uninitialized UInt8[1024]
       while read(buffer.to_slice) > 0
@@ -22,6 +20,7 @@ module HTTP
 
   # :nodoc:
   class UnknownLengthContent
+    include IO
     include Content
 
     def initialize(@io : IO)
@@ -31,6 +30,10 @@ module HTTP
       @io.read(slice)
     end
 
+    def read_byte
+      @io.read_byte
+    end
+
     def write(slice : Slice(UInt8))
       raise IO::Error.new "Can't write to UnknownLengthContent"
     end
@@ -38,6 +41,7 @@ module HTTP
 
   # :nodoc:
   class ChunkedContent
+    include IO
     include Content
     @chunk_remaining : Int32
 
@@ -67,6 +71,25 @@ module HTTP
       bytes_read = @io.read slice[0, to_read]
       @chunk_remaining -= bytes_read
 
+      check_chunk_remaining_is_zero
+
+      bytes_read
+    end
+
+    def read_byte
+      if @chunk_remaining > 0
+        byte = @io.read_byte
+        if byte
+          @chunk_remaining -= 1
+          check_chunk_remaining_is_zero
+        end
+        byte
+      else
+        super
+      end
+    end
+
+    private def check_chunk_remaining_is_zero
       # As soon as we finish reading a chunk we return,
       # in case the next content is delayed (see #3270).
       # We set @read_chunk_start to true so we read the next
@@ -74,8 +97,6 @@ module HTTP
       if @chunk_remaining == 0
         @read_chunk_start = true
       end
-
-      bytes_read
     end
 
     private def read_chunk_end
