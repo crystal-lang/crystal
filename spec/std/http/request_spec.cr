@@ -74,6 +74,49 @@ module HTTP
       io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
     end
 
+    it "serialize POST (with bytes body)" do
+      request = Request.new "POST", "/", body: Bytes['a'.ord, 'b'.ord]
+      io = MemoryIO.new
+      request.to_io(io)
+      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 2\r\n\r\nab")
+    end
+
+    it "serialize POST (with io body, without content-length header)" do
+      request = Request.new "POST", "/", body: MemoryIO.new("thisisthebody")
+      io = MemoryIO.new
+      request.to_io(io)
+      io.to_s.should eq("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nd\r\nthisisthebody\r\n0\r\n\r\n")
+    end
+
+    it "serialize POST (with io body, with content-length header)" do
+      string = "thisisthebody"
+      request = Request.new "POST", "/", body: MemoryIO.new(string)
+      request.content_length = string.bytesize
+      io = MemoryIO.new
+      request.to_io(io)
+      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+    end
+
+    it "raises if serializing POST body with incorrect content-length (less then real)" do
+      string = "thisisthebody"
+      request = Request.new "POST", "/", body: MemoryIO.new(string)
+      request.content_length = string.bytesize - 1
+      io = MemoryIO.new
+      expect_raises(ArgumentError) do
+        request.to_io(io)
+      end
+    end
+
+    it "raises if serializing POST body with incorrect content-length (more then real)" do
+      string = "thisisthebody"
+      request = Request.new "POST", "/", body: MemoryIO.new(string)
+      request.content_length = string.bytesize + 1
+      io = MemoryIO.new
+      expect_raises(ArgumentError) do
+        request.to_io(io)
+      end
+    end
+
     it "parses GET" do
       request = Request.from_io(MemoryIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
       request.method.should eq("GET")
@@ -125,25 +168,12 @@ module HTTP
       request.method.should eq("POST")
       request.path.should eq("/foo")
       request.headers.should eq({"Content-Length" => "13"})
-      request.body_io.not_nil!.gets_to_end.should eq("thisisthebody")
+      request.body.not_nil!.gets_to_end.should eq("thisisthebody")
     end
 
     it "handles malformed request" do
       request = Request.from_io(MemoryIO.new("nonsense"))
       request.should be_a(Request::BadRequest)
-    end
-
-    it "raises if creating with both body and body_io" do
-      expect_raises(ArgumentError) do
-        Request.new "GET", "/", body: "a", body_io: MemoryIO.new
-      end
-    end
-
-    it "raises if invoking #body when #body_io is available" do
-      request = Request.new "GET", "/", body_io: MemoryIO.new
-      expect_raises(Exception, "HTTP::Request has a `body_io`: use `body_io`, not `body` to get its body") do
-        request.body
-      end
     end
 
     describe "keep-alive" do

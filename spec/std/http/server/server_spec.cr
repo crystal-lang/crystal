@@ -140,16 +140,6 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n0\r\n\r\n")
       end
 
-      it "closes request io when flushing" do
-        request_io = MemoryIO.new("hello")
-        response_io = MemoryIO.new
-        response = Response.new(response_io)
-        response.request_io = request_io
-        response.print("Hello")
-        response.flush
-        request_io.closed?.should be_true
-      end
-
       it "wraps output" do
         io = MemoryIO.new
         response = Response.new(io)
@@ -251,6 +241,44 @@ module HTTP
         Content-Length: 11
 
         Hello world
+        RESPONSE
+      ))
+    end
+
+    it "skips body between requests" do
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.response.content_type = "text/plain"
+        context.response.puts "Hello world\r"
+      end
+
+      input = MemoryIO.new(requestize(<<-REQUEST
+        POST / HTTP/1.1
+        Content-Length: 7
+
+        hello
+        POST / HTTP/1.1
+        Content-Length: 7
+
+        hello
+        REQUEST
+      ))
+      output = MemoryIO.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(requestize(<<-RESPONSE
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Type: text/plain
+        Content-Length: 13
+
+        Hello world
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Type: text/plain
+        Content-Length: 13
+
+        Hello world
+
         RESPONSE
       ))
     end

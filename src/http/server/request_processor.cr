@@ -30,7 +30,6 @@ class HTTP::Server::RequestProcessor
           return
         end
 
-        response.request_io = request.body_io
         response.version = request.version
         response.reset
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
@@ -55,6 +54,10 @@ class HTTP::Server::RequestProcessor
         output.flush
 
         break unless request.keep_alive?
+
+        # Skip request body in case the handler
+        # didn't read it all, for the next request
+        request.body.try &.close
       end
     rescue ex : Errno
       # IO-related error, nothing to do
