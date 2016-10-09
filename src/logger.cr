@@ -7,6 +7,9 @@
 # When you are developing the system, however, you probably want to know about the program’s internal state,
 # and would set the Logger to DEBUG.
 #
+# If logging to multiple locations is required, an `IO::MultiWriter` can be
+# used.
+#
 # ### Example
 #
 # ```crystal
