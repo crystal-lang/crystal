@@ -210,7 +210,7 @@ class String
   def self.new(capacity : Int)
     check_capacity_in_bounds(capacity)
 
-    str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32).as(UInt8*)
+    str = GC.malloc_atomic(capacity.to_u32 + HEADER_SIZE + 1).as(UInt8*)
     buffer = str.as(String).to_unsafe
     bytesize, size = yield buffer
     str_header = str.as({Int32, Int32, Int32}*)
@@ -1162,15 +1162,17 @@ class String
   end
 
   private def calc_excess_right
-    excess_right = 0
-    while to_unsafe[bytesize - 1 - excess_right].unsafe_chr.whitespace?
-      excess_right += 1
+    i = bytesize - 1
+    while i >= 0 && to_unsafe[i].unsafe_chr.whitespace?
+      i -= 1
     end
-    excess_right
+    bytesize - 1 - i
   end
 
   private def calc_excess_left
     excess_left = 0
+    # All strings end with '\0', and it's not a whitespace
+    # so it's safe to access past 1 byte beyond the string data
     while to_unsafe[excess_left].unsafe_chr.whitespace?
       excess_left += 1
     end
@@ -1230,8 +1232,8 @@ class String
   # block and replaced by its return value.
   #
   # ```
-  # "hello".sub { |x| (x.ord + 1).chr } # => "iello"
-  # "hello".sub { "hi" }                # => "hiello"
+  # "hello".sub { |char| char + 1 } # => "iello"
+  # "hello".sub { "hi" }            # => "hiello"
   # ```
   def sub(&block : Char -> _)
     return self if empty?
@@ -1366,7 +1368,7 @@ class String
   # "hello yellow".sub("ll") { "dd" } # => "heddo yellow"
   # ```
   def sub(string : String, &block)
-    index = self.index(string)
+    index = self.byte_index(string)
     return self unless index
 
     String.build(bytesize) do |buffer|
@@ -1585,8 +1587,8 @@ class String
   # is replaced by the block's return value.
   #
   # ```
-  # "hello".gsub { |x| (x.ord + 1).chr } # => "ifmmp"
-  # "hello".gsub { "hi" }                # => "hihihihihi"
+  # "hello".gsub { |char| char + 1 } # => "ifmmp"
+  # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
   def gsub(&block : Char -> _)
     String.build(bytesize) do |buffer|
@@ -1680,7 +1682,7 @@ class String
   # # but "o" is not and so is not included
   # "hello".gsub(/(he|l|o)/, {"he": "ha", "l": "la"}) # => "halala"
   # ```
-  def gsub(pattern : Regex, hash : Hash(String, _))
+  def gsub(pattern : Regex, hash : Hash(String, _) | NamedTuple)
     gsub(pattern) do |match|
       hash[match]?
     end
@@ -1740,6 +1742,18 @@ class String
   def gsub(hash : Hash(Char, _))
     gsub do |char|
       hash[char]? || char
+    end
+  end
+
+  # Returns a string where all chars in the given named tuple are replaced
+  # by the corresponding *tuple* values.
+  #
+  # ```
+  # "hello".gsub({e: 'a', l: 'd'}) # => "haddo"
+  # ```
+  def gsub(tuple : NamedTuple)
+    gsub do |char|
+      tuple[char.to_s]? || char
     end
   end
 
@@ -3210,8 +3224,7 @@ class String
     end
   end
 
-  # :nodoc:
-  class CharIterator
+  private class CharIterator
     include Iterator(Char)
 
     @reader : Char::Reader
@@ -3243,8 +3256,7 @@ class String
     end
   end
 
-  # :nodoc:
-  class LineIterator
+  private class LineIterator
     include Iterator(String)
 
     @string : String

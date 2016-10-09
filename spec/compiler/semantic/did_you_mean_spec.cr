@@ -227,13 +227,6 @@ describe "Semantic: did you mean" do
       "do you maybe have a typo in this 'intialize' method?"
   end
 
-  it "suggests for global variable" do
-    assert_error %(
-      $foobar = 1
-      $fooobar
-      ), "did you mean $foobar"
-  end
-
   it "suggests for class variable" do
     assert_error %(
       class Foo

@@ -4,6 +4,11 @@ class YAML::Parser
     @anchors = {} of String => YAML::Type
   end
 
+  def self.new(content)
+    parser = new(content)
+    yield parser ensure parser.close
+  end
+
   def close
     @pull_parser.close
   end

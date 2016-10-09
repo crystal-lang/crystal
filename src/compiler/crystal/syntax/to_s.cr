@@ -51,10 +51,29 @@ module Crystal
 
     def visit(node : NumberLiteral)
       @str << node.value
-      if node.kind != :i32 && node.kind != :f64
+
+      if needs_suffix?(node)
         @str << "_"
         @str << node.kind.to_s
       end
+    end
+
+    def needs_suffix?(node : NumberLiteral)
+      case node.kind
+      when :i32
+        return false
+      when :f64
+        # If there's no '.' nor 'e', for example in `1_f64`,
+        # we need to include it (#3315)
+        node.value.each_char do |char|
+          case char
+          when '.', 'e'
+            return false
+          end
+        end
+      end
+
+      true
     end
 
     def visit(node : CharLiteral)
@@ -196,10 +215,6 @@ module Crystal
 
     def visit(node : Unless)
       visit_if_or_unless "unless", node
-    end
-
-    def visit(node : IfDef)
-      visit_if_or_unless "ifdef", node
     end
 
     def visit_if_or_unless(prefix, node)
@@ -623,6 +638,12 @@ module Crystal
         @str << " : "
         return_type.accept self
       end
+
+      if free_vars = node.free_vars
+        @str << " forall "
+        free_vars.join(", ", @str)
+      end
+
       newline
 
       unless node.abstract?
@@ -728,6 +749,10 @@ module Crystal
     end
 
     def visit(node : MacroLiteral)
+      # These two can only come from an escaped sequence like \{ or \{%
+      if node.value == "{" || node.value.starts_with?("{%")
+        @str << "\\"
+      end
       @str << node.value
       false
     end
@@ -933,7 +958,7 @@ module Crystal
       @str << "/"
       case exp = node.value
       when StringLiteral
-        @str << exp.value
+        @str << exp.value.gsub('/', "\\/")
       when StringInterpolation
         visit_interpolation exp, &.gsub('/', "\\/")
       end
@@ -1023,7 +1048,8 @@ module Crystal
 
     def visit(node : Not)
       @str << "!"
-      node.exp.accept self
+      need_parens = need_parens(node.exp)
+      in_parenthesis(need_parens, node.exp)
       false
     end
 
@@ -1146,13 +1172,18 @@ module Crystal
     end
 
     def visit(node : RangeLiteral)
-      node.from.accept self
+      need_parens = need_parens(node.from)
+      in_parenthesis(need_parens, node.from)
+
       if node.exclusive?
         @str << "..."
       else
         @str << ".."
       end
-      node.to.accept self
+
+      need_parens = need_parens(node.to)
+      in_parenthesis(need_parens, node.to)
+
       false
     end
 

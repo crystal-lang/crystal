@@ -10,6 +10,9 @@ module Crystal
       # We also need to define empty `new` methods for types
       # that don't have any `initialize` methods.
       define_default_new(self)
+      file_modules.each_value do |file_module|
+        define_default_new(file_module)
+      end
     end
 
     def define_default_new(type)
@@ -59,7 +62,7 @@ module Crystal
         has_self_initialize_methods = !self_initialize_methods.empty?
         if !has_self_initialize_methods
           is_generic = type.is_a?(GenericClassType)
-          inherits_from_generic = type.ancestors.any?(&.is_a?(InheritedGenericClass))
+          inherits_from_generic = type.ancestors.any?(&.is_a?(GenericClassInstanceType))
           if is_generic || inherits_from_generic
             has_default_self_new = self_new_methods.any? do |a_def|
               a_def.args.empty? && !a_def.yields
@@ -77,14 +80,30 @@ module Crystal
                 type.add_def(Def.argless_initialize)
               end
             else
+              initialize_owner = nil
+
               initialize_methods.each do |initialize|
                 # If the type has `self.new()`, don't override it
                 if initialize.args.empty? && !initialize.yields && has_default_self_new
                   next
                 end
 
+                # Only copy initialize methods from the first ancestor that has them
+                if initialize_owner && initialize.owner != initialize_owner
+                  break
+                end
+
+                initialize_owner = initialize.owner
+
                 new_method = initialize.expand_new_from_initialize(type)
                 type.metaclass.as(ModuleType).add_def(new_method)
+              end
+
+              # Copy non-generated `new` methods from parent to child
+              new_methods.each do |new_method|
+                next if new_method.new?
+
+                type.metaclass.as(ModuleType).add_def(new_method.clone)
               end
             end
           else
@@ -113,6 +132,9 @@ module Crystal
       new_def.yields = yields
       new_def.visibility = Visibility::Private if visibility.private?
       new_def.new = true
+      new_def.location = location
+      new_def.doc = doc
+      new_def.free_vars = free_vars
 
       # Forward block argument if any
       if uses_block_arg?
@@ -214,7 +236,9 @@ module Crystal
         Call.new(Path.global("GC"), "add_finalizer", var.clone))
       exps << var.clone
 
-      Def.new("new", body: exps)
+      a_def = Def.new("new", body: exps)
+      a_def.new = true
+      a_def
     end
 
     def self.argless_initialize

@@ -60,15 +60,6 @@ class Crystal::CodeGenVisitor
     ret result.not_nil!
   end
 
-  private def create_match_fun_body(type : NonGenericModuleType, type_id)
-    result = nil
-    type.expand_union_types.each do |sub_type|
-      sub_type_cond = match_any_type_id(sub_type, type_id)
-      result = result ? or(result, sub_type_cond) : sub_type_cond
-    end
-    ret result.not_nil!
-  end
-
   private def create_match_fun_body(type : VirtualType, type_id)
     min, max = @llvm_id.min_max_type_id(type.base_type).not_nil!
     ret(

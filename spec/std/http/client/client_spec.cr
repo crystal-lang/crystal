@@ -3,7 +3,7 @@ require "openssl"
 require "http/client"
 require "http/server"
 
-class TestServer < TCPServer
+private class TestServer < TCPServer
   def self.open(host, port, read_time = 0)
     server = new(host, port)
     begin

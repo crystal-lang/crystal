@@ -160,12 +160,12 @@ module Crystal
     end
 
     def print_instance_vars(type : GenericClassType, has_subtypes)
-      instance_vars = type.declared_instance_vars
-      return unless instance_vars
+      instance_vars = type.instance_vars
+      return if instance_vars.empty?
 
       max_name_size = instance_vars.keys.max_of &.size
 
-      instance_vars.each do |name, types|
+      instance_vars.each do |name, var|
         print_indent
         print (@indents.last ? "|" : " ")
         if has_subtypes
@@ -176,9 +176,8 @@ module Crystal
 
         with_color.light_gray.push(STDOUT) do
           print name.ljust(max_name_size)
-          next if types.size == 0
           print " : "
-          print types.join " | "
+          print var
         end
         puts
       end
@@ -323,16 +322,16 @@ module Crystal
     end
 
     def print_instance_vars(type : GenericClassType, has_subtypes, json_object, io : IO)
-      instance_vars = type.declared_instance_vars
-      return json_object unless instance_vars
+      instance_vars = type.instance_vars
+      return json_object if instance_vars.empty?
 
       json_object.field "instance_vars" do
         io << '['
-        instance_vars.each_with_index do |(name, types), index|
+        instance_vars.each_with_index do |(name, var), index|
           io << ',' if index > 0
           io.json_object do |ivar_object|
             ivar_object.field "name", name.to_s
-            ivar_object.field "types", types.join " | "
+            ivar_object.field "type", var.to_s
           end
         end
         io << ']'

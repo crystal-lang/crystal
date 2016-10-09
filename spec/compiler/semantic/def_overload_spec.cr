@@ -74,59 +74,59 @@ describe "Semantic: def overload" do
 
   it "types a call with overload matches virtual" do
     assert_type("
-      class A; end
+      class Foo; end
 
       def foo(x : Object)
         1
       end
 
-      foo(A.new)
+      foo(Foo.new)
     ") { int32 }
   end
 
   it "types a call with overload matches virtual 2" do
     assert_type("
-      class A
+      class Foo
       end
 
-      class B < A
+      class Bar < Foo
       end
 
-      def foo(x : A)
+      def foo(x : Foo)
         1
       end
 
-      def foo(x : B)
+      def foo(x : Bar)
         1.5
       end
 
-      foo(B.new)
+      foo(Bar.new)
     ") { float64 }
   end
 
   it "types a call with overload matches virtual 3" do
     assert_type("
-      class A
+      class Foo
       end
 
-      class B < A
+      class Bar < Foo
       end
 
-      def foo(x : A)
+      def foo(x : Foo)
         1
       end
 
-      def foo(x : B)
+      def foo(x : Bar)
         1.5
       end
 
-      foo(A.new)
+      foo(Foo.new)
     ") { int32 }
   end
 
   it "types a call with overload self" do
     assert_type("
-      class A
+      class Foo
         def foo(x : self)
           1
         end
@@ -136,14 +136,14 @@ describe "Semantic: def overload" do
         end
       end
 
-      a = A.new
+      a = Foo.new
       a.foo(a)
     ") { int32 }
   end
 
   it "types a call with overload self other match" do
     assert_type("
-      class A
+      class Foo
         def foo(x : self)
           1
         end
@@ -153,7 +153,7 @@ describe "Semantic: def overload" do
         end
       end
 
-      a = A.new
+      a = Foo.new
       a.foo(1)
     ") { float64 }
   end
@@ -166,17 +166,17 @@ describe "Semantic: def overload" do
         end
       end
 
-      class A
+      class Bar
         def foo(x)
           1.5
         end
       end
 
-      class B < A
+      class Baz < Bar
         include Foo
       end
 
-      b = B.new
+      b = Baz.new
       b.foo(b)
     ") { int32 }
   end
@@ -189,41 +189,41 @@ describe "Semantic: def overload" do
         end
       end
 
-      class A
+      class Bar
         def foo(x)
           1.5
         end
       end
 
-      class B < A
+      class Baz < Bar
         include Foo
       end
 
-      b = B.new
-      b.foo(A.new)
+      b = Baz.new
+      b.foo(Bar.new)
     ") { float64 }
   end
 
   it "types a call with overload self with inherited type" do
     assert_type("
-      class A
+      class Foo
         def foo(x : self)
           1
         end
       end
 
-      class B < A
+      class Bar < Foo
       end
 
-      a = A.new
-      a.foo(B.new)
+      a = Foo.new
+      a.foo(Bar.new)
     ") { int32 }
   end
 
   it "matches types with free variables" do
     assert_type("
       require \"prelude\"
-      def foo(x : Array(T), y : T)
+      def foo(x : Array(T), y : T) forall T
         1
       end
 
@@ -280,7 +280,7 @@ describe "Semantic: def overload" do
       class Foo(T)
       end
 
-      def foo(x : T)
+      def foo(x : T) forall T
         Foo(T).new
       end
 
@@ -294,6 +294,21 @@ describe "Semantic: def overload" do
       end
 
       def foo(x : Foo)
+        1
+      end
+
+      foo(Foo(Int32).new)
+    ") { int32 }
+  end
+
+  it "can call overload with aliased generic restriction" do
+    assert_type("
+      class Foo(T)
+      end
+
+      alias FooAlias = Foo
+
+      def foo(x : FooAlias(T)) forall T
         1
       end
 
@@ -409,7 +424,7 @@ describe "Semantic: def overload" do
 
   it "restrict virtual type with virtual type" do
     assert_type("
-      def foo(x : T, y : T)
+      def foo(x : T, y : T) forall T
         1
       end
 
@@ -429,7 +444,7 @@ describe "Semantic: def overload" do
       class Foo(T)
       end
 
-      def foo(x : Foo(T))
+      def foo(x : Foo(T)) forall T
         1
       end
 
@@ -532,7 +547,7 @@ describe "Semantic: def overload" do
 
   it "gets free variable from union restriction" do
     assert_type("
-      def foo(x : Nil | U)
+      def foo(x : Nil | U) forall U
         U
       end
 
@@ -542,7 +557,7 @@ describe "Semantic: def overload" do
 
   it "gets free variable from union restriction (2)" do
     assert_type("
-      def foo(x : Nil | U)
+      def foo(x : Nil | U) forall U
         U
       end
 
@@ -552,7 +567,7 @@ describe "Semantic: def overload" do
 
   it "gets free variable from union restriction without a union" do
     assert_type("
-      def foo(x : Nil | U)
+      def foo(x : Nil | U) forall U
         U
       end
 
@@ -586,7 +601,7 @@ describe "Semantic: def overload" do
         include Bar(Int32)
       end
 
-      def foo(x : Bar(T))
+      def foo(x : Bar(T)) forall T
         T
       end
 
@@ -603,7 +618,7 @@ describe "Semantic: def overload" do
         include Bar(T)
       end
 
-      def foo(x : Bar(T))
+      def foo(x : Bar(T)) forall T
         T
       end
 
@@ -644,11 +659,11 @@ describe "Semantic: def overload" do
 
   it "matches tuples of different sizes" do
     assert_type("
-      def foo(x : {X, Y})
+      def foo(x : {X, Y}) forall X, Y
         1
       end
 
-      def foo(x : {X, Y, Z})
+      def foo(x : {X, Y, Z}) forall X, Y, Z
         'a'
       end
 
@@ -659,7 +674,7 @@ describe "Semantic: def overload" do
 
   it "matches tuples and uses free var" do
     assert_type("
-      def foo(x : {X, Y})
+      def foo(x : {X, Y}) forall X, Y
         Y
       end
 
@@ -741,7 +756,7 @@ describe "Semantic: def overload" do
       end
 
       class Foo
-        include Moo(T)
+        include Moo(Int32)
 
         def foo(x)
           1
@@ -822,15 +837,15 @@ describe "Semantic: def overload" do
 
   it "uses long name when no overload matches and name is the same (#1030)" do
     assert_error %(
-      module A::String
+      module Moo::String
         def self.foo(a : String, b : Bool)
           puts a if b
         end
       end
 
-      A::String.foo("Hello, World!", true)
+      Moo::String.foo("Hello, World!", true)
       ),
-      " - A::String.foo(a : A::String, b : Bool)"
+      " - Moo::String.foo(a : Moo::String, b : Bool)"
   end
 
   it "overloads on metaclass (#2916)" do
@@ -905,5 +920,28 @@ describe "Semantic: def overload" do
 
       {foo(1), foo(nil)}
       )) { tuple_of([char, bool]) }
+  end
+
+  it "errors when binding free variable to different types" do
+    assert_error %(
+      def foo(x : T, y : T) forall T
+      end
+
+      foo(1, 'a')
+      ),
+      "no overload matches"
+  end
+
+  it "errors when binding free variable to different types (2)" do
+    assert_error %(
+      class Gen(T)
+      end
+
+      def foo(x : T, y : Gen(T)) forall T
+      end
+
+      foo(1, Gen(Char).new)
+      ),
+      "no overload matches"
   end
 end

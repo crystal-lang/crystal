@@ -5,8 +5,10 @@ describe Symbol do
     :foo.inspect.should eq(%(:foo))
     :"{".inspect.should eq(%(:"{"))
     :"hi there".inspect.should eq(%(:"hi there"))
+    :"1a".inspect.should eq(%(:"1a"))
     # :かたな.inspect.should eq(%(:かたな))
   end
+
   it "can be compared with another symbol" do
     (:foo > :bar).should be_true
     (:foo < :bar).should be_false

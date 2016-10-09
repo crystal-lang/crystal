@@ -45,8 +45,10 @@ struct String::Formatter(A)
     arg = current_arg
     if arg.is_a?(Hash)
       @io << arg[key]
+    elsif arg.is_a?(NamedTuple) # TODO: join with || after 0.19
+      @io << arg[key]
     else
-      raise ArgumentError.new "one hash required"
+      raise ArgumentError.new "one hash or named tuple required"
     end
   end
 
@@ -56,8 +58,10 @@ struct String::Formatter(A)
     arg = current_arg
     if arg.is_a?(Hash)
       target_arg = arg[key]
+    elsif arg.is_a?(NamedTuple) # TODO: join with || after 0.19
+      target_arg = arg[key]
     else
-      raise ArgumentError.new "one hash required"
+      raise ArgumentError.new "one hash or named tuple required"
     end
     flags = consume_flags
     consume_type flags, target_arg, true

@@ -106,6 +106,9 @@ module Crystal
     # Default standard error to use in a compilation.
     property stderr : IO = STDERR
 
+    # Whether to show error trace
+    property? show_error_trace = false
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -150,6 +153,7 @@ module Crystal
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
+      program.show_error_trace = show_error_trace?
       program
     end
 
@@ -179,7 +183,7 @@ module Crystal
     rescue ex : InvalidByteSequenceError
       stdout.print colorize("Error: ").red.bold
       stdout.print colorize("file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ").bold
-      stdout.puts "#{ex.message}"
+      stdout.puts ex.message
       exit 1
     end
 
@@ -321,7 +325,7 @@ module Crystal
     rescue ex : ArgumentError
       stdout.print colorize("Error: ").red.bold
       stdout.print "llc: "
-      stdout.puts "#{ex.message}"
+      stdout.puts ex.message
       exit 1
     end
 
@@ -386,12 +390,18 @@ module Crystal
       def initialize(@compiler : Compiler, @name : String, @llvm_mod : LLVM::Module,
                      @output_dir : String, @bc_flags_changed : Bool)
         @name = "_main" if @name == ""
-        @name = @name.gsub do |char|
-          case char
-          when 'a'..'z', 'A'..'Z', '0'..'9', '_'
-            char
-          else
-            char.ord
+        @name = String.build do |str|
+          @name.each_char do |char|
+            case char
+            when 'a'..'z', '0'..'9', '_'
+              str << char
+            when 'A'..'Z'
+              # Because OSX has case insensitive filenames, try to avoid
+              # clash of 'a' and 'A' by using 'A-' for 'A'.
+              str << char << '-'
+            else
+              str << char.ord
+            end
           end
         end
 

@@ -142,32 +142,72 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, other) }
   end
 
-  def /(other : BigInt) : BigInt
-    check_division_by_zero other
-
-    BigInt.new { |mpz| LibGMP.fdiv_q(mpz, self, other) }
-  end
-
   def /(other : Int) : BigInt
     check_division_by_zero other
 
     if other < 0
-      -(self / other.abs)
+      (-self).unsafe_floored_div(-other)
     else
-      BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, other) }
+      unsafe_floored_div(other)
     end
   end
 
-  def %(other : BigInt) : BigInt
+  def tdiv(other : Int) : BigInt
     check_division_by_zero other
 
-    BigInt.new { |mpz| LibGMP.fdiv_r(mpz, self, other) }
+    if other < 0
+      -self.unsafe_truncated_div(other)
+    else
+      unsafe_truncated_div(other)
+    end
+  end
+
+  def unsafe_floored_div(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.fdiv_q(mpz, self, other) }
+  end
+
+  def unsafe_floored_div(other : Int) : BigInt
+    BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, other.abs) }
+  end
+
+  def unsafe_truncated_div(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.tdiv_q(mpz, self, other) }
+  end
+
+  def unsafe_truncated_div(other : Int) : BigInt
+    BigInt.new { |mpz| LibGMP.tdiv_q_ui(mpz, self, other.abs) }
   end
 
   def %(other : Int) : BigInt
     check_division_by_zero other
 
+    if other < 0
+      -(-self).unsafe_floored_mod(-other)
+    else
+      unsafe_floored_mod(other)
+    end
+  end
+
+  def remainder(other : Int) : BigInt
+    check_division_by_zero other
+
+    unsafe_truncated_mod(other)
+  end
+
+  def unsafe_floored_mod(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.fdiv_r(mpz, self, other) }
+  end
+
+  def unsafe_floored_mod(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, other.abs) }
+  end
+
+  def unsafe_truncated_mod(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.tdiv_r(mpz, self, other) }
+  end
+
+  def unsafe_truncated_mod(other : Int) : BigInt
+    BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, other.abs) }
   end
 
   def ~ : BigInt

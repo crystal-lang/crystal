@@ -136,6 +136,10 @@ module Crystal
       LLVM::Int32
     end
 
+    private def create_llvm_type(type : GenericModuleInstanceMetaclassType, wants_size)
+      LLVM::Int32
+    end
+
     private def create_llvm_type(type : VirtualMetaclassType, wants_size)
       LLVM::Int32
     end

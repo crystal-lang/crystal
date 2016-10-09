@@ -156,11 +156,20 @@ describe "Code gen: generic class type" do
 
   it "invokes super in generic class (#2354)" do
     run(%(
-      $x = 1
+      class Global
+        @@x = 1
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       class Foo
         def foo
-          $x = 2
+          Global.x = 2
         end
       end
 
@@ -173,7 +182,7 @@ describe "Code gen: generic class type" do
       b = Bar(Int32).new
       b.foo
 
-      $x
+      Global.x
       )).to_i.should eq(2)
   end
 
@@ -255,5 +264,23 @@ describe "Code gen: generic class type" do
 
       NamedTuple(x: Foo).name
       )).to_string.should eq("NamedTuple(x: Foo)")
+  end
+
+  it "codegens virtual generic metaclass macro method call" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      Bar(Int32).new.as(Foo(Int32)).class.name
+      )).to_string.should eq("Bar(Int32)")
   end
 end

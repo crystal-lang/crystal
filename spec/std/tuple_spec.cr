@@ -1,6 +1,6 @@
 require "spec"
 
-class TupleSpecObj
+private class TupleSpecObj
   getter x : Int32
 
   def initialize(@x)

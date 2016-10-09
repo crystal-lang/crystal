@@ -1,6 +1,6 @@
 require "spec"
 
-class PartialReaderIO
+private class PartialReaderIO
   include IO
 
   @slice : Slice(UInt8)

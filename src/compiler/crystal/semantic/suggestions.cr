@@ -1,3 +1,4 @@
+require "levenshtein"
 require "../types"
 
 module Crystal
@@ -71,20 +72,10 @@ module Crystal
     def lookup_similar_def_name(name, args_size, block)
       lookup_similar_def(name, args_size, block).try &.name
     end
-  end
 
-  module InstanceVarContainer
     def lookup_similar_instance_var_name(name)
       Levenshtein.find(name, all_instance_vars.keys.select { |key| key != name })
     end
-  end
-
-  class IncludedGenericModule
-    delegate lookup_similar_def, lookup_similar_path, to: @module
-  end
-
-  class InheritedGenericClass
-    delegate lookup_similar_def, lookup_similar_path, to: @extended_class
   end
 
   class AliasType
@@ -96,6 +87,10 @@ module Crystal
   end
 
   class GenericClassInstanceMetaclassType
+    delegate lookup_similar_path, to: instance_type
+  end
+
+  class GenericModuleInstanceMetaclassType
     delegate lookup_similar_path, to: instance_type
   end
 

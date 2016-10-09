@@ -135,6 +135,10 @@ class Crystal::Program
   def generic_class(name, *type_vars)
     types[name].as(GenericClassType).instantiate(type_vars.to_a.map &.as(TypeVar))
   end
+
+  def generic_module(name, *type_vars)
+    types[name].as(GenericModuleType).instantiate(type_vars.to_a.map &.as(TypeVar))
+  end
 end
 
 record SemanticResult,
@@ -269,8 +273,8 @@ def parse(string, wants_doc = false)
   parser.parse
 end
 
-def codegen(code)
-  code = inject_primitives(code)
+def codegen(code, inject_primitives = true)
+  code = inject_primitives(code) if inject_primitives
   node = parse code
   result = semantic node
   result.program.codegen result.node, single_module: false

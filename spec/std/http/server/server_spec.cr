@@ -1,53 +1,51 @@
 require "spec"
 require "http/server"
 
-module IO
-  class RaiseErrno
-    def initialize(@value : Int32)
-    end
+private class RaiseErrno
+  def initialize(@value : Int32)
+  end
 
-    include IO
+  include IO
 
-    def read(slice : Slice(UInt8))
-      Errno.value = @value
-      raise Errno.new "..."
-    end
+  def read(slice : Slice(UInt8))
+    Errno.value = @value
+    raise Errno.new "..."
+  end
 
-    def write(slice : Slice(UInt8)) : Nil
-      raise "not implemented"
+  def write(slice : Slice(UInt8)) : Nil
+    raise "not implemented"
+  end
+end
+
+private class ReverseResponseOutput
+  include IO
+
+  @output : IO
+
+  def initialize(@output : IO)
+  end
+
+  def write(slice : Slice(UInt8))
+    slice.reverse_each do |byte|
+      @output.write_byte(byte)
     end
+  end
+
+  def read(slice : Slice(UInt8))
+    raise "Not implemented"
+  end
+
+  def close
+    @output.close
+  end
+
+  def flush
+    @output.flush
   end
 end
 
 module HTTP
   class Server
-    class ReverseResponseOutput
-      include IO
-
-      @output : IO
-
-      def initialize(@output : IO)
-      end
-
-      def write(slice : Slice(UInt8))
-        slice.reverse_each do |byte|
-          @output.write_byte(byte)
-        end
-      end
-
-      def read(slice : Slice(UInt8))
-        raise "Not implemented"
-      end
-
-      def close
-        @output.close
-      end
-
-      def flush
-        @output.flush
-      end
-    end
-
     describe Response do
       it "closes" do
         io = MemoryIO.new
@@ -249,7 +247,7 @@ module HTTP
 
     it "handles Errno" do
       processor = HTTP::Server::RequestProcessor.new { }
-      input = IO::RaiseErrno.new(Errno::ECONNRESET)
+      input = RaiseErrno.new(Errno::ECONNRESET)
       output = MemoryIO.new
       processor.process(input, output)
       output.rewind.gets_to_end.empty?.should be_true

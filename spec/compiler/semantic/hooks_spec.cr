@@ -101,7 +101,11 @@ describe "Semantic: hooks" do
     assert_type(%(
       abstract class Foo
         macro inherited
-          $bar = new
+          @@bar = new
+
+          def self.bar
+            @@bar
+          end
         end
       end
 
@@ -114,7 +118,7 @@ describe "Semantic: hooks" do
         end
       end
 
-      $bar.name
+      Bar.bar.name
       )) { string }
   end
 
@@ -142,5 +146,40 @@ describe "Semantic: hooks" do
       end
       ),
       "undefined macro method 'MacroId#unknown'"
+  end
+
+  it "does included macro for generic module" do
+    assert_type(%(
+      module Mod(T)
+        macro included
+          def self.method
+            1
+          end
+        end
+      end
+
+      class Klass
+        include Mod(Nil)
+      end
+
+      Klass.method
+      )) { int32 }
+  end
+
+  it "does inherited macro for generic class" do
+    assert_type(%(
+      class Foo(T)
+        macro inherited
+          def self.method
+            1
+          end
+        end
+      end
+
+      class Klass < Foo(Int32)
+      end
+
+      Klass.method
+      )) { int32 }
   end
 end

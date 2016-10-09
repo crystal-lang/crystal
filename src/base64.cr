@@ -19,20 +19,12 @@ module Base64
 
   class Error < Exception; end
 
-  # :nodoc:
-  CHARS_STD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-  # :nodoc:
-  CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-  # :nodoc:
-  LINE_SIZE = 60
-  # :nodoc:
-  PAD = '='.ord.to_u8
-  # :nodoc:
-  NL = '\n'.ord.to_u8
-  # :nodoc:
-  NR = '\r'.ord.to_u8
-
-  class Error < Exception; end
+  private CHARS_STD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  private CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+  private LINE_SIZE = 60
+  private PAD = '='.ord.to_u8
+  private NL = '\n'.ord.to_u8
+  private NR = '\r'.ord.to_u8
 
   # Returns the Base64-encoded version of `data`.
   # This method complies with RFC 2045.
@@ -46,7 +38,7 @@ module Base64
   # ```text
   # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
   # ```
-  def encode(data)
+  def encode(data) : String
     slice = data.to_slice
     String.new(encode_size(slice.size, new_lines: true)) do |buf|
       appender = buf.appender
@@ -99,7 +91,7 @@ module Base64
   # ```text
   # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==
   # ```
-  def strict_encode(data)
+  def strict_encode(data) : String
     strict_encode data, CHARS_STD, pad: true
   end
 
@@ -142,7 +134,7 @@ module Base64
   #
   # The `padding` parameter defaults to false. When true, enough `=` characters
   # are added to make the output divisible by 3.
-  def urlsafe_encode(data, padding = false)
+  def urlsafe_encode(data, padding = false) : String
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -166,7 +158,7 @@ module Base64
 
   # Returns the Base64-decoded version of `data` as a *Slice(UInt8)*.
   # This will decode either the normal or urlsafe alphabets.
-  def decode(data)
+  def decode(data) : Bytes
     slice = data.to_slice
     buf = Pointer(UInt8).malloc(decode_size(slice.size))
     appender = buf.appender
@@ -190,7 +182,7 @@ module Base64
   # If the data doesn't decode to a valid UTF8 string,
   # *InvalidByteSequenceError* will be raised.
   # This will decode either the normal or urlsafe alphabets.
-  def decode_string(data)
+  def decode_string(data) : String
     slice = data.to_slice
     String.new(decode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -245,6 +237,7 @@ module Base64
     size = data.size
     dt = DECODE_TABLE.to_unsafe
     cstr = data.pointer(size)
+    start_cstr = cstr
     while (size > 0) && (sym = cstr[size - 1]) && (sym == NL || sym == NR || sym == PAD)
       size -= 1
     end
@@ -262,6 +255,10 @@ module Base64
       yield (a << 2 | b >> 4).to_u8
       yield (b << 4 | c >> 2).to_u8
       yield (c << 6 | d).to_u8
+    end
+
+    while (cstr < endcstr + 4) && (cstr.value == NL || cstr.value == NR)
+      cstr += 1
     end
 
     mod = (endcstr - cstr) % 4
@@ -283,13 +280,12 @@ module Base64
     res = dt[sym]
     cstr += 1
     if res < 0
-      raise Error.new("Unexpected symbol '#{sym.chr}'")
+      raise Error.new("Unexpected byte 0x#{sym.to_s(16)} at #{cstr - start_cstr - 1}")
     end
     res
   end
 
-  # :nodoc:
-  DECODE_TABLE = Array(Int8).new(256) do |i|
+  private DECODE_TABLE = Array(Int8).new(256) do |i|
     case i.unsafe_chr
     when 'A'..'Z' then (i - 0x41).to_i8
     when 'a'..'z' then (i - 0x47).to_i8

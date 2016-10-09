@@ -71,6 +71,18 @@ module LLVM::ValueMethods
     init ? LLVM::Value.new(init) : nil
   end
 
+  def volatile=(volatile)
+    LibLLVM.set_volatile(self, volatile ? 1 : 0)
+  end
+
+  def ordering=(ordering)
+    LibLLVMExt.set_ordering(self, ordering)
+  end
+
+  def alignment=(bytes)
+    LibLLVM.set_alignment(self, bytes)
+  end
+
   def to_value
     LLVM::Value.new unwrap
   end

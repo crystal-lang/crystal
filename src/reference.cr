@@ -76,12 +76,15 @@ class Reference
     nil
   end
 
-  # TODO: Boehm GC doesn't scan thread local vars, so we can't use it yet
-  # @[ThreadLocal]
-  $_exec_recursive : Hash({UInt64, Symbol}, Bool)?
+  # :nodoc:
+  module ExecRecursive
+    def self.hash
+      @@exec_recursive ||= {} of {UInt64, Symbol} => Bool
+    end
+  end
 
   private def exec_recursive(method)
-    hash = ($_exec_recursive ||= {} of {UInt64, Symbol} => Bool)
+    hash = ExecRecursive.hash
     key = {object_id, method}
     if hash[key]?
       false

@@ -202,11 +202,11 @@ describe "Codegen: class var" do
         a + b
       end
 
-      A = foo()
+      CONST = foo()
 
       class Foo
         @@foo : Int32
-        @@foo = A
+        @@foo = CONST
 
         def self.foo
           @@foo

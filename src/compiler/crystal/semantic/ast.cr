@@ -189,6 +189,17 @@ module Crystal
         yield arg, arg_index, object, object_index
       end
     end
+
+    def free_var?(node : Path)
+      free_vars = @free_vars
+      return false unless free_vars
+
+      !node.global? && node.names.size == 1 && free_vars.includes?(node.names.first)
+    end
+
+    def free_var?(any)
+      false
+    end
   end
 
   class Macro

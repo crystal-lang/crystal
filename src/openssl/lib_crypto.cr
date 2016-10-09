@@ -72,7 +72,9 @@ lib LibCrypto
   fun evp_md4 = EVP_md4 : EVP_MD
   fun evp_md5 = EVP_md5 : EVP_MD
   fun evp_ripemd160 = EVP_ripemd160 : EVP_MD
+  {% if !flag?(:openbsd) %}
   fun evp_sha = EVP_sha : EVP_MD
+  {% end %}
   fun evp_sha1 = EVP_sha1 : EVP_MD
   fun evp_sha224 = EVP_sha224 : EVP_MD
   fun evp_sha256 = EVP_sha256 : EVP_MD

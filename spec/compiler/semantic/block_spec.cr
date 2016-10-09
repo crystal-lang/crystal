@@ -130,7 +130,7 @@ describe "Block inference" do
         end
       end
 
-      def bar(&block : Int32 -> U)
+      def bar(&block : Int32 -> U) forall U
         Foo(U).new(yield 1)
       end
 
@@ -150,7 +150,7 @@ describe "Block inference" do
         end
       end
 
-      def foo(x : U, &block: U -> T)
+      def foo(x : U, &block: U -> T) forall T, U
         Foo(T).new(yield x)
       end
 
@@ -250,7 +250,7 @@ describe "Block inference" do
       class Foo(T)
       end
 
-      def foo(&block: Int32 -> Foo(T))
+      def foo(&block: Int32 -> Foo(T)) forall T
         yield 1
         Foo(T).new
       end
@@ -362,14 +362,14 @@ describe "Block inference" do
     assert_type("
       require \"prelude\"
 
-      class A
+      class Foo
       end
 
-      class B < A
+      class Bar < Foo
       end
 
-      a = [] of A
-      a << B.new
+      a = [] of Foo
+      a << Bar.new
 
       a.map { |x| x.to_s }
 
@@ -826,30 +826,6 @@ describe "Block inference" do
       )) { array_of int32 }
   end
 
-  it "passed bug included generic module and typeof" do
-    assert_type(%(
-      module Moo(U)
-        def moo
-          U
-        end
-      end
-
-      class Foo(T)
-        include Moo(typeof(self.foo))
-
-        def initialize(@foo : T)
-        end
-
-        def foo
-          @foo
-        end
-      end
-
-      Foo.new(1).moo
-      Foo.new('a').moo
-      )) { char.metaclass }
-  end
-
   it "errors if invoking new with block when no initialize is defined" do
     assert_error %(
       class Foo
@@ -862,7 +838,7 @@ describe "Block inference" do
 
   it "recalculates call that uses block arg output as free var" do
     assert_type(%(
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block
         U
       end
@@ -895,7 +871,7 @@ describe "Block inference" do
         end
 
         class Bar
-          def initialize(&block : Int32 -> U)
+          def initialize(&block : Int32 -> U) forall U
             block
           end
         end
@@ -959,24 +935,6 @@ describe "Block inference" do
       "can't use `yield` outside a method"
   end
 
-  it "rebinds yield -> block arguments" do
-    assert_type(%(
-      def foo(x)
-        buffer = Pointer(typeof(x)).malloc(1_u64)
-        yield buffer
-      end
-
-      $a = 1
-      x = nil
-      foo($a) do |buffer|
-        buffer.value = $a
-        x = buffer
-      end
-      $a = 1.1
-      x
-      )) { nilable(pointer_of(union_of(int32, float64))) }
-  end
-
   it "errors on recursive yield" do
     assert_error %(
       def foo
@@ -993,7 +951,7 @@ describe "Block inference" do
 
   it "binds to proc, not only to its body (#1796)" do
     assert_type(%(
-      def yielder(&block : Int32 -> U)
+      def yielder(&block : Int32 -> U) forall U
         yield 1
         U
       end
@@ -1004,7 +962,7 @@ describe "Block inference" do
 
   it "binds block return type free variable even if there are no block arguments (#1797)" do
     assert_type(%(
-      def yielder(&block : -> U)
+      def yielder(&block : -> U) forall U
         yield
         U
       end
@@ -1073,7 +1031,7 @@ describe "Block inference" do
 
   it "does next from captured block" do
     assert_type(%(
-      def foo(&block : -> T)
+      def foo(&block : -> T) forall T
         block
       end
 
@@ -1115,7 +1073,7 @@ describe "Block inference" do
       class Foo(T)
       end
 
-      def foo(&block : -> Foo(T))
+      def foo(&block : -> Foo(T)) forall T
         block
         T
       end
@@ -1152,7 +1110,7 @@ describe "Block inference" do
       )) { bool }
   end
 
-  ["Object", "Foo(Object)", "Bar | Object", "(Object ->)", "( -> Object)"].each do |string|
+  ["Object", "Bar | Object", "(Object ->)", "( -> Object)"].each do |string|
     it "errors if using #{string} as block return type (#2358)" do
       assert_error %(
         class Foo(T)
@@ -1339,5 +1297,52 @@ describe "Block inference" do
         x
       end
       )) { union_of(int32, int64) }
+  end
+
+  it "uses free var in return type in captured block" do
+    assert_type(%(
+      class U
+      end
+
+      def foo(&block : -> U) forall U
+        block
+        U
+      end
+
+      foo { 1 }
+      )) { int32.metaclass }
+  end
+
+  it "uses free var in return type with tuple type" do
+    assert_type(%(
+      class T; end
+
+      class U; end
+
+      class Foo(T)
+        def initialize(@x : T)
+        end
+
+        def foo(&block : T -> U) forall U
+          {yield(@x), U}
+        end
+      end
+
+      Foo.new(1).foo { |x| {x, x} }
+      )) { tuple_of([tuple_of([int32, int32]), tuple_of([int32, int32]).metaclass]) }
+  end
+
+  it "correctly types unpacked tuple block arg after block (#3339)" do
+    assert_type(%(
+      def foo
+        yield({""})
+      end
+
+      i = 1
+      foo do |(i)|
+
+      end
+      i
+      ), inject_primitives: false) { int32 }
   end
 end

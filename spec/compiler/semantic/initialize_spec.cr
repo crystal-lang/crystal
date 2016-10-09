@@ -708,7 +708,7 @@ describe "Semantic: initialize" do
       class Foo(T)
       end
 
-      alias X = Foo(Int32)
+      alias Alias = Foo(Int32)
 
       class Foo(T)
         @x = 1

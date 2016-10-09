@@ -10,7 +10,7 @@ ADD . /opt/crystal-head
 
 WORKDIR /opt/crystal-head
 ENV CRYSTAL_CONFIG_VERSION HEAD
-ENV CRYSTAL_CONFIG_PATH libs:/opt/crystal-head/src:/opt/crystal-head/libs
+ENV CRYSTAL_CONFIG_PATH libs:lib:/opt/crystal-head/src:/opt/crystal-head/libs
 ENV LIBRARY_PATH /opt/crystal/embedded/lib
 ENV PATH /opt/crystal-head/bin:/opt/llvm-3.5.0-1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 

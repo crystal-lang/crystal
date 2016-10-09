@@ -124,7 +124,7 @@ end
 # long_operation
 # d.cancel
 # ```
-def delay(delay, &block : -> R)
+def delay(delay, &block : -> _)
   Concurrent::Future.new delay: delay, &block
 end
 
@@ -135,7 +135,7 @@ end
 # ... other actions ...
 # f.get #=> String
 # ```
-def future(&exp : -> R)
+def future(&exp : -> _)
   Concurrent::Future.new &exp
 end
 
@@ -147,6 +147,6 @@ end
 # spawn { maybe_use_computation(l) }
 # spawn { maybe_use_computation(l) }
 # ```
-def lazy(&block : -> R)
+def lazy(&block : -> _)
   Concurrent::Future.new run_immediately: false, &block
 end

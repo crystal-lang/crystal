@@ -392,7 +392,7 @@ class Regex
   # ```
   def inspect(io : IO)
     io << "/"
-    io << source
+    append_source(io)
     io << "/"
     io << "i" if options.includes?(Options::IGNORE_CASE)
     io << "m" if options.includes?(Options::MULTILINE)
@@ -499,8 +499,18 @@ class Regex
     io << "x" unless options.includes?(Options::EXTENDED)
 
     io << ":"
-    io << source
+    append_source(io)
     io << ")"
+  end
+
+  private def append_source(io)
+    source.each_char do |char|
+      if char == '/'
+        io << "\\/"
+      else
+        io << char
+      end
+    end
   end
 
   def dup

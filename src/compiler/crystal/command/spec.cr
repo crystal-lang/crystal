@@ -10,9 +10,17 @@
 
 class Crystal::Command
   private def spec
+    compiler = Compiler.new
+    OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal spec [options] [files]\n\nOptions:"
+      setup_simple_compiler_options compiler, opts
+    end
+
     # Assume spec files end with ".cr" and optionally with a colon and a number
-    # (for the target line number). Everything else is an option we forward.
-    filenames = options.select { |option| option =~ /\.cr(\:\d+)?\Z/ }
+    # (for the target line number), or is a directory. Everything else is an option we forward.
+    filenames = options.select do |option|
+      option =~ /\.cr(\:\d+)?\Z/ || Dir.exists?(option)
+    end
     options.reject! { |option| filenames.includes?(option) }
 
     locations = [] of {String, String}
@@ -59,7 +67,6 @@ class Crystal::Command
 
     output_filename = Crystal.tempfile "spec"
 
-    compiler = Compiler.new
     result = compiler.compile sources, output_filename
     execute output_filename, options
   end

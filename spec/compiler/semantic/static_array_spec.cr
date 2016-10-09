@@ -97,7 +97,7 @@ describe "Semantic: static array" do
 
   it "can match N type argument of static array (#1203)" do
     assert_type(%(
-      def fn(a : StaticArray(T, N))
+      def fn(a : StaticArray(T, N)) forall T, N
         N
       end
 
@@ -108,7 +108,7 @@ describe "Semantic: static array" do
 
   it "can match number type argument of static array (#1203)" do
     assert_type(%(
-      def fn(a : StaticArray(T, 10))
+      def fn(a : StaticArray(T, 10)) forall T
         10
       end
 
@@ -119,7 +119,7 @@ describe "Semantic: static array" do
 
   it "doesn't match other number type argument of static array (#1203)" do
     assert_error %(
-      def fn(a : StaticArray(T, 11))
+      def fn(a : StaticArray(T, 11)) forall T
         10
       end
 

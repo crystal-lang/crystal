@@ -5,9 +5,9 @@ describe "Code gen: alias" do
     run(%(
       require "prelude"
 
-      alias X = Array(X)
+      alias Alias = Array(Alias)
 
-      a = [] of X
+      a = [] of Alias
       b = a.map(&.to_s).join
       )).to_string.should eq("")
   end
@@ -16,9 +16,9 @@ describe "Code gen: alias" do
     run(%(
       require "prelude"
 
-      alias X = Nil | Array(X)
+      alias Alias = Nil | Array(Alias)
 
-      a = [] of X
+      a = [] of Alias
       b = a.map(&.to_s).join
       )).to_string.should eq("")
   end
@@ -27,9 +27,9 @@ describe "Code gen: alias" do
     run(%(
       require "prelude"
 
-      alias X = Nil | Array(X)
+      alias Alias = Nil | Array(Alias)
 
-      a = [] of X
+      a = [] of Alias
       b = a.map(&.to_s).join
       )).to_string.should eq("")
   end
@@ -78,9 +78,9 @@ describe "Code gen: alias" do
     result = semantic(%(
       alias Foo = Int32
 
-      module B
+      module Moo
         alias Bar = Foo
-        alias Foo = B
+        alias Foo = Moo
       end
       ))
     result.program.link_attributes
@@ -135,5 +135,43 @@ describe "Code gen: alias" do
         2
       end
       )).to_i.should eq(2)
+  end
+
+  it "overloads alias against generic (1) (#3261)" do
+    run(%(
+      class Foo(T)
+      end
+
+      alias FooString = Foo(String)
+
+      def take(foo : Foo(String))
+        1
+      end
+
+      def take(foo : FooString)
+        2
+      end
+
+      take(Foo(String).new)
+      ), inject_primitives: false).to_i.should eq(2)
+  end
+
+  it "overloads alias against generic (2) (#3261)" do
+    run(%(
+      class Foo(T)
+      end
+
+      alias FooString = Foo(String)
+
+      def take(foo : FooString)
+        2
+      end
+
+      def take(foo : Foo(String))
+        1
+      end
+
+      take(Foo(String).new)
+      ), inject_primitives: false).to_i.should eq(1)
   end
 end

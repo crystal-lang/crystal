@@ -9,7 +9,7 @@ describe "Semantic: generic class" do
       class Bar < Foo(T)
       end
       ),
-      "Foo is not a generic class, it's a class"
+      "Foo is not a generic type, it's a class"
   end
 
   it "errors if inheriting from generic and incorrect number of type vars" do
@@ -50,7 +50,7 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.t
-      )) { int32.metaclass }
+      ), inject_primitives: false) { int32.metaclass }
   end
 
   it "inhertis from generic with forwarding (2)" do
@@ -86,7 +86,7 @@ describe "Semantic: generic class" do
       )) { int32 }
   end
 
-  pending "inherits twice" do
+  it "inherits twice" do
     assert_type(%(
       class Foo
         def initialize
@@ -202,7 +202,7 @@ describe "Semantic: generic class" do
       class Bar < Foo(Int32)
       end
 
-      def foo(x : Foo(T))
+      def foo(x : Foo(T)) forall T
         T
       end
 
@@ -218,7 +218,7 @@ describe "Semantic: generic class" do
       class Bar(T) < Foo(T)
       end
 
-      def foo(x : Foo(T))
+      def foo(x : Foo(T)) forall T
         T
       end
 
@@ -345,16 +345,16 @@ describe "Semantic: generic class" do
 
   it "errors if using Number in alias" do
     assert_error %(
-      alias T = Number | String
-      T
+      alias Alias = Number | String
+      Alias
       ),
       "can't use Number in unions yet, use a more specific type"
   end
 
   it "errors if using Number in recursive alias" do
     assert_error %(
-      alias T = Number | Pointer(T)
-      T
+      alias Alias = Number | Pointer(Alias)
+      Alias
       ),
       "can't use Number in unions yet, use a more specific type"
   end
@@ -570,27 +570,6 @@ describe "Semantic: generic class" do
       )) { int64 }
   end
 
-  it "class doesn't conflict with generic type arg" do
-    assert_type(%(
-      class Foo(X)
-        def initialize(b : X)
-        end
-
-        def x
-          1
-        end
-      end
-
-      class Bar(Y)
-      end
-
-      class X
-      end
-
-      Foo.new(Bar(Int32).new).x
-      )) { int32 }
-  end
-
   it "inherits instance var type annotation from generic to concrete" do
     assert_type(%(
       class Foo(T)
@@ -802,6 +781,189 @@ describe "Semantic: generic class" do
 
       gen = Gen(Base.class).new
       gen.foo(Child || Child1)
+      )) { int32 }
+  end
+
+  it "can use virtual type for generic class" do
+    assert_type(%(
+      class Foo(T)
+        def foo
+          1
+        end
+      end
+
+      class Bar(T) < Foo(T)
+        def foo
+          'a'
+        end
+      end
+
+      class Baz
+        def initialize(@foo : Foo(Int32))
+        end
+
+        def foo
+          @foo.foo
+        end
+      end
+
+      baz = Baz.new(Bar(Int32).new)
+      baz.foo
+      )) { union_of int32, char }
+  end
+
+  it "recomputes on new subclass" do
+    assert_type(%(
+      class Foo(T)
+        def foo
+          1
+        end
+      end
+
+      class Bar(T) < Foo(T)
+        def foo
+          1
+        end
+      end
+
+      class Qux(T) < Bar(T)
+        def foo
+          'a'
+        end
+      end
+
+      class Baz
+        def initialize(@foo : Foo(Int32))
+        end
+
+        def foo
+          @foo.foo
+        end
+      end
+
+      baz = Baz.new(Bar(Int32).new)
+      baz.foo
+
+      baz = Baz.new(Qux(Int32).new)
+      baz.foo
+      )) { union_of(int32, char) }
+  end
+
+  it "types macro def with generic instance" do
+    assert_type(%(
+      class Reference
+        def foo
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class At
+      end
+
+      class Bt(T) < At
+      end
+
+      a = Pointer(At).malloc(1_u64)
+      a.value = Bt(Int32).new
+      a.value.foo
+      )) { string }
+  end
+
+  it "unifies generic metaclass types" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      Foo(Int32) || Bar(Int32)
+      )) { generic_class("Foo", int32).metaclass.virtual_type! }
+  end
+
+  it "doesn't crash when matching restriction against number literal (#3157)" do
+    assert_error %(
+      class Gen(T)
+        @value : String?
+
+        def initialize(@value : T)
+        end
+      end
+
+      Gen(3).new("a")
+      ),
+      "no overload matches"
+  end
+
+  it "doesn't crash when matching restriction against number literal (2) (#3157)" do
+    assert_error %(
+      class Cls(T)
+        @a : T?
+      end
+
+      Cls(3).new
+      ),
+      "expected type, not NumberLiteral"
+  end
+
+  it "replaces type parameters for virtual types (#3235)" do
+    assert_type(%(
+      abstract class Packet(T)
+      end
+
+      abstract class OutgoingPacket(T) < Packet(T)
+      end
+
+      class Client
+      end
+
+      class Connection(T)
+        def initialize
+          @packets = Array(OutgoingPacket(T)).new
+        end
+
+        def packets
+          @packets
+        end
+      end
+
+      Connection(Client).new.packets
+      )) { generic_class "Array", generic_class("OutgoingPacket", types["Client"]).virtual_type! }
+  end
+
+  it "nests generics with the same type var (#3297)" do
+    assert_type(%(
+      class Foo(A)
+        @a : A
+
+        def initialize(@a : A)
+        end
+
+        def a
+          @a
+        end
+
+        class Bar(A) < Foo(A)
+        end
+      end
+
+      Foo::Bar.new(:a).a
+      ), inject_primitives: false) { symbol }
+  end
+
+  it "restricts virtual generic instance type against generic (#3351)" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      class Sub < Gen(String)
+      end
+
+      def foo(x : Gen(String))
+        1
+      end
+
+      foo(Gen(String).new.as(Gen(String)))
       )) { int32 }
   end
 end

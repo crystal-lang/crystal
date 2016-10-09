@@ -57,8 +57,7 @@ class Logger
 
   alias Formatter = String, Time, String, String, IO ->
 
-  # :nodoc:
-  DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
+  private DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
     io << severity[0] << ", [" << datetime << " #" << Process.pid << "] "
     io << severity.rjust(5) << " -- " << progname << ": " << message
   end
@@ -83,10 +82,11 @@ class Logger
   # Calls the *close* method on the object passed to `initialize`
   def close
     return if @closed
+    return unless io = @io
     @closed = true
 
     @mutex.synchronize do
-      @io.close
+      io.close
     end
   end
 

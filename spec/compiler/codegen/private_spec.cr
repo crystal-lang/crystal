@@ -1,7 +1,7 @@
 require "../../spec_helper"
 require "tempfile"
 
-describe "Codegen: private def" do
+describe "Codegen: private" do
   it "codegens private def in same file" do
     compiler = Compiler.new
     sources = [
@@ -45,5 +45,17 @@ describe "Codegen: private def" do
     tempfile.close
 
     compiler.compile sources, output_filename
+  end
+
+  it "doesn't include filename for private types" do
+    run(%(
+      private class Foo
+        def foo
+          {{@type.stringify}}
+        end
+      end
+
+      Foo.new.foo
+      ), filename: "foo").to_string.should eq("Foo")
   end
 end

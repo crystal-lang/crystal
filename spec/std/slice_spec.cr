@@ -72,6 +72,11 @@ describe "Slice" do
     slice.to_s.should eq("Slice[1, 2, 3, 4]")
   end
 
+  it "does to_s for bytes" do
+    slice = Bytes[1, 2, 3]
+    slice.to_s.should eq("Bytes[1, 2, 3]")
+  end
+
   it "gets pointer" do
     slice = Slice.new(4, 0)
     expect_raises(IndexError) { slice.pointer(5) }
@@ -173,13 +178,13 @@ describe "Slice" do
     it "handles intersecting ranges" do
       # Test with ranges offset by 0 to 8 bytes
       (0..8).each do |offset|
-        buf = Slice.new(16) { |i| ('a'.ord + i).chr }
+        buf = Slice.new(16) { |i| 'a' + i }
         dst = buf[0, 8]
         src = buf[offset, 8]
 
         src.move_to(dst)
 
-        result = (0..7).map { |i| ('a'.ord + i + offset).chr }
+        result = (0..7).map { |i| 'a' + i + offset }
         dst.should eq(Slice.new(result.to_unsafe, result.size))
       end
     end
@@ -212,13 +217,13 @@ describe "Slice" do
     it "handles intersecting ranges" do
       # Test with ranges offset by 0 to 8 bytes
       (0..8).each do |offset|
-        buf = Slice.new(16) { |i| ('a'.ord + i).chr }
+        buf = Slice.new(16) { |i| 'a' + i }
         dst = buf[0, 8]
         src = buf[offset, 8]
 
         dst.move_from(src)
 
-        result = (0..7).map { |i| ('a'.ord + i + offset).chr }
+        result = (0..7).map { |i| 'a' + i + offset }
         dst.should eq(Slice.new(result.to_unsafe, result.size))
       end
     end

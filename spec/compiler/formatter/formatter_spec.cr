@@ -109,30 +109,11 @@ describe Crystal::Formatter do
     assert_format "#{keyword} a\n2; 3\nelse\n3\nend", "#{keyword} a\n  2; 3\nelse\n  3\nend"
   end
 
-  assert_format "ifdef a\n2\nend", "{% if flag?(:a) %}\n  2\n{% end %}"
-  assert_format "ifdef a\n2\n3\nend", "{% if flag?(:a) %}\n  2\n  3\n{% end %}"
-  assert_format "ifdef a\n2\nelse\nend", "{% if flag?(:a) %}\n  2\n{% else %}\n{% end %}"
-  assert_format "ifdef a\nelse\n2\nend", "{% if flag?(:a) %}\n{% else %}\n  2\n{% end %}"
-  assert_format "ifdef a\n2\nelse\n3\nend", "{% if flag?(:a) %}\n  2\n{% else %}\n  3\n{% end %}"
-  assert_format "ifdef a\n2\n3\nelse\n4\n5\nend", "{% if flag?(:a) %}\n  2\n  3\n{% else %}\n  4\n  5\n{% end %}"
-  assert_format "ifdef a\nifdef b\n3\nelse\n4\nend\nend", "{% if flag?(:a) %}\n  {% if flag?(:b) %}\n    3\n  {% else %}\n    4\n  {% end %}\n{% end %}"
-  assert_format "ifdef a\nifdef b\nelse\n4\nend\nend", "{% if flag?(:a) %}\n  {% if flag?(:b) %}\n  {% else %}\n    4\n  {% end %}\n{% end %}"
-  assert_format "ifdef a\n    # hello\n 2\nend", "{% if flag?(:a) %}\n  # hello\n  2\n{% end %}"
-  assert_format "ifdef a\n2; 3\nelse\n3\nend", "{% if flag?(:a) %}\n  2; 3\n{% else %}\n  3\n{% end %}"
-
   assert_format "if 1\n2\nelsif\n3\n4\nend", "if 1\n  2\nelsif 3\n  4\nend"
   assert_format "if 1\n2\nelsif\n3\n4\nelsif 5\n6\nend", "if 1\n  2\nelsif 3\n  4\nelsif 5\n  6\nend"
   assert_format "if 1\n2\nelsif\n3\n4\nelse\n6\nend", "if 1\n  2\nelsif 3\n  4\nelse\n  6\nend"
 
-  assert_format "ifdef a\n2\nelsif b\n4\nend", "{% if flag?(:a) %}\n  2\n{% elsif flag?(:b) %}\n  4\n{% end %}"
-  assert_format "ifdef !a\n2\nend", "{% if !flag?(:a) %}\n  2\n{% end %}"
-  assert_format "ifdef a && b\n2\nend", "{% if flag?(:a) && flag?(:b) %}\n  2\n{% end %}"
-  assert_format "ifdef a || b\n2\nend", "{% if flag?(:a) || flag?(:b) %}\n  2\n{% end %}"
-
   assert_format "{% if 1 %}\n  2\n{% end %}\ndef foo\nend"
-
-  assert_format "1 ifdef a", "{% if flag?(:a) %}\n  1\n{% end %}"
-  assert_format "1 ifdef a\n2", "{% if flag?(:a) %}\n  1\n{% end %}\n2"
 
   assert_format "if 1\n2\nend\nif 3\nend", "if 1\n  2\nend\nif 3\nend"
   assert_format "if 1\nelse\n2\nend\n3", "if 1\nelse\n  2\nend\n3"
@@ -189,6 +170,7 @@ describe Crystal::Formatter do
   assert_format "def %(x)\n  1\nend"
   assert_format "def `(x)\n  1\nend"
   assert_format "def /(x)\n  1\nend"
+  assert_format "def foo(x : X)  forall   X ,   Y; end", "def foo(x : X) forall X, Y\nend"
 
   assert_format "foo"
   assert_format "foo()"
@@ -384,7 +366,6 @@ describe Crystal::Formatter do
 
   assert_format "@a", "@a"
   assert_format "@@a", "@@a"
-  assert_format "$a", "$a"
   assert_format "$~", "$~"
   assert_format "$~.bar", "$~.bar"
   assert_format "$~ = 1", "$~ = 1"
@@ -499,6 +480,8 @@ describe Crystal::Formatter do
   assert_format "def foo\n1\nensure\n2\nend", "def foo\n  1\nensure\n  2\nend"
   assert_format "class Foo\ndef foo\n1\nensure\n2\nend\nend", "class Foo\n  def foo\n    1\n  ensure\n    2\n  end\nend"
   assert_format "def run\n\nrescue\n  2\n  3\nend"
+
+  assert_format "def foo(@x)\n\nrescue\nend"
 
   assert_format "macro foo\nend"
   assert_format "macro foo()\nend", "macro foo\nend"
@@ -829,6 +812,10 @@ describe Crystal::Formatter do
   assert_format "  <<-HTML\n  \#{1} \#{2}\n  HTML", "<<-HTML\n\#{1} \#{2}\nHTML"
   assert_format "  <<-HTML\n  foo\nHTML", "<<-HTML\nfoo\nHTML"
 
+  assert_format "<<-HTML\n  hello \n  HTML"
+  assert_format "<<-HTML\n  hello \n  world   \n  HTML"
+  assert_format "  <<-HTML\n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
+
   assert_format "#!shebang\n1 + 2"
 
   assert_format "   {{\n1 + 2 }}", "{{\n  1 + 2\n}}"
@@ -980,4 +967,5 @@ describe Crystal::Formatter do
   assert_format %(foo("b\#{1}" \\\n"baz")), %(foo("b\#{1}" \\\n    "baz"))
 
   assert_format "foo(A |\nB |\nC)", "foo(A |\n    B |\n    C)"
+  assert_format "def foo\n  case x\n  # z\n  when 1\n  end\nend"
 end

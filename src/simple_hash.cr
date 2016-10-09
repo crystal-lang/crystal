@@ -98,14 +98,14 @@ struct SimpleHash(K, V)
   # h.reject { |k, v| k > "a" } # => {"a" => 100}
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
-  def reject(&block : K, V -> U)
+  def reject(&block : K, V -> _)
     each_with_object(SimpleHash(K, V).new) do |memo, k, v|
       memo[k] = v unless yield k, v
     end
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather that returning a new one. Returns nil if no changes were made.
-  def reject!(&block : K, V -> U)
+  def reject!(&block : K, V -> _)
     num_entries = size
     each do |key, value|
       delete(key) if yield(key, value)
@@ -119,12 +119,12 @@ struct SimpleHash(K, V)
   # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
   # h.select { |k, v| v < 200 } # => {"a" => 100}
   # ```
-  def select(&block : K, V -> U)
+  def select(&block : K, V -> _)
     reject { |k, v| !yield(k, v) }
   end
 
   # Equivalent to `Hash#select` but makes modification on the current object rather that returning a new one. Returns nil if no changes were made
-  def select!(&block : K, V -> U)
+  def select!(&block : K, V -> _)
     reject! { |k, v| !yield(k, v) }
   end
 

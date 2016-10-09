@@ -339,7 +339,7 @@ describe "Semantic: closure" do
 
   it "transforms block to proc literal with free var" do
     assert_type("
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block.call(1)
       end
 
@@ -351,7 +351,7 @@ describe "Semantic: closure" do
 
   it "transforms block to proc literal without arguments" do
     assert_type("
-      def foo(&block : -> U)
+      def foo(&block : -> U) forall U
         block.call
       end
 
@@ -376,7 +376,7 @@ describe "Semantic: closure" do
 
   it "allows giving less block args when transforming block to proc literal" do
     assert_type("
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block.call(1)
       end
 
@@ -430,7 +430,7 @@ describe "Semantic: closure" do
   it "lookups return type in correct scope" do
     assert_type("
       module Mod
-        def foo(&block : Int32 -> T)
+        def foo(&block : Int32 -> T) forall T
           block
         end
       end

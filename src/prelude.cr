@@ -20,6 +20,7 @@ require "string"
 
 # Alpha-sorted list
 require "array"
+require "atomic"
 require "bool"
 require "box"
 require "char"

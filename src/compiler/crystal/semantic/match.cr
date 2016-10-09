@@ -48,7 +48,10 @@ module Crystal
 
     getter? strict : Bool
 
-    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @strict = false)
+    # Def free variables, unbound (`def (X, Y) ...`)
+    property def_free_vars : Array(String)?
+
+    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @strict = false, @def_free_vars = nil)
     end
 
     def get_free_var(name)
@@ -58,6 +61,11 @@ module Crystal
     def set_free_var(name, type)
       free_vars = @free_vars ||= {} of String => TypeVar
       free_vars[name] = type
+    end
+
+    def has_def_free_var?(name)
+      return false if get_free_var(name)
+      !!(@def_free_vars.try &.includes?(name))
     end
 
     # Returns the type that corresponds to using `self` when looking
@@ -84,7 +92,7 @@ module Crystal
     end
 
     def clone
-      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @strict)
+      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @strict, @def_free_vars.dup)
     end
   end
 

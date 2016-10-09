@@ -20,6 +20,22 @@ class Crystal::ASTNode
   end
 end
 
+class Crystal::Path
+  def raise_undefined_constant(type)
+    private_const = type.lookup_path(self, include_private: true)
+    if private_const
+      self.raise("private constant #{private_const} referenced")
+    end
+
+    similar_name = type.lookup_similar_path(self)
+    if similar_name
+      self.raise("undefined constant #{self} #{type.program.colorize("(did you mean '#{similar_name}')").yellow.bold}")
+    else
+      self.raise("undefined constant #{self}")
+    end
+  end
+end
+
 class Crystal::Call
   def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil)
     # Special case: Foo+:Class#new
@@ -63,7 +79,7 @@ class Crystal::Call
     if defs.empty?
       check_macro_wrong_number_of_arguments(def_name)
 
-      owner_trace = obj.try &.find_owner_trace(owner)
+      owner_trace = obj.try &.find_owner_trace(owner.program, owner)
       similar_name = owner.lookup_similar_def_name(def_name, self.args.size, block)
 
       error_msg = String.build do |msg|
@@ -99,7 +115,7 @@ class Crystal::Call
 
         # Check if it's an instance variable that was never assigned a value
         if obj.is_a?(InstanceVar)
-          scope = self.scope.as(InstanceVarContainer)
+          scope = self.scope
           ivar = scope.lookup_instance_var(obj.name)
           deps = ivar.dependencies?
           if deps && deps.size == 1 && deps.first.same?(program.nil_var)
@@ -197,7 +213,7 @@ class Crystal::Call
     end
 
     if args.size == 1 && args.first.type.includes_type?(program.nil)
-      owner_trace = args.first.find_owner_trace(program.nil)
+      owner_trace = args.first.find_owner_trace(program, program.nil)
     end
 
     arg_names = [] of Array(String)
@@ -340,7 +356,7 @@ class Crystal::Call
     named_args_types = NamedArgumentType.from_args(named_args)
     signature = CallSignature.new(def_name, args.map(&.type), block, named_args_types)
     defs.each do |a_def|
-      context = MatchContext.new(owner, a_def.owner)
+      context = MatchContext.new(owner, a_def.owner, def_free_vars: a_def.free_vars)
       match = signature.match(DefWithMetadata.new(a_def), context)
       next unless match
 

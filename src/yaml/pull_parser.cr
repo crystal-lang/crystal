@@ -4,6 +4,7 @@ class YAML::PullParser
   def initialize(@content : String | IO)
     @parser = Pointer(Void).malloc(LibYAML::PARSER_SIZE).as(LibYAML::Parser*)
     @event = LibYAML::Event.new
+    @closed = false
 
     LibYAML.yaml_parser_initialize(@parser)
 
@@ -22,6 +23,11 @@ class YAML::PullParser
 
     read_next
     parse_exception "Expected STREAM_START" unless kind == LibYAML::EventType::STREAM_START
+  end
+
+  def self.new(content)
+    parser = new(content)
+    yield parser ensure parser.close
   end
 
   def kind
@@ -245,16 +251,23 @@ class YAML::PullParser
   end
 
   def problem_mark
-    @parser.as(LibYAML::InternalParser*).value.problem_mark
+    @parser.value.problem_mark
   end
 
   private def problem?
-    @parser.as(LibYAML::InternalParser*).value.problem
+    @parser.value.problem
+  end
+
+  def finalize
+    return if @closed
+
+    LibYAML.yaml_parser_delete(@parser)
+    LibYAML.yaml_event_delete(pointerof(@event))
   end
 
   def close
-    LibYAML.yaml_parser_delete(@parser)
-    LibYAML.yaml_event_delete(pointerof(@event))
+    finalize
+    @closed = true
   end
 
   private def expect_kind(kind)

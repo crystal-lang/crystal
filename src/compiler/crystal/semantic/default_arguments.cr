@@ -96,6 +96,7 @@ class Crystal::Def
     expansion.yields = yields
     expansion.location = location
     expansion.raises = raises?
+    expansion.free_vars = free_vars
     if owner = self.owner?
       expansion.owner = owner
     end
@@ -127,7 +128,7 @@ class Crystal::Def
             # a temporary variable (tmp_var) and then replace all ocurrences of that free var with typeof(tmp_var)
             # to achieve the same effect, since we can't define a type alias inside a method.
             restriction = arg.restriction
-            if restriction.is_a?(Path) && restriction.names.size == 1 && Parser.free_var_name?(restriction.names.first)
+            if restriction.is_a?(Path) && restriction.names.size == 1 && (Parser.free_var_name?(restriction.names.first) || free_vars.try(&.includes?(restriction.names.first)))
               restriction_name = program.new_temp_var_name
               new_body << Assign.new(Var.new(restriction_name), Var.new(arg.name))
               body = body.transform(ReplaceFreeVarTransformer.new(restriction.names.first, restriction_name))

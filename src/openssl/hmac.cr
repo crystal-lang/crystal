@@ -8,7 +8,6 @@ class OpenSSL::HMAC
           when :md4       then LibCrypto.evp_md4
           when :md5       then LibCrypto.evp_md5
           when :ripemd160 then LibCrypto.evp_ripemd160
-          when :sha       then LibCrypto.evp_sha
           when :sha1      then LibCrypto.evp_sha1
           when :sha224    then LibCrypto.evp_sha224
           when :sha256    then LibCrypto.evp_sha256

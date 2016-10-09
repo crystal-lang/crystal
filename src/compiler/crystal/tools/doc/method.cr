@@ -140,6 +140,11 @@ class Crystal::Doc::Method
       @type.type_to_html return_type, io, links: links
     end
 
+    if free_vars = @def.free_vars
+      io << " forall "
+      free_vars.join(", ", io)
+    end
+
     io
   end
 

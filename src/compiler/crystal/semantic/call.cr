@@ -179,7 +179,7 @@ class Crystal::Call
     lookup_matches_in program, arg_types, named_args_types, search_in_parents: search_in_parents
   end
 
-  def lookup_matches_in(owner : NonGenericModuleType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true)
+  def lookup_matches_in(owner : NonGenericModuleType | GenericModuleInstanceType | GenericType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true)
     attach_subclass_observer owner
 
     including_types = owner.including_types
@@ -187,17 +187,6 @@ class Crystal::Call
       lookup_matches_in(including_types, arg_types, named_args_types, search_in_parents: search_in_parents)
     else
       [] of Def
-    end
-  end
-
-  def lookup_matches_in(owner : GenericClassType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true)
-    including_types = owner.including_types
-    if including_types
-      attach_subclass_observer owner
-
-      lookup_matches_in(including_types, arg_types, named_args_types, search_in_parents: search_in_parents)
-    else
-      raise "no type inherits #{owner}"
     end
   end
 
@@ -467,15 +456,22 @@ class Crystal::Call
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
     arg = args.first
-    if arg.is_a?(SymbolLiteral)
+
+    case arg # TODO: use || after 0.19
+    when SymbolLiteral
       name = arg.value
+    when StringLiteral
+      name = arg.value
+    end
+
+    if name
       index = instance_type.name_index(name)
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       else
-        raise "missing key '#{arg.value}' for named tuple #{owner}"
+        raise "missing key '#{name}' for named tuple #{owner}"
       end
     end
     nil
@@ -552,6 +548,7 @@ class Crystal::Call
 
     # TODO: do this better
     lookup = enclosing_def.owner
+
     case lookup
     when VirtualType
       parents = lookup.base_type.ancestors
@@ -561,11 +558,11 @@ class Crystal::Call
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericModuleType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(IncludedGenericModule) && ancestor.module == lookup }.not_nil!
+      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == lookup }.not_nil!
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(InheritedGenericClass) && ancestor.extended_class == lookup }
+      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(GenericClassInstanceType) && ancestor.generic_type == lookup }
       if index_of_ancestor
         parents = ancestors[index_of_ancestor + 1..-1]
       else
@@ -600,7 +597,7 @@ class Crystal::Call
     previous = previous_item.def
 
     signature = CallSignature.new(previous.name, arg_types, block, named_args_types)
-    context = MatchContext.new(scope, scope)
+    context = MatchContext.new(scope, scope, def_free_vars: previous.free_vars)
     match = Match.new(previous, arg_types, context, named_args_types)
     matches = Matches.new([match] of Match, true)
 
@@ -748,7 +745,9 @@ class Crystal::Call
         fun_args = [] of Arg
       end
 
-      if output.is_a?(ASTNode) && !output.is_a?(Underscore)
+      if match.def.free_var?(output)
+        # Nothing, output is a free variable
+      elsif output.is_a?(ASTNode) && !output.is_a?(Underscore)
         output_type = lookup_node_type?(match.context, output)
         if output_type
           output_type = program.nil if output_type.void?
@@ -789,6 +788,7 @@ class Crystal::Call
         block_arg_type = fun_literal_type
         block_type = fun_literal_type.as(ProcInstanceType).return_type
         if output
+          match.context.def_free_vars = match.def.free_vars
           matched = block_type.restrict(output, match.context)
           if !matched && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
@@ -807,7 +807,7 @@ class Crystal::Call
         end
       else
         if output
-          if output.is_a?(ASTNode) && !output.is_a?(Underscore)
+          if !match.def.free_var?(output) && output.is_a?(ASTNode) && !output.is_a?(Underscore)
             output_type = lookup_node_type(match.context, output).virtual_type
             output_type = program.nil if output_type.void?
             block.type = output_type
@@ -836,7 +836,7 @@ class Crystal::Call
       # and we delay it if possible.
       if output
         if !block.type?
-          if output.is_a?(ASTNode) && !output.is_a?(Underscore)
+          if !match.def.free_var?(output) && output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
               block_type = lookup_node_type(match.context, output).virtual_type
               block_type = program.nil if block_type.void?
@@ -848,6 +848,7 @@ class Crystal::Call
           end
         else
           block_type = block.type
+          match.context.def_free_vars = match.def.free_vars
           matched = block_type.restrict(output, match.context)
           if (!matched || (matched && !block_type.implements?(matched))) && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore)
@@ -1043,12 +1044,12 @@ class Crystal::Call
     {typed_def, args}
   end
 
-  def attach_subclass_observer(type : SubclassObservable)
-    if (subclass_notifier = @subclass_notifier).is_a?(SubclassObservable)
-      subclass_notifier.remove_subclass_observer(self)
+  def attach_subclass_observer(type : Type)
+    if subclass_notifier = @subclass_notifier
+      subclass_notifier.as(SubclassObservable).remove_subclass_observer(self)
     end
 
-    type.add_subclass_observer(self)
+    type.as(SubclassObservable).add_subclass_observer(self)
     @subclass_notifier = type
   end
 

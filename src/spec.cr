@@ -66,16 +66,14 @@ require "signal"
 # crystal spec spec/my/test/file_spec.cr:14
 # ```
 module Spec
-  # :nodoc:
-  COLORS = {
+  private COLORS = {
     success: :green,
     fail:    :red,
     error:   :red,
     pending: :yellow,
   }
 
-  # :nodoc:
-  LETTERS = {
+  private LETTERS = {
     success: '.',
     fail:    'F',
     error:   'E',
@@ -271,6 +269,13 @@ OptionParser.parse! do |opts|
   opts.on("--no-color", "Disable colored output") do
     Spec.use_colors = false
   end
+  opts.unknown_args do |args|
+  end
+end
+
+unless ARGV.empty?
+  puts "Error: unknown argument '#{ARGV.first}'"
+  exit 1
 end
 
 Signal::INT.trap { Spec.abort! }

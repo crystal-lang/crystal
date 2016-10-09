@@ -266,10 +266,6 @@ module Crystal
             else
               atomic = ExceptionHandler.new(atomic, ensure: ensure_body).at(location).tap { |e| e.suffix = true }
             end
-          when :ifdef
-            next_token_skip_statement_end
-            exp = parse_flags_or
-            atomic = IfDef.new(exp, atomic).at(location)
           else
             break
           end
@@ -396,7 +392,7 @@ module Crystal
           if atomic.is_a?(Call) && atomic.name != "[]" && !@def_vars.last.includes?(atomic.name)
             raise "'#{@token.type}' before definition of '#{atomic.name}'"
 
-            atomic = Var.new(atomic.name)
+            atomic = Var.new(atomic.name).at(location)
           end
 
           push_var atomic
@@ -704,7 +700,11 @@ module Crystal
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
-              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, name_column_number: name_column_number), method, [value] of ASTNode, name_column_number: name_column_number)] of ASTNode, name_column_number: name_column_number).at(location)
+              atomic = Call.new(atomic, "#{name}=", [
+                Call.new(
+                  Call.new(atomic.clone, name, name_column_number: name_column_number).at(location),
+                  method, [value] of ASTNode, name_column_number: name_column_number).at(location),
+              ] of ASTNode, name_column_number: name_column_number).at(location)
               next
             when :"||="
               # Rewrite 'f.x ||= value' as 'f.x || f.x=(value)'
@@ -935,7 +935,7 @@ module Crystal
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :GLOBAL
-        new_node_check_type_declaration Global
+        raise "$global_variables are not supported, use @@class_variables instead"
       when :"$~", :"$?"
         location = @token.location
         var = Var.new(@token.to_s).at(location)
@@ -1034,8 +1034,6 @@ module Crystal
           check_type_declaration { parse_select }
         when :if
           check_type_declaration { parse_if }
-        when :ifdef
-          check_type_declaration { parse_ifdef }
         when :unless
           check_type_declaration { parse_unless }
         when :include
@@ -1549,7 +1547,7 @@ module Crystal
       end
       skip_statement_end
 
-      body = parse_expressions
+      body = push_visbility { parse_expressions }
 
       end_location = token_end_location
       check_ident :end
@@ -1581,10 +1579,6 @@ module Crystal
             next_token
           end
           type_var_name = check_const
-
-          unless Parser.free_var_name?(type_var_name)
-            raise "type variables can only be single letters optionally followed by a digit", @token
-          end
 
           if type_vars.includes? type_var_name
             raise "duplicated type var name: #{type_var_name}", @token
@@ -1624,7 +1618,7 @@ module Crystal
       type_vars, splat_index = parse_type_vars
       skip_statement_end
 
-      body = parse_expressions
+      body = push_visbility { parse_expressions }
 
       end_location = token_end_location
       check_ident :end
@@ -1760,6 +1754,9 @@ module Crystal
 
       if @token.type == :","
         next_token_skip_space_or_newline
+      else
+        skip_space_or_newline
+        check :")"
       end
 
       Arg.new name, restriction: type
@@ -2102,7 +2099,7 @@ module Crystal
       open("array literal") do
         next_token_skip_space_or_newline
         while @token.type != :"]"
-          exps << parse_expression
+          exps << parse_op_assign_no_control
           end_location = token_end_location
           skip_space
           if @token.type == :NEWLINE
@@ -2114,6 +2111,10 @@ module Crystal
           if @token.type == :","
             slash_is_regex!
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :"]"
+            break
           end
         end
         next_token_skip_space
@@ -2148,7 +2149,7 @@ module Crystal
           end
           return parse_named_tuple(location)
         else
-          first_key = parse_op_assign
+          first_key = parse_op_assign_no_control
           case @token.type
           when :":"
             if first_key.is_a?(StringLiteral)
@@ -2194,10 +2195,13 @@ module Crystal
           if @token.type == :","
             slash_is_regex!
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :"}"
           end
 
           while @token.type != :"}"
-            key = parse_op_assign
+            key = parse_op_assign_no_control
             skip_space_or_newline
             if @token.type == :":" && key.is_a?(StringLiteral)
               # Nothing: it's a string key
@@ -2216,6 +2220,10 @@ module Crystal
             if @token.type == :","
               slash_is_regex!
               next_token_skip_space_or_newline
+            else
+              skip_space_or_newline
+              check :"}"
+              break
             end
           end
           end_location = token_end_location
@@ -2241,10 +2249,14 @@ module Crystal
       open("tuple literal", location) do
         exps << first_exp
         while @token.type != :"}"
-          exps << parse_expression
+          exps << parse_op_assign_no_control
           skip_space_or_newline
           if @token.type == :","
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :"}"
+            break
           end
         end
         end_location = token_end_location
@@ -2316,7 +2328,7 @@ module Crystal
           slash_is_regex!
           next_token_skip_space
 
-          value = parse_op_assign
+          value = parse_op_assign_no_control
           skip_space
 
           entries << NamedTupleLiteral::Entry.new(key, value)
@@ -3207,6 +3219,12 @@ module Crystal
         end_location = return_type.end_location
       end
 
+      skip_space
+      if @token.keyword?("forall")
+        next_token_skip_space
+        free_vars = parse_def_free_vars
+      end
+
       if is_abstract
         body = Nop.new
       else
@@ -3238,7 +3256,7 @@ module Crystal
       @doc_enabled = !!@wants_doc
       pop_def
 
-      node = Def.new name, args, body, receiver, block_arg, return_type, (is_macro_def || @is_macro_def), @yields, is_abstract, splat_index, double_splat: double_splat
+      node = Def.new name, args, body, receiver, block_arg, return_type, (is_macro_def || @is_macro_def), @yields, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
       node.name_column_number = name_column_number
       set_visibility node
       node.end_location = end_location
@@ -3255,6 +3273,23 @@ module Crystal
       if @token.type == :"!"
         raise "'!' is a pseudo-method and can't be redefined", @token
       end
+    end
+
+    def parse_def_free_vars
+      free_vars = [] of String
+      while true
+        check :CONST
+        free_vars << @token.value.to_s
+
+        next_token_skip_space
+        if @token.type == :","
+          next_token_skip_space
+          check :CONST
+        else
+          break
+        end
+      end
+      free_vars
     end
 
     def compute_block_arg_yields(block_arg)
@@ -3557,77 +3592,6 @@ module Crystal
       Unless.new(cond, a_then, a_else).at_end(end_location)
     end
 
-    def parse_ifdef(check_end = true, mode = :normal)
-      next_token_skip_space_or_newline
-
-      cond = parse_flags_or
-      skip_statement_end
-
-      a_then = parse_ifdef_body(mode)
-      skip_statement_end
-
-      a_else = nil
-      if @token.type == :IDENT
-        case @token.value
-        when :else
-          next_token_skip_statement_end
-          a_else = parse_ifdef_body(mode)
-        when :elsif
-          a_else = parse_ifdef check_end: false, mode: mode
-        end
-      end
-
-      end_location = token_end_location
-
-      if check_end
-        check_ident :end
-        next_token_skip_space
-      end
-
-      IfDef.new(cond, a_then, a_else).at_end(end_location)
-    end
-
-    def parse_ifdef_body(mode)
-      case mode
-      when :lib
-        parse_lib_body_expressions
-      when :struct_or_union
-        parse_c_struct_or_union_body_expressions
-      else
-        parse_expressions
-      end
-    end
-
-    parse_operator :flags_or, :flags_and, "Or.new left, right", ":\"||\""
-    parse_operator :flags_and, :flags_atomic, "And.new left, right", ":\"&&\""
-
-    def parse_flags_atomic
-      case @token.type
-      when :"("
-        next_token_skip_space
-        if @token.type == :")"
-          raise "unexpected token: #{@token}"
-        end
-
-        atomic = parse_flags_or
-        skip_space
-
-        check :")"
-        next_token_skip_space
-
-        atomic
-      when :"!"
-        next_token_skip_space
-        Not.new(parse_flags_atomic)
-      when :IDENT
-        str = @token.to_s
-        next_token_skip_space
-        Var.new(str)
-      else
-        raise "unexpected token: #{@token}"
-      end
-    end
-
     def set_visibility(node)
       if visibility = @visibility
         node.visibility = visibility
@@ -3898,6 +3862,7 @@ module Crystal
       yield
 
       end_location = token_end_location
+      slash_is_not_regex!
       next_token_skip_space
 
       Block.new(block_args, block_body, splat_index).at(location).at_end(end_location)
@@ -4226,11 +4191,13 @@ module Crystal
       names << @token.value.to_s
       end_location = token_end_location
 
+      @wants_regex = false
       next_token
       while @token.type == :"::"
         next_token_skip_space_or_newline
         names << check_const
         end_location = token_end_location
+        @wants_regex = false
         next_token
       end
 
@@ -4831,7 +4798,7 @@ module Crystal
       name_column_number = @token.column_number
       next_token_skip_statement_end
 
-      body = parse_lib_body_expressions
+      body = push_visbility { parse_lib_body_expressions }
 
       check_ident :end
       next_token_skip_space
@@ -4880,8 +4847,6 @@ module Crystal
           parse_c_struct_or_union union: true
         when :enum
           parse_enum_def
-        when :ifdef
-          parse_ifdef check_end: true, mode: :lib
         else
           unexpected_token
         end
@@ -5119,8 +5084,6 @@ module Crystal
         case @token.type
         when :IDENT
           case @token.value
-          when :ifdef
-            exps << parse_ifdef(mode: :struct_or_union)
           when :include
             if @inside_c_struct
               location = @token.location
@@ -5446,6 +5409,14 @@ module Crystal
 
       name = name.to_s
       name == "self" || @def_vars.last.includes?(name)
+    end
+
+    def push_visbility
+      old_visibility = @visibility
+      @visibility = nil
+      value = yield
+      @visibility = old_visibility
+      value
     end
 
     def self.free_var_name?(name)

@@ -288,4 +288,13 @@ describe "Code gen: named tuple" do
       NamedTuple(x: Nil, y: Int32).foo
       )).to_string.should eq("NamedTupleLiteral")
   end
+
+  it "assigns two same-size named tuple types to a same var (#3132)" do
+    run(%(
+      t = {x: true}
+      t
+      t = {x: 2}
+      t[:x]
+      )).to_i.should eq(2)
+  end
 end

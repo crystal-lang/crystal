@@ -72,10 +72,10 @@ describe "Semantic: class" do
     foo = mod.types["Foo"].as(GenericClassType)
 
     node[1].type.should eq(foo.instantiate([mod.int32] of TypeVar))
-    node[1].type.as(InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.nilable(mod.int32))
+    node[1].type.instance_vars["@coco"].type.should eq(mod.nilable(mod.int32))
 
     node[3].type.should eq(foo.instantiate([mod.float64] of TypeVar))
-    node[3].type.as(InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.nilable(mod.float64))
+    node[3].type.instance_vars["@coco"].type.should eq(mod.nilable(mod.float64))
   end
 
   it "types instance variable on getter" do
@@ -585,7 +585,7 @@ describe "Semantic: class" do
 
   it "types bug #168 (it inherits instance var even if not mentioned in initialize)" do
     assert_error "
-      class A
+      class Foo
         def foo
           x = @x
           if x
@@ -596,14 +596,14 @@ describe "Semantic: class" do
         end
       end
 
-      class B < A
-        def initialize(@x : A)
+      class Bar < Foo
+        def initialize(@x : Foo)
         end
       end
 
-      B.new(A.new).foo
+      Bar.new(Foo.new).foo
       ",
-      "Can't infer the type of instance variable '@x' of A"
+      "Can't infer the type of instance variable '@x' of Foo"
   end
 
   it "doesn't mark instance variable as nilable if calling another initialize" do
@@ -705,10 +705,14 @@ describe "Semantic: class" do
           1
         end
 
-        $x = self.foo.as(Int32)
+        @@x = self.foo.as(Int32)
+
+        def self.x
+          @@x
+        end
       end
 
-      $x
+      Foo.x
       )) { int32 }
   end
 
@@ -725,20 +729,6 @@ describe "Semantic: class" do
       Bar.new
       ),
       "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
-  end
-
-  it "instantiates types inferring generic type when there a type argument has the same name as an existing type" do
-    assert_type(%(
-      class B
-      end
-
-      class Foo(B)
-        def initialize(x : B)
-        end
-      end
-
-      Foo.new(0)
-      )) { generic_class "Foo", int32 }
   end
 
   it "doesn't error on new on abstract virtual type class" do
@@ -950,13 +940,13 @@ describe "Semantic: class" do
       class Baz
       end
 
-      class A::Baz::B
+      class Moo::Baz::B
         def self.foo
           1
         end
       end
 
-      A::Baz::B.foo
+      Moo::Baz::B.foo
       )) { int32 }
   end
 
@@ -1040,5 +1030,25 @@ describe "Semantic: class" do
       ")
     instance_vars = result.program.types["Foo"].instance_vars.to_a.map(&.[0])
     instance_vars.should eq(%w(@x @y))
+  end
+
+  it "errors if inherits from module" do
+    assert_error %(
+      module Moo
+      end
+
+      class Foo < Moo
+      end
+      ),
+      "Moo is not a class, it's a module"
+  end
+
+  it "can use short name for top-level type" do
+    assert_type(%(
+      class T
+      end
+
+      T.new
+      )) { types["T"] }
   end
 end

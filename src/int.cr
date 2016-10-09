@@ -78,18 +78,80 @@ struct Int
     self ^ -1
   end
 
-  def /(x : Int)
-    if x == 0
+  # Divides `self` by *other* using floored division.
+  #
+  # In floored division, given two integers x and y:
+  # * q = x / y is rounded toward negative infinity
+  # * r = x % y has the sign of the second argument
+  # * x == q*y + r
+  #
+  # For example:
+  #
+  # ```text
+  #  x     y     x / y     x % y
+  #  5     3       1         2
+  # -5     3      -2         1
+  #  5    -3      -2        -1
+  # -5    -3       1        -2
+  # ```
+  #
+  # Raises if *other* is zero, or if *other* is -1 and
+  # `self` is signed and is the minimum value for that
+  # integer type.
+  def /(other : Int)
+    check_div_argument other
+
+    div = unsafe_div other
+    mod = unsafe_mod other
+    div -= 1 if other > 0 ? mod < 0 : mod > 0
+    div
+  end
+
+  # Divides `self` by *other* using truncated division.
+  #
+  # In truncated division, given two integers x and y:
+  # * q = x.tdiv(y) is rounded toward zero
+  # * r = x.remainder(y) has the sign of the first argument
+  # * x == q*y + r
+  #
+  # For example:
+  #
+  # ```text
+  #  x     y     x / y     x % y
+  #  5     3       1         2
+  # -5     3      -1        -2
+  #  5    -3      -1         2
+  # -5    -3       1        -2
+  # ```
+  #
+  # Raises if *other* is zero, or if *other* is -1 and
+  # `self` is signed and is the minimum value for that
+  # integer type.
+  def tdiv(other : Int)
+    check_div_argument other
+
+    unsafe_div other
+  end
+
+  private def check_div_argument(other)
+    if other == 0
       raise DivisionByZero.new
     end
 
-    unsafe_div x
+    {% begin %}
+      if self < 0 && self == {{@type}}::MIN && other == -1
+        raise ArgumentError.new "overflow: {{@type}}::MIN / -1"
+      end
+    {% end %}
   end
 
   def fdiv(other)
     to_f / other
   end
 
+  # Returns `self` modulo *other*.
+  #
+  # This uses floored division. See `Int#/` for more details.
   def %(other : Int)
     if other == 0
       raise DivisionByZero.new
@@ -101,6 +163,9 @@ struct Int
     end
   end
 
+  # Returns `self` remainder *other*.
+  #
+  # This uses truncated division. See `Int#div` for more details.
   def remainder(other : Int)
     if other == 0
       raise DivisionByZero.new
@@ -189,8 +254,14 @@ struct Int
       raise ArgumentError.new "cannot raise an integer to a negative integer power, use floats for that"
     end
 
-    # TODO: this can probably be optimized by not using float pow
-    self.class.new(to_f ** exponent)
+    result = self.class.new(1)
+    k = self
+    while exponent > 0
+      result *= k if exponent & 0b1 != 0
+      k *= k
+      exponent = exponent.unsafe_shr(1)
+    end
+    result
   end
 
   # Returns the value of raising *self* to the power of *exponent*.
@@ -311,12 +382,9 @@ struct Int
     self % other
   end
 
-  # :nodoc:
-  DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
-  # :nodoc:
-  DIGITS_UPCASE = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  # :nodoc:
-  DIGITS_BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  private DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
+  private DIGITS_UPCASE = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  private DIGITS_BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
   def to_s
     to_s(10)
@@ -373,7 +441,7 @@ struct Int
     while num != 0
       ptr -= 1
       ptr.value = digits[num.remainder(base).abs]
-      num /= base
+      num = num.tdiv(base)
     end
 
     if neg
@@ -407,8 +475,7 @@ struct Int
   # ```
   abstract def popcount
 
-  # :nodoc:
-  class TimesIterator(T)
+  private class TimesIterator(T)
     include Iterator(T)
 
     @n : T
@@ -433,8 +500,7 @@ struct Int
     end
   end
 
-  # :nodoc:
-  class UptoIterator(T, N)
+  private class UptoIterator(T, N)
     include Iterator(T)
 
     @from : T
@@ -461,8 +527,7 @@ struct Int
     end
   end
 
-  # :nodoc:
-  class DowntoIterator(T, N)
+  private class DowntoIterator(T, N)
     include Iterator(T)
 
     @from : T

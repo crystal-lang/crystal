@@ -281,13 +281,31 @@ describe "Semantic: cast" do
 
   it "can cast from Void* to virtual type (#3014)" do
     assert_type(%(
-      abstract class A
+      abstract class Foo
       end
 
-      class B < A
+      class Bar < Foo
       end
 
-      B.new.as(Void*).as(A)
-      )) { types["A"].virtual_type! }
+      Bar.new.as(Void*).as(Foo)
+      )) { types["Foo"].virtual_type! }
+  end
+
+  it "casts to generic virtual type" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      Bar(Int32).new.as(Foo(Int32))
+      )) { generic_class("Foo", int32).virtual_type! }
+  end
+
+  it "doesn't cast to virtual primitive (bug)" do
+    assert_type(%(
+      1.as(Int)
+      )) { int32 }
   end
 end

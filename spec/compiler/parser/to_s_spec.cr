@@ -26,6 +26,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(/\\(group\\)/)
   expect_to_s %(/\\//), "/\\//"
   expect_to_s %(/\#{1 / 2}/)
+  expect_to_s %<%r(/)>, %(/\\//)
   expect_to_s %(foo &.bar), %(foo(&.bar))
   expect_to_s %(foo &.bar(1, 2, 3)), %(foo(&.bar(1, 2, 3)))
   expect_to_s %(foo do |k, v|\n  k.bar(1, 2, 3)\nend)
@@ -45,6 +46,7 @@ describe "ASTNode#to_s" do
   expect_to_s %[1 & 2 & (3 | 4)], %[(1 & 2) & (3 | 4)]
   expect_to_s %[(1 & 2) & (3 | 4)]
   expect_to_s "def foo(x : T = 1)\nend"
+  expect_to_s "def foo(x : X, y : Y) forall X, Y\nend"
   expect_to_s %(foo : A | (B -> C))
   expect_to_s %[%("\#{foo}")], %["\\\"\#{foo}\\\""]
   expect_to_s "class Foo\n  private def bar\n  end\nend"
@@ -73,4 +75,15 @@ describe "ASTNode#to_s" do
   expect_to_s %(def foo("bar baz" qux)\nend)
   expect_to_s "foo()"
   expect_to_s "/a/x"
+  expect_to_s "1_f32", "1_f32"
+  expect_to_s "1_f64", "1_f64"
+  expect_to_s "1.0", "1.0"
+  expect_to_s "1e10_f64", "1e10"
+  expect_to_s "!a"
+  expect_to_s "!(1 < 2)"
+  expect_to_s "(1 + 2)..3"
+  expect_to_s "macro foo\n{{ @type }}\nend"
+  expect_to_s "macro foo\n\\{{ @type }}\nend"
+  expect_to_s "macro foo\n{% @type %}\nend"
+  expect_to_s "macro foo\n\\{%@type %}\nend"
 end

@@ -21,6 +21,14 @@ describe "Char" do
     assert { 'ぃ'.pred.should eq('あ') }
   end
 
+  describe "+" do
+    assert { ('a' + 2).should eq('c') }
+  end
+
+  describe "-" do
+    assert { ('c' - 2).should eq('a') }
+  end
+
   describe "uppercase?" do
     assert { 'a'.uppercase?.should be_false }
     assert { 'A'.uppercase?.should be_true }

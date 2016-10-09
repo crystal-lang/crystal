@@ -131,8 +131,8 @@ module Crystal
       @abi = @program.target_machine.abi
       @llvm_typer = @program.llvm_typer
       @llvm_id = LLVMId.new(@program)
-      @main_ret_type = node.type
-      ret_type = @llvm_typer.llvm_return_type(node.type)
+      @main_ret_type = node.type? || @program.nil_type
+      ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM::VoidPointer.pointer], ret_type)
       @main.linkage = LLVM::Linkage::Internal unless expose_crystal_main
 
@@ -428,7 +428,7 @@ module Crystal
               when Var
                 context.vars[node_exp.name].pointer
               when InstanceVar
-                instance_var_ptr (context.type.remove_typedef.as(InstanceVarContainer)), node_exp.name, llvm_self_ptr
+                instance_var_ptr context.type.remove_typedef, node_exp.name, llvm_self_ptr
               when ClassVar
                 # Make sure the class var is initializer before taking a pointer of it
                 if node_exp.var.initializer
@@ -668,7 +668,7 @@ module Crystal
       if node.truthy?
         node.cond.accept self
         node.then.accept self
-        if (node_type = node.type?) && (then_type = node.then.type?)
+        if @needs_value && (node_type = node.type?) && (then_type = node.then.type?)
           @last = upcast(@last, node_type, then_type)
         end
         return false
@@ -677,7 +677,7 @@ module Crystal
       if node.falsey?
         node.cond.accept self
         node.else.accept self
-        if (node_type = node.type?) && (else_type = node.else.type?)
+        if @needs_value && (node_type = node.type?) && (else_type = node.else.type?)
           @last = upcast(@last, node_type, else_type)
         end
         return false
@@ -868,7 +868,7 @@ module Crystal
       set_current_debug_location node if @debug
       ptr = case target
             when InstanceVar
-              instance_var_ptr (context.type.as(InstanceVarContainer)), target.name, llvm_self_ptr
+              instance_var_ptr context.type, target.name, llvm_self_ptr
             when Global
               get_global target.name, target_type, target.var
             when ClassVar
@@ -1032,6 +1032,8 @@ module Crystal
     def visit(node : Var)
       var = context.vars[node.name]?
       if var
+        return unreachable if var.type.no_return?
+
         # Special variables always have an extra pointer
         already_loaded = (node.special_var? ? false : var.already_loaded)
         @last = downcast var.pointer, node.type, var.type, already_loaded
@@ -1068,7 +1070,7 @@ module Crystal
     end
 
     def read_instance_var(node_type, type, name, value)
-      ivar = type.lookup_instance_var_with_owner(name).instance_var
+      ivar = type.lookup_instance_var(name)
       ivar_ptr = instance_var_ptr type, name, value
       @last = downcast ivar_ptr, node_type, ivar.type, false
       if type.extern?
@@ -1220,9 +1222,7 @@ module Crystal
     end
 
     def declare_var(var)
-      return if var.no_returns?
-
-      context.vars[var.name] ||= LLVMVar.new(alloca(llvm_type(var.type), var.name), var.type)
+      context.vars[var.name] ||= LLVMVar.new(var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name), var.type)
     end
 
     def declare_lib_var(name, type, thread_local)
@@ -1700,12 +1700,8 @@ module Crystal
     end
 
     def run_instance_vars_initializers(real_type, type : GenericClassInstanceType, type_ptr)
-      run_instance_vars_initializers(real_type, type.generic_class, type_ptr)
+      run_instance_vars_initializers(real_type, type.generic_type, type_ptr)
       run_instance_vars_initializers_non_recursive real_type, type, type_ptr
-    end
-
-    def run_instance_vars_initializers(real_type, type : InheritedGenericClass, type_ptr)
-      run_instance_vars_initializers real_type, type.extended_class, type_ptr
     end
 
     def run_instance_vars_initializers(real_type, type : ClassType | GenericClassType, type_ptr)
@@ -1728,17 +1724,6 @@ module Crystal
 
       initializers.each do |init|
         ivar = real_type.lookup_instance_var(init.name)
-        value = init.value
-
-        # Don't need to initialize false
-        if ivar.type == @program.bool && value.false?
-          next
-        end
-
-        # Don't need to initialize zero
-        if ivar.type == @program.int32 && value.zero?
-          next
-        end
 
         with_cloned_context do
           # Instance var initializers must run with "self"
@@ -1748,10 +1733,10 @@ module Crystal
           context.vars["self"] = LLVMVar.new(type_ptr, real_type)
           alloca_vars init.meta_vars
 
-          value.accept self
+          init.value.accept self
 
           ivar_ptr = instance_var_ptr real_type, init.name, type_ptr
-          assign ivar_ptr, ivar.type, value.type, @last
+          assign ivar_ptr, ivar.type, init.value.type, @last
         end
       end
     end
@@ -1831,7 +1816,7 @@ module Crystal
         return union_field_ptr(type.instance_vars[name].type, pointer)
       end
 
-      index = type.index_of_instance_var(name)
+      index = type.index_of_instance_var(name).not_nil!
 
       unless type.struct?
         index += 1

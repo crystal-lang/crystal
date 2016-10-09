@@ -421,8 +421,7 @@ module Indexable(T)
     end
   end
 
-  # :nodoc:
-  class ItemIterator(A, T)
+  private class ItemIterator(A, T)
     include Iterator(T)
 
     def initialize(@array : A, @index = 0)
@@ -444,8 +443,7 @@ module Indexable(T)
     end
   end
 
-  # :nodoc:
-  class ReverseItemIterator(A, T)
+  private class ReverseItemIterator(A, T)
     include Iterator(T)
 
     def initialize(@array : A, @index : Int32 = array.size - 1)
@@ -467,8 +465,7 @@ module Indexable(T)
     end
   end
 
-  # :nodoc:
-  class IndexIterator(A)
+  private class IndexIterator(A)
     include Iterator(Int32)
 
     def initialize(@array : A, @index = 0)

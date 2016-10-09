@@ -515,6 +515,9 @@ describe "String" do
     assert { "".strip.should eq("") }
     assert { "\n".strip.should eq("") }
     assert { "\n\t  ".strip.should eq("") }
+
+    # TODO: add spec tags so this can be run with tag:slow
+    # assert { (" " * 167772160).strip.should eq("") }
   end
 
   describe "rstrip" do
@@ -845,6 +848,10 @@ describe "String" do
       "fここ bここr bここここz".sub("ここ", "そこ").should eq("fそこ bここr bここここz")
     end
 
+    it "subs with string and string (#3258)" do
+      "私は日本人です".sub("日本", "スペイン").should eq("私はスペイン人です")
+    end
+
     it "subs with string and block" do
       result = "foo boo".sub("oo") { |value|
         value.should eq("oo")
@@ -1069,9 +1076,19 @@ describe "String" do
       str.gsub({'e' => 'a', 'l' => 'd'}).should eq("haddo")
     end
 
+    it "gsubs with char named tuple" do
+      str = "hello"
+      str.gsub({e: 'a', l: 'd'}).should eq("haddo")
+    end
+
     it "gsubs with regex and hash" do
       str = "hello"
       str.gsub(/(he|l|o)/, {"he" => "ha", "l" => "la"}).should eq("halala")
+    end
+
+    it "gsubs with regex and named tuple" do
+      str = "hello"
+      str.gsub(/(he|l|o)/, {he: "ha", l: "la"}).should eq("halala")
     end
 
     it "gsubs using $~" do
@@ -1773,10 +1790,16 @@ describe "String" do
     it "substitutes one placeholder" do
       res = "change %{this}" % {"this" => "nothing"}
       res.should eq "change nothing"
+
+      res = "change %{this}" % {this: "nothing"}
+      res.should eq "change nothing"
     end
 
     it "substitutes multiple placeholder" do
       res = "change %{this} and %{more}" % {"this" => "nothing", "more" => "something"}
+      res.should eq "change nothing and something"
+
+      res = "change %{this} and %{more}" % {this: "nothing", more: "something"}
       res.should eq "change nothing and something"
     end
 
@@ -1784,10 +1807,14 @@ describe "String" do
       expect_raises KeyError do
         "change %{this}" % {"that" => "wrong key"}
       end
+
+      expect_raises KeyError do
+        "change %{this}" % {that: "wrong key"}
+      end
     end
 
-    it "raises if expecting hash but not given" do
-      expect_raises(ArgumentError, "one hash required") do
+    it "raises if expecting hash or named tuple but not given" do
+      expect_raises(ArgumentError, "one hash or named tuple required") do
         "change %{this}" % "this"
       end
     end
@@ -1800,6 +1827,9 @@ describe "String" do
 
     it "applies formatting to %<...> placeholder" do
       res = "change %<this>.2f" % {"this" => 23.456}
+      res.should eq "change 23.46"
+
+      res = "change %<this>.2f" % {this: 23.456}
       res.should eq "change 23.46"
     end
   end
@@ -1950,6 +1980,13 @@ describe "String" do
 
     expect_raises(IndexError) do
       "foo".at(4)
+    end
+  end
+
+  it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
+    String.new(255_u8) do |buffer|
+      LibGC.size(buffer).should be >= 255
+      {255, 0}
     end
   end
 end

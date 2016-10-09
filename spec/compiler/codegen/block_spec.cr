@@ -563,18 +563,27 @@ describe "Code gen: block" do
       class Bar < Foo
       end
 
-      $x : Int32?
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       struct Int
         def foo
           x = Foo.new
           x = Bar.new
-          x.do { $x = self }
+          x.do { Global.x = self }
         end
       end
 
       123.foo
-      $x.to_i
+      Global.x.to_i
     ").to_i.should eq(123)
   end
 
@@ -1220,12 +1229,21 @@ describe "Code gen: block" do
 
   it "codegens block bug with conditional next and unconditional break (3)" do
     run(%(
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         a = 1234
         a = yield 1
-        $x = a
+        Global.x = a
         a
       end
 
@@ -1233,27 +1251,36 @@ describe "Code gen: block" do
         next x if 1 == 1
         break 0
       end
-      $x
+      Global.x
       )).to_i.should eq(1)
   end
 
   it "codegens block bug with conditional next and unconditional break (4)" do
     run(%(
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         bar(yield 1)
       end
 
       def bar(x)
-        $x = x
+        Global.x = x
       end
 
       foo do |x|
         next x if 1 == 1
         break 0
       end
-      $x
+      Global.x
       )).to_i.should eq(1)
   end
 
@@ -1273,7 +1300,7 @@ describe "Code gen: block" do
 
   it "does next from captured block" do
     run(%(
-      def foo(&block : -> T)
+      def foo(&block : -> T) forall T
         block
       end
 
@@ -1440,5 +1467,30 @@ describe "Code gen: block" do
         3
       end
       )).to_i.should eq(3)
+  end
+
+  it "breaks in var assignment (#3364)" do
+    run(%(
+      def foo
+        yield
+        456
+      end
+
+      foo do
+        a = nil || break 123
+      end
+      )).to_i.should eq(123)
+  end
+
+  it "nexts in var assignment (#3364)" do
+    run(%(
+      def foo
+        yield
+      end
+
+      foo do
+        a = nil || next 123
+      end
+      )).to_i.should eq(123)
   end
 end

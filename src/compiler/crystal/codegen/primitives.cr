@@ -13,7 +13,7 @@ class Crystal::CodeGenVisitor
             end
   end
 
-  def codegen_primitive(node, target_def, call_args)
+  def codegen_primitive(call, node, target_def, call_args)
     @last = case node.name
             when "binary"
               codegen_primitive_binary node, target_def, call_args
@@ -57,6 +57,16 @@ class Crystal::CodeGenVisitor
               codegen_primitive_tuple_indexer_known_index node, target_def, call_args
             when "enum_value", "enum_new"
               call_args[0]
+            when "cmpxchg"
+              codegen_primitive_cmpxchg call, node, target_def, call_args
+            when "atomicrmw"
+              codegen_primitive_atomicrmw call, node, target_def, call_args
+            when "fence"
+              codegen_primitive_fence call, node, target_def, call_args
+            when "load_atomic"
+              codegen_primitive_load_atomic call, node, target_def, call_args
+            when "store_atomic"
+              codegen_primitive_store_atomic call, node, target_def, call_args
             else
               raise "Bug: unhandled primitive in codegen: #{node.name}"
             end
@@ -453,7 +463,7 @@ class Crystal::CodeGenVisitor
   end
 
   def struct_field_ptr(type, field_name, pointer)
-    index = type.index_of_instance_var('@' + field_name)
+    index = type.index_of_instance_var('@' + field_name).not_nil!
     aggregate_index pointer, index
   end
 
@@ -633,8 +643,25 @@ class Crystal::CodeGenVisitor
     phi_value = Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
-      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, false, proc_type)
+
+      # When invoking a Proc that has extern structs as arguments or return type, it's tricky:
+      # closures are never generated with C ABI because C doesn't support closures.
+      # But non-closures use C ABI, so if the target Proc is not a closure we cast the
+      # arguments according to the ABI.
+      # For this we temporarily set the target_def's `abi_info` and `considered_external`
+      # properties for the non-closure branch, and then reset it.
+      if target_def.proc_considered_external?
+        null_fun_ptr, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
+      else
+        null_fun_ptr, null_args = real_fun_ptr, args
+      end
+
+      value = codegen_call_or_invoke(node, target_def, nil, null_fun_ptr, null_args, true, target_def.type, false, proc_type)
       phi.add value, node.type
+
+      # Reset abi_info + considered_external so the closure part is generated as usual
+      target_def.abi_info = nil
+      target_def.considered_external = nil
 
       position_at_end ctx_is_not_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
@@ -645,6 +672,54 @@ class Crystal::CodeGenVisitor
 
     old_needs_value = @needs_value
     phi_value
+  end
+
+  def codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
+    null_fun_types = [] of LLVM::Type
+
+    null_args = [] of LLVM::Value
+    abi_info = abi_info(target_def)
+
+    if abi_info.return_type.attr == LLVM::Attribute::StructRet
+      sret_value = @sret_value = alloca abi_info.return_type.type
+      null_args << sret_value
+      null_fun_types << abi_info.return_type.type.pointer
+      null_fun_return_type = LLVM::Void
+    else
+      if cast = abi_info.return_type.cast
+        null_fun_return_type = cast
+      else
+        null_fun_return_type = abi_info.return_type.type
+      end
+    end
+
+    target_def.args.each_with_index do |arg, index|
+      call_arg = args[index]
+
+      abi_arg_type = abi_info.arg_types[index]
+      case abi_arg_type.kind
+      when LLVM::ABI::ArgKind::Direct
+        call_arg = codegen_direct_abi_call(call_arg, abi_arg_type)
+        if cast = abi_arg_type.cast
+          null_fun_types << cast
+        else
+          null_fun_types << abi_arg_type.type
+        end
+        null_args << call_arg
+      when LLVM::ABI::ArgKind::Indirect
+        # Pass argument as is (will be passed byval)
+        null_args << call_arg
+        null_fun_types << abi_arg_type.type.pointer
+      when LLVM::ABI::ArgKind::Ignore
+        # Ignore
+      end
+    end
+
+    null_fun_llvm_type = LLVM::Type.function(null_fun_types, null_fun_return_type)
+    null_fun_ptr = bit_cast fun_ptr, null_fun_llvm_type.pointer
+    target_def.considered_external = true
+
+    {null_fun_ptr, null_args}
   end
 
   def codegen_primitive_pointer_diff(node, target_def, call_args)
@@ -679,5 +754,105 @@ class Crystal::CodeGenVisitor
     else
       value
     end
+  end
+
+  def codegen_primitive_cmpxchg(call, node, target_def, call_args)
+    success_ordering = atomic_ordering_from_symbol_literal(call.args[-2])
+    failure_ordering = atomic_ordering_from_symbol_literal(call.args[-1])
+
+    pointer, cmp, new = call_args
+    value = builder.cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
+    value_ptr = alloca llvm_type(node.type)
+    store extract_value(value, 0), gep(value_ptr, 0, 0)
+    store extract_value(value, 1), gep(value_ptr, 0, 1)
+    value_ptr
+  end
+
+  def codegen_primitive_atomicrmw(call, node, target_def, call_args)
+    op = atomicrwm_bin_op_from_symbol_literal(call.args[0])
+    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
+    singlethread = bool_from_bool_literal(call.args[-1])
+
+    _, pointer, val = call_args
+    builder.atomicrmw(op, pointer, val, ordering, singlethread)
+  end
+
+  def codegen_primitive_fence(call, node, target_def, call_args)
+    ordering = atomic_ordering_from_symbol_literal(call.args[0])
+    singlethread = bool_from_bool_literal(call.args[1])
+
+    builder.fence(ordering, singlethread)
+    llvm_nil
+  end
+
+  def codegen_primitive_load_atomic(call, node, target_def, call_args)
+    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
+    volatile = bool_from_bool_literal(call.args[-1])
+
+    ptr = call_args.first
+
+    inst = builder.load(ptr)
+    inst.ordering = ordering
+    inst.volatile = true if volatile
+    set_alignment inst, node.type
+    inst
+  end
+
+  def codegen_primitive_store_atomic(call, node, target_def, call_args)
+    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
+    volatile = bool_from_bool_literal(call.args[-1])
+
+    ptr, value = call_args
+
+    inst = builder.store(value, ptr)
+    inst.ordering = ordering
+    inst.volatile = true if volatile
+    set_alignment inst, node.type
+    inst
+  end
+
+  def set_alignment(inst, type)
+    case type
+    when IntegerType, FloatType
+      inst.alignment = type.bytes
+    when CharType
+      inst.alignment = 4
+    else
+      inst.alignment = @program.has_flag?("x86_64") ? 8 : 4
+    end
+  end
+
+  def atomic_ordering_from_symbol_literal(node)
+    unless node.is_a?(SymbolLiteral)
+      node.raise "Bug: expected symbol literal"
+    end
+
+    ordering = LLVM::AtomicOrdering.parse?(node.value)
+    unless ordering
+      node.raise "unknown atomic ordering: #{node.value}"
+    end
+
+    ordering
+  end
+
+  def atomicrwm_bin_op_from_symbol_literal(node)
+    unless node.is_a?(SymbolLiteral)
+      node.raise "Bug: expected symbol literal"
+    end
+
+    op = LLVM::AtomicRMWBinOp.parse?(node.value)
+    unless op
+      node.raise "unknown atomic rwm bin op: #{node.value}"
+    end
+
+    op
+  end
+
+  def bool_from_bool_literal(node)
+    unless node.is_a?(BoolLiteral)
+      node.raise "Bug: expected bool literal"
+    end
+
+    node.value
   end
 end

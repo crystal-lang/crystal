@@ -24,8 +24,10 @@ module Crystal
         self.struct?
       when NonGenericModuleType
         self.including_types.try &.passed_by_value?
+      when GenericModuleInstanceType
+        self.including_types.try &.passed_by_value?
       when GenericClassInstanceType
-        self.generic_class.passed_by_value?
+        self.generic_type.passed_by_value?
       when TypeDefType
         self.typedef.passed_by_value?
       when AliasType
@@ -45,6 +47,10 @@ module Crystal
 
     def llvm_name(io)
       to_s_with_options io, codegen: true
+    end
+
+    def append_to_expand_union_types(types)
+      types << self
     end
   end
 
@@ -68,6 +74,38 @@ module Crystal
         io << "."
       end
       to_s_with_options io, codegen: true
+    end
+  end
+
+  class NonGenericModuleType
+    def append_to_expand_union_types(types)
+      if including_types = @including_types
+        including_types.each &.append_to_expand_union_types(types)
+      else
+        types << self
+      end
+    end
+  end
+
+  class GenericModuleInstanceType
+    def append_to_expand_union_types(types)
+      if including_types = @including_types
+        including_types.each &.append_to_expand_union_types(types)
+      else
+        types << self
+      end
+    end
+  end
+
+  class UnionType
+    def expand_union_types
+      if union_types.any?(&.is_a?(NonGenericModuleType))
+        types = [] of Type
+        union_types.each &.append_to_expand_union_types(types)
+        types
+      else
+        union_types
+      end
     end
   end
 

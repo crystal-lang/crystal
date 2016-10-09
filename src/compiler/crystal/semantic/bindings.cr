@@ -35,7 +35,7 @@ module Crystal
       # See if we can find where the mismatched type came from
       if from && !ex.inner && (freeze_type = @freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.size == 2
         other_type = type.union_types.find { |type| type != freeze_type }
-        trace = from.find_owner_trace(other_type)
+        trace = from.find_owner_trace(freeze_type.program, other_type)
         ex.inner = trace
       end
 
@@ -50,7 +50,7 @@ module Crystal
       if !freeze_type.includes_type?(invalid_type.program.nil) && invalid_type.includes_type?(invalid_type.program.nil)
         # This means that an instance variable become nil
         if self.is_a?(MetaTypeVar) && (nil_reason = self.nil_reason)
-          inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason)
+          inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason, freeze_type.program.show_error_trace?)
         end
       end
 
@@ -192,7 +192,7 @@ module Crystal
       type
     end
 
-    def find_owner_trace(owner)
+    def find_owner_trace(program, owner)
       owner_trace = [] of ASTNode
       node = self
 
@@ -210,7 +210,7 @@ module Crystal
         end
       end
 
-      MethodTraceException.new(owner, owner_trace, nil_reason)
+      MethodTraceException.new(owner, owner_trace, nil_reason, program.show_error_trace?)
     end
   end
 
@@ -288,6 +288,8 @@ module Crystal
       obj_type = obj.type?
       to_type = to.type
 
+      @upcast = false
+
       if obj_type && !(obj_type.pointer? || to_type.pointer?)
         filtered_type = obj_type.filter_by(to_type)
 
@@ -296,7 +298,8 @@ module Crystal
         #
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
-        if obj_type == filtered_type && obj_type != to_type && !to_type.is_a?(GenericClassType)
+        if obj_type == filtered_type && !to_type.is_a?(GenericClassType) &&
+           to_type.allowed_in_generics?
           filtered_type = to_type
           @upcast = true
         end
@@ -318,6 +321,8 @@ module Crystal
       obj_type = obj.type?
       to_type = to.type
 
+      @upcast = false
+
       if obj_type
         filtered_type = obj_type.filter_by(to_type)
 
@@ -326,7 +331,8 @@ module Crystal
         #
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
-        if obj_type == filtered_type && obj_type != to_type && !to_type.is_a?(GenericClassType)
+        if obj_type == filtered_type && !to_type.is_a?(GenericClassType) &&
+           to_type.allowed_in_generics?
           filtered_type = to_type.virtual_type
           @upcast = true
         end
@@ -384,7 +390,7 @@ module Crystal
   end
 
   class Generic
-    property! instance_type : GenericClassType
+    property! instance_type : GenericType
     property scope : Type?
     property? in_type_args = false
 
@@ -469,7 +475,7 @@ module Crystal
         end
 
         begin
-          generic_type = instance_type.instantiate(type_vars_types)
+          generic_type = instance_type.as(GenericType).instantiate(type_vars_types)
         rescue ex : Crystal::Exception
           raise ex.message
         end

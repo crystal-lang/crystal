@@ -620,41 +620,6 @@ module Crystal
     def_equals_and_hash @cond, @then, @else
   end
 
-  # An ifdef expression.
-  #
-  #     'ifdef' cond
-  #       then
-  #     [
-  #     'else'
-  #       else
-  #     ]
-  #     'end'
-  #
-  # An if elsif end is parsed as an If whose
-  # else is another If.
-  class IfDef < ASTNode
-    property cond : ASTNode
-    property then : ASTNode
-    property else : ASTNode
-
-    def initialize(@cond, a_then = nil, a_else = nil)
-      @then = Expressions.from a_then
-      @else = Expressions.from a_else
-    end
-
-    def accept_children(visitor)
-      @cond.accept visitor
-      @then.accept visitor
-      @else.accept visitor
-    end
-
-    def clone_without_location
-      IfDef.new(@cond.clone, @then.clone, @else.clone)
-    end
-
-    def_equals_and_hash @cond, @then, @else
-  end
-
   # Assign expression.
   #
   #     target '=' value
@@ -665,6 +630,10 @@ module Crystal
     property doc : String?
 
     def initialize(@target, @value)
+    end
+
+    def visibility=(visibility)
+      target.visibility = visibility
     end
 
     def accept_children(visitor)
@@ -888,6 +857,7 @@ module Crystal
   #     'end'
   #
   class Def < ASTNode
+    property free_vars : Array(String)?
     property receiver : ASTNode?
     property name : String
     property args : Array(Arg)
@@ -909,7 +879,7 @@ module Crystal
     property? assigns_special_var = false
     property? abstract : Bool
 
-    def initialize(@name, @args = [] of Arg, body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @macro_def = false, @yields = nil, @abstract = false, @splat_index = nil, @double_splat = nil)
+    def initialize(@name, @args = [] of Arg, body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @macro_def = false, @yields = nil, @abstract = false, @splat_index = nil, @double_splat = nil, @free_vars = nil)
       @body = Expressions.from body
     end
 
@@ -927,7 +897,7 @@ module Crystal
     end
 
     def clone_without_location
-      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @yields, @abstract, @splat_index, @double_splat.clone)
+      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @yields, @abstract, @splat_index, @double_splat.clone, @free_vars)
       a_def.calls_super = calls_super?
       a_def.calls_initialize = calls_initialize?
       a_def.calls_previous_def = calls_previous_def?
@@ -1177,6 +1147,7 @@ module Crystal
     property names : Array(String)
     property? global : Bool
     property name_size = 0
+    property visibility = Visibility::Public
 
     def initialize(@names : Array, @global = false)
     end
@@ -1220,6 +1191,7 @@ module Crystal
     property splat_index : Int32?
     property? abstract : Bool
     property? struct : Bool
+    property visibility = Visibility::Public
 
     def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = 0, @splat_index = nil)
       @body = Expressions.from body
@@ -1250,6 +1222,7 @@ module Crystal
     property splat_index : Int32?
     property name_column_number : Int32
     property doc : String?
+    property visibility = Visibility::Public
 
     def initialize(@name, body = nil, @type_vars = nil, @name_column_number = 0, @splat_index = nil)
       @body = Expressions.from body
@@ -1633,6 +1606,7 @@ module Crystal
     property name : String
     property body : ASTNode
     property name_column_number : Int32
+    property visibility = Visibility::Public
 
     def initialize(@name, body = nil, @name_column_number = 0)
       @body = Expressions.from body
@@ -1719,6 +1693,7 @@ module Crystal
     property members : Array(ASTNode)
     property base_type : ASTNode?
     property doc : String?
+    property visibility = Visibility::Public
 
     def initialize(@name, @members = [] of ASTNode, @base_type = nil)
     end
@@ -1758,6 +1733,7 @@ module Crystal
     property name : String
     property value : ASTNode
     property doc : String?
+    property visibility = Visibility::Public
 
     def initialize(@name : String, @value : ASTNode)
     end

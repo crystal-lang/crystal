@@ -231,7 +231,7 @@ describe "Semantic: macro" do
       ), "wrong number of arguments for macro 'foo' (given 1, expected 0)"
   end
 
-  it "executs raise inside macro" do
+  it "executes raise inside macro" do
     assert_error %(
       macro foo
         {{ raise "OH NO" }}
@@ -907,5 +907,31 @@ describe "Semantic: macro" do
 
       ->{ foo }.call
       )) { int32 }
+  end
+
+  it "finds var in proc for macros" do
+    assert_type(%(
+      macro foo(x)
+        {{x}}
+      end
+
+      ->(x : Int32) { foo(x) }.call(1)
+      )) { int32 }
+  end
+
+  it "applies visibility modifier only to first level" do
+    assert_type(%(
+      macro foo
+        class Foo
+          def self.foo
+            1
+          end
+        end
+      end
+
+      private foo
+
+      Foo.foo
+      ), inject_primitives: false) { int32 }
   end
 end

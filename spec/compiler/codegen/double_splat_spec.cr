@@ -100,11 +100,20 @@ describe "Codegen: double splat" do
 
   it "evaluates double splat argument just once (#2677)" do
     run(%(
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def data
-        $a += 1
-        {x: $a, y: $a, z: $a}
+        Global.x += 1
+        {x: Global.x, y: Global.x, z: Global.x}
       end
 
       def test(x, y, z)
@@ -112,7 +121,7 @@ describe "Codegen: double splat" do
 
       test(**data)
 
-      $a
+      Global.x
       )).to_i.should eq(1)
   end
 end

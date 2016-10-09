@@ -148,7 +148,7 @@ struct Set(T)
   #
   #     Set.new([1,1,3,5]) | Set.new([1,2,3])               #=> Set{1, 3, 5, 2}
   #     Set.new(['a','b','b','z']) | Set.new(['a','b','c']) #=> Set{'a', 'b', 'z', 'c'}
-  def |(other : Set(U))
+  def |(other : Set(U)) forall U
     set = Set(T | U).new
     each { |value| set.add value }
     other.each { |value| set.add value }
@@ -182,7 +182,7 @@ struct Set(T)
   #
   #     Set.new([1,2,3,4,5]) ^ Set.new([2,4,6])             #=> Set{1, 3, 5, 6}
   #     Set.new(['a','b','b','z']) ^ Set.new(['a','b','c']) #=> Set{'z', 'c'}
-  def ^(other : Set(U))
+  def ^(other : Set(U)) forall U
     set = Set(T | U).new
     each do |value|
       set.add value unless other.includes?(value)
@@ -198,7 +198,7 @@ struct Set(T)
   #
   #     Set.new([1,2,3,4,5]) ^ [2,4,6]             #=> Set{1, 3, 5, 6}
   #     Set.new(['a','b','b','z']) ^ ['a','b','c'] #=> Set{'z', 'c'}
-  def ^(other : Enumerable(U))
+  def ^(other : Enumerable(U)) forall U
     set = Set(T | U).new.merge(self)
     other.each do |value|
       if includes?(value)

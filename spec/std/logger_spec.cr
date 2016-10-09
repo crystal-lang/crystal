@@ -86,4 +86,11 @@ describe "Logger" do
     logger.info { a = 1 }
     a.should eq(0)
   end
+
+  it "closes" do
+    IO.pipe do |r, w|
+      Logger.new(w).close
+      w.closed?.should be_true
+    end
+  end
 end

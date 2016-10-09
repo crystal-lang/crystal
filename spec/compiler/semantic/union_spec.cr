@@ -14,7 +14,7 @@ describe "Semantic: union" do
   end
 
   it "types union of classes" do
-    assert_type("class A; end; class B; end; a = A.new || B.new; a") { union_of(types["A"], types["B"]) }
+    assert_type("class Foo; end; class Bar; end; a = Foo.new || Bar.new; a") { union_of(types["Foo"], types["Bar"]) }
   end
 
   it "assigns to union and keeps new union type in call" do
@@ -35,7 +35,7 @@ describe "Semantic: union" do
       class Bar(T)
       end
 
-      def foo(x : T)
+      def foo(x : T) forall T
         Bar(T).new
       end
 
@@ -43,15 +43,15 @@ describe "Semantic: union" do
     ") { generic_class "Bar", union_of(int32, char) }
   end
 
-  it "supports ifdef inside union" do
+  it "supports macro if inside union" do
     assert_type(%(
       lib LibC
         union Foo
-          ifdef some_flag
+          {% if flag?(:some_flag) %}
             a : Int32
-          else
+          {% else %}
             a : Float64
-          end
+          {% end %}
         end
       end
 

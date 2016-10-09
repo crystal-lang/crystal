@@ -89,6 +89,26 @@ struct Char
     end
   end
 
+  # Returns a char that has this char's codepoint plus *other*.
+  #
+  # ```
+  # 'a' + 1 # => 'b'
+  # 'a' + 2 # => 'c'
+  # ```
+  def +(other : Int) : Char
+    (ord + other).chr
+  end
+
+  # Returns a char that has this char's codepoint minus *other*.
+  #
+  # ```
+  # 'c' - 1 # => 'b'
+  # 'c' - 2 # => 'a'
+  # ```
+  def -(other : Int) : Char
+    (ord - other).chr
+  end
+
   # Implements the comparison operator.
   #
   # ```
@@ -633,9 +653,15 @@ struct Char
   #
   # This appends this char's bytes as encoded by UTF-8 to the given `IO`.
   def to_s(io : IO)
-    if ord <= 0x7f
+    if ascii?
       byte = ord.to_u8
-      io.write_utf8 Slice.new(pointerof(byte), 1)
+
+      # Optimization: writing a slice is much slower than writing a byte
+      if io.@encoding
+        io.write_utf8 Slice.new(pointerof(byte), 1)
+      else
+        io.write_byte byte
+      end
     else
       chars = uninitialized UInt8[4]
       i = 0

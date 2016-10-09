@@ -103,6 +103,9 @@ module Crystal
     # Default standard output to use in a program, while compiling.
     property stdout : IO = STDOUT
 
+    # Whether to show error trace
+    property? show_error_trace = false
+
     def initialize
       super(self, self, "main")
 
@@ -160,13 +163,13 @@ module Crystal
 
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
-      static_array.declare_instance_var("@buffer", Path.new("T"))
+      static_array.declare_instance_var("@buffer", TypeParameter.new(self, static_array, "T"))
       static_array.allowed_in_generics = false
 
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
-      string.declare_instance_var("@bytesize", @int32)
-      string.declare_instance_var("@length", @int32)
-      string.declare_instance_var("@c", @uint8)
+      string.declare_instance_var("@bytesize", int32)
+      string.declare_instance_var("@length", int32)
+      string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
       object.metaclass = klass
@@ -423,6 +426,22 @@ module Crystal
     # Returns the `Hash` `Type`
     def hash_type
       @hash_type.not_nil!
+    end
+
+    def type_from_literal_kind(kind)
+      case kind
+      when :i8  then int8
+      when :i16 then int16
+      when :i32 then int32
+      when :i64 then int64
+      when :u8  then uint8
+      when :u16 then uint16
+      when :u32 then uint32
+      when :u64 then uint64
+      when :f32 then float32
+      when :f64 then float64
+      else           raise "Invalid node kind: #{kind}"
+      end
     end
 
     # Returns the `IntegerType` that matches the given Int value

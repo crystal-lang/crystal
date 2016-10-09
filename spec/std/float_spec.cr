@@ -126,6 +126,7 @@ describe "Float" do
       65432.1234567891e20.to_s.should eq("6.54321234567891e+24")
       (1.0/0.0).to_s.should eq("Infinity")
       (-1.0/0.0).to_s.should eq("-Infinity")
+      (0.99999999999999989).to_s.should eq("1.0")
     end
 
     it "does to_s for f32" do

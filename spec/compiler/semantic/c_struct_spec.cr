@@ -150,15 +150,15 @@ describe "Semantic: struct" do
       )) { pointer_of(types["LibC"].types["Node"]) }
   end
 
-  it "supports ifdef inside struct" do
+  it "supports macro if inside struct" do
     assert_type(%(
       lib LibC
         struct Foo
-          ifdef some_flag
+          {% if flag?(:some_flag) %}
             a : Int32
-          else
+          {% else %}
             a : Float64
-          end
+          {% end %}
         end
       end
 

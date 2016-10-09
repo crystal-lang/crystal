@@ -180,7 +180,7 @@ struct Time
   private def add_months(months)
     day = self.day
     month = self.month + months.remainder(12)
-    year = self.year + (months / 12)
+    year = self.year + months.tdiv(12)
 
     if month < 1
       month = 12 + month
@@ -213,7 +213,13 @@ struct Time
   end
 
   def -(other : Time)
-    Span.new(ticks - other.ticks)
+    if local? && other.utc?
+      self - other.to_local
+    elsif utc? && other.local?
+      self - other.to_utc
+    else
+      Span.new(ticks - other.ticks)
+    end
   end
 
   def self.now : self

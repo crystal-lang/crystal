@@ -123,7 +123,7 @@ class Deque(T)
 
   # Concatenation. Returns a new Deque built by concatenating two deques together to create a third. The type of the new
   # deque is the union of the types of both the other deques.
-  def +(other : Deque(U))
+  def +(other : Deque(U)) forall U
     Deque(T | U).new.concat(self).concat(other)
   end
 

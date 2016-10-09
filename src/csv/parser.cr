@@ -71,8 +71,7 @@ class CSV::Parser
     @lexer.rewind
   end
 
-  # :nodoc:
-  struct RowIterator
+  private struct RowIterator
     include Iterator(Array(String))
 
     @parser : Parser

@@ -424,11 +424,13 @@ describe "Semantic: lib" do
       )) { int64 }
   end
 
-  it "correctly attached link flags if there's an ifdef" do
+  it "correctly attached link flags if there's a macro if" do
     result = semantic(%(
       @[Link("SDL")]
       @[Link("SDLMain")]
-      @[Link(framework: "Cocoa")] ifdef some_flag
+      {% if flag?(:some_flag) %}
+        @[Link(framework: "Cocoa")]
+      {% end %}
       lib LibSDL
         fun init = SDL_Init(flags : UInt32) : Int32
       end

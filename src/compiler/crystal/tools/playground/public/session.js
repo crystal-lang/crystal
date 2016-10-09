@@ -281,6 +281,7 @@ Playground.Session = function(options) {
   );
 
   this.stdout = options.stdout;
+  this.stdoutRawContent = "";
   this.outputIndicator = new Playground.OutputIndicator(options.outputIndicator);
 
   this.editor = CodeMirror(this.editorDom[0], {
@@ -553,12 +554,13 @@ Playground.Session = function(options) {
 
   //stdout
   this._appendStdout = function(content) {
-    this.stdout[0].innerText += content;
-
+    this.stdoutRawContent += content;
+    this.stdout[0].innerHTML = ansi_up.ansi_to_html(this.stdoutRawContent, {"use_classes": true});
   }.bind(this);
 
   this._clearStdout = function() {
-    this.stdout[0].innerText = "";
+    this.stdoutRawContent = "";
+    this.stdout[0].innerHTML = "";
     this.outputIndicator.turnOff();
   }.bind(this);
   //

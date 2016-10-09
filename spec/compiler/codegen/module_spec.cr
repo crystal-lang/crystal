@@ -434,4 +434,166 @@ describe "Code gen: module" do
       Foo.new.t
       )).to_string.should eq("TupleLiteral")
   end
+
+  it "can instantiate generic module" do
+    run(%(
+      struct Int32
+        def self.foo
+          10
+        end
+      end
+
+      module Foo(T)
+        def self.foo
+          T.foo
+        end
+      end
+
+      Foo(Int32).foo
+      )).to_i.should eq(10)
+  end
+
+  it "can use generic module as instance variable type" do
+    run(%(
+      module Moo(T)
+        def foo
+          1
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      class Bar
+        include Moo(Int32)
+
+        def foo
+          2
+        end
+      end
+
+      class Mooer
+        def initialize(@moo : Moo(Int32))
+        end
+
+        def moo
+          @moo.foo
+        end
+      end
+
+      mooer = Mooer.new(Foo.new)
+      x = mooer.moo
+
+      mooer = Mooer.new(Bar.new)
+      y = mooer.moo
+
+      x + y
+      )).to_i.should eq(3)
+  end
+
+  it "can use generic module as instance variable type (2)" do
+    run(%(
+      module Moo(T)
+        def foo
+          1
+        end
+      end
+
+      class Foo(T)
+        include Moo(T)
+      end
+
+      class Bar(T)
+        include Moo(T)
+
+        def foo
+          2
+        end
+      end
+
+      class Mooer
+        def initialize(@moo : Moo(Int32))
+        end
+
+        def moo
+          @moo.foo
+        end
+      end
+
+      mooer = Mooer.new(Foo(Int32).new)
+      x = mooer.moo
+
+      mooer = Mooer.new(Bar(Int32).new)
+      y = mooer.moo
+
+      x + y
+      )).to_i.should eq(3)
+  end
+
+  it "casts to union of module that is included in other module (#3323)" do
+    run(%(
+      require "prelude"
+
+      module Moo
+        def moo
+          0
+        end
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      class Foo
+        include Moo2
+      end
+
+      class Bar < Foo
+        def moo
+          10
+        end
+      end
+
+      struct Baz
+        include Moo
+      end
+
+      bar = Bar.new.as(Int32 | Moo)
+      bar.as(Moo).moo
+      )).to_i.should eq(10)
+  end
+
+  it "casts to union of generic module that is included in other module (#3323)" do
+    run(%(
+      require "prelude"
+
+      module Moo(T)
+        def moo
+          0
+        end
+      end
+
+      module Moo2(T)
+        include Moo(T)
+      end
+
+      class Foo
+        include Moo2(Char)
+      end
+
+      class Bar < Foo
+        def moo
+          10
+        end
+      end
+
+      struct Baz
+        include Moo(Char)
+      end
+
+      bar = Bar.new.as(Int32 | Moo(Char))
+      bar.as(Moo(Char)).moo
+      )).to_i.should eq(10)
+  end
 end

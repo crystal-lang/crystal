@@ -107,6 +107,13 @@ class OptionParser
   # See the other definition of `on` for examples.
   def on(short_flag, long_flag, description, &block : String ->)
     append_flag "#{short_flag}, #{long_flag}", description
+
+    has_argument = /([ =].+)/
+    if long_flag =~ has_argument
+      argument = $1
+      short_flag += argument unless short_flag =~ has_argument
+    end
+
     @handlers << Handler.new(short_flag, block)
     @handlers << Handler.new(long_flag, block)
   end
@@ -146,13 +153,10 @@ class OptionParser
   end
 
   private def append_flag(flag, description)
-    @flags << String.build do |str|
-      str << "    "
-      str << flag
-      (33 - flag.size).times do
-        str << " "
-      end
-      str << description
+    if flag.size >= 33
+      @flags << "    #{flag}\n#{" " * 37}#{description}"
+    else
+      @flags << "    #{flag}#{" " * (33 - flag.size)}#{description}"
     end
   end
 
@@ -166,8 +170,7 @@ class OptionParser
     parse ARGV
   end
 
-  # :nodoc:
-  struct ParseTask
+  private struct ParseTask
     @double_dash_index : Int32?
 
     def initialize(@parser : OptionParser, @args : Array(String))

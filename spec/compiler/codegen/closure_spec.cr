@@ -507,7 +507,7 @@ describe "Code gen: closure" do
 
   it "transforms block to proc literal with free var" do
     run("
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block
       end
 
@@ -538,7 +538,7 @@ describe "Code gen: closure" do
 
   it "allows giving less block args when transforming block to proc literal" do
     run("
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block.call(1)
       end
 
@@ -638,5 +638,27 @@ describe "Code gen: closure" do
       end
       coco
       )).to_i.should eq(1)
+  end
+
+  it "codegens closured self in block (#3388)" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+
+        def foo
+          yield
+          ->{ self }
+        end
+      end
+
+      foo = Foo.new(42)
+      foo2 = foo.foo { }
+      foo2.call.x
+      )).to_i.should eq(42)
   end
 end

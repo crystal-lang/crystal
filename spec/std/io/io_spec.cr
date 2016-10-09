@@ -1,10 +1,11 @@
 require "spec"
 require "big_int"
+require "base64"
 
 # This is a non-optimized version of MemoryIO so we can test
 # raw IO. Optimizations for specific IOs are tested separately
 # (for example in buffered_io_spec)
-class SimpleMemoryIO
+private class SimpleMemoryIO
   include IO
 
   getter buffer : UInt8*
@@ -561,6 +562,33 @@ describe IO do
           io.gets_to_end
         end
       end
+
+      it "does skips when converting to UTF-8" do
+        io = SimpleMemoryIO.new(Base64.decode_string("ey8qx+Tl8fwg7+Dw4Ozl8vD7IOLo5+jy4CovfQ=="))
+        io.set_encoding("UTF-8", invalid: :skip)
+        io.gets_to_end.should eq "{/*  */}"
+      end
+
+      it "decodes incomplete multibyte sequence with skip (#3285)" do
+        bytes = Bytes[195, 229, 237, 229, 240, 224, 246, 232, 255, 32, 241, 234, 240, 232, 239, 242, 224, 32, 48, 46, 48, 49, 50, 54, 32, 241, 229, 234, 243, 237, 228, 10]
+        m = MemoryIO.new(bytes)
+        m.set_encoding("UTF-8", invalid: :skip)
+        m.gets_to_end.should eq("  0.0126 \n")
+      end
+
+      it "decodes incomplete multibyte sequence with skip (2) (#3285)" do
+        str = File.read("#{__DIR__}/../data/io_data_incomplete_multibyte_sequence.txt")
+        m = MemoryIO.new(Base64.decode_string str)
+        m.set_encoding("UTF-8", invalid: :skip)
+        m.gets_to_end.bytesize.should eq(4277)
+      end
+
+      it "decodes incomplete multibyte sequence with skip (3) (#3285)" do
+        str = File.read("#{__DIR__}/../data/io_data_incomplete_multibyte_sequence_2.txt")
+        m = MemoryIO.new(Base64.decode_string str)
+        m.set_encoding("UTF-8", invalid: :skip)
+        m.gets_to_end.bytesize.should eq(8977)
+      end
     end
 
     describe "encode" do
@@ -685,4 +713,7 @@ describe IO do
       end
     end
   end
+
+  typeof(STDIN.cooked { })
+  typeof(STDIN.cooked!)
 end

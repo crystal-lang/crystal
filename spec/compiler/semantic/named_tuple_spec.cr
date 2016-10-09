@@ -27,6 +27,20 @@ describe "Semantic: named tuples" do
       )) { char }
   end
 
+  it "types named tuple access (3)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t["x"]
+      )) { int32 }
+  end
+
+  it "types named tuple access (4)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t["y"]
+      )) { char }
+  end
+
   it "types nilable named tuple access (1)" do
     assert_type(%(
       t = {x: 1, y: 'a'}
@@ -45,6 +59,27 @@ describe "Semantic: named tuples" do
     assert_type(%(
       t = {x: 1, y: 'a'}
       t[:foo]?
+      )) { nil_type }
+  end
+
+  it "types nilable named tuple access (4)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t["x"]?
+      )) { int32 }
+  end
+
+  it "types nilable named tuple access (5)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t["y"]?
+      )) { char }
+  end
+
+  it "types nilable named tuple access (6)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t["foo"]?
       )) { nil_type }
   end
 
@@ -150,7 +185,7 @@ describe "Semantic: named tuples" do
 
   it "matches in type restriction and gets free var" do
     assert_type(%(
-      def foo(x : {x: T, y: T})
+      def foo(x : {x: T, y: T}) forall T
         T
       end
 
@@ -164,15 +199,6 @@ describe "Semantic: named tuples" do
       t2 = {y: 'a', x: 1}
       t1 || t2
       )) { named_tuple_of({"x": int32, "y": char}) }
-  end
-
-  it "can assign two global var" do
-    assert_type(%(
-      $x = {name: "Foo", age: 20}
-      $y = {age: 40, name: "Bar"}
-      $x = $y
-      $x
-      )) { named_tuple_of({"name": string, "age": int32}) }
   end
 
   it "can assign to union of compatible named tuple" do

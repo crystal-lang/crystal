@@ -127,7 +127,7 @@ class Array(T)
   # ```
   def self.new(size : Int, &block : Int32 -> T)
     Array(T).build(size) do |buffer|
-      size.times do |i|
+      size.to_i.times do |i|
         buffer[i] = yield i
       end
       size
@@ -200,7 +200,7 @@ class Array(T)
   # ```
   #
   # See also: `#uniq`.
-  def &(other : Array(U))
+  def &(other : Array(U)) forall U
     return Array(T).new if self.empty? || other.empty?
 
     hash = other.to_lookup_hash
@@ -228,7 +228,7 @@ class Array(T)
   # ```
   #
   # See also: `#uniq`.
-  def |(other : Array(U))
+  def |(other : Array(U)) forall U
     Array(T | U).build(size + other.size) do |buffer|
       hash = Hash(T, Bool).new
       i = 0
@@ -257,7 +257,7 @@ class Array(T)
   # [1, 2] + ["a"]  # => [1,2,"a"] of (Int32 | String)
   # [1, 2] + [2, 3] # => [1,2,2,3]
   # ```
-  def +(other : Array(U))
+  def +(other : Array(U)) forall U
     new_size = size + other.size
     Array(T | U).build(new_size) do |buffer|
       buffer.copy_from(@buffer, size)
@@ -272,7 +272,7 @@ class Array(T)
   # ```
   # [1, 2, 3] - [2, 1] # => [3]
   # ```
-  def -(other : Array(U))
+  def -(other : Array(U)) forall U
     ary = Array(T).new(Math.max(size - other.size, 0))
     hash = other.to_lookup_hash
     each do |obj|
@@ -550,7 +550,7 @@ class Array(T)
   # ary # => ["a", "b", "c"]
   # ```
   def compact!
-    delete nil
+    !!(reject! &.nil?)
   end
 
   # Appends the elements of *other* to `self`, and returns `self`.
@@ -597,13 +597,19 @@ class Array(T)
 
   # Removes all items from `self` that are equal to *obj*.
   #
+  # Returns the last found element that was equal to *obj*,
+  # if any, or `nil` if not found.
+  #
   # ```
   # a = ["a", "b", "b", "b", "c"]
-  # a.delete("b")
-  # a # => ["a", "c"]
+  # a.delete("b") # => "b"
+  # a             # => ["a", "c"]
+  #
+  # a.delete("x") # => nil
+  # a             # => ["a", "c"]
   # ```
   def delete(obj)
-    reject! { |e| e == obj } != nil
+    internal_delete { |e| e == obj }[1]
   end
 
   # Removes the element at *index*, returning that element.
@@ -862,7 +868,7 @@ class Array(T)
   end
 
   # Optimized version of `Enumerable#map`.
-  def map(&block : T -> U)
+  def map(&block : T -> U) forall U
     Array(U).new(size) { |i| yield @buffer[i] }
   end
 
@@ -892,11 +898,21 @@ class Array(T)
   #
   # See also `Array#reject`
   def reject!
+    internal_delete { |e| yield e }[0]
+  end
+
+  # `reject!` and `delete` implementation: returns a tuple {x, y}
+  # with x being self/nil (modified, not modified)
+  # and y being the last matching element, or nil
+  private def internal_delete
     i1 = 0
     i2 = 0
+    match = nil
     while i1 < @size
       e = @buffer[i1]
-      unless yield e
+      if yield e
+        match = e
+      else
         if i1 != i2
           @buffer[i2] = e
         end
@@ -910,14 +926,14 @@ class Array(T)
       count = i1 - i2
       @size -= count
       (@buffer + @size).clear(count)
-      self
+      {self, match}
     else
-      nil
+      {nil, match}
     end
   end
 
   # Optimized version of `Enumerable#map_with_index`.
-  def map_with_index(&block : T, Int32 -> U)
+  def map_with_index(&block : T, Int32 -> U) forall U
     Array(U).new(size) { |i| yield @buffer[i], i }
   end
 
@@ -1229,7 +1245,7 @@ class Array(T)
     pop { nil }
   end
 
-  def product(ary : Array(U))
+  def product(ary : Array(U)) forall U
     result = Array({T, U}).new(size * ary.size)
     product(ary) do |x, y|
       result << {x, y}
@@ -1237,7 +1253,7 @@ class Array(T)
     result
   end
 
-  def product(enumerable : Enumerable(U), &block)
+  def product(enumerable : Enumerable, &block)
     self.each { |a| enumerable.each { |b| yield a, b } }
   end
 
@@ -1666,7 +1682,7 @@ class Array(T)
     end
   end
 
-  def zip(other : Array(U))
+  def zip(other : Array(U)) forall U
     pairs = Array({T, U}).new(size)
     zip(other) { |x, y| pairs << {x, y} }
     pairs
@@ -1678,7 +1694,7 @@ class Array(T)
     end
   end
 
-  def zip?(other : Array(U))
+  def zip?(other : Array(U)) forall U
     pairs = Array({T, U?}).new(size)
     zip?(other) { |x, y| pairs << {x, y} }
     pairs
@@ -1749,7 +1765,7 @@ class Array(T)
     to_lookup_hash { |elem| elem }
   end
 
-  protected def to_lookup_hash(&block : T -> U)
+  protected def to_lookup_hash(&block : T -> U) forall U
     each_with_object(Hash(U, T).new) do |o, h|
       key = yield o
       unless h.has_key?(key)
@@ -1772,8 +1788,7 @@ class Array(T)
     {from, size}
   end
 
-  # :nodoc:
-  class PermutationIterator(T)
+  private class PermutationIterator(T)
     include Iterator(Array(T))
 
     @array : Array(T)
@@ -1832,8 +1847,7 @@ class Array(T)
     end
   end
 
-  # :nodoc:
-  class CombinationIterator(T)
+  private class CombinationIterator(T)
     include Iterator(Array(T))
 
     @size : Int32
@@ -1894,8 +1908,7 @@ class Array(T)
     end
   end
 
-  # :nodoc:
-  class RepeatedCombinationIterator(T)
+  private class RepeatedCombinationIterator(T)
     include Iterator(Array(T))
 
     @size : Int32
@@ -1955,8 +1968,7 @@ class Array(T)
     end
   end
 
-  # :nodoc:
-  struct FlattenHelper(T)
+  private struct FlattenHelper(T)
     def self.flatten(ary)
       result = [] of T
       flatten ary, result

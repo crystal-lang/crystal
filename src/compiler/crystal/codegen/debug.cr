@@ -67,6 +67,10 @@ module Crystal
       di_builder.create_enumeration_type(nil, type.to_s, nil, 1, 32, 32, elements, get_debug_type(type.base_type))
     end
 
+    def create_debug_type(type : NonGenericModuleType)
+      # puts "Unsupported type for debugging: #{type} (#{type.class})"
+    end
+
     def create_debug_type(type : InstanceVarContainer)
       ivars = type.all_instance_vars
       element_types = [] of LibLLVMExt::Metadata
@@ -103,11 +107,11 @@ module Crystal
     end
 
     def create_debug_type(type : StaticArrayInstanceType)
-      puts "Unsupported type for debugging: #{type} (#{type.class})"
+      # puts "Unsupported type for debugging: #{type} (#{type.class})"
     end
 
     def create_debug_type(type)
-      puts "Unsupported type for debugging: #{type} (#{type.class})"
+      # puts "Unsupported type for debugging: #{type} (#{type.class})"
     end
 
     def declare_variable(var_name, var_type, alloca, target_def)

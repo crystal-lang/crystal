@@ -29,9 +29,8 @@ describe "MemoryIO" do
   it "raises if reading when closed" do
     io = MemoryIO.new("abc")
     io.close
-    buffer = uninitialized UInt8[3]
     expect_raises(IO::Error, "closed stream") do
-      io.read(buffer.to_slice)
+      io.read(Slice.new(3, 0_u8))
     end
   end
 

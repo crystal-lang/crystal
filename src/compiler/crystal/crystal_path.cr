@@ -25,6 +25,8 @@ module Crystal
                  {triple[0], "macosx", "darwin"}.join('-')
                elsif triple.any?(&.includes?("freebsd"))
                  {triple[0], triple[1], "freebsd"}.join('-')
+               elsif triple.any?(&.includes?("openbsd"))
+                 {triple[0], triple[1], "openbsd"}.join('-')
                else
                  triple.join('-')
                end
@@ -70,14 +72,38 @@ module Crystal
             return make_relative_unless_absolute relative_filename_cr
           end
 
-          # If it's a directory, we check if a .cr file with a name the same as the
-          # directory basename exists, and we require that one.
-          if Dir.exists?(relative_filename)
+          if slash_index = filename.index('/')
+            # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
+            before_slash, after_slash = filename.split('/', 2)
+            absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}.cr")
+            return absolute_filename if File.exists?(absolute_filename)
+
+            # Then check if "foo/src/foo/bar/baz.cr" exists (for a shard, namespaced structure)
+            absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}.cr")
+            return absolute_filename if File.exists?(absolute_filename)
+
+            # If it's "foo/bar/baz", check if "foo/bar/baz/baz.cr" exists (std, nested)
             basename = File.basename(relative_filename)
+            absolute_filename = make_relative_unless_absolute("#{relative_to}/#{filename}/#{basename}.cr")
+            return absolute_filename if File.exists?(absolute_filename)
+
+            # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, non-namespaced, nested)
+            absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}/#{after_slash}.cr")
+            return absolute_filename if File.exists?(absolute_filename)
+
+            # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, namespaced, nested)
+            absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}/#{after_slash}.cr")
+            return absolute_filename if File.exists?(absolute_filename)
+          else
+            basename = File.basename(relative_filename)
+
+            # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
             absolute_filename = make_relative_unless_absolute("#{relative_filename}/#{basename}.cr")
-            if File.exists?(absolute_filename)
-              return absolute_filename
-            end
+            return absolute_filename if File.exists?(absolute_filename)
+
+            # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
+            absolute_filename = make_relative_unless_absolute("#{relative_filename}/src/#{basename}.cr")
+            return absolute_filename if File.exists?(absolute_filename)
           end
         end
       end

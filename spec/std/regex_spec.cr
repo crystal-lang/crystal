@@ -31,6 +31,14 @@ describe "Regex" do
     md["foo"].should eq("r")
   end
 
+  it "does inspect with slash" do
+    %r(/).inspect.should eq("/\\//")
+  end
+
+  it "does to_s with slash" do
+    %r(/).to_s.should eq("(?-imsx:\\/)")
+  end
+
   it "doesn't crash when PCRE tries to free some memory (#771)" do
     expect_raises(ArgumentError) { Regex.new("foo)") }
   end

@@ -183,7 +183,7 @@ describe "Code gen: union type" do
     str = run(%(
       require "prelude"
 
-      def foo(x : T)
+      def foo(x : T) forall T
         T.to_s
       end
 

@@ -1,8 +1,7 @@
 require "c/stdio"
 require "c/stdlib"
 
-# :nodoc:
-struct LEBReader
+private struct LEBReader
   def initialize(@data : UInt8*)
   end
 

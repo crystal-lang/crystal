@@ -19,8 +19,7 @@ module Digest::SHA1
     Base64.strict_encode(digest(string_or_slice).to_slice)
   end
 
-  # :nodoc:
-  struct Context
+  private struct Context
     # This is a direct translation of https://tools.ietf.org/html/rfc3174#section-7
     # but we use loop unrolling for faster execution (about 1.07x slower than OpenSSL::SHA1).
 

@@ -203,13 +203,10 @@ class Dir
     io << "#<Dir:" << @path << ">"
   end
 
-  # :nodoc:
-  struct EntryIterator
+  private struct EntryIterator
     include Iterator(String)
 
-    @dir : Dir
-
-    def initialize(@dir)
+    def initialize(@dir : Dir)
     end
 
     def next

@@ -164,16 +164,25 @@ describe "Code gen: primitives" do
 
   it "doesn't optimize away call whose obj is not passed as self (#2226)" do
     run(%(
-      $x = 1
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
-        $x = 2
+        Global.x = 2
         3
       end
 
       foo.class.crystal_type_id
 
-      $x
+      Global.x
       )).to_i.should eq(2)
   end
 

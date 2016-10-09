@@ -2,6 +2,12 @@
 
 class Crystal::Command
   private def eval
+    compiler = Compiler.new
+    OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal eval [options] [source]\n\nOptions:"
+      setup_simple_compiler_options compiler, opts
+    end
+
     if options.empty?
       program_source = STDIN.gets_to_end
       program_args = [] of String
@@ -16,7 +22,6 @@ class Crystal::Command
       end
     end
 
-    compiler = Compiler.new
     sources = [Compiler::Source.new("eval", program_source)]
 
     output_filename = Crystal.tempfile "eval"

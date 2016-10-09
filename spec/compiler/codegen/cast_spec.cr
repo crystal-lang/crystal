@@ -258,17 +258,104 @@ describe "Code gen: cast" do
 
   it "can cast from Void* to virtual type (#3014)" do
     run(%(
-      abstract class A
+      abstract class Foo
         abstract def hi
       end
 
-      class B < A
+      class Bar < Foo
         def hi
           42
         end
       end
 
-      B.new.as(Void*).as(A).hi
+      Bar.new.as(Void*).as(Foo).hi
       )).to_i.should eq(42)
+  end
+
+  it "upcasts from non-generic to generic" do
+    run(%(
+      class Foo(T)
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo(Int32)
+        def foo
+          2
+        end
+      end
+
+      Bar.new.as(Foo(Int32)).foo
+      )).to_i.should eq(2)
+  end
+
+  it "upcasts type to virtual (#3304)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      Foo.new.as(Foo).foo
+      )).to_i.should eq(1)
+  end
+
+  it "upcasts type to virtual (2) (#3304)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      class Gen(T)
+        def self.cast(x)
+          x.as(T)
+        end
+      end
+
+      Gen(Foo).cast(Foo.new).foo
+      )).to_i.should eq(1)
+  end
+
+  it "casts with block var that changes type (#3341)" do
+    codegen(%(
+      require "prelude"
+
+      class Object
+        def try
+          yield self
+        end
+      end
+
+      class Foo
+      end
+
+      x = Foo.new.as(Int32 | Foo)
+      x.try &.as(Foo)
+      ))
+  end
+
+  it "casts between union types, where union has a tuple type (#3377)" do
+    codegen(%(
+      require "prelude"
+
+      v = 1 || true || 1.0
+      (v || {v}).as(Bool | Float64)
+      ))
   end
 end
