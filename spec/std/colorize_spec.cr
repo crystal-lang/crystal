@@ -98,7 +98,7 @@ describe "colorize" do
   end
 
   it "colorizes io with method" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     with_color.red.surround(io) do
       io << "hello"
     end
@@ -106,7 +106,7 @@ describe "colorize" do
   end
 
   it "colorizes io with symbol" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     with_color(:red).surround(io) do
       io << "hello"
     end
@@ -114,7 +114,7 @@ describe "colorize" do
   end
 
   it "colorizes with push and pop" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     with_color.red.push(io) do
       io << "hello"
       with_color.green.push(io) do
@@ -126,7 +126,7 @@ describe "colorize" do
   end
 
   it "colorizes with push and pop resets" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     with_color.red.push(io) do
       io << "hello"
       with_color.green.bold.push(io) do

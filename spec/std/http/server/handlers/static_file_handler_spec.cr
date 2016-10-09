@@ -2,7 +2,7 @@ require "spec"
 require "http/server"
 
 private def handle(request, fallthrough = true)
-  io = MemoryIO.new
+  io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
   handler = HTTP::StaticFileHandler.new "#{__DIR__}/static", fallthrough

@@ -68,7 +68,7 @@ describe CSV do
     end
 
     it "parses from IO" do
-      CSV.parse(MemoryIO.new(%("hel""lo",world))).should eq([[%(hel"lo), %(world)]])
+      CSV.parse(IO::Memory.new(%("hel""lo",world))).should eq([[%(hel"lo), %(world)]])
     end
 
     it "takes an optional separator argument" do

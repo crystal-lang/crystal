@@ -9,7 +9,7 @@ module HTTP
       orignal_headers = headers.dup
       request = Request.new "GET", "/", headers
 
-      io = MemoryIO.new
+      io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
       headers.should eq(orignal_headers)
@@ -21,7 +21,7 @@ module HTTP
       orignal_headers = headers.dup
       request = Request.new "GET", "/greet?q=hello&name=world", headers
 
-      io = MemoryIO.new
+      io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
       headers.should eq(orignal_headers)
@@ -34,7 +34,7 @@ module HTTP
       request = Request.new "GET", "/", headers
       request.cookies << Cookie.new("foo", "bar")
 
-      io = MemoryIO.new
+      io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
       headers.should eq(orignal_headers)
@@ -48,7 +48,7 @@ module HTTP
 
       request = Request.new "GET", "/", headers
 
-      io = MemoryIO.new
+      io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
 
@@ -69,41 +69,41 @@ module HTTP
 
     it "serialize POST (with body)" do
       request = Request.new "POST", "/", body: "thisisthebody"
-      io = MemoryIO.new
+      io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
     end
 
     it "parses GET" do
-      request = Request.from_io(MemoryIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
       request.method.should eq("GET")
       request.path.should eq("/")
       request.headers.should eq({"Host" => "host.example.org"})
     end
 
     it "parses GET with query params" do
-      request = Request.from_io(MemoryIO.new("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
+      request = Request.from_io(IO::Memory.new("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
       request.method.should eq("GET")
       request.path.should eq("/greet")
       request.headers.should eq({"Host" => "host.example.org"})
     end
 
     it "parses GET without \\r" do
-      request = Request.from_io(MemoryIO.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
       request.method.should eq("GET")
       request.path.should eq("/")
       request.headers.should eq({"Host" => "host.example.org"})
     end
 
     it "parses empty header" do
-      request = Request.from_io(MemoryIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nReferer:\r\n\r\n")).as(Request)
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nReferer:\r\n\r\n")).as(Request)
       request.method.should eq("GET")
       request.path.should eq("/")
       request.headers.should eq({"Host" => "host.example.org", "Referer" => ""})
     end
 
     it "parses GET with cookie" do
-      request = Request.from_io(MemoryIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: a=b\r\n\r\n")).as(Request)
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: a=b\r\n\r\n")).as(Request)
       request.method.should eq("GET")
       request.path.should eq("/")
       request.cookies["a"].value.should eq("b")
@@ -113,7 +113,7 @@ module HTTP
     end
 
     it "headers are case insensitive" do
-      request = Request.from_io(MemoryIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
       headers = request.headers.not_nil!
       headers["HOST"].should eq("host.example.org")
       headers["host"].should eq("host.example.org")
@@ -121,7 +121,7 @@ module HTTP
     end
 
     it "parses POST (with body)" do
-      request = Request.from_io(MemoryIO.new("POST /foo HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")).as(Request)
+      request = Request.from_io(IO::Memory.new("POST /foo HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")).as(Request)
       request.method.should eq("POST")
       request.path.should eq("/foo")
       request.headers.should eq({"Content-Length" => "13"})
@@ -129,7 +129,7 @@ module HTTP
     end
 
     it "handles malformed request" do
-      request = Request.from_io(MemoryIO.new("nonsense"))
+      request = Request.from_io(IO::Memory.new("nonsense"))
       request.should be_a(Request::BadRequest)
     end
 
@@ -165,7 +165,7 @@ module HTTP
 
     describe "#path" do
       it "returns parsed path" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
         request.path.should eq("/api/v3/some/resource")
       end
 
@@ -178,22 +178,22 @@ module HTTP
 
     describe "#path=" do
       it "sets path" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
         request.path = "/api/v2/greet"
         request.path.should eq("/api/v2/greet")
       end
 
       it "updates @resource" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
         request.path = "/api/v2/greet"
         request.resource.should eq("/api/v2/greet?filter=hello&world=test")
       end
 
       it "updates serialized form" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
         request.path = "/api/v2/greet"
 
-        io = MemoryIO.new
+        io = IO::Memory.new
         request.to_io(io)
         io.to_s.should eq("GET /api/v2/greet?filter=hello&world=test HTTP/1.1\r\n\r\n")
       end
@@ -201,29 +201,29 @@ module HTTP
 
     describe "#query" do
       it "returns request's query" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
         request.query.should eq("filter=hello&world=test")
       end
     end
 
     describe "#query=" do
       it "sets query" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
         request.query = "q=isearchforsomething&locale=de"
         request.query.should eq("q=isearchforsomething&locale=de")
       end
 
       it "updates @resource" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
         request.query = "q=isearchforsomething&locale=de"
         request.resource.should eq("/api/v3/some/resource?q=isearchforsomething&locale=de")
       end
 
       it "updates serialized form" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
         request.query = "q=isearchforsomething&locale=de"
 
-        io = MemoryIO.new
+        io = IO::Memory.new
         request.to_io(io)
         io.to_s.should eq("GET /api/v3/some/resource?q=isearchforsomething&locale=de HTTP/1.1\r\n\r\n")
       end
@@ -231,7 +231,7 @@ module HTTP
 
     describe "#query_params" do
       it "returns parsed HTTP::Params" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
         params = request.query_params
 
         params["foo"].should eq("bar")
@@ -240,14 +240,14 @@ module HTTP
       end
 
       it "happily parses when query is not a canonical url-encoded string" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?{\"hello\":\"world\"} HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?{\"hello\":\"world\"} HTTP/1.1\r\n\r\n")).as(Request)
         params = request.query_params
         params["{\"hello\":\"world\"}"].should eq("")
         params.to_s.should eq("%7B%22hello%22%3A%22world%22%7D=")
       end
 
       it "affects #query when modified" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
         params = request.query_params
 
         params["foo"] = "not-bar"
@@ -255,7 +255,7 @@ module HTTP
       end
 
       it "updates @resource when modified" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
         params = request.query_params
 
         params["foo"] = "not-bar"
@@ -263,18 +263,18 @@ module HTTP
       end
 
       it "updates serialized form when modified" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
         params = request.query_params
 
         params["foo"] = "not-bar"
 
-        io = MemoryIO.new
+        io = IO::Memory.new
         request.to_io(io)
         io.to_s.should eq("GET /api/v3/some/resource?foo=not-bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")
       end
 
       it "is affected when #query is modified" do
-        request = Request.from_io(MemoryIO.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
         params = request.query_params
 
         new_query = "foo=not-bar&foo=not-baz&not-baz=hello&name=world"

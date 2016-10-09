@@ -9,7 +9,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     super(io)
 
     @inside_inline_code = false
-    @code_buffer = MemoryIO.new
+    @code_buffer = IO::Memory.new
     @inside_code = false
     @inside_link = false
   end

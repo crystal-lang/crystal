@@ -194,7 +194,7 @@ class Crystal::Call
     end
 
     if defs_matching_args_size.size > 0
-      str = MemoryIO.new
+      str = IO::Memory.new
       if check_single_def_error_message(defs_matching_args_size, named_args_types, str)
         raise str.to_s
       else

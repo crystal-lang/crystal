@@ -7,7 +7,7 @@ class HTTP::WebSocket
   # :nodoc:
   def initialize(@ws : Protocol)
     @buffer = Slice(UInt8).new(4096)
-    @current_message = MemoryIO.new
+    @current_message = IO::Memory.new
   end
 
   # Opens a new websocket using the information provided by the URI. This will also handle the handshake

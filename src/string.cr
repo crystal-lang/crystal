@@ -99,7 +99,7 @@ require "c/string"
 #
 # This ends up invoking `Object#to_s(IO)` on each expression enclosed by `#{...}`.
 #
-# If you need to dynamically build a string, use `String#build` or `MemoryIO`.
+# If you need to dynamically build a string, use `String#build` or `IO::Memory`.
 class String
   # :nodoc:
   TYPE_ID = "".crystal_type_id
@@ -1011,7 +1011,7 @@ class String
   # "好".bytes            # => [229, 165, 189]
   # ```
   def encode(encoding : String, invalid : Symbol? = nil) : Slice(UInt8)
-    io = MemoryIO.new
+    io = IO::Memory.new
     String.encode(to_slice, "UTF-8", encoding, io, invalid)
     io.to_slice
   end

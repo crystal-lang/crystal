@@ -3,7 +3,7 @@ require "http/server"
 
 describe HTTP::ErrorHandler do
   it "rescues from exception" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
@@ -22,7 +22,7 @@ describe HTTP::ErrorHandler do
   end
 
   it "can return a generic error message" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)

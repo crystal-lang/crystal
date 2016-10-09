@@ -27,7 +27,7 @@ module HTTP
       return if query.empty?
 
       key = nil
-      buffer = MemoryIO.new
+      buffer = IO::Memory.new
 
       i = 0
       bytesize = query.bytesize
@@ -287,7 +287,7 @@ module HTTP
       @io : IO
       @first : Bool
 
-      def initialize(@io = MemoryIO.new)
+      def initialize(@io = IO::Memory.new)
         @first = true
       end
 
