@@ -96,7 +96,7 @@ module Base64
   end
 
   # :nodoc:
-  def strict_encode(data, alphabet, pad = false)
+  private def strict_encode(data, alphabet, pad = false)
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
