@@ -1,10 +1,6 @@
 require "spec"
 require "http/web_socket"
 
-private macro packet(*bytes)
-  Bytes[{{*bytes}}].pointer({{bytes.size}})
-end
-
 private def assert_text_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
 end
@@ -30,8 +26,8 @@ end
 describe HTTP::WebSocket do
   describe "receive" do
     it "can read a small text packet" do
-      data = packet(0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f)
-      io = PointerIO.new(pointerof(data))
+      data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
+      io = MemoryIO.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
       buffer = Slice(UInt8).new(64)
@@ -41,9 +37,9 @@ describe HTTP::WebSocket do
     end
 
     it "can read partial packets" do
-      data = packet(0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
-        0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f)
-      io = PointerIO.new(pointerof(data))
+      data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
+        0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
+      io = MemoryIO.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
       buffer = Slice(UInt8).new(3)
@@ -60,9 +56,9 @@ describe HTTP::WebSocket do
     end
 
     it "can read masked text message" do
-      data = packet(0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58,
-        0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58)
-      io = PointerIO.new(pointerof(data))
+      data = Bytes[0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58,
+        0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58]
+      io = MemoryIO.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
       buffer = Slice(UInt8).new(3)
@@ -79,10 +75,10 @@ describe HTTP::WebSocket do
     end
 
     it "can read fragmented packets" do
-      data = packet(0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f,
-        0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f)
+      data = Bytes[0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f,
+        0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f]
 
-      io = PointerIO.new(pointerof(data))
+      io = MemoryIO.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
       buffer = Slice(UInt8).new(10)
@@ -99,8 +95,8 @@ describe HTTP::WebSocket do
     end
 
     it "read ping packet" do
-      data = packet(0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f)
-      io = PointerIO.new(pointerof(data))
+      data = Bytes[0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
+      io = MemoryIO.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
       buffer = Slice(UInt8).new(64)
@@ -110,10 +106,10 @@ describe HTTP::WebSocket do
     end
 
     it "read ping packet in between fragmented packet" do
-      data = packet(0x01, 0x03, 0x48, 0x65, 0x6c,
+      data = Bytes[0x01, 0x03, 0x48, 0x65, 0x6c,
         0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
-        0x80, 0x02, 0x6c, 0x6f)
-      io = PointerIO.new(pointerof(data))
+        0x80, 0x02, 0x6c, 0x6f]
+      io = MemoryIO.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
       buffer = Slice(UInt8).new(64)
@@ -132,8 +128,8 @@ describe HTTP::WebSocket do
     end
 
     it "read long packet" do
-      data = File.read("#{__DIR__}/../data/websocket_longpacket.bin").to_unsafe
-      io = PointerIO.new(pointerof(data))
+      data = File.read("#{__DIR__}/../data/websocket_longpacket.bin")
+      io = MemoryIO.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
       buffer = Slice(UInt8).new(2048)
@@ -144,13 +140,12 @@ describe HTTP::WebSocket do
     end
 
     it "read very long packet" do
-      data_slice = Slice(UInt8).new(10 + 0x010000)
-      header = packet(0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00)
-      data_slice.copy_from(header, 10)
+      data = Slice(UInt8).new(10 + 0x010000)
 
-      data = data_slice.pointer(data_slice.bytesize)
+      header = Bytes[0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x0]
+      data.copy_from(header)
 
-      io = PointerIO.new(pointerof(data))
+      io = MemoryIO.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
       buffer = Slice(UInt8).new(0x010000)
@@ -160,8 +155,8 @@ describe HTTP::WebSocket do
     end
 
     it "can read a close packet" do
-      data = packet(0x88, 0x00)
-      io = PointerIO.new(pointerof(data))
+      data = Bytes[0x88, 0x00]
+      io = MemoryIO.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
       buffer = Slice(UInt8).new(64)
