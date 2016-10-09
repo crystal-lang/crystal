@@ -24,7 +24,7 @@ private class PartialReaderIO
 end
 
 describe "IO::Delimited" do
-  describe ".read" do
+  describe "#read" do
     it "doesn't read past the limit" do
       io = MemoryIO.new("abcderzzrfgzr")
       delimited = IO::Delimited.new(io, read_delimiter: "zr")
@@ -96,7 +96,7 @@ describe "IO::Delimited" do
     end
   end
 
-  describe ".write" do
+  describe "#write" do
     it "raises" do
       delimited = IO::Delimited.new(MemoryIO.new, read_delimiter: "zr")
       expect_raises(IO::Error, "Can't write to IO::Delimited") do
@@ -105,7 +105,7 @@ describe "IO::Delimited" do
     end
   end
 
-  describe ".close" do
+  describe "#close" do
     it "stops reading" do
       io = MemoryIO.new "abcdefg"
       delimited = IO::Delimited.new(io, read_delimiter: "zr")

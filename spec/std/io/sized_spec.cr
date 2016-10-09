@@ -1,7 +1,7 @@
 require "spec"
 
 describe "IO::Sized" do
-  describe ".read" do
+  describe "#read" do
     it "doesn't read past the limit when reading char-by-char" do
       io = MemoryIO.new "abcdefg"
       sized = IO::Sized.new(io, read_size: 5)
@@ -47,7 +47,7 @@ describe "IO::Sized" do
     end
   end
 
-  describe ".write" do
+  describe "#write" do
     it "raises" do
       sized = IO::Sized.new(MemoryIO.new, read_size: 5)
       expect_raises(IO::Error, "Can't write to IO::Sized") do
@@ -56,7 +56,7 @@ describe "IO::Sized" do
     end
   end
 
-  describe ".close" do
+  describe "#close" do
     it "stops reading" do
       io = MemoryIO.new "abcdefg"
       sized = IO::Sized.new(io, read_size: 5)
