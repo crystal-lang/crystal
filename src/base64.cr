@@ -132,11 +132,11 @@ module Base64
   #
   # The alphabet uses '-' instead of '+' and '_' instead of '/'.
   #
-  def urlsafe_encode(data) : String
+  def urlsafe_encode(data, padding = true) : String
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
-      to_base64(slice, CHARS_SAFE, pad: true) { |byte| appender << byte }
+      to_base64(slice, CHARS_SAFE, pad: padding) { |byte| appender << byte }
       size = appender.size
       {size, size}
     end
