@@ -140,6 +140,16 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n0\r\n\r\n")
       end
 
+      it "closes request io when flushing" do
+        request_io = MemoryIO.new("hello")
+        response_io = MemoryIO.new
+        response = Response.new(response_io)
+        response.request_io = request_io
+        response.print("Hello")
+        response.flush
+        request_io.closed?.should be_true
+      end
+
       it "wraps output" do
         io = MemoryIO.new
         response = Response.new(io)

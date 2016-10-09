@@ -30,6 +30,7 @@ class HTTP::Server::RequestProcessor
           return
         end
 
+        response.request_io = request.body_io
         response.version = request.version
         response.reset
         response.headers["Connection"] = "keep-alive" if request.keep_alive?

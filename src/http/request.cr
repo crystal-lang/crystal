@@ -2,22 +2,41 @@ require "./common"
 require "uri"
 require "http/params"
 
+# An HTTP request.
+#
+# It serves both to perform requests by an `HTTP::Client` and to
+# represent requests received by an `HTTP::Server`.
+#
+# In the case of an `HTTP::Server`, `#body` will always raise
+# and `#body_io` will optionally have an `IO` representing the request
+# body. This will be `nil` if the request has no body.
 class HTTP::Request
   getter method : String
   getter headers : Headers
   getter body : String?
+  getter body_io : IO?
   getter version : String
   @cookies : Cookies?
   @query_params : Params?
   @uri : URI?
 
-  def initialize(@method : String, @resource : String, headers : Headers? = nil, @body = nil, @version = "HTTP/1.1")
+  def initialize(@method : String, @resource : String, headers : Headers? = nil, @body = nil, @body_io = nil, @version = "HTTP/1.1")
     @headers = headers.try(&.dup) || Headers.new
     if body = @body
+      if body_io
+        raise ArgumentError.new("can't initialize HTTP::Request with both `body` and `body_io`")
+      end
       @headers["Content-Length"] = body.bytesize.to_s
-    elsif @method == "POST" || @method == "PUT"
+    elsif !@body_io && (@method == "POST" || @method == "PUT")
       @headers["Content-Length"] = "0"
     end
+  end
+
+  def body
+    if @body_io
+      raise "HTTP::Request has a `body_io`: use `body_io`, not `body` to get its body"
+    end
+    @body
   end
 
   # Returns a convenience wrapper around querying and setting cookie related
@@ -49,7 +68,7 @@ class HTTP::Request
     io << @method << " " << resource << " " << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
-    HTTP.serialize_headers_and_body(io, headers, @body, nil, @version)
+    HTTP.serialize_headers_and_body(io, headers, @body, @body_io, @version)
   end
 
   # :nodoc:
@@ -67,8 +86,8 @@ class HTTP::Request
     return BadRequest.new unless parts.size == 3
 
     method, resource, http_version = parts
-    HTTP.parse_headers_and_body(io) do |headers, body|
-      return new method, resource, headers, body.try &.gets_to_end, http_version
+    HTTP.parse_headers_and_body(io) do |headers, body_io|
+      return new method, resource, headers, nil, body_io, http_version
     end
 
     # Unexpected end of http request

@@ -32,6 +32,10 @@ class HTTP::Server
     # body. If not set, the default value is 200 (OK).
     property status_code : Int32
 
+    # Hold a reference to the request's IO: before writing anything
+    # into the response we must close this IO to advance the pointer in the socket
+    protected property request_io : IO?
+
     # :nodoc:
     def initialize(@io : IO, @version = "HTTP/1.1")
       @headers = Headers.new
@@ -116,6 +120,10 @@ class HTTP::Server
     end
 
     protected def write_headers
+      # Make sure to finish reading the request
+      # before writing anything to the response
+      request_io.try &.close
+
       status_message = HTTP.default_status_message_for(@status_code)
       @io << @version << " " << @status_code << " " << status_message << "\r\n"
       headers.each do |name, values|

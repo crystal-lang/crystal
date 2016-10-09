@@ -125,12 +125,25 @@ module HTTP
       request.method.should eq("POST")
       request.path.should eq("/foo")
       request.headers.should eq({"Content-Length" => "13"})
-      request.body.should eq("thisisthebody")
+      request.body_io.not_nil!.gets_to_end.should eq("thisisthebody")
     end
 
     it "handles malformed request" do
       request = Request.from_io(MemoryIO.new("nonsense"))
       request.should be_a(Request::BadRequest)
+    end
+
+    it "raises if creating with both body and body_io" do
+      expect_raises(ArgumentError) do
+        Request.new "GET", "/", body: "a", body_io: MemoryIO.new
+      end
+    end
+
+    it "raises if invoking #body when #body_io is available" do
+      request = Request.new "GET", "/", body_io: MemoryIO.new
+      expect_raises(Exception, "HTTP::Request has a `body_io`: use `body_io`, not `body` to get its body") do
+        request.body
+      end
     end
 
     describe "keep-alive" do
