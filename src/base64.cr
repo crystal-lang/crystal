@@ -1,5 +1,5 @@
 # The Base64 module provides for the encoding (`encode`, `strict_encode`,
-# `urlsafe_encode`) and decoding (`decode`, `strict_decode`, `urlsafe_decode`)
+# `urlsafe_encode`) and decoding (`decode`)
 # of binary data using a Base64 representation.
 #
 # ###Example
