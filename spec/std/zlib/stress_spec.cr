@@ -8,7 +8,7 @@ module Zlib
         1_000_000.times { rand(2000).to_i.to_s(32, io) }
       end
 
-      io = MemoryIO.new
+      io = IO::Memory.new
 
       deflate = Deflate.new(io)
       deflate.print expected
@@ -22,7 +22,7 @@ module Zlib
     it "inflate deflate should be inverse (utf-8)" do
       expected = "日本さん語日本さん語"
 
-      io = MemoryIO.new
+      io = IO::Memory.new
 
       deflate = Deflate.new(io)
       deflate.print expected

@@ -2,7 +2,7 @@ require "spec"
 require "big_int"
 require "base64"
 
-# This is a non-optimized version of MemoryIO so we can test
+# This is a non-optimized version of IO::Memory so we can test
 # raw IO. Optimizations for specific IOs are tested separately
 # (for example in buffered_io_spec)
 private class SimpleMemoryIO
@@ -113,7 +113,7 @@ describe IO do
 
   describe "IO iterators" do
     it "iterates by line" do
-      io = MemoryIO.new("hello\nbye\n")
+      io = IO::Memory.new("hello\nbye\n")
       lines = io.each_line
       lines.next.should eq("hello\n")
       lines.next.should eq("bye\n")
@@ -124,7 +124,7 @@ describe IO do
     end
 
     it "iterates by char" do
-      io = MemoryIO.new("abあぼ")
+      io = IO::Memory.new("abあぼ")
       chars = io.each_char
       chars.next.should eq('a')
       chars.next.should eq('b')
@@ -137,7 +137,7 @@ describe IO do
     end
 
     it "iterates by byte" do
-      io = MemoryIO.new("ab")
+      io = IO::Memory.new("ab")
       bytes = io.each_byte
       bytes.next.should eq('a'.ord)
       bytes.next.should eq('b'.ord)
@@ -150,24 +150,24 @@ describe IO do
 
   it "copies" do
     string = "abあぼ"
-    src = MemoryIO.new(string)
-    dst = MemoryIO.new
+    src = IO::Memory.new(string)
+    dst = IO::Memory.new
     IO.copy(src, dst).should eq(string.bytesize)
     dst.to_s.should eq(string)
   end
 
   it "copies with limit" do
     string = "abcあぼ"
-    src = MemoryIO.new(string)
-    dst = MemoryIO.new
+    src = IO::Memory.new(string)
+    dst = IO::Memory.new
     IO.copy(src, dst, 3).should eq(3)
     dst.to_s.should eq("abc")
   end
 
   it "raises on copy with negative limit" do
     string = "abcあぼ"
-    src = MemoryIO.new(string)
-    dst = MemoryIO.new
+    src = IO::Memory.new(string)
+    dst = IO::Memory.new
     expect_raises(ArgumentError, "negative limit") do
       IO.copy(src, dst, -10)
     end
@@ -510,7 +510,7 @@ describe IO do
       end
 
       it "reads utf8" do
-        io = MemoryIO.new("你".encode("GB2312"))
+        io = IO::Memory.new("你".encode("GB2312"))
         io.set_encoding("GB2312")
 
         buffer = uninitialized UInt8[1024]
@@ -571,21 +571,21 @@ describe IO do
 
       it "decodes incomplete multibyte sequence with skip (#3285)" do
         bytes = Bytes[195, 229, 237, 229, 240, 224, 246, 232, 255, 32, 241, 234, 240, 232, 239, 242, 224, 32, 48, 46, 48, 49, 50, 54, 32, 241, 229, 234, 243, 237, 228, 10]
-        m = MemoryIO.new(bytes)
+        m = IO::Memory.new(bytes)
         m.set_encoding("UTF-8", invalid: :skip)
         m.gets_to_end.should eq("  0.0126 \n")
       end
 
       it "decodes incomplete multibyte sequence with skip (2) (#3285)" do
         str = File.read("#{__DIR__}/../data/io_data_incomplete_multibyte_sequence.txt")
-        m = MemoryIO.new(Base64.decode_string str)
+        m = IO::Memory.new(Base64.decode_string str)
         m.set_encoding("UTF-8", invalid: :skip)
         m.gets_to_end.bytesize.should eq(4277)
       end
 
       it "decodes incomplete multibyte sequence with skip (3) (#3285)" do
         str = File.read("#{__DIR__}/../data/io_data_incomplete_multibyte_sequence_2.txt")
-        m = MemoryIO.new(Base64.decode_string str)
+        m = IO::Memory.new(Base64.decode_string str)
         m.set_encoding("UTF-8", invalid: :skip)
         m.gets_to_end.bytesize.should eq(8977)
       end

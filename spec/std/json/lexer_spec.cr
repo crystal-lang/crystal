@@ -9,7 +9,7 @@ private def it_lexes(string, expected_type, file = __FILE__, line = __LINE__)
   end
 
   it "lexes #{string} from IO", file, line do
-    lexer = JSON::Lexer.new MemoryIO.new(string)
+    lexer = JSON::Lexer.new IO::Memory.new(string)
     token = lexer.next_token
     token.type.should eq(expected_type)
   end
@@ -24,7 +24,7 @@ private def it_lexes_string(string, string_value, file = __FILE__, line = __LINE
   end
 
   it "lexes #{string} from IO", file, line do
-    lexer = JSON::Lexer.new MemoryIO.new(string)
+    lexer = JSON::Lexer.new IO::Memory.new(string)
     token = lexer.next_token
     token.type.should eq(:STRING)
     token.string_value.should eq(string_value)
@@ -41,7 +41,7 @@ private def it_lexes_int(string, int_value, file = __FILE__, line = __LINE__)
   end
 
   it "lexes #{string} from IO", file, line do
-    lexer = JSON::Lexer.new MemoryIO.new(string)
+    lexer = JSON::Lexer.new IO::Memory.new(string)
     token = lexer.next_token
     token.type.should eq(:INT)
     token.int_value.should eq(int_value)
@@ -59,7 +59,7 @@ private def it_lexes_float(string, float_value, file = __FILE__, line = __LINE__
   end
 
   it "lexes #{string} from IO", file, line do
-    lexer = JSON::Lexer.new MemoryIO.new(string)
+    lexer = JSON::Lexer.new IO::Memory.new(string)
     token = lexer.next_token
     token.type.should eq(:FLOAT)
     token.float_value.should eq(float_value)

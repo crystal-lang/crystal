@@ -11,7 +11,7 @@ module Crystal
     property delimiter_state : DelimiterState
     property macro_state : MacroState
     property passed_backslash_newline : Bool
-    property doc_buffer : MemoryIO?
+    property doc_buffer : IO::Memory?
     property raw : String
     property start : Int32
 
