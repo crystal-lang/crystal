@@ -132,13 +132,11 @@ module Base64
   #
   # The alphabet uses '-' instead of '+' and '_' instead of '/'.
   #
-  # The `padding` parameter defaults to false. When true, enough `=` characters
-  # are added to make the output divisible by 3.
-  def urlsafe_encode(data, padding = false) : String
+  def urlsafe_encode(data) : String
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
-      to_base64(slice, CHARS_SAFE, pad: padding) { |byte| appender << byte }
+      to_base64(slice, CHARS_SAFE, pad: true) { |byte| appender << byte }
       size = appender.size
       {size, size}
     end
@@ -153,7 +151,7 @@ module Base64
   # The `padding` parameter defaults to false. When true, enough `=` characters
   # are added to make the output divisible by 3.
   def urlsafe_encode(data, io : IO)
-    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: false)
+    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: true)
   end
 
   # Returns the Base64-decoded version of `data` as a *Slice(UInt8)*.
