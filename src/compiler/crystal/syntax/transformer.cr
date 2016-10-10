@@ -124,13 +124,6 @@ module Crystal
       node
     end
 
-    def transform(node : IfDef)
-      node.cond = node.cond.transform(self)
-      node.then = node.then.transform(self)
-      node.else = node.else.transform(self)
-      node
-    end
-
     def transform(node : MultiAssign)
       transform_many node.targets
       transform_many node.values
@@ -380,6 +373,12 @@ module Crystal
     end
 
     def transform(node : Assign)
+      node.target = node.target.transform(self)
+      node.value = node.value.transform(self)
+      node
+    end
+
+    def transform(node : OpAssign)
       node.target = node.target.transform(self)
       node.value = node.value.transform(self)
       node

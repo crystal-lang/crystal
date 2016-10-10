@@ -794,10 +794,6 @@ module Crystal::Macros
   # class Unless < ASTNode
   # end
 
-  # An ifdef expression.
-  # class IfDef < ASTNode
-  # end
-
   # Assign expression.
   class Assign < ASTNode
     # Returns the target assigned to.

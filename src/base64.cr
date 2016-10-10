@@ -1,5 +1,5 @@
 # The Base64 module provides for the encoding (`encode`, `strict_encode`,
-# `urlsafe_encode`) and decoding (`decode`, `strict_decode`, `urlsafe_decode`)
+# `urlsafe_encode`) and decoding (`decode`)
 # of binary data using a Base64 representation.
 #
 # ###Example
@@ -96,7 +96,7 @@ module Base64
   end
 
   # :nodoc:
-  def strict_encode(data, alphabet, pad = false)
+  private def strict_encode(data, alphabet, pad = false)
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -132,9 +132,9 @@ module Base64
   #
   # The alphabet uses '-' instead of '+' and '_' instead of '/'.
   #
-  # The `padding` parameter defaults to false. When true, enough `=` characters
-  # are added to make the output divisible by 3.
-  def urlsafe_encode(data, padding = false) : String
+  # The `padding` parameter defaults to true. When false, enough `=` characters
+  # are not added to make the output divisible by 4.
+  def urlsafe_encode(data, padding = true) : String
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -149,11 +149,8 @@ module Base64
   # Alphabet" in RFC 4648.
   #
   # The alphabet uses '-' instead of '+' and '_' instead of '/'.
-  #
-  # The `padding` parameter defaults to false. When true, enough `=` characters
-  # are added to make the output divisible by 3.
   def urlsafe_encode(data, io : IO)
-    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: false)
+    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: true)
   end
 
   # Returns the Base64-decoded version of `data` as a *Slice(UInt8)*.

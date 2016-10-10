@@ -349,4 +349,13 @@ describe "Code gen: cast" do
       x.try &.as(Foo)
       ))
   end
+
+  it "casts between union types, where union has a tuple type (#3377)" do
+    codegen(%(
+      require "prelude"
+
+      v = 1 || true || 1.0
+      (v || {v}).as(Bool | Float64)
+      ))
+  end
 end

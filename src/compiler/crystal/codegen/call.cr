@@ -254,8 +254,9 @@ class Crystal::CodeGenVisitor
         set_ensure_exception_handler(node)
         set_ensure_exception_handler(target_def)
 
+        args_base_index = create_local_copy_of_block_self(self_type, call_args)
         alloca_vars target_def.vars, target_def
-        create_local_copy_of_block_args(target_def, self_type, call_args)
+        create_local_copy_of_block_args(target_def, self_type, call_args, args_base_index)
 
         Phi.open(self, node) do |phi|
           context.return_phi = phi
@@ -378,7 +379,7 @@ class Crystal::CodeGenVisitor
       # Change context type: faster then creating a new context
       old_type = context.type
       context.type = self_type
-      codegen_primitive(body, target_def, call_args)
+      codegen_primitive(node, body, target_def, call_args)
       context.type = old_type
       return true
     end

@@ -1,5 +1,6 @@
 require "../../spec_helper"
 
+{% if !flag?(:openbsd) %}
 describe "Codegen: thread local" do
   it "works with class variables" do
     run(%(
@@ -62,3 +63,4 @@ describe "Codegen: thread local" do
     ))
   end
 end
+{% end %}

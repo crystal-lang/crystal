@@ -63,7 +63,7 @@ class UDPSocket < IPSocket
       self.reuse_address = true
 
       ret =
-        {% if flag?(:freebsd) %}
+        {% if flag?(:freebsd) || flag?(:openbsd) %}
           LibC.bind(fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
         {% else %}
           LibC.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen)

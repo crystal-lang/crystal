@@ -13,7 +13,7 @@ class Crystal::CodeGenVisitor
             end
   end
 
-  def codegen_primitive(node, target_def, call_args)
+  def codegen_primitive(call, node, target_def, call_args)
     @last = case node.name
             when "binary"
               codegen_primitive_binary node, target_def, call_args
@@ -57,6 +57,16 @@ class Crystal::CodeGenVisitor
               codegen_primitive_tuple_indexer_known_index node, target_def, call_args
             when "enum_value", "enum_new"
               call_args[0]
+            when "cmpxchg"
+              codegen_primitive_cmpxchg call, node, target_def, call_args
+            when "atomicrmw"
+              codegen_primitive_atomicrmw call, node, target_def, call_args
+            when "fence"
+              codegen_primitive_fence call, node, target_def, call_args
+            when "load_atomic"
+              codegen_primitive_load_atomic call, node, target_def, call_args
+            when "store_atomic"
+              codegen_primitive_store_atomic call, node, target_def, call_args
             else
               raise "Bug: unhandled primitive in codegen: #{node.name}"
             end
@@ -744,5 +754,105 @@ class Crystal::CodeGenVisitor
     else
       value
     end
+  end
+
+  def codegen_primitive_cmpxchg(call, node, target_def, call_args)
+    success_ordering = atomic_ordering_from_symbol_literal(call.args[-2])
+    failure_ordering = atomic_ordering_from_symbol_literal(call.args[-1])
+
+    pointer, cmp, new = call_args
+    value = builder.cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
+    value_ptr = alloca llvm_type(node.type)
+    store extract_value(value, 0), gep(value_ptr, 0, 0)
+    store extract_value(value, 1), gep(value_ptr, 0, 1)
+    value_ptr
+  end
+
+  def codegen_primitive_atomicrmw(call, node, target_def, call_args)
+    op = atomicrwm_bin_op_from_symbol_literal(call.args[0])
+    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
+    singlethread = bool_from_bool_literal(call.args[-1])
+
+    _, pointer, val = call_args
+    builder.atomicrmw(op, pointer, val, ordering, singlethread)
+  end
+
+  def codegen_primitive_fence(call, node, target_def, call_args)
+    ordering = atomic_ordering_from_symbol_literal(call.args[0])
+    singlethread = bool_from_bool_literal(call.args[1])
+
+    builder.fence(ordering, singlethread)
+    llvm_nil
+  end
+
+  def codegen_primitive_load_atomic(call, node, target_def, call_args)
+    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
+    volatile = bool_from_bool_literal(call.args[-1])
+
+    ptr = call_args.first
+
+    inst = builder.load(ptr)
+    inst.ordering = ordering
+    inst.volatile = true if volatile
+    set_alignment inst, node.type
+    inst
+  end
+
+  def codegen_primitive_store_atomic(call, node, target_def, call_args)
+    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
+    volatile = bool_from_bool_literal(call.args[-1])
+
+    ptr, value = call_args
+
+    inst = builder.store(value, ptr)
+    inst.ordering = ordering
+    inst.volatile = true if volatile
+    set_alignment inst, node.type
+    inst
+  end
+
+  def set_alignment(inst, type)
+    case type
+    when IntegerType, FloatType
+      inst.alignment = type.bytes
+    when CharType
+      inst.alignment = 4
+    else
+      inst.alignment = @program.has_flag?("x86_64") ? 8 : 4
+    end
+  end
+
+  def atomic_ordering_from_symbol_literal(node)
+    unless node.is_a?(SymbolLiteral)
+      node.raise "Bug: expected symbol literal"
+    end
+
+    ordering = LLVM::AtomicOrdering.parse?(node.value)
+    unless ordering
+      node.raise "unknown atomic ordering: #{node.value}"
+    end
+
+    ordering
+  end
+
+  def atomicrwm_bin_op_from_symbol_literal(node)
+    unless node.is_a?(SymbolLiteral)
+      node.raise "Bug: expected symbol literal"
+    end
+
+    op = LLVM::AtomicRMWBinOp.parse?(node.value)
+    unless op
+      node.raise "unknown atomic rwm bin op: #{node.value}"
+    end
+
+    op
+  end
+
+  def bool_from_bool_literal(node)
+    unless node.is_a?(BoolLiteral)
+      node.raise "Bug: expected bool literal"
+    end
+
+    node.value
   end
 end
