@@ -1323,10 +1323,10 @@ module Crystal
         write " "
       end
 
-      remove_to_skip node, to_skip
+      body = remove_to_skip node, to_skip
 
       unless node.abstract?
-        format_nested_with_end node.body
+        format_nested_with_end body
       end
 
       @inside_def -= 1
@@ -2442,21 +2442,21 @@ module Crystal
       if @token.keyword?(:do)
         write " do"
         next_token_skip_space
-        format_block_args node.args, node
-        format_nested_with_end node.body
+        body = format_block_args node.args, node
+        format_nested_with_end body
       elsif @token.type == :"{"
         write "," if needs_comma
         write " {"
         next_token_skip_space
-        format_block_args node.args, node
+        body = format_block_args node.args, node
         if @token.type == :NEWLINE
-          format_nested node.body
+          format_nested body
           skip_space_or_newline
           write_indent
         else
-          unless node.body.is_a?(Nop)
+          unless body.is_a?(Nop)
             write " "
-            accept node.body
+            accept body
           end
           skip_space_or_newline
           write " "
@@ -2606,7 +2606,7 @@ module Crystal
     end
 
     def format_block_args(args, node)
-      return 0 if args.empty?
+      return node.body if args.empty?
 
       to_skip = 0
 
@@ -2673,27 +2673,26 @@ module Crystal
       if to_skip > 0
         body = node.body
         if body.is_a?(ExceptionHandler) && body.implicit
-          node = body
-          body = body.body
+          sub_body = remove_to_skip(body, to_skip)
+          body.body = sub_body
+          return body
         end
 
         if body.is_a?(Expressions)
           body.expressions = body.expressions[to_skip..-1]
-          if body.expressions.empty?
-            set_body(node, Nop.new)
+          case body.expressions.size
+          when 0
+            Nop.new
+          when 1
+            body.expressions.first
+          else
+            body
           end
         else
-          set_body(node, Nop.new)
+          Nop.new
         end
-      end
-    end
-
-    def set_body(node, body)
-      case node
-      when Def
-        node.body = body
-      when ExceptionHandler
-        node.body = body
+      else
+        node.body
       end
     end
 
