@@ -2951,7 +2951,7 @@ module Crystal
       end
     end
 
-    def visit(node : When | Unless | Until | MacroLiteral)
+    def visit(node : When | Unless | Until | MacroLiteral | OpAssign)
       raise "Bug: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end

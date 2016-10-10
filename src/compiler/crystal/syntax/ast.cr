@@ -652,6 +652,37 @@ module Crystal
     def_equals_and_hash @target, @value
   end
 
+  # Operator assign expression.
+  #
+  #     target op'=' value
+  #
+  # For example if `op` is `+` then the above is:
+  #
+  #     target '+=' value
+  class OpAssign < ASTNode
+    property target : ASTNode
+    property op : String
+    property value : ASTNode
+
+    def initialize(@target, @op, @value)
+    end
+
+    def accept_children(visitor)
+      @target.accept visitor
+      @value.accept visitor
+    end
+
+    def end_location
+      @end_location || value.end_location
+    end
+
+    def clone_without_location
+      OpAssign.new(@target.clone, @op, @value.clone)
+    end
+
+    def_equals_and_hash @target, @op, @value
+  end
+
   # Assign expression.
   #
   #     target [',' target]+ '=' value [',' value]*

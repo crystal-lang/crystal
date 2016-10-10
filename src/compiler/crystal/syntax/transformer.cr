@@ -378,6 +378,12 @@ module Crystal
       node
     end
 
+    def transform(node : OpAssign)
+      node.target = node.target.transform(self)
+      node.value = node.value.transform(self)
+      node
+    end
+
     def transform(node : Out)
       node.exp = node.exp.transform(self)
       node

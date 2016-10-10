@@ -194,5 +194,188 @@ module Crystal
         node
       end
     end
+
+    # Convert `a += b` to `a = a + b`
+    def transform(node : OpAssign)
+      super
+
+      target = node.target
+      if target.is_a?(Call)
+        if target.name == "[]"
+          transform_op_assign_index(node, target)
+        else
+          transform_op_assign_call(node, target)
+        end
+      else
+        transform_op_assign_simple(node, target)
+      end
+    end
+
+    def transform_op_assign_call(node, target)
+      obj = target.obj.not_nil!
+
+      # Convert
+      #
+      #     a.exp += b
+      #
+      # To
+      #
+      #     tmp = a
+      #     tmp.exp=(tmp.exp + b)
+      case obj
+      when Var, InstanceVar, ClassVar, .simple_literal?
+        tmp = obj
+      else
+        tmp = program.new_temp_var
+
+        # (1) = tmp = a
+        assign = Assign.new(tmp, obj).at(node)
+      end
+
+      # (2) = tmp.exp
+      call = Call.new(tmp.clone, target.name).at(node)
+
+      case node.op
+      when "||"
+        # Special: tmp.exp || tmp.exp=(b)
+        #
+        # (3) = tmp.exp=(b)
+        right = Call.new(tmp.clone, "#{target.name}=", node.value).at(node)
+
+        # (4) = (2) || (3)
+        call = Or.new(call, right).at(node)
+      when "&&"
+        # Special: tmp.exp && tmp.exp=(b)
+        #
+        # (3) = tmp.exp=(b)
+        right = Call.new(tmp.clone, "#{target.name}=", node.value).at(node)
+
+        # (4) = (2) && (3)
+        call = And.new(call, right).at(node)
+      else
+        # (3) = (2) + b
+        call = Call.new(call, node.op, node.value).at(node)
+
+        # (4) = tmp.exp=((3))
+        call = Call.new(tmp.clone, "#{target.name}=", call).at(node)
+      end
+
+      # (1); (4)
+      if assign
+        Expressions.new([assign, call]).at(node)
+      else
+        call
+      end
+    end
+
+    def transform_op_assign_index(node, target)
+      obj = target.obj.not_nil!
+
+      # Convert
+      #
+      #     a[exp1, exp2, ...] += b
+      #
+      # To
+      #
+      #     tmp = a
+      #     tmp1 = exp1
+      #     tmp2 = exp2
+      #     ...
+      #     tmp.[]=(tmp1, tmp2, ..., tmp[tmp1, tmp2, ...] + b)
+      tmp_args = target.args.map { program.new_temp_var.as(ASTNode) }
+      tmp = program.new_temp_var
+
+      # (1) = tmp1 = exp1; tmp2 = exp2; ...; tmp = a
+      tmp_assigns = Array(ASTNode).new(tmp_args.size + 1)
+      tmp_args.each_with_index do |var, i|
+        # For simple literals we don't need a temp variable
+        arg = target.args[i]
+        if arg.simple_literal?
+          tmp_args[i] = arg
+        else
+          tmp_assigns << Assign.new(var.clone, arg).at(node)
+        end
+      end
+
+      case obj
+      when Var, InstanceVar, ClassVar, .simple_literal?
+        # Nothing
+        tmp = obj
+      else
+        tmp_assigns << Assign.new(tmp, obj).at(node)
+      end
+
+      case node.op
+      when "||"
+        # Special: tmp[tmp1, tmp2, ...]? || (tmp[tmp1, tmp2, ...] = b)
+        #
+        # (2) = tmp[tmp1, tmp2, ...]?
+        call = Call.new(tmp.clone, "[]?", tmp_args).at(node)
+
+        # (3) = tmp[tmp1, tmp2, ...] = b
+        args = Array(ASTNode).new(tmp_args.size + 1)
+        tmp_args.each { |arg| args << arg.clone }
+        args << node.value
+        right = Call.new(tmp.clone, "[]=", args).at(node)
+
+        # (3) = (2) || (4)
+        call = Or.new(call, right).at(node)
+      when "&&"
+        # Special: tmp[tmp1, tmp2, ...]? && (tmp[tmp1, tmp2, ...] = b)
+        #
+        # (2) = tmp[tmp1, tmp2, ...]?
+        call = Call.new(tmp.clone, "[]?", tmp_args).at(node)
+
+        # (3) = tmp[tmp1, tmp2, ...] = b
+        args = Array(ASTNode).new(tmp_args.size + 1)
+        tmp_args.each { |arg| args << arg.clone }
+        args << node.value
+        right = Call.new(tmp.clone, "[]=", args).at(node)
+
+        # (3) = (2) && (4)
+        call = And.new(call, right).at(node)
+      else
+        # (2) = tmp[tmp1, tmp2, ...]
+        call = Call.new(tmp.clone, "[]", tmp_args).at(node)
+
+        # (3) = (2) + b
+        call = Call.new(call, node.op, node.value).at(node)
+
+        # (4) tmp.[]=(tmp1, tmp2, ..., (3))
+        args = Array(ASTNode).new(tmp_args.size + 1)
+        tmp_args.each { |arg| args << arg.clone }
+        args << call
+        call = Call.new(tmp.clone, "[]=", args).at(node)
+      end
+
+      # (1); (4)
+      exps = Array(ASTNode).new(tmp_assigns.size + 2)
+      exps.concat(tmp_assigns)
+      exps << call
+      Expressions.new(exps).at(node)
+    end
+
+    def transform_op_assign_simple(node, target)
+      case node.op
+      when "&&"
+        # (1) a = b
+        assign = Assign.new(target, node.value).at(node)
+
+        # a && (1)
+        And.new(target.clone, assign).at(node)
+      when "||"
+        # (1) a = b
+        assign = Assign.new(target, node.value).at(node)
+
+        # a || (1)
+        Or.new(target.clone, assign).at(node)
+      else
+        # (1) = a + b
+        call = Call.new(target, node.op, node.value).at(node)
+
+        # a = (1)
+        Assign.new(target.clone, call).at(node)
+      end
+    end
   end
 end

@@ -2074,14 +2074,6 @@ module Crystal
             if last_arg
               skip_space_or_newline
 
-              if @token.type != :"="
-                # This is the case of `x[y] op= value`
-                write_token " ", @token.type
-                skip_space
-                accept_assign_value_after_equals last_arg.as(Call).args.last
-                return false
-              end
-
               write " ="
               next_token_skip_space
               accept_assign_value_after_equals last_arg
@@ -2174,18 +2166,6 @@ module Crystal
 
       if assignment
         skip_space
-
-        if @token.type != :"="
-          # It's something like `foo.bar += 1`
-          write " "
-          write @token.type
-          next_token_skip_space
-
-          assign_arg = node.args.last.as(Call).args.last
-          accept_assign_value_after_equals assign_arg
-          @dot_column = current_dot_column
-          return false
-        end
 
         next_token
         if @token.type == :"("
@@ -2811,20 +2791,25 @@ module Crystal
       accept node.target
       skip_space_or_newline
 
-      if @token.type == :"="
-        check_align = check_assign_length node.target
-        slash_is_regex!
-        write_token " ", :"="
-        skip_space
-        accept_assign_value_after_equals node.value, check_align: check_align
-      else
-        # This is the case of `target op= value`
-        write " "
-        write @token.type
-        next_token_skip_space
-        value = node.value.as(Call).args.last
-        accept_assign_value_after_equals value
-      end
+      check_align = check_assign_length node.target
+      slash_is_regex!
+      write_token " ", :"="
+      skip_space
+      accept_assign_value_after_equals node.value, check_align: check_align
+
+      false
+    end
+
+    def visit(node : OpAssign)
+      accept node.target
+      skip_space_or_newline
+
+      slash_is_regex!
+      write " "
+      write node.op
+      write "="
+      next_token_skip_space
+      accept_assign_value_after_equals node.value
 
       false
     end

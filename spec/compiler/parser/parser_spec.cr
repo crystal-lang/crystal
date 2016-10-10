@@ -129,7 +129,7 @@ describe "Parser" do
   it_parses "a[0] = 1, 2", MultiAssign.new([Call.new("a".call, "[]", 0.int32)] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a[0], a[1] = 1, 2", MultiAssign.new([Call.new("a".call, "[]", 0.int32), Call.new("a".call, "[]", 1.int32)] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a.foo, a.bar = 1, 2", MultiAssign.new([Call.new("a".call, "foo"), Call.new("a".call, "bar")] of ASTNode, [1.int32, 2.int32] of ASTNode)
-  it_parses "x = 0; a, b = x += 1", [Assign.new("x".var, 0.int32), MultiAssign.new(["a".var, "b".var] of ASTNode, [Assign.new("x".var, Call.new("x".var, "+", 1.int32))] of ASTNode)] of ASTNode
+  it_parses "x = 0; a, b = x += 1", [Assign.new("x".var, 0.int32), MultiAssign.new(["a".var, "b".var] of ASTNode, [OpAssign.new("x".var, "+", 1.int32)] of ASTNode)] of ASTNode
   it_parses "a, b = 1, 2 if 3", If.new(3.int32, MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode))
 
   it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
@@ -364,7 +364,7 @@ describe "Parser" do
   it_parses "f.x = - 1", Call.new("f".call, "x=", [Call.new(1.int32, "-")] of ASTNode)
 
   ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
-    it_parses "f.x #{op}= 2", Call.new("f".call, "x=", Call.new(Call.new("f".call, "x"), op, 2.int32))
+    it_parses "f.x #{op}= 2", OpAssign.new(Call.new("f".call, "x"), op, 2.int32)
   end
 
   ["/", "<", "<=", "==", "!=", "=~", "!~", ">", ">=", "+", "-", "*", "/", "~", "%", "&", "|", "^", "**", "==="].each do |op|
@@ -386,16 +386,16 @@ describe "Parser" do
   end
 
   ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
-    it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), Assign.new("a".var, Call.new("a".var, op, 1.int32))] of ASTNode
-    it_parses "a = 1; a #{op}=\n1", [Assign.new("a".var, 1.int32), Assign.new("a".var, Call.new("a".var, op, 1.int32))] of ASTNode
-    it_parses "a.b #{op}=\n1", Call.new("a".call, "b=", Call.new(Call.new("a".call, "b"), op, 1.int32))
+    it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
+    it_parses "a = 1; a #{op}=\n1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
+    it_parses "a.b #{op}=\n1", OpAssign.new(Call.new("a".call, "b"), op, 1.int32)
   end
 
-  it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int32), And.new("a".var, Assign.new("a".var, 1.int32))]
-  it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int32), Or.new("a".var, Assign.new("a".var, 1.int32))]
+  it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, "&&", 1.int32)]
+  it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, "||", 1.int32)]
 
-  it_parses "a = 1; a[2] &&= 3", [Assign.new("a".var, 1.int32), And.new(Call.new("a".var, "[]?", 2.int32), Call.new("a".var, "[]=", 2.int32, 3.int32))]
-  it_parses "a = 1; a[2] ||= 3", [Assign.new("a".var, 1.int32), Or.new(Call.new("a".var, "[]?", 2.int32), Call.new("a".var, "[]=", 2.int32, 3.int32))]
+  it_parses "a = 1; a[2] &&= 3", [Assign.new("a".var, 1.int32), OpAssign.new(Call.new("a".var, "[]", 2.int32), "&&", 3.int32)]
+  it_parses "a = 1; a[2] ||= 3", [Assign.new("a".var, 1.int32), OpAssign.new(Call.new("a".var, "[]", 2.int32), "||", 3.int32)]
 
   it_parses "if foo; 1; end", If.new("foo".call, 1.int32)
   it_parses "if foo\n1\nend", If.new("foo".call, 1.int32)
@@ -531,12 +531,12 @@ describe "Parser" do
 
   it_parses "1 if 3", If.new(3.int32, 1.int32)
   it_parses "1 unless 3", Unless.new(3.int32, 1.int32)
-  it_parses "r = 1; r.x += 2", [Assign.new("r".var, 1.int32), Call.new("r".var, "x=", Call.new(Call.new("r".var, "x"), "+", 2.int32))] of ASTNode
+  it_parses "r = 1; r.x += 2", [Assign.new("r".var, 1.int32), OpAssign.new(Call.new("r".var, "x"), "+", 2.int32)] of ASTNode
 
   it_parses "foo if 3", If.new(3.int32, "foo".call)
   it_parses "foo unless 3", Unless.new(3.int32, "foo".call)
 
-  it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int32), If.new(Assign.new("a".var, Call.new("a".var, "+", 20.int32)), Assign.new("a".var, Call.new("a".var, "+", 10.int32)))]
+  it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int32), If.new(OpAssign.new("a".var, "+", 20.int32), OpAssign.new("a".var, "+", 10.int32))]
   it_parses "puts a if true", If.new(true.bool, Call.new(nil, "puts", "a".call))
   it_parses "puts ::foo", Call.new(nil, "puts", Call.new(nil, "foo", global: true))
 
@@ -1026,8 +1026,8 @@ describe "Parser" do
 
   it_parses "foo.bar(1).baz", Call.new(Call.new("foo".call, "bar", 1.int32), "baz")
 
-  it_parses "b.c ||= 1", Or.new(Call.new("b".call, "c"), Call.new("b".call, "c=", 1.int32))
-  it_parses "b.c &&= 1", And.new(Call.new("b".call, "c"), Call.new("b".call, "c=", 1.int32))
+  it_parses "b.c ||= 1", OpAssign.new(Call.new("b".call, "c"), "||", 1.int32)
+  it_parses "b.c &&= 1", OpAssign.new(Call.new("b".call, "c"), "&&", 1.int32)
 
   it_parses "a = 1; class Foo; @x = a; end", [Assign.new("a".var, 1.int32), ClassDef.new("Foo".path, Assign.new("@x".instance_var, "a".call))]
 

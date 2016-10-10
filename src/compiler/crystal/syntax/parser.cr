@@ -375,8 +375,6 @@ module Crystal
             atomic
           end
         when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&="
-          # Rewrite 'a += b' as 'a = a + b'
-
           unexpected_token unless allow_ops
 
           break unless can_be_assigned?(atomic)
@@ -391,56 +389,13 @@ module Crystal
 
           if atomic.is_a?(Call) && atomic.name != "[]" && !@def_vars.last.includes?(atomic.name)
             raise "'#{@token.type}' before definition of '#{atomic.name}'"
-
-            atomic = Var.new(atomic.name).at(location)
           end
 
           push_var atomic
-
           method = @token.type.to_s.byte_slice(0, @token.to_s.bytesize - 1)
-          method_column_number = @token.column_number
-
-          token_type = @token.type
-
           next_token_skip_space_or_newline
-
           value = parse_op_assign_no_control
-
-          if atomic.is_a?(Call) && atomic.name == "[]"
-            obj = atomic.obj
-            atomic_clone = atomic.clone
-
-            case token_type
-            when :"&&="
-              atomic.args.push value
-              assign = Call.new(obj, "[]=", atomic.args, name_column_number: method_column_number).at(location)
-              fetch = atomic_clone
-              fetch.name = "[]?"
-              atomic = And.new(fetch, assign).at(location)
-            when :"||="
-              atomic.args.push value
-              assign = Call.new(obj, "[]=", atomic.args, name_column_number: method_column_number).at(location)
-              fetch = atomic_clone
-              fetch.name = "[]?"
-              atomic = Or.new(fetch, assign).at(location)
-            else
-              call = Call.new(atomic_clone, method, [value] of ASTNode, name_column_number: method_column_number).at(location)
-              atomic.args.push call
-              atomic = Call.new(obj, "[]=", atomic.args, name_column_number: method_column_number).at(location)
-            end
-          else
-            case token_type
-            when :"&&="
-              assign = Assign.new(atomic, value).at(location)
-              atomic = And.new(atomic.clone, assign).at(location)
-            when :"||="
-              assign = Assign.new(atomic, value).at(location)
-              atomic = Or.new(atomic.clone, assign).at(location)
-            else
-              call = Call.new(atomic, method, [value] of ASTNode, name_column_number: method_column_number).at(location)
-              atomic = Assign.new(atomic.clone, call).at(location)
-            end
-          end
+          atomic = OpAssign.new(atomic, method, value).at(location)
         else
           break
         end
@@ -695,36 +650,12 @@ module Crystal
 
               atomic = Call.new(atomic, "#{name}=", [arg] of ASTNode, name_column_number: name_column_number).at(location)
               next
-            when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
-              # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
+            when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&="
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
-              atomic = Call.new(atomic, "#{name}=", [
-                Call.new(
-                  Call.new(atomic.clone, name, name_column_number: name_column_number).at(location),
-                  method, [value] of ASTNode, name_column_number: name_column_number).at(location),
-              ] of ASTNode, name_column_number: name_column_number).at(location)
-              next
-            when :"||="
-              # Rewrite 'f.x ||= value' as 'f.x || f.x=(value)'
-              next_token_skip_space_or_newline
-              value = parse_op_assign
-
-              atomic = Or.new(
-                Call.new(atomic, name).at(location),
-                Call.new(atomic.clone, "#{name}=", value).at(location)
-              ).at(location)
-              next
-            when :"&&="
-              # Rewrite 'f.x &&= value' as 'f.x && f.x=(value)'
-              next_token_skip_space
-              value = parse_op_assign
-
-              atomic = And.new(
-                Call.new(atomic, name).at(location),
-                Call.new(atomic.clone, "#{name}=", value).at(location)
-              ).at(location)
+              call = Call.new(atomic, name, name_column_number: name_column_number).at(location)
+              atomic = OpAssign.new(call, method, value).at(location)
               next
             else
               call_args = preserve_stop_on_do { space_consumed ? parse_call_args_space_consumed : parse_call_args }
