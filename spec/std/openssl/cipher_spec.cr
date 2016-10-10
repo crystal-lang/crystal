@@ -18,8 +18,8 @@ describe OpenSSL::Cipher do
     c1.key = c2.key = key
     c1.iv = c2.iv = iv
 
-    s1 = MemoryIO.new
-    s2 = MemoryIO.new
+    s1 = IO::Memory.new
+    s2 = IO::Memory.new
     s1.write(c1.update("DATA"))
     s1.write(c1.update("DATA" * 4))
     s1.write(c1.final)
@@ -34,8 +34,8 @@ describe OpenSSL::Cipher do
     c1.key = c2.key = key
     c1.iv = c2.iv = iv
 
-    s3 = MemoryIO.new
-    s4 = MemoryIO.new
+    s3 = IO::Memory.new
+    s4 = IO::Memory.new
     s3.write(c1.update(s1.to_slice))
     s3.write(c1.final)
 

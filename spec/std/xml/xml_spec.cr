@@ -77,7 +77,7 @@ describe XML do
   end
 
   it "parses from io" do
-    io = MemoryIO.new(<<-XML
+    io = IO::Memory.new(<<-XML
       <?xml version='1.0' encoding='UTF-8'?>
       <people>
         <person id="1" id2="2">
@@ -211,7 +211,7 @@ describe XML do
   it "reads big xml file (#1455)" do
     content = "." * 20_000
     string = %(<?xml version="1.0"?><root>#{content}</root>)
-    parsed = XML.parse(MemoryIO.new(string))
+    parsed = XML.parse(IO::Memory.new(string))
     parsed.root.not_nil!.children[0].text.should eq(content)
   end
 

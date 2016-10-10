@@ -7,7 +7,7 @@ require "c/unistd"
 
 # The IO module is the basis for all input and output in Crystal.
 #
-# This module is included by types like `File`, `Socket` and `MemoryIO` and
+# This module is included by types like `File`, `Socket` and `IO::Memory` and
 # provide many useful methods for reading to and writing from an IO, like `print`, `puts`,
 # `gets` and `printf`.
 #
@@ -161,7 +161,7 @@ module IO
   # Reads at most *slice.size* bytes from this IO into *slice*. Returns the number of bytes read.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # slice = Slice(UInt8).new(4)
   # io.read(slice) # => 4
   # slice          # => [104, 101, 108, 108]
@@ -173,7 +173,7 @@ module IO
   # Writes the contents of *slice* into this IO.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # slice = Slice(UInt8).new(4) { |i| ('a'.ord + i).to_u8 }
   # io.write(slice)
   # io.to_s #=> "abcd"
@@ -253,7 +253,7 @@ module IO
   # This ends up calling `to_s(io)` on the object.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io << 1
   # io << '-'
   # io << "Crystal"
@@ -267,7 +267,7 @@ module IO
   # Same as `<<`
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.print 1
   # io.print '-'
   # io.print "Crystal"
@@ -282,7 +282,7 @@ module IO
   # on each of the objects.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.print 1, '-', "Crystal"
   # io.to_s # => "1-Crystal"
   # ```
@@ -297,7 +297,7 @@ module IO
   # unless the string already ends with one.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.puts "hello\n"
   # io.puts "world"
   # io.to_s # => "hello\nworld\n"
@@ -311,7 +311,7 @@ module IO
   # Writes the given object to this IO followed by a newline character.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.puts 1
   # io.puts "Crystal"
   # io.to_s # => "1\nCrystal\n"
@@ -324,7 +324,7 @@ module IO
   # Writes a newline character.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.puts
   # io.to_s # => "\n"
   # ```
@@ -336,7 +336,7 @@ module IO
   # Writes the given objects, each followed by a newline character.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.puts 1, '-', "Crystal"
   # io.to_s # => "1\n-\nCrystal\n"
   # ```
@@ -361,7 +361,7 @@ module IO
   # data to read.
   #
   # ```
-  # io = MemoryIO.new "a"
+  # io = IO::Memory.new "a"
   # io.read_byte # => 97
   # io.read_byte # => nil
   # ```
@@ -378,7 +378,7 @@ module IO
   # more data to read.
   #
   # ```
-  # io = MemoryIO.new "あ"
+  # io = IO::Memory.new "あ"
   # io.read_char # => 'あ'
   # io.read_char # => nil
   # ```
@@ -419,7 +419,7 @@ module IO
   # ```
   # bytes = "你".encode("GB2312") # => [196, 227]
   #
-  # io = MemoryIO.new(bytes)
+  # io = IO::Memory.new(bytes)
   # io.set_encoding("GB2312")
   # io.read_utf8_byte # => 228
   # io.read_utf8_byte # => 189
@@ -443,7 +443,7 @@ module IO
   # ```
   # bytes = "你".encode("GB2312") # => [196, 227]
   #
-  # io = MemoryIO.new(bytes)
+  # io = IO::Memory.new(bytes)
   # io.set_encoding("GB2312")
   #
   # buffer = uninitialized UInt8[1024]
@@ -490,7 +490,7 @@ module IO
   # Raises `EOFError` if there aren't `slice.size` bytes of data.
   #
   # ```
-  # io = MemoryIO.new "123451234"
+  # io = IO::Memory.new "123451234"
   # slice = Slice(UInt8).new(5)
   # io.read_fully(slice)
   # slice         # => [49, 50, 51, 52, 53]
@@ -509,7 +509,7 @@ module IO
   # Reads the rest of this IO data as a `String`.
   #
   # ```
-  # io = MemoryIO.new "hello world"
+  # io = IO::Memory.new "hello world"
   # io.gets_to_end # => "hello world"
   # io.gets_to_end # => ""
   # ```
@@ -535,7 +535,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = MemoryIO.new "hello\nworld"
+  # io = IO::Memory.new "hello\nworld"
   # io.gets # => "hello\n"
   # io.gets # => "world"
   # io.gets # => nil
@@ -548,7 +548,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = MemoryIO.new "hello\nworld"
+  # io = IO::Memory.new "hello\nworld"
   # io.gets(3) # => "hel"
   # io.gets(3) # => "lo\n"
   # io.gets(3) # => "wor"
@@ -563,7 +563,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = MemoryIO.new "hello\nworld"
+  # io = IO::Memory.new "hello\nworld"
   # io.gets('o') # => "hello"
   # io.gets('r') # => "\nwor"
   # io.gets('z') # => "ld"
@@ -577,7 +577,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = MemoryIO.new "hello\nworld"
+  # io = IO::Memory.new "hello\nworld"
   # io.gets('o', 3)  # => "hel"
   # io.gets('r', 10) # => "lo\nwor"
   # io.gets('z', 10) # => "ld"
@@ -615,7 +615,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = MemoryIO.new "hello\nworld"
+  # io = IO::Memory.new "hello\nworld"
   # io.gets("wo") # => "hello\nwo"
   # io.gets("wo") # => "rld"
   # io.gets("wo") # => nil
@@ -664,7 +664,7 @@ module IO
   # Reads and discards *bytes_count* bytes.
   #
   # ```
-  # io = MemoryIO.new "hello world"
+  # io = IO::Memory.new "hello world"
   # io.skip(6)
   # io.gets # => "world"
   # ```
@@ -680,7 +680,7 @@ module IO
   # Writes a single byte into this IO.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.write_byte 97_u8
   # io.to_s # => "a"
   # ```
@@ -698,7 +698,7 @@ module IO
   # See `Int#to_io` and `Float#to_io`.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.write_bytes(0x01020304, IO::ByteFormat::LittleEndian)
   # io.rewind
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
@@ -716,7 +716,7 @@ module IO
   # See `Int#from_io` and `Float#from_io`.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.puts "\u{4}\u{3}\u{2}\u{1}"
   # io.rewind
   # io.read_bytes(Int32, IO::ByteFormat::LittleEndian) # => 0x01020304
@@ -730,8 +730,8 @@ module IO
   # IO returns `false`, but including types may override.
   #
   # ```
-  # STDIN.tty?        # => true
-  # MemoryIO.new.tty? # => false
+  # STDIN.tty?          # => true
+  # IO::Memory.new.tty? # => false
   # ```
   def tty? : Bool
     false
@@ -742,7 +742,7 @@ module IO
   # ones as in the `gets` methods.
   #
   # ```
-  # io = MemoryIO.new("hello\nworld")
+  # io = IO::Memory.new("hello\nworld")
   # io.each_line do |line|
   #   puts line.chomp.reverse
   # end
@@ -765,7 +765,7 @@ module IO
   # ones as in the `gets` methods.
   #
   # ```
-  # io = MemoryIO.new("hello\nworld")
+  # io = IO::Memory.new("hello\nworld")
   # iter = io.each_line
   # iter.next # => "hello\n"
   # iter.next # => "world"
@@ -777,7 +777,7 @@ module IO
   # Inovkes the given block with each `Char` in this IO.
   #
   # ```
-  # io = MemoryIO.new("あめ")
+  # io = IO::Memory.new("あめ")
   # io.each_char do |char|
   #   puts char
   # end
@@ -798,7 +798,7 @@ module IO
   # Returns an `Iterator` for the chars in this IO.
   #
   # ```
-  # io = MemoryIO.new("あめ")
+  # io = IO::Memory.new("あめ")
   # iter = io.each_char
   # iter.next # => 'あ'
   # iter.next # => 'め'
@@ -810,7 +810,7 @@ module IO
   # Inovkes the given block with each byte (`UInt8`) in this IO.
   #
   # ```
-  # io = MemoryIO.new("aあ")
+  # io = IO::Memory.new("aあ")
   # io.each_byte do |byte|
   #   puts byte
   # end
@@ -833,7 +833,7 @@ module IO
   # Returns an `Iterator` for the bytes in this IO.
   #
   # ```
-  # io = MemoryIO.new("aあ")
+  # io = IO::Memory.new("aあ")
   # iter = io.each_byte
   # iter.next # => 97
   # iter.next # => 227
@@ -879,8 +879,8 @@ module IO
   # Copy all contents from *src* to *dst*.
   #
   # ```
-  # io = MemoryIO.new "hello"
-  # io2 = MemoryIO.new
+  # io = IO::Memory.new "hello"
+  # io2 = IO::Memory.new
   #
   # IO.copy io, io2
   #
@@ -899,8 +899,8 @@ module IO
   # Copy at most *limit* bytes from *src* to *dst*.
   #
   # ```
-  # io = MemoryIO.new "hello"
-  # io2 = MemoryIO.new
+  # io = IO::Memory.new "hello"
+  # io2 = IO::Memory.new
   #
   # IO.copy io, io2, 3
   #

@@ -2,7 +2,7 @@ module IO
   # An IO that wraps another IO, setting a limit for the number of bytes that can be read.
   #
   # ```
-  # io = MemoryIO.new "abcde"
+  # io = IO::Memory.new "abcde"
   # sized = IO::Sized.new(io, read_size: 3)
   #
   # sized.gets_to_end # => "abc"

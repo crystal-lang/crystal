@@ -113,7 +113,7 @@ describe "YAML" do
       end
 
       it "parses from IO" do
-        YAML.parse(MemoryIO.new("- foo\n- bar")).should eq(["foo", "bar"])
+        YAML.parse(IO::Memory.new("- foo\n- bar")).should eq(["foo", "bar"])
       end
     end
   end

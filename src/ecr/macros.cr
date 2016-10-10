@@ -54,7 +54,7 @@ module ECR
   #
   # name = "World"
   #
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # ECR.embed "greeting.ecr", io
   # io.to_s # => "Hello World!"
   # ```

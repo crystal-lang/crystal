@@ -89,19 +89,19 @@ class StringPool
     entry
   end
 
-  # Returns a string with the contents of the given `MemoryIO`.
+  # Returns a string with the contents of the given `IO::Memory`.
   #
   # If a string with those contents was already present in the pool, that one is returned.
   # Otherwise a new string is created, put in the pool and returned
   #
   # ```
   # pool = StringPool.new
-  # io = MemoryIO.new "crystal"
+  # io = IO::Memory.new "crystal"
   # pool.empty? # => true
   # pool.get(io)
   # pool.empty? # => false
   # ```
-  def get(str : MemoryIO)
+  def get(str : IO::Memory)
     get(str.buffer, str.bytesize)
   end
 
