@@ -68,7 +68,7 @@ describe "HTML" do
     it "unescapes &nbsp;" do
       str = HTML.unescape("nbsp&nbsp;space ")
 
-      str.should eq("nbsp space ")
+      str.should eq("nbsp\u{A0}space ")
     end
 
     it "unescapes Char::MAX_CODEPOINT" do
@@ -77,6 +77,18 @@ describe "HTML" do
 
       str = HTML.unescape("limit &#1114111;")
       str.should eq("limit 􏿿")
+    end
+
+    HTML::ENTITIES.each do |escaped, entity|
+      it "&#{escaped}; to #{entity}" do
+        str = HTML.unescape("&#{escaped};")
+        str.should eq("#{entity}")
+      end
+    end
+
+    it "does not change invalid entity" do
+      str = HTML.unescape("&abc;")
+      str.should eq("&abc;")
     end
   end
 end

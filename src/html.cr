@@ -1,3 +1,5 @@
+require "./html/entities"
+
 module HTML
   SUBSTITUTIONS = {
     '!'      => "&#33;",
@@ -34,15 +36,9 @@ module HTML
   def self.unescape(string : String)
     return string unless string.includes? '&'
 
-    string.gsub(/&(apos|amp|quot|gt|lt|nbsp|\#[0-9]+|\#[xX][0-9A-Fa-f]+);/) do |string, _match|
+    string.gsub(/&(\w{2,8}|\#[0-9]+|\#[xX][0-9A-Fa-f]+);/) do |string, _match|
       match = _match[1]
       case match
-      when "apos" then "'"
-      when "amp"  then "&"
-      when "quot" then "\""
-      when "gt"   then ">"
-      when "lt"   then "<"
-      when "nbsp" then " "
       when /\A#0*(\d+)\z/
         n = $1.to_i
         if n <= Char::MAX_CODEPOINT
@@ -57,6 +53,7 @@ module HTML
         else
           "&#x#{$1};"
         end
+      when /\w{2,8}/ then HTML::ENTITIES[match]? || "&#{match};"
       else
         "&#{match};"
       end
