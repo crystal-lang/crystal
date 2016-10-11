@@ -417,16 +417,8 @@ class File < IO::FileDescriptor
   # ```
   def self.read(filename, encoding = nil, invalid = nil) : String
     File.open(filename, "r") do |file|
-      if encoding
-        file.set_encoding(encoding, invalid: invalid)
-        file.gets_to_end
-      else
-        size = file.size.to_i
-        String.new(size) do |buffer|
-          file.read Slice.new(buffer, size)
-          {size.to_i, 0}
-        end
-      end
+      file.set_encoding(encoding, invalid: invalid) if encoding
+      file.gets_to_end
     end
   end
 
