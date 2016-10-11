@@ -417,6 +417,11 @@ class File < IO::FileDescriptor
   # ```
   def self.read(filename, encoding = nil, invalid = nil) : String
     File.open(filename, "r") do |file|
+      {% if flag?(:linux) %}
+      # workaround to handle zero sized files in /proc Linux virtual filesystem
+      encoding ||= "UTF-8" if File.expand_path(filename) =~ /^\/proc/
+      {% end %}
+
       if encoding
         file.set_encoding(encoding, invalid: invalid)
         file.gets_to_end
