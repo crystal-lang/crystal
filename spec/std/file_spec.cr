@@ -37,7 +37,7 @@ describe "File" do
     str.should eq("Hello World\n" * 20)
   end
 
-  {% if !flag?(:windows) %}
+  {% if flag?(:linux) %}
   it "reads entire file from proc virtual filesystem" do
     str = File.read "/proc/self/cmdline"
     str.size.should_not eq(0)
