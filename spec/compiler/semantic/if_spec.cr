@@ -239,4 +239,102 @@ describe "Semantic: if" do
       test
       ), inject_primitives: false) { int32 }
   end
+
+  it "restricts || else (1) (#3266)" do
+    assert_type(%(
+      a = 1 || nil
+      b = 1 || nil
+      if !a || !b
+        {1, 2}
+      else
+        {a, b}
+      end
+      ), inject_primitives: false) { tuple_of([int32, int32]) }
+  end
+
+  it "restricts || else (2) (#3266)" do
+    assert_type(%(
+      a = 1 || nil
+      if !a || 1
+        1
+      else
+        a
+      end
+      ), inject_primitives: false) { int32 }
+  end
+
+  it "restricts || else (3) (#3266)" do
+    assert_type(%(
+      a = 1 || nil
+      if 1 || !a
+        1
+      else
+        a
+      end
+      ), inject_primitives: false) { int32 }
+  end
+
+  it "doesn't restrict || else in sub && (right)" do
+    assert_type(%(
+      def foo
+        a = 1 || nil
+
+        if false || (!a && false)
+          return 1
+        end
+
+        a
+      end
+
+      foo
+      )) { nilable int32 }
+  end
+
+  it "doesn't restrict || else in sub && (left)" do
+    assert_type(%(
+      def foo
+        a = 1 || nil
+
+        if (!a && false) || false
+          return 1
+        end
+
+        a
+      end
+
+      foo
+      )) { nilable int32 }
+  end
+
+  it "doesn't restrict || else in sub || (right)" do
+    assert_type(%(
+      def foo
+        a = 1 || nil
+
+        if false || (!a || false)
+          return 1
+        end
+
+        a
+      end
+
+      foo
+      )) { nilable int32 }
+  end
+
+  it "doesn't restrict || else in sub || (left)" do
+    assert_type(%(
+      def foo
+        a = 1 || nil
+
+        if (!a || false) || false
+          return 1
+        end
+
+        a
+      end
+
+      foo
+      )) { nilable int32 }
+  end
 end
