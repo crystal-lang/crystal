@@ -421,10 +421,13 @@ class File < IO::FileDescriptor
         file.set_encoding(encoding, invalid: invalid)
         file.gets_to_end
       else
+        # We try to read a string with an initialize capacity
+        # equal to the file's size, but the size might not be
+        # correct or even be zero (for example for /proc files)
         size = file.size.to_i
-        String.new(size) do |buffer|
-          file.read Slice.new(buffer, size)
-          {size.to_i, 0}
+        size = 256 if size == 0
+        String.build(size) do |io|
+          IO.copy(file, io)
         end
       end
     end
