@@ -90,9 +90,9 @@ describe "MemoryIO" do
 
   it "does gets with char and limit without off-by-one" do
     io = MemoryIO.new("test\nabc")
-    io.gets('a', 5).to_s.size.should eq 5
+    io.gets('a', 5).should eq("test\n")
     io = MemoryIO.new("test\nabc")
-    io.gets('a', 6).to_s.size.should eq 6
+    io.gets('a', 6).should eq("test\na")
   end
 
   it "raises if invoking gets with negative limit" do

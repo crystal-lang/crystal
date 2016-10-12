@@ -96,9 +96,9 @@ describe "IO::Buffered" do
 
   it "does gets with char and limit without off-by-one" do
     io = BufferedWrapper.new(MemoryIO.new("test\nabc"))
-    io.gets('a', 5).to_s.size.should eq 5
+    io.gets('a', 5).should eq("test\n")
     io = BufferedWrapper.new(MemoryIO.new("test\nabc"))
-    io.gets('a', 6).to_s.size.should eq 6
+    io.gets('a', 6).should eq("test\na")
   end
 
   it "does gets with char and limit when not found in buffer" do

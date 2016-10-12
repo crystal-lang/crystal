@@ -461,10 +461,10 @@ describe IO do
       it "does gets on unicode with char and limit without off-by-one" do
         io = SimpleMemoryIO.new("test\nabc".encode("UCS-2LE"))
         io.set_encoding("UCS-2LE")
-        io.gets('a', 5).to_s.size.should eq 5
+        io.gets('a', 5).should eq("test\n")
         io = SimpleMemoryIO.new("test\nabc".encode("UCS-2LE"))
         io.set_encoding("UCS-2LE")
-        io.gets('a', 6).to_s.size.should eq 6
+        io.gets('a', 6).should eq("test\na")
       end
 
       it "gets with limit" do
