@@ -21,10 +21,6 @@ private class SimpleMemoryIO
     @pos = 0
   end
 
-  def pos=(p : Int)
-    @pos = p
-  end
-
   def self.new(string : String, max_read = nil)
     io = new(string.bytesize, max_read: max_read)
     io << string
