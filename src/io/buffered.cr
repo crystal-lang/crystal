@@ -55,7 +55,7 @@ module IO::Buffered
     index = @in_buffer_rem.index(delimiter_byte)
     if index
       # If we find it past the limit, limit the result
-      if index > limit
+      if index >= limit
         index = limit
       else
         index += 1
@@ -91,7 +91,7 @@ module IO::Buffered
 
         index = @in_buffer_rem.index(delimiter_byte)
         if index
-          if index > limit
+          if index >= limit
             index = limit
           else
             index += 1

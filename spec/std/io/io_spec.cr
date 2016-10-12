@@ -458,6 +458,15 @@ describe IO do
         end
       end
 
+      it "does gets on unicode with char and limit without off-by-one" do
+        io = SimpleMemoryIO.new("test\nabc".encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets('a', 5).should eq("test\n")
+        io = SimpleMemoryIO.new("test\nabc".encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets('a', 6).should eq("test\na")
+      end
+
       it "gets with limit" do
         str = "Hello\nWorld\n"
         io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
