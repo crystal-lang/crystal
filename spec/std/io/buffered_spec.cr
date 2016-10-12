@@ -94,6 +94,13 @@ describe "IO::Buffered" do
     io.gets('a', 3).should be_nil
   end
 
+  it "does gets with char and limit without off-by-one" do
+    io = BufferedWrapper.new(MemoryIO.new("test\nabc"))
+    io.gets('a', 5).to_s.size.should eq 5
+    io = BufferedWrapper.new(MemoryIO.new("test\nabc"))
+    io.gets('a', 6).to_s.size.should eq 6
+  end
+
   it "does gets with char and limit when not found in buffer" do
     io = BufferedWrapper.new(MemoryIO.new(("a" * (IO::Buffered::BUFFER_SIZE + 10)) + "b"))
     io.gets('b', 2).should eq("aa")

@@ -163,7 +163,7 @@ module IO
       index = @out_slice.index(delimiter)
       if index
         # If we find it past the limit, limit the result
-        if index > limit
+        if index >= limit
           index = limit
         else
           index += 1
@@ -194,7 +194,7 @@ module IO
 
           index = @out_slice.index(delimiter)
           if index
-            if index > limit
+            if index >= limit
               index = limit
             else
               index += 1

@@ -21,6 +21,10 @@ private class SimpleMemoryIO
     @pos = 0
   end
 
+  def pos=(p : Int)
+    @pos = p
+  end
+
   def self.new(string : String, max_read = nil)
     io = new(string.bytesize, max_read: max_read)
     io << string
@@ -456,6 +460,15 @@ describe IO do
             io.gets.should eq("你好我是人\n")
           end
         end
+      end
+
+      it "does gets on unicode with char and limit without off-by-one" do
+        io = SimpleMemoryIO.new("test\nabc".encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets('a', 5).to_s.size.should eq 5
+        io = SimpleMemoryIO.new("test\nabc".encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets('a', 6).to_s.size.should eq 6
       end
 
       it "gets with limit" do

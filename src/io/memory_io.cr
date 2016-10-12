@@ -141,7 +141,7 @@ class MemoryIO
 
     index = (@buffer + @pos).to_slice(@bytesize - @pos).index(delimiter.ord)
     if index
-      if index > limit
+      if index >= limit
         index = limit
       else
         index += 1
@@ -150,7 +150,7 @@ class MemoryIO
       index = @bytesize - @pos
       return nil if index == 0
 
-      if index > limit
+      if index >= limit
         index = limit
       end
     end

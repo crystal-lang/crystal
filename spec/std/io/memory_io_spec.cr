@@ -88,6 +88,13 @@ describe "MemoryIO" do
     io.gets(3).should be_nil
   end
 
+  it "does gets with char and limit without off-by-one" do
+    io = MemoryIO.new("test\nabc")
+    io.gets('a', 5).to_s.size.should eq 5
+    io = MemoryIO.new("test\nabc")
+    io.gets('a', 6).to_s.size.should eq 6
+  end
+
   it "raises if invoking gets with negative limit" do
     io = MemoryIO.new("hello\nworld\n")
     expect_raises ArgumentError, "negative limit" do
