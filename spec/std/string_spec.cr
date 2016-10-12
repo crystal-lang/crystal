@@ -571,6 +571,22 @@ describe "String" do
         assert { "日本語日本語".index("本語", 2).should eq(4) }
       end
     end
+
+    describe "by regex" do
+      assert { "string 12345".index(/\d+/).should eq(7) }
+      assert { "12345".index(/\d/).should eq(0) }
+      assert { "Hello, world!".index(/\d/).should be_nil }
+      assert { "abcdef".index(/[def]/).should eq(3) }
+      assert { "日本語日本語".index(/本語/).should eq(1) }
+
+      describe "with offset" do
+        assert { "abcDef".index(/[A-Z]/).should eq(3) }
+        assert { "foobarbaz".index(/ba/, -5).should eq(6) }
+        assert { "Foo".index(/[A-Z]/, 1).should be_nil }
+        assert { "foo".index(/o/, 2).should eq(2) }
+        assert { "日本語日本語".index(/本語/, 2).should eq(4) }
+      end
+    end
   end
 
   describe "rindex" do
@@ -595,6 +611,18 @@ describe "String" do
         assert { "foo baro baz".rindex("o b", 6).should eq(2) }
         assert { "foo baro baz".rindex("fg").should be_nil }
         assert { "日本語日本語".rindex("日本", 2).should eq(0) }
+      end
+    end
+
+    describe "by regex" do
+      assert { "bbbb".rindex(/b/).should eq(3) }
+      assert { "a43b53".rindex(/\d+/).should eq(4) }
+      assert { "bbbb".rindex(/\d/).should be_nil }
+
+      describe "with offset" do
+        assert { "bbbb".rindex(/b/, -3).should eq(2) }
+        assert { "bbbb".rindex(/b/, -1235).should be_nil }
+        assert { "日本語日本語".rindex(/日本/, 2).should eq(0) }
       end
     end
   end
