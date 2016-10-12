@@ -121,8 +121,8 @@ module GC
   end
 
   record Stats,
-    collections : LibC::ULong,
-    bytes_found : LibC::Long,
+    # collections : LibC::ULong,
+    # bytes_found : LibC::Long,
     heap_size : LibC::ULong,
     free_bytes : LibC::ULong,
     unmapped_bytes : LibC::ULong,
@@ -131,15 +131,17 @@ module GC
 
   def self.stats
     LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
-    collections = LibGC.gc_no - 1
-    bytes_found = LibGC.bytes_found
+    # collections = LibGC.gc_no - 1
+    # bytes_found = LibGC.bytes_found
 
-    Stats.new collections: collections,
-      bytes_found: bytes_found,
+    Stats.new(
+      # collections: collections,
+      # bytes_found: bytes_found,
       heap_size: heap_size,
       free_bytes: free_bytes,
       unmapped_bytes: unmapped_bytes,
       bytes_since_gc: bytes_since_gc,
       total_bytes: total_bytes
+    )
   end
 end
