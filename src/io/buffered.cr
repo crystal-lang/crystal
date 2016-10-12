@@ -156,9 +156,10 @@ module IO::Buffered
     return 0 if count == 0
 
     if @in_buffer_rem.empty?
-      # If we are asked to read more than the buffer's size,
-      # read directly into the slice.
-      if count >= BUFFER_SIZE
+      # If we are asked to read more than half the buffer's size,
+      # read directly into the slice, as it's not worth the extra
+      # memory copy.
+      if count >= BUFFER_SIZE / 2
         return unbuffered_read(slice[0, count]).to_i
       else
         fill_buffer
