@@ -32,6 +32,14 @@ describe OAuth::Consumer do
       end
       uri.should eq("https://example.com/oauth/authorize?oauth_token=request_token&baz=qux")
     end
+
+    it "with absolute uri" do
+      consumer = OAuth::Consumer.new "example.com", "consumer_key", "consumer_secret",
+        authorize_uri: "https://example2.com:1234/foo?bar=baz"
+      request_token = OAuth::RequestToken.new "request_token", "request_secret"
+      uri = consumer.get_authorize_uri request_token
+      uri.should eq("https://example2.com:1234/foo?oauth_token=request_token&bar=baz")
+    end
   end
 
   typeof(begin
