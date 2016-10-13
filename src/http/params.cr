@@ -88,7 +88,7 @@ module HTTP
     # end
     # params # => "color=black&name=crystal&year=2012%20-%20today"
     # ```
-    def self.build : String
+    def self.build(&block : Builder ->) : String
       form_builder = Builder.new
       yield form_builder
       form_builder.to_s
@@ -282,7 +282,10 @@ module HTTP
       URI.unescape_one query, bytesize, i, byte, char, buffer, true
     end
 
-    # :nodoc:
+    # HTTP params builder.
+    #
+    # Every parameter added is directly written to an IO,
+    # where keys and values are properly escaped.
     class Builder
       @io : IO
       @first : Bool
@@ -291,6 +294,7 @@ module HTTP
         @first = true
       end
 
+      # Adds a key-value pair to the params being built.
       def add(key, value)
         @io << '&' unless @first
         @first = false
