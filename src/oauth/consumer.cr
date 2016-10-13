@@ -78,11 +78,22 @@ class OAuth::Consumer
   # to obtain an access token, as specified by
   # [RFC5849, Section 2.2](https://tools.ietf.org/html/rfc5849#section-2.2)
   def get_authorize_uri(request_token, oauth_callback = nil) : String
+    get_authorize_uri(request_token, oauth_callback) { }
+  end
+
+  # Returns an authorize URI from a given request token to redirect the user
+  # to obtain an access token, as specified by
+  # [RFC5849, Section 2.2](https://tools.ietf.org/html/rfc5849#section-2.2)
+  #
+  # Yields an `HTTP::Params::Builder` to add extra parameters other than those
+  # defined by the standard.
+  def get_authorize_uri(request_token, oauth_callback = nil, &block : HTTP::Params::Builder ->) : String
     query = HTTP::Params.build do |form|
       form.add "oauth_token", request_token.token
       if oauth_callback
         form.add "oauth_callback", oauth_callback
       end
+      yield form
     end
 
     URI.new(@scheme, @host, @port, @authorize_uri, query).to_s

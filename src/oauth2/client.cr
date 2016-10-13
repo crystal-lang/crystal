@@ -64,12 +64,22 @@ class OAuth2::Client
   # Builds an authorize URI, as specified by
   # [RFC6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.1)
   def get_authorize_uri(scope = nil, state = nil) : String
+    get_authorize_uri(scope, state) { }
+  end
+
+  # Builds an authorize URI, as specified by
+  # [RFC6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.1)
+  #
+  # Yields an `HTTP::Params::Builder` to add extra parameters other than those
+  # defined by the standard.
+  def get_authorize_uri(scope = nil, state = nil, &block : HTTP::Params::Builder ->) : String
     query = HTTP::Params.build do |form|
       form.add "client_id", @client_id
       form.add "redirect_uri", @redirect_uri
       form.add "response_type", "code"
       form.add "scope", scope unless scope.nil?
       form.add "state", state unless state.nil?
+      yield form
     end
 
     URI.new(@scheme, @host, @port, @authorize_uri, query).to_s
