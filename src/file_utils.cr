@@ -1,6 +1,30 @@
 module FileUtils
   extend self
 
+  # Changes the current working directory of the process to the given string *path*.
+  # Alias of Dir.cd.
+  # ```
+  # FileUtils.cd("to/directory")
+  # ```
+  def cd(path : String)
+    Dir.cd(path)
+  end
+
+  # Changes the current working firectory of the process to the given string *path*
+  # and invoked the block, restoring the original working directory when the block exits.
+  # Alias of Dir.cd with block.
+  # ```
+  # FileUtils.cd("to/directory") { puts "Do something useful here!" }
+  # ```
+  def cd(path : String, &block)
+    Dir.cd(path, &block)
+  end
+
+  # Compares two files *filename1* to *filename2* to determine if they are identical.
+  # Returns true if content are the same, false otherwise.
+  # ```
+  # FileUtils.cmp("foo.cr", "bar.cr")
+  # ```
   def cmp(filename1 : String, filename2 : String)
     return false unless File.size(filename1) == File.size(filename2)
 
@@ -11,6 +35,11 @@ module FileUtils
     end
   end
 
+  # Compares two streams *stream1* to *stream2* to determine if they are identical.
+  # Returns true if content are the same, false otherwise.
+  # ```
+  # FileUtils.cmp(stream1 : IO, stream2 : IO)
+  # ```
   def cmp(stream1 : IO, stream2 : IO)
     buf1 = uninitialized UInt8[1024]
     buf2 = uninitialized UInt8[1024]
@@ -74,6 +103,106 @@ module FileUtils
     end
   end
 
+  # Creates a new directory at the given *path*. The linux-style permission *mode*
+  # can be specified, with a default of 777 (0o777).
+  # Alias of Dir.mkdir
+  # ```
+  # FileUtils.mkdir("foo")
+  # ```
+  def mkdir(path : String, mode = 0o777)
+    Dir.mkdir(path, mode)
+  end
+
+  # Creates a new directory at the given *paths*. The linux-style permission *mode*
+  # can be specified, with a default of 777 (0o777).
+  # ```
+  # FileUtils.mkdir(["foo", "bar"])
+  # ```
+  def mkdir(paths : Enumerable(String), mode = 0o777)
+    paths.each do |path|
+      Dir.mkdir(path, mode)
+    end
+    0
+  end
+
+  # Creates a new directory at the given *path*, including any non-existing
+  # intermediate directories. The linux-style permission *mode* can be specified,
+  # with a default of 777 (0o777).
+  # Alias of Dir.mkdir_p
+  # ```
+  # FileUtils.mkdir_p("foo")
+  # ```
+  def mkdir_p(path : String, mode = 0o777)
+    Dir.mkdir_p(path, mode)
+  end
+
+  # Creates a new directory at the given *paths*, including any non-existing
+  # intermediate directories. The linux-style permission *mode* can be specified,
+  # with a default of 777 (0o777).
+  # ```
+  # FileUtils.mkdir_p(["foo", "bar"])
+  # ```
+  def mkdir_p(paths : Enumerable(String), mode = 0o777)
+    paths.each do |path|
+      Dir.mkdir_p(path, mode)
+    end
+    0
+  end
+
+  # Moves *src_path* to *dest_path*.
+  # Alias of File.rename
+  # ```
+  # FileUtils.mv("afile", "afile.cr")
+  # ```
+  def mv(src_path : String, dest_path : String)
+    File.rename(src_path, dest_path)
+  end
+
+  # Moves every *srcs* to *dest*.
+  # ```
+  # FileUtils.mv(["afile", "foo", "bar"], "src")
+  # ```
+  def mv(srcs : Enumerable(String), dest : String)
+    raise ArgumentError.new("no such directory : #{dest}") unless Dir.exists?(dest)
+    srcs.each do |src|
+      begin
+        mv(src, File.join(dest, File.basename(src)))
+      rescue Errno
+      end
+    end
+    0
+  end
+
+  # Returns the current working directory.
+  # Alias of Dir.current
+  # ```
+  # FileUtils.pwd
+  # ```
+  def pwd : String
+    Dir.current
+  end
+
+  # Deletes the *path* file given.
+  # Alias of File.delete
+  # ```
+  # FileUtils.rm("afile.cr")
+  # ```
+  def rm(path : String)
+    File.delete(path)
+    0
+  end
+
+  # Deletes all *paths* file given.
+  # ```
+  # FileUtils.rm(["afile.cr", "bfile.cr"])
+  # ```
+  def rm(paths : Enumerable(String))
+    paths.each do |path|
+      File.delete(path)
+    end
+    0
+  end
+
   # Deletes a file or directory *path*
   # If *path* is a directory, this method removes all its contents recursively
   # ```
@@ -94,5 +223,68 @@ module FileUtils
     else
       File.delete(path)
     end
+  end
+
+  # Deletes a list of files or directories *paths*
+  # If one path is a directory, this method removes all its contents recursively
+  # ```
+  # FileUtils.rm_r(["dir", "file.cr"])
+  # ```
+  def rm_r(paths : Enumerable(String))
+    paths.each do |path|
+      rm_r(path)
+    end
+    0
+  end
+
+  # Deletes a file or directory *path*
+  # If *path* is a directory, this method removes all its contents recursively
+  # Ignore all errors.
+  # ```
+  # FileUtils.rm_rf("dir")
+  # FileUtils.rm_rf("file.cr")
+  # FileUtils.rm_rf("non_existent_file")
+  # ```
+  def rm_rf(path : String)
+    begin
+      rm_r(path)
+    rescue Errno
+    end
+    0
+  end
+
+  # Deletes a list of files or directories *paths*
+  # If one path is a directory, this method removes all its contents recursively
+  # Ignore all errors.
+  # ```
+  # FileUtils.rm_rf(["dir", "file.cr", "non_existent_file"])
+  # ```
+  def rm_rf(paths : Enumerable(String))
+    paths.each do |path|
+      begin
+        rm_r(path)
+      rescue Errno
+      end
+    end
+    0
+  end
+
+  # Removes the directory at the given *path*.
+  # Alias of Dir.rmdir
+  # ```
+  # FileUtils.rmdir("dir")
+  # ```
+  def rmdir(path : String)
+    Dir.rmdir(path)
+  end
+
+  # Removes all directories at the given *paths*.
+  # ```
+  # FileUtils.rmdir(["dir1", "dir2", "dir3"])
+  def rmdir(paths : Enumerable(String))
+    paths.each do |path|
+      Dir.rmdir(path)
+    end
+    0
   end
 end
