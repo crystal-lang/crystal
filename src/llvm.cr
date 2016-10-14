@@ -5,14 +5,27 @@ module LLVM
   @@initialized = false
 
   def self.init_x86
-    return if @@initialized
-    @@initialized = true
+    return if @@initialized_x86
+    @@initialized_x86 = true
 
     LibLLVM.initialize_x86_target_info
     LibLLVM.initialize_x86_target
     LibLLVM.initialize_x86_target_mc
     LibLLVM.initialize_x86_asm_printer
     LibLLVM.initialize_x86_asm_parser
+    # LibLLVM.link_in_jit
+    LibLLVM.link_in_mc_jit
+  end
+
+  def self.init_arm
+    return if @@initialized_arm
+    @@initialized_arm = true
+
+    LibLLVM.initialize_arm_target_info
+    LibLLVM.initialize_arm_target
+    LibLLVM.initialize_arm_target_mc
+    LibLLVM.initialize_arm_asm_printer
+    LibLLVM.initialize_arm_asm_parser
     # LibLLVM.link_in_jit
     LibLLVM.link_in_mc_jit
   end
