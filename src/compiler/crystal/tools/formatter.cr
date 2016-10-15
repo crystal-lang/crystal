@@ -1344,8 +1344,17 @@ module Crystal
       # If there are no args, remove extra "()", if any
       if args.empty?
         if @token.type == :"("
-          next_token_skip_space_or_newline
+          prefix_size = @column + 1
+
           write "(" if block_arg || double_splat || variadic
+          next_token
+
+          skip_space
+          if @token.type == :NEWLINE
+            write_line
+            write_indent(prefix_size)
+            indent(prefix_size) { skip_space_or_newline }
+          end
 
           if double_splat
             write_token :"**"
@@ -1355,8 +1364,13 @@ module Crystal
 
           if block_arg
             if double_splat
-              write_token :",", " "
-              skip_space_or_newline
+              write_token :","
+              found_comment = skip_space_or_newline
+              if found_comment
+                write_indent(prefix_size)
+              else
+                write " "
+              end
             end
             write_token :"&"
             skip_space
@@ -1397,6 +1411,8 @@ module Crystal
           write "("
         end
 
+        comma_written = false
+
         args.each_with_index do |arg, i|
           if next_needs_indent
             write_indent(prefix_size)
@@ -1417,11 +1433,16 @@ module Crystal
           skip_space
 
           if @token.type == :","
-            write "," unless last?(i, args)
+            has_more = !last?(i, args) || double_splat || block_arg
+
+            if has_more
+              write ","
+              comma_written = true
+            end
             next_token
             found_comment = skip_space
             if @token.type == :NEWLINE
-              unless last?(i, args)
+              if has_more
                 indent(prefix_size) { consume_newlines }
                 next_needs_indent = true
               end
@@ -1429,26 +1450,57 @@ module Crystal
               next_needs_indent = true
             else
               next_needs_indent = false
-              write " " unless last?(i, args)
+              write " " if has_more
             end
             skip_space_or_newline
+          else
+            comma_written = false
           end
         end
 
         if double_splat
-          write_token ", ", :"**"
+          if next_needs_indent
+            write_indent(prefix_size)
+            next_needs_indent = false
+          end
+          unless comma_written
+            write ", "
+            comma_written = true
+          end
+          write_token :"**"
           skip_space
           check :IDENT
           write double_splat
           next_token_skip_space
           if block_arg
             check :","
-            next_token_skip_space_or_newline
+            write ","
+            comma_written = true
+            found_comment = next_token_skip_space
+            if found_comment
+              next_needs_indent = true
+              found_comment = false
+            else
+              if @token.type == :NEWLINE
+                indent(prefix_size) { consume_newlines }
+                next_needs_indent = true
+              else
+                write " "
+              end
+            end
           end
         end
 
         if block_arg
-          write_token ", ", :"&"
+          if next_needs_indent
+            write_indent(prefix_size)
+            next_needs_indent = false
+          end
+          unless comma_written
+            write ", "
+            comma_written = true
+          end
+          write_token :"&"
           skip_space
           to_skip += 1 if at_skip?
           accept block_arg
