@@ -1153,6 +1153,12 @@ module Crystal
     # by the type variables.
     getter(generic_types) { {} of Array(TypeVar) => Type }
 
+    # Returns a TypeParameter relative to this type
+    def type_parameter(name) : TypeParameter
+      type_parameters = @type_parameters ||= {} of String => TypeParameter
+      type_parameters[name] ||= TypeParameter.new(program, self, name)
+    end
+
     def instantiate(type_vars)
       if (instance = generic_types[type_vars]?)
         return instance
