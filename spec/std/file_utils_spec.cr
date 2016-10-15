@@ -30,8 +30,7 @@ describe "FileUtils" do
 
   describe "pwd" do
     it "returns the current working directory" do
-      cwd = Dir.current
-      (cwd == FileUtils.pwd).should be_true
+      FileUtils.pwd.should eq(Dir.current)
     end
   end
 
@@ -164,7 +163,7 @@ describe "FileUtils" do
       FileUtils.mkdir(path)
       File.write(File.join(path, "a"), "")
       FileUtils.mkdir(File.join(path, "b"))
-      FileUtils.rm_rf(path).should eq(0)
+      FileUtils.rm_rf(path).should be_nil
       Dir.exists?(path).should be_false
     end
 
@@ -177,7 +176,7 @@ describe "FileUtils" do
       File.write(File.join(path2, "a"), "")
       FileUtils.mkdir(File.join(path1, "b"))
       FileUtils.mkdir(File.join(path2, "b"))
-      FileUtils.rm_rf([path1, path2]).should eq(0)
+      FileUtils.rm_rf([path1, path2]).should be_nil
       Dir.exists?(path1).should be_false
       Dir.exists?(path2).should be_false
     end
@@ -186,7 +185,7 @@ describe "FileUtils" do
       path1 = "/tmp/crystal_rm_rftest_#{Process.pid}/"
       path2 = File.join(path1, "a")
       FileUtils.mkdir(path1)
-      FileUtils.rm_rf([path1, path2]).should eq(0)
+      FileUtils.rm_rf([path1, path2]).should be_nil
     end
   end
 
@@ -199,7 +198,7 @@ describe "FileUtils" do
         path1 = File.join(path1, "a")
         path2 = File.join(path2, "b")
         File.write(path1, "")
-        FileUtils.mv(path1, path2).should eq(0)
+        FileUtils.mv(path1, path2).should be_nil
         File.exists?(path1).should be_false
         File.exists?(path2).should be_true
       ensure
@@ -225,7 +224,7 @@ describe "FileUtils" do
         path2 = File.join(path2, "b")
         File.write(path1, "")
         File.write(path2, "")
-        FileUtils.mv([path1, path2], path3).should eq(0)
+        FileUtils.mv([path1, path2], path3).should be_nil
         File.exists?(path1).should be_false
         File.exists?(path2).should be_false
         File.exists?(File.join(path3, "a")).should be_true
@@ -255,7 +254,7 @@ describe "FileUtils" do
         path2 = File.join(path2, "b")
         File.write(path1, "")
         File.write(path2, "")
-        FileUtils.mv([path1, path2, path4], path3).should eq(0)
+        FileUtils.mv([path1, path2, path4], path3).should be_nil
         File.exists?(path1).should be_false
         File.exists?(path2).should be_false
         File.exists?(File.join(path3, "a")).should be_true
@@ -271,19 +270,19 @@ describe "FileUtils" do
 
   it "tests mkdir and rmdir with a new path" do
     path = "/tmp/crystal_mkdir_test_#{Process.pid}/"
-    FileUtils.mkdir(path, 0o700).should eq(0)
+    FileUtils.mkdir(path, 0o700).should be_nil
     Dir.exists?(path).should be_true
-    FileUtils.rmdir(path).should eq(0)
+    FileUtils.rmdir(path).should be_nil
     Dir.exists?(path).should be_false
   end
 
   it "tests mkdir and rmdir with multiple new paths" do
     path1 = "/tmp/crystal_mkdir_test_#{Process.pid}/"
     path2 = "/tmp/crystal_mkdir_test_#{Process.pid + 1}/"
-    FileUtils.mkdir([path1, path2], 0o700).should eq(0)
+    FileUtils.mkdir([path1, path2], 0o700).should be_nil
     Dir.exists?(path1).should be_true
     Dir.exists?(path2).should be_true
-    FileUtils.rmdir([path1, path2]).should eq(0)
+    FileUtils.rmdir([path1, path2]).should be_nil
     Dir.exists?(path1).should be_false
     Dir.exists?(path2).should be_false
   end
@@ -305,35 +304,35 @@ describe "FileUtils" do
 
   it "tests mkdir_p with a new path" do
     path = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
-    FileUtils.mkdir_p(path).should eq(0)
+    FileUtils.mkdir_p(path).should be_nil
     Dir.exists?(path).should be_true
     path = File.join({path, "a", "b", "c"})
-    FileUtils.mkdir_p(path).should eq(0)
+    FileUtils.mkdir_p(path).should be_nil
     Dir.exists?(path).should be_true
   end
 
   it "tests mkdir_p with multiples new path" do
     path1 = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
     path2 = "/tmp/crystal_mkdir_ptest_#{Process.pid + 1}"
-    FileUtils.mkdir_p([path1, path2]).should eq(0)
+    FileUtils.mkdir_p([path1, path2]).should be_nil
     Dir.exists?(path1).should be_true
     Dir.exists?(path2).should be_true
     path1 = File.join({path1, "a", "b", "c"})
     path2 = File.join({path2, "a", "b", "c"})
-    FileUtils.mkdir_p([path1, path2]).should eq(0)
+    FileUtils.mkdir_p([path1, path2]).should be_nil
     Dir.exists?(path1).should be_true
     Dir.exists?(path2).should be_true
   end
 
   it "tests mkdir_p with an existing path" do
-    Dir.mkdir_p(__DIR__).should eq(0)
+    FileUtils.mkdir_p(__DIR__).should be_nil
     expect_raises Errno do
-      Dir.mkdir_p(__FILE__)
+      FileUtils.mkdir_p(__FILE__)
     end
   end
 
   it "tests mkdir_p with multiple existing path" do
-    FileUtils.mkdir_p([__DIR__, __DIR__]).should eq(0)
+    FileUtils.mkdir_p([__DIR__, __DIR__]).should be_nil
     expect_raises Errno do
       FileUtils.mkdir_p([__FILE__, "/tmp/crystal_mkdir_ptest_#{Process.pid}/"])
     end
@@ -366,7 +365,7 @@ describe "FileUtils" do
   it "tests rm with an existing path" do
     path = "/tmp/crystal_rm_test_#{Process.pid}"
     File.write(path, "")
-    FileUtils.rm(path).should eq(0)
+    FileUtils.rm(path).should be_nil
     File.exists?(path).should be_false
   end
 
@@ -381,7 +380,7 @@ describe "FileUtils" do
     path2 = "/tmp/crystal_rm_test_#{Process.pid + 1}"
     File.write(path1, "")
     File.write(path2, "")
-    FileUtils.rm([path1, path2]).should eq(0)
+    FileUtils.rm([path1, path2]).should be_nil
     File.exists?(path1).should be_false
     File.exists?(path2).should be_false
   end

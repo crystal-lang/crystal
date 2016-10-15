@@ -16,8 +16,8 @@ module FileUtils
   # ```
   # FileUtils.cd("to/directory") { puts "Do something useful here!" }
   # ```
-  def cd(path : String, &block)
-    Dir.cd(path, &block)
+  def cd(path : String)
+    Dir.cd(path) { yield }
   end
 
   # Compares two files *filename1* to *filename2* to determine if they are identical.
@@ -109,7 +109,7 @@ module FileUtils
   # ```
   # FileUtils.mkdir("foo")
   # ```
-  def mkdir(path : String, mode = 0o777)
+  def mkdir(path : String, mode = 0o777) : Nil
     Dir.mkdir(path, mode)
   end
 
@@ -118,11 +118,10 @@ module FileUtils
   # ```
   # FileUtils.mkdir(["foo", "bar"])
   # ```
-  def mkdir(paths : Enumerable(String), mode = 0o777)
+  def mkdir(paths : Enumerable(String), mode = 0o777) : Nil
     paths.each do |path|
       Dir.mkdir(path, mode)
     end
-    0
   end
 
   # Creates a new directory at the given *path*, including any non-existing
@@ -132,7 +131,7 @@ module FileUtils
   # ```
   # FileUtils.mkdir_p("foo")
   # ```
-  def mkdir_p(path : String, mode = 0o777)
+  def mkdir_p(path : String, mode = 0o777) : Nil
     Dir.mkdir_p(path, mode)
   end
 
@@ -142,11 +141,10 @@ module FileUtils
   # ```
   # FileUtils.mkdir_p(["foo", "bar"])
   # ```
-  def mkdir_p(paths : Enumerable(String), mode = 0o777)
+  def mkdir_p(paths : Enumerable(String), mode = 0o777) : Nil
     paths.each do |path|
       Dir.mkdir_p(path, mode)
     end
-    0
   end
 
   # Moves *src_path* to *dest_path*.
@@ -154,7 +152,7 @@ module FileUtils
   # ```
   # FileUtils.mv("afile", "afile.cr")
   # ```
-  def mv(src_path : String, dest_path : String)
+  def mv(src_path : String, dest_path : String) : Nil
     File.rename(src_path, dest_path)
   end
 
@@ -162,7 +160,7 @@ module FileUtils
   # ```
   # FileUtils.mv(["afile", "foo", "bar"], "src")
   # ```
-  def mv(srcs : Enumerable(String), dest : String)
+  def mv(srcs : Enumerable(String), dest : String) : Nil
     raise ArgumentError.new("no such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
       begin
@@ -170,7 +168,6 @@ module FileUtils
       rescue Errno
       end
     end
-    0
   end
 
   # Returns the current working directory.
@@ -187,20 +184,18 @@ module FileUtils
   # ```
   # FileUtils.rm("afile.cr")
   # ```
-  def rm(path : String)
+  def rm(path : String) : Nil
     File.delete(path)
-    0
   end
 
   # Deletes all *paths* file given.
   # ```
   # FileUtils.rm(["afile.cr", "bfile.cr"])
   # ```
-  def rm(paths : Enumerable(String))
+  def rm(paths : Enumerable(String)) : Nil
     paths.each do |path|
       File.delete(path)
     end
-    0
   end
 
   # Deletes a file or directory *path*
@@ -209,7 +204,7 @@ module FileUtils
   # FileUtils.rm_r("dir")
   # FileUtils.rm_r("file.cr")
   # ```
-  def rm_r(path : String)
+  def rm_r(path : String) : Nil
     if Dir.exists?(path) && !File.symlink?(path)
       Dir.open(path) do |dir|
         dir.each do |entry|
@@ -230,11 +225,10 @@ module FileUtils
   # ```
   # FileUtils.rm_r(["dir", "file.cr"])
   # ```
-  def rm_r(paths : Enumerable(String))
+  def rm_r(paths : Enumerable(String)) : Nil
     paths.each do |path|
       rm_r(path)
     end
-    0
   end
 
   # Deletes a file or directory *path*
@@ -245,12 +239,11 @@ module FileUtils
   # FileUtils.rm_rf("file.cr")
   # FileUtils.rm_rf("non_existent_file")
   # ```
-  def rm_rf(path : String)
+  def rm_rf(path : String) : Nil
     begin
       rm_r(path)
     rescue Errno
     end
-    0
   end
 
   # Deletes a list of files or directories *paths*
@@ -259,14 +252,13 @@ module FileUtils
   # ```
   # FileUtils.rm_rf(["dir", "file.cr", "non_existent_file"])
   # ```
-  def rm_rf(paths : Enumerable(String))
+  def rm_rf(paths : Enumerable(String)) : Nil
     paths.each do |path|
       begin
         rm_r(path)
       rescue Errno
       end
     end
-    0
   end
 
   # Removes the directory at the given *path*.
@@ -274,17 +266,16 @@ module FileUtils
   # ```
   # FileUtils.rmdir("dir")
   # ```
-  def rmdir(path : String)
+  def rmdir(path : String) : Nil
     Dir.rmdir(path)
   end
 
   # Removes all directories at the given *paths*.
   # ```
   # FileUtils.rmdir(["dir1", "dir2", "dir3"])
-  def rmdir(paths : Enumerable(String))
+  def rmdir(paths : Enumerable(String)) : Nil
     paths.each do |path|
       Dir.rmdir(path)
     end
-    0
   end
 end
