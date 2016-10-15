@@ -95,13 +95,18 @@ fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
 end
 
 def raise(ex : Exception) : NoReturn
-  ex.callstack = CallStack.new
-  unwind_ex = Pointer(LibUnwind::Exception).malloc
-  unwind_ex.value.exception_class = LibC::SizeT.zero
-  unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-  unwind_ex.value.exception_object = ex.object_id
-  unwind_ex.value.exception_type_id = ex.crystal_type_id
-  __crystal_raise(unwind_ex)
+  {% if flag?(:arm) %}
+    puts "UNRAISED EXCEPTION: #{ex.message} (#{ex.class.name})"
+    LibC.exit(-1)
+  {% else %}
+    ex.callstack = CallStack.new
+    unwind_ex = Pointer(LibUnwind::Exception).malloc
+    unwind_ex.value.exception_class = LibC::SizeT.zero
+    unwind_ex.value.exception_cleanup = LibC::SizeT.zero
+    unwind_ex.value.exception_object = ex.object_id
+    unwind_ex.value.exception_type_id = ex.crystal_type_id
+    __crystal_raise(unwind_ex)
+  {% end %}
 end
 
 def raise(message : String) : NoReturn
