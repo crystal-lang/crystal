@@ -129,7 +129,7 @@ class Random::MT19937
     @mt[0] = 0x80000000u32
   end
 
-  def next_u32
+  def next_u
     if @mti >= N
       if @mti == N + 1
         init_genrand(5489u32)
