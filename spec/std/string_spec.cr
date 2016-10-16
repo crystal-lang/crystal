@@ -627,6 +627,19 @@ describe "String" do
     end
   end
 
+  describe "rpartition" do
+    describe "by char" do
+      "hello".rpartition('l').should eq {"hel", "l", "o"}
+      "hello".rpartition('x').should eq {"", "", "hello"}
+    end
+
+    describe "by string" do
+      "hello".rpartition("l").should eq {"hel", "l", "o"}
+      "hello".rpartition("x").should eq {"", "", "hello"}
+      "hello".rpartition("ll").should eq {"hel", "l", "o"}
+    end
+  end
+
   describe "byte_index" do
     assert { "foo".byte_index('o'.ord).should eq(1) }
     assert { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
