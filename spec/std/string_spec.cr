@@ -645,7 +645,7 @@ describe "String" do
     end
 
     describe "by regex" do
-      "hello".rpartition(/.l/).should eq {"he", "ll", "o"}
+      "hello".rpartition(/.l/).should eq ({"he", "ll", "o"})
       "hello".rpartition(/ll/).should eq ({"he", "ll", "o"})
       "hello".rpartition(/.o/).should eq ({"hel", "lo", ""})
       "hello".rpartition(/.e/).should eq ({"", "he", "llo"})
