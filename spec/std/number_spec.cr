@@ -103,6 +103,9 @@ describe "Number" do
   end
 
   it "divides and calculs the modulo" do
+    11.divmod(3).should eq({3, 2})
+    11.divmod(-3).should eq({-4, -1})
+
     10.divmod(2).should eq({5, 0})
     11.divmod(2).should eq({5, 1})
 
