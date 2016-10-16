@@ -104,8 +104,16 @@ describe "Number" do
 
   it "divides and calculs the modulo" do
     10.divmod(2).should eq({5, 0})
+    11.divmod(2).should eq({5, 1})
+
     10.divmod(-2).should eq({-5, 0})
     11.divmod(-2).should eq({-6, -1})
+
+    -10.divmod(2).should eq({-5, 0})
+    -11.divmod(2).should eq({-6, 1})
+
+    -10.divmod(-2).should eq({5, 0})
+    -11.divmod(-2).should eq({5, -1})
   end
 
   it "compare the numbers" do
