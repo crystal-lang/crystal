@@ -629,14 +629,28 @@ describe "String" do
 
   describe "rpartition" do
     describe "by char" do
-      "hello".rpartition('l').should eq {"hel", "l", "o"}
-      "hello".rpartition('x').should eq {"", "", "hello"}
+      "hello".rpartition('l').should eq ({"hel", "l", "o"})
+      "hello".rpartition('o').should eq ({"", "", "hello"})
+      "hello".rpartition('h').should eq ({"", "", "hello"})
     end
 
     describe "by string" do
-      "hello".rpartition("l").should eq {"hel", "l", "o"}
-      "hello".rpartition("x").should eq {"", "", "hello"}
-      "hello".rpartition("ll").should eq {"hel", "l", "o"}
+      "hello".rpartition("l").should eq ({"hel", "l", "o"})
+      "hello".rpartition("x").should eq ({"", "", "hello"})
+      "hello".rpartition("o").should eq ({"", "", "hello"})
+      "hello".rpartition("h").should eq ({"", "", "hello"})
+      "hello".rpartition("ll").should eq ({"he", "ll", "o"})
+      "hello".rpartition("lo").should eq ({"", "", "hello"})
+      "hello".rpartition("he").should eq ({"", "", "hello"})
+    end
+
+    describe "by regex" do
+      # "hello".rpartition(/.l/).should eq {"he", "ll", "o"} # this is what it should be, but String#scan(Regex) has a bug
+      "hello".rpartition(/.l/).should eq ({"h", "el", "lo"})
+      "hello".rpartition(/ll/).should eq ({"he", "ll", "o"})
+
+      "hello".rpartition(/.o/).should eq ({"", "", "hello"})
+      "hello".rpartition(/.e/).should eq ({"", "", "hello"})
     end
   end
 

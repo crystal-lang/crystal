@@ -2210,16 +2210,39 @@ class String
   # "hello".rpartition(/.l/)        #=> ["he", "ll", "o"]
   # ```
   def rpartition(search : (Char | String)) : Tuple(String, String, String)
-    pos = self.rindex(search)
+    pos = self.rindex(search) || 0
     search_size = search.is_a?(Char) ? 1 : search.size
 
-    if pos.nil?
+    if pos == 0 \
+      || pos == self.size-1 \
+      || pos + search_size > self.size - 1
       {"", "", self}
     else
-      pre = self[0, pos - 1]
-      post = self[pos + search_size, -1]
+	    pre = self[0 .. (pos - 1)]
+  	  post = self[(pos + search_size) .. -1]
 
       {pre, search.to_s, post}
+    end
+  end
+
+  # ditto
+  def rpartition(search : Regex) : Tuple(String, String, String)
+    pos = 0
+	  match_content = ""
+    self.scan(search) do |match_data|
+    	pos = match_data.try &.begin(0) || 0
+	    match_content = match_data[0]
+    end
+    if pos == 0 \
+      || pos == self.size-1 \
+      || match_content.size == 0 \
+      || pos + match_content.size >= self.size
+      {"", "", self}
+    else
+      pre = self[0 .. pos - 1]
+      post = self[pos + match_content.size .. -1]
+
+      {pre, match_content.to_s, post}
     end
   end
 
