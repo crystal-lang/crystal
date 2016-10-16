@@ -158,7 +158,7 @@ struct Number
   # 11.divmod(-3) # => {-3, 2}
   # ```
   def divmod(number)
-    {(self / number).to_i, self % number}
+    {(self / number).floor, self % number}
   end
 
   # Implements the comparison operator.
