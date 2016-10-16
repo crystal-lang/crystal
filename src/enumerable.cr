@@ -250,9 +250,16 @@ module Enumerable(T)
   #     ["Alice", "Bob"].flat_map do |user|
   #       user.chars
   #     end  #=> ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
-  def flat_map(&block : T -> Array(U)) forall U
+  def flat_map(&block : T -> Array(U) | U) forall U
     ary = [] of U
-    each { |e| ary.concat(yield e) }
+    each do |e|
+      v = yield e
+      if v.is_a?(Array)
+        ary.concat(v)
+      else
+        ary.push(v)
+      end
+    end
     ary
   end
 
