@@ -136,9 +136,9 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_return(target_def : Def)
-    # Check if this def is considered external and the return
+    # Check if this def must use the C calling convention and the return
     # value must be either casted or passed by sret
-    if target_def.considered_external? && (abi_info = target_def.abi_info)
+    if target_def.c_calling_convention? && (abi_info = target_def.abi_info)
       ret_type = abi_info.return_type
       if cast = ret_type.cast
         casted_last = bit_cast @last, cast.pointer
@@ -158,7 +158,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
-    if !is_closure && (external = target_def.considered_external?)
+    if !is_closure && (external = target_def.c_calling_convention?)
       codegen_fun_signature_external(mangled_name, external)
     else
       codegen_fun_signature_non_external(mangled_name, target_def, self_type, is_fun_literal, is_closure)
@@ -207,7 +207,7 @@ class Crystal::CodeGenVisitor
 
     setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
 
-    if @single_module && !target_def.no_inline? && target_def.considered_external?
+    if @single_module && !target_def.no_inline? && !target_def.is_a?(External)
       context.fun.linkage = LLVM::Linkage::Internal
     end
 
@@ -398,7 +398,7 @@ class Crystal::CodeGenVisitor
     else
       # If it's an extern struct on a def that must be codegened with C ABI
       # compatibility, and it's not passed byval, we must cast the value
-      if target_def.considered_external? && arg.type.extern? && !value.attributes.by_val?
+      if target_def.c_calling_convention? && arg.type.extern? && !value.attributes.by_val?
         pointer = alloca(llvm_type(var_type), arg.name)
         casted_pointer = bit_cast pointer, value.type.pointer
         store value, casted_pointer

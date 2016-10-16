@@ -46,7 +46,7 @@ class Crystal::CodeGenVisitor
 
   def prepare_call_args(node, owner)
     target_def = node.target_def
-    if external = target_def.considered_external?
+    if external = target_def.c_calling_convention?
       prepare_call_args_external(node, external, owner)
     else
       prepare_call_args_non_external(node, target_def, owner)
@@ -449,7 +449,7 @@ class Crystal::CodeGenVisitor
 
     set_call_attributes node, target_def, self_type, is_closure, fun_type
 
-    external = target_def.try &.considered_external?
+    external = target_def.try &.c_calling_convention?
 
     if external && (external.type.proc? || external.type.is_a?(NilableProcType))
       fun_ptr = bit_cast(@last, LLVM::VoidPointer)
@@ -500,7 +500,7 @@ class Crystal::CodeGenVisitor
   end
 
   def set_call_attributes(node : Call, target_def, self_type, is_closure, fun_type)
-    if external = target_def.considered_external?
+    if external = target_def.c_calling_convention?
       set_call_attributes_external(node, external)
     else
       set_call_attributes_non_external(node, target_def, self_type, is_closure, fun_type)

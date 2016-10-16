@@ -648,9 +648,9 @@ class Crystal::CodeGenVisitor
       # closures are never generated with C ABI because C doesn't support closures.
       # But non-closures use C ABI, so if the target Proc is not a closure we cast the
       # arguments according to the ABI.
-      # For this we temporarily set the target_def's `abi_info` and `considered_external`
+      # For this we temporarily set the target_def's `abi_info` and `c_calling_convention`
       # properties for the non-closure branch, and then reset it.
-      if target_def.proc_considered_external?
+      if target_def.proc_c_calling_convention?
         null_fun_ptr, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
       else
         null_fun_ptr, null_args = real_fun_ptr, args
@@ -659,9 +659,9 @@ class Crystal::CodeGenVisitor
       value = codegen_call_or_invoke(node, target_def, nil, null_fun_ptr, null_args, true, target_def.type, false, proc_type)
       phi.add value, node.type
 
-      # Reset abi_info + considered_external so the closure part is generated as usual
+      # Reset abi_info + c_calling_convention so the closure part is generated as usual
       target_def.abi_info = nil
-      target_def.considered_external = nil
+      target_def.c_calling_convention = nil
 
       position_at_end ctx_is_not_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
@@ -717,7 +717,7 @@ class Crystal::CodeGenVisitor
 
     null_fun_llvm_type = LLVM::Type.function(null_fun_types, null_fun_return_type)
     null_fun_ptr = bit_cast fun_ptr, null_fun_llvm_type.pointer
-    target_def.considered_external = true
+    target_def.c_calling_convention = true
 
     {null_fun_ptr, null_args}
   end
