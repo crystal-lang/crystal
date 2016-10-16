@@ -2205,45 +2205,61 @@ class String
   # If it is not found, returns two empty strings and str.
   #
   # ```
-  # "hello".rpartition("l")         #=> ["hel", "l", "o"]
-  # "hello".rpartition("x")         #=> ["", "", "hello"]
-  # "hello".rpartition(/.l/)        #=> ["he", "ll", "o"]
+  # "hello".rpartition("l")  # => ["hel", "l", "o"]
+  # "hello".rpartition("x")  # => ["", "", "hello"]
+  # "hello".rpartition(/.l/) # => ["he", "ll", "o"]
   # ```
   def rpartition(search : (Char | String)) : Tuple(String, String, String)
-    pos = self.rindex(search) || 0
+    pos = self.rindex(search)
     search_size = search.is_a?(Char) ? 1 : search.size
 
-    if pos == 0 \
-      || pos == self.size-1 \
-      || pos + search_size > self.size - 1
-      {"", "", self}
-    else
-	    pre = self[0 .. (pos - 1)]
-  	  post = self[(pos + search_size) .. -1]
+    pre = ""
+    mid = ""
+    post = ""
 
-      {pre, search.to_s, post}
+    if pos.nil?
+      post = self
+    elsif pos == 0
+      mid = search.to_s
+      post = self[(pos + search_size)..-1]
+    else
+      pre = self[0..(pos - 1)]
+      mid = search.to_s
+      post = self[(pos + search_size)..-1]
     end
+    {pre, mid, post}
   end
 
   # ditto
   def rpartition(search : Regex) : Tuple(String, String, String)
-    pos = 0
-	  match_content = ""
-    self.scan(search) do |match_data|
-    	pos = match_data.try &.begin(0) || 0
-	    match_content = match_data[0]
-    end
-    if pos == 0 \
-      || pos == self.size-1 \
-      || match_content.size == 0 \
-      || pos + match_content.size >= self.size
-      {"", "", self}
-    else
-      pre = self[0 .. pos - 1]
-      post = self[pos + match_content.size .. -1]
+    match_result = nil
+    pos = self.size - 1
 
-      {pre, match_content.to_s, post}
+    while pos >= 0
+      self[pos..-1].scan(search) do |m|
+        match_result = m
+      end
+      match_result
+      break unless match_result.nil?
+      pos -= 1
     end
+    match_result
+
+    pre = ""
+    mid = ""
+    post = ""
+
+    if match_result.nil?
+      post = self
+    elsif pos == 0
+      mid = match_result[0]
+      post = self[match_result[0].size..-1]
+    else
+      pre = self[0..pos - 1]
+      mid = match_result.not_nil![0]
+      post = self[pos + match_result.not_nil![0].size..-1]
+    end
+    {pre, mid, post}
   end
 
   def byte_index(byte : Int, offset = 0)

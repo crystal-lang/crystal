@@ -630,27 +630,25 @@ describe "String" do
   describe "rpartition" do
     describe "by char" do
       "hello".rpartition('l').should eq ({"hel", "l", "o"})
-      "hello".rpartition('o').should eq ({"", "", "hello"})
-      "hello".rpartition('h').should eq ({"", "", "hello"})
+      "hello".rpartition('o').should eq ({"hell", "o", ""})
+      "hello".rpartition('h').should eq ({"", "h", "ello"})
     end
 
     describe "by string" do
       "hello".rpartition("l").should eq ({"hel", "l", "o"})
       "hello".rpartition("x").should eq ({"", "", "hello"})
-      "hello".rpartition("o").should eq ({"", "", "hello"})
-      "hello".rpartition("h").should eq ({"", "", "hello"})
+      "hello".rpartition("o").should eq ({"hell", "o", ""})
+      "hello".rpartition("h").should eq ({"", "h", "ello"})
       "hello".rpartition("ll").should eq ({"he", "ll", "o"})
-      "hello".rpartition("lo").should eq ({"", "", "hello"})
-      "hello".rpartition("he").should eq ({"", "", "hello"})
+      "hello".rpartition("lo").should eq ({"hel", "lo", ""})
+      "hello".rpartition("he").should eq ({"", "he", "llo"})
     end
 
     describe "by regex" do
-      # "hello".rpartition(/.l/).should eq {"he", "ll", "o"} # this is what it should be, but String#scan(Regex) has a bug
-      "hello".rpartition(/.l/).should eq ({"h", "el", "lo"})
+      "hello".rpartition(/.l/).should eq {"he", "ll", "o"}
       "hello".rpartition(/ll/).should eq ({"he", "ll", "o"})
-
-      "hello".rpartition(/.o/).should eq ({"", "", "hello"})
-      "hello".rpartition(/.e/).should eq ({"", "", "hello"})
+      "hello".rpartition(/.o/).should eq ({"hel", "lo", ""})
+      "hello".rpartition(/.e/).should eq ({"", "he", "llo"})
     end
   end
 
