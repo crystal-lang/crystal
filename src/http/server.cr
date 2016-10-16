@@ -10,7 +10,7 @@ require "./common"
 # An HTTP server.
 #
 # A server is given a handler that receives an `HTTP::Server::Context` that holds
-# the `HTTP::Request` to process and must in turn configure and write to an `HTTP::Server::Response`.
+# the `HTTP::Server::Request` to process and must in turn configure and write to an `HTTP::Server::Response`.
 #
 # The `HTTP::Server::Response` object has `status` and `headers` properties that can be
 # configured before writing the response body. Once response output is written,

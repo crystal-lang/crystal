@@ -10,7 +10,7 @@ end
 describe HTTP::Handler do
   it "responds with not found if there's no next handler" do
     io = MemoryIO.new
-    request = HTTP::Request.new("GET", "/")
+    request = HTTP::Server::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 

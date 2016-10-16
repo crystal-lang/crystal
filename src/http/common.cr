@@ -272,8 +272,6 @@ module HTTP
   end
 end
 
-require "./request"
-require "./client/response"
 require "./headers"
 require "./content"
 require "./cookie"

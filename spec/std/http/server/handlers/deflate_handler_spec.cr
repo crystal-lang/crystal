@@ -4,7 +4,7 @@ require "http/server"
 describe HTTP::DeflateHandler do
   it "doesn't deflates if doesn't have 'deflate' in Accept-Encoding header" do
     io = MemoryIO.new
-    request = HTTP::Request.new("GET", "/")
+    request = HTTP::Server::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
@@ -21,7 +21,7 @@ describe HTTP::DeflateHandler do
 
   it "deflates if has deflate in 'deflate' Accept-Encoding header" do
     io = MemoryIO.new
-    request = HTTP::Request.new("GET", "/")
+    request = HTTP::Server::Request.new("GET", "/")
     request.headers["Accept-Encoding"] = "foo, deflate, other"
 
     response = HTTP::Server::Response.new(io)
@@ -49,7 +49,7 @@ describe HTTP::DeflateHandler do
 
   it "deflates gzip if has deflate in 'deflate' Accept-Encoding header" do
     io = MemoryIO.new
-    request = HTTP::Request.new("GET", "/")
+    request = HTTP::Server::Request.new("GET", "/")
     request.headers["Accept-Encoding"] = "foo, gzip, other"
 
     response = HTTP::Server::Response.new(io)

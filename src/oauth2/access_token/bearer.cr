@@ -9,7 +9,7 @@ class OAuth2::AccessToken::Bearer < OAuth2::AccessToken
     "Bearer"
   end
 
-  def authenticate(request : HTTP::Request, tls)
+  def authenticate(request : HTTP::Client::Request, tls)
     request.headers["Authorization"] = "Bearer #{access_token}"
   end
 

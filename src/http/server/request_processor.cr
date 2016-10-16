@@ -19,17 +19,18 @@ class HTTP::Server::RequestProcessor
 
     begin
       until @wants_close
-        request = HTTP::Request.from_io(input)
+        request = HTTP::Server::Request.from_io(input)
 
         # EOF
         break unless request
 
-        if request.is_a?(HTTP::Request::BadRequest)
+        if request.is_a?(HTTP::Server::Request::BadRequest)
           response.respond_with_error("Bad Request", 400)
           response.close
           return
         end
 
+        response.request_io = request.body_io
         response.version = request.version
         response.reset
         response.headers["Connection"] = "keep-alive" if request.keep_alive?

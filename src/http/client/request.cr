@@ -1,8 +1,8 @@
-require "./common"
+require "../common"
 require "uri"
 require "http/params"
 
-class HTTP::Request
+class HTTP::Client::Request
   getter method : String
   getter headers : Headers
   getter body : String?
@@ -50,29 +50,6 @@ class HTTP::Request
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
     HTTP.serialize_headers_and_body(io, headers, @body, nil, @version)
-  end
-
-  # :nodoc:
-  record BadRequest
-
-  # Returns:
-  # * nil: EOF
-  # * BadRequest: bad request
-  # * HTTP::Request: successfully parsed
-  def self.from_io(io)
-    request_line = io.gets
-    return unless request_line
-
-    parts = request_line.split
-    return BadRequest.new unless parts.size == 3
-
-    method, resource, http_version = parts
-    HTTP.parse_headers_and_body(io) do |headers, body|
-      return new method, resource, headers, body.try &.gets_to_end, http_version
-    end
-
-    # Unexpected end of http request
-    BadRequest.new
   end
 
   # Lazily parses and return the request's path component.
