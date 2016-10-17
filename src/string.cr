@@ -2238,11 +2238,9 @@ class String
       self[pos..-1].scan(search) do |m|
         match_result = m
       end
-      match_result
       break unless match_result.nil?
       pos -= 1
     end
-    match_result
 
     pre, mid, post = {"", "", ""}
 
