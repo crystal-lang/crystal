@@ -2213,9 +2213,7 @@ class String
     pos = self.rindex(search)
     search_size = search.is_a?(Char) ? 1 : search.size
 
-    pre = ""
-    mid = ""
-    post = ""
+    pre, mid, post = {"", "", ""}
 
     if pos.nil?
       post = self
@@ -2245,9 +2243,7 @@ class String
     end
     match_result
 
-    pre = ""
-    mid = ""
-    post = ""
+    pre, mid, post = {"", "", ""}
 
     if match_result.nil?
       post = self
