@@ -1,3 +1,4 @@
+require "random"
 require "base64"
 
 {% if flag?(:linux) %}
@@ -10,9 +11,13 @@ require "base64"
 #
 # Examples:
 # ```crystal
-# SecureRandom.base64 # => "LIa9s/zWzJx49m/9zDX+VQ=="
-# SecureRandom.hex    # => "c8353864ff9764a39ef74983ec0d4a38"
-# SecureRandom.uuid   # => "c7ee4add-207f-411a-97b7-0d22788566d6"
+# SecureRandom.random_bytes(8) # => Bytes[141, 161, 130, 39, 247, 150, 68, 233]
+# SecureRandom.base64          # => "LIa9s/zWzJx49m/9zDX+VQ=="
+# SecureRandom.hex             # => "c8353864ff9764a39ef74983ec0d4a38"
+# SecureRandom.uuid            # => "c7ee4add-207f-411a-97b7-0d22788566d6"
+#
+# SecureRandom.rand(10000)        # => 4264
+# [1, 2, 3].shuffle(SecureRandom) # => [1, 3, 2]
 # ```
 #
 # The implementation follows the
@@ -20,6 +25,9 @@ require "base64"
 # implementation and uses `getrandom` on Linux (when provided by the kernel),
 # then tries to read from `/dev/urandom`.
 module SecureRandom
+  extend Random
+  extend self
+
   @@initialized = false
 
   # Generates *n* random bytes that are encoded into Base64.
@@ -29,7 +37,7 @@ module SecureRandom
   # ```crystal
   # SecureRandom.base64(4) # => "fK1eYg=="
   # ```
-  def self.base64(n : Int = 16) : String
+  def base64(n : Int = 16) : String
     Base64.strict_encode(random_bytes(n))
   end
 
@@ -42,7 +50,7 @@ module SecureRandom
   # SecureRandom.urlsafe_base64(8, true)  # => "vvP1kcs841I="
   # SecureRandom.urlsafe_base64(16, true) # => "og2aJrELDZWSdJfVGkxNKw=="
   # ```
-  def self.urlsafe_base64(n : Int = 16, padding = false) : String
+  def urlsafe_base64(n : Int = 16, padding = false) : String
     Base64.urlsafe_encode(random_bytes(n), padding)
   end
 
@@ -54,8 +62,12 @@ module SecureRandom
   # SecureRandom.hex    # => "05f100a1123f6bdbb427698ab664ff5f"
   # SecureRandom.hex(1) # => "1a"
   # ```
-  def self.hex(n : Int = 16) : String
+  def hex(n : Int = 16) : String
     random_bytes(n).hexstring
+  end
+
+  def next_u : UInt8
+    random_bytes(1)[0]
   end
 
   # Generates a slice filled with *n* random bytes.
@@ -64,7 +76,7 @@ module SecureRandom
   # SecureRandom.random_bytes    # => [145, 255, 191, 133, 132, 139, 53, 136, 93, 238, 2, 37, 138, 244, 3, 216]
   # SecureRandom.random_bytes(4) # => [217, 118, 38, 196]
   # ```
-  def self.random_bytes(n : Int = 16) : Slice(UInt8)
+  def random_bytes(n : Int = 16) : Slice(UInt8)
     if n < 0
       raise ArgumentError.new "negative size: #{n}"
     end
@@ -155,7 +167,7 @@ module SecureRandom
   # ```crystal
   # SecureRandom.uuid # => "a4e319dd-a778-4a51-804e-66a07bc63358"
   # ```
-  def self.uuid : String
+  def uuid : String
     bytes = random_bytes(16)
     bytes[6] = (bytes[6] & 0x0f) | 0x40
     bytes[8] = (bytes[8] & 0x3f) | 0x80

@@ -76,4 +76,19 @@ describe SecureRandom do
       uuid.should match(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{4}[0-9a-f]{8}\Z/)
     end
   end
+
+  describe "common random operations" do
+    it "rand" do
+      x = SecureRandom.rand(123456...654321)
+      x.should be >= 123456
+      x.should be < 654321
+    end
+
+    it "shuffle!" do
+      a = [1, 2, 3]
+      a.shuffle!(SecureRandom)
+      b = [1, 2, 3]
+      3.times { a.includes?(b.shift).should be_true }
+    end
+  end
 end
