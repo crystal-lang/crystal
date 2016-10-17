@@ -2205,9 +2205,9 @@ class String
   # If it is not found, returns two empty strings and str.
   #
   # ```
-  # "hello".rpartition("l")  # => ["hel", "l", "o"]
-  # "hello".rpartition("x")  # => ["", "", "hello"]
-  # "hello".rpartition(/.l/) # => ["he", "ll", "o"]
+  # "hello".rpartition("l")  # => {"hel", "l", "o"}
+  # "hello".rpartition("x")  # => {"", "", "hello"}
+  # "hello".rpartition(/.l/) # => {"he", "ll", "o"}
   # ```
   def rpartition(search : (Char | String)) : Tuple(String, String, String)
     pos = self.rindex(search)

@@ -649,6 +649,7 @@ describe "String" do
       "hello".rpartition(/ll/).should eq ({"he", "ll", "o"})
       "hello".rpartition(/.o/).should eq ({"hel", "lo", ""})
       "hello".rpartition(/.e/).should eq ({"", "he", "llo"})
+      "hello".rpartition(/l./).should eq ({"hel", "lo", ""})
     end
   end
 
