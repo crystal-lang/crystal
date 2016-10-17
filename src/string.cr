@@ -2246,9 +2246,10 @@ class String
 
     pre, mid, post = {"", "", ""}
 
-    if match_result.nil?
+    case
+    when match_result.nil?
       post = self
-    elsif pos == 0
+    when pos == 0
       mid = match_result[0]
       post = self[match_result[0].size..-1]
     else
