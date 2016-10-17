@@ -2215,9 +2215,10 @@ class String
 
     pre, mid, post = {"", "", ""}
 
-    if pos.nil?
+    case pos
+    when .nil?
       post = self
-    elsif pos == 0
+    when 0
       mid = search.to_s
       post = self[(pos + search_size)..-1]
     else
