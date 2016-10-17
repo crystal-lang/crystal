@@ -13,6 +13,11 @@ class String::Builder
   def initialize(capacity : Int = 64)
     String.check_capacity_in_bounds(capacity)
 
+    # Make sure to also be able to hold
+    # the header size plus the trailing zero byte
+    capacity += String::HEADER_SIZE + 1
+    String.check_capacity_in_bounds(capacity)
+
     @buffer = GC.malloc_atomic(capacity.to_u32).as(UInt8*)
     @bytesize = 0
     @capacity = capacity.to_i

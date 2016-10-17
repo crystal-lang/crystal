@@ -150,6 +150,18 @@ class LLVM::Builder
     switch
   end
 
+  def atomicrmw(op, ptr, val, ordering, singlethread)
+    Value.new LibLLVM.build_atomicrmw(self, op, ptr, val, ordering, singlethread ? 1 : 0)
+  end
+
+  def cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
+    Value.new LibLLVMExt.build_cmpxchg(self, pointer, cmp, new, success_ordering, failure_ordering)
+  end
+
+  def fence(ordering, singlethread, name = "")
+    Value.new LibLLVM.build_fence(self, ordering, singlethread ? 1 : 0, name)
+  end
+
   def set_current_debug_location(line, column, scope, inlined_at = nil)
     LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
   end

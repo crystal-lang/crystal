@@ -6,19 +6,21 @@ lib LibLLVMExt
 
   fun create_di_builder = LLVMNewDIBuilder(LibLLVM::ModuleRef) : DIBuilder
   fun di_builder_finalize = LLVMDIBuilderFinalize(DIBuilder)
+
   {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
-  fun di_builder_create_function = LLVMDIBuilderCreateFunction(
-                                                               builder : DIBuilder, scope : Metadata, name : LibC::Char*,
-                                                               linkage_name : LibC::Char*, file : Metadata, line : LibC::UInt,
-                                                               composite_type : Metadata, is_local_to_unit : LibC::Int, is_definition : LibC::Int,
-                                                               scope_line : LibC::UInt, flags : LibC::UInt, is_optimized : LibC::Int, func : LibLLVM::ValueRef) : Metadata
-{% else %}
-  fun di_builder_create_function = LLVMDIBuilderCreateFunction(
-                                                               builder : DIBuilder, scope : Metadata, name : LibC::Char*,
-                                                               linkage_name : LibC::Char*, file : Metadata, line : LibC::UInt,
-                                                               composite_type : Metadata, is_local_to_unit : Bool, is_definition : Bool,
-                                                               scope_line : LibC::UInt, flags : LibC::UInt, is_optimized : Bool, func : LibLLVM::ValueRef) : Metadata
-{% end %}
+    fun di_builder_create_function = LLVMDIBuilderCreateFunction(
+                                                                 builder : DIBuilder, scope : Metadata, name : LibC::Char*,
+                                                                 linkage_name : LibC::Char*, file : Metadata, line : LibC::UInt,
+                                                                 composite_type : Metadata, is_local_to_unit : LibC::Int, is_definition : LibC::Int,
+                                                                 scope_line : LibC::UInt, flags : LibC::UInt, is_optimized : LibC::Int, func : LibLLVM::ValueRef) : Metadata
+  {% else %}
+    fun di_builder_create_function = LLVMDIBuilderCreateFunction(
+                                                                 builder : DIBuilder, scope : Metadata, name : LibC::Char*,
+                                                                 linkage_name : LibC::Char*, file : Metadata, line : LibC::UInt,
+                                                                 composite_type : Metadata, is_local_to_unit : Bool, is_definition : Bool,
+                                                                 scope_line : LibC::UInt, flags : LibC::UInt, is_optimized : Bool, func : LibLLVM::ValueRef) : Metadata
+  {% end %}
+
   fun di_builder_create_file = LLVMDIBuilderCreateFile(builder : DIBuilder, file : LibC::Char*, dir : LibC::Char*) : Metadata
   fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit(builder : DIBuilder,
                                                                       lang : LibC::UInt, file : LibC::Char*,
@@ -88,4 +90,7 @@ lib LibLLVMExt
   fun metadata_replace_all_uses_with = LLVMMetadataReplaceAllUsesWith(Metadata, Metadata)
 
   fun set_current_debug_location = LLVMSetCurrentDebugLocation2(LibLLVM::BuilderRef, LibC::Int, LibC::Int, Metadata, Metadata)
+
+  fun build_cmpxchg = LLVMExtBuildCmpxchg(builder : LibLLVM::BuilderRef, pointer : LibLLVM::ValueRef, cmp : LibLLVM::ValueRef, new : LibLLVM::ValueRef, success_ordering : LLVM::AtomicOrdering, failure_ordering : LLVM::AtomicOrdering) : LibLLVM::ValueRef
+  fun set_ordering = LLVMExtSetOrdering(value : LibLLVM::ValueRef, ordering : LLVM::AtomicOrdering)
 end

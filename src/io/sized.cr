@@ -37,6 +37,18 @@ module IO
       bytes_read
     end
 
+    def read_byte
+      check_open
+
+      if @read_remaining > 0
+        byte = @io.read_byte
+        @read_remaining -= 1 if byte
+        byte
+      else
+        nil
+      end
+    end
+
     def write(slice : Slice(UInt8))
       raise IO::Error.new "Can't write to IO::Sized"
     end

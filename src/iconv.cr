@@ -8,10 +8,12 @@ struct Iconv
     original_from, original_to = from, to
 
     @skip_invalid = invalid == :skip
+    {% unless flag?(:freebsd) %}
     if @skip_invalid
       from = "#{from}//IGNORE"
       to = "#{to}//IGNORE"
     end
+    {% end %}
 
     @iconv = LibC.iconv_open(to, from)
 
@@ -40,6 +42,11 @@ struct Iconv
   end
 
   def convert(inbuf : UInt8**, inbytesleft : LibC::SizeT*, outbuf : UInt8**, outbytesleft : LibC::SizeT*)
+    {% if flag?(:freebsd) %}
+    if @skip_invalid
+      return LibC.__iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft, LibC::ICONV_F_HIDE_INVALID, out invalids)
+    end
+    {% end %}
     LibC.iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft)
   end
 

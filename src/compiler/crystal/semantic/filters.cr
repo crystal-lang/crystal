@@ -340,5 +340,11 @@ module Crystal
       end
       filters
     end
+
+    # Returns true if this filter is only applied to
+    # a temporary variable created by the compiler
+    def temp_var?
+      @filters.size == 1 && @filters.first_key.starts_with?("__temp_")
+    end
   end
 end

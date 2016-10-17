@@ -217,10 +217,6 @@ module Crystal
       visit_if_or_unless "unless", node
     end
 
-    def visit(node : IfDef)
-      visit_if_or_unless "ifdef", node
-    end
-
     def visit_if_or_unless(prefix, node)
       @str << keyword(prefix)
       @str << " "
@@ -324,13 +320,16 @@ module Crystal
         in_parenthesis(need_parens, node_obj)
 
         @str << decorate_call(node, "[")
+        (0...node.args.size - 1).each do |i|
+          @str << ", " if i > 0
+          node.args[i].accept self
+        end
 
-        node.args[0].accept self
         @str << decorate_call(node, "]")
         @str << " "
         @str << decorate_call(node, "=")
         @str << " "
-        node.args[1].accept self
+        node.args.last.accept self
       elsif node_obj && !alpha_or_underscore?(node.name) && node.args.size == 0
         @str << decorate_call(node, node.name)
         in_parenthesis(need_parens, node_obj)
@@ -426,10 +425,15 @@ module Crystal
         when 0
           !alpha_or_underscore?(obj.name)
         else
-          true
+          case obj.name
+          when "[]", "[]?"
+            false
+          else
+            true
+          end
         end
       when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
-           StringInterpolation, Path, Generic, InstanceVar, Global
+           StringInterpolation, Path, Generic, InstanceVar, ClassVar, Global
         false
       when ArrayLiteral
         !!obj.of
@@ -522,6 +526,13 @@ module Crystal
     def visit(node : Assign)
       node.target.accept self
       @str << " = "
+      accept_with_maybe_begin_end node.value
+      false
+    end
+
+    def visit(node : OpAssign)
+      node.target.accept self
+      @str << " " << node.op << "=" << " "
       accept_with_maybe_begin_end node.value
       false
     end

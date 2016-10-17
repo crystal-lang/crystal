@@ -72,6 +72,13 @@ module Crystal
     @file_module : FileModule?
     @while_vars : MetaVars?
 
+    # Separate type filters for an `a || b` expression.
+    # We need these to filter types on an else branch of an
+    # if that has an or expression, using boolean logic:
+    # `!(a || b)` is `!a && !b`
+    @or_left_type_filters : TypeFilters?
+    @or_right_type_filters : TypeFilters?
+
     def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       super(program, vars)
       @while_stack = [] of While
@@ -103,6 +110,8 @@ module Crystal
 
     def visit_any(node)
       @unreachable = false
+      @or_left_type_filters = nil
+      @or_right_type_filters = nil
       super
     end
 
@@ -1684,6 +1693,8 @@ module Crystal
         node.cond.accept self
       end
 
+      or_left_type_filters = @or_left_type_filters
+      or_right_type_filters = @or_right_type_filters
       cond_type_filters = @type_filters
       cond_vars = @vars
 
@@ -1709,9 +1720,27 @@ module Crystal
       # block is when the condition is a Var (in the else it must be
       # nil), IsA (in the else it's not that type), RespondsTo
       # (in the else it doesn't respond to that message) or Not.
-      case node.cond
+      case cond = node.cond
       when Var, IsA, RespondsTo, Not
         filter_vars cond_type_filters, &.not
+      when Or
+        # Try to apply boolean logic: `!(a || b)` is `!a && !b`
+
+        #  We can't deduce anything for sub && or || expressions
+        or_left_type_filters = nil if cond.left.is_a?(And) || cond.left.is_a?(Or)
+        or_right_type_filters = nil if cond.right.is_a?(And) || cond.right.is_a?(Or)
+
+        # No need to deduce anything for temp vars created by the compiler (won't be used by a user)
+        or_left_type_filters = nil if or_left_type_filters && or_left_type_filters.temp_var?
+
+        if or_left_type_filters && or_right_type_filters
+          filters = TypeFilters.and(or_left_type_filters.not, or_right_type_filters.not)
+          filter_vars filters
+        elsif or_left_type_filters
+          filter_vars or_left_type_filters.not
+        elsif or_right_type_filters
+          filter_vars or_right_type_filters.not
+        end
       end
 
       before_else_vars = @vars.dup
@@ -1729,6 +1758,8 @@ module Crystal
         when .and?
           @type_filters = TypeFilters.and(cond_type_filters, then_type_filters, else_type_filters)
         when .or?
+          @or_left_type_filters = or_left_type_filters = then_type_filters
+          @or_right_type_filters = or_right_type_filters = else_type_filters
           @type_filters = TypeFilters.or(cond_type_filters, then_type_filters, else_type_filters)
         end
       end
@@ -2113,6 +2144,16 @@ module Crystal
         # Nothing to do
       when "enum_new"
         # Nothing to do
+      when "cmpxchg"
+        node.type = program.tuple_of([typed_def.args[1].type, program.bool])
+      when "atomicrmw"
+        node.type = typed_def.args[2].type
+      when "fence"
+        node.type = program.nil_type
+      when "load_atomic"
+        node.type = typed_def.args.first.type.as(PointerInstanceType).element_type
+      when "store_atomic"
+        node.type = program.nil_type
       else
         node.raise "Bug: unhandled primitive in MainVisitor: #{node.name}"
       end
@@ -2941,7 +2982,7 @@ module Crystal
       end
     end
 
-    def visit(node : When | Unless | Until | MacroLiteral)
+    def visit(node : When | Unless | Until | MacroLiteral | OpAssign)
       raise "Bug: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end

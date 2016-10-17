@@ -116,7 +116,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if type_vars = node.type_vars
         free_vars = {} of String => TypeVar
         type_vars.each do |type_var|
-          free_vars[type_var] = TypeParameter.new(program, type.as(GenericType), type_var)
+          free_vars[type_var] = type.as(GenericType).type_parameter(type_var)
         end
       else
         free_vars = nil

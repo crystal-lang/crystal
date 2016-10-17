@@ -117,10 +117,11 @@ struct String::Formatter(A)
     when '1'..'9'
       num, size = consume_number
       flags.width = num
-      flags.width_size
+      flags.width_size = size
     when '*'
-      flags.width = consume_dynamic_value
-      flags.width_size = 1
+      val = consume_dynamic_value
+      flags.width = val
+      flags.width_size = val.to_s.size
     end
     flags
   end
@@ -133,8 +134,9 @@ struct String::Formatter(A)
         flags.precision = num
         flags.precision_size = size
       when '*'
-        flags.precision = consume_dynamic_value
-        flags.precision_size = 1
+        val = consume_dynamic_value
+        flags.precision = val
+        flags.precision_size = val.to_s.size
       else
         flags.precision = 0
         flags.precision_size = 1
@@ -266,7 +268,7 @@ struct String::Formatter(A)
   def recreate_float_format_string(flags)
     capacity = 3 # percent + type + \0
     capacity += flags.width_size
-    capacity += flags.precision_size
+    capacity += flags.precision_size + 1 # size + .
     capacity += 1 if flags.plus
     capacity += 1 if flags.minus
     capacity += 1 if flags.zero
@@ -275,7 +277,7 @@ struct String::Formatter(A)
     format_buf = format_buf(capacity)
     original_format_buf = format_buf
 
-    io = PointerIO.new(pointerof(format_buf))
+    io = MemoryIO.new(Slice(UInt8).new(format_buf, capacity))
     io << '%'
     io << '+' if flags.plus
     io << '-' if flags.minus

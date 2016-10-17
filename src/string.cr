@@ -1232,8 +1232,8 @@ class String
   # block and replaced by its return value.
   #
   # ```
-  # "hello".sub { |x| (x.ord + 1).chr } # => "iello"
-  # "hello".sub { "hi" }                # => "hiello"
+  # "hello".sub { |char| char + 1 } # => "iello"
+  # "hello".sub { "hi" }            # => "hiello"
   # ```
   def sub(&block : Char -> _)
     return self if empty?
@@ -1587,8 +1587,8 @@ class String
   # is replaced by the block's return value.
   #
   # ```
-  # "hello".gsub { |x| (x.ord + 1).chr } # => "ifmmp"
-  # "hello".gsub { "hi" }                # => "hihihihihi"
+  # "hello".gsub { |char| char + 1 } # => "ifmmp"
+  # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
   def gsub(&block : Char -> _)
     String.build(bytesize) do |buffer|
@@ -1745,11 +1745,11 @@ class String
     end
   end
 
-  # Returns a string where all chars in the given hash are replaced
+  # Returns a string where all chars in the given named tuple are replaced
   # by the corresponding *tuple* values.
   #
   # ```
-  # "hello".gsub({'e' => 'a', 'l' => 'd'}) # => "haddo"
+  # "hello".gsub({e: 'a', l: 'd'}) # => "haddo"
   # ```
   def gsub(tuple : NamedTuple)
     gsub do |char|
@@ -2088,6 +2088,8 @@ class String
   # "Hello, World".index('Z')    # => nil
   # "Hello, World".index("o", 5) # => 8
   # "Hello, World".index("H", 2) # => nil
+  # "Hello, World".index(/[ ]+/) # => 5
+  # "Hello, World".index(/d+/)   # => nil
   # ```
   def index(search : Char, offset = 0)
     # If it's ASCII we can delegate to slice
@@ -2126,6 +2128,14 @@ class String
     end
 
     nil
+  end
+
+  # ditto
+  def index(search : Regex, offset = 0)
+    offset += size if offset < 0
+    return nil unless 0 <= offset <= size
+
+    self.match(search, offset).try &.begin
   end
 
   # Returns the index of the _last_ appearance of *c* in the string,
@@ -2175,6 +2185,19 @@ class String
     end
 
     last_index
+  end
+
+  # ditto
+  def rindex(search : Regex, offset = 0)
+    offset += size if offset < 0
+    return nil unless 0 <= offset <= size
+
+    match_result = nil
+    self[0, self.size - offset].scan(search) do |match_data|
+      match_result = match_data
+    end
+
+    match_result.try &.begin(0)
   end
 
   def byte_index(byte : Int, offset = 0)

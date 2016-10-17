@@ -1,3 +1,14 @@
+## 0.19.4  (07-10-2016)
+
+* Added support for OpenBSD (thanks @wmoxam and @ysbaddaden)
+* More iconv fixes for FreeBSD (thanks @ysbaddaden)
+* Changed how `require` works for the upcoming `shards` release (this is backwards compatible). See https://github.com/crystal-lang/crystal/pull/2788
+* Added `Atomic` and exposed all LLVM atomic instructions to Crystal (needed to implemented multiple-thread support)
+* Added `Process.executable_path` (thanks @kostya, @whereami and @ysbaddaden)
+* Added `HTML.unescape` (thanks @dukex)
+* Added `Char#+(Int)` and `Char#-(Int)`
+* [A few bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.4)
+
 ## 0.19.3  (30-09-2016)
 
 * `crystal eval` now accepts some flags like `--stats`, `--release` and `--help`

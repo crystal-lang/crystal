@@ -30,6 +30,7 @@ class Thread
     @current_fiber = uninitialized Fiber
     @func = ->{}
     @@threads << self
+    @th = LibC.pthread_self
   end
 
   def finalize
@@ -48,17 +49,44 @@ class Thread
   end
 
   # All threads, so the GC can see them (GC doesn't scan thread locals)
+  # and we can find the current thread on platforms that don't support
+  # thread local storage (eg: OpenBSD)
   @@threads = Set(Thread).new
 
-  @[ThreadLocal]
-  @@current = new
+  {% if flag?(:openbsd) %}
+    @@main = new
 
-  def self.current
-    @@current
-  end
+    def self.current : Thread
+      if LibC.pthread_main_np == 1
+        return @@main
+      end
+
+      current_thread_id = LibC.pthread_self
+
+      current_thread = @@threads.find do |thread|
+        LibC.pthread_equal(thread.id, current_thread_id) != 0
+      end
+
+      raise "Error: failed to find current thread" unless current_thread
+      current_thread
+    end
+
+    protected def id
+      @th.not_nil!
+    end
+  {% else %}
+    @[ThreadLocal]
+    @@current = new
+
+    def self.current
+      @@current
+    end
+  {% end %}
 
   protected def start
+    {% unless flag?(:openbsd) %}
     @@current = self
+    {% end %}
     begin
       @func.call
     rescue ex

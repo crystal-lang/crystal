@@ -620,41 +620,6 @@ module Crystal
     def_equals_and_hash @cond, @then, @else
   end
 
-  # An ifdef expression.
-  #
-  #     'ifdef' cond
-  #       then
-  #     [
-  #     'else'
-  #       else
-  #     ]
-  #     'end'
-  #
-  # An if elsif end is parsed as an If whose
-  # else is another If.
-  class IfDef < ASTNode
-    property cond : ASTNode
-    property then : ASTNode
-    property else : ASTNode
-
-    def initialize(@cond, a_then = nil, a_else = nil)
-      @then = Expressions.from a_then
-      @else = Expressions.from a_else
-    end
-
-    def accept_children(visitor)
-      @cond.accept visitor
-      @then.accept visitor
-      @else.accept visitor
-    end
-
-    def clone_without_location
-      IfDef.new(@cond.clone, @then.clone, @else.clone)
-    end
-
-    def_equals_and_hash @cond, @then, @else
-  end
-
   # Assign expression.
   #
   #     target '=' value
@@ -685,6 +650,37 @@ module Crystal
     end
 
     def_equals_and_hash @target, @value
+  end
+
+  # Operator assign expression.
+  #
+  #     target op'=' value
+  #
+  # For example if `op` is `+` then the above is:
+  #
+  #     target '+=' value
+  class OpAssign < ASTNode
+    property target : ASTNode
+    property op : String
+    property value : ASTNode
+
+    def initialize(@target, @op, @value)
+    end
+
+    def accept_children(visitor)
+      @target.accept visitor
+      @value.accept visitor
+    end
+
+    def end_location
+      @end_location || value.end_location
+    end
+
+    def clone_without_location
+      OpAssign.new(@target.clone, @op, @value.clone)
+    end
+
+    def_equals_and_hash @target, @op, @value
   end
 
   # Assign expression.

@@ -94,6 +94,13 @@ describe "IO::Buffered" do
     io.gets('a', 3).should be_nil
   end
 
+  it "does gets with char and limit without off-by-one" do
+    io = BufferedWrapper.new(MemoryIO.new("test\nabc"))
+    io.gets('a', 5).should eq("test\n")
+    io = BufferedWrapper.new(MemoryIO.new("test\nabc"))
+    io.gets('a', 6).should eq("test\na")
+  end
+
   it "does gets with char and limit when not found in buffer" do
     io = BufferedWrapper.new(MemoryIO.new(("a" * (IO::Buffered::BUFFER_SIZE + 10)) + "b"))
     io.gets('b', 2).should eq("aa")
@@ -176,7 +183,7 @@ describe "IO::Buffered" do
     s = String.build do |str|
       900.times do
         10.times do |i|
-          str << ('a'.ord + i).chr
+          str << ('a' + i)
         end
       end
     end
@@ -197,7 +204,7 @@ describe "IO::Buffered" do
     s = String.build do |str|
       900.times do
         10.times do |i|
-          str << ('a'.ord + i).chr
+          str << ('a' + i)
         end
       end
     end

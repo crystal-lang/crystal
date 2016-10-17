@@ -163,7 +163,7 @@ module Crystal
 
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
-      static_array.declare_instance_var("@buffer", TypeParameter.new(self, static_array, "T"))
+      static_array.declare_instance_var("@buffer", static_array.type_parameter("T"))
       static_array.allowed_in_generics = false
 
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference

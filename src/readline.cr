@@ -1,4 +1,7 @@
 @[Link("readline")]
+{% if flag?(:openbsd) %}
+@[Link("termcap")]
+{% end %}
 lib LibReadline
   alias Int = LibC::Int
 

@@ -310,17 +310,19 @@ describe TCPSocket do
       (server.reuse_address = true).should be_true
       server.reuse_address?.should be_true
 
+      {% unless flag?(:openbsd) %}
       (server.keepalive = false).should be_false
       server.keepalive?.should be_false
       (server.keepalive = true).should be_true
       server.keepalive?.should be_true
+      {% end %}
 
       (server.linger = nil).should be_nil
       server.linger.should be_nil
       (server.linger = 42).should eq 42
       server.linger.should eq 42
 
-      TCPSocket.open("::", server.local_address.port) do |client|
+      TCPSocket.open("localhost", server.local_address.port) do |client|
         # The commented lines are actually dependent on the system configuration,
         # so for now we keep it commented. Once we can force the family
         # we can uncomment them.
@@ -344,12 +346,14 @@ describe TCPSocket do
         (client.tcp_nodelay = false).should be_false
         client.tcp_nodelay?.should be_false
 
+        {% unless flag?(:openbsd) %}
         (client.tcp_keepalive_idle = 42).should eq 42
         client.tcp_keepalive_idle.should eq 42
         (client.tcp_keepalive_interval = 42).should eq 42
         client.tcp_keepalive_interval.should eq 42
         (client.tcp_keepalive_count = 42).should eq 42
         client.tcp_keepalive_count.should eq 42
+        {% end %}
 
         client << "ping"
         sock.gets(4).should eq("ping")

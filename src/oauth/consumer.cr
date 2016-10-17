@@ -17,6 +17,7 @@
 #
 # # Create consumer, optionally pass custom URIs if needed,
 # # if the request, authorize or access_token URIs are not the standard ones
+# # (they can also be absolute URLs)
 # consumer = OAuth::Consumer.new("api.example.com", consumer_key, consumer_secret)
 #
 # # Get a request token.
@@ -52,6 +53,12 @@
 class OAuth::Consumer
   @tls : Bool
 
+  # Creates an OAuth consumer.
+  #
+  # Any or all of the customizable URIs *request_token_uri*, *authorize_uri* and
+  # *access_token_uri* can be relative or absolute.
+  # If they are relative, the given *host*, *port* and *scheme* will be used.
+  # If they are absolute, the absolute URL will be used.
   def initialize(@host : String, @consumer_key : String, @consumer_secret : String,
                  @port : Int32 = 443,
                  @scheme : String = "https",
@@ -65,12 +72,9 @@ class OAuth::Consumer
   # [RFC5849, Section 2.1](https://tools.ietf.org/html/rfc5849#section-2.1)
   #
   # Raises `OAuth::Error` if there was an error getting the request token.
-  def get_request_token(oauth_callback = "oob") : RequestToken
-    with_new_http_client(nil, nil, {"oauth_callback" => oauth_callback}) do |client|
-      response = client.post @request_token_uri
-      handle_response(response) do
-        RequestToken.from_response(response.body)
-      end
+  def get_request_token(oauth_callback = "oob") # : RequestToken
+    post(nil, nil, {"oauth_callback" => oauth_callback}, @request_token_uri) do |response|
+      RequestToken.from_response(response.body)
     end
   end
 
@@ -78,14 +82,35 @@ class OAuth::Consumer
   # to obtain an access token, as specified by
   # [RFC5849, Section 2.2](https://tools.ietf.org/html/rfc5849#section-2.2)
   def get_authorize_uri(request_token, oauth_callback = nil) : String
-    query = HTTP::Params.build do |form|
-      form.add "oauth_token", request_token.token
-      if oauth_callback
-        form.add "oauth_callback", oauth_callback
-      end
+    get_authorize_uri(request_token, oauth_callback) { }
+  end
+
+  # Returns an authorize URI from a given request token to redirect the user
+  # to obtain an access token, as specified by
+  # [RFC5849, Section 2.2](https://tools.ietf.org/html/rfc5849#section-2.2)
+  #
+  # Yields an `HTTP::Params::Builder` to add extra parameters other than those
+  # defined by the standard.
+  def get_authorize_uri(request_token, oauth_callback = nil, &block : HTTP::Params::Builder ->) : String
+    uri = URI.parse(@authorize_uri)
+
+    # Use the default URI if it's not an absolute one
+    unless uri.host
+      uri = URI.new(@scheme, @host, @port, @authorize_uri)
     end
 
-    URI.new(@scheme, @host, @port, @authorize_uri, query).to_s
+    uri.query = HTTP::Params.build do |form|
+      form.add "oauth_token", request_token.token
+      form.add "oauth_callback", oauth_callback if oauth_callback
+      if query = uri.query
+        HTTP::Params.parse(query).each do |key, value|
+          form.add key, value
+        end
+      end
+      yield form
+    end
+
+    uri.to_s
   end
 
   # Gets an access token from a previously obtained request token and an *oauth_verifier*
@@ -96,11 +121,8 @@ class OAuth::Consumer
   def get_access_token(request_token, oauth_verifier, extra_params = nil) : AccessToken
     extra_params ||= {} of String => String
     extra_params["oauth_verifier"] = oauth_verifier
-    with_new_http_client(request_token.token, request_token.secret, extra_params) do |client|
-      response = client.post @access_token_uri
-      handle_response(response) do
-        AccessToken.from_response(response.body)
-      end
+    post(request_token.token, request_token.secret, extra_params, @access_token_uri) do |response|
+      AccessToken.from_response(response.body)
     end
   end
 
@@ -110,11 +132,22 @@ class OAuth::Consumer
     authenticate client, token.token, token.secret, nil
   end
 
-  private def with_new_http_client(oauth_token, token_shared_secret, extra_params)
-    client = HTTP::Client.new @host, @port, tls: @tls
+  private def post(oauth_token, token_shared_secret, extra_params, target_uri)
+    uri = URI.parse(target_uri)
+
+    # If the target uri is absolute, we use that instead of the default values
+    if uri.host
+      client = HTTP::Client.new(uri)
+      target_uri = "#{uri.path}?#{uri.query}"
+    else
+      client = HTTP::Client.new @host, @port, tls: @tls
+    end
+
     authenticate client, oauth_token, token_shared_secret, extra_params
+
     begin
-      yield client
+      response = client.post target_uri
+      yield response
     ensure
       client.close
     end

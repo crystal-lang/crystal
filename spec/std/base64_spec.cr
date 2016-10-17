@@ -173,15 +173,15 @@ describe "Base64" do
   describe "urlsafe" do
     it "work" do
       s = String.build { |b| (160..179).each { |i| b << i.chr } }
-      se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw"
+      se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw=="
       Base64.urlsafe_encode(s).should eq(se)
     end
 
     it "encode to stream" do
       s = String.build { |b| (160..179).each { |i| b << i.chr } }
-      se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw"
+      se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw=="
       io = MemoryIO.new
-      Base64.urlsafe_encode(s, io).should eq(54)
+      Base64.urlsafe_encode(s, io).should eq(56)
       io.rewind
       io.gets_to_end.should eq se
     end

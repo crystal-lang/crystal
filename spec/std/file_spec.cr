@@ -37,6 +37,15 @@ describe "File" do
     str.should eq("Hello World\n" * 20)
   end
 
+  {% if flag?(:linux) %}
+    it "reads entire file from proc virtual filesystem" do
+      str1 = File.open "/proc/self/cmdline", &.gets_to_end
+      str2 = File.read "/proc/self/cmdline"
+      str2.empty?.should be_false
+      str2.should eq(str1)
+    end
+  {% end %}
+
   it "reads lines from file" do
     lines = File.read_lines "#{__DIR__}/data/test_file.txt"
     lines.size.should eq(20)
