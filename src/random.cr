@@ -56,6 +56,14 @@ module Random
   # The integers must be uniformly distributed between 0 and the maximal value for the chosen type.
   abstract def next_u : UInt
 
+  # Generates a slice filled with *n* random bytes.
+  def random_bytes(n : Int) : Bytes
+    n = n.to_i
+    size = (n + sizeof(typeof(next_u)) - 1) / sizeof(typeof(next_u)) # (n / sizeof(next_u)).ceil
+    result = Slice.new(size) { next_u }
+    result.to_unsafe.as(UInt8*).to_slice(n)
+  end
+
   # Generates a random `Bool`.
   #
   # ```
@@ -188,12 +196,7 @@ module Random
             end
 
           loop do
-            # Build up the number combining multiple outputs from the RNG.
-            result = {{utype}}.new(next_u)
-            (needed_parts - 1).times do
-              result <<= sizeof(typeof(next_u))*8
-              result |= {{utype}}.new(next_u)
-            end
+            result = rand_type({{utype}}, needed_parts)
 
             # For a uniform distribution we may need to throw away some numbers.
             if result < limit || limit == 0
@@ -222,16 +225,32 @@ module Random
       end
 
       # Generates a random integer in range `{{type}}::MIN..{{type}}::MAX`.
-      private def rand_type(type : {{type}}.class) : {{type}}
-        needed_parts = {{size/8}} / sizeof(typeof(next_u))
+      #
+      # However, if the *needed_parts* argument is specified, the underlying RNG will be called
+      # only this number of times.
+      private def rand_type(type : {{type}}.class,
+                            needed_parts = sizeof({{type}}) / sizeof(typeof(next_u)))
+        \{% if @type.methods.any? { |meth| meth.name == "random_bytes" } %}
+          # The RNG type overrode `random_bytes`, so we assume that using it is more optimal.
 
-        # Build up the number combining multiple outputs from the RNG.
-        result = {{utype}}.new(next_u)
-        (needed_parts - 1).times do
-          result <<= sizeof(typeof(next_u))*8
-          result |= {{utype}}.new(next_u)
-        end
-        {{type}}.new(result)
+          result = {{utype}}.new(0)
+          random_bytes(needed_parts).each do |x|
+            result <<= 8
+            result |= x
+          end
+
+          {{type}}.new(result)
+        \{% else %}
+          # Build up the number combining multiple outputs from the RNG.
+
+          result = {{utype}}.new(next_u)
+          (needed_parts - 1).times do
+            result <<= sizeof(typeof(next_u))*8
+            result |= {{utype}}.new(next_u)
+          end
+
+          {{type}}.new(result)
+        \{% end %}
       end
     {% end %}
   {% end %}
