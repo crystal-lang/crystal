@@ -125,6 +125,8 @@ Specify filename of output.
 Specify prelude to use. The default one initializes the garbage collector. You can also use --prelude=empty to use no preludes. This can be useful for checking code generation for a specific source code file.
 .It Fl -release
 Turn on optimizations for the generated code, which are disabled by default.
+.It Fl -error-trace
+Show full stack trace. Disabled by default, as the full trace usually makes error messages less readable and not always deliver relevant information.
 .It Fl s, -stats
 Print runtime statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
 .It Fl -single-module
@@ -153,6 +155,7 @@ Generate documentation from comments using a subset of markdown. The output is s
 .It Cm eval
 .Pp
 Evaluate code from arguments or, if no arguments are passed, from the standard input. Useful for experiments.
+It accepts the flags --stats, --release, and --help, as the build command does.
 .Pp
 .It
 .Cm play
