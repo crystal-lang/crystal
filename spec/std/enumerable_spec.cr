@@ -241,6 +241,10 @@ describe "Enumerable" do
     it "does example 3" do
       [[1, 2, 3], 4, 5].flat_map { |e| e }.should eq([1, 2, 3, 4, 5])
     end
+
+    it "does example 4" do
+      [{1 => 2}, {3 => 4}].flat_map { |e| e }.should eq([{1 => 2}, {3 => 4}])
+    end
   end
 
   describe "grep" do
