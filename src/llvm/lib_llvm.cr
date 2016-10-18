@@ -244,7 +244,6 @@ lib LibLLVM
   fun initialize_ipa = LLVMInitializeIPA(r : PassRegistryRef)
   fun initialize_code_gen = LLVMInitializeCodeGen(r : PassRegistryRef)
   fun initialize_target = LLVMInitializeTarget(r : PassRegistryRef)
-  fun add_target_data = LLVMAddTargetData(td : TargetDataRef, pm : PassManagerRef)
   fun get_next_target = LLVMGetNextTarget(t : TargetRef) : TargetRef
   fun get_default_target_triple = LLVMGetDefaultTargetTriple : UInt8*
   fun print_module_to_string = LLVMPrintModuleToString(mod : ModuleRef) : UInt8*
@@ -276,4 +275,8 @@ lib LibLLVM
   fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
   fun set_volatile = LLVMSetVolatile(value : ValueRef, volatile : UInt32)
   fun set_alignment = LLVMSetAlignment(value : ValueRef, bytes : UInt32)
+
+  {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
+    fun add_target_data = LLVMAddTargetData(td : TargetDataRef, pm : PassManagerRef)
+  {% end %}
 end

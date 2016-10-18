@@ -331,7 +331,9 @@ module Crystal
 
     protected def optimize(llvm_mod)
       fun_pass_manager = llvm_mod.new_function_pass_manager
-      fun_pass_manager.add_target_data target_machine.data_layout
+      {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
+        fun_pass_manager.add_target_data target_machine.data_layout
+      {% end %}
       pass_manager_builder.populate fun_pass_manager
       fun_pass_manager.run llvm_mod
       module_pass_manager.run llvm_mod
@@ -342,7 +344,9 @@ module Crystal
     private def module_pass_manager
       @module_pass_manager ||= begin
         mod_pass_manager = LLVM::ModulePassManager.new
-        mod_pass_manager.add_target_data target_machine.data_layout
+        {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
+          mod_pass_manager.add_target_data target_machine.data_layout
+        {% end %}
         pass_manager_builder.populate mod_pass_manager
         mod_pass_manager
       end
