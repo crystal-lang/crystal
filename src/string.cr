@@ -2466,7 +2466,9 @@ class String
       count += 1
 
       1.upto(match.size) do |i|
-        ary.push match[i]
+        if group = match[i]?
+          ary.push group
+        end
       end
 
       last_slice_offset = slice_offset

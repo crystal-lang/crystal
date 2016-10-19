@@ -716,6 +716,7 @@ describe "String" do
       assert { "a=".split(/\=/).should eq(["a", ""]) }
       assert { "=b".split(/\=/).should eq(["", "b"]) }
       assert { "=".split(/\=/, 2).should eq(["", ""]) }
+      assert { ",".split(/(?:(x)|(,))/).should eq(["", ",", ""]) }
 
       it "keeps groups" do
         s = "split on the word on okay?"
