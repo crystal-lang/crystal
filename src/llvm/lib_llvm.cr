@@ -296,4 +296,16 @@ lib LibLLVM
     fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
     fun set_module_data_layout = LLVMSetModuleDataLayout(mod : ModuleRef, data : TargetDataRef)
   {% end %}
+
+  {% if LibLLVM::IS_35 %}
+    DEBUG_METADATA_VERSION = 1
+  {% elsif LibLLVM::IS_36 %}
+    DEBUG_METADATA_VERSION = 2
+  {% else %}
+    DEBUG_METADATA_VERSION = 3
+  {% end %}
+
+  enum ModuleFlag : Int32
+    Warning = 2
+  end
 end

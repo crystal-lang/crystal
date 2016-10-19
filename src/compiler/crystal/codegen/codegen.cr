@@ -293,12 +293,9 @@ module Crystal
       end
 
       @modules.each do |name, mod|
-        if @debug
-          add_compile_unit_metadata(mod, name == "" ? "main" : name)
-        end
+        push_debug_info_metadata(mod) if @debug
 
         mod.dump if dump_all_llvm || name =~ dump_llvm_regex
-        # puts mod
 
         # Always run verifications so we can catch bugs earlier and more often.
         # We can probably remove this, or only enable this when compiling in
