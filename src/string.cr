@@ -2205,11 +2205,11 @@ class String
   # If it is not found, returns two empty strings and str.
   #
   # ```
-  # "hello".rpartition("l") # => {"he", "l", "lo"}
-  # "hello".rpartition("x") # => {"hello", "", ""}
+  # "hello".partition("l") # => {"he", "l", "lo"}
+  # "hello".partition("x") # => {"hello", "", ""}
   # ```
   def partition(search : (Char | String)) : Tuple(String, String, String)
-    pre, mid, post = {"", "", ""}
+    pre = mid = post = ""
     search_size = search.is_a?(Char) ? 1 : search.size
     case pos = self.index(search)
     when .nil?
@@ -2227,7 +2227,7 @@ class String
 
   # ditto
   def partition(search : Regex) : Tuple(String, String, String)
-    pre, mid, post = {"", "", ""}
+    pre = mid = post = ""
     case m = self.match(search)
     when .nil?
       pre = self
