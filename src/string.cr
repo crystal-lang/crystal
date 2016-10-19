@@ -2202,7 +2202,7 @@ class String
 
   # Searches sep or pattern (regexp) in the string,
   # and returns the part before it, the match, and the part after it.
-  # If it is not found, returns two empty strings and str.
+  # If it is not found, returns str followed by two empty strings.
   #
   # ```
   # "hello".partition("l") # => {"he", "l", "lo"}
