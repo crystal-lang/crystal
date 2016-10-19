@@ -8,8 +8,14 @@ class LLVM::TargetMachine
   end
 
   def data_layout
-    layout = LibLLVM.get_target_machine_data(self)
-    layout ? TargetData.new(layout) : raise "Missing layout for #{self}"
+    @layout ||= begin
+      layout = {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+                 LibLLVM.get_target_machine_data(self)
+               {% else %}
+                 LibLLVM.create_target_data_layout(self)
+               {% end %}
+      layout ? TargetData.new(layout) : raise "Missing layout for #{self}"
+    end
   end
 
   def triple

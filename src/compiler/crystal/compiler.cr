@@ -247,7 +247,7 @@ module Crystal
 
       # First write bitcodes: it breaks if we paralellize it
       unless multithreaded
-        Crystal.timing("Codegen (cyrstal)", @stats) do
+        Crystal.timing("Codegen (crystal)", @stats) do
           units.each &.write_bitcode
         end
       end

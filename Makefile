@@ -6,7 +6,13 @@ SPEC_SOURCES := $(shell find spec -name '*.cr')
 FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(threads),--threads $(threads) )$(if $(debug),-d )
 EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
 SHELL = bash
-LLVM_CONFIG_FINDER := command -v llvm-config-3.8 || command -v llvm-config38 || (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || command -v llvm-config-3.6 || command -v llvm-config36 || command -v llvm-config-3.5 || command -v llvm-config35 || command -v llvm-config
+LLVM_CONFIG_FINDER := \
+	[ -n "$(LLVM_CONFIG)" ] && command -v "$(LLVM_CONFIG)" || \
+	command -v llvm-config-3.9 || command -v llvm-config39 || (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
+	command -v llvm-config-3.8 || command -v llvm-config38 || (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
+	command -v llvm-config-3.6 || command -v llvm-config36 || \
+	command -v llvm-config-3.5 || command -v llvm-config35 || \
+	command -v llvm-config
 LLVM_CONFIG := $(shell $(LLVM_CONFIG_FINDER))
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
@@ -16,7 +22,9 @@ LIB_CRYSTAL_TARGET = src/ext/libcrystal.a
 CFLAGS += -fPIC
 
 ifeq (${LLVM_CONFIG},)
-$(error Could not locate llvm-config, make sure it is installed and in your PATH)
+$(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
+else
+  $(info Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)])
 endif
 
 .PHONY: all
