@@ -1,10 +1,12 @@
-FROM crystallang/crystal
+FROM ubuntu:14.04.4
+MAINTAINER crystal-devs <crystal-lang@googlegroups.com>
 
-RUN apt-get update && \
-    apt-get install -y build-essential curl libevent-dev git && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-RUN curl http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-linux-x86_64.tar.gz | tar xz -C /opt
+RUN apt-get update && apt-get update && apt-get install -y apt-transport-https curl build-essential \
+pkg-config libssl-dev llvm-3.6 libedit-dev libgmp-dev \
+libxml2-dev libyaml-dev libreadline-dev git-core libevent-dev && \
+curl https://dist.crystal-lang.org/apt/setup.sh | bash && \
+apt-get update && apt-get install -y crystal && \
+apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ADD . /opt/crystal-head
 
