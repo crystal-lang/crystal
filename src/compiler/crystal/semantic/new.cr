@@ -192,7 +192,7 @@ module Crystal
       end
 
       assign = Assign.new(obj.clone, alloc)
-      init = Call.new(obj.clone, "initialize", new_vars, named_args: named_args)
+      init = Call.new(obj.clone, "initialize", new_vars, named_args: named_args).at(self)
 
       # If the initialize yields, call it with a block
       # that yields those arguments.

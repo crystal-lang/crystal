@@ -81,12 +81,12 @@ module Crystal
         when NumberLiteral, Var, InstanceVar
           transform_many node.args
           left = obj
-          right = Call.new(middle.clone, node.name, node.args)
+          right = Call.new(middle.clone, node.name, node.args).at(middle)
         else
           temp_var = program.new_temp_var
           temp_assign = Assign.new(temp_var.clone, middle)
-          left = Call.new(obj.obj, obj.name, temp_assign)
-          right = Call.new(temp_var.clone, node.name, node.args)
+          left = Call.new(obj.obj, obj.name, temp_assign).at(obj.obj)
+          right = Call.new(temp_var.clone, node.name, node.args).at(node)
         end
         node = And.new(left, right)
         node = node.transform self

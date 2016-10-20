@@ -314,13 +314,13 @@ module Crystal
       end
 
       if capacity <= 64
-        call = Call.new(Path.global(["String", "Builder"]), "new")
+        call = Call.new(Path.global(["String", "Builder"]), "new").at(node)
       else
-        call = Call.new(Path.global(["String", "Builder"]), "new", NumberLiteral.new(capacity))
+        call = Call.new(Path.global(["String", "Builder"]), "new", NumberLiteral.new(capacity)).at(node)
       end
 
       node.expressions.each do |piece|
-        call = Call.new(call, "<<", piece)
+        call = Call.new(call, "<<", piece).at(node)
       end
       Call.new(call, "to_s").at(node)
     end
@@ -638,7 +638,7 @@ module Crystal
         end
       end
 
-      Call.new(cond, "===", right_side)
+      Call.new(cond, "===", right_side).at(obj)
     end
 
     macro check_implicit_obj(type)

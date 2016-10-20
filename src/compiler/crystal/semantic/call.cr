@@ -492,7 +492,7 @@ class Crystal::Call
         arg_type.tuple_types.each_with_index do |tuple_type, index|
           num = NumberLiteral.new(index)
           num.type = program.int32
-          tuple_indexer = Call.new(arg.exp, "[]", num)
+          tuple_indexer = Call.new(arg.exp, "[]", num).at(arg)
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
           new_args << tuple_indexer
@@ -508,7 +508,7 @@ class Crystal::Call
           sym = SymbolLiteral.new(entry.name)
           sym.type = program.symbol
           program.symbols.add sym.value
-          tuple_indexer = Call.new(arg.exp, "[]", sym)
+          tuple_indexer = Call.new(arg.exp, "[]", sym).at(arg)
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
           new_args << tuple_indexer
@@ -531,7 +531,7 @@ class Crystal::Call
         vars << arg
         args << arg
       end
-      block = Block.new(vars, Call.new(block_arg.clone, "call", args))
+      block = Block.new(vars, Call.new(block_arg.clone, "call", args).at(block_arg))
       block.vars = self.before_vars
       self.block = block
     else

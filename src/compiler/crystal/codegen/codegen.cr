@@ -1177,7 +1177,7 @@ module Crystal
       end
 
       ex = Call.new(Path.global("TypeCastError"), "new", StringInterpolation.new(pieces))
-      call = Call.global("raise", ex)
+      call = Call.global("raise", ex).at(node)
       call = @program.normalize(call)
 
       meta_vars = MetaVars.new
