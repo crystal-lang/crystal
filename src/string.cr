@@ -2200,6 +2200,45 @@ class String
     match_result.try &.begin(0)
   end
 
+  # Searches sep or pattern (regexp) in the string,
+  # and returns the part before it, the match, and the part after it.
+  # If it is not found, returns str followed by two empty strings.
+  #
+  # ```
+  # "hello".partition("l") # => {"he", "l", "lo"}
+  # "hello".partition("x") # => {"hello", "", ""}
+  # ```
+  def partition(search : (Char | String)) : Tuple(String, String, String)
+    pre = mid = post = ""
+    search_size = search.is_a?(Char) ? 1 : search.size
+    case pos = self.index(search)
+    when .nil?
+      pre = self
+    when 0
+      mid = search.to_s
+      post = self[(pos + search_size)..-1]
+    else
+      pre = self[0..(pos - 1)]
+      mid = search.to_s
+      post = self[(pos + search_size)..-1]
+    end
+    {pre, mid, post}
+  end
+
+  # ditto
+  def partition(search : Regex) : Tuple(String, String, String)
+    pre = mid = post = ""
+    case m = self.match(search)
+    when .nil?
+      pre = self
+    else
+      pre = m.pre_match
+      mid = m[0]
+      post = m.post_match
+    end
+    {pre, mid, post}
+  end
+
   def byte_index(byte : Int, offset = 0)
     offset.upto(bytesize - 1) do |i|
       if to_unsafe[i] == byte
