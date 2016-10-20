@@ -815,6 +815,12 @@ module Crystal
     end
   end
 
+  class VirtualMetaclassType
+    def restrict(other : Metaclass, context)
+      instance_type.restrict(other.name, context).try &.metaclass
+    end
+  end
+
   class NonGenericModuleType
     def restrict(other, context)
       super || including_types.try(&.restrict(other, context))
