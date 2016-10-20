@@ -47,6 +47,10 @@ module HTTP
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get("http://www.example.com"))
+    typeof(Client.post("http://www.example.com", body: MemoryIO.new))
+    typeof(Client.new("host").post("/", body: MemoryIO.new))
+    typeof(Client.post("http://www.example.com", body: Bytes[65]))
+    typeof(Client.new("host").post("/", body: Bytes[65]))
 
     describe "from URI" do
       it "has sane defaults" do

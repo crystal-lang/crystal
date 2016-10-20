@@ -2,22 +2,27 @@ require "./common"
 require "uri"
 require "http/params"
 
+# An HTTP request.
+#
+# It serves both to perform requests by an `HTTP::Client` and to
+# represent requests received by an `HTTP::Server`.
+#
+# A request always holds an IO as a body.
+# When creating a request with a `String` or `Bytes` its body
+# will be a `MemoryIO` wrapping these, and the Content-Length
+# header will be set appropriately.
 class HTTP::Request
-  getter method : String
-  getter headers : Headers
-  getter body : String?
-  getter version : String
+  property method : String
+  property headers : Headers
+  getter body : IO?
+  property version : String
   @cookies : Cookies?
   @query_params : Params?
   @uri : URI?
 
-  def initialize(@method : String, @resource : String, headers : Headers? = nil, @body = nil, @version = "HTTP/1.1")
+  def initialize(@method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, @version = "HTTP/1.1")
     @headers = headers.try(&.dup) || Headers.new
-    if body = @body
-      @headers["Content-Length"] = body.bytesize.to_s
-    elsif @method == "POST" || @method == "PUT"
-      @headers["Content-Length"] = "0"
-    end
+    self.body = body
   end
 
   # Returns a convenience wrapper around querying and setting cookie related
@@ -45,11 +50,36 @@ class HTTP::Request
     @method == "HEAD"
   end
 
+  def content_length=(length : Int)
+    headers["Content-Length"] = length.to_s
+  end
+
+  def content_length
+    HTTP.content_length(headers)
+  end
+
+  def body=(body : String)
+    @body = MemoryIO.new(body)
+    self.content_length = body.bytesize
+  end
+
+  def body=(body : Bytes)
+    @body = MemoryIO.new(body)
+    self.content_length = body.size
+  end
+
+  def body=(@body : IO)
+  end
+
+  def body=(@body : Nil)
+    @headers["Content-Length"] = "0" if @method == "POST" || @method == "PUT"
+  end
+
   def to_io(io)
     io << @method << " " << resource << " " << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
-    HTTP.serialize_headers_and_body(io, headers, @body, nil, @version)
+    HTTP.serialize_headers_and_body(io, headers, nil, @body, @version)
   end
 
   # :nodoc:
@@ -68,7 +98,7 @@ class HTTP::Request
 
     method, resource, http_version = parts
     HTTP.parse_headers_and_body(io) do |headers, body|
-      return new method, resource, headers, body.try &.gets_to_end, http_version
+      return new method, resource, headers, body, http_version
     end
 
     # Unexpected end of http request

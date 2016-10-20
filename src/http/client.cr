@@ -53,6 +53,9 @@
 # of the returned IO (or used for creating a String for the body). Invalid bytes in the given encoding
 # are silently ignored when reading text content.
 class HTTP::Client
+  # The set of possible valid body types
+  alias BodyType = String | Bytes | IO | Nil
+
   # Returns the target host.
   #
   # ```
@@ -300,7 +303,7 @@ class HTTP::Client
     # response = client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
-    def {{method.id}}(path, headers : HTTP::Headers? = nil, body : String? = nil) : HTTP::Client::Response
+    def {{method.id}}(path, headers : HTTP::Headers? = nil, body : BodyType = nil) : HTTP::Client::Response
       exec {{method.upcase}}, path, headers, body
     end
 
@@ -313,7 +316,7 @@ class HTTP::Client
     #   response.body_io.gets #=> "..."
     # end
     # ```
-    def {{method.id}}(path, headers : HTTP::Headers? = nil, body : String? = nil)
+    def {{method.id}}(path, headers : HTTP::Headers? = nil, body : BodyType = nil)
       exec {{method.upcase}}, path, headers, body do |response|
         yield response
       end
@@ -326,7 +329,7 @@ class HTTP::Client
     # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil) : HTTP::Client::Response
+    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil) : HTTP::Client::Response
       exec {{method.upcase}}, url, headers, body, tls
     end
 
@@ -338,7 +341,7 @@ class HTTP::Client
     #   response.body_io.gets #=> "..."
     # end
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil)
+    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil)
       exec {{method.upcase}}, url, headers, body, tls do |response|
         yield response
       end
@@ -352,7 +355,7 @@ class HTTP::Client
   # client = HTTP::Client.new "www.example.com"
   # response = client.post_form "/", "foo=bar"
   # ```
-  def post_form(path, form : String, headers : HTTP::Headers? = nil) : HTTP::Client::Response
+  def post_form(path, form : String | IO, headers : HTTP::Headers? = nil) : HTTP::Client::Response
     request = new_request("POST", path, headers, form)
     request.headers["Content-type"] = "application/x-www-form-urlencoded"
     exec request
@@ -368,7 +371,7 @@ class HTTP::Client
   #   response.body_io.gets
   # end
   # ```
-  def post_form(path, form : String, headers : HTTP::Headers? = nil)
+  def post_form(path, form : String | IO, headers : HTTP::Headers? = nil)
     request = new_request("POST", path, headers, form)
     request.headers["Content-type"] = "application/x-www-form-urlencoded"
     exec(request) do |response|
@@ -411,7 +414,7 @@ class HTTP::Client
   # ```
   # response = HTTP::Client.post_form "http://www.example.com", "foo=bar"
   # ```
-  def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil, tls = nil) : HTTP::Client::Response
+  def self.post_form(url, form : String | IO | Hash, headers : HTTP::Headers? = nil, tls = nil) : HTTP::Client::Response
     exec(url, tls) do |client, path|
       client.post_form(path, form, headers)
     end
@@ -426,7 +429,7 @@ class HTTP::Client
   #   response.body_io.gets
   # end
   # ```
-  def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil, tls = nil)
+  def self.post_form(url, form : String | IO | Hash, headers : HTTP::Headers? = nil, tls = nil)
     exec(url, tls) do |client, path|
       client.post_form(path, form, headers) do |response|
         yield response
@@ -506,7 +509,7 @@ class HTTP::Client
   # response = client.exec "GET", "/"
   # response.body # => "..."
   # ```
-  def exec(method : String, path, headers : HTTP::Headers? = nil, body : String? = nil) : HTTP::Client::Response
+  def exec(method : String, path, headers : HTTP::Headers? = nil, body : BodyType = nil) : HTTP::Client::Response
     exec new_request method, path, headers, body
   end
 
@@ -519,7 +522,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def exec(method : String, path, headers : HTTP::Headers? = nil, body : String? = nil)
+  def exec(method : String, path, headers : HTTP::Headers? = nil, body : BodyType = nil)
     exec(new_request(method, path, headers, body)) do |response|
       yield response
     end
@@ -532,7 +535,7 @@ class HTTP::Client
   # response = HTTP::Client.exec "GET", "http://www.example.com"
   # response.body # => "..."
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil) : HTTP::Client::Response
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil) : HTTP::Client::Response
     exec(url, tls) do |client, path|
       client.exec method, path, headers, body
     end
@@ -546,7 +549,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil)
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil)
     exec(url, tls) do |client, path|
       client.exec(method, path, headers, body) do |response|
         yield response
@@ -560,7 +563,7 @@ class HTTP::Client
     @socket = nil
   end
 
-  private def new_request(method, path, headers, body)
+  private def new_request(method, path, headers, body : BodyType)
     HTTP::Request.new(method, path, headers, body).tap do |request|
       request.headers["Host"] ||= host_header
     end

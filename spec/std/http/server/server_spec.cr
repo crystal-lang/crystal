@@ -245,6 +245,44 @@ module HTTP
       ))
     end
 
+    it "skips body between requests" do
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.response.content_type = "text/plain"
+        context.response.puts "Hello world\r"
+      end
+
+      input = MemoryIO.new(requestize(<<-REQUEST
+        POST / HTTP/1.1
+        Content-Length: 7
+
+        hello
+        POST / HTTP/1.1
+        Content-Length: 7
+
+        hello
+        REQUEST
+      ))
+      output = MemoryIO.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(requestize(<<-RESPONSE
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Type: text/plain
+        Content-Length: 13
+
+        Hello world
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Type: text/plain
+        Content-Length: 13
+
+        Hello world
+
+        RESPONSE
+      ))
+    end
+
     it "handles Errno" do
       processor = HTTP::Server::RequestProcessor.new { }
       input = RaiseErrno.new(Errno::ECONNRESET)
