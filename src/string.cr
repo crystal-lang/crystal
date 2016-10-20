@@ -2239,6 +2239,64 @@ class String
     {pre, mid, post}
   end
 
+  # Searches sep or pattern (regexp) in the string from the end of the string,
+  # and returns the part before it, the match, and the part after it.
+  # If it is not found, returns two empty strings and str.
+  #
+  # ```
+  # "hello".rpartition("l")  # => {"hel", "l", "o"}
+  # "hello".rpartition("x")  # => {"", "", "hello"}
+  # "hello".rpartition(/.l/) # => {"he", "ll", "o"}
+  # ```
+  def rpartition(search : (Char | String)) : Tuple(String, String, String)
+    pos = self.rindex(search)
+    search_size = search.is_a?(Char) ? 1 : search.size
+
+    pre = mid = post = ""
+
+    case pos
+    when .nil?
+      post = self
+    when 0
+      mid = search.to_s
+      post = self[(pos + search_size)..-1]
+    else
+      pre = self[0..(pos - 1)]
+      mid = search.to_s
+      post = self[(pos + search_size)..-1]
+    end
+    {pre, mid, post}
+  end
+
+  # ditto
+  def rpartition(search : Regex) : Tuple(String, String, String)
+    match_result = nil
+    pos = self.size - 1
+
+    while pos >= 0
+      self[pos..-1].scan(search) do |m|
+        match_result = m
+      end
+      break unless match_result.nil?
+      pos -= 1
+    end
+
+    pre = mid = post = ""
+
+    case
+    when match_result.nil?
+      post = self
+    when pos == 0
+      mid = match_result[0]
+      post = self[match_result[0].size..-1]
+    else
+      pre = self[0..pos - 1]
+      mid = match_result.not_nil![0]
+      post = self[pos + match_result.not_nil![0].size..-1]
+    end
+    {pre, mid, post}
+  end
+
   def byte_index(byte : Int, offset = 0)
     offset.upto(bytesize - 1) do |i|
       if to_unsafe[i] == byte
