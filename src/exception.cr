@@ -44,7 +44,12 @@ struct CallStack
     callstack = [] of Void*
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       bt = data.as(typeof(callstack))
-      ip = Pointer(Void).new(LibUnwind.get_ip(context))
+
+      ip = {% if flag?(:arm) %}
+             Pointer(Void).new(__crystal_unwind_get_ip(context))
+           {% else %}
+             Pointer(Void).new(LibUnwind.get_ip(context))
+           {% end %}
       bt << ip
 
       {% if flag?(:i686) %}
@@ -78,7 +83,13 @@ struct CallStack
   def self.print_backtrace
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       last_frame = data.as(RepeatedFrame*)
-      ip = Pointer(Void).new(LibUnwind.get_ip(context))
+
+      ip = {% if flag?(:arm) %}
+             Pointer(Void).new(__crystal_unwind_get_ip(context))
+           {% else %}
+             Pointer(Void).new(LibUnwind.get_ip(context))
+           {% end %}
+
       if last_frame.value.ip == ip
         last_frame.value.incr
       else
