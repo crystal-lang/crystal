@@ -627,6 +627,62 @@ describe "String" do
     end
   end
 
+  describe "partition" do
+    describe "by char" do
+      "hello".partition('h').should eq ({"", "h", "ello"})
+      "hello".partition('o').should eq ({"hell", "o", ""})
+      "hello".partition('l').should eq ({"he", "l", "lo"})
+      "hello".partition('x').should eq ({"hello", "", ""})
+    end
+
+    describe "by string" do
+      "hello".partition("h").should eq ({"", "h", "ello"})
+      "hello".partition("o").should eq ({"hell", "o", ""})
+      "hello".partition("l").should eq ({"he", "l", "lo"})
+      "hello".partition("ll").should eq ({"he", "ll", "o"})
+      "hello".partition("x").should eq ({"hello", "", ""})
+    end
+
+    describe "by regex" do
+      "hello".partition(/h/).should eq ({"", "h", "ello"})
+      "hello".partition(/o/).should eq ({"hell", "o", ""})
+      "hello".partition(/l/).should eq ({"he", "l", "lo"})
+      "hello".partition(/ll/).should eq ({"he", "ll", "o"})
+      "hello".partition(/.l/).should eq ({"h", "el", "lo"})
+      "hello".partition(/.h/).should eq ({"hello", "", ""})
+      "hello".partition(/h./).should eq ({"", "he", "llo"})
+      "hello".partition(/o./).should eq ({"hello", "", ""})
+      "hello".partition(/.o/).should eq ({"hel", "lo", ""})
+      "hello".partition(/x/).should eq ({"hello", "", ""})
+    end
+  end
+
+  describe "rpartition" do
+    describe "by char" do
+      "hello".rpartition('l').should eq ({"hel", "l", "o"})
+      "hello".rpartition('o').should eq ({"hell", "o", ""})
+      "hello".rpartition('h').should eq ({"", "h", "ello"})
+    end
+
+    describe "by string" do
+      "hello".rpartition("l").should eq ({"hel", "l", "o"})
+      "hello".rpartition("x").should eq ({"", "", "hello"})
+      "hello".rpartition("o").should eq ({"hell", "o", ""})
+      "hello".rpartition("h").should eq ({"", "h", "ello"})
+      "hello".rpartition("ll").should eq ({"he", "ll", "o"})
+      "hello".rpartition("lo").should eq ({"hel", "lo", ""})
+      "hello".rpartition("he").should eq ({"", "he", "llo"})
+    end
+
+    describe "by regex" do
+      "hello".rpartition(/.l/).should eq ({"he", "ll", "o"})
+      "hello".rpartition(/ll/).should eq ({"he", "ll", "o"})
+      "hello".rpartition(/.o/).should eq ({"hel", "lo", ""})
+      "hello".rpartition(/.e/).should eq ({"", "he", "llo"})
+      "hello".rpartition(/l./).should eq ({"hel", "lo", ""})
+    end
+  end
+
   describe "byte_index" do
     assert { "foo".byte_index('o'.ord).should eq(1) }
     assert { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }

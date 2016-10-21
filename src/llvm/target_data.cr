@@ -25,4 +25,8 @@ struct LLVM::TargetData
   def offset_of_element(struct_type, element)
     LibLLVM.offset_of_element(self, struct_type, element)
   end
+
+  def to_data_layout_string
+    String.new(LibLLVM.copy_string_rep_of_target_data(self))
+  end
 end

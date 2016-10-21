@@ -1261,7 +1261,8 @@ module Crystal
       next_token_skip_space
 
       if rescues || a_ensure
-        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at_end(end_location)
+        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at(exp).at_end(end_location)
+        ex.at(exp.location || rescues.try(&.first?).try(&.location) || a_ensure.try(&.location))
         ex.implicit = true if implicit
         {ex, end_location}
       else
@@ -1795,7 +1796,7 @@ module Crystal
 
       case delimiter_state.kind
       when :command
-        result = Call.new(nil, "`", result)
+        result = Call.new(nil, "`", result).at(location)
       when :regex
         if result.is_a?(StringLiteral) && (regex_error = Regex.error?(result.value))
           raise "invalid regex: #{regex_error}", location
@@ -3620,7 +3621,7 @@ module Crystal
 
       node =
         if block || block_arg || global
-          Call.new nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_column_number, has_parentheses
+          Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_column_number, has_parentheses)
         else
           if args
             if (!force_call && is_var) && args.size == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
@@ -3639,17 +3640,18 @@ module Crystal
               if @block_arg_name && !@uses_block_arg && name == @block_arg_name
                 @uses_block_arg = true
               end
-              Var.new name
+              Var.new(name)
             else
               if !force_call && !block_arg && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
                 raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 
-              Call.new nil, name, [] of ASTNode, nil, block_arg, named_args, global, name_column_number, has_parentheses
+              Call.new(nil, name, [] of ASTNode, nil, block_arg, named_args, global, name_column_number, has_parentheses)
             end
           end
         end
       node.doc = doc
+      node.location = block.try(&.location) || location
       node.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
       node
     end

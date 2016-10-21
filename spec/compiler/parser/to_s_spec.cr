@@ -86,4 +86,5 @@ describe "ASTNode#to_s" do
   expect_to_s "macro foo\n\\{{ @type }}\nend"
   expect_to_s "macro foo\n{% @type %}\nend"
   expect_to_s "macro foo\n\\{%@type %}\nend"
+  expect_to_s "enum A : B\nend"
 end

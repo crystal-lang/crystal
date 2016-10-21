@@ -2,7 +2,17 @@ require "./enums"
 
 {% begin %}
 lib LibLLVM
-  LLVM_CONFIG = {{`command -v llvm-config-3.8 || command -v llvm-config38 || (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || command -v llvm-config-3.6 || command -v llvm-config36 || command -v llvm-config-3.5 || command -v llvm-config35 || command -v llvm-config `.chomp.stringify}}
+  LLVM_CONFIG = {{
+                  `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
+                   command -v llvm-config-3.9 || command -v llvm-config39 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
+                   command -v llvm-config-3.8 || command -v llvm-config38 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
+                   command -v llvm-config-3.6 || command -v llvm-config36 || \
+                   command -v llvm-config-3.5 || command -v llvm-config35 || \
+                   command -v llvm-config
+                  `.chomp.stringify
+                }}
 end
 {% end %}
 
@@ -158,7 +168,6 @@ lib LibLLVM
   fun get_return_type = LLVMGetReturnType(function_type : TypeRef) : TypeRef
   fun get_target_name = LLVMGetTargetName(target : TargetRef) : UInt8*
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : UInt8*
-  fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
   fun get_target_machine_triple = LLVMGetTargetMachineTriple(t : TargetMachineRef) : UInt8*
   fun get_target_from_triple = LLVMGetTargetFromTriple(triple : UInt8*, target : TargetRef*, error_message : UInt8**) : Int32
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : LLVM::Type::Kind
@@ -202,7 +211,6 @@ lib LibLLVM
   fun run_function_pass_manager = LLVMRunFunctionPassManager(fpm : PassManagerRef, f : ValueRef) : Int32
   fun finalize_function_pass_manager = LLVMFinalizeFunctionPassManager(fpm : PassManagerRef) : Int32
   fun set_cleanup = LLVMSetCleanup(lpad : ValueRef, val : Int32)
-  fun set_data_layout = LLVMSetDataLayout(mod : ModuleRef, data : UInt8*)
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun is_global_constant = LLVMIsGlobalConstant(global : ValueRef) : Int32
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
@@ -244,7 +252,6 @@ lib LibLLVM
   fun initialize_ipa = LLVMInitializeIPA(r : PassRegistryRef)
   fun initialize_code_gen = LLVMInitializeCodeGen(r : PassRegistryRef)
   fun initialize_target = LLVMInitializeTarget(r : PassRegistryRef)
-  fun add_target_data = LLVMAddTargetData(td : TargetDataRef, pm : PassManagerRef)
   fun get_next_target = LLVMGetNextTarget(t : TargetRef) : TargetRef
   fun get_default_target_triple = LLVMGetDefaultTargetTriple : UInt8*
   fun print_module_to_string = LLVMPrintModuleToString(mod : ModuleRef) : UInt8*
@@ -276,4 +283,29 @@ lib LibLLVM
   fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
   fun set_volatile = LLVMSetVolatile(value : ValueRef, volatile : UInt32)
   fun set_alignment = LLVMSetAlignment(value : ValueRef, bytes : UInt32)
+
+  {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
+    fun add_target_data = LLVMAddTargetData(td : TargetDataRef, pm : PassManagerRef)
+  {% end %}
+
+  {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+    fun copy_string_rep_of_target_data = LLVMCopyStringRepOfTargetData(data : TargetDataRef) : UInt8*
+    fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
+    fun set_data_layout = LLVMSetDataLayout(mod : ModuleRef, data : UInt8*)
+  {% else %}
+    fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
+    fun set_module_data_layout = LLVMSetModuleDataLayout(mod : ModuleRef, data : TargetDataRef)
+  {% end %}
+
+  {% if LibLLVM::IS_35 %}
+    DEBUG_METADATA_VERSION = 1
+  {% elsif LibLLVM::IS_36 %}
+    DEBUG_METADATA_VERSION = 2
+  {% else %}
+    DEBUG_METADATA_VERSION = 3
+  {% end %}
+
+  enum ModuleFlag : Int32
+    Warning = 2
+  end
 end

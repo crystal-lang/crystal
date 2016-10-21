@@ -54,6 +54,10 @@ class HTTP::Server::RequestProcessor
         output.flush
 
         break unless request.keep_alive?
+
+        # Skip request body in case the handler
+        # didn't read it all, for the next request
+        request.body.try &.close
       end
     rescue ex : Errno
       # IO-related error, nothing to do
