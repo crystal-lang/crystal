@@ -206,7 +206,7 @@ module Crystal
       exps << assign
       exps << init
       exps << If.new(RespondsTo.new(obj.clone, "finalize"),
-        Call.new(Path.global("GC"), "add_finalizer", obj.clone))
+        Call.new(Path.global("GC"), "add_finalizer", obj.clone).at(self))
       exps << obj
 
       # Forward block argument if any
@@ -219,6 +219,8 @@ module Crystal
     end
 
     def self.argless_new(instance_type)
+      loc = instance_type.locations.try &.first?
+
       # This creates:
       #
       #    def new
@@ -227,16 +229,16 @@ module Crystal
       #      x
       #    end
       var = Var.new("x")
-      alloc = Call.new(nil, "allocate")
+      alloc = Call.new(nil, "allocate").at(loc)
       assign = Assign.new(var, alloc)
 
+      call = Call.new(Path.global("GC"), "add_finalizer", var.clone).at(loc)
       exps = Array(ASTNode).new(3)
       exps << assign
-      exps << If.new(RespondsTo.new(var.clone, "finalize"),
-        Call.new(Path.global("GC"), "add_finalizer", var.clone))
+      exps << If.new(RespondsTo.new(var.clone, "finalize"), call)
       exps << var.clone
 
-      a_def = Def.new("new", body: exps)
+      a_def = Def.new("new", body: exps).at(loc)
       a_def.new = true
       a_def
     end

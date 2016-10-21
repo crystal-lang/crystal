@@ -1261,7 +1261,8 @@ module Crystal
       next_token_skip_space
 
       if rescues || a_ensure
-        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at_end(end_location)
+        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at(exp).at_end(end_location)
+        ex.at(exp.location || rescues.try(&.first?).try(&.location) || a_ensure.try(&.location))
         ex.implicit = true if implicit
         {ex, end_location}
       else
