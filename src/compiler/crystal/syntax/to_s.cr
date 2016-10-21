@@ -1170,7 +1170,7 @@ module Crystal
       @str << " "
       @str << node.name.to_s
       if base_type = node.base_type
-        @str << " < "
+        @str << " : "
         base_type.accept self
       end
       newline
