@@ -562,7 +562,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def define_enum_question_method(enum_type, member, is_flags)
     method_name = is_flags ? "includes?" : "=="
-    a_def = Def.new("#{member.name.underscore}?", body: Call.new(Var.new("self").at(member), method_name, Path.new(member.name).at(member))).at(member)
+    body = Call.new(Var.new("self").at(member), method_name, Path.new(member.name).at(member)).at(member)
+    a_def = Def.new("#{member.name.underscore}?", body: body).at(member)
     enum_type.add_def a_def
   end
 

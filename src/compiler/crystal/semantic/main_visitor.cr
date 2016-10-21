@@ -1056,7 +1056,7 @@ module Crystal
         obj.accept self
       end
 
-      call = Call.new(obj, node.name)
+      call = Call.new(obj, node.name).at(obj)
       prepare_call(call)
 
       # Check if it's ->LibFoo.foo, so we deduce the type from that method

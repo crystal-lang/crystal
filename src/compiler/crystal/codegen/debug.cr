@@ -6,16 +6,24 @@ module Crystal
 
     def di_builder(llvm_module = @llvm_mod || @main_mod)
       di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
-      di_builders[llvm_module] ||= LLVM::DIBuilder.new(llvm_module)
+      di_builders[llvm_module] ||= LLVM::DIBuilder.new(llvm_module).tap do |di_builder|
+        file, dir = file_and_dir(llvm_module.name == "" ? "main" : llvm_module.name)
+        di_builder.create_compile_unit(CRYSTAL_LANG_DEBUG_IDENTIFIER, file, dir, "Crystal", 0, "", 0_u32)
+      end
     end
 
-    def add_compile_unit_metadata(mod, file)
-      file, dir = file_and_dir(file)
-      di_builder(mod).create_compile_unit(CRYSTAL_LANG_DEBUG_IDENTIFIER, file, dir, "Crystal", 0, "", 0_u32)
+    def push_debug_info_metadata(mod)
       di_builder(mod).finalize
 
-      LibLLVM.add_named_metadata_operand mod, "llvm.module.flags", metadata([2, "Dwarf Version", 2])
-      LibLLVM.add_named_metadata_operand mod, "llvm.module.flags", metadata([2, "Debug Info Version", 2])
+      # DebugInfo generation in LLVM by default uses a higher version of dwarf
+      # than OS X currently understands. Android has the same problem.
+      if @program.has_flag?("osx") || @program.has_flag?("android")
+        LibLLVM.add_named_metadata_operand(mod, "llvm.module.flags",
+          metadata([LibLLVM::ModuleFlag::Warning.value, "Dwarf Version", 2]))
+      end
+
+      LibLLVM.add_named_metadata_operand(mod, "llvm.module.flags",
+        metadata([LibLLVM::ModuleFlag::Warning.value, "Debug Info Version", LibLLVM::DEBUG_METADATA_VERSION]))
     end
 
     def fun_metadatas

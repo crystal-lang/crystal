@@ -15,9 +15,6 @@ module Crystal
   PERSONALITY_NAME   = "__crystal_personality"
   GET_EXCEPTION_NAME = "__crystal_get_exception"
 
-  DataLayout32 = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
-  DataLayout64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
-
   class Program
     def run(code, filename = nil)
       parser = Parser.new(code)
@@ -227,7 +224,7 @@ module Crystal
     end
 
     def data_layout
-      @program.has_flag?("x86_64") ? DataLayout64 : DataLayout32
+      @program.target_machine.data_layout
     end
 
     class CodegenWellKnownFunctions < Visitor
@@ -296,12 +293,9 @@ module Crystal
       end
 
       @modules.each do |name, mod|
-        if @debug
-          add_compile_unit_metadata(mod, name == "" ? "main" : name)
-        end
+        push_debug_info_metadata(mod) if @debug
 
         mod.dump if dump_all_llvm || name =~ dump_llvm_regex
-        # puts mod
 
         # Always run verifications so we can catch bugs earlier and more often.
         # We can probably remove this, or only enable this when compiling in
@@ -1183,7 +1177,7 @@ module Crystal
       end
 
       ex = Call.new(Path.global("TypeCastError"), "new", StringInterpolation.new(pieces))
-      call = Call.global("raise", ex)
+      call = Call.global("raise", ex).at(node)
       call = @program.normalize(call)
 
       meta_vars = MetaVars.new
