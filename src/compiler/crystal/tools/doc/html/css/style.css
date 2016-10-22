@@ -51,6 +51,7 @@ h2 {
   width: 20%;
   background-color: #2E1052;
   padding: 0 0 30px;
+  box-shadow: inset -3px 0 4px rgba(0,0,0,.35);
 }
 
 #types-list #search-box {
