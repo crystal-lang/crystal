@@ -385,7 +385,6 @@ class Markdown::Parser
         unless in_link
           link = check_link str, (pos + 1), bytesize
           checkbox = check_checkbox str, (pos + 1), bytesize
-          puts link, checkbox
           if link
             @renderer.text line.byte_slice(cursor, pos - cursor)
             cursor = pos + 1
@@ -467,23 +466,14 @@ class Markdown::Parser
   # A valid checkbox is made up of 3 characters and looks like
   # this `[ ]` or this `[x]` with the latter being a checked one.
   def check_checkbox(str, pos, bytesize)
-    # First we need to set an initial char count of 0
-    char_count = 0
-    while pos < bytesize
-      cur_char = str[pos].unsafe_chr
+    return false unless pos + 3 < bytesize
 
-      if cur_char == ']'
-        # If the current charater is a `]` then we are at the end of the checkbox
-        break
-      elsif !(/[x\s]/.match(cur_char.to_s))
-        # If the character is not a space or x then the checkbox isn't valid
-        return false
-      else
-        # Otherwise incriment the char count
-        char_count += 1
-      end
-      pos += 1
-    end
+    return false unless str[pos] == '['.ord
+    return false unless str[pos + 1] == ' '.ord || str[pos + 1] == 'x'.ord
+    return false unless str[pos + 2] == ']'.ord
+
+    true
+  end
 
     # If the char count is greater than 1 then the checkbox is not valid
     if char_count != 1
