@@ -467,7 +467,6 @@ class Markdown::Parser
   # A valid checkbox is made up of 3 characters and looks like
   # this `[ ]` or this `[x]` with the latter being a checked one.
   def check_checkbox(str, pos, bytesize)
-
     # First we need to set an initial char count of 0
     char_count = 0
     while pos < bytesize

@@ -106,4 +106,8 @@ describe Markdown do
   assert_render "hello < world", "<p>hello &lt; world</p>"
 
   assert_render "Hello __[World](http://example.com)__!", %(<p>Hello <strong><a href="http://example.com">World</a></strong>!</p>)
+
+  assert_render "- [x] This is a checkbox", "<ul><li><input type=\"checkbox\" checked disabled> This is a checkbox</li></ul>"
+  assert_render "- [ ] This is a checkbox", "<ul><li><input type=\"checkbox\" disabled> This is a checkbox</li></ul>"
+  assert_render "- [] This is not a checkbox", "<ul><li>[] This is not a checkbox</li></ul>"
 end
