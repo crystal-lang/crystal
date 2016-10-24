@@ -234,35 +234,31 @@ LLVMMetadataRef LLVMDIBuilderCreateParameterVariable(
 #endif
 }
 
-#if LLVM_VERSION_LE(3, 6)
-LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(LLVMDIBuilderRef Dref,
+LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(DIBuilderRef Dref,
                                              LLVMValueRef Storage,
                                              LLVMMetadataRef VarInfo,
                                              LLVMMetadataRef Expr,
+                                             LLVMValueRef DL,
                                              LLVMBasicBlockRef Block) {
+#if LLVM_VERSION_LE(3, 6)
   DIBuilder *D = unwrap(Dref);
   Instruction *Instr =
-      D->insertDeclare(unwrap(Storage), unwrapDI<DIVariable>(VarInfo),
-# if LLVM_VERSION_EQ(3, 5)
-# else
-                       unwrapDI<DIExpression>(Expr),
+    D->insertDeclare(unwrap(Storage), unwrapDI<DIVariable>(VarInfo),
+# if !LLVM_VERSION_EQ(3, 5)
+                     unwrapDI<DIExpression>(Expr),
 # endif
-                       unwrap(Block));
-  return wrap(Instr);
-}
+                     unwrap(Block));
+  Instr->setDebugLoc(DebugLoc::getFromDILocation(cast<MDNode>(unwrap<MetadataAsValue>(DL)->getMetadata())));
 #else /* LLVM > 3.6 */
-LLVMValueRef
-LLVMDIBuilderInsertDeclareAtEnd(DIBuilderRef Dref, LLVMValueRef Storage,
-                                LLVMMetadataRef VarInfo, LLVMMetadataRef Expr,
-                                LLVMValueRef DL, LLVMBasicBlockRef Block) {
-  Instruction *Instr = Dref->insertDeclare(
-      unwrap(Storage), unwrap<DILocalVariable>(VarInfo),
-      unwrapDI<DIExpression>(Expr),
-      DebugLoc(cast<MDNode>(unwrap<MetadataAsValue>(DL)->getMetadata())),
-      unwrap(Block));
+  Instruction *Instr =
+    Dref->insertDeclare(unwrap(Storage), unwrap<DILocalVariable>(VarInfo),
+                        unwrapDI<DIExpression>(Expr),
+                        DebugLoc(cast<MDNode>(unwrap<MetadataAsValue>(DL)->getMetadata())),
+                        unwrap(Block));
+#endif
+
   return wrap(Instr);
 }
-#endif
 
 LLVMMetadataRef LLVMDIBuilderCreateExpression(DIBuilderRef Dref, int64_t *Addr,
                                               size_t Length) {

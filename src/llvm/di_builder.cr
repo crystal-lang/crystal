@@ -56,11 +56,7 @@ struct LLVM::DIBuilder
   end
 
   def insert_declare_at_end(storage, var_info, expr, dl, block)
-    {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
-      LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, block)
-    {% else %}
-      LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, dl, block)
-    {% end %}
+    LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, dl, block)
   end
 
   def get_or_create_array(elements : Array(LibLLVMExt::Metadata))
@@ -91,18 +87,18 @@ struct LLVM::DIBuilder
   end
 
   def create_replaceable_composite_type(scope, name, file, line)
-    {% if LibLLVM::IS_38 %}
-      LibLLVMExt.di_builder_create_replaceable_composite_type(self, scope, name, file, line)
-    {% else %}
+    {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
       LibLLVMExt.temporary_md_node(LLVM::Context.global, nil, 0).as(LibLLVMExt::Metadata)
+    {% else %}
+      LibLLVMExt.di_builder_create_replaceable_composite_type(self, scope, name, file, line)
     {% end %}
   end
 
   def replace_temporary(from, to)
-    {% if LibLLVM::IS_38 %}
-      LibLLVMExt.di_builder_replace_temporary(self, from, to)
-    {% else %}
+    {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
       LibLLVMExt.metadata_replace_all_uses_with(from, to)
+    {% else %}
+      LibLLVMExt.di_builder_replace_temporary(self, from, to)
     {% end %}
   end
 

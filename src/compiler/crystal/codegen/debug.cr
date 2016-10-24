@@ -3,8 +3,6 @@ require "./codegen"
 module Crystal
   class CodeGenVisitor
     CRYSTAL_LANG_DEBUG_IDENTIFIER = 0x8002_u32
-    # TODO: for correctness, eventually this should come from the current LLVM context
-    DBG_KIND = LibLLVM.get_md_kind_id("dbg", 3)
 
     def di_builder(llvm_module = @llvm_mod || @main_mod)
       di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
@@ -122,27 +120,21 @@ module Crystal
     end
 
     def declare_parameter(arg_name, arg_type, arg_no, alloca, location)
-      return unless location
-
-      debug_type = get_debug_type(arg_type)
-      return unless debug_type
-
-      scope = get_current_debug_scope(location)
-      return unless scope
-
-      file, dir = file_and_dir(location.filename)
-      file = di_builder.create_file(file, dir)
-
-      var = di_builder.create_parameter_variable scope, arg_name, arg_no, file, location.line_number, debug_type
-      expr = di_builder.create_expression(nil, 0)
-
-      insert_debug_declaration alloca, var, expr
+      declare_local(arg_type, alloca, location) do |scope, file, line_number, debug_type|
+        di_builder.create_parameter_variable scope, arg_name, arg_no, file, line_number, debug_type
+      end
     end
 
     def declare_variable(var_name, var_type, alloca, location)
+      declare_local(var_type, alloca, location) do |scope, file, line_number, debug_type|
+        di_builder.create_auto_variable scope, var_name, file, line_number, debug_type
+      end
+    end
+
+    private def declare_local(type, alloca, location)
       return unless location
 
-      debug_type = get_debug_type(var_type)
+      debug_type = get_debug_type(type)
       return unless debug_type
 
       scope = get_current_debug_scope(location)
@@ -151,17 +143,10 @@ module Crystal
       file, dir = file_and_dir(location.filename)
       file = di_builder.create_file(file, dir)
 
-      var = di_builder.create_auto_variable scope, var_name, file, location.line_number, debug_type
+      var = yield scope, file, location.line_number, debug_type
       expr = di_builder.create_expression(nil, 0)
 
-      insert_debug_declaration alloca, var, expr
-    end
-
-    def insert_debug_declaration(alloca, var, expr)
-      declare = di_builder.insert_declare_at_end(alloca, var, expr, builder.current_debug_location, alloca_block)
-      # TODO: This is redundant for LLVM >= 3.8, but currently we don't have access to builder from DIBuilder
-      builder.set_metadata(declare, DBG_KIND, builder.current_debug_location)
-      declare
+      di_builder.insert_declare_at_end(alloca, var, expr, builder.current_debug_location, alloca_block)
     end
 
     def file_and_dir(file)
