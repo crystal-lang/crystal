@@ -3,6 +3,8 @@ require "./codegen"
 module Crystal
   class CodeGenVisitor
     CRYSTAL_LANG_DEBUG_IDENTIFIER = 0x8002_u32
+    # TODO: for correctness, eventually this should come from the current LLVM context
+    DBG_KIND = LibLLVM.get_md_kind_id("dbg", 3)
 
     def di_builder(llvm_module = @llvm_mod || @main_mod)
       di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
@@ -84,19 +86,16 @@ module Crystal
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_struct_type(type)
 
-      tmp_debug_type = di_builder.temporary_md_node(LLVM::Context.global)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type.to_s, nil, 1)
       debug_type_cache[type] = tmp_debug_type
 
-      # TOOD: use each_with_index
-      idx = 0
-      ivars.each do |name, ivar|
+      ivars.each_with_index do |(name, ivar), idx|
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx + (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
           member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, offset * 8, 0, ivar_debug_type)
           element_types << member
         end
-        idx += 1
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
@@ -104,7 +103,7 @@ module Crystal
       unless type.struct?
         debug_type = di_builder.create_pointer_type(debug_type, llvm_typer.pointer_size * 8, llvm_typer.pointer_size * 8, type.to_s)
       end
-      di_builder.replace_all_uses(tmp_debug_type, debug_type)
+      di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
     end
 
@@ -122,8 +121,25 @@ module Crystal
       # puts "Unsupported type for debugging: #{type} (#{type.class})"
     end
 
-    def declare_variable(var_name, var_type, alloca, target_def)
-      location = target_def.location
+    def declare_parameter(arg_name, arg_type, arg_no, alloca, location)
+      return unless location
+
+      debug_type = get_debug_type(arg_type)
+      return unless debug_type
+
+      scope = get_current_debug_scope(location)
+      return unless scope
+
+      file, dir = file_and_dir(location.filename)
+      file = di_builder.create_file(file, dir)
+
+      var = di_builder.create_parameter_variable scope, arg_name, arg_no, file, location.line_number, debug_type
+      expr = di_builder.create_expression(nil, 0)
+
+      insert_debug_declaration alloca, var, expr
+    end
+
+    def declare_variable(var_name, var_type, alloca, location)
       return unless location
 
       debug_type = get_debug_type(var_type)
@@ -131,21 +147,21 @@ module Crystal
 
       scope = get_current_debug_scope(location)
       return unless scope
+
       file, dir = file_and_dir(location.filename)
       file = di_builder.create_file(file, dir)
 
-      var = di_builder.create_local_variable LLVM::DwarfTag::AutoVariable,
-        scope, var_name, file, location.line_number, debug_type
+      var = di_builder.create_auto_variable scope, var_name, file, location.line_number, debug_type
       expr = di_builder.create_expression(nil, 0)
 
-      {% begin %}
-      {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
-      declare = di_builder.insert_declare_at_end(alloca, var, expr, alloca_block)
-      {% else %}
+      insert_debug_declaration alloca, var, expr
+    end
+
+    def insert_debug_declaration(alloca, var, expr)
       declare = di_builder.insert_declare_at_end(alloca, var, expr, builder.current_debug_location, alloca_block)
-      {% end %}
-      builder.set_metadata(declare, @dbg_kind, builder.current_debug_location)
-      {% end %}
+      # TODO: This is redundant for LLVM >= 3.8, but currently we don't have access to builder from DIBuilder
+      builder.set_metadata(declare, DBG_KIND, builder.current_debug_location)
+      declare
     end
 
     def file_and_dir(file)
@@ -222,16 +238,9 @@ module Crystal
     def emit_main_def_debug_metadata(main_fun, filename)
       file, dir = file_and_dir(filename)
       scope = di_builder.create_file(file, dir)
-      {% begin %}
-      {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
-      fn_metadata = di_builder.create_function(scope, MAIN_NAME, MAIN_NAME, scope,
-        0, fun_metadata_type, 1, 1, 0, 0_u32, 0, main_fun)
-      {% else %}
       fn_metadata = di_builder.create_function(scope, MAIN_NAME, MAIN_NAME, scope,
         0, fun_metadata_type, true, true, 0, 0_u32, false, main_fun)
-      {% end %}
       fun_metadatas[main_fun] = fn_metadata
-      {% end %}
     end
 
     def emit_def_debug_metadata(target_def)
@@ -240,16 +249,9 @@ module Crystal
 
       file, dir = file_and_dir(location.filename)
       scope = di_builder.create_file(file, dir)
-      {% begin %}
-      {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
-      fn_metadata = di_builder.create_function(scope, target_def.name, target_def.name, scope,
-        location.line_number, fun_metadata_type, 1, 1, location.line_number, 0_u32, 0, context.fun)
-      {% else %}
       fn_metadata = di_builder.create_function(scope, target_def.name, target_def.name, scope,
         location.line_number, fun_metadata_type, true, true, location.line_number, 0_u32, false, context.fun)
-      {% end %}
       fun_metadatas[context.fun] = fn_metadata
-      {% end %}
     end
   end
 end

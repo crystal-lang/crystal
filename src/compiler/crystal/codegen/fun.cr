@@ -98,15 +98,23 @@ class Crystal::CodeGenVisitor
         set_current_debug_location target_def if @debug
         alloca_vars target_def.vars, target_def, args, context.closure_parent_context
 
+        create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)
+
         if @debug
           in_alloca_block do
+            args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
+            location = target_def.location
             context.vars.each do |name, var|
-              declare_variable(name, var.type, var.pointer, target_def)
+              if name == "self"
+                declare_parameter(name, var.type, 1, var.pointer, location)
+              elsif arg_no = args.index { |arg| arg.name == name }
+                declare_parameter(name, var.type, arg_no + args_offset, var.pointer, location)
+              else
+                declare_variable(name, var.type, var.pointer, location)
+              end
             end
           end
         end
-
-        create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)
 
         context.return_type = target_def.type?
         context.return_phi = nil

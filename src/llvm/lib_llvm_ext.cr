@@ -40,12 +40,20 @@ lib LibLLVMExt
                                                                   align_in_bits : UInt64,
                                                                   encoding : LibC::UInt) : Metadata
 
-  fun di_builder_create_local_variable = LLVMDIBuilderCreateLocalVariable(builder : DIBuilder,
-                                                                          tag : LibC::UInt, scope : Metadata,
-                                                                          name : LibC::Char*, file : Metadata, line : LibC::UInt, type : Metadata,
-                                                                          always_preserve : LibC::Int, flags : LibC::UInt, arg_no : LibC::UInt) : Metadata
+  fun di_builder_create_auto_variable = LLVMDIBuilderCreateAutoVariable(builder : DIBuilder,
+                                                                        scope : Metadata,
+                                                                        name : LibC::Char*,
+                                                                        file : Metadata, line : LibC::UInt,
+                                                                        type : Metadata,
+                                                                        always_preserve : LibC::Int, flags : LibC::UInt) : Metadata
 
-  {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
+  fun di_builder_create_parameter_variable = LLVMDIBuilderCreateParameterVariable(builder : DIBuilder,
+                                                                                  scope : Metadata,
+                                                                                  name : LibC::Char*, arg_no : LibC::UInt,
+                                                                                  file : Metadata, line : LibC::UInt, type : Metadata,
+                                                                                  always_preserve : LibC::Int, flags : LibC::UInt) : Metadata
+
+{% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
   fun di_builder_insert_declare_at_end = LLVMDIBuilderInsertDeclareAtEnd(builder : DIBuilder,
                                                                          storage : LibLLVM::ValueRef,
                                                                          var_info : Metadata,
@@ -86,8 +94,17 @@ lib LibLLVMExt
                                                                       align_in_bits : UInt64,
                                                                       name : LibC::Char*) : Metadata
 
+{% if LibLLVM::IS_38 %}
+  fun di_builder_create_replaceable_composite_type = LLVMDIBuilderCreateReplaceableCompositeType(builder : DIBuilder,
+                                                                                                 scope : Metadata,
+                                                                                                 name : LibC::Char*,
+                                                                                                 file : Metadata,
+                                                                                                 line : LibC::UInt) : Metadata
+  fun di_builder_replace_temporary = LLVMDIBuilderReplaceTemporary(builder : DIBuilder, from : Metadata, to : Metadata)
+{% else %}
   fun temporary_md_node = LLVMTemporaryMDNode(context : LibLLVM::ContextRef, mds : Metadata*, count : LibC::UInt) : Metadata
   fun metadata_replace_all_uses_with = LLVMMetadataReplaceAllUsesWith(Metadata, Metadata)
+{% end %}
 
   fun set_current_debug_location = LLVMSetCurrentDebugLocation2(LibLLVM::BuilderRef, LibC::Int, LibC::Int, Metadata, Metadata)
 
