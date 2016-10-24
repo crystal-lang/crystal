@@ -27,6 +27,11 @@ struct JSON::ObjectBuilder(T)
     field(name) { value.to_json(@io) }
   end
 
+  # Adds a field to this JSON object, with raw JSON object as string
+  def raw_field(name, value)
+    field(name) { value.to_s(@io) }
+  end
+
   # Adds a field to this JSON object by specifying
   # it's name, then executes the block, which must append the value.
   def field(name)
