@@ -298,4 +298,15 @@ describe "JSON serialization" do
     end
     result.should eq("[1,[2,3]]")
   end
+
+  it "generate object with raw_field" do
+    some = %Q[{"d":"e"}]
+    result = String.build do |io|
+      io.json_object do |obj|
+        obj.field "a", "b"
+        obj.raw_field "c", some
+      end
+    end
+    result.should eq(%Q[{"a":"b","c":{"d":"e"}}])
+  end
 end
