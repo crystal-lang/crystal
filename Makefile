@@ -19,7 +19,8 @@ LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 LIB_CRYSTAL_SOURCES = $(shell find src/ext -name '*.c')
 LIB_CRYSTAL_OBJS = $(subst .c,.o,$(LIB_CRYSTAL_SOURCES))
 LIB_CRYSTAL_TARGET = src/ext/libcrystal.a
-CFLAGS += -fPIC
+CFLAGS += -fPIC $(if $(debug),-g -O0)
+CXXFLAGS += $(if $(debug),-g -O0)
 
 ifeq (${LLVM_CONFIG},)
 $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
@@ -83,7 +84,7 @@ $(O)/crystal: deps $(SOURCES)
 	$(BUILD_PATH) $(EXPORTS) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
-	$(CXX) -c -o $@ $< `$(LLVM_CONFIG) --cxxflags`
+	$(CXX) -c $(CXXFLAGS) -o $@ $< `$(LLVM_CONFIG) --cxxflags`
 
 $(LIB_CRYSTAL_TARGET): $(LIB_CRYSTAL_OBJS)
 	ar -rcs $@ $^
