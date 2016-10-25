@@ -668,6 +668,9 @@ module Crystal
 
       meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
 
+      # Save variable assignment location for debugging output
+      meta_var.location ||= target.location
+
       begin
         meta_var.bind_to value
       rescue ex : FrozenTypeException

@@ -202,6 +202,8 @@ module Crystal
       initialize_simple_class_vars_and_constants
 
       alloca_vars @program.vars, @program
+
+      emit_vars_debug_info(@program.vars) if @debug
     end
 
     # Here we only initialize simple constants and class variables, those
@@ -344,6 +346,8 @@ module Crystal
         file_module = @program.file_module(node.filename)
         if vars = file_module.vars?
           alloca_vars vars, file_module
+
+          emit_vars_debug_info(vars) if @debug
         end
         node.node.accept self
       end

@@ -149,6 +149,19 @@ module Crystal
       di_builder.insert_declare_at_end(alloca, var, expr, builder.current_debug_location, alloca_block)
     end
 
+    # Emit debug info for toplevel variables. Used for the main module and all
+    # required files.
+    def emit_vars_debug_info(vars)
+      in_alloca_block do
+        vars.each do |name, var|
+          llvm_var = context.vars[name]
+          set_current_debug_location var.location
+          declare_variable name, var.type, llvm_var.pointer, var.location
+        end
+        clear_current_debug_location
+      end
+    end
+
     def file_and_dir(file)
       # @file_and_dir ||= {} of String | VirtualFile => {String, String}
       realfile = case file
