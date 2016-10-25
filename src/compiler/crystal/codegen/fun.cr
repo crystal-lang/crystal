@@ -191,16 +191,23 @@ class Crystal::CodeGenVisitor
       args.push Arg.new(special_var_name, type: target_def.vars.not_nil![special_var_name].type)
     end
 
-    llvm_args_types = args.map do |arg|
+    llvm_args_types = args.map_with_index do |arg, i|
       arg_type = arg.type
       if arg_type.void?
         llvm_arg_type = LLVM::Int8
       else
-        llvm_arg_type = llvm_arg_type(arg_type)
-        # We need an extra pointer for special vars that are reference-like:
-        # non-reference-like are unions, so their argument representation is already a pointer
-        # (passed byval, but for these we don't pass them byval)
-        llvm_arg_type = llvm_arg_type.pointer if arg.special_var? && arg_type.reference_like?
+        llvm_arg_type = llvm_type(arg_type)
+
+        # We need an extra pointer for special vars (they always have an extra pointer)
+        if arg.special_var?
+          llvm_arg_type = llvm_arg_type.pointer
+        end
+
+        # Self is always passed by reference (pointer),
+        # even if the type is passed by value (like a struct)
+        if i == 0 && !is_fun_literal && self_type.passed_as_self? && self_type.passed_by_value?
+          llvm_arg_type = llvm_arg_type.pointer
+        end
       end
       llvm_arg_type
     end
@@ -222,15 +229,6 @@ class Crystal::CodeGenVisitor
     args.each_with_index do |arg, i|
       param = context.fun.params[i + offset]
       param.name = arg.name
-
-      # Set 'byval' attribute
-      # but don't set it if it's the "self" argument and it's a struct (while not in a closure).
-      if arg.type.passed_by_value?
-        if ((is_fun_literal && !is_closure) || (is_closure || !(i == 0 && self_type.struct?))) &&
-           !arg.special_var? # special vars are never passed byval
-          param.add_attribute LLVM::Attribute::ByVal
-        end
-      end
     end
 
     args
@@ -401,8 +399,16 @@ class Crystal::CodeGenVisitor
     var_type = (target_def_var || arg).type
     return if var_type.void?
 
+    # Pass-by-value parameters are passed as-is, so they are
+    # "already loaded" (they are not behind a pointer)
+    already_loaded = false
+
     if closure_var = context.vars[arg.name]?
       pointer = closure_var.pointer
+
+      if var_type.passed_by_value?
+        already_loaded = true
+      end
     else
       # If it's an extern struct on a def that must be codegened with C ABI
       # compatibility, and it's not passed byval, we must cast the value
@@ -412,21 +418,37 @@ class Crystal::CodeGenVisitor
         store value, casted_pointer
         context.vars[arg.name] = LLVMVar.new(pointer, var_type)
         return
+      elsif arg.special_var?
+        context.vars[arg.name] = LLVMVar.new(value, var_type)
+        return
       else
         # We don't need to create a copy of the argument if it's never
         # assigned a value inside the function.
         needs_copy = target_def_var.try &.assigned_to?
-        if needs_copy && !arg.special_var?
+        if needs_copy
           pointer = alloca(llvm_type(var_type), arg.name)
           context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+
+          if arg.type.passed_by_value? && !value.attributes.by_val?
+            already_loaded = true
+          end
         else
-          context.vars[arg.name] = LLVMVar.new(value, var_type, true)
-          return
+          if arg.type.passed_by_value? && !value.attributes.by_val?
+            # For pass-by-value we create an alloca so the value
+            # is behind a pointer, as everywhere else
+            pointer = alloca(llvm_type(var_type), arg.name)
+            store value, pointer
+            context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+            return
+          else
+            context.vars[arg.name] = LLVMVar.new(value, var_type, true)
+            return
+          end
         end
       end
     end
 
-    assign pointer, var_type, arg.type, value
+    assign pointer, var_type, arg.type, value, already_loaded
   end
 
   def type_module(type)

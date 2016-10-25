@@ -618,7 +618,14 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_proc_call(node, target_def, call_args)
     closure_ptr = call_args[0]
+
+    # For non-closure args we use byval attribute and other things
+    # that the C ABI dictates, if needed (args).
+    # Otherwise we load the values (closure_args).
     args = call_args[1..-1]
+    closure_args = Array(LLVM::Value).new(args.size + 1)
+
+    c_calling_convention = target_def.proc_c_calling_convention?
 
     proc_type = context.type.as(ProcInstanceType)
     0.upto(target_def.args.size - 1) do |i|
@@ -626,6 +633,11 @@ class Crystal::CodeGenVisitor
       proc_arg_type = proc_type.arg_types[i]
       target_def_arg_type = target_def.args[i].type
       args[i] = upcast arg, proc_arg_type, target_def_arg_type
+      if proc_arg_type.passed_by_value?
+        closure_args << load(args[i])
+      else
+        closure_args << args[i]
+      end
     end
 
     fun_ptr = builder.extract_value closure_ptr, 0
@@ -650,10 +662,10 @@ class Crystal::CodeGenVisitor
       # arguments according to the ABI.
       # For this we temporarily set the target_def's `abi_info` and `c_calling_convention`
       # properties for the non-closure branch, and then reset it.
-      if target_def.proc_c_calling_convention?
+      if c_calling_convention
         null_fun_ptr, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
       else
-        null_fun_ptr, null_args = real_fun_ptr, args
+        null_fun_ptr, null_args = real_fun_ptr, closure_args
       end
 
       value = codegen_call_or_invoke(node, target_def, nil, null_fun_ptr, null_args, true, target_def.type, false, proc_type)
@@ -665,8 +677,8 @@ class Crystal::CodeGenVisitor
 
       position_at_end ctx_is_not_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
-      args.insert(0, ctx_ptr)
-      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true, proc_type)
+      closure_args.insert(0, ctx_ptr)
+      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
     end
 
