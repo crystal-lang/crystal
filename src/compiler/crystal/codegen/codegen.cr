@@ -909,17 +909,7 @@ module Crystal
         llvm_value = check_proc_is_not_closure(llvm_value, target.type)
       end
 
-      if target.is_a?(Var) && target.special_var? && !target_type.reference_like?
-        # For special vars that are not reference-like, the function argument will
-        # be a pointer to the struct value. So, we need to first cast the value to
-        # that type (without the pointer), load it, and store it in the argument.
-        # If it's a reference-like then it's just a pointer and we can reuse the
-        # logic in the other branch.
-        llvm_value = upcast llvm_value, target_type, value.type
-        store load(llvm_value), ptr
-      else
-        assign ptr, target_type, value.type, llvm_value
-      end
+      assign ptr, target_type, value.type, llvm_value
 
       false
     end

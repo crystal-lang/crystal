@@ -54,6 +54,8 @@ class Crystal::CodeGenVisitor
   end
 
   def prepare_call_args_non_external(node, target_def, owner)
+    is_primitive = target_def.body.is_a?(Primitive)
+
     call_args = Array(LLVM::Value).new(node.args.size + 1)
     old_needs_value = @needs_value
 
@@ -83,6 +85,8 @@ class Crystal::CodeGenVisitor
       end
     end
 
+    c_calling_convention = target_def.c_calling_convention?
+
     # Then the arguments.
     node.args.zip(target_def.args) do |arg, def_arg|
       @needs_value = true
@@ -95,6 +99,13 @@ class Crystal::CodeGenVisitor
         call_arg = llvm_nil if arg.type.nil_type?
         call_arg = downcast(call_arg, def_arg.type, arg.type, true)
       end
+
+      # - C calling convention passing needs a separate handling of pass-by-value
+      # - Primitives might need a separate handling (for example invoking a Proc)
+      if arg.type.passed_by_value? && !c_calling_convention && !is_primitive
+        call_arg = load(call_arg)
+      end
+
       call_args << call_arg
     end
 
@@ -503,18 +514,7 @@ class Crystal::CodeGenVisitor
     if external = target_def.c_calling_convention?
       set_call_attributes_external(node, external)
     else
-      set_call_attributes_non_external(node, target_def, self_type, is_closure, fun_type)
-    end
-  end
-
-  def set_call_attributes_non_external(node, target_def, self_type, is_closure, fun_type)
-    arg_offset = 1
-    arg_offset += 1 if self_type.try(&.passed_as_self?)
-
-    node.args.each_with_index do |arg, i|
-      next unless arg.type.passed_by_value?
-
-      @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
+      # Non-external methods/functions have no arguments attributes
     end
   end
 
@@ -530,16 +530,8 @@ class Crystal::CodeGenVisitor
       next if node.args[i]?.try &.is_a?(Out)
 
       abi_arg_type = abi_info.arg_types[i]?
-      if abi_arg_type
-        if (attr = abi_arg_type.attr)
-          @last.add_instruction_attribute(i + arg_offset, attr)
-        end
-      else
-        # TODO: this is for variadic arguments, which is still not handled properly (in regards to the ABI for structs)
-        arg_type = arg.type
-        next unless arg_type.passed_by_value?
-
-        @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
+      if abi_arg_type && (attr = abi_arg_type.attr)
+        @last.add_instruction_attribute(i + arg_offset, attr)
       end
     end
 
@@ -555,13 +547,8 @@ class Crystal::CodeGenVisitor
     arg_offset = is_closure ? 2 : 1
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
     arg_types.try &.each_with_index do |arg_type, i|
-      if abi_info && (abi_arg_type = abi_info.arg_types[i]?)
-        if (attr = abi_arg_type.attr)
-          @last.add_instruction_attribute(i + arg_offset, attr)
-        end
-      else
-        next unless arg_type.passed_by_value?
-        @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
+      if abi_info && (abi_arg_type = abi_info.arg_types[i]?) && (attr = abi_arg_type.attr)
+        @last.add_instruction_attribute(i + arg_offset, attr)
       end
     end
   end
