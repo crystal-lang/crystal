@@ -158,8 +158,6 @@ module Crystal
       builder = LLVM::Builder.new
       @builder = wrap_builder builder
 
-      @dbg_kind = LibLLVM.get_md_kind_id("dbg", 3)
-
       @modules = {"" => @main_mod} of String => LLVM::Module
       @types_to_modules = {} of Type => LLVM::Module
 
