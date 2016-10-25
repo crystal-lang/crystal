@@ -248,7 +248,11 @@ LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(DIBuilderRef Dref,
                      unwrapDI<DIExpression>(Expr),
 # endif
                      unwrap(Block));
+# if LLVM_VERSION_EQ(3, 5)
+  Instr->setDebugLoc(DebugLoc::getFromDILocation(unwrap<MDNode>(DL)));
+# else
   Instr->setDebugLoc(DebugLoc::getFromDILocation(cast<MDNode>(unwrap<MetadataAsValue>(DL)->getMetadata())));
+# endif
 #else /* LLVM > 3.6 */
   Instruction *Instr =
     Dref->insertDeclare(unwrap(Storage), unwrap<DILocalVariable>(VarInfo),
