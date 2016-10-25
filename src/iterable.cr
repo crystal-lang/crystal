@@ -14,6 +14,15 @@ module Iterable(T)
     each.cycle(n)
   end
 
+  # Returns an Iterator that enumerates over the items, chunking them together based on the return value of the block.
+  #
+  #     (0..7).chunk(&./(3)).to_a => [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7]}]
+  #
+  # See `Iterator#chunks`
+  def chunk(&block : T -> U) forall U
+    each.chunk &block
+  end
+
   # Same as `each.slice(count)`.
   def each_slice(count : Int)
     each.slice(count)

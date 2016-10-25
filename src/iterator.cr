@@ -976,14 +976,33 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that returns a chunks.
+  # Returns an Iterator that enumerates over the items, chunking them together based on the return value of the block.
   #
-  #     iter = (1..3).chunk(&./(2))
-  #     iter.next # => {0, [1]}
-  #     iter.next # => {1, [2, 3]}
-  #     iter.next # => Iterator::Stop::INSTANCE
+  # Consecutive elements which return the same block value are chunked together.
   #
-  def chunk(&block : T -> U)
+  # For example, consecutive even numbers and odd numbers can be chunked as follows.
+  #
+  # ```
+  # [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5].chunk { |n|
+  #   n.even?
+  # }.each { |even, ary|
+  #   p [even, ary]
+  # }
+  #
+  # # => [false, [3, 1]]
+  # #    [true, [4]]
+  # #    [false, [1, 5, 9]]
+  # #    [true, [2, 6]]
+  # #    [false, [5, 3, 5]]
+  # ```
+  #
+  # The following key values have special meaning:
+  #
+  # * `Enumerable::Chunk::Drop` specifies that the elements should be dropped
+  # * `Enumerable::Chunk::Alone` specifies that the element should be chunked by itself
+  #
+  # See also: `Enumerable#chunks`
+  def chunk(&block : T -> U) forall T, U
     Chunk(typeof(self), T, U).new(self, &block)
   end
 

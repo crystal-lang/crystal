@@ -74,18 +74,23 @@ module Enumerable(T)
     any? &.itself
   end
 
-  # Returns an iterator with chunks
+  # Enumerates over the items, chunking them together based on the return value of the block.
   #
-  #     (0..7).chunk(&./(3)).to_a => [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7]}]
+  # Consecutive elements which return the same block value are chunked together.
   #
-  def chunk(&block : T -> U)
-    self.each.chunk &block
-  end
-
-  # Returns an array of chunks (TODO: rewrite to use enumerator)
+  # For example, consecutive even numbers and odd numbers can be chunked as follows.
   #
-  #     (0..7).chunks(&./(3)) => [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7]}]
+  # ```
+  # ary = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5].chunks { |n| n.even? }
+  # ary # => [{false, [3, 1]}, {true, [4]}, {false, [1, 5, 9]}, {true, [2, 6]}, {false, [5, 3, 5]}]
+  # ```
   #
+  # The following key values have special meaning:
+  #
+  # * `Enumerable::Chunk::Drop` specifies that the elements should be dropped
+  # * `Enumerable::Chunk::Alone` specifies that the element should be chunked by itself
+  #
+  # See also: `Iterator#chunk`
   def chunks(&block : T -> U)
     res = [] of Tuple(U, Array(T))
     chunks_internal(block) { |k, v| res << {k, v} }
@@ -98,7 +103,7 @@ module Enumerable(T)
     record Alone
 
     # :nodoc:
-    class Accumulator(T, U)
+    struct Accumulator(T, U)
       def initialize
         @key = uninitialized U
         @initialized = false
@@ -130,7 +135,6 @@ module Enumerable(T)
     end
   end
 
-  # :nodoc:
   private def chunks_internal(original_block : T -> U)
     acc = Chunk::Accumulator(T, U).new
     each do |val|
