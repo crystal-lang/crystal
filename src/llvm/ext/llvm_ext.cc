@@ -240,16 +240,23 @@ LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(DIBuilderRef Dref,
                                              LLVMMetadataRef Expr,
                                              LLVMValueRef DL,
                                              LLVMBasicBlockRef Block) {
-#if LLVM_VERSION_LE(3, 6)
+#if LLVM_VERSION_EQ(3, 5)
   DIBuilder *D = unwrap(Dref);
   Instruction *Instr =
     D->insertDeclare(unwrap(Storage), unwrapDI<DIVariable>(VarInfo),
-# if !LLVM_VERSION_EQ(3, 5)
-                     unwrapDI<DIExpression>(Expr),
-# endif
                      unwrap(Block));
+  Instr->setDebugLoc(DebugLoc::getFromDILocation(cast<MDNode>(DL)));
+#endif
+
+#if LLVM_VERSION_EQ(3, 6)
+  DIBuilder *D = unwrap(Dref);
+  Instruction *Instr =
+    D->insertDeclare(unwrap(Storage), unwrapDI<DIVariable>(VarInfo),
+                     unwrapDI<DIExpression>(Expr), unwrap(Block));
   Instr->setDebugLoc(DebugLoc::getFromDILocation(cast<MDNode>(unwrap<MetadataAsValue>(DL)->getMetadata())));
-#else /* LLVM > 3.6 */
+#endif
+
+#if LLVM_VERSION_GE(3, 7)
   Instruction *Instr =
     Dref->insertDeclare(unwrap(Storage), unwrap<DILocalVariable>(VarInfo),
                         unwrapDI<DIExpression>(Expr),
