@@ -1,6 +1,6 @@
 # The Iterable mixin provides convenience methods to collection classes
 # that provide an `each` method that returns an `Iterator` over the collection.
-module Iterable
+module Iterable(T)
   # Must return an `Iterator` over the elements in this collection.
   abstract def each
 

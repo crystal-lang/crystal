@@ -9,7 +9,7 @@ require "c/sys/stat"
 # the parent directory (..), and the directory itself (.).
 class Dir
   include Enumerable(String)
-  include Iterable
+  include Iterable(String)
 
   getter path : String
 
