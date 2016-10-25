@@ -442,6 +442,14 @@ describe Iterator do
       iter.rewind
       iter.next.should eq({1, 10})
     end
+
+    it "does with_index from range, with block" do
+      tuples = [] of {Int32, Int32}
+      (1..3).each.with_index do |value, index|
+        tuples << {value, index}
+      end
+      tuples.should eq([{1, 0}, {2, 1}, {3, 2}])
+    end
   end
 
   describe "with object" do

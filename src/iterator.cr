@@ -893,6 +893,13 @@ module Iterator(T)
     WithIndex(typeof(self), T, typeof(offset)).new(self, offset)
   end
 
+  # Yields each element in this iterator together with its index.
+  def with_index(offset : Int = 0)
+    with_index.each do |value, index|
+      yield value, index
+    end
+  end
+
   private class WithIndex(I, T, O)
     include Iterator({T, Int32})
     include IteratorWrapper
