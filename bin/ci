@@ -147,9 +147,9 @@ EOF
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_linux docker pull "jhass/crystal-build-$ARCH"
+  on_linux docker pull "rx14/crystal-build-$ARCH"
 
-  on_osx brew install llvm crystal-lang
+  on_osx brew install llvm crystal-lang gdb
 }
 
 with_build_env() {
@@ -160,13 +160,13 @@ with_build_env() {
 
   on_linux verify_linux_environment
   on_linux docker run \
-    --rm -t \
+    --rm -t --privileged \
     -u $(id -u) \
     -v $(pwd):/mnt \
     -w /mnt \
     -e LIBRARY_PATH="/opt/crystal/embedded/lib/" \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
-    "jhass/crystal-build-$ARCH" \
+    "rx14/crystal-build-docker:$ARCH" \
     "$ARCH_CMD" /bin/bash -c "'$command'"
 
   on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
