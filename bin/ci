@@ -148,8 +148,9 @@ prepare_build() {
   on_linux verify_linux_environment
 
   on_linux docker pull "jhass/crystal-build-$ARCH"
+  on_linux sudo apt-get install -y gdb
 
-  on_osx brew install llvm libevent pcre crystal-lang
+  on_osx brew install llvm libevent pcre crystal-lang gdb
 }
 
 with_build_env() {
