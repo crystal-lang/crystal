@@ -162,26 +162,143 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   # the program and run it, printing the last
   # expression and using that to compare the result.
   if code.includes?(%(require "prelude"))
-    ast = Parser.parse(code).as(Expressions)
+    build_executable(code, debug: debug, print: true) do |output_filename|
+      output = `#{output_filename}`
+      SpecRunOutput.new(output)
+    end
+  else
+    Program.new.run(code, filename: filename, debug: debug)
+  end
+end
+
+abstract class DebugLineCheck
+  abstract def matches?(output)
+
+  def self.from(line)
+    if line.starts_with?("/")
+      regex = line[1..-1]
+      if regex.ends_with?("/")
+        regex = regex[0..-2]
+      end
+      RegexLineCheck.new(regex)
+    else
+      StringLineCheck.new(line)
+    end
+  end
+end
+
+class StringLineCheck < DebugLineCheck
+  def initialize(@line : String)
+  end
+
+  def matches?(output)
+    output == @line
+  end
+
+  def to_s(io)
+    @line.to_s(io)
+  end
+end
+
+class RegexLineCheck < DebugLineCheck
+  def initialize(line)
+    @regex = Regex.new(line)
+  end
+
+  def matches?(output)
+    @regex.match(output)
+  end
+
+  def to_s(io)
+    @regex.inspect(io)
+  end
+end
+
+def debug(script, code)
+  code = code.strip
+  build_executable(code, debug: Crystal::Debug::All) do |output_filename|
+    script_filename = Crystal.tempfile("debug-script")
+    checks = [] of DebugLineCheck
+    File.open(script_filename, "w") do |script_file|
+      script.each_line do |script_line|
+        script_line = script_line.strip
+        next if script_line.empty?
+        if script_line.starts_with?("(gdb)")
+          script_file.puts script_line["(gdb)".size..-1].strip
+        else
+          checks << DebugLineCheck.from(script_line)
+        end
+      end
+    end
+
+    begin
+      output = Process.run("gdb", ["-quiet", "-batch", "-nx", "-x", script_filename, output_filename]) do |gdb|
+        gdb.output.gets_to_end
+      end
+
+      # GDB process should not fail to execute
+      $?.exit_code.should_not eq(127)
+      # and should have terminated normally (though maybe not successfully)
+      $?.normal_exit?.should be_true
+
+      last_output_matched = -1
+      next_check_index = 0
+      output.each_line.with_index do |output_line, output_index|
+        output_line = output_line.chomp
+        break if next_check_index >= checks.size
+        if checks[next_check_index].matches?(output_line)
+          last_output_matched = output_index
+          next_check_index += 1
+        end
+      end
+
+      unless next_check_index >= checks.size
+        expected_lines = render_lines_with_pointer(checks, next_check_index - 1)
+        output_lines = render_lines_with_pointer(output.lines.map(&.chomp), last_output_matched)
+        msg = "Expected lines:\n#{expected_lines}\nActual output:\n#{output_lines}"
+        fail "Failed to match all GDB output (last matched lines marked with >>>)\n#{msg}"
+      end
+    ensure
+      File.delete(script_filename)
+    end
+  end
+end
+
+def render_lines_with_pointer(lines, pointer_index)
+  String.build do |s|
+    lines.each_with_index do |line, index|
+      if index == pointer_index
+        s << ">>> "
+      else
+        s << "    "
+      end
+      s << line
+      s << "\n"
+    end
+  end
+end
+
+def build_executable(code, print = false, debug = Crystal::Debug::None)
+  ast = Parser.parse(code).as(Expressions)
+  if print
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
     call = Call.new(nil, "print", Var.new("__tempvar"))
     exps = Expressions.new([assign, call] of ASTNode)
     ast.expressions[-1] = exps
     code = ast.to_s
+  end
 
-    output_filename = Crystal.tempfile("crystal-spec-output")
+  output_filename = Crystal.tempfile("crystal-spec-output")
 
-    compiler = Compiler.new
-    compiler.debug = debug
-    compiler.compile Compiler::Source.new("spec", code), output_filename
+  compiler = Compiler.new
+  compiler.debug = debug
+  compiler.compile Compiler::Source.new("spec", code), output_filename
 
-    output = `#{output_filename}`
+  begin
+    yield output_filename
+  ensure
     File.delete(output_filename)
-
-    SpecRunOutput.new(output)
-  else
-    Program.new.run(code, filename: filename, debug: debug)
   end
 end
 
