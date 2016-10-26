@@ -52,6 +52,19 @@ describe JSON::Parser do
   it_raises_on_parse "[0]1"
   it_raises_on_parse "[0] 1 "
   it_raises_on_parse "[\"\\u123z\"]"
+  it_raises_on_parse "[1 true]"
+  it_raises_on_parse %({"foo": 1 "bar": 2})
+  it_raises_on_parse %([2.])
+  it_raises_on_parse %("hello\nworld")
+  it_raises_on_parse %("\\u201cello\nworld")
+  it_raises_on_parse %("hello\tworld")
+  it_raises_on_parse %("\\u201cello\tworld")
+
+  it_raises_on_parse "1\u{0}"
+
+  # Prevent too deep nesting (prevents stack overflow)
+  it_raises_on_parse(("[" * 513) + ("]" * 513))
+  it_raises_on_parse(("{" * 513) + ("}" * 513))
 
   it "returns raw" do
     value = JSON.parse_raw("1")

@@ -162,6 +162,10 @@ describe JSON::PullParser do
   assert_pull_parse_error %({"name": "John", "age", 1})
   assert_pull_parse_error %({"name": "John", "age": "foo", "bar"})
 
+  # Prevent too deep nesting (prevents stack overflow)
+  assert_pull_parse_error(("[" * 513) + ("]" * 513))
+  assert_pull_parse_error(("{" * 513) + ("}" * 513))
+
   describe "skip" do
     [
       {"null", "null"},

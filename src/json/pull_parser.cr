@@ -7,6 +7,8 @@ class JSON::PullParser
   getter string_value : String
   getter raw_value : String
 
+  property max_nesting = 512
+
   def initialize(input)
     @lexer = Lexer.new input
     @kind = :EOF
@@ -431,7 +433,7 @@ class JSON::PullParser
 
   private def begin_array
     @kind = :begin_array
-    @object_stack << :array
+    push_in_object_stack :array
 
     case next_token.type
     when :",", :"}", :":", :EOF
@@ -441,7 +443,7 @@ class JSON::PullParser
 
   private def begin_object
     @kind = :begin_object
-    @object_stack << :object
+    push_in_object_stack :object
 
     case next_token_expect_object_key.type
     when :STRING, :"}"
@@ -498,5 +500,13 @@ class JSON::PullParser
 
   private def parse_exception(msg)
     raise ParseException.new(msg, token.line_number, token.column_number)
+  end
+
+  private def push_in_object_stack(symbol)
+    if @object_stack.size >= @max_nesting
+      parse_exception "nesting of 101 is too deep"
+    end
+
+    @object_stack.push(symbol)
   end
 end
