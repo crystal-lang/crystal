@@ -504,7 +504,7 @@ class JSON::PullParser
 
   private def push_in_object_stack(symbol)
     if @object_stack.size >= @max_nesting
-      parse_exception "nesting of #{@max_nesting} is too deep"
+      parse_exception "nesting of #{@object_stack.size + 1} is too deep"
     end
 
     @object_stack.push(symbol)

@@ -62,9 +62,17 @@ describe JSON::Parser do
 
   it_raises_on_parse "1\u{0}"
 
-  # Prevent too deep nesting (prevents stack overflow)
-  it_raises_on_parse(("[" * 513) + ("]" * 513))
-  it_raises_on_parse(("{" * 513) + ("}" * 513))
+  it "prevents stack overflow for arrays" do
+    expect_raises JSON::ParseException, "nesting of 513 is too deep" do
+      JSON.parse(("[" * 513) + ("]" * 513))
+    end
+  end
+
+  it "prevents stack overflow for hashes" do
+    expect_raises JSON::ParseException, "nesting of 513 is too deep" do
+      JSON.parse((%({"x": ) * 513) + ("}" * 513))
+    end
+  end
 
   it "returns raw" do
     value = JSON.parse_raw("1")
