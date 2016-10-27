@@ -285,11 +285,21 @@ h2 {
 .entry-detail .signature .method-permalink {
   position: absolute;
   top: 0;
-  right: 0;
+  left: -35px;
   padding: 5px 15px;
   text-decoration: none;
   font-weight: bold;
   color: #624288;
+  opacity: .4;
+  transition: opacity .2s;
+}
+
+.entry-detail .signature .method-permalink:hover {
+  opacity: 1;
+}
+
+.entry-detail:target .signature .method-permalink {
+  opacity: 1;
 }
 
 .methods-inherited {
