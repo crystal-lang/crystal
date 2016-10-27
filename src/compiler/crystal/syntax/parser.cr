@@ -706,6 +706,8 @@ module Crystal
             when :"]"
               next_token
               break
+            else
+              unexpected_token
             end
           end
 
