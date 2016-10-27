@@ -380,6 +380,9 @@ def debug(script, code)
         gdb.output.gets_to_end
       end
 
+      # GDB process should not fail to execute
+      $?.exit_code.should_not eq(127)
+      # and should have terminated normally (though maybe not successfully)
       $?.normal_exit?.should be_true
 
       last_output_matched = -1
