@@ -128,7 +128,7 @@ class JSON::Parser
   private def nest
     @nest += 1
     if @nest > @max_nesting
-      parse_exception "nesting of 101 is too deep"
+      parse_exception "nesting of #{@max_nesting} is too deep"
     end
 
     yield
