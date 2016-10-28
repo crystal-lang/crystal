@@ -28,7 +28,12 @@ class Crystal::Program
     set.add "openbsd" if set.any?(&.starts_with?("openbsd"))
     set.add "x86_64" if set.any?(&.starts_with?("amd64"))
     set.add "i686" if set.any? { |flag| %w(i586 i486 i386).includes?(flag) }
-    set.add "arm" if set.any?(&.starts_with?("arm"))
+
+    if set.any?(&.starts_with?("arm"))
+      set.add "arm"
+      set.add "armhf" if set.includes?("gnueabihf")
+    end
+
     set
   end
 end

@@ -50,9 +50,13 @@ class Fiber
       stack_ptr[-2] = fiber_main.pointer # Initial `resume` will `ret` to this address
     {% elsif flag?(:arm) %}
       # In ARMv6 / ARVMv7, the context switch push/pops 8 registers.
-      # Add 8 FPU registers.
       # Add one more to store the argument of `fiber_main`
-      @stack_top = (stack_ptr - (9 + 16)).as(Void*)
+      {% if flag?(:armhf) %}
+        # Add 8 FPU registers.
+        @stack_top = (stack_ptr - (9 + 16)).as(Void*)
+      {% else %}
+        @stack_top = (stack_ptr - 9).as(Void*)
+      {% end %}
 
       stack_ptr[0] = fiber_main.pointer # Initial `resume` will `ret` to this address
       stack_ptr[-9] = self.as(Void*)    # This will be `pop` into r0 (first argument)
@@ -170,7 +174,7 @@ class Fiber
         popl \%ebx
         popl \%edi"
               :: "r"(current), "r"(to))
-    {% elsif flag?(:arm) %}
+    {% elsif flag?(:armhf) %}
       # we eventually reset LR to zero to avoid the ARM unwinder to mistake the
       # context switch as a regular call.
       asm("
@@ -180,6 +184,19 @@ class Fiber
         str    sp, [$0]
         ldr    sp, [$1]
         vldmia sp!, {d8-d15}
+        ldmia  sp!, {r0, r4-r11, lr}
+        mov    r1, lr
+        mov    lr, #0
+        mov    pc, r1
+        "
+              :: "r"(current), "r"(to))
+    {% elsif flag?(:arm) %}
+      # we eventually reset LR to zero to avoid the ARM unwinder to mistake the
+      # context switch as a regular call.
+      asm("
+        stmdb  sp!, {r0, r4-r11, lr}
+        str    sp, [$0]
+        ldr    sp, [$1]
         ldmia  sp!, {r0, r4-r11, lr}
         mov    r1, lr
         mov    lr, #0
