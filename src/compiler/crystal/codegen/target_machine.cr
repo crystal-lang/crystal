@@ -9,6 +9,13 @@ module Crystal
         LLVM.init_x86
       when /^arm/
         LLVM.init_arm
+
+        # Enable most conservative FPU for hard-float capable targets, unless a
+        # CPU is defined (it will most certainly enable a better FPU) or
+        # features contains a floating-point definition.
+        if cpu.empty? && !features.includes?("fp") && target_triple =~ /-gnueabihf/
+          features += "+vfp2"
+        end
       else
         raise "Unsupported arch for target triple: #{target_triple}"
       end
