@@ -323,6 +323,9 @@ class Crystal::Command
         opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
           compiler.mcpu = cpu
         end
+        opts.on("--mattr CPU", "Target specific features") do |features|
+          compiler.mattr = features
+        end
       end
 
       opts.on("--no-color", "Disable colored output") do
