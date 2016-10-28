@@ -47,6 +47,9 @@ module Crystal
     # Sets the mcpu. Check LLVM docs to learn about this.
     property mcpu : String?
 
+    # Sets the mattr (features). Check LLVM docs to learn about this.
+    property mattr : String?
+
     # If `false`, color won't be used in output messages.
     property? color = true
 
@@ -189,7 +192,7 @@ module Crystal
 
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@release}|#{@link_flags}"
+      current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}"
       bc_flags_filename = "#{output_dir}/bc_flags"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
@@ -320,7 +323,7 @@ module Crystal
     protected def target_machine
       @target_machine ||= begin
         triple = @target_triple || LLVM.default_target_triple
-        TargetMachine.create(triple, @mcpu || "", @release)
+        TargetMachine.create(triple, @mcpu || "", @mattr || "", @release)
       end
     rescue ex : ArgumentError
       stdout.print colorize("Error: ").red.bold

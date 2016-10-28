@@ -178,6 +178,11 @@ lib LibLLVM
   fun initialize_x86_target = LLVMInitializeX86Target
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC
+  fun initialize_arm_asm_printer = LLVMInitializeARMAsmPrinter
+  fun initialize_arm_asm_parser = LLVMInitializeARMAsmParser
+  fun initialize_arm_target = LLVMInitializeARMTarget
+  fun initialize_arm_target_info = LLVMInitializeARMTargetInfo
+  fun initialize_arm_target_mc = LLVMInitializeARMTargetMC
   fun initialize_native_target = LLVMInitializeNativeTarget
   fun int1_type = LLVMInt1Type : TypeRef
   fun int8_type = LLVMInt8Type : TypeRef

@@ -48,6 +48,18 @@ class Fiber
       stack_ptr[0] = self.as(Void*)      # First argument passed on the stack
       stack_ptr[-1] = Pointer(Void).null # Empty space to keep the stack alignment (16 bytes)
       stack_ptr[-2] = fiber_main.pointer # Initial `resume` will `ret` to this address
+    {% elsif flag?(:arm) %}
+      # In ARMv6 / ARVMv7, the context switch push/pops 8 registers.
+      # Add one more to store the argument of `fiber_main`
+      {% if flag?(:armhf) %}
+        # Add 8 FPU registers.
+        @stack_top = (stack_ptr - (9 + 16)).as(Void*)
+      {% else %}
+        @stack_top = (stack_ptr - 9).as(Void*)
+      {% end %}
+
+      stack_ptr[0] = fiber_main.pointer # Initial `resume` will `ret` to this address
+      stack_ptr[-9] = self.as(Void*)    # This will be `pop` into r0 (first argument)
     {% else %}
       {{ raise "Unsupported platform, only x86_64 and i686 are supported." }}
     {% end %}
@@ -127,7 +139,7 @@ class Fiber
 
   @[NoInline]
   @[Naked]
-  protected def self.switch_stacks(current, to)
+  protected def self.switch_stacks(current, to) : Nil
     # TODO: these \% escapes are needed because of https://github.com/crystal-lang/crystal/issues/2178
     # Remove them once that issue is fixed.
     {% if flag?(:x86_64) %}
@@ -162,10 +174,39 @@ class Fiber
         popl \%ebx
         popl \%edi"
               :: "r"(current), "r"(to))
+    {% elsif flag?(:armhf) %}
+      # we eventually reset LR to zero to avoid the ARM unwinder to mistake the
+      # context switch as a regular call.
+      asm("
+        .fpu vfp
+        stmdb  sp!, {r0, r4-r11, lr}
+        vstmdb sp!, {d8-d15}
+        str    sp, [$0]
+        ldr    sp, [$1]
+        vldmia sp!, {d8-d15}
+        ldmia  sp!, {r0, r4-r11, lr}
+        mov    r1, lr
+        mov    lr, #0
+        mov    pc, r1
+        "
+              :: "r"(current), "r"(to))
+    {% elsif flag?(:arm) %}
+      # we eventually reset LR to zero to avoid the ARM unwinder to mistake the
+      # context switch as a regular call.
+      asm("
+        stmdb  sp!, {r0, r4-r11, lr}
+        str    sp, [$0]
+        ldr    sp, [$1]
+        ldmia  sp!, {r0, r4-r11, lr}
+        mov    r1, lr
+        mov    lr, #0
+        mov    pc, r1
+        "
+              :: "r"(current), "r"(to))
     {% end %}
   end
 
-  def resume
+  def resume : Nil
     current, Thread.current.current_fiber = Thread.current.current_fiber, self
     LibGC.stackbottom = @stack_bottom
     Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
