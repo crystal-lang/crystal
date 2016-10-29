@@ -1,4 +1,6 @@
 # Handles encoding and decoding of HTML entities.
+#
+# For HTML *parsing* see module XML, especially `XML.parse_html`.
 module HTML
   SUBSTITUTIONS = {
     '!'      => "&#33;",
