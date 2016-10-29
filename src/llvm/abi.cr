@@ -15,6 +15,64 @@ abstract class LLVM::ABI
   abstract def size(type : Type)
   abstract def align(type : Type)
 
+  def size(type : Type, pointer_size)
+    case type.kind
+    when Type::Kind::Integer
+      (type.int_width + 7) / 8
+    when Type::Kind::Float
+      4
+    when Type::Kind::Double
+      8
+    when Type::Kind::Pointer
+      pointer_size
+    when Type::Kind::Struct
+      if type.packed_struct?
+        type.struct_element_types.reduce(0) do |memo, elem|
+          memo + size(elem)
+        end
+      else
+        size = type.struct_element_types.reduce(0) do |memo, elem|
+          align_offset(memo, elem) + size(elem)
+        end
+        align_offset(size, type)
+      end
+    when Type::Kind::Array
+      size(type.element_type) * type.array_size
+    else
+      raise "Unhandled Type::Kind in size: #{type.kind}"
+    end
+  end
+
+  def align_offset(offset, type)
+    align = align(type)
+    (offset + align - 1) / align * align
+  end
+
+  def align(type : Type, pointer_size)
+    case type.kind
+    when Type::Kind::Integer
+      (type.int_width + 7) / 8
+    when Type::Kind::Float
+      4
+    when Type::Kind::Double
+      8
+    when Type::Kind::Pointer
+      pointer_size
+    when Type::Kind::Struct
+      if type.packed_struct?
+        1
+      else
+        type.struct_element_types.reduce(1) do |memo, elem|
+          Math.max(memo, align(elem))
+        end
+      end
+    when Type::Kind::Array
+      align(type.element_type)
+    else
+      raise "Unhandled Type::Kind in align: #{type.kind}"
+    end
+  end
+
   enum ArgKind
     Direct
     Indirect

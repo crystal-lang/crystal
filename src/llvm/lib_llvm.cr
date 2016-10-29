@@ -178,6 +178,11 @@ lib LibLLVM
   fun initialize_x86_target = LLVMInitializeX86Target
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC
+  fun initialize_aarch64_asm_printer = LLVMInitializeAArch64AsmPrinter
+  fun initialize_aarch64_asm_parser = LLVMInitializeAArch64AsmParser
+  fun initialize_aarch64_target = LLVMInitializeAArch64Target
+  fun initialize_aarch64_target_info = LLVMInitializeAArch64TargetInfo
+  fun initialize_aarch64_target_mc = LLVMInitializeAArch64TargetMC
   fun initialize_arm_asm_printer = LLVMInitializeARMAsmPrinter
   fun initialize_arm_asm_parser = LLVMInitializeARMAsmParser
   fun initialize_arm_target = LLVMInitializeARMTarget

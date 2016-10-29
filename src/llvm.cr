@@ -17,6 +17,19 @@ module LLVM
     LibLLVM.link_in_mc_jit
   end
 
+  def self.init_aarch64
+    return if @@initialized_aarch64
+    @@initialized_aarch64 = true
+
+    LibLLVM.initialize_aarch64_target_info
+    LibLLVM.initialize_aarch64_target
+    LibLLVM.initialize_aarch64_target_mc
+    LibLLVM.initialize_aarch64_asm_printer
+    LibLLVM.initialize_aarch64_asm_parser
+    # LibLLVM.link_in_jit
+    LibLLVM.link_in_mc_jit
+  end
+
   def self.init_arm
     return if @@initialized_arm
     @@initialized_arm = true
