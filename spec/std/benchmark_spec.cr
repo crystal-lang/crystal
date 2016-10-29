@@ -87,3 +87,28 @@ describe Benchmark::IPS::Entry, "#human_mean" do
   assert { h_mean(12345678901.2345).should eq(" 12.35G") }
   assert { h_mean(123456789012.345).should eq("123.46G") }
 end
+
+private def h_ips(seconds)
+  mean = 1.0 / seconds
+  create_entry.tap { |e| e.mean = mean }.human_iteration_time
+end
+
+describe Benchmark::IPS::Entry, "#human_iteration_time" do
+  assert { h_ips(1234.567_890_123).should eq("1234.57s ") }
+  assert { h_ips(123.456_789_012_3).should eq("123.46s ") }
+  assert { h_ips(12.345_678_901_23).should eq(" 12.35s ") }
+  assert { h_ips(1.234_567_890_123).should eq("  1.23s ") }
+
+  assert { h_ips(0.123_456_789_012).should eq("123.46ms") }
+  assert { h_ips(0.012_345_678_901).should eq(" 12.35ms") }
+  assert { h_ips(0.001_234_567_890).should eq("  1.23ms") }
+
+  assert { h_ips(0.000_123_456_789).should eq("123.46µs") }
+  assert { h_ips(0.000_012_345_678).should eq(" 12.35µs") }
+  assert { h_ips(0.000_001_234_567).should eq("  1.23µs") }
+
+  assert { h_ips(0.000_000_123_456).should eq("123.46ns") }
+  assert { h_ips(0.000_000_012_345).should eq(" 12.35ns") }
+  assert { h_ips(0.000_000_001_234).should eq("  1.23ns") }
+  assert { h_ips(0.000_000_000_123).should eq("  0.12ns") }
+end
