@@ -45,9 +45,10 @@ module Benchmark
         max_compare = ran_items.max_of &.human_compare.size
 
         ran_items.each do |item|
-          printf "%s %s (±%5.2f%%) %s\n",
+          printf "%s %s (%s) (±%5.2f%%) %s\n",
             item.label.rjust(max_label),
             item.human_mean,
+            item.human_iteration_time,
             item.relative_stddev,
             item.human_compare.rjust(max_compare)
         end
@@ -195,6 +196,26 @@ module Benchmark
 
         "#{digits.round(2).to_s.rjust(6)}#{suffix}"
       end
+
+      def human_iteration_time
+        iteration_time = 1.0 / mean
+
+        case Math.log10(iteration_time)
+        when 0..Float64::MAX
+          digits = iteration_time
+          suffix = "s "
+        when -3..0
+          digits = iteration_time * 1000
+          suffix = "ms"
+        when -6..-3
+          digits = iteration_time * 1_000_000
+          suffix = "µs"
+        else
+          digits = iteration_time * 1_000_000_000
+          suffix = "ns"
+        end
+
+        "#{digits.round(2).to_s.rjust(6)}#{suffix}"
       end
 
       def human_compare
