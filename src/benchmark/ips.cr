@@ -178,17 +178,23 @@ module Benchmark
       end
 
       def human_mean
-        pair = case Math.log10(mean)
-               when -1..3
-                 {mean, ' '}
-               when 3..6
-                 {mean/1_000, 'k'}
-               when 6..9
-                 {mean/1_000_000, 'M'}
-               else
-                 {mean/1_000_000_000, 'G'}
-               end
-        "#{pair[0].round(2).to_s.rjust(6)}#{pair[1]}"
+        case Math.log10(mean)
+        when Float64::MIN..3
+          digits = mean
+          suffix = ' '
+        when 3..6
+          digits = mean / 1000
+          suffix = 'k'
+        when 6..9
+          digits = mean / 1_000_000
+          suffix = 'M'
+        else
+          digits = mean / 1_000_000_000
+          suffix = 'G'
+        end
+
+        "#{digits.round(2).to_s.rjust(6)}#{suffix}"
+      end
       end
 
       def human_compare
