@@ -55,7 +55,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
         end
       end
       expanded = Expressions.from(nodes)
-      expanded.bind_to(nodes)
     else
       expanded = Nop.new
     end

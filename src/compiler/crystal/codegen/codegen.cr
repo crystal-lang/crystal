@@ -348,6 +348,7 @@ module Crystal
           emit_vars_debug_info(vars) if @debug
         end
         node.node.accept self
+        @last = llvm_nil
       end
 
       false

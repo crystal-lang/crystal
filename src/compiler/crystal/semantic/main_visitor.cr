@@ -125,7 +125,7 @@ module Crystal
       @meta_vars = file_module.vars
 
       node.node.accept self
-      node.bind_to node.node
+      node.type = @program.nil_type
 
       @vars = old_vars
       @meta_vars = old_meta_vars
