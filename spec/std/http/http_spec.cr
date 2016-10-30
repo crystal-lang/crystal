@@ -44,7 +44,7 @@ describe HTTP do
       LibC.tzset
       begin
         time = Time.new(1994, 11, 6, 8, 49, 37, 0, Time::Kind::Local)
-        HTTP.rfc1123_date(time).should eq("Sun, 06 Nov 1994 06:49:37 GMT")
+        HTTP.rfc1123_date(time).should eq(time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT"))
       ensure
         ENV["TZ"] = tz
         LibC.tzset
