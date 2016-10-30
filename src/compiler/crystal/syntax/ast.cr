@@ -935,6 +935,7 @@ module Crystal
       a_def.uses_block_arg = uses_block_arg?
       a_def.assigns_special_var = assigns_special_var?
       a_def.name_column_number = name_column_number
+      a_def.visibility = visibility
       a_def
     end
 

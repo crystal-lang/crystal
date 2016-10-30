@@ -981,4 +981,17 @@ describe "Semantic: generic class" do
       Bar(Int32).new
       )) { generic_class "Bar", int32 }
   end
+
+  it "errors if invoking new on private new in generic type (#3485)" do
+    assert_error %(
+      class Foo(T)
+        private def self.new
+          super
+        end
+      end
+
+      Foo(String).new
+      ),
+      "private method 'new' called"
+  end
 end
