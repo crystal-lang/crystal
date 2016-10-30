@@ -5,7 +5,7 @@ module Crystal
   module TargetMachine
     def self.create(target_triple, cpu = "", features = "", release = false) : LLVM::TargetMachine
       case target_triple
-      when /^(x86_64|i[3456]86)/
+      when /^(x86_64|i[3456]86|amd64)/
         LLVM.init_x86
       when /^arm/
         LLVM.init_arm
