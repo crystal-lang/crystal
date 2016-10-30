@@ -2163,13 +2163,16 @@ module Crystal
           next_token
           found_comment = skip_space
           if found_comment || @token.type == :NEWLINE
-            skip_space_write_line
-            skip_space_or_newline
             if @inside_call_or_assign == 0
-              write_indent(@indent + 2, node.args.last)
+              next_indent = @indent + 2
             else
-              write_indent(column == 0 ? 2 : column, node.args.last)
+              next_indent = column == 0 ? 2 : column
             end
+            indent(next_indent) do
+              skip_space_write_line
+              skip_space_or_newline
+            end
+            write_indent(next_indent, node.args.last)
           else
             write " " if needs_space
             inside_call_or_assign do
@@ -2794,6 +2797,8 @@ module Crystal
     end
 
     def format_binary(node, token, alternative)
+      column = @column
+
       accept node.left
       skip_space_or_newline
 
@@ -2817,9 +2822,15 @@ module Crystal
       write_token " ", token
       skip_space
       if @token.type == :NEWLINE
-        next_token_skip_space_or_newline
-        write_line
-        next_indent = @inside_cond == 0 ? @indent + 2 : @indent
+        if @inside_call_or_assign == 0
+          next_indent = @inside_cond == 0 ? @indent + 2 : @indent
+        else
+          next_indent = column == 0 ? 2 : column
+        end
+        indent(next_indent) do
+          skip_space_write_line
+          skip_space_or_newline
+        end
         write_indent(next_indent, node.right)
         return false
       end

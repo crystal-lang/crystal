@@ -976,4 +976,9 @@ describe Crystal::Formatter do
   assert_format "def foo(a,\n        **b)\nend"
   assert_format "def foo(**b, # comment\n        &block)\nend"
   assert_format "def foo(a, **b, # comment\n        &block)\nend"
+
+  assert_format "1 +\n  # foo\n  2"
+  assert_format "1 +\n  # foo\n  2"
+  assert_format "1 ||\n  # foo\n  2"
+  assert_format "foo(1 ||\n    # foo\n    2)"
 end
