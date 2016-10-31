@@ -7,7 +7,7 @@ lib LibC
   alias Int = Int32
   alias UInt = UInt32
 
-  {% if flag?(:x86_64) %}
+  {% if flag?(:x86_64) || flag?(:aarch64) %}
     alias Long = Int64
     alias ULong = UInt64
   {% elsif flag?(:i686) || flag?(:arm) %}
