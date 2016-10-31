@@ -47,7 +47,7 @@ class Crystal::CodeGenVisitor
   def declare_const(const)
     global_name = const.llvm_name
     global = @main_mod.globals[global_name]? ||
-      @main_mod.globals.add(llvm_type(const.value.type), global_name)
+             @main_mod.globals.add(llvm_type(const.value.type), global_name)
     global.linkage = LLVM::Linkage::Internal if @single_module
     global
   end
