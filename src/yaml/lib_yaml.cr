@@ -7,7 +7,7 @@ lib LibYAML
   # the necessary memory and cast to the Parser and Emitter
   # structs if necessary, where we mapped only some fields
   # we are interested in.
-  {% if flag?(:x86_64) %}
+  {% if flag?(:x86_64) || flag?(:aarch64) %}
     PARSER_SIZE = 480
     EMITTER_SIZE = 432
   {% else %}

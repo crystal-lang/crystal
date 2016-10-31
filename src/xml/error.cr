@@ -24,7 +24,7 @@ class XML::Error < Exception
     message = String.new(fmt).chomp
     error = XML::Error.new(message, 0)
 
-    {% if flag?(:arm) %}
+    {% if flag?(:arm) || flag?(:aarch64) %}
       # libxml2 is likely missing ARM unwind tables (.ARM.extab and .ARM.exidx
       # sections) which prevent raising from a libxml2 context.
       @@errors << error

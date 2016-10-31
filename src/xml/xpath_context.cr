@@ -7,7 +7,7 @@ struct XML::XPathContext
   def evaluate(search_path : String)
     xpath = LibXML.xmlXPathEvalExpression(search_path, self)
     unless xpath
-      {% if flag?(:arm) %}
+      {% if flag?(:arm) || flag?(:aarch64) %}
         if errors = XML::Error.errors
           raise errors.last
         end
