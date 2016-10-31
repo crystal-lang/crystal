@@ -613,7 +613,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_class_with_type(type : Type, value)
-    type_id(type)
+    type_id(type.metaclass)
   end
 
   def codegen_primitive_proc_call(node, target_def, call_args)
