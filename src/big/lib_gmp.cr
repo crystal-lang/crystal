@@ -7,7 +7,7 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = ULong
 
-  {% if flag?(:x86_64) %}
+  {% if flag?(:x86_64) || flag?(:aarch64) %}
     alias MpExp = Int64
   {% else %}
     alias MpExp = Int32

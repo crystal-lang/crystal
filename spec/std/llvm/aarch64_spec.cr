@@ -1,20 +1,20 @@
 require "spec"
 require "llvm"
 
-{% if LibLLVM::BUILT_TARGETS.includes?(:arm) %}
-LLVM.init_arm
+{% if LibLLVM::BUILT_TARGETS.includes?(:aarch64) %}
+LLVM.init_aarch64
 {% end %}
 
 private def abi
-  triple = "arm-unknown-linux-gnueabihf"
+  triple = "aarch64-unknown-linux-gnu"
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
-  LLVM::ABI::ARM.new(machine)
+  LLVM::ABI::AArch64.new(machine)
 end
 
 class LLVM::ABI
-  describe ARM do
-    {% if LibLLVM::BUILT_TARGETS.includes?(:arm) %}
+  describe AArch64 do
+    {% if LibLLVM::BUILT_TARGETS.includes?(:aarch64) %}
     describe "align" do
       it "for integer" do
         abi.align(LLVM::Int1).should be_a(::Int32)
@@ -26,7 +26,7 @@ class LLVM::ABI
       end
 
       it "for pointer" do
-        abi.align(LLVM::Int8.pointer).should eq(4)
+        abi.align(LLVM::Int8.pointer).should eq(8)
       end
 
       it "for float" do
@@ -62,7 +62,7 @@ class LLVM::ABI
       end
 
       it "for pointer" do
-        abi.size(LLVM::Int8.pointer).should eq(4)
+        abi.size(LLVM::Int8.pointer).should eq(8)
       end
 
       it "for float" do
@@ -108,7 +108,7 @@ class LLVM::ABI
         info = abi.abi_info(arg_types, return_type, true)
         info.arg_types.size.should eq(1)
 
-        info.arg_types[0].should eq(ArgType.direct(str, cast: LLVM::Type.array(LLVM::Int32, 1)))
+        info.arg_types[0].should eq(ArgType.direct(str, cast: LLVM::Int32))
         info.return_type.should eq(ArgType.direct(str, cast: LLVM::Int32))
       end
 
@@ -121,7 +121,7 @@ class LLVM::ABI
         info.arg_types.size.should eq(1)
 
         info.arg_types[0].should eq(ArgType.direct(str, cast: LLVM::Type.array(LLVM::Int64, 2)))
-        info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
+        info.return_type.should eq(ArgType.direct(str, cast: LLVM::Type.array(LLVM::Int64, 2)))
       end
 
       it "does with structs between 64 and 128 bits" do
@@ -132,7 +132,7 @@ class LLVM::ABI
         info = abi.abi_info(arg_types, return_type, true)
         info.arg_types.size.should eq(1)
 
-        info.arg_types[0].should eq(ArgType.direct(str, cast: LLVM::Type.array(LLVM::Int64, 3)))
+        info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
         info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
       end
     end

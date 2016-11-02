@@ -7,6 +7,8 @@ module Crystal
       case target_triple
       when /^(x86_64|i[3456]86|amd64)/
         LLVM.init_x86
+      when /^aarch64/
+        LLVM.init_aarch64
       when /^arm/
         LLVM.init_arm
 

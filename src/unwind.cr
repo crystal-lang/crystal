@@ -125,7 +125,7 @@ lib LibUnwind
     fun raise_exception = _Unwind_RaiseException(ex : Exception*) : ReasonCode
   {% end %}
 
-  {% if flag?(:x86_64) || flag?(:arm) %}
+  {% if flag?(:x86_64) || flag?(:arm) || flag?(:aarch64) %}
     EH_REGISTER_0 = 0
     EH_REGISTER_1 = 1
   {% else %}
