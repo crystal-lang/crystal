@@ -1,7 +1,9 @@
 require "spec"
 require "llvm"
 
+{% if LibLLVM::BUILT_TARGETS.includes?(:aarch64) %}
 LLVM.init_aarch64
+{% end %}
 
 private def abi
   triple = "aarch64-unknown-linux-gnu"
@@ -12,6 +14,7 @@ end
 
 class LLVM::ABI
   describe AArch64 do
+    {% if LibLLVM::BUILT_TARGETS.includes?(:aarch64) %}
     describe "align" do
       it "for integer" do
         abi.align(LLVM::Int1).should be_a(::Int32)
@@ -133,5 +136,6 @@ class LLVM::ABI
         info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
       end
     end
+{% end %}
   end
 end
