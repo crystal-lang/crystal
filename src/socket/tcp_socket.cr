@@ -67,18 +67,10 @@ class TCPSocket < IPSocket
   # Opens a TCP socket to a remote TCP server, yields it to the block, then
   # eventually closes the socket when the block returns.
   #
+  # Forwards all params to TCPSocket#new.
   # Returns the value of the block.
-  def self.open(host, port, local_host, local_port)
-    sock = new(host, port, local_host: local_host, local_port: local_port)
-    begin
-      yield sock
-    ensure
-      sock.close
-    end
-  end
-
-  def self.open(host, port)
-    sock = new(host, port)
+  def self.open(*args, **kwargs)
+    sock = new(*args, **kwargs)
     begin
       yield sock
     ensure
