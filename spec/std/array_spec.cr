@@ -1238,6 +1238,22 @@ describe "Array" do
     end
   end
 
+  describe "nitems" do
+    describe "when array contains nil elements" do
+      it "returns number of the elements" do
+        a = [1, 2, nil, 4, nil, 6]
+        a.nitems.should eq(2)
+      end
+    end
+
+    describe "when array does not contains nil elements" do
+      it "returns zero" do
+        a = [1, 2, 3, 4, 5, 6]
+        a.nitems.should eq(0)
+      end
+    end
+  end
+
   it "does compact_map" do
     a = [1, 2, 3, 4, 5]
     b = a.compact_map { |e| e.divisible_by?(2) ? e : nil }
