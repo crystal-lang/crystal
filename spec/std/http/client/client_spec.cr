@@ -103,6 +103,20 @@ module HTTP
           Client.new(URI.parse("http:/"))
         end
       end
+
+      it "yields to a block" do
+        Client.new(URI.parse("http://example.com")) do |client|
+          typeof(client)
+        end
+      end
+    end
+
+    context "from a host" do
+      it "yields to a block" do
+        Client.new("example.com") do |client|
+          typeof(client)
+        end
+      end
     end
 
     it "doesn't read the body if request was HEAD" do

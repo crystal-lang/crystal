@@ -105,7 +105,7 @@ class HTTP::Client
   # 443 if *tls* is truthy. If *tls* is `true` a new `OpenSSL::SSL::Context::Client` will
   # be used, else the given one. In any case the active context can be accessed through `tls`.
   {% if flag?(:without_openssl) %}
-    def initialize(@host, port = nil, tls : Bool = false)
+    def initialize(@host : String, port = nil, tls : Bool = false)
       @tls = nil
       if tls
         raise "HTTP::Client TLS is disabled because `-D without_openssl` was passed at compile time"
@@ -115,7 +115,7 @@ class HTTP::Client
       @compress = true
     end
   {% else %}
-    def initialize(@host, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
+    def initialize(@host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
       @tls = case tls
              when true
                OpenSSL::SSL::Context::Client.new
@@ -151,10 +151,22 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
+
   def self.new(uri : URI, tls = nil)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
-    new(host, uri.port, tls)
+    client = new(host, uri.port, tls)
+  end
+
+  def self.new(uri : URI, tls = nil)
+    tls = tls_flag(uri, tls)
+    host = validate_host(uri)
+    client = new(host, uri.port, tls)
+    begin
+      yield client
+    ensure
+      client.close
+    end
   end
 
   # Creates a new HTTP client, yields it to the block, and closes
@@ -165,7 +177,7 @@ class HTTP::Client
   #   client.get "/"
   # end
   # ```
-  def self.new(host, port = nil, tls = false)
+  def self.new(host : String, port = nil, tls = false)
     client = new(host, port, tls)
     begin
       yield client
