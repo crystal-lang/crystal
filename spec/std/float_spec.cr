@@ -239,4 +239,8 @@ describe "Float" do
     1.0.clone.should eq(1.0)
     1.0_f32.clone.should eq(1.0_f32)
   end
+  describe "#factorial" do
+    assert { 0.5.factorial.should eq(0.88622692545275805) }
+    assert { 0.3.factorial.should eq(0.89747069630627718) }
+  end
 end
