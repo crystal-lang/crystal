@@ -450,6 +450,19 @@ struct Float
   end
 end
 
+struct Int
+  include Comparable(BigInt)
+
+  def <=>(other : BigInt)
+    -(other <=> self)
+  end
+
+  # Returns a BigInt representing this int.
+  def to_big_i : BigInt
+    BigInt.new(self)
+  end
+end
+
 class String
   # Returns a BigInt from this string, in the given *base*.
   #
