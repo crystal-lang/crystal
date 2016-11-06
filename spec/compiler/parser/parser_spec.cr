@@ -134,7 +134,6 @@ describe "Parser" do
 
   it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
-  it_parses "A, b = 1, 2", MultiAssign.new(["A".path, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
   assert_syntax_error "1 == 2, a = 4"
   assert_syntax_error "x : String, a = 4"
@@ -1324,6 +1323,7 @@ describe "Parser" do
   assert_syntax_error "/foo)/", "invalid regex"
   assert_syntax_error "def =\nend"
   assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment"
+  assert_syntax_error "FOO, BAR = 1, 2", "Multiple assignment is not allowed for constants"
   assert_syntax_error "{1, ->{ |x| x } }", "unexpected token '|'"
   assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token '|'"
 
