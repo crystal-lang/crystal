@@ -232,8 +232,8 @@ class URI
   #
   #     URI.escape("'Stop!' said Fred")                      #=> "%27Stop%21%27%20said%20Fred"
   #     URI.escape("'Stop!' said Fred", space_to_plus: true) #=> "%27Stop%21%27+said+Fred"
-  def self.escape(string : String, space_to_plus = false) : String
-    String.build { |io| escape(string, io, space_to_plus) }
+  def self.escape(string : String, space_to_plus = false, uri_safe = false) : String
+    String.build { |io| escape(string, io, space_to_plus, uri_safe) }
   end
 
   # URL-encode a string.
@@ -247,23 +247,30 @@ class URI
   #       URI.unreserved?(byte) || byte.chr == '/'
   #     end
   #     #=> "/foo/file%3F%281%29.txt"
-  def self.escape(string : String, space_to_plus = false, &block) : String
-    String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
+  def self.escape(string : String, space_to_plus = false, uri_safe = false, &block) : String
+    String.build { |io| escape(string, io, space_to_plus, uri_safe) { |byte| yield byte } }
   end
 
   # URL-encode a string and write the result to an `IO`.
-  def self.escape(string : String, io : IO, space_to_plus = false)
-    self.escape(string, io, space_to_plus) { |byte| URI.unreserved? byte }
+  def self.escape(string : String, io : IO, space_to_plus = false, uri_safe = false)
+    self.escape(string, io, space_to_plus, uri_safe) { |byte| URI.unreserved? byte }
+  end
+
+  # URL-encode a string into a URI safe way
+  def self.escape_uri_safe(string : String) : String
+    String.build { |io| escape(string, io, false, true) }
   end
 
   # URL-encode a string and write the result to an `IO`.
   #
   # This method requires block.
-  def self.escape(string : String, io : IO, space_to_plus = false, &block)
+  def self.escape(string : String, io : IO, space_to_plus = false, uri_safe = false, &block)
     string.each_byte do |byte|
       char = byte.unsafe_chr
       if char == ' ' && space_to_plus
         io.write_byte '+'.ord.to_u8
+      elsif reserved?(byte) && uri_safe
+        io.write_byte byte
       elsif char.ascii? && yield(byte) && (!space_to_plus || char != '+')
         io.write_byte byte
       else

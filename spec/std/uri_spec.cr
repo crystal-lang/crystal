@@ -163,6 +163,10 @@ describe "URI" do
       URI.unescape("hello&world") { |byte| URI.reserved? byte }
          .should eq("hello&world")
     end
+
+    it "escape a String into a url safe structure" do
+      URI.escape_uri_safe(":/?#[]@!$&\'()*+,;=").should eq(":/?#[]@!$&\'()*+,;=")
+    end
   end
 
   describe "reserved?" do
