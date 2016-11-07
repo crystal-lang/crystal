@@ -164,7 +164,7 @@ describe "URI" do
          .should eq("hello&world")
     end
 
-    it "escape a String into a url safe structure" do
+    it "escape a String into a uri safe structure" do
       URI.escape_uri_safe(":/?#[]@!$&\'()*+,;=").should eq(":/?#[]@!$&\'()*+,;=")
     end
   end
