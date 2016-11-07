@@ -86,7 +86,7 @@ build() {
   with_build_env 'make std_spec clean'
   with_build_env 'make crystal spec doc'
   with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
-  with_build_env './bin/crystal tool format --check'
+  with_build_env './bin/crystal tool format --check samples spec src'
 }
 
 deploy() {
@@ -165,6 +165,7 @@ with_build_env() {
     -v $(pwd):/mnt \
     -w /mnt \
     -e LIBRARY_PATH="/opt/crystal/embedded/lib/" \
+    -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     "jhass/crystal-build-$ARCH" \
     "$ARCH_CMD" /bin/bash -c "'$command'"
 
