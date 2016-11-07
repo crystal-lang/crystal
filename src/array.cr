@@ -1730,7 +1730,7 @@ class Array(T)
         return
       end
       d -= 1
-      shift_median!(a, n)
+      center_median!(a, n)
       c = partition_for_quick_sort!(a, n)
       quick_sort_for_intro_sort!(c, n - (c - a), d)
       n = c - a
@@ -1753,7 +1753,7 @@ class Array(T)
     while c < (n - 1) / 2
       c = 2 * (c + 1)
       c -= 1 if a[c] < a[c - 1]
-      break unless v < a[c]
+      break unless v <= a[c]
       a[p] = a[c]
       p = c
     end
@@ -1767,25 +1767,27 @@ class Array(T)
     a[p] = v
   end
 
-  protected def self.shift_median!(a, n)
+  protected def self.center_median!(a, n)
     b, c = a + n / 2, a + n - 1
-    if a.value < b.value
-      if b.value < c.value
-        a.value, b.value = b.value, a.value
-      elsif a.value < c.value
-        a.value, c.value = c.value, a.value
+    if a.value <= b.value
+      if b.value <= c.value
+        return
+      elsif a.value <= c.value
+        b.value, c.value = c.value, b.value
+      else
+        a.value, b.value, c.value = c.value, a.value, b.value
       end
-    elsif a.value < c.value
-      return
-    elsif b.value < c.value
-      a.value, c.value = c.value, a.value
-    else
+    elsif a.value <= c.value
       a.value, b.value = b.value, a.value
+    elsif b.value <= c.value
+      a.value, b.value, c.value = b.value, c.value, a.value
+    else
+      a.value, c.value = a.value, c.value
     end
   end
 
   protected def self.partition_for_quick_sort!(a, n)
-    v, l, r = a.value, a + 1, a + n
+    v, l, r = a[n / 2], a + 1, a + n - 1
     loop do
       while l.value < v
         l += 1
@@ -1826,7 +1828,7 @@ class Array(T)
         return
       end
       d -= 1
-      shift_median!(a, n, comp)
+      center_median!(a, n, comp)
       c = partition_for_quick_sort!(a, n, comp)
       quick_sort_for_intro_sort!(c, n - (c - a), d, comp)
       n = c - a
@@ -1849,7 +1851,7 @@ class Array(T)
     while c < (n - 1) / 2
       c = 2 * (c + 1)
       c -= 1 if comp.call(a[c], a[c - 1]) < 0
-      break unless comp.call(v, a[c]) < 0
+      break unless comp.call(v, a[c]) <= 0
       a[p] = a[c]
       p = c
     end
@@ -1863,25 +1865,27 @@ class Array(T)
     a[p] = v
   end
 
-  protected def self.shift_median!(a, n, comp)
+  protected def self.center_median!(a, n, comp)
     b, c = a + n / 2, a + n - 1
-    if comp.call(a.value, b.value) < 0
-      if comp.call(b.value, c.value) < 0
-        a.value, b.value = b.value, a.value
-      elsif comp.call(a.value, c.value) < 0
-        a.value, c.value = c.value, a.value
+    if comp.call(a.value, b.value) <= 0
+      if comp.call(b.value, c.value) <= 0
+        return
+      elsif comp.call(a.value, c.value) <= 0
+        b.value, c.value = c.value, b.value
+      else
+        a.value, b.value, c.value = c.value, a.value, b.value
       end
-    elsif comp.call(a.value, c.value) < 0
-      return
-    elsif comp.call(b.value, c.value) < 0
-      a.value, c.value = c.value, a.value
-    else
+    elsif comp.call(a.value, c.value) <= 0
       a.value, b.value = b.value, a.value
+    elsif comp.call(b.value, c.value) <= 0
+      a.value, b.value, c.value = b.value, c.value, a.value
+    else
+      a.value, c.value = a.value, c.value
     end
   end
 
   protected def self.partition_for_quick_sort!(a, n, comp)
-    v, l, r = a.value, a + 1, a + n
+    v, l, r = a[n / 2], a + 1, a + n - 1
     loop do
       while comp.call(l.value, v) < 0
         l += 1
