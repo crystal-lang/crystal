@@ -23,6 +23,14 @@ end
 
 # :nodoc:
 struct CallStack
+  @@skip = [] of String
+
+  def self.skip(filename)
+    @@skip << filename
+  end
+
+  skip(__FILE__)
+
   @callstack : Array(Void*)
   @backtrace : Array(String)?
 
@@ -137,11 +145,12 @@ struct CallStack
   end
 
   private def decode_backtrace
-    @callstack.map do |ip|
+    @callstack.compact_map do |ip|
       file, line, column = CallStack.decode_line_number(ip)
       if file == "??"
         file_line_column = "??"
       else
+        next if @@skip.includes?(file)
         file_line_column = "#{file} #{line}:#{column}"
       end
 

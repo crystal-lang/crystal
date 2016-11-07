@@ -1,5 +1,7 @@
 require "callstack"
 
+CallStack.skip(__FILE__)
+
 class Exception
   getter message : String?
   getter cause : Exception?

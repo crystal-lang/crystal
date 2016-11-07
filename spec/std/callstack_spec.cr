@@ -16,8 +16,14 @@ describe "Backtrace" do
 
     output = `#{tempfile.path}`
 
+    # resolved file line:column
     output.should match(/#{sample} 3:10/) # callee1
     output.should match(/#{sample} 15:3/) # callee3
     output.should match(/#{sample} 17:1/) # ???
+
+    # skipped internal details
+    output.should_not match(/src\/callstack\.cr/)
+    output.should_not match(/src\/exception\.cr/)
+    output.should_not match(/src\/raise\.cr/)
   end
 end
