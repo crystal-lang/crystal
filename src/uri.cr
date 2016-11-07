@@ -256,7 +256,7 @@ class URI
     self.escape(string, io, space_to_plus, uri_safe) { |byte| URI.unreserved? byte }
   end
 
-  # URL-encode a string into a URI safe way
+  # URL-encode a string into a URI safe structure
   def self.escape_uri_safe(string : String) : String
     String.build { |io| escape(string, io, false, true) }
   end
