@@ -2093,7 +2093,7 @@ class String
   # ```
   def index(search : Char, offset = 0)
     # If it's ASCII we can delegate to slice
-    if search.ascii?
+    if search.ascii? && ascii_only?
       return to_slice.index(search.ord.to_u8, offset)
     end
 
@@ -2150,7 +2150,7 @@ class String
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
-    if search.ascii?
+    if search.ascii? && ascii_only?
       return to_slice.rindex(search.ord.to_u8, offset)
     end
 

@@ -546,6 +546,7 @@ describe "String" do
       assert { "bar".index('r').should eq(2) }
       assert { "日本語".index('本').should eq(1) }
       assert { "bar".index('あ').should be_nil }
+      assert { "あいう_えお".index('_').should eq(3) }
 
       describe "with offset" do
         assert { "foobarbaz".index('a', 5).should eq(7) }
@@ -594,6 +595,7 @@ describe "String" do
       assert { "foobar".rindex('a').should eq(4) }
       assert { "foobar".rindex('g').should be_nil }
       assert { "日本語日本語".rindex('本').should eq(4) }
+      assert { "あいう_えお".rindex('_').should eq(3) }
 
       describe "with offset" do
         assert { "faobar".rindex('a', 3).should eq(1) }
@@ -801,6 +803,7 @@ describe "String" do
     assert { "foobar".ends_with?('x').should be_false }
     assert { "よし".ends_with?('し').should be_true }
     assert { "よし".ends_with?('な').should be_false }
+    assert { "あいう_".ends_with?('_').should be_true }
   end
 
   describe "=~" do
