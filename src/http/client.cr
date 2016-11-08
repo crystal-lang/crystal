@@ -154,7 +154,7 @@ class HTTP::Client
   def self.new(uri : URI, tls = nil)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
-    client = new(host, uri.port, tls)
+    new(host, uri.port, tls)
   end
 
   # Creates a new HTTP client from a URI, yields it to the block and closes the
