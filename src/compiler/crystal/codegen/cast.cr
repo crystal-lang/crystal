@@ -325,6 +325,10 @@ class Crystal::CodeGenVisitor
     cast_to value, to_type
   end
 
+  def downcast_distinct(value, to_type : VirtualType, from_type : NilableType)
+    cast_to value, to_type
+  end
+
   def downcast_distinct(value, to_type : Type, from_type : NilableType)
     value
   end

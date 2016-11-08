@@ -389,4 +389,26 @@ describe "Code gen: cast" do
       end
       )).to_string.should eq("A")
   end
+
+  it "casts from nilable type to virtual type (#3512)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      foo = 1 == 2 ? nil : Foo.new
+      x = foo.as(Foo)
+      x.foo
+      )).to_i.should eq(1)
+  end
 end
