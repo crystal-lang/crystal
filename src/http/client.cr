@@ -131,7 +131,7 @@ class HTTP::Client
   {% end %}
 
   # Creates a new HTTP client from a URI. Parses the *host*, *port*,
-  # and *tls* configuration from the url provided. Port defaults to
+  # and *tls* configuration from the URI provided. Port defaults to
   # 80 if not specified unless using the https protocol, which defaults
   # to port 443 and sets tls to `true`.
   #
@@ -151,13 +151,33 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-
   def self.new(uri : URI, tls = nil)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
     client = new(host, uri.port, tls)
   end
 
+  # Creates a new HTTP client from a URI, yields it to the block and closes the
+  # client afterwards. Parses the *host*, *port*, and *tls* configuration from
+  # the URI provided. Port defaults to 80 if not specified unless using the
+  # https protocol, which defaults to port 443 and sets tls to `true`.
+  #
+  # ```
+  # uri = URI.parse("https://secure.example.com")
+  # HTTP::Client.new(uri) do |client|
+  #   client.tls? # => true
+  #   client.get("/")
+  # end
+  # ```
+  # This constructor will *ignore* any path or query segments in the URI
+  # as those will need to be passed to the client when a request is made.
+  #
+  # If *tls* is given it will be used, if not a new TLS context will be created.
+  # If *tls* is given and *uri* is a HTTP URI, `ArgumentError` is raised.
+  # In any case the active context can be accessed through `tls`.
+  #
+  # This constructor will raise an exception if any scheme but HTTP or HTTPS
+  # is used.
   def self.new(uri : URI, tls = nil)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
