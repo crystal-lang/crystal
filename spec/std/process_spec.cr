@@ -14,9 +14,10 @@ describe Process do
     process.wait.exit_code.should eq(1)
   end
 
-  it "returns status 127 if command could not be executed" do
-    process = Process.new("foobarbaz")
-    process.wait.exit_code.should eq(127)
+  it "raises if command could not be executed" do
+    expect_raises Errno do
+      Process.new("foobarbaz")
+    end
   end
 
   it "run waits for the process" do
