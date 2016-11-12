@@ -367,7 +367,7 @@ class Crystal::CodeGenVisitor
           end
           accept call
 
-          phi.add @last, a_def.type
+          phi.add @last, call.type
           position_at_end next_def_label
         end
         unreachable
