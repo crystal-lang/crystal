@@ -1494,11 +1494,11 @@ class Array(T)
   end
 
   def sort_by(&block : T -> _)
-    dup.sort_by! &block
+    dup.sort_by! { |e| yield(e) }
   end
 
   def sort_by!(&block : T -> _)
-    sorted = map { |e| {e, block.call(e)} }.sort! { |x, y| x[1] <=> y[1] }
+    sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
     @size.times do |i|
       @buffer[i] = sorted.to_unsafe[i][0]
     end

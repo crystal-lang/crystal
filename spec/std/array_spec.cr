@@ -1029,6 +1029,13 @@ describe "Array" do
       b.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
     end
+
+    it "unpacks tuple" do
+      a = [{"d", 4}, {"a", 1}, {"c", 3}, {"e", 5}, {"b", 2}]
+      b = a.sort_by { |x, y| y }
+      b.should eq([{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}, {"e", 5}])
+      a.should_not eq(b)
+    end
   end
 
   describe "sort_by!" do
