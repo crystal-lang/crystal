@@ -25,4 +25,11 @@ describe "Compiler" do
       `#{tempfile.path}`.should eq("Hello!")
     end
   end
+
+  it "build a project without specified sources" do
+    Dir.cd "#{__DIR__}/data/" do
+      Crystal::Command.run ["build"]
+      File.delete("dummy-proj")
+    end
+  end
 end
