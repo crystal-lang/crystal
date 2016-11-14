@@ -43,10 +43,11 @@ module JSON
   # * **emit_null**: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
+  # * **setter**: if true, will generate a setter for the variable, true by default
+  # * **getter**: if true, will generate a getter for the variable, true by default
   #
-  # The mapping also automatically defines Crystal properties (getters and setters) for each
-  # of the keys. It doesn't define a constructor accepting those arguments, but you can provide
-  # an overload.
+  # This macro by default defines getters and setters for each variable (this can be overrided with *setter* and *getter*).
+  # The mapping doesn't define a constructor accepting these variables as arguments, but you can provide an overload.
   #
   # The macro basically defines a constructor accepting a `JSON::PullParser` that reads from
   # it and initializes this type's instance variables. It also defines a `to_json(IO)` method
@@ -66,13 +67,17 @@ module JSON
     {% for key, value in properties %}
       @{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
 
-      def {{key.id}}=(_{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
-        @{{key.id}} = _{{key.id}}
-      end
+      {% if value[:setter] == nil ? true : value[:setter] %}
+        def {{key.id}}=(_{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
+          @{{key.id}} = _{{key.id}}
+        end
+      {% end %}
 
-      def {{key.id}}
-        @{{key.id}}
-      end
+      {% if value[:getter] == nil ? true : value[:getter] %}
+        def {{key.id}}
+          @{{key.id}}
+        end
+      {% end %}
     {% end %}
 
     def initialize(%pull : JSON::PullParser)
