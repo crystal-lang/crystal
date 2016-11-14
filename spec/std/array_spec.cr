@@ -1677,4 +1677,10 @@ describe "Array" do
   it "flattens" do
     [[1, 'a'], [[[[true], "hi"]]]].flatten.should eq([1, 'a', true, "hi"])
   end
+
+  it "flattens the specified amount" do
+    [[1, 'a'], [[[[true], "hi"]]]].flatten(1).should eq([1, 'a', [[[true], "hi"]]])
+    [[1, 'a'], [[[[true], "hi"]]]].flatten(2).should eq([1, 'a', [[true], "hi"]])
+    [[1, 'a'], [[[[true], "hi"]]]].flatten(100).should eq([1, 'a', true, "hi"])
+  end
 end
