@@ -2232,7 +2232,20 @@ module Crystal
     end
 
     delegate lookup_defs, lookup_defs_with_modules, lookup_first_def,
-      lookup_macro, lookup_macros, types, types?, to: aliased_type
+      lookup_macro, lookup_macros, to: aliased_type
+
+    def types?
+      process_value
+      if aliased_type = @aliased_type
+        aliased_type.types?
+      else
+        nil
+      end
+    end
+
+    def types
+      types?.not_nil!
+    end
 
     def remove_alias
       process_value
