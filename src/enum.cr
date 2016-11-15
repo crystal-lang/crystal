@@ -311,14 +311,8 @@ struct Enum
   # ```
   def self.from_value?(value) : self | Nil
     {% if @type.has_attribute?("Flags") %}
-      arr = [] of self
-      {% for member in @type.constants %}
-        if ({{@type}}::{{member}}.value & value) == {{@type}}::{{member}}.value && {{@type}}::{{member}}.value != 0
-          arr << {{@type}}::{{member}}
-        end
-      {% end %}
-      return nil if arr.empty?
-      return arr.reduce { |sum, e| sum | e }
+      arr = values.select {|v| (v.to_i & value) == v.to_i && v.to_i != 0 }
+      return arr.reduce { |types, e| types | e } unless arr.empty?
     {% else %}
       {% for member in @type.constants %}
         return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
