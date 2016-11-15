@@ -311,8 +311,11 @@ struct Enum
   # ```
   def self.from_value?(value) : self | Nil
     {% if @type.has_attribute?("Flags") %}
-      arr = values.select {|v| (v.to_i & value) == v.to_i && v.to_i != 0 }
-      return arr.reduce { |types, e| types | e } unless arr.empty?
+      mask = {% for member, i in @type.constants %}\
+        {% if i != 0 %} | {% end %}\
+        {{@type}}::{{member}}.value{% end %}
+      return if (mask & value != value) || (value == 0 && !values.map(&.to_i).includes?(0))
+      return new(value)
     {% else %}
       {% for member in @type.constants %}
         return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
