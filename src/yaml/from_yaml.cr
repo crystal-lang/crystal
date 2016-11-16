@@ -155,6 +155,10 @@ def Union.new(pull : YAML::PullParser)
   raise YAML::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
 end
 
+def Time.new(pull : YAML::PullParser)
+  Time::Format::ISO_8601_DATE_TIME.parse(pull.read_scalar)
+end
+
 struct Time::Format
   def from_yaml(pull : YAML::PullParser)
     string = pull.read_scalar

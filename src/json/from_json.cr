@@ -226,6 +226,10 @@ def Union.new(pull : JSON::PullParser)
   raise JSON::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
 end
 
+def Time.new(pull : JSON::PullParser)
+  Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
+end
+
 struct Time::Format
   def from_json(pull : JSON::PullParser)
     string = pull.read_string
