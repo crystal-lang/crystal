@@ -314,7 +314,7 @@ struct Enum
       mask = {% for member, i in @type.constants %}\
         {% if i != 0 %} | {% end %}\
         {{@type}}::{{member}}.value{% end %}
-      return if (mask & value != value) || (value == 0 && !values.map(&.to_i).includes?(0))
+      return if (mask & value != value) || (value == 0 && values.none? { |val| val.to_i == 0 })
       return new(value)
     {% else %}
       {% for member in @type.constants %}
