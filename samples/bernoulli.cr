@@ -2,7 +2,7 @@
 # Taken from the 'Ada 99' project, https://marquisdegeek.com/code_ada99
 
 class Fraction
-  def initialize(n : Int32, d : Int32)
+  def initialize(n : Int64, d : Int64)
     @numerator = n
     @denominator = d
   end
@@ -46,8 +46,8 @@ end
 
 def calculate_bernoulli(bern)
   row = [] of Fraction
-  0.step(bern) do |m|
-    row << Fraction.new(1, m + 1)
+  0_i64.step(bern) do |m|
+    row << Fraction.new(1_i64, m + 1)
     m.step(1, -1) do |j|
       row[j - 1].subtract(row[j])
       row[j - 1].multiply(j)
@@ -58,8 +58,6 @@ def calculate_bernoulli(bern)
   row[0]
 end
 
-# Int32's are only big enough to calculate to 17 Bernoulli numbers
-# Any greater and we get 1/0 due to overflow and division by zero errors
-1.step(17) do |bern|
+1_i64.step(30_i64) do |bern|
   puts calculate_bernoulli(bern).to_s
 end
