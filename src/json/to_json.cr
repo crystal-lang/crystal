@@ -297,6 +297,14 @@ struct Enum
   end
 end
 
+struct Time
+  def to_json(io)
+    io << '"'
+    Time::Format::ISO_8601_DATE_TIME.format(self, io)
+    io << '"'
+  end
+end
+
 # Converter to be used with `JSON.mapping` and `YAML.mapping`
 # to serialize a `Time` instance as the number of seconds
 # since the unix epoch. See `Time.epoch`.

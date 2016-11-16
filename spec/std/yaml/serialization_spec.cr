@@ -108,6 +108,10 @@ describe "YAML serialization" do
     it "deserializes union" do
       Array(Int32 | String).from_yaml(%([1, "hello"])).should eq([1, "hello"])
     end
+
+    it "deserializes time" do
+      Time.from_yaml(%(2016-11-16T09:55:48-0300)).to_utc.should eq(Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc))
+    end
   end
 
   describe "to_yaml" do
@@ -180,6 +184,10 @@ describe "YAML serialization" do
 
     it "does for Enum" do
       YAMLSpecEnum.from_yaml(YAMLSpecEnum::One.to_yaml).should eq(YAMLSpecEnum::One)
+    end
+
+    it "does for time" do
+      Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc).to_yaml.should eq("--- 2016-11-16T12:55:48+0000\n...\n")
     end
 
     it "does a full document" do
