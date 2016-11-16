@@ -44,7 +44,7 @@ def gcd(a, b)
   b > 0 ? gcd(b, a % b) : a
 end
 
-def calculateBernoulli(bern)
+def calculate_bernoulli(bern)
   row = [] of Fraction
   0.step(bern) do |m|
     row << Fraction.new(1, m + 1)
@@ -61,5 +61,5 @@ end
 # Int32's are only big enough to calculate to 17 Bernoulli numbers
 # Any greater and we get 1/0 due to overflow and division by zero errors
 1.step(17) do |bern|
-  puts calculateBernoulli(bern).to_s
+  puts calculate_bernoulli(bern).to_s
 end
