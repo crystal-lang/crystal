@@ -1782,7 +1782,7 @@ class Array(T)
     elsif b.value <= c.value
       a.value, b.value, c.value = b.value, c.value, a.value
     else
-      a.value, c.value = a.value, c.value
+      a.value, c.value = c.value, a.value
     end
   end
 
@@ -1880,7 +1880,7 @@ class Array(T)
     elsif comp.call(b.value, c.value) <= 0
       a.value, b.value, c.value = b.value, c.value, a.value
     else
-      a.value, c.value = a.value, c.value
+      a.value, c.value = c.value, a.value
     end
   end
 
