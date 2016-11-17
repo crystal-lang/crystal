@@ -387,7 +387,7 @@ module Crystal
       if block
         # Check if this is foo &.bar
         first_block_arg = block.args.first?
-        if first_block_arg && block.args.size == 1
+        if first_block_arg && block.args.size == 1 && block.args.first.name.starts_with?("__arg")
           block_body = block.body
           if block_body.is_a?(Call)
             block_obj = block_body.obj
