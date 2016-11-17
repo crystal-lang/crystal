@@ -9,6 +9,7 @@
 * Added support for AArch64 (thanks @ysbaddaden)
 * Added support for LLVM 3.9 (thanks @ysbaddaden)
 * Added `__END_LINE__` magic constant in method default arguments: will be the last line of a call (if the call has a block, it will be the last line of that block)
+* Added `@def` inside macros that takes the value of the current method
 * API docs have a nicer style now (thanks @samueleaton)
 * Slight improvement to debugging support (thanks @ggiraldez)
 * Added iteration times to `Benchmark.ips` (thanks @RX14)

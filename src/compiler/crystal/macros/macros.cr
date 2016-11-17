@@ -32,14 +32,14 @@ class Crystal::Program
     filename
   end
 
-  def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil)
-    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call
+  def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
+    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def
     a_macro.body.accept interpreter
     interpreter.to_s
   end
 
-  def expand_macro(node : ASTNode, scope : Type, path_lookup : Type? = nil, free_vars = nil)
-    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, node.location
+  def expand_macro(node : ASTNode, scope : Type, path_lookup : Type? = nil, free_vars = nil, a_def : Def? = nil)
+    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, node.location, def: a_def
     interpreter.free_vars = free_vars
     node.accept interpreter
     interpreter.to_s

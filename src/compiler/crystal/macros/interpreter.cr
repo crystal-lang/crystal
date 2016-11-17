@@ -3,7 +3,7 @@ module Crystal
     getter last : ASTNode
     property free_vars : Hash(String, TypeVar)?
 
-    def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call)
+    def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call, a_def : Def? = nil)
       vars = {} of String => ASTNode
       splat_index = a_macro.splat_index
       double_splat = a_macro.double_splat
@@ -68,14 +68,14 @@ module Crystal
         vars[macro_block_arg.name] = call_block || Nop.new
       end
 
-      new(program, scope, path_lookup, a_macro.location, vars, call.block)
+      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def)
     end
 
     record MacroVarKey, name : String, exps : Array(ASTNode)?
 
     def initialize(@program : Program,
                    @scope : Type, @path_lookup : Type, @location : Location?,
-                   @vars = {} of String => ASTNode, @block : Block? = nil)
+                   @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil)
       @str = MemoryIO.new(512) # Can't be String::Builder because of `{{debug()}}
       @last = Nop.new
     end
@@ -397,8 +397,8 @@ module Crystal
             produce_tuple = node.names.first == "T"
           when GenericInstanceType
             produce_tuple = ((splat_index = path_lookup.splat_index) &&
-                             path_lookup.type_vars.keys.index(node.names.first) == splat_index) ||
-                            (path_lookup.double_variadic? && path_lookup.type_vars.first_key == node.names.first)
+              path_lookup.type_vars.keys.index(node.names.first) == splat_index) ||
+              (path_lookup.double_variadic? && path_lookup.type_vars.first_key == node.names.first)
           else
             produce_tuple = false
           end
@@ -444,6 +444,8 @@ module Crystal
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
         return @last = TypeNode.new(target)
+      when "@def"
+        return @last = @def || NilLiteral.new
       end
 
       node.raise "unknown macro instance var: '#{node.name}'"

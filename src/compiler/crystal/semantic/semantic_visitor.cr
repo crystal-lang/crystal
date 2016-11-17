@@ -14,6 +14,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   @free_vars : Hash(String, TypeVar)?
   @path_lookup : Type?
+  @untyped_def : Def?
   @typed_def : Def?
   @block : Block?
 
@@ -263,7 +264,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     generated_nodes = expand_macro(the_macro, node) do
       old_args = node.args
       node.args = args
-      expanded = @program.expand_macro the_macro, node, expansion_scope, @path_lookup
+      expanded = @program.expand_macro the_macro, node, expansion_scope, @path_lookup, @untyped_def
       node.args = old_args
       expanded
     end
@@ -363,7 +364,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
 
     generated_nodes = expand_macro(the_macro, node, mode: mode) do
-      @program.expand_macro node, (@scope || current_type), @path_lookup, @free_vars
+      @program.expand_macro node, (@scope || current_type), @path_lookup, @free_vars, @untyped_def
     end
 
     node.expanded = generated_nodes

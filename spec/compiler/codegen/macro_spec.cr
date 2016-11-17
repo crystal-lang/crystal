@@ -1466,4 +1466,28 @@ describe "Code gen: macro" do
       Foo.x
       ), inject_primitives: false).to_i.should eq(1)
   end
+
+  it "expands @def in inline macro" do
+    run(%(
+      def foo
+        {{@def.name.stringify}}
+      end
+
+      foo
+      )).to_string.should eq("foo")
+  end
+
+  it "expands @def in macro" do
+    run(%(
+      macro foo
+        {{@def.name.stringify}}
+      end
+
+      def bar
+        foo
+      end
+
+      bar
+      )).to_string.should eq("bar")
+  end
 end
