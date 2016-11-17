@@ -1008,7 +1008,7 @@ class Crystal::Call
       arg = typed_def.args[index]
       default_value = arg.default_value.as(MagicConstant)
       case default_value.name
-      when :__LINE__
+      when :__LINE__, :__END_LINE__
         type = program.int32
       when :__FILE__, :__DIR__
         type = program.string

@@ -1029,6 +1029,16 @@ module Crystal
                 return @token
               end
             end
+          when 'E'
+            if next_char == 'N' && next_char == 'D' && next_char == '_' && next_char == 'L' && next_char == 'I' && next_char == 'N' && next_char == 'E' && next_char == '_' && next_char == '_'
+              if ident_part_or_end?(peek_next_char)
+                scan_ident(start)
+              else
+                next_char
+                @token.type = :__END_LINE__
+                return @token
+              end
+            end
           when 'F'
             if next_char == 'I' && next_char == 'L' && next_char == 'E' && next_char == '_' && next_char == '_'
               if ident_part_or_end?(peek_next_char)

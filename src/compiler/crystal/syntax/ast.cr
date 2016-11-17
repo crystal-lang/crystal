@@ -2036,10 +2036,12 @@ module Crystal
       MagicConstant.new(@name)
     end
 
-    def expand_node(location)
+    def expand_node(location, end_location)
       case name
       when :__LINE__
         MagicConstant.expand_line_node(location)
+      when :__END_LINE__
+        MagicConstant.expand_line_node(end_location)
       when :__FILE__
         MagicConstant.expand_file_node(location)
       when :__DIR__

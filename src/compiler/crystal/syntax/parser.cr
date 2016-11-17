@@ -906,6 +906,8 @@ module Crystal
         end
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
+      when :__END_LINE__
+        raise "__END_LINE__ can only be used in default argument value", @token
       when :__FILE__
         node_and_next_token MagicConstant.expand_file_node(@token.location)
       when :__DIR__
@@ -3335,7 +3337,7 @@ module Crystal
         next_token_skip_space_or_newline
 
         case @token.type
-        when :__LINE__, :__FILE__, :__DIR__
+        when :__LINE__, :__END_LINE__, :__FILE__, :__DIR__
           default_value = MagicConstant.new(@token.type).at(@token.location)
           next_token
         else
@@ -3891,7 +3893,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__FILE__, :__DIR__, :UNDERSCORE
+      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__END_LINE__, :__FILE__, :__DIR__, :UNDERSCORE
         # Nothing
       when :"*", :"**"
         if current_char.whitespace?
