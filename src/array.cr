@@ -1484,12 +1484,12 @@ class Array(T)
   # Optionally, a block may be given that must implement a comparison, either with the comparison operator `<=>`
   # or a comparison between *a* and *b*, where a < b yields -1, a == b yields 0, and a > b yields 1.
   def sort!
-    Array.quicksort!(@buffer, @size)
+    Array.intro_sort!(@buffer, @size)
     self
   end
 
   def sort!(&block : T, T -> Int32)
-    Array.quicksort!(@buffer, @size, block)
+    Array.intro_sort!(@buffer, @size, block)
     self
   end
 
@@ -1717,48 +1717,200 @@ class Array(T)
     end
   end
 
-  protected def self.quicksort!(a, n, comp)
-    return if (n < 2)
-    p = a[n / 2]
-    l = a
-    r = a + n - 1
-    while l <= r
-      if comp.call(l.value, p) < 0
-        l += 1
-      elsif comp.call(r.value, p) > 0
-        r -= 1
-      else
-        t = l.value
-        l.value = r.value
-        l += 1
-        r.value = t
-        r -= 1
-      end
-    end
-    quicksort!(a, (r - a) + 1, comp) unless r == a + n - 1
-    quicksort!(l, (a + n) - l, comp) unless l == a
+  protected def self.intro_sort!(a, n)
+    return if n < 2
+    quick_sort_for_intro_sort!(a, n, Math.log2(n).to_i * 2)
+    insertion_sort!(a, n)
   end
 
-  protected def self.quicksort!(a, n)
-    return if (n < 2)
-    p = a[n / 2]
-    l = a
-    r = a + n - 1
-    while l <= r
-      if l.value < p
-        l += 1
-      elsif r.value > p
-        r -= 1
-      else
-        t = l.value
-        l.value = r.value
-        l += 1
-        r.value = t
-        r -= 1
+  protected def self.quick_sort_for_intro_sort!(a, n, d)
+    while n > 16
+      if d == 0
+        heap_sort!(a, n)
+        return
+      end
+      d -= 1
+      center_median!(a, n)
+      c = partition_for_quick_sort!(a, n)
+      quick_sort_for_intro_sort!(c, n - (c - a), d)
+      n = c - a
+    end
+  end
+
+  protected def self.heap_sort!(a, n)
+    (n / 2).downto 0 do |p|
+      heapify!(a, p, n)
+    end
+    while n > 1
+      n -= 1
+      a.value, a[n] = a[n], a.value
+      heapify!(a, 0, n)
+    end
+  end
+
+  protected def self.heapify!(a, p, n)
+    v, c = a[p], p
+    while c < (n - 1) / 2
+      c = 2 * (c + 1)
+      c -= 1 if a[c] < a[c - 1]
+      break unless v <= a[c]
+      a[p] = a[c]
+      p = c
+    end
+    if n & 1 == 0 && c == n / 2 - 1
+      c = 2 * c + 1
+      if v < a[c]
+        a[p] = a[c]
+        p = c
       end
     end
-    quicksort!(a, (r - a) + 1) unless r == a + n - 1
-    quicksort!(l, (a + n) - l) unless l == a
+    a[p] = v
+  end
+
+  protected def self.center_median!(a, n)
+    b, c = a + n / 2, a + n - 1
+    if a.value <= b.value
+      if b.value <= c.value
+        return
+      elsif a.value <= c.value
+        b.value, c.value = c.value, b.value
+      else
+        a.value, b.value, c.value = c.value, a.value, b.value
+      end
+    elsif a.value <= c.value
+      a.value, b.value = b.value, a.value
+    elsif b.value <= c.value
+      a.value, b.value, c.value = b.value, c.value, a.value
+    else
+      a.value, c.value = c.value, a.value
+    end
+  end
+
+  protected def self.partition_for_quick_sort!(a, n)
+    v, l, r = a[n / 2], a + 1, a + n - 1
+    loop do
+      while l.value < v
+        l += 1
+      end
+      r -= 1
+      while v < r.value
+        r -= 1
+      end
+      return l unless l < r
+      l.value, r.value = r.value, l.value
+      l += 1
+    end
+  end
+
+  protected def self.insertion_sort!(a, n)
+    (1...n).each do |i|
+      l = a + i
+      v = l.value
+      p = l - 1
+      while l > a && v < p.value
+        l.value = p.value
+        l, p = p, p - 1
+      end
+      l.value = v
+    end
+  end
+
+  protected def self.intro_sort!(a, n, comp)
+    return if n < 2
+    quick_sort_for_intro_sort!(a, n, Math.log2(n).to_i * 2, comp)
+    insertion_sort!(a, n, comp)
+  end
+
+  protected def self.quick_sort_for_intro_sort!(a, n, d, comp)
+    while n > 16
+      if d == 0
+        heap_sort!(a, n, comp)
+        return
+      end
+      d -= 1
+      center_median!(a, n, comp)
+      c = partition_for_quick_sort!(a, n, comp)
+      quick_sort_for_intro_sort!(c, n - (c - a), d, comp)
+      n = c - a
+    end
+  end
+
+  protected def self.heap_sort!(a, n, comp)
+    (n / 2).downto 0 do |p|
+      heapify!(a, p, n, comp)
+    end
+    while n > 1
+      n -= 1
+      a.value, a[n] = a[n], a.value
+      heapify!(a, 0, n, comp)
+    end
+  end
+
+  protected def self.heapify!(a, p, n, comp)
+    v, c = a[p], p
+    while c < (n - 1) / 2
+      c = 2 * (c + 1)
+      c -= 1 if comp.call(a[c], a[c - 1]) < 0
+      break unless comp.call(v, a[c]) <= 0
+      a[p] = a[c]
+      p = c
+    end
+    if n & 1 == 0 && c == n / 2 - 1
+      c = 2 * c + 1
+      if comp.call(v, a[c]) < 0
+        a[p] = a[c]
+        p = c
+      end
+    end
+    a[p] = v
+  end
+
+  protected def self.center_median!(a, n, comp)
+    b, c = a + n / 2, a + n - 1
+    if comp.call(a.value, b.value) <= 0
+      if comp.call(b.value, c.value) <= 0
+        return
+      elsif comp.call(a.value, c.value) <= 0
+        b.value, c.value = c.value, b.value
+      else
+        a.value, b.value, c.value = c.value, a.value, b.value
+      end
+    elsif comp.call(a.value, c.value) <= 0
+      a.value, b.value = b.value, a.value
+    elsif comp.call(b.value, c.value) <= 0
+      a.value, b.value, c.value = b.value, c.value, a.value
+    else
+      a.value, c.value = c.value, a.value
+    end
+  end
+
+  protected def self.partition_for_quick_sort!(a, n, comp)
+    v, l, r = a[n / 2], a + 1, a + n - 1
+    loop do
+      while comp.call(l.value, v) < 0
+        l += 1
+      end
+      r -= 1
+      while comp.call(v, r.value) < 0
+        r -= 1
+      end
+      return l unless l < r
+      l.value, r.value = r.value, l.value
+      l += 1
+    end
+  end
+
+  protected def self.insertion_sort!(a, n, comp)
+    (1...n).each do |i|
+      l = a + i
+      v = l.value
+      p = l - 1
+      while l > a && comp.call(v, p.value) < 0
+        l.value = p.value
+        l, p = p, p - 1
+      end
+      l.value = v
+    end
   end
 
   protected def to_lookup_hash
