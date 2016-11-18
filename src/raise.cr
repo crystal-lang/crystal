@@ -1,5 +1,8 @@
 require "c/stdio"
 require "c/stdlib"
+require "callstack"
+
+CallStack.skip(__FILE__)
 
 private struct LEBReader
   def initialize(@data : UInt8*)
