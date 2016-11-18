@@ -934,4 +934,17 @@ describe "Semantic: macro" do
       Foo.foo
       ), inject_primitives: false) { int32 }
   end
+
+  it "gives correct error when method is invoked but macro exists at the same scope" do
+    assert_error %(
+      macro foo(x)
+      end
+
+      class Foo
+      end
+
+      Foo.new.foo
+      ),
+      "undefined method 'foo'"
+  end
 end

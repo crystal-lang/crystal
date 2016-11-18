@@ -480,6 +480,9 @@ class Crystal::Call
   end
 
   def check_macro_wrong_number_of_arguments(def_name)
+    obj = self.obj
+    return if obj && !obj.is_a?(Path)
+
     macros = in_macro_target &.lookup_macros(def_name)
     return unless macros
 
