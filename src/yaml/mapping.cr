@@ -150,8 +150,19 @@ module YAML
     def to_yaml(%emitter : YAML::Emitter)
       %emitter.mapping do
         {% for key, value in properties %}
-          {{key.id.stringify}}.to_yaml(%emitter)
-          @{{key.id}}.to_yaml(%emitter)
+          _{{key.id}} = @{{key.id}}
+
+          unless _{{key.id}}.is_a?(Nil)
+            # Key
+            {{value[:key] || key.id.stringify}}.to_yaml(%emitter)
+
+            # Value
+            {% if value[:converter] %}
+              {{ value[:converter] }}.to_yaml(_{{key.id}}, %emitter)
+            {% else %}
+              _{{key.id}}.to_yaml(%emitter)
+            {% end %}
+          end
         {% end %}
       end
     end

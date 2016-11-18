@@ -68,6 +68,15 @@ private class YAMLWithSmallIntegers
   })
 end
 
+private class YAMLWithNilableTime
+  YAML.mapping({
+    value: {type: Time, nilable: true, converter: Time::Format.new("%F")},
+  })
+
+  def initialize
+  end
+end
+
 private class YAMLWithTimeEpoch
   YAML.mapping({
     value: {type: Time, converter: Time::EpochConverter},
@@ -124,6 +133,17 @@ describe "YAML mapping" do
     end
   end
 
+  it "does to_yaml" do
+    person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
+    person2 = YAMLPerson.from_yaml(person.to_yaml)
+    person2.should eq(person)
+  end
+
+  it "doesn't emit null when doing to_yaml" do
+    person = YAMLPerson.from_yaml("---\nname: John\n")
+    (person.to_yaml =~ /age/).should be_falsey
+  end
+
   it "raises if non-nilable attribute is nil" do
     expect_raises YAML::ParseException, "missing yaml attribute: name" do
       YAMLPerson.from_yaml("---\nage: 30\n")
@@ -137,7 +157,10 @@ describe "YAML mapping" do
 
   it "parses yaml with Time::Format converter" do
     yaml = YAMLWithTime.from_yaml("---\nvalue: 2014-10-31 23:37:16\n")
+    yaml.value.should be_a(Time)
+    yaml.value.to_s.should eq("2014-10-31 23:37:16")
     yaml.value.should eq(Time.new(2014, 10, 31, 23, 37, 16))
+    yaml.to_yaml.should eq("---\nvalue: 2014-10-31 23:37:16\n")
   end
 
   it "parses YAML with mapping key named 'key'" do
@@ -245,11 +268,17 @@ describe "YAML mapping" do
     yaml.obj["foo"].as_s.should eq("bar")
   end
 
+  it "outputs with converter when nilable" do
+    yaml = YAMLWithNilableTime.new
+    yaml.to_yaml.should eq("--- {}\n")
+  end
+
   it "uses Time::EpochConverter" do
     string = %({"value":1459859781})
     yaml = YAMLWithTimeEpoch.from_yaml(string)
     yaml.value.should be_a(Time)
     yaml.value.should eq(Time.epoch(1459859781))
+    yaml.to_yaml.should eq("---\nvalue: 1459859781\n")
   end
 
   it "uses Time::EpochMillisConverter" do
@@ -257,5 +286,6 @@ describe "YAML mapping" do
     yaml = YAMLWithTimeEpochMillis.from_yaml(string)
     yaml.value.should be_a(Time)
     yaml.value.should eq(Time.epoch_ms(1459860483856))
+    yaml.to_yaml.should eq("---\nvalue: 1459860483856\n")
   end
 end
