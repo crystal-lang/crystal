@@ -863,6 +863,16 @@ module Crystal
       remove_alias.restrict(other, context)
     end
 
+    def restrict(other : AliasType, context)
+      return self if self == other
+
+      if !self.simple? && !other.simple?
+        return nil
+      end
+
+      remove_alias.restrict(other, context)
+    end
+
     def restrict(other, context)
       return self if self == other
 

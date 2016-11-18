@@ -2225,6 +2225,7 @@ module Crystal
   class AliasType < NamedType
     getter? value_processed = false
     property! aliased_type : Type
+    getter? simple
 
     def initialize(program, namespace, name, @value : ASTNode)
       super(program, namespace, name)
