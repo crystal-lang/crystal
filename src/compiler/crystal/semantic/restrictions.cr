@@ -328,7 +328,7 @@ module Crystal
     end
 
     def restrict(other : UnionType, context)
-      restricted = other.union_types.any? { |union_type| restriction_of?(union_type, context.instantiated_type) }
+      restricted = other.union_types.any? { |union_type| restrict(union_type, context) }
       restricted ? self : nil
     end
 
