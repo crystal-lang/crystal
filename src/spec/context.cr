@@ -72,7 +72,8 @@ module Spec
         failures_and_errors.each_with_index do |fail, i|
           if ex = fail.exception
             puts
-            puts "  #{i + 1}) #{fail.description}"
+            puts "#{(i + 1).to_s.rjust(3, ' ')}) #{fail.description}"
+
             if ex.is_a?(AssertionFailed)
               source_line = Spec.read_line(ex.file, ex.line)
               if source_line
