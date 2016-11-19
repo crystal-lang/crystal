@@ -104,8 +104,20 @@ struct Time
   end
 end
 
+struct Time::Format
+  def to_yaml(value : Time, emitter : YAML::Emitter)
+    format(value).to_yaml(emitter)
+  end
+end
+
 module Time::EpochConverter
-  def self.to_yaml(value : Time, io : IO)
-    io << value.epoch
+  def self.to_yaml(value : Time, emitter : YAML::Emitter)
+    emitter << value.epoch
+  end
+end
+
+module Time::EpochMillisConverter
+  def self.to_yaml(value : Time, emitter : YAML::Emitter)
+    emitter << value.epoch_ms
   end
 end

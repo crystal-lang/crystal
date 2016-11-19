@@ -146,6 +146,26 @@ module YAML
         {% end %}
       {% end %}
     end
+
+    def to_yaml(%emitter : YAML::Emitter)
+      %emitter.mapping do
+        {% for key, value in properties %}
+          _{{key.id}} = @{{key.id}}
+
+          unless _{{key.id}}.is_a?(Nil)
+            # Key
+            {{value[:key] || key.id.stringify}}.to_yaml(%emitter)
+
+            # Value
+            {% if value[:converter] %}
+              {{ value[:converter] }}.to_yaml(_{{key.id}}, %emitter)
+            {% else %}
+              _{{key.id}}.to_yaml(%emitter)
+            {% end %}
+          end
+        {% end %}
+      end
+    end
   end
 
   # This is a convenience method to allow invoking `YAML.mapping`
