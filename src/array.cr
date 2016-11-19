@@ -1926,20 +1926,6 @@ class Array(T)
     end
   end
 
-  private def range_to_index_and_count(range)
-    from = range.begin
-    from += size if from < 0
-    raise IndexError.new if from < 0
-
-    to = range.end
-    to += size if to < 0
-    to -= 1 if range.excludes_end?
-    size = to - from + 1
-    size = 0 if size < 0
-
-    {from, size}
-  end
-
   private class PermutationIterator(T)
     include Iterator(Array(T))
 
