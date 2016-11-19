@@ -73,7 +73,7 @@ module ECR
       byte_index = string.char_index_to_byte_index(char_index).not_nil!
       reader = Char::Reader.new(string)
       reader.pos = byte_index
-      while reader.current_char.whitespace? && reader.has_next?
+      while reader.current_char.ascii_whitespace? && reader.has_next?
         reader.next_char
       end
       if reader.pos == string.bytesize

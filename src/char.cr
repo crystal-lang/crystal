@@ -124,52 +124,111 @@ struct Char
     ord < 128
   end
 
-  # Returns `true` if this char is an ASCII digit in specified base.
+  # Returns `true` if this char is an ASCII number in specified base.
   #
   # Base can be from 0 to 36 with digits from '0' to '9' and 'a' to 'z' or 'A' to 'Z'.
   #
   # ```
-  # '4'.digit?     # => true
-  # 'z'.digit?     # => false
-  # 'z'.digit?(36) # => true
+  # '4'.ascii_number?     # => true
+  # 'z'.ascii_number?     # => false
+  # 'z'.ascii_number?(36) # => true
   # ```
-  def digit?(base : Int = 10)
+  def ascii_number?(base : Int = 10)
     !!to_i?(base)
+  end
+
+  # Returns `true` if this char is a number according to unicode.
+  #
+  # ```
+  # '1'.number? # => true
+  # 'a'.number? # => false
+  # ```
+  def number?
+    ascii? ? ascii_number? : Unicode.number?(self)
   end
 
   # Returns `true` if this char is a lowercase ASCII letter.
   #
   # ```
+  # 'c'.ascii_lowercase? # => true
+  # 'ç'.lowercase?       # => false
+  # 'G'.ascii_lowercase? # => false
+  # '.'.ascii_lowercase? # => false
+  # ```
+  def ascii_lowercase?
+    'a' <= self <= 'z'
+  end
+
+  # Returns `true` if this char is a lowercase letter.
+  #
+  # ```
   # 'c'.lowercase? # => true
+  # 'ç'.lowercase? # => true
   # 'G'.lowercase? # => false
   # '.'.lowercase? # => false
   # ```
   def lowercase?
-    'a' <= self <= 'z'
+    ascii? ? ascii_lowercase? : Unicode.lowercase?(self)
   end
 
-  # Returns `true` if this char is an uppercase ASCII letter.
+  # Returns `true` if this char is an ASCII uppercase letter.
+  #
+  # ```
+  # 'H'.ascii_uppercase? # => true
+  # 'Á'.ascii_uppercase? # => false
+  # 'c'.ascii_uppercase? # => false
+  # '.'.ascii_uppercase? # => false
+  # ```
+  def ascii_uppercase?
+    'A' <= self <= 'Z'
+  end
+
+  # Returns `true` if this char is an uppercase letter.
   #
   # ```
   # 'H'.uppercase? # => true
+  # 'Á'.uppercase? # => true
   # 'c'.uppercase? # => false
   # '.'.uppercase? # => false
   # ```
   def uppercase?
-    'A' <= self <= 'Z'
+    ascii? ? ascii_uppercase? : Unicode.uppercase?(self)
   end
 
   # Returns `true` if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
   #
   # ```
-  # 'c'.alpha? # => true
-  # '8'.alpha? # => false
+  # 'c'.ascii_letter? # => true
+  # 'á'.ascii_letter? # => false
+  # '8'.ascii_letter? # => false
   # ```
-  def alpha?
-    lowercase? || uppercase?
+  def ascii_letter?
+    ascii_lowercase? || ascii_uppercase?
   end
 
-  # Returns true if this char is an ASCII letter or digit ('0' to '9', 'a' to 'z', 'A' to 'Z').
+  # Returns `true` if this char is a letter.
+  #
+  # ```
+  # 'c'.letter? # => true
+  # 'á'.letter? # => true
+  # '8'.letter? # => false
+  # ```
+  def letter?
+    ascii? ? ascii_letter? : Unicode.letter?(self)
+  end
+
+  # Returns true if this char is an ASCII letter or number ('0' to '9', 'a' to 'z', 'A' to 'Z').
+  #
+  # ```
+  # 'c'.ascii_alphanumeric? # => true
+  # '8'.ascii_alphanumeric? # => true
+  # '.'.ascii_alphanumeric? # => false
+  # ```
+  def ascii_alphanumeric?
+    ascii_letter? || ascii_number?
+  end
+
+  # Returns true if this char is a letter or a number according to unicode.
   #
   # ```
   # 'c'.alphanumeric? # => true
@@ -177,10 +236,21 @@ struct Char
   # '.'.alphanumeric? # => false
   # ```
   def alphanumeric?
-    alpha? || digit?
+    letter? || number?
   end
 
   # Returns `true` if this char is an ASCII whitespace.
+  #
+  # ```
+  # ' '.ascii_whitespace?  # => true
+  # '\t'.ascii_whitespace? # => true
+  # 'b'.ascii_whitespace?  # => false
+  # ```
+  def ascii_whitespace?
+    self == ' ' || 9 <= ord <= 13
+  end
+
+  # Returns `true` if this char is a whitespace according to unicode.
   #
   # ```
   # ' '.whitespace?  # => true
@@ -188,7 +258,7 @@ struct Char
   # 'b'.whitespace?  # => false
   # ```
   def whitespace?
-    self == ' ' || 9 <= ord <= 13
+    ascii? ? ascii_whitespace? : Unicode.whitespace?(self)
   end
 
   # Returns `true` if this char is an ASCII hex digit ('0' to '9', 'a' to 'z', 'A' to 'Z').
@@ -200,7 +270,7 @@ struct Char
   # 'g'.hex? # => false
   # ```
   def hex?
-    digit? 16
+    ascii_number? 16
   end
 
   # Returns `true` if this char is matched by the given *sets*.
@@ -282,34 +352,26 @@ struct Char
     !not_negated
   end
 
-  # Returns the ASCII downcase equivalent of this char.
+  # Returns the downcase equivalent of this char.
   #
   # ```
   # 'Z'.downcase # => 'z'
   # 'x'.downcase # => 'x'
   # '.'.downcase # => '.'
   # ```
-  def downcase
-    if uppercase?
-      (self.ord + 32).unsafe_chr
-    else
-      self
-    end
+  def downcase(options = Unicode::CaseOptions::None)
+    Unicode.downcase(self, options)
   end
 
-  # Returns the ASCII upcase equivalent of this char.
+  # Returns the upcase equivalent of this char.
   #
   # ```
   # 'z'.upcase # => 'Z'
   # 'X'.upcase # => 'X'
   # '.'.upcase # => '.'
   # ```
-  def upcase
-    if lowercase?
-      (self.ord - 32).unsafe_chr
-    else
-      self
-    end
+  def upcase(options = Unicode::CaseOptions::None)
+    Unicode.upcase(self, options)
   end
 
   # Returns this char's codepoint.
@@ -350,8 +412,18 @@ struct Char
   #   char.control? # => true
   # end
   # ```
-  def control?
+  def ascii_control?
     ord < 0x20 || (0x7F <= ord <= 0x9F)
+  end
+
+  # Returns `true` if this char is a control character according to unicode.
+  def control?
+    ascii? ? ascii_control? : Unicode.control?(self)
+  end
+
+  # Returns `true` if this is char is a mark character according to unicode.
+  def mark?
+    Unicode.mark?(self)
   end
 
   # Returns this char as a string that contains a char literal.
@@ -364,7 +436,7 @@ struct Char
   # ```
   def inspect
     dump_or_inspect do |io|
-      if control?
+      if ascii_control?
         io << "\\u{"
         ord.to_s(16, io)
         io << "}"
@@ -392,7 +464,7 @@ struct Char
   # ```
   def dump
     dump_or_inspect do |io|
-      if control? || ord >= 0x80
+      if ascii_control? || ord >= 0x80
         io << "\\u{"
         ord.to_s(16, io)
         io << "}"

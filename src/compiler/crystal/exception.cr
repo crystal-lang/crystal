@@ -59,7 +59,7 @@ module Crystal
           char
         elsif char == '\t'
           ' '
-        elsif char.whitespace?
+        elsif char.ascii_whitespace?
           char
         else
           found_non_space = true

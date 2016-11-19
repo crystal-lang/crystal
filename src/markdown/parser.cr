@@ -72,7 +72,7 @@ class Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = level
-    while pos < bytesize && str[pos].unsafe_chr.whitespace?
+    while pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
       pos += 1
     end
 
@@ -292,7 +292,7 @@ class Markdown::Parser
     str = line.to_unsafe
     pos = 0
 
-    while pos < bytesize && str[pos].unsafe_chr.whitespace?
+    while pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
       pos += 1
     end
 
@@ -401,7 +401,7 @@ class Markdown::Parser
           in_link = false
         end
       end
-      last_is_space = pos < bytesize && str[pos].unsafe_chr.whitespace?
+      last_is_space = pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
       pos += 1
     end
 
@@ -422,7 +422,7 @@ class Markdown::Parser
       return false unless idx + 1 < bytesize && str[idx + 1].unsafe_chr == char
     end
 
-    !str[idx - 1].unsafe_chr.whitespace?
+    !str[idx - 1].unsafe_chr.ascii_whitespace?
   end
 
   def check_link(str, pos, bytesize)
@@ -487,7 +487,7 @@ class Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && pos < 4 && str[pos].unsafe_chr.whitespace?
+    while pos < bytesize && pos < 4 && str[pos].unsafe_chr.ascii_whitespace?
       pos += 1
     end
 
@@ -502,7 +502,7 @@ class Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && str[pos].unsafe_chr.whitespace?
+    while pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
       pos += 1
     end
 
@@ -512,7 +512,7 @@ class Markdown::Parser
     pos += 1
 
     return false unless pos < bytesize
-    str[pos].unsafe_chr.whitespace?
+    str[pos].unsafe_chr.ascii_whitespace?
   end
 
   def previous_line_is_not_intended_and_starts_with_bullet_list_marker?(prefix)
@@ -535,14 +535,14 @@ class Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && str[pos].unsafe_chr.whitespace?
+    while pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
       pos += 1
     end
 
     return false unless pos < bytesize
-    return false unless str[pos].unsafe_chr.digit?
+    return false unless str[pos].unsafe_chr.ascii_number?
 
-    while pos < bytesize && str[pos].unsafe_chr.digit?
+    while pos < bytesize && str[pos].unsafe_chr.ascii_number?
       pos += 1
     end
 
@@ -575,7 +575,7 @@ class Markdown::Parser
     count = 1
 
     line.each_char do |char|
-      next if char.whitespace?
+      next if char.ascii_whitespace?
 
       if non_space_char
         if char == non_space_char
