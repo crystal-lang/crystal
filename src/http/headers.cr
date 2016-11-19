@@ -40,8 +40,8 @@ struct HTTP::Headers
     private def normalize_byte(byte)
       char = byte.unsafe_chr
 
-      return byte if char.lowercase? || char == '-' # Optimize the common case
-      return byte + 32 if char.uppercase?
+      return byte if char.ascii_lowercase? || char == '-' # Optimize the common case
+      return byte + 32 if char.ascii_uppercase?
       return '-'.ord if char == '_'
 
       byte
@@ -84,7 +84,7 @@ struct HTTP::Headers
       start = value.index(word)
       next unless start
       # check if the match is not surrounded by alphanumeric chars
-      next if start > 0 && value[start - 1].alphanumeric?
+      next if start > 0 && value[start - 1].ascii_alphanumeric?
       next if start + word.size < value.size && value[start + word.size].alphanumeric?
       return true
     end

@@ -483,7 +483,7 @@ class String
 
     # Skip leading whitespace
     if whitespace
-      while ptr.value.unsafe_chr.whitespace?
+      while ptr.value.unsafe_chr.ascii_whitespace?
         ptr += 1
       end
     end
@@ -562,7 +562,7 @@ class String
     if found_digit
       unless ptr.value == 0
         if whitespace
-          while ptr.value.unsafe_chr.whitespace?
+          while ptr.value.unsafe_chr.ascii_whitespace?
             ptr += 1
           end
         end
@@ -651,7 +651,7 @@ class String
 
     if strict
       if whitespace
-        while endptr < string_end && endptr.value.chr.whitespace?
+        while endptr < string_end && endptr.value.chr.ascii_whitespace?
           endptr += 1
         end
       end
@@ -660,7 +660,7 @@ class String
     else
       ptr = to_unsafe
       if whitespace
-        while ptr < string_end && ptr.value.chr.whitespace?
+        while ptr < string_end && ptr.value.chr.ascii_whitespace?
           ptr += 1
         end
       end
@@ -874,10 +874,10 @@ class String
   # ```
   # "hEllO".downcase # => "hello"
   # ```
-  def downcase
+  def downcase(options = Unicode::CaseOptions::None)
     String.build(bytesize) do |io|
       each_char do |char|
-        io << char.downcase
+        io << char.downcase(options)
       end
     end
   end
@@ -888,10 +888,10 @@ class String
   # ```
   # "hEllO".upcase # => "HELLO"
   # ```
-  def upcase
+  def upcase(options = Unicode::CaseOptions::None)
     String.build(bytesize) do |io|
       each_char do |char|
-        io << char.upcase
+        io << char.upcase(options)
       end
     end
   end
@@ -1163,7 +1163,7 @@ class String
 
   private def calc_excess_right
     i = bytesize - 1
-    while i >= 0 && to_unsafe[i].unsafe_chr.whitespace?
+    while i >= 0 && to_unsafe[i].unsafe_chr.ascii_whitespace?
       i -= 1
     end
     bytesize - 1 - i
@@ -1173,7 +1173,7 @@ class String
     excess_left = 0
     # All strings end with '\0', and it's not a whitespace
     # so it's safe to access past 1 byte beyond the string data
-    while to_unsafe[excess_left].unsafe_chr.whitespace?
+    while to_unsafe[excess_left].unsafe_chr.ascii_whitespace?
       excess_left += 1
     end
     excess_left
@@ -1913,6 +1913,20 @@ class String
     bytesize == 0
   end
 
+  # Returns true if this string consists exclusively of unicode whitespace.
+  #
+  # ```
+  # "".blank?        # => true
+  # "   ".blank?     # => true
+  # "   a   ".blank? # => false
+  # ```
+  def blank?
+    each_char do |char|
+      return false unless char.whitespace?
+    end
+    true
+  end
+
   def ==(other : self)
     return true if same?(other)
     return false unless bytesize == other.bytesize
@@ -2400,7 +2414,7 @@ class String
         while i < bytesize
           c = to_unsafe[i]
           i += 1
-          if c.unsafe_chr.whitespace?
+          if c.unsafe_chr.ascii_whitespace?
             piece_bytesize = i - 1 - index
             piece_size = single_byte_optimizable ? piece_bytesize : 0
             ary.push String.new(to_unsafe + index, piece_bytesize, piece_size)
@@ -2417,7 +2431,7 @@ class String
         while i < bytesize
           c = to_unsafe[i]
           i += 1
-          unless c.unsafe_chr.whitespace?
+          unless c.unsafe_chr.ascii_whitespace?
             index = i - 1
             looking_for_space = true
             break
@@ -2829,7 +2843,7 @@ class String
 
     while index >= 0
       s = chars[index]
-      if s.alphanumeric?
+      if s.ascii_alphanumeric?
         carry = 0
         if ('0' <= s && s < '9') ||
            ('a' <= s && s < 'z') ||
@@ -3140,7 +3154,7 @@ class String
   end
 
   private def inspect_char(char, io)
-    if char.control?
+    if char.ascii_control?
       io << "\\u{"
       char.ord.to_s(16, io)
       io << "}"
@@ -3150,7 +3164,7 @@ class String
   end
 
   private def dump_char(char, io)
-    if char.control? || char.ord >= 0x80
+    if char.ascii_control? || char.ord >= 0x80
       io << "\\u{"
       char.ord.to_s(16, io)
       io << "}"

@@ -192,7 +192,7 @@ module Crystal
       when Call
         !exp.has_parentheses? && (
           (exp.args.empty? && !exp.named_args) ||
-            (exp.name[0].alpha? && exp.name.ends_with?('=')) ||
+            (exp.name[0].ascii_letter? && exp.name.ends_with?('=')) ||
             exp.name == "[]" || exp.name == "[]="
         )
       else
@@ -1096,13 +1096,13 @@ module Crystal
       return false unless @no_type_declaration == 0
 
       pos = current_pos
-      while current_char.whitespace?
+      while current_char.ascii_whitespace?
         next_char_no_column_increment
       end
       comes_colon_space = current_char == ':'
       if comes_colon_space
         next_char_no_column_increment
-        comes_colon_space = current_char.whitespace?
+        comes_colon_space = current_char.ascii_whitespace?
       end
       self.current_pos = pos
       comes_colon_space
@@ -1353,7 +1353,7 @@ module Crystal
     end
 
     def call_block_arg_follows?
-      @token.type == :"&" && !current_char.whitespace?
+      @token.type == :"&" && !current_char.ascii_whitespace?
     end
 
     def parse_call_block_arg(args, check_paren, named_args = nil)
@@ -1929,7 +1929,7 @@ module Crystal
         else
           if remove_indent
             line = current_line.to_s
-            if (line.size < indent) || !line.each_char.first(indent).all?(&.whitespace?)
+            if (line.size < indent) || !line.each_char.first(indent).all?(&.ascii_whitespace?)
               raise "heredoc line must have an indent greater or equal than #{indent}", line_number, 1
             else
               line = line[indent..-1]
@@ -1959,7 +1959,7 @@ module Crystal
     end
 
     def remove_heredoc_from_line(line, indent, line_number)
-      if line.each_char.first(indent).all? &.whitespace?
+      if line.each_char.first(indent).all? &.ascii_whitespace?
         if line.size - 1 < indent
           "\n"
         else
@@ -2777,7 +2777,7 @@ module Crystal
     end
 
     def check_macro_skip_whitespace
-      if current_char == '\\' && peek_next_char.whitespace?
+      if current_char == '\\' && peek_next_char.ascii_whitespace?
         next_char
         true
       else
@@ -3886,21 +3886,21 @@ module Crystal
 
       case @token.type
       when :"&"
-        return nil if current_char.whitespace?
+        return nil if current_char.ascii_whitespace?
       when :"+", :"-"
         if check_plus_and_minus
-          return nil if current_char.whitespace?
+          return nil if current_char.ascii_whitespace?
         end
       when :"{"
         return nil unless allow_curly
       when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__END_LINE__, :__FILE__, :__DIR__, :UNDERSCORE
         # Nothing
       when :"*", :"**"
-        if current_char.whitespace?
+        if current_char.ascii_whitespace?
           return nil
         end
       when :"::"
-        if current_char.whitespace?
+        if current_char.ascii_whitespace?
           return nil
         end
       else
@@ -4034,12 +4034,12 @@ module Crystal
         splat = nil
         case @token.type
         when :"*"
-          unless current_char.whitespace?
+          unless current_char.ascii_whitespace?
             splat = :single
             next_token
           end
         when :"**"
-          unless current_char.whitespace?
+          unless current_char.ascii_whitespace?
             splat = :double
             next_token
           end
@@ -4809,7 +4809,7 @@ module Crystal
         next_token_skip_space_or_newline
         type = parse_single_type
 
-        if name[0].uppercase?
+        if name[0].ascii_uppercase?
           raise "external variables must start with lowercase, use for example `$#{name.underscore} = #{name} : #{type}`", location
         end
 
@@ -5357,7 +5357,7 @@ module Crystal
     end
 
     def self.free_var_name?(name)
-      name.size == 1 || (name.size == 2 && name[1].digit?)
+      name.size == 1 || (name.size == 2 && name[1].ascii_number?)
     end
   end
 end

@@ -29,25 +29,48 @@ describe "Char" do
     assert { ('c' - 2).should eq('a') }
   end
 
+  describe "ascii_uppercase?" do
+    assert { 'a'.ascii_uppercase?.should be_false }
+    assert { 'A'.ascii_uppercase?.should be_true }
+    assert { '1'.ascii_uppercase?.should be_false }
+    assert { ' '.ascii_uppercase?.should be_false }
+  end
+
   describe "uppercase?" do
-    assert { 'a'.uppercase?.should be_false }
     assert { 'A'.uppercase?.should be_true }
+    assert { 'Á'.uppercase?.should be_true }
+    assert { 'Ā'.uppercase?.should be_true }
+    assert { 'Ą'.uppercase?.should be_true }
+    assert { 'ā'.uppercase?.should be_false }
+    assert { 'á'.uppercase?.should be_false }
+    assert { 'a'.uppercase?.should be_false }
     assert { '1'.uppercase?.should be_false }
     assert { ' '.uppercase?.should be_false }
   end
 
+  describe "ascii_lowercase?" do
+    assert { 'a'.ascii_lowercase?.should be_true }
+    assert { 'A'.ascii_lowercase?.should be_false }
+    assert { '1'.ascii_lowercase?.should be_false }
+    assert { ' '.ascii_lowercase?.should be_false }
+  end
+
   describe "lowercase?" do
     assert { 'a'.lowercase?.should be_true }
+    assert { 'á'.lowercase?.should be_true }
+    assert { 'ā'.lowercase?.should be_true }
+    assert { 'ă'.lowercase?.should be_true }
     assert { 'A'.lowercase?.should be_false }
+    assert { 'Á'.lowercase?.should be_false }
     assert { '1'.lowercase?.should be_false }
     assert { ' '.lowercase?.should be_false }
   end
 
-  describe "alpha?" do
-    assert { 'a'.alpha?.should be_true }
-    assert { 'A'.alpha?.should be_true }
-    assert { '1'.alpha?.should be_false }
-    assert { ' '.alpha?.should be_false }
+  describe "ascii_letter?" do
+    assert { 'a'.ascii_letter?.should be_true }
+    assert { 'A'.ascii_letter?.should be_true }
+    assert { '1'.ascii_letter?.should be_false }
+    assert { ' '.ascii_letter?.should be_false }
   end
 
   describe "alphanumeric?" do
@@ -57,11 +80,11 @@ describe "Char" do
     assert { ' '.alphanumeric?.should be_false }
   end
 
-  describe "whitespace?" do
+  describe "ascii_whitespace?" do
     [' ', '\t', '\n', '\v', '\f', '\r'].each do |char|
-      assert { char.whitespace?.should be_true }
+      assert { char.ascii_whitespace?.should be_true }
     end
-    assert { 'A'.whitespace?.should be_false }
+    assert { 'A'.ascii_whitespace?.should be_false }
   end
 
   describe "hex?" do
@@ -330,26 +353,37 @@ describe "Char" do
     ('酒' === 37202).should be_true
   end
 
-  it "does digit?" do
+  it "does ascii_number?" do
     256.times do |i|
       chr = i.chr
-      ("01".chars.includes?(chr) == chr.digit?(2)).should be_true
-      ("01234567".chars.includes?(chr) == chr.digit?(8)).should be_true
-      ("0123456789".chars.includes?(chr) == chr.digit?).should be_true
-      ("0123456789".chars.includes?(chr) == chr.digit?(10)).should be_true
-      ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".includes?(chr) == chr.digit?(36)).should be_true
+      ("01".chars.includes?(chr) == chr.ascii_number?(2)).should be_true
+      ("01234567".chars.includes?(chr) == chr.ascii_number?(8)).should be_true
+      ("0123456789".chars.includes?(chr) == chr.ascii_number?).should be_true
+      ("0123456789".chars.includes?(chr) == chr.ascii_number?(10)).should be_true
+      ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".includes?(chr) == chr.ascii_number?(36)).should be_true
       unless 2 <= i <= 36
         expect_raises ArgumentError do
-          '0'.digit?(i)
+          '0'.ascii_number?(i)
         end
       end
     end
   end
 
-  it "does control?" do
-    'ù'.control?.should be_false
-    'a'.control?.should be_false
-    '\u0019'.control?.should be_true
+  it "does number?" do
+    assert { '1'.number?.should be_true }
+    assert { '٠'.number?.should be_true }
+    assert { '٢'.number?.should be_true }
+    assert { 'a'.number?.should be_false }
+  end
+
+  it "does ascii_control?" do
+    'ù'.ascii_control?.should be_false
+    'a'.ascii_control?.should be_false
+    '\u0019'.ascii_control?.should be_true
+  end
+
+  it "does mark?" do
+    0x300.chr.mark?.should be_true
   end
 
   it "does ascii?" do

@@ -290,7 +290,7 @@ class URI
   # Unreserved characters are alphabet, digit, '_', '.', '-', '~'.
   def self.unreserved?(byte) : Bool
     char = byte.unsafe_chr
-    char.alphanumeric? ||
+    char.ascii_alphanumeric? ||
       {'_', '.', '-', '~'}.includes?(char)
   end
 

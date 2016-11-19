@@ -199,7 +199,7 @@ class String
         io << "\\r"
       when '\t'
         io << "\\t"
-      when .control?
+      when .ascii_control?
         io << "\\u"
         ord = char.ord
         io << '0' if ord < 0x1000

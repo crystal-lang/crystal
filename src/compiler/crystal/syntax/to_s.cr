@@ -330,10 +330,10 @@ module Crystal
         @str << decorate_call(node, "=")
         @str << " "
         node.args.last.accept self
-      elsif node_obj && !alpha_or_underscore?(node.name) && node.args.size == 0
+      elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 0
         @str << decorate_call(node, node.name)
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !alpha_or_underscore?(node.name) && node.args.size == 1
+      elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 1
         in_parenthesis(need_parens, node_obj)
 
         @str << " "
@@ -347,7 +347,7 @@ module Crystal
           in_parenthesis(need_parens, node_obj)
           @str << "."
         end
-        if node.name.ends_with?('=') && node.name[0].alpha?
+        if node.name.ends_with?('=') && node.name[0].ascii_letter?
           @str << decorate_call(node, node.name.chop)
           @str << " = "
           node.args.each_with_index do |arg, i|
@@ -423,7 +423,7 @@ module Crystal
       when Call
         case obj.args.size
         when 0
-          !alpha_or_underscore?(obj.name)
+          !letter_or_underscore?(obj.name)
         else
           case obj.name
           when "[]", "[]?"
@@ -515,12 +515,12 @@ module Crystal
       str
     end
 
-    def alpha?(string)
-      string[0].alpha?
+    def letter?(string)
+      string[0].ascii_letter?
     end
 
-    def alpha_or_underscore?(string)
-      string[0].alpha? || string[0] == '_'
+    def letter_or_underscore?(string)
+      string[0].ascii_letter? || string[0] == '_'
     end
 
     def visit(node : Assign)

@@ -458,11 +458,17 @@ describe "String" do
   describe "downcase" do
     assert { "HELLO!".downcase.should eq("hello!") }
     assert { "HELLO MAN!".downcase.should eq("hello man!") }
+    assert { "ÁÉÍÓÚĀ".downcase.should eq("áéíóúā") }
+    assert { "AEIİOU".downcase(Unicode::CaseOptions::Turkic).should eq("aeıiou") }
+    assert { "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII).should eq("ÁeÍoÚ") }
   end
 
   describe "upcase" do
     assert { "hello!".upcase.should eq("HELLO!") }
     assert { "hello man!".upcase.should eq("HELLO MAN!") }
+    assert { "áéíóúā".upcase.should eq("ÁÉÍÓÚĀ") }
+    assert { "aeıiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEIİOU") }
+    assert { "áeíoú".upcase(Unicode::CaseOptions::ASCII).should eq("áEíOú") }
   end
 
   describe "capitalize" do
@@ -537,6 +543,12 @@ describe "String" do
   describe "empty?" do
     assert { "a".empty?.should be_false }
     assert { "".empty?.should be_true }
+  end
+
+  describe "blank?" do
+    assert { " \t\n".blank?.should be_true }
+    assert { "\u{1680}\u{2029}".blank?.should be_true }
+    assert { "hello".blank?.should be_false }
   end
 
   describe "index" do

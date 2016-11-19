@@ -1931,7 +1931,7 @@ module Crystal
       end
 
       # This is the case of an enum member
-      if node.name[0].uppercase? && @token.type == :","
+      if node.name[0].ascii_uppercase? && @token.type == :","
         write ", "
         next_token_skip_space
         @exp_needs_indent = @token.type == :NEWLINE
@@ -2210,7 +2210,7 @@ module Crystal
 
       current_dot_column = @dot_column
 
-      assignment = node.name.ends_with?('=') && node.name.chars.any?(&.alpha?)
+      assignment = node.name.ends_with?('=') && node.name.chars.any?(&.ascii_letter?)
 
       if assignment
         write node.name.chop
@@ -4060,16 +4060,16 @@ module Crystal
         after_comment_value = raw_after_comment_value.strip
         if after_comment_value.starts_with?("=>")
           value = "\# => #{after_comment_value[2..-1].strip}"
-        elsif after_comment_value.each_char.all? { |c| c.whitespace? || c == '#' }
+        elsif after_comment_value.each_char.all? { |c| c.ascii_whitespace? || c == '#' }
           # Nothing, leave sequences of whitespaces and '#' as is
         else
           char_1 = value[1]?
-          if char_1 && !char_1.whitespace?
+          if char_1 && !char_1.ascii_whitespace?
             value = "\# #{value[1..-1].strip}"
           end
         end
 
-        if !@last_write.empty? && !@last_write[-1].whitespace?
+        if !@last_write.empty? && !@last_write[-1].ascii_whitespace?
           write " "
         end
 
@@ -4233,7 +4233,7 @@ module Crystal
       @heredoc_fixes.each do |fix|
         fix.start_line.upto(fix.end_line) do |line_number|
           line = lines[line_number]
-          if (0...fix.difference).all? { |index| line[index]?.try &.whitespace? }
+          if (0...fix.difference).all? { |index| line[index]?.try &.ascii_whitespace? }
             lines[line_number] = line[fix.difference..-1]
           end
         end
@@ -4472,7 +4472,7 @@ module Crystal
     end
 
     def check_macro_whitespace
-      if @lexer.current_char == '\\' && @lexer.peek_next_char.whitespace?
+      if @lexer.current_char == '\\' && @lexer.peek_next_char.ascii_whitespace?
         @lexer.next_char
         write "\\"
         write @lexer.skip_macro_whitespace
