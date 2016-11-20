@@ -1940,6 +1940,17 @@ class Array(T)
     {from, size}
   end
 
+  # :nodoc:
+  def index(object, offset : Int = 0)
+    # Optimize for the case of looking for a byte in a byte slice
+    if T.is_a?(UInt8.class) &&
+       (object.is_a?(UInt8) || (object.is_a?(Int) && 0 <= object < 256))
+      return Slice.new(to_unsafe, size).fast_index(object, offset)
+    end
+
+    super
+  end
+
   private class PermutationIterator(T)
     include Iterator(Array(T))
 

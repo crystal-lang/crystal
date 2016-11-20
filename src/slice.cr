@@ -415,6 +415,30 @@ struct Slice(T)
   def to_unsafe : Pointer(T)
     @pointer
   end
+
+  # :nodoc:
+  def index(object, offset : Int = 0)
+    # Optimize for the case of looking for a byte in a byte slice
+    if T.is_a?(UInt8.class) &&
+       (object.is_a?(UInt8) || (object.is_a?(Int) && 0 <= object < 256))
+      return fast_index(object, offset)
+    end
+
+    super
+  end
+
+  # :nodoc:
+  def fast_index(object, offset)
+    offset += size if offset < 0
+    if 0 <= offset < size
+      result = LibC.memchr(to_unsafe + offset, object, size - offset)
+      if result
+        return (result - to_unsafe.as(Void*)).to_i32
+      end
+    end
+
+    nil
+  end
 end
 
 alias Bytes = Slice(UInt8)
