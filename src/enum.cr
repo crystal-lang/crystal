@@ -310,8 +310,16 @@ struct Enum
   # Color.from_value?(3) # => nil
   # ```
   def self.from_value?(value) : self | Nil
-    {% for member in @type.constants %}
-      return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
+    {% if @type.has_attribute?("Flags") %}
+      mask = {% for member, i in @type.constants %}\
+        {% if i != 0 %} | {% end %}\
+        {{@type}}::{{member}}.value{% end %}
+      return if (mask & value != value) || (value == 0 && values.none? { |val| val.to_i == 0 })
+      return new(value)
+    {% else %}
+      {% for member in @type.constants %}
+        return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
+      {% end %}
     {% end %}
     nil
   end
