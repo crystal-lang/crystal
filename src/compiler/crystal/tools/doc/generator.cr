@@ -4,6 +4,17 @@ class Crystal::Doc::Generator
   @base_dir : String
   @is_crystal_repo : Bool
 
+  # Adding a flag and associated css class will add support in parser
+  FLAG_COLORS = {
+    "BUG"        => "red",
+    "DEPRECATED" => "red",
+    "FIXME"      => "yellow",
+    "NOTE"       => "purple",
+    "OPTIMIZE"   => "green",
+    "TODO"       => "orange",
+  }
+  FLAGS = FLAG_COLORS.keys
+
   def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
@@ -43,13 +54,9 @@ class Crystal::Doc::Generator
     end
 
     if filename
-      body = File.read(filename)
+      body = doc(program_type, File.read(filename))
     else
       body = ""
-    end
-
-    body = String.build do |io|
-      Markdown.parse body, MarkdownDocRenderer.new(program_type, io)
     end
 
     File.write "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
@@ -226,9 +233,11 @@ class Crystal::Doc::Generator
   end
 
   def doc(context, string)
-    String.build do |io|
+    string = isolate_flag_lines string
+    markdown = String.build do |io|
       Markdown.parse string, MarkdownDocRenderer.new(context, io)
     end
+    generate_flags markdown
   end
 
   def fetch_doc_lines(doc)
@@ -237,6 +246,33 @@ class Crystal::Doc::Generator
         " "
       else
         "\n"
+      end
+    end
+  end
+
+  # Replaces flag keywords with html equivalent
+  #
+  # Assumes that flag keywords are at the beginning of respective `p` element
+  def generate_flags(string)
+    FLAGS.reduce(string) do |str, flag|
+      flag_regexp = /<p>\s*#{flag}:?/
+      element_sub = %(<p><span class="flag #{FLAG_COLORS[flag]}">#{flag}</span> )
+      str.gsub(flag_regexp, element_sub)
+    end
+  end
+
+  # Adds extra line break to flag keyword lines
+  #
+  # Guarantees that line is within its own paragraph element when parsed
+  def isolate_flag_lines(string)
+    flag_regexp = /^ ?(#{FLAGS.join('|')}):?/
+    String.build do |io|
+      string.each_line.join("", io) do |line, io|
+        if line =~ flag_regexp
+          io << line << '\n'
+        else
+          io << line
+        end
       end
     end
   end

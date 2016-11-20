@@ -349,6 +349,44 @@ code {
   font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
 }
 
+span.flag {
+  padding: 2px 4px 1px;
+  border-radius: 3px;
+  margin-right: 3px;
+  font-size: 11px;
+  border: 1px solid transparent;
+}
+
+span.flag.orange {
+  background-color: #EE8737;
+  color: #FCEBDD;
+  border-color: #EB7317;
+}
+
+span.flag.yellow {
+  background-color: #E4B91C;
+  color: #FCF8E8;
+  border-color: #B69115;
+}
+
+span.flag.green {
+  background-color: #469C14;
+  color: #E2F9D3;
+  border-color: #34700E;
+}
+
+span.flag.red {
+  background-color: #BF1919;
+  color: #F9ECEC;
+  border-color: #822C2C;
+}
+
+span.flag.purple {
+  background-color: #2E1052;
+  color: #ECE1F9;
+  border-color: #1F0B37;
+}
+
 .tooltip>span {
   position: absolute;
   opacity: 0;
