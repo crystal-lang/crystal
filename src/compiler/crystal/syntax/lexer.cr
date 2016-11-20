@@ -150,7 +150,7 @@ module Crystal
           when '='
             next_char :"<<="
           when '-'
-            here = MemoryIO.new(20)
+            here = IO::Memory.new(20)
             has_single_quote = false
             found_closing_single_quote = false
 
@@ -464,7 +464,7 @@ module Crystal
           line = @line_number
           column = @column_number
           start = current_pos + 1
-          io = MemoryIO.new
+          io = IO::Memory.new
           while true
             char = next_char
             case char
@@ -1128,7 +1128,7 @@ module Crystal
       if doc_buffer = @token.doc_buffer
         doc_buffer << '\n'
       else
-        @token.doc_buffer = doc_buffer = MemoryIO.new
+        @token.doc_buffer = doc_buffer = IO::Memory.new
       end
 
       doc_buffer.write slice_range(start_pos)

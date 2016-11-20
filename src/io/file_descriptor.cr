@@ -159,7 +159,7 @@ class IO::FileDescriptor
   # Returns the current position (in bytes) in this IO.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.pos     # => 0
   # io.gets(2) # => "he"
   # io.pos     # => 2
@@ -176,7 +176,7 @@ class IO::FileDescriptor
   # Sets the current position (in bytes) in this IO.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.pos = 3
   # io.gets_to_end # => "lo"
   # ```

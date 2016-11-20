@@ -1,8 +1,8 @@
 require "spec"
 
-describe "MemoryIO" do
+describe IO::Memory do
   it "writes" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     io.bytesize.should eq(0)
     io.write Slice.new("hello".to_unsafe, 3)
     io.bytesize.should eq(3)
@@ -12,14 +12,14 @@ describe "MemoryIO" do
 
   it "writes big" do
     s = "hi" * 100
-    io = MemoryIO.new
+    io = IO::Memory.new
     io.write Slice.new(s.to_unsafe, s.bytesize)
     io.rewind
     io.gets_to_end.should eq(s)
   end
 
   it "reads byte" do
-    io = MemoryIO.new("abc")
+    io = IO::Memory.new("abc")
     io.read_byte.should eq('a'.ord)
     io.read_byte.should eq('b'.ord)
     io.read_byte.should eq('c'.ord)
@@ -27,7 +27,7 @@ describe "MemoryIO" do
   end
 
   it "raises if reading when closed" do
-    io = MemoryIO.new("abc")
+    io = IO::Memory.new("abc")
     io.close
     expect_raises(IO::Error, "closed stream") do
       io.read(Slice.new(3, 0_u8))
@@ -35,7 +35,7 @@ describe "MemoryIO" do
   end
 
   it "raises if clearing when closed" do
-    io = MemoryIO.new("abc")
+    io = IO::Memory.new("abc")
     io.close
     expect_raises(IO::Error, "closed stream") do
       io.clear
@@ -43,28 +43,28 @@ describe "MemoryIO" do
   end
 
   it "appends to another buffer" do
-    s1 = MemoryIO.new
+    s1 = IO::Memory.new
     s1 << "hello"
 
-    s2 = MemoryIO.new
+    s2 = IO::Memory.new
     s1.to_s(s2)
     s2.to_s.should eq("hello")
   end
 
   it "reads single line content" do
-    io = MemoryIO.new("foo")
+    io = IO::Memory.new("foo")
     io.gets.should eq("foo")
   end
 
   it "reads each line" do
-    io = MemoryIO.new("foo\r\nbar\r\n")
+    io = IO::Memory.new("foo\r\nbar\r\n")
     io.gets.should eq("foo\r\n")
     io.gets.should eq("bar\r\n")
     io.gets.should eq(nil)
   end
 
   it "gets with char as delimiter" do
-    io = MemoryIO.new("hello world")
+    io = IO::Memory.new("hello world")
     io.gets('w').should eq("hello w")
     io.gets('r').should eq("or")
     io.gets('r').should eq("ld")
@@ -72,7 +72,7 @@ describe "MemoryIO" do
   end
 
   it "does gets with char and limit" do
-    io = MemoryIO.new("hello\nworld\n")
+    io = IO::Memory.new("hello\nworld\n")
     io.gets('o', 2).should eq("he")
     io.gets('w', 10_000).should eq("llo\nw")
     io.gets('z', 10_000).should eq("orld\n")
@@ -80,7 +80,7 @@ describe "MemoryIO" do
   end
 
   it "does gets with limit" do
-    io = MemoryIO.new("hello\nworld")
+    io = IO::Memory.new("hello\nworld")
     io.gets(3).should eq("hel")
     io.gets(3).should eq("lo\n")
     io.gets(3).should eq("wor")
@@ -89,34 +89,34 @@ describe "MemoryIO" do
   end
 
   it "does gets with char and limit without off-by-one" do
-    io = MemoryIO.new("test\nabc")
+    io = IO::Memory.new("test\nabc")
     io.gets('a', 5).should eq("test\n")
-    io = MemoryIO.new("test\nabc")
+    io = IO::Memory.new("test\nabc")
     io.gets('a', 6).should eq("test\na")
   end
 
   it "raises if invoking gets with negative limit" do
-    io = MemoryIO.new("hello\nworld\n")
+    io = IO::Memory.new("hello\nworld\n")
     expect_raises ArgumentError, "negative limit" do
       io.gets(-1)
     end
   end
 
   it "write single byte" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     io.write_byte 97_u8
     io.to_s.should eq("a")
   end
 
   it "writes and reads" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     io << "foo" << "bar"
     io.rewind
     io.gets.should eq("foobar")
   end
 
   it "can be converted to slice" do
-    str = MemoryIO.new
+    str = IO::Memory.new
     str.write_byte 0_u8
     str.write_byte 1_u8
     slice = str.to_slice
@@ -127,12 +127,12 @@ describe "MemoryIO" do
 
   it "reads more than available (#1229)" do
     s = "h" * (10 * 1024)
-    str = MemoryIO.new(s)
+    str = IO::Memory.new(s)
     str.gets(11 * 1024).should eq(s)
   end
 
   it "writes after reading" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     io << "abcdefghi"
     io.rewind
     io.gets(3)
@@ -142,32 +142,32 @@ describe "MemoryIO" do
   end
 
   it "has a size" do
-    MemoryIO.new("foo").size.should eq(3)
+    IO::Memory.new("foo").size.should eq(3)
   end
 
   it "can tell" do
-    io = MemoryIO.new("foo")
+    io = IO::Memory.new("foo")
     io.tell.should eq(0)
     io.gets(2)
     io.tell.should eq(2)
   end
 
   it "can seek set" do
-    io = MemoryIO.new("abcdef")
+    io = IO::Memory.new("abcdef")
     io.seek(3)
     io.tell.should eq(3)
     io.gets(1).should eq("d")
   end
 
   it "raises if seek set is negative" do
-    io = MemoryIO.new("abcdef")
+    io = IO::Memory.new("abcdef")
     expect_raises(ArgumentError, "negative pos") do
       io.seek(-1)
     end
   end
 
   it "can seek past the end" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     io << "abc"
     io.rewind
     io.seek(6)
@@ -178,14 +178,14 @@ describe "MemoryIO" do
   end
 
   it "can seek current" do
-    io = MemoryIO.new("abcdef")
+    io = IO::Memory.new("abcdef")
     io.seek(2)
     io.seek(1, IO::Seek::Current)
     io.gets(1).should eq("d")
   end
 
   it "raises if seek current leads to negative value" do
-    io = MemoryIO.new("abcdef")
+    io = IO::Memory.new("abcdef")
     io.seek(2)
     expect_raises(ArgumentError, "negative pos") do
       io.seek(-3, IO::Seek::Current)
@@ -193,13 +193,13 @@ describe "MemoryIO" do
   end
 
   it "can seek from the end" do
-    io = MemoryIO.new("abcdef")
+    io = IO::Memory.new("abcdef")
     io.seek(-2, IO::Seek::End)
     io.gets(1).should eq("e")
   end
 
   it "can be closed" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     io << "abc"
     io.close
     io.closed?.should be_true
@@ -212,7 +212,7 @@ describe "MemoryIO" do
   end
 
   it "seeks with pos and pos=" do
-    io = MemoryIO.new("abcdef")
+    io = IO::Memory.new("abcdef")
     io.pos = 4
     io.gets(1).should eq("e")
     io.pos -= 2
@@ -220,7 +220,7 @@ describe "MemoryIO" do
   end
 
   it "clears" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     io << "abc"
     io.rewind
     io.gets(1)
@@ -231,18 +231,18 @@ describe "MemoryIO" do
 
   it "raises if negative capacity" do
     expect_raises(ArgumentError, "negative capacity") do
-      MemoryIO.new(-1)
+      IO::Memory.new(-1)
     end
   end
 
   it "raises if capacity too big" do
     expect_raises(ArgumentError, "capacity too big") do
-      MemoryIO.new(UInt32::MAX)
+      IO::Memory.new(UInt32::MAX)
     end
   end
 
   it "creates from string" do
-    io = MemoryIO.new "abcdef"
+    io = IO::Memory.new "abcdef"
     io.gets(2).should eq("ab")
     io.gets(3).should eq("cde")
 
@@ -253,7 +253,7 @@ describe "MemoryIO" do
 
   it "creates from slice" do
     slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
-    io = MemoryIO.new slice
+    io = IO::Memory.new slice
     io.gets(2).should eq("ab")
     io.gets(3).should eq("cde")
     io.print 'x'
@@ -267,7 +267,7 @@ describe "MemoryIO" do
 
   it "creates from slice, non-writeable" do
     slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
-    io = MemoryIO.new slice, writeable: false
+    io = IO::Memory.new slice, writeable: false
 
     expect_raises(IO::Error, "read-only stream") do
       io.print 'z'
@@ -275,14 +275,14 @@ describe "MemoryIO" do
   end
 
   it "writes past end" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     io.pos = 1000
     io.print 'a'
     io.to_slice.to_a.should eq([0] * 1000 + [97])
   end
 
   it "writes past end with write_byte" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     io.pos = 1000
     io.write_byte 'a'.ord.to_u8
     io.to_slice.to_a.should eq([0] * 1000 + [97])
@@ -292,14 +292,14 @@ describe "MemoryIO" do
     describe "decode" do
       it "gets_to_end" do
         str = "Hello world" * 200
-        io = MemoryIO.new(str.encode("UCS-2LE"))
+        io = IO::Memory.new(str.encode("UCS-2LE"))
         io.set_encoding("UCS-2LE")
         io.gets_to_end.should eq(str)
       end
 
       it "gets" do
         str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
-        io = MemoryIO.new(str.encode("UCS-2LE"))
+        io = IO::Memory.new(str.encode("UCS-2LE"))
         io.set_encoding("UCS-2LE")
         io.gets.should eq("Hello world\n")
         io.gets.should eq("Foo\n")
@@ -308,7 +308,7 @@ describe "MemoryIO" do
 
       it "reads char" do
         str = "x\nHello world" + ("1234567890" * 1000)
-        io = MemoryIO.new(str.encode("UCS-2LE"))
+        io = IO::Memory.new(str.encode("UCS-2LE"))
         io.set_encoding("UCS-2LE")
         io.gets.should eq("x\n")
         str = str[2..-1]

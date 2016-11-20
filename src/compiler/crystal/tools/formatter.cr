@@ -51,8 +51,8 @@ module Crystal
     @line : Int32
     @column : Int32
     @token : Token
-    @output : MemoryIO
-    @line_output : MemoryIO
+    @output : IO::Memory
+    @line_output : IO::Memory
     @wrote_newline : Bool
     @wrote_comment : Bool
     @macro_state : Token::MacroState
@@ -88,8 +88,8 @@ module Crystal
       @token = @lexer.token
       @token = next_token
 
-      @output = MemoryIO.new(source.bytesize)
-      @line_output = MemoryIO.new
+      @output = IO::Memory.new(source.bytesize)
+      @line_output = IO::Memory.new
       @wrote_newline = false
       @wrote_comment = false
       @macro_state = Token::MacroState.default

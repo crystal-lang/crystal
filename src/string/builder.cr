@@ -1,6 +1,6 @@
 require "io"
 
-# Similar to `MemoryIO`, but optimized for building a single string.
+# Similar to `IO::Memory`, but optimized for building a single string.
 #
 # You should never have to deal with this class. Instead, use `String.build`.
 class String::Builder

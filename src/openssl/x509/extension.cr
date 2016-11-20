@@ -57,7 +57,7 @@ module OpenSSL::X509
     end
 
     def value
-      bio = OpenSSL::BIO.new(io = MemoryIO.new)
+      bio = OpenSSL::BIO.new(io = IO::Memory.new)
 
       if LibCrypto.x509v3_ext_print(bio, @ext, 0, 0) == 0
         LibCrypto.asn1_string_print(bio, LibCrypto.x509_extension_get_data(@ext))

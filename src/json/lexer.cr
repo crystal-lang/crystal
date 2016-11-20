@@ -16,7 +16,7 @@ abstract class JSON::Lexer
     @token = Token.new
     @line_number = 1
     @column_number = 1
-    @buffer = MemoryIO.new
+    @buffer = IO::Memory.new
     @string_pool = StringPool.new
     @skip = false
     @expects_object_key = false

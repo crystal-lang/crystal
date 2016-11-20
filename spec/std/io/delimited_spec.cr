@@ -26,7 +26,7 @@ end
 describe "IO::Delimited" do
   describe "#read" do
     it "doesn't read past the limit" do
-      io = MemoryIO.new("abcderzzrfgzr")
+      io = IO::Memory.new("abcderzzrfgzr")
       delimited = IO::Delimited.new(io, read_delimiter: "zr")
 
       delimited.gets_to_end.should eq("abcderz")
@@ -34,7 +34,7 @@ describe "IO::Delimited" do
     end
 
     it "doesn't read past the limit (char-by-char)" do
-      io = MemoryIO.new("abcderzzrfg")
+      io = IO::Memory.new("abcderzzrfg")
       delimited = IO::Delimited.new(io, read_delimiter: "zr")
 
       delimited.read_char.should eq('a')
@@ -54,35 +54,35 @@ describe "IO::Delimited" do
     end
 
     it "doesn't clobber active_delimiter_buffer" do
-      io = MemoryIO.new("ab12312")
+      io = IO::Memory.new("ab12312")
       delimited = IO::Delimited.new(io, read_delimiter: "12345")
 
       delimited.gets_to_end.should eq("ab12312")
     end
 
     it "handles the delimiter at the start" do
-      io = MemoryIO.new("ab12312")
+      io = IO::Memory.new("ab12312")
       delimited = IO::Delimited.new(io, read_delimiter: "ab1")
 
       delimited.read_char.should eq(nil)
     end
 
     it "handles the delimiter at the end" do
-      io = MemoryIO.new("ab12312z")
+      io = IO::Memory.new("ab12312z")
       delimited = IO::Delimited.new(io, read_delimiter: "z")
 
       delimited.gets_to_end.should eq("ab12312")
     end
 
     it "handles nearly a delimiter at the end" do
-      io = MemoryIO.new("ab12312")
+      io = IO::Memory.new("ab12312")
       delimited = IO::Delimited.new(io, read_delimiter: "122")
 
       delimited.gets_to_end.should eq("ab12312")
     end
 
     it "doesn't clobber the buffer on closely-offset partial matches" do
-      io = MemoryIO.new("abab1234abcdefgh")
+      io = IO::Memory.new("abab1234abcdefgh")
       delimited = IO::Delimited.new(io, read_delimiter: "abcdefgh")
 
       delimited.gets_to_end.should eq("abab1234")
@@ -98,7 +98,7 @@ describe "IO::Delimited" do
 
   describe "#write" do
     it "raises" do
-      delimited = IO::Delimited.new(MemoryIO.new, read_delimiter: "zr")
+      delimited = IO::Delimited.new(IO::Memory.new, read_delimiter: "zr")
       expect_raises(IO::Error, "Can't write to IO::Delimited") do
         delimited.puts "test string"
       end
@@ -107,7 +107,7 @@ describe "IO::Delimited" do
 
   describe "#close" do
     it "stops reading" do
-      io = MemoryIO.new "abcdefg"
+      io = IO::Memory.new "abcdefg"
       delimited = IO::Delimited.new(io, read_delimiter: "zr")
 
       delimited.read_char.should eq('a')
@@ -121,7 +121,7 @@ describe "IO::Delimited" do
     end
 
     it "closes the underlying stream if sync_close is true" do
-      io = MemoryIO.new "abcdefg"
+      io = IO::Memory.new "abcdefg"
       delimited = IO::Delimited.new(io, read_delimiter: "zr", sync_close: true)
       delimited.sync_close?.should eq(true)
 

@@ -5,7 +5,7 @@ module Zlib
   describe Deflate do
     it "should be able to deflate" do
       message = "this is a test string !!!!\n"
-      io = MemoryIO.new
+      io = IO::Memory.new
       deflate = Deflate.new(io)
       deflate.print message
       deflate.close
@@ -16,7 +16,7 @@ module Zlib
     end
 
     it "can be closed without sync" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       deflate = Deflate.new(io)
       deflate.close
       deflate.closed?.should be_true
@@ -28,7 +28,7 @@ module Zlib
     end
 
     it "can be closed with sync (1)" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       deflate = Deflate.new(io, sync_close: true)
       deflate.close
       deflate.closed?.should be_true
@@ -36,7 +36,7 @@ module Zlib
     end
 
     it "can be closed with sync (2)" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       deflate = Deflate.new(io)
       deflate.sync_close = true
       deflate.close
@@ -45,7 +45,7 @@ module Zlib
     end
 
     it "can be flushed" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       deflate = Deflate.new(io)
 
       deflate.print "this"

@@ -48,7 +48,7 @@ describe Process do
   end
 
   it "sends input in IO" do
-    value = Process.run("/bin/cat", input: MemoryIO.new("hello")) do |proc|
+    value = Process.run("/bin/cat", input: IO::Memory.new("hello")) do |proc|
       proc.input?.should be_nil
       proc.output.gets_to_end
     end
@@ -56,13 +56,13 @@ describe Process do
   end
 
   it "sends output to IO" do
-    output = MemoryIO.new
+    output = IO::Memory.new
     Process.run("/bin/sh", {"-c", "echo hello"}, output: output)
     output.to_s.should eq("hello\n")
   end
 
   it "sends error to IO" do
-    error = MemoryIO.new
+    error = IO::Memory.new
     Process.run("/bin/sh", {"-c", "echo hello 1>&2"}, error: error)
     error.to_s.should eq("hello\n")
   end
@@ -161,7 +161,7 @@ describe Process do
   end
 
   it "can link processes together" do
-    buffer = MemoryIO.new
+    buffer = IO::Memory.new
     Process.run("/bin/cat") do |cat|
       Process.run("/bin/cat", input: cat.output, output: buffer) do
         1000.times { cat.input.puts "line" }

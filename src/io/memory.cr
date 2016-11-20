@@ -1,8 +1,8 @@
 # An IO that reads and writes from a buffer in memory.
 #
 # The internal buffer can be resizeable and/or writeable depending
-# on how a MemoryIO is constructed.
-class MemoryIO
+# on how an IO::Memory is constructed.
+class IO::Memory
   include IO
 
   # Returns the internal buffer as a `Pointer(UInt8)`.
@@ -13,11 +13,11 @@ class MemoryIO
 
   @capacity : Int32
 
-  # Creates an empty, resizeable and writeable MemoryIO with the given
+  # Creates an empty, resizeable and writeable IO::Memory with the given
   # initialize capactiy for the internal buffer.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.pos  # => 0
   # io.read # => ""
   # ```
@@ -33,14 +33,14 @@ class MemoryIO
     @writeable = true
   end
 
-  # Creates a MemoryIO that will read, and optionally write, from/to
-  # the given slice. The created MemoryIO is non-resizeable.
+  # Creates an IO::Memory that will read, and optionally write, from/to
+  # the given slice. The created IO::Memory is non-resizeable.
   #
   # The IO starts at position zero for reading.
   #
   # ```
   # slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
-  # io = MemoryIO.new slice, writeable: false
+  # io = IO::Memory.new slice, writeable: false
   # io.pos  # => 0
   # io.read # => "abcdef"
   # ```
@@ -53,13 +53,13 @@ class MemoryIO
     @writeable = writeable
   end
 
-  # Creates a MemoryIO whose contents are the exact contents of *string*.
-  # The created MemoryIO is non-resizeable and non-writeable.
+  # Creates an IO::Memory whose contents are the exact contents of *string*.
+  # The created IO::Memory is non-resizeable and non-writeable.
   #
   # The IO starts at position zero for reading.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.pos        # => 0
   # io.gets(2)    # => "he"
   # io.print "hi" # raises
@@ -79,7 +79,7 @@ class MemoryIO
     count
   end
 
-  # See `IO#write(slice)`. Raises if this MemoryIO is non-writeable,
+  # See `IO#write(slice)`. Raises if this IO::Memory is non-writeable,
   # or if it's non-resizeable and a resize is needed.
   def write(slice : Slice(UInt8))
     check_writeable
@@ -107,7 +107,7 @@ class MemoryIO
     nil
   end
 
-  # See `IO#write_byte`. Raises if this MemoryIO is non-writeable,
+  # See `IO#write_byte`. Raises if this IO::Memory is non-writeable,
   # or if it's non-resizeable and a resize is needed.
   def write_byte(byte : UInt8)
     check_writeable
@@ -191,10 +191,10 @@ class MemoryIO
   end
 
   # Clears the internal buffer and resets the position to zero. Raises
-  # if this MemoryIO is non-resizeable.
+  # if this IO::Memory is non-resizeable.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.gets(3) # => "hel"
   # io.clear
   # io.pos         # => 0
@@ -207,10 +207,10 @@ class MemoryIO
     @pos = 0
   end
 
-  # Returns `true` if this MemoryIO has no contents.
+  # Returns `true` if this IO::Memory has no contents.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.empty? # => true
   # io.print "hello"
   # io.empty? # => false
@@ -222,7 +222,7 @@ class MemoryIO
   # Rewinds this IO to the initial position (zero).
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.gets(2) => "he"
   # io.rewind
   # io.gets(2) #=> "he"
@@ -235,7 +235,7 @@ class MemoryIO
   # Returns the total number of bytes in this IO.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.size # => 5
   # ```
   def size
@@ -250,7 +250,7 @@ class MemoryIO
   # Seeks to a given *offset* (in bytes) according to the *whence* argument.
   #
   # ```
-  # io = MemoryIO.new("abcdef")
+  # io = IO::Memory.new("abcdef")
   # io.gets(3) # => "abc"
   # io.seek(1, IO::Seek::Set)
   # io.gets(2) # => "bc"
@@ -275,7 +275,7 @@ class MemoryIO
   # Returns the current position (in bytes) of this IO.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.pos     # => 0
   # io.gets(2) # => "he"
   # io.pos     # => 2
@@ -287,7 +287,7 @@ class MemoryIO
   # Sets the current position (in bytes) of this IO.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.pos = 3
   # io.gets # => "lo"
   # ```
@@ -300,7 +300,7 @@ class MemoryIO
   # Closes this IO. Further operations on this IO will raise an `IO::Error`.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.close
   # io.gets_to_end # => IO::Error: closed stream
   # ```
@@ -311,7 +311,7 @@ class MemoryIO
   # Determines if this IO is closed.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.closed? # => false
   # io.close
   # io.closed? # => true
@@ -323,7 +323,7 @@ class MemoryIO
   # Returns a new String that contains the contents of the internal buffer.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.print 1, 2, 3
   # io.to_s # => "123"
   # ```
@@ -335,7 +335,7 @@ class MemoryIO
   # modifies the internal buffer.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # slice = io.to_slice
   # slice[0] = 97_u8
   # io.gets_to_end # => "aello"
@@ -368,5 +368,13 @@ class MemoryIO
   private def resize_to_capacity(capacity)
     @capacity = capacity
     @buffer = @buffer.realloc(@capacity)
+  end
+end
+
+# DEPRECATED: MemoryIO has been deprecated in 0.20.0 and will be removed afterwards. Please use `IO::Memory` instead.
+class MemoryIO < IO::Memory
+  def self.new(*args, **nargs)
+    {{ puts "Warning: MemoryIO is deprecated and will be removed after 0.20.0, use IO::Memory instead".id }}
+    super
   end
 end

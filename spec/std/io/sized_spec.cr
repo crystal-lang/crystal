@@ -3,7 +3,7 @@ require "spec"
 describe "IO::Sized" do
   describe "#read" do
     it "doesn't read past the limit when reading char-by-char" do
-      io = MemoryIO.new "abcdefg"
+      io = IO::Memory.new "abcdefg"
       sized = IO::Sized.new(io, read_size: 5)
 
       sized.read_char.should eq('a')
@@ -19,7 +19,7 @@ describe "IO::Sized" do
     end
 
     it "doesn't read past the limit when reading the correct size" do
-      io = MemoryIO.new("1234567")
+      io = IO::Memory.new("1234567")
       sized = IO::Sized.new(io, read_size: 5)
       slice = Bytes.new(5)
 
@@ -31,7 +31,7 @@ describe "IO::Sized" do
     end
 
     it "reads partially when supplied with a larger slice" do
-      io = MemoryIO.new("1234567")
+      io = IO::Memory.new("1234567")
       sized = IO::Sized.new(io, read_size: 5)
       slice = Bytes.new(10)
 
@@ -40,7 +40,7 @@ describe "IO::Sized" do
     end
 
     it "raises on negative numbers" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       expect_raises(ArgumentError, "negative read_size") do
         IO::Sized.new(io, read_size: -1)
       end
@@ -49,7 +49,7 @@ describe "IO::Sized" do
 
   describe "#write" do
     it "raises" do
-      sized = IO::Sized.new(MemoryIO.new, read_size: 5)
+      sized = IO::Sized.new(IO::Memory.new, read_size: 5)
       expect_raises(IO::Error, "Can't write to IO::Sized") do
         sized.puts "test string"
       end
@@ -58,7 +58,7 @@ describe "IO::Sized" do
 
   describe "#close" do
     it "stops reading" do
-      io = MemoryIO.new "abcdefg"
+      io = IO::Memory.new "abcdefg"
       sized = IO::Sized.new(io, read_size: 5)
 
       sized.read_char.should eq('a')
@@ -72,7 +72,7 @@ describe "IO::Sized" do
     end
 
     it "closes the underlying stream if sync_close is true" do
-      io = MemoryIO.new "abcdefg"
+      io = IO::Memory.new "abcdefg"
       sized = IO::Sized.new(io, read_size: 5, sync_close: true)
       sized.sync_close?.should eq(true)
 
@@ -83,7 +83,7 @@ describe "IO::Sized" do
   end
 
   it "read_byte" do
-    io = MemoryIO.new "abcdefg"
+    io = IO::Memory.new "abcdefg"
     sized = IO::Sized.new(io, read_size: 3)
     sized.read_byte.should eq('a'.ord)
     sized.read_byte.should eq('b'.ord)

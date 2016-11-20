@@ -1896,7 +1896,7 @@ module Crystal
     end
 
     def remove_heredoc_indent(pieces : Array, indent)
-      current_line = MemoryIO.new
+      current_line = IO::Memory.new
       remove_indent = true
       new_pieces = [] of ASTNode
       previous_line_number = 0

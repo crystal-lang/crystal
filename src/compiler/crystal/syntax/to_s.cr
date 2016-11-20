@@ -16,7 +16,7 @@ module Crystal
   class ToSVisitor < Visitor
     @str : IO
 
-    def initialize(@str = MemoryIO.new, @emit_loc_pragma = false)
+    def initialize(@str = IO::Memory.new, @emit_loc_pragma = false)
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
