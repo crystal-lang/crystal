@@ -468,7 +468,7 @@ describe "Enumerable" do
     end
 
     it "joins with io and block" do
-      str = MemoryIO.new
+      str = IO::Memory.new
       [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
       str.to_s.should eq("2, 3, 4")
     end

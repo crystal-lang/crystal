@@ -3,8 +3,8 @@ require "spec"
 describe "IO::MultiWriter" do
   describe "#write" do
     it "writes to multiple IOs" do
-      io1 = MemoryIO.new
-      io2 = MemoryIO.new
+      io1 = IO::Memory.new
+      io2 = IO::Memory.new
 
       writer = IO::MultiWriter.new(io1, io2)
 
@@ -27,7 +27,7 @@ describe "IO::MultiWriter" do
 
   describe "#close" do
     it "stops reading" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       writer = IO::MultiWriter.new(io)
 
       writer.close
@@ -41,7 +41,7 @@ describe "IO::MultiWriter" do
     end
 
     it "closes the underlying stream if sync_close is true" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       writer = IO::MultiWriter.new(io, sync_close: true)
 
       writer.close

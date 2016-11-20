@@ -3,7 +3,7 @@ require "spec"
 describe IO::ARGF do
   it "reads from STDIN if ARGV isn't specified" do
     argv = [] of String
-    stdin = MemoryIO.new("hello")
+    stdin = IO::Memory.new("hello")
 
     argf = IO::ARGF.new argv, stdin
     argf.path.should eq("-")
@@ -14,7 +14,7 @@ describe IO::ARGF do
   it "reads from ARGV if specified" do
     path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
     path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
-    stdin = MemoryIO.new("")
+    stdin = IO::Memory.new("")
     argv = [path1, path2]
 
     argf = IO::ARGF.new argv, stdin

@@ -3,7 +3,7 @@ require "http/server"
 
 describe HTTP::DeflateHandler do
   it "doesn't deflates if doesn't have 'deflate' in Accept-Encoding header" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
@@ -20,7 +20,7 @@ describe HTTP::DeflateHandler do
   end
 
   it "deflates if has deflate in 'deflate' Accept-Encoding header" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     request.headers["Accept-Encoding"] = "foo, deflate, other"
 
@@ -38,7 +38,7 @@ describe HTTP::DeflateHandler do
     response2 = HTTP::Client::Response.from_io(io, decompress: false)
     body = response2.body
 
-    io2 = MemoryIO.new
+    io2 = IO::Memory.new
     deflate = Zlib::Deflate.new(io2)
     deflate.print "Hello"
     deflate.close
@@ -48,7 +48,7 @@ describe HTTP::DeflateHandler do
   end
 
   it "deflates gzip if has deflate in 'deflate' Accept-Encoding header" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     request.headers["Accept-Encoding"] = "foo, gzip, other"
 
@@ -66,7 +66,7 @@ describe HTTP::DeflateHandler do
     response2 = HTTP::Client::Response.from_io(io, decompress: false)
     body = response2.body
 
-    io2 = MemoryIO.new
+    io2 = IO::Memory.new
     deflate = Zlib::Deflate.gzip(io2)
     deflate.print "Hello"
     deflate.close

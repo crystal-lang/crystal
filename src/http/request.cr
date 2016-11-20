@@ -9,7 +9,7 @@ require "http/params"
 #
 # A request always holds an IO as a body.
 # When creating a request with a `String` or `Bytes` its body
-# will be a `MemoryIO` wrapping these, and the Content-Length
+# will be a `IO::Memory` wrapping these, and the Content-Length
 # header will be set appropriately.
 class HTTP::Request
   property method : String
@@ -59,12 +59,12 @@ class HTTP::Request
   end
 
   def body=(body : String)
-    @body = MemoryIO.new(body)
+    @body = IO::Memory.new(body)
     self.content_length = body.bytesize
   end
 
   def body=(body : Bytes)
-    @body = MemoryIO.new(body)
+    @body = IO::Memory.new(body)
     self.content_length = body.size
   end
 

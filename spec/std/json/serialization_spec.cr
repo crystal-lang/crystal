@@ -48,7 +48,7 @@ describe "JSON serialization" do
     end
 
     it "does for Array(Int32) from IO" do
-      io = MemoryIO.new "[1, 2, 3]"
+      io = IO::Memory.new "[1, 2, 3]"
       Array(Int32).from_json(io).should eq([1, 2, 3])
     end
 
