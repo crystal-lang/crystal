@@ -28,6 +28,7 @@
 * Added `Enumerable#chunks` and `Iterator#chunk` (thanks @kostya)
 * Added `Iterator#with_index`
 * Several enhancements to the Random module: now works for any integer type and avoids overflows (thanks @BlaXpirit)
+* Optimized `Array#sort` by using introsort (thanks @c910335 )
 * [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.0)
 
 ## 0.19.4  (07-10-2016)
