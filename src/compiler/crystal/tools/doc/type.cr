@@ -469,19 +469,22 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Path, io, links = true)
-    # We don't want "::" prefixed in from of paths in the docs
-    old_global = node.global?
-    node.global = false
-
-    begin
-      match = lookup_path(node)
-      if match
-        type_to_html match, io, node.to_s, links: links
-      else
-        io << node
+    match = lookup_path(node)
+    if match
+      # If the path is global, search a local path and
+      # see if there's a different match. If not, we can safely
+      # remove the `::` as a prefix (harder to read)
+      remove_colons = false
+      if node.global?
+        node.global = false
+        remove_colons = lookup_path(node) == match
+        node.global = true unless remove_colons
       end
-    ensure
-      node.global = old_global
+
+      type_to_html match, io, node.to_s, links: links
+      node.global = true if remove_colons
+    else
+      io << node
     end
   end
 
@@ -685,4 +688,6 @@ class Crystal::Doc::Type
       end
     )
   end
+
+  delegate to_s, inspect, to: @type
 end
