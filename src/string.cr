@@ -877,7 +877,7 @@ class String
   def downcase(options = Unicode::CaseOptions::None)
     return self if empty?
 
-    if ascii_only?
+    if ascii_only? && ((options == Unicode::CaseOptions::None) || options.ascii?)
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
           buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
@@ -904,7 +904,7 @@ class String
   def upcase(options = Unicode::CaseOptions::None)
     return self if empty?
 
-    if ascii_only?
+    if ascii_only? && ((options == Unicode::CaseOptions::None) || options.ascii?)
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
           buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8

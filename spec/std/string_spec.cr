@@ -470,6 +470,7 @@ describe "String" do
     assert { "áéíóúā".upcase.should eq("ÁÉÍÓÚĀ") }
     assert { "aeıiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEIİOU") }
     assert { "áeíoú".upcase(Unicode::CaseOptions::ASCII).should eq("áEíOú") }
+    assert { "aeiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEİOU") }
     assert { "baﬄe".upcase.should eq("BAFFLE") }
     assert { "ﬀ".upcase.should eq("FF") }
   end
