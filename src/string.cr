@@ -877,7 +877,9 @@ class String
   def downcase(options = Unicode::CaseOptions::None)
     String.build(bytesize) do |io|
       each_char do |char|
-        io << char.downcase(options)
+        char.downcase(options) do |res|
+          io << res
+        end
       end
     end
   end
@@ -891,7 +893,9 @@ class String
   def upcase(options = Unicode::CaseOptions::None)
     String.build(bytesize) do |io|
       each_char do |char|
-        io << char.upcase(options)
+        char.upcase(options) do |res|
+          io << res
+        end
       end
     end
   end
@@ -908,9 +912,9 @@ class String
     String.build(bytesize) do |io|
       each_char_with_index do |char, i|
         if i == 0
-          io << char.upcase
+          char.upcase { |c| io << c }
         else
-          io << char.downcase
+          char.downcase { |c| io << c }
         end
       end
     end

@@ -25,6 +25,38 @@ module Unicode
   end
 
   def self.upcase(char : Char, options : CaseOptions)
+    result = check_upcase_ascii(char, options)
+    return result if result
+
+    result = check_upcase_turkic(char, options)
+    return result if result
+
+    check_upcase_ranges(char)
+  end
+
+  def self.upcase(char : Char, options : CaseOptions)
+    result = check_upcase_ascii(char, options)
+    if result
+      yield result
+      return
+    end
+
+    result = check_upcase_turkic(char, options)
+    if result
+      yield result
+      return
+    end
+
+    result = special_cases_upcase[char.ord]?
+    if result
+      result.each { |c| yield c.unsafe_chr if c != 0 }
+      return
+    end
+
+    yield check_upcase_ranges(char)
+  end
+
+  private def self.check_upcase_ascii(char, options)
     if (char.ascii? && options == Unicode::CaseOptions::None) || options.ascii?
       if char.ascii_lowercase?
         return (char.ord - 32).unsafe_chr
@@ -32,14 +64,20 @@ module Unicode
         return char
       end
     end
+    nil
+  end
 
+  private def self.check_upcase_turkic(char, options)
     if options.turkic?
       case char
       when 'ı'; return 'I'
       when 'i'; return 'İ'
       end
     end
+    nil
+  end
 
+  private def self.check_upcase_ranges(char)
     result = search_ranges(upcase_ranges, char.ord)
     return char + result if result
 
@@ -50,6 +88,38 @@ module Unicode
   end
 
   def self.downcase(char : Char, options : CaseOptions)
+    result = check_downcase_ascii(char, options)
+    return result if result
+
+    result = check_downcase_turkic(char, options)
+    return result if result
+
+    check_downcase_ranges(char)
+  end
+
+  def self.downcase(char : Char, options : CaseOptions)
+    result = check_downcase_ascii(char, options)
+    if result
+      yield result
+      return
+    end
+
+    result = check_downcase_turkic(char, options)
+    if result
+      yield result
+      return
+    end
+
+    result = special_cases_downcase[char.ord]?
+    if result
+      result.each { |c| yield c.unsafe_chr if c != 0 }
+      return
+    end
+
+    yield check_downcase_ranges(char)
+  end
+
+  private def self.check_downcase_ascii(char, options)
     if (char.ascii? && options == Unicode::CaseOptions::None) || options.ascii?
       if char.ascii_uppercase?
         return (char.ord + 32).unsafe_chr
@@ -58,13 +128,20 @@ module Unicode
       end
     end
 
+    nil
+  end
+
+  private def self.check_downcase_turkic(char, options)
     if options.turkic?
       case char
       when 'I'; return 'ı'
       when 'İ'; return 'i'
       end
     end
+    nil
+  end
 
+  private def self.check_downcase_ranges(char)
     result = search_ranges(downcase_ranges, char.ord)
     return char + result if result
 

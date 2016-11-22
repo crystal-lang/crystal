@@ -15,6 +15,10 @@ record Entry,
   upcase : Int32?,
   downcase : Int32?
 
+record SpecialCase,
+  codepoint : Int32,
+  value : Array(Int32)
+
 record CaseRange, low : Int32, high : Int32, delta : Int32
 record AlternateRange, low : Int32, high : Int32
 record Stride, low : Int32, high : Int32, stride : Int32
@@ -123,6 +127,8 @@ def strides(entries, targets)
 end
 
 entries = [] of Entry
+special_cases_downcase = [] of SpecialCase
+special_cases_upcase = [] of SpecialCase
 
 url = "http://www.unicode.org/Public/9.0.0/ucd/UnicodeData.txt"
 body = HTTP::Client.get(url).body
@@ -137,6 +143,34 @@ body.each_line do |line|
   upcase = pieces[12].to_i?(16)
   downcase = pieces[13].to_i?(16)
   entries << Entry.new(codepoint, name, general_category, upcase, downcase)
+end
+
+url = "http://www.unicode.org/Public/9.0.0/ucd/SpecialCasing.txt"
+body = HTTP::Client.get(url).body
+body.each_line do |line|
+  line = line.strip
+  next if line.empty?
+  break if line.starts_with?("# Conditional Mappings")
+  next if line.starts_with?('#')
+
+  pieces = line.split(';')
+  codepoint = pieces[0].to_i(16)
+  downcase = pieces[1].split.map(&.to_i(16))
+  upcase = pieces[3].split.map(&.to_i(16))
+  downcase = nil if downcase.size == 1
+  upcase = nil if upcase.size == 1
+  if downcase
+    while downcase.size < 3
+      downcase << 0
+    end
+    special_cases_downcase << SpecialCase.new(codepoint, downcase)
+  end
+  if upcase
+    while upcase.size < 3
+      upcase << 0
+    end
+    special_cases_upcase << SpecialCase.new(codepoint, upcase)
+  end
 end
 
 downcase_ranges = case_ranges entries, &.downcase

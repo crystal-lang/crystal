@@ -1309,10 +1309,141 @@ module Unicode
     end
   end
 
+  # Special downcase transformation that involve mapping a codepoint
+  # to multiple codepoints. The maximum transformation is always 3
+  # codepoints, so we store them all as 3 codepoints and 0 means end.
+  @@special_cases_downcase : Hash(Int32, {Int32, Int32, Int32})?
+  private def self.special_cases_downcase
+    @@special_cases_downcase ||= begin
+      data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: 1)
+      put(data, 304, 105, 775, 0)
+
+      data
+    end
+  end
+
+  # Special upcase transformation that involve mapping a codepoint
+  # to multiple codepoints. The maximum transformation is always 3
+  # codepoints, so we store them all as 3 codepoints and 0 means end.
+  @@special_cases_upcase : Hash(Int32, {Int32, Int32, Int32})?
+  private def self.special_cases_upcase
+    @@special_cases_upcase ||= begin
+      data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: 102)
+      put(data, 223, 83, 83, 0)
+      put(data, 64256, 70, 70, 0)
+      put(data, 64257, 70, 73, 0)
+      put(data, 64258, 70, 76, 0)
+      put(data, 64259, 70, 70, 73)
+      put(data, 64260, 70, 70, 76)
+      put(data, 64261, 83, 84, 0)
+      put(data, 64262, 83, 84, 0)
+      put(data, 1415, 1333, 1362, 0)
+      put(data, 64275, 1348, 1350, 0)
+      put(data, 64276, 1348, 1333, 0)
+      put(data, 64277, 1348, 1339, 0)
+      put(data, 64278, 1358, 1350, 0)
+      put(data, 64279, 1348, 1341, 0)
+      put(data, 329, 700, 78, 0)
+      put(data, 912, 921, 776, 769)
+      put(data, 944, 933, 776, 769)
+      put(data, 496, 74, 780, 0)
+      put(data, 7830, 72, 817, 0)
+      put(data, 7831, 84, 776, 0)
+      put(data, 7832, 87, 778, 0)
+      put(data, 7833, 89, 778, 0)
+      put(data, 7834, 65, 702, 0)
+      put(data, 8016, 933, 787, 0)
+      put(data, 8018, 933, 787, 768)
+      put(data, 8020, 933, 787, 769)
+      put(data, 8022, 933, 787, 834)
+      put(data, 8118, 913, 834, 0)
+      put(data, 8134, 919, 834, 0)
+      put(data, 8146, 921, 776, 768)
+      put(data, 8147, 921, 776, 769)
+      put(data, 8150, 921, 834, 0)
+      put(data, 8151, 921, 776, 834)
+      put(data, 8162, 933, 776, 768)
+      put(data, 8163, 933, 776, 769)
+      put(data, 8164, 929, 787, 0)
+      put(data, 8166, 933, 834, 0)
+      put(data, 8167, 933, 776, 834)
+      put(data, 8182, 937, 834, 0)
+      put(data, 8064, 7944, 921, 0)
+      put(data, 8065, 7945, 921, 0)
+      put(data, 8066, 7946, 921, 0)
+      put(data, 8067, 7947, 921, 0)
+      put(data, 8068, 7948, 921, 0)
+      put(data, 8069, 7949, 921, 0)
+      put(data, 8070, 7950, 921, 0)
+      put(data, 8071, 7951, 921, 0)
+      put(data, 8072, 7944, 921, 0)
+      put(data, 8073, 7945, 921, 0)
+      put(data, 8074, 7946, 921, 0)
+      put(data, 8075, 7947, 921, 0)
+      put(data, 8076, 7948, 921, 0)
+      put(data, 8077, 7949, 921, 0)
+      put(data, 8078, 7950, 921, 0)
+      put(data, 8079, 7951, 921, 0)
+      put(data, 8080, 7976, 921, 0)
+      put(data, 8081, 7977, 921, 0)
+      put(data, 8082, 7978, 921, 0)
+      put(data, 8083, 7979, 921, 0)
+      put(data, 8084, 7980, 921, 0)
+      put(data, 8085, 7981, 921, 0)
+      put(data, 8086, 7982, 921, 0)
+      put(data, 8087, 7983, 921, 0)
+      put(data, 8088, 7976, 921, 0)
+      put(data, 8089, 7977, 921, 0)
+      put(data, 8090, 7978, 921, 0)
+      put(data, 8091, 7979, 921, 0)
+      put(data, 8092, 7980, 921, 0)
+      put(data, 8093, 7981, 921, 0)
+      put(data, 8094, 7982, 921, 0)
+      put(data, 8095, 7983, 921, 0)
+      put(data, 8096, 8040, 921, 0)
+      put(data, 8097, 8041, 921, 0)
+      put(data, 8098, 8042, 921, 0)
+      put(data, 8099, 8043, 921, 0)
+      put(data, 8100, 8044, 921, 0)
+      put(data, 8101, 8045, 921, 0)
+      put(data, 8102, 8046, 921, 0)
+      put(data, 8103, 8047, 921, 0)
+      put(data, 8104, 8040, 921, 0)
+      put(data, 8105, 8041, 921, 0)
+      put(data, 8106, 8042, 921, 0)
+      put(data, 8107, 8043, 921, 0)
+      put(data, 8108, 8044, 921, 0)
+      put(data, 8109, 8045, 921, 0)
+      put(data, 8110, 8046, 921, 0)
+      put(data, 8111, 8047, 921, 0)
+      put(data, 8115, 913, 921, 0)
+      put(data, 8124, 913, 921, 0)
+      put(data, 8131, 919, 921, 0)
+      put(data, 8140, 919, 921, 0)
+      put(data, 8179, 937, 921, 0)
+      put(data, 8188, 937, 921, 0)
+      put(data, 8114, 8122, 921, 0)
+      put(data, 8116, 902, 921, 0)
+      put(data, 8130, 8138, 921, 0)
+      put(data, 8132, 905, 921, 0)
+      put(data, 8178, 8186, 921, 0)
+      put(data, 8180, 911, 921, 0)
+      put(data, 8119, 913, 834, 921)
+      put(data, 8135, 919, 834, 921)
+      put(data, 8183, 937, 834, 921)
+
+      data
+    end
+  end
+
   # TODO: this is needed to avoid generating lots of allocas
   # in LLVM, which makes LLVM really slow. The compiler should
   # try to avoid/reuse temporary allocas.
-  private def self.put(array, *values) : Nil
+  private def self.put(array : Array, *values) : Nil
     array << values
+  end
+
+  private def self.put(hash : Hash, key, *values) : Nil
+    hash[key] = values
   end
 end

@@ -68,10 +68,42 @@ module Unicode
     end
   <%- end %>
 
+  # Special downcase transformation that involve mapping a codepoint
+  # to multiple codepoints. The maximum transformation is always 3
+  # codepoints, so we store them all as 3 codepoints and 0 means end.
+  @@special_cases_downcase : Hash(Int32, {Int32, Int32, Int32})?
+  private def self.special_cases_downcase
+    @@special_cases_downcase ||= begin
+      data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_downcase.size %>)
+      <%- special_cases_downcase.each do |a_case| -%>
+        put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
+      <%- end %>
+      data
+    end
+  end
+
+  # Special upcase transformation that involve mapping a codepoint
+  # to multiple codepoints. The maximum transformation is always 3
+  # codepoints, so we store them all as 3 codepoints and 0 means end.
+  @@special_cases_upcase : Hash(Int32, {Int32, Int32, Int32})?
+  private def self.special_cases_upcase
+    @@special_cases_upcase ||= begin
+      data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_upcase.size %>)
+      <%- special_cases_upcase.each do |a_case| -%>
+        put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
+      <%- end %>
+      data
+    end
+  end
+
   # TODO: this is needed to avoid generating lots of allocas
   # in LLVM, which makes LLVM really slow. The compiler should
   # try to avoid/reuse temporary allocas.
-  private def self.put(array, *values) : Nil
+  private def self.put(array : Array, *values) : Nil
     array << values
+  end
+
+  private def self.put(hash : Hash, key, *values) : Nil
+    hash[key] = values
   end
 end

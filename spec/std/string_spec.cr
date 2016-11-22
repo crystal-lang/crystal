@@ -461,6 +461,7 @@ describe "String" do
     assert { "ÁÉÍÓÚĀ".downcase.should eq("áéíóúā") }
     assert { "AEIİOU".downcase(Unicode::CaseOptions::Turkic).should eq("aeıiou") }
     assert { "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII).should eq("ÁeÍoÚ") }
+    assert { "İ".downcase.should eq("i̇") }
   end
 
   describe "upcase" do
@@ -469,12 +470,15 @@ describe "String" do
     assert { "áéíóúā".upcase.should eq("ÁÉÍÓÚĀ") }
     assert { "aeıiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEIİOU") }
     assert { "áeíoú".upcase(Unicode::CaseOptions::ASCII).should eq("áEíOú") }
+    assert { "baﬄe".upcase.should eq("BAFFLE") }
+    assert { "ﬀ".upcase.should eq("FF") }
   end
 
   describe "capitalize" do
     assert { "HELLO!".capitalize.should eq("Hello!") }
     assert { "HELLO MAN!".capitalize.should eq("Hello man!") }
     assert { "".capitalize.should eq("") }
+    assert { "ﬄİ".capitalize.should eq("FFLi̇") }
   end
 
   describe "chomp" do

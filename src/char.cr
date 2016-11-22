@@ -366,6 +366,13 @@ struct Char
 
   # Returns the downcase equivalent of this char.
   #
+  # Note that this only works for characters whose downcase
+  # equivalent yields a single codepoint. There are a few
+  # characters, like 'İ', than when downcased result in multiple
+  # characters (in this case: 'I' and the dot mark).
+  #
+  # For a more correct method see the method that receives a block.
+  #
   # ```
   # 'Z'.downcase # => 'z'
   # 'x'.downcase # => 'x'
@@ -375,7 +382,23 @@ struct Char
     Unicode.downcase(self, options)
   end
 
+  # Yields each char for the downcase equivalent of this char.
+  #
+  # This method takes into account the possibility that an downcase
+  # version of a char might result in multiple chars, like for
+  # 'İ', which results in 'i' and a dot mark.
+  def downcase(options = Unicode::CaseOptions::None)
+    Unicode.downcase(self, options) { |char| yield char }
+  end
+
   # Returns the upcase equivalent of this char.
+  #
+  # Note that this only works for characters whose upcase
+  # equivalent yields a single codepoint. There are a few
+  # characters, like 'ﬄ', than when upcased result in multiple
+  # characters (in this case: 'F', 'F', 'L').
+  #
+  # For a more correct method see the method that receives a block.
   #
   # ```
   # 'z'.upcase # => 'Z'
@@ -384,6 +407,20 @@ struct Char
   # ```
   def upcase(options = Unicode::CaseOptions::None)
     Unicode.upcase(self, options)
+  end
+
+  # Yields each char for the upcase equivalent of this char.
+  #
+  # This method takes into account the possibility that an upcase
+  # version of a char might result in multiple chars, like for
+  # 'ﬄ', which results in 'F', 'F' and 'L'.
+  #
+  # ```
+  # 'z'.upcase { |v| puts v } # prints 'Z'
+  # 'ﬄ'.upcase { |v| puts v } # prints 'F', 'F', 'F'
+  # ```
+  def upcase(options = Unicode::CaseOptions::None)
+    Unicode.upcase(self, options) { |char| yield char }
   end
 
   # Returns this char's codepoint.
