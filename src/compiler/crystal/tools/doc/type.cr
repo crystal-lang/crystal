@@ -527,9 +527,31 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Union, io, links = true)
+    # See if it's a nilable type
+    if node.types.size == 2
+      # See if first type is Nil
+      if nil_type?(node.types[0])
+        return nilable_type_to_html node.types[1], io, links: links
+      elsif nil_type?(node.types[1])
+        return nilable_type_to_html node.types[0], io, links: links
+      end
+    end
+
     node.types.join(" | ", io) do |elem|
       node_to_html elem, io, links: links
     end
+  end
+
+  private def nilable_type_to_html(node, io, links)
+    node_to_html node, io, links: links
+    io << "?"
+  end
+
+  private def nil_type?(node)
+    return false unless node.is_a?(Path)
+
+    match = lookup_path(node)
+    match && match.type == @generator.program.nil_type
   end
 
   def node_to_html(node, io, links = true)
