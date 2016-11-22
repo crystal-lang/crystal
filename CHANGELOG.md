@@ -1,4 +1,4 @@
-## Next
+## 0.20.0 (22-11-2016)
 
 * **(breaking change)** Removed `ifdef` from the language
 * **(breaking change)** Removed `PointerIO`
