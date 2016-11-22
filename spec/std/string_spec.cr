@@ -870,6 +870,13 @@ describe "String" do
     reversed.should eq("はちいんこ")
   end
 
+  it "reverses taking grapheme clusters into account" do
+    reversed = "noël".reverse
+    reversed.bytesize.should eq("noël".bytesize)
+    reversed.size.should eq("noël".size)
+    reversed.should eq("lëon")
+  end
+
   describe "sub" do
     it "subs char with char" do
       replaced = "foobar".sub('o', 'e')

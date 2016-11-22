@@ -2748,18 +2748,25 @@ class String
   # "racecar".reverse   # => "racecar"
   # ```
   def reverse
-    String.new(bytesize) do |buffer|
-      buffer += bytesize
-      reader = Char::Reader.new(self)
-      reader.each do |char|
-        buffer -= reader.current_char_width
-        i = 0
-        char.each_byte do |byte|
-          buffer[i] = byte
-          i += 1
+    if ascii_only?
+      String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          buffer[i] = self.to_unsafe[bytesize - i - 1]
         end
+        {@bytesize, @length}
       end
-      {@bytesize, @length}
+    else
+      # Iterate grpahemes to reverse the string,
+      # so combining characters are placed correctly
+      String.new(bytesize) do |buffer|
+        buffer += bytesize
+        scan(/\X/) do |match|
+          grapheme = match[0]
+          buffer -= grapheme.bytesize
+          buffer.copy_from(grapheme.to_unsafe, grapheme.bytesize)
+        end
+        {@bytesize, @length}
+      end
     end
   end
 
