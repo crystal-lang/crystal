@@ -124,6 +124,12 @@ struct Char
     ord < 128
   end
 
+  # DEPRECATED: use `#ascii_number?` or `#number?`. This method will be removed after 0.20.0.
+  def digit?(base : Int = 10)
+    {{ puts "Warning: `Char#digit?` is deprecated and will be removed after 0.20.0, use `Char#ascii_number?` or `Char#number?` instead".id }}
+    ascii_number?(base)
+  end
+
   # Returns `true` if this char is an ASCII number in specified base.
   #
   # Base can be from 0 to 36 with digits from '0' to '9' and 'a' to 'z' or 'A' to 'Z'.
@@ -193,6 +199,12 @@ struct Char
   # ```
   def uppercase?
     ascii? ? ascii_uppercase? : Unicode.uppercase?(self)
+  end
+
+  # DEPRECATED: use `#ascii_letter?` or `#letter?`. This method will be removed after 0.20.0.
+  def alpha?
+    {{ puts "Warning: `Char#alpha?` is deprecated and will be removed after 0.20.0, use `Char#ascii_letter?` or `Char#letter?` instead".id }}
+    ascii_letter?
   end
 
   # Returns `true` if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
