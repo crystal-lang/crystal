@@ -875,10 +875,21 @@ class String
   # "hEllO".downcase # => "hello"
   # ```
   def downcase(options = Unicode::CaseOptions::None)
-    String.build(bytesize) do |io|
-      each_char do |char|
-        char.downcase(options) do |res|
-          io << res
+    return self if empty?
+
+    if ascii_only?
+      String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+        end
+        {@bytesize, @length}
+      end
+    else
+      String.build(bytesize) do |io|
+        each_char do |char|
+          char.downcase(options) do |res|
+            io << res
+          end
         end
       end
     end
@@ -891,10 +902,21 @@ class String
   # "hEllO".upcase # => "HELLO"
   # ```
   def upcase(options = Unicode::CaseOptions::None)
-    String.build(bytesize) do |io|
-      each_char do |char|
-        char.upcase(options) do |res|
-          io << res
+    return self if empty?
+
+    if ascii_only?
+      String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+        end
+        {@bytesize, @length}
+      end
+    else
+      String.build(bytesize) do |io|
+        each_char do |char|
+          char.upcase(options) do |res|
+            io << res
+          end
         end
       end
     end
@@ -907,14 +929,27 @@ class String
   # "hEllO".capitalize # => "Hello"
   # ```
   def capitalize
-    return self if bytesize == 0
+    return self if empty?
 
-    String.build(bytesize) do |io|
-      each_char_with_index do |char, i|
-        if i == 0
-          char.upcase { |c| io << c }
-        else
-          char.downcase { |c| io << c }
+    if ascii_only?
+      String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          if i == 0
+            buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+          else
+            buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+          end
+        end
+        {@bytesize, @length}
+      end
+    else
+      String.build(bytesize) do |io|
+        each_char_with_index do |char, i|
+          if i == 0
+            char.upcase { |c| io << c }
+          else
+            char.downcase { |c| io << c }
+          end
         end
       end
     end
@@ -933,7 +968,7 @@ class String
   #
   # See also: `#chop`
   def chomp
-    return self if bytesize == 0
+    return self if empty?
 
     case to_unsafe[bytesize - 1]
     when '\n'
@@ -2725,6 +2760,8 @@ class String
   # "eiffel_tower".camelcase # => "EiffelTower"
   # ```
   def camelcase
+    return self if empty?
+
     first = true
     last_is_underscore = false
 
@@ -2752,6 +2789,8 @@ class String
   # "racecar".reverse   # => "racecar"
   # ```
   def reverse
+    return self if bytesize <= 1
+
     if ascii_only?
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
@@ -2844,7 +2883,7 @@ class String
   # "***".succ       # => "**+"
   # ```
   def succ
-    return self if bytesize == 0
+    return self if empty?
 
     chars = self.chars
 
