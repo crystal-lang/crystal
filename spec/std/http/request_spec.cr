@@ -326,12 +326,12 @@ module HTTP
       end
 
       it "gets request host from the headers" do
-        request = Request.from_io(MemoryIO.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
         request.host.should eq("host.example.org")
       end
 
       it "gets request host with port from the headers" do
-        request = Request.from_io(MemoryIO.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
         request.host_with_port.should eq("host.example.org:3000")
       end
     end
