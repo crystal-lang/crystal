@@ -480,6 +480,7 @@ describe "String" do
     assert { "HELLO MAN!".capitalize.should eq("Hello man!") }
     assert { "".capitalize.should eq("") }
     assert { "ﬄİ".capitalize.should eq("FFLi̇") }
+    assert { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
   end
 
   describe "chomp" do

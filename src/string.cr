@@ -928,10 +928,10 @@ class String
   # ```
   # "hEllO".capitalize # => "Hello"
   # ```
-  def capitalize
+  def capitalize(options = Unicode::CaseOptions::None)
     return self if empty?
 
-    if ascii_only?
+    if ascii_only? && ((options == Unicode::CaseOptions::None) || options.ascii?)
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
           if i == 0
@@ -946,9 +946,9 @@ class String
       String.build(bytesize) do |io|
         each_char_with_index do |char, i|
           if i == 0
-            char.upcase { |c| io << c }
+            char.upcase(options) { |c| io << c }
           else
-            char.downcase { |c| io << c }
+            char.downcase(options) { |c| io << c }
           end
         end
       end
