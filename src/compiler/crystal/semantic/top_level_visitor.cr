@@ -477,6 +477,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           none = NumberLiteral.new(0, enum_base_type.kind)
           none.type = enum_type
           enum_type.add_constant Arg.new("None", default_value: none)
+
+          define_enum_none_question_method(enum_type, node)
         end
 
         unless enum_type.types["All"]?
@@ -564,6 +566,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     method_name = is_flags ? "includes?" : "=="
     body = Call.new(Var.new("self").at(member), method_name, Path.new(member.name).at(member)).at(member)
     a_def = Def.new("#{member.name.underscore}?", body: body).at(member)
+    enum_type.add_def a_def
+  end
+
+  def define_enum_none_question_method(enum_type, node)
+    body = Call.new(Call.new(nil, "value").at(node), "==", NumberLiteral.new(0)).at(node)
+    a_def = Def.new("none?", body: body).at(node)
     enum_type.add_def a_def
   end
 
