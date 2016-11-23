@@ -24,5 +24,7 @@ lib LibPCRE
   $pcre_free : Free
 end
 
-LibPCRE.pcre_malloc = ->GC.malloc(LibC::SizeT)
-LibPCRE.pcre_free = ->GC.free(Void*)
+{% unless flag?(:without_pcre) %}
+  LibPCRE.pcre_malloc = ->GC.malloc(LibC::SizeT)
+  LibPCRE.pcre_free = ->GC.free(Void*)
+{% end %}
