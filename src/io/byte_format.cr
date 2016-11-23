@@ -12,7 +12,7 @@
 # ### Decode from an IO
 #
 # ```
-# io = MemoryIO.new(Bytes[0x34, 0x12])
+# io = IO::Memory.new(Bytes[0x34, 0x12])
 # int16 = io.read_bytes(Int16, IO::ByteFormat::LittleEndian)
 # int16 # => 0x1234_i16
 # ```
@@ -28,7 +28,7 @@
 # ### Encode to IO
 #
 # ```
-# io = MemoryIO.new
+# io = IO::Memory.new
 # io.write_bytes(0x1234_i16, IO::ByteFormat::LittleEndian)
 # io.to_slice # => Bytes[0x34, 0x12]
 # ```
