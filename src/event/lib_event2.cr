@@ -1,6 +1,6 @@
 require "c/netdb"
 
-{% if flag?(:linux) %}
+{% if flag?(:linux) && !flag?(:android) %}
   @[Link("rt")]
 {% end %}
 

@@ -1,7 +1,6 @@
-{% unless flag?(:win32) %}
+{% unless flag?(:android) || flag?(:win32) %}
   @[Link("pthread")]
 {% end %}
-
 {% if flag?(:freebsd) %}
   @[Link("gc-threaded")]
 {% else %}
