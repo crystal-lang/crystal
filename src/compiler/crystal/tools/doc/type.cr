@@ -393,11 +393,18 @@ class Crystal::Doc::Type
     @type.doc
   end
 
-  def lookup_path(path_or_names)
+  def lookup_path(path_or_names : Path | Array(String))
     match = @type.lookup_path(path_or_names)
     return unless match.is_a?(Crystal::Type)
 
     @generator.type(match)
+  end
+
+  def lookup_path(full_path : String)
+    global = full_path.starts_with?("::")
+    full_path = full_path[2..-1] if global
+    path = Path.new(full_path.split("::"), global: global)
+    lookup_path(path)
   end
 
   def lookup_method(name)

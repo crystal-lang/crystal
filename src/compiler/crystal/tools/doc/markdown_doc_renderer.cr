@@ -46,9 +46,9 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
     # Check Type#method(...) or Type or #method(...)
     text = text.gsub /\b
-      ([A-Z]\w+(?:\:\:[A-Z]\w+)?(?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
+      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)?(?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
         |
-      ([A-Z]\w+(?:\:\:[A-Z]\w+)?)
+      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)?)
         |
       ((?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
       /x do |match_text, match|
@@ -71,7 +71,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
           method_args = ""
         end
 
-        another_type = @type.lookup_path(type_name.split("::"))
+        another_type = @type.lookup_path(type_name)
         if another_type && @type.must_be_included?
           method = lookup_method another_type, method_name, method_args, kind
           if method
@@ -82,7 +82,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
       # Type
       if match[2]?
-        another_type = @type.lookup_path(match_text.split("::"))
+        another_type = @type.lookup_path(match_text)
         if another_type && another_type.must_be_included?
           next type_link another_type, match_text
         end
