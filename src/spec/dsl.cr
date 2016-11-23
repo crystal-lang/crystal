@@ -7,8 +7,8 @@ module Spec::DSL
     describe(description.to_s, file, line, &block)
   end
 
-  def it(description, file = __FILE__, line = __LINE__, &block)
-    return unless Spec.matches?(description, file, line)
+  def it(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    return unless Spec.matches?(description, file, line, end_line)
 
     Spec.formatters.each(&.before_example(description))
 
@@ -28,16 +28,16 @@ module Spec::DSL
     end
   end
 
-  def pending(description, file = __FILE__, line = __LINE__, &block)
-    return unless Spec.matches?(description, file, line)
+  def pending(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    return unless Spec.matches?(description, file, line, end_line)
 
     Spec.formatters.each(&.before_example(description))
 
     Spec::RootContext.report(:pending, description, file, line)
   end
 
-  def assert(file = __FILE__, line = __LINE__, &block)
-    it("assert", file, line, &block)
+  def assert(file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    it("assert", file, line, end_line, &block)
   end
 
   def fail(msg, file = __FILE__, line = __LINE__)
