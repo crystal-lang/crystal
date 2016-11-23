@@ -2468,6 +2468,8 @@ module Crystal
     def format_block(node, needs_space)
       needs_comma = false
       @dot_column = nil
+      old_inside_call_or_assign = @inside_call_or_assign
+      @inside_call_or_assign = 0
 
       if @token.type == :","
         needs_comma = true
@@ -2603,6 +2605,8 @@ module Crystal
           raise "Bug: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
         end
       end
+
+      @inside_call_or_assign = old_inside_call_or_assign
     end
 
     def clear_object(node)

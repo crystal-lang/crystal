@@ -981,4 +981,6 @@ describe Crystal::Formatter do
   assert_format "1 +\n  # foo\n  2"
   assert_format "1 ||\n  # foo\n  2"
   assert_format "foo(1 ||\n    # foo\n    2)"
+
+  assert_format "x = a do\n  1 ||\n    2\nend"
 end
