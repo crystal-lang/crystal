@@ -1,6 +1,7 @@
 require "spec"
 require "yaml"
 require "compiler/crystal/tools/init"
+require "compiler/crystal/config"
 
 def describe_file(name, &block : String ->)
   describe name do
@@ -91,7 +92,7 @@ dependencies:
       parsed["version"].should eq("0.1.0")
       parsed["authors"].should eq(["John Smith <john@smith.com>"])
       parsed["license"].should eq("MIT")
-      parsed["crystal"].should eq(Crystal::VERSION)
+      parsed["crystal"].should eq(Crystal::Config.version)
       parsed["targets"]?.should be_nil
     end
 
