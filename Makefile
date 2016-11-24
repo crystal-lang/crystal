@@ -23,7 +23,7 @@ CFLAGS += -fPIC $(if $(debug),-g -O0)
 CXXFLAGS += $(if $(debug),-g -O0)
 
 ifeq (${LLVM_CONFIG},)
-$(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
+  $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
 else
   $(info Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)])
 endif
