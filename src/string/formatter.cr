@@ -43,9 +43,7 @@ struct String::Formatter(A)
   private def consume_substitution
     key = consume_substitution_key '}'
     arg = current_arg
-    if arg.is_a?(Hash)
-      @io << arg[key]
-    elsif arg.is_a?(NamedTuple) # TODO: join with || after 0.19
+    if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
       @io << arg[key]
     else
       raise ArgumentError.new "one hash or named tuple required"
@@ -56,9 +54,7 @@ struct String::Formatter(A)
     key = consume_substitution_key '>'
     next_char
     arg = current_arg
-    if arg.is_a?(Hash)
-      target_arg = arg[key]
-    elsif arg.is_a?(NamedTuple) # TODO: join with || after 0.19
+    if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
       target_arg = arg[key]
     else
       raise ArgumentError.new "one hash or named tuple required"

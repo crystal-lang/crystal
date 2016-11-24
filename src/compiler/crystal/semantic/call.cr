@@ -457,10 +457,8 @@ class Crystal::Call
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
     arg = args.first
 
-    case arg # TODO: use || after 0.19
-    when SymbolLiteral
-      name = arg.value
-    when StringLiteral
+    case arg
+    when SymbolLiteral, StringLiteral
       name = arg.value
     end
 
