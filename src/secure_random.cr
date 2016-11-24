@@ -101,9 +101,6 @@ module SecureRandom
     urandom.sync = true # don't buffer bytes
   end
 
-  # TODO: remove after 0.19.0 is released
-  @@getrandom_available : Bool?
-
   {% if flag?(:linux) %}
     @@getrandom_available = false
 

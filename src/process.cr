@@ -242,7 +242,6 @@ class Process
         )
       rescue ex
         ex.inspect_with_backtrace STDERR
-        LibC._exit 127 # TODO: remove after 0.19
       ensure
         LibC._exit 127
       end
