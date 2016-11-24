@@ -1146,13 +1146,7 @@ module Crystal
       case method
       when "==", "!="
         case arg = args.first?
-        when StringLiteral
-          if method == "=="
-            return BoolLiteral.new(@value == arg.value)
-          else
-            return BoolLiteral.new(@value != arg.value)
-          end
-        when SymbolLiteral
+        when StringLiteral, SymbolLiteral
           if method == "=="
             return BoolLiteral.new(@value == arg.value)
           else
