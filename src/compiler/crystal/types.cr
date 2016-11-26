@@ -2167,6 +2167,7 @@ module Crystal
   class LibType < ModuleType
     getter link_attributes : Array(LinkAttribute)?
     property? used = false
+    property call_convention : LLVM::CallConvention?
 
     def add_link_attributes(link_attributes)
       if link_attributes

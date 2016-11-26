@@ -356,7 +356,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : LibDef)
     check_outside_exp node, "declare lib"
 
-    link_attributes = process_link_attributes
+    link_attributes, call_convention = process_lib_attributes
 
     scope = current_type_scope(node)
 
@@ -371,6 +371,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     type.private = true if node.visibility.private?
     type.add_link_attributes(link_attributes)
+    type.call_convention = call_convention if call_convention
 
     pushing_type(type) do
       @in_lib = true
@@ -679,6 +680,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.doc ||= attributes_doc()
     check_ditto node
 
+    # Copy call convention from lib, if any
+    scope = current_type
+    if !call_convention && scope.is_a?(LibType)
+      call_convention = scope.call_convention
+    end
+
     # We fill the arguments and return type in TypeDeclarationVisitor
     external = External.new(node.name, ([] of Arg), node.body, node.real_name).at(node)
     external.doc = node.doc
@@ -750,12 +757,24 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def process_link_attributes
+  def process_lib_attributes
     attributes = @attributes
-    return unless attributes
+    return {nil, nil} unless attributes
 
     @attributes = nil
-    attributes.map { |attr| LinkAttribute.from(attr) }
+    link_attributes = [] of LinkAttribute
+    call_convention = nil
+    attributes.each do |attr|
+      case attr.name
+      when "Link"
+        link_attributes << LinkAttribute.from(attr)
+      when "CallConvention"
+        call_convention = parse_call_convention(attr, call_convention)
+      else
+        attr.raise "illegal attribute for lib, valid attributes are: Link, CallConvention"
+      end
+    end
+    {link_attributes, call_convention}
   end
 
   def include_in(current_type, node, kind)
@@ -813,28 +832,32 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attributes.reject! do |attr|
       next false unless attr.name == "CallConvention"
 
-      if call_convention
-        attr.raise "call convention already specified"
-      end
-
-      if attr.args.size != 1
-        attr.wrong_number_of_arguments "attribute CallConvention", attr.args.size, 1
-      end
-
-      call_convention_node = attr.args.first
-      unless call_convention_node.is_a?(StringLiteral)
-        call_convention_node.raise "argument to CallConvention must be a string"
-      end
-
-      value = call_convention_node.value
-      call_convention = LLVM::CallConvention.parse?(value)
-      unless call_convention
-        call_convention_node.raise "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
-      end
-
+      call_convention = parse_call_convention(attr, call_convention)
       true
     end
 
+    call_convention
+  end
+
+  def parse_call_convention(attr, call_convention)
+    if call_convention
+      attr.raise "call convention already specified"
+    end
+
+    if attr.args.size != 1
+      attr.wrong_number_of_arguments "attribute CallConvention", attr.args.size, 1
+    end
+
+    call_convention_node = attr.args.first
+    unless call_convention_node.is_a?(StringLiteral)
+      call_convention_node.raise "argument to CallConvention must be a string"
+    end
+
+    value = call_convention_node.value
+    call_convention = LLVM::CallConvention.parse?(value)
+    unless call_convention
+      call_convention_node.raise "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
+    end
     call_convention
   end
 
