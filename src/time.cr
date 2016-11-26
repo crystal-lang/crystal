@@ -1,4 +1,6 @@
-require "c/sys/time"
+{% if !flag?(:windows) %}
+  require "c/sys/time"
+{% end %}
 require "c/time"
 
 # `Time` represents an instance in time. Here are some examples:

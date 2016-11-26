@@ -1,4 +1,9 @@
-require "c/netdb"
+require "c/time"
+{% if flag?(:windows) %}
+  require "lib_windows"
+{% else %}
+  require "c/netdb"
+{% end %}
 
 {% if flag?(:linux) %}
   @[Link("rt")]
@@ -14,7 +19,7 @@ lib LibEvent2
   alias Int = LibC::Int
 
   {% if flag?(:windows) %}
-    # TODO
+    alias EvutilSocketT = LibWindows::DWord
   {% else %}
     alias EvutilSocketT = Int
   {% end %}
@@ -58,11 +63,11 @@ lib LibEvent2
 
   EVUTIL_EAI_CANCEL = -90001
 
-  alias DnsGetAddrinfoCallback = (Int32, LibC::Addrinfo*, Void*) ->
+  # alias DnsGetAddrinfoCallback = (Int32, LibC::Addrinfo*, Void*) ->
 
-  fun evdns_base_new(base : EventBase, init : Int32) : DnsBase
-  fun evdns_base_free(base : DnsBase, fail_requests : Int32)
-  fun evdns_getaddrinfo(base : DnsBase, nodename : UInt8*, servname : UInt8*, hints : LibC::Addrinfo*, cb : DnsGetAddrinfoCallback, arg : Void*) : DnsGetAddrinfoRequest
-  fun evdns_getaddrinfo_cancel(DnsGetAddrinfoRequest)
-  fun evutil_freeaddrinfo(ai : LibC::Addrinfo*)
+  # fun evdns_base_new(base : EventBase, init : Int32) : DnsBase
+  # fun evdns_base_free(base : DnsBase, fail_requests : Int32)
+  # fun evdns_getaddrinfo(base : DnsBase, nodename : UInt8*, servname : UInt8*, hints : LibC::Addrinfo*, cb : DnsGetAddrinfoCallback, arg : Void*) : DnsGetAddrinfoRequest
+  # fun evdns_getaddrinfo_cancel(DnsGetAddrinfoRequest)
+  # fun evutil_freeaddrinfo(ai : LibC::Addrinfo*)
 end

@@ -1,4 +1,6 @@
-require "c/sys/wait"
+{% if !flag?(:windows) %}
+  require "c/sys/wait"
+{% end %}
 
 # :nodoc:
 # Singleton that handles SIG_CHLD and queues events for Process#waitpid.

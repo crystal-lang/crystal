@@ -1,4 +1,6 @@
-require "c/pthread"
+{% if !flag?(:windows) %}
+  require "c/pthread"
+{% end %}
 require "./thread/*"
 
 # :nodoc:
@@ -6,7 +8,12 @@ class Thread
   # Don't use this class, it is used internally by the event scheduler.
   # Use spawn and channels instead.
 
-  @th : LibC::PthreadT?
+
+  {% if flag?(:windows) %}
+    @th : LibWindows::Handle?
+  {% else %}
+    @th : LibC::PthreadT?
+  {% end %}
   @exception : Exception?
   @detached = false
 
@@ -30,11 +37,19 @@ class Thread
     @current_fiber = uninitialized Fiber
     @func = ->{}
     @@threads << self
-    @th = LibC.pthread_self
+    {% if flag?(:windows) %}
+      @th = LibWindows::Handle.null
+    {% else %}
+      @th = LibC.pthread_self
+    {% end %}
   end
 
   def finalize
-    LibGC.pthread_detach(@th.not_nil!) unless @detached
+    {% if flag?(:windows) %}
+      raise "Thread.finalize"
+    {% else %}
+      LibGC.pthread_detach(@th.not_nil!) unless @detached
+    {% end %}
   end
 
   def join

@@ -1,4 +1,6 @@
-require "c/sys/mman"
+{% if !flag?(:windows) %}
+  require "c/sys/mman"
+{% end %}
 
 # :nodoc:
 @[NoInline]
@@ -72,16 +74,20 @@ class Fiber
   end
 
   protected def self.allocate_stack
-    @@stack_pool.pop? || LibC.mmap(nil, Fiber::STACK_SIZE,
+    {% if flag?(:windows) %}
+      @@stack_pool.pop? || LibC.malloc(Fiber::STACK_SIZE)
+    {% else %}
+      @@stack_pool.pop? || LibC.mmap(nil, Fiber::STACK_SIZE,
       LibC::PROT_READ | LibC::PROT_WRITE,
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
       -1, 0).tap do |pointer|
-      raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
-      {% if flag?(:linux) %}
-        LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
-      {% end %}
-      LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
-    end
+        raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
+        {% if flag?(:linux) %}
+          LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
+          {% end %}
+          LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
+        end
+    {% end %}
   end
 
   def self.stack_pool_collect
@@ -89,7 +95,11 @@ class Fiber
     free_count = @@stack_pool.size > 1 ? @@stack_pool.size / 2 : 1
     free_count.times do
       stack = @@stack_pool.pop
-      LibC.munmap(stack, Fiber::STACK_SIZE)
+      {% if flag?(:windows) %}
+
+      {% else %}
+        LibC.munmap(stack, Fiber::STACK_SIZE)
+      {% end %}
     end
   end
 
@@ -97,12 +107,12 @@ class Fiber
     @proc.call
   rescue ex
     if name = @name
-      STDERR.puts "Unhandled exception in spawn(name: #{name}):"
+      # STDERR.puts "Unhandled exception in spawn(name: #{name}):"
     else
-      STDERR.puts "Unhandled exception in spawn:"
+      # STDERR.puts "Unhandled exception in spawn:"
     end
-    ex.inspect_with_backtrace STDERR
-    STDERR.flush
+    # ex.inspect_with_backtrace STDERR
+    # STDERR.flush
   ensure
     @@stack_pool << @stack
 

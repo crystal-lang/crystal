@@ -1,8 +1,11 @@
-require "c/unistd"
+{% if flag?(:windows) %}
+{% else %}
+  require "c/unistd"
 
-STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
-STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
-STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
+  STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
+  STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
+  STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
+{% end %}
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 ARGV         = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
@@ -164,9 +167,10 @@ class Process
   end
 end
 
-Signal.setup_default_handlers
-
-at_exit { Event::SignalHandler.close }
+{% if !flag?(:windows) %}
+  Signal.setup_default_handlers
+  at_exit { Event::SignalHandler.close }
+{% end %}
 
 # Background loop to cleanup unused fiber stacks
 spawn do

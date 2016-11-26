@@ -1,9 +1,11 @@
-require "c/fcntl"
 require "c/stdio"
-require "c/sys/select"
-require "c/sys/wait"
-require "c/errno"
-require "c/unistd"
+{% if !flag?(:windows) %}
+  require "c/fcntl"
+  require "c/sys/select"
+  require "c/sys/wait"
+  require "c/errno"
+  require "c/unistd"
+{% end %}
 
 # The IO module is the basis for all input and output in Crystal.
 #

@@ -1,8 +1,10 @@
-require "c/signal"
 require "c/stdlib"
-require "c/sys/times"
-require "c/sys/wait"
-require "c/unistd"
+{% if !flag?(:windows) %}
+  require "c/signal"
+  require "c/sys/times"
+  require "c/sys/wait"
+  require "c/unistd"
+{% end %}
 
 class Process
   # Terminate the current process immediately. All open files, pipes and sockets

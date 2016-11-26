@@ -1,4 +1,6 @@
-require "c/fcntl"
+{% if !flag?(:windows) %}
+  require "c/fcntl"
+{% end %}
 
 # An IO over a file descriptor.
 class IO::FileDescriptor

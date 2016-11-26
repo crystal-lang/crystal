@@ -1,7 +1,10 @@
 require "c/stdio"
 require "c/string"
-require "c/dlfcn"
 require "unwind"
+
+{% if !flag?(:windows) %}
+  require "c/dlfcn"
+{% end %}
 
 def caller
   CallStack.new.printable_backtrace
@@ -126,17 +129,20 @@ struct CallStack
   end
 
   protected def self.decode_frame(ip, original_ip = ip)
-    if LibC.dladdr(ip, out info) != 0
-      offset = original_ip - info.dli_saddr
+    {% if flag?(:windows) %}
+    {% else %}
+      if LibC.dladdr(ip, out info) != 0
+        offset = original_ip - info.dli_saddr
 
-      if offset == 0
-        return decode_frame(ip - 1, original_ip)
-      end
+        if offset == 0
+          return decode_frame(ip - 1, original_ip)
+        end
 
-      unless info.dli_sname.null?
-        {offset, info.dli_sname}
+        unless info.dli_sname.null?
+          {offset, info.dli_sname}
+        end
       end
-    end
+    {% end %}
   end
 end
 
