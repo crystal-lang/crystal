@@ -146,39 +146,37 @@ class Fiber
   @[NoInline]
   @[Naked]
   protected def self.switch_stacks(current, to) : Nil
-    # TODO: these \% escapes are needed because of https://github.com/crystal-lang/crystal/issues/2178
-    # Remove them once that issue is fixed.
     {% if flag?(:x86_64) %}
       asm("
-        pushq \%rdi
-        pushq \%rbx
-        pushq \%rbp
-        pushq \%r12
-        pushq \%r13
-        pushq \%r14
-        pushq \%r15
-        movq \%rsp, ($0)
-        movq ($1), \%rsp
-        popq \%r15
-        popq \%r14
-        popq \%r13
-        popq \%r12
-        popq \%rbp
-        popq \%rbx
-        popq \%rdi"
+        pushq %rdi
+        pushq %rbx
+        pushq %rbp
+        pushq %r12
+        pushq %r13
+        pushq %r14
+        pushq %r15
+        movq %rsp, ($0)
+        movq ($1), %rsp
+        popq %r15
+        popq %r14
+        popq %r13
+        popq %r12
+        popq %rbp
+        popq %rbx
+        popq %rdi"
               :: "r"(current), "r"(to))
     {% elsif flag?(:i686) %}
       asm("
-        pushl \%edi
-        pushl \%ebx
-        pushl \%ebp
-        pushl \%esi
-        movl \%esp, ($0)
-        movl ($1), \%esp
-        popl \%esi
-        popl \%ebp
-        popl \%ebx
-        popl \%edi"
+        pushl %edi
+        pushl %ebx
+        pushl %ebp
+        pushl %esi
+        movl %esp, ($0)
+        movl ($1), %esp
+        popl %esi
+        popl %ebp
+        popl %ebx
+        popl %edi"
               :: "r"(current), "r"(to))
     {% elsif flag?(:aarch64) %}
       # Adapted from https://github.com/ldc-developers/druntime/blob/ldc/src/core/threadasm.S
