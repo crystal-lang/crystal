@@ -13,6 +13,8 @@ lib LibWindows
   alias Handle = Void*
   alias SizeT = UInt64 # FIXME
 
+  INVALID_HANDLE_VALUE = Pointer(Void).new((-1).to_u64)
+
   struct Overlapped
     internal : SizeT*
     internal_high : SizeT*
@@ -31,6 +33,19 @@ lib LibWindows
 
   @[CallConvention("X86_StdCall")]
   fun close_handle = CloseHandle(file : Handle) : Bool
+
+  @[CallConvention("X86_StdCall")]
+  fun create_io_completion_port = CreateIoCompletionPort(file : Handle, port : Handle, data : Void*, threads : DWord) : Handle
+
+  # Wine doesn't implement this
+  # @[CallConvention("X86_StdCall")]
+  # fun get_queued_completion_status_ex = GetQueuedCompletionStatusEx(port : Handle, entries : Overlapped*, count : SizeT, count_fetched : SizeT*, timeout_millis : DWord, alertable : Bool) : Bool
+
+  @[CallConvention("X86_StdCall")]
+  fun get_queued_completion_status = GetQueuedCompletionStatus(port : Handle, bytes_transfered : DWord*, data : Void**, entry : Overlapped**, timeout_millis : DWord) : Bool
+
+  @[CallConvention("X86_StdCall")]
+  fun post_queued_completion_status = PostQueuedCompletionStatus(port : Handle, bytes_transfered : DWord, data : Void*, entry : Overlapped*) : Bool
 
   WSASYSNOTREADY = 10091
   WSAVERNOTSUPPORTED = 10092

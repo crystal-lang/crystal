@@ -17,7 +17,6 @@ class Fiber
   @@stack_pool = [] of Void*
 
   @stack : Void*
-  @resume_event : Event::Event?
   @stack_top = uninitialized Void*
   protected property stack_top : Void*
   protected property stack_bottom : Void*
@@ -25,18 +24,34 @@ class Fiber
   protected property prev_fiber : Fiber?
   property name : String?
 
+  {% if !flag?(:windows) %}
+    @resume_event : Event::Event?
+  {% end %}
+
   def initialize(@name : String? = nil, &@proc : ->)
     @stack = Fiber.allocate_stack
     @stack_bottom = @stack + STACK_SIZE
     fiber_main = ->(f : Fiber) { f.run }
 
+    {% if flag?(:windows) %}
+      # It's the caller's responsibility to allocate 32 bytes of "shadow space" on the stack right
+      # before calling the function (regardless of the actual number of parameters used)
+      stack_ptr = @stack + STACK_SIZE - sizeof(Void*) * 4
+    {% else %}
     stack_ptr = @stack + STACK_SIZE - sizeof(Void*)
+    {% end %}
 
     # Align the stack pointer to 16 bytes
     stack_ptr = Pointer(Void*).new(stack_ptr.address & ~0x0f_u64)
 
     # @stack_top will be the stack pointer on the initial call to `resume`
-    {% if flag?(:x86_64) %}
+    {% if flag?(:x86_64) && flag?(:windows) %}
+      # In x86-64, the context switch push/pop 9 registers
+      @stack_top = (stack_ptr - 9).as(Void*)
+
+      stack_ptr[0] = fiber_main.pointer # Initial `resume` will `ret` to this address
+      stack_ptr[-1] = self.as(Void*)    # This will be `pop` into %rcx (first argument)
+    {% elsif flag?(:x86_64) %}
       # In x86-64, the context switch push/pop 7 registers
       @stack_top = (stack_ptr - 7).as(Void*)
 
@@ -147,8 +162,10 @@ class Fiber
       @@last_fiber = @prev_fiber
     end
 
+    {% if !flag?(:windows) %}
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free
+    {% end %}
 
     Scheduler.reschedule
   end
@@ -156,39 +173,60 @@ class Fiber
   @[NoInline]
   @[Naked]
   protected def self.switch_stacks(current, to) : Nil
-    # TODO: these \% escapes are needed because of https://github.com/crystal-lang/crystal/issues/2178
-    # Remove them once that issue is fixed.
-    {% if flag?(:x86_64) %}
+    {% if flag?(:x86_64) && flag?(:windows) %}
       asm("
-        pushq \%rdi
-        pushq \%rbx
-        pushq \%rbp
-        pushq \%r12
-        pushq \%r13
-        pushq \%r14
-        pushq \%r15
-        movq \%rsp, ($0)
-        movq ($1), \%rsp
-        popq \%r15
-        popq \%r14
-        popq \%r13
-        popq \%r12
-        popq \%rbp
-        popq \%rbx
-        popq \%rdi"
+        pushq %rcx
+        pushq %rdi
+        pushq %rbx
+        pushq %rbp
+        pushq %rsi
+        pushq %r12
+        pushq %r13
+        pushq %r14
+        pushq %r15
+        movq %rsp, ($0)
+        movq ($1), %rsp
+        popq %r15
+        popq %r14
+        popq %r13
+        popq %r12
+        popq %rsi
+        popq %rbp
+        popq %rbx
+        popq %rdi
+        popq %rcx"
+              :: "r"(current), "r"(to))
+    {% elsif flag?(:x86_64) %}
+      asm("
+        pushq %rdi
+        pushq %rbx
+        pushq %rbp
+        pushq %r12
+        pushq %r13
+        pushq %r14
+        pushq %r15
+        movq %rsp, ($0)
+        movq ($1), %rsp
+        popq %r15
+        popq %r14
+        popq %r13
+        popq %r12
+        popq %rbp
+        popq %rbx
+        popq %rdi"
               :: "r"(current), "r"(to))
     {% elsif flag?(:i686) %}
       asm("
-        pushl \%edi
-        pushl \%ebx
-        pushl \%ebp
-        pushl \%esi
-        movl \%esp, ($0)
-        movl ($1), \%esp
-        popl \%esi
-        popl \%ebp
-        popl \%ebx
-        popl \%edi"
+        pushl %edi
+        pushl %ebx
+        pushl %ebp
+        pushl %esi
+        movl %esp, ($0)
+        movl ($1), %esp
+        popl %esi
+        popl %ebp
+        popl %ebx
+        popl %edi"
               :: "r"(current), "r"(to))
     {% elsif flag?(:aarch64) %}
       # Adapted from https://github.com/ldc-developers/druntime/blob/ldc/src/core/threadasm.S
@@ -283,7 +321,12 @@ class Fiber
   end
 
   def yield
+    {% if flag?(:windows) %}
+      Scheduler.create_resume_event(self)
+      Scheduler.reschedule
+    {% end %}
     sleep(0)
+    {% else %}
   end
 
   def self.sleep(time)

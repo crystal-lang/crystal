@@ -1,5 +1,8 @@
 require "fiber"
-require "./concurrent/*"
+require "./concurrent/channel"
+require "./concurrent/error"
+require "./concurrent/future"
+require "./concurrent/scheduler"
 
 # Blocks the current fiber for the specified number of seconds.
 #
