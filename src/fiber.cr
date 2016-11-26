@@ -33,6 +33,7 @@ class Fiber
     @stack_bottom = @stack + STACK_SIZE
     fiber_main = ->(f : Fiber) { f.run }
 
+    stack_ptr = nil
     {% if flag?(:windows) %}
       # It's the caller's responsibility to allocate 32 bytes of "shadow space" on the stack right
       # before calling the function (regardless of the actual number of parameters used)
@@ -324,9 +325,9 @@ class Fiber
     {% if flag?(:windows) %}
       Scheduler.create_resume_event(self)
       Scheduler.reschedule
-    {% end %}
-    sleep(0)
     {% else %}
+      sleep(0)
+    {% end %}
   end
 
   def self.sleep(time)
