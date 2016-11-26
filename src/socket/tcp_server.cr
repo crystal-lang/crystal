@@ -8,7 +8,7 @@ require "./tcp_socket"
 # loop do
 #   server.accept do |client|
 #     message = client.gets
-#     server << message # echo the message back
+#     client << message # echo the message back
 #   end
 # end
 # ```
