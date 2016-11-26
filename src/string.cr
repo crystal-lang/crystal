@@ -99,7 +99,7 @@ require "c/string"
 #
 # This ends up invoking `Object#to_s(IO)` on each expression enclosed by `#{...}`.
 #
-# If you need to dynamically build a string, use `String#build` or `MemoryIO`.
+# If you need to dynamically build a string, use `String#build` or `IO::Memory`.
 class String
   # :nodoc:
   TYPE_ID = "".crystal_type_id
@@ -483,7 +483,7 @@ class String
 
     # Skip leading whitespace
     if whitespace
-      while ptr.value.unsafe_chr.whitespace?
+      while ptr.value.unsafe_chr.ascii_whitespace?
         ptr += 1
       end
     end
@@ -562,7 +562,7 @@ class String
     if found_digit
       unless ptr.value == 0
         if whitespace
-          while ptr.value.unsafe_chr.whitespace?
+          while ptr.value.unsafe_chr.ascii_whitespace?
             ptr += 1
           end
         end
@@ -651,7 +651,7 @@ class String
 
     if strict
       if whitespace
-        while endptr < string_end && endptr.value.chr.whitespace?
+        while endptr < string_end && endptr.value.chr.ascii_whitespace?
           endptr += 1
         end
       end
@@ -660,7 +660,7 @@ class String
     else
       ptr = to_unsafe
       if whitespace
-        while ptr < string_end && ptr.value.chr.whitespace?
+        while ptr < string_end && ptr.value.chr.ascii_whitespace?
           ptr += 1
         end
       end
@@ -874,10 +874,23 @@ class String
   # ```
   # "hEllO".downcase # => "hello"
   # ```
-  def downcase
-    String.build(bytesize) do |io|
-      each_char do |char|
-        io << char.downcase
+  def downcase(options = Unicode::CaseOptions::None)
+    return self if empty?
+
+    if ascii_only? && ((options == Unicode::CaseOptions::None) || options.ascii?)
+      String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+        end
+        {@bytesize, @length}
+      end
+    else
+      String.build(bytesize) do |io|
+        each_char do |char|
+          char.downcase(options) do |res|
+            io << res
+          end
+        end
       end
     end
   end
@@ -888,10 +901,23 @@ class String
   # ```
   # "hEllO".upcase # => "HELLO"
   # ```
-  def upcase
-    String.build(bytesize) do |io|
-      each_char do |char|
-        io << char.upcase
+  def upcase(options = Unicode::CaseOptions::None)
+    return self if empty?
+
+    if ascii_only? && ((options == Unicode::CaseOptions::None) || options.ascii?)
+      String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+        end
+        {@bytesize, @length}
+      end
+    else
+      String.build(bytesize) do |io|
+        each_char do |char|
+          char.upcase(options) do |res|
+            io << res
+          end
+        end
       end
     end
   end
@@ -902,15 +928,28 @@ class String
   # ```
   # "hEllO".capitalize # => "Hello"
   # ```
-  def capitalize
-    return self if bytesize == 0
+  def capitalize(options = Unicode::CaseOptions::None)
+    return self if empty?
 
-    String.build(bytesize) do |io|
-      each_char_with_index do |char, i|
-        if i == 0
-          io << char.upcase
-        else
-          io << char.downcase
+    if ascii_only? && ((options == Unicode::CaseOptions::None) || options.ascii?)
+      String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          if i == 0
+            buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+          else
+            buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+          end
+        end
+        {@bytesize, @length}
+      end
+    else
+      String.build(bytesize) do |io|
+        each_char_with_index do |char, i|
+          if i == 0
+            char.upcase(options) { |c| io << c }
+          else
+            char.downcase(options) { |c| io << c }
+          end
         end
       end
     end
@@ -929,7 +968,7 @@ class String
   #
   # See also: `#chop`
   def chomp
-    return self if bytesize == 0
+    return self if empty?
 
     case to_unsafe[bytesize - 1]
     when '\n'
@@ -1011,7 +1050,7 @@ class String
   # "好".bytes            # => [229, 165, 189]
   # ```
   def encode(encoding : String, invalid : Symbol? = nil) : Slice(UInt8)
-    io = MemoryIO.new
+    io = IO::Memory.new
     String.encode(to_slice, "UTF-8", encoding, io, invalid)
     io.to_slice
   end
@@ -1163,7 +1202,7 @@ class String
 
   private def calc_excess_right
     i = bytesize - 1
-    while i >= 0 && to_unsafe[i].unsafe_chr.whitespace?
+    while i >= 0 && to_unsafe[i].unsafe_chr.ascii_whitespace?
       i -= 1
     end
     bytesize - 1 - i
@@ -1173,7 +1212,7 @@ class String
     excess_left = 0
     # All strings end with '\0', and it's not a whitespace
     # so it's safe to access past 1 byte beyond the string data
-    while to_unsafe[excess_left].unsafe_chr.whitespace?
+    while to_unsafe[excess_left].unsafe_chr.ascii_whitespace?
       excess_left += 1
     end
     excess_left
@@ -1913,6 +1952,20 @@ class String
     bytesize == 0
   end
 
+  # Returns true if this string consists exclusively of unicode whitespace.
+  #
+  # ```
+  # "".blank?        # => true
+  # "   ".blank?     # => true
+  # "   a   ".blank? # => false
+  # ```
+  def blank?
+    each_char do |char|
+      return false unless char.whitespace?
+    end
+    true
+  end
+
   def ==(other : self)
     return true if same?(other)
     return false unless bytesize == other.bytesize
@@ -2093,7 +2146,7 @@ class String
   # ```
   def index(search : Char, offset = 0)
     # If it's ASCII we can delegate to slice
-    if search.ascii?
+    if search.ascii? && ascii_only?
       return to_slice.index(search.ord.to_u8, offset)
     end
 
@@ -2150,7 +2203,7 @@ class String
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
-    if search.ascii?
+    if search.ascii? && ascii_only?
       return to_slice.rindex(search.ord.to_u8, offset)
     end
 
@@ -2198,6 +2251,103 @@ class String
     end
 
     match_result.try &.begin(0)
+  end
+
+  # Searches sep or pattern (regexp) in the string,
+  # and returns the part before it, the match, and the part after it.
+  # If it is not found, returns str followed by two empty strings.
+  #
+  # ```
+  # "hello".partition("l") # => {"he", "l", "lo"}
+  # "hello".partition("x") # => {"hello", "", ""}
+  # ```
+  def partition(search : (Char | String)) : Tuple(String, String, String)
+    pre = mid = post = ""
+    search_size = search.is_a?(Char) ? 1 : search.size
+    case pos = self.index(search)
+    when .nil?
+      pre = self
+    when 0
+      mid = search.to_s
+      post = self[(pos + search_size)..-1]
+    else
+      pre = self[0..(pos - 1)]
+      mid = search.to_s
+      post = self[(pos + search_size)..-1]
+    end
+    {pre, mid, post}
+  end
+
+  # ditto
+  def partition(search : Regex) : Tuple(String, String, String)
+    pre = mid = post = ""
+    case m = self.match(search)
+    when .nil?
+      pre = self
+    else
+      pre = m.pre_match
+      mid = m[0]
+      post = m.post_match
+    end
+    {pre, mid, post}
+  end
+
+  # Searches sep or pattern (regexp) in the string from the end of the string,
+  # and returns the part before it, the match, and the part after it.
+  # If it is not found, returns two empty strings and str.
+  #
+  # ```
+  # "hello".rpartition("l")  # => {"hel", "l", "o"}
+  # "hello".rpartition("x")  # => {"", "", "hello"}
+  # "hello".rpartition(/.l/) # => {"he", "ll", "o"}
+  # ```
+  def rpartition(search : (Char | String)) : Tuple(String, String, String)
+    pos = self.rindex(search)
+    search_size = search.is_a?(Char) ? 1 : search.size
+
+    pre = mid = post = ""
+
+    case pos
+    when .nil?
+      post = self
+    when 0
+      mid = search.to_s
+      post = self[(pos + search_size)..-1]
+    else
+      pre = self[0..(pos - 1)]
+      mid = search.to_s
+      post = self[(pos + search_size)..-1]
+    end
+    {pre, mid, post}
+  end
+
+  # ditto
+  def rpartition(search : Regex) : Tuple(String, String, String)
+    match_result = nil
+    pos = self.size - 1
+
+    while pos >= 0
+      self[pos..-1].scan(search) do |m|
+        match_result = m
+      end
+      break unless match_result.nil?
+      pos -= 1
+    end
+
+    pre = mid = post = ""
+
+    case
+    when match_result.nil?
+      post = self
+    when pos == 0
+      mid = match_result[0]
+      post = self[match_result[0].size..-1]
+    else
+      pre = self[0..pos - 1]
+      mid = match_result.not_nil![0]
+      post = self[pos + match_result.not_nil![0].size..-1]
+    end
+    {pre, mid, post}
   end
 
   def byte_index(byte : Int, offset = 0)
@@ -2303,7 +2453,7 @@ class String
         while i < bytesize
           c = to_unsafe[i]
           i += 1
-          if c.unsafe_chr.whitespace?
+          if c.unsafe_chr.ascii_whitespace?
             piece_bytesize = i - 1 - index
             piece_size = single_byte_optimizable ? piece_bytesize : 0
             ary.push String.new(to_unsafe + index, piece_bytesize, piece_size)
@@ -2320,7 +2470,7 @@ class String
         while i < bytesize
           c = to_unsafe[i]
           i += 1
-          unless c.unsafe_chr.whitespace?
+          unless c.unsafe_chr.ascii_whitespace?
             index = i - 1
             looking_for_space = true
             break
@@ -2466,7 +2616,9 @@ class String
       count += 1
 
       1.upto(match.size) do |i|
-        ary.push match[i]
+        if group = match[i]?
+          ary.push group
+        end
       end
 
       last_slice_offset = slice_offset
@@ -2608,6 +2760,8 @@ class String
   # "eiffel_tower".camelcase # => "EiffelTower"
   # ```
   def camelcase
+    return self if empty?
+
     first = true
     last_is_underscore = false
 
@@ -2635,18 +2789,27 @@ class String
   # "racecar".reverse   # => "racecar"
   # ```
   def reverse
-    String.new(bytesize) do |buffer|
-      buffer += bytesize
-      reader = Char::Reader.new(self)
-      reader.each do |char|
-        buffer -= reader.current_char_width
-        i = 0
-        char.each_byte do |byte|
-          buffer[i] = byte
-          i += 1
+    return self if bytesize <= 1
+
+    if ascii_only?
+      String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          buffer[i] = self.to_unsafe[bytesize - i - 1]
         end
+        {@bytesize, @length}
       end
-      {@bytesize, @length}
+    else
+      # Iterate grpahemes to reverse the string,
+      # so combining characters are placed correctly
+      String.new(bytesize) do |buffer|
+        buffer += bytesize
+        scan(/\X/) do |match|
+          grapheme = match[0]
+          buffer -= grapheme.bytesize
+          buffer.copy_from(grapheme.to_unsafe, grapheme.bytesize)
+        end
+        {@bytesize, @length}
+      end
     end
   end
 
@@ -2720,7 +2883,7 @@ class String
   # "***".succ       # => "**+"
   # ```
   def succ
-    return self if bytesize == 0
+    return self if empty?
 
     chars = self.chars
 
@@ -2730,7 +2893,7 @@ class String
 
     while index >= 0
       s = chars[index]
-      if s.alphanumeric?
+      if s.ascii_alphanumeric?
         carry = 0
         if ('0' <= s && s < '9') ||
            ('a' <= s && s < 'z') ||
@@ -3041,7 +3204,7 @@ class String
   end
 
   private def inspect_char(char, io)
-    if char.control?
+    if char.ascii_control?
       io << "\\u{"
       char.ord.to_s(16, io)
       io << "}"
@@ -3051,7 +3214,7 @@ class String
   end
 
   private def dump_char(char, io)
-    if char.control? || char.ord >= 0x80
+    if char.ascii_control? || char.ord >= 0x80
       io << "\\u{"
       char.ord.to_s(16, io)
       io << "}"

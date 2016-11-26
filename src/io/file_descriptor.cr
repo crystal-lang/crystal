@@ -141,6 +141,18 @@ class IO::FileDescriptor
     self
   end
 
+  # Same as `seek` but yields to the block after seeking and eventually seeks
+  # back to the original position when the block returns.
+  def seek(offset, whence : Seek = Seek::Set)
+    original_pos = tell
+    begin
+      seek(offset, whence)
+      yield
+    ensure
+      seek(original_pos)
+    end
+  end
+
   # Same as `pos`.
   def tell
     pos
@@ -149,7 +161,7 @@ class IO::FileDescriptor
   # Returns the current position (in bytes) in this IO.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.pos     # => 0
   # io.gets(2) # => "he"
   # io.pos     # => 2
@@ -166,7 +178,7 @@ class IO::FileDescriptor
   # Sets the current position (in bytes) in this IO.
   #
   # ```
-  # io = MemoryIO.new "hello"
+  # io = IO::Memory.new "hello"
   # io.pos = 3
   # io.gets_to_end # => "lo"
   # ```

@@ -969,4 +969,18 @@ describe Crystal::Formatter do
   assert_format "foo(A |\nB |\nC)", "foo(A |\n    B |\n    C)"
   assert_format "def foo\n  case x\n  # z\n  when 1\n  end\nend"
   assert_format "foo { |x| (x).a }"
+  assert_format "def foo(\n        &block)\nend"
+  assert_format "def foo(a,\n        &block)\nend"
+  assert_format "def foo(\n        a,\n        &block)\nend"
+  assert_format "def foo(a,\n        *b)\nend"
+  assert_format "def foo(a,\n        **b)\nend"
+  assert_format "def foo(**b, # comment\n        &block)\nend"
+  assert_format "def foo(a, **b, # comment\n        &block)\nend"
+
+  assert_format "1 +\n  # foo\n  2"
+  assert_format "1 +\n  # foo\n  2"
+  assert_format "1 ||\n  # foo\n  2"
+  assert_format "foo(1 ||\n    # foo\n    2)"
+
+  assert_format "x = a do\n  1 ||\n    2\nend"
 end

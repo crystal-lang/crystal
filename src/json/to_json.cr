@@ -27,6 +27,11 @@ struct JSON::ObjectBuilder(T)
     field(name) { value.to_json(@io) }
   end
 
+  # Adds a field to this JSON object, with raw JSON object as string
+  def raw_field(name, value)
+    field(name) { value.to_s(@io) }
+  end
+
   # Adds a field to this JSON object by specifying
   # it's name, then executes the block, which must append the value.
   def field(name)
@@ -194,7 +199,7 @@ class String
         io << "\\r"
       when '\t'
         io << "\\t"
-      when .control?
+      when .ascii_control?
         io << "\\u"
         ord = char.ord
         io << '0' if ord < 0x1000
@@ -289,6 +294,14 @@ end
 struct Enum
   def to_json(io)
     io << value
+  end
+end
+
+struct Time
+  def to_json(io)
+    io << '"'
+    Time::Format::ISO_8601_DATE_TIME.format(self, io)
+    io << '"'
   end
 end
 

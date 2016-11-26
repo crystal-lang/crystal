@@ -458,17 +458,29 @@ describe "String" do
   describe "downcase" do
     assert { "HELLO!".downcase.should eq("hello!") }
     assert { "HELLO MAN!".downcase.should eq("hello man!") }
+    assert { "ÁÉÍÓÚĀ".downcase.should eq("áéíóúā") }
+    assert { "AEIİOU".downcase(Unicode::CaseOptions::Turkic).should eq("aeıiou") }
+    assert { "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII).should eq("ÁeÍoÚ") }
+    assert { "İ".downcase.should eq("i̇") }
   end
 
   describe "upcase" do
     assert { "hello!".upcase.should eq("HELLO!") }
     assert { "hello man!".upcase.should eq("HELLO MAN!") }
+    assert { "áéíóúā".upcase.should eq("ÁÉÍÓÚĀ") }
+    assert { "aeıiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEIİOU") }
+    assert { "áeíoú".upcase(Unicode::CaseOptions::ASCII).should eq("áEíOú") }
+    assert { "aeiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEİOU") }
+    assert { "baﬄe".upcase.should eq("BAFFLE") }
+    assert { "ﬀ".upcase.should eq("FF") }
   end
 
   describe "capitalize" do
     assert { "HELLO!".capitalize.should eq("Hello!") }
     assert { "HELLO MAN!".capitalize.should eq("Hello man!") }
     assert { "".capitalize.should eq("") }
+    assert { "ﬄİ".capitalize.should eq("FFLi̇") }
+    assert { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
   end
 
   describe "chomp" do
@@ -539,6 +551,12 @@ describe "String" do
     assert { "".empty?.should be_true }
   end
 
+  describe "blank?" do
+    assert { " \t\n".blank?.should be_true }
+    assert { "\u{1680}\u{2029}".blank?.should be_true }
+    assert { "hello".blank?.should be_false }
+  end
+
   describe "index" do
     describe "by char" do
       assert { "foo".index('o').should eq(1) }
@@ -546,6 +564,7 @@ describe "String" do
       assert { "bar".index('r').should eq(2) }
       assert { "日本語".index('本').should eq(1) }
       assert { "bar".index('あ').should be_nil }
+      assert { "あいう_えお".index('_').should eq(3) }
 
       describe "with offset" do
         assert { "foobarbaz".index('a', 5).should eq(7) }
@@ -594,6 +613,7 @@ describe "String" do
       assert { "foobar".rindex('a').should eq(4) }
       assert { "foobar".rindex('g').should be_nil }
       assert { "日本語日本語".rindex('本').should eq(4) }
+      assert { "あいう_えお".rindex('_').should eq(3) }
 
       describe "with offset" do
         assert { "faobar".rindex('a', 3).should eq(1) }
@@ -624,6 +644,62 @@ describe "String" do
         assert { "bbbb".rindex(/b/, -1235).should be_nil }
         assert { "日本語日本語".rindex(/日本/, 2).should eq(0) }
       end
+    end
+  end
+
+  describe "partition" do
+    describe "by char" do
+      "hello".partition('h').should eq ({"", "h", "ello"})
+      "hello".partition('o').should eq ({"hell", "o", ""})
+      "hello".partition('l').should eq ({"he", "l", "lo"})
+      "hello".partition('x').should eq ({"hello", "", ""})
+    end
+
+    describe "by string" do
+      "hello".partition("h").should eq ({"", "h", "ello"})
+      "hello".partition("o").should eq ({"hell", "o", ""})
+      "hello".partition("l").should eq ({"he", "l", "lo"})
+      "hello".partition("ll").should eq ({"he", "ll", "o"})
+      "hello".partition("x").should eq ({"hello", "", ""})
+    end
+
+    describe "by regex" do
+      "hello".partition(/h/).should eq ({"", "h", "ello"})
+      "hello".partition(/o/).should eq ({"hell", "o", ""})
+      "hello".partition(/l/).should eq ({"he", "l", "lo"})
+      "hello".partition(/ll/).should eq ({"he", "ll", "o"})
+      "hello".partition(/.l/).should eq ({"h", "el", "lo"})
+      "hello".partition(/.h/).should eq ({"hello", "", ""})
+      "hello".partition(/h./).should eq ({"", "he", "llo"})
+      "hello".partition(/o./).should eq ({"hello", "", ""})
+      "hello".partition(/.o/).should eq ({"hel", "lo", ""})
+      "hello".partition(/x/).should eq ({"hello", "", ""})
+    end
+  end
+
+  describe "rpartition" do
+    describe "by char" do
+      "hello".rpartition('l').should eq ({"hel", "l", "o"})
+      "hello".rpartition('o').should eq ({"hell", "o", ""})
+      "hello".rpartition('h').should eq ({"", "h", "ello"})
+    end
+
+    describe "by string" do
+      "hello".rpartition("l").should eq ({"hel", "l", "o"})
+      "hello".rpartition("x").should eq ({"", "", "hello"})
+      "hello".rpartition("o").should eq ({"hell", "o", ""})
+      "hello".rpartition("h").should eq ({"", "h", "ello"})
+      "hello".rpartition("ll").should eq ({"he", "ll", "o"})
+      "hello".rpartition("lo").should eq ({"hel", "lo", ""})
+      "hello".rpartition("he").should eq ({"", "he", "llo"})
+    end
+
+    describe "by regex" do
+      "hello".rpartition(/.l/).should eq ({"he", "ll", "o"})
+      "hello".rpartition(/ll/).should eq ({"he", "ll", "o"})
+      "hello".rpartition(/.o/).should eq ({"hel", "lo", ""})
+      "hello".rpartition(/.e/).should eq ({"", "he", "llo"})
+      "hello".rpartition(/l./).should eq ({"hel", "lo", ""})
     end
   end
 
@@ -716,6 +792,7 @@ describe "String" do
       assert { "a=".split(/\=/).should eq(["a", ""]) }
       assert { "=b".split(/\=/).should eq(["", "b"]) }
       assert { "=".split(/\=/, 2).should eq(["", ""]) }
+      assert { ",".split(/(?:(x)|(,))/).should eq(["", ",", ""]) }
 
       it "keeps groups" do
         s = "split on the word on okay?"
@@ -744,6 +821,7 @@ describe "String" do
     assert { "foobar".ends_with?('x').should be_false }
     assert { "よし".ends_with?('し').should be_true }
     assert { "よし".ends_with?('な').should be_false }
+    assert { "あいう_".ends_with?('_').should be_true }
   end
 
   describe "=~" do
@@ -796,6 +874,13 @@ describe "String" do
     reversed.bytesize.should eq(15)
     reversed.size.should eq(5)
     reversed.should eq("はちいんこ")
+  end
+
+  it "reverses taking grapheme clusters into account" do
+    reversed = "noël".reverse
+    reversed.bytesize.should eq("noël".bytesize)
+    reversed.size.should eq("noël".size)
+    reversed.should eq("lëon")
   end
 
   describe "sub" do

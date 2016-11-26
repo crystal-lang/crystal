@@ -82,6 +82,44 @@ describe "Float" do
     assert { 1.0.fdiv(0).should eq 1.0/0.0 }
   end
 
+  describe "divmod" do
+    assert { 1.2.divmod(0.3)[0].should eq(4) }
+    assert { 1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
+
+    assert { 1.3.divmod(0.3)[0].should eq(4) }
+    assert { 1.3.divmod(0.3)[1].should be_close(0.1, 0.00001) }
+
+    assert { 1.4.divmod(0.3)[0].should eq(4) }
+    assert { 1.4.divmod(0.3)[1].should be_close(0.2, 0.00001) }
+
+    assert { -1.2.divmod(0.3)[0].should eq(-4) }
+    assert { -1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
+
+    assert { -1.3.divmod(0.3)[0].should eq(-5) }
+    assert { -1.3.divmod(0.3)[1].should be_close(0.2, 0.00001) }
+
+    assert { -1.4.divmod(0.3)[0].should eq(-5) }
+    assert { -1.4.divmod(0.3)[1].should be_close(0.1, 0.00001) }
+
+    assert { 1.2.divmod(-0.3)[0].should eq(-4) }
+    assert { 1.2.divmod(-0.3)[1].should be_close(0.0, 0.00001) }
+
+    assert { 1.3.divmod(-0.3)[0].should eq(-5) }
+    assert { 1.3.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
+
+    assert { 1.4.divmod(-0.3)[0].should eq(-5) }
+    assert { 1.4.divmod(-0.3)[1].should be_close(-0.1, 0.00001) }
+
+    assert { -1.2.divmod(-0.3)[0].should eq(4) }
+    assert { -1.2.divmod(-0.3)[1].should be_close(0.0, 0.00001) }
+
+    assert { -1.3.divmod(-0.3)[0].should eq(4) }
+    assert { -1.3.divmod(-0.3)[1].should be_close(-0.1, 0.00001) }
+
+    assert { -1.4.divmod(-0.3)[0].should eq(4) }
+    assert { -1.4.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
+  end
+
   describe "to_s" do
     it "does to_s for f64" do
       12.34.to_s.should eq("12.34")

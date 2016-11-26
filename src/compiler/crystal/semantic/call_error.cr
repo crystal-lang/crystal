@@ -194,7 +194,7 @@ class Crystal::Call
     end
 
     if defs_matching_args_size.size > 0
-      str = MemoryIO.new
+      str = IO::Memory.new
       if check_single_def_error_message(defs_matching_args_size, named_args_types, str)
         raise str.to_s
       else
@@ -480,6 +480,9 @@ class Crystal::Call
   end
 
   def check_macro_wrong_number_of_arguments(def_name)
+    obj = self.obj
+    return if obj && !obj.is_a?(Path)
+
     macros = in_macro_target &.lookup_macros(def_name)
     return unless macros
 

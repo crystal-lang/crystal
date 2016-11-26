@@ -381,4 +381,20 @@ describe "Restrictions" do
       Foo.new(1)
       )) { generic_class "Foo", int32 }
   end
+
+  it "restricts virtual metaclass type against metaclass (#3438)" do
+    assert_type(%(
+      class Parent
+      end
+
+      class Child < Parent
+      end
+
+      def foo(x : Parent.class)
+        x
+      end
+
+      foo(Parent || Child)
+      )) { types["Parent"].metaclass.virtual_type! }
+  end
 end

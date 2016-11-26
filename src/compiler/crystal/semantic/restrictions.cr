@@ -328,7 +328,7 @@ module Crystal
     end
 
     def restrict(other : UnionType, context)
-      restricted = other.union_types.any? { |union_type| restriction_of?(union_type, context.instantiated_type) }
+      restricted = other.union_types.any? { |union_type| restrict(union_type, context) }
       restricted ? self : nil
     end
 
@@ -815,6 +815,12 @@ module Crystal
     end
   end
 
+  class VirtualMetaclassType
+    def restrict(other : Metaclass, context)
+      instance_type.restrict(other.name, context).try &.metaclass
+    end
+  end
+
   class NonGenericModuleType
     def restrict(other, context)
       super || including_types.try(&.restrict(other, context))
@@ -852,6 +858,16 @@ module Crystal
             other.raise_undefined_constant(context.defining_type)
           end
         end
+      end
+
+      remove_alias.restrict(other, context)
+    end
+
+    def restrict(other : AliasType, context)
+      return self if self == other
+
+      if !self.simple? && !other.simple?
+        return nil
       end
 
       remove_alias.restrict(other, context)

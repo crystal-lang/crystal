@@ -893,6 +893,13 @@ module Iterator(T)
     WithIndex(typeof(self), T, typeof(offset)).new(self, offset)
   end
 
+  # Yields each element in this iterator together with its index.
+  def with_index(offset : Int = 0)
+    with_index(offset).each do |value, index|
+      yield value, index
+    end
+  end
+
   private class WithIndex(I, T, O)
     include Iterator({T, Int32})
     include IteratorWrapper
@@ -973,6 +980,74 @@ module Iterator(T)
       @iterator1.rewind
       @iterator2.rewind
       self
+    end
+  end
+
+  # Returns an Iterator that enumerates over the items, chunking them together based on the return value of the block.
+  #
+  # Consecutive elements which return the same block value are chunked together.
+  #
+  # For example, consecutive even numbers and odd numbers can be chunked as follows.
+  #
+  # ```
+  # [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5].chunk { |n|
+  #   n.even?
+  # }.each { |even, ary|
+  #   p [even, ary]
+  # }
+  #
+  # # => [false, [3, 1]]
+  # #    [true, [4]]
+  # #    [false, [1, 5, 9]]
+  # #    [true, [2, 6]]
+  # #    [false, [5, 3, 5]]
+  # ```
+  #
+  # The following key values have special meaning:
+  #
+  # * `Enumerable::Chunk::Drop` specifies that the elements should be dropped
+  # * `Enumerable::Chunk::Alone` specifies that the element should be chunked by itself
+  #
+  # See also: `Enumerable#chunks`
+  def chunk(&block : T -> U) forall T, U
+    Chunk(typeof(self), T, U).new(self, &block)
+  end
+
+  # :nodoc:
+  class Chunk(I, T, U)
+    include Iterator(Tuple(U, Array(T)))
+    @iterator : I
+
+    def initialize(@iterator : Iterator(T), &@original_block : T -> U)
+      @acc = Enumerable::Chunk::Accumulator(T, U).new
+    end
+
+    def next
+      @iterator.each do |val|
+        key = @original_block.call(val)
+
+        if @acc.same_as?(key)
+          @acc.add(val)
+        else
+          tuple = @acc.fetch
+          @acc.init(key, val)
+          return tuple if tuple
+        end
+      end
+
+      if tuple = @acc.fetch
+        return tuple
+      end
+      stop
+    end
+
+    def rewind
+      @iterator.rewind
+      init_state
+    end
+
+    private def init_state
+      @acc = Enumerable::Chunk::Accumulator(T, U).new
     end
   end
 end

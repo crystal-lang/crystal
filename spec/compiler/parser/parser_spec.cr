@@ -1429,6 +1429,8 @@ describe "Parser" do
   assert_syntax_error "->(x y) { }"
   assert_syntax_error "->(x, y z) { }"
 
+  assert_syntax_error "x[1:-2]"
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"

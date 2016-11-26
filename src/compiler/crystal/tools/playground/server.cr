@@ -450,20 +450,26 @@ module Crystal::Playground
         end
       end
 
-      client_ws = PathWebSocketHandler.new "/client" do |ws|
-        @sessions_key += 1
-        @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, @logger)
-        @logger.info "/client WebSocket connected as session=#{@sessions_key}"
+      client_ws = PathWebSocketHandler.new "/client" do |ws, context|
+        origin = context.request.headers["Origin"]
+        if !accept_request?(origin)
+          @logger.warn "Invalid Request Origin: #{origin}"
+          ws.close "Invalid Request Origin"
+        else
+          @sessions_key += 1
+          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, @logger)
+          @logger.info "/client WebSocket connected as session=#{@sessions_key}"
 
-        ws.on_message do |message|
-          json = JSON.parse(message)
-          case json["type"].as_s
-          when "run"
-            source = json["source"].as_s
-            tag = json["tag"].as_i
-            session.run source, tag
-          when "stop"
-            session.stop
+          ws.on_message do |message|
+            json = JSON.parse(message)
+            case json["type"].as_s
+            when "run"
+              source = json["source"].as_s
+              tag = json["tag"].as_i
+              session.run source, tag
+            when "stop"
+              session.stop
+            end
           end
         end
       end
@@ -490,11 +496,25 @@ module Crystal::Playground
       end
 
       puts "Listening on http://#{host}:#{@port}"
+      if host == "0.0.0.0"
+        puts "WARNING running playground with 0.0.0.0 is unsecure."
+      end
 
       begin
         server.listen
       rescue ex
         raise ToolException.new(ex.message)
+      end
+    end
+
+    private def accept_request?(origin)
+      case @host
+      when nil
+        origin == "http://127.0.0.1:#{@port}" || origin == "http://localhost:#{@port}"
+      when "0.0.0.0"
+        true
+      else
+        origin == "http://#{@host}:#{@port}"
       end
     end
   end

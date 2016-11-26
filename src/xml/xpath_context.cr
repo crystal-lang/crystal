@@ -6,6 +6,15 @@ struct XML::XPathContext
 
   def evaluate(search_path : String)
     xpath = LibXML.xmlXPathEvalExpression(search_path, self)
+    unless xpath
+      {% if flag?(:arm) || flag?(:aarch64) %}
+        if errors = XML::Error.errors
+          raise errors.last
+        end
+      {% end %}
+      raise XML::Error.new("error in '#{search_path}' expression", 0)
+    end
+
     raise XML::Error.new("error in '#{search_path}' expression", 0) unless xpath.value
 
     case xpath.value.type

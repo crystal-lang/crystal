@@ -966,4 +966,32 @@ describe "Semantic: generic class" do
       foo(Gen(String).new.as(Gen(String)))
       )) { int32 }
   end
+
+  it "subclasses twice with same generic class (#3423)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      Bar(Int32).new
+      )) { generic_class "Bar", int32 }
+  end
+
+  it "errors if invoking new on private new in generic type (#3485)" do
+    assert_error %(
+      class Foo(T)
+        private def self.new
+          super
+        end
+      end
+
+      Foo(String).new
+      ),
+      "private method 'new' called"
+  end
 end

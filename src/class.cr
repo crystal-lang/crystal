@@ -27,9 +27,9 @@ class Class
   # Casts `other` to this class.
   #
   # This is the same as using `as`, but allows the class to be passed around as
-  # an argument. See the [documentation on
-  # as](//crystal-lang.org/docs/syntax_and_semantics/as.html) for more
-  # information.
+  # an argument. See the
+  # [documentation on as](//crystal-lang.org/docs/syntax_and_semantics/as.html)
+  # for more information.
   #
   #     klass = Int32
   #     number = [99, "str"][0]

@@ -153,7 +153,7 @@ class Hash(K, V)
   # Raises if any index is invalid.
   #
   # ```
-  # {"a": 1, "b": 2, "c": 3, "d": 4}.values_at("a", "c") # => {1, 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.values_at("a", "c") # => {1, 3}
   # ```
   def values_at(*indexes : K)
     indexes.map { |index| self[index] }
@@ -162,7 +162,7 @@ class Hash(K, V)
   # Returns the first key with the given *value*, else raises `KeyError`.
   #
   # ```
-  # hash = {"foo": "bar", "baz": "qux"}
+  # hash = {"foo" => "bar", "baz" => "qux"}
   # hash.key("bar")    # => "foo"
   # hash.key("qux")    # => "baz"
   # hash.key("foobar") # => Missing hash key for value: foobar (KeyError)
@@ -174,7 +174,7 @@ class Hash(K, V)
   # Returns the first key with the given *value*, else `nil`.
   #
   # ```
-  # hash = {"foo": "bar", "baz": "qux"}
+  # hash = {"foo" => "bar", "baz" => "qux"}
   # hash.key?("bar")    # => "foo"
   # hash.key?("qux")    # => "baz"
   # hash.key?("foobar") # => nil
@@ -423,7 +423,7 @@ class Hash(K, V)
   #
   # ```
   # hash = {"foo" => "bar"}
-  # hash.merge({"baz": "qux"})
+  # hash.merge({"baz" => "qux"})
   # # => {"foo" => "bar", "baz" => "qux"}
   # hash
   # # => {"foo" => "bar"}
@@ -446,7 +446,7 @@ class Hash(K, V)
   #
   # ```
   # hash = {"foo" => "bar"}
-  # hash.merge!({"baz": "qux"})
+  # hash.merge!({"baz" => "qux"})
   # hash # => {"foo" => "bar", "baz" => "qux"}
   # ```
   def merge!(other : Hash)
@@ -506,7 +506,7 @@ class Hash(K, V)
   # Returns a new `Hash` without the given keys.
   #
   # ```
-  # {"a": 1, "b": 2, "c": 3, "d": 4}.reject("a", "c") # => {"b": 2, "d": 4}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject("a", "c") # => {"b" => 2, "d" => 4}
   # ```
   def reject(*keys)
     hash = self.dup
@@ -516,8 +516,8 @@ class Hash(K, V)
   # Removes a list of keys out of hash.
   #
   # ```
-  # h = {"a": 1, "b": 2, "c": 3, "d": 4}.reject!("a", "c")
-  # h # => {"b": 2, "d": 4}
+  # h = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject!("a", "c")
+  # h # => {"b" => 2, "d" => 4}
   # ```
   def reject!(keys : Array | Tuple)
     keys.each { |k| delete(k) }
@@ -531,7 +531,7 @@ class Hash(K, V)
   # Returns a new `Hash` with the given keys.
   #
   # ```
-  # {"a": 1, "b": 2, "c": 3, "d": 4}.select("a", "c") # => {"a": 1, "c": 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select("a", "c") # => {"a" => 1, "c" => 3}
   # ```
   def select(keys : Array | Tuple)
     hash = {} of K => V
@@ -546,8 +546,8 @@ class Hash(K, V)
   # Removes every element except the given ones.
   #
   # ```
-  # h = {"a": 1, "b": 2, "c": 3, "d": 4}.select!("a", "c")
-  # h # => {"a": 1, "c": 3}
+  # h = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!("a", "c")
+  # h # => {"a" => 1, "c" => 3}
   # ```
   def select!(keys : Array | Tuple)
     each { |k, v| delete(k) unless keys.includes?(k) }
@@ -580,7 +580,7 @@ class Hash(K, V)
   # Returns the first key if it exists, or returns `nil`.
   #
   # ```
-  # hash = {"foo": "bar"}
+  # hash = {"foo" => "bar"}
   # hash.first_key? # => "foo"
   # hash.clear
   # hash.first_key? # => nil
@@ -653,7 +653,7 @@ class Hash(K, V)
   # Empties a `Hash` and returns it.
   #
   # ```
-  # hash = {"foo": "bar"}
+  # hash = {"foo" => "bar"}
   # hash.clear # => {}
   # ```
   def clear
@@ -693,10 +693,10 @@ class Hash(K, V)
   # Duplicates a `Hash`.
   #
   # ```
-  # hash_a = {"foo": "bar"}
+  # hash_a = {"foo" => "bar"}
   # hash_b = hash_a.dup
-  # hash_b.merge!({"baz": "qux"})
-  # hash_a # => {"foo": "bar"}
+  # hash_b.merge!({"baz" => "qux"})
+  # hash_a # => {"foo" => "bar"}
   # ```
   def dup
     hash = Hash(K, V).new(initial_capacity: @buckets_size)
@@ -709,10 +709,10 @@ class Hash(K, V)
   # Similar to `#dup`, but duplicates the values as well.
   #
   # ```
-  # hash_a = {"foobar": {"foo": "bar"}}
+  # hash_a = {"foobar" => {"foo" => "bar"}}
   # hash_b = hash_a.clone
   # hash_b["foobar"]["foo"] = "baz"
-  # hash_a # => {"foobar": {"foo": "bar"}}
+  # hash_a # => {"foobar" => {"foo" => "bar"}}
   # ```
   def clone
     hash = Hash(K, V).new(initial_capacity: @buckets_size)
@@ -729,7 +729,7 @@ class Hash(K, V)
   # Converts to a `String`.
   #
   # ```
-  # h = {"foo": "bar"}
+  # h = {"foo" => "bar"}
   # h.to_s       # => "{\"foo\" => \"bar\"}"
   # h.to_s.class # => String
   # ```
@@ -771,8 +771,8 @@ class Hash(K, V)
   # Inverts keys and values. If there are duplicated values, the last key becomes the new value.
   #
   # ```
-  # {"foo": "bar"}.invert               # => {"bar": "foo"}
-  # {"foo": "bar", "baz": "bar"}.invert # => {"bar": "baz"}
+  # {"foo" => "bar"}.invert                 # => {"bar" => "foo"}
+  # {"foo" => "bar", "baz" => "bar"}.invert # => {"bar" => "baz"}
   # ```
   def invert
     hash = Hash(V, K).new(initial_capacity: @buckets_size)

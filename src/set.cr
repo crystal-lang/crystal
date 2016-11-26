@@ -23,7 +23,7 @@
 #     s2.subset? s1    # => true
 struct Set(T)
   include Enumerable(T)
-  include Iterable
+  include Iterable(T)
 
   # Creates a new, empty `Set`
   #

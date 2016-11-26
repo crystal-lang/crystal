@@ -1,7 +1,7 @@
 # :nodoc:
 struct OAuth::AuthorizationHeader
   def initialize
-    @str = MemoryIO.new
+    @str = IO::Memory.new
     @str << "OAuth "
     @first = true
   end

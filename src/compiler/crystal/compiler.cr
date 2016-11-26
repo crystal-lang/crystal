@@ -47,6 +47,9 @@ module Crystal
     # Sets the mcpu. Check LLVM docs to learn about this.
     property mcpu : String?
 
+    # Sets the mattr (features). Check LLVM docs to learn about this.
+    property mattr : String?
+
     # If `false`, color won't be used in output messages.
     property? color = true
 
@@ -189,7 +192,7 @@ module Crystal
 
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@release}|#{@link_flags}"
+      current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}"
       bc_flags_filename = "#{output_dir}/bc_flags"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
@@ -247,7 +250,7 @@ module Crystal
 
       # First write bitcodes: it breaks if we paralellize it
       unless multithreaded
-        Crystal.timing("Codegen (cyrstal)", @stats) do
+        Crystal.timing("Codegen (crystal)", @stats) do
           units.each &.write_bitcode
         end
       end
@@ -320,7 +323,7 @@ module Crystal
     protected def target_machine
       @target_machine ||= begin
         triple = @target_triple || LLVM.default_target_triple
-        TargetMachine.create(triple, @mcpu || "", @release)
+        TargetMachine.create(triple, @mcpu || "", @mattr || "", @release)
       end
     rescue ex : ArgumentError
       stdout.print colorize("Error: ").red.bold
@@ -331,7 +334,9 @@ module Crystal
 
     protected def optimize(llvm_mod)
       fun_pass_manager = llvm_mod.new_function_pass_manager
-      fun_pass_manager.add_target_data target_machine.data_layout
+      {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
+        fun_pass_manager.add_target_data target_machine.data_layout
+      {% end %}
       pass_manager_builder.populate fun_pass_manager
       fun_pass_manager.run llvm_mod
       module_pass_manager.run llvm_mod
@@ -342,7 +347,9 @@ module Crystal
     private def module_pass_manager
       @module_pass_manager ||= begin
         mod_pass_manager = LLVM::ModulePassManager.new
-        mod_pass_manager.add_target_data target_machine.data_layout
+        {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
+          mod_pass_manager.add_target_data target_machine.data_layout
+        {% end %}
         pass_manager_builder.populate mod_pass_manager
         mod_pass_manager
       end

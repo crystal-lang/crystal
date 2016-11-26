@@ -23,6 +23,10 @@ class JSON::Lexer::StringBased < JSON::Lexer
       when '"'
         next_char
         break
+      else
+        if 0 <= current_char.ord < 32
+          unexpected_char
+        end
       end
     end
 
@@ -55,7 +59,11 @@ class JSON::Lexer::StringBased < JSON::Lexer
   end
 
   private def next_char_no_column_increment
-    @reader.next_char
+    char = @reader.next_char
+    if char == '\0' && @reader.pos != @reader.string.bytesize
+      unexpected_char
+    end
+    char
   end
 
   private def current_char

@@ -116,7 +116,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if type_vars = node.type_vars
         free_vars = {} of String => TypeVar
         type_vars.each do |type_var|
-          free_vars[type_var] = TypeParameter.new(program, type.as(GenericType), type_var)
+          free_vars[type_var] = type.as(GenericType).type_parameter(type_var)
         end
       else
         free_vars = nil
@@ -477,6 +477,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           none = NumberLiteral.new(0, enum_base_type.kind)
           none.type = enum_type
           enum_type.add_constant Arg.new("None", default_value: none)
+
+          define_enum_none_question_method(enum_type, node)
         end
 
         unless enum_type.types["All"]?
@@ -562,7 +564,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def define_enum_question_method(enum_type, member, is_flags)
     method_name = is_flags ? "includes?" : "=="
-    a_def = Def.new("#{member.name.underscore}?", body: Call.new(Var.new("self").at(member), method_name, Path.new(member.name).at(member))).at(member)
+    body = Call.new(Var.new("self").at(member), method_name, Path.new(member.name).at(member)).at(member)
+    a_def = Def.new("#{member.name.underscore}?", body: body).at(member)
+    enum_type.add_def a_def
+  end
+
+  def define_enum_none_question_method(enum_type, node)
+    body = Call.new(Call.new(nil, "value").at(node), "==", NumberLiteral.new(0)).at(node)
+    a_def = Def.new("none?", body: body).at(node)
     enum_type.add_def a_def
   end
 

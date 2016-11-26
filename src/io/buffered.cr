@@ -46,7 +46,7 @@ module IO::Buffered
     # We first check, after filling the buffer, if the delimiter
     # is already in the buffer. In that case it's much faster to create
     # a String from a slice of the buffer instead of appending to a
-    # MemoryIO, which happens in the other case.
+    # IO::Memory, which happens in the other case.
     fill_buffer if @in_buffer_rem.empty?
     if @in_buffer_rem.empty?
       return nil
@@ -66,7 +66,7 @@ module IO::Buffered
       return string
     end
 
-    # We didn't find the delimiter, so we append to a MemoryIO until we find it,
+    # We didn't find the delimiter, so we append to an IO::Memory until we find it,
     # or we reach the limit
     String.build do |buffer|
       loop do

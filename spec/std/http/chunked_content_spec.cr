@@ -3,7 +3,7 @@ require "http/content"
 
 describe HTTP::ChunkedContent do
   it "delays reading the next chunk as soon as one is consumed (#3270)" do
-    mem = MemoryIO.new("4\r\n123\n\r\n0\r\n\r\n")
+    mem = IO::Memory.new("4\r\n123\n\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
     bytes = uninitialized UInt8[4]
     bytes_read = content.read(bytes.to_slice)

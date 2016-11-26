@@ -1153,6 +1153,12 @@ module Crystal
     # by the type variables.
     getter(generic_types) { {} of Array(TypeVar) => Type }
 
+    # Returns a TypeParameter relative to this type
+    def type_parameter(name) : TypeParameter
+      type_parameters = @type_parameters ||= {} of String => TypeParameter
+      type_parameters[name] ||= TypeParameter.new(program, self, name)
+    end
+
     def instantiate(type_vars)
       if (instance = generic_types[type_vars]?)
         return instance
@@ -2219,6 +2225,7 @@ module Crystal
   class AliasType < NamedType
     getter? value_processed = false
     property! aliased_type : Type
+    getter? simple
 
     def initialize(program, namespace, name, @value : ASTNode)
       super(program, namespace, name)
@@ -2226,7 +2233,20 @@ module Crystal
     end
 
     delegate lookup_defs, lookup_defs_with_modules, lookup_first_def,
-      lookup_macro, lookup_macros, types, types?, to: aliased_type
+      lookup_macro, lookup_macros, to: aliased_type
+
+    def types?
+      process_value
+      if aliased_type = @aliased_type
+        aliased_type.types?
+      else
+        nil
+      end
+    end
+
+    def types
+      types?.not_nil!
+    end
 
     def remove_alias
       process_value

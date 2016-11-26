@@ -68,7 +68,7 @@ class Crystal::Type
       if root.is_a?(GenericType)
         free_vars ||= {} of String => TypeVar
         root.type_vars.each do |type_var|
-          free_vars[type_var] ||= TypeParameter.new(program, root, type_var)
+          free_vars[type_var] ||= root.type_parameter(type_var)
         end
         @free_vars = free_vars
       end
@@ -324,7 +324,7 @@ class Crystal::Type
       end
 
       if (self_type = @self_type).is_a?(GenericType)
-        params = self_type.type_vars.map { |type_var| TypeParameter.new(self_type.program, self_type, type_var).as(TypeVar) }
+        params = self_type.type_vars.map { |type_var| self_type.type_parameter(type_var).as(TypeVar) }
         self_type.instantiate(params)
       else
         @self_type.virtual_type

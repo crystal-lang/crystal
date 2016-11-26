@@ -47,6 +47,10 @@ module HTTP
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get("http://www.example.com"))
+    typeof(Client.post("http://www.example.com", body: IO::Memory.new))
+    typeof(Client.new("host").post("/", body: IO::Memory.new))
+    typeof(Client.post("http://www.example.com", body: Bytes[65]))
+    typeof(Client.new("host").post("/", body: Bytes[65]))
 
     describe "from URI" do
       it "has sane defaults" do
@@ -97,6 +101,20 @@ module HTTP
       it "raises error if URI is missing host" do
         expect_raises(ArgumentError, "must have host") do
           Client.new(URI.parse("http:/"))
+        end
+      end
+
+      it "yields to a block" do
+        Client.new(URI.parse("http://example.com")) do |client|
+          typeof(client)
+        end
+      end
+    end
+
+    context "from a host" do
+      it "yields to a block" do
+        Client.new("example.com") do |client|
+          typeof(client)
         end
       end
     end

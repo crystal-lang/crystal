@@ -935,6 +935,7 @@ module Crystal
       a_def.uses_block_arg = uses_block_arg?
       a_def.assigns_special_var = assigns_special_var?
       a_def.name_column_number = name_column_number
+      a_def.visibility = visibility
       a_def
     end
 
@@ -2035,10 +2036,12 @@ module Crystal
       MagicConstant.new(@name)
     end
 
-    def expand_node(location)
+    def expand_node(location, end_location)
       case name
       when :__LINE__
         MagicConstant.expand_line_node(location)
+      when :__END_LINE__
+        MagicConstant.expand_line_node(end_location)
       when :__FILE__
         MagicConstant.expand_file_node(location)
       when :__DIR__

@@ -59,18 +59,15 @@ class OptionParser
   protected property flags : Array(String)
   protected property handlers : Array(Handler)
   protected property unknown_args
-  protected property! missing_option
-  protected property! invalid_option
+  protected property missing_option
+  protected property invalid_option
 
   # Creates a new parser.
   def initialize
     @flags = [] of String
     @handlers = [] of Handler
-    missing_option { |flag| raise MissingOption.new(flag) }
-    invalid_option { |flag| raise InvalidOption.new(flag) }
-    # TODO: switch to these and change property! to property above after 0.19.0
-    # @missing_option = ->(option : String) { raise MissingOption.new(option) }
-    # @invalid_option = ->(option : String) { raise InvalidOption.new(option) }
+    @missing_option = ->(option : String) { raise MissingOption.new(option) }
+    @invalid_option = ->(option : String) { raise InvalidOption.new(option) }
   end
 
   # Creates a new parser, with its configuration specified in the block.

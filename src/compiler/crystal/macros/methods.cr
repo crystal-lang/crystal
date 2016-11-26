@@ -133,7 +133,7 @@ module Crystal
 
       node.args.first.accept self
       filename = @last.to_macro_id
-      original_filanme = filename
+      original_filename = filename
 
       # Support absolute paths
       if filename.starts_with?("/")
@@ -177,7 +177,7 @@ module Crystal
       if success
         @last = MacroId.new(result)
       else
-        node.raise "Error executing run: #{original_filanme} #{run_args.map(&.inspect).join " "}\n\nGot:\n\n#{result}\n"
+        node.raise "Error executing run: #{original_filename} #{run_args.map(&.inspect).join " "}\n\nGot:\n\n#{result}\n"
       end
     end
   end

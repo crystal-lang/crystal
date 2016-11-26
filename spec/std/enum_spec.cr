@@ -83,18 +83,37 @@ describe Enum do
     end
   end
 
-  it "does from_value?" do
-    SpecEnum.from_value?(0).should eq(SpecEnum::One)
-    SpecEnum.from_value?(1).should eq(SpecEnum::Two)
-    SpecEnum.from_value?(2).should eq(SpecEnum::Three)
-    SpecEnum.from_value?(3).should be_nil
+  describe "from_value?" do
+    it "for simple enum" do
+      SpecEnum.from_value?(0).should eq(SpecEnum::One)
+      SpecEnum.from_value?(1).should eq(SpecEnum::Two)
+      SpecEnum.from_value?(2).should eq(SpecEnum::Three)
+      SpecEnum.from_value?(3).should be_nil
+    end
+
+    it "for flags enum" do
+      SpecEnumFlags.from_value?(0).should be_nil
+      SpecEnumFlags.from_value?(1).should eq(SpecEnumFlags::One)
+      SpecEnumFlags.from_value?(2).should eq(SpecEnumFlags::Two)
+      SpecEnumFlags.from_value?(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
+      SpecEnumFlags.from_value?(8).should be_nil
+    end
   end
 
-  it "does from_value" do
-    SpecEnum.from_value(0).should eq(SpecEnum::One)
-    SpecEnum.from_value(1).should eq(SpecEnum::Two)
-    SpecEnum.from_value(2).should eq(SpecEnum::Three)
-    expect_raises { SpecEnum.from_value(3) }
+  describe "from_value" do
+    it "for simple enum" do
+      SpecEnum.from_value(0).should eq(SpecEnum::One)
+      SpecEnum.from_value(1).should eq(SpecEnum::Two)
+      SpecEnum.from_value(2).should eq(SpecEnum::Three)
+      expect_raises { SpecEnum.from_value(3) }
+    end
+
+    it "for flags enum" do
+      expect_raises { SpecEnumFlags.from_value(0) }
+      SpecEnumFlags.from_value(1).should eq(SpecEnumFlags::One)
+      SpecEnumFlags.from_value(2).should eq(SpecEnumFlags::Two)
+      SpecEnumFlags.from_value(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
+    end
   end
 
   it "has hash" do

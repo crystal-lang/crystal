@@ -3,10 +3,10 @@ module Crystal
     dir = Dir.current
     if filename.starts_with?(dir)
       filename = filename[dir.size..-1]
-      if filename.starts_with? "/"
-        ".#{filename}"
+      if filename.starts_with? '/'
+        filename[1..-1]
       else
-        "./#{filename}"
+        filename
       end
     else
       filename

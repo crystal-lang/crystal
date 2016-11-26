@@ -164,18 +164,18 @@ module Spec
   end
 
   # :nodoc:
-  def self.matches?(description, file, line)
+  def self.matches?(description, file, line, end_line = line)
     spec_pattern = @@pattern
     spec_line = @@line
     locations = @@locations
 
-    if line == spec_line
+    if spec_line && line <= spec_line <= end_line
       return true
     end
 
     if locations
       lines = locations[file]?
-      return true if lines && lines.includes?(line)
+      return true if lines && lines.any? { |l| line <= l <= end_line }
     end
 
     if spec_pattern || spec_line || locations

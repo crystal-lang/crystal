@@ -48,7 +48,7 @@ describe "JSON serialization" do
     end
 
     it "does for Array(Int32) from IO" do
-      io = MemoryIO.new "[1, 2, 3]"
+      io = IO::Memory.new "[1, 2, 3]"
       Array(Int32).from_json(io).should eq([1, 2, 3])
     end
 
@@ -134,6 +134,10 @@ describe "JSON serialization" do
     it "deserializes union with Float64 (fast path)" do
       Union(Float64, Array(Int32)).from_json(%(1)).should eq(1)
       Union(Float64, Array(Int32)).from_json(%(1.23)).should eq(1.23)
+    end
+
+    it "deserializes Time" do
+      Time.from_json(%("2016-11-16T09:55:48-0300")).to_utc.should eq(Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc))
     end
   end
 
@@ -282,6 +286,10 @@ describe "JSON serialization" do
     it "does for nested Hash with indent" do
       {"foo" => {"bar" => 1}}.to_pretty_json(indent: " ").should eq(%({\n "foo": {\n  "bar": 1\n }\n}))
     end
+
+    it "does for time" do
+      Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc).to_json.should eq(%("2016-11-16T12:55:48+0000"))
+    end
   end
 
   it "generates an array with JSON::Builder" do
@@ -297,5 +305,16 @@ describe "JSON serialization" do
       end
     end
     result.should eq("[1,[2,3]]")
+  end
+
+  it "generate object with raw_field" do
+    some = %Q[{"d":"e"}]
+    result = String.build do |io|
+      io.json_object do |obj|
+        obj.field "a", "b"
+        obj.raw_field "c", some
+      end
+    end
+    result.should eq(%Q[{"a":"b","c":{"d":"e"}}])
   end
 end

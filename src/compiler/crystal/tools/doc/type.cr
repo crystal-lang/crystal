@@ -393,11 +393,18 @@ class Crystal::Doc::Type
     @type.doc
   end
 
-  def lookup_path(path_or_names)
+  def lookup_path(path_or_names : Path | Array(String))
     match = @type.lookup_path(path_or_names)
     return unless match.is_a?(Crystal::Type)
 
     @generator.type(match)
+  end
+
+  def lookup_path(full_path : String)
+    global = full_path.starts_with?("::")
+    full_path = full_path[2..-1] if global
+    path = Path.new(full_path.split("::"), global: global)
+    lookup_path(path)
   end
 
   def lookup_method(name)
@@ -469,19 +476,22 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Path, io, links = true)
-    # We don't want "::" prefixed in from of paths in the docs
-    old_global = node.global?
-    node.global = false
-
-    begin
-      match = lookup_path(node)
-      if match
-        type_to_html match, io, node.to_s, links: links
-      else
-        io << node
+    match = lookup_path(node)
+    if match
+      # If the path is global, search a local path and
+      # see if there's a different match. If not, we can safely
+      # remove the `::` as a prefix (harder to read)
+      remove_colons = false
+      if node.global?
+        node.global = false
+        remove_colons = lookup_path(node) == match
+        node.global = true unless remove_colons
       end
-    ensure
-      node.global = old_global
+
+      type_to_html match, io, node.to_s, links: links
+      node.global = true if remove_colons
+    else
+      io << node
     end
   end
 
@@ -524,9 +534,31 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Union, io, links = true)
+    # See if it's a nilable type
+    if node.types.size == 2
+      # See if first type is Nil
+      if nil_type?(node.types[0])
+        return nilable_type_to_html node.types[1], io, links: links
+      elsif nil_type?(node.types[1])
+        return nilable_type_to_html node.types[0], io, links: links
+      end
+    end
+
     node.types.join(" | ", io) do |elem|
       node_to_html elem, io, links: links
     end
+  end
+
+  private def nilable_type_to_html(node, io, links)
+    node_to_html node, io, links: links
+    io << "?"
+  end
+
+  private def nil_type?(node)
+    return false unless node.is_a?(Path)
+
+    match = lookup_path(node)
+    match && match.type == @generator.program.nil_type
   end
 
   def node_to_html(node, io, links = true)
@@ -685,4 +717,6 @@ class Crystal::Doc::Type
       end
     )
   end
+
+  delegate to_s, inspect, to: @type
 end

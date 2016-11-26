@@ -98,8 +98,26 @@ struct Enum
   end
 end
 
+struct Time
+  def to_yaml(emitter : YAML::Emitter)
+    emitter << Time::Format::ISO_8601_DATE_TIME.format(self)
+  end
+end
+
+struct Time::Format
+  def to_yaml(value : Time, emitter : YAML::Emitter)
+    format(value).to_yaml(emitter)
+  end
+end
+
 module Time::EpochConverter
-  def self.to_yaml(value : Time, io : IO)
-    io << value.epoch
+  def self.to_yaml(value : Time, emitter : YAML::Emitter)
+    emitter << value.epoch
+  end
+end
+
+module Time::EpochMillisConverter
+  def self.to_yaml(value : Time, emitter : YAML::Emitter)
+    emitter << value.epoch_ms
   end
 end

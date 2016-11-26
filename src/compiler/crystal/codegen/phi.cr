@@ -89,7 +89,10 @@ class Crystal::CodeGenVisitor
           @codegen.last = llvm_nil
         else
           if @exit_block
-            @codegen.last = phi llvm_arg_type(@node_type.not_nil!), phi_table
+            node_type = @node_type.not_nil!
+            type = llvm_type(node_type)
+            type = type.pointer if node_type.passed_by_value?
+            @codegen.last = phi type, phi_table
           else
             @codegen.last = phi_table.values.first
           end

@@ -5,7 +5,7 @@ module IO
   # This is useful for exposing part of an underlying stream to a client.
   #
   # ```
-  # io = MemoryIO.new "abc||123"
+  # io = IO::Memory.new "abc||123"
   # delimited = IO::Delimited.new(io, read_delimiter: "||")
   #
   # delimited.gets_to_end # => "abc"

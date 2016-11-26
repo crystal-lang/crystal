@@ -125,7 +125,7 @@ module Crystal
       @meta_vars = file_module.vars
 
       node.node.accept self
-      node.bind_to node.node
+      node.type = @program.nil_type
 
       @vars = old_vars
       @meta_vars = old_meta_vars
@@ -668,6 +668,9 @@ module Crystal
 
       meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
 
+      # Save variable assignment location for debugging output
+      meta_var.location ||= target.location
+
       begin
         meta_var.bind_to value
       rescue ex : FrozenTypeException
@@ -1056,7 +1059,7 @@ module Crystal
         obj.accept self
       end
 
-      call = Call.new(obj, node.name)
+      call = Call.new(obj, node.name).at(obj)
       prepare_call(call)
 
       # Check if it's ->LibFoo.foo, so we deduce the type from that method

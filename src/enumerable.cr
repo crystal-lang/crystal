@@ -74,6 +74,86 @@ module Enumerable(T)
     any? &.itself
   end
 
+  # Enumerates over the items, chunking them together based on the return value of the block.
+  #
+  # Consecutive elements which return the same block value are chunked together.
+  #
+  # For example, consecutive even numbers and odd numbers can be chunked as follows.
+  #
+  # ```
+  # ary = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5].chunks { |n| n.even? }
+  # ary # => [{false, [3, 1]}, {true, [4]}, {false, [1, 5, 9]}, {true, [2, 6]}, {false, [5, 3, 5]}]
+  # ```
+  #
+  # The following key values have special meaning:
+  #
+  # * `Enumerable::Chunk::Drop` specifies that the elements should be dropped
+  # * `Enumerable::Chunk::Alone` specifies that the element should be chunked by itself
+  #
+  # See also: `Iterator#chunk`
+  def chunks(&block : T -> U)
+    res = [] of Tuple(U, Array(T))
+    chunks_internal(block) { |k, v| res << {k, v} }
+    res
+  end
+
+  # :nodoc:
+  module Chunk
+    record Drop
+    record Alone
+
+    # :nodoc:
+    struct Accumulator(T, U)
+      def initialize
+        @key = uninitialized U
+        @initialized = false
+        @data = [] of T
+      end
+
+      def init(key, val)
+        return if key == Drop
+        @key = key
+        @data = [val]
+        @initialized = true
+      end
+
+      def add(d)
+        @data << d
+      end
+
+      def fetch
+        if @initialized
+          {@key, @data}.tap { @initialized = false }
+        end
+      end
+
+      def same_as?(key)
+        return false unless @initialized
+        return false if key == Alone || key == Drop
+        @key == key
+      end
+    end
+  end
+
+  private def chunks_internal(original_block : T -> U)
+    acc = Chunk::Accumulator(T, U).new
+    each do |val|
+      key = original_block.call(val)
+      if acc.same_as?(key)
+        acc.add(val)
+      else
+        if tuple = acc.fetch
+          yield(*tuple)
+        end
+        acc.init(key, val)
+      end
+    end
+
+    if tuple = acc.fetch
+      yield(*tuple)
+    end
+  end
+
   # Returns an array with the results of running the block against each element of the collection, removing `nil` values.
   #
   #     ["Alice", "Bob"].map { |name| name.match(/^A./) }         #=> [#<Regex::MatchData "Al">, nil]
@@ -250,9 +330,16 @@ module Enumerable(T)
   #     ["Alice", "Bob"].flat_map do |user|
   #       user.chars
   #     end  #=> ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
-  def flat_map(&block : T -> Array(U)) forall U
+  def flat_map(&block : T -> Array(U) | U) forall U
     ary = [] of U
-    each { |e| ary.concat(yield e) }
+    each do |e|
+      v = yield e
+      if v.is_a?(Array)
+        ary.concat(v)
+      else
+        ary.push(v)
+      end
+    end
     ary
   end
 

@@ -51,7 +51,7 @@
 # ```
 struct Range(B, E)
   include Enumerable(B)
-  include Iterable
+  include Iterable(B)
 
   # Returns the object that defines the beginning of this range.
   #

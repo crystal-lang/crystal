@@ -192,7 +192,7 @@ module Crystal
       when Call
         !exp.has_parentheses? && (
           (exp.args.empty? && !exp.named_args) ||
-            (exp.name[0].alpha? && exp.name.ends_with?('=')) ||
+            (exp.name[0].ascii_letter? && exp.name.ends_with?('=')) ||
             exp.name == "[]" || exp.name == "[]="
         )
       else
@@ -706,6 +706,8 @@ module Crystal
             when :"]"
               next_token
               break
+            else
+              unexpected_token
             end
           end
 
@@ -904,6 +906,8 @@ module Crystal
         end
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
+      when :__END_LINE__
+        raise "__END_LINE__ can only be used in default argument value", @token
       when :__FILE__
         node_and_next_token MagicConstant.expand_file_node(@token.location)
       when :__DIR__
@@ -1092,13 +1096,13 @@ module Crystal
       return false unless @no_type_declaration == 0
 
       pos = current_pos
-      while current_char.whitespace?
+      while current_char.ascii_whitespace?
         next_char_no_column_increment
       end
       comes_colon_space = current_char == ':'
       if comes_colon_space
         next_char_no_column_increment
-        comes_colon_space = current_char.whitespace?
+        comes_colon_space = current_char.ascii_whitespace?
       end
       self.current_pos = pos
       comes_colon_space
@@ -1261,7 +1265,8 @@ module Crystal
       next_token_skip_space
 
       if rescues || a_ensure
-        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at_end(end_location)
+        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at(exp).at_end(end_location)
+        ex.at(exp.location || rescues.try(&.first?).try(&.location) || a_ensure.try(&.location))
         ex.implicit = true if implicit
         {ex, end_location}
       else
@@ -1348,7 +1353,7 @@ module Crystal
     end
 
     def call_block_arg_follows?
-      @token.type == :"&" && !current_char.whitespace?
+      @token.type == :"&" && !current_char.ascii_whitespace?
     end
 
     def parse_call_block_arg(args, check_paren, named_args = nil)
@@ -1795,7 +1800,7 @@ module Crystal
 
       case delimiter_state.kind
       when :command
-        result = Call.new(nil, "`", result)
+        result = Call.new(nil, "`", result).at(location)
       when :regex
         if result.is_a?(StringLiteral) && (regex_error = Regex.error?(result.value))
           raise "invalid regex: #{regex_error}", location
@@ -1891,7 +1896,7 @@ module Crystal
     end
 
     def remove_heredoc_indent(pieces : Array, indent)
-      current_line = MemoryIO.new
+      current_line = IO::Memory.new
       remove_indent = true
       new_pieces = [] of ASTNode
       previous_line_number = 0
@@ -1924,7 +1929,7 @@ module Crystal
         else
           if remove_indent
             line = current_line.to_s
-            if (line.size < indent) || !line.each_char.first(indent).all?(&.whitespace?)
+            if (line.size < indent) || !line.each_char.first(indent).all?(&.ascii_whitespace?)
               raise "heredoc line must have an indent greater or equal than #{indent}", line_number, 1
             else
               line = line[indent..-1]
@@ -1954,7 +1959,7 @@ module Crystal
     end
 
     def remove_heredoc_from_line(line, indent, line_number)
-      if line.each_char.first(indent).all? &.whitespace?
+      if line.each_char.first(indent).all? &.ascii_whitespace?
         if line.size - 1 < indent
           "\n"
         else
@@ -2772,7 +2777,7 @@ module Crystal
     end
 
     def check_macro_skip_whitespace
-      if current_char == '\\' && peek_next_char.whitespace?
+      if current_char == '\\' && peek_next_char.ascii_whitespace?
         next_char
         true
       else
@@ -3332,7 +3337,7 @@ module Crystal
         next_token_skip_space_or_newline
 
         case @token.type
-        when :__LINE__, :__FILE__, :__DIR__
+        when :__LINE__, :__END_LINE__, :__FILE__, :__DIR__
           default_value = MagicConstant.new(@token.type).at(@token.location)
           next_token
         else
@@ -3620,7 +3625,7 @@ module Crystal
 
       node =
         if block || block_arg || global
-          Call.new nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_column_number, has_parentheses
+          Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_column_number, has_parentheses)
         else
           if args
             if (!force_call && is_var) && args.size == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
@@ -3639,17 +3644,18 @@ module Crystal
               if @block_arg_name && !@uses_block_arg && name == @block_arg_name
                 @uses_block_arg = true
               end
-              Var.new name
+              Var.new(name)
             else
               if !force_call && !block_arg && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
                 raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 
-              Call.new nil, name, [] of ASTNode, nil, block_arg, named_args, global, name_column_number, has_parentheses
+              Call.new(nil, name, [] of ASTNode, nil, block_arg, named_args, global, name_column_number, has_parentheses)
             end
           end
         end
       node.doc = doc
+      node.location = block.try(&.location) || location
       node.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
       node
     end
@@ -3880,21 +3886,21 @@ module Crystal
 
       case @token.type
       when :"&"
-        return nil if current_char.whitespace?
+        return nil if current_char.ascii_whitespace?
       when :"+", :"-"
         if check_plus_and_minus
-          return nil if current_char.whitespace?
+          return nil if current_char.ascii_whitespace?
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__FILE__, :__DIR__, :UNDERSCORE
+      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__END_LINE__, :__FILE__, :__DIR__, :UNDERSCORE
         # Nothing
       when :"*", :"**"
-        if current_char.whitespace?
+        if current_char.ascii_whitespace?
           return nil
         end
       when :"::"
-        if current_char.whitespace?
+        if current_char.ascii_whitespace?
           return nil
         end
       else
@@ -4028,12 +4034,12 @@ module Crystal
         splat = nil
         case @token.type
         when :"*"
-          unless current_char.whitespace?
+          unless current_char.ascii_whitespace?
             splat = :single
             next_token
           end
         when :"**"
-          unless current_char.whitespace?
+          unless current_char.ascii_whitespace?
             splat = :double
             next_token
           end
@@ -4803,7 +4809,7 @@ module Crystal
         next_token_skip_space_or_newline
         type = parse_single_type
 
-        if name[0].uppercase?
+        if name[0].ascii_uppercase?
           raise "external variables must start with lowercase, use for example `$#{name.underscore} = #{name} : #{type}`", location
         end
 
@@ -5351,7 +5357,7 @@ module Crystal
     end
 
     def self.free_var_name?(name)
-      name.size == 1 || (name.size == 2 && name[1].digit?)
+      name.size == 1 || (name.size == 2 && name[1].ascii_number?)
     end
   end
 end

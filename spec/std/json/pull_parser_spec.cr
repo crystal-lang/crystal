@@ -162,6 +162,30 @@ describe JSON::PullParser do
   assert_pull_parse_error %({"name": "John", "age", 1})
   assert_pull_parse_error %({"name": "John", "age": "foo", "bar"})
 
+  it "prevents stack overflow for arrays" do
+    parser = JSON::PullParser.new(("[" * 513) + ("]" * 513))
+    expect_raises JSON::ParseException, "nesting of 513 is too deep" do
+      while true
+        break if parser.kind == :EOF
+        parser.read_next
+      end
+    end
+  end
+
+  it "prevents stack overflow for hashes" do
+    parser = JSON::PullParser.new((%({"x": ) * 513) + ("}" * 513))
+    expect_raises JSON::ParseException, "nesting of 513 is too deep" do
+      while true
+        break if parser.kind == :EOF
+        parser.read_next
+      end
+    end
+  end
+
+  # Prevent too deep nesting (prevents stack overflow)
+  assert_pull_parse_error(("[" * 513) + ("]" * 513))
+  assert_pull_parse_error(("{" * 513) + ("}" * 513))
+
   describe "skip" do
     [
       {"null", "null"},

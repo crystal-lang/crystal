@@ -1,3 +1,37 @@
+## 0.20.0 (22-11-2016)
+
+* **(breaking change)** Removed `ifdef` from the language
+* **(breaking change)** Removed `PointerIO`
+* **(breaking change)** The `body` property of `HTTP::Request` is now an `IO?` (previously it was `String`). Use `request.body.try(&.gets_to_end)`  if you need the entire body as a String.
+* **(breaking change)** `MemoryIO` has been renamed to `IO::Memory`. The old name can still be used but will produce a compile-time warning. `MemoryIO` will be removed immediately after 0.20.0.
+* **(breaking change)** `Char#digit?` was split into `Char#ascii_number?` and `Char#number?`. The old name is still available and will produce a compile-time warning, but will be removed immediately after 0.20.0.
+* **(breaking change)** `Char#alpha?` was split into `Char#ascii_letter?` and `Char#letter?`. The old name is still available and will produce a compile-time warning, but will be removed immediately after 0.20.0.
+* **(breaking change)** The `Iterable` module is now generic
+* Many `String` and `Char` methods are now unicode-aware, for example `String#downcase`, `String#upcase`, `Char#downcase`, `Char#upcase`, `Char#whitespace?`, etc.
+* Added support for HTTP client and server streaming.
+* Added support for ARM (thanks @ysbaddaden)
+* Added support for AArch64 (thanks @ysbaddaden)
+* Added support for LLVM 3.9 (thanks @ysbaddaden)
+* Added `__END_LINE__` magic constant in method default arguments: will be the last line of a call (if the call has a block, it will be the last line of that block)
+* Added `@def` inside macros that takes the value of the current method
+* API docs have a nicer style now, and notes like TODO and DEPRECATED are better highlighted (thanks @samueleaton)
+* Slight improvement to debugging support (thanks @ggiraldez)
+* Line numbers in backtraces (linux only for now) (thanks @ysbaddaden)
+* Added iteration times to `Benchmark.ips` (thanks @RX14)
+* Allow `HTTP::Client` block initializer to be used when passing an URI (thanks @philnash)
+* `JSON.mapping` and `YAML.mapping` getter/setter generation can now be controlled (thanks @zatherz)
+* `Time` is now serializable to JSON and YAML using ISO 8601 date-time format
+* Added `IO::MultiWriter` (thanks @RX14)
+* Added `String#index(Regex)` and `String#rindex(Regex)` (thanks @zatherz)
+* Added `String#partition` and `String#rpartition` (thanks @johnjansen)
+* Added `FileUtils.cd`, `FileUtils.mkdir`, `FileUtils.mkdir_p`, `FileUtils.mv`, `FileUtils.pwd`, `FileUtils.rm`, `FileUtils.rm_r`, `FileUtils.rmdir` (thanks @ghivert)
+* Added `JSON::Builder#raw_field` (thanks @kostya)
+* Added `Enumerable#chunks` and `Iterator#chunk` (thanks @kostya)
+* Added `Iterator#with_index`
+* Several enhancements to the Random module: now works for any integer type and avoids overflows (thanks @BlaXpirit)
+* Optimized `Array#sort` by using introsort (thanks @c910335)
+* [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.0)
+
 ## 0.19.4  (07-10-2016)
 
 * Added support for OpenBSD (thanks @wmoxam and @ysbaddaden)

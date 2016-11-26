@@ -150,7 +150,7 @@ module Crystal
           when '='
             next_char :"<<="
           when '-'
-            here = MemoryIO.new(20)
+            here = IO::Memory.new(20)
             has_single_quote = false
             found_closing_single_quote = false
 
@@ -275,7 +275,7 @@ module Crystal
           @token.type = :DELIMITER_START
           @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/')
           @token.raw = "/"
-        elsif char.whitespace? || char == '\0' || char == ';'
+        elsif char.ascii_whitespace? || char == '\0' || char == ';'
           @token.type = :"/"
         elsif @wants_regex
           @token.type = :DELIMITER_START
@@ -464,7 +464,7 @@ module Crystal
           line = @line_number
           column = @column_number
           start = current_pos + 1
-          io = MemoryIO.new
+          io = IO::Memory.new
           while true
             char = next_char
             case char
@@ -660,13 +660,13 @@ module Crystal
         when '?'
           next_char
           @token.type = :"$?"
-        when .digit?
+        when .ascii_number?
           start = current_pos
           char = next_char
           if char == '0'
             char = next_char
           else
-            while char.digit?
+            while char.ascii_number?
               char = next_char
             end
             char = next_char if char == '?'
@@ -1029,6 +1029,16 @@ module Crystal
                 return @token
               end
             end
+          when 'E'
+            if next_char == 'N' && next_char == 'D' && next_char == '_' && next_char == 'L' && next_char == 'I' && next_char == 'N' && next_char == 'E' && next_char == '_' && next_char == '_'
+              if ident_part_or_end?(peek_next_char)
+                scan_ident(start)
+              else
+                next_char
+                @token.type = :__END_LINE__
+                return @token
+              end
+            end
           when 'F'
             if next_char == 'I' && next_char == 'L' && next_char == 'E' && next_char == '_' && next_char == '_'
               if ident_part_or_end?(peek_next_char)
@@ -1059,14 +1069,14 @@ module Crystal
 
         scan_ident(start)
       else
-        if current_char.uppercase?
+        if current_char.ascii_uppercase?
           start = current_pos
           while ident_part?(next_char)
             # Nothing to do
           end
           @token.type = :CONST
           @token.value = string_range_from_pool(start)
-        elsif current_char.lowercase? || current_char == '_' || current_char.ord > 0x9F
+        elsif current_char.ascii_lowercase? || current_char == '_' || current_char.ord > 0x9F
           next_char
           scan_ident(start)
         else
@@ -1118,7 +1128,7 @@ module Crystal
       if doc_buffer = @token.doc_buffer
         doc_buffer << '\n'
       else
-        @token.doc_buffer = doc_buffer = MemoryIO.new
+        @token.doc_buffer = doc_buffer = IO::Memory.new
       end
 
       doc_buffer.write slice_range(start_pos)
@@ -1226,7 +1236,7 @@ module Crystal
 
       while true
         char = next_char
-        if char.digit?
+        if char.ascii_number?
           # Nothing to do
         elsif char == '_'
           has_underscore = true
@@ -1237,12 +1247,12 @@ module Crystal
 
       case current_char
       when '.'
-        if peek_next_char.digit?
+        if peek_next_char.ascii_number?
           is_integer = false
 
           while true
             char = next_char
-            if char.digit?
+            if char.ascii_number?
               # Nothing to do
             elsif char == '_'
               has_underscore = true
@@ -1259,7 +1269,7 @@ module Crystal
             end
 
             while true
-              if current_char.digit?
+              if current_char.ascii_number?
                 # Nothing to do
               elsif current_char == '_'
                 has_underscore = true
@@ -1288,7 +1298,7 @@ module Crystal
         end
 
         while true
-          if current_char.digit?
+          if current_char.ascii_number?
             # Nothing to do
           elsif current_char == '_'
             has_underscore = true
@@ -1491,7 +1501,7 @@ module Crystal
           scan_number(start)
         end
       else
-        if next_char.digit?
+        if next_char.ascii_number?
           raise "octal constants should be prefixed with 0o"
         else
           finish_scan_prefixed_number 0_u64, false, start
@@ -1759,7 +1769,7 @@ module Crystal
                 when '\n'
                   @line_number += 1
                   @token.line_number = @line_number
-                when .whitespace?
+                when .ascii_whitespace?
                   # Continue
                 else
                   break
@@ -1912,7 +1922,7 @@ module Crystal
         next_char
         start = current_pos
         if next_char == '%'
-          while (char = next_char).whitespace?
+          while (char = next_char).ascii_whitespace?
           end
 
           case char
@@ -2031,7 +2041,7 @@ module Crystal
               return @token
             else
               nest -= 1
-              whitespace = current_char.whitespace?
+              whitespace = current_char.ascii_whitespace?
               next_char
             end
           end
@@ -2115,7 +2125,7 @@ module Crystal
           elsif !delimiter_state && whitespace && (keyword = check_macro_opening_keyword(beginning_of_line))
             char = current_char
 
-            if keyword == :macro && char.whitespace?
+            if keyword == :macro && char.ascii_whitespace?
               old_pos = @reader.pos
               if next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(peek_next_char)
                 char = next_char
@@ -2144,11 +2154,11 @@ module Crystal
             end
 
             # If an assignment comes, we accept if/unless/while/until as nesting
-            if char == '=' && peek_next_char.whitespace?
+            if char == '=' && peek_next_char.ascii_whitespace?
               whitespace = false
               beginning_of_line = true
             else
-              whitespace = char.whitespace? || char == ';' || char == '(' || char == '[' || char == '{'
+              whitespace = char.ascii_whitespace? || char == ';' || char == '(' || char == '[' || char == '{'
               if beginning_of_line && !whitespace
                 beginning_of_line = false
               end
@@ -2168,7 +2178,7 @@ module Crystal
 
     def skip_macro_whitespace
       start = current_pos
-      while current_char.whitespace?
+      while current_char.ascii_whitespace?
         whitespace = true
         if current_char == '\n'
           @line_number += 1
@@ -2353,7 +2363,7 @@ module Crystal
           next_char
           @column_number = 1
           @line_number += 1
-        elsif current_char.whitespace?
+        elsif current_char.ascii_whitespace?
           next_char
         else
           break
@@ -2367,7 +2377,7 @@ module Crystal
       end
 
       start = current_pos
-      while !current_char.whitespace? && current_char != '\0' && current_char != @token.delimiter_state.end
+      while !current_char.ascii_whitespace? && current_char != '\0' && current_char != @token.delimiter_state.end
         next_char
       end
 
@@ -2542,11 +2552,11 @@ module Crystal
     end
 
     def ident_start?(char)
-      char.alpha? || char == '_' || char.ord > 0x9F
+      char.ascii_letter? || char == '_' || char.ord > 0x9F
     end
 
     def ident_part?(char)
-      ident_start?(char) || char.digit?
+      ident_start?(char) || char.ascii_number?
     end
 
     def ident_part_or_end?(char)
