@@ -338,6 +338,13 @@ class Deque(T)
     io << "Deque{...}" unless executed
   end
 
+  def pretty_print(pp)
+    executed = exec_recursive(:inspect) do
+      pp.list("Deque{", self, "}")
+    end
+    pp.text "Deque{...}" unless executed
+  end
+
   # Returns the number of elements in the deque.
   #
   # ```

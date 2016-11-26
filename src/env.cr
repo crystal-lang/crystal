@@ -133,4 +133,17 @@ module ENV
     end
     io << "}"
   end
+
+  def self.pretty_print(pp)
+    pp.list("{", keys.sort, "}") do |key|
+      pp.group do
+        key.pretty_print(pp)
+        pp.text " =>"
+        pp.nest do
+          pp.breakable
+          self[key].pretty_print(pp)
+        end
+      end
+    end
+  end
 end

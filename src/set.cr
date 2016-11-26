@@ -255,6 +255,10 @@ struct Set(T)
     to_s(io)
   end
 
+  def pretty_print(pp) : Nil
+    pp.list("Set{", self, "}")
+  end
+
   def hash
     @hash.hash
   end

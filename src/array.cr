@@ -1531,6 +1531,13 @@ class Array(T)
     io << "[...]" unless executed
   end
 
+  def pretty_print(pp) : Nil
+    executed = exec_recursive(:pretty_print) do
+      pp.list("[", self, "]")
+    end
+    pp.text "[...]" unless executed
+  end
+
   # Returns a pointer to the internal buffer where `self`'s elements are stored.
   #
   # This method is **unsafe** because it returns a pointer, and the pointed might eventually

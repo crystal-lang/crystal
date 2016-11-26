@@ -399,6 +399,11 @@ struct Slice(T)
     io << "]"
   end
 
+  def pretty_print(pp) : Nil
+    prefix = T == UInt8 ? "Bytes[" : "Slice["
+    pp.list(prefix, self, "]")
+  end
+
   def to_a
     Array(T).build(@size) do |pointer|
       pointer.copy_from(@pointer, @size)

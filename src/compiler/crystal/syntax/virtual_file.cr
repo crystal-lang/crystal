@@ -18,4 +18,12 @@ class Crystal::VirtualFile
   def to_s(io)
     io << "expanded macro: " << @macro.name
   end
+
+  def inspect(io)
+    to_s(io)
+  end
+
+  def pretty_print(pp)
+    pp.text inspect
+  end
 end
