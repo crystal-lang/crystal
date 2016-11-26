@@ -75,7 +75,9 @@ end
 
 module GC
   def self.init
-    LibGC.set_handle_fork(1)
+    {% if !flag? :windows %}
+      LibGC.set_handle_fork(1)
+    {% end %}
     LibGC.init
   end
 

@@ -8,7 +8,7 @@ macro redefine_main(name = main)
   fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
     %ex = nil
     %status = begin
-      # GC.init
+      GC.init
       {{yield LibCrystalMain.__crystal_main(argc, argv)}}
       0
     rescue ex
