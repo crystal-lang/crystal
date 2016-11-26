@@ -98,6 +98,9 @@ describe Markdown do
 
   assert_render "[![foo](bar)](baz)", %(<p><a href="baz"><img src="bar" alt="foo"/></a></p>)
 
+  assert_render "|:- CHeader -:|- RHeader with Spaces -:|: LHeader :- with ::- Characters -|- DHeader |\n| row1-1 | row1-2 | row1-3 | row1-4 |\n| row2-1 | row2-2 | row2-3 | row2-4 |\n| row3-1 | row3-2 | row3-3 | row3-4 |", "<table><tr><th style='text-align: center;'> CHeader </th><th style='text-align: right;'> RHeader with Spaces </th><th style='text-align: left;'> LHeader :- with ::- Characters </th><th style='text-align: left;'> DHeader </th></tr><tr><td style='text-align: center;'> row1-1 </td><td style='text-align: right;'> row1-2 </td><td style='text-align: left;'> row1-3 </td><td style='text-align: left;'> row1-4 </td></tr><tr><td style='text-align: center;'> row2-1 </td><td style='text-align: right;'> row2-2 </td><td style='text-align: left;'> row2-3 </td><td style='text-align: left;'> row2-4 </td></tr><tr><td style='text-align: center;'> row3-1 </td><td style='text-align: right;'> row3-2 </td><td style='text-align: left;'> row3-3 </td><td style='text-align: left;'> row3-4 </td></tr></table>"
+  assert_render "|:- CHeader -:|- RHeader with Spaces -:|: LHeader :- with ::- Characters -|- DHeader |", "<table><tr><th style='text-align: center;'> CHeader </th><th style='text-align: right;'> RHeader with Spaces </th><th style='text-align: left;'> LHeader :- with ::- Characters </th><th style='text-align: left;'> DHeader </th></tr></table>"
+
   assert_render "***", "<hr/>"
   assert_render "---", "<hr/>"
   assert_render "___", "<hr/>"

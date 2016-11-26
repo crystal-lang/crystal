@@ -65,6 +65,10 @@ class Markdown::Parser
       return render_quote
     end
 
+    if line.starts_with? "|"
+      return render_table
+    end
+
     render_paragraph
   end
 
@@ -278,6 +282,42 @@ class Markdown::Parser
     @renderer.end_ordered_list
 
     append_double_newline_if_has_more
+  end
+
+  def render_table
+    @renderer.begin_table
+
+    alignments = Hash(Int32, String).new
+    while true
+      line = @lines[@line]
+      break unless line.starts_with? "|"
+
+      @renderer.begin_table_row
+      elements = line[1..-2].split("|")
+      elements.each_with_index do |element, index|
+        if element[0..1].includes?("-") || element[-2..-1].includes?("-")
+          alignments[index] = get_table_alignment(element)
+          cellType = "th"
+          text = element.gsub(/^[-:]+|[-:]+$/, "")
+        else
+          cellType = "td"
+          text = element
+        end
+
+        @renderer.begin_table_cell(alignments[index], cellType)
+        @renderer.text text
+        @renderer.end_table_cell(cellType)
+      end
+
+      @renderer.end_table_row
+
+      @line += 1
+      if @line == @lines.size
+        break
+      end
+    end
+
+    @renderer.end_table
   end
 
   def append_double_newline_if_has_more
@@ -599,6 +639,18 @@ class Markdown::Parser
   def render_horizontal_rule
     @renderer.horizontal_rule
     @line += 1
+  end
+
+  def get_table_alignment(element)
+    if element[0] == ':' && element[-1] == ':'
+      "center"
+    elsif element[-1] == ':'
+      "right"
+    elsif element[0] == ':'
+      "left"
+    else
+      "left"
+    end
   end
 
   def newline
