@@ -969,4 +969,16 @@ module IO
   end
 end
 
-require "./io/*"
+# require "./io/*"
+require "./io/argf.cr"
+require "./io/buffered.cr"
+require "./io/byte_format.cr"
+require "./io/console.cr"
+require "./io/delimited.cr"
+require "./io/encoding.cr"
+require "./io/error.cr"
+require "./io/fd_set.cr"
+require "./io/file_descriptor.cr"
+require "./io/hexdump.cr"
+require "./io/multi_writer.cr"
+require "./io/sized.cr"

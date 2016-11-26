@@ -1,4 +1,7 @@
 {% if flag?(:windows) %}
+  STDIN = IO::FileDescriptor.new(LibWindows.get_std_handle(LibWindows::STD_INPUT_HANDLE))
+  STDOUT = IO::FileDescriptor.new(LibWindows.get_std_handle(LibWindows::STD_OUTPUT_HANDLE)).tap { |f| f.flush_on_newline = true }
+  STDERR = IO::FileDescriptor.new(LibWindows.get_std_handle(LibWindows::STD_ERROR_HANDLE)).tap { |f| f.flush_on_newline = true }
 {% else %}
   require "c/unistd"
 
