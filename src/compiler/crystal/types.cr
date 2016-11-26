@@ -542,6 +542,10 @@ module Crystal
     end
 
     abstract def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
+
+    def pretty_print(pp)
+      pp.text to_s
+    end
   end
 
   # A type that has a name and can be inside a namespace.

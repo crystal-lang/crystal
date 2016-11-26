@@ -107,6 +107,22 @@ class Object
     to_s io
   end
 
+  # Pretty prints `self` into the given printer.
+  #
+  # By default appends a text that is the result of invoking
+  # `#inspect` on self. Subclasses should override
+  # for custom pretty printing.
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.text(inspect)
+  end
+
+  # Returns a pretty printed version of `self`.
+  def pretty_inspect(width = 79, newline = "\n", indent = 0) : String
+    String.build do |io|
+      PrettyPrint.format(self, io, width, newline, indent)
+    end
+  end
+
   # Yields self to the block, and then returns self.
   #
   # The primary purpose of this method is to "tap into" a method chain,

@@ -225,6 +225,10 @@ class IO::FileDescriptor
     io
   end
 
+  def pretty_print(pp)
+    pp.text inspect
+  end
+
   private def unbuffered_read(slice : Slice(UInt8))
     count = slice.size
     loop do

@@ -227,6 +227,24 @@ struct HTTP::Headers
     to_s(io)
   end
 
+  def pretty_print(pp)
+    pp.list("HTTP::Headers{", @hash.keys.sort_by(&.name), "}") do |key|
+      pp.group do
+        key.name.pretty_print(pp)
+        pp.text " =>"
+        pp.nest do
+          pp.breakable
+          values = get(key)
+          if values.size == 1
+            values.first.pretty_print(pp)
+          else
+            values.pretty_print(pp)
+          end
+        end
+      end
+    end
+  end
+
   forward_missing_to @hash
 
   private def wrap(key)

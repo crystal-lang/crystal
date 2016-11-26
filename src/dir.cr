@@ -203,6 +203,14 @@ class Dir
     io << "#<Dir:" << @path << ">"
   end
 
+  def inspect(io)
+    to_s(io)
+  end
+
+  def pretty_print(pp)
+    pp.text inspect
+  end
+
   private struct EntryIterator
     include Iterator(String)
 

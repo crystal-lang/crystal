@@ -3128,6 +3128,10 @@ class String
     end
   end
 
+  def pretty_print(pp)
+    pp.text(inspect)
+  end
+
   def inspect_unquoted
     String.build do |io|
       inspect_unquoted(io)

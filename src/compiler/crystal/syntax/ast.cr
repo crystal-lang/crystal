@@ -84,6 +84,10 @@ module Crystal
     def class_desc : String
       {{@type.name.split("::").last.id.stringify}}
     end
+
+    def pretty_print(pp)
+      pp.text to_s
+    end
   end
 
   class Nop < ASTNode

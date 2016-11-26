@@ -241,6 +241,29 @@ struct NamedTuple
     io << "}"
   end
 
+  def pretty_print(pp)
+    pp.surround("{", "}", left_break: nil, right_break: nil) do
+      {% for key, value, i in T %}
+        {% if i > 0 %}
+          pp.comma
+        {% end %}
+        pp.group do
+          key = {{key.stringify}}
+          if Symbol.needs_quotes?(key)
+            pp.text key.inspect
+          else
+            pp.text key
+          end
+          pp.text ": "
+          pp.nest do
+            pp.breakable ""
+            self[{{key.symbolize}}].pretty_print(pp)
+          end
+        end
+      {% end %}
+    end
+  end
+
   # Yields each key and value in this named tuple.
   #
   # ```

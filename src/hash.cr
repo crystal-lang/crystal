@@ -749,6 +749,22 @@ class Hash(K, V)
     io << "{...}" unless executed
   end
 
+  def pretty_print(pp) : Nil
+    executed = exec_recursive(:pretty_print) do
+      pp.list("{", self, "}") do |key, value|
+        pp.group do
+          key.pretty_print(pp)
+          pp.text " =>"
+          pp.nest do
+            pp.breakable
+            value.pretty_print(pp)
+          end
+        end
+      end
+    end
+    pp.text "{...}" unless executed
+  end
+
   # Returns self.
   def to_h
     self

@@ -390,6 +390,10 @@ struct Tuple
     io << "}"
   end
 
+  def pretty_print(pp) : Nil
+    pp.list("{", self, "}")
+  end
+
   # Returns a new tuple where elements are mapped by the given block.
   #
   # ```
