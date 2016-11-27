@@ -127,7 +127,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       when GenericClassType
         node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
       when NonGenericClassType, GenericClassInstanceType
-        # OK
+        if superclass == @program.enum
+          node_superclass.raise "can't inherit Enum. Use the enum keyword to define enums"
+        end
       else
         node_superclass.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
       end

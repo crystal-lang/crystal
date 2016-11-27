@@ -290,4 +290,12 @@ describe "Semantic: enum" do
       Foo::A
       )) { types["Foo"] }
   end
+
+  it "errors if inheriting Enum (#3592)" do
+    assert_error %(
+      struct Foo < Enum
+      end
+      ),
+      "can't inherit Enum. Use the enum keyword to define enums"
+  end
 end
