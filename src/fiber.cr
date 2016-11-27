@@ -316,7 +316,9 @@ class Fiber
   end
 
   def sleep(time)
-    {% if !flag?(:windows) %}
+    {% if flag?(:windows) %}
+      Scheduler.create_sleep_event(self, time)
+    {% else %}
       event = @resume_event ||= Scheduler.create_resume_event(self)
       event.add(time)
     {% end %}

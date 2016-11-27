@@ -39,6 +39,15 @@ class Scheduler
     end
   end
 
+  def self.create_sleep_event(fiber, seconds)
+    LibWindows.create_timer_queue_timer(out handle, nil, ->(data, fired) {
+      # this is run inside a thread pool managed by the system
+      Scheduler.create_resume_event(data.as(Fiber))
+    }, fiber.as(Void*), (seconds*1000).to_u32, 0, 0)
+
+    # TODO: DeleteTimerQueueTimer(handle) after timer fires, but not inside callback
+  end
+
   # def self.create_fd_write_event(io : IO::FileDescriptor, edge_triggered : Bool = false)
   #   flags = LibEvent2::EventFlags::Write
   #   flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered

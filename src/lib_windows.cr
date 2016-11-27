@@ -67,6 +67,9 @@ lib LibWindows
   @[CallConvention("X86_StdCall")]
   fun wait_for_single_object = WaitForSingleObject(handle : Handle, timeout_millis : DWord) : DWord
 
+  @[CallConvention("X86_StdCall")]
+  fun create_timer_queue_timer = CreateTimerQueueTimer(timer_handle : Handle*, queue_handle : Handle, callback : (Void*, Bool) ->, data : Void*, due : DWord, period : DWord, flags : SizeT) : Bool
+
   WSASYSNOTREADY = 10091
   WSAVERNOTSUPPORTED = 10092
   WSAEINPROGRESS = 10036
