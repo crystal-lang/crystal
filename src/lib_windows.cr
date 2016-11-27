@@ -14,6 +14,7 @@ lib LibWindows
   alias SizeT = UInt64 # FIXME
 
   INVALID_HANDLE_VALUE = Pointer(Void).new((-1).to_u64)
+  INFINITY = 0xFFFFFFFF_u32
 
   struct Overlapped
     internal : SizeT*

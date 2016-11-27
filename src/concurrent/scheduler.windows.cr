@@ -23,7 +23,7 @@ class Scheduler
         bytes_transfered = 0u32
         data = Pointer(Void).null
         entry = uninitialized LibWindows::Overlapped*
-        if LibWindows.get_queued_completion_status(Scheduler.completion_port, pointerof(bytes_transfered), pointerof(data), pointerof(entry), 1000.to_u)
+        if LibWindows.get_queued_completion_status(Scheduler.completion_port, pointerof(bytes_transfered), pointerof(data), pointerof(entry), LibWindows::INFINITY)
           if entry.null?
             # It is just a fiber wanting to be resumed
             data.as(Fiber).resume
