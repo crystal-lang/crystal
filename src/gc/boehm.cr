@@ -52,10 +52,16 @@ lib LibGC
 
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
-  # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
-  # fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : Void*, start : Void* ->, arg : Void*) : LibC::Int
-  # fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
-  # fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
+  {% if flag?(:windows) %}
+    # Boehm GC requires to use GC_CreateThread and GC_ExitThread instead of CreateThread and ExitThread
+    fun create_thread = GC_CreateThread(attr : LibWindows::SecurityAttributes*, stack_size : LibWindows::DWord, start : Void* -> LibWindows::DWord, arg : Void*, flags : LibWindows::DWord, id : LibWindows::DWord*) : LibWindows::Handle
+    fun exit_thread = GC_ExitThread(code : LibWindows::DWord) : NoReturn
+  {% else %}
+    # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
+    fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : Void*, start : Void* ->, arg : Void*) : LibC::Int
+    fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
+    fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
+  {% end %}
 end
 
 # :nodoc:
