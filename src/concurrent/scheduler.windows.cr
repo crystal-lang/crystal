@@ -35,7 +35,7 @@ class Scheduler
 
   def self.create_resume_event(fiber)
     unless LibWindows.post_queued_completion_status(Scheduler.completion_port, 0, fiber.as(Void*), nil)
-      raise "Failed to post IOCP event"
+      raise WinError.new "PostQueueCompletionStatus"
     end
   end
 

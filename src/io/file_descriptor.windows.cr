@@ -213,20 +213,12 @@ class IO::FileDescriptor
     count = slice.size
     total = count
     loop do
-      bytes_written = 0u32
-      if LibWindows.write_file(@fd, slice.pointer(count), count, pointerof(bytes_written), nil)
+      if LibWindows.write_file(@fd, slice.pointer(count), count, out bytes_written, nil)
         count -= bytes_written
         return total if count == 0
         slice += bytes_written
       else
-        # if Errno.value == Errno::EAGAIN
-        #   wait_writable
-        #   next
-        # elsif Errno.value == Errno::EBADF
-        #   raise IO::Error.new "File not open for writing"
-        # else
-          raise "Error writing file"
-        # end
+        raise WinError.new "WriteFile"
       end
     end
   ensure

@@ -18,7 +18,7 @@ class Thread
     }, self.as(Void*), 0, nil)
 
     if @th.not_nil!.null?
-      raise "CreateThread"
+      raise WinError.new "CreateThread"
     end
   end
 
@@ -38,7 +38,7 @@ class Thread
 
   def join
     if LibWindows.wait_for_single_object(@th.not_nil!, LibWindows::INFINITY) != LibWindows::WAIT_OBJECT_0
-      raise "WaitForSingleObject"
+      raise WinError.new "WaitForSingleObject"
     end
 
     if exception = @exception

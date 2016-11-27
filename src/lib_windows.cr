@@ -70,6 +70,19 @@ lib LibWindows
   @[CallConvention("X86_StdCall")]
   fun create_timer_queue_timer = CreateTimerQueueTimer(timer_handle : Handle*, queue_handle : Handle, callback : (Void*, Bool) ->, data : Void*, due : DWord, period : DWord, flags : SizeT) : Bool
 
+  @[CallConvention("X86_StdCall")]
+  fun get_last_error = GetLastError() : DWord
+
+  FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
+  FORMAT_MESSAGE_IGNORE_INSERTS  = 0x00000200_u32
+  FORMAT_MESSAGE_FROM_STRING     = 0x00000400_u32
+  FORMAT_MESSAGE_FROM_HMODULE    = 0x00000800_u32
+  FORMAT_MESSAGE_FROM_SYSTEM     = 0x00001000_u32
+  FORMAT_MESSAGE_ARGUMENT_ARRAY  = 0x00002000_u32
+
+  @[CallConvention("X86_StdCall")]
+  fun format_message = FormatMessageA(flags : DWord, source : Void*, msg : DWord, lang : DWord, buffer : UInt8*, size : DWord, args : Void*) : DWord
+
   WSASYSNOTREADY = 10091
   WSAVERNOTSUPPORTED = 10092
   WSAEINPROGRESS = 10036
@@ -91,7 +104,9 @@ lib LibWindows
   fun wsa_startup = WSAStartup(version : Int16, data : WSAData*) : Int32;
 end
 
+require "winerror.cr"
+
 data = uninitialized LibWindows::WSAData
 if LibWindows.wsa_startup(0x0202, pointerof(data)) != 0
-  raise "WSAStartup failed"
+  raise WinError.new "WSAStartup"
 end
