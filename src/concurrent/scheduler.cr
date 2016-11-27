@@ -7,7 +7,9 @@ class Scheduler
 
   def self.reschedule
     if runnable = @@runnables.shift?
-      runnable.resume
+      # Resume will reset the token to null by default, so explicitly don't
+      # loose the token set in `#enqueue`
+      runnable.resume(runnable.resume_token)
     else
       loop_fiber.resume
     end
@@ -79,11 +81,15 @@ class Scheduler
     dns_base.getaddrinfo(nodename, servname, hints, data, &callback)
   end
 
-  def self.enqueue(fiber : Fiber)
+  def self.enqueue(fiber : Fiber, resume_token : Void* = Pointer(Void).null)
+    fiber.resume_token = resume_token
     @@runnables << fiber
   end
 
-  def self.enqueue(fibers : Enumerable(Fiber))
-    @@runnables.concat fibers
+  def self.enqueue(fibers : Enumerable(Fiber), resume_token : Void* = Pointer(Void).null)
+    fibers.each do |fiber|
+      fiber.resume_token = resume_token
+      @@runnables << fiber
+    end
   end
 end
