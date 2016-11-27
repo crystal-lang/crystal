@@ -39,12 +39,14 @@ module Crystal
     describe_file "example/.gitignore" do |gitignore|
       gitignore.should contain("/.shards/")
       gitignore.should contain("/shard.lock")
+      gitignore.should contain("/lib/")
       gitignore.should contain("/libs/")
     end
 
     describe_file "example_app/.gitignore" do |gitignore|
       gitignore.should contain("/.shards/")
       gitignore.should_not contain("/shard.lock")
+      gitignore.should contain("/lib/")
       gitignore.should contain("/libs/")
     end
 

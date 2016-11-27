@@ -116,7 +116,7 @@ SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
-export CRYSTAL_PATH=$CRYSTAL_ROOT/src:libs:lib
+export CRYSTAL_PATH=$CRYSTAL_ROOT/src:lib:libs
 
 if [ -x "$CRYSTAL_DIR/crystal" ]
 then
