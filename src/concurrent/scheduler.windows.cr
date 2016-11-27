@@ -3,6 +3,7 @@ require "event"
 # :nodoc:
 class Scheduler
   @@runnables = Deque(Fiber).new
+  @@timers = Hash(Fiber, LibWindows::Handle).new
 
   def self.reschedule
     if runnable = @@runnables.shift?
@@ -26,7 +27,15 @@ class Scheduler
         if LibWindows.get_queued_completion_status(Scheduler.completion_port, pointerof(bytes_transfered), pointerof(data), pointerof(entry), LibWindows::INFINITY)
           if entry.null?
             # It is just a fiber wanting to be resumed
-            data.as(Fiber).resume
+            fiber = data.as(Fiber)
+            if timer_handle = @@timers[fiber]?
+              unless LibWindows.delete_timer_queue_timer(nil, timer_handle, nil)
+                error = WinError.new "DeleteTimerQueueTimer"
+                raise error if error.code != WinError::ERROR_IO_PENDING && error.code != WinError::ERROR_SUCCESS
+              end
+              @@timers.delete(fiber)
+            end
+            fiber.resume
           end
         end
       end
@@ -45,7 +54,7 @@ class Scheduler
       Scheduler.create_resume_event(data.as(Fiber))
     }, fiber.as(Void*), (seconds*1000).to_u32, 0, 0)
 
-    # TODO: DeleteTimerQueueTimer(handle) after timer fires, but not inside callback
+    @@timers[fiber] = handle
   end
 
   # def self.create_fd_write_event(io : IO::FileDescriptor, edge_triggered : Bool = false)

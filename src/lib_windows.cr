@@ -71,6 +71,9 @@ lib LibWindows
   fun create_timer_queue_timer = CreateTimerQueueTimer(timer_handle : Handle*, queue_handle : Handle, callback : (Void*, Bool) ->, data : Void*, due : DWord, period : DWord, flags : SizeT) : Bool
 
   @[CallConvention("X86_StdCall")]
+  fun delete_timer_queue_timer = DeleteTimerQueueTimer(queue_handle : Handle, timer_handle : Handle, completion_event : Handle) : Bool
+
+  @[CallConvention("X86_StdCall")]
   fun get_last_error = GetLastError() : DWord
 
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
