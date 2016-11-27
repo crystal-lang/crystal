@@ -164,8 +164,8 @@ class Fiber
     end
 
     {% if !flag?(:windows) %}
-    # Delete the resume event if it was used by `yield` or `sleep`
-    @resume_event.try &.free
+      # Delete the resume event if it was used by `yield` or `sleep`
+      @resume_event.try &.free
     {% end %}
 
     Scheduler.reschedule
@@ -316,8 +316,10 @@ class Fiber
   end
 
   def sleep(time)
-    event = @resume_event ||= Scheduler.create_resume_event(self)
-    event.add(time)
+    {% if !flag?(:windows) %}
+      event = @resume_event ||= Scheduler.create_resume_event(self)
+      event.add(time)
+    {% end %}
     Scheduler.reschedule
   end
 
