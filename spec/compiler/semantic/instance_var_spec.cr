@@ -4410,4 +4410,13 @@ describe "Semantic: instance var" do
       ),
       "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
   end
+
+  it "doesn't crash on #3580" do
+    assert_error %(
+      class Hoge
+        @hoge_dir : String = "~/.hoge" ? "~/.hoge" : default_hoge_dir
+      end
+      ),
+      "undefined local variable or method"
+  end
 end
