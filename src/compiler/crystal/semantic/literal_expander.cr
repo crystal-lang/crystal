@@ -472,7 +472,7 @@ module Crystal
       value_name = @program.new_temp_var_name
 
       targets = [Var.new(index_name).at(node), Var.new(value_name).at(node)] of ASTNode
-      channel = Path.global("Channel").at(node)
+      select_module = Path.global("Select").at(node)
 
       tuple_values = [] of ASTNode
       case_whens = [] of When
@@ -510,7 +510,7 @@ module Crystal
       call_args = [TupleLiteral.new(tuple_values).at(node)] of ASTNode
       call_args << BoolLiteral.new(true) if node.else
 
-      call = Call.new(channel, "select", call_args).at(node)
+      call = Call.new(select_module, "select", call_args).at(node)
       multi = MultiAssign.new(targets, [call] of ASTNode)
       case_cond = Var.new(index_name).at(node)
       a_case = Case.new(case_cond, case_whens, case_else).at(node)
