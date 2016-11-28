@@ -3188,6 +3188,10 @@ module Crystal
           format_nested(a_else, @indent)
           indent(@indent + 2) { skip_space_or_newline }
         else
+          while @token.type == :";"
+            next_token_skip_space
+          end
+
           @when_infos << AlignInfo.new(node.object_id, @line, @column, @column, @column, false)
           write " "
           accept a_else
