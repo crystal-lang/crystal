@@ -169,6 +169,12 @@ module Spec
     spec_line = @@line
     locations = @@locations
 
+    # When a method invokes `it` and only forwards line information,
+    # not end_line information (this can happen in code before we
+    # introduced the end_line feature) then running a spec by giving
+    # a line won't work because end_line might be located before line.
+    # So, we also check `line == spec_line` to somehow preserve
+    # backwards compatibility.
     if spec_line && (line == spec_line || line <= spec_line <= end_line)
       return true
     end
