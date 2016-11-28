@@ -169,13 +169,13 @@ module Spec
     spec_line = @@line
     locations = @@locations
 
-    if spec_line && line <= spec_line <= end_line
+    if spec_line && (line == spec_line || line <= spec_line <= end_line)
       return true
     end
 
     if locations
       lines = locations[file]?
-      return true if lines && lines.any? { |l| line <= l <= end_line }
+      return true if lines && lines.any? { |l| line == l || line <= l <= end_line }
     end
 
     if spec_pattern || spec_line || locations
