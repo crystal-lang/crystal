@@ -41,6 +41,7 @@ module Crystal
     end
 
     def get_debug_type(type)
+      type = type.remove_indirection
       debug_type_cache[type] ||= create_debug_type(type)
     end
 
