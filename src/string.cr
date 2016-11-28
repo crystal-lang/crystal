@@ -1171,8 +1171,8 @@ class String
   # Returns a new string with trailing whitespace removed.
   #
   # ```
-  # "    hello    ".strip # => "    hello"
-  # "\tgoodbye\r\n".strip # => "\tgoodbye"
+  # "    hello    ".rstrip # => "    hello"
+  # "\tgoodbye\r\n".rstrip # => "\tgoodbye"
   # ```
   def rstrip
     excess_right = calc_excess_right
@@ -1187,8 +1187,8 @@ class String
   # Returns a new string with leading whitespace removed.
   #
   # ```
-  # "    hello    ".strip # => "hello    "
-  # "\tgoodbye\r\n".strip # => "goodbye\r\n"
+  # "    hello    ".lstrip # => "hello    "
+  # "\tgoodbye\r\n".lstrip # => "goodbye\r\n"
   # ```
   def lstrip
     excess_left = calc_excess_left
