@@ -1,3 +1,5 @@
+require "concurrent/channel"
+
 def generator(n : T)
   channel = Channel(T).new
   spawn do
