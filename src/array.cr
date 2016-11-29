@@ -23,6 +23,13 @@
 # []          # syntax error
 # ```
 #
+# Notice that it's not possible to access a not yet allocated element:
+#
+# ```
+# array = [] of Int32
+# array[0] = 1 # throws an IndexOutOfBounds exception
+# ```
+#
 # An Array is implemented using an internal buffer of some capacity
 # and is reallocated when elements are pushed to it when more capacity
 # is needed. This is normally known as a [dynamic array](http://en.wikipedia.org/wiki/Dynamic_array).
