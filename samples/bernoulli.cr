@@ -29,6 +29,8 @@ class Fraction
   end
 
   def reduce
+    # Although we use our own gcd method here, as an example, there is
+    # a built-in Int#gcd implementation.
     gcd = gcd(@numerator, @denominator)
     @numerator /= gcd
     @denominator /= gcd
@@ -59,5 +61,5 @@ def calculate_bernoulli(bern)
 end
 
 1_i64.step(30_i64) do |bern|
-  puts calculate_bernoulli(bern).to_s
+  puts "#{bern} : #{calculate_bernoulli(bern).to_s}"
 end
