@@ -73,6 +73,14 @@ class HTTP::Client
       response.body.should eq("")
     end
 
+    it "parses response starting with \\r\\n" do
+      response = Response.from_io(MemoryIO.new("\r\n\r\nHTTP/1.1 200 OK\r\n\r\n"))
+      response.status_code.should eq(200)
+      response.status_message.should eq("OK")
+      response.headers.size.should eq(0)
+      response.body.should eq("")
+    end
+
     it "parses response with duplicated headers" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nWarning: 111 Revalidation failed\r\nWarning: 110 Response is stale\r\n\r\nhelloworld"))
       response.headers.get("Warning").should eq(["111 Revalidation failed", "110 Response is stale"])

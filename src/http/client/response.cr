@@ -91,7 +91,15 @@ class HTTP::Client::Response
   end
 
   def self.from_io(io, ignore_body = false, decompress = true, &block)
-    line = io.gets
+    line = nil
+    # skip \r\n lines before protocol line
+    while buf = io.gets
+      if buf != "\r\n"
+        line = buf
+        break
+      end
+    end
+
     if line
       pieces = line.split(3)
       http_version = pieces[0]
