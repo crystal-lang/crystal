@@ -70,26 +70,30 @@ class Reference
   end
 
   def pretty_print(pp) : Nil
-    prefix = "#<#{{{@type.name.id.stringify}}}:0x#{object_id.to_s(16)}"
-    executed = exec_recursive(:pretty_print) do
-      pp.surround(prefix, ">", left_break: " ", right_break: nil) do
-        {% for ivar, i in @type.instance_vars.map(&.name).sort %}
-            {% if i > 0 %}
-              pp.comma
-            {% end %}
-            pp.group do
-              pp.text "@{{ivar.id}}="
-              pp.nest do
-                pp.breakable ""
-                @{{ivar.id}}.pretty_print(pp)
+    {% if @type.methods.any? &.name.==("inspect") %}
+      pp.text inspect
+    {% else %}
+      prefix = "#<#{{{@type.name.id.stringify}}}:0x#{object_id.to_s(16)}"
+      executed = exec_recursive(:pretty_print) do
+        pp.surround(prefix, ">", left_break: " ", right_break: nil) do
+          {% for ivar, i in @type.instance_vars.map(&.name).sort %}
+              {% if i > 0 %}
+                pp.comma
+              {% end %}
+              pp.group do
+                pp.text "@{{ivar.id}}="
+                pp.nest do
+                  pp.breakable ""
+                  @{{ivar.id}}.pretty_print(pp)
+                end
               end
-            end
-          {% end %}
+            {% end %}
+        end
       end
-    end
-    unless executed
-      pp.text "#{prefix} ...>"
-    end
+      unless executed
+        pp.text "#{prefix} ...>"
+      end
+    {% end %}
   end
 
   def to_s(io : IO) : Nil
