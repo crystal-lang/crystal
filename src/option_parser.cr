@@ -22,6 +22,11 @@
 #
 #     destination = destination.upcase if upcase
 #     puts "Hello #{destination}!"
+#
+# Note:
+# Options only work after build. Commands like `crystal opt.cr -h` are actually running "crystal" program.
+# Run `crystal build` before running and passing options to your programs.
+#
 class OptionParser
   class Exception < ::Exception
   end
