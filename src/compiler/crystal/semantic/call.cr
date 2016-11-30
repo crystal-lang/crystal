@@ -234,7 +234,7 @@ class Crystal::Call
     end
 
     if matches.empty?
-      defined_method_missing = owner.check_method_missing(signature)
+      defined_method_missing = owner.check_method_missing(signature, self)
       if defined_method_missing
         matches = owner.lookup_matches(signature)
       end
