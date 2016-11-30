@@ -1810,6 +1810,22 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
     else
       object.wrong_number_of_arguments "#{klass}#[]", args.size, 1
     end
+  when "[]="
+    object.interpret_two_args_method(method, args) do |index_node, value|
+      unless index_node.is_a?(Crystal::NumberLiteral)
+        index_node.raise "expected index argument to ArrayLiteral#[]= to be a number, not #{index_node.class_desc}"
+      end
+
+      index = index_node.to_number.to_i
+      index += object.elements.size if index < 0
+
+      unless 0 <= index < object.elements.size
+        index_node.raise "index out of bounds (index: #{index}, size: #{object.elements.size}"
+      end
+
+      object.elements[index] = value
+      value
+    end
   when "unshift"
     case args.size
     when 1

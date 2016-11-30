@@ -634,6 +634,10 @@ describe "macro methods" do
       assert_macro "", %({{ [1, 2, 3, 4, 5][1, 3] }}), [] of ASTNode, %([2, 3, 4])
     end
 
+    it "executes []=" do
+      assert_macro "", %({% a = [0]; a[0] = 2 %}{{a[0]}}), [] of ASTNode, "2"
+    end
+
     it "executes of" do
       assert_macro "x", %({{ x.of }}), [ArrayLiteral.new([] of ASTNode, of: Path.new(["Int64"]))] of ASTNode, %(Int64)
     end
