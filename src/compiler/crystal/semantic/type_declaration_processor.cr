@@ -116,7 +116,7 @@ struct Crystal::TypeDeclarationProcessor
 
   def process(node)
     # First check type declarations
-    node.accept type_decl_visitor
+    @program.visit_with_finished_hooks(node, type_decl_visitor)
 
     # Use the last type found for class variables to declare them
     type_decl_visitor.class_vars.each do |owner, vars|
@@ -127,7 +127,7 @@ struct Crystal::TypeDeclarationProcessor
 
     # Then use several syntactic rules to infer the types of
     # variables that don't have an explicit type set
-    node.accept type_guess_visitor
+    @program.visit_with_finished_hooks(node, type_guess_visitor)
 
     # Process class variables
     type_guess_visitor.class_vars.each do |owner, vars|
