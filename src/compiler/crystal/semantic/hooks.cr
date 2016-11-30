@@ -1,4 +1,32 @@
 module Crystal
+  class Program
+    record FinishedHook, scope : ModuleType, macro : Macro, node : ASTNode
+    getter finished_hooks = [] of FinishedHook
+
+    def add_finished_hook(scope, a_macro, node)
+      @finished_hooks << FinishedHook.new(scope, a_macro, node)
+    end
+
+    # Visit all finished hooks with the given visitor
+    def process_finished_hooks(visitor)
+      @finished_hooks.each do |hook|
+        if visitor.is_a?(SemanticVisitor)
+          old_type = visitor.current_type.as(ModuleType)
+          visitor.current_type = hook.scope
+          hook.node.accept(visitor)
+          visitor.current_type = old_type
+        else
+          hook.node.accept(visitor)
+        end
+      end
+    end
+
+    def visit_with_finished_hooks(node, visitor)
+      node.accept visitor
+      process_finished_hooks visitor
+    end
+  end
+
   # Holds hook expansions.
   #
   # For example, a `ClassDef` node will include macro exapnsions

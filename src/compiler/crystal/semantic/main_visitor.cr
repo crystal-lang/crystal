@@ -2,11 +2,22 @@ require "./semantic_visitor"
 
 module Crystal
   class Program
-    def visit_main(node, visitor = MainVisitor.new(self))
+    def visit_main(node, visitor = MainVisitor.new(self), process_finished_hooks = false)
       node.accept visitor
+      program.process_finished_hooks(visitor) if process_finished_hooks
 
-      node.accept FixMissingTypes.new(self)
+      missing_types = FixMissingTypes.new(self)
+      node.accept missing_types
+      program.process_finished_hooks(missing_types) if process_finished_hooks
+
       node = cleanup node
+
+      if process_finished_hooks
+        finished_hooks.map! do |hook|
+          hook_node = cleanup(hook.node)
+          FinishedHook.new(hook.scope, hook.macro, hook_node)
+        end
+      end
 
       node
     end

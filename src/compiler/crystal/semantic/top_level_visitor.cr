@@ -38,6 +38,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   # These are `new` methods (expanded) that was created from `initialize` methods (original)
   getter new_expansions = [] of {original: Def, expanded: Def}
 
+  # All finished hooks and their scope
+  record FinishedHook, scope : ModuleType, macro : Macro
+  @finished_hooks = [] of FinishedHook
+
   @last_doc : String?
 
   def visit(node : ClassDef)
@@ -241,13 +245,20 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Macro)
     check_outside_exp node, "declare macro"
 
+    node.set_type @program.nil
+
+    if node.name == "finished"
+      @finished_hooks << FinishedHook.new(current_type, node)
+      return false
+    end
+
+    target = current_type.metaclass.as(ModuleType)
     begin
-      current_type.metaclass.as(ModuleType).add_macro node
+      target.add_macro node
     rescue ex : Crystal::Exception
       node.raise ex.message
     end
 
-    node.set_type @program.nil
     false
   end
 
@@ -990,5 +1001,16 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope = program.check_private(node) || scope
     end
     scope
+  end
+
+  # Turn all finished macros into expanded nodes, and
+  # add them to the program
+  def process_finished_hooks
+    @finished_hooks.each do |hook|
+      expansion = expand_macro(hook.macro, hook.macro) do
+        @program.expand_macro hook.macro.body, hook.scope
+      end
+      program.add_finished_hook(hook.scope, hook.macro, expansion)
+    end
   end
 end

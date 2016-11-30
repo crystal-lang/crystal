@@ -61,6 +61,7 @@ module Crystal
     def codegen(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, llvm_mod: llvm_mod, expose_crystal_main: expose_crystal_main
       node.accept visitor
+      visitor.process_finished_hooks
       visitor.finish
 
       visitor.modules
@@ -1833,6 +1834,12 @@ module Crystal
       end
 
       aggregate_index pointer, index
+    end
+
+    def process_finished_hooks
+      last = @last
+      @program.process_finished_hooks(self)
+      @last = last
     end
 
     def build_string_constant(str, name = "str")
