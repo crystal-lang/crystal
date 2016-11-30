@@ -13,11 +13,13 @@ class YAMLScalarTester
   @val : String
   @tag : String?
   @style : LibYAML::ScalarStyle?
+
   def initialize(value, tag : String? = nil, style : LibYAML::ScalarStyle? = nil)
     @val = value
     @tag = tag
     @style = style
   end
+
   def to_yaml(emitter : YAML::Emitter, tag : String? = nil, style : LibYAML::ScalarStyle? = nil)
     @val.to_yaml(emitter, tag: tag || @tag, style: style || @style)
   end
@@ -251,13 +253,13 @@ describe "YAML serialization" do
       end
 
       it "Array" do
-        a = [10,11]
+        a = [10, 11]
         r = a.to_yaml(tag: "!custom")
         r.should eq("--- !custom\n- 10\n- 11\n")
       end
 
       it "Hash" do
-        h = {"a"=>"b"}
+        h = {"a" => "b"}
         r = h.to_yaml(tag: "!custom")
         r.should eq("--- !custom\na: b\n")
       end
@@ -323,7 +325,7 @@ describe "YAML serialization" do
       end
 
       it "!!map" do
-        x = {"A"=>"X"}
+        x = {"A" => "X"}
         r = x.to_yaml("tag:yaml.org,2002:map")
         r.should eq("---\nA: X\n")
       end
@@ -344,7 +346,7 @@ describe "YAML serialization" do
 
       it "for array element" do
         x = YAMLScalarTester.new("10", "!custom")
-        a = [ x ]
+        a = [x]
         r = a.to_yaml
         r.should eq("---\n- !custom 10\n")
       end
@@ -393,13 +395,13 @@ describe "YAML serialization" do
 
     describe "sequence style" do
       it "BLOCK" do
-        a = ["A","B","C"]
+        a = ["A", "B", "C"]
         r = a.to_yaml(style: LibYAML::SequenceStyle::BLOCK)
         r.should eq("---\n- A\n- B\n- C\n")
       end
 
       it "FLOW" do
-        a = ["A","B","C"]
+        a = ["A", "B", "C"]
         r = a.to_yaml(style: LibYAML::SequenceStyle::FLOW)
         r.should eq("--- [A, B, C]\n")
       end
@@ -407,13 +409,13 @@ describe "YAML serialization" do
 
     describe "mapping style" do
       it "BLOCK" do
-        h = {"A"=>"X", "B"=>"Y", "C"=>"Z"}
+        h = {"A" => "X", "B" => "Y", "C" => "Z"}
         r = h.to_yaml(style: LibYAML::MappingStyle::BLOCK)
         r.should eq("---\nA: X\nB: Y\nC: Z\n")
       end
 
       it "FLOW" do
-        h = {"A"=>"X", "B"=>"Y", "C"=>"Z"}
+        h = {"A" => "X", "B" => "Y", "C" => "Z"}
         r = h.to_yaml(style: LibYAML::MappingStyle::FLOW)
         r.should eq("--- {A: X, B: Y, C: Z}\n")
       end

@@ -164,5 +164,4 @@ class YAML::Emitter
   private def ctag(tag : String?)
     tag.try(&.to_unsafe) || Pointer(UInt8).null
   end
-
 end
