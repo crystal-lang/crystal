@@ -367,4 +367,18 @@ describe "Code gen: method_missing" do
       Foo.new(Wrapped.new).foo(1, 2, 3)
       )).to_i.should eq(6)
   end
+
+  it "does method_missing generating method" do
+    run(%(
+      class Foo
+        macro method_missing(call)
+          def {{call.name}}
+            {{call.name.stringify}}
+          end
+        end
+      end
+
+      Foo.new.bar
+      )).to_string.should eq("bar")
+  end
 end

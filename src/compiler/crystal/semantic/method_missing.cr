@@ -4,18 +4,18 @@ module Crystal
   class Type
     ONE_ARG = [Arg.new("a1")]
 
-    def check_method_missing(signature)
+    def check_method_missing(signature, call)
       if !metaclass? && signature.name != "initialize"
         # Make sure to define method missing in the whole hierarchy
         virtual_type = virtual_type()
         if virtual_type == self
           method_missing = lookup_method_missing
           if method_missing
-            define_method_from_method_missing(method_missing, signature)
+            define_method_from_method_missing(method_missing, signature, call)
             return true
           end
         else
-          return virtual_type.check_method_missing(signature)
+          return virtual_type.check_method_missing(signature, call)
         end
       end
 
@@ -35,7 +35,7 @@ module Crystal
       nil
     end
 
-    def define_method_from_method_missing(method_missing, signature)
+    def define_method_from_method_missing(method_missing, signature, original_call)
       name_node = StringLiteral.new(signature.name)
       args_nodes = [] of ASTNode
       args_nodes_names = Set(String).new
@@ -62,22 +62,63 @@ module Crystal
       fake_call = Call.new(nil, "method_missing", [call] of ASTNode)
 
       expanded_macro = program.expand_macro method_missing, fake_call, self, self
-      generated_nodes = program.parse_macro_source(expanded_macro, method_missing, method_missing, args_nodes_names) do |parser|
-        parser.parse_to_def(a_def)
-      end
 
-      a_def.body = generated_nodes
-      a_def.yields = block.try &.args.size
+      # Check if the expanded macro is a def. We do this
+      # by just lexing the result and seeing if the first
+      # token is `def`
+      expands_to_def = starts_with_def?(expanded_macro)
+      generated_nodes =
+        program.parse_macro_source(expanded_macro, method_missing, method_missing, args_nodes_names) do |parser|
+          if expands_to_def
+            parser.parse
+          else
+            parser.parse_to_def(a_def)
+          end
+        end
+
+      if generated_nodes.is_a?(Def)
+        a_def = generated_nodes
+      else
+        if expands_to_def
+          raise_wrong_method_missing_expansion(
+            "it should only expand to a single def",
+            expanded_macro,
+            original_call)
+        end
+
+        a_def.body = generated_nodes
+        a_def.yields = block.try &.args.size
+      end
 
       owner = self
       owner = owner.base_type if owner.is_a?(VirtualType)
 
-      if owner.is_a?(ModuleType)
-        owner.add_def(a_def)
-        true
-      else
-        false
+      return false unless owner.is_a?(ModuleType)
+
+      owner.add_def(a_def)
+
+      # If it expanded to a def, we check if the def
+      # is now found by regular lookup. It should!
+      # Otherwise there's a mistake in the macro.
+      if expands_to_def && owner.lookup_matches(signature).empty?
+        raise_wrong_method_missing_expansion(
+          "the generated method won't be found by the original call invocation",
+          expanded_macro,
+          original_call)
       end
+
+      true
+    end
+
+    private def raise_wrong_method_missing_expansion(msg, expanded_macro, original_call)
+      str = String.build do |io|
+        io << "wrong method_missing expansion\n\n"
+        io << "The method_missing macro expanded to:\n\n"
+        io << Crystal.with_line_numbers(expanded_macro)
+        io << "\n\n"
+        io << "However, " << msg
+      end
+      original_call.raise str
     end
   end
 
@@ -86,18 +127,18 @@ module Crystal
   end
 
   class VirtualType
-    def check_method_missing(signature)
+    def check_method_missing(signature, call)
       method_missing = base_type.lookup_method_missing
       defined = false
       if method_missing
-        defined = base_type.define_method_from_method_missing(method_missing, signature) || defined
+        defined = base_type.define_method_from_method_missing(method_missing, signature, call) || defined
       end
 
-      defined = add_subclasses_method_missing_matches(base_type, method_missing, signature) || defined
+      defined = add_subclasses_method_missing_matches(base_type, method_missing, signature, call) || defined
       defined
     end
 
-    def add_subclasses_method_missing_matches(base_type, method_missing, signature)
+    def add_subclasses_method_missing_matches(base_type, method_missing, signature, call)
       defined = false
 
       base_type.subclasses.each do |subclass|
@@ -111,19 +152,29 @@ module Crystal
 
         # Check if the subclass redefined the method_missing
         if subclass_method_missing && subclass_method_missing.object_id != method_missing.object_id
-          subclass.define_method_from_method_missing(subclass_method_missing, signature)
+          subclass.define_method_from_method_missing(subclass_method_missing, signature, call)
           defined = true
         elsif method_missing
           # Otherwise, we need to define this method missing because of macro vars like @name
-          subclass.define_method_from_method_missing(method_missing, signature)
+          subclass.define_method_from_method_missing(method_missing, signature, call)
           subclass_method_missing = method_missing
           defined = true
         end
 
-        defined = add_subclasses_method_missing_matches(subclass, subclass_method_missing, signature) || defined
+        defined = add_subclasses_method_missing_matches(subclass, subclass_method_missing, signature, call) || defined
       end
 
       defined
     end
   end
+end
+
+private def starts_with_def?(source)
+  lexer = Crystal::Lexer.new(source)
+  while true
+    token = lexer.next_token
+    return true if token.keyword?(:def)
+    break if token.type == :EOF
+  end
+  false
 end

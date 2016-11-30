@@ -40,4 +40,37 @@ describe "Semantic: method_missing" do
       Foo(Int32).new.foo
       )) { int32 }
   end
+
+  it "errors if method_missing expands to an incorrect method" do
+    assert_error %(
+      class Foo
+        macro method_missing(call)
+          def baz
+            1
+          end
+        end
+      end
+
+      Foo.new.bar
+      ),
+      "wrong method_missing expansion"
+  end
+
+  it "errors if method_missing expands to multiple methods" do
+    assert_error %(
+      class Foo
+        macro method_missing(call)
+          def bar
+            1
+          end
+
+          def qux
+          end
+        end
+      end
+
+      Foo.new.bar
+      ),
+      "wrong method_missing expansion"
+  end
 end
