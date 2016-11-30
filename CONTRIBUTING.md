@@ -41,7 +41,8 @@ as the standard library. Otherwise the barebones `crystal` executable uses the s
 your installation.
 
 Next, make changes to the standard library, making sure you also provide corresponding specs. To run
-the specs for the standard library, run `bin/crystal spec/std_spec.cr`. To run a particular spec: `bin/crystal spec/std/array_spec.cr`.
+the specs for the standard library, run `make std_spec`. To run a particular spec: `bin/crystal spec/std/array_spec.cr`.
+You can use `make help` for a list of available make targets.
 
 Note: at this point you might get long compile error that include "library not found for: ...". This means
 you are [missing some libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).
@@ -56,13 +57,13 @@ Then push your changes and create a pull request.
 If you want to add/change something in the compiler,
 the first thing you will need to do is to [install the compiler](https://crystal-lang.org/docs/installation/index.html).
 
-Once you have a compiler up and running, and that executing `crystal` on the command line prints its usage,
-it's time to setup your environment to compile Crystal itself, which is written in Crystal. Check out
+Once you have a compiler up and running, check that executing `crystal` on the command line prints its usage.
+Now you can setup your environment to compile Crystal itself, which is itself written in Crystal. Check out
 the `install` and `before_install` sections found in [.travis.yml](https://github.com/crystal-lang/crystal/blob/master/.travis.yml).
 These set-up LLVM 3.6 and its required libraries.
 
 Next, executing `make clean crystal spec` should compile a compiler and using that compiler compile and execute
-the specs. All specs should pass.
+the specs. All specs should pass. You can use `make help` for a list of available make targets.
 
 ## Maintain clean pull requests
 
