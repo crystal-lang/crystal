@@ -117,6 +117,7 @@ CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
 export CRYSTAL_PATH=$CRYSTAL_ROOT/src:lib:libs
+export CRYSTAL_HAS_WRAPPER=true
 
 if [ -x "$CRYSTAL_DIR/crystal" ]
 then
