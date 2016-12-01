@@ -56,8 +56,6 @@ class Crystal::Doc::Type
     case type = @type
     when GenericType
       type.type_vars
-    when GenericInstanceType
-      type.type_vars
     else
       nil
     end
@@ -618,38 +616,45 @@ class Crystal::Doc::Type
   end
 
   def type_to_html(type : Crystal::GenericInstanceType, io, text = nil, links = true)
+    not_instantiated = type.type_vars.all? { |(name, type_var)| type_var.is_a?(Var) && type_var.type.is_a?(TypeParameter) }
     generic_type = @generator.type(type.generic_type)
-    if generic_type.must_be_included?
-      if links
-        io << %(<a href=")
-        io << generic_type.path_from(self)
-        io << %(">)
-      end
-      if text
-        io << text
-      else
-        generic_type.full_name_without_type_vars(io)
-      end
-      if links
-        io << "</a>"
-      end
+    must_be_included = generic_type.must_be_included?
+
+    if must_be_included && links
+      io << %(<a href=")
+      io << generic_type.path_from(self)
+      io << %(">)
+    end
+
+    if text
+      io << text
     else
-      if text
-        io << text
-      else
-        generic_type.full_name_without_type_vars(io)
+      generic_type.full_name_without_type_vars(io)
+      if not_instantiated
+        io << '('
+        type.type_vars.values.join ", ", &.as(Var).type.to_s io
+        io << ')'
       end
     end
-    io << '('
-    type.type_vars.values.join(", ", io) do |type_var|
-      case type_var
-      when Var
-        type_to_html type_var.type, io, links: links
-      when Crystal::Type
-        type_to_html type_var, io, links: links
-      end
+
+    if must_be_included && links
+      io << "</a>"
     end
-    io << ')'
+
+    unless not_instantiated
+      io << '('
+      type.type_vars.values.join(", ", io) do |type_var|
+        case type_var
+        when Var
+          type_to_html type_var.type, io, links: links
+        when Crystal::Type
+          type_to_html type_var, io, links: links
+        when ASTNode
+          type_to_html type_var, io, links: links
+        end
+      end
+      io << ')'
+    end
   end
 
   def type_to_html(type : Crystal::VirtualType, io, text = nil, links = true)
@@ -657,10 +662,7 @@ class Crystal::Doc::Type
   end
 
   def type_to_html(type : Crystal::Type, io, text = nil, links = true)
-    type_to_html @generator.type(type), io, text, links: links
-  end
-
-  def type_to_html(type : Type, io, text = nil, links = true)
+    type = @generator.type(type)
     if type.must_be_included?
       if links
         io << %(<a href=")
@@ -682,6 +684,14 @@ class Crystal::Doc::Type
         type.full_name(io)
       end
     end
+  end
+
+  def type_to_html(type : Type, io, text = nil, links = true)
+    type_to_html type.type, io, text, links: links
+  end
+
+  def type_to_html(type : ASTNode, io, text = nil, links = true)
+    type.to_s io
   end
 
   def must_be_included?
