@@ -1508,6 +1508,31 @@ module Crystal::Macros
     def instance : TypeNode
     end
 
+    # Determines if *self* overrides any method named *method* from type *type*.
+    #
+    # ```
+    # class Foo
+    #   def one
+    #     1
+    #   end
+    #
+    #   def two
+    #     2
+    #   end
+    # end
+    #
+    # class Bar < Foo
+    #   def one
+    #     11
+    #   end
+    # end
+    #
+    # {{ Bar.overrides?(Foo, "one") }} # => true
+    # {{ Bar.overrides?(Foo, "two") }} # => false
+    # ```
+    def overrides?(type : TypeNode, method : StringLiteral | SymbolLiteral | MacroId) : Bool
+    end
+
     # Returns `true` if *other* is an ancestor of `self`.
     def <(other : TypeNode) : BoolLiteral
     end

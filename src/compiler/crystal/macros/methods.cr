@@ -1339,6 +1339,25 @@ module Crystal
           end
           BoolLiteral.new(!!value)
         end
+      when "overrides?"
+        interpret_two_args_method(method, args) do |arg1, arg2|
+          unless arg1.is_a?(TypeNode)
+            raise "TypeNode##{method} expects TypeNode as a first argument, not #{arg1.class_desc}"
+          end
+
+          case arg2
+          when StringLiteral
+            value = arg2.value
+          when SymbolLiteral
+            value = arg2.value
+          when MacroId
+            value = arg2.value
+          else
+            raise "TypeNode##{method} expects StringLiteral, SymbolLiteral or MacroId as a second argument, not #{arg2.class_desc}"
+          end
+
+          TypeNode.overrides?(type, arg1.type, value)
+        end
       else
         super
       end
@@ -1427,6 +1446,13 @@ module Crystal
         end
       end
       ArrayLiteral.new(defs)
+    end
+
+    def self.overrides?(type, target, method)
+      overrides = type.lookup_defs(method).any? do |a_def|
+        a_def.owner != target && a_def.macro_owner != target && a_def.owner.implements?(target)
+      end
+      BoolLiteral.new(!!overrides)
     end
   end
 
