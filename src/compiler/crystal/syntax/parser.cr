@@ -5199,7 +5199,7 @@ module Crystal
 
       if @token.type == :IDENT
         case @token.value
-        when :do, :end, :else, :elsif, :when, :rescue, :ensure
+        when :do, :end, :else, :elsif, :when, :rescue, :ensure, :then
           if next_comes_colon_space?
             return false
           end

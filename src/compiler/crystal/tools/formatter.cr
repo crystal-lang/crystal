@@ -3307,7 +3307,7 @@ module Crystal
             skip_space_or_newline
             needs_indent = true
           else
-            write "then "
+            write " then "
             skip_space_or_newline
           end
         else
