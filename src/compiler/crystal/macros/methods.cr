@@ -1220,6 +1220,20 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
       when "constants"
         interpret_argless_method(method, args) { TypeNode.constants(type) }
+      when "constant"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when StringLiteral
+            value = arg.value
+          when SymbolLiteral
+            value = arg.value.to_s
+          when MacroId
+            value = arg.value.to_s
+          else
+            raise "argument to constant must be a StringLiteral, SymbolLiteral or MacroId, not #{arg.class_desc}"
+          end
+          TypeNode.constant(type, value)
+        end
       when "has_constant?"
         interpret_one_arg_method(method, args) do |arg|
           case arg
@@ -1391,6 +1405,18 @@ module Crystal
 
     def self.has_constant?(type, name)
       BoolLiteral.new(type.types.has_key?(name))
+    end
+
+    def self.constant(type, name)
+      type = type.types[name]?
+      case type
+      when Const
+        type.value
+      when Type
+        TypeNode.new(type)
+      else
+        NilLiteral.new
+      end
     end
 
     def self.methods(type)

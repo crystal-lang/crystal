@@ -1458,6 +1458,14 @@ module Crystal::Macros
     def constants : ArrayLiteral(MacroId)
     end
 
+    # Returns a constant defined in this type.
+    #
+    # If the constant is a constant (like `A = 1`), then its value
+    # as an ASTNode is returned. If the constant is a type, the
+    # type is returned as a `TypeNode`. Otherwise, `NilLiteral` is returned.
+    def constant(name : StringLiteral | SymbolLiteral | MacroId) : ASTNode
+    end
+
     # Returns true if this type has a constant. For example `DEFAULT_OPTIONS`
     # (the name you pass to this method is "DEFAULT_OPTIONS" or :DEFAULT_OPTIONS
     # in this cases).

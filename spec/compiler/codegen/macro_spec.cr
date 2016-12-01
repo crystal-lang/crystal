@@ -1490,4 +1490,14 @@ describe "Code gen: macro" do
       bar
       )).to_string.should eq("bar")
   end
+
+  it "gets constant" do
+    run(%(
+      class Foo
+        Bar = 42
+      end
+
+      {{ Foo.constant("Bar") }}
+      )).to_i.should eq(42)
+  end
 end
