@@ -726,9 +726,13 @@ describe "macro methods" do
     it "executes type (nop)" do
       assert_macro "", %({{ {'z' => 6, 'a' => 9}.type }}), [] of ASTNode, %()
     end
+
+    it "executes double splat" do
+      assert_macro "", %({{**{1 => 2, 3 => 4}}}), [] of ASTNode, "1 => 2, 3 => 4"
+    end
   end
 
-  describe "named literal methods" do
+  describe "named tuple literal methods" do
     it "executes size" do
       assert_macro "", %({{{a: 1, b: 3}.size}}), [] of ASTNode, "2"
     end
@@ -775,6 +779,10 @@ describe "macro methods" do
 
     it "executes to_a" do
       assert_macro "", %({{{a: 1, b: 3}.to_a}}), [] of ASTNode, "[{a, 1}, {b, 3}]"
+    end
+
+    it "executes double splat" do
+      assert_macro "", %({{**{a: 1, "foo bar": 2}}}), [] of ASTNode, %(a: 1, "foo bar": 2)
     end
   end
 

@@ -2958,10 +2958,15 @@ module Crystal
     def parse_expression_inside_macro
       @in_macro_expression = true
 
-      if @token.type == :"*"
+      case @token.type
+      when :"*"
         next_token_skip_space
         exp = parse_expression
         exp = Splat.new(exp).at(exp.location)
+      when :"**"
+        next_token_skip_space
+        exp = parse_expression
+        exp = DoubleSplat.new(exp).at(exp.location)
       else
         exp = parse_expression
       end

@@ -431,6 +431,33 @@ module Crystal
       false
     end
 
+    def visit(node : DoubleSplat)
+      node.exp.accept self
+
+      last = @last
+      case last
+      when HashLiteral
+        @last = MacroId.new(
+          last.entries.join(", ") do |entry|
+            "#{entry.key} => #{entry.value}"
+          end
+        )
+      when NamedTupleLiteral
+        @last = MacroId.new(
+          last.entries.join(", ") do |entry|
+            if Symbol.needs_quotes?(entry.key)
+              "#{entry.key.inspect}: #{entry.value}"
+            else
+              "#{entry.key}: #{entry.value}"
+            end
+          end
+        )
+      else
+        node.raise "argument to ** must be HashLiteral or NamedTuple, not #{last.class_desc}"
+      end
+      false
+    end
+
     def visit(node : IsA)
       node.obj.accept self
       const_name = node.const.to_s
