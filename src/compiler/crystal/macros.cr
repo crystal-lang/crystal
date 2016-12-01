@@ -536,6 +536,10 @@ module Crystal::Macros
     def [](index : NumberLiteral) : ASTNode
     end
 
+    # Similar to `Array#[]=`.
+    def []=(index : NumberLiteral, value : ASTNode)
+    end
+
     # Similar to `Array#+`.
     def +(other : ArrayLiteral) : ArrayLiteral
     end
