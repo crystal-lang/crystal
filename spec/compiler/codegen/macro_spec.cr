@@ -1555,7 +1555,7 @@ describe "Code gen: macro" do
       )).to_b.should be_true
   end
 
-  it "determines if overrides, with macro method (true)" do
+  it "determines if overrides, with macro method (false)" do
     run(%(
       class Foo
         def foo
