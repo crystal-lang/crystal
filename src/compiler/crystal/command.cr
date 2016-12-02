@@ -458,6 +458,10 @@ class Crystal::Command
       puts opts
       exit
     end
+    opts.on("--no-color", "Disable colored output") do
+      @color = false
+      compiler.color = false
+    end
     opts.invalid_option { }
   end
 
