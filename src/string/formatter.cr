@@ -292,7 +292,7 @@ struct String::Formatter(A)
 
   def pad(consumed, flags)
     padding_char = flags.padding_char
-    (flags.width - consumed).times do
+    (flags.width.abs - consumed).times do
       @io << padding_char
     end
   end
@@ -366,16 +366,12 @@ struct String::Formatter(A)
       @precision_size = 0
     end
 
-    def wants_padding?
-      @width > 0
-    end
-
     def left_padding?
-      wants_padding? && !@minus
+      @minus ? @width < 0 : @width > 0
     end
 
     def right_padding?
-      wants_padding? && @minus
+      @minus ? @width > 0 : @width < 0
     end
 
     def padding_char

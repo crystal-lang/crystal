@@ -1395,6 +1395,7 @@ describe "String" do
     ("%20s" % 'a').should eq("                   a")
     ("%-20s" % 'a').should eq("a                   ")
     ("%*s" % [10, 123]).should eq("       123")
+    ("%*s" % [-10, 123]).should eq("123       ")
     ("%.5s" % "foo bar baz").should eq("foo b")
     ("%.*s" % [5, "foo bar baz"]).should eq("foo b")
     ("%*.*s" % [20, 5, "foo bar baz"]).should eq("               foo b")
