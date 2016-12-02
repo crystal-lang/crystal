@@ -142,32 +142,72 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, other) }
   end
 
-  def /(other : BigInt) : BigInt
-    check_division_by_zero other
-
-    BigInt.new { |mpz| LibGMP.fdiv_q(mpz, self, other) }
-  end
-
   def /(other : Int) : BigInt
     check_division_by_zero other
 
     if other < 0
-      -(self / other.abs)
+      (-self).unsafe_floored_div(-other)
     else
-      BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, other) }
+      unsafe_floored_div(other)
     end
   end
 
-  def %(other : BigInt) : BigInt
+  def tdiv(other : Int) : BigInt
     check_division_by_zero other
 
-    BigInt.new { |mpz| LibGMP.fdiv_r(mpz, self, other) }
+    if other < 0
+      -self.unsafe_truncated_div(other)
+    else
+      unsafe_truncated_div(other)
+    end
+  end
+
+  def unsafe_floored_div(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.fdiv_q(mpz, self, other) }
+  end
+
+  def unsafe_floored_div(other : Int) : BigInt
+    BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, other.abs) }
+  end
+
+  def unsafe_truncated_div(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.tdiv_q(mpz, self, other) }
+  end
+
+  def unsafe_truncated_div(other : Int) : BigInt
+    BigInt.new { |mpz| LibGMP.tdiv_q_ui(mpz, self, other.abs) }
   end
 
   def %(other : Int) : BigInt
     check_division_by_zero other
 
+    if other < 0
+      -(-self).unsafe_floored_mod(-other)
+    else
+      unsafe_floored_mod(other)
+    end
+  end
+
+  def remainder(other : Int) : BigInt
+    check_division_by_zero other
+
+    unsafe_truncated_mod(other)
+  end
+
+  def unsafe_floored_mod(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.fdiv_r(mpz, self, other) }
+  end
+
+  def unsafe_floored_mod(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, other.abs) }
+  end
+
+  def unsafe_truncated_mod(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.tdiv_r(mpz, self, other) }
+  end
+
+  def unsafe_truncated_mod(other : Int) : BigInt
+    BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, other.abs) }
   end
 
   def ~ : BigInt
@@ -199,6 +239,23 @@ struct BigInt < Int
       raise ArgumentError.new("negative exponent isn't supported")
     end
     BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
+  end
+
+  def gcd(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.gcd(mpz, self, other) }
+  end
+
+  def gcd(other : Int) : Int
+    result = LibGMP.gcd_ui(nil, self, other.abs.to_u64)
+    result == 0 ? self : result
+  end
+
+  def lcm(other : BigInt) : BigInt
+    BigInt.new { |mpz| LibGMP.lcm(mpz, self, other) }
+  end
+
+  def lcm(other : Int) : BigInt
+    BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
 
   def inspect
@@ -307,6 +364,10 @@ struct BigInt < Int
     self
   end
 
+  def clone
+    self
+  end
+
   private def check_division_by_zero(value)
     if value == 0
       raise DivisionByZero.new
@@ -360,6 +421,14 @@ struct Int
 
   def %(other : BigInt) : BigInt
     to_big_i % other
+  end
+
+  def gcm(other : BigInt) : Int
+    other.gcm(self)
+  end
+
+  def lcm(other : BigInt) : BigInt
+    other.lcm(self)
   end
 
   # Returns a BigInt representing this integer.

@@ -74,4 +74,23 @@ describe "Logger" do
       r.gets.should match(/  ANY -- shard: another message\n/)
     end
   end
+
+  it "can create a logger with nil (#3065)" do
+    logger = Logger.new(nil)
+    logger.error("ouch")
+  end
+
+  it "doesn't yield to the block with nil" do
+    a = 0
+    logger = Logger.new(nil)
+    logger.info { a = 1 }
+    a.should eq(0)
+  end
+
+  it "closes" do
+    IO.pipe do |r, w|
+      Logger.new(w).close
+      w.closed?.should be_true
+    end
+  end
 end

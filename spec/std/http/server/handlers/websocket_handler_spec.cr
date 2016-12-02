@@ -3,7 +3,7 @@ require "http/server"
 
 describe HTTP::WebSocketHandler do
   it "returns not found if the request is not an websocket upgrade" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
@@ -20,11 +20,11 @@ describe HTTP::WebSocketHandler do
 
   {% for connection in ["Upgrade", "keep-alive, Upgrade"] %}
     it "gives upgrade response for websocket upgrade request with '{{connection.id}}' request" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       headers = HTTP::Headers{
-        "Upgrade":           "websocket",
-        "Connection":        {{connection}},
-        "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+        "Upgrade" =>           "websocket",
+        "Connection" =>        {{connection}},
+        "Sec-WebSocket-Key" => "dGhlIHNhbXBsZSBub25jZQ==",
       }
       request = HTTP::Request.new("GET", "/", headers: headers)
       response = HTTP::Server::Response.new(io)
@@ -36,7 +36,7 @@ describe HTTP::WebSocketHandler do
       begin
         handler.call context
       rescue IO::Error
-        # Raises because the MemoryIO is empty
+        # Raises because the IO::Memory is empty
       end
 
       response.close

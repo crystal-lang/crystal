@@ -115,7 +115,16 @@ describe "Code gen: new" do
 
   it "oveloads new and initialize, 2 (#2489)" do
     run(%(
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       class Foo
         def initialize(@foo : Int32)
@@ -124,34 +133,43 @@ describe "Code gen: new" do
 
       class Bar < Foo
         def self.new(foo : Int32) : self
-          $x = foo + 1
+          Global.x = foo + 1
           super
         end
       end
 
       Bar.new(5)
 
-      $x
+      Global.x
       )).to_i.should eq(6)
   end
 
   it "oveloads new and initialize, 3 (#2489)" do
     run(%(
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       class Foo
         def initialize(@foo : Int32)
         end
 
         def self.new(foo : Int32) : self
-          $x = foo + 1
+          Global.x = foo + 1
           previous_def
         end
       end
 
       Foo.new(5)
 
-      $x
+      Global.x
       )).to_i.should eq(6)
   end
 

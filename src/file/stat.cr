@@ -12,11 +12,11 @@ class File
     end
 
     def atime
-      ifdef darwin
+      {% if flag?(:darwin) %}
         time @stat.st_atimespec
-      else
+      {% else %}
         time @stat.st_atim
-      end
+      {% end %}
     end
 
     def blksize
@@ -28,11 +28,11 @@ class File
     end
 
     def ctime
-      ifdef darwin
+      {% if flag?(:darwin) %}
         time @stat.st_ctimespec
-      else
+      {% else %}
         time @stat.st_ctim
-      end
+      {% end %}
     end
 
     def dev
@@ -57,11 +57,11 @@ class File
     end
 
     def mtime
-      ifdef darwin
+      {% if flag?(:darwin) %}
         time @stat.st_mtimespec
-      else
+      {% else %}
         time @stat.st_mtim
-      end
+      {% end %}
     end
 
     def nlink
@@ -85,7 +85,7 @@ class File
       io << " dev=0x"
       dev.to_s(16, io)
       io << ", ino=" << ino
-      io << ", mode=0"
+      io << ", mode=0o"
       mode.to_s(8, io)
       io << ", nlink=" << nlink
       io << ", uid=" << uid
@@ -99,6 +99,36 @@ class File
       io << ", mtime=" << mtime
       io << ", ctime=" << ctime
       io << ">"
+    end
+
+    def pretty_print(pp)
+      pp.surround("#<File::Stat", ">", left_break: " ", right_break: nil) do
+        pp.text "dev=0x#{dev.to_s(16)}"
+        pp.comma
+        pp.text "ino=#{ino}"
+        pp.comma
+        pp.text "mode=0o#{mode.to_s(8)}"
+        pp.comma
+        pp.text "nlink=#{nlink}"
+        pp.comma
+        pp.text "uid=#{uid}"
+        pp.comma
+        pp.text "gid=#{gid}"
+        pp.comma
+        pp.text "rdev=0x#{rdev.to_s(16)}"
+        pp.comma
+        pp.text "size=#{size}"
+        pp.comma
+        pp.text "blksize=#{blksize}"
+        pp.comma
+        pp.text "blocks=#{blocks}"
+        pp.comma
+        pp.text "atime=#{atime}"
+        pp.comma
+        pp.text "mtime=#{mtime}"
+        pp.comma
+        pp.text "ctime=#{ctime}"
+      end
     end
 
     def blockdev?

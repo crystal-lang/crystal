@@ -40,7 +40,7 @@ describe XML do
   end
 
   it "parses HTML from IO" do
-    io = MemoryIO.new(%(\
+    io = IO::Memory.new(%(\
       <!doctype html>
       <html>
       <head>
@@ -62,5 +62,11 @@ describe XML do
     xml = XML.parse_html(html5)
     xml.errors.should_not be_nil
     xml.xpath_node("//html/body/nav").should_not be_nil
+  end
+
+  it "raises error when parsing empty string (#2752)" do
+    expect_raises XML::Error, "Document is empty" do
+      XML.parse_html("")
+    end
   end
 end

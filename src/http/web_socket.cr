@@ -7,19 +7,19 @@ class HTTP::WebSocket
   # :nodoc:
   def initialize(@ws : Protocol)
     @buffer = Slice(UInt8).new(4096)
-    @current_message = MemoryIO.new
+    @current_message = IO::Memory.new
   end
 
   # Opens a new websocket using the information provided by the URI. This will also handle the handshake
   # and will raise an exception if the handshake did not complete successfully. This method will also raise
   # an exception if the URI is missing the host and/or the path.
   #
-  # Please note that the scheme will only be used to identify if SSL should be used or not. Therefore, schemes
+  # Please note that the scheme will only be used to identify if TLS should be used or not. Therefore, schemes
   # apart from `wss` and `https` will be treated as the default which is `ws`.
   #
   # ```
   # WebSocket.new(URI.parse("ws://websocket.example.com/chat"))        # Creates a new WebSocket to `websocket.example.com`
-  # WebSocket.new(URI.parse("wss://websocket.example.com/chat"))       # Creates a new WebSocket with SSL to `websocket.example.com`
+  # WebSocket.new(URI.parse("wss://websocket.example.com/chat"))       # Creates a new WebSocket with TLS to `websocket.example.com`
   # WebSocket.new(URI.parse("http://websocket.example.com:8080/chat")) # Creates a new WebSocket to `websocket.example.com` on port `8080`
   # ```
   def self.new(uri : URI | String)
@@ -30,11 +30,11 @@ class HTTP::WebSocket
   # and will raise an exception if the handshake did not complete successfully.
   #
   # ```
-  # WebSocket.new("websocket.example.com", "/chat")             # Creates a new WebSocket to `websocket.example.com`
-  # WebSocket.new("websocket.example.com", "/chat", ssl = true) # Creates a new WebSocket with SSL to `ẁebsocket.example.com`
+  # WebSocket.new("websocket.example.com", "/chat")            # Creates a new WebSocket to `websocket.example.com`
+  # WebSocket.new("websocket.example.com", "/chat", tls: true) # Creates a new WebSocket with TLS to `ẁebsocket.example.com`
   # ```
-  def self.new(host : String, path : String, port = nil, ssl = false)
-    new(Protocol.new(host, path, port, ssl))
+  def self.new(host : String, path : String, port = nil, tls = false)
+    new(Protocol.new(host, path, port, tls))
   end
 
   def on_message(&@on_message : String ->)

@@ -21,11 +21,11 @@ def assert_implementations(code)
 
   code.lines.each_with_index do |line, line_number_0|
     if column_number = line.index('‸')
-      cursor_location = Location.new(line_number_0 + 1, column_number + 1, ".")
+      cursor_location = Location.new(".", line_number_0 + 1, column_number + 1)
     end
 
     if column_number = line.index('༓')
-      expected_locations << Location.new(line_number_0 + 1, column_number + 1, ".")
+      expected_locations << Location.new(".", line_number_0 + 1, column_number + 1)
     end
   end
 
@@ -34,7 +34,7 @@ def assert_implementations(code)
   if cursor_location
     visitor, result = processed_implementation_visitor(code, cursor_location)
 
-    result_location = result.implementations.not_nil!.map { |e| Location.new(e.line.not_nil!, e.column.not_nil!, e.filename.not_nil!).to_s }.sort
+    result_location = result.implementations.not_nil!.map { |e| Location.new(e.filename.not_nil!, e.line.not_nil!, e.column.not_nil!).to_s }.sort
 
     result_location.should eq(expected_locations.map(&.to_s))
   else
@@ -60,12 +60,12 @@ describe "implementations" do
 
   it "find implementors of different classes" do
     assert_implementations %(
-      class A
+      class Foo
         ༓def foo
         end
       end
 
-      class B
+      class Bar
         ༓def foo
         end
       end
@@ -74,19 +74,19 @@ describe "implementations" do
         o.f‸oo
       end
 
-      bar(A.new)
-      bar(B.new)
+      bar(Foo.new)
+      bar(Bar.new)
     )
   end
 
   it "find implementors of classes that are only used" do
     assert_implementations %(
-      class A
+      class Foo
         ༓def foo
         end
       end
 
-      class B
+      class Bar
         def foo
         end
       end
@@ -95,8 +95,8 @@ describe "implementations" do
         o.f‸oo
       end
 
-      bar(A.new)
-      B.new
+      bar(Foo.new)
+      Bar.new
     )
   end
 
@@ -189,7 +189,7 @@ describe "implementations" do
 
       baz
       bar
-    ), Location.new(12, 9, "."))
+    ), Location.new(".", 12, 9))
 
     result.implementations.should_not be_nil
     impls = result.implementations.not_nil!
@@ -227,7 +227,7 @@ describe "implementations" do
 
       baz
       bar
-    ), Location.new(12, 9, "."))
+    ), Location.new(".", 12, 9))
 
     String::Builder.build do |io|
       result.to_text(io)
@@ -251,7 +251,7 @@ describe "implementations" do
 
       baz
       bar
-    ), Location.new(12, 9, "."))
+    ), Location.new(".", 12, 9))
 
     String::Builder.build do |io|
       result.to_json(io)
@@ -274,12 +274,12 @@ describe "implementations" do
 
   it "find implementation in generic class" do
     assert_implementations %(
-    class A
+    class Foo
       ༓def self.foo
       end
     end
 
-    class B
+    class Baz
       ༓def self.foo
       end
     end
@@ -290,8 +290,8 @@ describe "implementations" do
       end
     end
 
-    Bar(A).new.bar
-    Bar(B).new.bar
+    Bar(Foo).new.bar
+    Bar(Baz).new.bar
     )
   end
 

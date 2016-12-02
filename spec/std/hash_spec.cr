@@ -1,16 +1,18 @@
 require "spec"
 
-alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
+private alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
 
-class HashBreaker
+private class HashBreaker
   getter x : Int32
 
   def initialize(@x)
   end
 end
 
-class NeverInstantiated
+private class NeverInstantiated
 end
+
+private alias RecursiveType = String | Int32 | Array(RecursiveType) | Hash(Symbol, RecursiveType)
 
 describe "Hash" do
   describe "empty" do
@@ -134,12 +136,12 @@ describe "Hash" do
 
   describe "values_at" do
     it "returns the given keys" do
-      {"a": 1, "b": 2, "c": 3, "d": 4}.values_at("b", "a", "c").should eq({2, 1, 3})
+      {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.values_at("b", "a", "c").should eq({2, 1, 3})
     end
 
     it "raises when passed an invalid key" do
       expect_raises KeyError do
-        {"a": 1}.values_at("b")
+        {"a" => 1}.values_at("b")
       end
     end
 
@@ -150,25 +152,25 @@ describe "Hash" do
 
   describe "key" do
     it "returns the first key with the given value" do
-      hash = {"foo": "bar", "baz": "qux"}
+      hash = {"foo" => "bar", "baz" => "qux"}
       hash.key("bar").should eq("foo")
       hash.key("qux").should eq("baz")
     end
 
     it "raises when no key pairs with the given value" do
       expect_raises KeyError do
-        {"foo": "bar"}.key("qux")
+        {"foo" => "bar"}.key("qux")
       end
     end
 
     describe "if block is given," do
       it "returns the first key with the given value" do
-        hash = {"foo": "bar", "baz": "bar"}
+        hash = {"foo" => "bar", "baz" => "bar"}
         hash.key("bar") { |value| value.upcase }.should eq("foo")
       end
 
       it "yields the argument if no hash key pairs with the value" do
-        hash = {"foo": "bar"}
+        hash = {"foo" => "bar"}
         hash.key("qux") { |value| value.upcase }.should eq("QUX")
       end
     end
@@ -176,13 +178,13 @@ describe "Hash" do
 
   describe "key?" do
     it "returns the first key with the given value" do
-      hash = {"foo": "bar", "baz": "qux"}
+      hash = {"foo" => "bar", "baz" => "qux"}
       hash.key?("bar").should eq("foo")
       hash.key?("qux").should eq("baz")
     end
 
     it "returns nil if no key pairs with the given value" do
-      hash = {"foo": "bar", "baz": "qux"}
+      hash = {"foo" => "bar", "baz" => "qux"}
       hash.key?("foobar").should eq nil
       hash.key?("bazqux").should eq nil
     end
@@ -197,6 +199,18 @@ describe "Hash" do
     it "has key" do
       a = {1 => 2}
       a.has_key?(1).should be_true
+    end
+  end
+
+  describe "has_value?" do
+    it "returns true if contains the value" do
+      a = {1 => 2, 3 => 4, 5 => 6}
+      a.has_value?(4).should be_true
+    end
+
+    it "returns false if does not contain the value" do
+      a = {1 => 2, 3 => 4, 5 => 6}
+      a.has_value?(3).should be_false
     end
   end
 
@@ -323,6 +337,12 @@ describe "Hash" do
     h3 = h2.merge(h1) { |k, v1, v2| k + v1 + v2 }
     h3.should_not be(h2)
     h3.should eq({1 => 11, 3 => 4, 2 => 8})
+  end
+
+  it "merges recursive type (#1693)" do
+    hash = {:foo => "bar"} of Symbol => RecursiveType
+    result = hash.merge({:foobar => "foo"})
+    result.should eq({:foo => "bar", :foobar => "foo"})
   end
 
   it "merges!" do
@@ -549,14 +569,14 @@ describe "Hash" do
     it "pass key, value, index values into block" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      hash.each_with_index { |k, v, i| results << k + v + i }
+      hash.each_with_index { |(k, v), i| results << k + v + i }
       results.should eq [6, 16, 23]
     end
 
     it "can be used with offset" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      hash.each_with_index(3) { |k, v, i| results << k + v + i }
+      hash.each_with_index(3) { |(k, v), i| results << k + v + i }
       results.should eq [9, 19, 26]
     end
   end
@@ -564,7 +584,7 @@ describe "Hash" do
   describe "each_with_object" do
     it "passes memo, key and value into block" do
       hash = {:a => 'b'}
-      hash.each_with_object(:memo) do |memo, k, v|
+      hash.each_with_object(:memo) do |(k, v), memo|
         memo.should eq(:memo)
         k.should eq(:a)
         v.should eq('b')
@@ -573,7 +593,8 @@ describe "Hash" do
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = hash.each_with_object({} of Char => Symbol) do |memo, k, v|
+      result = nil
+      result = hash.each_with_object({} of Char => Symbol) do |(k, v), memo|
         memo[v] = k
       end
       result.should eq({'b' => :a, 'd' => :c, 'f' => :e})
@@ -647,7 +668,7 @@ describe "Hash" do
   describe "reduce" do
     it "passes memo, key and value into block" do
       hash = {:a => 'b'}
-      hash.reduce(:memo) do |memo, k, v|
+      hash.reduce(:memo) do |memo, (k, v)|
         memo.should eq(:memo)
         k.should eq(:a)
         v.should eq('b')
@@ -656,7 +677,7 @@ describe "Hash" do
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = hash.reduce("") do |memo, k, v|
+      result = hash.reduce("") do |memo, (k, v)|
         memo + v
       end
       result.should eq("bdf")

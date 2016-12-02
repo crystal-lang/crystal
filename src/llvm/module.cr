@@ -10,8 +10,12 @@ class LLVM::Module
     LibLLVM.set_target(self, target)
   end
 
-  def data_layout=(data)
-    LibLLVM.set_data_layout(self, data)
+  def data_layout=(data : TargetData)
+    {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+      LibLLVM.set_data_layout(self, data.to_data_layout_string)
+    {% else %}
+      LibLLVM.set_module_data_layout(self, data)
+    {% end %}
   end
 
   def dump

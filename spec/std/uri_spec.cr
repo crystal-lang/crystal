@@ -39,6 +39,14 @@ describe "URI" do
   assert { URI.parse("http://www.example.com?q=1").full_path.should eq("/?q=1") }
   assert { URI.parse("http://test.dev/a%3Ab").full_path.should eq("/a%3Ab") }
 
+  it "implements ==" do
+    URI.parse("http://example.com").should eq(URI.parse("http://example.com"))
+  end
+
+  it "implements hash" do
+    URI.parse("http://example.com").hash.should eq(URI.parse("http://example.com").hash)
+  end
+
   describe "userinfo" do
     assert { URI.parse("http://www.example.com").userinfo.should be_nil }
     assert { URI.parse("http://foo@www.example.com").userinfo.should eq("foo") }
@@ -119,7 +127,6 @@ describe "URI" do
       {"hello%252%2Bworld", "hello%2+world"},
       {"%E3%81%AA%E3%81%AA", "なな"},
       {"%27Stop%21%27%20said%20Fred", "'Stop!' said Fred"},
-      {"%FF", String.new(1) { |buf| buf.value = 255_u8; {1, 0} }},
       {"%0A", "\n"},
     ].each do |(from, to)|
       it "escapes #{to}" do
@@ -130,6 +137,20 @@ describe "URI" do
         String.build do |str|
           URI.escape(to, str)
         end.should eq(from)
+      end
+    end
+
+    describe "invalid utf8 strings" do
+      input = String.new(1) { |buf| buf.value = 255_u8; {1, 0} }
+
+      it "escapes without failing" do
+        URI.escape(input).should eq("%FF")
+      end
+
+      it "escapes to IO without failing" do
+        String.build do |str|
+          URI.escape(input, str)
+        end.should eq("%FF")
       end
     end
 

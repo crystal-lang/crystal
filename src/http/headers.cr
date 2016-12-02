@@ -3,6 +3,8 @@
 # Two headers are considered the same if their downcase representation is the same
 # (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
+  include Enumerable({String, Array(String)})
+
   # :nodoc:
   record Key, name : String do
     forward_missing_to @name
@@ -36,10 +38,10 @@ struct HTTP::Headers
     end
 
     private def normalize_byte(byte)
-      char = byte.chr
+      char = byte.unsafe_chr
 
-      return byte if char.lowercase? || char == '-' # Optimize the common case
-      return byte + 32 if char.uppercase?
+      return byte if char.ascii_lowercase? || char == '-' # Optimize the common case
+      return byte + 32 if char.ascii_uppercase?
       return '-'.ord if char == '_'
 
       byte
@@ -73,7 +75,7 @@ struct HTTP::Headers
   # The `word` is expected to match between word boundaries (i.e. non-alphanumeric chars).
   #
   # ```
-  # headers = HTTP::Headers{"Connection": "keep-alive, Upgrade"}
+  # headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
   # headers.includes_word?("Connection", "Upgrade") # => true
   # ```
   def includes_word?(key, word)
@@ -82,7 +84,7 @@ struct HTTP::Headers
       start = value.index(word)
       next unless start
       # check if the match is not surrounded by alphanumeric chars
-      next if start > 0 && value[start - 1].alphanumeric?
+      next if start > 0 && value[start - 1].ascii_alphanumeric?
       next if start + word.size < value.size && value[start + word.size].alphanumeric?
       return true
     end
@@ -178,7 +180,7 @@ struct HTTP::Headers
 
   def each
     @hash.each do |key, value|
-      yield key.name, value
+      yield({key.name, value})
     end
   end
 
@@ -208,7 +210,7 @@ struct HTTP::Headers
 
   def to_s(io : IO)
     io << "HTTP::Headers{"
-    @hash.each_with_index do |key, values, index|
+    @hash.each_with_index do |(key, values), index|
       io << ", " if index > 0
       key.name.inspect(io)
       io << " => "
@@ -223,6 +225,24 @@ struct HTTP::Headers
 
   def inspect(io : IO)
     to_s(io)
+  end
+
+  def pretty_print(pp)
+    pp.list("HTTP::Headers{", @hash.keys.sort_by(&.name), "}") do |key|
+      pp.group do
+        key.name.pretty_print(pp)
+        pp.text " =>"
+        pp.nest do
+          pp.breakable
+          values = get(key)
+          if values.size == 1
+            values.first.pretty_print(pp)
+          else
+            values.pretty_print(pp)
+          end
+        end
+      end
+    end
   end
 
   forward_missing_to @hash
@@ -255,9 +275,9 @@ struct HTTP::Headers
     # are '\t', ' ', all US-ASCII printable characters and
     # range from '\x80' to '\xff' (but the last is obsoleted.)
     value.each_byte do |byte|
-      char = byte.chr
+      char = byte.unsafe_chr
       next if char == '\t'
-      if char < ' ' || char > '\u{ff}' || char == '\u{7e}'
+      if char < ' ' || char > '\u{ff}' || char == '\u{7f}'
         raise ArgumentError.new("header content contains invalid character #{char.inspect}")
       end
     end

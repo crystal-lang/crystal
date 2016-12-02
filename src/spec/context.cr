@@ -9,6 +9,7 @@ module Spec
     description : String,
     file : String,
     line : Int32,
+    elapsed : Time::Span?,
     exception : Exception?
 
   # :nodoc:
@@ -30,8 +31,8 @@ module Spec
       @results[:fail].empty? && @results[:error].empty?
     end
 
-    def self.report(kind, full_description, file, line, ex = nil)
-      result = Result.new(kind, full_description, file, line, ex)
+    def self.report(kind, full_description, file, line, elapsed = nil, ex = nil)
+      result = Result.new(kind, full_description, file, line, elapsed, ex)
       @@contexts_stack.last.report(result)
     end
 
@@ -71,7 +72,8 @@ module Spec
         failures_and_errors.each_with_index do |fail, i|
           if ex = fail.exception
             puts
-            puts "  #{i + 1}) #{fail.description}"
+            puts "#{(i + 1).to_s.rjust(3, ' ')}) #{fail.description}"
+
             if ex.is_a?(AssertionFailed)
               source_line = Spec.read_line(ex.file, ex.line)
               if source_line
@@ -99,6 +101,23 @@ module Spec
         end
       end
 
+      if Spec.slowest
+        puts
+        results = @results[:success] + @results[:fail]
+        top_n = results.sort_by { |res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
+        top_n_time = top_n.sum &.elapsed.not_nil!.total_seconds
+        percent = (top_n_time * 100) / elapsed_time.total_seconds
+        puts "Top #{Spec.slowest} slowest examples (#{top_n_time} seconds, #{percent.round(2)}% of total time):"
+        top_n.each do |res|
+          puts "  #{res.description}"
+          res_elapsed = res.elapsed.not_nil!.total_seconds.to_s
+          if Spec.use_colors?
+            res_elapsed = res_elapsed.colorize.bold
+          end
+          puts "    #{res_elapsed} seconds #{Spec.relative_file(res.file)}:#{res.line}"
+        end
+      end
+
       puts
 
       success = @results[:success]
@@ -110,16 +129,7 @@ module Spec
                      else                                        :success
                      end
 
-      total_seconds = elapsed_time.total_seconds
-      if total_seconds < 1
-        puts "Finished in #{elapsed_time.total_milliseconds.round(2)} milliseconds"
-      elsif total_seconds < 60
-        puts "Finished in #{total_seconds.round(2)} seconds"
-      else
-        minutes = elapsed_time.minutes
-        seconds = elapsed_time.seconds
-        puts "Finished in #{minutes}:#{seconds < 10 ? "0" : ""}#{seconds} minutes"
-      end
+      puts "Finished in #{Spec.to_human(elapsed_time)}"
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
 
       unless failures_and_errors.empty?
@@ -165,7 +175,7 @@ module Spec
     end
 
     def report(result)
-      @parent.report Result.new(result.kind, "#{@description} #{result.description}", result.file, result.line, result.exception)
+      @parent.report Result.new(result.kind, "#{@description} #{result.description}", result.file, result.line, result.elapsed, result.exception)
     end
 
     def matches?(pattern, line, locations)

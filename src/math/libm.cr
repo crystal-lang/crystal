@@ -1,4 +1,7 @@
-@[Link("m")] ifdef linux
+{% if flag?(:linux) || flag?(:freebsd) || flag?(:openbsd) %}
+  @[Link("m")]
+{% end %}
+
 lib LibM
   # ## To be uncommented once LLVM is updated
   # LLVM binary operations

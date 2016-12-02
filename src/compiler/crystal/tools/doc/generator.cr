@@ -2,12 +2,25 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
+  @is_crystal_repo : Bool
+
+  # Adding a flag and associated css class will add support in parser
+  FLAG_COLORS = {
+    "BUG"        => "red",
+    "DEPRECATED" => "red",
+    "FIXME"      => "yellow",
+    "NOTE"       => "purple",
+    "OPTIMIZE"   => "green",
+    "TODO"       => "orange",
+  }
+  FLAGS = FLAG_COLORS.keys
 
   def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
     compute_repository
+    @is_crystal_repo = @repo_name == "github.com/crystal-lang/crystal"
   end
 
   def run
@@ -41,24 +54,20 @@ class Crystal::Doc::Generator
     end
 
     if filename
-      body = File.read(filename)
+      body = doc(program_type, File.read(filename))
     else
       body = ""
     end
 
-    body = String.build do |io|
-      Markdown.parse body, MarkdownDocRenderer.new(program_type, io)
-    end
-
-    write_template "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
+    File.write "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
   end
 
   def copy_files
     Dir.mkdir_p "#{@dir}/css"
     Dir.mkdir_p "#{@dir}/js"
 
-    write_template "#{@dir}/css/style.css", StyleTemplate.new
-    write_template "#{@dir}/js/doc.js", JsTypeTemplate.new
+    File.write "#{@dir}/css/style.css", StyleTemplate.new
+    File.write "#{@dir}/js/doc.js", JsTypeTemplate.new
   end
 
   def generate_types_docs(types, dir, all_types)
@@ -69,7 +78,7 @@ class Crystal::Doc::Generator
         filename = "#{dir}/#{type.name}.html"
       end
 
-      write_template filename, TypeTemplate.new(type, all_types)
+      File.write filename, TypeTemplate.new(type, all_types)
 
       next if type.program?
 
@@ -82,28 +91,16 @@ class Crystal::Doc::Generator
     end
   end
 
-  def write_template(filename, template)
-    File.open(filename, "w") do |file|
-      template.to_s file
-    end
-  end
-
   def must_include?(type : Doc::Type)
     must_include? type.type
   end
 
-  def must_include?(type : Crystal::IncludedGenericModule)
-    must_include? type.module
-  end
-
-  def must_include?(type : Crystal::InheritedGenericClass)
-    must_include? type.extended_class
-  end
-
   def must_include?(type : Crystal::Type)
+    return false if type.private?
     return false if nodoc?(type)
+    return true if crystal_builtin?(type)
 
-    type.locations.any? do |type_location|
+    type.locations.try &.any? do |type_location|
       must_include? type_location
     end
   end
@@ -149,6 +146,24 @@ class Crystal::Doc::Generator
 
   def nodoc?(obj)
     nodoc? obj.doc.try &.strip
+  end
+
+  def crystal_builtin?(type)
+    return false unless @is_crystal_repo
+    return false unless type.is_a?(Const) || type.is_a?(NonGenericModuleType)
+
+    crystal_type = @program.types["Crystal"]
+    return true if type == crystal_type
+
+    return false unless type.is_a?(Const)
+    return false unless type.namespace == crystal_type
+
+    {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
+      "DESCRIPTION", "PATH", "VERSION"}.each do |name|
+      return true if type == crystal_type.types[name]?
+    end
+
+    false
   end
 
   def type(type)
@@ -218,9 +233,11 @@ class Crystal::Doc::Generator
   end
 
   def doc(context, string)
-    String.build do |io|
+    string = isolate_flag_lines string
+    markdown = String.build do |io|
       Markdown.parse string, MarkdownDocRenderer.new(context, io)
     end
+    generate_flags markdown
   end
 
   def fetch_doc_lines(doc)
@@ -229,6 +246,33 @@ class Crystal::Doc::Generator
         " "
       else
         "\n"
+      end
+    end
+  end
+
+  # Replaces flag keywords with html equivalent
+  #
+  # Assumes that flag keywords are at the beginning of respective `p` element
+  def generate_flags(string)
+    FLAGS.reduce(string) do |str, flag|
+      flag_regexp = /<p>\s*#{flag}:?/
+      element_sub = %(<p><span class="flag #{FLAG_COLORS[flag]}">#{flag}</span> )
+      str.gsub(flag_regexp, element_sub)
+    end
+  end
+
+  # Adds extra line break to flag keyword lines
+  #
+  # Guarantees that line is within its own paragraph element when parsed
+  def isolate_flag_lines(string)
+    flag_regexp = /^ ?(#{FLAGS.join('|')}):?/
+    String.build do |io|
+      string.each_line.join("", io) do |line, io|
+        if line =~ flag_regexp
+          io << line << '\n'
+        else
+          io << line
+        end
       end
     end
   end
@@ -285,7 +329,7 @@ class Crystal::Doc::Generator
     filename[@base_dir.size..-1]
   end
 
-  record RelativeLocation, filename : String, url : String?
+  record RelativeLocation, filename : String, line_number : Int32, url : String?
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)
@@ -303,7 +347,7 @@ class Crystal::Doc::Generator
       filename = filename[1..-1] if filename.starts_with? File::SEPARATOR
       filename = filename[4..-1] if filename.starts_with? SRC_SEP
 
-      locations << RelativeLocation.new(filename, url)
+      locations << RelativeLocation.new(filename, location.line_number, url)
     end
     locations
   end

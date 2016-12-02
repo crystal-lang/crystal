@@ -151,6 +151,10 @@ describe Time do
     t = Time.new 2014, 10, 31, 21, 18, 13
     t2 = t - 1.month
     t2.to_s.should eq("2014-09-30 21:18:13")
+
+    t = Time.new 2014, 10, 31, 21, 18, 13
+    t2 = t + 6.month
+    t2.to_s.should eq("2015-04-30 21:18:13")
   end
 
   it "add years" do
@@ -459,6 +463,12 @@ describe Time do
     time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
   end
 
+  it "parses microseconds" do
+    time = Time.parse("2016-09-09T17:03:28.456789+01:00", "%FT%T.%L%z").to_utc
+    time.to_s.should eq("2016-09-09 16:03:28 UTC")
+    time.millisecond.should eq(456)
+  end
+
   it "parses the correct amount of digits (#853)" do
     time = Time.parse("20150624", "%Y%m%d")
     time.year.should eq(2015)
@@ -611,6 +621,13 @@ describe Time do
     ensure
       ENV["TZ"] = old_tz
     end
+  end
+
+  it "does diff of utc vs local time" do
+    local = Time.now
+    utc = local.to_utc
+    (utc - local).should eq(0.seconds)
+    (local - utc).should eq(0.seconds)
   end
 
   typeof(Time.now.year)

@@ -1,22 +1,18 @@
 module Crystal
   class Program
-    # This is a recording of a `new` method (expanded) that
-    # was created from an `initialize` method (original)
-    record NewExpansion, original : Def, expanded : Def
-
-    @new_expansions = [] of NewExpansion
-    getter new_expansions
-
-    def define_new_methods
+    def define_new_methods(new_expansions)
       # Here we complete the body of `self.new` methods
       # created from `initialize` methods.
-      @new_expansions.each do |expansion|
-        expansion.expanded.fill_body_from_initialize(expansion.original.owner)
+      new_expansions.each do |expansion|
+        expansion[:expanded].fill_body_from_initialize(expansion[:original].owner)
       end
 
       # We also need to define empty `new` methods for types
       # that don't have any `initialize` methods.
-      define_default_new(@program)
+      define_default_new(self)
+      file_modules.each_value do |file_module|
+        define_default_new(file_module)
+      end
     end
 
     def define_default_new(type)
@@ -37,6 +33,8 @@ module Crystal
               end
 
       if check
+        type = type.as(ModuleType)
+
         self_initialize_methods = type.lookup_defs_without_parents("initialize")
         self_new_methods = type.metaclass.lookup_defs_without_parents("new")
 
@@ -48,7 +46,7 @@ module Crystal
         if !has_new_or_initialize
           # Add self.new
           new_method = Def.argless_new(type)
-          type.metaclass.add_def(new_method)
+          type.metaclass.as(ModuleType).add_def(new_method)
 
           # Also add `initialize`, so `super` in a subclass
           # inside an `initialize` will find this one
@@ -64,7 +62,7 @@ module Crystal
         has_self_initialize_methods = !self_initialize_methods.empty?
         if !has_self_initialize_methods
           is_generic = type.is_a?(GenericClassType)
-          inherits_from_generic = type.ancestors.any?(&.is_a?(InheritedGenericClass))
+          inherits_from_generic = type.ancestors.any?(&.is_a?(GenericClassInstanceType))
           if is_generic || inherits_from_generic
             has_default_self_new = self_new_methods.any? do |a_def|
               a_def.args.empty? && !a_def.yields
@@ -78,22 +76,38 @@ module Crystal
             if initialize_methods.empty?
               # If the type has `self.new()`, don't override it
               unless has_default_self_new
-                type.metaclass.add_def(Def.argless_new(type))
+                type.metaclass.as(ModuleType).add_def(Def.argless_new(type))
                 type.add_def(Def.argless_initialize)
               end
             else
+              initialize_owner = nil
+
               initialize_methods.each do |initialize|
                 # If the type has `self.new()`, don't override it
                 if initialize.args.empty? && !initialize.yields && has_default_self_new
                   next
                 end
 
+                # Only copy initialize methods from the first ancestor that has them
+                if initialize_owner && initialize.owner != initialize_owner
+                  break
+                end
+
+                initialize_owner = initialize.owner
+
                 new_method = initialize.expand_new_from_initialize(type)
-                type.metaclass.add_def(new_method)
+                type.metaclass.as(ModuleType).add_def(new_method)
+              end
+
+              # Copy non-generated `new` methods from parent to child
+              new_methods.each do |new_method|
+                next if new_method.new?
+
+                type.metaclass.as(ModuleType).add_def(new_method.clone)
               end
             end
           else
-            type.lookup_new_in_ancestors = true
+            type.as(ClassType).lookup_new_in_ancestors = true
           end
         end
       end
@@ -118,10 +132,13 @@ module Crystal
       new_def.yields = yields
       new_def.visibility = Visibility::Private if visibility.private?
       new_def.new = true
+      new_def.location = location
+      new_def.doc = doc
+      new_def.free_vars = free_vars
 
       # Forward block argument if any
-      if uses_block_arg
-        block_arg = block_arg.not_nil!
+      if uses_block_arg?
+        block_arg = self.block_arg.not_nil!
         new_def.block_arg = block_arg.clone
         new_def.uses_block_arg = true
       end
@@ -131,7 +148,11 @@ module Crystal
 
     def fill_body_from_initialize(instance_type)
       if instance_type.is_a?(GenericClassType)
-        generic_type_args = instance_type.type_vars.map { |type_var| Path.new(type_var).as(ASTNode) }
+        generic_type_args = instance_type.type_vars.map_with_index do |type_var, i|
+          arg = Path.new(type_var).as(ASTNode)
+          arg = Splat.new(arg) if instance_type.splat_index == i
+          arg
+        end
         new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
         alloc = Call.new(new_generic, "allocate")
       else
@@ -170,8 +191,8 @@ module Crystal
         new_vars << DoubleSplat.new(Var.new(double_splat.name))
       end
 
-      assign = Assign.new(obj, alloc)
-      init = Call.new(obj, "initialize", new_vars, named_args: named_args)
+      assign = Assign.new(obj.clone, alloc)
+      init = Call.new(obj.clone, "initialize", new_vars, named_args: named_args).at(self)
 
       # If the initialize yields, call it with a block
       # that yields those arguments.
@@ -184,12 +205,13 @@ module Crystal
       exps = Array(ASTNode).new(4)
       exps << assign
       exps << init
-      exps << Call.new(Path.global("GC"), "add_finalizer", obj) if instance_type.has_finalizer?
+      exps << If.new(RespondsTo.new(obj.clone, "finalize"),
+        Call.new(Path.global("GC"), "add_finalizer", obj.clone).at(self))
       exps << obj
 
       # Forward block argument if any
-      if uses_block_arg
-        block_arg = block_arg.not_nil!
+      if uses_block_arg?
+        block_arg = self.block_arg.not_nil!
         init.block_arg = Var.new(block_arg.name)
       end
 
@@ -197,23 +219,28 @@ module Crystal
     end
 
     def self.argless_new(instance_type)
+      loc = instance_type.locations.try &.first?
+
       # This creates:
       #
       #    def new
       #      x = allocate
-      #      GC.add_finalizer x
+      #      GC.add_finalizer x if x.responds_to? :finalize
       #      x
       #    end
       var = Var.new("x")
-      alloc = Call.new(nil, "allocate")
+      alloc = Call.new(nil, "allocate").at(loc)
       assign = Assign.new(var, alloc)
 
+      call = Call.new(Path.global("GC"), "add_finalizer", var.clone).at(loc)
       exps = Array(ASTNode).new(3)
       exps << assign
-      exps << Call.new(Path.global("GC"), "add_finalizer", var) if instance_type.has_finalizer?
-      exps << var
+      exps << If.new(RespondsTo.new(var.clone, "finalize"), call)
+      exps << var.clone
 
-      Def.new("new", body: exps)
+      a_def = Def.new("new", body: exps).at(loc)
+      a_def.new = true
+      a_def
     end
 
     def self.argless_initialize
@@ -251,8 +278,8 @@ module Crystal
       expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index)
       expansion.yields = yields
       expansion.visibility = Visibility::Private if visibility.private?
-      if uses_block_arg
-        block_arg = block_arg.not_nil!
+      if uses_block_arg?
+        block_arg = self.block_arg.not_nil!
         expansion.block_arg = block_arg.clone
         expansion.uses_block_arg = true
       end

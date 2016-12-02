@@ -97,4 +97,31 @@ describe "Codegen: double splat" do
       foo 1000, 20, z: 30, w: 40
       )).to_i.should eq((1000 - 20*30) * 40)
   end
+
+  it "evaluates double splat argument just once (#2677)" do
+    run(%(
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      def data
+        Global.x += 1
+        {x: Global.x, y: Global.x, z: Global.x}
+      end
+
+      def test(x, y, z)
+      end
+
+      test(**data)
+
+      Global.x
+      )).to_i.should eq(1)
+  end
 end

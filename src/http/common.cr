@@ -1,8 +1,9 @@
-require "zlib" ifdef !without_zlib
+{% if !flag?(:without_zlib) %}
+  require "zlib"
+{% end %}
 
 module HTTP
-  # :nodoc:
-  DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
+  private DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
 
   # :nodoc:
   enum BodyType
@@ -33,9 +34,9 @@ module HTTP
         end
 
         if decompress && body
-          ifdef without_zlib
+          {% if flag?(:without_zlib) %}
             raise "Can't decompress because `-D without_zlib` was passed at compile time"
-          else
+          {% else %}
             encoding = headers["Content-Encoding"]?
             case encoding
             when "gzip"
@@ -43,7 +44,7 @@ module HTTP
             when "deflate"
               body = Zlib::Inflate.new(body, sync_close: true)
             end
-          end
+          {% end %}
         end
 
         check_content_type_charset(body, headers)
@@ -85,7 +86,7 @@ module HTTP
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
-    while middle_index < bytesize && cstr[middle_index].chr.whitespace?
+    while middle_index < bytesize && cstr[middle_index].unsafe_chr.ascii_whitespace?
       middle_index += 1
     end
 
@@ -106,46 +107,58 @@ module HTTP
 
   # :nodoc:
   def self.serialize_headers_and_body(io, headers, body, body_io, version)
-    # prepare either chunked response headers if protocol supports it
-    # or consume the io to get the Content-Length header
-    unless body
-      if body_io
-        if Client::Response.supports_chunked?(version)
-          headers["Transfer-Encoding"] = "chunked"
-          body = nil
-        else
-          body = body_io.gets_to_end
-          body_io = nil
-        end
-      end
-    end
-
     if body
-      headers["Content-Length"] = body.bytesize.to_s
+      serialize_headers_and_string_body(io, headers, body)
+    elsif body_io
+      content_length = content_length(headers)
+      if content_length
+        serialize_headers(io, headers)
+        copied = IO.copy(body_io, io)
+        if copied != content_length
+          raise ArgumentError.new("Content-Length header is #{content_length} but body had #{copied} bytes")
+        end
+      elsif Client::Response.supports_chunked?(version)
+        headers["Transfer-Encoding"] = "chunked"
+        serialize_headers(io, headers)
+        serialize_chunked_body(io, body_io)
+      else
+        body = body_io.gets_to_end
+        serialize_headers_and_string_body(io, headers, body)
+      end
+    else
+      serialize_headers(io, headers)
     end
+  end
 
+  def self.serialize_headers_and_string_body(io, headers, body)
+    headers["Content-Length"] = body.bytesize.to_s
+    serialize_headers(io, headers)
+    io << body
+  end
+
+  def self.serialize_headers(io, headers)
     headers.each do |name, values|
       values.each do |value|
         io << name << ": " << value << "\r\n"
       end
     end
-
     io << "\r\n"
+  end
 
-    if body
-      io << body
+  def self.serialize_chunked_body(io, body)
+    buf = uninitialized UInt8[8192]
+    while (buf_length = body.read(buf.to_slice)) > 0
+      buf_length.to_s(16, io)
+      io << "\r\n"
+      io.write(buf.to_slice[0, buf_length])
+      io << "\r\n"
     end
+    io << "0\r\n\r\n"
+  end
 
-    if body_io
-      buf = uninitialized UInt8[8192]
-      while (buf_length = body_io.read(buf.to_slice)) > 0
-        buf_length.to_s(16, io)
-        io << "\r\n"
-        io.write(buf.to_slice[0, buf_length])
-        io << "\r\n"
-      end
-      io << "0\r\n\r\n"
-    end
+  # :nodoc
+  def self.content_length(headers)
+    headers["Content-Length"]?.try &.to_u64?
   end
 
   # :nodoc:
@@ -199,7 +212,7 @@ module HTTP
   def self.parse_time(time_str : String) : Time?
     DATE_PATTERNS.each do |pattern|
       begin
-        return Time.parse(time_str, pattern)
+        return Time.parse(time_str, pattern, kind: Time::Kind::Utc)
       rescue Time::Format::Error
       end
     end
@@ -209,7 +222,7 @@ module HTTP
 
   def self.rfc1123_date(time : Time) : String
     # TODO: GMT should come from the Time classes instead
-    time.to_s("%a, %d %b %Y %H:%M:%S GMT")
+    time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
   end
 
   # Returns the default status message of the given HTTP status code.

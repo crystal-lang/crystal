@@ -164,16 +164,36 @@ describe "Code gen: primitives" do
 
   it "doesn't optimize away call whose obj is not passed as self (#2226)" do
     run(%(
-      $x = 1
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
-        $x = 2
+        Global.x = 2
         3
       end
 
       foo.class.crystal_type_id
 
-      $x
+      Global.x
       )).to_i.should eq(2)
+  end
+
+  it "uses built-in llvm function that returns a tuple" do
+    run(%(
+      lib Intrinsics
+        fun sadd_i32_with_overlow = "llvm.sadd.with.overflow.i32"(a : Int32, b : Int32) : {Int32, Bool}
+      end
+
+      x, o = Intrinsics.sadd_i32_with_overlow(1, 2)
+      x
+      )).to_i.should eq(3)
   end
 end

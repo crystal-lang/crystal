@@ -1,0 +1,451 @@
+# Base visitor for semantic analysis. It traveses the whole
+# ASTNode tree, keeping a `current_type` in context, which corresponds
+# to the type being visited according to class/module/lib definitions.
+abstract class Crystal::SemanticVisitor < Crystal::Visitor
+  getter program : Program
+
+  # At every point there's a current type.
+  # In the beginnig this is the `Program` (top-level), but when
+  # a class definition is visited this changes to that type, and so on.
+  property current_type : ModuleType
+
+  property! scope : Type
+  setter scope
+
+  @free_vars : Hash(String, TypeVar)?
+  @path_lookup : Type?
+  @untyped_def : Def?
+  @typed_def : Def?
+  @block : Block?
+
+  def initialize(@program, @vars = MetaVars.new)
+    @current_type = @program
+    @exp_nest = 0
+    @in_lib = false
+    @in_c_struct_or_union = false
+    @in_is_a = false
+  end
+
+  # Transform require to its source code.
+  # The source code can be a Nop if the file was already required.
+  def visit(node : Require)
+    if expanded = node.expanded
+      expanded.accept self
+      return false
+    end
+
+    if inside_exp?
+      node.raise "can't require dynamically"
+    end
+
+    location = node.location
+    filenames = @program.find_in_path(node.string, location.try &.original_filename)
+    if filenames
+      nodes = Array(ASTNode).new(filenames.size)
+      filenames.each do |filename|
+        if @program.add_to_requires(filename)
+          parser = Parser.new File.read(filename), @program.string_pool
+          parser.filename = filename
+          parser.wants_doc = @program.wants_doc?
+          parsed_nodes = parser.parse
+          parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
+          # We must type the node immediately, in case a file requires another
+          # *before* one of the files in `filenames`
+          parsed_nodes.accept self
+          nodes << FileNode.new(parsed_nodes, filename)
+        end
+      end
+      expanded = Expressions.from(nodes)
+    else
+      expanded = Nop.new
+    end
+
+    node.expanded = expanded
+    node.bind_to(expanded)
+    false
+  rescue ex : Crystal::Exception
+    node.raise "while requiring \"#{node.string}\"", ex
+  rescue ex
+    node.raise "while requiring \"#{node.string}\": #{ex.message}"
+  end
+
+  def visit(node : ClassDef)
+    check_outside_exp node, "declare class"
+    pushing_type(node.resolved_type) do
+      node.hook_expansions.try &.each &.accept self
+      node.body.accept self
+    end
+    node.set_type(@program.nil)
+    false
+  end
+
+  def visit(node : ModuleDef)
+    check_outside_exp node, "declare module"
+    pushing_type(node.resolved_type) do
+      node.body.accept self
+    end
+    node.set_type(@program.nil)
+    false
+  end
+
+  def visit(node : EnumDef)
+    check_outside_exp node, "declare enum"
+    pushing_type(node.resolved_type) do
+      node.members.each &.accept self
+    end
+    node.set_type(@program.nil)
+    false
+  end
+
+  def visit(node : LibDef)
+    check_outside_exp node, "declare lib"
+    node.set_type(@program.nil)
+    false
+  end
+
+  def visit(node : Include)
+    check_outside_exp node, "include"
+    node.hook_expansions.try &.each &.accept self
+    node.set_type(@program.nil)
+    false
+  end
+
+  def visit(node : Extend)
+    check_outside_exp node, "extend"
+    node.hook_expansions.try &.each &.accept self
+    node.set_type(@program.nil)
+    false
+  end
+
+  def visit(node : Alias)
+    check_outside_exp node, "declare alias"
+    node.set_type(@program.nil)
+    false
+  end
+
+  def visit(node : Def)
+    check_outside_exp node, "declare def"
+    node.hook_expansions.try &.each &.accept self
+    node.set_type(@program.nil)
+    false
+  end
+
+  def visit(node : Macro)
+    check_outside_exp node, "declare macro"
+    node.set_type(@program.nil)
+    false
+  end
+
+  def visit(node : Attribute)
+    attributes = @attributes ||= [] of Attribute
+    attributes << node
+    false
+  end
+
+  def visit(node : Call)
+    !expand_macro(node, raise_on_missing_const: false)
+  end
+
+  def visit(node : MacroExpression)
+    expand_inline_macro node
+    false
+  end
+
+  def visit(node : MacroIf)
+    expand_inline_macro node
+    false
+  end
+
+  def visit(node : MacroFor)
+    expand_inline_macro node
+    false
+  end
+
+  def visit(node : ExternalVar | Path | Generic | ProcNotation | Union | Metaclass | Self | TypeOf)
+    false
+  end
+
+  def visit(node : ASTNode)
+    true
+  end
+
+  def visit_any(node)
+    @exp_nest += 1 if nesting_exp?(node)
+
+    true
+  end
+
+  def end_visit_any(node)
+    @exp_nest -= 1 if nesting_exp?(node)
+
+    if @attributes
+      case node
+      when Expressions
+        # Nothing, will be taken care in individual expressions
+      when Attribute
+        # Nothing
+      when Nop
+        # Nothing (might happen as a result of an evaulated macro if)
+      when Call
+        # Don't clear attributes if these were generated by a macro
+        unless node.expanded
+          @attributes = nil
+        end
+      when MacroExpression, MacroIf, MacroFor
+        # Don't clear attributes if these were generated by a macro
+      else
+        @attributes = nil
+      end
+    end
+  end
+
+  def nesting_exp?(node)
+    case node
+    when Expressions, LibDef, CStructOrUnionDef, ClassDef, ModuleDef, FunDef, Def, Macro,
+         Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf, MacroExpression,
+         FileNode, TypeDeclaration, Require
+      false
+    else
+      true
+    end
+  end
+
+  def lookup_type(node : ASTNode, free_vars = nil)
+    current_type.lookup_type(node, free_vars: free_vars, allow_typeof: false)
+  end
+
+  def check_outside_exp(node, op)
+    node.raise "can't #{op} dynamically" if inside_exp?
+  end
+
+  def expand_macro(node, raise_on_missing_const = true, first_pass = false)
+    if expanded = node.expanded
+      @exp_nest -= 1
+      begin
+        expanded.accept self
+      rescue ex : Crystal::Exception
+        node.raise "expanding macro", ex
+      end
+      @exp_nest += 1
+      return true
+    end
+
+    obj = node.obj
+    case obj
+    when Path
+      base_type = @path_lookup || @scope || @current_type
+      macro_scope = base_type.lookup_type_var?(obj, free_vars: @free_vars, raise: raise_on_missing_const)
+      return false unless macro_scope.is_a?(Type)
+
+      macro_scope = macro_scope.remove_alias
+
+      the_macro = macro_scope.metaclass.lookup_macro(node.name, node.args, node.named_args)
+    when Nil
+      return false if node.name == "super" || node.name == "previous_def"
+      the_macro = node.lookup_macro
+    else
+      return false
+    end
+
+    return false unless the_macro
+
+    # If we find a macro outside a def/block and this is not the first pass it means that the
+    # macro was defined before we first found this call, so it's an error
+    # (we must analyze the macro expansion in all passes)
+    if !@typed_def && !@block && !first_pass
+      node.raise "macro '#{node.name}' must be defined before this point but is defined later"
+    end
+
+    expansion_scope = (macro_scope || @scope || current_type)
+
+    args = expand_macro_arguments(node, expansion_scope)
+
+    @exp_nest -= 1
+    generated_nodes = expand_macro(the_macro, node) do
+      old_args = node.args
+      node.args = args
+      expanded = @program.expand_macro the_macro, node, expansion_scope, @path_lookup, @untyped_def
+      node.args = old_args
+      expanded
+    end
+    @exp_nest += 1
+
+    node.expanded = generated_nodes
+    node.bind_to generated_nodes
+
+    true
+  end
+
+  def expand_macro(the_macro, node, mode = nil)
+    begin
+      expanded_macro = yield
+    rescue ex : Crystal::Exception
+      node.raise "expanding macro", ex
+    end
+
+    mode ||= if @in_c_struct_or_union
+               Program::MacroExpansionMode::Normal
+             elsif @in_lib
+               Program::MacroExpansionMode::Lib
+             else
+               Program::MacroExpansionMode::Normal
+             end
+
+    generated_nodes = @program.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
+      inside_def: !!@typed_def,
+      inside_type: !current_type.is_a?(Program),
+      inside_exp: @exp_nest > 0,
+      mode: mode,
+    )
+
+    if node_doc = node.doc
+      generated_nodes.accept PropagateDocVisitor.new(node_doc)
+    end
+
+    generated_nodes.accept self
+    generated_nodes
+  end
+
+  class PropagateDocVisitor < Visitor
+    @doc : String
+
+    def initialize(@doc)
+    end
+
+    def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Alias | Assign)
+      node.doc ||= @doc
+      false
+    end
+
+    def visit(node : ASTNode)
+      true
+    end
+  end
+
+  def expand_macro_arguments(node, expansion_scope)
+    # If any argument is a MacroExpression, solve it first and
+    # replace Path with Const/TypeNode if it denotes such thing
+    args = node.args
+    if args.any? &.is_a?(MacroExpression)
+      @exp_nest -= 1
+      args = args.map do |arg|
+        if arg.is_a?(MacroExpression)
+          arg.accept self
+          expanded = arg.expanded.not_nil!
+          if expanded.is_a?(Path)
+            expanded_type = expansion_scope.lookup_path(expanded)
+            case expanded_type
+            when Const
+              expanded = expanded_type.value
+            when Type
+              expanded = TypeNode.new(expanded_type)
+            end
+          end
+          expanded
+        else
+          arg
+        end
+      end
+      @exp_nest += 1
+    end
+    args
+  end
+
+  def expand_inline_macro(node, mode = nil)
+    if expanded = node.expanded
+      begin
+        expanded.accept self
+      rescue ex : Crystal::Exception
+        node.raise "expanding macro", ex
+      end
+      return expanded
+    end
+
+    the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
+
+    generated_nodes = expand_macro(the_macro, node, mode: mode) do
+      @program.expand_macro node, (@scope || current_type), @path_lookup, @free_vars, @untyped_def
+    end
+
+    node.expanded = generated_nodes
+    node.bind_to generated_nodes
+
+    generated_nodes
+  end
+
+  def check_valid_attributes(node, valid_attributes, desc)
+    attributes = @attributes
+    return unless attributes
+
+    attributes.each do |attr|
+      unless valid_attributes.includes?(attr.name)
+        attr.raise "illegal attribute for #{desc}, valid attributes are: #{valid_attributes.join ", "}"
+      end
+
+      if attr.name != "Primitive"
+        if !attr.args.empty? || attr.named_args
+          attr.raise "#{attr.name} attribute can't receive arguments"
+        end
+      end
+    end
+
+    attributes
+  end
+
+  def check_allowed_in_lib(node, type = node.type.instance_type)
+    unless type.allowed_in_lib?
+      msg = String.build do |msg|
+        msg << "only primitive types, pointers, structs, unions, enums and tuples are allowed in lib declarations, not #{type}"
+        msg << " (did you mean LibC::Int?)" if type == @program.int
+        msg << " (did you mean LibC::Float?)" if type == @program.float
+      end
+      node.raise msg
+    end
+
+    if type.is_a?(TypeDefType) && type.typedef.proc?
+      type = type.typedef
+    end
+
+    type
+  end
+
+  def check_declare_var_type(node, declared_type, variable_kind)
+    type = declared_type.instance_type
+
+    if type.is_a?(GenericClassType)
+      node.raise "can't declare variable of generic non-instantiated type #{type}"
+    end
+
+    Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as the type of #{variable_kind}")
+
+    declared_type
+  end
+
+  def class_var_owner(node)
+    scope = (@scope || current_type).class_var_owner
+    case scope
+    when Program
+      node.raise "can't use class variables at the top level"
+    when GenericClassType, GenericModuleType
+      node.raise "can't use class variables in generic types"
+    end
+
+    scope.as(ClassVarContainer)
+  end
+
+  def interpret_enum_value(node : ASTNode, target_type = nil)
+    interpreter = MathInterpreter.new(current_type, self)
+    interpreter.interpret(node, target_type)
+  end
+
+  def inside_exp?
+    @exp_nest > 0
+  end
+
+  def pushing_type(type : ModuleType)
+    old_type = @current_type
+    @current_type = type
+    yield
+    @current_type = old_type
+  end
+end

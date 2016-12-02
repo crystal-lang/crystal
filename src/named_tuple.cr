@@ -34,8 +34,48 @@ struct NamedTuple
   #
   # {}                         # syntax error
   # ```
-  def self.new(**options)
+  def self.new(**options : **T)
     options
+  end
+
+  # Creates a named tuple from the given hash, with elements casted to the given types. See `#from`.
+  #
+  # ```
+  # NamedTuple(foo: String, bar: Int64).from({:foo => "world", :bar => 2})       # => {foo: "world", bar: 2}
+  # NamedTuple(foo: String, bar: Int64).from({"foo" => "world", "bar" => 2})     # => {foo: "world", bar: 2}
+  # NamedTuple(foo: String, bar: Int64).from({:foo => "world", :bar => 2}).class # => {foo: String, bar: Int64}
+  # ```
+  def self.from(hash : Hash)
+    {% begin %}
+    NamedTuple.new(**{{T}}).from(hash)
+    {% end %}
+  end
+
+  # Expects to be called on a named tuple whose values are types, creates a tuple from the given hash,
+  # with types casted appropriately. The hash keys must be either symbols or strings.
+  #
+  # This allows you to easily pass a hash as individual named arguments to a method.
+  #
+  # ```
+  # def speak_about(thing : String, n : Int64)
+  #   "I see #{n} #{thing}s"
+  # end
+  #
+  # data = JSON.parse(%({"thing": "world", "n": 2})).as_h
+  # speak_about(**{thing: String, n: Int64}.from(data)) # => "I see 2 worlds"
+  # ```
+  def from(hash : Hash)
+    if size != hash.size
+      raise ArgumentError.new("Expected a hash with #{size} keys but one with #{hash.size} keys was given.")
+    end
+
+    {% begin %}
+      NamedTuple.new(
+      {% for key, value in T %}
+        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash["{{key}}"] }),
+      {% end %}
+      )
+    {% end %}
   end
 
   # Returns the value for the given *key*, if there's such key, otherwise raises `KeyError`.
@@ -46,10 +86,13 @@ struct NamedTuple
   # key = :name
   # tuple[key] # => "Crystal"
   #
+  # key = "year"
+  # tuple[key] # => 2011
+  #
   # key = :other
   # tuple[key] # # => KeyError
   # ```
-  def [](key : Symbol)
+  def [](key : Symbol | String)
     fetch(key) { raise KeyError.new "Missing named tuple key: #{key.inspect}" }
   end
 
@@ -61,10 +104,13 @@ struct NamedTuple
   # key = :name
   # tuple[key]? # => "Crystal"
   #
+  # key = "year"
+  # tuple[key] # => 2011
+  #
   # key = :other
   # tuple[key]? # => nil
   # ```
-  def []?(key : Symbol)
+  def []?(key : Symbol | String)
     fetch(key, nil)
   end
 
@@ -73,9 +119,10 @@ struct NamedTuple
   # ```
   # tuple = {name: "Crystal", year: 2011}
   # tuple.fetch(:name, "Unknown") # => "Crystal"
+  # tuple.fetch("year", 0)        # => 2011
   # tuple.fetch(:other, 0)        # => 0
   # ```
-  def fetch(key : Symbol, default_value)
+  def fetch(key : Symbol | String, default_value)
     fetch(key) { default_value }
   end
 
@@ -89,6 +136,20 @@ struct NamedTuple
   def fetch(key : Symbol, &block)
     {% for key in T %}
       return self[{{key.symbolize}}] if {{key.symbolize}} == key
+    {% end %}
+    yield
+  end
+
+  # Returns the value for the given *key*, if there's such key, otherwise the value returned by the block.
+  #
+  # ```
+  # tuple = {name: "Crystal", year: 2011}
+  # tuple.fetch("name") { "Unknown" } # => "Crystal"
+  # tuple.fetch("other") { 0 }        # => 0
+  # ```
+  def fetch(key : String, &block)
+    {% for key in T %}
+      return self[{{key.symbolize}}] if {{key.stringify}} == key
     {% end %}
     yield
   end
@@ -168,11 +229,39 @@ struct NamedTuple
       {% if i > 0 %}
         io << ", "
       {% end %}
-      io << {{key.stringify}}
+      key = {{key.stringify}}
+      if Symbol.needs_quotes?(key)
+        key.inspect(io)
+      else
+        io << key
+      end
       io << ": "
       self[{{key.symbolize}}].inspect(io)
     {% end %}
     io << "}"
+  end
+
+  def pretty_print(pp)
+    pp.surround("{", "}", left_break: nil, right_break: nil) do
+      {% for key, value, i in T %}
+        {% if i > 0 %}
+          pp.comma
+        {% end %}
+        pp.group do
+          key = {{key.stringify}}
+          if Symbol.needs_quotes?(key)
+            pp.text key.inspect
+          else
+            pp.text key
+          end
+          pp.text ": "
+          pp.nest do
+            pp.breakable ""
+            self[{{key.symbolize}}].pretty_print(pp)
+          end
+        end
+      {% end %}
+    end
   end
 
   # Yields each key and value in this named tuple.
@@ -355,7 +444,7 @@ struct NamedTuple
     compare_with_other_named_tuple(other)
   end
 
-  private def compare_with_other_named_tuple(other : U)
+  private def compare_with_other_named_tuple(other : U) forall U
     {% if T.keys.sort == U.keys.sort %}
       {% for key in T %}
         return false unless self[{{key.symbolize}}] == other[{{key.symbolize}}]
@@ -367,17 +456,12 @@ struct NamedTuple
     {% end %}
   end
 
-  # Returns *self*.
-  def dup
-    self
-  end
-
   # Returns a named tuple with the same keys but with cloned values, using the `clone` method.
   def clone
     {% begin %}
       {
         {% for key in T %}
-          {{key}}: self[{{key.symbolize}}].clone,
+          {{key.stringify}}: self[{{key.symbolize}}].clone,
         {% end %}
       }
     {% end %}

@@ -1,3 +1,5 @@
+require "./node"
+
 struct XML::Attributes
   include Enumerable(Node)
 

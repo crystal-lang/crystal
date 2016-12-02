@@ -98,4 +98,9 @@ describe "BigFloat" do
     b = 123.to_big_f
     b.hash.should eq(b.to_f64.hash)
   end
+
+  it "clones" do
+    x = 1.to_big_f
+    x.clone.should eq(x)
+  end
 end

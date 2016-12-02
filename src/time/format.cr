@@ -52,6 +52,9 @@ struct Time::Format
   # The ISO 8601 date format. This is just `"%F"`.
   ISO_8601_DATE = new "%F"
 
+  # The ISO 8601 datetime format. This is just `"%FT%X%z"`.
+  ISO_8601_DATE_TIME = new "%FT%X%z"
+
   # Error raised when an invalid pattern is used.
   class Error < ::Exception
   end

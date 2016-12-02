@@ -7,11 +7,11 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = ULong
 
-  ifdef x86_64
+  {% if flag?(:x86_64) || flag?(:aarch64) %}
     alias MpExp = Int64
-  else
+  {% else %}
     alias MpExp = Int32
-  end
+  {% end %}
 
   struct MPZ
     _mp_alloc : Int32
@@ -55,8 +55,14 @@ lib LibGMP
   fun fdiv_q = __gmpz_fdiv_q(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun fdiv_q_ui = __gmpz_fdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
 
+  fun tdiv_q = __gmpz_tdiv_q(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+  fun tdiv_q_ui = __gmpz_tdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
+
   fun fdiv_r = __gmpz_fdiv_r(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun fdiv_r_ui = __gmpz_fdiv_r_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
+
+  fun tdiv_r = __gmpz_tdiv_r(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+  fun tdiv_r_ui = __gmpz_tdiv_r_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
 
   fun neg = __gmpz_neg(rop : MPZ*, op : MPZ*)
   fun abs = __gmpz_abs(rop : MPZ*, op : MPZ*)
@@ -83,6 +89,13 @@ lib LibGMP
   fun cmp_si = __gmpz_cmp_si(op1 : MPZ*, op2 : Long) : Int
   fun cmp_ui = __gmpz_cmp_ui(op1 : MPZ*, op2 : ULong) : Int
   fun cmp_d = __gmpz_cmp_d(op1 : MPZ*, op2 : Double) : Int
+
+  # # Number Theoretic Functions
+
+  fun gcd = __gmpz_gcd(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+  fun gcd_ui = __gmpz_gcd_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong) : ULong
+  fun lcm = __gmpz_lcm(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+  fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
 
   # MPQ
   struct MPQ

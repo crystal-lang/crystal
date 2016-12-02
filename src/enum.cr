@@ -87,7 +87,7 @@ struct Enum
   include Comparable(self)
 
   # Appends a String representation of this enum member to the given IO. See `to_s`.
-  macro def to_s(io : IO) : Nil
+  def to_s(io : IO) : Nil
     {% if @type.has_attribute?("Flags") %}
       if value == 0
         io << "None"
@@ -125,7 +125,7 @@ struct Enum
   #
   # Color.new(10).to_s # => "10"
   # ```
-  macro def to_s : String
+  def to_s : String
     {% if @type.has_attribute?("Flags") %}
       String.build { |io| to_s(io) }
     {% else %}
@@ -279,7 +279,7 @@ struct Enum
   # ```
   # Color.names # => ["Red", "Green", "Blue"]
   # ```
-  macro def self.names : Array(String)
+  def self.names : Array(String)
     {% if @type.has_attribute?("Flags") %}
       {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
     {% else %}
@@ -292,7 +292,7 @@ struct Enum
   # ```
   # Color.values # => [Color::Red, Color::Green, Color::Blue]
   # ```
-  macro def self.values : Array(self)
+  def self.values : Array(self)
     {% if @type.has_attribute?("Flags") %}
       {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map { |e| "#{@type}::#{e.id}".id } }}
     {% else %}
@@ -309,9 +309,17 @@ struct Enum
   # Color.from_value?(2) # => Color::Blue
   # Color.from_value?(3) # => nil
   # ```
-  macro def self.from_value?(value) : self | Nil
-    {% for member in @type.constants %}
-      return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
+  def self.from_value?(value) : self | Nil
+    {% if @type.has_attribute?("Flags") %}
+      mask = {% for member, i in @type.constants %}\
+        {% if i != 0 %} | {% end %}\
+        {{@type}}::{{member}}.value{% end %}
+      return if (mask & value != value) || (value == 0 && values.none? { |val| val.to_i == 0 })
+      return new(value)
+    {% else %}
+      {% for member in @type.constants %}
+        return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
+      {% end %}
     {% end %}
     nil
   end
@@ -329,7 +337,7 @@ struct Enum
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
   end
 
-  # macro def self.to_h : Hash(String, self)
+  # def self.to_h : Hash(String, self)
   #   {
   #     {% for member in @type.constants %}
   #       {{member.stringify}} => {{member}},
@@ -338,8 +346,11 @@ struct Enum
   # end
 
   # Returns the enum member that has the given name, or
-  # raises if no such member exists. The comparison is made by using
-  # `String#camelcase` between *string* and the enum members names.
+  # raises `ArgumentError` if no such member exists. The comparison is made by using
+  # `String#camelcase` and `String#downcase` between *string* and
+  # the enum members names, so a member named "FourtyTwo" or "FOURTY_TWO"
+  # is found with any of these strings: "fourty_two", "FourtyTwo", "FOURTY_TWO",
+  # "FOURTYTWO", "fourtytwo".
   #
   # ```
   # Color.parse("Red")    # => Color::Red
@@ -347,23 +358,26 @@ struct Enum
   # Color.parse("Yellow") # => Exception
   # ```
   def self.parse(string) : self
-    parse?(string) || raise "Unknown enum #{self} value: #{string}"
+    parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")
   end
 
   # Returns the enum member that has the given name, or
   # `nil` if no such member exists. The comparison is made by using
-  # `String#camelcase` between *string* and the enum members names.
+  # `String#camelcase` and `String#downcase` between *string* and
+  # the enum members names, so a member named "FourtyTwo" or "FOURTY_TWO"
+  # is found with any of these strings: "fourty_two", "FourtyTwo", "FOURTY_TWO",
+  # "FOURTYTWO", "fourtytwo".
   #
   # ```
   # Color.parse?("Red")    # => Color::Red
   # Color.parse?("BLUE")   # => Color::Blue
   # Color.parse?("Yellow") # => nil
   # ```
-  macro def self.parse?(string) : self?
+  def self.parse?(string) : self?
     {% begin %}
-      case string.camelcase
+      case string.camelcase.downcase
       {% for member in @type.constants %}
-        when {{member.stringify.camelcase}}
+        when {{member.stringify.camelcase.downcase}}
           {{@type}}::{{member}}
       {% end %}
       else
@@ -372,7 +386,11 @@ struct Enum
     {% end %}
   end
 
-  # Convenience macro to create an *or*ed enum from the given members.
+  def clone
+    self
+  end
+
+  # Convenience macro to create a combined enum (combines given members using `|` (or) logical operator)
   #
   # ```
   # IOMode.flags(Read, Write) # => IOMode::Read | IOMode::Write

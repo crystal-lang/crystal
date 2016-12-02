@@ -32,12 +32,24 @@ class Reference
     false
   end
 
+  # Returns a shallow copy of this object.
+  #
+  # This allocates a new object and copies the contents of
+  # `self` into it.
+  def dup
+    {% begin %}
+      dup = {{@type}}.allocate
+      dup.as(Void*).copy_from(self.as(Void*), instance_sizeof({{@type}}))
+      dup
+    {% end %}
+  end
+
   # Returns this reference's `object_id` as the hash value.
   def hash
     object_id
   end
 
-  macro def inspect(io : IO) : Nil
+  def inspect(io : IO) : Nil
     io << "#<" << {{@type.name.id.stringify}} << ":0x"
     object_id.to_s(16, io)
 
@@ -57,6 +69,33 @@ class Reference
     nil
   end
 
+  def pretty_print(pp) : Nil
+    {% if @type.methods.any? &.name.==("inspect") %}
+      pp.text inspect
+    {% else %}
+      prefix = "#<#{{{@type.name.id.stringify}}}:0x#{object_id.to_s(16)}"
+      executed = exec_recursive(:pretty_print) do
+        pp.surround(prefix, ">", left_break: " ", right_break: nil) do
+          {% for ivar, i in @type.instance_vars.map(&.name).sort %}
+              {% if i > 0 %}
+                pp.comma
+              {% end %}
+              pp.group do
+                pp.text "@{{ivar.id}}="
+                pp.nest do
+                  pp.breakable ""
+                  @{{ivar.id}}.pretty_print(pp)
+                end
+              end
+            {% end %}
+        end
+      end
+      unless executed
+        pp.text "#{prefix} ...>"
+      end
+    {% end %}
+  end
+
   def to_s(io : IO) : Nil
     io << "#<" << self.class.name << ":0x"
     object_id.to_s(16, io)
@@ -64,12 +103,15 @@ class Reference
     nil
   end
 
-  # TODO: Boehm GC doesn't scan thread local vars, so we can't use it yet
-  # @[ThreadLocal]
-  $_exec_recursive : Hash({UInt64, Symbol}, Bool)?
+  # :nodoc:
+  module ExecRecursive
+    def self.hash
+      @@exec_recursive ||= {} of {UInt64, Symbol} => Bool
+    end
+  end
 
   private def exec_recursive(method)
-    hash = ($_exec_recursive ||= {} of {UInt64, Symbol} => Bool)
+    hash = ExecRecursive.hash
     key = {object_id, method}
     if hash[key]?
       false

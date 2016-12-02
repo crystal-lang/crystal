@@ -276,16 +276,16 @@ describe "Codegen: is_a?" do
   it "codegens is_a? with a Const does comparison and gives true" do
     run("
       require \"prelude\"
-      A = 1
-      1.is_a?(A)
+      CONST = 1
+      1.is_a?(CONST)
       ").to_b.should be_true
   end
 
   it "codegens is_a? with a Const does comparison and gives false" do
     run("
       require \"prelude\"
-      A = 1
-      2.is_a?(A)
+      CONST = 1
+      2.is_a?(CONST)
       ").to_b.should be_false
   end
 
@@ -457,20 +457,20 @@ describe "Codegen: is_a?" do
 
   it "works with inherited generic class against an instantiation (2)" do
     run(%(
-      class A
+      class Class1
       end
 
-      class B < A
+      class Class2 < Class1
       end
 
       class Foo(T)
       end
 
-      class Bar < Foo(B)
+      class Bar < Foo(Class2)
       end
 
       bar = Bar.new
-      bar.is_a?(Foo(A))
+      bar.is_a?(Foo(Class1))
       )).to_b.should be_true
   end
 
@@ -490,22 +490,22 @@ describe "Codegen: is_a?" do
   it "doesn't type merge (1) (#548)" do
     run(%(
       class Base; end
-      class A < Base; end
-      class B < Base; end
-      class C < Base; end
+      class Base1 < Base; end
+      class Base2 < Base; end
+      class Base3 < Base; end
 
-      C.new.is_a?(A | B)
+      Base3.new.is_a?(Base1 | Base2)
       )).to_b.should be_false
   end
 
   it "doesn't type merge (2) (#548)" do
     run(%(
       class Base; end
-      class A < Base; end
-      class B < Base; end
-      class C < Base; end
+      class Base1 < Base; end
+      class Base2 < Base; end
+      class Base3 < Base; end
 
-      A.new.is_a?(A | B) && B.new.is_a?(A | B)
+      Base1.new.is_a?(Base1 | Base2) && Base2.new.is_a?(Base1 | Base2)
       )).to_b.should be_true
   end
 
@@ -667,8 +667,34 @@ describe "Codegen: is_a?" do
         end
       end
 
-      io = (Foo.new as Moo) || 1
+      io = Foo.new.as(Moo) || 1
       foo(io)
       )).to_i.should eq(2)
+  end
+
+  it "does is_a? for virtual generic instance type against generic" do
+    run(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      def foo(x : Bar)
+      end
+
+      Bar(Int32).new.as(Foo(Int32)).is_a?(Bar) ? 2 : 3
+      )).to_i.should eq(2)
+  end
+
+  it "doesn't consider generic type to be a generic type of a recursive alias (#3524)" do
+    run(%(
+      class Gen(T)
+      end
+
+      alias Type = Int32 | Gen(Type)
+      a = Gen(Int32).new
+      a.is_a?(Type)
+      )).to_b.should be_false
   end
 end

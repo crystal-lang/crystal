@@ -52,7 +52,13 @@ struct Char
   # The character representing the end of a C string.
   ZERO = '\0'
 
-  # Returns the difference of the codepoint values of this char and `other`.
+  # The maximum character
+  MAX = 0x10ffff.unsafe_chr
+
+  # The maximum valid codepoint for a character
+  MAX_CODEPOINT = 0x10ffff
+
+  # Returns the difference of the codepoint values of this char and *other*.
   #
   # ```
   # 'a' - 'a' # => 0
@@ -69,7 +75,7 @@ struct Char
   # 'f' + "oo" # => "foo"
   # ```
   def +(str : String)
-    bytesize = str.bytesize + bytesize
+    bytesize = str.bytesize + self.bytesize
     String.new(bytesize) do |buffer|
       count = 0
       each_byte do |byte|
@@ -83,6 +89,26 @@ struct Char
     end
   end
 
+  # Returns a char that has this char's codepoint plus *other*.
+  #
+  # ```
+  # 'a' + 1 # => 'b'
+  # 'a' + 2 # => 'c'
+  # ```
+  def +(other : Int) : Char
+    (ord + other).chr
+  end
+
+  # Returns a char that has this char's codepoint minus *other*.
+  #
+  # ```
+  # 'c' - 1 # => 'b'
+  # 'c' - 2 # => 'a'
+  # ```
+  def -(other : Int) : Char
+    (ord - other).chr
+  end
+
   # Implements the comparison operator.
   #
   # ```
@@ -92,49 +118,129 @@ struct Char
     self - other
   end
 
-  # Returns true if this char is an ASCII digit ('0' to '9').
-  #
-  # ```
-  # '4'.digit? # => true
-  # 'z'.digit? # => false
-  # ```
-  def digit?
-    '0' <= self <= '9'
+  # Returns `true` if this char is an ASCII character
+  # (codepoint is in (0..127))
+  def ascii?
+    ord < 128
   end
 
-  # Returns true if this char is a lowercase ASCII letter.
+  # DEPRECATED: use `#ascii_number?` or `#number?`. This method will be removed after 0.20.0.
+  def digit?(base : Int = 10)
+    {{ puts "Warning: `Char#digit?` is deprecated and will be removed after 0.20.0, use `Char#ascii_number?` or `Char#number?` instead".id }}
+    ascii_number?(base)
+  end
+
+  # Returns `true` if this char is an ASCII number in specified base.
+  #
+  # Base can be from 0 to 36 with digits from '0' to '9' and 'a' to 'z' or 'A' to 'Z'.
+  #
+  # ```
+  # '4'.ascii_number?     # => true
+  # 'z'.ascii_number?     # => false
+  # 'z'.ascii_number?(36) # => true
+  # ```
+  def ascii_number?(base : Int = 10)
+    !!to_i?(base)
+  end
+
+  # Returns `true` if this char is a number according to unicode.
+  #
+  # ```
+  # '1'.number? # => true
+  # 'a'.number? # => false
+  # ```
+  def number?
+    ascii? ? ascii_number? : Unicode.number?(self)
+  end
+
+  # Returns `true` if this char is a lowercase ASCII letter.
+  #
+  # ```
+  # 'c'.ascii_lowercase? # => true
+  # 'ç'.lowercase?       # => false
+  # 'G'.ascii_lowercase? # => false
+  # '.'.ascii_lowercase? # => false
+  # ```
+  def ascii_lowercase?
+    'a' <= self <= 'z'
+  end
+
+  # Returns `true` if this char is a lowercase letter.
   #
   # ```
   # 'c'.lowercase? # => true
+  # 'ç'.lowercase? # => true
   # 'G'.lowercase? # => false
   # '.'.lowercase? # => false
   # ```
   def lowercase?
-    'a' <= self <= 'z'
+    ascii? ? ascii_lowercase? : Unicode.lowercase?(self)
   end
 
-  # Returns true if this char is an uppercase ASCII letter.
+  # Returns `true` if this char is an ASCII uppercase letter.
+  #
+  # ```
+  # 'H'.ascii_uppercase? # => true
+  # 'Á'.ascii_uppercase? # => false
+  # 'c'.ascii_uppercase? # => false
+  # '.'.ascii_uppercase? # => false
+  # ```
+  def ascii_uppercase?
+    'A' <= self <= 'Z'
+  end
+
+  # Returns `true` if this char is an uppercase letter.
   #
   # ```
   # 'H'.uppercase? # => true
+  # 'Á'.uppercase? # => true
   # 'c'.uppercase? # => false
   # '.'.uppercase? # => false
   # ```
   def uppercase?
-    'A' <= self <= 'Z'
+    ascii? ? ascii_uppercase? : Unicode.uppercase?(self)
   end
 
-  # Returns true if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
+  # DEPRECATED: use `#ascii_letter?` or `#letter?`. This method will be removed after 0.20.0.
+  def alpha?
+    {{ puts "Warning: `Char#alpha?` is deprecated and will be removed after 0.20.0, use `Char#ascii_letter?` or `Char#letter?` instead".id }}
+    ascii_letter?
+  end
+
+  # Returns `true` if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
   #
   # ```
-  # 'c'.alpha? # => true
-  # '8'.alpha? # => false
+  # 'c'.ascii_letter? # => true
+  # 'á'.ascii_letter? # => false
+  # '8'.ascii_letter? # => false
   # ```
-  def alpha?
-    lowercase? || uppercase?
+  def ascii_letter?
+    ascii_lowercase? || ascii_uppercase?
   end
 
-  # Returns true if this char is an ASCII letter or digit ('0' to '9', 'a' to 'z', 'A' to 'Z').
+  # Returns `true` if this char is a letter.
+  #
+  # ```
+  # 'c'.letter? # => true
+  # 'á'.letter? # => true
+  # '8'.letter? # => false
+  # ```
+  def letter?
+    ascii? ? ascii_letter? : Unicode.letter?(self)
+  end
+
+  # Returns true if this char is an ASCII letter or number ('0' to '9', 'a' to 'z', 'A' to 'Z').
+  #
+  # ```
+  # 'c'.ascii_alphanumeric? # => true
+  # '8'.ascii_alphanumeric? # => true
+  # '.'.ascii_alphanumeric? # => false
+  # ```
+  def ascii_alphanumeric?
+    ascii_letter? || ascii_number?
+  end
+
+  # Returns true if this char is a letter or a number according to unicode.
   #
   # ```
   # 'c'.alphanumeric? # => true
@@ -142,10 +248,21 @@ struct Char
   # '.'.alphanumeric? # => false
   # ```
   def alphanumeric?
-    alpha? || digit?
+    letter? || number?
   end
 
-  # Returns true if this char is an ASCII whitespace.
+  # Returns `true` if this char is an ASCII whitespace.
+  #
+  # ```
+  # ' '.ascii_whitespace?  # => true
+  # '\t'.ascii_whitespace? # => true
+  # 'b'.ascii_whitespace?  # => false
+  # ```
+  def ascii_whitespace?
+    self == ' ' || 9 <= ord <= 13
+  end
+
+  # Returns `true` if this char is a whitespace according to unicode.
   #
   # ```
   # ' '.whitespace?  # => true
@@ -153,10 +270,22 @@ struct Char
   # 'b'.whitespace?  # => false
   # ```
   def whitespace?
-    self == ' ' || 9 <= ord <= 13
+    ascii? ? ascii_whitespace? : Unicode.whitespace?(self)
   end
 
-  # Returns true if this char is matched by the given sets.
+  # Returns `true` if this char is an ASCII hex digit ('0' to '9', 'a' to 'z', 'A' to 'Z').
+  #
+  # ```
+  # '5'.hex? # => true
+  # 'a'.hex? # => true
+  # 'F'.hex? # => true
+  # 'g'.hex? # => false
+  # ```
+  def hex?
+    ascii_number? 16
+  end
+
+  # Returns `true` if this char is matched by the given *sets*.
   #
   # Each parameter defines a set, the character is matched against
   # the intersection of those, in other words it needs to
@@ -235,34 +364,63 @@ struct Char
     !not_negated
   end
 
-  # Returns the ASCII downcase equivalent of this char.
+  # Returns the downcase equivalent of this char.
+  #
+  # Note that this only works for characters whose downcase
+  # equivalent yields a single codepoint. There are a few
+  # characters, like 'İ', than when downcased result in multiple
+  # characters (in this case: 'I' and the dot mark).
+  #
+  # For a more correct method see the method that receives a block.
   #
   # ```
   # 'Z'.downcase # => 'z'
   # 'x'.downcase # => 'x'
   # '.'.downcase # => '.'
   # ```
-  def downcase
-    if uppercase?
-      (self.ord + 32).chr
-    else
-      self
-    end
+  def downcase(options = Unicode::CaseOptions::None)
+    Unicode.downcase(self, options)
   end
 
-  # Returns the ASCII upcase equivalent of this char.
+  # Yields each char for the downcase equivalent of this char.
+  #
+  # This method takes into account the possibility that an downcase
+  # version of a char might result in multiple chars, like for
+  # 'İ', which results in 'i' and a dot mark.
+  def downcase(options = Unicode::CaseOptions::None)
+    Unicode.downcase(self, options) { |char| yield char }
+  end
+
+  # Returns the upcase equivalent of this char.
+  #
+  # Note that this only works for characters whose upcase
+  # equivalent yields a single codepoint. There are a few
+  # characters, like 'ﬄ', than when upcased result in multiple
+  # characters (in this case: 'F', 'F', 'L').
+  #
+  # For a more correct method see the method that receives a block.
   #
   # ```
   # 'z'.upcase # => 'Z'
   # 'X'.upcase # => 'X'
   # '.'.upcase # => '.'
   # ```
-  def upcase
-    if lowercase?
-      (self.ord - 32).chr
-    else
-      self
-    end
+  def upcase(options = Unicode::CaseOptions::None)
+    Unicode.upcase(self, options)
+  end
+
+  # Yields each char for the upcase equivalent of this char.
+  #
+  # This method takes into account the possibility that an upcase
+  # version of a char might result in multiple chars, like for
+  # 'ﬄ', which results in 'F', 'F' and 'L'.
+  #
+  # ```
+  # 'z'.upcase { |v| puts v } # prints 'Z'
+  # 'ﬄ'.upcase { |v| puts v } # prints 'F', 'F', 'F'
+  # ```
+  def upcase(options = Unicode::CaseOptions::None)
+    Unicode.upcase(self, options) { |char| yield char }
   end
 
   # Returns this char's codepoint.
@@ -292,7 +450,7 @@ struct Char
     (ord - 1).chr
   end
 
-  # Returns true if this char is an ASCII control character.
+  # Returns `true` if this char is an ASCII control character.
   #
   # ```
   # ('\u0000'..'\u0019').each do |char|
@@ -302,14 +460,22 @@ struct Char
   # ('\u007F'..'\u009F').each do |char|
   #   char.control? # => true
   # end
-  #
-  # # false in every other case
   # ```
-  def control?
+  def ascii_control?
     ord < 0x20 || (0x7F <= ord <= 0x9F)
   end
 
-  # Returns this Char as a String that contains a char literal as written in Crystal.
+  # Returns `true` if this char is a control character according to unicode.
+  def control?
+    ascii? ? ascii_control? : Unicode.control?(self)
+  end
+
+  # Returns `true` if this is char is a mark character according to unicode.
+  def mark?
+    Unicode.mark?(self)
+  end
+
+  # Returns this char as a string that contains a char literal.
   #
   # ```
   # 'a'.inspect      # => "'a'"
@@ -319,7 +485,7 @@ struct Char
   # ```
   def inspect
     dump_or_inspect do |io|
-      if control?
+      if ascii_control?
         io << "\\u{"
         ord.to_s(16, io)
         io << "}"
@@ -329,14 +495,14 @@ struct Char
     end
   end
 
-  # Appends this Char as a String that contains a char literal as written in Crystal to the given IO.
+  # Appends this char as a string that contains a char literal to the given `IO`.
   #
   # See `#inspect`.
   def inspect(io)
     io << inspect
   end
 
-  # Returns this Char as a String that contains a char literal as written in Crystal,
+  # Returns this char as a string that contains a char literal as written in Crystal,
   # with characters with a codepoint greater than 0x79 written as `\u{...}`.
   #
   # ```
@@ -347,7 +513,7 @@ struct Char
   # ```
   def dump
     dump_or_inspect do |io|
-      if control? || ord >= 0x80
+      if ascii_control? || ord >= 0x80
         io << "\\u{"
         ord.to_s(16, io)
         io << "}"
@@ -357,7 +523,7 @@ struct Char
     end
   end
 
-  # Appends this Char as a String that contains a char literal as written in Crystal to the given IO.
+  # Appends this char as a string that contains a char literal to the given `IO`.
   #
   # See `#dump`.
   def dump(io)
@@ -385,73 +551,117 @@ struct Char
     end
   end
 
-  # Returns the integer value of this char if it's an ASCII char denoting a digit,
-  # 0 otherwise.
+  # Returns the integer value of this char if it's an ASCII char denoting a digit
+  # in *base*, raises otherwise.
   #
   # ```
-  # '1'.to_i # => 1
-  # '8'.to_i # => 8
-  # 'c'.to_i # => 0
+  # '1'.to_i     # => 1
+  # '8'.to_i     # => 8
+  # 'c'.to_i     # => ArgumentError
+  # '1'.to_i(16) # => 1
+  # 'a'.to_i(16) # => 10
+  # 'f'.to_i(16) # => 15
+  # 'z'.to_i(16) # => ArgumentError
   # ```
-  def to_i
-    to_i { 0 }
+  def to_i(base : Int = 10)
+    to_i?(base) || raise ArgumentError.new("Invalid integer: #{self}")
   end
 
-  # Returns the integer value of this char if it's an ASCII char denoting a digit,
-  # otherwise the value returned by the block.
+  # Returns the integer value of this char if it's an ASCII char denoting a digit
+  # in *base*,  `nil` otherwise.
   #
   # ```
-  # '1'.to_i { 10 } # => 1
-  # '8'.to_i { 10 } # => 8
-  # 'c'.to_i { 10 } # => 10
+  # '1'.to_i     # => 1
+  # '8'.to_i     # => 8
+  # 'c'.to_i     # => ArgumentError
+  # '1'.to_i(16) # => 1
+  # 'a'.to_i(16) # => 10
+  # 'f'.to_i(16) # => 15
+  # 'z'.to_i(16) # => ArgumentError
   # ```
-  def to_i
-    if digit?
+  def to_i?(base : Int = 10)
+    raise ArgumentError.new "invalid base #{base}, expected 2 to 36" unless 2 <= base <= 36
+
+    if base == 10
+      return unless '0' <= self <= '9'
       self - '0'
     else
-      yield
-    end
-  end
-
-  # Returns the integer value of this char if it's an ASCII char denoting a digit in the given base,
-  # otherwise the value of `or_else`.
-  #
-  # ```
-  # '1'.to_i(16)     # => 1
-  # 'a'.to_i(16)     # => 10
-  # 'f'.to_i(16)     # => 15
-  # 'z'.to_i(16)     # => 0
-  # 'z'.to_i(16, 20) # => 20
-  # ```
-  def to_i(base, or_else = 0)
-    to_i(base) { or_else }
-  end
-
-  # Returns the integer value of this char if it's an ASCII char denoting a digit in the given base,
-  # otherwise the value return by the block.
-  #
-  # ```
-  # '1'.to_i(16) { 20 } # => 1
-  # 'a'.to_i(16) { 20 } # => 10
-  # 'f'.to_i(16) { 20 } # => 15
-  # 'z'.to_i(16) { 20 } # => 20
-  # ```
-  def to_i(base)
-    raise ArgumentError.new "invalid base #{base}" unless 2 <= base <= 36
-
-    ord = ord()
-    if ord < 256
-      digit = String::CHAR_TO_DIGIT.to_unsafe[ord]
-      if digit == -1 || digit >= base
-        return yield
+      ord = ord()
+      if 0 <= ord < 256
+        digit = String::CHAR_TO_DIGIT.to_unsafe[ord]
+        return if digit == -1 || digit >= base
+        digit
       end
-      digit
-    else
-      return yield
     end
   end
 
-  # Yields each of the bytes of this Char as encoded by UTF-8.
+  # Same as `to_i`
+  def to_i32(base : Int = 10)
+    to_i(base)
+  end
+
+  # Same as `to_i?`
+  def to_i32?(base : Int = 10)
+    to_i?(base)
+  end
+
+  {% for type in %w(i8 i16 i64 u8 u16 u32 u64) %}
+    # See `to_i`
+    def to_{{type.id}}(base : Int = 10)
+      to_i(base).to_{{type.id}}
+    end
+
+    # See `to_i?`
+    def to_{{type.id}}?(base : Int = 10)
+      to_i?(base).try &.to_{{type.id}}
+    end
+  {% end %}
+
+  # Returns the integer value of this char as a float if it's an ASCII char denoting a digit,
+  # raises otherwise.
+  #
+  # ```
+  # '1'.to_i # => 1.0
+  # '8'.to_i # => 8.0
+  # 'c'.to_i # => ArgumentError
+  # ```
+  def to_f
+    to_f64
+  end
+
+  # Returns the integer value of this char as a float if it's an ASCII char denoting a digit,
+  # `nil` otherwise.
+  #
+  # ```
+  # '1'.to_i # => 1.0
+  # '8'.to_i # => 8.0
+  # 'c'.to_i # => ArgumentError
+  # ```
+  def to_f?
+    to_f64?
+  end
+
+  # See `to_f`
+  def to_f32
+    to_i.to_f32
+  end
+
+  # See `to_f?`
+  def to_f32?
+    to_i?.try &.to_f32
+  end
+
+  # Same as `to_f`
+  def to_f64
+    to_i.to_f64
+  end
+
+  # Same as `to_f?`
+  def to_f64?
+    to_i?.try &.to_f64
+  end
+
+  # Yields each of the bytes of this char as encoded by UTF-8.
   #
   # ```
   # puts "'a'"
@@ -493,14 +703,14 @@ struct Char
       yield (0xe0 | (c >> 12)).to_u8
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
-    elsif c <= 0x10ffff
+    elsif c <= MAX_CODEPOINT
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       yield (0xf0 | (c >> 18)).to_u8
       yield (0x80 | ((c >> 12) & 0x3f)).to_u8
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
     else
-      raise "Invalid char value"
+      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 
@@ -523,15 +733,15 @@ struct Char
     elsif c <= 0xffff
       # 1110xxxx  10xxxxxx  10xxxxxx
       3
-    elsif c <= 0x10ffff
+    elsif c <= MAX_CODEPOINT
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       4
     else
-      raise "Invalid char value"
+      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 
-  # Returns this Char bytes as encoded by UTF-8, as an `Array(UInt8)`.
+  # Returns this char bytes as encoded by UTF-8, as an `Array(UInt8)`.
   #
   # ```
   # 'a'.bytes # => [97]
@@ -545,7 +755,7 @@ struct Char
     bytes
   end
 
-  # Returns this Char as a String containing this Char as a single character.
+  # Returns this char as a string containing this char as a single character.
   #
   # ```
   # 'a'.to_s # => "a"
@@ -560,12 +770,19 @@ struct Char
     end
   end
 
-  # Appends this Char to the given IO. This appends this Char's bytes as encoded
-  # by UTF-8 to the given IO.
+  # Appends this char to the given `IO`.
+  #
+  # This appends this char's bytes as encoded by UTF-8 to the given `IO`.
   def to_s(io : IO)
-    if ord <= 0x7f
+    if ascii?
       byte = ord.to_u8
-      io.write_utf8 Slice.new(pointerof(byte), 1)
+
+      # Optimization: writing a slice is much slower than writing a byte
+      if io.@encoding
+        io.write_utf8 Slice.new(pointerof(byte), 1)
+      else
+        io.write_byte byte
+      end
     else
       chars = uninitialized UInt8[4]
       i = 0
@@ -577,7 +794,19 @@ struct Char
     end
   end
 
+  # Returns `true` if the codepoint is equal to *byte* ignoring the type.
+  #
+  # ```
+  # 'c'.ord       # => 99
+  # 'c' === 99_u8 # => true
+  # 'c' === 99    # => true
+  # 'z' === 99    # => false
+  # ```
   def ===(byte : Int)
     ord === byte
+  end
+
+  def clone
+    self
   end
 end

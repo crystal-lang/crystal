@@ -1,38 +1,72 @@
 require "spec"
 require "big_int"
 
-struct StructSpecTestClass
-  @x : Int32
-  @y : String
+module StructSpec
+  struct TestClass
+    @x : Int32
+    @y : String
 
-  def initialize(@x, @y)
+    def initialize(@x, @y)
+    end
   end
-end
 
-struct StructSpecBigIntWrapper
-  @value : BigInt
+  struct BigIntWrapper
+    @value : BigInt
 
-  def initialize(@value : BigInt)
+    def initialize(@value : BigInt)
+    end
+  end
+
+  struct DupCloneStruct
+    property x, y
+
+    def initialize
+      @x = 1
+      @y = [1, 2, 3]
+    end
+
+    def_clone
   end
 end
 
 describe "Struct" do
   it "does to_s" do
-    s = StructSpecTestClass.new(1, "hello")
-    s.to_s.should eq(%(StructSpecTestClass(@x=1, @y="hello")))
+    s = StructSpec::TestClass.new(1, "hello")
+    s.to_s.should eq(%(StructSpec::TestClass(@x=1, @y="hello")))
   end
 
   it "does ==" do
-    s = StructSpecTestClass.new(1, "hello")
+    s = StructSpec::TestClass.new(1, "hello")
     s.should eq(s)
   end
 
   it "does hash" do
-    s = StructSpecTestClass.new(1, "hello")
+    s = StructSpec::TestClass.new(1, "hello")
     s.hash.should eq(31 + "hello".hash)
   end
 
   it "does hash for struct wrapper (#1940)" do
-    StructSpecBigIntWrapper.new(BigInt.new(0)).hash.should eq(0)
+    StructSpec::BigIntWrapper.new(BigInt.new(0)).hash.should eq(0)
+  end
+
+  it "does dup" do
+    original = StructSpec::DupCloneStruct.new
+    duplicate = original.dup
+    duplicate.x.should eq(original.x)
+    duplicate.y.should be(original.y)
+
+    original.x = 10
+    duplicate.x.should_not eq(10)
+  end
+
+  it "clones with def_clone" do
+    original = StructSpec::DupCloneStruct.new
+    clone = original.clone
+    clone.x.should eq(original.x)
+    clone.y.should_not be(original.y)
+    clone.y.should eq(original.y)
+
+    original.x = 10
+    clone.x.should_not eq(10)
   end
 end

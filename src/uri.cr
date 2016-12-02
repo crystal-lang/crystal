@@ -118,6 +118,8 @@ class URI
   # Sets the opaque component of the URI.
   setter opaque : String?
 
+  def_equals_and_hash scheme, host, port, path, query, user, password, fragment, opaque
+
   def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
   end
 
@@ -217,7 +219,7 @@ class URI
     bytesize = string.bytesize
     while i < bytesize
       byte = string.unsafe_byte_at(i)
-      char = byte.chr
+      char = byte.unsafe_chr
       i = unescape_one(string, bytesize, i, byte, char, io, plus_to_space) { |byte| yield byte }
     end
     io
@@ -259,10 +261,10 @@ class URI
   # This method requires block.
   def self.escape(string : String, io : IO, space_to_plus = false, &block)
     string.each_byte do |byte|
-      char = byte.chr
+      char = byte.unsafe_chr
       if char == ' ' && space_to_plus
         io.write_byte '+'.ord.to_u8
-      elsif byte < 0x80 && yield(byte) && (!space_to_plus || char != '+')
+      elsif char.ascii? && yield(byte) && (!space_to_plus || char != '+')
         io.write_byte byte
       else
         io.write_byte '%'.ord.to_u8
@@ -278,7 +280,7 @@ class URI
   # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
   # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
   def self.reserved?(byte) : Bool
-    char = byte.chr
+    char = byte.unsafe_chr
     '&' <= char <= ',' ||
       {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
   end
@@ -287,8 +289,8 @@ class URI
   #
   # Unreserved characters are alphabet, digit, '_', '.', '-', '~'.
   def self.unreserved?(byte) : Bool
-    char = byte.chr
-    char.alphanumeric? ||
+    char = byte.unsafe_chr
+    char.ascii_alphanumeric? ||
       {'_', '.', '-', '~'}.includes?(char)
   end
 
@@ -321,7 +323,7 @@ class URI
     if char == '%' && i < bytesize - 2
       i += 1
       first = string.unsafe_byte_at(i)
-      first_num = first.chr.to_i 16, or_else: nil
+      first_num = first.unsafe_chr.to_i? 16
       unless first_num
         io.write_byte byte
         return i
@@ -329,7 +331,7 @@ class URI
 
       i += 1
       second = string.unsafe_byte_at(i)
-      second_num = second.chr.to_i 16, or_else: nil
+      second_num = second.unsafe_chr.to_i? 16
       unless second_num
         io.write_byte byte
         io.write_byte first

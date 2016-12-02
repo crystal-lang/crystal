@@ -87,4 +87,25 @@ describe "Code gen: void" do
       bar LibC.foo
     ))
   end
+
+  it "returns void from nil functions, doesn't crash when passing value" do
+    run(%(
+      def baz(x)
+        1
+      end
+
+      struct Nil
+        def bar
+          baz(self)
+        end
+      end
+
+      def foo
+        1
+        nil
+      end
+
+      foo.bar
+      )).to_i.should eq(1)
+  end
 end

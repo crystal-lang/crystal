@@ -257,6 +257,9 @@ describe "Code gen: virtual type" do
     run("
       require \"prelude\"
 
+      class Ref
+      end
+
       class Foo
         def foo
           bar self
@@ -268,7 +271,7 @@ describe "Code gen: virtual type" do
 
       class Baz < Foo
         def initialize
-          @x = Reference.new
+          @x = Ref.new
         end
 
         def x

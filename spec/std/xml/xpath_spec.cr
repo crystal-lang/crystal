@@ -65,8 +65,14 @@ module XML
 
     it "raises on invalid xpath" do
       expect_raises XML::Error do
+        doc = doc()
         doc.xpath("coco()")
       end
+    end
+
+    it "returns nil with invalid xpath" do
+      doc = doc()
+      doc.xpath_node("//invalid").should be_nil
     end
 
     it "finds with namespace" do
@@ -75,7 +81,7 @@ module XML
         <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
         </feed>
         ))
-      nodes = doc.xpath("//atom:feed", namespaces: {"atom": "http://www.w3.org/2005/Atom"}).as(NodeSet)
+      nodes = doc.xpath("//atom:feed", namespaces: {"atom" => "http://www.w3.org/2005/Atom"}).as(NodeSet)
       nodes.size.should eq(1)
       nodes[0].name.should eq("feed")
       ns = nodes[0].namespace.not_nil!
@@ -105,7 +111,7 @@ module XML
           <person id="2"/>
         </feed>
         ))
-      nodes = doc.xpath("//feed/person[@id=$value]", variables: {"value": 2}).as(NodeSet)
+      nodes = doc.xpath("//feed/person[@id=$value]", variables: {"value" => 2}).as(NodeSet)
       nodes.size.should eq(1)
       nodes[0]["id"].should eq("2")
     end

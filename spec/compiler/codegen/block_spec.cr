@@ -563,18 +563,27 @@ describe "Code gen: block" do
       class Bar < Foo
       end
 
-      $x : Int32?
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       struct Int
         def foo
           x = Foo.new
           x = Bar.new
-          x.do { $x = self }
+          x.do { Global.x = self }
         end
       end
 
       123.foo
-      $x.to_i
+      Global.x.to_i
     ").to_i.should eq(123)
   end
 
@@ -719,26 +728,6 @@ describe "Code gen: block" do
       a = Foo.new || Bar.new
       a.foo {}
     ")
-  end
-
-  it "allows yields with less arguments than in block" do
-    run("
-      struct Nil
-        def to_i
-          0
-        end
-      end
-
-      def foo
-        yield 1
-      end
-
-      a = 0
-      foo do |x, y|
-        a += x + y.to_i
-      end
-      a
-      ").to_i.should eq(1)
   end
 
   it "codegens block with nilable type with return (1)" do
@@ -1240,12 +1229,21 @@ describe "Code gen: block" do
 
   it "codegens block bug with conditional next and unconditional break (3)" do
     run(%(
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         a = 1234
         a = yield 1
-        $x = a
+        Global.x = a
         a
       end
 
@@ -1253,27 +1251,36 @@ describe "Code gen: block" do
         next x if 1 == 1
         break 0
       end
-      $x
+      Global.x
       )).to_i.should eq(1)
   end
 
   it "codegens block bug with conditional next and unconditional break (4)" do
     run(%(
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         bar(yield 1)
       end
 
       def bar(x)
-        $x = x
+        Global.x = x
       end
 
       foo do |x|
         next x if 1 == 1
         break 0
       end
-      $x
+      Global.x
       )).to_i.should eq(1)
   end
 
@@ -1293,7 +1300,7 @@ describe "Code gen: block" do
 
   it "does next from captured block" do
     run(%(
-      def foo(&block : -> T)
+      def foo(&block : -> T) forall T
         block
       end
 
@@ -1341,5 +1348,149 @@ describe "Code gen: block" do
         "oops"
       end
       )).to_string.should eq("foo")
+  end
+
+  it "yields inside yield (#682)" do
+    run(%(
+      def foo
+        yield(1, (yield 3))
+      end
+
+      a = 0
+      foo do |x|
+        a += x
+      end
+      a
+      )).to_i.should eq(4)
+  end
+
+  it "yields splat" do
+    run(%(
+      def foo
+        tup = {1, 2, 3}
+        yield *tup
+      end
+
+      foo do |x, y, z|
+        x + y + z
+      end
+      )).to_i.should eq(6)
+  end
+
+  it "yields more exps than block arg, through splat" do
+    run(%(
+      def foo
+        yield *{1, 2}
+      end
+
+      foo do |x|
+        x
+      end
+      )).to_i.should eq(1)
+  end
+
+  it "uses splat in block argument" do
+    run(%(
+      def foo
+        yield 1, 2, 3
+      end
+
+      foo do |*args|
+        args[0] + args[1] + args[2]
+      end
+      )).to_i.should eq(6)
+  end
+
+  it "uses splat in block argument, many args" do
+    run(%(
+      def foo
+        yield 1, 2, 3, 4, 5, 6
+      end
+
+      foo do |x, y, *z, w|
+        ((((x + y) * z[0]) - z[1]) * z[2]) - w
+      end
+      )).to_i.should eq(((((1 + 2) * 3) - 4) * 5) - 6)
+  end
+
+  it "uses block splat argument with union types" do
+    run(%(
+      def foo
+        yield 1
+        yield 2.5
+      end
+
+      total = 0
+      foo do |*args|
+        total += args[0].to_i
+      end
+      total
+      )).to_i.should eq(3)
+  end
+
+  it "auto-unpacks tuple" do
+    run(%(
+      def foo
+        tup = {1, 2, 4}
+        yield tup
+      end
+
+      foo do |x, y, z|
+        (x + y) * z
+      end
+      )).to_i.should eq((1 + 2) * 4)
+  end
+
+  it "unpacks tuple but doesn't override local variables" do
+    run(%(
+      def foo
+        yield({10, 20}, {30, 40})
+      end
+
+      x = 1
+      y = 2
+      z = 3
+      w = 4
+      foo do |(x, y), (z, w)|
+      end
+      x + y + z + w
+      )).to_i.should eq(10)
+  end
+
+  it "codegens block with multiple underscores (#3054)" do
+    run(%(
+      def foo(&block : Int32, Int32 -> Int32)
+        block.call(1, 2)
+      end
+
+      foo do |_, _|
+        3
+      end
+      )).to_i.should eq(3)
+  end
+
+  it "breaks in var assignment (#3364)" do
+    run(%(
+      def foo
+        yield
+        456
+      end
+
+      foo do
+        a = nil || break 123
+      end
+      )).to_i.should eq(123)
+  end
+
+  it "nexts in var assignment (#3364)" do
+    run(%(
+      def foo
+        yield
+      end
+
+      foo do
+        a = nil || next 123
+      end
+      )).to_i.should eq(123)
   end
 end

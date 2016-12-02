@@ -85,12 +85,12 @@ struct Char
   end
 
   {% for op, desc in {
-                       "==": "equal to",
-                       "!=": "not equal to",
-                       "<":  "less than",
-                       "<=": "less than or equal to",
-                       ">":  "greater than",
-                       ">=": "greater than or equal to",
+                       "==" => "equal to",
+                       "!=" => "not equal to",
+                       "<"  => "less than",
+                       "<=" => "less than or equal to",
+                       ">"  => "greater than",
+                       ">=" => "greater than or equal to",
                      } %}
     # Returns true if *self*'s codepoint is {{desc.id}} *other*'s codepoint.
     @[Primitive(:binary)]
@@ -236,6 +236,19 @@ struct Pointer(T)
   end
 end
 
+struct Proc
+  # Invokes this Proc and returns the result.
+  #
+  # ```
+  # add = ->(x : Int32, y : Int32) { x + y }
+  # add.call(1, 2) # => 3
+  # ```
+  @[Primitive(:proc_call)]
+  @[Raises]
+  def call(*args : *T) : R
+  end
+end
+
 # All Number methods are defined on concrete structs (for example Int32, UInt8, etc.),
 # never on Number, Int or Float because we don't want to handle a primitive for
 # other types that could extend these types (for example BigInt): if we do that
@@ -250,7 +263,7 @@ end
   {% ints = %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   {% floats = %w(Float32 Float64) %}
   {% nums = %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64 Float32 Float64) %}
-  {% binaries = {"+": "adding", "-": "subtracting", "*": "multiplying", "/": "dividing"} %}
+  {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying", "/" => "dividing"} %}
 
   {% for num in nums %}
     struct {{num.id}}
@@ -268,12 +281,12 @@ end
 
       {% for num2 in nums %}
         {% for op, desc in {
-                             "==": "equal to",
-                             "!=": "not equal to",
-                             "<":  "less than",
-                             "<=": "less than or equal to",
-                             ">":  "greater than",
-                             ">=": "greater than or equal to",
+                             "==" => "equal to",
+                             "!=" => "not equal to",
+                             "<"  => "less than",
+                             "<=" => "less than or equal to",
+                             ">"  => "greater than",
+                             ">=" => "greater than or equal to",
                            } %}
           # Returns true if *self* is {{desc.id}} *other*.
           @[Primitive(:binary)]
@@ -286,13 +299,18 @@ end
 
   {% for int in ints %}
     struct {{int.id}}
-      # Returns a `Char` that has the unicode codepoint of *self*.
+      # Returns a `Char` that has the unicode codepoint of *self*,
+      # without checking if this integer is in the range valid for
+      # chars (`0..0x10ffff`).
+      #
+      # You should never use this method unless `chr` turns out to
+      # be a bottleneck.
       #
       # ```
-      # 97.chr # => 'a'
+      # 97.unsafe_chr # => 'a'
       # ```
       @[Primitive(:cast)]
-      def chr : Char
+      def unsafe_chr : Char
       end
 
       {% for int2 in ints %}

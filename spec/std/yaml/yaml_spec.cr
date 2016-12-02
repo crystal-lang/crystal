@@ -55,7 +55,7 @@ describe "YAML" do
           bar:
             !!str '<<': *foo
         ))
-        doc.should eq({"foo": {"hello": "world"}, "bar": {"<<": {"hello": "world"}}})
+        doc.should eq({"foo" => {"hello" => "world"}, "bar" => {"<<" => {"hello" => "world"}}})
       end
 
       it "doesn't merge empty mapping" do
@@ -64,7 +64,7 @@ describe "YAML" do
           bar:
             <<: *foo
         ))
-        doc["bar"].should eq({"<<": ""})
+        doc["bar"].should eq({"<<" => ""})
       end
 
       it "doesn't merge arrays" do
@@ -74,7 +74,7 @@ describe "YAML" do
           bar:
             <<: *foo
         ))
-        doc["bar"].should eq({"<<": ["1"]})
+        doc["bar"].should eq({"<<" => ["1"]})
       end
 
       it "has correct line/number info (#2585)" do
@@ -92,19 +92,42 @@ describe "YAML" do
           ex.column_number.should eq(3)
         end
       end
+
+      it "has correct line/number info (2)" do
+        begin
+          parser = YAML::PullParser.new <<-MSG
+
+              authors:
+                - [foo] bar
+            MSG
+
+          parser.read_stream do
+            parser.read_document do
+              parser.read_scalar
+            end
+          end
+        rescue ex : YAML::ParseException
+          ex.line_number.should eq(1)
+          ex.column_number.should eq(2)
+        end
+      end
+
+      it "parses from IO" do
+        YAML.parse(IO::Memory.new("- foo\n- bar")).should eq(["foo", "bar"])
+      end
     end
   end
 
   describe "dump" do
     it "returns YAML as a string" do
-      YAML.dump(%w(1 2 3)).should eq("--- \n- 1\n- 2\n- 3")
+      YAML.dump(%w(1 2 3)).should eq("---\n- 1\n- 2\n- 3\n")
     end
 
     it "writes YAML to a stream" do
       string = String.build do |str|
         YAML.dump(%w(1 2 3), str)
       end
-      string.should eq("--- \n- 1\n- 2\n- 3")
+      string.should eq("---\n- 1\n- 2\n- 3\n")
     end
   end
 end

@@ -15,4 +15,6 @@ lib LibC
   end
 
   fun gai_strerror(ecode : Int) : Char*
+  fun getaddrinfo(hostname : Char*, servname : Char*, hints : Addrinfo*, res : Addrinfo**) : Int
+  fun freeaddrinfo(ai : Addrinfo*)
 end

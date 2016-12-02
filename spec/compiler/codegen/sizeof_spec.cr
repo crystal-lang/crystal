@@ -48,11 +48,11 @@ describe "Code gen: sizeof" do
     # be struct { 8 bytes, 8 bytes }.
     #
     # In 32 bits structs are aligned to 4 bytes, so it remains the same.
-    ifdef x86_64
+    {% if flag?(:x86_64) %}
       size.should eq(16)
-    else
+    {% else %}
       size.should eq(12)
-    end
+    {% end %}
   end
 
   it "gets instance_sizeof class" do
@@ -80,5 +80,51 @@ describe "Code gen: sizeof" do
   it "gets sizeof NoReturn" do
     # Same as the size of a byte
     run("sizeof(NoReturn)").to_i.should eq(1)
+  end
+
+  it "can use sizeof in type argument (1)" do
+    run(%(
+      struct StaticArray
+        def size
+          N
+        end
+      end
+
+      x = uninitialized UInt8[sizeof(Int32)]
+      x.size
+      )).to_i.should eq(4)
+  end
+
+  it "can use sizeof in type argument (2)" do
+    run(%(
+      struct StaticArray
+        def size
+          N
+        end
+      end
+
+      x = uninitialized UInt8[sizeof(Float64)]
+      x.size
+      )).to_i.should eq(8)
+  end
+
+  it "can use instance_sizeof in type argument" do
+    run(%(
+      struct StaticArray
+        def size
+          N
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = 1
+          @y = 1
+        end
+      end
+
+      x = uninitialized UInt8[instance_sizeof(Foo)]
+      x.size
+      )).to_i.should eq(12)
   end
 end

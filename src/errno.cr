@@ -2,16 +2,18 @@ require "c/errno"
 require "c/string"
 
 lib LibC
-  ifdef linux
-    ifdef musl
+  {% if flag?(:linux) %}
+    {% if flag?(:musl) %}
       fun __errno_location : Int*
-    else
+    {% else %}
       @[ThreadLocal]
       $errno : Int
-    end
-  elsif darwin || freebsd
+    {% end %}
+  {% elsif flag?(:darwin) || flag?(:freebsd) %}
     fun __error : Int*
-  end
+  {% elsif flag?(:openbsd) %}
+    fun __error = __errno : Int*
+  {% end %}
 end
 
 # Errno wraps and gives access to libc's errno. This is mostly useful when
@@ -19,93 +21,182 @@ end
 #
 # This class is the exception thrown when errno errors are encountered.
 class Errno < Exception
-  EPERM           = LibC::EPERM           # Operation not permitted
-  ENOENT          = LibC::ENOENT          # No such file or directory
-  ESRCH           = LibC::ESRCH           # No such process
-  EINTR           = LibC::EINTR           # Interrupted system call
-  EIO             = LibC::EIO             # Input/output error
-  ENXIO           = LibC::ENXIO           # Device not configured
-  ENOEXEC         = LibC::ENOEXEC         # Exec format error
-  EBADF           = LibC::EBADF           # Bad file descriptor
-  ECHILD          = LibC::ECHILD          # No child processes
-  EDEADLK         = LibC::EDEADLK         # Resource deadlock avoided
-  ENOMEM          = LibC::ENOMEM          # Cannot allocate memory
-  EACCES          = LibC::EACCES          # Permission denied
-  EFAULT          = LibC::EFAULT          # Bad address
-  ENOTBLK         = LibC::ENOTBLK         # Block device required
-  EBUSY           = LibC::EBUSY           # Device / Resource busy
-  EEXIST          = LibC::EEXIST          # File exists
-  EXDEV           = LibC::EXDEV           # Cross-device link
-  ENODEV          = LibC::ENODEV          # Operation not supported by device
-  ENOTDIR         = LibC::ENOTDIR         # Not a directory
-  EISDIR          = LibC::EISDIR          # Is a directory
-  EINVAL          = LibC::EINVAL          # Invalid argument
-  ENFILE          = LibC::ENFILE          # Too many open files in system
-  EMFILE          = LibC::EMFILE          # Too many open files
-  ENOTTY          = LibC::ENOTTY          # Inappropriate ioctl for device
-  ETXTBSY         = LibC::ETXTBSY         # Text file busy
-  EFBIG           = LibC::EFBIG           # File too large
-  ENOSPC          = LibC::ENOSPC          # No space left on device
-  ESPIPE          = LibC::ESPIPE          # Illegal seek
-  EROFS           = LibC::EROFS           # Read-only file system
-  EMLINK          = LibC::EMLINK          # Too many links
-  EPIPE           = LibC::EPIPE           # Broken pipe
-  EDOM            = LibC::EDOM            # Numerical argument out of domain
-  ERANGE          = LibC::ERANGE          # Result too large
-  EAGAIN          = LibC::EAGAIN          # Resource temporarily unavailable
-  EWOULDBLOCK     = LibC::EWOULDBLOCK     # Operation would block
-  EINPROGRESS     = LibC::EINPROGRESS     # Operation now in progress
-  EALREADY        = LibC::EALREADY        # Operation already in progress
-  ENOTSOCK        = LibC::ENOTSOCK        # Socket operation on non-socket
-  EDESTADDRREQ    = LibC::EDESTADDRREQ    # Destination address required
-  EMSGSIZE        = LibC::EMSGSIZE        # Message too long
-  EPROTOTYPE      = LibC::EPROTOTYPE      # Protocol wrong type for socket
-  ENOPROTOOPT     = LibC::ENOPROTOOPT     # Protocol not available
-  EPROTONOSUPPORT = LibC::EPROTONOSUPPORT # Protocol not supported
-  ESOCKTNOSUPPORT = LibC::ESOCKTNOSUPPORT # Socket type not supported
-  EPFNOSUPPORT    = LibC::EPFNOSUPPORT    # Protocol family not supported
-  EAFNOSUPPORT    = LibC::EAFNOSUPPORT    # Address family not supported by protocol family
-  EADDRINUSE      = LibC::EADDRINUSE      # Address already in use
-  EADDRNOTAVAIL   = LibC::EADDRNOTAVAIL   # Can't assign requested address
-  ENETDOWN        = LibC::ENETDOWN        # Network is down
-  ENETUNREACH     = LibC::ENETUNREACH     # Network is unreachable
-  ENETRESET       = LibC::ENETRESET       # Network dropped connection on reset
-  ECONNABORTED    = LibC::ECONNABORTED    # Software caused connection abort
-  ECONNRESET      = LibC::ECONNRESET      # Connection reset by peer
-  ENOBUFS         = LibC::ENOBUFS         # No buffer space available
-  EISCONN         = LibC::EISCONN         # Socket is already connected
-  ENOTCONN        = LibC::ENOTCONN        # Socket is not connected
-  ESHUTDOWN       = LibC::ESHUTDOWN       # Can't send after socket shutdown
-  ETOOMANYREFS    = LibC::ETOOMANYREFS    # Too many references: can't splice
-  ETIMEDOUT       = LibC::ETIMEDOUT       # Operation timed out
-  ECONNREFUSED    = LibC::ECONNREFUSED    # Connection refused
-  ELOOP           = LibC::ELOOP           # Too many levels of symbolic links
-  ENAMETOOLONG    = LibC::ENAMETOOLONG    # File name too long
-  EHOSTDOWN       = LibC::EHOSTDOWN       # Host is down
-  EHOSTUNREACH    = LibC::EHOSTUNREACH    # No route to host
-  ENOTEMPTY       = LibC::ENOTEMPTY       # Directory not empty
-  EUSERS          = LibC::EUSERS          # Too many users
-  EDQUOT          = LibC::EDQUOT          # Disc quota exceeded
-  ESTALE          = LibC::ESTALE          # Stale NFS file handle
-  EREMOTE         = LibC::EREMOTE         # Too many levels of remote in path
-  ENOLCK          = LibC::ENOLCK          # No locks available
-  ENOSYS          = LibC::ENOSYS          # Function not implemented
-  EOVERFLOW       = LibC::EOVERFLOW       # Value too large to be stored in data type
-  ECANCELED       = LibC::ECANCELED       # Operation canceled
-  EIDRM           = LibC::EIDRM           # Identifier removed
-  ENOMSG          = LibC::ENOMSG          # No message of desired type
-  EILSEQ          = LibC::EILSEQ          # Illegal byte sequence
-  EBADMSG         = LibC::EBADMSG         # Bad message
-  EMULTIHOP       = LibC::EMULTIHOP       # Reserved
-  ENODATA         = LibC::ENODATA         # No message available on STREAM
-  ENOLINK         = LibC::ENOLINK         # Reserved
-  ENOSR           = LibC::ENOSR           # No STREAM resources
-  ENOSTR          = LibC::ENOSTR          # Not a STREAM
-  EPROTO          = LibC::EPROTO          # Protocol error
-  ETIME           = LibC::ETIME           # STREAM ioctl timeout
-  EOPNOTSUPP      = LibC::EOPNOTSUPP      # Operation not supported on socket
-  ENOTRECOVERABLE = LibC::ENOTRECOVERABLE # State not recoverable
-  EOWNERDEAD      = LibC::EOWNERDEAD      # Previous owner died
+  # Argument list too long
+  E2BIG = LibC::E2BIG
+  # Operation not permitted
+  EPERM = LibC::EPERM
+  # No such file or directory
+  ENOENT = LibC::ENOENT
+  # No such process
+  ESRCH = LibC::ESRCH
+  # Interrupted system call
+  EINTR = LibC::EINTR
+  # Input/output error
+  EIO = LibC::EIO
+  # Device not configured
+  ENXIO = LibC::ENXIO
+  # Exec format error
+  ENOEXEC = LibC::ENOEXEC
+  # Bad file descriptor
+  EBADF = LibC::EBADF
+  # No child processes
+  ECHILD = LibC::ECHILD
+  # Resource deadlock avoided
+  EDEADLK = LibC::EDEADLK
+  # Cannot allocate memory
+  ENOMEM = LibC::ENOMEM
+  # Permission denied
+  EACCES = LibC::EACCES
+  # Bad address
+  EFAULT = LibC::EFAULT
+  # Block device required
+  ENOTBLK = LibC::ENOTBLK
+  # Device / Resource busy
+  EBUSY = LibC::EBUSY
+  # File exists
+  EEXIST = LibC::EEXIST
+  # Cross-device link
+  EXDEV = LibC::EXDEV
+  # Operation not supported by device
+  ENODEV = LibC::ENODEV
+  # Not a directory
+  ENOTDIR = LibC::ENOTDIR
+  # Is a directory
+  EISDIR = LibC::EISDIR
+  # Invalid argument
+  EINVAL = LibC::EINVAL
+  # Too many open files in system
+  ENFILE = LibC::ENFILE
+  # Too many open files
+  EMFILE = LibC::EMFILE
+  # Inappropriate ioctl for device
+  ENOTTY = LibC::ENOTTY
+  # Text file busy
+  ETXTBSY = LibC::ETXTBSY
+  # File too large
+  EFBIG = LibC::EFBIG
+  # No space left on device
+  ENOSPC = LibC::ENOSPC
+  # Illegal seek
+  ESPIPE = LibC::ESPIPE
+  # Read-only file system
+  EROFS = LibC::EROFS
+  # Too many links
+  EMLINK = LibC::EMLINK
+  # Broken pipe
+  EPIPE = LibC::EPIPE
+  # Numerical argument out of domain
+  EDOM = LibC::EDOM
+  # Result too large
+  ERANGE = LibC::ERANGE
+  # Resource temporarily unavailable
+  EAGAIN = LibC::EAGAIN
+  # Operation would block
+  EWOULDBLOCK = LibC::EWOULDBLOCK
+  # Operation now in progress
+  EINPROGRESS = LibC::EINPROGRESS
+  # Operation already in progress
+  EALREADY = LibC::EALREADY
+  # Socket operation on non-socket
+  ENOTSOCK = LibC::ENOTSOCK
+  # Destination address required
+  EDESTADDRREQ = LibC::EDESTADDRREQ
+  # Message too long
+  EMSGSIZE = LibC::EMSGSIZE
+  # Protocol wrong type for socket
+  EPROTOTYPE = LibC::EPROTOTYPE
+  # Protocol not available
+  ENOPROTOOPT = LibC::ENOPROTOOPT
+  # Protocol not supported
+  EPROTONOSUPPORT = LibC::EPROTONOSUPPORT
+  # Socket type not supported
+  ESOCKTNOSUPPORT = LibC::ESOCKTNOSUPPORT
+  # Protocol family not supported
+  EPFNOSUPPORT = LibC::EPFNOSUPPORT
+  # Address family not supported by protocol family
+  EAFNOSUPPORT = LibC::EAFNOSUPPORT
+  # Address already in use
+  EADDRINUSE = LibC::EADDRINUSE
+  # Can't assign requested address
+  EADDRNOTAVAIL = LibC::EADDRNOTAVAIL
+  # Network is down
+  ENETDOWN = LibC::ENETDOWN
+  # Network is unreachable
+  ENETUNREACH = LibC::ENETUNREACH
+  # Network dropped connection on reset
+  ENETRESET = LibC::ENETRESET
+  # Software caused connection abort
+  ECONNABORTED = LibC::ECONNABORTED
+  # Connection reset by peer
+  ECONNRESET = LibC::ECONNRESET
+  # No buffer space available
+  ENOBUFS = LibC::ENOBUFS
+  # Socket is already connected
+  EISCONN = LibC::EISCONN
+  # Socket is not connected
+  ENOTCONN = LibC::ENOTCONN
+  # Can't send after socket shutdown
+  ESHUTDOWN = LibC::ESHUTDOWN
+  # Too many references: can't splice
+  ETOOMANYREFS = LibC::ETOOMANYREFS
+  # Operation timed out
+  ETIMEDOUT = LibC::ETIMEDOUT
+  # Connection refused
+  ECONNREFUSED = LibC::ECONNREFUSED
+  # Too many levels of symbolic links
+  ELOOP = LibC::ELOOP
+  # File name too long
+  ENAMETOOLONG = LibC::ENAMETOOLONG
+  # Host is down
+  EHOSTDOWN = LibC::EHOSTDOWN
+  # No route to host
+  EHOSTUNREACH = LibC::EHOSTUNREACH
+  # Directory not empty
+  ENOTEMPTY = LibC::ENOTEMPTY
+  # Too many users
+  EUSERS = LibC::EUSERS
+  # Disc quota exceeded
+  EDQUOT = LibC::EDQUOT
+  # Stale NFS file handle
+  ESTALE = LibC::ESTALE
+  # Too many levels of remote in path
+  EREMOTE = LibC::EREMOTE
+  # No locks available
+  ENOLCK = LibC::ENOLCK
+  # Function not implemented
+  ENOSYS = LibC::ENOSYS
+  # Value too large to be stored in data type
+  EOVERFLOW = LibC::EOVERFLOW
+  # Operation canceled
+  ECANCELED = LibC::ECANCELED
+  # Identifier removed
+  EIDRM = LibC::EIDRM
+  # No message of desired type
+  ENOMSG = LibC::ENOMSG
+  # Illegal byte sequence
+  EILSEQ = LibC::EILSEQ
+  # Bad message
+  EBADMSG = LibC::EBADMSG
+  # Reserved
+  EMULTIHOP = LibC::EMULTIHOP
+  # No message available on STREAM
+  ENODATA = LibC::ENODATA
+  # Reserved
+  ENOLINK = LibC::ENOLINK
+  # No STREAM resources
+  ENOSR = LibC::ENOSR
+  # Not a STREAM
+  ENOSTR = LibC::ENOSTR
+  # Protocol error
+  EPROTO = LibC::EPROTO
+  # STREAM ioctl timeout
+  ETIME = LibC::ETIME
+  # Operation not supported on socket
+  EOPNOTSUPP = LibC::EOPNOTSUPP
+  # State not recoverable
+  ENOTRECOVERABLE = LibC::ENOTRECOVERABLE
+  # Previous owner died
+  EOWNERDEAD = LibC::EOWNERDEAD
 
   # Returns the numeric value of errno.
   getter errno : Int32
@@ -129,27 +220,27 @@ class Errno < Exception
 
   # Returns the value of libc's errno.
   def self.value : LibC::Int
-    ifdef linux
-      ifdef musl
+    {% if flag?(:linux) %}
+      {% if flag?(:musl) %}
         LibC.__errno_location.value
-      else
+      {% else %}
         LibC.errno
-      end
-    elsif darwin || freebsd
+      {% end %}
+    {% elsif flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
       LibC.__error.value
-    end
+    {% end %}
   end
 
   # Sets the value of libc's errno.
   def self.value=(value)
-    ifdef linux
-      ifdef musl
+    {% if flag?(:linux) %}
+      {% if flag?(:musl) %}
         LibC.__errno_location.value = value
-      else
+      {% else %}
         LibC.errno = value
-      end
-    elsif darwin || freebsd
+      {% end %}
+    {% elsif flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
       LibC.__error.value = value
-    end
+    {% end %}
   end
 end

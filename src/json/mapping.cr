@@ -7,17 +7,17 @@ module JSON
   # require "json"
   #
   # class Location
-  #   JSON.mapping({
+  #   JSON.mapping(
   #     lat: Float64,
   #     lng: Float64,
-  #   })
+  #   )
   # end
   #
   # class House
-  #   JSON.mapping({
-  #     address:  String,
+  #   JSON.mapping(
+  #     address: String,
   #     location: {type: Location, nilable: true},
-  #   })
+  #   )
   # end
   #
   # house = House.from_json(%({"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}))
@@ -28,7 +28,8 @@ module JSON
   #
   # ### Usage
   #
-  # `JSON.mapping` must receive a hash literal whose keys will define Crystal properties.
+  # `JSON.mapping` must receive a series of named arguments, or a named tuple literal, or a hash literal,
+  # whose keys will define Crystal properties.
   #
   # The value of each key can be a single type (not a union type). Primitive types (numbers, string, boolean and nil)
   # are supported, as well as custom objects which use `JSON.mapping` or define a `new` method
@@ -37,14 +38,16 @@ module JSON
   # The value can also be another hash literal with the following options:
   # * **type**: (required) the single type described above (you can use `JSON::Any` too)
   # * **key**: the property name in the JSON document (as opposed to the property name in the Crystal code)
-  # * **nilable**: if true, the property can be `Nil`
+  # * **nilable**: if true, the property can be `Nil`. Passing `T | Nil` as a type has the same effect.
   # * **default**: value to use if the property is missing in the JSON document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a JSON document is parsed.
   # * **emit_null**: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
+  # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
+  # * **setter**: if true, will generate a setter for the variable, true by default
+  # * **getter**: if true, will generate a getter for the variable, true by default
   #
-  # The mapping also automatically defines Crystal properties (getters and setters) for each
-  # of the keys. It doesn't define a constructor accepting those arguments, but you can provide
-  # an overload.
+  # This macro by default defines getters and setters for each variable (this can be overrided with *setter* and *getter*).
+  # The mapping doesn't define a constructor accepting these variables as arguments, but you can provide an overload.
   #
   # The macro basically defines a constructor accepting a `JSON::PullParser` that reads from
   # it and initializes this type's instance variables. It also defines a `to_json(IO)` method
@@ -64,13 +67,17 @@ module JSON
     {% for key, value in properties %}
       @{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
 
-      def {{key.id}}=(_{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
-        @{{key.id}} = _{{key.id}}
-      end
+      {% if value[:setter] == nil ? true : value[:setter] %}
+        def {{key.id}}=(_{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
+          @{{key.id}} = _{{key.id}}
+        end
+      {% end %}
 
-      def {{key.id}}
-        @{{key.id}}
-      end
+      {% if value[:getter] == nil ? true : value[:getter] %}
+        def {{key.id}}
+          @{{key.id}}
+        end
+      {% end %}
     {% end %}
 
     def initialize(%pull : JSON::PullParser)
@@ -84,16 +91,28 @@ module JSON
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
             %found{key.id} = true
+
             %var{key.id} =
               {% if value[:nilable] || value[:default] != nil %} %pull.read_null_or { {% end %}
 
+              {% if value[:root] %}
+                %pull.on_key!({{value[:root]}}) do
+              {% end %}
+
               {% if value[:converter] %}
                 {{value[:converter]}}.from_json(%pull)
-              {% else %}
+              {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
                 {{value[:type]}}.new(%pull)
+              {% else %}
+                Union({{value[:type]}}).new(%pull)
+              {% end %}
+
+              {% if value[:root] %}
+                end
               {% end %}
 
             {% if value[:nilable] || value[:default] != nil %} } {% end %}
+
         {% end %}
         else
           {% if strict %}
@@ -106,7 +125,7 @@ module JSON
 
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
-          if %var{key.id}.is_a?(Nil) && !%found{key.id}
+          if %var{key.id}.is_a?(Nil) && !%found{key.id} && !Union({{value[:type]}}).nilable?
             raise JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
@@ -122,7 +141,7 @@ module JSON
         {% elsif value[:default] != nil %}
           @{{key.id}} = %var{key.id}.is_a?(Nil) ? {{value[:default]}} : %var{key.id}
         {% else %}
-          @{{key.id}} = %var{key.id}.not_nil!
+          @{{key.id}} = (%var{key.id}).as({{value[:type]}})
         {% end %}
       {% end %}
     end
@@ -137,6 +156,17 @@ module JSON
           {% end %}
 
             json.field({{value[:key] || key.id.stringify}}) do
+              {% if value[:root] %}
+                {% if value[:emit_null] %}
+                  if _{{key.id}}.is_a?(Nil)
+                    nil.to_json(io)
+                  else
+                {% end %}
+
+                io.json_object do |json|
+                  json.field({{value[:root]}}) do
+              {% end %}
+
               {% if value[:converter] %}
                 if _{{key.id}}
                   {{ value[:converter] }}.to_json(_{{key.id}}, io)
@@ -146,6 +176,14 @@ module JSON
               {% else %}
                 _{{key.id}}.to_json(io)
               {% end %}
+
+              {% if value[:root] %}
+                {% if value[:emit_null] %}
+                  end
+                {% end %}
+                  end
+                end
+              {% end %}
             end
 
           {% unless value[:emit_null] %}
@@ -154,5 +192,11 @@ module JSON
         {% end %}
       end
     end
+  end
+
+  # This is a convenience method to allow invoking `JSON.mapping`
+  # with named arguments instead of with a hash/named-tuple literal.
+  macro mapping(**properties)
+    ::JSON.mapping({{properties}})
   end
 end

@@ -104,6 +104,14 @@ describe "YAML serialization" do
         end
       end
     end
+
+    it "deserializes union" do
+      Array(Int32 | String).from_yaml(%([1, "hello"])).should eq([1, "hello"])
+    end
+
+    it "deserializes time" do
+      Time.from_yaml(%(2016-11-16T09:55:48-0300)).to_utc.should eq(Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc))
+    end
   end
 
   describe "to_yaml" do
@@ -126,6 +134,10 @@ describe "YAML serialization" do
 
     it "does for String" do
       String.from_yaml("hello".to_yaml).should eq("hello")
+    end
+
+    it "does for String with stars (#3353)" do
+      String.from_yaml("***".to_yaml).should eq("***")
     end
 
     it "does for String with quote" do
@@ -174,6 +186,10 @@ describe "YAML serialization" do
       YAMLSpecEnum.from_yaml(YAMLSpecEnum::One.to_yaml).should eq(YAMLSpecEnum::One)
     end
 
+    it "does for time" do
+      Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc).to_yaml.should eq("--- 2016-11-16T12:55:48+0000\n...\n")
+    end
+
     it "does a full document" do
       data = {
         :hello   => "World",
@@ -187,7 +203,7 @@ describe "YAML serialization" do
         :null  => nil,
       }
 
-      expected = "--- \nhello: World\ninteger: 2\nfloat: 3.5\nhash: \n  a: 1\n  b: 2\narray: \n  - 1\n  - 2\n  - 3\nnull: "
+      expected = "---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: \n"
 
       data.to_yaml.should eq(expected)
     end
@@ -196,7 +212,7 @@ describe "YAML serialization" do
       string = String.build do |str|
         %w(a b c).to_yaml(str)
       end
-      string.should eq("--- \n- a\n- b\n- c")
+      string.should eq("---\n- a\n- b\n- c\n")
     end
   end
 end

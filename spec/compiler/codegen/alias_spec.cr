@@ -5,9 +5,9 @@ describe "Code gen: alias" do
     run(%(
       require "prelude"
 
-      alias X = Array(X)
+      alias Alias = Array(Alias)
 
-      a = [] of X
+      a = [] of Alias
       b = a.map(&.to_s).join
       )).to_string.should eq("")
   end
@@ -16,9 +16,9 @@ describe "Code gen: alias" do
     run(%(
       require "prelude"
 
-      alias X = Nil | Array(X)
+      alias Alias = Nil | Array(Alias)
 
-      a = [] of X
+      a = [] of Alias
       b = a.map(&.to_s).join
       )).to_string.should eq("")
   end
@@ -27,9 +27,9 @@ describe "Code gen: alias" do
     run(%(
       require "prelude"
 
-      alias X = Nil | Array(X)
+      alias Alias = Nil | Array(Alias)
 
-      a = [] of X
+      a = [] of Alias
       b = a.map(&.to_s).join
       )).to_string.should eq("")
   end
@@ -43,8 +43,8 @@ describe "Code gen: alias" do
 
       alias Foo = Int32 | Bar(Foo)
 
-      a = 1 as Foo
-      b = a as Int32
+      a = 1.as(Foo)
+      b = a.as(Int32)
       b
       )).to_i.should eq(1)
   end
@@ -66,7 +66,7 @@ describe "Code gen: alias" do
         if n == 0
           1
         else
-          foo(n - 1) as Foo
+          foo(n - 1).as(Foo)
         end
       end
 
@@ -75,12 +75,12 @@ describe "Code gen: alias" do
   end
 
   it "doesn't break with alias for link attributes" do
-    result = infer_type(%(
+    result = semantic(%(
       alias Foo = Int32
 
-      module B
+      module Moo
         alias Bar = Foo
-        alias Foo = B
+        alias Foo = Moo
       end
       ))
     result.program.link_attributes
@@ -96,7 +96,7 @@ describe "Code gen: alias" do
       Foo(Type).new
 
       ptr = Pointer(Type).malloc(1_u64)
-      ptr.value = 1 as Type
+      ptr.value = 1.as(Type)
       ptr.value = 1
       ))
   end
@@ -128,12 +128,50 @@ describe "Code gen: alias" do
     run(%(
       alias Foo = Bool | Array(Foo)
 
-      a = false as Foo
+      a = false.as(Foo)
       if a
         1
       else
         2
       end
       )).to_i.should eq(2)
+  end
+
+  it "overloads alias against generic (1) (#3261)" do
+    run(%(
+      class Foo(T)
+      end
+
+      alias FooString = Foo(String)
+
+      def take(foo : Foo(String))
+        1
+      end
+
+      def take(foo : FooString)
+        2
+      end
+
+      take(Foo(String).new)
+      ), inject_primitives: false).to_i.should eq(2)
+  end
+
+  it "overloads alias against generic (2) (#3261)" do
+    run(%(
+      class Foo(T)
+      end
+
+      alias FooString = Foo(String)
+
+      def take(foo : FooString)
+        2
+      end
+
+      def take(foo : Foo(String))
+        1
+      end
+
+      take(Foo(String).new)
+      ), inject_primitives: false).to_i.should eq(1)
   end
 end

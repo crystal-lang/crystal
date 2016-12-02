@@ -1,6 +1,31 @@
+# Deserializes the given JSON in *string_or_io* into
+# an instance of `self`. This simply creates a `parser = JSON::PullParser`
+# and invokes `new(parser)`: classes that want to provide JSON
+# deserialization must provide an `def initialize(parser : JSON::PullParser`
+# method.
+#
+# ```
+# Int32.from_json("1")                # => 1
+# Array(Int32).from_json("[1, 2, 3]") # => [1, 2, 3]
+# ```
 def Object.from_json(string_or_io) : self
   parser = JSON::PullParser.new(string_or_io)
   new parser
+end
+
+# Deserializes the given JSON in *string_or_io* into
+# an instance of `self`, assuming the JSON consists
+# of an JSON object with key *root*, and whose value is
+# the value to deserialize.
+#
+# ```
+# Int32.from_json(%({"main": 1}), root: "main").should eq(1)
+# ```
+def Object.from_json(string_or_io, root : String) : self
+  parser = JSON::PullParser.new(string_or_io)
+  parser.on_key!(root) do
+    new parser
+  end
 end
 
 # Parses a String or IO denoting a JSON array, yielding
@@ -160,6 +185,49 @@ def Enum.new(pull : JSON::PullParser)
   else
     raise "expecting int or string in JSON for #{self.class}, not #{pull.kind}"
   end
+end
+
+def Union.new(pull : JSON::PullParser)
+  # Optimization: use fast path for primitive types
+  {% begin %}
+    # Here we store types that are not primitive types
+    {% non_primitives = [] of Nil %}
+
+    {% for type, index in T %}
+      {% if type == Nil %}
+        return pull.read_null if pull.kind == :null
+      {% elsif type == Bool ||
+                 type == Int8 || type == Int16 || type == Int32 || type == Int64 ||
+                 type == UInt8 || type == UInt16 || type == UInt32 || type == UInt64 ||
+                 type == Float32 || type == Float64 ||
+                 type == String %}
+        value = pull.read?({{type}})
+        return value unless value.nil?
+      {% else %}
+        {% non_primitives << type %}
+      {% end %}
+    {% end %}
+
+    # If after traversing all the types we are left with just one
+    # non-primitive type, we can parse it directly (no need to use `read_raw`)
+    {% if non_primitives.size == 1 %}
+      return {{non_primitives[0]}}.new(pull)
+    {% end %}
+  {% end %}
+
+  string = pull.read_raw
+  {% for type in T %}
+    begin
+      return {{type}}.from_json(string)
+    rescue JSON::ParseException
+      # Ignore
+    end
+  {% end %}
+  raise JSON::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
+end
+
+def Time.new(pull : JSON::PullParser)
+  Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
 end
 
 struct Time::Format

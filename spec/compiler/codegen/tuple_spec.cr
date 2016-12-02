@@ -66,7 +66,7 @@ describe "Code gen: tuple" do
         end
       end
 
-      def foo(x : T)
+      def foo(x : T) forall T
         p = Pointer(T).malloc(1)
         p.value = x
         p
@@ -293,5 +293,62 @@ describe "Code gen: tuple" do
         v[0].to_i + v[1].to_i
       end
       )).to_i.should eq(42)
+  end
+
+  it "provides T as a tuple literal" do
+    run(%(
+      struct Tuple
+        def self.foo
+          {{ T.class_name }}
+        end
+      end
+      Tuple(Nil, Int32).foo
+      )).to_string.should eq("TupleLiteral")
+  end
+
+  it "passes empty tuple and empty named tuple to a method (#2852)" do
+    codegen(%(
+      def foo(*binds)
+        baz(binds)
+      end
+
+      def bar(**binds)
+        baz(binds)
+      end
+
+      def baz(binds)
+        binds
+      end
+
+      foo
+      bar
+      ))
+  end
+
+  it "assigns two same-size tuple types to a same var (#3132)" do
+    run(%(
+      t = {true}
+      t
+      t = {2}
+      t[0]
+      )).to_i.should eq(2)
+  end
+
+  it "downcasts union to mixed tuple type" do
+    run(%(
+      t = {1} || 2 || {true}
+      t = {1}
+      t[0]
+      )).to_i.should eq(1)
+  end
+
+  it "downcasts union to mixed union with mixed tuple types" do
+    run(%(
+      require "prelude"
+
+      t = {1} || 2 || {true}
+      t = {1} || 2
+      t.as(Tuple)[0]
+      )).to_i.should eq(1)
   end
 end

@@ -228,4 +228,8 @@ describe Time::Span do
     t1.to_f.should be_close(93784, 1e-01)
     t1.to_i.should eq(93784)
   end
+
+  it "should sum" do
+    [1.second, 5.seconds].sum.should eq(6.seconds)
+  end
 end

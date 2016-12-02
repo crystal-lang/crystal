@@ -242,7 +242,7 @@ Playground.Inspector = function(session, line) {
   }.bind(this);
 
   this.dataLabels = function() {
-    // collect all data labels, in order of apperance
+    // collect all data labels, in order of appearance
     var res = []
     var resSet = {}
     for(var i = 0; i < this.messages.length; i++) {
@@ -281,6 +281,7 @@ Playground.Session = function(options) {
   );
 
   this.stdout = options.stdout;
+  this.stdoutRawContent = "";
   this.outputIndicator = new Playground.OutputIndicator(options.outputIndicator);
 
   this.editor = CodeMirror(this.editorDom[0], {
@@ -340,16 +341,20 @@ Playground.Session = function(options) {
         case "exception":
           this._triggerFinish();
 
+          var last_line = this.editor.lastLine() + 1;
           this._fullError = message.exception.message;
           if (message.exception.payload) {
             for (var i = 0; i < message.exception.payload.length; i++) {
               var ex = message.exception.payload[i];
               if (ex.file == "play" || ex.file == "") {
-                this._showEditorError(ex.line, ex.column, ex.message, i);
+                // if there is an issue with the reported line,
+                // let's make sure the error is displayed
+                var ex_line = Math.min(ex.line, last_line);
+                this._showEditorError(ex_line, ex.column, ex.message, i);
               }
             }
           } else {
-            this._showEditorError(this.editor.lastLine(), 1, "Compiler error", 0);
+            this._showEditorError(last_line, 1, "Compiler error", 0);
           }
           break;
         case "bug":
@@ -549,12 +554,13 @@ Playground.Session = function(options) {
 
   //stdout
   this._appendStdout = function(content) {
-    this.stdout[0].innerText += content;
-
+    this.stdoutRawContent += content;
+    this.stdout[0].innerHTML = ansi_up.ansi_to_html(ansi_up.escape_for_html(this.stdoutRawContent), {"use_classes": true});
   }.bind(this);
 
   this._clearStdout = function() {
-    this.stdout[0].innerText = "";
+    this.stdoutRawContent = "";
+    this.stdout[0].innerHTML = "";
     this.outputIndicator.turnOff();
   }.bind(this);
   //

@@ -1,22 +1,24 @@
-require "./base_type_visitor"
+require "./semantic_visitor"
 
 module Crystal
-  # Guess the type of global, class and instance variables
+  # Guess the type of class and instance variables
   # from assignments to them.
-  class TypeGuessVisitor < BaseTypeVisitor
+  class TypeGuessVisitor < SemanticVisitor
     alias TypeDeclarationWithLocation = TypeDeclarationProcessor::TypeDeclarationWithLocation
     alias InitializeInfo = TypeDeclarationProcessor::InitializeInfo
     alias InstanceVarTypeInfo = TypeDeclarationProcessor::InstanceVarTypeInfo
+    alias Error = TypeDeclarationProcessor::Error
 
-    getter globals
     getter class_vars
     getter initialize_infos
+    getter errors
 
     class TypeInfo
       property type
       property outside_def
+      getter location
 
-      def initialize(@type : Type)
+      def initialize(@type : Type, @location : Location)
         @outside_def = false
       end
     end
@@ -24,14 +26,21 @@ module Crystal
     @args : Array(Arg)?
     @block_arg : Arg?
 
+    # Before checking types, we set this to nil.
+    # Afterwards, this is non-nil if an error was found
+    # (a type like Class or Reference is used)
+    @error : Error?
+
+    @type_override : Type?
+
     def initialize(mod,
                    @explicit_instance_vars : Hash(Type, Hash(String, TypeDeclarationWithLocation)),
                    @guessed_instance_vars : Hash(Type, Hash(String, InstanceVarTypeInfo)),
                    @initialize_infos : Hash(Type, Array(InitializeInfo)),
-                   @instance_vars_outside : Hash(Type, Array(String)))
+                   @instance_vars_outside : Hash(Type, Array(String)),
+                   @errors : Hash(Type, Hash(String, Error)))
       super(mod)
 
-      @globals = {} of String => TypeInfo
       @class_vars = {} of ClassVarContainer => Hash(String, TypeInfo)
 
       # Was `self` access found? If so, instance variables assigned after it
@@ -54,6 +63,7 @@ module Crystal
       @methods_being_checked = [] of Def
 
       @outside_def = true
+      @inside_class_method = false
     end
 
     def visit(node : Var)
@@ -74,19 +84,25 @@ module Crystal
     def visit(node : UninitializedVar)
       var = node.var
       if var.is_a?(InstanceVar)
+        if @inside_class_method
+          node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+        end
+
+        @error = nil
+
         add_to_initialize_info(var.name)
 
         case owner = current_type
         when NonGenericClassType
-          process_uninitialized_instance_var_on_non_generic(owner, var, node.declared_type)
+          process_uninitialized_instance_var(owner, var, node.declared_type)
         when Program, FileModule
           # Nothing
         when NonGenericModuleType
-          process_uninitialized_instance_var_on_non_generic(owner, var, node.declared_type)
+          process_uninitialized_instance_var(owner, var, node.declared_type)
         when GenericClassType
-          process_uninitialized_instance_var_on_generic(owner, var, node.declared_type)
+          process_uninitialized_instance_var(owner, var, node.declared_type)
         when GenericModuleType
-          process_uninitialized_instance_var_on_generic(owner, var, node.declared_type)
+          process_uninitialized_instance_var(owner, var, node.declared_type)
         end
       end
     end
@@ -103,17 +119,8 @@ module Crystal
 
     def visit(node : Call)
       if @outside_def
-        if node.global
-          node.scope = @mod
-        else
-          node.scope = current_type.metaclass
-        end
-
-        if expand_macro(node, raise_on_missing_const: false)
-          false
-        else
-          true
-        end
+        node.scope = node.global? ? @program : current_type.metaclass
+        super
       else
         # If it's "self.class", don't consider this as self being passed to a method
         return false if self_dot_class?(node)
@@ -150,22 +157,22 @@ module Crystal
           fun_arg = fun_def.args[index]?
           next unless fun_arg
 
-          type = TypeLookup.lookup?(obj_type, fun_arg.restriction.not_nil!)
+          type = obj_type.lookup_type?(fun_arg.restriction.not_nil!)
           next unless type.is_a?(PointerInstanceType)
 
           type = type.element_type
 
           case owner = current_type
           when NonGenericClassType
-            process_lib_out_on_non_generic(owner, exp, type)
+            process_lib_out(owner, exp, type)
           when Program, FileModule
             # Nothing
           when NonGenericModuleType
-            process_lib_out_on_non_generic(owner, exp, type)
+            process_lib_out(owner, exp, type)
           when GenericClassType
-            process_lib_out_on_generic(owner, exp, type)
+            process_lib_out(owner, exp, type)
           when GenericModuleType
-            process_lib_out_on_generic(owner, exp, type)
+            process_lib_out(owner, exp, type)
           end
         end
       end
@@ -178,24 +185,38 @@ module Crystal
     def process_assign(target, value)
       check_has_self(value)
 
-      case target
-      when Global
-        process_assign_global(target, value)
-      when ClassVar
-        process_assign_class_var(target, value)
-      when InstanceVar
-        process_assign_instance_var(target, value)
-      when Path
-        # Don't guess anything from constant values
-        false
-      else
-        # Process the right hand side in case there's an assignment there too
-        value.accept self
-        nil
+      @error = nil
+
+      result =
+        case target
+        when ClassVar
+          process_assign_class_var(target, value)
+        when InstanceVar
+          if @inside_class_method
+            target.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+          end
+
+          process_assign_instance_var(target, value)
+        when Path
+          # Don't guess anything from constant values
+          false
+        else
+          # Process the right hand side in case there's an assignment there too
+          value.accept self
+          nil
+        end
+
+      if error = @error
+        errors = @errors[current_type] ||= {} of String => Error
+        errors[target.to_s] ||= error
       end
+
+      result
     end
 
     def process_multi_assign(node : MultiAssign)
+      @error = nil
+
       if node.targets.size == node.values.size
         node.targets.zip(node.values) do |target, value|
           process_assign(target, value)
@@ -207,6 +228,10 @@ module Crystal
 
         node.targets.each do |target|
           if target.is_a?(InstanceVar)
+            if @inside_class_method
+              target.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+            end
+
             add_to_initialize_info(target.name)
           end
         end
@@ -227,7 +252,7 @@ module Crystal
               case target
               when InstanceVar
                 owner_vars = @guessed_instance_vars[current_type] ||= {} of String => InstanceVarTypeInfo
-                add_instance_var_type_info(owner_vars, target.name, tuple_type)
+                add_instance_var_type_info(owner_vars, target.name, tuple_type, target)
               when ClassVar
                 owner = class_var_owner(target)
 
@@ -235,29 +260,12 @@ module Crystal
                 next if owner.class_vars[target.name]?
 
                 owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
-                add_type_info(owner_vars, target.name, tuple_type)
-              when Global
-                next if @mod.global_vars[target.name]?
-
-                add_type_info(@globals, target.name, tuple_type)
+                add_type_info(owner_vars, target.name, tuple_type, target)
               end
             end
           end
         end
       end
-    end
-
-    def process_assign_global(target, value)
-      # If the global variable already exists no need to guess its type
-      if global = @mod.global_vars[target.name]?
-        return global.type
-      end
-
-      type = guess_type(value)
-      if type
-        add_type_info(@globals, target.name, type)
-      end
-      type
     end
 
     def process_assign_class_var(target, value)
@@ -271,7 +279,7 @@ module Crystal
       type = guess_type(value)
       if type
         owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
-        add_type_info(owner_vars, target.name, type)
+        add_type_info(owner_vars, target.name, type, target)
       end
       type
     end
@@ -279,15 +287,19 @@ module Crystal
     def process_assign_instance_var(target, value)
       case owner = current_type
       when NonGenericClassType
-        value = process_assign_instance_var_on_non_generic(owner, target, value)
+        value = process_assign_instance_var(owner, target, value)
       when Program, FileModule
         # Nothing
       when NonGenericModuleType
-        value = process_assign_instance_var_on_non_generic(owner, target, value)
+        value = process_assign_instance_var(owner, target, value)
       when GenericClassType
-        value = process_assign_instance_var_on_generic(owner, target, value)
+        value = process_assign_instance_var(owner, target, value)
       when GenericModuleType
-        value = process_assign_instance_var_on_generic(owner, target, value)
+        value = process_assign_instance_var(owner, target, value)
+      end
+
+      unless current_type.allows_instance_vars?
+        target.raise "can't declare instance variables in #{current_type}"
       end
 
       add_to_initialize_info(target.name)
@@ -302,7 +314,7 @@ module Crystal
       end
     end
 
-    def process_assign_instance_var_on_non_generic(owner, target, value)
+    def process_assign_instance_var(owner, target, value)
       if @outside_def
         outside_vars = @instance_vars_outside[owner] ||= [] of String
         outside_vars << target.name unless outside_vars.includes?(target.name)
@@ -320,36 +332,17 @@ module Crystal
       type = guess_type(value)
       if type
         owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
-        add_instance_var_type_info(owner_vars, target.name, type)
+        add_instance_var_type_info(owner_vars, target.name, type, target)
       end
       type
     end
 
-    def process_assign_instance_var_on_generic(owner, target, value)
+    def process_uninitialized_instance_var(owner, target, value)
       if @outside_def
         outside_vars = @instance_vars_outside[owner] ||= [] of String
         outside_vars << target.name unless outside_vars.includes?(target.name)
       end
 
-      # Skip if the generic class already defines an explicit type
-      existing = @explicit_instance_vars[owner]?.try &.[target.name]?
-      if existing
-        # Accept the value in case there are assigns there
-        value.accept self
-        return
-      end
-
-      type_vars = guess_type_vars(value)
-      if type_vars
-        owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
-        type_vars.each do |type_var|
-          add_instance_var_type_info(owner_vars, target.name, type_var)
-        end
-      end
-      type_vars
-    end
-
-    def process_uninitialized_instance_var_on_non_generic(owner, target, value)
       # If there is already a type restriction, skip
       existing = @explicit_instance_vars[owner]?.try &.[target.name]?
       if existing
@@ -360,27 +353,12 @@ module Crystal
       type = lookup_type?(value)
       if type
         owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
-        add_instance_var_type_info(owner_vars, target.name, type)
+        add_instance_var_type_info(owner_vars, target.name, type, target)
       end
       type
     end
 
-    def process_uninitialized_instance_var_on_generic(owner, target, value)
-      # Skip if the generic class already defines an explicit type
-      existing = @explicit_instance_vars[owner]?.try &.[target.name]?
-      if existing
-        return
-      end
-
-      type_vars = [value] of TypeVar
-      owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
-      type_vars.each do |type_var|
-        add_instance_var_type_info(owner_vars, target.name, type_var)
-      end
-      type_vars
-    end
-
-    def process_lib_out_on_non_generic(owner, target, type)
+    def process_lib_out(owner, target, type)
       # If there is already a type restriction, skip
       existing = @explicit_instance_vars[owner]?.try &.[target.name]?
       if existing
@@ -388,28 +366,13 @@ module Crystal
       end
 
       owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
-      add_instance_var_type_info(owner_vars, target.name, type)
+      add_instance_var_type_info(owner_vars, target.name, type, target)
     end
 
-    def process_lib_out_on_generic(owner, target, type)
-      # Skip if the generic class already defines an explicit type
-      existing = @explicit_instance_vars[owner]?.try &.[target.name]?
-      if existing
-        return
-      end
-
-      type_vars = [type] of TypeVar
-      owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
-      type_vars.each do |type_var|
-        add_instance_var_type_info(owner_vars, target.name, type_var)
-      end
-      type_vars
-    end
-
-    def add_type_info(vars, name, type)
+    def add_type_info(vars, name, type, node)
       info = vars[name]?
       unless info
-        info = TypeInfo.new(type)
+        info = TypeInfo.new(type, node.location.not_nil!)
         info.outside_def = true if @outside_def
         vars[name] = info
       else
@@ -419,58 +382,45 @@ module Crystal
       end
     end
 
-    def add_instance_var_type_info(vars, name, type_var)
+    def add_instance_var_type_info(vars, name, type : Type, node)
       info = vars[name]?
       unless info
-        info = InstanceVarTypeInfo.new
-        info.type_vars << type_var
+        info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
         info.outside_def = true if @outside_def
         vars[name] = info
       else
-        info.type_vars << type_var
+        info.type = Type.merge!([info.type, type])
         info.outside_def = true if @outside_def
         vars[name] = info
       end
     end
 
     def guess_type(node : NumberLiteral)
-      case node.kind
-      when :i8  then mod.int8
-      when :i16 then mod.int16
-      when :i32 then mod.int32
-      when :i64 then mod.int64
-      when :u8  then mod.uint8
-      when :u16 then mod.uint16
-      when :u32 then mod.uint32
-      when :u64 then mod.uint64
-      when :f32 then mod.float32
-      when :f64 then mod.float64
-      else           raise "Invalid node kind: #{node.kind}"
-      end
+      program.type_from_literal_kind node.kind
     end
 
     def guess_type(node : CharLiteral)
-      mod.char
+      program.char
     end
 
     def guess_type(node : BoolLiteral)
-      mod.bool
+      program.bool
     end
 
     def guess_type(node : NilLiteral)
-      mod.nil
+      program.nil
     end
 
     def guess_type(node : StringLiteral)
-      mod.string
+      program.string
     end
 
     def guess_type(node : StringInterpolation)
-      mod.string
+      program.string
     end
 
     def guess_type(node : SymbolLiteral)
-      mod.symbol
+      program.symbol
     end
 
     def guess_type(node : ArrayLiteral)
@@ -482,17 +432,17 @@ module Crystal
             return type.instantiate([Type.merge!(element_types)] of TypeVar)
           end
         else
-          return check_allowed_in_generics(type)
+          return check_allowed_in_generics(node, type)
         end
       elsif node_of = node.of
         type = lookup_type?(node_of)
         if type
-          return mod.array_of(type)
+          return program.array_of(type.virtual_type)
         end
       else
         element_types = guess_array_literal_element_types(node)
         if element_types
-          return mod.array_of(Type.merge!(element_types))
+          return program.array_of(Type.merge!(element_types))
         end
       end
 
@@ -520,7 +470,7 @@ module Crystal
             return type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar)
           end
         else
-          return check_allowed_in_generics(type)
+          return check_allowed_in_generics(node, type)
         end
       elsif node_of = node.of
         key_type = lookup_type?(node_of.key)
@@ -529,11 +479,11 @@ module Crystal
         value_type = lookup_type?(node_of.value)
         return nil unless value_type
 
-        return mod.hash_of(key_type, value_type)
+        return program.hash_of(key_type.virtual_type, value_type.virtual_type)
       else
         key_types, value_types = guess_hash_literal_key_value_types(node)
         if key_types && value_types
-          return mod.hash_of(Type.merge!(key_types), Type.merge!(value_types))
+          return program.hash_of(Type.merge!(key_types), Type.merge!(value_types))
         end
       end
 
@@ -564,14 +514,14 @@ module Crystal
       to_type = guess_type(node.to)
 
       if from_type && to_type
-        mod.range_of(from_type, to_type)
+        program.range_of(from_type, to_type)
       else
         nil
       end
     end
 
     def guess_type(node : RegexLiteral)
-      mod.types["Regex"]
+      program.types["Regex"]
     end
 
     def guess_type(node : TupleLiteral)
@@ -585,7 +535,7 @@ module Crystal
       end
 
       if element_types
-        mod.tuple_of(element_types)
+        program.tuple_of(element_types)
       else
         nil
       end
@@ -602,7 +552,7 @@ module Crystal
       end
 
       if entries
-        mod.named_tuple_of(entries)
+        program.named_tuple_of(entries)
       else
         nil
       end
@@ -671,7 +621,7 @@ module Crystal
         if type.is_a?(PointerType)
           element_type = guess_type(node.args[1])
           if element_type
-            return @mod.pointer_of(element_type)
+            return @program.pointer_of(element_type)
           end
         end
       end
@@ -692,7 +642,7 @@ module Crystal
       defs.try &.each do |metadata|
         external = metadata.def.as(External)
         if def_return_type = external.fun_def?.try &.return_type
-          return_type = TypeLookup.lookup(obj_type, def_return_type)
+          return_type = obj_type.lookup_type(def_return_type)
           return return_type if return_type
         elsif external_type = external.type?
           # This is the case of an External being an external variable
@@ -766,11 +716,14 @@ module Crystal
       # Try to guess from the method's body, but now
       # the current lookup type is obj_type
       type = nil
-      pushing_type(obj_type) do
-        # Wrap everything in Expressions to check for explicit `return`
-        exps = Expressions.new([body] of ASTNode)
-        type = guess_type_in_method_body(exps)
-      end
+      old_type_override = @type_override
+      @type_override = obj_type
+
+      # Wrap everything in Expressions to check for explicit `return`
+      exps = Expressions.new([body] of ASTNode)
+      type = guess_type_in_method_body(exps)
+
+      @type_override = old_type_override
 
       @methods_being_checked.pop
 
@@ -795,7 +748,7 @@ module Crystal
 
     def guess_type(node : NilableCast)
       type = lookup_type?(node.to)
-      type ? @mod.nilable(type) : nil
+      type ? @program.nilable(type) : nil
     end
 
     def guess_type(node : UninitializedVar)
@@ -836,7 +789,7 @@ module Crystal
           return type if type
         else
           # If there's no restriction it means it's a `-> Void` proc
-          return @mod.fun_of([@mod.void] of Type)
+          return @program.proc_of([@program.void] of Type)
         end
       end
 
@@ -851,8 +804,8 @@ module Crystal
       end
 
       info = @guessed_instance_vars[current_type]?.try &.[node.name]?
-      if info && (first = info.type_vars.first?) && first.is_a?(Type)
-        first
+      if info
+        info.type
       else
         nil
       end
@@ -956,27 +909,27 @@ module Crystal
     end
 
     def guess_type(node : Not)
-      @mod.bool
+      @program.bool
     end
 
     def guess_type(node : IsA)
-      @mod.bool
+      @program.bool
     end
 
     def guess_type(node : RespondsTo)
-      @mod.bool
+      @program.bool
     end
 
     def guess_type(node : SizeOf)
-      @mod.int32
+      @program.int32
     end
 
     def guess_type(node : InstanceSizeOf)
-      @mod.int32
+      @program.int32
     end
 
     def guess_type(node : Nop)
-      @mod.nil
+      @program.nil
     end
 
     def guess_from_two(type1, type2)
@@ -995,221 +948,6 @@ module Crystal
       nil
     end
 
-    def guess_type_vars(node : Call)
-      guess_type_call_lib_out(node)
-
-      obj = node.obj
-
-      # If it's something like T.new, guess T.
-      # If it's something like T(X).new, guess T(X).
-      if node.name == "new" && obj && (obj.is_a?(Path) || obj.is_a?(Generic))
-        type = lookup_type_no_check?(obj)
-        return nil if type.is_a?(GenericType)
-
-        # See if the "new" method has a return type annotation, and use it if so
-        if type
-          return_type = guess_type_from_method(type, node)
-          return [return_type] of TypeVar if return_type
-        end
-
-        return [obj] of TypeVar
-      end
-
-      # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
-      if obj.is_a?(Generic) && obj.name.single?("Pointer") &&
-         (node.name == "malloc" || node.name == "null")
-        return [obj] of TypeVar
-      end
-
-      type = guess_type_call_pointer_malloc_two_args(node)
-      return [type] of TypeVar if type
-
-      type = guess_type_call_lib_fun(node)
-      return [type] of TypeVar if type
-
-      type = guess_type_call_with_type_annotation(node)
-      return [type] of TypeVar if type
-
-      nil
-    end
-
-    def guess_type_vars(node : Var)
-      check_var_is_self(node)
-
-      if args = @args
-        # Find an argument with the same name as this variable
-        arg = args.find { |arg| arg.name == node.name }
-        if arg
-          # If the argument has a restriction, guess the type from it
-          if restriction = arg.restriction
-            return [restriction] of TypeVar
-          end
-
-          # If the argument has a default value, guess the type from it
-          if default_value = arg.default_value
-            return guess_type_vars(default_value)
-          end
-        end
-      end
-
-      # Try to guess type from a block argument with the same name
-      if (block_arg = @block_arg) && block_arg.name == node.name
-        restriction = block_arg.restriction
-        if restriction
-          return [restriction] of TypeVar
-        end
-      end
-
-      nil
-    end
-
-    def guess_type_vars(node : InstanceVar)
-      # In an assignment like @x = @y, we use the info gathered so far for @y
-      type_decl = @explicit_instance_vars[current_type]?.try &.[node.name]?
-      if type_decl
-        return [type_decl.type] of TypeVar
-      end
-
-      @guessed_instance_vars[current_type]?.try &.[node.name]?.try &.type_vars
-    end
-
-    def guess_type_vars(node : BinaryOp)
-      left_vars = guess_type_vars(node.left)
-      right_vars = guess_type_vars(node.right)
-      merge_two_type_vars(left_vars, right_vars)
-    end
-
-    def guess_type_vars(node : If)
-      left_vars = guess_type_vars(node.then)
-      right_vars = guess_type_vars(node.else)
-      merge_two_type_vars(left_vars, right_vars)
-    end
-
-    def guess_type_vars(node : Unless)
-      left_vars = guess_type_vars(node.then)
-      right_vars = guess_type_vars(node.else)
-      merge_two_type_vars(left_vars, right_vars)
-    end
-
-    def guess_type_vars(node : Case)
-      all_type_vars = nil
-
-      node.whens.each do |when|
-        type_vars = guess_type_vars(when.body)
-        next unless type_vars
-
-        all_type_vars ||= [] of TypeVar
-        all_type_vars.concat(type_vars)
-      end
-
-      if node_else = node.else
-        type_vars = guess_type_vars(node_else)
-        if type_vars
-          all_type_vars ||= [] of TypeVar
-          all_type_vars.concat(type_vars)
-        end
-      end
-
-      all_type_vars
-    end
-
-    def guess_type_vars(node : Expressions)
-      last = node.expressions.last?
-      last ? guess_type_vars(last) : nil
-    end
-
-    def guess_type_vars(node : ArrayLiteral)
-      if name = node.name
-        type = lookup_type_no_check?(name)
-        if type.is_a?(GenericClassType)
-          element_types = guess_array_literal_element_types(node)
-          if element_types
-            return [type.instantiate([Type.merge!(element_types)] of TypeVar)] of TypeVar
-          end
-        else
-          type = check_allowed_in_generics(type)
-          if type
-            return [type] of TypeVar
-          end
-        end
-      end
-
-      if node_of = node.of
-        return [Generic.new(Path.global("Array"), node_of)] of TypeVar
-      end
-
-      element_types = guess_array_literal_element_types(node)
-      if element_types
-        return [mod.array_of(Type.merge!(element_types))] of TypeVar
-      end
-
-      nil
-    end
-
-    def guess_type_vars(node : HashLiteral)
-      if name = node.name
-        type = lookup_type_no_check?(name)
-        if type.is_a?(GenericClassType)
-          key_types, value_types = guess_hash_literal_key_value_types(node)
-          if key_types && value_types
-            return [type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar)] of TypeVar
-          end
-        else
-          type = check_allowed_in_generics(type)
-          if type
-            return [type] of TypeVar
-          end
-        end
-      end
-
-      if node_of = node.of
-        return [Generic.new(Path.global("Hash"), [node_of.key, node_of.value] of ASTNode)] of TypeVar
-      end
-
-      key_types, value_types = guess_hash_literal_key_value_types(node)
-      if key_types && value_types
-        return [mod.hash_of(Type.merge!(key_types), Type.merge!(value_types))] of TypeVar
-      end
-
-      nil
-    end
-
-    def guess_type_vars(node : Assign)
-      if node.target.is_a?(Var)
-        return guess_type_vars(node.value)
-      end
-
-      type_vars = process_assign(node)
-      if type_vars.is_a?(Array(TypeVar))
-        type_vars
-      else
-        nil
-      end
-    end
-
-    def guess_type_vars(node : ASTNode)
-      type = guess_type(node)
-      if type
-        [type] of TypeVar
-      else
-        nil
-      end
-    end
-
-    def merge_two_type_vars(t1, t2)
-      if t1
-        if t2
-          t1 + t2
-        else
-          t1
-        end
-      elsif t2
-        t2
-      else
-        nil
-      end
-    end
-
     def check_has_self(node)
       return false if node.is_a?(Var)
 
@@ -1223,28 +961,28 @@ module Crystal
     end
 
     def lookup_type?(node, root = current_type)
-      type = TypeLookup.lookup?(root, node, allow_typeof: false)
-      check_allowed_in_generics(type)
+      type = root.lookup_type?(node, allow_typeof: false)
+      check_allowed_in_generics(node, type)
     end
 
     def lookup_type_no_check?(node)
-      TypeLookup.lookup?(current_type, node, allow_typeof: false)
+      current_type.lookup_type?(node, allow_typeof: false)
     end
 
-    def check_allowed_in_generics(type)
+    def check_allowed_in_generics(node, type)
       # Types such as Object, Int, etc., are not allowed in generics
       # and as variables types, so we disallow them.
       if type && !type.allowed_in_generics?
-        # However, Reference is allowed for variables.
-        if type == @mod.reference
-          return type
-        else
-          return nil
-        end
+        @error = Error.new(node, type)
+        return nil
       end
 
       case type
-      when GenericClassType, GenericModuleType
+      when GenericClassType
+        @error = Error.new(node, type)
+        nil
+      when GenericModuleType
+        @error = Error.new(node, type)
         nil
       when NonGenericClassType
         type.virtual_type
@@ -1254,66 +992,13 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      check_outside_block_or_exp node, "declare class"
-
       @initialize_infos[node.resolved_type] ||= [] of InitializeInfo
-
-      pushing_type(node.resolved_type) do
-        node.runtime_initializers.try &.each &.accept self
-        node.body.accept self
-      end
-
-      false
+      super
     end
 
     def visit(node : ModuleDef)
-      check_outside_block_or_exp node, "declare module"
-
       @initialize_infos[node.resolved_type] ||= [] of InitializeInfo
-
-      pushing_type(node.resolved_type) do
-        node.body.accept self
-      end
-
-      false
-    end
-
-    def visit(node : EnumDef)
-      check_outside_block_or_exp node, "declare enum"
-
-      pushing_type(node.resolved_type) do
-        node.members.each &.accept self
-      end
-
-      false
-    end
-
-    def visit(node : Alias)
-      check_outside_block_or_exp node, "declare alias"
-
-      false
-    end
-
-    def visit(node : Include)
-      check_outside_block_or_exp node, "include"
-
-      node.runtime_initializers.try &.each &.accept self
-
-      false
-    end
-
-    def visit(node : Extend)
-      check_outside_block_or_exp node, "extend"
-
-      node.runtime_initializers.try &.each &.accept self
-
-      false
-    end
-
-    def visit(node : LibDef)
-      check_outside_block_or_exp node, "declare lib"
-
-      false
+      super
     end
 
     def visit(node : TypeDeclaration)
@@ -1327,24 +1012,26 @@ module Crystal
       # If this method was redefined and this new method doesn't
       # call `previous_def`, this method will never be called,
       # so we ignore it
-      if (next_def = node.next) && !next_def.calls_previous_def
+      if (next_def = node.next) && !next_def.calls_previous_def?
         return false
       end
 
-      check_outside_block_or_exp node, "declare def"
-
-      node.runtime_initializers.try &.each &.accept self
+      super
 
       @outside_def = false
       @found_self = false
       @args = node.args
       @block_arg = node.block_arg
 
-      if node.name == "initialize" && !current_type.is_a?(Program)
+      if !node.receiver && node.name == "initialize" && !current_type.is_a?(Program)
         initialize_info = @initialize_info = InitializeInfo.new(node)
       end
 
+      @inside_class_method = !!node.receiver
+
       node.body.accept self
+
+      @inside_class_method = false
 
       if initialize_info
         @initialize_infos[current_type] << initialize_info
@@ -1359,8 +1046,6 @@ module Crystal
     end
 
     def visit(node : FunDef)
-      check_outside_block_or_exp node, "declare fun"
-
       if body = node.body
         @outside_def = false
         @args = node.args
@@ -1372,45 +1057,12 @@ module Crystal
       false
     end
 
-    def visit(node : Macro)
-      check_outside_block_or_exp node, "declare macro"
-
-      false
-    end
-
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       node.def.body.accept self
       false
     end
 
-    def visit(node : Cast)
-      node.obj.accept self
-      false
-    end
-
-    def visit(node : NilableCast)
-      node.obj.accept self
-      false
-    end
-
-    def visit(node : IsA)
-      node.obj.accept self
-      false
-    end
-
-    def visit(node : InstanceSizeOf)
-      false
-    end
-
-    def visit(node : SizeOf)
-      false
-    end
-
-    def visit(node : TypeOf)
-      false
-    end
-
-    def visit(node : PointerOf)
+    def visit(node : InstanceSizeOf | SizeOf | TypeOf | PointerOf)
       false
     end
 
@@ -1426,42 +1078,14 @@ module Crystal
       @outside_def ? super : false
     end
 
-    def visit(node : Path)
-      false
-    end
-
-    def visit(node : Generic)
-      false
-    end
-
-    def visit(node : Fun)
-      false
-    end
-
-    def visit(node : Union)
-      false
-    end
-
-    def visit(node : Metaclass)
-      false
-    end
-
-    def visit(node : Self)
-      false
-    end
-
-    def visit(node : TypeOf)
-      false
-    end
-
     def gather_returns(node)
       gatherer = ReturnGatherer.new
       node.accept gatherer
       gatherer.returns
     end
 
-    def inside_block?
-      false
+    def current_type
+      @type_override || @current_type
     end
   end
 

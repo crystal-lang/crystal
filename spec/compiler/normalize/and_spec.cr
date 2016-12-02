@@ -18,7 +18,7 @@ describe "Normalize: and" do
   end
 
   it "normalizes and with ! on var.is_a?(...)" do
-    assert_expand_second "a = 1; !a.is_a?(Int32) && b", "if !a.is_a?(Int32)\n  b\nelse\n  !a.is_a?(Int32)\nend"
+    assert_expand_second "a = 1; !a.is_a?(Int32) && b", "if !(a.is_a?(Int32))\n  b\nelse\n  !(a.is_a?(Int32))\nend"
   end
 
   it "normalizes and with is_a? on exp" do

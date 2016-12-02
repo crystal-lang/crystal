@@ -51,7 +51,7 @@
 # ```
 struct Range(B, E)
   include Enumerable(B)
-  include Iterable
+  include Iterable(B)
 
   # Returns the object that defines the beginning of this range.
   #
@@ -270,8 +270,12 @@ struct Range(B, E)
     end
   end
 
-  # :nodoc:
-  class ItemIterator(B, E)
+  # Returns a new Range with `begin` and `end` cloned.
+  def clone
+    Range.new(@begin.clone, @end.clone, @exclusive)
+  end
+
+  private class ItemIterator(B, E)
     include Iterator(B)
 
     @range : Range(B, E)
@@ -306,8 +310,7 @@ struct Range(B, E)
     end
   end
 
-  # :nodoc:
-  class ReverseIterator(B, E)
+  private class ReverseIterator(B, E)
     include Iterator(E)
 
     @range : Range(B, E)
@@ -333,8 +336,7 @@ struct Range(B, E)
     end
   end
 
-  # :nodoc:
-  class StepIterator(R, B, N)
+  private class StepIterator(R, B, N)
     include Iterator(B)
 
     @range : R

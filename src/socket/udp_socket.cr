@@ -1,6 +1,7 @@
 require "./ip_socket"
 
 # A User Datagram Protocol socket.
+#
 # UDP runs on top of the Internet Protocol (IP) and was developed for applications that do
 # not require reliability, acknowledgement, or flow control features at the transport layer.
 # This simple protocol provides transport layer addressing in the form of UDP ports and an
@@ -11,9 +12,8 @@ require "./ip_socket"
 # beforehand. The UDP socket only needs to be opened for communication. It listens for
 # incoming messages and sends outgoing messages on request.
 #
-# This implementation supports both IPv4 and IPv6 addresses. For IPv4 addresses you need use
-# `Socket::Family::INET` family (used by default). And `Socket::Family::INET6` for IPv6
-# addresses accordingly.
+# This implementation supports both IPv4 and IPv6 addresses. For IPv4 addresses you must use
+# `Socket::Family::INET` family (default) or `Socket::Family::INET6` for IPv6 # addresses.
 #
 # Usage example:
 # ```
@@ -48,25 +48,26 @@ require "./ip_socket"
 # end
 # ```
 class UDPSocket < IPSocket
-  def initialize(family : Socket::Family = Socket::Family::INET)
-    super create_socket(family.value, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP)
+  def initialize(@family : Family = Family::INET)
+    super create_socket(family.value, Type::DGRAM, Protocol::UDP)
   end
 
-  # Creates a UDP socket from the given address.
+  # Binds the UDP socket to a local address.
   #
   # ```
   # server = UDPSocket.new
   # server.bind "localhost", 1234
   # ```
   def bind(host, port, dns_timeout = nil)
-    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |addrinfo|
+    getaddrinfo(host, port, @family, Type::DGRAM, Protocol::UDP, timeout: dns_timeout) do |addrinfo|
       self.reuse_address = true
 
-      ifdef freebsd
-        ret = LibC.bind(fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
-      else
-        ret = LibC.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
-      end
+      ret =
+        {% if flag?(:freebsd) || flag?(:openbsd) %}
+          LibC.bind(fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
+        {% else %}
+          LibC.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
+        {% end %}
       unless ret == 0
         next false if addrinfo.ai_next
         raise Errno.new("Error binding UDP socket at #{host}:#{port}")
@@ -76,14 +77,15 @@ class UDPSocket < IPSocket
     end
   end
 
-  # Attempts to connect the socket to a remote address and port for this socket.
+  # Connects the UDP socket to a remote address to send messages to.
   #
   # ```
   # client = UDPSocket.new
-  # client.connect "localhost", 1234
+  # client.connect("localhost", 1234)
+  # client.send("a text message")
   # ```
   def connect(host, port, dns_timeout = nil, connect_timeout = nil)
-    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |addrinfo|
+    getaddrinfo(host, port, @family, Type::DGRAM, Protocol::UDP, timeout: dns_timeout) do |addrinfo|
       if err = nonblocking_connect host, port, addrinfo, timeout: connect_timeout
         next false if addrinfo.ai_next
         raise err
@@ -93,57 +95,64 @@ class UDPSocket < IPSocket
     end
   end
 
-  def send(string : String)
-    send(string.to_slice)
+  # Sends a text message to the previously connected remote address. See
+  # `#connect`.
+  def send(message : String)
+    send(message.to_slice)
   end
 
-  def send(slice : Slice(UInt8))
-    bytes_sent = LibC.send(fd, (slice.to_unsafe.as(Void*)), slice.size, 0)
-    if bytes_sent != -1
-      return bytes_sent
-    end
-
-    raise Errno.new("Error writing datagram")
+  # Sends a binary message to the previously connected remote address. See
+  # `#connect`.
+  def send(message : Slice(UInt8))
+    bytes_sent = LibC.send(fd, (message.to_unsafe.as(Void*)), message.size, 0)
+    raise Errno.new("Error sending datagram") if bytes_sent == -1
+    bytes_sent
   ensure
     if (writers = @writers) && !writers.empty?
       add_write_event
     end
   end
 
-  def send(string : String, addr : IPAddress)
-    send(string.to_slice, addr)
+  # Sends a text message to the specified remote address.
+  def send(message : String, addr : IPAddress)
+    send(message.to_slice, addr)
   end
 
-  def send(slice : Slice(UInt8), addr : IPAddress)
+  # Sends a binary message to the specified remote address.
+  def send(message : Slice(UInt8), addr : IPAddress)
     sockaddr = addr.sockaddr
-    bytes_sent = LibC.sendto(fd, (slice.to_unsafe.as(Void*)), slice.size, 0, pointerof(sockaddr).as(LibC::Sockaddr*), addr.addrlen)
-    if bytes_sent != -1
-      return bytes_sent
-    end
-
-    raise Errno.new("Error writing datagram")
+    bytes_sent = LibC.sendto(fd, (message.to_unsafe.as(Void*)), message.size, 0, pointerof(sockaddr).as(LibC::Sockaddr*), addr.addrlen)
+    raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
+    bytes_sent
   end
 
-  def receive(slice : Slice(UInt8)) : {Int32, IPAddress}
+  # Receives a binary message on the previously bound address.
+  #
+  # ```
+  # server = UDPSocket.new
+  # server.bind "localhost", 1234
+  #
+  # message = Slice(UInt8).new(32)
+  # message_size, client_addr = server.receive(message)
+  # ```
+  def receive(message : Slice(UInt8)) : {Int32, IPAddress}
     loop do
       sockaddr = uninitialized LibC::SockaddrIn6
       addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
+      bytes_read = LibC.recvfrom(fd, (message.to_unsafe.as(Void*)), message.size, 0, pointerof(sockaddr).as(LibC::Sockaddr*), pointerof(addrlen))
 
-      bytes_read = LibC.recvfrom(fd, (slice.to_unsafe.as(Void*)), slice.size, 0, pointerof(sockaddr).as(LibC::Sockaddr*), pointerof(addrlen))
-      if bytes_read != -1
-        return {
-          bytes_read.to_i32,
-          IPAddress.new(sockaddr, addrlen),
-        }
-      end
-
-      if Errno.value == Errno::EAGAIN
-        wait_readable
+      if bytes_read == -1
+        if Errno.value == Errno::EAGAIN
+          wait_readable
+        else
+          raise Errno.new("Error receiving datagram")
+        end
       else
-        raise Errno.new("Error receiving datagram")
+        return {bytes_read.to_i32, IPAddress.new(sockaddr, addrlen)}
       end
     end
   ensure
+    # see IO::FileDescriptor#unbuffered_read
     if (readers = @readers) && !readers.empty?
       add_read_event
     end

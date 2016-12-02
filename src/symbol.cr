@@ -68,9 +68,13 @@ struct Symbol
     when "&", "|", "^", "~", "**", ">>", "<<", "%", "[]", "<=>", "===", "[]?", "[]="
       # Nothing
     else
-      string.each_char do |char|
+      string.each_char_with_index do |char, i|
+        if i == 0 && char.ascii_number?
+          return true
+        end
+
         case char
-        when .alphanumeric?, '_'
+        when .ascii_alphanumeric?, '_'
           # Nothing
         else
           return true
@@ -78,5 +82,9 @@ struct Symbol
       end
     end
     false
+  end
+
+  def clone
+    self
   end
 end

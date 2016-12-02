@@ -101,4 +101,8 @@ struct Nil
   def not_nil!
     raise "Nil assertion failed"
   end
+
+  def clone
+    self
+  end
 end

@@ -1,3 +1,6 @@
+# Base class for the two possible access tokens: Bearer and Mac.
+#
+# Use `#authenticate` to authenticate an `HTTP::Client`.
 abstract class OAuth2::AccessToken
   def self.new(pull : JSON::PullParser)
     token_type = nil
@@ -48,11 +51,11 @@ abstract class OAuth2::AccessToken
     @expires_in = expires_in.to_i64
   end
 
-  abstract def authenticate(request : HTTP::Request, ssl)
+  abstract def authenticate(request : HTTP::Request, tls)
 
   def authenticate(client : HTTP::Client)
     client.before_request do |request|
-      authenticate request, client.ssl?
+      authenticate request, client.tls?
     end
   end
 end

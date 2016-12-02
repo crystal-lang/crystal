@@ -1,3 +1,5 @@
+require "../bcrypt"
+
 # :nodoc:
 module Crypto::Bcrypt::Base64
   ALPHABET = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"

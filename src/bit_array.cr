@@ -16,6 +16,7 @@
 #     ba[2]                 # => true
 struct BitArray
   include Enumerable(Bool)
+  include Indexable(Bool)
 
   # The number of bits the BitArray stores
   getter size : Int32
@@ -29,14 +30,8 @@ struct BitArray
     @bits = Pointer(UInt32).malloc(malloc_size, value)
   end
 
-  # Returns the bit at the given index.
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to access a bit outside the array's range.
-  #
-  #     ba = BitArray.new(5)
-  #     ba[3] # => false
-  def [](index)
-    bit_index, sub_index = bit_index_and_sub_index(index)
+  def unsafe_at(index : Int)
+    bit_index, sub_index = index.divmod(32)
     (@bits[bit_index] & (1 << sub_index)) > 0
   end
 
@@ -83,20 +78,6 @@ struct BitArray
     end
   end
 
-  # Calls the given block once for each element in self, passing that element as a parameter.
-  #
-  #     ba = BitArray.new(5)
-  #     ba[2] = true; ba[3] = true
-  #     ba # => BitArray[00110]
-  #     ba.each do |i|
-  #         print i, ", "
-  #     end # => false, false, true, true, false
-  def each
-    @size.times do |i|
-      yield self[i]
-    end
-  end
-
   # Creates a string representation of self.
   #
   #     ba = BitArray.new(5)
@@ -122,9 +103,13 @@ struct BitArray
   end
 
   private def bit_index_and_sub_index(index)
-    index += @size if index < 0
-    raise IndexError.new if index >= @size || index < 0
+    bit_index_and_sub_index(index) { raise IndexError.new }
+  end
 
+  private def bit_index_and_sub_index(index)
+    index = check_index_out_of_bounds(index) do
+      return yield
+    end
     index.divmod(32)
   end
 

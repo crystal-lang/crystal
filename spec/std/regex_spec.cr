@@ -25,11 +25,18 @@ describe "Regex" do
     "Crystal".match(/(?<bar>C)#{/(?<foo>R)/i}/).should be_truthy
     "Crystal".match(/(?<bar>C)#{/(?<foo>R)/}/i).should be_falsey
 
-    "Crystal".match(/(?<bar>.)#{/(?<foo>.)/}/) do |md|
-      md[0].should eq("Cr")
-      md["bar"].should eq("C")
-      md["foo"].should eq("r")
-    end
+    md = "Crystal".match(/(?<bar>.)#{/(?<foo>.)/}/).not_nil!
+    md[0].should eq("Cr")
+    md["bar"].should eq("C")
+    md["foo"].should eq("r")
+  end
+
+  it "does inspect with slash" do
+    %r(/).inspect.should eq("/\\//")
+  end
+
+  it "does to_s with slash" do
+    %r(/).to_s.should eq("(?-imsx:\\/)")
   end
 
   it "doesn't crash when PCRE tries to free some memory (#771)" do
@@ -131,5 +138,15 @@ describe "Regex" do
     it "combines Regex objects in the same way as Regex#+" do
       Regex.union(/skiing/i, /sledding/).should eq(/skiing/i + /sledding/)
     end
+  end
+
+  it "dups" do
+    regex = /foo/
+    regex.dup.should be(regex)
+  end
+
+  it "clones" do
+    regex = /foo/
+    regex.clone.should be(regex)
   end
 end

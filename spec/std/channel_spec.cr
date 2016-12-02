@@ -78,7 +78,12 @@ describe Channel::Unbuffered do
     ch1 = Channel::Unbuffered(Int32).new
     ch2 = Channel::Unbuffered(Int32).new
     spawn { ch1.send 123 }
-    Channel.select(ch1.receive_op, ch2.receive_op).should eq({0, 123})
+    Channel.select(ch1.receive_select_action, ch2.receive_select_action).should eq({0, 123})
+  end
+
+  it "works with select else" do
+    ch1 = Channel::Unbuffered(Int32).new
+    Channel.select({ch1.receive_select_action}, true).should eq({1, nil})
   end
 
   it "can send and receive nil" do
@@ -180,7 +185,7 @@ describe Channel::Buffered do
     ch1 = Channel::Buffered(Int32).new
     ch2 = Channel::Buffered(Int32).new
     spawn { ch1.send 123 }
-    Channel.select(ch1.receive_op, ch2.receive_op).should eq({0, 123})
+    Channel.select(ch1.receive_select_action, ch2.receive_select_action).should eq({0, 123})
   end
 
   it "can send and receive nil" do

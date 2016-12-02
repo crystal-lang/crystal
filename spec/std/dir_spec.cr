@@ -26,6 +26,10 @@ describe "Dir" do
     Dir.exists?(File.join([__DIR__, "/foo/bar/"])).should be_false
   end
 
+  it "tests exists? on a directory path to a file" do
+    Dir.exists?("#{__FILE__}/").should be_false
+  end
+
   it "tests mkdir and rmdir with a new path" do
     path = "/tmp/crystal_mkdir_test_#{Process.pid}/"
     Dir.mkdir(path, 0o700).should eq(0)

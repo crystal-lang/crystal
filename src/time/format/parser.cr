@@ -164,7 +164,15 @@ struct Time::Format
     end
 
     def milliseconds
-      @millisecond = consume_number(3)
+      # Consume more than 3 digits (12 seems a good maximum),
+      # and later just use the first 3 digits because Time
+      # only has microsecond precision.
+      pos = @reader.pos
+      @millisecond = consume_number(12)
+      digits = @reader.pos - pos
+      if digits > 3
+        @millisecond /= 10 ** (digits - 3)
+      end
     end
 
     def am_pm
@@ -222,20 +230,20 @@ struct Time::Format
         sign = char == '-' ? -1 : 1
 
         char = next_char
-        raise "invalid timezone" unless char.digit?
+        raise "invalid timezone" unless char.ascii_number?
         hours = char.to_i
 
         char = next_char
-        raise "invalid timezone" unless char.digit?
+        raise "invalid timezone" unless char.ascii_number?
         hours = 10*hours + char.to_i
 
         char = next_char
         char = next_char if char == ':'
-        raise "invalid timezone" unless char.digit?
+        raise "invalid timezone" unless char.ascii_number?
         minutes = char.to_i
 
         char = next_char
-        raise "invalid timezone" unless char.digit?
+        raise "invalid timezone" unless char.ascii_number?
         minutes = 10*minutes + char.to_i
 
         @offset_in_minutes = sign * (60*hours + minutes)
@@ -244,9 +252,9 @@ struct Time::Format
 
         if @reader.has_next?
           pos = @reader.pos
-          if char == ':' && next_char.digit? && @reader.has_next? && next_char.digit?
+          if char == ':' && next_char.ascii_number? && @reader.has_next? && next_char.ascii_number?
             next_char
-          elsif char.digit? && next_char.digit?
+          elsif char.ascii_number? && next_char.ascii_number?
             next_char
           else
             @reader.pos = pos
@@ -279,7 +287,7 @@ struct Time::Format
       n = 0_i64
       char = current_char
 
-      if char.digit?
+      if char.ascii_number?
         n = (char - '0').to_i64
         char = next_char
       else
@@ -288,7 +296,7 @@ struct Time::Format
 
       max_digits -= 1
 
-      while max_digits > 0 && char.digit?
+      while max_digits > 0 && char.ascii_number?
         n = n * 10 + (char - '0')
         char = next_char
         max_digits -= 1
@@ -298,7 +306,7 @@ struct Time::Format
     end
 
     def consume_number_blank_padded(max_digits)
-      if current_char.whitespace?
+      if current_char.ascii_whitespace?
         max_digits -= 1
         next_char
       end
@@ -308,14 +316,14 @@ struct Time::Format
 
     def consume_string
       start_pos = @reader.pos
-      while current_char.alpha?
+      while current_char.ascii_letter?
         next_char
       end
       @reader.string.byte_slice(start_pos, @reader.pos - start_pos)
     end
 
     def skip_space
-      next_char if current_char.whitespace?
+      next_char if current_char.ascii_whitespace?
     end
 
     def current_char

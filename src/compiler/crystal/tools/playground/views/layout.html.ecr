@@ -6,8 +6,11 @@
     <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/lib/codemirror.css">
     <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/theme/neat.css">
     <link rel="stylesheet" href="/vendor/octicons-3.5.0/octicons.css">
+    <link rel="stylesheet" href="/vendor/ansi_up-1.3.0/theme.css">
     <link rel="stylesheet" type="text/css" href="/application.css">
-
+    <% each_resource(:css) do |res| %>
+      <link rel="stylesheet" type="text/css" href="<%= res.src %>">
+    <% end %>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
     <title>Crystal Playground</title>
@@ -45,14 +48,18 @@
       </div>
     </footer>
 
-    <script src="/vendor/jquery-2.2.1.min.js"></script>
-    <script src="/vendor/materialize-v0.97.5/js/materialize.min.js"></script>
-    <script src="/vendor/CodeMirror-5.12.0/lib/codemirror.js"></script>
-    <script src="/vendor/CodeMirror-5.12.0/addon/comment/comment.js"></script>
-    <script src="/vendor/CodeMirror-5.12.0/mode/crystal/crystal.js"></script>
+    <script type="text/javascript" src="/vendor/jquery-2.2.1.min.js"></script>
+    <script type="text/javascript" src="/vendor/materialize-v0.97.5/js/materialize.min.js"></script>
+    <script type="text/javascript" src="/vendor/CodeMirror-5.12.0/lib/codemirror.js"></script>
+    <script type="text/javascript" src="/vendor/CodeMirror-5.12.0/addon/comment/comment.js"></script>
+    <script type="text/javascript" src="/vendor/CodeMirror-5.12.0/mode/crystal/crystal.js"></script>
+    <script type="text/javascript" src="/vendor/ansi_up-1.3.0/ansi_up.js"></script>
     <script type="text/javascript" src="/environment.js"></script>
     <script type="text/javascript" src="/settings.js"></script>
     <script type="text/javascript" src="/session.js"></script>
     <script type="text/javascript" src="/application.js"></script>
+    <% each_resource(:js) do |res| %>
+      <script type="text/javascript" src="<%= res.src %>"></script>
+    <% end %>
   </body>
 </html>

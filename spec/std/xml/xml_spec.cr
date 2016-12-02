@@ -77,7 +77,7 @@ describe XML do
   end
 
   it "parses from io" do
-    io = MemoryIO.new(<<-XML
+    io = IO::Memory.new(<<-XML
       <?xml version='1.0' encoding='UTF-8'?>
       <people>
         <person id="1" id2="2">
@@ -94,6 +94,12 @@ describe XML do
     people = doc.children.find { |node| node.name == "people" }.not_nil!
     person = people.children.find { |node| node.name == "person" }.not_nil!
     person["id"].should eq("1")
+  end
+
+  it "raises exception on empty string" do
+    expect_raises XML::Error, "Document is empty" do
+      XML.parse("")
+    end
   end
 
   it "does to_s" do
@@ -205,7 +211,7 @@ describe XML do
   it "reads big xml file (#1455)" do
     content = "." * 20_000
     string = %(<?xml version="1.0"?><root>#{content}</root>)
-    parsed = XML.parse(MemoryIO.new(string))
+    parsed = XML.parse(IO::Memory.new(string))
     parsed.root.not_nil!.children[0].text.should eq(content)
   end
 
@@ -274,5 +280,19 @@ describe XML do
 
     doc = XML.parse(xml_str)
     doc.root.to_s.should eq("<person>\n  <name>たろう</name>\n</person>")
+  end
+
+  describe "escape" do
+    it "does not change a safe string" do
+      str = XML.escape("safe_string")
+
+      str.should eq("safe_string")
+    end
+
+    it "escapes dangerous characters from a string" do
+      str = XML.escape("< & >")
+
+      str.should eq("&lt; &amp; &gt;")
+    end
   end
 end

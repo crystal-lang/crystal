@@ -7,6 +7,8 @@ class JSON::PullParser
   getter string_value : String
   getter raw_value : String
 
+  property max_nesting = 512
+
   def initialize(input)
     @lexer = Lexer.new input
     @kind = :EOF
@@ -167,8 +169,8 @@ class JSON::PullParser
       first = true
       while kind != :end_object
         io << "," unless first
-        read_object_key
         @string_value.to_json(io)
+        read_object_key
         io << ":"
         read_raw(io)
         first = false
@@ -226,11 +228,12 @@ class JSON::PullParser
 
   def on_key!(key)
     found = false
+    value = uninitialized typeof(yield)
 
     read_object do |some_key|
       if some_key == key
         found = true
-        yield
+        value = yield
       else
         skip
       end
@@ -239,11 +242,63 @@ class JSON::PullParser
     unless found
       raise "json key not found: #{key}"
     end
+
+    value
   end
 
   def read_next
     read_next_internal
     @kind
+  end
+
+  def read?(klass : Bool.class)
+    read_bool if kind == :bool
+  end
+
+  def read?(klass : Int8.class)
+    read_int.to_i8 if kind == :int
+  end
+
+  def read?(klass : Int16.class)
+    read_int.to_i16 if kind == :int
+  end
+
+  def read?(klass : Int32.class)
+    read_int.to_i32 if kind == :int
+  end
+
+  def read?(klass : Int64.class)
+    read_int.to_i64 if kind == :int
+  end
+
+  def read?(klass : UInt8.class)
+    read_int.to_u8 if kind == :int
+  end
+
+  def read?(klass : UInt16.class)
+    read_int.to_u16 if kind == :int
+  end
+
+  def read?(klass : UInt32.class)
+    read_int.to_u32 if kind == :int
+  end
+
+  def read?(klass : UInt64.class)
+    read_int.to_u64 if kind == :int
+  end
+
+  def read?(klass : Float32.class)
+    return read_int.to_f32 if kind == :int
+    return read_float.to_f32 if kind == :float
+  end
+
+  def read?(klass : Float64.class)
+    return read_int.to_f64 if kind == :int
+    return read_float.to_f64 if kind == :float
+  end
+
+  def read?(klass : String.class)
+    read_string if kind == :string
   end
 
   private def read_next_internal
@@ -378,7 +433,7 @@ class JSON::PullParser
 
   private def begin_array
     @kind = :begin_array
-    @object_stack << :array
+    push_in_object_stack :array
 
     case next_token.type
     when :",", :"}", :":", :EOF
@@ -388,7 +443,7 @@ class JSON::PullParser
 
   private def begin_object
     @kind = :begin_object
-    @object_stack << :object
+    push_in_object_stack :object
 
     case next_token_expect_object_key.type
     when :STRING, :"}"
@@ -402,9 +457,9 @@ class JSON::PullParser
     @object_stack.last?
   end
 
-  private delegate token, @lexer
-  private delegate next_token, @lexer
-  private delegate next_token_expect_object_key, @lexer
+  private delegate token, to: @lexer
+  private delegate next_token, to: @lexer
+  private delegate next_token_expect_object_key, to: @lexer
 
   private def next_token_after_value
     case next_token.type
@@ -445,5 +500,13 @@ class JSON::PullParser
 
   private def parse_exception(msg)
     raise ParseException.new(msg, token.line_number, token.column_number)
+  end
+
+  private def push_in_object_stack(symbol)
+    if @object_stack.size >= @max_nesting
+      parse_exception "nesting of #{@object_stack.size + 1} is too deep"
+    end
+
+    @object_stack.push(symbol)
   end
 end

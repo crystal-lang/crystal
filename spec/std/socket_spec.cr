@@ -1,6 +1,69 @@
 require "spec"
 require "socket"
 
+describe Socket do
+  # Tests from libc-test:
+  # http://repo.or.cz/libc-test.git/blob/master:/src/functional/inet_pton.c
+  assert "ip?" do
+    # dotted-decimal notation
+    Socket.ip?("0.0.0.0").should be_true
+    Socket.ip?("127.0.0.1").should be_true
+    Socket.ip?("10.0.128.31").should be_true
+    Socket.ip?("255.255.255.255").should be_true
+
+    # numbers-and-dots notation, but not dotted-decimal
+    # Socket.ip?("1.2.03.4").should be_false # fails on darwin
+    Socket.ip?("1.2.0x33.4").should be_false
+    Socket.ip?("1.2.0XAB.4").should be_false
+    Socket.ip?("1.2.0xabcd").should be_false
+    Socket.ip?("1.0xabcdef").should be_false
+    Socket.ip?("00377.0x0ff.65534").should be_false
+
+    # invalid
+    Socket.ip?(".1.2.3").should be_false
+    Socket.ip?("1..2.3").should be_false
+    Socket.ip?("1.2.3.").should be_false
+    Socket.ip?("1.2.3.4.5").should be_false
+    Socket.ip?("1.2.3.a").should be_false
+    Socket.ip?("1.256.2.3").should be_false
+    Socket.ip?("1.2.4294967296.3").should be_false
+    Socket.ip?("1.2.-4294967295.3").should be_false
+    Socket.ip?("1.2. 3.4").should be_false
+
+    # ipv6
+    Socket.ip?(":").should be_false
+    Socket.ip?("::").should be_true
+    Socket.ip?("::1").should be_true
+    Socket.ip?(":::").should be_false
+    Socket.ip?(":192.168.1.1").should be_false
+    Socket.ip?("::192.168.1.1").should be_true
+    Socket.ip?("0:0:0:0:0:0:192.168.1.1").should be_true
+    Socket.ip?("0:0::0:0:0:192.168.1.1").should be_true
+    # Socket.ip?("::012.34.56.78").should be_false # fails on darwin
+    Socket.ip?(":ffff:192.168.1.1").should be_false
+    Socket.ip?("::ffff:192.168.1.1").should be_true
+    Socket.ip?(".192.168.1.1").should be_false
+    Socket.ip?(":.192.168.1.1").should be_false
+    Socket.ip?("a:0b:00c:000d:E:F::").should be_true
+    # Socket.ip?("a:0b:00c:000d:0000e:f::").should be_false # fails on GNU libc
+    Socket.ip?("1:2:3:4:5:6::").should be_true
+    Socket.ip?("1:2:3:4:5:6:7::").should be_true
+    Socket.ip?("1:2:3:4:5:6:7:8::").should be_false
+    Socket.ip?("1:2:3:4:5:6:7::9").should be_false
+    Socket.ip?("::1:2:3:4:5:6").should be_true
+    Socket.ip?("::1:2:3:4:5:6:7").should be_true
+    Socket.ip?("::1:2:3:4:5:6:7:8").should be_false
+    Socket.ip?("a:b::c:d:e:f").should be_true
+    Socket.ip?("ffff:c0a8:5e4").should be_false
+    Socket.ip?(":ffff:c0a8:5e4").should be_false
+    Socket.ip?("0:0:0:0:0:ffff:c0a8:5e4").should be_true
+    Socket.ip?("0:0:0:0:ffff:c0a8:5e4").should be_false
+    Socket.ip?("0::ffff:c0a8:5e4").should be_true
+    Socket.ip?("::0::ffff:c0a8:5e4").should be_false
+    Socket.ip?("c0a8").should be_false
+  end
+end
+
 describe Socket::IPAddress do
   it "transforms an IPv4 address into a C struct and back again" do
     addr1 = Socket::IPAddress.new(Socket::Family::INET, "127.0.0.1", 8080.to_i16)
@@ -29,7 +92,113 @@ describe Socket::UNIXAddress do
   end
 end
 
+describe UNIXServer do
+  it "raises when path is too long" do
+    path = "/tmp/crystal-test-too-long-unix-socket-#{("a" * 2048)}.sock"
+    expect_raises(ArgumentError, "Path size exceeds the maximum size") { UNIXServer.new(path) }
+    File.exists?(path).should be_false
+  end
+
+  it "creates the socket file" do
+    path = "/tmp/crystal-test-unix-sock"
+
+    UNIXServer.open(path) do
+      File.exists?(path).should be_true
+    end
+
+    File.exists?(path).should be_false
+  end
+
+  it "deletes socket file on close" do
+    path = "/tmp/crystal-test-unix-sock"
+
+    begin
+      server = UNIXServer.new(path)
+      server.close
+      File.exists?(path).should be_false
+    rescue
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
+  it "raises when socket file already exists" do
+    path = "/tmp/crystal-test-unix-sock"
+    server = UNIXServer.new(path)
+
+    begin
+      expect_raises(Errno) { UNIXServer.new(path) }
+    ensure
+      server.close
+    end
+  end
+
+  describe "accept" do
+    it "returns the client UNIXSocket" do
+      UNIXServer.open("/tmp/crystal-test-unix-sock") do |server|
+        UNIXSocket.open("/tmp/crystal-test-unix-sock") do |_|
+          client = server.accept
+          client.should be_a(UNIXSocket)
+          client.close
+        end
+      end
+    end
+
+    it "raises when server is closed" do
+      server = UNIXServer.new("/tmp/crystal-test-unix-sock")
+      exception = nil
+
+      spawn do
+        begin
+          server.accept
+        rescue ex
+          exception = ex
+        end
+      end
+
+      server.close
+      until exception
+        Fiber.yield
+      end
+
+      exception.should be_a(IO::Error)
+      exception.try(&.message).should eq("closed stream")
+    end
+  end
+
+  describe "accept?" do
+    it "returns the client UNIXSocket" do
+      UNIXServer.open("/tmp/crystal-test-unix-sock") do |server|
+        UNIXSocket.open("/tmp/crystal-test-unix-sock") do |_|
+          client = server.accept?.not_nil!
+          client.should be_a(UNIXSocket)
+          client.close
+        end
+      end
+    end
+
+    it "returns nil when server is closed" do
+      server = UNIXServer.new("/tmp/crystal-test-unix-sock")
+      ret = :initial
+
+      spawn { ret = server.accept? }
+      server.close
+
+      while ret == :initial
+        Fiber.yield
+      end
+
+      ret.should be_nil
+    end
+  end
+end
+
 describe UNIXSocket do
+  it "raises when path is too long" do
+    path = "/tmp/crystal-test-too-long-unix-socket-#{("a" * 2048)}.sock"
+    expect_raises(ArgumentError, "Path size exceeds the maximum size") { UNIXSocket.new(path) }
+    File.exists?(path).should be_false
+  end
+
   it "sends and receives messages" do
     path = "/tmp/crystal-test-unix-sock"
 
@@ -110,14 +279,6 @@ describe UNIXSocket do
       sizes.should contain(left.recv_buffer_size)
     end
   end
-
-  it "creates the socket file" do
-    path = "/tmp/crystal-test-unix-sock"
-
-    UNIXServer.open(path) do
-      File.exists?(path).should be_true
-    end
-  end
 end
 
 describe TCPServer do
@@ -149,17 +310,19 @@ describe TCPSocket do
       (server.reuse_address = true).should be_true
       server.reuse_address?.should be_true
 
+      {% unless flag?(:openbsd) %}
       (server.keepalive = false).should be_false
       server.keepalive?.should be_false
       (server.keepalive = true).should be_true
       server.keepalive?.should be_true
+      {% end %}
 
       (server.linger = nil).should be_nil
       server.linger.should be_nil
       (server.linger = 42).should eq 42
       server.linger.should eq 42
 
-      TCPSocket.open("::", server.local_address.port) do |client|
+      TCPSocket.open("localhost", server.local_address.port) do |client|
         # The commented lines are actually dependent on the system configuration,
         # so for now we keep it commented. Once we can force the family
         # we can uncomment them.
@@ -183,12 +346,14 @@ describe TCPSocket do
         (client.tcp_nodelay = false).should be_false
         client.tcp_nodelay?.should be_false
 
+        {% unless flag?(:openbsd) %}
         (client.tcp_keepalive_idle = 42).should eq 42
         client.tcp_keepalive_idle.should eq 42
         (client.tcp_keepalive_interval = 42).should eq 42
         client.tcp_keepalive_interval.should eq 42
         (client.tcp_keepalive_count = 42).should eq 42
         client.tcp_keepalive_count.should eq 42
+        {% end %}
 
         client << "ping"
         sock.gets(4).should eq("ping")
@@ -207,9 +372,8 @@ describe TCPSocket do
   end
 
   it "fails when connection is refused" do
-    port = 0
-    TCPServer.open("localhost", port) do |server|
-      port = server.local_address.port
+    port = TCPServer.open("localhost", 0) do |server|
+      server.local_address.port
     end
 
     expect_raises(Errno, "Error connecting to 'localhost:#{port}': Connection refused") do
@@ -252,10 +416,8 @@ describe UDPSocket do
   end
 
   it "sends and receives messages by send and receive over IPv4" do
-    port = free_udp_socket_port
-
     server = UDPSocket.new(Socket::Family::INET)
-    server.bind("127.0.0.1", port)
+    server.bind("127.0.0.1", 0)
 
     client = UDPSocket.new(Socket::Family::INET)
 
@@ -280,10 +442,8 @@ describe UDPSocket do
   end
 
   it "sends and receives messages by send and receive over IPv6" do
-    port = free_udp_socket_port
-
     server = UDPSocket.new(Socket::Family::INET6)
-    server.bind("::1", port)
+    server.bind("::1", 0)
 
     client = UDPSocket.new(Socket::Family::INET6)
 

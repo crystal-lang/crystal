@@ -128,8 +128,8 @@ describe "Lexer" do
   it_lexes_keywords [:def, :if, :else, :elsif, :end, :true, :false, :class, :module, :include,
     :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break,
     :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-    :case, :when, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
-    :pointerof, :sizeof, :instance_sizeof, :ifdef, :as, :as?, :typeof, :for, :in,
+    :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
+    :pointerof, :sizeof, :instance_sizeof, :as, :as?, :typeof, :for, :in,
     :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
     "❨╯°□°❩╯︵┻━┻"]
@@ -230,7 +230,7 @@ describe "Lexer" do
   assert_syntax_error "'\\", "unterminated char literal"
   it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"(", :")",
     :"==", :"!=", :"=~", :"!", :",", :".", :"..", :"...", :"&&", :"||",
-    :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"/=", :"%=", :"&=",
+    :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"%=", :"&=",
     :"|=", :"^=", :"**=", :"<<", :">>", :"%", :"&", :"|", :"^", :"**", :"<<=",
     :">>=", :"~", :"[]", :"[]=", :"[", :"]", :"::", :"<=>", :"=>", :"||=",
     :"&&=", :"===", :";", :"->", :"[]?", :"{%", :"{{", :"%}", :"@[", :"!~"]
@@ -436,6 +436,13 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
     token.value.should eq("\\")
+  end
+
+  it "lexes /=" do
+    lexer = Lexer.new("/=")
+    lexer.slash_is_regex = false
+    token = lexer.next_token
+    token.type.should eq(:"/=")
   end
 
   assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"

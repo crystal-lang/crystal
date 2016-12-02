@@ -1,8 +1,11 @@
 require "./lexer"
 
 class JSON::Parser
+  property max_nesting = 512
+
   def initialize(string_or_io : String | IO)
     @lexer = JSON::Lexer.new(string_or_io)
+    @nest = 0
     next_token
   end
 
@@ -40,16 +43,20 @@ class JSON::Parser
 
     ary = [] of Type
 
-    if token.type != :"]"
-      while true
-        ary << parse_value
+    nest do
+      if token.type != :"]"
+        while true
+          ary << parse_value
 
-        case token.type
-        when :","
-          next_token
-          unexpected_token if token.type == :"]"
-        when :"]"
-          break
+          case token.type
+          when :","
+            next_token
+            unexpected_token if token.type == :"]"
+          when :"]"
+            break
+          else
+            unexpected_token
+          end
         end
       end
     end
@@ -64,26 +71,30 @@ class JSON::Parser
 
     object = {} of String => Type
 
-    if token.type != :"}"
-      while true
-        check :STRING
-        key = token.string_value
+    nest do
+      if token.type != :"}"
+        while true
+          check :STRING
+          key = token.string_value
 
-        next_token
+          next_token
 
-        check :":"
-        next_token
+          check :":"
+          next_token
 
-        value = parse_value
+          value = parse_value
 
-        object[key] = value
+          object[key] = value
 
-        case token.type
-        when :","
-          next_token_expect_object_key
-          unexpected_token if token.type == :"}"
-        when :"}"
-          break
+          case token.type
+          when :","
+            next_token_expect_object_key
+            unexpected_token if token.type == :"}"
+          when :"}"
+            break
+          else
+            unexpected_token
+          end
         end
       end
     end
@@ -93,9 +104,9 @@ class JSON::Parser
     object
   end
 
-  private delegate token, @lexer
-  private delegate next_token, @lexer
-  private delegate next_token_expect_object_key, @lexer
+  private delegate token, to: @lexer
+  private delegate next_token, to: @lexer
+  private delegate next_token_expect_object_key, to: @lexer
 
   private def value_and_next_token(value)
     next_token
@@ -107,6 +118,20 @@ class JSON::Parser
   end
 
   private def unexpected_token
-    raise ParseException.new("unexpected token '#{token}'", token.line_number, token.column_number)
+    parse_exception "unexpected token '#{token}'"
+  end
+
+  private def parse_exception(msg)
+    raise ParseException.new(msg, token.line_number, token.column_number)
+  end
+
+  private def nest
+    @nest += 1
+    if @nest > @max_nesting
+      parse_exception "nesting of #{@nest} is too deep"
+    end
+
+    yield
+    @nest -= 1
   end
 end

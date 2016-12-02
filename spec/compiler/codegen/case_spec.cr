@@ -34,10 +34,8 @@ describe "Code gen: case" do
     run("
       require \"prelude\"
 
-      $a = 0
-
       def foo
-        $a += 1
+        1
       end
 
       case foo
@@ -92,9 +90,9 @@ describe "Code gen: case" do
         end
       end
 
-      A = nil
+      CONST = nil
       case nil
-      when A
+      when CONST
         1
       else
         2

@@ -5,6 +5,54 @@ describe "NamedTuple" do
     NamedTuple.new(x: 1, y: 2).should eq({x: 1, y: 2})
   end
 
+  it "does NamedTuple.from" do
+    t = NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :bar => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    t = NamedTuple(foo: Int32, bar: Int32).from({"foo" => 1, "bar" => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    t = NamedTuple("foo bar": Int32, "baz qux": Int32).from({"foo bar" => 1, "baz qux" => 2})
+    t.should eq({"foo bar": 1, "baz qux": 2})
+    t.class.should eq(NamedTuple("foo bar": Int32, "baz qux": Int32))
+
+    expect_raises ArgumentError do
+      NamedTuple(foo: Int32, bar: Int32).from({:foo => 1})
+    end
+
+    expect_raises KeyError do
+      NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :baz => 2})
+    end
+
+    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+      NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :bar => "foo"})
+    end
+  end
+
+  it "does NamedTuple#from" do
+    t = {foo: Int32, bar: Int32}.from({:foo => 1, :bar => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    t = {foo: Int32, bar: Int32}.from({"foo" => 1, "bar" => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    expect_raises ArgumentError do
+      {foo: Int32, bar: Int32}.from({:foo => 1})
+    end
+
+    expect_raises KeyError do
+      {foo: Int32, bar: Int32}.from({:foo => 1, :baz => 2})
+    end
+
+    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+      {foo: Int32, bar: Int32}.from({:foo => 1, :bar => "foo"})
+    end
+  end
+
   it "gets size" do
     {a: 1, b: 3}.size.should eq(2)
   end
@@ -42,6 +90,44 @@ describe "NamedTuple" do
     typeof(val).should eq(Int32 | Char | Nil)
 
     key = :c
+    val = tup[key]?
+    val.should be_nil
+    typeof(val).should eq(Int32 | Char | Nil)
+  end
+
+  it "does [] with string" do
+    tup = {a: 1, b: 'a'}
+
+    key = "a"
+    val = tup[key]
+    val.should eq(1)
+    typeof(val).should eq(Int32 | Char)
+
+    key = "b"
+    val = tup[key]
+    val.should eq('a')
+    typeof(val).should eq(Int32 | Char)
+
+    expect_raises(KeyError) do
+      key = "c"
+      tup[key]
+    end
+  end
+
+  it "does []? with string" do
+    tup = {a: 1, b: 'a'}
+
+    key = "a"
+    val = tup[key]?
+    val.should eq(1)
+    typeof(val).should eq(Int32 | Char | Nil)
+
+    key = "b"
+    val = tup[key]?
+    val.should eq('a')
+    typeof(val).should eq(Int32 | Char | Nil)
+
+    key = "c"
     val = tup[key]?
     val.should be_nil
     typeof(val).should eq(Int32 | Char | Nil)
@@ -189,6 +275,9 @@ describe "NamedTuple" do
 
     tup1[:b] << 4
     tup2[:b].should eq([1, 2, 3])
+
+    tup2 = {"foo bar": 1}
+    tup2.clone.should eq(tup2)
   end
 
   it "does keys" do

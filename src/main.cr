@@ -4,6 +4,7 @@ lib LibCrystalMain
 end
 
 macro redefine_main(name = main)
+  # :nodoc:
   fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
     %ex = nil
     %status = begin

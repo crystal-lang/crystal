@@ -3,6 +3,8 @@ require "uri"
 module HTTP
   # Represents a collection of http parameters and their respective values.
   struct Params
+    include Enumerable({String, String})
+
     # Parses an HTTP query string into a `HTTP::Params`
     #
     #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo")
@@ -25,13 +27,13 @@ module HTTP
       return if query.empty?
 
       key = nil
-      buffer = MemoryIO.new
+      buffer = IO::Memory.new
 
       i = 0
       bytesize = query.bytesize
       while i < bytesize
         byte = query.unsafe_byte_at(i)
-        char = byte.chr
+        char = byte.unsafe_chr
 
         case char
         when '='
@@ -62,6 +64,16 @@ module HTTP
       end
     end
 
+    # Creates an HTTP::Params instance from the key-value
+    # pairs of the given *hash*.
+    def self.from_hash(hash : Hash)
+      build do |builder|
+        hash.each do |key, value|
+          builder.add key, value
+        end
+      end
+    end
+
     # Builds an url-encoded HTTP form/query.
     #
     # The yielded object has an `add` method that accepts two arguments,
@@ -76,7 +88,7 @@ module HTTP
     # end
     # params # => "color=black&name=crystal&year=2012%20-%20today"
     # ```
-    def self.build : String
+    def self.build(&block : Builder ->) : String
       form_builder = Builder.new
       yield form_builder
       form_builder.to_s
@@ -121,7 +133,7 @@ module HTTP
     # params.has_key?("email")   # => true
     # params.has_key?("garbage") # => false
     # ```
-    delegate has_key?, raw_params
+    delegate has_key?, to: raw_params
 
     # Sets first value for specified param name.
     #
@@ -214,7 +226,7 @@ module HTTP
     def each
       raw_params.each do |name, values|
         values.each do |value|
-          yield(name, value)
+          yield({name, value})
         end
       end
     end
@@ -270,15 +282,19 @@ module HTTP
       URI.unescape_one query, bytesize, i, byte, char, buffer, true
     end
 
-    # :nodoc:
+    # HTTP params builder.
+    #
+    # Every parameter added is directly written to an IO,
+    # where keys and values are properly escaped.
     class Builder
       @io : IO
       @first : Bool
 
-      def initialize(@io = MemoryIO.new)
+      def initialize(@io = IO::Memory.new)
         @first = true
       end
 
+      # Adds a key-value pair to the params being built.
       def add(key, value)
         @io << '&' unless @first
         @first = false

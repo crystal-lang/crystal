@@ -11,7 +11,7 @@
 # [circular buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 class Deque(T)
   include Enumerable(T)
-  include Iterable
+  include Indexable(T)
   include Comparable(Deque)
 
   # This Deque is based on a circular buffer. It works like a normal array, but when an item is removed from the left
@@ -123,7 +123,7 @@ class Deque(T)
 
   # Concatenation. Returns a new Deque built by concatenating two deques together to create a third. The type of the new
   # deque is the union of the types of both the other deques.
-  def +(other : Deque(U))
+  def +(other : Deque(U)) forall U
     Deque(T | U).new.concat(self).concat(other)
   end
 
@@ -135,22 +135,6 @@ class Deque(T)
   # Alias for `push`.
   def <<(value : T)
     push(value)
-  end
-
-  # Returns the element at the given `index`.
-  #
-  # Negative indices can be used to start counting from the end of the deque.
-  # Raises `IndexError` if trying to access an element outside the deque's range.
-  def [](index : Int)
-    at(index)
-  end
-
-  # Returns the element at the given index.
-  #
-  # Negative indices can be used to start counting from the end of the deque.
-  # Returns `nil` if trying to access an element outside the deque's range.
-  def []?(index : Int)
-    at(index) { nil }
   end
 
   # Sets the given value at the given index.
@@ -166,21 +150,10 @@ class Deque(T)
     @buffer[index] = value
   end
 
-  # Returns the element at the given index, if in bounds, otherwise raises `IndexError`.
-  def at(index : Int)
-    at(index) { raise IndexError.new }
-  end
-
-  # Returns the element at the given index, if in bounds, otherwise executes the given block and returns its value.
-  def at(index : Int)
-    index += @size if index < 0
-    unless 0 <= index < @size
-      yield
-    else
-      index += @start
-      index -= @capacity if index >= @capacity
-      @buffer[index]
-    end
+  def unsafe_at(index : Int)
+    index += @start
+    index -= @capacity if index >= @capacity
+    @buffer[index]
   end
 
   # Removes all elements from self.
@@ -302,60 +275,6 @@ class Deque(T)
     end
   end
 
-  # Gives an iterator over each item in this deque, from first to last.
-  def each
-    ItemIterator.new(self)
-  end
-
-  # Yields indices of each item in this deque, from first (`0`) to last (`size - 1`).
-  def each_index
-    (0...@size).each do |i|
-      yield i
-    end
-    self
-  end
-
-  # Gives an iterator over the indices of each item in this deque, from first (`0`) to last (`size - 1`).
-  def each_index
-    IndexIterator.new(self)
-  end
-
-  # Returns true if this deque has 0 items.
-  def empty?
-    @size == 0
-  end
-
-  # Zips two deques and gives each pair to the passed block. Returns `true` if the block returns `true` every time.
-  def equals?(other : Deque)
-    return false if @size != other.size
-    each_with_index do |x, i|
-      return false unless yield(x, other[i])
-    end
-    true
-  end
-
-  # Returns the leftmost item in the deque (index `0`). Raises `IndexError` if empty.
-  def first
-    first { raise IndexError.new }
-  end
-
-  # Returns the leftmost item in the deque (index `0`), if not empty, otherwise executes the given block and returns its
-  # value.
-  def first
-    @size == 0 ? yield : @buffer[@start]
-  end
-
-  # Returns the leftmost item in the deque (index `0`), if not empty, otherwise `nil`.
-  def first?
-    first { nil }
-  end
-
-  def hash
-    reduce(31 * @size) do |memo, elem|
-      31 * memo + elem.hash
-    end
-  end
-
   # Insert a new item before the item at `index`. Items to the right of this one will have their indices incremented.
   #
   # ```
@@ -419,20 +338,11 @@ class Deque(T)
     io << "Deque{...}" unless executed
   end
 
-  # Returns the rightmost item in the deque (index `size - 1`). Raises `IndexError` if empty.
-  def last
-    last { raise IndexError.new }
-  end
-
-  # Returns the rightmost item in the deque (index `size - 1`), if not empty, otherwise executes the given block and
-  # returns its value.
-  def last
-    @size == 0 ? yield : self[@size - 1]
-  end
-
-  # Returns the rightmost item in the deque (index `size - 1`), if not empty, otherwise `nil`.
-  def last?
-    last { nil }
+  def pretty_print(pp)
+    executed = exec_recursive(:inspect) do
+      pp.list("Deque{", self, "}")
+    end
+    pp.text "Deque{...}" unless executed
   end
 
   # Returns the number of elements in the deque.
@@ -496,16 +406,6 @@ class Deque(T)
     index -= @capacity if index >= @capacity
     @buffer[index] = value
     @size += 1
-    self
-  end
-
-  # Yields each item in this deque, from last to first.
-  #
-  # Do not modify the deque while using `reverse_each`!
-  def reverse_each
-    (size - 1).downto(0) do |i|
-      yield self[i]
-    end
     self
   end
 
@@ -654,52 +554,6 @@ class Deque(T)
         (@buffer + @start).clear(to_move)
         @start = new_start
       end
-    end
-  end
-
-  # :nodoc:
-  class ItemIterator(T)
-    include Iterator(T)
-
-    @deque : Deque(T)
-    @index : Int32
-
-    def initialize(@deque : Deque(T), @index = 0)
-    end
-
-    def next
-      value = @deque.at(@index) { stop }
-      @index += 1
-      value
-    end
-
-    def rewind
-      @index = 0
-      self
-    end
-  end
-
-  # :nodoc:
-  class IndexIterator(T)
-    include Iterator(Int32)
-
-    @deque : Deque(T)
-    @index : Int32
-
-    def initialize(@deque : Deque(T), @index = 0)
-    end
-
-    def next
-      return stop if @index >= @deque.size
-
-      value = @index
-      @index += 1
-      value
-    end
-
-    def rewind
-      @index = 0
-      self
     end
   end
 end

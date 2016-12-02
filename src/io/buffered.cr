@@ -46,7 +46,7 @@ module IO::Buffered
     # We first check, after filling the buffer, if the delimiter
     # is already in the buffer. In that case it's much faster to create
     # a String from a slice of the buffer instead of appending to a
-    # MemoryIO, which happens in the other case.
+    # IO::Memory, which happens in the other case.
     fill_buffer if @in_buffer_rem.empty?
     if @in_buffer_rem.empty?
       return nil
@@ -55,7 +55,7 @@ module IO::Buffered
     index = @in_buffer_rem.index(delimiter_byte)
     if index
       # If we find it past the limit, limit the result
-      if index > limit
+      if index >= limit
         index = limit
       else
         index += 1
@@ -66,7 +66,7 @@ module IO::Buffered
       return string
     end
 
-    # We didn't find the delimiter, so we append to a MemoryIO until we find it,
+    # We didn't find the delimiter, so we append to an IO::Memory until we find it,
     # or we reach the limit
     String.build do |buffer|
       loop do
@@ -91,7 +91,7 @@ module IO::Buffered
 
         index = @in_buffer_rem.index(delimiter_byte)
         if index
-          if index > limit
+          if index >= limit
             index = limit
           else
             index += 1
@@ -124,28 +124,28 @@ module IO::Buffered
     first = @in_buffer_rem[0].to_u32
     if first < 0x80
       @in_buffer_rem += 1
-      return first.chr, 1
+      return first.unsafe_chr, 1
     end
 
     second = (@in_buffer_rem[1] & 0x3f).to_u32
     if first < 0xe0
       @in_buffer_rem += 2
-      return ((first & 0x1f) << 6 | second).chr, 2
+      return ((first & 0x1f) << 6 | second).unsafe_chr, 2
     end
 
     third = (@in_buffer_rem[2] & 0x3f).to_u32
     if first < 0xf0
       @in_buffer_rem += 3
-      return ((first & 0x0f) << 12 | (second << 6) | third).chr, 3
+      return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3
     end
 
     fourth = (@in_buffer_rem[3] & 0x3f).to_u32
     if first < 0xf8
       @in_buffer_rem += 4
-      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr, 4
+      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4
     end
 
-    raise InvalidByteSequenceError.new
+    raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
   end
 
   # Buffered implementation of `IO#read(slice)`.
@@ -156,9 +156,10 @@ module IO::Buffered
     return 0 if count == 0
 
     if @in_buffer_rem.empty?
-      # If we are asked to read more than the buffer's size,
-      # read directly into the slice.
-      if count >= BUFFER_SIZE
+      # If we are asked to read more than half the buffer's size,
+      # read directly into the slice, as it's not worth the extra
+      # memory copy.
+      if count >= BUFFER_SIZE / 2
         return unbuffered_read(slice[0, count]).to_i
       else
         fill_buffer
@@ -240,8 +241,6 @@ module IO::Buffered
   # will be done (that is, writing to this IO is immediately synced to the
   # underlying IO).
   def sync=(sync)
-    # TODO: maybe instead of `sync=` we should rename this to `buffer=`,
-    # because otherwise you have to think in a reversed way.
     flush if sync && !@sync
     @sync = !!sync
   end

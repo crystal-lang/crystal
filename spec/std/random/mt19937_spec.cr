@@ -211,7 +211,7 @@ describe "Random::MT19937" do
 
     m = Random::MT19937.new [0x123, 0x234, 0x345, 0x456]
     numbers.each do |n|
-      m.next_u32.should eq(n)
+      m.next_u.should eq(n)
     end
   end
 end

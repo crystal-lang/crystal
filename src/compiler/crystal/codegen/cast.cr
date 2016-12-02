@@ -69,7 +69,9 @@ require "./codegen"
 # type into a specific type (such as when casting a Foo to a Bar, with Bar < Foo).
 
 class Crystal::CodeGenVisitor
-  def assign(target_pointer, target_type, value_type, value)
+  def assign(target_pointer, target_type, value_type, value, already_loaded = false)
+    return if @builder.end
+
     target_type = target_type.remove_indirection
     value_type = value_type.remove_indirection
 
@@ -77,34 +79,35 @@ class Crystal::CodeGenVisitor
       if target_type.nil_type?
         value
       else
-        store to_rhs(value, target_type), target_pointer
+        value = to_rhs(value, target_type) unless already_loaded
+        store value, target_pointer
       end
     else
-      assign_distinct target_pointer, target_type, value_type, value
+      assign_distinct target_pointer, target_type, value_type, value, already_loaded
     end
   end
 
-  def assign_distinct(target_pointer, target_type : NilableType, value_type : Type, value)
+  def assign_distinct(target_pointer, target_type : NilableType, value_type : Type, value, already_loaded)
     store upcast(value, target_type, value_type), target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : ReferenceUnionType, value)
+  def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : ReferenceUnionType, value, already_loaded)
     store value, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : VirtualType, value)
+  def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : VirtualType, value, already_loaded)
     store value, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : Type, value)
+  def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : Type, value, already_loaded)
     store cast_to(value, target_type), target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableReferenceUnionType, value_type : Type, value)
+  def assign_distinct(target_pointer, target_type : NilableReferenceUnionType, value_type : Type, value, already_loaded)
     store upcast(value, target_type, value_type), target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : MixedUnionType, value)
+  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : MixedUnionType, value, already_loaded)
     # It might happen that some types inside the union `value_type` are not inside `target_type`,
     # for example with named tuple of same keys with different order. In that case we need cast
     # those value to the correct type before finally storing them in the target union.
@@ -153,8 +156,13 @@ class Crystal::CodeGenVisitor
   end
 
   def needs_value_cast_inside_union?(value_type, union_type)
+    # A type needs a special cast if:
+    # 1. It's a tuple or named tuple
+    # 2. It's not inside the target union
+    # 3. There's a compatible type inside the target union
     return false unless value_type.is_a?(TupleInstanceType) || value_type.is_a?(NamedTupleInstanceType)
-    !union_type.union_types.any? &.==(value_type)
+    !union_type.union_types.any?(&.==(value_type)) &&
+      union_type.union_types.any? { |ut| value_type.implements?(ut) || ut.implements?(value_type) }
   end
 
   def assign_distinct_union_types(target_pointer, target_type, value_type, value)
@@ -162,23 +170,23 @@ class Crystal::CodeGenVisitor
     store load(casted_value), target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : NilableType, value)
+  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : NilableType, value, already_loaded)
     store_in_union target_pointer, value_type, value
   end
 
-  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : VoidType, value)
+  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : VoidType, value, already_loaded)
     store type_id(value_type), union_type_id(target_pointer)
   end
 
-  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : BoolType, value)
+  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : BoolType, value, already_loaded)
     store_bool_in_union target_type, target_pointer, value
   end
 
-  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : NilType, value)
+  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : NilType, value, already_loaded)
     store_nil_in_union target_pointer, target_type
   end
 
-  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : Type, value)
+  def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : Type, value, already_loaded)
     case value_type
     when TupleInstanceType, NamedTupleInstanceType
       # It might happen that `value_type` is not of the union but it's compatible with one of them.
@@ -190,48 +198,53 @@ class Crystal::CodeGenVisitor
       end
     end
 
-    store_in_union target_pointer, value_type, to_rhs(value, value_type)
+    value = to_rhs(value, value_type) unless already_loaded
+    store_in_union target_pointer, value_type, value
   end
 
-  def assign_distinct(target_pointer, target_type : VirtualType, value_type : MixedUnionType, value)
+  def assign_distinct(target_pointer, target_type : VirtualType, value_type : MixedUnionType, value, already_loaded)
     casted_value = cast_to_pointer(union_value(value), target_type)
     store load(casted_value), target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : VirtualType, value_type : Type, value)
+  def assign_distinct(target_pointer, target_type : VirtualType, value_type : Type, value, already_loaded)
     store cast_to(value, target_type), target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : MetaclassType, value)
+  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : MetaclassType, value, already_loaded)
     store value, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : NilType, value)
+  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : VirtualMetaclassType, value, already_loaded)
+    store value, target_pointer
+  end
+
+  def assign_distinct(target_pointer, target_type : NilableProcType, value_type : NilType, value, already_loaded)
     nilable_fun = make_nilable_fun target_type
     store nilable_fun, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : FunInstanceType, value)
+  def assign_distinct(target_pointer, target_type : NilableProcType, value_type : ProcInstanceType, value, already_loaded)
     store value, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : TypeDefType, value)
-    assign_distinct target_pointer, target_type, value_type.typedef, value
+  def assign_distinct(target_pointer, target_type : NilableProcType, value_type : TypeDefType, value, already_loaded)
+    assign_distinct target_pointer, target_type, value_type.typedef, value, already_loaded
   end
 
-  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : NilType, value)
+  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : NilType, value, already_loaded)
     store llvm_type(target_type).null, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : PointerInstanceType, value)
+  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : PointerInstanceType, value, already_loaded)
     store value, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : TypeDefType, value)
-    assign_distinct target_pointer, target_type, value_type.typedef, value
+  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : TypeDefType, value, already_loaded)
+    assign_distinct target_pointer, target_type, value_type.typedef, value, already_loaded
   end
 
-  def assign_distinct(target_pointer, target_type : TupleInstanceType, value_type : TupleInstanceType, value)
+  def assign_distinct(target_pointer, target_type : TupleInstanceType, value_type : TupleInstanceType, value, already_loaded)
     index = 0
     target_type.tuple_types.zip(value_type.tuple_types) do |target_tuple_type, value_tuple_type|
       target_ptr = gep target_pointer, 0, index
@@ -243,7 +256,7 @@ class Crystal::CodeGenVisitor
     value
   end
 
-  def assign_distinct(target_pointer, target_type : NamedTupleInstanceType, value_type : NamedTupleInstanceType, value)
+  def assign_distinct(target_pointer, target_type : NamedTupleInstanceType, value_type : NamedTupleInstanceType, value, already_loaded)
     value_type.entries.each_with_index do |entry, index|
       value_ptr = aggregate_index(value, index)
       value_at_index = to_lhs(value_ptr, entry.type)
@@ -253,7 +266,13 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
+  def assign_distinct(target_pointer, target_type : ProcInstanceType, value_type : ProcInstanceType, value, already_loaded)
+    # Cast of a non-void proc to a void proc
+    value = to_rhs(value, target_type) unless already_loaded
+    store value, target_pointer
+  end
+
+  def assign_distinct(target_pointer, target_type : Type, value_type : Type, value, already_loaded)
     raise "Bug: trying to assign #{target_type} <- #{value_type}"
   end
 
@@ -262,6 +281,8 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast(value, to_type, from_type : Type, already_loaded)
+    return llvm_nil if @builder.end
+
     from_type = from_type.remove_indirection
     to_type = to_type.remove_indirection
 
@@ -278,7 +299,7 @@ class Crystal::CodeGenVisitor
     llvm_nil
   end
 
-  def downcast_distinct(value, to_type, from_type : MetaclassType | GenericClassInstanceMetaclassType | VirtualMetaclassType)
+  def downcast_distinct(value, to_type, from_type : MetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType | VirtualMetaclassType)
     value
   end
 
@@ -304,20 +325,29 @@ class Crystal::CodeGenVisitor
     cast_to value, to_type
   end
 
+  def downcast_distinct(value, to_type : VirtualType, from_type : NilableType)
+    cast_to value, to_type
+  end
+
   def downcast_distinct(value, to_type : Type, from_type : NilableType)
     value
   end
 
-  def downcast_distinct(value, to_type : FunInstanceType, from_type : NilableFunType)
+  def downcast_distinct(value, to_type : ProcInstanceType, from_type : NilableProcType)
     value
   end
 
-  def downcast_distinct(value, to_type : TypeDefType, from_type : NilableFunType)
+  def downcast_distinct(value, to_type : TypeDefType, from_type : NilableProcType)
     downcast_distinct value, to_type.typedef, from_type
   end
 
   def downcast_distinct(value, to_type : PointerInstanceType, from_type : NilablePointerType)
     value
+  end
+
+  def downcast_distinct(value, to_type : PointerInstanceType, from_type : PointerInstanceType)
+    # cast of a pointer being cast to Void*
+    bit_cast value, LLVM::VoidPointer
   end
 
   def downcast_distinct(value, to_type : TypeDefType, from_type : NilablePointerType)
@@ -353,7 +383,47 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast_distinct(value, to_type : MixedUnionType, from_type : MixedUnionType)
-    cast_to_pointer value, to_type
+    # It might happen that some types inside the union `from_type` are not inside `to_type`,
+    # for example with named tuple of same keys with different order. In that case we need cast
+    # those value to the correct type before finally storing them in the target union.
+    needs_union_value_cast = from_type.union_types.any? do |vt|
+      needs_value_cast_inside_union?(vt, to_type)
+    end
+
+    if needs_union_value_cast
+      # Compute the values that need a cast
+      types_needing_cast = from_type.union_types.select do |vt|
+        needs_value_cast_inside_union?(vt, to_type)
+      end
+
+      # Fetch the value's type id
+      from_type_id = type_id(value, from_type)
+
+      Phi.open(self, to_type, @needs_value) do |phi|
+        types_needing_cast.each_with_index do |type_needing_cast, i|
+          # Find compatible type
+          compatible_type = to_type.union_types.find { |ut| ut.implements?(type_needing_cast) }.not_nil!
+
+          matches_label, doesnt_match_label = new_blocks "matches", "doesnt_match_label"
+          cmp_result = equal?(from_type_id, type_id(type_needing_cast))
+          cond cmp_result, matches_label, doesnt_match_label
+
+          position_at_end matches_label
+
+          casted_value = cast_to_pointer(union_value(value), type_needing_cast)
+          downcasted_value = downcast(casted_value, compatible_type, type_needing_cast, true)
+          final_value = upcast(downcasted_value, to_type, compatible_type)
+          phi.add final_value, to_type
+
+          position_at_end doesnt_match_label
+        end
+
+        final_value = cast_to_pointer value, to_type
+        phi.add final_value, to_type, last: true
+      end
+    else
+      cast_to_pointer value, to_type
+    end
   end
 
   def downcast_distinct(value, to_type : NilableType, from_type : MixedUnionType)
@@ -362,20 +432,59 @@ class Crystal::CodeGenVisitor
 
   def downcast_distinct(value, to_type : BoolType, from_type : MixedUnionType)
     value_ptr = union_value(value)
-    value = cast_to_pointer(value_ptr, @mod.int8)
+    value = cast_to_pointer(value_ptr, @program.int8)
     value = load(value)
     trunc value, LLVM::Int1
   end
 
   def downcast_distinct(value, to_type : Type, from_type : MixedUnionType)
+    # It might happen that to_type is not of the union but it's compatible with one of them.
+    # We need to first cast the value to the compatible type and to to_type
+    case to_type
+    when TupleInstanceType, NamedTupleInstanceType
+      unless from_type.union_types.any? &.==(to_type)
+        compatible_type = from_type.union_types.find { |ut| to_type.implements?(ut) }.not_nil!
+        value = downcast(value, compatible_type, from_type, true)
+        value = downcast(value, to_type, compatible_type, true)
+        return value
+      end
+    end
+
     value_ptr = union_value(value)
     value = cast_to_pointer(value_ptr, to_type)
     to_lhs value, to_type
   end
 
-  def downcast_distinct(value, to_type : FunInstanceType, from_type : FunInstanceType)
+  def downcast_distinct(value, to_type : ProcInstanceType, from_type : ProcInstanceType)
     # Nothing to do
     value
+  end
+
+  def downcast_distinct(value, to_type : TupleInstanceType, from_type : TupleInstanceType)
+    target_pointer = alloca(llvm_type(to_type))
+    index = 0
+    to_type.tuple_types.zip(from_type.tuple_types) do |target_tuple_type, value_tuple_type|
+      target_ptr = gep target_pointer, 0, index
+      value_ptr = gep value, 0, index
+      loaded_value = to_lhs(value_ptr, value_tuple_type)
+      downcasted_value = downcast(loaded_value, target_tuple_type, value_tuple_type, true)
+      store downcasted_value, target_ptr
+      index += 1
+    end
+    target_pointer
+  end
+
+  def downcast_distinct(value, to_type : NamedTupleInstanceType, from_type : NamedTupleInstanceType)
+    target_pointer = alloca(llvm_type(to_type))
+    from_type.entries.each_with_index do |entry, index|
+      value_ptr = aggregate_index(value, index)
+      value_at_index = to_lhs(value_ptr, entry.type)
+      target_index = to_type.name_index(entry.name).not_nil!
+      target_index_type = to_type.name_type(entry.name)
+      downcasted_value = downcast(value_at_index, target_index_type, entry.type, true)
+      store downcasted_value, aggregate_index(target_pointer, target_index)
+    end
+    target_pointer
   end
 
   def downcast_distinct(value, to_type : Type, from_type : Type)
@@ -383,6 +492,8 @@ class Crystal::CodeGenVisitor
   end
 
   def upcast(value, to_type, from_type)
+    return llvm_nil if @builder.end
+
     from_type = from_type.remove_indirection
     to_type = to_type.remove_indirection
 
@@ -392,7 +503,7 @@ class Crystal::CodeGenVisitor
     value
   end
 
-  def upcast_distinct(value, to_type : MetaclassType | GenericClassInstanceMetaclassType | VirtualMetaclassType, from_type)
+  def upcast_distinct(value, to_type : MetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType | VirtualMetaclassType, from_type)
     value
   end
 
@@ -416,15 +527,15 @@ class Crystal::CodeGenVisitor
     cast_to value, to_type
   end
 
-  def upcast_distinct(value, to_type : NilableFunType, from_type : NilType)
+  def upcast_distinct(value, to_type : NilableProcType, from_type : NilType)
     make_nilable_fun to_type
   end
 
-  def upcast_distinct(value, to_type : NilableFunType, from_type : FunInstanceType)
+  def upcast_distinct(value, to_type : NilableProcType, from_type : ProcInstanceType)
     value
   end
 
-  def upcast_distinct(value, to_type : NilableFunType, from_type : TypeDefType)
+  def upcast_distinct(value, to_type : NilableProcType, from_type : TypeDefType)
     upcast_distinct value, to_type, from_type.typedef
   end
 
@@ -539,6 +650,10 @@ class Crystal::CodeGenVisitor
     target_ptr
   end
 
+  def upcast_distinct(value, to_type : GenericClassInstanceType, from_type : Type)
+    cast_to value, to_type
+  end
+
   def upcast_distinct(value, to_type : Type, from_type : Type)
     raise "Bug: trying to upcast #{to_type} <- #{from_type}"
   end
@@ -550,7 +665,7 @@ class Crystal::CodeGenVisitor
   end
 
   def store_bool_in_union(union_type, union_pointer, value)
-    store type_id(value, @mod.bool), union_type_id(union_pointer)
+    store type_id(value, @program.bool), union_type_id(union_pointer)
 
     # To store a boolean in a union
     # we sign-extend it to the size in bits of the union
@@ -567,7 +682,7 @@ class Crystal::CodeGenVisitor
     union_value_type = llvm_union_value_type(target_type)
     value = union_value_type.null
 
-    store type_id(value, @mod.nil), union_type_id(union_pointer)
+    store type_id(value, @program.nil), union_type_id(union_pointer)
     casted_value_ptr = bit_cast union_value(union_pointer), union_value_type.pointer
     store value, casted_value_ptr
   end

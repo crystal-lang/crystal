@@ -1,7 +1,7 @@
 require "spec"
 require "http/server"
 
-class EmptyHTTPHandler < HTTP::Handler
+private class EmptyHTTPHandler < HTTP::Handler
   def call(context)
     call_next(context)
   end
@@ -9,7 +9,7 @@ end
 
 describe HTTP::Handler do
   it "responds with not found if there's no next handler" do
-    io = MemoryIO.new
+    io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)

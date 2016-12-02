@@ -16,7 +16,7 @@ describe YAML::Any do
     end
 
     it "gets hash" do
-      YAML.parse("foo: bar").as_h.should eq({"foo": "bar"})
+      YAML.parse("foo: bar").as_h.should eq({"foo" => "bar"})
     end
   end
 

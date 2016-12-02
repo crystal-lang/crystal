@@ -104,6 +104,17 @@ class HTTP::Server
       @output.close
     end
 
+    # Generates an error response using *message* and *code*.
+    #
+    # Calls `reset` and then writes the given message.
+    def respond_with_error(message = "Internal Server Error", code = 500)
+      reset
+      @status_code = code
+      self.content_type = "text/plain"
+      self << code << ' ' << message << '\n'
+      flush
+    end
+
     protected def write_headers
       status_message = HTTP.default_status_message_for(@status_code)
       @io << @version << " " << @status_code << " " << status_message << "\r\n"

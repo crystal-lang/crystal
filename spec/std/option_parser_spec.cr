@@ -133,8 +133,28 @@ describe "OptionParser" do
     expect_doesnt_capture_option [] of String, "-f [FLAG]"
   end
 
-  it "doesn't raise if required option is not specified with separated short flag 2" do
+  it "doesn't raise if required option is not specified with separated short flag" do
     expect_doesnt_capture_option [] of String, "-f FLAG"
+  end
+
+  it "parses argument when only referenced in long flag" do
+    captured = ""
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.on("-f", "--flag X", "some flag") { |x| captured = x }
+    end
+    parser.parse(["-f", "12"])
+    captured.should eq "12"
+    parser.to_s.should contain "   -f, --flag X"
+  end
+
+  it "parses argument when referenced in long and short flag" do
+    captured = ""
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.on("-f X", "--flag X", "some flag") { |x| captured = x }
+    end
+    parser.parse(["-f", "12"])
+    captured.should eq "12"
+    parser.to_s.should contain "   -f X, --flag X"
   end
 
   it "does to_s with banner" do
@@ -145,11 +165,11 @@ describe "OptionParser" do
       opts.on("-g[FLAG]", "some other flag") do
       end
     end
-    parser.to_s.should eq([
-      "Usage: foo",
-      "    -f, --flag                       some flag",
-      "    -g[FLAG]                         some other flag",
-    ].join "\n")
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+          -f, --flag                       some flag
+          -g[FLAG]                         some other flag
+      USAGE
   end
 
   it "does to_s with separators" do
@@ -164,15 +184,34 @@ describe "OptionParser" do
       opts.on("-g[FLAG]", "some other flag") do
       end
     end
-    parser.to_s.should eq([
-      "Usage: foo",
-      "",
-      "Type F flags:",
-      "    -f, --flag                       some flag",
-      "",
-      "Type G flags:",
-      "    -g[FLAG]                         some other flag",
-    ].join "\n")
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+
+      Type F flags:
+          -f, --flag                       some flag
+
+      Type G flags:
+          -g[FLAG]                         some other flag
+      USAGE
+  end
+
+  it "does to_s with very long flag (#3305)" do
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("--very_long_option_kills=formatter", "long") do
+      end
+      opts.on("-f", "--flag", "some flag") do
+      end
+      opts.on("-g[FLAG]", "some other flag") do
+      end
+    end
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+          --very_long_option_kills=formatter
+                                           long
+          -f, --flag                       some flag
+          -g[FLAG]                         some other flag
+      USAGE
   end
 
   it "raises on invalid option" do
@@ -181,6 +220,32 @@ describe "OptionParser" do
         opts.on("-f", "some flag") { }
       end
     end
+  end
+
+  it "calls the handler for invalid options" do
+    called = false
+    OptionParser.parse(["-f", "-j"]) do |opts|
+      opts.on("-f", "some flag") { }
+      opts.invalid_option do |flag|
+        flag.should eq("-j")
+        called = true
+      end
+    end
+
+    called.should be_true
+  end
+
+  it "calls the handler for missing options" do
+    called = false
+    OptionParser.parse(["-f"]) do |opts|
+      opts.on("-f FOO", "some flag") { }
+      opts.missing_option do |flag|
+        flag.should eq("-f")
+        called = true
+      end
+    end
+
+    called.should be_true
   end
 
   describe "multiple times" do

@@ -55,7 +55,7 @@ class Crystal::Doc::Method
 
   def id
     String.build do |io|
-      io << to_s.gsub(' ', "")
+      io << to_s.gsub(/<.+?>/, "").gsub(' ', "")
       if @class_method
         io << "-class-method"
       else
@@ -138,6 +138,11 @@ class Crystal::Doc::Method
     when Crystal::Type
       io << " : "
       @type.type_to_html return_type, io, links: links
+    end
+
+    if free_vars = @def.free_vars
+      io << " forall "
+      free_vars.join(", ", io)
     end
 
     io

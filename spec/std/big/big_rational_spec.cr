@@ -155,4 +155,9 @@ describe BigRational do
   it "is a number" do
     br(10, 3).is_a?(Number).should be_true
   end
+
+  it "clones" do
+    x = br(10, 3)
+    x.clone.should eq(x)
+  end
 end

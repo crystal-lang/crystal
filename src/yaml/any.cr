@@ -170,6 +170,11 @@ struct YAML::Any
     @raw.to_s(io)
   end
 
+  # :nodoc:
+  def pretty_print(pp)
+    @raw.pretty_print(pp)
+  end
+
   # Returns true if both `self` and *other*'s raw object are equal.
   def ==(other : YAML::Any)
     raw == other.raw

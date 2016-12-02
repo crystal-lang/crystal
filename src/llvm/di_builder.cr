@@ -1,3 +1,5 @@
+require "./lib_llvm"
+
 struct LLVM::DIBuilder
   def initialize(llvm_module)
     @unwrap = LibLLVMExt.create_di_builder(llvm_module)
@@ -29,20 +31,32 @@ struct LLVM::DIBuilder
 
   def create_function(scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
                       scope_line, flags, is_optimized, func)
-    LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
-      scope_line, flags, is_optimized, func)
+    {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
+      LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, line, composite_type,
+                                            is_local_to_unit ? 1 : 0,
+                                            is_definition ? 1 : 0,
+                                            scope_line, flags,
+                                            is_optimized ? 1 : 0, func)
+    {% else %}
+      LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, line, composite_type,
+                                            is_local_to_unit, is_definition, scope_line, flags, is_optimized, func)
+    {% end %}
   end
 
-  def create_local_variable(tag, scope, name, file, line, type)
-    LibLLVMExt.di_builder_create_local_variable(self, tag.value, scope, name, file, line, type, 0, 0, 0)
+  def create_auto_variable(scope, name, file, line, type)
+    LibLLVMExt.di_builder_create_auto_variable(self, scope, name, file, line, type, 0, 0)
+  end
+
+  def create_parameter_variable(scope, name, argno, file, line, type)
+    LibLLVMExt.di_builder_create_parameter_variable(self, scope, name, argno, file, line, type, 0, 0)
   end
 
   def create_expression(addr, length)
     LibLLVMExt.di_builder_create_expression(self, addr, length)
   end
 
-  def insert_declare_at_end(storage, var_info, expr, block)
-    LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, block)
+  def insert_declare_at_end(storage, var_info, expr, dl, block)
+    LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, dl, block)
   end
 
   def get_or_create_array(elements : Array(LibLLVMExt::Metadata))
@@ -72,12 +86,20 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_create_pointer_type(self, pointee, size_in_bits, align_in_bits, name)
   end
 
-  def temporary_md_node(context)
-    LibLLVMExt.temporary_md_node(context, nil, 0).as(LibLLVMExt::Metadata)
+  def create_replaceable_composite_type(scope, name, file, line)
+    {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
+      LibLLVMExt.temporary_md_node(LLVM::Context.global, nil, 0).as(LibLLVMExt::Metadata)
+    {% else %}
+      LibLLVMExt.di_builder_create_replaceable_composite_type(self, scope, name, file, line)
+    {% end %}
   end
 
-  def replace_all_uses(from, to)
-    LibLLVMExt.metadata_replace_all_uses_with(from, to)
+  def replace_temporary(from, to)
+    {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
+      LibLLVMExt.metadata_replace_all_uses_with(from, to)
+    {% else %}
+      LibLLVMExt.di_builder_replace_temporary(self, from, to)
+    {% end %}
   end
 
   def finalize

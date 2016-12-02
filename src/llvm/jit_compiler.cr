@@ -8,6 +8,13 @@ class LLVM::JITCompiler
     if LibLLVM.create_mc_jit_compiler_for_module(out @unwrap, mod, nil, 0, out error) != 0
       raise LLVM.string_and_dispose(error)
     end
+
+    @finalized = false
+  end
+
+  def self.new(mod)
+    jit = new(mod)
+    yield jit ensure jit.dispose
   end
 
   def run_function(func)
@@ -28,7 +35,14 @@ class LLVM::JITCompiler
     @unwrap
   end
 
+  def dispose
+    return if @finalized
+    @finalized = true
+    finalize
+  end
+
   def finalize
+    return if @finalized
     LibLLVM.dispose_execution_engine(@unwrap)
   end
 end

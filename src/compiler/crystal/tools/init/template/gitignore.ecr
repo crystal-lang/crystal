@@ -1,10 +1,11 @@
 /doc/
 /libs/
-/.crystal/
+/lib/
+/bin/
 /.shards/
+<%- if config.skeleton_type == "lib" -%>
 
-<% if config.skeleton_type == "lib" %>
 # Libraries don't need dependency lock
 # Dependencies will be locked in application that uses them
 /shard.lock
-<% end %>
+<%- end -%>

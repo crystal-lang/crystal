@@ -1,4 +1,72 @@
-class OpenSSL::SSL::Socket
+abstract class OpenSSL::SSL::Socket
+  class Client < Socket
+    def initialize(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
+      super(io, context, sync_close)
+
+      if hostname
+        # Macro from OpenSSL: SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
+        LibSSL.ssl_ctrl(
+          @ssl,
+          LibSSL::SSLCtrl::SET_TLSEXT_HOSTNAME,
+          LibSSL::TLSExt::NAMETYPE_host_name,
+          hostname.to_unsafe.as(Pointer(Void))
+        )
+
+        {% if LibSSL::OPENSSL_102 %}
+          param = LibSSL.ssl_get0_param(@ssl)
+
+          if ::Socket.ip?(hostname)
+            unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
+              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
+            end
+          else
+            unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
+              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
+            end
+          end
+        {% else %}
+          context.set_cert_verify_callback(hostname)
+        {% end %}
+      end
+
+      ret = LibSSL.ssl_connect(@ssl)
+      unless ret == 1
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
+      end
+    end
+
+    def self.open(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
+      socket = new(io, context, sync_close, hostname)
+
+      begin
+        yield socket
+      ensure
+        socket.close
+      end
+    end
+  end
+
+  class Server < Socket
+    def initialize(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+      super(io, context, sync_close)
+
+      ret = LibSSL.ssl_accept(@ssl)
+      unless ret == 1
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+      end
+    end
+
+    def self.open(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+      socket = new(io, context, sync_close)
+
+      begin
+        yield socket
+      ensure
+        socket.close
+      end
+    end
+  end
+
   include IO
 
   # If `sync_close` is true, closing this socket will
@@ -7,17 +75,15 @@ class OpenSSL::SSL::Socket
 
   getter? closed : Bool
 
-  def initialize(io, mode = :client, context = Context.default, @sync_close : Bool = false)
+  protected def initialize(io, context : Context, @sync_close : Bool = false)
     @closed = false
+
     @ssl = LibSSL.ssl_new(context)
+    unless @ssl
+      raise OpenSSL::Error.new("SSL_new")
+    end
     @bio = BIO.new(io)
     LibSSL.ssl_set_bio(@ssl, @bio, @bio)
-
-    if mode == :client
-      LibSSL.ssl_connect(@ssl)
-    else
-      LibSSL.ssl_accept(@ssl)
-    end
   end
 
   def finalize
@@ -29,14 +95,21 @@ class OpenSSL::SSL::Socket
 
     count = slice.size
     return 0 if count == 0
-    LibSSL.ssl_read(@ssl, slice.pointer(count), count)
+    LibSSL.ssl_read(@ssl, slice.pointer(count), count).tap do |bytes|
+      unless bytes > 0
+        raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+      end
+    end
   end
 
   def write(slice : Slice(UInt8))
     check_open
 
     count = slice.size
-    LibSSL.ssl_write(@ssl, slice.pointer(count), count)
+    bytes = LibSSL.ssl_write(@ssl, slice.pointer(count), count)
+    unless bytes > 0
+      raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_write")
+    end
     nil
   end
 
@@ -44,24 +117,50 @@ class OpenSSL::SSL::Socket
     @bio.io.flush
   end
 
+  {% if LibSSL::OPENSSL_102 %}
+  # Returns the negotiated ALPN protocol (eg: "h2") of nil if no protocol was
+  # negotiated.
+  def alpn_protocol
+    LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
+    String.new(protocol, len) unless protocol.null?
+  end
+  {% end %}
+
   def close
     return if @closed
     @closed = true
 
     begin
-      while LibSSL.ssl_shutdown(@ssl) == 0; end
+      loop do
+        begin
+          ret = LibSSL.ssl_shutdown(@ssl)
+          break if ret == 1
+          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
+        rescue e : Errno
+          case e.errno
+          when 0
+            # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
+            # assume we're done
+            break
+          when Errno::EAGAIN
+            # Ignore, shutdown did not complete yet
+          else
+            raise e
+          end
+        rescue e : OpenSSL::SSL::Error
+          case e.error
+          when .want_read?, .want_write?
+            # Ignore, shutdown did not complete yet
+          else
+            raise e
+          end
+        end
+
+        # ret == 0, retry, shutdown is not complete yet
+      end
     rescue IO::Error
     ensure
       @bio.io.close if @sync_close
-    end
-  end
-
-  def self.open_client(io, context = Context.default)
-    ssl_sock = new(io, :client, context)
-    begin
-      yield ssl_sock
-    ensure
-      ssl_sock.close
     end
   end
 end

@@ -3,7 +3,7 @@ class Crypto::MD5
   #
   #     Crypto::MD5.hex_digest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
   def self.hex_digest(data : String | Slice(UInt8)) : String
-    context = Context.new
+    context = ContextImpl.new
     context.update data
     context.final
     context.hex
@@ -18,24 +18,22 @@ class Crypto::MD5
   #        ctx.update "oo"
   #     end                            # => "acbd18db4cc2f85cedef654fccc4a4d8"
   def self.hex_digest : String
-    context = ContextWrapper.new
+    context = Context.new
     yield context
     context.final
     context.hex
   end
 
-  # :nodoc:
-  class ContextWrapper
-    getter context : Context
-    delegate update, final, hex, context
+  class Context
+    getter context : ContextImpl
+    delegate update, final, hex, to: context
 
     def initialize
-      @context = Context.new
+      @context = ContextImpl.new
     end
   end
 
-  # :nodoc:
-  struct Context
+  private struct ContextImpl
     def initialize
       @i = StaticArray(UInt32, 2).new(0_u32)
       @buf = StaticArray(UInt32, 4).new(0_u32)
@@ -72,10 +70,8 @@ class Crypto::MD5
         if mdi == 0x40
           ii = 0
           16.times do |i|
-            in[i] = (@in[ii + 3].to_u32 << 24) |
-              (@in[ii + 2].to_u32 << 16) |
-              (@in[ii + 1].to_u32 << 8) |
-              (@in[ii])
+            # TODO (formatter) split in multiple lines
+            in[i] = (@in[ii + 3].to_u32 << 24) | (@in[ii + 2].to_u32 << 16) | (@in[ii + 1].to_u32 << 8) | (@in[ii])
             ii += 4
           end
           transform in
@@ -252,10 +248,8 @@ class Crypto::MD5
       # append length in bits and transform
       ii = 0
       14.times do |i|
-        in[i] = (@in[ii + 3].to_u32 << 24) |
-          (@in[ii + 2].to_u32 << 16) |
-          (@in[ii + 1].to_u32 << 8) |
-          (@in[ii])
+        # TODO (formatter) split in multiple lines
+        in[i] = (@in[ii + 3].to_u32 << 24) | (@in[ii + 2].to_u32 << 16) | (@in[ii + 1].to_u32 << 8) | (@in[ii])
         ii += 4
       end
       transform in

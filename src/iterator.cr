@@ -1,3 +1,5 @@
+require "./enumerable"
+
 # An Iterator allows processing sequences lazily, as opposed to `Enumerable` which processes
 # sequences eagerly and produces an `Array` in most of its methods.
 #
@@ -112,8 +114,7 @@ module Iterator(T)
     Singleton(T).new(element)
   end
 
-  # :nodoc:
-  struct Singleton(T)
+  private struct Singleton(T)
     include Iterator(T)
 
     def initialize(@element : T)
@@ -132,8 +133,7 @@ module Iterator(T)
     SingletonProc(T).new(block)
   end
 
-  # :nodoc:
-  struct SingletonProc(T)
+  private struct SingletonProc(T)
     include Iterator(T)
 
     def initialize(@proc : -> T)
@@ -161,12 +161,11 @@ module Iterator(T)
   #     iter.next # => 'b'
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def chain(other : Iterator(U))
+  def chain(other : Iterator(U)) forall U
     Chain(typeof(self), typeof(other), T, U).new(self, other)
   end
 
-  # :nodoc:
-  class Chain(I1, I2, T1, T2)
+  private class Chain(I1, I2, T1, T2)
     include Iterator(T1 | T2)
 
     def initialize(@iterator1 : I1, @iterator2 : I2)
@@ -202,12 +201,11 @@ module Iterator(T)
   #     iter.next # => 4
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def compact_map(&func : T -> U)
+  def compact_map(&func : T -> _)
     CompactMap(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
   end
 
-  # :nodoc:
-  struct CompactMap(I, T, U)
+  private struct CompactMap(I, T, U)
     include Iterator(U)
     include IteratorWrapper
 
@@ -237,8 +235,7 @@ module Iterator(T)
     Cons(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  struct Cons(I, T, N)
+  private struct Cons(I, T, N)
     include Iterator(Array(T))
     include IteratorWrapper
 
@@ -278,8 +275,7 @@ module Iterator(T)
     Cycle(typeof(self), T).new(self)
   end
 
-  # :nodoc:
-  struct Cycle(I, T)
+  private struct Cycle(I, T)
     include Iterator(T)
     include IteratorWrapper
 
@@ -313,8 +309,7 @@ module Iterator(T)
     CycleN(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  class CycleN(I, T, N)
+  private class CycleN(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -390,8 +385,7 @@ module Iterator(T)
   #   Flatten(self, typeof(Flatten.element_type(self))).new(self)
   # end
 
-  # :nodoc:
-  # class Flatten(I, T1)
+  # private class Flatten(I, T1)
   #   include Iterator(T1)
 
   #   @iterator : I
@@ -485,8 +479,7 @@ module Iterator(T)
     InGroupsOf(typeof(self), T, typeof(size), typeof(filled_up_with)).new(self, size, filled_up_with)
   end
 
-  # :nodoc:
-  struct InGroupsOf(I, T, N, U)
+  private struct InGroupsOf(I, T, N, U)
     include Iterator(Array(T | U))
     include IteratorWrapper
 
@@ -516,12 +509,11 @@ module Iterator(T)
   #     iter.next # => 6
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def map(&func : T -> U)
+  def map(&func : T -> U) forall U
     Map(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  struct Map(I, T, U)
+  private struct Map(I, T, U)
     include Iterator(U)
     include IteratorWrapper
 
@@ -541,12 +533,11 @@ module Iterator(T)
   #     iter.next # => 2
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def reject(&func : T -> U)
+  def reject(&func : T -> U) forall U
     Reject(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  struct Reject(I, T, B)
+  private struct Reject(I, T, B)
     include Iterator(T)
     include IteratorWrapper
 
@@ -571,12 +562,11 @@ module Iterator(T)
   #     iter.next # => 3
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def select(&func : T -> U)
+  def select(&func : T -> U) forall U
     Select(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  struct Select(I, T, B)
+  private struct Select(I, T, B)
     include Iterator(T)
     include IteratorWrapper
 
@@ -605,8 +595,7 @@ module Iterator(T)
     Skip(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  class Skip(I, T, N)
+  private class Skip(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -637,12 +626,11 @@ module Iterator(T)
   #     iter.next # => 0
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def skip_while(&func : T -> U)
+  def skip_while(&func : T -> U) forall U
     SkipWhile(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  class SkipWhile(I, T, U)
+  private class SkipWhile(I, T, U)
     include Iterator(T)
     include IteratorWrapper
 
@@ -681,8 +669,7 @@ module Iterator(T)
     Slice(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  struct Slice(I, T, N)
+  private struct Slice(I, T, N)
     include Iterator(Array(T))
     include IteratorWrapper
 
@@ -719,8 +706,7 @@ module Iterator(T)
     Step(self, T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  struct Step(I, T, N)
+  private struct Step(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -753,8 +739,7 @@ module Iterator(T)
     First(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  # :nodoc:
-  class First(I, T, N)
+  private class First(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -785,12 +770,11 @@ module Iterator(T)
   #     iter.next # => 2
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def take_while(&func : T -> U)
+  def take_while(&func : T -> U) forall U
     TakeWhile(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  class TakeWhile(I, T, U)
+  private class TakeWhile(I, T, U)
     include Iterator(T)
     include IteratorWrapper
 
@@ -832,8 +816,7 @@ module Iterator(T)
     Tap(typeof(self), T).new(self, block)
   end
 
-  # :nodoc:
-  struct Tap(I, T)
+  private struct Tap(I, T)
     include Iterator(T)
     include IteratorWrapper
 
@@ -868,12 +851,11 @@ module Iterator(T)
   #     iter.next # => ["b", "a"]
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def uniq(&func : T -> U)
+  def uniq(&func : T -> U) forall U
     Uniq(typeof(self), T, U).new(self, func)
   end
 
-  # :nodoc:
-  struct Uniq(I, T, U)
+  private struct Uniq(I, T, U)
     include Iterator(T)
     include IteratorWrapper
 
@@ -911,8 +893,14 @@ module Iterator(T)
     WithIndex(typeof(self), T, typeof(offset)).new(self, offset)
   end
 
-  # :nodoc:
-  class WithIndex(I, T, O)
+  # Yields each element in this iterator together with its index.
+  def with_index(offset : Int = 0)
+    with_index(offset).each do |value, index|
+      yield value, index
+    end
+  end
+
+  private class WithIndex(I, T, O)
     include Iterator({T, Int32})
     include IteratorWrapper
 
@@ -944,8 +932,7 @@ module Iterator(T)
     WithObject(typeof(self), T, typeof(obj)).new(self, obj)
   end
 
-  # :nodoc:
-  struct WithObject(I, T, O)
+  private struct WithObject(I, T, O)
     include Iterator({T, O})
     include IteratorWrapper
 
@@ -969,12 +956,11 @@ module Iterator(T)
   #    iter.next # => {6, 9}
   #    iter.next # => Iterator::Stop::INSTANCE
   #
-  def zip(other : Iterator(U))
+  def zip(other : Iterator(U)) forall U
     Zip(typeof(self), typeof(other), T, U).new(self, other)
   end
 
-  # :nodoc:
-  struct Zip(I1, I2, T1, T2)
+  private struct Zip(I1, I2, T1, T2)
     include Iterator({T1, T2})
 
     def initialize(@iterator1 : I1, @iterator2 : I2)
@@ -994,6 +980,74 @@ module Iterator(T)
       @iterator1.rewind
       @iterator2.rewind
       self
+    end
+  end
+
+  # Returns an Iterator that enumerates over the items, chunking them together based on the return value of the block.
+  #
+  # Consecutive elements which return the same block value are chunked together.
+  #
+  # For example, consecutive even numbers and odd numbers can be chunked as follows.
+  #
+  # ```
+  # [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5].chunk { |n|
+  #   n.even?
+  # }.each { |even, ary|
+  #   p [even, ary]
+  # }
+  #
+  # # => [false, [3, 1]]
+  # #    [true, [4]]
+  # #    [false, [1, 5, 9]]
+  # #    [true, [2, 6]]
+  # #    [false, [5, 3, 5]]
+  # ```
+  #
+  # The following key values have special meaning:
+  #
+  # * `Enumerable::Chunk::Drop` specifies that the elements should be dropped
+  # * `Enumerable::Chunk::Alone` specifies that the element should be chunked by itself
+  #
+  # See also: `Enumerable#chunks`
+  def chunk(&block : T -> U) forall T, U
+    Chunk(typeof(self), T, U).new(self, &block)
+  end
+
+  # :nodoc:
+  class Chunk(I, T, U)
+    include Iterator(Tuple(U, Array(T)))
+    @iterator : I
+
+    def initialize(@iterator : Iterator(T), &@original_block : T -> U)
+      @acc = Enumerable::Chunk::Accumulator(T, U).new
+    end
+
+    def next
+      @iterator.each do |val|
+        key = @original_block.call(val)
+
+        if @acc.same_as?(key)
+          @acc.add(val)
+        else
+          tuple = @acc.fetch
+          @acc.init(key, val)
+          return tuple if tuple
+        end
+      end
+
+      if tuple = @acc.fetch
+        return tuple
+      end
+      stop
+    end
+
+    def rewind
+      @iterator.rewind
+      init_state
+    end
+
+    private def init_state
+      @acc = Enumerable::Chunk::Accumulator(T, U).new
     end
   end
 end

@@ -28,13 +28,13 @@ def loop
 end
 
 # Reads a line from STDIN. See `IO#gets`.
-def gets(*args)
-  STDIN.gets(*args)
+def gets(*args, **options)
+  STDIN.gets(*args, **options)
 end
 
 # Reads a line from STDIN. See `IO#read_line`.
-def read_line(*args)
-  STDIN.read_line(*args)
+def read_line(*args, **options)
+  STDIN.read_line(*args, **options)
 end
 
 # Prints objects to STDOUT and then invokes `STDOUT.flush`. See `IO#print`.
@@ -71,20 +71,23 @@ def puts(*objects)
   STDOUT.puts *objects
 end
 
-# Prints *object* to STDOUT by invoking `inspect(io)` on it, followed
+# Pretty prints *object* to STDOUT followed
 # by a newline. Returns *object*.
+#
+# See `Object#pretty_print(pp)`
 def p(object)
-  object.inspect(STDOUT)
+  PrettyPrint.format(object, STDOUT, 79)
   puts
   object
 end
 
-# Prints each object in *objects* to STDOUT by invoking `inspect(io)` on it, followed
+# Pretty prints each object in *objects* to STDOUT, followed
 # by a newline. Returns *objects*.
+#
+# See `Object#pretty_print(pp)`
 def p(*objects)
   objects.each do |obj|
-    obj.inspect(STDOUT)
-    puts
+    p obj
   end
   objects
 end

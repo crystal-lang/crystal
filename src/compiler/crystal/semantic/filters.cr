@@ -1,13 +1,13 @@
 module Crystal
   class TypeFilteredNode < ASTNode
     def initialize(@filter : TypeFilter, @node : ASTNode)
-      @dependencies = Dependencies.new(@node)
+      @dependencies = [@node] of ASTNode
       node.add_observer self
       update(@node)
     end
 
-    def update(from)
-      from_type = from.type?
+    def update(from = nil)
+      from_type = from.try &.type?
 
       if from_type
         self.type = @filter.apply(from_type)
@@ -30,21 +30,19 @@ module Crystal
   end
 
   abstract class TypeFilter
-    def self.and(filters)
-      set = Set.new(filters)
-      uniq = set.to_a
-      if uniq.size == 1
-        return uniq.first
-      else
-        AndTypeFilter.new(uniq)
-      end
-    end
-
     def self.and(type_filter1, type_filter2)
       if type_filter1 == type_filter2
         return type_filter1
       else
-        AndTypeFilter.new([type_filter1, type_filter2])
+        AndTypeFilter.new(type_filter1, type_filter2)
+      end
+    end
+
+    def self.or(type_filter1, type_filter2)
+      if type_filter1 == type_filter2
+        return type_filter1
+      else
+        OrTypeFilter.new(type_filter1, type_filter2)
       end
     end
 
@@ -75,27 +73,46 @@ module Crystal
   end
 
   class AndTypeFilter < TypeFilter
-    getter filters : Array(TypeFilter)
-
-    def initialize(@filters : Array(TypeFilter))
+    def initialize(@filter1 : TypeFilter, @filter2 : TypeFilter)
     end
 
     def apply(other)
       type = other
-      @filters.each do |filter|
-        type = filter.apply(type)
-      end
+      type = @filter1.apply(type)
+      type = @filter2.apply(type)
       type
     end
 
     def ==(other : self)
-      @filters == other.filters
+      @filter1 == other.@filter1 && @filter2 == other.@filter2
     end
 
     def to_s(io)
-      io << "("
-      @filters.join " && ", io
-      io << ")"
+      io << "(" << @filter1 << " && " << @filter2 << ")"
+    end
+  end
+
+  class OrTypeFilter < TypeFilter
+    def initialize(@filter1 : TypeFilter, @filter2 : TypeFilter)
+    end
+
+    def apply(other)
+      type1 = @filter1.apply(other)
+      type2 = @filter2.apply(other)
+      res = if type1 && type2
+              type1.program.type_merge_union_of([type1, type2])
+            else
+              type1 || type2
+            end
+      res
+    end
+
+    def ==(other : self)
+      @filter1 == other.@filter1 && @filter2 == other.@filter2
+    end
+
+    def to_s(io)
+      io << "(" << @filter1 << " || " << @filter2 << ")"
     end
   end
 
@@ -124,7 +141,7 @@ module Crystal
     end
 
     def to_s(io)
-      io << "not-nil"
+      io << "truthy"
     end
   end
 
@@ -200,9 +217,7 @@ module Crystal
     end
 
     def to_s(io)
-      io << "responds_to?("
-      @name.to_s(io)
-      io << ")"
+      io << "responds_to?(" << @name << ")"
     end
   end
 
@@ -271,8 +286,29 @@ module Crystal
       end
     end
 
+    def self.or(filters1, filters2)
+      if filters1 && filters2
+        new_filters = TypeFilters.new
+        all_keys = (filters1.keys + filters2.keys).uniq!
+        all_keys.each do |name|
+          filter1 = filters1[name]?
+          filter2 = filters2[name]?
+          if filter1 && filter2
+            new_filters[name] = TypeFilter.or(filter1, filter2)
+          end
+        end
+        new_filters
+      else
+        nil
+      end
+    end
+
     def self.and(filters1, filters2, filters3)
       and(filters1, and(filters2, filters3))
+    end
+
+    def self.or(filters1, filters2, filters3)
+      or(filters1, or(filters2, filters3))
     end
 
     def [](name)
@@ -303,6 +339,12 @@ module Crystal
         filters[key] = value.not
       end
       filters
+    end
+
+    # Returns true if this filter is only applied to
+    # a temporary variable created by the compiler
+    def temp_var?
+      @filters.size == 1 && @filters.first_key.starts_with?("__temp_")
     end
   end
 end

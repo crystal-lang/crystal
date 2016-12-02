@@ -422,7 +422,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(10)
   end
 
-  it "codegens fun literal with struct" do
+  it "codegens proc literal with struct" do
     run(%(
       struct Foo
         def initialize(@x : Int32)
@@ -492,7 +492,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(1)
   end
 
-  it "transforms block to fun literal" do
+  it "transforms block to proc literal" do
     run("
       def foo(&block : Int32 -> Int32)
         block.call(1)
@@ -505,9 +505,9 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "transforms block to fun literal with free var" do
+  it "transforms block to proc literal with free var" do
     run("
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block
       end
 
@@ -518,7 +518,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(10)
   end
 
-  it "allows passing block as fun literal to new and to initialize" do
+  it "allows passing block as proc literal to new and to initialize" do
     run("
       class Foo
         def initialize(&block : Int32 -> Float64)
@@ -536,9 +536,9 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "allows giving less block args when transforming block to fun literal" do
+  it "allows giving less block args when transforming block to proc literal" do
     run("
-      def foo(&block : Int32 -> U)
+      def foo(&block : Int32 -> U) forall U
         block.call(1)
       end
 
@@ -550,7 +550,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "allows passing fun literal to def that captures block with &" do
+  it "allows passing proc literal to def that captures block with &" do
     run("
       def foo(&block : Int32 -> Int32)
         block.call(1)
@@ -638,5 +638,27 @@ describe "Code gen: closure" do
       end
       coco
       )).to_i.should eq(1)
+  end
+
+  it "codegens closured self in block (#3388)" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+
+        def foo
+          yield
+          ->{ self }
+        end
+      end
+
+      foo = Foo.new(42)
+      foo2 = foo.foo { }
+      foo2.call.x
+      )).to_i.should eq(42)
   end
 end

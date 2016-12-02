@@ -1,10 +1,12 @@
 require "spec"
 require "llvm"
 
+{% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
 LLVM.init_x86
+{% end %}
 
 private def abi
-  triple = LLVM.default_target_triple
+  triple = LLVM.default_target_triple.gsub(/^(.+?)-/, "x86_64-")
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
   LLVM::ABI::X86_64.new(machine)
@@ -12,6 +14,7 @@ end
 
 class LLVM::ABI
   describe X86_64 do
+    {% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
     describe "align" do
       it "for integer" do
         abi.align(LLVM::Int1).should be_a(::Int32)
@@ -133,5 +136,6 @@ class LLVM::ABI
         info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
       end
     end
+{% end %}
   end
 end

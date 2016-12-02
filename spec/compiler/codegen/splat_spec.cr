@@ -119,4 +119,55 @@ describe "Code gen: splat" do
       foo.x + foo.y
       )).to_i.should eq(3)
   end
+
+  it "does #2407" do
+    codegen(%(
+      lib LibC
+        fun exit(Int32) : NoReturn
+      end
+
+      def some
+        yield(1 || (LibC.exit(1); ""))
+      end
+
+      def foo(*objects)
+        bar *objects
+      end
+
+      def bar(objects)
+      end
+
+      some do |value|
+        foo value
+      end
+      ))
+  end
+
+  it "evaluates splat argument just once (#2677)" do
+    run(%(
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      def data
+        Global.x += 1
+        {Global.x, Global.x, Global.x}
+      end
+
+      def test(x, y, z)
+        x + y + z
+      end
+
+      v = test(*data)
+
+      Global.x
+      )).to_i.should eq(1)
+  end
 end

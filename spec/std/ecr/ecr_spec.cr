@@ -1,8 +1,8 @@
 require "spec"
 require "ecr"
-require "ecr/macros"
+require "ecr/processor"
 
-class ECRSpecHelloView
+private class ECRSpecHelloView
   @msg : String
 
   def initialize(@msg)
@@ -33,5 +33,35 @@ describe "ECR" do
   it "does ECR.def_to_s" do
     view = ECRSpecHelloView.new("world!")
     view.to_s.strip.should eq("Hello world! 012")
+  end
+
+  it "does with <%= -%>" do
+    io = IO::Memory.new
+    ECR.embed "#{__DIR__}/../data/test_template2.ecr", io
+    io.to_s.should eq("123")
+  end
+
+  it "does with <%- %> (1)" do
+    io = IO::Memory.new
+    ECR.embed "#{__DIR__}/../data/test_template3.ecr", io
+    io.to_s.should eq("01")
+  end
+
+  it "does with <%- %> (2)" do
+    io = IO::Memory.new
+    ECR.embed "#{__DIR__}/../data/test_template4.ecr", io
+    io.to_s.should eq("hi\n01")
+  end
+
+  it "does with <% -%>" do
+    io = IO::Memory.new
+    ECR.embed "#{__DIR__}/../data/test_template5.ecr", io
+    io.to_s.should eq("hi\n      0\n      1\n  ")
+  end
+
+  it "does with -% inside string" do
+    io = IO::Memory.new
+    ECR.embed "#{__DIR__}/../data/test_template6.ecr", io
+    io.to_s.should eq("string with -%")
   end
 end

@@ -1,15 +1,3 @@
-# :nodoc:
-macro embed_ecr(filename, io_name)
-  {{ puts "`embed_ecr` is deprecated, use `ECR.embed`".id }}
-  ECR.embed {{filename}}, {{io_name}}
-end
-
-# :nodoc:
-macro ecr_file(filename)
-  {{ puts "`ecr_file` is deprecated, use `ECR.def_to_s`".id }}
-  ECR.def_to_s {{filename}}
-end
-
 module ECR
   # Defines a `to_s(io)` method whose body is the ECR contained
   # in *filename*, translated to Crystal code.
@@ -66,7 +54,7 @@ module ECR
   #
   # name = "World"
   #
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # ECR.embed "greeting.ecr", io
   # io.to_s # => "Hello World!"
   # ```

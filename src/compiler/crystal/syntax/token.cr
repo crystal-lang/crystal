@@ -11,7 +11,7 @@ module Crystal
     property delimiter_state : DelimiterState
     property macro_state : MacroState
     property passed_backslash_newline : Bool
-    property doc_buffer : MemoryIO?
+    property doc_buffer : IO::Memory?
     property raw : String
     property start : Int32
 
@@ -32,31 +32,35 @@ module Crystal
     record DelimiterState,
       kind : Symbol,
       nest : Char | String,
-      :end,
+      end : Char | String,
       open_count : Int32,
-      heredoc_indent : Int32 do
-      @end : Char | String
+      heredoc_indent : Int32,
+      allow_escapes : Bool do
     end
 
     struct DelimiterState
       def self.default
-        DelimiterState.new(:string, '\0', '\0', 0, 0)
+        DelimiterState.new(:string, '\0', '\0', 0, 0, true)
       end
 
       def self.new(kind, nest, the_end)
-        new kind, nest, the_end, 0, 0
+        new kind, nest, the_end, 0, 0, true
       end
 
-      def self.new(kind, nest, the_end, open_count)
-        new kind, nest, the_end, open_count, 0
+      def self.new(kind, nest, the_end, allow_escapes : Bool)
+        new kind, nest, the_end, 0, 0, allow_escapes
+      end
+
+      def self.new(kind, nest, the_end, open_count : Int32)
+        new kind, nest, the_end, open_count, 0, true
       end
 
       def with_open_count_delta(delta)
-        DelimiterState.new(@kind, @nest, @end, @open_count + delta, @heredoc_indent)
+        DelimiterState.new(@kind, @nest, @end, @open_count + delta, @heredoc_indent, @allow_escapes)
       end
 
       def with_heredoc_indent(indent)
-        DelimiterState.new(@kind, @nest, @end, @open_count, indent)
+        DelimiterState.new(@kind, @nest, @end, @open_count, indent, @allow_escapes)
       end
     end
 
@@ -79,7 +83,7 @@ module Crystal
     @location : Location?
 
     def location
-      @location ||= Location.new(line_number, column_number, filename)
+      @location ||= Location.new(filename, line_number, column_number)
     end
 
     def location=(@location)

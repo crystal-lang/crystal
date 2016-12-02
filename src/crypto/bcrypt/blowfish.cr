@@ -1,3 +1,4 @@
+require "../bcrypt"
 require "../blowfish"
 
 # :nodoc:

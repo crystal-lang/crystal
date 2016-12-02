@@ -128,7 +128,9 @@ function initDemoPlayground(dom) {
     $("<div>").addClass("row").append(
       $("<div>").addClass("col s7").append(
         $("<div>").addClass("card card-plain").append(
-          output = $("<pre>").addClass("output").css("min-height", "1.5em")))
+          $("<pre>").addClass("ansi-base16-railscasts-bright").append(
+            output = $("<code>").addClass("output").css("min-height", "1.5em")
+          )))
       ).append(
       outputIndicator = $("<div>").addClass("col s1")
       ).append(

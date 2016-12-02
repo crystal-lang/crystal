@@ -40,4 +40,4 @@ vBv = vv = 0.0_f64
   vBv += u[i] * v[i]
   vv += v[i] * v[i]
 end
-puts "#{(Math.sqrt(vBv / vv))}"
+puts Math.sqrt(vBv / vv)

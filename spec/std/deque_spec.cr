@@ -1,6 +1,6 @@
 require "spec"
 
-class DequeTester
+private class DequeTester
   # Execute the same actions on an Array and a Deque and compare them at each step.
 
   @deque : Deque(Int32)
@@ -34,7 +34,7 @@ class DequeTester
   end
 end
 
-alias RecursiveDeque = Deque(RecursiveDeque)
+private alias RecursiveDeque = Deque(RecursiveDeque)
 
 describe "Deque" do
   describe "implementation" do
@@ -598,6 +598,20 @@ describe "Deque" do
         a.clear
       end
       count.should eq(1)
+    end
+  end
+
+  describe "reverse each iterator" do
+    it "does next" do
+      a = Deque{1, 2, 3}
+      iter = a.reverse_each
+      iter.next.should eq(3)
+      iter.next.should eq(2)
+      iter.next.should eq(1)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(3)
     end
   end
 

@@ -126,4 +126,47 @@ describe "BitArray" do
       e.should eq({1, 3, 5, 7, 8, 10, 12, 14, 40, 42}.includes?(i))
     end
   end
+
+  it "provides an iterator" do
+    ary = BitArray.new(2)
+    ary[0] = true
+    ary[1] = false
+
+    iter = ary.each
+    iter.next.should be_true
+    iter.next.should be_false
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should be_true
+
+    iter.rewind
+    iter.cycle.first(3).to_a.should eq([true, false, true])
+  end
+
+  it "provides an index iterator" do
+    ary = BitArray.new(2)
+
+    iter = ary.each_index
+    iter.next.should eq(0)
+    iter.next.should eq(1)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(0)
+  end
+
+  it "provides a reverse iterator" do
+    ary = BitArray.new(2)
+    ary[0] = true
+    ary[1] = false
+
+    iter = ary.reverse_each
+    iter.next.should be_false
+    iter.next.should be_true
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should be_false
+  end
 end

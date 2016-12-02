@@ -1,87 +1,21 @@
 require "../types"
 
 module Crystal
-  class Type
-    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
-      raise "Bug: #{self} doesn't implement lookup_matches"
-    end
-
-    def lookup_matches_without_parents(signature, owner = self, type_lookup = self, matches_array = nil)
-      raise "Bug: #{self} doesn't implement lookup_matches_without_parents"
-    end
-
-    def lookup_matches_with_modules(signature, owner = self, type_lookup = self, matches_array = nil)
-      raise "Bug: #{self} doesn't implement lookup_matches_with_modules"
+  record NamedArgumentType, name : String, type : Type do
+    def self.from_args(named_args : Array(NamedArgument)?)
+      named_args.try &.map { |named_arg| new(named_arg.name, named_arg.value.type) }
     end
   end
 
-  module MatchesLookup
-    def lookup_matches_without_parents(signature, owner = self, type_lookup = self, matches_array = nil)
-      if defs = self.defs.try &.[signature.name]?
-        context = MatchContext.new(owner, type_lookup)
+  record CallSignature,
+    name : String,
+    arg_types : Array(Type),
+    block : Block?,
+    named_args : Array(NamedArgumentType)?
 
-        defs.each do |item|
-          next if item.def.abstract?
-
-          # If the def has a macro owner, which means that the original
-          # def was defined via a `macro def` and copied to a subtype,
-          # we need to use the type that defined the `macro def` as a
-          # type lookup for arguments.
-          macro_owner = item.def.macro_owner?
-          context.type_lookup = macro_owner if macro_owner
-
-          match = MatchesLookup.match_def(signature, item, context)
-
-          context.type_lookup = type_lookup if macro_owner
-
-          if match
-            matches_array ||= [] of Match
-            matches_array << match
-
-            # If the argument types are compatible with the match's argument types,
-            # we are done. We don't just compare types with ==, there is a special case:
-            # a function type with return T can be transpass a restriction of a function
-            # with with the same arguments but which returns Void.
-            if signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
-              return Matches.new(matches_array, true, owner)
-            end
-          end
-        end
-      end
-
-      Matches.new(matches_array, Cover.create(signature.arg_types, matches_array), owner)
-    end
-
-    def lookup_matches_with_modules(signature, owner = self, type_lookup = self, matches_array = nil)
-      matches = lookup_matches_without_parents(signature, owner, type_lookup, matches_array)
-      return matches unless matches.empty?
-
-      is_new = owner.metaclass? && signature.name == "new"
-      if is_new
-        # For a `new` method we need to do this in case a `new` is defined
-        # in a module type
-        my_parents = instance_type.parents.try &.map(&.metaclass)
-      else
-        my_parents = parents
-      end
-
-      # `new` must only be searched in ancestors if this type itself doesn't define
-      # an `initialize` or `self.new` method. This was already computed in `new.cr`
-      # and can be known by invoking `lookup_new_in_ancestors?`
-      if my_parents && !(!lookup_new_in_ancestors? && is_new)
-        my_parents.each do |parent|
-          break unless parent.is_a?(IncludedGenericModule) || parent.module?
-
-          matches = parent.lookup_matches_with_modules(signature, owner, parent, matches_array)
-          return matches unless matches.empty?
-        end
-      end
-
-      Matches.new(matches_array, Cover.create(signature.arg_types, matches_array), owner, false)
-    end
-
-    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
-      matches = lookup_matches_without_parents(signature, owner, type_lookup, matches_array)
+  class Type
+    def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil)
+      matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array)
       return matches if matches.cover_all?
 
       matches_array = matches.matches
@@ -114,7 +48,89 @@ module Crystal
       Matches.new(matches_array, cover, owner, false)
     end
 
-    def self.match_def(signature, def_metadata, context)
+    def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = nil)
+      if defs = self.defs.try &.[signature.name]?
+        context = MatchContext.new(owner, path_lookup)
+
+        defs.each do |item|
+          next if item.def.abstract?
+
+          # If the def has a macro owner, which means that the original
+          # def was defined via a `macro def` and copied to a subtype,
+          # we need to use the type that defined the `macro def` as a
+          # type lookup for arguments.
+          macro_owner = item.def.macro_owner?
+          context.defining_type = macro_owner if macro_owner
+          context.def_free_vars = item.def.free_vars
+
+          match = signature.match(item, context)
+
+          context.defining_type = path_lookup if macro_owner
+          context.def_free_vars = nil
+
+          if match
+            matches_array ||= [] of Match
+            matches_array << match
+
+            # If the argument types are compatible with the match's argument types,
+            # we are done. We don't just compare types with ==, there is a special case:
+            # a function type with return T can be transpass a restriction of a function
+            # with with the same arguments but which returns Void.
+            arg_types_equal = signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
+            if (match_named_args = match.named_arg_types) && (signature_named_args = signature.named_args) &&
+               match_named_args.size == signature_named_args.size
+              match_named_args = match_named_args.sort_by &.name
+              signature_named_args = signature_named_args.sort_by &.name
+              named_arg_types_equal = match_named_args.equals?(signature_named_args) do |x, y|
+                x.name == y.name && x.type.compatible_with?(y.type)
+              end
+            else
+              named_arg_types_equal = !match.named_arg_types && !signature.named_args
+            end
+
+            if arg_types_equal && named_arg_types_equal
+              return Matches.new(matches_array, true, owner)
+            end
+          end
+        end
+      end
+
+      Matches.new(matches_array, Cover.create(signature, matches_array), owner)
+    end
+
+    def lookup_matches_with_modules(signature, owner = self, path_lookup = self, matches_array = nil)
+      matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array)
+      return matches unless matches.empty?
+
+      is_new = owner.metaclass? && signature.name == "new"
+      if is_new
+        # For a `new` method we need to do this in case a `new` is defined
+        # in a module type
+        my_parents = instance_type.parents.try &.map(&.metaclass)
+      else
+        my_parents = parents
+      end
+
+      # `new` must only be searched in ancestors if this type itself doesn't define
+      # an `initialize` or `self.new` method. This was already computed in `new.cr`
+      # and can be known by invoking `lookup_new_in_ancestors?`
+      if my_parents && !(!lookup_new_in_ancestors? && is_new)
+        my_parents.each do |parent|
+          break unless parent.module?
+
+          matches = parent.lookup_matches_with_modules(signature, owner, parent, matches_array)
+          return matches unless matches.empty?
+        end
+      end
+
+      Matches.new(matches_array, Cover.create(signature, matches_array), owner, false)
+    end
+  end
+
+  struct CallSignature
+    def match(def_metadata, context)
+      signature = self
+
       # If yieldness isn't the same there's no match
       if def_metadata.yields != !!signature.block
         return nil
@@ -152,6 +168,7 @@ module Crystal
       end
 
       matched_arg_types = nil
+      matched_named_arg_types = nil
 
       # If there's a restriction on a splat (that's not a splat restriction),
       # zero splatted args don't match
@@ -172,7 +189,7 @@ module Crystal
           next
         end
 
-        match_arg_type = match_arg(arg_type, arg, context)
+        match_arg_type = arg_type.restrict(arg, context)
         if match_arg_type
           matched_arg_types ||= [] of Type
           matched_arg_types.push match_arg_type
@@ -184,9 +201,9 @@ module Crystal
 
       # Match splat arguments against splat restriction
       if splat_arg_types && splat_restriction.is_a?(Splat)
-        tuple_type = context.owner.program.tuple_of(splat_arg_types)
-        value = match_arg(tuple_type, splat_restriction.exp, context)
-        unless value
+        tuple_type = context.instantiated_type.program.tuple_of(splat_arg_types)
+        match_arg_type = tuple_type.restrict(splat_restriction.exp, context)
+        unless match_arg_type
           return nil
         end
       end
@@ -220,22 +237,32 @@ module Crystal
               end
             end
 
-            unless match_arg(named_arg.type, a_def.args[found_index], context)
+            match_arg_type = named_arg.type.restrict(a_def.args[found_index], context)
+            unless match_arg_type
               return nil
             end
+
+            matched_named_arg_types ||= [] of NamedArgumentType
+            matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
           else
             # If there's a double splat it's ok, the named arg will be put there
             if a_def.double_splat
+              match_arg_type = named_arg.type
+
               # If there's a restrction on the double splat, check that it matches
               if double_splat_restriction
                 if double_splat_entries
                   double_splat_entries << named_arg
                 else
-                  unless match_arg(named_arg.type, double_splat_restriction, context)
+                  match_arg_type = named_arg.type.restrict(double_splat_restriction, context)
+                  unless match_arg_type
                     return nil
                   end
                 end
               end
+
+              matched_named_arg_types ||= [] of NamedArgumentType
+              matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
 
               found_unmatched_named_arg = true
               next
@@ -248,8 +275,8 @@ module Crystal
 
       # Match double splat arguments against double splat restriction
       if double_splat_entries && double_splat_restriction.is_a?(DoubleSplat)
-        named_tuple_type = context.owner.program.named_tuple_of(double_splat_entries)
-        value = match_arg(named_tuple_type, double_splat_restriction.exp, context)
+        named_tuple_type = context.instantiated_type.program.named_tuple_of(double_splat_entries)
+        value = named_tuple_type.restrict(double_splat_restriction.exp, context)
         unless value
           return nil
         end
@@ -275,32 +302,22 @@ module Crystal
       # new ones when there are free vars.
       context = context.clone if context.free_vars
 
-      Match.new(a_def, (matched_arg_types || arg_types), context)
-    end
-
-    def self.match_arg(arg_type, arg : Arg, context : MatchContext)
-      restriction = arg.type? || arg.restriction
-      match_arg arg_type, restriction, context
-    end
-
-    def self.match_arg(arg_type, restriction, context : MatchContext)
-      arg_type.not_nil!.restrict restriction, context
-    end
-  end
-
-  class EmptyType
-    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
-      Matches.new(nil, nil, self, false)
+      Match.new(a_def, (matched_arg_types || arg_types), context, matched_named_arg_types)
     end
   end
 
   class AliasType
-    delegate lookup_matches, aliased_type
-    delegate lookup_matches_without_parents, aliased_type
+    delegate lookup_matches, lookup_matches_without_parents, to: aliased_type
   end
 
   module VirtualTypeLookup
-    def lookup_matches(signature, owner = self, type_lookup = self)
+    record Change, type : ModuleType, def : Def
+
+    def virtual_lookup(type)
+      type
+    end
+
+    def lookup_matches(signature, owner = self, path_lookup = self)
       is_new = virtual_metaclass? && signature.name == "new"
 
       base_type_lookup = virtual_lookup(base_type)
@@ -324,78 +341,85 @@ module Crystal
 
       # Traverse all subtypes
       instance_type.subtypes(base_type).each do |subtype|
-        unless subtype.value?
-          subtype_lookup = virtual_lookup(subtype)
-          subtype_virtual_lookup = virtual_lookup(subtype.virtual_type)
+        subtype_lookup = virtual_lookup(subtype)
+        subtype_virtual_lookup = virtual_lookup(subtype.virtual_type)
 
-          # Check matches but without parents: only included modules
-          subtype_matches = subtype_lookup.lookup_matches_with_modules(signature, subtype_virtual_lookup, subtype_virtual_lookup)
+        # Check matches but without parents: only included modules
+        subtype_matches = subtype_lookup.lookup_matches_with_modules(signature, subtype_virtual_lookup, subtype_virtual_lookup)
 
-          # For Foo+:Class#new we need to check that this subtype doesn't define
-          # an incompatible initialize: if so, we return empty matches, because
-          # all subtypes must have an initialize with the same number of arguments.
-          if is_new && subtype_matches.empty?
-            other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules("initialize")
-            unless other_initializers.empty?
-              return Matches.new(nil, false)
-            end
+        # For Foo+:Class#new we need to check that this subtype doesn't define
+        # an incompatible initialize: if so, we return empty matches, because
+        # all subtypes must have an initialize with the same number of arguments.
+        if is_new && subtype_matches.empty?
+          other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules("initialize")
+          unless other_initializers.empty?
+            return Matches.new(nil, false)
           end
+        end
 
-          # If we didn't find a match in a subclass, and the base type match is a macro
-          # def, we need to copy it to the subclass so that @name, @instance_vars and other
-          # macro vars resolve correctly.
-          if subtype_matches.empty?
-            new_subtype_matches = nil
+        # If we didn't find a match in a subclass, and the base type match is a macro
+        # def, we need to copy it to the subclass so that @name, @instance_vars and other
+        # macro vars resolve correctly.
+        if subtype_matches.empty?
+          new_subtype_matches = nil
 
-            base_type_matches.each do |base_type_match|
-              if base_type_match.def.macro_def?
-                # We need to copy each submatch if it's a macro def
-                full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup)
-                full_subtype_matches.each do |full_subtype_match|
-                  cloned_def = full_subtype_match.def.clone
-                  cloned_def.macro_owner = full_subtype_match.def.macro_owner
-                  cloned_def.owner = subtype_lookup
+          base_type_matches.each do |base_type_match|
+            if base_type_match.def.macro_def?
+              # We need to copy each submatch if it's a macro def
+              full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup)
+              full_subtype_matches.each do |full_subtype_match|
+                cloned_def = full_subtype_match.def.clone
+                cloned_def.macro_owner = full_subtype_match.def.macro_owner
+                cloned_def.owner = subtype_lookup
 
-                  # We want to add this cloned def at the end, because if we search subtype matches
-                  # in the next iteration we will find it, and we don't want that.
-                  changes ||= [] of Change
-                  changes << Change.new(subtype_lookup, cloned_def)
+                # We want to add this cloned def at the end, because if we search subtype matches
+                # in the next iteration we will find it, and we don't want that.
+                changes ||= [] of Change
 
-                  new_subtype_matches ||= [] of Match
-                  new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.type_lookup, full_subtype_match.context.free_vars))
+                # On a generic instance type, we must add the macro method to the
+                # generic type, not the instance (this will make it so that the method
+                # is found on any generic instance type)
+                change_owner = subtype_lookup
+                change_owner = change_owner.generic_type if change_owner.is_a?(GenericInstanceType)
+
+                if change_owner.is_a?(ModuleType)
+                  changes << Change.new(change_owner, cloned_def)
                 end
+
+                new_subtype_matches ||= [] of Match
+                new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
               end
             end
-
-            if new_subtype_matches
-              subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature.arg_types, new_subtype_matches))
-            end
           end
 
-          if !subtype.leaf? && subtype_matches.size > 0
-            type_to_matches ||= {} of Type => Matches
-            type_to_matches[subtype] = subtype_matches
+          if new_subtype_matches
+            subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature, new_subtype_matches))
           end
+        end
 
-          # If the subtype is non-abstract but doesn't cover all,
-          # we need to check if a parent covers it
-          if !subtype.abstract? && !base_type_covers_all && !subtype_matches.cover_all?
-            unless covered_by_superclass?(subtype, type_to_matches)
-              return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
-            end
+        if !subtype.leaf? && subtype_matches.size > 0
+          type_to_matches ||= {} of Type => Matches
+          type_to_matches[subtype] = subtype_matches
+        end
+
+        # If the subtype is non-abstract but doesn't cover all,
+        # we need to check if a parent covers it
+        if !subtype.abstract? && !base_type_covers_all && !subtype_matches.cover_all?
+          unless covered_by_superclass?(subtype, type_to_matches)
+            return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
           end
+        end
 
-          if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
-            if subtype.abstract? && !self.is_a?(VirtualMetaclassType) && subtype.subclasses.empty?
-              # No need to add matches if for an abstract class without subclasses
-            else
-              # We need to insert the matches before the previous ones
-              # because subtypes are more specific matches
-              if matches
-                subtype_matches_matches.concat matches
-              end
-              matches = subtype_matches_matches
+        if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
+          if subtype.abstract? && !self.is_a?(VirtualMetaclassType) && subtype.subclasses.empty?
+            # No need to add matches if for an abstract class without subclasses
+          else
+            # We need to insert the matches before the previous ones
+            # because subtypes are more specific matches
+            if matches
+              subtype_matches_matches.concat matches
             end
+            matches = subtype_matches_matches
           end
         end
       end
@@ -417,6 +441,12 @@ module Crystal
         superclass = superclass.superclass
       end
       false
+    end
+  end
+
+  class VirtualMetaclassType
+    def virtual_lookup(type)
+      type.metaclass
     end
   end
 end

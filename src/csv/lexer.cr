@@ -28,9 +28,9 @@ abstract class CSV::Lexer
   getter quote_char : Char
 
   # :nodoc:
-  def initialize(@separator = DEFAULT_SEPARATOR, @quote_char = DEFAULT_QUOTE_CHAR)
+  def initialize(@separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR)
     @token = Token.new
-    @buffer = MemoryIO.new
+    @buffer = IO::Memory.new
     @column_number = 1
     @line_number = 1
     @last_empty_column = false

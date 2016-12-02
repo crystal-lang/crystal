@@ -1,6 +1,6 @@
 require "spec"
 
-class ComparableTestClass
+private class ComparableTestClass
   include Comparable(Int)
 
   def initialize(@value : Int32)

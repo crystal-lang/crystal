@@ -5,7 +5,7 @@ class Crystal::Def
     # If the named arguments cover all arguments with a default value and
     # they come in the same order, we can safely return this def without
     # needing a useless indirection.
-    if !splat_index && named_args && args_size + named_args.size == args.size
+    if !splat_index && !double_splat && named_args && args_size + named_args.size == args.size
       all_match = true
       named_args.each_with_index do |named_arg, i|
         arg = args[args_size + i]
@@ -34,7 +34,7 @@ class Crystal::Def
       end
     end
 
-    retain_body = yields || splat_index || double_splat || assigns_special_var || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
+    retain_body = yields || splat_index || double_splat || assigns_special_var? || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
 
     splat_index = self.splat_index
     double_splat = self.double_splat
@@ -89,12 +89,14 @@ class Crystal::Def
 
     expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, yields)
     expansion.args.each { |arg| arg.default_value = nil }
-    expansion.calls_super = calls_super
-    expansion.calls_initialize = calls_initialize
-    expansion.calls_previous_def = calls_previous_def
-    expansion.uses_block_arg = uses_block_arg
+    expansion.calls_super = calls_super?
+    expansion.calls_initialize = calls_initialize?
+    expansion.calls_previous_def = calls_previous_def?
+    expansion.uses_block_arg = uses_block_arg?
     expansion.yields = yields
     expansion.location = location
+    expansion.raises = raises?
+    expansion.free_vars = free_vars
     if owner = self.owner?
       expansion.owner = owner
     end
@@ -126,7 +128,7 @@ class Crystal::Def
             # a temporary variable (tmp_var) and then replace all ocurrences of that free var with typeof(tmp_var)
             # to achieve the same effect, since we can't define a type alias inside a method.
             restriction = arg.restriction
-            if restriction.is_a?(Path) && restriction.names.size == 1 && Parser.free_var_name?(restriction.names.first)
+            if restriction.is_a?(Path) && restriction.names.size == 1 && (Parser.free_var_name?(restriction.names.first) || free_vars.try(&.includes?(restriction.names.first)))
               restriction_name = program.new_temp_var_name
               new_body << Assign.new(Var.new(restriction_name), Var.new(arg.name))
               body = body.transform(ReplaceFreeVarTransformer.new(restriction.names.first, restriction_name))
@@ -192,8 +194,8 @@ class Crystal::Def
         end
       end
 
-      call = Call.new(nil, name, new_args)
-      call.is_expansion = true
+      call = Call.new(nil, name, new_args).at(self)
+      call.expansion = true
       body << call
 
       expansion.body = Expressions.new(body)
@@ -213,7 +215,7 @@ class Crystal::Def
     end
 
     def transform(node : Path)
-      if !node.global && node.names.size == 1 && node.names.first == @free_var_name
+      if !node.global? && node.names.size == 1 && node.names.first == @free_var_name
         TypeOf.new([Var.new(@replacement_name)] of ASTNode)
       else
         node

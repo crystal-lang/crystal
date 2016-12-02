@@ -1,7 +1,7 @@
 require "spec"
 require "yaml"
 
-class YAMLPerson
+private class YAMLPerson
   YAML.mapping({
     name: String,
     age:  {type: Int32, nilable: true},
@@ -13,26 +13,24 @@ class YAMLPerson
   end
 end
 
-class StrictYAMLPerson
+private class StrictYAMLPerson
   YAML.mapping({
     name: {type: String},
     age:  {type: Int32, nilable: true},
   }, true)
 end
 
-class YAMLWithBool
-  YAML.mapping({
-    value: {type: Bool},
-  })
+private class YAMLWithBool
+  YAML.mapping value: Bool
 end
 
-class YAMLWithTime
+private class YAMLWithTime
   YAML.mapping({
     value: {type: Time, converter: Time::Format.new("%F %T")},
   })
 end
 
-class YAMLWithKey
+private class YAMLWithKey
   YAML.mapping({
     key:   String,
     value: Int32,
@@ -40,7 +38,7 @@ class YAMLWithKey
   })
 end
 
-class YAMLWithDefaults
+private class YAMLWithDefaults
   YAML.mapping({
     a: {type: Int32, default: 11},
     b: {type: String, default: "Haha"},
@@ -50,10 +48,11 @@ class YAMLWithDefaults
     f: {type: Int32, nilable: true, default: 1},
     g: {type: Int32, nilable: true, default: nil},
     h: {type: Array(Int32), default: [1, 2, 3]},
+    i: String?,
   })
 end
 
-class YAMLWithAny
+private class YAMLWithAny
   YAML.mapping({
     obj: YAML::Any,
   })
@@ -62,20 +61,29 @@ class YAMLWithAny
   end
 end
 
-class YAMLWithSmallIntegers
+private class YAMLWithSmallIntegers
   YAML.mapping({
     foo: Int16,
     bar: Int8,
   })
 end
 
-class YAMLWithTimeEpoch
+private class YAMLWithNilableTime
+  YAML.mapping({
+    value: {type: Time, nilable: true, converter: Time::Format.new("%F")},
+  })
+
+  def initialize
+  end
+end
+
+private class YAMLWithTimeEpoch
   YAML.mapping({
     value: {type: Time, converter: Time::EpochConverter},
   })
 end
 
-class YAMLWithTimeEpochMillis
+private class YAMLWithTimeEpochMillis
   YAML.mapping({
     value: {type: Time, converter: Time::EpochMillisConverter},
   })
@@ -125,6 +133,17 @@ describe "YAML mapping" do
     end
   end
 
+  it "does to_yaml" do
+    person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
+    person2 = YAMLPerson.from_yaml(person.to_yaml)
+    person2.should eq(person)
+  end
+
+  it "doesn't emit null when doing to_yaml" do
+    person = YAMLPerson.from_yaml("---\nname: John\n")
+    (person.to_yaml =~ /age/).should be_falsey
+  end
+
   it "raises if non-nilable attribute is nil" do
     expect_raises YAML::ParseException, "missing yaml attribute: name" do
       YAMLPerson.from_yaml("---\nage: 30\n")
@@ -138,7 +157,10 @@ describe "YAML mapping" do
 
   it "parses yaml with Time::Format converter" do
     yaml = YAMLWithTime.from_yaml("---\nvalue: 2014-10-31 23:37:16\n")
+    yaml.value.should be_a(Time)
+    yaml.value.to_s.should eq("2014-10-31 23:37:16")
     yaml.value.should eq(Time.new(2014, 10, 31, 23, 37, 16))
+    yaml.to_yaml.should eq("---\nvalue: 2014-10-31 23:37:16\n")
   end
 
   it "parses YAML with mapping key named 'key'" do
@@ -216,6 +238,12 @@ describe "YAML mapping" do
       json.e.should eq false
       json = YAMLWithDefaults.from_yaml(%({"e":true}))
       json.e.should eq true
+
+      json = YAMLWithDefaults.from_yaml(%({}))
+      json.i.should be_nil
+
+      json = YAMLWithDefaults.from_yaml(%({"i":"bla"}))
+      json.i.should eq("bla")
     end
 
     it "create new array every time" do
@@ -240,11 +268,17 @@ describe "YAML mapping" do
     yaml.obj["foo"].as_s.should eq("bar")
   end
 
+  it "outputs with converter when nilable" do
+    yaml = YAMLWithNilableTime.new
+    yaml.to_yaml.should eq("--- {}\n")
+  end
+
   it "uses Time::EpochConverter" do
     string = %({"value":1459859781})
     yaml = YAMLWithTimeEpoch.from_yaml(string)
     yaml.value.should be_a(Time)
     yaml.value.should eq(Time.epoch(1459859781))
+    yaml.to_yaml.should eq("---\nvalue: 1459859781\n")
   end
 
   it "uses Time::EpochMillisConverter" do
@@ -252,5 +286,6 @@ describe "YAML mapping" do
     yaml = YAMLWithTimeEpochMillis.from_yaml(string)
     yaml.value.should be_a(Time)
     yaml.value.should eq(Time.epoch_ms(1459860483856))
+    yaml.to_yaml.should eq("---\nvalue: 1459860483856\n")
   end
 end

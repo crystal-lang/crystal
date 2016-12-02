@@ -5,12 +5,16 @@ class ECR::Lexer
     property value : String
     property line_number : Int32
     property column_number : Int32
+    property? supress_leading : Bool
+    property? supress_trailing : Bool
 
     def initialize
       @type = :EOF
       @value = ""
       @line_number = 0
       @column_number = 0
+      @supress_leading = false
+      @supress_trailing = false
     end
   end
 
@@ -32,6 +36,13 @@ class ECR::Lexer
       if peek_next_char == '%'
         next_char
         next_char
+
+        if current_char == '-'
+          @token.supress_leading = true
+          next_char
+        else
+          @token.supress_leading = false
+        end
 
         case current_char
         when '='
@@ -90,15 +101,31 @@ class ECR::Lexer
       when '\n'
         @line_number += 1
         @column_number = 0
+      when '-'
+        if peek_next_char == '%'
+          # We need to peek another char, so we remember
+          # where we are, check that, and then go back
+          pos = @reader.pos
+          column_number = @column_number
+
+          next_char
+
+          is_end = peek_next_char == '>'
+          @reader.pos = pos
+          @column_number = column_number
+
+          if is_end
+            @token.supress_trailing = true
+            setup_control_token(start_pos, is_escape)
+            raise "expecting '>' after '-%'" if current_char != '>'
+            next_char
+            break
+          end
+        end
       when '%'
         if peek_next_char == '>'
-          @token.value = if is_escape
-                           "<%#{string_range(start_pos, current_pos + 2)}"
-                         else
-                           string_range(start_pos)
-                         end
-          next_char
-          next_char
+          @token.supress_trailing = false
+          setup_control_token(start_pos, is_escape)
           break
         end
       end
@@ -107,6 +134,16 @@ class ECR::Lexer
 
     @token.type = is_escape ? :STRING : (is_output ? :OUTPUT : :CONTROL)
     @token
+  end
+
+  private def setup_control_token(start_pos, is_escape)
+    @token.value = if is_escape
+                     "<%#{string_range(start_pos, current_pos + 2)}"
+                   else
+                     string_range(start_pos)
+                   end
+    next_char
+    next_char
   end
 
   private def copy_location_info_to_token

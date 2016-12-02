@@ -1,6 +1,6 @@
 require "spec"
 
-class SpecEnumerable
+private class SpecEnumerable
   include Enumerable(Int32)
 
   def each
@@ -89,6 +89,118 @@ describe "Enumerable" do
       end
       called.should eq 6
       elements.should eq [1, 2, 1, 2, 1, 2]
+    end
+  end
+
+  describe "chunk" do
+    it "works" do
+      [1].chunk { true }.to_a.should eq [{true, [1]}]
+      [1, 2].chunk { false }.to_a.should eq [{false, [1, 2]}]
+      [1, 1, 2, 3, 3].chunk(&.itself).to_a.should eq [{1, [1, 1]}, {2, [2]}, {3, [3, 3]}]
+      [1, 1, 2, 3, 3].chunk(&.<=(2)).to_a.should eq [{true, [1, 1, 2]}, {false, [3, 3]}]
+      (0..10).chunk(&./(3)).to_a.should eq [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7, 8]}, {3, [9, 10]}]
+    end
+
+    it "work with class" do
+      [1, 1, 2, 3, 3].chunk(&.class).to_a.should eq [{Int32, [1, 1, 2, 3, 3]}]
+    end
+
+    it "works with block" do
+      res = [] of Tuple(Bool, Array(Int32))
+      [1, 2, 3].chunk { |x| x < 3 }.each { |(k, v)| res << {k, v} }
+      res.should eq [{true, [1, 2]}, {false, [3]}]
+    end
+
+    it "rewind" do
+      i = (0..10).chunk(&./(3))
+      i.next.should eq({0, [0, 1, 2]})
+      i.next.should eq({1, [3, 4, 5]})
+      i.rewind
+      i.next.should eq({0, [0, 1, 2]})
+      i.next.should eq({1, [3, 4, 5]})
+    end
+
+    it "returns elements of the Enumerable in an Array of Tuple, {v, ary}, where 'ary' contains the consecutive elements for which the block returned the value 'v'" do
+      result = [1, 2, 3, 2, 3, 2, 1].chunk { |x| x < 3 ? 1 : 0 }.to_a
+      result.should eq [{1, [1, 2]}, {0, [3]}, {1, [2]}, {0, [3]}, {1, [2, 1]}]
+    end
+
+    it "returns elements for which the block returns Enumerable::Chunk::Alone in separate Arrays" do
+      result = [1, 2, 3, 2, 1].chunk { |x| x < 2 ? Enumerable::Chunk::Alone : false }.to_a
+      result.should eq [{Enumerable::Chunk::Alone, [1]}, {false, [2, 3, 2]}, {Enumerable::Chunk::Alone, [1]}]
+    end
+
+    it "alone all" do
+      result = [1, 2].chunk { Enumerable::Chunk::Alone }.to_a
+      result.should eq [{Enumerable::Chunk::Alone, [1]}, {Enumerable::Chunk::Alone, [2]}]
+    end
+
+    it "does not return elements for which the block returns Enumerable::Chunk::Drop" do
+      result = [1, 2, 3, 3, 2, 1].chunk { |x| x == 2 ? Enumerable::Chunk::Drop : 1 }.to_a
+      result.should eq [{1, [1]}, {1, [3, 3]}, {1, [1]}]
+    end
+
+    it "drop all" do
+      result = [1, 2].chunk { Enumerable::Chunk::Drop }.to_a
+      result.size.should eq 0
+    end
+
+    it "nil allowed as value" do
+      result = [1, 2, 3, 2, 1].chunk { |x| x == 2 ? nil : 1 }.to_a
+      result.should eq [{1, [1]}, {nil, [2]}, {1, [3]}, {nil, [2]}, {1, [1]}]
+    end
+
+    it "nil 2 case" do
+      result = [nil, nil, 1, 1, nil].chunk(&.itself).to_a
+      result.should eq [{nil, [nil, nil]}, {1, [1, 1]}, {nil, [nil]}]
+    end
+  end
+
+  describe "chunks" do
+    it "works" do
+      [1].chunks { true }.should eq [{true, [1]}]
+      [1, 2].chunks { false }.should eq [{false, [1, 2]}]
+      [1, 1, 2, 3, 3].chunks(&.itself).should eq [{1, [1, 1]}, {2, [2]}, {3, [3, 3]}]
+      [1, 1, 2, 3, 3].chunks(&.<=(2)).should eq [{true, [1, 1, 2]}, {false, [3, 3]}]
+      (0..10).chunks(&./(3)).should eq [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7, 8]}, {3, [9, 10]}]
+    end
+
+    it "work with class" do
+      [1, 1, 2, 3, 3].chunks(&.class).should eq [{Int32, [1, 1, 2, 3, 3]}]
+    end
+
+    it "work with pure enumerable" do
+      SpecEnumerable.new.chunks(&./(2)).should eq [{0, [1]}, {1, [2, 3]}]
+    end
+
+    it "returns elements for which the block returns Enumerable::Chunk::Alone in separate Arrays" do
+      result = [1, 2, 3, 2, 1].chunks { |x| x < 2 ? Enumerable::Chunk::Alone : false }
+      result.should eq [{Enumerable::Chunk::Alone, [1]}, {false, [2, 3, 2]}, {Enumerable::Chunk::Alone, [1]}]
+    end
+
+    it "alone all" do
+      result = [1, 2].chunks { Enumerable::Chunk::Alone }
+      result.should eq [{Enumerable::Chunk::Alone, [1]}, {Enumerable::Chunk::Alone, [2]}]
+    end
+
+    it "does not return elements for which the block returns Enumerable::Chunk::Drop" do
+      result = [1, 2, 3, 3, 2, 1].chunks { |x| x == 2 ? Enumerable::Chunk::Drop : 1 }
+      result.should eq [{1, [1]}, {1, [3, 3]}, {1, [1]}]
+    end
+
+    it "drop all" do
+      result = [1, 2].chunks { Enumerable::Chunk::Drop }
+      result.size.should eq 0
+    end
+
+    it "nil allowed as value" do
+      result = [1, 2, 3, 2, 1].chunks { |x| x == 2 ? nil : 1 }
+      result.should eq [{1, [1]}, {nil, [2]}, {1, [3]}, {nil, [2]}, {1, [1]}]
+    end
+
+    it "nil 2 case" do
+      result = [nil, nil, 1, 1, nil].chunks(&.itself)
+      result.should eq [{nil, [nil, nil]}, {1, [1, 1]}, {nil, [nil]}]
     end
   end
 
@@ -237,6 +349,14 @@ describe "Enumerable" do
     it "does example 2" do
       [[1, 2], [3, 4]].flat_map { |e| e + [100] }.should eq([1, 2, 100, 3, 4, 100])
     end
+
+    it "does example 3" do
+      [[1, 2, 3], 4, 5].flat_map { |e| e }.should eq([1, 2, 3, 4, 5])
+    end
+
+    it "does example 4" do
+      [{1 => 2}, {3 => 4}].flat_map { |e| e }.should eq([{1 => 2}, {3 => 4}])
+    end
   end
 
   describe "grep" do
@@ -261,6 +381,7 @@ describe "Enumerable" do
   describe "in_groups_of" do
     assert { [1, 2, 3].in_groups_of(1).should eq([[1], [2], [3]]) }
     assert { [1, 2, 3].in_groups_of(2).should eq([[1, 2], [3, nil]]) }
+    assert { [1, 2, 3, 4].in_groups_of(3).should eq([[1, 2, 3], [4, nil, nil]]) }
     assert { ([] of Int32).in_groups_of(2).should eq([] of Array(Array(Int32 | Nil))) }
     assert { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
 
@@ -272,8 +393,8 @@ describe "Enumerable" do
 
     it "takes a block" do
       sums = [] of Int32
-      [1, 2, 4].in_groups_of(2, 0) { |a| sums << a.sum }
-      sums.should eq([3, 4])
+      [1, 2, 4, 5].in_groups_of(3, 10) { |a| sums << a.sum }
+      sums.should eq([7, 25])
     end
   end
 
@@ -347,7 +468,7 @@ describe "Enumerable" do
     end
 
     it "joins with io and block" do
-      str = MemoryIO.new
+      str = IO::Memory.new
       [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
       str.to_s.should eq("2, 3, 4")
     end

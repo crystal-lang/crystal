@@ -13,4 +13,13 @@ struct Value
   def ==(other)
     false
   end
+
+  # Returns a shallow copy of this object.
+  #
+  # Because `Value` is a value type, this method returns `self`,
+  # which already involves a shallow copy of this object because
+  # value types are passed by value.
+  def dup
+    self
+  end
 end

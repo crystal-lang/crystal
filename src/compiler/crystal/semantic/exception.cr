@@ -23,7 +23,8 @@ module Crystal
           name_size = 0
           column_number = location.column_number
         end
-        new message, location.line_number, column_number, location.filename, name_size, inner
+        ex = new message, location.line_number, column_number, location.filename, name_size, inner
+        wrap_macro_expression(ex, location)
       else
         new message, nil, 0, nil, 0, inner
       end
@@ -38,7 +39,16 @@ module Crystal
     end
 
     def self.new(message : String, location : Location)
-      new message, location.line_number, location.column_number, location.filename, 0
+      ex = new message, location.line_number, location.column_number, location.filename, 0
+      wrap_macro_expression(ex, location)
+    end
+
+    protected def self.wrap_macro_expression(ex, location)
+      filename = location.filename
+      if filename.is_a?(VirtualFile) && (expanded_location = filename.expanded_location)
+        ex = TypeException.new "expanding macro", expanded_location.line_number, expanded_location.column_number, expanded_location.filename, 0, ex
+      end
+      ex
     end
 
     def json_obj(ar, io)
@@ -87,9 +97,8 @@ module Crystal
           append_error_message io, msg
         end
       when VirtualFile
-        lines = filename.source.lines.to_a
         io << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
-        io << lines.to_s_with_line_numbers
+        io << Crystal.with_line_numbers(filename.source, @line, @color)
         is_macro = true
       else
         lines = source ? source.lines.to_a : nil
@@ -148,7 +157,7 @@ module Crystal
   end
 
   class MethodTraceException < Exception
-    def initialize(@owner : Type?, @trace : Array(ASTNode), @nil_reason : NilReason?)
+    def initialize(@owner : Type?, @trace : Array(ASTNode), @nil_reason : NilReason?, @show : Bool)
       super(nil)
     end
 
@@ -165,15 +174,31 @@ module Crystal
 
     def append_to_s(source, io)
       has_trace = @trace.any?(&.location)
+      nil_reason = @nil_reason
+
+      if !@show
+        if nil_reason
+          print_nil_reason(nil_reason, io)
+          if has_trace || nil_reason.try(&.nodes)
+            io.puts
+            io.puts
+          end
+        end
+        if has_trace || nil_reason.try(&.nodes)
+          io.print "Rerun with --error-trace to show a complete error trace."
+        end
+        return
+      end
+
       if has_trace
         io.puts ("=" * 80)
-        io << "\n#{@owner} trace:"
+        io.puts
+        io << "#{@owner} trace:"
         @trace.each do |node|
           print_with_location node, io
         end
       end
 
-      nil_reason = @nil_reason
       return unless nil_reason
 
       if has_trace
@@ -183,18 +208,22 @@ module Crystal
       io.puts ("=" * 80)
       io.puts
 
+      print_nil_reason(nil_reason, io)
+
+      if nil_reason_nodes = nil_reason.nodes
+        nil_reason_nodes.each do |node|
+          print_with_location node, io
+        end
+      end
+    end
+
+    def print_nil_reason(nil_reason, io)
       io << colorize("Error: ").bold
       case nil_reason.reason
       when :used_before_initialized
         io << colorize("instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
       when :used_self_before_initialized
         io << colorize("'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable").bold
-      end
-
-      if nil_reason_nodes = nil_reason.nodes
-        nil_reason_nodes.each do |node|
-          print_with_location node, io
-        end
       end
     end
 

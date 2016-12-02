@@ -63,6 +63,11 @@ describe SecureRandom do
       bytes = SecureRandom.random_bytes(50)
       bytes.size.should eq(50)
     end
+
+    it "fully fills a large buffer" do
+      bytes = SecureRandom.random_bytes(10000)
+      bytes[9990, 10].should_not eq(Slice(UInt8).new(10))
+    end
   end
 
   describe "uuid" do

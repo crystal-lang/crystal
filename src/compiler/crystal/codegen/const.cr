@@ -30,11 +30,11 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   # The special constants ARGC_UNSAFE and ARGV_UNSAFE need to be initialized
-  # as soon as the program starts, because we have access to argc and arv
+  # as soon as the program starts, because we have access to argc and argv
   # in the main function
   def initialize_argv_and_argc
     {"ARGC_UNSAFE", "ARGV_UNSAFE"}.each do |name|
-      const = @mod.types[name].as(Const)
+      const = @program.types[name].as(Const)
       global = declare_const(const)
       request_value do
         accept const.value
@@ -47,7 +47,7 @@ class Crystal::CodeGenVisitor
   def declare_const(const)
     global_name = const.llvm_name
     global = @main_mod.globals[global_name]? ||
-      @main_mod.globals.add(llvm_type(const.value.type), global_name)
+             @main_mod.globals.add(llvm_type(const.value.type), global_name)
     global.linkage = LLVM::Linkage::Internal if @single_module
     global
   end
@@ -117,8 +117,8 @@ class Crystal::CodeGenVisitor
 
     define_main_function(fun_name, ([] of LLVM::Type), LLVM::Void, needs_alloca: true) do |func|
       with_cloned_context do
-        # "self" in a constant is the constant's container
-        context.type = const.container
+        # "self" in a constant is the constant's namespace
+        context.type = const.namespace
 
         # Start with fresh variables
         context.vars = LLVMVars.new
@@ -142,12 +142,7 @@ class Crystal::CodeGenVisitor
             const.initializer = @last
           end
         else
-          if const.value.type.passed_by_value?
-            global.initializer = llvm_type(const.value.type).undef
-          else
-            global.initializer = @last.type.null
-          end
-
+          global.initializer = llvm_type(const.value.type).null
           store @last, global
         end
 
@@ -167,7 +162,7 @@ class Crystal::CodeGenVisitor
   end
 
   def read_const_pointer(const)
-    if const == @mod.argc || const == @mod.argv
+    if const == @program.argc || const == @program.argv
       global_name = const.llvm_name
       global = declare_const(const)
 

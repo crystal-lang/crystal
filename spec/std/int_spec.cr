@@ -33,6 +33,12 @@ describe "Int" do
       end
     end
 
+    it "should work with large integers" do
+      x = 51_i64 ** 11
+      x.should eq(6071163615208263051_i64)
+      x.should be_a(Int64)
+    end
+
     describe "with float" do
       assert { (2 ** 2.0).should be_close(4, 0.0001) }
       assert { (2 ** 2.5_f32).should be_close(5.656854249492381, 0.0001) }
@@ -322,9 +328,47 @@ describe "Int" do
     UInt64.new(1).should eq(1)
   end
 
+  it "divides negative numbers" do
+    (7 / 2).should eq(3)
+    (-7 / 2).should eq(-4)
+    (7 / -2).should eq(-4)
+    (-7 / -2).should eq(3)
+
+    (6 / 2).should eq(3)
+    (-6 / 2).should eq(-3)
+    (6 / -2).should eq(-3)
+    (-6 / -2).should eq(3)
+  end
+
+  it "tdivs" do
+    5.tdiv(3).should eq(1)
+    -5.tdiv(3).should eq(-1)
+    5.tdiv(-3).should eq(-1)
+    -5.tdiv(-3).should eq(1)
+  end
+
+  it "holds true that x == q*y + r" do
+    [5, -5, 6, -6, 10, -10].each do |x|
+      [3, -3].each do |y|
+        q = x / y
+        r = x % y
+        (q*y + r).should eq(x)
+      end
+    end
+  end
+
   it "raises when divides by zero" do
     expect_raises(DivisionByZero) { 1 / 0 }
     (4 / 2).should eq(2)
+  end
+
+  it "raises when divides Int::MIN by -1" do
+    expect_raises(ArgumentError) { Int8::MIN / -1 }
+    expect_raises(ArgumentError) { Int16::MIN / -1 }
+    expect_raises(ArgumentError) { Int32::MIN / -1 }
+    expect_raises(ArgumentError) { Int64::MIN / -1 }
+
+    (UInt8::MIN / -1).should eq(0)
   end
 
   it "raises when mods by zero" do
@@ -430,5 +474,24 @@ describe "Int" do
         {% end %}
       end
     end
+  end
+
+  it "clones" do
+    [1_u8, 2_u16, 3_u32, 4_u64, 5_i8, 6_i16, 7_i32, 8_i64].each do |value|
+      value.clone.should eq(value)
+    end
+  end
+
+  it "#chr" do
+    65.chr.should eq('A')
+
+    expect_raises(ArgumentError, "#{0x10ffff + 1} out of char range") do
+      (0x10ffff + 1).chr
+    end
+  end
+
+  it "#unsafe_chr" do
+    65.unsafe_chr.should eq('A')
+    (0x10ffff + 1).unsafe_chr.ord.should eq(0x10ffff + 1)
   end
 end

@@ -23,7 +23,7 @@
 #     s2.subset? s1    # => true
 struct Set(T)
   include Enumerable(T)
-  include Iterable
+  include Iterable(T)
 
   # Creates a new, empty `Set`
   #
@@ -148,7 +148,7 @@ struct Set(T)
   #
   #     Set.new([1,1,3,5]) | Set.new([1,2,3])               #=> Set{1, 3, 5, 2}
   #     Set.new(['a','b','b','z']) | Set.new(['a','b','c']) #=> Set{'a', 'b', 'z', 'c'}
-  def |(other : Set(U))
+  def |(other : Set(U)) forall U
     set = Set(T | U).new
     each { |value| set.add value }
     other.each { |value| set.add value }
@@ -182,7 +182,7 @@ struct Set(T)
   #
   #     Set.new([1,2,3,4,5]) ^ Set.new([2,4,6])             #=> Set{1, 3, 5, 6}
   #     Set.new(['a','b','b','z']) ^ Set.new(['a','b','c']) #=> Set{'z', 'c'}
-  def ^(other : Set(U))
+  def ^(other : Set(U)) forall U
     set = Set(T | U).new
     each do |value|
       set.add value unless other.includes?(value)
@@ -198,7 +198,7 @@ struct Set(T)
   #
   #     Set.new([1,2,3,4,5]) ^ [2,4,6]             #=> Set{1, 3, 5, 6}
   #     Set.new(['a','b','b','z']) ^ ['a','b','c'] #=> Set{'z', 'c'}
-  def ^(other : Enumerable(U))
+  def ^(other : Enumerable(U)) forall U
     set = Set(T | U).new.merge(self)
     other.each do |value|
       if includes?(value)
@@ -234,6 +234,15 @@ struct Set(T)
     Set(T).new.merge(self)
   end
 
+  # Returns a new set with all of the elements cloned.
+  def clone
+    clone = Set(T).new
+    each do |element|
+      clone << element.clone
+    end
+    clone
+  end
+
   # Returns the elements as an array
   #
   #     Set.new([1,5]).to_a  # => [1,5]
@@ -244,6 +253,10 @@ struct Set(T)
   # Alias of `#to_s`
   def inspect(io)
     to_s(io)
+  end
+
+  def pretty_print(pp) : Nil
+    pp.list("Set{", self, "}")
   end
 
   def hash

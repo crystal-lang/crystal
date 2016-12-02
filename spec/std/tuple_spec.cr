@@ -1,6 +1,6 @@
 require "spec"
 
-class TupleSpecObj
+private class TupleSpecObj
   getter x : Int32
 
   def initialize(@x)
@@ -141,8 +141,37 @@ describe "Tuple" do
     u[1].should_not be(r2)
   end
 
-  it "does Tuple#new" do
+  it "does Tuple.new" do
     Tuple.new(1, 2, 3).should eq({1, 2, 3})
+    Tuple.new([1, 2, 3]).should eq({[1, 2, 3]})
+  end
+
+  it "does Tuple.from" do
+    t = Tuple(Int32, Float64).from([1_i32, 2.0_f64])
+    t.should eq({1_i32, 2.0_f64})
+    t.class.should eq(Tuple(Int32, Float64))
+
+    expect_raises ArgumentError do
+      Tuple(Int32).from([1, 2])
+    end
+
+    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+      Tuple(Int32, String).from(["foo", 1])
+    end
+  end
+
+  it "does Tuple#from" do
+    t = {Int32, Float64}.from([1_i32, 2.0_f64])
+    t.should eq({1_i32, 2.0_f64})
+    t.class.should eq(Tuple(Int32, Float64))
+
+    expect_raises ArgumentError do
+      {Int32}.from([1, 2])
+    end
+
+    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+      {Int32, String}.from(["foo", 1])
+    end
   end
 
   it "clones empty tuple" do
@@ -233,7 +262,7 @@ describe "Tuple" do
     (tuple1 <=> tuple2).should eq(0)
   end
 
-  it "does <=> with the same begining and different size" do
+  it "does <=> with the same beginning and different size" do
     tuple1 = {1, 2, 3}
     tuple2 = {1, 2}
     (tuple1 <=> tuple2).should eq(1)
@@ -241,7 +270,7 @@ describe "Tuple" do
 
   it "does types" do
     tuple = {1, 'a', "hello"}
-    tuple.types.to_s.should eq("{Int32, Char, String}")
+    tuple.types.to_s.should eq("Tuple(Int32, Char, String)")
   end
 
   it "does ===" do

@@ -88,8 +88,8 @@ describe "Code gen: def" do
 
   it "codegens recursive type with union" do
     run("
-      class A
-        @next : A?
+      class Foo
+        @next : Foo?
 
         def next=(n)
           @next = n
@@ -100,16 +100,16 @@ describe "Code gen: def" do
         end
       end
 
-      a = A.allocate
-      a.next = A.allocate
+      a = Foo.allocate
+      a.next = Foo.allocate
       a = a.next
       ")
   end
 
   it "codegens with related types" do
     run("
-      class A
-        @next : A | B | Nil
+      class Foo
+        @next : Foo | Bar | Nil
 
         def next=(n)
           @next = n
@@ -120,8 +120,8 @@ describe "Code gen: def" do
         end
       end
 
-      class B
-        @next : A | B | Nil
+      class Bar
+        @next : Foo | Bar | Nil
 
         def next=(n)
           @next = n
@@ -138,13 +138,13 @@ describe "Code gen: def" do
         end
       end
 
-      a = A.allocate
-      a.next = B.allocate
+      a = Foo.allocate
+      a.next = Bar.allocate
 
-      foo(a, B.allocate)
+      foo(a, Bar.allocate)
 
-      c = A.allocate
-      c.next = B.allocate
+      c = Foo.allocate
+      c.next = Bar.allocate
 
       foo(c, c.next)
       ")
@@ -229,7 +229,7 @@ describe "Code gen: def" do
   end
 
   it "codegens recursive nasty code" do
-    run("
+    codegen("
       class Foo
         def initialize(x)
         end
@@ -386,7 +386,7 @@ describe "Code gen: def" do
         end
       end
 
-      foo = 1 == 1 ? Foo.new : (Pointer(Int32).new(0_u64) as Bar)
+      foo = 1 == 1 ? Foo.new : Pointer(Int32).new(0_u64).as(Bar)
       foo.bar
       ").to_i.should eq(1)
   end
@@ -407,7 +407,7 @@ describe "Code gen: def" do
         2
       end
 
-      foo = 1 == 1 ? Foo.new : (Pointer(Int32).new(0_u64) as Bar)
+      foo = 1 == 1 ? Foo.new : Pointer(Int32).new(0_u64).as(Bar)
       something(foo)
       ").to_i.should eq(1)
   end
@@ -522,12 +522,30 @@ describe "Code gen: def" do
 
   it "can match N type argument of static array (#1203)" do
     run(%(
-      def fn(a : StaticArray(T, N))
+      def fn(a : StaticArray(T, N)) forall T, N
         N
       end
 
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
       )).to_i.should eq(10)
+  end
+
+  it "uses dispatch call type for phi (#3529)" do
+    codegen(%(
+      def foo(x : Int32)
+        yield
+        1.0
+      end
+
+      def foo(x : Int64)
+        yield
+        1.0
+      end
+
+      foo(1 || 1_i64) do
+        break
+      end
+      ), inject_primitives: false)
   end
 end

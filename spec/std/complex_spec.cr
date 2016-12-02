@@ -163,4 +163,9 @@ describe "Complex" do
       (-5.7/(Complex.new(2.27, 8.92))).should eq(Complex.new(-0.1527278908111847, 0.6001466017778712))
     end
   end
+
+  it "clones" do
+    c = Complex.new(4, 6.2)
+    c.clone.should eq(c)
+  end
 end

@@ -5,14 +5,18 @@ describe "Code gen: hooks" do
     run("
       class Foo
         macro inherited
-          $x = 1
+          @@x = 1
+
+          def self.x
+            @@x
+          end
         end
       end
 
       class Bar < Foo
       end
 
-      $x
+      Bar.x
       ").to_i.should eq(1)
   end
 
@@ -20,7 +24,11 @@ describe "Code gen: hooks" do
     run("
       module Foo
         macro included
-          $x = 1
+          @@x = 1
+
+          def self.x
+            @@x
+          end
         end
       end
 
@@ -28,7 +36,7 @@ describe "Code gen: hooks" do
         include Foo
       end
 
-      $x
+      Bar.x
       ").to_i.should eq(1)
   end
 
@@ -36,7 +44,11 @@ describe "Code gen: hooks" do
     run("
       module Foo
         macro extended
-          $x = 1
+          @@x = 1
+
+          def self.x
+            @@x
+          end
         end
       end
 
@@ -44,31 +56,51 @@ describe "Code gen: hooks" do
         extend Foo
       end
 
-      $x
+      Bar.x
       ").to_i.should eq(1)
   end
 
   it "does added method macro" do
     run("
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
       class Foo
         macro method_added(d)
-          $x = 1
+          Global.x = 1
         end
 
         def foo; end
       end
 
-      $x
+      Global.x
       ").to_i.should eq(1)
   end
 
   it "does inherited macro recursively" do
     run("
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
       class Foo
         macro inherited
-          $x += 1
+          Global.x += 1
         end
       end
 
@@ -78,25 +110,62 @@ describe "Code gen: hooks" do
       class Baz < Bar
       end
 
-      $x
+      Global.x
       ").to_i.should eq(2)
   end
 
   it "does inherited macro before class body" do
     run("
-      $x = 123
+      class Global
+        @@x = 123
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
       class Foo
         macro inherited
-          $y : Int32
-          $y = $x
+          @@y : Int32 = Global.x
+
+          def self.y
+            @@y
+          end
         end
       end
 
       class Bar < Foo
-        $x += 1
+        Global.x += 1
       end
 
-      $y
+      Bar.y
       ").to_i.should eq(123)
+  end
+
+  it "does finished" do
+    run(%(
+      class Foo
+        A = [1]
+
+        macro finished
+          {% A[0] = A[0] + 1 %}
+        end
+
+        macro finished
+          {% A[0] = A[0] * 2 %}
+        end
+
+        macro finished
+          def self.foo
+            {{ A[0] }}
+          end
+        end
+      end
+
+      Foo.foo
+      )).to_i.should eq(4)
   end
 end

@@ -3,8 +3,8 @@ struct OAuth::Signature
   def initialize(@consumer_key : String, @client_shared_secret : String, @oauth_token : String? = nil, @token_shared_secret : String? = nil, @extra_params : Hash(String, String)? = nil)
   end
 
-  def base_string(request, ssl, ts, nonce)
-    base_string request, ssl, gather_params(request, ts, nonce)
+  def base_string(request, tls, ts, nonce)
+    base_string request, tls, gather_params(request, ts, nonce)
   end
 
   def key
@@ -17,13 +17,13 @@ struct OAuth::Signature
     end
   end
 
-  def compute(request, ssl, ts, nonce)
-    base_string = base_string(request, ssl, ts, nonce)
+  def compute(request, tls, ts, nonce)
+    base_string = base_string(request, tls, ts, nonce)
     Base64.strict_encode(OpenSSL::HMAC.digest :sha1, key, base_string)
   end
 
-  def authorization_header(request, ssl, ts, nonce)
-    oauth_signature = compute request, ssl, ts, nonce
+  def authorization_header(request, tls, ts, nonce)
+    oauth_signature = compute request, tls, ts, nonce
 
     auth_header = AuthorizationHeader.new
     auth_header.add "oauth_consumer_key", @consumer_key
@@ -39,13 +39,13 @@ struct OAuth::Signature
     auth_header.to_s
   end
 
-  private def base_string(request, ssl, params)
-    host, port = host_and_port(request, ssl)
+  private def base_string(request, tls, params)
+    host, port = host_and_port(request, tls)
 
     String.build do |str|
       str << request.method
       str << '&'
-      str << (ssl ? "https" : "http")
+      str << (tls ? "https" : "http")
       str << "%3A%2F%2F"
       URI.escape host, str
       if port
@@ -80,13 +80,15 @@ struct OAuth::Signature
     body = request.body
     content_type = request.headers["Content-type"]?
     if body && content_type == "application/x-www-form-urlencoded"
-      params.add_query body
+      form = body.gets_to_end
+      params.add_query form
+      request.body = form
     end
 
     params
   end
 
-  private def host_and_port(request, ssl)
+  private def host_and_port(request, tls)
     host_header = request.headers["Host"]
     if colon_index = host_header.index ':'
       host = host_header[0...colon_index]

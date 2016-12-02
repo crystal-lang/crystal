@@ -126,14 +126,14 @@ describe "Code gen: lib" do
     run(%(
       require "prelude"
 
-      lib M
+      lib Moo
         struct Type
           func : (Type*) -> Int32
         end
       end
 
-      p = Pointer(M::Type).malloc(1)
-      p.value.func = -> (t: M::Type*) { 10 }
+      p = Pointer(Moo::Type).malloc(1)
+      p.value.func = -> (t: Moo::Type*) { 10 }
       p.value.func.call(p)
       )).to_i.should eq(10)
   end
@@ -142,14 +142,14 @@ describe "Code gen: lib" do
     run(%(
       require "prelude"
 
-      lib M
+      lib Moo
         union Type
           func : (Type*) -> Int32
         end
       end
 
-      p = Pointer(M::Type).malloc(1)
-      p.value.func = -> (t: M::Type*) { 10 }
+      p = Pointer(Moo::Type).malloc(1)
+      p.value.func = -> (t: Moo::Type*) { 10 }
       p.value.func.call(p)
       )).to_i.should eq(10)
   end
@@ -204,6 +204,16 @@ describe "Code gen: lib" do
       end
 
       LibFoo::Some.new.to_s
+      ))
+  end
+
+  it "doesn't crash when casting -1 to UInt32 (#3594)" do
+    codegen(%(
+      lib LibFoo
+        fun foo(x : UInt32) : Nil
+      end
+
+      LibFoo.foo(-1)
       ))
   end
 end

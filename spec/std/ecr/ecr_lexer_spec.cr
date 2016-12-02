@@ -1,5 +1,5 @@
 require "spec"
-require "ecr"
+require "ecr/lexer"
 
 describe "ECR::Lexer" do
   it "lexes without interpolation" do
@@ -29,6 +29,8 @@ describe "ECR::Lexer" do
     token.value.should eq(" foo ")
     token.line_number.should eq(1)
     token.column_number.should eq(9)
+    token.supress_leading?.should be_false
+    token.supress_trailing?.should be_false
 
     token = lexer.next_token
     token.type.should eq(:STRING)
@@ -38,6 +40,38 @@ describe "ECR::Lexer" do
 
     token = lexer.next_token
     token.type.should eq(:EOF)
+  end
+
+  it "lexes with <%- %>" do
+    lexer = ECR::Lexer.new("<%- foo %>")
+
+    token = lexer.next_token
+    token.type.should eq(:CONTROL)
+    token.value.should eq(" foo ")
+    token.line_number.should eq(1)
+    token.column_number.should eq(4)
+    token.supress_leading?.should be_true
+    token.supress_trailing?.should be_false
+  end
+
+  it "lexes with <% -%>" do
+    lexer = ECR::Lexer.new("<% foo -%>")
+
+    token = lexer.next_token
+    token.type.should eq(:CONTROL)
+    token.value.should eq(" foo ")
+    token.line_number.should eq(1)
+    token.column_number.should eq(3)
+    token.supress_leading?.should be_false
+    token.supress_trailing?.should be_true
+  end
+
+  it "lexes with -% inside string" do
+    lexer = ECR::Lexer.new("<% \"-%\" %>")
+
+    token = lexer.next_token
+    token.type.should eq(:CONTROL)
+    token.value.should eq(" \"-%\" ")
   end
 
   it "lexes with <%= %>" do
@@ -54,6 +88,8 @@ describe "ECR::Lexer" do
     token.value.should eq(" foo ")
     token.line_number.should eq(1)
     token.column_number.should eq(10)
+    token.supress_leading?.should be_false
+    token.supress_trailing?.should be_false
 
     token = lexer.next_token
     token.type.should eq(:STRING)
@@ -63,6 +99,18 @@ describe "ECR::Lexer" do
 
     token = lexer.next_token
     token.type.should eq(:EOF)
+  end
+
+  it "lexes with <%= -%>" do
+    lexer = ECR::Lexer.new("<%= foo -%>")
+
+    token = lexer.next_token
+    token.type.should eq(:OUTPUT)
+    token.value.should eq(" foo ")
+    token.line_number.should eq(1)
+    token.column_number.should eq(4)
+    token.supress_leading?.should be_false
+    token.supress_trailing?.should be_true
   end
 
   it "lexes with <%# %>" do
@@ -79,6 +127,8 @@ describe "ECR::Lexer" do
     token.value.should eq("# foo ")
     token.line_number.should eq(1)
     token.column_number.should eq(9)
+    token.supress_leading?.should be_false
+    token.supress_trailing?.should be_false
 
     token = lexer.next_token
     token.type.should eq(:STRING)
@@ -88,6 +138,18 @@ describe "ECR::Lexer" do
 
     token = lexer.next_token
     token.type.should eq(:EOF)
+  end
+
+  it "lexes with <%# -%>" do
+    lexer = ECR::Lexer.new("<%# foo -%>")
+
+    token = lexer.next_token
+    token.type.should eq(:CONTROL)
+    token.value.should eq("# foo ")
+    token.line_number.should eq(1)
+    token.column_number.should eq(3)
+    token.supress_leading?.should be_false
+    token.supress_trailing?.should be_true
   end
 
   it "lexes with <%% %>" do
@@ -104,6 +166,8 @@ describe "ECR::Lexer" do
     token.value.should eq("<% foo %>")
     token.line_number.should eq(1)
     token.column_number.should eq(10)
+    token.supress_leading?.should be_false
+    token.supress_trailing?.should be_false
 
     token = lexer.next_token
     token.type.should eq(:STRING)
@@ -129,6 +193,8 @@ describe "ECR::Lexer" do
     token.value.should eq("<%= foo %>")
     token.line_number.should eq(1)
     token.column_number.should eq(10)
+    token.supress_leading?.should be_false
+    token.supress_trailing?.should be_false
 
     token = lexer.next_token
     token.type.should eq(:STRING)

@@ -124,4 +124,41 @@ describe "StaticArray" do
     a[1].should eq(4)
     a[2].should eq(3)
   end
+
+  it "clones" do
+    a = StaticArray(Array(Int32), 1).new { |i| [1] }
+    b = a.clone
+    b[0].should eq(a[0])
+    b[0].should_not be(a[0])
+  end
+
+  it "iterates with each" do
+    a = StaticArray(Int32, 3).new { |i| i + 1 }
+    iter = a.each
+    iter.next.should eq(1)
+    iter.next.should eq(2)
+    iter.next.should eq(3)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(1)
+
+    iter.rewind
+    iter.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
+  end
+
+  it "iterates with reverse each" do
+    a = StaticArray(Int32, 3).new { |i| i + 1 }
+    iter = a.reverse_each
+    iter.next.should eq(3)
+    iter.next.should eq(2)
+    iter.next.should eq(1)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(3)
+
+    iter.rewind
+    iter.cycle.first(5).to_a.should eq([3, 2, 1, 3, 2])
+  end
 end

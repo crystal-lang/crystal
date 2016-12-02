@@ -1,6 +1,6 @@
 require "io"
 
-# Similar to `MemoryIO`, but optimized for building a single string.
+# Similar to `IO::Memory`, but optimized for building a single string.
 #
 # You should never have to deal with this class. Instead, use `String.build`.
 class String::Builder
@@ -11,6 +11,11 @@ class String::Builder
   @buffer : Pointer(UInt8)
 
   def initialize(capacity : Int = 64)
+    String.check_capacity_in_bounds(capacity)
+
+    # Make sure to also be able to hold
+    # the header size plus the trailing zero byte
+    capacity += String::HEADER_SIZE + 1
     String.check_capacity_in_bounds(capacity)
 
     @buffer = GC.malloc_atomic(capacity.to_u32).as(UInt8*)

@@ -43,10 +43,10 @@ struct String::Formatter(A)
   private def consume_substitution
     key = consume_substitution_key '}'
     arg = current_arg
-    if arg.is_a?(Hash)
+    if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
       @io << arg[key]
     else
-      raise ArgumentError.new "one hash required"
+      raise ArgumentError.new "one hash or named tuple required"
     end
   end
 
@@ -54,10 +54,10 @@ struct String::Formatter(A)
     key = consume_substitution_key '>'
     next_char
     arg = current_arg
-    if arg.is_a?(Hash)
+    if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
       target_arg = arg[key]
     else
-      raise ArgumentError.new "one hash required"
+      raise ArgumentError.new "one hash or named tuple required"
     end
     flags = consume_flags
     consume_type flags, target_arg, true
@@ -113,10 +113,11 @@ struct String::Formatter(A)
     when '1'..'9'
       num, size = consume_number
       flags.width = num
-      flags.width_size
+      flags.width_size = size
     when '*'
-      flags.width = consume_dynamic_value
-      flags.width_size = 1
+      val = consume_dynamic_value
+      flags.width = val
+      flags.width_size = val.to_s.size
     end
     flags
   end
@@ -129,8 +130,9 @@ struct String::Formatter(A)
         flags.precision = num
         flags.precision_size = size
       when '*'
-        flags.precision = consume_dynamic_value
-        flags.precision_size = 1
+        val = consume_dynamic_value
+        flags.precision = val
+        flags.precision_size = val.to_s.size
       else
         flags.precision = 0
         flags.precision_size = 1
@@ -198,7 +200,9 @@ struct String::Formatter(A)
   def string(flags, arg, arg_specified)
     arg = next_arg unless arg_specified
 
-    arg = arg.to_s[0...(flags.precision || arg.to_s.size)]
+    if precision = flags.precision
+      arg = arg.to_s[0...precision]
+    end
 
     pad arg.to_s.size, flags if flags.left_padding?
     @io << arg
@@ -260,7 +264,7 @@ struct String::Formatter(A)
   def recreate_float_format_string(flags)
     capacity = 3 # percent + type + \0
     capacity += flags.width_size
-    capacity += flags.precision_size
+    capacity += flags.precision_size + 1 # size + .
     capacity += 1 if flags.plus
     capacity += 1 if flags.minus
     capacity += 1 if flags.zero
@@ -269,7 +273,7 @@ struct String::Formatter(A)
     format_buf = format_buf(capacity)
     original_format_buf = format_buf
 
-    io = PointerIO.new(pointerof(format_buf))
+    io = IO::Memory.new(Slice(UInt8).new(format_buf, capacity))
     io << '%'
     io << '+' if flags.plus
     io << '-' if flags.minus
@@ -288,7 +292,7 @@ struct String::Formatter(A)
 
   def pad(consumed, flags)
     padding_char = flags.padding_char
-    (flags.width - consumed).times do
+    (flags.width.abs - consumed).times do
       @io << padding_char
     end
   end
@@ -362,16 +366,12 @@ struct String::Formatter(A)
       @precision_size = 0
     end
 
-    def wants_padding?
-      @width > 0
-    end
-
     def left_padding?
-      wants_padding? && !@minus
+      @minus ? @width < 0 : @width > 0
     end
 
     def right_padding?
-      wants_padding? && @minus
+      @minus ? @width > 0 : @width < 0
     end
 
     def padding_char

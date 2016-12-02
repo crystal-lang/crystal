@@ -1,8 +1,14 @@
+# Implementation of the `crystal tool format` command
+#
+# This is just the command-line part. The formatter
+# logic is in `crystal/tools/formatter.cr`.
+
 class Crystal::Command
   record FormatResult, filename : String, code : Code do
     enum Code
       FORMAT
       SYNTAX
+      INVALID_BYTE_SEQUENCE
       BUG
     end
   end
@@ -25,7 +31,7 @@ class Crystal::Command
 
         opts.on("-h", "--help", "Show this message") do
           puts opts
-          exit 1
+          exit
         end
 
         opts.on("--no-color", "Disable colored output") do
@@ -59,6 +65,8 @@ class Crystal::Command
             error "formatting '#{result.filename}' produced changes", exit_code: nil
           when .syntax?
             error "'#{result.filename}' has syntax errors", exit_code: nil
+          when .invalid_byte_sequence?
+            error "'#{result.filename}' is not a valid Crystal source file", exit_code: nil
           when .bug?
             error "there's a bug formatting '#{result.filename}', please report it including the contents of the file: https://github.com/crystal-lang/crystal/issues", exit_code: nil
           end
@@ -77,6 +85,11 @@ class Crystal::Command
 
       print result
       STDOUT.flush
+    rescue ex : InvalidByteSequenceError
+      print "Error: ".colorize.toggle(@color).red.bold
+      print "source is not a valid Crystal source file: ".colorize.toggle(@color).bold
+      puts ex.message
+      exit 1
     rescue ex : Crystal::SyntaxException
       if @format == "json"
         puts ex.to_json
@@ -100,6 +113,11 @@ class Crystal::Command
       exit(result == source ? 0 : 1) if check_files
 
       File.write(filename, result)
+    rescue ex : InvalidByteSequenceError
+      print "Error: ".colorize.toggle(@color).red.bold
+      print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.toggle(@color).bold
+      puts ex.message
+      exit 1
     rescue ex : Crystal::SyntaxException
       if @format == "json"
         puts ex.to_json
@@ -125,7 +143,7 @@ class Crystal::Command
     if File.file?(filename)
       format_file filename, check_files
     elsif Dir.exists?(filename)
-      filename = filename[0...-1] if filename.ends_with?('/')
+      filename = filename.chomp('/')
       filenames = Dir["#{filename}/**/*.cr"]
       format_many filenames, check_files
     else
@@ -145,6 +163,14 @@ class Crystal::Command
       else
         File.write(filename, result)
         STDOUT << "Format".colorize(:green).toggle(@color) << " " << filename << "\n"
+      end
+    rescue ex : InvalidByteSequenceError
+      if check_files
+        check_files << FormatResult.new(filename, FormatResult::Code::INVALID_BYTE_SEQUENCE)
+      else
+        print "Error: ".colorize.toggle(@color).red.bold
+        print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.toggle(@color).bold
+        puts ex.message
       end
     rescue ex : Crystal::SyntaxException
       if check_files

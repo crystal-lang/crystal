@@ -277,4 +277,24 @@ describe "Code gen: named tuple" do
       end
       )).to_i.should eq(42)
   end
+
+  it "provides T as a named tuple literal" do
+    run(%(
+      struct NamedTuple
+        def self.foo
+          {{ T.class_name }}
+        end
+      end
+      NamedTuple(x: Nil, y: Int32).foo
+      )).to_string.should eq("NamedTupleLiteral")
+  end
+
+  it "assigns two same-size named tuple types to a same var (#3132)" do
+    run(%(
+      t = {x: true}
+      t
+      t = {x: 2}
+      t[:x]
+      )).to_i.should eq(2)
+  end
 end

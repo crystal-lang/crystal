@@ -6,18 +6,18 @@ require "c/unistd"
 
 class File < IO::FileDescriptor
   # The file/directory separator character. '/' in unix, '\\' in windows.
-  SEPARATOR = ifdef windows
+  SEPARATOR = {% if flag?(:windows) %}
     '\\'
-  else
+  {% else %}
     '/'
-  end
+  {% end %}
 
   # The file/directory separator string. "/" in unix, "\\" in windows.
-  SEPARATOR_STRING = ifdef windows
+  SEPARATOR_STRING = {% if flag?(:windows) %}
     "\\"
-  else
+  {% else %}
     "/"
-  end
+  {% end %}
 
   # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
@@ -76,12 +76,12 @@ class File < IO::FileDescriptor
 
   getter path : String
 
-  # Returns a `File::Stat` object for the named file or raises
+  # Returns a `File::Stat` object for the file given by *path* or raises
   # `Errno` in case of an error. In case of a symbolic link
   # it is followed and information about the target is returned.
   #
   # ```
-  # echo "foo" > foo
+  # File.write("foo", "foo")
   # File.stat("foo").size  # => 4
   # File.stat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
@@ -92,12 +92,12 @@ class File < IO::FileDescriptor
     Stat.new(stat)
   end
 
-  # Returns a `File::Stat` object for the named file or raises
+  # Returns a `File::Stat` object for the file given by *path* or raises
   # `Errno` in case of an error. In case of a symbolic link
   # information about it is returned.
   #
   # ```
-  # echo "foo" > foo
+  # File.write("foo", "foo")
   # File.lstat("foo").size  # => 4
   # File.lstat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
@@ -108,57 +108,57 @@ class File < IO::FileDescriptor
     Stat.new(stat)
   end
 
-  # Returns true if file exists else returns false
+  # Returns `true` if *path* exists else returns `false`
   #
   # ```
   # File.exists?("foo") # => false
-  # echo "foo" > foo
+  # File.write("foo", "foo")
   # File.exists?("foo") # => true
   # ```
-  def self.exists?(filename) : Bool
-    accessible?(filename, LibC::F_OK)
+  def self.exists?(path) : Bool
+    accessible?(path, LibC::F_OK)
   end
 
-  # Returns true if file is readable by the real user id of this process else returns false
+  # Returns `true` if *path* is readable by the real user id of this process else returns `false`.
   #
   # ```
-  # echo "foo" > foo
+  # File.write("foo", "foo")
   # File.readable?("foo") # => true
   # ```
-  def self.readable?(filename) : Bool
-    accessible?(filename, LibC::R_OK)
+  def self.readable?(path) : Bool
+    accessible?(path, LibC::R_OK)
   end
 
-  # Returns true if file is writable by the real user id of this process else returns false
+  # Returns `true` if *path* is writable by the real user id of this process else returns `false`.
   #
   # ```
-  # echo "foo" > foo
+  # File.write("foo", "foo")
   # File.writable?("foo") # => true
   # ```
-  def self.writable?(filename) : Bool
-    accessible?(filename, LibC::W_OK)
+  def self.writable?(path) : Bool
+    accessible?(path, LibC::W_OK)
   end
 
-  # Returns true if file is executable by the real user id of this process else returns false
+  # Returns `true` if *path* is executable by the real user id of this process else returns `false`.
   #
   # ```
-  # echo "foo" > foo
+  # File.write("foo", "foo")
   # File.executable?("foo") # => false
   # ```
-  def self.executable?(filename) : Bool
-    accessible?(filename, LibC::X_OK)
+  def self.executable?(path) : Bool
+    accessible?(path, LibC::X_OK)
   end
 
   # Convenience method to avoid code on LibC.access calls. Not meant to be called by users of this class.
-  private def self.accessible?(filename, flag)
-    LibC.access(filename.check_no_null_byte, flag) == 0
+  private def self.accessible?(path, flag)
+    LibC.access(path.check_no_null_byte, flag) == 0
   end
 
-  # Returns true if given path exists and is a file
+  # Returns `true` if given *path* exists and is a file.
   #
-  # ```crystal
-  # # touch foo
-  # # mkdir bar
+  # ```
+  # File.write("foo", "")
+  # Dir.mkdir("bar")
   # File.file?("foo")    # => true
   # File.file?("bar")    # => false
   # File.file?("foobar") # => false
@@ -174,11 +174,11 @@ class File < IO::FileDescriptor
     File::Stat.new(stat).file?
   end
 
-  # Returns true if the given path exists and is a directory
+  # Returns `true` if the given *path* exists and is a directory.
   #
-  # ```crystal
-  # # touch foo
-  # # mkdir bar
+  # ```
+  # File.write("foo", "")
+  # Dir.mkdir("bar")
   # File.directory?("foo")    # => false
   # File.directory?("bar")    # => true
   # File.directory?("foobar") # => false
@@ -187,81 +187,116 @@ class File < IO::FileDescriptor
     Dir.exists?(path)
   end
 
-  # Returns all components of the given filename except the last one
+  # Returns all components of the given *path* except the last one.
   #
   # ```
   # File.dirname("/foo/bar/file.cr") # => "/foo/bar"
   # ```
-  def self.dirname(filename) : String
-    filename.check_no_null_byte
-    index = filename.rindex SEPARATOR
+  def self.dirname(path) : String
+    path.check_no_null_byte
+    index = path.rindex SEPARATOR
     if index
       if index == 0
         SEPARATOR_STRING
       else
-        filename[0, index]
+        path[0, index]
       end
     else
       "."
     end
   end
 
-  # Returns the last component of the given filename
+  # Returns the last component of the given *path*.
   #
   # ```
   # File.basename("/foo/bar/file.cr") # => "file.cr"
   # ```
-  def self.basename(filename) : String
-    return "" if filename.bytesize == 0
-    return SEPARATOR_STRING if filename == SEPARATOR_STRING
+  def self.basename(path) : String
+    return "" if path.bytesize == 0
+    return SEPARATOR_STRING if path == SEPARATOR_STRING
 
-    filename.check_no_null_byte
+    path.check_no_null_byte
 
-    last = filename.size - 1
-    last -= 1 if filename[last] == SEPARATOR
+    last = path.size - 1
+    last -= 1 if path[last] == SEPARATOR
 
-    index = filename.rindex SEPARATOR, last
+    index = path.rindex SEPARATOR, last
     if index
-      filename[index + 1, last - index]
+      path[index + 1, last - index]
     else
-      filename
+      path
     end
   end
 
-  # Returns the last component of the given filename
-  # If the given suffix is present at the end of filename, it is removed
+  # Returns the last component of the given *path*.
+  #
+  # If *suffix* is present at the end of *path*, it is removed.
   #
   # ```
   # File.basename("/foo/bar/file.cr", ".cr") # => "file"
   # ```
-  def self.basename(filename, suffix) : String
+  def self.basename(path, suffix) : String
     suffix.check_no_null_byte
-    basename = basename(filename)
-    basename = basename[0, basename.size - suffix.size] if basename.ends_with?(suffix)
-    basename
+    basename(path).chomp(suffix)
   end
 
-  # Delete a file. Deleting non-existent file will raise an exception.
+  # Changes the owner of the specified file.
   #
-  # ```crystal
-  # # touch foo
-  # File.delete("./foo")
-  # # => nil
-  # File.delete("./bar")
-  # # => Error deleting file './bar': No such file or directory (Errno)
   # ```
-  def self.delete(filename)
-    err = LibC.unlink(filename.check_no_null_byte)
-    if err == -1
-      raise Errno.new("Error deleting file '#{filename}'")
+  # File.chown("/foo/bar/baz.cr", 1001, 100)
+  # File.chown("/foo/bar", gid: 100)
+  # ```
+  #
+  # Unless *follow_symlinks* is set to true, then the owner symlink itself will
+  # be changed, otherwise the owner of the symlink destination file will be
+  # changed. For example, assuming symlinks as `foo -> bar -> baz`:
+  #
+  # ```
+  # File.chown("foo", gid: 100)                        # changes foo's gid
+  # File.chown("foo", gid: 100, follow_symlinks: true) # changes baz's gid
+  # ```
+  def self.chown(path, uid : Int? = -1, gid : Int = -1, follow_symlinks = false)
+    ret = if !follow_symlinks && symlink?(path)
+            LibC.lchown(path, uid, gid)
+          else
+            LibC.chown(path, uid, gid)
+          end
+    raise Errno.new("Error changing owner of '#{path}'") if ret == -1
+  end
+
+  # Changes the permissions of the specified file.
+  #
+  # Symlinks are dereferenced, so that only the permissions of the symlink
+  # destination are changed, never the permissions of the symlink itself.
+  #
+  # ```
+  # File.chmod("foo/bin", 0o755)
+  # File.chmod("foo/bin/exec", 0o700)
+  # ```
+  def self.chmod(path, mode : Int)
+    if LibC.chmod(path, mode) == -1
+      raise Errno.new("Error changing permissions of '#{path}'")
     end
   end
 
-  # Returns a file's extension, or an empty string if the file has no extension.
+  # Delete the file at *path*. Deleting non-existent file will raise an exception.
   #
-  # ```crystal
-  # File.extname("foo.cr")
-  # # => .cr
+  # ```
+  # File.write("foo", "")
+  # File.delete("./foo")
+  # File.delete("./bar") # => Error deleting file './bar': No such file or directory (Errno)
+  # ```
+  def self.delete(path)
+    err = LibC.unlink(path.check_no_null_byte)
+    if err == -1
+      raise Errno.new("Error deleting file '#{path}'")
+    end
+  end
+
+  # Returns *filename*'s extension, or an empty string if it has no extension.
+  #
+  # ```
+  # File.extname("foo.cr") # => ".cr"
   # ```
   def self.extname(filename) : String
     filename.check_no_null_byte
@@ -275,6 +310,15 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Converts *path* to an absolute path. Relative paths are
+  # referenced from the current working directory of the process unless
+  # *dir* is given, in which case it will be used as the starting point.
+  #
+  # ```
+  # File.expand_path("foo")             # => "/home/.../foo"
+  # File.expand_path("~/crystal/foo")   # => "/home/crystal/foo"
+  # File.expand_path("baz", "/foo/bar") # => "/foo/bar/baz"
+  # ```
   def self.expand_path(path, dir = nil) : String
     path.check_no_null_byte
 
@@ -306,37 +350,38 @@ class File < IO::FileDescriptor
     end
 
     String.build do |str|
-      ifdef !windows
+      {% if !flag?(:windows) %}
         str << SEPARATOR_STRING
-      end
+      {% end %}
       items.join SEPARATOR_STRING, str
     end
   end
 
-  # Resolves the real path of the file by following symbolic links
+  # Resolves the real path of *path* by following symbolic links.
   def self.real_path(path) : String
     real_path_ptr = LibC.realpath(path, nil)
     raise Errno.new("Error resolving real path of #{path}") unless real_path_ptr
     String.new(real_path_ptr).tap { LibC.free(real_path_ptr.as(Void*)) }
   end
 
-  # Creates a new link (also known as a hard link) to an existing file.
+  # Creates a new link (also known as a hard link) at *new_path* to an existing file
+  # given by *old_path*.
   def self.link(old_path, new_path)
     ret = LibC.symlink(old_path.check_no_null_byte, new_path.check_no_null_byte)
     raise Errno.new("Error creating link from #{old_path} to #{new_path}") if ret != 0
     ret
   end
 
-  # Creates a symbolic link to an existing file.
+  # Creates a symbolic link at *new_path* to an existing file given by *old_path.
   def self.symlink(old_path, new_path)
     ret = LibC.symlink(old_path.check_no_null_byte, new_path.check_no_null_byte)
     raise Errno.new("Error creating symlink from #{old_path} to #{new_path}") if ret != 0
     ret
   end
 
-  # Returns true if the pointed file is a symlink.
-  def self.symlink?(filename) : Bool
-    if LibC.lstat(filename.check_no_null_byte, out stat) != 0
+  # Returns `true` if the *path* is a symbolic link.
+  def self.symlink?(path) : Bool
+    if LibC.lstat(path.check_no_null_byte, out stat) != 0
       if Errno.value == Errno::ENOENT
         return false
       else
@@ -346,10 +391,15 @@ class File < IO::FileDescriptor
     (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
   end
 
+  # Opens the file named by *filename*. If a file is being created, its initial
+  # permissions may be set using the *perm* parameter.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil) : self
     new filename, mode, perm, encoding, invalid
   end
 
+  # Opens the file named by *filename*. If a file is being created, its initial
+  # permissions may be set using the *perm* parameter. Then given block will be passed the opened
+  # file as an argument, the file will be automatically closed when the block returns.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
     file = File.new filename, mode, perm, encoding, invalid
     begin
@@ -359,12 +409,11 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns the content of the given file as a string.
+  # Returns the content of *filename* as a string.
   #
-  # ```crystal
-  # # echo "foo" >> bar
-  # File.read("./bar")
-  # # => foo
+  # ```
+  # File.write("bar", "foo")
+  # File.read("bar") # => "foo"
   # ```
   def self.read(filename, encoding = nil, invalid = nil) : String
     File.open(filename, "r") do |file|
@@ -372,19 +421,22 @@ class File < IO::FileDescriptor
         file.set_encoding(encoding, invalid: invalid)
         file.gets_to_end
       else
+        # We try to read a string with an initialize capacity
+        # equal to the file's size, but the size might not be
+        # correct or even be zero (for example for /proc files)
         size = file.size.to_i
-        String.new(size) do |buffer|
-          file.read Slice.new(buffer, size)
-          {size.to_i, 0}
+        size = 256 if size == 0
+        String.build(size) do |io|
+          IO.copy(file, io)
         end
       end
     end
   end
 
-  # Yields each line of the given file to the given block.
+  # Yields each line in *filename* to the given block.
   #
-  # ```crystal
-  # File.each_line("./foo") do |line|
+  # ```
+  # File.each_line("foo") do |line|
   #   # loop
   # end
   # ```
@@ -396,18 +448,16 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns an `Iterator` for each line in the given file.
+  # Returns an `Iterator` for each line in *filename*.
   def self.each_line(filename, encoding = nil, invalid = nil)
     File.open(filename, "r", encoding: encoding, invalid: invalid).each_line
   end
 
-  # Returns all lines of the given file as an array of strings.
+  # Returns all lines in *filename* as an array of strings.
   #
-  # ```crystal
-  # # echo "foo" >> foobar
-  # # echo "bar" >> foobar
-  # File.read_lines("./foobar")
-  # # => ["foo\n","bar\n"]
+  # ```
+  # File.write("foobar", "foo\nbar")
+  # File.read_lines("foobar") # => ["foo\n", "bar\n"]
   # ```
   def self.read_lines(filename, encoding = nil, invalid = nil) : Array(String)
     lines = [] of String
@@ -417,11 +467,12 @@ class File < IO::FileDescriptor
     lines
   end
 
-  # Write the given content to the given filename.
-  # An existing file will be overwritten, or a file will be created with the given filename.
+  # Write the given content to *filename*.
   #
-  # ```crystal
-  # File.write("./foo", "bar")
+  # An existing file will be overwritten, else a file will be created.
+  #
+  # ```
+  # File.write("foo", "bar")
   # ```
   def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
     File.open(filename, "w", perm, encoding: encoding, invalid: invalid) do |file|
@@ -429,7 +480,7 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns a new string formed by joining the strings using File::SEPARATOR.
+  # Returns a new string formed by joining the strings using `File::SEPARATOR`.
   #
   # ```
   # File.join("foo", "bar", "baz")       # => "foo/bar/baz"
@@ -440,12 +491,12 @@ class File < IO::FileDescriptor
     join parts
   end
 
-  # Returns a new string formed by joining the strings using File::SEPARATOR.
+  # Returns a new string formed by joining the strings using `File::SEPARATOR`.
   #
   # ```
-  # File.join("foo", "bar", "baz")       # => "foo/bar/baz"
-  # File.join("foo/", "/bar/", "/baz")   # => "foo/bar/baz"
-  # File.join("/foo/", "/bar/", "/baz/") # => "/foo/bar/baz/"
+  # File.join({"foo", "bar", "baz"})       # => "foo/bar/baz"
+  # File.join({"foo/", "/bar/", "/baz"})   # => "foo/bar/baz"
+  # File.join(["/foo/", "/bar/", "/baz/"]) # => "/foo/bar/baz/"
   # ```
   def self.join(parts : Array | Tuple) : String
     String.build do |str|
@@ -471,11 +522,16 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns the size of the given file in bytes.
+  # Returns the size of *filename* bytes.
   def self.size(filename) : UInt64
     stat(filename.check_no_null_byte).size
   end
 
+  # Moves *old_filename* to *new_filename*.
+  #
+  # ```
+  # File.rename("afile", "afile.cr")
+  # ```
   def self.rename(old_filename, new_filename)
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0
@@ -484,11 +540,13 @@ class File < IO::FileDescriptor
     code
   end
 
+  # Return the size in bytes of the currently opened file.
   def size
     stat.size
   end
 
-  # Truncates the file to the specified size. Requires a write file descriptor
+  # Truncates the file to the specified *size*. Requires that the current file is opened
+  # for writing.
   def truncate(size = 0)
     flush
     code = LibC.ftruncate(fd, size)
@@ -498,7 +556,7 @@ class File < IO::FileDescriptor
     code
   end
 
-  def to_s(io)
+  def inspect(io)
     io << "#<File:" << @path
     io << " (closed)" if closed?
     io << ">"

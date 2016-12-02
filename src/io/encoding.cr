@@ -15,8 +15,7 @@ module IO
     end
   end
 
-  # :nodoc:
-  class Encoder
+  private class Encoder
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
       @closed = false
@@ -48,8 +47,7 @@ module IO
     end
   end
 
-  # :nodoc:
-  class Decoder
+  private class Decoder
     BUFFER_SIZE     = 4 * 1024
     OUT_BUFFER_SIZE = 4 * 1024
 
@@ -64,55 +62,72 @@ module IO
       @in_buffer_left = LibC::SizeT.new(0)
       @out_buffer = Slice(UInt8).new((GC.malloc_atomic(OUT_BUFFER_SIZE).as(UInt8*)), OUT_BUFFER_SIZE)
       @out_slice = Slice(UInt8).new(Pointer(UInt8).null, 0)
-      @last_errno = 0
       @closed = false
     end
 
     def read(io)
-      return unless @out_slice.empty?
+      loop do
+        return unless @out_slice.empty?
 
-      if @in_buffer_left == 0
-        @in_buffer = @buffer.to_unsafe
-        @in_buffer_left = LibC::SizeT.new(io.read(@buffer))
-      elsif @last_errno == Errno::EINVAL
-        # EINVAL means "An incomplete multibyte sequence has been encountered in the input."
+        if @in_buffer_left == 0
+          @in_buffer = @buffer.to_unsafe
+          @in_buffer_left = LibC::SizeT.new(io.read(@buffer))
+        end
 
-        # If we have just a few bytes remaining to fill, move the ones we have to the beginning
-        # and read into the rest, so we avoid just decoding a small amount of bytes
-        buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
-        if buffer_remaining < 64
+        # If we just have a few bytes to decode, read more, just in case these don't produce a character
+        if @in_buffer_left < 16
+          buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
           @buffer.copy_from(@in_buffer, @in_buffer_left)
           @in_buffer = @buffer.to_unsafe
-          buffer_remaining = BUFFER_SIZE - @in_buffer_left
+          @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
         end
-        @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
-      end
 
-      # If we just have a few bytes to decode, read more, just in case these don't produce a character
-      if @in_buffer_left < 16
-        buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
+        # If, after refilling the buffer, we couldn't read new bytes
+        # it means we reached the end
+        break if @in_buffer_left == 0
+
+        # Convert bytes using iconv
+        out_buffer = @out_buffer.to_unsafe
+        out_buffer_left = LibC::SizeT.new(OUT_BUFFER_SIZE)
+        result = @iconv.convert(pointerof(@in_buffer), pointerof(@in_buffer_left), pointerof(out_buffer), pointerof(out_buffer_left))
+        @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
+
+        # Check for errors
+        if result == -1
+          case Errno.value
+          when Errno::EILSEQ
+            # For an illegal sequence we just skip one byte and we'll continue next
+            @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
+          when Errno::EINVAL
+            # EINVAL means "An incomplete multibyte sequence has been encountered in the input."
+            old_in_buffer_left = @in_buffer_left
+
+            # On invalid multibyte sequence we try to read more bytes
+            # to see if they complete the sequence
+            refill_in_buffer(io)
+
+            # If we couldn't read anything new, we raise or skip
+            if old_in_buffer_left == @in_buffer_left
+              @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
+            end
+          end
+
+          # Continue decoding after an error
+          next
+        end
+
+        break
+      end
+    end
+
+    private def refill_in_buffer(io)
+      buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
+      if buffer_remaining < 64
         @buffer.copy_from(@in_buffer, @in_buffer_left)
         @in_buffer = @buffer.to_unsafe
-        @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
+        buffer_remaining = BUFFER_SIZE - @in_buffer_left
       end
-
-      out_buffer = @out_buffer.to_unsafe
-      out_buffer_left = LibC::SizeT.new(OUT_BUFFER_SIZE)
-      old_in_buffer_left = @in_buffer_left
-      result = @iconv.convert(pointerof(@in_buffer), pointerof(@in_buffer_left), pointerof(out_buffer), pointerof(out_buffer_left))
-      @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
-      if result == -1
-        if Errno.value == Errno::EILSEQ
-          @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
-        end
-
-        if old_in_buffer_left == @in_buffer_left
-          raise ArgumentError.new "incomplete multibyte sequence"
-        end
-        @last_errno = Errno.value
-      else
-        @last_errno = 0
-      end
+      @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
     end
 
     def read_byte(io)
@@ -148,7 +163,7 @@ module IO
       index = @out_slice.index(delimiter)
       if index
         # If we find it past the limit, limit the result
-        if index > limit
+        if index >= limit
           index = limit
         else
           index += 1
@@ -179,7 +194,7 @@ module IO
 
           index = @out_slice.index(delimiter)
           if index
-            if index > limit
+            if index >= limit
               index = limit
             else
               index += 1

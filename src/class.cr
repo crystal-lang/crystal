@@ -20,16 +20,16 @@ class Class
   # ```
   # String.name # => "String"
   # ```
-  macro def name : String
+  def name : String
     {{ @type.name.stringify }}
   end
 
   # Casts `other` to this class.
   #
   # This is the same as using `as`, but allows the class to be passed around as
-  # an argument. See the [documentation on
-  # as](//crystal-lang.org/docs/syntax_and_semantics/as.html) for more
-  # information.
+  # an argument. See the
+  # [documentation on as](//crystal-lang.org/docs/syntax_and_semantics/as.html)
+  # for more information.
   #
   #     klass = Int32
   #     number = [99, "str"][0]
@@ -45,13 +45,31 @@ class Class
   # ```
   # Int32 | Char # => (Int32 | Char)
   # ```
-  def self.|(other : U.class)
+  def self.|(other : U.class) forall U
     t = uninitialized self
     u = uninitialized U
     typeof(t, u)
   end
 
+  # Returns `true` if this class is `Nil`.
+  #
+  # ```
+  # Int32.nilable? # => false
+  # Nil.nilable?   # => true
+  # ```
+  def nilable?
+    self == ::Nil
+  end
+
   def to_s(io)
     io << name
+  end
+
+  def dup
+    self
+  end
+
+  def clone
+    self
   end
 end

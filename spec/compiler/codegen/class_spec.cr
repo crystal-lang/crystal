@@ -372,8 +372,8 @@ describe "Code gen: class" do
 
   it "codegens bug #168" do
     run("
-      class A
-        @x : A?
+      class Foo
+        @x : Foo?
 
         def foo
           x = @x
@@ -385,12 +385,12 @@ describe "Code gen: class" do
         end
       end
 
-      class B < A
+      class Bar < Foo
         def initialize(@x)
         end
       end
 
-      B.new(A.new).foo
+      Bar.new(Foo.new).foo
       ").to_i.should eq(1)
   end
 
@@ -434,10 +434,14 @@ describe "Code gen: class" do
           1
         end
 
-        $x = self.foo as Int32
+        @@x = self.foo.as(Int32)
+
+        def self.x
+          @@x
+        end
       end
 
-      $x
+      Foo.x
       )).to_i.should eq(1)
   end
 
@@ -448,10 +452,14 @@ describe "Code gen: class" do
           1
         end
 
-        $x = self as Foo.class
+        @@x = self.as(Foo.class)
+
+        def self.x
+          @@x
+        end
       end
 
-      $x.foo
+      Foo.x.foo
       )).to_i.should eq(1)
   end
 
@@ -473,10 +481,10 @@ describe "Code gen: class" do
       require "prelude"
 
       class Foo; end
-      class A < Foo; end
-      class B < Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
 
-      a = Foo || A || B
+      a = Foo || Bar || Baz
       a.to_s
       )).to_string.should eq("Foo")
   end
@@ -486,12 +494,12 @@ describe "Code gen: class" do
       require "prelude"
 
       class Foo; end
-      class A < Foo; end
-      class B < Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
 
-      a = A || Foo || B
+      a = Bar || Foo || Baz
       a.to_s
-      )).to_string.should eq("A")
+      )).to_string.should eq("Bar")
   end
 
   it "does to_s for virtual metaclass type (3)" do
@@ -499,12 +507,12 @@ describe "Code gen: class" do
       require "prelude"
 
       class Foo; end
-      class A < Foo; end
-      class B < Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
 
-      a = B || A || Foo
+      a = Baz || Bar || Foo
       a.to_s
-      )).to_string.should eq("B")
+      )).to_string.should eq("Baz")
   end
 
   it "builds generic class bug" do
@@ -573,7 +581,7 @@ describe "Code gen: class" do
   it "notifies superclass recursively on inheritance (#576)" do
     run(%(
       class Class
-        macro def name : String
+        def name : String
           {{ @type.name.stringify }}
         end
 
@@ -582,25 +590,25 @@ describe "Code gen: class" do
         end
       end
 
-      class A
+      class Foo
       end
 
-      ptr = Pointer(A.class).malloc(1_u64)
-      ptr.value = A
+      ptr = Pointer(Foo.class).malloc(1_u64)
+      ptr.value = Foo
       ptr.value.foo
 
-      class B < A; end
-      ptr.value = B
+      class Bar < Foo; end
+      ptr.value = Bar
       ptr.value.foo
 
-      class C < B; end
-      ptr.value = C
+      class Baz < Bar; end
+      ptr.value = Baz
       ptr.value.foo
 
-      class D < C; end
-      ptr.value = D
+      class Qux < Baz; end
+      ptr.value = Qux
       ptr.value.foo
-      )).to_string.should eq("D")
+      )).to_string.should eq("Qux")
   end
 
   it "works with array in variable initializer in non-generic type (#855)" do
@@ -665,13 +673,13 @@ describe "Code gen: class" do
         end
       end
 
-      class A
+      class Foo
         def test
-          A.class
+          Foo.class
         end
       end
 
-      x = A.new.test
+      x = Foo.new.test
       x.bar
       )).to_i.should eq(123)
   end
@@ -787,5 +795,193 @@ describe "Code gen: class" do
 
       Bar.new.foo.foo
       )).to_i.should eq(2)
+  end
+
+  it "doesn't crash on #1216" do
+    codegen(%(
+      class Foo
+        def initialize(@ivar : Int32)
+          meth
+        end
+
+        def meth
+          r = self.class.new(5)
+          r.@ivar
+        end
+      end
+
+      Foo.new(6)
+      ))
+  end
+
+  it "doesn't crash on #1216 with pointerof" do
+    codegen(%(
+      class Foo
+        def initialize(@ivar : Int32)
+          meth
+        end
+
+        def meth
+          r = self.class.new(5)
+          pointerof(r.@ivar)
+        end
+      end
+
+      Foo.new(6)
+      ))
+  end
+
+  it "doesn't crash on #1216 (reduced)" do
+    codegen(%(
+      class Foo
+        def foo
+          crash.foo
+        end
+      end
+
+      def crash
+        x = Foo.allocate
+        x.foo
+        x
+      end
+
+      crash
+      ))
+  end
+
+  it "doesn't crash on abstract class never instantiated (#2840)" do
+    codegen(%(
+      require "prelude"
+
+      abstract class Foo
+      end
+
+      if 1 == 2
+        true
+      else
+        Pointer(Foo).malloc(1_u64).value.foo
+      end
+      ))
+  end
+
+  it "can assign virtual metaclass to virtual metaclass (#3007)" do
+    run(%(
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.foo
+          2
+        end
+      end
+
+      class Baz < Bar
+        def self.foo
+          3
+        end
+      end
+
+      class Gen(T)
+        def initialize(x : T)
+        end
+      end
+
+      ptr = Pointer(Foo.class).malloc(1_u64)
+      ptr.value = Bar || Baz
+      ptr.value.foo
+      )).to_i.should eq(2)
+  end
+
+  it "transfers initializer from module to generic class" do
+    run(%(
+      module Moo
+        @x = 123
+
+        def x
+          @x
+        end
+      end
+
+      class Foo(T)
+        include Moo
+      end
+
+      Foo(Int32).new.x
+      )).to_i.should eq(123)
+  end
+
+  it "transfers initializer from generic module to non-generic class" do
+    run(%(
+      module Moo(T)
+        @x = 123
+
+        def x
+          @x
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      Foo.new.x
+      )).to_i.should eq(123)
+  end
+
+  it "transfers initializer from generic module to generic class" do
+    run(%(
+      module Moo(T)
+        @x = 123
+
+        def x
+          @x
+        end
+      end
+
+      class Foo(T)
+        include Moo(T)
+      end
+
+      Foo(Int32).new.x
+      )).to_i.should eq(123)
+  end
+
+  it "doesn't skip false initializers (#3272)" do
+    run(%(
+      class Parent
+        @foo = true
+
+        def foo
+          @foo
+        end
+      end
+
+      class Child < Parent
+        @foo = false
+      end
+
+      Child.new.foo ? 10 : 20
+      )).to_i.should eq(20)
+  end
+
+  it "doesn't skip zero initializers (#3272)" do
+    run(%(
+      class Parent
+        @foo = 123
+
+        def foo
+          @foo
+        end
+      end
+
+      class Child < Parent
+        @foo = 0
+      end
+
+      Child.new.foo
+      )).to_i.should eq(0)
   end
 end

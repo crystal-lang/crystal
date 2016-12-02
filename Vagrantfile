@@ -9,9 +9,9 @@ Vagrant.configure("2") do |config|
       c.vm.box = "ubuntu/#{box_name}"
 
       c.vm.provision :shell, inline: %(
-        curl -s http://dist.crystal-lang.org/apt/setup.sh | bash
+        curl -s https://dist.crystal-lang.org/apt/setup.sh | bash
         apt-get install -y crystal git libgmp3-dev zlib1g-dev libedit-dev libxml2-dev libssl-dev libyaml-dev libreadline-dev g++
-        curl -s http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-linux-`uname -m`.tar.gz | tar xz -C /opt
+        curl -s https://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-linux-`uname -m`.tar.gz | tar xz -C /opt
         echo 'export LIBRARY_PATH="/opt/crystal/embedded/lib"' > /etc/profile.d/crystal.sh
         echo 'export PATH="$PATH:/opt/llvm-3.5.0-1/bin"' >> /etc/profile.d/crystal.sh
       )

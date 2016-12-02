@@ -75,11 +75,11 @@ class LLVM::Builder
 
   {% for method_name in %w(gep inbounds_gep) %}
     def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.to_unsafe as LibLLVM::ValueRef*), indices.size, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
     end
 
     def {{method_name.id}}(value, index : LLVM::Value, name = "")
-      indices = pointerof(index) as LibLLVM::ValueRef*
+      indices = pointerof(index).as(LibLLVM::ValueRef*)
       Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1, name)
     end
 
@@ -87,7 +87,7 @@ class LLVM::Builder
       indices = uninitialized LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.to_unsafe as LibLLVM::ValueRef*), 2, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
     end
   {% end %}
 
@@ -148,6 +148,18 @@ class LLVM::Builder
       LibLLVM.add_case switch, case_value, block
     end
     switch
+  end
+
+  def atomicrmw(op, ptr, val, ordering, singlethread)
+    Value.new LibLLVM.build_atomicrmw(self, op, ptr, val, ordering, singlethread ? 1 : 0)
+  end
+
+  def cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
+    Value.new LibLLVMExt.build_cmpxchg(self, pointer, cmp, new, success_ordering, failure_ordering)
+  end
+
+  def fence(ordering, singlethread, name = "")
+    Value.new LibLLVM.build_fence(self, ordering, singlethread ? 1 : 0, name)
   end
 
   def set_current_debug_location(line, column, scope, inlined_at = nil)

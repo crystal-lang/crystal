@@ -13,7 +13,7 @@ describe "ASTNode#to_s" do
   expect_to_s "(~1).foo"
   expect_to_s "1 && (a = 2)"
   expect_to_s "(a = 2) && 1"
-  expect_to_s "foo(a as Int32)", "foo(a.as(Int32))"
+  expect_to_s "foo(a.as(Int32))"
   expect_to_s "(1 + 2).as(Int32)", "((1 + 2)).as(Int32)"
   expect_to_s "a.as?(Int32)"
   expect_to_s "(1 + 2).as?(Int32)", "((1 + 2)).as?(Int32)"
@@ -26,8 +26,10 @@ describe "ASTNode#to_s" do
   expect_to_s %(/\\(group\\)/)
   expect_to_s %(/\\//), "/\\//"
   expect_to_s %(/\#{1 / 2}/)
+  expect_to_s %<%r(/)>, %(/\\//)
   expect_to_s %(foo &.bar), %(foo(&.bar))
   expect_to_s %(foo &.bar(1, 2, 3)), %(foo(&.bar(1, 2, 3)))
+  expect_to_s %(foo { |i| i.bar { i } }), "foo do |i|\n  i.bar do\n    i\n  end\nend"
   expect_to_s %(foo do |k, v|\n  k.bar(1, 2, 3)\nend)
   expect_to_s %(foo(3, &.*(2)))
   expect_to_s %(return begin\n  1\n  2\nend)
@@ -40,11 +42,12 @@ describe "ASTNode#to_s" do
   expect_to_s %({% if foo %}\n  foo_then\n{% else %}\n  foo_else\n{% end %})
   expect_to_s %({% for foo in bar %}\n  {{ foo }}\n{% end %})
   expect_to_s %(macro foo\n  {% for foo in bar %}\n    {{ foo }}\n  {% end %}\nend)
-  expect_to_s %[1 as Int32], %[1.as(Int32)]
-  expect_to_s %[(1 || 1.1) as Int32], %[((1 || 1.1)).as(Int32)]
+  expect_to_s %[1.as(Int32)]
+  expect_to_s %[(1 || 1.1).as(Int32)], %[((1 || 1.1)).as(Int32)]
   expect_to_s %[1 & 2 & (3 | 4)], %[(1 & 2) & (3 | 4)]
   expect_to_s %[(1 & 2) & (3 | 4)]
   expect_to_s "def foo(x : T = 1)\nend"
+  expect_to_s "def foo(x : X, y : Y) forall X, Y\nend"
   expect_to_s %(foo : A | (B -> C))
   expect_to_s %[%("\#{foo}")], %["\\\"\#{foo}\\\""]
   expect_to_s "class Foo\n  private def bar\n  end\nend"
@@ -67,4 +70,22 @@ describe "ASTNode#to_s" do
   expect_to_s "macro foo(**args)\nend"
   expect_to_s "macro foo(x, **args)\nend"
   expect_to_s "def foo(x y)\nend"
+  expect_to_s %(foo("bar baz": 2))
+  expect_to_s %(Foo("bar baz": Int32))
+  expect_to_s %({"foo bar": 1})
+  expect_to_s %(def foo("bar baz" qux)\nend)
+  expect_to_s "foo()"
+  expect_to_s "/a/x"
+  expect_to_s "1_f32", "1_f32"
+  expect_to_s "1_f64", "1_f64"
+  expect_to_s "1.0", "1.0"
+  expect_to_s "1e10_f64", "1e10"
+  expect_to_s "!a"
+  expect_to_s "!(1 < 2)"
+  expect_to_s "(1 + 2)..3"
+  expect_to_s "macro foo\n{{ @type }}\nend"
+  expect_to_s "macro foo\n\\{{ @type }}\nend"
+  expect_to_s "macro foo\n{% @type %}\nend"
+  expect_to_s "macro foo\n\\{%@type %}\nend"
+  expect_to_s "enum A : B\nend"
 end
