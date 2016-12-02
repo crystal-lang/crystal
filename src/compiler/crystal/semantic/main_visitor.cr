@@ -583,7 +583,10 @@ module Crystal
       var = lookup_instance_var node
       node.bind_to(var)
 
-      if @is_initialize && !@vars.has_key?(node.name) && !scope.has_instance_var_initializer?(node.name)
+      if @is_initialize &&
+         @typeof_nest == 0 &&
+         !@vars.has_key?(node.name) &&
+         !scope.has_instance_var_initializer?(node.name)
         ivar = scope.lookup_instance_var(node.name)
         ivar.nil_reason ||= NilReason.new(node.name, :used_before_initialized, [node] of ASTNode)
         ivar.bind_to program.nil_var
@@ -2907,6 +2910,21 @@ module Crystal
       names_to_remove.each do |name|
         @meta_vars.delete name
         @vars.delete name
+      end
+    end
+
+    def check_initialize_instance_vars_types(owner)
+      return if untyped_def.calls_super? ||
+                untyped_def.calls_initialize?
+
+      owner.all_instance_vars.each do |name, var|
+        next if owner.has_instance_var_initializer?(name)
+        next if var.type.includes_type?(@program.nil)
+
+        meta_var = @meta_vars[name]?
+        unless meta_var
+          untyped_def.raise "instance variable '#{name}' of #{owner} was not initialized in this 'initialize', rendering it nilable"
+        end
       end
     end
 

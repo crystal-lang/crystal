@@ -4419,4 +4419,130 @@ describe "Semantic: instance var" do
       ),
       "undefined local variable or method"
   end
+
+  it "is more permissive with macro def initialize" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+            @{{ivar}} = 0
+          {% end %}
+        end
+      end
+
+      Foo.new
+      ), inject_primitives: false) { types["Foo"] }
+  end
+
+  it "is more permissive with macro def initialize, other initialize" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+        @y : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+            @{{ivar}} = 0
+          {% end %}
+        end
+
+        def initialize(@x, @y)
+        end
+      end
+
+      Foo.new
+      ), inject_primitives: false) { types["Foo"] }
+  end
+
+  it "errors with macro def but another def doesn't initialize all" do
+    assert_error %(
+      class Foo
+        @x : Int32
+        @y : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+            @{{ivar}} = 0
+          {% end %}
+        end
+
+        def initialize(@x)
+        end
+      end
+
+      Foo.new
+      ),
+      "instance variable '@y' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+  end
+
+  it "errors if finally not initialized in macro def" do
+    assert_error %(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+          {% end %}
+        end
+      end
+
+      Foo.new
+      ),
+      "instance variable '@x' of Foo was not initialized in this 'initialize', rendering it nilable"
+  end
+
+  it "doesn't error if initializes via super in macro def" do
+    assert_type(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x)
+          super
+          {% for ivar in @type.instance_vars %}
+          {% end %}
+        end
+      end
+
+      Bar.new(1)
+      )) { types["Bar"] }
+  end
+
+  it "doesn't error if uses typeof(@var)" do
+    assert_type(%(
+      struct Int32
+        def self.zero
+          0
+        end
+      end
+
+      class Foo
+        @x : Int32
+
+        def initialize
+          @x = typeof(@x).zero
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "doesn't error if not initiliazed in macro def but outside it" do
+    assert_type(%(
+      class Foo
+        @x = 1
+
+        def initialize
+          {% @type %}
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
+  end
 end

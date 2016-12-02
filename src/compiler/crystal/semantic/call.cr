@@ -376,6 +376,9 @@ class Crystal::Call
             end
 
             if visitor.is_initialize
+              if match.def.macro_def?
+                visitor.check_initialize_instance_vars_types(owner)
+              end
               visitor.bind_initialize_instance_vars(owner)
             end
           end

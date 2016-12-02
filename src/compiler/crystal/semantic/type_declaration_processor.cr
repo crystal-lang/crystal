@@ -108,6 +108,9 @@ struct Crystal::TypeDeclarationProcessor
     # removed if an explicit type is found (in remove_error).
     @errors = {} of Type => Hash(String, Error)
 
+    # Types that have a single macro def initialize
+    @has_macro_def = Set(Type).new
+
     @type_decl_visitor = TypeDeclarationVisitor.new(@program, @explicit_instance_vars)
 
     @type_guess_visitor = TypeGuessVisitor.new(@program, @explicit_instance_vars,
@@ -383,6 +386,8 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def nilable_instance_var?(owner, name)
+    return false if @has_macro_def.includes?(owner)
+
     non_nilable_vars = @non_nilable_instance_vars[owner]?
     !non_nilable_vars || (non_nilable_vars && !non_nilable_vars.includes?(name))
   end
@@ -399,6 +404,7 @@ struct Crystal::TypeDeclarationProcessor
       infos = find_initialize_infos(owner)
 
       if infos
+        @has_macro_def << owner if infos.size == 1 && infos.first.def.macro_def?
         non_nilable = compute_non_nilable_instance_vars_multi(owner, infos)
       end
 
@@ -438,7 +444,7 @@ struct Crystal::TypeDeclarationProcessor
     # super or assign all of those variables
     if ancestor_non_nilable
       infos.each do |info|
-        unless info.def.calls_super? || info.def.calls_initialize?
+        unless info.def.calls_super? || info.def.calls_initialize? || info.def.macro_def?
           ancestor_non_nilable.each do |name|
             # If the variable is initialized outside, it's OK
             next if initialized_outside?(owner, name)
@@ -468,6 +474,10 @@ struct Crystal::TypeDeclarationProcessor
         # If an initialize calls another initialize, consider it like it initializes
         # all instance vars, because the other initialize will have to do that
         next if info.def.calls_initialize?
+
+        # Assume a macro def initializes all of them
+        # (will be checked later)
+        next if info.def.macro_def?
 
         # Similarly, calling previous_def would have the vars initialized
         # in the other def
