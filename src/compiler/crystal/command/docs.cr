@@ -5,6 +5,13 @@
 
 class Crystal::Command
   private def docs
+    compiler = Compiler.new
+    compiler.wants_doc = true
+    OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal docs [options] [files]\n\nOptions:"
+      setup_simple_compiler_options compiler, opts, no_codegen: true
+    end
+
     if options.empty?
       sources = [Compiler::Source.new("require", %(require "./src/**"))]
       included_dirs = [] of String
@@ -16,8 +23,6 @@ class Crystal::Command
 
     included_dirs << File.expand_path("./src")
 
-    compiler = Compiler.new
-    compiler.wants_doc = true
     result = compiler.top_level_semantic sources
 
     Doc::Generator.new(result.program, included_dirs).run
