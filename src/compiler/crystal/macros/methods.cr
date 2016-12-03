@@ -123,7 +123,7 @@ module Crystal
       end
       msg = msg.join " "
 
-      node.raise "can't expand macro: #{msg}"
+      node.raise msg, exception_type: MacroRaiseException
     end
 
     def interpret_run(node)
