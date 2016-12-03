@@ -711,7 +711,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def visit(node : TypeDeclaration | UninitializedVar)
+  def visit(node : TypeDeclaration)
+    if (var = node.var).is_a?(Var)
+      @vars[var.name] = MetaVar.new(var.name)
+    end
+    false
+  end
+
+  def visit(node : UninitializedVar)
+    if (var = node.var).is_a?(Var)
+      @vars[var.name] = MetaVar.new(var.name)
+    end
     false
   end
 
