@@ -18,7 +18,7 @@
 #     s1 == s2         # => true
 #     s1 == s3         # => true
 #     s1.add(2)
-#     s1.merge([6,8])
+#     s1.merge!([6,8])
 #     s1.subset? s2    # => false
 #     s2.subset? s1    # => true
 struct Set(T)
@@ -41,7 +41,7 @@ struct Set(T)
   #     s = Set.new [1,3,5]
   #     s.empty? => false
   def self.new(enumerable : Enumerable(T))
-    Set(T).new.merge(enumerable)
+    Set(T).new.merge!(enumerable)
   end
 
   # Alias for `add`
@@ -63,9 +63,9 @@ struct Set(T)
   # Adds `#each` element of *elems* to the set and returns `self`.
   #
   #     s = Set.new [1,5]
-  #     s.merge [5,5,8,9]
+  #     s.merge! [5,5,8,9]
   #     s.size            # => 4
-  def merge(elems)
+  def merge!(elems)
     elems.each { |elem| self << elem }
     self
   end
@@ -199,7 +199,7 @@ struct Set(T)
   #     Set.new([1,2,3,4,5]) ^ [2,4,6]             #=> Set{1, 3, 5, 6}
   #     Set.new(['a','b','b','z']) ^ ['a','b','c'] #=> Set{'z', 'c'}
   def ^(other : Enumerable(U)) forall U
-    set = Set(T | U).new.merge(self)
+    set = Set(T | U).new.merge!(self)
     other.each do |value|
       if includes?(value)
         set.delete value
@@ -231,7 +231,7 @@ struct Set(T)
 
   # Returns a new set with all of the same elements
   def dup
-    Set(T).new.merge(self)
+    Set(T).new.merge!(self)
   end
 
   # Returns a new set with all of the elements cloned.
