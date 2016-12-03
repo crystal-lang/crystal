@@ -18,6 +18,8 @@ module Crystal
         if cpu.empty? && !features.includes?("fp") && target_triple =~ /-gnueabihf/
           features += "+vfp2"
         end
+      when /^asmjs/
+        LLVM.init_js_backend
       else
         raise "Unsupported arch for target triple: #{target_triple}"
       end

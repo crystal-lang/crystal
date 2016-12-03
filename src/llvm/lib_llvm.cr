@@ -189,6 +189,9 @@ lib LibLLVM
   fun initialize_arm_target = LLVMInitializeARMTarget
   fun initialize_arm_target_info = LLVMInitializeARMTargetInfo
   fun initialize_arm_target_mc = LLVMInitializeARMTargetMC
+  fun initialize_js_backend_target = LLVMInitializeJSBackendTarget
+  fun initialize_js_backend_target_info = LLVMInitializeJSBackendTargetInfo
+  fun initialize_js_backend_target_mc = LLVMInitializeJSBackendTargetMC
   fun initialize_native_target = LLVMInitializeNativeTarget
   fun int1_type = LLVMInt1Type : TypeRef
   fun int8_type = LLVMInt8Type : TypeRef
