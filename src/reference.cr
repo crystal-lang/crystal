@@ -77,17 +77,17 @@ class Reference
       executed = exec_recursive(:pretty_print) do
         pp.surround(prefix, ">", left_break: " ", right_break: nil) do
           {% for ivar, i in @type.instance_vars.map(&.name).sort %}
-              {% if i > 0 %}
-                pp.comma
-              {% end %}
-              pp.group do
-                pp.text "@{{ivar.id}}="
-                pp.nest do
-                  pp.breakable ""
-                  @{{ivar.id}}.pretty_print(pp)
-                end
-              end
+            {% if i > 0 %}
+              pp.comma
             {% end %}
+            pp.group do
+              pp.text "@{{ivar.id}}="
+              pp.nest do
+                pp.breakable ""
+                @{{ivar.id}}.pretty_print(pp)
+              end
+            end
+          {% end %}
         end
       end
       unless executed
