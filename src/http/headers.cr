@@ -79,14 +79,23 @@ struct HTTP::Headers
   # headers.includes_word?("Connection", "Upgrade") # => true
   # ```
   def includes_word?(key, word)
+    return false if word.empty?
+
+    word = word.downcase
     # iterates over all header values avoiding the concatenation
     get?(key).try &.each do |value|
-      start = value.index(word)
-      next unless start
-      # check if the match is not surrounded by alphanumeric chars
-      next if start > 0 && value[start - 1].ascii_alphanumeric?
-      next if start + word.size < value.size && value[start + word.size].alphanumeric?
-      return true
+      value = value.downcase
+      offset = 0
+      while true
+        start = value.index(word, offset)
+        break unless start
+        offset = start + word.size
+
+        # check if the match is not surrounded by alphanumeric chars
+        next if start > 0 && value[start - 1].ascii_alphanumeric?
+        next if start + word.size < value.size && value[start + word.size].ascii_alphanumeric?
+        return true
+      end
     end
 
     false
