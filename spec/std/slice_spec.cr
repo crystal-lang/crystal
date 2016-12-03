@@ -357,6 +357,11 @@ describe "Slice" do
     b = [1, 2, 3]
     3.times { a.includes?(b.shift).should be_true }
   end
+
+  it "creates empty slice" do
+    slice = Slice(Int32).empty
+    slice.empty?.should be_true
+  end
 end
 
 private def itself(*args)

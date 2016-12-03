@@ -113,6 +113,16 @@ struct Slice(T)
     new(size) { value }
   end
 
+  # Creates an empty slice.
+  #
+  # ```
+  # slice = Slice(UInt8).empty
+  # slice.size # => 0
+  # ```
+  def self.empty
+    new(Pointer(T).null, 0)
+  end
+
   # Returns a new slice that i *offset* elements apart from this slice.
   #
   # ```
