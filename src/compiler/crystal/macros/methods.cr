@@ -686,6 +686,24 @@ module Crystal
             interpreter.accept block.body
           end
         }
+      when "double_splat"
+        case args.size
+        when 0
+          to_double_splat
+        when 1
+          interpret_one_arg_method(method, args) do |arg|
+            if entries.empty?
+              to_double_splat
+            else
+              unless arg.is_a?(Crystal::StringLiteral)
+                arg.raise "argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
+              end
+              to_double_splat(arg.value)
+            end
+          end
+        else
+          wrong_number_of_arguments "double_splat", args.size, 0..1
+        end
       when "[]"
         case args.size
         when 1
@@ -721,6 +739,12 @@ module Crystal
         super
       end
     end
+
+    private def to_double_splat(trailing_string = "")
+      MacroId.new(entries.join(", ") do |entry|
+        "#{entry.key} => #{entry.value}"
+      end + trailing_string)
+    end
   end
 
   class NamedTupleLiteral
@@ -751,6 +775,24 @@ module Crystal
             interpreter.accept block.body
           end
         }
+      when "double_splat"
+        case args.size
+        when 0
+          to_double_splat
+        when 1
+          interpret_one_arg_method(method, args) do |arg|
+            if entries.empty?
+              to_double_splat
+            else
+              unless arg.is_a?(Crystal::StringLiteral)
+                arg.raise "argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
+              end
+              to_double_splat(arg.value)
+            end
+          end
+        else
+          wrong_number_of_arguments "double_splat", args.size, 0..1
+        end
       when "[]"
         case args.size
         when 1
@@ -802,6 +844,16 @@ module Crystal
       else
         super
       end
+    end
+
+    private def to_double_splat(trailing_string = "")
+      MacroId.new(entries.join(", ") do |entry|
+        if Symbol.needs_quotes?(entry.key)
+          "#{entry.key.inspect}: #{entry.value}"
+        else
+          "#{entry.key}: #{entry.value}"
+        end
+      end + trailing_string)
     end
   end
 
@@ -1760,9 +1812,21 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
         interpreter.accept(block.body).truthy?
       end)
     end
-  when "argify"
-    object.interpret_argless_method(method, args) do
+  when "splat"
+    case args.size
+    when 0
       Crystal::MacroId.new(object.elements.join ", ")
+    when 1
+      object.interpret_one_arg_method(method, args) do |arg|
+        if object.elements.empty?
+          Crystal::MacroId.new("")
+        else
+          unless arg.is_a?(Crystal::StringLiteral)
+            arg.raise "argument to splat must be a StringLiteral, not #{arg.class_desc}"
+          end
+          Crystal::MacroId.new((object.elements.join ", ") + arg.value)
+        end
+      end
     end
   when "empty?"
     object.interpret_argless_method(method, args) { Crystal::BoolLiteral.new(object.elements.empty?) }

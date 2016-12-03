@@ -427,34 +427,13 @@ module Crystal
 
     def visit(node : Splat)
       node.exp.accept self
-      @last = @last.interpret("argify", [] of ASTNode, nil, self)
+      @last = @last.interpret("splat", [] of ASTNode, nil, self)
       false
     end
 
     def visit(node : DoubleSplat)
       node.exp.accept self
-
-      last = @last
-      case last
-      when HashLiteral
-        @last = MacroId.new(
-          last.entries.join(", ") do |entry|
-            "#{entry.key} => #{entry.value}"
-          end
-        )
-      when NamedTupleLiteral
-        @last = MacroId.new(
-          last.entries.join(", ") do |entry|
-            if Symbol.needs_quotes?(entry.key)
-              "#{entry.key.inspect}: #{entry.value}"
-            else
-              "#{entry.key}: #{entry.value}"
-            end
-          end
-        )
-      else
-        node.raise "argument to ** must be HashLiteral or NamedTuple, not #{last.class_desc}"
-      end
+      @last = @last.interpret("double_splat", [] of ASTNode, nil, self)
       false
     end
 
