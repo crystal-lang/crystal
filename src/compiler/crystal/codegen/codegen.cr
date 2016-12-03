@@ -833,20 +833,24 @@ module Crystal
       return false if node.discarded?
 
       target, value = node.target, node.value
+      codegen_assign(target, value, node)
+    end
 
-      case target
-      when Underscore
-        accept value
-        return false
-      when Path
-        const = target.target_const.not_nil!
-        if const.used? && !const.simple?
-          initialize_const(const)
-        end
-        @last = llvm_nil
-        return false
+    def codegen_assign(target : Underscore, value, node)
+      accept value
+      false
+    end
+
+    def codegen_assign(target : Path, value, node)
+      const = target.target_const.not_nil!
+      if const.used? && !const.simple?
+        initialize_const(const)
       end
+      @last = llvm_nil
+      false
+    end
 
+    def codegen_assign(target, value, node)
       target_type = target.type?
 
       # This means it's an instance variable initialize of a generic type,
@@ -995,6 +999,10 @@ module Crystal
       case var
       when Var
         declare_var var
+
+        if value = node.value
+          codegen_assign(var, value, node)
+        end
       when Global
         if value = node.value
           request_value do

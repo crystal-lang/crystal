@@ -926,7 +926,14 @@ class Crystal::Call
       yield
     rescue ex : Crystal::Exception
       if obj = @obj
-        raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
+        if name == "initialize"
+          # Avoid putting 'initialize' in the error trace
+          # because it's most likely that this is happening
+          # inside a generated 'new' method
+          ::raise ex
+        else
+          raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
+        end
       else
         raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
       end

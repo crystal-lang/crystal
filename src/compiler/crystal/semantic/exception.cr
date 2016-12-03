@@ -31,6 +31,14 @@ module Crystal
     end
 
     def initialize(message, @line, @column : Int32, @filename, @size, @inner = nil)
+      # If the inner exception is a macro raise, we replace this exception's
+      # message with that message. In this way the error message will
+      # look like a regular message produced by the compiler, and not
+      # because of an incorrect macro expansion.
+      if inner.is_a?(MacroRaiseException)
+        message = inner.message
+        @inner = nil
+      end
       super(message)
     end
 
@@ -281,6 +289,9 @@ module Crystal
   end
 
   class UndefinedMacroMethodError < TypeException
+  end
+
+  class MacroRaiseException < TypeException
   end
 
   class Program

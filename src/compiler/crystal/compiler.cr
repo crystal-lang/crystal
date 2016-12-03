@@ -152,7 +152,7 @@ module Crystal
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.target_machine = target_machine
       program.flags << "release" if @release
-      program.flags.merge @flags
+      program.flags.merge! @flags
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout

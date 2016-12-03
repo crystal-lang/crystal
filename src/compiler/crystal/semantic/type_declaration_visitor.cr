@@ -149,12 +149,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   def visit(node : TypeDeclaration)
     case var = node.var
     when Var
-      if @in_c_struct_or_union
-        declare_c_struct_or_union_field(node)
-        return false
-      end
-
-      node.raise "declaring the type of a local variable is not yet supported"
+      declare_c_struct_or_union_field(node) if @in_c_struct_or_union
     when InstanceVar
       declare_instance_var(node, var)
     when ClassVar

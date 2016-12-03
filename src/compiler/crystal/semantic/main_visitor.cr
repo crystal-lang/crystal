@@ -336,14 +336,36 @@ module Crystal
         special_var = define_special_var(node.name, program.nil_var)
         node.bind_to special_var
       else
-        node.raise "read before definition of local variable '#{node.name}'"
+        node.raise "read before assignment to local variable '#{node.name}'"
       end
     end
 
     def visit(node : TypeDeclaration)
       case var = node.var
       when Var
-        node.raise "declaring the type of a local variable is not yet supported"
+        if @meta_vars[var.name]?
+          node.raise "variable '#{var.name}' already declared"
+        end
+
+        meta_var = new_meta_var(var.name)
+        meta_var.type = @program.no_return
+
+        var.bind_to(meta_var)
+        @meta_vars[var.name] = meta_var
+
+        @in_type_args += 1
+        node.declared_type.accept self
+        @in_type_args -= 1
+
+        if declared_type = node.declared_type.type?
+          meta_var.freeze_type = declared_type
+        else
+          node.raise "can't infer type of type declaration"
+        end
+
+        if value = node.value
+          type_assign(var, value, node)
+        end
       when InstanceVar
         if @untyped_def
           node.raise "declaring the type of an instance variable must be done at the class level"
@@ -398,7 +420,7 @@ module Crystal
           var_type = check_declare_var_type node, declared_type, "a variable"
           var.type = var_type
         else
-          var.type = program.no_return
+          node.raise "can't infer type of type declaration"
         end
 
         meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)

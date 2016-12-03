@@ -564,15 +564,15 @@ describe "macro methods" do
       assert_macro "", %({{[1, 2, 3].last}}), [] of ASTNode, "3"
     end
 
-    it "executes argify" do
-      assert_macro "", %({{[1, 2, 3].argify}}), [] of ASTNode, "1, 2, 3"
+    it "executes splat" do
+      assert_macro "", %({{[1, 2, 3].splat}}), [] of ASTNode, "1, 2, 3"
     end
 
-    it "executes argify with symbols and strings" do
-      assert_macro "", %({{[:foo, "hello", 3].argify}}), [] of ASTNode, %(:foo, "hello", 3)
+    it "executes splat with symbols and strings" do
+      assert_macro "", %({{[:foo, "hello", 3].splat}}), [] of ASTNode, %(:foo, "hello", 3)
     end
 
-    it "executes argify with splat" do
+    it "executes splat with splat" do
       assert_macro "", %({{*[1, 2, 3]}}), [] of ASTNode, "1, 2, 3"
     end
 
@@ -730,6 +730,14 @@ describe "macro methods" do
     it "executes double splat" do
       assert_macro "", %({{**{1 => 2, 3 => 4}}}), [] of ASTNode, "1 => 2, 3 => 4"
     end
+
+    it "executes double splat" do
+      assert_macro "", %({{{1 => 2, 3 => 4}.double_splat}}), [] of ASTNode, "1 => 2, 3 => 4"
+    end
+
+    it "executes double splat with arg" do
+      assert_macro "", %({{{1 => 2, 3 => 4}.double_splat(", ")}}), [] of ASTNode, "1 => 2, 3 => 4, "
+    end
   end
 
   describe "named tuple literal methods" do
@@ -783,6 +791,14 @@ describe "macro methods" do
 
     it "executes double splat" do
       assert_macro "", %({{**{a: 1, "foo bar": 2}}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+    end
+
+    it "executes double splat" do
+      assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+    end
+
+    it "executes double splat with arg" do
+      assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, )
     end
   end
 
@@ -867,15 +883,19 @@ describe "macro methods" do
       assert_macro "", %({{ {1, 2, 3}.last }}), [] of ASTNode, "3"
     end
 
-    it "executes argify" do
-      assert_macro "", %({{ {1, 2, 3}.argify }}), [] of ASTNode, "1, 2, 3"
+    it "executes splat" do
+      assert_macro "", %({{ {1, 2, 3}.splat }}), [] of ASTNode, "1, 2, 3"
     end
 
-    it "executes argify with symbols and strings" do
-      assert_macro "", %({{ {:foo, "hello", 3}.argify }}), [] of ASTNode, %(:foo, "hello", 3)
+    it "executes splat with arg" do
+      assert_macro "", %({{ {1, 2, 3}.splat(", ") }}), [] of ASTNode, "1, 2, 3, "
     end
 
-    it "executes argify with splat" do
+    it "executes splat with symbols and strings" do
+      assert_macro "", %({{ {:foo, "hello", 3}.splat }}), [] of ASTNode, %(:foo, "hello", 3)
+    end
+
+    it "executes splat with splat" do
       assert_macro "", %({{ *{1, 2, 3} }}), [] of ASTNode, "1, 2, 3"
     end
 

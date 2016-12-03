@@ -86,4 +86,18 @@ document.addEventListener('DOMContentLoaded', function() {
   if(initialY > 0) {
     typesList.scrollTop = initialY;
   }
+
+  var scrollToEntryFromLocationHash = function() {
+    var hash = window.location.hash;
+    if (hash) {
+      var targetAnchor = unescape(hash.substr(1));
+      var targetEl = document.querySelectorAll('.entry-detail[id="' + targetAnchor + '"]');
+
+      if (targetEl && targetEl.length > 0) {
+        targetEl[0].offsetParent.scrollTop = targetEl[0].offsetTop;
+      }
+    }
+  };
+  window.addEventListener("hashchange", scrollToEntryFromLocationHash, false);
+  scrollToEntryFromLocationHash();
 });

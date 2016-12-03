@@ -477,7 +477,12 @@ module Crystal::Macros
 
     # Returns a `MacroId` with all of this array's elements joined
     # by commas.
-    def argify : MacroId
+    #
+    # If *trailing_string* is given, it will be appended to
+    # the result unless this array is empty. This lets you
+    # splat an array and optionally write a trailing comma
+    # if needed.
+    def splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
     # Similar to `Array#empty?`
@@ -608,6 +613,16 @@ module Crystal::Macros
     # This refers to the part before brackets in `MyHash{'a' => 1, 'b' => 2}`
     def type : Path | Nop
     end
+
+    # Returns a `MacroId` with all of this hash elements joined
+    # by commas.
+    #
+    # If *trailing_string* is given, it will be appended to
+    # the result unless this hash is empty. This lets you
+    # splat a hash and optionally write a trailing comma
+    # if needed.
+    def double_splat(trailing_string : StringLiteral = nil) : MacroId
+    end
   end
 
   # A named tuple literal.
@@ -634,6 +649,10 @@ module Crystal::Macros
 
     # Similar to `NamedTuple#map`
     def map : ArrayLiteral
+    end
+
+    # Similar to `HashLiteral#double_splat`
+    def double_splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
     # Similar to `NamedTuple#[]`
@@ -683,18 +702,9 @@ module Crystal::Macros
   end
 
   # A tuple literal.
+  #
+  # It's macro methods are the same as `ArrayLiteral`
   class TupleLiteral < ASTNode
-    # Similar to `Tuple#empty?`
-    def empty? : BoolLiteral
-    end
-
-    # Similar to `Tuple#size`
-    def size : NumberLiteral
-    end
-
-    # Similar to `Tuple#[]`
-    def [](index : NumberLiteral) : ASTNode
-    end
   end
 
   # A fictitious node representing a variable or instance

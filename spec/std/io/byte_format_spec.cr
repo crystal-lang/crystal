@@ -78,6 +78,12 @@ describe IO::ByteFormat do
           IO::ByteFormat::LittleEndian.encode(0x1234_i16, bytes)
           bytes.should eq(Bytes[0x34, 0x12])
         end
+
+        it "writes int16 to larger slice" do
+          bytes = Bytes[0, 0, 0, 0]
+          IO::ByteFormat::LittleEndian.encode(0x1234_i16, bytes)
+          bytes.should eq(Bytes[0x34, 0x12, 0, 0])
+        end
       end
     end
 
@@ -135,6 +141,12 @@ describe IO::ByteFormat do
 
         it "reads int16" do
           bytes = Bytes[0x34, 0x12]
+          int = IO::ByteFormat::LittleEndian.decode(Int16, bytes)
+          int.should eq(0x1234_i16)
+        end
+
+        it "reads int16 from larger slice" do
+          bytes = Bytes[0x34, 0x12, 0, 0]
           int = IO::ByteFormat::LittleEndian.decode(Int16, bytes)
           int.should eq(0x1234_i16)
         end

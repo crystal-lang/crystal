@@ -947,4 +947,15 @@ describe "Semantic: macro" do
       ),
       "undefined method 'foo'"
   end
+
+  it "uses uninitialized variable with macros" do
+    assert_type(%(
+      macro foo(x)
+        {{x}}
+      end
+
+      a = uninitialized Int32
+      foo(a)
+      )) { int32 }
+  end
 end

@@ -221,10 +221,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def expand_macro(node, raise_on_missing_const = true, first_pass = false)
     if expanded = node.expanded
       @exp_nest -= 1
-      begin
+      eval_macro(node) do
         expanded.accept self
-      rescue ex : Crystal::Exception
-        node.raise "expanding macro", ex
       end
       @exp_nest += 1
       return true
@@ -277,11 +275,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   def expand_macro(the_macro, node, mode = nil)
-    begin
-      expanded_macro = yield
-    rescue ex : Crystal::Exception
-      node.raise "expanding macro", ex
-    end
+    expanded_macro =
+      eval_macro(node) do
+        yield
+      end
 
     mode ||= if @in_c_struct_or_union
                Program::MacroExpansionMode::Normal
@@ -353,10 +350,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def expand_inline_macro(node, mode = nil)
     if expanded = node.expanded
-      begin
+      eval_macro(node) do
         expanded.accept self
-      rescue ex : Crystal::Exception
-        node.raise "expanding macro", ex
       end
       return expanded
     end
@@ -371,6 +366,14 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.bind_to generated_nodes
 
     generated_nodes
+  end
+
+  def eval_macro(node)
+    yield
+  rescue ex : MacroRaiseException
+    node.raise ex.message, exception_type: MacroRaiseException
+  rescue ex : Crystal::Exception
+    node.raise "expanding macro", ex
   end
 
   def check_valid_attributes(node, valid_attributes, desc)
