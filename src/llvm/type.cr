@@ -131,4 +131,13 @@ struct LLVM::Type
     LLVM.to_io(LibLLVM.print_type_to_string(self), io)
     self
   end
+
+  def aggregate?
+    case kind
+    when Kind::Struct, Kind::Array
+      true
+    else
+      false
+    end
+  end
 end
