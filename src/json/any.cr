@@ -86,7 +86,7 @@ struct JSON::Any
     case object = @raw
     when Array
       value = object[index]?
-      value ? Any.new(value) : nil
+      value.nil? ? nil : Any.new(value)
     else
       raise "expected Array for #[]?(index : Int), not #{object.class}"
     end
@@ -111,7 +111,7 @@ struct JSON::Any
     case object = @raw
     when Hash
       value = object[key]?
-      value ? Any.new(value) : nil
+      value.nil? ? nil : Any.new(value)
     else
       raise "expected Hash for #[]?(key : String), not #{object.class}"
     end
