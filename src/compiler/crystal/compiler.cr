@@ -241,7 +241,7 @@ module Crystal
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
-      stdout.puts "#{CC} #{object_name} -o #{output_filename} #{@link_flags} #{lib_flags}"
+      stdout.puts "Command to run on target machine:\n#{CC} #{object_name} -o #{output_filename} #{@link_flags} #{lib_flags}"
     end
 
     private def codegen(program, units : Array(CompilationUnit), lib_flags, output_filename, output_dir)
