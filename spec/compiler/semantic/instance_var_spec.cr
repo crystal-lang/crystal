@@ -4240,13 +4240,6 @@ describe "Semantic: instance var" do
       "can't declare variable of generic non-instantiated type Foo"
   end
 
-  it "errors (for now) when typing a local variable" do
-    assert_error %(
-      x : Int32
-      ),
-      "declaring the type of a local variable is not yet supported"
-  end
-
   it "errors when typing an instance variable inside a method" do
     assert_error %(
       def foo
