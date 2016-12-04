@@ -204,6 +204,7 @@ module Crystal
 
     private def codegen(program : Program, node, sources, output_filename)
       @link_flags = "#{@link_flags} -rdynamic"
+
       if @target_triple.to_s.includes?("emscripten")
         @cc = ENV["CC"]? || "emcc"
       end

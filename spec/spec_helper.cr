@@ -334,7 +334,7 @@ def test_c(c_code, crystal_code)
   begin
     File.write(c_filename, c_code)
 
-    `#{Crystal::Compiler::CC} #{c_filename} -c -o #{o_filename}`.should be_truthy
+    `#{Crystal::Compiler.cc} #{c_filename} -c -o #{o_filename}`.should be_truthy
 
     yield run(%(
     require "prelude"
