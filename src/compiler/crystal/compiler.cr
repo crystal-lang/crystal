@@ -10,7 +10,8 @@ module Crystal
   # A Compiler parses source code, type checks it and
   # optionally generates an executable.
   class Compiler
-    property cc = ENV["CC"]? || "cc"
+    CC = ENV["CC"]? || "cc"
+    property cc = CC
 
     # A source to the compiler: it's filename and source code.
     record Source,
