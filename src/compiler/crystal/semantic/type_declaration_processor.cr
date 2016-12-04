@@ -236,6 +236,10 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def process_owner_instance_var_declaration(owner, name, type_decl)
+    # Generic instances already have their instance vars
+    # set from uninstantiated generic types
+    return if owner.is_a?(GenericInstanceType)
+
     # Check if a superclass already defined this variable
     supervar = owner.lookup_instance_var?(name)
 
@@ -313,6 +317,10 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def process_owner_guessed_instance_var_declaration(owner, name, type_info)
+    # Generic instances already have their instance vars
+    # set from uninstantiated generic types
+    return if owner.is_a?(GenericInstanceType)
+
     case owner
     when NonGenericClassType
       # If a superclass already defines this variable we ignore

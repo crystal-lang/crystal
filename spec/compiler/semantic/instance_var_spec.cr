@@ -4538,4 +4538,26 @@ describe "Semantic: instance var" do
       Foo.new
       )) { types["Foo"] }
   end
+
+  it "doesn't error if inheriting generic instance (#3635)" do
+    assert_type(%(
+      module Core(T)
+        @a : Bool
+      end
+
+      class Base(T)
+        include Core(Int32)
+
+        @a = true
+      end
+
+      class Foo < Base(String)
+        def a
+          @a
+        end
+      end
+
+      Foo.new.a
+      )) { bool }
+  end
 end
