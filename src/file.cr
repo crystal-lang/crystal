@@ -488,7 +488,7 @@ class File < IO::FileDescriptor
   # File.join("/foo/", "/bar/", "/baz/") # => "/foo/bar/baz/"
   # ```
   def self.join(*parts) : String
-    join parts
+    Path.join(parts).to_s
   end
 
   # Returns a new string formed by joining the strings using `File::SEPARATOR`.
@@ -499,27 +499,7 @@ class File < IO::FileDescriptor
   # File.join(["/foo/", "/bar/", "/baz/"]) # => "/foo/bar/baz/"
   # ```
   def self.join(parts : Array | Tuple) : String
-    String.build do |str|
-      parts.each_with_index do |part, index|
-        part.check_no_null_byte
-
-        str << SEPARATOR if index > 0
-
-        byte_start = 0
-        byte_count = part.bytesize
-
-        if index > 0 && part.starts_with?(SEPARATOR)
-          byte_start += 1
-          byte_count -= 1
-        end
-
-        if index != parts.size - 1 && part.ends_with?(SEPARATOR)
-          byte_count -= 1
-        end
-
-        str.write part.unsafe_byte_slice(byte_start, byte_count)
-      end
-    end
+    Path.join(parts).to_s
   end
 
   # Returns the size of *filename* bytes.
