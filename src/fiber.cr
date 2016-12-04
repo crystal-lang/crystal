@@ -66,8 +66,18 @@ class Fiber
 
       stack_ptr[0] = fiber_main.pointer # Initial `resume` will `ret` to this address
       stack_ptr[-9] = self.as(Void*)    # This will be `pop` into r0 (first argument)
+    {% elsif flag?(:javascript) %}
+      # TODO: Discover if copying i386 Fiber code is correct for JavaScript
+
+      # In IA32, the context switch push/pops 4 registers.
+      # Add two more to store the argument of `fiber_main`
+      @stack_top = (stack_ptr - 6).as(Void*)
+
+      stack_ptr[0] = self.as(Void*)      # First argument passed on the stack
+      stack_ptr[-1] = Pointer(Void).null # Empty space to keep the stack alignment (16 bytes)
+      stack_ptr[-2] = fiber_main.pointer # Initial `resume` will `ret` to this address
     {% else %}
-      {{ raise "Unsupported platform, only x86_64 and i686 are supported." }}
+      {{ raise "Unsupported platform." }}
     {% end %}
 
     @prev_fiber = nil
