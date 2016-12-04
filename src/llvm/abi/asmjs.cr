@@ -1,7 +1,6 @@
 require "../abi"
 
 class LLVM::ABI::ASMJS < LLVM::ABI
-
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool)
     ret_ty = compute_return_type(rty, ret_def)
     arg_tys = compute_arg_types(atys)
@@ -33,5 +32,4 @@ class LLVM::ABI::ASMJS < LLVM::ABI
       end
     end
   end
-
 end
