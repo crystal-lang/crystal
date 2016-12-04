@@ -547,12 +547,17 @@ class Crystal::Doc::Type
     end
   end
 
-  private def nilable_type_to_html(node, io, links)
+  private def nilable_type_to_html(node : ASTNode, io, links)
     node_to_html node, io, links: links
     io << "?"
   end
 
-  private def nil_type?(node)
+  private def nilable_type_to_html(type : Crystal::Type, io, text, links)
+    type_to_html(type, io, text, links: links)
+    io << "?"
+  end
+
+  private def nil_type?(node : ASTNode)
     return false unless node.is_a?(Path)
 
     match = lookup_path(node)
@@ -570,6 +575,15 @@ class Crystal::Doc::Type
 
   def type_to_html(type : Crystal::UnionType, io, text = nil, links = true)
     has_type_splat = type.union_types.any? &.is_a?(TypeSplat)
+
+    if !has_type_splat && type.union_types.size == 2
+      if type.union_types[0].nil_type?
+        return nilable_type_to_html(type.union_types[1], io, text, links)
+      elsif type.union_types[1].nil_type?
+        return nilable_type_to_html(type.union_types[0], io, text, links)
+      end
+    end
+
     if has_type_splat
       io << "Union("
       separator = ", "
