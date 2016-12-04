@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   var searchTimeout;
-  searchInput.addEventListener('keyup', function() {
+  var performSearch = function() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(function() {
       var text = searchInput.value;
@@ -75,7 +75,12 @@ document.addEventListener('DOMContentLoaded', function() {
         };
       }
     }, 200);
-  });
+  };
+  if (searchInput.value.length > 0) {
+    performSearch();
+  }
+  searchInput.addEventListener('keyup', performSearch);
+  searchInput.addEventListener('input', performSearch);
 
   typesList.onscroll = function() {
     var y = typesList.scrollTop;
