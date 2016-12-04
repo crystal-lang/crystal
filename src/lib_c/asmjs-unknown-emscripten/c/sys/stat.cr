@@ -28,20 +28,21 @@ lib LibC
 
   struct Stat
     st_dev : DevT
-    st_ino : InoT
-    st_nlink : NlinkT
+    __st_dev_padding : Int
+    __st_ino_truncated : Long
     st_mode : ModeT
+    st_nlink : NlinkT
     st_uid : UidT
     st_gid : GidT
-    __pad0 : UInt
     st_rdev : DevT
+    __st_rdev_padding : Int
     st_size : OffT
     st_blksize : BlksizeT
     st_blocks : BlkcntT
     st_atim : Timespec
     st_mtim : Timespec
     st_ctim : Timespec
-    __unused : StaticArray(Long, 3)
+    st_ino : InoT
   end
 
   fun chmod(x0 : Char*, x1 : ModeT) : Int
