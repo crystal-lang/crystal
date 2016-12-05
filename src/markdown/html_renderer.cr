@@ -119,4 +119,30 @@ class Markdown::HTMLRenderer
   def horizontal_rule
     @io << "<hr/>"
   end
+
+  def begin_table
+    @io << "<table>"
+  end
+
+  def end_table
+    @io << "</table>"
+  end
+
+  def begin_table_row
+    @io << "<tr>"
+  end
+
+  def end_table_row
+    @io << "</tr>"
+  end
+
+  def begin_table_cell(alignment, cellType)
+    text = cellType == "td" ? "<td style='text-align: #{alignment};'>" : "<th style='text-align: #{alignment};'>"
+    @io << text
+  end
+
+  def end_table_cell(cellType)
+    text = cellType == "td" ? "</td>" : "</th>"
+    @io << text
+  end
 end

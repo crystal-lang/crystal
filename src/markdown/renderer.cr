@@ -24,4 +24,8 @@ module Markdown::Renderer
   abstract def image(url, alt)
   abstract def text(text)
   abstract def horizontal_rule
+  abstract def begin_table
+  abstract def end_table
+  abstract def begin_table_cell(alignment, cellType)
+  abstract def end_table_cell(cellType)
 end
