@@ -1,3 +1,21 @@
+## 0.20.1 (05-12-2016)
+
+* **(breaking change)** `Set#merge` as renamed to `Set#merge!`
+* **(breaking change)** `Slice.new(size)` no longer works with non primitive integers and floats
+* **(breaking change)** The macro method `argify` was renamed to `splat`
+* Added pretty printing. The methods `p` and `pp` now use it. To get the old behaviour use `puts obj.inspect`
+* Added `ArrayLiteral#[]=`, `TypeNode#constant`, `TypeNode#overrides?` and `HashLiteral#double_splat` in macros
+* Added a `finished` macro hook that runs at the end of the program
+* Added support for declaring the type of a local variable
+* Added `Slice.empty`
+* Flags enums now have a `none?` method
+* `IO::ByteFormat` has now methods to encode/decode to/from a `Slice`
+* Spec: the line number passed to run a specific `it` block can now be inside any line of that block
+* The `CallConvention` attribute can now also be applied to a `lib` declaration, and all `fun`s inside it will inherit it
+* The `method_missing` hook can now define a method, useful for specifying block arguments
+* Support double splat in macros (`{{**...}}`)
+* [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.1)
+
 ## 0.20.0 (22-11-2016)
 
 * **(breaking change)** Removed `ifdef` from the language
