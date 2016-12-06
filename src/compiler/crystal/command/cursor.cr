@@ -45,7 +45,9 @@ class Crystal::Command
 
     file = File.expand_path(file)
 
-    result = yield Location.new(file, line_number, column_number), config, result
+    result = Crystal.timing("Tool (#{command.split(' ')[1]})", @stats) do
+      yield Location.new(file, line_number, column_number), config, result
+    end
 
     case format
     when "json"
