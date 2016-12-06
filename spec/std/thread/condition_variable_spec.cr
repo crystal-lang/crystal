@@ -1,7 +1,12 @@
 require "spec"
 
+# These specs are marked as pending until we add
+# support for parallelism, where we'll see if we
+# need condition variables.
+#
+# Also: review these specs!
 describe Thread::ConditionVariable do
-  it "signals" do
+  pending "signals" do
     mutex = Thread::Mutex.new
     cond = Thread::ConditionVariable.new
     pcond = Thread::ConditionVariable.new
@@ -12,6 +17,7 @@ describe Thread::ConditionVariable do
       Thread.new do
         mutex.synchronize do
           waiting += 1
+          # TODO: why is this needed? Bug?
           pcond.signal
           cond.wait mutex
         end
@@ -30,7 +36,7 @@ describe Thread::ConditionVariable do
     threads.map &.join
   end
 
-  it "broadcasts" do
+  pending "broadcasts" do
     mutex = Thread::Mutex.new
     cond = Thread::ConditionVariable.new
     pcond = Thread::ConditionVariable.new
