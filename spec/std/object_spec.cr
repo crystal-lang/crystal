@@ -333,4 +333,35 @@ describe Object do
       obj.property10?.should be_false
     end
   end
+
+  describe "try" do
+    it "yields self when not nil" do
+      obj = "An arbitrary string"
+      obj.try(&.itself).should eq(obj)
+    end
+
+    it "yields self when not nil even when default given" do
+      obj = "An arbitrary string"
+      obj.try("another value") { |o| o }.should eq(obj)
+    end
+
+    it "yields nil when nil" do
+      obj = nil
+      obj.try(&.itself).should eq(nil)
+    end
+
+    it "yields given default value when nil" do
+      obj = nil
+      default = "Default value"
+      obj.try(default, &.itself).should eq(default)
+    end
+
+    it "should use type of default as return type when default is provided" do
+      obj = /.* (.)(.)(.)/.match("An arbitrary string")
+      typeof(obj).should eq(Regex::MatchData | Nil)
+      typeof(obj.try(&.size)).should eq(Int32 | Nil)
+      typeof(obj.try(0, &.size)).should eq(Int32)
+      typeof(obj.try("none", &.size)).should eq(Int32 | String)
+    end
+  end
 end
