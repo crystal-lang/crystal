@@ -451,6 +451,7 @@ class Crystal::Command
       compiler.release = true
     end
     opts.on("-s", "--stats", "Enable statistics output") do
+      @stats = true
       compiler.stats = true
     end
     opts.on("-h", "--help", "Show this message") do
