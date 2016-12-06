@@ -23,15 +23,19 @@ module Crystal
     exit(exit_code) if exit_code
   end
 
-  def self.timing(label, stats)
+  def self.timing(label, stats, delay = false)
     if stats
-      print "%-34s" % "#{label}:"
+      print "%-34s" % "#{label}:" unless delay
       time = Time.now
       value = yield
       elapsed_time = Time.now - time
       LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
       mb = heap_size / 1024.0 / 1024.0
-      puts " %s (%7.2fMB)" % {elapsed_time, mb}
+      if delay
+        puts "%-34s %s (%7.2fMB)" % {"#{label}:", elapsed_time, mb}
+      else
+        puts " %s (%7.2fMB)" % {elapsed_time, mb}
+      end
       value
     else
       yield

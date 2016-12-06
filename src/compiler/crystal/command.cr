@@ -52,6 +52,7 @@ class Crystal::Command
 
   def initialize(@options : Array(String))
     @color = true
+    @stats = false
   end
 
   def run
@@ -172,7 +173,9 @@ class Crystal::Command
 
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
-    Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
+    Crystal.timing("Tool (hierarchy)", @stats, delay: true) do
+      Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
+    end
   end
 
   private def run_command(single_file = false)
@@ -190,7 +193,9 @@ class Crystal::Command
 
   private def types
     config, result = compile_no_codegen "tool types"
-    Crystal.print_types result.node
+    Crystal.timing("Tool (types)", @stats, delay: true) do
+      Crystal.print_types result.node
+    end
   end
 
   private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false, top_level = false)
@@ -202,15 +207,17 @@ class Crystal::Command
   end
 
   private def execute(output_filename, run_args)
-    begin
-      Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
-        # Ignore the signal so we don't exit the running process
-        # (the running process can still handle this signal)
-        Signal::INT.ignore # do
+    status = Crystal.timing("Execute", @stats, delay: true) do
+      begin
+        Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
+          # Ignore the signal so we don't exit the running process
+          # (the running process can still handle this signal)
+          Signal::INT.ignore # do
+        end
+        $?
+      ensure
+        File.delete(output_filename) rescue nil
       end
-      status = $?
-    ensure
-      File.delete(output_filename) rescue nil
     end
 
     if status.normal_exit?
@@ -351,9 +358,14 @@ class Crystal::Command
         opts.on("--release", "Compile in release mode") do
           compiler.release = true
         end
-        opts.on("-s", "--stats", "Enable statistics output") do
-          compiler.stats = true
-        end
+      end
+
+      opts.on("-s", "--stats", "Enable statistics output") do
+        @stats = true
+        compiler.stats = true
+      end
+
+      unless no_codegen
         opts.on("--single-module", "Generate a single LLVM module") do
           compiler.single_module = true
         end
