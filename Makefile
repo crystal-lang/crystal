@@ -4,6 +4,7 @@ O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(threads),--threads $(threads) )$(if $(debug),-d )
+VERBOSE := $(if $(verbose),-v )
 EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
 SHELL = bash
 LLVM_CONFIG_FINDER := \
@@ -40,15 +41,15 @@ help: ## Show this help
 
 .PHONY: spec
 spec: all_spec ## Run all specs
-	$(O)/all_spec
+	$(O)/all_spec $(VERBOSE)
 
 .PHONY: std_spec
 std_spec: all_std_spec ## Run standard library specs
-	$(O)/std_spec
+	$(O)/std_spec $(VERBOSE)
 
 .PHONY: compiler_spec
 compiler_spec: all_compiler_spec ## Run compiler specs
-	$(O)/compiler_spec
+	$(O)/compiler_spec $(VERBOSE)
 
 .PHONY: doc
 doc: ## Generate standard library documentation
