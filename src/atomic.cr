@@ -23,10 +23,10 @@ struct Atomic(T)
   # atomic = Atomic.new(1)
   #
   # atomic.compare_and_set(2, 3) # => {1, false}
-  # atomic.value                 # => 1
+  # atomic.get                   # => 1
   #
   # atomic.compare_and_set(1, 3) # => {1, true}
-  # atomic.value                 # => 3
+  # atomic.get                   # => 3
   # ```
   def compare_and_set(cmp : T, new : T) : {T, Bool}
     # Check if it's a nilable reference type
@@ -50,7 +50,7 @@ struct Atomic(T)
   # ```
   # atomic = Atomic.new(1)
   # atomic.add(2) # => 2
-  # atomic.value  # => 3
+  # atomic.get    # => 3
   # ```
   def add(value : T)
     Ops.atomicrmw(:add, pointerof(@value), value, :sequentially_consistent, false)
@@ -61,7 +61,7 @@ struct Atomic(T)
   # ```
   # atomic = Atomic.new(9)
   # atomic.sub(2) # => 9
-  # atomic.value  # => 7
+  # atomic.get    # => 7
   # ```
   def sub(value : T)
     Ops.atomicrmw(:sub, pointerof(@value), value, :sequentially_consistent, false)
@@ -72,7 +72,7 @@ struct Atomic(T)
   # ```
   # atomic = Atomic.new(5)
   # atomic.and(3) # => 5
-  # atomic.value  # => 1
+  # atomic.get    # => 1
   # ```
   def and(value : T)
     Ops.atomicrmw(:and, pointerof(@value), value, :sequentially_consistent, false)
@@ -83,7 +83,7 @@ struct Atomic(T)
   # ```
   # atomic = Atomic.new(5)
   # atomic.nand(3) # => 5
-  # atomic.value   # => -2
+  # atomic.get     # => -2
   # ```
   def nand(value : T)
     Ops.atomicrmw(:nand, pointerof(@value), value, :sequentially_consistent, false)
@@ -94,7 +94,7 @@ struct Atomic(T)
   # ```
   # atomic = Atomic.new(5)
   # atomic.or(2) # => 5
-  # atomic.value # => 7
+  # atomic.get   # => 7
   # ```
   def or(value : T)
     Ops.atomicrmw(:or, pointerof(@value), value, :sequentially_consistent, false)
@@ -105,7 +105,7 @@ struct Atomic(T)
   # ```
   # atomic = Atomic.new(5)
   # atomic.or(3) # => 5
-  # atomic.value # => 6
+  # atomic.get   # => 6
   # ```
   def xor(value : T)
     Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
@@ -117,10 +117,10 @@ struct Atomic(T)
   # atomic = Atomic.new(5)
   #
   # atomic.max(3) # => 5
-  # atomic.value  # => 5
+  # atomic.get    # => 5
   #
   # atomic.max(10) # => 5
-  # atomic.value   # => 10
+  # atomic.get     # => 10
   # ```
   def max(value : T)
     {% if T < Int::Signed %}
@@ -136,10 +136,10 @@ struct Atomic(T)
   # atomic = Atomic.new(5)
   #
   # atomic.min(10) # => 5
-  # atomic.value   # => 5
+  # atomic.get     # => 5
   #
   # atomic.min(3) # => 5
-  # atomic.value  # => 3
+  # atomic.get    # => 3
   # ```
   def min(value : T)
     {% if T < Int::Signed %}
@@ -154,7 +154,7 @@ struct Atomic(T)
   # ```
   # atomic = Atomic.new(5)
   # atomic.set(10) # => 5
-  # atomic.value   # => 10
+  # atomic.get     # => 10
   # ```
   def swap(value : T)
     Ops.atomicrmw(:xchg, pointerof(@value), value, :sequentially_consistent, false)
@@ -165,7 +165,7 @@ struct Atomic(T)
   # ```
   # atomic = Atomic.new(5)
   # atomic.set(10) # => 10
-  # atomic.value   # => 10
+  # atomic.get     # => 10
   # ```
   def set(value : T)
     Ops.store(pointerof(@value), value, :sequentially_consistent, true)
@@ -177,7 +177,7 @@ struct Atomic(T)
   # ```
   # atomic = Atomic.new(5)
   # atomic.lazy_set(10) # => 10
-  # atomic.value        # => 10
+  # atomic.get          # => 10
   # ```
   def lazy_set(@value : T)
   end
