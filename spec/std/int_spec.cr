@@ -297,7 +297,7 @@ describe "Int" do
   describe "step" do
     it "steps through limit" do
       passed = false
-      1.step(1) { |x| passed = true }
+      1.step(to: 1) { |x| passed = true }
       fail "expected step to pass through 1" unless passed
     end
   end

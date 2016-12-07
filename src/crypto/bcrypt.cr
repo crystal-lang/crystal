@@ -97,7 +97,7 @@ class Crypto::Bcrypt
     cdata = CIPHER_TEXT.dup
     size = cdata.size
 
-    0.step(4, 2) do |i|
+    0.step(to: 4, by: 2) do |i|
       64.times do
         l, r = blowfish.encrypt_pair(cdata[i], cdata[i + 1])
         cdata[i], cdata[i + 1] = l, r
