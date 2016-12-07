@@ -52,7 +52,7 @@ class Crystal::Command
 
   def initialize(@options : Array(String))
     @color = true
-    @stats = false
+    @stats = @time = false
   end
 
   def run
@@ -207,7 +207,8 @@ class Crystal::Command
   end
 
   private def execute(output_filename, run_args)
-    status = Crystal.timing("Execute", @stats, delay: true) do
+    stats = @stats || !@time
+    status = Crystal.timing("Execute", @stats || @time, delay: true, display_memory: stats, padding_size: stats ? 34 : 0) do
       begin
         Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
           # Ignore the signal so we don't exit the running process
@@ -365,6 +366,10 @@ class Crystal::Command
         compiler.stats = true
       end
 
+      opts.on("-t", "--time", "Enable execution time output") do
+        @time = true
+      end
+
       unless no_codegen
         opts.on("--single-module", "Generate a single LLVM module") do
           compiler.single_module = true
@@ -453,6 +458,9 @@ class Crystal::Command
     opts.on("-s", "--stats", "Enable statistics output") do
       @stats = true
       compiler.stats = true
+    end
+    opts.on("-t", "--time", "Enable execution time output") do
+      @time = true
     end
     opts.on("-h", "--help", "Show this message") do
       puts opts
