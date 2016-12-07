@@ -858,15 +858,15 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    def initialize(@iterator : I, @n : N)
-      raise ArgumentError.new("n must be greater or equal 1") if @n < 1
+    def initialize(@iterator : I, @by : N)
+      raise ArgumentError.new("n must be greater or equal 1") if @by < 1
     end
 
     def next
       value = @iterator.next
       return stop if value.is_a?(Stop)
 
-      (@n - 1).times do
+      (@by - 1).times do
         @iterator.next
       end
 

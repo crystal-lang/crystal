@@ -166,13 +166,13 @@ struct Range(B, E)
   # ```
   #
   # See `Range`'s overview for the definition of `Xs`.
-  def step(n = 1)
+  def step(by = 1)
     current = @begin
     while current < @end
       yield current
-      n.times { current = current.succ }
+      by.times { current = current.succ }
     end
-    yield current if current == @end && !@exclusive
+    yield current if !@exclusive &&  current == @end
     self
   end
 
@@ -181,8 +181,8 @@ struct Range(B, E)
   # ```
   # (1..10).step(3).skip(1).to_a # => [4, 7, 10]
   # ```
-  def step(n : Int = 1)
-    StepIterator(self, B, typeof(n)).new(self, n)
+  def step(by = 1)
+    StepIterator(self, B, typeof(by)).new(self, by)
   end
 
   # Returns true if this range excludes the *end* element.
