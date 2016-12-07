@@ -298,4 +298,12 @@ describe "Semantic: enum" do
       ),
       "can't inherit Enum. Use the enum keyword to define enums"
   end
+
+  it "errors on enum without members (#3447)" do
+    assert_error %(
+      enum Foo
+      end
+      ),
+      "enum Foo must have at least one member"
+  end
 end

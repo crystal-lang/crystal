@@ -485,6 +485,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         is_flags: is_flags)
     end
 
+    if enum_type.types.empty?
+      node.raise "enum #{node.name} must have at least one member"
+    end
+
     unless existed
       if is_flags
         unless enum_type.types["None"]?
