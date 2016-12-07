@@ -161,6 +161,30 @@ class Regex
       match
     end
 
+    # Returns the array of named capture groups in the order they appear in the
+    # RE.
+    #
+    # ```
+    # "Crystal".match(/r(ys)/).not_nil!.group_names                        # => []
+    # "Crystal".match(/r(?<ok>ys)/).not_nil!.group_names                   # => ["ok"]
+    # "Crystal".match(/^(?<first>..)(.*)(?<last>.)*/).not_nil!.group_names # => ["first","last"]
+    # ```
+    def group_names
+      (1..size).select { |i| @regex.name_table[i]? }.map { |i| @regex.name_table[i] }
+    end
+
+    # Returns the array of named capture groups that actually matched a
+    # substring, in the order they appear in the RE.
+    #
+    # ```
+    # "Crystal".match(/r(ys)/).not_nil!.matched_group_names                        # => []
+    # "Crystal".match(/r(?<ok>ys)?/).not_nil!.matched_group_names                  # => ["ok"]
+    # "Crystal".match(/^(?<first>..)(.*)(?<last>.)*/).not_nil!.matched_group_names # => ["first"]
+    # ```
+    def matched_group_names
+      group_names.select { |k| self.[k]? }
+    end
+
     # Returns the part of the original string before the match. If the match
     # starts at the start of the string, returns the empty string.
     #
@@ -200,6 +224,29 @@ class Regex
         end
       end
       io << ">"
+    end
+
+    # Returns an array containing all the matches found.  Optional groups that
+    # did not match will contain `nil`, while all matching groups will contain
+    # the matching substring.  Matches on named groups will also be included,
+    # as if they were unnamed.
+    #
+    # ```
+    # "Crystal".match(/^(?<first>..)(?:.)(.*)(.)*(?<last>.)/).not_nil!.to_a
+    # # => ["Crystal", "Cr", "sta", nil, "l"]
+    # ```
+    def to_a
+      (0..size).map { |i| self[i]? }
+    end
+
+    # Returns a hash of matches from named groups
+    #
+    # ```
+    # "Crystal".match(/^(?<first>..)(?:.)(.*)(?<mid>.)*(?<last>.)/).not_nil!.to_a
+    # # => {"first" => "Cr", "last" => "l", "mid" => nil}
+    # ```
+    def to_h
+      @regex.name_table.values.map { |k| [k, self[k]?] }.to_h
     end
 
     def dup

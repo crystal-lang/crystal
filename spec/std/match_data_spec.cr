@@ -100,4 +100,96 @@ describe "Regex::MatchData" do
       "há日本語".match(/本/).not_nil!.pre_match.should eq "há日"
     end
   end
+
+  describe "to_a" do
+    it "produces an array containing the full and group matches" do
+      str = "Crystal is great!"
+      re = /([A-Z]*).* (.*) .*?(?<vowels>[aeiou]+)t!/
+      md = re.match(str).not_nil!
+      md.to_a.should eq(["Crystal is great!", "C", "is", "ea"])
+    end
+
+    it "includes nil for optional groups that don't match" do
+      str = "Crystal is great!"
+      re = /([A-Z][^ ]*) is (not ?)?.*([0-9])*.*(.)$/
+      md = re.match(str).not_nil!
+      md.to_a.should eq(["Crystal is great!", "Crystal", nil, nil, "!"])
+    end
+
+    it "contains only the full match if there are no groups" do
+      str = "Crystal is great!"
+      re = /[A-Z][^ ]* is (?:not ?)?.*$/
+      md = re.match(str).not_nil!
+      md.to_a.should eq(["Crystal is great!"])
+    end
+  end
+
+  describe "to_h" do
+    it "produces a hash containing the key-value pairs for named group and match" do
+      str = "Regex is super fun!"
+      re = /(?<subject>[a-z]+) (?<predicate>(?<verb>[a-z]+) (?:(?<adjective>[a-z]+) )?(?<noun>[a-z]+)(?<extra>.+)?)/i
+      md = re.match(str).not_nil!
+      md.to_h.should eq({"subject" => "Regex", "predicate" => "is super fun!", "verb" => "is", "adjective" => "super", "noun" => "fun", "extra" => "!"})
+    end
+
+    it "produces keys with nil values when the given named group has no match" do
+      str = "Crystal is fast"
+      re = /(?<subject>[a-z]+) (?<predicate>(?<verb>[a-z]+) (?:(?<adjective>[a-z]+) )?(?<noun>[a-z]+)(?<extra>.+)?)/i
+      md = re.match(str).not_nil!
+      md.to_h.should eq({"subject" => "Crystal", "predicate" => "is fast", "verb" => "is", "adjective" => nil, "noun" => "fast", "extra" => nil})
+    end
+
+    it "produces an empty hash when there are no named groups" do
+      str = "Crystal is great!"
+      re = /([A-Z][^ ]*) is (not ?)?.*([0-9])*.*(.)$/
+      md = re.match(str).not_nil!
+      md.to_h.should eq({} of String => (String | Nil))
+    end
+  end
+
+  describe "group_names" do
+    it "returns an array of group names" do
+      str = "Regex is super fun!"
+      re = /(?<subject>[a-z]+) (?<predicate>(?<verb>[a-z]+) (?:(?<adjective>[a-z]+) )?(?<noun>[a-z]+)(?<extra>.+)?)/i
+      md = re.match(str).not_nil!
+      md.group_names.should eq(["subject", "predicate", "verb", "adjective", "noun", "extra"])
+    end
+
+    it "returns full list of group names even if some don't match" do
+      str = "Crystal is fast"
+      re = /(?<subject>[a-z]+) (?<predicate>(?<verb>[a-z]+) (?:(?<adjective>[a-z]+) )?(?<noun>[a-z]+)(?<extra>.+)?)/i
+      md = re.match(str).not_nil!
+      md.group_names.should eq(["subject", "predicate", "verb", "adjective", "noun", "extra"])
+    end
+
+    it "returns an empty array if there are no named groups" do
+      str = "Crystal is great!"
+      re = /([A-Z][^ ]*) is (not ?)?.*([0-9])*.*(.)$/
+      md = re.match(str).not_nil!
+      md.group_names.should eq([] of String)
+    end
+  end
+
+  describe "matched_named_groups" do
+    it "returns an array of group names that have matches" do
+      str = "Regex is super fun!"
+      re = /(?<subject>[a-z]+) (?<predicate>(?<verb>[a-z]+) (?:(?<adjective>[a-z]+) )?(?<noun>[a-z]+)(?<extra>.*)?$)/i
+      md = re.match(str).not_nil!
+      md.matched_group_names.should eq(["subject", "predicate", "verb", "adjective", "noun", "extra"])
+    end
+
+    it "returns only the group names that have matches" do
+      str = "Crystal is fast"
+      re = /(?<subject>[a-z]+) (?<predicate>(?<verb>[a-z]+) (?:(?<adjective>[a-z]+) )?(?<noun>[a-z]+)(?<extra>.*)?$)/i
+      md = re.match(str).not_nil!
+      md.matched_group_names.should eq(["subject", "predicate", "verb", "noun", "extra"])
+    end
+
+    it "returns an empty array if there are no named groups" do
+      str = "Crystal is great!"
+      re = /([A-Z][^ ]*) is (not ?)?.*([0-9])*.*(.)$/
+      md = re.match(str).not_nil!
+      md.matched_group_names.should eq([] of String)
+    end
+  end
 end
