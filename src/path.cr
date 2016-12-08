@@ -123,14 +123,14 @@ class Path
   def dirname : Path
     index = value.rindex SEPARATOR
     str = if index
-      if index == 0
-        SEPARATOR_STRING
-      else
-        value[0, index]
-      end
-    else
-      "."
-    end
+            if index == 0
+              SEPARATOR_STRING
+            else
+              value[0, index]
+            end
+          else
+            "."
+          end
 
     self.class.new(str)
   end
