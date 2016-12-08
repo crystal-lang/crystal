@@ -25,8 +25,8 @@ class Path
     @path = path.value.check_no_null_byte
   end
 
-  def to_s : String
-    @path
+  def to_s(io : IO)
+    io << @path
   end
 
   def <=>(other : Path)
@@ -180,6 +180,55 @@ class Path
     else
       ""
     end
+  end
+
+  # Converts *path* to an absolute path. Relative paths are
+  # referenced from the current working directory of the process unless
+  # *dir* is given, in which case it will be used as the starting point.
+  #
+  # ```
+  # File.expand_path("foo")             # => "/home/.../foo"
+  # File.expand_path("~/crystal/foo")   # => "/home/crystal/foo"
+  # File.expand_path("baz", "/foo/bar") # => "/foo/bar/baz"
+  # ```
+  def expand_path(dir = nil) : Path
+    path = value
+
+    if path.starts_with?('~')
+      home = ENV["HOME"]
+      if path.size >= 2 && path[1] == SEPARATOR
+        path = home + path[1..-1]
+      elsif path.size < 2
+        return self.class.new(home)
+      end
+    end
+
+    unless path.starts_with?(SEPARATOR)
+      dir = dir ? Path.new(dir).expand_path : Path.new(Dir.current)
+      path = "#{dir}#{SEPARATOR}#{path}"
+    end
+
+    parts = path.split(SEPARATOR)
+    items = [] of String
+    parts.each do |part|
+      case part
+      when "", "."
+        # Nothing
+      when ".."
+        items.pop?
+      else
+        items << part
+      end
+    end
+
+    str = String.build do |str|
+      {% if !flag?(:windows) %}
+    str << SEPARATOR_STRING
+    {% end %}
+      items.join SEPARATOR_STRING, str
+    end
+
+    self.class.new(str)
   end
 
   protected def value
