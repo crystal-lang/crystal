@@ -381,4 +381,31 @@ describe "Code gen: method_missing" do
       Foo.new.bar
       )).to_string.should eq("bar")
   end
+
+  it "works with named arguments, using names (#3654)" do
+    run(%(
+      class A
+        macro method_missing(call)
+          x + y
+        end
+      end
+
+      a = A.new
+      a.b(x: 1, y: 2)
+      )).to_i.should eq(3)
+  end
+
+  it "works with named arguments, named args in call (#3654)" do
+    run(%(
+      class A
+        macro method_missing(call)
+          {{call.named_args[0].name}} +
+            {{call.named_args[1].name}}
+        end
+      end
+
+      a = A.new
+      a.b(x: 1, y: 2)
+      )).to_i.should eq(3)
+  end
 end

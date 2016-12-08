@@ -38,11 +38,20 @@ module Crystal
     def define_method_from_method_missing(method_missing, signature, original_call)
       name_node = StringLiteral.new(signature.name)
       args_nodes = [] of ASTNode
+      named_args_nodes = nil
       args_nodes_names = Set(String).new
       signature.arg_types.each_index do |index|
         arg_node_name = "_arg#{index}"
         args_nodes << MacroId.new(arg_node_name)
         args_nodes_names << arg_node_name
+      end
+      if named_args = signature.named_args
+        args_nodes_names << ""
+        named_args.try &.each do |named_arg|
+          named_args_nodes ||= [] of NamedArgument
+          named_args_nodes << NamedArgument.new(named_arg.name, MacroId.new(named_arg.name))
+          args_nodes_names << named_arg.name
+        end
       end
       args_node = ArrayLiteral.new(args_nodes)
       if block = signature.block
@@ -57,8 +66,12 @@ module Crystal
       end
 
       a_def = Def.new(signature.name, args_nodes_names.map { |name| Arg.new(name) })
+      a_def.splat_index = signature.arg_types.size if signature.named_args
 
-      call = Call.new(nil, signature.name, args: args_nodes, block: block_node.is_a?(Block) ? block_node : nil)
+      call = Call.new(nil, signature.name,
+        args: args_nodes,
+        named_args: named_args_nodes,
+        block: block_node.is_a?(Block) ? block_node : nil)
       fake_call = Call.new(nil, "method_missing", [call] of ASTNode)
 
       expanded_macro = program.expand_macro method_missing, fake_call, self, self
