@@ -3,6 +3,7 @@ require "c/stdio"
 require "c/stdlib"
 require "c/sys/stat"
 require "c/unistd"
+require "path"
 
 class File < IO::FileDescriptor
   # The file/directory separator character. '/' in unix, '\\' in windows.
@@ -193,17 +194,7 @@ class File < IO::FileDescriptor
   # File.dirname("/foo/bar/file.cr") # => "/foo/bar"
   # ```
   def self.dirname(path) : String
-    path.check_no_null_byte
-    index = path.rindex SEPARATOR
-    if index
-      if index == 0
-        SEPARATOR_STRING
-      else
-        path[0, index]
-      end
-    else
-      "."
-    end
+    Path.new(path).dirname.to_s
   end
 
   # Returns the last component of the given *path*.
@@ -212,20 +203,7 @@ class File < IO::FileDescriptor
   # File.basename("/foo/bar/file.cr") # => "file.cr"
   # ```
   def self.basename(path) : String
-    return "" if path.bytesize == 0
-    return SEPARATOR_STRING if path == SEPARATOR_STRING
-
-    path.check_no_null_byte
-
-    last = path.size - 1
-    last -= 1 if path[last] == SEPARATOR
-
-    index = path.rindex SEPARATOR, last
-    if index
-      path[index + 1, last - index]
-    else
-      path
-    end
+    Path.new(path).basename.to_s
   end
 
   # Returns the last component of the given *path*.
@@ -236,8 +214,7 @@ class File < IO::FileDescriptor
   # File.basename("/foo/bar/file.cr", ".cr") # => "file"
   # ```
   def self.basename(path, suffix) : String
-    suffix.check_no_null_byte
-    basename(path).chomp(suffix)
+    Path.new(path).basename(suffix).to_s
   end
 
   # Changes the owner of the specified file.
@@ -299,15 +276,7 @@ class File < IO::FileDescriptor
   # File.extname("foo.cr") # => ".cr"
   # ```
   def self.extname(filename) : String
-    filename.check_no_null_byte
-
-    dot_index = filename.rindex('.')
-
-    if dot_index && dot_index != filename.size - 1 && filename[dot_index - 1] != SEPARATOR
-      filename[dot_index, filename.size - dot_index]
-    else
-      ""
-    end
+    Path.new(filename).extname
   end
 
   # Converts *path* to an absolute path. Relative paths are
