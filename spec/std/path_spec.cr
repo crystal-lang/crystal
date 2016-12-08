@@ -1,5 +1,4 @@
 require "spec"
-require "path"
 
 private def base
   Path.new(Dir.current)

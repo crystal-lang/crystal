@@ -3,10 +3,9 @@ require "c/stdio"
 require "c/stdlib"
 require "c/sys/stat"
 require "c/unistd"
-require "path"
 
 class File < IO::FileDescriptor
-  SEPARATOR = Path::SEPARATOR
+  SEPARATOR        = Path::SEPARATOR
   SEPARATOR_STRING = Path::SEPARATOR_STRING
 
   # :nodoc:
