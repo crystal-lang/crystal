@@ -1,0 +1,29 @@
+variables:
+  TRAVIS_OS_NAME: docker
+  LIBRARY_PATH: /opt/crystal/embedded/lib/
+
+cache:
+  key: "crystal"
+  paths:
+    - .crystal
+
+.test-crystal: &test-crystal
+  before_script:
+    - bin/ci prepare_system
+    - bin/ci prepare_build
+  script:
+    - bin/ci build
+
+x86_64:
+  <<: *test-crystal
+  image: jhass/crystal-build-x86_64
+  variables:
+    ARCH: x86_64
+    ARCH_CMD: linux64
+
+i386:
+  <<: *test-crystal
+  image: jhass/crystal-build-i386
+  variables:
+    ARCH: i386
+    ARCH_CMD: linux32

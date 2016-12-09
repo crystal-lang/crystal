@@ -77,6 +77,10 @@ on_osx() {
   fail_on_error on_os "osx" "${@}"
 }
 
+on_docker() {
+  fail_on_error on_os "docker" "${@}"
+}
+
 prepare_system() {
   on_osx brew update
   on_deploy sudo pip install awscli
@@ -173,6 +177,8 @@ with_build_env() {
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/bash -c "'$command'"
 
+  on_docker verify_linux_environment
+  on_docker /bin/bash -c "'$command'"
 }
 
 usage() {
