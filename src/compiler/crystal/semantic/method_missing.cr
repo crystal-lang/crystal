@@ -47,13 +47,12 @@ module Crystal
       end
       if named_args = signature.named_args
         args_nodes_names << ""
-        named_args.try &.each do |named_arg|
+        named_args.each do |named_arg|
           named_args_nodes ||= [] of NamedArgument
           named_args_nodes << NamedArgument.new(named_arg.name, MacroId.new(named_arg.name))
           args_nodes_names << named_arg.name
         end
       end
-      args_node = ArrayLiteral.new(args_nodes)
       if block = signature.block
         block_vars = block.args.map_with_index do |var, index|
           Var.new("_block_arg#{index}")
