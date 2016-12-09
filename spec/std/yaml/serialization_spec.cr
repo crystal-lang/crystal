@@ -46,6 +46,11 @@ describe "YAML serialization" do
       Array(Int32).from_yaml("---\n- 1\n- 2\n- 3\n").should eq([1, 2, 3])
     end
 
+    it "does Array#from_yaml from IO" do
+      io = IO::Memory.new "---\n- 1\n- 2\n- 3\n"
+      Array(Int32).from_yaml(io).should eq([1, 2, 3])
+    end
+
     it "does Array#from_yaml with block" do
       elements = [] of Int32
       Array(Int32).from_yaml("---\n- 1\n- 2\n- 3\n") do |element|
