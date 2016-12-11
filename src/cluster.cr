@@ -5,12 +5,11 @@ class Cluster
         return Process.fork { Process.run(PROGRAM_NAME, nil, env, true, false, true, true, true, nil ) }
     end
 
-    def self.master
-        (ENV["FORKED"]? || "0") == "0"
+    def self.master?
+     (ENV["FORKED"]? || "0") == "0"
+    end
+    def self.worker?
+     (ENV["FORKED"]? || "0") == "1"
     end
 
-    def self.slave
-        (ENV["FORKED"]? || "0") == "1"
-    end
-    
 end
