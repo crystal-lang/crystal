@@ -3885,7 +3885,7 @@ module Crystal
     end
 
     def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false)
-      if (@token.keyword?(:as) || @token.keyword?(:end)) && !next_comes_colon_space?
+      if @token.keyword?(:end) && !next_comes_colon_space?
         return nil
       end
 

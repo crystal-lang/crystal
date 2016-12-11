@@ -1218,6 +1218,14 @@ describe "Parser" do
 
   it_parses "Foo.foo(count: 3).bar { }", Call.new(Call.new("Foo".path, "foo", named_args: [NamedArgument.new("count", 3.int32)]), "bar", block: Block.new)
 
+  it_parses %(
+    class Foo
+      def bar
+        print as Foo
+      end
+    end
+  ), ClassDef.new("Foo".path, Def.new("bar", body: Call.new(nil, "print", Cast.new(Var.new("self"), "Foo".path))))
+
   assert_syntax_error "a = a", "can't use variable name 'a' inside assignment to variable 'a'"
 
   assert_syntax_error "{{ {{ 1 }} }}", "can't nest macro expressions"
