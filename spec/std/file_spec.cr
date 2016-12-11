@@ -14,7 +14,10 @@ private def rootdir
 end
 
 private def home
-  ENV["HOME"]
+  home = ENV["HOME"]
+  return home if home == "/"
+
+  home.chomp('/')
 end
 
 private def it_raises_on_null_byte(operation, &block)
