@@ -6,11 +6,11 @@ class Cluster
     end
 
     def self.master
-        (ENV["FORKED"]? ||= "0") == "0"
+        (ENV["FORKED"]? || "0") == "0"
     end
 
     def self.slave
-        (ENV["FORKED"]? ||= "0") == "1"
+        (ENV["FORKED"]? || "0") == "1"
     end
     
 end
