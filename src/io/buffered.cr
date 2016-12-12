@@ -15,10 +15,10 @@ module IO::Buffered
   @flush_on_newline = false
 
   # Reads at most *slice.size* bytes from the wrapped IO into *slice*. Returns the number of bytes read.
-  abstract def unbuffered_read(slice : Slice(UInt8))
+  abstract def unbuffered_read(slice : Bytes)
 
   # Writes at most *slice.size* bytes from *slice* into the wrapped IO. Returns the number of bytes written.
-  abstract def unbuffered_write(slice : Slice(UInt8))
+  abstract def unbuffered_write(slice : Bytes)
 
   # Flushes the wrapped IO.
   abstract def unbuffered_flush
@@ -149,7 +149,7 @@ module IO::Buffered
   end
 
   # Buffered implementation of `IO#read(slice)`.
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     check_open
 
     count = slice.size
@@ -174,7 +174,7 @@ module IO::Buffered
   end
 
   # Buffered implementation of `IO#write(slice)`.
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     check_open
 
     count = slice.size

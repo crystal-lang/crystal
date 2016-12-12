@@ -19,12 +19,12 @@ private class BufferedWrapper
     io
   end
 
-  private def unbuffered_read(slice : Slice(UInt8))
+  private def unbuffered_read(slice : Bytes)
     @called_unbuffered_read = true
     @io.read(slice)
   end
 
-  private def unbuffered_write(slice : Slice(UInt8))
+  private def unbuffered_write(slice : Bytes)
     @io.write(slice)
   end
 
@@ -189,7 +189,7 @@ describe "IO::Buffered" do
     end
     io = BufferedWrapper.new(IO::Memory.new(s))
 
-    slice = Slice(UInt8).new(9000)
+    slice = Bytes.new(9000)
     count = io.read(slice)
     count.should eq(9000)
 
@@ -283,7 +283,7 @@ describe "IO::Buffered" do
   it "shouldn't call unbuffered read if reading to an empty slice" do
     str = IO::Memory.new("foo")
     io = BufferedWrapper.new(str)
-    io.read(Slice(UInt8).new(0))
+    io.read(Bytes.new(0))
     io.called_unbuffered_read.should be_false
   end
 

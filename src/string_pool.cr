@@ -54,7 +54,7 @@ class StringPool
   # pool.get(slice)
   # pool.empty? # => false
   #  ```
-  def get(slice : Slice(UInt8))
+  def get(slice : Bytes)
     get slice.pointer(slice.size), slice.size
   end
 

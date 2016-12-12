@@ -229,7 +229,7 @@ class IO::FileDescriptor
     pp.text inspect
   end
 
-  private def unbuffered_read(slice : Slice(UInt8))
+  private def unbuffered_read(slice : Bytes)
     count = slice.size
     loop do
       bytes_read = LibC.read(@fd, slice.pointer(count).as(Void*), count)
@@ -249,7 +249,7 @@ class IO::FileDescriptor
     end
   end
 
-  private def unbuffered_write(slice : Slice(UInt8))
+  private def unbuffered_write(slice : Bytes)
     count = slice.size
     total = count
     loop do

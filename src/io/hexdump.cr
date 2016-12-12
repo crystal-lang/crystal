@@ -28,13 +28,13 @@ module IO
     def initialize(@io : IO, @output : IO = STDERR, @read = false, @write = false)
     end
 
-    def read(buf : Slice(UInt8))
+    def read(buf : Bytes)
       @io.read(buf).tap do |read_bytes|
         @output.puts buf[0, read_bytes].hexdump if @read && read_bytes
       end
     end
 
-    def write(buf : Slice(UInt8))
+    def write(buf : Bytes)
       @io.write(buf).tap do
         @output.puts buf.hexdump if @write
       end

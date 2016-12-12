@@ -30,7 +30,7 @@ describe HTTP::WebSocket do
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(64)
+      buffer = Bytes.new(64)
       result = ws.receive(buffer)
       assert_text_packet result, 5, final: true
       String.new(buffer[0, result.size]).should eq("Hello")
@@ -42,7 +42,7 @@ describe HTTP::WebSocket do
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(3)
+      buffer = Bytes.new(3)
 
       2.times do
         result = ws.receive(buffer)
@@ -61,7 +61,7 @@ describe HTTP::WebSocket do
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(3)
+      buffer = Bytes.new(3)
 
       2.times do
         result = ws.receive(buffer)
@@ -81,7 +81,7 @@ describe HTTP::WebSocket do
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(10)
+      buffer = Bytes.new(10)
 
       2.times do
         result = ws.receive(buffer)
@@ -99,7 +99,7 @@ describe HTTP::WebSocket do
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(64)
+      buffer = Bytes.new(64)
       result = ws.receive(buffer)
       assert_ping_packet result, 5, final: true
       String.new(buffer[0, result.size]).should eq("Hello")
@@ -112,7 +112,7 @@ describe HTTP::WebSocket do
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(64)
+      buffer = Bytes.new(64)
 
       result = ws.receive(buffer)
       assert_text_packet result, 3, final: false
@@ -132,7 +132,7 @@ describe HTTP::WebSocket do
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(2048)
+      buffer = Bytes.new(2048)
 
       result = ws.receive(buffer)
       assert_text_packet result, 1023, final: true
@@ -140,7 +140,7 @@ describe HTTP::WebSocket do
     end
 
     it "read very long packet" do
-      data = Slice(UInt8).new(10 + 0x010000)
+      data = Bytes.new(10 + 0x010000)
 
       header = Bytes[0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x0]
       data.copy_from(header)
@@ -148,7 +148,7 @@ describe HTTP::WebSocket do
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(0x010000)
+      buffer = Bytes.new(0x010000)
 
       result = ws.receive(buffer)
       assert_binary_packet result, 0x010000, final: true
@@ -159,7 +159,7 @@ describe HTTP::WebSocket do
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(64)
+      buffer = Bytes.new(64)
       result = ws.receive(buffer)
       assert_close_packet result, 0, final: true
     end

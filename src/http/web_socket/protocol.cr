@@ -47,11 +47,11 @@ class HTTP::WebSocket::Protocol
 
     def initialize(@websocket : Protocol, binary, frame_size)
       @opcode = binary ? Opcode::BINARY : Opcode::TEXT
-      @buffer = Slice(UInt8).new(frame_size)
+      @buffer = Bytes.new(frame_size)
       @pos = 0
     end
 
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       count = Math.min(@buffer.size - @pos, slice.size)
       (@buffer + @pos).copy_from(slice.pointer(count), count)
       @pos += count
@@ -67,7 +67,7 @@ class HTTP::WebSocket::Protocol
       nil
     end
 
-    def read(slice : Slice(UInt8))
+    def read(slice : Bytes)
       raise "this IO is write-only"
     end
 
@@ -87,7 +87,7 @@ class HTTP::WebSocket::Protocol
     send(data.to_slice, Opcode::TEXT)
   end
 
-  def send(data : Slice(UInt8))
+  def send(data : Bytes)
     send(data, Opcode::BINARY)
   end
 
@@ -97,13 +97,13 @@ class HTTP::WebSocket::Protocol
     stream_io.flush
   end
 
-  def send(data : Slice(UInt8), opcode : Opcode, flags = Flags::FINAL, flush = true)
+  def send(data : Bytes, opcode : Opcode, flags = Flags::FINAL, flush = true)
     write_header(data.size, opcode, flags)
     write_payload(data)
     @io.flush if flush
   end
 
-  def receive(buffer : Slice(UInt8))
+  def receive(buffer : Bytes)
     if @remaining == 0
       opcode = read_header
     else

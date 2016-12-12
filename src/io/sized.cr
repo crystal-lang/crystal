@@ -28,7 +28,7 @@ module IO
       @read_remaining = read_size.to_u64
     end
 
-    def read(slice : Slice(UInt8))
+    def read(slice : Bytes)
       check_open
 
       count = {slice.size.to_u64, @read_remaining}.min
@@ -60,7 +60,7 @@ module IO
       string
     end
 
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       raise IO::Error.new "Can't write to IO::Sized"
     end
 

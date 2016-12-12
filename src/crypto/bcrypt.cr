@@ -54,17 +54,17 @@ class Crypto::Bcrypt
     new(passwordb, saltb, cost)
   end
 
-  getter password : Slice(UInt8)
-  getter salt : Slice(UInt8)
+  getter password : Bytes
+  getter salt : Bytes
   getter cost : Int32
 
-  def initialize(@password : Slice(UInt8), @salt : Slice(UInt8), @cost = DEFAULT_COST)
+  def initialize(@password : Bytes, @salt : Bytes, @cost = DEFAULT_COST)
     raise Error.new("Invalid cost") unless COST_RANGE.includes?(cost)
     raise Error.new("Invalid salt size") unless salt.size == SALT_SIZE
     raise Error.new("Invalid password size") unless PASSWORD_RANGE.includes?(password.size)
   end
 
-  @digest : Slice(UInt8)?
+  @digest : Bytes?
 
   def digest
     @digest ||= hash_password
@@ -104,7 +104,7 @@ class Crypto::Bcrypt
       end
     end
 
-    ret = Slice(UInt8).new(size * 4)
+    ret = Bytes.new(size * 4)
     j = -1
 
     size.times do |i|

@@ -230,7 +230,7 @@ describe "Slice" do
   end
 
   it "does hexstring" do
-    slice = Slice(UInt8).new(4) { |i| i.to_u8 + 1 }
+    slice = Bytes.new(4) { |i| i.to_u8 + 1 }
     slice.hexstring.should eq("01020304")
   end
 
@@ -244,7 +244,7 @@ describe "Slice" do
       00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.
       EOF
 
-    slice = Slice(UInt8).new(96) { |i| i.to_u8 + 32 }
+    slice = Bytes.new(96) { |i| i.to_u8 + 32 }
     slice.hexdump.should eq(ascii_table)
 
     ascii_table_plus = <<-EOF
@@ -257,7 +257,7 @@ describe "Slice" do
       00000060  80 81 82 83 84                                    .....
       EOF
 
-    plus = Slice(UInt8).new(101) { |i| i.to_u8 + 32 }
+    plus = Bytes.new(101) { |i| i.to_u8 + 32 }
     plus.hexdump.should eq(ascii_table_plus)
   end
 

@@ -21,7 +21,7 @@ module IO
       @closed = false
     end
 
-    def write(io, slice : Slice(UInt8))
+    def write(io, slice : Bytes)
       inbuf_ptr = slice.to_unsafe
       inbytesleft = LibC::SizeT.new(slice.size)
       outbuf = uninitialized UInt8[1024]
@@ -51,16 +51,16 @@ module IO
     BUFFER_SIZE     = 4 * 1024
     OUT_BUFFER_SIZE = 4 * 1024
 
-    property out_slice : Slice(UInt8)
+    property out_slice : Bytes
 
     @in_buffer : Pointer(UInt8)
 
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
-      @buffer = Slice(UInt8).new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
+      @buffer = Bytes.new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
       @in_buffer = @buffer.to_unsafe
       @in_buffer_left = LibC::SizeT.new(0)
-      @out_buffer = Slice(UInt8).new((GC.malloc_atomic(OUT_BUFFER_SIZE).as(UInt8*)), OUT_BUFFER_SIZE)
+      @out_buffer = Bytes.new((GC.malloc_atomic(OUT_BUFFER_SIZE).as(UInt8*)), OUT_BUFFER_SIZE)
       @out_slice = Bytes.empty
       @closed = false
     end

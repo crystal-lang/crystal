@@ -121,7 +121,7 @@ class String
   #
   # Note: if the slice doesn't denote a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
-  def self.new(slice : Slice(UInt8))
+  def self.new(slice : Bytes)
     new(slice.pointer(slice.size), slice.size)
   end
 
@@ -137,7 +137,7 @@ class String
   # slice[1] = 195_u8
   # String.new(slice, "GB2312") # => "好"
   # ```
-  def self.new(bytes : Slice(UInt8), encoding : String, invalid : Symbol? = nil) : String
+  def self.new(bytes : Bytes, encoding : String, invalid : Symbol? = nil) : String
     String.build do |str|
       String.encode(bytes, encoding, "UTF-8", str, invalid)
     end
@@ -1080,7 +1080,7 @@ class String
   # "好".encode("GB2312") # => [186, 195]
   # "好".bytes            # => [229, 165, 189]
   # ```
-  def encode(encoding : String, invalid : Symbol? = nil) : Slice(UInt8)
+  def encode(encoding : String, invalid : Symbol? = nil) : Bytes
     io = IO::Memory.new
     String.encode(to_slice, "UTF-8", encoding, io, invalid)
     io.to_slice

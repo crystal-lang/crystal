@@ -44,7 +44,7 @@ class IO::Memory
   # io.pos  # => 0
   # io.read # => "abcdef"
   # ```
-  def initialize(slice : Slice(UInt8), writeable = true)
+  def initialize(slice : Bytes, writeable = true)
     @buffer = slice.to_unsafe
     @bytesize = @capacity = slice.size.to_i
     @pos = 0
@@ -69,7 +69,7 @@ class IO::Memory
   end
 
   # See `IO#read(slice)`.
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     check_open
 
     count = slice.size
@@ -81,7 +81,7 @@ class IO::Memory
 
   # See `IO#write(slice)`. Raises if this IO::Memory is non-writeable,
   # or if it's non-resizeable and a resize is needed.
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     check_writeable
     check_open
 

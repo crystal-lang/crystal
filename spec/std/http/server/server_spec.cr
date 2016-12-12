@@ -7,12 +7,12 @@ private class RaiseErrno
 
   include IO
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     Errno.value = @value
     raise Errno.new "..."
   end
 
-  def write(slice : Slice(UInt8)) : Nil
+  def write(slice : Bytes) : Nil
     raise "not implemented"
   end
 end
@@ -25,13 +25,13 @@ private class ReverseResponseOutput
   def initialize(@output : IO)
   end
 
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     slice.reverse_each do |byte|
       @output.write_byte(byte)
     end
   end
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     raise "Not implemented"
   end
 

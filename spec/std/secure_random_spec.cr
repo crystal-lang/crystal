@@ -66,7 +66,7 @@ describe SecureRandom do
 
     it "fully fills a large buffer" do
       bytes = SecureRandom.random_bytes(10000)
-      bytes[9990, 10].should_not eq(Slice(UInt8).new(10))
+      bytes[9990, 10].should_not eq(Bytes.new(10))
     end
   end
 

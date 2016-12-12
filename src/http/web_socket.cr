@@ -6,7 +6,7 @@ class HTTP::WebSocket
 
   # :nodoc:
   def initialize(@ws : Protocol)
-    @buffer = Slice(UInt8).new(4096)
+    @buffer = Bytes.new(4096)
     @current_message = IO::Memory.new
   end
 

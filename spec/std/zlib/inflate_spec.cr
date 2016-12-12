@@ -17,7 +17,7 @@ module Zlib
       end
 
       str.should eq("this is a test string !!!!\n")
-      inflate.read(Slice(UInt8).new(10)).should eq(0)
+      inflate.read(Bytes.new(10)).should eq(0)
     end
 
     it "can be closed without sync" do
@@ -62,7 +62,7 @@ module Zlib
       end
       io.rewind
       inflate = Inflate.new(io)
-      slice = Slice(UInt8).new(0)
+      slice = Bytes.new(0)
       inflate.read(slice).should eq(0)
     end
   end
