@@ -213,6 +213,22 @@ class HTTP::WebSocket::Protocol
     (@header[1] & 0x80_u8) != 0_u8
   end
 
+  def ping(message = nil)
+    if message
+      send(message.to_slice, Opcode::PING)
+    else
+      send(Bytes.empty, Opcode::PING)
+    end
+  end
+
+  def pong(message = nil)
+    if message
+      send(message.to_slice, Opcode::PONG)
+    else
+      send(Bytes.empty, Opcode::PONG)
+    end
+  end
+
   def close(message = nil)
     if message
       send(message.to_slice, Opcode::CLOSE)
