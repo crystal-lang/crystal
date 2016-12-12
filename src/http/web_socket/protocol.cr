@@ -217,7 +217,7 @@ class HTTP::WebSocket::Protocol
     if message
       send(message.to_slice, Opcode::CLOSE)
     else
-      send(Slice.new(Pointer(UInt8).null, 0), Opcode::CLOSE)
+      send(Bytes.empty, Opcode::CLOSE)
     end
   end
 

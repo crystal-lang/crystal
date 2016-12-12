@@ -42,7 +42,7 @@ module IO
       # The buffer where we do all our work.
       @delimiter_buffer = Bytes.new(@read_delimiter.size)
       # Slice inside delimiter buffer where bytes waiting to be read are stored.
-      @active_delimiter_buffer = Bytes.new(Pointer(UInt8).null, 0)
+      @active_delimiter_buffer = Bytes.empty
     end
 
     def read(slice : Slice(UInt8))

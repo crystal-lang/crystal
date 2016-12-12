@@ -61,7 +61,7 @@ module IO
       @in_buffer = @buffer.to_unsafe
       @in_buffer_left = LibC::SizeT.new(0)
       @out_buffer = Slice(UInt8).new((GC.malloc_atomic(OUT_BUFFER_SIZE).as(UInt8*)), OUT_BUFFER_SIZE)
-      @out_slice = Slice(UInt8).new(Pointer(UInt8).null, 0)
+      @out_slice = Bytes.empty
       @closed = false
     end
 
@@ -213,7 +213,7 @@ module IO
 
     def write(io)
       io.write @out_slice
-      @out_slice = Slice.new(Pointer(UInt8).null, 0)
+      @out_slice = Bytes.empty
     end
 
     def write(io, numbytes)

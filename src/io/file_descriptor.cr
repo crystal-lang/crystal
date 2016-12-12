@@ -134,7 +134,7 @@ class IO::FileDescriptor
       raise Errno.new "Unable to seek"
     end
 
-    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+    @in_buffer_rem = Bytes.empty
 
     self
   end

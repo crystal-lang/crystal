@@ -149,7 +149,7 @@ class HTTP::Server
       end
 
       def reset
-        @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+        @in_buffer_rem = Bytes.empty
         @out_count = 0
         @sync = false
         @flush_on_newline = false
