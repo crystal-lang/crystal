@@ -2737,9 +2737,15 @@ module Crystal
 
     def visit(node : IsA)
       if node.nil_check?
-        accept node.obj
-        skip_space_or_newline
-        write_token :"."
+        obj = node.obj
+
+        # Consider `nil?`
+        unless @token.keyword?(:nil?) && obj.is_a?(Var) && obj.name == "self"
+          accept obj
+          skip_space_or_newline
+          write_token :"."
+        end
+
         write_keyword :"nil?"
         if @token.type == :"("
           write_token :"("
@@ -2764,12 +2770,19 @@ module Crystal
     end
 
     def format_special_call(node, keyword)
-      unless node.obj.is_a?(Nop)
-        accept node.obj
+      obj = node.obj
+
+      # Consider `special T`
+      unless @token.keyword?(keyword) && obj.is_a?(Var) && obj.name == "self"
+        unless obj.is_a?(Nop)
+          accept obj
+          skip_space_or_newline
+          write_token :"."
+        end
+
         skip_space_or_newline
-        write_token :"."
       end
-      skip_space_or_newline
+
       write_keyword keyword
       skip_space_or_newline
 
@@ -3370,8 +3383,10 @@ module Crystal
     end
 
     def format_cast(node, keyword)
+      obj = node.obj
+
       # This is for the case `&.as(...)`
-      if node.obj.is_a?(Nop)
+      if obj.is_a?(Nop)
         write_keyword keyword
         write_token :"("
         accept node.to
@@ -3379,10 +3394,14 @@ module Crystal
         return false
       end
 
-      accept node.obj
-      skip_space
-      write_token :"."
-      skip_space_or_newline
+      # Consider `as T`
+      unless @token.keyword?(keyword) && obj.is_a?(Var) && obj.name == "self"
+        accept obj
+        skip_space
+        write_token :"."
+        skip_space_or_newline
+      end
+
       write_keyword keyword
       skip_space
       if @token.type == :"("

@@ -985,4 +985,10 @@ describe Crystal::Formatter do
   assert_format "x = a do\n  1 ||\n    2\nend"
   assert_format "case 1\nwhen a; 2\nelse; b\nend", "case 1\nwhen a; 2\nelse    b\nend"
   assert_format "case 1\nwhen a; 2\nelse; ; b\nend", "case 1\nwhen a; 2\nelse    b\nend"
+
+  assert_format "as Foo"
+  assert_format "as? Foo"
+  assert_format "is_a? Foo"
+  assert_format "responds_to? :foo"
+  assert_format "nil?"
 end
