@@ -34,6 +34,12 @@ module HTTP
       @io.read_byte
     end
 
+    def gets(delimiter : Char, limit : Int) : String?
+      return super if @encoding
+
+      @io.gets(delimiter, limit)
+    end
+
     def write(slice : Slice(UInt8))
       raise IO::Error.new "Can't write to UnknownLengthContent"
     end
