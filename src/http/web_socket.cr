@@ -37,6 +37,12 @@ class HTTP::WebSocket
     new(Protocol.new(host, path, port, tls))
   end
 
+  def on_ping(&@on_ping : String ->)
+  end
+
+  def on_pong(&@on_pong : String ->)
+  end
+
   def on_message(&@on_message : String ->)
   end
 
@@ -45,6 +51,22 @@ class HTTP::WebSocket
 
   def send(message)
     @ws.send(message)
+  end
+
+  # It's possible to send a PING frame, which the client must respond to
+  # with a PONG, or the server can send an unsolicited PONG frame
+  # which the client should not respond to.
+  #
+  # See `#pong`.
+  def ping(message = nil)
+    @ws.ping(message)
+  end
+
+  # Server can send an unsolicited PONG frame which the client should not respond to.
+  #
+  # See `#ping`.
+  def pong(message = nil)
+    @ws.pong(message)
   end
 
   def stream(binary = true, frame_size = 1024)
@@ -67,6 +89,18 @@ class HTTP::WebSocket
       end
 
       case info.opcode
+      when Protocol::Opcode::PING
+        @current_message.write @buffer[0, info.size]
+        if info.final
+          @on_ping.try &.call(@current_message.to_s)
+          @current_message.clear
+        end
+      when Protocol::Opcode::PONG
+        @current_message.write @buffer[0, info.size]
+        if info.final
+          @on_pong.try &.call(@current_message.to_s)
+          @current_message.clear
+        end
       when Protocol::Opcode::TEXT
         @current_message.write @buffer[0, info.size]
         if info.final
