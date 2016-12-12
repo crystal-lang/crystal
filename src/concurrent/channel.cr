@@ -1,13 +1,7 @@
 require "fiber"
+require "select"
 
 abstract class Channel(T)
-  module SelectAction
-    abstract def ready?
-    abstract def execute
-    abstract def wait
-    abstract def unwait
-  end
-
   class ClosedError < Exception
     def initialize(msg = "Channel is closed")
       super(msg)
@@ -30,7 +24,7 @@ abstract class Channel(T)
 
   def close
     @closed = true
-    Scheduler.enqueue @receivers
+    Scheduler.enqueue(@receivers, receive_token)
     @receivers.clear
     nil
   end
@@ -51,20 +45,34 @@ abstract class Channel(T)
     to_s(io)
   end
 
-  def wait_for_receive
+  # :nodoc:
+  def activate_receive
     @receivers << Fiber.current
   end
 
-  def unwait_for_receive
+  # :nodoc:
+  def deactivate_receive
     @receivers.delete Fiber.current
   end
 
-  def wait_for_send
+  # :nodoc:
+  def receive_token
+    self.as(Void*) + 1
+  end
+
+  # :nodoc:
+  def activate_send
     @senders << Fiber.current
   end
 
-  def unwait_for_send
+  # :nodoc:
+  def deactivate_send
     @senders.delete Fiber.current
+  end
+
+  # :nodoc:
+  def send_token
+    self.as(Void*) + 2
   end
 
   protected def raise_if_closed
@@ -76,7 +84,7 @@ abstract class Channel(T)
   end
 
   def self.receive_first(channels : Tuple | Array)
-    self.select(channels.map(&.receive_select_action))[1]
+    Select.select(channels.map(&.receive_select_action))[1]
   end
 
   def self.send_first(value, *channels)
@@ -84,31 +92,17 @@ abstract class Channel(T)
   end
 
   def self.send_first(value, channels : Tuple | Array)
-    self.select(channels.map(&.send_select_action(value)))
+    Select.select(channels.map(&.send_select_action(value)))
     nil
   end
 
-  def self.select(*ops : SelectAction)
+  def self.select(*ops : Select::Action)
     self.select ops
   end
 
   def self.select(ops : Tuple | Array, has_else = false)
-    loop do
-      ops.each_with_index do |op, index|
-        if op.ready?
-          result = op.execute
-          return index, result
-        end
-      end
-
-      if has_else
-        return ops.size, nil
-      end
-
-      ops.each &.wait
-      Scheduler.reschedule
-      ops.each &.unwait
-    end
+    {{ puts "Warning: Channel.select is deprecated and will be removed after 0.20.0, use Select.select instead".id }}
+    Select.select(ops, has_else)
   end
 
   def send_select_action(value : T)
@@ -119,8 +113,8 @@ abstract class Channel(T)
     ReceiveAction.new(self)
   end
 
-  struct ReceiveAction(C)
-    include SelectAction
+  private struct ReceiveAction(C)
+    include Select::Action::Checkable
 
     def initialize(@channel : C)
     end
@@ -133,17 +127,21 @@ abstract class Channel(T)
       @channel.receive
     end
 
-    def wait
-      @channel.wait_for_receive
+    def activate
+      @channel.activate_receive
     end
 
-    def unwait
-      @channel.unwait_for_receive
+    def deactivate
+      @channel.deactivate_receive
+    end
+
+    def owns_token?(resume_token)
+      resume_token == @channel.receive_token
     end
   end
 
-  struct SendAction(C, T)
-    include SelectAction
+  private struct SendAction(C, T)
+    include Select::Action::Checkable
 
     def initialize(@channel : C, @value : T)
     end
@@ -156,12 +154,16 @@ abstract class Channel(T)
       @channel.send(@value)
     end
 
-    def wait
-      @channel.wait_for_send
+    def activate
+      @channel.activate_send
     end
 
-    def unwait
-      @channel.unwait_for_send
+    def deactivate
+      @channel.deactivate_send
+    end
+
+    def owns_token?(resume_token)
+      resume_token == @channel.send_token
     end
   end
 end
@@ -182,7 +184,7 @@ class Channel::Buffered(T) < Channel(T)
     raise_if_closed
 
     @queue << value
-    Scheduler.enqueue @receivers
+    Scheduler.enqueue(@receivers, receive_token)
     @receivers.clear
 
     self
@@ -196,7 +198,7 @@ class Channel::Buffered(T) < Channel(T)
     end
 
     @queue.shift.tap do
-      Scheduler.enqueue @senders
+      Scheduler.enqueue(@senders, send_token)
       @senders.clear
     end
   end
@@ -233,7 +235,7 @@ class Channel::Unbuffered(T) < Channel(T)
     @sender = Fiber.current
 
     if receiver = @receivers.shift?
-      receiver.resume
+      receiver.resume(receive_token)
     else
       Scheduler.reschedule
     end
@@ -244,7 +246,7 @@ class Channel::Unbuffered(T) < Channel(T)
       yield if @closed
       @receivers << Fiber.current
       if sender = @senders.shift?
-        sender.resume
+        sender.resume(send_token)
       else
         Scheduler.reschedule
       end
@@ -254,7 +256,7 @@ class Channel::Unbuffered(T) < Channel(T)
 
     @value.tap do
       @has_value = false
-      Scheduler.enqueue @sender.not_nil!
+      Scheduler.enqueue(@sender.not_nil!, send_token)
     end
   end
 

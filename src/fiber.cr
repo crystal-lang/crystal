@@ -22,6 +22,7 @@ class Fiber
   protected property next_fiber : Fiber?
   protected property prev_fiber : Fiber?
   property name : String?
+  property resume_token : Void* = Pointer(Void).null
 
   def initialize(@name : String? = nil, &@proc : ->)
     @stack = Fiber.allocate_stack
@@ -254,7 +255,7 @@ class Fiber
     {% end %}
   end
 
-  def resume : Nil
+  def resume(@resume_token : Void* = Pointer(Void).null) : Nil
     current, Thread.current.current_fiber = Thread.current.current_fiber, self
     LibGC.stackbottom = @stack_bottom
     {% if flag?(:aarch64) %}

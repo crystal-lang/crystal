@@ -1,4 +1,5 @@
 require "c/fcntl"
+require "select"
 
 # An IO over a file descriptor.
 class IO::FileDescriptor
@@ -96,14 +97,14 @@ class IO::FileDescriptor
   # :nodoc:
   def resume_read
     if reader = @readers.try &.shift?
-      reader.resume
+      reader.resume(read_token)
     end
   end
 
   # :nodoc:
   def resume_write
     if writer = @writers.try &.shift?
-      writer.resume
+      writer.resume(write_token)
     end
   end
 
@@ -275,12 +276,31 @@ class IO::FileDescriptor
     end
   end
 
+  private def readers
+    @readers ||= Deque(Fiber).new
+  end
+
+  # :nodoc:
+  def activate_read
+    readers << Fiber.current
+    add_read_event
+  end
+
+  # :nodoc:
+  def deactivate_read
+    @readers.try &.delete(Fiber.current)
+  end
+
+  # :nodoc:
+  def read_token
+    self.as(Void*) + 1
+  end
+
   private def wait_readable
     wait_readable { |err| raise err }
   end
 
   private def wait_readable
-    readers = (@readers ||= Deque(Fiber).new)
     readers << Fiber.current
     add_read_event
     Scheduler.reschedule
@@ -300,13 +320,32 @@ class IO::FileDescriptor
     nil
   end
 
+  private def writers
+    @writers ||= Deque(Fiber).new
+  end
+
+  # :nodoc:
+  def activate_write
+    writers << Fiber.current
+    add_write_event
+  end
+
+  # :nodoc:
+  def deactivate_write
+    @writers.try &.delete(Fiber.current)
+  end
+
+  # :nodoc:
+  def write_token
+    self.as(Void*) + 2
+  end
+
   private def wait_writable(timeout = @write_timeout)
     wait_writable(timeout: timeout) { |err| raise err }
   end
 
   # msg/timeout are overridden in nonblock_connect
   private def wait_writable(msg = "write timed out", timeout = @write_timeout)
-    writers = (@writers ||= Deque(Fiber).new)
     writers << Fiber.current
     add_write_event timeout
     Scheduler.reschedule
@@ -324,6 +363,74 @@ class IO::FileDescriptor
     event = @write_event ||= Scheduler.create_fd_write_event(self)
     event.add timeout
     nil
+  end
+
+  def read_byte_select_action
+    ReadByteSelectAction.new(self)
+  end
+
+  def write_byte_select_action(byte)
+    WriteByteSelectAction.new(self, byte)
+  end
+
+  private struct ReadByteSelectAction(FDIO)
+    include Select::Action::Pollable
+
+    def initialize(@io : FDIO)
+    end
+
+    def execute
+      @io.read_byte
+    end
+
+    def activate
+      @io.activate_read
+    end
+
+    def deactivate
+      @io.deactivate_read
+    end
+
+    def owns_token?(token)
+      token == @io.read_token
+    end
+
+    def pollfd
+      pollfd = LibC::Pollfd.new
+      pollfd.fd = @io.fd
+      pollfd.events = LibC::PollEvent::In
+      pollfd
+    end
+  end
+
+  private struct WriteByteSelectAction(FDIO)
+    include Select::Action::Pollable
+
+    def initialize(@io : FDIO, @byte : UInt8)
+    end
+
+    def execute
+      @io.write_byte(@byte)
+    end
+
+    def activate
+      @io.activate_write
+    end
+
+    def deactivate
+      @io.deactivate_write
+    end
+
+    def owns_token?(token)
+      token == @io.write_token
+    end
+
+    def pollfd
+      pollfd = LibC::Pollfd.new
+      pollfd.fd = @io.fd
+      pollfd.events = LibC::PollEvent::Out
+      pollfd
+    end
   end
 
   private def unbuffered_rewind
@@ -350,13 +457,14 @@ class IO::FileDescriptor
     @read_event = nil
     @write_event.try &.free
     @write_event = nil
+
     if readers = @readers
-      Scheduler.enqueue readers
+      Scheduler.enqueue(readers, read_token)
       readers.clear
     end
 
     if writers = @writers
-      Scheduler.enqueue writers
+      Scheduler.enqueue(writers, write_token)
       writers.clear
     end
 
