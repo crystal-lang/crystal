@@ -404,9 +404,14 @@ class Crystal::CodeGenVisitor
 
   # If a method's body is just a simple literal, "self", or an instance variable,
   # we always inline it: less code generated, easier job for LLVM to optimize, and
-  # avoid a call in non-release builds. But do this only in non-debug builds, so we can still step.
+  # avoid a call in non-release builds.
+  #
+  # Do this even in debug mode, because there's not much use in stepping
+  # to read a constant value or the value of an instance variable.
+  # Additionally, not inlining instance variable getters changes the semantic
+  # a program, so we must always inline these.
   def try_inline_call(target_def, body, self_type, call_args)
-    return false if @debug || target_def.is_a?(External)
+    return false if target_def.is_a?(External)
 
     case body
     when Nop, NilLiteral, BoolLiteral, CharLiteral, StringLiteral, NumberLiteral, SymbolLiteral

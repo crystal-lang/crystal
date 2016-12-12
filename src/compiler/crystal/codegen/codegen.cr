@@ -14,17 +14,17 @@ module Crystal
   GET_EXCEPTION_NAME = "__crystal_get_exception"
 
   class Program
-    def run(code, filename = nil)
+    def run(code, filename = nil, debug = false)
       parser = Parser.new(code)
       parser.filename = filename
       node = parser.parse
       node = normalize node
       node = semantic node
-      evaluate node
+      evaluate node, debug: debug
     end
 
-    def evaluate(node)
-      llvm_mod = codegen(node, single_module: true)[""]
+    def evaluate(node, debug = false)
+      llvm_mod = codegen(node, single_module: true, debug: debug)[""]
       main = llvm_mod.functions[MAIN_NAME]
 
       main_return_type = main.return_type
