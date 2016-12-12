@@ -1201,6 +1201,13 @@ class Array(T)
     pop { raise IndexError.new }
   end
 
+  # Removes the last value from `self`.
+  # If the array is empty, the given block is called.
+  #
+  # ```
+  # a = [1]
+  # a.pop { "Testing" } #=> 1
+  # a.pop { "Testing" } #=> "Testing"
   def pop
     if @size == 0
       yield
@@ -1241,6 +1248,7 @@ class Array(T)
     ary
   end
 
+  # Like `pop`, but returns `nil` if `self` is empty.
   def pop?
     pop { nil }
   end
