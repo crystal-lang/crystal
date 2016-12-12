@@ -47,7 +47,7 @@ module OpenSSL::X509
       LibCrypto.obj_obj2nid(obj)
 
       if (nid = LibCrypto.obj_obj2nid(obj)) == LibCrypto::NID_undef
-        buf = Slice(UInt8).new(512)
+        buf = Bytes.new(512)
         LibCrypto.i2t_asn1_object(buf, buf.size, obj)
       else
         buf = LibCrypto.obj_nid2sn(nid)

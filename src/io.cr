@@ -14,25 +14,25 @@ require "c/unistd"
 # The only requirement for a type including the IO module is to define
 # these two methods:
 #
-# * `read(slice : Slice(UInt8))`: read at most *slice.size* bytes into *slice* and return the number of bytes read
-# * `write(slice : Slice(UInt8))`: write the whole *slice* into the IO
+# * `read(slice : Bytes)`: read at most *slice.size* bytes into *slice* and return the number of bytes read
+# * `write(slice : Bytes)`: write the whole *slice* into the IO
 #
-# For example, this is a simple IO on top of a `Slice(UInt8)`:
+# For example, this is a simple IO on top of a `Bytes`:
 #
 # ```
 # class SimpleSliceIO
 #   include IO
 #
-#   def initialize(@slice : Slice(UInt8))
+#   def initialize(@slice : Bytes)
 #   end
 #
-#   def read(slice : Slice(UInt8))
+#   def read(slice : Bytes)
 #     slice.size.times { |i| slice[i] = @slice[i] }
 #     @slice += slice.size
 #     count
 #   end
 #
-#   def write(slice : Slice(UInt8))
+#   def write(slice : Bytes)
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
 #     nil
@@ -162,22 +162,22 @@ module IO
   #
   # ```
   # io = IO::Memory.new "hello"
-  # slice = Slice(UInt8).new(4)
+  # slice = Bytes.new(4)
   # io.read(slice) # => 4
   # slice          # => [104, 101, 108, 108]
   # io.read(slice) # => 1
   # slice          # => [111, 101, 108, 108]
   # ```
-  abstract def read(slice : Slice(UInt8))
+  abstract def read(slice : Bytes)
 
   # Writes the contents of *slice* into this IO.
   #
   # ```
   # io = IO::Memory.new
-  # slice = Slice(UInt8).new(4) { |i| ('a'.ord + i).to_u8 }
+  # slice = Bytes.new(4) { |i| ('a'.ord + i).to_u8 }
   # io.write(slice)
   # io.to_s #=> "abcd"
-  abstract def write(slice : Slice(UInt8)) : Nil
+  abstract def write(slice : Bytes) : Nil
 
   # Closes this IO.
   #
@@ -452,7 +452,7 @@ module IO
   #
   # "你".bytes # => [228, 189, 160]
   # ```
-  def read_utf8(slice : Slice(UInt8))
+  def read_utf8(slice : Bytes)
     if decoder = decoder()
       decoder.read_utf8(self, slice)
     else
@@ -461,7 +461,7 @@ module IO
   end
 
   # Writes a slice of UTF-8 encoded bytes to this IO, using the current encoding.
-  def write_utf8(slice : Slice(UInt8))
+  def write_utf8(slice : Bytes)
     if encoder = encoder()
       encoder.write(self, slice)
     else
@@ -491,12 +491,12 @@ module IO
   #
   # ```
   # io = IO::Memory.new "123451234"
-  # slice = Slice(UInt8).new(5)
+  # slice = Bytes.new(5)
   # io.read_fully(slice) # => 5
   # slice                # => [49, 50, 51, 52, 53]
   # io.read_fully        # => EOFError
   # ```
-  def read_fully(slice : Slice(UInt8))
+  def read_fully(slice : Bytes)
     read_fully?(slice) || raise(EOFError.new)
   end
 
@@ -506,12 +506,12 @@ module IO
   #
   # ```
   # io = IO::Memory.new "123451234"
-  # slice = Slice(UInt8).new(5)
+  # slice = Bytes.new(5)
   # io.read_fully?(slice) # => 5
   # slice                 # => [49, 50, 51, 52, 53]
   # io.read_fully?        # => nil
   # ```
-  def read_fully?(slice : Slice(UInt8))
+  def read_fully?(slice : Bytes)
     count = slice.size
     while slice.size > 0
       read_bytes = read slice

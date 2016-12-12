@@ -12,7 +12,7 @@ class IO::ARGF
     @read_from_stdin = false
   end
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     count = slice.size
     first_initialize unless @initialized
 
@@ -58,7 +58,7 @@ class IO::ARGF
     string
   end
 
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     raise IO::Error.new "can't write to ARGF"
   end
 

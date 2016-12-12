@@ -64,7 +64,7 @@ class HTTP::Server
     end
 
     # See `IO#write(slice)`.
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       @output.write(slice)
     end
 
@@ -74,7 +74,7 @@ class HTTP::Server
     end
 
     # :nodoc:
-    def read(slice : Slice(UInt8))
+    def read(slice : Bytes)
       raise "can't read from HTTP::Server::Response"
     end
 
@@ -156,11 +156,11 @@ class HTTP::Server
         @chunked = false
       end
 
-      private def unbuffered_read(slice : Slice(UInt8))
+      private def unbuffered_read(slice : Bytes)
         raise "can't read from HTTP::Server::Response"
       end
 
-      private def unbuffered_write(slice : Slice(UInt8))
+      private def unbuffered_write(slice : Bytes)
         unless response.wrote_headers?
           if response.version != "HTTP/1.0" && !response.headers.has_key?("Content-Length")
             response.headers["Transfer-Encoding"] = "chunked"

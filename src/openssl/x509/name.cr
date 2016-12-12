@@ -66,7 +66,7 @@ module OpenSSL::X509
       count = LibCrypto.x509_name_entry_count(@name)
       raise Error.new("X509_NAME_entry_count") if count < 0
 
-      long_name = Slice(UInt8).new(512)
+      long_name = Bytes.new(512)
 
       Array(Tuple(String, String)).new(count) do |i|
         entry = LibCrypto.x509_name_get_entry(@name, i)

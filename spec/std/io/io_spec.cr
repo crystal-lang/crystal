@@ -27,13 +27,13 @@ private class SimpleIOMemory
     io
   end
 
-  def self.new(bytes : Slice(UInt8), max_read = nil)
+  def self.new(bytes : Bytes, max_read = nil)
     io = new(bytes.size, max_read: max_read)
     io.write(bytes)
     io
   end
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     count = slice.size
     count = Math.min(count, @bytesize - @pos)
     if max_read = @max_read
@@ -44,7 +44,7 @@ private class SimpleIOMemory
     count
   end
 
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     count = slice.size
     new_bytesize = bytesize + count
     if new_bytesize > @capacity
@@ -98,7 +98,7 @@ describe IO do
     it "doesn't block on first read.  blocks on 2nd read" do
       IO.pipe do |read, write|
         write.puts "hello"
-        slice = Slice(UInt8).new 1024
+        slice = Bytes.new 1024
 
         read.read_timeout = 1
         read.read(slice).should eq(6)
@@ -343,7 +343,7 @@ describe IO do
 
     it "does read_fully" do
       str = SimpleIOMemory.new("hello")
-      slice = Slice(UInt8).new(4)
+      slice = Bytes.new(4)
       str.read_fully(slice).should eq(4)
       String.new(slice).should eq("hell")
 
@@ -354,7 +354,7 @@ describe IO do
 
     it "does read_fully?" do
       str = SimpleIOMemory.new("hello")
-      slice = Slice(UInt8).new(4)
+      slice = Bytes.new(4)
       str.read_fully?(slice).should eq(4)
       String.new(slice).should eq("hell")
 

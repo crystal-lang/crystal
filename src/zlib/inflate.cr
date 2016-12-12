@@ -64,12 +64,12 @@ class Zlib::Inflate
   end
 
   # Always raises: this is a read-only IO.
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     raise IO::Error.new "Can't write to InflateIO"
   end
 
   # See `IO#read`.
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     check_open
 
     return 0 if slice.empty?

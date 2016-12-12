@@ -45,7 +45,7 @@ module IO
       @active_delimiter_buffer = Bytes.empty
     end
 
-    def read(slice : Slice(UInt8))
+    def read(slice : Bytes)
       check_open
       return 0 if @finished
 
@@ -110,7 +110,7 @@ module IO
       read_bytes
     end
 
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       raise IO::Error.new "Can't write to IO::Delimited"
     end
 

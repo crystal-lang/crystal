@@ -13,7 +13,7 @@ module HTTP
   class FixedLengthContent < IO::Sized
     include Content
 
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       raise IO::Error.new "Can't write to FixedLengthContent"
     end
   end
@@ -26,7 +26,7 @@ module HTTP
     def initialize(@io : IO)
     end
 
-    def read(slice : Slice(UInt8))
+    def read(slice : Bytes)
       @io.read(slice)
     end
 
@@ -40,7 +40,7 @@ module HTTP
       @io.gets(delimiter, limit)
     end
 
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       raise IO::Error.new "Can't write to UnknownLengthContent"
     end
   end
@@ -57,7 +57,7 @@ module HTTP
       check_last_chunk
     end
 
-    def read(slice : Slice(UInt8))
+    def read(slice : Bytes)
       count = slice.size
       return 0 if count == 0
 
@@ -115,7 +115,7 @@ module HTTP
       read_chunk_end if @chunk_remaining == 0
     end
 
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       raise IO::Error.new "Can't write to ChunkedContent"
     end
   end

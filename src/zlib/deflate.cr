@@ -73,12 +73,12 @@ class Zlib::Deflate
   end
 
   # Always raises: this is a write-only IO.
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     raise "can't read from Zlib::Deflate"
   end
 
   # See `IO#write`.
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     check_open
 
     @stream.avail_in = slice.size

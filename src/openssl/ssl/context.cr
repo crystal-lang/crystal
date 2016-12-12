@@ -292,15 +292,15 @@ abstract class OpenSSL::SSL::Context
   # context.alpn_protocol = "h2"
   # ```
   def alpn_protocol=(protocol : String)
-    proto = Slice(UInt8).new(protocol.bytesize + 1)
+    proto = Bytes.new(protocol.bytesize + 1)
     proto[0] = protocol.bytesize.to_u8
     protocol.to_slice.copy_to(proto.to_unsafe + 1, protocol.bytesize)
     self.alpn_protocol = proto
   end
 
-  private def alpn_protocol=(protocol : Slice(UInt8))
+  private def alpn_protocol=(protocol : Bytes)
     alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
-      proto = Box(Slice(UInt8)).unbox(data)
+      proto = Box(Bytes).unbox(data)
       ret = LibSSL.ssl_select_next_proto(o, olen, proto, 2, i, ilen)
       if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
         LibSSL::SSL_TLSEXT_ERR_NOACK

@@ -36,11 +36,11 @@ class String::Builder
     io
   end
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     raise "Not implemented"
   end
 
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     count = slice.size
     new_bytesize = real_bytesize + count
     if new_bytesize > @capacity

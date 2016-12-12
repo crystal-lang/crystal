@@ -273,7 +273,7 @@ struct String::Formatter(A)
     format_buf = format_buf(capacity)
     original_format_buf = format_buf
 
-    io = IO::Memory.new(Slice(UInt8).new(format_buf, capacity))
+    io = IO::Memory.new(Bytes.new(format_buf, capacity))
     io << '%'
     io << '+' if flags.plus
     io << '-' if flags.minus

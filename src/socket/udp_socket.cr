@@ -103,7 +103,7 @@ class UDPSocket < IPSocket
 
   # Sends a binary message to the previously connected remote address. See
   # `#connect`.
-  def send(message : Slice(UInt8))
+  def send(message : Bytes)
     bytes_sent = LibC.send(fd, (message.to_unsafe.as(Void*)), message.size, 0)
     raise Errno.new("Error sending datagram") if bytes_sent == -1
     bytes_sent
@@ -119,7 +119,7 @@ class UDPSocket < IPSocket
   end
 
   # Sends a binary message to the specified remote address.
-  def send(message : Slice(UInt8), addr : IPAddress)
+  def send(message : Bytes, addr : IPAddress)
     sockaddr = addr.sockaddr
     bytes_sent = LibC.sendto(fd, (message.to_unsafe.as(Void*)), message.size, 0, pointerof(sockaddr).as(LibC::Sockaddr*), addr.addrlen)
     raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
@@ -132,10 +132,10 @@ class UDPSocket < IPSocket
   # server = UDPSocket.new
   # server.bind "localhost", 1234
   #
-  # message = Slice(UInt8).new(32)
+  # message = Bytes.new(32)
   # message_size, client_addr = server.receive(message)
   # ```
-  def receive(message : Slice(UInt8)) : {Int32, IPAddress}
+  def receive(message : Bytes) : {Int32, IPAddress}
     loop do
       sockaddr = uninitialized LibC::SockaddrIn6
       addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))

@@ -2,14 +2,14 @@ class Crypto::MD5
   # Returns a String the hexadecimal representation of the MD5 hash of *data*
   #
   #     Crypto::MD5.hex_digest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
-  def self.hex_digest(data : String | Slice(UInt8)) : String
+  def self.hex_digest(data : String | Bytes) : String
     context = ContextImpl.new
     context.update data
     context.final
     context.hex
   end
 
-  # Yields a context object with an `#update(data : String | Slice(UInt8))`
+  # Yields a context object with an `#update(data : String | Bytes)`
   # method available. Returns a String the hexadecimal representation of the
   # MD5 hash all data passed in.
   #
@@ -45,7 +45,7 @@ class Crypto::MD5
       @digest = uninitialized UInt8[16]
     end
 
-    def update(data : String | Slice(UInt8))
+    def update(data : String | Bytes)
       update(data.to_unsafe, data.bytesize.to_u32)
     end
 
