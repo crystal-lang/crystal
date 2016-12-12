@@ -49,6 +49,17 @@ module IO
       end
     end
 
+    def gets(delimiter : Char, limit : Int) : String?
+      check_open
+
+      return super if @encoding
+      return nil if @read_remaining == 0
+
+      string = @io.gets(delimiter, Math.min(limit, @read_remaining))
+      @read_remaining -= string.bytesize if string
+      string
+    end
+
     def write(slice : Slice(UInt8))
       raise IO::Error.new "Can't write to IO::Sized"
     end
