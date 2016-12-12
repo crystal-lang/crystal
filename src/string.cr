@@ -179,6 +179,9 @@ class String
   # Note: if the chars don't denote a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(chars : UInt8*, bytesize, size = 0)
+    # Avoid allocating memory for the empty string
+    return "" if bytesize == 0
+
     new(bytesize) do |buffer|
       buffer.copy_from(chars, bytesize)
       {bytesize, size}
