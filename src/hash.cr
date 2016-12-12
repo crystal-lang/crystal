@@ -775,12 +775,12 @@ class Hash(K, V)
     @buckets = @buckets.realloc(new_size)
     new_size.times { |i| @buckets[i] = nil }
     @buckets_size = new_size
-    entry = @first
+    entry = @last
     while entry
-      entry.next = nil
       index = bucket_index entry.key
-      insert_in_bucket_end index, entry
-      entry = entry.fore
+      entry.next = @buckets[index]
+      @buckets[index] = entry
+      entry = entry.back
     end
   end
 
@@ -820,21 +820,6 @@ class Hash(K, V)
       end
     else
       return @buckets[index] = Entry(K, V).new(key, value)
-    end
-  end
-
-  private def insert_in_bucket_end(index, existing_entry)
-    entry = @buckets[index]
-    if entry
-      while entry
-        if entry.next
-          entry = entry.next
-        else
-          return entry.next = existing_entry
-        end
-      end
-    else
-      @buckets[index] = existing_entry
     end
   end
 
