@@ -773,12 +773,16 @@ module Crystal
       if @is_initialize
         var_name = target.name
 
-        meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
-        meta_var.bind_to value
-        meta_var.assigned_to = true
+        # Don't track instance variables nilabilty (for example, if they were
+        # just assigned inside a branch) if they have an initializer
+        unless scope.has_instance_var_initializer?(var_name)
+          meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+          meta_var.bind_to value
+          meta_var.assigned_to = true
 
-        simple_var = MetaVar.new(var_name)
-        simple_var.bind_to(target)
+          simple_var = MetaVar.new(var_name)
+          simple_var.bind_to(target)
+        end
 
         used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
         if (found_self = @found_self_in_initialize_call) || (used_ivars_node = used_ivars_in_calls_in_initialize.try(&.[var_name]?)) || (@block_nest > 0 && !@vars.has_key?(var_name))
@@ -791,9 +795,11 @@ module Crystal
           ivar.bind_to program.nil_var
         end
 
-        @vars[var_name] = simple_var
+        if simple_var
+          @vars[var_name] = simple_var
 
-        check_exception_handler_vars var_name, value
+          check_exception_handler_vars var_name, value
+        end
       end
     end
 

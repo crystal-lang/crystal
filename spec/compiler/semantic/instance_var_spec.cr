@@ -4560,4 +4560,22 @@ describe "Semantic: instance var" do
       Foo.new.a
       )) { bool }
   end
+
+  it "doesn't consider var as nilable if conditionally assigned inside initialize, but has initializer (#3669)" do
+    assert_type(%(
+      class Foo
+        @x = 0
+
+        def initialize
+          @x = 1 if 1 == 2
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
 end
