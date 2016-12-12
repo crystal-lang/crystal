@@ -31,6 +31,33 @@ class IO::ARGF
     read_count
   end
 
+  # :nodoc:
+  def gets(delimiter : Char, limit : Int) : String?
+    return super if @encoding
+
+    first_initialize unless @initialized
+
+    if current_io = @current_io
+      string = current_io.gets(delimiter, limit)
+      if !string && !@read_from_stdin
+        current_io.close
+        if @argv.empty?
+          @current_io = nil
+        else
+          read_next_argv
+          string = gets(delimiter, limit)
+        end
+      end
+    elsif !@read_from_stdin && !@argv.empty?
+      read_next_argv
+      string = gets(delimiter, limit)
+    else
+      string = nil
+    end
+
+    string
+  end
+
   def write(slice : Slice(UInt8))
     raise IO::Error.new "can't write to ARGF"
   end

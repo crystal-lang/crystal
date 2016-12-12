@@ -37,4 +37,38 @@ describe IO::ARGF do
     str = argf.gets(5)
     str.should eq("12345")
   end
+
+  describe "gets" do
+    it "reads from STDIN if ARGV isn't specified" do
+      argv = [] of String
+      stdin = IO::Memory.new("hello\nworld\n")
+
+      argf = IO::ARGF.new argv, stdin
+      argf.gets.should eq("hello\n")
+      argf.gets.should eq("world\n")
+      argf.gets.should be_nil
+    end
+
+    it "reads from ARGV if specified" do
+      path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
+      path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
+      stdin = IO::Memory.new("")
+      argv = [path1, path2]
+
+      argf = IO::ARGF.new argv, stdin
+      argv.should eq([path1, path2])
+
+      argf.gets.should eq("12345\n")
+      argv.should eq([path2])
+
+      argf.gets.should eq("67890\n")
+      argv.empty?.should be_true
+
+      argf.gets.should be_nil
+
+      argv << path1
+      str = argf.gets
+      str.should eq("12345\n")
+    end
+  end
 end
