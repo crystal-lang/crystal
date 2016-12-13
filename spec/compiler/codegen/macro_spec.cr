@@ -1575,4 +1575,46 @@ describe "Code gen: macro" do
       x
       )).to_b.should be_false
   end
+
+  it "forwards file location" do
+    run(%(
+      macro foo
+        bar
+      end
+
+      macro bar(file = __FILE__)
+        {{file}}
+      end
+
+      foo
+      ), filename: "bar.cr").to_string.should eq("bar.cr")
+  end
+
+  it "forwards dir location" do
+    run(%(
+      macro foo
+        bar
+      end
+
+      macro bar(dir = __DIR__)
+        {{dir}}
+      end
+
+      foo
+      ), filename: "somedir/bar.cr").to_string.should eq("somedir")
+  end
+
+  it "forwards line number" do
+    run(%(
+      macro foo
+        bar
+      end
+
+      macro bar(line = __LINE__)
+        {{line}}
+      end
+
+      foo
+      ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(10)
+  end
 end
