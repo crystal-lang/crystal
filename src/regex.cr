@@ -214,12 +214,12 @@ class Regex
   # Creates a new Regex out of the given source String.
   #
   # ```
-  # Regex.new("^a-z+:\s+\w+")                     # => /^a-z+:\s+\w+/
+  # Regex.new("^a-z+:\\s+\\w+")                   # => /^a-z+:\s+\w+/
   # Regex.new("cat", Regex::Options::IGNORE_CASE) # => /cat/i
   # options = Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
   # Regex.new("dog", options) # => /dog/ix
   # ```
-  def initialize(source, @options : Options = Options::None)
+  def initialize(source : String, @options : Options = Options::None)
     # PCRE's pattern must have their null characters escaped
     source = source.gsub('\u{0}', "\\0")
     @source = source
