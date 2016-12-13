@@ -1,3 +1,4 @@
+# Handles encoding and decoding of HTML entities.
 module HTML
   SUBSTITUTIONS = {
     '!'      => "&#33;",
@@ -21,16 +22,39 @@ module HTML
     '\u{a0}' => "&nbsp;",
   }
 
+  # Encodes a string with HTML entity substitutions.
+  #
+  # ```
+  # require "html"
+  #
+  # HTML.escape("Crystal & You") # => "Crystal &amp; You"
+  # ```
   def self.escape(string : String) : String
     string.gsub(SUBSTITUTIONS)
   end
 
+  # Encodes a string to HTML, but writes to the IO instance provided.
+  #
+  # ```
+  # require "html"
+  #
+  # io = IO::Memory.new
+  # HTML.escape("Crystal & You", io) # => "Crystal & You"
+  # io.to_s                          # => "Crystal &amp; You"
+  # ```
   def self.escape(string : String, io : IO)
     string.each_char do |char|
       io << SUBSTITUTIONS.fetch(char, char)
     end
   end
 
+  # Decodes a string that contains HTML entities.
+  #
+  # ```
+  # require "html"
+  #
+  # HTML.unescape("Crystal &amp; You") # => "Crystal & You"
+  # ```
   def self.unescape(string : String)
     return string unless string.includes? '&'
 
