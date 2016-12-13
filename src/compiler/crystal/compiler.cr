@@ -149,6 +149,7 @@ module Crystal
 
     private def new_program(sources)
       program = Program.new
+      program.filename = sources.first.filename
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.target_machine = target_machine
       program.flags << "release" if release?

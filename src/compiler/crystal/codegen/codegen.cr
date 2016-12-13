@@ -200,6 +200,10 @@ module Crystal
 
       initialize_simple_class_vars_and_constants
 
+      if @debug && (filename = @program.filename)
+        set_current_debug_location Location.new(filename, 1, 1)
+      end
+
       alloca_vars @program.vars, @program
 
       emit_vars_debug_info(@program.vars) if @debug
