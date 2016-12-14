@@ -10,7 +10,6 @@
 # This Deque is implemented with a [dynamic array](http://en.wikipedia.org/wiki/Dynamic_array) used as a
 # [circular buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 class Deque(T)
-  include Enumerable(T)
   include Indexable(T)
   include Comparable(Deque)
 

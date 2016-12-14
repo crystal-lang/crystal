@@ -70,7 +70,7 @@ class Reference
   end
 
   def pretty_print(pp) : Nil
-    {% if @type.methods.any? &.name.==("inspect") %}
+    {% if @type.overrides?(Reference, "inspect") %}
       pp.text inspect
     {% else %}
       prefix = "#<#{{{@type.name.id.stringify}}}:0x#{object_id.to_s(16)}"

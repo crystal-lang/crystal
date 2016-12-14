@@ -44,7 +44,6 @@
 # set << 3
 # ```
 class Array(T)
-  include Enumerable(T)
   include Indexable(T)
   include Comparable(Array)
 

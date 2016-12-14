@@ -1,6 +1,5 @@
 # A fixed-size, stack allocated array.
 struct StaticArray(T, N)
-  include Enumerable(T)
   include Indexable(T)
 
   # Create a new `StaticArray` with the given *args*. The type of the

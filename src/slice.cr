@@ -6,7 +6,6 @@ require "c/string"
 # reading from and writing to a slice involve bound checks.
 # In this way, a slice is a safe alternative to Pointer.
 struct Slice(T)
-  include Enumerable(T)
   include Indexable(T)
 
   # Create a new `Slice` with the given *args*. The type of the

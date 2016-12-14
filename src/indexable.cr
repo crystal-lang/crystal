@@ -7,10 +7,7 @@
 # Types including this module are typically `Array`-like types.
 module Indexable(T)
   include Iterable(T)
-
-  # TODO: the compiler doesn't realize that if X includes Indexable then X is Enumerable
-  # This is fixed in 0.19.0
-  # include Enumerable(T)
+  include Enumerable(T)
 
   # Returns the number of elements in this container
   abstract def size

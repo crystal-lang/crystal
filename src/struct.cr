@@ -108,9 +108,7 @@ struct Struct
   end
 
   def pretty_print(pp) : Nil
-    # TODO: do this better: ask if the type overrides
-    # the method from Struct
-    {% if @type.methods.any? &.name.==("inspect") %}
+    {% if @type.overrides?(Struct, "inspect") %}
       pp.text inspect
     {% else %}
       prefix = "#{{{@type.name.id.stringify}}}("
