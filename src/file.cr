@@ -324,6 +324,8 @@ class File < IO::FileDescriptor
 
     if path.starts_with?('~')
       home = ENV["HOME"]
+      home = home.chomp('/') unless home == "/"
+
       if path.size >= 2 && path[1] == SEPARATOR
         path = home + path[1..-1]
       elsif path.size < 2
