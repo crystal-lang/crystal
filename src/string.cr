@@ -726,7 +726,7 @@ class String
     reader = Char::Reader.new(self)
     i = 0
 
-    reader.each_with_index do |char|
+    reader.each do |char|
       if i == start
         start_pos = reader.pos
       elsif count >= 0 && i == start + count
@@ -2511,7 +2511,7 @@ class String
     single_byte_optimizable = ascii_only?
 
     reader = Char::Reader.new(self)
-    reader.each_with_index do |char, i|
+    reader.each do |char|
       if char == separator
         piece_bytesize = reader.pos - byte_offset
         piece_size = single_byte_optimizable ? piece_bytesize : 0
