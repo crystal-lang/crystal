@@ -630,7 +630,7 @@ class Crystal::Doc::Type
   end
 
   def type_to_html(type : Crystal::GenericInstanceType, io, text = nil, links = true)
-    not_instantiated = type.type_vars.all? { |(name, type_var)| type_var.is_a?(Var) && type_var.type.is_a?(TypeParameter) }
+    has_link_in_type_vars = type.type_vars.any? { |(name, type_var)| type_has_link? type_var.as?(Var).try(&.type) || type_var }
     generic_type = @generator.type(type.generic_type)
     must_be_included = generic_type.must_be_included?
 
@@ -644,31 +644,22 @@ class Crystal::Doc::Type
       io << text
     else
       generic_type.full_name_without_type_vars(io)
-      if not_instantiated
-        io << '('
-        type.type_vars.values.join ", ", &.as(Var).type.to_s io
-        io << ')'
-      end
     end
 
-    if must_be_included && links
-      io << "</a>"
-    end
+    io << "</a>" if must_be_included && links && has_link_in_type_vars
 
-    unless not_instantiated
-      io << '('
-      type.type_vars.values.join(", ", io) do |type_var|
-        case type_var
-        when Var
-          type_to_html type_var.type, io, links: links
-        when Crystal::Type
-          type_to_html type_var, io, links: links
-        when ASTNode
-          type_to_html type_var, io, links: links
-        end
+    io << '('
+    type.type_vars.values.join(", ", io) do |type_var|
+      case type_var
+      when Var
+        type_to_html type_var.type, io, links: links
+      else
+        type_to_html type_var, io, links: links
       end
-      io << ')'
     end
+    io << ')'
+
+    io << "</a>" if must_be_included && links && !has_link_in_type_vars
   end
 
   def type_to_html(type : Crystal::VirtualType, io, text = nil, links = true)
@@ -706,6 +697,36 @@ class Crystal::Doc::Type
 
   def type_to_html(type : ASTNode, io, text = nil, links = true)
     type.to_s io
+  end
+
+  def type_has_link?(type : Crystal::UnionType)
+    type.union_types.any? { |type| type_has_link? type }
+  end
+
+  def type_has_link?(type : Crystal::ProcInstanceType)
+    type.arg_types.any? { |type| type_has_link? type } ||
+      type_has_link? type.return_type
+  end
+
+  def type_has_link?(type : Crystal::TupleInstanceType)
+    type.tuple_types.any? { |type| type_has_link? type }
+  end
+
+  def type_has_link?(type : Crystal::NamedTupleInstanceType)
+    type.entries.any? { |entry| type_has_link? entry.type }
+  end
+
+  def type_has_link?(type : Crystal::GenericInstanceType)
+    @generator.type(type.generic_type).must_be_included? ||
+      type.type_vars.any? { |(name, type_var)| type_has_link? type_var.as?(Var).try(&.type) || type_var }
+  end
+
+  def type_has_link?(type : Crystal::Type)
+    @generator.type(type).must_be_included?
+  end
+
+  def type_has_link?(type : Crystal::TypeParameter | ASTNode)
+    false
   end
 
   def must_be_included?
