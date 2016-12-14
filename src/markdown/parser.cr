@@ -467,8 +467,21 @@ class Markdown::Parser
           @renderer.text line.byte_slice(cursor, pos - cursor)
           @renderer.end_link
 
-          paren_idx = (str + pos + 1).to_slice(bytesize - pos - 1).index(')'.ord).not_nil!
-          pos += paren_idx + 1
+          # in case of url with parenthesis
+          paren_count = 0
+          while pos < bytesize
+            case str[pos].unsafe_chr
+            when '('
+              paren_count += 1
+            when ')'
+              paren_count -= 1
+              if paren_count == 0
+                break
+              end
+            end
+            pos += 1
+          end
+
           cursor = pos + 1
           in_link = false
         end
@@ -518,10 +531,26 @@ class Markdown::Parser
 
     return nil unless str[bracket_idx + 1] === '('
 
-    paren_idx = (str + bracket_idx + 1).to_slice(bytesize - bracket_idx - 1).index ')'.ord
-    return nil unless paren_idx
-
-    String.new(Slice.new(str + bracket_idx + 2, paren_idx - 1))
+    pos += 1
+    paren_count = 0
+    paren_start_idx = -1
+    paren_end_idx = -1
+    while pos < bytesize
+      case str[pos].unsafe_chr
+      when '('
+        paren_start_idx = pos if paren_start_idx < 0
+        paren_count += 1
+      when ')'
+        paren_count -= 1
+        if paren_count == 0
+          paren_end_idx = pos
+          s = String.new(Slice.new(str + paren_start_idx + 1, paren_end_idx - paren_start_idx - 1))
+          return s
+          break
+        end
+      end
+      pos += 1
+    end
   end
 
   def next_line_is_all?(char)
