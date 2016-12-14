@@ -548,4 +548,14 @@ describe "Code gen: def" do
       end
       ), inject_primitives: false)
   end
+
+  it "codegens union to union assignment of mutable arg (#3691)" do
+    codegen(%(
+      def foo(arg)
+        arg = ""
+      end
+
+      foo(1 || true)
+      ))
+  end
 end
