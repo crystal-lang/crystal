@@ -2175,6 +2175,8 @@ module Crystal
         node.type = program.uint64
       when "object_crystal_type_id"
         node.type = program.int32
+      when "class_crystal_instance_type_id"
+        node.type = program.int32
       when "symbol_to_s"
         node.type = program.string
       when "class"

@@ -1144,4 +1144,9 @@ class Object
       \{% end %}
     end
   end
+
+  protected def self.set_crystal_type_id(ptr)
+    ptr.as(LibC::SizeT*).value = LibC::SizeT.new(crystal_instance_type_id)
+    ptr
+  end
 end

@@ -51,6 +51,12 @@ class Reference
   end
 end
 
+class Class
+  @[Primitive(:class_crystal_instance_type_id)]
+  def crystal_instance_type_id
+  end
+end
+
 struct Bool
   # Returns true if *self* is equal to *other*.
   @[Primitive(:binary)]
