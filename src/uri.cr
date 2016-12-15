@@ -131,7 +131,7 @@ class URI
   # ```
   def full_path
     String.build do |str|
-      str << (path.try { |p| !p.empty? } ? path : "/")
+      str << (@path.try { |p| !p.empty? } ? @path : "/")
       str << "?" << @query if @query
     end
   end
@@ -170,8 +170,16 @@ class URI
     end
   end
 
-  def path
-    remove_dot_segments(@path)
+  # Returns normalized URI
+  def normalize
+    uri = dup
+    uri.normalize!
+    uri
+  end
+
+  # Destructive normalize
+  def normalize!
+    @path = remove_dot_segments(path)
   end
 
   # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
