@@ -397,4 +397,14 @@ describe "Restrictions" do
       foo(Parent || Child)
       )) { types["Parent"].metaclass.virtual_type! }
   end
+
+  it "doesn't crash on invalid splat restriction (#3698)" do
+    assert_error %(
+      def foo(arg : *String)
+      end
+
+      foo(1)
+      ),
+      "no overload matches"
+  end
 end

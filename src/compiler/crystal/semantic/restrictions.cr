@@ -426,6 +426,10 @@ module Crystal
       nil
     end
 
+    def restrict(other : Splat, context)
+      nil
+    end
+
     def restrict(other : ASTNode, context)
       raise "Bug: unsupported restriction: #{self} vs. #{other}"
     end
