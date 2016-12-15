@@ -44,9 +44,19 @@ describe IO::ARGF do
       stdin = IO::Memory.new("hello\nworld\n")
 
       argf = IO::ARGF.new argv, stdin
-      argf.gets.should eq("hello\n")
-      argf.gets.should eq("world\n")
+      argf.gets.should eq("hello")
+      argf.gets.should eq("world")
       argf.gets.should be_nil
+    end
+
+    it "reads from STDIN if ARGV isn't specified, chomp = false" do
+      argv = [] of String
+      stdin = IO::Memory.new("hello\nworld\n")
+
+      argf = IO::ARGF.new argv, stdin
+      argf.gets(chomp: false).should eq("hello\n")
+      argf.gets(chomp: false).should eq("world\n")
+      argf.gets(chomp: false).should be_nil
     end
 
     it "reads from ARGV if specified" do
@@ -58,16 +68,16 @@ describe IO::ARGF do
       argf = IO::ARGF.new argv, stdin
       argv.should eq([path1, path2])
 
-      argf.gets.should eq("12345\n")
+      argf.gets(chomp: false).should eq("12345\n")
       argv.should eq([path2])
 
-      argf.gets.should eq("67890\n")
+      argf.gets(chomp: false).should eq("67890\n")
       argv.empty?.should be_true
 
-      argf.gets.should be_nil
+      argf.gets(chomp: false).should be_nil
 
       argv << path1
-      str = argf.gets
+      str = argf.gets(chomp: false)
       str.should eq("12345\n")
     end
   end

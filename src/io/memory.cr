@@ -132,7 +132,7 @@ class IO::Memory
   end
 
   # :nodoc:
-  def gets(delimiter : Char, limit : Int32)
+  def gets(delimiter : Char, limit : Int32, chomp = false)
     return super if @encoding || delimiter.ord >= 128
 
     check_open
@@ -155,8 +155,18 @@ class IO::Memory
       end
     end
 
+    advance = index
+
+    if chomp && index > 0 && (@buffer + @pos + index - 1).value === delimiter
+      index -= 1
+
+      if delimiter == '\n' && index > 0 && (@buffer + @pos + index - 1).value === '\r'
+        index -= 1
+      end
+    end
+
     string = String.new(@buffer + @pos, index)
-    @pos += index
+    @pos += advance
     string
   end
 

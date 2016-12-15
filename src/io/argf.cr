@@ -32,25 +32,25 @@ class IO::ARGF
   end
 
   # :nodoc:
-  def gets(delimiter : Char, limit : Int) : String?
+  def gets(delimiter : Char, limit : Int, chomp = false) : String?
     return super if @encoding
 
     first_initialize unless @initialized
 
     if current_io = @current_io
-      string = current_io.gets(delimiter, limit)
+      string = current_io.gets(delimiter, limit, chomp)
       if !string && !@read_from_stdin
         current_io.close
         if @argv.empty?
           @current_io = nil
         else
           read_next_argv
-          string = gets(delimiter, limit)
+          string = gets(delimiter, limit, chomp)
         end
       end
     elsif !@read_from_stdin && !@argv.empty?
       read_next_argv
-      string = gets(delimiter, limit)
+      string = gets(delimiter, limit, chomp)
     else
       string = nil
     end
