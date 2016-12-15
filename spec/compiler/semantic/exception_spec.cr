@@ -355,52 +355,6 @@ describe "Semantic: exception" do
       )) { int32 }
   end
 
-  it "doesn't type instance variable if initialized inside begin and rescue raises" do
-    assert_type(%(
-      require "prelude"
-
-      class Foo
-        def initialize
-          begin
-            @bar = 1
-          rescue
-            raise "OH NO"
-          end
-        end
-
-        def bar
-          @bar
-        end
-      end
-
-      foo = Foo.new
-      foo.bar
-      )) { int32 }
-  end
-
-  it "doesn't type instance variable if initialized inside begin and in rescue" do
-    assert_type(%(
-      require "prelude"
-
-      class Foo
-        def initialize
-          begin
-            @bar = 1
-          rescue
-            @bar = 2
-          end
-        end
-
-        def bar
-          @bar
-        end
-      end
-
-      foo = Foo.new
-      foo.bar
-      )) { int32 }
-  end
-
   it "correctly types #1988" do
     assert_type(%(
       begin
@@ -444,5 +398,35 @@ describe "Semantic: exception" do
       end
       var
       )) { union_of(int32, string) }
+  end
+
+  it "marks instance variable as nilable if assigned inside rescue inside initialize" do
+    assert_error %(
+      require "prelude"
+
+      def some_method
+        if rand < 0.999999999
+          raise "OH NO"
+        else
+          2
+        end
+      end
+
+      class Coco < Exception
+        def initialize(@x : Foo)
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = 1
+        rescue
+          raise Coco.new(self)
+        end
+      end
+
+      Foo.new
+      ),
+      "instance variable '@x' of Foo must be Int32, not Nil"
   end
 end

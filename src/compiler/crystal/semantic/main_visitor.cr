@@ -2490,6 +2490,15 @@ module Crystal
         # was raised before assigning any of the vars.
         exception_handler_vars.each do |name, var|
           unless before_body_vars[name]?
+            # Instance variables inside the body must be marked as nil
+            if name.starts_with?('@')
+              ivar = scope.lookup_instance_var(name)
+              unless ivar.type.includes_type?(@program.nil_var)
+                ivar.nil_reason = NilReason.new(name, :initialized_in_rescue)
+                ivar.bind_to @program.nil_var
+              end
+            end
+
             var.nil_if_read = true
           end
         end
@@ -2549,7 +2558,7 @@ module Crystal
         end
 
         # However, those previous variables can't be nil afterwards:
-        # if an exception was raised then we won't running the code
+        # if an exception was raised then we won't be running the code
         # after the ensure clause, so variables don't matter. But if
         # an exception was not raised then all variables were declared
         # successfully.

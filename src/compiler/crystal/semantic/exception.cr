@@ -232,6 +232,8 @@ module Crystal
         io << colorize("instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
       when :used_self_before_initialized
         io << colorize("'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable").bold
+      when :initialized_in_rescue
+        io << colorize("instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued").bold
       end
     end
 
