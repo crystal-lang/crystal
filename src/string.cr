@@ -958,6 +958,34 @@ class String
     end
   end
 
+  # Returns a new String with *char* removed if the string starts with it.
+  #
+  # ```
+  # "hello".lchomp('h') # => "ello"
+  # "hello".lchomp('g') # => "hello"
+  # ```
+  def lchomp(char : Char)
+    if starts_with?(char)
+      unsafe_byte_slice_string(char.bytesize, bytesize - char.bytesize)
+    else
+      self
+    end
+  end
+
+  # Returns a new String with *str* removed if the string starts with it.
+  #
+  # ```
+  # "hello".lchomp("hel") # => "lo"
+  # "hello".lchomp("eh")  # => "hello"
+  # ```
+  def lchomp(str : String)
+    if starts_with?(str)
+      unsafe_byte_slice_string(str.bytesize, bytesize - str.bytesize)
+    else
+      self
+    end
+  end
+
   # Returns a new String with the last carriage return removed (that is, it
   # will remove \n, \r, and \r\n).
   #
