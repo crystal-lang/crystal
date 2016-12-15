@@ -5,27 +5,17 @@ require "c/sys/stat"
 require "c/unistd"
 
 class File < IO::FileDescriptor
-  # The file/directory separator character. '/' in unix, '\\' in windows.
-  SEPARATOR = {% if flag?(:windows) %}
-    '\\'
-  {% else %}
-    '/'
-  {% end %}
-
-  # The file/directory separator string. "/" in unix, "\\" in windows.
-  SEPARATOR_STRING = {% if flag?(:windows) %}
-    "\\"
-  {% else %}
-    "/"
-  {% end %}
+  SEPARATOR        = Path::SEPARATOR
+  SEPARATOR_STRING = Path::SEPARATOR_STRING
 
   # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
 
-  def initialize(filename : String, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
+  def initialize(filename : String | Path, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
     oflag = open_flag(mode) | LibC::O_CLOEXEC
+    filename = Path.new(filename)
 
-    fd = LibC.open(filename.check_no_null_byte, oflag, perm)
+    fd = LibC.open(filename.to_s, oflag, perm)
     if fd < 0
       raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
     end
@@ -74,7 +64,7 @@ class File < IO::FileDescriptor
     oflag = m | o
   end
 
-  getter path : String
+  getter path : Path
 
   # Returns a `File::Stat` object for the file given by *path* or raises
   # `Errno` in case of an error. In case of a symbolic link
@@ -193,17 +183,7 @@ class File < IO::FileDescriptor
   # File.dirname("/foo/bar/file.cr") # => "/foo/bar"
   # ```
   def self.dirname(path) : String
-    path.check_no_null_byte
-    index = path.rindex SEPARATOR
-    if index
-      if index == 0
-        SEPARATOR_STRING
-      else
-        path[0, index]
-      end
-    else
-      "."
-    end
+    Path.new(path).dirname.to_s
   end
 
   # Returns the last component of the given *path*.
@@ -212,20 +192,7 @@ class File < IO::FileDescriptor
   # File.basename("/foo/bar/file.cr") # => "file.cr"
   # ```
   def self.basename(path) : String
-    return "" if path.bytesize == 0
-    return SEPARATOR_STRING if path == SEPARATOR_STRING
-
-    path.check_no_null_byte
-
-    last = path.size - 1
-    last -= 1 if path[last] == SEPARATOR
-
-    index = path.rindex SEPARATOR, last
-    if index
-      path[index + 1, last - index]
-    else
-      path
-    end
+    Path.new(path).basename.to_s
   end
 
   # Returns the last component of the given *path*.
@@ -236,8 +203,7 @@ class File < IO::FileDescriptor
   # File.basename("/foo/bar/file.cr", ".cr") # => "file"
   # ```
   def self.basename(path, suffix) : String
-    suffix.check_no_null_byte
-    basename(path).chomp(suffix)
+    Path.new(path).basename(suffix).to_s
   end
 
   # Changes the owner of the specified file.
@@ -299,15 +265,7 @@ class File < IO::FileDescriptor
   # File.extname("foo.cr") # => ".cr"
   # ```
   def self.extname(filename) : String
-    filename.check_no_null_byte
-
-    dot_index = filename.rindex('.')
-
-    if dot_index && dot_index != filename.size - 1 && filename[dot_index - 1] != SEPARATOR
-      filename[dot_index, filename.size - dot_index]
-    else
-      ""
-    end
+    Path.new(filename).extname
   end
 
   # Converts *path* to an absolute path. Relative paths are
@@ -320,41 +278,7 @@ class File < IO::FileDescriptor
   # File.expand_path("baz", "/foo/bar") # => "/foo/bar/baz"
   # ```
   def self.expand_path(path, dir = nil) : String
-    path.check_no_null_byte
-
-    if path.starts_with?('~')
-      home = ENV["HOME"]
-      if path.size >= 2 && path[1] == SEPARATOR
-        path = home + path[1..-1]
-      elsif path.size < 2
-        return home
-      end
-    end
-
-    unless path.starts_with?(SEPARATOR)
-      dir = dir ? expand_path(dir) : Dir.current
-      path = "#{dir}#{SEPARATOR}#{path}"
-    end
-
-    parts = path.split(SEPARATOR)
-    items = [] of String
-    parts.each do |part|
-      case part
-      when "", "."
-        # Nothing
-      when ".."
-        items.pop?
-      else
-        items << part
-      end
-    end
-
-    String.build do |str|
-      {% if !flag?(:windows) %}
-        str << SEPARATOR_STRING
-      {% end %}
-      items.join SEPARATOR_STRING, str
-    end
+    Path.new(path).expand_path(dir).to_s
   end
 
   # Resolves the real path of *path* by following symbolic links.
@@ -488,7 +412,7 @@ class File < IO::FileDescriptor
   # File.join("/foo/", "/bar/", "/baz/") # => "/foo/bar/baz/"
   # ```
   def self.join(*parts) : String
-    join parts
+    Path.join(parts).to_s
   end
 
   # Returns a new string formed by joining the strings using `File::SEPARATOR`.
@@ -499,27 +423,7 @@ class File < IO::FileDescriptor
   # File.join(["/foo/", "/bar/", "/baz/"]) # => "/foo/bar/baz/"
   # ```
   def self.join(parts : Array | Tuple) : String
-    String.build do |str|
-      parts.each_with_index do |part, index|
-        part.check_no_null_byte
-
-        str << SEPARATOR if index > 0
-
-        byte_start = 0
-        byte_count = part.bytesize
-
-        if index > 0 && part.starts_with?(SEPARATOR)
-          byte_start += 1
-          byte_count -= 1
-        end
-
-        if index != parts.size - 1 && part.ends_with?(SEPARATOR)
-          byte_count -= 1
-        end
-
-        str.write part.unsafe_byte_slice(byte_start, byte_count)
-      end
-    end
+    Path.join(parts).to_s
   end
 
   # Returns the size of *filename* bytes.
