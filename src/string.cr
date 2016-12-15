@@ -2566,31 +2566,46 @@ class String
   # "foo,bar,baz".split(',', 2) # => ["foo", "bar,baz"]
   # ```
   def split(separator : Char, limit = nil)
-    if empty? || (limit && limit <= 1)
-      return [self]
+    ary = Array(String).new
+    split(separator, limit) do |string|
+      ary << string
+    end
+    ary
+  end
+
+  # Splits the string after each character *separator* and yields each part to a block.
+  #
+  # If *limit* is present, up to *limit* new strings will be created,
+  # with the entire remainder added to the last string.
+  #
+  # ```
+  # ary = [] of String
+  # "foo,bar,baz".split(',') { |string| ary << string }; ary # => ["foo", "bar", "baz"]
+  # ary.clear
+  # "foo,bar,baz".split(',', 2) { |string| ary << string }; ary # => ["foo", "bar,baz"]
+  # ```
+  def split(separator : Char, limit = nil, &block : String -> _)
+    if empty? || limit && limit <= 1
+      yield self
+      return
     end
 
-    ary = Array(String).new
-
+    yielded = 0
     byte_offset = 0
-    single_byte_optimizable = ascii_only?
 
     reader = Char::Reader.new(self)
     reader.each do |char|
       if char == separator
         piece_bytesize = reader.pos - byte_offset
-        piece_size = single_byte_optimizable ? piece_bytesize : 0
-        ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        yield String.new(to_unsafe + byte_offset, piece_bytesize)
+        yielded += 1
         byte_offset = reader.pos + reader.current_char_width
-        break if limit && ary.size + 1 == limit
+        break if limit && yielded + 1 == limit
       end
     end
 
     piece_bytesize = bytesize - byte_offset
-    piece_size = single_byte_optimizable ? piece_bytesize : 0
-    ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
-
-    ary
+    yield String.new(to_unsafe + byte_offset, piece_bytesize)
   end
 
   # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
