@@ -2481,11 +2481,36 @@ class String
   # old_pond.split(3) # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
   # ```
   def split(limit : Int32? = nil)
+    ary = Array(String).new
+    split(limit) do |string|
+      ary << string
+    end
+    ary
+  end
+
+  # Splits the string after any ASCII whitespace character and yields each part to a block.
+  #
+  # If *limit* is present, up to *limit* new strings will be created,
+  # with the entire remainder added to the last string.
+  #
+  # ```
+  # ary = [] of String
+  # old_pond = "
+  #   Old pond
+  #   a frog leaps in
+  #   water's sound
+  # "
+  # old_pond.split { |s| ary << s }; ary # => ["Old", "pond", "a", "frog", "leaps", "in", "water's", "sound"]
+  # ary.clear
+  # old_pond.split(3) { |s| ary << s }; ary # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
+  # ```
+  def split(limit : Int32? = nil, &block : String -> _)
     if limit && limit <= 1
-      return [self]
+      yield self
+      return
     end
 
-    ary = Array(String).new
+    yielded = 0
     single_byte_optimizable = ascii_only?
     index = 0
     i = 0
@@ -2499,10 +2524,11 @@ class String
           if c.unsafe_chr.ascii_whitespace?
             piece_bytesize = i - 1 - index
             piece_size = single_byte_optimizable ? piece_bytesize : 0
-            ary.push String.new(to_unsafe + index, piece_bytesize, piece_size)
+            yield String.new(to_unsafe + index, piece_bytesize, piece_size)
+            yielded += 1
             looking_for_space = false
 
-            if limit && ary.size + 1 == limit
+            if limit && yielded + 1 == limit
               limit_reached = true
             end
 
@@ -2526,9 +2552,8 @@ class String
     if looking_for_space
       piece_bytesize = bytesize - index
       piece_size = single_byte_optimizable ? piece_bytesize : 0
-      ary.push String.new(to_unsafe + index, piece_bytesize, piece_size)
+      yield String.new(to_unsafe + index, piece_bytesize, piece_size)
     end
-    ary
   end
 
   # Makes an array by splitting the string on the given character *separator* (and removing that character).
