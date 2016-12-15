@@ -30,7 +30,7 @@ module IO::Buffered
   abstract def unbuffered_rewind
 
   # :nodoc:
-  def gets(delimiter : Char, limit : Int)
+  def gets(delimiter : Char, limit : Int, chomp = false)
     check_open
 
     if delimiter.ord >= 128 || @encoding
@@ -61,8 +61,18 @@ module IO::Buffered
         index += 1
       end
 
+      advance = index
+
+      if chomp && index > 0 && @in_buffer_rem[index - 1] === delimiter_byte
+        index -= 1
+
+        if delimiter == '\n' && index > 0 && @in_buffer_rem[index - 1] === '\r'
+          index -= 1
+        end
+      end
+
       string = String.new(@in_buffer_rem[0, index])
-      @in_buffer_rem += index
+      @in_buffer_rem += advance
       return string
     end
 
@@ -101,6 +111,7 @@ module IO::Buffered
           break
         end
       end
+      buffer.chomp!(delimiter_byte) if chomp
     end
   end
 

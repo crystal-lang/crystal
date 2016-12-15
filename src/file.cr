@@ -442,17 +442,17 @@ class File < IO::FileDescriptor
   #   # loop
   # end
   # ```
-  def self.each_line(filename, encoding = nil, invalid = nil)
+  def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
     File.open(filename, "r", encoding: encoding, invalid: invalid) do |file|
-      file.each_line do |line|
+      file.each_line(chomp: chomp) do |line|
         yield line
       end
     end
   end
 
   # Returns an `Iterator` for each line in *filename*.
-  def self.each_line(filename, encoding = nil, invalid = nil)
-    File.open(filename, "r", encoding: encoding, invalid: invalid).each_line
+  def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
+    File.open(filename, "r", encoding: encoding, invalid: invalid).each_line(chomp: chomp)
   end
 
   # Returns all lines in *filename* as an array of strings.
@@ -461,9 +461,9 @@ class File < IO::FileDescriptor
   # File.write("foobar", "foo\nbar")
   # File.read_lines("foobar") # => ["foo\n", "bar\n"]
   # ```
-  def self.read_lines(filename, encoding = nil, invalid = nil) : Array(String)
+  def self.read_lines(filename, encoding = nil, invalid = nil, chomp = true) : Array(String)
     lines = [] of String
-    each_line(filename, encoding: encoding, invalid: invalid) do |line|
+    each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp) do |line|
       lines << line
     end
     lines

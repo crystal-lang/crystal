@@ -51,16 +51,35 @@ end
 
 describe "IO::Buffered" do
   it "does gets" do
-    io = BufferedWrapper.new(IO::Memory.new("hello\nworld\n"))
-    io.gets.should eq("hello\n")
-    io.gets.should eq("world\n")
+    io = BufferedWrapper.new(IO::Memory.new("hello\r\nworld\n"))
+    io.gets.should eq("hello")
+    io.gets.should eq("world")
     io.gets.should be_nil
+  end
+
+  it "does gets with chomp = false" do
+    io = BufferedWrapper.new(IO::Memory.new("hello\nworld\n"))
+    io.gets(chomp: false).should eq("hello\n")
+    io.gets(chomp: false).should eq("world\n")
+    io.gets(chomp: false).should be_nil
   end
 
   it "does gets with big line" do
     big_line = "a" * 20_000
     io = BufferedWrapper.new(IO::Memory.new("#{big_line}\nworld\n"))
-    io.gets.should eq("#{big_line}\n")
+    io.gets.should eq(big_line)
+  end
+
+  it "does gets with big line and \\r\\n" do
+    big_line = "a" * 20_000
+    io = BufferedWrapper.new(IO::Memory.new("#{big_line}\r\nworld\n"))
+    io.gets.should eq(big_line)
+  end
+
+  it "does gets with big line and chomp = false" do
+    big_line = "a" * 20_000
+    io = BufferedWrapper.new(IO::Memory.new("#{big_line}\nworld\n"))
+    io.gets(chomp: false).should eq("#{big_line}\n")
   end
 
   it "does gets with char delimiter" do
@@ -174,9 +193,9 @@ describe "IO::Buffered" do
   it "rewinds" do
     str = IO::Memory.new("hello\nworld\n")
     io = BufferedWrapper.new str
-    io.gets.should eq("hello\n")
+    io.gets.should eq("hello")
     io.rewind
-    io.gets.should eq("hello\n")
+    io.gets.should eq("hello")
   end
 
   it "reads more than the buffer's internal capacity" do
@@ -302,9 +321,19 @@ describe "IO::Buffered" do
         base_io = IO::Memory.new(str.encode("UCS-2LE"))
         io = BufferedWrapper.new(base_io)
         io.set_encoding("UCS-2LE")
-        io.gets.should eq("Hello world\n")
-        io.gets.should eq("Foo\n")
-        io.gets.should eq("Bar\n")
+        io.gets.should eq("Hello world")
+        io.gets.should eq("Foo")
+        io.gets.should eq("Bar")
+      end
+
+      it "gets with chomp = false" do
+        str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
+        base_io = IO::Memory.new(str.encode("UCS-2LE"))
+        io = BufferedWrapper.new(base_io)
+        io.set_encoding("UCS-2LE")
+        io.gets(chomp: false).should eq("Hello world\n")
+        io.gets(chomp: false).should eq("Foo\n")
+        io.gets(chomp: false).should eq("Bar\n")
       end
 
       it "gets big string" do
@@ -313,8 +342,8 @@ describe "IO::Buffered" do
         io = BufferedWrapper.new(base_io)
         io.set_encoding("UCS-2LE")
         10_000.times do |i|
-          io.gets.should eq("Hello\n")
-          io.gets.should eq("World\n")
+          io.gets(chomp: false).should eq("Hello\n")
+          io.gets(chomp: false).should eq("World\n")
         end
       end
 
@@ -324,7 +353,7 @@ describe "IO::Buffered" do
         io = BufferedWrapper.new(base_io)
         io.set_encoding("GB2312")
         1000.times do
-          io.gets.should eq("你好我是人\n")
+          io.gets(chomp: false).should eq("你好我是人\n")
         end
       end
 
@@ -333,7 +362,7 @@ describe "IO::Buffered" do
         base_io = IO::Memory.new(str.encode("UCS-2LE"))
         io = BufferedWrapper.new(base_io)
         io.set_encoding("UCS-2LE")
-        io.gets.should eq("x\n")
+        io.gets(chomp: false).should eq("x\n")
         str = str[2..-1]
         str.each_char do |char|
           io.read_char.should eq(char)

@@ -61,6 +61,15 @@ private class SimpleIOMemory
     Slice.new(@buffer, @bytesize)
   end
 
+  def to_s
+    String.new @buffer, @bytesize
+  end
+
+  def rewind
+    @pos = 0
+    self
+  end
+
   private def check_needs_resize
     resize_to_capacity(@capacity * 2) if @bytesize == @capacity
   end
@@ -113,8 +122,19 @@ describe IO do
 
   describe "IO iterators" do
     it "iterates by line" do
-      io = IO::Memory.new("hello\nbye\n")
+      io = SimpleIOMemory.new("hello\nbye\n")
       lines = io.each_line
+      lines.next.should eq("hello")
+      lines.next.should eq("bye")
+      lines.next.should be_a(Iterator::Stop)
+
+      lines.rewind
+      lines.next.should eq("hello")
+    end
+
+    it "iterates by line with chomp false" do
+      io = SimpleIOMemory.new("hello\nbye\n")
+      lines = io.each_line(chomp: false)
       lines.next.should eq("hello\n")
       lines.next.should eq("bye\n")
       lines.next.should be_a(Iterator::Stop)
@@ -124,7 +144,7 @@ describe IO do
     end
 
     it "iterates by char" do
-      io = IO::Memory.new("abあぼ")
+      io = SimpleIOMemory.new("abあぼ")
       chars = io.each_char
       chars.next.should eq('a')
       chars.next.should eq('b')
@@ -137,7 +157,7 @@ describe IO do
     end
 
     it "iterates by byte" do
-      io = IO::Memory.new("ab")
+      io = SimpleIOMemory.new("ab")
       bytes = io.each_byte
       bytes.next.should eq('a'.ord)
       bytes.next.should eq('b'.ord)
@@ -150,24 +170,24 @@ describe IO do
 
   it "copies" do
     string = "abあぼ"
-    src = IO::Memory.new(string)
-    dst = IO::Memory.new
+    src = SimpleIOMemory.new(string)
+    dst = SimpleIOMemory.new
     IO.copy(src, dst).should eq(string.bytesize)
     dst.to_s.should eq(string)
   end
 
   it "copies with limit" do
     string = "abcあぼ"
-    src = IO::Memory.new(string)
-    dst = IO::Memory.new
+    src = SimpleIOMemory.new(string)
+    dst = SimpleIOMemory.new
     IO.copy(src, dst, 3).should eq(3)
     dst.to_s.should eq("abc")
   end
 
   it "raises on copy with negative limit" do
     string = "abcあぼ"
-    src = IO::Memory.new(string)
-    dst = IO::Memory.new
+    src = SimpleIOMemory.new(string)
+    dst = SimpleIOMemory.new
     expect_raises(ArgumentError, "negative limit") do
       IO.copy(src, dst, -10)
     end
@@ -177,7 +197,7 @@ describe IO do
     File.open("#{__DIR__}/../data/test_file.txt") do |file1|
       File.open("#{__DIR__}/../data/test_file.ini") do |file2|
         file2.reopen(file1)
-        file2.gets.should eq("Hello World\n")
+        file2.gets.should eq("Hello World")
       end
     end
   end
@@ -185,15 +205,30 @@ describe IO do
   describe "read operations" do
     it "does gets" do
       io = SimpleIOMemory.new("hello\nworld\n")
-      io.gets.should eq("hello\n")
-      io.gets.should eq("world\n")
+      io.gets.should eq("hello")
+      io.gets.should eq("world")
       io.gets.should be_nil
+    end
+
+    it "does gets with \\r\\n" do
+      io = SimpleIOMemory.new("hello\r\nworld\r\nfoo\rbar\n")
+      io.gets.should eq("hello")
+      io.gets.should eq("world")
+      io.gets.should eq("foo\rbar")
+      io.gets.should be_nil
+    end
+
+    it "does gets with chomp false" do
+      io = SimpleIOMemory.new("hello\nworld\n")
+      io.gets(chomp: false).should eq("hello\n")
+      io.gets(chomp: false).should eq("world\n")
+      io.gets(chomp: false).should be_nil
     end
 
     it "does gets with big line" do
       big_line = "a" * 20_000
       io = SimpleIOMemory.new("#{big_line}\nworld\n")
-      io.gets.should eq("#{big_line}\n")
+      io.gets.should eq(big_line)
     end
 
     it "does gets with char delimiter" do
@@ -216,6 +251,13 @@ describe IO do
       io.gets("lo").should eq("hello")
       io.gets("rl").should eq(" worl")
       io.gets("foo").should eq("d")
+    end
+
+    it "gets with string as delimiter and chomp = true" do
+      io = SimpleIOMemory.new("hello world")
+      io.gets("lo", chomp: true).should eq("hel")
+      io.gets("rl", chomp: true).should eq(" wo")
+      io.gets("foo", chomp: true).should eq("d")
     end
 
     it "gets with empty string as delimiter" do
@@ -271,7 +313,7 @@ describe IO do
 
     it "reads all remaining content" do
       io = SimpleIOMemory.new("foo\nbar\nbaz\n")
-      io.gets.should eq("foo\n")
+      io.gets.should eq("foo")
       io.gets_to_end.should eq("bar\nbaz\n")
     end
 
@@ -311,9 +353,9 @@ describe IO do
       io.each_line do |line|
         case counter
         when 0
-          line.should eq("a\n")
+          line.should eq("a")
         when 1
-          line.should eq("bb\n")
+          line.should eq("bb")
         when 2
           line.should eq("cc")
         end
@@ -437,13 +479,23 @@ describe IO do
       end
 
       it "gets" do
-        str = "Hello world\nFoo\nBar"
+        str = "Hello world\r\nFoo\nBar"
         io = SimpleIOMemory.new(str.encode("UCS-2LE"))
         io.set_encoding("UCS-2LE")
-        io.gets.should eq("Hello world\n")
-        io.gets.should eq("Foo\n")
+        io.gets.should eq("Hello world")
+        io.gets.should eq("Foo")
         io.gets.should eq("Bar")
         io.gets.should be_nil
+      end
+
+      it "gets with chomp = false" do
+        str = "Hello world\r\nFoo\nBar"
+        io = SimpleIOMemory.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets(chomp: false).should eq("Hello world\r\n")
+        io.gets(chomp: false).should eq("Foo\n")
+        io.gets(chomp: false).should eq("Bar")
+        io.gets(chomp: false).should be_nil
       end
 
       it "gets big string" do
@@ -451,8 +503,8 @@ describe IO do
         io = SimpleIOMemory.new(str.encode("UCS-2LE"))
         io.set_encoding("UCS-2LE")
         10_000.times do |i|
-          io.gets.should eq("Hello\n")
-          io.gets.should eq("World\n")
+          io.gets.should eq("Hello")
+          io.gets.should eq("World")
         end
       end
 
@@ -462,7 +514,7 @@ describe IO do
           io = SimpleIOMemory.new(str)
           io.set_encoding("GB2312")
           1000.times do
-            io.gets.should eq("你好我是人\n")
+            io.gets.should eq("你好我是人")
           end
         end
       end

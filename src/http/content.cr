@@ -34,10 +34,10 @@ module HTTP
       @io.read_byte
     end
 
-    def gets(delimiter : Char, limit : Int) : String?
+    def gets(delimiter : Char, limit : Int, chomp = false) : String?
       return super if @encoding
 
-      @io.gets(delimiter, limit)
+      @io.gets(delimiter, limit, chomp)
     end
 
     def write(slice : Bytes)

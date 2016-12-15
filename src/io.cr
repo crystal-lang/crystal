@@ -549,17 +549,22 @@ module IO
   # Reads a line from this IO. A line is terminated by the `\n` character.
   # Returns `nil` if called at the end of this IO.
   #
+  # By default the newline is removed from the returned string,
+  # unless *chomp* is false.
+  #
   # ```
-  # io = IO::Memory.new "hello\nworld"
-  # io.gets # => "hello\n"
-  # io.gets # => "world"
-  # io.gets # => nil
+  # io = IO::Memory.new "hello\nworld\nfoo\n"
+  # io.gets               # => "hello"
+  # io.gets(chomp: false) # => "world\n"
+  # io.gets               # => "foo"
+  # io.gets               # => nil
   # ```
-  def gets : String?
-    gets '\n'
+  def gets(chomp = true) : String?
+    gets '\n', chomp: chomp
   end
 
-  # Reads a line of at most `limit` bytes from this IO. A line is terminated by the `\n` character.
+  # Reads a line of at most `limit` bytes from this IO.
+  # A line is terminated by the `\n` character.
   # Returns `nil` if called at the end of this IO.
   #
   # ```
@@ -570,8 +575,8 @@ module IO
   # io.gets(3) # => "ld"
   # io.gets(3) # => nil
   # ```
-  def gets(limit : Int) : String?
-    gets '\n', limit
+  def gets(limit : Int, chomp = false) : String?
+    gets '\n', limit: limit, chomp: chomp
   end
 
   # Reads until *delimiter* is found, or the end of the IO is reached.
@@ -584,8 +589,8 @@ module IO
   # io.gets('z') # => "ld"
   # io.gets('w') # => nil
   # ```
-  def gets(delimiter : Char) : String?
-    gets delimiter, Int32::MAX
+  def gets(delimiter : Char, chomp = false) : String?
+    gets delimiter, Int32::MAX, chomp: chomp
   end
 
   # Reads until *delimiter* is found, `limit` bytes are read, or the end of the IO is reached.
@@ -598,14 +603,16 @@ module IO
   # io.gets('z', 10) # => "ld"
   # io.gets('w', 10) # => nil
   # ```
-  def gets(delimiter : Char, limit : Int) : String?
+  def gets(delimiter : Char, limit : Int, chomp = false) : String?
     raise ArgumentError.new "negative limit" if limit < 0
 
     # # If the char's representation is a single byte and we have an encoding,
     # search the delimiter in the buffer
     if delimiter.ascii? && (decoder = decoder())
-      return decoder.gets(self, delimiter.ord.to_u8, limit)
+      return decoder.gets(self, delimiter.ord.to_u8, limit: limit, chomp: chomp)
     end
+
+    chomp_rn = delimiter == '\n' && chomp
 
     buffer = String::Builder.new
     total = 0
@@ -617,8 +624,31 @@ module IO
 
       char, char_bytesize = info
 
-      buffer << char
-      break if char == delimiter
+      # Consider the case of \r\n when the delimiter is \n and chomp = true
+      if chomp_rn && char == '\r'
+        info2 = read_char_with_bytesize
+        unless info2
+          buffer << char
+          break
+        end
+
+        char2, char_bytesize2 = info2
+        if char2 == '\n'
+          break
+        end
+
+        buffer << '\r'
+        total += char_bytesize
+        break if total >= limit
+
+        buffer << char2
+        total += char_bytesize2
+      elsif char == delimiter
+        buffer << char unless chomp
+        break
+      else
+        buffer << char
+      end
 
       total += char_bytesize
       break if total >= limit
@@ -635,7 +665,7 @@ module IO
   # io.gets("wo") # => "rld"
   # io.gets("wo") # => nil
   # ```
-  def gets(delimiter : String) : String?
+  def gets(delimiter : String, chomp = false) : String?
     # Empty string: read all
     if delimiter.empty?
       return gets_to_end
@@ -643,12 +673,12 @@ module IO
 
     # One byte: use gets(Char)
     if delimiter.bytesize == 1
-      return gets(delimiter.unsafe_byte_at(0).unsafe_chr)
+      return gets(delimiter.unsafe_byte_at(0).unsafe_chr, chomp: chomp)
     end
 
     # One char: use gets(Char)
     if delimiter.size == 1
-      return gets(delimiter[0])
+      return gets(delimiter[0], chomp: chomp)
     end
 
     # The 'hard' case: we read until we match the last byte,
@@ -664,9 +694,12 @@ module IO
       buffer.write_byte(byte)
       total_bytes += 1
 
-      break if (byte == last_byte) &&
-               (buffer.bytesize >= delimiter.bytesize) &&
-               (buffer.buffer + total_bytes - delimiter.bytesize).memcmp(delimiter.to_unsafe, delimiter.bytesize) == 0
+      if (byte == last_byte) &&
+         (buffer.bytesize >= delimiter.bytesize) &&
+         (buffer.buffer + total_bytes - delimiter.bytesize).memcmp(delimiter.to_unsafe, delimiter.bytesize) == 0
+        buffer.back(delimiter.bytesize) if chomp
+        break
+      end
     end
     buffer.to_s
   end
@@ -786,7 +819,7 @@ module IO
   # iter.next # => "world"
   # ```
   def each_line(*args, **options)
-    LineIterator.new(self, args, **options)
+    LineIterator.new(self, args, options)
   end
 
   # Inovkes the given block with each `Char` in this IO.
@@ -933,14 +966,14 @@ module IO
     limit - remaining
   end
 
-  private struct LineIterator(I, A)
+  private struct LineIterator(I, A, N)
     include Iterator(String)
 
-    def initialize(@io : I, @args : A)
+    def initialize(@io : I, @args : A, @nargs : N)
     end
 
     def next
-      @io.gets(*@args) || stop
+      @io.gets(*@args, **@nargs) || stop
     end
 
     def rewind

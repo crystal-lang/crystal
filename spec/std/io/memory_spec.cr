@@ -57,10 +57,17 @@ describe IO::Memory do
   end
 
   it "reads each line" do
-    io = IO::Memory.new("foo\r\nbar\r\n")
-    io.gets.should eq("foo\r\n")
-    io.gets.should eq("bar\r\n")
+    io = IO::Memory.new("foo\r\nbar\n")
+    io.gets.should eq("foo")
+    io.gets.should eq("bar")
     io.gets.should eq(nil)
+  end
+
+  it "reads each line with chomp = false" do
+    io = IO::Memory.new("foo\r\nbar\r\n")
+    io.gets(chomp: false).should eq("foo\r\n")
+    io.gets(chomp: false).should eq("bar\r\n")
+    io.gets(chomp: false).should eq(nil)
   end
 
   it "gets with char as delimiter" do
@@ -301,16 +308,25 @@ describe IO::Memory do
         str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
         io = IO::Memory.new(str.encode("UCS-2LE"))
         io.set_encoding("UCS-2LE")
-        io.gets.should eq("Hello world\n")
-        io.gets.should eq("Foo\n")
-        io.gets.should eq("Bar\n")
+        io.gets(chomp: false).should eq("Hello world\n")
+        io.gets(chomp: false).should eq("Foo\n")
+        io.gets(chomp: false).should eq("Bar\n")
+      end
+
+      it "gets with chomp = false" do
+        str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
+        io = IO::Memory.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets.should eq("Hello world")
+        io.gets.should eq("Foo")
+        io.gets.should eq("Bar")
       end
 
       it "reads char" do
         str = "x\nHello world" + ("1234567890" * 1000)
         io = IO::Memory.new(str.encode("UCS-2LE"))
         io.set_encoding("UCS-2LE")
-        io.gets.should eq("x\n")
+        io.gets(chomp: false).should eq("x\n")
         str = str[2..-1]
         str.each_char do |char|
           io.read_char.should eq(char)

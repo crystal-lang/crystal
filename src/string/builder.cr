@@ -7,8 +7,8 @@ class String::Builder
   include IO
 
   getter bytesize : Int32
-  @capacity : Int32
-  @buffer : Pointer(UInt8)
+  getter capacity : Int32
+  getter buffer : Pointer(UInt8)
 
   def initialize(capacity : Int = 64)
     String.check_capacity_in_bounds(capacity)
@@ -59,6 +59,29 @@ class String::Builder
 
   def empty?
     @bytesize == 0
+  end
+
+  # Chomps the last byte from the string buffer.
+  # If the byte is '\n' and there's a '\r' before it, it is
+  # also removed.
+  def chomp!(byte : UInt8)
+    if bytesize > 0 && buffer[bytesize - 1] == byte
+      back(1)
+
+      if byte === '\n' && bytesize > 0 && buffer[bytesize - 1] === '\r'
+        back(1)
+      end
+    end
+  end
+
+  # Moves the write pointer, and the resulting string bytesize,
+  # by the given amount
+  def back(amount : Int)
+    unless 0 <= amount <= @bytesize
+      raise ArgumentError.new "invalid back amount"
+    end
+
+    @bytesize -= amount
   end
 
   def to_s

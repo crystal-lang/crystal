@@ -17,7 +17,7 @@ module HTTP
     headers = Headers.new
 
     while line = io.gets
-      if line == "\r\n" || line == "\n"
+      if line.empty?
         body = nil
         if body_type.prohibited?
           body = nil

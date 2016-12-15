@@ -156,7 +156,7 @@ module IO
       count
     end
 
-    def gets(io, delimiter : UInt8, limit : Int)
+    def gets(io, delimiter : UInt8, limit : Int, chomp)
       read(io)
       return nil if @out_slice.empty?
 
@@ -169,16 +169,12 @@ module IO
           index += 1
         end
 
-        string = String.new(@out_slice[0, index])
-        advance(index)
-        return string
+        return gets_index(index, delimiter, chomp)
       end
 
       # Check if there's limit bytes in the out slice
       if @out_slice.size >= limit
-        string = String.new(@out_slice[0, limit])
-        advance(limit)
-        return string
+        return gets_index(limit, delimiter, chomp)
       end
 
       # We need to read from the out_slice into a String until we find that byte,
@@ -208,7 +204,24 @@ module IO
             end
           end
         end
+        str.chomp!(delimiter) if chomp
       end
+    end
+
+    private def gets_index(index, delimiter, chomp)
+      advance_increment = index
+
+      if chomp && index > 0 && @out_slice[index - 1] === delimiter
+        index -= 1
+
+        if delimiter === '\n' && index > 0 && @out_slice[index - 1] === '\r'
+          index -= 1
+        end
+      end
+
+      string = String.new(@out_slice[0, index])
+      advance(advance_increment)
+      string
     end
 
     def write(io)
