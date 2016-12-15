@@ -2652,7 +2652,7 @@ class String
     end
 
     if separator.empty?
-      split_by_empty_separator(limit).each do |string|
+      split_by_empty_separator(limit) do |string|
         yield string
       end
       return
@@ -2725,7 +2725,7 @@ class String
     end
 
     if separator.source.empty?
-      split_by_empty_separator(limit).each do |string|
+      split_by_empty_separator(limit) do |string|
         yield string
       end
       return
@@ -2772,19 +2772,19 @@ class String
     yield byte_slice(slice_offset)
   end
 
-  private def split_by_empty_separator(limit)
-    ary = Array(String).new
+  private def split_by_empty_separator(limit, &block : String -> _)
+    yielded = 0
 
     each_char do |c|
-      ary.push c.to_s
-      break if limit && ary.size + 1 == limit
+      yield c.to_s
+      yielded += 1
+      break if limit && yielded + 1 == limit
     end
 
-    if limit && ary.size != size
-      ary.push(self[ary.size..-1])
+    if limit && yielded != size
+      yield self[yielded..-1]
+      yielded += 1
     end
-
-    ary
   end
 
   def lines(chomp = true)
