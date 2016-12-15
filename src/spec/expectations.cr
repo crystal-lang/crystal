@@ -269,7 +269,7 @@ module Spec
             fail "expected {{klass.id}} with message matching #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
           end
         when String
-          unless %ex_to_s.includes?(%msg)
+          unless %ex_to_s == %msg
             backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
             fail "expected {{klass.id}} with #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
           end
