@@ -246,7 +246,7 @@ class Crystal::Call
       # don't give error. This is to allow small code comments without giving
       # compile errors, which will anyway appear once you add concrete
       # subclasses and instances.
-      if def_name == "new" || !(owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType)))
+      if def_name == "new" || !(!owner.metaclass? && owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType)))
         raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches)
       end
     end
