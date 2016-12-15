@@ -434,6 +434,8 @@ module Crystal
         @vars[var.name] = meta_var
 
         check_exception_handler_vars(var.name, node)
+
+        node.type = meta_var.type unless meta_var.type.no_return?
       when InstanceVar
         type = scope? || current_type
         if @untyped_def
@@ -473,7 +475,7 @@ module Crystal
         class_var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
       end
 
-      node.type = @program.nil
+      node.type = @program.nil unless node.type?
 
       false
     end

@@ -1029,11 +1029,18 @@ module Crystal
 
     def visit(node : UninitializedVar)
       var = node.var
-      if var.is_a?(Var)
-        declare_var var
-      end
 
-      @last = llvm_nil
+      case var
+      when Var
+        llvm_var = declare_var var
+        if node.type.nil_type? || !@needs_value
+          @last = llvm_nil
+        else
+          @last = to_lhs(llvm_var.pointer, node.type)
+        end
+      else
+        @last = llvm_nil
+      end
 
       false
     end
