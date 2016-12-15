@@ -20,6 +20,10 @@ class Crystal::CodeGenVisitor
 
     call_args, has_out = prepare_call_args node, owner
 
+    # It can happen that one of the arguments caused an unreacahble
+    # to happen, so we must stop here
+    return false if @builder.end
+
     if block = node.block
       if fun_literal = block.fun_literal
         codegen_call_with_block_as_fun_literal(node, fun_literal, owner, call_args)
