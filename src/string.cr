@@ -2684,6 +2684,28 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
 
+  # Splits the string after each regex *separator* and yields each part to a block.
+  #
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  #
+  # ```
+  # ary = [] of String
+  # long_river_name = "Mississippi"
+  # long_river_name.split(/s+/) { |s| ary << s }; ary # => ["Mi", "i", "ippi"]
+  # ary.clear
+  # long_river_name.split(//) { |s| ary << s }; ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
+  def split(separator : Regex, limit = nil)
+    ary = Array(String).new
+    split(separator, limit) do |string|
+      ary << string
+    end
+    ary
+  end
+
   # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
   #
   # If *limit* is present, the array will be limited to *limit* items and
@@ -2696,16 +2718,19 @@ class String
   # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
   # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil)
+  def split(separator : Regex, limit = nil, &block : String -> _)
     if empty? || (limit && limit <= 1)
-      return [self]
+      yield self
+      return
     end
 
     if separator.source.empty?
-      return split_by_empty_separator(limit)
+      split_by_empty_separator(limit).each do |string|
+        yield string
+      end
+      return
     end
 
-    ary = Array(String).new
     count = 0
     match_offset = 0
     slice_offset = 0
@@ -2719,15 +2744,15 @@ class String
       if slice_offset == 0 && slice_size == 0 && match_bytesize == 0
         # Skip
       elsif slice_offset == bytesize && slice_size == 0
-        ary.push byte_slice(last_slice_offset)
+        yield byte_slice(last_slice_offset)
       else
-        ary.push byte_slice(slice_offset, slice_size)
+        yield byte_slice(slice_offset, slice_size)
       end
       count += 1
 
       1.upto(match.size) do |i|
         if group = match[i]?
-          ary.push group
+          yield group
         end
       end
 
@@ -2744,9 +2769,7 @@ class String
       break if slice_offset > bytesize
     end
 
-    ary.push byte_slice(slice_offset)
-
-    ary
+    yield byte_slice(slice_offset)
   end
 
   private def split_by_empty_separator(limit)
