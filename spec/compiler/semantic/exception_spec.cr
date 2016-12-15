@@ -404,14 +404,6 @@ describe "Semantic: exception" do
     assert_error %(
       require "prelude"
 
-      def some_method
-        if rand < 0.999999999
-          raise "OH NO"
-        else
-          2
-        end
-      end
-
       class Coco < Exception
         def initialize(@x : Foo)
         end
