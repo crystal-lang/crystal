@@ -2622,15 +2622,43 @@ class String
   # long_river_name.split("")   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : String, limit = nil)
+    ary = Array(String).new
+    split(separator, limit) do |string|
+      ary << string
+    end
+    ary
+  end
+
+  # Splits the string after each string *separator* and yields each part to a block.
+  #
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is an empty string (`""`), the string will be separated into one-character strings.
+  #
+  # ```
+  # ary = [] of String
+  # long_river_name = "Mississippi"
+  # long_river_name.split("ss") { |s| ary << s }; ary # => ["Mi", "i", "ippi"]
+  # ary.clear
+  # long_river_name.split("i") { |s| ary << s }; ary # => ["M", "ss", "ss", "pp"]
+  # ary.clear
+  # long_river_name.split("") { |s| ary << s }; ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
+  def split(separator : String, limit = nil, &block : String -> _)
     if empty? || (limit && limit <= 1)
-      return [self]
+      yield self
+      return
     end
 
     if separator.empty?
-      return split_by_empty_separator(limit)
+      split_by_empty_separator(limit).each do |string|
+        yield string
+      end
+      return
     end
 
-    ary = Array(String).new
+    yielded = 0
     byte_offset = 0
     separator_bytesize = separator.bytesize
 
@@ -2642,19 +2670,18 @@ class String
       if (to_unsafe + i).memcmp(separator.to_unsafe, separator_bytesize) == 0
         piece_bytesize = i - byte_offset
         piece_size = single_byte_optimizable ? piece_bytesize : 0
-        ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        yielded += 1
         byte_offset = i + separator_bytesize
         i += separator_bytesize - 1
-        break if limit && ary.size + 1 == limit
+        break if limit && yielded + 1 == limit
       end
       i += 1
     end
 
     piece_bytesize = bytesize - byte_offset
     piece_size = single_byte_optimizable ? piece_bytesize : 0
-    ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
-
-    ary
+    yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
 
   # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
