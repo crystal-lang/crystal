@@ -1502,7 +1502,7 @@ module Crystal
 
     def self.overrides?(type, target, method)
       overrides = type.lookup_defs(method).any? do |a_def|
-        a_def.owner != target && a_def.macro_owner != target && a_def.owner.implements?(target)
+        a_def.owner != target && a_def.macro_owner != target && !target.implements?(a_def.owner)
       end
       BoolLiteral.new(!!overrides)
     end

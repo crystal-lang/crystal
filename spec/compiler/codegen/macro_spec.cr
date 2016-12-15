@@ -1555,6 +1555,31 @@ describe "Code gen: macro" do
       )).to_b.should be_true
   end
 
+  it "determines if overrides, through module (true)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      module Moo
+        def foo
+          2
+        end
+      end
+
+      class Bar < Foo
+        include Moo
+      end
+
+      class Baz < Bar
+      end
+
+      {{ Baz.overrides?(Foo, "foo") }}
+      )).to_b.should be_true
+  end
+
   it "determines if overrides, with macro method (false)" do
     run(%(
       class Foo
