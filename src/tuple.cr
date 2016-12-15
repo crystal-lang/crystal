@@ -62,7 +62,6 @@
 # tuple # => {1, "hello", 'x'} (Tuple(Int32, String, Char))
 # ```
 struct Tuple
-  include Enumerable(Union(*T))
   include Indexable(Union(*T))
   include Comparable(Tuple)
 
