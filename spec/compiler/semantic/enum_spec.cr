@@ -306,4 +306,28 @@ describe "Semantic: enum" do
       ),
       "enum Foo must have at least one member"
   end
+
+  it "errors if declaring type inside enum (#3127)" do
+    assert_error %(
+      enum Foo
+        A
+      end
+
+      class Foo::Bar
+      end
+      ),
+      "can't declare type inside enum Foo"
+  end
+
+  it "errors if declaring type inside enum, nested (#3127)" do
+    assert_error %(
+      enum Foo
+        A
+      end
+
+      class Foo::Bar::Baz
+      end
+      ),
+      "can't declare type inside enum"
+  end
 end
