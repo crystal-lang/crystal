@@ -483,6 +483,18 @@ describe "String" do
     assert { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
   end
 
+  describe "lchomp" do
+    assert { "hello".lchomp('g').should eq("hello") }
+    assert { "hello".lchomp('h').should eq("ello") }
+    assert { "かたな".lchomp('か').should eq("たな") }
+
+    assert { "hello".lchomp("good").should eq("hello") }
+    assert { "hello".lchomp("hel").should eq("lo") }
+    assert { "かたな".lchomp("かた").should eq("な") }
+
+    assert { "\n\n\n\nhello".lchomp("").should eq("\n\n\n\nhello") }
+  end
+
   describe "chomp" do
     assert { "hello\n".chomp.should eq("hello") }
     assert { "hello\r".chomp.should eq("hello") }
