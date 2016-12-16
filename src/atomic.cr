@@ -49,7 +49,7 @@ struct Atomic(T)
   #
   # ```
   # atomic = Atomic.new(1)
-  # atomic.add(2) # => 2
+  # atomic.add(2) # => 1
   # atomic.get    # => 3
   # ```
   def add(value : T)
