@@ -45,10 +45,10 @@ module FileUtils
     buf2 = uninitialized UInt8[1024]
 
     while true
-      read1 = stream1.read buf1.to_slice
-      read2 = stream2.read buf2.to_slice
+      read1 = stream1.read(buf1.to_slice)
+      read2 = stream2.read_fully?(buf2.to_slice[0, read1])
+      return false unless read2
 
-      return false if read1 != read2
       return false if buf1.to_unsafe.memcmp(buf2.to_unsafe, read1) != 0
       return true if read1 == 0
     end
