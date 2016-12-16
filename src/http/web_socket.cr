@@ -104,7 +104,9 @@ class HTTP::WebSocket
       when Protocol::Opcode::PING
         @current_message.write @buffer[0, info.size]
         if info.final
-          @on_ping.try &.call(@current_message.to_s)
+          message = @current_message.to_s
+          @on_ping.try &.call(message)
+          pong(message) unless closed?
           @current_message.clear
         end
       when Protocol::Opcode::PONG
@@ -122,7 +124,9 @@ class HTTP::WebSocket
       when Protocol::Opcode::CLOSE
         @current_message.write @buffer[0, info.size]
         if info.final
-          @on_close.try &.call(@current_message.to_s)
+          message = @current_message.to_s
+          @on_close.try &.call(message)
+          close(message) unless closed?
           @current_message.clear
           break
         end
