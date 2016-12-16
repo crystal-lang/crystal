@@ -677,19 +677,10 @@ struct Crystal::TypeDeclarationProcessor
     # We sort types. We put modules first, because if these declare types
     # of instance variables we want them declared in including types.
     # Then we sort other types by depth, so we declare types first in
-    # superclass and then in subclasses.
-    types.sort! do |t1, t2|
-      if t1.module?
-        if t2.module?
-          t1.object_id <=> t2.object_id
-        else
-          -1
-        end
-      elsif t2.module?
-        1
-      else
-        t1.depth <=> t2.depth
-      end
+    # superclass and then in subclasses. Finally, two modules or classes
+    # with the same depths are sorted by name.
+    types.sort_by! do |t|
+      {t.module? ? 0 : 1, t.depth, t.to_s}
     end
   end
 
