@@ -493,6 +493,22 @@ describe "File" do
       File.delete(filename)
     end
 
+    it "writes bytes" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello".to_slice)
+      File.read(filename).should eq("hello")
+      File.delete(filename)
+    end
+
+    it "writes io" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.open("#{__DIR__}/data/test_file.txt") do |file|
+        File.write(filename, file)
+      end
+      File.read(filename).should eq(File.read("#{__DIR__}/data/test_file.txt"))
+      File.delete(filename)
+    end
+
     it "raises if trying to write to a file not opened for writing" do
       filename = "#{__DIR__}/data/temp_write.txt"
       File.write(filename, "hello")

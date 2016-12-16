@@ -469,16 +469,28 @@ class File < IO::FileDescriptor
     lines
   end
 
-  # Write the given content to *filename*.
+  # Write the given *content* to *filename*.
   #
   # An existing file will be overwritten, else a file will be created.
   #
   # ```
   # File.write("foo", "bar")
   # ```
+  #
+  # If the content is a `Slice(UInt8)`, those bytes will be written. If it's
+  # an `IO`, all bytes from the IO will be written. Otherwise, the string
+  # representation of *content* will be written (the result of invoking `to_s`
+  # on *content*)
   def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
     File.open(filename, "w", perm, encoding: encoding, invalid: invalid) do |file|
-      file.print(content)
+      case content
+      when Bytes
+        file.write(content)
+      when IO
+        IO.copy(content, file)
+      else
+        file.print(content)
+      end
     end
   end
 
