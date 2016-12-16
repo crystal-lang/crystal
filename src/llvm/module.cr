@@ -34,6 +34,10 @@ class LLVM::Module
     LibLLVM.write_bitcode_to_file self, filename
   end
 
+  def write_bitcode
+    MemoryBuffer.new(LibLLVM.write_bitcode_to_memory_buffer self)
+  end
+
   def verify
     error = LibLLVM.verify_module(self, LLVM::VerifierFailureAction::ReturnStatusAction, out message)
     begin
