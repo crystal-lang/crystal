@@ -494,7 +494,7 @@ module IO
   # slice = Slice(UInt8).new(5)
   # io.read_fully(slice)
   # slice         # => [49, 50, 51, 52, 53]
-  # io.read_fully # => EOFError
+  # io.read_fully(slice) # => EOFError
   # ```
   def read_fully(slice : Slice(UInt8))
     count = slice.size
