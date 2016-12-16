@@ -1714,6 +1714,14 @@ class Array(T)
     pairs
   end
 
+  def nitems
+    nils = 0
+    each do |obj|
+      nils += 1 if obj == nil
+    end
+    nils
+  end
+
   private def check_needs_resize
     double_capacity if @size == @capacity
   end
