@@ -1,4 +1,6 @@
 class HTTP::WebSocket
+  getter? closed = false
+
   # :nodoc:
   def initialize(io : IO)
     initialize(Protocol.new(io))
@@ -49,7 +51,12 @@ class HTTP::WebSocket
   def on_close(&@on_close : String ->)
   end
 
+  protected def check_open
+    raise IO::Error.new "closed socket" if closed?
+  end
+
   def send(message)
+    check_open
     @ws.send(message)
   end
 
@@ -59,6 +66,7 @@ class HTTP::WebSocket
   #
   # See `#pong`.
   def ping(message = nil)
+    check_open
     @ws.ping(message)
   end
 
@@ -66,16 +74,20 @@ class HTTP::WebSocket
   #
   # See `#ping`.
   def pong(message = nil)
+    check_open
     @ws.pong(message)
   end
 
   def stream(binary = true, frame_size = 1024)
+    check_open
     @ws.stream(binary: binary, frame_size: frame_size) do |io|
       yield io
     end
   end
 
   def close(message = nil)
+    return if closed?
+    @closed = true
     @ws.close(message)
   end
 
