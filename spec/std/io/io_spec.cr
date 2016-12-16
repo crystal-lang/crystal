@@ -344,12 +344,21 @@ describe IO do
     it "does read_fully" do
       str = SimpleIOMemory.new("hello")
       slice = Slice(UInt8).new(4)
-      str.read_fully(slice)
+      str.read_fully(slice).should eq(4)
       String.new(slice).should eq("hell")
 
       expect_raises(IO::EOFError) do
         str.read_fully(slice)
       end
+    end
+
+    it "does read_fully?" do
+      str = SimpleIOMemory.new("hello")
+      slice = Slice(UInt8).new(4)
+      str.read_fully?(slice).should eq(4)
+      String.new(slice).should eq("hell")
+
+      str.read_fully?(slice).should be_nil
     end
   end
 

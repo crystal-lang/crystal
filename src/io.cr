@@ -492,15 +492,30 @@ module IO
   # ```
   # io = IO::Memory.new "123451234"
   # slice = Slice(UInt8).new(5)
-  # io.read_fully(slice)
-  # slice         # => [49, 50, 51, 52, 53]
-  # io.read_fully # => EOFError
+  # io.read_fully(slice) # => 5
+  # slice                # => [49, 50, 51, 52, 53]
+  # io.read_fully        # => EOFError
   # ```
   def read_fully(slice : Slice(UInt8))
+    read_fully?(slice) || raise(EOFError.new)
+  end
+
+  # Tries to read exactly `slice.size` bytes from this IO into `slice`.
+  # Returns `nil` if there aren't `slice.size` bytes of data, otherwise
+  # returns the number of bytes read.
+  #
+  # ```
+  # io = IO::Memory.new "123451234"
+  # slice = Slice(UInt8).new(5)
+  # io.read_fully?(slice) # => 5
+  # slice                 # => [49, 50, 51, 52, 53]
+  # io.read_fully?        # => nil
+  # ```
+  def read_fully?(slice : Slice(UInt8))
     count = slice.size
     while slice.size > 0
       read_bytes = read slice
-      raise EOFError.new if read_bytes == 0
+      return nil if read_bytes == 0
       slice += read_bytes
     end
     count
