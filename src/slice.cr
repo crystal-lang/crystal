@@ -24,18 +24,27 @@ struct Slice(T)
   # `Number.slice` (numbers will be coerced to the type T)
   #
   # See also: `Number.slice`.
-  macro [](*args)
+  def self.[](*args : *U) forall U
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
     {% if @type.name != "Slice(T)" && T < Number %}
-      {{T}}.slice({{*args}})
-    {% else %}
-      %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
-      {% for arg, i in args %}
-        %ptr[{{i}}] = {{arg}}
+      {% for i in 0...U.size %}
+        {% unless U[i] < Number %}
+          {% raise "argument #{i} is not Number type with #{@type}[...]" %}
+        {% end %}
       {% end %}
-      Slice.new(%ptr, {{args.size}})
     {% end %}
+    new args.size do |i|
+      {% if @type.name != "Slice(T)" %}
+        {% if T < Number %}
+          {{T}}.new args[i]
+        {% else %}
+          {{T}}.cast args[i]
+        {% end %}
+      {% else %}
+        args[i]
+      {% end %}
+    end
   end
 
   # Returns the size of this slice.
