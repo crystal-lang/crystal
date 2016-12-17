@@ -3,6 +3,7 @@
 # See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
 class Hash(K, V)
   include Enumerable({K, V})
+  include Iterable({K, V})
 
   getter size : Int32
   @buckets_size : Int32
