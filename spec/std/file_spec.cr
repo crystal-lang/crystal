@@ -105,6 +105,23 @@ describe "File" do
     idx.should eq(20)
   end
 
+  describe "empty?" do
+    it "gives true when file is empty" do
+      File.empty?("#{__DIR__}/data/blank_test_file.txt").should be_true
+    end
+
+    it "gives false when file is not empty" do
+      File.empty?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+
+    it "raises an error when the file does not exist" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      expect_raises Errno do
+        File.empty?(filename)
+      end
+    end
+  end
+
   describe "exists?" do
     it "gives true" do
       File.exists?("#{__DIR__}/data/test_file.txt").should be_true

@@ -119,6 +119,14 @@ class File < IO::FileDescriptor
     accessible?(path, LibC::F_OK)
   end
 
+  def self.empty?(path) : Bool
+    begin
+      stat(path).size == 0
+    rescue Errno
+      raise Errno.new("Error determining size of '#{path}'")
+    end
+  end
+
   # Returns `true` if *path* is readable by the real user id of this process else returns `false`.
   #
   # ```
