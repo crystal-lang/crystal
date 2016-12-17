@@ -119,6 +119,15 @@ class File < IO::FileDescriptor
     accessible?(path, LibC::F_OK)
   end
 
+  # Returns `true` if the file at *path* is empty, otherwise returns `false`.
+  # Raises `Errno` if the file at *path* does not exist.
+  #
+  # ```
+  # File.write("foo", "")
+  # File.empty?("foo") # => true
+  # File.write("foo", "foo")
+  # File.empty?("foo") # => false
+  # ```
   def self.empty?(path) : Bool
     begin
       stat(path).size == 0
