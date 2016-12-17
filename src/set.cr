@@ -28,7 +28,7 @@ struct Set(T)
   #
   # ```
   # s = Set(Int32).new
-  # set.empty? # => true
+  # s.empty? # => true
   # ```
   #
   # An initial capacity can be specified, and it will be set as the initial capacity

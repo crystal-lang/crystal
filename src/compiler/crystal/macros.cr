@@ -118,6 +118,7 @@ module Crystal::Macros
     # end
     #
     # puts test # prints "foo" (including the double quotes)
+    # ```
     def stringify : StringLiteral
     end
 

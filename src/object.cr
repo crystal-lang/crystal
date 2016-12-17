@@ -1111,7 +1111,7 @@ class Object
   #
   # ```
   # class StringWrapper
-  #   def initialize(@string)
+  #   def initialize(@string : String)
   #   end
   #
   #   forward_missing_to @string

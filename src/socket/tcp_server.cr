@@ -4,6 +4,8 @@ require "./tcp_socket"
 #
 # Usage example:
 # ```
+# require "socket"
+#
 # server = TCPServer.new("localhost", 1234)
 # loop do
 #   server.accept do |client|

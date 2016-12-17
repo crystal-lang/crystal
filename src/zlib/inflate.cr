@@ -7,6 +7,8 @@
 # ### Example: decompress text a file
 #
 # ```
+# require "zlib"
+#
 # string = File.open("./file.gzip", "r") do |file|
 #   Zlib::Inflate.gzip(file) do |inflate|
 #     inflate.gets_to_end

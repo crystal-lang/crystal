@@ -19,7 +19,7 @@ end
 # the value to deserialize.
 #
 # ```
-# Int32.from_json(%({"main": 1}), root: "main").should eq(1)
+# Int32.from_json(%({"main": 1}), root: "main") # => 1
 # ```
 def Object.from_json(string_or_io, root : String) : self
   parser = JSON::PullParser.new(string_or_io)

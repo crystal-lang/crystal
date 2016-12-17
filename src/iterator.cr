@@ -42,7 +42,7 @@ require "./enumerable"
 # class Zeros
 #   include Iterator(Int32)
 #
-#   def initialize(@size)
+#   def initialize(@size : Int32)
 #     @produced = 0
 #   end
 #

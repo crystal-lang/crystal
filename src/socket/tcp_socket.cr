@@ -4,6 +4,8 @@ require "./ip_socket"
 #
 # Usage example:
 # ```
+# require "socket"
+#
 # client = TCPSocket.new("localhost", 1234)
 # client << "message\n"
 # response = client.gets

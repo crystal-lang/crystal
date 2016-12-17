@@ -18,8 +18,10 @@ class IO::Memory
   #
   # ```
   # io = IO::Memory.new
-  # io.pos  # => 0
-  # io.read # => ""
+  # slice = Bytes.new(1)
+  # io.pos         # => 0
+  # io.read(slice) # => 0
+  # slice          # => Bytes[0]
   # ```
   def initialize(capacity : Int = 64)
     String.check_capacity_in_bounds(capacity)
@@ -41,8 +43,9 @@ class IO::Memory
   # ```
   # slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
   # io = IO::Memory.new slice, writeable: false
-  # io.pos  # => 0
-  # io.read # => "abcdef"
+  # io.pos            # => 0
+  # io.read(slice)    # => 6
+  # String.new(slice) # => "abcdef"
   # ```
   def initialize(slice : Bytes, writeable = true)
     @buffer = slice.to_unsafe
@@ -233,9 +236,9 @@ class IO::Memory
   #
   # ```
   # io = IO::Memory.new "hello"
-  # io.gets(2) => "he"
+  # io.gets(2) # => "he"
   # io.rewind
-  # io.gets(2) #=> "he"
+  # io.gets(2) # => "he"
   # ```
   def rewind
     @pos = 0

@@ -66,9 +66,12 @@ module Math
 
   # Calculates the logarithmic gamma of *value*.
   #
-  # lgamma(x) is the same as
   # ```
-  # Math.log(Math.gamma(x).abs)
+  # Math.lgamma(2.96)
+  # ```
+  # is the same as
+  # ```
+  # Math.log(Math.gamma(2.96).abs)
   # ```
   def lgamma(value : Float32)
     {% if flag?(:darwin) %}
@@ -227,7 +230,8 @@ module Math
   # Computes the next highest power of 2 of *v*
   #
   # ```
-  # Math.pw2ceil(33) #=> 64
+  # Math.pw2ceil(33) # => 64
+  # ```
   def pw2ceil(v)
     # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
     v -= 1

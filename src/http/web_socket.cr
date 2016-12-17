@@ -18,9 +18,9 @@ class HTTP::WebSocket
   # apart from `wss` and `https` will be treated as the default which is `ws`.
   #
   # ```
-  # WebSocket.new(URI.parse("ws://websocket.example.com/chat"))        # Creates a new WebSocket to `websocket.example.com`
-  # WebSocket.new(URI.parse("wss://websocket.example.com/chat"))       # Creates a new WebSocket with TLS to `websocket.example.com`
-  # WebSocket.new(URI.parse("http://websocket.example.com:8080/chat")) # Creates a new WebSocket to `websocket.example.com` on port `8080`
+  # HTTP::WebSocket.new(URI.parse("ws://websocket.example.com/chat"))        # Creates a new WebSocket to `websocket.example.com`
+  # HTTP::WebSocket.new(URI.parse("wss://websocket.example.com/chat"))       # Creates a new WebSocket with TLS to `websocket.example.com`
+  # HTTP::WebSocket.new(URI.parse("http://websocket.example.com:8080/chat")) # Creates a new WebSocket to `websocket.example.com` on port `8080`
   # ```
   def self.new(uri : URI | String)
     new(Protocol.new(uri))
@@ -30,8 +30,8 @@ class HTTP::WebSocket
   # and will raise an exception if the handshake did not complete successfully.
   #
   # ```
-  # WebSocket.new("websocket.example.com", "/chat")            # Creates a new WebSocket to `websocket.example.com`
-  # WebSocket.new("websocket.example.com", "/chat", tls: true) # Creates a new WebSocket with TLS to `ẁebsocket.example.com`
+  # HTTP::WebSocket.new("websocket.example.com", "/chat")            # Creates a new WebSocket to `websocket.example.com`
+  # HTTP::WebSocket.new("websocket.example.com", "/chat", tls: true) # Creates a new WebSocket with TLS to `ẁebsocket.example.com`
   # ```
   def self.new(host : String, path : String, port = nil, tls = false)
     new(Protocol.new(host, path, port, tls))

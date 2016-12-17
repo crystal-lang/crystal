@@ -127,9 +127,8 @@ struct StaticArray(T, N)
   # Fills the array by substituting all elements with the given value
   #
   # ```
-  # array = StaticArray(Int32, 3).new { |i| i+1 }
-  # array[]= 2 # => [2, 2, 2]
-  #
+  # array = StaticArray(Int32, 3).new { |i| i + 1 }
+  # array.[]= 2 # => [2, 2, 2]
   # ```
   def []=(value : T)
     size.times do |i|

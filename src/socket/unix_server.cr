@@ -6,6 +6,8 @@ require "./unix_socket"
 #
 # Example usage:
 # ```
+# require "socket"
+#
 # server = UNIXServer.new("/tmp/myapp.sock")
 # message = server.gets
 # server.puts message
