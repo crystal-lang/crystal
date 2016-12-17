@@ -160,6 +160,15 @@ class Dir
     File::Stat.new(stat).directory?
   end
 
+  # Returns `true` if the directory at *path* is empty, otherwise returns `false`.
+  # Raises `Errno` if the directory at *path* does not exist.
+  #
+  # ```
+  # Dir.mkdir("bar")
+  # Dir.empty?("bar") # => true
+  # File.write("bar/a_file", "The content")
+  # Dir.empty?("bar") # => false
+  # ```
   def self.empty?(path) : Bool
     raise Errno.new("Error determining size of '#{path}'") unless exists?(path)
 
