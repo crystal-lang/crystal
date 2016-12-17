@@ -19,6 +19,8 @@ module Crystal
         interpret_system(node)
       when "raise"
         interpret_raise(node)
+      when "read_file"
+        interpret_read_file(node)
       when "run"
         interpret_run(node)
       else
@@ -97,6 +99,20 @@ module Crystal
       end
 
       @last = Nop.new
+    end
+
+    def interpret_read_file(node)
+      if node.args.size == 1
+        node.args[0].accept self
+        filename = @last.to_macro_id
+        if File.exists?(filename)
+          @last = StringLiteral.new(File.read(filename))
+        else
+          @last = NilLiteral.new
+        end
+      else
+        node.wrong_number_of_arguments "macro call 'read_file'", node.args.size, 1
+      end
     end
 
     def interpret_system(node)

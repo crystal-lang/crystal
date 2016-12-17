@@ -1524,4 +1524,18 @@ describe "macro methods" do
       assert_macro "", %({{flag?(:foo)}}), [] of ASTNode, %(false)
     end
   end
+
+  describe "read_file" do
+    it "reads file (exists)" do
+      run(%q<
+        {{read_file("#{__DIR__}/../data/build")}}
+        >, filename = __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
+    end
+
+    it "reads file (doesn't exists)" do
+      run(%q<
+        {{read_file("#{__DIR__}/../data/build_foo")}} ? 10 : 20
+        >, filename = __FILE__).to_i.should eq(20)
+    end
+  end
 end

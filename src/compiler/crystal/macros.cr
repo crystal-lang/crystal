@@ -39,6 +39,17 @@ module Crystal::Macros
   def raise(message) : NoReturn
   end
 
+  # Reads a file: if it exists, returns a StringLiteral with its contents;
+  # otherwise `nil` is returned.
+  #
+  # To read a file relative to where the macro is defined, use:
+  #
+  # ```
+  # read_file("#{__DIR__}/some_file.txt")
+  # ```
+  def read_file(filename) : StringLiteral | NilLiteral
+  end
+
   # Compiles and execute a Crystal program and returns its output
   # as a `MacroId`.
   #
