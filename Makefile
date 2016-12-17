@@ -41,6 +41,7 @@ LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 LIB_CRYSTAL_SOURCES = $(shell find src/ext -name '*.c')
 LIB_CRYSTAL_OBJS = $(subst .c,.o,$(LIB_CRYSTAL_SOURCES))
 LIB_CRYSTAL_TARGET = src/ext/libcrystal.a
+DEPS = $(LLVM_EXT_OBJ) $(LIB_CRYSTAL_TARGET)
 CFLAGS += -fPIC $(if $(debug),-g -O0)
 CXXFLAGS += $(if $(debug),-g -O0)
 
@@ -71,15 +72,15 @@ help: ## Show this help
 		awk 'BEGIN {FS = "## "}; /^## [a-zA-Z_-]/ {printf "  \033[36m%s\033[0m\n", $$2}; /^##  / {printf "  %s\n", $$2}'
 
 .PHONY: spec
-spec: all_spec ## Run all specs
+spec: $(O)/all_spec ## Run all specs
 	$(O)/all_spec $(VERBOSE)
 
 .PHONY: std_spec
-std_spec: all_std_spec ## Run standard library specs
+std_spec: $(O)/std_spec ## Run standard library specs
 	$(O)/std_spec $(VERBOSE)
 
 .PHONY: compiler_spec
-compiler_spec: all_compiler_spec ## Run compiler specs
+compiler_spec: $(O)/compiler_spec ## Run compiler specs
 	$(O)/compiler_spec $(VERBOSE)
 
 .PHONY: doc
@@ -89,29 +90,19 @@ doc: ## Generate standard library documentation
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
 
-.PHONY: all_spec all_std_spec all_compiler_spec
-all_spec: $(O)/all_spec
-all_std_spec: $(O)/std_spec
-all_compiler_spec: $(O)/compiler_spec
-
-.PHONY: llvm_ext libcrystal deps
-llvm_ext: $(LLVM_EXT_OBJ)
-libcrystal: $(LIB_CRYSTAL_TARGET)
-deps: llvm_ext libcrystal
-
-$(O)/all_spec: deps $(SOURCES) $(SPEC_SOURCES)
+$(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/all_spec.cr
 
-$(O)/std_spec: deps $(SOURCES) $(SPEC_SOURCES)
+$(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/std_spec.cr
 
-$(O)/compiler_spec: deps $(SOURCES) $(SPEC_SOURCES)
+$(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/compiler_spec.cr
 
-$(O)/crystal: deps $(SOURCES)
+$(O)/crystal: $(DEPS) $(SOURCES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) $(EXPORTS) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
