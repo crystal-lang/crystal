@@ -104,16 +104,36 @@ module Enumerable(T)
 
     # :nodoc:
     struct Accumulator(T, U)
-      def initialize
+      @data : Array(T)
+      @reuse : Bool
+
+      def initialize(reuse = false)
         @key = uninitialized U
         @initialized = false
-        @data = [] of T
+
+        if reuse
+          if reuse.is_a?(Array)
+            @data = reuse
+          else
+            @data = [] of T
+          end
+          @reuse = true
+        else
+          @data = [] of T
+          @reuse = false
+        end
       end
 
       def init(key, val)
         return if key == Drop
         @key = key
-        @data = [val]
+
+        if @reuse
+          @data.clear
+          @data << val
+        else
+          @data = [val]
+        end
         @initialized = true
       end
 
@@ -131,6 +151,11 @@ module Enumerable(T)
         return false unless @initialized
         return false if key == Alone || key == Drop
         @key == key
+      end
+
+      def reset
+        @initialized = false
+        @data.clear
       end
     end
   end
@@ -211,19 +236,39 @@ module Enumerable(T)
   #     [3, 4]
   #     [4, 5]
   #
-  def each_cons(count : Int)
-    cons = Array(T).new(count)
+  # By default, a new array is created and yielded for each consecutive slice of elements.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def each_cons(count : Int, reuse = false)
+    if reuse
+      unless reuse.is_a?(Array)
+        reuse = Array(T).new(count)
+      end
+      cons = reuse
+    else
+      cons = Array(T).new(count)
+      reuse = nil
+    end
+
     each do |elem|
       cons << elem
       cons.shift if cons.size > count
       if cons.size == count
-        yield cons.dup
+        if reuse
+          yield cons
+        else
+          yield cons.dup
+        end
       end
     end
     nil
   end
 
-  # Iterates over the collection in slices of size *count*, and runs the block for each of those.
+  # Iterates over the collection in slices of size *count*,
+  # and runs the block for each of those.
   #
   #     [1, 2, 3, 4, 5].each_slice(2) do |slice|
   #       puts slice
@@ -236,17 +281,38 @@ module Enumerable(T)
   #     [5]
   #
   # Note that the last one can be smaller.
-  def each_slice(count : Int)
-    each_slice_internal(count, Array(T)) { |slice| yield slice }
+  #
+  # By default, a new array is created and yielded for each silce.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def each_slice(count : Int, reuse = false)
+    each_slice_internal(count, Array(T), reuse) { |slice| yield slice }
   end
 
-  private def each_slice_internal(count : Int, type)
-    slice = type.new(count)
+  private def each_slice_internal(count : Int, type, reuse)
+    if reuse
+      unless reuse.is_a?(Array)
+        reuse = type.new(count)
+      end
+      reuse.clear
+      slice = reuse
+    else
+      slice = type.new(count)
+    end
+
     each do |elem|
       slice << elem
       if slice.size == count
         yield slice
-        slice = type.new(count)
+
+        if reuse
+          slice.clear
+        else
+          slice = type.new(count)
+        end
       end
     end
     yield slice unless slice.empty?
@@ -373,7 +439,6 @@ module Enumerable(T)
   #
   #     [1, 2, 3].in_groups_of(2, 0) #=> [[1, 2], [3, 0]]
   #     [1, 2, 3].in_groups_of(2) #=> [[1, 2], [3, nil]]
-  #
   def in_groups_of(size : Int, filled_up_with : U = nil) forall U
     raise ArgumentError.new("size must be positive") if size <= 0
 
@@ -390,14 +455,17 @@ module Enumerable(T)
   #     #=> 3
   #     #=> 4
   #
-  def in_groups_of(size : Int, filled_up_with : U = nil, &block) forall U
+  # By default, a new array is created and yielded for each group.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def in_groups_of(size : Int, filled_up_with : U = nil, reuse = false, &block) forall U
     raise ArgumentError.new("size must be positive") if size <= 0
 
-    each_slice_internal(size, Array(T | U)) do |slice|
-      unless slice.size == size
-        slice.concat(Array(T | U).new(size - slice.size, filled_up_with))
-      end
-
+    each_slice_internal(size, Array(T | U), reuse) do |slice|
+      (size - slice.size).times { slice << filled_up_with }
       yield slice
     end
   end

@@ -1484,6 +1484,18 @@ describe "Array" do
       sums.should eq([9, 9, 9, 9, 9, 9])
     end
 
+    it "yields with reuse = true" do
+      sums = [] of Int32
+      object_ids = Set(UInt64).new
+      [1, 2, 3].each_permutation(3, reuse: true) do |perm|
+        object_ids << perm.object_id
+        perm.map! &.+(1)
+        sums << perm.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([9, 9, 9, 9, 9, 9])
+      object_ids.size.should eq(1)
+    end
+
     assert { expect_raises(ArgumentError, "size must be positive") { [1].each_permutation(-1) { } } }
 
     it "returns iterator" do
@@ -1510,6 +1522,20 @@ describe "Array" do
 
       iter.rewind
       iter.next.should eq(perms[0])
+    end
+
+    it "returns iterator with reuse = true" do
+      a = [1, 2, 3]
+      object_ids = Set(UInt64).new
+      perms = a.permutations
+      iter = a.each_permutation(reuse: true)
+      perms.each do |perm|
+        b = iter.next.as(Array)
+        object_ids << b.object_id
+        b.should eq(perm)
+      end
+      iter.next.should be_a(Iterator::Stop)
+      object_ids.size.should eq(1)
     end
   end
 
@@ -1542,6 +1568,27 @@ describe "Array" do
       sums.should eq([9])
     end
 
+    it "does with reuse = true" do
+      sums = [] of Int32
+      object_ids = Set(UInt64).new
+      [1, 2, 3].each_combination(2, reuse: true) do |comb|
+        sums << comb.sum
+        object_ids << comb.object_id
+      end
+      sums.should eq([3, 4, 5])
+      object_ids.size.should eq(1)
+    end
+
+    it "does with reuse = array" do
+      sums = [] of Int32
+      reuse = [] of Int32
+      [1, 2, 3].each_combination(2, reuse: reuse) do |comb|
+        sums << comb.sum
+        comb.should be(reuse)
+      end
+      sums.should eq([3, 4, 5])
+    end
+
     assert { expect_raises(ArgumentError, "size must be positive") { [1].each_combination(-1) { } } }
 
     it "returns iterator" do
@@ -1555,6 +1602,33 @@ describe "Array" do
 
       iter.rewind
       iter.next.should eq(combs[0])
+    end
+
+    it "returns iterator with reuse = true" do
+      a = [1, 2, 3, 4]
+      combs = a.combinations(2)
+      object_ids = Set(UInt64).new
+      iter = a.each_combination(2, reuse: true)
+      combs.each do |comb|
+        b = iter.next
+        object_ids << b.object_id
+        b.should eq(comb)
+      end
+      iter.next.should be_a(Iterator::Stop)
+      object_ids.size.should eq(1)
+    end
+
+    it "returns iterator with reuse = array" do
+      a = [1, 2, 3, 4]
+      reuse = [] of Int32
+      combs = a.combinations(2)
+      iter = a.each_combination(2, reuse: reuse)
+      combs.each do |comb|
+        b = iter.next
+        b.should be(reuse)
+        b.should eq(comb)
+      end
+      iter.next.should be_a(Iterator::Stop)
     end
   end
 
@@ -1587,6 +1661,29 @@ describe "Array" do
 
     assert { expect_raises(ArgumentError, "size must be positive") { [1].each_repeated_combination(-1) { } } }
 
+    it "yields with reuse = true" do
+      sums = [] of Int32
+      object_ids = Set(UInt64).new
+      [1, 2, 3].each_repeated_combination(3, reuse: true) do |comb|
+        object_ids << comb.object_id
+        comb.map! &.+(1)
+        sums << comb.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
+      object_ids.size.should eq(1)
+    end
+
+    it "yields with reuse = array" do
+      sums = [] of Int32
+      reuse = [] of Int32
+      [1, 2, 3].each_repeated_combination(3, reuse: reuse) do |comb|
+        comb.should be(reuse)
+        comb.map! &.+(1)
+        sums << comb.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
+    end
+
     it "returns iterator" do
       a = [1, 2, 3, 4]
       combs = a.repeated_combinations(2)
@@ -1598,6 +1695,33 @@ describe "Array" do
 
       iter.rewind
       iter.next.should eq(combs[0])
+    end
+
+    it "returns iterator with reuse = true" do
+      a = [1, 2, 3, 4]
+      object_ids = Set(UInt64).new
+      combs = a.repeated_combinations(2)
+      iter = a.each_repeated_combination(2, reuse: true)
+      combs.each do |comb|
+        b = iter.next
+        object_ids << b.object_id
+        b.should eq(comb)
+      end
+      iter.next.should be_a(Iterator::Stop)
+      object_ids.size.should eq(1)
+    end
+
+    it "returns iterator with reuse = array" do
+      a = [1, 2, 3, 4]
+      reuse = [] of Int32
+      combs = a.repeated_combinations(2)
+      iter = a.each_repeated_combination(2, reuse: reuse)
+      combs.each do |comb|
+        b = iter.next
+        b.should be(reuse)
+        b.should eq(comb)
+      end
+      iter.next.should be_a(Iterator::Stop)
     end
   end
 
@@ -1622,6 +1746,29 @@ describe "Array" do
     it "yielding dup of arrays" do
       sums = [] of Int32
       [1, 2, 3].each_repeated_permutation(3) do |a|
+        a.map! &.+(1)
+        sums << a.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([6, 7, 8, 7, 8, 9, 8, 9, 10, 7, 8, 9, 8, 9, 10, 9, 10, 11, 8, 9, 10, 9, 10, 11, 10, 11, 12])
+    end
+
+    it "yields with reuse = true" do
+      sums = [] of Int32
+      object_ids = Set(UInt64).new
+      [1, 2, 3].each_repeated_permutation(3, reuse: true) do |a|
+        object_ids << a.object_id
+        a.map! &.+(1)
+        sums << a.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([6, 7, 8, 7, 8, 9, 8, 9, 10, 7, 8, 9, 8, 9, 10, 9, 10, 11, 8, 9, 10, 9, 10, 11, 10, 11, 12])
+      object_ids.size.should eq(1)
+    end
+
+    it "yields with reuse = array" do
+      sums = [] of Int32
+      reuse = [] of Int32
+      [1, 2, 3].each_repeated_permutation(3, reuse: reuse) do |a|
+        a.should be(reuse)
         a.map! &.+(1)
         sums << a.sum
       end.should eq([1, 2, 3])
@@ -1654,6 +1801,17 @@ describe "Array" do
       res = [] of Array(Int32)
       Array.each_product([[1, 2], [3], [5, 6]]) { |r| res << r }
       res.should eq([[1, 3, 5], [1, 3, 6], [2, 3, 5], [2, 3, 6]])
+    end
+
+    it "more arrays, reuse = true" do
+      res = [] of Array(Int32)
+      object_ids = Set(UInt64).new
+      Array.each_product([[1, 2], [3], [5, 6]], reuse: true) do |r|
+        object_ids << r.object_id
+        res << r.dup
+      end
+      res.should eq([[1, 3, 5], [1, 3, 6], [2, 3, 5], [2, 3, 6]])
+      object_ids.size.should eq(1)
     end
 
     it "with splat" do
