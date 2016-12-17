@@ -5,6 +5,15 @@
 # are documented on the classes in this module. Additionally, methods of the
 # `Macros` module are top-level methods that you can invoke, like `puts` and `run`.
 module Crystal::Macros
+  # Compares two [semantic versions](http://semver.org/).
+  # Returns -1 if v1 < v2, 0 if v1 == v2, - if v1 > v2.
+  #
+  # ```
+  # {{ compare_versions("1.10.0", "1.2.0") }} # => 1
+  # ```
+  def compare_versions(v1 : StringLiteral, v2 : StringLiteral) : NumberLiteral
+  end
+
   # Outputs the current macro's buffer to the standard output. Useful for debugging
   # a macro to see what's being generated. Use it like `{{debug()}}`, the parenthesis
   # are mandatory.

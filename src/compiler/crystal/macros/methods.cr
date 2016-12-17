@@ -1,10 +1,13 @@
 require "../semantic/ast"
 require "./macros"
+require "semantic_version"
 
 module Crystal
   class MacroInterpreter
     def interpret_top_level_call(node)
       case node.name
+      when "compare_versions"
+        interpret_compare_versions(node)
       when "debug"
         interpret_debug(node)
       when "env"
@@ -24,6 +27,34 @@ module Crystal
       else
         node.raise "undefined macro method: '#{node.name}'"
       end
+    end
+
+    def interpret_compare_versions(node)
+      unless node.args.size == 2
+        node.wrong_number_of_arguments "macro call 'compare_versions'", node.args.size, 2
+      end
+
+      first_arg = node.args[0]
+      first = accept first_arg
+      first_string = first.to_string("first argument to 'compare_versions'")
+
+      second_arg = node.args[1]
+      second = accept second_arg
+      second_string = second.to_string("second argument to 'compare_versions'")
+
+      first_version = begin
+        SemanticVersion.parse(first_string)
+      rescue ex
+        first_arg.raise ex.message
+      end
+
+      second_version = begin
+        SemanticVersion.parse(second_string)
+      rescue ex
+        second_arg.raise ex.message
+      end
+
+      @last = NumberLiteral.new(first_version <=> second_version)
     end
 
     def interpret_debug(node)
@@ -185,6 +216,16 @@ module Crystal
   class ASTNode
     def to_macro_id
       to_s
+    end
+
+    def to_string(context)
+      case self
+      when StringLiteral then return self.value
+      when SymbolLiteral then return self.value
+      when MacroId       then return self.value
+      else
+        raise "expected #{context} to be a StringLiteral, SymbolLiteral or MacroId, not #{class_desc}"
+      end
     end
 
     def truthy?

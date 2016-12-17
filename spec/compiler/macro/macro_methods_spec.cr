@@ -1524,4 +1524,8 @@ describe "macro methods" do
       assert_macro "", %({{flag?(:foo)}}), [] of ASTNode, %(false)
     end
   end
+
+  it "compares versions" do
+    assert_macro "", %({{compare_versions("1.10.3", "1.2.3")}}), [] of ASTNode, %(1)
+  end
 end
