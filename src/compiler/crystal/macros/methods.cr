@@ -1315,42 +1315,19 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.constants(type) }
       when "constant"
         interpret_one_arg_method(method, args) do |arg|
-          case arg
-          when StringLiteral
-            value = arg.value
-          when SymbolLiteral
-            value = arg.value.to_s
-          when MacroId
-            value = arg.value.to_s
-          else
-            raise "argument to constant must be a StringLiteral, SymbolLiteral or MacroId, not #{arg.class_desc}"
-          end
+          value = arg.to_string("argument to 'TypeNode#constant'")
           TypeNode.constant(type, value)
         end
       when "has_constant?"
         interpret_one_arg_method(method, args) do |arg|
-          case arg
-          when StringLiteral
-            value = arg.value
-          when SymbolLiteral
-            value = arg.value.to_s
-          else
-            raise "argument to has_constant? must be a StringLiteral or SymbolLiteral, not #{arg.class_desc}"
-          end
+          value = arg.to_string("argument to 'TypeNode#has_constant?'")
           TypeNode.has_constant?(type, value)
         end
       when "methods"
         interpret_argless_method(method, args) { TypeNode.methods(type) }
       when "has_attribute?"
         interpret_one_arg_method(method, args) do |arg|
-          case arg
-          when StringLiteral
-            value = arg.value
-          when SymbolLiteral
-            value = arg.value
-          else
-            raise "argument to has_attribtue? must be a StringLiteral or SymbolLiteral, not #{arg.class_desc}"
-          end
+          value = arg.to_string("argument to 'TypeNode#has_attribute?'")
           BoolLiteral.new(!!type.has_attribute?(value))
         end
       when "size"
@@ -1438,17 +1415,7 @@ module Crystal
             raise "TypeNode##{method} expects TypeNode as a first argument, not #{arg1.class_desc}"
           end
 
-          case arg2
-          when StringLiteral
-            value = arg2.value
-          when SymbolLiteral
-            value = arg2.value
-          when MacroId
-            value = arg2.value
-          else
-            raise "TypeNode##{method} expects StringLiteral, SymbolLiteral or MacroId as a second argument, not #{arg2.class_desc}"
-          end
-
+          value = arg2.to_string("second argument to 'TypeNode#overrides?")
           TypeNode.overrides?(type, arg1.type, value)
         end
       else
