@@ -406,7 +406,7 @@ module Crystal
         bc_name = self.bc_name
         object_name = self.object_name
 
-        memory_buffer = llvm_mod.write_bitcode
+        memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
 
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
