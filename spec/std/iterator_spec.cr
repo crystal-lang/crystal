@@ -136,6 +136,30 @@ describe Iterator do
       iter.next.should eq [4]
       iter.next.should be_a Iterator::Stop
     end
+
+    it "returns each_slice iterator with reuse = true" do
+      iter = (1..5).each.each_slice(2, reuse: true)
+
+      a = iter.next
+      a.should eq([1, 2])
+
+      b = iter.next
+      b.should eq([3, 4])
+      b.should be(a)
+    end
+
+    it "returns each_slice iterator with reuse = array" do
+      reuse = [] of Int32
+      iter = (1..5).each.each_slice(2, reuse: reuse)
+
+      a = iter.next
+      a.should eq([1, 2])
+      a.should be(reuse)
+
+      b = iter.next
+      b.should eq([3, 4])
+      b.should be(reuse)
+    end
   end
 
   describe "in_groups_of" do
@@ -179,6 +203,22 @@ describe Iterator do
     it "still works with other iterator methods like to_a" do
       iter = (1..3).each.in_groups_of(2, 'z')
       iter.to_a.should eq [[1, 2], [3, 'z']]
+    end
+
+    it "creats a group of two with reuse = true" do
+      iter = (1..3).each.in_groups_of(2, reuse: true)
+
+      a = iter.next
+      a.should eq([1, 2])
+
+      b = iter.next
+      b.should eq([3, nil])
+      b.should be(a)
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq [1, 2]
     end
   end
 

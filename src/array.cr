@@ -961,15 +961,22 @@ class Array(T)
   #     a.each_permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
   #     sums #=> [3, 4, 3, 5, 4, 5]
   #
-  def each_permutation(size : Int = self.size)
+  # By default, a new array is created and yielded for each permutation.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def each_permutation(size : Int = self.size, reuse = false)
     n = self.size
     return self if size > n
 
     raise ArgumentError.new("size must be positive") if size < 0
 
+    reuse = check_reuse(reuse, size)
     pool = self.dup
     cycles = (n - size + 1..n).to_a.reverse!
-    yield pool[0, size]
+    yield pool_slice(pool, size, reuse)
 
     while true
       stop = true
@@ -983,7 +990,7 @@ class Array(T)
           cycles[i] = n - i
         else
           pool.swap i, -ci
-          yield pool[0, size]
+          yield pool_slice(pool, size, reuse)
           stop = false
           break
         end
@@ -1006,10 +1013,17 @@ class Array(T)
   # iter.next # => [3, 2, 1]
   # iter.next # => Iterator::Stop
   # ```
-  def each_permutation(size : Int = self.size)
+  #
+  # By default, a new array is created and returned for each permutation.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def each_permutation(size : Int = self.size, reuse = false)
     raise ArgumentError.new("size must be positive") if size < 0
 
-    PermutationIterator.new(self, size.to_i)
+    PermutationIterator.new(self, size.to_i, reuse)
   end
 
   def combinations(size : Int = self.size)
@@ -1020,16 +1034,18 @@ class Array(T)
     ary
   end
 
-  def each_combination(size : Int = self.size)
+  def each_combination(size : Int = self.size, reuse = false)
     n = self.size
     return self if size > n
     raise ArgumentError.new("size must be positive") if size < 0
 
+    reuse = check_reuse(reuse, size)
     copy = self.dup
     pool = self.dup
 
     indices = (0...size).to_a
-    yield pool[0, size]
+
+    yield pool_slice(pool, size, reuse)
 
     while true
       stop = true
@@ -1052,14 +1068,35 @@ class Array(T)
         pool[j] = copy[indices[j]]
       end
 
-      yield pool[0, size]
+      yield pool_slice(pool, size, reuse)
     end
   end
 
-  def each_combination(size : Int = self.size)
+  private def each_combination_piece(pool, size, reuse)
+    if reuse
+      reuse.clear
+      size.times { |i| reuse << pool[i] }
+      reuse
+    else
+      pool[0, size]
+    end
+  end
+
+  def each_combination(size : Int = self.size, reuse = false)
     raise ArgumentError.new("size must be positive") if size < 0
 
-    CombinationIterator.new(self, size.to_i)
+    CombinationIterator.new(self, size.to_i, reuse)
+  end
+
+  private def check_reuse(reuse, size)
+    if reuse
+      unless reuse.is_a?(Array)
+        reuse = typeof(self).new(size)
+      end
+    else
+      reuse = nil
+    end
+    reuse
   end
 
   # Returns a new Array that is a one-dimensional flattening of self (recursively).
@@ -1084,16 +1121,17 @@ class Array(T)
     ary
   end
 
-  def each_repeated_combination(size : Int = self.size)
+  def each_repeated_combination(size : Int = self.size, reuse = false)
     n = self.size
     return self if size > n && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
 
+    reuse = check_reuse(reuse, size)
     copy = self.dup
     indices = Array.new(size, 0)
     pool = indices.map { |i| copy[i] }
 
-    yield pool[0, size]
+    yield pool_slice(pool, size, reuse)
 
     while true
       stop = true
@@ -1113,14 +1151,14 @@ class Array(T)
       indices.fill(i, size - i) { ii }
       pool.fill(i, size - i) { tmp }
 
-      yield pool[0, size]
+      yield pool_slice(pool, size, reuse)
     end
   end
 
-  def each_repeated_combination(size : Int = self.size)
+  def each_repeated_combination(size : Int = self.size, reuse = false)
     raise ArgumentError.new("size must be positive") if size < 0
 
-    RepeatedCombinationIterator.new(self, size.to_i)
+    RepeatedCombinationIterator.new(self, size.to_i, reuse)
   end
 
   def self.product(arrays)
@@ -1135,13 +1173,23 @@ class Array(T)
     product(arrays.to_a)
   end
 
-  def self.each_product(arrays)
+  def self.each_product(arrays : Array(Array), reuse = false)
     pool = arrays.map &.first
     lens = arrays.map &.size
     return if lens.any? &.==(0)
+
     n = arrays.size
     indices = Array.new(n, 0)
-    yield pool[0, n]
+
+    if reuse
+      unless reuse.is_a?(Array)
+        reuse = typeof(pool).new(n)
+      end
+    else
+      reuse = nil
+    end
+
+    yield pool_slice(pool, n, reuse)
 
     while true
       i = n - 1
@@ -1155,12 +1203,12 @@ class Array(T)
         indices[i] += 1
       end
       pool[i] = arrays[i][indices[i]]
-      yield pool[0, n]
+      yield pool_slice(pool, n, reuse)
     end
   end
 
-  def self.each_product(*arrays : Array)
-    each_product(arrays.to_a) do |result|
+  def self.each_product(*arrays : Array, reuse = false)
+    each_product(arrays.to_a, reuse: reuse) do |result|
       yield result
     end
   end
@@ -1173,7 +1221,7 @@ class Array(T)
     ary
   end
 
-  def each_repeated_permutation(size : Int = self.size)
+  def each_repeated_permutation(size : Int = self.size, reuse = false)
     n = self.size
     return self if size != 0 && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
@@ -1181,7 +1229,7 @@ class Array(T)
     if size == 0
       yield([] of T)
     else
-      Array.each_product(Array.new(size, self)) { |r| yield r }
+      Array.each_product(Array.new(size, self), reuse: reuse) { |r| yield r }
     end
 
     self
@@ -1953,14 +2001,23 @@ class Array(T)
     @stop : Bool
     @i : Int32
     @first : Bool
+    @reuse : Array(T)?
 
-    def initialize(@array : Array(T), @size)
+    def initialize(@array : Array(T), @size, reuse)
       @n = @array.size
       @cycles = (@n - @size + 1..@n).to_a.reverse!
       @pool = @array.dup
       @stop = @size > @n
       @i = @size - 1
       @first = true
+
+      if reuse
+        if reuse.is_a?(Array)
+          @reuse = reuse
+        else
+          @reuse = Array(T).new(@size)
+        end
+      end
     end
 
     def next
@@ -1968,7 +2025,7 @@ class Array(T)
 
       if @first
         @first = false
-        return @pool[0, @size]
+        return pool_slice(@pool, @size, @reuse)
       end
 
       while @i >= 0
@@ -1980,7 +2037,7 @@ class Array(T)
           @cycles[@i] = @n - @i
         else
           @pool.swap @i, -ci
-          value = @pool[0, @size]
+          value = pool_slice(@pool, @size, @reuse)
           @i = @size - 1
           return value
         end
@@ -2012,8 +2069,9 @@ class Array(T)
     @stop : Bool
     @i : Int32
     @first : Bool
+    @reuse : Array(T)?
 
-    def initialize(array : Array(T), @size)
+    def initialize(array : Array(T), @size, reuse)
       @n = array.size
       @copy = array.dup
       @pool = array.dup
@@ -2021,6 +2079,14 @@ class Array(T)
       @stop = @size > @n
       @i = @size - 1
       @first = true
+
+      if reuse
+        if reuse.is_a?(Array)
+          @reuse = reuse
+        else
+          @reuse = Array(T).new(@size)
+        end
+      end
     end
 
     def next
@@ -2028,7 +2094,7 @@ class Array(T)
 
       if @first
         @first = false
-        return @pool[0, @size]
+        return pool_slice(@pool, @size, @reuse)
       end
 
       while @i >= 0
@@ -2041,7 +2107,7 @@ class Array(T)
             @pool[j] = @copy[@indices[j]]
           end
 
-          value = @pool[0, @size]
+          value = pool_slice(@pool, @size, @reuse)
           @i = @size - 1
           return value
         end
@@ -2073,8 +2139,9 @@ class Array(T)
     @stop : Bool
     @i : Int32
     @first : Bool
+    @reuse : Array(T)?
 
-    def initialize(array : Array(T), @size)
+    def initialize(array : Array(T), @size, reuse)
       @n = array.size
       @copy = array.dup
       @indices = Array.new(@size, 0)
@@ -2082,6 +2149,14 @@ class Array(T)
       @stop = @size > @n
       @i = @size - 1
       @first = true
+
+      if reuse
+        if reuse.is_a?(Array)
+          @reuse = reuse
+        else
+          @reuse = Array(T).new(@size)
+        end
+      end
     end
 
     def next
@@ -2089,7 +2164,7 @@ class Array(T)
 
       if @first
         @first = false
-        return @pool[0, @size]
+        return pool_slice(@pool, @size, @reuse)
       end
 
       while @i >= 0
@@ -2099,7 +2174,7 @@ class Array(T)
           @indices.fill(@i, @size - @i) { ii }
           @pool.fill(@i, @size - @i) { tmp }
 
-          value = @pool[0, @size]
+          value = pool_slice(@pool, @size, @reuse)
           @i = @size - 1
           return value
         end
@@ -2146,5 +2221,15 @@ class Array(T)
         ary
       end
     end
+  end
+end
+
+private def pool_slice(pool, size, reuse)
+  if reuse
+    reuse.clear
+    size.times { |i| reuse << pool[i] }
+    reuse
+  else
+    pool[0, size]
   end
 end
