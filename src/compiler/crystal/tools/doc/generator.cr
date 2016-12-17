@@ -269,7 +269,7 @@ class Crystal::Doc::Generator
     String.build do |io|
       string.each_line.join("", io) do |line, io|
         if line =~ flag_regexp
-          io << line << '\n'
+          io << '\n' << line
         else
           io << line
         end
