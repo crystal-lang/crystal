@@ -160,6 +160,15 @@ class Dir
     File::Stat.new(stat).directory?
   end
 
+  def self.empty?(path) : Bool
+    raise Errno.new("Error determining size of '#{path}'") unless exists?(path)
+
+    foreach(path) do |f|
+      return false unless {".", ".."}.includes?(f)
+    end
+    true
+  end
+
   # Creates a new directory at the given path. The linux-style permission mode
   # can be specified, with a default of 777 (0o777).
   def self.mkdir(path, mode = 0o777)
