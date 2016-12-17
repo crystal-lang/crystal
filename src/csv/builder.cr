@@ -3,6 +3,8 @@ require "./csv"
 # A CSV Builder writes CSV to an IO.
 #
 # ```
+# require "csv"
+#
 # result = CSV.build do |csv|
 #   # A row can be written by specifying several values
 #   csv.row "Hello", 1, 'a', "String with \"quotes\""

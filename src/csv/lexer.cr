@@ -4,6 +4,7 @@ require "./csv"
 # parse a CSV without the need to allocate intermediate arrays.
 #
 # ```
+# require "csv"
 # lexer = CSV::Lexer.new "one,two\nthree"
 # lexer.next_token # => CSV::Token(@kind=Cell, @value="one")
 # lexer.next_token # => CSV::Token(@kind=Cell, @value="two")

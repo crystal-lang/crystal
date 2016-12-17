@@ -416,7 +416,7 @@ class HTTP::Client
   #
   # ```
   # client = HTTP::Client.new "www.example.com"
-  # response = client.post_form "/", {"foo": "bar"}
+  # response = client.post_form "/", {"foo" => "bar"}
   # ```
   def post_form(path, form : Hash, headers : HTTP::Headers? = nil) : HTTP::Client::Response
     body = HTTP::Params.from_hash(form)
@@ -429,7 +429,7 @@ class HTTP::Client
   #
   # ```
   # client = HTTP::Client.new "www.example.com"
-  # client.post_form("/", {"foo": "bar"}) do |response|
+  # client.post_form("/", {"foo" => "bar"}) do |response|
   #   response.body_io.gets
   # end
   # ```

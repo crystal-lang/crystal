@@ -145,8 +145,8 @@ struct Tuple
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0] # => 1
-  # tuple[3] # => nil
+  # tuple[0]? # => 1
+  # tuple[3]? # => nil
   # ```
   def []?(index : Int)
     at(index) { nil }
@@ -156,8 +156,8 @@ struct Tuple
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0] # => 1
-  # tuple[3] # => raises IndexError
+  # tuple.at(0) # => 1
+  # tuple.at(3) # => raises IndexError
   # ```
   def at(index : Int)
     at(index) { raise IndexError.new }

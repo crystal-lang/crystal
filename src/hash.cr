@@ -306,13 +306,8 @@ class Hash(K, V)
   # hsh = {"foo" => "bar", "baz" => "qux"}
   # iterator = hsh.each
   #
-  # entry = iterator.next
-  # entry[0] # => "foo"
-  # entry[1] # => "bar"
-  #
-  # entry = iterator.next
-  # entry[0] # => "baz"
-  # entry[1] # => "qux"
+  # iterator.next # => {"foo", "bar"}
+  # iterator.next # => {"baz", "qux"}
   # ```
   def each
     EntryIterator(K, V).new(self, @first)

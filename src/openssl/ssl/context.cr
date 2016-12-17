@@ -58,8 +58,10 @@ abstract class OpenSSL::SSL::Context
     # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
     #
     # ```
+    # require "openssl"
+    #
     # context = OpenSSL::SSL::Context::Client.new
-    # context.options = OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3
+    # context.add_options(OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3)
     # ```
     def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
       super(method)
@@ -112,7 +114,7 @@ abstract class OpenSSL::SSL::Context
     #
     # ```
     # context = OpenSSL::SSL::Context::Server.new
-    # context.options = OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3
+    # context.add_options(OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3)
     # ```
     def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
       super(method)

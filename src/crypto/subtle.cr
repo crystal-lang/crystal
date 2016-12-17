@@ -3,8 +3,9 @@ module Crypto::Subtle
   # Note: *x* and *y* must be able to respond to `to_slice`.
   #
   # ```
-  # Crypto::Suble.constant_time_compare("foo","bar") => false
-  # Crypto::Suble.constant_time_compare("foo","foo") => true
+  # require "crypto/subtle"
+  # Crypto::Subtle.constant_time_compare("foo", "bar") # => false
+  # Crypto::Subtle.constant_time_compare("foo", "foo") # => true
   # ```
   def self.constant_time_compare(x, y) : Bool
     x = x.to_slice

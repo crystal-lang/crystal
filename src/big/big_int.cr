@@ -13,6 +13,7 @@ struct BigInt < Int
   # Creates a BigInt with the value zero.
   #
   # ```
+  # require "big"
   # BigInt.new # => 0
   # ```
   def initialize

@@ -173,7 +173,7 @@ class String
   #
   # ```
   # ptr = Pointer.malloc(4) { |i| ('a'.ord + i).to_u8 }
-  # String.new(ptr, 2) => "ab"
+  # String.new(ptr, 2) # => "ab"
   # ```
   #
   # Note: if the chars don't denote a valid UTF-8 sequence, this method still succeeds.
@@ -275,7 +275,7 @@ class String
   # "12_345".to_i(underscore: true) # => 12345
   #
   # "  12345  ".to_i                    # => 12345
-  # "  12345  ".to_i(whitepsace: false) # => raises
+  # "  12345  ".to_i(whitespace: false) # => raises
   #
   # "0x123abc".to_i               # => raises
   # "0x123abc".to_i(prefix: true) # => 1194684
@@ -994,7 +994,7 @@ class String
   # "string\n\r".chomp # => "string\n"
   # "string\n".chomp   # => "string"
   # "string".chomp     # => "string"
-  # "x".chomp.chmop    # => "x"
+  # "x".chomp.chomp    # => "x"
   # ```
   #
   # See also: `#chop`

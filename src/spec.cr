@@ -49,20 +49,20 @@ require "signal"
 # By convention, specs live in the `spec` directory of a project. You can compile
 # and run the specs of a project by running:
 #
-# ```
+# ```shell
 # crystal spec
 # ```
 #
 # Also, you can compile and run individual spec files by providing their path:
 #
-# ```
+# ```shell
 # crystal spec spec/my/test/file_spec.cr
 # ```
 #
 # In addition, you can also run individual specs by optionally providing a line
 # number:
 #
-# ```
+# ```shell
 # crystal spec spec/my/test/file_spec.cr:14
 # ```
 module Spec

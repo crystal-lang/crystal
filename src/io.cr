@@ -29,7 +29,7 @@ require "c/unistd"
 #   def read(slice : Bytes)
 #     slice.size.times { |i| slice[i] = @slice[i] }
 #     @slice += slice.size
-#     count
+#     slice.size
 #   end
 #
 #   def write(slice : Bytes)
@@ -176,7 +176,8 @@ module IO
   # io = IO::Memory.new
   # slice = Bytes.new(4) { |i| ('a'.ord + i).to_u8 }
   # io.write(slice)
-  # io.to_s #=> "abcd"
+  # io.to_s # => "abcd"
+  # ```
   abstract def write(slice : Bytes) : Nil
 
   # Closes this IO.
@@ -494,7 +495,7 @@ module IO
   # slice = Bytes.new(5)
   # io.read_fully(slice) # => 5
   # slice                # => [49, 50, 51, 52, 53]
-  # io.read_fully        # => EOFError
+  # io.read_fully(slice) # => EOFError
   # ```
   def read_fully(slice : Bytes)
     read_fully?(slice) || raise(EOFError.new)
@@ -509,7 +510,7 @@ module IO
   # slice = Bytes.new(5)
   # io.read_fully?(slice) # => 5
   # slice                 # => [49, 50, 51, 52, 53]
-  # io.read_fully?        # => nil
+  # io.read_fully?(slice) # => nil
   # ```
   def read_fully?(slice : Bytes)
     count = slice.size

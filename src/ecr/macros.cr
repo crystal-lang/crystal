@@ -11,7 +11,7 @@ module ECR
   # require "ecr/macros"
   #
   # class Greeting
-  #   def initialize(@name)
+  #   def initialize(@name : String)
   #   end
   #
   #   ECR.def_to_s "greeting.ecr"

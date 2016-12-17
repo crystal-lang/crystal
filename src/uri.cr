@@ -173,7 +173,7 @@ class URI
   # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
   #
   # ```
-  # require 'uri'
+  # require "uri"
   #
   # uri = URI.parse("http://crystal-lang.org")
   # # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >

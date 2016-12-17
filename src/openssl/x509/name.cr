@@ -8,6 +8,7 @@ module OpenSSL::X509
     #
     # Example:
     # ```
+    # require "openssl"
     # OpenSSL::X509::Name.parse("CN=nobody/DC=example")
     # ```
     def self.parse(string : String) : Name

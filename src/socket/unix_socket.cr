@@ -4,6 +4,8 @@
 #
 # Example usage:
 # ```
+# require "socket"
+#
 # sock = UNIXSocket.new("/tmp/myapp.sock")
 # sock.puts "message"
 # response = sock.gets

@@ -16,10 +16,10 @@ module Unicode
     # Use turkic case rules:
     #
     # ```
-    # 'İ'.downcase(Unicode::CaseOptions::Turikic) # => 'i'
-    # 'I'.downcase(Unicode::CaseOptions::Turikic) # => 'ı'
-    # 'i'.upcase(Unicode::CaseOptions::Turikic)   # => 'İ'
-    # 'ı'.upcase(Unicode::CaseOptions::Turikic)   # => 'I'
+    # 'İ'.downcase(Unicode::CaseOptions::Turkic) # => 'i'
+    # 'I'.downcase(Unicode::CaseOptions::Turkic) # => 'ı'
+    # 'i'.upcase(Unicode::CaseOptions::Turkic)   # => 'İ'
+    # 'ı'.upcase(Unicode::CaseOptions::Turkic)   # => 'I'
     # ```
     Turkic
   end

@@ -74,7 +74,7 @@ class Deque(T)
   # value in that index.
   #
   # ```
-  # Deque.new(3) { |i| (i + 1) ** 2 } # => Deque{1, 4, 9}
+  # Deque(Int32).new(3) { |i| (i + 1) ** 2 } # => Deque{1, 4, 9}
   # ```
   def initialize(size : Int, &block : Int32 -> T)
     if size < 0
@@ -278,7 +278,7 @@ class Deque(T)
   #
   # ```
   # a = Deque{0, 1, 2}
-  # a.insert_at(1, 7) # => Deque{0, 7, 1, 2}
+  # a.insert(1, 7) # => Deque{0, 7, 1, 2}
   # ```
   def insert(index : Int, value : T)
     if index < 0

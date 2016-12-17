@@ -18,7 +18,7 @@
 # struct Mutable
 #   property value
 #
-#   def initialize(@value)
+#   def initialize(@value : Int32)
 #   end
 # end
 #
@@ -52,7 +52,7 @@ struct Struct
   #
   # ```
   # struct Point
-  #   def initialize(@x, @y)
+  #   def initialize(@x : Int32, @y : Int32)
   #   end
   # end
   #
@@ -86,7 +86,7 @@ struct Struct
   #
   # ```
   # struct Point
-  #   def initialize(@x, @y)
+  #   def initialize(@x : Int32, @y : Int32)
   #   end
   # end
   #

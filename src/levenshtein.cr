@@ -3,10 +3,12 @@ module Levenshtein
   # Computes the [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) of two strings.
   #
   # ```
-  # levenshtein("algorithm", "altruistic") # => 6
-  # levenshtein("hello", "hallo")          # => 1
-  # levenshtein("こんにちは", "こんちは")           # => 1
-  # levensthein("hey", "hey")              # => 0
+  # require "levenshtein"
+  #
+  # Levenshtein.distance("algorithm", "altruistic") # => 6
+  # Levenshtein.distance("hello", "hallo")          # => 1
+  # Levenshtein.distance("こんにちは", "こんちは")           # => 1
+  # Levenshtein.distance("hey", "hey")              # => 0
   # ```
   def self.distance(string1 : String, string2 : String) : Int32
     return 0 if string1 == string2
