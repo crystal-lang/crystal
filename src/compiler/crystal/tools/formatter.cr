@@ -1309,18 +1309,18 @@ module Crystal
         skip_space_or_newline
         write " forall "
         next_token
+        last_index = free_vars.size - 1
         free_vars.each_with_index do |free_var, i|
           skip_space_or_newline
           check :CONST
           write free_var
-          next_token_skip_space_or_newline
+          next_token
+          skip_space_or_newline if last_index != i
           if @token.type == :","
             write ", "
             next_token_skip_space_or_newline
           end
         end
-        skip_space
-        write " "
       end
 
       body = remove_to_skip node, to_skip
@@ -3507,9 +3507,7 @@ module Crystal
       implicit_handler = false
       if node.implicit
         accept node.body
-        skip_space_or_newline
-
-        write_line
+        write_line unless skip_space_or_newline last: true
         implicit_handler = true
         column = @def_indent
       else
