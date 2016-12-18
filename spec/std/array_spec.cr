@@ -1841,5 +1841,11 @@ describe "Array" do
 
   it "flattens" do
     [[1, 'a'], [[[[true], "hi"]]]].flatten.should eq([1, 'a', true, "hi"])
+
+    s = [1, 2, 3]
+    t = [4, 5, 6, [7, 8]]
+    u = [9, [10, 11].each]
+    a = [s, t, u, 12, 13]
+    a.flatten.to_a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
   end
 end

@@ -1101,13 +1101,14 @@ class Array(T)
 
   # Returns a new Array that is a one-dimensional flattening of self (recursively).
   #
-  # That is, for every element that is an array, extract its elements into the new array.
+  # That is, for every element that is an array or an iterator, extract its elements into the new array.
   #
   # ```
-  # s = [1, 2, 3]         # => [1, 2, 3]
-  # t = [4, 5, 6, [7, 8]] # => [4, 5, 6, [7, 8]]
-  # a = [s, t, 9, 10]     # => [[1, 2, 3], [4, 5, 6, [7, 8]], 9, 10]
-  # a.flatten             # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  # s = [1, 2, 3]          # => [1, 2, 3]
+  # t = [4, 5, 6, [7, 8]]  # => [4, 5, 6, [7, 8]]
+  # u = [9, [10, 11].each] # => [9, Indexable#ItemIterator]
+  # a = [s, t, u, 12, 13]  # => [[1, 2, 3], [4, 5, 6, [7, 8]], 9, 10]
+  # a.flatten              # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
   # ```
   def flatten
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
@@ -2210,13 +2211,22 @@ class Array(T)
       end
     end
 
+    def self.flatten(iter : Iterator, result)
+      iter.each do |elem|
+        flatten elem, result
+      end
+    end
+
     def self.flatten(other : T, result)
       result << other
     end
 
     def self.element_type(ary)
-      if ary.is_a?(Array)
+      case ary
+      when Array
         element_type(ary.first)
+      when Iterator
+        element_type(ary.next)
       else
         ary
       end
