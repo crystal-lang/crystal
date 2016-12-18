@@ -461,4 +461,6 @@ struct Slice(T)
   end
 end
 
+# A convenient alias for the most common slice type,
+# a slice of bytes, used for example in `IO#read` and `IO#write`.
 alias Bytes = Slice(UInt8)
