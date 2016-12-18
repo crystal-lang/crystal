@@ -370,13 +370,18 @@ module Iterator(T)
 
   # Returns an iterator that flattens nested iterators into a single iterator
   # whose type is the union of the simple types of all of the nested iterators
-  # (and their nested iterators, and so on).
+  # (and their nested iterators except tuples, and so on).
   #
   #     iter = [(1..2).each, ('a'..'b').each].each.flatten
   #     iter.next # => 1
   #     iter.next # => 2
   #     iter.next # => 'a'
   #     iter.next # => 'b'
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  #     iter = [{1, 2}, {3 => 4}.each]
+  #     iter.next # => {1, 2}
+  #     iter.next # => {3, 4}
   #     iter.next # => Iterator::Stop::INSTANCE
   #
   def flatten
@@ -397,6 +402,8 @@ module Iterator(T)
 
     def next
       case value = @generators.last.next
+      when Tuple
+        value
       when Iterator
         @generators.push value
         self.next
@@ -427,6 +434,8 @@ module Iterator(T)
       case element
       when Stop
         raise ""
+      when Tuple
+        element
       when Iterator
         element_type(element.next)
       when Iterable
@@ -438,6 +447,8 @@ module Iterator(T)
 
     def self.iterator_type(iter)
       case iter
+      when Tuple
+        raise ""
       when Iterator
         iter || iterator_type iter.next
       when Iterable

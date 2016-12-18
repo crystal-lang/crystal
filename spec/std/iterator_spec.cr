@@ -502,8 +502,6 @@ describe Iterator do
     end
   end
 
-  # TODO: with the new global type inference algorithm we can't yet implement this.
-  #
   describe "flatten" do
     it "flattens an iterator of mixed-type iterators" do
       iter = [(1..2).each, ('a'..'b').each, {:c => 3}.each].each.flatten
@@ -512,8 +510,7 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq('a')
       iter.next.should eq('b')
-      iter.next.should eq(:c)
-      iter.next.should eq(3)
+      iter.next.should eq({:c, 3})
 
       iter.next.should be_a(Iterator::Stop)
 
@@ -521,7 +518,7 @@ describe Iterator do
       iter.next.should eq(1)
 
       iter.rewind
-      iter.to_a.should eq([1, 2, 'a', 'b', :c, 3])
+      iter.to_a.should eq([1, 2, 'a', 'b', {:c, 3}])
     end
 
     it "flattens an iterator of mixed-type elements and iterators" do
@@ -583,6 +580,17 @@ describe Iterator do
       ([] of Nil).each.flatten.to_a.should eq([] of Nil)
       ['a'].each.flatten.to_a.should eq(['a'])
       [[[[[["hi"]]]]]].each.flatten.to_a.should eq(["hi"])
+    end
+
+    it "flattens a deeply-nested iterables except tuples" do
+      iter = [[1, {2, 3}, 4], [{5 => 6}, 7]].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq({2, 3})
+      iter.next.should eq(4)
+      iter.next.should eq({5, 6})
+      iter.next.should eq(7)
+      iter.next.should be_a(Iterator::Stop)
     end
   end
 end
