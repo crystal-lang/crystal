@@ -116,8 +116,10 @@ module Crystal
 
       case @token.type
       when :","
-        # Continue
-        unexpected_token unless last_is_target
+        unless last_is_target
+          raise "Multiple assignment is not allowed for constants" if last.is_a?(Path)
+          unexpected_token
+        end
       when :NEWLINE, :";"
         return last
       else
@@ -173,7 +175,7 @@ module Crystal
         targets << assign
         values << assign.args.pop
       else
-        raise "Bug: mutliassign index expression can only be Assign or Call"
+        raise "Bug: multiassign index expression can only be Assign or Call"
       end
 
       values.concat exps[assign_index + 1..-1]
@@ -187,7 +189,7 @@ module Crystal
 
     def multi_assign_target?(exp)
       case exp
-      when Underscore, Var, InstanceVar, ClassVar, Global, Path, Assign
+      when Underscore, Var, InstanceVar, ClassVar, Global, Assign
         true
       when Call
         !exp.has_parentheses? && (
