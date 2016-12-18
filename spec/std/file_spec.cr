@@ -429,7 +429,7 @@ describe "File" do
     it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
       prev_home = home
       begin
-        ENV["HOME"] = home + "/"
+        ENV["HOME"] = __DIR__ + "/"
         File.expand_path("~/").should eq(home)
         File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
         File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
