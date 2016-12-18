@@ -582,13 +582,13 @@ describe Iterator do
       [[[[[["hi"]]]]]].each.flatten.to_a.should eq(["hi"])
     end
 
-    it "flattens a deeply-nested iterables except tuples" do
+    it "flattens a deeply-nested iterables and arrays (#3703)" do
       iter = [[1, {2, 3}, 4], [{5 => 6}, 7]].each.flatten
 
       iter.next.should eq(1)
       iter.next.should eq({2, 3})
       iter.next.should eq(4)
-      iter.next.should eq({5, 6})
+      iter.next.should eq({5 => 6})
       iter.next.should eq(7)
       iter.next.should be_a(Iterator::Stop)
     end

@@ -368,9 +368,9 @@ module Iterator(T)
     slice(n)
   end
 
-  # Returns an iterator that flattens nested iterators into a single iterator
-  # whose type is the union of the simple types of all of the nested iterators
-  # (and their nested iterators except tuples, and so on).
+  # Returns an iterator that flattens nested iterators and arrays into a single iterator
+  # whose type is the union of the simple types of all of the nested iterators and arrays
+  # (and their nested iterators and arrays, and so on).
   #
   #     iter = [(1..2).each, ('a'..'b').each].each.flatten
   #     iter.next # => 1
@@ -379,16 +379,11 @@ module Iterator(T)
   #     iter.next # => 'b'
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  #     iter = [{1, 2}, {3 => 4}.each]
-  #     iter.next # => {1, 2}
-  #     iter.next # => {3, 4}
-  #     iter.next # => Iterator::Stop::INSTANCE
-  #
   def flatten
     Flatten(typeof(Flatten.iterator_type(self)), typeof(Flatten.element_type(self))).new(self)
   end
 
-  private class Flatten(I, T)
+  private struct Flatten(I, T)
     include Iterator(T)
 
     @iterator : I
@@ -402,12 +397,10 @@ module Iterator(T)
 
     def next
       case value = @generators.last.next
-      when Tuple
-        value
       when Iterator
         @generators.push value
         self.next
-      when Iterable
+      when Array
         @generators.push value.each
         self.next
       when Stop
@@ -434,11 +427,9 @@ module Iterator(T)
       case element
       when Stop
         raise ""
-      when Tuple
-        element
       when Iterator
         element_type(element.next)
-      when Iterable
+      when Array
         element_type(element.each)
       else
         element
@@ -447,11 +438,9 @@ module Iterator(T)
 
     def self.iterator_type(iter)
       case iter
-      when Tuple
-        raise ""
       when Iterator
         iter || iterator_type iter.next
-      when Iterable
+      when Array
         iterator_type iter.each
       else
         raise ""
