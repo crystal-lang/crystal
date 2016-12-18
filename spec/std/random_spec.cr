@@ -24,6 +24,21 @@ RNG_DATA_64 = [148763248732657823u64, 18446744073709551615u64, 0u64,
   32456325635673576u64, 2456245614625u64, 32452456246u64, 3956529762u64,
   9823674982364u64, 234253464546456u64, 14345435645646u64]
 
+class TestBytesRNG < TestRNG(UInt8)
+  def random_bytes(n)
+    result = Bytes.new(n) do
+      i = @i
+      @i = (i + 1) % @data.size
+      @data[i]
+    end
+  end
+
+  def next_u
+    fail "next_u should not have been called"
+    super
+  end
+end
+
 describe "Random" do
   it "limited number" do
     rand(1).should eq(0)
@@ -121,6 +136,23 @@ describe "Random" do
     Random::DEFAULT.next_bool.should be_a(Bool)
   end
 
+  it "fills a large buffer with random bytes" do
+    bytes = Random::DEFAULT.random_bytes(10000)
+    bytes[9990, 10].should_not eq(Slice(UInt8).new(10))
+  end
+
+  it "generates random bytes" do
+    rng = TestRNG.new([0xfa19443eu32, 1u32, 0x12345678u32])
+    rng.random_bytes(9).should eq Bytes[0x3e, 0x44, 0x19, 0xfa, 1, 0, 0, 0, 0x78]
+    rng.random_bytes(1).should eq Bytes[0x3e]
+    rng.random_bytes(4).should eq Bytes[1, 0, 0, 0]
+    rng.random_bytes(3).should eq Bytes[0x78, 0x56, 0x34]
+    rng.random_bytes(0).should eq Bytes[]
+
+    rng = TestRNG.new([12u8, 255u8, 11u8, 5u8, 122u8, 200u8, 192u8])
+    rng.random_bytes(7).should eq Bytes[12, 255, 11, 5, 122, 200, 192]
+  end
+
   it "generates by accumulation" do
     rng = TestRNG.new([234u8, 153u8, 0u8, 0u8, 127u8, 128u8, 255u8, 255u8])
     rng.rand(65536).should eq 60057    # 234*0x100 + 153
@@ -175,5 +207,11 @@ describe "Random" do
       expected -= 0x100 if a >= 0x80
       rng.rand(Int8::MIN..Int8::MAX).should eq expected
     end
+  end
+
+  it "generates from random bytes" do
+    rng = TestBytesRNG.new([255u8, 254u8, 234u8, 153u8])
+    rng.rand(258).should eq 201 # 255*0x100 + 254 [skip]-> (234*0x100 + 153) % 257
+    rng.rand(Int16::MIN..Int16::MAX).should eq -2
   end
 end
