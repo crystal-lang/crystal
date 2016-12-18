@@ -368,11 +368,9 @@ module Iterator(T)
     slice(n)
   end
 
-  # TODO: with the new global type inference algorithm we can't yet express this type.
-  #
-  # Returns an iterator that flattens nested iterators into a single iterator
-  # whose type is the union of the simple types of all of the nested iterators
-  # (and their nested iterators, and so on).
+  # Returns an iterator that flattens nested iterators and arrays into a single iterator
+  # whose type is the union of the simple types of all of the nested iterators and arrays
+  # (and their nested iterators and arrays, and so on).
   #
   #     iter = [(1..2).each, ('a'..'b').each].each.flatten
   #     iter.next # => 1
@@ -381,84 +379,74 @@ module Iterator(T)
   #     iter.next # => 'b'
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  # def flatten
-  #   Flatten(self, typeof(Flatten.element_type(self))).new(self)
-  # end
+  def flatten
+    Flatten(typeof(Flatten.iterator_type(self)), typeof(Flatten.element_type(self))).new(self)
+  end
 
-  # private class Flatten(I, T1)
-  #   include Iterator(T1)
+  private struct Flatten(I, T)
+    include Iterator(T)
 
-  #   @iterator : I
-  #   @top : Bool
-  #   @to_rewind : Array(Proc(Nil))
+    @iterator : I
+    @stopped : Array(I)
+    @generators : Array(I)
 
-  #   # @generator : I
+    def initialize(@iterator)
+      @generators = [@iterator]
+      @stopped = [] of I
+    end
 
-  #   def initialize(@iterator)
-  #     @generator = @iterator
-  #     @top = true
-  #     @to_rewind = [] of Proc(Nil)
-  #   end
+    def next
+      case value = @generators.last.next
+      when Iterator
+        @generators.push value
+        self.next
+      when Array
+        @generators.push value.each
+        self.next
+      when Stop
+        if @generators.size == 1
+          stop
+        else
+          @stopped << @generators.pop
+          self.next
+        end
+      else
+        value
+      end
+    end
 
-  #   def next
-  #     value = @generator.next
-  #     if value.is_a?(Stop)
-  #       if @top
-  #         return stop
-  #       else
-  #         @generator = @iterator
-  #         @top = true
-  #         return self.next
-  #       end
-  #     end
+    def rewind
+      @generators.each &.rewind
+      @generators.clear
+      @generators << @iterator
+      @stopped.each &.rewind
+      @stopped.clear
+    end
 
-  #     flatten value
-  #   end
+    def self.element_type(element)
+      case element
+      when Stop
+        raise ""
+      when Iterator
+        element_type(element.next)
+      when Array
+        element_type(element.each)
+      else
+        element
+      end
+    end
 
-  #   def make_rewinder(iter)
-  #     ->{
-  #       iter.rewind
-  #       # Return nil to disguise the individual iterator types
-  #       nil
-  #     }
-  #   end
-
-  #   def rewind
-  #     @iterator.rewind
-  #     @generator = @iterator
-  #     @top = true
-  #     @to_rewind.each &.call
-  #     @to_rewind.clear
-  #   end
-
-  #   def flatten(element)
-  #     case element
-  #     when Iterator
-  #       flat = element.flatten
-  #       @generator = flat
-  #       @to_rewind << make_rewinder flat
-  #       @top = false
-  #       self.next
-  #     when Iterable
-  #       flatten element.each
-  #     else
-  #       element
-  #     end
-  #   end
-
-  #   def self.element_type(element)
-  #     case element
-  #     when Stop
-  #       raise ""
-  #     when Iterator
-  #       element_type(element.next)
-  #     when Iterable
-  #       element_type(element.each)
-  #     else
-  #       element
-  #     end
-  #   end
-  # end
+    def self.iterator_type(iter)
+      case iter
+      when Iterator
+        iter || iterator_type iter.next
+      when Array
+        iterator_type iter.each
+      else
+        raise ""
+      end
+    end
+  end
 
   # Returns an iterator that chunks the iterator's elements in arrays of *size*
   # filling up the remaining elements if no element remains with nil or a given
