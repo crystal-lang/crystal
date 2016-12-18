@@ -405,6 +405,30 @@ module Indexable(T)
     indexes.map { |index| self[index] }
   end
 
+  def zip(other : Indexable)
+    each_with_index do |elem, i|
+      yield elem, other[i]
+    end
+  end
+
+  def zip(other : Indexable(U)) forall U
+    pairs = Array({T, U}).new(size)
+    zip(other) { |x, y| pairs << {x, y} }
+    pairs
+  end
+
+  def zip?(other : Indexable)
+    each_with_index do |elem, i|
+      yield elem, other[i]?
+    end
+  end
+
+  def zip?(other : Indexable(U)) forall U
+    pairs = Array({T, U?}).new(size)
+    zip?(other) { |x, y| pairs << {x, y} }
+    pairs
+  end
+
   private def check_index_out_of_bounds(index)
     check_index_out_of_bounds(index) { raise IndexError.new }
   end

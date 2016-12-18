@@ -1690,30 +1690,6 @@ class Array(T)
     @buffer[index] = yield @buffer[index]
   end
 
-  def zip(other : Array)
-    each_with_index do |elem, i|
-      yield elem, other[i]
-    end
-  end
-
-  def zip(other : Array(U)) forall U
-    pairs = Array({T, U}).new(size)
-    zip(other) { |x, y| pairs << {x, y} }
-    pairs
-  end
-
-  def zip?(other : Array)
-    each_with_index do |elem, i|
-      yield elem, other[i]?
-    end
-  end
-
-  def zip?(other : Array(U)) forall U
-    pairs = Array({T, U?}).new(size)
-    zip?(other) { |x, y| pairs << {x, y} }
-    pairs
-  end
-
   private def check_needs_resize
     double_capacity if @size == @capacity
   end
