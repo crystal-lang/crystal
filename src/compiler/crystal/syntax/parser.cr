@@ -2792,10 +2792,12 @@ module Crystal
     def parse_percent_macro_expression
       raise "can't nest macro expressions", @token if @in_macro_expression
 
+      location = @token.location
       macro_exp = parse_macro_expression
       check_macro_expression_end
+      end_location = token_end_location
       next_token
-      MacroExpression.new(macro_exp)
+      MacroExpression.new(macro_exp).at(location).at_end(end_location)
     end
 
     def parse_macro_expression
@@ -2870,7 +2872,7 @@ module Crystal
           next_token_skip_space
           check :"%}"
 
-          return MacroFor.new(vars, exp, body)
+          return MacroFor.new(vars, exp, body).at_end(token_end_location)
         when :if
           return parse_macro_if(start_line, start_column, macro_state)
         when :unless
@@ -2894,7 +2896,7 @@ module Crystal
           next_token_skip_space
           check :"%}"
 
-          return MacroIf.new(BoolLiteral.new(true), body)
+          return MacroIf.new(BoolLiteral.new(true), body).at_end(token_end_location)
         when :else, :elsif, :end
           return nil
         end
@@ -2904,7 +2906,7 @@ module Crystal
       exps = parse_expressions
       @in_macro_expression = false
 
-      MacroExpression.new(exps, output: false)
+      MacroExpression.new(exps, output: false).at_end(token_end_location)
     end
 
     def parse_macro_if(start_line, start_column, macro_state, check_end = true)
@@ -2916,7 +2918,7 @@ module Crystal
 
       if @token.type != :"%}" && check_end
         an_if = parse_if_after_condition cond, true
-        return MacroExpression.new(an_if, output: false)
+        return MacroExpression.new(an_if, output: false).at_end(token_end_location)
       end
 
       check :"%}"
@@ -2956,7 +2958,7 @@ module Crystal
         unexpected_token
       end
 
-      return MacroIf.new(cond, a_then, a_else)
+      return MacroIf.new(cond, a_then, a_else).at_end(token_end_location)
     end
 
     def parse_expression_inside_macro
@@ -3664,7 +3666,7 @@ module Crystal
           end
         end
       node.doc = doc
-      node.location = block.try(&.location) || location
+      node.location = location
       node.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
       node
     end
@@ -4738,6 +4740,7 @@ module Crystal
     end
 
     def parse_lib
+      location = @token.location
       next_token_skip_space_or_newline
 
       name = check_const
@@ -4747,9 +4750,10 @@ module Crystal
       body = push_visbility { parse_lib_body_expressions }
 
       check_ident :end
+      end_location = token_end_location
       next_token_skip_space
 
-      LibDef.new name, body, name_column_number
+      LibDef.new(name, body, name_column_number).at(location).at_end(end_location)
     end
 
     def parse_lib_body
@@ -4836,6 +4840,7 @@ module Crystal
     IdentOrConst = [:IDENT, :CONST]
 
     def parse_fun_def(require_body = false)
+      location = @token.location
       doc = @token.doc
 
       push_def if require_body
@@ -4914,6 +4919,7 @@ module Crystal
       if require_body
         if @token.keyword?(:end)
           body = Nop.new
+          end_location = token_end_location
           next_token
         else
           body = parse_expressions
@@ -4921,13 +4927,14 @@ module Crystal
         end
       else
         body = nil
+        end_location = token_end_location
       end
 
       pop_def if require_body
 
       fun_def = FunDef.new name, args, return_type, varargs, body, real_name
       fun_def.doc = doc
-      fun_def
+      fun_def.at(location).at_end(end_location)
     end
 
     def parse_alias
@@ -5008,14 +5015,16 @@ module Crystal
     end
 
     def parse_c_struct_or_union(union : Bool)
+      location = @token.location
       next_token_skip_space_or_newline
       name = check_const
       next_token_skip_statement_end
       body = parse_c_struct_or_union_body_expressions
       check_ident :end
+      end_location = token_end_location
       next_token_skip_space
 
-      CStructOrUnionDef.new name, Expressions.from(body), union: union
+      CStructOrUnionDef.new(name, Expressions.from(body), union: union).at(location).at_end(end_location)
     end
 
     def parse_c_struct_or_union_body
@@ -5082,6 +5091,7 @@ module Crystal
     end
 
     def parse_enum_def
+      location = @token.location
       doc = @token.doc
 
       next_token_skip_space_or_newline
@@ -5103,13 +5113,14 @@ module Crystal
       members = parse_enum_body_expressions
 
       check_ident :end
+      end_location = token_end_location
       next_token_skip_space
 
       raise "Bug: EnumDef name can only be a Path" unless name.is_a?(Path)
 
       enum_def = EnumDef.new name, members, base_type
       enum_def.doc = doc
-      enum_def
+      enum_def.at(location).at_end(end_location)
     end
 
     def parse_enum_body
