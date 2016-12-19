@@ -1065,15 +1065,17 @@ class Array(T)
   # Returns a new Array that is a one-dimensional flattening of self (recursively).
   #
   # That is, for every element that is an array, extract its elements into the new array.
+  # It is also possible to give it an Integer argument telling it how many Array levels to flatten.
   #
   # ```
   # s = [1, 2, 3]         # => [1, 2, 3]
   # t = [4, 5, 6, [7, 8]] # => [4, 5, 6, [7, 8]]
   # a = [s, t, 9, 10]     # => [[1, 2, 3], [4, 5, 6, [7, 8]], 9, 10]
   # a.flatten             # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  # a.flatten(1)          # => [1, 2, 3, 4, 5, 6, [7, 8], 9, 10]
   # ```
-  def flatten
-    FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
+  def flatten(steps : Int = -2)
+    FlattenHelper(typeof(FlattenHelper.element_type(self, steps))).flatten(self, steps)
   end
 
   def repeated_combinations(size : Int = self.size)
@@ -2122,25 +2124,29 @@ class Array(T)
   end
 
   private struct FlattenHelper(T)
-    def self.flatten(ary)
+    def self.flatten(ary, steps)
       result = [] of T
-      flatten ary, result
+      flatten ary, result, steps
       result
     end
 
-    def self.flatten(ary : Array, result)
-      ary.each do |elem|
-        flatten elem, result
+    def self.flatten(ary : Array, result, steps)
+      if steps == -1
+        result << ary
+      else
+        ary.each do |elem|
+          flatten elem, result, steps - 1
+        end
       end
     end
 
-    def self.flatten(other : T, result)
+    def self.flatten(other : T, result, steps)
       result << other
     end
 
-    def self.element_type(ary)
-      if ary.is_a?(Array)
-        element_type(ary.first)
+    def self.element_type(ary, steps)
+      if ary.is_a?(Array) && steps != -1
+        element_type(ary.first, steps - 1)
       else
         ary
       end
