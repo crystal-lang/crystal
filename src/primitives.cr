@@ -27,7 +27,7 @@ class Object
   def class
   end
 
-  # :nodoc
+  # :nodoc:
   @[Primitive(:object_crystal_type_id)]
   def crystal_type_id
   end
