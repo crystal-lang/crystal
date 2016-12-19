@@ -11,7 +11,7 @@ private class OneByOneIO
     @pos = 0
   end
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     return 0 if slice.empty?
     return 0 if @pos >= @bytes.size
 
@@ -20,7 +20,7 @@ private class OneByOneIO
     1
   end
 
-  def write(slice : Slice(UInt8)) : Nil
+  def write(slice : Bytes) : Nil
   end
 end
 
