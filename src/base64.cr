@@ -153,7 +153,7 @@ module Base64
     strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: true)
   end
 
-  # Returns the Base64-decoded version of `data` as a *Bytes*.
+  # Returns the Base64-decoded version of `data` as a `Bytes`.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data) : Bytes
     slice = data.to_slice
