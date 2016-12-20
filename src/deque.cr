@@ -200,7 +200,7 @@ class Deque(T)
     found
   end
 
-  # Delete the item that is present at the `index`. Items to the right of this one will have their indices decremented.
+  # Delete the item that is present at the *index*. Items to the right of this one will have their indices decremented.
   # Raises `IndexError` if trying to delete an element outside the deque's range.
   #
   # ```
@@ -272,7 +272,7 @@ class Deque(T)
     end
   end
 
-  # Insert a new item before the item at `index`. Items to the right of this one will have their indices incremented.
+  # Insert a new item before the item at *index*. Items to the right of this one will have their indices incremented.
   #
   # ```
   # a = Deque{0, 1, 2}
@@ -381,7 +381,7 @@ class Deque(T)
     pop { nil }
   end
 
-  # Removes the last `n` (at most) items in the deque.
+  # Removes the last *n* (at most) items in the deque.
   def pop(n : Int)
     if n < 0
       raise ArgumentError.new("can't pop negative count")
@@ -406,15 +406,15 @@ class Deque(T)
     self
   end
 
-  # Rotates this deque in place so that the element at `n` becomes first.
+  # Rotates this deque in place so that the element at *n* becomes first.
   #
-  # For positive `n`, equivalent to `n.times { push(shift) }`.
-  # For negative `n`, equivalent to `(-n).times { unshift(pop) }`.
+  # For positive *n*, equivalent to `n.times { push(shift) }`.
+  # For negative *n*, equivalent to `(-n).times { unshift(pop) }`.
   def rotate!(n : Int = 1)
     if @size == @capacity
       @start = (@start + n) % @capacity
     else
-      # Turn `n` into an equivalent index in range -size/2 .. size/2
+      # Turn *n* into an equivalent index in range -size/2 .. size/2
       half = @size / 2
       if n.abs >= half
         n = (n + half) % @size - half
@@ -460,7 +460,7 @@ class Deque(T)
     shift { nil }
   end
 
-  # Removes the first `n` (at most) items in the deque.
+  # Removes the first *n* (at most) items in the deque.
   def shift(n : Int)
     if n < 0
       raise ArgumentError.new("can't shift negative count")
@@ -470,7 +470,7 @@ class Deque(T)
     nil
   end
 
-  # Swaps the items at the indices `i` and `j`.
+  # Swaps the items at the indices *i* and *j*.
   def swap(i, j)
     self[i], self[j] = self[j], self[i]
     self

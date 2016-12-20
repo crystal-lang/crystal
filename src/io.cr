@@ -487,7 +487,7 @@ module IO
     end
   end
 
-  # Tries to read exactly `slice.size` bytes from this IO into `slice`.
+  # Tries to read exactly `slice.size` bytes from this IO into *slice*.
   # Raises `EOFError` if there aren't `slice.size` bytes of data.
   #
   # ```
@@ -501,7 +501,7 @@ module IO
     read_fully?(slice) || raise(EOFError.new)
   end
 
-  # Tries to read exactly `slice.size` bytes from this IO into `slice`.
+  # Tries to read exactly `slice.size` bytes from this IO into *slice*.
   # Returns `nil` if there aren't `slice.size` bytes of data, otherwise
   # returns the number of bytes read.
   #
@@ -564,7 +564,7 @@ module IO
     gets '\n', chomp: chomp
   end
 
-  # Reads a line of at most `limit` bytes from this IO.
+  # Reads a line of at most *limit* bytes from this IO.
   # A line is terminated by the `\n` character.
   # Returns `nil` if called at the end of this IO.
   #
@@ -594,7 +594,7 @@ module IO
     gets delimiter, Int32::MAX, chomp: chomp
   end
 
-  # Reads until *delimiter* is found, `limit` bytes are read, or the end of the IO is reached.
+  # Reads until *delimiter* is found, *limit* bytes are read, or the end of the IO is reached.
   # Returns `nil` if called at the end of this IO.
   #
   # ```

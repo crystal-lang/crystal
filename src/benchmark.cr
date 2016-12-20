@@ -94,9 +94,9 @@ module Benchmark
   # Instruction per second interface of the `Benchmark` module. Yields a `Job`
   # to which one can report the benchmarks. See the module's description.
   #
-  # The optional parameters `calculation` and `warmup` set the duration of
+  # The optional parameters *calculation* and *warmup* set the duration of
   # those stages in seconds. For more detail on these stages see
-  # `Benchmark::IPS`. When the `interactive` parameter is true, results are
+  # `Benchmark::IPS`. When the *interactive* parameter is true, results are
   # displayed and updated as they are calculated, otherwise all at once.
   def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
     {% if !flag?(:release) %}

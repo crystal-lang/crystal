@@ -804,7 +804,7 @@ class Array(T)
     fill(range) { value }
   end
 
-  # Returns the first `n` elements of the array.
+  # Returns the first *n* elements of the array.
   #
   # ```
   # [1, 2, 3].first(2) # => [1, 2]
@@ -847,7 +847,7 @@ class Array(T)
     to_s io
   end
 
-  # Returns the last `n` elements of the array.
+  # Returns the last *n* elements of the array.
   #
   # ```
   # [1, 2, 3].last(2) # => [2, 3]

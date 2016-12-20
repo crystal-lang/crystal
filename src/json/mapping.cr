@@ -56,7 +56,7 @@ module JSON
   #
   # This macro also declares instance variables of the types given in the mapping.
   #
-  # If `strict` is true, unknown properties in the JSON
+  # If *strict* is true, unknown properties in the JSON
   # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
   macro mapping(properties, strict = false)

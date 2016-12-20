@@ -11,10 +11,10 @@ require "c/string"
 # You can obtain pointers in four ways: `#new`, `#malloc`, `pointerof` and by calling a C
 # function that returns a pointer.
 #
-# `pointerof(x)`, where `x` is a variable or an instance variable, returns a pointer to
+# `pointerof(x)`, where *x* is a variable or an instance variable, returns a pointer to
 # that variable:
 #
-# ```crystal
+# ```
 # x = 1
 # ptr = pointerof(x)
 # ptr.value = 2
@@ -270,7 +270,7 @@ struct Pointer(T)
     LibC.memcmp(self.as(Void*), (other.as(Void*)), (count * sizeof(T)))
   end
 
-  # Swaps the contents pointed at the offsets `i` and `j`.
+  # Swaps the contents pointed at the offsets *i* and *j*.
   #
   # ```
   # ptr = Pointer.malloc(4) { |i| i + 1 }

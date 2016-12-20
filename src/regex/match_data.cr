@@ -43,10 +43,10 @@ class Regex
     def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @size : Int32)
     end
 
-    # Return the position of the first character of the `n`th match.
+    # Return the position of the first character of the *n*th match.
     #
-    # When `n` is `0` or not given, uses the match of the entire `Regex`.
-    # Otherwise, uses the match of the `n`th capture group.
+    # When *n* is `0` or not given, uses the match of the entire `Regex`.
+    # Otherwise, uses the match of the *n*th capture group.
     #
     # ```
     # "Crystal".match(/r/).not_nil!.begin(0)     # => 1
@@ -59,8 +59,8 @@ class Regex
 
     # Return the position of the next character after the match.
     #
-    # When `n` is `0` or not given, uses the match of the entire `Regex`.
-    # Otherwise, uses the match of the `n`th capture group.
+    # When *n* is `0` or not given, uses the match of the entire `Regex`.
+    # Otherwise, uses the match of the *n*th capture group.
     #
     # ```
     # "Crystal".match(/r/).not_nil!.end(0)     # => 2
@@ -71,10 +71,10 @@ class Regex
       @string.byte_index_to_char_index byte_end(n)
     end
 
-    # Return the position of the first byte of the `n`th match.
+    # Return the position of the first byte of the *n*th match.
     #
-    # When `n` is `0` or not given, uses the match of the entire `Regex`.
-    # Otherwise, uses the match of the `n`th capture group.
+    # When *n* is `0` or not given, uses the match of the entire `Regex`.
+    # Otherwise, uses the match of the *n*th capture group.
     #
     # ```
     # "Crystal".match(/r/).not_nil!.byte_begin(0)     # => 1
@@ -88,8 +88,8 @@ class Regex
 
     # Return the position of the next byte after the match.
     #
-    # When `n` is `0` or not given, uses the match of the entire `Regex`.
-    # Otherwise, uses the match of the `n`th capture group.
+    # When *n* is `0` or not given, uses the match of the entire `Regex`.
+    # Otherwise, uses the match of the *n*th capture group.
     #
     # ```
     # "Crystal".match(/r/).not_nil!.byte_end(0)     # => 2
@@ -101,10 +101,10 @@ class Regex
       @ovector[n * 2 + 1]
     end
 
-    # Returns the match of the `n`th capture group, or `nil` if there isn't
-    # an `n`th capture group.
+    # Returns the match of the *n*th capture group, or `nil` if there isn't
+    # an *n*th capture group.
     #
-    # When `n` is `0`, returns the match for the entire `Regex`.
+    # When *n* is `0`, returns the match for the entire `Regex`.
     #
     # ```
     # "Crystal".match(/r(ys)/).not_nil![0]? # => "rys"
@@ -120,8 +120,8 @@ class Regex
       @string.byte_slice(start, finish - start)
     end
 
-    # Returns the match of the `n`th capture group, or raises an `IndexError`
-    # if there is no `n`th capture group.
+    # Returns the match of the *n*th capture group, or raises an `IndexError`
+    # if there is no *n*th capture group.
     #
     # ```
     # "Crystal".match(/r(ys)/).not_nil![1] # => "ys"
@@ -133,7 +133,7 @@ class Regex
       self[n]?.not_nil!
     end
 
-    # Returns the match of the capture group named by `group_name`, or
+    # Returns the match of the capture group named by *group_name*, or
     # `nil` if there is no such named capture group.
     #
     # ```
@@ -146,7 +146,7 @@ class Regex
       self[ret]?
     end
 
-    # Returns the match of the capture group named by `group_name`, or
+    # Returns the match of the capture group named by *group_name*, or
     # raises an `ArgumentError` if there is no such named capture group.
     #
     # ```

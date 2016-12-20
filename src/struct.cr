@@ -43,7 +43,7 @@
 # create immutable structs with some fields, similar to a `Tuple` but using
 # names instead of indices.
 struct Struct
-  # Returns `true` if this struct is equal to `other`.
+  # Returns `true` if this struct is equal to *other*.
   #
   # Both structs's instance vars are compared to each other. Thus, two
   # structs are considered equal if each of their instance variables are

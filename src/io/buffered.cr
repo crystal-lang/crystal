@@ -248,7 +248,7 @@ module IO::Buffered
     @flush_on_newline
   end
 
-  # Turns on/off IO buffering. When `sync` is set to `true`, no buffering
+  # Turns on/off IO buffering. When *sync* is set to `true`, no buffering
   # will be done (that is, writing to this IO is immediately synced to the
   # underlying IO).
   def sync=(sync)

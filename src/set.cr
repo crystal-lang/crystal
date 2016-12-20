@@ -53,7 +53,7 @@ struct Set(T)
     add object
   end
 
-  # Adds `object` to the set and returns `self`
+  # Adds *object* to the set and returns `self`
   #
   # ```
   # s = Set{1, 5}
@@ -318,17 +318,17 @@ struct Set(T)
     end
   end
 
-  # Writes a string representation of the set to `io`
+  # Writes a string representation of the set to *io*
   def to_s(io)
     io << "Set{"
     join ", ", io, &.inspect(io)
     io << "}"
   end
 
-  # Returns `true` if the set is a subset of the `other` set
+  # Returns `true` if the set is a subset of the *other* set
   #
-  # This set must have the same or fewer elements than the `other` set, and all
-  # of elements in this set must be present in the `other` set.
+  # This set must have the same or fewer elements than the *other* set, and all
+  # of elements in this set must be present in the *other* set.
   #
   # ```
   # Set{1, 5}.subset? Set{1, 3, 5}    # => true
@@ -339,10 +339,10 @@ struct Set(T)
     all? { |value| other.includes?(value) }
   end
 
-  # Returns `true` if the set is a proper subset of the `other` set
+  # Returns `true` if the set is a proper subset of the *other* set
   #
-  # This set must have fewer elements than the `other` set, and all
-  # of elements in this set must be present in the `other` set.
+  # This set must have fewer elements than the *other* set, and all
+  # of elements in this set must be present in the *other* set.
   #
   # ```
   # Set{1, 5}.subset? Set{1, 3, 5}    # => true
@@ -353,10 +353,10 @@ struct Set(T)
     all? { |value| other.includes?(value) }
   end
 
-  # Returns `true` if the set is a superset of the `other` set
+  # Returns `true` if the set is a superset of the *other* set
   #
-  # The `other` must have the same or fewer elements than this set, and all of
-  # elements in the `other` set must be present in this set.
+  # The *other* must have the same or fewer elements than this set, and all of
+  # elements in the *other* set must be present in this set.
   #
   # ```
   # Set{1, 3, 5}.superset? Set{1, 5}    # => true
@@ -366,10 +366,10 @@ struct Set(T)
     other.subset?(self)
   end
 
-  # Returns `true` if the set is a superset of the `other` set
+  # Returns `true` if the set is a superset of the *other* set
   #
-  # The `other` must have the same or fewer elements than this set, and all of
-  # elements in the `other` set must be present in this set.
+  # The *other* must have the same or fewer elements than this set, and all of
+  # elements in the *other* set must be present in this set.
   #
   # ```
   # Set{1, 3, 5}.superset? Set{1, 5}    # => true

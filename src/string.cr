@@ -704,15 +704,15 @@ class String
     self[from, size]
   end
 
-  # Returns a substring starting from the `start` character
-  # of size `count`.
+  # Returns a substring starting from the *start* character
+  # of size *count*.
   #
-  # The `start` argument can be negative to start counting
+  # The *start* argument can be negative to start counting
   # from the end of the string.
   #
-  # Raises `IndexError` if `start` isn't in range.
+  # Raises `IndexError` if *start* isn't in range.
   #
-  # Raises `ArgumentError` if `count` is negative.
+  # Raises `ArgumentError` if *count* is negative.
   def [](start : Int, count : Int)
     if ascii_only?
       return byte_slice(start, count)
@@ -2167,7 +2167,7 @@ class String
   end
 
   # Returns the index of *search* in the string, or `nil` if the string is not present.
-  # If `offset` is present, it defines the position to start the search.
+  # If *offset* is present, it defines the position to start the search.
   #
   # ```
   # "Hello, World".index('o')    # => 4
@@ -2224,8 +2224,8 @@ class String
     self.match(search, offset).try &.begin
   end
 
-  # Returns the index of the _last_ appearance of *c* in the string,
-  # If `offset` is present, it defines the position to _end_ the search
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
   # (characters beyond this point are ignored).
   #
   # ```
@@ -2856,7 +2856,7 @@ class String
     end
   end
 
-  # Adds instances of `char` to right of the string until it is at least size of `len`.
+  # Adds instances of *char* to right of the string until it is at least size of *len*.
   #
   # ```
   # "Purple".ljust(8)      # => "Purple  "
@@ -2867,7 +2867,7 @@ class String
     just len, char, true
   end
 
-  # Adds instances of `char` to left of the string until it is at least size of `len`.
+  # Adds instances of *char* to left of the string until it is at least size of *len*.
   #
   # ```
   # "Purple".ljust(8)      # => "  Purple"
