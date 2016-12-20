@@ -271,7 +271,7 @@ struct Tuple
   # Each object in each tuple is compared (using the <=> operator).
   #
   # Tuples are compared in an "element-wise" manner; the first element of this tuple is
-  # compared with the first one of `other` using the `<=>` operator, then each of the second elements,
+  # compared with the first one of *other* using the `<=>` operator, then each of the second elements,
   # etc. As soon as the result of any such comparison is non zero
   # (i.e. the two corresponding elements are not equal), that result is returned for the whole tuple comparison.
   #

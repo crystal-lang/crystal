@@ -97,7 +97,7 @@ class Zlib::Inflate
         return read_bytes
       else
         # LibZ.inflate might not write any data to the output slice because
-        # it might need more input. We can know this happened because `ret`
+        # it might need more input. We can know this happened because *ret*
         # is not STREAM_END.
         if read_bytes == 0
           next

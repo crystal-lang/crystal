@@ -247,7 +247,7 @@ class Regex
     end
   end
 
-  # Returns a String constructed by escaping any metacharacters in `str`.
+  # Returns a String constructed by escaping any metacharacters in *str*.
   #
   # ```
   # string = Regex.escape("\*?{}.") # => "\\*\\?\\{\\}\\."
@@ -269,7 +269,7 @@ class Regex
     end
   end
 
-  # Union. Returns a Regex that matches any of `patterns`. If any pattern
+  # Union. Returns a Regex that matches any of *patterns*. If any pattern
   # contains a named capture group using the same name as a named capture
   # group in any other pattern, an ArgumentError will be raised at runtime.
   # All capture groups in the patterns after the first one will have their
@@ -287,7 +287,7 @@ class Regex
     new patterns.map { |pattern| union_part pattern }.join("|")
   end
 
-  # Union. Returns a Regex that matches any of `patterns`. If any pattern
+  # Union. Returns a Regex that matches any of *patterns*. If any pattern
   # contains a named capture group using the same name as a named capture
   # group in any other pattern, an ArgumentError will be raised at runtime.
   # All capture groups in the patterns after the first one will have their
@@ -358,8 +358,8 @@ class Regex
     !match.nil?
   end
 
-  # Match. Matches a regular expression against `other` and returns
-  # the starting position of the match if `other` is a matching String,
+  # Match. Matches a regular expression against *other* and returns
+  # the starting position of the match if *other* is a matching String,
   # otherwise `nil`. `$~` will contain a Regex::MatchData if there was a match,
   # `nil` otherwise.
   #
@@ -400,8 +400,8 @@ class Regex
   end
 
   # Match at character index. Matches a regular expression against String
-  # `str`. Starts at the character index given by `pos` if given, otherwise at
-  # the start of `str`. Returns a `Regex::MatchData` if `str` matched, otherwise
+  # *str*. Starts at the character index given by *pos* if given, otherwise at
+  # the start of *str*. Returns a `Regex::MatchData` if *str* matched, otherwise
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```
@@ -420,8 +420,8 @@ class Regex
   end
 
   # Match at byte index. Matches a regular expression against String
-  # `str`. Starts at the byte index given by `pos` if given, otherwise at
-  # the start of `str`. Returns a Regex::MatchData if `str` matched, otherwise
+  # *str*. Starts at the byte index given by *pos* if given, otherwise at
+  # the start of *str*. Returns a Regex::MatchData if *str* matched, otherwise
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```

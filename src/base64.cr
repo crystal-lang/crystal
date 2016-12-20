@@ -26,7 +26,7 @@ module Base64
   private NL = '\n'.ord.to_u8
   private NR = '\r'.ord.to_u8
 
-  # Returns the Base64-encoded version of `data`.
+  # Returns the Base64-encoded version of *data*.
   # This method complies with RFC 2045.
   # Line feeds are added to every 60 encoded characters.
   #
@@ -48,7 +48,7 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of `data` to `io`.
+  # Write the Base64-encoded version of *data* to *io*.
   # This method complies with RFC 2045.
   # Line feeds are added to every 60 encoded characters.
   #
@@ -79,7 +79,7 @@ module Base64
     end
   end
 
-  # Returns the Base64-encoded version of `data` with no newlines.
+  # Returns the Base64-encoded version of *data* with no newlines.
   # This method complies with RFC 4648.
   #
   #     require "base64"
@@ -104,7 +104,7 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of `data` with no newlines to `io`.
+  # Write the Base64-encoded version of *data* with no newlines to *io*.
   # This method complies with RFC 4648.
   #
   #     require "base64"
@@ -123,13 +123,13 @@ module Base64
     count
   end
 
-  # Returns the Base64-encoded version of `data` using a urlsafe alphabet.
+  # Returns the Base64-encoded version of *data* using a urlsafe alphabet.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
   # Alphabet" in RFC 4648.
   #
   # The alphabet uses '-' instead of '+' and '_' instead of '/'.
   #
-  # The `padding` parameter defaults to true. When false, enough `=` characters
+  # The *padding* parameter defaults to true. When false, enough `=` characters
   # are not added to make the output divisible by 4.
   def urlsafe_encode(data, padding = true) : String
     slice = data.to_slice
@@ -141,7 +141,7 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of `data` using a urlsafe alphabet to `io`.
+  # Write the Base64-encoded version of *data* using a urlsafe alphabet to *io*.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
   # Alphabet" in RFC 4648.
   #
@@ -150,7 +150,7 @@ module Base64
     strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: true)
   end
 
-  # Returns the Base64-decoded version of `data` as a `Bytes`.
+  # Returns the Base64-decoded version of *data* as a `Bytes`.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data) : Bytes
     slice = data.to_slice
@@ -160,7 +160,7 @@ module Base64
     Slice.new(buf, appender.size.to_i32)
   end
 
-  # Write the Base64-decoded version of `data` to `io`.
+  # Write the Base64-decoded version of *data* to *io*.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data, io : IO)
     count = 0
@@ -172,7 +172,7 @@ module Base64
     count
   end
 
-  # Returns the Base64-decoded version of `data` as a string.
+  # Returns the Base64-decoded version of *data* as a string.
   # If the data doesn't decode to a valid UTF8 string,
   # *InvalidByteSequenceError* will be raised.
   # This will decode either the normal or urlsafe alphabets.

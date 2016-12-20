@@ -14,7 +14,7 @@ require "c/stdlib"
 module ENV
   extend Enumerable({String, String})
 
-  # Retrieves the value for environment variable named `key` as a `String`.
+  # Retrieves the value for environment variable named *key* as a `String`.
   # Raises `KeyError` if the named variable does not exist.
   def self.[](key : String) : String
     fetch(key)
@@ -28,8 +28,8 @@ module ENV
 
   # Sets the value for environment variable named *key* as *value*.
   # Overwrites existing environment variable if already present.
-  # Returns `value` if successful, otherwise raises an exception.
-  # If `value` is nil, the environment variable is deleted.
+  # Returns *value* if successful, otherwise raises an exception.
+  # If *value* is `nil`, the environment variable is deleted.
   def self.[]=(key : String, value : String?)
     if value
       if LibC.setenv(key, value, 1) != 0
@@ -56,13 +56,13 @@ module ENV
   end
 
   # Retrieves a value corresponding to the given *key*. Return the second argument's value
-  # if the key does not exist.
+  # if the *key* does not exist.
   def self.fetch(key, default)
     fetch(key) { default }
   end
 
-  # Retrieves a value corresponding to a key. Return the value of the block if
-  # the key does not exist.
+  # Retrieves a value corresponding to a given *key*. Return the value of the block if
+  # the *key* does not exist.
   def self.fetch(key : String, &block : String -> String? | NoReturn)
     value = LibC.getenv key
     return String.new(value) if value
@@ -95,7 +95,7 @@ module ENV
   end
 
   # Iterates over all `KEY=VALUE` pairs of environment variables, yielding both
-  # the `key` and `value`.
+  # the *key* and *value*.
   #
   #     ENV.each do |key, value|
   #       puts "#{key} => #{value}"

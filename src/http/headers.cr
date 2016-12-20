@@ -71,8 +71,8 @@ struct HTTP::Headers
     values ? concat(values) : nil
   end
 
-  # Returns if among the headers for `key` there is some that contains `word` as a value.
-  # The `word` is expected to match between word boundaries (i.e. non-alphanumeric chars).
+  # Returns if among the headers for *key* there is some that contains *word* as a value.
+  # The *word* is expected to match between word boundaries (i.e. non-alphanumeric chars).
   #
   # ```
   # headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}

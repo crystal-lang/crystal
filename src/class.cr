@@ -24,7 +24,7 @@ class Class
     {{ @type.name.stringify }}
   end
 
-  # Casts `other` to this class.
+  # Casts *other* to this class.
   #
   # This is the same as using `as`, but allows the class to be passed around as
   # an argument. See the
@@ -40,7 +40,7 @@ class Class
     other.as(self)
   end
 
-  # Returns the union type of `self` and `other`.
+  # Returns the union type of `self` and *other*.
   #
   # ```
   # Int32 | Char # => (Int32 | Char)
