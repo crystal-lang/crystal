@@ -52,6 +52,7 @@ class Reference
 end
 
 class Class
+  # :nodoc:
   @[Primitive(:class_crystal_instance_type_id)]
   def crystal_instance_type_id
   end
