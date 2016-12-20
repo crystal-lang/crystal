@@ -64,7 +64,6 @@ module Base64
     count
   end
 
-  # :nodoc:
   private def encode_with_new_lines(data)
     inc = 0
     to_base64(data.to_slice, CHARS_STD, pad: true) do |byte|
@@ -95,7 +94,6 @@ module Base64
     strict_encode data, CHARS_STD, pad: true
   end
 
-  # :nodoc:
   private def strict_encode(data, alphabet, pad = false)
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
@@ -115,7 +113,6 @@ module Base64
     strict_encode_to_io_internal(data, io, CHARS_STD, pad: true)
   end
 
-  # :nodoc:
   private def strict_encode_to_io_internal(data, io, alphabet, pad)
     count = 0
     to_base64(data.to_slice, alphabet, pad: pad) do |byte|
