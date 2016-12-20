@@ -722,7 +722,7 @@ class Crystal::Doc::Type
   end
 
   def type_has_link?(type : Crystal::Type)
-    @generator.type(type).must_be_included?
+    @generator.type(type.devirtualize).must_be_included?
   end
 
   def type_has_link?(type : Crystal::TypeParameter | ASTNode)
