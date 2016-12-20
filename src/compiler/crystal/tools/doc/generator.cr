@@ -267,7 +267,7 @@ class Crystal::Doc::Generator
   def isolate_flag_lines(string)
     flag_regexp = /^ ?(#{FLAGS.join('|')}):?/
     String.build do |io|
-      string.each_line.join("", io) do |line, io|
+      string.each_line(chomp: false).join("", io) do |line, io|
         if line =~ flag_regexp
           io << '\n' << line
         else
