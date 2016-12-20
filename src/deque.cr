@@ -19,6 +19,8 @@ class Deque(T)
   # (this Deque has 5 items, each equal to their index)
 
   @start = 0
+  protected setter size
+  protected getter buffer
 
   # Creates a new empty Deque
   def initialize
@@ -74,23 +76,19 @@ class Deque(T)
   # value in that index.
   #
   # ```
-  # Deque(Int32).new(3) { |i| (i + 1) ** 2 } # => Deque{1, 4, 9}
+  # Deque.new(3) { |i| (i + 1) ** 2 } # => Deque{1, 4, 9}
   # ```
-  def initialize(size : Int, &block : Int32 -> T)
+  def self.new(size : Int, &block : Int32 -> T)
     if size < 0
       raise ArgumentError.new("negative deque size: #{size}")
     end
-    @size = size.to_i
-    @capacity = size.to_i
 
-    if @capacity == 0
-      @buffer = Pointer(T).null
-    else
-      @buffer = Pointer(T).malloc(@capacity)
-      (0...@size).each do |i|
-        @buffer[i] = yield i
-      end
+    deque = Deque(T).new(size)
+    deque.size = size
+    size.to_i.times do |i|
+      deque.buffer[i] = yield i
     end
+    deque
   end
 
   # Creates a new Deque that copies its items from an Array.
