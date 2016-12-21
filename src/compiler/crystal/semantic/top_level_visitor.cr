@@ -654,11 +654,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     when Def
       return false
     when Macro
-      if current_type != @program.program
-        node.raise "#{node.modifier.to_s.downcase} macros can only be declared at the top-level"
+      if node.modifier.private?
+        return false
+      else
+        node.raise "can only use 'private' for macros"
       end
-
-      return false
     when Call
       # Don't give an error yet: wait to see if the
       # call doesn't resolve to a method/macro
