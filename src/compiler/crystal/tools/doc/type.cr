@@ -210,7 +210,7 @@ class Crystal::Doc::Type
       macros = [] of Macro
       @type.metaclass.macros.try &.each_value do |the_macros|
         the_macros.each do |a_macro|
-          if @generator.must_include? a_macro
+          if a_macro.visibility.public? && @generator.must_include? a_macro
             macros << self.macro(a_macro)
           end
         end
