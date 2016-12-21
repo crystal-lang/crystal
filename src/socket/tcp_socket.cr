@@ -20,21 +20,21 @@ class TCPSocket < IPSocket
   #
   # Note that `dns_timeout` is currently ignored.
   def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
-    getaddrinfo(host, port, nil, Type::STREAM, Protocol::TCP, timeout: dns_timeout) do |addrinfo|
-      super create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol)
-
-      if err = nonblocking_connect(host, port, addrinfo, timeout: connect_timeout)
+    Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
+      super(addrinfo.family, addrinfo.type, addrinfo.protocol)
+      connect(addrinfo, timeout: connect_timeout) do |error|
         close
-        next false if addrinfo.ai_next
-        raise err
+        error
       end
-
-      true
     end
   end
 
-  protected def initialize(fd : Int32)
-    super fd
+  protected def initialize(family : Family, type : Type, protocol : Protocol)
+    super family, type, protocol
+  end
+
+  protected def initialize(fd : Int32, family : Family, type : Type, protocol : Protocol)
+    super fd, family, type, protocol
   end
 
   # Opens a TCP socket to a remote TCP server, yields it to the block, then

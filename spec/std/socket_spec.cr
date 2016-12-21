@@ -4,7 +4,7 @@ require "socket"
 describe Socket do
   # Tests from libc-test:
   # http://repo.or.cz/libc-test.git/blob/master:/src/functional/inet_pton.c
-  assert "ip?" do
+  it ".ip?" do
     # dotted-decimal notation
     Socket.ip?("0.0.0.0").should be_true
     Socket.ip?("127.0.0.1").should be_true
@@ -65,29 +65,46 @@ describe Socket do
 end
 
 describe Socket::IPAddress do
-  it "transforms an IPv4 address into a C struct and back again" do
-    addr1 = Socket::IPAddress.new(Socket::Family::INET, "127.0.0.1", 8080.to_i16)
-    addr2 = Socket::IPAddress.new(addr1.sockaddr, addr1.addrlen)
+  it "transforms an IPv4 address into a C struct and back" do
+    addr1 = Socket::IPAddress.new("127.0.0.1", 8080)
+    addr2 = Socket::IPAddress.from(addr1.to_unsafe, addr1.size)
 
-    addr1.family.should eq(addr2.family)
-    addr1.port.should eq(addr2.port)
-    addr1.address.should eq(addr2.address)
-    addr1.to_s.should eq("127.0.0.1:8080")
+    addr2.family.should eq(addr1.family)
+    addr2.port.should eq(addr1.port)
+    addr2.address.should eq(addr1.address)
   end
 
-  it "transforms an IPv6 address into a C struct and back again" do
-    addr1 = Socket::IPAddress.new(Socket::Family::INET6, "2001:db8:8714:3a90::12", 8080.to_i16)
-    addr2 = Socket::IPAddress.new(addr1.sockaddr, addr1.addrlen)
+  it "transforms an IPv6 address into a C struct and back" do
+    addr1 = Socket::IPAddress.new("2001:db8:8714:3a90::12", 8080)
+    addr2 = Socket::IPAddress.from(addr1.to_unsafe, addr1.size)
 
-    addr1.family.should eq(addr2.family)
-    addr1.port.should eq(addr2.port)
-    addr1.address.should eq(addr2.address)
-    addr1.to_s.should eq("2001:db8:8714:3a90::12:8080")
+    addr2.family.should eq(addr1.family)
+    addr2.port.should eq(addr1.port)
+    addr2.address.should eq(addr1.address)
+  end
+
+  it "to_s" do
+    Socket::IPAddress.new("127.0.0.1", 80).to_s.should eq("127.0.0.1:80")
+    Socket::IPAddress.new("2001:db8:8714:3a90::12", 443).to_s.should eq("[2001:db8:8714:3a90::12]:443")
   end
 end
 
 describe Socket::UNIXAddress do
-  it "does to_s" do
+  it "transforms into a C struct and back" do
+    addr1 = Socket::UNIXAddress.new("/tmp/service.sock")
+    addr2 = Socket::UNIXAddress.from(addr1.to_unsafe, addr1.size)
+
+    addr2.family.should eq(addr1.family)
+    addr2.path.should eq(addr1.path)
+    addr2.to_s.should eq("/tmp/service.sock")
+  end
+
+  it "raises when path is too long" do
+    path = "/tmp/crystal-test-too-long-unix-socket-#{("a" * 2048)}.sock"
+    expect_raises(ArgumentError, "Path size exceeds the maximum size") { Socket::UNIXAddress.new(path) }
+  end
+
+  it "to_s" do
     Socket::UNIXAddress.new("some_path").to_s.should eq("some_path")
   end
 end
@@ -211,8 +228,6 @@ describe UNIXSocket do
         client.local_address.path.should eq(path)
 
         server.accept do |sock|
-          sock.sync?.should eq(server.sync?)
-
           sock.local_address.family.should eq(Socket::Family::UNIX)
           sock.local_address.path.should eq("")
 
@@ -225,8 +240,19 @@ describe UNIXSocket do
           client.gets(4).should eq("pong")
         end
       end
+    end
+  end
 
-      # test sync flag propagation after accept
+  it "sync flag after accept" do
+    path = "/tmp/crystal-test-unix-sock"
+
+    UNIXServer.open(path) do |server|
+      UNIXSocket.open(path) do |client|
+        server.accept do |sock|
+          sock.sync?.should eq(server.sync?)
+        end
+      end
+
       server.sync = !server.sync?
 
       UNIXSocket.open(path) do |client|
@@ -244,6 +270,7 @@ describe UNIXSocket do
 
       left << "ping"
       right.gets(4).should eq("ping")
+
       right << "pong"
       left.gets(4).should eq("pong")
     end
@@ -382,31 +409,25 @@ describe TCPSocket do
   end
 
   it "fails when host doesn't exist" do
-    expect_raises(Socket::Error, /^getaddrinfo: (.+ not known|no address .+|Non-recoverable failure in name resolution|Name does not resolve)$/i) do
+    expect_raises(Socket::Error, /No address found for localhostttttt:12345/) do
       TCPSocket.new("localhostttttt", 12345)
     end
   end
 end
 
 describe UDPSocket do
-  it "sends and receives messages by reading and writing" do
+  it "reads and writes data to server" do
     port = free_udp_socket_port
 
     server = UDPSocket.new(Socket::Family::INET6)
     server.bind("::", port)
-
-    server.local_address.family.should eq(Socket::Family::INET6)
-    server.local_address.port.should eq(port)
-    server.local_address.address.should eq("::")
+    server.local_address.should eq(Socket::IPAddress.new("::", port))
 
     client = UDPSocket.new(Socket::Family::INET6)
     client.connect("::1", port)
-
     client.local_address.family.should eq(Socket::Family::INET6)
     client.local_address.address.should eq("::1")
-    client.remote_address.family.should eq(Socket::Family::INET6)
-    client.remote_address.port.should eq(port)
-    client.remote_address.address.should eq("::1")
+    client.remote_address.should eq(Socket::IPAddress.new("::1", port))
 
     client << "message"
     server.gets(7).should eq("message")
@@ -415,51 +436,62 @@ describe UDPSocket do
     server.close
   end
 
-  it "sends and receives messages by send and receive over IPv4" do
+  it "sends and receives messages over IPv4" do
+    buffer = uninitialized UInt8[256]
+
     server = UDPSocket.new(Socket::Family::INET)
     server.bind("127.0.0.1", 0)
 
     client = UDPSocket.new(Socket::Family::INET)
-
-    buffer = uninitialized UInt8[256]
-
     client.send("message equal to buffer", server.local_address)
-    bytes_read, addr1 = server.receive(buffer.to_slice[0, 23])
-    message1 = String.new(buffer.to_slice[0, bytes_read])
-    message1.should eq("message equal to buffer")
-    addr1.family.should eq(server.local_address.family)
-    addr1.address.should eq(server.local_address.address)
+
+    bytes_read, client_addr = server.receive(buffer.to_slice[0, 23])
+    message = String.new(buffer.to_slice[0, bytes_read])
+    message.should eq("message equal to buffer")
+    client_addr.should eq(Socket::IPAddress.new("127.0.0.1", client.local_address.port))
 
     client.send("message less than buffer", server.local_address)
-    bytes_read, addr2 = server.receive(buffer.to_slice)
-    message2 = String.new(buffer.to_slice[0, bytes_read])
-    message2.should eq("message less than buffer")
-    addr2.family.should eq(server.local_address.family)
-    addr2.address.should eq(server.local_address.address)
+
+    bytes_read, client_addr = server.receive(buffer.to_slice)
+    message = String.new(buffer.to_slice[0, bytes_read])
+    message.should eq("message less than buffer")
+
+    client.connect server.local_address
+    client.send "ip4 message"
+
+    message, client_addr = server.receive
+    message.should eq("ip4 message")
+    client_addr.should eq(Socket::IPAddress.new("127.0.0.1", client.local_address.port))
 
     server.close
     client.close
   end
 
-  it "sends and receives messages by send and receive over IPv6" do
+  it "sends and receives messages over IPv6" do
+    buffer = uninitialized UInt8[1500]
+
     server = UDPSocket.new(Socket::Family::INET6)
     server.bind("::1", 0)
 
     client = UDPSocket.new(Socket::Family::INET6)
+    client.send("some message", server.local_address)
 
-    buffer = uninitialized UInt8[1500]
+    bytes_read, client_addr = server.receive(buffer.to_slice)
+    String.new(buffer.to_slice[0, bytes_read]).should eq("some message")
+    client_addr.should eq(Socket::IPAddress.new("::1", client.local_address.port))
 
-    client.send("message", server.local_address)
-    bytes_read, addr = server.receive(buffer.to_slice)
-    String.new(buffer.to_slice[0, bytes_read]).should eq("message")
-    addr.family.should eq(server.local_address.family)
-    addr.address.should eq(server.local_address.address)
+    client.connect server.local_address
+    client.send "ip6 message"
+
+    message, client_addr = server.receive(20)
+    message.should eq("ip6 message")
+    client_addr.should eq(Socket::IPAddress.new("::1", client.local_address.port))
 
     server.close
     client.close
   end
 
-  it "broadcast messages" do
+  it "broadcasts messages" do
     port = free_udp_socket_port
 
     client = UDPSocket.new(Socket::Family::INET)

@@ -36,6 +36,14 @@ lib LibC
     sa_data : StaticArray(Char, 14)
   end
 
+  struct SockaddrStorage
+    ss_len : Char
+    ss_family : SaFamilyT
+    __ss_pad1 : StaticArray(Char, 6)
+    __ss_align : Long
+    __ss_pad2 : StaticArray(Char, 112)
+  end
+
   struct Linger
     l_onoff : Int
     l_linger : Int
