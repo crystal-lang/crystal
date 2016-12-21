@@ -547,7 +547,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "erros if applying protected modifier to macro" do
+  it "errors if applying protected modifier to macro" do
     assert_error %(
       class Foo
         protected macro foo
