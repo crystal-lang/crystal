@@ -389,6 +389,22 @@ describe TCPSocket do
 end
 
 describe UDPSocket do
+  it "sends messages to nowhere, once" do
+    client = UDPSocket.new
+    destination = Socket::IPAddress.new(Socket::Family::INET, "127.0.0.1", 12341)
+
+    client.send("message", destination)
+  end
+
+  it "sends messages to nowhere, iterate" do
+    client = UDPSocket.new
+    destination = Socket::IPAddress.new(Socket::Family::INET, "127.0.0.1", 12342)
+
+    10.times do |iteration|
+      client.send("message", destination)
+    end
+  end
+
   it "sends and receives messages by reading and writing" do
     port = free_udp_socket_port
 
