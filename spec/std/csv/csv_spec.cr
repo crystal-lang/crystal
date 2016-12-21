@@ -121,6 +121,12 @@ describe CSV do
     end
   end
 
+  it "can do map_with_index (and other enumerable methods)" do
+    csv = new_csv headers: true
+    values = csv.map_with_index { |csv, index| "#{csv.row[0]}-#{index}" }
+    values.should eq(["1-0", "3-1", "5-2"])
+  end
+
   it "can do new with block" do
     CSV.new(%(one, two\n1, 2\n3, 4\n5), headers: true, strip: true) do |csv|
       csv["one"].should eq("1")
