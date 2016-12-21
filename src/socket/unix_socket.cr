@@ -16,25 +16,20 @@ class UNIXSocket < Socket
 
   # Connects a named UNIX socket, bound to a filesystem pathname.
   def initialize(@path : String, type : Type = Type::STREAM)
-    addr = LibC::SockaddrUn.new
-    addr.sun_family = LibC::SaFamilyT.new(Family::UNIX)
+    super(Family::UNIX, type, Protocol::IP)
 
-    if path.bytesize + 1 > addr.sun_path.size
-      raise ArgumentError.new("Path size exceeds the maximum size of #{addr.sun_path.size - 1} bytes")
-    end
-    addr.sun_path.to_unsafe.copy_from(path.to_unsafe, path.bytesize + 1)
-
-    super create_socket(Family::UNIX, type, 0)
-
-    if LibC.connect(@fd, (pointerof(addr).as(LibC::Sockaddr*)), sizeof(LibC::SockaddrUn)) != 0
+    connect(UNIXAddress.new(path)) do |error|
       close
-      raise Errno.new("Error connecting to '#{path}'")
+      raise error
     end
   end
 
-  protected def initialize(fd : Int32)
-    init_close_on_exec fd
-    super fd
+  protected def initialize(family : Family, type : Type)
+    super family, type, Protocol::IP
+  end
+
+  protected def initialize(fd : Int32, type : Type)
+    super fd, Family::UNIX, type, Protocol::IP
   end
 
   # Opens an UNIX socket to a filesystem pathname, yields it to the block, then
@@ -65,15 +60,18 @@ class UNIXSocket < Socket
   # left.gets # => "message"
   # ```
   def self.pair(type : Type = Type::STREAM)
-    fds = StaticArray(Int32, 2).new { 0_i32 }
+    fds = uninitialized Int32[2]
+
     socktype = type.value
-    {% if LibC.constants.includes?("SOCK_CLOEXEC".id) %}
+    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
       socktype |= LibC::SOCK_CLOEXEC
     {% end %}
+
     if LibC.socketpair(Family::UNIX, socktype, 0, fds) != 0
       raise Errno.new("socketpair:")
     end
-    fds.map { |fd| UNIXSocket.new(fd) }
+
+    {UNIXSocket.new(fds[0], type), UNIXSocket.new(fds[1], type)}
   end
 
   # Creates a pair of unamed UNIX sockets (see `pair`) and yields them to the
@@ -96,5 +94,10 @@ class UNIXSocket < Socket
 
   def remote_address
     UNIXAddress.new(path.to_s)
+  end
+
+  def receive
+    bytes_read, sockaddr, addrlen = recvfrom
+    {bytes_read, UNIXAddress.from(sockaddr, addrlen)}
   end
 end
