@@ -37,7 +37,7 @@ module Crystal
       @no_type_declaration = 0
 
       # This flags tells the parser where it has to consider a "do"
-      # as beloning to the current parsed call. For eample when writing
+      # as belonging to the current parsed call. For example when writing
       #
       # ```
       # foo bar do
