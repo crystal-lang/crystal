@@ -268,6 +268,8 @@ module Base64
     end
   end
 
+  # TODO: uncomment if release 'private macro'
+  # private macro next_decoded_value
   # :nodoc:
   macro next_decoded_value
     sym = cstr.value
