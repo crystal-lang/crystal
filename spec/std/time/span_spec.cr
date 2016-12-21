@@ -207,6 +207,14 @@ describe Time::Span do
     # TODO check overflow
   end
 
+  it "divides by another Time::Span" do
+    ratio = 20.minutes / 15.seconds
+    ratio.should eq(80.0)
+
+    ratio2 = 45.seconds / 1.minute
+    ratio2.should eq(0.75)
+  end
+
   it "test to_s" do
     t1 = Time::Span.new 1, 2, 3, 4, 5
     t2 = -t1
