@@ -238,6 +238,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       macro_scope = macro_scope.remove_alias
 
       the_macro = macro_scope.metaclass.lookup_macro(node.name, node.args, node.named_args)
+      node.raise "private macro '#{node.name}' called for #{obj}" if the_macro && the_macro.visibility.private?
     when Nil
       return false if node.name == "super" || node.name == "previous_def"
       the_macro = node.lookup_macro

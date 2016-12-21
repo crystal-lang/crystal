@@ -485,6 +485,7 @@ class Crystal::Call
 
     macros = in_macro_target &.lookup_macros(def_name)
     return unless macros
+    macros = macros.reject &.visibility.private?
 
     if macros.size == 1
       if msg = check_named_args_and_splats(macros.first, named_args)
