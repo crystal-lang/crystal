@@ -286,6 +286,15 @@ module Random
     end
   end
 
+  # Returns a random `Float64` in the given *range*.
+  # ```
+  # Random.new.rand(-1.0..1.0) # => -0.450051
+  # ```
+  def rand(range : Range(Float, Float)) : Float64
+    span = range.end - range.begin
+    rand * span + range.begin
+  end
+
   # see `#rand`
   def self.rand : Float64
     DEFAULT.rand
@@ -294,6 +303,11 @@ module Random
   # see `#rand(x)`
   def self.rand(x)
     DEFAULT.rand(x)
+  end
+
+  # see `#rand(range)`
+  def self.rand(range : Range(Float, Float)) : Float64
+    DEFAULT.rand(range)
   end
 end
 
