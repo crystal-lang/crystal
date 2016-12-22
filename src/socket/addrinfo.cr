@@ -5,7 +5,7 @@ class Socket
     getter protocol : Protocol
     getter size : Int32
 
-    @addr : LibC::Sockaddr*
+    @addr : LibC::SockaddrIn6
     @next : LibC::Addrinfo*
 
     def self.resolve(host, service, family : Family, type : Type, protocol : Protocol = Protocol::IP, timeout = nil)
@@ -63,14 +63,14 @@ class Socket
       @protocol = Protocol.from_value(addrinfo.value.ai_protocol)
       @size = addrinfo.value.ai_addrlen.to_i
 
-      @addr = Pointer(LibC::SockaddrIn6).malloc.as(LibC::Sockaddr*)
+      @addr = uninitialized LibC::SockaddrIn6
       @next = addrinfo.value.ai_next
 
       case @family
       when Family::INET6
-        addrinfo.value.ai_addr.as(LibC::SockaddrIn6*).copy_to(@addr.as(LibC::SockaddrIn6*), 1)
+        addrinfo.value.ai_addr.as(LibC::SockaddrIn6*).copy_to(pointerof(@addr).as(LibC::SockaddrIn6*), 1)
       when Family::INET
-        addrinfo.value.ai_addr.as(LibC::SockaddrIn*).copy_to(@addr.as(LibC::SockaddrIn*), 1)
+        addrinfo.value.ai_addr.as(LibC::SockaddrIn*).copy_to(pointerof(@addr).as(LibC::SockaddrIn*), 1)
       end
     end
 
@@ -79,7 +79,7 @@ class Socket
     end
 
     def to_unsafe
-      @addr
+      pointerof(@addr).as(LibC::Sockaddr*)
     end
 
     protected def next?

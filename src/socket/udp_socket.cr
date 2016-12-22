@@ -64,9 +64,13 @@ class UDPSocket < IPSocket
   # message, client_addr = server.receive
   # ```
   def receive(max_message_size = 512) : {String, IPAddress}
-    bytes = Bytes.new(max_message_size)
-    bytes_read, sockaddr, addrlen = recvfrom(bytes)
-    {String.new(bytes.to_unsafe, bytes_read), IPAddress.from(sockaddr, addrlen)}
+    address = nil
+    message = String.new(max_message_size) do |buffer|
+      bytes_read, sockaddr, addrlen = recvfrom(Slice.new(buffer, max_message_size))
+      address = IPAddress.from(sockaddr, addrlen)
+      {bytes_read, 0}
+    end
+    {message, address.not_nil!}
   end
 
   # Receives a binary message from the previously bound address.
