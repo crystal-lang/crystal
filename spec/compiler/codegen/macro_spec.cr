@@ -1642,4 +1642,28 @@ describe "Code gen: macro" do
       foo
       ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(10)
   end
+
+  it "keeps line number with no block" do
+    run(%(
+      macro foo
+        {{ yield }}
+        __LINE__
+      end
+
+      foo
+    ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(7)
+  end
+
+  it "keeps line number with a block" do
+    run(%(
+      macro foo
+        {{ yield }}
+        __LINE__
+      end
+
+      foo do
+        1
+      end
+    ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(7)
+  end
 end

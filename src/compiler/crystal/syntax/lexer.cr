@@ -13,6 +13,7 @@ module Crystal
     getter token : Token
     getter line_number : Int32
     @filename : String | VirtualFile | Nil
+    @saved_filename : String | VirtualFile | Nil
     @token_end_location : Location?
     @string_pool : StringPool
 
@@ -40,6 +41,11 @@ module Crystal
       # and get the original delimiter.
       @delimiter_state_stack = [] of Token::DelimiterState
       @macro_curly_count = 0
+
+      @saved = false
+      @saved_filename = ""
+      @saved_line_number = 1
+      @saved_column_number = 1
     end
 
     def filename=(filename)
@@ -49,19 +55,16 @@ module Crystal
     def next_token
       reset_token
 
-      start = current_pos
-
       # Skip comments
       while current_char == '#'
-        char = next_char_no_column_increment
+        start = current_pos
 
-        # Check #<loc:"file",line,column> pragma comment
-        if char == '<' &&
-           (char = next_char_no_column_increment) == 'l' &&
-           (char = next_char_no_column_increment) == 'o' &&
-           (char = next_char_no_column_increment) == 'c' &&
-           (char = next_char_no_column_increment) == ':' &&
-           (char = next_char_no_column_increment) == '"'
+        # Check #<loc:...> pragma comment
+        if next_char_no_column_increment == '<' &&
+           next_char_no_column_increment == 'l' &&
+           next_char_no_column_increment == 'o' &&
+           next_char_no_column_increment == 'c' &&
+           next_char_no_column_increment == ':'
           next_char_no_column_increment
           consume_loc_pragma
           start = current_pos
@@ -76,6 +79,8 @@ module Crystal
         end
       end
 
+      start = current_pos
+
       reset_regex_flags = true
 
       case current_char
@@ -88,6 +93,10 @@ module Crystal
         if next_char == '\n'
           @line_number += 1
           @column_number = 1
+          if @saved
+            @saved_line_number += 1
+            @saved_column_number = 1
+          end
           @token.passed_backslash_newline = true
           consume_whitespace
           reset_regex_flags = false
@@ -99,6 +108,10 @@ module Crystal
         next_char
         @line_number += 1
         @column_number = 1
+        if @saved
+          @saved_line_number += 1
+          @saved_column_number = 1
+        end
         reset_regex_flags = false
         consume_newlines
       when '\r'
@@ -107,6 +120,10 @@ module Crystal
           @token.type = :NEWLINE
           @line_number += 1
           @column_number = 1
+          if @saved
+            @saved_line_number += 1
+            @saved_column_number = 1
+          end
           consume_newlines
         else
           raise "expected '\\n' after '\\r'"
@@ -177,6 +194,10 @@ module Crystal
               when char == '\n'
                 @line_number += 1
                 @column_number = 0
+                if @saved
+                  @saved_line_number += 1
+                  @saved_column_number = 0
+                end
                 break
               when ident_part?(char)
                 here << char
@@ -490,6 +511,7 @@ module Crystal
                 io << consume_octal_escape(char)
               when '\n'
                 @line_number += 1
+                @saved_line_number += 1 if @saved
                 io << "\n"
               when '\0'
                 raise "unterminated quoted symbol", line, column
@@ -1154,6 +1176,10 @@ module Crystal
             next_char
             @line_number += 1
             @column_number = 1
+            if @saved
+              @saved_line_number += 1
+              @saved_column_number = 1
+            end
             @token.passed_backslash_newline = true
           else
             unknown_token
@@ -1177,6 +1203,7 @@ module Crystal
         when '\n'
           next_char_no_column_increment
           @line_number += 1
+          @saved_line_number += 1 if @saved
           @token.doc_buffer = nil
         when '\r'
           if next_char_no_column_increment != '\n'
@@ -1184,6 +1211,7 @@ module Crystal
           end
           next_char_no_column_increment
           @line_number += 1
+          @saved_line_number += 1 if @saved
           @token.doc_buffer = nil
         else
           break
@@ -1758,6 +1786,7 @@ module Crystal
               @token.value = char_value.chr.to_s
             when '\n'
               @line_number += 1
+              @saved_line_number += 1 if @saved
               @token.line_number = @line_number
 
               # Skip until the next non-whitespace char
@@ -1768,6 +1797,7 @@ module Crystal
                   raise_unterminated_quoted string_end
                 when '\n'
                   @line_number += 1
+                  @saved_line_number += 1 if @saved
                   @token.line_number = @line_number
                 when .ascii_whitespace?
                   # Continue
@@ -1815,6 +1845,7 @@ module Crystal
         @column_number = 1
         @token.column_number = @column_number
         @line_number += 1
+        @saved_line_number += 1 if @saved
         @token.line_number = @line_number
 
         if delimiter_state.kind == :heredoc
@@ -1995,6 +2026,10 @@ module Crystal
             next_char
             @line_number += 1
             @column_number = 1
+            if @saved
+              @saved_line_number += 1
+              @saved_column_number = 1
+            end
             @token.line_number = @line_number
             @token.column_number = @column_number
             break
@@ -2061,6 +2096,10 @@ module Crystal
         when '\n'
           @line_number += 1
           @column_number = 0
+          if @saved
+            @saved_line_number += 1
+            @saved_column_number = 0
+          end
           whitespace = true
           beginning_of_line = true
         when '\\'
@@ -2183,6 +2222,10 @@ module Crystal
         if current_char == '\n'
           @line_number += 1
           @column_number = 0
+          if @saved
+            @saved_line_number += 1
+            @saved_column_number = 0
+          end
           beginning_of_line = true
         end
         next_char
@@ -2361,8 +2404,12 @@ module Crystal
       while true
         if current_char == '\n'
           next_char
-          @column_number = 1
           @line_number += 1
+          @column_number = 1
+          if @saved
+            @saved_line_number += 1
+            @saved_column_number = 1
+          end
         elsif current_char.ascii_whitespace?
           next_char
         else
@@ -2401,60 +2448,109 @@ module Crystal
     end
 
     def consume_loc_pragma
-      filename_pos = current_pos
+      case current_char
+      when '"'
+        # skip '"'
+        next_char_no_column_increment
 
-      while true
-        case current_char
-        when '"'
-          break
-        when '\0'
-          raise "unexpected end of file in loc pragma"
-        else
-          next_char_no_column_increment
+        filename_pos = current_pos
+
+        while true
+          case current_char
+          when '"'
+            break
+          when '\0'
+            raise "unexpected end of file in loc pragma"
+          else
+            next_char_no_column_increment
+          end
         end
-      end
 
-      filename = string_range(filename_pos)
+        filename = string_range(filename_pos)
 
-      # skip '"'
-      next_char
+        # skip '"'
+        next_char
 
-      unless current_char == ','
-        raise "expected ',' in loc pragma after filename"
-      end
-      next_char
-
-      line_number = 0
-      while true
-        case current_char
-        when '0'..'9'
-          line_number = 10 * line_number + (current_char - '0').to_i
-        when ','
-          next_char
-          break
-        else
-          raise "expected digit or ',' in loc pragma for line number"
+        unless current_char == ','
+          raise "expected ',' in loc pragma after filename"
         end
         next_char
-      end
 
-      column_number = 0
-      while true
-        case current_char
-        when '0'..'9'
-          column_number = 10 * column_number + (current_char - '0').to_i
-        when '>'
+        line_number = 0
+        while true
+          case current_char
+          when '0'..'9'
+            line_number = 10 * line_number + (current_char - '0').to_i
+          when ','
+            next_char
+            break
+          else
+            raise "expected digit or ',' in loc pragma for line number"
+          end
           next_char
-          break
-        else
-          raise "expected digit or '>' in loc pragma for column_number number"
         end
-        next_char
-      end
 
-      @token.filename = @filename = filename
-      @token.line_number = @line_number = line_number
-      @token.column_number = @column_number = column_number
+        column_number = 0
+        while true
+          case current_char
+          when '0'..'9'
+            column_number = 10 * column_number + (current_char - '0').to_i
+          when '>'
+            next_char
+            break
+          else
+            raise "expected digit or '>' in loc pragma for column_number number"
+          end
+          next_char
+        end
+
+        @token.filename = @filename = filename
+        @token.line_number = @line_number = line_number
+        @token.column_number = @column_number = column_number
+      when 's'
+        unless next_char_no_column_increment == 'a' &&
+               next_char_no_column_increment == 'v' &&
+               next_char_no_column_increment == 'e' &&
+               next_char_no_column_increment == '>'
+          raise "invalid #<loc:...> pragma comment"
+        end
+
+        # skip '>'
+        next_char_no_column_increment
+
+        @token.column_number = @column_number += 11 # == "#<loc:save>".size
+        @saved_column_number += 11 if @saved
+
+        unless @saved
+          @saved = true
+          @saved_filename = @filename
+          @token.line_number = @saved_line_number = @line_number
+          @token.column_number = @saved_column_number = @column_number
+        end
+      when 'r'
+        unless next_char_no_column_increment == 'e' &&
+               next_char_no_column_increment == 's' &&
+               next_char_no_column_increment == 'e' &&
+               next_char_no_column_increment == 't' &&
+               next_char_no_column_increment == '>'
+          raise "invalid #<loc:...> pragma"
+        end
+
+        # skip '>'
+        next_char_no_column_increment
+
+        @token.column_number = @column_number += 12 # == "#<loc:reset>".size
+        @saved_column_number += 12 if @saved
+
+        if @saved
+          @saved = false
+          @filename = @saved_filename
+          @token.line_number = @line_number = @saved_line_number
+          @token.column_number = @column_number = @saved_column_number
+        end
+      else
+        raise "invalid #<loc:...> pragma"
+      end
     end
 
     def next_char_no_column_increment
@@ -2463,15 +2559,21 @@ module Crystal
 
     def next_char
       @column_number += 1
+      @saved_column_number += 1 if @saved
       next_char_no_column_increment
     end
 
     def next_char_check_line
       @column_number += 1
+      @saved_column_number += 1 if @saved
       char = next_char_no_column_increment
       if char == '\n'
         @line_number += 1
         @column_number = 1
+        if @saved
+          @saved_line_number += 1
+          @saved_column_number = 1
+        end
       end
       char
     end
