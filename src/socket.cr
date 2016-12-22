@@ -387,6 +387,14 @@ class Socket < IO::FileDescriptor
     setsockopt_bool LibC::SO_REUSEADDR, val
   end
 
+  def reuse_port?
+    getsockopt_bool LibC::SO_REUSEPORT
+  end
+
+  def reuse_port=(val : Bool)
+    setsockopt_bool LibC::SO_REUSEPORT, val
+  end
+
   def broadcast?
     getsockopt_bool LibC::SO_BROADCAST
   end
