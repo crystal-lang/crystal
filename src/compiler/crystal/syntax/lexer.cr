@@ -13,7 +13,7 @@ module Crystal
     getter token : Token
     getter line_number : Int32
     @filename : String | VirtualFile | Nil
-    @saved_filename : String | VirtualFile | Nil
+    @stacked_filename : String | VirtualFile | Nil
     @token_end_location : Location?
     @string_pool : StringPool
 
@@ -42,10 +42,10 @@ module Crystal
       @delimiter_state_stack = [] of Token::DelimiterState
       @macro_curly_count = 0
 
-      @saved = false
-      @saved_filename = ""
-      @saved_line_number = 1
-      @saved_column_number = 1
+      @stacked = false
+      @stacked_filename = ""
+      @stacked_line_number = 1
+      @stacked_column_number = 1
     end
 
     def filename=(filename)
@@ -91,12 +91,7 @@ module Crystal
         reset_regex_flags = false
       when '\\'
         if next_char == '\n'
-          @line_number += 1
-          @column_number = 1
-          if @saved
-            @saved_line_number += 1
-            @saved_column_number = 1
-          end
+          incr_line_number
           @token.passed_backslash_newline = true
           consume_whitespace
           reset_regex_flags = false
@@ -106,24 +101,14 @@ module Crystal
       when '\n'
         @token.type = :NEWLINE
         next_char
-        @line_number += 1
-        @column_number = 1
-        if @saved
-          @saved_line_number += 1
-          @saved_column_number = 1
-        end
+        incr_line_number
         reset_regex_flags = false
         consume_newlines
       when '\r'
         if next_char == '\n'
           next_char
           @token.type = :NEWLINE
-          @line_number += 1
-          @column_number = 1
-          if @saved
-            @saved_line_number += 1
-            @saved_column_number = 1
-          end
+          incr_line_number
           consume_newlines
         else
           raise "expected '\\n' after '\\r'"
@@ -192,12 +177,7 @@ module Crystal
                   raise "exepcting '\\n' after '\\r'"
                 end
               when char == '\n'
-                @line_number += 1
-                @column_number = 0
-                if @saved
-                  @saved_line_number += 1
-                  @saved_column_number = 0
-                end
+                incr_line_number 0
                 break
               when ident_part?(char)
                 here << char
@@ -510,8 +490,7 @@ module Crystal
               when '0', '1', '2', '3', '4', '5', '6', '7'
                 io << consume_octal_escape(char)
               when '\n'
-                @line_number += 1
-                @saved_line_number += 1 if @saved
+                incr_line_number nil
                 io << "\n"
               when '\0'
                 raise "unterminated quoted symbol", line, column
@@ -1174,12 +1153,7 @@ module Crystal
         when '\\'
           if next_char == '\n'
             next_char
-            @line_number += 1
-            @column_number = 1
-            if @saved
-              @saved_line_number += 1
-              @saved_column_number = 1
-            end
+            incr_line_number
             @token.passed_backslash_newline = true
           else
             unknown_token
@@ -1202,16 +1176,14 @@ module Crystal
         case current_char
         when '\n'
           next_char_no_column_increment
-          @line_number += 1
-          @saved_line_number += 1 if @saved
+          incr_line_number nil
           @token.doc_buffer = nil
         when '\r'
           if next_char_no_column_increment != '\n'
             raise "expected '\\n' after '\\r'"
           end
           next_char_no_column_increment
-          @line_number += 1
-          @saved_line_number += 1 if @saved
+          incr_line_number nil
           @token.doc_buffer = nil
         else
           break
@@ -1785,8 +1757,7 @@ module Crystal
               @token.type = :STRING
               @token.value = char_value.chr.to_s
             when '\n'
-              @line_number += 1
-              @saved_line_number += 1 if @saved
+              incr_line_number
               @token.line_number = @line_number
 
               # Skip until the next non-whitespace char
@@ -1796,8 +1767,7 @@ module Crystal
                 when '\0'
                   raise_unterminated_quoted string_end
                 when '\n'
-                  @line_number += 1
-                  @saved_line_number += 1 if @saved
+                  incr_line_number
                   @token.line_number = @line_number
                 when .ascii_whitespace?
                   # Continue
@@ -1842,11 +1812,9 @@ module Crystal
         end
 
         next_char
-        @column_number = 1
-        @token.column_number = @column_number
-        @line_number += 1
-        @saved_line_number += 1 if @saved
+        incr_line_number 1
         @token.line_number = @line_number
+        @token.column_number = @column_number
 
         if delimiter_state.kind == :heredoc
           string_end = string_end.to_s
@@ -2024,12 +1992,7 @@ module Crystal
             beginning_of_line = true
             whitespace = true
             next_char
-            @line_number += 1
-            @column_number = 1
-            if @saved
-              @saved_line_number += 1
-              @saved_column_number = 1
-            end
+            incr_line_number
             @token.line_number = @line_number
             @token.column_number = @column_number
             break
@@ -2094,12 +2057,7 @@ module Crystal
       until char == '{' || char == '\0' || (char == '\\' && ((peek = peek_next_char) == '{' || peek == '%')) || (whitespace && !delimiter_state && char == 'e')
         case char
         when '\n'
-          @line_number += 1
-          @column_number = 0
-          if @saved
-            @saved_line_number += 1
-            @saved_column_number = 0
-          end
+          incr_line_number 0
           whitespace = true
           beginning_of_line = true
         when '\\'
@@ -2220,12 +2178,7 @@ module Crystal
       while current_char.ascii_whitespace?
         whitespace = true
         if current_char == '\n'
-          @line_number += 1
-          @column_number = 0
-          if @saved
-            @saved_line_number += 1
-            @saved_column_number = 0
-          end
+          incr_line_number 0
           beginning_of_line = true
         end
         next_char
@@ -2404,12 +2357,7 @@ module Crystal
       while true
         if current_char == '\n'
           next_char
-          @line_number += 1
-          @column_number = 1
-          if @saved
-            @saved_line_number += 1
-            @saved_column_number = 1
-          end
+          incr_line_number 1
         elsif current_char.ascii_whitespace?
           next_char
         else
@@ -2466,6 +2414,7 @@ module Crystal
           end
         end
 
+        incr_column_number (current_pos - filename_pos) + 7 # == "#<loc:\"".size
         filename = string_range(filename_pos)
 
         # skip '"'
@@ -2507,49 +2456,73 @@ module Crystal
         @token.filename = @filename = filename
         @token.line_number = @line_number = line_number
         @token.column_number = @column_number = column_number
-      when 's'
-        unless next_char_no_column_increment == 'a' &&
-               next_char_no_column_increment == 'v' &&
-               next_char_no_column_increment == 'e' &&
-               next_char_no_column_increment == '>'
-          raise "invalid #<loc:...> pragma comment"
-        end
-
-        # skip '>'
+      when 'p'
+        # skip 'p'
         next_char_no_column_increment
 
-        @token.column_number = @column_number += 11 # == "#<loc:save>".size
-        @saved_column_number += 11 if @saved
+        case current_char
+        when 'o'
+          unless next_char_no_column_increment == 'p' &&
+                 next_char_no_column_increment == '>'
+            raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+          end
 
-        unless @saved
-          @saved = true
-          @saved_filename = @filename
-          @token.line_number = @saved_line_number = @line_number
-          @token.column_number = @saved_column_number = @column_number
-        end
-      when 'r'
-        unless next_char_no_column_increment == 'e' &&
-               next_char_no_column_increment == 's' &&
-               next_char_no_column_increment == 'e' &&
-               next_char_no_column_increment == 't' &&
-               next_char_no_column_increment == '>'
-          raise "invalid #<loc:...> pragma"
-        end
+          # skip '>'
+          next_char_no_column_increment
 
-        # skip '>'
-        next_char_no_column_increment
+          incr_column_number 10 # == "#<loc:pop>".size
 
-        @token.column_number = @column_number += 12 # == "#<loc:reset>".size
-        @saved_column_number += 12 if @saved
+          pop_location
+        when 'u'
+          unless next_char_no_column_increment == 's' &&
+                 next_char_no_column_increment == 'h' &&
+                 next_char_no_column_increment == '>'
+            raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+          end
 
-        if @saved
-          @saved = false
-          @filename = @saved_filename
-          @token.line_number = @line_number = @saved_line_number
-          @token.column_number = @column_number = @saved_column_number
+          # skip '>'
+          next_char_no_column_increment
+
+          incr_column_number 11 # == "#<loc:push>".size
+
+          @token.line_number = @line_number
+          @token.column_number = @column_number
+          push_location
+        else
+          raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
         end
       else
-        raise "invalid #<loc:...> pragma"
+        raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+      end
+    end
+
+    def pop_location
+      if @stacked
+        @stacked = false
+        @token.filename = @filename = @stacked_filename
+        @token.line_number = @line_number = @stacked_line_number
+        @token.column_number = @column_number = @stacked_column_number
+      end
+    end
+
+    def push_location
+      unless @stacked
+        @stacked = true
+        @stacked_filename, @stacked_line_number, @stacked_column_number = @filename, @line_number, @column_number
+      end
+    end
+
+    def incr_column_number(d = 1)
+      @column_number += d
+      @stacked_column_number += d if @stacked
+    end
+
+    def incr_line_number(column_number = 1)
+      @line_number += 1
+      @column_number = column_number if column_number
+      if @stacked
+        @stacked_line_number += 1
+        @stacked_column_number = column_number if column_number
       end
     end
 
@@ -2558,22 +2531,16 @@ module Crystal
     end
 
     def next_char
-      @column_number += 1
-      @saved_column_number += 1 if @saved
+      incr_column_number
       next_char_no_column_increment
     end
 
     def next_char_check_line
-      @column_number += 1
-      @saved_column_number += 1 if @saved
       char = next_char_no_column_increment
       if char == '\n'
-        @line_number += 1
-        @column_number = 1
-        if @saved
-          @saved_line_number += 1
-          @saved_column_number = 1
-        end
+        incr_line_number
+      else
+        incr_column_number = 1
       end
       char
     end

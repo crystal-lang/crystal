@@ -102,9 +102,9 @@ module Crystal
         # retaining the original node's location, so error messages
         # are shown in the block instead of in the generated macro source
         is_yield = node.exp.is_a?(Yield) && !@last.is_a?(Nop)
-        @str << " #<loc:save>begin " if is_yield
+        @str << " #<loc:push>begin " if is_yield
         @last.to_s(@str, emit_loc_pragma: is_yield)
-        @str << " end#<loc:reset> " if is_yield
+        @str << " end#<loc:pop> " if is_yield
       end
 
       false
