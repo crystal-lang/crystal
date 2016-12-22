@@ -3,16 +3,26 @@ require "crypto/subtle"
 
 describe "Subtle" do
   it "compares constant times" do
-    data = [
+    data1 = [
       {"a" => Slice.new(1, 0x11), "b" => Slice.new(1, 0x11), "result" => true},
-      {"a" => Slice.new(1, 0x12), "b" => Slice.new(1, 0x11), "result" => false},
-      {"a" => Slice.new(1, 0x11), "b" => Slice.new(2) { |i| 0x11 + i }, "result" => false},
-      {"a" => Slice.new(2) { |i| 0x11 + i }, "b" => Slice.new(1, 0x11), "result" => false},
+      {"a" => Slice.new(1, 0x12), "b" => Slice.new(1, 0x11), "result" => false}
     ]
 
-    data.each do |test|
+    data1.each do |test|
       Crypto::Subtle.constant_time_compare(test["a"].as(Slice(Int32)), test["b"].as(Slice(Int32))).should eq(test["result"])
     end
+
+    data2 = [
+      {"a" => Slice.new(1, 0x11), "b" => Slice.new(2) { |i| 0x11 + i }},
+      {"a" => Slice.new(2) { |i| 0x11 + i }, "b" => Slice.new(1, 0x11)}
+    ]
+
+    data2.each do |test|
+      expect_raises(ArgumentError, /Arguments must be equal length/) do
+        Crypto::Subtle.constant_time_compare(test["a"].as(Slice(Int32)), test["b"].as(Slice(Int32)))
+      end
+    end
+
   end
 
   it "compares constant time bytes on equality" do
