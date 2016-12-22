@@ -765,8 +765,7 @@ struct Char
     String.new(4) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
-      appender << 0_u8
-      {appender.size - 1, 1}
+      {appender.size, 1}
     end
   end
 
