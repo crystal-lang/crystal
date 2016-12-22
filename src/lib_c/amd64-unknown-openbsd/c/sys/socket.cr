@@ -11,6 +11,7 @@ lib LibC
   SO_LINGER      = 0x0080
   SO_RCVBUF      = 0x1002
   SO_REUSEADDR   = 0x0004
+  SO_REUSEPORT   = 0x0200
   SO_SNDBUF      = 0x1001
   PF_INET        = LibC::AF_INET
   PF_INET6       = LibC::AF_INET6
