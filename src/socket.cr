@@ -34,9 +34,9 @@ class Socket < IO::FileDescriptor
   # :nodoc:
   SOMAXCONN = 128
 
-  property family : Family
-  property type : Type
-  property protocol : Protocol
+  getter family : Family
+  getter type : Type
+  getter protocol : Protocol
 
   # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
   # need full control over the socket.
@@ -136,7 +136,7 @@ class Socket < IO::FileDescriptor
   #
   # ```
   # sock = Socket.tcp(Socket::Family::INET6)
-  # sock.bind "localhost", 1234
+  # sock.bind 1234
   # ```
   def bind(port : Int)
     Addrinfo.resolve("::", port, @family, @type, @protocol) do |addrinfo|
@@ -295,9 +295,13 @@ class Socket < IO::FileDescriptor
   # message, client_addr = server.receive
   # ```
   def receive(max_message_size = 512) : {String, Address}
-    bytes = Bytes.new(max_message_size)
-    bytes_read, sockaddr, addrlen = recvfrom(bytes)
-    {String.new(bytes.to_unsafe, bytes_read), Address.from(sockaddr, addrlen)}
+    address = nil
+    message = String.new(max_message_size) do |buffer|
+      bytes_read, sockaddr, addrlen = recvfrom(Slice.new(buffer, max_message_size))
+      address = Address.from(sockaddr, addrlen)
+      {bytes_read, 0}
+    end
+    {message, address.not_nil!}
   end
 
   # Receives a binary message from the previously bound address.

@@ -81,23 +81,29 @@ class Socket
     def address
       @address ||= begin
         case family
-        when Family::INET6 then chars = address(@addr6)
-        when Family::INET  then chars = address(@addr4)
+        when Family::INET6 then address(@addr6)
+        when Family::INET  then address(@addr4)
         else                    raise "unsupported IP address family: #{family}"
         end
-        raise Errno.new("Failed to convert IP address") unless chars
-        String.new(chars)
       end
     end
 
     private def address(addr : LibC::In6Addr)
-      chars = GC.malloc_atomic(46).as(UInt8*)
-      chars if LibC.inet_ntop(family, pointerof(addr).as(Void*), chars, 46)
+      String.new(46) do |buffer|
+        unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 46)
+          raise Errno.new("Failed to convert IP address")
+        end
+        {LibC.strlen(buffer), 0}
+      end
     end
 
     private def address(addr : LibC::InAddr)
-      chars = GC.malloc_atomic(16).as(UInt8*)
-      chars if LibC.inet_ntop(family, pointerof(addr).as(Void*), chars, 16)
+      String.new(16) do |buffer|
+        unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 16)
+          raise Errno.new("Failed to convert IP address")
+        end
+        {LibC.strlen(buffer), 0}
+      end
     end
 
     private def address(addr) : Nil
