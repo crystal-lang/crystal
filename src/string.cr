@@ -220,9 +220,15 @@ class String
       raise ArgumentError.new("bytesize out of capacity bounds")
     end
 
+    buffer[bytesize] = 0_u8
+
+    # Try to reclaim some memory if capacity is bigger than what was requested
+    if bytesize < capacity
+      str = str.realloc(bytesize.to_u32 + HEADER_SIZE + 1)
+    end
+
     str_header = str.as({Int32, Int32, Int32}*)
     str_header.value = {TYPE_ID, bytesize.to_i, size.to_i}
-    buffer[bytesize] = 0_u8
     str.as(String)
   end
 
