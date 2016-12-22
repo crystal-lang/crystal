@@ -193,9 +193,8 @@ class String
   # (UTF-8 codepoints count) of the String. If the returned size is zero, the UTF-8 codepoints
   # count will be lazily computed.
   #
-  # This method is **unsafe**: the bytesize returned by the block must be less than the
-  # capacity given to this String. In the future this method might check that the returned
-  # bytesize is less or equal than the capacity, making it a safe method.
+  # The bytesize returned by the block must be less than or equal to the
+  # capacity given to this String, otherwise `ArgumentError` is raised.
   #
   # If you need to build a String where the maximum capacity is unknown, use `String#build`.
   #
@@ -216,6 +215,11 @@ class String
     str = GC.malloc_atomic(capacity.to_u32 + HEADER_SIZE + 1).as(UInt8*)
     buffer = str.as(String).to_unsafe
     bytesize, size = yield buffer
+
+    unless 0 <= bytesize <= capacity
+      raise ArgumentError.new("bytesize out of capacity bounds")
+    end
+
     str_header = str.as({Int32, Int32, Int32}*)
     str_header.value = {TYPE_ID, bytesize.to_i, size.to_i}
     buffer[bytesize] = 0_u8

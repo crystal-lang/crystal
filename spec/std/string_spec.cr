@@ -2154,4 +2154,12 @@ describe "String" do
       {255, 0}
     end
   end
+
+  it "raises on String.new if returned bytesize is greater than capacity" do
+    expect_raises ArgumentError, "bytesize out of capacity bounds" do
+      String.new(123) do |buffer|
+        {124, 0}
+      end
+    end
+  end
 end
