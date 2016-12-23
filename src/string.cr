@@ -119,7 +119,7 @@ class String
   # String.new(slice) # => "abcd"
   # ```
   #
-  # Note: if the slice doesn't denote a valid UTF-8 sequence, this method still succeeds.
+  # NOTE: If the slice doesn't denote a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(slice : Bytes)
     new(slice.pointer(slice.size), slice.size)
@@ -158,7 +158,7 @@ class String
   # String.new(ptr) # => "abcd"
   # ```
   #
-  # Note: if the chars don't denote a valid UTF-8 sequence, this method still succeeds.
+  # NOTE: If the chars don't denote a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(chars : UInt8*)
     new(chars, LibC.strlen(chars))
@@ -176,7 +176,7 @@ class String
   # String.new(ptr, 2) # => "ab"
   # ```
   #
-  # Note: if the chars don't denote a valid UTF-8 sequence, this method still succeeds.
+  # NOTE: If the chars don't denote a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(chars : UInt8*, bytesize, size = 0)
     # Avoid allocating memory for the empty string
@@ -207,7 +207,7 @@ class String
   # str # => "ab"
   # ```
   #
-  # Note: if the buffer doesn't end up denoting a valid UTF-8 sequence, this method still succeeds.
+  # NOTE: If the buffer doesn't end up denoting a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(capacity : Int)
     check_capacity_in_bounds(capacity)
