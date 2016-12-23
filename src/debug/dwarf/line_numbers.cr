@@ -261,10 +261,7 @@ module Debug
         end
       end
 
-      # TODO: uncomment if release 'private macro'
-      # private macro increment_address_and_op_index(operation_advance)
-      # :nodoc:
-      macro increment_address_and_op_index(operation_advance)
+      private macro increment_address_and_op_index(operation_advance)
         if sequence.maximum_operations_per_instruction == 1
           registers.address += {{operation_advance}} * sequence.minimum_instruction_length
         else

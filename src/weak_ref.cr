@@ -10,8 +10,7 @@ class WeakRef(T)
 
   def self.allocate
     ptr = GC.malloc_atomic(sizeof(self)).as(self)
-    # TODO: uncomment after 0.20.1
-    # set_crystal_type_id(ptr)
+    set_crystal_type_id(ptr)
     ptr
   end
 
