@@ -92,12 +92,16 @@ struct Nil
     io << "nil"
   end
 
-  # Doesn't yields to the block. See `Object#try`.
+  # Doesn't yields to the block.
+  #
+  # See also: `Object#try`.
   def try(&block)
     self
   end
 
-  # Raises an exception. See `Object#not_nil!`.
+  # Raises an exception.
+  #
+  # See also: `Object#not_nil!`.
   def not_nil!
     raise "Nil assertion failed"
   end

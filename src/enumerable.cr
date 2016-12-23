@@ -94,7 +94,7 @@ module Enumerable(T)
   # * `Enumerable::Chunk::Drop` specifies that the elements should be dropped
   # * `Enumerable::Chunk::Alone` specifies that the element should be chunked by itself
   #
-  # See also: `Iterator#chunk`
+  # See also: `Iterator#chunk`.
   def chunks(&block : T -> U) forall U
     res = [] of Tuple(U, Array(T))
     chunks_internal(block) { |k, v| res << {k, v} }

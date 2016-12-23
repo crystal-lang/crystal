@@ -213,7 +213,7 @@ struct Range(B, E)
     end
   end
 
-  # Same as `includes?`
+  # Same as `includes?`.
   def covers?(value)
     includes?(value)
   end
@@ -234,7 +234,7 @@ struct Range(B, E)
   # high
   # ```
   #
-  # See `Object#===`.
+  # See also: `Object#===`.
   def ===(value)
     includes?(value)
   end

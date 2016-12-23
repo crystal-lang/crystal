@@ -38,13 +38,15 @@ struct NamedTuple
     options
   end
 
-  # Creates a named tuple from the given hash, with elements casted to the given types. See `#from`.
+  # Creates a named tuple from the given hash, with elements casted to the given types.
   #
   # ```
   # NamedTuple(foo: String, bar: Int64).from({:foo => "world", :bar => 2})       # => {foo: "world", bar: 2}
   # NamedTuple(foo: String, bar: Int64).from({"foo" => "world", "bar" => 2})     # => {foo: "world", bar: 2}
   # NamedTuple(foo: String, bar: Int64).from({:foo => "world", :bar => 2}).class # => {foo: String, bar: Int64}
   # ```
+  #
+  # See also: `#from`.
   def self.from(hash : Hash)
     {% begin %}
     NamedTuple.new(**{{T}}).from(hash)
@@ -156,7 +158,7 @@ struct NamedTuple
 
   # Returns a hash value based on this name tuple's size, keys and values.
   #
-  # See `Object#hash`.
+  # See also: `Object#hash`.
   def hash
     hash = 31 * size
     {% for key in T.keys.sort %}

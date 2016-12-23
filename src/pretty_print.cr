@@ -143,7 +143,7 @@ class PrettyPrint
     end
   end
 
-  # Same as
+  # Same as:
   #
   # ```
   # text ","

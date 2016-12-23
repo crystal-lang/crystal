@@ -163,7 +163,7 @@ struct Number
 
   # Implements the comparison operator.
   #
-  # See `Object#<=>`
+  # See also: `Object#<=>`.
   def <=>(other)
     self > other ? 1 : (self < other ? -1 : 0)
   end

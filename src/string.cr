@@ -1007,7 +1007,7 @@ class String
   # "x".chomp.chomp    # => "x"
   # ```
   #
-  # See also: `#chop`
+  # See also: `#chop`.
   def chomp
     return self if empty?
 
@@ -1067,7 +1067,7 @@ class String
   # "x".chop.chop     # => ""
   # ```
   #
-  # See also: `#chomp`
+  # See also: `#chomp`.
   def chop
     return "" if bytesize <= 1
 
@@ -3215,7 +3215,7 @@ class String
   # end
   # ```
   #
-  # See also: `Char#ord`
+  # See also: `Char#ord`.
   def each_codepoint
     each_char do |char|
       yield char.ord
@@ -3231,7 +3231,7 @@ class String
   # codepoints.next # => 9731
   # ```
   #
-  # See also: `Char#ord`
+  # See also: `Char#ord`.
   def each_codepoint
     each_char.map &.ord
   end
@@ -3242,7 +3242,7 @@ class String
   # "ab☃".codepoints # => [97, 98, 9731]
   # ```
   #
-  # See also: `Char#ord`
+  # See also: `Char#ord`.
   def codepoints
     codepoints = Array(Int32).new(@length > 0 ? @length : bytesize)
     each_codepoint do |codepoint|
@@ -3440,7 +3440,7 @@ class String
 
   # Returns a hash based on this string’s size and content.
   #
-  # See also `Object#hash`.
+  # See also: `Object#hash`.
   def hash
     h = 0
     each_byte do |c|

@@ -55,7 +55,7 @@ class Hash(K, V)
     value
   end
 
-  # See `Hash#fetch`
+  # See also: `Hash#fetch`.
   def [](key)
     fetch(key)
   end
@@ -672,7 +672,7 @@ class Hash(K, V)
     true
   end
 
-  # See `Object#hash`.
+  # See also: `Object#hash`.
   #
   # ```
   # foo = {"foo" => "bar"}
