@@ -8,6 +8,7 @@
 #
 # ```
 # require "base64"
+#
 # enc = Base64.encode("Send reinforcements") # => "U2VuZCByZWluZm9yY2VtZW50cw==\n"
 # plain = Base64.decode(enc)                 # => "Send reinforcements"
 # ```
@@ -32,6 +33,7 @@ module Base64
   #
   # ```
   # require "base64"
+  #
   # puts Base64.encode("Now is the time for all good coders\nto learn Crystal")
   # ```
   #
@@ -56,6 +58,7 @@ module Base64
   #
   # ```
   # require "base64"
+  #
   # Base64.encode("Now is the time for all good coders\nto learn Crystal", io)
   # ```
   def encode(data, io : IO)
@@ -88,6 +91,7 @@ module Base64
   #
   # ```
   # require "base64"
+  #
   # puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
   # ```
   #
@@ -115,6 +119,7 @@ module Base64
   #
   # ```
   # require "base64"
+  #
   # Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", io)
   # ```
   def strict_encode(data, io : IO)

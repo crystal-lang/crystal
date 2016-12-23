@@ -4,6 +4,7 @@
 #
 # ```
 # require "string_pool"
+#
 # pool = StringPool.new
 # a = "foo" + "bar"
 # b = "foo" + "bar"
