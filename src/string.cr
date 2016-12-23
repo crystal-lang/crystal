@@ -1896,7 +1896,7 @@ class String
   end
 
   # Sets should be a list of strings following the rules
-  # described at Char#in_set?. Returns the number of characters
+  # described at `Char#in_set?`. Returns the number of characters
   # in this string that match the given set.
   def count(*sets)
     count { |char| char.in_set?(*sets) }
@@ -1927,7 +1927,7 @@ class String
   end
 
   # Sets should be a list of strings following the rules
-  # described at Char#in_set?. Returns a new string with
+  # described at `Char#in_set?`. Returns a new string with
   # all characters that match the given set removed.
   #
   # ```
@@ -1966,7 +1966,7 @@ class String
   end
 
   # Sets should be a list of strings following the rules
-  # described at Char#in_set?. Returns a new string with all
+  # described at `Char#in_set?`. Returns a new string with all
   # runs of the same character replaced by one instance, if
   # they match the given set.
   #
@@ -2043,7 +2043,7 @@ class String
   # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
   # manner.
   #
-  # If *case_insitive* if `false`, this method delegates to `<=>`. Otherwise,
+  # If *case_insitive* is `false`, this method delegates to `<=>`. Otherwise,
   # the strings are compared char-by-char, and ASCII characters are compared in a
   # case-insensitive way.
   #
@@ -2500,9 +2500,13 @@ class String
   #   a frog leaps in
   #   water's sound
   # "
-  # old_pond.split { |s| ary << s }; ary # => ["Old", "pond", "a", "frog", "leaps", "in", "water's", "sound"]
+  #
+  # old_pond.split { |s| ary << s }
+  # ary # => ["Old", "pond", "a", "frog", "leaps", "in", "water's", "sound"]
   # ary.clear
-  # old_pond.split(3) { |s| ary << s }; ary # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
+  #
+  # old_pond.split(3) { |s| ary << s }
+  # ary # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
   # ```
   def split(limit : Int32? = nil, &block : String -> _)
     if limit && limit <= 1
@@ -2580,9 +2584,13 @@ class String
   #
   # ```
   # ary = [] of String
-  # "foo,bar,baz".split(',') { |string| ary << string }; ary # => ["foo", "bar", "baz"]
+  #
+  # "foo,bar,baz".split(',') { |string| ary << string }
+  # ary # => ["foo", "bar", "baz"]
   # ary.clear
-  # "foo,bar,baz".split(',', 2) { |string| ary << string }; ary # => ["foo", "bar,baz"]
+  #
+  # "foo,bar,baz".split(',', 2) { |string| ary << string }
+  # ary # => ["foo", "bar,baz"]
   # ```
   def split(separator : Char, limit = nil, &block : String -> _)
     if empty? || limit && limit <= 1
@@ -2639,11 +2647,17 @@ class String
   # ```
   # ary = [] of String
   # long_river_name = "Mississippi"
-  # long_river_name.split("ss") { |s| ary << s }; ary # => ["Mi", "i", "ippi"]
+  #
+  # long_river_name.split("ss") { |s| ary << s }
+  # ary # => ["Mi", "i", "ippi"]
   # ary.clear
-  # long_river_name.split("i") { |s| ary << s }; ary # => ["M", "ss", "ss", "pp"]
+  #
+  # long_river_name.split("i") { |s| ary << s }
+  # ary # => ["M", "ss", "ss", "pp"]
   # ary.clear
-  # long_river_name.split("") { |s| ary << s }; ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  #
+  # long_river_name.split("") { |s| ary << s }
+  # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : String, limit = nil, &block : String -> _)
     if empty? || (limit && limit <= 1)
@@ -2694,9 +2708,13 @@ class String
   # ```
   # ary = [] of String
   # long_river_name = "Mississippi"
-  # long_river_name.split(/s+/) { |s| ary << s }; ary # => ["Mi", "i", "ippi"]
+  #
+  # long_river_name.split(/s+/) { |s| ary << s }
+  # ary # => ["Mi", "i", "ippi"]
   # ary.clear
-  # long_river_name.split(//) { |s| ary << s }; ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  #
+  # long_river_name.split(//) { |s| ary << s }
+  # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : Regex, limit = nil)
     ary = Array(String).new
@@ -3189,20 +3207,22 @@ class String
     chars
   end
 
-  # Yields each codepoint to the block. See Char#ord
+  # Yields each codepoint to the block.
   #
   # ```
   # "ab☃".each_codepoint do |codepoint|
   #   codepoint # => 97, 98, 9731
   # end
   # ```
+  #
+  # See also: `Char#ord`
   def each_codepoint
     each_char do |char|
       yield char.ord
     end
   end
 
-  # Returns an iterator for each codepoint. See Char#ord
+  # Returns an iterator for each codepoint.
   #
   # ```
   # codepoints = "ab☃".each_codepoint
@@ -3210,15 +3230,19 @@ class String
   # codepoints.next # => 98
   # codepoints.next # => 9731
   # ```
+  #
+  # See also: `Char#ord`
   def each_codepoint
     each_char.map &.ord
   end
 
-  # Returns an array of the codepoints that make the string. See Char#ord
+  # Returns an array of the codepoints that make the string.
   #
   # ```
   # "ab☃".codepoints # => [97, 98, 9731]
   # ```
+  #
+  # See also: `Char#ord`
   def codepoints
     codepoints = Array(Int32).new(@length > 0 ? @length : bytesize)
     each_codepoint do |codepoint|
@@ -3405,7 +3429,7 @@ class String
     true
   end
 
-  # Interpolates *other* into the string using `Kernel#sprintf`
+  # Interpolates *other* into the string using `Kernel#sprintf`.
   #
   # ```
   # "Party like it's %d!!!" % 1999 # => Party like it's 1999!!!
