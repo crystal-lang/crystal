@@ -5,6 +5,7 @@ module FileUtils
   # Alias of Dir.cd.
   # ```
   # require "file_utils"
+  #
   # FileUtils.cd("to/directory")
   # ```
   def cd(path : String)

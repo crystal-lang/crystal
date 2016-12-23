@@ -9,6 +9,7 @@
 # Example:
 # ```
 # require "io/hexdump"
+#
 # io = IO::Hexdump.new(socket, output: STDERR, read: true)
 # ```
 #

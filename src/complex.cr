@@ -5,6 +5,7 @@
 #
 # ```
 # require "complex"
+#
 # Complex.new(1, 0)   # => 1 + 0i
 # Complex.new(5, -12) #  => 5 - 12i
 # ```
