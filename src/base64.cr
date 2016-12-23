@@ -6,11 +6,11 @@
 #
 # A simple encoding and decoding.
 #
-#     require "base64"
-#     enc   = Base64.encode("Send reinforcements")
-#                         # => "U2VuZCByZWluZm9yY2VtZW50cw==\n"
-#     plain = Base64.decode(enc)
-#                         # => "Send reinforcements"
+# ```
+# require "base64"
+# enc = Base64.encode("Send reinforcements") # => "U2VuZCByZWluZm9yY2VtZW50cw==\n"
+# plain = Base64.decode(enc)                 # => "Send reinforcements"
+# ```
 #
 # The purpose of using base64 to encode data is that it translates any binary
 # data into purely printable characters.
@@ -30,8 +30,10 @@ module Base64
   # This method complies with RFC 2045.
   # Line feeds are added to every 60 encoded characters.
   #
-  #     require "base64"
-  #     puts Base64.encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
+  # require "base64"
+  # puts Base64.encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
   #
   # Generates:
   #
@@ -52,8 +54,10 @@ module Base64
   # This method complies with RFC 2045.
   # Line feeds are added to every 60 encoded characters.
   #
-  #     require "base64"
-  #     Base64.encode("Now is the time for all good coders\nto learn Crystal", io)
+  # ```
+  # require "base64"
+  # Base64.encode("Now is the time for all good coders\nto learn Crystal", io)
+  # ```
   def encode(data, io : IO)
     count = 0
     encode_with_new_lines(data.to_slice) do |byte|
@@ -82,8 +86,10 @@ module Base64
   # Returns the Base64-encoded version of *data* with no newlines.
   # This method complies with RFC 4648.
   #
-  #     require "base64"
-  #     puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
+  # require "base64"
+  # puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
   #
   # Generates:
   #
@@ -107,8 +113,10 @@ module Base64
   # Write the Base64-encoded version of *data* with no newlines to *io*.
   # This method complies with RFC 4648.
   #
-  #     require "base64"
-  #     Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", io)
+  # ```
+  # require "base64"
+  # Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", io)
+  # ```
   def strict_encode(data, io : IO)
     strict_encode_to_io_internal(data, io, CHARS_STD, pad: true)
   end

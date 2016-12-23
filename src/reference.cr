@@ -1,8 +1,10 @@
 # Reference is the base class of classes you define in your program.
 # It is set as a class' superclass when you don't specify one:
 #
-#     class MyClass # < Reference
-#     end
+# ```
+# class MyClass # < Reference
+# end
+# ```
 #
 # A reference type is passed by reference: when you pass it to methods,
 # return it from methods or assign it to variables, a pointer is actually passed.

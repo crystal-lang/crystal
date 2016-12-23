@@ -3,6 +3,7 @@
 # `XML#parse` will parse xml from `String` or `IO` and return xml document as an `XML:Node` which represents all kinds of xml nodes.
 #
 # Example:
+#
 # ```
 # require "xml"
 #

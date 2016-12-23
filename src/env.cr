@@ -7,10 +7,12 @@ require "c/stdlib"
 #
 # ### Example
 #
-#     # Set env var PORT to a default if not already set
-#     ENV["PORT"] ||= "5000"
-#     # Later use that env var.
-#     puts ENV["PORT"].to_i
+# ```
+# # Set env var PORT to a default if not already set
+# ENV["PORT"] ||= "5000"
+# # Later use that env var.
+# puts ENV["PORT"].to_i
+# ```
 module ENV
   extend Enumerable({String, String})
 
@@ -97,9 +99,11 @@ module ENV
   # Iterates over all `KEY=VALUE` pairs of environment variables, yielding both
   # the *key* and *value*.
   #
-  #     ENV.each do |key, value|
-  #       puts "#{key} => #{value}"
-  #     end
+  # ```
+  # ENV.each do |key, value|
+  #   puts "#{key} => #{value}"
+  # end
+  # ```
   def self.each
     environ_ptr = LibC.environ
     while environ_ptr

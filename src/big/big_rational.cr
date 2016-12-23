@@ -5,10 +5,13 @@ require "./big"
 # denominator and the numerator have no common factors, and that the
 # denominator is positive. Zero has the unique representation 0/1.
 #
-#     r = BigRational.new(BigInt.new(7),BigInt.new(3))
-#     r.to_s # => "7/3"
-#     r = BigRational.new(3,-9)
-#     r.to_s # => "-1/3"
+# ```
+# r = BigRational.new(BigInt.new(7), BigInt.new(3))
+# r.to_s # => "7/3"
+#
+# r = BigRational.new(3, -9)
+# r.to_s # => "-1/3"
+# ```
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
 struct BigRational < Number
@@ -102,14 +105,18 @@ struct BigRational < Number
 
   # Divides the rational by (2 ** *other*)
   #
-  #     BigRational.new(2,3) >> 2 # => 1/6
+  # ```
+  # BigRational.new(2, 3) >> 2 # => 1/6
+  # ```
   def >>(other : Int)
     BigRational.new { |mpq| LibGMP.mpq_div_2exp(mpq, self, other) }
   end
 
   # Multiplies the rational by (2 ** *other*)
   #
-  #     BigRational.new(2,3) << 2 # => 8/3
+  # ```
+  # BigRational.new(2, 3) << 2 # => 8/3
+  # ```
   def <<(other : Int)
     BigRational.new { |mpq| LibGMP.mpq_mul_2exp(mpq, self, other) }
   end
@@ -151,10 +158,12 @@ struct BigRational < Number
   #
   # Optionally takes a radix base (2 through 36).
   #
-  #     r = BigRational.new(8243243,562828882)
-  #     r.to_s     # => "8243243/562828882"
-  #     r.to_s(16) # => "7dc82b/218c1652"
-  #     r.to_s(36) # => "4woiz/9b3djm"
+  # ```
+  # r = BigRational.new(8243243, 562828882)
+  # r.to_s     # => "8243243/562828882"
+  # r.to_s(16) # => "7dc82b/218c1652"
+  # r.to_s(36) # => "4woiz/9b3djm"
+  # ```
   def to_s(base = 10)
     String.new(to_cstr(base))
   end

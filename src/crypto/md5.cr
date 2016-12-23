@@ -1,7 +1,9 @@
 class Crypto::MD5
   # Returns a String the hexadecimal representation of the MD5 hash of *data*
   #
-  #     Crypto::MD5.hex_digest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
+  # ```
+  # Crypto::MD5.hex_digest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
+  # ```
   def self.hex_digest(data : String | Bytes) : String
     context = ContextImpl.new
     context.update data
@@ -13,10 +15,13 @@ class Crypto::MD5
   # method available. Returns a String the hexadecimal representation of the
   # MD5 hash all data passed in.
   #
-  #     Crypto::MD5.hex_digest do |ctx|
-  #        ctx.update "f"
-  #        ctx.update "oo"
-  #     end                            # => "acbd18db4cc2f85cedef654fccc4a4d8"
+  # ```
+  # Crypto::MD5.hex_digest do |ctx|
+  #   ctx.update "f"
+  #   ctx.update "oo"
+  # end
+  # # => "acbd18db4cc2f85cedef654fccc4a4d8"
+  # ```
   def self.hex_digest : String
     context = Context.new
     yield context

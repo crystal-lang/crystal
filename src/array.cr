@@ -938,14 +938,15 @@ class Array(T)
 
   # Returns an Array with all possible permutations of *size*.
   #
-  #     a = [1, 2, 3]
-  #     a.permutations    #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  #     a.permutations(1) #=> [[1],[2],[3]]
-  #     a.permutations(2) #=> [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
-  #     a.permutations(3) #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  #     a.permutations(0) #=> [[]]
-  #     a.permutations(4) #=> []
-  #
+  # ```
+  # a = [1, 2, 3]
+  # a.permutations    # => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  # a.permutations(1) # => [[1],[2],[3]]
+  # a.permutations(2) # => [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
+  # a.permutations(3) # => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  # a.permutations(0) # => [[]]
+  # a.permutations(4) # => []
+  # ```
   def permutations(size : Int = self.size)
     ary = [] of Array(T)
     each_permutation(size) do |a|
@@ -956,10 +957,12 @@ class Array(T)
 
   # Yields each possible permutation of *size* of `self`.
   #
-  #     a = [1, 2, 3]
-  #     sums = [] of Int32
-  #     a.each_permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
-  #     sums #=> [3, 4, 3, 5, 4, 5]
+  # ```
+  # a = [1, 2, 3]
+  # sums = [] of Int32
+  # a.each_permutation(2) { |p| sums << p.sum } # => [1, 2, 3]
+  # sums                                        # => [3, 4, 3, 5, 4, 5]
+  # ```
   #
   # By default, a new array is created and yielded for each permutation.
   # If *reuse* is given, the array can be reused: if *reuse* is
