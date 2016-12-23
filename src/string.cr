@@ -2616,6 +2616,18 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize)
   end
 
+  # Returns an `Iterator` which yields each split of this string on the given character *separator* (see `String#split(Char)`).
+  #
+  # ```
+  # split = "one,two,three".each_split(',')
+  # split.next # => "one"
+  # split.next # => "two"
+  # split.next # => "three"
+  # ```
+  def each_split(separator : Char, limit = nil)
+    CharSplitIterator.new(self, separator, limit)
+  end
+
   # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
   #
   # If *limit* is present, the array will be limited to *limit* items and
@@ -3578,6 +3590,50 @@ class String
 
     if capacity.to_u64 > (UInt32::MAX - HEADER_SIZE - 1)
       raise ArgumentError.new("capacity too big")
+    end
+  end
+
+  private class CharSplitIterator
+    include Iterator(String)
+
+    def initialize(@string : String, @separator : Char, @limit : Int32? = nil)
+      @reader = Char::Reader.new(string)
+      @byte_offset = 0
+      @split_count = 0
+      @end = false
+    end
+
+    def next
+      return stop if @end
+      @split_count += 1
+
+      while @reader.has_next? && !reached_limit?
+        char = @reader.current_char
+        if char == @separator
+          piece_bytesize = @reader.pos - @byte_offset
+          string = String.new(@string.to_unsafe + @byte_offset, piece_bytesize)
+          @byte_offset = @reader.pos + @reader.current_char_width
+          @reader.next_char
+          return string
+        end
+        @reader.next_char
+      end
+
+      @end = true if !@reader.has_next? || reached_limit?
+      piece_bytesize = @string.bytesize - @byte_offset
+      String.new(@string.to_unsafe + @byte_offset, piece_bytesize)
+    end
+
+    def rewind
+      @split_count = 0
+      @reader.pos = 0
+      @byte_offset = 0
+      @end = false
+      self
+    end
+
+    private def reached_limit?
+      (limit = @limit) && @split_count == limit
     end
   end
 
