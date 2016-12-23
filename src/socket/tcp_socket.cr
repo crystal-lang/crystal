@@ -19,7 +19,36 @@ class TCPSocket < IPSocket
   # must be in seconds (integers or floats).
   #
   # Note that `dns_timeout` is currently ignored.
-  def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
+  def initialize(host, port, local_host, local_port, dns_timeout : Time::Span | Number | Nil = nil, connect_timeout : Time::Span | Number | Nil = nil)
+    getaddrinfo(host, port, nil, Type::STREAM, Protocol::TCP, timeout: dns_timeout) do |addrinfo|
+      super create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol)
+
+      getaddrinfo(local_host, local_port, nil, Type::STREAM, Protocol::TCP, timeout: dns_timeout) do |localaddrinfo|
+        ret =
+          {% if flag?(:freebsd) || flag?(:openbsd) %}
+            LibC.bind(fd, localaddrinfo.ai_addr.as(LibC::Sockaddr*), localaddrinfo.ai_addrlen)
+          {% else %}
+            LibC.bind(fd, localaddrinfo.ai_addr, localaddrinfo.ai_addrlen)
+          {% end %}
+        unless ret == 0
+          next false if localaddrinfo.ai_next
+          raise Errno.new("Error binding TCP socket at #{local_host}:#{local_port}")
+        end
+
+        if err = nonblocking_connect(host, port, addrinfo, timeout: connect_timeout)
+          close
+          next false if addrinfo.ai_next
+          raise err
+        end
+
+        true
+      end
+
+      true
+    end
+  end
+
+  def initialize(host, port, dns_timeout : Time::Span | Number | Nil = nil, connect_timeout : Time::Span | Number | Nil = nil)
     getaddrinfo(host, port, nil, Type::STREAM, Protocol::TCP, timeout: dns_timeout) do |addrinfo|
       super create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol)
 
@@ -40,9 +69,10 @@ class TCPSocket < IPSocket
   # Opens a TCP socket to a remote TCP server, yields it to the block, then
   # eventually closes the socket when the block returns.
   #
+  # Forwards all params to TCPSocket#new.
   # Returns the value of the block.
-  def self.open(host, port)
-    sock = new(host, port)
+  def self.open(*args, **kwargs)
+    sock = new(*args, **kwargs)
     begin
       yield sock
     ensure

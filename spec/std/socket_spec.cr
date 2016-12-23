@@ -386,6 +386,27 @@ describe TCPSocket do
       TCPSocket.new("localhostttttt", 12345)
     end
   end
+
+  it "binds to a local port" do
+    port = TCPServer.open("::", 0) do |server|
+      server.local_address.port
+    end
+    port.should be > 0
+
+    TCPServer.open("::", port) do |server|
+      server.local_address.family.should eq(Socket::Family::INET6)
+      server.local_address.port.should eq(port)
+      server.local_address.address.should eq("::")
+
+      # test sync flag propagation after accept
+      server.sync = !server.sync?
+
+      TCPSocket.open("::", server.local_address.port, "::", 54321) do |client|
+        sock = server.accept
+        sock.sync?.should eq(server.sync?)
+      end
+    end
+  end
 end
 
 describe UDPSocket do
