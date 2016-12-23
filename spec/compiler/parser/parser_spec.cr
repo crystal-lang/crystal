@@ -1442,6 +1442,8 @@ describe "Parser" do
 
   assert_syntax_error "x[1:-2]"
 
+  assert_syntax_error "1 ? : 2 : 3"
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"
