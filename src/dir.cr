@@ -3,10 +3,12 @@ require "c/unistd"
 require "c/sys/stat"
 
 # Objects of class Dir are directory streams representing directories in the underlying file system.
-# They provide a variety of ways to list directories and their contents. See also `File`.
+# They provide a variety of ways to list directories and their contents.
 #
 # The directory used in these examples contains the two regular files (config.h and main.rb),
 # the parent directory (..), and the directory itself (.).
+#
+# See also: `File`.
 class Dir
   include Enumerable(String)
   include Iterable(String)

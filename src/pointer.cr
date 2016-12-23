@@ -30,7 +30,9 @@ require "c/string"
 struct Pointer(T)
   # Unsafe wrapper around a `Pointer` that allows to write values to
   # it while advancing the location and keeping track of how many elements
-  # were written. See `Pointer#appender`
+  # were written.
+  #
+  # See also: `Pointer#appender`.
   struct Appender(T)
     def initialize(@pointer : Pointer(T))
       @start = @pointer
@@ -96,7 +98,7 @@ struct Pointer(T)
   # Returns -1, 0 or 1 if this pointer's address is less, equal or greater than *other*'s address,
   # respectively.
   #
-  # See `Object#<=>`.
+  # See also: `Object#<=>`.
   def <=>(other : self)
     address <=> other.address
   end

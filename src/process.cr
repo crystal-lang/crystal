@@ -259,7 +259,7 @@ class Process
     @wait_count = 0
   end
 
-  # See `Process.kill`
+  # See also: `Process.kill`
   def kill(sig = Signal::TERM)
     Process.kill sig, @pid
   end
@@ -452,12 +452,12 @@ def `(command) : String
   output
 end
 
-# See `Process.fork`
+# See also: `Process.fork`
 def fork
   Process.fork { yield }
 end
 
-# See `Process.fork`
+# See also: `Process.fork`
 def fork
   Process.fork
 end

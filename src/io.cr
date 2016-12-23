@@ -265,7 +265,7 @@ module IO
     self
   end
 
-  # Same as `<<`
+  # Same as `<<`.
   #
   # ```
   # io = IO::Memory.new

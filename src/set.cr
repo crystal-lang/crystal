@@ -74,7 +74,7 @@ struct Set(T)
   # s.size # => 4
   # ```
   #
-  # See also `#|` to merge two sets and return a new one.
+  # See also: `#|` to merge two sets and return a new one.
   def merge!(elems)
     elems.each { |elem| self << elem }
     self
@@ -173,7 +173,7 @@ struct Set(T)
   # Set{'a', 'b', 'b', 'z'} | Set{'a', 'b', 'c'} # => Set{'a', 'b', 'z', 'c'}
   # ```
   #
-  # See also `#merge` to add elements from a set to `self`.
+  # See also: `#merge` to add elements from a set to `self`.
   def |(other : Set(U)) forall U
     set = Set(T | U).new
     each { |value| set.add value }

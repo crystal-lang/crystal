@@ -261,8 +261,6 @@ struct Slice(T)
   # Raises if the desination slice cannot fit the data being transferred
   # e.g. dest.size < self.size.
   #
-  # See `Pointer#move_to`
-  #
   # ```
   # src = Slice['a', 'a', 'a']
   # dst = Slice['b', 'b', 'b', 'b', 'b']
@@ -270,6 +268,8 @@ struct Slice(T)
   # dst             # => Slice['a', 'a', 'a', 'b', 'b']
   # dst.move_to src # => IndexError
   # ```
+  #
+  # See also: `Pointer#move_to`.
   def move_to(target : self)
     @pointer.move_to(target.pointer(size), size)
   end

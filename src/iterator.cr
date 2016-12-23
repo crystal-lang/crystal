@@ -1171,7 +1171,7 @@ module Iterator(T)
   # used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   #
-  # See also: `Enumerable#chunks`
+  # See also: `Enumerable#chunks`.
   def chunk(reuse = false, &block : T -> U) forall T, U
     Chunk(typeof(self), T, U).new(self, reuse, &block)
   end

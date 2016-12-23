@@ -72,7 +72,7 @@ struct Struct
 
   # Returns a hash value based on this struct's instance variables hash values.
   #
-  # See `Object#hash`
+  # See also: `Object#hash`
   def hash : Int32
     hash = 0
     {% for ivar in @type.instance_vars %}

@@ -20,7 +20,7 @@ module Iterable(T)
   # (0..7).chunk(&./(3)).to_a # => [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7]}]
   # ```
   #
-  # See `Iterator#chunks`
+  # See also: `Iterator#chunks`.
   def chunk(reuse = false, &block : T -> U) forall U
     each.chunk reuse, &block
   end

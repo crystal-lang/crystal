@@ -151,7 +151,9 @@ struct Int
 
   # Returns `self` modulo *other*.
   #
-  # This uses floored division. See `Int#/` for more details.
+  # This uses floored division.
+  #
+  # See `Int#/` for more details.
   def %(other : Int)
     if other == 0
       raise DivisionByZero.new
@@ -165,7 +167,9 @@ struct Int
 
   # Returns `self` remainder *other*.
   #
-  # This uses truncated division. See `Int#div` for more details.
+  # This uses truncated division.
+  #
+  # See `Int#div` for more details.
   def remainder(other : Int)
     if other == 0
       raise DivisionByZero.new
@@ -455,14 +459,14 @@ struct Int
 
   # Writes this integer to the given *io* in the given *format*.
   #
-  # See `IO#write_bytes`.
+  # See also: `IO#write_bytes`.
   def to_io(io : IO, format : IO::ByteFormat)
     format.encode(self, io)
   end
 
   # Reads an integer from the given *io* in the given *format*.
   #
-  # See `IO#read_bytes`.
+  # See also: `IO#read_bytes`.
   def self.from_io(io : IO, format : IO::ByteFormat)
     format.decode(self, io)
   end

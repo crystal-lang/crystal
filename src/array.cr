@@ -887,7 +887,7 @@ class Array(T)
   # Modifies `self`, keeping only the elements in the collection for which the
   # passed block returns *true*. Returns `nil` if no changes were made.
   #
-  # See also `Array#select`
+  # See also: `Array#select`.
   def select!
     reject! { |elem| !yield(elem) }
   end
@@ -895,7 +895,7 @@ class Array(T)
   # Modifies `self`, deleting the elements in the collection for which the
   # passed block returns *true*. Returns `nil` if no changes were made.
   #
-  # See also `Array#reject`
+  # See also: `Array#reject`.
   def reject!
     internal_delete { |e| yield e }[0]
   end
@@ -1319,7 +1319,8 @@ class Array(T)
 
   # Append. Pushes one value to the end of `self`, given that the type of the value is *T*
   # (which might be a single type or a union of types).
-  # This method returns `self`, so several calls can be chained. See `pop` for the opposite effect.
+  # This method returns `self`, so several calls can be chained.
+  # See `pop` for the opposite effect.
   #
   # ```
   # a = ["a", "b"]
@@ -1708,7 +1709,8 @@ class Array(T)
 
   # Prepend. Adds *obj* to the beginning of `self`, given that the type of the value is *T*
   # (which might be a single type or a union of types).
-  # This method returns `self`, so several calls can be chained. See `shift` for the opposite effect.
+  # This method returns `self`, so several calls can be chained.
+  # See `shift` for the opposite effect.
   #
   # ```
   # a = ["a", "b"]
