@@ -214,7 +214,7 @@ struct StaticArray(T, N)
     # Don't pass `self` here because we'll pass `self` by
     # value and for big static arrays that seems to make
     # LLVM really slow.
-    # # TODO: investigate why, maybe report a bug to LLVM?
+    # TODO: investigate why, maybe report a bug to LLVM?
     pp.list("StaticArray[", to_slice, "]")
   end
 
