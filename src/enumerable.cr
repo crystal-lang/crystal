@@ -396,11 +396,11 @@ module Enumerable(T)
   #     ["Alice", "Bob"].flat_map do |user|
   #       user.chars
   #     end  #=> ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
-  def flat_map(&block : T -> Array(U) | U) forall U
+  def flat_map(&block : T -> Array(U) | Iterator(U) | U) forall U
     ary = [] of U
     each do |e|
-      v = yield e
-      if v.is_a?(Array)
+      case v = yield e
+      when Array, Iterator
         ary.concat(v)
       else
         ary.push(v)

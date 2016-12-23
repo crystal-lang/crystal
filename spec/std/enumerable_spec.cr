@@ -439,6 +439,10 @@ describe "Enumerable" do
     it "does example 4" do
       [{1 => 2}, {3 => 4}].flat_map { |e| e }.should eq([{1 => 2}, {3 => 4}])
     end
+
+    it "flattens iterators" do
+      [[1, 2], [3, 4]].flat_map(&.each).should eq([1, 2, 3, 4])
+    end
   end
 
   describe "grep" do

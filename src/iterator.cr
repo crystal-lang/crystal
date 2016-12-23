@@ -476,6 +476,84 @@ module Iterator(T)
     end
   end
 
+  # Returns a new iterator with the concatenated results of running the block (which is expected to return arrays or iterators)
+  # once for every element in the collection.
+  #
+  #     iter = [1, 2, 3].each.flat_map { |x| [x, x] }
+  #
+  #     iter.next #=> [1, 1]
+  #     iter.next #=> [2, 2]
+  #     iter.next #=> [3, 3]
+  #
+  #     iter = [1, 2, 3].each.flat_map { |x| [x, x].each }
+  #
+  #     iter.to_a #=> [1, 1, 2, 2, 3, 3]
+  #
+  def flat_map(&func : T -> Array(U) | Iterator(U) | U) forall U
+    FlatMap(typeof(self), U, typeof(FlatMap.iterator_type(self, func)), typeof(func)).new self, func
+  end
+
+  private class FlatMap(I0, T, I, F)
+    include Iterator(T)
+    include IteratorWrapper
+
+    @iterator : I0
+    @func : F
+    @nest_iterator : I?
+    @stopped : Array(I)
+
+    def initialize(@iterator, @func)
+      @nest_iterator = nil
+      @stopped = [] of I
+    end
+
+    def next
+      if iter = @nest_iterator
+        value = iter.next
+        if value.is_a?(Stop)
+          @stopped << iter
+          @nest_iterator = nil
+          self.next
+        else
+          value
+        end
+      else
+        case value = @func.call wrapped_next
+        when Array
+          @nest_iterator = value.each
+          self.next
+        when Iterator
+          @nest_iterator = value
+          self.next
+        else
+          value
+        end
+      end
+    end
+
+    def rewind
+      @nest_iterator.try &.rewind
+      @nest_iterator = nil
+      @stopped.each &.rewind
+      @stopped.clear
+      super
+    end
+
+    def self.iterator_type(iter, func)
+      value = iter.next
+      raise "" if value.is_a?(Stop)
+
+      case value = func.call value
+      when Array
+        value.each
+      when Iterator
+        value
+      else
+        raise ""
+      end
+    end
+  end
+
   # Returns an iterator that chunks the iterator's elements in arrays of *size*
   # filling up the remaining elements if no element remains with nil or a given
   # optional parameter.
