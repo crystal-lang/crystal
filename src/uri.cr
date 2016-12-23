@@ -170,6 +170,18 @@ class URI
     end
   end
 
+  # Returns normalized URI
+  def normalize
+    uri = dup
+    uri.normalize!
+    uri
+  end
+
+  # Destructive normalize
+  def normalize!
+    @path = remove_dot_segments(path)
+  end
+
   # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
   #
   # ```
@@ -353,6 +365,57 @@ class URI
     io.write_byte byte
     i += 1
     i
+  end
+
+  # RFC 3986 6.2.2.3
+  # https://tools.ietf.org/html/rfc3986#section-5.2.4
+  private def remove_dot_segments(path : String?)
+    return if path.nil?
+
+    result = [] of String
+    while path.size > 0
+      # A.  If the input buffer begins with a prefix of "../" or "./",
+      #     then remove that prefix from the input buffer; otherwise,
+      if path.starts_with?("../")
+        path = path[3..-1]
+      elsif path.starts_with?("./")
+        path = path[2..-1]
+        # B.  if the input buffer begins with a prefix of "/./" or "/.",
+        #     where "." is a complete path segment, then replace that
+        #     prefix with "/" in the input buffer; otherwise,
+      elsif path.starts_with?("/./")
+        path = "/" + path[3..-1]
+      elsif path == "/."
+        path = "/" + path[2..-1]
+        # C.  if the input buffer begins with a prefix of "/../" or "/..",
+        #     where ".." is a complete path segment, then replace that
+        #     prefix with "/" in the input buffer and remove the last
+        #     segment and its preceding "/" (if any) from the output
+        #     buffer; otherwise,
+      elsif path.starts_with?("/../")
+        path = "/" + path[4..-1]
+        result.pop if result.size > 0
+      elsif path == "/.."
+        path = "/" + path[3..-1]
+        result.pop if result.size > 0
+        # D.  if the input buffer consists only of "." or "..", then remove
+        #     that from the input buffer; otherwise,
+      elsif path == ".." || path == "."
+        path = ""
+        # E.  move the first path segment in the input buffer to the end of
+        #     the output buffer, including the initial "/" character (if
+        #     any) and any subsequent characters up to, but not including,
+        #     the next "/" character or the end of the input buffer.
+      else
+        slash_search_idx = path[0] == '/' ? 1 : 0
+        segment_end_idx = path.index("/", slash_search_idx)
+        segment_end_idx ||= path.size
+        result << path[0...segment_end_idx]
+        path = path[segment_end_idx..-1]
+      end
+    end
+
+    result.join
   end
 
   private def userinfo(user, io)
