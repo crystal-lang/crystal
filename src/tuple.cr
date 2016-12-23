@@ -327,7 +327,7 @@ struct Tuple
     {% end %}
   end
 
-  # Returns a tuple that contains *self*'s elements followed by *other*'s elements.
+  # Returns a tuple that contains `self`'s elements followed by *other*'s elements.
   #
   # ```
   # t1 = {1, 2}

@@ -255,7 +255,7 @@ struct Slice(T)
     pointer(count).move_to(target, count)
   end
 
-  # Moves the contents of this slice into *target*. *target* and *self* may
+  # Moves the contents of this slice into *target*. *target* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
   # Raises if the desination slice cannot fit the data being transferred
@@ -274,7 +274,7 @@ struct Slice(T)
     @pointer.move_to(target.pointer(size), size)
   end
 
-  # Moves the contents of *source* into this slice. *source* and *self* may
+  # Moves the contents of *source* into this slice. *source* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
   # Truncates if the other slice doesn't fit. The same as `source.move_to(self)`.

@@ -127,8 +127,8 @@ struct Pointer(T)
     (self + offset).value = value
   end
 
-  # Copies *count* elements from *source* into *self*.
-  # If *source* and *self* overlap, behaviour is undefined.
+  # Copies *count* elements from *source* into `self`.
+  # If *source* and `self` overlap, behaviour is undefined.
   # Use `#move_from` if they overlap (slower but always works).
   #
   # ```
@@ -158,8 +158,8 @@ struct Pointer(T)
     self
   end
 
-  # Copies *count* elements from *self* into *target*.
-  # If *self* and *target* overlap, behaviour is undefined.
+  # Copies *count* elements from `self` into *target*.
+  # If `self` and *target* overlap, behaviour is undefined.
   # Use `#move_to` if they overlap (slower but always works).
   #
   # ```
@@ -180,8 +180,8 @@ struct Pointer(T)
     target.copy_from_impl(self, count)
   end
 
-  # Copies *count* elements from *source* into *self*.
-  # *source* and *self* may overlap; the copy is always done in a non-destructive manner.
+  # Copies *count* elements from *source* into `self`.
+  # *source* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
   # ptr1 = Pointer.malloc(4) { |i| i + 1 } # ptr1 -> [1, 2, 3, 4]
@@ -210,8 +210,8 @@ struct Pointer(T)
     self
   end
 
-  # Copies *count* elements from *self* into *source*.
-  # *source* and *self* may overlap; the copy is always done in a non-destructive manner.
+  # Copies *count* elements from `self` into *source*.
+  # *source* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
   # ptr1 = Pointer.malloc(4) { |i| i + 1 } # ptr1 -> [1, 2, 3, 4]

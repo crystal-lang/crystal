@@ -1528,7 +1528,7 @@ module Crystal::Macros
     def instance : TypeNode
     end
 
-    # Determines if *self* overrides any method named *method* from type *type*.
+    # Determines if `self` overrides any method named *method* from type *type*.
     #
     # ```
     # class Foo
