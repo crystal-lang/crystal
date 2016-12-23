@@ -86,7 +86,8 @@
 struct Enum
   include Comparable(self)
 
-  # Appends a String representation of this enum member to the given IO. See `to_s`.
+  # Appends a `String` representation of this enum member to the given *io*.
+  # See `to_s`.
   def to_s(io : IO) : Nil
     {% if @type.has_attribute?("Flags") %}
       if value == 0
@@ -110,7 +111,7 @@ struct Enum
     nil
   end
 
-  # Returns a String representation of this enum member.
+  # Returns a `String` representation of this enum member.
   # In the case of regular enums, this is just the name of the member.
   # In the case of flag enums, it's the names joined by commas, or "None",
   # if the value is zero.

@@ -1,7 +1,7 @@
 # A named tuple is a fixed-size, immutable, stack-allocated mapping
 # of a fixed set of keys to values.
 #
-# You can think of a NamedTuple as an immutable `Hash` whose keys (which
+# You can think of a `NamedTuple` as an immutable `Hash` whose keys (which
 # are of type `Symbol`), and the types for each key, are known at compile time.
 #
 # A named tuple can be created with a named tuple literal:

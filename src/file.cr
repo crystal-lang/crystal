@@ -495,7 +495,7 @@ class File < IO::FileDescriptor
   # ```
   #
   # If the content is a `Slice(UInt8)`, those bytes will be written. If it's
-  # an `IO`, all bytes from the IO will be written. Otherwise, the string
+  # an `IO`, all bytes from the `IO` will be written. Otherwise, the string
   # representation of *content* will be written (the result of invoking `to_s`
   # on *content*)
   def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)

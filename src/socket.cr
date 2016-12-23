@@ -447,7 +447,7 @@ class Socket < IO::FileDescriptor
     optval
   end
 
-  # optval is restricted to Int32 until sizeof works on variables
+  # optval is restricted to `Int32` until sizeof works on variables
   def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.setsockopt(fd, level, optname, (pointerof(optval).as(Void*)), optsize)

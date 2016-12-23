@@ -1,7 +1,7 @@
 # A tuple is a fixed-size, immutable, stack-allocated sequence of values
 # of possibly different types.
 #
-# You can think of a Tuple as an immutable `Array` whose types for each position
+# You can think of a `Tuple` as an immutable `Array` whose types for each position
 # are known at compile time.
 #
 # A tuple can be created with the usual `new` method or with a tuple literal:

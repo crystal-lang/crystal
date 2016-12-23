@@ -115,7 +115,7 @@ class Process
   end
 
   # run_hooks should ALWAYS be true unless exec* is used immediately after fork.
-  # Channels, IO and other will not work reliably if run_hooks is false.
+  # Channels, `IO` and other will not work reliably if run_hooks is false.
   protected def self.fork_internal(run_hooks : Bool = true)
     pid = LibC.fork
     case pid
@@ -131,9 +131,9 @@ class Process
   # The standard io configuration of a process:
   #
   # * `nil`: use a pipe
-  # * `false`: no IO (`/dev/null`)
+  # * `false`: no `IO` (`/dev/null`)
   # * `true`: inherit from parent
-  # * `IO`: use the given IO
+  # * `IO`: use the given `IO`
   alias Stdio = Nil | Bool | IO
   alias Env = Nil | Hash(String, Nil) | Hash(String, String?) | Hash(String, String)
 
@@ -167,9 +167,9 @@ class Process
   # Replaces the current process with a new one.
   #
   # The possible values for *input*, *output* and *error* are:
-  # * `false`: no IO (`/dev/null`)
+  # * `false`: no `IO` (`/dev/null`)
   # * `true`: inherit from parent
-  # * `IO`: use the given IO
+  # * `IO`: use the given `IO`
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Bool | IO::FileDescriptor = true, output : Bool | IO::FileDescriptor = true, error : Bool | IO::FileDescriptor = true, chdir : String? = nil)
     command, argv = prepare_argv(command, args, shell)
     exec_internal(command, argv, env, clear_env, input, output, error, chdir)

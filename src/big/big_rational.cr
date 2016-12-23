@@ -34,7 +34,7 @@ struct BigRational < Number
     LibGMP.mpq_canonicalize(mpq)
   end
 
-  # Creates a new BigRational with *num* as the numerator and 1 for denominator.
+  # Creates a new `BigRational` with *num* as the numerator and 1 for denominator.
   def initialize(num : Int)
     initialize(num, 1)
   end
@@ -125,7 +125,7 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_neg(mpq, self) }
   end
 
-  # Returns a new BigRational as 1/r.
+  # Returns a new `BigRational` as 1/r.
   #
   # This will raise an exception if rational is 0.
   def inv
@@ -206,7 +206,7 @@ end
 struct Int
   include Comparable(BigRational)
 
-  # Returns a BigRational representing this integer.
+  # Returns a `BigRational` representing this integer.
   def to_big_r
     BigRational.new(self, 1)
   end

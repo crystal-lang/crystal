@@ -5,19 +5,19 @@ require "c/sys/wait"
 require "c/errno"
 require "c/unistd"
 
-# The IO module is the basis for all input and output in Crystal.
+# The `IO` module is the basis for all input and output in Crystal.
 #
 # This module is included by types like `File`, `Socket` and `IO::Memory` and
 # provide many useful methods for reading to and writing from an IO, like `print`, `puts`,
 # `gets` and `printf`.
 #
-# The only requirement for a type including the IO module is to define
+# The only requirement for a type including the `IO` module is to define
 # these two methods:
 #
 # * `read(slice : Bytes)`: read at most *slice.size* bytes into *slice* and return the number of bytes read
 # * `write(slice : Bytes)`: write the whole *slice* into the IO
 #
-# For example, this is a simple IO on top of a `Bytes`:
+# For example, this is a simple `IO` on top of a `Bytes`:
 #
 # ```
 # class SimpleSliceIO
@@ -50,7 +50,7 @@ require "c/unistd"
 #
 # ### Encoding
 #
-# An IO can be set an encoding with the `#set_encoding` method. When this is
+# An `IO` can be set an encoding with the `#set_encoding` method. When this is
 # set, all string operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
 # `printf`) will write in the given encoding, and read from the given encoding.
 # Byte operations (`read`, `write`, `read_byte`, `write_byte`) never do
@@ -76,7 +76,7 @@ module IO
     End = 2
   end
 
-  # Raised when an IO operation times out.
+  # Raised when an `IO` operation times out.
   #
   # ```
   # STDIN.read_timeout = 1
@@ -98,7 +98,7 @@ module IO
   # IO was ready after the specified amount of seconds passed. Fractions
   # are supported.
   #
-  # If timeout_sec is nil, this method blocks until an IO is ready.
+  # If timeout_sec is nil, this method blocks until an `IO` is ready.
   def self.select(read_ios, write_ios, error_ios, timeout_sec : LibC::TimeT | Int | Float?)
     nfds = 0
     read_ios.try &.each do |io|
@@ -158,7 +158,7 @@ module IO
     end
   end
 
-  # Reads at most *slice.size* bytes from this IO into *slice*. Returns the number of bytes read.
+  # Reads at most *slice.size* bytes from this `IO` into *slice*. Returns the number of bytes read.
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -186,7 +186,7 @@ module IO
   def close
   end
 
-  # Returns `true` if this IO is closed.
+  # Returns `true` if this `IO` is closed.
   #
   # IO defines returns `false`, but including types may override.
   def closed?
@@ -279,7 +279,7 @@ module IO
     nil
   end
 
-  # Writes the given objects into this IO by invoking `to_s(io)`
+  # Writes the given objects into this `IO` by invoking `to_s(io)`
   # on each of the objects.
   #
   # ```
@@ -294,7 +294,7 @@ module IO
     nil
   end
 
-  # Writes the given string to this IO followed by a newline character
+  # Writes the given string to this `IO` followed by a newline character
   # unless the string already ends with one.
   #
   # ```
@@ -309,7 +309,7 @@ module IO
     nil
   end
 
-  # Writes the given object to this IO followed by a newline character.
+  # Writes the given object to this `IO` followed by a newline character.
   #
   # ```
   # io = IO::Memory.new
@@ -504,7 +504,7 @@ module IO
     end
   end
 
-  # Tries to read exactly `slice.size` bytes from this IO into *slice*.
+  # Tries to read exactly `slice.size` bytes from this `IO` into *slice*.
   # Raises `EOFError` if there aren't `slice.size` bytes of data.
   #
   # ```
@@ -518,7 +518,7 @@ module IO
     read_fully?(slice) || raise(EOFError.new)
   end
 
-  # Tries to read exactly `slice.size` bytes from this IO into *slice*.
+  # Tries to read exactly `slice.size` bytes from this `IO` into *slice*.
   # Returns `nil` if there aren't `slice.size` bytes of data, otherwise
   # returns the number of bytes read.
   #
@@ -539,7 +539,7 @@ module IO
     count
   end
 
-  # Reads the rest of this IO data as a `String`.
+  # Reads the rest of this `IO` data as a `String`.
   #
   # ```
   # io = IO::Memory.new "hello world"
@@ -597,7 +597,7 @@ module IO
     gets '\n', limit: limit, chomp: chomp
   end
 
-  # Reads until *delimiter* is found, or the end of the IO is reached.
+  # Reads until *delimiter* is found, or the end of the `IO` is reached.
   # Returns `nil` if called at the end of this IO.
   #
   # ```
@@ -611,7 +611,7 @@ module IO
     gets delimiter, Int32::MAX, chomp: chomp
   end
 
-  # Reads until *delimiter* is found, *limit* bytes are read, or the end of the IO is reached.
+  # Reads until *delimiter* is found, *limit* bytes are read, or the end of the `IO` is reached.
   # Returns `nil` if called at the end of this IO.
   #
   # ```
@@ -674,7 +674,7 @@ module IO
     buffer.to_s
   end
 
-  # Reads until *delimiter* is found or the end of the IO is reached.
+  # Reads until *delimiter* is found or the end of the `IO` is reached.
   # Returns `nil` if called at the end of this IO.
   #
   # ```
@@ -755,7 +755,7 @@ module IO
     write Slice.new(pointerof(x), 1)
   end
 
-  # Writes the given object to this IO using the specified *format*.
+  # Writes the given object to this `IO` using the specified *format*.
   #
   # This ends up invoking `object.to_io(self, format)`, so any object defining a
   # `to_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)`
@@ -773,7 +773,7 @@ module IO
     object.to_io(self, format)
   end
 
-  # Reads an instance of the given *type* from this IO using the specified *format*.
+  # Reads an instance of the given *type* from this `IO` using the specified *format*.
   #
   # This ends up invoking `type.from_io(self, format)`, so any type defining a
   # `from_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)`
@@ -791,7 +791,7 @@ module IO
     type.from_io(self, format)
   end
 
-  # Returns `true` if this IO is associated with a terminal device (tty), `false` otherwise.
+  # Returns `true` if this `IO` is associated with a terminal device (tty), `false` otherwise.
   #
   # IO returns `false`, but including types may override.
   #

@@ -1,7 +1,7 @@
 # A Deque ("[double-ended queue](https://en.wikipedia.org/wiki/Double-ended_queue)") is a collection of objects of type
 # T that behaves much like an Array.
 #
-# Deque has a subset of Array's API. It performs better than an Array when there are frequent insertions or deletions
+# Deque has a subset of Array's API. It performs better than an `Array` when there are frequent insertions or deletions
 # of items near the beginning or the end.
 #
 # The most typical use case of a Deque is a queue: use `push` to add items to the end of the queue and `shift` to get
@@ -476,7 +476,7 @@ class Deque(T)
     self
   end
 
-  # Returns an Array (shallow copy) that contains all the items of this deque.
+  # Returns an `Array` (shallow copy) that contains all the items of this deque.
   def to_a
     arr = Array(T).new(@size)
     each do |x|
