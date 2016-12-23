@@ -3865,7 +3865,7 @@ module Crystal
       end
 
       if @token.type == :"::" || @token.type == :":"
-        write " " if @token.type == :":"
+        write " " unless !inputs && !clobbers
         write @token.type
         write " "
         next_token_skip_space_or_newline

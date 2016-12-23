@@ -615,6 +615,7 @@ describe Crystal::Formatter do
   assert_format %(asm("nop" :::: "volatile" )), %(asm("nop" :::: "volatile"))
   assert_format %(asm("nop" :::: "volatile"  , "alignstack"  ,  "intel"   )), %(asm("nop" :::: "volatile", "alignstack", "intel"))
   assert_format %(asm("nop" ::: "eax" ,  "ebx" :   "volatile"  ,  "alignstack" )), %(asm("nop" ::: "eax", "ebx" : "volatile", "alignstack"))
+  assert_format %(asm("a" : "b"(c) : "d"(e) :: "volatile"))
 
   assert_format "1 # foo\n1234 # bar", "1    # foo\n1234 # bar"
   assert_format "1234 # foo\n1 # bar", "1234 # foo\n1    # bar"
