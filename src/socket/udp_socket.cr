@@ -41,6 +41,7 @@ require "./ip_socket"
 # The `send` methods may sporadically fail with `Errno::ECONNREFUSED` when sending datagrams
 # to a non-listening server.
 # Wrap with an exception handler to prevent raising. Example:
+#
 # ```
 # begin
 #   client.send(message, @destination)

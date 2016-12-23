@@ -7,8 +7,10 @@ module HTTP
 
     # Parses an HTTP query string into a `HTTP::Params`
     #
-    #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo")
-    #     #=> #<HTTP::Params @raw_params = {"foo" => ["bar", "baz"], "qux" => ["zoo"]}>
+    # ```
+    # HTTP::Params.parse("foo=bar&foo=baz&qux=zoo")
+    # # => #<HTTP::Params @raw_params = {"foo" => ["bar", "baz"], "qux" => ["zoo"]}>
+    # ```
     def self.parse(query : String) : self
       parsed = {} of String => Array(String)
       parse(query) do |key, value|
@@ -20,9 +22,11 @@ module HTTP
 
     # Parses an HTTP query and yields each key-value pair
     #
-    #     HTTP::Params.parse(query) do |key, value|
-    #       # ...
-    #     end
+    # ```
+    # HTTP::Params.parse(query) do |key, value|
+    #   # ...
+    # end
+    # ```
     def self.parse(query : String)
       return if query.empty?
 
