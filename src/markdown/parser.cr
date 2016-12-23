@@ -7,6 +7,9 @@ class Markdown::Parser
   def initialize(text : String, @renderer : Renderer)
     @lines = text.lines.map &.chomp
     @line = 0
+
+    @references = Hash(String, Tuple(String, String)).new
+    @link_text = ""
   end
 
   def parse
@@ -35,6 +38,8 @@ class Markdown::Parser
       render_unordered_list(item.char)
     when :fenced_code
       render_fenced_code
+    when :reference
+      add_reference line
     when :ordered_list
       render_ordered_list
     when :quote
@@ -47,6 +52,10 @@ class Markdown::Parser
   def classify(line)
     if empty? line
       return :empty
+    end
+
+    if starts_with_bracket? line
+      return :reference
     end
 
     if next_line_is_all?('=')
@@ -105,6 +114,16 @@ class Markdown::Parser
     end
 
     render_header level, line.byte_slice(pos), 1
+  end
+
+  def add_reference(line)
+    regexp = /^\[([^\n\]]+)\]:[ \t]*(\S+)\s*(\S*)?$/
+    res = line.scan(regexp).first
+    if res.as?(Regex::MatchData) && false == res[1].blank? && false == res[2].blank?
+      @references[res[1].to_s] = {res[2].to_s, res[3].to_s}
+    end
+
+    @line += 1
   end
 
   def render_header(level, line, increment)
@@ -306,6 +325,8 @@ class Markdown::Parser
     two_underscores = false
     one_backtick = false
     in_link = false
+    link_text = ""
+    link_path = ""
     last_is_space = true
 
     while pos < bytesize
@@ -369,6 +390,7 @@ class Markdown::Parser
         end
       when '!'
         if pos + 1 < bytesize && str[pos + 1] === '['
+          # TODO
           link = check_link str, (pos + 2), bytesize
           if link
             @renderer.text line.byte_slice(cursor, pos - cursor)
@@ -384,25 +406,23 @@ class Markdown::Parser
           end
         end
       when '['
-        unless in_link
-          link = check_link str, (pos + 1), bytesize
-          if link
-            @renderer.text line.byte_slice(cursor, pos - cursor)
-            cursor = pos + 1
-            @renderer.begin_link link
-            in_link = true
-          end
-        end
-      when ']'
-        if in_link
+        result = check_link str, pos, bytesize
+
+        if result[:valid_link]
+          # pre link
           @renderer.text line.byte_slice(cursor, pos - cursor)
+
+          # link
+          @renderer.begin_link result[:url].to_s
+          @renderer.text result[:text].to_s
           @renderer.end_link
 
-          paren_idx = (str + pos + 1).to_slice(bytesize - pos - 1).index(')'.ord).not_nil!
-          pos += paren_idx + 1
+          pos = result[:link_end_idx].to_i
           cursor = pos + 1
-          in_link = false
+
+          @renderer.text line.byte_slice(cursor + 1, bytesize - cursor - 1)
         end
+
       end
       last_is_space = pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
       pos += 1
@@ -428,14 +448,22 @@ class Markdown::Parser
     !str[idx - 1].unsafe_chr.ascii_whitespace?
   end
 
-  def check_link(str, pos, bytesize)
+  def check_link(str, pos, bytesize) : NamedTuple{valid_link: Bool, reason: (Nil | Symbol), text: (Nil | String), url: (Nil | String), link_start_idx: Int32, link_end_idx: Int32}
+    # used for rendering outside of link
+    link_start_idx = -1
+    link_end_idx = -1
+
     # We need to count nested brackets to do it right
-    bracket_count = 1
+    bracket_count = 0
+    bracket_start_idx = -1
+    bracket_end_idx = -1
     while pos < bytesize
       case str[pos].unsafe_chr
       when '['
+        bracket_start_idx = pos if bracket_start_idx < 0
         bracket_count += 1
       when ']'
+        bracket_end_idx = pos
         bracket_count -= 1
         if bracket_count == 0
           break
@@ -444,15 +472,110 @@ class Markdown::Parser
       pos += 1
     end
 
-    return nil unless bracket_count == 0
-    bracket_idx = pos
+    if bracket_count != 0
+      # wrong number of brackets
+      return {valid_link: false, reason: :wrong_number_of_brackets, text: nil, url: nil, link_start_idx: link_start_idx, link_end_idx: link_end_idx}
+    end
 
-    return nil unless str[bracket_idx + 1] === '('
+    if bracket_start_idx < 0 || bracket_end_idx < 0
+      # wrong number of brackets
+      return {valid_link: false, reason: :bracket_index_nil, text: nil, url: nil, link_start_idx: link_start_idx, link_end_idx: link_end_idx}
+    end
 
-    paren_idx = (str + bracket_idx + 1).to_slice(bytesize - bracket_idx - 1).index ')'.ord
-    return nil unless paren_idx
+    # we have first param here
+    first_param = String.new(Slice.new(str + bracket_start_idx + 1, bracket_end_idx - bracket_start_idx - 1))
+    # we search for second param as it has higher priority
+    # but if not found we will use set below indexes
+    link_start_idx = bracket_start_idx
+    link_end_idx = bracket_end_idx
 
-    String.new(Slice.new(str + bracket_idx + 2, paren_idx - 1))
+    # search for second parameter
+    if str[pos + 1].unsafe_chr === '['
+      # must go into next bracket
+      pos += 1
+      # look inside second bracket set
+      bracket_count = 0
+      bracket_start_idx = -1
+      bracket_end_idx = -1
+      while pos < bytesize
+        case str[pos].unsafe_chr
+        when '['
+          bracket_start_idx = pos if bracket_start_idx < 0
+          bracket_count += 1
+        when ']'
+          bracket_end_idx = pos
+          bracket_count -= 1
+          if bracket_count == 0
+            break
+          end
+        end
+        pos += 1
+      end
+
+      if bracket_count != 0
+        # wrong number of brackets
+        return {valid_link: false, reason: :wrong_number_of_second_brackets, text: nil, url: nil, link_start_idx: link_start_idx, link_end_idx: link_end_idx}
+      end
+
+      if bracket_start_idx < 0 || bracket_end_idx < 0
+        # wrong number of brackets
+        return {valid_link: false, reason: :second_bracket_index_nil, text: nil, url: nil, link_start_idx: link_start_idx, link_end_idx: link_end_idx}
+      end
+
+      link_end_idx = bracket_end_idx
+      second_param = String.new(Slice.new(str + bracket_start_idx + 1, bracket_end_idx - bracket_start_idx - 1))
+
+      if @references[second_param]?
+        return {valid_link: true,  reason: :referenced, text: first_param, url: @references[second_param][0], link_start_idx: link_start_idx, link_end_idx: link_end_idx}
+      else
+        return {valid_link: false, reason: :reference_not_found, text: nil, url: nil, link_start_idx: link_start_idx, link_end_idx: link_end_idx}
+      end
+
+    elsif str[pos + 1].unsafe_chr === '('
+      # must go into next parenthesis
+      pos += 1
+      # look inside second parenthesis set
+      bracket_count = 0
+      bracket_start_idx = -1
+      bracket_end_idx = -1
+      while pos < bytesize
+        case str[pos].unsafe_chr
+        when '('
+          bracket_start_idx = pos if bracket_start_idx < 0
+          bracket_count += 1
+        when ')'
+          bracket_end_idx = pos
+          bracket_count -= 1
+          if bracket_count == 0
+            break
+          end
+        end
+        pos += 1
+      end
+
+      if bracket_count != 0
+        # wrong number of brackets
+        return {valid_link: false, reason: :wrong_number_of_parenthesis, text: nil, url: nil, link_start_idx: link_start_idx, link_end_idx: link_end_idx}
+      end
+
+      if bracket_start_idx < 0 || bracket_end_idx < 0
+        # wrong number of brackets
+        return {valid_link: false, reason: :parenthesis_index_nil, text: nil, url: nil, link_start_idx: link_start_idx, link_end_idx: link_end_idx}
+      end
+
+      link_end_idx = bracket_end_idx
+      second_param = String.new(Slice.new(str + bracket_start_idx + 1, bracket_end_idx - bracket_start_idx - 1))
+      return {valid_link: true, reason: :direct_link, text: first_param, url: second_param, link_start_idx: link_start_idx, link_end_idx: link_end_idx}
+
+    end
+
+    # looks like we not found second parameter
+    # lookup for one parameter link
+    if @references[first_param]?
+      return {valid_link: true, reason: :only_first_param, text: @references[first_param][1], url: @references[first_param][0], link_start_idx: link_start_idx, link_end_idx: link_end_idx}
+    end
+
+    return {valid_link: false, reason: :reference_not_found, text: nil, url: nil, link_start_idx: link_start_idx, link_end_idx: link_end_idx}
   end
 
   def next_line_is_all?(char)
@@ -532,6 +655,10 @@ class Markdown::Parser
 
   def starts_with_backticks?(line)
     line.starts_with? "```"
+  end
+
+  def starts_with_bracket?(line)
+    line.starts_with? "["
   end
 
   def starts_with_digits_dot?(line)
