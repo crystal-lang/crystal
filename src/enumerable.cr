@@ -91,7 +91,7 @@ module Enumerable(T)
   # * `Enumerable::Chunk::Alone` specifies that the element should be chunked by itself
   #
   # See also: `Iterator#chunk`
-  def chunks(&block : T -> U)
+  def chunks(&block : T -> U) forall U
     res = [] of Tuple(U, Array(T))
     chunks_internal(block) { |k, v| res << {k, v} }
     res
@@ -160,7 +160,7 @@ module Enumerable(T)
     end
   end
 
-  private def chunks_internal(original_block : T -> U)
+  private def chunks_internal(original_block : T -> U) forall U
     acc = Chunk::Accumulator(T, U).new
     each do |val|
       key = original_block.call(val)

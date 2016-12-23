@@ -377,7 +377,7 @@ module Crystal
 
       if single_name
         first_name = other.names.first
-        if context.defining_type.type_var?(first_name) || Parser.free_var_name?(first_name)
+        if context.defining_type.type_var?(first_name)
           return context.set_free_var(first_name, self)
         end
       end
@@ -856,7 +856,7 @@ module Crystal
         single_name = other.names.size == 1
         if single_name
           first_name = other.names.first
-          if context.defining_type.type_var?(first_name) || Parser.free_var_name?(first_name)
+          if context.defining_type.type_var?(first_name)
             return context.set_free_var(first_name, self)
           else
             other.raise_undefined_constant(context.defining_type)

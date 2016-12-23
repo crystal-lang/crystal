@@ -407,4 +407,15 @@ describe "Restrictions" do
       ),
       "no overload matches"
   end
+
+  it "errors if using free var without forall" do
+    assert_error %(
+      def foo(x : T)
+        T
+      end
+
+      foo(1)
+      ),
+      "undefined constant T"
+  end
 end

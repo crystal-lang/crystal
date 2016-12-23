@@ -5359,9 +5359,5 @@ module Crystal
       @visibility = old_visibility
       value
     end
-
-    def self.free_var_name?(name)
-      name.size == 1 || (name.size == 2 && name[1].ascii_number?)
-    end
   end
 end
