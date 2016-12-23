@@ -632,5 +632,12 @@ describe Iterator do
       iter.next.should eq(7)
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "return iterator itself by rewind" do
+      iter = [1, [2, 3], 4].each.flatten
+
+      iter.to_a.should eq([1, 2, 3, 4])
+      iter.rewind.to_a.should eq([1, 2, 3, 4])
+    end
   end
 end

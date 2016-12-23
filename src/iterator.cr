@@ -448,6 +448,7 @@ module Iterator(T)
       @generators << @iterator
       @stopped.each &.rewind
       @stopped.clear
+      self
     end
 
     def self.element_type(element)
