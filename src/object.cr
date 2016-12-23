@@ -45,14 +45,14 @@ class Object
   # ```
   #
   # Object simply implements `===` by invoking `==`, but subclasses
-  # (notably Regex) can override it to provide meaningful case-equality semantics.
+  # (notably `Regex`) can override it to provide meaningful case-equality semantics.
   def ===(other)
     self == other
   end
 
   # Pattern match.
   #
-  # Overridden by descendants (notably Regex and String) to provide meaningful
+  # Overridden by descendants (notably `Regex` and `String`) to provide meaningful
   # pattern-match semantics.
   def =~(other)
     nil
@@ -77,8 +77,8 @@ class Object
     end
   end
 
-  # Appends a String representation of this object
-  # to the given IO object.
+  # Appends a `String` representation of this object
+  # to the given `IO` object.
   #
   # An object must never append itself to the io argument,
   # as this will in turn call `to_s(io)` on it.
@@ -91,7 +91,7 @@ class Object
   #
   # Classes must usually **not** override this method. Instead,
   # they must override `inspect(io)`, which must append to the
-  # given IO object.
+  # given `IO` object.
   def inspect
     String.build do |io|
       inspect io
@@ -99,7 +99,7 @@ class Object
   end
 
   # Appends a string representation of this object
-  # to the given IO object.
+  # to the given `IO` object.
   #
   # Similar to `to_s(io)`, but usually appends more information
   # about this object.
@@ -123,7 +123,7 @@ class Object
     end
   end
 
-  # Yields self to the block, and then returns self.
+  # Yields `self` to the block, and then returns `self`.
   #
   # The primary purpose of this method is to "tap into" a method chain,
   # in order to perform operations on intermediate results within the chain.
@@ -1076,7 +1076,7 @@ class Object
 
   # Defines an `==` method by comparing the given fields.
   #
-  # The generated `==` method has a self restriction.
+  # The generated `==` method has a `self` restriction.
   #
   # ```
   # class Person
@@ -1098,7 +1098,7 @@ class Object
 
   # Defines `hash` and `==` method from the given fields.
   #
-  # The generated `==` method has a self restriction.
+  # The generated `==` method has a `self` restriction.
   #
   # ```
   # class Person

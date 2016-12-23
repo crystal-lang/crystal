@@ -2,9 +2,9 @@ require "c/stdlib"
 require "c/stdio"
 require "c/string"
 
-# A String represents an immutable sequence of UTF-8 characters.
+# A `String` represents an immutable sequence of UTF-8 characters.
 #
-# A String is typically created with a string literal, enclosing UTF-8 characters
+# A `String` is typically created with a string literal, enclosing UTF-8 characters
 # in double quotes:
 #
 # ```
@@ -89,7 +89,7 @@ require "c/string"
 # %<hello <"world">> # same as "hello <\"world\">"
 # ```
 #
-# To create a String with embedded expressions, you can use string interpolation:
+# To create a `String` with embedded expressions, you can use string interpolation:
 #
 # ```
 # a = 1
@@ -109,7 +109,7 @@ class String
 
   include Comparable(self)
 
-  # Creates a String from the given *slice*. Bytes will be copied from the slice.
+  # Creates a `String` from the given *slice*. `Bytes` will be copied from the slice.
   #
   # This method is always safe to call, and the resulting string will have
   # the contents and size of the slice.
@@ -125,7 +125,7 @@ class String
     new(slice.pointer(slice.size), slice.size)
   end
 
-  # Creates a new String from the given *bytes*, which are encoded in the given *encoding*.
+  # Creates a new `String` from the given *bytes*, which are encoded in the given *encoding*.
   #
   # The *invalid* argument can be:
   # * `nil`: an exception is raised on invalid byte sequences
@@ -143,7 +143,7 @@ class String
     end
   end
 
-  # Creates a String from a pointer. Bytes will be copied from the pointer.
+  # Creates a `String` from a pointer. `Bytes` will be copied from the pointer.
   #
   # This method is **unsafe**: the pointer must point to data that eventually
   # contains a zero byte that indicates the ends of the string. Otherwise,
@@ -164,8 +164,8 @@ class String
     new(chars, LibC.strlen(chars))
   end
 
-  # Creates a new String from a pointer, indicating its bytesize count
-  # and, optionally, the UTF-8 codepoints count (size). Bytes will be
+  # Creates a new `String` from a pointer, indicating its bytesize count
+  # and, optionally, the UTF-8 codepoints count (size). `Bytes` will be
   # copied from the pointer.
   #
   # If the given size is zero, the amount of UTF-8 codepoints will be
@@ -188,7 +188,7 @@ class String
     end
   end
 
-  # Creates a new String by allocating a buffer (`Pointer(UInt8)`) with the given capacity, then
+  # Creates a new `String` by allocating a buffer (`Pointer(UInt8)`) with the given capacity, then
   # yielding that buffer. The block must return a tuple with the bytesize and size
   # (UTF-8 codepoints count) of the String. If the returned size is zero, the UTF-8 codepoints
   # count will be lazily computed.
@@ -196,7 +196,7 @@ class String
   # The bytesize returned by the block must be less than or equal to the
   # capacity given to this String, otherwise `ArgumentError` is raised.
   #
-  # If you need to build a String where the maximum capacity is unknown, use `String#build`.
+  # If you need to build a `String` where the maximum capacity is unknown, use `String#build`.
   #
   # ```
   # str = String.new(4) do |buffer|
@@ -232,8 +232,8 @@ class String
     str.as(String)
   end
 
-  # Builds a String by creating a `String::Builder` with the given initial capacity, yielding
-  # it to the block and finally getting a String out of it. The `String::Builder` automatically
+  # Builds a `String` by creating a `String::Builder` with the given initial capacity, yielding
+  # it to the block and finally getting a `String` out of it. The `String::Builder` automatically
   # resizes as needed.
   #
   # ```
@@ -326,12 +326,12 @@ class String
     to_i8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int8: #{self}") }
   end
 
-  # Same as `#to_i` but returns an Int8 or nil.
+  # Same as `#to_i` but returns an `Int8` or nil.
   def to_i8?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int8?
     to_i8(base, whitespace, underscore, prefix, strict) { nil }
   end
 
-  # Same as `#to_i` but returns an Int8 or the block's value.
+  # Same as `#to_i` but returns an `Int8` or the block's value.
   def to_i8(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
     gen_to_ i8, 127, 128
   end
@@ -341,12 +341,12 @@ class String
     to_u8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt8: #{self}") }
   end
 
-  # Same as `#to_i` but returns an UInt8 or nil.
+  # Same as `#to_i` but returns an `UInt8` or nil.
   def to_u8?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt8?
     to_u8(base, whitespace, underscore, prefix, strict) { nil }
   end
 
-  # Same as `#to_i` but returns an UInt8 or the block's value.
+  # Same as `#to_i` but returns an `UInt8` or the block's value.
   def to_u8(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
     gen_to_ u8, 255
   end
@@ -356,12 +356,12 @@ class String
     to_i16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int16: #{self}") }
   end
 
-  # Same as `#to_i` but returns an Int16 or nil.
+  # Same as `#to_i` but returns an `Int16` or nil.
   def to_i16?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int16?
     to_i16(base, whitespace, underscore, prefix, strict) { nil }
   end
 
-  # Same as `#to_i` but returns an Int16 or the block's value.
+  # Same as `#to_i` but returns an `Int16` or the block's value.
   def to_i16(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
     gen_to_ i16, 32767, 32768
   end
@@ -371,12 +371,12 @@ class String
     to_u16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt16: #{self}") }
   end
 
-  # Same as `#to_i` but returns an UInt16 or nil.
+  # Same as `#to_i` but returns an `UInt16` or nil.
   def to_u16?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt16?
     to_u16(base, whitespace, underscore, prefix, strict) { nil }
   end
 
-  # Same as `#to_i` but returns an UInt16 or the block's value.
+  # Same as `#to_i` but returns an `UInt16` or the block's value.
   def to_u16(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
     gen_to_ u16, 65535
   end
@@ -401,12 +401,12 @@ class String
     to_u32(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt32: #{self}") }
   end
 
-  # Same as `#to_i` but returns an UInt32 or nil.
+  # Same as `#to_i` but returns an `UInt32` or nil.
   def to_u32?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt32?
     to_u32(base, whitespace, underscore, prefix, strict) { nil }
   end
 
-  # Same as `#to_i` but returns an UInt32 or the block's value.
+  # Same as `#to_i` but returns an `UInt32` or the block's value.
   def to_u32(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
     gen_to_ u32, 4294967295
   end
@@ -416,12 +416,12 @@ class String
     to_i64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int64: #{self}") }
   end
 
-  # Same as `#to_i` but returns an Int64 or nil.
+  # Same as `#to_i` but returns an `Int64` or nil.
   def to_i64?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int64?
     to_i64(base, whitespace, underscore, prefix, strict) { nil }
   end
 
-  # Same as `#to_i` but returns an Int64 or the block's value.
+  # Same as `#to_i` but returns an `Int64` or the block's value.
   def to_i64(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
     gen_to_ i64, 9223372036854775807, 9223372036854775808
   end
@@ -431,12 +431,12 @@ class String
     to_u64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt64: #{self}") }
   end
 
-  # Same as `#to_i` but returns an UInt64 or nil.
+  # Same as `#to_i` but returns an `UInt64` or nil.
   def to_u64?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt64?
     to_u64(base, whitespace, underscore, prefix, strict) { nil }
   end
 
-  # Same as `#to_i` but returns an UInt64 or the block's value.
+  # Same as `#to_i` but returns an `UInt64` or the block's value.
   def to_u64(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
     gen_to_ u64
   end
@@ -968,7 +968,7 @@ class String
     end
   end
 
-  # Returns a new String with *char* removed if the string starts with it.
+  # Returns a new `String` with *char* removed if the string starts with it.
   #
   # ```
   # "hello".lchomp('h') # => "ello"
@@ -982,7 +982,7 @@ class String
     end
   end
 
-  # Returns a new String with *str* removed if the string starts with it.
+  # Returns a new `String` with *str* removed if the string starts with it.
   #
   # ```
   # "hello".lchomp("hel") # => "lo"
@@ -996,7 +996,7 @@ class String
     end
   end
 
-  # Returns a new String with the last carriage return removed (that is, it
+  # Returns a new `String` with the last carriage return removed (that is, it
   # will remove \n, \r, and \r\n).
   #
   # ```
@@ -1025,7 +1025,7 @@ class String
     end
   end
 
-  # Returns a new String with *char* removed if the string ends with it.
+  # Returns a new `String` with *char* removed if the string ends with it.
   #
   # ```
   # "hello".chomp('o') # => "hell"
@@ -1041,7 +1041,7 @@ class String
     end
   end
 
-  # Returns a new String with *str* removed if the string ends with it.
+  # Returns a new `String` with *str* removed if the string ends with it.
   #
   # ```
   # "hello".chomp("llo") # => "he"
@@ -1055,7 +1055,7 @@ class String
     end
   end
 
-  # Returns a new String with the last character removed.
+  # Returns a new `String` with the last character removed.
   # If the string ends with `\r\n`, both characters are removed.
   # Applying chop to an empty string returns an empty string.
   #
@@ -1119,7 +1119,7 @@ class String
     end
   end
 
-  # Returns a new String that results of inserting *other* in *self* at *index*.
+  # Returns a new `String` that results of inserting *other* in *self* at *index*.
   # Negative indices count from the end of the string, and insert **after**
   # the given index.
   #
@@ -1150,7 +1150,7 @@ class String
     insert_impl(byte_index, bytes.to_unsafe, count, new_bytesize, new_size)
   end
 
-  # Returns a new String that results of inserting *other* in *self* at *index*.
+  # Returns a new `String` that results of inserting *other* in *self* at *index*.
   # Negative indices count from the end of the string, and insert **after**
   # the given index.
   #
@@ -1504,7 +1504,7 @@ class String
     end
   end
 
-  # Returns a new String with the character at the given index
+  # Returns a new `String` with the character at the given index
   # replaced by *replacement*.
   #
   # ```
@@ -1520,7 +1520,7 @@ class String
     end
   end
 
-  # Returns a new String with the character at the given index
+  # Returns a new `String` with the character at the given index
   # replaced by *replacement*.
   #
   # ```
@@ -1555,7 +1555,7 @@ class String
     end
   end
 
-  # Returns a new String with characters at the given range
+  # Returns a new `String` with characters at the given range
   # replaced by *replacement*.
   #
   # ```
@@ -1571,7 +1571,7 @@ class String
     end
   end
 
-  # Returns a new String with characters at the given range
+  # Returns a new `String` with characters at the given range
   # replaced by *replacement*.
   #
   # ```
@@ -3564,7 +3564,7 @@ class String
 
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.
   #
-  # This method should sometimes be called before passing a String to a C function.
+  # This method should sometimes be called before passing a `String` to a C function.
   def check_no_null_byte
     raise ArgumentError.new("string contains null byte") if byte_index(0)
     self

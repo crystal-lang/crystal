@@ -5,7 +5,7 @@
 # Set uses `Hash` as storage, so you must note the following points:
 #
 # * Equality of elements is determined according to `Object#==` and `Object#hash`.
-# * Set assumes that the identity of each element does not change while it is stored. Modifying an element of a set will render the set to an unreliable state.
+# * `Set` assumes that the identity of each element does not change while it is stored. Modifying an element of a set will render the set to an unreliable state.
 #
 # ### Example
 #

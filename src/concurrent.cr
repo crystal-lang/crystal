@@ -62,7 +62,7 @@ def spawn(*, name : String? = nil, &block)
 end
 
 # Spawns a fiber by first creating a Proc, passing the *call*'s
-# expressions to it, and letting the Proc finally invoke the *call*.
+# expressions to it, and letting the `Proc` finally invoke the *call*.
 #
 # Compare this:
 #
@@ -90,7 +90,7 @@ end
 #
 # This is because in the first case all spawned fibers refer to
 # the same local variable, while in the second example copies of
-# *i* are passed to a Proc that eventually invokes the call.
+# *i* are passed to a `Proc` that eventually invokes the call.
 macro spawn(call, *, name = nil)
   {% if call.is_a?(Call) %}
     ->(

@@ -2,8 +2,8 @@
 # * can't be expressed in Crystal (need to be expressed in LLVM). For example unary
 #   and binary math operators fall into this category.
 # * should always be inlined with an LLVM instruction for performance reasons, even
-#   in non-release builds. An example of this is Char#ord, which could be implemented
-#   in Crystal by assigning self to a variable and casting a pointer to it to Int32,
+#   in non-release builds. An example of this is `Char#ord`, which could be implemented
+#   in Crystal by assigning `self` to a variable and casting a pointer to it to `Int32`,
 #   and then reading back the value.
 
 class Object
@@ -34,7 +34,7 @@ class Object
 end
 
 class Reference
-  # Returns a UInt64 that uniquely identifies this object.
+  # Returns a `UInt64` that uniquely identifies this object.
   #
   # The returned value is the memory address of this object.
   #
@@ -244,7 +244,7 @@ struct Pointer(T)
 end
 
 struct Proc
-  # Invokes this Proc and returns the result.
+  # Invokes this `Proc` and returns the result.
   #
   # ```
   # add = ->(x : Int32, y : Int32) { x + y }
@@ -256,7 +256,7 @@ struct Proc
   end
 end
 
-# All Number methods are defined on concrete structs (for example Int32, UInt8, etc.),
+# All `Number` methods are defined on concrete structs (for example `Int32`, `UInt8`, etc.),
 # never on Number, Int or Float because we don't want to handle a primitive for
 # other types that could extend these types (for example BigInt): if we do that
 # a compiler crash will happen.

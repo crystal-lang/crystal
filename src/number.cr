@@ -13,8 +13,8 @@ struct Number
     self
   end
 
-  # Creates an `Array` of self with the given values, which will be casted
-  # to this type with the `new` method (defined in each Number type).
+  # Creates an `Array` of `self` with the given values, which will be casted
+  # to this type with the `new` method (defined in each `Number` type).
   #
   # ```
   # floats = Float64[1, 2, 3, 4]
@@ -32,8 +32,8 @@ struct Number
     end
   end
 
-  # Creates a `Slice` of self with the given values, which will be casted
-  # to this type with the `new` method (defined in each Number type).
+  # Creates a `Slice` of `self` with the given values, which will be casted
+  # to this type with the `new` method (defined in each `Number` type).
   #
   # The slice is allocated on the heap.
   #
@@ -52,8 +52,8 @@ struct Number
     %slice
   end
 
-  # Creates a `StaticArray` of self with the given values, which will be casted
-  # to this type with the `new` method (defined in each Number type).
+  # Creates a `StaticArray` of `self` with the given values, which will be casted
+  # to this type with the `new` method (defined in each `Number` type).
   #
   # ```
   # floats = Float64.static_array(1, 2, 3, 4)
@@ -126,7 +126,7 @@ struct Number
     self < 0 ? -self : self
   end
 
-  # Returns the square of self (`self * self`).
+  # Returns the square of `self` (`self * self`).
   #
   # ```
   # 4.abs2   # => 16
@@ -151,7 +151,7 @@ struct Number
   end
 
   # Returns a `Tuple` of two elements containing the quotient
-  # and modulus obtained by dividing self by *number*.
+  # and modulus obtained by dividing `self` by *number*.
   #
   # ```
   # 11.divmod(3)  # => {3, 2}

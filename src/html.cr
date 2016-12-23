@@ -33,7 +33,7 @@ module HTML
     string.gsub(SUBSTITUTIONS)
   end
 
-  # Encodes a string to HTML, but writes to the IO instance provided.
+  # Encodes a string to HTML, but writes to the `IO` instance provided.
   #
   # ```
   # require "html"

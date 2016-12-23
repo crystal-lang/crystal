@@ -21,7 +21,7 @@ struct Complex
     @imag = imag.to_f
   end
 
-  # Determines whether self equals *other* or not
+  # Determines whether `self` equals *other* or not
   def ==(other : Complex)
     @real == other.real && @imag == other.imag
   end
@@ -161,7 +161,7 @@ struct Complex
     log / Math::LOG10
   end
 
-  # Adds the value of self to *other*
+  # Adds the value of `self` to *other*
   def +(other : Complex)
     Complex.new(@real + other.real, @imag + other.imag)
   end
@@ -186,7 +186,7 @@ struct Complex
     Complex.new(@real - other, @imag)
   end
 
-  # Multiplies self by *other*
+  # Multiplies `self` by *other*
   def *(other : Complex)
     Complex.new(@real * other.real - @imag * other.imag, @real * other.imag + @imag * other.real)
   end
@@ -196,7 +196,7 @@ struct Complex
     Complex.new(@real * other, @imag * other)
   end
 
-  # Divides self by *other*
+  # Divides `self` by *other*
   def /(other : Complex)
     if other.real <= other.imag
       r = other.real / other.imag

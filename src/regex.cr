@@ -1,10 +1,10 @@
 require "./regex/*"
 
-# A Regex represents a regular expression, a pattern that describes the
-# contents of strings. A Regex can determine whether or not a string matches
+# A `Regex` represents a regular expression, a pattern that describes the
+# contents of strings. A `Regex` can determine whether or not a string matches
 # its description, and extract the parts of the string that match.
 #
-# A Regex can be created using the literal syntax, in which it is delimited by
+# A `Regex` can be created using the literal syntax, in which it is delimited by
 # forward slashes (`/`):
 #
 # ```
@@ -174,8 +174,8 @@ require "./regex/*"
 # regular expressions are also UTF-8 only (by default).
 #
 # PCRE optionally permits named capture groups (named subpatterns) to not be
-# unique. Crystal exposes the name table of a Regex as a
-# Hash of String => Int32, and therefore requires named capture groups to have
+# unique. Crystal exposes the name table of a `Regex` as a
+# `Hash` of `String` => `Int32`, and therefore requires named capture groups to have
 # unique names within a single Regex.
 class Regex
   @[Flags]
@@ -204,14 +204,14 @@ class Regex
   # ```
   getter options : Options
 
-  # Return the original String representation of the Regex pattern.
+  # Return the original `String` representation of the `Regex` pattern.
   #
   # ```
   # /ab+c/x.source # => "ab+c"
   # ```
   getter source : String
 
-  # Creates a new Regex out of the given source String.
+  # Creates a new `Regex` out of the given source `String`.
   #
   # ```
   # Regex.new("^a-z+:\\s+\\w+")                   # => /^a-z+:\s+\w+/
@@ -232,7 +232,7 @@ class Regex
   end
 
   # Determines Regex's source validity. If it is, `nil` is returned.
-  # If it's not, a String containing the error message is returned.
+  # If it's not, a `String` containing the error message is returned.
   #
   # ```
   # Regex.error?("(foo|bar)") # => nil
@@ -247,7 +247,7 @@ class Regex
     end
   end
 
-  # Returns a String constructed by escaping any metacharacters in *str*.
+  # Returns a `String` constructed by escaping any metacharacters in *str*.
   #
   # ```
   # string = Regex.escape("\*?{}.") # => "\\*\\?\\{\\}\\."
@@ -269,7 +269,7 @@ class Regex
     end
   end
 
-  # Union. Returns a Regex that matches any of *patterns*. If any pattern
+  # Union. Returns a `Regex` that matches any of *patterns*. If any pattern
   # contains a named capture group using the same name as a named capture
   # group in any other pattern, an ArgumentError will be raised at runtime.
   # All capture groups in the patterns after the first one will have their
@@ -287,7 +287,7 @@ class Regex
     new patterns.map { |pattern| union_part pattern }.join("|")
   end
 
-  # Union. Returns a Regex that matches any of *patterns*. If any pattern
+  # Union. Returns a `Regex` that matches any of *patterns*. If any pattern
   # contains a named capture group using the same name as a named capture
   # group in any other pattern, an ArgumentError will be raised at runtime.
   # All capture groups in the patterns after the first one will have their
@@ -310,7 +310,7 @@ class Regex
     escape pattern
   end
 
-  # Union. Returns a Regex that matches either of the operands. If either
+  # Union. Returns a `Regex` that matches either of the operands. If either
   # operand contains a named capture groups using the same name as a named
   # capture group in the other operand, an ArgumentError will be raised at
   # runtime. All capture groups in the second operand will have their indexes
@@ -383,7 +383,7 @@ class Regex
     nil
   end
 
-  # Convert to String in literal format. Returns the source as a String in
+  # Convert to `String` in literal format. Returns the source as a `String` in
   # Regex literal format, delimited in forward slashes (`/`), with any
   # optional flags included.
   #
@@ -444,7 +444,7 @@ class Regex
     $~ = match
   end
 
-  # Returns a Hash where the values are the names of capture groups and the
+  # Returns a `Hash` where the values are the names of capture groups and the
   # keys are their indexes. Non-named capture groups will not have entries in
   # the Hash. Capture groups are indexed starting from 1.
   #
@@ -476,8 +476,8 @@ class Regex
     lookup
   end
 
-  # Convert to String in subpattern format. Produces a String which can be
-  # embedded in another Regex via interpolation, where it will be interpreted
+  # Convert to `String` in subpattern format. Produces a `String` which can be
+  # embedded in another `Regex` via interpolation, where it will be interpreted
   # as a non-capturing subexpression in another regular expression.
   #
   # ```

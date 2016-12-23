@@ -1,6 +1,6 @@
 require "c/string"
 
-# A Slice is a `Pointer` with an associated size.
+# A `Slice` is a `Pointer` with an associated size.
 #
 # While a pointer is unsafe because no bound checks are performed when reading from and writing to it,
 # reading from and writing to a slice involve bound checks.

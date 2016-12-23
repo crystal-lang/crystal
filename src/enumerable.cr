@@ -1246,7 +1246,7 @@ module Enumerable(T)
   end
 
   # Creates a hash out of an Enumerable where each element is a
-  # 2 element structure (for instance a Tuple or an Array)
+  # 2 element structure (for instance a `Tuple` or an `Array`)
   #
   # ```
   # [[:a, :b], [:c, :d]].to_h        # => {a: :b, c: :d}

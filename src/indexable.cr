@@ -100,7 +100,7 @@ module Indexable(T)
   # behind. If the block returns `true`, the finding element
   # is itself or exists infront.
   #
-  # Binary search needs sorted array, so self has to be sorted.
+  # Binary search needs sorted array, so `self` has to be sorted.
   #
   # Returns `nil` if the block didn't return `true` for any element.
   #
@@ -119,7 +119,7 @@ module Indexable(T)
   # behind. If the block returns `true`, the finding element
   # is itself or exists infront.
   #
-  # Binary search needs sorted array, so self has to be sorted.
+  # Binary search needs sorted array, so `self` has to be sorted.
   #
   # Returns `nil` if the block didn't return `true` for any element.
   #

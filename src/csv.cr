@@ -59,7 +59,7 @@ class CSV
   DEFAULT_SEPARATOR  = ','
   DEFAULT_QUOTE_CHAR = '"'
 
-  # Parses a CSV or IO into an array.
+  # Parses a CSV or `IO` into an array.
   # takes optional *separator* and *quote_char* arguments for defining
   # non-standard csv cell separators and quote characters
   #
