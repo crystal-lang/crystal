@@ -204,7 +204,7 @@ struct Tuple
   # Returns `true` if this tuple has the same size as the other tuple
   # and their elements are equal to each other when  compared with `==`.
   #
-  # ```crystal
+  # ```
   # t1 = {1, "hello"}
   # t2 = {1.0, "hello"}
   # t3 = {2, "hello"}

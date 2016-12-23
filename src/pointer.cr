@@ -54,7 +54,7 @@ struct Pointer(T)
 
   # Returns true if this pointer's address is zero.
   #
-  # ```crystal
+  # ```
   # a = 1
   # pointerof(a).null? # => false
   #

@@ -72,20 +72,20 @@ struct Time
   # `Kind` represents a specified time zone.
   #
   # Initializing a `Time` instance with specified `Kind`:
-  # ```crystal
+  # ```
   # time = Time.new(2016, 2, 15, 21, 1, 10, 0, Time::Kind::Local)
   # ```
   #
   # Alternatively, you can switch the `Kind` for any instance:
   #
-  # ```crystal
+  # ```
   # time.to_utc   # => 2016-02-15 21:00:00 UTC
   # time.to_local # => 2016-02-16 05:01:10 +0800
   # ```
   #
   # Inspection:
   #
-  # ```crystal
+  # ```
   # time.local? # => true
   # time.utc?   # => false
   # ```
