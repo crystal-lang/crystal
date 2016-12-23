@@ -406,8 +406,6 @@ module Crystal
         bc_name = self.bc_name
         object_name = self.object_name
 
-        memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
-
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
         # in the cache directory.
@@ -418,27 +416,61 @@ module Crystal
         # `.bc` file is exactly the same as the old one. In that case
         # the `.o` file will also be the same, so we simply reuse the
         # old one. Generating an `.o` file is what takes most time.
-        if !compiler.emit && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
-          memory_io = IO::Memory.new(memory_buffer.to_slice)
-          changed = File.open(bc_name) { |bc_file| !FileUtils.cmp(bc_file, memory_io) }
 
-          # If the user cancelled a previous compilation
-          # it might be that the .o file is empty
-          if !changed && File.size(object_name) > 0
-            # We can skip compilation
-            memory_buffer.dispose
-            memory_buffer = nil
-          else
-            # We need to compile, so we'll write the memory buffer to file
+        must_compile = true
+        can_reuse_previous_compilation =
+          !compiler.emit && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
+
+        {% if LibLLVM::IS_35 %}
+          # In LLVM 3.5 we can't write a bitcode to memory,
+          # so instead we write it to another file
+          bc_name_new = self.bc_name_new
+          llvm_mod.write_bitcode_to_file(bc_name_new)
+
+          if can_reuse_previous_compilation
+            if FileUtils.cmp(bc_name, bc_name_new)
+              # If the user cancelled a previous compilation it might be that
+              # the .o file is empty
+              if File.size(object_name) > 0
+                File.delete bc_name_new
+                must_compile = false
+              end
+            end
           end
-        end
 
-        # If there's a memory buffer, it means we must create a .o from it
-        if memory_buffer
-          # Create the .bc file (for next compilations)
-          File.write(bc_name, memory_buffer.to_slice)
-          memory_buffer.dispose
+          if must_compile
+            # Create/overwrite the .bc file (for next compilations)
+            File.rename(bc_name_new, bc_name)
+            compiler.optimize llvm_mod if compiler.release?
+            compiler.target_machine.emit_obj_to_file llvm_mod, object_name
+          end
+        {% else %}
+          memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
 
+          if can_reuse_previous_compilation
+            memory_io = IO::Memory.new(memory_buffer.to_slice)
+            changed = File.open(bc_name) { |bc_file| !FileUtils.cmp(bc_file, memory_io) }
+
+            # If the user cancelled a previous compilation
+            # it might be that the .o file is empty
+            if !changed && File.size(object_name) > 0
+              must_compile = false
+              memory_buffer.dispose
+              memory_buffer = nil
+            else
+              # We need to compile, so we'll write the memory buffer to file
+            end
+          end
+
+          # If there's a memory buffer, it means we must create a .o from it
+          if memory_buffer
+            # Create the .bc file (for next compilations)
+            File.write(bc_name, memory_buffer.to_slice)
+            memory_buffer.dispose
+          end
+        {% end %}
+
+        if must_compile
           compiler.optimize llvm_mod if compiler.release?
           compiler.target_machine.emit_obj_to_file llvm_mod, object_name
         end
@@ -475,6 +507,10 @@ module Crystal
 
       def bc_name
         "#{@output_dir}/#{@name}.bc"
+      end
+
+      def bc_name_new
+        "#{@output_dir}/#{@name}.new.bc"
       end
 
       def ll_name

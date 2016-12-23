@@ -1,17 +1,13 @@
 class LLVM::MemoryBuffer
-  def initialize(@unwrap : LibLLVM::MemoryBufferRef | Bytes)
+  def initialize(@unwrap : LibLLVM::MemoryBufferRef)
     @finalized = false
   end
 
   def to_slice
-    if (unwrap = @unwrap).is_a?(Bytes)
-      unwrap
-    else
-      Slice.new(
-        LibLLVM.get_buffer_start(unwrap),
-        LibLLVM.get_buffer_size(unwrap),
-      )
-    end
+    Slice.new(
+      LibLLVM.get_buffer_start(@unwrap),
+      LibLLVM.get_buffer_size(@unwrap),
+    )
   end
 
   def dispose
@@ -23,9 +19,7 @@ class LLVM::MemoryBuffer
   def finalize
     return if @finalized
 
-    if (unwrap = @unwrap).is_a?(LibLLVM::MemoryBufferRef)
-      LibLLVM.dispose_memory_buffer(unwrap)
-    end
+    LibLLVM.dispose_memory_buffer(@unwrap)
   end
 
   def to_unsafe

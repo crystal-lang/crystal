@@ -34,19 +34,11 @@ class LLVM::Module
     LibLLVM.write_bitcode_to_file self, filename
   end
 
-  def write_bitcode_to_memory_buffer
-    {% if LibLLVM::IS_35 %}
-      # LLVMWriteBitcodeToMemoryBuffer doesn't exist in LLVM 3.5.0
-      slice = IO.pipe do |r, w|
-        write_bitcode_to_fd(w.fd)
-        w.close
-        r.gets_to_end.to_slice
-      end
-      MemoryBuffer.new(slice)
-    {% else %}
+  {% unless LibLLVM::IS_35 %}
+    def write_bitcode_to_memory_buffer
       MemoryBuffer.new(LibLLVM.write_bitcode_to_memory_buffer self)
-    {% end %}
-  end
+    end
+  {% end %}
 
   def write_bitcode_to_fd(fd : Int, should_close = false, buffered = false)
     LibLLVM.write_bitcode_to_fd(self, fd, should_close ? 1 : 0, buffered ? 1 : 0)
