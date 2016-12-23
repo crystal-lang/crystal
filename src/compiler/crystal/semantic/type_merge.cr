@@ -303,7 +303,7 @@ module Crystal
       end
 
       # If the names are the same we now merge the types for each key
-      # Note: we use self's order to preserve the order of the tuple on the left hand side
+      # NOTE: we use self's order to preserve the order of the tuple on the left hand side
       merged_entries = self.entries.map_with_index do |self_entry, i|
         name = self_entry.name
         other_type = other.name_type(name)

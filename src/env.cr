@@ -2,9 +2,6 @@ require "c/stdlib"
 
 # `ENV` is a hash-like accessor for environment variables.
 #
-# __Note:__ All keys and values are strings. You must take care to cast other types
-# at runtime, e.g. integer port numbers.
-#
 # ### Example
 #
 # ```
@@ -13,6 +10,9 @@ require "c/stdlib"
 # # Later use that env var.
 # puts ENV["PORT"].to_i
 # ```
+#
+# NOTE: All keys and values are strings. You must take care to cast other types
+# at runtime, e.g. integer port numbers.
 module ENV
   extend Enumerable({String, String})
 
