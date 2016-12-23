@@ -1,4 +1,4 @@
-## 0.20.2 (23-12-2016)
+## 0.20.3 (23-12-2016)
 
 * **(breaking change)** `IO#gets`, `IO#each_line`, `String#lines`, `String#each_line`, etc. now chomp lines by default. You can pass `chomp: false` to prevent automatic chomping. Note that `chomp` is `true` by default for argless `IO#gets` (read line) but `false` if args are given.
 * **(breaking change)** `HTTP::Handler` is now a module instead of a class (thanks @andrewhamon)
@@ -21,7 +21,7 @@
 * Added `URI#normalize` and `normalize!` (thanks @taylorfinnell)
 * Added `reuse` optional argument to many `Array`, `Enumerable` and `Iterable` methods that allow you to reuse the yielded/return array for better performance and less memory footprint
 * The `:debug` flag is now present when compiled with `--debug`, useful for doing `flag?(:debug)` in macros (thanks @luislavena)
-* [Many bug fixes and performance improvements](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.2)
+* [Many bug fixes and performance improvements](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.3)
 
 ## 0.20.1 (05-12-2016)
 
