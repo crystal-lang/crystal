@@ -1,8 +1,8 @@
 require "openssl/lib_crypto"
 
-# :nodoc;
+# :nodoc:
 module OpenSSL::X509
-  # :nodoc;
+  # :nodoc:
   class Extension
     def self.new(oid : String, value : String, critical = false)
       nid = LibCrypto.obj_ln2nid(oid)

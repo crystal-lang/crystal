@@ -2,9 +2,9 @@ require "openssl/lib_crypto"
 require "./extension"
 require "./name"
 
-# :nodoc;
+# :nodoc:
 module OpenSSL::X509
-  # :nodoc;
+  # :nodoc:
   class Certificate
     def initialize
       @cert = LibCrypto.x509_new

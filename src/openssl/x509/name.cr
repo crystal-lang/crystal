@@ -1,8 +1,8 @@
 require "openssl/lib_crypto"
 
-# :nodoc;
+# :nodoc:
 module OpenSSL::X509
-  # :nodoc;
+  # :nodoc:
   class Name
     # Parses entries in string and initializes a Name object.
     #

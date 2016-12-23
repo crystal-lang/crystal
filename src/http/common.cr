@@ -156,7 +156,7 @@ module HTTP
     io << "0\r\n\r\n"
   end
 
-  # :nodoc
+  # :nodoc:
   def self.content_length(headers)
     headers["Content-Length"]?.try &.to_u64?
   end
