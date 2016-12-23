@@ -316,13 +316,13 @@ describe TCPServer do
       sock = Socket.tcp(Socket::Family::INET6)
       sock.bind(Socket::IPAddress.new("::1", port))
 
-      TCPServer.open("::1", port) {}
+      TCPServer.open("::1", port) { }
     end
   end
 
   it "allows to share the same port (SO_REUSEPORT)" do
     TCPServer.open("::", 0) do |server|
-      TCPServer.open("::", server.local_address.port) {}
+      TCPServer.open("::", server.local_address.port) { }
     end
   end
 end
