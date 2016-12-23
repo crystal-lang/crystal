@@ -8,7 +8,7 @@ require "./yaml/*"
 # making it easy to traverse a complex YAML structure but requires some casts from time to time,
 # mostly via some method invocations.
 #
-# ```crystal
+# ```
 # require "yaml"
 #
 # data = YAML.parse <<-END
@@ -32,7 +32,7 @@ require "./yaml/*"
 # `YAML.dump` generates the YAML representation for an object. An `IO` can be passed and it will be written there,
 # otherwise it will be returned as a string. Similarly, `#to_yaml` (with or without an `IO`) on any object does the same.
 #
-# ```crystal
+# ```
 # yaml = YAML.dump({hello: "world"})                                # => "--- \nhello: world"
 # File.open("file.yml", "w") { |f| YAML.dump({hello: "world"}, f) } # => writes it to the file
 # # or:
@@ -74,7 +74,7 @@ module YAML
   #     bar
   # ```
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # YAML.parse(File.read("./foo.yml"))
@@ -99,7 +99,7 @@ module YAML
   # hello: world
   # ```
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # YAML.parse_all(File.read("./foo.yml"))
