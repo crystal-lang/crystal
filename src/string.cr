@@ -1119,7 +1119,7 @@ class String
     end
   end
 
-  # Returns a new `String` that results of inserting *other* in *self* at *index*.
+  # Returns a new `String` that results of inserting *other* in `self` at *index*.
   # Negative indices count from the end of the string, and insert **after**
   # the given index.
   #
@@ -1150,7 +1150,7 @@ class String
     insert_impl(byte_index, bytes.to_unsafe, count, new_bytesize, new_size)
   end
 
-  # Returns a new `String` that results of inserting *other* in *self* at *index*.
+  # Returns a new `String` that results of inserting *other* in `self` at *index*.
   # Negative indices count from the end of the string, and insert **after**
   # the given index.
   #

@@ -420,7 +420,7 @@ struct NamedTuple
   end
 
   # Returns `true` if this tuple has the same keys as *other*, and values
-  # for each key are the same in *self* and *other*.
+  # for each key are the same in `self` and *other*.
   #
   # ```
   # tuple1 = {name: "Crystal", year: 2011}

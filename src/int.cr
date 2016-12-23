@@ -60,7 +60,7 @@ struct Int
   alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64
   alias Primitive = Signed | Unsigned
 
-  # Returns a `Char` that has the unicode codepoint of *self*.
+  # Returns a `Char` that has the unicode codepoint of `self`.
   #
   # Raises `ArgumentError` if this integer's value doesn't fit a char's range (`0..0x10ffff`).
   #
@@ -239,7 +239,7 @@ struct Int
     self
   end
 
-  # Returns the value of raising *self* to the power of *exponent*.
+  # Returns the value of raising `self` to the power of *exponent*.
   #
   # Raises `ArgumentError` if *exponent* is negative: if this is needed,
   # either use a float base or a float exponent.
@@ -264,7 +264,7 @@ struct Int
     result
   end
 
-  # Returns the value of raising *self* to the power of *exponent*.
+  # Returns the value of raising `self` to the power of *exponent*.
   #
   # ```
   # 2 ** 3.0  # => 8.0

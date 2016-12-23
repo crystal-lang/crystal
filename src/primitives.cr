@@ -59,12 +59,12 @@ class Class
 end
 
 struct Bool
-  # Returns true if *self* is equal to *other*.
+  # Returns true if `self` is equal to *other*.
   @[Primitive(:binary)]
   def ==(other : Bool) : Bool
   end
 
-  # Returns true if *self* is not equal to *other*.
+  # Returns true if `self` is not equal to *other*.
   @[Primitive(:binary)]
   def !=(other : Bool) : Bool
   end
@@ -99,7 +99,7 @@ struct Char
                        ">"  => "greater than",
                        ">=" => "greater than or equal to",
                      } %}
-    # Returns true if *self*'s codepoint is {{desc.id}} *other*'s codepoint.
+    # Returns true if `self`'s codepoint is {{desc.id}} *other*'s codepoint.
     @[Primitive(:binary)]
     def {{op.id}}(other : Char) : Bool
     end
@@ -107,12 +107,12 @@ struct Char
 end
 
 struct Symbol
-  # Returns true if *self* is equal to *other*.
+  # Returns true if `self` is equal to *other*.
   @[Primitive(:binary)]
   def ==(other : Symbol) : Bool
   end
 
-  # Returns true if *self* is not equal to *other*.
+  # Returns true if `self` is not equal to *other*.
   @[Primitive(:binary)]
   def !=(other : Symbol) : Bool
   end
@@ -280,7 +280,7 @@ end
                              to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64,
                              to_f32: Float32, to_f64: Float64,
                            } %}
-        # Returns *self* converted to {{type}}.
+        # Returns `self` converted to {{type}}.
         @[Primitive(:cast)]
         def {{name.id}} : {{type}}
         end
@@ -295,7 +295,7 @@ end
                              ">"  => "greater than",
                              ">=" => "greater than or equal to",
                            } %}
-          # Returns true if *self* is {{desc.id}} *other*.
+          # Returns true if `self` is {{desc.id}} *other*.
           @[Primitive(:binary)]
           def {{op.id}}(other : {{num2.id}}) : Bool
           end
@@ -306,7 +306,7 @@ end
 
   {% for int in ints %}
     struct {{int.id}}
-      # Returns a `Char` that has the unicode codepoint of *self*,
+      # Returns a `Char` that has the unicode codepoint of `self`,
       # without checking if this integer is in the range valid for
       # chars (`0..0x10ffff`).
       #
@@ -323,24 +323,24 @@ end
       {% for int2 in ints %}
         {% for op, desc in binaries %}
           {% if op != "/" %}
-            # Returns the result of {{desc.id}} *self* and *other*.
+            # Returns the result of {{desc.id}} `self` and *other*.
             @[Primitive(:binary)]
             def {{op.id}}(other : {{int2.id}}) : self
             end
           {% end %}
         {% end %}
 
-        # Returns the result of performing a bitwise OR of *self*'s and *other*'s bits.
+        # Returns the result of performing a bitwise OR of `self`'s and *other*'s bits.
         @[Primitive(:binary)]
         def |(other : {{int2.id}}) : self
         end
 
-        # Returns the result of performing a bitwise AND of *self*'s and *other*'s bits.
+        # Returns the result of performing a bitwise AND of `self`'s and *other*'s bits.
         @[Primitive(:binary)]
         def &(other : {{int2.id}}) : self
         end
 
-        # Returns the result of performing a bitwise XOR of *self*'s and *other*'s bits.
+        # Returns the result of performing a bitwise XOR of `self`'s and *other*'s bits.
         @[Primitive(:binary)]
         def ^(other : {{int2.id}}) : self
         end
@@ -368,7 +368,7 @@ end
 
       {% for float in floats %}
         {% for op, desc in binaries %}
-          # Returns the result of {{desc.id}} *self* and *other*.
+          # Returns the result of {{desc.id}} `self` and *other*.
           @[Primitive(:binary)]
           def {{op.id}}(other : {{float.id}}) : {{float.id}}
           end
@@ -381,7 +381,7 @@ end
     struct {{float.id}}
       {% for num in nums %}
         {% for op, desc in binaries %}
-          # Returns the result of {{desc.id}} *self* and *other*.
+          # Returns the result of {{desc.id}} `self` and *other*.
           @[Primitive(:binary)]
           def {{op.id}}(other : {{num.id}}) : self
           end
