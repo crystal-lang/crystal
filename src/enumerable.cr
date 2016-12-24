@@ -618,7 +618,7 @@ module Enumerable(T)
   #
   #     ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }  #=> ["User #0: Alice", "User #1: Bob"]
   #
-  def map_with_index(&block : T, Int32 -> U)
+  def map_with_index(&block : T, Int32 -> U) forall U
     ary = [] of U
     each_with_index { |e, i| ary << yield e, i }
     ary
