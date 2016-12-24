@@ -469,8 +469,7 @@ class String
     negative : Bool,
     invalid : Bool
 
-  # :nodoc:
-  macro gen_to_(method, max_positive = nil, max_negative = nil)
+  private macro gen_to_(method, max_positive = nil, max_negative = nil)
     info = to_u64_info(base, whitespace, underscore, prefix, strict)
     return yield if info.invalid
 
