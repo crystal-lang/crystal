@@ -599,6 +599,12 @@ describe "Enumerable" do
       result = ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }
       result.should eq ["User #0: Alice", "User #1: Bob"]
     end
+
+    it "yields the element and the index of an iterator" do
+      str = "hello"
+      result = str.each_char.map_with_index { |char, i| "#{char}#{i}" }
+      result.should eq ["h0", "e1", "l2", "l3", "o4"]
+    end
   end
 
   describe "max" do
