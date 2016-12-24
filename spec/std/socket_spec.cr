@@ -149,6 +149,23 @@ describe UNIXServer do
     end
   end
 
+  it "won't delete existing file on bind failure" do
+    path = "/tmp/crystal-test-unix.sock"
+
+    File.write(path, "")
+    File.exists?(path).should be_true
+
+    begin
+      expect_raises Errno, /(already|Address) in use/ do
+        UNIXServer.new(path)
+      end
+
+      File.exists?(path).should be_true
+    ensure
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
   describe "accept" do
     it "returns the client UNIXSocket" do
       UNIXServer.open("/tmp/crystal-test-unix-sock") do |server|
