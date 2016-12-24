@@ -816,6 +816,37 @@ describe "String" do
   end
 
   describe "each_split" do
+    describe "by space" do
+      it "removes ascii whitespace" do
+        iter = "   foo   bar\n\t  baz   ".each_split
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by non ascii chars" do
+        iter = "日本語 \n\t 日本 \n\n 語".each_split
+        iter.next.should eq("日本語")
+        iter.next.should eq("日本")
+        iter.next.should eq("語")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with a limit of 1" do
+        iter = "   foo   bar\n\t  baz   ".each_split(1)
+        iter.next.should eq("   foo   bar\n\t  baz   ")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with a limit of 2" do
+        iter = "   foo   bar\n\t  baz   ".each_split(2)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar\n\t  baz   ")
+        iter.next.should be_a(Iterator::Stop)
+      end
+    end
+
     describe "by char" do
       it "splits an empty string" do
         iter = "".each_split(',')

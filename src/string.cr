@@ -2560,6 +2560,18 @@ class String
     end
   end
 
+  # Returns an `Iterator` which yields each split of this string on any ASCII whitespace characters(see `String#split`).
+  #
+  # ```
+  # split = "hello out there!".each_split
+  # split.next # => "hello"
+  # split.next # => "out"
+  # split.next # => "there!"
+  # ```
+  def each_split(limit = nil)
+    SplitIterator.new(self, limit)
+  end
+
   # Makes an array by splitting the string on the given character *separator* (and removing that character).
   #
   # If *limit* is present, up to *limit* new strings will be created,
@@ -3590,6 +3602,76 @@ class String
 
     if capacity.to_u64 > (UInt32::MAX - HEADER_SIZE - 1)
       raise ArgumentError.new("capacity too big")
+    end
+  end
+
+  private class SplitIterator
+    include Iterator(String)
+
+    @single_byte_optimizable : Bool
+
+    def initialize(@string : String, @limit : Int32? = nil)
+      @single_byte_optimizable = @string.ascii_only?
+      @index = 0
+      @i = 0
+      @split_count = 0
+      @looking_for_space = false
+    end
+
+    def next
+      return stop if end?
+      @split_count += 1
+      return @string if (limit = @limit) && limit <= 1
+
+      while @i < @string.bytesize
+        if @looking_for_space
+          while @i < @string.bytesize
+            c = @string.to_unsafe[@i]
+            @i += 1
+            if c.unsafe_chr.ascii_whitespace?
+              piece_bytesize = @i - 1 - @index
+              piece_size = @single_byte_optimizable ? piece_bytesize : 0
+              @looking_for_space = false
+              return String.new(@string.to_unsafe + @index, piece_bytesize, piece_size)
+            end
+          end
+        else
+          while @i < @string.bytesize
+            c = @string.to_unsafe[@i]
+            @i += 1
+            unless c.unsafe_chr.ascii_whitespace?
+              @index = @i - 1
+              @looking_for_space = true
+              break
+            end
+          end
+          break if reached_limit?
+        end
+      end
+
+      if @looking_for_space
+        piece_bytesize = @string.bytesize - @index
+        piece_size = @single_byte_optimizable ? piece_bytesize : 0
+        return String.new(@string.to_unsafe + @index, piece_bytesize, piece_size)
+      end
+
+      stop if end?
+    end
+
+    def rewind
+      @index = 0
+      @i = 0
+      @split_count = 0
+      @looking_for_space = false
+      self
+    end
+
+    private def reached_limit?
+      (limit = @limit) && @split_count == limit
+    end
+
+    private def end?
+      @i == @string.bytesize || reached_limit?
     end
   end
 
