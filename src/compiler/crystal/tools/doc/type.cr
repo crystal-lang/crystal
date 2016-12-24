@@ -134,12 +134,12 @@ class Crystal::Doc::Type
   end
 
   def alias_definition
-    alias_def = @type.as(AliasType).aliased_type
+    alias_def = @type.as?(AliasType).try(&.aliased_type)
     alias_def
   end
 
   def formatted_alias_definition
-    type_to_html alias_definition
+    type_to_html alias_definition.as(Crystal::Type)
   end
 
   @types : Array(Type)?
@@ -344,6 +344,10 @@ class Crystal::Doc::Type
     else
       "#{name}.html"
     end
+  end
+
+  def json_path
+    path.sub(/\.html$/, ".json")
   end
 
   def path_from(type)

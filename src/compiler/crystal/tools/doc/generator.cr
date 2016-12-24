@@ -54,12 +54,17 @@ class Crystal::Doc::Generator
     end
 
     if filename
-      body = doc(program_type, File.read(filename))
+      raw_body = File.read(filename)
+      body = doc(program_type, raw_body)
     else
+      raw_body = ""
       body = ""
     end
 
     File.write "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
+
+    type_refs = types.map { |t| JSONise::TypeRef.new(t) }
+    File.write "#{@dir}/index.json", JSONise::Main.new(raw_body, type_refs, repository_name)
   end
 
   def copy_files
@@ -74,11 +79,14 @@ class Crystal::Doc::Generator
     types.each do |type|
       if type.program?
         filename = "#{dir}/toplevel.html"
+        jsonname = "#{dir}/toplevel.json"
       else
         filename = "#{dir}/#{type.name}.html"
+        jsonname = "#{dir}/#{type.name}.json"
       end
 
       File.write filename, TypeTemplate.new(type, all_types)
+      File.write jsonname, JSONise::Type.new(type)
 
       next if type.program?
 
