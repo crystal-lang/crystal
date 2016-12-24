@@ -80,6 +80,9 @@ describe Markdown do
   assert_render "* Hello\nWorld", "<ul><li>Hello\nWorld</li></ul>"
   assert_render "Params:\n* Foo\n* Bar", "<p>Params:</p>\n\n<ul><li>Foo</li><li>Bar</li></ul>"
 
+  assert_render "* Hello\n* World\n\n```\nHello World\n```", "<ul><li>Hello</li><li>World</li></ul>\n\n<pre><code>Hello World</code></pre>"
+  assert_render "1. Hello\n2. World\n\n```\nHello World\n```", "<ol><li>Hello</li><li>World</li></ol>\n\n<pre><code>Hello World</code></pre>"
+
   assert_render "+ Hello", "<ul><li>Hello</li></ul>"
   assert_render "- Hello", "<ul><li>Hello</li></ul>"
 
