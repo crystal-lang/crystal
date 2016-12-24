@@ -52,7 +52,7 @@
 }
 .cm-fat-cursor .CodeMirror-cursor {
   width: auto;
-  border: 0;
+  border: 0 !important;
   background: #7e7;
 }
 .cm-fat-cursor div.CodeMirror-cursors {
@@ -88,8 +88,14 @@
 
 .cm-tab { display: inline-block; text-decoration: inherit; }
 
+.CodeMirror-rulers {
+  position: absolute;
+  left: 0; right: 0; top: -50px; bottom: -20px;
+  overflow: hidden;
+}
 .CodeMirror-ruler {
   border-left: 1px solid #ccc;
+  top: 0; bottom: 0;
   position: absolute;
 }
 
@@ -191,6 +197,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
 
 .CodeMirror-gutters {
   position: absolute; left: 0; top: 0;
+  min-height: 100%;
   z-index: 3;
 }
 .CodeMirror-gutter {
@@ -199,9 +206,6 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
   display: inline-block;
   vertical-align: top;
   margin-bottom: -30px;
-  /* Hack to make IE7 behave */
-  *zoom:1;
-  *display:inline;
 }
 .CodeMirror-gutter-wrapper {
   position: absolute;
@@ -245,6 +249,8 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
   position: relative;
   overflow: visible;
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-variant-ligatures: contextual;
+  font-variant-ligatures: contextual;
 }
 .CodeMirror-wrap pre {
   word-wrap: break-word;
@@ -288,7 +294,10 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
   visibility: hidden;
 }
 
-.CodeMirror-cursor { position: absolute; }
+.CodeMirror-cursor {
+  position: absolute;
+  pointer-events: none;
+}
 .CodeMirror-measure pre { position: static; }
 
 div.CodeMirror-cursors {
@@ -314,9 +323,6 @@ div.CodeMirror-dragcursors {
   background: #ffa;
   background: rgba(255, 255, 0, .4);
 }
-
-/* IE7 hack to prevent it from returning funny offsetTops on the spans */
-.CodeMirror span { *vertical-align: text-bottom; }
 
 /* Used to force a border model for a node */
 .cm-force-border { padding-right: .1px; }
