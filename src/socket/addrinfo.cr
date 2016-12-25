@@ -38,7 +38,7 @@ class Socket
 
           unless addrinfo = addrinfo.try(&.next?)
             if error.is_a?(Errno) && error.errno == Errno::ECONNREFUSED
-              raise Errno.new("Error connecting to '#{host}:#{service}': Connection refused", error.errno)
+              raise Errno.new("Error connecting to '#{host}:#{service}'", error.errno)
             else
               raise error if error
             end
