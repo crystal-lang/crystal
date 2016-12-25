@@ -396,6 +396,12 @@ describe "Array" do
       a.concat(1..4)
       a.@capacity.should eq(6)
     end
+
+    it "concats a union of arrays" do
+      a = [1, '2']
+      a.concat([3] || ['4'])
+      a.should eq([1, '2', 3])
+    end
   end
 
   describe "delete" do

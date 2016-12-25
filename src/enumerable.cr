@@ -1143,4 +1143,14 @@ module Enumerable(T)
       hash[item[0]] = item[1]
     end
   end
+
+  # Appends the elements of `self` to *array* and returns *array*.
+  #
+  #     ary = ['a', 'b']
+  #     ('c'..'d').concat_to(ary)
+  #     ary # => ['a', 'b', 'c', 'd']
+  #
+  def concat_to(array)
+    array.concat_enumerable(self)
+  end
 end
