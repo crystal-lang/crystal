@@ -103,7 +103,7 @@ module Crystal
         # are shown in the block instead of in the generated macro source
         is_yield = node.exp.is_a?(Yield) && !@last.is_a?(Nop)
         @str << " #<loc:push>begin " if is_yield
-        @last.to_s(@str, emit_loc_pragma: is_yield)
+        @last.to_s(@str, emit_loc_pragma: is_yield, emit_doc: is_yield)
         @str << " end#<loc:pop> " if is_yield
       end
 
@@ -349,7 +349,7 @@ module Crystal
     def visit(node : Yield)
       if block = @block
         if node.exps.empty?
-          @last = block.body.clone
+          @last = block.body.clone(with_doc: true)
         else
           block_vars = {} of String => ASTNode
           node.exps.each_with_index do |exp, i|
@@ -357,7 +357,7 @@ module Crystal
               block_vars[block_arg.name] = exp.clone
             end
           end
-          @last = replace_block_vars block.body.clone, block_vars
+          @last = replace_block_vars block.body.clone(with_doc: true), block_vars
         end
       else
         @last = Nop.new

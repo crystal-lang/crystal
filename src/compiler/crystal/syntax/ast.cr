@@ -36,10 +36,11 @@ module Crystal
 
     # Returns a deep copy of this node. Copied nodes retain
     # the location and end location of the original nodes.
-    def clone
+    def clone(with_doc = false)
       clone = clone_without_location
       clone.location = location
       clone.end_location = end_location
+      clone.doc = doc if with_doc
       clone
     end
 
