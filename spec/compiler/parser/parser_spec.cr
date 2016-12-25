@@ -1022,6 +1022,8 @@ describe "Parser" do
   it_parses "{1, 2, 3}", TupleLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode)
   it_parses "{A::B}", TupleLiteral.new([Path.new(["A", "B"])] of ASTNode)
   it_parses "{\n1,\n2\n}", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
+  it_parses "{\n1\n}", TupleLiteral.new([1.int32] of ASTNode)
+  it_parses "{\n{1}\n}", TupleLiteral.new([TupleLiteral.new([1.int32] of ASTNode)] of ASTNode)
 
   it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", block: Block.new(body: Assign.new("a".var, 1.int32))), "a".call] of ASTNode
 
