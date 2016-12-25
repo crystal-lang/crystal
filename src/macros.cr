@@ -66,8 +66,6 @@ macro record(name, *properties)
                    }})
     end
 
-    {{yield}}
-
     def clone
       {{name.id}}.new({{
                         *properties.map do |property|
@@ -81,6 +79,7 @@ macro record(name, *properties)
                         end
                       }})
     end
+    {{yield}}
   end
 end
 

@@ -37,7 +37,7 @@ module Crystal
     # Returns a deep copy of this node. Copied nodes retain
     # the location and end location of the original nodes.
     def clone(with_doc = false)
-      clone = clone_without_location
+      clone = clone_without_location(with_doc: with_doc)
       clone.location = location
       clone.end_location = end_location
       clone.doc = doc if with_doc
@@ -92,7 +92,7 @@ module Crystal
   end
 
   class Nop < ASTNode
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       Nop.new
     end
 
@@ -146,8 +146,8 @@ module Crystal
       @expressions.each &.accept visitor
     end
 
-    def clone_without_location
-      Expressions.new(@expressions.clone)
+    def clone_without_location(with_doc = false)
+      Expressions.new(@expressions.map &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash expressions
@@ -158,7 +158,7 @@ module Crystal
   #     'nil'
   #
   class NilLiteral < ASTNode
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       NilLiteral.new
     end
 
@@ -175,7 +175,7 @@ module Crystal
     def initialize(@value)
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       BoolLiteral.new(@value)
     end
 
@@ -199,7 +199,7 @@ module Crystal
       @value[0] == '+' || @value[0] == '-'
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       NumberLiteral.new(@value, @kind)
     end
 
@@ -217,7 +217,7 @@ module Crystal
     def initialize(@value : Char)
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       CharLiteral.new(@value)
     end
 
@@ -230,7 +230,7 @@ module Crystal
     def initialize(@value : String)
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       StringLiteral.new(@value)
     end
 
@@ -247,8 +247,8 @@ module Crystal
       @expressions.each &.accept visitor
     end
 
-    def clone_without_location
-      StringInterpolation.new(@expressions.clone)
+    def clone_without_location(with_doc = false)
+      StringInterpolation.new(@expressions.map &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash expressions
@@ -260,7 +260,7 @@ module Crystal
     def initialize(@value : String)
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       SymbolLiteral.new(@value)
     end
 
@@ -289,8 +289,8 @@ module Crystal
       @of.try &.accept visitor
     end
 
-    def clone_without_location
-      ArrayLiteral.new(@elements.clone, @of.clone, @name.clone)
+    def clone_without_location(with_doc = false)
+      ArrayLiteral.new(@elements.map &.clone(with_doc: with_doc).as(ASTNode), @of.try &.clone(with_doc: with_doc).as(ASTNode), @name.try &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @elements, @of, @name
@@ -316,13 +316,17 @@ module Crystal
       end
     end
 
-    def clone_without_location
-      HashLiteral.new(@entries.clone, @of.clone, @name.clone)
+    def clone_without_location(with_doc = false)
+      HashLiteral.new(@entries.map &.clone(with_doc: with_doc).as(Entry), @of.try &.clone(with_doc: with_doc).as(Entry), @name.try &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @entries, @of, @name
 
-    record Entry, key : ASTNode, value : ASTNode
+    record Entry, key : ASTNode, value : ASTNode do
+      def clone(with_doc = false)
+        Entry.new key.clone(with_doc: with_doc).as(ASTNode), value.clone(with_doc: with_doc).as(ASTNode)
+      end
+    end
   end
 
   class NamedTupleLiteral < ASTNode
@@ -337,13 +341,17 @@ module Crystal
       end
     end
 
-    def clone_without_location
-      NamedTupleLiteral.new(@entries.clone)
+    def clone_without_location(with_doc = false)
+      NamedTupleLiteral.new(@entries.map &.clone(with_doc: with_doc).as(Entry))
     end
 
     def_equals_and_hash @entries
 
-    record Entry, key : String, value : ASTNode
+    record Entry, key : String, value : ASTNode do
+      def clone(with_doc = false)
+        Entry.new key, value.clone(with_doc: with_doc).as(ASTNode)
+      end
+    end
   end
 
   class RangeLiteral < ASTNode
@@ -359,8 +367,8 @@ module Crystal
       @to.accept visitor
     end
 
-    def clone_without_location
-      RangeLiteral.new(@from.clone, @to.clone, @exclusive.clone)
+    def clone_without_location(with_doc = false)
+      RangeLiteral.new(@from.clone(with_doc: with_doc).as(ASTNode), @to.clone(with_doc: with_doc).as(ASTNode), @exclusive)
     end
 
     def_equals_and_hash @from, @to, @exclusive
@@ -377,8 +385,8 @@ module Crystal
       @value.accept visitor
     end
 
-    def clone_without_location
-      RegexLiteral.new(@value.clone, @options)
+    def clone_without_location(with_doc = false)
+      RegexLiteral.new(@value.clone(with_doc: with_doc).as(ASTNode), @options)
     end
 
     def_equals_and_hash @value, @options
@@ -398,8 +406,8 @@ module Crystal
       elements.each &.accept visitor
     end
 
-    def clone_without_location
-      TupleLiteral.new(elements.clone)
+    def clone_without_location(with_doc = false)
+      TupleLiteral.new(elements.map &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash elements
@@ -424,7 +432,7 @@ module Crystal
       name.size
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       Var.new(@name)
     end
 
@@ -455,8 +463,8 @@ module Crystal
       @body.accept visitor
     end
 
-    def clone_without_location
-      Block.new(@args.clone, @body.clone, @splat_index)
+    def clone_without_location(with_doc = false)
+      Block.new(@args.map &.clone(with_doc: with_doc).as(Var), @body.clone(with_doc: with_doc).as(ASTNode), @splat_index)
     end
 
     def_equals_and_hash args, body, splat_index
@@ -529,8 +537,8 @@ module Crystal
       @block.try &.accept visitor
     end
 
-    def clone_without_location
-      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global, @name_column_number, @has_parentheses)
+    def clone_without_location(with_doc = false)
+      clone = Call.new(@obj.try &.clone(with_doc: with_doc).as(ASTNode), @name, @args.map &.clone(with_doc: with_doc).as(ASTNode), @block.try &.clone(with_doc), @block_arg.clone, @named_args.try &.map &.clone(with_doc: with_doc).as(NamedArgument), @global, @name_column_number, @has_parentheses)
       clone.name_size = name_size
       clone.expansion = expansion?
       clone
@@ -560,8 +568,8 @@ module Crystal
       @value.accept visitor
     end
 
-    def clone_without_location
-      NamedArgument.new(name, value.clone)
+    def clone_without_location(with_doc = false)
+      NamedArgument.new(name, value.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash name, value
@@ -595,8 +603,8 @@ module Crystal
       @else.accept visitor
     end
 
-    def clone_without_location
-      If.new(@cond.clone, @then.clone, @else.clone)
+    def clone_without_location(with_doc = false)
+      If.new(@cond.clone(with_doc: with_doc).as(ASTNode), @then.clone(with_doc: with_doc).as(ASTNode), @else.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @cond, @then, @else
@@ -618,8 +626,8 @@ module Crystal
       @else.accept visitor
     end
 
-    def clone_without_location
-      Unless.new(@cond.clone, @then.clone, @else.clone)
+    def clone_without_location(with_doc = false)
+      Unless.new(@cond.clone(with_doc: with_doc).as(ASTNode), @then.clone(with_doc: with_doc).as(ASTNode), @else.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @cond, @then, @else
@@ -650,8 +658,8 @@ module Crystal
       @end_location || value.end_location
     end
 
-    def clone_without_location
-      Assign.new(@target.clone, @value.clone)
+    def clone_without_location(with_doc = false)
+      Assign.new(@target.clone(with_doc: with_doc).as(ASTNode), @value.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @target, @value
@@ -681,8 +689,8 @@ module Crystal
       @end_location || value.end_location
     end
 
-    def clone_without_location
-      OpAssign.new(@target.clone, @op, @value.clone)
+    def clone_without_location(with_doc = false)
+      OpAssign.new(@target.clone(with_doc: with_doc).as(ASTNode), @op, @value.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @target, @op, @value
@@ -712,8 +720,8 @@ module Crystal
       other.targets == targets && other.values == values
     end
 
-    def clone_without_location
-      MultiAssign.new(@targets.clone, @values.clone)
+    def clone_without_location(with_doc = false)
+      MultiAssign.new(@targets.map &.clone(with_doc: with_doc).as(ASTNode), @values.map &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_hash @targets, @values
@@ -730,7 +738,7 @@ module Crystal
       name.size
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       InstanceVar.new(@name)
     end
 
@@ -748,8 +756,8 @@ module Crystal
       @obj.accept visitor
     end
 
-    def clone_without_location
-      ReadInstanceVar.new(@obj.clone, @name)
+    def clone_without_location(with_doc = false)
+      ReadInstanceVar.new(@obj.clone(with_doc: with_doc).as(ASTNode), @name)
     end
 
     def_equals_and_hash @obj, @name
@@ -761,7 +769,7 @@ module Crystal
     def initialize(@name)
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       ClassVar.new(@name)
     end
 
@@ -779,7 +787,7 @@ module Crystal
       name.size
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       Global.new(@name)
     end
 
@@ -810,8 +818,8 @@ module Crystal
   #     expression '&&' expression
   #
   class And < BinaryOp
-    def clone_without_location
-      And.new(@left.clone, @right.clone)
+    def clone_without_location(with_doc = false)
+      And.new(@left.clone(with_doc: with_doc).as(ASTNode), @right.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
@@ -820,8 +828,8 @@ module Crystal
   #     expression '||' expression
   #
   class Or < BinaryOp
-    def clone_without_location
-      Or.new(@left.clone, @right.clone)
+    def clone_without_location(with_doc = false)
+      Or.new(@left.clone(with_doc: with_doc).as(ASTNode), @right.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
@@ -849,8 +857,8 @@ module Crystal
       name.size
     end
 
-    def clone_without_location
-      Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone
+    def clone_without_location(with_doc = false)
+      Arg.new @name, @default_value.try &.clone(with_doc: with_doc).as(ASTNode), @restriction.try &.clone(with_doc: with_doc).as(ASTNode), @external_name.clone
     end
 
     def_equals_and_hash name, default_value, restriction, external_name
@@ -871,8 +879,8 @@ module Crystal
       @output.try &.accept visitor
     end
 
-    def clone_without_location
-      ProcNotation.new(@inputs.clone, @output.clone)
+    def clone_without_location(with_doc = false)
+      ProcNotation.new(@inputs.try(&.map(&.clone(with_doc: with_doc).as(ASTNode))), @output.try &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash inputs, output
@@ -932,8 +940,8 @@ module Crystal
       name.size
     end
 
-    def clone_without_location
-      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @yields, @abstract, @splat_index, @double_splat.clone, @free_vars)
+    def clone_without_location(with_doc = false)
+      a_def = Def.new(@name, @args.map &.clone(with_doc: with_doc).as(Arg), @body.clone(with_doc: with_doc).as(ASTNode), @receiver.try &.clone(with_doc: with_doc).as(ASTNode), @block_arg.try &.clone(with_doc: with_doc).as(Arg), @return_type.try &.clone(with_doc: with_doc).as(ASTNode), @macro_def, @yields, @abstract, @splat_index, @double_splat.try &.clone(with_doc: with_doc).as(Arg), @free_vars)
       a_def.calls_super = calls_super?
       a_def.calls_initialize = calls_initialize?
       a_def.calls_previous_def = calls_previous_def?
@@ -972,8 +980,8 @@ module Crystal
       name.size
     end
 
-    def clone_without_location
-      Macro.new(@name, @args.clone, @body.clone, @block_arg.clone, @splat_index, @double_splat.clone)
+    def clone_without_location(with_doc = false)
+      Macro.new(@name, @args.map &.clone(with_doc: with_doc).as(Arg), @body.clone(with_doc: with_doc).as(ASTNode), @block_arg.try &.clone(with_doc: with_doc).as(Arg), @splat_index, @double_splat.try &.clone(with_doc: with_doc).as(Arg))
     end
 
     def_equals_and_hash @name, @args, @body, @block_arg, @splat_index, @double_splat
@@ -994,32 +1002,32 @@ module Crystal
 
   # Used only for flags
   class Not < UnaryExpression
-    def clone_without_location
-      Not.new(@exp.clone)
+    def clone_without_location(with_doc = false)
+      Not.new(@exp.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
   class PointerOf < UnaryExpression
-    def clone_without_location
-      PointerOf.new(@exp.clone)
+    def clone_without_location(with_doc = false)
+      PointerOf.new(@exp.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
   class SizeOf < UnaryExpression
-    def clone_without_location
-      SizeOf.new(@exp.clone)
+    def clone_without_location(with_doc = false)
+      SizeOf.new(@exp.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
   class InstanceSizeOf < UnaryExpression
-    def clone_without_location
-      InstanceSizeOf.new(@exp.clone)
+    def clone_without_location(with_doc = false)
+      InstanceSizeOf.new(@exp.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
   class Out < UnaryExpression
-    def clone_without_location
-      Out.new(@exp.clone)
+    def clone_without_location(with_doc = false)
+      Out.new(@exp.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
@@ -1035,8 +1043,8 @@ module Crystal
       @exp.accept visitor
     end
 
-    def clone_without_location
-      VisibilityModifier.new(@modifier, @exp.clone)
+    def clone_without_location(with_doc = false)
+      VisibilityModifier.new(@modifier, @exp.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash modifier, exp
@@ -1055,8 +1063,8 @@ module Crystal
       @const.accept visitor
     end
 
-    def clone_without_location
-      IsA.new(@obj.clone, @const.clone, @nil_check)
+    def clone_without_location(with_doc = false)
+      IsA.new(@obj.clone(with_doc: with_doc).as(ASTNode), @const.clone(with_doc: with_doc).as(ASTNode), @nil_check)
     end
 
     def_equals_and_hash @obj, @const, @nil_check
@@ -1073,8 +1081,8 @@ module Crystal
       obj.accept visitor
     end
 
-    def clone_without_location
-      RespondsTo.new(@obj.clone, @name)
+    def clone_without_location(with_doc = false)
+      RespondsTo.new(@obj.clone(with_doc: with_doc).as(ASTNode), @name)
     end
 
     def_equals_and_hash @obj, @name
@@ -1086,7 +1094,7 @@ module Crystal
     def initialize(@string)
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       Require.new(@string)
     end
 
@@ -1106,8 +1114,8 @@ module Crystal
       @body.accept visitor
     end
 
-    def clone_without_location
-      When.new(@conds.clone, @body.clone)
+    def clone_without_location(with_doc = false)
+      When.new(@conds.map &.clone(with_doc: with_doc).as(ASTNode), @body.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @conds, @body
@@ -1126,15 +1134,19 @@ module Crystal
       @else.try &.accept visitor
     end
 
-    def clone_without_location
-      Case.new(@cond.clone, @whens.clone, @else.clone)
+    def clone_without_location(with_doc = false)
+      Case.new(@cond.try &.clone(with_doc: with_doc).as(ASTNode), @whens.map &.clone(with_doc: with_doc).as(When), @else.try &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @cond, @whens, @else
   end
 
   class Select < ASTNode
-    record When, condition : ASTNode, body : ASTNode
+    record When, condition : ASTNode, body : ASTNode do
+      def clone(with_doc = false)
+        When.new condition.clone(with_doc: with_doc), body.clone(with_doc: with_doc)
+      end
+    end
 
     property whens : Array(When)
     property else : ASTNode?
@@ -1150,8 +1162,8 @@ module Crystal
       @else.try &.accept visitor
     end
 
-    def clone_without_location
-      Select.new(@whens.clone, @else.clone)
+    def clone_without_location(with_doc = false)
+      Select.new(@whens.map &.clone(with_doc: with_doc).as(When), @else.try &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @whens, @else
@@ -1167,7 +1179,7 @@ module Crystal
       true
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       self
     end
 
@@ -1203,7 +1215,7 @@ module Crystal
       names.size == 1 && names.first == name
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       ident = Path.new(@names.clone, @global)
       ident.name_size = name_size
       ident
@@ -1239,8 +1251,8 @@ module Crystal
       @body.accept visitor
     end
 
-    def clone_without_location
-      ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @name_column_number, @splat_index)
+    def clone_without_location(with_doc = false)
+      ClassDef.new(@name, @body.clone(with_doc: with_doc).as(ASTNode), @superclass.try &.clone(with_doc: with_doc).as(ASTNode), @type_vars.clone, @abstract, @struct, @name_column_number, @splat_index)
     end
 
     def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct, @splat_index
@@ -1269,8 +1281,8 @@ module Crystal
       @body.accept visitor
     end
 
-    def clone_without_location
-      ModuleDef.new(@name, @body.clone, @type_vars.clone, @name_column_number, @splat_index)
+    def clone_without_location(with_doc = false)
+      ModuleDef.new(@name, @body.clone(with_doc: with_doc).as(ASTNode), @type_vars.clone, @name_column_number, @splat_index)
     end
 
     def_equals_and_hash @name, @body, @type_vars, @splat_index
@@ -1295,8 +1307,8 @@ module Crystal
       @body.accept visitor
     end
 
-    def clone_without_location
-      While.new(@cond.clone, @body.clone)
+    def clone_without_location(with_doc = false)
+      While.new(@cond.clone(with_doc: with_doc).as(ASTNode), @body.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @cond, @body
@@ -1321,8 +1333,8 @@ module Crystal
       @body.accept visitor
     end
 
-    def clone_without_location
-      Until.new(@cond.clone, @body.clone)
+    def clone_without_location(with_doc = false)
+      Until.new(@cond.clone(with_doc: with_doc).as(ASTNode), @body.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @cond, @body
@@ -1346,8 +1358,8 @@ module Crystal
       @named_args.try &.each &.accept visitor
     end
 
-    def clone_without_location
-      Generic.new(@name.clone, @type_vars.clone, @named_args.clone)
+    def clone_without_location(with_doc = false)
+      Generic.new(@name.clone(with_doc: with_doc).as(Path), @type_vars.map &.clone(with_doc: with_doc).as(ASTNode), @named_args.try &.map &.clone(with_doc: with_doc).as(NamedArgument))
     end
 
     def_equals_and_hash @name, @type_vars, @named_args
@@ -1383,8 +1395,8 @@ module Crystal
       end
     end
 
-    def clone_without_location
-      TypeDeclaration.new(@var.clone, @declared_type.clone, @value.clone)
+    def clone_without_location(with_doc = false)
+      TypeDeclaration.new(@var.clone(with_doc: with_doc).as(ASTNode), @declared_type.clone(with_doc: with_doc).as(ASTNode), @value.try &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @var, @declared_type, @value
@@ -1414,8 +1426,8 @@ module Crystal
       end
     end
 
-    def clone_without_location
-      UninitializedVar.new(@var.clone, @declared_type.clone)
+    def clone_without_location(with_doc = false)
+      UninitializedVar.new(@var.clone(with_doc: with_doc).as(ASTNode), @declared_type.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @var, @declared_type
@@ -1435,8 +1447,8 @@ module Crystal
       @types.try &.each &.accept visitor
     end
 
-    def clone_without_location
-      Rescue.new(@body.clone, @types.clone, @name)
+    def clone_without_location(with_doc = false)
+      Rescue.new(@body.clone(with_doc: with_doc).as(ASTNode), @types.try(&.map(&.clone(with_doc: with_doc).as(ASTNode))), @name)
     end
 
     def_equals_and_hash @body, @types, @name
@@ -1461,8 +1473,8 @@ module Crystal
       @ensure.try &.accept visitor
     end
 
-    def clone_without_location
-      ex = ExceptionHandler.new(@body.clone, @rescues.clone, @else.clone, @ensure.clone)
+    def clone_without_location(with_doc = false)
+      ex = ExceptionHandler.new(@body.clone(with_doc: with_doc).as(ASTNode), @rescues.try(&.map(&.clone(with_doc: with_doc).as(Rescue))), @else.try &.clone(with_doc: with_doc).as(ASTNode), @ensure.try &.clone(with_doc: with_doc).as(ASTNode))
       ex.implicit = implicit
       ex.suffix = suffix
       ex
@@ -1481,8 +1493,8 @@ module Crystal
       @def.accept visitor
     end
 
-    def clone_without_location
-      ProcLiteral.new(@def.clone)
+    def clone_without_location(with_doc = false)
+      ProcLiteral.new(@def.clone(with_doc: with_doc).as(Def))
     end
 
     def_equals_and_hash @def
@@ -1501,8 +1513,8 @@ module Crystal
       @args.each &.accept visitor
     end
 
-    def clone_without_location
-      ProcPointer.new(@obj.clone, @name, @args.clone)
+    def clone_without_location(with_doc = false)
+      ProcPointer.new(@obj.try &.clone(with_doc: with_doc).as(ASTNode), @name, @args.map &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @obj, @name, @args
@@ -1518,8 +1530,8 @@ module Crystal
       @types.each &.accept visitor
     end
 
-    def clone_without_location
-      Union.new(@types.clone)
+    def clone_without_location(with_doc = false)
+      Union.new(@types.map &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash types
@@ -1530,7 +1542,7 @@ module Crystal
       true
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       Self.new
     end
 
@@ -1557,20 +1569,20 @@ module Crystal
   end
 
   class Return < ControlExpression
-    def clone_without_location
-      Return.new(@exp.clone)
+    def clone_without_location(with_doc = false)
+      Return.new(@exp.try &.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
   class Break < ControlExpression
-    def clone_without_location
-      Break.new(@exp.clone)
+    def clone_without_location(with_doc = false)
+      Break.new(@exp.try &.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
   class Next < ControlExpression
-    def clone_without_location
-      Next.new(@exp.clone)
+    def clone_without_location(with_doc = false)
+      Next.new(@exp.try &.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
@@ -1586,8 +1598,8 @@ module Crystal
       @exps.each &.accept visitor
     end
 
-    def clone_without_location
-      Yield.new(@exps.clone, @scope.clone)
+    def clone_without_location(with_doc = false)
+      Yield.new(@exps.map &.clone(with_doc: with_doc).as(ASTNode), @scope.try &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def end_location
@@ -1607,7 +1619,7 @@ module Crystal
       @name.accept visitor
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       Include.new(@name)
     end
 
@@ -1628,7 +1640,7 @@ module Crystal
       @name.accept visitor
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       Extend.new(@name)
     end
 
@@ -1653,8 +1665,8 @@ module Crystal
       @body.accept visitor
     end
 
-    def clone_without_location
-      LibDef.new(@name, @body.clone, @name_column_number)
+    def clone_without_location(with_doc = false)
+      LibDef.new(@name, @body.clone(with_doc: with_doc).as(ASTNode), @name_column_number)
     end
 
     def_equals_and_hash @name, @body
@@ -1678,8 +1690,8 @@ module Crystal
       @body.try &.accept visitor
     end
 
-    def clone_without_location
-      FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
+    def clone_without_location(with_doc = false)
+      FunDef.new(@name, @args.map &.clone(with_doc: with_doc).as(Arg), @return_type.try &.clone(with_doc: with_doc).as(ASTNode), @varargs, @body.try &.clone(with_doc: with_doc).as(ASTNode), @real_name)
     end
 
     def_equals_and_hash @name, @args, @return_type, @varargs, @body, @real_name
@@ -1697,8 +1709,8 @@ module Crystal
       @type_spec.accept visitor
     end
 
-    def clone_without_location
-      TypeDef.new(@name, @type_spec.clone, @name_column_number)
+    def clone_without_location(with_doc = false)
+      TypeDef.new(@name, @type_spec.clone(with_doc: with_doc).as(ASTNode), @name_column_number)
     end
 
     def_equals_and_hash @name, @type_spec
@@ -1718,8 +1730,8 @@ module Crystal
       @body.accept visitor
     end
 
-    def clone_without_location
-      CStructOrUnionDef.new(@name, @body.clone, @union)
+    def clone_without_location(with_doc = false)
+      CStructOrUnionDef.new(@name, @body.clone(with_doc: with_doc).as(ASTNode), @union)
     end
 
     def_equals_and_hash @name, @union, @body
@@ -1740,8 +1752,8 @@ module Crystal
       @base_type.try &.accept visitor
     end
 
-    def clone_without_location
-      EnumDef.new(@name, @members.clone, @base_type.clone)
+    def clone_without_location(with_doc = false)
+      EnumDef.new(@name, @members.map &.clone(with_doc: with_doc).as(ASTNode), @base_type.try &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @name, @members, @base_type
@@ -1759,8 +1771,8 @@ module Crystal
       @type_spec.accept visitor
     end
 
-    def clone_without_location
-      ExternalVar.new(@name, @type_spec.clone, @real_name)
+    def clone_without_location(with_doc = false)
+      ExternalVar.new(@name, @type_spec.clone(with_doc: with_doc).as(ASTNode), @real_name)
     end
 
     def_equals_and_hash @name, @type_spec, @real_name
@@ -1779,8 +1791,8 @@ module Crystal
       @value.accept visitor
     end
 
-    def clone_without_location
-      Alias.new(@name, @value.clone)
+    def clone_without_location(with_doc = false)
+      Alias.new(@name, @value.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @name, @value
@@ -1796,8 +1808,8 @@ module Crystal
       @name.accept visitor
     end
 
-    def clone_without_location
-      Metaclass.new(@name.clone)
+    def clone_without_location(with_doc = false)
+      Metaclass.new(@name.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash name
@@ -1816,8 +1828,8 @@ module Crystal
       @to.accept visitor
     end
 
-    def clone_without_location
-      Cast.new(@obj.clone, @to.clone)
+    def clone_without_location(with_doc = false)
+      Cast.new(@obj.clone(with_doc: with_doc).as(ASTNode), @to.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def end_location
@@ -1840,8 +1852,8 @@ module Crystal
       @to.accept visitor
     end
 
-    def clone_without_location
-      NilableCast.new(@obj.clone, @to.clone)
+    def clone_without_location(with_doc = false)
+      NilableCast.new(@obj.clone(with_doc: with_doc).as(ASTNode), @to.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def end_location
@@ -1862,8 +1874,8 @@ module Crystal
       @expressions.each &.accept visitor
     end
 
-    def clone_without_location
-      TypeOf.new(@expressions.clone)
+    def clone_without_location(with_doc = false)
+      TypeOf.new(@expressions.map &.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash expressions
@@ -1883,8 +1895,10 @@ module Crystal
       @named_args.try &.each &.accept visitor
     end
 
-    def clone_without_location
-      Attribute.new(name, @args.clone, @named_args.clone)
+    def clone_without_location(with_doc = false)
+      args = @args.map &.clone(with_doc: with_doc).as(ASTNode).as(ASTNode)
+      named_args = @named_args.try &.map &.clone(with_doc: with_doc).as(ASTNode).as(NamedArgument)
+      Attribute.new(name, args, named_args)
     end
 
     def self.any?(attributes, name)
@@ -1908,8 +1922,8 @@ module Crystal
       @exp.accept visitor
     end
 
-    def clone_without_location
-      MacroExpression.new(@exp.clone, @output)
+    def clone_without_location(with_doc = false)
+      MacroExpression.new(@exp.clone(with_doc: with_doc).as(ASTNode), @output)
     end
 
     def_equals_and_hash exp, output?
@@ -1922,7 +1936,7 @@ module Crystal
     def initialize(@value : String)
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       self
     end
 
@@ -1952,8 +1966,8 @@ module Crystal
       @else.accept visitor
     end
 
-    def clone_without_location
-      MacroIf.new(@cond.clone, @then.clone, @else.clone)
+    def clone_without_location(with_doc = false)
+      MacroIf.new(@cond.clone(with_doc: with_doc).as(ASTNode), @then.clone(with_doc: with_doc).as(ASTNode), @else.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @cond, @then, @else
@@ -1978,8 +1992,8 @@ module Crystal
       @body.accept visitor
     end
 
-    def clone_without_location
-      MacroFor.new(@vars.clone, @exp.clone, @body.clone)
+    def clone_without_location(with_doc = false)
+      MacroFor.new(@vars.map &.clone(with_doc: with_doc).as(Var), @exp.clone(with_doc: with_doc).as(ASTNode), @body.clone(with_doc: with_doc).as(ASTNode))
     end
 
     def_equals_and_hash @vars, @exp, @body
@@ -1997,8 +2011,8 @@ module Crystal
       @exps.try &.each &.accept visitor
     end
 
-    def clone_without_location
-      MacroVar.new(@name, @exps.clone)
+    def clone_without_location(with_doc = false)
+      MacroVar.new(@name, @exps.try(&.map(&.clone(with_doc: with_doc).as(ASTNode))))
     end
 
     def_equals_and_hash @name, @exps
@@ -2010,7 +2024,7 @@ module Crystal
       true
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       Underscore.new
     end
 
@@ -2020,14 +2034,14 @@ module Crystal
   end
 
   class Splat < UnaryExpression
-    def clone_without_location
-      Splat.new(@exp.clone)
+    def clone_without_location(with_doc = false)
+      Splat.new(@exp.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
   class DoubleSplat < UnaryExpression
-    def clone_without_location
-      DoubleSplat.new(@exp.clone)
+    def clone_without_location(with_doc = false)
+      DoubleSplat.new(@exp.clone(with_doc: with_doc).as(ASTNode))
     end
   end
 
@@ -2037,7 +2051,7 @@ module Crystal
     def initialize(@name : Symbol)
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       MagicConstant.new(@name)
     end
 
@@ -2100,8 +2114,8 @@ module Crystal
       @inputs.try &.each &.accept visitor
     end
 
-    def clone_without_location
-      Asm.new(@text, @output.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel)
+    def clone_without_location(with_doc = false)
+      Asm.new(@text, @output.try &.clone(with_doc: with_doc).as(AsmOperand), @inputs.try(&.map(&.clone(with_doc: with_doc).as(AsmOperand))), @clobbers, @volatile, @alignstack, @intel)
     end
 
     def_equals_and_hash text, output, inputs, clobbers, volatile?, alignstack?, intel?
@@ -2118,7 +2132,7 @@ module Crystal
       @exp.accept visitor
     end
 
-    def clone_without_location
+    def clone_without_location(with_doc = false)
       AsmOperand.new(@constraint, @exp)
     end
 
