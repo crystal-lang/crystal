@@ -14,7 +14,7 @@ module Crystal
       end
     end
 
-    def clone_without_location(with_doc = false)
+    def clone_without_location
       TypeFilteredNode.new(@filter, @node)
     end
 

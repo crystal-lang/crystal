@@ -349,7 +349,7 @@ module Crystal
     def visit(node : Yield)
       if block = @block
         if node.exps.empty?
-          @last = block.body.clone(with_doc: true)
+          @last = block.body.clone
         else
           block_vars = {} of String => ASTNode
           node.exps.each_with_index do |exp, i|
@@ -357,7 +357,7 @@ module Crystal
               block_vars[block_arg.name] = exp.clone
             end
           end
-          @last = replace_block_vars block.body.clone(with_doc: true), block_vars
+          @last = replace_block_vars block.body.clone, block_vars
         end
       else
         @last = Nop.new
