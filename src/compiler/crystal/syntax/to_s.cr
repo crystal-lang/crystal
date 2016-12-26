@@ -7,8 +7,8 @@ module Crystal
       to_s(io)
     end
 
-    def to_s(io, emit_loc_pragma = false)
-      visitor = ToSVisitor.new(io, emit_loc_pragma: emit_loc_pragma)
+    def to_s(io, emit_loc_pragma = false, emit_doc = false)
+      visitor = ToSVisitor.new(io, emit_loc_pragma: emit_loc_pragma, emit_doc: emit_doc)
       self.accept visitor
     end
   end
@@ -16,28 +16,31 @@ module Crystal
   class ToSVisitor < Visitor
     @str : IO
 
-    def initialize(@str = IO::Memory.new, @emit_loc_pragma = false)
+    def initialize(@str = IO::Memory.new, @emit_loc_pragma = false, @emit_doc = false)
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
     end
 
     def visit_any(node)
-      return true unless @emit_loc_pragma
+      if @emit_doc && (doc = node.doc) && !doc.empty?
+        doc.each_line(chomp: false) do |line|
+          append_indent
+          @str << "# "
+          @str << line
+        end
+        @str.puts
+      end
 
-      location = node.location
-      return true unless location
-
-      filename = location.filename
-      return true unless filename.is_a?(String)
-
-      @str << "#<loc:"
-      filename.inspect(@str)
-      @str << ","
-      @str << location.line_number
-      @str << ","
-      @str << location.column_number
-      @str << ">"
+      if @emit_loc_pragma && (loc = node.location) && loc.filename.is_a?(String)
+        @str << "#<loc:"
+        loc.filename.inspect(@str)
+        @str << ","
+        @str << loc.line_number
+        @str << ","
+        @str << loc.column_number
+        @str << ">"
+      end
 
       true
     end

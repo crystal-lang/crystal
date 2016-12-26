@@ -40,6 +40,7 @@ module Crystal
       clone = clone_without_location
       clone.location = location
       clone.end_location = end_location
+      clone.doc = doc
       clone
     end
 
