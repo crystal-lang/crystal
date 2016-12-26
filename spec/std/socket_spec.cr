@@ -384,6 +384,14 @@ describe UNIXSocket do
 end
 
 describe TCPServer do
+  it "creates a raw socket" do
+    sock = TCPServer.new
+    sock.family.should eq(Socket::Family::INET)
+
+    sock = TCPServer.new(Socket::Family::INET6)
+    sock.family.should eq(Socket::Family::INET6)
+  end
+
   it "fails when port is in use" do
     port = free_udp_socket_port
 
@@ -403,6 +411,14 @@ describe TCPServer do
 end
 
 describe TCPSocket do
+  it "creates a raw socket" do
+    sock = TCPSocket.new
+    sock.family.should eq(Socket::Family::INET)
+
+    sock = TCPSocket.new(Socket::Family::INET6)
+    sock.family.should eq(Socket::Family::INET6)
+  end
+
   it "sends and receives messages" do
     port = TCPServer.open("::", 0) do |server|
       server.local_address.port
@@ -500,6 +516,14 @@ describe TCPSocket do
 end
 
 describe UDPSocket do
+  it "creates a raw socket" do
+    sock = UDPSocket.new
+    sock.family.should eq(Socket::Family::INET)
+
+    sock = UDPSocket.new(Socket::Family::INET6)
+    sock.family.should eq(Socket::Family::INET6)
+  end
+
   it "reads and writes data to server" do
     port = free_udp_socket_port
 

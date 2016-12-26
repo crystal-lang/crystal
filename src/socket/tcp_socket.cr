@@ -12,6 +12,11 @@ require "./ip_socket"
 # client.close
 # ```
 class TCPSocket < IPSocket
+  # Creates a new `TCPSocket`, waiting to be connected.
+  def self.new(family : Family = Family::INET)
+    super(family, Type::STREAM, Protocol::TCP)
+  end
+
   # Creates a new TCP connection to a remote TCP server.
   #
   # You may limit the DNS resolution time with `dns_timeout` and limit the
