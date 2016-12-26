@@ -3,6 +3,8 @@ class Socket
     getter family : Family
     getter size : Int32
 
+    # Returns either an `IPAddress` or `UNIXAddres` from the internal OS
+    # representation. Only INET, INET6 and UNIX families are supported.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : Address
       case family = Family.new(sockaddr.value.sa_family)
       when Family::INET6
@@ -26,6 +28,21 @@ class Socket
     end
   end
 
+  # IP address representation.
+  #
+  # Holds a binary representation of an IP address, either translated from a
+  # String, or directly received from an opened connection (e.g.
+  # `Socket#local_address`, `Socket#receive`).
+  #
+  # Example:
+  # ```
+  # Socket::IPAddress.new("127.0.0.1", 8080)
+  # Socket::IPAddress.new("fe80::2ab2:bdff:fe59:8e2c", 1234)
+  # ```
+  #
+  # `IPAddress` won't resolve domains, including `localhost`. If you must
+  # resolve an IP, or don't know whether a String constains an IP or a domain
+  # name, you should use `Addrinfo.resolve` instead.
   struct IPAddress < Address
     getter port : Int32
 
@@ -45,6 +62,8 @@ class Socket
       end
     end
 
+    # Creates an `IPAddress` from the internal OS representation. Supports both
+    # INET and INET6 families.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : IPAddress
       case family = Family.new(sockaddr.value.sa_family)
       when Family::INET6
@@ -78,6 +97,13 @@ class Socket
       addr if LibC.inet_pton(LibC::AF_INET, address, pointerof(addr)) == 1
     end
 
+    # Returns a String representation of the IP address.
+    #
+    # Example:
+    # ```
+    # ip_address = socket.remote_address
+    # ip_address.address # => "127.0.0.1"
+    # ```
     def address
       @address ||= begin
         case family
@@ -152,6 +178,15 @@ class Socket
     end
   end
 
+  # UNIX address representation.
+  #
+  # Holds the local path of an UNIX address, usually coming from an opened
+  # connection (e.g. `Socket#local_address`, `Socket#receive`).
+  #
+  # Example:
+  # ```
+  # Socket::UNIXAddress.new("/tmp/my.sock")
+  # ```
   struct UNIXAddress < Address
     getter path : String
 
@@ -166,6 +201,7 @@ class Socket
       @size = sizeof(LibC::SockaddrUn)
     end
 
+    # Creates an `UNIXSocket` from the internal OS representation.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : UNIXAddress
       new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
     end

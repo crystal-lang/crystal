@@ -1,4 +1,5 @@
 class Socket
+  # Domain name resolver.
   struct Addrinfo
     getter family : Family
     getter type : Type
@@ -8,7 +9,31 @@ class Socket
     @addr : LibC::SockaddrIn6
     @next : LibC::Addrinfo*
 
-    def self.resolve(host, service, family : Family, type : Type, protocol : Protocol = Protocol::IP, timeout = nil)
+    # Resolves a domain that best matches the given options.
+    #
+    # - *domain* may be an IP address or a domain name.
+    # - *service* may be a port number or a service name. It must be specified,
+    #   because different servers may handle the `mail` or `http` services for
+    #   example.
+    # - *family* is optional and defaults to `Family::UNSPEC`
+    # - *type* is the intented socket type (e.g. `Type::STREAM`) and must be
+    #   specified.
+    # - *protocol* is the intented socket protocol (e.g. `Protocol::TCP`) and
+    #   should be specified.
+    #
+    # Each possible resolution will be yield as an `Addrinfo` struct, for as
+    # long as the block returns an error. The iteration will stop once the block
+    # returns `nil`.
+    #
+    # Example:
+    # ```
+    # Socket::Addrinfo.resolve("example.org", "http", type: Socket::Type::STREAM, protocol: Socket::Type::TCP) do |addrinfo|
+    #   sock = Socket.new(addrinfo.family, addrinfo.type, addrinfo.protocol)
+    #   sock.connect(addrinfo)
+    #   return sock
+    # end
+    # ```
+    def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil)
       hints = LibC::Addrinfo.new
       hints.ai_family = (family || Family::UNSPEC).to_i32
       hints.ai_socktype = type
@@ -19,11 +44,11 @@ class Socket
         hints.ai_flags |= LibC::AI_NUMERICSERV
       end
 
-      case ret = LibC.getaddrinfo(host, service.to_s, pointerof(hints), out ptr)
+      case ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
       when 0
         # success
       when LibC::EAI_NONAME
-        raise Socket::Error.new("No address found for #{host}:#{service} over #{protocol}")
+        raise Socket::Error.new("No address found for #{domain}:#{service} over #{protocol}")
       else
         raise Socket::Error.new("getaddrinfo: #{String.new(LibC.gai_strerror(ret))}")
       end
@@ -38,7 +63,7 @@ class Socket
 
           unless addrinfo = addrinfo.try(&.next?)
             if error.is_a?(Errno) && error.errno == Errno::ECONNREFUSED
-              raise Errno.new("Error connecting to '#{host}:#{service}'", error.errno)
+              raise Errno.new("Error connecting to '#{domain}:#{service}'", error.errno)
             else
               raise error if error
             end
@@ -51,10 +76,34 @@ class Socket
 
     def self.tcp(host, service, family = Family::UNSPEC, timeout = nil)
       resolve(host, service, family, Type::STREAM, Protocol::TCP) { |addrinfo| yield addrinfo }
+    # Shortcut to resolve a domain for the TCP protocol with STREAM type.
+    #
+    # Example:
+    # ```
+    # Addrinfo.tcp("example.org", 80) do |addrinfo|
+    #   sock = Socket.new(addrinfo.family, addrinfo.type, addrinfo.protocol)
+    #   sock.connect(addrinfo)
+    #   sock
+    # end
+    # ```
+    def self.tcp(domain, service, family = Family::UNSPEC, timeout = nil)
+      resolve(domain, service, family, Type::STREAM, Protocol::TCP) { |addrinfo| yield addrinfo }
     end
 
-    def self.udp(host, service, family = Family::UNSPEC, timeout = nil)
-      resolve(host, service, family, Type::DGRAM, Protocol::UDP) { |addrinfo| yield addrinfo }
+    end
+
+    # Shortcut to resolve a domain for the UDP protocol with DGRAM type.
+    #
+    # Example:
+    # ```
+    # sock = UDPSocket.new
+    # Addrinfo.udp("example.org", 53) do |addrinfo|
+    #   sock.bind(addrinfo)
+    #   sock
+    # end
+    # ```
+    def self.udp(domain, service, family = Family::UNSPEC, timeout = nil)
+      resolve(domain, service, family, Type::DGRAM, Protocol::UDP) { |addrinfo| yield addrinfo }
     end
 
     protected def initialize(addrinfo : LibC::Addrinfo*)
@@ -74,6 +123,7 @@ class Socket
       end
     end
 
+    # Returns an `IPAddress` matching this addrinfo.
     def ip_address
       @ip_address = IPAddress.from(@addr, @addrlen)
     end
