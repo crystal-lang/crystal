@@ -12,13 +12,13 @@ lib LibLLVMExt
                                                                  builder : DIBuilder, scope : Metadata, name : LibC::Char*,
                                                                  linkage_name : LibC::Char*, file : Metadata, line : LibC::UInt,
                                                                  composite_type : Metadata, is_local_to_unit : LibC::Int, is_definition : LibC::Int,
-                                                                 scope_line : LibC::UInt, flags : LibC::UInt, is_optimized : LibC::Int, func : LibLLVM::ValueRef) : Metadata
+                                                                 scope_line : LibC::UInt, flags : LLVM::DIFlags, is_optimized : LibC::Int, func : LibLLVM::ValueRef) : Metadata
   {% else %}
     fun di_builder_create_function = LLVMDIBuilderCreateFunction(
                                                                  builder : DIBuilder, scope : Metadata, name : LibC::Char*,
                                                                  linkage_name : LibC::Char*, file : Metadata, line : LibC::UInt,
                                                                  composite_type : Metadata, is_local_to_unit : Bool, is_definition : Bool,
-                                                                 scope_line : LibC::UInt, flags : LibC::UInt, is_optimized : Bool, func : LibLLVM::ValueRef) : Metadata
+                                                                 scope_line : LibC::UInt, flags : LLVM::DIFlags, is_optimized : Bool, func : LibLLVM::ValueRef) : Metadata
   {% end %}
 
   fun di_builder_create_file = LLVMDIBuilderCreateFile(builder : DIBuilder, file : LibC::Char*, dir : LibC::Char*) : Metadata
@@ -45,13 +45,15 @@ lib LibLLVMExt
                                                                         name : LibC::Char*,
                                                                         file : Metadata, line : LibC::UInt,
                                                                         type : Metadata,
-                                                                        always_preserve : LibC::Int, flags : LibC::UInt) : Metadata
+                                                                        always_preserve : LibC::Int,
+                                                                        flags : LLVM::DIFlags,
+                                                                        align_in_bits : UInt32) : Metadata
 
   fun di_builder_create_parameter_variable = LLVMDIBuilderCreateParameterVariable(builder : DIBuilder,
                                                                                   scope : Metadata,
                                                                                   name : LibC::Char*, arg_no : LibC::UInt,
                                                                                   file : Metadata, line : LibC::UInt, type : Metadata,
-                                                                                  always_preserve : LibC::Int, flags : LibC::UInt) : Metadata
+                                                                                  always_preserve : LibC::Int, flags : LLVM::DIFlags) : Metadata
 
   fun di_builder_insert_declare_at_end = LLVMDIBuilderInsertDeclareAtEnd(builder : DIBuilder,
                                                                          storage : LibLLVM::ValueRef,
@@ -74,11 +76,11 @@ lib LibLLVMExt
 
   fun di_builder_create_struct_type = LLVMDIBuilderCreateStructType(builder : DIBuilder,
                                                                     scope : Metadata, name : LibC::Char*, file : Metadata, line : LibC::UInt, size_in_bits : UInt64,
-                                                                    align_in_bits : UInt64, flags : LibC::UInt, derived_from : Metadata, element_types : Metadata) : Metadata
+                                                                    align_in_bits : UInt64, flags : LLVM::DIFlags, derived_from : Metadata, element_types : Metadata) : Metadata
 
   fun di_builder_create_member_type = LLVMDIBuilderCreateMemberType(builder : DIBuilder,
                                                                     scope : Metadata, name : LibC::Char*, file : Metadata, line : LibC::UInt, size_in_bits : UInt64,
-                                                                    align_in_bits : UInt64, offset_in_bits : UInt64, flags : LibC::UInt, ty : Metadata) : Metadata
+                                                                    align_in_bits : UInt64, offset_in_bits : UInt64, flags : LLVM::DIFlags, ty : Metadata) : Metadata
 
   fun di_builder_create_pointer_type = LLVMDIBuilderCreatePointerType(builder : DIBuilder,
                                                                       pointee_type : Metadata,

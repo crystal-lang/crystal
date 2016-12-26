@@ -196,4 +196,32 @@ module LLVM
     UMax
     UMin
   end
+
+  enum DIFlags : UInt32
+    Zero                = 0
+    Private             = 1
+    Protected           = 2
+    Public              = 3
+    FwdDecl             = 1 << 2
+    AppleBlock          = 1 << 3
+    BlockByrefStruct    = 1 << 4
+    Virtual             = 1 << 5
+    Artificial          = 1 << 6
+    Explicit            = 1 << 7
+    Prototyped          = 1 << 8
+    ObjcClassComplete   = 1 << 9
+    ObjectPointer       = 1 << 10
+    Vector              = 1 << 11
+    StaticMember        = 1 << 12
+    LValueReference     = 1 << 13
+    RValueReference     = 1 << 14
+    ExternalTypeRef     = 1 << 15
+    SingleInheritance   = 1 << 16
+    MultipleInheritance = 2 << 16
+    VirtualInheritance  = 3 << 16
+    IntroducedVirtual   = 1 << 18
+    BitField            = 1 << 19
+    NoReturn            = 1 << 20
+    MainSubprogram      = 1 << 21
+  end
 end
