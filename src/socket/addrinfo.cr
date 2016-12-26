@@ -153,9 +153,11 @@ class Socket
       end
     end
 
+    @ip_address : IPAddress?
+
     # Returns an `IPAddress` matching this addrinfo.
     def ip_address
-      @ip_address = IPAddress.from(@addr, @addrlen)
+      @ip_address ||= IPAddress.from(to_unsafe, size)
     end
 
     def to_unsafe
