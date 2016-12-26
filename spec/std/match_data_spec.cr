@@ -107,6 +107,36 @@ describe "Regex::MatchData" do
     end
   end
 
+  it "gets an array of unnamed captures" do
+    "Crystal".match(/(Cr)y/).not_nil!.captures.should eq(["Cr"])
+    "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.captures.should eq(["Cr", "st"])
+  end
+
+  it "gets a hash of named captures" do
+    "Crystal".match(/(?<name1>Cr)y/).not_nil!.named_captures.should eq({"name1" => "Cr"})
+    "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.named_captures.should eq({"name1" => "y", "name2" => "al"})
+  end
+
+  it "converts into an array" do
+    "Crystal".match(/(?<name1>Cr)(y)/).not_nil!.to_a.should eq(["Cry", "Cr", "y"])
+    "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.to_a.should eq(["Crystal", "Cr", "y", "st", "al"])
+  end
+
+  it "converts into a hash" do
+    "Crystal".match(/(?<name1>Cr)(y)/).not_nil!.to_h.should eq({
+            0 => "Cry",
+      "name1" => "Cr",
+            2 => "y",
+    })
+    "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.to_h.should eq({
+            0 => "Crystal",
+            1 => "Cr",
+      "name1" => "y",
+            3 => "st",
+      "name2" => "al",
+    })
+  end
+
   it "can check equality" do
     re = /((?<hello>he)llo)/
     m1 = re.match("hello")
