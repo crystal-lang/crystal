@@ -21,19 +21,61 @@ class Socket
     # - *protocol* is the intented socket protocol (e.g. `Protocol::TCP`) and
     #   should be specified.
     #
-    # Each possible resolution will be yield as an `Addrinfo` struct, for as
-    # long as the block returns an error. The iteration will stop once the block
-    # returns `nil`.
-    #
     # Example:
     # ```
-    # Socket::Addrinfo.resolve("example.org", "http", type: Socket::Type::STREAM, protocol: Socket::Type::TCP) do |addrinfo|
-    #   sock = Socket.new(addrinfo.family, addrinfo.type, addrinfo.protocol)
-    #   sock.connect(addrinfo)
-    #   return sock
-    # end
+    # addrinfos = Socket::Addrinfo.resolve("example.org", "http", type: Socket::Type::STREAM, protocol: Socket::Type::TCP)
     # ```
+    def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
+      addrinfos = [] of Addrinfo
+
+      getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
+        loop do
+          addrinfos << addrinfo.not_nil!
+          unless addrinfo = addrinfo.next?
+            return addrinfos
+          end
+        end
+      end
+    end
+
+    # Resolves a domain that best matches the given options.
+    #
+    # Yields each possible `Addrinfo` resolution since a domain may resolve to
+    # many IP. Implementations are supposed to try all the addresses until the
+    # socket is connected (or bound) or there are no addresses to try anymore.
+    #
+    # Raising is an expensive operation, so instead of raising on a connect or
+    # bind error, just to rescue it immediately after, the block is expected to
+    # return the error instead, which will be raised once there are no more
+    # addresses to try.
+    #
+    # The iteration will be stopped once the block returns something that isn't
+    # an `Exception` (e.g. a `Socket` or `nil`).
     def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil)
+      getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
+        error = nil
+
+        loop do
+          value = yield addrinfo.not_nil!
+
+          if value.is_a?(Exception)
+            error = value
+          else
+            return value
+          end
+
+          unless addrinfo = addrinfo.try(&.next?)
+            if error.is_a?(Errno) && error.errno == Errno::ECONNREFUSED
+              raise Errno.new("Error connecting to '#{domain}:#{service}'", error.errno)
+            else
+              raise error if error
+            end
+          end
+        end
+      end
+    end
+
+    private def self.getaddrinfo(domain, service, family, type, protocol, timeout)
       hints = LibC::Addrinfo.new
       hints.ai_family = (family || Family::UNSPEC).to_i32
       hints.ai_socktype = type
@@ -54,54 +96,42 @@ class Socket
       end
 
       begin
-        addrinfo = new(ptr)
-        error = nil
-
-        loop do
-          error = yield addrinfo.not_nil!
-          return unless error
-
-          unless addrinfo = addrinfo.try(&.next?)
-            if error.is_a?(Errno) && error.errno == Errno::ECONNREFUSED
-              raise Errno.new("Error connecting to '#{domain}:#{service}'", error.errno)
-            else
-              raise error if error
-            end
-          end
-        end
+        yield new(ptr)
       ensure
         LibC.freeaddrinfo(ptr)
       end
     end
 
-    def self.tcp(host, service, family = Family::UNSPEC, timeout = nil)
-      resolve(host, service, family, Type::STREAM, Protocol::TCP) { |addrinfo| yield addrinfo }
-    # Shortcut to resolve a domain for the TCP protocol with STREAM type.
+    # Resolves *domain* for the UDP protocol and returns an `Array` of possible
+    # `Addrinfo`. See `#resolve` for details.
     #
     # Example:
     # ```
-    # Addrinfo.tcp("example.org", 80) do |addrinfo|
-    #   sock = Socket.new(addrinfo.family, addrinfo.type, addrinfo.protocol)
-    #   sock.connect(addrinfo)
-    #   sock
-    # end
+    # addrinfos = Socket::Addrinfo.tcp("example.org", 80)
     # ```
+    def self.tcp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
+      resolve(domain, service, family, Type::STREAM, Protocol::TCP)
+    end
+
+    # Resolves a domain for the TCP protocol with STREAM type, and yields each
+    # possible `Addrinfo`. See `#resolve` for details.
     def self.tcp(domain, service, family = Family::UNSPEC, timeout = nil)
       resolve(domain, service, family, Type::STREAM, Protocol::TCP) { |addrinfo| yield addrinfo }
     end
 
-    end
-
-    # Shortcut to resolve a domain for the UDP protocol with DGRAM type.
+    # Resolves *domain* for the UDP protocol and returns an `Array` of possible
+    # `Addrinfo`. See `#resolve` for details.
     #
     # Example:
     # ```
-    # sock = UDPSocket.new
-    # Addrinfo.udp("example.org", 53) do |addrinfo|
-    #   sock.bind(addrinfo)
-    #   sock
-    # end
+    # addrinfos = Socket::Addrinfo.tcp("example.org", 53)
     # ```
+    def self.udp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
+      resolve(domain, service, family, Type::DGRAM, Protocol::UDP)
+    end
+
+    # Resolves a domain for the UDP protocol with DGRAM type, and yields each
+    # possible `Addrinfo`. See `#resolve` for details.
     def self.udp(domain, service, family = Family::UNSPEC, timeout = nil)
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP) { |addrinfo| yield addrinfo }
     end
