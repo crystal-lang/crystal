@@ -146,16 +146,7 @@ struct Pointer(T)
   # ptr1[3] # => 4
   # ```
   def copy_from(source : Pointer(T), count : Int)
-    raise ArgumentError.new("negative count") if count < 0
-
-    if self.class == source.class
-      Intrinsics.memcpy(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
-    else
-      while (count -= 1) >= 0
-        self[count] = source[count]
-      end
-    end
-    self
+    source.copy_to(self, count)
   end
 
   # :nodoc:
@@ -186,7 +177,7 @@ struct Pointer(T)
   # ptr2[3] # => 14
   # ```
   def copy_to(target : Pointer, count : Int)
-    target.copy_from(self, count)
+    target.copy_from_impl(self, count)
   end
 
   # Copies *count* elements from *source* into *self*.
@@ -207,20 +198,7 @@ struct Pointer(T)
   # ptr1[3] # => 3
   # ```
   def move_from(source : Pointer(T), count : Int)
-    raise ArgumentError.new("negative count") if count < 0
-
-    if self.class == source.class
-      Intrinsics.memmove(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
-    else
-      if source.address < address
-        copy_from source, count
-      else
-        count.times do |i|
-          self[i] = source[i]
-        end
-      end
-    end
-    self
+    source.move_to(self, count)
   end
 
   # :nodoc:
@@ -250,7 +228,42 @@ struct Pointer(T)
   # ptr1[3] # => 3
   # ```
   def move_to(target : Pointer, count : Int)
-    target.move_from(self, count)
+    target.move_from_impl(self, count)
+  end
+
+  # We use separate method in which we make sure that `source`
+  # is never a union of pointers. This is guaranteed because both
+  # copy_from/move_from/copy_to/move_to reverse self and caller,
+  # and so if either self or the arguments are unions a dispatch
+  # will happen and unions will disappear.
+  protected def copy_from_impl(source : Pointer(T), count : Int)
+    raise ArgumentError.new("negative count") if count < 0
+
+    if self.class == source.class
+      Intrinsics.memcpy(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
+    else
+      while (count -= 1) >= 0
+        self[count] = source[count]
+      end
+    end
+    self
+  end
+
+  protected def move_from_impl(source : Pointer(T), count : Int)
+    raise ArgumentError.new("negative count") if count < 0
+
+    if self.class == source.class
+      Intrinsics.memmove(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
+    else
+      if source.address < address
+        copy_from source, count
+      else
+        count.times do |i|
+          self[i] = source[i]
+        end
+      end
+    end
+    self
   end
 
   # Compares *count* elements from this pointer and *other*, byte by byte.

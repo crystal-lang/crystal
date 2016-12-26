@@ -32,7 +32,7 @@ describe "Pointer" do
       p2 = Pointer.malloc(4) { 0 }
       p2.copy_from(p1, 4)
       4.times do |i|
-        p2[0].should eq(p1[0])
+        p2[i].should eq(p1[i])
       end
     end
 
@@ -42,6 +42,14 @@ describe "Pointer" do
         p1.copy_from(p1, -1)
       end
     end
+
+    it "copies from union of pointers" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 1.5)
+      p3 = Pointer.malloc(4, 0 || 0.0)
+      p3.copy_from(p1 || p2, 4)
+      4.times { |i| p3[i].should eq(p1[i]) }
+    end
   end
 
   describe "copy_to" do
@@ -50,7 +58,7 @@ describe "Pointer" do
       p2 = Pointer.malloc(4) { 0 }
       p1.copy_to(p2, 4)
       4.times do |i|
-        p2[0].should eq(p1[0])
+        p2[i].should eq(p1[i])
       end
     end
 
@@ -59,6 +67,14 @@ describe "Pointer" do
       expect_raises(ArgumentError, "negative count") do
         p1.copy_to(p1, -1)
       end
+    end
+
+    it "copies to union of pointers" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 0 || 1.5)
+      p3 = Pointer.malloc(4, 0 || 'a')
+      p1.copy_to(p2 || p3, 4)
+      4.times { |i| p2[i].should eq(p1[i]) }
     end
   end
 
@@ -87,6 +103,14 @@ describe "Pointer" do
         p1.move_from(p1, -1)
       end
     end
+
+    it "moves from union of pointers" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 1.5)
+      p3 = Pointer.malloc(4, 0 || 0.0)
+      p3.move_from(p1 || p2, 4)
+      4.times { |i| p3[i].should eq(p1[i]) }
+    end
   end
 
   describe "move_to" do
@@ -113,6 +137,14 @@ describe "Pointer" do
       expect_raises(ArgumentError, "negative count") do
         p1.move_to(p1, -1)
       end
+    end
+
+    it "moves to union of pointers" do
+      p1 = Pointer.malloc(4, 1)
+      p2 = Pointer.malloc(4, 0 || 1.5)
+      p3 = Pointer.malloc(4, 0 || 'a')
+      p1.move_to(p2 || p3, 4)
+      4.times { |i| p2[i].should eq(p1[i]) }
     end
   end
 
