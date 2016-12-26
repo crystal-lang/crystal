@@ -64,6 +64,11 @@ struct JSON::ArrayBuilder(T)
     push { value.to_json(@io) }
   end
 
+  # Appends a JSON raw value into this array
+  def push_raw(value)
+    push { value.to_s(@io) }
+  end
+
   # Executes the block, expecting it to append a value
   # in this array
   def push
