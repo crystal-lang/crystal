@@ -100,4 +100,13 @@ describe "Regex::MatchData" do
       "há日本語".match(/本/).not_nil!.pre_match.should eq "há日"
     end
   end
+
+  it "can check equality" do
+    re = /((?<hello>he)llo)/
+    m1 = re.match("hello")
+    m2 = re.match("hello")
+    m1.should be_truthy
+    m2.should be_truthy
+    m1.should eq(m2)
+  end
 end

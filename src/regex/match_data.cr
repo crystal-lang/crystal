@@ -210,6 +210,14 @@ class Regex
       self
     end
 
+    def ==(other : Regex::MatchData)
+      return false unless size == other.size
+      return false unless regex == other.regex
+      return false unless string == other.string
+
+      return @ovector.memcmp(other.@ovector, (size + 1) * 2) == 0
+    end
+
     private def check_index_out_of_bounds(index)
       raise IndexError.new unless valid_group?(index)
     end
