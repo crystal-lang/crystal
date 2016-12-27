@@ -1,6 +1,6 @@
 module Crypto::Subtle
   # Compares *x* and *y* in constant time and returns true if they are the same, and false if they are not.
-  # Note: *x* and *y* must be able to respond to `to_slice`.
+  # Note: *x* and *y* must be able to respond to `to_slice` and *x* and *y* must be of equal length.
   #
   # ```
   # require "crypto/subtle"
@@ -10,7 +10,7 @@ module Crypto::Subtle
   def self.constant_time_compare(x, y) : Bool
     x = x.to_slice
     y = y.to_slice
-    return false if x.size != y.size
+    raise ArgumentError.new("Arguments must be equal lengths") unless x.size == y.size
 
     v = 0_u8
 
