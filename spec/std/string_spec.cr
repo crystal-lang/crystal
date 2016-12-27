@@ -979,6 +979,119 @@ describe "String" do
         iter.next.should be_a(Iterator::Stop)
       end
     end
+
+    describe "by string" do
+      it "splits an empty string single char" do
+        iter = "".each_split(",")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits empty string multiple char" do
+        iter = "".each_split(":-")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by multiple characters" do
+        iter = "foo:-bar:-:-baz:-".each_split(":-")
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("")
+        iter.next.should eq("baz")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by multiple characters 2" do
+        iter = "foo:-bar:-:-baz".each_split(":-")
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("")
+        iter.next.should eq("baz")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by non exisitent string" do
+        iter = "foo".each_split(":-")
+        iter.next.should eq("foo")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by an empty string" do
+        iter = "foo".each_split("")
+        iter.next.should eq("f")
+        iter.next.should eq("o")
+        iter.next.should eq("o")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits non ascii strings" do
+        iter = "日本さん語日本さん語".each_split("さん")
+        iter.next.should eq("日本")
+        iter.next.should eq("語日本")
+        iter.next.should eq("語")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with limit 1" do
+        iter = "foo,bar,baz,qux".each_split(",", 1)
+        iter.next.should eq("foo,bar,baz,qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with limit 3" do
+        iter = "foo,bar,baz,qux".each_split(",", 3)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz,qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with high limit" do
+        iter = "foo,bar,baz,qux".each_split(",", 30)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz")
+        iter.next.should eq("qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with space" do
+        iter = "a b c".each_split(" ", 2)
+        iter.next.should eq("a")
+        iter.next.should eq("b c")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with only separator" do
+        iter = "=".each_split("=")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with separator at end" do
+        iter = "a=".each_split("=")
+        iter.next.should eq("a")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with separator at beginning" do
+        iter = "=b".each_split("=")
+        iter.next.should eq("")
+        iter.next.should eq("b")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with only separator and limit" do
+        iter = "=".each_split("=", 2)
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+    end
   end
 
   describe "starts_with?" do
