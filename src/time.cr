@@ -410,7 +410,7 @@ struct Time
     end
   end
 
-  macro def_at(name)
+  private macro def_at(name)
     def at_{{name.id}}
       year, month, day, day_year = year_month_day_day_year
       mask({{yield}})
