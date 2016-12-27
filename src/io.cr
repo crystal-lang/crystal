@@ -727,20 +727,23 @@ module IO
     gets(*args, **options) || raise EOFError.new
   end
 
-  # Reads and discards *bytes_count* bytes.
+  # Reads and discards exactly *bytes_count* bytes.
+  # Raises IO::EOFError if there aren't at least *bytes_count* bytes.
   #
   # ```
   # io = IO::Memory.new "hello world"
   # io.skip(6)
-  # io.gets # => "world"
+  # io.gets    # => "world"
+  # io.skip(1) # raises IO::EOFError
   # ```
   def skip(bytes_count : Int) : Nil
     buffer = uninitialized UInt8[1024]
     while bytes_count > 0
       read_count = read(buffer.to_slice[0, bytes_count])
+      raise IO::EOFError.new if read_count == 0
+
       bytes_count -= read_count
     end
-    nil
   end
 
   # Writes a single byte into this IO.

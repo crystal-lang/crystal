@@ -477,6 +477,14 @@ describe IO do
       io.skip(6)
       io.gets_to_end.should eq("world")
     end
+
+    it "skips but raises if not enough bytes" do
+      io = SimpleIOMemory.new
+      io << "hello"
+      expect_raises(IO::EOFError) do
+        io.skip(6)
+      end
+    end
   end
 
   describe "encoding" do
