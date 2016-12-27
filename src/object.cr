@@ -142,13 +142,15 @@ class Object
   # Yields self. Nil overrides this method and doesn't yield.
   #
   # This method is useful for dealing with nilable types, to safely
-  # perform operations only when the value is not nil.
+  # perform operations only when the value is not nil.  The default argument is
+  # used by Nil#try to provide an alternate return value when nil, but ignored
+  # in this method.
   #
   # ```
   # # First program argument in downcase, or nil
   # ARGV[0]?.try &.downcase
   # ```
-  def try
+  def try(default = nil)
     yield self
   end
 

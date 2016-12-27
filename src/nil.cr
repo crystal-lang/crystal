@@ -92,9 +92,13 @@ struct Nil
     io << "nil"
   end
 
-  # Doesn't yields to the block. See `Object#try`.
-  def try(&block)
-    self
+  # Returns the given value if the receiver is nil, which by default is also
+  # nil. This can be used to make the return value homogeneous, allowing
+  # further methods to be chained without requiring further try calls. The
+  # alternate way of doing this is `(obj.try &block || if_nil_value)`, but this
+  # method is safe for `false`. See `Object#try`.
+  def try(default = nil, &block)
+    default
   end
 
   # Raises an exception. See `Object#not_nil!`.
