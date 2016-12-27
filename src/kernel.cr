@@ -92,6 +92,18 @@ def p(*objects)
   objects
 end
 
+# Pretty prints each object in *objects* to STDOUT, followed
+# by a newline. Returns *objects*.
+#
+# ```
+# p foo: 23, bar: 42 # => {foo: 23, bar: 42}
+# ```
+#
+# See `Object#pretty_print(pp)`
+def p(**objects)
+  p(objects)
+end
+
 # :nodoc:
 module AtExitHandlers
   @@running = false
