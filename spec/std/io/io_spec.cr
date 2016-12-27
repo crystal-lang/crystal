@@ -347,6 +347,16 @@ describe IO do
       io.read_char.should be_nil
     end
 
+    it "reads string" do
+      io = SimpleIOMemory.new("hello world")
+      io.read_string(5).should eq("hello")
+      io.read_string(1).should eq(" ")
+      io.read_string(0).should eq("")
+      expect_raises(IO::EOFError) do
+        io.read_string(6)
+      end
+    end
+
     it "does each_line" do
       io = SimpleIOMemory.new("a\nbb\ncc")
       counter = 0

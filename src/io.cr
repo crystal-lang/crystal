@@ -461,6 +461,23 @@ module IO
     end
   end
 
+  # Reads an UTF-8 encoded String of exactly *bytesize* bytes.
+  # Raises `EOFError` if there are not enough bytes to build
+  # the string.
+  #
+  # ```
+  # io = IO::Memory.new("hello world")
+  # io.read_string(5) # => "hello"
+  # io.read_string(1) # => " "
+  # io.read_string(6) # raises IO::EOFError
+  # ```
+  def read_string(bytesize : Int) : String
+    String.new(bytesize) do |ptr|
+      read_fully(Slice.new(ptr, bytesize))
+      {bytesize, 0}
+    end
+  end
+
   # Writes a slice of UTF-8 encoded bytes to this IO, using the current encoding.
   def write_utf8(slice : Bytes)
     if encoder = encoder()
