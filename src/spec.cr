@@ -109,6 +109,10 @@ unless ARGV.empty?
   exit 1
 end
 
+if ENV["SPEC_VERBOSE"]? == "1"
+  Spec.override_default_formatter(Spec::VerboseFormatter.new)
+end
+
 Signal::INT.trap { Spec.abort! }
 
 Spec.run
