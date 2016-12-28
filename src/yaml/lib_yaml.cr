@@ -15,6 +15,14 @@ lib LibYAML
     EMITTER_SIZE = 264
   {% end %}
 
+  TAG_STR   = "tag:yaml.org,2002:str"
+  TAG_SEQ   = "tag:yaml.org,2002:seq"
+  TAG_MAP   = "tag:yaml.org,2002:map"
+  TAG_INT   = "tag:yaml.org,2002:int"
+  TAG_FLOAT = "tag:yaml.org,2002:float"
+  TAG_BOOL  = "tag:yaml.org,2002:bool"
+  TAG_NULL  = "tag:yaml.org,2002:null"
+
   enum Encoding
     Any
     UTF8
@@ -62,6 +70,8 @@ lib LibYAML
     BLOCK
     FLOW
   end
+
+  alias Style = ScalarStyle | SequenceStyle | MappingStyle | Nil
 
   struct StreamStartEvent
     encoding : Int32
