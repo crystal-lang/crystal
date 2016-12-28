@@ -91,6 +91,12 @@ module Iterator(T)
       self
     end
 
+    # :nodoc:
+    def auto_rewind?
+      return @iterator.auto_rewind? if @auto_rewind.nil?
+      !!@auto_rewind
+    end
+
     # Invokes `next` on the wrapped iterator and returns `stop` if
     # the given value was a Stop. Otherwise, returns the value.
     macro wrapped_next
@@ -150,6 +156,32 @@ module Iterator(T)
 
   # Rewinds the iterator to its original state.
   abstract def rewind
+
+  # Whether to rewind after `each` and some `Enumerable` methods.
+  #
+  # Default value is `true`, so the iterator rewinds after `each` automatically.
+  #
+  # ```
+  # iter = (1..2).each
+  #
+  # iter.auto_rewind? # => true
+  # iter.size         # => 2
+  # iter.size         # => 2
+  #
+  # iter.auto_rewind = false
+  # iter.size # => 2
+  # iter.size # => 0
+  # ```
+  def auto_rewind?
+    @auto_rewind.nil? ? true : @auto_rewind.not_nil!
+  end
+
+  # :ditto:
+  def auto_rewind=(value : Bool)
+    @auto_rewind = value
+  end
+
+  @auto_rewind : Bool?
 
   # Returns an iterator that returns elements from the original iterator until
   # it is exhausted and then returns the elements of the second iterator.
@@ -383,6 +415,7 @@ module Iterator(T)
       break if value.is_a?(Stop)
       yield value
     end
+    rewind if auto_rewind?
   end
 
   # Returns an iterator that then returns slices of n elements of the initial
@@ -424,6 +457,7 @@ module Iterator(T)
 
   private struct Flatten(I, T)
     include Iterator(T)
+    include IteratorWrapper
 
     @iterator : I
     @stopped : Array(I)
