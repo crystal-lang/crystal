@@ -6,12 +6,14 @@ describe Iterator do
     it "creates singleton" do
       iter = Iterator.of(42)
       iter.first(3).to_a.should eq([42, 42, 42])
+      iter.rewind.first(3).to_a.should eq([42, 42, 42])
     end
 
     it "creates singleton from block" do
       a = 0
       iter = Iterator.of { a += 1 }
       iter.first(3).to_a.should eq([1, 2, 3])
+      iter.rewind.first(3).to_a.should eq([4, 5, 6])
     end
   end
 

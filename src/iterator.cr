@@ -142,6 +142,10 @@ module Iterator(T)
     def next
       @proc.call
     end
+
+    def rewind
+      self
+    end
   end
 
   # Returns the next element in this iterator, or `Iterator::Stop::INSTANCE` if there
