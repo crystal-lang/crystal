@@ -52,7 +52,7 @@ class Socket < IO::FileDescriptor
 
   # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
   # you need full control over the socket.
-  def self.unix(type : Type = Type::Stream, blocking = false)
+  def self.unix(type : Type = Type::STREAM, blocking = false)
     new(Family::UNIX, type, blocking: blocking)
   end
 
