@@ -280,7 +280,7 @@ describe "macro methods" do
     end
 
     it "executes lines" do
-      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1\\n", "2\\n", "3"])
+      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
     end
 
     it "executes size" do
@@ -564,15 +564,15 @@ describe "macro methods" do
       assert_macro "", %({{[1, 2, 3].last}}), [] of ASTNode, "3"
     end
 
-    it "executes argify" do
-      assert_macro "", %({{[1, 2, 3].argify}}), [] of ASTNode, "1, 2, 3"
+    it "executes splat" do
+      assert_macro "", %({{[1, 2, 3].splat}}), [] of ASTNode, "1, 2, 3"
     end
 
-    it "executes argify with symbols and strings" do
-      assert_macro "", %({{[:foo, "hello", 3].argify}}), [] of ASTNode, %(:foo, "hello", 3)
+    it "executes splat with symbols and strings" do
+      assert_macro "", %({{[:foo, "hello", 3].splat}}), [] of ASTNode, %(:foo, "hello", 3)
     end
 
-    it "executes argify with splat" do
+    it "executes splat with splat" do
       assert_macro "", %({{*[1, 2, 3]}}), [] of ASTNode, "1, 2, 3"
     end
 
@@ -632,6 +632,10 @@ describe "macro methods" do
 
     it "executes [] with two numbers" do
       assert_macro "", %({{ [1, 2, 3, 4, 5][1, 3] }}), [] of ASTNode, %([2, 3, 4])
+    end
+
+    it "executes []=" do
+      assert_macro "", %({% a = [0]; a[0] = 2 %}{{a[0]}}), [] of ASTNode, "2"
     end
 
     it "executes of" do
@@ -722,9 +726,21 @@ describe "macro methods" do
     it "executes type (nop)" do
       assert_macro "", %({{ {'z' => 6, 'a' => 9}.type }}), [] of ASTNode, %()
     end
+
+    it "executes double splat" do
+      assert_macro "", %({{**{1 => 2, 3 => 4}}}), [] of ASTNode, "1 => 2, 3 => 4"
+    end
+
+    it "executes double splat" do
+      assert_macro "", %({{{1 => 2, 3 => 4}.double_splat}}), [] of ASTNode, "1 => 2, 3 => 4"
+    end
+
+    it "executes double splat with arg" do
+      assert_macro "", %({{{1 => 2, 3 => 4}.double_splat(", ")}}), [] of ASTNode, "1 => 2, 3 => 4, "
+    end
   end
 
-  describe "named literal methods" do
+  describe "named tuple literal methods" do
     it "executes size" do
       assert_macro "", %({{{a: 1, b: 3}.size}}), [] of ASTNode, "2"
     end
@@ -771,6 +787,18 @@ describe "macro methods" do
 
     it "executes to_a" do
       assert_macro "", %({{{a: 1, b: 3}.to_a}}), [] of ASTNode, "[{a, 1}, {b, 3}]"
+    end
+
+    it "executes double splat" do
+      assert_macro "", %({{**{a: 1, "foo bar": 2}}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+    end
+
+    it "executes double splat" do
+      assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+    end
+
+    it "executes double splat with arg" do
+      assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, )
     end
   end
 
@@ -855,15 +883,19 @@ describe "macro methods" do
       assert_macro "", %({{ {1, 2, 3}.last }}), [] of ASTNode, "3"
     end
 
-    it "executes argify" do
-      assert_macro "", %({{ {1, 2, 3}.argify }}), [] of ASTNode, "1, 2, 3"
+    it "executes splat" do
+      assert_macro "", %({{ {1, 2, 3}.splat }}), [] of ASTNode, "1, 2, 3"
     end
 
-    it "executes argify with symbols and strings" do
-      assert_macro "", %({{ {:foo, "hello", 3}.argify }}), [] of ASTNode, %(:foo, "hello", 3)
+    it "executes splat with arg" do
+      assert_macro "", %({{ {1, 2, 3}.splat(", ") }}), [] of ASTNode, "1, 2, 3, "
     end
 
-    it "executes argify with splat" do
+    it "executes splat with symbols and strings" do
+      assert_macro "", %({{ {:foo, "hello", 3}.splat }}), [] of ASTNode, %(:foo, "hello", 3)
+    end
+
+    it "executes splat with splat" do
       assert_macro "", %({{ *{1, 2, 3} }}), [] of ASTNode, "1, 2, 3"
     end
 
@@ -1491,5 +1523,9 @@ describe "macro methods" do
     it "doesn't have flag" do
       assert_macro "", %({{flag?(:foo)}}), [] of ASTNode, %(false)
     end
+  end
+
+  it "compares versions" do
+    assert_macro "", %({{compare_versions("1.10.3", "1.2.3")}}), [] of ASTNode, %(1)
   end
 end

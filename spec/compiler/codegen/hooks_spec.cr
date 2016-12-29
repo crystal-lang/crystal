@@ -144,4 +144,28 @@ describe "Code gen: hooks" do
       Bar.y
       ").to_i.should eq(123)
   end
+
+  it "does finished" do
+    run(%(
+      class Foo
+        A = [1]
+
+        macro finished
+          {% A[0] = A[0] + 1 %}
+        end
+
+        macro finished
+          {% A[0] = A[0] * 2 %}
+        end
+
+        macro finished
+          def self.foo
+            {{ A[0] }}
+          end
+        end
+      end
+
+      Foo.foo
+      )).to_i.should eq(4)
+  end
 end

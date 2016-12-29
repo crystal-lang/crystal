@@ -71,7 +71,7 @@ struct Number
   end
 
   # Invokes the given block with the sequence of numbers starting at `self`,
-  # incremented by `by` on each call, and with an optional `limit`.
+  # incremented by *by* on each call, and with an optional *limit*.
   #
   # ```
   # 3.step(by: 2, limit: 10) do |n|
@@ -215,7 +215,7 @@ struct Number
     self.class.new((x * y).round / y)
   end
 
-  # Clamps a value within `range`.
+  # Clamps a value within *range*.
   # ```
   # 5.clamp(10..100)   # => 10
   # 50.clamp(10..100)  # => 50

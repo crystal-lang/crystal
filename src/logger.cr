@@ -23,7 +23,7 @@
 # log.warn("Nothing to do!")
 #
 # begin
-#   File.each_line(path) do |line|
+#   File.each_line("/foo/bar.log") do |line|
 #     unless line =~ /^(\w+) = (.*)$/
 #       log.error("Line in wrong format: #{line}")
 #     end

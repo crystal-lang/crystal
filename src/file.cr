@@ -119,6 +119,23 @@ class File < IO::FileDescriptor
     accessible?(path, LibC::F_OK)
   end
 
+  # Returns `true` if the file at *path* is empty, otherwise returns `false`.
+  # Raises `Errno` if the file at *path* does not exist.
+  #
+  # ```
+  # File.write("foo", "")
+  # File.empty?("foo") # => true
+  # File.write("foo", "foo")
+  # File.empty?("foo") # => false
+  # ```
+  def self.empty?(path) : Bool
+    begin
+      stat(path).size == 0
+    rescue Errno
+      raise Errno.new("Error determining size of '#{path}'")
+    end
+  end
+
   # Returns `true` if *path* is readable by the real user id of this process else returns `false`.
   #
   # ```
@@ -324,6 +341,8 @@ class File < IO::FileDescriptor
 
     if path.starts_with?('~')
       home = ENV["HOME"]
+      home = home.chomp('/') unless home == "/"
+
       if path.size >= 2 && path[1] == SEPARATOR
         path = home + path[1..-1]
       elsif path.size < 2
@@ -440,17 +459,17 @@ class File < IO::FileDescriptor
   #   # loop
   # end
   # ```
-  def self.each_line(filename, encoding = nil, invalid = nil)
+  def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
     File.open(filename, "r", encoding: encoding, invalid: invalid) do |file|
-      file.each_line do |line|
+      file.each_line(chomp: chomp) do |line|
         yield line
       end
     end
   end
 
   # Returns an `Iterator` for each line in *filename*.
-  def self.each_line(filename, encoding = nil, invalid = nil)
-    File.open(filename, "r", encoding: encoding, invalid: invalid).each_line
+  def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
+    File.open(filename, "r", encoding: encoding, invalid: invalid).each_line(chomp: chomp)
   end
 
   # Returns all lines in *filename* as an array of strings.
@@ -459,24 +478,36 @@ class File < IO::FileDescriptor
   # File.write("foobar", "foo\nbar")
   # File.read_lines("foobar") # => ["foo\n", "bar\n"]
   # ```
-  def self.read_lines(filename, encoding = nil, invalid = nil) : Array(String)
+  def self.read_lines(filename, encoding = nil, invalid = nil, chomp = true) : Array(String)
     lines = [] of String
-    each_line(filename, encoding: encoding, invalid: invalid) do |line|
+    each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp) do |line|
       lines << line
     end
     lines
   end
 
-  # Write the given content to *filename*.
+  # Write the given *content* to *filename*.
   #
   # An existing file will be overwritten, else a file will be created.
   #
   # ```
   # File.write("foo", "bar")
   # ```
+  #
+  # If the content is a `Slice(UInt8)`, those bytes will be written. If it's
+  # an `IO`, all bytes from the IO will be written. Otherwise, the string
+  # representation of *content* will be written (the result of invoking `to_s`
+  # on *content*)
   def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
     File.open(filename, "w", perm, encoding: encoding, invalid: invalid) do |file|
-      file.print(content)
+      case content
+      when Bytes
+        file.write(content)
+      when IO
+        IO.copy(content, file)
+      else
+        file.print(content)
+      end
     end
   end
 

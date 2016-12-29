@@ -18,7 +18,7 @@ struct BigRational < Number
 
   # Create a new BigRational.
   #
-  # If `denominator` is 0, this will raise an exception.
+  # If *denominator* is 0, this will raise an exception.
   def initialize(numerator : Int, denominator : Int)
     check_division_by_zero denominator
 
@@ -100,14 +100,14 @@ struct BigRational < Number
     self / other.to_big_r
   end
 
-  # Divides the rational by (2**`other`)
+  # Divides the rational by (2 ** *other*)
   #
   #     BigRational.new(2,3) >> 2 # => 1/6
   def >>(other : Int)
     BigRational.new { |mpq| LibGMP.mpq_div_2exp(mpq, self, other) }
   end
 
-  # Multiplies the rational by (2**`other`)
+  # Multiplies the rational by (2 ** *other*)
   #
   #     BigRational.new(2,3) << 2 # => 8/3
   def <<(other : Int)

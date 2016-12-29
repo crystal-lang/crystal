@@ -119,6 +119,7 @@ module Crystal
 
     def visit(node : Call)
       if @outside_def
+        node.scope = node.global? ? @program : current_type.metaclass
         super
       else
         # If it's "self.class", don't consider this as self being passed to a method

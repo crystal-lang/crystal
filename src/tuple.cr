@@ -62,7 +62,6 @@
 # tuple # => {1, "hello", 'x'} (Tuple(Int32, String, Char))
 # ```
 struct Tuple
-  include Enumerable(Union(*T))
   include Indexable(Union(*T))
   include Comparable(Tuple)
 
@@ -146,8 +145,8 @@ struct Tuple
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0] # => 1
-  # tuple[3] # => nil
+  # tuple[0]? # => 1
+  # tuple[3]? # => nil
   # ```
   def []?(index : Int)
     at(index) { nil }
@@ -157,8 +156,8 @@ struct Tuple
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0] # => 1
-  # tuple[3] # => raises IndexError
+  # tuple.at(0) # => 1
+  # tuple.at(3) # => raises IndexError
   # ```
   def at(index : Int)
     at(index) { raise IndexError.new }
@@ -272,7 +271,7 @@ struct Tuple
   # Each object in each tuple is compared (using the <=> operator).
   #
   # Tuples are compared in an "element-wise" manner; the first element of this tuple is
-  # compared with the first one of `other` using the `<=>` operator, then each of the second elements,
+  # compared with the first one of *other* using the `<=>` operator, then each of the second elements,
   # etc. As soon as the result of any such comparison is non zero
   # (i.e. the two corresponding elements are not equal), that result is returned for the whole tuple comparison.
   #
@@ -388,6 +387,10 @@ struct Tuple
     io << "{"
     join ", ", io, &.inspect(io)
     io << "}"
+  end
+
+  def pretty_print(pp) : Nil
+    pp.list("{", self, "}")
   end
 
   # Returns a new tuple where elements are mapped by the given block.

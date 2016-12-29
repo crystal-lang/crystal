@@ -2,11 +2,22 @@ require "./semantic_visitor"
 
 module Crystal
   class Program
-    def visit_main(node, visitor = MainVisitor.new(self))
+    def visit_main(node, visitor = MainVisitor.new(self), process_finished_hooks = false)
       node.accept visitor
+      program.process_finished_hooks(visitor) if process_finished_hooks
 
-      node.accept FixMissingTypes.new(self)
+      missing_types = FixMissingTypes.new(self)
+      node.accept missing_types
+      program.process_finished_hooks(missing_types) if process_finished_hooks
+
       node = cleanup node
+
+      if process_finished_hooks
+        finished_hooks.map! do |hook|
+          hook_node = cleanup(hook.node)
+          FinishedHook.new(hook.scope, hook.macro, hook_node)
+        end
+      end
 
       node
     end
@@ -325,14 +336,36 @@ module Crystal
         special_var = define_special_var(node.name, program.nil_var)
         node.bind_to special_var
       else
-        node.raise "read before definition of local variable '#{node.name}'"
+        node.raise "read before assignment to local variable '#{node.name}'"
       end
     end
 
     def visit(node : TypeDeclaration)
       case var = node.var
       when Var
-        node.raise "declaring the type of a local variable is not yet supported"
+        if @meta_vars[var.name]?
+          node.raise "variable '#{var.name}' already declared"
+        end
+
+        meta_var = new_meta_var(var.name)
+        meta_var.type = @program.no_return
+
+        var.bind_to(meta_var)
+        @meta_vars[var.name] = meta_var
+
+        @in_type_args += 1
+        node.declared_type.accept self
+        @in_type_args -= 1
+
+        if declared_type = node.declared_type.type?
+          meta_var.freeze_type = declared_type
+        else
+          node.raise "can't infer type of type declaration"
+        end
+
+        if value = node.value
+          type_assign(var, value, node)
+        end
       when InstanceVar
         if @untyped_def
           node.raise "declaring the type of an instance variable must be done at the class level"
@@ -387,7 +420,7 @@ module Crystal
           var_type = check_declare_var_type node, declared_type, "a variable"
           var.type = var_type
         else
-          var.type = program.no_return
+          node.raise "can't infer type of type declaration"
         end
 
         meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
@@ -401,6 +434,8 @@ module Crystal
         @vars[var.name] = meta_var
 
         check_exception_handler_vars(var.name, node)
+
+        node.type = meta_var.type unless meta_var.type.no_return?
       when InstanceVar
         type = scope? || current_type
         if @untyped_def
@@ -440,7 +475,7 @@ module Crystal
         class_var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
       end
 
-      node.type = @program.nil
+      node.type = @program.nil unless node.type?
 
       false
     end
@@ -572,7 +607,10 @@ module Crystal
       var = lookup_instance_var node
       node.bind_to(var)
 
-      if @is_initialize && !@vars.has_key?(node.name) && !scope.has_instance_var_initializer?(node.name)
+      if @is_initialize &&
+         @typeof_nest == 0 &&
+         !@vars.has_key?(node.name) &&
+         !scope.has_instance_var_initializer?(node.name)
         ivar = scope.lookup_instance_var(node.name)
         ivar.nil_reason ||= NilReason.new(node.name, :used_before_initialized, [node] of ASTNode)
         ivar.bind_to program.nil_var
@@ -737,12 +775,16 @@ module Crystal
       if @is_initialize
         var_name = target.name
 
-        meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
-        meta_var.bind_to value
-        meta_var.assigned_to = true
+        # Don't track instance variables nilabilty (for example, if they were
+        # just assigned inside a branch) if they have an initializer
+        unless scope.has_instance_var_initializer?(var_name)
+          meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+          meta_var.bind_to value
+          meta_var.assigned_to = true
 
-        simple_var = MetaVar.new(var_name)
-        simple_var.bind_to(target)
+          simple_var = MetaVar.new(var_name)
+          simple_var.bind_to(target)
+        end
 
         used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
         if (found_self = @found_self_in_initialize_call) || (used_ivars_node = used_ivars_in_calls_in_initialize.try(&.[var_name]?)) || (@block_nest > 0 && !@vars.has_key?(var_name))
@@ -755,9 +797,11 @@ module Crystal
           ivar.bind_to program.nil_var
         end
 
-        @vars[var_name] = simple_var
+        if simple_var
+          @vars[var_name] = simple_var
 
-        check_exception_handler_vars var_name, value
+          check_exception_handler_vars var_name, value
+        end
       end
     end
 
@@ -2133,6 +2177,8 @@ module Crystal
         node.type = program.uint64
       when "object_crystal_type_id"
         node.type = program.int32
+      when "class_crystal_instance_type_id"
+        node.type = program.int32
       when "symbol_to_s"
         node.type = program.string
       when "class"
@@ -2444,6 +2490,15 @@ module Crystal
         # was raised before assigning any of the vars.
         exception_handler_vars.each do |name, var|
           unless before_body_vars[name]?
+            # Instance variables inside the body must be marked as nil
+            if name.starts_with?('@')
+              ivar = scope.lookup_instance_var(name)
+              unless ivar.type.includes_type?(@program.nil_var)
+                ivar.nil_reason = NilReason.new(name, :initialized_in_rescue)
+                ivar.bind_to @program.nil_var
+              end
+            end
+
             var.nil_if_read = true
           end
         end
@@ -2503,7 +2558,7 @@ module Crystal
         end
 
         # However, those previous variables can't be nil afterwards:
-        # if an exception was raised then we won't running the code
+        # if an exception was raised then we won't be running the code
         # after the ensure clause, so variables don't matter. But if
         # an exception was not raised then all variables were declared
         # successfully.
@@ -2896,6 +2951,21 @@ module Crystal
       names_to_remove.each do |name|
         @meta_vars.delete name
         @vars.delete name
+      end
+    end
+
+    def check_initialize_instance_vars_types(owner)
+      return if untyped_def.calls_super? ||
+                untyped_def.calls_initialize?
+
+      owner.all_instance_vars.each do |name, var|
+        next if owner.has_instance_var_initializer?(name)
+        next if var.type.includes_type?(@program.nil)
+
+        meta_var = @meta_vars[name]?
+        unless meta_var
+          untyped_def.raise "instance variable '#{name}' of #{owner} was not initialized in this 'initialize', rendering it nilable"
+        end
       end
     end
 

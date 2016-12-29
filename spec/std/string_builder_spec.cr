@@ -18,4 +18,20 @@ describe String::Builder do
 
     expect_raises { builder.to_s }
   end
+
+  it "goes back" do
+    s = String::Builder.build do |str|
+      str << 12
+      str.back(1)
+    end
+    s.should eq("1")
+  end
+
+  it "goes back all" do
+    s = String::Builder.build do |str|
+      str << 12
+      str.back(2)
+    end
+    s.should eq("")
+  end
 end

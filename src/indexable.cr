@@ -7,10 +7,7 @@
 # Types including this module are typically `Array`-like types.
 module Indexable(T)
   include Iterable(T)
-
-  # TODO: the compiler doesn't realize that if X includes Indexable then X is Enumerable
-  # This is fixed in 0.19.0
-  # include Enumerable(T)
+  include Enumerable(T)
 
   # Returns the number of elements in this container
   abstract def size
@@ -406,6 +403,30 @@ module Indexable(T)
   # ```
   def values_at(*indexes : Int)
     indexes.map { |index| self[index] }
+  end
+
+  def zip(other : Indexable)
+    each_with_index do |elem, i|
+      yield elem, other[i]
+    end
+  end
+
+  def zip(other : Indexable(U)) forall U
+    pairs = Array({T, U}).new(size)
+    zip(other) { |x, y| pairs << {x, y} }
+    pairs
+  end
+
+  def zip?(other : Indexable)
+    each_with_index do |elem, i|
+      yield elem, other[i]?
+    end
+  end
+
+  def zip?(other : Indexable(U)) forall U
+    pairs = Array({T, U?}).new(size)
+    zip?(other) { |x, y| pairs << {x, y} }
+    pairs
   end
 
   private def check_index_out_of_bounds(index)

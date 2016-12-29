@@ -483,6 +483,18 @@ describe "String" do
     assert { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
   end
 
+  describe "lchomp" do
+    assert { "hello".lchomp('g').should eq("hello") }
+    assert { "hello".lchomp('h').should eq("ello") }
+    assert { "かたな".lchomp('か').should eq("たな") }
+
+    assert { "hello".lchomp("good").should eq("hello") }
+    assert { "hello".lchomp("hel").should eq("lo") }
+    assert { "かたな".lchomp("かた").should eq("な") }
+
+    assert { "\n\n\n\nhello".lchomp("").should eq("\n\n\n\nhello") }
+  end
+
   describe "chomp" do
     assert { "hello\n".chomp.should eq("hello") }
     assert { "hello\r".chomp.should eq("hello") }
@@ -494,6 +506,7 @@ describe "String" do
     assert { "かたな\r\n".chomp.should eq("かたな") }
     assert { "hello\n\n".chomp.should eq("hello\n") }
     assert { "hello\r\n\n".chomp.should eq("hello\r\n") }
+    assert { "hello\r\n".chomp('\n').should eq("hello") }
 
     assert { "hello".chomp('a').should eq("hello") }
     assert { "hello".chomp('o').should eq("hell") }
@@ -738,6 +751,7 @@ describe "String" do
       assert { "   foo  bar".split(' ').should eq(["", "", "", "foo", "", "bar"]) }
       assert { "   foo   bar\n\t  baz   ".split(' ').should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
       assert { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
+      assert { "   foo   bar\n\t  baz   ".split(1).should eq(["   foo   bar\n\t  baz   "]) }
       assert { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
       assert { "   foo   bar\n\t  baz   ".split(" ").should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
       assert { "foo,bar,baz,qux".split(',', 1).should eq(["foo,bar,baz,qux"]) }
@@ -1395,6 +1409,7 @@ describe "String" do
     ("%20s" % 'a').should eq("                   a")
     ("%-20s" % 'a').should eq("a                   ")
     ("%*s" % [10, 123]).should eq("       123")
+    ("%*s" % [-10, 123]).should eq("123       ")
     ("%.5s" % "foo bar baz").should eq("foo b")
     ("%.*s" % [5, "foo bar baz"]).should eq("foo b")
     ("%*.*s" % [20, 5, "foo bar baz"]).should eq("               foo b")
@@ -1818,20 +1833,52 @@ describe "String" do
   end
 
   it "gets lines" do
+    "".lines.should eq([] of String)
+    "\n".lines.should eq([""] of String)
+    "\r".lines.should eq(["\r"] of String)
+    "\r\n".lines.should eq([""] of String)
     "foo".lines.should eq(["foo"])
-    "foo\nbar\nbaz\n".lines.should eq(["foo\n", "bar\n", "baz\n"])
+    "foo\n".lines.should eq(["foo"])
+    "foo\r\n".lines.should eq(["foo"])
+    "foo\nbar\r\nbaz\n".lines.should eq(["foo", "bar", "baz"])
+    "foo\nbar\r\nbaz\r\n".lines.should eq(["foo", "bar", "baz"])
+  end
+
+  it "gets lines with chomp = false" do
+    "foo".lines(chomp: false).should eq(["foo"])
+    "foo\nbar\r\nbaz\n".lines(chomp: false).should eq(["foo\n", "bar\r\n", "baz\n"])
+    "foo\nbar\r\nbaz\r\n".lines(chomp: false).should eq(["foo\n", "bar\r\n", "baz\r\n"])
   end
 
   it "gets each_line" do
     lines = [] of String
-    "foo\n\nbar\nbaz\n".each_line do |line|
+    "foo\n\nbar\r\nbaz\n".each_line do |line|
       lines << line
     end
-    lines.should eq(["foo\n", "\n", "bar\n", "baz\n"])
+    lines.should eq(["foo", "", "bar", "baz"])
+  end
+
+  it "gets each_line with chomp = false" do
+    lines = [] of String
+    "foo\n\nbar\r\nbaz\r\n".each_line(chomp: false) do |line|
+      lines << line
+    end
+    lines.should eq(["foo\n", "\n", "bar\r\n", "baz\r\n"])
   end
 
   it "gets each_line iterator" do
-    iter = "foo\nbar\nbaz\n".each_line
+    iter = "foo\nbar\r\nbaz\r\n".each_line
+    iter.next.should eq("foo")
+    iter.next.should eq("bar")
+    iter.next.should eq("baz")
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq("foo")
+  end
+
+  it "gets each_line iterator with chomp = false" do
+    iter = "foo\nbar\nbaz\n".each_line(chomp: false)
     iter.next.should eq("foo\n")
     iter.next.should eq("bar\n")
     iter.next.should eq("baz\n")
@@ -2106,6 +2153,14 @@ describe "String" do
     String.new(255_u8) do |buffer|
       LibGC.size(buffer).should be >= 255
       {255, 0}
+    end
+  end
+
+  it "raises on String.new if returned bytesize is greater than capacity" do
+    expect_raises ArgumentError, "bytesize out of capacity bounds" do
+      String.new(123) do |buffer|
+        {124, 0}
+      end
     end
   end
 end

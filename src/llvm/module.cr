@@ -30,8 +30,18 @@ class LLVM::Module
     GlobalCollection.new(self)
   end
 
-  def write_bitcode(filename : String)
+  def write_bitcode_to_file(filename : String)
     LibLLVM.write_bitcode_to_file self, filename
+  end
+
+  {% unless LibLLVM::IS_35 %}
+    def write_bitcode_to_memory_buffer
+      MemoryBuffer.new(LibLLVM.write_bitcode_to_memory_buffer self)
+    end
+  {% end %}
+
+  def write_bitcode_to_fd(fd : Int, should_close = false, buffered = false)
+    LibLLVM.write_bitcode_to_fd(self, fd, should_close ? 1 : 0, buffered ? 1 : 0)
   end
 
   def verify

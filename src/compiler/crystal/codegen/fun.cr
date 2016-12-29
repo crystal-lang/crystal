@@ -399,15 +399,14 @@ class Crystal::CodeGenVisitor
     var_type = (target_def_var || arg).type
     return if var_type.void?
 
-    # Pass-by-value parameters are passed as-is, so they are
-    # "already loaded" (they are not behind a pointer)
-    already_loaded = false
-
     if closure_var = context.vars[arg.name]?
       pointer = closure_var.pointer
 
-      if var_type.passed_by_value?
-        already_loaded = true
+      if arg.type.passed_by_value?
+        # Create an alloca and store it there, so assign works well
+        pointer2 = alloca(llvm_type(arg.type))
+        store value, pointer2
+        value = pointer2
       end
     else
       # If it's an extern struct on a def that must be codegened with C ABI
@@ -430,7 +429,10 @@ class Crystal::CodeGenVisitor
           context.vars[arg.name] = LLVMVar.new(pointer, var_type)
 
           if arg.type.passed_by_value? && !value.attributes.by_val?
-            already_loaded = true
+            # Create an alloca and store it there, so assign works well
+            pointer2 = alloca(llvm_type(arg.type))
+            store value, pointer2
+            value = pointer2
           end
         else
           if arg.type.passed_by_value? && !value.attributes.by_val?
@@ -448,7 +450,7 @@ class Crystal::CodeGenVisitor
       end
     end
 
-    assign pointer, var_type, arg.type, value, already_loaded
+    assign pointer, var_type, arg.type, value
   end
 
   def type_module(type)

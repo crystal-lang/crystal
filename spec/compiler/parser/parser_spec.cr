@@ -134,7 +134,6 @@ describe "Parser" do
 
   it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
-  it_parses "A, b = 1, 2", MultiAssign.new(["A".path, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
   assert_syntax_error "1 == 2, a = 4"
   assert_syntax_error "x : String, a = 4"
@@ -705,6 +704,7 @@ describe "Parser" do
   it_parses "puts {{1}}", Call.new(nil, "puts", MacroExpression.new(1.int32))
   it_parses "puts {{\n1\n}}", Call.new(nil, "puts", MacroExpression.new(1.int32))
   it_parses "puts {{*1}}", Call.new(nil, "puts", MacroExpression.new(1.int32.splat))
+  it_parses "puts {{**1}}", Call.new(nil, "puts", MacroExpression.new(DoubleSplat.new(1.int32)))
   it_parses "{{a = 1 if 2}}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)))
   it_parses "{% a = 1 %}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false)
   it_parses "{%\na = 1\n%}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false)
@@ -879,6 +879,7 @@ describe "Parser" do
   it_parses "case / /\nwhen / /\n/ /\nelse\n/ /\nend", Case.new(regex(" "), [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "))
 
   it_parses "case 1; when 1 then 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1; when x then 2; else; 3; end", Case.new(1.int32, [When.new(["x".call] of ASTNode, 2.int32)], 3.int32)
   it_parses "case 1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
   it_parses "case\n1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
 
@@ -1216,6 +1217,14 @@ describe "Parser" do
 
   it_parses "Foo.foo(count: 3).bar { }", Call.new(Call.new("Foo".path, "foo", named_args: [NamedArgument.new("count", 3.int32)]), "bar", block: Block.new)
 
+  it_parses %(
+    class Foo
+      def bar
+        print as Foo
+      end
+    end
+  ), ClassDef.new("Foo".path, Def.new("bar", body: Call.new(nil, "print", Cast.new(Var.new("self"), "Foo".path))))
+
   assert_syntax_error "a = a", "can't use variable name 'a' inside assignment to variable 'a'"
 
   assert_syntax_error "{{ {{ 1 }} }}", "can't nest macro expressions"
@@ -1314,6 +1323,8 @@ describe "Parser" do
     "can't change the value of self"
   assert_syntax_error "self += 1",
     "can't change the value of self"
+  assert_syntax_error "FOO, BAR = 1, 2",
+    "Multiple assignment is not allowed for constants"
   assert_syntax_error "self, x = 1, 2",
     "can't change the value of self"
   assert_syntax_error "x, self = 1, 2",
@@ -1430,6 +1441,8 @@ describe "Parser" do
   assert_syntax_error "->(x, y z) { }"
 
   assert_syntax_error "x[1:-2]"
+
+  assert_syntax_error "1 ? : 2 : 3"
 
   describe "end locations" do
     assert_end_location "nil"

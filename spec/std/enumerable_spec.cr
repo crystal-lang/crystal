@@ -154,6 +154,25 @@ describe "Enumerable" do
       result = [nil, nil, 1, 1, nil].chunk(&.itself).to_a
       result.should eq [{nil, [nil, nil]}, {1, [1, 1]}, {nil, [nil]}]
     end
+
+    it "reuses true" do
+      iter = [1, 1, 2, 3, 3].chunk(reuse: true, &.itself)
+      a = iter.next.as(Tuple)
+      a.should eq({1, [1, 1]})
+
+      b = iter.next.as(Tuple)
+      b.should eq({2, [2]})
+      b[1].should be(a[1])
+
+      c = iter.next.as(Tuple)
+      c.should eq({3, [3, 3]})
+      c[1].should be(a[1])
+
+      iter.rewind
+      a1 = iter.next.as(Tuple)
+      a1.should eq({1, [1, 1]})
+      a1[1].should be(a[1])
+    end
   end
 
   describe "chunks" do
@@ -227,6 +246,46 @@ describe "Enumerable" do
       iter.rewind
       iter.next.should eq([1, 2, 3])
     end
+
+    it "returns each_cons iterator with reuse = true" do
+      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: true)
+
+      a = iter.next
+      a.should eq([1, 2, 3])
+
+      b = iter.next
+      b.should be(a)
+    end
+
+    it "returns each_cons iterator with reuse = array" do
+      reuse = [] of Int32
+      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
+
+      a = iter.next
+      a.should eq([1, 2, 3])
+      a.should be(reuse)
+    end
+
+    it "returns running pairs with reuse = true" do
+      array = [] of Array(Int32)
+      object_ids = Set(UInt64).new
+      [1, 2, 3, 4].each_cons(2, reuse: true) do |pair|
+        object_ids << pair.object_id
+        array << pair.dup
+      end
+      array.should eq([[1, 2], [2, 3], [3, 4]])
+      object_ids.size.should eq(1)
+    end
+
+    it "returns running pairs with reuse = array" do
+      array = [] of Array(Int32)
+      reuse = [] of Int32
+      [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
+        pair.should be(reuse)
+        array << pair.dup
+      end
+      array.should eq([[1, 2], [2, 3], [3, 4]])
+    end
   end
 
   describe "each_slice" do
@@ -234,11 +293,34 @@ describe "Enumerable" do
       array = [] of Array(Int32)
       [1, 2, 3].each_slice(2) { |slice| array << slice }
       array.should eq([[1, 2], [3]])
+      array[0].should_not be(array[1])
     end
 
     it "returns full slices" do
       array = [] of Array(Int32)
       [1, 2, 3, 4].each_slice(2) { |slice| array << slice }
+      array.should eq([[1, 2], [3, 4]])
+      array[0].should_not be(array[1])
+    end
+
+    it "reuses with true" do
+      array = [] of Array(Int32)
+      object_ids = Set(UInt64).new
+      [1, 2, 3, 4].each_slice(2, reuse: true) do |slice|
+        object_ids << slice.object_id
+        array << slice.dup
+      end
+      array.should eq([[1, 2], [3, 4]])
+      object_ids.size.should eq(1)
+    end
+
+    it "reuses with existing array" do
+      array = [] of Array(Int32)
+      reuse = [] of Int32
+      [1, 2, 3, 4].each_slice(2, reuse: reuse) do |slice|
+        slice.should be(reuse)
+        array << slice.dup
+      end
       array.should eq([[1, 2], [3, 4]])
     end
 
@@ -395,6 +477,27 @@ describe "Enumerable" do
       sums = [] of Int32
       [1, 2, 4, 5].in_groups_of(3, 10) { |a| sums << a.sum }
       sums.should eq([7, 25])
+    end
+
+    it "reuses with true" do
+      array = [] of Array(Int32)
+      object_ids = Set(UInt64).new
+      [1, 2, 4, 5].in_groups_of(3, 10, reuse: true) do |group|
+        object_ids << group.object_id
+        array << group.dup
+      end
+      array.should eq([[1, 2, 4], [5, 10, 10]])
+      object_ids.size.should eq(1)
+    end
+
+    it "reuses with existing array" do
+      array = [] of Array(Int32)
+      reuse = [] of Int32
+      [1, 2, 4, 5].in_groups_of(3, 10, reuse: reuse) do |slice|
+        slice.should be(reuse)
+        array << slice.dup
+      end
+      array.should eq([[1, 2, 4], [5, 10, 10]])
     end
   end
 

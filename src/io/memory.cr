@@ -18,8 +18,10 @@ class IO::Memory
   #
   # ```
   # io = IO::Memory.new
-  # io.pos  # => 0
-  # io.read # => ""
+  # slice = Bytes.new(1)
+  # io.pos         # => 0
+  # io.read(slice) # => 0
+  # slice          # => Bytes[0]
   # ```
   def initialize(capacity : Int = 64)
     String.check_capacity_in_bounds(capacity)
@@ -41,10 +43,11 @@ class IO::Memory
   # ```
   # slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
   # io = IO::Memory.new slice, writeable: false
-  # io.pos  # => 0
-  # io.read # => "abcdef"
+  # io.pos            # => 0
+  # io.read(slice)    # => 6
+  # String.new(slice) # => "abcdef"
   # ```
-  def initialize(slice : Slice(UInt8), writeable = true)
+  def initialize(slice : Bytes, writeable = true)
     @buffer = slice.to_unsafe
     @bytesize = @capacity = slice.size.to_i
     @pos = 0
@@ -69,7 +72,7 @@ class IO::Memory
   end
 
   # See `IO#read(slice)`.
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     check_open
 
     count = slice.size
@@ -81,7 +84,7 @@ class IO::Memory
 
   # See `IO#write(slice)`. Raises if this IO::Memory is non-writeable,
   # or if it's non-resizeable and a resize is needed.
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     check_writeable
     check_open
 
@@ -132,7 +135,7 @@ class IO::Memory
   end
 
   # :nodoc:
-  def gets(delimiter : Char, limit : Int32)
+  def gets(delimiter : Char, limit : Int32, chomp = false)
     return super if @encoding || delimiter.ord >= 128
 
     check_open
@@ -155,8 +158,18 @@ class IO::Memory
       end
     end
 
+    advance = index
+
+    if chomp && index > 0 && (@buffer + @pos + index - 1).value === delimiter
+      index -= 1
+
+      if delimiter == '\n' && index > 0 && (@buffer + @pos + index - 1).value === '\r'
+        index -= 1
+      end
+    end
+
     string = String.new(@buffer + @pos, index)
-    @pos += index
+    @pos += advance
     string
   end
 
@@ -223,9 +236,9 @@ class IO::Memory
   #
   # ```
   # io = IO::Memory.new "hello"
-  # io.gets(2) => "he"
+  # io.gets(2) # => "he"
   # io.rewind
-  # io.gets(2) #=> "he"
+  # io.gets(2) # => "he"
   # ```
   def rewind
     @pos = 0

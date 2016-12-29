@@ -2,8 +2,8 @@ require "spec"
 require "crypto/bcrypt"
 
 describe "Crypto::Bcrypt" do
-  latin1_pound_sign = String.new(Slice(UInt8).new(1, 0xa3_u8))
-  utf8_pound_sign = String.new(Slice(UInt8).new(2) { |i| i == 0 ? 0xc2_u8 : 0xa3_u8 })
+  latin1_pound_sign = String.new(Bytes.new(1, 0xa3_u8))
+  utf8_pound_sign = String.new(Bytes.new(2) { |i| i == 0 ? 0xc2_u8 : 0xa3_u8 })
   bit8_unicode_pound_sign = "\u00A3"
 
   vectors = [

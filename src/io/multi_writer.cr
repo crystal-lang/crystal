@@ -32,13 +32,13 @@ module IO
       @writers = writers.map(&.as(IO)).to_a
     end
 
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       check_open
 
       @writers.each { |writer| writer.write(slice) }
     end
 
-    def read(slice : Slice(UInt8))
+    def read(slice : Bytes)
       raise IO::Error.new("Can't read from IO::MultiWriter")
     end
 

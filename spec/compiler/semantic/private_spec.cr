@@ -125,6 +125,52 @@ describe "Semantic: private" do
     compiler.compile sources, "output"
   end
 
+  it "find module private macro inside the module" do
+    assert_type(%(
+      class Foo
+        private macro foo
+          def bar
+            1
+          end
+        end
+
+        foo
+      end
+
+      Foo.new.bar
+      )) { int32 }
+  end
+
+  it "find module private macro inside a module, which is inherited by the module" do
+    assert_type(%(
+      class Foo
+        private macro foo
+          def bar
+            1
+          end
+        end
+      end
+
+      class Bar < Foo
+        foo
+      end
+
+      Bar.new.bar
+      )) { int32 }
+  end
+
+  it "doesn't find module private macro outside the module" do
+    assert_error %(
+      class Foo
+        private macro foo
+          1
+        end
+      end
+
+      Foo.foo
+    ), "private macro 'foo' called for Foo"
+  end
+
   it "finds private def when invoking from inside macro (#2082)" do
     assert_type(%(
       private def foo

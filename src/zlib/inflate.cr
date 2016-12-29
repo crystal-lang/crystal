@@ -7,6 +7,8 @@
 # ### Example: decompress text a file
 #
 # ```
+# require "zlib"
+#
 # string = File.open("./file.gzip", "r") do |file|
 #   Zlib::Inflate.gzip(file) do |inflate|
 #     inflate.gets_to_end
@@ -64,12 +66,12 @@ class Zlib::Inflate
   end
 
   # Always raises: this is a read-only IO.
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     raise IO::Error.new "Can't write to InflateIO"
   end
 
   # See `IO#read`.
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     check_open
 
     return 0 if slice.empty?
@@ -95,7 +97,7 @@ class Zlib::Inflate
         return read_bytes
       else
         # LibZ.inflate might not write any data to the output slice because
-        # it might need more input. We can know this happened because `ret`
+        # it might need more input. We can know this happened because *ret*
         # is not STREAM_END.
         if read_bytes == 0
           next

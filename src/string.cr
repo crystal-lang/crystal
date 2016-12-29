@@ -121,7 +121,7 @@ class String
   #
   # Note: if the slice doesn't denote a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
-  def self.new(slice : Slice(UInt8))
+  def self.new(slice : Bytes)
     new(slice.pointer(slice.size), slice.size)
   end
 
@@ -137,7 +137,7 @@ class String
   # slice[1] = 195_u8
   # String.new(slice, "GB2312") # => "好"
   # ```
-  def self.new(bytes : Slice(UInt8), encoding : String, invalid : Symbol? = nil) : String
+  def self.new(bytes : Bytes, encoding : String, invalid : Symbol? = nil) : String
     String.build do |str|
       String.encode(bytes, encoding, "UTF-8", str, invalid)
     end
@@ -173,12 +173,15 @@ class String
   #
   # ```
   # ptr = Pointer.malloc(4) { |i| ('a'.ord + i).to_u8 }
-  # String.new(ptr, 2) => "ab"
+  # String.new(ptr, 2) # => "ab"
   # ```
   #
   # Note: if the chars don't denote a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(chars : UInt8*, bytesize, size = 0)
+    # Avoid allocating memory for the empty string
+    return "" if bytesize == 0
+
     new(bytesize) do |buffer|
       buffer.copy_from(chars, bytesize)
       {bytesize, size}
@@ -190,9 +193,8 @@ class String
   # (UTF-8 codepoints count) of the String. If the returned size is zero, the UTF-8 codepoints
   # count will be lazily computed.
   #
-  # This method is **unsafe**: the bytesize returned by the block must be less than the
-  # capacity given to this String. In the future this method might check that the returned
-  # bytesize is less or equal than the capacity, making it a safe method.
+  # The bytesize returned by the block must be less than or equal to the
+  # capacity given to this String, otherwise `ArgumentError` is raised.
   #
   # If you need to build a String where the maximum capacity is unknown, use `String#build`.
   #
@@ -213,9 +215,20 @@ class String
     str = GC.malloc_atomic(capacity.to_u32 + HEADER_SIZE + 1).as(UInt8*)
     buffer = str.as(String).to_unsafe
     bytesize, size = yield buffer
+
+    unless 0 <= bytesize <= capacity
+      raise ArgumentError.new("bytesize out of capacity bounds")
+    end
+
+    buffer[bytesize] = 0_u8
+
+    # Try to reclaim some memory if capacity is bigger than what was requested
+    if bytesize < capacity
+      str = str.realloc(bytesize.to_u32 + HEADER_SIZE + 1)
+    end
+
     str_header = str.as({Int32, Int32, Int32}*)
     str_header.value = {TYPE_ID, bytesize.to_i, size.to_i}
-    buffer[bytesize] = 0_u8
     str.as(String)
   end
 
@@ -272,7 +285,7 @@ class String
   # "12_345".to_i(underscore: true) # => 12345
   #
   # "  12345  ".to_i                    # => 12345
-  # "  12345  ".to_i(whitepsace: false) # => raises
+  # "  12345  ".to_i(whitespace: false) # => raises
   #
   # "0x123abc".to_i               # => raises
   # "0x123abc".to_i(prefix: true) # => 1194684
@@ -701,15 +714,15 @@ class String
     self[from, size]
   end
 
-  # Returns a substring starting from the `start` character
-  # of size `count`.
+  # Returns a substring starting from the *start* character
+  # of size *count*.
   #
-  # The `start` argument can be negative to start counting
+  # The *start* argument can be negative to start counting
   # from the end of the string.
   #
-  # Raises `IndexError` if `start` isn't in range.
+  # Raises `IndexError` if *start* isn't in range.
   #
-  # Raises `ArgumentError` if `count` is negative.
+  # Raises `ArgumentError` if *count* is negative.
   def [](start : Int, count : Int)
     if ascii_only?
       return byte_slice(start, count)
@@ -723,7 +736,7 @@ class String
     reader = Char::Reader.new(self)
     i = 0
 
-    reader.each_with_index do |char|
+    reader.each do |char|
       if i == start
         start_pos = reader.pos
       elsif count >= 0 && i == start + count
@@ -955,6 +968,34 @@ class String
     end
   end
 
+  # Returns a new String with *char* removed if the string starts with it.
+  #
+  # ```
+  # "hello".lchomp('h') # => "ello"
+  # "hello".lchomp('g') # => "hello"
+  # ```
+  def lchomp(char : Char)
+    if starts_with?(char)
+      unsafe_byte_slice_string(char.bytesize, bytesize - char.bytesize)
+    else
+      self
+    end
+  end
+
+  # Returns a new String with *str* removed if the string starts with it.
+  #
+  # ```
+  # "hello".lchomp("hel") # => "lo"
+  # "hello".lchomp("eh")  # => "hello"
+  # ```
+  def lchomp(str : String)
+    if starts_with?(str)
+      unsafe_byte_slice_string(str.bytesize, bytesize - str.bytesize)
+    else
+      self
+    end
+  end
+
   # Returns a new String with the last carriage return removed (that is, it
   # will remove \n, \r, and \r\n).
   #
@@ -963,7 +1004,7 @@ class String
   # "string\n\r".chomp # => "string\n"
   # "string\n".chomp   # => "string"
   # "string".chomp     # => "string"
-  # "x".chomp.chmop    # => "x"
+  # "x".chomp.chomp    # => "x"
   # ```
   #
   # See also: `#chop`
@@ -991,7 +1032,9 @@ class String
   # "hello".chomp('a') # => "hello"
   # ```
   def chomp(char : Char)
-    if ends_with?(char)
+    if char == '\n'
+      chomp
+    elsif ends_with?(char)
       unsafe_byte_slice_string(0, bytesize - char.bytesize)
     else
       self
@@ -1049,7 +1092,7 @@ class String
   # "好".encode("GB2312") # => [186, 195]
   # "好".bytes            # => [229, 165, 189]
   # ```
-  def encode(encoding : String, invalid : Symbol? = nil) : Slice(UInt8)
+  def encode(encoding : String, invalid : Symbol? = nil) : Bytes
     io = IO::Memory.new
     String.encode(to_slice, "UTF-8", encoding, io, invalid)
     io.to_slice
@@ -1171,8 +1214,8 @@ class String
   # Returns a new string with trailing whitespace removed.
   #
   # ```
-  # "    hello    ".strip # => "    hello"
-  # "\tgoodbye\r\n".strip # => "\tgoodbye"
+  # "    hello    ".rstrip # => "    hello"
+  # "\tgoodbye\r\n".rstrip # => "\tgoodbye"
   # ```
   def rstrip
     excess_right = calc_excess_right
@@ -1187,8 +1230,8 @@ class String
   # Returns a new string with leading whitespace removed.
   #
   # ```
-  # "    hello    ".strip # => "hello    "
-  # "\tgoodbye\r\n".strip # => "goodbye\r\n"
+  # "    hello    ".lstrip # => "hello    "
+  # "\tgoodbye\r\n".lstrip # => "goodbye\r\n"
   # ```
   def lstrip
     excess_left = calc_excess_left
@@ -2134,7 +2177,7 @@ class String
   end
 
   # Returns the index of *search* in the string, or `nil` if the string is not present.
-  # If `offset` is present, it defines the position to start the search.
+  # If *offset* is present, it defines the position to start the search.
   #
   # ```
   # "Hello, World".index('o')    # => 4
@@ -2191,8 +2234,8 @@ class String
     self.match(search, offset).try &.begin
   end
 
-  # Returns the index of the _last_ appearance of *c* in the string,
-  # If `offset` is present, it defines the position to _end_ the search
+  # Returns the index of the _last_ appearance of *search* in the string,
+  # If *offset* is present, it defines the position to _end_ the search
   # (characters beyond this point are ignored).
   #
   # ```
@@ -2438,11 +2481,36 @@ class String
   # old_pond.split(3) # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
   # ```
   def split(limit : Int32? = nil)
+    ary = Array(String).new
+    split(limit) do |string|
+      ary << string
+    end
+    ary
+  end
+
+  # Splits the string after any ASCII whitespace character and yields each part to a block.
+  #
+  # If *limit* is present, up to *limit* new strings will be created,
+  # with the entire remainder added to the last string.
+  #
+  # ```
+  # ary = [] of String
+  # old_pond = "
+  #   Old pond
+  #   a frog leaps in
+  #   water's sound
+  # "
+  # old_pond.split { |s| ary << s }; ary # => ["Old", "pond", "a", "frog", "leaps", "in", "water's", "sound"]
+  # ary.clear
+  # old_pond.split(3) { |s| ary << s }; ary # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
+  # ```
+  def split(limit : Int32? = nil, &block : String -> _)
     if limit && limit <= 1
-      return [self]
+      yield self
+      return
     end
 
-    ary = Array(String).new
+    yielded = 0
     single_byte_optimizable = ascii_only?
     index = 0
     i = 0
@@ -2456,10 +2524,11 @@ class String
           if c.unsafe_chr.ascii_whitespace?
             piece_bytesize = i - 1 - index
             piece_size = single_byte_optimizable ? piece_bytesize : 0
-            ary.push String.new(to_unsafe + index, piece_bytesize, piece_size)
+            yield String.new(to_unsafe + index, piece_bytesize, piece_size)
+            yielded += 1
             looking_for_space = false
 
-            if limit && ary.size + 1 == limit
+            if limit && yielded + 1 == limit
               limit_reached = true
             end
 
@@ -2483,9 +2552,8 @@ class String
     if looking_for_space
       piece_bytesize = bytesize - index
       piece_size = single_byte_optimizable ? piece_bytesize : 0
-      ary.push String.new(to_unsafe + index, piece_bytesize, piece_size)
+      yield String.new(to_unsafe + index, piece_bytesize, piece_size)
     end
-    ary
   end
 
   # Makes an array by splitting the string on the given character *separator* (and removing that character).
@@ -2498,31 +2566,46 @@ class String
   # "foo,bar,baz".split(',', 2) # => ["foo", "bar,baz"]
   # ```
   def split(separator : Char, limit = nil)
-    if empty? || (limit && limit <= 1)
-      return [self]
+    ary = Array(String).new
+    split(separator, limit) do |string|
+      ary << string
+    end
+    ary
+  end
+
+  # Splits the string after each character *separator* and yields each part to a block.
+  #
+  # If *limit* is present, up to *limit* new strings will be created,
+  # with the entire remainder added to the last string.
+  #
+  # ```
+  # ary = [] of String
+  # "foo,bar,baz".split(',') { |string| ary << string }; ary # => ["foo", "bar", "baz"]
+  # ary.clear
+  # "foo,bar,baz".split(',', 2) { |string| ary << string }; ary # => ["foo", "bar,baz"]
+  # ```
+  def split(separator : Char, limit = nil, &block : String -> _)
+    if empty? || limit && limit <= 1
+      yield self
+      return
     end
 
-    ary = Array(String).new
-
+    yielded = 0
     byte_offset = 0
-    single_byte_optimizable = ascii_only?
 
     reader = Char::Reader.new(self)
-    reader.each_with_index do |char, i|
+    reader.each do |char|
       if char == separator
         piece_bytesize = reader.pos - byte_offset
-        piece_size = single_byte_optimizable ? piece_bytesize : 0
-        ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        yield String.new(to_unsafe + byte_offset, piece_bytesize)
+        yielded += 1
         byte_offset = reader.pos + reader.current_char_width
-        break if limit && ary.size + 1 == limit
+        break if limit && yielded + 1 == limit
       end
     end
 
     piece_bytesize = bytesize - byte_offset
-    piece_size = single_byte_optimizable ? piece_bytesize : 0
-    ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
-
-    ary
+    yield String.new(to_unsafe + byte_offset, piece_bytesize)
   end
 
   # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
@@ -2539,15 +2622,43 @@ class String
   # long_river_name.split("")   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : String, limit = nil)
+    ary = Array(String).new
+    split(separator, limit) do |string|
+      ary << string
+    end
+    ary
+  end
+
+  # Splits the string after each string *separator* and yields each part to a block.
+  #
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is an empty string (`""`), the string will be separated into one-character strings.
+  #
+  # ```
+  # ary = [] of String
+  # long_river_name = "Mississippi"
+  # long_river_name.split("ss") { |s| ary << s }; ary # => ["Mi", "i", "ippi"]
+  # ary.clear
+  # long_river_name.split("i") { |s| ary << s }; ary # => ["M", "ss", "ss", "pp"]
+  # ary.clear
+  # long_river_name.split("") { |s| ary << s }; ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
+  def split(separator : String, limit = nil, &block : String -> _)
     if empty? || (limit && limit <= 1)
-      return [self]
+      yield self
+      return
     end
 
     if separator.empty?
-      return split_by_empty_separator(limit)
+      split_by_empty_separator(limit) do |string|
+        yield string
+      end
+      return
     end
 
-    ary = Array(String).new
+    yielded = 0
     byte_offset = 0
     separator_bytesize = separator.bytesize
 
@@ -2559,18 +2670,39 @@ class String
       if (to_unsafe + i).memcmp(separator.to_unsafe, separator_bytesize) == 0
         piece_bytesize = i - byte_offset
         piece_size = single_byte_optimizable ? piece_bytesize : 0
-        ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        yielded += 1
         byte_offset = i + separator_bytesize
         i += separator_bytesize - 1
-        break if limit && ary.size + 1 == limit
+        break if limit && yielded + 1 == limit
       end
       i += 1
     end
 
     piece_bytesize = bytesize - byte_offset
     piece_size = single_byte_optimizable ? piece_bytesize : 0
-    ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+    yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+  end
 
+  # Splits the string after each regex *separator* and yields each part to a block.
+  #
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  #
+  # ```
+  # ary = [] of String
+  # long_river_name = "Mississippi"
+  # long_river_name.split(/s+/) { |s| ary << s }; ary # => ["Mi", "i", "ippi"]
+  # ary.clear
+  # long_river_name.split(//) { |s| ary << s }; ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
+  def split(separator : Regex, limit = nil)
+    ary = Array(String).new
+    split(separator, limit) do |string|
+      ary << string
+    end
     ary
   end
 
@@ -2586,16 +2718,19 @@ class String
   # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
   # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil)
+  def split(separator : Regex, limit = nil, &block : String -> _)
     if empty? || (limit && limit <= 1)
-      return [self]
+      yield self
+      return
     end
 
     if separator.source.empty?
-      return split_by_empty_separator(limit)
+      split_by_empty_separator(limit) do |string|
+        yield string
+      end
+      return
     end
 
-    ary = Array(String).new
     count = 0
     match_offset = 0
     slice_offset = 0
@@ -2609,15 +2744,15 @@ class String
       if slice_offset == 0 && slice_size == 0 && match_bytesize == 0
         # Skip
       elsif slice_offset == bytesize && slice_size == 0
-        ary.push byte_slice(last_slice_offset)
+        yield byte_slice(last_slice_offset)
       else
-        ary.push byte_slice(slice_offset, slice_size)
+        yield byte_slice(slice_offset, slice_size)
       end
       count += 1
 
       1.upto(match.size) do |i|
         if group = match[i]?
-          ary.push group
+          yield group
         end
       end
 
@@ -2634,29 +2769,27 @@ class String
       break if slice_offset > bytesize
     end
 
-    ary.push byte_slice(slice_offset)
-
-    ary
+    yield byte_slice(slice_offset)
   end
 
-  private def split_by_empty_separator(limit)
-    ary = Array(String).new
+  private def split_by_empty_separator(limit, &block : String -> _)
+    yielded = 0
 
     each_char do |c|
-      ary.push c.to_s
-      break if limit && ary.size + 1 == limit
+      yield c.to_s
+      yielded += 1
+      break if limit && yielded + 1 == limit
     end
 
-    if limit && ary.size != size
-      ary.push(self[ary.size..-1])
+    if limit && yielded != size
+      yield self[yielded..-1]
+      yielded += 1
     end
-
-    ary
   end
 
-  def lines
+  def lines(chomp = true)
     lines = [] of String
-    each_line do |line|
+    each_line(chomp: chomp) do |line|
       lines << line
     end
     lines
@@ -2675,11 +2808,21 @@ class String
   # # => EVEN THE MONKEY SEEMS TO want
   # # => A LITTLE COAT OF STRAW
   # ```
-  def each_line
+  def each_line(chomp = true)
+    return if empty?
+
     offset = 0
 
     while byte_index = byte_index('\n'.ord.to_u8, offset)
-      yield unsafe_byte_slice_string(offset, byte_index + 1 - offset)
+      count = byte_index - offset + 1
+      if chomp
+        count -= 1
+        if offset + count > 0 && to_unsafe[offset + count - 1] === '\r'
+          count -= 1
+        end
+      end
+
+      yield unsafe_byte_slice_string(offset, count)
       offset = byte_index + 1
     end
 
@@ -2689,8 +2832,8 @@ class String
   end
 
   # Returns an `Iterator` which yields each line of this string (see `String#each_line`).
-  def each_line
-    LineIterator.new(self)
+  def each_line(chomp = true)
+    LineIterator.new(self, chomp)
   end
 
   # Converts camelcase boundaries to underscores.
@@ -2813,7 +2956,7 @@ class String
     end
   end
 
-  # Adds instances of `char` to right of the string until it is at least size of `len`.
+  # Adds instances of *char* to right of the string until it is at least size of *len*.
   #
   # ```
   # "Purple".ljust(8)      # => "Purple  "
@@ -2824,7 +2967,7 @@ class String
     just len, char, true
   end
 
-  # Adds instances of `char` to left of the string until it is at least size of `len`.
+  # Adds instances of *char* to left of the string until it is at least size of *len*.
   #
   # ```
   # "Purple".ljust(8)      # => "  Purple"
@@ -3126,6 +3269,10 @@ class String
     dump_or_inspect(io) do |char|
       inspect_char(char, io)
     end
+  end
+
+  def pretty_print(pp)
+    pp.text(inspect)
   end
 
   def inspect_unquoted
@@ -3445,11 +3592,7 @@ class String
   private class LineIterator
     include Iterator(String)
 
-    @string : String
-    @offset : Int32
-    @end : Bool
-
-    def initialize(@string)
+    def initialize(@string : String, @chomp : Bool)
       @offset = 0
       @end = false
     end
@@ -3459,7 +3602,15 @@ class String
 
       byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
       if byte_index
-        value = @string.unsafe_byte_slice_string(@offset, byte_index + 1 - @offset)
+        count = byte_index - @offset + 1
+        if @chomp
+          count -= 1
+          if @offset + count > 0 && @string.to_unsafe[@offset + count - 1] === '\r'
+            count -= 1
+          end
+        end
+
+        value = @string.unsafe_byte_slice_string(@offset, count)
         @offset = byte_index + 1
       else
         if @offset == @string.bytesize

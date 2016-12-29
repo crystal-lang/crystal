@@ -1,6 +1,5 @@
 # A fixed-size, stack allocated array.
 struct StaticArray(T, N)
-  include Enumerable(T)
   include Indexable(T)
 
   # Create a new `StaticArray` with the given *args*. The type of the
@@ -128,9 +127,8 @@ struct StaticArray(T, N)
   # Fills the array by substituting all elements with the given value
   #
   # ```
-  # array = StaticArray(Int32, 3).new { |i| i+1 }
-  # array[]= 2 # => [2, 2, 2]
-  #
+  # array = StaticArray(Int32, 3).new { |i| i + 1 }
+  # array.[]= 2 # => [2, 2, 2]
   # ```
   def []=(value : T)
     size.times do |i|
@@ -207,6 +205,14 @@ struct StaticArray(T, N)
     io << "StaticArray["
     join ", ", io, &.inspect(io)
     io << "]"
+  end
+
+  def pretty_print(pp)
+    # Don't pass self here because we'll pass self by
+    # value and for big static arrays that seems to make
+    # LLVM really slow.
+    # # TODO: investigate why, maybe report a bug to LLVM?
+    pp.list("StaticArray[", to_slice, "]")
   end
 
   # Returns a new StaticArray where each element is cloned from elements in `self`.

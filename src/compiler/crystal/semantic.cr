@@ -30,10 +30,12 @@ class Crystal::Program
     processor.check_non_nilable_class_vars_without_initializers
 
     Crystal.timing("Semantic (ivars initializers)", stats) do
-      node.accept InstanceVarsInitializerVisitor.new(self)
+      visitor = InstanceVarsInitializerVisitor.new(self)
+      visit_with_finished_hooks(node, visitor)
     end
+
     result = Crystal.timing("Semantic (main)", stats) do
-      visit_main(node)
+      visit_main(node, process_finished_hooks: true)
     end
     Crystal.timing("Semantic (cleanup)", stats) do
       cleanup_types
@@ -54,6 +56,8 @@ class Crystal::Program
     new_expansions = Crystal.timing("Semantic (top level)", stats) do
       visitor = TopLevelVisitor.new(self)
       node.accept visitor
+      visitor.process_finished_hooks
+      process_finished_hooks(visitor)
       visitor.new_expansions
     end
     Crystal.timing("Semantic (new)", stats) do

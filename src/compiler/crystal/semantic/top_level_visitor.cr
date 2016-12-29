@@ -38,6 +38,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   # These are `new` methods (expanded) that was created from `initialize` methods (original)
   getter new_expansions = [] of {original: Def, expanded: Def}
 
+  # All finished hooks and their scope
+  record FinishedHook, scope : ModuleType, macro : Macro
+  @finished_hooks = [] of FinishedHook
+
   @last_doc : String?
 
   def visit(node : ClassDef)
@@ -127,7 +131,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       when GenericClassType
         node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
       when NonGenericClassType, GenericClassInstanceType
-        # OK
+        if superclass == @program.enum
+          node_superclass.raise "can't inherit Enum. Use the enum keyword to define enums"
+        end
       else
         node_superclass.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
       end
@@ -239,13 +245,20 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Macro)
     check_outside_exp node, "declare macro"
 
+    node.set_type @program.nil
+
+    if node.name == "finished"
+      @finished_hooks << FinishedHook.new(current_type, node)
+      return false
+    end
+
+    target = current_type.metaclass.as(ModuleType)
     begin
-      current_type.metaclass.as(ModuleType).add_macro node
+      target.add_macro node
     rescue ex : Crystal::Exception
       node.raise ex.message
     end
 
-    node.set_type @program.nil
     false
   end
 
@@ -356,7 +369,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : LibDef)
     check_outside_exp node, "declare lib"
 
-    link_attributes = process_link_attributes
+    link_attributes, call_convention = process_lib_attributes
 
     scope = current_type_scope(node)
 
@@ -371,6 +384,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     type.private = true if node.visibility.private?
     type.add_link_attributes(link_attributes)
+    type.call_convention = call_convention if call_convention
 
     pushing_type(type) do
       @in_lib = true
@@ -469,6 +483,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         enum_type: enum_type,
         enum_base_type: enum_base_type,
         is_flags: is_flags)
+    end
+
+    if enum_type.types.empty?
+      node.raise "enum #{node.name} must have at least one member"
     end
 
     unless existed
@@ -636,11 +654,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     when Def
       return false
     when Macro
-      if current_type != @program.program
-        node.raise "#{node.modifier.to_s.downcase} macros can only be declared at the top-level"
+      if node.modifier.private?
+        return false
+      else
+        node.raise "can only use 'private' for macros"
       end
-
-      return false
     when Call
       # Don't give an error yet: wait to see if the
       # call doesn't resolve to a method/macro
@@ -679,6 +697,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.doc ||= attributes_doc()
     check_ditto node
 
+    # Copy call convention from lib, if any
+    scope = current_type
+    if !call_convention && scope.is_a?(LibType)
+      call_convention = scope.call_convention
+    end
+
     # We fill the arguments and return type in TypeDeclarationVisitor
     external = External.new(node.name, ([] of Arg), node.body, node.real_name).at(node)
     external.doc = node.doc
@@ -691,7 +715,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def visit(node : TypeDeclaration | UninitializedVar)
+  def visit(node : TypeDeclaration)
+    if (var = node.var).is_a?(Var)
+      @vars[var.name] = MetaVar.new(var.name)
+    end
+    false
+  end
+
+  def visit(node : UninitializedVar)
+    if (var = node.var).is_a?(Var)
+      @vars[var.name] = MetaVar.new(var.name)
+    end
     false
   end
 
@@ -750,12 +784,24 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def process_link_attributes
+  def process_lib_attributes
     attributes = @attributes
-    return unless attributes
+    return {nil, nil} unless attributes
 
     @attributes = nil
-    attributes.map { |attr| LinkAttribute.from(attr) }
+    link_attributes = [] of LinkAttribute
+    call_convention = nil
+    attributes.each do |attr|
+      case attr.name
+      when "Link"
+        link_attributes << LinkAttribute.from(attr)
+      when "CallConvention"
+        call_convention = parse_call_convention(attr, call_convention)
+      else
+        attr.raise "illegal attribute for lib, valid attributes are: Link, CallConvention"
+      end
+    end
+    {link_attributes, call_convention}
   end
 
   def include_in(current_type, node, kind)
@@ -813,28 +859,32 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attributes.reject! do |attr|
       next false unless attr.name == "CallConvention"
 
-      if call_convention
-        attr.raise "call convention already specified"
-      end
-
-      if attr.args.size != 1
-        attr.wrong_number_of_arguments "attribute CallConvention", attr.args.size, 1
-      end
-
-      call_convention_node = attr.args.first
-      unless call_convention_node.is_a?(StringLiteral)
-        call_convention_node.raise "argument to CallConvention must be a string"
-      end
-
-      value = call_convention_node.value
-      call_convention = LLVM::CallConvention.parse?(value)
-      unless call_convention
-        call_convention_node.raise "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
-      end
-
+      call_convention = parse_call_convention(attr, call_convention)
       true
     end
 
+    call_convention
+  end
+
+  def parse_call_convention(attr, call_convention)
+    if call_convention
+      attr.raise "call convention already specified"
+    end
+
+    if attr.args.size != 1
+      attr.wrong_number_of_arguments "attribute CallConvention", attr.args.size, 1
+    end
+
+    call_convention_node = attr.args.first
+    unless call_convention_node.is_a?(StringLiteral)
+      call_convention_node.raise "argument to CallConvention must be a string"
+    end
+
+    value = call_convention_node.value
+    call_convention = LLVM::CallConvention.parse?(value)
+    unless call_convention
+      call_convention_node.raise "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
+    end
     call_convention
   end
 
@@ -929,6 +979,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       name = path.names.pop
       scope = lookup_type_def_name_creating_modules path
     end
+
+    if scope.is_a?(EnumType)
+      path.raise "can't declare type inside enum #{scope}"
+    end
+
     {scope.as(ModuleType), name}
   end
 
@@ -945,6 +1000,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
             path.raise "execpted #{name} to be a type"
           end
         else
+          if base_type.is_a?(EnumType)
+            path.raise "can't declare type inside enum #{base_type}"
+          end
+
           next_type = NonGenericModuleType.new(@program, base_type.as(ModuleType), name)
           if (location = path.location)
             next_type.add_location(location)
@@ -965,5 +1024,16 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope = program.check_private(node) || scope
     end
     scope
+  end
+
+  # Turn all finished macros into expanded nodes, and
+  # add them to the program
+  def process_finished_hooks
+    @finished_hooks.each do |hook|
+      expansion = expand_macro(hook.macro, hook.macro) do
+        @program.expand_macro hook.macro.body, hook.scope
+      end
+      program.add_finished_hook(hook.scope, hook.macro, expansion)
+    end
   end
 end

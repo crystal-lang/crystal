@@ -97,16 +97,19 @@ macro pp(*exps)
     # Nothing
   {% elsif exps.size == 1 %}
     {% exp = exps.first %}
-    ::puts "#{ {{exp.stringify}} } # => #{ ({{exp}}).inspect }"
+    %prefix = "#{{{ exp.stringify }}} # => "
+    ::print %prefix
+    PrettyPrint.format({{exp}}, STDOUT, width: 80 - %prefix.size, indent: %prefix.size)
+    ::puts
   {% else %}
-    %strings = [] of {String, String}
-    {% for exp in exps %}
-      %strings.push({ {{exp.stringify}}, ({{exp}}).inspect })
+    %names = { {{*exps.map(&.stringify)}} }
+    %max_size = %names.max_of &.size
+    {% for exp, i in exps %}
+      %prefix = "#{%names[{{i}}].ljust(%max_size)} # => "
+      ::print %prefix
+      PrettyPrint.format({{exp}}, STDOUT, width: 80 - %prefix.size, indent: %prefix.size)
+      ::puts
     {% end %}
-    %max_size = %strings.max_of &.[0].size
-    %strings.each do |%left, %right|
-      ::puts "#{%left.ljust(%max_size)} # => #{%right}"
-    end
   {% end %}
 end
 

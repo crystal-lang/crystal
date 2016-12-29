@@ -106,6 +106,9 @@ module Crystal
     # Whether to show error trace
     property? show_error_trace = false
 
+    # The main filename of this program
+    property filename : String?
+
     def initialize
       super(self, self, "main")
 

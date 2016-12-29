@@ -37,7 +37,11 @@ class Reference
   # This allocates a new object and copies the contents of
   # `self` into it.
   def dup
-    {% begin %}
+    {% if @type.abstract? %}
+      # This shouldn't happen, as the type is abstract,
+      # but we need to avoid the allocate invocation below
+      raise "can't dup {{@type}}"
+    {% else %}
       dup = {{@type}}.allocate
       dup.as(Void*).copy_from(self.as(Void*), instance_sizeof({{@type}}))
       dup
@@ -67,6 +71,33 @@ class Reference
     end
     io << ">"
     nil
+  end
+
+  def pretty_print(pp) : Nil
+    {% if @type.overrides?(Reference, "inspect") %}
+      pp.text inspect
+    {% else %}
+      prefix = "#<#{{{@type.name.id.stringify}}}:0x#{object_id.to_s(16)}"
+      executed = exec_recursive(:pretty_print) do
+        pp.surround(prefix, ">", left_break: " ", right_break: nil) do
+          {% for ivar, i in @type.instance_vars.map(&.name).sort %}
+            {% if i > 0 %}
+              pp.comma
+            {% end %}
+            pp.group do
+              pp.text "@{{ivar.id}}="
+              pp.nest do
+                pp.breakable ""
+                @{{ivar.id}}.pretty_print(pp)
+              end
+            end
+          {% end %}
+        end
+      end
+      unless executed
+        pp.text "#{prefix} ...>"
+      end
+    {% end %}
   end
 
   def to_s(io : IO) : Nil

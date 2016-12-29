@@ -165,6 +165,7 @@ describe "Semantic: doc" do
     result = semantic %(
       # Hello
       enum Foo
+        A
       end
     ), wants_doc: true
     program = result.program
@@ -178,6 +179,7 @@ describe "Semantic: doc" do
       # Hello
       @[Flags]
       enum Foo : UInt8
+        A
       end
     ), wants_doc: true
     program = result.program
@@ -206,6 +208,7 @@ describe "Semantic: doc" do
       # Hello
       @[Flags]
       enum Foo
+        A
       end
     ), wants_doc: true
     program = result.program

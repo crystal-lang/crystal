@@ -37,7 +37,7 @@ module Crystal
       @no_type_declaration = 0
 
       # This flags tells the parser where it has to consider a "do"
-      # as beloning to the current parsed call. For eample when writing
+      # as belonging to the current parsed call. For example when writing
       #
       # ```
       # foo bar do
@@ -116,8 +116,10 @@ module Crystal
 
       case @token.type
       when :","
-        # Continue
-        unexpected_token unless last_is_target
+        unless last_is_target
+          raise "Multiple assignment is not allowed for constants" if last.is_a?(Path)
+          unexpected_token
+        end
       when :NEWLINE, :";"
         return last
       else
@@ -173,7 +175,7 @@ module Crystal
         targets << assign
         values << assign.args.pop
       else
-        raise "Bug: mutliassign index expression can only be Assign or Call"
+        raise "Bug: multiassign index expression can only be Assign or Call"
       end
 
       values.concat exps[assign_index + 1..-1]
@@ -187,7 +189,7 @@ module Crystal
 
     def multi_assign_target?(exp)
       case exp
-      when Underscore, Var, InstanceVar, ClassVar, Global, Path, Assign
+      when Underscore, Var, InstanceVar, ClassVar, Global, Assign
         true
       when Call
         !exp.has_parentheses? && (
@@ -405,8 +407,6 @@ module Crystal
       atomic
     end
 
-    ColonOrNewline = [:":", :NEWLINE]
-
     def parse_question_colon
       cond = parse_range
 
@@ -416,14 +416,13 @@ module Crystal
         check_void_value cond, location
 
         next_token_skip_space_or_newline
-        next_token_skip_space_or_newline if @token.type == :":"
 
         @no_type_declaration += 1
         true_val = parse_question_colon
-        check ColonOrNewline
 
+        skip_space_or_newline
+        check :":"
         next_token_skip_space_or_newline
-        next_token_skip_space_or_newline if @token.type == :":"
 
         false_val = parse_question_colon
         @no_type_declaration -= 1
@@ -2958,10 +2957,15 @@ module Crystal
     def parse_expression_inside_macro
       @in_macro_expression = true
 
-      if @token.type == :"*"
+      case @token.type
+      when :"*"
         next_token_skip_space
         exp = parse_expression
         exp = Splat.new(exp).at(exp.location)
+      when :"**"
+        next_token_skip_space
+        exp = parse_expression
+        exp = DoubleSplat.new(exp).at(exp.location)
       else
         exp = parse_expression
       end
@@ -3880,7 +3884,7 @@ module Crystal
     end
 
     def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false)
-      if (@token.keyword?(:as) || @token.keyword?(:end)) && !next_comes_colon_space?
+      if @token.keyword?(:end) && !next_comes_colon_space?
         return nil
       end
 
@@ -5199,7 +5203,7 @@ module Crystal
 
       if @token.type == :IDENT
         case @token.value
-        when :do, :end, :else, :elsif, :when, :rescue, :ensure
+        when :do, :end, :else, :elsif, :when, :rescue, :ensure, :then
           if next_comes_colon_space?
             return false
           end
@@ -5354,10 +5358,6 @@ module Crystal
       value = yield
       @visibility = old_visibility
       value
-    end
-
-    def self.free_var_name?(name)
-      name.size == 1 || (name.size == 2 && name[1].ascii_number?)
     end
   end
 end

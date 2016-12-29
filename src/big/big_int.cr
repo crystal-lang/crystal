@@ -13,6 +13,7 @@ struct BigInt < Int
   # Creates a BigInt with the value zero.
   #
   # ```
+  # require "big"
   # BigInt.new # => 0
   # ```
   def initialize
@@ -57,7 +58,7 @@ struct BigInt < Int
     LibGMP.init_set_d(out @mpz, num)
   end
 
-  # Returns `num`. Useful for generic code that does `T.new(...)` with `T`
+  # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
   # being a `Number`.
   def self.new(num : BigInt)
     num

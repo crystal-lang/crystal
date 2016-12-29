@@ -157,7 +157,7 @@ module Debug
     end
 
     private def read_magic
-      @io.read(magic = Slice(UInt8).new(4))
+      @io.read(magic = Bytes.new(4))
       raise Error.new("Invalid magic number") unless magic == MAGIC
     end
 

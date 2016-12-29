@@ -21,7 +21,7 @@ module Crystal
         triple[0] = "i686"
       end
 
-      target = if triple.any?(&.includes?("macosx"))
+      target = if triple.any?(&.includes?("macosx")) || triple.any?(&.includes?("darwin"))
                  {triple[0], "macosx", "darwin"}.join('-')
                elsif triple.any?(&.includes?("freebsd"))
                  {triple[0], triple[1], "freebsd"}.join('-')

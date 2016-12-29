@@ -21,7 +21,7 @@ module IO
       @closed = false
     end
 
-    def write(io, slice : Slice(UInt8))
+    def write(io, slice : Bytes)
       inbuf_ptr = slice.to_unsafe
       inbytesleft = LibC::SizeT.new(slice.size)
       outbuf = uninitialized UInt8[1024]
@@ -51,17 +51,17 @@ module IO
     BUFFER_SIZE     = 4 * 1024
     OUT_BUFFER_SIZE = 4 * 1024
 
-    property out_slice : Slice(UInt8)
+    property out_slice : Bytes
 
     @in_buffer : Pointer(UInt8)
 
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
-      @buffer = Slice(UInt8).new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
+      @buffer = Bytes.new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
       @in_buffer = @buffer.to_unsafe
       @in_buffer_left = LibC::SizeT.new(0)
-      @out_buffer = Slice(UInt8).new((GC.malloc_atomic(OUT_BUFFER_SIZE).as(UInt8*)), OUT_BUFFER_SIZE)
-      @out_slice = Slice(UInt8).new(Pointer(UInt8).null, 0)
+      @out_buffer = Bytes.new((GC.malloc_atomic(OUT_BUFFER_SIZE).as(UInt8*)), OUT_BUFFER_SIZE)
+      @out_slice = Bytes.empty
       @closed = false
     end
 
@@ -156,7 +156,7 @@ module IO
       count
     end
 
-    def gets(io, delimiter : UInt8, limit : Int)
+    def gets(io, delimiter : UInt8, limit : Int, chomp)
       read(io)
       return nil if @out_slice.empty?
 
@@ -169,16 +169,12 @@ module IO
           index += 1
         end
 
-        string = String.new(@out_slice[0, index])
-        advance(index)
-        return string
+        return gets_index(index, delimiter, chomp)
       end
 
       # Check if there's limit bytes in the out slice
       if @out_slice.size >= limit
-        string = String.new(@out_slice[0, limit])
-        advance(limit)
-        return string
+        return gets_index(limit, delimiter, chomp)
       end
 
       # We need to read from the out_slice into a String until we find that byte,
@@ -208,12 +204,29 @@ module IO
             end
           end
         end
+        str.chomp!(delimiter) if chomp
       end
+    end
+
+    private def gets_index(index, delimiter, chomp)
+      advance_increment = index
+
+      if chomp && index > 0 && @out_slice[index - 1] === delimiter
+        index -= 1
+
+        if delimiter === '\n' && index > 0 && @out_slice[index - 1] === '\r'
+          index -= 1
+        end
+      end
+
+      string = String.new(@out_slice[0, index])
+      advance(advance_increment)
+      string
     end
 
     def write(io)
       io.write @out_slice
-      @out_slice = Slice.new(Pointer(UInt8).null, 0)
+      @out_slice = Bytes.empty
     end
 
     def write(io, numbytes)

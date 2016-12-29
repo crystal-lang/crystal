@@ -1,6 +1,6 @@
 # The XML module allows parsing and generating [XML](https://www.w3.org/XML/) documents.
 #
-# `XML#parse` will parse xml from `String` or `io` and return xml document as an `XML:Node` which represents all kinds of xml nodes.
+# `XML#parse` will parse xml from `String` or `IO` and return xml document as an `XML:Node` which represents all kinds of xml nodes.
 #
 # Example:
 # ```

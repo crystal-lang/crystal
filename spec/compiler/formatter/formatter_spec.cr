@@ -170,7 +170,17 @@ describe Crystal::Formatter do
   assert_format "def %(x)\n  1\nend"
   assert_format "def `(x)\n  1\nend"
   assert_format "def /(x)\n  1\nend"
-  assert_format "def foo(x : X)  forall   X ,   Y; end", "def foo(x : X) forall X, Y\nend"
+  assert_format "def foo(x : X)  forall   X ,   Y; end", "def foo(x : X) forall X, Y; end"
+
+  assert_format "def foo(a : T) forall T \n  #\nend", "def foo(a : T) forall T\n  #\nend"
+  assert_format "def foo(a : T, b : U) forall T, U\n  #\nend", "def foo(a : T, b : U) forall T, U\n  #\nend"
+  assert_format "def foo(a : T, b : U) forall T, U         #\n  #\nend", "def foo(a : T, b : U) forall T, U #\n  #\nend"
+  assert_format "def foo(a : T) forall T\n  #\n\nend", "def foo(a : T) forall T\n  #\n\nend"
+  assert_format "def foo(a : T) forall T\n  #\n\n\nend", "def foo(a : T) forall T\n  #\n\nend"
+  assert_format "def foo\n  1\n  #\nrescue\nend"
+  assert_format "def foo\n  1 #\n\nrescue\nend"
+  assert_format "def foo\n  1 #\nrescue\nend"
+  assert_format "def foo\n  1\n  #\n\n\nrescue\nend", "def foo\n  1\n  #\n\nrescue\nend"
 
   assert_format "foo"
   assert_format "foo()"
@@ -605,6 +615,7 @@ describe Crystal::Formatter do
   assert_format %(asm("nop" :::: "volatile" )), %(asm("nop" :::: "volatile"))
   assert_format %(asm("nop" :::: "volatile"  , "alignstack"  ,  "intel"   )), %(asm("nop" :::: "volatile", "alignstack", "intel"))
   assert_format %(asm("nop" ::: "eax" ,  "ebx" :   "volatile"  ,  "alignstack" )), %(asm("nop" ::: "eax", "ebx" : "volatile", "alignstack"))
+  assert_format %(asm("a" : "b"(c) : "d"(e) :: "volatile"))
 
   assert_format "1 # foo\n1234 # bar", "1    # foo\n1234 # bar"
   assert_format "1234 # foo\n1 # bar", "1234 # foo\n1    # bar"
@@ -983,4 +994,12 @@ describe Crystal::Formatter do
   assert_format "foo(1 ||\n    # foo\n    2)"
 
   assert_format "x = a do\n  1 ||\n    2\nend"
+  assert_format "case 1\nwhen a; 2\nelse; b\nend", "case 1\nwhen a; 2\nelse    b\nend"
+  assert_format "case 1\nwhen a; 2\nelse; ; b\nend", "case 1\nwhen a; 2\nelse    b\nend"
+
+  assert_format "as Foo"
+  assert_format "as? Foo"
+  assert_format "is_a? Foo"
+  assert_format "responds_to? :foo"
+  assert_format "nil?"
 end

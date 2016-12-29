@@ -11,6 +11,7 @@ lib LibC
   SO_LINGER      = 13
   SO_RCVBUF      =  8
   SO_REUSEADDR   =  2
+  SO_REUSEPORT   = 15
   SO_SNDBUF      =  7
   PF_INET        =  2
   PF_INET6       = 10
@@ -33,6 +34,12 @@ lib LibC
   struct Sockaddr
     sa_family : SaFamilyT
     sa_data : StaticArray(Char, 14)
+  end
+
+  struct SockaddrStorage
+    ss_family : SaFamilyT
+    __ss_align : ULong
+    __ss_padding : StaticArray(Char, 112)
   end
 
   struct Linger

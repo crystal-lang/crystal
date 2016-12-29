@@ -4,6 +4,8 @@ require "../subtle"
 # Generate, read and verify `Crypto::Bcrypt` hashes.
 #
 # ```
+# require "crypto/bcrypt/password"
+#
 # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
 # # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
 #

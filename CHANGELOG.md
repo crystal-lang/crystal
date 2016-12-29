@@ -1,3 +1,46 @@
+## 0.20.3 (23-12-2016)
+
+* **(breaking change)** `IO#gets`, `IO#each_line`, `String#lines`, `String#each_line`, etc. now chomp lines by default. You can pass `chomp: false` to prevent automatic chomping. Note that `chomp` is `true` by default for argless `IO#gets` (read line) but `false` if args are given.
+* **(breaking change)** `HTTP::Handler` is now a module instead of a class (thanks @andrewhamon)
+* **(breaking change)** Free variables now must be specified with `forall`, a single uppercase letter will not work anymore
+* **(breaking change)** The `libs` directory is no longer in the default CRYSTAL_PATH, use `lib` (running `crystal deps` should fix this)
+* Optimized compile times, specially on linux
+* `private` can now be used with macros inside types (thanks @MakeNowJust)
+* CLI: the `-s`/`--stats` option now also shows execution time (thanks @MakeNowJust)
+* CLI: added `-t`/`--time` to show execution time (thanks @MakeNowJust)
+* `Socket` now allows any family/type/protocol association, [and many other improvements](https://github.com/crystal-lang/crystal/pull/3750) (thanks @ysbaddaden)
+* YAML: an `IO` can now be passed to `from_yaml` (thanks @MakeNowJust)
+* Added `class_getter`, `class_setter`, `class_property`, etc. (thanks @Sija)
+* Added `String#lchomp` (thanks @Sija)
+* Added `IO#read_fully?`
+* Added `Iterator#flatten` (thanks @MakeNowJust)
+* Added `HTTP::WebSocket#ping`, `pong`, `on_ping`, `on_pong`, and now a ping message is automatically replied with a pong message (thanks @Sija)
+* Added `File#empty?` and `Dir#empty?` (thanks @dylandrop)
+* Added `Time::Span#/(Time::Span)` (thanks @RX14)
+* Added `String#split` versions that accept a block (thanks @splattael)
+* Added `URI#normalize` and `normalize!` (thanks @taylorfinnell)
+* Added `reuse` optional argument to many `Array`, `Enumerable` and `Iterable` methods that allow you to reuse the yielded/return array for better performance and less memory footprint
+* The `:debug` flag is now present when compiled with `--debug`, useful for doing `flag?(:debug)` in macros (thanks @luislavena)
+* [Many bug fixes and performance improvements](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.3)
+
+## 0.20.1 (05-12-2016)
+
+* **(breaking change)** `Set#merge` as renamed to `Set#merge!`
+* **(breaking change)** `Slice.new(size)` no longer works with non primitive integers and floats
+* **(breaking change)** The macro method `argify` was renamed to `splat`
+* Added pretty printing. The methods `p` and `pp` now use it. To get the old behaviour use `puts obj.inspect`
+* Added `ArrayLiteral#[]=`, `TypeNode#constant`, `TypeNode#overrides?` and `HashLiteral#double_splat` in macros
+* Added a `finished` macro hook that runs at the end of the program
+* Added support for declaring the type of a local variable
+* Added `Slice.empty`
+* Flags enums now have a `none?` method
+* `IO::ByteFormat` has now methods to encode/decode to/from a `Slice`
+* Spec: the line number passed to run a specific `it` block can now be inside any line of that block
+* The `CallConvention` attribute can now also be applied to a `lib` declaration, and all `fun`s inside it will inherit it
+* The `method_missing` hook can now define a method, useful for specifying block arguments
+* Support double splat in macros (`{{**...}}`)
+* [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.1)
+
 ## 0.20.0 (22-11-2016)
 
 * **(breaking change)** Removed `ifdef` from the language

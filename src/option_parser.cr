@@ -43,7 +43,7 @@ class OptionParser
     flag : String,
     block : String ->
 
-  # Creates a new parser, with its configuration specified in the block, and uses it to parse the passed `args`.
+  # Creates a new parser, with its configuration specified in the block, and uses it to parse the passed *args*.
   def self.parse(args) : self
     parser = OptionParser.new
     yield parser

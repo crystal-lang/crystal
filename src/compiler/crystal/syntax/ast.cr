@@ -84,6 +84,10 @@ module Crystal
     def class_desc : String
       {{@type.name.split("::").last.id.stringify}}
     end
+
+    def pretty_print(pp)
+      pp.text to_s
+    end
   end
 
   class Nop < ASTNode
@@ -2056,7 +2060,7 @@ module Crystal
     end
 
     def self.expand_line(location)
-      location.try(&.line_number) || 0
+      (location.try(&.original_location) || location).try(&.line_number) || 0
     end
 
     def self.expand_file_node(location)
@@ -2064,7 +2068,7 @@ module Crystal
     end
 
     def self.expand_file(location)
-      location.try(&.filename.to_s) || "?"
+      location.try(&.original_filename.to_s) || "?"
     end
 
     def self.expand_dir_node(location)

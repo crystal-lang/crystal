@@ -9,16 +9,16 @@ module IO::Buffered
 
   BUFFER_SIZE = 8192
 
-  @in_buffer_rem = Slice(UInt8).new(Pointer(UInt8).null, 0)
+  @in_buffer_rem = Bytes.empty
   @out_count = 0
   @sync = false
   @flush_on_newline = false
 
   # Reads at most *slice.size* bytes from the wrapped IO into *slice*. Returns the number of bytes read.
-  abstract def unbuffered_read(slice : Slice(UInt8))
+  abstract def unbuffered_read(slice : Bytes)
 
   # Writes at most *slice.size* bytes from *slice* into the wrapped IO. Returns the number of bytes written.
-  abstract def unbuffered_write(slice : Slice(UInt8))
+  abstract def unbuffered_write(slice : Bytes)
 
   # Flushes the wrapped IO.
   abstract def unbuffered_flush
@@ -30,7 +30,7 @@ module IO::Buffered
   abstract def unbuffered_rewind
 
   # :nodoc:
-  def gets(delimiter : Char, limit : Int)
+  def gets(delimiter : Char, limit : Int, chomp = false)
     check_open
 
     if delimiter.ord >= 128 || @encoding
@@ -61,8 +61,18 @@ module IO::Buffered
         index += 1
       end
 
+      advance = index
+
+      if chomp && index > 0 && @in_buffer_rem[index - 1] === delimiter_byte
+        index -= 1
+
+        if delimiter == '\n' && index > 0 && @in_buffer_rem[index - 1] === '\r'
+          index -= 1
+        end
+      end
+
       string = String.new(@in_buffer_rem[0, index])
-      @in_buffer_rem += index
+      @in_buffer_rem += advance
       return string
     end
 
@@ -101,6 +111,7 @@ module IO::Buffered
           break
         end
       end
+      buffer.chomp!(delimiter_byte) if chomp
     end
   end
 
@@ -149,7 +160,7 @@ module IO::Buffered
   end
 
   # Buffered implementation of `IO#read(slice)`.
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     check_open
 
     count = slice.size
@@ -174,7 +185,7 @@ module IO::Buffered
   end
 
   # Buffered implementation of `IO#write(slice)`.
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     check_open
 
     count = slice.size
@@ -237,7 +248,7 @@ module IO::Buffered
     @flush_on_newline
   end
 
-  # Turns on/off IO buffering. When `sync` is set to `true`, no buffering
+  # Turns on/off IO buffering. When *sync* is set to `true`, no buffering
   # will be done (that is, writing to this IO is immediately synced to the
   # underlying IO).
   def sync=(sync)
@@ -268,7 +279,7 @@ module IO::Buffered
   # Rewinds the underlying IO. Returns `self`.
   def rewind
     unbuffered_rewind
-    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+    @in_buffer_rem = Bytes.empty
     self
   end
 

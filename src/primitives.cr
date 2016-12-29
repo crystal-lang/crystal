@@ -27,7 +27,7 @@ class Object
   def class
   end
 
-  # :nodoc
+  # :nodoc:
   @[Primitive(:object_crystal_type_id)]
   def crystal_type_id
   end
@@ -48,6 +48,13 @@ class Reference
   # ```
   @[Primitive(:object_id)]
   def object_id : UInt64
+  end
+end
+
+class Class
+  # :nodoc:
+  @[Primitive(:class_crystal_instance_type_id)]
+  def crystal_instance_type_id
   end
 end
 

@@ -12,7 +12,7 @@ class IO::ARGF
     @read_from_stdin = false
   end
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     count = slice.size
     first_initialize unless @initialized
 
@@ -31,7 +31,34 @@ class IO::ARGF
     read_count
   end
 
-  def write(slice : Slice(UInt8))
+  # :nodoc:
+  def gets(delimiter : Char, limit : Int, chomp = false) : String?
+    return super if @encoding
+
+    first_initialize unless @initialized
+
+    if current_io = @current_io
+      string = current_io.gets(delimiter, limit, chomp)
+      if !string && !@read_from_stdin
+        current_io.close
+        if @argv.empty?
+          @current_io = nil
+        else
+          read_next_argv
+          string = gets(delimiter, limit, chomp)
+        end
+      end
+    elsif !@read_from_stdin && !@argv.empty?
+      read_next_argv
+      string = gets(delimiter, limit, chomp)
+    else
+      string = nil
+    end
+
+    string
+  end
+
+  def write(slice : Bytes)
     raise IO::Error.new "can't write to ARGF"
   end
 

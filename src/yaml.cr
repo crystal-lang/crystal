@@ -114,7 +114,7 @@ module YAML
     object.to_yaml
   end
 
-  # Serializes an object to YAML, writing it to `io`.
+  # Serializes an object to YAML, writing it to *io*.
   def self.dump(object, io : IO)
     object.to_yaml(io)
   end

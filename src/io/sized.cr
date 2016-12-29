@@ -28,7 +28,7 @@ module IO
       @read_remaining = read_size.to_u64
     end
 
-    def read(slice : Slice(UInt8))
+    def read(slice : Bytes)
       check_open
 
       count = {slice.size.to_u64, @read_remaining}.min
@@ -49,7 +49,23 @@ module IO
       end
     end
 
-    def write(slice : Slice(UInt8))
+    def gets(delimiter : Char, limit : Int, chomp = false) : String?
+      check_open
+
+      return super if @encoding
+      return nil if @read_remaining == 0
+
+      # We can't pass chomp here, because it will remove part of the delimiter
+      # and then we won't know how much we consumed from @io, so we chomp later
+      string = @io.gets(delimiter, Math.min(limit, @read_remaining))
+      if string
+        @read_remaining -= string.bytesize
+        string = string.chomp(delimiter) if chomp
+      end
+      string
+    end
+
+    def write(slice : Bytes)
       raise IO::Error.new "Can't write to IO::Sized"
     end
 
