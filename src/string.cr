@@ -2731,6 +2731,7 @@ class String
   # iter.next # => "ippi"
   # ```
   def each_split(separator : String, limit = nil)
+    return EmptySplitIterator.new(self, limit) if separator.empty?
     StringSplitIterator.new(self, separator, limit)
   end
 
@@ -2826,7 +2827,16 @@ class String
     yield byte_slice(slice_offset)
   end
 
+  # Returns an `Iterator` which yields each split of this string on the given Regex *separator* (see `String#split(Regex)`).
+  #
+  # ```
+  # iter = "Mississippi".each_split(/s+/)
+  # iter.next # => "Mi"
+  # iter.next # => "i"
+  # iter.next # => "ippi"
+  # ```
   def each_split(regex : Regex, limit = nil)
+    return EmptySplitIterator.new(self, limit) if regex.source.empty?
     RegexSplitIterator.new(self, regex, limit)
   end
 
@@ -3748,7 +3758,6 @@ class String
 
     def next
       return stop if @end || reached_limit?
-      return split_by_empty_separator if @separator.empty?
       @split_count += 1
       return @string if (limit = @limit) && limit <= 1
 
@@ -3778,7 +3787,7 @@ class String
       @i = 0
       @byte_offset = 0
       @end = false
-      @reader = nil
+      self
     end
 
     private def reached_limit?
@@ -3787,24 +3796,6 @@ class String
 
     private def single_byte_optimizable?
       @string.ascii_only?
-    end
-
-    private def split_by_empty_separator
-      @reader ||= Char::Reader.new(@string)
-      @split_count += 1
-
-      while (reader = @reader) && reader.has_next? && !reached_limit?
-        char = reader.current_char
-        @reader.not_nil!.next_char
-        reader.current_char
-        return char.to_s
-      end
-
-      if reached_limit?
-        return @string[@split_count - 1..-1]
-      end
-
-      stop
     end
   end
 
@@ -3822,7 +3813,6 @@ class String
 
     def next
       return stop if @end || reached_limit?
-      return split_by_empty_separator if @separator.source.empty?
       @split_count += 1
 
       if (limit = @limit) && limit <= 1
@@ -3838,12 +3828,12 @@ class String
         if @split_count > 1 && match.size > 0
           set_offset(match_bytesize)
           while @group_matches <= match.size
-            @group_matches  += 1
+            @group_matches += 1
             if group = match[@group_matches]?
               return group
             end
           end
-          @group_matches  = 0
+          @group_matches = 0
         end
 
         @index = match.byte_begin(0)
@@ -3865,6 +3855,17 @@ class String
       @string.byte_slice(@slice_offset)
     end
 
+    def rewind
+      @split_count = 0
+      @match_offset = 0
+      @slice_offset = 0
+      @last_slice_offset = 0
+      @index = 0
+      @group_matches = 0
+      @end = false
+      self
+    end
+
     private def set_offset(match_bytesize)
       @last_slice_offset = @slice_offset
       if match_bytesize == 0
@@ -3876,36 +3877,40 @@ class String
       end
     end
 
+    private def reached_limit?
+      @split_count == @limit
+    end
+  end
+
+  private class EmptySplitIterator
+    include Iterator(String)
+
+    def initialize(@string : String, @limit : Int32? = nil)
+      @reader = Char::Reader.new(@string)
+      @split_count = 0
+    end
+
+    def next
+      return stop if reached_limit? || !@reader.has_next?
+      @split_count += 1
+
+      if !reached_limit?
+        char = @reader.current_char
+        @reader.next_char
+        return char.to_s
+      end
+
+      @string[@reader.pos..-1]
+    end
+
     def rewind
       @split_count = 0
-      @match_offset = 0
-      @slice_offset = 0
-      @last_slice_offset = 0
-      @index = 0
-      @group_matches = 0
-      @end = false
+      @reader.pos = 0
+      self
     end
 
     private def reached_limit?
       @split_count == @limit
-    end
-
-    private def split_by_empty_separator
-      @reader ||= Char::Reader.new(@string)
-      @split_count += 1
-
-      while (reader = @reader) && reader.has_next? && !reached_limit?
-        char = reader.current_char
-        @reader.not_nil!.next_char
-        reader.current_char
-        return char.to_s
-      end
-
-      if reached_limit?
-        return @string[@split_count - 1..-1]
-      end
-
-      stop
     end
   end
 

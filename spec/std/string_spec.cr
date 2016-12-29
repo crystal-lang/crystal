@@ -889,7 +889,6 @@ describe "String" do
       end
 
       it "splits with mixed spaces" do
-        "foo   ".split(' ')
         iter = "   foo  bar".each_split(' ')
         iter.next.should eq("")
         iter.next.should eq("")
