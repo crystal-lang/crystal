@@ -2826,6 +2826,10 @@ class String
     yield byte_slice(slice_offset)
   end
 
+  def each_split(regex : Regex, limit = nil)
+    RegexSplitIterator.new(self, regex, limit)
+  end
+
   private def split_by_empty_separator(limit, &block : String -> _)
     yielded = 0
 
@@ -3783,6 +3787,107 @@ class String
 
     private def single_byte_optimizable?
       @string.ascii_only?
+    end
+
+    private def split_by_empty_separator
+      @reader ||= Char::Reader.new(@string)
+      @split_count += 1
+
+      while (reader = @reader) && reader.has_next? && !reached_limit?
+        char = reader.current_char
+        @reader.not_nil!.next_char
+        reader.current_char
+        return char.to_s
+      end
+
+      if reached_limit?
+        return @string[@split_count - 1..-1]
+      end
+
+      stop
+    end
+  end
+
+  private class RegexSplitIterator
+    include Iterator(String)
+
+    def initialize(@string : String, @separator : Regex, @limit : Int32? = nil)
+      @split_count = 0
+      @match_offset = 0
+      @slice_offset = 0
+      @last_slice_offset = 0
+      @index = 0
+      @group_matches = 0
+    end
+
+    def next
+      return stop if @end || reached_limit?
+      return split_by_empty_separator if @separator.source.empty?
+      @split_count += 1
+
+      if (limit = @limit) && limit <= 1
+        return @string
+      end
+
+      while match = @separator.match_at_byte_index(@string, @match_offset)
+        break if reached_limit?
+        break if @slice_offset > @string.bytesize
+
+        match_bytesize = match[0].bytesize
+
+        if @split_count > 1 && match.size > 0
+          set_offset(match_bytesize)
+          while @group_matches <= match.size
+            @group_matches  += 1
+            if group = match[@group_matches]?
+              return group
+            end
+          end
+          @group_matches  = 0
+        end
+
+        @index = match.byte_begin(0)
+        slice_size = @index - @slice_offset
+
+        if @slice_offset == 0 && slice_size == 0 && match_bytesize == 0
+          # skip
+        elsif @slice_offset == @string.bytesize && slice_size == 0
+          slice = @string.byte_slice(@last_slice_offset)
+        else
+          slice = @string.byte_slice(@slice_offset, slice_size)
+        end
+
+        set_offset(match_bytesize) if match.size == 0
+        return slice if slice
+      end
+
+      @end = true
+      @string.byte_slice(@slice_offset)
+    end
+
+    private def set_offset(match_bytesize)
+      @last_slice_offset = @slice_offset
+      if match_bytesize == 0
+        @match_offset = @index + 1
+        @slice_offset = @index
+      else
+        @match_offset = @index + match_bytesize
+        @slice_offset = @match_offset
+      end
+    end
+
+    def rewind
+      @split_count = 0
+      @match_offset = 0
+      @slice_offset = 0
+      @last_slice_offset = 0
+      @index = 0
+      @group_matches = 0
+      @end = false
+    end
+
+    private def reached_limit?
+      @split_count == @limit
     end
 
     private def split_by_empty_separator
