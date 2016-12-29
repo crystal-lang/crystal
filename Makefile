@@ -9,7 +9,7 @@
 ## Build the compiler in release mode
 ##   $ make crystal release=1
 ## Run all specs in verbose mode
-##   $ make specs verbose=1
+##   $ make spec verbose=1
 
 LLVM_CONFIG ?= ## llvm-config command path to use
 
