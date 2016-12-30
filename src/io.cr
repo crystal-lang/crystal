@@ -746,6 +746,14 @@ module IO
     end
   end
 
+  # Reads and discards bytes from `self` until there
+  # are no more bytes.
+  def skip_to_end : Nil
+    buffer = uninitialized UInt8[1024]
+    while read(buffer.to_slice) > 0
+    end
+  end
+
   # Writes a single byte into this IO.
   #
   # ```

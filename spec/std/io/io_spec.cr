@@ -485,6 +485,13 @@ describe IO do
         io.skip(6)
       end
     end
+
+    it "skips to end" do
+      io = SimpleIOMemory.new
+      io << "hello"
+      io.skip_to_end
+      io.read_byte.should be_nil
+    end
   end
 
   describe "encoding" do

@@ -2,9 +2,7 @@ module HTTP
   # :nodoc:
   module Content
     def close
-      buffer = uninitialized UInt8[1024]
-      while read(buffer.to_slice) > 0
-      end
+      skip_to_end
       super
     end
   end
