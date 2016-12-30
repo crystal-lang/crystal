@@ -1,6 +1,4 @@
-{% if !flag?(:windows) %}
-  require "c/iconv"
-{% end %}
+require "c/iconv"
 
 # :nodoc:
 struct Iconv
@@ -16,6 +14,8 @@ struct Iconv
         to = "#{to}//IGNORE"
       end
     {% end %}
+
+    @iconv = uninitialized LibC::IconvT
 
     {% if !flag?(:windows) %}
       @iconv = LibC.iconv_open(to, from)
@@ -34,7 +34,6 @@ struct Iconv
         end
       end
     {% end %}
-
   end
 
   def self.new(from : String, to : String, invalid : Symbol? = nil)
