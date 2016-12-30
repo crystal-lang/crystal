@@ -139,6 +139,47 @@ lib LibXML
   fun xmlSaveTree(ctx : SaveCtxPtr, node : Node*) : LibC::Long
   fun xmlSaveClose(ctx : SaveCtxPtr) : Int
 
+  struct OutputBuffer
+    context : Void*
+    writecallback : OutputWriteCallback
+    closecallback : OutputCloseCallback
+    xmlCharEncodingHandlerPtr : Void*
+    buffer : Void*
+    conv : Void*
+    writter : Int
+    error : Int
+  end
+
+  type TextWriter = Void*
+
+  fun xmlNewTextWriter(out : OutputBuffer*) : TextWriter
+  fun xmlTextWriterStartDocument(TextWriter, version : UInt8*, encoding : UInt8*, standalone : UInt8*) : Int
+  fun xmlTextWriterEndDocument(TextWriter) : Int
+  fun xmlTextWriterStartElement(TextWriter, name : UInt8*) : Int
+  fun xmlTextWriterEndElement(TextWriter) : Int
+  fun xmlTextWriterStartAttribute(TextWriter, name : UInt8*) : Int
+  fun xmlTextWriterEndAttribute(TextWriter) : Int
+  fun xmlTextWriterFlush(TextWriter) : Int
+  fun xmlTextWriterSetIndent(TextWriter, indent : Int) : Int
+  fun xmlTextWriterSetIndentString(TextWriter, str : UInt8*) : Int
+  fun xmlTextWriterSetQuoteChar(TextWriter, char : UInt8) : Int
+  fun xmlTextWriterWriteAttribute(TextWriter, name : UInt8*, content : UInt8*) : Int
+  fun xmlTextWriterWriteString(TextWriter, content : UInt8*) : Int
+  fun xmlTextWriterStartAttributeNS(TextWriter, prefix : UInt8*, name : UInt8*, namespaceURI : UInt8*) : Int
+  fun xmlTextWriterWriteAttributeNS(TextWriter, prefix : UInt8*, name : UInt8*, namespaceURI : UInt8*, content : UInt8*) : Int
+  fun xmlTextWriterStartElementNS(TextWriter, prefix : UInt8*, name : UInt8*, namespaceURI : UInt8*) : Int
+  fun xmlTextWriterStartCDATA(TextWriter) : Int
+  fun xmlTextWriterEndCDATA(TextWriter) : Int
+  fun xmlTextWriterWriteCDATA(TextWriter, content : UInt8*) : Int
+  fun xmlTextWriterStartComment(TextWriter) : Int
+  fun xmlTextWriterEndComment(TextWriter) : Int
+  fun xmlTextWriterWriteComment(TextWriter, content : UInt8*) : Int
+  fun xmlTextWriterStartDTD(TextWriter, name : UInt8*, pubid : UInt8*, sysid : UInt8*) : Int
+  fun xmlTextWriterEndDTD(TextWriter) : Int
+  fun xmlTextWriterWriteDTD(TextWriter, name : UInt8*, pubid : UInt8*, sysid : UInt8*, subset : UInt8*) : Int
+
+  fun xmlOutputBufferCreateIO(iowrite : OutputWriteCallback, ioclose : OutputCloseCallback, ioctx : Void*, encoder : Void*) : OutputBuffer*
+
   enum ErrorLevel
     NONE    = 0
     WARNING = 1
