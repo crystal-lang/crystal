@@ -1013,7 +1013,7 @@ module Iterator(T)
     include IteratorWrapper
 
     def initialize(@iterator : I, @func : T -> U)
-      @hash = {} of T => Bool
+      @hash = {} of U => Bool
     end
 
     def next

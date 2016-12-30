@@ -449,7 +449,7 @@ describe Iterator do
     end
 
     it "with block" do
-      iter = (1..8).each.uniq { |x| x % 3 }
+      iter = (1..8).each.uniq { |x| (x % 3).to_s }
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(3)
