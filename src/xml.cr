@@ -1,5 +1,7 @@
 # The XML module allows parsing and generating [XML](https://www.w3.org/XML/) documents.
 #
+# ### Parsing
+#
 # `XML#parse` will parse xml from `String` or `IO` and return xml document as an `XML:Node` which represents all kinds of xml nodes.
 #
 # Example:
@@ -26,6 +28,23 @@
 #     puts child.content                               # Jane : String?
 #   end
 # end
+# ```
+#
+# ## Generating
+#
+# Use `XML.build`, which uses an `XML::Writer`:
+#
+# ```
+# require "xml"
+#
+# string = XML.build(indent: "  ") do |xml|
+#   xml.element("person", id: 1) do
+#     xml.element("firstname") { xml.text "Jane" }
+#     xml.element("lastname") { xml.text "Doe" }
+#   end
+# end
+#
+# string # => "<?xml version=\"1.0\"?>\n<person id=\"1\">\n  <firstname>Jane</firstname>\n  <lastname>Doe</lastname>\n</person>\n"
 # ```
 module XML
   SUBSTITUTIONS = {
