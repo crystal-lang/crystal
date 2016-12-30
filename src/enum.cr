@@ -276,6 +276,29 @@ struct Enum
     value.hash
   end
 
+  # Iterates each values in a Flags Enum.
+  #
+  # ```
+  # (IOMode::Read | IOMode::Async).each do |member, value|
+  #   # yield IOMode::Read, 1
+  #   # yield IOMode::Async, 3
+  # end
+  # ```
+  def each
+    {% if @type.has_attribute?("Flags") %}
+      return if value == 0
+      {% for member in @type.constants %}
+        {% if member.stringify != "All" %}
+          if includes?({{@type}}::{{member}})
+            yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+          end
+        {% end %}
+      {% end %}
+    {% else %}
+      {% raise "Can't iterate #{@type}: only Flags Enum can be iterated" %}
+    {% end %}
+  end
+
   # Returns all enum members as an `Array(String)`.
   #
   # ```
