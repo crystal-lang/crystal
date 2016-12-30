@@ -741,6 +741,40 @@ describe "File" do
     end
   end
 
+  it "reads at offset" do
+    filename = "#{__DIR__}/data/test_file.txt"
+    file = File.open(filename)
+    file.read_at(6, 100) do |io|
+      io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
+    end
+    file.read_at(0, 240) do |io|
+      io.gets_to_end.should eq(File.read(filename))
+    end
+  end
+
+  it "raises when reading at offset outside of bounds" do
+    filename = "#{__DIR__}/data/temp_write.txt"
+    File.write(filename, "hello world")
+
+    begin
+      File.open(filename) do |io|
+        expect_raises(ArgumentError, "negative bytesize") do
+          io.read_at(3, -1) { }
+        end
+
+        expect_raises(ArgumentError, "offset out of bounds") do
+          io.read_at(12, 1) { }
+        end
+
+        expect_raises(ArgumentError, "bytesize out of bounds") do
+          io.read_at(6, 6) { }
+        end
+      end
+    ensure
+      File.delete(filename)
+    end
+  end
+
   describe "raises on null byte" do
     it_raises_on_null_byte "new" do
       File.new("foo\0bar")

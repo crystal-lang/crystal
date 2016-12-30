@@ -295,6 +295,42 @@ describe IO::Memory do
     io.to_slice.to_a.should eq([0] * 1000 + [97])
   end
 
+  it "reads at offset" do
+    io = IO::Memory.new("hello world")
+
+    io.read_at(6, 3) do |sub|
+      sub.gets_to_end.should eq("wor")
+
+      expect_raises(IO::Error, "read-only stream") do
+        io << "hello"
+      end
+    end
+
+    io.read_at(0, 11) do |sub|
+      sub.gets_to_end.should eq("hello world")
+    end
+
+    io.read_at(11, 0) do |sub|
+      sub.gets_to_end.should eq("")
+    end
+  end
+
+  it "raises when reading at offset outside of bounds" do
+    io = IO::Memory.new("hello world")
+
+    expect_raises(ArgumentError, "negative bytesize") do
+      io.read_at(3, -1) { }
+    end
+
+    expect_raises(ArgumentError, "offset out of bounds") do
+      io.read_at(12, 1) { }
+    end
+
+    expect_raises(ArgumentError, "bytesize out of bounds") do
+      io.read_at(6, 6) { }
+    end
+  end
+
   describe "encoding" do
     describe "decode" do
       it "gets_to_end" do

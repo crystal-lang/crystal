@@ -315,6 +315,37 @@ class IO::Memory
     @pos = value.to_i
   end
 
+  # Yields an `IO::Memory` to read a section of this IO's buffer.
+  #
+  # During the block duration `self` becomes read-only,
+  # so multiple concurrent open are allowed.
+  def read_at(offset, bytesize)
+    unless 0 <= offset <= @bytesize
+      raise ArgumentError.new("offset out of bounds")
+    end
+
+    if bytesize < 0
+      raise ArgumentError.new("negative bytesize")
+    end
+
+    unless 0 <= offset + bytesize <= @bytesize
+      raise ArgumentError.new("bytesize out of bounds")
+    end
+
+    old_writeable = @writeable
+    old_resizeable = @resizeable
+    io = IO::Memory.new(to_slice[offset, bytesize], writeable: false)
+    begin
+      @writeable = false
+      @resizeable = false
+      yield io
+    ensure
+      io.close
+      @writeable = old_writeable
+      @resizeable = old_resizeable
+    end
+  end
+
   # Closes this IO. Further operations on this IO will raise an `IO::Error`.
   #
   # ```

@@ -600,6 +600,27 @@ class File < IO::FileDescriptor
     code
   end
 
+  # Yields an `IO` to read a section inside this file.
+  # Mutliple sections can be read concurrently.
+  def read_at(offset, bytesize, &block)
+    self_bytesize = self.size
+
+    unless 0 <= offset <= self_bytesize
+      raise ArgumentError.new("offset out of bounds")
+    end
+
+    if bytesize < 0
+      raise ArgumentError.new("negative bytesize")
+    end
+
+    unless 0 <= offset + bytesize <= self_bytesize
+      raise ArgumentError.new("bytesize out of bounds")
+    end
+
+    io = PReader.new(fd, offset, bytesize)
+    yield io ensure io.close
+  end
+
   def inspect(io)
     io << "#<File:" << @path
     io << " (closed)" if closed?
@@ -608,4 +629,4 @@ class File < IO::FileDescriptor
   end
 end
 
-require "file/*"
+require "./file/*"

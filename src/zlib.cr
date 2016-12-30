@@ -7,6 +7,7 @@ require "./zlib/*"
 # * `Zlib::Inflate` for decompression
 module Zlib
   GZIP = LibZ::MAX_BITS + 16
+  ZIP  = -LibZ::MAX_BITS
 
   # Returns the linked zlib version.
   def self.version : String
