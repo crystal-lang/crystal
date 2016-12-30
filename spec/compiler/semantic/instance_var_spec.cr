@@ -4578,4 +4578,27 @@ describe "Semantic: instance var" do
       Foo.new.x
       )) { int32 }
   end
+
+  it "types generic instance as virtual type if generic type has subclasses (#3805)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Qux
+        def initialize
+          @ptr = Pointer(Foo(Int32)).malloc(1_u64)
+        end
+
+        def ptr=(ptr)
+          @ptr = ptr
+        end
+      end
+
+      Bar(Int32).new
+      Qux.new
+      )) { types["Qux"] }
+  end
 end
