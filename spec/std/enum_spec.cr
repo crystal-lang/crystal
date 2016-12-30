@@ -63,6 +63,31 @@ describe Enum do
     (SpecEnumFlags::One | SpecEnumFlags::Two).includes?(SpecEnumFlags::Three).should be_false
   end
 
+  describe "each" do
+    it "won't yield None" do
+      SpecEnumFlags::None.each do |name|
+        raise "unexpected yield"
+      end
+    end
+
+    it "won't yield All" do
+      SpecEnumFlags::All.each do |name|
+        raise "unexpected yield" if name == SpecEnumFlags::All
+      end
+    end
+
+    it "yields each member" do
+      names = [] of SpecEnumFlags
+      values = [] of Int32
+      SpecEnumFlags.flags(One, Three).each do |name, value|
+        names << name
+        values << value
+      end
+      names.should eq([SpecEnumFlags::One, SpecEnumFlags::Three])
+      values.should eq([SpecEnumFlags::One.value, SpecEnumFlags::Three.value])
+    end
+  end
+
   describe "names" do
     it "for simple enum" do
       SpecEnum.names.should eq(%w(One Two Three))
