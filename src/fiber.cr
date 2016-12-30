@@ -15,8 +15,8 @@ class Fiber
   @@first_fiber : Fiber? = nil
   @@last_fiber : Fiber? = nil
   @@stack_pool = [] of Void*
-  @@stack_pool_mutex = Thread::Mutex.new
-  @@fiber_list_mutex = Thread::Mutex.new
+  @@stack_pool_mutex = SpinLock.new
+  @@fiber_list_mutex = SpinLock.new
   @thread : Void*
   @callback : (->)?
 
