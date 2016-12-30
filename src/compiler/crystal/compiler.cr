@@ -173,7 +173,8 @@ module Crystal
         nodes = Expressions.from(nodes)
 
         # Prepend the prelude to the parsed program
-        nodes = Expressions.new([Require.new(prelude), nodes] of ASTNode)
+        location = Location.new(program.filename, 1, 1)
+        nodes = Expressions.new([Require.new(prelude).at(location), nodes] of ASTNode)
 
         # And normalize
         program.normalize(nodes)
