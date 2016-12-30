@@ -62,6 +62,18 @@ describe Socket do
     Socket.ip?("::0::ffff:c0a8:5e4").should be_false
     Socket.ip?("c0a8").should be_false
   end
+
+  describe ".unix" do
+    it "creates a unix socket" do
+      sock = Socket.unix
+      sock.should be_a(Socket)
+      sock.family.should eq(Socket::Family::UNIX)
+      sock.type.should eq(Socket::Type::STREAM)
+
+      sock = Socket.unix(Socket::Type::DGRAM)
+      sock.type.should eq(Socket::Type::DGRAM)
+    end
+  end
 end
 
 describe Socket::Addrinfo do
