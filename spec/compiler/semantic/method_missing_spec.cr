@@ -73,4 +73,23 @@ describe "Semantic: method_missing" do
       ),
       "wrong method_missing expansion"
   end
+
+  it "finds method_missing with 'with ... yield'" do
+    assert_type(%(
+      class Foo
+        macro method_missing(call)
+          1
+        end
+      end
+
+      def bar
+        foo = Foo.new
+        with foo yield
+      end
+
+      bar do
+        baz
+      end
+      )) { int32 }
+  end
 end

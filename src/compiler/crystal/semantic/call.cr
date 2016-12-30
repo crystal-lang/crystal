@@ -237,6 +237,12 @@ class Crystal::Call
       defined_method_missing = owner.check_method_missing(signature, self)
       if defined_method_missing
         matches = owner.lookup_matches(signature)
+      elsif with_scope = @with_scope
+        defined_method_missing = with_scope.check_method_missing(signature, self)
+        if defined_method_missing
+          matches = with_scope.lookup_matches(signature)
+          @uses_with_scope = true
+        end
       end
     end
 

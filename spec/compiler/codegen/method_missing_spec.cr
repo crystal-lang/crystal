@@ -408,4 +408,26 @@ describe "Code gen: method_missing" do
       a.b(x: 1, y: 2)
       )).to_i.should eq(3)
   end
+
+  it "finds method_missing with 'with ... yield'" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        macro method_missing(call)
+          @{{call.name.id}}
+        end
+      end
+
+      def bar
+        foo = Foo.new(10)
+        with foo yield
+      end
+
+      bar do
+        x
+      end
+      )).to_i.should eq(10)
+  end
 end
