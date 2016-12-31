@@ -44,14 +44,14 @@
 # An enum can be created from an integer:
 #
 # ```
-# puts Color.new(1) # => prints "Green"
+# puts Color.new(1) # => "Green"
 # ```
 #
 # Values that don't correspond to an enum's constants are allowed: the value will still be of type Color,
 # but when printed you will get the underlying value:
 #
 # ```
-# puts Color.new(10) # => prints "10"
+# puts Color.new(10) # => "10"
 # ```
 #
 # This method is mainly intended to convert integers from C to enums in Crystal.
@@ -167,9 +167,9 @@ struct Enum
   # to this enum member's value.
   #
   # ```
-  # Color::Red + 1 # => Color::Blue
-  # Color::Red + 2 # => Color::Green
-  # Color::Red + 3 # => 3
+  # Color::Red + 1 # => Color::Green
+  # Color::Red + 2 # => Color::Blue
+  # Color::Red + 3 # => Color.new(3)
   # ```
   def +(other : Int)
     self.class.new(value + other)
@@ -181,7 +181,7 @@ struct Enum
   # ```
   # Color::Blue - 1 # => Color::Green
   # Color::Blue - 2 # => Color::Red
-  # Color::Blue - 3 # => -1
+  # Color::Blue - 3 # => Color.new(-1)
   # ```
   def -(other : Int)
     self.class.new(value - other)
@@ -356,7 +356,7 @@ struct Enum
   # Color.from_value(0) # => Color::Red
   # Color.from_value(1) # => Color::Green
   # Color.from_value(2) # => Color::Blue
-  # Color.from_value(3) # => Exception
+  # Color.from_value(3) # raises Exception
   # ```
   def self.from_value(value) : self
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
@@ -380,7 +380,7 @@ struct Enum
   # ```
   # Color.parse("Red")    # => Color::Red
   # Color.parse("BLUE")   # => Color::Blue
-  # Color.parse("Yellow") # => Exception
+  # Color.parse("Yellow") # raises ArgumentError
   # ```
   def self.parse(string) : self
     parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")

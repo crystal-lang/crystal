@@ -104,8 +104,8 @@ struct Atomic(T)
   #
   # ```
   # atomic = Atomic.new(5)
-  # atomic.or(3) # => 5
-  # atomic.get   # => 6
+  # atomic.xor(3) # => 5
+  # atomic.get    # => 6
   # ```
   def xor(value : T)
     Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
@@ -153,8 +153,8 @@ struct Atomic(T)
   #
   # ```
   # atomic = Atomic.new(5)
-  # atomic.set(10) # => 5
-  # atomic.get     # => 10
+  # atomic.swap(10) # => 5
+  # atomic.get      # => 10
   # ```
   def swap(value : T)
     Ops.atomicrmw(:xchg, pointerof(@value), value, :sequentially_consistent, false)

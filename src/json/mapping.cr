@@ -22,7 +22,7 @@ module JSON
   #
   # house = House.from_json(%({"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}))
   # house.address  # => "Crystal Road 1234"
-  # house.location # => #&lt;Location:0x10cd93d80 @lat=12.3, @lng=34.5>
+  # house.location # => #<Location:0x10cd93d80 @lat=12.3, @lng=34.5>
   # house.to_json  # => %({"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}})
   # ```
   #

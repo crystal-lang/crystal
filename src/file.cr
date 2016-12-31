@@ -82,7 +82,7 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "foo")
-  # File.stat("foo").size  # => 4
+  # File.stat("foo").size  # => 3
   # File.stat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.stat(path) : Stat
@@ -98,7 +98,7 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "foo")
-  # File.lstat("foo").size  # => 4
+  # File.lstat("foo").size  # => 3
   # File.lstat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.lstat(path) : Stat
@@ -111,6 +111,7 @@ class File < IO::FileDescriptor
   # Returns `true` if *path* exists else returns `false`
   #
   # ```
+  # File.delete("foo") if File.exists?("foo")
   # File.exists?("foo") # => false
   # File.write("foo", "foo")
   # File.exists?("foo") # => true
@@ -175,9 +176,9 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "")
-  # Dir.mkdir("bar")
+  # Dir.mkdir("dir1")
   # File.file?("foo")    # => true
-  # File.file?("bar")    # => false
+  # File.file?("dir1")   # => false
   # File.file?("foobar") # => false
   # ```
   def self.file?(path) : Bool
@@ -195,9 +196,9 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "")
-  # Dir.mkdir("bar")
+  # Dir.mkdir("dir2")
   # File.directory?("foo")    # => false
-  # File.directory?("bar")    # => true
+  # File.directory?("dir2")   # => true
   # File.directory?("foobar") # => false
   # ```
   def self.directory?(path) : Bool
@@ -287,8 +288,11 @@ class File < IO::FileDescriptor
   # destination are changed, never the permissions of the symlink itself.
   #
   # ```
-  # File.chmod("foo/bin", 0o755)
-  # File.chmod("foo/bin/exec", 0o700)
+  # File.chmod("foo", 0o755)
+  # File.stat("foo").perm # => 0o755
+  #
+  # File.chmod("foo", 0o700)
+  # File.stat("foo").perm # => 0o700
   # ```
   def self.chmod(path, mode : Int)
     if LibC.chmod(path, mode) == -1
@@ -301,7 +305,7 @@ class File < IO::FileDescriptor
   # ```
   # File.write("foo", "")
   # File.delete("./foo")
-  # File.delete("./bar") # => Error deleting file './bar': No such file or directory (Errno)
+  # File.delete("./bar") # raises Errno (No such file or directory)
   # ```
   def self.delete(path)
     err = LibC.unlink(path.check_no_null_byte)
@@ -455,9 +459,13 @@ class File < IO::FileDescriptor
   # Yields each line in *filename* to the given block.
   #
   # ```
-  # File.each_line("foo") do |line|
-  #   # loop
+  # File.write("foobar", "foo\nbar")
+  #
+  # array = [] of String
+  # File.each_line("foobar") do |line|
+  #   array << line
   # end
+  # array # => ["foo", "bar"]
   # ```
   def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
     File.open(filename, "r", encoding: encoding, invalid: invalid) do |file|
@@ -476,7 +484,7 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foobar", "foo\nbar")
-  # File.read_lines("foobar") # => ["foo\n", "bar\n"]
+  # File.read_lines("foobar") # => ["foo", "bar"]
   # ```
   def self.read_lines(filename, encoding = nil, invalid = nil, chomp = true) : Array(String)
     lines = [] of String
@@ -561,7 +569,12 @@ class File < IO::FileDescriptor
   # Moves *old_filename* to *new_filename*.
   #
   # ```
+  # File.write("afile", "foo")
+  # File.exists?("afile") # => true
+  #
   # File.rename("afile", "afile.cr")
+  # File.exists?("afile")    # => false
+  # File.exists?("afile.cr") # => true
   # ```
   def self.rename(old_filename, new_filename)
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)

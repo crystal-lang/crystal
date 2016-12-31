@@ -65,7 +65,7 @@ class IO::Memory
   # io = IO::Memory.new "hello"
   # io.pos        # => 0
   # io.gets(2)    # => "he"
-  # io.print "hi" # raises
+  # io.print "hi" # raises IO::Error
   # ```
   def self.new(string : String)
     new string.to_slice, writeable: false
@@ -207,11 +207,16 @@ class IO::Memory
   # if this IO::Memory is non-resizeable.
   #
   # ```
-  # io = IO::Memory.new "hello"
-  # io.gets(3) # => "hel"
+  # io = IO::Memory.new
+  # io << "abc"
+  # io.rewind
+  # io.gets(1) # => "a"
   # io.clear
   # io.pos         # => 0
   # io.gets_to_end # => ""
+  #
+  # io = IO::Memory.new "hello"
+  # io.clear # raises IO::Error
   # ```
   def clear
     check_open
@@ -315,7 +320,7 @@ class IO::Memory
   # ```
   # io = IO::Memory.new "hello"
   # io.close
-  # io.gets_to_end # => IO::Error: closed stream
+  # io.gets_to_end # raises IO::Error (closed stream)
   # ```
   def close
     @closed = true

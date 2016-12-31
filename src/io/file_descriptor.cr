@@ -118,6 +118,8 @@ class IO::FileDescriptor
   # Returns `self`.
   #
   # ```
+  # File.write("testfile", "abc")
+  #
   # file = File.new("testfile")
   # file.gets(3) # => "abc"
   # file.seek(1, IO::Seek::Set)
@@ -159,10 +161,12 @@ class IO::FileDescriptor
   # Returns the current position (in bytes) in this IO.
   #
   # ```
-  # io = IO::Memory.new "hello"
-  # io.pos     # => 0
-  # io.gets(2) # => "he"
-  # io.pos     # => 2
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos     # => 0
+  # file.gets(2) # => "he"
+  # file.pos     # => 2
   # ```
   def pos
     check_open
@@ -176,9 +180,11 @@ class IO::FileDescriptor
   # Sets the current position (in bytes) in this IO.
   #
   # ```
-  # io = IO::Memory.new "hello"
-  # io.pos = 3
-  # io.gets_to_end # => "lo"
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos = 3
+  # file.gets_to_end # => "lo"
   # ```
   def pos=(value)
     seek value

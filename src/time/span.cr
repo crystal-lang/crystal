@@ -5,7 +5,7 @@
 # Check all `#new` methods for details.
 #
 # ```
-# Time::Span.new(10000)          # => 0:0:0.010000
+# Time::Span.new(10000)          # => 00:00:00.001
 # Time::Span.new(10, 10, 10)     # => 10:10:10
 # Time::Span.new(10, 10, 10, 10) # => 10.10:10:10
 # ```

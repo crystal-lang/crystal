@@ -78,7 +78,7 @@ class Regex
     #
     # ```
     # "Crystal".match(/r/).not_nil!.byte_begin(0)     # => 1
-    # "Crystal".match(/r(ys)/).not_nil!.byte_begin(1) # => 4
+    # "Crystal".match(/r(ys)/).not_nil!.byte_begin(1) # => 2
     # "クリスタル".match(/リ(ス)/).not_nil!.byte_begin(0)    # => 3
     # ```
     def byte_begin(n = 0)
@@ -125,7 +125,7 @@ class Regex
     #
     # ```
     # "Crystal".match(/r(ys)/).not_nil![1] # => "ys"
-    # "Crystal".match(/r(ys)/).not_nil![2] # => raises IndexError
+    # "Crystal".match(/r(ys)/).not_nil![2] # raises IndexError
     # ```
     def [](n)
       check_index_out_of_bounds n
@@ -151,7 +151,7 @@ class Regex
     #
     # ```
     # "Crystal".match(/r(?<ok>ys)/).not_nil!["ok"] # => "ys"
-    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # => raises ArgumentError
+    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises ArgumentError
     # ```
     def [](group_name : String)
       match = self[group_name]?

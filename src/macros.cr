@@ -12,8 +12,7 @@
 # ```
 # record Point, x : Int32, y : Int32
 #
-# point = Point.new 1, 2
-# point.to_s # => "Point(@x=1, @y=2)"
+# Point.new 1, 2 # => #<Point(@x=1, @y=2)>
 # ```
 #
 # An example with the block version:
@@ -34,8 +33,8 @@
 # ```
 # record Point, x : Int32 = 0, y : Int32 = 0
 #
-# Point.new      # => Point(@x=0, @y=0)
-# Point.new y: 2 # => Point(@x=0, @y=2)
+# Point.new      # => #<Point(@x=0, @y=0)>
+# Point.new y: 2 # => #<Point(@x=0, @y=2)>
 # ```
 #
 # An example with assignments (in this case the compiler must be able to
@@ -44,8 +43,8 @@
 # ```
 # record Point, x = 0, y = 0
 #
-# Point.new      # => Point(@x=0, @y=0)
-# Point.new y: 2 # => Point(@x=0, @y=2)
+# Point.new      # => #<Point(@x=0, @y=0)>
+# Point.new y: 2 # => #<Point(@x=0, @y=2)>
 # ```
 macro record(name, *properties)
   struct {{name.id}}
@@ -88,9 +87,9 @@ end
 #
 # ```
 # a = 1
-# pp a # prints "a # => 1"
+# pp a # => "a # => 1"
 #
-# pp [1, 2, 3].map(&.to_s) # prints "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
+# pp [1, 2, 3].map(&.to_s) # => "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
 # ```
 macro pp(*exps)
   {% if exps.size == 0 %}

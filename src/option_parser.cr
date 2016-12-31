@@ -83,6 +83,7 @@ class OptionParser
   # Example:
   #
   # ```
+  # parser = OptionParser.new
   # parser.banner = "Usage: crystal [command] [switches] [program file] [--] [arguments]"
   # ```
   setter banner : String?

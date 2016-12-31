@@ -6,8 +6,8 @@
 # ```
 # require "complex"
 #
-# Complex.new(1, 0)   # => 1 + 0i
-# Complex.new(5, -12) #  => 5 - 12i
+# Complex.new(1, 0)   # => 1.0 + 0.0i
+# Complex.new(5, -12) # => 5.0 - 12.0i
 # ```
 struct Complex
   #  Returns the real part of self
@@ -39,7 +39,7 @@ struct Complex
   # Write this complex object to an io
   #
   # ```
-  # Complex.new(42, 2).to_s # => 42 + 2i
+  # Complex.new(42, 2).to_s # => "42.0 + 2.0i"
   # ```
   def to_s(io : IO)
     io << @real
@@ -51,7 +51,7 @@ struct Complex
   # Write this complex object to an io, surrounded by parentheses.
   #
   # ```
-  # Complex.new(42, 2).inspect # => (42 + 2i)
+  # Complex.new(42, 2).inspect # => "(42.0 + 2.0i)"
   # ```
   def inspect(io : IO)
     io << '('
@@ -63,8 +63,8 @@ struct Complex
   # number form, using the Pythagorean theorem.
   #
   # ```
-  # Complex.new(42, 2).abs  # => 42.0476
-  # Complex.new(-42, 2).abs # => 42.0476
+  # Complex.new(42, 2).abs  # => 42.047592083257278
+  # Complex.new(-42, 2).abs # => 42.047592083257278
   # ```
   def abs
     Math.hypot(@real, @imag)
@@ -91,7 +91,7 @@ struct Complex
   # Returns a tuple with the abs value and the phase.
   #
   # ```
-  # Complex.new(42, 2).polar # => {2.54311, 0.665774}
+  # Complex.new(42, 2).polar # => {42.047592083257278, 0.047583103276983396}
   # ```
   def polar
     {abs, phase}
@@ -100,8 +100,8 @@ struct Complex
   # Returns the conjugate of self
   #
   # ```
-  # Complex.new(42, 2).conj  # => 42 - 2i
-  # Complex.new(42, -2).conj # => 42 + 2i
+  # Complex.new(42, 2).conj  # => 42.0 - 2.0i
+  # Complex.new(42, -2).conj # => 42.0 + 2.0i
   # ```
   def conj
     Complex.new(@real, -@imag)
@@ -139,7 +139,7 @@ struct Complex
   # Calculates the exp of self
   #
   # ```
-  # Complex.new(4, 2).exp #  => -22.7208 + 49.646i
+  # Complex.new(4, 2).exp # => -22.720847417619233 + 49.645957334580565i
   # ```
   def exp
     r = Math.exp(@real)

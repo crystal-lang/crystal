@@ -94,7 +94,7 @@ class Socket < IO::FileDescriptor
   #
   # ```
   # sock = Socket.unix
-  # sock.connect UNIXAddress.new("/tmp/service.sock")
+  # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
   # ```
   def connect(addr, timeout = nil) : Nil
     connect(addr, timeout) { |error| raise error }
@@ -246,8 +246,8 @@ class Socket < IO::FileDescriptor
   #
   # ```
   # sock = Socket.unix(Socket::Type::DGRAM)
-  # sock.connect("/tmp/service.sock")
-  # sock.send(binary_message)
+  # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
+  # sock.send(Bytes[0])
   # ```
   def send(message : Bytes)
     bytes_sent = LibC.send(fd, message.to_unsafe.as(Void*), message.size, 0)

@@ -11,6 +11,8 @@
 # ```
 # require "zlib"
 #
+# File.write("file.txt", "abc")
+#
 # File.open("./file.txt", "r") do |input_file|
 #   File.open("./file.gzip", "w") do |output_file|
 #     Zlib::Deflate.gzip(output_file) do |deflate|

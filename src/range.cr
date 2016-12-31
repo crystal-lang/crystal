@@ -20,7 +20,7 @@
 #
 #   getter size
 #
-#   def initialize(@size)
+#   def initialize(@size : Int32)
 #   end
 #
 #   def succ
@@ -45,9 +45,10 @@
 # An example of using `Xs` to construct a range:
 #
 # ```
-# r = Xs.new(3)..Xs.new(6) # => xxx..xxxxxx
-# r.to_a                   # => [xxx, xxxx, xxxxx, xxxxxx]
-# r.includes?(Xs.new(5))   # => true
+# r = Xs.new(3)..Xs.new(6)
+# r.to_s                 # => "xxx..xxxxxx"
+# r.to_a                 # => [Xs.new(3), Xs.new(4), Xs.new(5), Xs.new(6)]
+# r.includes?(Xs.new(5)) # => true
 # ```
 struct Range(B, E)
   include Enumerable(B)
@@ -85,7 +86,7 @@ struct Range(B, E)
   # Returns an `Iterator` that cycles over the values of this range.
   #
   # ```
-  # (1..3).cycle.first(5).to_a # => [1, 2, 3, 1, 3]
+  # (1..3).cycle.first(5).to_a # => [1, 2, 3, 1, 2]
   # ```
   def cycle
     each.cycle

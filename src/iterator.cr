@@ -494,9 +494,9 @@ module Iterator(T)
   # ```
   # iter = [1, 2, 3].each.flat_map { |x| [x, x] }
   #
-  # iter.next # => [1, 1]
-  # iter.next # => [2, 2]
-  # iter.next # => [3, 3]
+  # iter.next # => 1
+  # iter.next # => 1
+  # iter.next # => 2
   #
   # iter = [1, 2, 3].each.flat_map { |x| [x, x].each }
   #
@@ -999,7 +999,7 @@ module Iterator(T)
   # value to be checked for uniqueness.
   #
   # ```
-  # iter = [["a", "a"], ["b", "a"], ["a", "c"]].uniq &.first
+  # iter = [["a", "a"], ["b", "a"], ["a", "c"]].each.uniq &.first
   # iter.next # => ["a", "a"]
   # iter.next # => ["b", "a"]
   # iter.next # => Iterator::Stop::INSTANCE
