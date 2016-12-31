@@ -72,14 +72,11 @@ struct XML::Node
     type == XML::Type::COMMENT_NODE
   end
 
-  # Returns the content for this Node. Returns `nil` if node does not have any content.
-  def content
+  # Returns the content for this Node. An empty string is
+  # returned if the node has no content.
+  def content : String
     content = LibXML.xmlNodeGetContent(self)
-    if content
-      String.new(content)
-    else
-      nil
-    end
+    content ? String.new(content) : ""
   end
 
   # Sets the Node's content to a Text node containing string. The string gets XML escaped, not interpreted as markup.
