@@ -21,12 +21,12 @@ struct XML::Node
   end
 
   # Gets the attribute content for the *attribute* given by name. Raises `KeyError` if attribute is not found.
-  def [](attribute : String)
-    attributes[attribute].content
+  def [](attribute : String) : String
+    attributes[attribute].content || raise(KeyError.new("Missing attribute: #{attribute}"))
   end
 
   # Gets the attribute content for the *attribute* given by name. Returns `nil` if attribute is not found.
-  def []?(attribute : String)
+  def []?(attribute : String) : String?
     attributes[attribute]?.try &.content
   end
 
