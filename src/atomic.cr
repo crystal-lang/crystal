@@ -5,8 +5,8 @@
 struct Atomic(T)
   # Creates an Atomic with the given initial value.
   def initialize(@value : T)
-    {% if !T.union? && (T == Char || T < Int::Primitive) %}
-      # Support integer types or char (because it's represented as an integer)
+    {% if !T.union? && (T == Char || T < Int::Primitive || T < Enum) %}
+      # Support integer types, enum types, or char (because it's represented as an integer)
     {% elsif T < Reference || (T.union? && T.union_types.all? { |t| t == Nil || t < Reference }) %}
       # Support reference types, or union types with only nil or reference types
     {% else %}
