@@ -1,5 +1,18 @@
 require "spec"
 
+enum AtomicEnum
+  One
+  Two
+  Three
+end
+
+@[Flags]
+enum AtomicEnumFlags
+  One
+  Two
+  Three
+end
+
 describe Atomic do
   it "compares and sets with integer" do
     atomic = Atomic.new(1)
@@ -9,6 +22,26 @@ describe Atomic do
 
     atomic.compare_and_set(1, 3).should eq({1, true})
     atomic.get.should eq(3)
+  end
+
+  it "compares and set with enum" do
+    atomic = Atomic(AtomicEnum).new(AtomicEnum::One)
+
+    atomic.compare_and_set(AtomicEnum::Two, AtomicEnum::Three).should eq({AtomicEnum::One, false})
+    atomic.get.should eq(AtomicEnum::One)
+
+    atomic.compare_and_set(AtomicEnum::One, AtomicEnum::Three).should eq({AtomicEnum::One, true})
+    atomic.get.should eq(AtomicEnum::Three)
+  end
+
+  it "compares and set with flags enum" do
+    atomic = Atomic(AtomicEnumFlags).new(AtomicEnumFlags::One)
+
+    atomic.compare_and_set(AtomicEnumFlags::Two, AtomicEnumFlags::Three).should eq({AtomicEnumFlags::One, false})
+    atomic.get.should eq(AtomicEnumFlags::One)
+
+    atomic.compare_and_set(AtomicEnumFlags::One, AtomicEnumFlags::Three).should eq({AtomicEnumFlags::One, true})
+    atomic.get.should eq(AtomicEnumFlags::Three)
   end
 
   it "compares and sets with nilable type" do
