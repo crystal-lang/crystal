@@ -6,6 +6,8 @@ require "./big"
 # denominator is positive. Zero has the unique representation 0/1.
 #
 # ```
+# require "big_rational"
+#
 # r = BigRational.new(BigInt.new(7), BigInt.new(3))
 # r.to_s # => "7/3"
 #

@@ -139,7 +139,7 @@ class HTTP::Client
   # uri = URI.parse("https://secure.example.com")
   # client = HTTP::Client.new(uri)
   #
-  # client.tls? # => true
+  # client.tls? # => #<OpenSSL::SSL::Context::Client>
   # client.get("/")
   # ```
   # This constructor will *ignore* any path or query segments in the URI
@@ -165,7 +165,7 @@ class HTTP::Client
   # ```
   # uri = URI.parse("https://secure.example.com")
   # HTTP::Client.new(uri) do |client|
-  #   client.tls? # => true
+  #   client.tls? # => #<OpenSSL::SSL::Context::Client>
   #   client.get("/")
   # end
   # ```

@@ -442,7 +442,7 @@ end
 # Example:
 #
 # ```
-# `echo *` # => "LICENSE shard.yml Readme.md spec src\n"
+# `echo hi` # => "hi\n"
 # ```
 def `(command) : String
   process = Process.new(command, shell: true, input: true, output: nil, error: true)

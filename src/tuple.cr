@@ -8,9 +8,9 @@
 #
 # ```
 # tuple = {1, "hello", 'x'} # Tuple(Int32, String, Char)
-# tuple[0]                  # => 1       (Int32)
-# tuple[1]                  # => "hello" (String)
-# tuple[2]                  # => 'x'     (Char)
+# tuple[0]                  # => 1
+# tuple[1]                  # => "hello"
+# tuple[2]                  # => 'x'
 # ```
 #
 # The compiler knows what types are in each position, so when indexing
@@ -59,7 +59,8 @@
 # end
 #
 # tuple = splat_test 1, "hello", 'x'
-# tuple # => {1, "hello", 'x'} (Tuple(Int32, String, Char))
+# tuple.class # => Tuple(Int32, String, Char)
+# tuple       # => {1, "hello", 'x'}
 # ```
 struct Tuple
   include Indexable(Union(*T))
@@ -105,7 +106,7 @@ struct Tuple
   # end
   #
   # data = JSON.parse(%(["world", 2])).as_a
-  # speak_about(*{String, Int64}).from(data)) # => "I see 2 worlds"
+  # speak_about(*{String, Int64}.from(data)) # => "I see 2 worlds"
   # ```
   def from(array : Array)
     if size != array.size
@@ -131,13 +132,13 @@ struct Tuple
   # ```
   # tuple = {1, "hello", 'x'}
   # tuple[0] # => 1 (Int32)
-  # tuple[3] # => compile error: index out of bounds for tuple {Int32, String, Char}
+  # tuple[3] # compile error: index out of bounds for tuple {Int32, String, Char}
   #
   # i = 0
   # tuple[i] # => 1 (Int32 | String | Char)
   #
   # i = 3
-  # tuple[i] # => runtime error: IndexError
+  # tuple[i] # raises IndexError
   # ```
   def [](index : Int)
     at(index)
@@ -159,7 +160,7 @@ struct Tuple
   # ```
   # tuple = {1, "hello", 'x'}
   # tuple.at(0) # => 1
-  # tuple.at(3) # => raises IndexError
+  # tuple.at(3) # raises IndexError
   # ```
   def at(index : Int)
     at(index) { raise IndexError.new }
@@ -364,11 +365,11 @@ struct Tuple
     {{T.size}}
   end
 
-  # Returns a tuple containing the types of this tuple.
+  # Returns the types of this tuple.
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple.types # => {Int32, String, Char}
+  # tuple.types # => Tuple(Int32, String, Char)
   # ```
   def types
     T

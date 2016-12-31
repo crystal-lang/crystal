@@ -183,8 +183,8 @@ class Deque(T)
   #
   # ```
   # a = Deque{"a", "b", "b", "b", "c"}
-  # a.delete("b")
-  # a # => Deque{"a", "c"}
+  # a.delete("b") # => true
+  # a             # => Deque{"a", "c"}
   # ```
   def delete(obj)
     found = false
@@ -205,7 +205,8 @@ class Deque(T)
   #
   # ```
   # a = Deque{1, 2, 3}
-  # a.delete_at(1) # => Deque{1, 3}
+  # a.delete_at(1) # => 2
+  # a              # => Deque{1, 3}
   # ```
   def delete_at(index : Int)
     if index < 0
@@ -356,7 +357,7 @@ class Deque(T)
   # ```
   # a = Deque{1, 2, 3}
   # a.pop # => 3
-  # # a == Deque{1, 2}
+  # a     # => Deque{1, 2}
   # ```
   def pop
     pop { raise IndexError.new }
@@ -435,7 +436,7 @@ class Deque(T)
   # ```
   # a = Deque{1, 2, 3}
   # a.shift # => 1
-  # # a == Deque{2, 3}
+  # a       # => Deque{2, 3}
   # ```
   def shift
     shift { raise IndexError.new }

@@ -208,10 +208,10 @@ struct Int
   # * If *count* is negative, a right shift is performed
   #
   # ```
-  # 8000 << 1  # => 4000
-  # 8000 << 2  # => 2000
+  # 8000 << 1  # => 16000
+  # 8000 << 2  # => 32000
   # 8000 << 32 # => 0
-  # 8000 << -1 # => 16000
+  # 8000 << -1 # => 4000
   # ```
   def <<(count : Int)
     if count < 0
@@ -475,7 +475,7 @@ struct Int
   #
   # ```
   # 5.popcount   # => 2
-  # -15.popcount # => 5
+  # -15.popcount # => 29
   # ```
   abstract def popcount
 

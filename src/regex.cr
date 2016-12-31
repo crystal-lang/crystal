@@ -21,7 +21,7 @@ require "./regex/*"
 # x = "a"
 # /#{x}/.match("asdf") # => #<Regex::MatchData "a">
 # x = "("
-# /#{x}/ # => ArgumentError
+# /#{x}/ # raises ArgumentError
 # ```
 #
 # When we check to see if a particular regular expression describes a string,
@@ -57,7 +57,7 @@ require "./regex/*"
 # $~                     # => #<Regex::MatchData "stack">
 # /needle/ =~ "haystack" # => nil
 # "haystack" =~ /needle/ # => nil
-# $~                     # => nil
+# $~                     # raises Exception
 # ```
 #
 # When matching a regular expression using `#match` (either `String#match` or
@@ -70,7 +70,7 @@ require "./regex/*"
 # $~                         # => #<Regex::MatchData "hay">
 # /needle/.match("haystack") # => nil
 # "haystack".match(/needle/) # => nil
-# $~                         # => nil
+# $~                         # raises Exception
 # ```
 #
 # [Regular expressions](https://en.wikipedia.org/wiki/Regular_expression)
@@ -164,10 +164,10 @@ require "./regex/*"
 # * `x`: extended (PCRE_EXTENDED)
 #
 # ```
-# /asdf/ =~ "ASDF"         # => nil
-# /asdf/i =~ "ASDF"        # => 0
-# /asdf\nz/i =~ "ASDF\nZ"  # => nil
-# /asdf\nz/im =~ "ASDF\nZ" # => 0
+# /asdf/ =~ "ASDF"    # => nil
+# /asdf/i =~ "ASDF"   # => 0
+# /^z/i =~ "ASDF\nZ"  # => nil
+# /^z/im =~ "ASDF\nZ" # => 5
 # ```
 #
 # PCRE supports other encodings, but Crystal strings are UTF-8 only, so Crystal
@@ -200,7 +200,8 @@ class Regex
   # Return a `Regex::Options` representing the optional flags applied to this Regex.
   #
   # ```
-  # /ab+c/ix.options # => IGNORE_CASE, EXTENDED
+  # /ab+c/ix.options      # => Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
+  # /ab+c/ix.options.to_s # => "IGNORE_CASE, EXTENDED"
   # ```
   getter options : Options
 

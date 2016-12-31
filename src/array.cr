@@ -31,7 +31,7 @@
 # `new` method and a `<<` method. `Set` is one such type:
 #
 # ```
-# set = Set{1, 2, 3} # => [1, 2, 3]
+# set = Set{1, 2, 3} # => Set{1, 2, 3}
 # set.class          # => Set(Int32)
 # ```
 #
@@ -313,7 +313,7 @@ class Array(T)
   # ary[0] = 5
   # p ary # => [5,2,3]
   #
-  # ary[3] = 5 # => IndexError
+  # ary[3] = 5 # raises IndexError
   # ```
   @[AlwaysInline]
   def []=(index : Int, value : T)
@@ -449,7 +449,7 @@ class Array(T)
   # a = ["a", "b", "c", "d", "e"]
   # a[1..3]    # => ["b", "c", "d"]
   # a[4..7]    # => ["e"]
-  # a[6..10]   # => Index Error
+  # a[6..10]   # raise IndexError
   # a[5..10]   # => []
   # a[-2...-1] # => ["d"]
   # ```
@@ -469,7 +469,7 @@ class Array(T)
   # ```
   # a = ["a", "b", "c", "d", "e"]
   # a[-3, 3] # => ["c", "d", "e"]
-  # a[6, 1]  # => Index Error
+  # a[6, 1]  # raise IndexError
   # a[1, 2]  # => ["b", "c"]
   # a[5, 1]  # => []
   # ```
@@ -618,7 +618,7 @@ class Array(T)
   # a = ["ant", "bat", "cat", "dog"]
   # a.delete_at(2)  # => "cat"
   # a               # => ["ant", "bat", "dog"]
-  # a.delete_at(99) # => IndexError
+  # a.delete_at(99) # raises IndexError
   # ```
   def delete_at(index : Int)
     index = check_index_out_of_bounds index
@@ -638,7 +638,7 @@ class Array(T)
   # a = ["ant", "bat", "cat", "dog"]
   # a.delete_at(1..2)    # => ["bat", "cat"]
   # a                    # => ["ant", "dog"]
-  # a.delete_at(99..100) # => IndexError
+  # a.delete_at(99..100) # raises IndexError
   # ```
   def delete_at(range : Range(Int, Int))
     from, size = range_to_index_and_count(range)
@@ -654,7 +654,7 @@ class Array(T)
   # a = ["ant", "bat", "cat", "dog"]
   # a.delete_at(1, 2)  # => ["bat", "cat"]
   # a                  # => ["ant", "dog"]
-  # a.delete_at(99, 1) # => IndexError
+  # a.delete_at(99, 1) # raises IndexError
   # ```
   def delete_at(index : Int, count : Int)
     val = self[index, count]
@@ -1014,7 +1014,7 @@ class Array(T)
   # iter.next # => [2, 3, 1]
   # iter.next # => [3, 1, 2]
   # iter.next # => [3, 2, 1]
-  # iter.next # => Iterator::Stop
+  # iter.next # => #<Iterator::Stop>
   # ```
   #
   # By default, a new array is created and returned for each permutation.
@@ -1109,8 +1109,8 @@ class Array(T)
   # ```
   # s = [1, 2, 3]          # => [1, 2, 3]
   # t = [4, 5, 6, [7, 8]]  # => [4, 5, 6, [7, 8]]
-  # u = [9, [10, 11].each] # => [9, Indexable#ItemIterator]
-  # a = [s, t, u, 12, 13]  # => [[1, 2, 3], [4, 5, 6, [7, 8]], 9, 10]
+  # u = [9, [10, 11].each] # => [9, #<Indexable::ItemIterator>]
+  # a = [s, t, u, 12, 13]  # => [[1, 2, 3], [4, 5, 6, [7, 8]], 9, #<Indexable::ItemIterator>, 12, 13]
   # a.flatten              # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
   # ```
   def flatten
@@ -1325,7 +1325,7 @@ class Array(T)
   # ```
   # a = ["a", "b"]
   # a.push("c") # => ["a", "b", "c"]
-  # a.push(1)   # => Errors, because the array only accepts String.
+  # a.push(1)   # Errors, because the array only accepts String.
   #
   # a = ["a", "b"] of (Int32 | String)
   # a.push("c") # => ["a", "b", "c"]
@@ -1714,12 +1714,12 @@ class Array(T)
   #
   # ```
   # a = ["a", "b"]
-  # a.unshift("c") # => ["c", a", "b"]
-  # a.unshift(1)   # => Errors, because the array only accepts String.
+  # a.unshift("c") # => ["c", "a", "b"]
+  # a.unshift(1)   # Errors, because the array only accepts String.
   #
   # a = ["a", "b"] of (Int32 | String)
   # a.unshift("c") # => ["c", "a", "b"]
-  # a.unshift(1)   # => [1, "a", "b", "c"]
+  # a.unshift(1)   # => [1, "c", "a", "b"]
   # ```
   def unshift(obj : T)
     insert 0, obj
