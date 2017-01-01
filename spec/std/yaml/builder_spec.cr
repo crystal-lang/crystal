@@ -2,16 +2,10 @@ require "spec"
 require "yaml"
 
 private def assert_built(expected)
-  io = IO::Memory.new
-  yaml = YAML::Builder.new(io)
-  yaml.stream do
-    yaml.document do
-      with yaml yield yaml
-    end
+  string = YAML.build do |yaml|
+    with yaml yield yaml
   end
-  yaml.flush
-  io.rewind
-  io.to_s.should eq(expected)
+  string.should eq(expected)
 end
 
 describe YAML::Builder do

@@ -7,11 +7,7 @@ class Object
 
   def to_yaml(io : IO)
     YAML.build(io) do |yaml|
-      yaml.stream do
-        yaml.document do
-          to_yaml(yaml)
-        end
-      end
+      to_yaml(yaml)
     end
   end
 end
