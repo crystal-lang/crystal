@@ -27,7 +27,10 @@ class TCPServer < TCPSocket
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
 
       self.reuse_address = true
-      self.reuse_port = true
+      begin
+        self.reuse_port = true
+      rescue Errno
+      end
 
       if errno = bind(addrinfo) { |errno| errno }
         close
