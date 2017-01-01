@@ -1,7 +1,7 @@
 # A tuple is a fixed-size, immutable, stack-allocated sequence of values
 # of possibly different types.
 #
-# You can think of a Tuple as an immutable `Array` whose types for each position
+# You can think of a `Tuple` as an immutable `Array` whose types for each position
 # are known at compile time.
 #
 # A tuple can be created with the usual `new` method or with a tuple literal:
@@ -80,12 +80,14 @@ struct Tuple
     args
   end
 
-  # Creates a tuple from the given array, with elements casted to the given types. See `#from`.
+  # Creates a tuple from the given array, with elements casted to the given types.
   #
   # ```
   # Tuple(String, Int64).from(["world", 2])       # => {"world", 2}
   # Tuple(String, Int64).from(["world", 2]).class # => {String, Int64}
   # ```
+  #
+  # See also: `#from`.
   def self.from(array : Array)
     {% begin %}
     Tuple.new(*{{T}}).from(array)
@@ -204,7 +206,7 @@ struct Tuple
   # Returns `true` if this tuple has the same size as the other tuple
   # and their elements are equal to each other when  compared with `==`.
   #
-  # ```crystal
+  # ```
   # t1 = {1, "hello"}
   # t2 = {1.0, "hello"}
   # t3 = {2, "hello"}
@@ -240,7 +242,7 @@ struct Tuple
   # {1, 2} === {1, 3} # => false
   # ```
   #
-  # See `Object#===`
+  # See also: `Object#===`.
   def ===(other : self)
     {% for i in 0...T.size %}
       return false unless self[{{i}}] === other[{{i}}]
@@ -256,7 +258,7 @@ struct Tuple
   # {/o+/, "bar"} === {"foo", "bar"} # => true
   # ```
   #
-  # See `Object#===`
+  # See also: `Object#===`.
   def ===(other : Tuple)
     return false unless size == other.size
 
@@ -286,7 +288,7 @@ struct Tuple
   # {1, 2} <=> {1, 2.0}                 # => 0
   # ```
   #
-  # See `Object#<=>`.
+  # See also: `Object#<=>`.
   def <=>(other : self)
     {% for i in 0...T.size %}
       cmp = self[{{i}}] <=> other[{{i}}]
@@ -307,7 +309,7 @@ struct Tuple
 
   # Returns a hash value based on this tuple's length and contents.
   #
-  # See `Object#hash`.
+  # See also: `Object#hash`.
   def hash
     hash = 31 * size
     {% for i in 0...T.size %}
@@ -327,7 +329,7 @@ struct Tuple
     {% end %}
   end
 
-  # Returns a tuple that contains *self*'s elements followed by *other*'s elements.
+  # Returns a tuple that contains `self`'s elements followed by *other*'s elements.
   #
   # ```
   # t1 = {1, 2}

@@ -5,7 +5,7 @@ class Markdown::Parser
   @lines : Array(String)
 
   def initialize(text : String, @renderer : Renderer)
-    @lines = text.lines.map &.chomp
+    @lines = text.lines
     @line = 0
   end
 
@@ -210,6 +210,8 @@ class Markdown::Parser
     @renderer.begin_unordered_list
 
     while true
+      break unless starts_with_bullet_list_marker?(@lines[@line], prefix)
+
       join_next_lines continue_on: nil, stop_on: UnorderedList.new(prefix)
       line = @lines[@line]
 
@@ -222,8 +224,6 @@ class Markdown::Parser
 
         next
       end
-
-      break unless starts_with_bullet_list_marker?(line, prefix)
 
       if line.starts_with?("  ") && previous_line_is_not_intended_and_starts_with_bullet_list_marker?(prefix)
         @renderer.begin_unordered_list
@@ -253,6 +253,8 @@ class Markdown::Parser
     @renderer.begin_ordered_list
 
     while true
+      break unless starts_with_digits_dot? @lines[@line]
+
       join_next_lines continue_on: nil, stop_on: :ordered_list
       line = @lines[@line]
 
@@ -265,8 +267,6 @@ class Markdown::Parser
 
         next
       end
-
-      break unless starts_with_digits_dot? line
 
       @renderer.begin_list_item
       process_line line.byte_slice(line.index('.').not_nil! + 1)

@@ -50,8 +50,6 @@ Try it online
 Documentation
 ----------
 
-Both in progress:
-
 * [Official docs](http://crystal-lang.org/docs)
 * [Standard library API](https://crystal-lang.org/api)
 

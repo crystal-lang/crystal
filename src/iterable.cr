@@ -16,9 +16,11 @@ module Iterable(T)
 
   # Returns an Iterator that enumerates over the items, chunking them together based on the return value of the block.
   #
-  #     (0..7).chunk(&./(3)).to_a => [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7]}]
+  # ```
+  # (0..7).chunk(&./(3)).to_a # => [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7]}]
+  # ```
   #
-  # See `Iterator#chunks`
+  # See also: `Iterator#chunks`.
   def chunk(reuse = false, &block : T -> U) forall U
     each.chunk reuse, &block
   end

@@ -17,12 +17,20 @@ require "./tcp_socket"
 class TCPServer < TCPSocket
   include Socket::Server
 
+  # Creates a new `TCPServer`, waiting to be bound.
+  def self.new(family : Family = Family::INET)
+    super(family)
+  end
+
   def initialize(host : String, port : Int, backlog = SOMAXCONN, dns_timeout = nil)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
 
       self.reuse_address = true
-      self.reuse_port = true
+      begin
+        self.reuse_port = true
+      rescue Errno
+      end
 
       if errno = bind(addrinfo) { |errno| errno }
         close

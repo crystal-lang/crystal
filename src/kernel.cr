@@ -33,24 +33,32 @@ def loop
   end
 end
 
-# Reads a line from STDIN. See `IO#gets`.
+# Reads a line from STDIN.
+#
+# See also: `IO#gets`.
 def gets(*args, **options)
   STDIN.gets(*args, **options)
 end
 
-# Reads a line from STDIN. See `IO#read_line`.
+# Reads a line from STDIN.
+#
+# See also: `IO#read_line`.
 def read_line(*args, **options)
   STDIN.read_line(*args, **options)
 end
 
-# Prints objects to STDOUT and then invokes `STDOUT.flush`. See `IO#print`.
+# Prints objects to STDOUT and then invokes `STDOUT.flush`.
+#
+# See also: `IO#print`.
 def print(*objects : _)
   STDOUT.print *objects
   STDOUT.flush
   nil
 end
 
-# Prints a formatted string to STDOUT. See `IO#printf`.
+# Prints a formatted string to STDOUT.
+#
+# See also: `IO#printf`.
 def printf(format_string, *args)
   printf format_string, args
 end
@@ -60,7 +68,9 @@ def printf(format_string, args : Array | Tuple)
   STDOUT.printf format_string, args
 end
 
-# Returns a formatted string. See `IO#printf`.
+# Returns a formatted string.
+#
+# See also: `IO#printf`.
 def sprintf(format_string, *args) : String
   sprintf format_string, args
 end
@@ -72,7 +82,9 @@ def sprintf(format_string, args : Array | Tuple) : String
   end
 end
 
-# Prints objects to STDOUT, each followed by a newline. See `IO#puts`.
+# Prints objects to STDOUT, each followed by a newline.
+#
+# See also: `IO#puts`.
 def puts(*objects)
   STDOUT.puts *objects
 end
@@ -80,7 +92,7 @@ end
 # Pretty prints *object* to STDOUT followed
 # by a newline. Returns *object*.
 #
-# See `Object#pretty_print(pp)`
+# See also: `Object#pretty_print(pp)`.
 def p(object)
   PrettyPrint.format(object, STDOUT, 79)
   puts
@@ -90,12 +102,24 @@ end
 # Pretty prints each object in *objects* to STDOUT, followed
 # by a newline. Returns *objects*.
 #
-# See `Object#pretty_print(pp)`
+# See also: `Object#pretty_print(pp)`.
 def p(*objects)
   objects.each do |obj|
     p obj
   end
   objects
+end
+
+# Pretty prints each object in *objects* to STDOUT, followed
+# by a newline. Returns *objects*.
+#
+# ```
+# p foo: 23, bar: 42 # => {foo: 23, bar: 42}
+# ```
+#
+# See `Object#pretty_print(pp)`
+def p(**objects)
+  p(objects)
 end
 
 # :nodoc:

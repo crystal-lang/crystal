@@ -1683,9 +1683,9 @@ module Crystal
     end
 
     def virtual_type
-      if leaf? && !abstract?
+      if generic_type.leaf? && !abstract?
         self
-      elsif struct? && abstract? && !leaf?
+      elsif struct? && abstract? && !generic_type.leaf?
         virtual_type!
       elsif struct?
         self

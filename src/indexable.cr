@@ -100,7 +100,7 @@ module Indexable(T)
   # behind. If the block returns `true`, the finding element
   # is itself or exists infront.
   #
-  # Binary search needs sorted array, so self has to be sorted.
+  # Binary search needs sorted array, so `self` has to be sorted.
   #
   # Returns `nil` if the block didn't return `true` for any element.
   #
@@ -119,7 +119,7 @@ module Indexable(T)
   # behind. If the block returns `true`, the finding element
   # is itself or exists infront.
   #
-  # Binary search needs sorted array, so self has to be sorted.
+  # Binary search needs sorted array, so `self` has to be sorted.
   #
   # Returns `nil` if the block didn't return `true` for any element.
   #
@@ -265,7 +265,7 @@ module Indexable(T)
 
   # Returns a hash code based on `self`'s size and elements.
   #
-  # See `Object#hash`.
+  # See also: `Object#hash`.
   def hash
     reduce(31 * size) do |memo, elem|
       31 * memo + elem.hash

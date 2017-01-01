@@ -17,7 +17,7 @@ struct Symbol
 
   # Generates an `Int32` hash value for this symbol.
   #
-  # See `Object#hash`.
+  # See also: `Object#hash`.
   def hash : Int32
     to_i
   end

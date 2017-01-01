@@ -439,6 +439,10 @@ describe "Enumerable" do
     it "does example 4" do
       [{1 => 2}, {3 => 4}].flat_map { |e| e }.should eq([{1 => 2}, {3 => 4}])
     end
+
+    it "flattens iterators" do
+      [[1, 2], [3, 4]].flat_map(&.each).should eq([1, 2, 3, 4])
+    end
   end
 
   describe "grep" do
@@ -598,6 +602,12 @@ describe "Enumerable" do
     it "yields the element and the index" do
       result = ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }
       result.should eq ["User #0: Alice", "User #1: Bob"]
+    end
+
+    it "yields the element and the index of an iterator" do
+      str = "hello"
+      result = str.each_char.map_with_index { |char, i| "#{char}#{i}" }
+      result.should eq ["h0", "e1", "l2", "l3", "o4"]
     end
   end
 

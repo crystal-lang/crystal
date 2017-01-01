@@ -1,4 +1,5 @@
 class Socket
+  # Domain name resolver.
   struct Addrinfo
     getter family : Family
     getter type : Type
@@ -8,7 +9,73 @@ class Socket
     @addr : LibC::SockaddrIn6
     @next : LibC::Addrinfo*
 
-    def self.resolve(host, service, family : Family, type : Type, protocol : Protocol = Protocol::IP, timeout = nil)
+    # Resolves a domain that best matches the given options.
+    #
+    # - *domain* may be an IP address or a domain name.
+    # - *service* may be a port number or a service name. It must be specified,
+    #   because different servers may handle the `mail` or `http` services for
+    #   example.
+    # - *family* is optional and defaults to `Family::UNSPEC`
+    # - *type* is the intented socket type (e.g. `Type::STREAM`) and must be
+    #   specified.
+    # - *protocol* is the intented socket protocol (e.g. `Protocol::TCP`) and
+    #   should be specified.
+    #
+    # Example:
+    # ```
+    # addrinfos = Socket::Addrinfo.resolve("example.org", "http", type: Socket::Type::STREAM, protocol: Socket::Type::TCP)
+    # ```
+    def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
+      addrinfos = [] of Addrinfo
+
+      getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
+        loop do
+          addrinfos << addrinfo.not_nil!
+          unless addrinfo = addrinfo.next?
+            return addrinfos
+          end
+        end
+      end
+    end
+
+    # Resolves a domain that best matches the given options.
+    #
+    # Yields each possible `Addrinfo` resolution since a domain may resolve to
+    # many IP. Implementations are supposed to try all the addresses until the
+    # socket is connected (or bound) or there are no addresses to try anymore.
+    #
+    # Raising is an expensive operation, so instead of raising on a connect or
+    # bind error, just to rescue it immediately after, the block is expected to
+    # return the error instead, which will be raised once there are no more
+    # addresses to try.
+    #
+    # The iteration will be stopped once the block returns something that isn't
+    # an `Exception` (e.g. a `Socket` or `nil`).
+    def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil)
+      getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
+        error = nil
+
+        loop do
+          value = yield addrinfo.not_nil!
+
+          if value.is_a?(Exception)
+            error = value
+          else
+            return value
+          end
+
+          unless addrinfo = addrinfo.try(&.next?)
+            if error.is_a?(Errno) && error.errno == Errno::ECONNREFUSED
+              raise Errno.new("Error connecting to '#{domain}:#{service}'", error.errno)
+            else
+              raise error if error
+            end
+          end
+        end
+      end
+    end
+
+    private def self.getaddrinfo(domain, service, family, type, protocol, timeout)
       hints = LibC::Addrinfo.new
       hints.ai_family = (family || Family::UNSPEC).to_i32
       hints.ai_socktype = type
@@ -19,42 +86,54 @@ class Socket
         hints.ai_flags |= LibC::AI_NUMERICSERV
       end
 
-      case ret = LibC.getaddrinfo(host, service.to_s, pointerof(hints), out ptr)
+      case ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
       when 0
         # success
       when LibC::EAI_NONAME
-        raise Socket::Error.new("No address found for #{host}:#{service} over #{protocol}")
+        raise Socket::Error.new("No address found for #{domain}:#{service} over #{protocol}")
       else
         raise Socket::Error.new("getaddrinfo: #{String.new(LibC.gai_strerror(ret))}")
       end
 
       begin
-        addrinfo = new(ptr)
-        error = nil
-
-        loop do
-          error = yield addrinfo.not_nil!
-          return unless error
-
-          unless addrinfo = addrinfo.try(&.next?)
-            if error.is_a?(Errno) && error.errno == Errno::ECONNREFUSED
-              raise Errno.new("Error connecting to '#{host}:#{service}': Connection refused", error.errno)
-            else
-              raise error if error
-            end
-          end
-        end
+        yield new(ptr)
       ensure
         LibC.freeaddrinfo(ptr)
       end
     end
 
-    def self.tcp(host, service, family = Family::UNSPEC, timeout = nil)
-      resolve(host, service, family, Type::STREAM, Protocol::TCP) { |addrinfo| yield addrinfo }
+    # Resolves *domain* for the UDP protocol and returns an `Array` of possible
+    # `Addrinfo`. See `#resolve` for details.
+    #
+    # Example:
+    # ```
+    # addrinfos = Socket::Addrinfo.tcp("example.org", 80)
+    # ```
+    def self.tcp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
+      resolve(domain, service, family, Type::STREAM, Protocol::TCP)
     end
 
-    def self.udp(host, service, family = Family::UNSPEC, timeout = nil)
-      resolve(host, service, family, Type::DGRAM, Protocol::UDP) { |addrinfo| yield addrinfo }
+    # Resolves a domain for the TCP protocol with STREAM type, and yields each
+    # possible `Addrinfo`. See `#resolve` for details.
+    def self.tcp(domain, service, family = Family::UNSPEC, timeout = nil)
+      resolve(domain, service, family, Type::STREAM, Protocol::TCP) { |addrinfo| yield addrinfo }
+    end
+
+    # Resolves *domain* for the UDP protocol and returns an `Array` of possible
+    # `Addrinfo`. See `#resolve` for details.
+    #
+    # Example:
+    # ```
+    # addrinfos = Socket::Addrinfo.tcp("example.org", 53)
+    # ```
+    def self.udp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
+      resolve(domain, service, family, Type::DGRAM, Protocol::UDP)
+    end
+
+    # Resolves a domain for the UDP protocol with DGRAM type, and yields each
+    # possible `Addrinfo`. See `#resolve` for details.
+    def self.udp(domain, service, family = Family::UNSPEC, timeout = nil)
+      resolve(domain, service, family, Type::DGRAM, Protocol::UDP) { |addrinfo| yield addrinfo }
     end
 
     protected def initialize(addrinfo : LibC::Addrinfo*)
@@ -74,8 +153,11 @@ class Socket
       end
     end
 
+    @ip_address : IPAddress?
+
+    # Returns an `IPAddress` matching this addrinfo.
     def ip_address
-      @ip_address = IPAddress.from(@addr, @addrlen)
+      @ip_address ||= IPAddress.from(to_unsafe, size)
     end
 
     def to_unsafe

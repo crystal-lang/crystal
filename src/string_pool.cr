@@ -4,6 +4,7 @@
 #
 # ```
 # require "string_pool"
+#
 # pool = StringPool.new
 # a = "foo" + "bar"
 # b = "foo" + "bar"
@@ -29,7 +30,7 @@ class StringPool
     @size = 0
   end
 
-  # Returns `true` if the String Pool has no element otherwise returns `false`.
+  # Returns `true` if the `StringPool` has no element otherwise returns `false`.
   #
   # ```
   # pool = StringPool.new

@@ -497,7 +497,7 @@ struct Char
 
   # Appends this char as a string that contains a char literal to the given `IO`.
   #
-  # See `#inspect`.
+  # See also: `#inspect`.
   def inspect(io)
     io << inspect
   end
@@ -525,7 +525,7 @@ struct Char
 
   # Appends this char as a string that contains a char literal to the given `IO`.
   #
-  # See `#dump`.
+  # See also: `#dump`.
   def dump(io)
     io << '\''
     io << dump
@@ -568,7 +568,7 @@ struct Char
   end
 
   # Returns the integer value of this char if it's an ASCII char denoting a digit
-  # in *base*,  `nil` otherwise.
+  # in *base*, `nil` otherwise.
   #
   # ```
   # '1'.to_i     # => 1
@@ -595,23 +595,23 @@ struct Char
     end
   end
 
-  # Same as `to_i`
+  # Same as `to_i`.
   def to_i32(base : Int = 10) : Int32
     to_i(base)
   end
 
-  # Same as `to_i?`
+  # Same as `to_i?`.
   def to_i32?(base : Int = 10) : Int32?
     to_i?(base)
   end
 
   {% for type in %w(i8 i16 i64 u8 u16 u32 u64) %}
-    # See `to_i`
+    # See also: `to_i`.
     def to_{{type.id}}(base : Int = 10)
       to_i(base).to_{{type.id}}
     end
 
-    # See `to_i?`
+    # See also: `to_i?`.
     def to_{{type.id}}?(base : Int = 10)
       to_i?(base).try &.to_{{type.id}}
     end
@@ -641,22 +641,22 @@ struct Char
     to_f64?
   end
 
-  # See `to_f`
+  # See also: `to_f`.
   def to_f32
     to_i.to_f32
   end
 
-  # See `to_f?`
+  # See also: `to_f?`.
   def to_f32?
     to_i?.try &.to_f32
   end
 
-  # Same as `to_f`
+  # Same as `to_f`.
   def to_f64
     to_i.to_f64
   end
 
-  # Same as `to_f?`
+  # Same as `to_f?`.
   def to_f64?
     to_i?.try &.to_f64
   end

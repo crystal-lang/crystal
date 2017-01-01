@@ -449,7 +449,7 @@ describe Iterator do
     end
 
     it "with block" do
-      iter = (1..8).each.uniq { |x| x % 3 }
+      iter = (1..8).each.uniq { |x| (x % 3).to_s }
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(3)
@@ -638,6 +638,65 @@ describe Iterator do
 
       iter.to_a.should eq([1, 2, 3, 4])
       iter.rewind.to_a.should eq([1, 2, 3, 4])
+    end
+  end
+
+  describe "#flat_map" do
+    it "flattens returned arrays" do
+      iter = [1, 2, 3].each.flat_map { |x| [x, x] }
+
+      iter.next.should eq(1)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should eq(3)
+
+      iter.rewind.to_a.should eq([1, 1, 2, 2, 3, 3])
+    end
+
+    it "flattens returned items" do
+      iter = [1, 2, 3].each.flat_map { |x| x }
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+
+      iter.rewind.to_a.should eq([1, 2, 3])
+    end
+
+    it "flattens returned iterators" do
+      iter = [1, 2, 3].each.flat_map { |x| [x, x].each }
+
+      iter.next.should eq(1)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should eq(3)
+
+      iter.rewind.to_a.should eq([1, 1, 2, 2, 3, 3])
+    end
+
+    it "flattens returned values" do
+      iter = [1, 2, 3].each.flat_map do |x|
+        case x
+        when 1
+          x
+        when 2
+          [x, x]
+        else
+          [x, x].each
+        end
+      end
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should eq(3)
+
+      iter.rewind.to_a.should eq([1, 2, 2, 3, 3])
     end
   end
 end

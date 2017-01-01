@@ -31,11 +31,12 @@ class Class
   # [documentation on as](//crystal-lang.org/docs/syntax_and_semantics/as.html)
   # for more information.
   #
-  #     klass = Int32
-  #     number = [99, "str"][0]
-  #     typeof(number)             # => (String | Int32)
-  #     typeof(klass.cast(number)) # => Int32
-  #
+  # ```
+  # klass = Int32
+  # number = [99, "str"][0]
+  # typeof(number)             # => (String | Int32)
+  # typeof(klass.cast(number)) # => Int32
+  # ```
   def cast(other) : self
     other.as(self)
   end

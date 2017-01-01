@@ -29,7 +29,7 @@ class UNIXServer < UNIXSocket
     super(Family::UNIX, type)
 
     bind(UNIXAddress.new(path)) do |error|
-      close
+      close(delete: false)
       raise error
     end
 
@@ -65,10 +65,10 @@ class UNIXServer < UNIXSocket
   end
 
   # Closes the socket, then deletes the filesystem pathname if it exists.
-  def close
-    super
+  def close(delete = true)
+    super()
   ensure
-    if path = @path
+    if delete && (path = @path)
       File.delete(path) if File.exists?(path)
       @path = nil
     end

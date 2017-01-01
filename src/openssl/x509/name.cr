@@ -1,14 +1,15 @@
 require "openssl/lib_crypto"
 
-# :nodoc;
+# :nodoc:
 module OpenSSL::X509
-  # :nodoc;
+  # :nodoc:
   class Name
     # Parses entries in string and initializes a Name object.
     #
     # Example:
     # ```
     # require "openssl"
+    #
     # OpenSSL::X509::Name.parse("CN=nobody/DC=example")
     # ```
     def self.parse(string : String) : Name

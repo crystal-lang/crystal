@@ -203,8 +203,10 @@ class URI
   # If *plus_to_space* is true, it replace plus character (0x2B) to ' '.
   # e.g. `application/x-www-form-urlencoded` wants this replace.
   #
-  #     URI.unescape("%27Stop%21%27%20said%20Fred")                  #=> "'Stop!' said Fred"
-  #     URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) #=> "'Stop!' said Fred"
+  # ```
+  # URI.unescape("%27Stop%21%27%20said%20Fred")                  # => "'Stop!' said Fred"
+  # URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) # => "'Stop!' said Fred"
+  # ```
   def self.unescape(string : String, plus_to_space = false) : String
     String.build { |io| unescape(string, io, plus_to_space) }
   end
@@ -242,8 +244,10 @@ class URI
   # If *space_to_plus* is true, it replace space character (0x20) to '+' and '+' is
   # encoded to '%2B'. e.g. `application/x-www-form-urlencoded` want this replace.
   #
-  #     URI.escape("'Stop!' said Fred")                      #=> "%27Stop%21%27%20said%20Fred"
-  #     URI.escape("'Stop!' said Fred", space_to_plus: true) #=> "%27Stop%21%27+said+Fred"
+  # ```
+  # URI.escape("'Stop!' said Fred")                      # => "%27Stop%21%27%20said%20Fred"
+  # URI.escape("'Stop!' said Fred", space_to_plus: true) # => "%27Stop%21%27+said+Fred"
+  # ```
   def self.escape(string : String, space_to_plus = false) : String
     String.build { |io| escape(string, io, space_to_plus) }
   end
@@ -254,11 +258,13 @@ class URI
   # whose code is less than `0x80`. The characters that block returns
   # `true` are not escaped, other characters are escaped.
   #
-  #     # Escape URI path
-  #     URI.escape("/foo/file?(1).txt") do |byte|
-  #       URI.unreserved?(byte) || byte.chr == '/'
-  #     end
-  #     #=> "/foo/file%3F%281%29.txt"
+  # ```
+  # # Escape URI path
+  # URI.escape("/foo/file?(1).txt") do |byte|
+  #   URI.unreserved?(byte) || byte.chr == '/'
+  # end
+  # # => "/foo/file%3F%281%29.txt"
+  # ```
   def self.escape(string : String, space_to_plus = false, &block) : String
     String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
   end

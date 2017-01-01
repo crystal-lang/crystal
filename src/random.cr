@@ -69,7 +69,7 @@ module Random
     next_u.odd?
   end
 
-  # Same as `rand(Int32::MIN..Int32::MAX)`
+  # Same as `rand(Int32::MIN..Int32::MAX)`.
   def next_int : Int32
     rand_type(Int32)
   end

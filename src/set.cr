@@ -5,7 +5,7 @@
 # Set uses `Hash` as storage, so you must note the following points:
 #
 # * Equality of elements is determined according to `Object#==` and `Object#hash`.
-# * Set assumes that the identity of each element does not change while it is stored. Modifying an element of a set will render the set to an unreliable state.
+# * `Set` assumes that the identity of each element does not change while it is stored. Modifying an element of a set will render the set to an unreliable state.
 #
 # ### Example
 #
@@ -74,7 +74,7 @@ struct Set(T)
   # s.size # => 4
   # ```
   #
-  # See also `#|` to merge two sets and return a new one.
+  # See also: `#|` to merge two sets and return a new one.
   def merge!(elems)
     elems.each { |elem| self << elem }
     self
@@ -173,7 +173,7 @@ struct Set(T)
   # Set{'a', 'b', 'b', 'z'} | Set{'a', 'b', 'c'} # => Set{'a', 'b', 'z', 'c'}
   # ```
   #
-  # See also `#merge` to add elements from a set to `self`.
+  # See also: `#merge` to add elements from a set to `self`.
   def |(other : Set(U)) forall U
     set = Set(T | U).new
     each { |value| set.add value }

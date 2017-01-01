@@ -6,7 +6,7 @@ module YAML
   # Once defined, `Object#from_yaml` populates properties of the class from the
   # YAML document.
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # class Employee
@@ -27,7 +27,7 @@ module YAML
   # Attributes not mapped with `YAML.mapping` are not defined as properties.
   # Also, missing attributes raise a `ParseException`.
   #
-  # ```crystal
+  # ```
   # employee = Employee.from_yaml("title: Manager\nname: John\nage: 30")
   # employee.age # => undefined method 'age'.
   #
@@ -37,7 +37,7 @@ module YAML
   #
   # You can also define attributes for each property.
   #
-  # ```crystal
+  # ```
   # class Employee
   #   YAML.mapping(
   #     title: String,

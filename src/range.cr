@@ -1,4 +1,4 @@
-# A Range represents an interval: a set of values with a beginning and an end.
+# A `Range` represents an interval: a set of values with a beginning and an end.
 #
 # Ranges may be constructed using the usual `new` method or with literals:
 #
@@ -213,7 +213,7 @@ struct Range(B, E)
     end
   end
 
-  # Same as `includes?`
+  # Same as `includes?`.
   def covers?(value)
     includes?(value)
   end
@@ -234,7 +234,7 @@ struct Range(B, E)
   # high
   # ```
   #
-  # See `Object#===`.
+  # See also: `Object#===`.
   def ===(value)
     includes?(value)
   end
@@ -251,7 +251,7 @@ struct Range(B, E)
     to_s(io)
   end
 
-  # If self is a `Int` range, it provides O(1) implementation,
+  # If `self` is a `Int` range, it provides O(1) implementation,
   # otherwise it is same as `Enumerable#sum`.
   def sum(initial)
     b = self.begin
@@ -270,7 +270,7 @@ struct Range(B, E)
     end
   end
 
-  # Returns a new Range with `begin` and `end` cloned.
+  # Returns a new `Range` with `begin` and `end` cloned.
   def clone
     Range.new(@begin.clone, @end.clone, @exclusive)
   end

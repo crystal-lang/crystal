@@ -357,7 +357,7 @@ module Crystal
       end
 
       def visit(node : Var)
-        if @a_def.vars.try &.[node.name].closured?
+        if @a_def.vars.try &.[node.name]?.try &.closured?
           @vars << node
         end
       end

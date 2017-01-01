@@ -1,6 +1,6 @@
 require "./csv"
 
-# A CSV Builder writes CSV to an IO.
+# A CSV Builder writes CSV to an `IO`.
 #
 # ```
 # require "csv"
@@ -35,13 +35,13 @@ require "./csv"
 # 4,5,6,7,8
 # ```
 class CSV::Builder
-  # Creates a builder that will write to the given IO.
+  # Creates a builder that will write to the given `IO`.
   def initialize(@io : IO)
     @first_cell_in_row = true
   end
 
   # Yields a `CSV::Row` to append a row. A newline is appended
-  # to IO after the block exits.
+  # to `IO` after the block exits.
   def row
     yield Row.new(self)
     @io << "\n"

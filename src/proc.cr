@@ -1,4 +1,4 @@
-# A Proc represents a function pointer with an optional context (the closure data). It is typically created with a proc literal:
+# A `Proc` represents a function pointer with an optional context (the closure data). It is typically created with a proc literal:
 #
 # ```
 # # A proc without arguments
@@ -23,7 +23,7 @@
 #
 # This form allows you to specify the return type and to check it against the proc's body.
 #
-# Another way to create a Proc is by capturing a block:
+# Another way to create a `Proc` is by capturing a block:
 #
 # ```
 # def capture(&block : Int32 -> Int32)
@@ -40,9 +40,9 @@
 #
 # ### Passing a Proc to a C function
 #
-# Passing a Proc to a C function, for example as a callback, is possible as long as the Proc isn't a closure. If it is, either
+# Passing a `Proc` to a C function, for example as a callback, is possible as long as the `Proc` isn't a closure. If it is, either
 # a compile-time or runtime error will happen depending on whether the compiler can check this. The reason
-# is that a Proc is internally represented as two void pointers, one having the function
+# is that a `Proc` is internally represented as two void pointers, one having the function
 # pointer and another the closure data. If just the function pointer is passed, the closure data will be missing
 # at invocation time.
 #
@@ -56,8 +56,8 @@
 # end
 # ```
 #
-# To properly define a wrapper for this function we must send the Proc as the callback data, and then
-# convert that callback data to the Proc and finally invoke it.
+# To properly define a wrapper for this function we must send the `Proc` as the callback data, and then
+# convert that callback data to the `Proc` and finally invoke it.
 #
 # ```
 # module Ticker
@@ -98,7 +98,7 @@ struct Proc
     ptr.value
   end
 
-  # Returns a new Proc that has its first arguments fixed to the values given by *args*.
+  # Returns a new `Proc` that has its first arguments fixed to the values given by *args*.
   #
   # See [Wikipedia, Partial application](https://en.wikipedia.org/wiki/Partial_application)
   #

@@ -1,6 +1,6 @@
 require "c/string"
 
-# A Slice is a `Pointer` with an associated size.
+# A `Slice` is a `Pointer` with an associated size.
 #
 # While a pointer is unsafe because no bound checks are performed when reading from and writing to it,
 # reading from and writing to a slice involve bound checks.
@@ -255,13 +255,11 @@ struct Slice(T)
     pointer(count).move_to(target, count)
   end
 
-  # Moves the contents of this slice into *target*. *target* and *self* may
+  # Moves the contents of this slice into *target*. *target* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
   # Raises if the desination slice cannot fit the data being transferred
   # e.g. dest.size < self.size.
-  #
-  # See `Pointer#move_to`
   #
   # ```
   # src = Slice['a', 'a', 'a']
@@ -270,11 +268,13 @@ struct Slice(T)
   # dst             # => Slice['a', 'a', 'a', 'b', 'b']
   # dst.move_to src # => IndexError
   # ```
+  #
+  # See also: `Pointer#move_to`.
   def move_to(target : self)
     @pointer.move_to(target.pointer(size), size)
   end
 
-  # Moves the contents of *source* into this slice. *source* and *self* may
+  # Moves the contents of *source* into this slice. *source* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
   # Truncates if the other slice doesn't fit. The same as `source.move_to(self)`.

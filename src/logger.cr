@@ -12,7 +12,7 @@
 #
 # ### Example
 #
-# ```crystal
+# ```
 # require "logger"
 #
 # log = Logger.new(STDOUT)

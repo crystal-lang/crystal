@@ -33,8 +33,8 @@ require "./spec/dsl"
 # There commonly is one top level `describe` that defines which greater unit,
 # such as a class, is tested in this spec file. Further `describe` calls can
 # be nested within to specify smaller units under test like individual methods.
-# It can also be used to set up a certain context - think empty Array versus
-# Array with elements. There is also the `context` method that behaves just like
+# It can also be used to set up a certain context - think empty `Array` versus
+# `Array` with elements. There is also the `context` method that behaves just like
 # `describe` but has a lightly different meaning to the reader.
 #
 # Concrete test cases are defined with `it` within a `describe` block. A
@@ -107,6 +107,10 @@ end
 unless ARGV.empty?
   puts "Error: unknown argument '#{ARGV.first}'"
   exit 1
+end
+
+if ENV["SPEC_VERBOSE"]? == "1"
+  Spec.override_default_formatter(Spec::VerboseFormatter.new)
 end
 
 Signal::INT.trap { Spec.abort! }

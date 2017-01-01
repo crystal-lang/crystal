@@ -1,7 +1,7 @@
 # A named tuple is a fixed-size, immutable, stack-allocated mapping
 # of a fixed set of keys to values.
 #
-# You can think of a NamedTuple as an immutable `Hash` whose keys (which
+# You can think of a `NamedTuple` as an immutable `Hash` whose keys (which
 # are of type `Symbol`), and the types for each key, are known at compile time.
 #
 # A named tuple can be created with a named tuple literal:
@@ -38,13 +38,15 @@ struct NamedTuple
     options
   end
 
-  # Creates a named tuple from the given hash, with elements casted to the given types. See `#from`.
+  # Creates a named tuple from the given hash, with elements casted to the given types.
   #
   # ```
   # NamedTuple(foo: String, bar: Int64).from({:foo => "world", :bar => 2})       # => {foo: "world", bar: 2}
   # NamedTuple(foo: String, bar: Int64).from({"foo" => "world", "bar" => 2})     # => {foo: "world", bar: 2}
   # NamedTuple(foo: String, bar: Int64).from({:foo => "world", :bar => 2}).class # => {foo: String, bar: Int64}
   # ```
+  #
+  # See also: `#from`.
   def self.from(hash : Hash)
     {% begin %}
     NamedTuple.new(**{{T}}).from(hash)
@@ -156,7 +158,7 @@ struct NamedTuple
 
   # Returns a hash value based on this name tuple's size, keys and values.
   #
-  # See `Object#hash`.
+  # See also: `Object#hash`.
   def hash
     hash = 31 * size
     {% for key in T.keys.sort %}
@@ -420,7 +422,7 @@ struct NamedTuple
   end
 
   # Returns `true` if this tuple has the same keys as *other*, and values
-  # for each key are the same in *self* and *other*.
+  # for each key are the same in `self` and *other*.
   #
   # ```
   # tuple1 = {name: "Crystal", year: 2011}

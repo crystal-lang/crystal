@@ -2102,6 +2102,10 @@ module Crystal
             return parse_tuple first_key, location
           when :"}"
             return parse_tuple first_key, location
+          when :NEWLINE
+            next_token_skip_space
+            check :"}"
+            return parse_tuple first_key, location
           else
             check :"=>"
           end
