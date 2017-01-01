@@ -1049,8 +1049,10 @@ module Iterator(T)
 
   # Yields each element in this iterator together with its index.
   def with_index(offset : Int = 0)
-    with_index(offset).each do |value, index|
+    index = offset
+    each do |value|
       yield value, index
+      index += 1
     end
   end
 
