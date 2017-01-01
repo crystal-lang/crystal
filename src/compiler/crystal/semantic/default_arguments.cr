@@ -143,7 +143,7 @@ class Crystal::Def
         splat_size.times do |i|
           tuple_args << Var.new(splat_names[i])
         end
-        tuple = TupleLiteral.new(tuple_args)
+        tuple = TupleLiteral.new(tuple_args).at(args[splat_index])
         new_body << Assign.new(Var.new(args[splat_index].name), tuple)
       end
 
@@ -156,7 +156,7 @@ class Crystal::Def
 
           named_tuple_entries << NamedTupleLiteral::Entry.new(named_arg, Var.new(named_arg))
         end
-        named_tuple = NamedTupleLiteral.new(named_tuple_entries)
+        named_tuple = NamedTupleLiteral.new(named_tuple_entries).at(double_splat)
         new_body << Assign.new(Var.new(double_splat.name), named_tuple)
       end
 
