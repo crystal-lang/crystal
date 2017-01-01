@@ -3,6 +3,7 @@
 # See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
 class Hash(K, V)
   include Enumerable({K, V})
+  include Iterable({K, V})
 
   getter size : Int32
   @buckets_size : Int32
@@ -305,13 +306,8 @@ class Hash(K, V)
   # hsh = {"foo" => "bar", "baz" => "qux"}
   # iterator = hsh.each
   #
-  # entry = iterator.next
-  # entry[0] # => "foo"
-  # entry[1] # => "bar"
-  #
-  # entry = iterator.next
-  # entry[0] # => "baz"
-  # entry[1] # => "qux"
+  # iterator.next # => {"foo", "bar"}
+  # iterator.next # => {"baz", "qux"}
   # ```
   def each
     EntryIterator(K, V).new(self, @first)
@@ -749,6 +745,22 @@ class Hash(K, V)
     io << "{...}" unless executed
   end
 
+  def pretty_print(pp) : Nil
+    executed = exec_recursive(:pretty_print) do
+      pp.list("{", self, "}") do |key, value|
+        pp.group do
+          key.pretty_print(pp)
+          pp.text " =>"
+          pp.nest do
+            pp.breakable
+            value.pretty_print(pp)
+          end
+        end
+      end
+    end
+    pp.text "{...}" unless executed
+  end
+
   # Returns self.
   def to_h
     self
@@ -759,12 +771,12 @@ class Hash(K, V)
     @buckets = @buckets.realloc(new_size)
     new_size.times { |i| @buckets[i] = nil }
     @buckets_size = new_size
-    entry = @first
+    entry = @last
     while entry
-      entry.next = nil
       index = bucket_index entry.key
-      insert_in_bucket_end index, entry
-      entry = entry.fore
+      entry.next = @buckets[index]
+      @buckets[index] = entry
+      entry = entry.back
     end
   end
 
@@ -804,21 +816,6 @@ class Hash(K, V)
       end
     else
       return @buckets[index] = Entry(K, V).new(key, value)
-    end
-  end
-
-  private def insert_in_bucket_end(index, existing_entry)
-    entry = @buckets[index]
-    if entry
-      while entry
-        if entry.next
-          entry = entry.next
-        else
-          return entry.next = existing_entry
-        end
-      end
-    else
-      @buckets[index] = existing_entry
     end
   end
 

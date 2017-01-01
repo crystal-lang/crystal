@@ -14,7 +14,10 @@ private def rootdir
 end
 
 private def home
-  ENV["HOME"]
+  home = ENV["HOME"]
+  return home if home == "/"
+
+  home.chomp('/')
 end
 
 private def it_raises_on_null_byte(operation, &block)
@@ -49,12 +52,29 @@ describe "File" do
   it "reads lines from file" do
     lines = File.read_lines "#{__DIR__}/data/test_file.txt"
     lines.size.should eq(20)
+    lines.first.should eq("Hello World")
+  end
+
+  it "reads lines from file with chomp = false" do
+    lines = File.read_lines "#{__DIR__}/data/test_file.txt", chomp: false
+    lines.size.should eq(20)
     lines.first.should eq("Hello World\n")
   end
 
   it "reads lines from file with each" do
     idx = 0
     File.each_line("#{__DIR__}/data/test_file.txt") do |line|
+      if idx == 0
+        line.should eq("Hello World")
+      end
+      idx += 1
+    end
+    idx.should eq(20)
+  end
+
+  it "reads lines from file with each, chomp = false" do
+    idx = 0
+    File.each_line("#{__DIR__}/data/test_file.txt", chomp: false) do |line|
       if idx == 0
         line.should eq("Hello World\n")
       end
@@ -67,11 +87,39 @@ describe "File" do
     idx = 0
     File.each_line("#{__DIR__}/data/test_file.txt").each do |line|
       if idx == 0
+        line.should eq("Hello World")
+      end
+      idx += 1
+    end
+    idx.should eq(20)
+  end
+
+  it "reads lines from file with each as iterator, chomp = false" do
+    idx = 0
+    File.each_line("#{__DIR__}/data/test_file.txt", chomp: false).each do |line|
+      if idx == 0
         line.should eq("Hello World\n")
       end
       idx += 1
     end
     idx.should eq(20)
+  end
+
+  describe "empty?" do
+    it "gives true when file is empty" do
+      File.empty?("#{__DIR__}/data/blank_test_file.txt").should be_true
+    end
+
+    it "gives false when file is not empty" do
+      File.empty?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+
+    it "raises an error when the file does not exist" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      expect_raises Errno do
+        File.empty?(filename)
+      end
+    end
   end
 
   describe "exists?" do
@@ -422,6 +470,38 @@ describe "File" do
       File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
       File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
     end
+
+    it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
+      prev_home = home
+      begin
+        ENV["HOME"] = __DIR__ + "/"
+        File.expand_path("~/").should eq(home)
+        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
+        File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
+        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
+        File.expand_path("~").should eq(home)
+        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
+        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+      ensure
+        ENV["HOME"] = prev_home
+      end
+    end
+
+    it "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
+      prev_home = home
+      begin
+        ENV["HOME"] = "/"
+        File.expand_path("~/").should eq(home)
+        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
+        File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
+        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
+        File.expand_path("~").should eq(home)
+        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
+        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+      ensure
+        ENV["HOME"] = prev_home
+      end
+    end
   end
 
   describe "real_path" do
@@ -455,6 +535,22 @@ describe "File" do
       filename = "#{__DIR__}/data/temp_write.txt"
       File.write(filename, "hello")
       File.read(filename).should eq("hello")
+      File.delete(filename)
+    end
+
+    it "writes bytes" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello".to_slice)
+      File.read(filename).should eq("hello")
+      File.delete(filename)
+    end
+
+    it "writes io" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.open("#{__DIR__}/data/test_file.txt") do |file|
+        File.write(filename, file)
+      end
+      File.read(filename).should eq(File.read("#{__DIR__}/data/test_file.txt"))
       File.delete(filename)
     end
 

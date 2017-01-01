@@ -31,6 +31,14 @@ module Crystal
     end
 
     def initialize(message, @line, @column : Int32, @filename, @size, @inner = nil)
+      # If the inner exception is a macro raise, we replace this exception's
+      # message with that message. In this way the error message will
+      # look like a regular message produced by the compiler, and not
+      # because of an incorrect macro expansion.
+      if inner.is_a?(MacroRaiseException)
+        message = inner.message
+        @inner = nil
+      end
       super(message)
     end
 
@@ -224,6 +232,8 @@ module Crystal
         io << colorize("instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
       when :used_self_before_initialized
         io << colorize("'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable").bold
+      when :initialized_in_rescue
+        io << colorize("instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued").bold
       end
     end
 
@@ -281,6 +291,9 @@ module Crystal
   end
 
   class UndefinedMacroMethodError < TypeException
+  end
+
+  class MacroRaiseException < TypeException
   end
 
   class Program

@@ -43,9 +43,7 @@ struct String::Formatter(A)
   private def consume_substitution
     key = consume_substitution_key '}'
     arg = current_arg
-    if arg.is_a?(Hash)
-      @io << arg[key]
-    elsif arg.is_a?(NamedTuple) # TODO: join with || after 0.19
+    if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
       @io << arg[key]
     else
       raise ArgumentError.new "one hash or named tuple required"
@@ -56,9 +54,7 @@ struct String::Formatter(A)
     key = consume_substitution_key '>'
     next_char
     arg = current_arg
-    if arg.is_a?(Hash)
-      target_arg = arg[key]
-    elsif arg.is_a?(NamedTuple) # TODO: join with || after 0.19
+    if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
       target_arg = arg[key]
     else
       raise ArgumentError.new "one hash or named tuple required"
@@ -277,7 +273,7 @@ struct String::Formatter(A)
     format_buf = format_buf(capacity)
     original_format_buf = format_buf
 
-    io = IO::Memory.new(Slice(UInt8).new(format_buf, capacity))
+    io = IO::Memory.new(Bytes.new(format_buf, capacity))
     io << '%'
     io << '+' if flags.plus
     io << '-' if flags.minus
@@ -296,7 +292,7 @@ struct String::Formatter(A)
 
   def pad(consumed, flags)
     padding_char = flags.padding_char
-    (flags.width - consumed).times do
+    (flags.width.abs - consumed).times do
       @io << padding_char
     end
   end
@@ -370,16 +366,12 @@ struct String::Formatter(A)
       @precision_size = 0
     end
 
-    def wants_padding?
-      @width > 0
-    end
-
     def left_padding?
-      wants_padding? && !@minus
+      @minus ? @width < 0 : @width > 0
     end
 
     def right_padding?
-      wants_padding? && @minus
+      @minus ? @width > 0 : @width < 0
     end
 
     def padding_char

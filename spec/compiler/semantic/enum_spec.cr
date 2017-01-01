@@ -290,4 +290,44 @@ describe "Semantic: enum" do
       Foo::A
       )) { types["Foo"] }
   end
+
+  it "errors if inheriting Enum (#3592)" do
+    assert_error %(
+      struct Foo < Enum
+      end
+      ),
+      "can't inherit Enum. Use the enum keyword to define enums"
+  end
+
+  it "errors on enum without members (#3447)" do
+    assert_error %(
+      enum Foo
+      end
+      ),
+      "enum Foo must have at least one member"
+  end
+
+  it "errors if declaring type inside enum (#3127)" do
+    assert_error %(
+      enum Foo
+        A
+      end
+
+      class Foo::Bar
+      end
+      ),
+      "can't declare type inside enum Foo"
+  end
+
+  it "errors if declaring type inside enum, nested (#3127)" do
+    assert_error %(
+      enum Foo
+        A
+      end
+
+      class Foo::Bar::Baz
+      end
+      ),
+      "can't declare type inside enum"
+  end
 end

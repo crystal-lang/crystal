@@ -104,13 +104,13 @@ describe "Set" do
   describe "merge" do
     it "adds all the other elements" do
       set = Set{1, 4, 8}
-      set.merge [1, 9, 10]
+      set.merge! [1, 9, 10]
       set.should eq(Set{1, 4, 8, 9, 10})
     end
 
     it "returns self" do
       set = Set{1, 4, 8}
-      set.merge([1, 9, 10]).should eq(Set{1, 4, 8, 9, 10})
+      set.merge!([1, 9, 10]).should eq(Set{1, 4, 8, 9, 10})
     end
   end
 

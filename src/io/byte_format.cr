@@ -127,28 +127,30 @@ module IO::ByteFormat
   {% for mod in %w(LittleEndian BigEndian) %}
     module {{mod.id}}
       {% for type, i in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64) %}
+        {% bytesize = 2 ** (i / 2) %}
+
         def self.encode(int : {{type.id}}, io : IO)
-          buffer = pointerof(int).as(UInt8[{{2 ** (i / 2)}}]*).value
+          buffer = pointerof(int).as(UInt8[{{bytesize}}]*).value
           buffer.reverse! unless SystemEndian == self
           io.write(buffer.to_slice)
         end
 
         def self.encode(int : {{type.id}}, bytes : Bytes)
-          buffer = pointerof(int).as(UInt8[{{2 ** (i / 2)}}]*).value
+          buffer = pointerof(int).as(UInt8[{{bytesize}}]*).value
           buffer.reverse! unless SystemEndian == self
           buffer.to_slice.copy_to(bytes)
         end
 
         def self.decode(type : {{type.id}}.class, io : IO)
-          buffer = uninitialized UInt8[{{2 ** (i / 2)}}]
+          buffer = uninitialized UInt8[{{bytesize}}]
           io.read_fully(buffer.to_slice)
           buffer.reverse! unless SystemEndian == self
           buffer.to_unsafe.as(Pointer({{type.id}})).value
         end
 
         def self.decode(type : {{type.id}}.class, bytes : Bytes)
-          buffer = uninitialized UInt8[{{2 ** (i / 2)}}]
-          bytes.copy_to(buffer.to_slice)
+          buffer = uninitialized UInt8[{{bytesize}}]
+          bytes.to_slice[0, {{bytesize}}].copy_to(buffer.to_slice)
           buffer.reverse! unless SystemEndian == self
           buffer.to_unsafe.as(Pointer({{type.id}})).value
         end

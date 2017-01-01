@@ -196,4 +196,13 @@ describe "Code gen: primitives" do
       x
       )).to_i.should eq(3)
   end
+
+  it "gets crystal class instance type id" do
+    run(%(
+      class Foo
+      end
+
+      Foo.new.crystal_type_id == Foo.crystal_instance_type_id
+      )).to_b.should be_true
+  end
 end

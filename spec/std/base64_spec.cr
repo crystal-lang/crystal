@@ -31,7 +31,7 @@ describe "Base64" do
   end
 
   it "encodes byte slice" do
-    slice = Slice(UInt8).new(5) { 1_u8 }
+    slice = Bytes.new(5) { 1_u8 }
     Base64.encode(slice).should eq("AQEBAQE=\n")
     Base64.strict_encode(slice).should eq("AQEBAQE=")
   end

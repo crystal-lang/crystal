@@ -90,4 +90,22 @@ describe "IO::Sized" do
     sized.read_byte.should eq('c'.ord)
     sized.read_byte.should be_nil
   end
+
+  it "gets" do
+    io = IO::Memory.new "foo\nbar\nbaz"
+    sized = IO::Sized.new(io, read_size: 9)
+    sized.gets.should eq("foo")
+    sized.gets.should eq("bar")
+    sized.gets.should eq("b")
+    sized.gets.should be_nil
+  end
+
+  it "gets with chomp = false" do
+    io = IO::Memory.new "foo\nbar\nbaz"
+    sized = IO::Sized.new(io, read_size: 9)
+    sized.gets(chomp: false).should eq("foo\n")
+    sized.gets(chomp: false).should eq("bar\n")
+    sized.gets(chomp: false).should eq("b")
+    sized.gets(chomp: false).should be_nil
+  end
 end

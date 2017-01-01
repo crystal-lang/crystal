@@ -48,6 +48,10 @@ class Crystal::Location
     io << filename << ":" << line_number << ":" << column_number
   end
 
+  def pretty_print(pp)
+    pp.text to_s
+  end
+
   def <=>(other)
     self_file = @filename
     other_file = other.filename

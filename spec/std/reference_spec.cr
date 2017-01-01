@@ -25,6 +25,16 @@ module ReferenceSpec
 
     def_clone
   end
+
+  abstract class Abstract
+  end
+
+  class Concrete < Abstract
+    property x
+
+    def initialize(@x : Int32)
+    end
+  end
 end
 
 describe "Reference" do
@@ -77,6 +87,14 @@ describe "Reference" do
     duplicate.should_not be(original)
     duplicate.x.should eq(original.x)
     duplicate.y.should be(original.y)
+  end
+
+  it "can dup class that inherits abstract class" do
+    original = ReferenceSpec::Concrete.new(2).as(ReferenceSpec::Abstract)
+    duplicate = original.dup
+    duplicate.should be_a(ReferenceSpec::Concrete)
+    duplicate.should_not be(original)
+    duplicate.x.should eq(original.x)
   end
 
   it "clones with def_clone" do

@@ -40,8 +40,7 @@ end
 {% if flag?(:arm) %}
   # On ARM EHABI the personality routine is responsible for actually
   # unwinding a single stack frame before returning (ARM EHABI Sec. 6.1).
-  # :nodoc:
-  macro __crystal_continue_unwind
+  private macro __crystal_continue_unwind
     if LibUnwind.__gnu_unwind_frame(ucb, context) != LibUnwind::ReasonCode::NO_REASON
       return LibUnwind::ReasonCode::FAILURE
     end

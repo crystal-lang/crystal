@@ -10,7 +10,6 @@
 # This Deque is implemented with a [dynamic array](http://en.wikipedia.org/wiki/Dynamic_array) used as a
 # [circular buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 class Deque(T)
-  include Enumerable(T)
   include Indexable(T)
   include Comparable(Deque)
 
@@ -20,6 +19,8 @@ class Deque(T)
   # (this Deque has 5 items, each equal to their index)
 
   @start = 0
+  protected setter size
+  protected getter buffer
 
   # Creates a new empty Deque
   def initialize
@@ -77,21 +78,17 @@ class Deque(T)
   # ```
   # Deque.new(3) { |i| (i + 1) ** 2 } # => Deque{1, 4, 9}
   # ```
-  def initialize(size : Int, &block : Int32 -> T)
+  def self.new(size : Int, &block : Int32 -> T)
     if size < 0
       raise ArgumentError.new("negative deque size: #{size}")
     end
-    @size = size.to_i
-    @capacity = size.to_i
 
-    if @capacity == 0
-      @buffer = Pointer(T).null
-    else
-      @buffer = Pointer(T).malloc(@capacity)
-      (0...@size).each do |i|
-        @buffer[i] = yield i
-      end
+    deque = Deque(T).new(size)
+    deque.size = size
+    size.to_i.times do |i|
+      deque.buffer[i] = yield i
     end
+    deque
   end
 
   # Creates a new Deque that copies its items from an Array.
@@ -203,7 +200,7 @@ class Deque(T)
     found
   end
 
-  # Delete the item that is present at the `index`. Items to the right of this one will have their indices decremented.
+  # Delete the item that is present at the *index*. Items to the right of this one will have their indices decremented.
   # Raises `IndexError` if trying to delete an element outside the deque's range.
   #
   # ```
@@ -275,11 +272,11 @@ class Deque(T)
     end
   end
 
-  # Insert a new item before the item at `index`. Items to the right of this one will have their indices incremented.
+  # Insert a new item before the item at *index*. Items to the right of this one will have their indices incremented.
   #
   # ```
   # a = Deque{0, 1, 2}
-  # a.insert_at(1, 7) # => Deque{0, 7, 1, 2}
+  # a.insert(1, 7) # => Deque{0, 7, 1, 2}
   # ```
   def insert(index : Int, value : T)
     if index < 0
@@ -338,6 +335,13 @@ class Deque(T)
     io << "Deque{...}" unless executed
   end
 
+  def pretty_print(pp)
+    executed = exec_recursive(:inspect) do
+      pp.list("Deque{", self, "}")
+    end
+    pp.text "Deque{...}" unless executed
+  end
+
   # Returns the number of elements in the deque.
   #
   # ```
@@ -377,7 +381,7 @@ class Deque(T)
     pop { nil }
   end
 
-  # Removes the last `n` (at most) items in the deque.
+  # Removes the last *n* (at most) items in the deque.
   def pop(n : Int)
     if n < 0
       raise ArgumentError.new("can't pop negative count")
@@ -402,15 +406,15 @@ class Deque(T)
     self
   end
 
-  # Rotates this deque in place so that the element at `n` becomes first.
+  # Rotates this deque in place so that the element at *n* becomes first.
   #
-  # For positive `n`, equivalent to `n.times { push(shift) }`.
-  # For negative `n`, equivalent to `(-n).times { unshift(pop) }`.
+  # For positive *n*, equivalent to `n.times { push(shift) }`.
+  # For negative *n*, equivalent to `(-n).times { unshift(pop) }`.
   def rotate!(n : Int = 1)
     if @size == @capacity
       @start = (@start + n) % @capacity
     else
-      # Turn `n` into an equivalent index in range -size/2 .. size/2
+      # Turn *n* into an equivalent index in range -size/2 .. size/2
       half = @size / 2
       if n.abs >= half
         n = (n + half) % @size - half
@@ -456,7 +460,7 @@ class Deque(T)
     shift { nil }
   end
 
-  # Removes the first `n` (at most) items in the deque.
+  # Removes the first *n* (at most) items in the deque.
   def shift(n : Int)
     if n < 0
       raise ArgumentError.new("can't shift negative count")
@@ -466,7 +470,7 @@ class Deque(T)
     nil
   end
 
-  # Swaps the items at the indices `i` and `j`.
+  # Swaps the items at the indices *i* and *j*.
   def swap(i, j)
     self[i], self[j] = self[j], self[i]
     self

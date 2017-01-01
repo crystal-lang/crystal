@@ -6,7 +6,6 @@ require "c/string"
 # reading from and writing to a slice involve bound checks.
 # In this way, a slice is a safe alternative to Pointer.
 struct Slice(T)
-  include Enumerable(T)
   include Indexable(T)
 
   # Create a new `Slice` with the given *args*. The type of the
@@ -31,11 +30,11 @@ struct Slice(T)
     {% if @type.name != "Slice(T)" && T < Number %}
       {{T}}.slice({{*args}})
     {% else %}
-      %slice = Slice(typeof({{*args}})).new({{args.size}})
+      %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
       {% for arg, i in args %}
-        %slice.to_unsafe[{{i}}] = {{arg}}
+        %ptr[{{i}}] = {{arg}}
       {% end %}
-      %slice
+      Slice.new(%ptr, {{args.size}})
     {% end %}
   end
 
@@ -68,11 +67,17 @@ struct Slice(T)
   # The memory is allocated by the `GC`, so when there are
   # no pointers to this memory, it will be automatically freed.
   #
+  # Only works for primitive integers and floats (UInt8, Int32, Float64, etc.)
+  #
   # ```
   # slice = Slice(UInt8).new(3)
   # slice # => [0, 0, 0]
   # ```
   def self.new(size : Int)
+    {% unless T <= Int::Primitive || T <= Float::Primitive %}
+      {% raise "can only use primitive integers and floats with Slice.new(size), not #{T}" %}
+    {% end %}
+
     pointer = Pointer(T).malloc(size)
     new(pointer, size)
   end
@@ -105,6 +110,16 @@ struct Slice(T)
   # ```
   def self.new(size : Int, value : T)
     new(size) { value }
+  end
+
+  # Creates an empty slice.
+  #
+  # ```
+  # slice = Slice(UInt8).empty
+  # slice.size # => 0
+  # ```
+  def self.empty
+    new(Pointer(T).null, 0)
   end
 
   # Returns a new slice that i *offset* elements apart from this slice.
@@ -399,6 +414,11 @@ struct Slice(T)
     io << "]"
   end
 
+  def pretty_print(pp) : Nil
+    prefix = T == UInt8 ? "Bytes[" : "Slice["
+    pp.list(prefix, self, "]")
+  end
+
   def to_a
     Array(T).build(@size) do |pointer|
       pointer.copy_from(@pointer, @size)
@@ -441,4 +461,6 @@ struct Slice(T)
   end
 end
 
+# A convenient alias for the most common slice type,
+# a slice of bytes, used for example in `IO#read` and `IO#write`.
 alias Bytes = Slice(UInt8)

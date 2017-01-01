@@ -98,7 +98,7 @@ class IO::FileDescriptor
       raise Errno.new "Unable to seek"
     end
 
-    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+    @in_buffer_rem = Bytes.empty
 
     self
   end
@@ -189,7 +189,11 @@ class IO::FileDescriptor
     io
   end
 
-  private def unbuffered_read(slice : Slice(UInt8))
+  def pretty_print(pp)
+    pp.text inspect
+  end
+
+  private def unbuffered_read(slice : Bytes)
     count = slice.size
     loop do
       bytes_read = LibC.read(@fd, slice.pointer(count).as(Void*), count)
@@ -209,7 +213,7 @@ class IO::FileDescriptor
     end
   end
 
-  private def unbuffered_write(slice : Slice(UInt8))
+  private def unbuffered_write(slice : Bytes)
     count = slice.size
     total = count
     loop do

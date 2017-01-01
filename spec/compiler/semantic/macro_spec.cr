@@ -547,14 +547,16 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "errors if using private on non-top-level macro" do
+  it "errors if applying protected modifier to macro" do
     assert_error %(
       class Foo
-        private macro bar
+        protected macro foo
+          1
         end
       end
-      ),
-      "private macros can only be declared at the top-level"
+
+      Foo.foo
+    ), "can only use 'private' for macros"
   end
 
   it "expands macro with break inside while (#1852)" do
@@ -946,5 +948,16 @@ describe "Semantic: macro" do
       Foo.new.foo
       ),
       "undefined method 'foo'"
+  end
+
+  it "uses uninitialized variable with macros" do
+    assert_type(%(
+      macro foo(x)
+        {{x}}
+      end
+
+      a = uninitialized Int32
+      foo(a)
+      )) { int32 }
   end
 end

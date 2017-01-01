@@ -23,7 +23,7 @@ class Crystal::Program
 
   private def parse_flags(flags_name)
     set = flags_name.map(&.downcase).to_set
-    set.add "darwin" if set.any?(&.starts_with?("macosx"))
+    set.add "darwin" if set.any?(&.starts_with?("macosx")) || set.any?(&.starts_with?("darwin"))
     set.add "freebsd" if set.any?(&.starts_with?("freebsd"))
     set.add "openbsd" if set.any?(&.starts_with?("openbsd"))
     set.add "x86_64" if set.any?(&.starts_with?("amd64"))

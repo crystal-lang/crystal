@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: uninitialized" do
   it "declares as uninitialized" do
-    assert_type("a = uninitialized Int32") { nil_type }
+    assert_type("a = uninitialized Int32") { int32 }
   end
 
   it "declares as uninitialized and reads it" do
@@ -125,5 +125,11 @@ describe "Semantic: uninitialized" do
 
       bar
       )) { nil_type }
+  end
+
+  it "has type (#3641)" do
+    assert_type(%(
+      x = uninitialized Int32
+      )) { int32 }
   end
 end

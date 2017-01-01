@@ -3,7 +3,7 @@ require "spec"
 private class PartialReaderIO
   include IO
 
-  @slice : Slice(UInt8)
+  @slice : Bytes
 
   def initialize(data : String)
     @slice = data.to_slice

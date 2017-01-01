@@ -73,7 +73,7 @@ class StringScanner
     @str.byte_index_to_char_index(@byte_offset).not_nil!
   end
 
-  # Tries to match with `pattern` at the current position. If there's a match,
+  # Tries to match with *pattern* at the current position. If there's a match,
   # the scanner advances the scan offset, the last match is saved, and it
   # returns the matched string.  Otherwise, the scanner returns nil.
   #
@@ -86,7 +86,7 @@ class StringScanner
     match(pattern, advance: true, options: Regex::Options::ANCHORED)
   end
 
-  # Scans the string _until_ the `pattern` is matched. Returns the substring up
+  # Scans the string _until_ the *pattern* is matched. Returns the substring up
   # to and including the end of the match, the last match is saved, and
   # advances the scan offset.  Returns `nil` if no match.
   #
@@ -112,7 +112,7 @@ class StringScanner
     end
   end
 
-  # Attempts to skip over the given `pattern` beginning with the scan offset.
+  # Attempts to skip over the given *pattern* beginning with the scan offset.
   # In other words, the pattern is not anchored to the current scan offset.
   #
   # If there's a match, the scanner advances the scan offset, the last match is
@@ -127,7 +127,7 @@ class StringScanner
     match.size if match
   end
 
-  # Attempts to skip _until_ the given `pattern` is found after the scan
+  # Attempts to skip _until_ the given *pattern* is found after the scan
   # offset. In other words, the pattern is not anchored to the current scan
   # offset.
   #
@@ -164,7 +164,7 @@ class StringScanner
     match(pattern, advance: false, options: Regex::Options::None)
   end
 
-  # Returns the `n`-th subgroup in the most recent match.
+  # Returns the *n*-th subgroup in the most recent match.
   #
   # Raises an exception if there was no last match or if there is no subgroup.
   #
@@ -182,7 +182,7 @@ class StringScanner
     @last_match.not_nil![n]
   end
 
-  # Returns the nilable `n`-th subgroup in the most recent match.
+  # Returns the nilable *n*-th subgroup in the most recent match.
   #
   # Returns `nil` if there was no last match or if there is no subgroup.
   #
@@ -231,7 +231,7 @@ class StringScanner
     @str
   end
 
-  # Extracts a string corresponding to string[offset,`len`], without advancing
+  # Extracts a string corresponding to string[offset,*len*], without advancing
   # the scan offset.
   def peek(len)
     @str[offset, len]

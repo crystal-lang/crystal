@@ -1,3 +1,5 @@
+{% raise("Please use `make spec` or `bin/crystal` when running specs, or set the i_know_what_im_doing flag if you know what you're doing") unless env("CRYSTAL_HAS_WRAPPER") || flag?("i_know_what_im_doing") %}
+
 ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
 
 require "spec"
@@ -273,11 +275,11 @@ def parse(string, wants_doc = false)
   parser.parse
 end
 
-def codegen(code, inject_primitives = true)
+def codegen(code, inject_primitives = true, debug = false)
   code = inject_primitives(code) if inject_primitives
   node = parse code
   result = semantic node
-  result.program.codegen result.node, single_module: false
+  result.program.codegen result.node, single_module: false, debug: debug
 end
 
 class Crystal::SpecRunOutput
@@ -297,7 +299,7 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code, filename = nil, inject_primitives = true)
+def run(code, filename = nil, inject_primitives = true, debug = false)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT
@@ -317,6 +319,7 @@ def run(code, filename = nil, inject_primitives = true)
     output_filename = Crystal.tempfile("crystal-spec-output")
 
     compiler = Compiler.new
+    compiler.debug = debug
     compiler.compile Compiler::Source.new("spec", code), output_filename
 
     output = `#{output_filename}`
@@ -324,7 +327,7 @@ def run(code, filename = nil, inject_primitives = true)
 
     SpecRunOutput.new(output)
   else
-    Program.new.run(code, filename: filename)
+    Program.new.run(code, filename: filename, debug: debug)
   end
 end
 

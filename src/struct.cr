@@ -18,7 +18,7 @@
 # struct Mutable
 #   property value
 #
-#   def initialize(@value)
+#   def initialize(@value : Int32)
 #   end
 # end
 #
@@ -43,7 +43,7 @@
 # create immutable structs with some fields, similar to a `Tuple` but using
 # names instead of indices.
 struct Struct
-  # Returns `true` if this struct is equal to `other`.
+  # Returns `true` if this struct is equal to *other*.
   #
   # Both structs's instance vars are compared to each other. Thus, two
   # structs are considered equal if each of their instance variables are
@@ -52,7 +52,7 @@ struct Struct
   #
   # ```
   # struct Point
-  #   def initialize(@x, @y)
+  #   def initialize(@x : Int32, @y : Int32)
   #   end
   # end
   #
@@ -86,7 +86,7 @@ struct Struct
   #
   # ```
   # struct Point
-  #   def initialize(@x, @y)
+  #   def initialize(@x : Int32, @y : Int32)
   #   end
   # end
   #
@@ -105,6 +105,28 @@ struct Struct
     {% end %}
     io << ")"
     nil
+  end
+
+  def pretty_print(pp) : Nil
+    {% if @type.overrides?(Struct, "inspect") %}
+      pp.text inspect
+    {% else %}
+      prefix = "#{{{@type.name.id.stringify}}}("
+      pp.surround(prefix, ")", left_break: "", right_break: nil) do
+        {% for ivar, i in @type.instance_vars.map(&.name).sort %}
+          {% if i > 0 %}
+            pp.comma
+          {% end %}
+          pp.group do
+            pp.text "@{{ivar.id}}="
+            pp.nest do
+              pp.breakable ""
+              @{{ivar.id}}.pretty_print(pp)
+            end
+          end
+        {% end %}
+      end
+    {% end %}
   end
 
   # Same as `#inspect(io)`.

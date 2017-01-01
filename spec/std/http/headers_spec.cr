@@ -147,6 +147,24 @@ describe HTTP::Headers do
     headers.includes_word?("foo", "ba").should be_false
   end
 
+  it "matches word with comma separated value, case insensitive (#3626)" do
+    headers = HTTP::Headers{"foo" => "BaR, BAZ"}
+    headers.includes_word?("foo", "bar").should be_true
+    headers.includes_word?("foo", "baz").should be_true
+    headers.includes_word?("foo", "BAR").should be_true
+    headers.includes_word?("foo", "ba").should be_false
+  end
+
+  it "doesn't match empty string" do
+    headers = HTTP::Headers{"foo" => "bar, baz"}
+    headers.includes_word?("foo", "").should be_false
+  end
+
+  it "matches word with comma separated value, partial match" do
+    headers = HTTP::Headers{"foo" => "bar, bazo, baz"}
+    headers.includes_word?("foo", "baz").should be_true
+  end
+
   it "matches word among headers" do
     headers = HTTP::Headers.new
     headers.add("foo", "bar")

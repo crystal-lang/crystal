@@ -224,6 +224,10 @@ struct Time::Span
     Span.new(ticks / number)
   end
 
+  def /(other : self)
+    ticks.to_f64 / other.ticks.to_f64
+  end
+
   def <=>(other : self)
     ticks <=> other.ticks
   end

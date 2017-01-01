@@ -209,7 +209,8 @@ module HTTP
     # Returns `true` if a cookie with the given *key* exists.
     #
     # ```
-    # request.cookies.has_key?("foo") #=> true
+    # request.cookies.has_key?("foo") # => true
+    # ```
     def has_key?(key)
       @cookies.has_key?(key)
     end

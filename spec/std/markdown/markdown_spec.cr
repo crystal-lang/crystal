@@ -3,7 +3,7 @@ require "markdown"
 
 private def assert_render(input, output, file = __FILE__, line = __LINE__)
   it "renders #{input.inspect}", file, line do
-    Markdown.to_html(input).should eq(output)
+    Markdown.to_html(input).should eq(output), file, line
   end
 end
 
@@ -70,13 +70,14 @@ describe Markdown do
   assert_render "Hello\n```\nWorld\n```", "<p>Hello</p>\n\n<pre><code>World</code></pre>"
 
   assert_render "> Hello World\n", "<blockquote>Hello World</blockquote>"
+  assert_render "> This spawns\nmultiple\nlines\n\ntext", "<blockquote>This spawns\nmultiple\nlines</blockquote>\n\n<p>text</p>"
 
   assert_render "* Hello", "<ul><li>Hello</li></ul>"
   assert_render "* Hello\n* World", "<ul><li>Hello</li><li>World</li></ul>"
   assert_render "* Hello\n* World\n  * Crystal", "<ul><li>Hello</li><li>World</li><ul><li>Crystal</li></ul></ul>"
   assert_render "* Level1\n  * Level2\n  * Level2\n* Level1", "<ul><li>Level1</li><ul><li>Level2</li><li>Level2</li></ul><li>Level1</li></ul>"
   assert_render "* Level1\n  * Level2\n  * Level2", "<ul><li>Level1</li><ul><li>Level2</li><li>Level2</li></ul></ul>"
-  assert_render "* Hello\nWorld", "<ul><li>Hello</li></ul>\n\n<p>World</p>"
+  assert_render "* Hello\nWorld", "<ul><li>Hello\nWorld</li></ul>"
   assert_render "Params:\n* Foo\n* Bar", "<p>Params:</p>\n\n<ul><li>Foo</li><li>Bar</li></ul>"
 
   assert_render "+ Hello", "<ul><li>Hello</li></ul>"
@@ -84,10 +85,16 @@ describe Markdown do
 
   assert_render "* Hello\n+ World\n- Crystal", "<ul><li>Hello</li></ul>\n\n<ul><li>World</li></ul>\n\n<ul><li>Crystal</li></ul>"
 
+  assert_render "* This spawns\nmultiple\nlines\n\ntext", "<ul><li>This spawns\nmultiple\nlines</li></ul>\n\n<p>text</p>"
+  assert_render "* Two\nlines\n* This spawns\nmultiple\nlines\n\ntext", "<ul><li>Two\nlines</li><li>This spawns\nmultiple\nlines</li></ul>\n\n<p>text</p>"
+
   assert_render "1. Hello", "<ol><li>Hello</li></ol>"
   assert_render "2. Hello", "<ol><li>Hello</li></ol>"
   assert_render "01. Hello\n02. World", "<ol><li>Hello</li><li>World</li></ol>"
   assert_render "Params:\n  1. Foo\n  2. Bar", "<p>Params:</p>\n\n<ol><li>Foo</li><li>Bar</li></ol>"
+
+  assert_render "1. This spawns\nmultiple\nlines\n\ntext", "<ol><li>This spawns\nmultiple\nlines</li></ol>\n\n<p>text</p>"
+  assert_render "1. Two\nlines\n1. This spawns\nmultiple\nlines\n\ntext", "<ol><li>Two\nlines</li><li>This spawns\nmultiple\nlines</li></ol>\n\n<p>text</p>"
 
   assert_render "Hello [world](http://example.com)", %(<p>Hello <a href="http://example.com">world</a></p>)
   assert_render "Hello [world](http://example.com)!", %(<p>Hello <a href="http://example.com">world</a>!</p>)
@@ -97,6 +104,9 @@ describe Markdown do
   assert_render "Hello ![world](http://example.com)!", %(<p>Hello <img src="http://example.com" alt="world"/>!</p>)
 
   assert_render "[![foo](bar)](baz)", %(<p><a href="baz"><img src="bar" alt="foo"/></a></p>)
+
+  assert_render "This [spawns\nmultiple\nlines](http://example.com)\n\ntext",
+    %(<p>This <a href="http://example.com">spawns\nmultiple\nlines</a></p>\n\n<p>text</p>)
 
   assert_render "***", "<hr/>"
   assert_render "---", "<hr/>"

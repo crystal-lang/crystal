@@ -206,4 +206,14 @@ describe "Code gen: lib" do
       LibFoo::Some.new.to_s
       ))
   end
+
+  it "doesn't crash when casting -1 to UInt32 (#3594)" do
+    codegen(%(
+      lib LibFoo
+        fun foo(x : UInt32) : Nil
+      end
+
+      LibFoo.foo(-1)
+      ))
+  end
 end

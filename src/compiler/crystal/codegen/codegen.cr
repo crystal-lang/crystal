@@ -14,17 +14,17 @@ module Crystal
   GET_EXCEPTION_NAME = "__crystal_get_exception"
 
   class Program
-    def run(code, filename = nil)
+    def run(code, filename = nil, debug = false)
       parser = Parser.new(code)
       parser.filename = filename
       node = parser.parse
       node = normalize node
       node = semantic node
-      evaluate node
+      evaluate node, debug: debug
     end
 
-    def evaluate(node)
-      llvm_mod = codegen(node, single_module: true)[""]
+    def evaluate(node, debug = false)
+      llvm_mod = codegen(node, single_module: true, debug: debug)[""]
       main = llvm_mod.functions[MAIN_NAME]
 
       main_return_type = main.return_type
@@ -61,6 +61,7 @@ module Crystal
     def codegen(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, llvm_mod: llvm_mod, expose_crystal_main: expose_crystal_main
       node.accept visitor
+      visitor.process_finished_hooks
       visitor.finish
 
       visitor.modules
@@ -198,6 +199,10 @@ module Crystal
       initialize_argv_and_argc
 
       initialize_simple_class_vars_and_constants
+
+      if @debug && (filename = @program.filename)
+        set_current_debug_location Location.new(filename, 1, 1)
+      end
 
       alloca_vars @program.vars, @program
 
@@ -832,20 +837,24 @@ module Crystal
       return false if node.discarded?
 
       target, value = node.target, node.value
+      codegen_assign(target, value, node)
+    end
 
-      case target
-      when Underscore
-        accept value
-        return false
-      when Path
-        const = target.target_const.not_nil!
-        if const.used? && !const.simple?
-          initialize_const(const)
-        end
-        @last = llvm_nil
-        return false
+    def codegen_assign(target : Underscore, value, node)
+      accept value
+      false
+    end
+
+    def codegen_assign(target : Path, value, node)
+      const = target.target_const.not_nil!
+      if const.used? && !const.simple?
+        initialize_const(const)
       end
+      @last = llvm_nil
+      false
+    end
 
+    def codegen_assign(target, value, node)
       target_type = target.type?
 
       # This means it's an instance variable initialize of a generic type,
@@ -994,6 +1003,10 @@ module Crystal
       case var
       when Var
         declare_var var
+
+        if value = node.value
+          codegen_assign(var, value, node)
+        end
       when Global
         if value = node.value
           request_value do
@@ -1016,11 +1029,18 @@ module Crystal
 
     def visit(node : UninitializedVar)
       var = node.var
-      if var.is_a?(Var)
-        declare_var var
-      end
 
-      @last = llvm_nil
+      case var
+      when Var
+        llvm_var = declare_var var
+        if node.type.nil_type? || !@needs_value
+          @last = llvm_nil
+        else
+          @last = to_lhs(llvm_var.pointer, node.type)
+        end
+      else
+        @last = llvm_nil
+      end
 
       false
     end
@@ -1169,16 +1189,16 @@ module Crystal
 
     def type_cast_exception_call(from_type, to_type, node, var_name)
       pieces = [
-        StringLiteral.new("cast from "),
-        Call.new(Var.new(var_name), "class"),
-        StringLiteral.new(" to #{to_type} failed"),
+        StringLiteral.new("cast from ").at(node),
+        Call.new(Var.new(var_name).at(node), "class").at(node),
+        StringLiteral.new(" to #{to_type} failed").at(node),
       ] of ASTNode
 
       if location = node.location
-        pieces << StringLiteral.new (", at #{location.filename}:#{location.line_number}")
+        pieces << StringLiteral.new(", at #{location.filename}:#{location.line_number}").at(node)
       end
 
-      ex = Call.new(Path.global("TypeCastError"), "new", StringInterpolation.new(pieces))
+      ex = Call.new(Path.global("TypeCastError").at(node), "new", StringInterpolation.new(pieces).at(node)).at(node)
       call = Call.global("raise", ex).at(node)
       call = @program.normalize(call)
 
@@ -1833,6 +1853,12 @@ module Crystal
       end
 
       aggregate_index pointer, index
+    end
+
+    def process_finished_hooks
+      last = @last
+      @program.process_finished_hooks(self)
+      @last = last
     end
 
     def build_string_constant(str, name = "str")

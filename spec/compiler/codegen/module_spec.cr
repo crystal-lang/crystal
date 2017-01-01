@@ -596,4 +596,30 @@ describe "Code gen: module" do
       bar.as(Moo(Char)).moo
       )).to_i.should eq(10)
   end
+
+  it "codegend dispatch of union with module (#3647)" do
+    run(%(
+      module Moo
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(x : Int32)
+        1
+      end
+
+      def foo(x)
+        234
+      end
+
+      m = Bar.new.as(Moo)
+      a = m || 1
+      foo(a)
+      )).to_i.should eq(234)
+  end
 end

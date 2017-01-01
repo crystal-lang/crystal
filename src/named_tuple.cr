@@ -241,6 +241,29 @@ struct NamedTuple
     io << "}"
   end
 
+  def pretty_print(pp)
+    pp.surround("{", "}", left_break: nil, right_break: nil) do
+      {% for key, value, i in T %}
+        {% if i > 0 %}
+          pp.comma
+        {% end %}
+        pp.group do
+          key = {{key.stringify}}
+          if Symbol.needs_quotes?(key)
+            pp.text key.inspect
+          else
+            pp.text key
+          end
+          pp.text ": "
+          pp.nest do
+            pp.breakable ""
+            self[{{key.symbolize}}].pretty_print(pp)
+          end
+        end
+      {% end %}
+    end
+  end
+
   # Yields each key and value in this named tuple.
   #
   # ```
@@ -252,7 +275,7 @@ struct NamedTuple
   #
   # Output:
   #
-  # ```
+  # ```text
   # name = Crystal
   # year = 2011
   # ```
@@ -274,7 +297,7 @@ struct NamedTuple
   #
   # Output:
   #
-  # ```
+  # ```text
   # name
   # year
   # ```
@@ -296,7 +319,7 @@ struct NamedTuple
   #
   # Output:
   #
-  # ```
+  # ```text
   # Crystal
   # 2011
   # ```
@@ -318,7 +341,7 @@ struct NamedTuple
   #
   # Output:
   #
-  # ```
+  # ```text
   # 1) name = Crystal
   # 2) year = 2011
   # ```
@@ -336,7 +359,7 @@ struct NamedTuple
   #
   # ```
   # tuple = {name: "Crystal", year: 2011}
-  # tuple.map { |k, v| "#{name}: #{year}" } # => ["name: Crystal", "year: 2011"]
+  # tuple.map { |k, v| "#{k}: #{v}" } # => ["name: Crystal", "year: 2011"]
   # ```
   def map
     array = Array(typeof(yield first_key_internal, first_value_internal)).new(size)

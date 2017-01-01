@@ -15,15 +15,14 @@
 #     ba                    # => "BitArray[101010101010]"
 #     ba[2]                 # => true
 struct BitArray
-  include Enumerable(Bool)
   include Indexable(Bool)
 
   # The number of bits the BitArray stores
   getter size : Int32
 
-  # Create a new BitArray of `size` bits.
+  # Create a new BitArray of *size* bits.
   #
-  # `initial` optionally sets the starting value, true or false, for all bits
+  # *initial* optionally sets the starting value, true or false, for all bits
   # in the array.
   def initialize(@size, initial : Bool = false)
     value = initial ? UInt32::MAX : UInt32::MIN
@@ -95,10 +94,10 @@ struct BitArray
     to_s(io)
   end
 
-  # Returns a Slice(UInt8) able to read and write bytes from a buffer.
+  # Returns a `Bytes` able to read and write bytes from a buffer.
   # The slice will be long enough to hold all the bits groups in bytes despite the `UInt32` internal representation.
   # It's useful for reading and writing a bit array from a byte buffer directly.
-  def to_slice : Slice(UInt8)
+  def to_slice : Bytes
     Slice.new(@bits.as(Pointer(UInt8)), (@size / 8.0).ceil.to_i)
   end
 

@@ -90,7 +90,7 @@ abstract class OpenSSL::SSL::Socket
     LibSSL.ssl_free(@ssl)
   end
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     check_open
 
     count = slice.size
@@ -102,7 +102,7 @@ abstract class OpenSSL::SSL::Socket
     end
   end
 
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     check_open
 
     count = slice.size

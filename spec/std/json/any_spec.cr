@@ -76,11 +76,13 @@ describe JSON::Any do
     it "of array" do
       JSON.parse("[1, 2, 3]")[1]?.not_nil!.raw.should eq(2)
       JSON.parse("[1, 2, 3]")[3]?.should be_nil
+      JSON.parse("[true, false]")[1]?.should eq false
     end
 
     it "of hash" do
       JSON.parse(%({"foo": "bar"}))["foo"]?.not_nil!.raw.should eq("bar")
       JSON.parse(%({"foo": "bar"}))["fox"]?.should be_nil
+      JSON.parse(%q<{"foo": false}>)["foo"]?.should eq false
     end
   end
 

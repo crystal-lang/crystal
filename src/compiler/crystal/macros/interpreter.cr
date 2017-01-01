@@ -102,9 +102,9 @@ module Crystal
         # retaining the original node's location, so error messages
         # are shown in the block instead of in the generated macro source
         is_yield = node.exp.is_a?(Yield) && !@last.is_a?(Nop)
-        @str << " begin " if is_yield
+        @str << " #<loc:push>begin " if is_yield
         @last.to_s(@str, emit_loc_pragma: is_yield)
-        @str << " end " if is_yield
+        @str << " end#<loc:pop> " if is_yield
       end
 
       false
@@ -427,7 +427,13 @@ module Crystal
 
     def visit(node : Splat)
       node.exp.accept self
-      @last = @last.interpret("argify", [] of ASTNode, nil, self)
+      @last = @last.interpret("splat", [] of ASTNode, nil, self)
+      false
+    end
+
+    def visit(node : DoubleSplat)
+      node.exp.accept self
+      @last = @last.interpret("double_splat", [] of ASTNode, nil, self)
       false
     end
 

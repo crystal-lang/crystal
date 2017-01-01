@@ -102,7 +102,7 @@ describe "Deque" do
     end
 
     it "creates with default value in block" do
-      deq = Deque(Int32).new(5) { |i| i * 2 }
+      deq = Deque.new(5) { |i| i * 2 }
       deq.should eq(Deque{0, 2, 4, 6, 8})
     end
 

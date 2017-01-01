@@ -57,11 +57,11 @@ module Crypto::Bcrypt::Base64
     end
   end
 
-  def self.decode(string, maxolen) : Slice(UInt8)
+  def self.decode(string, maxolen) : Bytes
     off, slen, olen = 0, string.size, 0
 
     i = -1
-    str = Slice(UInt8).new(maxolen)
+    str = Bytes.new(maxolen)
 
     while off < slen - 1 && olen < maxolen
       c1, c2 = char64(string[off]), char64(string[off + 1])

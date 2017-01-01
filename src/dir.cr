@@ -160,6 +160,24 @@ class Dir
     File::Stat.new(stat).directory?
   end
 
+  # Returns `true` if the directory at *path* is empty, otherwise returns `false`.
+  # Raises `Errno` if the directory at *path* does not exist.
+  #
+  # ```
+  # Dir.mkdir("bar")
+  # Dir.empty?("bar") # => true
+  # File.write("bar/a_file", "The content")
+  # Dir.empty?("bar") # => false
+  # ```
+  def self.empty?(path) : Bool
+    raise Errno.new("Error determining size of '#{path}'") unless exists?(path)
+
+    foreach(path) do |f|
+      return false unless {".", ".."}.includes?(f)
+    end
+    true
+  end
+
   # Creates a new directory at the given path. The linux-style permission mode
   # can be specified, with a default of 777 (0o777).
   def self.mkdir(path, mode = 0o777)
@@ -201,6 +219,14 @@ class Dir
 
   def to_s(io)
     io << "#<Dir:" << @path << ">"
+  end
+
+  def inspect(io)
+    to_s(io)
+  end
+
+  def pretty_print(pp)
+    pp.text inspect
   end
 
   private struct EntryIterator

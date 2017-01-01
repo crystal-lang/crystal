@@ -5,6 +5,15 @@
 # are documented on the classes in this module. Additionally, methods of the
 # `Macros` module are top-level methods that you can invoke, like `puts` and `run`.
 module Crystal::Macros
+  # Compares two [semantic versions](http://semver.org/).
+  # Returns -1 if v1 < v2, 0 if v1 == v2, - if v1 > v2.
+  #
+  # ```
+  # {{ compare_versions("1.10.0", "1.2.0") }} # => 1
+  # ```
+  def compare_versions(v1 : StringLiteral, v2 : StringLiteral) : NumberLiteral
+  end
+
   # Outputs the current macro's buffer to the standard output. Useful for debugging
   # a macro to see what's being generated. Use it like `{{debug()}}`, the parenthesis
   # are mandatory.
@@ -75,39 +84,6 @@ module Crystal::Macros
   def run(filename, *args) : MacroId
   end
 
-  # Returns the filename where this node is located.
-  # Might return nil if the location is not known.
-  def filename : StringLiteral | NilLiteral
-  end
-
-  # Returns the line number where this node begins.
-  # Might return nil if the location is not known.
-  #
-  # The first line number in a file is 1.
-  def line_number : StringLiteral | NilLiteral
-  end
-
-  # Returns the column number where this node begins.
-  # Might return nil if the location is not known.
-  #
-  # The first column number in a line is 1.
-  def column_number : StringLiteral | NilLiteral
-  end
-
-  # Returns the line number where this node ends.
-  # Might return nil if the location is not known.
-  #
-  # The first line number in a file is 1.
-  def end_line_number : StringLiteral | NilLiteral
-  end
-
-  # Returns the column number where this node ends.
-  # Might return nil if the location is not known.
-  #
-  # The first column number in a line is 1.
-  def end_column_number : StringLiteral | NilLiteral
-  end
-
   # This is the base class of all AST nodes. This methods are
   # available to all AST nodes.
   abstract class ASTNode
@@ -142,6 +118,7 @@ module Crystal::Macros
     # end
     #
     # puts test # prints "foo" (including the double quotes)
+    # ```
     def stringify : StringLiteral
     end
 
@@ -155,6 +132,39 @@ module Crystal::Macros
     # puts test # => prints StringLiteral
     # ```
     def class_name : StringLiteral
+    end
+
+    # Returns the filename where this node is located.
+    # Might return nil if the location is not known.
+    def filename : StringLiteral | NilLiteral
+    end
+
+    # Returns the line number where this node begins.
+    # Might return nil if the location is not known.
+    #
+    # The first line number in a file is 1.
+    def line_number : StringLiteral | NilLiteral
+    end
+
+    # Returns the column number where this node begins.
+    # Might return nil if the location is not known.
+    #
+    # The first column number in a line is 1.
+    def column_number : StringLiteral | NilLiteral
+    end
+
+    # Returns the line number where this node ends.
+    # Might return nil if the location is not known.
+    #
+    # The first line number in a file is 1.
+    def end_line_number : StringLiteral | NilLiteral
+    end
+
+    # Returns the column number where this node ends.
+    # Might return nil if the location is not known.
+    #
+    # The first column number in a line is 1.
+    def end_column_number : StringLiteral | NilLiteral
     end
 
     # Returns true if this node's textual representation is the same as
@@ -477,7 +487,12 @@ module Crystal::Macros
 
     # Returns a `MacroId` with all of this array's elements joined
     # by commas.
-    def argify : MacroId
+    #
+    # If *trailing_string* is given, it will be appended to
+    # the result unless this array is empty. This lets you
+    # splat an array and optionally write a trailing comma
+    # if needed.
+    def splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
     # Similar to `Array#empty?`
@@ -534,6 +549,10 @@ module Crystal::Macros
 
     # Similar to `Array#[]`, but returns `NilLiteral` on out of bounds.
     def [](index : NumberLiteral) : ASTNode
+    end
+
+    # Similar to `Array#[]=`.
+    def []=(index : NumberLiteral, value : ASTNode)
     end
 
     # Similar to `Array#+`.
@@ -604,6 +623,16 @@ module Crystal::Macros
     # This refers to the part before brackets in `MyHash{'a' => 1, 'b' => 2}`
     def type : Path | Nop
     end
+
+    # Returns a `MacroId` with all of this hash elements joined
+    # by commas.
+    #
+    # If *trailing_string* is given, it will be appended to
+    # the result unless this hash is empty. This lets you
+    # splat a hash and optionally write a trailing comma
+    # if needed.
+    def double_splat(trailing_string : StringLiteral = nil) : MacroId
+    end
   end
 
   # A named tuple literal.
@@ -630,6 +659,10 @@ module Crystal::Macros
 
     # Similar to `NamedTuple#map`
     def map : ArrayLiteral
+    end
+
+    # Similar to `HashLiteral#double_splat`
+    def double_splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
     # Similar to `NamedTuple#[]`
@@ -679,18 +712,9 @@ module Crystal::Macros
   end
 
   # A tuple literal.
+  #
+  # It's macro methods are the same as `ArrayLiteral`
   class TupleLiteral < ASTNode
-    # Similar to `Tuple#empty?`
-    def empty? : BoolLiteral
-    end
-
-    # Similar to `Tuple#size`
-    def size : NumberLiteral
-    end
-
-    # Similar to `Tuple#[]`
-    def [](index : NumberLiteral) : ASTNode
-    end
   end
 
   # A fictitious node representing a variable or instance
@@ -1454,6 +1478,14 @@ module Crystal::Macros
     def constants : ArrayLiteral(MacroId)
     end
 
+    # Returns a constant defined in this type.
+    #
+    # If the constant is a constant (like `A = 1`), then its value
+    # as an ASTNode is returned. If the constant is a type, the
+    # type is returned as a `TypeNode`. Otherwise, `NilLiteral` is returned.
+    def constant(name : StringLiteral | SymbolLiteral | MacroId) : ASTNode
+    end
+
     # Returns true if this type has a constant. For example `DEFAULT_OPTIONS`
     # (the name you pass to this method is "DEFAULT_OPTIONS" or :DEFAULT_OPTIONS
     # in this cases).
@@ -1494,6 +1526,31 @@ module Crystal::Macros
     # Returns the instance type of this type, if it's a class type,
     # or `self` otherwise. This is the opposite of `#class`.
     def instance : TypeNode
+    end
+
+    # Determines if *self* overrides any method named *method* from type *type*.
+    #
+    # ```
+    # class Foo
+    #   def one
+    #     1
+    #   end
+    #
+    #   def two
+    #     2
+    #   end
+    # end
+    #
+    # class Bar < Foo
+    #   def one
+    #     11
+    #   end
+    # end
+    #
+    # {{ Bar.overrides?(Foo, "one") }} # => true
+    # {{ Bar.overrides?(Foo, "two") }} # => false
+    # ```
+    def overrides?(type : TypeNode, method : StringLiteral | SymbolLiteral | MacroId) : Bool
     end
 
     # Returns `true` if *other* is an ancestor of `self`.
