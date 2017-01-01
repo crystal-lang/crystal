@@ -1,5 +1,5 @@
 module XML
-  # Returns the resulting String of writing XML to the yielded `XML::Writer`.
+  # Returns the resulting String of writing XML to the yielded `XML::Builder`.
   #
   # ```
   # require "xml"
@@ -21,9 +21,9 @@ module XML
     end
   end
 
-  # Writes XML into the given IO. An `XML::Writer` is yielded to the block.
+  # Writes XML into the given IO. An `XML::Builder` is yielded to the block.
   def self.build(io : IO, version : String? = nil, encoding : String? = nil, indent = nil)
-    xml = XML::Writer.new(io)
+    xml = XML::Builder.new(io)
     xml.indent = indent if indent
     v = xml.document(version, encoding) do
       yield xml
@@ -32,11 +32,11 @@ module XML
     v
   end
 
-  # An XML writer.
-  struct Writer
+  # An XML builder.
+  struct Builder
     @box : Void*
 
-    # Creates a writer that writes to the given *io*.
+    # Creates a builder that writes to the given *io*.
     def initialize(io : IO)
       @box = Box.box(io)
       buffer = LibXML.xmlOutputBufferCreateIO(
