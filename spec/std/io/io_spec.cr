@@ -370,7 +370,7 @@ describe IO do
           line.should eq("cc")
         end
         counter += 1
-      end
+      end.should be(io)
       counter.should eq(3)
     end
 

@@ -294,7 +294,7 @@ module HTTP
       cookies.each do |cookie|
         cookie.name.should eq "a"
         cookie.value.should eq "b"
-      end
+      end.should be(cookies)
 
       cookie = cookies.each.next
       cookie.should eq Cookie.new("a", "b")

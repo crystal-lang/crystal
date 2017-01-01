@@ -2827,7 +2827,7 @@ class String
   # # => A LITTLE COAT OF STRAW
   # ```
   def each_line(chomp = true)
-    return if empty?
+    return self if empty?
 
     offset = 0
 
@@ -2847,6 +2847,8 @@ class String
     unless offset == bytesize
       yield unsafe_byte_slice_string(offset)
     end
+
+    self
   end
 
   # Returns an `Iterator` which yields each line of this string (see `String#each_line`).

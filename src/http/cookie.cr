@@ -230,6 +230,7 @@ module HTTP
       @cookies.values.each do |cookie|
         yield cookie
       end
+      self
     end
 
     # Returns an iterator over the cookies of this collection.

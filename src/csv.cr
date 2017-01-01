@@ -192,6 +192,7 @@ class CSV
     while self.next
       yield self
     end
+    self
   end
 
   # Advanced the cursor to the next row. Must be called once to position

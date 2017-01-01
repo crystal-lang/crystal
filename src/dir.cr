@@ -60,6 +60,7 @@ class Dir
     while entry = read
       yield entry
     end
+    self
   end
 
   def each

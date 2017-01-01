@@ -196,6 +196,11 @@ module HTTP
     end
 
     describe "#each" do
+      it "returns self" do
+        params = Params.parse("foo=bar&foo=baz&baz=qux")
+        params.each { }.should eq(params)
+      end
+
       it "calls provided proc for each name, value pair, including multiple values per one param name" do
         received = [] of {String, String}
 

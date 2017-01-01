@@ -277,6 +277,14 @@ describe "Deque" do
     a.should eq(Deque{x})
   end
 
+  it "does each" do
+    a = Deque{1}
+    a2 = a.each do |x|
+      x.should eq(1)
+    end
+    a2.should be(a)
+  end
+
   it "does each_index" do
     a = Deque{1, 1, 1}
     b = 0

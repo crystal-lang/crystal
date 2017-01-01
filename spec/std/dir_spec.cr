@@ -236,7 +236,7 @@ describe "Dir" do
     dir = Dir.new(__DIR__)
     dir.each do |filename|
       filenames << filename
-    end
+    end.should be(dir)
     dir.close
 
     filenames.includes?("dir_spec.cr").should be_true

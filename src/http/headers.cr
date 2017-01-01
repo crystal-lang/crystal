@@ -191,6 +191,7 @@ struct HTTP::Headers
     @hash.each do |key, value|
       yield({key.name, value})
     end
+    self
   end
 
   def get(key)

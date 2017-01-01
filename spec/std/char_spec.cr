@@ -333,9 +333,15 @@ describe "Char" do
     end
   end
 
-  it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
-    expect_raises InvalidByteSequenceError do
-      (0x10ffff + 1).unsafe_chr.each_byte { |b| }
+  describe "each_byte" do
+    it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
+      expect_raises InvalidByteSequenceError do
+        (0x10ffff + 1).unsafe_chr.each_byte { |b| }
+      end
+    end
+
+    it "returns self" do
+      'a'.each_byte(&.should eq('a'.ord)).should eq('a')
     end
   end
 

@@ -1794,6 +1794,13 @@ describe "String" do
     sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
   end
 
+  it "gets each_char with block" do
+    s = "abc"
+    a = [] of Char
+    s.each_char { |c| a << c }.should be(s)
+    a.should eq(['a', 'b', 'c'])
+  end
+
   it "gets each_char iterator" do
     iter = "abc".each_char
     iter.next.should eq('a')
@@ -1815,6 +1822,13 @@ describe "String" do
 
   it "cycles chars" do
     "abc".each_char.cycle.first(8).join.should eq("abcabcab")
+  end
+
+  it "gets each_byte with block" do
+    s = "abc"
+    a = [] of UInt8
+    s.each_byte { |x| a << x }.should be(s)
+    a.should eq(['a', 'b', 'c'].map &.ord)
   end
 
   it "gets each_byte iterator" do
@@ -1850,11 +1864,17 @@ describe "String" do
     "foo\nbar\r\nbaz\r\n".lines(chomp: false).should eq(["foo\n", "bar\r\n", "baz\r\n"])
   end
 
+  it "gets each_line if empty" do
+    s = ""
+    s.each_line { fail "empty_string.each_line don't call block" }.should be(s)
+  end
+
   it "gets each_line" do
     lines = [] of String
-    "foo\n\nbar\r\nbaz\n".each_line do |line|
+    s = "foo\n\nbar\r\nbaz\n"
+    s.each_line do |line|
       lines << line
-    end
+    end.should be(s)
     lines.should eq(["foo", "", "bar", "baz"])
   end
 
