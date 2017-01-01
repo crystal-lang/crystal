@@ -28,16 +28,34 @@
 #
 # The above is useful for dealing with a dynamic JSON structure but is slower than using `JSON#mapping`.
 #
-# ### Generating with `JSON::Builder`
+# ### Generating with `JSON.build`
 #
-# Use `JSON::Builder` to generate JSON on the fly by directly emitting data
-# to an `IO`.
+# Use `JSON.build`, which uses `JSON::Builder`, to generate JSON
+# by emitting scalars, arrays and objects:
+#
+# ```
+# require "json"
+#
+# string = JSON.build do |json|
+#   json.object do
+#     json.field "name", "foo"
+#     json.field "values" do
+#       json.array do
+#         json.number 1
+#         json.number 2
+#         json.number 3
+#       end
+#     end
+#   end
+# end
+# string # => %<{"name":"foo","values":[1,2,3]}>
+# ```
 #
 # ### Generating with `to_json`
 #
-# `to_json` and `to_json(IO)` methods are provided for primitive types, but you
-# need to define `to_json(IO)` for custom objects, either manually or using
-# `JSON#mapping`.
+# `to_json`, `to_json(IO)` and `to_json(JSON::Builder)` methods are provided
+# for primitive types, but you need to define `to_json(JSON::Builder)`
+# for custom objects, either manually or using `JSON#mapping`.
 module JSON
   # Generic JSON error
   class Error < Exception

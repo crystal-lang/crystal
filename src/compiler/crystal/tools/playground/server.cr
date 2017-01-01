@@ -67,11 +67,11 @@ module Crystal::Playground
         end
 
         @logger.error "Instrumention bug found (session=#{@session_key}, tag=#{tag})."
-        send_with_json_builder do |json, io|
+        send_with_json_builder do |json|
           json.field "type", "bug"
           json.field "tag", tag
           json.field "exception" do
-            append_exception io, ex
+            append_exception json, ex
           end
         end
 
@@ -80,7 +80,7 @@ module Crystal::Playground
 
       execute tag, output_filename
 
-      send_with_json_builder do |json, io|
+      send_with_json_builder do |json|
         json.field "type", "run"
         json.field "tag", tag
         json.field "filename", output_filename
@@ -100,28 +100,28 @@ module Crystal::Playground
     end
 
     def send_with_json_builder
-      send(String.build do |io|
-        io.json_object do |json|
-          yield json, io
+      send(JSON.build do |json|
+        json.object do
+          yield json
         end
       end)
     end
 
     def send_exception(ex, tag)
-      send_with_json_builder do |json, io|
+      send_with_json_builder do |json|
         json.field "type", "exception"
         json.field "tag", tag
         json.field "exception" do
-          append_exception io, ex
+          append_exception json, ex
         end
       end
     end
 
-    def append_exception(io, ex)
-      io.json_object do |json|
+    def append_exception(json, ex)
+      json.object do
         json.field "message", ex.to_s
         if ex.is_a?(Crystal::Exception)
-          json.field "payload", ex
+          json.field "payload", ex.to_s
         end
       end
     end
@@ -151,7 +151,7 @@ module Crystal::Playground
         @logger.info "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
         exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
 
-        send_with_json_builder do |json, io|
+        send_with_json_builder do |json|
           json.field "type", "exit"
           json.field "tag", tag
           json.field "status", exit_status

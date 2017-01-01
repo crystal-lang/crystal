@@ -291,31 +291,4 @@ describe "JSON serialization" do
       Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc).to_json.should eq(%("2016-11-16T12:55:48+0000"))
     end
   end
-
-  it "generates an array with JSON::Builder" do
-    result = String.build do |io|
-      io.json_array do |array|
-        array.push 1
-        array.push do
-          io.json_array do |array2|
-            array2 << 2
-            array2 << 3
-            array2.push_raw(%Q<{"d":"e"}>)
-          end
-        end
-      end
-    end
-    result.should eq(%q<[1,[2,3,{"d":"e"}]]>)
-  end
-
-  it "generate object with raw_field" do
-    some = %Q[{"d":"e"}]
-    result = String.build do |io|
-      io.json_object do |obj|
-        obj.field "a", "b"
-        obj.raw_field "c", some
-      end
-    end
-    result.should eq(%Q[{"a":"b","c":{"d":"e"}}])
-  end
 end

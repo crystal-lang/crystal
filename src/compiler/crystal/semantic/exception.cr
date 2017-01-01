@@ -59,18 +59,16 @@ module Crystal
       ex
     end
 
-    def json_obj(ar, io)
-      ar.push do
-        io.json_object do |obj|
-          obj.field "file", true_filename
-          obj.field "line", @line
-          obj.field "column", @column
-          obj.field "size", @size
-          obj.field "message", @message
-        end
+    def to_json_single(json)
+      json.object do
+        json.field "file", true_filename
+        json.field "line", @line
+        json.field "column", @column
+        json.field "size", @size
+        json.field "message", @message
       end
       if inner = @inner
-        inner.json_obj(ar, io)
+        inner.to_json_single(json)
       end
     end
 
@@ -173,7 +171,7 @@ module Crystal
       true
     end
 
-    def json_obj(ar, io)
+    def to_json_single(json)
     end
 
     def to_s_with_source(source, io)
