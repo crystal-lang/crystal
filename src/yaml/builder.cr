@@ -1,4 +1,4 @@
-class YAML::Emitter
+class YAML::Builder
   protected getter io
 
   def initialize(@io : IO)
@@ -7,7 +7,7 @@ class YAML::Emitter
     @closed = false
     LibYAML.yaml_emitter_initialize(@emitter)
     LibYAML.yaml_emitter_set_output(@emitter, ->(data, buffer, size) {
-      emitter = data.as(YAML::Emitter)
+      emitter = data.as(YAML::Builder)
       emitter.io.write(Slice.new(buffer, size))
       1
     }, self.as(Void*))
@@ -46,12 +46,9 @@ class YAML::Emitter
     document_end
   end
 
-  def scalar(string)
+  def scalar(value)
+    string = value.to_s
     emit scalar, nil, nil, string, string.bytesize, 1, 1, LibYAML::ScalarStyle::ANY
-  end
-
-  def <<(value)
-    scalar value.to_s
   end
 
   def sequence_start
@@ -105,6 +102,22 @@ class YAML::Emitter
     ret = LibYAML.yaml_emitter_emit(@emitter, pointerof(@event))
     if ret != 1
       raise YAML::Error.new("error emitting #{event_name}")
+    end
+  end
+end
+
+module YAML
+  def self.build
+    String.build do |str|
+      build(str) do |yaml|
+        yield yaml
+      end
+    end
+  end
+
+  def self.build(io : IO)
+    YAML::Builder.new(io) do |yaml|
+      yield yaml
     end
   end
 end
