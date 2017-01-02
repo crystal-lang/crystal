@@ -12,6 +12,7 @@ class IO::FileDescriptor
   property write_timed_out : Bool
 
   def initialize(@fd : LibWindows::Handle)
+    @edge_triggerable = false # HACK to make docs build in ci.
     @closed = false
     @read_timed_out = false
     @write_timed_out = false

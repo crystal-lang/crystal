@@ -1,20 +1,20 @@
 lib LibWindows
-  STD_INPUT_HANDLE = 0xFFFFFFF6_u32
+  STD_INPUT_HANDLE  = 0xFFFFFFF6_u32
   STD_OUTPUT_HANDLE = 0xFFFFFFF5_u32
-  STD_ERROR_HANDLE = 0xFFFFFFF4_u32
+  STD_ERROR_HANDLE  = 0xFFFFFFF4_u32
 
   FILE_TYPE_UNKNOWN = 0x0000
-  FILE_TYPE_DISK = 0x0001
-  FILE_TYPE_CHAR = 0x0002
-  FILE_TYPE_PIPE = 0x0003
-  FILE_TYPE_REMOTE = 0x8000
+  FILE_TYPE_DISK    = 0x0001
+  FILE_TYPE_CHAR    = 0x0002
+  FILE_TYPE_PIPE    = 0x0003
+  FILE_TYPE_REMOTE  = 0x8000
 
   alias DWord = UInt32
   alias Handle = Void*
   alias SizeT = UInt64 # FIXME
 
   INVALID_HANDLE_VALUE = Pointer(Void).new((-1).to_u64)
-  INFINITY = 0xFFFFFFFF_u32
+  INFINITY             = 0xFFFFFFFF_u32
 
   @[CallConvention("X86_StdCall")]
   fun duplicate_handle = DuplicateHandle(source_process : Handle, source : Handle, target_process : Handle, target : Handle*, desired_access : DWord, inherit_handle : Bool, options : DWord) : Bool
@@ -54,10 +54,10 @@ lib LibWindows
   end
 
   @[CallConvention("X86_StdCall")]
-  fun get_current_process = GetCurrentProcess() : Handle
+  fun get_current_process = GetCurrentProcess : Handle
 
   @[CallConvention("X86_StdCall")]
-  fun get_current_thread = GetCurrentThread() : Handle
+  fun get_current_thread = GetCurrentThread : Handle
 
   WAIT_ABANDONED = 0x00000080_u32
   WAIT_OBJECT_0  = 0x00000000_u32
@@ -74,7 +74,7 @@ lib LibWindows
   fun delete_timer_queue_timer = DeleteTimerQueueTimer(queue_handle : Handle, timer_handle : Handle, completion_event : Handle) : Bool
 
   @[CallConvention("X86_StdCall")]
-  fun get_last_error = GetLastError() : DWord
+  fun get_last_error = GetLastError : DWord
 
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
   FORMAT_MESSAGE_IGNORE_INSERTS  = 0x00000200_u32
@@ -86,12 +86,12 @@ lib LibWindows
   @[CallConvention("X86_StdCall")]
   fun format_message = FormatMessageA(flags : DWord, source : Void*, msg : DWord, lang : DWord, buffer : UInt8*, size : DWord, args : Void*) : DWord
 
-  WSASYSNOTREADY = 10091
+  WSASYSNOTREADY     = 10091
   WSAVERNOTSUPPORTED = 10092
-  WSAEINPROGRESS = 10036
-  WSAEPROCLIM = 10067
-  WSAEFAULT = 10014
-  WSAEINVAL = 10022
+  WSAEINPROGRESS     = 10036
+  WSAEPROCLIM        = 10067
+  WSAEFAULT          = 10014
+  WSAEINVAL          = 10022
 
   struct WSAData
     version : UInt16
@@ -104,7 +104,7 @@ lib LibWindows
   end
 
   @[CallConvention("X86_StdCall")]
-  fun wsa_startup = WSAStartup(version : Int16, data : WSAData*) : Int32;
+  fun wsa_startup = WSAStartup(version : Int16, data : WSAData*) : Int32
 end
 
 require "winerror.cr"

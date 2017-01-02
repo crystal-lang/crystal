@@ -1,4 +1,3 @@
-
 # :nodoc:
 class Thread
   # Don't use this class, it is used internally by the event scheduler.
