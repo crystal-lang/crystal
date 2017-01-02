@@ -1,7 +1,7 @@
 require "json"
 require "json/*"
 
-module Crystal::Doc::JSONise
+module Crystal::Doc::JSONSerializer
   macro mapping(src, properties, strict = false)
     JSON.mapping({{properties}}, {{strict}})
 
@@ -30,7 +30,7 @@ module Crystal::Doc::JSONise
   end
 
   macro mapping(src, **properties)
-    JSONise.mapping({{src}}, {{properties}})
+    JSONSerializer.mapping({{src}}, {{properties}})
   end
 
   record Main, body : String, types : Array(TypeRef), repository_name : String do
@@ -46,7 +46,7 @@ module Crystal::Doc::JSONise
   end
 
   class Type
-    JSONise.mapping(
+    JSONSerializer.mapping(
       Crystal::Doc::Type,
       html_id: {type: String, nilable: false},
       json_path: {type: String, nilable: false},
@@ -78,7 +78,7 @@ module Crystal::Doc::JSONise
   end
 
   class TypeRef
-    JSONise.mapping(
+    JSONSerializer.mapping(
       Crystal::Doc::Type,
       html_id: {type: String, nilable: false},
       json_path: {type: String, nilable: false},
@@ -89,7 +89,7 @@ module Crystal::Doc::JSONise
   end
 
   class Constant
-    JSONise.mapping(
+    JSONSerializer.mapping(
       Crystal::Doc::Constant,
       name: {type: String, nilable: false},
       doc: {type: String, nilable: true},
@@ -98,7 +98,7 @@ module Crystal::Doc::JSONise
   end
 
   class Method
-    JSONise.mapping(
+    JSONSerializer.mapping(
       Crystal::Doc::Method,
       id: {type: String, nilable: false},
       html_id: {type: String, nilable: false},
@@ -112,7 +112,7 @@ module Crystal::Doc::JSONise
   end
 
   class Macro
-    JSONise.mapping(
+    JSONSerializer.mapping(
       Crystal::Doc::Macro,
       id: {type: String, nilable: false},
       html_id: {type: String, nilable: false},
@@ -126,7 +126,7 @@ module Crystal::Doc::JSONise
   end
 
   class DefAST
-    JSONise.mapping(
+    JSONSerializer.mapping(
       Crystal::Def,
       name: {type: String, nilable: false},
       args: {type: Array(ArgAST), nilable: false, wrap: ArgAST},
@@ -141,7 +141,7 @@ module Crystal::Doc::JSONise
   end
 
   class MacroAST
-    JSONise.mapping(
+    JSONSerializer.mapping(
       Crystal::Macro,
       name: {type: String, nilable: false},
       args: {type: Array(ArgAST), nilable: false, wrap: ArgAST},
@@ -154,7 +154,7 @@ module Crystal::Doc::JSONise
   end
 
   class ArgAST
-    JSONise.mapping(
+    JSONSerializer.mapping(
       Crystal::Arg,
       name: {type: String, nilable: false},
       doc: {type: String, nilable: true},
@@ -165,7 +165,7 @@ module Crystal::Doc::JSONise
   end
 
   class RelativeLocation
-    JSONise.mapping(
+    JSONSerializer.mapping(
       Crystal::Doc::Generator::RelativeLocation,
       filename: {type: String, nilable: false, default: ""},
       line_number: {type: Int32, nilable: false, default: 0},

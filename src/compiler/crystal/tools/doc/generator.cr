@@ -63,8 +63,8 @@ class Crystal::Doc::Generator
 
     File.write "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
 
-    type_refs = types.map { |t| JSONise::TypeRef.new(t) }
-    File.write "#{@dir}/index.json", JSONise::Main.new(raw_body, type_refs, repository_name)
+    type_refs = types.map { |t| JSONSerializer::TypeRef.new(t) }
+    File.write "#{@dir}/index.json", JSONSerializer::Main.new(raw_body, type_refs, repository_name)
   end
 
   def copy_files
@@ -86,7 +86,7 @@ class Crystal::Doc::Generator
       end
 
       File.write filename, TypeTemplate.new(type, all_types)
-      File.write jsonname, JSONise::Type.new(type)
+      File.write jsonname, JSONSerializer::Type.new(type)
 
       next if type.program?
 
