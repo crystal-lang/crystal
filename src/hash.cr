@@ -554,6 +554,29 @@ class Hash(K, V)
     select!(keys)
   end
 
+  # Returns new `Hash` without `nil` values.
+  #
+  # ```
+  # hash = {"hello" => "world", "foo" => nil}
+  # hash.compact # => {"hello" => "world"}
+  # ```
+  def compact
+    each_with_object({} of K => typeof(self.first_value.not_nil!)) do |(key, value), memo|
+      memo[key] = value unless value.nil?
+    end
+  end
+
+  # Removes all `nil` value from `self`. Returns nil if no changes were made.
+  #
+  # ```
+  # hash = {"hello" => "world", "foo" => nil}
+  # hash.compact! # => {"hello" => "world"}
+  # hash.compact! # => nil
+  # ```
+  def compact!
+    reject! { |key, value| value.nil? }
+  end
+
   # Zips two arrays into a `Hash`, taking keys from *ary1* and values from *ary2*.
   #
   # ```
