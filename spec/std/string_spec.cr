@@ -1001,6 +1001,12 @@ describe "String" do
       str.sub(/(he|l|o)/, {"l" => "la"}).should be(str)
     end
 
+    it "subs with regex and named tuple" do
+      str = "hello"
+      str.sub(/(he|l|o)/, {he: "ha", l: "la"}).should eq("hallo")
+      str.sub(/(he|l|o)/, {l: "la"}).should be(str)
+    end
+
     it "subs using $~" do
       "foo".sub(/(o)/) { "x#{$1}x" }.should eq("fxoxo")
     end
