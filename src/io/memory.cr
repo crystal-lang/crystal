@@ -388,11 +388,3 @@ class IO::Memory
     @buffer = @buffer.realloc(@capacity)
   end
 end
-
-# DEPRECATED: MemoryIO has been deprecated in 0.20.0 and will be removed afterwards. Please use `IO::Memory` instead.
-class MemoryIO < IO::Memory
-  def self.new(*args, **nargs)
-    {{ puts "Warning: MemoryIO is deprecated and will be removed after 0.20.0, use IO::Memory instead".id }}
-    super
-  end
-end
