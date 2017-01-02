@@ -1423,7 +1423,7 @@ class String
   # "hello".sub(/(he|l|o)/, {"he": "ha", "l": "la"}) # => "hallo"
   # "hello".sub(/(he|l|o)/, {"l": "la"})             # => "hello"
   # ```
-  def sub(pattern : Regex, hash : Hash(String, _))
+  def sub(pattern : Regex, hash : Hash(String, _) | NamedTuple)
     sub(pattern) { |match|
       if hash.has_key?(match)
         hash[match]
