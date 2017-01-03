@@ -426,9 +426,21 @@ struct Enum
       {{ @type }}::{{ value }}{% end %}\
   end
 
-  # def self.each
-  #   to_h.each do |key, value|
-  #     yield key, value
-  #   end
+  # Iterates each member of the enum. It won't iterate the None and All members
+  # of flags enums.
+  #
+  # ```
+  # IOMode.each do |member, value|
+  #   # yield IOMode::Read, 1
+  #   # yield IOMode::Write, 2
+  #   # yield IOMode::Async, 3
   # end
+  # ```
+  def self.each
+    {% for member in @type.constants %}
+      {% unless @type.has_attribute?("Flags") && %w(none all).includes?(member.stringify.downcase) %}
+        yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+      {% end %}
+    {% end %}
+  end
 end
