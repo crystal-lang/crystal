@@ -1,4 +1,4 @@
-# A YAML builder generates valid JSON.
+# A YAML builder generates valid YAML.
 #
 # A `YAML::Error` is raised if attempting to generate
 # an invalid YAML (for example, if invoking `end_sequence`
