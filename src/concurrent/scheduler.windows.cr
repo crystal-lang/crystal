@@ -50,7 +50,7 @@ class Scheduler
 
   def self.create_sleep_event(fiber, seconds)
     LibWindows.create_timer_queue_timer(out handle, nil, ->(data, fired) {
-      # this is run inside a thread pool managed by the system
+      # this is run inside a thread from a pool managed by the system
       Scheduler.create_resume_event(data.as(Fiber))
     }, fiber.as(Void*), (seconds*1000).to_u32, 0, 0)
 
