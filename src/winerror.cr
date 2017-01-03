@@ -1,16 +1,11 @@
 class WinError < Exception
   property code : UInt32
 
-<<<<<<< HEAD
   # NOTE: `get_last_error` must be called BEFORE an instance of this class
   # is malloced as it would change the "last error" to SUCCESS
   def self.new(message)
     new(message, LibWindows.get_last_error)
   end
-=======
-  def initialize(message)
-    @code = LibWindows.get_last_error
->>>>>>> 6fdb95915ab63892dad40c3bd36336994c802fe6
 
   def initialize(message, @code)
     buffer = uninitialized UInt8[256]

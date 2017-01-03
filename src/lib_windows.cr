@@ -10,7 +10,6 @@ lib LibWindows
   FILE_TYPE_PIPE    = 0x0003
   FILE_TYPE_REMOTE  = 0x8000
 
-<<<<<<< HEAD
   GENERIC_EXECUTE = 0x20000000
   GENERIC_WRITE   = 0x40000000
   GENERIC_READ    = 0x80000000
@@ -23,12 +22,10 @@ lib LibWindows
 
   FILE_FLAG_OVERLAPPED = 0x40000000
 
-=======
   # source https://msdn.microsoft.com/en-us/library/windows/desktop/aa383751(v=vs.85).aspx
   alias Long = Int32
   alias Word = UInt16
   alias WChar = UInt16
->>>>>>> 6fdb95915ab63892dad40c3bd36336994c802fe6
   alias DWord = UInt32
   alias Handle = Void*
   alias SizeT = UInt64 # FIXME
@@ -61,21 +58,7 @@ lib LibWindows
   fun create_io_completion_port = CreateIoCompletionPort(file : Handle, port : Handle, data : Void*, threads : DWord) : Handle
   fun get_queued_completion_status = GetQueuedCompletionStatus(port : Handle, bytes_transfered : DWord*, data : Void**, entry : Overlapped**, timeout_millis : DWord) : Bool
   fun post_queued_completion_status = PostQueuedCompletionStatus(port : Handle, bytes_transfered : DWord, data : Void*, entry : Overlapped*) : Bool
-<<<<<<< HEAD
   fun get_current_process = GetCurrentProcess : Handle
-=======
-
-  struct SecurityAttributes
-    length : DWord
-    security_descriptors : Void*
-    inherit_handle : Bool
-  end
-
-  @[CallConvention("X86_StdCall")]
-  fun get_current_process = GetCurrentProcess : Handle
-
-  @[CallConvention("X86_StdCall")]
->>>>>>> 6fdb95915ab63892dad40c3bd36336994c802fe6
   fun get_current_thread = GetCurrentThread : Handle
 
   WAIT_ABANDONED = 0x00000080_u32
@@ -86,11 +69,6 @@ lib LibWindows
   fun wait_for_single_object = WaitForSingleObject(handle : Handle, timeout_millis : DWord) : DWord
   fun create_timer_queue_timer = CreateTimerQueueTimer(timer_handle : Handle*, queue_handle : Handle, callback : (Void*, Bool) ->, data : Void*, due : DWord, period : DWord, flags : SizeT) : Bool
   fun delete_timer_queue_timer = DeleteTimerQueueTimer(queue_handle : Handle, timer_handle : Handle, completion_event : Handle) : Bool
-<<<<<<< HEAD
-=======
-
-  @[CallConvention("X86_StdCall")]
->>>>>>> 6fdb95915ab63892dad40c3bd36336994c802fe6
   fun get_last_error = GetLastError : DWord
 
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
@@ -119,10 +97,6 @@ lib LibWindows
     vendor_info : UInt8*
   end
 
-<<<<<<< HEAD
-  fun wsa_startup = WSAStartup(version : Int16, data : WSAData*) : Int32
-=======
-  @[CallConvention("X86_StdCall")]
   fun wsa_startup = WSAStartup(version : Int16, data : WSAData*) : Int32
 
   # source https://msdn.microsoft.com/en-us/library/windows/desktop/ms724950(v=vs.85).aspx
@@ -153,12 +127,8 @@ lib LibWindows
     high_date_time : DWord
   end
 
-  @[CallConvention("X86_StdCall")]
   fun get_time_zone_information = GetTimeZoneInformation(tz_info : TimeZoneInformation*) : DWord
-
-  @[CallConvention("X86_StdCall")]
   fun get_system_time_as_file_time = GetSystemTimeAsFileTime(time : FileTime*)
->>>>>>> 6fdb95915ab63892dad40c3bd36336994c802fe6
 end
 
 require "winerror.cr"
