@@ -5,7 +5,12 @@ class IO::FileDescriptor
   # :nodoc:
   property overlappeds = Hash(LibWindows::Overlapped*, Fiber).new
 
+<<<<<<< HEAD
   def initialize(@handle : LibWindows::Handle)
+=======
+  def initialize(@fd : LibWindows::Handle)
+    @edge_triggerable = false # HACK to make docs build in ci.
+>>>>>>> 6fdb95915ab63892dad40c3bd36336994c802fe6
     @closed = false
     @pos = 0_u64
     Scheduler.attach_to_completion_port(@handle, self)

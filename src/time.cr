@@ -605,10 +605,19 @@ struct Time
     {% end %}
 
     unless offset
-      # current TZ may have DST, either in past, present or future
-      ret = LibC.localtime_r(pointerof(second), out tm)
-      raise Errno.new("localtime_r") if ret.null?
-      offset = tm.tm_gmtoff.to_i64
+      {% if !flag?(:windows) %}
+        # current TZ may have DST, either in past, present or future
+        ret = LibC.localtime_r(pointerof(second), out tm)
+        raise Errno.new("localtime_r") if ret.null?
+        offset = tm.tm_gmtoff.to_i64
+      {% else %}
+        # TODO handle daylight?
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724421(v=vs.85).aspx
+        ret = LibWindows.get_time_zone_information(out tz)
+        raise WinError.new("GetTimeZoneInformation") if ret == -1
+        # UTC = local time + bias
+        return tz.bias.to_i64 * - Span::TicksPerMinute
+      {% end %}
     end
 
     offset / 60 * Span::TicksPerMinute
@@ -619,6 +628,11 @@ struct Time
       ret = LibC.gettimeofday(out timeval, nil)
       raise Errno.new("gettimeofday") unless ret == 0
       {timeval.tv_sec, timeval.tv_usec.to_i64 * 10}
+    {% elsif flag?(:windows) %}
+      LibWindows.get_system_time_as_file_time(out filetime)
+      winticks = (filetime.high_date_time.to_u64 << 32) | filetime.low_date_time.to_u64
+      # winticks start in 1601. unix in 1970.
+      { (winticks / 10_000_000i64) - 11644473600i64, (winticks % 10_000_000) * 10 }
     {% else %}
       ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
       raise Errno.new("clock_gettime") unless ret == 0
