@@ -275,7 +275,7 @@ def parse(string, wants_doc = false)
   parser.parse
 end
 
-def codegen(code, inject_primitives = true, debug = false)
+def codegen(code, inject_primitives = true, debug = Crystal::Debug::None)
   code = inject_primitives(code) if inject_primitives
   node = parse code
   result = semantic node
@@ -299,7 +299,7 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = false)
+def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT

@@ -452,7 +452,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
-    set_current_debug_location node if @debug
+    set_current_debug_location node if @debug.line_numbers?
 
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"

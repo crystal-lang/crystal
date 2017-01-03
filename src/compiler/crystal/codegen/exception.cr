@@ -134,7 +134,7 @@ class Crystal::CodeGenVisitor
             if a_rescue_name = a_rescue.name
               context.vars = context.vars.dup
               get_exception_fun = main_fun(GET_EXCEPTION_NAME)
-              set_current_debug_location node if @debug
+              set_current_debug_location node if @debug.line_numbers?
               exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, get_exception_fun.params.first.type)]
               exception = int2ptr exception_ptr, LLVMTyper::TYPE_ID_POINTER
               unless a_rescue.type.virtual?

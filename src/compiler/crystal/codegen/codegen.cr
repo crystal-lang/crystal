@@ -14,7 +14,7 @@ module Crystal
   GET_EXCEPTION_NAME = "__crystal_get_exception"
 
   class Program
-    def run(code, filename = nil, debug = false)
+    def run(code, filename = nil, debug = Debug::Default)
       parser = Parser.new(code)
       parser.filename = filename
       node = parser.parse
@@ -23,7 +23,7 @@ module Crystal
       evaluate node, debug: debug
     end
 
-    def evaluate(node, debug = false)
+    def evaluate(node, debug = Debug::Default)
       llvm_mod = codegen(node, single_module: true, debug: debug)[""]
       main = llvm_mod.functions[MAIN_NAME]
 
@@ -58,7 +58,7 @@ module Crystal
       end
     end
 
-    def codegen(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
+    def codegen(node, single_module = false, debug = Debug::Default, llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, llvm_mod: llvm_mod, expose_crystal_main: expose_crystal_main
       node.accept visitor
       visitor.process_finished_hooks
@@ -131,10 +131,9 @@ module Crystal
     @cant_pass_closure_to_c_exception_call : Call?
     @realloc_fun : LLVM::Function?
 
-    def initialize(@program : Program, @node : ASTNode, single_module = false, debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
+    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       @main_mod = @llvm_mod
       @single_module = !!single_module
-      @debug = !!debug
       @abi = @program.target_machine.abi
       @llvm_typer = @program.llvm_typer
       @llvm_id = LLVMId.new(@program)
@@ -143,7 +142,7 @@ module Crystal
       @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM::VoidPointer.pointer], ret_type)
       @main.linkage = LLVM::Linkage::Internal unless expose_crystal_main
 
-      emit_main_def_debug_metadata(@main, "??") if @debug
+      emit_main_def_debug_metadata(@main, "??") unless @debug.none?
 
       @context = Context.new @main, @program
       @context.return_type = @main_ret_type
@@ -200,13 +199,13 @@ module Crystal
 
       initialize_simple_class_vars_and_constants
 
-      if @debug && (filename = @program.filename)
+      if @debug.line_numbers? && (filename = @program.filename)
         set_current_debug_location Location.new(filename, 1, 1)
       end
 
       alloca_vars @program.vars, @program
 
-      emit_vars_debug_info(@program.vars) if @debug
+      emit_vars_debug_info(@program.vars) if @debug.variables?
     end
 
     # Here we only initialize simple constants and class variables, those
@@ -307,7 +306,7 @@ module Crystal
       end
 
       @modules.each do |name, mod|
-        push_debug_info_metadata(mod) if @debug
+        push_debug_info_metadata(mod) unless @debug.none?
 
         mod.dump if dump_all_llvm || name =~ dump_llvm_regex
 
@@ -350,7 +349,7 @@ module Crystal
         if vars = file_module.vars?
           alloca_vars vars, file_module
 
-          emit_vars_debug_info(vars) if @debug
+          emit_vars_debug_info(vars) if @debug.variables?
         end
         node.node.accept self
         @last = llvm_nil
@@ -526,7 +525,7 @@ module Crystal
 
       last_fun = target_def_fun(node.call.target_def, owner)
 
-      set_current_debug_location(node) if @debug
+      set_current_debug_location(node) if @debug.line_numbers?
       fun_ptr = bit_cast(last_fun, LLVM::VoidPointer)
       if call_self && !owner.metaclass? && !owner.is_a?(LibType)
         ctx_ptr = bit_cast(call_self, LLVM::VoidPointer)
@@ -697,7 +696,7 @@ module Crystal
       then_block, else_block = new_blocks "then", "else"
 
       request_value do
-        set_current_debug_location(node) if @debug
+        set_current_debug_location(node) if @debug.line_numbers?
         codegen_cond_branch node.cond, then_block, else_block
       end
 
@@ -731,7 +730,7 @@ module Crystal
         position_at_end while_block
 
         request_value do
-          set_current_debug_location node.cond if @debug
+          set_current_debug_location node.cond if @debug.line_numbers?
           codegen_cond_branch node.cond, body_block, exit_block
         end
 
@@ -772,7 +771,7 @@ module Crystal
     end
 
     def visit(node : Break)
-      set_current_debug_location(node) if @debug
+      set_current_debug_location(node) if @debug.line_numbers?
       node_type = accept_control_expression(node)
 
       if break_phi = context.break_phi
@@ -792,7 +791,7 @@ module Crystal
     end
 
     def visit(node : Next)
-      set_current_debug_location(node) if @debug
+      set_current_debug_location(node) if @debug.line_numbers?
       node_type = accept_control_expression(node)
 
       case target = node.target
@@ -880,7 +879,7 @@ module Crystal
 
       last = @last
 
-      set_current_debug_location node if @debug
+      set_current_debug_location node if @debug.line_numbers?
       ptr = case target
             when InstanceVar
               instance_var_ptr context.type, target.name, llvm_self_ptr
@@ -1534,7 +1533,7 @@ module Crystal
 
       0.upto(blocks.size - 2) do |i|
         position_at_end blocks[i]
-        clear_current_debug_location if @debug
+        clear_current_debug_location if @debug.line_numbers?
         br blocks[i + 1]
       end
 
