@@ -831,11 +831,10 @@ module IO
   # olleh
   # dlrow
   # ```
-  def each_line(*args, **options)
+  def each_line(*args, **options) : Nil
     while line = gets(*args, **options)
       yield line
     end
-    nil
   end
 
   # Returns an `Iterator` for the *lines* in this IO, where a line
@@ -867,11 +866,10 @@ module IO
   # あ
   # め
   # ```
-  def each_char
+  def each_char : Nil
     while char = read_char
       yield char
     end
-    nil
   end
 
   # Returns an `Iterator` for the chars in this IO.
@@ -903,11 +901,10 @@ module IO
   # 129
   # 130
   # ```
-  def each_byte
+  def each_byte : Nil
     while byte = read_byte
       yield byte
     end
-    nil
   end
 
   # Returns an `Iterator` for the bytes in this IO.

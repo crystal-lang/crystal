@@ -56,11 +56,10 @@ class Dir
   # Got config.h
   # Got main.rb
   # ```
-  def each
+  def each : Nil
     while entry = read
       yield entry
     end
-    nil
   end
 
   def each

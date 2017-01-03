@@ -196,11 +196,10 @@ struct Tuple
   # "hello"
   # 'x'
   # ```
-  def each
+  def each : Nil
     {% for i in 0...T.size %}
       yield self[{{i}}]
     {% end %}
-    nil
   end
 
   # Returns `true` if this tuple has the same size as the other tuple

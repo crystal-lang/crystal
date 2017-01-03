@@ -37,7 +37,7 @@ struct XML::Attributes
     find { |node| node.name == name }
   end
 
-  def each
+  def each : Nil
     return unless @node.element?
 
     props = self.props
@@ -45,8 +45,6 @@ struct XML::Attributes
       yield Node.new(props)
       props = props.value.next
     end
-
-    nil
   end
 
   def to_s(io)

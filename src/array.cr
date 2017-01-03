@@ -970,7 +970,7 @@ class Array(T)
   # the method will create a new array and reuse it. This can be
   # used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_permutation(size : Int = self.size, reuse = false)
+  def each_permutation(size : Int = self.size, reuse = false) : Nil
     n = self.size
     return if size > n
 
@@ -1037,7 +1037,7 @@ class Array(T)
     ary
   end
 
-  def each_combination(size : Int = self.size, reuse = false)
+  def each_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
     return if size > n
     raise ArgumentError.new("size must be positive") if size < 0
@@ -1125,7 +1125,7 @@ class Array(T)
     ary
   end
 
-  def each_repeated_combination(size : Int = self.size, reuse = false)
+  def each_repeated_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
     return if size > n && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
@@ -1225,7 +1225,7 @@ class Array(T)
     ary
   end
 
-  def each_repeated_permutation(size : Int = self.size, reuse = false)
+  def each_repeated_permutation(size : Int = self.size, reuse = false) : Nil
     n = self.size
     return if size != 0 && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
@@ -1235,8 +1235,6 @@ class Array(T)
     else
       Array.each_product(Array.new(size, self), reuse: reuse) { |r| yield r }
     end
-
-    nil
   end
 
   # Removes the last value from `self`, at index *size - 1*.
