@@ -176,13 +176,21 @@ fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
 end
 
 def raise(ex : Exception) : NoReturn
-  ex.callstack = CallStack.new
-  unwind_ex = Pointer(LibUnwind::Exception).malloc
-  unwind_ex.value.exception_class = LibC::SizeT.zero
-  unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-  unwind_ex.value.exception_object = ex.object_id
-  unwind_ex.value.exception_type_id = ex.crystal_type_id
-  __crystal_raise(unwind_ex)
+  {% if flag?(:windows) %}
+    data = ex.inspect_with_backtrace.to_slice
+    count = data.size
+    stderr = LibWindows.get_std_handle(LibWindows::STD_ERROR_HANDLE)
+    LibWindows.write_file(stderr, data.pointer(count), count, nil, nil)
+    LibC.exit 1
+  {% else %}
+    ex.callstack = CallStack.new
+    unwind_ex = Pointer(LibUnwind::Exception).malloc
+    unwind_ex.value.exception_class = LibC::SizeT.zero
+    unwind_ex.value.exception_cleanup = LibC::SizeT.zero
+    unwind_ex.value.exception_object = ex.object_id
+    unwind_ex.value.exception_type_id = ex.crystal_type_id
+    __crystal_raise(unwind_ex)
+  {% end %}
 end
 
 def raise(message : String) : NoReturn
