@@ -511,7 +511,7 @@ describe "Array" do
   it "does each_index" do
     a = [1, 1, 1]
     b = 0
-    a.each_index { |i| b += i }
+    a.each_index { |i| b += i }.should be_nil
     b.should eq(3)
   end
 
@@ -1193,7 +1193,7 @@ describe "Array" do
     a.each do
       count += 1
       a.clear
-    end
+    end.should be_nil
     count.should eq(1)
   end
 
@@ -1203,7 +1203,7 @@ describe "Array" do
     a.each_index do
       count += 1
       a.clear
-    end
+    end.should be_nil
     count.should eq(1)
   end
 
@@ -1477,7 +1477,7 @@ describe "Array" do
       sums = [] of Int32
       [1, 2, 3].each_permutation(2) do |perm|
         sums << perm.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([3, 4, 3, 5, 4, 5])
     end
 
@@ -1486,7 +1486,7 @@ describe "Array" do
       [1, 2, 3].each_permutation(3) do |perm|
         perm.map! &.+(1)
         sums << perm.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([9, 9, 9, 9, 9, 9])
     end
 
@@ -1497,7 +1497,7 @@ describe "Array" do
         object_ids << perm.object_id
         perm.map! &.+(1)
         sums << perm.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([9, 9, 9, 9, 9, 9])
       object_ids.size.should eq(1)
     end
@@ -1561,7 +1561,7 @@ describe "Array" do
       sums = [] of Int32
       [1, 2, 3].each_combination(2) do |comb|
         sums << comb.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([3, 4, 5])
     end
 
@@ -1570,7 +1570,7 @@ describe "Array" do
       [1, 2, 3].each_combination(3) do |comb|
         comb.map! &.+(1)
         sums << comb.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([9])
     end
 
@@ -1580,7 +1580,7 @@ describe "Array" do
       [1, 2, 3].each_combination(2, reuse: true) do |comb|
         sums << comb.sum
         object_ids << comb.object_id
-      end
+      end.should be_nil
       sums.should eq([3, 4, 5])
       object_ids.size.should eq(1)
     end
@@ -1591,7 +1591,7 @@ describe "Array" do
       [1, 2, 3].each_combination(2, reuse: reuse) do |comb|
         sums << comb.sum
         comb.should be(reuse)
-      end
+      end.should be_nil
       sums.should eq([3, 4, 5])
     end
 
@@ -1652,7 +1652,7 @@ describe "Array" do
       sums = [] of Int32
       [1, 2, 3].each_repeated_combination(2) do |comb|
         sums << comb.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([2, 3, 4, 4, 5, 6])
     end
 
@@ -1661,7 +1661,7 @@ describe "Array" do
       [1, 2, 3].each_repeated_combination(3) do |comb|
         comb.map! &.+(1)
         sums << comb.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
     end
 
@@ -1674,7 +1674,7 @@ describe "Array" do
         object_ids << comb.object_id
         comb.map! &.+(1)
         sums << comb.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
       object_ids.size.should eq(1)
     end
@@ -1686,7 +1686,7 @@ describe "Array" do
         comb.should be(reuse)
         comb.map! &.+(1)
         sums << comb.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
     end
 
@@ -1745,7 +1745,7 @@ describe "Array" do
       sums = [] of Int32
       [1, 2, 3].each_repeated_permutation(2) do |a|
         sums << a.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([2, 3, 4, 3, 4, 5, 4, 5, 6])
     end
 
@@ -1754,7 +1754,7 @@ describe "Array" do
       [1, 2, 3].each_repeated_permutation(3) do |a|
         a.map! &.+(1)
         sums << a.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([6, 7, 8, 7, 8, 9, 8, 9, 10, 7, 8, 9, 8, 9, 10, 9, 10, 11, 8, 9, 10, 9, 10, 11, 10, 11, 12])
     end
 
@@ -1765,7 +1765,7 @@ describe "Array" do
         object_ids << a.object_id
         a.map! &.+(1)
         sums << a.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([6, 7, 8, 7, 8, 9, 8, 9, 10, 7, 8, 9, 8, 9, 10, 9, 10, 11, 8, 9, 10, 9, 10, 11, 10, 11, 12])
       object_ids.size.should eq(1)
     end
@@ -1777,7 +1777,7 @@ describe "Array" do
         a.should be(reuse)
         a.map! &.+(1)
         sums << a.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([6, 7, 8, 7, 8, 9, 8, 9, 10, 7, 8, 9, 8, 9, 10, 9, 10, 11, 8, 9, 10, 9, 10, 11, 10, 11, 12])
     end
 

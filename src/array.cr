@@ -972,7 +972,7 @@ class Array(T)
   # interest is to be used in a read-only fashion.
   def each_permutation(size : Int = self.size, reuse = false)
     n = self.size
-    return self if size > n
+    return if size > n
 
     raise ArgumentError.new("size must be positive") if size < 0
 
@@ -1000,7 +1000,7 @@ class Array(T)
         i -= 1
       end
 
-      return self if stop
+      return if stop
     end
   end
 
@@ -1039,7 +1039,7 @@ class Array(T)
 
   def each_combination(size : Int = self.size, reuse = false)
     n = self.size
-    return self if size > n
+    return if size > n
     raise ArgumentError.new("size must be positive") if size < 0
 
     reuse = check_reuse(reuse, size)
@@ -1061,7 +1061,7 @@ class Array(T)
         i -= 1
       end
 
-      return self if stop
+      return if stop
 
       indices[i] += 1
       pool[i] = copy[indices[i]]
@@ -1127,7 +1127,7 @@ class Array(T)
 
   def each_repeated_combination(size : Int = self.size, reuse = false)
     n = self.size
-    return self if size > n && n == 0
+    return if size > n && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
 
     reuse = check_reuse(reuse, size)
@@ -1148,7 +1148,7 @@ class Array(T)
         end
         i -= 1
       end
-      return self if stop
+      return if stop
 
       ii = indices[i] + 1
       tmp = copy[ii]
@@ -1227,7 +1227,7 @@ class Array(T)
 
   def each_repeated_permutation(size : Int = self.size, reuse = false)
     n = self.size
-    return self if size != 0 && n == 0
+    return if size != 0 && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
 
     if size == 0
@@ -1236,7 +1236,7 @@ class Array(T)
       Array.each_product(Array.new(size, self), reuse: reuse) { |r| yield r }
     end
 
-    self
+    nil
   end
 
   # Removes the last value from `self`, at index *size - 1*.

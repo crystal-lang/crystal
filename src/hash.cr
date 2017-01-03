@@ -296,7 +296,7 @@ class Hash(K, V)
       yield({current.key, current.value})
       current = current.fore
     end
-    self
+    nil
   end
 
   # Returns an iterator over the hash entries.

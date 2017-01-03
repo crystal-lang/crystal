@@ -147,7 +147,7 @@ struct Char
         @pos += @current_char_width
         decode_current_char
       end
-      self
+      nil
     end
 
     private def decode_char_at(pos)

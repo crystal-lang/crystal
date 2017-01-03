@@ -184,7 +184,7 @@ module Indexable(T)
       yield i
       i += 1
     end
-    self
+    nil
   end
 
   # Returns an `Iterator` for each index in `self`.
@@ -336,7 +336,7 @@ module Indexable(T)
     (size - 1).downto(0) do |i|
       yield unsafe_at(i)
     end
-    self
+    nil
   end
 
   # Returns an `Iterator` over the elements of `self` in reverse order.

@@ -144,7 +144,7 @@ struct Set(T)
     @hash.each_key do |key|
       yield key
     end
-    self
+    nil
   end
 
   # Returns an iterator for each element of the set.

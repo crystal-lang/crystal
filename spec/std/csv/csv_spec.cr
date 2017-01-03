@@ -118,7 +118,7 @@ describe CSV do
     csv.each do
       csv["one"].should eq("1")
       break
-    end
+    end.should be_nil
   end
 
   it "can do new with block" do

@@ -339,6 +339,10 @@ describe "Char" do
     end
   end
 
+  it "does each_byte" do
+    'a'.each_byte(&.should eq('a'.ord)).should be_nil
+  end
+
   it "does bytes" do
     '\u{FF}'.bytes.should eq([195, 191])
   end

@@ -295,6 +295,16 @@ describe "Set" do
     h1.should eq(h2)
   end
 
+  it "does each" do
+    set = Set{1, 2, 3}
+    i = 1
+    set.each do |v|
+      v.should eq(i)
+      i += 1
+    end.should be_nil
+    i.should eq(4)
+  end
+
   it "gets each iterator" do
     iter = Set{1, 2, 3}.each
     iter.next.should eq(1)

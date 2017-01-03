@@ -45,6 +45,8 @@ struct XML::Attributes
       yield Node.new(props)
       props = props.value.next
     end
+
+    nil
   end
 
   def to_s(io)

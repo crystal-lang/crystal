@@ -200,7 +200,7 @@ struct Tuple
     {% for i in 0...T.size %}
       yield self[{{i}}]
     {% end %}
-    self
+    nil
   end
 
   # Returns `true` if this tuple has the same size as the other tuple
@@ -447,7 +447,7 @@ struct Tuple
     {% for i in 1..T.size %}
       yield self[{{T.size - i}}]
     {% end %}
-    self
+    nil
   end
 
   # Returns the first element of this tuple. Doesn't compile

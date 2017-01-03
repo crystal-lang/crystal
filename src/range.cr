@@ -104,7 +104,7 @@ struct Range(B, E)
       current = current.succ
     end
     yield current if !@exclusive && current == @end
-    self
+    nil
   end
 
   # Returns an `Iterator` over the elements of this range.
@@ -129,7 +129,7 @@ struct Range(B, E)
       current = current.pred
       yield current
     end
-    self
+    nil
   end
 
   # Returns a reverse `Iterator` over the elements of this range.

@@ -24,6 +24,7 @@ class CSV::Parser
     while row = next_row
       yield row
     end
+    nil
   end
 
   # Returns an `Iterator` of `Array(String)` for the remaining rows.

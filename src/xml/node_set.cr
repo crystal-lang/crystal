@@ -22,6 +22,7 @@ struct XML::NodeSet
     size.times do |i|
       yield internal_at(i)
     end
+    nil
   end
 
   def empty?

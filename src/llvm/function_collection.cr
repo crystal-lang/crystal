@@ -30,6 +30,6 @@ struct LLVM::FunctionCollection
       yield LLVM::Function.new f
       f = LibLLVM.get_next_function(f)
     end
-    self
+    nil
   end
 end

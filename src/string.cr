@@ -2847,6 +2847,8 @@ class String
     unless offset == bytesize
       yield unsafe_byte_slice_string(offset)
     end
+
+    nil
   end
 
   # Returns an `Iterator` which yields each line of this string (see `String#each_line`).
@@ -3162,7 +3164,7 @@ class String
         yield char
       end
     end
-    self
+    nil
   end
 
   # Returns an iterator over each character in the string.
@@ -3191,7 +3193,7 @@ class String
       yield char, i
       i += 1
     end
-    self
+    nil
   end
 
   # Returns an array of all characters in the string.
@@ -3262,7 +3264,7 @@ class String
     to_unsafe.to_slice(bytesize).each do |byte|
       yield byte
     end
-    self
+    nil
   end
 
   # Returns an iterator over each byte in the string.
