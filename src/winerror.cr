@@ -2,13 +2,16 @@
 class WinError < Exception
   property code : UInt32
 
-  def initialize(message)
-    @code = LibWindows.get_last_error()
+  # NOTE: `get_last_error` must be called BEFORE an instance of this class
+  # is malloced as it would change the "last error" to SUCCESS
+  def self.new(message)
+    new(message, LibWindows.get_last_error)
+  end
 
+  def initialize(message, @code)
     buffer = uninitialized UInt8[256]
-    size = 256
-    size = LibWindows.format_message(LibWindows::FORMAT_MESSAGE_FROM_SYSTEM, nil, @code, 0, buffer, size, nil)
-    details = String.new(buffer.to_unsafe, size)
+    size = LibWindows.format_message(LibWindows::FORMAT_MESSAGE_FROM_SYSTEM, nil, @code, 0, buffer, buffer.size, nil)
+    details = String.new(buffer.to_unsafe, size).strip
     super "#{message}: #{details}"
   end
 
