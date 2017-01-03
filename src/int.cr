@@ -328,46 +328,43 @@ struct Int
     self - 1
   end
 
-  def times(&block : self ->)
+  def times(&block : self ->) : Nil
     i = self ^ self
     while i < self
       yield i
       i += 1
     end
-    self
   end
 
   def times
     TimesIterator(typeof(self)).new(self)
   end
 
-  def upto(n, &block : self ->)
+  def upto(n, &block : self ->) : Nil
     x = self
     while x <= n
       yield x
       x += 1
     end
-    self
   end
 
   def upto(n)
     UptoIterator(typeof(self), typeof(n)).new(self, n)
   end
 
-  def downto(n, &block : self ->)
+  def downto(n, &block : self ->) : Nil
     x = self
     while x >= n
       yield x
       x -= 1
     end
-    self
   end
 
   def downto(n)
     DowntoIterator(typeof(self), typeof(n)).new(self, n)
   end
 
-  def to(n, &block : self ->)
+  def to(n, &block : self ->) : Nil
     if self < n
       upto(n) { |i| yield i }
     elsif self > n
@@ -375,7 +372,6 @@ struct Int
     else
       yield self
     end
-    self
   end
 
   def to(n)
