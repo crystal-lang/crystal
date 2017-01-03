@@ -1,21 +1,21 @@
 @[CallConvention("X86_StdCall")]
 lib LibWindows
-  STD_INPUT_HANDLE = 0xFFFFFFF6_u32
+  STD_INPUT_HANDLE  = 0xFFFFFFF6_u32
   STD_OUTPUT_HANDLE = 0xFFFFFFF5_u32
-  STD_ERROR_HANDLE = 0xFFFFFFF4_u32
+  STD_ERROR_HANDLE  = 0xFFFFFFF4_u32
 
   FILE_TYPE_UNKNOWN = 0x0000
-  FILE_TYPE_DISK = 0x0001
-  FILE_TYPE_CHAR = 0x0002
-  FILE_TYPE_PIPE = 0x0003
-  FILE_TYPE_REMOTE = 0x8000
+  FILE_TYPE_DISK    = 0x0001
+  FILE_TYPE_CHAR    = 0x0002
+  FILE_TYPE_PIPE    = 0x0003
+  FILE_TYPE_REMOTE  = 0x8000
 
   alias DWord = UInt32
   alias Handle = Void*
   alias SizeT = UInt64 # FIXME
 
   INVALID_HANDLE_VALUE = Pointer(Void).new((-1).to_u64)
-  INFINITY = 0xFFFFFFFF_u32
+  INFINITY             = 0xFFFFFFFF_u32
 
   fun duplicate_handle = DuplicateHandle(source_process : Handle, source : Handle, target_process : Handle, target : Handle*, desired_access : DWord, inherit_handle : Bool, options : DWord) : Bool
 
@@ -36,11 +36,12 @@ lib LibWindows
   fun get_file_type = GetFileType(file : Handle) : DWord
   fun write_file = WriteFile(file : Handle, buffer : UInt8*, size : DWord, written : DWord*, overlapped : Overlapped*) : Bool
   fun close_handle = CloseHandle(file : Handle) : Bool
+
   fun create_io_completion_port = CreateIoCompletionPort(file : Handle, port : Handle, data : Void*, threads : DWord) : Handle
   fun get_queued_completion_status = GetQueuedCompletionStatus(port : Handle, bytes_transfered : DWord*, data : Void**, entry : Overlapped**, timeout_millis : DWord) : Bool
   fun post_queued_completion_status = PostQueuedCompletionStatus(port : Handle, bytes_transfered : DWord, data : Void*, entry : Overlapped*) : Bool
-  fun get_current_process = GetCurrentProcess() : Handle
-  fun get_current_thread = GetCurrentThread() : Handle
+  fun get_current_process = GetCurrentProcess : Handle
+  fun get_current_thread = GetCurrentThread : Handle
 
   WAIT_ABANDONED = 0x00000080_u32
   WAIT_OBJECT_0  = 0x00000000_u32
@@ -50,7 +51,7 @@ lib LibWindows
   fun wait_for_single_object = WaitForSingleObject(handle : Handle, timeout_millis : DWord) : DWord
   fun create_timer_queue_timer = CreateTimerQueueTimer(timer_handle : Handle*, queue_handle : Handle, callback : (Void*, Bool) ->, data : Void*, due : DWord, period : DWord, flags : SizeT) : Bool
   fun delete_timer_queue_timer = DeleteTimerQueueTimer(queue_handle : Handle, timer_handle : Handle, completion_event : Handle) : Bool
-  fun get_last_error = GetLastError() : DWord
+  fun get_last_error = GetLastError : DWord
 
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
   FORMAT_MESSAGE_IGNORE_INSERTS  = 0x00000200_u32
@@ -61,12 +62,12 @@ lib LibWindows
 
   fun format_message = FormatMessageA(flags : DWord, source : Void*, msg : DWord, lang : DWord, buffer : UInt8*, size : DWord, args : Void*) : DWord
 
-  WSASYSNOTREADY = 10091
+  WSASYSNOTREADY     = 10091
   WSAVERNOTSUPPORTED = 10092
-  WSAEINPROGRESS = 10036
-  WSAEPROCLIM = 10067
-  WSAEFAULT = 10014
-  WSAEINVAL = 10022
+  WSAEINPROGRESS     = 10036
+  WSAEPROCLIM        = 10067
+  WSAEFAULT          = 10014
+  WSAEINVAL          = 10022
 
   struct WSAData
     version : UInt16
@@ -78,7 +79,7 @@ lib LibWindows
     vendor_info : UInt8*
   end
 
-  fun wsa_startup = WSAStartup(version : Int16, data : WSAData*) : Int32;
+  fun wsa_startup = WSAStartup(version : Int16, data : WSAData*) : Int32
 end
 
 require "winerror.cr"

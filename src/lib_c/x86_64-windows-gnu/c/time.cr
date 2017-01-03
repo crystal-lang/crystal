@@ -1,4 +1,3 @@
-
 lib LibC
   CLOCK_MONOTONIC = 1
   CLOCK_REALTIME  = 0
