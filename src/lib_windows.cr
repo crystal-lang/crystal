@@ -1,3 +1,4 @@
+@[CallConvention("X86_StdCall")]
 lib LibWindows
   STD_INPUT_HANDLE = 0xFFFFFFF6_u32
   STD_OUTPUT_HANDLE = 0xFFFFFFF5_u32
@@ -16,36 +17,14 @@ lib LibWindows
   INVALID_HANDLE_VALUE = Pointer(Void).new((-1).to_u64)
   INFINITY = 0xFFFFFFFF_u32
 
-  @[CallConvention("X86_StdCall")]
   fun duplicate_handle = DuplicateHandle(source_process : Handle, source : Handle, target_process : Handle, target : Handle*, desired_access : DWord, inherit_handle : Bool, options : DWord) : Bool
 
   struct Overlapped
-    internal : SizeT*
-    internal_high : SizeT*
-    pointer : Void*
+    status : SizeT
+    bytes_transfered : SizeT
+    offset : UInt64
     event : Handle
   end
-
-  @[CallConvention("X86_StdCall")]
-  fun get_std_handle = GetStdHandle(std_handle : DWord) : Handle
-
-  @[CallConvention("X86_StdCall")]
-  fun get_file_type = GetFileType(file : Handle) : DWord
-
-  @[CallConvention("X86_StdCall")]
-  fun write_file = WriteFile(file : Handle, buffer : UInt8*, size : DWord, written : DWord*, overlapped : Overlapped*) : Bool
-
-  @[CallConvention("X86_StdCall")]
-  fun close_handle = CloseHandle(file : Handle) : Bool
-
-  @[CallConvention("X86_StdCall")]
-  fun create_io_completion_port = CreateIoCompletionPort(file : Handle, port : Handle, data : Void*, threads : DWord) : Handle
-
-  @[CallConvention("X86_StdCall")]
-  fun get_queued_completion_status = GetQueuedCompletionStatus(port : Handle, bytes_transfered : DWord*, data : Void**, entry : Overlapped**, timeout_millis : DWord) : Bool
-
-  @[CallConvention("X86_StdCall")]
-  fun post_queued_completion_status = PostQueuedCompletionStatus(port : Handle, bytes_transfered : DWord, data : Void*, entry : Overlapped*) : Bool
 
   struct SecurityAttributes
     length : DWord
@@ -53,10 +32,14 @@ lib LibWindows
     inherit_handle : Bool
   end
 
-  @[CallConvention("X86_StdCall")]
+  fun get_std_handle = GetStdHandle(std_handle : DWord) : Handle
+  fun get_file_type = GetFileType(file : Handle) : DWord
+  fun write_file = WriteFile(file : Handle, buffer : UInt8*, size : DWord, written : DWord*, overlapped : Overlapped*) : Bool
+  fun close_handle = CloseHandle(file : Handle) : Bool
+  fun create_io_completion_port = CreateIoCompletionPort(file : Handle, port : Handle, data : Void*, threads : DWord) : Handle
+  fun get_queued_completion_status = GetQueuedCompletionStatus(port : Handle, bytes_transfered : DWord*, data : Void**, entry : Overlapped**, timeout_millis : DWord) : Bool
+  fun post_queued_completion_status = PostQueuedCompletionStatus(port : Handle, bytes_transfered : DWord, data : Void*, entry : Overlapped*) : Bool
   fun get_current_process = GetCurrentProcess() : Handle
-
-  @[CallConvention("X86_StdCall")]
   fun get_current_thread = GetCurrentThread() : Handle
 
   WAIT_ABANDONED = 0x00000080_u32
@@ -64,16 +47,9 @@ lib LibWindows
   WAIT_TIMEOUT   = 0x00000102_u32
   WAIT_FAILED    = 0xFFFFFFFF_u32
 
-  @[CallConvention("X86_StdCall")]
   fun wait_for_single_object = WaitForSingleObject(handle : Handle, timeout_millis : DWord) : DWord
-
-  @[CallConvention("X86_StdCall")]
   fun create_timer_queue_timer = CreateTimerQueueTimer(timer_handle : Handle*, queue_handle : Handle, callback : (Void*, Bool) ->, data : Void*, due : DWord, period : DWord, flags : SizeT) : Bool
-
-  @[CallConvention("X86_StdCall")]
   fun delete_timer_queue_timer = DeleteTimerQueueTimer(queue_handle : Handle, timer_handle : Handle, completion_event : Handle) : Bool
-
-  @[CallConvention("X86_StdCall")]
   fun get_last_error = GetLastError() : DWord
 
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
@@ -83,7 +59,6 @@ lib LibWindows
   FORMAT_MESSAGE_FROM_SYSTEM     = 0x00001000_u32
   FORMAT_MESSAGE_ARGUMENT_ARRAY  = 0x00002000_u32
 
-  @[CallConvention("X86_StdCall")]
   fun format_message = FormatMessageA(flags : DWord, source : Void*, msg : DWord, lang : DWord, buffer : UInt8*, size : DWord, args : Void*) : DWord
 
   WSASYSNOTREADY = 10091
@@ -103,7 +78,6 @@ lib LibWindows
     vendor_info : UInt8*
   end
 
-  @[CallConvention("X86_StdCall")]
   fun wsa_startup = WSAStartup(version : Int16, data : WSAData*) : Int32;
 end
 
