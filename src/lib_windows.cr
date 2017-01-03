@@ -10,6 +10,18 @@ lib LibWindows
   FILE_TYPE_PIPE    = 0x0003
   FILE_TYPE_REMOTE  = 0x8000
 
+  GENERIC_EXECUTE = 0x20000000
+  GENERIC_WRITE   = 0x40000000
+  GENERIC_READ    = 0x80000000
+
+  CREATE_NEW        = 1
+  CREATE_ALWAYS     = 2
+  OPEN_EXISTING     = 3
+  OPEN_ALWAYS       = 4
+  TRUNCATE_EXISTING = 5
+
+  FILE_FLAG_OVERLAPPED = 0x40000000
+
   alias DWord = UInt32
   alias Handle = Void*
   alias SizeT = UInt64 # FIXME
@@ -34,6 +46,8 @@ lib LibWindows
 
   fun get_std_handle = GetStdHandle(std_handle : DWord) : Handle
   fun get_file_type = GetFileType(file : Handle) : DWord
+  fun create_file = CreateFileA(filename : UInt8*, access : DWord, sharemode : DWord, security_attributes : SecurityAttributes*, creation : DWord, flags : DWord, template : Handle) : Handle
+  fun read_file = ReadFile(file : Handle, buffer : UInt8*, size : DWord, read : DWord*, overlapped : Overlapped*) : Bool
   fun write_file = WriteFile(file : Handle, buffer : UInt8*, size : DWord, written : DWord*, overlapped : Overlapped*) : Bool
   fun close_handle = CloseHandle(file : Handle) : Bool
 

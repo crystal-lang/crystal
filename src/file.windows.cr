@@ -8,20 +8,22 @@ class File < IO::FileDescriptor
   # The file/directory separator string. "/" in unix, "\\" in windows.
   SEPARATOR_STRING = "\\"
 
-  # :nodoc:
-  DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
+  def initialize(filename : String, mode = "r", encoding = nil, invalid = nil)
+    access, creation, seek = open_flag(mode)
+    flags = LibWindows::FILE_FLAG_OVERLAPPED
+    handle = LibWindows.create_file(filename, access, 0, nil, creation, flags, nil)
 
-  def initialize(filename : String, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
-    oflag = open_flag(mode) | LibC::O_CLOEXEC
+    if handle.null?
+      raise WinError.new("Error opening file '#{filename}' with mode '#{mode}'")
+    end
 
-    fd = LibC.open(filename.check_no_null_byte, oflag, perm)
-    if fd < 0
-      raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
+    if seek
+      # SEEK_END
     end
 
     @path = filename
     self.set_encoding(encoding, invalid: invalid) if encoding
-    super(fd, blocking: true)
+    super(handle)
   end
 
   protected def open_flag(mode)
@@ -29,17 +31,18 @@ class File < IO::FileDescriptor
       raise "invalid access mode #{mode}"
     end
 
-    m = 0
-    o = 0
+    seek = false
     case mode[0]
     when 'r'
-      m = LibC::O_RDONLY
+      access = LibWindows::GENERIC_READ
+      creation = LibWindows::OPEN_EXISTING
     when 'w'
-      m = LibC::O_WRONLY
-      o = LibC::O_CREAT | LibC::O_TRUNC
+      access = LibWindows::GENERIC_WRITE
+      creation = LibWindows::CREATE_ALWAYS
     when 'a'
-      m = LibC::O_WRONLY
-      o = LibC::O_CREAT | LibC::O_APPEND
+      access = LibWindows::GENERIC_WRITE
+      creation = LibWindows::OPEN_ALWAYS
+      seek = true
     else
       raise "invalid access mode #{mode}"
     end
@@ -50,7 +53,7 @@ class File < IO::FileDescriptor
     when 2
       case mode[1]
       when '+'
-        m = LibC::O_RDWR
+        access = LibWindows::GENERIC_READ | LibWindows::GENERIC_WRITE
       when 'b'
         # Nothing
       else
@@ -60,7 +63,7 @@ class File < IO::FileDescriptor
       raise "invalid access mode #{mode}"
     end
 
-    oflag = m | o
+    return {access, creation, seek}
   end
 
   getter path : String
@@ -399,17 +402,15 @@ class File < IO::FileDescriptor
     (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
   end
 
-  # Opens the file named by *filename*. If a file is being created, its initial
-  # permissions may be set using the *perm* parameter.
-  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil) : self
-    new filename, mode, perm, encoding, invalid
+  # Opens the file named by *filename*.
+  def self.open(filename, mode = "r", encoding = nil, invalid = nil) : self
+    new filename, mode, encoding, invalid
   end
 
-  # Opens the file named by *filename*. If a file is being created, its initial
-  # permissions may be set using the *perm* parameter. Then given block will be passed the opened
+  # Opens the file named by *filename*. Then given block will be passed the opened
   # file as an argument, the file will be automatically closed when the block returns.
-  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
-    file = File.new filename, mode, perm, encoding, invalid
+  def self.open(filename, mode = "r", encoding = nil, invalid = nil)
+    file = File.new filename, mode, encoding, invalid
     begin
       yield file
     ensure

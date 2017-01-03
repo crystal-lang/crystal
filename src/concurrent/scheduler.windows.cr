@@ -15,7 +15,20 @@ class Scheduler
   end
 
   def self.completion_port
-    @@completion_port ||= LibWindows.create_io_completion_port(LibWindows::INVALID_HANDLE_VALUE, nil, nil, 0)
+    completion_port = @@completion_port ||= LibWindows.create_io_completion_port(LibWindows::INVALID_HANDLE_VALUE, nil, nil, 0)
+    if completion_port.null?
+      raise WinError.new("CreateIoCompletionPort")
+    end
+    completion_port
+  end
+
+  def self.attach_to_completion_port(handle, fd)
+    if LibWindows.create_io_completion_port(handle, Scheduler.completion_port, fd.as(Void*), 0).null?
+      # It is allowed to fail if the handle doesn't have FILE_FLAG_OVERLAPPED.
+      # How to check for if the flag is set on the handle?
+
+      # raise WinError.new("CreateIoCompletionPort")
+    end
   end
 
   def self.loop_fiber
