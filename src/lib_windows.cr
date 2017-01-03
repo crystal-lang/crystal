@@ -9,6 +9,10 @@ lib LibWindows
   FILE_TYPE_PIPE    = 0x0003
   FILE_TYPE_REMOTE  = 0x8000
 
+  # source https://msdn.microsoft.com/en-us/library/windows/desktop/aa383751(v=vs.85).aspx
+  alias Long = Int32
+  alias Word = UInt16
+  alias WChar = UInt16
   alias DWord = UInt32
   alias Handle = Void*
   alias SizeT = UInt64 # FIXME
@@ -105,6 +109,40 @@ lib LibWindows
 
   @[CallConvention("X86_StdCall")]
   fun wsa_startup = WSAStartup(version : Int16, data : WSAData*) : Int32
+
+  # source https://msdn.microsoft.com/en-us/library/windows/desktop/ms724950(v=vs.85).aspx
+  struct SystemTime
+    year : Word
+    month : Word
+    day_of_week : Word
+    day : Word
+    hour : Word
+    minute : Word
+    second : Word
+    milliseconds : Word
+  end
+
+  # source https://msdn.microsoft.com/en-us/library/windows/desktop/ms725481(v=vs.85).aspx
+  struct TimeZoneInformation
+    bias : Long
+    standard_name : StaticArray(WChar, 32)
+    standard_date : SystemTime
+    standard_bias : Long
+    daylight_name : StaticArray(WChar, 32)
+    daylight_date : SystemTime
+    daylight_bias : Long
+  end
+
+  struct FileTime
+    low_date_time : DWord
+    high_date_time : DWord
+  end
+
+  @[CallConvention("X86_StdCall")]
+  fun get_time_zone_information = GetTimeZoneInformation(tz_info : TimeZoneInformation*) : DWord
+
+  @[CallConvention("X86_StdCall")]
+  fun get_system_time_as_file_time = GetSystemTimeAsFileTime(time : FileTime*)
 end
 
 require "winerror.cr"
