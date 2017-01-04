@@ -77,6 +77,23 @@ module Crystal
     def_equals_and_hash type
   end
 
+  # Fictitious node to represent a type restriction
+  #
+  # It is used for type restrection of method arguments.
+  class TypeRestrict < ASTNode
+    getter value
+    getter restriction
+
+    def initialize(@value : ASTNode, @restriction : ASTNode)
+    end
+
+    def clone_without_location
+      TypeRestrict.new @value.clone, @restriction.clone
+    end
+
+    def_equals_and_hash value, restriction
+  end
+
   class Arg
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
       @external_name = external_name || @name

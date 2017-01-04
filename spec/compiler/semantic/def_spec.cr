@@ -423,6 +423,26 @@ describe "Semantic: def" do
       )) { int32.metaclass }
   end
 
+  it "uses free variable with metaclass" do
+    assert_type(%(
+      def foo(x : Free.class) forall Free
+        Free
+      end
+
+      foo(Int32)
+      )) { int32.metaclass }
+  end
+
+  it "uses free variable with metaclass and default value" do
+    assert_type(%(
+      def foo(x : Free.class = Int32) forall Free
+        Free
+      end
+
+      foo
+      )) { int32.metaclass }
+  end
+
   it "uses free variable as block return type" do
     assert_type(%(
       def foo(&block : -> Free) forall Free
