@@ -81,17 +81,17 @@ module Crystal
   #
   # It is used for type restrection of method arguments.
   class TypeRestriction < ASTNode
-    getter value
-    getter restriction
+    getter obj
+    getter to
 
-    def initialize(@value : ASTNode, @restriction : ASTNode)
+    def initialize(@obj : ASTNode, @to : ASTNode)
     end
 
     def clone_without_location
-      TypeRestriction.new @value.clone, @restriction.clone
+      TypeRestriction.new @obj.clone, @to.clone
     end
 
-    def_equals_and_hash value, restriction
+    def_equals_and_hash obj, to
   end
 
   class Arg

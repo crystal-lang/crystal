@@ -2835,19 +2835,19 @@ module Crystal
     end
 
     def visit(node : TypeRestriction)
-      value = node.value
-      restriction = node.restriction
+      obj = node.obj
+      to = node.to
 
-      value.accept self
+      obj.accept self
 
       unless context = match_context
         node.raise "BUG: there is no match context"
       end
 
-      if type = value.type.restrict(restriction, context)
+      if type = obj.type.restrict(to, context)
         node.type = type
       else
-        node.raise "can't restrict #{value.type} to #{restriction}"
+        node.raise "can't restrict #{obj.type} to #{to}"
       end
 
       false
