@@ -266,11 +266,10 @@ struct XML::Builder
     call SetQuoteChar, char.ord
   end
 
-  # TODO: mark as private
-  macro call(name, *args)
-      ret = LibXML.xmlTextWriter{{name}}(@writer, {{*args}})
-      check ret, {{@def.name.stringify}}
-    end
+  private macro call(name, *args)
+    ret = LibXML.xmlTextWriter{{name}}(@writer, {{*args}})
+    check ret, {{@def.name.stringify}}
+  end
 
   private def check(ret, msg)
     raise XML::Error.new("error in #{msg}", 0) if ret < 0
