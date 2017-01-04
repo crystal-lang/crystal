@@ -27,7 +27,7 @@ end
 
 {% begin %}
   lib LibLLVM
-    IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
+    IS_38 = {{LibLLVM::VERSION.starts_with?("3.8") || flag?(:openbsd)}}
     IS_36 = {{LibLLVM::VERSION.starts_with?("3.6")}}
     IS_35 = {{LibLLVM::VERSION.starts_with?("3.5")}}
   end
