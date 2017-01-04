@@ -207,11 +207,18 @@ describe "NamedTuple" do
     i.should eq(2)
   end
 
-  it "does has_key?" do
+  it "does has_key? with symbol" do
     tup = {a: 1, b: 'a'}
     tup.has_key?(:a).should be_true
     tup.has_key?(:b).should be_true
     tup.has_key?(:c).should be_false
+  end
+
+  it "does has_key? with string" do
+    tup = {a: 1, b: 'a'}
+    tup.has_key?("a").should be_true
+    tup.has_key?("b").should be_true
+    tup.has_key?("c").should be_false
   end
 
   it "does empty" do
