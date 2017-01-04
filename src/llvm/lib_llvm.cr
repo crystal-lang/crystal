@@ -1,5 +1,3 @@
-require "./enums"
-
 {% begin %}
 lib LibLLVM
   LLVM_CONFIG = {{
@@ -27,6 +25,8 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_40 = {{LibLLVM::VERSION.starts_with?("4.0")}}
+    IS_39 = {{LibLLVM::VERSION.starts_with?("3.9")}}
     IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
     IS_36 = {{LibLLVM::VERSION.starts_with?("3.6")}}
     IS_35 = {{LibLLVM::VERSION.starts_with?("3.5")}}
@@ -34,6 +34,10 @@ end
 {% end %}
 
 lib LibLLVM
+  alias Char = LibC::Char
+  alias Int = LibC::Int
+  alias UInt = LibC::UInt
+
   type ContextRef = Void*
   type ModuleRef = Void*
   type TypeRef = Void*
@@ -57,13 +61,9 @@ lib LibLLVM
     enable_fast_isel : Int32
   end
 
-  fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : LLVM::Attribute)
-  fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : LLVM::Attribute)
   fun add_case = LLVMAddCase(switch : ValueRef, onval : ValueRef, dest : BasicBlockRef)
   fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
-  fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : LLVM::Attribute)
-  fun get_function_attr = LLVMGetFunctionAttr(fn : ValueRef) : LLVM::Attribute
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : UInt8*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : Int32)
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
@@ -154,7 +154,6 @@ lib LibLLVM
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : UInt64
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
-  fun get_attribute = LLVMGetAttribute(arg : ValueRef) : LLVM::Attribute
   fun get_current_debug_location = LLVMGetCurrentDebugLocation(builder : BuilderRef) : ValueRef
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
@@ -325,6 +324,27 @@ lib LibLLVM
     DEBUG_METADATA_VERSION = 2
   {% else %}
     DEBUG_METADATA_VERSION = 3
+  {% end %}
+
+  {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+    fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : LLVM::Attribute)
+    fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : LLVM::Attribute)
+    fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : LLVM::Attribute)
+    fun get_function_attr = LLVMGetFunctionAttr(fn : ValueRef) : LLVM::Attribute
+    fun get_attribute = LLVMGetAttribute(arg : ValueRef) : LLVM::Attribute
+  {% else %}
+    type AttributeRef = Void*
+    alias AttributeIndex = UInt
+
+    fun get_module_context = LLVMGetModuleContext(m : ModuleRef) : ContextRef
+    fun get_global_parent = LLVMGetGlobalParent(global : ValueRef) : ModuleRef
+
+    fun get_last_enum_attribute_kind = LLVMGetLastEnumAttributeKind() : UInt
+    fun get_enum_attribute_kind_for_name = LLVMGetEnumAttributeKindForName(name : Char*, s_len : LibC::SizeT) : UInt
+    fun create_enum_attribute = LLVMCreateEnumAttribute(c : ContextRef, kind_id : UInt, val : UInt64) : AttributeRef
+    fun add_attribute_at_index = LLVMAddAttributeAtIndex(f : ValueRef, idx : AttributeIndex, a : AttributeRef)
+    fun get_enum_attribute_at_index = LLVMGetEnumAttributeAtIndex(f : ValueRef, idx : AttributeIndex, kind_id : UInt) : AttributeRef
+    fun add_call_site_attribute = LLVMAddCallSiteAttribute(f : ValueRef, idx : AttributeIndex, value : AttributeRef)
   {% end %}
 
   enum ModuleFlag : Int32

@@ -76,7 +76,8 @@ LLVMMetadataRef LLVMDIBuilderCreateCompileUnit(DIBuilderRef Dref, unsigned Lang,
                                                const char *File,
                                                const char *Dir,
                                                const char *Producer,
-                                               int Optimized, const char *Flags,
+                                               int Optimized,
+                                               const char *Flags,
                                                unsigned RuntimeVersion) {
 #if LLVM_VERSION_LE(3, 6)
   DIBuilder *D = unwrap(Dref);
@@ -84,8 +85,14 @@ LLVMMetadataRef LLVMDIBuilderCreateCompileUnit(DIBuilderRef Dref, unsigned Lang,
                                           Flags, RuntimeVersion);
   return wrap(CU);
 #else
+# if LLVM_VERSION_LE(3, 9)
   return wrap(Dref->createCompileUnit(Lang, File, Dir, Producer, Optimized,
                                       Flags, RuntimeVersion));
+# else
+  DIFile *F = Dref->createFile(File, Dir);
+  return wrap(Dref->createCompileUnit(Lang, F, Producer, Optimized,
+                                      Flags, RuntimeVersion));
+# endif
 #endif
 }
 
@@ -93,7 +100,14 @@ LLVMMetadataRef LLVMDIBuilderCreateFunction(
     DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
     const char *LinkageName, LLVMMetadataRef File, unsigned Line,
     LLVMMetadataRef CompositeType, bool IsLocalToUnit, bool IsDefinition,
-    unsigned ScopeLine, unsigned Flags, bool IsOptimized, LLVMValueRef Func) {
+    unsigned ScopeLine,
+#if LLVM_VERSION_LE(3, 9)
+    unsigned Flags,
+#else
+    DINode::DIFlags Flags,
+#endif
+    bool IsOptimized,
+    LLVMValueRef Func) {
 #if LLVM_VERSION_LE(3, 6)
   DIBuilder *D = unwrap(Dref);
   DISubprogram Sub = D->createFunction(
@@ -139,7 +153,11 @@ LLVMMetadataRef LLVMDIBuilderCreateBasicType(DIBuilderRef Dref,
   DIBasicType T = D->createBasicType(Name, SizeInBits, AlignInBits, Encoding);
   return wrap(T);
 #else
+# if LLVM_VERSION_LE(3, 9)
   return wrap(Dref->createBasicType(Name, SizeInBits, AlignInBits, Encoding));
+# else
+  return wrap(Dref->createBasicType(Name, SizeInBits, Encoding));
+# endif
 #endif
 }
 
@@ -201,25 +219,42 @@ LLVMDIBuilderCreateSubroutineType(DIBuilderRef Dref, LLVMMetadataRef File,
 LLVMMetadataRef LLVMDIBuilderCreateAutoVariable(
     DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
     LLVMMetadataRef File, unsigned Line, LLVMMetadataRef Ty,
-    int AlwaysPreserve, unsigned Flags) {
+    int AlwaysPreserve,
+#if LLVM_VERSION_LE(3, 9)
+    unsigned Flags,
+#else
+    DINode::DIFlags Flags,
+#endif
+    uint32_t AlignInBits) {
 #if LLVM_VERSION_LE(3, 6)
   DIBuilder *D = unwrap(Dref);
   DIVariable V = D->createLocalVariable(
       llvm::dwarf::DW_TAG_auto_variable, unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       unwrapDI<DIType>(Ty), AlwaysPreserve, Flags, 0);
-  return wrap(V);
 #else
+# if LLVM_VERSION_LE(3, 9)
   DILocalVariable *V = Dref->createAutoVariable(
       unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       unwrapDI<DIType>(Ty), AlwaysPreserve, Flags);
-  return wrap(V);
+# else
+  DILocalVariable *V = Dref->createAutoVariable(
+      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
+      unwrapDI<DIType>(Ty), AlwaysPreserve, Flags, AlignInBits);
+# endif
 #endif
+  return wrap(V);
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateParameterVariable(
     DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
     unsigned ArgNo, LLVMMetadataRef File, unsigned Line,
-    LLVMMetadataRef Ty, int AlwaysPreserve, unsigned Flags) {
+    LLVMMetadataRef Ty, int AlwaysPreserve,
+#if LLVM_VERSION_LE(3, 9)
+    unsigned Flags
+#else
+    DINode::DIFlags Flags
+#endif
+    ) {
 #if LLVM_VERSION_LE(3, 6)
   DIBuilder *D = unwrap(Dref);
   DIVariable V = D->createLocalVariable(
@@ -322,7 +357,11 @@ LLVMDIBuilderCreateStructType(DIBuilderRef Dref,
                               unsigned Line,
                               uint64_t SizeInBits,
                               uint64_t AlignInBits,
+#if LLVM_VERSION_LE(3, 9)
                               unsigned Flags,
+#else
+                              DINode::DIFlags Flags,
+#endif
                               LLVMMetadataRef DerivedFrom,
                               LLVMMetadataRef Elements) {
 #if LLVM_VERSION_LE(3, 6)
@@ -374,7 +413,12 @@ LLVMDIBuilderCreateMemberType(DIBuilderRef Dref, LLVMMetadataRef Scope,
                               const char *Name, LLVMMetadataRef File,
                               unsigned Line, uint64_t SizeInBits,
                               uint64_t AlignInBits, uint64_t OffsetInBits,
-                              unsigned Flags, LLVMMetadataRef Ty) {
+#if LLVM_VERSION_LE(3, 9)
+                              unsigned Flags,
+#else
+                              DINode::DIFlags Flags,
+#endif
+                              LLVMMetadataRef Ty) {
 #if LLVM_VERSION_LE(3, 6)
   DIBuilder *D = unwrap(Dref);
   DIDerivedType DT = D->createMemberType(
