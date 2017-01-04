@@ -156,27 +156,39 @@ describe "Number" do
     ary[2].should eq(300.to_u8)
   end
 
-  it "steps from int to float" do
-    count = 0
-    0.step(by: 0.1, limit: 0.3) do |x|
-      typeof(x).should eq(typeof(0.1))
-      case count
-      when 0 then x.should eq(0.0)
-      when 1 then x.should eq(0.1)
-      when 2 then x.should eq(0.2)
+  describe "step" do
+    it "from int to float" do
+      count = 0
+      0.step(by: 0.1, to: 0.3) do |x|
+        typeof(x).should eq(typeof(0.1))
+        case count
+        when 0 then x.should eq(0.0)
+        when 1 then x.should eq(0.1)
+        when 2 then x.should eq(0.2)
+        end
+        count += 1
       end
-      count += 1
     end
-  end
 
-  it "does step iterator" do
-    iter = 0.step(by: 0.1, limit: 0.3)
-    iter.next.should eq(0.0)
-    iter.next.should eq(0.1)
-    iter.next.should eq(0.2)
-    iter.next.should be_a(Iterator::Stop)
+    it "iterator" do
+      iter = 0.step(by: 0.1, to: 0.3)
+      iter.next.should eq(0.0)
+      iter.next.should eq(0.1)
+      iter.next.should eq(0.2)
+      iter.next.should be_a(Iterator::Stop)
 
-    iter.rewind
-    iter.next.should eq(0.0)
+      iter.rewind
+      iter.next.should eq(0.0)
+    end
+
+    it "iterator without limit" do
+      iter = 0.step
+
+      1000.times do
+        iter.next
+      end
+
+      iter.next.should eq(1000)
+    end
   end
 end

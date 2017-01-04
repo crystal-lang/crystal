@@ -71,10 +71,10 @@ struct Number
   end
 
   # Invokes the given block with the sequence of numbers starting at `self`,
-  # incremented by *by* on each call, and with an optional *limit*.
+  # incremented by *by* on each call, and with an optional *to*.
   #
   # ```
-  # 3.step(by: 2, limit: 10) do |n|
+  # 3.step(to: 10, by: 2) do |n|
   #   puts n
   # end
   # ```
@@ -87,17 +87,17 @@ struct Number
   # 7
   # 9
   # ```
-  def step(limit = nil, by = 1)
+  def step(*, to = nil, by = 1)
     x = self + (by - by)
 
-    if limit
+    if to
       if by > 0
-        while x <= limit
+        while x <= to
           yield x
           x += by
         end
       elsif by < 0
-        while x >= limit
+        while x >= to
           yield x
           x += by
         end
@@ -112,8 +112,8 @@ struct Number
     self
   end
 
-  def step(limit = nil, by = 1)
-    StepIterator.new(self + (by - by), limit, by)
+  def step(*, to = nil, by = 1)
+    StepIterator.new(self + (by - by), to, by)
   end
 
   # Returns the absolute value of this number.
@@ -242,20 +242,20 @@ struct Number
     include Iterator(T)
 
     @n : T
-    @limit : L
+    @to : L
     @by : B
     @original : T
 
-    def initialize(@n : T, @limit : L, @by : B)
+    def initialize(@n : T, @to : L, @by : B)
       @original = @n
     end
 
     def next
-      if limit = @limit
+      if to = @to
         if @by > 0
-          return stop if @n > limit
+          return stop if @n > to
         elsif @by < 0
-          return stop if @n < limit
+          return stop if @n < to
         end
 
         value = @n

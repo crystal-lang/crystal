@@ -342,40 +342,40 @@ struct Int
 
   def upto(n, &block : self ->) : Nil
     x = self
-    while x <= n
+    while x <= to
       yield x
       x += 1
     end
   end
 
-  def upto(n)
-    UptoIterator(typeof(self), typeof(n)).new(self, n)
+  def upto(to)
+    UptoIterator(typeof(self), typeof(to)).new(self, to)
   end
 
-  def downto(n, &block : self ->) : Nil
+  def downto(to, &block : self ->) : Nil
     x = self
-    while x >= n
+    while x >= to
       yield x
       x -= 1
     end
   end
 
-  def downto(n)
-    DowntoIterator(typeof(self), typeof(n)).new(self, n)
+  def downto(to)
+    DowntoIterator(typeof(self), typeof(to)).new(self, to)
   end
 
-  def to(n, &block : self ->) : Nil
-    if self < n
-      upto(n) { |i| yield i }
-    elsif self > n
-      downto(n) { |i| yield i }
+  def to(to, &block : self ->) : Nil
+    if self < to
+      upto(to) { |i| yield i }
+    elsif self > to
+      downto(to) { |i| yield i }
     else
       yield self
     end
   end
 
-  def to(n)
-    self <= n ? upto(n) : downto(n)
+  def to(to)
+    self <= to ? upto(to) : downto(to)
   end
 
   def modulo(other)

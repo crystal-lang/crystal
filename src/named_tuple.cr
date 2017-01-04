@@ -219,6 +219,14 @@ struct NamedTuple
     false
   end
 
+  # ditto
+  def has_key?(key : String) : Bool
+    {% for key in T %}
+      return true if {{key.stringify}} == key
+    {% end %}
+    false
+  end
+
   # Appends a string representation of this named tuple to the given `IO`.
   #
   # ```
