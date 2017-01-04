@@ -395,9 +395,9 @@ class Regex
     io << "/"
     append_source(io)
     io << "/"
-    io << "i" if options.includes?(Options::IGNORE_CASE)
-    io << "m" if options.includes?(Options::MULTILINE)
-    io << "x" if options.includes?(Options::EXTENDED)
+    io << "i" if options.ignore_case?
+    io << "m" if options.multiline?
+    io << "x" if options.extended?
   end
 
   # Match at character index. Matches a regular expression against String
@@ -490,14 +490,14 @@ class Regex
   # ```
   def to_s(io : IO)
     io << "(?"
-    io << "i" if options.includes?(Options::IGNORE_CASE)
-    io << "ms" if options.includes?(Options::MULTILINE)
-    io << "x" if options.includes?(Options::EXTENDED)
+    io << "i" if options.ignore_case?
+    io << "ms" if options.multiline?
+    io << "x" if options.extended?
 
     io << "-"
-    io << "i" unless options.includes?(Options::IGNORE_CASE)
-    io << "ms" unless options.includes?(Options::MULTILINE)
-    io << "x" unless options.includes?(Options::EXTENDED)
+    io << "i" unless options.ignore_case?
+    io << "ms" unless options.multiline?
+    io << "x" unless options.extended?
 
     io << ":"
     append_source(io)
