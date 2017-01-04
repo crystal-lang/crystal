@@ -45,7 +45,7 @@ module Crystal
     end
 
     def visit(node : TypeRestriction)
-      @str << "# type restrict: "
+      @str << "# type restriction: "
       node.obj.accept self
       @str << " : "
       node.to.accept self
