@@ -379,7 +379,7 @@ struct Enum
   #
   # ```
   # Color.parse("Red")    # => Color::Red
-  # Color.parse("BLUE")   # => Color::Blue
+  # Color.parse("blue")   # => Color::Blue
   # Color.parse("Yellow") # => Exception
   # ```
   def self.parse(string) : self
@@ -395,7 +395,7 @@ struct Enum
   #
   # ```
   # Color.parse?("Red")    # => Color::Red
-  # Color.parse?("BLUE")   # => Color::Blue
+  # Color.parse?("blue")   # => Color::Blue
   # Color.parse?("Yellow") # => nil
   # ```
   def self.parse?(string) : self?
