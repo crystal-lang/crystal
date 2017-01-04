@@ -90,6 +90,12 @@ doc: ## Generate standard library documentation
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
 
+.PHONY: deps llvm_ext libcrystal
+deps: $(DEPS) ## Build dependencies
+
+llvm_ext: $(LLVM_EXT_OBJ)
+libcrystal: $(LIB_CRYSTAL_TARGET)
+
 $(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/all_spec.cr
