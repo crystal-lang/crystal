@@ -57,7 +57,7 @@ module Unicode
   end
 
   private def self.check_upcase_ascii(char, options)
-    if (char.ascii? && options == Unicode::CaseOptions::None) || options.ascii?
+    if (char.ascii? && options.none?) || options.ascii?
       if char.ascii_lowercase?
         return (char.ord - 32).unsafe_chr
       else
@@ -120,7 +120,7 @@ module Unicode
   end
 
   private def self.check_downcase_ascii(char, options)
-    if (char.ascii? && options == Unicode::CaseOptions::None) || options.ascii?
+    if (char.ascii? && options.none?) || options.ascii?
       if char.ascii_uppercase?
         return (char.ord + 32).unsafe_chr
       else
