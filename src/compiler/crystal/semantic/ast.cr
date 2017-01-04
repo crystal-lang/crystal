@@ -80,7 +80,7 @@ module Crystal
   # Fictitious node to represent a type restriction
   #
   # It is used for type restrection of method arguments.
-  class TypeRestrict < ASTNode
+  class TypeRestriction < ASTNode
     getter value
     getter restriction
 
@@ -88,7 +88,7 @@ module Crystal
     end
 
     def clone_without_location
-      TypeRestrict.new @value.clone, @restriction.clone
+      TypeRestriction.new @value.clone, @restriction.clone
     end
 
     def_equals_and_hash value, restriction

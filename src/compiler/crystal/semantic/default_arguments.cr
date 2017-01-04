@@ -125,7 +125,7 @@ class Crystal::Def
             new_body << Assign.new(Var.new(arg.name), default_value)
 
             if restriction = arg.restriction
-              new_body << TypeRestrict.new(Var.new(arg.name), restriction).at(arg)
+              new_body << TypeRestriction.new(Var.new(arg.name), restriction).at(arg)
             end
           end
         end

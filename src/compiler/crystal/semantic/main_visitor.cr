@@ -2834,7 +2834,7 @@ module Crystal
       false
     end
 
-    def visit(node : TypeRestrict)
+    def visit(node : TypeRestriction)
       value = node.value
       restriction = node.restriction
 
