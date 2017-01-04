@@ -113,7 +113,7 @@ class YAML::Builder
     @closed = true
   end
 
-  macro emit(event_name, *args)
+  private macro emit(event_name, *args)
     LibYAML.yaml_{{event_name}}_event_initialize(pointerof(@event), {{*args}})
     yaml_emit({{event_name.stringify}})
   end
