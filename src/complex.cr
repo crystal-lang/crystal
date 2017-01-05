@@ -1,7 +1,7 @@
 # A complex number is a number represented in the form a + bi. In this form,
 # a and b are real numbers, and i is an imaginary number such as i² = -1.
 # The a is the real part of the number, and the b is the imaginary part of
-#  the number.
+# the number.
 #
 # ```
 # require "complex"
@@ -10,7 +10,7 @@
 # Complex.new(5, -12) # => 5.0 - 12.0i
 # ```
 struct Complex
-  #  Returns the real part of self
+  # Returns the real part of self
   getter real : Float64
 
   # Returns the image part of self
@@ -171,7 +171,7 @@ struct Complex
     Complex.new(@real + other, @imag)
   end
 
-  #  Returns the opposite of self
+  # Returns the opposite of self
   def -
     Complex.new(-@real, -@imag)
   end
@@ -209,7 +209,7 @@ struct Complex
     end
   end
 
-  #  ditto
+  # ditto
   def /(other : Number)
     Complex.new(@real / other, @imag / other)
   end

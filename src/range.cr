@@ -173,7 +173,7 @@ struct Range(B, E)
       yield current
       by.times { current = current.succ }
     end
-    yield current if !@exclusive &&  current == @end
+    yield current if !@exclusive && current == @end
     self
   end
 
