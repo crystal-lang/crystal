@@ -171,7 +171,7 @@ describe "Semantic: def" do
       "undefined method"
   end
 
-  it "errors when type restriction is incompatible with default value" do
+  it "errors when default value is incompatible with type restriction" do
     assert_error "
       def foo(x : Int64 = 1)
       end
