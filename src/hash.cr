@@ -166,7 +166,7 @@ class Hash(K, V)
   # hash = {"foo" => "bar", "baz" => "qux"}
   # hash.key("bar")    # => "foo"
   # hash.key("qux")    # => "baz"
-  # hash.key("foobar") # => Missing hash key for value: foobar (KeyError)
+  # hash.key("foobar") # raises KeyError (Missing hash key for value: foobar)
   # ```
   def key(value)
     key(value) { raise KeyError.new "Missing hash key for value: #{value}" }
@@ -627,7 +627,7 @@ class Hash(K, V)
   # hash       # => {"baz" => "qux"}
   #
   # hash = {} of String => String
-  # hash.shift # => Index out of bounds (IndexError)
+  # hash.shift # raises IndexError
   # ```
   def shift
     shift { raise IndexError.new }

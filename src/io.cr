@@ -80,7 +80,7 @@ module IO
   #
   # ```
   # STDIN.read_timeout = 1
-  # STDIN.gets # => IO::Timeout (after 1 second)
+  # STDIN.gets # raises IO::Timeout (after 1 second)
   # ```
   class Timeout < Exception
   end
@@ -164,9 +164,9 @@ module IO
   # io = IO::Memory.new "hello"
   # slice = Bytes.new(4)
   # io.read(slice) # => 4
-  # slice          # => [104, 101, 108, 108]
+  # slice          # => Bytes[104, 101, 108, 108]
   # io.read(slice) # => 1
-  # slice          # => [111, 101, 108, 108]
+  # slice          # => Bytes[111, 101, 108, 108]
   # ```
   abstract def read(slice : Bytes)
 
@@ -418,7 +418,7 @@ module IO
   # If no encoding is set, this is the same as `#read_byte`.
   #
   # ```
-  # bytes = "你".encode("GB2312") # => [196, 227]
+  # bytes = "你".encode("GB2312") # => Bytes[196, 227]
   #
   # io = IO::Memory.new(bytes)
   # io.set_encoding("GB2312")
@@ -442,14 +442,14 @@ module IO
   # If no encoding is set, this is the same as `#read(slice)`.
   #
   # ```
-  # bytes = "你".encode("GB2312") # => [196, 227]
+  # bytes = "你".encode("GB2312") # => Bytes[196, 227]
   #
   # io = IO::Memory.new(bytes)
   # io.set_encoding("GB2312")
   #
   # buffer = uninitialized UInt8[1024]
   # bytes_read = io.read_utf8(buffer.to_slice) # => 3
-  # buffer.to_slice[0, bytes_read]             # => [228, 189, 160]
+  # buffer.to_slice[0, bytes_read]             # => Bytes[228, 189, 160]
   #
   # "你".bytes # => [228, 189, 160]
   # ```
@@ -511,8 +511,8 @@ module IO
   # io = IO::Memory.new "123451234"
   # slice = Bytes.new(5)
   # io.read_fully(slice) # => 5
-  # slice                # => [49, 50, 51, 52, 53]
-  # io.read_fully(slice) # => EOFError
+  # slice                # => Bytes[49, 50, 51, 52, 53]
+  # io.read_fully(slice) # raises IO::EOFError
   # ```
   def read_fully(slice : Bytes)
     read_fully?(slice) || raise(EOFError.new)
@@ -526,7 +526,7 @@ module IO
   # io = IO::Memory.new "123451234"
   # slice = Bytes.new(5)
   # io.read_fully?(slice) # => 5
-  # slice                 # => [49, 50, 51, 52, 53]
+  # slice                 # => Bytes[49, 50, 51, 52, 53]
   # io.read_fully?(slice) # => nil
   # ```
   def read_fully?(slice : Bytes)
@@ -544,7 +544,6 @@ module IO
   # ```
   # io = IO::Memory.new "hello world"
   # io.gets_to_end # => "hello world"
-  # io.gets_to_end # => ""
   # ```
   def gets_to_end : String
     String.build do |str|
@@ -844,7 +843,7 @@ module IO
   # ```
   # io = IO::Memory.new("hello\nworld")
   # iter = io.each_line
-  # iter.next # => "hello\n"
+  # iter.next # => "hello"
   # iter.next # => "world"
   # ```
   def each_line(*args, **options)

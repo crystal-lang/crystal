@@ -113,7 +113,7 @@ class CSV
   #   csv.row "one", "two"
   #   csv.row "three"
   # end
-  # result # => "one,two\nthree"
+  # result # => "one,two\nthree\n"
   # ```
   def self.build : String
     String.build do |io|
@@ -131,7 +131,7 @@ class CSV
   #   csv.row "one", "two"
   #   csv.row "three"
   # end
-  # io.to_s # => "HEADER\none,two\nthree"
+  # io.to_s # => "HEADER\none,two\nthree\n"
   # ```
   def self.build(io : IO)
     builder = Builder.new(io)

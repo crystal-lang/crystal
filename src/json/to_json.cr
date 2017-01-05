@@ -158,15 +158,15 @@ end
 # ```
 # require "json"
 #
-# class Person
+# class Timestamp
 #   JSON.mapping({
-#     birth_date: {type: Time, converter: Time::EpochMillisConverter},
+#     value: {type: Time, converter: Time::EpochMillisConverter},
 #   })
 # end
 #
-# person = Person.from_json(%({"birth_date": 1459860483856}))
-# person.birth_date # => 2016-04-05 12:48:03 UTC
-# person.to_json    # => %({"birth_date":1459860483856})
+# timestamp = Timestamp.from_json(%({"value": 1459860483856}))
+# timestamp.value   # => 2016-04-05 12:48:03.856 UTC
+# timestamp.to_json # => %({"value":1459860483856})
 # ```
 module Time::EpochMillisConverter
   def self.to_json(value : Time, json : JSON::Builder)

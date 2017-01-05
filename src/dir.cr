@@ -44,6 +44,9 @@ class Dir
   # passing the filename of each entry as a parameter to the block.
   #
   # ```
+  # Dir.mkdir("testdir")
+  # File.write("testdir/config.h", "")
+  #
   # d = Dir.new("testdir")
   # d.each { |x| puts "Got #{x}" }
   # ```
@@ -54,7 +57,6 @@ class Dir
   # Got .
   # Got ..
   # Got config.h
-  # Got main.rb
   # ```
   def each
     while entry = read
@@ -70,9 +72,11 @@ class Dir
   #
   # ```
   # d = Dir.new("testdir")
-  # d.read # => "."
-  # d.read # => ".."
-  # d.read # => "config.h"
+  # array = [] of String
+  # while file = d.read
+  #   array << file
+  # end
+  # array.sort # => [".", "..", "config.h"]
   # ```
   def read
     # readdir() returns NULL for failure and sets errno or returns NULL for EOF but leaves errno as is.  wtf.

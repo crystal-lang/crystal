@@ -6,7 +6,7 @@ module FileUtils
   # ```
   # require "file_utils"
   #
-  # FileUtils.cd("to/directory")
+  # FileUtils.cd("/tmp")
   # ```
   #
   # NOTE: Alias of `Dir.cd`
@@ -18,7 +18,7 @@ module FileUtils
   # and invoked the block, restoring the original working directory when the block exits.
   #
   # ```
-  # FileUtils.cd("to/directory") { puts "Do something useful here!" }
+  # FileUtils.cd("/tmp") { Dir.current } # => "/tmp"
   # ```
   #
   # NOTE: Alias of `Dir.cd` with block
@@ -30,7 +30,9 @@ module FileUtils
   # Returns true if content are the same, false otherwise.
   #
   # ```
-  # FileUtils.cmp("foo.cr", "bar.cr")
+  # File.write("file.cr", "1")
+  # File.write("bar.cr", "1")
+  # FileUtils.cmp("file.cr", "bar.cr") # => true
   # ```
   def cmp(filename1 : String, filename2 : String)
     return false unless File.size(filename1) == File.size(filename2)
@@ -46,7 +48,10 @@ module FileUtils
   # Returns true if content are the same, false otherwise.
   #
   # ```
-  # FileUtils.cmp(stream1 : IO, stream2 : IO)
+  # File.write("afile", "123")
+  # stream1 = File.open("afile")
+  # stream2 = IO::Memory.new("123")
+  # FileUtils.cmp(stream1, stream2) # => true
   # ```
   def cmp(stream1 : IO, stream2 : IO)
     buf1 = uninitialized UInt8[1024]
@@ -67,7 +72,9 @@ module FileUtils
   # Permission bits are copied too.
   #
   # ```
-  # FileUtils.cp("file_utils.cr", "file_utils_copy.cr")
+  # File.chmod("afile", 0o600)
+  # FileUtils.cp("afile", "afile_copy")
+  # File.stat("afile_copy").perm # => 0o600
   # ```
   def cp(src_path : String, dest : String)
     File.open(src_path) do |s|
@@ -82,7 +89,8 @@ module FileUtils
   # *dest* must be an existing directory.
   #
   # ```
-  # FileUtils.cp({"cgi.cr", "complex.cr", "date.cr"}, "files")
+  # Dir.mkdir("files")
+  # FileUtils.cp({"bar.cr", "afile"}, "files")
   # ```
   def cp(srcs : Enumerable(String), dest : String)
     raise ArgumentError.new("no such directory : #{dest}") unless Dir.exists?(dest)
@@ -95,7 +103,7 @@ module FileUtils
   # If *src_path* is a directory, this method copies all its contents recursively
   #
   # ```
-  # FileUtils.cp_r("src_dir", "src_dir_copy")
+  # FileUtils.cp_r("files", "dir")
   # ```
   def cp_r(src_path : String, dest_path : String)
     if Dir.exists?(src_path)
@@ -118,7 +126,7 @@ module FileUtils
   # can be specified, with a default of 777 (0o777).
   #
   # ```
-  # FileUtils.mkdir("foo")
+  # FileUtils.mkdir("src")
   # ```
   #
   # NOTE: Alias of `Dir.mkdir`
@@ -156,7 +164,7 @@ module FileUtils
   # with a default of 777 (0o777).
   #
   # ```
-  # FileUtils.mkdir_p(["foo", "bar"])
+  # FileUtils.mkdir_p(["foo", "bar", "baz", "dir1", "dir2", "dir3"])
   # ```
   def mkdir_p(paths : Enumerable(String), mode = 0o777) : Nil
     paths.each do |path|
@@ -178,7 +186,7 @@ module FileUtils
   # Moves every *srcs* to *dest*.
   #
   # ```
-  # FileUtils.mv(["afile", "foo", "bar"], "src")
+  # FileUtils.mv(["foo", "bar"], "src")
   # ```
   def mv(srcs : Enumerable(String), dest : String) : Nil
     raise ArgumentError.new("no such directory : #{dest}") unless Dir.exists?(dest)
@@ -215,7 +223,7 @@ module FileUtils
   # Deletes all *paths* file given.
   #
   # ```
-  # FileUtils.rm(["afile.cr", "bfile.cr"])
+  # FileUtils.rm(["dir/afile", "afile_copy"])
   # ```
   def rm(paths : Enumerable(String)) : Nil
     paths.each do |path|
@@ -250,7 +258,7 @@ module FileUtils
   # If one path is a directory, this method removes all its contents recursively
   #
   # ```
-  # FileUtils.rm_r(["dir", "file.cr"])
+  # FileUtils.rm_r(["files", "bar.cr"])
   # ```
   def rm_r(paths : Enumerable(String)) : Nil
     paths.each do |path|
@@ -293,7 +301,7 @@ module FileUtils
   # Removes the directory at the given *path*.
   #
   # ```
-  # FileUtils.rmdir("dir")
+  # FileUtils.rmdir("baz")
   # ```
   #
   # NOTE: Alias of `Dir.rmdir`

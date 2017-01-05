@@ -29,16 +29,15 @@ module YAML
   #
   # ```
   # employee = Employee.from_yaml("title: Manager\nname: John\nage: 30")
-  # employee.age # => undefined method 'age'.
+  # employee.age # undefined method 'age'. (compile error)
   #
-  # employee = Employee.from_yaml("title: Manager")
-  # # => ParseException: missing yaml attribute: name
+  # Employee.from_yaml("title: Manager") # raises YAML::ParseException
   # ```
   #
   # You can also define attributes for each property.
   #
   # ```
-  # class Employee
+  # class Employer
   #   YAML.mapping(
   #     title: String,
   #     name: {

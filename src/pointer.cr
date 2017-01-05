@@ -312,10 +312,10 @@ struct Pointer(T)
   #
   # ```
   # ptr1 = Pointer(Int32).new(1234)
-  # ptr1.to_s # => Pointer(Int32)@0x4D2
+  # ptr1.to_s # => "Pointer(Int32)@0x4d2"
   #
   # ptr2 = Pointer(Int32).new(0)
-  # ptr2.to_s # => Pointer(Int32).null
+  # ptr2.to_s # => "Pointer(Int32).null"
   # ```
   def to_s(io : IO)
     io << "Pointer("
@@ -408,14 +408,13 @@ struct Pointer(T)
   # ```
   # # Allocate memory for an Int32: 4 bytes
   # ptr = Pointer(Int32).malloc
-  # ptr.value #=> 0
+  # ptr.value # => 0
   #
   # # Allocate memory for 10 Int32: 40 bytes
   # ptr = Pointer(Int32).malloc(10)
-  # ptr[0] #=> 0
-  # ...
-  # ptr[9] #=> 0
-  #
+  # ptr[0] # => 0
+  # # ...
+  # ptr[9] # => 0
   # ```
   def self.malloc(size : Int = 1)
     if size < 0
@@ -472,8 +471,8 @@ struct Pointer(T)
   # Returns a `Slice` that points to this pointer and is bounded by the given *size*.
   #
   # ```
-  # ptr = Pointer.malloc(6) { |i| i + 10 } #   [10, 11, 12, 13, 14, 15]
-  # slice = ptr.to_slice(4)                # => [10, 11, 12, 13]
+  # ptr = Pointer.malloc(6) { |i| i + 10 } # [10, 11, 12, 13, 14, 15]
+  # slice = ptr.to_slice(4)                # => Slice[10, 11, 12, 13]
   # slice.class                            # => Slice(Int32)
   # ```
   def to_slice(size)
@@ -483,9 +482,9 @@ struct Pointer(T)
   # Clears (sets to "zero" bytes) a number of values pointed by this pointer.
   #
   # ```
-  # ptr = Pointer.malloc(6) { |i| i + 10 } #   [10, 11, 12, 13, 14, 15]
+  # ptr = Pointer.malloc(6) { |i| i + 10 } # [10, 11, 12, 13, 14, 15]
   # ptr.clear(3)
-  # ptr #   [0, 0, 0, 13, 14, 15]
+  # ptr.to_slice(6) # => Slice[0, 0, 0, 13, 14, 15]
   # ```
   def clear(count = 1)
     ptr = self.as(Pointer(Void))

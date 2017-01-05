@@ -273,24 +273,24 @@ class String
   #
   # ```
   # "12345".to_i             # => 12345
-  # "0a".to_i                # => 0
-  # "hello".to_i             # => raises
+  # "0a".to_i                # raises ArgumentError
+  # "hello".to_i             # raises ArgumentError
   # "0a".to_i(16)            # => 10
   # "1100101".to_i(2)        # => 101
   # "1100101".to_i(8)        # => 294977
   # "1100101".to_i(10)       # => 1100101
   # "1100101".to_i(base: 16) # => 17826049
   #
-  # "12_345".to_i                   # => raises
+  # "12_345".to_i                   # raises ArgumentError
   # "12_345".to_i(underscore: true) # => 12345
   #
   # "  12345  ".to_i                    # => 12345
-  # "  12345  ".to_i(whitespace: false) # => raises
+  # "  12345  ".to_i(whitespace: false) # raises ArgumentError
   #
-  # "0x123abc".to_i               # => raises
+  # "0x123abc".to_i               # raises ArgumentError
   # "0x123abc".to_i(prefix: true) # => 1194684
   #
-  # "99 red balloons".to_i                # => raises
+  # "99 red balloons".to_i                # raises ArgumentError
   # "99 red balloons".to_i(strict: false) # => 99
   # ```
   def to_i(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true)
@@ -301,10 +301,10 @@ class String
   # of this string, or if the resulting integer doesn't fit an Int32.
   #
   # ```
-  # "12345".to_i?           # => 12345
-  # "99 red balloons".to_i? # => 99
-  # "0a".to_i?              # => 0
-  # "hello".to_i?           # => nil
+  # "12345".to_i?             # => 12345
+  # "99 red balloons".to_i?   # => nil
+  # "0a".to_i?(strict: false) # => 0
+  # "hello".to_i?             # => nil
   # ```
   def to_i?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true)
     to_i32?(base, whitespace, underscore, prefix, strict)
@@ -600,9 +600,9 @@ class String
   #
   # ```
   # "123.45e1".to_f                # => 1234.5
-  # "45.67 degrees".to_f           # => 45.67
-  # "thx1138".to_f                 # => ArgumentError
-  # " 1.2".to_f(whitespace: false) # => ArgumentError
+  # "45.67 degrees".to_f           # raises ArgumentError
+  # "thx1138".to_f(strict: false)  # raises ArgumentError
+  # " 1.2".to_f(whitespace: false) # raises ArgumentError
   # "1.2foo".to_f(strict: false)   # => 1.2
   # ```
   def to_f(whitespace = true, strict = true)
@@ -618,7 +618,7 @@ class String
   #
   # ```
   # "123.45e1".to_f?                # => 1234.5
-  # "45.67 degrees".to_f?           # => 45.67
+  # "45.67 degrees".to_f?           # => nil
   # "thx1138".to_f?                 # => nil
   # " 1.2".to_f?(whitespace: false) # => nil
   # "1.2foo".to_f?(strict: false)   # => 1.2
@@ -1089,7 +1089,7 @@ class String
   # * `:skip`: invalid byte sequences are ignored
   #
   # ```
-  # "好".encode("GB2312") # => [186, 195]
+  # "好".encode("GB2312") # => Bytes[186, 195]
   # "好".bytes            # => [229, 165, 189]
   # ```
   def encode(encoding : String, invalid : Symbol? = nil) : Bytes
@@ -1699,7 +1699,7 @@ class String
   # by the block value's value.
   #
   # ```
-  # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => #=> "104 101 108 108 111 "
+  # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
   def gsub(pattern : Regex)
     gsub_append(pattern) do |string, match, buffer|
@@ -2184,8 +2184,8 @@ class String
   # "Hello, World".index('Z')    # => nil
   # "Hello, World".index("o", 5) # => 8
   # "Hello, World".index("H", 2) # => nil
-  # "Hello, World".index(/[ ]+/) # => 5
-  # "Hello, World".index(/d+/)   # => nil
+  # "Hello, World".index(/[ ]+/) # => 6
+  # "Hello, World".index(/\d+/)  # => nil
   # ```
   def index(search : Char, offset = 0)
     # If it's ASCII we can delegate to slice
@@ -2242,7 +2242,7 @@ class String
   # "Hello, World".rindex('o')    # => 8
   # "Hello, World".rindex('Z')    # => nil
   # "Hello, World".rindex("o", 5) # => 4
-  # "Hello, World".rindex("H", 2) # => nil
+  # "Hello, World".rindex("W", 2) # => nil
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
@@ -2626,7 +2626,7 @@ class String
   # ```
   # long_river_name = "Mississippi"
   # long_river_name.split("ss") # => ["Mi", "i", "ippi"]
-  # long_river_name.split("i")  # => ["M", "ss", "ss", "pp"]
+  # long_river_name.split("i")  # => ["M", "ss", "ss", "pp", ""]
   # long_river_name.split("")   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : String, limit = nil)
@@ -2653,7 +2653,7 @@ class String
   # ary.clear
   #
   # long_river_name.split("i") { |s| ary << s }
-  # ary # => ["M", "ss", "ss", "pp"]
+  # ary # => ["M", "ss", "ss", "pp", ""]
   # ary.clear
   #
   # long_river_name.split("") { |s| ary << s }
@@ -2988,9 +2988,9 @@ class String
   # Adds instances of *char* to left of the string until it is at least size of *len*.
   #
   # ```
-  # "Purple".ljust(8)      # => "  Purple"
-  # "Purple".ljust(8, '-') # => "--Purple"
-  # "Aubergine".ljust(8)   # => "Aubergine"
+  # "Purple".rjust(8)      # => "  Purple"
+  # "Purple".rjust(8, '-') # => "--Purple"
+  # "Aubergine".rjust(8)   # => "Aubergine"
   # ```
   def rjust(len, char : Char = ' ')
     just len, char, false
@@ -3148,9 +3148,11 @@ class String
   # Yields each character in the string to the block.
   #
   # ```
+  # array = [] of Char
   # "ab☃".each_char do |char|
-  #   char # => 'a', 'b', '☃'
+  #   array << char
   # end
+  # array # => ['a', 'b', '☃']
   # ```
   def each_char
     if ascii_only?
@@ -3180,10 +3182,11 @@ class String
   # Yields each character and its index in the string to the block.
   #
   # ```
+  # array = [] of Tuple(Char, Int32)
   # "ab☃".each_char_with_index do |char, index|
-  #   char  # => 'a', 'b', '☃'
-  #   index # => 0,   1,   2
+  #   array << {char, index}
   # end
+  # array # => [{'a', 0}, {'b', 1}, {'☃', 2}]
   # ```
   def each_char_with_index
     i = 0
@@ -3210,9 +3213,11 @@ class String
   # Yields each codepoint to the block.
   #
   # ```
+  # array = [] of Int32
   # "ab☃".each_codepoint do |codepoint|
-  #   codepoint # => 97, 98, 9731
+  #   array << codepoint
   # end
+  # array # => [97, 98, 9731]
   # ```
   #
   # See also: `Char#ord`.
@@ -3254,9 +3259,11 @@ class String
   # Yields each byte in the string to the block.
   #
   # ```
+  # array = [] of UInt8
   # "ab☃".each_byte do |byte|
-  #   byte # => 97, 98, 226, 152, 131
+  #   array << byte
   # end
+  # array # => [97, 98, 226, 152, 131]
   # ```
   def each_byte
     to_unsafe.to_slice(bytesize).each do |byte|
@@ -3272,7 +3279,7 @@ class String
   # bytes.next # => 97
   # bytes.next # => 98
   # bytes.next # => 226
-  # bytes.next # => 156
+  # bytes.next # => 152
   # bytes.next # => 131
   # ```
   def each_byte
@@ -3432,7 +3439,7 @@ class String
   # Interpolates *other* into the string using `Kernel#sprintf`.
   #
   # ```
-  # "Party like it's %d!!!" % 1999 # => Party like it's 1999!!!
+  # "Party like it's %d!!!" % 1999 # => "Party like it's 1999!!!"
   # ```
   def %(other)
     sprintf self, other

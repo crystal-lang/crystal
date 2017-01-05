@@ -9,8 +9,8 @@
 # ```
 # language = {name: "Crystal", year: 2011} # NamedTuple(name: String, year: Int32)
 #
-# language[:name]  # => "Crystal" (String)
-# language[:year]  # => 2011      (Int32)
+# language[:name]  # => "Crystal"
+# language[:year]  # => 2011
 # language[:other] # compile time error
 # ```
 #
@@ -30,9 +30,8 @@ struct NamedTuple
   #
   # ```
   # NamedTuple.new(name: "Crystal", year: 2011) #=> {name: "Crystal", year: 2011}
-  # NamedTuple.new                  #=> {}
-  #
-  # {}                         # syntax error
+  # NamedTuple.new # => {}
+  # {}             # syntax error
   # ```
   def self.new(**options : **T)
     options
@@ -59,6 +58,8 @@ struct NamedTuple
   # This allows you to easily pass a hash as individual named arguments to a method.
   #
   # ```
+  # require "json"
+  #
   # def speak_about(thing : String, n : Int64)
   #   "I see #{n} #{thing}s"
   # end
@@ -92,7 +93,7 @@ struct NamedTuple
   # tuple[key] # => 2011
   #
   # key = :other
-  # tuple[key] # # => KeyError
+  # tuple[key] # raises KeyError
   # ```
   def [](key : Symbol | String)
     fetch(key) { raise KeyError.new "Missing named tuple key: #{key.inspect}" }
