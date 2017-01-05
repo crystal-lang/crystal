@@ -340,7 +340,7 @@ struct Int
     TimesIterator(typeof(self)).new(self)
   end
 
-  def upto(n, &block : self ->) : Nil
+  def upto(to, &block : self ->) : Nil
     x = self
     while x <= to
       yield x
