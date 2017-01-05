@@ -18,7 +18,7 @@ require "c/string"
 # x = 1
 # ptr = pointerof(x)
 # ptr.value = 2
-# puts x # => 2
+# x # => 2
 # ```
 #
 # Note that a pointer is *falsey* if it's null (if it's address is zero).

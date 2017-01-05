@@ -44,14 +44,14 @@
 # An enum can be created from an integer:
 #
 # ```
-# puts Color.new(1) # => "Green"
+# Color.new(1).to_s # => "Green"
 # ```
 #
 # Values that don't correspond to an enum's constants are allowed: the value will still be of type Color,
 # but when printed you will get the underlying value:
 #
 # ```
-# puts Color.new(10) # => "10"
+# Color.new(10).to_s # => "10"
 # ```
 #
 # This method is mainly intended to convert integers from C to enums in Crystal.
