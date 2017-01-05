@@ -271,6 +271,7 @@ class Deque(T)
         yield @buffer[i]
       end
     end
+    self
   end
 
   # Insert a new item before the item at *index*. Items to the right of this one will have their indices incremented.

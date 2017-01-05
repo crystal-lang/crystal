@@ -236,6 +236,7 @@ module HTTP
           yield({name, value})
         end
       end
+      self
     end
 
     # Deletes first value for provided param name. If there are no values left,

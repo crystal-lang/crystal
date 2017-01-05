@@ -115,10 +115,14 @@ describe CSV do
 
   it "can do each" do
     csv = new_csv headers: true
+    ones = [] of String
+    twos = [] of String
     csv.each do
-      csv["one"].should eq("1")
-      break
-    end
+      ones << csv["one"]
+      twos << csv["two"]
+    end.should be(csv)
+    ones.should eq(["1", "3", "5"])
+    twos.should eq([" 2", " 4", ""])
   end
 
   it "can do new with block" do

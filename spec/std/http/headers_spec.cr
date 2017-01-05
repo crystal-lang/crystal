@@ -29,7 +29,7 @@ describe HTTP::Headers do
     serialized = String.build do |io|
       headers.each do |name, values|
         io << name << ": " << values.first << ";"
-      end
+      end.should be(headers)
     end
 
     serialized.should eq("FOO_BAR: bar;Foobar-foo: baz;")

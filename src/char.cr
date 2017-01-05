@@ -712,6 +712,8 @@ struct Char
     else
       raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
+
+    self
   end
 
   # Returns the number of UTF-8 bytes in this char.

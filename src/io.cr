@@ -834,6 +834,7 @@ module IO
     while line = gets(*args, **options)
       yield line
     end
+    self
   end
 
   # Returns an `Iterator` for the *lines* in this IO, where a line
@@ -869,6 +870,7 @@ module IO
     while char = read_char
       yield char
     end
+    self
   end
 
   # Returns an `Iterator` for the chars in this IO.
@@ -904,6 +906,7 @@ module IO
     while byte = read_byte
       yield byte
     end
+    self
   end
 
   # Returns an `Iterator` for the bytes in this IO.

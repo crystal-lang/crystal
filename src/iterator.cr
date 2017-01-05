@@ -383,6 +383,7 @@ module Iterator(T)
       break if value.is_a?(Stop)
       yield value
     end
+    self
   end
 
   # Returns an iterator that then returns slices of n elements of the initial

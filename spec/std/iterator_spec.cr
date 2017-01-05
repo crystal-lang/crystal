@@ -15,6 +15,13 @@ describe Iterator do
     end
   end
 
+  describe "each" do
+    it "returns self" do
+      iter = (1..3).each
+      iter.each { }.should be(iter)
+    end
+  end
+
   describe "compact_map" do
     it "applies the function and removes nil values" do
       iter = (1..3).each.compact_map { |e| e.odd? ? e : nil }
