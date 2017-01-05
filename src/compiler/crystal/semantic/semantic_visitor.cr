@@ -430,8 +430,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     case scope
     when Program
       node.raise "can't use class variables at the top level"
-    when GenericClassType, GenericModuleType
-      node.raise "can't use class variables in generic types"
     end
 
     scope.as(ClassVarContainer)
