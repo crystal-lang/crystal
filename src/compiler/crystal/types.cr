@@ -2451,6 +2451,14 @@ module Crystal
       end
     end
 
+    def virtual_type
+      instance_type.virtual_type.metaclass
+    end
+
+    def virtual_type!
+      instance_type.virtual_type!.metaclass
+    end
+
     delegate defs, macros, to: instance_type.generic_type.metaclass
     delegate type_vars, abstract?, generic_nest, lookup_new_in_ancestors?, to: instance_type
 
