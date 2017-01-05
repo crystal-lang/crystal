@@ -2826,7 +2826,7 @@ class String
   # # => EVEN THE MONKEY SEEMS TO want
   # # => A LITTLE COAT OF STRAW
   # ```
-  def each_line(chomp = true)
+  def each_line(chomp = true) : Nil
     return if empty?
 
     offset = 0
@@ -3154,7 +3154,7 @@ class String
   # end
   # array # => ['a', 'b', '☃']
   # ```
-  def each_char
+  def each_char : Nil
     if ascii_only?
       each_byte do |byte|
         yield byte.unsafe_chr
@@ -3164,7 +3164,6 @@ class String
         yield char
       end
     end
-    self
   end
 
   # Returns an iterator over each character in the string.
@@ -3194,7 +3193,6 @@ class String
       yield char, i
       i += 1
     end
-    self
   end
 
   # Returns an array of all characters in the string.
@@ -3269,7 +3267,7 @@ class String
     to_unsafe.to_slice(bytesize).each do |byte|
       yield byte
     end
-    self
+    nil
   end
 
   # Returns an iterator over each byte in the string.

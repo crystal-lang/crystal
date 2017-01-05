@@ -290,13 +290,12 @@ class Hash(K, V)
   #   key_and_value # => {"foo", "bar"}
   # end
   # ```
-  def each
+  def each : Nil
     current = @first
     while current
       yield({current.key, current.value})
       current = current.fore
     end
-    self
   end
 
   # Returns an iterator over the hash entries.

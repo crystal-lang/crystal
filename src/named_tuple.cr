@@ -290,11 +290,10 @@ struct NamedTuple
   # name = Crystal
   # year = 2011
   # ```
-  def each
+  def each : Nil
     {% for key in T %}
       yield {{key.symbolize}}, self[{{key.symbolize}}]
     {% end %}
-    self
   end
 
   # Yields each key in this named tuple.
@@ -312,11 +311,10 @@ struct NamedTuple
   # name
   # year
   # ```
-  def each_key
+  def each_key : Nil
     {% for key in T %}
       yield {{key.symbolize}}
     {% end %}
-    self
   end
 
   # Yields each value in this named tuple.
@@ -334,11 +332,10 @@ struct NamedTuple
   # Crystal
   # 2011
   # ```
-  def each_value
+  def each_value : Nil
     {% for key in T %}
       yield self[{{key.symbolize}}]
     {% end %}
-    self
   end
 
   # Yields each key and value, together with an index starting at *offset*, in this named tuple.
@@ -362,7 +359,6 @@ struct NamedTuple
       yield key, value, i
       i += 1
     end
-    self
   end
 
   # Returns an `Array` populated with the results of each iteration in the given block,

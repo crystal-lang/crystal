@@ -154,7 +154,7 @@ describe "NamedTuple" do
         value.should eq("hello")
       end
       i += 1
-    end
+    end.should be_nil
     i.should eq(2)
   end
 
@@ -169,7 +169,7 @@ describe "NamedTuple" do
         key.should eq(:b)
       end
       i += 1
-    end
+    end.should be_nil
     i.should eq(2)
   end
 
@@ -184,7 +184,7 @@ describe "NamedTuple" do
         value.should eq("hello")
       end
       i += 1
-    end
+    end.should be_nil
     i.should eq(2)
   end
 
@@ -203,7 +203,7 @@ describe "NamedTuple" do
         index.should eq(1)
       end
       i += 1
-    end
+    end.should be_nil
     i.should eq(2)
   end
 

@@ -178,13 +178,12 @@ module Indexable(T)
   # ```text
   # 0 -- 1 -- 2 --
   # ```
-  def each_index
+  def each_index : Nil
     i = 0
     while i < size
       yield i
       i += 1
     end
-    self
   end
 
   # Returns an `Iterator` for each index in `self`.
@@ -332,11 +331,10 @@ module Indexable(T)
   end
 
   # Same as `#each`, but works in reverse.
-  def reverse_each(&block)
+  def reverse_each(&block) : Nil
     (size - 1).downto(0) do |i|
       yield unsafe_at(i)
     end
-    self
   end
 
   # Returns an `Iterator` over the elements of `self` in reverse order.

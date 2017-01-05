@@ -377,7 +377,7 @@ module Iterator(T)
   # iter = ["a", "b", "c"].each
   # iter.each { |x| print x, " " } # Prints "a b c"
   # ```
-  def each
+  def each : Nil
     while true
       value = self.next
       break if value.is_a?(Stop)

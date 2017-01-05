@@ -98,14 +98,13 @@ struct Range(B, E)
   # (10..15).each { |n| print n, ' ' }
   # # prints: 10 11 12 13 14 15
   # ```
-  def each
+  def each : Nil
     current = @begin
     while current < @end
       yield current
       current = current.succ
     end
     yield current if !@exclusive && current == @end
-    self
   end
 
   # Returns an `Iterator` over the elements of this range.
@@ -123,14 +122,13 @@ struct Range(B, E)
   # (10...15).reverse_each { |n| print n, ' ' }
   # # prints: 14 13 12 11 10
   # ```
-  def reverse_each
+  def reverse_each : Nil
     yield @end if !@exclusive && !(@end < @begin)
     current = @end
     while @begin < current
       current = current.pred
       yield current
     end
-    self
   end
 
   # Returns a reverse `Iterator` over the elements of this range.

@@ -687,7 +687,7 @@ struct Char
   # 129
   # 130
   # ```
-  def each_byte
+  def each_byte : Nil
     # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
 
     c = ord

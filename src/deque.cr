@@ -265,7 +265,7 @@ class Deque(T)
   # Yields each item in this deque, from first to last.
   #
   # Do not modify the deque while using this variant of `each`!
-  def each
+  def each : Nil
     halfs do |r|
       r.each do |i|
         yield @buffer[i]

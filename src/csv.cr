@@ -188,7 +188,7 @@ class CSV
   end
 
   # Invokes the block once for each row in this CSV, yielding `self`.
-  def each
+  def each : Nil
     while self.next
       yield self
     end

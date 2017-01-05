@@ -277,10 +277,17 @@ describe "Deque" do
     a.should eq(Deque{x})
   end
 
+  it "does each" do
+    a = Deque{1, 1, 1}
+    b = 0
+    a.each { |i| b += i }.should be_nil
+    b.should eq(3)
+  end
+
   it "does each_index" do
     a = Deque{1, 1, 1}
     b = 0
-    a.each_index { |i| b += i }
+    a.each_index { |i| b += i }.should be_nil
     b.should eq(3)
   end
 

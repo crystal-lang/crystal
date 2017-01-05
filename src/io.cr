@@ -830,7 +830,7 @@ module IO
   # olleh
   # dlrow
   # ```
-  def each_line(*args, **options)
+  def each_line(*args, **options) : Nil
     while line = gets(*args, **options)
       yield line
     end
@@ -865,7 +865,7 @@ module IO
   # あ
   # め
   # ```
-  def each_char
+  def each_char : Nil
     while char = read_char
       yield char
     end
@@ -900,7 +900,7 @@ module IO
   # 129
   # 130
   # ```
-  def each_byte
+  def each_byte : Nil
     while byte = read_byte
       yield byte
     end

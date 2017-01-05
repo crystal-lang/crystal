@@ -91,7 +91,7 @@ describe CSV do
     sum = 0
     CSV.each_row("1,2\n3,4\n") do |row|
       sum += row.map(&.to_i).sum
-    end
+    end.should be_nil
     sum.should eq(10)
   end
 

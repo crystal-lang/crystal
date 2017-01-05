@@ -35,6 +35,8 @@ struct HTTP::Headers
 
         return false if byte1 != byte2
       end
+
+      true
     end
 
     private def normalize_byte(byte)

@@ -58,7 +58,7 @@ class Dir
   # Got ..
   # Got config.h
   # ```
-  def each
+  def each : Nil
     while entry = read
       yield entry
     end

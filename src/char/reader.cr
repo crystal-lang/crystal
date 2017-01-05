@@ -141,13 +141,12 @@ struct Char
     # B
     # C
     # ```
-    def each
+    def each : Nil
       while has_next?
         yield current_char
         @pos += @current_char_width
         decode_current_char
       end
-      self
     end
 
     private def decode_char_at(pos)
