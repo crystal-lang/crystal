@@ -32,10 +32,6 @@ module Event
       @freed = true
     end
 
-    def finalize
-      free
-    end
-
     private def to_timeval(time : Int)
       t = uninitialized LibC::Timeval
       t.tv_sec = typeof(t.tv_sec).new(time)

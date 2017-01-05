@@ -13,7 +13,7 @@ module Crystal
     end
 
     def push_debug_info_metadata(mod)
-      di_builder(mod).finalize
+      di_builder(mod).end
 
       # DebugInfo generation in LLVM by default uses a higher version of dwarf
       # than OS X currently understands. Android has the same problem.

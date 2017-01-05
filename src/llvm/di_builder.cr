@@ -102,7 +102,7 @@ struct LLVM::DIBuilder
     {% end %}
   end
 
-  def finalize
+  def end
     LibLLVMExt.di_builder_finalize(self)
   end
 

@@ -241,4 +241,14 @@ describe "Semantic: struct" do
       ),
       "recursive struct Bar detected: `@value : Foo` -> `Foo` -> `Bar`"
   end
+
+  it "errors if defining finalize for struct (#3840)" do
+    assert_error %(
+      struct Foo
+        def finalize
+        end
+      end
+      ),
+      "structs can't have finalizers because they are not tracked by the GC"
+  end
 end

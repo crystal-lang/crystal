@@ -312,6 +312,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       process_primitive_attribute(node, primitive_attribute)
     end
 
+    if target_type.struct? && !target_type.metaclass? && node.name == "finalize"
+      node.raise "structs can't have finalizers because they are not tracked by the GC"
+    end
+
     target_type.add_def node
     node.set_type @program.nil
 
