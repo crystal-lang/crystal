@@ -83,33 +83,35 @@ def puts(*objects) : Nil
 end
 
 # Pretty prints *object* to STDOUT followed
-# by a newline.
+# by a newline. Returns *object*.
 #
 # See also: `Object#pretty_print(pp)`.
-def p(object) : Nil
+def p(object)
   PrettyPrint.format(object, STDOUT, 79)
   puts
+  object
 end
 
 # Pretty prints each object in *objects* to STDOUT, followed
-# by a newline.
+# by a newline. Returns *objects*.
 #
 # See also: `Object#pretty_print(pp)`.
-def p(*objects) : Nil
+def p(*objects)
   objects.each do |obj|
     p obj
   end
+  objects
 end
 
 # Pretty prints each object in *objects* to STDOUT, followed
-# by a newline.
+# by a newline. Returns *objects*.
 #
 # ```
-# p foo: 23, bar: 42 # prints "{foo: 23, bar: 42}"
+# p foo: 23, bar: 42 # => {foo: 23, bar: 42}
 # ```
 #
 # See `Object#pretty_print(pp)`
-def p(**objects) : Nil
+def p(**objects)
   p(objects)
 end
 
