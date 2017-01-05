@@ -171,6 +171,16 @@ describe "Semantic: def" do
       "undefined method"
   end
 
+  it "errors when type restriction is incompatible with default value" do
+    assert_error "
+      def foo(x : Int64 = 1)
+      end
+
+      foo
+      ",
+      "can't restrict Int32 to Int64"
+  end
+
   it "types call with global scope" do
     assert_type("
       def bar
