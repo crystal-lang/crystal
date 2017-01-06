@@ -1,6 +1,6 @@
 require "spec"
 
-module ReferenceSpec
+private module ReferenceSpec
   class TestClass
     @x : Int32
     @y : String

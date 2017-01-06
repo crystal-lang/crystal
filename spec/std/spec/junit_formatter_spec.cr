@@ -118,7 +118,7 @@ describe "JUnit Formatter" do
   end
 end
 
-def build_report
+private def build_report
   output = String::Builder.new
   formatter = Spec::JUnitFormatter.new(output)
   yield formatter
@@ -126,7 +126,7 @@ def build_report
   output.to_s
 end
 
-def exception_with_backtrace(msg)
+private def exception_with_backtrace(msg)
   begin
     raise Exception.new(msg)
   rescue e

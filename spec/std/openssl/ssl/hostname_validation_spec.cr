@@ -1,7 +1,7 @@
 require "spec"
 require "openssl/ssl/hostname_validation"
 
-def openssl_create_cert(subject = nil, san = nil)
+private def openssl_create_cert(subject = nil, san = nil)
   cert = OpenSSL::X509::Certificate.new
   cert.subject = subject if subject
   cert.add_extension(OpenSSL::X509::Extension.new("subjectAltName", san)) if san
