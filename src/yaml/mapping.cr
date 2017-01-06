@@ -52,7 +52,7 @@ module YAML
   # Available attributes:
   #
   # * *type* (required) defines its type. In the example above, *title: String* is a shortcut to *title: {type: String}*.
-  # * *nilable* defines if a property can be a `Nil`. Passing `T | Nil` as a type has the same effect.
+  # * *nilable* defines if a property can be a `Nil`. Passing `T?` as a type has the same effect.
   # * **default**: value to use if the property is missing in the YAML document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a YAML document is parsed.
   # * *key* defines which key to read from a YAML document. It defaults to the name of the property.
   # * *converter* takes an alternate type for parsing. It requires a `#from_yaml` method in that class, and returns an instance of the given type. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
