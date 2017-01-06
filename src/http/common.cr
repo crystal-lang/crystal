@@ -229,6 +229,67 @@ module HTTP
     time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
   end
 
+  # Dequotes an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
+  # quoted-string.
+  #
+  # ```
+  # quoted = %q(\"foo\\bar\")
+  # HTTP.dequote_string(quoted) # => %q("foo\bar")
+  # ```
+  def self.dequote_string(str)
+    data = str.to_slice
+    quoted_pair_index = data.index('\\'.ord)
+    return str unless quoted_pair_index
+
+    String.build do |io|
+      while quoted_pair_index
+        io.write(data[0, quoted_pair_index])
+        io << data[quoted_pair_index + 1].chr
+
+        data += quoted_pair_index + 2
+        quoted_pair_index = data.index('\\'.ord)
+      end
+      io.write(data)
+    end
+  end
+
+  # Encodes a string to an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
+  # quoted-string. Encoded string is written to *io*. May raise when *string*
+  # contains an invalid character.
+  #
+  # ```
+  # string = %q("foo\ bar")
+  # io = IO::Memory.new
+  # HTTP.quote_string(string, io)
+  # io.gets_to_end # => %q(\"foo\\\ bar\")
+  # ```
+  def self.quote_string(string, io)
+    # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
+
+    string.each_byte do |byte|
+      case byte
+      when '\t'.ord, ' '.ord, '"'.ord, '\\'.ord
+        io << '\\'
+      when 0x00..0x1F, 0x7F
+        raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+      end
+      io.write_byte byte
+    end
+  end
+
+  # Encodes a string to an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
+  # quoted-string. May raise when *string* contains an invalid character.
+  #
+  # ```
+  # string = %q("foo\ bar")
+  # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
+  # ```
+  def self.quote_string(string)
+    String.build do |io|
+      quote_string(string, io)
+    end
+  end
+
   # Returns the default status message of the given HTTP status code.
   def self.default_status_message_for(status_code : Int) : String
     case status_code

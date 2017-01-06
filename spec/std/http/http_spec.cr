@@ -51,4 +51,33 @@ describe HTTP do
       end
     end
   end
+
+  describe ".dequote_string" do
+    it "dequotes a string" do
+      HTTP.dequote_string(%q(foo\"\\bar\ baz\\)).should eq(%q(foo"\bar baz\))
+    end
+  end
+
+  describe ".quote_string" do
+    it "quotes a string" do
+      HTTP.quote_string("foo!#():;?~").should eq("foo!#():;?~")
+      HTTP.quote_string(%q(foo"bar\baz)).should eq(%q(foo\"bar\\baz))
+      HTTP.quote_string("\t ").should eq("\\\t\\ ")
+      HTTP.quote_string("it works 😂😂😂👌👌👌😂😂😂").should eq("it\\ works\\ 😂😂😂👌👌👌😂😂😂")
+    end
+
+    it "raises on invalid characters" do
+      expect_raises(ArgumentError, "String contained invalid character") do
+        HTTP.quote_string("foo\0bar")
+      end
+
+      expect_raises(ArgumentError, "String contained invalid character") do
+        HTTP.quote_string("foo\u{1B}bar")
+      end
+
+      expect_raises(ArgumentError, "String contained invalid character") do
+        HTTP.quote_string("foo\u{7F}bar")
+      end
+    end
+  end
 end
