@@ -7,6 +7,11 @@ describe HTTP do
     HTTP.parse_time("Sun, 06 Nov 1994 08:49:37 GMT").should eq(time)
   end
 
+  it "parses RFC 1123 without day name" do
+    time = Time.new(1994, 11, 6, 8, 49, 37)
+    HTTP.parse_time("06 Nov 1994 08:49:37 GMT").should eq(time)
+  end
+
   it "parses RFC 1036" do
     time = Time.new(1994, 11, 6, 8, 49, 37)
     HTTP.parse_time("Sunday, 06-Nov-94 08:49:37 GMT").should eq(time)
