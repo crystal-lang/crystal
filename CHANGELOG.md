@@ -1,7 +1,8 @@
-## Next
+# 0.20.4 (06-01-2017)
 
 * **(breaking change)** A type that wants to convert itself to JSON now must override `to_json(builder : JSON::Builder)` instead of `to_json(io : IO)`. The same is true for custom JSON converters. If you are using `JSON.mapping` then your code will continue to work without changes.
 * **(breaking change)** Defining a `finalize` method on a struct now gives a compile error
+* **(breaking change)** Default argument types now must match their restriction, if any (for example `def foo(x : Int32 = nil)` will now fail to compile if `foo` is invoked without arguments) (thanks @MakeNowJust)
 * **(breaking change)** `each` methods now return `Nil`
 * **(breaking change)** `IO#skip(bytes)` will now raise if there aren't at least the given amount of bytes in the `IO` (previously it would work well if there were less bytes, and it would hang if there were more)
 * **(breaking change)** `MemoryIO` was removed (use `IO::Memory` instead)
