@@ -775,6 +775,18 @@ describe "Semantic: macro" do
       )) { int32.metaclass }
   end
 
+  it "finds free type vars" do
+    assert_type(%(
+      module Foo(T)
+        def self.foo(foo : U) forall U
+          { {{ T }}, {{ U }} }
+        end
+      end
+
+      Foo(Int32).foo("foo")
+    )) { tuple_of([int32.metaclass, string.metaclass]) }
+  end
+
   it "gets named arguments in double splat" do
     assert_type(%(
       macro foo(**options)

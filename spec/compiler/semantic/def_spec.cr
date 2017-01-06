@@ -171,6 +171,16 @@ describe "Semantic: def" do
       "undefined method"
   end
 
+  it "errors when default value is incompatible with type restriction" do
+    assert_error "
+      def foo(x : Int64 = 1)
+      end
+
+      foo
+      ",
+      "can't restrict Int32 to Int64"
+  end
+
   it "types call with global scope" do
     assert_type("
       def bar
@@ -420,6 +430,26 @@ describe "Semantic: def" do
       end
 
       foo(1)
+      )) { int32.metaclass }
+  end
+
+  it "uses free variable with metaclass" do
+    assert_type(%(
+      def foo(x : Free.class) forall Free
+        Free
+      end
+
+      foo(Int32)
+      )) { int32.metaclass }
+  end
+
+  it "uses free variable with metaclass and default value" do
+    assert_type(%(
+      def foo(x : Free.class = Int32) forall Free
+        Free
+      end
+
+      foo
       )) { int32.metaclass }
   end
 
