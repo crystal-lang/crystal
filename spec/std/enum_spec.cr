@@ -198,4 +198,8 @@ describe Enum do
       values.should eq([SpecEnumFlags::One.value, SpecEnumFlags::Two.value, SpecEnumFlags::Three.value])
     end
   end
+
+  it "different enums classes not eq always" do
+    SpecEnum::One.should_not eq SpecEnum2::FourtyTwo
+  end
 end
