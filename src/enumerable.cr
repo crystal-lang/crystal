@@ -1006,6 +1006,12 @@ module Enumerable(T)
     {a, b}
   end
 
+  # Parallel map
+  #
+  def parallel_map(&block : T -> U)
+    map { |e| future { block.call(e) } }.map &.get
+  end
+
   # Returns an array with all the elements in the collection for which the passed block returns `false`.
   #
   # ```
