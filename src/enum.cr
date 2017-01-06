@@ -339,7 +339,7 @@ struct Enum
   # Color.from_value?(2) # => Color::Blue
   # Color.from_value?(3) # => nil
   # ```
-  def self.from_value?(value) : self | Nil
+  def self.from_value?(value) : self?
     {% if @type.has_attribute?("Flags") %}
       mask = {% for member, i in @type.constants %}\
         {% if i != 0 %} | {% end %}\

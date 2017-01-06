@@ -146,7 +146,7 @@ struct JSON::Any
   end
 
   # Checks that the underlying value is `Bool`, and returns its value. Returns nil otherwise.
-  def as_bool? : (Bool | Nil)
+  def as_bool? : Bool?
     as_bool if @raw.is_a?(Bool)
   end
 
@@ -156,7 +156,7 @@ struct JSON::Any
   end
 
   # Checks that the underlying value is `Int`, and returns its value as an `Int32`. Returns nil otherwise.
-  def as_i? : (Int32 | Nil)
+  def as_i? : Int32?
     as_i if @raw.is_a?(Int)
   end
 
@@ -166,7 +166,7 @@ struct JSON::Any
   end
 
   # Checks that the underlying value is `Int`, and returns its value as an `Int64`. Returns nil otherwise.
-  def as_i64? : (Int64 | Nil)
+  def as_i64? : Int64?
     as_i64 if @raw.is_a?(Int64)
   end
 
@@ -176,7 +176,7 @@ struct JSON::Any
   end
 
   # Checks that the underlying value is `Float`, and returns its value as an `Float64`. Returns nil otherwise.
-  def as_f? : (Float64 | Nil)
+  def as_f? : Float64?
     as_f if @raw.is_a?(Float64)
   end
 
@@ -186,7 +186,7 @@ struct JSON::Any
   end
 
   # Checks that the underlying value is `Float`, and returns its value as an `Float32`. Returns nil otherwise.
-  def as_f32? : (Float32 | Nil)
+  def as_f32? : Float32?
     as_f32 if (@raw.is_a?(Float32) || @raw.is_a?(Float64))
   end
 
@@ -196,7 +196,7 @@ struct JSON::Any
   end
 
   # Checks that the underlying value is `String`, and returns its value. Returns nil otherwise.
-  def as_s? : (String | Nil)
+  def as_s? : String?
     as_s if @raw.is_a?(String)
   end
 
@@ -206,7 +206,7 @@ struct JSON::Any
   end
 
   # Checks that the underlying value is `Array`, and returns its value. Returns nil otherwise.
-  def as_a? : (Array(Type) | Nil)
+  def as_a? : Array(Type)?
     as_a if @raw.is_a?(Array(Type))
   end
 
@@ -216,7 +216,7 @@ struct JSON::Any
   end
 
   # Checks that the underlying value is `Hash`, and returns its value. Returns nil otherwise.
-  def as_h? : (Hash(String, Type) | Nil)
+  def as_h? : Hash(String, Type)?
     as_h if @raw.is_a?(Hash(String, Type))
   end
 

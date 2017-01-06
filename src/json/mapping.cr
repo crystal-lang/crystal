@@ -38,7 +38,7 @@ module JSON
   # The value can also be another hash literal with the following options:
   # * **type**: (required) the single type described above (you can use `JSON::Any` too)
   # * **key**: the property name in the JSON document (as opposed to the property name in the Crystal code)
-  # * **nilable**: if true, the property can be `Nil`. Passing `T | Nil` as a type has the same effect.
+  # * **nilable**: if true, the property can be `Nil`. Passing `T?` as a type has the same effect.
   # * **default**: value to use if the property is missing in the JSON document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a JSON document is parsed.
   # * **emit_null**: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
