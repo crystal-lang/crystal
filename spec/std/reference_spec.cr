@@ -105,4 +105,10 @@ describe "Reference" do
     clone.y.should_not be(original.y)
     clone.y.should eq(original.y)
   end
+
+  # TODO uncomment after 0.20.3
+  # it "pretty_print" do
+  #   ReferenceSpec::TestClassBase.new.pretty_inspect.should match(/\A#<ReferenceSpec::TestClassBase:0x[0-9a-f]+>\Z/)
+  #   ReferenceSpec::TestClass.new(42, "foo").pretty_inspect.should match(/\A#<ReferenceSpec::TestClass:0x[0-9a-f]+ @x=42, @y="foo">\Z/)
+  # end
 end
