@@ -130,7 +130,7 @@ struct StaticArray(T, N)
   #
   # ```
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.[]= 2 # => 3
+  # array.[]= 2 # => nil
   # array       # => StaticArray[2, 2, 2]
   # ```
   def []=(value : T)

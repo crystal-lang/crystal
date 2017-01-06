@@ -39,7 +39,7 @@ module HTML
   # require "html"
   #
   # io = IO::Memory.new
-  # HTML.escape("Crystal & You", io) # => "Crystal & You"
+  # HTML.escape("Crystal & You", io) # => nil
   # io.to_s                          # => "Crystal &amp; You"
   # ```
   def self.escape(string : String, io : IO)
