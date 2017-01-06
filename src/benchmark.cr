@@ -83,7 +83,7 @@ module Benchmark
   # one can report the benchmarks. See the module's description.
   def bm
     {% if !flag?(:release) %}
-      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id }}
+      puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
 
     report = BM::Job.new
@@ -101,7 +101,7 @@ module Benchmark
   # displayed and updated as they are calculated, otherwise all at once.
   def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
     {% if !flag?(:release) %}
-      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id }}
+      puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
 
     job = IPS::Job.new(calculation, warmup, interactive)
