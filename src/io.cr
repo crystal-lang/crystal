@@ -618,7 +618,7 @@ module IO
           decoder.write(str)
         end
       else
-        buffer = uninitialized UInt8[2048]
+        buffer = uninitialized UInt8[4096]
         while (read_bytes = read(buffer.to_slice)) > 0
           str.write buffer.to_slice[0, read_bytes]
         end
@@ -1115,7 +1115,7 @@ module IO
   # io2.to_s # => "hello"
   # ```
   def self.copy(src, dst)
-    buffer = uninitialized UInt8[1024]
+    buffer = uninitialized UInt8[4096]
     count = 0
     while (len = src.read(buffer.to_slice).to_i32) > 0
       dst.write buffer.to_slice[0, len]
@@ -1137,7 +1137,7 @@ module IO
   def self.copy(src, dst, limit : Int)
     raise ArgumentError.new("negative limit") if limit < 0
 
-    buffer = uninitialized UInt8[1024]
+    buffer = uninitialized UInt8[4096]
     remaining = limit
     while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
       dst.write buffer.to_slice[0, len]
