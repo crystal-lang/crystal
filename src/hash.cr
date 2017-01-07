@@ -198,12 +198,24 @@ class Hash(K, V)
     yield value
   end
 
-  # Deletes the key-value pair and returns the value.
+  # Deletes the key-value pair and returns the value, otherwise returns `nil`.
   #
   # ```
   # h = {"foo" => "bar"}
   # h.delete("foo")     # => "bar"
   # h.fetch("foo", nil) # => nil
+  # ```
+  def delete(key)
+    delete(key) { nil }
+  end
+
+  # Deletes the key-value pair and returns the value, else yields *key* with given block.
+  #
+  # ```
+  # h = {"foo" => "bar"}
+  # h.delete("foo") { |key| "#{key} not found" } # => "bar"
+  # h.fetch("foo", nil)                          # => nil
+  # h.delete("baz") { |key| "#{key} not found" } # => "baz not found"
   # ```
   def delete(key)
     index = bucket_index(key)
@@ -242,7 +254,7 @@ class Hash(K, V)
       previous_entry = entry
       entry = entry.next
     end
-    nil
+    yield key
   end
 
   # Deletes each key-value pair for which the given block returns `true`.

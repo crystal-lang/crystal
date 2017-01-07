@@ -257,6 +257,22 @@ describe "Hash" do
       a = {1 => 2}
       a.delete(2).should be_nil
     end
+
+    describe "with block" do
+      it "returns the value if a key is found" do
+        a = {1 => 2}
+        a.delete(1) { 5 }.should eq(2)
+      end
+
+      it "returns the value of the block if key is not found" do
+        a = {1 => 2}
+        a.delete(3) { |key| key }.should eq(3)
+      end
+
+      it "returns nil if key is found and value is nil" do
+        {3 => nil}.delete(3) { 7 }.should be_nil
+      end
+    end
   end
 
   describe "size" do
