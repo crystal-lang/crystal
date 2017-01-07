@@ -140,7 +140,7 @@ struct Int
 
     {% begin %}
       if self < 0 && self == {{@type}}::MIN && other == -1
-        raise ArgumentError.new "overflow: {{@type}}::MIN / -1"
+        raise ArgumentError.new "overflow: {{@type.id}}::MIN / -1"
       end
     {% end %}
   end

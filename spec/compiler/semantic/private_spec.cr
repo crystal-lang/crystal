@@ -219,6 +219,28 @@ describe "Semantic: private" do
     compiler.compile sources, "output"
   end
 
+  it "finds private type in macro expansion with {{@type}}" do
+    compiler = Compiler.new
+    sources = [
+      Compiler::Source.new("foo.cr", %(
+                                        class Foo
+                                          def bar
+                                            {{@type}}.new
+                                          end
+                                        end
+                                      )),
+      Compiler::Source.new("bar.cr", %(
+                                        private class Bar < Foo
+                                        end
+
+                                        Bar.new.bar
+                                      )),
+    ]
+    compiler.no_codegen = true
+    compiler.prelude = "empty"
+    compiler.compile sources, "output"
+  end
+
   it "can use types in private type" do
     assert_type(%(
       private class Foo
