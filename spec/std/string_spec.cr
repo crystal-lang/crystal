@@ -138,6 +138,13 @@ describe "String" do
       "FooBar"["Baz"]?.should be_nil
     end
 
+    it "gets with a char" do
+      "foo/bar"['/'].should eq '/'
+      expect_raises { "foo/bar"['-'] }
+      "foo/bar"['/']?.should eq '/'
+      "foo/bar"['-']?.should be_nil
+    end
+
     it "gets with index and []?" do
       "hello"[1]?.should eq('e')
       "hello"[5]?.should be_nil
