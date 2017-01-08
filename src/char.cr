@@ -74,19 +74,19 @@ struct Char
   # ```
   # '-' * 10 # => "----------"
   # ```
-  def *(times : Int)
-    raise ArgumentError.new "negative argument" if times < 0
+  def *(times count : Int)
+    raise ArgumentError.new "negative argument" if count < 0
 
-    if times == 0
+    if count == 0
       return ""
     elsif bytesize == 1
-      return String.new(times) do |buffer|
-        Intrinsics.memset(buffer.as(Void*), bytes[0], times, 0, false)
-        {times, times}
+      return String.new(count) do |buffer|
+        Intrinsics.memset(buffer.as(Void*), bytes[0], count, 0, false)
+        {count, count}
       end
     end
 
-    total_bytesize = bytesize * times
+    total_bytesize = bytesize * count
     String.new(total_bytesize) do |buffer|
       buffer.copy_from(bytes.to_unsafe, bytesize)
       n = bytesize
@@ -97,7 +97,7 @@ struct Char
       end
 
       (buffer + n).copy_from(buffer, total_bytesize - n)
-      {total_bytesize, times}
+      {total_bytesize, count}
     end
   end
 
