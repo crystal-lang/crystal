@@ -285,6 +285,7 @@ module Crystal
     end
 
     def parse_expression_suffix(location)
+      slash_is_regex!
       next_token_skip_statement_end
       exp = parse_op_assign_no_control
       (yield exp).at(location).at_end(exp)

@@ -984,4 +984,29 @@ describe "Code gen: class" do
       Child.new.foo
       )).to_i.should eq(0)
   end
+
+  it "codegens virtual generic class instance metaclass (#3819)" do
+    run(%(
+      module Core
+      end
+
+      class Base(T)
+        include Core
+      end
+
+      class Foo < Base(String)
+      end
+
+      class Bar < Base(Int32)
+      end
+
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      Foo.new.as(Core).class.name
+      )).to_string.should eq("Foo")
+  end
 end

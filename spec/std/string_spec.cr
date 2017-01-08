@@ -1001,6 +1001,12 @@ describe "String" do
       str.sub(/(he|l|o)/, {"l" => "la"}).should be(str)
     end
 
+    it "subs with regex and named tuple" do
+      str = "hello"
+      str.sub(/(he|l|o)/, {he: "ha", l: "la"}).should eq("hallo")
+      str.sub(/(he|l|o)/, {l: "la"}).should be(str)
+    end
+
     it "subs using $~" do
       "foo".sub(/(o)/) { "x#{$1}x" }.should eq("fxoxo")
     end
@@ -1794,6 +1800,23 @@ describe "String" do
     sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
   end
 
+  it "does each_char" do
+    s = "abc"
+    i = 0
+    s.each_char do |c|
+      case i
+      when 0
+        c.should eq('a')
+      when 1
+        c.should eq('b')
+      when 2
+        c.should eq('c')
+      end
+      i += 1
+    end.should be_nil
+    i.should eq(3)
+  end
+
   it "gets each_char iterator" do
     iter = "abc".each_char
     iter.next.should eq('a')
@@ -1815,6 +1838,23 @@ describe "String" do
 
   it "cycles chars" do
     "abc".each_char.cycle.first(8).join.should eq("abcabcab")
+  end
+
+  it "does each_byte" do
+    s = "abc"
+    i = 0
+    s.each_byte do |b|
+      case i
+      when 0
+        b.should eq('a'.ord)
+      when 1
+        b.should eq('b'.ord)
+      when 2
+        b.should eq('c'.ord)
+      end
+      i += 1
+    end.should be_nil
+    i.should eq(3)
   end
 
   it "gets each_byte iterator" do
@@ -1854,7 +1894,7 @@ describe "String" do
     lines = [] of String
     "foo\n\nbar\r\nbaz\n".each_line do |line|
       lines << line
-    end
+    end.should be_nil
     lines.should eq(["foo", "", "bar", "baz"])
   end
 
@@ -1862,7 +1902,7 @@ describe "String" do
     lines = [] of String
     "foo\n\nbar\r\nbaz\r\n".each_line(chomp: false) do |line|
       lines << line
-    end
+    end.should be_nil
     lines.should eq(["foo\n", "\n", "bar\r\n", "baz\r\n"])
   end
 
@@ -1892,7 +1932,7 @@ describe "String" do
     codepoints = [] of Int32
     "ab☃".each_codepoint do |codepoint|
       codepoints << codepoint
-    end
+    end.should be_nil
     codepoints.should eq [97, 98, 9731]
   end
 

@@ -1396,6 +1396,7 @@ module Crystal
   # A generic module type, like Enumerable(T).
   class GenericModuleType < ModuleType
     include GenericType
+    include ClassVarContainer
 
     def initialize(program, namespace, name, @type_vars)
       super(program, namespace, name)
@@ -1446,6 +1447,7 @@ module Crystal
   # A generic class type, like Array(T).
   class GenericClassType < ClassType
     include GenericType
+    include ClassVarContainer
 
     def initialize(program, namespace, name, superclass, @type_vars : Array(String), add_subclass = true)
       super(program, namespace, name, superclass, add_subclass)
@@ -1535,6 +1537,10 @@ module Crystal
 
     def initialize(program, @generic_type, @type_vars)
       super(program)
+    end
+
+    def class_var_owner
+      generic_type
     end
 
     def parents
@@ -2449,6 +2455,14 @@ module Crystal
         parents << (instance_type.superclass.try(&.metaclass) || program.class_type)
         parents
       end
+    end
+
+    def virtual_type
+      instance_type.virtual_type.metaclass
+    end
+
+    def virtual_type!
+      instance_type.virtual_type!.metaclass
     end
 
     delegate defs, macros, to: instance_type.generic_type.metaclass

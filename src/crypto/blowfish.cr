@@ -18,14 +18,14 @@ class Crypto::Blowfish
 
     l, r = 0, 0
 
-    0.step(17, 2) do |i|
+    0.step(to: 17, by: 2) do |i|
       l, r = encrypt_pair(l, r)
       @p[i] = l
       @p[i + 1] = r
     end
 
     0.upto(3) do |i|
-      0.step(255, 2) do |j|
+      0.step(to: 255, by: 2) do |j|
         l, r = encrypt_pair(l, r)
         @s[i][j] = l
         @s[i][j + 1] = r

@@ -10,7 +10,7 @@
 # require "base64"
 #
 # enc = Base64.encode("Send reinforcements") # => "U2VuZCByZWluZm9yY2VtZW50cw==\n"
-# plain = Base64.decode(enc)                 # => "Send reinforcements"
+# plain = Base64.decode_string(enc)          # => "Send reinforcements"
 # ```
 #
 # The purpose of using base64 to encode data is that it translates any binary
@@ -32,8 +32,6 @@ module Base64
   # Line feeds are added to every 60 encoded characters.
   #
   # ```
-  # require "base64"
-  #
   # puts Base64.encode("Now is the time for all good coders\nto learn Crystal")
   # ```
   #
@@ -41,6 +39,7 @@ module Base64
   #
   # ```text
   # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
+  # Q3J5c3RhbA==
   # ```
   def encode(data) : String
     slice = data.to_slice
@@ -57,9 +56,7 @@ module Base64
   # Line feeds are added to every 60 encoded characters.
   #
   # ```
-  # require "base64"
-  #
-  # Base64.encode("Now is the time for all good coders\nto learn Crystal", io)
+  # Base64.encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
   # ```
   def encode(data, io : IO)
     count = 0
@@ -90,8 +87,6 @@ module Base64
   # This method complies with RFC 4648.
   #
   # ```
-  # require "base64"
-  #
   # puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
   # ```
   #
@@ -118,9 +113,7 @@ module Base64
   # This method complies with RFC 4648.
   #
   # ```
-  # require "base64"
-  #
-  # Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", io)
+  # Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
   # ```
   def strict_encode(data, io : IO)
     strict_encode_to_io_internal(data, io, CHARS_STD, pad: true)

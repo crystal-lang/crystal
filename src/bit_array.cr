@@ -89,7 +89,7 @@ struct BitArray
   #
   # ```
   # ba = BitArray.new(5)
-  # puts ba.to_s # => "BitArray[00000]"
+  # ba.to_s # => "BitArray[00000]"
   # ```
   def to_s(io : IO)
     io << "BitArray["

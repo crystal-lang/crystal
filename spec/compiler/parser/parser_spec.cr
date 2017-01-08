@@ -1243,6 +1243,8 @@ describe "Parser" do
   it_parses "{1 => 2 / 3}", HashLiteral.new([HashLiteral::Entry.new(1.int32, Call.new(2.int32, "/", 3.int32))])
   it_parses "a { |x| x } / b", Call.new(Call.new(nil, "a", block: Block.new(args: ["x".var], body: "x".var)), "/", "b".call)
 
+  it_parses "1 if /x/", If.new(RegexLiteral.new("x".string), 1.int32)
+
   assert_syntax_error "return do\nend", "unexpected token: do"
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|

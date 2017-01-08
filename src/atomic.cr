@@ -5,8 +5,8 @@
 struct Atomic(T)
   # Creates an Atomic with the given initial value.
   def initialize(@value : T)
-    {% if !T.union? && (T == Char || T < Int::Primitive) %}
-      # Support integer types or char (because it's represented as an integer)
+    {% if !T.union? && (T == Char || T < Int::Primitive || T < Enum) %}
+      # Support integer types, enum types, or char (because it's represented as an integer)
     {% elsif T < Reference || (T.union? && T.union_types.all? { |t| t == Nil || t < Reference }) %}
       # Support reference types, or union types with only nil or reference types
     {% else %}
@@ -104,8 +104,8 @@ struct Atomic(T)
   #
   # ```
   # atomic = Atomic.new(5)
-  # atomic.or(3) # => 5
-  # atomic.get   # => 6
+  # atomic.xor(3) # => 5
+  # atomic.get    # => 6
   # ```
   def xor(value : T)
     Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
@@ -153,8 +153,8 @@ struct Atomic(T)
   #
   # ```
   # atomic = Atomic.new(5)
-  # atomic.set(10) # => 5
-  # atomic.get     # => 10
+  # atomic.swap(10) # => 5
+  # atomic.get      # => 10
   # ```
   def swap(value : T)
     Ops.atomicrmw(:xchg, pointerof(@value), value, :sequentially_consistent, false)

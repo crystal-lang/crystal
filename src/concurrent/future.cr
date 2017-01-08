@@ -120,8 +120,8 @@ end
 # Access to get is synchronized between fibers.  *&block* is only called once.
 # May be canceled before *&block* is called by calling `cancel`.
 # ```
-# d = delay(1) { Process.kill(Process.pid) }
-# long_operation
+# d = delay(1) { Process.kill(Signal::KILL, Process.pid) }
+# # ... long operations ...
 # d.cancel
 # ```
 def delay(delay, &block : -> _)
@@ -131,9 +131,9 @@ end
 # Spawns a `Fiber` to compute *&block* in the background.
 # Access to get is synchronized between fibers.  *&block* is only called once.
 # ```
-# f = future { http_request }
-# ... other actions ...
-# f.get #=> String
+# f = future { `echo hello` }
+# # ... other actions ...
+# f.get # => "hello\n"
 # ```
 def future(&exp : -> _)
   Concurrent::Future.new &exp

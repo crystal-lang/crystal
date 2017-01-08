@@ -420,6 +420,30 @@ describe "Hash" do
     h1.should eq({:a => 1, :b => 2, :c => 3})
   end
 
+  it "compacts" do
+    h1 = {:a => 1, :b => 2, :c => nil}
+
+    h2 = h1.compact
+    h2.should be_a(Hash(Symbol, Int32))
+    h2.should eq({:a => 1, :b => 2})
+  end
+
+  it "compacts!" do
+    h1 = {:a => 1, :b => 2, :c => nil}
+
+    h2 = h1.compact!
+    h2.should eq({:a => 1, :b => 2})
+    h2.should be(h1)
+  end
+
+  it "returns nil when using compact! and no changes were made" do
+    h1 = {:a => 1, :b => 2, :c => 3}
+
+    h2 = h1.compact!
+    h2.should be_nil
+    h1.should eq({:a => 1, :b => 2, :c => 3})
+  end
+
   it "zips" do
     ary1 = [1, 2, 3]
     ary2 = ['a', 'b', 'c']
@@ -535,6 +559,36 @@ describe "Hash" do
     %w(a c).should contain h3[1]
   end
 
+  it "does each" do
+    hash = {"foo" => 1, "bar" => 2}
+    ks = [] of String
+    vs = [] of Int32
+    hash.each do |k, v|
+      ks << k
+      vs << v
+    end.should be_nil
+    ks.should eq(["foo", "bar"])
+    vs.should eq([1, 2])
+  end
+
+  it "does each_key" do
+    hash = {"foo" => 1, "bar" => 2}
+    ks = [] of String
+    hash.each_key do |k|
+      ks << k
+    end.should be_nil
+    ks.should eq(["foo", "bar"])
+  end
+
+  it "does each_value" do
+    hash = {"foo" => 1, "bar" => 2}
+    vs = [] of Int32
+    hash.each_value do |v|
+      vs << v
+    end.should be_nil
+    vs.should eq([1, 2])
+  end
+
   it "gets each iterator" do
     iter = {:a => 1, :b => 2}.each
     iter.next.should eq({:a, 1})
@@ -569,14 +623,14 @@ describe "Hash" do
     it "pass key, value, index values into block" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      hash.each_with_index { |(k, v), i| results << k + v + i }
+      hash.each_with_index { |(k, v), i| results << k + v + i }.should be_nil
       results.should eq [6, 16, 23]
     end
 
     it "can be used with offset" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      hash.each_with_index(3) { |(k, v), i| results << k + v + i }
+      hash.each_with_index(3) { |(k, v), i| results << k + v + i }.should be_nil
       results.should eq [9, 19, 26]
     end
   end

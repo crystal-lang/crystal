@@ -229,19 +229,19 @@ describe "Int" do
   describe "to" do
     it "does upwards" do
       a = 0
-      1.to(3) { |i| a += i }
+      1.to(3) { |i| a += i }.should be_nil
       a.should eq(6)
     end
 
     it "does downards" do
       a = 0
-      4.to(2) { |i| a += i }
+      4.to(2) { |i| a += i }.should be_nil
       a.should eq(9)
     end
 
     it "does when same" do
       a = 0
-      2.to(2) { |i| a += i }
+      2.to(2) { |i| a += i }.should be_nil
       a.should eq(2)
     end
   end
@@ -297,7 +297,7 @@ describe "Int" do
   describe "step" do
     it "steps through limit" do
       passed = false
-      1.step(1) { |x| passed = true }
+      1.step(to: 1) { |x| passed = true }
       fail "expected step to pass through 1" unless passed
     end
   end
@@ -376,6 +376,16 @@ describe "Int" do
     (4 % 2).should eq(0)
   end
 
+  it "does times" do
+    i = sum = 0
+    3.times do |n|
+      i += 1
+      sum += n
+    end.should be_nil
+    i.should eq(3)
+    sum.should eq(3)
+  end
+
   it "gets times iterator" do
     iter = 3.times
     iter.next.should eq(0)
@@ -403,6 +413,16 @@ describe "Int" do
     -13.remainder(-4).should eq(-1)
   end
 
+  it "does upto" do
+    i = sum = 0
+    1.upto(3) do |n|
+      i += 1
+      sum += n
+    end.should be_nil
+    i.should eq(3)
+    sum.should eq(6)
+  end
+
   it "gets upto iterator" do
     iter = 1.upto(3)
     iter.next.should eq(1)
@@ -412,6 +432,16 @@ describe "Int" do
 
     iter.rewind
     iter.next.should eq(1)
+  end
+
+  it "does downto" do
+    i = sum = 0
+    3.downto(1) do |n|
+      i += 1
+      sum += n
+    end.should be_nil
+    i.should eq(3)
+    sum.should eq(6)
   end
 
   it "gets downto iterator" do

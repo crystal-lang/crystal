@@ -139,7 +139,7 @@ class HTTP::Client
   # uri = URI.parse("https://secure.example.com")
   # client = HTTP::Client.new(uri)
   #
-  # client.tls? # => true
+  # client.tls? # => #<OpenSSL::SSL::Context::Client>
   # client.get("/")
   # ```
   # This constructor will *ignore* any path or query segments in the URI
@@ -165,7 +165,7 @@ class HTTP::Client
   # ```
   # uri = URI.parse("https://secure.example.com")
   # HTTP::Client.new(uri) do |client|
-  #   client.tls? # => true
+  #   client.tls? # => #<OpenSSL::SSL::Context::Client>
   #   client.get("/")
   # end
   # ```
@@ -483,12 +483,28 @@ class HTTP::Client
   end
 
   private def exec_internal(request)
+    response = exec_internal_single(request)
+    return handle_response(response) if response
+
+    # Server probably closed the connection, so retry one
+    close
+    request.body.try &.rewind
+    response = exec_internal_single(request)
+    return handle_response(response) if response
+
+    raise "unexpected end of http response"
+  end
+
+  private def exec_internal_single(request)
     decompress = set_defaults request
     request.to_io(socket)
     socket.flush
-    HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress).tap do |response|
-      close unless response.keep_alive?
-    end
+    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress)
+  end
+
+  private def handle_response(response)
+    close unless response.keep_alive?
+    response
   end
 
   # Executes a request request and yields an `HTTP::Client::Response` to the block.
@@ -508,15 +524,40 @@ class HTTP::Client
   end
 
   private def exec_internal(request, &block)
+    exec_internal_single(request) do |response|
+      if response
+        return handle_response(response) { yield response }
+      end
+
+      # Server probably closed the connection, so retry once
+      close
+      request.body.try &.rewind
+      exec_internal_single(request) do |response|
+        if response
+          return handle_response(response) do
+            yield response
+          end
+        end
+
+        raise "unexpected end of http response"
+      end
+    end
+  end
+
+  private def exec_internal_single(request)
     decompress = set_defaults request
     request.to_io(socket)
     socket.flush
-    HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
-      value = yield response
-      response.body_io.try &.close
-      close unless response.keep_alive?
-      value
+    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+      yield response
     end
+  end
+
+  private def handle_response(response)
+    value = yield
+    response.body_io?.try &.close
+    close unless response.keep_alive?
+    value
   end
 
   private def set_defaults(request)

@@ -130,53 +130,46 @@ class JSON::PullParser
     when :string
       @string_value.to_json.tap { read_next }
     when :begin_array
-      String.build { |io| read_raw(io) }
+      JSON.build { |json| read_raw(json) }
     when :begin_object
-      String.build { |io| read_raw(io) }
+      JSON.build { |json| read_raw(json) }
     else
       unexpected_token
     end
   end
 
-  def read_raw(io)
+  def read_raw(json)
     case @kind
     when :null
       read_next
-      io << "null"
+      json.null
     when :bool
-      io << @bool_value
+      json.bool(@bool_value)
       read_next
     when :int, :float
-      io << @raw_value
+      json.raw(@raw_value)
       read_next
     when :string
-      @string_value.to_json(io)
+      json.string(@string_value)
       read_next
     when :begin_array
-      io << "["
-      read_begin_array
-      first = true
-      while kind != :end_array
-        io << "," unless first
-        read_raw(io)
-        first = false
+      json.array do
+        read_begin_array
+        while kind != :end_array
+          read_raw(json)
+        end
+        read_end_array
       end
-      io << "]"
-      read_end_array
     when :begin_object
-      io << "{"
-      read_begin_object
-      first = true
-      while kind != :end_object
-        io << "," unless first
-        @string_value.to_json(io)
-        read_object_key
-        io << ":"
-        read_raw(io)
-        first = false
+      json.object do
+        read_begin_object
+        while kind != :end_object
+          json.string(@string_value)
+          read_object_key
+          read_raw(json)
+        end
+        read_end_object
       end
-      io << "}"
-      read_end_object
     else
       unexpected_token
     end

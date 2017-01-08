@@ -12,7 +12,7 @@
 #                - qux
 #                - fox
 #          END
-# data["foo"]["bar"]["baz"][1].as_s # => "qux"
+# data["foo"]["bar"]["baz"][0].as_s # => "qux"
 # data["foo"]["bar"]["baz"].as_a    # => ["qux", "fox"]
 # ```
 #

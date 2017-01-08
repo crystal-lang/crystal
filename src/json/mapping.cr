@@ -22,7 +22,7 @@ module JSON
   #
   # house = House.from_json(%({"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}))
   # house.address  # => "Crystal Road 1234"
-  # house.location # => #&lt;Location:0x10cd93d80 @lat=12.3, @lng=34.5>
+  # house.location # => #<Location:0x10cd93d80 @lat=12.3, @lng=34.5>
   # house.to_json  # => %({"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}})
   # ```
   #
@@ -41,7 +41,7 @@ module JSON
   # * **nilable**: if true, the property can be `Nil`. Passing `T | Nil` as a type has the same effect.
   # * **default**: value to use if the property is missing in the JSON document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a JSON document is parsed.
   # * **emit_null**: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
-  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
+  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
   # * **setter**: if true, will generate a setter for the variable, true by default
   # * **getter**: if true, will generate a getter for the variable, true by default
@@ -50,9 +50,9 @@ module JSON
   # The mapping doesn't define a constructor accepting these variables as arguments, but you can provide an overload.
   #
   # The macro basically defines a constructor accepting a `JSON::PullParser` that reads from
-  # it and initializes this type's instance variables. It also defines a `to_json(IO)` method
-  # by invoking `to_json(IO)` on each of the properties (unless a converter is specified, in
-  # which case `to_json(value, IO)` is invoked).
+  # it and initializes this type's instance variables. It also defines a `to_json(JSON::Builder)` method
+  # by invoking `to_json(JSON::Builder)` on each of the properties (unless a converter is specified, in
+  # which case `to_json(value, JSON::Builder)` is invoked).
   #
   # This macro also declares instance variables of the types given in the mapping.
   #
@@ -146,8 +146,8 @@ module JSON
       {% end %}
     end
 
-    def to_json(io : IO)
-      io.json_object do |json|
+    def to_json(json : JSON::Builder)
+      json.object do
         {% for key, value in properties %}
           _{{key.id}} = @{{key.id}}
 
@@ -159,22 +159,22 @@ module JSON
               {% if value[:root] %}
                 {% if value[:emit_null] %}
                   if _{{key.id}}.is_a?(Nil)
-                    nil.to_json(io)
+                    nil.to_json(json)
                   else
                 {% end %}
 
-                io.json_object do |json|
+                json.object do
                   json.field({{value[:root]}}) do
               {% end %}
 
               {% if value[:converter] %}
                 if _{{key.id}}
-                  {{ value[:converter] }}.to_json(_{{key.id}}, io)
+                  {{ value[:converter] }}.to_json(_{{key.id}}, json)
                 else
-                  nil.to_json(io)
+                  nil.to_json(json)
                 end
               {% else %}
-                _{{key.id}}.to_json(io)
+                _{{key.id}}.to_json(json)
               {% end %}
 
               {% if value[:root] %}

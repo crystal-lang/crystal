@@ -18,7 +18,7 @@ struct XML::NodeSet
     internal_at(index)
   end
 
-  def each
+  def each : Nil
     size.times do |i|
       yield internal_at(i)
     end

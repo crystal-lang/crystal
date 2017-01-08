@@ -5,15 +5,17 @@ require "json"
 
 module Crystal
   class PrettyTypeNameJsonConverter
-    def self.to_json(hash, io)
-      io.json_object do |obj|
+    def self.to_json(hash, json : JSON::Builder)
+      json.object do
         hash.each do |key, value|
-          obj.field(key) do
-            io << '"'
-            pretty_type_name(value, io)
-            io << '"'
-          end
+          json.field key, pretty_type_name(value)
         end
+      end
+    end
+
+    def self.pretty_type_name(type)
+      String.build do |io|
+        type.to_s_with_options(io, true)
       end
     end
 
@@ -23,8 +25,8 @@ module Crystal
   end
 
   class HashStringType < Hash(String, Type)
-    def to_json(io)
-      PrettyTypeNameJsonConverter.to_json(self, io)
+    def to_json(json : JSON::Builder)
+      PrettyTypeNameJsonConverter.to_json(self, json)
     end
   end
 

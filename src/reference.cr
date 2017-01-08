@@ -81,9 +81,11 @@ class Reference
     {% else %}
       prefix = "#<#{{{@type.name.id.stringify}}}:0x#{object_id.to_s(16)}"
       executed = exec_recursive(:pretty_print) do
-        pp.surround(prefix, ">", left_break: " ", right_break: nil) do
+        pp.surround(prefix, ">", left_break: nil, right_break: nil) do
           {% for ivar, i in @type.instance_vars.map(&.name).sort %}
-            {% if i > 0 %}
+            {% if i == 0 %}
+              pp.breakable
+            {% else %}
               pp.comma
             {% end %}
             pp.group do

@@ -9,12 +9,14 @@
 # ```
 # require "zlib"
 #
-# string = File.open("./file.gzip", "r") do |file|
+# File.write("file.gzip", Bytes[31, 139, 8, 0, 0, 0, 0, 0, 0, 3, 75, 76, 74, 6, 0, 194, 65, 36, 53, 3, 0, 0, 0])
+#
+# string = File.open("file.gzip", "r") do |file|
 #   Zlib::Inflate.gzip(file) do |inflate|
 #     inflate.gets_to_end
 #   end
 # end
-# puts string
+# string # => "abc"
 # ```
 #
 # See also: `Zlib::Deflate` for compressing data.

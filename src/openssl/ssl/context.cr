@@ -265,7 +265,7 @@ abstract class OpenSSL::SSL::Context
   #
   # Example:
   # ```
-  # context.remove_options(OpenSSL::SSL::NO_SSLV3)
+  # context.remove_options(OpenSSL::SSL::Options::NO_SSLV3)
   # ```
   def remove_options(options : OpenSSL::SSL::Options)
     OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)

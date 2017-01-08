@@ -31,7 +31,7 @@
 # `new` method and a `<<` method. `Set` is one such type:
 #
 # ```
-# set = Set{1, 2, 3} # => [1, 2, 3]
+# set = Set{1, 2, 3} # => Set{1, 2, 3}
 # set.class          # => Set(Int32)
 # ```
 #
@@ -94,9 +94,9 @@ class Array(T)
   # Array.new(3, 'a') # => ['a', 'a', 'a']
   #
   # ary = Array.new(3, [1])
-  # puts ary # => [[1], [1], [1]]
+  # ary # => [[1], [1], [1]]
   # ary[0][0] = 2
-  # puts ary # => [[2], [2], [2]]
+  # ary # => [[2], [2], [2]]
   # ```
   def initialize(size : Int, value : T)
     if size < 0
@@ -120,9 +120,9 @@ class Array(T)
   # Array.new(3) { |i| (i + 1) ** 2 } # => [1, 4, 9]
   #
   # ary = Array.new(3) { [1] }
-  # puts ary # => [[1], [1], [1]]
+  # ary # => [[1], [1], [1]]
   # ary[0][0] = 2
-  # puts ary # => [[2], [1], [1]]
+  # ary # => [[2], [1], [1]]
   # ```
   def self.new(size : Int, &block : Int32 -> T)
     Array(T).build(size) do |buffer|
@@ -313,7 +313,7 @@ class Array(T)
   # ary[0] = 5
   # p ary # => [5,2,3]
   #
-  # ary[3] = 5 # => IndexError
+  # ary[3] = 5 # raises IndexError
   # ```
   @[AlwaysInline]
   def []=(index : Int, value : T)
@@ -449,7 +449,7 @@ class Array(T)
   # a = ["a", "b", "c", "d", "e"]
   # a[1..3]    # => ["b", "c", "d"]
   # a[4..7]    # => ["e"]
-  # a[6..10]   # => Index Error
+  # a[6..10]   # raise IndexError
   # a[5..10]   # => []
   # a[-2...-1] # => ["d"]
   # ```
@@ -469,7 +469,7 @@ class Array(T)
   # ```
   # a = ["a", "b", "c", "d", "e"]
   # a[-3, 3] # => ["c", "d", "e"]
-  # a[6, 1]  # => Index Error
+  # a[6, 1]  # raise IndexError
   # a[1, 2]  # => ["b", "c"]
   # a[5, 1]  # => []
   # ```
@@ -521,12 +521,12 @@ class Array(T)
   # ary = [[1, 2], [3, 4]]
   # ary2 = ary.clone
   # ary[0][0] = 5
-  # puts ary  # => [[5, 2], [3, 4]]
-  # puts ary2 # => [[1, 2], [3, 4]]
+  # ary  # => [[5, 2], [3, 4]]
+  # ary2 # => [[1, 2], [3, 4]]
   #
   # ary2 << [7, 8]
-  # puts ary  # => [[5, 2], [3, 4]]
-  # puts ary2 # => [[1, 2], [3, 4], [7, 8]]
+  # ary  # => [[5, 2], [3, 4]]
+  # ary2 # => [[1, 2], [3, 4], [7, 8]]
   # ```
   def clone
     Array(T).new(size) { |i| @buffer[i].clone.as(T) }
@@ -618,7 +618,7 @@ class Array(T)
   # a = ["ant", "bat", "cat", "dog"]
   # a.delete_at(2)  # => "cat"
   # a               # => ["ant", "bat", "dog"]
-  # a.delete_at(99) # => IndexError
+  # a.delete_at(99) # raises IndexError
   # ```
   def delete_at(index : Int)
     index = check_index_out_of_bounds index
@@ -638,7 +638,7 @@ class Array(T)
   # a = ["ant", "bat", "cat", "dog"]
   # a.delete_at(1..2)    # => ["bat", "cat"]
   # a                    # => ["ant", "dog"]
-  # a.delete_at(99..100) # => IndexError
+  # a.delete_at(99..100) # raises IndexError
   # ```
   def delete_at(range : Range(Int, Int))
     from, size = range_to_index_and_count(range)
@@ -654,7 +654,7 @@ class Array(T)
   # a = ["ant", "bat", "cat", "dog"]
   # a.delete_at(1, 2)  # => ["bat", "cat"]
   # a                  # => ["ant", "dog"]
-  # a.delete_at(99, 1) # => IndexError
+  # a.delete_at(99, 1) # raises IndexError
   # ```
   def delete_at(index : Int, count : Int)
     val = self[index, count]
@@ -674,12 +674,12 @@ class Array(T)
   # ary = [[1, 2], [3, 4]]
   # ary2 = ary.dup
   # ary[0][0] = 5
-  # puts ary  # => [[5, 2], [3, 4]]
-  # puts ary2 # => [[5, 2], [3, 4]]
+  # ary  # => [[5, 2], [3, 4]]
+  # ary2 # => [[5, 2], [3, 4]]
   #
   # ary2 << [7, 8]
-  # puts ary  # => [[5, 2], [3, 4]]
-  # puts ary2 # => [[5, 2], [3, 4], [7, 8]]
+  # ary  # => [[5, 2], [3, 4]]
+  # ary2 # => [[5, 2], [3, 4], [7, 8]]
   # ```
   def dup
     Array(T).build(@capacity) do |buffer|
@@ -960,7 +960,7 @@ class Array(T)
   # ```
   # a = [1, 2, 3]
   # sums = [] of Int32
-  # a.each_permutation(2) { |p| sums << p.sum } # => [1, 2, 3]
+  # a.each_permutation(2) { |p| sums << p.sum } # => nil
   # sums                                        # => [3, 4, 3, 5, 4, 5]
   # ```
   #
@@ -970,9 +970,9 @@ class Array(T)
   # the method will create a new array and reuse it. This can be
   # used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_permutation(size : Int = self.size, reuse = false)
+  def each_permutation(size : Int = self.size, reuse = false) : Nil
     n = self.size
-    return self if size > n
+    return if size > n
 
     raise ArgumentError.new("size must be positive") if size < 0
 
@@ -1000,7 +1000,7 @@ class Array(T)
         i -= 1
       end
 
-      return self if stop
+      return if stop
     end
   end
 
@@ -1014,7 +1014,7 @@ class Array(T)
   # iter.next # => [2, 3, 1]
   # iter.next # => [3, 1, 2]
   # iter.next # => [3, 2, 1]
-  # iter.next # => Iterator::Stop
+  # iter.next # => #<Iterator::Stop>
   # ```
   #
   # By default, a new array is created and returned for each permutation.
@@ -1037,9 +1037,9 @@ class Array(T)
     ary
   end
 
-  def each_combination(size : Int = self.size, reuse = false)
+  def each_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
-    return self if size > n
+    return if size > n
     raise ArgumentError.new("size must be positive") if size < 0
 
     reuse = check_reuse(reuse, size)
@@ -1061,7 +1061,7 @@ class Array(T)
         i -= 1
       end
 
-      return self if stop
+      return if stop
 
       indices[i] += 1
       pool[i] = copy[indices[i]]
@@ -1109,8 +1109,8 @@ class Array(T)
   # ```
   # s = [1, 2, 3]          # => [1, 2, 3]
   # t = [4, 5, 6, [7, 8]]  # => [4, 5, 6, [7, 8]]
-  # u = [9, [10, 11].each] # => [9, Indexable#ItemIterator]
-  # a = [s, t, u, 12, 13]  # => [[1, 2, 3], [4, 5, 6, [7, 8]], 9, 10]
+  # u = [9, [10, 11].each] # => [9, #<Indexable::ItemIterator>]
+  # a = [s, t, u, 12, 13]  # => [[1, 2, 3], [4, 5, 6, [7, 8]], 9, #<Indexable::ItemIterator>, 12, 13]
   # a.flatten              # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
   # ```
   def flatten
@@ -1125,9 +1125,9 @@ class Array(T)
     ary
   end
 
-  def each_repeated_combination(size : Int = self.size, reuse = false)
+  def each_repeated_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
-    return self if size > n && n == 0
+    return if size > n && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
 
     reuse = check_reuse(reuse, size)
@@ -1148,7 +1148,7 @@ class Array(T)
         end
         i -= 1
       end
-      return self if stop
+      return if stop
 
       ii = indices[i] + 1
       tmp = copy[ii]
@@ -1225,9 +1225,9 @@ class Array(T)
     ary
   end
 
-  def each_repeated_permutation(size : Int = self.size, reuse = false)
+  def each_repeated_permutation(size : Int = self.size, reuse = false) : Nil
     n = self.size
-    return self if size != 0 && n == 0
+    return if size != 0 && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
 
     if size == 0
@@ -1235,8 +1235,6 @@ class Array(T)
     else
       Array.each_product(Array.new(size, self), reuse: reuse) { |r| yield r }
     end
-
-    self
   end
 
   # Removes the last value from `self`, at index *size - 1*.
@@ -1325,7 +1323,7 @@ class Array(T)
   # ```
   # a = ["a", "b"]
   # a.push("c") # => ["a", "b", "c"]
-  # a.push(1)   # => Errors, because the array only accepts String.
+  # a.push(1)   # Errors, because the array only accepts String.
   #
   # a = ["a", "b"] of (Int32 | String)
   # a.push("c") # => ["a", "b", "c"]
@@ -1714,12 +1712,12 @@ class Array(T)
   #
   # ```
   # a = ["a", "b"]
-  # a.unshift("c") # => ["c", a", "b"]
-  # a.unshift(1)   # => Errors, because the array only accepts String.
+  # a.unshift("c") # => ["c", "a", "b"]
+  # a.unshift(1)   # Errors, because the array only accepts String.
   #
   # a = ["a", "b"] of (Int32 | String)
   # a.unshift("c") # => ["c", "a", "b"]
-  # a.unshift(1)   # => [1, "a", "b", "c"]
+  # a.unshift(1)   # => [1, "c", "a", "b"]
   # ```
   def unshift(obj : T)
     insert 0, obj

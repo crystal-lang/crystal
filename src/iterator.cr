@@ -377,7 +377,7 @@ module Iterator(T)
   # iter = ["a", "b", "c"].each
   # iter.each { |x| print x, " " } # Prints "a b c"
   # ```
-  def each
+  def each : Nil
     while true
       value = self.next
       break if value.is_a?(Stop)
@@ -494,9 +494,9 @@ module Iterator(T)
   # ```
   # iter = [1, 2, 3].each.flat_map { |x| [x, x] }
   #
-  # iter.next # => [1, 1]
-  # iter.next # => [2, 2]
-  # iter.next # => [3, 3]
+  # iter.next # => 1
+  # iter.next # => 1
+  # iter.next # => 2
   #
   # iter = [1, 2, 3].each.flat_map { |x| [x, x].each }
   #
@@ -858,15 +858,15 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    def initialize(@iterator : I, @n : N)
-      raise ArgumentError.new("n must be greater or equal 1") if @n < 1
+    def initialize(@iterator : I, @by : N)
+      raise ArgumentError.new("n must be greater or equal 1") if @by < 1
     end
 
     def next
       value = @iterator.next
       return stop if value.is_a?(Stop)
 
-      (@n - 1).times do
+      (@by - 1).times do
         @iterator.next
       end
 
@@ -999,7 +999,7 @@ module Iterator(T)
   # value to be checked for uniqueness.
   #
   # ```
-  # iter = [["a", "a"], ["b", "a"], ["a", "c"]].uniq &.first
+  # iter = [["a", "a"], ["b", "a"], ["a", "c"]].each.uniq &.first
   # iter.next # => ["a", "a"]
   # iter.next # => ["b", "a"]
   # iter.next # => Iterator::Stop::INSTANCE
@@ -1049,8 +1049,10 @@ module Iterator(T)
 
   # Yields each element in this iterator together with its index.
   def with_index(offset : Int = 0)
-    with_index(offset).each do |value, index|
+    index = offset
+    each do |value|
       yield value, index
+      index += 1
     end
   end
 

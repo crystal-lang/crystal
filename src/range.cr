@@ -20,7 +20,7 @@
 #
 #   getter size
 #
-#   def initialize(@size)
+#   def initialize(@size : Int32)
 #   end
 #
 #   def succ
@@ -45,9 +45,10 @@
 # An example of using `Xs` to construct a range:
 #
 # ```
-# r = Xs.new(3)..Xs.new(6) # => xxx..xxxxxx
-# r.to_a                   # => [xxx, xxxx, xxxxx, xxxxxx]
-# r.includes?(Xs.new(5))   # => true
+# r = Xs.new(3)..Xs.new(6)
+# r.to_s                 # => "xxx..xxxxxx"
+# r.to_a                 # => [Xs.new(3), Xs.new(4), Xs.new(5), Xs.new(6)]
+# r.includes?(Xs.new(5)) # => true
 # ```
 struct Range(B, E)
   include Enumerable(B)
@@ -85,7 +86,7 @@ struct Range(B, E)
   # Returns an `Iterator` that cycles over the values of this range.
   #
   # ```
-  # (1..3).cycle.first(5).to_a # => [1, 2, 3, 1, 3]
+  # (1..3).cycle.first(5).to_a # => [1, 2, 3, 1, 2]
   # ```
   def cycle
     each.cycle
@@ -97,14 +98,13 @@ struct Range(B, E)
   # (10..15).each { |n| print n, ' ' }
   # # prints: 10 11 12 13 14 15
   # ```
-  def each
+  def each : Nil
     current = @begin
     while current < @end
       yield current
       current = current.succ
     end
     yield current if !@exclusive && current == @end
-    self
   end
 
   # Returns an `Iterator` over the elements of this range.
@@ -122,14 +122,13 @@ struct Range(B, E)
   # (10...15).reverse_each { |n| print n, ' ' }
   # # prints: 14 13 12 11 10
   # ```
-  def reverse_each
+  def reverse_each : Nil
     yield @end if !@exclusive && !(@end < @begin)
     current = @end
     while @begin < current
       current = current.pred
       yield current
     end
-    self
   end
 
   # Returns a reverse `Iterator` over the elements of this range.
@@ -166,13 +165,13 @@ struct Range(B, E)
   # ```
   #
   # See `Range`'s overview for the definition of `Xs`.
-  def step(n = 1)
+  def step(by = 1)
     current = @begin
     while current < @end
       yield current
-      n.times { current = current.succ }
+      by.times { current = current.succ }
     end
-    yield current if current == @end && !@exclusive
+    yield current if !@exclusive && current == @end
     self
   end
 
@@ -181,8 +180,8 @@ struct Range(B, E)
   # ```
   # (1..10).step(3).skip(1).to_a # => [4, 7, 10]
   # ```
-  def step(n : Int = 1)
-    StepIterator(self, B, typeof(n)).new(self, n)
+  def step(by = 1)
+    StepIterator(self, B, typeof(by)).new(self, by)
   end
 
   # Returns true if this range excludes the *end* element.

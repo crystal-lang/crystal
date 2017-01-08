@@ -13,7 +13,7 @@ module Crystal
     end
 
     def push_debug_info_metadata(mod)
-      di_builder(mod).finalize
+      di_builder(mod).end
 
       # DebugInfo generation in LLVM by default uses a higher version of dwarf
       # than OS X currently understands. Android has the same problem.
@@ -92,13 +92,13 @@ module Crystal
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx + (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
-          member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, offset * 8, 0, ivar_debug_type)
+          member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, offset * 8, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
-      debug_type = di_builder.create_struct_type(nil, type.to_s, nil, 1, size, size, 0, nil, di_builder.get_or_create_type_array(element_types))
+      debug_type = di_builder.create_struct_type(nil, type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, di_builder.get_or_create_type_array(element_types))
       unless type.struct?
         debug_type = di_builder.create_pointer_type(debug_type, llvm_typer.pointer_size * 8, llvm_typer.pointer_size * 8, type.to_s)
       end
@@ -128,7 +128,17 @@ module Crystal
 
     def declare_variable(var_name, var_type, alloca, location)
       declare_local(var_type, alloca, location) do |scope, file, line_number, debug_type|
-        di_builder.create_auto_variable scope, var_name, file, line_number, debug_type
+        di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
+      end
+    end
+
+    private def align_of(type)
+      case type
+      when CharType    then 32
+      when IntegerType then type.bits
+      when FloatType   then type.bytes * 8
+      when BoolType    then 8
+      else                  0 # unsupported
       end
     end
 
@@ -238,7 +248,7 @@ module Crystal
       file, dir = file_and_dir(filename)
       scope = di_builder.create_file(file, dir)
       fn_metadata = di_builder.create_function(scope, MAIN_NAME, MAIN_NAME, scope,
-        0, fun_metadata_type, true, true, 0, 0_u32, false, main_fun)
+        0, fun_metadata_type, true, true, 0, LLVM::DIFlags::Zero, false, main_fun)
       fun_metadatas[main_fun] = fn_metadata
     end
 
@@ -249,7 +259,8 @@ module Crystal
       file, dir = file_and_dir(location.filename)
       scope = di_builder.create_file(file, dir)
       fn_metadata = di_builder.create_function(scope, target_def.name, target_def.name, scope,
-        location.line_number, fun_metadata_type, true, true, location.line_number, 0_u32, false, context.fun)
+        location.line_number, fun_metadata_type, true, true,
+        location.line_number, LLVM::DIFlags::Zero, false, context.fun)
       fun_metadatas[context.fun] = fn_metadata
     end
   end

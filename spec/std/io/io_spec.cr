@@ -370,7 +370,41 @@ describe IO do
           line.should eq("cc")
         end
         counter += 1
-      end
+      end.should be_nil
+      counter.should eq(3)
+    end
+
+    it "does each_char" do
+      io = SimpleIOMemory.new("あいう")
+      counter = 0
+      io.each_char do |c|
+        case counter
+        when 0
+          c.should eq('あ')
+        when 1
+          c.should eq('い')
+        when 2
+          c.should eq('う')
+        end
+        counter += 1
+      end.should be_nil
+      counter.should eq(3)
+    end
+
+    it "does each_byte" do
+      io = SimpleIOMemory.new("abc")
+      counter = 0
+      io.each_byte do |b|
+        case counter
+        when 0
+          b.should eq('a'.ord)
+        when 1
+          b.should eq('b'.ord)
+        when 2
+          b.should eq('c'.ord)
+        end
+        counter += 1
+      end.should be_nil
       counter.should eq(3)
     end
 

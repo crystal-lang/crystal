@@ -67,7 +67,7 @@ describe "Block inference" do
     assert_type("
       require \"prelude\"
       a = [1] || [1.1]
-      a.each { |x| x }
+      a.tap { |x| x }
     ") { union_of(array_of(int32), array_of(float64)) }
   end
 

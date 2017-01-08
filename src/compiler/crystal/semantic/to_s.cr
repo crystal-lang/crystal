@@ -44,6 +44,14 @@ module Crystal
       false
     end
 
+    def visit(node : TypeRestriction)
+      @str << "# type restriction: "
+      node.obj.accept self
+      @str << " : "
+      node.to.accept self
+      false
+    end
+
     def visit(node : YieldBlockBinder)
       false
     end

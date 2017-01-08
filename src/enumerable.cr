@@ -375,9 +375,10 @@ module Enumerable(T)
   # Iterates over the collection, passing each element and the initial object *obj*. Returns that object.
   #
   # ```
-  # ["Alice", "Bob"].each_with_object({} of String => Int32) do |user, sizes|
+  # hash = ["Alice", "Bob"].each_with_object({} of String => Int32) do |user, sizes|
   #   sizes[user] = user.size
-  # end # => {"Alice" => 5, "Bob" => 3}
+  # end
+  # hash # => {"Alice" => 5, "Bob" => 3}
   # ```
   def each_with_object(obj)
     each do |elem|
@@ -418,9 +419,10 @@ module Enumerable(T)
   # every element in the collection.
   #
   # ```
-  # ["Alice", "Bob"].flat_map do |user|
+  # array = ["Alice", "Bob"].flat_map do |user|
   #   user.chars
-  # end # => ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
+  # end
+  # array # => ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
   # ```
   def flat_map(&block : T -> Array(U) | Iterator(U) | U) forall U
     ary = [] of U
@@ -1249,8 +1251,8 @@ module Enumerable(T)
   # 2 element structure (for instance a `Tuple` or an `Array`)
   #
   # ```
-  # [[:a, :b], [:c, :d]].to_h        # => {a: :b, c: :d}
-  # Tuple.new({:a, 1}, {:c, 2}).to_h # => {a: 1, c: 2}
+  # [[:a, :b], [:c, :d]].to_h        # => {:a => :b, :c => :d}
+  # Tuple.new({:a, 1}, {:c, 2}).to_h # => {:a => 1, :c => 2}
   # ```
   def to_h
     each_with_object(Hash(typeof(first[0]), typeof(first[1])).new) do |item, hash|

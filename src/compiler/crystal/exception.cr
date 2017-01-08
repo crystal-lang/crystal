@@ -13,8 +13,10 @@ module Crystal
 
     abstract def to_s_with_source(source, io)
 
-    def to_json(io)
-      io.json_array { |ar| json_obj(ar, io) }
+    def to_json(json : JSON::Builder)
+      json.array do
+        to_json_single(json)
+      end
     end
 
     def true_filename(filename = @filename) : String
@@ -86,11 +88,9 @@ module Crystal
       @message
     end
 
-    def json_obj(ar, io)
-      ar.push do
-        io.json_object do |obj|
-          obj.field "message", @message
-        end
+    def to_json_single(json)
+      json.object do
+        json.field "message", @message
       end
     end
   end

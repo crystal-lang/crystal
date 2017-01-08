@@ -362,7 +362,7 @@ class Crystal::Call
           bubbling_exception do
             visitor = MainVisitor.new(program, typed_def_args, typed_def)
             visitor.yield_vars = yield_vars
-            visitor.free_vars = match.context.free_vars
+            visitor.match_context = match.context
             visitor.untyped_def = match.def
             visitor.call = self
             visitor.scope = lookup_self_type

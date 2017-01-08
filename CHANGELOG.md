@@ -1,3 +1,33 @@
+# 0.20.4 (06-01-2017)
+
+* **(breaking change)** A type that wants to convert itself to JSON now must override `to_json(builder : JSON::Builder)` instead of `to_json(io : IO)`. The same is true for custom JSON converters. If you are using `JSON.mapping` then your code will continue to work without changes.
+* **(breaking change)** Defining a `finalize` method on a struct now gives a compile error
+* **(breaking change)** Default argument types now must match their restriction, if any (for example `def foo(x : Int32 = nil)` will now fail to compile if `foo` is invoked without arguments) (thanks @MakeNowJust)
+* **(breaking change)** `each` methods now return `Nil`
+* **(breaking change)** `IO#skip(bytes)` will now raise if there aren't at least the given amount of bytes in the `IO` (previously it would work well if there were less bytes, and it would hang if there were more)
+* **(breaking change)** `MemoryIO` was removed (use `IO::Memory` instead)
+* **(breaking change)** `Number#step` now requires named arguments, `to` and `by`, to avoid argument order confusion
+* **(breaking change)** `YAML::Emitter` was renamed to `YAML::Builder`, and some of its methods were also renamed
+* **(breaking change)** `XML::Node#[]` now always returns a `String` (previously it could also return `Nil`, which was incorrect)
+* **(breaking change)** `XML::Node#content` now returns an empty `String` when no content is available
+* `HTTP::Client` now automatically reconnects on a dropped keep-alive connection
+* `with ... yield` now works well with `method_missing`
+* Class variables can now be used in generic types (all generic instances share the same variable, and subclasses get their own copy, as usual)
+* Added support for LLVM 4 (thanks @ysbaddaden)
+* Added `Enum.each` and `Enum#each` (thanks @ysbaddaden)
+* Added `Hash#compact` and `Hash#compact!` (thanks @MakeNowJust)
+* Added `IO#read_string(bytesize)`
+* Added `IO#skip_to_end`
+* Added `Iterator#flat_map` (thanks @MakeNowJust)
+* Added `JSON.build` and `JSON::Builder`
+* Added `NamedTuple#has_key?(String)` (thanks @Sija)
+* Added `p(NamedTuple)` (thanks @splattael)
+* Added `Regex::MatchData#==` (thanks @MakeNowJust)
+* Added `String#sub(Regex, NamedTuple)` (thanks @maiha)
+* Added `XML.build` and `XML::Builder`
+* Lots of improvements and applied consistencies to doc comments (thanks @Sija and @maiha)
+* [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.4)
+
 ## 0.20.3 (23-12-2016)
 
 * **(breaking change)** `IO#gets`, `IO#each_line`, `String#lines`, `String#each_line`, etc. now chomp lines by default. You can pass `chomp: false` to prevent automatic chomping. Note that `chomp` is `true` by default for argless `IO#gets` (read line) but `false` if args are given.

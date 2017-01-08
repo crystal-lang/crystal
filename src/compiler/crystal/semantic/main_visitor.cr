@@ -50,9 +50,7 @@ module Crystal
     property block_nest = 0
     property with_scope : Type?
 
-    # These are the free variables that came from matches. We look up
-    # here first if we find a single-element Path like `T`.
-    property free_vars
+    property match_context : MatchContext?
 
     # These are the variables and types that come from a block specification
     # like `&block : Int32 -> Int32`. When doing `yield 1` we need to verify
@@ -146,7 +144,7 @@ module Crystal
     end
 
     def visit(node : Path)
-      type = (@path_lookup || @scope || @current_type).lookup_type_var(node, free_vars: @free_vars)
+      type = (@path_lookup || @scope || @current_type).lookup_type_var(node, free_vars: free_vars)
       case type
       when Const
         if !type.value.type? && !type.visited?
@@ -978,7 +976,7 @@ module Crystal
 
       block_visitor = MainVisitor.new(program, before_block_vars, @typed_def, meta_vars)
       block_visitor.yield_vars = @yield_vars
-      block_visitor.free_vars = @free_vars
+      block_visitor.match_context = @match_context
       block_visitor.untyped_def = @untyped_def
       block_visitor.call = @call
       block_visitor.fun_literal_context = @fun_literal_context
@@ -1075,7 +1073,7 @@ module Crystal
       block_visitor = MainVisitor.new(program, fun_vars, node.def, meta_vars)
       block_visitor.current_type = current_type
       block_visitor.yield_vars = @yield_vars
-      block_visitor.free_vars = @free_vars
+      block_visitor.match_context = @match_context
       block_visitor.untyped_def = node.def
       block_visitor.call = @call
       block_visitor.scope = @scope
@@ -2836,7 +2834,30 @@ module Crystal
       false
     end
 
+    def visit(node : TypeRestriction)
+      obj = node.obj
+      to = node.to
+
+      obj.accept self
+
+      unless context = match_context
+        node.raise "BUG: there is no match context"
+      end
+
+      if type = obj.type.restrict(to, context)
+        node.type = type
+      else
+        node.raise "can't restrict #{obj.type} to #{to}"
+      end
+
+      false
+    end
+
     # # Helpers
+
+    def free_vars
+      match_context.try &.free_vars
+    end
 
     def check_closured(var)
       return if @typeof_nest > 0

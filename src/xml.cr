@@ -32,7 +32,7 @@
 #
 # ## Generating
 #
-# Use `XML.build`, which uses an `XML::Writer`:
+# Use `XML.build`, which uses an `XML::Builder`:
 #
 # ```
 # require "xml"

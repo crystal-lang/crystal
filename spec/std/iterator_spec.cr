@@ -116,7 +116,7 @@ describe Iterator do
     it "yields the individual elements to the block" do
       iter = ["a", "b", "c"].each
       concatinated = ""
-      iter.each { |e| concatinated += e }
+      iter.each { |e| concatinated += e }.should be_nil
       concatinated.should eq "abc"
     end
   end

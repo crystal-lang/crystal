@@ -123,12 +123,14 @@ module Crystal
       all_types = [types.shift] of Type
 
       types.each do |t2|
-        not_found = all_types.each do |t1|
+        not_found = all_types.all? do |t1|
           ancestor = t1.common_ancestor(t2)
           if ancestor
             all_types.delete t1
             all_types << ancestor.virtual_type
-            break
+            false
+          else
+            true
           end
         end
         if not_found

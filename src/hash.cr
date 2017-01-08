@@ -166,7 +166,7 @@ class Hash(K, V)
   # hash = {"foo" => "bar", "baz" => "qux"}
   # hash.key("bar")    # => "foo"
   # hash.key("qux")    # => "baz"
-  # hash.key("foobar") # => Missing hash key for value: foobar (KeyError)
+  # hash.key("foobar") # raises KeyError (Missing hash key for value: foobar)
   # ```
   def key(value)
     key(value) { raise KeyError.new "Missing hash key for value: #{value}" }
@@ -290,13 +290,12 @@ class Hash(K, V)
   #   key_and_value # => {"foo", "bar"}
   # end
   # ```
-  def each
+  def each : Nil
     current = @first
     while current
       yield({current.key, current.value})
       current = current.fore
     end
-    self
   end
 
   # Returns an iterator over the hash entries.
@@ -554,6 +553,29 @@ class Hash(K, V)
     select!(keys)
   end
 
+  # Returns new `Hash` without `nil` values.
+  #
+  # ```
+  # hash = {"hello" => "world", "foo" => nil}
+  # hash.compact # => {"hello" => "world"}
+  # ```
+  def compact
+    each_with_object({} of K => typeof(self.first_value.not_nil!)) do |(key, value), memo|
+      memo[key] = value unless value.nil?
+    end
+  end
+
+  # Removes all `nil` value from `self`. Returns nil if no changes were made.
+  #
+  # ```
+  # hash = {"hello" => "world", "foo" => nil}
+  # hash.compact! # => {"hello" => "world"}
+  # hash.compact! # => nil
+  # ```
+  def compact!
+    reject! { |key, value| value.nil? }
+  end
+
   # Zips two arrays into a `Hash`, taking keys from *ary1* and values from *ary2*.
   #
   # ```
@@ -604,7 +626,7 @@ class Hash(K, V)
   # hash       # => {"baz" => "qux"}
   #
   # hash = {} of String => String
-  # hash.shift # => Index out of bounds (IndexError)
+  # hash.shift # raises IndexError
   # ```
   def shift
     shift { raise IndexError.new }

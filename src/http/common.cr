@@ -71,8 +71,9 @@ module HTTP
     # This is basically
     #
     # ```
+    # line = "Server: nginx"
     # name, value = line.split ':', 2
-    # {name, value.lstrip}
+    # {name, value.lstrip} # => {"Server", "nginx"}
     # ```
     #
     # except that it's faster because we only create 2 strings

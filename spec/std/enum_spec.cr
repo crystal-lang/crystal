@@ -63,6 +63,31 @@ describe Enum do
     (SpecEnumFlags::One | SpecEnumFlags::Two).includes?(SpecEnumFlags::Three).should be_false
   end
 
+  describe "each" do
+    it "won't yield None" do
+      SpecEnumFlags::None.each do |name|
+        raise "unexpected yield"
+      end
+    end
+
+    it "won't yield All" do
+      SpecEnumFlags::All.each do |name|
+        raise "unexpected yield" if name == SpecEnumFlags::All
+      end
+    end
+
+    it "yields each member" do
+      names = [] of SpecEnumFlags
+      values = [] of Int32
+      SpecEnumFlags.flags(One, Three).each do |name, value|
+        names << name
+        values << value
+      end
+      names.should eq([SpecEnumFlags::One, SpecEnumFlags::Three])
+      values.should eq([SpecEnumFlags::One.value, SpecEnumFlags::Three.value])
+    end
+  end
+
   describe "names" do
     it "for simple enum" do
       SpecEnum.names.should eq(%w(One Two Three))
@@ -144,5 +169,37 @@ describe Enum do
 
   it "clones" do
     SpecEnum::One.clone.should eq(SpecEnum::One)
+  end
+
+  describe "each" do
+    it "iterates each member" do
+      keys = [] of SpecEnum
+      values = [] of Int8
+
+      SpecEnum.each do |key, value|
+        keys << key
+        values << value
+      end
+
+      keys.should eq([SpecEnum::One, SpecEnum::Two, SpecEnum::Three])
+      values.should eq([SpecEnum::One.value, SpecEnum::Two.value, SpecEnum::Three.value])
+    end
+
+    it "iterates each flag" do
+      keys = [] of SpecEnumFlags
+      values = [] of Int32
+
+      SpecEnumFlags.each do |key, value|
+        keys << key
+        values << value
+      end
+
+      keys.should eq([SpecEnumFlags::One, SpecEnumFlags::Two, SpecEnumFlags::Three])
+      values.should eq([SpecEnumFlags::One.value, SpecEnumFlags::Two.value, SpecEnumFlags::Three.value])
+    end
+  end
+
+  it "different enums classes not eq always" do
+    SpecEnum::One.should_not eq SpecEnum2::FourtyTwo
   end
 end

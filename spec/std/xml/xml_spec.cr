@@ -229,6 +229,11 @@ describe XML do
     root.content.should eq("Foo")
   end
 
+  it "gets empty content" do
+    doc = XML.parse("<foo/>")
+    doc.children.first.content.should eq("")
+  end
+
   it "sets node name" do
     doc = XML.parse(<<-XML
       <?xml version='1.0' encoding='UTF-8'?>

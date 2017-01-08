@@ -9,7 +9,7 @@ module IO
   # delimited = IO::Delimited.new(io, read_delimiter: "||")
   #
   # delimited.gets_to_end # => "abc"
-  # delimited.gets_to_end # => nil
+  # delimited.gets_to_end # => ""
   # io.gets_to_end        # => "123"
   # ```
   class Delimited

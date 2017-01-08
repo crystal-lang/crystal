@@ -21,12 +21,12 @@ struct XML::Node
   end
 
   # Gets the attribute content for the *attribute* given by name. Raises `KeyError` if attribute is not found.
-  def [](attribute : String)
-    attributes[attribute].content
+  def [](attribute : String) : String
+    attributes[attribute].content || raise(KeyError.new("Missing attribute: #{attribute}"))
   end
 
   # Gets the attribute content for the *attribute* given by name. Returns `nil` if attribute is not found.
-  def []?(attribute : String)
+  def []?(attribute : String) : String?
     attributes[attribute]?.try &.content
   end
 
@@ -72,14 +72,11 @@ struct XML::Node
     type == XML::Type::COMMENT_NODE
   end
 
-  # Returns the content for this Node. Returns `nil` if node does not have any content.
-  def content
+  # Returns the content for this Node. An empty string is
+  # returned if the node has no content.
+  def content : String
     content = LibXML.xmlNodeGetContent(self)
-    if content
-      String.new(content)
-    else
-      nil
-    end
+    content ? String.new(content) : ""
   end
 
   # Sets the Node's content to a Text node containing string. The string gets XML escaped, not interpreted as markup.
@@ -448,7 +445,10 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `Bool`.
   #
   # ```
-  # node.xpath_bool("count(//person) > 0")
+  # require "xml"
+  # doc = XML.parse("<person></person>")
+  #
+  # doc.xpath_bool("count(//person) > 0") # => true
   # ```
   def xpath_bool(path, namespaces = nil, variables = nil)
     xpath(path, namespaces).as(Bool)
@@ -457,7 +457,7 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `Float64`.
   #
   # ```
-  # node.xpath_float("count(//person)")
+  # doc.xpath_float("count(//person)") # => 1.0
   # ```
   def xpath_float(path, namespaces = nil, variables = nil)
     xpath(path, namespaces).as(Float64)
@@ -466,7 +466,9 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `NodeSet`.
   #
   # ```
-  # node.xpath_nodes("//person")
+  # nodes = doc.xpath_nodes("//person")
+  # nodes.class       # => XML::NodeSet
+  # nodes.map(&.name) # => ["person"]
   # ```
   def xpath_nodes(path, namespaces = nil, variables = nil)
     xpath(path, namespaces).as(NodeSet)
@@ -475,7 +477,8 @@ struct XML::Node
   # Searches this node for XPath *path* for nodes and returns the first one.
   # or nil if not found
   # ```
-  # node.xpath_node("//person")
+  # doc.xpath_node("//person")  # => #<XML::Node:0x2013e80 name="person">
+  # doc.xpath_node("//invalid") # => nil
   # ```
   def xpath_node(path, namespaces = nil, variables = nil)
     xpath_nodes(path, namespaces).first?
@@ -484,7 +487,7 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `String`.
   #
   # ```
-  # node.xpath_string("string(/persons/person[1])")
+  # doc.xpath_string("string(/persons/person[1])")
   # ```
   def xpath_string(path, namespaces = nil, variables = nil)
     xpath(path, namespaces).as(String)

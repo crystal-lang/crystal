@@ -9,8 +9,8 @@
 # ```
 # language = {name: "Crystal", year: 2011} # NamedTuple(name: String, year: Int32)
 #
-# language[:name]  # => "Crystal" (String)
-# language[:year]  # => 2011      (Int32)
+# language[:name]  # => "Crystal"
+# language[:year]  # => 2011
 # language[:other] # compile time error
 # ```
 #
@@ -30,9 +30,8 @@ struct NamedTuple
   #
   # ```
   # NamedTuple.new(name: "Crystal", year: 2011) #=> {name: "Crystal", year: 2011}
-  # NamedTuple.new                  #=> {}
-  #
-  # {}                         # syntax error
+  # NamedTuple.new # => {}
+  # {}             # syntax error
   # ```
   def self.new(**options : **T)
     options
@@ -59,6 +58,8 @@ struct NamedTuple
   # This allows you to easily pass a hash as individual named arguments to a method.
   #
   # ```
+  # require "json"
+  #
   # def speak_about(thing : String, n : Int64)
   #   "I see #{n} #{thing}s"
   # end
@@ -92,7 +93,7 @@ struct NamedTuple
   # tuple[key] # => 2011
   #
   # key = :other
-  # tuple[key] # # => KeyError
+  # tuple[key] # raises KeyError
   # ```
   def [](key : Symbol | String)
     fetch(key) { raise KeyError.new "Missing named tuple key: #{key.inspect}" }
@@ -219,6 +220,14 @@ struct NamedTuple
     false
   end
 
+  # ditto
+  def has_key?(key : String) : Bool
+    {% for key in T %}
+      return true if {{key.stringify}} == key
+    {% end %}
+    false
+  end
+
   # Appends a string representation of this named tuple to the given `IO`.
   #
   # ```
@@ -281,11 +290,10 @@ struct NamedTuple
   # name = Crystal
   # year = 2011
   # ```
-  def each
+  def each : Nil
     {% for key in T %}
       yield {{key.symbolize}}, self[{{key.symbolize}}]
     {% end %}
-    self
   end
 
   # Yields each key in this named tuple.
@@ -303,11 +311,10 @@ struct NamedTuple
   # name
   # year
   # ```
-  def each_key
+  def each_key : Nil
     {% for key in T %}
       yield {{key.symbolize}}
     {% end %}
-    self
   end
 
   # Yields each value in this named tuple.
@@ -325,11 +332,10 @@ struct NamedTuple
   # Crystal
   # 2011
   # ```
-  def each_value
+  def each_value : Nil
     {% for key in T %}
       yield self[{{key.symbolize}}]
     {% end %}
-    self
   end
 
   # Yields each key and value, together with an index starting at *offset*, in this named tuple.
@@ -353,7 +359,6 @@ struct NamedTuple
       yield key, value, i
       i += 1
     end
-    self
   end
 
   # Returns an `Array` populated with the results of each iteration in the given block,

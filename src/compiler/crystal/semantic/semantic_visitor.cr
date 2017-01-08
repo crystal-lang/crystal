@@ -12,7 +12,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   property! scope : Type
   setter scope
 
-  @free_vars : Hash(String, TypeVar)?
   @path_lookup : Type?
   @untyped_def : Def?
   @typed_def : Def?
@@ -199,6 +198,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
   end
 
+  # Returns free variables
+  def free_vars : Hash(String, TypeVar)?
+    nil
+  end
+
   def nesting_exp?(node)
     case node
     when Expressions, LibDef, CStructOrUnionDef, ClassDef, ModuleDef, FunDef, Def, Macro,
@@ -232,7 +236,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     case obj
     when Path
       base_type = @path_lookup || @scope || @current_type
-      macro_scope = base_type.lookup_type_var?(obj, free_vars: @free_vars, raise: raise_on_missing_const)
+      macro_scope = base_type.lookup_type_var?(obj, free_vars: free_vars, raise: raise_on_missing_const)
       return false unless macro_scope.is_a?(Type)
 
       macro_scope = macro_scope.remove_alias
@@ -360,7 +364,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
 
     generated_nodes = expand_macro(the_macro, node, mode: mode) do
-      @program.expand_macro node, (@scope || current_type), @path_lookup, @free_vars, @untyped_def
+      @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
     end
 
     node.expanded = generated_nodes
@@ -430,8 +434,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     case scope
     when Program
       node.raise "can't use class variables at the top level"
-    when GenericClassType, GenericModuleType
-      node.raise "can't use class variables in generic types"
     end
 
     scope.as(ClassVarContainer)

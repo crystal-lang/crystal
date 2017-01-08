@@ -27,17 +27,37 @@ require "./yaml/*"
 # `YAML#mapping` defines how an object is mapped to YAML. Mapped data is accessible
 # through generated properties like *Foo#bar*. It is more type-safe and efficient.
 #
+# ### Generating with `YAML.build`
+#
+# Use `YAML.build`, which uses `YAML::Builder`, to generate YAML
+# by emitting scalars, sequences and mappings:
+#
+# ```
+# require "yaml"
+#
+# string = YAML.build do |yaml|
+#   yaml.mapping do
+#     yaml.scalar "foo"
+#     yaml.sequence do
+#       yaml.scalar 1
+#       yaml.scalar 2
+#     end
+#   end
+# end
+# string # => "---\nfoo:\n- 1\n- 2\n"
+# ```
+#
 # ### Dumping with `YAML.dump` or `#to_yaml`
 #
 # `YAML.dump` generates the YAML representation for an object. An `IO` can be passed and it will be written there,
 # otherwise it will be returned as a string. Similarly, `#to_yaml` (with or without an `IO`) on any object does the same.
 #
 # ```
-# yaml = YAML.dump({hello: "world"})                                # => "--- \nhello: world"
-# File.open("file.yml", "w") { |f| YAML.dump({hello: "world"}, f) } # => writes it to the file
+# yaml = YAML.dump({hello: "world"})                               # => "---\nhello: world\n"
+# File.open("foo.yml", "w") { |f| YAML.dump({hello: "world"}, f) } # writes it to the file
 # # or:
-# yaml = {hello: "world"}.to_yaml                                # => "--- \nhello: world"
-# File.open("file.yml", "w") { |f| {hello: "world"}.to_yaml(f) } # => writes it to the file
+# yaml = {hello: "world"}.to_yaml                               # => "---\nhello: world\n"
+# File.open("foo.yml", "w") { |f| {hello: "world"}.to_yaml(f) } # writes it to the file
 # ```
 module YAML
   class Error < Exception

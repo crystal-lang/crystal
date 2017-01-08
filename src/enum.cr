@@ -44,14 +44,14 @@
 # An enum can be created from an integer:
 #
 # ```
-# puts Color.new(1) # => prints "Green"
+# Color.new(1).to_s # => "Green"
 # ```
 #
 # Values that don't correspond to an enum's constants are allowed: the value will still be of type Color,
 # but when printed you will get the underlying value:
 #
 # ```
-# puts Color.new(10) # => prints "10"
+# Color.new(10).to_s # => "10"
 # ```
 #
 # This method is mainly intended to convert integers from C to enums in Crystal.
@@ -167,9 +167,9 @@ struct Enum
   # to this enum member's value.
   #
   # ```
-  # Color::Red + 1 # => Color::Blue
-  # Color::Red + 2 # => Color::Green
-  # Color::Red + 3 # => 3
+  # Color::Red + 1 # => Color::Green
+  # Color::Red + 2 # => Color::Blue
+  # Color::Red + 3 # => Color.new(3)
   # ```
   def +(other : Int)
     self.class.new(value + other)
@@ -181,7 +181,7 @@ struct Enum
   # ```
   # Color::Blue - 1 # => Color::Green
   # Color::Blue - 2 # => Color::Red
-  # Color::Blue - 3 # => -1
+  # Color::Blue - 3 # => Color.new(-1)
   # ```
   def -(other : Int)
     self.class.new(value - other)
@@ -234,6 +234,11 @@ struct Enum
     value <=> other.value
   end
 
+  # :nodoc:
+  def ==(other)
+    false
+  end
+
   # Returns `true` if this enum member's value includes *other*. This
   # performs a logical "and" between this enum member's value and *other*'s,
   # so instead of writing:
@@ -274,6 +279,29 @@ struct Enum
   # Returns a hash value. This is the hash of the underlying value.
   def hash
     value.hash
+  end
+
+  # Iterates each values in a Flags Enum.
+  #
+  # ```
+  # (IOMode::Read | IOMode::Async).each do |member, value|
+  #   # yield IOMode::Read, 1
+  #   # yield IOMode::Async, 3
+  # end
+  # ```
+  def each
+    {% if @type.has_attribute?("Flags") %}
+      return if value == 0
+      {% for member in @type.constants %}
+        {% if member.stringify != "All" %}
+          if includes?({{@type}}::{{member}})
+            yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+          end
+        {% end %}
+      {% end %}
+    {% else %}
+      {% raise "Can't iterate #{@type}: only Flags Enum can be iterated" %}
+    {% end %}
   end
 
   # Returns all enum members as an `Array(String)`.
@@ -333,7 +361,7 @@ struct Enum
   # Color.from_value(0) # => Color::Red
   # Color.from_value(1) # => Color::Green
   # Color.from_value(2) # => Color::Blue
-  # Color.from_value(3) # => Exception
+  # Color.from_value(3) # raises Exception
   # ```
   def self.from_value(value) : self
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
@@ -357,7 +385,7 @@ struct Enum
   # ```
   # Color.parse("Red")    # => Color::Red
   # Color.parse("BLUE")   # => Color::Blue
-  # Color.parse("Yellow") # => Exception
+  # Color.parse("Yellow") # raises ArgumentError
   # ```
   def self.parse(string) : self
     parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")
@@ -403,9 +431,21 @@ struct Enum
       {{ @type }}::{{ value }}{% end %}\
   end
 
-  # def self.each
-  #   to_h.each do |key, value|
-  #     yield key, value
-  #   end
+  # Iterates each member of the enum. It won't iterate the None and All members
+  # of flags enums.
+  #
+  # ```
+  # IOMode.each do |member, value|
+  #   # yield IOMode::Read, 1
+  #   # yield IOMode::Write, 2
+  #   # yield IOMode::Async, 3
   # end
+  # ```
+  def self.each
+    {% for member in @type.constants %}
+      {% unless @type.has_attribute?("Flags") && %w(none all).includes?(member.stringify.downcase) %}
+        yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+      {% end %}
+    {% end %}
+  end
 end

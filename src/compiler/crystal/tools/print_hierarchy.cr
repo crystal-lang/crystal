@@ -271,96 +271,86 @@ module Crystal
         compute_targets(@program.types, exp, false)
       end
 
-      STDOUT.json_object do |json_object|
-        print_type(@program.object, json_object, STDOUT)
+      JSON.build(STDOUT) do |json|
+        json.object do
+          print_type(@program.object, json)
+        end
       end
       STDOUT.flush
     end
 
-    def print_subtypes(types, json_object, io : IO)
+    def print_subtypes(types, json)
       types = types.sort_by &.to_s
 
-      json_object.field "sub_types" do
-        io << '['
-        types.each_with_index do |type, index|
-          if must_print? type
-            io << ',' if index > 0
-            io.json_object do |new_json_object|
-              print_type(type, new_json_object, io)
+      json.field "sub_types" do
+        json.array do
+          types.each_with_index do |type, index|
+            if must_print? type
+              json.object do
+                print_type(type, json)
+              end
             end
           end
         end
-        io << ']'
       end
-
-      json_object
     end
 
-    def print_type_name(type, json_object)
-      json_object.field "name", type.to_s
-      json_object.field "kind", type.struct? ? "struct" : "class"
+    def print_type_name(type, json)
+      json.field "name", type.to_s
+      json.field "kind", type.struct? ? "struct" : "class"
 
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
          !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
-        json_object.field "size_in_bytes", @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
+        json.field "size_in_bytes", @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
       end
-      json_object
     end
 
-    def print_type(type : GenericClassType | NonGenericClassType | GenericClassInstanceType, json_object, io : IO)
-      json_object = print_type_name(type, json_object)
+    def print_type(type : GenericClassType | NonGenericClassType | GenericClassInstanceType, json)
+      print_type_name(type, json)
       subtypes = type.subclasses.select { |sub| must_print?(sub) }
 
-      json_object = print_instance_vars(type, !subtypes.empty?, json_object, io)
-      json_object = print_subtypes(subtypes, json_object, io)
-
-      json_object
+      print_instance_vars(type, !subtypes.empty?, json)
+      print_subtypes(subtypes, json)
     end
 
-    def print_type(type, json_object, io : IO)
+    def print_type(type, json)
       # Nothing to do
     end
 
-    def print_instance_vars(type : GenericClassType, has_subtypes, json_object, io : IO)
+    def print_instance_vars(type : GenericClassType, has_subtypes, json)
       instance_vars = type.instance_vars
-      return json_object if instance_vars.empty?
+      return if instance_vars.empty?
 
-      json_object.field "instance_vars" do
-        io << '['
-        instance_vars.each_with_index do |(name, var), index|
-          io << ',' if index > 0
-          io.json_object do |ivar_object|
-            ivar_object.field "name", name.to_s
-            ivar_object.field "type", var.to_s
-          end
-        end
-        io << ']'
-      end
-
-      json_object
-    end
-
-    def print_instance_vars(type, has_subtypes, json_object, io : IO)
-      instance_vars = type.instance_vars
-      return json_object if instance_vars.empty?
-
-      instance_vars = instance_vars.values
-      json_object.field "instance_vars" do
-        io << '['
-        instance_vars.each_with_index do |instance_var, index|
-          if ivar_type = instance_var.type?
-            io << ',' if index > 0
-            io.json_object do |ivar_object|
-              ivar_object.field "name", instance_var.name.to_s
-              ivar_object.field "type", ivar_type.to_s
-              ivar_object.field "size_in_bytes", @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar_type))
+      json.field "instance_vars" do
+        json.array do
+          instance_vars.each do |name, var|
+            json.object do
+              json.field "name", name.to_s
+              json.field "type", var.to_s
             end
           end
         end
-        io << ']'
       end
+    end
 
-      json_object
+    def print_instance_vars(type, has_subtypes, json)
+      instance_vars = type.instance_vars
+      return if instance_vars.empty?
+
+      instance_vars = instance_vars.values
+      json.field "instance_vars" do
+        json.array do
+          instance_vars.each do |instance_var|
+            if ivar_type = instance_var.type?
+              json.object do
+                json.field "name", instance_var.name.to_s
+                json.field "type", ivar_type.to_s
+                json.field "size_in_bytes", @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar_type))
+              end
+            end
+          end
+        end
+      end
     end
   end
 end

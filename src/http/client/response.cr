@@ -84,29 +84,52 @@ class HTTP::Client::Response
   end
 
   def self.from_io(io, ignore_body = false, decompress = true)
-    from_io(io, ignore_body: ignore_body, decompress: decompress) do |response|
-      response.consume_body_io
-      return response
+    from_io?(io, ignore_body, decompress) ||
+      raise("unexpected end of http request")
+  end
+
+  # Parses an HTTP::Client::Response from the given IO.
+  # Might return `nil` if there's no data in the IO,
+  # which probably means that the connection was closed.
+  def self.from_io?(io, ignore_body = false, decompress = true)
+    from_io?(io, ignore_body: ignore_body, decompress: decompress) do |response|
+      if response
+        response.consume_body_io
+        return response
+      else
+        return nil
+      end
     end
   end
 
-  def self.from_io(io, ignore_body = false, decompress = true, &block)
-    line = io.gets
-    if line
-      pieces = line.split(3)
-      http_version = pieces[0]
-      status_code = pieces[1].to_i
-      status_message = pieces[2]? ? pieces[2].chomp : ""
-
-      body_type = HTTP::BodyType::OnDemand
-      body_type = HTTP::BodyType::Mandatory if mandatory_body?(status_code)
-      body_type = HTTP::BodyType::Prohibited if ignore_body
-
-      HTTP.parse_headers_and_body(io, body_type: body_type, decompress: decompress) do |headers, body|
-        return yield new status_code, nil, headers, status_message, http_version, body
+  def self.from_io(io, ignore_body = false, decompress = true)
+    from_io?(io, ignore_body, decompress) do |response|
+      if response
+        yield response
+      else
+        raise("unexpected end of http request")
       end
     end
+  end
 
-    raise "unexpected end of http response"
+  # Parses an HTTP::Client::Response from the given IO and yields
+  # it to the block. Might yield `nil` if there's no data in the IO,
+  # which probably means that the connection was closed.
+  def self.from_io?(io, ignore_body = false, decompress = true, &block)
+    line = io.gets
+    return yield nil unless line
+
+    pieces = line.split(3)
+    http_version = pieces[0]
+    status_code = pieces[1].to_i
+    status_message = pieces[2]? ? pieces[2].chomp : ""
+
+    body_type = HTTP::BodyType::OnDemand
+    body_type = HTTP::BodyType::Mandatory if mandatory_body?(status_code)
+    body_type = HTTP::BodyType::Prohibited if ignore_body
+
+    HTTP.parse_headers_and_body(io, body_type: body_type, decompress: decompress) do |headers, body|
+      return yield new status_code, nil, headers, status_message, http_version, body
+    end
   end
 end

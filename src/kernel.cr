@@ -50,21 +50,20 @@ end
 # Prints objects to STDOUT and then invokes `STDOUT.flush`.
 #
 # See also: `IO#print`.
-def print(*objects : _)
+def print(*objects : _) : Nil
   STDOUT.print *objects
   STDOUT.flush
-  nil
 end
 
 # Prints a formatted string to STDOUT.
 #
 # See also: `IO#printf`.
-def printf(format_string, *args)
+def printf(format_string, *args) : Nil
   printf format_string, args
 end
 
 # ditto
-def printf(format_string, args : Array | Tuple)
+def printf(format_string, args : Array | Tuple) : Nil
   STDOUT.printf format_string, args
 end
 
@@ -85,7 +84,7 @@ end
 # Prints objects to STDOUT, each followed by a newline.
 #
 # See also: `IO#puts`.
-def puts(*objects)
+def puts(*objects) : Nil
   STDOUT.puts *objects
 end
 
@@ -163,7 +162,7 @@ end
 # ```text
 # goodbye cruel world
 # ```
-def at_exit(&handler : Int32 ->)
+def at_exit(&handler : Int32 ->) : Nil
   AtExitHandlers.add(handler)
 end
 
@@ -171,7 +170,7 @@ end
 # to the invoking environment.
 #
 # Registered `at_exit` procs are executed.
-def exit(status = 0)
+def exit(status = 0) : NoReturn
   AtExitHandlers.run status
   STDOUT.flush
   STDERR.flush
@@ -180,7 +179,7 @@ end
 
 # Terminates execution immediately, printing *message* to STDERR and
 # then calling `exit(status)`.
-def abort(message, status = 1)
+def abort(message, status = 1) : NoReturn
   STDERR.puts message if message
   exit status
 end

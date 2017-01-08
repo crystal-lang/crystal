@@ -251,8 +251,8 @@ struct JSON::Any
   end
 
   # :nodoc:
-  def to_json(io)
-    raw.to_json(io)
+  def to_json(json : JSON::Builder)
+    raw.to_json(json)
   end
 end
 

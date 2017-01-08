@@ -67,7 +67,7 @@ describe "Char::Reader" do
     sum = 0
     reader.each do |char|
       sum += char.ord
-    end
+    end.should be_nil
     sum.should eq(294)
   end
 
@@ -75,7 +75,7 @@ describe "Char::Reader" do
     reader = Char::Reader.new("")
     reader.each do |char|
       fail "reader each shouldn't yield on empty string"
-    end
+    end.should be_nil
   end
 
   it "errors if 0x80 <= first_byte < 0xC2" do
