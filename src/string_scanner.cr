@@ -254,7 +254,7 @@ class StringScanner
     io << "#<StringScanner "
     offset = offset()
     io << offset << "/" << @str.size
-    start = Math.min(Math.max(offset - 2, 0), @str.size - 5)
+    start = Math.min(Math.max(offset - 2, 0), Math.max(0, @str.size - 5))
     io << " \"" << @str[start, 5] << "\" >"
   end
 end
