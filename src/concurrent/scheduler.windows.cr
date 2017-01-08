@@ -24,11 +24,13 @@ class Scheduler
 
   def self.attach_to_completion_port(handle, fd) : Bool
     if LibWindows.create_io_completion_port(handle, Scheduler.completion_port, fd.as(Void*), 0).null?
-      # It is allowed to fail if the handle doesn't have FILE_FLAG_OVERLAPPED.
-      # How to check for if the flag is set on the handle?
+      if LibWindows.get_last_error == WinError::ERROR_INVALID_PARAMETER
+        # It is allowed to fail if the handle doesn't have FILE_FLAG_OVERLAPPED.
+        # But better check before calling. How to check for if the flag is set on the handle?
+        return false
+      end
 
-      # raise WinError.new("CreateIoCompletionPort")
-      return false
+      raise WinError.new("CreateIoCompletionPort")
     end
     true
   end
