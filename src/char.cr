@@ -423,6 +423,21 @@ struct Char
     Unicode.upcase(self, options) { |char| yield char }
   end
 
+  # Returns the ASCII swapcase equivalent of this char.
+  #
+  # ```
+  # 'z'.swapcase # => 'Z'
+  # 'X'.swapcase # => 'x'
+  # '.'.swapcase # => '.'
+  # ```
+  def swapcase
+    if 'a' <= self && self <= 'z'
+      (self.ord - 32).chr
+    else
+      downcase
+    end
+  end
+
   # Returns this char's codepoint.
   def hash
     ord

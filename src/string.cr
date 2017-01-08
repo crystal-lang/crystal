@@ -935,6 +935,21 @@ class String
     end
   end
 
+  # Returns a new string with each lowercase letter replaced with its uppercase
+  # counterpart and each uppercase letter with its lowercase counterpart.
+  #
+  # ```
+  # "hEllO".swapcase        # => "Hello"
+  # "cRyStAl_LaNg".swapcase # => "CrYsTaL_lAnG"
+  # ```
+  def swapcase
+    String.build(bytesize) do |io|
+      each_char do |char|
+        io << char.swapcase
+      end
+    end
+  end
+
   # Returns a new string with the first letter converted to uppercase and every
   # subsequent letter converted to lowercase.
   #
