@@ -152,11 +152,7 @@ class IO::FileDescriptor
 
   private def unbuffered_read(slice : Bytes)
     overlapped = LibWindows::Overlapped.new
-    overlapped.status = 0
-    overlapped.bytes_transfered = 0
     overlapped.offset = @pos
-    overlapped.event = nil
-
     ret = LibWindows.read_file(@handle, slice.pointer(slice.size), slice.size, out bytes_read, pointerof(overlapped))
     if ret || LibWindows.get_last_error == WinError::ERROR_IO_PENDING
       if @async
@@ -181,10 +177,7 @@ class IO::FileDescriptor
     total = count
     loop do
       overlapped = LibWindows::Overlapped.new
-      overlapped.status = 0
-      overlapped.bytes_transfered = 0
       overlapped.offset = @pos
-      overlapped.event = nil
       ret = LibWindows.write_file(@handle, slice.pointer(count), count, out bytes_written, pointerof(overlapped))
       if ret || LibWindows.get_last_error == WinError::ERROR_IO_PENDING
         if @async
