@@ -22,13 +22,15 @@ class Scheduler
     completion_port
   end
 
-  def self.attach_to_completion_port(handle, fd)
+  def self.attach_to_completion_port(handle, fd) : Bool
     if LibWindows.create_io_completion_port(handle, Scheduler.completion_port, fd.as(Void*), 0).null?
       # It is allowed to fail if the handle doesn't have FILE_FLAG_OVERLAPPED.
       # How to check for if the flag is set on the handle?
 
       # raise WinError.new("CreateIoCompletionPort")
+      return false
     end
+    true
   end
 
   def self.loop_fiber
@@ -49,6 +51,9 @@ class Scheduler
               @@timers.delete(fiber)
             end
             fiber.resume
+          else
+            fd = data.as(IO::FileDescriptor)
+            fd.resume_overlapped entry
           end
         end
       end

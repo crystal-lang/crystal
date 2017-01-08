@@ -9,7 +9,7 @@ class IO::FileDescriptor
     @edge_triggerable = false # HACK to make docs build in ci.
     @closed = false
     @pos = 0_u64
-    Scheduler.attach_to_completion_port(@handle, self)
+    @async = Scheduler.attach_to_completion_port(@handle, self)
   end
 
   # def self.fcntl(handle, cmd, arg = 0)
@@ -151,19 +151,26 @@ class IO::FileDescriptor
   end
 
   private def unbuffered_read(slice : Bytes)
-    overlapped = GC.malloc(sizeof(LibWindows::Overlapped)).as(LibWindows::Overlapped*)
-    overlapped.value.status = 0
-    overlapped.value.bytes_transfered = 0
-    overlapped.value.offset = @pos
-    overlapped.value.event = nil
+    overlapped = LibWindows::Overlapped.new
+    overlapped.status = 0
+    overlapped.bytes_transfered = 0
+    overlapped.offset = @pos
+    overlapped.event = nil
 
-    if LibWindows.read_file(@handle, slice.pointer(slice.size), slice.size, out bytes_read, overlapped)
+    ret = LibWindows.read_file(@handle, slice.pointer(slice.size), slice.size, out bytes_read, pointerof(overlapped))
+    if ret || LibWindows.get_last_error == WinError::ERROR_IO_PENDING
+      if @async
+        @overlappeds[pointerof(overlapped)] = Fiber.current
+        sleep
+        if overlapped.status != WinError::ERROR_SUCCESS
+          raise WinError.new "ReadFile", overlapped.status.to_u32
+        end
+        bytes_read = overlapped.bytes_transfered
+      end
       @pos += bytes_read
       return bytes_read
     elsif LibWindows.get_last_error == WinError::ERROR_HANDLE_EOF
       return 0
-    elsif LibWindows.get_last_error == WinError::ERROR_IO_PENDING
-      raise WinError.new "ReadFile: TODO, Implement Overlapped write"
     else
       raise WinError.new "ReadFile"
     end
@@ -173,22 +180,35 @@ class IO::FileDescriptor
     count = slice.size
     total = count
     loop do
-      overlapped = GC.malloc(sizeof(LibWindows::Overlapped)).as(LibWindows::Overlapped*)
-      overlapped.value.status = 0
-      overlapped.value.bytes_transfered = 0
-      overlapped.value.offset = @pos
-      overlapped.value.event = nil
-      if LibWindows.write_file(@handle, slice.pointer(count), count, out bytes_written, overlapped)
+      overlapped = LibWindows::Overlapped.new
+      overlapped.status = 0
+      overlapped.bytes_transfered = 0
+      overlapped.offset = @pos
+      overlapped.event = nil
+      ret = LibWindows.write_file(@handle, slice.pointer(count), count, out bytes_written, pointerof(overlapped))
+      if ret || LibWindows.get_last_error == WinError::ERROR_IO_PENDING
+        if @async
+          @overlappeds[pointerof(overlapped)] = Fiber.current
+          sleep
+          if overlapped.status != WinError::ERROR_SUCCESS
+            raise WinError.new "WriteFile", overlapped.status.to_u32
+          end
+          bytes_written = overlapped.bytes_transfered
+        end
         @pos += bytes_written
         count -= bytes_written
         return total if count == 0
         slice += bytes_written
-      elsif LibWindows.get_last_error == WinError::ERROR_IO_PENDING
-        raise WinError.new "WriteFile: TODO, Implement Overlapped write"
       else
         raise WinError.new "WriteFile"
       end
     end
+  end
+
+  # :nodoc:
+  def resume_overlapped(overlapped_ptr)
+    @overlappeds.delete(overlapped_ptr).try &.resume
+    # TODO: Can it possibly not be found?
   end
 
   private def unbuffered_rewind
