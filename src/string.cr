@@ -2176,6 +2176,9 @@ class String
     end
   end
 
+  # Prime number constant for Rabin-Karp algorithm
+  private PRIME_RK = 2097169u32
+
   # Returns the index of *search* in the string, or `nil` if the string is not present.
   # If *offset* is present, it defines the position to start the search.
   #
@@ -2210,17 +2213,63 @@ class String
     offset += size if offset < 0
     return nil if offset < 0
 
-    end_pos = bytesize - search.bytesize
+    return size < offset ? nil : offset if search.empty?
 
-    reader = Char::Reader.new(self)
-    reader.each_with_index do |char, i|
-      if reader.pos <= end_pos
-        if i >= offset && (to_unsafe + reader.pos).memcmp(search.to_unsafe, search.bytesize) == 0
-          return i
-        end
+    # Rabin-Karp algorithm
+    # https://en.wikipedia.org/wiki/Rabin%E2%80%93Karp_algorithm
+
+    # calculate a rolling hash of search string (needle)
+    search_hash = 0u32
+    search.each_byte do |b|
+      search_hash = search_hash * PRIME_RK + b
+    end
+    pow = PRIME_RK ** search.bytesize
+
+    # Find start index with offset
+    char_index = 0
+    pointer = to_unsafe
+    end_pointer = pointer + bytesize
+    while char_index < offset && pointer < end_pointer
+      byte = pointer.value
+      if byte < 0x80
+        pointer += 1
+      elsif byte < 0xe0
+        pointer += 2
+      elsif byte < 0xf0
+        pointer += 3
       else
-        break
+        pointer += 4
       end
+      char_index += 1
+    end
+
+    head_pointer = pointer
+
+    # calculate a rolling hash of this text (haystack)
+    hash = 0u32
+    hash_end_pointer = pointer + search.bytesize
+    return if hash_end_pointer > end_pointer
+    while pointer < hash_end_pointer
+      hash = hash * PRIME_RK + pointer.value
+      pointer += 1
+    end
+
+    while true
+      # check hash equality and real string equality
+      if hash == search_hash && head_pointer.memcmp(search.to_unsafe, search.bytesize) == 0
+        return char_index
+      end
+
+      return if pointer >= end_pointer
+
+      byte = head_pointer.value
+      char_index += 1 if (byte & 0x80) == 0 || (byte & 0x40) != 0
+
+      # update a rolling hash of this text (haystack)
+      hash = hash * PRIME_RK + pointer.value - pow * byte
+
+      head_pointer += 1
+      pointer += 1
     end
 
     nil

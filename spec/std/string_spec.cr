@@ -600,6 +600,8 @@ describe "String" do
         assert { "foobarbaz".index("ba", -5).should eq(6) }
         assert { "foo".index("ba", 1).should be_nil }
         assert { "foo".index("ba", -20).should be_nil }
+        assert { "foo".index("", 3).should eq(3) }
+        assert { "foo".index("", 4).should be_nil }
         assert { "日本語日本語".index("本語", 2).should eq(4) }
       end
     end
@@ -616,6 +618,8 @@ describe "String" do
         assert { "foobarbaz".index(/ba/, -5).should eq(6) }
         assert { "Foo".index(/[A-Z]/, 1).should be_nil }
         assert { "foo".index(/o/, 2).should eq(2) }
+        assert { "foo".index(//, 3).should eq(3) }
+        assert { "foo".index(//, 4).should be_nil }
         assert { "日本語日本語".index(/本語/, 2).should eq(4) }
       end
     end
