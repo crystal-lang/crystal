@@ -3,7 +3,7 @@ class IO::FileDescriptor
   include Buffered
 
   # :nodoc:
-  property overlappeds = Hash(LibWindows::Overlapped*, Fiber).new
+  property overlappeds = Hash(LibWindows::Overlapped*, Fiber?).new
 
   def initialize(@handle : LibWindows::Handle)
     @edge_triggerable = false # HACK to make docs build in ci.
@@ -151,24 +151,28 @@ class IO::FileDescriptor
   end
 
   private def unbuffered_read(slice : Bytes)
-    overlapped = LibWindows::Overlapped.new
-    overlapped.offset = @pos
-    ret = LibWindows.read_file(@handle, slice.pointer(slice.size), slice.size, out bytes_read, pointerof(overlapped))
-    if ret || LibWindows.get_last_error == WinError::ERROR_IO_PENDING
-      if @async
-        @overlappeds[pointerof(overlapped)] = Fiber.current
-        sleep
-        if overlapped.status != WinError::ERROR_SUCCESS
-          raise WinError.new "ReadFile", overlapped.status.to_u32
-        end
-        bytes_read = overlapped.bytes_transfered
-      end
+    overlapped = Pointer(LibWindows::Overlapped).malloc
+    overlapped.value = LibWindows::Overlapped.new
+    overlapped.value.offset = @pos
+    LibWindows.read_file(@handle, slice.pointer(slice.size), slice.size, out bytes_read, overlapped)
+    status = LibWindows.get_last_error
+    if status == WinError::ERROR_IO_PENDING
+      @overlappeds[overlapped] = Fiber.current
+      Scheduler.reschedule
+      status = overlapped.value.status.to_u32
+      bytes_read = overlapped.value.bytes_transfered
+    elsif @async
+      # See unbuffered_write
+      @overlappeds[overlapped] = nil
+    end
+
+    if status == WinError::ERROR_SUCCESS
       @pos += bytes_read
       return bytes_read
-    elsif LibWindows.get_last_error == WinError::ERROR_HANDLE_EOF
+    elsif status == WinError::ERROR_HANDLE_EOF
       return 0
     else
-      raise WinError.new "ReadFile"
+      raise WinError.new "ReadFile", status
     end
   end
 
@@ -176,32 +180,39 @@ class IO::FileDescriptor
     count = slice.size
     total = count
     loop do
-      overlapped = LibWindows::Overlapped.new
-      overlapped.offset = @pos
-      ret = LibWindows.write_file(@handle, slice.pointer(count), count, out bytes_written, pointerof(overlapped))
-      if ret || LibWindows.get_last_error == WinError::ERROR_IO_PENDING
-        if @async
-          @overlappeds[pointerof(overlapped)] = Fiber.current
-          sleep
-          if overlapped.status != WinError::ERROR_SUCCESS
-            raise WinError.new "WriteFile", overlapped.status.to_u32
-          end
-          bytes_written = overlapped.bytes_transfered
-        end
+      overlapped = Pointer(LibWindows::Overlapped).malloc
+      overlapped.value = LibWindows::Overlapped.new
+      overlapped.value.offset = @pos
+      LibWindows.write_file(@handle, slice.pointer(count), count, out bytes_written, overlapped)
+      status = LibWindows.get_last_error
+      if status == WinError::ERROR_IO_PENDING
+        @overlappeds[overlapped] = Fiber.current
+        Scheduler.reschedule
+        status = overlapped.value.status.to_u32
+        bytes_written = overlapped.value.bytes_transfered
+      elsif @async
+        # Even though the operation already completed, this IO is asynchronous and a completion notification
+        # will be triggered ai the IOCP (Scheduler). This means the overlapped pointer still remain valid.
+        # It is saved in the @overlappeds Hash to prevent GC collection. We can return the results now and
+        # simply ignore the event later.
+        @overlappeds[overlapped] = nil
+      end
+
+      if status == WinError::ERROR_SUCCESS
         @pos += bytes_written
         count -= bytes_written
         return total if count == 0
         slice += bytes_written
       else
-        raise WinError.new "WriteFile"
+        raise WinError.new "WriteFile", status
       end
     end
   end
 
   # :nodoc:
   def resume_overlapped(overlapped_ptr)
+    # @overlappeds will not contain this overlapped if the call returned success earlier
     @overlappeds.delete(overlapped_ptr).try &.resume
-    # TODO: Can it possibly not be found?
   end
 
   private def unbuffered_rewind
