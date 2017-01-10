@@ -69,7 +69,7 @@ class Crystal::CodeGenVisitor
 
       needs_body = !target_def.is_a?(External) || is_exported_fun
       if needs_body
-        emit_def_debug_metadata target_def if @debug
+        emit_def_debug_metadata target_def unless @debug.none?
 
         context.fun.add_attribute LLVM::Attribute::UWTable
         if @program.has_flag?("darwin")
@@ -81,7 +81,7 @@ class Crystal::CodeGenVisitor
         new_entry_block
 
         if is_closure
-          clear_current_debug_location if @debug
+          clear_current_debug_location if @debug.line_numbers?
           setup_closure_vars context.closure_vars.not_nil!
         else
           context.reset_closure
@@ -99,12 +99,12 @@ class Crystal::CodeGenVisitor
           context.closure_parent_context = closure_parent_context
         end
 
-        set_current_debug_location target_def if @debug
+        set_current_debug_location target_def if @debug.line_numbers?
         alloca_vars target_def.vars, target_def, args, context.closure_parent_context
 
         create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)
 
-        if @debug
+        if @debug.variables?
           in_alloca_block do
             args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
             location = target_def.location
@@ -125,7 +125,9 @@ class Crystal::CodeGenVisitor
 
         accept target_def.body
 
-        set_current_debug_location target_def.end_location if @debug
+        if @debug.line_numbers?
+          set_current_debug_location target_def.end_location
+        end
 
         codegen_return(target_def)
 

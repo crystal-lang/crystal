@@ -13,7 +13,7 @@ describe "Code gen: debug" do
       end
 
       x = Foo.new || Bar.new
-      ), debug: true)
+      ), debug: Crystal::Debug::All)
   end
 
   it "inlines instance var access through getter in debug mode" do
@@ -45,6 +45,6 @@ describe "Code gen: debug" do
       foo = Foo.new
       foo.set
       foo.bar.x
-      ), debug: true, filename: "foo.cr").to_i.should eq(2)
+      ), debug: Crystal::Debug::All, filename: "foo.cr").to_i.should eq(2)
   end
 end

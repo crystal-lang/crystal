@@ -281,8 +281,11 @@ class Crystal::Command
             compiler.cross_compile = true
           end
         end
-        opts.on("-d", "--debug", "Add symbolic debug info") do
-          compiler.debug = true
+        opts.on("-d", "--debug", "Add full symbolic debug info") do
+          compiler.debug = Crystal::Debug::All
+        end
+        opts.on("", "--no-debug", "Skip any symbolic debug info") do
+          compiler.debug = Crystal::Debug::None
         end
       end
 
@@ -443,8 +446,11 @@ class Crystal::Command
   end
 
   private def setup_simple_compiler_options(compiler, opts)
-    opts.on("-d", "--debug", "Add symbolic debug info") do
-      compiler.debug = true
+    opts.on("-d", "--debug", "Add full symbolic debug info") do
+      compiler.debug = Crystal::Debug::All
+    end
+    opts.on("", "--no-debug", "Skip any symbolic debug info") do
+      compiler.debug = Crystal::Debug::None
     end
     opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
       compiler.flags << flag

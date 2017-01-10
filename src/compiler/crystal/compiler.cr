@@ -5,6 +5,13 @@ require "colorize"
 require "crypto/md5"
 
 module Crystal
+  @[Flags]
+  enum Debug
+    LineNumbers
+    Variables
+    Default     = LineNumbers
+  end
+
   # Main interface to the compiler.
   #
   # A Compiler parses source code, type checks it and
@@ -35,7 +42,7 @@ module Crystal
 
     # If `true`, the executable will be generated with debug code
     # that can be understood by `gdb` and `lldb`.
-    property? debug = false
+    property debug = Debug::Default
 
     # If `true`, `.ll` files will be generated in the default cache
     # directory for each generated LLVM module.
@@ -153,7 +160,7 @@ module Crystal
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.target_machine = target_machine
       program.flags << "release" if release?
-      program.flags << "debug" if debug?
+      program.flags << "debug" unless debug.none?
       program.flags.merge! @flags
       program.wants_doc = wants_doc?
       program.color = color?
@@ -209,7 +216,7 @@ module Crystal
       @link_flags = "#{@link_flags} -rdynamic"
 
       llvm_modules = Crystal.timing("Codegen (crystal)", @stats) do
-        program.codegen node, debug: @debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
+        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
       end
 
       if @cross_compile
