@@ -6,9 +6,7 @@ require "./openssl/lib_ssl"
 # - TLS sockets will wrap the underlying TCP socket, and any further communication must happen through the OpenSSL::SSL::Socket only.
 #
 # ## Usage Example
-# for the below "server" example to work, a key pair should be created, using openssl cli utility it can be done like that
-# - Generate keys to /tmp/
-# - openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/private.key -out /tmp/certificate.crt
+# - Note: for the below "server" example to work, a key pair should be attained
 #
 # Recommended ciphers can be taken from
 # - https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet#Rule_-_Only_Support_Strong_Cryptographic_Ciphers
@@ -28,8 +26,8 @@ require "./openssl/lib_ssl"
 # def server
 #   socket = TCPServer.new(5555) # Bind new TCPSocket to port 5555
 #   context = OpenSSL::SSL::Context::Server.new
-#   context.private_key = "/tmp/private.key"
-#   context.certificate_chain = "/tmp/certificate.crt"
+#   context.private_key = "/path/to/private.key"
+#   context.certificate_chain = "/path/to/public.cert"
 #   puts "server is up"
 #   socket.accept do |client|
 #     puts "got client"
