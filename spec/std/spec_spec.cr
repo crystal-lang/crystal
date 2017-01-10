@@ -1,5 +1,13 @@
 require "spec"
 
+class SpecException < Exception
+  getter value : Int32
+
+  def initialize(@value, msg)
+    super(msg)
+  end
+end
+
 describe "Spec matchers" do
   describe "should be_truthy" do
     it "passes for true" do
@@ -74,6 +82,14 @@ describe "Spec matchers" do
       expect_raises Spec::AssertionFailed, %{expected: value "hello world!"\nto not include: "world"} do
         "hello world!".should_not contain("world")
       end
+    end
+  end
+
+  describe "expect_raises" do
+    it "return exception" do
+      ex = expect_raises(SpecException) { raise SpecException.new(11, "O_o") }
+      ex.value.should eq 11
+      ex.message.should eq "O_o"
     end
   end
 
