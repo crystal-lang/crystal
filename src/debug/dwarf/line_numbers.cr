@@ -125,7 +125,7 @@ module Debug
       #
       # :nodoc:
       struct Sequence
-        property! offset : LibC::Long
+        property! offset : LibC::OffT
         property! unit_length : UInt32
         property! version : UInt16
         property! header_length : UInt32 # FIXME: UInt64 for DWARF64 (uncommon)
@@ -169,7 +169,7 @@ module Debug
       # The array of indexed file names.
       getter files : Array(String)
 
-      @offset : LibC::Long
+      @offset : LibC::OffT
 
       def initialize(@io : IO::FileDescriptor, size)
         @offset = @io.tell
