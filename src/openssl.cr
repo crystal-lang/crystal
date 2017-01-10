@@ -16,6 +16,7 @@ require "./openssl/lib_ssl"
 #   # recommended ciphers can be taken from
 #   # - https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet#Rule_-_Only_Support_Strong_Cryptographic_Ciphers
 #   # - https://cipherli.st/
+#   # - Full list is available at: https://wiki.openssl.org/index.php/Manual:Ciphers(1)#CIPHER_STRINGS
 #   context.ciphers = "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH"
 #   context.private_key = "/tmp/private.key"
 #   context.certificate_chain = "/tmp/certificate.crt"
@@ -36,7 +37,7 @@ require "./openssl/lib_ssl"
 # ```crystal
 # require "socket"
 # require "openssl"
-
+#
 # def client
 #   socket = TCPSocket.new("127.0.0.1", 5555)
 #   context = OpenSSL::SSL::Context::Client.new
