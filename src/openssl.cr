@@ -1,7 +1,6 @@
 require "./openssl/lib_ssl"
 
 # ### Example
-# ## Server side
 # for the below "server" example to work, a key pair should be created, using openssl it can be done like that
 # - Generate keys to /tmp/
 # - openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/private.key -out /tmp/certificate.crt
@@ -11,6 +10,12 @@ require "./openssl/lib_ssl"
 # - https://cipherli.st/
 # - Full list is available at: https://wiki.openssl.org/index.php/Manual:Ciphers(1)#CIPHER_STRINGS
 #
+# Do note that
+# - Crystal do provide sane defaults for all Ciphers and protocols
+# - Linked version of OpenSSL need to be checked for supporting specific protocols and ciphers
+# - If any configurations or choices in Crystal regarding SSL settings and security are found to be lacking or need
+#   improvement please open an issue and let us know
+# ## Server side
 # ```crystal
 # require "socket"
 # require "openssl"
