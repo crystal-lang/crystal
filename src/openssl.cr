@@ -1,7 +1,12 @@
 require "./openssl/lib_ssl"
 
-# ### Example
-# for the below "server" example to work, a key pair should be created, using openssl it can be done like that
+# # OpenSSL Integration
+#
+# - TLS sockets need a context, potentially with keys (required for servers) and configuration.
+# - TLS sockets will wrap the underlying TCP socket, and any further communication must happen through the OpenSSL::SSL::Socket only.
+#
+# ## Usage Example
+# for the below "server" example to work, a key pair should be created, using openssl cli utility it can be done like that
 # - Generate keys to /tmp/
 # - openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/private.key -out /tmp/certificate.crt
 #
@@ -11,11 +16,11 @@ require "./openssl/lib_ssl"
 # - Full list is available at: https://wiki.openssl.org/index.php/Manual:Ciphers(1)#CIPHER_STRINGS
 #
 # Do note that
-# - Crystal do provide sane defaults for all Ciphers and protocols
+# - Crystal does its best to provide sane configuration defaults (see [Mozilla-Intermediate](https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28default.29))
 # - Linked version of OpenSSL need to be checked for supporting specific protocols and ciphers
 # - If any configurations or choices in Crystal regarding SSL settings and security are found to be lacking or need
 #   improvement please open an issue and let us know
-# ## Server side
+# ### Server side
 # ```crystal
 # require "socket"
 # require "openssl"
@@ -23,8 +28,6 @@ require "./openssl/lib_ssl"
 # def server
 #   socket = TCPServer.new(5555) # Bind new TCPSocket to port 5555
 #   context = OpenSSL::SSL::Context::Server.new
-#   # Define which ciphers to use with OpenSSL
-#   context.ciphers = "VALID_CIPHER_STRING"
 #   context.private_key = "/tmp/private.key"
 #   context.certificate_chain = "/tmp/certificate.crt"
 #   puts "server is up"
@@ -37,7 +40,7 @@ require "./openssl/lib_ssl"
 #   end
 # end
 # ```
-# ## Client side
+# ### Client side
 # ```crystal
 # require "socket"
 # require "openssl"
@@ -45,7 +48,6 @@ require "./openssl/lib_ssl"
 # def client
 #   socket = TCPSocket.new("127.0.0.1", 5555)
 #   context = OpenSSL::SSL::Context::Client.new
-#   context.ciphers = "VALID_CIPHER_STRING"
 #   ssl_socket = OpenSSL::SSL::Socket::Client.new(socket, context)
 #   ssl_socket.write("Testing".to_slice)
 # end
