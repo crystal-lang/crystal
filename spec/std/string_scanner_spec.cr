@@ -233,6 +233,8 @@ describe StringScanner, "#inspect" do
   it "works with small strings" do
     s = StringScanner.new("hi")
     s.inspect.should eq(%(#<StringScanner 0/2 "hi" >))
+    s.scan(/\w\w/)
+    s.inspect.should eq(%(#<StringScanner 2/2 "hi" >))
   end
 end
 
