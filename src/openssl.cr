@@ -18,7 +18,9 @@ require "./openssl/lib_ssl"
 # - Linked version of OpenSSL need to be checked for supporting specific protocols and ciphers
 # - If any configurations or choices in Crystal regarding SSL settings and security are found to be lacking or need
 #   improvement please open an issue and let us know
+#
 # ### Server side
+#
 # ```crystal
 # require "socket"
 # require "openssl"
@@ -27,7 +29,7 @@ require "./openssl/lib_ssl"
 #   socket = TCPServer.new(5555) # Bind new TCPSocket to port 5555
 #   context = OpenSSL::SSL::Context::Server.new
 #   context.private_key = "/path/to/private.key"
-#   context.certificate_chain = "/path/to/public.cert"
+#   context.certificate_chain = "/path/to/public.cert?"
 #   puts "server is up"
 #   socket.accept do |client|
 #     puts "got client"
@@ -38,7 +40,9 @@ require "./openssl/lib_ssl"
 #   end
 # end
 # ```
+#
 # ### Client side
+#
 # ```crystal
 # require "socket"
 # require "openssl"
@@ -50,7 +54,6 @@ require "./openssl/lib_ssl"
 #   ssl_socket.write("Testing".to_slice)
 # end
 # ```
-
 module OpenSSL
   class Error < Exception
     getter! code : LibCrypto::ULong?
