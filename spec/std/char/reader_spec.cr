@@ -91,6 +91,10 @@ describe "Char::Reader" do
     expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xe0, 0x9F, 0xA0]) }
   end
 
+  it "errors if first_byte == 0xED && second_byte >= 0xA0" do
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xed, 0xB0, 0xA0]) }
+  end
+
   it "errors if first_byte < 0xF0 && (third_byte & 0xC0) != 0x80" do
     expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xe0, 0xA0, 0]) }
   end
