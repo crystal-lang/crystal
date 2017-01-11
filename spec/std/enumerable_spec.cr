@@ -752,6 +752,12 @@ describe "Enumerable" do
     end
   end
 
+  describe "select_with_index" do
+    it "selects the values for which the block with index returns true" do
+      ["a", "b", "c", "d", "e"].select_with_index { |_, i| (i.even?) }.should eq(["a", "c", "e"])
+    end
+  end
+
   describe "skip" do
     it "returns an array without the skipped elements" do
       [1, 2, 3, 4, 5, 6].skip(3).should eq [4, 5, 6]

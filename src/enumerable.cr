@@ -1028,6 +1028,17 @@ module Enumerable(T)
     ary
   end
 
+  # Like `select`, but the block gets passed both the element and its index.
+  #
+  # ```
+  # ["a", "b", "c", "d", "e"].select_with_index { |c, i| i % 2 == 0 } # => ["a", "c", "e"]
+  # ```
+  def select_with_index(&block : T, Int32 ->)
+    ary = [] of T
+    each_with_index { |e, i| ary << e if yield e, i }
+    ary
+  end
+
   # Returns the number of elements in the collection.
   #
   # ```
