@@ -274,6 +274,8 @@ module Spec
             fail "expected {{klass.id}} with #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
           end
         end
+
+        %ex
       rescue %ex
         if %failed
           raise %ex
