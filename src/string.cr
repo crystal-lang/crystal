@@ -775,7 +775,7 @@ class String
     at(index) { nil }
   end
 
-  def []?(str : String)
+  def []?(str : String | Char)
     includes?(str) ? str : nil
   end
 
@@ -788,7 +788,7 @@ class String
     match[group]? if match
   end
 
-  def [](str : String)
+  def [](str : String | Char)
     self[str]?.not_nil!
   end
 
