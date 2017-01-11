@@ -142,6 +142,7 @@ describe Socket::IPAddress do
 
     addr2.family.should eq(addr1.family)
     addr2.port.should eq(addr1.port)
+    typeof(addr2.address).should eq(String)
     addr2.address.should eq(addr1.address)
   end
 
@@ -151,6 +152,7 @@ describe Socket::IPAddress do
 
     addr2.family.should eq(addr1.family)
     addr2.port.should eq(addr1.port)
+    typeof(addr2.address).should eq(String)
     addr2.address.should eq(addr1.address)
   end
 
