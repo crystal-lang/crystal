@@ -107,8 +107,8 @@ class Socket
     def address
       @address ||= begin
         case family
-        when Family::INET6 then address(@addr6)
-        when Family::INET  then address(@addr4)
+        when Family::INET6 then address(@addr6.not_nil!)
+        when Family::INET  then address(@addr4.not_nil!)
         else                    raise "unsupported IP address family: #{family}"
         end
       end
@@ -130,10 +130,6 @@ class Socket
         end
         {LibC.strlen(buffer), 0}
       end
-    end
-
-    private def address(addr) : Nil
-      # shouldn't happen
     end
 
     def ==(other : IPAddress)
