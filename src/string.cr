@@ -2335,20 +2335,54 @@ class String
   # ditto
   def rindex(search : String, offset = size - search.size)
     offset += size if offset < 0
-    return nil if offset < 0
+    return if offset < 0
 
-    end_size = size - search.size
+    # Rabin-Karp algorithm
+    # https://en.wikipedia.org/wiki/Rabin%E2%80%93Karp_algorithm
 
-    last_index = nil
+    # calculate a rolling hash of search text (needle)
+    search_hash = 0u32
+    search.to_slice.reverse_each do |b|
+      search_hash = search_hash * PRIME_RK + b
+    end
+    pow = PRIME_RK ** search.bytesize
 
-    reader = Char::Reader.new(self)
-    reader.each_with_index do |char, i|
-      if i <= end_size && i <= offset && (to_unsafe + reader.pos).memcmp(search.to_unsafe, search.bytesize) == 0
-        last_index = i
-      end
+    hash = 0u32
+    char_index = size
+
+    begin_pointer = to_unsafe
+    pointer = begin_pointer + bytesize
+    tail_pointer = pointer
+    hash_begin_pointer = pointer - search.bytesize
+
+    return if hash_begin_pointer < begin_pointer
+
+    # calculate a rolling hash of this text (haystack)
+    while hash_begin_pointer < pointer
+      pointer -= 1
+      byte = pointer.value
+      char_index -= 1 if (byte & 0xC0) != 0x80
+
+      hash = hash * PRIME_RK + byte
     end
 
-    last_index
+    while true
+      # check hash equality and real string equality
+      if hash == search_hash && char_index <= offset &&
+         pointer.memcmp(search.to_unsafe, search.bytesize) == 0
+        return char_index
+      end
+
+      return if begin_pointer == pointer
+
+      pointer -= 1
+      tail_pointer -= 1
+      byte = pointer.value
+      char_index -= 1 if (byte & 0xC0) != 0x80
+
+      # update a rolling hash of this text (haystack)
+      hash = hash * PRIME_RK + byte - pow * tail_pointer.value
+    end
   end
 
   # ditto
