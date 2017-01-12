@@ -653,7 +653,8 @@ describe "String" do
 
       describe "with offset" do
         assert { "foo baro baz".rindex("o b", 6).should eq(2) }
-        assert { "foo baro baz".rindex("fg").should be_nil }
+        assert { "foo".rindex("", 3).should eq(3) }
+        assert { "foo".rindex("", 4).should eq(3) }
         assert { "日本語日本語".rindex("日本", 2).should eq(0) }
       end
     end
