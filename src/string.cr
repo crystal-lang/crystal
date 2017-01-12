@@ -3154,7 +3154,7 @@ class String
       $~ = match
       yield match
       match_bytesize = match[0].bytesize
-      break if match_bytesize == 0
+      match_bytesize += 1 if match_bytesize == 0
       byte_offset = index + match_bytesize
     end
 

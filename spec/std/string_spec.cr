@@ -1673,6 +1673,7 @@ describe "String" do
     it "works when match is empty" do
       r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
       "hello".scan(r).map(&.[0]).should eq(["hello", ""])
+      "hello world".scan(/\w+|(?= )/).map(&.[0]).should eq(["hello", "", "world"])
     end
 
     it "works with strings with block" do
