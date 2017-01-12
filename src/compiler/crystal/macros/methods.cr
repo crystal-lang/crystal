@@ -1317,6 +1317,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.type_vars(type) }
       when "instance_vars"
         interpret_argless_method(method, args) { TypeNode.instance_vars(type) }
+      when "ancestors"
+        interpret_argless_method(method, args) { TypeNode.ancestors(type) }
       when "superclass"
         interpret_argless_method(method, args) { TypeNode.superclass(type) }
       when "subclasses"
@@ -1467,6 +1469,10 @@ module Crystal
       else
         ArrayLiteral.new
       end
+    end
+
+    def self.ancestors(type)
+      ArrayLiteral.map(type.ancestors) { |ancestor| TypeNode.new(ancestor) }
     end
 
     def self.superclass(type)

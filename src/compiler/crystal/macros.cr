@@ -1481,6 +1481,10 @@ module Crystal::Macros
     def instance_vars : ArrayLiteral(MetaVar)
     end
 
+    # Returns all ancestors of this type.
+    def ancestors : ArrayLiteral(TypeNode)
+    end
+
     # Returns the direct superclass of this type.
     def superclass : TypeNode | NilLiteral
     end
