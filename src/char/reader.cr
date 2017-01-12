@@ -150,8 +150,6 @@ struct Char
     end
 
     private def decode_char_at(pos)
-      # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
-
       first = byte_at(pos)
       if first < 0x80
         return yield first, 1
@@ -177,6 +175,10 @@ struct Char
 
       if first < 0xf0
         if first == 0xe0 && second < 0xa0
+          invalid_byte_sequence(second, pos + 1)
+        end
+
+        if first == 0xed && second >= 0xa0
           invalid_byte_sequence(second, pos + 1)
         end
 
