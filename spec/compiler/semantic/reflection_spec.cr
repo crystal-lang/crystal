@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: reflection" do
   it "types Object class" do
-    assert_type("Object") { types["Class"] }
+    assert_type("Object") { types["Object"].metaclass }
   end
 
   it "types Class class" do

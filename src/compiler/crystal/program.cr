@@ -175,7 +175,6 @@ module Crystal
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      object.metaclass = klass
       klass.metaclass = klass
       klass.allowed_in_generics = false
 
