@@ -2179,8 +2179,20 @@ class String
     end
   end
 
-  # Prime number constant for Rabin-Karp algorithm
+  # Prime number constant for Rabin-Karp algorithm `String#index`
   private PRIME_RK = 2097169u32
+
+  # Update rolling hash for Rabin-Karp algorithm `String#index`
+  private macro update_hash(n)
+    {% for i in 1..n %}
+      {% if i != 1 %}
+        byte = head_pointer.value
+      {% end %}
+      hash = hash * PRIME_RK + pointer.value - pow * byte
+      pointer += 1
+      head_pointer += 1
+    {% end %}
+  end
 
   # Returns the index of *search* in the string, or `nil` if the string is not present.
   # If *offset* is present, it defines the position to start the search.
@@ -2214,14 +2226,14 @@ class String
   # ditto
   def index(search : String, offset = 0)
     offset += size if offset < 0
-    return nil if offset < 0
+    return if offset < 0
 
     return size < offset ? nil : offset if search.empty?
 
     # Rabin-Karp algorithm
     # https://en.wikipedia.org/wiki/Rabin%E2%80%93Karp_algorithm
 
-    # calculate a rolling hash of search string (needle)
+    # calculate a rolling hash of search text (needle)
     search_hash = 0u32
     search.each_byte do |b|
       search_hash = search_hash * PRIME_RK + b
@@ -2266,16 +2278,20 @@ class String
       return if pointer >= end_pointer
 
       byte = head_pointer.value
-      char_index += 1 if (byte & 0x80) == 0 || (byte & 0x40) != 0
 
-      # update a rolling hash of this text (haystack)
-      hash = hash * PRIME_RK + pointer.value - pow * byte
-
-      head_pointer += 1
-      pointer += 1
+      # update a rolling hash of this text (heystack)
+      # thanks @MaxLap for suggesting this loop reduction
+      if byte < 0x80
+        update_hash 1
+      elsif byte < 0xe0
+        update_hash 2
+      elsif byte < 0xf0
+        update_hash 3
+      else
+        update_hash 4
+      end
+      char_index += 1
     end
-
-    nil
   end
 
   # ditto
