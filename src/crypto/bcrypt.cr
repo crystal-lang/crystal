@@ -37,10 +37,10 @@ class Crypto::Bcrypt
   private DIGEST_SIZE = 31
 
   # bcrypt IV: "OrpheanBeholderScryDoubt"
-  private CIPHER_TEXT = Int32[
+  private CIPHER_TEXT = UInt32.static_array(
     0x4f727068, 0x65616e42, 0x65686f6c,
     0x64657253, 0x63727944, 0x6f756274,
-  ]
+  )
 
   def self.hash_secret(password, cost = DEFAULT_COST) : String
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1) # include leading 0
@@ -94,8 +94,8 @@ class Crypto::Bcrypt
     blowfish = Blowfish.new(BLOWFISH_ROUNDS)
     blowfish.enhance_key_schedule(salt, password, cost)
 
-    cdata = CIPHER_TEXT.dup
-    size = cdata.size
+    cipher = CIPHER_TEXT.dup
+    cdata = cipher.to_unsafe
 
     0.step(to: 4, by: 2) do |i|
       64.times do
@@ -104,10 +104,10 @@ class Crypto::Bcrypt
       end
     end
 
-    ret = Bytes.new(size * 4)
+    ret = Bytes.new(cipher.size * 4)
     j = -1
 
-    size.times do |i|
+    cipher.size.times do |i|
       ret[j += 1] = (cdata[i] >> 24).to_u8
       ret[j += 1] = (cdata[i] >> 16).to_u8
       ret[j += 1] = (cdata[i] >> 8).to_u8

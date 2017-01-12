@@ -16,27 +16,25 @@ class Crypto::Bcrypt::Blowfish < Crypto::Blowfish
     pos = 0
 
     0.upto(17) do |i|
-      @p[i] ^= next_word(key, pointerof(pos))
+      @p.to_unsafe[i] ^= next_word(key, pointerof(pos))
     end
 
-    l, r, pos = 0, 0, 0
+    l, r, pos = 0_u32, 0_u32, 0
 
-    0.step(to: 17, by: 2) do |i|
+    (0..17).step(2) do |i|
       l ^= next_word(data, pointerof(pos))
       r ^= next_word(data, pointerof(pos))
       l, r = encrypt_pair(l, r)
-      @p[i] = l
-      @p[i + 1] = r
+      @p.to_unsafe[i] = l
+      @p.to_unsafe[i + 1] = r
     end
 
-    0.upto(3) do |i|
-      0.step(to: 255, by: 2) do |j|
-        l ^= next_word(data, pointerof(pos))
-        r ^= next_word(data, pointerof(pos))
-        l, r = encrypt_pair(l, r)
-        @s[i][j] = l
-        @s[i][j + 1] = r
-      end
+    (0..1023).step(2) do |i|
+      l ^= next_word(data, pointerof(pos))
+      r ^= next_word(data, pointerof(pos))
+      l, r = encrypt_pair(l, r)
+      @s.to_unsafe[i] = l
+      @s.to_unsafe[i + 1] = r
     end
   end
 end
