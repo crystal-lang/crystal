@@ -199,7 +199,7 @@ abstract class JSON::Lexer
         hexnum1.chr
       end
     else
-      raise "uknown escape char: #{char}"
+      raise "unknown escape char: #{char}"
     end
   end
 
