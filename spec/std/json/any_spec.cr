@@ -52,6 +52,20 @@ describe JSON::Any do
     end
   end
 
+  describe "converts" do
+    it "to array" do
+      JSON.parse(%([1, 2, 3])).to_a.should eq([1, 2, 3].map { |x| JSON::Any.new x.to_i64 })
+      JSON.parse(%([1, 2, 3])).to_a?.should eq([1, 2, 3].map { |x| JSON::Any.new x.to_i64 })
+      JSON.parse("true").as_a?.should be_nil
+    end
+
+    it "to hash" do
+      JSON.parse(%({"foo": "bar"})).to_h.should eq({"foo" => JSON::Any.new "bar"})
+      JSON.parse(%({"foo": "bar"})).to_h?.should eq({"foo" => JSON::Any.new "bar"})
+      JSON.parse("true").as_h?.should be_nil
+    end
+  end
+
   describe "#size" do
     it "of array" do
       JSON.parse("[1, 2, 3]").size.should eq(3)
