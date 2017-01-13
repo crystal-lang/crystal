@@ -651,12 +651,12 @@ module Crystal
     end
 
     def visit(node : SizeOf)
-      @last = trunc(llvm_size(node.exp.type.instance_type), LLVM::Int32)
+      @last = trunc(llvm_size(node.exp.type.instance_type.devirtualize), LLVM::Int32)
       false
     end
 
     def visit(node : InstanceSizeOf)
-      @last = trunc(llvm_struct_size(node.exp.type.instance_type), LLVM::Int32)
+      @last = trunc(llvm_struct_size(node.exp.type.instance_type.devirtualize), LLVM::Int32)
       false
     end
 

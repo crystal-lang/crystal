@@ -2401,7 +2401,7 @@ module Crystal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if (type = node.exp.type?) && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.size_of(type))
+        expanded = NumberLiteral.new(@program.size_of(type.devirtualize))
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2417,8 +2417,8 @@ module Crystal
       # Try to resolve the instance_sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if (type = node.exp.type?) && type.instance_type.class? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.instance_size_of(type))
+      if (type = node.exp.type?) && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
+        expanded = NumberLiteral.new(@program.instance_size_of(type.devirtualize))
         expanded.type = @program.int32
         node.expanded = expanded
       end

@@ -677,7 +677,7 @@ module Crystal
       exp_type = node.exp.type?
 
       if exp_type
-        instance_type = exp_type.instance_type
+        instance_type = exp_type.instance_type.devirtualize
         unless instance_type.class?
           node.exp.raise "#{instance_type} is not a class, it's a #{instance_type.type_desc}"
         end
