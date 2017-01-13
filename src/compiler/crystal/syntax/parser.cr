@@ -1594,7 +1594,7 @@ module Crystal
 
       unexpected_token "(" if @token.type == :"("
 
-      node = Expressions.new exps
+      node = Expressions.new(exps)
       node.keyword = :"("
       node
     end
@@ -3186,7 +3186,7 @@ module Crystal
             else
               exps.push body
             end
-            body = Expressions.from exps
+            body = Expressions.from(exps)
           end
           body, end_location = parse_exception_handler body, implicit: true
         end

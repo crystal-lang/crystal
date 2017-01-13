@@ -138,6 +138,10 @@ module Crystal
       @expressions.last
     end
 
+    def location
+      @location || @expressions.first?.try &.location
+    end
+
     def end_location
       @end_location || @expressions.last?.try &.end_location
     end
