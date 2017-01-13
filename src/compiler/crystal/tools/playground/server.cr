@@ -121,7 +121,9 @@ module Crystal::Playground
       json.object do
         json.field "message", ex.to_s
         if ex.is_a?(Crystal::Exception)
-          json.field "payload", ex.to_s
+          json.field "payload" do
+            ex.to_json(json)
+          end
         end
       end
     end
