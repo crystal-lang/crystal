@@ -44,8 +44,8 @@ class Reference
       # but we need to avoid the allocate invocation below
       raise "can't dup {{@type}}"
     {% else %}
-      dup = {{@type}}.allocate
-      dup.as(Void*).copy_from(self.as(Void*), instance_sizeof({{@type}}))
+      dup = self.class.allocate
+      dup.as(Void*).copy_from(self.as(Void*), instance_sizeof(self))
       dup
     {% end %}
   end
