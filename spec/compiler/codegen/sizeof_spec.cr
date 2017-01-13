@@ -109,7 +109,7 @@ describe "Code gen: sizeof" do
   end
 
   it "can use sizeof of virtual type" do
-    run(%(
+    size = run(%(
       class Foo
         @x = 1
       end
@@ -120,10 +120,16 @@ describe "Code gen: sizeof" do
 
       foo = Bar.new.as(Foo)
       sizeof(typeof(foo))
-      )).to_i.should eq(8)
+      )).to_i
+
+    {% if flag?(:x86_64) %}
+      size.should eq(8)
+    {% else %}
+      size.should eq(4)
+    {% end %}
   end
 
-  it "can use sizeof of virtual type" do
+  it "can use instance_sizeof of virtual type" do
     run(%(
       class Foo
         @x = 1
