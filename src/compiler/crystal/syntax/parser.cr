@@ -1780,7 +1780,7 @@ module Crystal
             value.is_a?(String) ? StringLiteral.new(value) : value
           end
         end
-        result = StringInterpolation.new(pieces)
+        result = StringInterpolation.new(pieces).at(location)
       else
         if needs_heredoc_indent_removed?(delimiter_state)
           pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
