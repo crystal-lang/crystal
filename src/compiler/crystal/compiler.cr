@@ -60,6 +60,9 @@ module Crystal
     # If `false`, color won't be used in output messages.
     property? color = true
 
+    # If `true`, skip cleanup process on semantic analysis.
+    property? no_cleanup = false
+
     # If `true`, no executable will be generated after compilation
     # (useful to type-check a prorgam)
     property? no_codegen = false
@@ -131,7 +134,7 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node = program.semantic node, @stats
+      node = program.semantic node, @stats, cleanup: !no_cleanup?
       codegen program, node, source, output_filename unless @no_codegen
       Result.new program, node
     end

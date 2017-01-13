@@ -18,7 +18,7 @@ class Crystal::Program
   # Runs semantic analysis on the given node, returning a node
   # that's typed. In the process types and methods are defined in
   # this program.
-  def semantic(node : ASTNode, stats = false) : ASTNode
+  def semantic(node : ASTNode, stats = false, cleanup = true) : ASTNode
     node, processor = top_level_semantic(node, stats: stats)
 
     Crystal.timing("Semantic (cvars initializers)", stats) do
@@ -35,15 +35,18 @@ class Crystal::Program
     end
 
     result = Crystal.timing("Semantic (main)", stats) do
-      visit_main(node, process_finished_hooks: true)
+      visit_main(node, process_finished_hooks: true, cleanup: cleanup)
     end
+
     Crystal.timing("Semantic (cleanup)", stats) do
       cleanup_types
       cleanup_files
     end
+
     Crystal.timing("Semantic (recursive struct check)", stats) do
       RecursiveStructChecker.new(self).run
     end
+
     result
   end
 

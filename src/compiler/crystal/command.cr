@@ -35,6 +35,7 @@ class Crystal::Command
 
     Tool:
         context                  show context for given location
+        expand                   show macro expansion for given location
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         implementations          show implementations for given call in location
@@ -141,6 +142,9 @@ class Crystal::Command
       when "format".starts_with?(tool)
         options.shift
         format
+      when "expand".starts_with?(tool)
+        options.shift
+        expand
       when "hierarchy".starts_with?(tool)
         options.shift
         hierarchy
@@ -198,9 +202,10 @@ class Crystal::Command
     end
   end
 
-  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false, top_level = false)
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false)
     config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
     config.compiler.no_codegen = true
+    config.compiler.no_cleanup = no_cleanup
     config.compiler.wants_doc = wants_doc
     result = top_level ? config.top_level_semantic : config.compile
     {config, result}

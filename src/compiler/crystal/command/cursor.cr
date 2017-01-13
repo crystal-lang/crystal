@@ -17,8 +17,14 @@ class Crystal::Command
     end
   end
 
-  private def cursor_command(command)
-    config, result = compile_no_codegen command, cursor_command: true
+  private def expand
+    cursor_command("tool expand", no_cleanup: true, wants_doc: true) do |location, config, result|
+      result = ExpandVisitor.new(location).process(result)
+    end
+  end
+
+  private def cursor_command(command, no_cleanup = false, wants_doc = false)
+    config, result = compile_no_codegen command, cursor_command: true, no_cleanup: no_cleanup, wants_doc: wants_doc
 
     format = config.output_format
 
