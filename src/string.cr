@@ -109,6 +109,10 @@ class String
 
   include Comparable(self)
 
+  macro inherited
+    {{ raise "cannot inherit from String" }}
+  end
+
   # Creates a `String` from the given *slice*. `Bytes` will be copied from the slice.
   #
   # This method is always safe to call, and the resulting string will have
