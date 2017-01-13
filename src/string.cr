@@ -2798,41 +2798,32 @@ class String
     end
 
     count = 0
-    match_offset = 0
-    slice_offset = 0
-    last_slice_offset = 0
+    match_offset = slice_offset = 0
 
     while match = separator.match_at_byte_index(self, match_offset)
       index = match.byte_begin(0)
-      slice_size = index - slice_offset
       match_bytesize = match[0].bytesize
+      next_offset = index + match_bytesize
 
-      if slice_offset == 0 && slice_size == 0 && match_bytesize == 0
-        # Skip
-      elsif slice_offset == bytesize && slice_size == 0
-        yield byte_slice(last_slice_offset)
+      if next_offset == slice_offset
+        match_offset = next_offset + char_bytesize_at(next_offset)
       else
+        slice_size = index - slice_offset
+
         yield byte_slice(slice_offset, slice_size)
-      end
-      count += 1
+        count += 1
 
-      1.upto(match.size) do |i|
-        if group = match[i]?
-          yield group
+        1.upto(match.size) do |i|
+          if group = match[i]?
+            yield group
+          end
         end
+
+        slice_offset = match_offset = next_offset
       end
 
-      last_slice_offset = slice_offset
-
-      if match_bytesize == 0
-        match_offset = index + 1
-        slice_offset = index
-      else
-        match_offset = index + match_bytesize
-        slice_offset = match_offset
-      end
       break if limit && count + 1 == limit
-      break if slice_offset > bytesize
+      break if match_offset >= bytesize
     end
 
     yield byte_slice(slice_offset)
@@ -3520,6 +3511,19 @@ class String
     @bytesize == size
   end
 
+  protected def char_bytesize_at(byte_index)
+    case unsafe_byte_at(byte_index)
+    when .< 0x80
+      1
+    when .< 0xe0
+      2
+    when .< 0xf0
+      3
+    else
+      4
+    end
+  end
+
   protected def size_known?
     @bytesize == 0 || @length > 0
   end
@@ -3530,19 +3534,7 @@ class String
 
     while byte_index < bytesize
       yield byte_index, char_index
-
-      c = to_unsafe[byte_index]
-
-      if c < 0x80
-        byte_index += 1
-      elsif c < 0xe0
-        byte_index += 2
-      elsif c < 0xf0
-        byte_index += 3
-      else
-        byte_index += 4
-      end
-
+      byte_index += char_bytesize_at(byte_index)
       char_index += 1
     end
 
