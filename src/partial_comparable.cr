@@ -1,7 +1,7 @@
 # The PartialComparable mixin is used by classes whose objects may be partially ordered.
 #
 # Including types must provide an `<=>` method, which compares the receiver against
-# another object, returning -1, 0, +1 or nil depending on whether the receiver is less than,
+# another object, returning -1, 0, +1 or `nil` depending on whether the receiver is less than,
 # equal to, greater than the other object, or no order can be established.
 #
 # PartialComparable uses `<=>` to implement the conventional comparison operators (`<`, `<=`, `==`, `>=`, and `>`).

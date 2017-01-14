@@ -94,11 +94,11 @@ module IO
   # * ready to write if they appeared in write_ios
   # * have an error condition if they appeared in error_ios
   #
-  # If the optional timeout_sec is given, nil is returned if no
+  # If the optional timeout_sec is given, `nil` is returned if no
   # IO was ready after the specified amount of seconds passed. Fractions
   # are supported.
   #
-  # If timeout_sec is nil, this method blocks until an `IO` is ready.
+  # If timeout_sec is `nil`, this method blocks until an `IO` is ready.
   def self.select(read_ios, write_ios, error_ios, timeout_sec : LibC::TimeT | Int | Float?)
     nfds = 0
     read_ios.try &.each do |io|
@@ -567,7 +567,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # By default the newline is removed from the returned string,
-  # unless *chomp* is false.
+  # unless *chomp* is `false`.
   #
   # ```
   # io = IO::Memory.new "hello\nworld\nfoo\n"

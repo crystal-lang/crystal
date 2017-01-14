@@ -465,7 +465,7 @@ module Enumerable(T)
     h
   end
 
-  # Returns an `Array` with chunks in the given size, eventually filled up with given value or nil.
+  # Returns an `Array` with chunks in the given size, eventually filled up with given value or `nil`.
   #
   # ```
   # [1, 2, 3].in_groups_of(2, 0) # => [[1, 2], [3, 0]]
@@ -691,7 +691,7 @@ module Enumerable(T)
     max_by &.itself
   end
 
-  # Like `max` but returns nil if the collection is empty.
+  # Like `max` but returns `nil` if the collection is empty.
   def max?
     max_by? &.itself
   end
@@ -711,7 +711,7 @@ module Enumerable(T)
     value
   end
 
-  # Like `max_by` but returns nil if the collection is empty.
+  # Like `max_by` but returns `nil` if the collection is empty.
   def max_by?(&block : T -> U) forall U
     found, value = max_by_internal { |value| yield value }
     found ? value : nil
@@ -745,7 +745,7 @@ module Enumerable(T)
     value
   end
 
-  # Like `max_of` but returns nil if the collection is empty.
+  # Like `max_of` but returns `nil` if the collection is empty.
   def max_of?(&block : T -> U) forall U
     found, value = max_of_internal { |value| yield value }
     found ? value : nil
@@ -780,7 +780,7 @@ module Enumerable(T)
     min_by &.itself
   end
 
-  # Like `min` but returns nil if the collection is empty.
+  # Like `min` but returns `nil` if the collection is empty.
   def min?
     min_by? &.itself
   end
@@ -800,7 +800,7 @@ module Enumerable(T)
     value
   end
 
-  # Like `min_by` but returns nil if the collection is empty.
+  # Like `min_by` but returns `nil` if the collection is empty.
   def min_by?(&block : T -> U) forall U
     found, value = min_by_internal { |value| yield value }
     found ? value : nil
@@ -834,7 +834,7 @@ module Enumerable(T)
     value
   end
 
-  # Like `min_of` but returns nil if the collection is empty.
+  # Like `min_of` but returns `nil` if the collection is empty.
   def min_of?(&block : T -> U) forall U
     found, value = min_of_internal { |value| yield value }
     found ? value : nil
@@ -1054,7 +1054,7 @@ module Enumerable(T)
     array
   end
 
-  # Skips elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.
+  # Skips elements up to, but not including, the first element for which the block returns `nil` or `false` and returns an array containing the remaining elements.
   #
   # ```
   # [1, 2, 3, 4, 5, 0].skip_while { |i| i < 3 } # => [3, 4, 5, 0]
@@ -1222,7 +1222,7 @@ module Enumerable(T)
     ary
   end
 
-  # Passes elements to the block until the block returns nil or false, then stops iterating and returns an array of all prior elements.
+  # Passes elements to the block until the block returns `nil` or `false`, then stops iterating and returns an array of all prior elements.
   #
   # ```
   # [1, 2, 3, 4, 5, 0].take_while { |i| i < 3 } # => [1, 2]

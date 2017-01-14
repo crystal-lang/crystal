@@ -1,11 +1,11 @@
 # Object is the base type of all Crystal objects.
 class Object
-  # Returns true if this object is equal to *other*.
+  # Returns `true` if this object is equal to *other*.
   #
   # Subclasses override this method to provide class-specific meaning.
   abstract def ==(other)
 
-  # Returns true if this object is not equal to *other*.
+  # Returns `true` if this object is not equal to *other*.
   #
   # By default this method is implemented as `!(self == other)`
   # so there's no need to override this unless there's a more efficient
@@ -139,10 +139,10 @@ class Object
     self
   end
 
-  # Yields self. Nil overrides this method and doesn't yield.
+  # Yields self. `Nil` overrides this method and doesn't yield.
   #
   # This method is useful for dealing with nilable types, to safely
-  # perform operations only when the value is not nil.
+  # perform operations only when the value is not `nil`.
   #
   # ```
   # # First program argument in downcase, or nil
@@ -152,7 +152,7 @@ class Object
     yield self
   end
 
-  # Returns self. Nil overrides this method and raises an exception.
+  # Returns self. `Nil` overrides this method and raises an exception.
   def not_nil!
     self
   end

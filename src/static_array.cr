@@ -52,7 +52,7 @@ struct StaticArray(T, N)
   private def initialize
   end
 
-  # Equality. Returns *true* if each element in `self` is equal to each
+  # Equality. Returns `true` if each element in `self` is equal to each
   # corresponding element in *other*.
   #
   # ```
@@ -70,7 +70,7 @@ struct StaticArray(T, N)
     true
   end
 
-  # Equality with another object. Always returns *false*.
+  # Equality with another object. Always returns `false`.
   #
   # ```
   # array = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]

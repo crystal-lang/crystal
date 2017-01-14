@@ -54,7 +54,7 @@ struct Pointer(T)
 
   include Comparable(self)
 
-  # Returns true if this pointer's address is zero.
+  # Returns `true` if this pointer's address is zero.
   #
   # ```
   # a = 1

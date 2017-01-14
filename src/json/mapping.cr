@@ -38,13 +38,13 @@ module JSON
   # The value can also be another hash literal with the following options:
   # * **type**: (required) the single type described above (you can use `JSON::Any` too)
   # * **key**: the property name in the JSON document (as opposed to the property name in the Crystal code)
-  # * **nilable**: if true, the property can be `Nil`. Passing `T?` as a type has the same effect.
+  # * **nilable**: if `true`, the property can be `Nil`. Passing `T?` as a type has the same effect.
   # * **default**: value to use if the property is missing in the JSON document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a JSON document is parsed.
-  # * **emit_null**: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
+  # * **emit_null**: if `true`, emits a `null` value for nilable properties (by default nulls are not emitted)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
-  # * **setter**: if true, will generate a setter for the variable, true by default
-  # * **getter**: if true, will generate a getter for the variable, true by default
+  # * **setter**: if `true`, will generate a setter for the variable, `true` by default
+  # * **getter**: if `true`, will generate a getter for the variable, `true` by default
   #
   # This macro by default defines getters and setters for each variable (this can be overrided with *setter* and *getter*).
   # The mapping doesn't define a constructor accepting these variables as arguments, but you can provide an overload.
@@ -56,7 +56,7 @@ module JSON
   #
   # This macro also declares instance variables of the types given in the mapping.
   #
-  # If *strict* is true, unknown properties in the JSON
+  # If *strict* is `true`, unknown properties in the JSON
   # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
   macro mapping(properties, strict = false)

@@ -1,5 +1,5 @@
 module Crypto::Subtle
-  # Compares *x* and *y* in constant time and returns true if they are the same, and false if they are not.
+  # Compares *x* and *y* in constant time and returns `true` if they are the same, and `false` if they are not.
   #
   # ```
   # require "crypto/subtle"

@@ -100,8 +100,7 @@ class Deque(T)
     Deque(T).new(array.size) { |i| array[i] }
   end
 
-  # Equality. Returns true if it is passed a Deque and `equals?` returns true for both deques, the caller and the
-  # argument.
+  # Returns `true` if it is passed a Deque and `equals?` returns `true` for both deques, the caller and the argument.
   #
   # ```
   # deq = Deque{2, 3}

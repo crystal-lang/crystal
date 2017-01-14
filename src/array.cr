@@ -150,7 +150,7 @@ class Array(T)
     ary
   end
 
-  # Equality. Returns *true* if each element in `self` is equal to each
+  # Equality. Returns `true` if each element in `self` is equal to each
   # corresponding element in *other*.
   #
   # ```
@@ -885,7 +885,7 @@ class Array(T)
   end
 
   # Modifies `self`, keeping only the elements in the collection for which the
-  # passed block returns *true*. Returns `nil` if no changes were made.
+  # passed block returns `true`. Returns `nil` if no changes were made.
   #
   # See also: `Array#select`.
   def select!
@@ -893,7 +893,7 @@ class Array(T)
   end
 
   # Modifies `self`, deleting the elements in the collection for which the
-  # passed block returns *true*. Returns `nil` if no changes were made.
+  # passed block returns `true`. Returns `nil` if no changes were made.
   #
   # See also: `Array#reject`.
   def reject!

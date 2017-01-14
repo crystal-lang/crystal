@@ -75,7 +75,7 @@ class StringScanner
 
   # Tries to match with *pattern* at the current position. If there's a match,
   # the scanner advances the scan offset, the last match is saved, and it
-  # returns the matched string.  Otherwise, the scanner returns nil.
+  # returns the matched string.  Otherwise, the scanner returns `nil`.
   #
   #     s = StringScanner.new("test string")
   #     s.scan(/\w+/)   # => "test"
@@ -204,7 +204,7 @@ class StringScanner
     @last_match.try(&.[n]?)
   end
 
-  # Returns true if the scan offset is at the end of the string.
+  # Returns `true` if the scan offset is at the end of the string.
   #
   #     s = StringScanner.new("this is a string")
   #     s.eos?                 # => false

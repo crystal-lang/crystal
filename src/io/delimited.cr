@@ -15,7 +15,7 @@ module IO
   class Delimited
     include IO
 
-    # If `sync_close` is true, closing this IO will close the underlying IO.
+    # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
     property? sync_close
 
     getter read_delimiter

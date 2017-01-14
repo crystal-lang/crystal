@@ -184,7 +184,7 @@ struct Range(B, E)
     StepIterator(self, B, typeof(by)).new(self, by)
   end
 
-  # Returns true if this range excludes the *end* element.
+  # Returns `true` if this range excludes the *end* element.
   #
   # ```
   # (1..10).excludes_end?  # => false
@@ -194,7 +194,7 @@ struct Range(B, E)
     @exclusive
   end
 
-  # Returns true if this range includes the given *value*.
+  # Returns `true` if this range includes the given *value*.
   #
   # ```
   # (1..10).includes?(4)  # => true

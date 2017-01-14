@@ -201,7 +201,7 @@ module Indexable(T)
     IndexIterator.new(self)
   end
 
-  # Returns *true* if `self` is empty, *false* otherwise.
+  # Returns `true` if `self` is empty, `false` otherwise.
   #
   # ```
   # ([] of Int32).empty? # => true
@@ -216,7 +216,7 @@ module Indexable(T)
   #
   # If `self`'s size is the same as *other*'s size, this method yields
   # elements from `self` and *other* in tandem: if the block returns true
-  # for all of them, this method returns *true*. Otherwise it returns *false*.
+  # for all of them, this method returns `true`. Otherwise it returns `false`.
   #
   # ```
   # a = [1, 2, 3]

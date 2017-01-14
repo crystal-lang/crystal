@@ -9,7 +9,7 @@
 # `Struct` or with a `StaticArray` you have to be careful. Read their
 # documentation to learn more about this.
 struct Value
-  # Returns false.
+  # Returns `false`.
   def ==(other)
     false
   end

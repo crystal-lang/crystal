@@ -29,7 +29,7 @@ class HTTP::Client::Response
     @body
   end
 
-  # Returns true if the response status code is between 200 and 299
+  # Returns `true` if the response status code is between 200 and 299
   def success?
     (200..299).includes?(status_code)
   end

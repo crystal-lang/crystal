@@ -461,8 +461,9 @@ struct Tuple
     self[0]
   end
 
-  # Returns the first element of this tuple, or nil if this
+  # Returns the first element of this tuple, or `nil` if this
   # is the empty tuple.
+  #
   # ```
   # tuple = {1, 2.5}
   # tuple.first? # => 1
@@ -491,7 +492,7 @@ struct Tuple
     {% end %}
   end
 
-  # Returns the last element of this tuple, or nil if this
+  # Returns the last element of this tuple, or `nil` if this
   # is the empty tuple.
   #
   # ```

@@ -466,7 +466,7 @@ class Socket < IO::FileDescriptor
     optval
   end
 
-  # Returns true if the string represents a valid IPv4 or IPv6 address.
+  # Returns `true` if the string represents a valid IPv4 or IPv6 address.
   def self.ip?(string : String)
     addr = LibC::In6Addr.new
     ptr = pointerof(addr).as(Void*)

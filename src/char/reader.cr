@@ -56,7 +56,7 @@ struct Char
       decode_current_char
     end
 
-    # Returns true if there is a character left to read.
+    # Returns `true` if there is a character left to read.
     # The terminating byte '\0' is considered a valid character
     # by this method.
     #

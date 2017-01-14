@@ -68,7 +68,7 @@ class Dir
     EntryIterator.new(self)
   end
 
-  # Reads the next entry from dir and returns it as a string. Returns nil at the end of the stream.
+  # Reads the next entry from dir and returns it as a string. Returns `nil` at the end of the stream.
   #
   # ```
   # d = Dir.new("testdir")
@@ -154,7 +154,7 @@ class Dir
     entries
   end
 
-  # Returns true if the given path exists and is a directory
+  # Returns `true` if the given path exists and is a directory
   def self.exists?(path) : Bool
     if LibC.stat(path.check_no_null_byte, out stat) != 0
       if Errno.value == Errno::ENOENT || Errno.value == Errno::ENOTDIR

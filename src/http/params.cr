@@ -82,7 +82,7 @@ module HTTP
     # Builds an url-encoded HTTP form/query.
     #
     # The yielded object has an `add` method that accepts two arguments,
-    # a key (String) and a value (String or Nil). Keys and values are escaped
+    # a key (String) and a value (`String` or `Nil`). Keys and values are escaped
     # using `URI#escape`.
     #
     # ```
@@ -123,7 +123,7 @@ module HTTP
       raw_params[name].first
     end
 
-    # Returns first value or nil for specified param name.
+    # Returns first value or `nil` for specified param name.
     #
     # ```
     # params["email"]?              # => "john@example.org"
@@ -133,7 +133,7 @@ module HTTP
       fetch(name) { nil }
     end
 
-    # Returns true if param with provided name exists.
+    # Returns `true` if param with provided name exists.
     #
     # ```
     # params.has_key?("email")   # => true

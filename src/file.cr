@@ -265,7 +265,7 @@ class File < IO::FileDescriptor
   # File.chown("/foo/bar", gid: 100)
   # ```
   #
-  # Unless *follow_symlinks* is set to true, then the owner symlink itself will
+  # Unless *follow_symlinks* is set to `true`, then the owner symlink itself will
   # be changed, otherwise the owner of the symlink destination file will be
   # changed. For example, assuming symlinks as `foo -> bar -> baz`:
   #

@@ -25,7 +25,7 @@ struct BitArray
 
   # Create a new BitArray of *size* bits.
   #
-  # *initial* optionally sets the starting value, true or false, for all bits
+  # *initial* optionally sets the starting value, `true` or `false`, for all bits
   # in the array.
   def initialize(@size, initial : Bool = false)
     value = initial ? UInt32::MAX : UInt32::MIN
@@ -54,7 +54,7 @@ struct BitArray
     end
   end
 
-  # Toggles the bit at the given index. A false bit becomes a true bit, and
+  # Toggles the bit at the given index. A false bit becomes a `true` bit, and
   # vice versa.
   # Negative indices can be used to start counting from the end of the array.
   # Raises `IndexError` if trying to access a bit outside the array's range.
@@ -70,7 +70,7 @@ struct BitArray
     @bits[bit_index] ^= 1 << sub_index
   end
 
-  # Inverts all bits in the array. Falses become true and vice versa.
+  # Inverts all bits in the array. Falses become `true` and vice versa.
   #
   # ```
   # ba = BitArray.new(5)

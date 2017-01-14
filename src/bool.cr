@@ -41,7 +41,7 @@ struct Bool
     self != other
   end
 
-  # Returns a hash value for this boolean: 0 for false, 1 for true.
+  # Returns a hash value for this boolean: 0 for `false`, 1 for `true`.
   def hash
     self ? 1 : 0
   end
