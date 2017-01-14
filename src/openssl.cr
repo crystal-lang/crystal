@@ -21,7 +21,7 @@ require "./openssl/lib_ssl"
 #
 # ### Server side
 #
-# ```crystal
+# ```
 # require "socket"
 # require "openssl"
 #
@@ -29,7 +29,7 @@ require "./openssl/lib_ssl"
 #   socket = TCPServer.new(5555) # Bind new TCPSocket to port 5555
 #   context = OpenSSL::SSL::Context::Server.new
 #   context.private_key = "/path/to/private.key"
-#   context.certificate_chain = "/path/to/public.cert?"
+#   context.certificate_chain = "/path/to/public.cert"
 #   puts "server is up"
 #   socket.accept do |client|
 #     puts "got client"
@@ -43,7 +43,7 @@ require "./openssl/lib_ssl"
 #
 # ### Client side
 #
-# ```crystal
+# ```
 # require "socket"
 # require "openssl"
 #
