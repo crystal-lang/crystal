@@ -217,7 +217,7 @@ struct Char
     ascii? ? ascii_letter? : Unicode.letter?(self)
   end
 
-  # Returns true if this char is an ASCII letter or number ('0' to '9', 'a' to 'z', 'A' to 'Z').
+  # Returns `true` if this char is an ASCII letter or number ('0' to '9', 'a' to 'z', 'A' to 'Z').
   #
   # ```
   # 'c'.ascii_alphanumeric? # => true
@@ -228,7 +228,7 @@ struct Char
     ascii_letter? || ascii_number?
   end
 
-  # Returns true if this char is a letter or a number according to unicode.
+  # Returns `true` if this char is a letter or a number according to unicode.
   #
   # ```
   # 'c'.alphanumeric? # => true

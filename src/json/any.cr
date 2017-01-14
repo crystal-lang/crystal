@@ -80,7 +80,7 @@ struct JSON::Any
   end
 
   # Assumes the underlying value is an Array and returns the element
-  # at the given index, or nil if out of bounds.
+  # at the given index, or `nil` if out of bounds.
   # Raises if the underlying value is not an Array.
   def []?(index : Int) : JSON::Any?
     case object = @raw
@@ -105,7 +105,7 @@ struct JSON::Any
   end
 
   # Assumes the underlying value is a Hash and returns the element
-  # with the given key, or nil if the key is not present.
+  # with the given key, or `nil` if the key is not present.
   # Raises if the underlying value is not a Hash.
   def []?(key : String) : JSON::Any?
     case object = @raw
@@ -145,7 +145,7 @@ struct JSON::Any
     @raw.as(Bool)
   end
 
-  # Checks that the underlying value is `Bool`, and returns its value. Returns nil otherwise.
+  # Checks that the underlying value is `Bool`, and returns its value. Returns `nil` otherwise.
   def as_bool? : Bool?
     as_bool if @raw.is_a?(Bool)
   end
@@ -155,7 +155,7 @@ struct JSON::Any
     @raw.as(Int).to_i
   end
 
-  # Checks that the underlying value is `Int`, and returns its value as an `Int32`. Returns nil otherwise.
+  # Checks that the underlying value is `Int`, and returns its value as an `Int32`. Returns `nil` otherwise.
   def as_i? : Int32?
     as_i if @raw.is_a?(Int)
   end
@@ -165,7 +165,7 @@ struct JSON::Any
     @raw.as(Int).to_i64
   end
 
-  # Checks that the underlying value is `Int`, and returns its value as an `Int64`. Returns nil otherwise.
+  # Checks that the underlying value is `Int`, and returns its value as an `Int64`. Returns `nil` otherwise.
   def as_i64? : Int64?
     as_i64 if @raw.is_a?(Int64)
   end
@@ -175,7 +175,7 @@ struct JSON::Any
     @raw.as(Float).to_f
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float64`. Returns nil otherwise.
+  # Checks that the underlying value is `Float`, and returns its value as an `Float64`. Returns `nil` otherwise.
   def as_f? : Float64?
     as_f if @raw.is_a?(Float64)
   end
@@ -185,7 +185,7 @@ struct JSON::Any
     @raw.as(Float).to_f32
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`. Returns nil otherwise.
+  # Checks that the underlying value is `Float`, and returns its value as an `Float32`. Returns `nil` otherwise.
   def as_f32? : Float32?
     as_f32 if (@raw.is_a?(Float32) || @raw.is_a?(Float64))
   end
@@ -195,7 +195,7 @@ struct JSON::Any
     @raw.as(String)
   end
 
-  # Checks that the underlying value is `String`, and returns its value. Returns nil otherwise.
+  # Checks that the underlying value is `String`, and returns its value. Returns `nil` otherwise.
   def as_s? : String?
     as_s if @raw.is_a?(String)
   end
@@ -205,7 +205,7 @@ struct JSON::Any
     @raw.as(Array)
   end
 
-  # Checks that the underlying value is `Array`, and returns its value. Returns nil otherwise.
+  # Checks that the underlying value is `Array`, and returns its value. Returns `nil` otherwise.
   def as_a? : Array(Type)?
     as_a if @raw.is_a?(Array(Type))
   end
@@ -215,7 +215,7 @@ struct JSON::Any
     @raw.as(Hash)
   end
 
-  # Checks that the underlying value is `Hash`, and returns its value. Returns nil otherwise.
+  # Checks that the underlying value is `Hash`, and returns its value. Returns `nil` otherwise.
   def as_h? : Hash(String, Type)?
     as_h if @raw.is_a?(Hash(String, Type))
   end
@@ -235,12 +235,12 @@ struct JSON::Any
     @raw.pretty_print(pp)
   end
 
-  # Returns true if both `self` and *other*'s raw object are equal.
+  # Returns `true` if both `self` and *other*'s raw object are equal.
   def ==(other : JSON::Any)
     raw == other.raw
   end
 
-  # Returns true if the raw object is equal to *other*.
+  # Returns `true` if the raw object is equal to *other*.
   def ==(other)
     raw == other
   end

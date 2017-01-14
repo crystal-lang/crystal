@@ -45,9 +45,9 @@ class Process
     nil
   end
 
-  # Returns true if the process identified by *pid* is valid for
-  # a currently registered process, false otherwise. Note that this
-  # returns true for a process in the zombie or similar state.
+  # Returns `true` if the process identified by *pid* is valid for
+  # a currently registered process, `false` otherwise. Note that this
+  # returns `true` for a process in the zombie or similar state.
   def self.exists?(pid : Int)
     ret = LibC.kill(pid, 0)
     if ret == 0
@@ -85,7 +85,7 @@ class Process
 
   # Duplicates the current process.
   # Returns a `Process` representing the new child process in the current process
-  # and nil inside the new child process.
+  # and `nil` inside the new child process.
   def self.fork : self?
     if pid = fork_internal
       Process.new pid
@@ -114,8 +114,8 @@ class Process
     pid
   end
 
-  # run_hooks should ALWAYS be true unless exec* is used immediately after fork.
-  # Channels, `IO` and other will not work reliably if run_hooks is false.
+  # run_hooks should ALWAYS be `true` unless exec* is used immediately after fork.
+  # Channels, `IO` and other will not work reliably if run_hooks is `false`.
   protected def self.fork_internal(run_hooks : Bool = true)
     pid = LibC.fork
     case pid
@@ -280,7 +280,7 @@ class Process
   end
 
   # Whether the process is still registered in the system.
-  # Note that this returns true for processes in the zombie or similar state.
+  # Note that this returns `true` for processes in the zombie or similar state.
   def exists?
     !terminated?
   end

@@ -27,7 +27,7 @@ module FileUtils
   end
 
   # Compares two files *filename1* to *filename2* to determine if they are identical.
-  # Returns true if content are the same, false otherwise.
+  # Returns `true` if content are the same, `false` otherwise.
   #
   # ```
   # File.write("file.cr", "1")
@@ -45,7 +45,7 @@ module FileUtils
   end
 
   # Compares two streams *stream1* to *stream2* to determine if they are identical.
-  # Returns true if content are the same, false otherwise.
+  # Returns `true` if content are the same, `false` otherwise.
   #
   # ```
   # File.write("afile", "123")

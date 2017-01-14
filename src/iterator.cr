@@ -194,8 +194,8 @@ module Iterator(T)
   end
 
   # Return an iterator that applies the given function to the element and then
-  # returns it unless it is nil. If the returned value would be nil it instead
-  # returns the next non nil value.
+  # returns it unless it is `nil`. If the returned value would be `nil` it instead
+  # returns the next non `nil` value.
   #
   # ```
   # iter = [1, nil, 2, nil].each.compact_map { |e| e.try &.*(2) }
@@ -568,7 +568,7 @@ module Iterator(T)
   end
 
   # Returns an iterator that chunks the iterator's elements in arrays of *size*
-  # filling up the remaining elements if no element remains with nil or a given
+  # filling up the remaining elements if no element remains with `nil` or a given
   # optional parameter.
   #
   # ```

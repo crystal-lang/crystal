@@ -270,10 +270,10 @@ class String
   # or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.
   #
   # Options:
-  # * **whitespace**: if true, leading and trailing whitespaces are allowed
-  # * **underscore**: if true, underscores in numbers are allowed
-  # * **prefix**: if true, the prefixes "0x", "0" and "0b" override the base
-  # * **strict**: if true, extraneous characters past the end of the number are disallowed
+  # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
+  # * **underscore**: if `true`, underscores in numbers are allowed
+  # * **prefix**: if `true`, the prefixes `"0x"`, `"0"` and `"0b"` override the base
+  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
   #
   # ```
   # "12345".to_i             # => 12345
@@ -330,7 +330,7 @@ class String
     to_i8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int8: #{self}") }
   end
 
-  # Same as `#to_i` but returns an `Int8` or nil.
+  # Same as `#to_i` but returns an `Int8` or `nil`.
   def to_i8?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int8?
     to_i8(base, whitespace, underscore, prefix, strict) { nil }
   end
@@ -345,7 +345,7 @@ class String
     to_u8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt8: #{self}") }
   end
 
-  # Same as `#to_i` but returns an `UInt8` or nil.
+  # Same as `#to_i` but returns an `UInt8` or `nil`.
   def to_u8?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt8?
     to_u8(base, whitespace, underscore, prefix, strict) { nil }
   end
@@ -360,7 +360,7 @@ class String
     to_i16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int16: #{self}") }
   end
 
-  # Same as `#to_i` but returns an `Int16` or nil.
+  # Same as `#to_i` but returns an `Int16` or `nil`.
   def to_i16?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int16?
     to_i16(base, whitespace, underscore, prefix, strict) { nil }
   end
@@ -375,7 +375,7 @@ class String
     to_u16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt16: #{self}") }
   end
 
-  # Same as `#to_i` but returns an `UInt16` or nil.
+  # Same as `#to_i` but returns an `UInt16` or `nil`.
   def to_u16?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt16?
     to_u16(base, whitespace, underscore, prefix, strict) { nil }
   end
@@ -405,7 +405,7 @@ class String
     to_u32(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt32: #{self}") }
   end
 
-  # Same as `#to_i` but returns an `UInt32` or nil.
+  # Same as `#to_i` but returns an `UInt32` or `nil`.
   def to_u32?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt32?
     to_u32(base, whitespace, underscore, prefix, strict) { nil }
   end
@@ -420,7 +420,7 @@ class String
     to_i64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int64: #{self}") }
   end
 
-  # Same as `#to_i` but returns an `Int64` or nil.
+  # Same as `#to_i` but returns an `Int64` or `nil`.
   def to_i64?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int64?
     to_i64(base, whitespace, underscore, prefix, strict) { nil }
   end
@@ -435,7 +435,7 @@ class String
     to_u64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt64: #{self}") }
   end
 
-  # Same as `#to_i` but returns an `UInt64` or nil.
+  # Same as `#to_i` but returns an `UInt64` or `nil`.
   def to_u64?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt64?
     to_u64(base, whitespace, underscore, prefix, strict) { nil }
   end
@@ -598,8 +598,8 @@ class String
   # This method raises an exception if the string is not a valid float representation.
   #
   # Options:
-  # * **whitespace**: if true, leading and trailing whitespaces are allowed
-  # * **strict**: if true, extraneous characters past the end of the number are disallowed
+  # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
+  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
   #
   # ```
   # "123.45e1".to_f                # => 1234.5
@@ -616,8 +616,8 @@ class String
   # This method returns `nil` if the string is not a valid float representation.
   #
   # Options:
-  # * **whitespace**: if true, leading and trailing whitespaces are allowed
-  # * **strict**: if true, extraneous characters past the end of the number are disallowed
+  # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
+  # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
   #
   # ```
   # "123.45e1".to_f?                # => 1234.5
@@ -1612,7 +1612,7 @@ class String
     end
   end
 
-  # This returns true if this string has '\\' in it. It might not be a back reference,
+  # This returns `true` if this string has '\\' in it. It might not be a back reference,
   # but '\\' is probably used for back references, so this check is faster than parsing
   # the whole thing.
   def has_back_references?
@@ -1993,12 +1993,12 @@ class String
     squeeze { true }
   end
 
-  # Returns true if this is the empty string, `""`.
+  # Returns `true` if this is the empty string, `""`.
   def empty?
     bytesize == 0
   end
 
-  # Returns true if this string consists exclusively of unicode whitespace.
+  # Returns `true` if this string consists exclusively of unicode whitespace.
   #
   # ```
   # "".blank?        # => true
@@ -2519,9 +2519,9 @@ class String
     nil
   end
 
-  # Returns the byte index of a char index, or nil if out of bounds.
+  # Returns the byte index of a char index, or `nil` if out of bounds.
   #
-  # It is valid to pass `size` to *index*, and in this case the answer
+  # It is valid to pass `#size` to *index*, and in this case the answer
   # will be the bytesize of this string.
   #
   # ```
@@ -2542,9 +2542,9 @@ class String
     nil
   end
 
-  # Returns the char index of a byte index, or nil if out of bounds.
+  # Returns the char index of a byte index, or `nil` if out of bounds.
   #
-  # It is valid to pass `bytesize` to *index*, and in this case the answer
+  # It is valid to pass `#bytesize` to *index*, and in this case the answer
   # will be the size of this string.
   def byte_index_to_char_index(index)
     if ascii_only?
@@ -2558,7 +2558,7 @@ class String
     nil
   end
 
-  # Returns true if the string contains *search*.
+  # Returns `true` if the string contains *search*.
   #
   # ```
   # "Team".includes?('i')            # => false

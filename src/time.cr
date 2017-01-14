@@ -285,12 +285,12 @@ struct Time
     Kind.new((encoded.to_u64 >> KindShift).to_i64)
   end
 
-  # Returns *true* if `Kind` is set to *Utc*.
+  # Returns `true` if `Kind` is set to *Utc*.
   def utc?
     kind == Kind::Utc
   end
 
-  # Returns *true* if `Kind` is set to *Local*.
+  # Returns `true` if `Kind` is set to *Local*.
   def local?
     kind == Kind::Local
   end

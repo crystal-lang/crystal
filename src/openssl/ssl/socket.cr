@@ -69,7 +69,7 @@ abstract class OpenSSL::SSL::Socket
 
   include IO
 
-  # If `sync_close` is true, closing this socket will
+  # If `#sync_close?` is `true`, closing this socket will
   # close the underlying IO.
   property? sync_close : Bool
 
@@ -118,7 +118,7 @@ abstract class OpenSSL::SSL::Socket
   end
 
   {% if LibSSL::OPENSSL_102 %}
-  # Returns the negotiated ALPN protocol (eg: "h2") of nil if no protocol was
+  # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
   # negotiated.
   def alpn_protocol
     LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)

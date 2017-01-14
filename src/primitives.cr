@@ -59,12 +59,12 @@ class Class
 end
 
 struct Bool
-  # Returns true if `self` is equal to *other*.
+  # Returns `true` if `self` is equal to *other*.
   @[Primitive(:binary)]
   def ==(other : Bool) : Bool
   end
 
-  # Returns true if `self` is not equal to *other*.
+  # Returns `true` if `self` is not equal to *other*.
   @[Primitive(:binary)]
   def !=(other : Bool) : Bool
   end
@@ -99,7 +99,7 @@ struct Char
                        ">"  => "greater than",
                        ">=" => "greater than or equal to",
                      } %}
-    # Returns true if `self`'s codepoint is {{desc.id}} *other*'s codepoint.
+    # Returns `true` if `self`'s codepoint is {{desc.id}} *other*'s codepoint.
     @[Primitive(:binary)]
     def {{op.id}}(other : Char) : Bool
     end
@@ -107,12 +107,12 @@ struct Char
 end
 
 struct Symbol
-  # Returns true if `self` is equal to *other*.
+  # Returns `true` if `self` is equal to *other*.
   @[Primitive(:binary)]
   def ==(other : Symbol) : Bool
   end
 
-  # Returns true if `self` is not equal to *other*.
+  # Returns `true` if `self` is not equal to *other*.
   @[Primitive(:binary)]
   def !=(other : Symbol) : Bool
   end
@@ -294,7 +294,7 @@ end
                              ">"  => "greater than",
                              ">=" => "greater than or equal to",
                            } %}
-          # Returns true if `self` is {{desc.id}} *other*.
+          # Returns `true` if `self` is {{desc.id}} *other*.
           @[Primitive(:binary)]
           def {{op.id}}(other : {{num2.id}}) : Bool
           end

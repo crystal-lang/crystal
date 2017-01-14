@@ -26,7 +26,7 @@
 class Zlib::Deflate
   include IO
 
-  # If `sync_close` is true, closing this IO will close the underlying IO.
+  # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
   property? sync_close : Bool
 
   # Creates an instance of Zlib::Deflate. `close` must be invoked after all data

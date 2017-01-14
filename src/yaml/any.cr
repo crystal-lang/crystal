@@ -85,7 +85,7 @@ struct YAML::Any
   end
 
   # Assumes the underlying value is an Array and returns the element
-  # at the given index, or nil if out of bounds.
+  # at the given index, or `nil` if out of bounds.
   # Raises if the underlying value is not an Array.
   def []?(index : Int) : YAML::Any?
     case object = @raw
@@ -110,7 +110,7 @@ struct YAML::Any
   end
 
   # Assumes the underlying value is a Hash and returns the element
-  # with the given key, or nil if the key is not present.
+  # with the given key, or `nil` if the key is not present.
   # Raises if the underlying value is not a Hash.
   def []?(key : String) : YAML::Any?
     case object = @raw
@@ -175,12 +175,12 @@ struct YAML::Any
     @raw.pretty_print(pp)
   end
 
-  # Returns true if both `self` and *other*'s raw object are equal.
+  # Returns `true` if both `self` and *other*'s raw object are equal.
   def ==(other : YAML::Any)
     raw == other.raw
   end
 
-  # Returns true if the raw object is equal to *other*.
+  # Returns `true` if the raw object is equal to *other*.
   def ==(other)
     raw == other
   end

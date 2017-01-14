@@ -40,12 +40,12 @@ struct XML::Node
     Attributes.new(self)
   end
 
-  # Returns true if this is an attribute node.
+  # Returns `true` if this is an attribute node.
   def attribute?
     type == XML::Type::ATTRIBUTE_NODE
   end
 
-  # Returns true if this is a CDATA section node.
+  # Returns `true` if this is a CDATA section node.
   def cdata?
     type == XML::Type::CDATA_SECTION_NODE
   end
@@ -67,7 +67,7 @@ struct XML::Node
     NodeSet.new(document, set)
   end
 
-  # Returns true if this is a comment node.
+  # Returns `true` if this is a comment node.
   def comment?
     type == XML::Type::COMMENT_NODE
   end
@@ -89,7 +89,7 @@ struct XML::Node
     Node.new @node.value.doc
   end
 
-  # Returns true if this is a Document node.
+  # Returns `true` if this is a Document node.
   def document?
     type == XML::Type::DOCUMENT_NODE
   end
@@ -114,7 +114,7 @@ struct XML::Node
     end
   end
 
-  # Returns true if this is an Element node.
+  # Returns `true` if this is an Element node.
   def element?
     type == XML::Type::ELEMENT_NODE
   end
@@ -131,7 +131,7 @@ struct XML::Node
     nil
   end
 
-  # Returns true if this is a DocumentFragment.
+  # Returns `true` if this is a DocumentFragment.
   def fragment?
     type == XML::Type::DOCUMENT_FRAG_NODE
   end
@@ -341,7 +341,7 @@ struct XML::Node
     previous
   end
 
-  # Returns true if this is a Processing Instruction node.
+  # Returns `true` if this is a Processing Instruction node.
   def processing_instruction?
     type == XML::Type::PI_NODE
   end
@@ -362,7 +362,7 @@ struct XML::Node
     self.content = text
   end
 
-  # Returns true if this is a Text node.
+  # Returns `true` if this is a Text node.
   def text?
     type == XML::Type::TEXT_NODE
   end
@@ -428,7 +428,7 @@ struct XML::Node
     @node.value.type
   end
 
-  # Returns true if this is an xml Document node.
+  # Returns `true` if this is an xml Document node.
   def xml?
     type == XML::Type::DOCUMENT_NODE
   end
@@ -475,7 +475,7 @@ struct XML::Node
   end
 
   # Searches this node for XPath *path* for nodes and returns the first one.
-  # or nil if not found
+  # or `nil` if not found
   # ```
   # doc.xpath_node("//person")  # => #<XML::Node:0x2013e80 name="person">
   # doc.xpath_node("//invalid") # => nil

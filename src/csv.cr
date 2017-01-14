@@ -143,10 +143,10 @@ class CSV
 
   # Creates a new instance from the given `String` or `IO`.
   #
-  # If *strip* is true, row values are stripped with `String#strip` before being
+  # If *strip* is `true`, row values are stripped with `String#strip` before being
   # returned from methods.
   #
-  # If *headers* is true, row values can be accessed with header names or patterns.
+  # If *headers* is `true`, row values can be accessed with header names or patterns.
   # Headers are always stripped.
   #
   # see `CSV.parse` about the *separator* and *quote_char* arguments
@@ -166,10 +166,10 @@ class CSV
   # Creates a new instance from the given `String` or `IO`, and yields it to
   # the given block once for each row in the CSV.
   #
-  # If *strip* is true, row values are stripped with `String#strip` before being
+  # If *strip* is `true`, row values are stripped with `String#strip` before being
   # returned from methods.
   #
-  # If *headers* is true, row values can be accessed with header names or patterns.
+  # If *headers* is `true`, row values can be accessed with header names or patterns.
   # Headers are always stripped.
   #
   # see `CSV.parse` about the *separator* and *quote_char* arguments
@@ -219,7 +219,7 @@ class CSV
   end
 
   # Returns the current row's value corresponding to the given *header* name.
-  # Returns nil if no such header exists.
+  # Returns `nil` if no such header exists.
   # Raises `CSV::Error` if headers were not requested.
   def []?(header : String) : String?
     row_internal[header]?
@@ -234,7 +234,7 @@ class CSV
 
   # Returns the current row's value at the given column index.
   # A negative index counts from the end.
-  # Returns nil if no such column exists.
+  # Returns `nil` if no such column exists.
   def []?(column : Int) : String?
     row_internal[column]?
   end
@@ -247,7 +247,7 @@ class CSV
   end
 
   # Returns the current row's value corresponding to the given *header_pattern*.
-  # Returns nil if no such header exists.
+  # Returns `nil` if no such header exists.
   # Raises `CSV::Error` if headers were not requested.
   def []?(header_pattern : Regex) : String?
     row_internal[header_pattern]?
@@ -305,7 +305,7 @@ class CSV
     end
 
     # Returns this row's value corresponding to the given *header* name.
-    # Returns nil if no such header exists.
+    # Returns `nil` if no such header exists.
     # Raises `CSV::Error` if headers were not requested.
     def []?(header : String) : String?
       index = csv.indices[header]?
@@ -327,7 +327,7 @@ class CSV
 
     # Returns this row's value at the given column index.
     # A negative index counts from the end.
-    # Returns nil if no such column exists.
+    # Returns `nil` if no such column exists.
     def []?(column : Int) : String?
       size = csv.headers?.try(&.size) || @row.size
 
@@ -348,7 +348,7 @@ class CSV
     end
 
     # Returns this row's value corresponding to the given *header_pattern*.
-    # Returns nil if no such header exists.
+    # Returns `nil` if no such header exists.
     # Raises `CSV::Error` if headers were not requested.
     def []?(header_pattern : Regex) : String?
       csv.headers.each_with_index do |header, i|

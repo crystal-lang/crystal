@@ -97,7 +97,7 @@ module Benchmark
   #
   # The optional parameters *calculation* and *warmup* set the duration of
   # those stages in seconds. For more detail on these stages see
-  # `Benchmark::IPS`. When the *interactive* parameter is true, results are
+  # `Benchmark::IPS`. When the *interactive* parameter is `true`, results are
   # displayed and updated as they are calculated, otherwise all at once.
   def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
     {% if !flag?(:release) %}

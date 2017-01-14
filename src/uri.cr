@@ -13,7 +13,7 @@ require "./uri/uri_parser"
 # require "uri"
 #
 # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
-# # => #&lt;URI:0x1003f1e40 @scheme="http", @host="foo.com", @port=nil, @path="/posts", @query="id=30&limit=5", ... >
+# # => #<URI:0x1003f1e40 @scheme="http", @host="foo.com", @port=nil, @path="/posts", @query="id=30&limit=5", ... >
 # uri.scheme # => "http"
 # uri.host   # => "foo.com"
 # uri.query  # => "id=30&limit=5"
@@ -193,7 +193,7 @@ class URI
 
   # URL-decode a string.
   #
-  # If *plus_to_space* is true, it replace plus character (0x2B) to ' '.
+  # If *plus_to_space* is `true`, it replace plus character (0x2B) to ' '.
   # e.g. `application/x-www-form-urlencoded` wants this replace.
   #
   # ```
@@ -234,7 +234,7 @@ class URI
 
   # URL-encode a string.
   #
-  # If *space_to_plus* is true, it replace space character (0x20) to '+' and '+' is
+  # If *space_to_plus* is `true`, it replace space character (0x20) to '+' and '+' is
   # encoded to '%2B'. e.g. `application/x-www-form-urlencoded` want this replace.
   #
   # ```

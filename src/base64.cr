@@ -135,7 +135,7 @@ module Base64
   #
   # The alphabet uses '-' instead of '+' and '_' instead of '/'.
   #
-  # The *padding* parameter defaults to true. When false, enough `=` characters
+  # The *padding* parameter defaults to `true`. When `false`, enough `=` characters
   # are not added to make the output divisible by 4.
   def urlsafe_encode(data, padding = true) : String
     slice = data.to_slice
