@@ -49,7 +49,7 @@ require "c/string"
 #
 # ```
 # "hello
-#       world" # same as "hello      \nworld"
+#       world" # same as "hello\n      world"
 # ```
 #
 # Note that in the above example trailing and leading spaces, as well as newlines,
