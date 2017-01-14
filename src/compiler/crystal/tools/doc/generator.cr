@@ -19,8 +19,8 @@ class Crystal::Doc::Generator
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
+    @is_crystal_repo = false
     compute_repository
-    @is_crystal_repo = @repo_name == "github.com/crystal-lang/crystal"
   end
 
   def run
@@ -283,6 +283,8 @@ class Crystal::Doc::Generator
 
     github_remote_pattern = /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_|\.)+)/
     github_remotes = remotes.lines.select &.match(github_remote_pattern)
+    @is_crystal_repo = github_remotes.any? { |gr| gr =~ %r{github\.com[/:]crystal-lang/crystal} }
+
     remote = github_remotes.find(&.starts_with?("origin")) || github_remotes.first?
     return unless remote
 
