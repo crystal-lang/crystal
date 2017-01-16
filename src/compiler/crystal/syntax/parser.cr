@@ -2310,6 +2310,7 @@ module Crystal
         when :IDENT
           case @token.value
           when :when
+            location = @token.location
             slash_is_regex!
             next_token_skip_space_or_newline
             when_conds = [] of ASTNode
@@ -2337,7 +2338,7 @@ module Crystal
                     raise "wrong number of tuple elements (given #{tuple_elements.size}, expected #{cond.elements.size})", curly_location
                   end
 
-                  tuple = TupleLiteral.new(tuple_elements)
+                  tuple = TupleLiteral.new(tuple_elements).at(curly_location)
                   when_conds << tuple
 
                   check :"}"
@@ -2360,7 +2361,7 @@ module Crystal
             slash_is_regex!
             when_body = parse_expressions
             skip_space_or_newline
-            whens << When.new(when_conds, when_body)
+            whens << When.new(when_conds, when_body).at(location)
           when :else
             if whens.size == 0
               unexpected_token @token.to_s, "expecting when"

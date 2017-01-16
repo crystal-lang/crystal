@@ -425,7 +425,7 @@ module Crystal
                 end
               end
             else
-              comp = case_when_comparison(TupleLiteral.new(temp_vars.not_nil!.clone), cond)
+              comp = case_when_comparison(TupleLiteral.new(temp_vars.not_nil!.clone), cond).at(cond)
             end
           else
             temp_var = temp_vars.try &.first
@@ -638,7 +638,7 @@ module Crystal
         end
       end
 
-      Call.new(cond, "===", right_side).at(obj)
+      Call.new(cond, "===", right_side)
     end
 
     macro check_implicit_obj(type)
