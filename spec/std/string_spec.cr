@@ -810,7 +810,9 @@ describe "String" do
       assert { "foo,bar,baz,qux".split(/,/, 30).should eq(["foo", "bar", "baz", "qux"]) }
       assert { "a b c".split(Regex.new(" "), 2).should eq(["a", "b c"]) }
       assert { "日本ん語日本ん語".split(/ん/).should eq(["日本", "語日本", "語"]) }
+      assert { "九十九十九".split(/(?=十)/).should eq(["九", "十九", "十九"]) }
       assert { "hello world".split(/\b/).should eq(["hello", " ", "world", ""]) }
+      assert { "hello world".split(/\w+|(?= )/).should eq(["", " ", ""]) }
       assert { "abc".split(//).should eq(["a", "b", "c"]) }
       assert { "hello".split(/\w+/).should eq(["", ""]) }
       assert { "foo".split(/o/).should eq(["f", "", ""]) }
@@ -1674,6 +1676,7 @@ describe "String" do
     it "works when match is empty" do
       r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
       "hello".scan(r).map(&.[0]).should eq(["hello", ""])
+      "hello world".scan(/\w+|(?= )/).map(&.[0]).should eq(["hello", "", "world"])
     end
 
     it "works with strings with block" do
