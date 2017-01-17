@@ -467,6 +467,7 @@ class Crystal::CodeGenVisitor
       value_ptr = gep value, 0, index
       loaded_value = to_lhs(value_ptr, value_tuple_type)
       downcasted_value = downcast(loaded_value, target_tuple_type, value_tuple_type, true)
+      downcasted_value = to_rhs(downcasted_value, target_tuple_type)
       store downcasted_value, target_ptr
       index += 1
     end
@@ -481,6 +482,7 @@ class Crystal::CodeGenVisitor
       target_index = to_type.name_index(entry.name).not_nil!
       target_index_type = to_type.name_type(entry.name)
       downcasted_value = downcast(value_at_index, target_index_type, entry.type, true)
+      downcasted_value = to_rhs(downcasted_value, target_index_type)
       store downcasted_value, aggregate_index(target_pointer, target_index)
     end
     target_pointer

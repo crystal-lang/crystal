@@ -351,4 +351,17 @@ describe "Code gen: tuple" do
       t.as(Tuple)[0]
       )).to_i.should eq(1)
   end
+
+  it "downcasts union inside tuple to value (#3907)" do
+    codegen(%(
+      struct Foo
+      end
+
+      foo = Foo.new
+
+      x = {0, foo}
+      z = x[0]
+      x = {0, z}
+      ))
+  end
 end
