@@ -1,10 +1,6 @@
-require "spec"
-require "yaml"
-require "../../../../src/compiler/crystal/**"
+require "../../../spec_helper"
 
-include Crystal
-
-def processed_implementation_visitor(code, cursor_location)
+private def processed_implementation_visitor(code, cursor_location)
   compiler = Compiler.new
   compiler.no_codegen = true
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
@@ -15,7 +11,7 @@ def processed_implementation_visitor(code, cursor_location)
   {visitor, process_result}
 end
 
-def assert_implementations(code)
+private def assert_implementations(code)
   cursor_location = nil
   expected_locations = [] of Location
 

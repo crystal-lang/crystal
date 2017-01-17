@@ -1,6 +1,6 @@
 require "spec"
 
-class SafeIndexable
+private class SafeIndexable
   include Indexable(Int32)
 
   getter size

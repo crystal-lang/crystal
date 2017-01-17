@@ -1,6 +1,6 @@
 require "spec"
 
-class SpecException < Exception
+private class SpecException < Exception
   getter value : Int32
 
   def initialize(@value, msg)

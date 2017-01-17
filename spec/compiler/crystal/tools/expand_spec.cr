@@ -1,7 +1,4 @@
-require "spec"
-require "../../../../src/compiler/crystal/**"
-
-include Crystal
+require "../../../spec_helper"
 
 private def processed_expand_visitor(code, cursor_location)
   compiler = Compiler.new

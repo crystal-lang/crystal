@@ -1,9 +1,9 @@
 require "spec"
 require "yaml"
-require "compiler/crystal/tools/init"
 require "compiler/crystal/config"
+require "compiler/crystal/tools/init"
 
-def describe_file(name, &block : String ->)
+private def describe_file(name, &block : String ->)
   describe name do
     it "has proper contents" do
       block.call(File.read("tmp/#{name}"))
@@ -11,7 +11,7 @@ def describe_file(name, &block : String ->)
   end
 end
 
-def run_init_project(skeleton_type, name, dir, author, email, github_name)
+private def run_init_project(skeleton_type, name, dir, author, email, github_name)
   Crystal::Init::InitProject.new(
     Crystal::Init::Config.new(skeleton_type, name, dir, author, email, github_name, true)
   ).run
