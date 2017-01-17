@@ -3,40 +3,48 @@ require "./openssl/lib_ssl"
 # # OpenSSL Integration
 #
 # - TLS sockets need a context, potentially with keys (required for servers) and configuration.
-# - TLS sockets will wrap the underlying TCP socket, and any further communication must happen through the OpenSSL::SSL::Socket only.
+# - TLS sockets will wrap the underlying TCP socket, and any further communication must happen through the `OpenSSL::SSL::Socket` only.
 #
 # ## Usage Example
-# - Note: for the below "server" example to work, a key pair should be attained
 #
-# Recommended ciphers can be taken from
-# - https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet#Rule_-_Only_Support_Strong_Cryptographic_Ciphers
-# - https://cipherli.st/
-# - Full list is available at: https://wiki.openssl.org/index.php/Manual:Ciphers(1)#CIPHER_STRINGS
+# Recommended ciphers can be taken from:
+# - [OWASP Wiki](https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet#Rule_-_Only_Support_Strong_Cryptographic_Ciphers)
+# - [Cipherli.st](https://cipherli.st/)
+# - Full list is available at [OpenSSL Wiki](https://wiki.openssl.org/index.php/Manual:Ciphers%281%29#CIPHER_STRINGS)
 #
-# Do note that
-# - Crystal does its best to provide sane configuration defaults (see [Mozilla-Intermediate](https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28default.29))
-# - Linked version of OpenSSL need to be checked for supporting specific protocols and ciphers
+# Do note that:
+# - Crystal does its best to provide sane configuration defaults (see [Mozilla-Intermediate](https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28default.29)).
+# - Linked version of OpenSSL need to be checked for supporting specific protocols and ciphers.
 # - If any configurations or choices in Crystal regarding SSL settings and security are found to be lacking or need
-#   improvement please open an issue and let us know
+#   improvement please [open an issue](https://github.com/crystal-lang/crystal/issues/new) and let us know.
 #
 # ### Server side
+#
+# NOTE: For the below example to work, a key pair should be attained.
 #
 # ```
 # require "socket"
 # require "openssl"
 #
 # def server
-#   socket = TCPServer.new(5555) # Bind new TCPSocket to port 5555
+#   # Bind new TCPSocket to port 5555
+#   socket = TCPServer.new(5555)
+#
 #   context = OpenSSL::SSL::Context::Server.new
 #   context.private_key = "/path/to/private.key"
 #   context.certificate_chain = "/path/to/public.cert"
-#   puts "server is up"
+#
+#   puts "Server is up"
+#
 #   socket.accept do |client|
-#     puts "got client"
+#     puts "Got client"
+#
+#     bytes = Bytes.new(20)
+#
 #     ssl_socket = OpenSSL::SSL::Socket::Server.new(client, context)
-#     slice = Slice(UInt8).new(20)
-#     ssl_socket.read(slice)
-#     puts String.new(slice)
+#     ssl_socket.read(bytes)
+#
+#     puts String.new(bytes)
 #   end
 # end
 # ```
@@ -50,6 +58,7 @@ require "./openssl/lib_ssl"
 # def client
 #   socket = TCPSocket.new("127.0.0.1", 5555)
 #   context = OpenSSL::SSL::Context::Client.new
+#
 #   ssl_socket = OpenSSL::SSL::Socket::Client.new(socket, context)
 #   ssl_socket.write("Testing".to_slice)
 # end
