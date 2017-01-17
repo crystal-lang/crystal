@@ -46,7 +46,7 @@ struct NamedTuple
   # NamedTuple(name: String, val: Int32).from({"name" => "number", "val" => num_or_str}) # => {name: "number", val: 42}
   #
   # num_or_str = "a string"
-  # NamedTuple(name: String, val: Int32).from({"name" => "number", "val" => num_or_str}) # =>  can't cast String to Int32
+  # NamedTuple(name: String, val: Int32).from({"name" => "number", "val" => num_or_str}) # => can't cast String to Int32
   # ```
   # See also: `#from`.
   def self.from(hash : Hash)
