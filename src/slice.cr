@@ -329,6 +329,8 @@ struct Slice(T)
   def hexdump
     self.as(Slice(UInt8))
 
+    return "" if empty?
+
     full_lines, leftover = size.divmod(16)
     if leftover == 0
       str_size = full_lines * 77 - 1

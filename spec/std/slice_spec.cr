@@ -234,6 +234,10 @@ describe "Slice" do
     slice.hexstring.should eq("01020304")
   end
 
+  it "does hexdump for empty slice" do
+    Bytes.empty.hexdump.should eq("")
+  end
+
   it "does hexdump" do
     ascii_table = <<-EOF
       00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
