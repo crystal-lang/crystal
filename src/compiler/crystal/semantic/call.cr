@@ -6,7 +6,7 @@ require "./type_lookup"
 class Crystal::Call
   property! scope : Type
   property with_scope : Type?
-  property! parent_visitor : MainVisitor?
+  property! parent_visitor : MainVisitor
   property target_defs : Array(Def)?
   property expanded : ASTNode?
   property? uses_with_scope = false

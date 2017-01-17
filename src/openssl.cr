@@ -56,7 +56,7 @@ require "./openssl/lib_ssl"
 # ```
 module OpenSSL
   class Error < Exception
-    getter! code : LibCrypto::ULong?
+    getter! code : LibCrypto::ULong
 
     def initialize(message = nil, fetched = false)
       @code ||= LibCrypto::ULong.new(0)

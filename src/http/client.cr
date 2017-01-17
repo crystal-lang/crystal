@@ -83,7 +83,7 @@ class HTTP::Client
   {% if flag?(:without_openssl) %}
     getter! tls : Nil
   {% else %}
-    getter! tls : OpenSSL::SSL::Context::Client?
+    getter! tls : OpenSSL::SSL::Context::Client
   {% end %}
 
   # Whether automatic compression/decompression is enabled.
