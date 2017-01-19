@@ -81,6 +81,8 @@ class Zip::File
     end
   end
 
+  # Try to find the directory end offset (by searching its signature)
+  # in the last 64, 1024 and 65K bytes (in that order)
   private def find_directory_end_offset
     find_directory_end_offset(64) ||
       find_directory_end_offset(1024) ||
@@ -100,6 +102,8 @@ class Zip::File
 
     i = buf_size - 1 - 4
     while i >= 0
+      # These are the bytes the make up the directory end signature,
+      # according to the spec
       break if buf[i] == 0x50 && buf[i + 1] == 0x4b && buf[i + 2] == 0x05 && buf[i + 3] == 0x06
       i -= 1
     end
@@ -172,17 +176,30 @@ class Zip::File
       # Apparently a zip entry might have different extra bytes
       # in the local file header and central directory header,
       # so to know the data offset we must read them again.
+      #
+      # The bytes inside a local file header, from the signature
+      # and up to the extra length field, sum up 30 bytes.
+      #
+      # This 30 and 22 constants are burned inside the zip spec and
+      # will never change.
       @io.read_at(offset.to_i32, 30) do |io|
-        # at least check that the signature is OK
+        # at least check that the signature is OK (these are 4 bytes)
         signature = read(io, UInt32)
         if signature != FileInfo::SIGNATURE
           raise Zip::Error.new("wrong local file header signature (expected 0x#{FileInfo::SIGNATURE.to_s(16)}, got 0x#{signature.to_s(16)})")
         end
 
         # Skip most of the headers except filename length and extra length
+        # (skip 22, so we already read 26 bytes)
         io.skip(22)
+
+        # With these two we read 4 bytes more, so we are at 30 bytes
         filename_length = read(io, UInt16)
         extra_length = read(io, UInt16)
+
+        # The data of this entry comes at the local file header offset
+        # plus 30 bytes (the ones we just skipped) plus skipping the
+        # filename's bytes plus skipping the extra bytes.
         @offset + 30 + filename_length + extra_length
       end
     end

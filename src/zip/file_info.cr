@@ -95,7 +95,7 @@ module Zip::FileInfo
     write io, @uncompressed_size        # 4
     write io, @filename.bytesize.to_u16 # filename length (2)
     write io, extra.size.to_u16         # extra field length (2)
-    24
+    24                                  # the 24 bytes we just wrote
   end
 
   protected def write_data_descriptor(io : IO)
@@ -103,7 +103,7 @@ module Zip::FileInfo
     write io, @crc32                         # 4
     write io, @compressed_size               # 4
     write io, @uncompressed_size             # 4
-    16
+    16                                       # the 16 bytes we just wrote
   end
 
   protected def decompressor_for(io, is_sized = false)

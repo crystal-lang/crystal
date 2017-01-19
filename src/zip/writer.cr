@@ -34,9 +34,12 @@ class Zip::Writer
   # Creates a new writer to the given *io*.
   def initialize(@io : IO, @sync_close = false)
     @entries = [] of Entry
-    @written = 0_u32
     @compressed_size_counter = ChecksumWriter.new
     @uncompressed_size_counter = ChecksumWriter.new(compute_crc32: true)
+
+    # Keep track of how many bytes we write, because we need
+    # that to write the offset of each local file header and some other info
+    @written = 0_u32
   end
 
   # Creates a new writer to the given *filename*.
@@ -188,16 +191,25 @@ class Zip::Writer
       write Zip::CENTRAL_DIRECTORY_HEADER_SIGNATURE # 4
       write Zip::VERSION                            # version made by (2)
       write Zip::VERSION                            # version needed to extract (2)
+      @written += 8                                 # the 8 bytes we just wrote
+
       @written += entry.meta_to_io(@io)
+
       write entry.comment.bytesize.to_u16 # file comment length (2)
       write 0_u16                         # disk number start (2)
       write 0_u16                         # internal file attribute (2)
       write 0_u32                         # external file attribute (4)
       write entry.offset                  # relative offset of local header (4)
+      @written += 14                      # the 14 bytes we just wrote
+
       @io << entry.filename
+      @written += entry.filename.bytesize
+
       @io.write(entry.extra)
+      @written += entry.extra.size
+
       @io << entry.comment
-      @written += 22 + entry.filename.bytesize + entry.extra.size + entry.comment.bytesize
+      @written += entry.comment.bytesize
     end
   end
 
