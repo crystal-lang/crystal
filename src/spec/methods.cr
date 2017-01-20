@@ -36,6 +36,7 @@ module Spec::Methods
     Spec::RootContext.report(:pending, description, file, line)
   end
 
+  # DEPRECATED: Use `#it`
   def assert(file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
     it("assert", file, line, end_line, &block)
   end
