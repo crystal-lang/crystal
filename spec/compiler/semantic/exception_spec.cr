@@ -421,4 +421,25 @@ describe "Semantic: exception" do
       ),
       "instance variable '@x' of Foo must be Int32, not Nil"
   end
+
+  it "assigns var inside ensure (1) (#3919)" do
+    assert_type(%(
+      begin
+      ensure
+        a = 1
+      end
+      a
+      )) { int32 }
+  end
+
+  it "assigns var inside ensure (2) (#3919)" do
+    assert_type(%(
+      a = true
+      begin
+      ensure
+        a = 1
+      end
+      a
+      )) { int32 }
+  end
 end

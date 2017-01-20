@@ -2548,9 +2548,18 @@ module Crystal
             end
           end
 
+          before_ensure_vars = @vars.dup
+
           node_ensure.accept self
 
           @vars = after_handler_vars
+
+          # Variables declared or overwritten inside the ensure block
+          # must remain after the exception handler
+          exception_handler_vars.each do |name, var|
+            before_var = before_ensure_vars[name]?
+            @vars[name] = var unless var.same?(before_var)
+          end
         else
           @vars = exception_handler_vars
         end
