@@ -193,7 +193,7 @@ describe StringScanner, "#[]?" do
 end
 
 describe StringScanner, "#string" do
-  assert { StringScanner.new("foo").string.should eq("foo") }
+  it { StringScanner.new("foo").string.should eq("foo") }
 end
 
 describe StringScanner, "#offset" do

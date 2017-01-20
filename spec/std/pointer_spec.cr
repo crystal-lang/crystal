@@ -149,7 +149,7 @@ describe "Pointer" do
   end
 
   describe "memcmp" do
-    assert do
+    it do
       p1 = Pointer.malloc(4) { |i| i }
       p2 = Pointer.malloc(4) { |i| i }
       p3 = Pointer.malloc(4) { |i| i + 1 }

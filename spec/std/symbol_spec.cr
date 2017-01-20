@@ -25,6 +25,6 @@ describe Symbol do
   end
 
   describe "clone" do
-    assert { :foo.clone.should eq(:foo) }
+    it { :foo.clone.should eq(:foo) }
   end
 end
