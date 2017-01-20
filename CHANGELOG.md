@@ -1,3 +1,17 @@
+# 0.20.5 (20-01-2017)
+
+* Improved performance in `String#index`, `String#rindex` due to Rabin-Karp algorithm (thanks @MakeJustNow).
+* Improved performance in `Crypto::Bcrypt` (see #3880, thanks @ysbaddaden).
+* `expect_raises` returns raised exception (thanks @kostya).
+* Line numbers debug information is always generated (see #3831, thanks @ysbaddaden).
+* Added `Zip::File`, `Zip::Reader` and `Zip::Writer`. Native readers for zip files that delegate compression to existing zlib module.
+* Added `Hash#delete` with block (see #3856, thanks @bmulvihill).
+* Added `String#[](char : Char)` (see #3855, thanks @Sija).
+* Added `crystal tool expand` to expand macro call in a given location (see #3732, thanks @MakeNowJust).
+* Fixed `crystal play` is able to show compilation errors again.
+* `crystal doc` recognizes `crystal-lang/crystal` in any remote (thanks @MaxLap).
+* [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.5)
+
 # 0.20.4 (06-01-2017)
 
 * **(breaking change)** A type that wants to convert itself to JSON now must override `to_json(builder : JSON::Builder)` instead of `to_json(io : IO)`. The same is true for custom JSON converters. If you are using `JSON.mapping` then your code will continue to work without changes.
