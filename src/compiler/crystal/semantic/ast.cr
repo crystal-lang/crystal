@@ -453,6 +453,10 @@ module Crystal
       io << " (assigned-to)" if assigned_to?
       io << " (object id: #{object_id})"
     end
+
+    def pretty_print(pp)
+      pp.text inspect
+    end
   end
 
   alias MetaVars = Hash(String, MetaVar)
