@@ -692,23 +692,16 @@ module Crystal
 
           column_number = @token.column_number
           next_token_skip_space_or_newline
-          args = [] of ASTNode
-          while true
-            args << parse_single_arg
-            skip_space_or_newline
-            case @token.type
-            when :","
-              next_token_skip_space_or_newline
-              if @token.type == :"]"
-                next_token
-                break
-              end
-            when :"]"
-              next_token
-              break
-            else
-              unexpected_token
-            end
+          call_args = preserve_stop_on_do { parse_call_args_space_consumed check_plus_and_minus: false, allow_curly: true, end_token: :"]" }
+          skip_space_or_newline
+          check :"]"
+          next_token
+
+          if call_args
+            args = call_args.args
+            block = call_args.block
+            block_arg = call_args.block_arg
+            named_args = call_args.named_args
           end
 
           if @token.type == :"?"
@@ -719,7 +712,7 @@ module Crystal
             skip_space
           end
 
-          atomic = Call.new(atomic, method_name, args, name_column_number: column_number).at(location)
+          atomic = Call.new(atomic, method_name, args: (args || [] of ASTNode), block: block, block_arg: block_arg, named_args: named_args, name_column_number: column_number).at(location)
           atomic.name_size = 0 if atomic.is_a?(Call)
           atomic
         else
@@ -3890,7 +3883,7 @@ module Crystal
       end
     end
 
-    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false)
+    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token = :")")
       if @token.keyword?(:end) && !next_comes_colon_space?
         return nil
       end
@@ -3942,7 +3935,7 @@ module Crystal
       # never to `return`.
       @stop_on_do = true unless control
 
-      while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :")" && @token.type != :":" && !end_token?
+      while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != end_token && @token.type != :":" && !end_token?
         if call_block_arg_follows?
           return parse_call_block_arg(args, false)
         end

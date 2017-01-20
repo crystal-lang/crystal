@@ -340,6 +340,10 @@ describe "Parser" do
   it_parses "x.foo(a: 1, b: 2)", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
   it_parses "x.foo a: 1, b: 2 ", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
 
+  it_parses "x[a: 1, b: 2]", Call.new("x".call, "[]", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
+  it_parses "x[{1}]", Call.new("x".call, "[]", TupleLiteral.new([1.int32] of ASTNode))
+  it_parses "x[+ 1]", Call.new("x".call, "[]", Call.new(1.int32, "+"))
+
   it_parses "foo(a: 1, &block)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: 1, &block", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: b(1) do\nend", Call.new(nil, "foo", named_args: [NamedArgument.new("a", Call.new(nil, "b", 1.int32))], block: Block.new)
