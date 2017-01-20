@@ -2038,7 +2038,7 @@ class String
     return 0 if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
 
-    cmp = to_unsafe.memcmp(other.to_unsafe, bytesize)
+    cmp = to_unsafe.memcmp(other.to_unsafe, min_bytesize)
     cmp == 0 ? (bytesize <=> other.bytesize) : cmp.sign
   end
 
