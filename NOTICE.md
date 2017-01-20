@@ -1,4 +1,4 @@
-# Crystal Programmig Language
+# Crystal Programming Language
 
 Copyright 2012-2017 Manas Technology Solutions.
 
@@ -22,10 +22,10 @@ Crystal compiler links these libraries, which have their own license:
     - [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
   * [bdwgc](http://www.hboehm.info/gc/)
     - [MIT](https://opensource.org/licenses/MIT)
-  * [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/)
-    - [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
-Crystal standard library uses these libraries, which have their own licenses:
+And [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/) is used, which is licensed by [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+Parts of the Crystal standard library use the following libraries, which have their own licenses:
 
   * LLVM
   * PCRE
