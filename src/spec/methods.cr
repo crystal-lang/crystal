@@ -7,7 +7,7 @@ module Spec::Methods
     describe(description.to_s, file, line, &block)
   end
 
-  def it(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+  def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
     return unless Spec.matches?(description, file, line, end_line)
 
     Spec.formatters.each(&.before_example(description))
@@ -28,7 +28,7 @@ module Spec::Methods
     end
   end
 
-  def pending(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
     return unless Spec.matches?(description, file, line, end_line)
 
     Spec.formatters.each(&.before_example(description))
