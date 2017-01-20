@@ -32,12 +32,12 @@ describe "URI" do
   assert_uri("/foo?q=1", path: "/foo", query: "q=1")
   assert_uri("mailto:foo@example.org", scheme: "mailto", path: nil, opaque: "foo@example.org")
 
-  assert { URI.parse("http://www.example.com/foo").full_path.should eq("/foo") }
-  assert { URI.parse("http://www.example.com").full_path.should eq("/") }
-  assert { URI.parse("http://www.example.com/foo?q=1").full_path.should eq("/foo?q=1") }
-  assert { URI.parse("http://www.example.com/?q=1").full_path.should eq("/?q=1") }
-  assert { URI.parse("http://www.example.com?q=1").full_path.should eq("/?q=1") }
-  assert { URI.parse("http://test.dev/a%3Ab").full_path.should eq("/a%3Ab") }
+  it { URI.parse("http://www.example.com/foo").full_path.should eq("/foo") }
+  it { URI.parse("http://www.example.com").full_path.should eq("/") }
+  it { URI.parse("http://www.example.com/foo?q=1").full_path.should eq("/foo?q=1") }
+  it { URI.parse("http://www.example.com/?q=1").full_path.should eq("/?q=1") }
+  it { URI.parse("http://www.example.com?q=1").full_path.should eq("/?q=1") }
+  it { URI.parse("http://test.dev/a%3Ab").full_path.should eq("/a%3Ab") }
 
   describe "normalize" do
     it "removes dot notation from path" do
@@ -76,34 +76,34 @@ describe "URI" do
   end
 
   describe "userinfo" do
-    assert { URI.parse("http://www.example.com").userinfo.should be_nil }
-    assert { URI.parse("http://foo@www.example.com").userinfo.should eq("foo") }
-    assert { URI.parse("http://foo:bar@www.example.com").userinfo.should eq("foo:bar") }
+    it { URI.parse("http://www.example.com").userinfo.should be_nil }
+    it { URI.parse("http://foo@www.example.com").userinfo.should eq("foo") }
+    it { URI.parse("http://foo:bar@www.example.com").userinfo.should eq("foo:bar") }
   end
 
   describe "to_s" do
-    assert { URI.new("http", "www.example.com").to_s.should eq("http://www.example.com") }
-    assert { URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com") }
-    assert do
+    it { URI.new("http", "www.example.com").to_s.should eq("http://www.example.com") }
+    it { URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com") }
+    it do
       u = URI.new("http", "www.example.com")
       u.user = "alice"
       u.to_s.should eq("http://alice@www.example.com")
       u.password = "s3cr3t"
       u.to_s.should eq("http://alice:s3cr3t@www.example.com")
     end
-    assert do
+    it do
       u = URI.new("http", "www.example.com")
       u.user = ":D"
       u.to_s.should eq("http://%3AD@www.example.com")
       u.password = "@_@"
       u.to_s.should eq("http://%3AD:%40_%40@www.example.com")
     end
-    assert { URI.new("http", "www.example.com", user: "@al:ce", password: "s/cr3t").to_s.should eq("http://%40al%3Ace:s%2Fcr3t@www.example.com") }
-    assert { URI.new("http", "www.example.com", fragment: "top").to_s.should eq("http://www.example.com#top") }
-    assert { URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234") }
-    assert { URI.new("http", "www.example.com", 80, "/hello").to_s.should eq("http://www.example.com/hello") }
-    assert { URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s.should eq("http://www.example.com/hello?a=1") }
-    assert { URI.new("mailto", opaque: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
+    it { URI.new("http", "www.example.com", user: "@al:ce", password: "s/cr3t").to_s.should eq("http://%40al%3Ace:s%2Fcr3t@www.example.com") }
+    it { URI.new("http", "www.example.com", fragment: "top").to_s.should eq("http://www.example.com#top") }
+    it { URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234") }
+    it { URI.new("http", "www.example.com", 80, "/hello").to_s.should eq("http://www.example.com/hello") }
+    it { URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s.should eq("http://www.example.com/hello?a=1") }
+    it { URI.new("mailto", opaque: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
   end
 
   describe ".unescape" do
