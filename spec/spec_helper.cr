@@ -215,8 +215,8 @@ def assert_after_cleanup(before, after)
   result.node.to_s.strip.should eq(after.strip)
 end
 
-def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile = __FILE__, metaline = __LINE__)
-  it "says syntax error on #{str.inspect}", metafile, metaline do
+def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile = __FILE__, metaline = __LINE__, metaendline = __END_LINE__)
+  it "says syntax error on #{str.inspect}", metafile, metaline, metaendline do
     begin
       parse str
       fail "expected SyntaxException to be raised", metafile, metaline
