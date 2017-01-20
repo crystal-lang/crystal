@@ -241,7 +241,7 @@ describe "File" do
     File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
   end
 
-  assert "chown" do
+  it "chown" do
     # changing owners requires special privileges, so we test that method calls do compile
     typeof(File.chown("/tmp/test"))
     typeof(File.chown("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
@@ -361,8 +361,8 @@ describe "File" do
   end
 
   describe "size" do
-    assert { File.size("#{__DIR__}/data/test_file.txt").should eq(240) }
-    assert do
+    it { File.size("#{__DIR__}/data/test_file.txt").should eq(240) }
+    it do
       File.open("#{__DIR__}/data/test_file.txt", "r") do |file|
         file.size.should eq(240)
       end

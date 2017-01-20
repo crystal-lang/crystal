@@ -128,7 +128,7 @@ describe Socket::Addrinfo do
   end
 
   describe "#ip_address" do
-    assert do
+    it do
       addrinfos = Socket::Addrinfo.udp("localhost", 80)
       typeof(addrinfos.first.ip_address).should eq(Socket::IPAddress)
     end

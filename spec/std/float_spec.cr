@@ -2,19 +2,19 @@ require "spec"
 
 describe "Float" do
   describe "**" do
-    assert { (2.5_f32 ** 2_i32).should be_close(6.25_f32, 0.0001) }
-    assert { (2.5_f32 ** 2).should be_close(6.25_f32, 0.0001) }
-    assert { (2.5_f32 ** 2.5_f32).should be_close(9.882117688026186_f32, 0.0001) }
-    assert { (2.5_f32 ** 2.5).should be_close(9.882117688026186_f32, 0.0001) }
-    assert { (2.5_f64 ** 2_i32).should be_close(6.25_f64, 0.0001) }
-    assert { (2.5_f64 ** 2).should be_close(6.25_f64, 0.0001) }
-    assert { (2.5_f64 ** 2.5_f64).should be_close(9.882117688026186_f64, 0.0001) }
-    assert { (2.5_f64 ** 2.5).should be_close(9.882117688026186_f64, 0.001) }
+    it { (2.5_f32 ** 2_i32).should be_close(6.25_f32, 0.0001) }
+    it { (2.5_f32 ** 2).should be_close(6.25_f32, 0.0001) }
+    it { (2.5_f32 ** 2.5_f32).should be_close(9.882117688026186_f32, 0.0001) }
+    it { (2.5_f32 ** 2.5).should be_close(9.882117688026186_f32, 0.0001) }
+    it { (2.5_f64 ** 2_i32).should be_close(6.25_f64, 0.0001) }
+    it { (2.5_f64 ** 2).should be_close(6.25_f64, 0.0001) }
+    it { (2.5_f64 ** 2.5_f64).should be_close(9.882117688026186_f64, 0.0001) }
+    it { (2.5_f64 ** 2.5).should be_close(9.882117688026186_f64, 0.001) }
   end
 
   describe "%" do
     it "uses modulo behavior, not remainder behavior" do
-      assert { ((-11.5) % 4.0).should eq(0.5) }
+      it { ((-11.5) % 4.0).should eq(0.5) }
     end
   end
 
@@ -23,14 +23,14 @@ describe "Float" do
       expect_raises(DivisionByZero) { 1.2.modulo 0.0 }
     end
 
-    assert { (13.0.modulo 4.0).should eq(1.0) }
-    assert { (13.0.modulo -4.0).should eq(-3.0) }
-    assert { (-13.0.modulo 4.0).should eq(3.0) }
-    assert { (-13.0.modulo -4.0).should eq(-1.0) }
-    assert { (11.5.modulo 4.0).should eq(3.5) }
-    assert { (11.5.modulo -4.0).should eq(-0.5) }
-    assert { (-11.5.modulo 4.0).should eq(0.5) }
-    assert { (-11.5.modulo -4.0).should eq(-3.5) }
+    it { (13.0.modulo 4.0).should eq(1.0) }
+    it { (13.0.modulo -4.0).should eq(-3.0) }
+    it { (-13.0.modulo 4.0).should eq(3.0) }
+    it { (-13.0.modulo -4.0).should eq(-1.0) }
+    it { (11.5.modulo 4.0).should eq(3.5) }
+    it { (11.5.modulo -4.0).should eq(-0.5) }
+    it { (-11.5.modulo 4.0).should eq(0.5) }
+    it { (-11.5.modulo -4.0).should eq(-3.5) }
   end
 
   describe "remainder" do
@@ -38,14 +38,14 @@ describe "Float" do
       expect_raises(DivisionByZero) { 1.2.remainder 0.0 }
     end
 
-    assert { (13.0.remainder 4.0).should eq(1.0) }
-    assert { (13.0.remainder -4.0).should eq(1.0) }
-    assert { (-13.0.remainder 4.0).should eq(-1.0) }
-    assert { (-13.0.remainder -4.0).should eq(-1.0) }
-    assert { (11.5.remainder 4.0).should eq(3.5) }
-    assert { (11.5.remainder -4.0).should eq(3.5) }
-    assert { (-11.5.remainder 4.0).should eq(-3.5) }
-    assert { (-11.5.remainder -4.0).should eq(-3.5) }
+    it { (13.0.remainder 4.0).should eq(1.0) }
+    it { (13.0.remainder -4.0).should eq(1.0) }
+    it { (-13.0.remainder 4.0).should eq(-1.0) }
+    it { (-13.0.remainder -4.0).should eq(-1.0) }
+    it { (11.5.remainder 4.0).should eq(3.5) }
+    it { (11.5.remainder -4.0).should eq(3.5) }
+    it { (-11.5.remainder 4.0).should eq(-3.5) }
+    it { (-11.5.remainder -4.0).should eq(-3.5) }
 
     it "preserves type" do
       r = 1.5_f32.remainder(1)
@@ -54,70 +54,70 @@ describe "Float" do
   end
 
   describe "round" do
-    assert { 2.5.round.should eq(3) }
-    assert { 2.4.round.should eq(2) }
+    it { 2.5.round.should eq(3) }
+    it { 2.4.round.should eq(2) }
   end
 
   describe "floor" do
-    assert { 2.1.floor.should eq(2) }
-    assert { 2.9.floor.should eq(2) }
+    it { 2.1.floor.should eq(2) }
+    it { 2.9.floor.should eq(2) }
   end
 
   describe "ceil" do
-    assert { 2.0_f32.ceil.should eq(2) }
-    assert { 2.0.ceil.should eq(2) }
+    it { 2.0_f32.ceil.should eq(2) }
+    it { 2.0.ceil.should eq(2) }
 
-    assert { 2.1_f32.ceil.should eq(3_f32) }
-    assert { 2.1.ceil.should eq(3) }
+    it { 2.1_f32.ceil.should eq(3_f32) }
+    it { 2.1.ceil.should eq(3) }
 
-    assert { 2.9_f32.ceil.should eq(3) }
-    assert { 2.9.ceil.should eq(3) }
+    it { 2.9_f32.ceil.should eq(3) }
+    it { 2.9.ceil.should eq(3) }
   end
 
   describe "fdiv" do
-    assert { 1.0.fdiv(1).should eq 1.0 }
-    assert { 1.0.fdiv(2).should eq 0.5 }
-    assert { 1.0.fdiv(0.5).should eq 2.0 }
-    assert { 0.0.fdiv(1).should eq 0.0 }
-    assert { 1.0.fdiv(0).should eq 1.0/0.0 }
+    it { 1.0.fdiv(1).should eq 1.0 }
+    it { 1.0.fdiv(2).should eq 0.5 }
+    it { 1.0.fdiv(0.5).should eq 2.0 }
+    it { 0.0.fdiv(1).should eq 0.0 }
+    it { 1.0.fdiv(0).should eq 1.0/0.0 }
   end
 
   describe "divmod" do
-    assert { 1.2.divmod(0.3)[0].should eq(4) }
-    assert { 1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
+    it { 1.2.divmod(0.3)[0].should eq(4) }
+    it { 1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
 
-    assert { 1.3.divmod(0.3)[0].should eq(4) }
-    assert { 1.3.divmod(0.3)[1].should be_close(0.1, 0.00001) }
+    it { 1.3.divmod(0.3)[0].should eq(4) }
+    it { 1.3.divmod(0.3)[1].should be_close(0.1, 0.00001) }
 
-    assert { 1.4.divmod(0.3)[0].should eq(4) }
-    assert { 1.4.divmod(0.3)[1].should be_close(0.2, 0.00001) }
+    it { 1.4.divmod(0.3)[0].should eq(4) }
+    it { 1.4.divmod(0.3)[1].should be_close(0.2, 0.00001) }
 
-    assert { -1.2.divmod(0.3)[0].should eq(-4) }
-    assert { -1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
+    it { -1.2.divmod(0.3)[0].should eq(-4) }
+    it { -1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
 
-    assert { -1.3.divmod(0.3)[0].should eq(-5) }
-    assert { -1.3.divmod(0.3)[1].should be_close(0.2, 0.00001) }
+    it { -1.3.divmod(0.3)[0].should eq(-5) }
+    it { -1.3.divmod(0.3)[1].should be_close(0.2, 0.00001) }
 
-    assert { -1.4.divmod(0.3)[0].should eq(-5) }
-    assert { -1.4.divmod(0.3)[1].should be_close(0.1, 0.00001) }
+    it { -1.4.divmod(0.3)[0].should eq(-5) }
+    it { -1.4.divmod(0.3)[1].should be_close(0.1, 0.00001) }
 
-    assert { 1.2.divmod(-0.3)[0].should eq(-4) }
-    assert { 1.2.divmod(-0.3)[1].should be_close(0.0, 0.00001) }
+    it { 1.2.divmod(-0.3)[0].should eq(-4) }
+    it { 1.2.divmod(-0.3)[1].should be_close(0.0, 0.00001) }
 
-    assert { 1.3.divmod(-0.3)[0].should eq(-5) }
-    assert { 1.3.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
+    it { 1.3.divmod(-0.3)[0].should eq(-5) }
+    it { 1.3.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
 
-    assert { 1.4.divmod(-0.3)[0].should eq(-5) }
-    assert { 1.4.divmod(-0.3)[1].should be_close(-0.1, 0.00001) }
+    it { 1.4.divmod(-0.3)[0].should eq(-5) }
+    it { 1.4.divmod(-0.3)[1].should be_close(-0.1, 0.00001) }
 
-    assert { -1.2.divmod(-0.3)[0].should eq(4) }
-    assert { -1.2.divmod(-0.3)[1].should be_close(0.0, 0.00001) }
+    it { -1.2.divmod(-0.3)[0].should eq(4) }
+    it { -1.2.divmod(-0.3)[1].should be_close(0.0, 0.00001) }
 
-    assert { -1.3.divmod(-0.3)[0].should eq(4) }
-    assert { -1.3.divmod(-0.3)[1].should be_close(-0.1, 0.00001) }
+    it { -1.3.divmod(-0.3)[0].should eq(4) }
+    it { -1.3.divmod(-0.3)[1].should be_close(-0.1, 0.00001) }
 
-    assert { -1.4.divmod(-0.3)[0].should eq(4) }
-    assert { -1.4.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
+    it { -1.4.divmod(-0.3)[0].should eq(4) }
+    it { -1.4.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
   end
 
   describe "to_s" do

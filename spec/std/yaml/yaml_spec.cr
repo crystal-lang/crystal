@@ -3,12 +3,12 @@ require "yaml"
 
 describe "YAML" do
   describe "parser" do
-    assert { YAML.parse("foo").should eq("foo") }
-    assert { YAML.parse("- foo\n- bar").should eq(["foo", "bar"]) }
-    assert { YAML.parse_all("---\nfoo\n---\nbar\n").should eq(["foo", "bar"]) }
-    assert { YAML.parse("foo: bar").should eq({"foo" => "bar"}) }
-    assert { YAML.parse("--- []\n").should eq([] of YAML::Type) }
-    assert { YAML.parse("---\n...").should eq("") }
+    it { YAML.parse("foo").should eq("foo") }
+    it { YAML.parse("- foo\n- bar").should eq(["foo", "bar"]) }
+    it { YAML.parse_all("---\nfoo\n---\nbar\n").should eq(["foo", "bar"]) }
+    it { YAML.parse("foo: bar").should eq({"foo" => "bar"}) }
+    it { YAML.parse("--- []\n").should eq([] of YAML::Type) }
+    it { YAML.parse("---\n...").should eq("") }
 
     it "parses recursive sequence" do
       doc = YAML.parse("--- &foo\n- *foo\n")

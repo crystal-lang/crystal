@@ -374,7 +374,7 @@ describe "Deque" do
   end
 
   describe "inspect" do
-    assert { Deque{1, 2, 3}.inspect.should eq("Deque{1, 2, 3}") }
+    it { Deque{1, 2, 3}.inspect.should eq("Deque{1, 2, 3}") }
   end
 
   describe "last" do
@@ -537,7 +537,7 @@ describe "Deque" do
 
   describe "to_s" do
     it "does to_s" do
-      assert { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
+      it { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
     end
 
     it "does with recursive" do
