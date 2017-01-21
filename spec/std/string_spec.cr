@@ -1756,6 +1756,14 @@ describe "String" do
     assert { "12".rjust(7, 'あ').should eq("あああああ12") }
   end
 
+  describe "center" do
+    assert { "123".center(2).should eq("123") }
+    assert { "123".center(5).should eq(" 123 ") }
+    assert { "123".center(7, '-').should eq("--123--") }
+    assert { "123".center(8, '-').should eq("--123---") }
+    assert { "123".center(7, 'あ').should eq("ああ123ああ") }
+  end
+
   describe "succ" do
     it "returns an empty string for empty strings" do
       "".succ.should eq("")

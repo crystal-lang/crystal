@@ -3075,7 +3075,7 @@ class String
   # "Aubergine".ljust(8)   # => "Aubergine"
   # ```
   def ljust(len, char : Char = ' ')
-    just len, char, true
+    justify len, char, :left
   end
 
   # Adds instances of *char* to left of the string until it is at least size of *len*.
@@ -3086,10 +3086,23 @@ class String
   # "Aubergine".rjust(8)   # => "Aubergine"
   # ```
   def rjust(len, char : Char = ' ')
-    just len, char, false
+    justify len, char, :right
   end
 
-  private def just(len, char, left)
+  # Centers string in a new string with the size of *len*, padded
+  # with instances of *char*.
+  #
+  # ```
+  # "Purple".center(8)      # => " Purple "
+  # "Purple".center(8, '-') # => "-Purple-"
+  # "Purple".center(9, '-') # => "-Purple--"
+  # "Aubergine".center(8)   # => "Aubergine"
+  # ```
+  def center(len, char : Char = ' ')
+    justify len, char, :center
+  end
+
+  private def justify(len, char, direction)
     return self if size >= len
 
     bytes, count = String.char_bytes_and_bytesize(char)
@@ -3098,22 +3111,52 @@ class String
     new_bytesize = bytesize + difference * count
 
     String.new(new_bytesize) do |buffer|
-      if left
+      if direction == :left
         buffer.copy_from(to_unsafe, bytesize)
         buffer += bytesize
       end
 
-      if count == 1
-        Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, difference.to_u32, 0_u32, false)
-        buffer += difference
+      if direction == :center
+        spacing = difference / 2.0
+        prefix_space = spacing.floor.to_i
+        postfix_space = spacing.ceil.to_i
+
+        if count == 1
+          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, prefix_space.to_u32, 0_u32, false)
+          buffer += prefix_space
+
+          buffer.copy_from(to_unsafe, bytesize)
+          buffer += bytesize
+
+          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, postfix_space.to_u32, 0_u32, false)
+          buffer += difference
+        else
+          prefix_space.times do
+            buffer.copy_from(bytes.to_unsafe, count)
+            buffer += count
+          end
+
+          buffer.copy_from(to_unsafe, bytesize)
+          buffer += bytesize
+
+          postfix_space.times do
+            buffer.copy_from(bytes.to_unsafe, count)
+            buffer += count
+          end
+        end
       else
-        difference.times do
-          buffer.copy_from(bytes.to_unsafe, count)
-          buffer += count
+        if count == 1
+          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, difference.to_u32, 0_u32, false)
+          buffer += difference
+        else
+          difference.times do
+            buffer.copy_from(bytes.to_unsafe, count)
+            buffer += count
+          end
         end
       end
 
-      unless left
+      if direction == :right
         buffer.copy_from(to_unsafe, bytesize)
       end
 
