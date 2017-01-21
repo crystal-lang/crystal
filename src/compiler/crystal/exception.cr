@@ -3,7 +3,7 @@ require "colorize"
 
 module Crystal
   abstract class Exception < ::Exception
-    property? color = false
+    property color = Colorize::When::Auto
 
     @filename : String | VirtualFile | Nil
 
@@ -47,11 +47,11 @@ module Crystal
     end
 
     def colorize(obj)
-      obj.colorize.toggle(@color)
+      obj.colorize.when(@color)
     end
 
     def with_color
-      ::with_color.toggle(@color)
+      ::with_color.when(@color)
     end
 
     def replace_leading_tabs_with_spaces(line)

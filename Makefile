@@ -13,17 +13,19 @@
 
 LLVM_CONFIG ?= ## llvm-config command path to use
 
-release ?= ## Compile in release mode
-stats ?=   ## Enable statistics output
-threads ?= ## Maximum number of threads to use
-debug ?=   ## Add symbolic debug info
-verbose ?= ## Run specs in verbose mode
+release ?=    ## Compile in release mode
+stats ?=      ## Enable statistics output
+threads ?=    ## Maximum number of threads to use
+debug ?=      ## Add symbolic debug info
+verbose ?=    ## Run specs in verbose mode
+color ?= auto ## Colorize the output
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
-FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(threads),--threads $(threads) )$(if $(debug),-d )
+FLAGS := --color=$(color)$(if $(release), --release)$(if $(stats), --stats)$(if $(threads), --threads $(threads))$(if $(debug), -d)
 VERBOSE := $(if $(verbose),-v )
+COLOR := --color=$(color)
 EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
 SHELL = bash
 LLVM_CONFIG_FINDER := \
@@ -73,15 +75,15 @@ help: ## Show this help
 
 .PHONY: spec
 spec: $(O)/all_spec ## Run all specs
-	$(O)/all_spec $(VERBOSE)
+	$(O)/all_spec $(COLOR) $(VERBOSE)
 
 .PHONY: std_spec
 std_spec: $(O)/std_spec ## Run standard library specs
-	$(O)/std_spec $(VERBOSE)
+	$(O)/std_spec $(COLOR) $(VERBOSE)
 
 .PHONY: compiler_spec
 compiler_spec: $(O)/compiler_spec ## Run compiler specs
-	$(O)/compiler_spec $(VERBOSE)
+	$(O)/compiler_spec $(COLOR) $(VERBOSE)
 
 .PHONY: doc
 doc: ## Generate standard library documentation

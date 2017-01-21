@@ -10,7 +10,7 @@ module Crystal
     @size : Int32
 
     def color=(color)
-      @color = !!color
+      @color = color
       inner.try &.color=(color)
     end
 

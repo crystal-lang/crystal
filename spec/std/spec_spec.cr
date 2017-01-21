@@ -101,14 +101,14 @@ describe "Spec matchers" do
 end
 
 describe "Spec" do
-  describe "use_colors?" do
+  describe "use_colors" do
     it "returns if output is colored or not" do
-      saved = Spec.use_colors?
+      saved = Spec.use_colors
       begin
-        Spec.use_colors = false
-        Spec.use_colors?.should be_false
-        Spec.use_colors = true
-        Spec.use_colors?.should be_true
+        Spec.use_colors = Colorize::When::Never
+        Spec.use_colors.should eq(Colorize::When::Never)
+        Spec.use_colors = Colorize::When::Auto
+        Spec.use_colors.should eq(Colorize::When::Auto)
       ensure
         Spec.use_colors = saved
       end

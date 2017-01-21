@@ -52,7 +52,7 @@ class Crystal::Command
   private getter options
 
   def initialize(@options : Array(String))
-    @color = true
+    @color = Colorize::When::Auto
     @stats = @time = false
   end
 
@@ -344,9 +344,15 @@ class Crystal::Command
         end
       end
 
+      opts.on("--color auto|always|never", "Colorize the output") do |policy|
+        color = Colorize::When.parse policy
+        @color = color
+        compiler.color = color
+      end
+
       opts.on("--no-color", "Disable colored output") do
-        @color = false
-        compiler.color = false
+        @color = Colorize::When::Never
+        compiler.color = Colorize::When::Never
       end
 
       unless no_codegen
@@ -477,9 +483,14 @@ class Crystal::Command
       puts opts
       exit
     end
+    opts.on("--color auto|always|never", "Colorize the output") do |policy|
+      color = Colorize::When.parse policy
+      @color = color
+      compiler.color = color
+    end
     opts.on("--no-color", "Disable colored output") do
-      @color = false
-      compiler.color = false
+      @color = Colorize::When::Never
+      compiler.color = Colorize::When::Never
     end
     opts.invalid_option { }
   end
@@ -495,7 +506,7 @@ class Crystal::Command
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color")
+    @color = Colorize::When::Never if ARGV.includes?("--no-color")
     Crystal.error msg, @color, exit_code: exit_code
   end
 end

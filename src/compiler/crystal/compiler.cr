@@ -57,8 +57,8 @@ module Crystal
     # Sets the mattr (features). Check LLVM docs to learn about this.
     property mattr : String?
 
-    # If `false`, color won't be used in output messages.
-    property? color = true
+    # Colorize policy. See `Colorize::When`.
+    property color = Colorize::When::Auto
 
     # If `true`, skip cleanup process on semantic analysis.
     property? no_cleanup = false
@@ -169,7 +169,7 @@ module Crystal
       program.flags << "debug" unless debug.none?
       program.flags.concat @flags
       program.wants_doc = wants_doc?
-      program.color = color?
+      program.color = color
       program.stdout = stdout
       program.show_error_trace = show_error_trace?
       program.wants_stats = @stats
@@ -458,7 +458,7 @@ module Crystal
     end
 
     private def colorize(obj)
-      obj.colorize.toggle(@color)
+      obj.colorize.when(@color)
     end
 
     # An LLVM::Module with information to compile it.

@@ -67,8 +67,8 @@ module Crystal
     # If `true`, doc comments are attached to types and methods.
     property? wants_doc = false
 
-    # If `true`, error messages can be colorized
-    property? color = true
+    # Colorize policy. See `Colorize::When`.
+    property color = Colorize::When::Auto
 
     # All required files. The set stores absolute files. This way
     # files loaded by `require` nodes are only processed once.
@@ -500,7 +500,7 @@ module Crystal
     # Colorizes the given object, depending on whether this program
     # is configured to use colors.
     def colorize(obj)
-      obj.colorize.toggle(@color)
+      obj.colorize.when(@color)
     end
 
     private def abstract_value_type(type)

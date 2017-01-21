@@ -49,7 +49,7 @@ module Crystal::Playground
       ]
       output_filename = tempfile "play-#{@session_key}-#{tag}"
       compiler = Compiler.new
-      compiler.color = false
+      compiler.color = Colorize::When::Never
       begin
         @logger.info "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})."
         result = compiler.compile sources, output_filename

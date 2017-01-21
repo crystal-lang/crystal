@@ -17,24 +17,12 @@ module Spec
     pending: '*',
   }
 
-  @@use_colors = true
+  # :nodoc:
+  class_property use_colors = Colorize::When::Auto
 
   # :nodoc:
   def self.color(str, status)
-    if use_colors?
-      str.colorize(COLORS[status])
-    else
-      str
-    end
-  end
-
-  # :nodoc:
-  def self.use_colors?
-    @@use_colors
-  end
-
-  # :nodoc:
-  def self.use_colors=(@@use_colors)
+    str.colorize(fore: COLORS[status], when: use_colors)
   end
 
   # :nodoc:

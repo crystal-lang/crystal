@@ -97,8 +97,11 @@ OptionParser.parse! do |opts|
   opts.on("-v", "--verbose", "verbose output") do
     Spec.override_default_formatter(Spec::VerboseFormatter.new)
   end
+  opts.on("--color auto|always|never", "Colorize the output") do |color|
+    Spec.use_colors = Colorize::When.parse color
+  end
   opts.on("--no-color", "Disable colored output") do
-    Spec.use_colors = false
+    Spec.use_colors = Colorize::When::Never
   end
   opts.unknown_args do |args|
   end
