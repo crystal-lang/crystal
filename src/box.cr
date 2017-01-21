@@ -14,6 +14,11 @@ class Box(T)
   def initialize(@object : T)
   end
 
+  # Returns boxed object as a Void*.
+  def box
+    self.as(Void*)
+  end
+
   # Creates a Box for an object and returns it as a Void*.
   def self.box(object) : Void*
     new(object).as(Void*)
