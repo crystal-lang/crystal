@@ -13,16 +13,24 @@
 #
 # upcase = false
 # destination = "World"
+# friends = [] of String
 #
 # OptionParser.parse! do |parser|
-#   parser.banner = "Usage: salute [arguments]"
+#   parser.banner = "Usage: salute [arguments] [friends]"
 #   parser.on("-u", "--upcase", "Upcases the salute") { upcase = true }
 #   parser.on("-t NAME", "--to=NAME", "Specifies the name to salute") { |name| destination = name }
-#   parser.on("-h", "--help", "Show this help") { puts parser }
+#   parser.on("-h", "--help", "Show this help") do
+#     puts parser
+#     exit
+#   end
+#   parser.unknown_args do |before, after|
+#     friends = before if before.any?
+#   end
 # end
 #
 # destination = destination.upcase if upcase
 # puts "Hello #{destination}!"
+# friends.each { |friend| puts "Hello #{friend}" } if friends.any?
 # ```
 class OptionParser
   class Exception < ::Exception
