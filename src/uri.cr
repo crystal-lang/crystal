@@ -286,7 +286,7 @@ class URI
     io
   end
 
-  # Returns whether given byte is reserved character defined in RFC 3986.
+  # Returns whether given byte is reserved character defined in [RFC 3986](https://tools.ietf.org/html/rfc3986).
   #
   # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
   # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
@@ -296,7 +296,7 @@ class URI
       {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
   end
 
-  # Returns whether given byte is unreserved character defined in RFC 3986.
+  # Returns whether given byte is unreserved character defined in [RFC 3986](https://tools.ietf.org/html/rfc3986).
   #
   # Unreserved characters are alphabet, digit, '_', '.', '-', '~'.
   def self.unreserved?(byte) : Bool
@@ -366,8 +366,7 @@ class URI
     i
   end
 
-  # RFC 3986 6.2.2.3
-  # https://tools.ietf.org/html/rfc3986#section-5.2.4
+  # [RFC 3986 6.2.2.3](https://tools.ietf.org/html/rfc3986#section-5.2.4)
   private def remove_dot_segments(path : String?)
     return if path.nil?
 

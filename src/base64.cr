@@ -28,7 +28,7 @@ module Base64
   private NR = '\r'.ord.to_u8
 
   # Returns the Base64-encoded version of *data*.
-  # This method complies with RFC 2045.
+  # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
   # Line feeds are added to every 60 encoded characters.
   #
   # ```
@@ -52,7 +52,7 @@ module Base64
   end
 
   # Write the Base64-encoded version of *data* to *io*.
-  # This method complies with RFC 2045.
+  # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
   # Line feeds are added to every 60 encoded characters.
   #
   # ```
@@ -84,7 +84,7 @@ module Base64
   end
 
   # Returns the Base64-encoded version of *data* with no newlines.
-  # This method complies with RFC 4648.
+  # This method complies with [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
   # ```
   # puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
@@ -110,7 +110,7 @@ module Base64
   end
 
   # Write the Base64-encoded version of *data* with no newlines to *io*.
-  # This method complies with RFC 4648.
+  # This method complies with [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
   # ```
   # Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
@@ -131,7 +131,7 @@ module Base64
 
   # Returns the Base64-encoded version of *data* using a urlsafe alphabet.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
-  # Alphabet" in RFC 4648.
+  # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
   # The alphabet uses '-' instead of '+' and '_' instead of '/'.
   #
@@ -149,7 +149,7 @@ module Base64
 
   # Write the Base64-encoded version of *data* using a urlsafe alphabet to *io*.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
-  # Alphabet" in RFC 4648.
+  # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
   # The alphabet uses '-' instead of '+' and '_' instead of '/'.
   def urlsafe_encode(data, io : IO)

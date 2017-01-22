@@ -61,7 +61,7 @@ describe OpenSSL::SSL::HostnameValidation do
       OpenSSL::SSL::HostnameValidation.matches_hostname?("foo.bar.example.com", "foo.bar.example.com").should be_true
     end
 
-    it "wildcard matches according to RFC6125, section 6.4.3" do
+    it "wildcard matches according to RFC 6125, section 6.4.3" do
       OpenSSL::SSL::HostnameValidation.matches_hostname?("*.com", "example.com").should be_false
       OpenSSL::SSL::HostnameValidation.matches_hostname?("bar.*.example.com", "bar.foo.example.com").should be_false
 

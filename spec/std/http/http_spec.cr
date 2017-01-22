@@ -2,12 +2,12 @@ require "spec"
 require "http"
 
 describe HTTP do
-  it "parses RFC1123" do
+  it "parses RFC 1123" do
     time = Time.new(1994, 11, 6, 8, 49, 37)
     HTTP.parse_time("Sun, 06 Nov 1994 08:49:37 GMT").should eq(time)
   end
 
-  it "parses RFC1036" do
+  it "parses RFC 1036" do
     time = Time.new(1994, 11, 6, 8, 49, 37)
     HTTP.parse_time("Sunday, 06-Nov-94 08:49:37 GMT").should eq(time)
   end
@@ -32,7 +32,7 @@ describe HTTP do
     parsed_time.to_utc.to_s.should eq("2011-09-10 02:36:00 UTC")
   end
 
-  describe "generates RFC1123" do
+  describe "generates RFC 1123" do
     it "without time zone" do
       time = Time.new(1994, 11, 6, 8, 49, 37, 0, Time::Kind::Utc)
       HTTP.rfc1123_date(time).should eq("Sun, 06 Nov 1994 08:49:37 GMT")

@@ -1,4 +1,5 @@
-# The OAuth module provides an `OAuth::Consumer` as specified by [RFC5849](https://tools.ietf.org/html/rfc5849).
+# The OAuth module provides an `OAuth::Consumer` as specified by
+# [RFC 5849](https://tools.ietf.org/html/rfc5849).
 #
 # ### Performing HTTP client requests with OAuth authentication
 #
