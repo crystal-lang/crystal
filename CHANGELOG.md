@@ -1,6 +1,6 @@
 # 0.20.5 (20-01-2017)
 
-* Improved performance in `String#index`, `String#rindex` due to Rabin-Karp algorithm (thanks @MakeJustNow).
+* Improved performance in `String#index`, `String#rindex` due to Rabin-Karp algorithm (thanks @MakeNowJust).
 * Improved performance in `Crypto::Bcrypt` (see #3880, thanks @ysbaddaden).
 * `expect_raises` returns raised exception (thanks @kostya).
 * Line numbers debug information is always generated (see #3831, thanks @ysbaddaden).
