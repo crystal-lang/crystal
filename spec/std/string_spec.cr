@@ -1716,6 +1716,14 @@ describe "String" do
     match[0].should eq("")
   end
 
+  it "matches with a block" do
+    "Crystal".match(/[p-s]/) do |md|
+      md.not_nil!.string.should eq "Crystal"
+      md.not_nil![0].should eq "r"
+      md.not_nil![1]?.should eq nil
+    end
+  end
+
   it "has size (same as size)" do
     "テスト".size.should eq(3)
   end

@@ -3190,6 +3190,14 @@ class String
     match
   end
 
+  # Finds match of *regex*, starting at *pos* and passes to *block*
+  # and yields a `Regex::MatchData` instance
+  def match(regex : Regex, pos = 0, &block : Regex::MatchData? -> _)
+    match = match(regex, pos)
+    yield match
+    match
+  end
+
   # Searches the string for instances of *pattern*, yielding a `Regex::MatchData` for each match.
   def scan(pattern : Regex)
     byte_offset = 0
