@@ -1207,6 +1207,50 @@ module Enumerable(T)
     reduce(initial) { |memo, e| memo * (yield e) }
   end
 
+  # Returns an array of tuples containing the cartesian product
+  # between the collection and the enumerable. Or in other words, it
+  # will return an Array with a Tuple for each possible combination of
+  # two elements from the collection and the passed enumerable.
+  #
+  # ```
+  # arr = [1, 2, 3]
+  # set = Set(Char).new(['a', 'b'])
+  # arr.product(set)
+  # => [{1, 'a'}, {1, 'b'}, {2, 'a'}, {2, 'b'}, {3, 'a'}, {3, 'b'}])
+  # ```
+  #
+  # An empty array will be returned if either collection is empty.
+  def product(ary : Enumerable(U)) forall U
+    result = if ary.responds_to?(:size)
+               Array({T, U}).new(size * ary.size)
+             else
+               Array({T, U}).new
+             end
+
+    product(ary) do |x, y|
+      result << {x, y}
+    end
+    result
+  end
+
+  # Yields the cartesian product between the collection and the
+  # enumerable to the passed block. Or in other words, it will yield
+  # each possible combination of two elements from the collection and
+  # the passed enumerable.
+  #
+  # ```
+  # arr = [1, 2, 3]
+  # set = Set(Char).new(['a', 'b'])
+  # r = [] of Int32|Char
+  # arr.product(set) { |a, b| r << a; r << b }
+  # => [1, 'a', 1, 'b', 2, 'a', 2, 'b', 3, 'a', 3, 'b'])
+  # ```
+  #
+  # Will not yield if either collection is empty.
+  def product(enumerable : Enumerable, &block)
+    self.each { |a| enumerable.each { |b| yield a, b } }
+  end
+
   # Returns an array with the first *count* elements in the collection.
   #
   # If *count* is bigger than the number of elements in the collection, returns as many as possible. This

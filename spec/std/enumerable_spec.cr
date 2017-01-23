@@ -820,6 +820,20 @@ describe "Enumerable" do
       typeof([1.5, 2.5, 3.5].product).should eq(Float64)
       typeof([1, 2, 3].product(&.to_f)).should eq(Float64)
     end
+
+    it "does cartesian product without block" do
+      [1, 2, 3].product(['a', 'b']).should eq([{1, 'a'}, {1, 'b'}, {2, 'a'}, {2, 'b'}, {3, 'a'}, {3, 'b'}])
+      (1..3).product(Set(Char).new(['a', 'b'])).should eq([{1, 'a'}, {1, 'b'}, {2, 'a'}, {2, 'b'}, {3, 'a'}, {3, 'b'}])
+    end
+
+    it "does cartesian product with block" do
+      r = [] of Int32
+      [1, 2, 3].product([5, 6]) { |a, b| r << a; r << b }
+      r.should eq([1, 5, 1, 6, 2, 5, 2, 6, 3, 5, 3, 6])
+      r.clear
+      Set(Int32).new([1, 2, 3]).product(5..6) { |a, b| r << a; r << b }
+      r.should eq([1, 5, 1, 6, 2, 5, 2, 6, 3, 5, 3, 6])
+    end
   end
 
   describe "first" do

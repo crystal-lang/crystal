@@ -1303,18 +1303,6 @@ class Array(T)
     pop { nil }
   end
 
-  def product(ary : Array(U)) forall U
-    result = Array({T, U}).new(size * ary.size)
-    product(ary) do |x, y|
-      result << {x, y}
-    end
-    result
-  end
-
-  def product(enumerable : Enumerable, &block)
-    self.each { |a| enumerable.each { |b| yield a, b } }
-  end
-
   # Append. Pushes one value to the end of `self`, given that the type of the value is *T*
   # (which might be a single type or a union of types).
   # This method returns `self`, so several calls can be chained.
