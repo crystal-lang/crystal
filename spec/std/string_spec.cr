@@ -482,6 +482,11 @@ describe "String" do
     assert { "ﬀ".upcase.should eq("FF") }
   end
 
+  describe "swapcase" do
+    assert { "hEllO mAn!".swapcase.should eq("HeLLo MaN!") }
+    assert { "HeLLo MaN!".swapcase.should eq("hEllO mAn!") }
+  end
+
   describe "capitalize" do
     assert { "HELLO!".capitalize.should eq("Hello!") }
     assert { "HELLO MAN!".capitalize.should eq("Hello man!") }

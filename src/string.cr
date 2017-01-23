@@ -938,6 +938,20 @@ class String
     end
   end
 
+  # Returns a new string with each letter's the opposite case of what it
+  # originally is. Lower-case letters are upcased, uppercase letters are downcased.
+  #
+  # ```
+  # "hEllO".swapcase # => "HeLLo"
+  # ```
+  def swapcase
+    String.build(bytesize) do |io|
+      each_char do |char|
+        io << char.swapcase
+      end
+    end
+  end
+
   # Returns a new string with the first letter converted to uppercase and every
   # subsequent letter converted to lowercase.
   #
