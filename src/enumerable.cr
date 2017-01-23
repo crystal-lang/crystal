@@ -1017,6 +1017,17 @@ module Enumerable(T)
     ary
   end
 
+  # Like `reject`, but the block gets passed both the element and its index.
+  #
+  # ```
+  # ["a", "b", "c", "d", "e"].reject_with_index { |c, i| i % 2 == 0 } # => ["b", "d"]
+  # ```
+  def reject_with_index(&block : T, Int32 ->)
+    ary = [] of T
+    each_with_index { |e, i| ary << e unless yield e, i }
+    ary
+  end
+
   # Returns an array with all the elements in the collection for which the passed block returns `true`.
   #
   # ```
@@ -1025,6 +1036,17 @@ module Enumerable(T)
   def select(&block : T ->)
     ary = [] of T
     each { |e| ary << e if yield e }
+    ary
+  end
+
+  # Like `select`, but the block gets passed both the element and its index.
+  #
+  # ```
+  # ["a", "b", "c", "d", "e"].select_with_index { |c, i| i % 2 == 0 } # => ["a", "c", "e"]
+  # ```
+  def select_with_index(&block : T, Int32 ->)
+    ary = [] of T
+    each_with_index { |e, i| ary << e if yield e, i }
     ary
   end
 

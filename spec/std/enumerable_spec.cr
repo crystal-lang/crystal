@@ -746,9 +746,21 @@ describe "Enumerable" do
     end
   end
 
+  describe "reject_with_index" do
+    it "rejects the values for which the block with index returns true" do
+      ["a", "b", "c", "d", "e"].reject_with_index { |_, i| (i.even?) }.should eq(["b", "d"])
+    end
+  end
+
   describe "select" do
     it "selects the values for which the block returns true" do
       [1, 2, 3, 4].select(&.even?).should eq([2, 4])
+    end
+  end
+
+  describe "select_with_index" do
+    it "selects the values for which the block with index returns true" do
+      ["a", "b", "c", "d", "e"].select_with_index { |_, i| (i.even?) }.should eq(["a", "c", "e"])
     end
   end
 
