@@ -223,6 +223,38 @@ describe "Enumerable" do
     end
   end
 
+  describe "dig" do
+    it "gets the value at given path given splat" do
+      a = [1, 2, 3]
+      h = {"a" => {"b" => {"c" => [10, 20]}}, a => {"a" => "b"}}
+
+      h.dig("a", "b", "c", 1).should eq(20)
+      h.dig("a", "b", "c").should eq([10, 20])
+      h.dig([1, 2, 3], "a").should eq("b")
+    end
+
+    it "can traverse arrays" do
+      h = {"w" => ["x", {"y" => "z"}]}
+      h.dig("w", 1, "y").should eq("z")
+    end
+
+    it "returns nil if not found" do
+      a = [1, 2, 3]
+      h = {"a" => {"b" => {"c" => 300}}, a => {"a" => "b"}}
+
+      h.dig("a", "b", "c", "d", "e").should eq(nil)
+      h.dig("z").should eq(nil)
+      h.dig("").should eq(nil)
+    end
+
+    it "works with arrays" do
+      a = ["z", {"a" => [[1], [["x"], "y"]]}]
+      a.dig(1, "a", 1, 0, 0).should eq("x")
+      a.dig(1, "a", 3, 9999999999).should eq(nil)
+      a.dig(1, "z").should eq(nil)
+    end
+  end
+
   describe "each_cons" do
     it "returns running pairs" do
       array = [] of Array(Int32)

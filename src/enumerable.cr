@@ -230,6 +230,30 @@ module Enumerable(T)
     n.times { each { |x| yield x } }
   end
 
+  # Traverses the depth of a structure and returns the value.
+  # Returns nil if not found.
+  #
+  # ```
+  # h = {"a" => {"b" => [10, 20, 30]}}
+  # h.dig "a", "b", 1             # => 20
+  # h.dig "a", "b", "c", "d", "e" # => nil
+  # ```
+  def dig(key : K, *subkeys)
+    if (value = self[key]?) && value.responds_to?(:dig)
+      value.dig(*subkeys)
+    end
+  end
+
+  def dig(key : K)
+    self[key]?
+  end
+
+  def dig(key : Int32, *subkeys)
+    if (value = self[key]?) && value.responds_to?(:dig)
+      value.dig(*subkeys)
+    end
+  end
+
   # Iterates over the collection yielding chunks of size *count*, but advancing one by one.
   #
   # ```
