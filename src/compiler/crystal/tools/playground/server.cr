@@ -246,7 +246,7 @@ module Crystal::Playground
     private def crystal_source_to_markdown(filename)
       String.build do |io|
         header = true
-        File.each_line(filename) do |line|
+        File.each_line(filename, chomp: false) do |line|
           if header && line[0] != '\n' && line[0] != '#'
             header = false
             io << "```playground\n"
