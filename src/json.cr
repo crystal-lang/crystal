@@ -72,7 +72,7 @@ module JSON
   end
 
   # All valid JSON types
-  alias Type = Nil | Bool | Int64 | Float64 | String | Array(Type) | Hash(String, Type)
+  alias Type = Nil | Bool | Int32 | Int64 | Float32 | Float64 | String | Array(Type) | Hash(String, Type)
 
   # Parses a JSON document as a `JSON::Any`.
   def self.parse(input : String | IO) : Any
