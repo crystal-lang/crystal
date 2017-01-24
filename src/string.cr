@@ -2662,6 +2662,18 @@ class String
     end
   end
 
+  # Returns an `Iterator` which yields each split of this string on any ASCII whitespace characters(see `String#split`).
+  #
+  # ```
+  # iter = "hello out there!".each_split
+  # iter.next # => "hello"
+  # iter.next # => "out"
+  # iter.next # => "there!"
+  # ```
+  def each_split(limit = nil)
+    SplitIterator.new(self, limit)
+  end
+
   # Makes an array by splitting the string on the given character *separator* (and removing that character).
   #
   # If *limit* is present, up to *limit* new strings will be created,
@@ -2716,6 +2728,18 @@ class String
 
     piece_bytesize = bytesize - byte_offset
     yield String.new(to_unsafe + byte_offset, piece_bytesize)
+  end
+
+  # Returns an `Iterator` which yields each split of this string on the given character *separator* (see `String#split(Char)`).
+  #
+  # ```
+  # iter = "one,two,three".each_split(',')
+  # iter.next # => "one"
+  # iter.next # => "two"
+  # iter.next # => "three"
+  # ```
+  def each_split(separator : Char, limit = nil)
+    CharSplitIterator.new(self, separator, limit)
   end
 
   # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
@@ -2800,6 +2824,19 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
 
+  # Returns an `Iterator` which yields each split on given String(see `String#split(String)`).
+  #
+  # ```
+  # iter = "Mississippi".each_split("ss")
+  # iter.next # => "Mi"
+  # iter.next # => "i"
+  # iter.next # => "ippi"
+  # ```
+  def each_split(separator : String, limit = nil)
+    return EmptySplitIterator.new(self, limit) if separator.empty?
+    StringSplitIterator.new(self, separator, limit)
+  end
+
   # Splits the string after each regex *separator* and yields each part to a block.
   #
   # If *limit* is present, the array will be limited to *limit* items and
@@ -2881,6 +2918,19 @@ class String
     end
 
     yield byte_slice(slice_offset)
+  end
+
+  # Returns an `Iterator` which yields each split of this string on the given Regex *separator* (see `String#split(Regex)`).
+  #
+  # ```
+  # iter = "Mississippi".each_split(/s+/)
+  # iter.next # => "Mi"
+  # iter.next # => "i"
+  # iter.next # => "ippi"
+  # ```
+  def each_split(regex : Regex, limit = nil)
+    return EmptySplitIterator.new(self, limit) if regex.source.empty?
+    RegexSplitIterator.new(self, regex, limit)
   end
 
   private def split_by_empty_separator(limit, &block : String -> _)
@@ -3677,6 +3727,289 @@ class String
 
     if capacity.to_u64 > (UInt32::MAX - HEADER_SIZE - 1)
       raise ArgumentError.new("capacity too big")
+    end
+  end
+
+  private class SplitIterator
+    include Iterator(String)
+
+    def initialize(@string : String, @limit : Int32? = nil)
+      @index = 0
+      @i = 0
+      @split_count = 0
+      @looking_for_space = false
+    end
+
+    def next
+      return stop if end?
+      @split_count += 1
+      return @string if (limit = @limit) && limit <= 1
+
+      while @i < @string.bytesize
+        if @looking_for_space
+          while @i < @string.bytesize
+            c = @string.to_unsafe[@i]
+            @i += 1
+            if c.unsafe_chr.ascii_whitespace?
+              piece_bytesize = @i - 1 - @index
+              piece_size = single_byte_optimizable? ? piece_bytesize : 0
+              @looking_for_space = false
+              return String.new(@string.to_unsafe + @index, piece_bytesize, piece_size)
+            end
+          end
+        else
+          while @i < @string.bytesize
+            c = @string.to_unsafe[@i]
+            @i += 1
+            unless c.unsafe_chr.ascii_whitespace?
+              @index = @i - 1
+              @looking_for_space = true
+              break
+            end
+          end
+          break if reached_limit?
+        end
+      end
+
+      if @looking_for_space
+        piece_bytesize = @string.bytesize - @index
+        piece_size = single_byte_optimizable? ? piece_bytesize : 0
+        return String.new(@string.to_unsafe + @index, piece_bytesize, piece_size)
+      end
+
+      stop
+    end
+
+    def rewind
+      @index = 0
+      @i = 0
+      @split_count = 0
+      @looking_for_space = false
+      self
+    end
+
+    private def reached_limit?
+      @split_count == @limit
+    end
+
+    private def single_byte_optimizable?
+      @string.ascii_only?
+    end
+
+    private def end?
+      @i == @string.bytesize || reached_limit?
+    end
+  end
+
+  private class CharSplitIterator
+    include Iterator(String)
+
+    def initialize(@string : String, @separator : Char, @limit : Int32? = nil)
+      @reader = Char::Reader.new(string)
+      @byte_offset = 0
+      @split_count = 0
+      @end = false
+    end
+
+    def next
+      return stop if @end
+      @split_count += 1
+
+      while @reader.has_next? && !reached_limit?
+        char = @reader.current_char
+        if char == @separator
+          piece_bytesize = @reader.pos - @byte_offset
+          string = String.new(@string.to_unsafe + @byte_offset, piece_bytesize)
+          @byte_offset = @reader.pos + @reader.current_char_width
+          @reader.next_char
+          return string
+        end
+        @reader.next_char
+      end
+
+      @end = true if !@reader.has_next? || reached_limit?
+      piece_bytesize = @string.bytesize - @byte_offset
+      String.new(@string.to_unsafe + @byte_offset, piece_bytesize)
+    end
+
+    def rewind
+      @split_count = 0
+      @reader.pos = 0
+      @byte_offset = 0
+      @end = false
+      self
+    end
+
+    private def reached_limit?
+      @split_count == @limit
+    end
+  end
+
+  private class StringSplitIterator
+    include Iterator(String)
+
+    def initialize(@string : String, @separator : String, @limit : Int32? = nil)
+      @split_count = 0
+      @i = 0
+      @byte_offset = 0
+      @end = false
+    end
+
+    def next
+      return stop if @end || reached_limit?
+      @split_count += 1
+      return @string if (limit = @limit) && limit <= 1
+
+      separator_bytesize = @separator.bytesize
+      stop = @string.bytesize - separator_bytesize + 1
+
+      while (@i < stop) && !reached_limit?
+        if (@string.to_unsafe + @i).memcmp(@separator.to_unsafe, separator_bytesize) == 0
+          piece_bytesize = @i - @byte_offset
+          piece_size = single_byte_optimizable? ? piece_bytesize : 0
+          string = String.new(@string.to_unsafe + @byte_offset, piece_bytesize, piece_size)
+          @byte_offset = @i + separator_bytesize
+          @i += separator_bytesize
+          return string
+        end
+        @i += 1
+      end
+
+      @end = true
+      piece_bytesize = @string.bytesize - @byte_offset
+      piece_size = single_byte_optimizable? ? piece_bytesize : 0
+      return String.new(@string.to_unsafe + @byte_offset, piece_bytesize, piece_size)
+    end
+
+    def rewind
+      @split_count = 0
+      @i = 0
+      @byte_offset = 0
+      @end = false
+      self
+    end
+
+    private def reached_limit?
+      @split_count == @limit
+    end
+
+    private def single_byte_optimizable?
+      @string.ascii_only?
+    end
+  end
+
+  private class RegexSplitIterator
+    include Iterator(String)
+
+    def initialize(@string : String, @separator : Regex, @limit : Int32? = nil)
+      @split_count = 0
+      @match_offset = 0
+      @slice_offset = 0
+      @last_slice_offset = 0
+      @index = 0
+      @group_matches = 0
+    end
+
+    def next
+      return stop if @end || reached_limit?
+      @split_count += 1
+
+      if (limit = @limit) && limit <= 1
+        return @string
+      end
+
+      while match = @separator.match_at_byte_index(@string, @match_offset)
+        break if reached_limit?
+        break if @slice_offset > @string.bytesize
+
+        match_bytesize = match[0].bytesize
+
+        if @split_count > 1 && match.size > 0
+          set_offset(match_bytesize)
+          while @group_matches <= match.size
+            @group_matches += 1
+            if group = match[@group_matches]?
+              return group
+            end
+          end
+          @group_matches = 0
+        end
+
+        @index = match.byte_begin(0)
+        slice_size = @index - @slice_offset
+
+        if @slice_offset == 0 && slice_size == 0 && match_bytesize == 0
+          # skip
+        elsif @slice_offset == @string.bytesize && slice_size == 0
+          slice = @string.byte_slice(@last_slice_offset)
+        else
+          slice = @string.byte_slice(@slice_offset, slice_size)
+        end
+
+        set_offset(match_bytesize) if match.size == 0
+        return slice if slice
+      end
+
+      @end = true
+      @string.byte_slice(@slice_offset)
+    end
+
+    def rewind
+      @split_count = 0
+      @match_offset = 0
+      @slice_offset = 0
+      @last_slice_offset = 0
+      @index = 0
+      @group_matches = 0
+      @end = false
+      self
+    end
+
+    private def set_offset(match_bytesize)
+      @last_slice_offset = @slice_offset
+      if match_bytesize == 0
+        @match_offset = @index + 1
+        @slice_offset = @index
+      else
+        @match_offset = @index + match_bytesize
+        @slice_offset = @match_offset
+      end
+    end
+
+    private def reached_limit?
+      @split_count == @limit
+    end
+  end
+
+  private class EmptySplitIterator
+    include Iterator(String)
+
+    def initialize(@string : String, @limit : Int32? = nil)
+      @reader = Char::Reader.new(@string)
+      @split_count = 0
+    end
+
+    def next
+      return stop if reached_limit? || !@reader.has_next?
+      @split_count += 1
+
+      if !reached_limit?
+        char = @reader.current_char
+        @reader.next_char
+        return char.to_s
+      end
+
+      @string[@reader.pos..-1]
+    end
+
+    def rewind
+      @split_count = 0
+      @reader.pos = 0
+      self
+    end
+
+    private def reached_limit?
+      @split_count == @limit
     end
   end
 

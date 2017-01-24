@@ -829,6 +829,434 @@ describe "String" do
     end
   end
 
+  describe "each_split" do
+    describe "by space" do
+      it "removes ascii whitespace" do
+        iter = "   foo   bar\n\t  baz   ".each_split
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by non ascii chars" do
+        iter = "日本語 \n\t 日本 \n\n 語".each_split
+        iter.next.should eq("日本語")
+        iter.next.should eq("日本")
+        iter.next.should eq("語")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with a limit of 1" do
+        iter = "   foo   bar\n\t  baz   ".each_split(1)
+        iter.next.should eq("   foo   bar\n\t  baz   ")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with a limit of 2" do
+        iter = "   foo   bar\n\t  baz   ".each_split(2)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar\n\t  baz   ")
+        iter.next.should be_a(Iterator::Stop)
+      end
+    end
+
+    describe "by char" do
+      it "splits an empty string" do
+        iter = "".each_split(',')
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by char" do
+        iter = "foo,bar,,baz,".each_split(',')
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("")
+        iter.next.should eq("baz")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits for single element" do
+        iter = "foo".each_split(',')
+        iter.next.should eq("foo")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with spaces in front" do
+        iter = "   foo".each_split(' ')
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should eq("foo")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with spaces in back" do
+        iter = "foo   ".each_split(' ')
+        iter.next.should eq("foo")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with mixed spaces" do
+        iter = "   foo  bar".each_split(' ')
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should eq("foo")
+        iter.next.should eq("")
+        iter.next.should eq("bar")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with mixed in white space" do
+        iter = "   foo   bar\n\t  baz   ".each_split(' ')
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should eq("foo")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should eq("bar\n\t")
+        iter.next.should eq("")
+        iter.next.should eq("baz")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits using limit 1" do
+        iter = "foo,bar,baz,qux".each_split(',', 1)
+        iter.next.should eq("foo,bar,baz,qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits using limit more than one" do
+        iter = "foo,bar,baz,qux".each_split(',', 3)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz,qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits using limit greater than splits" do
+        iter = "foo,bar,baz,qux".each_split(',', 30)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz")
+        iter.next.should eq("qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits using limit 1 with space" do
+        iter = "foo bar baz qux".each_split(' ', 1)
+        iter.next.should eq("foo bar baz qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits using limit more than one with space" do
+        iter = "foo bar baz qux".each_split(' ', 3)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits using limit greater than splits with space" do
+        iter = "foo bar baz qux".each_split(' ', 30)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz")
+        iter.next.should eq("qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with empty string at end" do
+        iter = "a,b,".each_split(',', 3)
+        iter.next.should eq("a")
+        iter.next.should eq("b")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits non ascii characters" do
+        iter = "日本ん語日本ん語".each_split('ん')
+        iter.next.should eq("日本")
+        iter.next.should eq("語日本")
+        iter.next.should eq("語")
+        iter.next.should be_a(Iterator::Stop)
+      end
+    end
+
+    describe "by string" do
+      it "splits an empty string single char" do
+        iter = "".each_split(",")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits empty string multiple char" do
+        iter = "".each_split(":-")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by multiple characters" do
+        iter = "foo:-bar:-:-baz:-".each_split(":-")
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("")
+        iter.next.should eq("baz")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by multiple characters 2" do
+        iter = "foo:-bar:-:-baz".each_split(":-")
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("")
+        iter.next.should eq("baz")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by non exisitent string" do
+        iter = "foo".each_split(":-")
+        iter.next.should eq("foo")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by an empty string" do
+        iter = "foo".each_split("")
+        iter.next.should eq("f")
+        iter.next.should eq("o")
+        iter.next.should eq("o")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits non ascii strings" do
+        iter = "日本さん語日本さん語".each_split("さん")
+        iter.next.should eq("日本")
+        iter.next.should eq("語日本")
+        iter.next.should eq("語")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with limit 1" do
+        iter = "foo,bar,baz,qux".each_split(",", 1)
+        iter.next.should eq("foo,bar,baz,qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with limit 3" do
+        iter = "foo,bar,baz,qux".each_split(",", 3)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz,qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with high limit" do
+        iter = "foo,bar,baz,qux".each_split(",", 30)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz")
+        iter.next.should eq("qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with space" do
+        iter = "a b c".each_split(" ", 2)
+        iter.next.should eq("a")
+        iter.next.should eq("b c")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with only separator" do
+        iter = "=".each_split("=")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with separator at end" do
+        iter = "a=".each_split("=")
+        iter.next.should eq("a")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with separator at beginning" do
+        iter = "=b".each_split("=")
+        iter.next.should eq("")
+        iter.next.should eq("b")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with only separator and limit" do
+        iter = "=".each_split("=", 2)
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+    end
+
+    describe "by regex" do
+      it "splits empty string" do
+        iter = "".each_split(/\n\t/)
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by regex" do
+        iter = "foo\n\tbar\n\t\n\tbaz".each_split(/\n\t/)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("")
+        iter.next.should eq("baz")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits by regex 2" do
+        iter = "foo\n\tbar\n\t\n\tbaz".each_split(/(?:\n\t)+/)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with limit 1" do
+        iter = "foo,bar".each_split(/,/, 1)
+        iter.next.should eq("foo,bar")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with separator at end" do
+        iter = "foo,bar,".each_split(/,/)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with limit 3" do
+        iter = "foo,bar,baz,qux".each_split(/,/, 3)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz,qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with high limit" do
+        iter = "foo,bar,baz,qux".each_split(/,/, 30)
+        iter.next.should eq("foo")
+        iter.next.should eq("bar")
+        iter.next.should eq("baz")
+        iter.next.should eq("qux")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with space regex" do
+        iter = "a b c".each_split(Regex.new(" "), 2)
+        iter.next.should eq("a")
+        iter.next.should eq("b c")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits non ascii characters" do
+        iter = "日本ん語日本ん語".each_split(/ん/)
+        iter.next.should eq("日本")
+        iter.next.should eq("語日本")
+        iter.next.should eq("語")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits word boundaries" do
+        iter = "hello world".each_split(/\b/)
+        iter.next.should eq("hello")
+        iter.next.should eq(" ")
+        iter.next.should eq("world")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits on empty regex" do
+        iter = "abc".each_split(//)
+        iter.next.should eq("a")
+        iter.next.should eq("b")
+        iter.next.should eq("c")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits on w+" do
+        iter = "hello".each_split(/\w+/)
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits on single character" do
+        iter = "foo".each_split(/o/)
+        iter.next.should eq("f")
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits on equality separator" do
+        iter = "=".each_split(/\=/)
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits on equal at end" do
+        iter = "a=".each_split(/\=/)
+        iter.next.should eq("a")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits on equal at beginning" do
+        iter = "=b".each_split(/\=/)
+        iter.next.should eq("")
+        iter.next.should eq("b")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits on equal with limit" do
+        iter = "=".each_split(/\=/, 2)
+        iter.next.should eq("")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "splits with groups" do
+        iter = ",".each_split(/(?:(x)|(,))/)
+        iter.next.should eq("")
+        iter.next.should eq(",")
+        iter.next.should eq("")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "keeps groups" do
+        s = "split on the word on okay?"
+        iter = s.each_split(/(on)/)
+        iter.next.should eq("split ")
+        iter.next.should eq("on")
+        iter.next.should eq(" the word ")
+        iter.next.should eq("on")
+        iter.next.should eq(" okay?")
+        iter.next.should be_a(Iterator::Stop)
+      end
+    end
+  end
+
   describe "starts_with?" do
     assert { "foobar".starts_with?("foo").should be_true }
     assert { "foobar".starts_with?("").should be_true }
