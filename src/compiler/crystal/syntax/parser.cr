@@ -108,12 +108,10 @@ module Crystal
 
     def parse_multi_assign
       location = @token.location
-
       last = parse_expression
       skip_space
 
       last_is_target = multi_assign_target?(last)
-
       case @token.type
       when :","
         unless last_is_target

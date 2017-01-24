@@ -237,4 +237,8 @@ describe "Semantic: const" do
       FOO
       )) { types["Foo"] }
   end
+
+  it "errors on multiple constant assignment (#3466)" do
+    assert_error "FOO, BAR = 1, 2", "Multiple assignment is not allowed for constants"
+  end
 end
