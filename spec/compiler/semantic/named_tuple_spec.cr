@@ -85,7 +85,7 @@ describe "Semantic: named tuples" do
 
   it "gives error when indexing with an unknown name" do
     assert_error "{x: 1, y: 'a'}[:z]",
-      "missing key 'z' for named tuple NamedTuple(x: Int32, y: Char)"
+      "Missing key 'z' for named tuple NamedTuple(x: Int32, y: Char)"
   end
 
   it "can write generic type for NamedTuple" do
@@ -101,21 +101,21 @@ describe "Semantic: named tuples" do
 
       Foo(x: Int32, y: Char)
       ),
-      "can only use named arguments with NamedTuple"
+      "Can only use named arguments with NamedTuple"
   end
 
   it "gives error when using named args on Tuple" do
     assert_error %(
       Tuple(x: Int32, y: Char)
       ),
-      "can only use named arguments with NamedTuple"
+      "Can only use named arguments with NamedTuple"
   end
 
   it "gives error when not using named args with NamedTuple" do
     assert_error %(
       NamedTuple(Int32, Char)
       ),
-      "can only instantiate NamedTuple with named arguments"
+      "Can only instantiate NamedTuple with named arguments"
   end
 
   it "gets type at compile time" do
@@ -168,7 +168,7 @@ describe "Semantic: named tuples" do
 
       foo({x: 1, y: 'a'})
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "doesn't match type restriction with instance" do
@@ -180,7 +180,7 @@ describe "Semantic: named tuples" do
 
       Foo({a: Int32}).foo({a: 1.1})
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "matches in type restriction and gets free var" do

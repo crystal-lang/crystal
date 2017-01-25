@@ -153,10 +153,10 @@ describe "Semantic: exception" do
   end
 
   assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex",
-    "specific rescue must come before catch-all rescue"
+    "Specific rescue must come before catch-all rescue"
 
   assert_syntax_error "begin; rescue ex; rescue; end; ex",
-    "catch-all rescue can only be specified once"
+    "Catch-all rescue can only be specified once"
 
   assert_syntax_error "begin; else; 1; end",
     "'else' is useless without 'rescue'"
@@ -331,7 +331,7 @@ describe "Semantic: exception" do
       foo = Foo.new
       foo.bar
       ),
-      "instance variable '@bar' of Foo must be Int32, not Nil"
+      "Instance variable '@bar' of Foo must be Int32, not Nil"
   end
 
   it "doesn't type instance variable as nilable if assigned inside an exception handler after being assigned" do
@@ -419,7 +419,7 @@ describe "Semantic: exception" do
 
       Foo.new
       ),
-      "instance variable '@x' of Foo must be Int32, not Nil"
+      "Instance variable '@x' of Foo must be Int32, not Nil"
   end
 
   it "assigns var inside ensure (1) (#3919)" do

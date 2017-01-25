@@ -74,7 +74,7 @@ describe "Semantic: module" do
 
       Bar.new.foo(1.5)
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "includes module but not generic" do
@@ -98,7 +98,7 @@ describe "Semantic: module" do
         include Foo(Int)
       end
       ",
-      "wrong number of type vars for Foo(T, U) (given 1, expected 2)"
+      "Wrong number of type vars for Foo(T, U) (given 1, expected 2)"
   end
 
   it "includes generic module but wrong number of arguments 2" do
@@ -110,7 +110,7 @@ describe "Semantic: module" do
         include Foo
       end
       ",
-      "wrong number of type vars for Foo(T) (given 0, expected 1)"
+      "Wrong number of type vars for Foo(T) (given 0, expected 1)"
   end
 
   it "includes generic module explicitly" do
@@ -143,12 +143,12 @@ describe "Semantic: module" do
 
       Bar(Int32).new.foo(1.5)
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "reports can't use instance variables inside module" do
     assert_error "def foo; @a = 1; end; foo",
-      "can't use instance variables at the top level"
+      "Can't use instance variables at the top level"
   end
 
   it "works with int including enumerable" do
@@ -250,7 +250,7 @@ describe "Semantic: module" do
       end
 
       Bar.foo
-      ", "undefined method 'foo'"
+      ", "Undefined method 'foo'"
   end
 
   it "extends a module" do
@@ -288,7 +288,7 @@ describe "Semantic: module" do
       module Foo
         include self
       end
-      ", "cyclic include detected"
+      ", "Cyclic include detected"
   end
 
   it "gives error with cyclic include" do
@@ -303,7 +303,7 @@ describe "Semantic: module" do
       module Foo
         include Bar
       end
-      ", "cyclic include detected"
+      ", "Cyclic include detected"
   end
 
   it "finds types close to included module" do
@@ -724,7 +724,7 @@ describe "Semantic: module" do
         module Foo; end
       end
       ),
-      "can't declare module dynamically"
+      "Can't declare module dynamically"
   end
 
   it "uses :Module name for modules in errors" do
@@ -733,7 +733,7 @@ describe "Semantic: module" do
 
       Moo.new
       ),
-      "undefined method 'new' for Moo:Module"
+      "Undefined method 'new' for Moo:Module"
   end
 
   it "uses type declaration inside module" do
@@ -782,7 +782,7 @@ describe "Semantic: module" do
 
       Foo.new.moo
       ),
-      "instance variable '@x' of Foo must be Int32, not Bool"
+      "Instance variable '@x' of Foo must be Int32, not Bool"
   end
 
   it "uses type declaration inside module, recursive, and gives error" do
@@ -813,7 +813,7 @@ describe "Semantic: module" do
 
       Foo.new.moo
       ),
-      "instance variable '@x' of Foo must be Int32"
+      "Instance variable '@x' of Foo must be Int32"
   end
 
   it "initializes variable in module" do
@@ -978,7 +978,7 @@ describe "Semantic: module" do
 
       Qux::Bar
       ),
-      "undefined constant Qux::Bar"
+      "Undefined constant Qux::Bar"
   end
 
   it "can restrict module with module (#3029)" do

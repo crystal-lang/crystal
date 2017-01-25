@@ -15,7 +15,7 @@ describe "Semantic: return" do
 
   it "errors on return in top level" do
     assert_error "return",
-      "can't return from top level"
+      "Can't return from top level"
   end
 
   it "types return if true" do

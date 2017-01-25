@@ -88,14 +88,14 @@ describe "Semantic: alias" do
       alias Alias = String
       alias Alias = Int32
       ),
-      "alias Alias is already defined"
+      "Alias Alias is already defined"
   end
 
   it "errors if alias is already defined as another type" do
     assert_error %(
       alias String = Int32
       ),
-      "can't alias String because it's already defined as a class"
+      "Can't alias String because it's already defined as a class"
   end
 
   it "errors if defining infinite recursive alias" do
@@ -103,7 +103,7 @@ describe "Semantic: alias" do
       alias Alias = Alias
       Alias
       ),
-      "infinite recursive definition of alias Alias"
+      "Infinite recursive definition of alias Alias"
   end
 
   it "errors if defining infinite recursive alias in union" do
@@ -111,7 +111,7 @@ describe "Semantic: alias" do
       alias Alias = Int32 | Alias
       Alias
       ),
-      "infinite recursive definition of alias Alias"
+      "Infinite recursive definition of alias Alias"
   end
 
   it "allows using generic type of recursive alias as restriction (#488)" do
@@ -151,7 +151,7 @@ describe "Semantic: alias" do
 
       Rec::A
       ),
-      "undefined constant Rec::A"
+      "Undefined constant Rec::A"
   end
 
   %w(class module struct).each do |type|
@@ -216,14 +216,14 @@ describe "Semantic: alias" do
         alias Foo = Int32
       end
       ),
-      "can't declare alias dynamically"
+      "Can't declare alias dynamically"
   end
 
   it "errors if trying to use typeof in alias" do
     assert_error %(
       alias Foo = typeof(1)
       ),
-      "can't use 'typeof' here"
+      "Can't use 'typeof' here"
   end
 
   it "can use .class in alias (#2835)" do

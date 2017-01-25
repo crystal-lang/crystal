@@ -98,7 +98,7 @@ describe "Semantic: const" do
 
   it "doesn't share variables with global scope" do
     assert_error "a = 1; CONST = a; CONST",
-      "undefined local variable or method 'a'"
+      "Undefined local variable or method 'a'"
   end
 
   it "finds const from restriction" do
@@ -207,7 +207,7 @@ describe "Semantic: const" do
         CONST = 1
       end
       ),
-      "can't declare constant dynamically"
+      "Can't declare constant dynamically"
   end
 
   it "errors on dynamic constant assignment inside if" do
@@ -216,7 +216,7 @@ describe "Semantic: const" do
         CONST = 1
       end
       ),
-      "can't declare constant dynamically"
+      "Can't declare constant dynamically"
   end
 
   it "can use constant defined later (#2906)" do

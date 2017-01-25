@@ -7,7 +7,7 @@ private TimeSpecTicks = [
 ]
 
 def Time.expect_invalid
-  expect_raises ArgumentError, "invalid time" do
+  expect_raises ArgumentError, "Invalid time" do
     yield
   end
 end

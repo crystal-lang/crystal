@@ -115,7 +115,7 @@ describe "IO::Delimited" do
 
       delimited.close
       delimited.closed?.should eq(true)
-      expect_raises(IO::Error, "closed stream") do
+      expect_raises(IO::Error, "Closed stream") do
         delimited.read_char
       end
     end

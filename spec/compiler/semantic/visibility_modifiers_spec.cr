@@ -11,7 +11,7 @@ describe "Visibility modifiers" do
 
       Foo.new.foo
       ),
-      "private method 'foo' called for Foo"
+      "Private method 'foo' called for Foo"
   end
 
   it "allows setting visibility modifier to macro" do
@@ -29,7 +29,7 @@ describe "Visibility modifiers" do
 
       Foo.new.foo
       ),
-      "private method 'foo' called for Foo"
+      "Private method 'foo' called for Foo"
   end
 
   it "allows setting visibility modifier to macro that generates many methods (1)" do
@@ -50,7 +50,7 @@ describe "Visibility modifiers" do
 
       Foo.new.foo
       ),
-      "private method 'foo' called for Foo"
+      "Private method 'foo' called for Foo"
   end
 
   it "allows setting visibility modifier to macro that generates many methods (2)" do
@@ -71,7 +71,7 @@ describe "Visibility modifiers" do
 
       Foo.new.bar
       ),
-      "private method 'bar' called for Foo"
+      "Private method 'bar' called for Foo"
   end
 
   it "allows invoking protected method from the same class" do
@@ -138,7 +138,7 @@ describe "Visibility modifiers" do
 
       Foo.new.foo
       ),
-      "protected method 'foo' called for Foo"
+      "Protected method 'foo' called for Foo"
   end
 
   it "errors if invoking protected method from non-subclass" do
@@ -156,7 +156,7 @@ describe "Visibility modifiers" do
 
       Bar.new.bar
       ),
-      "protected method 'foo' called for Foo"
+      "Protected method 'foo' called for Foo"
   end
 
   it "errors if invoking protected method from non-subclass, generated with macro that generates a macro" do
@@ -178,7 +178,7 @@ describe "Visibility modifiers" do
 
       Foo.new.foo
       ),
-      "protected method 'foo' called for Foo"
+      "Protected method 'foo' called for Foo"
   end
 
   it "errors if applying visibility modifier to non-def or non-call" do
@@ -187,7 +187,7 @@ describe "Visibility modifiers" do
         private 1
       end
       ),
-      "can't apply visibility modifier"
+      "Can't apply visibility modifier"
   end
 
   it "allows invoking protected from instance to class" do
@@ -216,7 +216,7 @@ describe "Visibility modifiers" do
       foo = Foo.new(1)
       foo.initialize(2)
       ),
-      "protected method 'initialize' called for Foo"
+      "Protected method 'initialize' called for Foo"
   end
 
   it "allows invoking private setter with self" do
@@ -382,6 +382,6 @@ describe "Visibility modifiers" do
     assert_error %(
       private foo
       ),
-      "undefined local variable or method 'foo'"
+      "Undefined local variable or method 'foo'"
   end
 end

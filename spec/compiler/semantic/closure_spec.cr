@@ -2,11 +2,11 @@ require "../../spec_helper"
 
 describe "Semantic: closure" do
   it "gives error when doing yield inside proc literal" do
-    assert_error "-> { yield }", "can't use `yield` outside a method"
+    assert_error "-> { yield }", "Can't use `yield` outside a method"
   end
 
   it "gives error when doing yield inside proc literal" do
-    assert_error "def foo; -> { yield }; end; foo {}", "can't use `yield` inside a proc literal or captured block"
+    assert_error "def foo; -> { yield }; end; foo {}", "Can't use `yield` inside a proc literal or captured block"
   end
 
   it "marks variable as closured in program" do
@@ -239,7 +239,7 @@ describe "Semantic: closure" do
       a = 1
       LibC.foo(-> { a })
       ),
-      "can't send closure to C function (closured vars: a)"
+      "Can't send closure to C function (closured vars: a)"
   end
 
   it "errors if sending closured proc pointer to C (1)" do
@@ -259,7 +259,7 @@ describe "Semantic: closure" do
 
       Foo.new.foo
       ),
-      "can't send closure to C function (closured vars: self)"
+      "Can't send closure to C function (closured vars: self)"
   end
 
   it "errors if sending closured proc pointer to C (2)" do
@@ -276,7 +276,7 @@ describe "Semantic: closure" do
       foo = Foo.new
       LibC.foo(->foo.bar)
       ),
-      "can't send closure to C function (closured vars: self)"
+      "Can't send closure to C function (closured vars: self)"
   end
 
   it "errors if sending closured proc pointer to C (3)" do
@@ -297,7 +297,7 @@ describe "Semantic: closure" do
 
       Foo.new.foo
       ),
-      "can't send closure to C function (closured vars: @a)"
+      "Can't send closure to C function (closured vars: @a)"
   end
 
   it "transforms block to proc literal" do
@@ -334,7 +334,7 @@ describe "Semantic: closure" do
         x.to_f
       end
       ",
-      "expected block to return Int32, not Float64"
+      "Expected block to return Int32, not Float64"
   end
 
   it "transforms block to proc literal with free var" do
@@ -371,7 +371,7 @@ describe "Semantic: closure" do
         x.to_f
       end
       ",
-      "wrong number of block arguments (given 1, expected 0)"
+      "Wrong number of block arguments (given 1, expected 0)"
   end
 
   it "allows giving less block args when transforming block to proc literal" do
@@ -412,7 +412,7 @@ describe "Semantic: closure" do
       f = ->(x : Int64) { x + 1 }
       foo &f
       ",
-      "expected block argument's argument #1 to be Int32, not Int64"
+      "Expected block argument's argument #1 to be Int32, not Int64"
   end
 
   it "errors if forwaring block arg doesn't match input type size" do
@@ -424,7 +424,7 @@ describe "Semantic: closure" do
       f = ->(x : Int32) { x + 1 }
       foo &f
       ",
-      "wrong number of block argument's arguments (given 1, expected 2)"
+      "Wrong number of block argument's arguments (given 1, expected 2)"
   end
 
   it "lookups return type in correct scope" do
@@ -506,7 +506,7 @@ describe "Semantic: closure" do
         a
       end)
       ),
-      "can't send closure to C function (closured vars: a)"
+      "Can't send closure to C function (closured vars: a)"
   end
 
   it "doesn't crash for non-existing variable (#3789)" do
@@ -522,6 +522,6 @@ describe "Semantic: closure" do
         }
       })
       ),
-      "can't send closure to C function (closured vars: x)"
+      "Can't send closure to C function (closured vars: x)"
   end
 end

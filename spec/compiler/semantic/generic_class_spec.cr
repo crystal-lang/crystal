@@ -20,7 +20,7 @@ describe "Semantic: generic class" do
       class Bar < Foo(A, B)
       end
       ),
-      "wrong number of type vars for Foo(T) (given 2, expected 1)"
+      "Wrong number of type vars for Foo(T) (given 2, expected 1)"
   end
 
   it "inhertis from generic with instantiation" do
@@ -253,7 +253,7 @@ describe "Semantic: generic class" do
 
       Foo(Char | String).bar
       ),
-      "undefined constant T::Bar"
+      "Undefined constant T::Bar"
   end
 
   it "instantiates generic class with default argument in initialize (#394)" do
@@ -324,7 +324,7 @@ describe "Semantic: generic class" do
       class Bar < Foo
       end
       ),
-      "wrong number of type vars for Foo(T) (given 0, expected 1)"
+      "Wrong number of type vars for Foo(T) (given 0, expected 1)"
   end
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
@@ -340,7 +340,7 @@ describe "Semantic: generic class" do
     assert_error %(
       Pointer(Number | String)
       ),
-      "can't use Number in unions yet, use a more specific type"
+      "Can't use Number in unions yet, use a more specific type"
   end
 
   it "errors if using Number in alias" do
@@ -348,7 +348,7 @@ describe "Semantic: generic class" do
       alias Alias = Number | String
       Alias
       ),
-      "can't use Number in unions yet, use a more specific type"
+      "Can't use Number in unions yet, use a more specific type"
   end
 
   it "errors if using Number in recursive alias" do
@@ -356,7 +356,7 @@ describe "Semantic: generic class" do
       alias Alias = Number | Pointer(Alias)
       Alias
       ),
-      "can't use Number in unions yet, use a more specific type"
+      "Can't use Number in unions yet, use a more specific type"
   end
 
   it "finds generic type argument from method with default value" do
@@ -443,14 +443,14 @@ describe "Semantic: generic class" do
     assert_error %(
       Proc(32)
       ),
-      "argument to Proc must be a type, not 32"
+      "Argument to Proc must be a type, not 32"
   end
 
   it "errors if passing integer literal to Tuple as generic argument (#1120)" do
     assert_error %(
       Tuple(32)
       ),
-      "argument to Tuple must be a type, not 32"
+      "Argument to Tuple must be a type, not 32"
   end
 
   it "disallow using a non-instantiated generic type as a generic type argument" do
@@ -490,7 +490,7 @@ describe "Semantic: generic class" do
 
       foo
       ),
-      "generic type too nested"
+      "Generic type too nested"
   end
 
   it "errors on too nested generic instance, with union type" do
@@ -504,7 +504,7 @@ describe "Semantic: generic class" do
 
       foo
       ),
-      "generic type too nested"
+      "Generic type too nested"
   end
 
   it "errors on too nested tuple instance" do
@@ -515,7 +515,7 @@ describe "Semantic: generic class" do
 
       foo
       ),
-      "tuple type too nested"
+      "Tuple type too nested"
   end
 
   it "gives helpful error message when generic type var is missing (#1526)" do
@@ -527,7 +527,7 @@ describe "Semantic: generic class" do
 
       Foo.new(1)
       ),
-      "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
+      "Can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
   end
 
   it "gives helpful error message when generic type var is missing in block spec (#1526)" do
@@ -540,7 +540,7 @@ describe "Semantic: generic class" do
 
       Foo.new { |x| }
       ),
-      "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
+      "Can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
   end
 
   it "can define instance var forward declared (#962)" do
@@ -690,7 +690,7 @@ describe "Semantic: generic class" do
 
       Bar.new(PluginContainer(Foo).new)
       ),
-      "instance variable '@value' of Bar must be PluginContainer(Plugin), not PluginContainer(Foo)"
+      "Instance variable '@value' of Bar must be PluginContainer(Plugin), not PluginContainer(Foo)"
   end
 
   it "instantiates generic variadic class, accesses T from class method" do
@@ -892,7 +892,7 @@ describe "Semantic: generic class" do
 
       Gen(3).new("a")
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "doesn't crash when matching restriction against number literal (2) (#3157)" do
@@ -903,7 +903,7 @@ describe "Semantic: generic class" do
 
       Cls(3).new
       ),
-      "expected type, not NumberLiteral"
+      "Expected type, not NumberLiteral"
   end
 
   it "replaces type parameters for virtual types (#3235)" do
@@ -992,6 +992,6 @@ describe "Semantic: generic class" do
 
       Foo(String).new
       ),
-      "private method 'new' called"
+      "Private method 'new' called"
   end
 end

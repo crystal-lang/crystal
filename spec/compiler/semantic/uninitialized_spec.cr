@@ -38,7 +38,7 @@ describe "Semantic: uninitialized" do
 
       Bar.new
       ),
-      "can't declare variable of generic non-instantiated type Foo"
+      "Can't declare variable of generic non-instantiated type Foo"
   end
 
   it "errors if declares var and then assigns other type" do
@@ -46,7 +46,7 @@ describe "Semantic: uninitialized" do
       x = uninitialized Int32
       x = 1_i64
       ),
-      "type must be Int32, not (Int32 | Int64)"
+      "Type must be Int32, not (Int32 | Int64)"
   end
 
   it "errors if declaring variable multiple times with different types (#917)" do
@@ -57,7 +57,7 @@ describe "Semantic: uninitialized" do
         buf = uninitialized Float64
       end
       ),
-      "variable 'buf' already declared with type Int32"
+      "Variable 'buf' already declared with type Int32"
   end
 
   it "can uninitialize variable outside initialize (#2828)" do

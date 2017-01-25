@@ -108,7 +108,7 @@ describe "Restrictions" do
 
       bar(1 || "")
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "errors on T::Type that's union when used from type restriction" do
@@ -119,7 +119,7 @@ describe "Restrictions" do
 
       foo(1 || 1.5)
       ),
-      "undefined constant T::Baz"
+      "Undefined constant T::Baz"
   end
 
   it "errors on T::Type that's a union when used from block type restriction" do
@@ -131,7 +131,7 @@ describe "Restrictions" do
 
       Foo(Int32 | Float64).foo { 1 + 2 }
       ),
-      "undefined constant T::Baz"
+      "Undefined constant T::Baz"
   end
 
   it "errors if can't find type on lookup" do
@@ -140,7 +140,7 @@ describe "Restrictions" do
       end
 
       foo 1
-      ), "undefined constant Something"
+      ), "Undefined constant Something"
   end
 
   it "errors if can't find type on lookup with nested type" do
@@ -149,7 +149,7 @@ describe "Restrictions" do
       end
 
       foo 1
-      ), "undefined constant Foo::Bar"
+      ), "Undefined constant Foo::Bar"
   end
 
   it "works with static array (#637)" do
@@ -251,7 +251,7 @@ describe "Restrictions" do
 
       foo GenericChild(Base).new
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "allows passing recursive type to free var (#1076)" do
@@ -405,7 +405,7 @@ describe "Restrictions" do
 
       foo(1)
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "errors if using free var without forall" do
@@ -416,6 +416,6 @@ describe "Restrictions" do
 
       foo(1)
       ),
-      "undefined constant T"
+      "Undefined constant T"
   end
 end

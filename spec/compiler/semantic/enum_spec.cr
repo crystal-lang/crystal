@@ -29,7 +29,7 @@ describe "Semantic: enum" do
       end
 
       foo 1
-      ), "no overload matches 'foo' with type Int32"
+      ), "No overload matches 'foo' with type Int32"
   end
 
   it "finds method in enum type" do
@@ -71,7 +71,7 @@ describe "Semantic: enum" do
         A
       end
       ),
-      "enum 'Foo' already contains a member named 'A'"
+      "Enum 'Foo' already contains a member named 'A'"
   end
 
   it "creates enum from value" do
@@ -156,7 +156,7 @@ describe "Semantic: enum" do
         C
       end
       ),
-      "can't reopen enum and add more constants to it"
+      "Can't reopen enum and add more constants to it"
   end
 
   it "has None value when defined as @[Flags]" do
@@ -227,7 +227,7 @@ describe "Semantic: enum" do
 
       Foo::A.foo
       ),
-      "private method 'foo' called for Foo"
+      "Private method 'foo' called for Foo"
   end
 
   it "errors if enum value is too big for type (#678)" do
@@ -236,7 +236,7 @@ describe "Semantic: enum" do
         A = 2147486719
       end
       ),
-      "invalid Int32: 2147486719"
+      "Invalid Int32: 2147486719"
   end
 
   it "errors if using instance var inside enum (#991)" do
@@ -251,7 +251,7 @@ describe "Semantic: enum" do
 
       Foo::A.meth
       ),
-      "can't use instance variables inside enums (at enum Foo)"
+      "Can't use instance variables inside enums (at enum Foo)"
   end
 
   it "marks as flags with base type (#2185)" do
@@ -296,7 +296,7 @@ describe "Semantic: enum" do
       struct Foo < Enum
       end
       ),
-      "can't inherit Enum. Use the enum keyword to define enums"
+      "Can't inherit Enum. Use the enum keyword to define enums"
   end
 
   it "errors on enum without members (#3447)" do
@@ -304,7 +304,7 @@ describe "Semantic: enum" do
       enum Foo
       end
       ),
-      "enum Foo must have at least one member"
+      "Enum Foo must have at least one member"
   end
 
   it "errors if declaring type inside enum (#3127)" do
@@ -316,7 +316,7 @@ describe "Semantic: enum" do
       class Foo::Bar
       end
       ),
-      "can't declare type inside enum Foo"
+      "Can't declare type inside enum Foo"
   end
 
   it "errors if declaring type inside enum, nested (#3127)" do
@@ -328,6 +328,6 @@ describe "Semantic: enum" do
       class Foo::Bar::Baz
       end
       ),
-      "can't declare type inside enum"
+      "Can't declare type inside enum"
   end
 end

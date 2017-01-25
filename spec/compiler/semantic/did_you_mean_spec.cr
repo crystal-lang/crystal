@@ -192,7 +192,7 @@ describe "Semantic: did you mean" do
 
       Foo.new(1)
       ),
-      "do you maybe have a typo in this 'intialize' method?"
+      "Do you maybe have a typo in this 'intialize' method?"
   end
 
   it "suggest that there might be a type for an initialize method in inherited class" do
@@ -209,7 +209,7 @@ describe "Semantic: did you mean" do
 
       Bar.new(1)
       ),
-      "do you maybe have a typo in this 'intialize' method?"
+      "Do you maybe have a typo in this 'intialize' method?"
   end
 
   it "suggest that there might be a type for an initialize method with overload" do
@@ -224,7 +224,7 @@ describe "Semantic: did you mean" do
 
       Foo.new(1.0)
       ),
-      "do you maybe have a typo in this 'intialize' method?"
+      "Do you maybe have a typo in this 'intialize' method?"
   end
 
   it "suggests for class variable" do
@@ -237,7 +237,7 @@ describe "Semantic: did you mean" do
   end
 
   it "suggests a better alternative to logical operators (#2715)" do
-    message = "undefined method 'and'"
+    message = "Undefined method 'and'"
     message = " (did you mean '&&'?)".colorize.yellow.bold.to_s
     assert_error %(
       def rand(x : Int32)

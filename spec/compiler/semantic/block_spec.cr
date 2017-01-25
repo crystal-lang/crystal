@@ -81,7 +81,7 @@ describe "Block inference" do
         x
       end
       ),
-      "too many block arguments (given 1, expected maximum 0)"
+      "Too many block arguments (given 1, expected maximum 0)"
   end
 
   it "yields with different types" do
@@ -168,7 +168,7 @@ describe "Block inference" do
 
       foo {}
       ",
-      "argument #1 of yield expected to be Int32, not Float64"
+      "Argument #1 of yield expected to be Int32, not Float64"
   end
 
   it "reports error if yields a type that's not that one in the block specification" do
@@ -179,7 +179,7 @@ describe "Block inference" do
 
       foo {}
       ",
-      "argument #1 of yield expected to be Int32, not (Float64 | Int32)"
+      "Argument #1 of yield expected to be Int32, not (Float64 | Int32)"
   end
 
   it "reports error if yields a type that later changes and that's not that one in the block specification" do
@@ -194,7 +194,7 @@ describe "Block inference" do
 
       foo {}
       ",
-      "argument #1 of yield expected to be Int32, not (Float64 | Int32)"
+      "Argument #1 of yield expected to be Int32, not (Float64 | Int32)"
   end
 
   it "reports error if missing arguments to yield" do
@@ -205,7 +205,7 @@ describe "Block inference" do
 
       foo { |x| x }
       ",
-      "wrong number of yield arguments (given 1, expected 2)"
+      "Wrong number of yield arguments (given 1, expected 2)"
   end
 
   it "reports error if block didn't return expected type" do
@@ -216,7 +216,7 @@ describe "Block inference" do
 
       foo { 'a' }
       ",
-      "expected block to return Float64, not Char"
+      "Expected block to return Float64, not Char"
   end
 
   it "reports error if block type doesn't match" do
@@ -227,7 +227,7 @@ describe "Block inference" do
 
       foo { 1 || 1.5 }
       ",
-      "expected block to return Float64, not (Float64 | Int32)"
+      "Expected block to return Float64, not (Float64 | Int32)"
   end
 
   it "reports error if block changes type" do
@@ -242,7 +242,7 @@ describe "Block inference" do
         a = 1
       end
       ",
-      "type must be Float64"
+      "Type must be Float64"
   end
 
   it "matches block arg return type" do
@@ -302,7 +302,7 @@ describe "Block inference" do
       f = Foo.new
       f.foo {}
       ",
-      "argument #1 of yield expected to be Foo, not Int32"
+      "Argument #1 of yield expected to be Foo, not Int32"
   end
 
   it "error with self output type doesn't match" do
@@ -316,12 +316,12 @@ describe "Block inference" do
       f = Foo.new
       f.foo { 1 }
       ",
-      "expected block to return Foo, not Int32"
+      "Expected block to return Foo, not Int32"
   end
 
   it "errors when using local variable with block argument name" do
     assert_error "def foo; yield 1; end; foo { |a| }; a",
-      "undefined local variable or method 'a'"
+      "Undefined local variable or method 'a'"
   end
 
   it "types empty block" do
@@ -505,7 +505,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare def dynamically"
+      "Can't declare def dynamically"
   end
 
   it "errors if declares macro inside block" do
@@ -519,7 +519,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare macro dynamically"
+      "Can't declare macro dynamically"
   end
 
   it "errors if declares fun inside block" do
@@ -533,7 +533,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare fun dynamically"
+      "Can't declare fun dynamically"
   end
 
   it "errors if declares class inside block" do
@@ -547,7 +547,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare class dynamically"
+      "Can't declare class dynamically"
   end
 
   it "errors if declares module inside block" do
@@ -561,7 +561,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare module dynamically"
+      "Can't declare module dynamically"
   end
 
   it "errors if declares lib inside block" do
@@ -575,7 +575,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare lib dynamically"
+      "Can't declare lib dynamically"
   end
 
   it "errors if declares alias inside block" do
@@ -588,7 +588,7 @@ describe "Block inference" do
         alias A = Int32
       end
       ),
-      "can't declare alias dynamically"
+      "Can't declare alias dynamically"
   end
 
   it "errors if declares include inside block" do
@@ -601,7 +601,7 @@ describe "Block inference" do
         include Int32
       end
       ),
-      "can't include dynamically"
+      "Can't include dynamically"
   end
 
   it "errors if declares extend inside block" do
@@ -614,7 +614,7 @@ describe "Block inference" do
         extend Int32
       end
       ),
-      "can't extend dynamically"
+      "Can't extend dynamically"
   end
 
   it "errors if declares enum inside block" do
@@ -629,7 +629,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare enum dynamically"
+      "Can't declare enum dynamically"
   end
 
   it "allows alias as block fun type" do
@@ -658,7 +658,7 @@ describe "Block inference" do
         x + 1
       end
       ),
-      "expected block type to be a function type, not Int32"
+      "Expected block type to be a function type, not Int32"
   end
 
   it "passes #262" do
@@ -910,7 +910,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare class dynamically"
+      "Can't declare class dynamically"
   end
 
   it "doesn't assign block variable type to last value (#694)" do
@@ -932,7 +932,7 @@ describe "Block inference" do
     assert_error %(
       yield
       ),
-      "can't use `yield` outside a method"
+      "Can't use `yield` outside a method"
   end
 
   it "errors on recursive yield" do
@@ -946,7 +946,7 @@ describe "Block inference" do
 
       foo {}
       ),
-      "recursive block expansion"
+      "Recursive block expansion"
   end
 
   it "binds to proc, not only to its body (#1796)" do
@@ -999,7 +999,7 @@ describe "Block inference" do
 
       bar
       ),
-      "can't return from captured block, use next"
+      "Can't return from captured block, use next"
   end
 
   it "errors if breaks from captured block" do
@@ -1016,7 +1016,7 @@ describe "Block inference" do
 
       bar
       ),
-      "can't break from captured block"
+      "Can't break from captured block"
   end
 
   it "errors if doing next in proc literal" do
@@ -1191,7 +1191,7 @@ describe "Block inference" do
         {x, y, z, w}
       end
       ),
-      "too many block arguments (given 3+, expected maximum 1+)"
+      "Too many block arguments (given 3+, expected maximum 1+)"
   end
 
   it "errors if splat argument becomes a union" do
@@ -1204,7 +1204,7 @@ describe "Block inference" do
       foo do |*args|
       end
       ),
-      "block splat argument must be a tuple type"
+      "Block splat argument must be a tuple"
   end
 
   it "auto-unpacks tuple" do
@@ -1255,7 +1255,7 @@ describe "Block inference" do
       foo do |x, y, z|
       end
       ),
-      "too many block arguments (given 3, expected maximum 2)"
+      "Too many block arguments (given 3, expected maximum 2)"
   end
 
   it "auto-unpacks tuple, too many args" do
@@ -1268,7 +1268,7 @@ describe "Block inference" do
       foo do |x, y, z|
       end
       ),
-      "too many block arguments (given 3, expected maximum 2)"
+      "Too many block arguments (given 3, expected maximum 2)"
   end
 
   it "doesn't crash on #2531" do

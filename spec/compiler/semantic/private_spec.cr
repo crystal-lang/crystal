@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: private" do
   it "doesn't find private def in another file" do
-    expect_raises Crystal::TypeException, "undefined local variable or method 'foo'" do
+    expect_raises Crystal::TypeException, "Undefined local variable or method 'foo'" do
       compiler = Compiler.new
       sources = [
         Compiler::Source.new("foo.cr", %(
@@ -71,7 +71,7 @@ describe "Semantic: private" do
   end
 
   it "doesn't find private macro in another file" do
-    expect_raises Crystal::TypeException, "undefined local variable or method 'foo'" do
+    expect_raises Crystal::TypeException, "Undefined local variable or method 'foo'" do
       compiler = Compiler.new
       sources = [
         Compiler::Source.new("foo.cr", %(
@@ -168,7 +168,7 @@ describe "Semantic: private" do
       end
 
       Foo.foo
-    ), "private macro 'foo' called for Foo"
+    ), "Private macro 'foo' called for Foo"
   end
 
   it "finds private def when invoking from inside macro (#2082)" do
@@ -184,7 +184,7 @@ describe "Semantic: private" do
   end
 
   it "doesn't find private class in another file" do
-    expect_raises Crystal::TypeException, "undefined constant Foo" do
+    expect_raises Crystal::TypeException, "Undefined constant Foo" do
       compiler = Compiler.new
       sources = [
         Compiler::Source.new("foo.cr", %(
@@ -289,7 +289,7 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced"
+      "Private constant Foo::Bar referenced"
   end
 
   it "doesn't find private module from outside namespace" do
@@ -301,7 +301,7 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced"
+      "Private constant Foo::Bar referenced"
   end
 
   it "doesn't find private enum from outside namespace" do
@@ -314,7 +314,7 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced"
+      "Private constant Foo::Bar referenced"
   end
 
   it "doesn't find private alias from outside namespace" do
@@ -325,7 +325,7 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced"
+      "Private constant Foo::Bar referenced"
   end
 
   it "doesn't find private lib from outside namespace" do
@@ -337,7 +337,7 @@ describe "Semantic: private" do
 
       Foo::LibBar
       ),
-      "private constant Foo::LibBar referenced"
+      "Private constant Foo::LibBar referenced"
   end
 
   it "doesn't find private constant from outside namespace" do
@@ -348,7 +348,7 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced"
+      "Private constant Foo::Bar referenced"
   end
 
   it "finds private type from inside namespace" do
@@ -394,6 +394,6 @@ describe "Semantic: private" do
 
       {{ Foo::Bar }}
       ),
-      "private constant Foo::Bar referenced"
+      "Private constant Foo::Bar referenced"
   end
 end

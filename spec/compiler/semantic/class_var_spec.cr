@@ -14,7 +14,7 @@ describe "Semantic: class var" do
 
       Foo.x = true
       ),
-      "class variable '@@x' of Foo must be Int32, not Bool"
+      "Class variable '@@x' of Foo must be Int32, not Bool"
   end
 
   it "declares class variable (2)" do
@@ -29,7 +29,7 @@ describe "Semantic: class var" do
 
       Foo.x
       ),
-      "class variable '@@x' of Foo is not nilable (it's Int32) so it must have an initializer"
+      "Class variable '@@x' of Foo is not nilable (it's Int32) so it must have an initializer"
   end
   it "types class var" do
     assert_type("
@@ -89,7 +89,7 @@ describe "Semantic: class var" do
         @@foo
       end
       ),
-      "illegal attribute"
+      "Illegal attribute"
   end
 
   it "says illegal attribute for class var assignment" do
@@ -99,7 +99,7 @@ describe "Semantic: class var" do
         @@foo = 1
       end
       ),
-      "illegal attribute"
+      "Illegal attribute"
   end
 
   it "allows self.class as type var in class body (#537)" do
@@ -126,7 +126,7 @@ describe "Semantic: class var" do
 
       Bar(self).new
       ),
-      "there's no self in this scope"
+      "There's no self in this scope"
   end
 
   it "allows class var in primitive types (#612)" do
@@ -249,7 +249,7 @@ describe "Semantic: class var" do
       @@foo = 1
       @@foo
       ",
-      "can't use class variables at the top level"
+      "Can't use class variables at the top level"
   end
 
   it "errors when typing a class variable inside a method" do
@@ -260,7 +260,7 @@ describe "Semantic: class var" do
 
       foo
       ),
-      "declaring the type of a class variable must be done at the class level"
+      "Declaring the type of a class variable must be done at the class level"
   end
 
   it "errors if using local variable in initializer" do
@@ -272,7 +272,7 @@ describe "Semantic: class var" do
         @@x = a
       end
       ),
-      "undefined local variable or method 'a'"
+      "Undefined local variable or method 'a'"
   end
 
   it "errors on undefined constant (1)" do
@@ -285,7 +285,7 @@ describe "Semantic: class var" do
 
       Foo.foo
       ),
-      "undefined constant Bar"
+      "Undefined constant Bar"
   end
 
   it "errors on undefined constant (2)" do
@@ -296,7 +296,7 @@ describe "Semantic: class var" do
 
       Foo.foo
       ),
-      "undefined constant Bar"
+      "Undefined constant Bar"
   end
 
   it "infers in multiple assign for tuple type (1)" do
@@ -328,7 +328,7 @@ describe "Semantic: class var" do
         end
       end
       ),
-      "can't use Class as the type of class variable @@class of Foo, use a more specific type"
+      "Can't use Class as the type of class variable @@class of Foo, use a more specific type"
   end
 
   it "gives correct error when trying to use Int as a class variable type" do
@@ -337,7 +337,7 @@ describe "Semantic: class var" do
         @@x : Int
       end
       ),
-      "can't use Int as the type of a class variable yet, use a more specific type"
+      "Can't use Int as the type of a class variable yet, use a more specific type"
   end
 
   it "can find class var in subclass" do
@@ -384,7 +384,7 @@ describe "Semantic: class var" do
         @@x : Float64
       end
       ),
-      "class variable '@@x' of Bar is already defined as Int32 in Foo"
+      "Class variable '@@x' of Bar is already defined as Int32 in Foo"
   end
 
   it "errors if redefining class var type in subclass, with guess" do
@@ -397,7 +397,7 @@ describe "Semantic: class var" do
         @@x = 'a'
       end
       ),
-      "class variable '@@x' of Bar is already defined as Int32 in Foo"
+      "Class variable '@@x' of Bar is already defined as Int32 in Foo"
   end
 
   it "errors if redefining class var type in included module" do
@@ -412,7 +412,7 @@ describe "Semantic: class var" do
         @@x : Float64
       end
       ),
-      "class variable '@@x' of Bar is already defined as Int32 in Moo"
+      "Class variable '@@x' of Bar is already defined as Int32 in Moo"
   end
 
   it "declares uninitialized (#2935)" do
@@ -495,6 +495,6 @@ describe "Semantic: class var" do
         @@foo : Int32
       end
       ),
-      "class variable '@@foo' of Foo is not nilable (it's Int32) so it must have an initializer"
+      "Class variable '@@foo' of Foo is not nilable (it's Int32) so it must have an initializer"
   end
 end

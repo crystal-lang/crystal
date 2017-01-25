@@ -33,16 +33,16 @@ describe "Semantic: var" do
       end
 
       bar
-    ", "undefined local variable or method 'something'"
+    ", "Undefined local variable or method 'something'"
   end
 
   it "reports there's no self" do
-    assert_error "self", "there's no self in this scope"
+    assert_error "self", "There's no self in this scope"
   end
 
   it "reports variable always nil" do
     assert_error "1 == 2 ? (a = 1) : a",
-      "read before assignment to local variable 'a'"
+      "Read before assignment to local variable 'a'"
   end
 
   it "lets type on else side of if with a Bool | Nil union" do
@@ -57,14 +57,14 @@ describe "Semantic: var" do
       a = 1
       a = uninitialized Float64
       ),
-      "variable 'a' already declared"
+      "Variable 'a' already declared"
   end
 
   it "errors if reads from underscore" do
     assert_error %(
       _
       ),
-      "can't read from _"
+      "Can't read from _"
   end
 
   it "declares local variable with value" do
@@ -87,7 +87,7 @@ describe "Semantic: var" do
       a : Int32
       a
       ),
-      "read before assignment to local variable 'a'"
+      "Read before assignment to local variable 'a'"
   end
 
   it "declares local variable and assigns it with if" do
@@ -110,7 +110,7 @@ describe "Semantic: var" do
       end
       a
       ),
-      "type must be Int32"
+      "Type must be Int32"
   end
 
   it "declares local variable and assigns wrong type" do
@@ -118,7 +118,7 @@ describe "Semantic: var" do
       a : Int32
       a = true
       ),
-      "type must be Int32"
+      "Type must be Int32"
   end
 
   it "errors if variable already exists" do
@@ -126,6 +126,6 @@ describe "Semantic: var" do
       a = true
       a : Int32
       ),
-      "variable 'a' already declared"
+      "Variable 'a' already declared"
   end
 end

@@ -168,7 +168,7 @@ describe "Parser" do
   it_parses "def foo; x { |a| a }; end", Def.new("foo", body: [Call.new(nil, "x", block: Block.new(["a".var], ["a".var] of ASTNode))] of ASTNode)
   it_parses "def foo; x { |_| 1 }; end", Def.new("foo", body: [Call.new(nil, "x", block: Block.new(["_".var], [1.int32] of ASTNode))] of ASTNode)
   it_parses "def foo; x { |a, *b| b }; end", Def.new("foo", body: [Call.new(nil, "x", block: Block.new(["a".var, "b".var], ["b".var] of ASTNode, splat_index: 1))] of ASTNode)
-  assert_syntax_error "x { |*a, *b| }", "splat block argument already specified"
+  assert_syntax_error "x { |*a, *b| }", "Splat block argument already specified"
 
   it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int32)])
   it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", restriction: "Int".path)])
@@ -217,10 +217,10 @@ describe "Parser" do
   it_parses "def foo(x, *args, y = 2); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32)], body: 1.int32, splat_index: 1)
   it_parses "def foo(x, *args, y = 2, w, z = 3); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32), "w".arg, Arg.new("z", default_value: 3.int32)], body: 1.int32, splat_index: 1)
   it_parses "def foo(x, *, y); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1)
-  assert_syntax_error "def foo(x, *); 1; end", "named arguments must follow bare *"
+  assert_syntax_error "def foo(x, *); 1; end", "Named arguments must follow bare *"
 
-  assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
-  assert_syntax_error "def foo(var = x : Int); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
+  assert_syntax_error "def foo(var = 1 : Int32); end", "The syntax for an argument with a default value V and type T is `arg : T = V`"
+  assert_syntax_error "def foo(var = x : Int); end", "The syntax for an argument with a default value V and type T is `arg : T = V`"
 
   it_parses "def foo(**args)\n1\nend", Def.new("foo", body: 1.int32, double_splat: "args".arg)
   it_parses "def foo(x, **args)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args".arg)
@@ -239,9 +239,9 @@ describe "Parser" do
 
   it_parses %(def foo("bar qux" y); y; end), Def.new("foo", args: [Arg.new("y", external_name: "bar qux")], body: "y".var)
 
-  assert_syntax_error "def foo(x x); 1; end", "when specified, external name must be different than internal name"
-  assert_syntax_error "def foo(x @x); 1; end", "when specified, external name must be different than internal name"
-  assert_syntax_error "def foo(x @@x); 1; end", "when specified, external name must be different than internal name"
+  assert_syntax_error "def foo(x x); 1; end", "When specified, external name must be different than internal name"
+  assert_syntax_error "def foo(x @x); 1; end", "When specified, external name must be different than internal name"
+  assert_syntax_error "def foo(x @@x); 1; end", "When specified, external name must be different than internal name"
 
   assert_syntax_error "def foo(*a foo); end"
   assert_syntax_error "def foo(**a foo); end"
@@ -249,7 +249,7 @@ describe "Parser" do
 
   it_parses "macro foo(**args)\n1\nend", Macro.new("foo", body: MacroLiteral.new("1\n"), double_splat: "args".arg)
 
-  assert_syntax_error "macro foo(x, *); 1; end", "named arguments must follow bare *"
+  assert_syntax_error "macro foo(x, *); 1; end", "Named arguments must follow bare *"
 
   it_parses "abstract def foo", Def.new("foo", abstract: true)
   it_parses "abstract def foo; 1", [Def.new("foo", abstract: true), 1.int32]
@@ -430,7 +430,7 @@ describe "Parser" do
   it_parses "module Foo(*T); end", ModuleDef.new("Foo".path, type_vars: ["T"], splat_index: 0)
   it_parses "class Foo(*T); end", ClassDef.new("Foo".path, type_vars: ["T"], splat_index: 0)
   it_parses "class Foo(T, *U); end", ClassDef.new("Foo".path, type_vars: ["T", "U"], splat_index: 1)
-  assert_syntax_error "class Foo(*T, *U); end", "splat type argument already specified"
+  assert_syntax_error "class Foo(*T, *U); end", "Splat type argument already specified"
 
   it_parses "x : Foo(A, *B, C)", TypeDeclaration.new("x".var, Generic.new("Foo".path, ["A".path, "B".path.splat, "C".path] of ASTNode))
   it_parses "x : *T -> R", TypeDeclaration.new("x".var, ProcNotation.new(["T".path.splat] of ASTNode, "R".path))
@@ -464,7 +464,7 @@ describe "Parser" do
 
   it_parses "Foo({x: X})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
   it_parses "Foo({x: X, y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path), NamedArgument.new("y", "Y".path)])] of ASTNode)
-  assert_syntax_error "Foo({x: X, x: Y})", "duplicated key: x"
+  assert_syntax_error "Foo({x: X, x: Y})", "Duplicated key: x"
 
   it_parses %(Foo({"foo bar": X})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo bar", "X".path)])] of ASTNode)
   it_parses %(Foo({"foo": X, "bar": Y})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo", "X".path), NamedArgument.new("bar", "Y".path)])] of ASTNode)
@@ -560,36 +560,36 @@ describe "Parser" do
     it_parses "#{keyword} 1 if true", If.new(true.bool, klass.new(1.int32))
     it_parses "#{keyword} if true", If.new(true.bool, klass.new)
 
-    assert_syntax_error "a = #{keyword}", "void value expression"
-    assert_syntax_error "a = 1; a += #{keyword}", "void value expression"
-    assert_syntax_error "yield #{keyword}", "void value expression"
-    assert_syntax_error "foo(#{keyword})", "void value expression"
-    assert_syntax_error "foo[#{keyword}]", "void value expression"
-    assert_syntax_error "foo[1] = #{keyword}", "void value expression"
-    assert_syntax_error "if #{keyword}; end", "void value expression"
-    assert_syntax_error "unless #{keyword}; end", "void value expression"
-    assert_syntax_error "while #{keyword}; end", "void value expression"
-    assert_syntax_error "until #{keyword}; end", "void value expression"
-    assert_syntax_error "1 if #{keyword}", "void value expression"
-    assert_syntax_error "1 unless #{keyword}", "void value expression"
-    assert_syntax_error "#{keyword}.foo", "void value expression"
-    assert_syntax_error "#{keyword}.as(Int32)", "void value expression"
-    assert_syntax_error "#{keyword}[]", "void value expression"
-    assert_syntax_error "#{keyword}[0]", "void value expression"
-    assert_syntax_error "#{keyword}[0]= 1", "void value expression"
-    assert_syntax_error "#{keyword} .. 1", "void value expression"
-    assert_syntax_error "#{keyword} ... 1", "void value expression"
-    assert_syntax_error "1 .. #{keyword}", "void value expression"
-    assert_syntax_error "1 ... #{keyword}", "void value expression"
-    assert_syntax_error "#{keyword} ? 1 : 2", "void value expression"
-    assert_syntax_error "+#{keyword}", "void value expression"
+    assert_syntax_error "a = #{keyword}", "Void value expression"
+    assert_syntax_error "a = 1; a += #{keyword}", "Void value expression"
+    assert_syntax_error "yield #{keyword}", "Void value expression"
+    assert_syntax_error "foo(#{keyword})", "Void value expression"
+    assert_syntax_error "foo[#{keyword}]", "Void value expression"
+    assert_syntax_error "foo[1] = #{keyword}", "Void value expression"
+    assert_syntax_error "if #{keyword}; end", "Void value expression"
+    assert_syntax_error "unless #{keyword}; end", "Void value expression"
+    assert_syntax_error "while #{keyword}; end", "Void value expression"
+    assert_syntax_error "until #{keyword}; end", "Void value expression"
+    assert_syntax_error "1 if #{keyword}", "Void value expression"
+    assert_syntax_error "1 unless #{keyword}", "Void value expression"
+    assert_syntax_error "#{keyword}.foo", "Void value expression"
+    assert_syntax_error "#{keyword}.as(Int32)", "Void value expression"
+    assert_syntax_error "#{keyword}[]", "Void value expression"
+    assert_syntax_error "#{keyword}[0]", "Void value expression"
+    assert_syntax_error "#{keyword}[0]= 1", "Void value expression"
+    assert_syntax_error "#{keyword} .. 1", "Void value expression"
+    assert_syntax_error "#{keyword} ... 1", "Void value expression"
+    assert_syntax_error "1 .. #{keyword}", "Void value expression"
+    assert_syntax_error "1 ... #{keyword}", "Void value expression"
+    assert_syntax_error "#{keyword} ? 1 : 2", "Void value expression"
+    assert_syntax_error "+#{keyword}", "Void value expression"
 
     ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "==="].each do |op|
-      assert_syntax_error "#{keyword} #{op} 1", "void value expression"
+      assert_syntax_error "#{keyword} #{op} 1", "Void value expression"
     end
 
-    assert_syntax_error "case #{keyword}; when 1; end; end", "void value expression"
-    assert_syntax_error "case 1; when #{keyword}; end; end", "void value expression"
+    assert_syntax_error "case #{keyword}; when 1; end; end", "Void value expression"
+    assert_syntax_error "case 1; when #{keyword}; end; end", "Void value expression"
   end
 
   it_parses "yield", Yield.new
@@ -868,7 +868,7 @@ describe "Parser" do
   it_parses %({"foo": 1}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", 1.int32)])
   it_parses %({"foo": 1, "bar": 2}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", 1.int32), NamedTupleLiteral::Entry.new("bar", 2.int32)])
 
-  assert_syntax_error "{a: 1, a: 2}", "duplicated key: a"
+  assert_syntax_error "{a: 1, a: 2}", "Duplicated key: a"
 
   it_parses "{} of Int => Double", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new("Int".path, "Double".path))
 
@@ -898,13 +898,13 @@ describe "Parser" do
   it_parses "case {1, 2}\nwhen {3, 4}, {5, 6}\n7\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode), TupleLiteral.new([5.int32, 6.int32] of ASTNode)] of ASTNode, 7.int32)])
   it_parses "case {1, 2}\nwhen {.foo, .bar}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new(ImplicitObj.new, "foo"), Call.new(ImplicitObj.new, "bar")] of ASTNode)] of ASTNode, 5.int32)])
   it_parses "case {1, 2}\nwhen foo\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new(["foo".call] of ASTNode, 5.int32)])
-  assert_syntax_error "case {1, 2}; when {3}; 4; end", "wrong number of tuple elements (given 1, expected 2)", 1, 19
+  assert_syntax_error "case {1, 2}; when {3}; 4; end", "Wrong number of tuple elements (given 1, expected 2)", 1, 19
 
   it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
   it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
   it_parses "select\nwhen foo\n2\nelse\n3\nend", Select.new([Select::When.new("foo".call, 2.int32)], 3.int32)
 
-  assert_syntax_error "select\nwhen 1\n2\nend", "invalid select when expression: must be an assignment or call"
+  assert_syntax_error "select\nwhen 1\n2\nend", "Invalid select when expression: must be an assignment or call"
 
   it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
   it_parses "def foo; / /; end", Def.new("foo", body: regex(" "))
@@ -1132,16 +1132,16 @@ describe "Parser" do
   it_parses "<<-SOME\n  Sa\n  Se\n  SOME", "Sa\nSe".string
   it_parses "<<-HERE\n  \#{1} \#{2}\n  HERE", StringInterpolation.new([1.int32, " ".string, 2.int32] of ASTNode)
   it_parses "<<-HERE\n  \#{1} \\n \#{2}\n  HERE", StringInterpolation.new([1.int32, " \n ".string, 2.int32] of ASTNode)
-  assert_syntax_error "<<-HERE\n   One\nwrong\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
-  assert_syntax_error "<<-HERE\n   One\n wrong\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
-  assert_syntax_error "<<-HERE\n   One\n \#{1}\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
-  assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\n  HERE", "heredoc line must have an indent greater or equal than 2", 4, 1
-  assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\#{1}\n  HERE", "heredoc line must have an indent greater or equal than 2", 4, 1
-  assert_syntax_error "<<-HERE\n One\n  \#{1}\n  HERE", "heredoc line must have an indent greater or equal than 2", 2, 1
+  assert_syntax_error "<<-HERE\n   One\nwrong\n  Zero\n  HERE", "Heredoc line must have an indent greater or equal than 2", 3, 1
+  assert_syntax_error "<<-HERE\n   One\n wrong\n  Zero\n  HERE", "Heredoc line must have an indent greater or equal than 2", 3, 1
+  assert_syntax_error "<<-HERE\n   One\n \#{1}\n  Zero\n  HERE", "Heredoc line must have an indent greater or equal than 2", 3, 1
+  assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\n  HERE", "Heredoc line must have an indent greater or equal than 2", 4, 1
+  assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\#{1}\n  HERE", "Heredoc line must have an indent greater or equal than 2", 4, 1
+  assert_syntax_error "<<-HERE\n One\n  \#{1}\n  HERE", "Heredoc line must have an indent greater or equal than 2", 2, 1
   assert_syntax_error %("foo" "bar")
 
   it_parses "<<-'HERE'\n  hello \\n world\n  \#{1}\n  HERE", StringLiteral.new("hello \\n world\n\#{1}")
-  assert_syntax_error "<<-'HERE\n", "expecting closing single quote"
+  assert_syntax_error "<<-'HERE\n", "Expecting closing single quote"
 
   it_parses "<<-FOO\n1\nFOO.bar", Call.new("1".string, "bar")
   it_parses "<<-FOO\n1\nFOO + 2", Call.new("1".string, "+", 2.int32)
@@ -1231,10 +1231,10 @@ describe "Parser" do
     end
   ), ClassDef.new("Foo".path, Def.new("bar", body: Call.new(nil, "print", Cast.new(Var.new("self"), "Foo".path))))
 
-  assert_syntax_error "a = a", "can't use variable name 'a' inside assignment to variable 'a'"
+  assert_syntax_error "a = a", "Can't use variable name 'a' inside assignment to variable 'a'"
 
-  assert_syntax_error "{{ {{ 1 }} }}", "can't nest macro expressions"
-  assert_syntax_error "{{ {% begin %} }}", "can't nest macro expressions"
+  assert_syntax_error "{{ {{ 1 }} }}", "Can't nest macro expressions"
+  assert_syntax_error "{{ {% begin %} }}", "Can't nest macro expressions"
 
   it_parses "Foo?", Crystal::Generic.new(Path.global("Union"), ["Foo".path, Path.global("Nil")] of ASTNode)
   it_parses "Foo::Bar?", Crystal::Generic.new(Path.global("Union"), [Path.new(%w(Foo Bar)), Path.global("Nil")] of ASTNode)
@@ -1251,35 +1251,35 @@ describe "Parser" do
 
   it_parses "foo bar.baz(1) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
 
-  assert_syntax_error "return do\nend", "unexpected token: do"
+  assert_syntax_error "return do\nend", "Unexpected token: do"
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend"
   end
 
   assert_syntax_error "def foo(x = 1, y); end",
-    "argument must have a default value"
+    "Argument must have a default value"
 
   assert_syntax_error " [1, 2, 3 end"
   assert_syntax_error " {1 => end"
 
   assert_syntax_error " {1, 2, 3 end"
   assert_syntax_error " (1, 2, 3 end",
-    "unterminated parenthesized expression", 1, 2
+    "Unterminated parenthesized expression", 1, 2
 
   assert_syntax_error "foo(1, 2, 3 end",
-    "expecting token ')', not 'end'", 1, 13
+    "Expecting token ')', not 'end'", 1, 13
 
   assert_syntax_error "foo(foo(&.block)",
-    "expecting token ')', not 'EOF'", 1, 17
+    "Expecting token ')', not 'EOF'", 1, 17
 
   assert_syntax_error "case when .foo? then 1; end"
   assert_syntax_error "macro foo;{%end};end"
-  assert_syntax_error "foo {1, 2}", "unexpected token: ,"
-  assert_syntax_error "pointerof(self)", "can't take pointerof(self)"
+  assert_syntax_error "foo {1, 2}", "Unexpected token: ,"
+  assert_syntax_error "pointerof(self)", "Can't take pointerof(self)"
   assert_syntax_error "def foo 1; end"
 
-  assert_syntax_error %<{"x": [] of Int32,\n}\n1.foo(>, "unterminated call", 3, 6
+  assert_syntax_error %<{"x": [] of Int32,\n}\n1.foo(>, "Unterminated call", 3, 6
 
   assert_syntax_error "def foo x y; end", "parentheses are mandatory for def arguments"
   assert_syntax_error "macro foo(x y z); end"
@@ -1288,21 +1288,21 @@ describe "Parser" do
   assert_syntax_error %(macro foo x; 1 + 2; end), "parentheses are mandatory for macro arguments"
   assert_syntax_error %(macro foo x\n 1 + 2; end), "parentheses are mandatory for macro arguments"
 
-  assert_syntax_error "1 2", "unexpected token: 2"
-  assert_syntax_error "macro foo(*x, *y); end", "unexpected token: *"
+  assert_syntax_error "1 2", "Unexpected token: 2"
+  assert_syntax_error "macro foo(*x, *y); end", "Unexpected token: *"
 
-  assert_syntax_error "foo x: 1, x: 1", "duplicated named argument: x", 1, 11
-  assert_syntax_error "def foo(x, x); end", "duplicated argument name: x", 1, 12
-  assert_syntax_error "class Foo(T, T); end", "duplicated type var name: T", 1, 14
-  assert_syntax_error "->(x : Int32, x : Int32) {}", "duplicated argument name: x", 1, 15
-  assert_syntax_error "foo { |x, x| }", "duplicated block argument name: x", 1, 11
-  assert_syntax_error "foo { |x, (x)| }", "duplicated block argument name: x", 1, 12
-  assert_syntax_error "foo { |(x, x)| }", "duplicated block argument name: x", 1, 12
+  assert_syntax_error "foo x: 1, x: 1", "Duplicated named argument: x", 1, 11
+  assert_syntax_error "def foo(x, x); end", "Duplicated argument name: x", 1, 12
+  assert_syntax_error "class Foo(T, T); end", "Duplicated type var name: T", 1, 14
+  assert_syntax_error "->(x : Int32, x : Int32) {}", "Duplicated argument name: x", 1, 15
+  assert_syntax_error "foo { |x, x| }", "Duplicated block argument name: x", 1, 11
+  assert_syntax_error "foo { |x, (x)| }", "Duplicated block argument name: x", 1, 12
+  assert_syntax_error "foo { |(x, x)| }", "Duplicated block argument name: x", 1, 12
 
-  assert_syntax_error "def foo(*x, **x); end", "duplicated argument name: x"
-  assert_syntax_error "def foo(*x, &x); end", "duplicated argument name: x"
-  assert_syntax_error "def foo(**x, &x); end", "duplicated argument name: x"
-  assert_syntax_error "def foo(x, **x); end", "duplicated argument name: x"
+  assert_syntax_error "def foo(*x, **x); end", "Duplicated argument name: x"
+  assert_syntax_error "def foo(*x, &x); end", "Duplicated argument name: x"
+  assert_syntax_error "def foo(**x, &x); end", "Duplicated argument name: x"
+  assert_syntax_error "def foo(x, **x); end", "Duplicated argument name: x"
 
   assert_syntax_error "Set {1, 2, 3} of Int32"
   assert_syntax_error "Hash {foo: 1} of Int32 => Int32"
@@ -1325,47 +1325,47 @@ describe "Parser" do
 
   assert_syntax_error "a = 1; b = 2; a, b += 1, 2"
 
-  assert_syntax_error "lib LibC\n$Errno : Int32\nend", "external variables must start with lowercase, use for example `$errno = Errno : Int32`"
+  assert_syntax_error "lib LibC\n$Errno : Int32\nend", "External variables must start with lowercase, use for example `$errno = Errno : Int32`"
 
   assert_syntax_error "a += 1",
     "'+=' before definition of 'a'"
   assert_syntax_error "self = 1",
-    "can't change the value of self"
+    "Can't change the value of self"
   assert_syntax_error "self += 1",
-    "can't change the value of self"
+    "Can't change the value of self"
   assert_syntax_error "FOO, BAR = 1, 2",
     "Multiple assignment is not allowed for constants"
   assert_syntax_error "self, x = 1, 2",
-    "can't change the value of self"
+    "Can't change the value of self"
   assert_syntax_error "x, self = 1, 2",
-    "can't change the value of self"
+    "Can't change the value of self"
 
   assert_syntax_error "macro foo(x : Int32); end"
 
-  assert_syntax_error "/foo)/", "invalid regex"
+  assert_syntax_error "/foo)/", "Invalid regex"
   assert_syntax_error "def =\nend"
-  assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment"
-  assert_syntax_error "{1, ->{ |x| x } }", "unexpected token '|'"
-  assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token '|'"
+  assert_syntax_error "def foo; A = 1; end", "Dynamic constant assignment"
+  assert_syntax_error "{1, ->{ |x| x } }", "Unexpected token '|'"
+  assert_syntax_error "{1, ->do\n|x| x\end }", "Unexpected token '|'"
 
-  assert_syntax_error "1 while 3", "trailing `while` is not supported"
-  assert_syntax_error "1 until 3", "trailing `until` is not supported"
-  assert_syntax_error "x++", "postfix increment is not supported, use `exp += 1`"
-  assert_syntax_error "x--", "postfix decrement is not supported, use `exp -= 1`"
-  assert_syntax_error "if 1 == 1 a; end", "unexpected token"
-  assert_syntax_error "unless 1 == 1 a; end", "unexpected token"
-  assert_syntax_error "while 1 == 1 a; end", "unexpected token"
-  assert_syntax_error "case 1 == 1 a; when 2; end", "unexpected token"
-  assert_syntax_error "case 1 == 1; when 2 a; end", "unexpected token"
+  assert_syntax_error "1 while 3", "Trailing `while` is not supported"
+  assert_syntax_error "1 until 3", "Trailing `until` is not supported"
+  assert_syntax_error "x++", "Postfix increment is not supported, use `exp += 1`"
+  assert_syntax_error "x--", "Postfix decrement is not supported, use `exp -= 1`"
+  assert_syntax_error "if 1 == 1 a; end", "Unexpected token"
+  assert_syntax_error "unless 1 == 1 a; end", "Unexpected token"
+  assert_syntax_error "while 1 == 1 a; end", "Unexpected token"
+  assert_syntax_error "case 1 == 1 a; when 2; end", "Unexpected token"
+  assert_syntax_error "case 1 == 1; when 2 a; end", "Unexpected token"
 
-  assert_syntax_error %(class Foo; require "bar"; end), "can't require inside type declarations"
-  assert_syntax_error %(module Foo; require "bar"; end), "can't require inside type declarations"
-  assert_syntax_error %(def foo; require "bar"; end), "can't require inside def"
+  assert_syntax_error %(class Foo; require "bar"; end), "Can't require inside type declarations"
+  assert_syntax_error %(module Foo; require "bar"; end), "Can't require inside type declarations"
+  assert_syntax_error %(def foo; require "bar"; end), "Can't require inside def"
 
-  assert_syntax_error "def foo(x: Int32); end", "space required before colon in type restriction"
-  assert_syntax_error "def foo(x :Int32); end", "space required after colon in type restriction"
+  assert_syntax_error "def foo(x: Int32); end", "Space required before colon in type restriction"
+  assert_syntax_error "def foo(x :Int32); end", "Space required after colon in type restriction"
 
-  assert_syntax_error "def f end", "unexpected token: end (expected ';' or newline)"
+  assert_syntax_error "def f end", "Unexpected token: end (expected ';' or newline)"
 
   assert_syntax_error %([\n"foo"\n"bar"\n])
   it_parses "[\n1\n]", ArrayLiteral.new([1.int32] of ASTNode)
@@ -1387,13 +1387,13 @@ describe "Parser" do
     if 1
       foo 1,
     end
-    ), "invalid trailing comma in call"
+    ), "Invalid trailing comma in call"
 
-  assert_syntax_error "foo 1,", "invalid trailing comma in call"
-  assert_syntax_error "def foo:String\nend", "a space is mandatory between ':' and return type"
-  assert_syntax_error "def foo :String\nend", "a space is mandatory between ':' and return type"
-  assert_syntax_error "def foo():String\nend", "a space is mandatory between ':' and return type"
-  assert_syntax_error "def foo() :String\nend", "a space is mandatory between ':' and return type"
+  assert_syntax_error "foo 1,", "Invalid trailing comma in call"
+  assert_syntax_error "def foo:String\nend", "A space is mandatory between ':' and return type"
+  assert_syntax_error "def foo :String\nend", "A space is mandatory between ':' and return type"
+  assert_syntax_error "def foo():String\nend", "A space is mandatory between ':' and return type"
+  assert_syntax_error "def foo() :String\nend", "A space is mandatory between ':' and return type"
 
   assert_syntax_error "foo.responds_to?"
 
@@ -1417,21 +1417,21 @@ describe "Parser" do
     assert_syntax_error "macro #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
   end
 
-  assert_syntax_error "Foo{one: :two, three: :four}", "can't use named tuple syntax for Hash-like literal"
+  assert_syntax_error "Foo{one: :two, three: :four}", "Can't use named tuple syntax for Hash-like literal"
   assert_syntax_error "{one: :two, three: :four} of Symbol => Symbol"
-  assert_syntax_error %(Hash{"foo": 1}), "can't use named tuple syntax for Hash-like literal"
-  assert_syntax_error %(Hash{"foo": 1, "bar": 2}), "can't use named tuple syntax for Hash-like literal"
+  assert_syntax_error %(Hash{"foo": 1}), "Can't use named tuple syntax for Hash-like literal"
+  assert_syntax_error %(Hash{"foo": 1, "bar": 2}), "Can't use named tuple syntax for Hash-like literal"
 
   assert_syntax_error "{foo: 1\nbar: 2}"
   assert_syntax_error "{foo: 1, bar: 2\nbaz: 3}"
 
-  assert_syntax_error "'''", "invalid empty char literal"
+  assert_syntax_error "'''", "Invalid empty char literal"
 
-  assert_syntax_error "def foo(*args = 1); end", "splat argument can't have default value"
-  assert_syntax_error "def foo(**args = 1); end", "double splat argument can't have default value"
+  assert_syntax_error "def foo(*args = 1); end", "Splat argument can't have default value"
+  assert_syntax_error "def foo(**args = 1); end", "Double splat argument can't have default value"
 
-  assert_syntax_error "require 1", "expected string literal for require"
-  assert_syntax_error %(def foo("bar \#{1} qux" y); y; end), "interpolation not allowed in external name"
+  assert_syntax_error "require 1", "Expected string literal for require"
+  assert_syntax_error %(def foo("bar \#{1} qux" y); y; end), "Interpolation not allowed in external name"
 
   assert_syntax_error "def Foo(Int32).bar;end"
 
