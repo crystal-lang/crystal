@@ -194,11 +194,11 @@ module Crystal
 
       if instance_type.double_variadic?
         unless node.named_args
-          node.raise "can only instantiate NamedTuple with named arguments"
+          node.raise "Can only instantiate NamedTuple with named arguments"
         end
       elsif instance_type.splat_index
         if node.named_args
-          node.raise "can only use named arguments with NamedTuple"
+          node.raise "Can only use named arguments with NamedTuple"
         end
 
         min_needed = instance_type.type_vars.size - 1
@@ -207,7 +207,7 @@ module Crystal
         end
       else
         if node.named_args
-          node.raise "can only use named arguments with NamedTuple"
+          node.raise "Can only use named arguments with NamedTuple"
         end
 
         # Need to count type vars because there might be splats
@@ -272,7 +272,7 @@ module Crystal
       types = node.types.map do |subtype|
         instance_type = subtype.type
         unless instance_type.allowed_in_generics?
-          subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
+          subtype.raise "Can't use #{instance_type} in unions yet, use a more specific type"
         end
         instance_type.virtual_type
       end
@@ -297,7 +297,7 @@ module Crystal
     def visit(node : Self)
       the_self = (@scope || current_type)
       if the_self.is_a?(Program)
-        node.raise "there's no self in this scope"
+        node.raise "There's no self in this scope"
       end
 
       node.type = the_self.instance_type
@@ -326,7 +326,7 @@ module Crystal
       elsif node.name == "self"
         current_type = current_type()
         if current_type.is_a?(Program)
-          node.raise "there's no self in this scope"
+          node.raise "There's no self in this scope"
         else
           node.type = current_type.metaclass
         end
@@ -334,7 +334,7 @@ module Crystal
         special_var = define_special_var(node.name, program.nil_var)
         node.bind_to special_var
       else
-        node.raise "read before assignment to local variable '#{node.name}'"
+        node.raise "Read before assignment to local variable '#{node.name}'"
       end
     end
 
@@ -342,7 +342,7 @@ module Crystal
       case var = node.var
       when Var
         if @meta_vars[var.name]?
-          node.raise "variable '#{var.name}' already declared"
+          node.raise "Variable '#{var.name}' already declared"
         end
 
         meta_var = new_meta_var(var.name)
@@ -358,7 +358,7 @@ module Crystal
         if declared_type = node.declared_type.type?
           meta_var.freeze_type = declared_type
         else
-          node.raise "can't infer type of type declaration"
+          node.raise "Can't infer type of type declaration"
         end
 
         if value = node.value
@@ -366,11 +366,11 @@ module Crystal
         end
       when InstanceVar
         if @untyped_def
-          node.raise "declaring the type of an instance variable must be done at the class level"
+          node.raise "Declaring the type of an instance variable must be done at the class level"
         end
       when ClassVar
         if @untyped_def
-          node.raise "declaring the type of a class variable must be done at the class level"
+          node.raise "Declaring the type of a class variable must be done at the class level"
         end
 
         attributes = check_valid_attributes node, ValidClassVarAttributes, "class variable"
@@ -381,7 +381,7 @@ module Crystal
         end
       when Global
         if @untyped_def
-          node.raise "declaring the type of a global variable must be done at the class level"
+          node.raise "Declaring the type of a global variable must be done at the class level"
         end
 
         attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
@@ -406,7 +406,7 @@ module Crystal
       case var = node.var
       when Var
         if @vars[var.name]?
-          var.raise "variable '#{var.name}' already declared"
+          var.raise "Variable '#{var.name}' already declared"
         end
 
         @in_type_args += 1
@@ -418,12 +418,12 @@ module Crystal
           var_type = check_declare_var_type node, declared_type, "a variable"
           var.type = var_type
         else
-          node.raise "can't infer type of type declaration"
+          node.raise "Can't infer type of type declaration"
         end
 
         meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
         if (existing_type = meta_var.type?) && existing_type != var_type
-          node.raise "variable '#{var.name}' already declared with type #{existing_type}"
+          node.raise "Variable '#{var.name}' already declared with type #{existing_type}"
         end
 
         meta_var.bind_to(var)
@@ -464,7 +464,7 @@ module Crystal
         when GenericClassInstanceType
           # OK
         else
-          node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
+          node.raise "Can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end
       when ClassVar
         attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
@@ -491,7 +491,7 @@ module Crystal
       case exp = node.exp
       when Var
         if @meta_vars.has_key?(exp.name)
-          exp.raise "variable '#{exp.name}' is already defined, `out` must be used to define a variable, use another name"
+          exp.raise "Variable '#{exp.name}' is already defined, `out` must be used to define a variable, use another name"
         end
 
         # We declare out variables
@@ -541,7 +541,7 @@ module Crystal
       if first_time_accessing_meta_type_var?(var)
         var_type = var.type?
         if var_type && !var_type.includes_type?(program.nil)
-          node.raise "global variable '#{node.name}' is read here before it was initialized, rendering it nilable, but its type is #{var_type}"
+          node.raise "Global variable '#{node.name}' is read here before it was initialized, rendering it nilable, but its type is #{var_type}"
         end
         var.bind_to program.nil_var
       end
@@ -650,13 +650,13 @@ module Crystal
     def lookup_instance_var(node, scope)
       case scope
       when Nil
-        node.raise "can't use instance variables at the top level"
+        node.raise "Can't use instance variables at the top level"
       when Program
-        node.raise "can't use instance variables at the top level"
+        node.raise "Can't use instance variables at the top level"
       when PrimitiveType
-        node.raise "can't use instance variables inside primitive types (at #{scope})"
+        node.raise "Can't use instance variables inside primitive types (at #{scope})"
       when EnumType
-        node.raise "can't use instance variables inside enums (at enum #{scope})"
+        node.raise "Can't use instance variables inside enums (at enum #{scope})"
       when .metaclass?
         node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
       when InstanceVarContainer
@@ -872,12 +872,12 @@ module Crystal
     def visit(node : Yield)
       call = @call
       unless call
-        node.raise "can't use `yield` outside a method"
+        node.raise "Can't use `yield` outside a method"
       end
 
       if ctx = @fun_literal_context
         node.raise <<-MSG
-          can't use `yield` inside a proc literal or captured block
+          Can't use `yield` inside a proc literal or captured block
 
           Make sure to read the whole docs section about blocks and procs,
           including "Capturing blocks" and "Block forwarding":
@@ -886,7 +886,7 @@ module Crystal
           MSG
       end
 
-      block = call.block || node.raise("no block given")
+      block = call.block || node.raise("No block given")
 
       # This is the case of a yield when there's a captured block
       if block.fun_literal
@@ -1055,7 +1055,7 @@ module Crystal
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           arg.type = arg_type.virtual_type
         elsif !arg.type?
-          arg.raise "function argument '#{arg.name}' must have a type"
+          arg.raise "Function argument '#{arg.name}' must have a type"
         end
 
         fun_var = MetaVar.new(arg.name, arg.type)
@@ -1089,7 +1089,7 @@ module Crystal
     end
 
     def self.check_type_allowed_as_proc_argument(node, type)
-      Crystal.check_type_allowed_in_generics(node, type, "cannot be used as a Proc argument type")
+      Crystal.check_type_allowed_in_generics(node, type, "Cannot be used as a Proc argument type")
     end
 
     def visit(node : ProcPointer)
@@ -1107,7 +1107,7 @@ module Crystal
       # Check if it's ->LibFoo.foo, so we deduce the type from that method
       if node.args.empty? && obj && (obj_type = obj.type).is_a?(LibType)
         matching_fun = obj_type.lookup_first_def(node.name, false)
-        node.raise "undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
+        node.raise "Undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
 
         call.args = matching_fun.args.map_with_index do |arg, i|
           Var.new("arg#{i}", arg.type.instance_type).as(ASTNode)
@@ -1124,7 +1124,7 @@ module Crystal
       begin
         call.recalculate
       rescue ex : Crystal::Exception
-        node.raise "error instantiating #{node}", ex
+        node.raise "Error instantiating #{node}", ex
       end
 
       node.call = call
@@ -1362,7 +1362,7 @@ module Crystal
 
       # Error quickly if we can't find a fun
       method = obj_type.lookup_first_def(node.name, false)
-      node.raise "undefined fun '#{node.name}' for #{obj_type}" unless method
+      node.raise "Undefined fun '#{node.name}' for #{obj_type}" unless method
 
       node.args.each_with_index do |arg, index|
         case arg
@@ -1585,10 +1585,10 @@ module Crystal
     end
 
     def visit(node : Return)
-      typed_def = @typed_def || node.raise("can't return from top level")
+      typed_def = @typed_def || node.raise("Can't return from top level")
 
       if typed_def.captured_block?
-        node.raise "can't return from captured block, use next"
+        node.raise "Can't return from captured block, use next"
       end
 
       node.exp.try &.accept self
@@ -1613,9 +1613,9 @@ module Crystal
 
     def visit(node : Underscore)
       if @in_type_args == 0
-        node.raise "can't read from _"
+        node.raise "Can't read from _"
       else
-        node.raise "can't use underscore as generic type argument"
+        node.raise "Can't use underscore as generic type argument"
       end
     end
 
@@ -1678,18 +1678,18 @@ module Crystal
 
       case node.to.type?
       when @program.object
-        node.raise "can't cast to Object yet"
+        node.raise "Can't cast to Object yet"
       when @program.reference
-        node.raise "can't cast to Reference yet"
+        node.raise "Can't cast to Reference yet"
       when @program.class_type
-        node.raise "can't cast to Class yet"
+        node.raise "Can't cast to Class yet"
       end
 
       obj_type = node.obj.type?
       if obj_type.is_a?(PointerInstanceType)
         to_type = node.to.type.instance_type
         if to_type.is_a?(GenericType)
-          node.raise "can't cast #{obj_type} to #{to_type}"
+          node.raise "Can't cast #{obj_type} to #{to_type}"
         end
       end
 
@@ -1725,7 +1725,7 @@ module Crystal
       inferred_return_type = @program.type_merge([body.type?, external.type?])
 
       if return_type && return_type != @program.nil && inferred_return_type != return_type
-        node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
+        node.raise "Expected fun to return #{return_type} but it returned #{inferred_return_type}"
       end
 
       external.set_type(return_type)
@@ -2101,7 +2101,7 @@ module Crystal
         break_vars.push @vars.dup
       else
         if @typed_def.try &.captured_block?
-          node.raise "can't break from captured block"
+          node.raise "Can't break from captured block"
         end
 
         node.raise "Invalid break"
@@ -2247,15 +2247,15 @@ module Crystal
 
       case instance_type
       when GenericClassType
-        node.raise "can't create instance of generic class #{instance_type} without specifying its type vars"
+        node.raise "Can't create instance of generic class #{instance_type} without specifying its type vars"
       when UnionType
-        node.raise "can't create instance of a union type"
+        node.raise "Can't create instance of a union type"
       when PointerInstanceType
-        node.raise "can't create instance of a pointer type"
+        node.raise "Can't create instance of a pointer type"
       end
 
       if !instance_type.virtual? && instance_type.abstract?
-        node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
+        node.raise "Can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
       end
 
       node.type = instance_type
@@ -2263,7 +2263,7 @@ module Crystal
 
     def visit_pointer_malloc(node)
       if scope.instance_type.is_a?(GenericClassType)
-        node.raise "can't malloc pointer without type, use Pointer(Type).malloc(size)"
+        node.raise "Can't malloc pointer without type, use Pointer(Type).malloc(size)"
       end
 
       node.type = scope.instance_type
@@ -2292,7 +2292,7 @@ module Crystal
 
     def visit_pointer_new(node)
       if scope.instance_type.is_a?(GenericClassType)
-        node.raise "can't create pointer without type, use Pointer(Type).new(address)"
+        node.raise "Can't create pointer without type, use Pointer(Type).new(address)"
       end
 
       node.type = scope.instance_type
@@ -2333,7 +2333,7 @@ module Crystal
         return
       end
 
-      node.raise "field '#{field_name}' of #{scope.type_desc} #{scope} has type #{expected_type}, not #{actual_type}"
+      node.raise "Field '#{field_name}' of #{scope.type_desc} #{scope} has type #{expected_type}, not #{actual_type}"
     end
 
     def convert_struct_or_union_numeric_argument(node, unaliased_type, expected_type, actual_type)
@@ -2357,13 +2357,13 @@ module Crystal
               if const = node_exp.target_const
                 const.value
               else
-                node_exp.raise "can't take address of #{node_exp}"
+                node_exp.raise "Can't take address of #{node_exp}"
               end
             when ReadInstanceVar
               visit_read_instance_var(node_exp)
               node_exp
             else
-              node_exp.raise "can't take address of #{node_exp}"
+              node_exp.raise "Can't take address of #{node_exp}"
             end
       node.bind_to var
       true
@@ -2829,7 +2829,7 @@ module Crystal
       # Only check for calls that didn't resolve to a macro:
       # all other cases are already covered in TopLevelVisitor
       if exp.is_a?(Call) && !exp.expanded
-        node.raise "can't apply visibility modifier"
+        node.raise "Can't apply visibility modifier"
       end
 
       node.type = @program.nil
@@ -2856,7 +2856,7 @@ module Crystal
       if type = obj.type.restrict(to, context)
         node.type = type
       else
-        node.raise "can't restrict #{obj.type} to #{to}"
+        node.raise "Can't restrict #{obj.type} to #{to}"
       end
 
       false
@@ -2994,7 +2994,7 @@ module Crystal
 
         meta_var = @meta_vars[name]?
         unless meta_var
-          untyped_def.raise "instance variable '#{name}' of #{owner} was not initialized in this 'initialize', rendering it nilable"
+          untyped_def.raise "Instance variable '#{name}' of #{owner} was not initialized in this 'initialize', rendering it nilable"
         end
       end
     end

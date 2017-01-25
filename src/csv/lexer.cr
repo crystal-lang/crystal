@@ -93,7 +93,7 @@ abstract class CSV::Lexer
     while true
       case char = next_char
       when '\0'
-        raise "unclosed quote"
+        raise "Unclosed quote"
         break
       when @quote_char
         case next_char
@@ -105,7 +105,7 @@ abstract class CSV::Lexer
         when @quote_char
           @buffer << @quote_char
         else
-          raise "expecting comma, newline or end, not #{current_char.inspect}"
+          raise "Expecting comma, newline or end, not #{current_char.inspect}"
         end
       else
         @buffer << char

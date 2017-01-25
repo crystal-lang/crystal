@@ -1383,7 +1383,7 @@ module Crystal
       when Global
         var.name.size
       else
-        raise "can't happen"
+        raise "Can't happen"
       end
     end
 
@@ -1414,7 +1414,7 @@ module Crystal
       when InstanceVar
         var.name.size
       else
-        raise "can't happen"
+        raise "Can't happen"
       end
     end
 

@@ -20,11 +20,11 @@ struct Iconv
     if @iconv.address == LibC::SizeT.new(-1)
       if Errno.value == Errno::EINVAL
         if original_from == "UTF-8"
-          raise ArgumentError.new("invalid encoding: #{original_to}")
+          raise ArgumentError.new("Invalid encoding: #{original_to}")
         elsif original_to == "UTF-8"
-          raise ArgumentError.new("invalid encoding: #{original_from}")
+          raise ArgumentError.new("Invalid encoding: #{original_from}")
         else
-          raise ArgumentError.new("invalid encoding: #{original_from} -> #{original_to}")
+          raise ArgumentError.new("Invalid encoding: #{original_from} -> #{original_to}")
         end
       else
         raise Errno.new("iconv_open")
@@ -61,9 +61,9 @@ struct Iconv
     else
       case Errno.value
       when Errno::EINVAL
-        raise ArgumentError.new "incomplete multibyte sequence"
+        raise ArgumentError.new "Incomplete multibyte sequence"
       when Errno::EILSEQ
-        raise ArgumentError.new "invalid multibyte sequence"
+        raise ArgumentError.new "Invalid multibyte sequence"
       end
     end
   end

@@ -46,7 +46,7 @@ class IO::ARGF
   end
 
   def write(slice : Bytes)
-    raise IO::Error.new "can't write to ARGF"
+    raise IO::Error.new "Can't write to ARGF"
   end
 
   def path

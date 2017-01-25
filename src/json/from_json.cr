@@ -164,7 +164,7 @@ def NamedTuple.new(pull : JSON::PullParser)
 
     {% for key in T.keys %}
       if %var{key.id}.nil?
-        raise JSON::ParseException.new("missing json attribute: {{key}}", 0, 0)
+        raise JSON::ParseException.new("Missing json attribute: {{key}}", 0, 0)
       end
     {% end %}
 
@@ -183,7 +183,7 @@ def Enum.new(pull : JSON::PullParser)
   when :string
     parse(pull.read_string)
   else
-    raise "expecting int or string in JSON for #{self.class}, not #{pull.kind}"
+    raise "Expecting int or string in JSON for #{self.class}, not #{pull.kind}"
   end
 end
 
@@ -223,7 +223,7 @@ def Union.new(pull : JSON::PullParser)
       # Ignore
     end
   {% end %}
-  raise JSON::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
+  raise JSON::ParseException.new("Couldn't parse #{self} from #{string}", 0, 0)
 end
 
 def Time.new(pull : JSON::PullParser)

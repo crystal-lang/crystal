@@ -299,7 +299,7 @@ module Crystal
       end
 
       unless current_type.allows_instance_vars?
-        target.raise "can't declare instance variables in #{current_type}"
+        target.raise "Can't declare instance variables in #{current_type}"
       end
 
       add_to_initialize_info(target.name)

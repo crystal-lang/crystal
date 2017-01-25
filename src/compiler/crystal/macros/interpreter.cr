@@ -119,7 +119,7 @@ module Crystal
       if var
         @last = var
       else
-        node.raise "undefined macro variable '#{node.name}'"
+        node.raise "Undefined macro variable '#{node.name}'"
       end
     end
 
@@ -168,7 +168,7 @@ module Crystal
         from = @last
 
         unless from.is_a?(NumberLiteral)
-          node.raise "range begin #{exp.from} must evaluate to a NumberLiteral"
+          node.raise "Range begin #{exp.from} must evaluate to a NumberLiteral"
         end
 
         from = from.to_number.to_i
@@ -177,7 +177,7 @@ module Crystal
         to = @last
 
         unless to.is_a?(NumberLiteral)
-          node.raise "range end #{exp.to} must evaluate to a NumberLiteral"
+          node.raise "Range end #{exp.to} must evaluate to a NumberLiteral"
         end
 
         to = to.to_number.to_i
@@ -209,7 +209,7 @@ module Crystal
             {MacroId.new(entry.name), TypeNode.new(entry.type)}
           end
         else
-          exp.raise "can't interate TypeNode of type #{type}, only tuple or named tuple types"
+          exp.raise "Can't interate TypeNode of type #{type}, only tuple or named tuple types"
         end
       else
         node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"
@@ -279,7 +279,7 @@ module Crystal
         node.value.accept self
         @vars[target.name] = @last
       else
-        node.raise "can only assign to variables, not #{target.class_desc}"
+        node.raise "Can only assign to variables, not #{target.class_desc}"
       end
 
       false
@@ -421,7 +421,7 @@ module Crystal
       when ASTNode
         matched_type
       else
-        node.raise "can't interpret #{node}"
+        node.raise "Can't interpret #{node}"
       end
     end
 
@@ -454,7 +454,7 @@ module Crystal
         return @last = @def || NilLiteral.new
       end
 
-      node.raise "unknown macro instance var: '#{node.name}'"
+      node.raise "Unknown macro instance var: '#{node.name}'"
     end
 
     def visit(node : TupleLiteral)
@@ -489,7 +489,7 @@ module Crystal
     end
 
     def visit(node : ASTNode)
-      node.raise "can't execute #{node.class_desc} in a macro"
+      node.raise "Can't execute #{node.class_desc} in a macro"
     end
 
     def to_s

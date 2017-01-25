@@ -121,7 +121,7 @@ class YAML::Builder
   private def yaml_emit(event_name)
     ret = LibYAML.yaml_emitter_emit(@emitter, pointerof(@event))
     if ret != 1
-      raise YAML::Error.new("error emitting #{event_name}")
+      raise YAML::Error.new("Error emitting #{event_name}")
     end
   end
 end

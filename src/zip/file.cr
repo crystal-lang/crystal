@@ -63,7 +63,7 @@ class Zip::File
   # Returns the entry that has the given filename, or
   # raises `KeyError` if no such entry exists.
   def [](filename : String) : Entry
-    self[filename]? || raise(KeyError.new("missing zip entry: #{filename}"))
+    self[filename]? || raise(KeyError.new("Missing zip entry: #{filename}"))
   end
 
   # Returns the entry that has the given filename, or
@@ -87,7 +87,7 @@ class Zip::File
     find_directory_end_offset(64) ||
       find_directory_end_offset(1024) ||
       find_directory_end_offset(65 * 1024) ||
-      raise Zip::Error.new("couldn't find directory end signature in the last 65KB")
+      raise Zip::Error.new("Couldn't find directory end signature in the last 65KB")
   end
 
   private def find_directory_end_offset(buf_size)
@@ -116,7 +116,7 @@ class Zip::File
 
     signature = read UInt32
     if signature != Zip::END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE
-      raise Error.new("expected end of central directory header signature, not 0x#{signature.to_s(16)}")
+      raise Error.new("Expected end of central directory header signature, not 0x#{signature.to_s(16)}")
     end
 
     read Int16                     # number of this disk
@@ -138,7 +138,7 @@ class Zip::File
     entries_size.times do
       signature = read UInt32
       if signature != Zip::CENTRAL_DIRECTORY_HEADER_SIGNATURE
-        raise Error.new("expected directory header signature, not 0x#{signature.to_s(16)}")
+        raise Error.new("Expected directory header signature, not 0x#{signature.to_s(16)}")
       end
 
       entry = Entry.new(@io)
@@ -186,7 +186,7 @@ class Zip::File
         # at least check that the signature is OK (these are 4 bytes)
         signature = read(io, UInt32)
         if signature != FileInfo::SIGNATURE
-          raise Zip::Error.new("wrong local file header signature (expected 0x#{FileInfo::SIGNATURE.to_s(16)}, got 0x#{signature.to_s(16)})")
+          raise Zip::Error.new("Wrong local file header signature (expected 0x#{FileInfo::SIGNATURE.to_s(16)}, got 0x#{signature.to_s(16)})")
         end
 
         # Skip most of the headers except filename length and extra length

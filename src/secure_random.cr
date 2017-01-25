@@ -67,7 +67,7 @@ module SecureRandom
   # ```
   def self.random_bytes(n : Int = 16) : Bytes
     if n < 0
-      raise ArgumentError.new "negative size: #{n}"
+      raise ArgumentError.new "Negative size: #{n}"
     end
 
     init unless @@initialized

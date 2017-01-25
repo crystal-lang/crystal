@@ -223,7 +223,7 @@ struct Number
   # 500.clamp(10..100) # => 100
   # ```
   def clamp(range : Range)
-    raise ArgumentError.new("can't clamp an exclusive range") if range.exclusive?
+    raise ArgumentError.new("Can't clamp an exclusive range") if range.exclusive?
     clamp range.begin, range.end
   end
 

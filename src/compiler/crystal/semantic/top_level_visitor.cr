@@ -60,7 +60,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       extern, extern_union, packed = process_class_def_struct_attributes
     else
       if (attributes = @attributes) && !attributes.empty?
-        node.raise "class declaration can't have attributes"
+        node.raise "Class declaration can't have attributes"
       end
     end
 
@@ -80,9 +80,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           type_type_vars = type.type_vars
           if type_vars != type_type_vars
             if type_type_vars.size == 1
-              node.raise "type var must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
+              node.raise "Type var must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
             else
-              node.raise "type vars must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
+              node.raise "Type vars must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
             end
           end
         else
@@ -101,7 +101,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         type = GenericClassType.new @program, scope, name, nil, type_vars, false
         type.splat_index = node.splat_index
         if extern
-          node.raise "can only use Extern attribute with non-generic structs"
+          node.raise "Can only use Extern attribute with non-generic structs"
         end
       else
         type = NonGenericClassType.new @program, scope, name, nil, false
@@ -129,10 +129,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       superclass = lookup_type(node_superclass, free_vars: free_vars)
       case superclass
       when GenericClassType
-        node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
+        node_superclass.raise "Wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
       when NonGenericClassType, GenericClassInstanceType
         if superclass == @program.enum
-          node_superclass.raise "can't inherit Enum. Use the enum keyword to define enums"
+          node_superclass.raise "Can't inherit Enum. Use the enum keyword to define enums"
         end
       else
         node_superclass.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
@@ -142,16 +142,16 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     if node.superclass && !created_new_type && type.superclass != superclass
-      node.raise "superclass mismatch for class #{type} (#{superclass} for #{type.superclass})"
+      node.raise "Superclass mismatch for class #{type} (#{superclass} for #{type.superclass})"
     end
 
     if created_new_type && superclass
       if node.struct? != superclass.struct?
-        node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
+        node.raise "Can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
       end
 
       if superclass.struct? && !superclass.abstract?
-        node.raise "can't extend non-abstract struct #{superclass}"
+        node.raise "Can't extend non-abstract struct #{superclass}"
       end
     end
 
@@ -225,9 +225,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     existing_type = current_type.types[node.name]?
     if existing_type
       if existing_type.is_a?(AliasType)
-        node.raise "alias #{node.name} is already defined"
+        node.raise "Alias #{node.name} is already defined"
       else
-        node.raise "can't alias #{node.name} because it's already defined as a #{existing_type.type_desc}"
+        node.raise "Can't alias #{node.name} because it's already defined as a #{existing_type.type_desc}"
       end
     end
 
@@ -285,11 +285,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
                     metaclass = type.metaclass
                     case metaclass
                     when LibType
-                      receiver.raise "can't define method in lib #{metaclass}"
+                      receiver.raise "Can't define method in lib #{metaclass}"
                     when GenericClassInstanceMetaclassType
-                      receiver.raise "can't define method in generic instance #{metaclass}"
+                      receiver.raise "Can't define method in generic instance #{metaclass}"
                     when GenericModuleInstanceMetaclassType
-                      receiver.raise "can't define method in generic instance #{metaclass}"
+                      receiver.raise "Can't define method in generic instance #{metaclass}"
                     end
                     metaclass
                   end
@@ -300,10 +300,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     if node.abstract?
       if (target_type.class? || target_type.struct?) && !target_type.abstract?
-        node.raise "can't define abstract def on non-abstract #{target_type.type_desc}"
+        node.raise "Can't define abstract def on non-abstract #{target_type.type_desc}"
       end
       if target_type.metaclass?
-        node.raise "can't define abstract def on metaclass"
+        node.raise "Can't define abstract def on metaclass"
       end
     end
 
@@ -313,7 +313,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     if target_type.struct? && !target_type.metaclass? && node.name == "finalize"
-      node.raise "structs can't have finalizers because they are not tracked by the GC"
+      node.raise "Structs can't have finalizers because they are not tracked by the GC"
     end
 
     target_type.add_def node
@@ -341,18 +341,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   private def process_primitive_attribute(node, attribute)
     if attribute.args.size != 1
-      attribute.raise "expected Primitive attribute to have one argument"
+      attribute.raise "Expected Primitive attribute to have one argument"
     end
 
     arg = attribute.args.first
     unless arg.is_a?(SymbolLiteral)
-      arg.raise "expected Primitive argument to be a symbol literal"
+      arg.raise "Expected Primitive argument to be a symbol literal"
     end
 
     value = arg.value
 
     unless node.body.is_a?(Nop)
-      node.raise "method marked as Primitive must have an empty body"
+      node.raise "Method marked as Primitive must have an empty body"
     end
 
     node.body = Primitive.new(value)
@@ -459,7 +459,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     if base_type = node.base_type
       enum_base_type = lookup_type(base_type)
       unless enum_base_type.is_a?(IntegerType)
-        base_type.raise "enum base type must be an integer type"
+        base_type.raise "Enum base type must be an integer type"
       end
     else
       enum_base_type = @program.int32
@@ -490,7 +490,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     if enum_type.types.empty?
-      node.raise "enum #{node.name} must have at least one member"
+      node.raise "Enum #{node.name} must have at least one member"
     end
 
     unless existed
@@ -544,7 +544,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       is_flags = options[:is_flags]
 
       if options[:existed]
-        node.raise "can't reopen enum and add more constants to it"
+        node.raise "Can't reopen enum and add more constants to it"
       end
 
       if default_value = member.default_value
@@ -554,7 +554,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if default_value.is_a?(Crystal::NumberLiteral)
         enum_base_kind = base_type.kind
         if (enum_base_kind == :i32) && (enum_base_kind != default_value.kind)
-          default_value.raise "enum value must be an Int32"
+          default_value.raise "Enum value must be an Int32"
         end
       end
 
@@ -562,7 +562,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       const_value = NumberLiteral.new(counter, base_type.kind)
       member.default_value = const_value
       if enum_type.types.has_key?(member.name)
-        member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
+        member.raise "Enum '#{enum_type}' already contains a member named '#{member.name}'"
       end
 
       define_enum_question_method(enum_type, member, is_flags)
@@ -618,7 +618,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     type = scope.types[target.names.first]?
     if type
-      target.raise "already initialized constant #{type}"
+      target.raise "Already initialized constant #{type}"
     end
 
     const = Const.new(@program, scope, target.names.first, value)
@@ -645,14 +645,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if node.modifier.private?
         return false
       else
-        node.raise "can only use 'private' for types"
+        node.raise "Can only use 'private' for types"
       end
     when Assign
       if (target = exp.target).is_a?(Path)
         if node.modifier.private?
           return false
         else
-          node.raise "can only use 'private' for constants"
+          node.raise "Can only use 'private' for constants"
         end
       end
     when Def
@@ -661,7 +661,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if node.modifier.private?
         return false
       else
-        node.raise "can only use 'private' for macros"
+        node.raise "Can only use 'private' for macros"
       end
     when Call
       # Don't give an error yet: wait to see if the
@@ -669,7 +669,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       return false
     end
 
-    node.raise "can't apply visibility modifier"
+    node.raise "Can't apply visibility modifier"
   end
 
   def visit(node : ProcLiteral)
@@ -693,7 +693,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare fun"
 
     if node.body && !current_type.is_a?(Program)
-      node.raise "can only declare fun at lib or global scope"
+      node.raise "Can only declare fun at lib or global scope"
     end
 
     call_convention = check_call_convention_attributes node
@@ -802,7 +802,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       when "CallConvention"
         call_convention = parse_call_convention(attr, call_convention)
       else
-        attr.raise "illegal attribute for lib, valid attributes are: Link, CallConvention"
+        attr.raise "Illegal attribute for lib, valid attributes are: Link, CallConvention"
       end
     end
     {link_attributes, call_convention}
@@ -814,7 +814,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     type = lookup_type(node_name)
     case type
     when GenericModuleType
-      node.raise "wrong number of type vars for #{type} (given 0, expected #{type.type_vars.size})"
+      node.raise "Wrong number of type vars for #{type} (given 0, expected #{type.type_vars.size})"
     when .module?
       # OK
     else
@@ -825,7 +825,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       current_type.as(ModuleType).include type
       run_hooks hook_type(type), current_type, kind, node
     rescue ex : TypeException
-      node.raise "at '#{kind}' hook", ex
+      node.raise "At '#{kind}' hook", ex
     end
   end
 
@@ -872,7 +872,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def parse_call_convention(attr, call_convention)
     if call_convention
-      attr.raise "call convention already specified"
+      attr.raise "Call convention already specified"
     end
 
     if attr.args.size != 1
@@ -881,13 +881,13 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     call_convention_node = attr.args.first
     unless call_convention_node.is_a?(StringLiteral)
-      call_convention_node.raise "argument to CallConvention must be a string"
+      call_convention_node.raise "Argument to CallConvention must be a string"
     end
 
     value = call_convention_node.value
     call_convention = LLVM::CallConvention.parse?(value)
     unless call_convention
-      call_convention_node.raise "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
+      call_convention_node.raise "Invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
     end
     call_convention
   end
@@ -949,7 +949,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
               value.raise "Extern 'union' attribute must be a boolean, not #{value.class_desc}"
             end
           else
-            named_arg.raise "unknown Extern named argument, valid arguments are: 'union'"
+            named_arg.raise "Unknown Extern named argument, valid arguments are: 'union'"
           end
         end
 
@@ -957,7 +957,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       when "Packed"
         packed = true
       else
-        attr.raise "illegal attribute for struct declaration, valid attributes are: Packed, Extern"
+        attr.raise "Illegal attribute for struct declaration, valid attributes are: Packed, Extern"
       end
     end
 
@@ -985,7 +985,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     if scope.is_a?(EnumType)
-      path.raise "can't declare type inside enum #{scope}"
+      path.raise "Can't declare type inside enum #{scope}"
     end
 
     {scope.as(ModuleType), name}
@@ -1001,11 +1001,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         next_type = base_type.lookup_path_item(name, lookup_in_namespace: false, include_private: true, location: path.location)
         if next_type
           if next_type.is_a?(ASTNode)
-            path.raise "execpted #{name} to be a type"
+            path.raise "Execpted #{name} to be a type"
           end
         else
           if base_type.is_a?(EnumType)
-            path.raise "can't declare type inside enum #{base_type}"
+            path.raise "Can't declare type inside enum #{base_type}"
           end
 
           next_type = NonGenericModuleType.new(@program, base_type.as(ModuleType), name)

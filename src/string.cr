@@ -110,7 +110,7 @@ class String
   include Comparable(self)
 
   macro inherited
-    {{ raise "cannot inherit from String" }}
+    {{ raise "Cannot inherit from String" }}
   end
 
   # Creates a `String` from the given *slice*. `Bytes` will be copied from the slice.
@@ -221,7 +221,7 @@ class String
     bytesize, size = yield buffer
 
     unless 0 <= bytesize <= capacity
-      raise ArgumentError.new("bytesize out of capacity bounds")
+      raise ArgumentError.new("Bytesize out of capacity bounds")
     end
 
     buffer[bytesize] = 0_u8
@@ -327,7 +327,7 @@ class String
 
   # Same as `#to_i` but returns an `Int8`.
   def to_i8(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int8
-    to_i8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int8: #{self}") }
+    to_i8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid Int8: #{self}") }
   end
 
   # Same as `#to_i` but returns an `Int8` or `nil`.
@@ -342,7 +342,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt8`.
   def to_u8(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt8
-    to_u8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt8: #{self}") }
+    to_u8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid UInt8: #{self}") }
   end
 
   # Same as `#to_i` but returns an `UInt8` or `nil`.
@@ -357,7 +357,7 @@ class String
 
   # Same as `#to_i` but returns an `Int16`.
   def to_i16(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int16
-    to_i16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int16: #{self}") }
+    to_i16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid Int16: #{self}") }
   end
 
   # Same as `#to_i` but returns an `Int16` or `nil`.
@@ -372,7 +372,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt16`.
   def to_u16(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt16
-    to_u16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt16: #{self}") }
+    to_u16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid UInt16: #{self}") }
   end
 
   # Same as `#to_i` but returns an `UInt16` or `nil`.
@@ -387,7 +387,7 @@ class String
 
   # Same as `#to_i`.
   def to_i32(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int32
-    to_i32(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int32: #{self}") }
+    to_i32(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid Int32: #{self}") }
   end
 
   # Same as `#to_i`.
@@ -402,7 +402,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt32`.
   def to_u32(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt32
-    to_u32(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt32: #{self}") }
+    to_u32(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid UInt32: #{self}") }
   end
 
   # Same as `#to_i` but returns an `UInt32` or `nil`.
@@ -417,7 +417,7 @@ class String
 
   # Same as `#to_i` but returns an `Int64`.
   def to_i64(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int64
-    to_i64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int64: #{self}") }
+    to_i64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid Int64: #{self}") }
   end
 
   # Same as `#to_i` but returns an `Int64` or `nil`.
@@ -432,7 +432,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt64`.
   def to_u64(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt64
-    to_u64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt64: #{self}") }
+    to_u64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid UInt64: #{self}") }
   end
 
   # Same as `#to_i` but returns an `UInt64` or `nil`.
@@ -493,7 +493,7 @@ class String
   end
 
   private def to_u64_info(base, whitespace, underscore, prefix, strict)
-    raise ArgumentError.new("invalid base #{base}") unless 2 <= base <= 36 || base == 62
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
 
     ptr = to_unsafe
 
@@ -753,7 +753,7 @@ class String
     end_pos ||= reader.pos
 
     if start_pos
-      raise ArgumentError.new "negative count" if count < 0
+      raise ArgumentError.new "Negative count" if count < 0
       return "" if count == 0
 
       count = end_pos - start_pos
@@ -767,7 +767,7 @@ class String
       if count >= 0
         return ""
       else
-        raise ArgumentError.new "negative count"
+        raise ArgumentError.new "Negative count"
       end
     else
       raise IndexError.new
@@ -829,7 +829,7 @@ class String
     single_byte_optimizable = ascii_only?
 
     if 0 <= start < bytesize
-      raise ArgumentError.new "negative count" if count < 0
+      raise ArgumentError.new "Negative count" if count < 0
 
       count = bytesize - start if start + count > bytesize
       return "" if count == 0
@@ -844,7 +844,7 @@ class String
       if count >= 0
         return ""
       else
-        raise ArgumentError.new "negative count"
+        raise ArgumentError.new "Negative count"
       end
     else
       raise IndexError.new
@@ -1859,11 +1859,11 @@ class String
         index += 1
         start_index = index
         end_index = replacement.byte_index('>'.ord.to_u8, start_index)
-        raise ArgumentError.new("missing ending '>' for '\\\\k<...'") unless end_index
+        raise ArgumentError.new("Missing ending '>' for '\\\\k<...'") unless end_index
 
         name = replacement.byte_slice(start_index, end_index - start_index)
         capture = match_data[name]?
-        raise IndexError.new("undefined group name reference: #{name.inspect}") unless capture
+        raise IndexError.new("Undefined group name reference: #{name.inspect}") unless capture
 
         buffer << capture
         index = end_index + 1
@@ -2361,7 +2361,7 @@ class String
   # # => "Developers! Developers! Developers! Developers!"
   # ```
   def *(times : Int)
-    raise ArgumentError.new "negative argument" if times < 0
+    raise ArgumentError.new "Negative argument" if times < 0
 
     if times == 0 || bytesize == 0
       return ""
@@ -3888,18 +3888,18 @@ class String
   #
   # This method should sometimes be called before passing a `String` to a C function.
   def check_no_null_byte
-    raise ArgumentError.new("string contains null byte") if byte_index(0)
+    raise ArgumentError.new("String contains null byte") if byte_index(0)
     self
   end
 
   # :nodoc:
   def self.check_capacity_in_bounds(capacity)
     if capacity < 0
-      raise ArgumentError.new("negative capacity")
+      raise ArgumentError.new("Negative capacity")
     end
 
     if capacity.to_u64 > (UInt32::MAX - HEADER_SIZE - 1)
-      raise ArgumentError.new("capacity too big")
+      raise ArgumentError.new("Capacity too big")
     end
   end
 

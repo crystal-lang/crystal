@@ -80,7 +80,7 @@ class Event::SignalHandler
     if callback = @callbacks[sig]?
       callback.call sig
     else
-      raise "missing #{sig} callback"
+      raise "Missing #{sig} callback"
     end
   rescue ex
     ex.inspect_with_backtrace STDERR

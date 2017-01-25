@@ -709,7 +709,7 @@ module Crystal
         return add_hook :method_added, a_def, args_size: 1
       when "method_missing"
         if a_def.args.size != 1
-          raise TypeException.new "macro 'method_missing' expects 1 argument (call)"
+          raise TypeException.new "Macro 'method_missing' expects 1 argument (call)"
         end
       end
 
@@ -727,11 +727,11 @@ module Crystal
       if a_def.args.size != args_size
         case args_size
         when 0
-          raise TypeException.new "macro '#{kind}' must not have arguments"
+          raise TypeException.new "Macro '#{kind}' must not have arguments"
         when 1
-          raise TypeException.new "macro '#{kind}' must have a argument"
+          raise TypeException.new "Macro '#{kind}' must have a argument"
         else
-          raise TypeException.new "macro '#{kind}' must have #{args_size} arguments"
+          raise TypeException.new "Macro '#{kind}' must have #{args_size} arguments"
         end
       end
 
@@ -745,9 +745,9 @@ module Crystal
 
     def include(mod)
       if mod == self
-        raise TypeException.new "cyclic include detected"
+        raise TypeException.new "Cyclic include detected"
       elsif mod.ancestors.includes?(self)
-        raise TypeException.new "cyclic include detected"
+        raise TypeException.new "Cyclic include detected"
       else
         unless parents.includes?(mod)
           parents.insert 0, mod
@@ -1207,7 +1207,7 @@ module Crystal
           # Consider the case of @x : *T
           instance_var_type = ivar_type.splatted_type.replace_type_parameters(instance)
           unless instance_var_type.is_a?(TupleInstanceType)
-            raise TypeException.new "expected splatted type to be a tuple type, not #{instance_var_type}"
+            raise TypeException.new "Expected splatted type to be a tuple type, not #{instance_var_type}"
           end
         else
           instance_var_type = ivar_type.replace_type_parameters(instance)
@@ -1341,7 +1341,7 @@ module Crystal
       if node.is_a?(Var)
         node.type
       else
-        node.raise "can't declare variable with #{node.class_desc}"
+        node.raise "Can't declare variable with #{node.class_desc}"
       end
     end
 
@@ -1574,13 +1574,13 @@ module Crystal
             if type_var.is_a?(TupleInstanceType)
               new_type_vars.concat(type_var.tuple_types)
             else
-              node.raise "expected type to be a tuple type, not #{type_var}"
+              node.raise "Expected type to be a tuple type, not #{type_var}"
             end
           elsif type.is_a?(TypeSplat)
             if type_var.is_a?(TupleInstanceType)
               new_type_vars.concat(type_var.tuple_types)
             else
-              node.raise "expected type to be a tuple type, not #{type_var}"
+              node.raise "Expected type to be a tuple type, not #{type_var}"
             end
           else
             new_type_vars << type_var
@@ -1836,12 +1836,12 @@ module Crystal
 
       unless n.is_a?(Var) && n.type.is_a?(TypeParameter)
         unless n.is_a?(NumberLiteral)
-          raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{n.type} (N must be an integer)"
+          raise TypeException.new "Can't instantiate StaticArray(T, N) with N = #{n.type} (N must be an integer)"
         end
 
         value = n.value.to_i
         if value < 0
-          raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{value} (N must be positive)"
+          raise TypeException.new "Can't instantiate StaticArray(T, N) with N = #{value} (N must be positive)"
         end
       end
 
@@ -1876,7 +1876,7 @@ module Crystal
 
       types = type_vars.map do |type_var|
         unless type_var.is_a?(Type)
-          type_var.raise "argument to Proc must be a type, not #{type_var}"
+          type_var.raise "Argument to Proc must be a type, not #{type_var}"
         end
         type_var
       end
@@ -1955,7 +1955,7 @@ module Crystal
 
       types = type_vars.map do |type_var|
         unless type_var.is_a?(Type)
-          type_var.raise "argument to Tuple must be a type, not #{type_var}"
+          type_var.raise "Argument to Tuple must be a type, not #{type_var}"
         end
         type_var
       end
@@ -2064,7 +2064,7 @@ module Crystal
     @instantiations = {} of Array(NamedArgumentType) => Type
 
     def instantiate(type_vars)
-      raise "can't instantiate NamedTuple type yet"
+      raise "Can't instantiate NamedTuple type yet"
     end
 
     def instantiate_named_args(entries : Array(NamedArgumentType))
@@ -2531,7 +2531,7 @@ module Crystal
     def instantiate(type_vars)
       types = type_vars.map do |type_var|
         unless type_var.is_a?(Type)
-          type_var.raise "argument to Proc must be a type, not #{type_var}"
+          type_var.raise "Argument to Proc must be a type, not #{type_var}"
         end
         type_var
       end
@@ -2624,14 +2624,14 @@ module Crystal
           if replacement.is_a?(Var)
             new_union_types << replacement.type
           else
-            raise TypeException.new "expected type, not #{replacement.class_desc}"
+            raise TypeException.new "Expected type, not #{replacement.class_desc}"
           end
         when TypeSplat
           type_var = type.splatted_type.replace_type_parameters(instance)
           if type_var.is_a?(TupleInstanceType)
             new_union_types.concat(type_var.tuple_types)
           else
-            raise TypeException.new "expected tuple type, not #{type_var}"
+            raise TypeException.new "Expected tuple type, not #{type_var}"
           end
         else
           new_union_types << type.replace_type_parameters(instance)

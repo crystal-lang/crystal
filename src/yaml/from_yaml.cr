@@ -25,7 +25,7 @@ def Nil.new(pull : YAML::PullParser)
   if value.empty?
     nil
   else
-    raise YAML::ParseException.new("expected nil, not #{value}", 0, 0)
+    raise YAML::ParseException.new("Expected nil, not #{value}", 0, 0)
   end
 end
 
@@ -122,7 +122,7 @@ def NamedTuple.new(pull : YAML::PullParser)
 
     {% for key in T.keys %}
       if %var{key.id}.nil?
-        raise YAML::ParseException.new("missing yaml attribute: {{key}}", 0, 0)
+        raise YAML::ParseException.new("Missing yaml attribute: {{key}}", 0, 0)
       end
     {% end %}
 
@@ -152,7 +152,7 @@ def Union.new(pull : YAML::PullParser)
       # Ignore
     end
   {% end %}
-  raise YAML::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
+  raise YAML::ParseException.new("Couldn't parse #{self} from #{string}", 0, 0)
 end
 
 def Time.new(pull : YAML::PullParser)
