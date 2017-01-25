@@ -1,8 +1,8 @@
 require "c/sys/wait"
 
 # :nodoc:
-# Singleton that handles SIG_CHLD and queues events for Process#waitpid.
-# Process.waitpid uses this class for nonblocking operation.
+# Singleton that handles `SIG_CHLD` and queues events for `Process#waitpid`.
+# `Process.waitpid` uses this class for nonblocking operation.
 class Event::SignalChildHandler
   def self.instance : self
     @@instance ||= begin
@@ -50,7 +50,7 @@ class Event::SignalChildHandler
     end
   end
 
-  # returns a future that sends a Process::Status or raises after forking.
+  # Returns a future that sends a `Process::Status` or raises after forking.
   def waitpid(pid : LibC::PidT)
     chan = ChanType.new(1)
     # BUG: needs mutexes with threads

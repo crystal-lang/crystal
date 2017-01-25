@@ -1,4 +1,4 @@
-# Struct is the base type of structs you create in your program.
+# `Struct` is the base type of structs you create in your program.
 # It is set as a struct's superstruct when you don't specify one:
 #
 # ```

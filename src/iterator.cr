@@ -1,6 +1,6 @@
 require "./enumerable"
 
-# An Iterator allows processing sequences lazily, as opposed to `Enumerable` which processes
+# An `Iterator` allows processing sequences lazily, as opposed to `Enumerable` which processes
 # sequences eagerly and produces an `Array` in most of its methods.
 #
 # As an example, let's compute the first three numbers in the range `1..10_000_000` that are even,
@@ -12,14 +12,14 @@ require "./enumerable"
 #
 # The above works, but creates many intermediate arrays: one for the *select* call,
 # one for the *map* call and one for the *take* call. A more efficient way is to invoke
-# `Range#each` without a block, which gives us an Iterator so we can process the operations
+# `Range#each` without a block, which gives us an `Iterator` so we can process the operations
 # lazily:
 #
 # ```
 # (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.first(3) # => #< Iterator(T)::First...
 # ```
 #
-# Iterator redefines many of `Enumerable`'s method in a lazy way, returning iterators
+# `Iterator` redefines many of `Enumerable`'s method in a lazy way, returning iterators
 # instead of arrays.
 #
 # At the end of the call chain we get back a new iterator: we need to consume it, either
@@ -29,14 +29,14 @@ require "./enumerable"
 # (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.first(3).to_a # => [6, 12, 18]
 # ```
 #
-# To implement an Iterator you need to define a `next` method that must return the next
+# To implement an `Iterator` you need to define a `next` method that must return the next
 # element in the sequence or `Iterator::Stop::INSTANCE`, which signals the end of the sequence
 # (you can invoke `stop` inside an iterator as a shortcut).
 #
 # Additionally, an `Iterator` can implement `rewind`, which must rewind the iterator to
 # its initial state. This is needed to implement the `cycle` method.
 #
-# For example, this is an iterator that returns a sequence of N zeros:
+# For example, this is an iterator that returns a sequence of `N` zeros:
 #
 # ```
 # class Zeros
@@ -75,24 +75,25 @@ require "./enumerable"
 module Iterator(T)
   include Enumerable(T)
 
-  # The class that signals that there are no more elements in an iterator.
+  # The class that signals that there are no more elements in an `Iterator`.
   class Stop
     INSTANCE = new
   end
 
-  # IteratorWrapper eliminates some boilerplate when defining an Iterator that wraps another iterator.
+  # `IteratorWrapper` eliminates some boilerplate when defining
+  # an `Iterator` that wraps another iterator.
   #
   # To use it, include this module in your iterator and make sure that the wrapped
   # iterator is stored in the `@iterator` instance variable.
   module IteratorWrapper
-    # Rewinds the wrapped iterator and returns self.
+    # Rewinds the wrapped iterator and returns `self`.
     def rewind
       @iterator.rewind
       self
     end
 
     # Invokes `next` on the wrapped iterator and returns `stop` if
-    # the given value was a Stop. Otherwise, returns the value.
+    # the given value was a `Iterator::Stop`. Otherwise, returns the value.
     macro wrapped_next
       %value = @iterator.next
       return stop if %value.is_a?(Stop)
@@ -234,11 +235,12 @@ module Iterator(T)
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
-  # By default, a new array is returned for each consecutive slice when invoking `next`.
-  # If *reuse* is given, the array can be reused: if *reuse* is
-  # an `Array`, this array will be reused; if *reuse* if truthy,
-  # the method will create a new array and reuse it. This can be
-  # used to prevent many memory allocations when each slice of
+  # By default, a new array is created and yielded for each consecutive when invoking `next`.
+  # * If *reuse* is given, the array can be reused
+  # * If *reuse* is an `Array`, this array will be reused
+  # * If *reuse* is truthy, the method will create a new array and reuse it.
+  #
+  # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def cons(n : Int, reuse = false)
     raise ArgumentError.new "invalid cons size: #{n}" if n <= 0
@@ -322,7 +324,7 @@ module Iterator(T)
 
   # Returns an iterator that repeatedly returns the elements of the original
   # iterator starting back at the beginning when the end was reached,
-  # but only n times.
+  # but only *n* times.
   #
   # ```
   # iter = ["a", "b", "c"].each.cycle(2)
@@ -385,7 +387,7 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that then returns slices of n elements of the initial
+  # Returns an iterator that then returns slices of *n* elements of the initial
   # iterator.
   #
   # ```
@@ -396,11 +398,12 @@ module Iterator(T)
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
-  # By default, a new array is returned for each silce when invoking `next`.
-  # If *reuse* is given, the array can be reused: if *reuse* is
-  # an `Array`, this array will be reused; if *reuse* if truthy,
-  # the method will create a new array and reuse it. This can be
-  # used to prevent many memory allocations when each slice of
+  # By default, a new array is created and yielded for each consecutive when invoking `next`.
+  # * If *reuse* is given, the array can be reused
+  # * If *reuse* is an `Array`, this array will be reused
+  # * If *reuse* is truthy, the method will create a new array and reuse it.
+  #
+  # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_slice(n, reuse = false)
     slice(n, reuse)
@@ -488,7 +491,8 @@ module Iterator(T)
     end
   end
 
-  # Returns a new iterator with the concatenated results of running the block (which is expected to return arrays or iterators)
+  # Returns a new iterator with the concatenated results of running the block
+  # (which is expected to return arrays or iterators)
   # once for every element in the collection.
   #
   # ```
@@ -585,10 +589,11 @@ module Iterator(T)
   # ```
   #
   # By default, a new array is created and yielded for each group.
-  # If *reuse* is given, the array can be reused: if *reuse* is
-  # an `Array`, this array will be reused; if *reuse* if truthy,
-  # the method will create a new array and reuse it. This can be
-  # used to prevent many memory allocations when each slice of
+  # * If *reuse* is given, the array can be reused
+  # * If *reuse* is an `Array`, this array will be reused
+  # * If *reuse* is truthy, the method will create a new array and reuse it.
+  #
+  # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def in_groups_of(size : Int, filled_up_with = nil, reuse = false)
     raise ArgumentError.new("size must be positive") if size <= 0
@@ -793,7 +798,7 @@ module Iterator(T)
     end
   end
 
-  # Alias of `each_slice`
+  # Alias of `each_slice`.
   def slice(n : Int, reuse = false)
     raise ArgumentError.new "invalid slice size: #{n}" if n <= 0
     Slice(typeof(self), T, typeof(n)).new(self, n, reuse)
@@ -874,7 +879,7 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that only returns the first n elements of the
+  # Returns an iterator that only returns the first *n* elements of the
   # initial iterator.
   #
   # ```
@@ -1034,7 +1039,7 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that returns a tuple of the element and its index.
+  # Returns an iterator that returns a `Tuple` of the element and its index.
   #
   # ```
   # iter = (1..3).each.with_index
@@ -1076,7 +1081,7 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that returns a tuple of the element and a given object.
+  # Returns an iterator that returns a `Tuple` of the element and a given object.
   #
   # ```
   # iter = (1..3).each.with_object("a")
@@ -1103,7 +1108,7 @@ module Iterator(T)
   end
 
   # Returns an iterator that returns the elements of this iterator and the given
-  # one pairwise as tuples.
+  # one pairwise as `Tuple`s.
   #
   # ```
   # iter1 = [4, 5, 6].each
@@ -1141,7 +1146,8 @@ module Iterator(T)
     end
   end
 
-  # Returns an Iterator that enumerates over the items, chunking them together based on the return value of the block.
+  # Returns an Iterator that enumerates over the items,
+  # chunking them together based on the return value of the block.
   #
   # Consecutive elements which return the same block value are chunked together.
   #
@@ -1166,11 +1172,12 @@ module Iterator(T)
   # * `Enumerable::Chunk::Drop` specifies that the elements should be dropped
   # * `Enumerable::Chunk::Alone` specifies that the element should be chunked by itself
   #
-  # By default, a new array is returned for each chunk when invoking `next`.
-  # If *reuse* is given, the array can be reused: if *reuse* is
-  # an `Array`, this array will be reused; if *reuse* if truthy,
-  # the method will create a new array and reuse it. This can be
-  # used to prevent many memory allocations when each slice of
+  # By default, a new array is created and yielded for each chunk when invoking `next`.
+  # * If *reuse* is given, the array can be reused
+  # * If *reuse* is an `Array`, this array will be reused
+  # * If *reuse* is truthy, the method will create a new array and reuse it.
+  #
+  # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   #
   # See also: `Enumerable#chunks`.

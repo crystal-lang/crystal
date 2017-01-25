@@ -110,9 +110,9 @@ struct Int
   # Divides `self` by *other* using truncated division.
   #
   # In truncated division, given two integers x and y:
-  # * q = x.tdiv(y) is rounded toward zero
-  # * r = x.remainder(y) has the sign of the first argument
-  # * x == q*y + r
+  # * `q = x.tdiv(y)` is rounded toward zero
+  # * `r = x.remainder(y)` has the sign of the first argument
+  # * `x == q*y + r`
   #
   # For example:
   #
@@ -124,7 +124,7 @@ struct Int
   # -5    -3       1        -2
   # ```
   #
-  # Raises if *other* is zero, or if *other* is -1 and
+  # Raises if *other* is `0`, or if *other* is `-1` and
   # `self` is signed and is the minimum value for that
   # integer type.
   def tdiv(other : Int)

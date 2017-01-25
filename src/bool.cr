@@ -29,7 +29,7 @@ struct Bool
     self ? other : false
   end
 
-  # Exclusive Or. Returns `true` if this bool is different from *other*, otherwise returns `false`.
+  # Exclusive OR. Returns `true` if this bool is different from *other*, otherwise returns `false`.
   #
   # ```
   # false ^ false # => false

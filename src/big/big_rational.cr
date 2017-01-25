@@ -21,7 +21,7 @@ struct BigRational < Number
   include Comparable(Int)
   include Comparable(Float)
 
-  # Create a new BigRational.
+  # Create a new `BigRational`.
   #
   # If *denominator* is 0, this will raise an exception.
   def initialize(numerator : Int, denominator : Int)

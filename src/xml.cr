@@ -2,7 +2,7 @@
 #
 # ### Parsing
 #
-# `XML#parse` will parse xml from `String` or `IO` and return xml document as an `XML:Node` which represents all kinds of xml nodes.
+# `XML#parse` will parse xml from `String` or `IO` and return xml document as an `XML::Node` which represents all kinds of xml nodes.
 #
 # Example:
 #
@@ -60,6 +60,7 @@ module XML
   end
 
   # Parses an XML document from *string* with *options* into an `XML::Node`.
+  #
   # See `ParserOptions.default` for default options.
   def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Node
     raise XML::Error.new("Document is empty", 0) if string.empty?
@@ -67,6 +68,7 @@ module XML
   end
 
   # Parses an XML document from *io* with *options* into an `XML::Node`.
+  #
   # See `ParserOptions.default` for default options.
   def self.parse(io : IO, options : ParserOptions = ParserOptions.default) : Node
     from_ptr LibXML.xmlReadIO(
@@ -82,6 +84,7 @@ module XML
   end
 
   # Parses an HTML document from *string* with *options* into an `XML::Node`.
+  #
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     raise XML::Error.new("Document is empty", 0) if string.empty?
@@ -89,6 +92,7 @@ module XML
   end
 
   # Parses an HTML document from *io* with *options* into an `XML::Node`.
+  #
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     from_ptr LibXML.htmlReadIO(

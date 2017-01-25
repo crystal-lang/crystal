@@ -100,7 +100,7 @@ module FileUtils
   end
 
   # Copies a file or directory *src_path* to *dest_path*.
-  # If *src_path* is a directory, this method copies all its contents recursively
+  # If *src_path* is a directory, this method copies all its contents recursively.
   #
   # ```
   # FileUtils.cp_r("files", "dir")
@@ -232,7 +232,7 @@ module FileUtils
   end
 
   # Deletes a file or directory *path*.
-  # If *path* is a directory, this method removes all its contents recursively
+  # If *path* is a directory, this method removes all its contents recursively.
   #
   # ```
   # FileUtils.rm_r("dir")
@@ -255,7 +255,7 @@ module FileUtils
   end
 
   # Deletes a list of files or directories *paths*.
-  # If one path is a directory, this method removes all its contents recursively
+  # If one path is a directory, this method removes all its contents recursively.
   #
   # ```
   # FileUtils.rm_r(["files", "bar.cr"])
@@ -267,7 +267,7 @@ module FileUtils
   end
 
   # Deletes a file or directory *path*.
-  # If *path* is a directory, this method removes all its contents recursively
+  # If *path* is a directory, this method removes all its contents recursively.
   # Ignore all errors.
   #
   # ```
@@ -283,7 +283,7 @@ module FileUtils
   end
 
   # Deletes a list of files or directories *paths*.
-  # If one path is a directory, this method removes all its contents recursively
+  # If one path is a directory, this method removes all its contents recursively.
   # Ignore all errors.
   #
   # ```

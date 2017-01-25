@@ -1,9 +1,8 @@
 # A JSON builder generates valid JSON.
 #
-# A `JSON::Error` is raised if attempting to generate
-# an invalid JSON (for example, if invoking `end_array`
-# without a matching `start_array`, or trying to use
-# a non-string value as an object's field name)
+# A `JSON::Error` is raised if attempting to generate an invalid JSON
+# (for example, if invoking `end_array` without a matching `start_array`,
+# or trying to use a non-string value as an object's field name).
 class JSON::Builder
   private getter io
 
@@ -12,11 +11,12 @@ class JSON::Builder
   record ArrayState, empty : Bool
   record ObjectState, empty : Bool, name : Bool
   record DocumentEndState
+
   alias State = StartState | DocumentStartState | ArrayState | ObjectState | DocumentEndState
 
   @indent : String?
 
-  # Creates a JSON::Builder that will write to the given IO.
+  # Creates a `JSON::Builder` that will write to the given `IO`.
   def initialize(@io : IO)
     @state = [StartState.new] of State
     @current_indent = 0
@@ -234,12 +234,12 @@ class JSON::Builder
     yield
   end
 
-  # Flushes the underlying IO.
+  # Flushes the underlying `IO`.
   def flush
     @io.flush
   end
 
-  # Sets the indent string.
+  # Sets the indent *string*.
   def indent=(string : String)
     if string.empty?
       @indent = nil
@@ -248,7 +248,7 @@ class JSON::Builder
     end
   end
 
-  # Sets the indent level (number of spaces)
+  # Sets the indent *level* (number of spaces).
   def indent=(level : Int)
     if level < 0
       @indent = nil
@@ -333,7 +333,7 @@ class JSON::Builder
 end
 
 module JSON
-  # Returns the resulting String of writing JSON to the yielded `JSON::Builder`.
+  # Returns the resulting `String` of writing JSON to the yielded `JSON::Builder`.
   #
   # ```
   # require "json"
@@ -360,7 +360,7 @@ module JSON
     end
   end
 
-  # Writes JSON into the given IO. A `JSON::Builder` is yielded to the block.
+  # Writes JSON into the given `IO`. A `JSON::Builder` is yielded to the block.
   def self.build(io : IO, indent = nil)
     builder = JSON::Builder.new(io)
     builder.indent = indent if indent

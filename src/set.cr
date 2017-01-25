@@ -1,8 +1,8 @@
-# Set implements a collection of unordered values with no duplicates.
+# `Set` implements a collection of unordered values with no duplicates.
 #
 # An `Enumerable` object can be converted to `Set` using the `#to_set` method.
 #
-# Set uses `Hash` as storage, so you must note the following points:
+# `Set` uses `Hash` as storage, so you must note the following points:
 #
 # * Equality of elements is determined according to `Object#==` and `Object#hash`.
 # * `Set` assumes that the identity of each element does not change while it is stored. Modifying an element of a set will render the set to an unreliable state.
@@ -24,7 +24,7 @@ struct Set(T)
   include Enumerable(T)
   include Iterable(T)
 
-  # Creates a new, empty `Set`
+  # Creates a new, empty `Set`.
   #
   # ```
   # s = Set(Int32).new
@@ -32,12 +32,12 @@ struct Set(T)
   # ```
   #
   # An initial capacity can be specified, and it will be set as the initial capacity
-  # of the internal Hash.
+  # of the internal `Hash`.
   def initialize(initial_capacity = nil)
     @hash = Hash(T, Nil).new(initial_capacity: initial_capacity)
   end
 
-  # Creates a new set from the elements in `enumerable`
+  # Creates a new set from the elements in *enumerable*.
   #
   # ```
   # a = [1, 3, 5]
@@ -53,7 +53,7 @@ struct Set(T)
     add object
   end
 
-  # Adds *object* to the set and returns `self`
+  # Adds *object* to the set and returns `self`.
   #
   # ```
   # s = Set{1, 5}
@@ -257,7 +257,7 @@ struct Set(T)
     self
   end
 
-  # Returns `true` if both sets have the same elements
+  # Returns `true` if both sets have the same elements.
   #
   # ```
   # Set{1, 5} == Set{1, 5} # => true
@@ -266,12 +266,12 @@ struct Set(T)
     same?(other) || @hash == other.@hash
   end
 
-  # Returns a new set with all of the same elements
+  # Returns a new `Set` with all of the same elements.
   def dup
     Set.new(self)
   end
 
-  # Returns a new set with all of the elements cloned.
+  # Returns a new `Set` with all of the elements cloned.
   def clone
     clone = Set(T).new
     each do |element|
@@ -280,7 +280,7 @@ struct Set(T)
     clone
   end
 
-  # Returns the elements as an array
+  # Returns the elements as an `Array`.
   #
   # ```
   # Set{1, 5}.to_a # => [1,5]
@@ -289,7 +289,7 @@ struct Set(T)
     @hash.keys
   end
 
-  # Alias of `#to_s`
+  # Alias of `#to_s`.
   def inspect(io)
     to_s(io)
   end
@@ -317,14 +317,14 @@ struct Set(T)
     end
   end
 
-  # Writes a string representation of the set to *io*
+  # Writes a string representation of the set to *io*.
   def to_s(io)
     io << "Set{"
     join ", ", io, &.inspect(io)
     io << "}"
   end
 
-  # Returns `true` if the set is a subset of the *other* set
+  # Returns `true` if the set is a subset of the *other* set.
   #
   # This set must have the same or fewer elements than the *other* set, and all
   # of elements in this set must be present in the *other* set.
@@ -338,7 +338,7 @@ struct Set(T)
     all? { |value| other.includes?(value) }
   end
 
-  # Returns `true` if the set is a proper subset of the *other* set
+  # Returns `true` if the set is a proper subset of the *other* set.
   #
   # This set must have fewer elements than the *other* set, and all
   # of elements in this set must be present in the *other* set.
@@ -352,7 +352,7 @@ struct Set(T)
     all? { |value| other.includes?(value) }
   end
 
-  # Returns `true` if the set is a superset of the *other* set
+  # Returns `true` if the set is a superset of the *other* set.
   #
   # The *other* must have the same or fewer elements than this set, and all of
   # elements in the *other* set must be present in this set.
@@ -365,7 +365,7 @@ struct Set(T)
     other.subset?(self)
   end
 
-  # Returns `true` if the set is a superset of the *other* set
+  # Returns `true` if the set is a superset of the *other* set.
   #
   # The *other* must have the same or fewer elements than this set, and all of
   # elements in the *other* set must be present in this set.
@@ -390,7 +390,7 @@ struct Set(T)
 end
 
 module Enumerable
-  # Returns a new `Set` with each unique element in the enumerable
+  # Returns a new `Set` with each unique element in the enumerable.
   def to_set
     Set.new(self)
   end

@@ -28,14 +28,15 @@
 # This is implemented with `HTTP::Client#before_request` to add an authorization
 # header to every request.
 #
-# Alternatively, you can create an `OAuth::Consumer` and then invoke its `OAuth::Consumer#authenticate`
-# method, or create an `OAuth::AccessToken` and invoke its `OAuth::AccessToken#authenticate`.
+# Alternatively, you can create an `OAuth::Consumer` and then invoke its
+# `OAuth::Consumer#authenticate` method, or create an `OAuth::AccessToken`
+# and invoke its `OAuth::AccessToken#authenticate`.
 #
 # ### Obtaining access tokens
 #
 # See `OAuth::Consumer` for an example.
 module OAuth
-  # Sets up an HTTP::Client to add an OAuth authorization header to every request performed.
+  # Sets up an `HTTP::Client` to add an OAuth authorization header to every request performed.
   # Check this module's docs for an example usage.
   def self.authenticate(client : HTTP::Client, token, token_secret, consumer_key, consumer_secret, extra_params = nil) : Nil
     client.before_request do |request|

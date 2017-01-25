@@ -1,6 +1,6 @@
 # Provides methods that answer questions about unicode characters,
 # and the `Unicode::CaseOptions` enum for special case conversions
-# like turkic.
+# like Turkic.
 #
 # There's no need to use the methods defined in this module
 # because they are exposed in `Char` in a more convenient way
@@ -13,7 +13,7 @@ module Unicode
     # Only transform ASCII characters.
     ASCII
 
-    # Use turkic case rules:
+    # Use Turkic case rules:
     #
     # ```
     # 'İ'.downcase(Unicode::CaseOptions::Turkic) # => 'i'

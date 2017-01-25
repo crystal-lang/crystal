@@ -1,7 +1,7 @@
 # Specifies the format to convert a `Time` to and from a `String`.
 #
-# The pattern of a format is a String with directives. Directives
-# being with a percent (%) character. Any text not listed as a directive
+# The pattern of a format is a `String` with directives. Directives
+# being with a percent (`%`) character. Any text not listed as a directive
 # will be passed/parsed through the output/input string.
 #
 # The directives are:
@@ -62,26 +62,26 @@ struct Time::Format
   # Returns the string pattern of this format.
   getter pattern : String
 
-  # Creates a new Time::Format with the given *pattern*. The given time
-  # *kind* will be used when parsing a Time and no time zone is found in it.
+  # Creates a new `Time::Format` with the given *pattern*. The given time
+  # *kind* will be used when parsing a `Time` and no time zone is found in it.
   def initialize(@pattern : String, @kind = Time::Kind::Unspecified)
   end
 
-  # Parses a string into a Time.
+  # Parses a string into a `Time`.
   def parse(string, kind = @kind) : Time
     parser = Parser.new(string)
     parser.visit(pattern)
     parser.time(kind)
   end
 
-  # Turns a Time into a String.
+  # Turns a `Time` into a `String`.
   def format(time : Time) : String
     String.build do |str|
       format time, str
     end
   end
 
-  # Formats a Time into the given *io*.
+  # Formats a `Time` into the given *io*.
   def format(time : Time, io : IO)
     formatter = Formatter.new(time, io)
     formatter.visit(pattern)

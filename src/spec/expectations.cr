@@ -226,8 +226,7 @@ module Spec
       Spec::MatchExpectation.new(value)
     end
 
-    # Passes if actual includes expected. Works on collections and String.
-    # @param expected - item expected to be contained in actual
+    # Passes if actual includes *expected*. Works on collections and `String`.
     def contain(expected)
       Spec::ContainExpectation.new(expected)
     end

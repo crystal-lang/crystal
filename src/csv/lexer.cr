@@ -14,12 +14,12 @@ require "./csv"
 # lexer.next_token # => CSV::Token(@kind=Eof, @value="three")
 # ```
 abstract class CSV::Lexer
-  # Creates a CSV lexer from a string.
+  # Creates a CSV lexer from a `String`.
   def self.new(string : String, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
     StringBased.new(string, separator, quote_char)
   end
 
-  # Creates a CSV lexer from an IO.
+  # Creates a CSV lexer from an `IO`.
   def self.new(io : IO, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
     IOBased.new(io, separator, quote_char)
   end

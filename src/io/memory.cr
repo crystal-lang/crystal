@@ -1,7 +1,7 @@
-# An IO that reads and writes from a buffer in memory.
+# An `IO` that reads and writes from a buffer in memory.
 #
 # The internal buffer can be resizeable and/or writeable depending
-# on how an IO::Memory is constructed.
+# on how an `IO::Memory` is constructed.
 class IO::Memory
   include IO
 
@@ -13,7 +13,7 @@ class IO::Memory
 
   @capacity : Int32
 
-  # Creates an empty, resizeable and writeable IO::Memory with the given
+  # Creates an empty, resizeable and writeable `IO::Memory` with the given
   # initialize capactiy for the internal buffer.
   #
   # ```
@@ -35,8 +35,8 @@ class IO::Memory
     @writeable = true
   end
 
-  # Creates an IO::Memory that will read, and optionally write, from/to
-  # the given slice. The created IO::Memory is non-resizeable.
+  # Creates an `IO::Memory` that will read, and optionally write, from/to
+  # the given slice. The created `IO::Memory` is non-resizeable.
   #
   # The IO starts at position zero for reading.
   #
@@ -56,10 +56,10 @@ class IO::Memory
     @writeable = writeable
   end
 
-  # Creates an IO::Memory whose contents are the exact contents of *string*.
-  # The created IO::Memory is non-resizeable and non-writeable.
+  # Creates an `IO::Memory` whose contents are the exact contents of *string*.
+  # The created `IO::Memory` is non-resizeable and non-writeable.
   #
-  # The IO starts at position zero for reading.
+  # The `IO` starts at position zero for reading.
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -82,7 +82,7 @@ class IO::Memory
     count
   end
 
-  # See `IO#write(slice)`. Raises if this IO::Memory is non-writeable,
+  # See `IO#write(slice)`. Raises if this `IO::Memory` is non-writeable,
   # or if it's non-resizeable and a resize is needed.
   def write(slice : Bytes)
     check_writeable
@@ -110,7 +110,7 @@ class IO::Memory
     nil
   end
 
-  # See `IO#write_byte`. Raises if this IO::Memory is non-writeable,
+  # See `IO#write_byte`. Raises if this `IO::Memory` is non-writeable,
   # or if it's non-resizeable and a resize is needed.
   def write_byte(byte : UInt8)
     check_writeable
@@ -203,8 +203,8 @@ class IO::Memory
     end
   end
 
-  # Clears the internal buffer and resets the position to zero. Raises
-  # if this IO::Memory is non-resizeable.
+  # Clears the internal buffer and resets the position to zero.
+  # Raises if this `IO::Memory` is non-resizeable.
   #
   # ```
   # io = IO::Memory.new
@@ -225,7 +225,7 @@ class IO::Memory
     @pos = 0
   end
 
-  # Returns `true` if this IO::Memory has no contents.
+  # Returns `true` if this `IO::Memory` has no contents.
   #
   # ```
   # io = IO::Memory.new
@@ -237,7 +237,7 @@ class IO::Memory
     @bytesize == 0
   end
 
-  # Rewinds this IO to the initial position (zero).
+  # Rewinds this `IO` to the initial position (zero).
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -250,7 +250,7 @@ class IO::Memory
     self
   end
 
-  # Returns the total number of bytes in this IO.
+  # Returns the total number of bytes in this `IO`.
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -290,7 +290,7 @@ class IO::Memory
     self.pos = offset
   end
 
-  # Returns the current position (in bytes) of this IO.
+  # Returns the current position (in bytes) of this `IO`.
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -302,7 +302,7 @@ class IO::Memory
     tell
   end
 
-  # Sets the current position (in bytes) of this IO.
+  # Sets the current position (in bytes) of this `IO`.
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -315,7 +315,7 @@ class IO::Memory
     @pos = value.to_i
   end
 
-  # Yields an `IO::Memory` to read a section of this IO's buffer.
+  # Yields an `IO::Memory` to read a section of this `IO`'s buffer.
   #
   # During the block duration `self` becomes read-only,
   # so multiple concurrent open are allowed.
@@ -346,7 +346,7 @@ class IO::Memory
     end
   end
 
-  # Closes this IO. Further operations on this IO will raise an `IO::Error`.
+  # Closes this `IO`. Further operations on this `IO` will raise an `IO::Error`.
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -357,7 +357,7 @@ class IO::Memory
     @closed = true
   end
 
-  # Determines if this IO is closed.
+  # Determines if this `IO` is closed.
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -369,7 +369,7 @@ class IO::Memory
     @closed
   end
 
-  # Returns a new String that contains the contents of the internal buffer.
+  # Returns a new `String` that contains the contents of the internal buffer.
   #
   # ```
   # io = IO::Memory.new
@@ -380,7 +380,7 @@ class IO::Memory
     String.new @buffer, @bytesize
   end
 
-  # Returns a Slice over the internal buffer. Modifying the slice
+  # Returns a `Slice` over the internal buffer. Modifying the slice
   # modifies the internal buffer.
   #
   # ```
@@ -393,7 +393,7 @@ class IO::Memory
     Slice.new(@buffer, @bytesize)
   end
 
-  # Appends this internal buffer to the given IO.
+  # Appends this internal buffer to the given `IO`.
   def to_s(io)
     io.write Slice.new(@buffer, @bytesize)
   end

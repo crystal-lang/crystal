@@ -57,7 +57,8 @@ module Random
 
   # Generates a random unsigned integer.
   #
-  # The integers must be uniformly distributed between 0 and the maximal value for the chosen type.
+  # The integers must be uniformly distributed between `0` and
+  # the maximal value for the chosen type.
   abstract def next_u : UInt
 
   # Generates a random `Bool`.
@@ -74,13 +75,13 @@ module Random
     rand_type(Int32)
   end
 
-  # see `#rand`
+  # See `#rand`.
   def next_float : Float64
     max_prec = 1u64 << 53 # Float64, excluding mantissa, has 2^53 values
     rand(max_prec) / (max_prec - 1).to_f64
   end
 
-  # Generates a random `Float64` between 0 and 1.
+  # Generates a random `Float64` between `0` and `1`.
   #
   # ```
   # r = Random.new
@@ -91,7 +92,8 @@ module Random
     next_float
   end
 
-  # Generates a random integer which is greater than or equal to 0 and less than *max*.
+  # Generates a random integer which is greater than or equal to `0`
+  # and less than *max*.
   #
   # The return type always matches the supplied argument.
   #
@@ -240,7 +242,8 @@ module Random
     {% end %}
   {% end %}
 
-  # Returns a random `Float64` which is greater than or equal to 0 and less than *max*.
+  # Returns a random `Float64` which is greater than or equal to `0`
+  # and less than *max*.
   #
   # ```
   # Random.new.rand(3.5)    # => 2.88938
@@ -286,23 +289,23 @@ module Random
     end
   end
 
-  # see `#rand`
+  # See `#rand`.
   def self.rand : Float64
     DEFAULT.rand
   end
 
-  # see `#rand(x)`
+  # See `#rand(x)`.
   def self.rand(x)
     DEFAULT.rand(x)
   end
 end
 
-# see `Random#rand`
+# See `Random#rand`.
 def rand
   Random.rand
 end
 
-# see `Random#rand(x)`
+# See `Random#rand(x)`.
 def rand(x)
   Random.rand(x)
 end

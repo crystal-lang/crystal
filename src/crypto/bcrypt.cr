@@ -19,7 +19,8 @@ require "./subtle"
 #
 # This implementation of Bcrypt is currently 50% slower than pure C solutions,
 # so keep this in mind when selecting your cost. It may be wise to test with
-# Ruby's bcrypt gem which is a binding to OpenBSD's implementation.
+# Ruby's [bcrypt gem](https://github.com/codahale/bcrypt-ruby)
+# which is a binding to OpenBSD's implementation.
 #
 # Last but not least: beware of denial of services! Always protect your
 # application using an external strategy (eg: rate limiting), otherwise

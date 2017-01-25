@@ -5,7 +5,7 @@ require "base64"
   require "c/sys/syscall"
 {% end %}
 
-# The SecureRandom module is an interface for creating cryptography secure
+# The `SecureRandom` module is an interface for creating cryptography secure
 # random values in different formats.
 #
 # Examples:
@@ -22,7 +22,7 @@ require "base64"
 module SecureRandom
   @@initialized = false
 
-  # Generates *n* random bytes that are encoded into Base64.
+  # Generates *n* random bytes that are encoded into base64.
   #
   # Check `Base64#strict_encode` for details.
   #
@@ -33,7 +33,7 @@ module SecureRandom
     Base64.strict_encode(random_bytes(n))
   end
 
-  # URL-safe variant of `#base64`
+  # URL-safe variant of `#base64`.
   #
   # Check `Base64#urlsafe_encode` for details.
   #
@@ -48,7 +48,8 @@ module SecureRandom
 
   # Generates a hexadecimal string based on *n* random bytes.
   #
-  # The bytes are encoded into a string of a two-digit hexadecimal number (00-ff) per byte.
+  # The bytes are encoded into a string of a two-digit
+  # hexadecimal number (00-ff) per byte.
   #
   # ```
   # SecureRandom.hex    # => "05f100a1123f6bdbb427698ab664ff5f"
@@ -144,7 +145,7 @@ module SecureRandom
     end
   {% end %}
 
-  # Generates a UUID (Universally Unique Identifier)
+  # Generates a UUID (Universally Unique Identifier).
   #
   # It generates a random v4 UUID. Check [RFC 4122 Section 4.4](https://tools.ietf.org/html/rfc4122#section-4.4)
   # for the used algorithm and its implications.

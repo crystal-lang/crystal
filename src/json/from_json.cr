@@ -28,7 +28,7 @@ def Object.from_json(string_or_io, root : String) : self
   end
 end
 
-# Parses a String or IO denoting a JSON array, yielding
+# Parses a `String` or `IO` denoting a JSON array, yielding
 # each of its elements to the given block. This is useful
 # for decoding an array and processing its elements without
 # creating an Array in memory, which might be expensive.
@@ -49,7 +49,7 @@ end
 # 3
 # ```
 #
-# To parse and get an Array, use the block-less overload.
+# To parse and get an `Array`, use the block-less overload.
 def Array.from_json(string_or_io) : Nil
   parser = JSON::PullParser.new(string_or_io)
   new(parser) do |element|

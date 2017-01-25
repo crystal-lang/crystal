@@ -77,7 +77,7 @@ struct Nil
     ""
   end
 
-  # Doesn't write anything to the given IO.
+  # Doesn't write anything to the given `IO`.
   def to_s(io : IO)
     # Nothing to do
   end
@@ -87,7 +87,7 @@ struct Nil
     "nil"
   end
 
-  # Writes `"nil"` to the given IO.
+  # Writes `"nil"` to the given `IO`.
   def inspect(io)
     io << "nil"
   end

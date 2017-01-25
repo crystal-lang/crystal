@@ -1,5 +1,5 @@
 module IO
-  # Has the name and the invalid option
+  # Has the `name` and the `invalid` option.
   struct EncodingOptions
     getter name : String
     getter invalid : Symbol?

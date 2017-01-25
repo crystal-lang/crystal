@@ -1,9 +1,9 @@
 # A handler that invokes the next handler and, if that next handler raises
 # an exception, returns with a 500 (Internal Server Error) status code.
 #
-#  In verbose mode prints the exception with its backtrace to the response,
-#  else a generic error message is returned to the client. Use the LogHandler before this
-#  to log the exception on the server side.
+# In verbose mode prints the exception with its backtrace to the response,
+# else a generic error message is returned to the client.
+# Use the `HTTP::LogHandler` before this to log the exception on the server side.
 class HTTP::ErrorHandler
   include HTTP::Handler
 
