@@ -219,21 +219,21 @@ def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile =
   it "says syntax error on #{str.inspect}", metafile, metaline, metaendline do
     begin
       parse str
-      fail "expected SyntaxException to be raised", metafile, metaline
+      fail "Expected SyntaxException to be raised", metafile, metaline
     rescue ex : SyntaxException
       if message
         unless ex.message.not_nil!.includes?(message.not_nil!)
-          fail "expected message to include #{message.inspect} but got #{ex.message.inspect}", metafile, metaline
+          fail "Expected message to include #{message.inspect} but got #{ex.message.inspect}", metafile, metaline
         end
       end
       if line
         unless ex.line_number == line
-          fail "expected line number to be #{line} but got #{ex.line_number}", metafile, metaline
+          fail "Expected line number to be #{line} but got #{ex.line_number}", metafile, metaline
         end
       end
       if column
         unless ex.column_number == column
-          fail "expected column number to be #{column} but got #{ex.column_number}", metafile, metaline
+          fail "Expected column number to be #{column} but got #{ex.column_number}", metafile, metaline
         end
       end
     end

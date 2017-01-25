@@ -7,12 +7,12 @@ describe "Semantic: cast" do
 
   it "casts to incompatible type gives error" do
     assert_error "1.as(Float64)",
-      "can't cast Int32 to Float64"
+      "Can't cast Int32 to Float64"
   end
 
   pending "casts from union to incompatible union gives error" do
     assert_error "(1 || 1.5).as(Int32 | Char)",
-      "can't cast Int32 | Float64 to Int32 | Char"
+      "Can't cast Int32 | Float64 to Int32 | Char"
   end
 
   it "casts from pointer to generic class gives error" do
@@ -23,7 +23,7 @@ describe "Semantic: cast" do
       a = 1
       pointerof(a).as(Foo)
       ",
-      "can't cast Pointer(Int32) to Foo(T)"
+      "Can't cast Pointer(Int32) to Foo(T)"
   end
 
   it "casts from union to compatible union" do
@@ -110,7 +110,7 @@ describe "Semantic: cast" do
     assert_error %(
       1.as(Void*)
       ),
-      "can't cast Int32 to Pointer(Void)"
+      "Can't cast Int32 to Pointer(Void)"
   end
 
   it "disallows casting fun to pointer" do
@@ -118,7 +118,7 @@ describe "Semantic: cast" do
       f = ->{ 1 }
       f.as(Void*)
       ),
-      "can't cast Proc(Int32) to Pointer(Void)"
+      "Can't cast Proc(Int32) to Pointer(Void)"
   end
 
   it "disallows casting pointer to fun" do
@@ -126,7 +126,7 @@ describe "Semantic: cast" do
       a = uninitialized Void*
       a.as(-> Int32)
       ),
-      "can't cast Pointer(Void) to Proc(Int32)"
+      "Can't cast Pointer(Void) to Proc(Int32)"
   end
 
   it "doesn't error if casting to a generic type" do
@@ -183,7 +183,7 @@ describe "Semantic: cast" do
 
       foo 1.as(Bool)
       ),
-      "can't cast Int32 to Bool"
+      "Can't cast Int32 to Bool"
   end
 
   it "casts to target type even if can't infer casted value type (obsolete)" do
@@ -212,7 +212,7 @@ describe "Semantic: cast" do
 
       Foo.new.as(Bar)
       ),
-      "can't cast Foo to Bar"
+      "Can't cast Foo to Bar"
   end
 
   it "can cast to metaclass (bug)" do
@@ -227,7 +227,7 @@ describe "Semantic: cast" do
     assert_error %(
       nil.as(Object)
       ),
-      "can't cast to Object yet"
+      "Can't cast to Object yet"
   end
 
   it "doesn't allow upcast of generic type var (#996)" do
@@ -243,7 +243,7 @@ describe "Semantic: cast" do
 
       Gen(Foo).new
       Gen(Bar).new.as(Gen(Foo))
-      ), "can't cast Gen(Bar) to Gen(Foo)"
+      ), "Can't cast Gen(Bar) to Gen(Foo)"
   end
 
   it "allows casting NoReturn to any type (#2132)" do
@@ -262,21 +262,21 @@ describe "Semantic: cast" do
 
       puts(typeof(nil.as(Object)))
       ),
-      "can't cast to Object yet"
+      "Can't cast to Object yet"
   end
 
   it "disallows casting to Reference" do
     assert_error %(
       "foo".as(Reference)
       ),
-      "can't cast to Reference yet"
+      "Can't cast to Reference yet"
   end
 
   it "disallows casting to Class" do
     assert_error %(
       nil.as(Class)
       ),
-      "can't cast to Class yet"
+      "Can't cast to Class yet"
   end
 
   it "can cast from Void* to virtual type (#3014)" do

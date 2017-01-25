@@ -12,7 +12,7 @@ describe "Semantic: lib" do
 
       LibC.foo
       ),
-      "undefined fun 'foo' for LibC"
+      "Undefined fun 'foo' for LibC"
   end
 
   it "raises wrong number of arguments" do
@@ -23,7 +23,7 @@ describe "Semantic: lib" do
 
       LibC.foo 1
       ),
-      "wrong number of arguments for 'LibC#foo' (given 1, expected 0)"
+      "Wrong number of arguments for 'LibC#foo' (given 1, expected 0)"
   end
 
   it "raises wrong argument type" do
@@ -34,7 +34,7 @@ describe "Semantic: lib" do
 
       LibC.foo 'a'
       ),
-      "argument 'x' of 'LibC#foo' must be Int32, not Char"
+      "Argument 'x' of 'LibC#foo' must be Int32, not Char"
   end
 
   it "reports error when changing var type and something breaks" do
@@ -56,7 +56,7 @@ describe "Semantic: lib" do
       f.value + 1
       f.value = 'a'
       ),
-      "undefined method '+' for Char"
+      "Undefined method '+' for Char"
   end
 
   it "reports error when changing instance var type and something breaks" do
@@ -84,32 +84,32 @@ describe "Semantic: lib" do
 
       f.value = 1
       ",
-      "argument 'c' of 'Lib#bar' must be Char"
+      "Argument 'c' of 'Lib#bar' must be Char"
   end
 
   it "reports error on fun argument type not primitive like" do
     assert_error "lib LibFoo; fun foo(x : Reference); end",
-      "only primitive types"
+      "Only primitive types"
   end
 
   it "reports error on fun argument type not primitive like, Nil (#2994)" do
     assert_error "lib LibFoo; fun foo(x : Nil); end",
-      "only primitive types"
+      "Only primitive types"
   end
 
   it "reports error on fun return type not primitive like" do
     assert_error "lib LibFoo; fun foo : Reference; end",
-      "only primitive types"
+      "Only primitive types"
   end
 
   it "reports error on struct field type not primitive like" do
     assert_error "lib LibFoo; struct Foo; x : Reference; end; end",
-      "only primitive types"
+      "Only primitive types"
   end
 
   it "reports error on typedef type not primitive like" do
     assert_error "lib LibFoo; type Foo = Reference; end",
-      "only primitive types"
+      "Only primitive types"
   end
 
   it "reports error out can only be used with lib funs" do
@@ -131,7 +131,7 @@ describe "Semantic: lib" do
       x = Pointer(Int32).malloc(1_u64)
       Lib.foo out x
       ),
-      "variable 'x' is already defined, `out` must be used to define a variable, use another name"
+      "Variable 'x' is already defined, `out` must be used to define a variable, use another name"
   end
 
   it "allows invoking out with underscore " do
@@ -228,7 +228,7 @@ describe "Semantic: lib" do
       end
 
       LibC.foo Foo.new
-      ", "argument 'x' of 'LibC#foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
+      ", "Argument 'x' of 'LibC#foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
   end
 
   it "error if passing non primitive type as varargs" do
@@ -241,7 +241,7 @@ describe "Semantic: lib" do
       end
 
       LibC.foo 1, Foo.new
-      ", "argument #2 of 'LibC#foo' is not a primitive type and no Foo#to_unsafe method found"
+      ", "Argument #2 of 'LibC#foo' is not a primitive type and no Foo#to_unsafe method found"
   end
 
   it "error if passing non primitive type as varargs invoking to_unsafe" do
@@ -260,7 +260,7 @@ describe "Semantic: lib" do
       end
 
       LibC.foo 1, Foo.new
-      ", "converted Foo invoking to_unsafe, but Bar is not a primitive type"
+      ", "Converted Foo invoking to_unsafe, but Bar is not a primitive type"
   end
 
   it "allows passing splat to LibC fun" do
@@ -291,7 +291,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "illegal attribute for lib, valid attributes are: Link"
+      "Illegal attribute for lib, valid attributes are: Link"
   end
 
   it "errors if missing link arguments" do
@@ -300,7 +300,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "missing link arguments: must at least specify a library name"
+      "Missing link arguments: must at least specify a library name"
   end
 
   it "errors if first argument is not a string" do
@@ -309,7 +309,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "'lib' link argument must be a String"
+      "'lib' link argument must be a string"
   end
 
   it "errors if second argument is not a string" do
@@ -318,7 +318,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "'ldflags' link argument must be a String"
+      "'ldflags' link argument must be a string"
   end
 
   it "errors if third argument is not a bool" do
@@ -327,7 +327,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "'static' link argument must be a Bool"
+      "'static' link argument must be a bool"
   end
 
   it "errors if foruth argument is not a bool" do
@@ -336,7 +336,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "'framework' link argument must be a String"
+      "'framework' link argument must be a string"
   end
 
   it "errors if too many link arguments" do
@@ -345,7 +345,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "wrong number of link arguments (given 5, expected 1..4)"
+      "Wrong number of link arguments (given 5, expected 1..4)"
   end
 
   it "errors if unknown named arg" do
@@ -354,7 +354,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+      "Unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
   end
 
   it "errors if lib already specified with positional argument" do
@@ -372,7 +372,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "'lib' link argument must be a String"
+      "'lib' link argument must be a string"
   end
 
   it "clears attributes after lib" do
@@ -482,7 +482,7 @@ describe "Semantic: lib" do
       def LibC.foo
       end
       ),
-      "can't define method in lib LibC"
+      "Can't define method in lib LibC"
   end
 
   it "reopens lib and adds more link attributes" do
@@ -547,7 +547,7 @@ describe "Semantic: lib" do
         fun foo(x : Void)
       end
       ),
-      "can't use Void as argument type"
+      "Can't use Void as argument type"
   end
 
   it "errors if using void via typedef as argument (related to #508)" do
@@ -557,7 +557,7 @@ describe "Semantic: lib" do
         fun foo(x : Foo)
       end
       ),
-      "can't use Void as argument type"
+      "Can't use Void as argument type"
   end
 
   it "can use tuple as fun return" do
@@ -582,7 +582,7 @@ describe "Semantic: lib" do
       bar = LibFoo::Bar.new
       LibFoo.foo(bar)
       ),
-      "argument 'x' of 'LibFoo#foo' must be Pointer(LibFoo::Bar), not LibFoo::Bar"
+      "Argument 'x' of 'LibFoo#foo' must be Pointer(LibFoo::Bar), not LibFoo::Bar"
   end
 
   it "passes int as another integer type in variable" do
@@ -631,7 +631,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo Foo.new
       ),
-      "converting from Foo to Int32 by invoking 'to_i32'"
+      "Converting from Foo to Int32 by invoking 'to_i32'"
   end
 
   it "errors if invoking to_i32 and got wrong type" do
@@ -648,7 +648,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo Foo.new
       ),
-      "invoked 'to_i32' to convert from Foo to Int32, but got Char"
+      "Invoked 'to_i32' to convert from Foo to Int32, but got Char"
   end
 
   it "defines lib funs before funs with body" do
@@ -673,7 +673,7 @@ describe "Semantic: lib" do
 
       LibX.x(out z)
       ),
-      "can't use out at varargs position: declare the variable with `z = uninitialized ...` and pass it with `pointerof(z)`"
+      "Can't use out at varargs position: declare the variable with `z = uninitialized ...` and pass it with `pointerof(z)`"
   end
 
   it "errors if using out with void pointer (#2424)" do
@@ -684,7 +684,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo(out x)
       ),
-      "can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
+      "Can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
   end
 
   it "errors if using out with void pointer through type" do
@@ -696,7 +696,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo(out x)
       ),
-      "can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
+      "Can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
   end
 
   it "errors if using out with non-pointer" do
@@ -707,7 +707,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo(out x)
       ),
-      "argument 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
+      "Argument 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
   end
 
   it "errors if redefining fun with different signature (#2468)" do
@@ -729,7 +729,7 @@ describe "Semantic: lib" do
 
       LibC.foo y: 1_u8, x: 1
       ),
-      "can't use named args with variadic function"
+      "Can't use named args with variadic function"
   end
 
   it "errors if using unknown named arg" do
@@ -740,7 +740,7 @@ describe "Semantic: lib" do
 
       LibC.foo y: 1_u8, x: 1, z: 2
       ),
-      "no argument named 'z'"
+      "No argument named 'z'"
   end
 
   it "errors if argument already specified" do
@@ -751,7 +751,7 @@ describe "Semantic: lib" do
 
       LibC.foo 1, x: 2
       ),
-      "argument 'x' already specified"
+      "Argument 'x' already specified"
   end
 
   it "errors if missing arugment" do
@@ -762,7 +762,7 @@ describe "Semantic: lib" do
 
       LibC.foo x: 2
       ),
-      "missing argument: y"
+      "Missing argument: y"
   end
 
   it "errors if missing arugments" do
@@ -773,7 +773,7 @@ describe "Semantic: lib" do
 
       LibC.foo y: 1_u8
       ),
-      "missing arguments: x, z"
+      "Missing arguments: x, z"
   end
 
   it "can use named args" do
@@ -905,7 +905,7 @@ describe "Semantic: lib" do
         fun foo : Int32
       end
       ),
-      "wrong number of arguments for attribute CallConvention (given 2, expected 1)"
+      "Wrong number of arguments for attribute CallConvention (given 2, expected 1)"
   end
 
   it "errors if CallConvention argument is not a string" do
@@ -915,7 +915,7 @@ describe "Semantic: lib" do
         fun foo : Int32
       end
       ),
-      "argument to CallConvention must be a string"
+      "Argument to CallConvention must be a string"
   end
 
   it "errors if CallConvention argument is not a valid string" do
@@ -925,6 +925,6 @@ describe "Semantic: lib" do
         fun foo : Int32
       end
       ),
-      "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
+      "Invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
   end
 end

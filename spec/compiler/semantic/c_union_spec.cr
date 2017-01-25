@@ -46,7 +46,7 @@ describe "Semantic: c union" do
       bar = LibFoo::Bar.new
       bar.x = -> { a }
       ),
-      "can't set closure as C union member"
+      "Can't set closure as C union member"
   end
 
   it "errors on empty c union (#633)" do
@@ -56,7 +56,7 @@ describe "Semantic: c union" do
         end
       end
       ),
-      "empty unions are disallowed"
+      "Empty unions are disallowed"
   end
 
   it "errors if using void in union field type" do
@@ -67,7 +67,7 @@ describe "Semantic: c union" do
         end
       end
       ),
-      "can't use Void as a union field type"
+      "Can't use Void as a union field type"
   end
 
   it "errors if using void via typedef in union field type" do
@@ -80,6 +80,6 @@ describe "Semantic: c union" do
         end
       end
       ),
-      "can't use Void as a union field type"
+      "Can't use Void as a union field type"
   end
 end

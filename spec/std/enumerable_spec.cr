@@ -472,7 +472,7 @@ describe "Enumerable" do
     it { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
 
     it "raises argument error if size is less than 0" do
-      expect_raises ArgumentError, "size must be positive" do
+      expect_raises ArgumentError, "Size must be positive" do
         [1, 2, 3].in_groups_of(0)
       end
     end

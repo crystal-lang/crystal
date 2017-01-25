@@ -156,7 +156,7 @@ describe "Semantic: NoReturn" do
         a += 1
       end
       ),
-      "undefined method 'size' for Nil"
+      "Undefined method 'size' for Nil"
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (1)" do
@@ -279,7 +279,7 @@ describe "Semantic: NoReturn" do
         a += 1
       end
       ),
-      "undefined method 'size' for Nil"
+      "Undefined method 'size' for Nil"
   end
 
   it "types exception handler as NoReturn if ensure is NoReturn" do

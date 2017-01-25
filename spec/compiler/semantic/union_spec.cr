@@ -114,7 +114,7 @@ describe "Semantic: union" do
     assert_error %(
       Union(Int32, String).new
       ),
-      "can't create instance of a union type"
+      "Can't create instance of a union type"
   end
 
   it "finds method in Object" do

@@ -8,7 +8,7 @@ describe "Semantic: named args" do
 
       foo 1, w: 3
       ),
-      "no argument named 'w'"
+      "No argument named 'w'"
   end
 
   it "errors if named arg already specified" do
@@ -18,7 +18,7 @@ describe "Semantic: named args" do
 
       foo 1, x: 1
       ),
-      "argument 'x' already specified"
+      "Argument 'x' already specified"
   end
 
   it "errors if named arg not found in new" do
@@ -30,7 +30,7 @@ describe "Semantic: named args" do
 
       Foo.new 1, w: 3
       ),
-      "no argument named 'w'"
+      "No argument named 'w'"
   end
 
   it "errors if named arg already specified" do
@@ -42,7 +42,7 @@ describe "Semantic: named args" do
 
       Foo.new 1, x: 1
       ),
-      "argument 'x' already specified"
+      "Argument 'x' already specified"
   end
 
   it "errors if doesn't pass named arg restriction" do
@@ -52,7 +52,7 @@ describe "Semantic: named args" do
 
       foo x: 1.5
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "errors if named arg already specified but in same position" do
@@ -62,7 +62,7 @@ describe "Semantic: named args" do
 
       foo 1, headers: 2
       ),
-      "argument 'headers' already specified"
+      "Argument 'headers' already specified"
   end
 
   it "sends one regular argument as named argument" do
@@ -112,7 +112,7 @@ describe "Semantic: named args" do
 
       foo x: 1, y: 2
       ),
-      "no argument named 'x'"
+      "No argument named 'x'"
   end
 
   it "errors if named arg matches splat argument" do
@@ -122,7 +122,7 @@ describe "Semantic: named args" do
 
       foo x: 1, y: 2
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "allows named arg if there's a splat" do
@@ -142,7 +142,7 @@ describe "Semantic: named args" do
 
       foo x: 1, y: 2
       ),
-      "missing argument: z"
+      "Missing argument: z"
   end
 
   it "errors if missing two arguments" do
@@ -152,7 +152,7 @@ describe "Semantic: named args" do
 
       foo y: 2
       ),
-      "missing arguments: x, z"
+      "Missing arguments: x, z"
   end
 
   it "doesn't include arguments with default values in missing arguments error" do
@@ -163,7 +163,7 @@ describe "Semantic: named args" do
 
       foo(x: 1)
       ),
-      "missing argument: z"
+      "Missing argument: z"
   end
 
   it "says no overload matches with named arg" do
@@ -176,7 +176,7 @@ describe "Semantic: named args" do
 
       foo(x: 2)
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "gives correct error message for missing args after *" do
@@ -186,7 +186,7 @@ describe "Semantic: named args" do
 
       foo
       ),
-      "missing arguments: x, y"
+      "Missing arguments: x, y"
   end
 
   it "overloads based on required named args" do

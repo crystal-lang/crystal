@@ -26,7 +26,7 @@ describe "Semantic: static array" do
     assert_error %(
       x = uninitialized Char[Int32]
       ),
-      "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
+      "Can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
   end
 
   it "allows instantiating static array instance var in initialize of generic type" do
@@ -49,7 +49,7 @@ describe "Semantic: static array" do
     assert_error %(
       x = uninitialized Int32[-1]
       ),
-      "can't instantiate StaticArray(T, N) with N = -1 (N must be positive)"
+      "Can't instantiate StaticArray(T, N) with N = -1 (N must be positive)"
   end
 
   it "types static array new with size being a constant" do
@@ -92,7 +92,7 @@ describe "Semantic: static array" do
 
       foo { |x| 0 }
       ),
-      "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
+      "Can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
   end
 
   it "can match N type argument of static array (#1203)" do
@@ -126,6 +126,6 @@ describe "Semantic: static array" do
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
       ),
-      "no overload matches"
+      "No overload matches"
   end
 end

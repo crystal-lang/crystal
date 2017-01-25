@@ -93,7 +93,7 @@ describe "Semantic: extern struct" do
         @x = uninitialized Bar
       end
       ),
-      "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
+      "Only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
   end
 
   it "errors if using non-primitive for field type via module" do
@@ -110,7 +110,7 @@ describe "Semantic: extern struct" do
         include Moo
       end
       ),
-      "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
+      "Only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
   end
 
   it "errors if using non-primitive type in constructor" do
@@ -125,7 +125,7 @@ describe "Semantic: extern struct" do
         end
       end
       ),
-      "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
+      "Only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
   end
 
   it "declares extern union with no constructor" do

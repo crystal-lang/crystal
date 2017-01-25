@@ -68,7 +68,7 @@ describe "Semantic: proc" do
 
   it "errors when using local variable with proc argument name" do
     assert_error "->(a : Int32) { }; a",
-      "undefined local variable or method 'a'"
+      "Undefined local variable or method 'a'"
   end
 
   it "allows implicit cast of proc to return void in LibC function" do
@@ -140,7 +140,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int32) { x }
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "has proc literal as restriction and errors if input is different" do
@@ -151,7 +151,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int64) { x.to_f }
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "has proc literal as restriction and errors if sizes are different" do
@@ -162,7 +162,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int32, y : Int32) { x.to_f }
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "allows passing nil as proc callback" do
@@ -181,7 +181,7 @@ describe "Semantic: proc" do
       f = ->(x : Int32) { x.to_f }
       f.as(Int32, Int32 -> Float64)
       ",
-      "can't cast")
+      "Can't cast")
   end
 
   it "allows casting a proc type to one with void argument" do
@@ -196,7 +196,7 @@ describe "Semantic: proc" do
       f = ->(x : Int32) { x.to_f }
       f.as(-> Float64)
       ",
-      "can't cast Proc(Int32, Float64) to Proc(Float64)"
+      "Can't cast Proc(Int32, Float64) to Proc(Float64)"
   end
 
   it "disallows casting a proc type to one accepting same size argument but different output" do
@@ -204,7 +204,7 @@ describe "Semantic: proc" do
       f = ->(x : Int32) { x.to_f }
       f.as(Int32 -> Int32)
       ",
-      "can't cast Proc(Int32, Float64) to Proc(Int32, Int32)"
+      "Can't cast Proc(Int32, Float64) to Proc(Int32, Int32)"
   end
 
   it "disallows casting a proc type to one accepting same size argument but different input" do
@@ -212,7 +212,7 @@ describe "Semantic: proc" do
       f = ->(x : Int32) { x.to_f }
       f.as(Float64 -> Float64)
       ",
-      "can't cast Proc(Int32, Float64) to Proc(Float64, Float64)"
+      "Can't cast Proc(Int32, Float64) to Proc(Float64, Float64)"
   end
 
   it "types proc literal hard type inference (1)" do
@@ -331,7 +331,7 @@ describe "Semantic: proc" do
       alias Alias = Int32 -> Int32
       Alias.new { |x, y| }
       ",
-      "wrong number of block arguments for Proc(Int32, Int32)#new (given 2, expected 1)"
+      "Wrong number of block arguments for Proc(Int32, Int32)#new (given 2, expected 1)"
   end
 
   it "says wrong return type in new on proc type" do
@@ -339,12 +339,12 @@ describe "Semantic: proc" do
       alias Alias = Int32 -> Int32
       Alias.new &.to_f
       ",
-      "expected block to return Int32, not Float64"
+      "Expected block to return Int32, not Float64"
   end
 
   it "errors if missing argument type in proc literal" do
     assert_error "->(x) { x }",
-      "function argument 'x' must have a type"
+      "Function argument 'x' must have a type"
   end
 
   it "allows passing function to LibC without specifying types" do
@@ -468,7 +468,7 @@ describe "Semantic: proc" do
 
       LibFoo.bar ->(x) { 1.1 }
       ),
-      "argument 'f' of 'LibFoo#bar' must be a Proc returning Int32, not Float64"
+      "Argument 'f' of 'LibFoo#bar' must be a Proc returning Int32, not Float64"
   end
 
   it "doesn't capture closured var if using typeof" do
@@ -611,7 +611,7 @@ describe "Semantic: proc" do
       block = foo { |elems| 1 }
       block.call [Foo.new, Bar.new]
       ),
-      "expected block to return Foo, not Int32"
+      "Expected block to return Foo, not Int32"
   end
 
   it "doesn't let passing an non-covariant generic argument" do
@@ -631,7 +631,7 @@ describe "Semantic: proc" do
       f = ->(x : Array(Foo)) {}
       f.call [Bar.new]
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "allows invoking a function with a generic subtype" do
@@ -796,7 +796,7 @@ describe "Semantic: proc" do
     assert_error %(
       ->(x : Int32) { }.call
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "finds method of object" do

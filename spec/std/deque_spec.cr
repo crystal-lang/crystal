@@ -112,13 +112,13 @@ describe "Deque" do
     end
 
     it "raises on negative count" do
-      expect_raises(ArgumentError, "negative deque size") do
+      expect_raises(ArgumentError, "Negative deque size") do
         Deque.new(-1, 3)
       end
     end
 
     it "raises on negative capacity" do
-      expect_raises(ArgumentError, "negative deque capacity") do
+      expect_raises(ArgumentError, "Negative deque capacity") do
         Deque(Int32).new(-1)
       end
     end

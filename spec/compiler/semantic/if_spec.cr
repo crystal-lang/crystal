@@ -48,7 +48,7 @@ describe "Semantic: if" do
         require "foo"
       end
       ),
-      "can't require dynamically"
+      "Can't require dynamically"
   end
 
   it "correctly filters type of variable if there's a raise with an interpolation that can't be typed" do
@@ -145,7 +145,7 @@ describe "Semantic: if" do
         a.foo + b.bar
       end
       ),
-      "undefined method"
+      "Undefined method"
   end
 
   it "doesn't restrict with || on var and non-restricting condition" do
@@ -161,7 +161,7 @@ describe "Semantic: if" do
         a.foo
       end
       ),
-      "undefined method"
+      "Undefined method"
   end
 
   it "restricts with || but doesn't unify types to base class" do

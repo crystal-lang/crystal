@@ -1082,7 +1082,7 @@ describe "Code gen: macro" do
 
       bar
       ),
-      "dynamic constant assignment"
+      "Dynamic constant assignment"
   end
 
   it "finds macro from virtual type" do

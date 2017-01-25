@@ -195,7 +195,7 @@ describe Iterator do
     end
 
     it "raises argument error if size is less than 0" do
-      expect_raises ArgumentError, "size must be positive" do
+      expect_raises ArgumentError, "Size must be positive" do
         [1, 2, 3].each.in_groups_of(0)
       end
     end

@@ -68,7 +68,7 @@ describe "Semantic: primitives" do
       end
 
       LibFoo.foo == 1
-      ), "undefined method '==' for Nil"
+      ), "Undefined method '==' for Nil"
   end
 
   it "correctly types first hash from type vars (bug)" do
@@ -101,7 +101,7 @@ describe "Semantic: primitives" do
 
       Foo.new + 1
       ),
-      "undefined method"
+      "Undefined method"
   end
 
   it "extends from Number and doesn't find >= method" do
@@ -111,7 +111,7 @@ describe "Semantic: primitives" do
 
       Foo.new >= 1
       ),
-      "undefined method"
+      "Undefined method"
   end
 
   it "extends from Number and doesn't find to_i method" do
@@ -121,7 +121,7 @@ describe "Semantic: primitives" do
 
       Foo.new.to_i
       ),
-      "undefined method"
+      "Undefined method"
   end
 
   pending "types pointer of int" do
@@ -175,7 +175,7 @@ describe "Semantic: primitives" do
 
       1.meth
       ),
-      "can't use instance variables inside primitive types (at Int32)"
+      "Can't use instance variables inside primitive types (at Int32)"
   end
 
   it "types @[Primitive] method" do
@@ -198,7 +198,7 @@ describe "Semantic: primitives" do
         end
       end
       ),
-      "expected Primitive attribute to have one argument"
+      "Expected Primitive attribute to have one argument"
   end
 
   it "errors if @[Primitive] has non-symbol arg" do
@@ -209,7 +209,7 @@ describe "Semantic: primitives" do
         end
       end
       ),
-      "expected Primitive argument to be a symbol literal"
+      "Expected Primitive argument to be a symbol literal"
   end
 
   it "errors if @[Primitive] method has body" do
@@ -221,6 +221,6 @@ describe "Semantic: primitives" do
         end
       end
       ),
-      "method marked as Primitive must have an empty body"
+      "Method marked as Primitive must have an empty body"
   end
 end

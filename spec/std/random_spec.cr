@@ -51,7 +51,7 @@ describe "Random" do
   end
 
   it "raises on invalid number" do
-    expect_raises ArgumentError, "invalid bound for rand: 0" do
+    expect_raises ArgumentError, "Invalid bound for rand: 0" do
       rand(0)
     end
   end
@@ -88,16 +88,16 @@ describe "Random" do
   end
 
   it "raises on invalid range" do
-    expect_raises ArgumentError, "invalid range for rand: 1...1" do
+    expect_raises ArgumentError, "Invalid range for rand: 1...1" do
       rand(1...1)
     end
-    expect_raises ArgumentError, "invalid range for rand: 1..0" do
+    expect_raises ArgumentError, "Invalid range for rand: 1..0" do
       rand(1..0)
     end
-    expect_raises ArgumentError, "invalid range for rand: 1.0...1.0" do
+    expect_raises ArgumentError, "Invalid range for rand: 1.0...1.0" do
       rand(1.0...1.0)
     end
-    expect_raises ArgumentError, "invalid range for rand: 1.0..0.0" do
+    expect_raises ArgumentError, "Invalid range for rand: 1.0..0.0" do
       rand(1.0..0.0)
     end
   end

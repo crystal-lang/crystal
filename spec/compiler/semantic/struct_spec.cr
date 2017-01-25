@@ -74,7 +74,7 @@ describe "Semantic: struct" do
     assert_error "
       struct Foo < Reference
       end
-      ", "can't make struct 'Foo' inherit class 'Reference'"
+      ", "Can't make struct 'Foo' inherit class 'Reference'"
   end
 
   it "can't extend class from struct" do
@@ -84,7 +84,7 @@ describe "Semantic: struct" do
 
       class Bar < Foo
       end
-      ", "can't make class 'Bar' inherit struct 'Foo'"
+      ", "Can't make class 'Bar' inherit struct 'Foo'"
   end
 
   it "can't reopen as different type" do
@@ -106,7 +106,7 @@ describe "Semantic: struct" do
 
       Test.new(Test.new(nil))
       ),
-      "recursive struct Test detected: `@test : (Test | Nil)`"
+      "Recursive struct Test detected: `@test : (Test | Nil)`"
   end
 
   it "errors on recursive struct inside module" do
@@ -118,7 +118,7 @@ describe "Semantic: struct" do
 
       Foo::Test.new(Foo::Test.new(nil))
       ),
-      "recursive struct Foo::Test detected: `@test : (Foo::Test | Nil)`"
+      "Recursive struct Foo::Test detected: `@test : (Foo::Test | Nil)`"
   end
 
   it "errors on recursive generic struct inside module" do
@@ -130,7 +130,7 @@ describe "Semantic: struct" do
 
       Foo::Test(Int32).new(Foo::Test(Int32).new(nil))
       ),
-      "recursive struct Foo::Test(T) detected: `@test : (Foo::Test(T) | Nil)`"
+      "Recursive struct Foo::Test(T) detected: `@test : (Foo::Test(T) | Nil)`"
   end
 
   it "errors on mutually recursive struct" do
@@ -148,7 +148,7 @@ describe "Semantic: struct" do
       Foo.new(Bar.new(nil))
       Bar.new(Foo.new(nil))
       ),
-      "recursive struct Foo detected: `@bar : (Bar | Nil)` -> `@foo : (Foo | Nil)`"
+      "Recursive struct Foo detected: `@bar : (Bar | Nil)` -> `@foo : (Foo | Nil)`"
   end
 
   it "can't extend struct from non-abstract struct" do
@@ -159,7 +159,7 @@ describe "Semantic: struct" do
       struct Bar < Foo
       end
       ),
-      "can't extend non-abstract struct Foo"
+      "Can't extend non-abstract struct Foo"
   end
 
   it "unifies type to virtual type" do
@@ -227,7 +227,7 @@ describe "Semantic: struct" do
         end
       end
       ),
-      "recursive struct Foo detected: `@moo : Moo` -> `Moo` -> `Foo`"
+      "Recursive struct Foo detected: `@moo : Moo` -> `Moo` -> `Foo`"
   end
 
   it "detects recursive struct through inheritance (#3071)" do
@@ -239,7 +239,7 @@ describe "Semantic: struct" do
         @value = uninitialized Foo
       end
       ),
-      "recursive struct Bar detected: `@value : Foo` -> `Foo` -> `Bar`"
+      "Recursive struct Bar detected: `@value : Foo` -> `Foo` -> `Bar`"
   end
 
   it "errors if defining finalize for struct (#3840)" do
@@ -249,6 +249,6 @@ describe "Semantic: struct" do
         end
       end
       ),
-      "structs can't have finalizers because they are not tracked by the GC"
+      "Structs can't have finalizers because they are not tracked by the GC"
   end
 end
