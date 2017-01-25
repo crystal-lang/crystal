@@ -17,11 +17,11 @@ module Crystal
       named_args = attr.named_args
 
       if name != "Link"
-        attr.raise "illegal attribute for lib, valid attributes are: Link"
+        attr.raise "Illegal attribute for lib, valid attributes are: Link"
       end
 
       if args.empty? && !named_args
-        attr.raise "missing link arguments: must at least specify a library name"
+        attr.raise "Missing link arguments: must at least specify a library name"
       end
 
       lib_name = nil
@@ -33,16 +33,16 @@ module Crystal
       args.each do |arg|
         case count
         when 0
-          arg.raise "'lib' link argument must be a String" unless arg.is_a?(StringLiteral)
+          arg.raise "'lib' link argument must be a string" unless arg.is_a?(StringLiteral)
           lib_name = arg.value
         when 1
-          arg.raise "'ldflags' link argument must be a String" unless arg.is_a?(StringLiteral)
+          arg.raise "'ldflags' link argument must be a string" unless arg.is_a?(StringLiteral)
           lib_ldflags = arg.value
         when 2
-          arg.raise "'static' link argument must be a Bool" unless arg.is_a?(BoolLiteral)
+          arg.raise "'static' link argument must be a bool" unless arg.is_a?(BoolLiteral)
           lib_static = arg.value
         when 3
-          arg.raise "'framework' link argument must be a String" unless arg.is_a?(StringLiteral)
+          arg.raise "'framework' link argument must be a string" unless arg.is_a?(StringLiteral)
           lib_framework = arg.value
         else
           attr.wrong_number_of "link arguments", args.size, "1..4"
@@ -57,22 +57,22 @@ module Crystal
         case named_arg.name
         when "lib"
           named_arg.raise "'lib' link argument already specified" if count > 0
-          named_arg.raise "'lib' link argument must be a String" unless value.is_a?(StringLiteral)
+          named_arg.raise "'lib' link argument must be a string" unless value.is_a?(StringLiteral)
           lib_name = value.value
         when "ldflags"
           named_arg.raise "'ldflags' link argument already specified" if count > 1
-          named_arg.raise "'ldflags' link argument must be a String" unless value.is_a?(StringLiteral)
+          named_arg.raise "'ldflags' link argument must be a string" unless value.is_a?(StringLiteral)
           lib_ldflags = value.value
         when "static"
           named_arg.raise "'static' link argument already specified" if count > 2
-          named_arg.raise "'static' link argument must be a Bool" unless value.is_a?(BoolLiteral)
+          named_arg.raise "'static' link argument must be a bool" unless value.is_a?(BoolLiteral)
           lib_static = value.value
         when "framework"
           named_arg.raise "'framework' link argument already specified" if count > 3
-          named_arg.raise "'framework' link argument must be a String" unless value.is_a?(StringLiteral)
+          named_arg.raise "'framework' link argument must be a string" unless value.is_a?(StringLiteral)
           lib_framework = value.value
         else
-          named_arg.raise "unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+          named_arg.raise "Unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
         end
       end
 

@@ -2667,7 +2667,7 @@ module Crystal
             when :UNDERSCORE
               underscore = true
             else
-              raise "expecting block argument name, not #{@token.type}"
+              raise "Expecting block argument name, not #{@token.type}"
             end
 
             write(underscore ? "_" : @token.value)
@@ -3526,7 +3526,7 @@ module Crystal
             next_token_skip_space_or_newline
             accept node.ensure.not_nil!
           else
-            raise "expected 'rescue' or 'ensure'"
+            raise "Expected 'rescue' or 'ensure'"
           end
           return false
         end
@@ -4461,11 +4461,11 @@ module Crystal
     end
 
     def check_keyword(*keywords)
-      raise "expecting keyword #{keywords.join " or "}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless keywords.any? { |k| @token.keyword?(k) }
+      raise "Expecting keyword #{keywords.join " or "}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless keywords.any? { |k| @token.keyword?(k) }
     end
 
     def check(token_type)
-      raise "expecting #{token_type}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless @token.type == token_type
+      raise "Expecting #{token_type}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless @token.type == token_type
     end
 
     def check_end

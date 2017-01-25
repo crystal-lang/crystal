@@ -6,7 +6,7 @@ class OpenSSL::Cipher
 
   def initialize(name)
     cipher = LibCrypto.evp_get_cipherbyname name
-    raise ArgumentError.new "unsupported cipher algorithm #{name.inspect}" unless cipher
+    raise ArgumentError.new "Unsupported cipher algorithm #{name.inspect}" unless cipher
 
     @ctx = LibCrypto.evp_cipher_ctx_new
     # The EVP which has EVP_CIPH_RAND_KEY flag (such as DES3) allows
@@ -25,7 +25,7 @@ class OpenSSL::Cipher
   end
 
   def key=(key)
-    raise ArgumentError.new "key length too short: wanted #{key_len}, got #{key.bytesize}" if key.bytesize < key_len
+    raise ArgumentError.new "Key length too short: wanted #{key_len}, got #{key.bytesize}" if key.bytesize < key_len
     cipherinit key: key
     key
   end

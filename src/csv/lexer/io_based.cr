@@ -22,7 +22,7 @@ class CSV::Lexer::IOBased < CSV::Lexer
       when '\r', '\n', '\0'
         break
       when @quote_char
-        raise "unexpected quote"
+        raise "Unexpected quote"
       else
         @buffer << current_char
         next_char

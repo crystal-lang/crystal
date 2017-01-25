@@ -65,22 +65,22 @@ module Readline
   end
 
   def bind_key(c : Char, &f : KeyBindingProc)
-    raise ArgumentError.new "not a valid ASCII character: '#{c.inspect}'" unless 0 <= c.ord <= 255
+    raise ArgumentError.new "Not a valid ASCII character: '#{c.inspect}'" unless 0 <= c.ord <= 255
 
     handlers = (@@key_bind_handlers ||= {} of LibReadline::Int => KeyBindingProc)
     handlers[c.ord] = f
 
     res = LibReadline.rl_bind_key(c.ord, KeyBindingHandler).to_i32
-    raise ArgumentError.new "invalid key: '#{c.inspect}'" unless res == 0
+    raise ArgumentError.new "Invalid key: '#{c.inspect}'" unless res == 0
   end
 
   def unbind_key(c : Char)
     if (handlers = @@key_bind_handlers) && handlers[c.ord]?
       handlers.delete(c.ord)
       res = LibReadline.rl_unbind_key(c.ord).to_i32
-      raise Exception.new "error unbinding key: '#{c.inspect}'" unless res == 0
+      raise Exception.new "Error unbinding key: '#{c.inspect}'" unless res == 0
     else
-      raise KeyError.new "key not bound: '#{c.inspect}'"
+      raise KeyError.new "Key not bound: '#{c.inspect}'"
     end
   end
 

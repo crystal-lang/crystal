@@ -92,11 +92,11 @@ class ECR::Lexer
       case current_char
       when '\0'
         if is_output
-          raise "unexpected end of file inside <%= ..."
+          raise "Unexpected end of file inside <%= ..."
         elsif is_escape
-          raise "unexpected end of file inside <%% ..."
+          raise "Unexpected end of file inside <%% ..."
         else
-          raise "unexpected end of file inside <% ..."
+          raise "Unexpected end of file inside <% ..."
         end
       when '\n'
         @line_number += 1
@@ -117,7 +117,7 @@ class ECR::Lexer
           if is_end
             @token.supress_trailing = true
             setup_control_token(start_pos, is_escape)
-            raise "expecting '>' after '-%'" if current_char != '>'
+            raise "Expecting '>' after '-%'" if current_char != '>'
             next_char
             break
           end

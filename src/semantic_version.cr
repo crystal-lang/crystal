@@ -19,7 +19,7 @@ class SemanticVersion
       build = m[7]?
       new major, minor, patch, prerelease, build
     else
-      raise ArgumentError.new("not a semantic version: #{str.inspect}")
+      raise ArgumentError.new("Not a semantic version: #{str.inspect}")
     end
   end
 
@@ -32,7 +32,7 @@ class SemanticVersion
                   when nil
                     Prerelease.new
                   else
-                    raise ArgumentError.new("invalid prerelease #{prerelease.inspect}")
+                    raise ArgumentError.new("Invalid prerelease #{prerelease.inspect}")
                   end
   end
 

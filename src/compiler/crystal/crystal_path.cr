@@ -157,9 +157,9 @@ module Crystal
       end
 
       if relative_to
-        raise "can't find file '#{filename}' relative to '#{relative_to}'"
+        raise "Can't find file '#{filename}' relative to '#{relative_to}'"
       else
-        raise "can't find file '#{filename}'"
+        raise "Can't find file '#{filename}'"
       end
     end
   end

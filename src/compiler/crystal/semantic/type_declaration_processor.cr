@@ -163,7 +163,7 @@ struct Crystal::TypeDeclarationProcessor
     remove_error owner, name
 
     if owner.extern? && !type.allowed_in_lib?
-      raise TypeException.new("only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations, not #{type}", location.not_nil!)
+      raise TypeException.new("Only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations, not #{type}", location.not_nil!)
     end
 
     if owner.is_a?(NonGenericModuleType) || owner.is_a?(NonGenericClassType)
@@ -210,7 +210,7 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def raise_cant_declare_instance_var(owner, location)
-    raise TypeException.new("can't declare instance variables in #{owner}", location)
+    raise TypeException.new("Can't declare instance variables in #{owner}", location)
   end
 
   private def process_instance_vars_declarations
@@ -246,7 +246,7 @@ struct Crystal::TypeDeclarationProcessor
     if supervar && supervar.owner != owner
       # Redeclaring a variable with the same type is OK
       unless supervar.type.same?(type_decl.type)
-        raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.type} (trying to re-declare as #{type_decl.type})", type_decl.location)
+        raise TypeException.new("Instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.type} (trying to re-declare as #{type_decl.type})", type_decl.location)
       end
     else
       declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true, check_nilable: !owner.module?)
@@ -401,7 +401,7 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def raise_nil_instance_var(owner, name, location)
-    raise TypeException.new("instance variable #{name} of #{owner} was inferred to be Nil, but Nil alone provides no information", location)
+    raise TypeException.new("Instance variable #{name} of #{owner} was inferred to be Nil, but Nil alone provides no information", location)
   end
 
   private def compute_non_nilable_instance_vars
@@ -569,10 +569,10 @@ struct Crystal::TypeDeclarationProcessor
           elsif owner == ivar.owner
             raise_doesnt_explicitly_initializes(info, name, ivar)
           else
-            info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}' of #{ivar.owner}, with #{owner} < #{ivar.owner}, rendering it nilable"
+            info.def.raise "This 'initialize' doesn't initialize instance variable '#{name}' of #{ivar.owner}, with #{owner} < #{ivar.owner}, rendering it nilable"
           end
         else
-          info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}', rendering it nilable"
+          info.def.raise "This 'initialize' doesn't initialize instance variable '#{name}', rendering it nilable"
         end
       end
     end
@@ -602,7 +602,7 @@ struct Crystal::TypeDeclarationProcessor
     return unless var_type
 
     if !class_var.initializer && !var_type.includes_type?(@program.nil_type)
-      class_var.raise "class variable '#{name}' of #{owner} is not nilable (it's #{var_type}) so it must have an initializer"
+      class_var.raise "Class variable '#{name}' of #{owner} is not nilable (it's #{var_type}) so it must have an initializer"
     end
   end
 
@@ -615,11 +615,11 @@ struct Crystal::TypeDeclarationProcessor
       entries.each do |name, error|
         case name
         when .starts_with?("$")
-          error.node.raise "can't use #{error.type} as the type of global variable #{name}, use a more specific type"
+          error.node.raise "Can't use #{error.type} as the type of global variable #{name}, use a more specific type"
         when .starts_with?("@@")
-          error.node.raise "can't use #{error.type} as the type of class variable #{name} of #{type}, use a more specific type"
+          error.node.raise "Can't use #{error.type} as the type of class variable #{name} of #{type}, use a more specific type"
         when .starts_with?("@")
-          error.node.raise "can't use #{error.type} as the type of instance variable #{name} of #{type}, use a more specific type"
+          error.node.raise "Can't use #{error.type} as the type of instance variable #{name} of #{type}, use a more specific type"
         end
       end
     end
@@ -639,7 +639,7 @@ struct Crystal::TypeDeclarationProcessor
             next unless ancestor_class_var
 
             if owner_class_var.type != ancestor_class_var.type
-              raise TypeException.new("class variable '#{name}' of #{owner} is already defined as #{ancestor_class_var.type} in #{ancestor}", info.location)
+              raise TypeException.new("Class variable '#{name}' of #{owner} is already defined as #{ancestor_class_var.type} in #{ancestor}", info.location)
             end
           end
         end
@@ -648,16 +648,16 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def raise_not_initialized_in_all_initialize(node : ASTNode, name, owner)
-    node.raise "instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable"
+    node.raise "Instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   private def raise_not_initialized_in_all_initialize(location : Location, name, owner)
-    raise TypeException.new "instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable", location
+    raise TypeException.new "Instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable", location
   end
 
   private def raise_doesnt_explicitly_initializes(info, name, ivar)
     info.def.raise <<-MSG
-      this 'initialize' doesn't explicitly initialize instance variable '#{name}' of #{ivar.owner}, rendering it nilable
+      This 'initialize' doesn't explicitly initialize instance variable '#{name}' of #{ivar.owner}, rendering it nilable
 
       The instance variable '#{name}' is initialized in other 'initialize' methods,
       and by not initializing it here it's not clear if the variable is supposed

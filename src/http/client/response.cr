@@ -16,7 +16,7 @@ class HTTP::Client::Response
       @body = "" unless @body || @body_io
     else
       if (@body || @body_io) && (headers["Content-Length"]? != "0")
-        raise ArgumentError.new("status #{status_code} should not have a body")
+        raise ArgumentError.new("Status #{status_code} should not have a body")
       end
     end
   end
@@ -85,7 +85,7 @@ class HTTP::Client::Response
 
   def self.from_io(io, ignore_body = false, decompress = true)
     from_io?(io, ignore_body, decompress) ||
-      raise("unexpected end of http request")
+      raise("Unexpected end of http request")
   end
 
   # Parses an `HTTP::Client::Response` from the given `IO`.
@@ -107,7 +107,7 @@ class HTTP::Client::Response
       if response
         yield response
       else
-        raise("unexpected end of http request")
+        raise("Unexpected end of http request")
       end
     end
   end

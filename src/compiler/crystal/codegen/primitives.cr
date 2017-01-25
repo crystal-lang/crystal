@@ -847,7 +847,7 @@ class Crystal::CodeGenVisitor
 
     ordering = LLVM::AtomicOrdering.parse?(node.value)
     unless ordering
-      node.raise "unknown atomic ordering: #{node.value}"
+      node.raise "Unknown atomic ordering: #{node.value}"
     end
 
     ordering
@@ -860,7 +860,7 @@ class Crystal::CodeGenVisitor
 
     op = LLVM::AtomicRMWBinOp.parse?(node.value)
     unless op
-      node.raise "unknown atomic rwm bin op: #{node.value}"
+      node.raise "Unknown atomic rwm bin op: #{node.value}"
     end
 
     op

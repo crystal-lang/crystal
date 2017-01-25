@@ -77,14 +77,14 @@ class String::Builder
   # by the given *amount*.
   def back(amount : Int)
     unless 0 <= amount <= @bytesize
-      raise ArgumentError.new "invalid back amount"
+      raise ArgumentError.new "Invalid back amount"
     end
 
     @bytesize -= amount
   end
 
   def to_s
-    raise "can only invoke 'to_s' once on String::Builder" if @finished
+    raise "Can only invoke 'to_s' once on String::Builder" if @finished
     @finished = true
 
     write_byte 0_u8

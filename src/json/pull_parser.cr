@@ -233,7 +233,7 @@ class JSON::PullParser
     end
 
     unless found
-      raise "json key not found: #{key}"
+      raise "JSON key not found: #{key}"
     end
 
     value
@@ -484,11 +484,11 @@ class JSON::PullParser
   end
 
   private def expect_kind(kind)
-    parse_exception "expected #{kind} but was #{@kind}" unless @kind == kind
+    parse_exception "Expected #{kind} but was #{@kind}" unless @kind == kind
   end
 
   private def unexpected_token
-    parse_exception "unexpected token: #{token}"
+    parse_exception "Unexpected token: #{token}"
   end
 
   private def parse_exception(msg)
@@ -497,7 +497,7 @@ class JSON::PullParser
 
   private def push_in_object_stack(symbol)
     if @object_stack.size >= @max_nesting
-      parse_exception "nesting of #{@object_stack.size + 1} is too deep"
+      parse_exception "Nesting of #{@object_stack.size + 1} is too deep"
     end
 
     @object_stack.push(symbol)

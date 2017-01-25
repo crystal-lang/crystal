@@ -112,9 +112,9 @@ class Crystal::Call
         when TupleInstanceType
           arg_types.concat arg_type.tuple_types
         when UnionType
-          arg.raise "splatting a union #{arg_type} is not yet supported"
+          arg.raise "Splatting a union #{arg_type} is not yet supported"
         else
-          arg.raise "argument to splat must be a tuple, not #{arg_type}"
+          arg.raise "Argument to splat must be a tuple, not #{arg_type}"
         end
       when DoubleSplat
         case arg_type = arg.type
@@ -123,13 +123,13 @@ class Crystal::Call
             name, type = entry.name, entry.type
 
             named_args_types ||= [] of NamedArgumentType
-            raise "duplicate key: #{name}" if named_args_types.any? &.name.==(name)
+            raise "Duplicate key: #{name}" if named_args_types.any? &.name.==(name)
             named_args_types << NamedArgumentType.new(name, type)
           end
         when UnionType
-          arg.raise "double splatting a union #{arg_type} is not yet supported"
+          arg.raise "Double splatting a union #{arg_type} is not yet supported"
         else
-          arg.raise "argument to double splat must be a named tuple, not #{arg_type}"
+          arg.raise "Argument to double splat must be a named tuple, not #{arg_type}"
         end
       else
         arg_types << arg.type
@@ -141,7 +141,7 @@ class Crystal::Call
     if named_args = self.named_args
       named_args_types ||= [] of NamedArgumentType
       named_args.each do |named_arg|
-        raise "duplicate key: #{named_arg.name}" if named_args_types.any? &.name.==(named_arg.name)
+        raise "Duplicate key: #{named_arg.name}" if named_args_types.any? &.name.==(named_arg.name)
         named_args_types << NamedArgumentType.new(named_arg.name, named_arg.value.type)
       end
     end
@@ -404,7 +404,7 @@ class Crystal::Call
     # TODO Ideally this should check `> 1`, but the algorithm isn't precise. However,
     # manually nested blocks don't nest this deep.
     if block_nest > 15
-      raise "recursive block expansion: blocks that yield are always inlined, and this call leads to an infinite inlining"
+      raise "Recursive block expansion: blocks that yield are always inlined, and this call leads to an infinite inlining"
     end
   end
 
@@ -455,9 +455,9 @@ class Crystal::Call
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       elsif instance_type.size == 0
-        raise "index '#{arg}' out of bounds for empty tuple"
+        raise "Index '#{arg}' out of bounds for empty tuple"
       else
-        raise "index out of bounds for #{owner} (#{arg} not in 0..#{instance_type.size - 1})"
+        raise "Index out of bounds for #{owner} (#{arg} not in 0..#{instance_type.size - 1})"
       end
     end
     nil
@@ -478,7 +478,7 @@ class Crystal::Call
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       else
-        raise "missing key '#{name}' for named tuple #{owner}"
+        raise "Missing key '#{name}' for named tuple #{owner}"
       end
     end
     nil
@@ -542,13 +542,13 @@ class Crystal::Call
       block.vars = self.before_vars
       self.block = block
     else
-      block_arg.raise "expected a function type, not #{block_arg.type}"
+      block_arg.raise "Expected a function type, not #{block_arg.type}"
     end
   end
 
   def lookup_super_matches(arg_types, named_args_types)
     if scope.is_a?(Program)
-      raise "there's no superclass in this scope"
+      raise "There's no superclass in this scope"
     end
 
     enclosing_def = enclosing_def()
@@ -589,7 +589,7 @@ class Crystal::Call
       end
       lookup_matches_in_type(parents.last, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize)
     else
-      raise "there's no superclass in this scope"
+      raise "There's no superclass in this scope"
     end
   end
 
@@ -598,7 +598,7 @@ class Crystal::Call
 
     previous_item = enclosing_def.previous
     unless previous_item
-      return raise "there is no previous definition of '#{enclosing_def.name}'"
+      return raise "There is no previous definition of '#{enclosing_def.name}'"
     end
 
     previous = previous_item.def
@@ -688,7 +688,7 @@ class Crystal::Call
           if input.is_a?(Splat)
             tuple_type = lookup_node_type(match.context, input.exp)
             unless tuple_type.is_a?(TupleInstanceType)
-              input.raise "expected type to be a tuple type, not #{tuple_type}"
+              input.raise "Expected type to be a tuple type, not #{tuple_type}"
             end
             tuple_type.tuple_types.each do |arg_type|
               MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
@@ -710,7 +710,7 @@ class Crystal::Call
       # is valid too only if Foo is an alias/typedef that referes to a FunctionType
       block_arg_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
       unless block_arg_type.is_a?(ProcInstanceType)
-        block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_type}"
+        block_arg_restriction.raise "Expected block type to be a function type, not #{block_arg_type}"
         return nil, nil
       end
 
@@ -758,7 +758,7 @@ class Crystal::Call
         output_type = lookup_node_type?(match.context, output)
         if output_type
           output_type = program.nil if output_type.void?
-          Crystal.check_type_allowed_in_generics(output, output_type, "can't use #{output_type} as a block return type")
+          Crystal.check_type_allowed_in_generics(output, output_type, "Can't use #{output_type} as a block return type")
           output_type = output_type.virtual_type
         end
       end
@@ -804,7 +804,7 @@ class Crystal::Call
               block.freeze_type = output_type || block_type
               block_arg_type = program.proc_of(fun_args, block_type)
             else
-              raise "expected block to return #{output}, not #{block_type}"
+              raise "Expected block to return #{output}, not #{block_type}"
             end
           elsif output_type
             block.bind_to(block)
@@ -863,16 +863,16 @@ class Crystal::Call
                 block_type = lookup_node_type(match.context, output).virtual_type
               rescue ex : Crystal::Exception
                 if block_type
-                  raise "couldn't match #{block_type} to #{output}", ex
+                  raise "Couldn't match #{block_type} to #{output}", ex
                 else
                   cant_infer_block_return_type
                 end
               end
             else
               if output.is_a?(Self)
-                raise "expected block to return #{match.context.instantiated_type}, not #{block_type}"
+                raise "Expected block to return #{match.context.instantiated_type}, not #{block_type}"
               else
-                raise "expected block to return #{output}, not #{block_type}"
+                raise "Expected block to return #{output}, not #{block_type}"
               end
             end
           end
@@ -894,7 +894,7 @@ class Crystal::Call
       i = 1
       yield_vars.zip(call_block_arg_types) do |yield_var, call_block_arg_type|
         if yield_var.type != call_block_arg_type
-          raise "expected block argument's argument ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
+          raise "Expected block argument's argument ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
         end
         i += 1
       end
@@ -914,7 +914,7 @@ class Crystal::Call
   end
 
   private def cant_infer_block_return_type
-    raise "can't infer block return type, try to cast the block body with `as`. See: https://github.com/crystal-lang/crystal/wiki/Compiler-error-messages#cant-infer-block-return-type"
+    raise "Can't infer block return type, try to cast the block body with `as`. See: https://github.com/crystal-lang/crystal/wiki/Compiler-error-messages#cant-infer-block-return-type"
   end
 
   private def lookup_node_type(context, node)
@@ -938,10 +938,10 @@ class Crystal::Call
           # inside a generated 'new' method
           ::raise ex
         else
-          raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
+          raise "Instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
         end
       else
-        raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+        raise "Instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
       end
     end
   end
@@ -1009,7 +1009,7 @@ class Crystal::Call
         owner = owner.as(ProcInstanceType)
         proc_arg_type = owner.arg_types[index]
         unless type.covariant?(proc_arg_type)
-          self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+          self.args[index].raise "Type must be #{proc_arg_type}, not #{type}"
         end
       end
 

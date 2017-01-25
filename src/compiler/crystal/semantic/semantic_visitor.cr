@@ -34,7 +34,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
 
     if inside_exp?
-      node.raise "can't require dynamically"
+      node.raise "Can't require dynamically"
     end
 
     location = node.location
@@ -63,9 +63,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.bind_to(expanded)
     false
   rescue ex : Crystal::Exception
-    node.raise "while requiring \"#{node.string}\"", ex
+    node.raise "While requiring \"#{node.string}\"", ex
   rescue ex
-    node.raise "while requiring \"#{node.string}\": #{ex.message}"
+    node.raise "While requiring \"#{node.string}\": #{ex.message}"
   end
 
   def visit(node : ClassDef)
@@ -219,7 +219,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   def check_outside_exp(node, op)
-    node.raise "can't #{op} dynamically" if inside_exp?
+    node.raise "Can't #{op} dynamically" if inside_exp?
   end
 
   def expand_macro(node, raise_on_missing_const = true, first_pass = false)
@@ -242,7 +242,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       macro_scope = macro_scope.remove_alias
 
       the_macro = macro_scope.metaclass.lookup_macro(node.name, node.args, node.named_args)
-      node.raise "private macro '#{node.name}' called for #{obj}" if the_macro && the_macro.visibility.private?
+      node.raise "Private macro '#{node.name}' called for #{obj}" if the_macro && the_macro.visibility.private?
     when Nil
       return false if node.name == "super" || node.name == "previous_def"
       the_macro = node.lookup_macro
@@ -256,7 +256,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     # macro was defined before we first found this call, so it's an error
     # (we must analyze the macro expansion in all passes)
     if !@typed_def && !@block && !first_pass
-      node.raise "macro '#{node.name}' must be defined before this point but is defined later"
+      node.raise "Macro '#{node.name}' must be defined before this point but is defined later"
     end
 
     expansion_scope = (macro_scope || @scope || current_type)
@@ -378,7 +378,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   rescue ex : MacroRaiseException
     node.raise ex.message, exception_type: MacroRaiseException
   rescue ex : Crystal::Exception
-    node.raise "expanding macro", ex
+    node.raise "Expanding macro", ex
   end
 
   def check_valid_attributes(node, valid_attributes, desc)
@@ -387,7 +387,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
     attributes.each do |attr|
       unless valid_attributes.includes?(attr.name)
-        attr.raise "illegal attribute for #{desc}, valid attributes are: #{valid_attributes.join ", "}"
+        attr.raise "Illegal attribute for #{desc}, valid attributes are: #{valid_attributes.join ", "}"
       end
 
       if attr.name != "Primitive"
@@ -403,7 +403,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def check_allowed_in_lib(node, type = node.type.instance_type)
     unless type.allowed_in_lib?
       msg = String.build do |msg|
-        msg << "only primitive types, pointers, structs, unions, enums and tuples are allowed in lib declarations, not #{type}"
+        msg << "Only primitive types, pointers, structs, unions, enums and tuples are allowed in lib declarations, not #{type}"
         msg << " (did you mean LibC::Int?)" if type == @program.int
         msg << " (did you mean LibC::Float?)" if type == @program.float
       end
@@ -421,10 +421,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     type = declared_type.instance_type
 
     if type.is_a?(GenericClassType)
-      node.raise "can't declare variable of generic non-instantiated type #{type}"
+      node.raise "Can't declare variable of generic non-instantiated type #{type}"
     end
 
-    Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as the type of #{variable_kind}")
+    Crystal.check_type_allowed_in_generics(node, type, "Can't use #{type} as the type of #{variable_kind}")
 
     declared_type
   end
@@ -433,7 +433,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     scope = (@scope || current_type).class_var_owner
     case scope
     when Program
-      node.raise "can't use class variables at the top level"
+      node.raise "Can't use class variables at the top level"
     end
 
     scope.as(ClassVarContainer)

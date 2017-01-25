@@ -42,7 +42,7 @@ class Reference
     {% if @type.abstract? %}
       # This shouldn't happen, as the type is abstract,
       # but we need to avoid the allocate invocation below
-      raise "can't dup {{@type}}"
+      raise "Can't dup {{@type}}"
     {% else %}
       dup = self.class.allocate
       dup.as(Void*).copy_from(self.as(Void*), instance_sizeof(self))

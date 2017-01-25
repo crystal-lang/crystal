@@ -124,7 +124,7 @@ module Crystal
 
     private def raise_wrong_method_missing_expansion(msg, expanded_macro, original_call)
       str = String.build do |io|
-        io << "wrong method_missing expansion\n\n"
+        io << "Wrong method_missing expansion\n\n"
         io << "The method_missing macro expanded to:\n\n"
         io << Crystal.with_line_numbers(expanded_macro)
         io << "\n\n"

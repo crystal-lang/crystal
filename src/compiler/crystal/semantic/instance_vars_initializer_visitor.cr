@@ -58,7 +58,7 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
     current_type = current_type()
     case current_type
     when Program, FileModule
-      node.raise "can't use instance variables at the top level"
+      node.raise "Can't use instance variables at the top level"
     when ClassType, NonGenericModuleType, GenericModuleType
       meta_vars = MetaVars.new
       ivar_visitor = MainVisitor.new(program, meta_vars: meta_vars)

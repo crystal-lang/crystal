@@ -53,7 +53,7 @@ module Crystal
         @line = macro_location.line_number + loc.line_number
         @column = loc.column_number
       else
-        raise "not implemented"
+        raise "Not implemented"
       end
     end
 

@@ -25,11 +25,11 @@ class File::PReader
   end
 
   def unbuffered_write(slice : Bytes)
-    raise IO::Error.new("can't write to read-only IO")
+    raise IO::Error.new("Can't write to read-only IO")
   end
 
   def unbuffered_flush
-    raise IO::Error.new("can't flush read-only IO")
+    raise IO::Error.new("Can't flush read-only IO")
   end
 
   def unbuffered_rewind

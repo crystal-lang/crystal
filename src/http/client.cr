@@ -492,7 +492,7 @@ class HTTP::Client
     response = exec_internal_single(request)
     return handle_response(response) if response
 
-    raise "unexpected end of http response"
+    raise "Unexpected end of http response"
   end
 
   private def exec_internal_single(request)
@@ -539,7 +539,7 @@ class HTTP::Client
           end
         end
 
-        raise "unexpected end of http response"
+        raise "Unexpected end of http response"
       end
     end
   end
@@ -691,7 +691,7 @@ class HTTP::Client
       scheme = uri.scheme
       case scheme
       when nil
-        raise ArgumentError.new("missing scheme: #{uri}")
+        raise ArgumentError.new("Missing scheme: #{uri}")
       when "http"
         false
       when "https"
@@ -705,7 +705,7 @@ class HTTP::Client
       scheme = uri.scheme
       case {scheme, context}
       when {nil, _}
-        raise ArgumentError.new("missing scheme: #{uri}")
+        raise ArgumentError.new("Missing scheme: #{uri}")
       when {"http", nil}
         false
       when {"http", OpenSSL::SSL::Context::Client}
