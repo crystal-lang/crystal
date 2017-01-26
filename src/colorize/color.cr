@@ -138,6 +138,9 @@ module Colorize
     def default?
       false
     end
+
+    # :nodoc:
+    def_equals_and_hash value
   end
 
   # `ColorRGB` represents 24bit true color on a terminal.
@@ -213,5 +216,8 @@ module Colorize
     def default?
       false
     end
+
+    # :nodoc:
+    def_equals_and_hash red, green, blue
   end
 end

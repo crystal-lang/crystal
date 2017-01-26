@@ -60,8 +60,8 @@ class Crystal::Command
       end
     end
 
-    unless @color.auto?
-      options << "--color=#{@color}"
+    unless STDOUT.colorize_when.auto?
+      options << "--color=#{STDOUT.colorize_when.to_s.underscore}"
     end
 
     source_filename = File.expand_path("spec")

@@ -95,7 +95,7 @@ module Spec
 
             if ex.is_a?(AssertionFailed)
               puts
-              puts "     # #{Spec.relative_file(ex.file)}:#{ex.line}".colorize.when(Spec.use_colors).cyan
+              puts "     # #{Spec.relative_file(ex.file)}:#{ex.line}".colorize.cyan
             end
           end
         end
@@ -110,11 +110,9 @@ module Spec
         puts "Top #{Spec.slowest} slowest examples (#{top_n_time} seconds, #{percent.round(2)}% of total time):"
         top_n.each do |res|
           puts "  #{res.description}"
-
           res_elapsed = res.elapsed.not_nil!.total_seconds.to_s
-          print "    "
-          print res_elapsed.colorize.when(Spec.use_colors)
-          puts " seconds #{Spec.relative_file(res.file)}:#{res.line}"
+          STDOUT << "    " << res_elapsed.colorize.red << " seconds #{Spec.relative_file(res.file)}:#{res.line}"
+          puts
         end
       end
 
@@ -137,8 +135,8 @@ module Spec
         puts "Failed examples:"
         puts
         failures_and_errors.each do |fail|
-          print "crystal spec #{Spec.relative_file(fail.file)}:#{fail.line}".colorize.when(Spec.use_colors).red
-          puts " # #{fail.description}".colorize.when(Spec.use_colors).cyan
+          print "crystal spec #{Spec.relative_file(fail.file)}:#{fail.line}".colorize.red
+          puts " # #{fail.description}".colorize.cyan
         end
       end
     end

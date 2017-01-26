@@ -67,9 +67,6 @@ module Crystal
     # If `true`, doc comments are attached to types and methods.
     property? wants_doc = false
 
-    # Colorize policy. See `Colorize::When`.
-    property color = Colorize::When::Auto
-
     # All required files. The set stores absolute files. This way
     # files loaded by `require` nodes are only processed once.
     getter requires = Set(String).new
@@ -497,11 +494,17 @@ module Crystal
       "__temp_#{@temp_var_counter}"
     end
 
-    # Colorizes the given object, depending on whether this program
-    # is configured to use colors.
-    def colorize(obj)
-      obj.colorize.when(@color)
-    end
+    # # Colorizes the given object, depending on whether this program
+    # # is configured to use colors.
+    # def colorize(obj)
+    #   if (stdout = stdout()).is_a?(Colorize::IO) && stdout.output_escape_sequence?
+    #     String.build do |io|
+    #       io.colorizable << yield(obj.colorize)
+    #     end
+    #   else
+    #     obj
+    #   end
+    # end
 
     private def abstract_value_type(type)
       type.abstract = true

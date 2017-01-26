@@ -50,7 +50,7 @@ require "colorize/*"
 # By the way, you can use `String` (via `.parse_color), `Int` (via `Color256.new`) and `Color` instances to specify color:
 #
 # ```
-# with_color(fore: "red")     # use `String` instead.
+# with_color(fore: "red") # use `String` instead.
 #
 # with_color(fore: "#FDD")    # FDD means a color code, not Floppy Dick Drive.
 # with_color(fore: "#FFDDDD") # It is same above.
@@ -111,25 +111,27 @@ require "colorize/*"
 # with_color(fore: :red).when(:always).surround { puts "foo" }
 #
 # # Last specified policy is only available.
-# puts "foo".colorize.always.auto.never # output no escape sequence.
+# puts "foo".colorize.always.auto.never                            # output no escape sequence.
 # with_color(fore: :red).never.auto.always.surround { puts "foo" } # output no escape sequence.
 # ```
 module Colorize
-  module ObjectExtensions
-    def colorize(fore = nil, back = nil, mode = nil, when policy = nil)
-      Colorize::Object.new(self)
-                      .fore(fore)
-                      .back(back)
-                      .mode(mode)
-                      .when(policy)
-    end
-  end
 end
 
-def with_color(fore = nil, back = nil, mode = nil, when policy = nil)
-  Colorize::Style.new fore, back, mode, policy
+# Create a new `Colorize::Style` from given values.
+def with_color(fore = nil, back = nil, mode = nil)
+  Colorize::Style.new fore, back, mode
 end
 
 class Object
   include Colorize::ObjectExtensions
+end
+
+module IO
+  include Colorize::IOExtension
+
+  class FileDescriptor
+    include Colorize::ColorizableIO
+
+    @colorize_when = Colorize::When::Auto
+  end
 end

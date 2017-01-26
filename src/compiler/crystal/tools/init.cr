@@ -131,11 +131,11 @@ module Crystal
       def render
         Dir.mkdir_p(File.dirname(full_path))
         File.write(full_path, to_s)
-        puts log_message unless config.silent
+        log_message unless config.silent
       end
 
       def log_message
-        "      #{"create".colorize(:light_green)}  #{full_path}"
+        STDOUT << "      " << "create".colorize(:light_green) << "  #{full_path}"
       end
 
       def module_name

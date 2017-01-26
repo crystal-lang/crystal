@@ -18,11 +18,8 @@ module Spec
   }
 
   # :nodoc:
-  class_property use_colors = Colorize::When::Auto
-
-  # :nodoc:
   def self.color(str, status)
-    str.colorize(fore: COLORS[status], when: use_colors)
+    str.colorize(fore: COLORS[status])
   end
 
   # :nodoc:

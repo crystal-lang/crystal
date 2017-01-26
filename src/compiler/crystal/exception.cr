@@ -3,15 +3,13 @@ require "colorize"
 
 module Crystal
   abstract class Exception < ::Exception
-    property color = Colorize::When::Auto
-
     @filename : String | VirtualFile | Nil
 
-    def to_s(io)
-      to_s_with_source(nil, io)
-    end
-
     abstract def to_s_with_source(source, io)
+
+    def to_s(io)
+      to_s_with_source(nil, io.to_colorizable)
+    end
 
     def to_json(json : JSON::Builder)
       json.array do
@@ -38,20 +36,12 @@ module Crystal
 
     def to_s_with_source(source)
       String.build do |io|
-        to_s_with_source source, io
+        to_s_with_source source, io.to_colorizable
       end
     end
 
     def relative_filename(filename)
       Crystal.relative_filename(filename)
-    end
-
-    def colorize(obj)
-      obj.colorize.when(@color)
-    end
-
-    def with_color
-      ::with_color.when(@color)
     end
 
     def replace_leading_tabs_with_spaces(line)

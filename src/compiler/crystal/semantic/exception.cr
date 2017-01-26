@@ -9,10 +9,7 @@ module Crystal
     @column : Int32
     @size : Int32
 
-    def color=(color)
-      @color = color
-      inner.try &.color=(color)
-    end
+    @colorized_message : Colorize::Builder?
 
     def self.for_node(node, message, inner = nil)
       location = node.location
@@ -28,6 +25,10 @@ module Crystal
       else
         new message, nil, 0, nil, 0, inner
       end
+    end
+
+    def initialize(@colorized_message : Colorize::Builder, @line, @column : Int32, @filename, @size, @inner = nil)
+      initialize colorized_message.to_s_without_colorize, @line, @column, @filename, @size, @inner
     end
 
     def initialize(message, @line, @column : Int32, @filename, @size, @inner = nil)
@@ -84,9 +85,9 @@ module Crystal
       # If the inner exception has no location it means that they came from virtual nodes.
       # In that case, get the deepest error message and only show that.
       if inner && !inner.has_location?
-        msg = deepest_error_message.to_s
+        msg = deepest_error_message
       else
-        msg = @message.to_s
+        msg = @colorized_message || @message
       end
 
       is_macro = false
@@ -104,7 +105,7 @@ module Crystal
         end
       when VirtualFile
         io << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
-        io << Crystal.with_line_numbers(filename.source, @line, @color)
+        Crystal.with_line_numbers(filename.source, @line, io)
         is_macro = true
       else
         lines = source ? source.lines.to_a : nil
@@ -117,7 +118,7 @@ module Crystal
         io << replace_leading_tabs_with_spaces(line.chomp)
         io << "\n"
         io << (" " * (@column - 1))
-        with_color.green.bold.surround(io) do
+        with_color.green.bold.surround(io) do |io|
           io << "^"
           if @size > 0
             io << ("~" * (@size - 1))
@@ -128,7 +129,7 @@ module Crystal
 
       if is_macro
         io << "\n"
-        append_error_message io, @message
+        append_error_message io, @colorized_message || @message
       end
 
       if inner && inner.has_location?
@@ -138,10 +139,10 @@ module Crystal
     end
 
     def append_error_message(io, msg)
-      if @inner
+      if (inner = @inner) && inner.has_location?
         io << msg
       else
-        io << colorize(msg).bold
+        io << msg.colorize.bold
       end
     end
 
@@ -157,7 +158,7 @@ module Crystal
       if inner = @inner
         inner.deepest_error_message
       else
-        @message
+        @colorized_message || @message
       end
     end
   end
@@ -224,14 +225,16 @@ module Crystal
     end
 
     def print_nil_reason(nil_reason, io)
-      io << colorize("Error: ").bold
-      case nil_reason.reason
-      when :used_before_initialized
-        io << colorize("instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
-      when :used_self_before_initialized
-        io << colorize("'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable").bold
-      when :initialized_in_rescue
-        io << colorize("instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued").bold
+      with_color.bold.surround(io) do |io|
+        io << "Error: "
+        case nil_reason.reason
+        when :used_before_initialized
+          io << "instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+        when :used_self_before_initialized
+          io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable"
+        when :initialized_in_rescue
+          io << "instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued"
+        end
       end
     end
 
@@ -272,7 +275,7 @@ module Crystal
 
       io << "    "
       io << (" " * (name_column - 1))
-      with_color.green.bold.surround(io) do
+      with_color.green.bold.surround(io) do |io|
         io << "^"
         if name_size > 0
           io << ("~" * (name_size - 1)) if name_size
@@ -296,14 +299,14 @@ module Crystal
 
   class Program
     def undefined_global_variable(node, similar_name)
-      common = String.build do |str|
+      common = Colorize.build do |str|
         str << "Can't infer the type of global variable '#{node.name}'"
         if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+          str << " (did you mean #{similar_name}?)".colorize.yellow.bold
         end
       end
 
-      msg = String.build do |str|
+      msg = Colorize.build do |str|
         str << common
         str << "\n\n"
         str << undefined_variable_message("global", node.name)
@@ -314,14 +317,14 @@ module Crystal
     end
 
     def undefined_class_variable(node, owner, similar_name)
-      common = String.build do |str|
+      common = Colorize.build do |str|
         str << "Can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+          str << " (did you mean #{similar_name}?)".colorize.yellow.bold
         end
       end
 
-      msg = String.build do |str|
+      msg = Colorize.build do |str|
         str << common
         str << "\n\n"
         str << undefined_variable_message("class", node.name)
@@ -332,14 +335,14 @@ module Crystal
     end
 
     def undefined_instance_variable(node, owner, similar_name)
-      common = String.build do |str|
+      common = Colorize.build do |str|
         str << "Can't infer the type of instance variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+          str << " (did you mean #{similar_name}?)".colorize.yellow.bold
         end
       end
 
-      msg = String.build do |str|
+      msg = Colorize.build do |str|
         str << common
         str << "\n\n"
         str << undefined_variable_message("instance", node.name)

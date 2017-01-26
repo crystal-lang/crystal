@@ -2,18 +2,32 @@ require "spec"
 require "colorize"
 
 private class FakeTTY < IO::Memory
-  def tty?
-    true
-  end
+  include Colorize::ColorizableIO
+
+  @colorize_when = Colorize::When::Always
+
+  property? tty = false
+
+  INSTANCE = new
 end
 
-private def colorize(obj, io = IO::Memory.new,  **args)
-  if obj
-    yield(obj.colorize(**args).when(:always).when(args[:when]?)).to_s io
-  else
-    yield(with_color(**args).when(:always).when(args[:when]?)).as(Colorize::Style).surround(io) { }
+private def colorize(obj, tty = true, colorize_when = Colorize::When::Always, **args)
+  io = FakeTTY::INSTANCE
+
+  begin
+    io.colorize_when = colorize_when
+    io.tty = tty
+    if obj
+      io << yield obj.colorize **args
+    else
+      io.surround(yield with_color **args) { }
+    end
+  ensure
+    io.colorize_when = Colorize::When::Always
+    io.tty = false
   end
-  io.to_s
+
+  io.to_s.tap { io.clear }
 end
 
 private def colorize(obj, **args)
@@ -152,79 +166,44 @@ describe Colorize do
       end
 
       it "colorizes when given io is TTY on 'auto' policy" do
-        colorize(obj, when: :auto, &.black).should eq("")
-        colorize(obj, when: "auto", &.black).should eq("")
-        colorize(obj, when: Colorize::When::Auto, &.black).should eq("")
-        colorize(obj, &.black.auto).should eq("")
-        colorize(obj, &.black.when(:auto)).should eq("")
-        colorize(obj, &.black.when("auto")).should eq("")
-        colorize(obj, &.black.when(Colorize::When::Auto)).should eq("")
+        colorize(obj, tty: false, colorize_when: :auto, &.black).should eq("")
+        colorize(obj, tty: false, colorize_when: "auto", &.black).should eq("")
+        colorize(obj, tty: false, colorize_when: Colorize::When::Auto, &.black).should eq("")
 
-        colorize(obj, io: FakeTTY.new, when: :auto, &.black).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, when: "auto", &.black).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, when: Colorize::When::Auto, &.black).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, &.black.auto).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, &.black.when(:auto)).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, &.black.when("auto")).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, &.black.when(Colorize::When::Auto)).should eq("\e[30m\e[0m")
+        colorize(obj, tty: true, colorize_when: :auto, &.black).should eq("\e[30m\e[0m")
+        colorize(obj, tty: true, colorize_when: "auto", &.black).should eq("\e[30m\e[0m")
+        colorize(obj, tty: true, colorize_when: Colorize::When::Auto, &.black).should eq("\e[30m\e[0m")
       end
 
       it "colorizes always" do
-        colorize(obj, when: :always, &.black).should eq("\e[30m\e[0m")
-        colorize(obj, when: "always", &.black).should eq("\e[30m\e[0m")
-        colorize(obj, when: Colorize::When::Always, &.black).should eq("\e[30m\e[0m")
-        colorize(obj, &.black.always).should eq("\e[30m\e[0m")
-        colorize(obj, &.black.when(:always)).should eq("\e[30m\e[0m")
-        colorize(obj, &.black.when("always")).should eq("\e[30m\e[0m")
-        colorize(obj, &.black.when(Colorize::When::Always)).should eq("\e[30m\e[0m")
+        colorize(obj, tty: false, colorize_when: :always, &.black).should eq("\e[30m\e[0m")
+        colorize(obj, tty: false, colorize_when: "always", &.black).should eq("\e[30m\e[0m")
+        colorize(obj, tty: false, colorize_when: Colorize::When::Always, &.black).should eq("\e[30m\e[0m")
 
-        colorize(obj, io: FakeTTY.new, when: :always, &.black).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, when: "always", &.black).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, when: Colorize::When::Always, &.black).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, &.black.always).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, &.black.when(:always)).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, &.black.when("always")).should eq("\e[30m\e[0m")
-        colorize(obj, io: FakeTTY.new, &.black.when(Colorize::When::Always)).should eq("\e[30m\e[0m")
+        colorize(obj, tty: true, colorize_when: :always, &.black).should eq("\e[30m\e[0m")
+        colorize(obj, tty: true, colorize_when: "always", &.black).should eq("\e[30m\e[0m")
+        colorize(obj, tty: true, colorize_when: Colorize::When::Always, &.black).should eq("\e[30m\e[0m")
       end
 
       it "colorizes never" do
-        colorize(obj, when: :never, &.black).should eq("")
-        colorize(obj, when: "never", &.black).should eq("")
-        colorize(obj, when: Colorize::When::Never, &.black).should eq("")
-        colorize(obj, &.black.never).should eq("")
-        colorize(obj, &.black.when(:never)).should eq("")
-        colorize(obj, &.black.when("never")).should eq("")
-        colorize(obj, &.black.when(Colorize::When::Never)).should eq("")
+        colorize(obj, tty: false, colorize_when: :never, &.black).should eq("")
+        colorize(obj, tty: false, colorize_when: "never", &.black).should eq("")
+        colorize(obj, tty: false, colorize_when: Colorize::When::Never, &.black).should eq("")
 
-        colorize(obj, io: FakeTTY.new, when: :never, &.black).should eq("")
-        colorize(obj, io: FakeTTY.new, when: "never", &.black).should eq("")
-        colorize(obj, io: FakeTTY.new, when: Colorize::When::Never, &.black).should eq("")
-        colorize(obj, io: FakeTTY.new, &.black.never).should eq("")
-        colorize(obj, io: FakeTTY.new, &.black.when(:never)).should eq("")
-        colorize(obj, io: FakeTTY.new, &.black.when("never")).should eq("")
-        colorize(obj, io: FakeTTY.new, &.black.when(Colorize::When::Never)).should eq("")
+        colorize(obj, tty: true, colorize_when: :never, &.black).should eq("")
+        colorize(obj, tty: true, colorize_when: "never", &.black).should eq("")
+        colorize(obj, tty: true, colorize_when: Colorize::When::Never, &.black).should eq("")
       end
 
       it "is chainable but apply only last" do
         colorize(obj, &.blue.red).should eq("\e[31m\e[0m")
         colorize(obj, &.on_blue.on_red).should eq("\e[41m\e[0m")
-        colorize(obj, &.always.never).should eq("")
       end
 
-      it "toggles off" do
-        colorize(obj, &.black.toggle(false)).should eq("")
-        colorize(obj, &.toggle(false).black).should eq("")
-      end
-
-      it "toggles off and on" do
-        colorize(obj, io: FakeTTY.new, &.toggle(false).black.toggle(true)).should eq("\e[30m\e[0m")
-      end
-
-      it "is chainable, `nil` has no effect" do
+      it "is chainable, nil has no effect" do
         colorize(obj, &.blue.fore(nil)).should eq("\e[34m\e[0m")
         colorize(obj, &.on_blue.back(nil)).should eq("\e[44m\e[0m")
         colorize(obj, &.bold.mode(nil)).should eq("\e[1m\e[0m")
-        colorize(obj, io: FakeTTY.new, &.when(:never).when(nil)).should eq("")
       end
 
       it "raises on unknown foreground color" do
@@ -247,13 +226,59 @@ describe Colorize do
     end
   end
 
-  describe Colorize::Style do
+  describe Colorize::IOExtension do
+    describe "colorizable" do
+      it "creates a new Colorize::ColorizableIO instance" do
+        original = IO::Memory.new
+        colorizable = original.to_colorizable
+        colorizable.should be_a(Colorize::ColorizableIO)
+        colorizable.should_not be(original)
+      end
+
+      it "returns itself if it is a Colorize::ColorizableIO" do
+        original = FakeTTY.new
+        colorizable = original.to_colorizable
+        colorizable.should be_a(Colorize::ColorizableIO)
+        colorizable.should be(original)
+      end
+    end
+  end
+
+  describe Colorize::ColorizableIO do
+    it "IO::FileDescriptor is a Colorize::ColorizableIO" do
+      File.open(__FILE__) do |f|
+        f.should be_a(Colorize::ColorizableIO)
+      end
+    end
+
+    describe "#colorize_when" do
+      it "default value on IO::FileDescriptor is Colorize::When::Auto" do
+        File.open(__FILE__) do |f|
+          f.colorize_when.should eq(Colorize::When::Auto)
+        end
+      end
+    end
+
+    describe "#colorize_when=" do
+      it "raises on unknown policy symbol" do
+        expect_raises ArgumentError, "unknown policy: bad" do
+          FakeTTY.new.colorize_when = :bad
+        end
+      end
+
+      it "raises on unknown policy string" do
+        expect_raises ArgumentError, "unknown policy: bad" do
+          FakeTTY.new.colorize_when = "bad"
+        end
+      end
+    end
+
     describe "#surround" do
       it "colorizes with surround stack" do
         FakeTTY.new.tap do |io|
-          with_color.red.surround(io) do |io|
+          io.surround(with_color.red) do |io|
             io << "hello"
-            with_color.green.bold.surround(io) do |io|
+            io.surround(with_color.green.bold) do |io|
               io << "world"
             end
             io << "bye"
@@ -263,9 +288,9 @@ describe Colorize do
 
       it "colorizes with surround stack having Object" do
         FakeTTY.new.tap do |io|
-          with_color.red.surround(io) do |io|
+          io.surround(with_color.red) do |io|
             io << "hello"
-            "world".colorize.green.bold.to_s io
+            io << "world".colorize.green.bold
             io << "bye"
           end
         end.to_s.should eq("\e[31mhello\e[0;32;1mworld\e[0;31mbye\e[0m")
@@ -273,9 +298,9 @@ describe Colorize do
 
       it "colorizes with surround stack having same styles" do
         FakeTTY.new.tap do |io|
-          with_color.red.surround(io) do |io|
+          io.surround(with_color.red) do |io|
             io << "hello"
-            with_color.red.surround(io) do |io|
+            io.surround(with_color.red) do |io|
               io << "world"
             end
             io << "bye"
@@ -284,25 +309,81 @@ describe Colorize do
       end
 
       it "colorizes with surround stack having default styles" do
-        io = FakeTTY.new
-        with_color.surround(io) do |io|
-          io << "hello"
-          with_color.surround(io) do |io|
-            io << "foo"
-            with_color.green.surround(io) do |io|
-              io << "fizz"
-              with_color.surround(io) do |io|
-                io << "world"
+        FakeTTY.new.tap do |io|
+          io.surround(with_color) do |io|
+            io << "hello"
+            io.surround(with_color) do |io|
+              io << "foo"
+              io.surround(with_color.green) do |io|
+                io << "fizz"
+                io.surround(with_color) do |io|
+                  io << "world"
+                end
+                io << "buzz"
               end
-              io << "buzz"
+              io << "bar"
             end
-            io << "bar"
+            io << "bye"
           end
-          io << "bye"
+        end.to_s.should eq("hellofoo\e[32mfizz\e[0mworld\e[32mbuzz\e[0mbarbye")
+      end
+    end
+  end
+
+  describe Colorize::Builder do
+    describe "#<<" do
+      it "accepts some objects" do
+        io = Colorize::Builder.new
+        (io << "foo" << :foo << 1).should be(io)
+      end
+
+      it "accepts Colorize::Object" do
+        io = Colorize::Builder.new
+        (io << "foo".colorize.red << "bar".colorize.blue).should be(io)
+      end
+
+      it "accepts mixed objects" do
+        io = Colorize::Builder.new
+        (io << "foo".colorize.red << :bar << 42).should be(io)
+      end
+    end
+
+    describe "#surround" do
+      it "creates a new builder" do
+        io = Colorize::Builder.new
+        io.surround(with_color.red) do |io2|
+          io2.puts "foo".colorize.bold
+          io.should_not be(io2)
         end
-        io.to_s.should eq("hellofoo\e[32mfizz\e[0mworld\e[32mbuzz\e[0mbarbye")
+      end
+
+      it "yields the block with a new builder" do
+        io = Colorize::Builder.new
+        io.surround(with_color.red) do |io|
+          puts "foo".colorize.bold
+          itself.should be(io)
+        end
+      end
+    end
+
+    describe "#to_s" do
+      it "outputs objects" do
+        io = Colorize::Builder.new
+        io << "foo" << :foo << 1
+        io.to_s.should eq("foofoo1")
+      end
+
+      it "outputs Colorize::Object" do
+        io = Colorize::Builder.new
+        io << "foo".colorize.red << "bar".colorize.blue
+        io.to_s.should eq("\e[31mfoo\e[0m\e[34mbar\e[0m")
+      end
+
+      it "outputs mixed objects" do
+        io = Colorize::Builder.new
+        io << "foo".colorize.red << :bar << 42
+        io.to_s.should eq("\e[31mfoo\e[0mbar42")
       end
     end
   end
 end
-

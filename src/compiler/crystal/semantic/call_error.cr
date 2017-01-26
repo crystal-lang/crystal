@@ -29,7 +29,7 @@ class Crystal::Path
 
     similar_name = type.lookup_similar_path(self)
     if similar_name
-      self.raise("undefined constant #{self} #{type.program.colorize("(did you mean '#{similar_name}')").yellow.bold}")
+      self.raise Colorize::Builder{"undefined constant #{self}", " (did you mean '#{similar_name}')".colorize.yellow.bold}
     else
       self.raise("undefined constant #{self}")
     end
@@ -82,7 +82,7 @@ class Crystal::Call
       owner_trace = obj.try &.find_owner_trace(owner.program, owner)
       similar_name = owner.lookup_similar_def_name(def_name, self.args.size, block)
 
-      error_msg = String.build do |msg|
+      error_msg = Colorize.build do |msg|
         if obj && owner != program
           msg << "undefined method '#{def_name}' for #{owner}"
         elsif convert_to_logical_operator(def_name)
@@ -101,15 +101,15 @@ class Crystal::Call
         end
 
         if obj && obj.type != owner
-          msg << colorize(" (compile-time type is #{obj.type})").yellow.bold
+          msg << " (compile-time type is #{obj.type})".colorize.yellow.bold
         end
 
         if similar_name
           if similar_name == def_name
             # This check is for the case `a if a = 1`
-            msg << colorize(" (If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it)").yellow.bold
+            msg << " (If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it)".colorize.yellow.bold
           else
-            msg << colorize(" (did you mean '#{similar_name}'?)").yellow.bold
+            msg << " (did you mean '#{similar_name}'?)".colorize.yellow.bold
           end
         end
 
@@ -121,9 +121,9 @@ class Crystal::Call
           if deps && deps.size == 1 && deps.first.same?(program.nil_var)
             similar_name = scope.lookup_similar_instance_var_name(ivar.name)
             if similar_name
-              msg << colorize(" (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)").yellow.bold
+              msg << " (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)".colorize.yellow.bold
             else
-              msg << colorize(" (#{ivar.name} was never assigned a value)").yellow.bold
+              msg << " (#{ivar.name} was never assigned a value)".colorize.yellow.bold
             end
           end
         end
@@ -135,7 +135,7 @@ class Crystal::Call
 
     # If it's on an initialize method and there's a similar method name, it's probably a typo
     if (def_name == "initialize" || def_name == "new") && (similar_def = owner.instance_type.lookup_similar_def("initialize", self.args.size, block))
-      inner_msg = colorize("do you maybe have a typo in this '#{similar_def.name}' method?").yellow.bold.to_s
+      inner_msg = Colorize.build &.<< "do you maybe have a typo in this '#{similar_def.name}' method?".colorize.yellow.bold
       inner_exception = TypeException.for_node(similar_def, inner_msg)
     end
 
@@ -387,10 +387,10 @@ class Crystal::Call
       str << "\n - "
       append_def_full_name a_def.owner, a_def, arg_types, str
       if defs.size > 1 && a_def.same?(matched_def)
-        str << colorize(" (trying this one)").blue
+        str << " (trying this one)".colorize.blue
       end
       if a_def.args.any? { |arg| arg.default_value && arg.external_name == argument_name }
-        str << colorize(" (did you mean this one?)").yellow.bold
+        str << " (did you mean this one?)".colorize.yellow.bold
       end
     end
   end
@@ -545,12 +545,12 @@ class Crystal::Call
       elsif !a_def.double_splat
         similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.external_name))
 
-        msg = String.build do |str|
+        msg = Colorize.build do |str|
           str << "no argument named '"
           str << named_arg.name
           str << "'"
           if similar_name
-            str << colorize(" (did you mean '#{similar_name}'?)").yellow.bold
+            str << " (did you mean '#{similar_name}'?)".colorize.yellow.bold
           end
 
           defs = owner.lookup_defs(a_def.name)
@@ -651,9 +651,5 @@ class Crystal::Call
     else
       "#{owner}##{method_name}"
     end
-  end
-
-  private def colorize(obj)
-    program.colorize(obj)
   end
 end

@@ -9,9 +9,9 @@ enum Colorize::When
   # Not output escape sequence even if given *io* is TTY.
   Never
 
-  # Return `true` if given *io* is colorizable on this policy.
+  # Return `true` when given *io* can output escape sequence on this policy.
   # See `Auto`, `Always` and `Never`.
-  def colorizable_io?(io)
+  def output_escape_sequence?(io)
     always? || auto? && io.responds_to?(:tty?) && io.tty?
   end
 end

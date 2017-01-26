@@ -75,15 +75,20 @@ class Crystal::Program
       generated_node = yield parser
       normalize(generated_node, inside_exp: inside_exp)
     rescue ex : Crystal::SyntaxException
-      expanded_source = String.build do |str|
-        str << ("=" * 80) << '\n'
-        str << ("-" * 80) << '\n'
-        str << Crystal.with_line_numbers(generated_source) << '\n'
-        str << ("-" * 80) << '\n'
-        str << ex.to_s_with_source(generated_source) << '\n'
-        str << ("=" * 80)
-      end
-      node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{expanded_source}"
+      node.raise(Colorize.build do |str|
+        str.puts "macro didn't expand to a valid program, it expanded to:"
+        str.puts
+        str.puts "=" * 80
+        str.puts "-" * 80
+        with_color.surround(str) do |str|
+          Crystal.with_line_numbers(generated_source, ex.line_number, str)
+        end
+        str.puts "-" * 80
+        with_color.surround(str) do |str|
+          ex.to_s_with_source(generated_source, str)
+        end
+        str.puts "=" * 80
+      end)
     end
   end
 

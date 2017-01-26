@@ -35,11 +35,14 @@ class Crystal::Command
         end
 
         opts.on("--color auto|always|never", "Colorize the output") do |policy|
-          @color = Colorize::When.parse policy
+          color = Colorize::When.parse policy
+          STDOUT.colorize_when = color
+          STDERR.colorize_when = color
         end
 
         opts.on("--no-color", "Disable colored output") do
-          @color = Colorize::When::Never
+          STDOUT.colorize_when = Colorize::When::Never
+          STDERR.colorize_when = Colorize::When::Never
         end
       end
 
@@ -90,8 +93,8 @@ class Crystal::Command
       print result
       STDOUT.flush
     rescue ex : InvalidByteSequenceError
-      print "Error: ".colorize.when(@color).red.bold
-      print "source is not a valid Crystal source file: ".colorize.when(@color).bold
+      print "Error: ".colorize.red.bold
+      print "source is not a valid Crystal source file: ".colorize.bold
       puts ex.message
       exit 1
     rescue ex : Crystal::SyntaxException
@@ -118,8 +121,8 @@ class Crystal::Command
 
       File.write(filename, result)
     rescue ex : InvalidByteSequenceError
-      print "Error: ".colorize.when(@color).red.bold
-      print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.when(@color).bold
+      print "Error: ".colorize.red.bold
+      print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.bold
       puts ex.message
       exit 1
     rescue ex : Crystal::SyntaxException
@@ -166,21 +169,21 @@ class Crystal::Command
         check_files << FormatResult.new(filename, FormatResult::Code::FORMAT)
       else
         File.write(filename, result)
-        STDOUT << "Format".colorize(:green).when(@color) << " " << filename << "\n"
+        STDOUT << "Format".colorize(:green) << " " << filename << "\n"
       end
     rescue ex : InvalidByteSequenceError
       if check_files
         check_files << FormatResult.new(filename, FormatResult::Code::INVALID_BYTE_SEQUENCE)
       else
-        print "Error: ".colorize.when(@color).red.bold
-        print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.when(@color).bold
+        print "Error: ".colorize.red.bold
+        print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.bold
         puts ex.message
       end
     rescue ex : Crystal::SyntaxException
       if check_files
         check_files << FormatResult.new(filename, FormatResult::Code::SYNTAX)
       else
-        STDOUT << "Syntax Error:".colorize(:yellow).when(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
+        STDOUT << "Syntax Error:".colorize(:yello) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
       end
     rescue ex
       if check_files
@@ -194,7 +197,7 @@ class Crystal::Command
   end
 
   private def couldnt_format(file)
-    STDERR << "Error:".colorize(:red).when(@color) << ", " <<
+    STDERR << "Error:".colorize(:red) << ", " <<
       "couldn't format " << file << ", please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
   end
 end
