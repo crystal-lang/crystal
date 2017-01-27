@@ -95,7 +95,7 @@ module Crystal
     end
 
     private def assign_id_impl(type)
-      raise "Bug: unhandled type in assign id: #{type}"
+      raise "BUG: unhandled type in assign id: #{type}"
     end
 
     private def assign_id_from_subtypes(type, subtypes)
@@ -148,7 +148,7 @@ module Crystal
     end
 
     private def assign_id_to_metaclass(type)
-      raise "Bug: unhandled type in assign id to metaclass: #{type}"
+      raise "BUG: unhandled type in assign id to metaclass: #{type}"
     end
 
     private def assign_id_to_metaclass(type, metaclass)

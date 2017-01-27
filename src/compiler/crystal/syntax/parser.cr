@@ -175,7 +175,7 @@ module Crystal
         targets << assign
         values << assign.args.pop
       else
-        raise "Bug: multiassign index expression can only be Assign or Call"
+        raise "BUG: multiassign index expression can only be Assign or Call"
       end
 
       values.concat exps[assign_index + 1..-1]
@@ -1141,7 +1141,7 @@ module Crystal
           tuple_or_hash.name = ident
           return tuple_or_hash
         else
-          raise "Bug: tuple_or_hash should be tuple or hash, not #{tuple_or_hash}"
+          raise "BUG: tuple_or_hash should be tuple or hash, not #{tuple_or_hash}"
         end
       end
       ident
@@ -1399,7 +1399,7 @@ module Crystal
           if call.is_a?(Call)
             call.obj = obj
           else
-            raise "Bug: #{call} should be a call"
+            raise "BUG: #{call} should be a call"
           end
 
           call = call.as(Call)
@@ -1482,7 +1482,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      raise "Bug: ClassDef name can only be a Path" unless name.is_a?(Path)
+      raise "BUG: ClassDef name can only be a Path" unless name.is_a?(Path)
 
       @type_nest -= 1
 
@@ -1553,7 +1553,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      raise "Bug: ModuleDef name can only be a Path" unless name.is_a?(Path)
+      raise "BUG: ModuleDef name can only be a Path" unless name.is_a?(Path)
 
       @type_nest -= 1
 
@@ -2423,7 +2423,7 @@ module Crystal
         when Cast        then call.obj = ImplicitObj.new
         when NilableCast then call.obj = ImplicitObj.new
         else
-          raise "Bug: expected Call, RespondsTo, IsA, Cast or NilableCast"
+          raise "BUG: expected Call, RespondsTo, IsA, Cast or NilableCast"
         end
         call
       else
@@ -3368,7 +3368,7 @@ module Crystal
         end
       end
 
-      raise "Bug: arg_name is nil" unless arg_name
+      raise "BUG: arg_name is nil" unless arg_name
 
       arg = Arg.new(arg_name, default_value, restriction, external_name: external_name).at(arg_location)
       args << arg
@@ -4229,7 +4229,7 @@ module Crystal
       when ASTNode
         [type] of ASTNode
       else
-        raise "Bug"
+        raise "BUG"
       end
     end
 
@@ -4242,7 +4242,7 @@ module Crystal
       when ASTNode
         type
       else
-        raise "Bug"
+        raise "BUG"
       end
     end
 
@@ -4360,7 +4360,7 @@ module Crystal
             when ASTNode
               type = make_tuple_type([type] of ASTNode).at(location)
             else
-              raise "Bug"
+              raise "BUG"
             end
           end
         when :"("
@@ -4375,7 +4375,7 @@ module Crystal
           when ASTNode
             # skip
           else
-            raise "Bug"
+            raise "BUG"
           end
         else
           if allow_primitives
@@ -5110,7 +5110,7 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      raise "Bug: EnumDef name can only be a Path" unless name.is_a?(Path)
+      raise "BUG: EnumDef name can only be a Path" unless name.is_a?(Path)
 
       enum_def = EnumDef.new name, members, base_type
       enum_def.doc = doc

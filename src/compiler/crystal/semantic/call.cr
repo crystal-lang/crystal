@@ -493,7 +493,7 @@ class Crystal::Call
       when Splat
         arg_type = arg.type
         unless arg_type.is_a?(TupleInstanceType)
-          arg.raise "Bug: splat expects a tuple, not #{arg_type}"
+          arg.raise "BUG: splat expects a tuple, not #{arg_type}"
         end
 
         arg_type.tuple_types.each_with_index do |tuple_type, index|
@@ -508,7 +508,7 @@ class Crystal::Call
       when DoubleSplat
         arg_type = arg.type
         unless arg_type.is_a?(NamedTupleInstanceType)
-          arg.raise "Bug: double splat expects a named tuple, not #{arg_type}"
+          arg.raise "BUG: double splat expects a named tuple, not #{arg_type}"
         end
 
         arg_type.entries.each do |entry|
@@ -1027,7 +1027,7 @@ class Crystal::Call
       when :__FILE__, :__DIR__
         type = program.string
       else
-        default_value.raise "Bug: unknown magic constant: #{default_value.name}"
+        default_value.raise "BUG: unknown magic constant: #{default_value.name}"
       end
       var = MetaVar.new(arg.name, type).at(arg.location)
       var.bind_to(var)
