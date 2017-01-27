@@ -395,7 +395,7 @@ class Process
         dst_io.reopen(file)
       end
     else
-      raise "Bug: unknown object type #{src_io}"
+      raise "BUG: unknown object type #{src_io}"
     end
 
     dst_io.close_on_exec = false

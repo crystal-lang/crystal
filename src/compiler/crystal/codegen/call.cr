@@ -3,12 +3,12 @@ require "./codegen"
 class Crystal::CodeGenVisitor
   def visit(node : Call)
     if node.expanded
-      raise "Bug: #{node} at #{node.location} should have been expanded"
+      raise "BUG: #{node} at #{node.location} should have been expanded"
     end
 
     target_defs = node.target_defs
     unless target_defs
-      node.raise "Bug: no target defs"
+      node.raise "BUG: no target defs"
     end
 
     if target_defs.size > 1
@@ -134,7 +134,7 @@ class Crystal::CodeGenVisitor
       when :__DIR__
         call_args << build_string_constant(MagicConstant.expand_dir(location))
       else
-        default_value.raise "Bug: unknown magic constant: #{default_value.name}"
+        default_value.raise "BUG: unknown magic constant: #{default_value.name}"
       end
     end
 
@@ -176,7 +176,7 @@ class Crystal::CodeGenVisitor
         when InstanceVar
           call_arg = instance_var_ptr(type, exp.name, llvm_self_ptr)
         else
-          arg.raise "Bug: out argument was #{exp}"
+          arg.raise "BUG: out argument was #{exp}"
         end
       else
         @needs_value = true
