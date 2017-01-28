@@ -669,7 +669,7 @@ module Crystal
               end
             end
 
-            block = parse_block(block, stop_on_do: space_consumed && @stop_on_do)
+            block = parse_block(block, stop_on_do: @stop_on_do)
             if block || block_arg
               atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args, name_column_number: name_column_number
             else
