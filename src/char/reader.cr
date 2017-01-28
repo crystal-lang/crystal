@@ -47,13 +47,24 @@ struct Char
     # ```
     getter pos : Int32
 
-    # Creates a reader with the specified *string*.
-    def initialize(@string : String)
-      @pos = 0
+    # Creates a reader with the specified *string* positioned at
+    # byte index *pos*.
+    def initialize(@string : String, pos = 0)
+      @pos = pos.to_i
       @current_char = '\0'
       @current_char_width = 0
       @end = false
       decode_current_char
+    end
+
+    # Creates a reader that will be positioned at the last char
+    # of the given string.
+    def initialize(*, at_end @string : String)
+      @pos = @string.bytesize
+      @current_char = '\0'
+      @current_char_width = 0
+      @end = false
+      decode_previous_char
     end
 
     # Returns `true` if there is a character left to read.
@@ -106,6 +117,24 @@ struct Char
       decode_char_at(next_pos) do |code_point, width|
         code_point.unsafe_chr
       end
+    end
+
+    # Returns `true` if there are characters before
+    # the current one.
+    def has_previous?
+      @pos > 0
+    end
+
+    # Returns the previous character, `#pos`
+    # is decremented.
+    # Raises `IndexError` if the reader is at the begining of
+    # the `#string`
+    def previous_char
+      unless has_previous?
+        raise IndexError.new
+      end
+
+      decode_previous_char
     end
 
     # Sets `#pos` to *pos*.
@@ -215,6 +244,22 @@ struct Char
         @current_char_width = width
         @end = @pos == @string.bytesize
         @current_char = code_point.unsafe_chr
+      end
+    end
+
+    private def decode_previous_char
+      if @pos == 0
+        @end = @pos == @string.bytesize
+      else
+        while @pos > 0
+          @pos -= 1
+          break if (byte_at(@pos) & 0xC0) != 0x80
+        end
+        decode_char_at(@pos) do |code_point, width|
+          @current_char_width = width
+          @end = @pos == @string.bytesize
+          @current_char = code_point.unsafe_chr
+        end
       end
     end
 
