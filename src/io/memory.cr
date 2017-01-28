@@ -189,6 +189,25 @@ class IO::Memory
   end
 
   # :nodoc:
+  def skip(bytes_count)
+    check_open
+
+    available = @bytesize - @pos
+    if available >= bytes_count
+      @pos += bytes_count
+    else
+      raise IO::EOFError.new
+    end
+  end
+
+  # :nodoc:
+  def skip_to_end
+    check_open
+
+    @pos = @bytesize
+  end
+
+  # :nodoc:
   def gets_to_end
     return super if @encoding
 
