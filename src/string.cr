@@ -1543,8 +1543,7 @@ class String
     byte_index = char_index_to_byte_index(index)
     raise IndexError.new unless byte_index
 
-    reader = Char::Reader.new(self)
-    reader.pos = byte_index
+    reader = Char::Reader.new(self, pos: byte_index)
     width = reader.current_char_width
     replacement_width = replacement.bytesize
     new_bytesize = bytesize - width + replacement_width
@@ -2321,15 +2320,24 @@ class String
     offset += size if offset < 0
     return nil if offset < 0
 
-    last_index = nil
-
-    each_char_with_index do |char, i|
-      if i <= offset && char == search
-        last_index = i
-      end
+    if offset == size - 1
+      reader = Char::Reader.new(at_end: self)
+    else
+      byte_index = char_index_to_byte_index(offset)
+      raise IndexError.new unless byte_index
+      reader = Char::Reader.new(self, pos: byte_index)
     end
 
-    last_index
+    while true
+      if reader.current_char == search
+        return offset
+      elsif reader.has_previous?
+        reader.previous_char
+        offset -= 1
+      else
+        return nil
+      end
+    end
   end
 
   # ditto
