@@ -520,6 +520,13 @@ describe IO do
       end
     end
 
+    it "skips more than 4096 bytes" do
+      io = SimpleIOMemory.new
+      io << "a" * 4100
+      io.skip(4099)
+      io.gets_to_end.should eq("a")
+    end
+
     it "skips to end" do
       io = SimpleIOMemory.new
       io << "hello"
