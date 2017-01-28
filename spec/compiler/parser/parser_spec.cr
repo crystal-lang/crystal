@@ -1249,6 +1249,8 @@ describe "Parser" do
 
   it_parses "1 if /x/", If.new(RegexLiteral.new("x".string), 1.int32)
 
+  it_parses "foo bar.baz(1) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
+
   assert_syntax_error "return do\nend", "unexpected token: do"
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
