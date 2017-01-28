@@ -331,6 +331,28 @@ describe IO::Memory do
     end
   end
 
+  it "skips" do
+    io = IO::Memory.new("hello")
+    io.skip(2)
+    io.gets_to_end.should eq("llo")
+
+    io.rewind
+    io.skip(5)
+    io.gets_to_end.should eq("")
+
+    io.rewind
+
+    expect_raises(IO::EOFError) do
+      io.skip(6)
+    end
+  end
+
+  it "skips_to_end" do
+    io = IO::Memory.new("hello")
+    io.skip_to_end
+    io.gets_to_end.should eq("")
+  end
+
   describe "encoding" do
     describe "decode" do
       it "gets_to_end" do
