@@ -738,7 +738,7 @@ module IO
   # io.skip(1) # raises IO::EOFError
   # ```
   def skip(bytes_count : Int) : Nil
-    buffer = uninitialized UInt8[1024]
+    buffer = uninitialized UInt8[4096]
     while bytes_count > 0
       read_count = read(buffer.to_slice[0, bytes_count])
       raise IO::EOFError.new if read_count == 0
@@ -750,7 +750,7 @@ module IO
   # Reads and discards bytes from `self` until there
   # are no more bytes.
   def skip_to_end : Nil
-    buffer = uninitialized UInt8[1024]
+    buffer = uninitialized UInt8[4096]
     while read(buffer.to_slice) > 0
     end
   end
