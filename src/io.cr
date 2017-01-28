@@ -740,7 +740,7 @@ module IO
   def skip(bytes_count : Int) : Nil
     buffer = uninitialized UInt8[4096]
     while bytes_count > 0
-      read_count = read(buffer.to_slice[0, bytes_count])
+      read_count = read(buffer.to_slice[0, Math.min(bytes_count, 4096)])
       raise IO::EOFError.new if read_count == 0
 
       bytes_count -= read_count
