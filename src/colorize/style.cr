@@ -33,30 +33,18 @@ struct Colorize::Style
     IO.new(io).colorize_write style, reset: false
   end
 
-  # Get escape sequence of this style.
-  #
-  # ```
-  # Colorize::Style.new(:red).to_s # => "\e[31m"
-  # ```
-  def to_s
-    String.build do |io|
-      escape_sequence io
-    end
-  end
-
   # Colorize the content in the block with this style.
   #
   # It is short hand for `IO#surround`.
   def surround(io = STDOUT)
-    IO.new(io).surround(self) { |io| with io yield io }
+    IO.new(io).surround(self) { |io| yield io }
   end
 
   # DEPRECATED: use `#surround`. This method will be removed after 0.21.0.
   def push(io = STDOUT)
     {{ puts "`Colorize::Style#push` is deprecated and will be removed after 0.21.0, use `Colorize::Style#surround` instead".id }}
-    surround(io) { |io| with io yield io }
+    surround(io) { |io| yield io }
   end
 
-  # :nodoc:
-  def_equals_and_hash fore, back, mode
+  def_equals_and_hash fore, back, mode, enabled?
 end

@@ -139,7 +139,6 @@ module Colorize
       false
     end
 
-    # :nodoc:
     def_equals_and_hash value
   end
 
@@ -217,7 +216,6 @@ module Colorize
       false
     end
 
-    # :nodoc:
     def_equals_and_hash red, green, blue
   end
 end

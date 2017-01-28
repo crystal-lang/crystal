@@ -1,3 +1,4 @@
+# `Mode` represents a text decorations on a terminal.
 @[Flags]
 enum Colorize::Mode
   Bold      = 1 << 0

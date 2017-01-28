@@ -183,7 +183,7 @@ class Crystal::Command
       if check_files
         check_files << FormatResult.new(filename, FormatResult::Code::SYNTAX)
       else
-        STDOUT << "Syntax Error:".colorize(:yello) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
+        STDOUT << "Syntax Error:".colorize(:yellow) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
       end
     rescue ex
       if check_files

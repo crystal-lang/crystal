@@ -15,21 +15,21 @@ module Colorize
     # Return wrapped object.
     getter object
 
-    # Overload for `IO`. See `IO#to_s`.
+    # Overload for `ColorizableIO`. See `IO#to_s`.
     def to_s(io : ColorizableIO)
-      io << self
+      io.surround(self) do |io|
+        io << object
+      end
     end
 
     # Output `object` with this style.
     #
     # NOTE: When you use this method, you can't get auto TTY detection feature.
-    # You should use `ColorizableIO` explicitly.
     def to_s(io : ::IO)
-      IO.new(io) << self
+      self.to_s IO.new(io)
     end
 
-    # :nodoc:
-    def_equals_and_hash fore, back, mode, object
+    def_equals_and_hash fore, back, mode, enabled?, object
   end
 
   # `ObjectExtension` is a mixin module for `::Object`.

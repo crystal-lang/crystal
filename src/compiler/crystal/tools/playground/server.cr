@@ -29,6 +29,10 @@ module Crystal::Playground
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
+        require "colorize/io"
+
+        STDOUT.colorize_when = Colorize::When::Always
+        STDERR.colorize_when = Colorize::When::Always
 
         class Crystal::Playground::Agent
           @@instance = Crystal::Playground::Agent.new("ws://localhost:#{@port}/agent/#{@session_key}/#{tag}", #{tag})

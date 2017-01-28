@@ -1,16 +1,18 @@
 require "colorize/*"
 
-# With `Colorize` you can change the fore- and background colors and text decorations when rendering text
-# on terminals supporting ANSI escape codes.
+# With `Colorize` you can change the fore- and background colors and text
+# decorations when rendering text on terminals supporting ANSI escape codes.
 #
 # It adds the `colorize` method to `Object` and thus all classes as its main
 # interface, which calls `to_s` and surrounds it with the necessary escape
 # codes when it comes to obtaining a string representation of the object.
 #
 # Or you can use `#with_color` global method, which returns `Style` object
-# to represent a style (fore- and background colors and text decorations) on a terminal. `Style#surround` colorize given block outputs with its style.
+# to represent a style (fore- and background colors and text decorations)
+# on a terminal. `Style#surround` colorize given block outputs with its style.
 #
-# `Object` and `Style` are mixed in `Builder`, so we can construct a style of both classes in the same way.
+# `Object` and `Style` are mixed in `StyleBuilder`,
+# so we can construct a style of both classes in the same way.
 #
 # Theirs first argument changes the foreground color:
 #
@@ -47,7 +49,8 @@ require "colorize/*"
 # with_color.on_green
 # ```
 #
-# By the way, you can use `String` (via `.parse_color), `Int` (via `Color256.new`) and `Color` instances to specify color:
+# To specify color, you can use `String` (via `Colorize.parse_color`),
+# `Int` (via `Color256.new`) and `Color` instances to specify color:
 #
 # ```
 # with_color(fore: "red") # use `String` instead.
@@ -86,33 +89,54 @@ require "colorize/*"
 # with_color.fore(:yellow).back(:blue).mode(:underline)
 # ```
 #
-# It outputs escape sequences only if target `IO` is TTY.
-# You can change this behavior with `always`, `never`, `auto` and `when` methods:
+# When `::IO` class have a potential to support ANSI escape sequence, this
+# `::IO` class includes `ColorizableIO` module. For example,
+# `IO::FileDescriptor` includes `ColorizableIO`.
+#
+# `ColorizableIO` has `colorize_when` property, which value decides to output escape sequence. If this property's value is:
+#
+#   - `:always` (`When::Always`), it outputs escape sequence always.
+#   - `:never` (`When::Never`), it doesn't output escape sequence.
+#   - `:auto` (`When::Auto`), it outputs escape sequence when it is TTY.
+#
+# `IO::FileDescript#colorize_when`'s default value is `:auto`, so we aren't
+# careful the program connects pipe or not.
 #
 # ```
-# # Output colorized `"foo"` if `STDOUT` is TTY (default)
-# puts "foo".colorize(fore: :red)
-# puts "foo".colorize(fore: :red).auto # explicit
-# with_color(fore: :red).surround { puts "foo" }
-# with_color(fore: :red).auto.surround { puts "foo" } # explicit
+# # If program connects to pipe (like `crystal run foo.cr | cat`), it
+# # doesn't output escape sequence. But if program connects to terminal, it
+# # outputs escape sequence.
+# puts "foo".colorize.red
 #
-# # Output colorized `"foo"` even if `STDOUT` is not TTY.
-# puts "foo".colorize(fore: :red).always
-# with_color(fore: :red).always.surround { puts "foo" }
+# # In addition, if IO class doesn't include `ColorizableIO`, it outputs
+# # escape sequence as default.
+# mem = IO::Memory.new
+# mem << "foo".colorize.red
+# mem.to_s # => "\e[31mfoo\e[0m"
 #
-# # Output not colorized `"foo"` even if `STDOUT` is TTY.
-# puts "foo".colorize(fore: :red).never
-# with_color(fore: :red).never.surround { puts "foo" }
+# # Create ColorizableIO from IO object by `to_colorizable` method.
+# colorizable_io = IO::Memory.new.to_colorizable
+# # Default colorize policy is `Always`.
+# colorizable_io.colorize_when # => Colorize::When::Always
+# ```
 #
-# # Alternative ways:
-# puts "foo".colorize(fore: :red, when: :always)
-# with_color(fore: :red, when: :always).surround { puts "foo" }
-# puts "foo".colorize(fore: :red).when(:never)
-# with_color(fore: :red).when(:always).surround { puts "foo" }
+# Finally, complete example is:
 #
-# # Last specified policy is only available.
-# puts "foo".colorize.always.auto.never                            # output no escape sequence.
-# with_color(fore: :red).never.auto.always.surround { puts "foo" } # output no escape sequence.
+# ```
+# require "colorize"
+#
+# # This program outpus escape sequence always
+# STDOUT.colorize_when = :always
+#
+# # Colorize this block as bold.
+# with_color.bold.surround do
+#   print "Hello "
+#
+#   # But, colorize only "Crystal" as yellow.
+#   print "Crystal".colorize.yellow
+#
+#   puts " World!"
+# end
 # ```
 module Colorize
 end
@@ -128,10 +152,4 @@ end
 
 module IO
   include Colorize::IOExtension
-
-  class FileDescriptor
-    include Colorize::ColorizableIO
-
-    @colorize_when = Colorize::When::Auto
-  end
 end

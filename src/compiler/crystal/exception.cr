@@ -8,7 +8,7 @@ module Crystal
     abstract def to_s_with_source(source, io)
 
     def to_s(io)
-      to_s_with_source(nil, io.to_colorizable)
+      to_s_with_source(nil, io.to_colorizable(Colorize::When::Never))
     end
 
     def to_json(json : JSON::Builder)
@@ -36,7 +36,7 @@ module Crystal
 
     def to_s_with_source(source)
       String.build do |io|
-        to_s_with_source source, io.to_colorizable
+        to_s_with_source source, io.to_colorizable(Colorize::When::Never)
       end
     end
 

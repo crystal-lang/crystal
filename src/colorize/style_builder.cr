@@ -14,6 +14,9 @@ module Colorize::StyleBuilder
   # Activated text decoration modes. See `Mode`.
   property mode = Mode::None
 
+  # Colorize only if this value is `true`.  It is changed by `#toggle` method.
+  property? enabled = true
+
   {% for color in ColorANSI.constants %}
     # Set `ColorANSI::{{color}}` to `#fore`, then return `self`.
     def {{color.underscore}}
@@ -194,6 +197,12 @@ module Colorize::StyleBuilder
     fore fore
     back back
     mode mode
+  end
+
+  # Set *flag* to `#enabled`, then return `self`.
+  def toggle(flag)
+    @enabled = !!flag
+    self
   end
 
   # Return `true` if `#fore`, `#back` and `#mode` are still default.

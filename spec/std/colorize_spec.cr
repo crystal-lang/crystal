@@ -223,6 +223,14 @@ describe Colorize do
           colorize(obj, mode: :bad)
         end
       end
+
+      it "toggles to disable" do
+        colorize(obj, fore: :red, &.toggle(false)).should eq("")
+      end
+
+      it "toggles to disable, then enable" do
+        colorize(obj, fore: :red, &.toggle(false).toggle(true)).should eq("\e[31m\e[0m")
+      end
     end
   end
 
@@ -233,6 +241,19 @@ describe Colorize do
         colorizable = original.to_colorizable
         colorizable.should be_a(Colorize::ColorizableIO)
         colorizable.should_not be(original)
+        colorizable.should be_a(Colorize::IO)
+        colorizable.as(Colorize::IO).io.should be(original)
+      end
+
+      it "s default policy is always" do
+        IO::Memory.new.to_colorizable.colorize_when.should eq(Colorize::When::Always)
+      end
+
+      it "creates a new Colorize::ColorizableIO instance with specified policy" do
+        original = IO::Memory.new
+        colorizable = original.to_colorizable(:never)
+        colorizable.should_not be(original)
+        colorizable.colorize_when.should eq(Colorize::When::Never)
       end
 
       it "returns itself if it is a Colorize::ColorizableIO" do
@@ -240,6 +261,14 @@ describe Colorize do
         colorizable = original.to_colorizable
         colorizable.should be_a(Colorize::ColorizableIO)
         colorizable.should be(original)
+      end
+
+      it "returns itself if it is a Colorize::ColorizableIO with original policy" do
+        original = FakeTTY.new
+        colorizable = original.to_colorizable(:never)
+        colorizable.should be_a(Colorize::ColorizableIO)
+        colorizable.should be(original)
+        colorizable.colorize_when.should eq(Colorize::When::Always)
       end
     end
   end
@@ -257,9 +286,29 @@ describe Colorize do
           f.colorize_when.should eq(Colorize::When::Auto)
         end
       end
+
+      it "invoke block with specified policy" do
+        tty = FakeTTY.new
+        tty.colorize_when(Colorize::When::Never) do |io|
+          io.colorize_when.should eq(Colorize::When::Never)
+        end
+        tty.colorize_when.should eq(Colorize::When::Always)
+      end
     end
 
     describe "#colorize_when=" do
+      it "sets policies" do
+        tty = FakeTTY.new
+        {% for policy in Colorize::When.constants %}
+          tty.colorize_when = Colorize::When::{{policy}}
+          tty.colorize_when.should eq(Colorize::When::{{policy}})
+          tty.colorize_when = {{policy.underscore.stringify}}
+          tty.colorize_when.should eq(Colorize::When::{{policy}})
+          tty.colorize_when = {{policy.underscore.symbolize}}
+          tty.colorize_when.should eq(Colorize::When::{{policy}})
+        {% end %}
+      end
+
       it "raises on unknown policy symbol" do
         expect_raises ArgumentError, "unknown policy: bad" do
           FakeTTY.new.colorize_when = :bad
@@ -335,16 +384,28 @@ describe Colorize do
       it "accepts some objects" do
         io = Colorize::Builder.new
         (io << "foo" << :foo << 1).should be(io)
+
+        io.@contents.size.should eq(1)
+        io.@contents[0].to_s.should eq("foofoo1")
       end
 
       it "accepts Colorize::Object" do
         io = Colorize::Builder.new
         (io << "foo".colorize.red << "bar".colorize.blue).should be(io)
+
+        io.@contents.size.should eq(2)
+        io.@contents[0].should eq("foo".colorize.red)
+        io.@contents[1].should eq("bar".colorize.blue)
       end
 
       it "accepts mixed objects" do
         io = Colorize::Builder.new
-        (io << "foo".colorize.red << :bar << 42).should be(io)
+        (io << 1.1 << "foo".colorize.red << :bar << 42).should be(io)
+
+        io.@contents.size.should eq(3)
+        io.@contents[0].to_s.should eq("1.1")
+        io.@contents[1].should eq("foo".colorize.red)
+        io.@contents[2].to_s.should eq("bar42")
       end
     end
 
@@ -352,17 +413,22 @@ describe Colorize do
       it "creates a new builder" do
         io = Colorize::Builder.new
         io.surround(with_color.red) do |io2|
-          io2.puts "foo".colorize.bold
           io.should_not be(io2)
         end
       end
 
-      it "yields the block with a new builder" do
+      it "surrounds objects" do
         io = Colorize::Builder.new
-        io.surround(with_color.red) do |io|
-          puts "foo".colorize.bold
-          itself.should be(io)
+        io.surround(with_color.red) do |io2|
+          io2 << "foo".colorize.bold
         end
+
+        io.@contents.size.should eq(1)
+        io.@contents[0].should be_a(Colorize::Object(Colorize::Builder))
+
+        io2 = io.@contents[0].as(Colorize::Object(Colorize::Builder)).object
+        io2.@contents.size.should eq(1)
+        io2.@contents[0].should eq("foo".colorize.bold)
       end
     end
 
@@ -375,7 +441,7 @@ describe Colorize do
 
       it "outputs Colorize::Object" do
         io = Colorize::Builder.new
-        io << "foo".colorize.red << "bar".colorize.blue
+        io << "foo".colorize.red << :bar.colorize.blue
         io.to_s.should eq("\e[31mfoo\e[0m\e[34mbar\e[0m")
       end
 
@@ -383,6 +449,32 @@ describe Colorize do
         io = Colorize::Builder.new
         io << "foo".colorize.red << :bar << 42
         io.to_s.should eq("\e[31mfoo\e[0mbar42")
+      end
+
+      it "outputs mixed objects, but colorizes dependeing on io" do
+        io = Colorize::Builder.new
+        io << "foo".colorize.red << :bar << 42
+        String.build do |str|
+          io.to_s str.to_colorizable(:never)
+        end.should eq("foobar42")
+      end
+    end
+
+    describe "#to_s_without_colorize" do
+      it "does not colorize" do
+        io = Colorize::Builder.new
+        io << "foo".colorize.red << :bar << 42
+        io.to_s_without_colorize.should eq("foobar42")
+      end
+
+      it "does not change colorize_when" do
+        io = Colorize::Builder.new
+        io << "foo".colorize.red << :bar << 42
+        mem = IO::Memory.new.to_colorizable(:auto)
+        mem.colorize_when.should eq(Colorize::When::Auto)
+        io.to_s_without_colorize mem
+        mem.io.to_s.should eq("foobar42")
+        mem.colorize_when.should eq(Colorize::When::Auto)
       end
     end
   end

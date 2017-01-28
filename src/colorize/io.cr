@@ -6,9 +6,8 @@ module Colorize
   module ColorizableIO
     # Whether to output escape sequence. See `When`.
     #
-    #   - `IO::FileDescriptor`'s default value is `When::Auto`.
-    #   - `Colorize::IO`'s default value is `When::Always`.
-    getter colorize_when : When
+    # NOTE: `IO::FileDescriptor`'s default value is `When::Auto`. It works fine.
+    getter colorize_when : When = When::Always
 
     # Set *colorize_when* to `#colorize_when`.
     #
@@ -22,19 +21,22 @@ module Colorize
     #
     # See `When` for each values details.
     def colorize_when=(colorize_when : String | Symbol)
-      self.colorize_when = When.parse?(colorize_when.to_s) || raise ArgumentError.new("unknown policy: #{colorize_when}")
+      @colorize_when = When.parse?(colorize_when.to_s) || raise ArgumentError.new("unknown policy: #{colorize_when}")
     end
 
     # Set *colorize_when* to `#colorize_when`.
     def colorize_when=(@colorize_when)
     end
 
-    # Overload for `Object`.
-    def <<(colorize : Object)
-      surround(colorize) do |io|
-        io << colorize.object
+    # Set *colorize_when* to `#colorize_when`, then invoke the block. After it, reset `#colorize_when` as old value.
+    def colorize_when(colorize_when)
+      old_when = @colorize_when
+      begin
+        self.colorize_when = colorize_when
+        yield self
+      ensure
+        @colorize_when = old_when
       end
-      self
     end
 
     # It keeps last colorizing style for nesting.
@@ -42,7 +44,7 @@ module Colorize
 
     # Return `true` when this `IO` can output escape sequence on its `#colorize_when` policy.
     def output_escape_sequence?
-      colorize_when.output_escape_sequence?(self)
+      @colorize_when.output_escape_sequence?(self)
     end
 
     # Colorize the output in the block with *colorize* style.
@@ -53,14 +55,14 @@ module Colorize
     def surround(style) : self
       last_style = @last_style
 
-      if !output_escape_sequence? || last_style.try &.same_style? style
-        with self yield self
+      if !output_escape_sequence? || !style.enabled? || last_style.try &.same_style? style
+        yield self
       else
         must_reset = colorize_write style, reset: !(last_style.nil? || last_style.all_default?)
         @last_style = style
 
         begin
-          with self yield self
+          yield self
         ensure
           @last_style = last_style
           if must_reset
@@ -134,18 +136,17 @@ module Colorize
     include ::IO
     include ColorizableIO
 
-    @colorize_when = When::Always
-
     # Return wrapped `::IO` object
     getter io
 
-    # Return *io*.
-    def self.new(io : ColorizableIO)
+    # Return *io* itself if *io* is `ColorizableIO` already.
+    def self.new(io : ColorizableIO, colorize_when = When::Always)
       io
     end
 
-    # Wrap a `::IO`.
-    def initialize(@io : ::IO)
+    # Wrap a given *io* with *colorize_when* policy.
+    def initialize(@io : ::IO, colorize_when = When::Always)
+      self.colorize_when = colorize_when
     end
 
     # Delegate to `#io`.
@@ -164,11 +165,17 @@ module Colorize
   # It adds `#to_colorizable` method to create a new `ColorizableIO` instance.
   module IOExtension
     # Return `ColorizableIO` to colorize the output to `self`.
-    # If `self` is not `ColorizableIO`, it returns a new `IO` instance.
+    #
+    # If `self` is not `ColorizableIO`, it returns a new `IO` instance with *when_for_new* policy.
     # If `self` is `ColorizableIO` already, it returns itself.
-    def to_colorizable
-      return self if is_a?(ColorizableIO)
-      Colorize::IO.new self
+    def to_colorizable(when_for_new = When::Always)
+      Colorize::IO.new self, when_for_new
     end
   end
+end
+
+class IO::FileDescriptor
+  include Colorize::ColorizableIO
+
+  @colorize_when = Colorize::When::Auto
 end
