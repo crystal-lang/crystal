@@ -815,13 +815,13 @@ class String
 
     index += size if index < 0
 
-    each_char_with_index do |char, i|
-      if index == i
-        return char
-      end
+    byte_index = char_index_to_byte_index(index)
+    if byte_index
+      reader = Char::Reader.new(self, pos: byte_index)
+      return reader.current_char
+    else
+      yield
     end
-
-    yield
   end
 
   def byte_slice(start : Int, count : Int)
