@@ -144,6 +144,7 @@ class Zip::Reader
     def initialize(io)
       super(at_file_header: io)
       @io = ChecksumReader.new(decompressor_for(io), @filename)
+      @closed = false
     end
 
     # Returns an `IO` to the entry's data.

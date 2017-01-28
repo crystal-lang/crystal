@@ -17,6 +17,7 @@ module Zip::FileInfo
   property comment = ""
   property offset = 0_u32
 
+  # :nodoc:
   def initialize(*, at_file_header io : IO)
     @version = read(io, UInt16)
     file_name_length, extra_field_length, time = initialize_meta(io)
@@ -28,6 +29,7 @@ module Zip::FileInfo
     end
   end
 
+  # :nodoc:
   def initialize(*, at_central_directory_header io : IO)
     read io, UInt16            # version made by
     @version = read io, UInt16 # version needed to extract
@@ -48,6 +50,7 @@ module Zip::FileInfo
     end
   end
 
+  # :nodoc:
   def initialize_meta(io : IO)
     @general_purpose_bit_flag = read(io, UInt16)
     @compression_method = CompressionMethod.new(read(io, UInt16))
