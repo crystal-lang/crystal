@@ -90,12 +90,12 @@ module IO
   end
 
   # Returns an array of all given IOs that are
-  # * ready to read if they appeared in read_ios
-  # * ready to write if they appeared in write_ios
-  # * have an error condition if they appeared in error_ios
+  # * ready to read if they appeared in *read_ios*
+  # * ready to write if they appeared in *write_ios*
+  # * have an error condition if they appeared in *error_ios*
   #
-  # If the optional timeout_sec is given, `nil` is returned if no
-  # IO was ready after the specified amount of seconds passed. Fractions
+  # If the optional *timeout_sec* is given, `nil` is returned if no
+  # `IO` was ready after the specified amount of seconds passed. Fractions
   # are supported.
   #
   # If timeout_sec is `nil`, this method blocks until an `IO` is ready.
@@ -158,7 +158,8 @@ module IO
     end
   end
 
-  # Reads at most *slice.size* bytes from this `IO` into *slice*. Returns the number of bytes read.
+  # Reads at most *slice.size* bytes from this `IO` into *slice*.
+  # Returns the number of bytes read.
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -170,7 +171,7 @@ module IO
   # ```
   abstract def read(slice : Bytes)
 
-  # Writes the contents of *slice* into this IO.
+  # Writes the contents of *slice* into this `IO`.
   #
   # ```
   # io = IO::Memory.new
@@ -180,15 +181,15 @@ module IO
   # ```
   abstract def write(slice : Bytes) : Nil
 
-  # Closes this IO.
+  # Closes this `IO`.
   #
-  # IO defines this is a no-op method, but including types may override.
+  # `IO` defines this is a no-op method, but including types may override.
   def close
   end
 
   # Returns `true` if this `IO` is closed.
   #
-  # IO defines returns `false`, but including types may override.
+  # `IO` defines returns `false`, but including types may override.
   def closed?
     false
   end
@@ -199,12 +200,12 @@ module IO
 
   # Flushes buffered data, if any.
   #
-  # IO defines this is a no-op method, but including types may override.
+  # `IO` defines this is a no-op method, but including types may override.
   def flush
   end
 
-  # Creates a pair of pipe endpoints (connected to each other) and returns them as a
-  # two-element tuple.
+  # Creates a pair of pipe endpoints (connected to each other)
+  # and returns them as a two-element `Tuple`.
   #
   # ```
   # reader, writer = IO.pipe
@@ -250,7 +251,7 @@ module IO
     end
   end
 
-  # Writes the given object into this IO.
+  # Writes the given object into this `IO`.
   # This ends up calling `to_s(io)` on the object.
   #
   # ```
@@ -358,7 +359,7 @@ module IO
     nil
   end
 
-  # Reads a single byte from this IO. Returns `nil` if there is no more
+  # Reads a single byte from this `IO`. Returns `nil` if there is no more
   # data to read.
   #
   # ```
@@ -375,7 +376,7 @@ module IO
     end
   end
 
-  # Reads a single `Char` from this IO. Returns `nil` if there is no
+  # Reads a single `Char` from this `IO`. Returns `nil` if there is no
   # more data to read.
   #
   # ```
@@ -412,8 +413,8 @@ module IO
     (byte & 0x3f).to_u32
   end
 
-  # Reads a single decoded UTF-8 byte from this IO. Returns `nil` if there is no more
-  # data to read.
+  # Reads a single decoded UTF-8 byte from this `IO`.
+  # Returns `nil` if there is no more data to read.
   #
   # If no encoding is set, this is the same as `#read_byte`.
   #
@@ -437,7 +438,8 @@ module IO
     end
   end
 
-  # Reads UTF-8 decoded bytes into the given *slice*. Returns the number of UTF-8 bytes read.
+  # Reads UTF-8 decoded bytes into the given *slice*.
+  # Returns the number of UTF-8 bytes read.
   #
   # If no encoding is set, this is the same as `#read(slice)`.
   #
@@ -461,7 +463,7 @@ module IO
     end
   end
 
-  # Reads an UTF-8 encoded String of exactly *bytesize* bytes.
+  # Reads an UTF-8 encoded string of exactly *bytesize* bytes.
   # Raises `EOFError` if there are not enough bytes to build
   # the string.
   #
@@ -478,7 +480,7 @@ module IO
     end
   end
 
-  # Writes a slice of UTF-8 encoded bytes to this IO, using the current encoding.
+  # Writes a slice of UTF-8 encoded bytes to this `IO`, using the current encoding.
   def write_utf8(slice : Bytes)
     if encoder = encoder()
       encoder.write(self, slice)
@@ -563,8 +565,8 @@ module IO
     end
   end
 
-  # Reads a line from this IO. A line is terminated by the `\n` character.
-  # Returns `nil` if called at the end of this IO.
+  # Reads a line from this `IO`. A line is terminated by the `\n` character.
+  # Returns `nil` if called at the end of this `IO`.
   #
   # By default the newline is removed from the returned string,
   # unless *chomp* is `false`.
@@ -580,9 +582,9 @@ module IO
     gets '\n', chomp: chomp
   end
 
-  # Reads a line of at most *limit* bytes from this IO.
+  # Reads a line of at most *limit* bytes from this `IO`.
   # A line is terminated by the `\n` character.
-  # Returns `nil` if called at the end of this IO.
+  # Returns `nil` if called at the end of this `IO`.
   #
   # ```
   # io = IO::Memory.new "hello\nworld"
@@ -597,7 +599,7 @@ module IO
   end
 
   # Reads until *delimiter* is found, or the end of the `IO` is reached.
-  # Returns `nil` if called at the end of this IO.
+  # Returns `nil` if called at the end of this `IO`.
   #
   # ```
   # io = IO::Memory.new "hello\nworld"
@@ -611,7 +613,7 @@ module IO
   end
 
   # Reads until *delimiter* is found, *limit* bytes are read, or the end of the `IO` is reached.
-  # Returns `nil` if called at the end of this IO.
+  # Returns `nil` if called at the end of this `IO`.
   #
   # ```
   # io = IO::Memory.new "hello\nworld"
@@ -674,7 +676,7 @@ module IO
   end
 
   # Reads until *delimiter* is found or the end of the `IO` is reached.
-  # Returns `nil` if called at the end of this IO.
+  # Returns `nil` if called at the end of this `IO`.
   #
   # ```
   # io = IO::Memory.new "hello\nworld"
@@ -721,13 +723,13 @@ module IO
     buffer.to_s
   end
 
-  # Same as `gets`, but raises `EOFError` if called at the end of this IO.
+  # Same as `gets`, but raises `EOFError` if called at the end of this `IO`.
   def read_line(*args, **options) : String?
     gets(*args, **options) || raise EOFError.new
   end
 
   # Reads and discards exactly *bytes_count* bytes.
-  # Raises IO::EOFError if there aren't at least *bytes_count* bytes.
+  # Raises `IO::EOFError` if there aren't at least *bytes_count* bytes.
   #
   # ```
   # io = IO::Memory.new "hello world"
@@ -753,7 +755,7 @@ module IO
     end
   end
 
-  # Writes a single byte into this IO.
+  # Writes a single byte into this `IO`.
   #
   # ```
   # io = IO::Memory.new
@@ -813,7 +815,7 @@ module IO
     false
   end
 
-  # Invokes the given block with each *line* in this IO, where a line
+  # Invokes the given block with each *line* in this `IO`, where a line
   # is defined by the arguments passed to this method, which can be the same
   # ones as in the `gets` methods.
   #
@@ -836,7 +838,7 @@ module IO
     end
   end
 
-  # Returns an `Iterator` for the *lines* in this IO, where a line
+  # Returns an `Iterator` for the *lines* in this `IO`, where a line
   # is defined by the arguments passed to this method, which can be the same
   # ones as in the `gets` methods.
   #
@@ -850,7 +852,7 @@ module IO
     LineIterator.new(self, args, options)
   end
 
-  # Inovkes the given block with each `Char` in this IO.
+  # Inovkes the given block with each `Char` in this `IO`.
   #
   # ```
   # io = IO::Memory.new("あめ")
@@ -871,7 +873,7 @@ module IO
     end
   end
 
-  # Returns an `Iterator` for the chars in this IO.
+  # Returns an `Iterator` for the chars in this `IO`.
   #
   # ```
   # io = IO::Memory.new("あめ")
@@ -883,7 +885,7 @@ module IO
     CharIterator.new(self)
   end
 
-  # Inovkes the given block with each byte (`UInt8`) in this IO.
+  # Inovkes the given block with each byte (`UInt8`) in this `IO`.
   #
   # ```
   # io = IO::Memory.new("aあ")
@@ -906,7 +908,7 @@ module IO
     end
   end
 
-  # Returns an `Iterator` for the bytes in this IO.
+  # Returns an `Iterator` for the bytes in this `IO`.
   #
   # ```
   # io = IO::Memory.new("aあ")
@@ -920,13 +922,13 @@ module IO
     ByteIterator.new(self)
   end
 
-  # Rewinds this IO. By default this method raises, but including types
-  # mayb implement it.
+  # Rewinds this `IO`. By default this method raises, but including types
+  # may implement it.
   def rewind
     raise IO::Error.new("can't rewind")
   end
 
-  # Sets the encoding of this IO.
+  # Sets the encoding of this `IO`.
   #
   # The *invalid* argument can be:
   # * `nil`: an exception is raised on invalid byte sequences
@@ -947,7 +949,7 @@ module IO
     nil
   end
 
-  # Returns this IO's encoding. The default is UTF-8.
+  # Returns this `IO`'s encoding. The default is `UTF-8`.
   def encoding : String
     @encoding.try(&.name) || "UTF-8"
   end

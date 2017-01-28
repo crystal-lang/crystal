@@ -176,17 +176,18 @@ require "./regex/*"
 # PCRE optionally permits named capture groups (named subpatterns) to not be
 # unique. Crystal exposes the name table of a `Regex` as a
 # `Hash` of `String` => `Int32`, and therefore requires named capture groups to have
-# unique names within a single Regex.
+# unique names within a single `Regex`.
 class Regex
   @[Flags]
   enum Options
     IGNORE_CASE = 1
-    # PCRE native PCRE_MULTILINE flag is 2, and PCRE_DOTALL is 4 ;
-    # - PCRE_DOTALL changes the "." meaning,
-    # - PCRE_MULTILINE changes "^" and "$" meanings)
-    # Ruby modifies this meaning to have essentially one unique "m"
+    # PCRE native `PCRE_MULTILINE` flag is `2`, and `PCRE_DOTALL` is `4`
+    # - `PCRE_DOTALL` changes the "`.`" meaning
+    # - `PCRE_MULTILINE` changes "`^`" and "`$`" meanings
+    #
+    # Crystal modifies this meaning to have essentially one unique "`m`"
     # flag that activates both behaviours, so here we do the same by
-    # mapping MULTILINE to PCRE_MULTILINE | PCRE_DOTALL
+    # mapping `MULTILINE` to `PCRE_MULTILINE | PCRE_DOTALL`.
     MULTILINE = 6
     EXTENDED  = 8
     # :nodoc:
@@ -197,7 +198,7 @@ class Regex
     NO_UTF8_CHECK = 0x00002000
   end
 
-  # Return a `Regex::Options` representing the optional flags applied to this Regex.
+  # Return a `Regex::Options` representing the optional flags applied to this `Regex`.
   #
   # ```
   # /ab+c/ix.options      # => Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
@@ -360,8 +361,8 @@ class Regex
   end
 
   # Match. Matches a regular expression against *other* and returns
-  # the starting position of the match if *other* is a matching String,
-  # otherwise `nil`. `$~` will contain a Regex::MatchData if there was a match,
+  # the starting position of the match if *other* is a matching `String`,
+  # otherwise `nil`. `$~` will contain a `Regex::MatchData` if there was a match,
   # `nil` otherwise.
   #
   # ```
@@ -374,7 +375,7 @@ class Regex
     match.try &.begin(0)
   end
 
-  # Match. When the argument is not a String, always returns `nil`.
+  # Match. When the argument is not a `String`, always returns `nil`.
   #
   # ```
   # /at/ =~ "input data" # => 7
@@ -400,7 +401,7 @@ class Regex
     io << "x" if options.extended?
   end
 
-  # Match at character index. Matches a regular expression against String
+  # Match at character index. Matches a regular expression against `String`
   # *str*. Starts at the character index given by *pos* if given, otherwise at
   # the start of *str*. Returns a `Regex::MatchData` if *str* matched, otherwise
   # `nil`. `$~` will contain the same value that was returned.
@@ -420,9 +421,9 @@ class Regex
     $~ = match
   end
 
-  # Match at byte index. Matches a regular expression against String
+  # Match at byte index. Matches a regular expression against `String`
   # *str*. Starts at the byte index given by *pos* if given, otherwise at
-  # the start of *str*. Returns a Regex::MatchData if *str* matched, otherwise
+  # the start of *str*. Returns a `Regex::MatchData` if *str* matched, otherwise
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```
@@ -447,7 +448,7 @@ class Regex
 
   # Returns a `Hash` where the values are the names of capture groups and the
   # keys are their indexes. Non-named capture groups will not have entries in
-  # the Hash. Capture groups are indexed starting from 1.
+  # the `Hash`. Capture groups are indexed starting from `1`.
   #
   # ```
   # /(.)/.name_table                         # => {}

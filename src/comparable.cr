@@ -1,10 +1,10 @@
-# The Comparable mixin is used by classes whose objects may be ordered.
+# The `Comparable` mixin is used by classes whose objects may be ordered.
 #
 # Including types must provide an `<=>` method, which compares the receiver against
-# another object, returning -1, 0, or +1 depending on whether the receiver is less than,
+# another object, returning `-1`, `0`, or `+1` depending on whether the receiver is less than,
 # equal to, or greater than the other object.
 #
-# Comparable uses `<=>` to implement the conventional comparison operators (`<`, `<=`, `==`, `>=`, and `>`).
+# `Comparable` uses `<=>` to implement the conventional comparison operators (`<`, `<=`, `==`, `>=`, and `>`).
 module Comparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `-1`.
   def <(other : T)
@@ -40,7 +40,7 @@ module Comparable(T)
     (self <=> other) >= 0
   end
 
-  # Comparison operator. Returns 0 if the two objects are equal,
+  # Comparison operator. Returns `0` if the two objects are equal,
   # a negative number if this object is considered less than *other*,
   # or a positive number otherwise.
   #

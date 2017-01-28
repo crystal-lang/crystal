@@ -1,4 +1,4 @@
-# The IO::Buffered mixin enhances the IO module with input/output buffering.
+# The `IO::Buffered` mixin enhances the `IO` module with input/output buffering.
 #
 # The buffering behaviour can be turned on/off with the `#sync=` method.
 #
@@ -14,19 +14,21 @@ module IO::Buffered
   @sync = false
   @flush_on_newline = false
 
-  # Reads at most *slice.size* bytes from the wrapped IO into *slice*. Returns the number of bytes read.
+  # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
+  # Returns the number of bytes read.
   abstract def unbuffered_read(slice : Bytes)
 
-  # Writes at most *slice.size* bytes from *slice* into the wrapped IO. Returns the number of bytes written.
+  # Writes at most *slice.size* bytes from *slice* into the wrapped `IO`.
+  # Returns the number of bytes written.
   abstract def unbuffered_write(slice : Bytes)
 
-  # Flushes the wrapped IO.
+  # Flushes the wrapped `IO`.
   abstract def unbuffered_flush
 
-  # Closes the wrapped IO.
+  # Closes the wrapped `IO`.
   abstract def unbuffered_close
 
-  # Rewinds the wrapped IO.
+  # Rewinds the wrapped `IO`.
   abstract def unbuffered_rewind
 
   # :nodoc:
@@ -238,30 +240,30 @@ module IO::Buffered
     end
   end
 
-  # Turns on/off flushing the underlying IO when a newline is written.
+  # Turns on/off flushing the underlying `IO` when a newline is written.
   def flush_on_newline=(flush_on_newline)
     @flush_on_newline = !!flush_on_newline
   end
 
-  # Determines if this IO flushes automatically when a newline is written.
+  # Determines if this `IO` flushes automatically when a newline is written.
   def flush_on_newline?
     @flush_on_newline
   end
 
-  # Turns on/off IO buffering. When *sync* is set to `true`, no buffering
-  # will be done (that is, writing to this IO is immediately synced to the
-  # underlying IO).
+  # Turns on/off `IO` buffering. When *sync* is set to `true`, no buffering
+  # will be done (that is, writing to this `IO` is immediately synced to the
+  # underlying `IO`).
   def sync=(sync)
     flush if sync && !@sync
     @sync = !!sync
   end
 
-  # Determines if this IO does buffering. If `true`, no buffering is done.
+  # Determines if this `IO` does buffering. If `true`, no buffering is done.
   def sync?
     @sync
   end
 
-  # Flushes any buffered data and the underlying IO. Returns `self`.
+  # Flushes any buffered data and the underlying `IO`. Returns `self`.
   def flush
     unbuffered_write(Slice.new(out_buffer, @out_count)) if @out_count > 0
     unbuffered_flush
@@ -269,14 +271,14 @@ module IO::Buffered
     self
   end
 
-  # Flushes and closes the underlying IO.
+  # Flushes and closes the underlying `IO`.
   def close
     flush if @out_count > 0
     unbuffered_close
     nil
   end
 
-  # Rewinds the underlying IO. Returns `self`.
+  # Rewinds the underlying `IO`. Returns `self`.
   def rewind
     unbuffered_rewind
     @in_buffer_rem = Bytes.empty

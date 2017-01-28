@@ -9,10 +9,10 @@
 #
 # Note that methods used to traverse a JSON structure, `#[]`, `#[]?` and `#each`,
 # always return a `JSON::Any` to allow further traversal. To convert them to `String`,
-# `Int32`, etc., use the "as_" methods, such as `#as_s`, `#as_i`, which perform
+# `Int32`, etc., use the `as_` methods, such as `#as_s`, `#as_i`, which perform
 # a type check against the raw underlying value. This means that invoking `#as_s`
 # when the underlying value is not a String will raise: the value won't automatically
-# be converted (parsed) to a String.
+# be converted (parsed) to a `String`.
 struct JSON::Any
   include Enumerable(self)
 
@@ -53,8 +53,7 @@ struct JSON::Any
   def initialize(@raw : JSON::Type)
   end
 
-  # Assumes the underlying value is an `Array` or `Hash` and returns
-  # its size.
+  # Assumes the underlying value is an `Array` or `Hash` and returns its size.
   # Raises if the underlying value is not an `Array` or `Hash`.
   def size : Int
     case object = @raw
@@ -67,9 +66,9 @@ struct JSON::Any
     end
   end
 
-  # Assumes the underlying value is an Array and returns the element
+  # Assumes the underlying value is an `Array` and returns the element
   # at the given index.
-  # Raises if the underlying value is not an Array.
+  # Raises if the underlying value is not an `Array`.
   def [](index : Int) : JSON::Any
     case object = @raw
     when Array
@@ -79,9 +78,9 @@ struct JSON::Any
     end
   end
 
-  # Assumes the underlying value is an Array and returns the element
+  # Assumes the underlying value is an `Array` and returns the element
   # at the given index, or `nil` if out of bounds.
-  # Raises if the underlying value is not an Array.
+  # Raises if the underlying value is not an `Array`.
   def []?(index : Int) : JSON::Any?
     case object = @raw
     when Array
@@ -92,9 +91,9 @@ struct JSON::Any
     end
   end
 
-  # Assumes the underlying value is a Hash and returns the element
+  # Assumes the underlying value is a `Hash` and returns the element
   # with the given key.
-  # Raises if the underlying value is not a Hash.
+  # Raises if the underlying value is not a `Hash`.
   def [](key : String) : JSON::Any
     case object = @raw
     when Hash
@@ -104,9 +103,9 @@ struct JSON::Any
     end
   end
 
-  # Assumes the underlying value is a Hash and returns the element
+  # Assumes the underlying value is a `Hash` and returns the element
   # with the given key, or `nil` if the key is not present.
-  # Raises if the underlying value is not a Hash.
+  # Raises if the underlying value is not a `Hash`.
   def []?(key : String) : JSON::Any?
     case object = @raw
     when Hash
@@ -135,87 +134,104 @@ struct JSON::Any
     end
   end
 
-  # Checks that the underlying value is `Nil`, and returns `nil`. Raises otherwise.
+  # Checks that the underlying value is `Nil`, and returns `nil`.
+  # Raises otherwise.
   def as_nil : Nil
     @raw.as(Nil)
   end
 
-  # Checks that the underlying value is `Bool`, and returns its value. Raises otherwise.
+  # Checks that the underlying value is `Bool`, and returns its value.
+  # Raises otherwise.
   def as_bool : Bool
     @raw.as(Bool)
   end
 
-  # Checks that the underlying value is `Bool`, and returns its value. Returns `nil` otherwise.
+  # Checks that the underlying value is `Bool`, and returns its value.
+  # Returns `nil` otherwise.
   def as_bool? : Bool?
     as_bool if @raw.is_a?(Bool)
   end
 
-  # Checks that the underlying value is `Int`, and returns its value as an `Int32`. Raises otherwise.
+  # Checks that the underlying value is `Int`, and returns its value as an `Int32`.
+  # Raises otherwise.
   def as_i : Int32
     @raw.as(Int).to_i
   end
 
-  # Checks that the underlying value is `Int`, and returns its value as an `Int32`. Returns `nil` otherwise.
+  # Checks that the underlying value is `Int`, and returns its value as an `Int32`.
+  # Returns `nil` otherwise.
   def as_i? : Int32?
     as_i if @raw.is_a?(Int)
   end
 
-  # Checks that the underlying value is `Int`, and returns its value as an `Int64`. Raises otherwise.
+  # Checks that the underlying value is `Int`, and returns its value as an `Int64`.
+  # Raises otherwise.
   def as_i64 : Int64
     @raw.as(Int).to_i64
   end
 
-  # Checks that the underlying value is `Int`, and returns its value as an `Int64`. Returns `nil` otherwise.
+  # Checks that the underlying value is `Int`, and returns its value as an `Int64`.
+  # Returns `nil` otherwise.
   def as_i64? : Int64?
     as_i64 if @raw.is_a?(Int64)
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float64`. Raises otherwise.
+  # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
+  # Raises otherwise.
   def as_f : Float64
     @raw.as(Float).to_f
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float64`. Returns `nil` otherwise.
+  # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
+  # Returns `nil` otherwise.
   def as_f? : Float64?
     as_f if @raw.is_a?(Float64)
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`. Raises otherwise.
+  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Raises otherwise.
   def as_f32 : Float32
     @raw.as(Float).to_f32
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`. Returns `nil` otherwise.
+  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Returns `nil` otherwise.
   def as_f32? : Float32?
     as_f32 if (@raw.is_a?(Float32) || @raw.is_a?(Float64))
   end
 
-  # Checks that the underlying value is `String`, and returns its value. Raises otherwise.
+  # Checks that the underlying value is `String`, and returns its value.
+  # Raises otherwise.
   def as_s : String
     @raw.as(String)
   end
 
-  # Checks that the underlying value is `String`, and returns its value. Returns `nil` otherwise.
+  # Checks that the underlying value is `String`, and returns its value.
+  # Returns `nil` otherwise.
   def as_s? : String?
     as_s if @raw.is_a?(String)
   end
 
-  # Checks that the underlying value is `Array`, and returns its value. Raises otherwise.
+  # Checks that the underlying value is `Array`, and returns its value.
+  # Raises otherwise.
   def as_a : Array(Type)
     @raw.as(Array)
   end
 
-  # Checks that the underlying value is `Array`, and returns its value. Returns `nil` otherwise.
+  # Checks that the underlying value is `Array`, and returns its value.
+  # Returns `nil` otherwise.
   def as_a? : Array(Type)?
     as_a if @raw.is_a?(Array(Type))
   end
 
-  # Checks that the underlying value is `Hash`, and returns its value. Raises otherwise.
+  # Checks that the underlying value is `Hash`, and returns its value.
+  # Raises otherwise.
   def as_h : Hash(String, Type)
     @raw.as(Hash)
   end
 
-  # Checks that the underlying value is `Hash`, and returns its value. Returns `nil` otherwise.
+  # Checks that the underlying value is `Hash`, and returns its value.
+  # Returns `nil` otherwise.
   def as_h? : Hash(String, Type)?
     as_h if @raw.is_a?(Hash(String, Type))
   end

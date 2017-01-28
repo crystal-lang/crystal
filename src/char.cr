@@ -1,6 +1,6 @@
 require "comparable"
 
-# A Char represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point).
+# A `Char` represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point).
 # It occupies 32 bits.
 #
 # It is created by enclosing an UTF-8 character in single quotes.
@@ -52,10 +52,10 @@ struct Char
   # The character representing the end of a C string.
   ZERO = '\0'
 
-  # The maximum character
+  # The maximum character.
   MAX = 0x10ffff.unsafe_chr
 
-  # The maximum valid codepoint for a character
+  # The maximum valid codepoint for a character.
   MAX_CODEPOINT = 0x10ffff
 
   # Returns the difference of the codepoint values of this char and *other*.
@@ -491,7 +491,7 @@ struct Char
   end
 
   # Returns this char as a string that contains a char literal as written in Crystal,
-  # with characters with a codepoint greater than 0x79 written as `\u{...}`.
+  # with characters with a codepoint greater than `0x79` written as `\u{...}`.
   #
   # ```
   # 'a'.dump      # => "'a'"

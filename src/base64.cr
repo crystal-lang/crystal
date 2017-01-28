@@ -1,8 +1,8 @@
-# The Base64 module provides for the encoding (`encode`, `strict_encode`,
+# The `Base64` module provides for the encoding (`encode`, `strict_encode`,
 # `urlsafe_encode`) and decoding (`decode`)
-# of binary data using a Base64 representation.
+# of binary data using a base64 representation.
 #
-# ###Example
+# ### Example
 #
 # A simple encoding and decoding.
 #
@@ -27,8 +27,8 @@ module Base64
   private NL = '\n'.ord.to_u8
   private NR = '\r'.ord.to_u8
 
-  # Returns the Base64-encoded version of *data*.
-  # This method complies with RFC 2045.
+  # Returns the base64-encoded version of *data*.
+  # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
   # Line feeds are added to every 60 encoded characters.
   #
   # ```
@@ -51,8 +51,8 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of *data* to *io*.
-  # This method complies with RFC 2045.
+  # Write the base64-encoded version of *data* to *io*.
+  # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
   # Line feeds are added to every 60 encoded characters.
   #
   # ```
@@ -83,8 +83,8 @@ module Base64
     end
   end
 
-  # Returns the Base64-encoded version of *data* with no newlines.
-  # This method complies with RFC 4648.
+  # Returns the base64-encoded version of *data* with no newlines.
+  # This method complies with [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
   # ```
   # puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
@@ -109,8 +109,8 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of *data* with no newlines to *io*.
-  # This method complies with RFC 4648.
+  # Write the base64-encoded version of *data* with no newlines to *io*.
+  # This method complies with [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
   # ```
   # Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
@@ -129,11 +129,11 @@ module Base64
     count
   end
 
-  # Returns the Base64-encoded version of *data* using a urlsafe alphabet.
+  # Returns the base64-encoded version of *data* using a urlsafe alphabet.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
-  # Alphabet" in RFC 4648.
+  # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
-  # The alphabet uses '-' instead of '+' and '_' instead of '/'.
+  # The alphabet uses `'-'` instead of `'+'` and `'_'` instead of `'/'`.
   #
   # The *padding* parameter defaults to `true`. When `false`, enough `=` characters
   # are not added to make the output divisible by 4.
@@ -147,16 +147,16 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of *data* using a urlsafe alphabet to *io*.
+  # Write the base64-encoded version of *data* using a urlsafe alphabet to *io*.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
-  # Alphabet" in RFC 4648.
+  # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
-  # The alphabet uses '-' instead of '+' and '_' instead of '/'.
+  # The alphabet uses `'-'` instead of `'+'` and `'_'` instead of `'/'`.
   def urlsafe_encode(data, io : IO)
     strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: true)
   end
 
-  # Returns the Base64-decoded version of *data* as a `Bytes`.
+  # Returns the base64-decoded version of *data* as a `Bytes`.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data) : Bytes
     slice = data.to_slice
@@ -166,7 +166,7 @@ module Base64
     Slice.new(buf, appender.size.to_i32)
   end
 
-  # Write the Base64-decoded version of *data* to *io*.
+  # Write the base64-decoded version of *data* to *io*.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data, io : IO)
     count = 0
@@ -178,9 +178,9 @@ module Base64
     count
   end
 
-  # Returns the Base64-decoded version of *data* as a string.
+  # Returns the base64-decoded version of *data* as a string.
   # If the data doesn't decode to a valid UTF8 string,
-  # *InvalidByteSequenceError* will be raised.
+  # ` InvalidByteSequenceError` will be raised.
   # This will decode either the normal or urlsafe alphabets.
   def decode_string(data) : String
     slice = data.to_slice

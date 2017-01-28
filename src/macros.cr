@@ -1,4 +1,4 @@
-# Defines a **struct** with the given name and properties.
+# Defines a **`Struct`** with the given name and properties.
 #
 # The generated struct has a constructor with the given properties
 # in the same order as declared. The struct only provides getters,
@@ -83,7 +83,8 @@ macro record(name, *properties)
   end
 end
 
-# Prints a series of expressions together with their values. Useful for print style debugging.
+# Prints a series of expressions together with their values.
+# Useful for print style debugging.
 #
 # ```
 # a = 1

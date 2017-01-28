@@ -150,7 +150,7 @@ class Hash(K, V)
     entry ? entry.value : yield key
   end
 
-  # Returns a tuple populated with the elements at the given indexes.
+  # Returns a tuple populated with the elements at the given *indexes*.
   # Raises if any index is invalid.
   #
   # ```
@@ -795,7 +795,7 @@ class Hash(K, V)
     pp.text "{...}" unless executed
   end
 
-  # Returns self.
+  # Returns `self`.
   def to_h
     self
   end

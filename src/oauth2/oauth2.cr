@@ -1,5 +1,5 @@
 # The OAuth module provides an `OAuth2::Client` as specified
-# by [RFC6749](https://tools.ietf.org/html/rfc6749).
+# by [RFC 6749](https://tools.ietf.org/html/rfc6749).
 #
 # ### Performing HTTP client requests with OAuth2 authentication
 #

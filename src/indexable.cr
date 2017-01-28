@@ -1,15 +1,15 @@
 # A container that allows accessing elements via a numeric index.
 #
-# Indexing starts at 0. A negative index is assumed to be
-# relative to the end of the container: -1 indicates the last element,
-# -2 is the next to last element, and so on.
+# Indexing starts at `0`. A negative index is assumed to be
+# relative to the end of the container: `-1` indicates the last element,
+# `-2` is the next to last element, and so on.
 #
 # Types including this module are typically `Array`-like types.
 module Indexable(T)
   include Iterable(T)
   include Enumerable(T)
 
-  # Returns the number of elements in this container
+  # Returns the number of elements in this container.
   abstract def size
 
   # Returns the element at the given *index*, without doing any bounds check.
@@ -25,7 +25,7 @@ module Indexable(T)
   # of performance.
   abstract def unsafe_at(index : Int)
 
-  # Returns the element at the given index, if in bounds,
+  # Returns the element at the given *index*, if in bounds,
   # otherwise executes the given block and returns its value.
   #
   # ```
@@ -40,7 +40,7 @@ module Indexable(T)
     unsafe_at(index)
   end
 
-  # Returns the element at the given index, if in bounds,
+  # Returns the element at the given *index*, if in bounds,
   # otherwise raises `IndexError`.
   #
   # ```
@@ -53,7 +53,7 @@ module Indexable(T)
     at(index) { raise IndexError.new }
   end
 
-  # Returns the element at the given index.
+  # Returns the element at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the array.
   # Raises `IndexError` if trying to access an element outside the array's range.
@@ -73,7 +73,7 @@ module Indexable(T)
     at(index)
   end
 
-  # Returns the element at the given index.
+  # Returns the element at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the array.
   # Returns `nil` if trying to access an element outside the array's range.
@@ -380,7 +380,7 @@ module Indexable(T)
   end
 
   # Returns a random element from `self`, using the given *random* number generator.
-  # Raises IndexError if `self` is empty.
+  # Raises `IndexError` if `self` is empty.
   #
   # ```
   # a = [1, 2, 3]
@@ -393,7 +393,7 @@ module Indexable(T)
     unsafe_at(random.rand(size))
   end
 
-  # Returns a tuple populated with the elements at the given indexes.
+  # Returns a `Tuple` populated with the elements at the given indexes.
   # Raises `IndexError` if any index is invalid.
   #
   # ```

@@ -1,5 +1,5 @@
 class Crypto::MD5
-  # Returns a String the hexadecimal representation of the MD5 hash of *data*
+  # Returns a String the hexadecimal representation of the MD5 hash of *data*.
   #
   # ```
   # Crypto::MD5.hex_digest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"

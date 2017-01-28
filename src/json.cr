@@ -57,7 +57,7 @@
 # for primitive types, but you need to define `to_json(JSON::Builder)`
 # for custom objects, either manually or using `JSON#mapping`.
 module JSON
-  # Generic JSON error
+  # Generic JSON error.
   class Error < Exception
   end
 
@@ -71,7 +71,7 @@ module JSON
     end
   end
 
-  # All valid JSON types
+  # All valid JSON types.
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(Type) | Hash(String, Type)
 
   # Parses a JSON document as a `JSON::Any`.

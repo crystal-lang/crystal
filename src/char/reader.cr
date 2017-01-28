@@ -1,16 +1,16 @@
 struct Char
-  # A Char::Reader allows iterating a String by Chars.
+  # A `Char::Reader` allows iterating a `String` by Chars.
   #
-  # As soon as you instantiate a Char::Reader it will decode the first
-  # char in the String, which can be accessed by invoking `current_char`.
+  # As soon as you instantiate a `Char::Reader` it will decode the first
+  # char in the `String`, which can be accessed by invoking `current_char`.
   # At this point `pos`, the current position in the string, will equal zero.
   # Successive calls to `next_char` return the next chars in the string,
   # advancing `pos`.
   #
-  # Note that the null character '\0' will be returned in `current_char` when
+  # Note that the null character `'\0'` will be returned in `current_char` when
   # the end is reached (as well as when the string is empty). Thus, `has_next?`
   # will return `false` only when `pos` is equal to the string's bytesize, in which
-  # case `current_char` will always be '\0'.
+  # case `current_char` will always be `'\0'`.
   struct Reader
     include Enumerable(Char)
 
@@ -27,7 +27,7 @@ struct Char
     # ```
     getter current_char : Char
 
-    # Returns the size of the current_char (in bytes) as if it were encoded in UTF-8.
+    # Returns the size of the `#current_char` (in bytes) as if it were encoded in UTF-8.
     #
     # ```
     # reader = Char::Reader.new("aé")
@@ -47,7 +47,7 @@ struct Char
     # ```
     getter pos : Int32
 
-    # Creates a reader with the specified *string*
+    # Creates a reader with the specified *string*.
     def initialize(@string : String)
       @pos = 0
       @current_char = '\0'
@@ -57,7 +57,7 @@ struct Char
     end
 
     # Returns `true` if there is a character left to read.
-    # The terminating byte '\0' is considered a valid character
+    # The terminating byte `'\0'` is considered a valid character
     # by this method.
     #
     # ```
@@ -71,7 +71,7 @@ struct Char
 
     # Reads the next character in the string,
     # `#pos` is incremented. Raises `IndexError` if the reader is
-    # at the end of the `#string`
+    # at the end of the `#string`.
     #
     # ```
     # reader = Char::Reader.new("ab")
@@ -89,7 +89,7 @@ struct Char
     # Returns the next character in the `#string`
     # without incrementing `#pos`.
     # Raises `IndexError` if the reader is at
-    # the end of the `#string`
+    # the end of the `#string`.
     #
     # ```
     # reader = Char::Reader.new("ab")

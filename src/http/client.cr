@@ -53,7 +53,7 @@
 # of the returned IO (or used for creating a String for the body). Invalid bytes in the given encoding
 # are silently ignored when reading text content.
 class HTTP::Client
-  # The set of possible valid body types
+  # The set of possible valid body types.
   alias BodyType = String | Bytes | IO | Nil
 
   # Returns the target host.

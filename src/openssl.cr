@@ -1,6 +1,6 @@
 require "./openssl/lib_ssl"
 
-# # OpenSSL Integration
+# ## OpenSSL Integration
 #
 # - TLS sockets need a context, potentially with keys (required for servers) and configuration.
 # - TLS sockets will wrap the underlying TCP socket, and any further communication must happen through the `OpenSSL::SSL::Socket` only.

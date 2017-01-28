@@ -4,7 +4,7 @@
 # you already have an access token, check the `OAuth` module description.
 #
 # This class also provides methods to get request tokens, build authorize URIs
-# and get access tokens, as specified by [RFC5849](https://tools.ietf.org/html/rfc5849).
+# and get access tokens, as specified by [RFC 5849](https://tools.ietf.org/html/rfc5849).
 #
 # ### Example
 #
@@ -69,7 +69,7 @@ class OAuth::Consumer
   end
 
   # Obtains a request token, also known as "temporary credentials", as specified by
-  # [RFC5849, Section 2.1](https://tools.ietf.org/html/rfc5849#section-2.1)
+  # [RFC 5849, Section 2.1](https://tools.ietf.org/html/rfc5849#section-2.1).
   #
   # Raises `OAuth::Error` if there was an error getting the request token.
   def get_request_token(oauth_callback = "oob") # : RequestToken
@@ -80,14 +80,14 @@ class OAuth::Consumer
 
   # Returns an authorize URI from a given request token to redirect the user
   # to obtain an access token, as specified by
-  # [RFC5849, Section 2.2](https://tools.ietf.org/html/rfc5849#section-2.2)
+  # [RFC 5849, Section 2.2](https://tools.ietf.org/html/rfc5849#section-2.2).
   def get_authorize_uri(request_token, oauth_callback = nil) : String
     get_authorize_uri(request_token, oauth_callback) { }
   end
 
   # Returns an authorize URI from a given request token to redirect the user
   # to obtain an access token, as specified by
-  # [RFC5849, Section 2.2](https://tools.ietf.org/html/rfc5849#section-2.2)
+  # [RFC 5849, Section 2.2](https://tools.ietf.org/html/rfc5849#section-2.2).
   #
   # Yields an `HTTP::Params::Builder` to add extra parameters other than those
   # defined by the standard.
@@ -115,7 +115,7 @@ class OAuth::Consumer
 
   # Gets an access token from a previously obtained request token and an *oauth_verifier*
   # obtained from an authorize URI, as specified by
-  # [RFC5849, Section 2.3](https://tools.ietf.org/html/rfc5849#section-2.3)
+  # [RFC 5849, Section 2.3](https://tools.ietf.org/html/rfc5849#section-2.3).
   #
   # Raises `OAuth::Error` if there was an error getting the access token.
   def get_access_token(request_token, oauth_verifier, extra_params = nil) : AccessToken
@@ -126,8 +126,8 @@ class OAuth::Consumer
     end
   end
 
-  # Authenticated an HTTP::Client to add an OAuth authorization header, as specified by
-  # [RFC5849, Section 3](https://tools.ietf.org/html/rfc5849#section-3)
+  # Authenticated an `HTTP::Client` to add an OAuth authorization header, as specified by
+  # [RFC 5849, Section 3](https://tools.ietf.org/html/rfc5849#section-3).
   def authenticate(client : HTTP::Client, token : AccessToken) : Nil
     authenticate client, token.token, token.secret, nil
   end

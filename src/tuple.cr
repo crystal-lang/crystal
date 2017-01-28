@@ -126,7 +126,7 @@ struct Tuple
     self[index]
   end
 
-  # Returns the element at the given index. Read the type docs to understand
+  # Returns the element at the given *index*. Read the type docs to understand
   # the difference between indexing with a number literal or a variable.
   #
   # ```
@@ -144,7 +144,7 @@ struct Tuple
     at(index)
   end
 
-  # Returns the element at the given index or `nil` if out of bounds.
+  # Returns the element at the given *index* or `nil` if out of bounds.
   #
   # ```
   # tuple = {1, "hello", 'x'}
@@ -155,7 +155,7 @@ struct Tuple
     at(index) { nil }
   end
 
-  # Returns the element at the given index or raises IndexError if out of bounds.
+  # Returns the element at the given *index* or raises IndexError if out of bounds.
   #
   # ```
   # tuple = {1, "hello", 'x'}
@@ -166,7 +166,7 @@ struct Tuple
     at(index) { raise IndexError.new }
   end
 
-  # Returns the element at the given index or the value returned by the block if
+  # Returns the element at the given *index* or the value returned by the block if
   # out of bounds.
   #
   # ```
@@ -270,13 +270,12 @@ struct Tuple
 
   # Implements the comparison operator.
   #
-  # Each object in each tuple is compared (using the <=> operator).
+  # Each object in each tuple is compared (using the `<=>` operator).
   #
   # Tuples are compared in an "element-wise" manner; the first element of this tuple is
   # compared with the first one of *other* using the `<=>` operator, then each of the second elements,
   # etc. As soon as the result of any such comparison is non zero
   # (i.e. the two corresponding elements are not equal), that result is returned for the whole tuple comparison.
-  #
   #
   # If all the elements are equal, then the result is based on a comparison of the tuple sizes.
   # Thus, two tuples are "equal" according to `<=>` if, and only if, they have the same size

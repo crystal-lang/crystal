@@ -249,7 +249,6 @@ abstract class OpenSSL::SSL::Context
   # Adds options to the TLS context.
   #
   # Example:
-  #
   # ```
   # context.add_options(
   #   OpenSSL::SSL::Options::ALL |      # various workarounds
@@ -317,7 +316,7 @@ abstract class OpenSSL::SSL::Context
   # Set this context verify param to the default one of the given name.
   #
   # Depending on the OpenSSL version, the available defaults are
-  # default, pkcs7, smime_sign, ssl_client and ssl_server
+  # `default`, `pkcs7`, `smime_sign`, `ssl_client` and `ssl_server`.
   def default_verify_param=(name : String)
     param = LibCrypto.x509_verify_param_lookup(name)
     raise ArgumentError.new("#{name} is an unsupported default verify param") unless param

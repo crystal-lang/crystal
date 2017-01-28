@@ -20,7 +20,7 @@ module HTTP
       Params.new(parsed)
     end
 
-    # Parses an HTTP query and yields each key-value pair
+    # Parses an HTTP query and yields each key-value pair.
     #
     # ```
     # query = "foo=bar&foo=baz&qux=zoo"
@@ -69,7 +69,7 @@ module HTTP
       end
     end
 
-    # Creates an HTTP::Params instance from the key-value
+    # Creates an `HTTP::Params` instance from the key-value
     # pairs of the given *hash*.
     def self.from_hash(hash : Hash)
       build do |builder|
@@ -82,8 +82,8 @@ module HTTP
     # Builds an url-encoded HTTP form/query.
     #
     # The yielded object has an `add` method that accepts two arguments,
-    # a key (String) and a value (`String` or `Nil`). Keys and values are escaped
-    # using `URI#escape`.
+    # a key (`String`) and a value (`String` or `Nil`).
+    # Keys and values are escaped using `URI#escape`.
     #
     # ```
     # params = HTTP::Params.build do |form|
@@ -123,7 +123,7 @@ module HTTP
       raw_params[name].first
     end
 
-    # Returns first value or `nil` for specified param name.
+    # Returns first value or `nil` for specified param *name*.
     #
     # ```
     # params["email"]?              # => "john@example.org"
@@ -141,7 +141,7 @@ module HTTP
     # ```
     delegate has_key?, to: raw_params
 
-    # Sets first value for specified param name.
+    # Sets first *value* for specified param *name*.
     #
     # ```
     # params["item"] = "pencil"
@@ -151,7 +151,7 @@ module HTTP
       raw_params[name][0] = value
     end
 
-    # Returns all values for specified param name.
+    # Returns all values for specified param *name*.
     #
     # ```
     # params.set_all("item", ["pencil", "book", "workbook"])
@@ -161,7 +161,7 @@ module HTTP
       raw_params.fetch(name) { [] of String }
     end
 
-    # Returns first value for specified param name.
+    # Returns first value for specified param *name*.
     #
     # ```
     # params.fetch("email")              # => "john@example.org"
@@ -171,8 +171,8 @@ module HTTP
       raw_params.fetch(name).first
     end
 
-    # Returns first value for specified param name. Fallbacks to provided
-    # default value when there is no such param.
+    # Returns first value for specified param *name*. Fallbacks to provided
+    # *default* value when there is no such param.
     #
     # ```
     # params.fetch("email", "none@example.org")           # => "john@example.org"
@@ -183,7 +183,7 @@ module HTTP
       fetch(name)
     end
 
-    # Returns first value for specified param name. Fallbacks to return value
+    # Returns first value for specified param *name*. Fallbacks to return value
     # of provided block when there is no such param.
     #
     # ```
@@ -195,8 +195,8 @@ module HTTP
       fetch(name)
     end
 
-    # Appends new value for specified param name. Creates param when there was
-    # no such param.
+    # Appends new value for specified param *name*.
+    # Creates param when there was no such param.
     #
     # ```
     # params.add("item", "keychain")
@@ -208,7 +208,7 @@ module HTTP
       raw_params[name] << value
     end
 
-    # Sets all values for specified param name at once.
+    # Sets all *values* for specified param *name* at once.
     #
     # ```
     # params.set_all("item", ["keychain", "keynote"])
@@ -238,7 +238,7 @@ module HTTP
       end
     end
 
-    # Deletes first value for provided param name. If there are no values left,
+    # Deletes first value for provided param *name*. If there are no values left,
     # deletes param itself. Returns deleted value.
     #
     # ```
@@ -256,7 +256,7 @@ module HTTP
       value
     end
 
-    # Deletes all values for provided param name. Returns array of deleted
+    # Deletes all values for provided param *name*. Returns array of deleted
     # values.
     #
     # ```
@@ -268,7 +268,7 @@ module HTTP
       raw_params.delete(name)
     end
 
-    # Serializes to string representation as http url encoded form
+    # Serializes to string representation as http url-encoded form.
     #
     # ```
     # params = HTTP::Params.parse("item=keychain&item=keynote&email=john@example.org")
@@ -294,7 +294,7 @@ module HTTP
 
     # HTTP params builder.
     #
-    # Every parameter added is directly written to an IO,
+    # Every parameter added is directly written to an `IO`,
     # where keys and values are properly escaped.
     class Builder
       @io : IO

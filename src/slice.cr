@@ -4,7 +4,7 @@ require "c/string"
 #
 # While a pointer is unsafe because no bound checks are performed when reading from and writing to it,
 # reading from and writing to a slice involve bound checks.
-# In this way, a slice is a safe alternative to Pointer.
+# In this way, a slice is a safe alternative to `Pointer`.
 struct Slice(T)
   include Indexable(T)
 
@@ -20,8 +20,8 @@ struct Slice(T)
   # slice.class # => Slice(Char | Int32)
   # ```
   #
-  # If T is a `Number` then this is equivalent to
-  # `Number.slice` (numbers will be coerced to the type T)
+  # If `T` is a `Number` then this is equivalent to
+  # `Number.slice` (numbers will be coerced to the type `T`)
   #
   # See also: `Number.slice`.
   macro [](*args)
@@ -67,7 +67,7 @@ struct Slice(T)
   # The memory is allocated by the `GC`, so when there are
   # no pointers to this memory, it will be automatically freed.
   #
-  # Only works for primitive integers and floats (UInt8, Int32, Float64, etc.)
+  # Only works for primitive integers and floats (`UInt8`, `Int32`, `Float64`, etc.)
   #
   # ```
   # slice = Slice(UInt8).new(3)
@@ -122,7 +122,7 @@ struct Slice(T)
     new(Pointer(T).null, 0)
   end
 
-  # Returns a new slice that i *offset* elements apart from this slice.
+  # Returns a new slice that is *offset* elements apart from this slice.
   #
   # ```
   # slice = Slice.new(5) { |i| i + 10 }
@@ -139,7 +139,7 @@ struct Slice(T)
     Slice.new(@pointer + offset, @size - offset)
   end
 
-  # Sets the given value at the given index.
+  # Sets the given value at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the slice.
   # Raises `IndexError` if trying to set an element outside the slice's range.
@@ -259,7 +259,7 @@ struct Slice(T)
   # overlap; the copy is always done in a non-destructive manner.
   #
   # Raises if the desination slice cannot fit the data being transferred
-  # e.g. dest.size < self.size.
+  # e.g. `dest.size < self.size`.
   #
   # ```
   # src = Slice['a', 'a', 'a']

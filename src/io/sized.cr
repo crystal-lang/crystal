@@ -1,5 +1,5 @@
 module IO
-  # An IO that wraps another IO, setting a limit for the number of bytes that can be read.
+  # An `IO` that wraps another `IO`, setting a limit for the number of bytes that can be read.
   #
   # ```
   # io = IO::Memory.new "abcde"
@@ -12,7 +12,7 @@ module IO
   class Sized
     include IO
 
-    # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
+    # If `#sync_close?` is `true`, closing this `IO` will close the underlying `IO`.
     property? sync_close : Bool
 
     # The number of remaining bytes to be read.
@@ -21,7 +21,7 @@ module IO
 
     # Creates a new `IO::Sized` which wraps *io*, and can read a maximum of
     # *read_size* bytes. If *sync_close* is set, calling `#close` calls
-    # `#close` on the underlying IO.
+    # `#close` on the underlying `IO`.
     def initialize(@io : IO, read_size : Int, @sync_close = false)
       raise ArgumentError.new "negative read_size" if read_size < 0
       @closed = false

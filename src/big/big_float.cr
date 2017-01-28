@@ -1,7 +1,7 @@
 require "c/string"
 require "./big"
 
-# A BigFloat can represent arbitrarily large floats.
+# A `BigFloat` can represent arbitrarily large floats.
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
 struct BigFloat < Float

@@ -1,10 +1,10 @@
 # A write-only `IO` object to compress data in zlib or gzip format.
 #
-# Instances of this class wrap another IO object. When you write to this
-# instance, it compresses the data and writes it to the underlying IO.
+# Instances of this class wrap another `IO` object. When you write to this
+# instance, it compresses the data and writes it to the underlying `IO`.
 #
-# **Note**: unless created with a block, `close` must be invoked after all
-# data has been written to a Zlib::Deflate instance.
+# NOTE: unless created with a block, `close` must be invoked after all
+# data has been written to a `Zlib::Deflate` instance.
 #
 # ### Example: compress a file
 #
@@ -26,11 +26,11 @@
 class Zlib::Deflate
   include IO
 
-  # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
+  # If `#sync_close?` is `true`, closing this `IO` will close the underlying `IO`.
   property? sync_close : Bool
 
-  # Creates an instance of Zlib::Deflate. `close` must be invoked after all data
-  # has written.
+  # Creates an instance of `Zlib::Deflate`. `close` must be invoked
+  # after all data has been written.
   def initialize(@output : IO, level = LibZ::DEFAULT_COMPRESSION, wbits = LibZ::MAX_BITS,
                  mem_level = LibZ::DEF_MEM_LEVEL, strategy = LibZ::Strategy::DEFAULT_STRATEGY,
                  @sync_close : Bool = false)
@@ -46,8 +46,8 @@ class Zlib::Deflate
     end
   end
 
-  # Creates an instance of Zlib::Deflate, yields it to the given block, and closes
-  # it at its end.
+  # Creates an instance of `Zlib::Deflate`, yields it to the given block,
+  # and closes it at its end.
   def self.new(output : IO, level = LibZ::DEFAULT_COMPRESSION, wbits = LibZ::MAX_BITS,
                mem_level = LibZ::DEF_MEM_LEVEL, strategy = LibZ::Strategy::DEFAULT_STRATEGY,
                sync_close : Bool = false)
@@ -59,14 +59,14 @@ class Zlib::Deflate
     end
   end
 
-  # Creates an instance of Zlib::Deflate for the gzip format. `close` must be invoked after all data
-  # has written.
+  # Creates an instance of `Zlib::Deflate` for the gzip format. `close`
+  # must be invoked after all data has written.
   def self.gzip(output, sync_close : Bool = false) : self
     new output, wbits: GZIP, sync_close: sync_close
   end
 
-  # Creates an instance of Zlib::Deflate for the gzip format, yields it to the given block, and closes
-  # it at its end.
+  # Creates an instance of `Zlib::Deflate` for the gzip format, yields it
+  # to the given block, and closes it at its end.
   def self.gzip(output, sync_close : Bool = false)
     deflate = gzip(output, sync_close: sync_close)
     begin
@@ -76,7 +76,7 @@ class Zlib::Deflate
     end
   end
 
-  # Always raises: this is a write-only IO.
+  # Always raises: this is a write-only `IO`.
   def read(slice : Bytes)
     raise "can't read from Zlib::Deflate"
   end
@@ -97,7 +97,7 @@ class Zlib::Deflate
     consume_output LibZ::Flush::SYNC_FLUSH
   end
 
-  # Closes this IO. Must be invoked after all data has been written.
+  # Closes this `IO`. Must be invoked after all data has been written.
   def close
     return if @closed
     @closed = true
@@ -110,7 +110,7 @@ class Zlib::Deflate
     @output.close if @sync_close
   end
 
-  # Returns `true` if this IO is closed.
+  # Returns `true` if this `IO` is closed.
   def closed?
     @closed
   end

@@ -31,7 +31,7 @@ class Socket
   # IP address representation.
   #
   # Holds a binary representation of an IP address, either translated from a
-  # String, or directly received from an opened connection (e.g.
+  # `String`, or directly received from an opened connection (e.g.
   # `Socket#local_address`, `Socket#receive`).
   #
   # Example:
@@ -41,7 +41,7 @@ class Socket
   # ```
   #
   # `IPAddress` won't resolve domains, including `localhost`. If you must
-  # resolve an IP, or don't know whether a String constains an IP or a domain
+  # resolve an IP, or don't know whether a `String` constains an IP or a domain
   # name, you should use `Addrinfo.resolve` instead.
   struct IPAddress < Address
     getter port : Int32
@@ -97,7 +97,7 @@ class Socket
       addr if LibC.inet_pton(LibC::AF_INET, address, pointerof(addr)) == 1
     end
 
-    # Returns a String representation of the IP address.
+    # Returns a `String` representation of the IP address.
     #
     # Example:
     # ```

@@ -1,4 +1,4 @@
-# Reference is the base class of classes you define in your program.
+# `Reference` is the base class of classes you define in your program.
 # It is set as a class' superclass when you don't specify one:
 #
 # ```
@@ -9,11 +9,11 @@
 # A reference type is passed by reference: when you pass it to methods,
 # return it from methods or assign it to variables, a pointer is actually passed.
 #
-# Invoking `new` on a Reference allocates a new instance on the heap.
+# Invoking `new` on a `Reference` allocates a new instance on the heap.
 # The instance's memory is automatically freed (garbage-collected) when
 # the instance is no longer referred by any other entity in the program.
 class Reference
-  # Returns `true` if this reference is the same as *other*. Invokes `same?`
+  # Returns `true` if this reference is the same as *other*. Invokes `same?`.
   def ==(other : self)
     same?(other)
   end

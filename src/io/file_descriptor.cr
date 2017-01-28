@@ -1,6 +1,6 @@
 require "c/fcntl"
 
-# An IO over a file descriptor.
+# An `IO` over a file descriptor.
 class IO::FileDescriptor
   include Buffered
 
@@ -158,7 +158,7 @@ class IO::FileDescriptor
     pos
   end
 
-  # Returns the current position (in bytes) in this IO.
+  # Returns the current position (in bytes) in this `IO`.
   #
   # ```
   # File.write("testfile", "hello")
@@ -177,7 +177,7 @@ class IO::FileDescriptor
     seek_value - @in_buffer_rem.size
   end
 
-  # Sets the current position (in bytes) in this IO.
+  # Sets the current position (in bytes) in this `IO`.
   #
   # ```
   # File.write("testfile", "hello")

@@ -7,9 +7,9 @@ require "http/params"
 # It serves both to perform requests by an `HTTP::Client` and to
 # represent requests received by an `HTTP::Server`.
 #
-# A request always holds an IO as a body.
+# A request always holds an `IO` as a body.
 # When creating a request with a `String` or `Bytes` its body
-# will be a `IO::Memory` wrapping these, and the Content-Length
+# will be a `IO::Memory` wrapping these, and the `Content-Length`
 # header will be set appropriately.
 class HTTP::Request
   property method : String
@@ -125,7 +125,7 @@ class HTTP::Request
     value
   end
 
-  # Return request host from headers
+  # Return request host from headers.
   def host
     host = @headers["Host"]?
     return unless host
@@ -133,7 +133,7 @@ class HTTP::Request
     index ? host[0...index] : host
   end
 
-  # Return request host with port from headers
+  # Return request host with port from headers.
   def host_with_port
     @headers["Host"]?
   end

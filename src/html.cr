@@ -36,8 +36,6 @@ module HTML
   # Encodes a string to HTML, but writes to the `IO` instance provided.
   #
   # ```
-  # require "html"
-  #
   # io = IO::Memory.new
   # HTML.escape("Crystal & You", io) # => nil
   # io.to_s                          # => "Crystal &amp; You"
@@ -51,8 +49,6 @@ module HTML
   # Decodes a string that contains HTML entities.
   #
   # ```
-  # require "html"
-  #
   # HTML.unescape("Crystal &amp; You") # => "Crystal & You"
   # ```
   def self.unescape(string : String)

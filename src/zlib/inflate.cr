@@ -23,10 +23,10 @@
 class Zlib::Inflate
   include IO
 
-  # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
+  # If `#sync_close?` is `true`, closing this `IO` will close the underlying `IO`.
   property? sync_close : Bool
 
-  # Creates an instance of Zlib::Inflate.
+  # Creates an instance of `Zlib::Inflate`.
   def initialize(@input : IO, wbits = LibZ::MAX_BITS, @sync_close : Bool = false)
     @buf = uninitialized UInt8[8192] # input buffer used by zlib
     @stream = LibZ::ZStream.new
@@ -39,8 +39,8 @@ class Zlib::Inflate
     @closed = false
   end
 
-  # Creates an instance of Zlib::Inflate, yields it to the given block, and closes
-  # it at its end.
+  # Creates an instance of `Zlib::Inflate`, yields it to the given block,
+  # and closes it at its end.
   def self.new(input : IO, wbits = LibZ::MAX_BITS, sync_close : Bool = false)
     inflate = new input, wbits: wbits, sync_close: sync_close
     begin
@@ -50,14 +50,14 @@ class Zlib::Inflate
     end
   end
 
-  # Creates an instance of Zlib::Inflate for the gzip format.
-  # has written.
+  # Creates an instance of `Zlib::Inflate` for the gzip format. `close`
+  # must be invoked after all data has written.
   def self.gzip(input, sync_close : Bool = false) : self
     new input, wbits: GZIP, sync_close: sync_close
   end
 
-  # Creates an instance of Zlib::Inflate for the gzip format, yields it to the given block, and closes
-  # it at its end.
+  # Creates an instance of `Zlib::Inflate` for the gzip format, yields it
+  # to the given block, and closes it at its end.
   def self.gzip(input, sync_close : Bool = false)
     inflate = gzip input, sync_close: sync_close
     begin
@@ -67,7 +67,7 @@ class Zlib::Inflate
     end
   end
 
-  # Always raises: this is a read-only IO.
+  # Always raises: this is a read-only `IO`.
   def write(slice : Bytes)
     raise IO::Error.new "Can't write to InflateIO"
   end
@@ -110,7 +110,7 @@ class Zlib::Inflate
     end
   end
 
-  # Closes this IO.
+  # Closes this `IO`.
   def close
     return if @closed
     @closed = true
@@ -120,7 +120,7 @@ class Zlib::Inflate
     @input.close if @sync_close
   end
 
-  # Returns `true` if this IO is closed.
+  # Returns `true` if this `IO` is closed.
   def closed?
     @closed
   end

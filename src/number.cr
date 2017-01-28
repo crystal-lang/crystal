@@ -136,10 +136,10 @@ struct Number
     self * self
   end
 
-  # Returns the sign of this number as an Int32.
-  # * -1 if this number is negative
-  # * 0 if this number is zero
-  # * 1 if this number is positive
+  # Returns the sign of this number as an `Int32`.
+  # * `-1` if this number is negative
+  # * `0` if this number is zero
+  # * `1` if this number is positive
   #
   # ```
   # 123.sign # => 1
@@ -216,6 +216,7 @@ struct Number
   end
 
   # Clamps a value within *range*.
+  #
   # ```
   # 5.clamp(10..100)   # => 10
   # 50.clamp(10..100)  # => 50
@@ -227,6 +228,7 @@ struct Number
   end
 
   # Clamps a value between *min* and *max*.
+  #
   # ```
   # 5.clamp(10, 100)   # => 10
   # 50.clamp(10, 100)  # => 50

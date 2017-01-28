@@ -42,7 +42,7 @@ class StringPool
     @size == 0
   end
 
-  # Returns a string with the contents of the given slice.
+  # Returns a `String` with the contents of the given *slice*.
   #
   # If a string with those contents was already present in the pool, that one is returned.
   # Otherwise a new string is created, put in the pool and returned.
@@ -59,7 +59,7 @@ class StringPool
     get slice.pointer(slice.size), slice.size
   end
 
-  # Returns a string with the contents given by the pointer *str* of size *len*.
+  # Returns a `String` with the contents given by the pointer *str* of size *len*.
   #
   # If a string with those contents was already present in the pool, that one is returned.
   # Otherwise a new string is created, put in the pool and returned.
@@ -90,10 +90,10 @@ class StringPool
     entry
   end
 
-  # Returns a string with the contents of the given `IO::Memory`.
+  # Returns a `String` with the contents of the given `IO::Memory`.
   #
   # If a string with those contents was already present in the pool, that one is returned.
-  # Otherwise a new string is created, put in the pool and returned
+  # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
   # pool = StringPool.new
@@ -106,10 +106,10 @@ class StringPool
     get(str.buffer, str.bytesize)
   end
 
-  # Returns a string with the contents of the given string.
+  # Returns a `String` with the contents of the given string.
   #
   # If a string with those contents was already present in the pool, that one is returned.
-  # Otherwise a new string is created, put in the pool and returned
+  # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
   # pool = StringPool.new

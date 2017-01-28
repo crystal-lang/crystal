@@ -267,7 +267,7 @@ class String
   # integer base *base* (between 2 and 36).
   #
   # If there is not a valid number at the start of this string,
-  # or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.
+  # or if the resulting integer doesn't fit an `Int32`, an `ArgumentError` is raised.
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
@@ -302,7 +302,7 @@ class String
   end
 
   # Same as `#to_i`, but returns `nil` if there is not a valid number at the start
-  # of this string, or if the resulting integer doesn't fit an Int32.
+  # of this string, or if the resulting integer doesn't fit an `Int32`.
   #
   # ```
   # "12345".to_i?             # => 12345
@@ -315,7 +315,7 @@ class String
   end
 
   # Same as `#to_i`, but returns the block's value if there is not a valid number at the start
-  # of this string, or if the resulting integer doesn't fit an Int32.
+  # of this string, or if the resulting integer doesn't fit an `Int32`.
   #
   # ```
   # "12345".to_i { 0 } # => 12345
@@ -325,7 +325,7 @@ class String
     to_i32(base, whitespace, underscore, prefix, strict) { yield }
   end
 
-  # Same as `#to_i` but returns an Int8.
+  # Same as `#to_i` but returns an `Int8`.
   def to_i8(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int8
     to_i8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int8: #{self}") }
   end
@@ -340,7 +340,7 @@ class String
     gen_to_ i8, 127, 128
   end
 
-  # Same as `#to_i` but returns an UInt8.
+  # Same as `#to_i` but returns an `UInt8`.
   def to_u8(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt8
     to_u8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt8: #{self}") }
   end
@@ -355,7 +355,7 @@ class String
     gen_to_ u8, 255
   end
 
-  # Same as `#to_i` but returns an Int16.
+  # Same as `#to_i` but returns an `Int16`.
   def to_i16(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int16
     to_i16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int16: #{self}") }
   end
@@ -370,7 +370,7 @@ class String
     gen_to_ i16, 32767, 32768
   end
 
-  # Same as `#to_i` but returns an UInt16.
+  # Same as `#to_i` but returns an `UInt16`.
   def to_u16(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt16
     to_u16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt16: #{self}") }
   end
@@ -400,7 +400,7 @@ class String
     gen_to_ i32, 2147483647, 2147483648
   end
 
-  # Same as `#to_i` but returns an UInt32.
+  # Same as `#to_i` but returns an `UInt32`.
   def to_u32(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt32
     to_u32(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt32: #{self}") }
   end
@@ -415,7 +415,7 @@ class String
     gen_to_ u32, 4294967295
   end
 
-  # Same as `#to_i` but returns an Int64.
+  # Same as `#to_i` but returns an `Int64`.
   def to_i64(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int64
     to_i64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int64: #{self}") }
   end
@@ -430,7 +430,7 @@ class String
     gen_to_ i64, 9223372036854775807, 9223372036854775808
   end
 
-  # Same as `#to_i` but returns an UInt64.
+  # Same as `#to_i` but returns an `UInt64`.
   def to_u64(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt64
     to_u64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt64: #{self}") }
   end
@@ -884,7 +884,7 @@ class String
     to_unsafe[index]
   end
 
-  # Returns a new string with each uppercase letter replaced with its lowercase
+  # Returns a new `String` with each uppercase letter replaced with its lowercase
   # counterpart.
   #
   # ```
@@ -911,7 +911,7 @@ class String
     end
   end
 
-  # Returns a new string with each lowercase letter replaced with its uppercase
+  # Returns a new `String` with each lowercase letter replaced with its uppercase
   # counterpart.
   #
   # ```
@@ -938,7 +938,7 @@ class String
     end
   end
 
-  # Returns a new string with the first letter converted to uppercase and every
+  # Returns a new `String` with the first letter converted to uppercase and every
   # subsequent letter converted to lowercase.
   #
   # ```
@@ -1193,7 +1193,7 @@ class String
     end
   end
 
-  # Returns a new string with leading and trailing whitespace removed.
+  # Returns a new `String` with leading and trailing whitespace removed.
   #
   # ```
   # "    hello    ".strip # => "hello"
@@ -1214,7 +1214,7 @@ class String
     end
   end
 
-  # Returns a new string with trailing whitespace removed.
+  # Returns a new `String` with trailing whitespace removed.
   #
   # ```
   # "    hello    ".rstrip # => "    hello"
@@ -1230,7 +1230,7 @@ class String
     end
   end
 
-  # Returns a new string with leading whitespace removed.
+  # Returns a new `String` with leading whitespace removed.
   #
   # ```
   # "    hello    ".lstrip # => "hello    "
@@ -1313,7 +1313,7 @@ class String
     end
   end
 
-  # Returns a new string where the first character is yielded to the given
+  # Returns a new `String` where the first character is yielded to the given
   # block and replaced by its return value.
   #
   # ```
@@ -1331,7 +1331,7 @@ class String
     end
   end
 
-  # Returns a string where the first occurrence of *char* is replaced by
+  # Returns a `String` where the first occurrence of *char* is replaced by
   # *replacement*.
   #
   # ```
@@ -1359,7 +1359,7 @@ class String
     end
   end
 
-  # Returns a string where the first occurrence of *pattern* is replaced by
+  # Returns a `String` where the first occurrence of *pattern* is replaced by
   # the block's return value.
   #
   # ```
@@ -1372,7 +1372,7 @@ class String
     end
   end
 
-  # Returns a string where the first occurrence of *pattern* is replaced by
+  # Returns a `String` where the first occurrence of *pattern* is replaced by
   # *replacement*
   #
   # ```
@@ -1418,7 +1418,7 @@ class String
     end
   end
 
-  # Returns a string where the first occurrences of the given *pattern* is replaced
+  # Returns a `String` where the first occurrences of the given *pattern* is replaced
   # with the matching entry from the *hash* of replacements. If the first match
   # is not included in the *hash*, nothing is replaced.
   #
@@ -1436,7 +1436,7 @@ class String
     }
   end
 
-  # Returns a string where the first occurrences of the given *string* is replaced
+  # Returns a `String` where the first occurrences of the given *string* is replaced
   # with the given *replacement*.
   #
   # ```
@@ -1446,7 +1446,7 @@ class String
     sub(string) { replacement }
   end
 
-  # Returns a string where the first occurrences of the given *string* is replaced
+  # Returns a `String` where the first occurrences of the given *string* is replaced
   # with the block's value.
   #
   # ```
@@ -1463,7 +1463,7 @@ class String
     end
   end
 
-  # Returns a string where the first char in the string matching a key in the
+  # Returns a `String` where the first char in the string matching a key in the
   # given *hash* is replaced by the corresponding hash value.
   #
   # ```
@@ -1612,8 +1612,8 @@ class String
     end
   end
 
-  # This returns `true` if this string has '\\' in it. It might not be a back reference,
-  # but '\\' is probably used for back references, so this check is faster than parsing
+  # This returns `true` if this string has `'\\'` in it. It might not be a back reference,
+  # but `'\\'` is probably used for back references, so this check is faster than parsing
   # the whole thing.
   def has_back_references?
     to_slice.index('\\'.ord.to_u8)
@@ -1668,7 +1668,7 @@ class String
     end
   end
 
-  # Returns a string where each character yielded to the given block
+  # Returns a `String` where each character yielded to the given block
   # is replaced by the block's return value.
   #
   # ```
@@ -1683,7 +1683,7 @@ class String
     end
   end
 
-  # Returns a string where all occurrences of the given char are
+  # Returns a `String` where all occurrences of the given char are
   # replaced with the given *replacement*.
   #
   # ```
@@ -1698,7 +1698,7 @@ class String
     end
   end
 
-  # Returns a string where all occurrences of the given *pattern* are replaced
+  # Returns a `String` where all occurrences of the given *pattern* are replaced
   # by the block value's value.
   #
   # ```
@@ -1711,7 +1711,7 @@ class String
     end
   end
 
-  # Returns a string where all occurrences of the given *pattern* are replaced
+  # Returns a `String` where all occurrences of the given *pattern* are replaced
   # with the given *replacement*.
   #
   # ```
@@ -1734,7 +1734,7 @@ class String
   # about capture groups.
   #
   # Backreferences are expressed in the form `"\\d"`, where *d* is a group
-  # number, or `"\\k&lt;name>"` where *name* is the name of a named capture group.
+  # number, or `"\\k<name>"` where *name* is the name of a named capture group.
   # A sequence of literal characters resembling a backreference can be
   # expressed by placing `"\\"` before the sequence.
   #
@@ -1757,7 +1757,7 @@ class String
     end
   end
 
-  # Returns a string where all occurrences of the given *pattern* are replaced
+  # Returns a `String` where all occurrences of the given *pattern* are replaced
   # with a *hash* of replacements. If the *hash* contains the matched pattern,
   # the corresponding value is used as a replacement. Otherwise the match is
   # not included in the returned string.
@@ -1773,7 +1773,7 @@ class String
     end
   end
 
-  # Returns a string where all occurrences of the given *string* are replaced
+  # Returns a `String` where all occurrences of the given *string* are replaced
   # with the given *replacement*.
   #
   # ```
@@ -1783,7 +1783,7 @@ class String
     gsub(string) { replacement }
   end
 
-  # Returns a string where all occurrences of the given *string* are replaced
+  # Returns a `String` where all occurrences of the given *string* are replaced
   # with the block's value.
   #
   # ```
@@ -1818,7 +1818,7 @@ class String
     end
   end
 
-  # Returns a string where all chars in the given hash are replaced
+  # Returns a `String` where all chars in the given hash are replaced
   # by the corresponding *hash* values.
   #
   # ```
@@ -1830,7 +1830,7 @@ class String
     end
   end
 
-  # Returns a string where all chars in the given named tuple are replaced
+  # Returns a `String` where all chars in the given named tuple are replaced
   # by the corresponding *tuple* values.
   #
   # ```
@@ -1889,7 +1889,7 @@ class String
     count
   end
 
-  # Counts the occurrences of other in this string.
+  # Counts the occurrences of *other* char in this string.
   #
   # ```
   # "aabbcc".count('a') # => 2
@@ -1906,7 +1906,7 @@ class String
   end
 
   # Yields each char in this string to the block.
-  # Returns a new string with all characters for which the
+  # Returns a new `String` with all characters for which the
   # block returned a truthy value removed.
   #
   # ```
@@ -1920,7 +1920,7 @@ class String
     end
   end
 
-  # Returns a new string with all occurrences of char removed.
+  # Returns a new `String` with all occurrences of *char* removed.
   #
   # ```
   # "aabbcc".delete('b') # => "aacc"
@@ -1930,7 +1930,7 @@ class String
   end
 
   # Sets should be a list of strings following the rules
-  # described at `Char#in_set?`. Returns a new string with
+  # described at `Char#in_set?`. Returns a new `String` with
   # all characters that match the given set removed.
   #
   # ```
@@ -1941,7 +1941,7 @@ class String
   end
 
   # Yields each char in this string to the block.
-  # Returns a new string, that has all characters removed,
+  # Returns a new `String`, that has all characters removed,
   # that were the same as the previous one and for which the given
   # block returned a truthy value.
   #
@@ -1959,7 +1959,7 @@ class String
     end
   end
 
-  # Returns a new string, with all runs of char replaced by one instance.
+  # Returns a new `String`, with all runs of char replaced by one instance.
   #
   # ```
   # "a    bbb".squeeze(' ') # => "a bbb"
@@ -1969,7 +1969,7 @@ class String
   end
 
   # Sets should be a list of strings following the rules
-  # described at `Char#in_set?`. Returns a new string with all
+  # described at `Char#in_set?`. Returns a new `String` with all
   # runs of the same character replaced by one instance, if
   # they match the given set.
   #
@@ -1983,7 +1983,7 @@ class String
     squeeze { |char| char.in_set?(*sets) }
   end
 
-  # Returns a new string, that has all characters removed,
+  # Returns a new `String`, that has all characters removed,
   # that were the same as the previous one.
   #
   # ```
@@ -2018,11 +2018,11 @@ class String
     to_unsafe.memcmp(other.to_unsafe, bytesize) == 0
   end
 
-  # Compares this string with *other*, returning -1, 0 or +1 depending on whether
+  # Compares this string with *other*, returning `-1`, `0` or `+1` depending on whether
   # this string is less, equal or greater than *other*.
   #
   # Comparison is done byte-per-byte: if a byte is less then the other corresponding
-  # byte, -1 is returned and so on.
+  # byte, `-1` is returned and so on.
   #
   # If the strings are of different lengths, and the strings are equal when compared
   # up to the shortest length, then the longer string is considered greater than
@@ -2042,7 +2042,7 @@ class String
     cmp == 0 ? (bytesize <=> other.bytesize) : cmp.sign
   end
 
-  # Compares this string with *other*, returning -1, 0 or +1 depending on whether
+  # Compares this string with *other*, returning `-1`, `0` or `+1` depending on whether
   # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
   # manner.
   #
@@ -2146,7 +2146,7 @@ class String
     end
   end
 
-  # Makes a new string by adding *str* to itself *times* times.
+  # Makes a new `String` by adding *str* to itself *times* times.
   #
   # ```
   # "Developers! " * 4
@@ -2179,10 +2179,10 @@ class String
     end
   end
 
-  # Prime number constant for Rabin-Karp algorithm `String#index`
+  # Prime number constant for Rabin-Karp algorithm `String#index`.
   private PRIME_RK = 2097169u32
 
-  # Update rolling hash for Rabin-Karp algorithm `String#index`
+  # Update rolling hash for Rabin-Karp algorithm `String#index`.
   private macro update_hash(n)
     {% for i in 1..n %}
       {% if i != 1 %}
@@ -2398,8 +2398,8 @@ class String
     match_result.try &.begin(0)
   end
 
-  # Searches sep or pattern (regexp) in the string,
-  # and returns the part before it, the match, and the part after it.
+  # Searches separator or pattern (`Regex`) in the string, and returns
+  # a `Tuple` with the part before it, the match, and the part after it.
   # If it is not found, returns str followed by two empty strings.
   #
   # ```
@@ -2437,8 +2437,8 @@ class String
     {pre, mid, post}
   end
 
-  # Searches sep or pattern (regexp) in the string from the end of the string,
-  # and returns the part before it, the match, and the part after it.
+  # Searches separator or pattern (`Regex`) in the string from the end of the string,
+  # and returns a `Tuple` with the part before it, the match, and the part after it.
   # If it is not found, returns two empty strings and str.
   #
   # ```
@@ -2568,7 +2568,8 @@ class String
     !!index(search)
   end
 
-  # Makes an array by splitting the string on any ASCII whitespace characters (and removing that whitespace).
+  # Makes an array by splitting the string on any ASCII whitespace characters
+  # (and removing that whitespace).
   #
   # If *limit* is present, up to *limit* new strings will be created,
   # with the entire remainder added to the last string.
@@ -2662,7 +2663,8 @@ class String
     end
   end
 
-  # Makes an array by splitting the string on the given character *separator* (and removing that character).
+  # Makes an `Array` by splitting the string on the given character *separator*
+  # (and removing that character).
   #
   # If *limit* is present, up to *limit* new strings will be created,
   # with the entire remainder added to the last string.
@@ -2718,7 +2720,7 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize)
   end
 
-  # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
+  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
   #
   # If *limit* is present, the array will be limited to *limit* items and
   # the final item will contain the remainder of the string.
@@ -2826,7 +2828,7 @@ class String
     ary
   end
 
-  # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
+  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
   #
   # If *limit* is present, the array will be limited to *limit* items and
   # the final item will contain the remainder of the string.
@@ -3121,12 +3123,15 @@ class String
     end
   end
 
-  # Returns the successor of the string. The successor is calculated by incrementing characters starting from the rightmost
-  # alphanumeric (or the rightmost character if there are no alphanumerics) in the string. Incrementing a digit always
-  # results in another digit, and incrementing a letter results in another letter of the same case.
+  # Returns the successor of the string. The successor is calculated
+  # by incrementing characters starting from the rightmost alphanumeric
+  # (or the rightmost character if there are no alphanumerics) in the string.
+  # Incrementing a digit always results in another digit, and incrementing
+  # a letter results in another letter of the same case.
   #
-  # If the increment generates a “carry”, the character to the left of it is incremented. This process repeats until
-  # there is no carry, adding an additional character if necessary.
+  # If the increment generates a "carry", the character to the left of it is
+  # incremented. This process repeats until there is no carry,
+  # adding an additional character if necessary.
   #
   # ```
   # "abcd".succ      # => "abce"
@@ -3190,7 +3195,8 @@ class String
     match
   end
 
-  # Searches the string for instances of *pattern*, yielding a `Regex::MatchData` for each match.
+  # Searches the string for instances of *pattern*,
+  # yielding a `Regex::MatchData` for each match.
   def scan(pattern : Regex)
     byte_offset = 0
 
@@ -3207,7 +3213,7 @@ class String
   end
 
   # Searches the string for instances of *pattern*,
-  # returning an array of `Regex::MatchData` for each match.
+  # returning an `Array` of `Regex::MatchData` for each match.
   def scan(pattern : Regex)
     matches = [] of Regex::MatchData
     scan(pattern) do |match|
@@ -3259,7 +3265,7 @@ class String
     end
   end
 
-  # Returns an iterator over each character in the string.
+  # Returns an `Iterator` over each character in the string.
   #
   # ```
   # chars = "ab☃".each_char
@@ -3288,7 +3294,7 @@ class String
     end
   end
 
-  # Returns an array of all characters in the string.
+  # Returns an `Array` of all characters in the string.
   #
   # ```
   # "ab☃".chars # => ['a', 'b', '☃']
@@ -3318,7 +3324,7 @@ class String
     end
   end
 
-  # Returns an iterator for each codepoint.
+  # Returns an `Iterator` for each codepoint.
   #
   # ```
   # codepoints = "ab☃".each_codepoint
@@ -3332,7 +3338,7 @@ class String
     each_char.map &.ord
   end
 
-  # Returns an array of the codepoints that make the string.
+  # Returns an `Array` of the codepoints that make the string.
   #
   # ```
   # "ab☃".codepoints # => [97, 98, 9731]
@@ -3363,7 +3369,7 @@ class String
     nil
   end
 
-  # Returns an iterator over each byte in the string.
+  # Returns an `Iterator` over each byte in the string.
   #
   # ```
   # bytes = "ab☃".each_byte

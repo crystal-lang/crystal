@@ -73,6 +73,7 @@ struct Time
   # `Kind` represents a specified time zone.
   #
   # Initializing a `Time` instance with specified `Kind`:
+  #
   # ```
   # time = Time.new(2016, 2, 15, 21, 1, 10, 0, Time::Kind::Local)
   # ```
@@ -142,7 +143,7 @@ struct Time
   end
 
   # Returns a new `Time` instance that corresponds to the number
-  # seconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970)
+  # seconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970).
   #
   # ```
   # Time.epoch(981173106) # => 2001-02-03 04:05:06 UTC
@@ -152,7 +153,7 @@ struct Time
   end
 
   # Returns a new `Time` instance that corresponds to the number
-  # milliseconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970)
+  # milliseconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970).
   #
   # ```
   # time = Time.epoch_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC

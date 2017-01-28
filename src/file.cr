@@ -5,14 +5,14 @@ require "c/sys/stat"
 require "c/unistd"
 
 class File < IO::FileDescriptor
-  # The file/directory separator character. '/' in unix, '\\' in windows.
+  # The file/directory separator character. `'/'` in Unix, `'\\'` in Windows.
   SEPARATOR = {% if flag?(:windows) %}
     '\\'
   {% else %}
     '/'
   {% end %}
 
-  # The file/directory separator string. "/" in unix, "\\" in windows.
+  # The file/directory separator string. `"/"` in Unix, `"\\"` in Windows.
   SEPARATOR_STRING = {% if flag?(:windows) %}
     "\\"
   {% else %}

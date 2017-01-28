@@ -36,7 +36,7 @@ class Process
     LibC.getppid
   end
 
-  # Sends a signal to the processes identified by the given *pids*.
+  # Sends a *signal* to the processes identified by the given *pids*.
   def self.kill(signal : Signal, *pids : Int)
     pids.each do |pid|
       ret = LibC.kill(pid, signal.value)
@@ -58,12 +58,13 @@ class Process
     end
   end
 
-  # A struct representing the CPU current times of the process, in fractions of seconds.
+  # A struct representing the CPU current times of the process,
+  # in fractions of seconds.
   #
-  # * *utime* CPU time a process spent in userland.
-  # * *stime* CPU time a process spent in the kernel.
-  # * *cutime* CPU time a processes terminated children (and their terminated children) spent in the userland.
-  # * *cstime* CPU time a processes terminated children (and their terminated children) spent in the kernel.
+  # * *utime*: CPU time a process spent in userland.
+  # * *stime*: CPU time a process spent in the kernel.
+  # * *cutime*: CPU time a processes terminated children (and their terminated children) spent in the userland.
+  # * *cstime*: CPU time a processes terminated children (and their terminated children) spent in the kernel.
   record Tms, utime : Float64, stime : Float64, cutime : Float64, cstime : Float64
 
   # Returns a `Tms` for the current process. For the children times, only those
@@ -114,8 +115,8 @@ class Process
     pid
   end
 
-  # run_hooks should ALWAYS be `true` unless exec* is used immediately after fork.
-  # Channels, `IO` and other will not work reliably if run_hooks is `false`.
+  # *run_hooks* should ALWAYS be `true` unless `exec` is used immediately after fork.
+  # Channels, `IO` and other will not work reliably if *run_hooks* is `false`.
   protected def self.fork_internal(run_hooks : Bool = true)
     pid = LibC.fork
     case pid
@@ -128,7 +129,7 @@ class Process
     pid
   end
 
-  # The standard io configuration of a process:
+  # The standard `IO` configuration of a process:
   #
   # * `nil`: use a pipe
   # * `false`: no `IO` (`/dev/null`)

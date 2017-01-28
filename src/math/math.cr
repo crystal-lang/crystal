@@ -10,7 +10,7 @@ module Math
 
   {% for name in %w(acos acosh asin asinh atan atanh cbrt cos cosh erf erfc exp
                    exp2 expm1 ilogb log log10 log1p log2 logb sin sinh sqrt tan tanh) %}
-    # Calculates the {{name.id}} of *value*
+    # Calculates the {{name.id}} of *value*.
     def {{name.id}}(value : Float32)
       LibM.{{name.id}}_f32(value)
     end
@@ -27,7 +27,7 @@ module Math
   {% end %}
 
   {% for name in %w(besselj0 besselj1 bessely0 bessely1) %}
-    # Calculates the {{name.id}} function of *value*
+    # Calculates the {{name.id}} function of *value*.
     def {{name.id}}(value : Float32)
       {% if flag?(:darwin) %}
         LibM.{{name.id}}_f64(value).to_f32
@@ -49,7 +49,8 @@ module Math
 
   # Calculates the gamma function of *value*.
   #
-  # Note that gamma(n) is same as fact(n-1) for integer n > 0. However gamma(n) returns float and can be an approximation.
+  # Note that `gamma(n)` is same as `fact(n - 1)` for integer `n > 0`.
+  # However `gamma(n)` returns float and can be an approximation.
   def gamma(value : Float32)
     LibM.tgamma_f32(value)
   end
@@ -92,7 +93,7 @@ module Math
   end
 
   {% for name in %w(atan2 copysign hypot) %}
-    # Calculates {{name.id}} with parameters *value1* and *value2*
+    # Calculates {{name.id}} with parameters *value1* and *value2*.
     def {{name.id}}(value1 : Float32, value2 : Float32)
       LibM.{{name.id}}_f32(value1, value2)
     end
@@ -124,7 +125,8 @@ module Math
   # def div(value1, value2)
   #   LibM.div(value1, value2)
   # end
-  # Returns the logarithm of *numeric* to the base *base*
+
+  # Returns the logarithm of *numeric* to the base *base*.
   def log(numeric, base)
     log(numeric) / log(base)
   end
@@ -175,7 +177,7 @@ module Math
   # end
 
   {% for name in %w(besselj bessely) %}
-    # Calculates {{name.id}} with parameters *value1* and *value2*
+    # Calculates {{name.id}} with parameters *value1* and *value2*.
     def {{name.id}}(value1 : Int32, value2 : Float32)
       {% if flag?(:darwin) %}
         LibM.{{name.id}}_f64(value1, value2).to_f32
@@ -196,7 +198,7 @@ module Math
   {% end %}
 
   {% for name in %w(ldexp scalbn) %}
-    # Calculates {{name.id}} with parameters *value1* and *value2*
+    # Calculates {{name.id}} with parameters *value1* and *value2*.
     def {{name.id}}(value1 : Float32, value2 : Int32)
       LibM.{{name.id}}_f32(value1, value2)
     end
@@ -227,7 +229,7 @@ module Math
     scalbln(value.to_f, exp.to_i64)
   end
 
-  # Computes the next highest power of 2 of *v*
+  # Computes the next highest power of 2 of *v*.
   #
   # ```
   # Math.pw2ceil(33) # => 64

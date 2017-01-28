@@ -44,6 +44,7 @@ class Tempfile < IO::FileDescriptor
   end
 
   # Retrieves the full path of a this tempfile.
+  #
   # ```
   # Tempfile.new("foo").path # => "/tmp/foo.ulBCPS"
   # ```
@@ -68,7 +69,8 @@ class Tempfile < IO::FileDescriptor
     tempfile
   end
 
-  # Returns the tmp dir used for tempfile
+  # Returns the tmp dir used for tempfile.
+  #
   # ```
   # Tempfile.dirname # => "/tmp"
   # ```
