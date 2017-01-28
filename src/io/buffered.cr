@@ -186,6 +186,21 @@ module IO::Buffered
     to_read
   end
 
+  # :nodoc:
+  def skip(bytes_count) : Nil
+    check_open
+
+    if bytes_count <= @in_buffer_rem.size
+      @in_buffer_rem += bytes_count
+      return
+    end
+
+    bytes_count -= @in_buffer_rem.size
+    @in_buffer_rem = Bytes.empty
+
+    super(bytes_count)
+  end
+
   # Buffered implementation of `IO#write(slice)`.
   def write(slice : Bytes)
     check_open
