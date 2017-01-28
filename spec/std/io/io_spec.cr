@@ -608,6 +608,20 @@ describe IO do
         io.gets(3).should eq("Hel")
       end
 
+      it "gets with non-ascii" do
+        str = "你好我是人"
+        io = SimpleIOMemory.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets('人').should eq("你好我是人")
+      end
+
+      it "gets with non-ascii and chomp: false" do
+        str = "你好我是人"
+        io = SimpleIOMemory.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets('人', chomp: true).should eq("你好我是")
+      end
+
       it "gets with limit (big)" do
         str = "Hello world" * 10_000
         io = SimpleIOMemory.new(str.encode("UCS-2LE"))
