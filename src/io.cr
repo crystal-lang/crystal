@@ -475,7 +475,14 @@ module IO
   # ```
   def read_string(bytesize : Int) : String
     String.new(bytesize) do |ptr|
-      read_fully(Slice.new(ptr, bytesize))
+      if decoder = decoder()
+        read = decoder.read_utf8(self, Slice.new(ptr, bytesize))
+        if read != bytesize
+          raise IO::EOFError.new
+        end
+      else
+        read_fully(Slice.new(ptr, bytesize))
+      end
       {bytesize, 0}
     end
   end
