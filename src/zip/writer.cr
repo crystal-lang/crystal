@@ -44,7 +44,7 @@ class Zip::Writer
 
   # Creates a new writer to the given *filename*.
   def self.new(filename : String)
-    new(::File.new(filename), sync_close: true)
+    new(::File.new(filename, "w"), sync_close: true)
   end
 
   # Creates a new writer to the given *io*, yields it to the given block,
