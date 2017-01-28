@@ -739,6 +739,14 @@ describe IO do
         m.set_encoding("UTF-8", invalid: :skip)
         m.gets_to_end.bytesize.should eq(8977)
       end
+
+      it "reads string" do
+        str = "Hello world\r\nFoo\nBar"
+        io = SimpleIOMemory.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.read_string(11).should eq("Hello world")
+        io.gets_to_end.should eq("\r\nFoo\nBar")
+      end
     end
 
     describe "encode" do
