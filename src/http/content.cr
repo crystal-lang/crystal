@@ -38,6 +38,10 @@ module HTTP
       @io.gets(delimiter, limit, chomp)
     end
 
+    def skip(bytes_count)
+      @io.skip(bytes_count)
+    end
+
     def write(slice : Bytes)
       raise IO::Error.new "Can't write to UnknownLengthContent"
     end
@@ -88,6 +92,16 @@ module HTTP
           check_chunk_remaining_is_zero
         end
         byte
+      else
+        super
+      end
+    end
+
+    def skip(bytes_count)
+      if bytes_count <= @chunk_remaining
+        @io.skip(bytes_count)
+        @chunk_remaining -= bytes_count
+        check_chunk_remaining_is_zero
       else
         super
       end
