@@ -59,19 +59,19 @@ describe Zip do
     io = IO::Memory.new
 
     text = "contents of foo"
-    crc32 = Zlib.crc32(text)
+    crc32 = CRC32.checksum(text)
 
     Zip::Writer.open(io) do |zip|
       entry = Zip::Writer::Entry.new("foo.txt")
       entry.compression_method = Zip::CompressionMethod::STORED
-      entry.crc32 = crc32.to_u32
+      entry.crc32 = crc32
       entry.compressed_size = text.bytesize.to_u32
       entry.uncompressed_size = text.bytesize.to_u32
       zip.add entry, &.print(text)
 
       entry = Zip::Writer::Entry.new("bar.txt")
       entry.compression_method = Zip::CompressionMethod::STORED
-      entry.crc32 = crc32.to_u32
+      entry.crc32 = crc32
       entry.compressed_size = text.bytesize.to_u32
       entry.uncompressed_size = text.bytesize.to_u32
       zip.add entry, &.print(text)

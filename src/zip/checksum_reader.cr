@@ -5,12 +5,9 @@ module Zip
   private class ChecksumReader
     include IO
 
-    def initialize(@io : IO, @filename : String, verify @expected_crc32 : UInt32? = nil)
-      @crc32 = LibC::ULong.new(0)
-    end
+    getter crc32 = CRC32.initial
 
-    def crc32
-      @crc32.to_u32
+    def initialize(@io : IO, @filename : String, verify @expected_crc32 : UInt32? = nil)
     end
 
     def read(slice : Bytes)
@@ -20,7 +17,7 @@ module Zip
           raise Zip::Error.new("checksum failed for entry #{@filename} (expected #{expected_crc32}, got #{crc32}")
         end
       else
-        @crc32 = Zlib.crc32(slice[0, read_bytes], @crc32)
+        @crc32 = CRC32.update(slice[0, read_bytes], @crc32)
       end
       read_bytes
     end

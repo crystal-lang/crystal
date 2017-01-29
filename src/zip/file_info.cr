@@ -115,12 +115,13 @@ module Zip::FileInfo
       io = IO::Sized.new(io, compressed_size) unless is_sized
     when .deflated?
       if compressed_size == 0 && bit_3_set?
-        io = IO::Delimited.new(io, DEFLATE_END_SIGNATURE)
+        # Read until we end decompressing the deflate data,
+        # which has an unknown size
       else
         io = IO::Sized.new(io, compressed_size) unless is_sized
       end
 
-      io = Zlib::Inflate.new(io, wbits: Zlib::ZIP)
+      io = Flate::Reader.new(io)
     else
       raise "Unsupported compression method: #{compression_method}"
     end

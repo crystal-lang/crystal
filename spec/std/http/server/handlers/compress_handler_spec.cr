@@ -1,14 +1,14 @@
 require "spec"
 require "http/server"
 
-describe HTTP::DeflateHandler do
+describe HTTP::CompressHandler do
   it "doesn't deflates if doesn't have 'deflate' in Accept-Encoding header" do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
-    handler = HTTP::DeflateHandler.new
+    handler = HTTP::CompressHandler.new
     handler.next = HTTP::Handler::Proc.new do |ctx|
       ctx.response.print "Hello"
     end
@@ -27,7 +27,7 @@ describe HTTP::DeflateHandler do
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
-    handler = HTTP::DeflateHandler.new
+    handler = HTTP::CompressHandler.new
     handler.next = HTTP::Handler::Proc.new do |ctx|
       ctx.response.print "Hello"
     end
@@ -39,7 +39,7 @@ describe HTTP::DeflateHandler do
     body = response2.body
 
     io2 = IO::Memory.new
-    deflate = Zlib::Deflate.new(io2)
+    deflate = Flate::Writer.new(io2)
     deflate.print "Hello"
     deflate.close
     io2.rewind
@@ -55,7 +55,7 @@ describe HTTP::DeflateHandler do
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
-    handler = HTTP::DeflateHandler.new
+    handler = HTTP::CompressHandler.new
     handler.next = HTTP::Handler::Proc.new do |ctx|
       ctx.response.print "Hello"
     end
@@ -67,7 +67,7 @@ describe HTTP::DeflateHandler do
     body = response2.body
 
     io2 = IO::Memory.new
-    deflate = Zlib::Deflate.gzip(io2)
+    deflate = Gzip::Writer.new(io2)
     deflate.print "Hello"
     deflate.close
     io2.rewind

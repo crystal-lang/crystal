@@ -310,7 +310,7 @@ module HTTP
     server = Server.new("0.0.0.0", 0, [
       ErrorHandler.new,
       LogHandler.new,
-      DeflateHandler.new,
+      CompressHandler.new,
       StaticFileHandler.new("."),
     ]
     )
@@ -329,7 +329,7 @@ module HTTP
     server = Server.new(0, [
       ErrorHandler.new,
       LogHandler.new,
-      DeflateHandler.new,
+      CompressHandler.new,
       StaticFileHandler.new("."),
     ]
     )
