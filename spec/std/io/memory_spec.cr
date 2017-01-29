@@ -331,6 +331,20 @@ describe IO::Memory do
     end
   end
 
+  it "peeks" do
+    str = "hello world"
+    io = IO::Memory.new(str)
+
+    io.peek.should eq("hello world".to_slice)
+    io.pos.should eq(0)
+
+    io.skip(3)
+    io.peek.should eq("lo world".to_slice)
+
+    io.skip_to_end
+    io.peek.should be_nil
+  end
+
   it "skips" do
     io = IO::Memory.new("hello")
     io.skip(2)

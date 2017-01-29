@@ -189,6 +189,14 @@ class IO::Memory
   end
 
   # :nodoc:
+  def peek
+    check_open
+
+    peek = Slice.new(@buffer + @pos, @bytesize - @pos)
+    peek.empty? ? nil : peek
+  end
+
+  # :nodoc:
   def skip(bytes_count)
     check_open
 

@@ -49,20 +49,17 @@ module IO
       end
     end
 
-    def gets(delimiter : Char, limit : Int, chomp = false) : String?
+    def peek
       check_open
 
-      return super if @encoding
-      return nil if @read_remaining == 0
+      peek = @io.peek
+      return nil unless peek
 
-      # We can't pass chomp here, because it will remove part of the delimiter
-      # and then we won't know how much we consumed from @io, so we chomp later
-      string = @io.gets(delimiter, Math.min(limit, @read_remaining))
-      if string
-        @read_remaining -= string.bytesize
-        string = string.chomp(delimiter) if chomp
+      if @read_remaining < peek.size
+        peek = peek[0, @read_remaining]
       end
-      string
+
+      peek.empty? ? nil : peek
     end
 
     def skip(bytes_count) : Nil

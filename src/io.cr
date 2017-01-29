@@ -390,6 +390,44 @@ module IO
   end
 
   private def read_char_with_bytesize
+    # For UTF-8 encoding, try to see if we can peek 4 bytes.
+    # If so, this will be faster than reading byte per byte.
+    if !decoder && (peek = self.peek) && peek.size == 4
+      read_char_with_bytesize_peek(peek)
+    else
+      read_char_with_bytesize_slow
+    end
+  end
+
+  private def read_char_with_bytesize_peek(peek)
+    first = peek[0].to_u32
+    if first < 0x80
+      skip(1)
+      return first.unsafe_chr, 1
+    end
+
+    second = (peek[1] & 0x3f).to_u32
+    if first < 0xe0
+      skip(2)
+      return ((first & 0x1f) << 6 | second).unsafe_chr, 2
+    end
+
+    third = (peek[2] & 0x3f).to_u32
+    if first < 0xf0
+      skip(3)
+      return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3
+    end
+
+    fourth = (peek[3] & 0x3f).to_u32
+    if first < 0xf8
+      skip(4)
+      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4
+    end
+
+    raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
+  end
+
+  private def read_char_with_bytesize_slow
     first = read_utf8_byte
     return nil unless first
 
@@ -485,6 +523,22 @@ module IO
       end
       {bytesize, 0}
     end
+  end
+
+  # Peeks into this IO, if possible.
+  #
+  # If this IO can peek into some data, it returns a slice
+  # with that data. Returns `nil` if this IO isn't peekable,
+  # or if there's no data to peek.
+  #
+  # The returned bytes are only valid data until a next call
+  # to any method that reads from this IO is invoked.
+  #
+  # By default this method returns `nil`, but IO implementations
+  # that provide buffering or wrap other IOs should override
+  # this method.
+  def peek : Bytes?
+    nil
   end
 
   # Writes a slice of UTF-8 encoded bytes to this `IO`, using the current encoding.
@@ -632,12 +686,101 @@ module IO
   def gets(delimiter : Char, limit : Int, chomp = false) : String?
     raise ArgumentError.new "negative limit" if limit < 0
 
+    ascii = delimiter.ascii?
+    decoder = decoder()
+
     # # If the char's representation is a single byte and we have an encoding,
     # search the delimiter in the buffer
-    if delimiter.ascii? && (decoder = decoder())
+    if ascii && decoder
       return decoder.gets(self, delimiter.ord.to_u8, limit: limit, chomp: chomp)
     end
 
+    # If there's no encoding, the delimiter is ASCII and we can peek,
+    # use a faster algorithm
+    if ascii && !decoder && (peek = self.peek)
+      gets_peek(delimiter, limit, chomp, peek)
+    else
+      gets_slow(delimiter, limit, chomp)
+    end
+  end
+
+  private def gets_peek(delimiter, limit, chomp, peek)
+    limit = Int32::MAX if limit < 0
+
+    delimiter_byte = delimiter.ord.to_u8
+
+    # We first check, if the delimiter is already in the peek buffer.
+    # In that case it's much faster to create a String from a slice
+    # of the buffer instead of appending to a IO::Memory,
+    # which happens in the other case.
+    index = peek.index(delimiter_byte)
+    if index
+      # If we find it past the limit, limit the result
+      if index >= limit
+        index = limit
+      else
+        index += 1
+      end
+
+      advance = index
+
+      if chomp && index > 0 && peek[index - 1] === delimiter_byte
+        index -= 1
+
+        if delimiter == '\n' && index > 0 && peek[index - 1] === '\r'
+          index -= 1
+        end
+      end
+
+      string = String.new(peek[0, index])
+      skip(advance)
+      return string
+    end
+
+    # We didn't find the delimiter, so we append to a String::Builde
+    # until we find it or we reach the limit, appending what we have
+    # in the peek buffer and peeking again.
+    String.build do |buffer|
+      while peek
+        available = Math.min(peek.size, limit)
+        buffer.write peek[0, available]
+        skip(available)
+        peek += available
+        limit -= available
+
+        if limit == 0
+          break
+        end
+
+        if peek.size == 0
+          peek = self.peek
+        end
+
+        unless peek
+          if buffer.bytesize == 0
+            return nil
+          else
+            break
+          end
+        end
+
+        index = peek.index(delimiter_byte)
+        if index
+          if index >= limit
+            index = limit
+          else
+            index += 1
+          end
+          buffer.write peek[0, index]
+          skip(index)
+          break
+        end
+      end
+      buffer.chomp!(delimiter_byte) if chomp
+    end
+  end
+
+  private def gets_slow(delimiter : Char, limit, chomp)
     chomp_rn = delimiter == '\n' && chomp
 
     buffer = String::Builder.new

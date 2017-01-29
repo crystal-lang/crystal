@@ -32,30 +32,17 @@ class IO::ARGF
   end
 
   # :nodoc:
-  def gets(delimiter : Char, limit : Int, chomp = false) : String?
-    return super if @encoding
-
+  def peek
     first_initialize unless @initialized
 
     if current_io = @current_io
-      string = current_io.gets(delimiter, limit, chomp)
-      if !string && !@read_from_stdin
-        current_io.close
-        if @argv.empty?
-          @current_io = nil
-        else
-          read_next_argv
-          string = gets(delimiter, limit, chomp)
-        end
-      end
+      current_io.peek
     elsif !@read_from_stdin && !@argv.empty?
       read_next_argv
-      string = gets(delimiter, limit, chomp)
+      peek
     else
-      string = nil
+      nil
     end
-
-    string
   end
 
   def write(slice : Bytes)

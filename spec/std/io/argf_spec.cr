@@ -81,4 +81,31 @@ describe IO::ARGF do
       str.should eq("12345\n")
     end
   end
+
+  describe "peek" do
+    it "peeks from STDIN if ARGV isn't specified" do
+      argv = [] of String
+      stdin = IO::Memory.new("1234")
+
+      argf = IO::ARGF.new argv, stdin
+      argf.peek.should eq("1234".to_slice)
+
+      argf.gets_to_end.should eq("1234")
+    end
+
+    it "peeks from ARGV if specified" do
+      path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
+      path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
+      stdin = IO::Memory.new("")
+      argv = [path1, path2]
+
+      argf = IO::ARGF.new argv, stdin
+      argf.peek.should eq("12345\n".to_slice)
+
+      argf.read_string(6)
+      argf.read_byte
+
+      argf.peek.should eq("7890\n".to_slice)
+    end
+  end
 end

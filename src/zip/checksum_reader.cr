@@ -25,6 +25,10 @@ module Zip
       read_bytes
     end
 
+    def peek
+      @io.peek
+    end
+
     def write(slice : Bytes)
       raise IO::Error.new "can't read from Zip::Reader or Zip::File entry"
     end
