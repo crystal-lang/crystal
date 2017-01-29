@@ -65,6 +65,17 @@ module IO
       string
     end
 
+    def skip(bytes_count) : Nil
+      check_open
+
+      if bytes_count <= @read_remaining
+        @io.skip(bytes_count)
+        @read_remaining -= bytes_count
+      else
+        raise IO::EOFError.new
+      end
+    end
+
     def write(slice : Bytes)
       raise IO::Error.new "Can't write to IO::Sized"
     end

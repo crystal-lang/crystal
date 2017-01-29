@@ -108,4 +108,15 @@ describe "IO::Sized" do
     sized.gets(chomp: false).should eq("b")
     sized.gets(chomp: false).should be_nil
   end
+
+  it "skips" do
+    io = IO::Memory.new "123456789"
+    sized = IO::Sized.new(io, read_size: 6)
+    sized.skip(3)
+    sized.read_char.should eq('4')
+
+    expect_raises(IO::EOFError) do
+      sized.skip(6)
+    end
+  end
 end
