@@ -109,6 +109,14 @@ describe "IO::Sized" do
     sized.gets(chomp: false).should be_nil
   end
 
+  it "peeks" do
+    io = IO::Memory.new "123456789"
+    sized = IO::Sized.new(io, read_size: 6)
+    sized.peek.should eq("123456".to_slice)
+    sized.gets_to_end.should eq("123456")
+    sized.peek.should be_nil
+  end
+
   it "skips" do
     io = IO::Memory.new "123456789"
     sized = IO::Sized.new(io, read_size: 6)

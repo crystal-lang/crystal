@@ -306,6 +306,19 @@ describe "IO::Buffered" do
     io.called_unbuffered_read.should be_false
   end
 
+  it "peeks" do
+    str = IO::Memory.new("foo")
+    io = BufferedWrapper.new(str)
+
+    io.peek.should eq("foo".to_slice)
+
+    # Peek doesn't advance
+    io.gets_to_end.should eq("foo")
+
+    # Returns nil if no more data
+    io.peek.should be_nil
+  end
+
   it "skips" do
     str = IO::Memory.new("123456789")
     io = BufferedWrapper.new(str)

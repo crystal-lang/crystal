@@ -41,6 +41,10 @@ module IO
       end
     end
 
+    def peek
+      @io.peek
+    end
+
     def closed?
       @io.closed?
     end

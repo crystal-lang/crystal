@@ -12,6 +12,22 @@ describe HTTP::ChunkedContent do
     mem.pos.should eq(7) # only this chunk was read
   end
 
+  it "peeks" do
+    mem = IO::Memory.new("4\r\n123\n\r\n0\r\n\r\n")
+    content = HTTP::ChunkedContent.new(mem)
+
+    content.peek.should eq("123\n".to_slice)
+  end
+
+  it "peeks into next chunk" do
+    mem = IO::Memory.new("4\r\n123\n\r\n3\r\n456\r\n0\r\n\r\n")
+    content = HTTP::ChunkedContent.new(mem)
+
+    content.skip(4)
+    content.peek.should eq("456".to_slice)
+    content.gets_to_end.should eq("456")
+  end
+
   it "skips" do
     mem = IO::Memory.new("4\r\n123\n\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
