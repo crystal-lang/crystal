@@ -58,7 +58,7 @@ class Zip::Reader
   # are no more entries.
   #
   # After reading a next entry, previous entries can no
-  # longer be read (their IO will be closed.)
+  # longer be read (their `IO` will be closed.)
   def next_entry : Entry?
     return nil if @reached_end
 
@@ -109,7 +109,15 @@ class Zip::Reader
 
   private def skip_data_descriptor(entry)
     if entry.compression_method.deflated? && entry.bit_3_set?
-      read_data_descriptor(entry)
+      # The data descriptor signature is optional: if we
+      # find it, we read the data descriptor info normally;
+      # otherwise, the first four bytes are the crc32 value.
+      signature = read UInt32
+      if signature == FileInfo::DATA_DESCRIPTOR_SIGNATURE
+        read_data_descriptor(entry)
+      else
+        read_data_descriptor(entry, crc32: signature)
+      end
       @read_data_descriptor = true
     else
       @read_data_descriptor = false
@@ -117,8 +125,8 @@ class Zip::Reader
     end
   end
 
-  private def read_data_descriptor(entry)
-    entry.crc32 = read UInt32
+  private def read_data_descriptor(entry, crc32 = nil)
+    entry.crc32 = crc32 || (read UInt32)
     entry.compressed_size = read UInt32
     entry.uncompressed_size = read UInt32
     verify_checksum(entry)

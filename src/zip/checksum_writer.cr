@@ -5,7 +5,7 @@ module Zip
     include IO
 
     getter count = 0_u32
-    getter crc32 = LibC::ULong.new(0)
+    getter crc32 = CRC32.initial
     getter! io : IO
 
     def initialize(@compute_crc32 = false)
@@ -17,13 +17,13 @@ module Zip
 
     def write(slice : Bytes)
       @count += slice.size
-      @crc32 = Zlib.crc32(slice, @crc32) if @compute_crc32
+      @crc32 = CRC32.update(slice, @crc32) if @compute_crc32
       io.write(slice)
     end
 
     def io=(@io)
       @count = 0_u32
-      @crc32 = LibC::ULong.new(0)
+      @crc32 = CRC32.initial
     end
   end
 end

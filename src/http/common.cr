@@ -1,5 +1,6 @@
 {% if !flag?(:without_zlib) %}
-  require "zlib"
+  require "flate"
+  require "gzip"
 {% end %}
 
 module HTTP
@@ -40,9 +41,9 @@ module HTTP
             encoding = headers["Content-Encoding"]?
             case encoding
             when "gzip"
-              body = Zlib::Inflate.gzip(body, sync_close: true)
+              body = Gzip::Reader.new(body, sync_close: true)
             when "deflate"
-              body = Zlib::Inflate.new(body, sync_close: true)
+              body = Flate::Reader.new(body, sync_close: true)
             end
           {% end %}
         end

@@ -6,8 +6,6 @@ lib LibZ
   alias Long = LibC::Long
   alias ULong = LibC::ULong
   alias SizeT = LibC::SizeT
-  alias Double = LibC::Double
-  alias BitcntT = ULong
 
   alias Bytef = UInt8
 
@@ -37,36 +35,6 @@ lib LibZ
     reserved : Long
   end
 
-  struct GZHeader
-    text : Int32
-    time : UInt64
-    xflags : Int32
-    os : Int32
-    extra : UInt8*
-    extra_len : UInt32
-    extra_max : UInt32
-    name : UInt8*
-    name_max : UInt32
-    comment : UInt8*
-    comm_max : UInt32
-    hcrc : Int32
-    done : Int32
-  end
-
-  enum Strategy
-    FILTERED         = 1
-    HUFFMAN_ONLY     = 2
-    RLE              = 3
-    FIXED            = 4
-    DEFAULT_STRATEGY = 0
-  end
-
-  # compression level
-  NO_COMPRESSION      =  0
-  BEST_SPEED          =  1
-  BEST_COMPRESSION    =  9
-  DEFAULT_COMPRESSION = -1
-
   # error codes
   enum Error
     OK            =  0
@@ -95,37 +63,22 @@ lib LibZ
   Z_DEFLATED    =  8
 
   fun deflateInit2 = deflateInit2_(stream : ZStream*, level : Int32, method : Int32,
-                                   window_bits : Int32, mem_level : Int32, strategy : Strategy,
+                                   window_bits : Int32, mem_level : Int32, strategy : Int32,
                                    version : UInt8*, stream_size : Int32) : Error
   fun deflate(stream : ZStream*, flush : Flush) : Error
   fun deflateEnd(stream : ZStream*) : Int32
-  fun deflateReset(stream : ZStream*) : Int32
-  fun deflateParams(stream : ZStream*, level : Int32, strategy : Strategy) : Int32
-  fun deflateSetDictionary(stream : ZStream*, dictionary : UInt8*, len : UInt32) : Int32
+  fun deflateReset(stream : ZStream*) : Error
+  fun deflateSetDictionary(stream : ZStream*, dictionary : UInt8*, len : UInt) : Int
 
   fun inflateInit2 = inflateInit2_(stream : ZStream*, window_bits : Int32, version : UInt8*, stream_size : Int32) : Error
   fun inflate(stream : ZStream*, flush : Flush) : Error
   fun inflateEnd(stream : ZStream*) : Int32
   fun inflateReset(stream : ZStream*) : Int32
-  fun inflateSetDictionary(stream : ZStream*, dictionary : UInt8*, len : UInt32) : Int32
+  fun inflateSetDictionary(stream : ZStream*, dictionary : UInt8*, len : UInt) : Int
 
-  alias GZFile = Void*
+  alias InFunc = Void*, UInt8** -> UInt
+  alias OutFunc = Void*, UInt8*, UInt -> Int
 
-  fun gzdopen(fd : Int32, mode : UInt8*) : GZFile
-  fun gzbuffer(file : GZFile, size : UInt32) : Int32
-  fun gzsetparams(file : GZFile, level : Int32, strategy : Strategy) : Int32
-  fun gzread(file : GZFile, buf : UInt8*, len : UInt32) : Int32
-  fun gzwrite(file : GZFile, buf : UInt8*, len : UInt32) : Int32
-  fun gzflush(file : GZFile, flush : Flush) : Int32
-  fun gzseek(file : GZFile, offset : LibC::SizeT, whence : Int32) : Int32
-  fun gzrewind(file : GZFile) : Int32
-  fun gztell(file : GZFile) : LibC::SizeT
-  fun gzoffset(file : GZFile) : LibC::SizeT
-  fun gzeof(file : GZFile) : Int32
-  fun gzdirect(file : GZFile) : Int32
-  fun gzclose(file : GZFile) : Int32
-  fun gzclose_r(file : GZFile) : Int32
-  fun gzclose_w(file : GZFile) : Int32
-  fun gzerror(file : GZFile, errnum : Int32*) : UInt8*
-  fun gzclearerr(file : GZFile)
+  fun inflateBackInit = inflateBackInit_(stream : ZStream*, window_bits : Int, window : UInt8*, version : UInt8*, stream_size : Int) : Int
+  fun inflateBack(stream : ZStream*, in : InFunc, in_desc : Void*, out : OutFunc, out_desc : Void*) : Int
 end

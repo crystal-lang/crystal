@@ -66,7 +66,7 @@ require "./common"
 # HTTP::Server.new("127.0.0.1", 8080, [
 #   HTTP::ErrorHandler.new,
 #   HTTP::LogHandler.new,
-#   HTTP::DeflateHandler.new,
+#   HTTP::CompressHandler.new,
 #   HTTP::StaticFileHandler.new("."),
 # ]).listen
 # ```
