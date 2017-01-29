@@ -1200,18 +1200,74 @@ class String
   # "\tgoodbye\r\n".strip # => "goodbye"
   # ```
   def strip
-    excess_right = calc_excess_right
-    if excess_right == bytesize
+    excess_left = calc_excess_left
+    if excess_left == bytesize
       return ""
     end
 
-    excess_left = calc_excess_left
+    excess_right = calc_excess_right
+    remove_excess(excess_left, excess_right)
+  end
 
-    if excess_right == 0 && excess_left == 0
-      self
-    else
-      unsafe_byte_slice_string(excess_left, bytesize - excess_left - excess_right)
+  # Returns a new string where leading and trailing occurrences of *char* are removed.
+  #
+  # ```
+  # "aaabcdaaa".strip('a') # => "bcd"
+  # ```
+  def strip(char : Char)
+    return self if empty?
+
+    excess_left = calc_excess_left(char)
+    if excess_left == bytesize
+      return ""
     end
+
+    excess_right = calc_excess_right(char)
+    remove_excess(excess_left, excess_right)
+  end
+
+  # Returns a new string where leading and trailing occurrences of any char
+  # in *chars* are removed. The *chars* argument is not a prefix or suffix;
+  # rather; all combinations of its values are stripped.
+  #
+  # ```
+  # "abcdefcba".strip("abc") # => "def"
+  # ```
+  def strip(chars : String)
+    return self if empty?
+
+    case chars.size
+    when 0
+      return self
+    when 1
+      return strip(chars[0])
+    end
+
+    excess_left = calc_excess_left(chars)
+    if excess_left == bytesize
+      return ""
+    end
+
+    excess_right = calc_excess_right(chars)
+    remove_excess(excess_left, excess_right)
+  end
+
+  # Returns a new string where leading and trailing characters for which
+  # the block returns a *truthy* value are removed.
+  #
+  # ```
+  # "bcadefcba".strip { |c| 'a' <= c <= 'c' } # => "def"
+  # ```
+  def strip(&block : Char -> _)
+    return self if empty?
+
+    excess_left = calc_excess_left { |c| yield c }
+    if excess_left == bytesize
+      return ""
+    end
+
+    excess_right = calc_excess_right { |c| yield c }
+    remove_excess(excess_left, excess_right)
   end
 
   # Returns a new `String` with trailing whitespace removed.
@@ -1221,13 +1277,51 @@ class String
   # "\tgoodbye\r\n".rstrip # => "\tgoodbye"
   # ```
   def rstrip
-    excess_right = calc_excess_right
+    remove_excess_right(calc_excess_right)
+  end
 
-    if excess_right == 0
+  # Returns a new string with trailing occurrences of *char* removed.
+  #
+  # ```
+  # "aaabcdaaa".rstrip('a') # => "aaabcd"
+  # ```
+  def rstrip(char : Char)
+    return self if empty?
+
+    remove_excess_right(calc_excess_right(char))
+  end
+
+  # Returns a new string where trailing occurrences of any char
+  # in *chars* are removed. The *chars* argument is not a suffix;
+  # rather; all combinations of its values are stripped.
+  #
+  # ```
+  # "abcdefcba".rstrip("abc") # => "abcdef"
+  # ```
+  def rstrip(chars : String)
+    return self if empty?
+
+    case chars.size
+    when 0
       self
+    when 1
+      rstrip(chars[0])
     else
-      byte_slice 0, bytesize - excess_right
+      remove_excess_right(calc_excess_right(chars))
     end
+  end
+
+  # Returns a new string where trailing characters for which
+  # the block returns a *truthy* value are removed.
+  #
+  # ```
+  # "bcadefcba".rstrip { |c| 'a' <= c <= 'c' } # => "bcadef"
+  # ```
+  def rstrip(&block : Char -> _)
+    return self if empty?
+
+    excess_right = calc_excess_right { |c| yield c }
+    remove_excess_right(excess_right)
   end
 
   # Returns a new `String` with leading whitespace removed.
@@ -1237,13 +1331,51 @@ class String
   # "\tgoodbye\r\n".lstrip # => "goodbye\r\n"
   # ```
   def lstrip
-    excess_left = calc_excess_left
+    remove_excess_left(calc_excess_left)
+  end
 
-    if excess_left == 0
+  # Returns a new string with leading occurrences of *char* removed.
+  #
+  # ```
+  # "aaabcdaaa".lstrip('a') # => "bcdaaa"
+  # ```
+  def lstrip(char : Char)
+    return self if empty?
+
+    remove_excess_left(calc_excess_left(char))
+  end
+
+  # Returns a new string where leading occurrences of any char
+  # in *chars* are removed. The *chars* argument is not a suffix;
+  # rather; all combinations of its values are stripped.
+  #
+  # ```
+  # "bcadefcba".lstrip("abc") # => "defcba"
+  # ```
+  def lstrip(chars : String)
+    return self if empty?
+
+    case chars.size
+    when 0
       self
+    when 1
+      lstrip(chars[0])
     else
-      byte_slice excess_left
+      remove_excess_left(calc_excess_left(chars))
     end
+  end
+
+  # Returns a new string where leading characters for which
+  # the block returns a *truthy* value are removed.
+  #
+  # ```
+  # "bcadefcba".lstrip { |c| 'a' <= c <= 'c' } # => "defcba"
+  # ```
+  def lstrip(&block : Char -> _)
+    return self if empty?
+
+    excess_left = calc_excess_left { |c| yield c }
+    remove_excess_left(excess_left)
   end
 
   private def calc_excess_right
@@ -1254,6 +1386,32 @@ class String
     bytesize - 1 - i
   end
 
+  private def calc_excess_right(char : Char)
+    calc_excess_right do |reader_char|
+      char == reader_char
+    end
+  end
+
+  private def calc_excess_right(chars : String)
+    calc_excess_right do |reader_char|
+      chars.includes?(reader_char)
+    end
+  end
+
+  private def calc_excess_right(&block)
+    byte_index = bytesize
+    reader = Char::Reader.new(at_end: self)
+    while (yield reader.current_char)
+      byte_index = reader.pos
+      if byte_index == 0
+        return bytesize
+      else
+        reader.previous_char
+      end
+    end
+    bytesize - byte_index
+  end
+
   private def calc_excess_left
     excess_left = 0
     # All strings end with '\0', and it's not a whitespace
@@ -1262,6 +1420,57 @@ class String
       excess_left += 1
     end
     excess_left
+  end
+
+  private def calc_excess_left(char : Char)
+    calc_excess_left do |reader_char|
+      char == reader_char
+    end
+  end
+
+  private def calc_excess_left(chars : String)
+    calc_excess_left do |reader_char|
+      chars.includes?(reader_char)
+    end
+  end
+
+  private def calc_excess_left(&block)
+    reader = Char::Reader.new(self)
+    while (yield reader.current_char)
+      reader.next_char
+      return bytesize unless reader.has_next?
+    end
+    reader.pos
+  end
+
+  private def remove_excess(excess_left, excess_right)
+    if excess_right == 0 && excess_left == 0
+      self
+    else
+      unsafe_byte_slice_string(excess_left, bytesize - excess_right - excess_left)
+    end
+  end
+
+  private def remove_excess_right(excess_right)
+    case excess_right
+    when 0
+      self
+    when bytesize
+      ""
+    else
+      unsafe_byte_slice_string(0, bytesize - excess_right)
+    end
+  end
+
+  private def remove_excess_left(excess_left)
+    case excess_left
+    when 0
+      self
+    when bytesize
+      ""
+    else
+      unsafe_byte_slice_string(excess_left)
+    end
   end
 
   # Returns a new string _tr_anslating characters using *from* and *to* as a

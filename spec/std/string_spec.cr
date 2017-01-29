@@ -550,13 +550,45 @@ describe "String" do
 
     # TODO: add spec tags so this can be run with tag:slow
     # it { (" " * 167772160).strip.should eq("") }
+
+    it { "".strip("xyz").should eq("") }
+    it { "foobar".strip("").should eq("foobar") }
+    it { "rrfoobarr".strip("r").should eq("fooba") }
+    it { "rfoobar".strip("x").should eq("rfoobar") }
+    it { "rrrfooba".strip("r").should eq("fooba") }
+    it { "foobarrr".strip("r").should eq("fooba") }
+    it { "rabfooabr".strip("bar").should eq("foo") }
+    it { "rabfooabr".strip("xyz").should eq("rabfooabr") }
+    it { "fooabr".strip("bar").should eq("foo") }
+    it { "rabfoo".strip("bar").should eq("foo") }
+    it { "rababr".strip("bar").should eq("") }
+
+    it { "aaabcdaaa".strip('a').should eq("bcd") }
+    it { "bcdaaa".strip('a').should eq("bcd") }
+    it { "aaabcd".strip('a').should eq("bcd") }
+
+    it { "ababcdaba".strip { |c| c == 'a' || c == 'b' }.should eq("cd") }
   end
 
   describe "rstrip" do
+    it { "".rstrip.should eq("") }
     it { "  hello  ".rstrip.should eq("  hello") }
     it { "hello".rstrip.should eq("hello") }
     it { "  かたな \n\f\v".rstrip.should eq("  かたな") }
     it { "かたな".rstrip.should eq("かたな") }
+
+    it { "".rstrip("xyz").should eq("") }
+    it { "foobar".rstrip("").should eq("foobar") }
+    it { "foobarrrr".rstrip("r").should eq("fooba") }
+    it { "foobars".rstrip("r").should eq("foobars") }
+    it { "foobar".rstrip("rab").should eq("foo") }
+    it { "foobar".rstrip("foo").should eq("foobar") }
+    it { "bararbr".rstrip("bar").should eq("") }
+
+    it { "foobarrrr".rstrip('r').should eq("fooba") }
+    it { "foobar".rstrip('x').should eq("foobar") }
+
+    it { "foobar".rstrip { |c| c == 'a' || c == 'r' }.should eq("foob") }
   end
 
   describe "lstrip" do
@@ -564,6 +596,19 @@ describe "String" do
     it { "hello".lstrip.should eq("hello") }
     it { "  \n\v かたな  ".lstrip.should eq("かたな  ") }
     it { "  かたな".lstrip.should eq("かたな") }
+
+    it { "".lstrip("xyz").should eq("") }
+    it { "barfoo".lstrip("").should eq("barfoo") }
+    it { "bbbarfoo".lstrip("b").should eq("arfoo") }
+    it { "sbarfoo".lstrip("r").should eq("sbarfoo") }
+    it { "barfoo".lstrip("rab").should eq("foo") }
+    it { "barfoo".lstrip("foo").should eq("barfoo") }
+    it { "b".lstrip("bar").should eq("") }
+
+    it { "bbbbarfoo".lstrip('b').should eq("arfoo") }
+    it { "barfoo".lstrip('x').should eq("barfoo") }
+
+    it { "barfoo".lstrip { |c| c == 'a' || c == 'b' }.should eq("rfoo") }
   end
 
   describe "empty?" do
