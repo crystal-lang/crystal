@@ -38,7 +38,7 @@ module Spec::Methods
 
   # DEPRECATED: Use `#it`
   def assert(file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    it("assert", file, line, end_line, &block)
+    {{ raise "'assert' was removed: use 'it' instead".id }}
   end
 
   def fail(msg, file = __FILE__, line = __LINE__)
