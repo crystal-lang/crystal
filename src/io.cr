@@ -195,7 +195,7 @@ module IO
   end
 
   protected def check_open
-    raise IO::Error.new "closed stream" if closed?
+    raise IO::Error.new "Closed stream" if closed?
   end
 
   # Flushes buffered data, if any.
@@ -684,7 +684,7 @@ module IO
   # io.gets('w', 10) # => nil
   # ```
   def gets(delimiter : Char, limit : Int, chomp = false) : String?
-    raise ArgumentError.new "negative limit" if limit < 0
+    raise ArgumentError.new "Negative limit" if limit < 0
 
     ascii = delimiter.ascii?
     decoder = decoder()
@@ -1075,7 +1075,7 @@ module IO
   # Rewinds this `IO`. By default this method raises, but including types
   # may implement it.
   def rewind
-    raise IO::Error.new("can't rewind")
+    raise IO::Error.new("Can't rewind")
   end
 
   # Sets the encoding of this `IO`.
@@ -1135,7 +1135,7 @@ module IO
   # io2.to_s # => "hel"
   # ```
   def self.copy(src, dst, limit : Int)
-    raise ArgumentError.new("negative limit") if limit < 0
+    raise ArgumentError.new("Negative limit") if limit < 0
 
     buffer = uninitialized UInt8[4096]
     remaining = limit

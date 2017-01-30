@@ -75,7 +75,7 @@ class HTTP::Server
 
     # :nodoc:
     def read(slice : Bytes)
-      raise "can't read from HTTP::Server::Response"
+      raise "Can't read from HTTP::Server::Response"
     end
 
     # Upgrades this response, writing headers and yieling the connection `IO` (a socket) to the given block.
@@ -157,7 +157,7 @@ class HTTP::Server
       end
 
       private def unbuffered_read(slice : Bytes)
-        raise "can't read from HTTP::Server::Response"
+        raise "Can't read from HTTP::Server::Response"
       end
 
       private def unbuffered_write(slice : Bytes)
@@ -205,7 +205,7 @@ class HTTP::Server
       end
 
       private def unbuffered_rewind
-        raise "can't rewind to HTTP::Server::Response"
+        raise "Can't rewind to HTTP::Server::Response"
       end
 
       private def unbuffered_flush

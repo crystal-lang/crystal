@@ -29,7 +29,7 @@ class Gzip::Header
     io.read_fully(header.to_slice + 1)
 
     if header[0] != ID1 || header[1] != ID2 || header[2] != DEFLATE
-      raise Error.new("invalid gzip header")
+      raise Error.new("Invalid gzip header")
     end
 
     flg = Flg.new(header[3])

@@ -46,13 +46,13 @@ class Zlib::Reader
     fdict = flg.bit(5) == 1
     if fdict
       unless dict
-        raise Zlib::Error.new("missing dictionary")
+        raise Zlib::Error.new("Missing dictionary")
       end
 
       checksum = io.read_bytes(UInt32, IO::ByteFormat::BigEndian)
       dict_checksum = Adler32.checksum(dict)
       if checksum != dict_checksum
-        raise Zlib::Error.new("dictionary ADLER-32 checksum mismatch")
+        raise Zlib::Error.new("Dictionary ADLER-32 checksum mismatch")
       end
     end
   end
@@ -82,7 +82,7 @@ class Zlib::Reader
 
   # Always raises `IO::Error` because this is a read-only `IO`.
   def write(slice : Bytes)
-    raise IO::Error.new "can't write to Zlib::Reader"
+    raise IO::Error.new "Can't write to Zlib::Reader"
   end
 
   def close
@@ -94,6 +94,6 @@ class Zlib::Reader
   end
 
   protected def self.invalid_header
-    raise Zlib::Error.new("invalid header")
+    raise Zlib::Error.new("Invalid header")
   end
 end

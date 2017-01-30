@@ -115,7 +115,7 @@ module YAML
         {% end %}
         else
           {% if strict %}
-            raise ::YAML::ParseException.new("unknown yaml attribute: #{key}", 0, 0)
+            raise ::YAML::ParseException.new("Unknown yaml attribute: #{key}", 0, 0)
           {% else %}
             %pull.skip
           {% end %}
@@ -126,7 +126,7 @@ module YAML
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
-            raise ::YAML::ParseException.new("missing yaml attribute: {{(value[:key] || key).id}}", 0, 0)
+            raise ::YAML::ParseException.new("Missing yaml attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
       {% end %}

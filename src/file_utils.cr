@@ -93,7 +93,7 @@ module FileUtils
   # FileUtils.cp({"bar.cr", "afile"}, "files")
   # ```
   def cp(srcs : Enumerable(String), dest : String)
-    raise ArgumentError.new("no such directory : #{dest}") unless Dir.exists?(dest)
+    raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
       cp(src, dest)
     end
@@ -189,7 +189,7 @@ module FileUtils
   # FileUtils.mv(["foo", "bar"], "src")
   # ```
   def mv(srcs : Enumerable(String), dest : String) : Nil
-    raise ArgumentError.new("no such directory : #{dest}") unless Dir.exists?(dest)
+    raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
       begin
         mv(src, File.join(dest, File.basename(src)))

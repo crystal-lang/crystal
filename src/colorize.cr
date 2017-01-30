@@ -192,7 +192,7 @@ struct Colorize::Object(T)
       end
     {% end %}
 
-    raise ArgumentError.new "unknown color: #{color}"
+    raise ArgumentError.new "Unknown color: #{color}"
   end
 
   def back(color : Symbol)
@@ -203,7 +203,7 @@ struct Colorize::Object(T)
       end
     {% end %}
 
-    raise ArgumentError.new "unknown color: #{color}"
+    raise ArgumentError.new "Unknown color: #{color}"
   end
 
   def mode(mode : Symbol)
@@ -214,7 +214,7 @@ struct Colorize::Object(T)
       end
     {% end %}
 
-    raise ArgumentError.new "unknown mode: #{mode}"
+    raise ArgumentError.new "Unknown mode: #{mode}"
   end
 
   def on(color : Symbol)

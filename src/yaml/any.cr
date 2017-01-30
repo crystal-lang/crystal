@@ -68,7 +68,7 @@ struct YAML::Any
     when Hash
       object.size
     else
-      raise "expected Array or Hash for #size, not #{object.class}"
+      raise "Expected Array or Hash for #size, not #{object.class}"
     end
   end
 
@@ -81,7 +81,7 @@ struct YAML::Any
     when Array
       Any.new object[index]
     else
-      raise "expected Array for #[](index : Int), not #{object.class}"
+      raise "Expected Array for #[](index : Int), not #{object.class}"
     end
   end
 
@@ -95,7 +95,7 @@ struct YAML::Any
       value = object[index]?
       value ? Any.new(value) : nil
     else
-      raise "expected Array for #[]?(index : Int), not #{object.class}"
+      raise "Expected Array for #[]?(index : Int), not #{object.class}"
     end
   end
 
@@ -108,7 +108,7 @@ struct YAML::Any
     when Hash
       Any.new object[key]
     else
-      raise "expected Hash for #[](key : String), not #{object.class}"
+      raise "Expected Hash for #[](key : String), not #{object.class}"
     end
   end
 
@@ -122,7 +122,7 @@ struct YAML::Any
       value = object[key]?
       value ? Any.new(value) : nil
     else
-      raise "expected Hash for #[]?(key : String), not #{object.class}"
+      raise "Expected Hash for #[]?(key : String), not #{object.class}"
     end
   end
 
@@ -141,7 +141,7 @@ struct YAML::Any
         yield Any.new(key), Any.new(value)
       end
     else
-      raise "expected Array or Hash for #each, not #{object.class}"
+      raise "Expected Array or Hash for #each, not #{object.class}"
     end
   end
 

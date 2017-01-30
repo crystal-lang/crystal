@@ -128,7 +128,7 @@ abstract class JSON::Lexer
     while true
       case next_char
       when '\0'
-        raise "unterminated string"
+        raise "Unterminated string"
       when '\\'
         consume_string_escape_sequence
       when '"'
@@ -152,7 +152,7 @@ abstract class JSON::Lexer
     while true
       case char = next_char
       when '\0'
-        raise "unterminated string"
+        raise "Unterminated string"
       when '\\'
         @buffer << consume_string_escape_sequence
       when '"'
@@ -199,7 +199,7 @@ abstract class JSON::Lexer
         hexnum1.chr
       end
     else
-      raise "unknown escape char: #{char}"
+      raise "Unknown escape char: #{char}"
     end
   end
 
@@ -207,7 +207,7 @@ abstract class JSON::Lexer
     hexnum = 0
     4.times do
       char = next_char
-      hexnum = (hexnum << 4) | (char.to_i?(16) || raise "unexpected char in hex number: #{char.inspect}")
+      hexnum = (hexnum << 4) | (char.to_i?(16) || raise "Unexpected char in hex number: #{char.inspect}")
     end
     hexnum
   end
@@ -357,7 +357,7 @@ abstract class JSON::Lexer
   end
 
   private def unexpected_char(char = current_char)
-    raise "unexpected char '#{char}'"
+    raise "Unexpected char '#{char}'"
   end
 
   private def raise(msg)

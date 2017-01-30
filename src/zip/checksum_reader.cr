@@ -14,7 +14,7 @@ module Zip
       read_bytes = @io.read(slice)
       if read_bytes == 0
         if (expected_crc32 = @expected_crc32) && crc32 != expected_crc32
-          raise Zip::Error.new("checksum failed for entry #{@filename} (expected #{expected_crc32}, got #{crc32}")
+          raise Zip::Error.new("Checksum failed for entry #{@filename} (expected #{expected_crc32}, got #{crc32}")
         end
       else
         @crc32 = CRC32.update(slice[0, read_bytes], @crc32)
@@ -27,7 +27,7 @@ module Zip
     end
 
     def write(slice : Bytes)
-      raise IO::Error.new "can't read from Zip::Reader or Zip::File entry"
+      raise IO::Error.new "Can't read from Zip::Reader or Zip::File entry"
     end
   end
 end

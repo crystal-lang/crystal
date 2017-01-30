@@ -140,7 +140,7 @@ class IO::Memory
 
     check_open
 
-    raise ArgumentError.new "negative limit" if limit < 0
+    raise ArgumentError.new "Negative limit" if limit < 0
 
     index = (@buffer + @pos).to_slice(@bytesize - @pos).index(delimiter.ord)
     if index
@@ -337,7 +337,7 @@ class IO::Memory
   # io.gets # => "lo"
   # ```
   def pos=(value)
-    raise ArgumentError.new("negative pos") if value < 0
+    raise ArgumentError.new("Negative pos") if value < 0
 
     @pos = value.to_i
   end
@@ -348,15 +348,15 @@ class IO::Memory
   # so multiple concurrent open are allowed.
   def read_at(offset, bytesize)
     unless 0 <= offset <= @bytesize
-      raise ArgumentError.new("offset out of bounds")
+      raise ArgumentError.new("Offset out of bounds")
     end
 
     if bytesize < 0
-      raise ArgumentError.new("negative bytesize")
+      raise ArgumentError.new("Negative bytesize")
     end
 
     unless 0 <= offset + bytesize <= @bytesize
-      raise ArgumentError.new("bytesize out of bounds")
+      raise ArgumentError.new("Bytesize out of bounds")
     end
 
     old_writeable = @writeable
@@ -427,13 +427,13 @@ class IO::Memory
 
   private def check_writeable
     unless @writeable
-      raise IO::Error.new "read-only stream"
+      raise IO::Error.new "Read-only stream"
     end
   end
 
   private def check_resizeable
     unless @resizeable
-      raise IO::Error.new "non-resizeable stream"
+      raise IO::Error.new "Non-resizeable stream"
     end
   end
 

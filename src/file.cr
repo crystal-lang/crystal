@@ -37,7 +37,7 @@ class File < IO::FileDescriptor
 
   protected def open_flag(mode)
     if mode.size == 0
-      raise "invalid access mode #{mode}"
+      raise "Invalid access mode #{mode}"
     end
 
     m = 0
@@ -52,7 +52,7 @@ class File < IO::FileDescriptor
       m = LibC::O_WRONLY
       o = LibC::O_CREAT | LibC::O_APPEND
     else
-      raise "invalid access mode #{mode}"
+      raise "Invalid access mode #{mode}"
     end
 
     case mode.size
@@ -65,10 +65,10 @@ class File < IO::FileDescriptor
       when 'b'
         # Nothing
       else
-        raise "invalid access mode #{mode}"
+        raise "Invalid access mode #{mode}"
       end
     else
-      raise "invalid access mode #{mode}"
+      raise "Invalid access mode #{mode}"
     end
 
     oflag = m | o
@@ -624,15 +624,15 @@ class File < IO::FileDescriptor
     self_bytesize = self.size
 
     unless 0 <= offset <= self_bytesize
-      raise ArgumentError.new("offset out of bounds")
+      raise ArgumentError.new("Offset out of bounds")
     end
 
     if bytesize < 0
-      raise ArgumentError.new("negative bytesize")
+      raise ArgumentError.new("Negative bytesize")
     end
 
     unless 0 <= offset + bytesize <= self_bytesize
-      raise ArgumentError.new("bytesize out of bounds")
+      raise ArgumentError.new("Bytesize out of bounds")
     end
 
     io = PReader.new(fd, offset, bytesize)

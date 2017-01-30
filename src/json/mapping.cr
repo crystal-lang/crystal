@@ -116,7 +116,7 @@ module JSON
         {% end %}
         else
           {% if strict %}
-            raise ::JSON::ParseException.new("unknown json attribute: #{key}", 0, 0)
+            raise ::JSON::ParseException.new("Unknown json attribute: #{key}", 0, 0)
           {% else %}
             %pull.skip
           {% end %}
@@ -126,7 +126,7 @@ module JSON
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
-            raise ::JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
+            raise ::JSON::ParseException.new("Missing json attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
       {% end %}

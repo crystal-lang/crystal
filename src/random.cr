@@ -110,7 +110,7 @@ module Random
     {% for type in ["Int#{size}".id, utype] %}
       private def rand_int(max : {{type}}) : {{type}}
         unless max > 0
-          raise ArgumentError.new "invalid bound for rand: #{max}"
+          raise ArgumentError.new "Invalid bound for rand: #{max}"
         end
 
         # The basic ideas of the algorithm are best illustrated with examples.
@@ -213,11 +213,11 @@ module Random
         span = {{utype}}.new(range.end - range.begin)
         if range.excludes_end?
           unless range.begin < range.end
-            raise ArgumentError.new "invalid range for rand: #{range}"
+            raise ArgumentError.new "Invalid range for rand: #{range}"
           end
         else
           unless range.begin <= range.end
-            raise ArgumentError.new "invalid range for rand: #{range}"
+            raise ArgumentError.new "Invalid range for rand: #{range}"
           end
           if range.begin == {{type}}::MIN && range.end == {{type}}::MAX
             return rand_type({{type}})
@@ -251,7 +251,7 @@ module Random
   # ```
   def rand(max : Float) : Float64
     unless max > 0
-      raise ArgumentError.new "invalid bound for rand: #{max}"
+      raise ArgumentError.new "Invalid bound for rand: #{max}"
     end
     max_prec = 1u64 << 53 # Float64, excluding mantissa, has 2^53 values
     rand(max_prec) / max_prec.to_f64 * max
@@ -278,12 +278,12 @@ module Random
     span = range.end - range.begin
     if range.excludes_end?
       unless range.begin < range.end
-        raise ArgumentError.new "invalid range for rand: #{range}"
+        raise ArgumentError.new "Invalid range for rand: #{range}"
       end
       range.begin + rand(span)
     else
       unless range.begin <= range.end
-        raise ArgumentError.new "invalid range for rand: #{range}"
+        raise ArgumentError.new "Invalid range for rand: #{range}"
       end
       range.begin + rand * span
     end

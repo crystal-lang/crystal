@@ -54,12 +54,12 @@ struct LLVM::Type
   end
 
   def int_width
-    raise "not an Integer" unless kind == Kind::Integer
+    raise "Not an Integer" unless kind == Kind::Integer
     LibLLVM.get_int_type_width(self).to_i32
   end
 
   def packed_struct?
-    raise "not a Struct" unless kind == Kind::Struct
+    raise "Not a Struct" unless kind == Kind::Struct
     LibLLVM.is_packed_struct(self) != 0
   end
 
@@ -70,7 +70,7 @@ struct LLVM::Type
   end
 
   def struct_element_types
-    raise "not a Struct" unless kind == Kind::Struct
+    raise "Not a Struct" unless kind == Kind::Struct
     count = LibLLVM.count_struct_element_types(self)
 
     Array(LLVM::Type).build(count) do |buffer|
@@ -84,12 +84,12 @@ struct LLVM::Type
     when Kind::Array, Kind::Vector, Kind::Pointer
       Type.new LibLLVM.get_element_type(self)
     else
-      raise "not a sequential type"
+      raise "Not a sequential type"
     end
   end
 
   def array_size
-    raise "not an Array" unless kind == Kind::Array
+    raise "Not an Array" unless kind == Kind::Array
     LibLLVM.get_array_length(self).to_i32
   end
 

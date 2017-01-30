@@ -262,7 +262,7 @@ struct XML::Node
   # Sets the name for this Node.
   def name=(name)
     if document? || text? || cdata? || fragment?
-      raise XML::Error.new("can't set name of XML #{type}", 0)
+      raise XML::Error.new("Can't set name of XML #{type}", 0)
     end
     LibXML.xmlNodeSetName(self, name.to_s)
   end

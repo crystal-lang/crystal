@@ -111,7 +111,7 @@ class Concurrent::Future(R)
     elsif error = @error
       raise error
     else
-      raise "compiler bug"
+      raise "Compiler bug"
     end
   end
 end

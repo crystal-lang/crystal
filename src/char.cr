@@ -568,7 +568,7 @@ struct Char
   # 'z'.to_i(16) # raises ArgumentError
   # ```
   def to_i?(base : Int = 10) : Int32?
-    raise ArgumentError.new "invalid base #{base}, expected 2 to 36" unless 2 <= base <= 36
+    raise ArgumentError.new "Invalid base #{base}, expected 2 to 36" unless 2 <= base <= 36
 
     if base == 10
       return unless '0' <= self <= '9'

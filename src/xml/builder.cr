@@ -260,7 +260,7 @@ struct XML::Builder
   # Sets the quote char to use, either `'` or `"`.
   def quote_char=(char : Char)
     unless char == '\'' || char == '"'
-      raise ArgumentError.new("quote char must be ' or \", not #{char}")
+      raise ArgumentError.new("Quote char must be ' or \", not #{char}")
     end
 
     call SetQuoteChar, char.ord
@@ -272,7 +272,7 @@ struct XML::Builder
   end
 
   private def check(ret, msg)
-    raise XML::Error.new("error in #{msg}", 0) if ret < 0
+    raise XML::Error.new("Error in #{msg}", 0) if ret < 0
   end
 
   private def string_to_unsafe(string)

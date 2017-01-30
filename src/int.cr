@@ -140,7 +140,7 @@ struct Int
 
     {% begin %}
       if self < 0 && self == {{@type}}::MIN && other == -1
-        raise ArgumentError.new "overflow: {{@type}}::MIN / -1"
+        raise ArgumentError.new "Overflow: {{@type}}::MIN / -1"
       end
     {% end %}
   end
@@ -255,7 +255,7 @@ struct Int
   # ```
   def **(exponent : Int) : self
     if exponent < 0
-      raise ArgumentError.new "cannot raise an integer to a negative integer power, use floats for that"
+      raise ArgumentError.new "Cannot raise an integer to a negative integer power, use floats for that"
     end
 
     result = self.class.new(1)

@@ -63,7 +63,7 @@ class Gzip::Writer
 
   # Always raises `IO::Error` because this is a write-only `IO`.
   def read(slice : Bytes)
-    raise IO::Error.new("can't read from Gzip::Writer")
+    raise IO::Error.new("Can't read from Gzip::Writer")
   end
 
   # See `IO#write`.

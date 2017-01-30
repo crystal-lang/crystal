@@ -41,7 +41,7 @@ class Deque(T)
   # ```
   def initialize(initial_capacity : Int)
     if initial_capacity < 0
-      raise ArgumentError.new("negative deque capacity: #{initial_capacity}")
+      raise ArgumentError.new("Negative deque capacity: #{initial_capacity}")
     end
     @size = 0
     @capacity = initial_capacity.to_i
@@ -60,7 +60,7 @@ class Deque(T)
   # ```
   def initialize(size : Int, value : T)
     if size < 0
-      raise ArgumentError.new("negative deque size: #{size}")
+      raise ArgumentError.new("Negative deque size: #{size}")
     end
     @size = size.to_i
     @capacity = size.to_i
@@ -80,7 +80,7 @@ class Deque(T)
   # ```
   def self.new(size : Int, &block : Int32 -> T)
     if size < 0
-      raise ArgumentError.new("negative deque size: #{size}")
+      raise ArgumentError.new("Negative deque size: #{size}")
     end
 
     deque = Deque(T).new(size)
@@ -389,7 +389,7 @@ class Deque(T)
   # Removes the last *n* (at most) items in the deque.
   def pop(n : Int)
     if n < 0
-      raise ArgumentError.new("can't pop negative count")
+      raise ArgumentError.new("Can't pop negative count")
     end
     n = Math.min(n, @size)
     n.times { pop }
@@ -469,7 +469,7 @@ class Deque(T)
   # Removes the first *n* (at most) items in the deque.
   def shift(n : Int)
     if n < 0
-      raise ArgumentError.new("can't shift negative count")
+      raise ArgumentError.new("Can't shift negative count")
     end
     n = Math.min(n, @size)
     n.times { shift }

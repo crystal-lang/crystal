@@ -10,7 +10,7 @@ module IO
 
     def self.check_invalid(invalid)
       if invalid && invalid != :skip
-        raise ArgumentError.new "valid values for `invalid` option are `nil` and `:skip`, not #{invalid.inspect}"
+        raise ArgumentError.new "Valid values for `invalid` option are `nil` and `:skip`, not #{invalid.inspect}"
       end
     end
   end

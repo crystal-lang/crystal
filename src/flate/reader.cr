@@ -51,7 +51,7 @@ class Flate::Reader
 
   # Always raises `IO::Error` because this is a read-only `IO`.
   def write(slice : Bytes)
-    raise IO::Error.new "can't write to Flate::Reader"
+    raise IO::Error.new "Can't write to Flate::Reader"
   end
 
   # See `IO#read`.

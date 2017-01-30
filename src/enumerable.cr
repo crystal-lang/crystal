@@ -487,7 +487,7 @@ module Enumerable(T)
   # [1, 2, 3].in_groups_of(2)    # => [[1, 2], [3, nil]]
   # ```
   def in_groups_of(size : Int, filled_up_with : U = nil) forall U
-    raise ArgumentError.new("size must be positive") if size <= 0
+    raise ArgumentError.new("Size must be positive") if size <= 0
 
     ary = Array(Array(T | U)).new
     in_groups_of(size, filled_up_with) do |group|
@@ -512,7 +512,7 @@ module Enumerable(T)
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def in_groups_of(size : Int, filled_up_with : U = nil, reuse = false, &block) forall U
-    raise ArgumentError.new("size must be positive") if size <= 0
+    raise ArgumentError.new("Size must be positive") if size <= 0
 
     each_slice_internal(size, Array(T | U), reuse) do |slice|
       (size - slice.size).times { slice << filled_up_with }
@@ -1068,7 +1068,7 @@ module Enumerable(T)
   # [1, 2, 3, 4, 5, 6].skip(3) # => [4, 5, 6]
   # ```
   def skip(count : Int)
-    raise ArgumentError.new("attempt to skip negative size") if count < 0
+    raise ArgumentError.new("Attempt to skip negative size") if count < 0
 
     array = Array(T).new
     each_with_index do |e, i|
@@ -1243,7 +1243,7 @@ module Enumerable(T)
   # returns as many as possible. This include the case of calling it over
   # an empty collection, in which case it returns an empty array.
   def first(count : Int)
-    raise ArgumentError.new("attempt to take negative size") if count < 0
+    raise ArgumentError.new("Attempt to take negative size") if count < 0
 
     ary = Array(T).new(count)
     each_with_index do |e, i|

@@ -12,7 +12,7 @@ module Zip
     end
 
     def read(slice : Bytes)
-      raise IO::Error.new "can't read from Zip::Writer entry"
+      raise IO::Error.new "Can't read from Zip::Writer entry"
     end
 
     def write(slice : Bytes)
