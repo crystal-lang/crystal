@@ -186,7 +186,7 @@ module Crystal
       # any case, macro code *should* be simple so that it doesn't
       # need to be debugged at runtime (because macros work at compile-time.)
       unless filename.is_a?(String)
-        raise "Bug: expected debug filename to be a String, not #{filename.class}"
+        raise "BUG: expected debug filename to be a String, not #{filename.class}"
       end
 
       {

@@ -2539,7 +2539,7 @@ module Crystal
                 write_token :")"
               end
             else
-              raise "Bug: expected `[`, `[]` or `[]?`"
+              raise "BUG: expected `[`, `[]` or `[]?`"
             end
           elsif !call.obj && call.name == "[]="
             case @token.type
@@ -2565,7 +2565,7 @@ module Crystal
                 write_token :")"
               end
             else
-              raise "Bug: expected `[` or `[]=`"
+              raise "BUG: expected `[` or `[]=`"
             end
           else
             indent(@indent, call)
@@ -2607,7 +2607,7 @@ module Crystal
             accept body
           end
         else
-          raise "Bug: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
+          raise "BUG: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
         end
       end
 
@@ -2836,7 +2836,7 @@ module Crystal
         when Call
           accept_assign_value(right.args.last)
         else
-          raise "Bug: expected Assign or Call after op assign, at #{node.location}"
+          raise "BUG: expected Assign or Call after op assign, at #{node.location}"
         end
         return false
       end
@@ -3910,7 +3910,7 @@ module Crystal
     end
 
     def visit(node : ASTNode)
-      raise "Bug: unexpected node: #{node.class} at #{node.location}"
+      raise "BUG: unexpected node: #{node.class} at #{node.location}"
     end
 
     def to_s(io)
