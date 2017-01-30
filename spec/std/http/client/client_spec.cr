@@ -134,7 +134,7 @@ module HTTP
     end
 
     it "raises if URI is missing scheme" do
-      expect_raises(ArgumentError, "missing scheme") do
+      expect_raises(ArgumentError, "Missing scheme") do
         HTTP::Client.get URI.parse("www.example.com")
       end
     end
@@ -154,7 +154,7 @@ module HTTP
 
       TestServer.open("localhost", 0, 0.5) do |server|
         client = Client.new("localhost", server.local_address.port)
-        expect_raises(IO::Timeout, "read timed out") do
+        expect_raises(IO::Timeout, "Read timed out") do
           client.read_timeout = 0.001
           client.get("/?sleep=1")
         end

@@ -26,13 +26,13 @@ describe "Array" do
     end
 
     it "raises on negative count" do
-      expect_raises(ArgumentError, "negative array size") do
+      expect_raises(ArgumentError, "Negative array size") do
         Array.new(-1, 3)
       end
     end
 
     it "raises on negative capacity" do
-      expect_raises(ArgumentError, "negative array size") do
+      expect_raises(ArgumentError, "Negative array size") do
         Array(Int32).new(-1)
       end
     end
@@ -176,13 +176,13 @@ describe "Array" do
     end
 
     it "raises on negative count" do
-      expect_raises ArgumentError, /negative count: -1/ do
+      expect_raises ArgumentError, /Negative count: -1/ do
         [1, 2, 3][1, -1]
       end
     end
 
     it "raises on negative count on empty Array" do
-      expect_raises ArgumentError, /negative count: -1/ do
+      expect_raises ArgumentError, /Negative count: -1/ do
         Array(Int32).new[0, -1]
       end
     end
@@ -260,7 +260,7 @@ describe "Array" do
       a[1, 3] = 6
       a.should eq([1, 6, 5, 6, 7, 8])
 
-      expect_raises ArgumentError, "negative count" do
+      expect_raises ArgumentError, "Negative count" do
         [1, 2, 3][0, -1]
       end
 
@@ -1471,7 +1471,7 @@ describe "Array" do
     it { [1, 2, 3].permutations(3).should eq([[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]) }
     it { [1, 2, 3].permutations(0).should eq([[] of Int32]) }
     it { [1, 2, 3].permutations(4).should eq([] of Array(Int32)) }
-    it { expect_raises(ArgumentError, "size must be positive") { [1].permutations(-1) } }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].permutations(-1) } }
 
     it "accepts a block" do
       sums = [] of Int32
@@ -1502,7 +1502,7 @@ describe "Array" do
       object_ids.size.should eq(1)
     end
 
-    it { expect_raises(ArgumentError, "size must be positive") { [1].each_permutation(-1) { } } }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_permutation(-1) { } } }
 
     it "returns iterator" do
       a = [1, 2, 3]
@@ -1555,7 +1555,7 @@ describe "Array" do
     it { [1, 2, 3].combinations(4).should eq([] of Array(Int32)) }
     it { [1, 2, 3, 4].combinations(3).should eq([[1, 2, 3], [1, 2, 4], [1, 3, 4], [2, 3, 4]]) }
     it { [1, 2, 3, 4].combinations(2).should eq([[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]) }
-    it { expect_raises(ArgumentError, "size must be positive") { [1].combinations(-1) } }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].combinations(-1) } }
 
     it "accepts a block" do
       sums = [] of Int32
@@ -1595,7 +1595,7 @@ describe "Array" do
       sums.should eq([3, 4, 5])
     end
 
-    it { expect_raises(ArgumentError, "size must be positive") { [1].each_combination(-1) { } } }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_combination(-1) { } } }
 
     it "returns iterator" do
       a = [1, 2, 3, 4]
@@ -1646,7 +1646,7 @@ describe "Array" do
     it { [1, 2, 3].repeated_combinations(3).should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
     it { [1, 2, 3].repeated_combinations(0).should eq([[] of Int32]) }
     it { [1, 2, 3].repeated_combinations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 3], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 3], [1, 3, 3, 3], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 3], [2, 3, 3, 3], [3, 3, 3, 3]]) }
-    it { expect_raises(ArgumentError, "size must be positive") { [1].repeated_combinations(-1) } }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].repeated_combinations(-1) } }
 
     it "accepts a block" do
       sums = [] of Int32
@@ -1665,7 +1665,7 @@ describe "Array" do
       sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
     end
 
-    it { expect_raises(ArgumentError, "size must be positive") { [1].each_repeated_combination(-1) { } } }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_repeated_combination(-1) { } } }
 
     it "yields with reuse = true" do
       sums = [] of Int32
@@ -1739,7 +1739,7 @@ describe "Array" do
     it { [1, 2, 3].repeated_permutations(3).should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 1], [1, 2, 2], [1, 2, 3], [1, 3, 1], [1, 3, 2], [1, 3, 3], [2, 1, 1], [2, 1, 2], [2, 1, 3], [2, 2, 1], [2, 2, 2], [2, 2, 3], [2, 3, 1], [2, 3, 2], [2, 3, 3], [3, 1, 1], [3, 1, 2], [3, 1, 3], [3, 2, 1], [3, 2, 2], [3, 2, 3], [3, 3, 1], [3, 3, 2], [3, 3, 3]]) }
     it { [1, 2, 3].repeated_permutations(0).should eq([[] of Int32]) }
     it { [1, 2, 3].repeated_permutations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 1], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 1], [1, 1, 3, 2], [1, 1, 3, 3], [1, 2, 1, 1], [1, 2, 1, 2], [1, 2, 1, 3], [1, 2, 2, 1], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 1], [1, 2, 3, 2], [1, 2, 3, 3], [1, 3, 1, 1], [1, 3, 1, 2], [1, 3, 1, 3], [1, 3, 2, 1], [1, 3, 2, 2], [1, 3, 2, 3], [1, 3, 3, 1], [1, 3, 3, 2], [1, 3, 3, 3], [2, 1, 1, 1], [2, 1, 1, 2], [2, 1, 1, 3], [2, 1, 2, 1], [2, 1, 2, 2], [2, 1, 2, 3], [2, 1, 3, 1], [2, 1, 3, 2], [2, 1, 3, 3], [2, 2, 1, 1], [2, 2, 1, 2], [2, 2, 1, 3], [2, 2, 2, 1], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 1], [2, 2, 3, 2], [2, 2, 3, 3], [2, 3, 1, 1], [2, 3, 1, 2], [2, 3, 1, 3], [2, 3, 2, 1], [2, 3, 2, 2], [2, 3, 2, 3], [2, 3, 3, 1], [2, 3, 3, 2], [2, 3, 3, 3], [3, 1, 1, 1], [3, 1, 1, 2], [3, 1, 1, 3], [3, 1, 2, 1], [3, 1, 2, 2], [3, 1, 2, 3], [3, 1, 3, 1], [3, 1, 3, 2], [3, 1, 3, 3], [3, 2, 1, 1], [3, 2, 1, 2], [3, 2, 1, 3], [3, 2, 2, 1], [3, 2, 2, 2], [3, 2, 2, 3], [3, 2, 3, 1], [3, 2, 3, 2], [3, 2, 3, 3], [3, 3, 1, 1], [3, 3, 1, 2], [3, 3, 1, 3], [3, 3, 2, 1], [3, 3, 2, 2], [3, 3, 2, 3], [3, 3, 3, 1], [3, 3, 3, 2], [3, 3, 3, 3]]) }
-    it { expect_raises(ArgumentError, "size must be positive") { [1].repeated_permutations(-1) } }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].repeated_permutations(-1) } }
 
     it "accepts a block" do
       sums = [] of Int32
@@ -1781,7 +1781,7 @@ describe "Array" do
       sums.should eq([6, 7, 8, 7, 8, 9, 8, 9, 10, 7, 8, 9, 8, 9, 10, 9, 10, 11, 8, 9, 10, 9, 10, 11, 10, 11, 12])
     end
 
-    it { expect_raises(ArgumentError, "size must be positive") { [1].each_repeated_permutation(-1) { } } }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_repeated_permutation(-1) { } } }
   end
 
   describe "Array.each_product" do
