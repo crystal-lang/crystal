@@ -62,17 +62,17 @@ describe "Semantic: struct" do
 
   it "errors on struct if no field" do
     assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = LibFoo::Bar.new; f.y = 'a'",
-      "undefined method 'y=' for LibFoo::Bar"
+      "Undefined method 'y=' for LibFoo::Bar"
   end
 
   it "errors on struct setter if different type" do
     assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = LibFoo::Bar.new; f.x = 'a'",
-      "field 'x' of struct LibFoo::Bar has type Int32, not Char"
+      "Field 'x' of struct LibFoo::Bar has type Int32, not Char"
   end
 
   it "errors on struct setter if different type via new" do
     assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = Pointer(LibFoo::Bar).malloc(1_u64); f.value.x = 'a'",
-      "field 'x' of struct LibFoo::Bar has type Int32, not Char"
+      "Field 'x' of struct LibFoo::Bar has type Int32, not Char"
   end
 
   it "types struct getter on pointer type" do
@@ -92,7 +92,7 @@ describe "Semantic: struct" do
       bar = LibFoo::Bar.new
       bar.x = -> { a }
       ),
-      "can't set closure as C struct member"
+      "Can't set closure as C struct member"
   end
 
   it "errors if already defined" do
@@ -196,7 +196,7 @@ describe "Semantic: struct" do
 
       LibC::Bar.new.a
       ),
-      "can only include C struct, not union"
+      "Can only include C struct, not union"
   end
 
   it "errors if includes unknown type" do
@@ -209,7 +209,7 @@ describe "Semantic: struct" do
 
       LibC::Bar.new.a
       ),
-      "undefined constant Foo"
+      "Undefined constant Foo"
   end
 
   it "errors if includes and field already exists" do
@@ -227,7 +227,7 @@ describe "Semantic: struct" do
 
       LibC::Bar.new.a
       ),
-      "struct LibC::Foo has a field named 'a', which LibC::Bar already defines"
+      "Struct LibC::Foo has a field named 'a', which LibC::Bar already defines"
   end
 
   it "errors if includes and field already exists, the other way around" do
@@ -245,7 +245,7 @@ describe "Semantic: struct" do
 
       LibC::Bar.new.a
       ),
-      "struct LibC::Bar already defines a field named 'a'"
+      "Struct LibC::Bar already defines a field named 'a'"
   end
 
   it "marks as packed" do
@@ -268,7 +268,7 @@ describe "Semantic: struct" do
         end
       end
       ),
-      "empty structs are disallowed"
+      "Empty structs are disallowed"
   end
 
   it "errors if using void in struct field type" do
@@ -279,7 +279,7 @@ describe "Semantic: struct" do
         end
       end
       ),
-      "can't use Void as a struct field type"
+      "Can't use Void as a struct field type"
   end
 
   it "errors if using void via typedef in struct field type" do
@@ -292,7 +292,7 @@ describe "Semantic: struct" do
         end
       end
       ),
-      "can't use Void as a struct field type"
+      "Can't use Void as a struct field type"
   end
 
   it "can access instance var from the outside (#1092)" do
@@ -339,7 +339,7 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "converting from Foo to Int32 by invoking 'to_i32'"
+      "Converting from Foo to Int32 by invoking 'to_i32'"
   end
 
   it "errors if invoking to_i32 and got wrong type" do
@@ -359,7 +359,7 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "invoked 'to_i32' to convert from Foo to Int32, but got Char"
+      "Invoked 'to_i32' to convert from Foo to Int32, but got Char"
   end
 
   it "errors if invoking to_unsafe and got error in that call" do
@@ -379,7 +379,7 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "no overload matches 'Int32#+' with type Char"
+      "No overload matches 'Int32#+' with type Char"
   end
 
   it "errors if invoking to_unsafe and got different type" do
@@ -399,6 +399,6 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "invoked 'to_unsafe' to convert from Foo to Int32, but got Char"
+      "Invoked 'to_unsafe' to convert from Foo to Int32, but got Char"
   end
 end

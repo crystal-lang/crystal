@@ -84,7 +84,7 @@ describe "Semantic: instance var" do
 
       Bar.new.x
       ),
-      "instance variable '@x' of Foo, with Bar < Foo, is already declared as Int32"
+      "Instance variable '@x' of Foo, with Bar < Foo, is already declared as Int32"
   end
 
   it "declares instance var in module, inherits to type" do
@@ -326,7 +326,7 @@ describe "Semantic: instance var" do
 
       Foo(3).new(3).x
       ),
-      "can't declare variable with NumberLiteral"
+      "Can't declare variable with NumberLiteral"
   end
 
   it "declares instance var of generic type through module" do
@@ -1393,7 +1393,7 @@ describe "Semantic: instance var" do
 
       Bar.new.foo
       ),
-      "instance variable '@x' of Foo must be Int32, not Float64"
+      "Instance variable '@x' of Foo must be Int32, not Float64"
   end
 
   it "doesn't infer for subclass if assigns another type (2)" do
@@ -1419,7 +1419,7 @@ describe "Semantic: instance var" do
 
       Bar.new.foo
       ),
-      "instance variable '@x' of Foo must be Int32, not Float64"
+      "Instance variable '@x' of Foo must be Int32, not Float64"
   end
 
   it "infers type from included module" do
@@ -1789,7 +1789,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "this 'initialize' doesn't explicitly initialize instance variable '@x' of Foo, rendering it nilable"
+      "This 'initialize' doesn't explicitly initialize instance variable '@x' of Foo, rendering it nilable"
   end
 
   it "doesn't error if not initializes in all initialize because declared as nilable" do
@@ -1861,7 +1861,7 @@ describe "Semantic: instance var" do
         @x : Int32
       end
       ),
-      "instance variable '@x' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   it "doesn't if declaring nilable instance var and turns out to be nilable" do
@@ -1884,7 +1884,7 @@ describe "Semantic: instance var" do
         @x : T
       end
       ),
-      "instance variable '@x' of Foo(T) was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' of Foo(T) was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   it "errors if declaring instance var and turns out to be nilable, in generic module type" do
@@ -1897,7 +1897,7 @@ describe "Semantic: instance var" do
         include Moo(Int32)
       end
       ),
-      "instance variable '@x' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   it "doesn't error if declaring instance var and doesn't out to be nilable, in generic module type" do
@@ -1932,7 +1932,7 @@ describe "Semantic: instance var" do
         include Moo(T)
       end
       ),
-      "instance variable '@x' of Foo(T) was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' of Foo(T) was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   it "doesn't error if not initializing variables but calling super" do
@@ -2020,7 +2020,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
+      "This 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
   end
 
   it "errors if not initializing super variables (2)" do
@@ -2039,7 +2039,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
+      "This 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
   end
 
   it "errors if not initializing super variables (3)" do
@@ -2056,7 +2056,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
+      "This 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
   end
 
   it "errors if not initializing super variable in generic" do
@@ -2073,7 +2073,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "this 'initialize' doesn't initialize instance variable '@x' of Foo(T), with Bar(T) < Foo(T), rendering it nilable"
+      "This 'initialize' doesn't initialize instance variable '@x' of Foo(T), with Bar(T) < Foo(T), rendering it nilable"
   end
 
   it "doesn't error if not calling super but initializing all variables" do
@@ -2851,7 +2851,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "instance variable @x of Foo was inferred to be Nil, but Nil alone provides no information"
+      "Instance variable @x of Foo was inferred to be Nil, but Nil alone provides no information"
   end
 
   it "says can't infer type if only nil was assigned, in generic type" do
@@ -2868,7 +2868,7 @@ describe "Semantic: instance var" do
 
       Foo(Int32).new.x
       ),
-      "instance variable @x of Foo(T) was inferred to be Nil, but Nil alone provides no information"
+      "Instance variable @x of Foo(T) was inferred to be Nil, but Nil alone provides no information"
   end
 
   it "allows nil instance var because it's a generic type" do
@@ -3064,7 +3064,7 @@ describe "Semantic: instance var" do
 
       Foo(Int32).new.bar
       ),
-      "can't use Bar(T) as the type of instance variable @bar of Foo(T), use a more specific type"
+      "Can't use Bar(T) as the type of instance variable @bar of Foo(T), use a more specific type"
   end
 
   it "doesn't crash on missing var on subclass, with superclass not specifying a type" do
@@ -3081,7 +3081,7 @@ describe "Semantic: instance var" do
 
       Bar.new
       ),
-      "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
+      "This 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
   end
 
   it "doesn't complain if not initliazed in one initialize, but has initializer (#2465)" do
@@ -3435,7 +3435,7 @@ describe "Semantic: instance var" do
 
       Foo.new
       ),
-      "undefined constant Bar"
+      "Undefined constant Bar"
   end
 
   it "infers from class method that invokes new" do
@@ -3696,7 +3696,7 @@ describe "Semantic: instance var" do
 
       Foo.new("aaaa")
       ),
-      "wrong number of arguments for 'Foo.new'"
+      "Wrong number of arguments for 'Foo.new'"
   end
 
   it "guesses inside macro if" do
@@ -3937,7 +3937,7 @@ describe "Semantic: instance var" do
 
       Foo.new
       ),
-      "undefined fun 'nope' for LibFoo"
+      "Undefined fun 'nope' for LibFoo"
   end
 
   it "errors when using Class (#2605)" do
@@ -3947,7 +3947,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "can't use Class as the type of instance variable @class of Foo, use a more specific type"
+      "Can't use Class as the type of instance variable @class of Foo, use a more specific type"
   end
 
   it "errors when using Class in generic type" do
@@ -3957,7 +3957,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "can't use Class as the type of instance variable @class of Foo(T), use a more specific type"
+      "Can't use Class as the type of instance variable @class of Foo(T), use a more specific type"
   end
 
   it "doesn't error when using Class but specifying type" do
@@ -4036,7 +4036,7 @@ describe "Semantic: instance var" do
           @x : Int32?
         end
         ),
-        "can't declare instance variables in #{type}"
+        "Can't declare instance variables in #{type}"
     end
   end
 
@@ -4047,7 +4047,7 @@ describe "Semantic: instance var" do
           @x : Int32?
         end
         ),
-        "can't declare instance variables in #{type}"
+        "Can't declare instance variables in #{type}"
     end
   end
 
@@ -4061,7 +4061,7 @@ describe "Semantic: instance var" do
         include Moo
       end
       ),
-      "can't declare instance variables in Object"
+      "Can't declare instance variables in Object"
   end
 
   it "errors if adds instance variable to Object via guess" do
@@ -4071,7 +4071,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "can't declare instance variables in Object"
+      "Can't declare instance variables in Object"
   end
 
   it "errors if adds instance variable to Object via guess via included module" do
@@ -4085,7 +4085,7 @@ describe "Semantic: instance var" do
         include Moo
       end
       ),
-      "can't declare instance variables in Object"
+      "Can't declare instance variables in Object"
   end
 
   it "gives correct error when trying to use Int as an instance variable type" do
@@ -4094,7 +4094,7 @@ describe "Semantic: instance var" do
         @x : Int
       end
       ),
-      "can't use Int as the type of an instance variable yet, use a more specific type"
+      "Can't use Int as the type of an instance variable yet, use a more specific type"
   end
 
   it "shouldn't error when accessing instance var in initialized that's always initialized (#2953)" do
@@ -4237,7 +4237,7 @@ describe "Semantic: instance var" do
         @x : Foo
       end
       ),
-      "can't declare variable of generic non-instantiated type Foo"
+      "Can't declare variable of generic non-instantiated type Foo"
   end
 
   it "errors when typing an instance variable inside a method" do
@@ -4248,7 +4248,7 @@ describe "Semantic: instance var" do
 
       foo
       ),
-      "declaring the type of an instance variable must be done at the class level"
+      "Declaring the type of an instance variable must be done at the class level"
   end
 
   it "declares instance var with union type with a virtual member" do
@@ -4410,7 +4410,7 @@ describe "Semantic: instance var" do
         @hoge_dir : String = "~/.hoge" ? "~/.hoge" : default_hoge_dir
       end
       ),
-      "undefined local variable or method"
+      "Undefined local variable or method"
   end
 
   it "is more permissive with macro def initialize" do
@@ -4467,7 +4467,7 @@ describe "Semantic: instance var" do
 
       Foo.new
       ),
-      "instance variable '@y' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@y' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   it "errors if finally not initialized in macro def" do
@@ -4483,7 +4483,7 @@ describe "Semantic: instance var" do
 
       Foo.new
       ),
-      "instance variable '@x' of Foo was not initialized in this 'initialize', rendering it nilable"
+      "Instance variable '@x' of Foo was not initialized in this 'initialize', rendering it nilable"
   end
 
   it "doesn't error if initializes via super in macro def" do

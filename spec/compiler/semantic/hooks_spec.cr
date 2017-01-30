@@ -76,7 +76,7 @@ describe "Semantic: hooks" do
         macro inherited(x)
         end
       end
-      ), "macro 'inherited' must not have arguments"
+      ), "Macro 'inherited' must not have arguments"
   end
 
   it "errors if wrong included args size" do
@@ -85,7 +85,7 @@ describe "Semantic: hooks" do
         macro included(x)
         end
       end
-      ), "macro 'included' must not have arguments"
+      ), "Macro 'included' must not have arguments"
   end
 
   it "errors if wrong extended args size" do
@@ -94,7 +94,7 @@ describe "Semantic: hooks" do
         macro extended(x)
         end
       end
-      ), "macro 'extended' must not have arguments"
+      ), "Macro 'extended' must not have arguments"
   end
 
   it "types initializer in inherited" do
@@ -128,7 +128,7 @@ describe "Semantic: hooks" do
         macro method_added
         end
       end
-      ), "macro 'method_added' must have a argument"
+      ), "Macro 'method_added' must have a argument"
   end
 
   it "includes error message in included hook (#889)" do
@@ -145,7 +145,7 @@ describe "Semantic: hooks" do
         include Doable
       end
       ),
-      "undefined macro method 'MacroId#unknown'"
+      "Undefined macro method 'MacroId#unknown'"
   end
 
   it "does included macro for generic module" do

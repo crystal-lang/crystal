@@ -54,7 +54,7 @@ module Crystal
     protected def self.wrap_macro_expression(ex, location)
       filename = location.filename
       if filename.is_a?(VirtualFile) && (expanded_location = filename.expanded_location)
-        ex = TypeException.new "expanding macro", expanded_location.line_number, expanded_location.column_number, expanded_location.filename, 0, ex
+        ex = TypeException.new "Expanding macro", expanded_location.line_number, expanded_location.column_number, expanded_location.filename, 0, ex
       end
       ex
     end
@@ -227,11 +227,11 @@ module Crystal
       io << colorize("Error: ").bold
       case nil_reason.reason
       when :used_before_initialized
-        io << colorize("instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
+        io << colorize("Instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
       when :used_self_before_initialized
         io << colorize("'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable").bold
       when :initialized_in_rescue
-        io << colorize("instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued").bold
+        io << colorize("Instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued").bold
       end
     end
 

@@ -28,7 +28,7 @@ module Zlib
       writer.closed?.should be_true
       io.closed?.should be_false
 
-      expect_raises IO::Error, "closed stream" do
+      expect_raises IO::Error, "Closed stream" do
         writer.print "a"
       end
     end

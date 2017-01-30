@@ -8,7 +8,7 @@ describe "Semantic: previous_def" do
       end
 
       foo
-      ), "there is no previous definition of 'foo'"
+      ), "There is no previous definition of 'foo'"
   end
 
   it "types previous def" do
@@ -126,6 +126,6 @@ describe "Semantic: previous_def" do
 
       Foo.new.x
       ),
-      "wrong number of arguments"
+      "Wrong number of arguments"
   end
 end

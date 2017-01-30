@@ -23,7 +23,7 @@ module IO
     # *read_size* bytes. If *sync_close* is set, calling `#close` calls
     # `#close` on the underlying `IO`.
     def initialize(@io : IO, read_size : Int, @sync_close = false)
-      raise ArgumentError.new "negative read_size" if read_size < 0
+      raise ArgumentError.new "Negative read_size" if read_size < 0
       @closed = false
       @read_remaining = read_size.to_u64
     end

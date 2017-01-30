@@ -5,7 +5,7 @@ class Crystal::Call
     old_target_defs = @target_defs
 
     external = obj_type.lookup_first_def(name, false).as(External?)
-    raise "undefined fun '#{name}' for #{obj_type}" unless external
+    raise "Undefined fun '#{name}' for #{obj_type}" unless external
 
     check_lib_call_named_args(external)
 
@@ -39,7 +39,7 @@ class Crystal::Call
     return unless named_args
 
     if external.varargs?
-      raise "can't use named args with variadic function"
+      raise "Can't use named args with variadic function"
     end
 
     # We check that all arguments are covered, and then we
@@ -57,11 +57,11 @@ class Crystal::Call
     named_args.each do |named_arg|
       found_index = external.args.index { |arg| arg.name == named_arg.name }
       unless found_index
-        named_arg.raise "no argument named '#{named_arg.name}'"
+        named_arg.raise "No argument named '#{named_arg.name}'"
       end
 
       if covered[found_index]
-        named_arg.raise "argument '#{named_arg.name}' already specified"
+        named_arg.raise "Argument '#{named_arg.name}' already specified"
       end
 
       covered[found_index] = true
@@ -76,9 +76,9 @@ class Crystal::Call
     end
 
     if missing_args.size == 1
-      raise "missing argument: #{missing_args.first}"
+      raise "Missing argument: #{missing_args.first}"
     elsif missing_args.size > 1
-      raise "missing arguments: #{missing_args.join ", "}"
+      raise "Missing arguments: #{missing_args.join ", "}"
     end
 
     # Now we sort the named args according to their index.
@@ -115,7 +115,7 @@ class Crystal::Call
         arg_type = arg.type
         if arg_type.is_a?(PointerInstanceType)
           if arg_type.element_type.remove_indirection.void?
-            call_arg.raise "can't use out with Void* (argument #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} is Void*)"
+            call_arg.raise "Can't use out with Void* (argument #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} is Void*)"
           end
 
           if call_arg.exp.is_a?(Underscore)
@@ -127,7 +127,7 @@ class Crystal::Call
             parent_visitor.bind_meta_var(call_arg.exp)
           end
         else
-          call_arg.raise "argument #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"
+          call_arg.raise "Argument #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"
         end
       end
     end
@@ -137,7 +137,7 @@ class Crystal::Call
       untyped_def.args.size.upto(self.args.size - 1) do |i|
         self_arg = self.args[i]
         if self_arg.is_a?(Out)
-          self_arg.raise "can't use out at varargs position: declare the variable with `#{self_arg.exp} = uninitialized ...` and pass it with `pointerof(#{self_arg.exp})`"
+          self_arg.raise "Can't use out at varargs position: declare the variable with `#{self_arg.exp} = uninitialized ...` and pass it with `pointerof(#{self_arg.exp})`"
         end
       end
     end
@@ -158,7 +158,7 @@ class Crystal::Call
           unless self_arg_type.nil_type? || self_arg_type.allowed_in_lib?
             implicit_call = Conversions.try_to_unsafe(self_arg.clone, parent_visitor) do |ex|
               if Conversions.to_unsafe_lookup_failed?(ex)
-                self_arg.raise "argument ##{i + 1} of '#{full_name(obj_type)}' is not a primitive type and no #{self_arg_type}#to_unsafe method found"
+                self_arg.raise "Argument ##{i + 1} of '#{full_name(obj_type)}' is not a primitive type and no #{self_arg_type}#to_unsafe method found"
               else
                 self_arg.raise ex.message, ex
               end
@@ -168,14 +168,14 @@ class Crystal::Call
               if implicit_call_type.allowed_in_lib?
                 self.args[i] = implicit_call
               else
-                self_arg.raise "converted #{self_arg_type} invoking to_unsafe, but #{implicit_call_type} is not a primitive type"
+                self_arg.raise "Converted #{self_arg_type} invoking to_unsafe, but #{implicit_call_type} is not a primitive type"
               end
             else
-              self_arg.raise "tried to convert #{self_arg_type} invoking to_unsafe, but can't deduce its type"
+              self_arg.raise "Tried to convert #{self_arg_type} invoking to_unsafe, but can't deduce its type"
             end
           end
         else
-          self_arg.raise "can't deduce argument type"
+          self_arg.raise "Can't deduce argument type"
         end
       end
     end
@@ -203,9 +203,9 @@ class Crystal::Call
         if expected_type.is_a?(ProcInstanceType) &&
            actual_type.is_a?(ProcInstanceType) &&
            expected_type.arg_types == actual_type.arg_types
-          self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be a Proc returning #{expected_type.return_type}, not #{actual_type.return_type}"
+          self_arg.raise "Argument #{arg_name} of '#{full_name(obj_type)}' must be a Proc returning #{expected_type.return_type}, not #{actual_type.return_type}"
         else
-          self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
+          self_arg.raise "Argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
         end
       else
         self_arg.raise ex.message, ex
@@ -218,10 +218,10 @@ class Crystal::Call
         self.args[index] = implicit_call
       else
         arg_name = lib_arg_name(typed_def_arg, index)
-        self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type} (nor #{implicit_call_type} returned by '#{actual_type}#to_unsafe')"
+        self_arg.raise "Argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type} (nor #{implicit_call_type} returned by '#{actual_type}#to_unsafe')"
       end
     else
-      self_arg.raise "tried to convert #{actual_type} to #{expected_type} invoking to_unsafe, but can't deduce its type"
+      self_arg.raise "Tried to convert #{actual_type} to #{expected_type} invoking to_unsafe, but can't deduce its type"
     end
   end
 

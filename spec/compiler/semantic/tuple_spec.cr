@@ -43,7 +43,7 @@ describe "Semantic: tuples" do
 
   it "gives error when indexing out of range" do
     assert_error "{1, 'a'}[2]",
-      "index out of bounds for Tuple(Int32, Char) (2 not in 0..1)"
+      "Index out of bounds for Tuple(Int32, Char) (2 not in 0..1)"
   end
 
   it "gives error when indexing out of range on empty tuple" do
@@ -54,7 +54,7 @@ describe "Semantic: tuples" do
 
       tuple()[0]
       ),
-      "index '0' out of bounds for empty tuple"
+      "Index '0' out of bounds for empty tuple"
   end
 
   it "can name a tuple type" do
@@ -89,7 +89,7 @@ describe "Semantic: tuples" do
 
       foo("a", "b")
       ),
-      "recursive splat expansion"
+      "Recursive splat expansion"
   end
 
   it "errors on recusrive splat expansion (1) (#361)" do
@@ -102,7 +102,7 @@ describe "Semantic: tuples" do
 
       foo "foo", 1
       ),
-      "recursive splat expansion"
+      "Recursive splat expansion"
   end
 
   it "errors on recursive splat expansion (2) (#361)" do
@@ -116,7 +116,7 @@ describe "Semantic: tuples" do
 
       foo "foo", 1
       ),
-      "recursive splat expansion"
+      "Recursive splat expansion"
   end
 
   it "allows tuple covariance" do
@@ -247,7 +247,7 @@ describe "Semantic: tuples" do
 
       foo({1, 'a'})
       ),
-      "can't specify more than one splat in restriction"
+      "Can't specify more than one splat in restriction"
   end
 
   it "errors on tuple too big (#3816)" do
@@ -259,6 +259,6 @@ describe "Semantic: tuples" do
         pos += {0, 0}
       end
       ),
-      "tuple too big"
+      "Tuple too big"
   end
 end

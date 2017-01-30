@@ -113,7 +113,7 @@ class Crystal::Type
       if type.is_a?(Type)
         if @in_generic_args == 0 && type.is_a?(AliasType) && !type.aliased_type?
           if type.value_processed?
-            node.raise "infinite recursive definition of alias #{type}"
+            node.raise "Infinite recursive definition of alias #{type}"
           else
             type.process_value
           end
@@ -130,7 +130,7 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_allowed_in_generics(ident, type, "can't use #{type} in unions")
+        check_type_allowed_in_generics(ident, type, "Can't use #{type} in unions")
 
         type.virtual_type
       end
@@ -156,33 +156,33 @@ class Crystal::Type
       when NamedTupleType
         named_args = node.named_args
         unless named_args
-          node.raise "can only instantiate NamedTuple with named arguments"
+          node.raise "Can only instantiate NamedTuple with named arguments"
         end
 
         entries = named_args.map do |named_arg|
           subnode = named_arg.value
 
           if subnode.is_a?(NumberLiteral)
-            subnode.raise "can't use number as type for NamedTuple"
+            subnode.raise "Can't use number as type for NamedTuple"
           end
 
           type = in_generic_args { lookup(subnode) }
           return if !@raise && !type
           type = type.not_nil!
 
-          check_type_allowed_in_generics(subnode, type, "can't use #{type} as a generic type argument")
+          check_type_allowed_in_generics(subnode, type, "Can't use #{type} as a generic type argument")
           NamedArgumentType.new(named_arg.name, type.virtual_type)
         end
 
         begin
           return instance_type.instantiate_named_args(entries)
         rescue ex : Crystal::Exception
-          node.raise "instantiating #{node}", inner: ex if @raise
+          node.raise "Instantiating #{node}", inner: ex if @raise
         end
       when GenericType
         if instance_type.splat_index
           if node.named_args
-            node.raise "can only use named arguments with NamedTuple"
+            node.raise "Can only use named arguments with NamedTuple"
           end
 
           min_needed = instance_type.type_vars.size - 1
@@ -191,7 +191,7 @@ class Crystal::Type
           end
         else
           if node.named_args
-            node.raise "can only use named arguments with NamedTuple"
+            node.raise "Can only use named arguments with NamedTuple"
           end
 
           if instance_type.type_vars.size != node.type_vars.size
@@ -222,7 +222,7 @@ class Crystal::Type
           else
             return if !@raise
 
-            type_var.raise "can only splat tuple type, not #{splat_type}"
+            type_var.raise "Can only splat tuple type, not #{splat_type}"
           end
         else
           # Check the case of T resolving to a number
@@ -235,7 +235,7 @@ class Crystal::Type
                 num = interpreter.interpret(type.value)
                 type_vars << NumberLiteral.new(num)
               rescue ex : Crystal::Exception
-                type_var.raise "expanding constant value for a number value", inner: ex
+                type_var.raise "Expanding constant value for a number value", inner: ex
               end
               next
             when ASTNode
@@ -250,7 +250,7 @@ class Crystal::Type
 
           case instance_type
           when GenericUnionType, PointerType, StaticArrayType, TupleType, ProcType
-            check_type_allowed_in_generics(type_var, type, "can't use #{type} as a generic type argument")
+            check_type_allowed_in_generics(type_var, type, "Can't use #{type} as a generic type argument")
           end
 
           type_vars << type.virtual_type
@@ -268,7 +268,7 @@ class Crystal::Type
           instance_type.as(GenericType).instantiate(type_vars)
         end
       rescue ex : Crystal::Exception
-        node.raise "instantiating #{node}", inner: ex if @raise
+        node.raise "Instantiating #{node}", inner: ex if @raise
       end
     end
 
@@ -286,7 +286,7 @@ class Crystal::Type
               types.concat(a_type.tuple_types)
             else
               if @raise
-                input.exp.raise "can only splat tuple type, not #{a_type}"
+                input.exp.raise "Can only splat tuple type, not #{a_type}"
               else
                 return
               end
@@ -296,7 +296,7 @@ class Crystal::Type
             return if !@raise && !type
             type = type.not_nil!
 
-            check_type_allowed_in_generics(input, type, "can't use #{type} as proc argument")
+            check_type_allowed_in_generics(input, type, "Can't use #{type} as proc argument")
 
             types << type.virtual_type
           end
@@ -308,7 +308,7 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_allowed_in_generics(output, type, "can't use #{type} as proc return type")
+        check_type_allowed_in_generics(output, type, "Can't use #{type} as proc return type")
 
         types << type.virtual_type
       else
@@ -320,7 +320,7 @@ class Crystal::Type
 
     def lookup(node : Self)
       if @self_type.is_a?(Program)
-        node.raise "there's no self in this scope"
+        node.raise "There's no self in this scope"
       end
 
       if (self_type = @self_type).is_a?(GenericType)
@@ -334,7 +334,7 @@ class Crystal::Type
     def lookup(node : TypeOf)
       unless @allow_typeof
         if @raise
-          node.raise "can't use 'typeof' here"
+          node.raise "Can't use 'typeof' here"
         else
           return
         end
@@ -346,7 +346,7 @@ class Crystal::Type
       begin
         expressions.each &.accept visitor
       rescue ex : Crystal::Exception
-        node.raise "typing typeof", inner: ex
+        node.raise "Typing typeof", inner: ex
       end
       program.type_merge expressions
     end
@@ -360,16 +360,16 @@ class Crystal::Type
       else
         return if !@raise
 
-        node.raise "can only splat tuple type, not #{splat_type}"
+        node.raise "Can only splat tuple type, not #{splat_type}"
       end
     end
 
     def lookup(node : Underscore)
-      node.raise "can't use underscore as generic type argument" if @raise
+      node.raise "Can't use underscore as generic type argument" if @raise
     end
 
     def lookup(node : ASTNode)
-      raise "Bug: unknown node in TypeLookup: #{node} #{node.class_desc}"
+      raise "BUG: unknown node in TypeLookup: #{node} #{node.class_desc}"
     end
 
     def raise_undefined_constant(node)
@@ -381,7 +381,7 @@ class Crystal::Type
       if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericClassType)
         first_name = node.names.first
         if instance_type.type_vars.includes?(first_name)
-          node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"
+          node.raise "Can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"
         end
       end
     end

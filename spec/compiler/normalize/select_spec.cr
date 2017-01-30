@@ -10,7 +10,7 @@ describe "Normalize: case" do
       when 1
         baz
       else
-        ::raise("Bug: invalid select index")
+        ::raise("BUG: invalid select index")
       end
       CODE
   end
@@ -23,7 +23,7 @@ describe "Normalize: case" do
         x = __temp_2.as(typeof(foo))
         x + 1
       else
-        ::raise("Bug: invalid select index")
+        ::raise("BUG: invalid select index")
       end
       CODE
   end
@@ -48,7 +48,7 @@ describe "Normalize: case" do
         x = __temp_2.as(typeof(foo?))
         x + 1
       else
-        ::raise("Bug: invalid select index")
+        ::raise("BUG: invalid select index")
       end
       CODE
   end
@@ -61,7 +61,7 @@ describe "Normalize: case" do
         x = __temp_2.as(typeof(foo!))
         x + 1
       else
-        ::raise("Bug: invalid select index")
+        ::raise("BUG: invalid select index")
       end
       CODE
   end

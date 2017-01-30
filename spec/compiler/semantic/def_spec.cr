@@ -111,7 +111,7 @@ describe "Semantic: def" do
 
   it "reports undefined method" do
     assert_error "foo()",
-      "undefined method 'foo'"
+      "Undefined method 'foo'"
   end
 
   it "reports no overload matches" do
@@ -121,7 +121,7 @@ describe "Semantic: def" do
 
       foo 1 || 1.5
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "reports no overload matches 2" do
@@ -134,7 +134,7 @@ describe "Semantic: def" do
 
       foo(1 || 'a', 1 || 1.5)
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "reports no block given" do
@@ -168,7 +168,7 @@ describe "Semantic: def" do
 
       foo.bar
       ",
-      "undefined method"
+      "Undefined method"
   end
 
   it "errors when default value is incompatible with type restriction" do
@@ -178,7 +178,7 @@ describe "Semantic: def" do
 
       foo
       ",
-      "can't restrict Int32 to Int64"
+      "Can't restrict Int32 to Int64"
   end
 
   it "types call with global scope" do
@@ -249,7 +249,7 @@ describe "Semantic: def" do
 
       a = Pointer(Node).new(0_u64)
       foo a
-      ), "no overload matches"
+      ), "No overload matches"
   end
 
   it "says can only defined def on types and self" do
@@ -272,7 +272,7 @@ describe "Semantic: def" do
 
       foo
       ),
-      "type must be Int32, not Char"
+      "Type must be Int32, not Char"
   end
 
   it "errors if return type doesn't match on instance method" do
@@ -285,7 +285,7 @@ describe "Semantic: def" do
 
       Foo.new.foo
       ),
-      "type must be Int32, not Char"
+      "Type must be Int32, not Char"
   end
 
   it "errors if return type doesn't match on class method" do
@@ -298,7 +298,7 @@ describe "Semantic: def" do
 
       Foo.foo
       ),
-      "type must be Int32, not Char"
+      "Type must be Int32, not Char"
   end
 
   it "is ok if returns Int32? with explicit return" do
@@ -347,7 +347,7 @@ describe "Semantic: def" do
 
       Foo.bar
       ),
-      "wrong number of arguments for 'foo' (given 1, expected 0)"
+      "Wrong number of arguments for 'foo' (given 1, expected 0)"
   end
 
   it "gives correct error for wrong number of arguments for program call inside type (2) (#1024)" do
@@ -363,7 +363,7 @@ describe "Semantic: def" do
 
       Foo.bar
       ),
-      "no overload matches 'foo'"
+      "No overload matches 'foo'"
   end
 
   it "errors if declares def inside if" do
@@ -372,7 +372,7 @@ describe "Semantic: def" do
         def foo; end
       end
       ),
-      "can't declare def dynamically"
+      "Can't declare def dynamically"
   end
 
   it "accesses free var of default argument (#1101)" do
@@ -407,7 +407,7 @@ describe "Semantic: def" do
 
       foo(1)
       ),
-      "undefined constant T::String"
+      "Undefined constant T::String"
   end
 
   it "errors if trying to declare method on generic class instance" do
@@ -420,7 +420,7 @@ describe "Semantic: def" do
       def Bar.foo
       end
       ),
-      "can't define method in generic instance"
+      "Can't define method in generic instance"
   end
 
   it "uses free variable" do

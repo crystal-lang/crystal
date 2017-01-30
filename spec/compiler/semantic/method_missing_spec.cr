@@ -17,7 +17,7 @@ describe "Semantic: method_missing" do
 
       foo = Baz.new || Bar.new
       foo.lala
-      ), "undefined method 'lala' for Baz"
+      ), "Undefined method 'lala' for Baz"
   end
 
   it "does error in method_missing if wrong number of args" do
@@ -26,7 +26,7 @@ describe "Semantic: method_missing" do
         macro method_missing(call, foo)
         end
       end
-      ), "macro 'method_missing' expects 1 argument (call)"
+      ), "Macro 'method_missing' expects 1 argument (call)"
   end
 
   it "does method missing for generic type" do
@@ -53,7 +53,7 @@ describe "Semantic: method_missing" do
 
       Foo.new.bar
       ),
-      "wrong method_missing expansion"
+      "Wrong method_missing expansion"
   end
 
   it "errors if method_missing expands to multiple methods" do
@@ -71,7 +71,7 @@ describe "Semantic: method_missing" do
 
       Foo.new.bar
       ),
-      "wrong method_missing expansion"
+      "Wrong method_missing expansion"
   end
 
   it "finds method_missing with 'with ... yield'" do

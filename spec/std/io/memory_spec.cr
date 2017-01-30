@@ -29,7 +29,7 @@ describe IO::Memory do
   it "raises if reading when closed" do
     io = IO::Memory.new("abc")
     io.close
-    expect_raises(IO::Error, "closed stream") do
+    expect_raises(IO::Error, "Closed stream") do
       io.read(Slice.new(3, 0_u8))
     end
   end
@@ -37,7 +37,7 @@ describe IO::Memory do
   it "raises if clearing when closed" do
     io = IO::Memory.new("abc")
     io.close
-    expect_raises(IO::Error, "closed stream") do
+    expect_raises(IO::Error, "Closed stream") do
       io.clear
     end
   end
@@ -104,7 +104,7 @@ describe IO::Memory do
 
   it "raises if invoking gets with negative limit" do
     io = IO::Memory.new("hello\nworld\n")
-    expect_raises ArgumentError, "negative limit" do
+    expect_raises ArgumentError, "Negative limit" do
       io.gets(-1)
     end
   end
@@ -168,7 +168,7 @@ describe IO::Memory do
 
   it "raises if seek set is negative" do
     io = IO::Memory.new("abcdef")
-    expect_raises(ArgumentError, "negative pos") do
+    expect_raises(ArgumentError, "Negative pos") do
       io.seek(-1)
     end
   end
@@ -194,7 +194,7 @@ describe IO::Memory do
   it "raises if seek current leads to negative value" do
     io = IO::Memory.new("abcdef")
     io.seek(2)
-    expect_raises(ArgumentError, "negative pos") do
+    expect_raises(ArgumentError, "Negative pos") do
       io.seek(-3, IO::Seek::Current)
     end
   end
@@ -211,11 +211,11 @@ describe IO::Memory do
     io.close
     io.closed?.should be_true
 
-    expect_raises(IO::Error, "closed stream") { io.gets_to_end }
-    expect_raises(IO::Error, "closed stream") { io.print "hi" }
-    expect_raises(IO::Error, "closed stream") { io.seek(1) }
-    expect_raises(IO::Error, "closed stream") { io.gets }
-    expect_raises(IO::Error, "closed stream") { io.read_byte }
+    expect_raises(IO::Error, "Closed stream") { io.gets_to_end }
+    expect_raises(IO::Error, "Closed stream") { io.print "hi" }
+    expect_raises(IO::Error, "Closed stream") { io.seek(1) }
+    expect_raises(IO::Error, "Closed stream") { io.gets }
+    expect_raises(IO::Error, "Closed stream") { io.read_byte }
   end
 
   it "seeks with pos and pos=" do
@@ -237,13 +237,13 @@ describe IO::Memory do
   end
 
   it "raises if negative capacity" do
-    expect_raises(ArgumentError, "negative capacity") do
+    expect_raises(ArgumentError, "Negative capacity") do
       IO::Memory.new(-1)
     end
   end
 
   it "raises if capacity too big" do
-    expect_raises(ArgumentError, "capacity too big") do
+    expect_raises(ArgumentError, "Capacity too big") do
       IO::Memory.new(UInt32::MAX)
     end
   end
@@ -253,7 +253,7 @@ describe IO::Memory do
     io.gets(2).should eq("ab")
     io.gets(3).should eq("cde")
 
-    expect_raises(IO::Error, "read-only stream") do
+    expect_raises(IO::Error, "Read-only stream") do
       io.print 1
     end
   end
@@ -267,7 +267,7 @@ describe IO::Memory do
 
     String.new(slice).should eq("abcdex")
 
-    expect_raises(IO::Error, "non-resizeable stream") do
+    expect_raises(IO::Error, "Non-resizeable stream") do
       io.print 'z'
     end
   end
@@ -276,7 +276,7 @@ describe IO::Memory do
     slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
     io = IO::Memory.new slice, writeable: false
 
-    expect_raises(IO::Error, "read-only stream") do
+    expect_raises(IO::Error, "Read-only stream") do
       io.print 'z'
     end
   end
@@ -301,7 +301,7 @@ describe IO::Memory do
     io.read_at(6, 3) do |sub|
       sub.gets_to_end.should eq("wor")
 
-      expect_raises(IO::Error, "read-only stream") do
+      expect_raises(IO::Error, "Read-only stream") do
         io << "hello"
       end
     end
@@ -318,15 +318,15 @@ describe IO::Memory do
   it "raises when reading at offset outside of bounds" do
     io = IO::Memory.new("hello world")
 
-    expect_raises(ArgumentError, "negative bytesize") do
+    expect_raises(ArgumentError, "Negative bytesize") do
       io.read_at(3, -1) { }
     end
 
-    expect_raises(ArgumentError, "offset out of bounds") do
+    expect_raises(ArgumentError, "Offset out of bounds") do
       io.read_at(12, 1) { }
     end
 
-    expect_raises(ArgumentError, "bytesize out of bounds") do
+    expect_raises(ArgumentError, "Bytesize out of bounds") do
       io.read_at(6, 6) { }
     end
   end

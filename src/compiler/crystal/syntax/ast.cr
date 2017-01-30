@@ -1383,7 +1383,7 @@ module Crystal
       when Global
         var.name.size
       else
-        raise "can't happen"
+        raise "Can't happen"
       end
     end
 
@@ -1414,7 +1414,7 @@ module Crystal
       when InstanceVar
         var.name.size
       else
-        raise "can't happen"
+        raise "Can't happen"
       end
     end
 
@@ -2056,7 +2056,7 @@ module Crystal
       when :__DIR__
         MagicConstant.expand_dir_node(location)
       else
-        raise "Bug: unknown magic constant: #{name}"
+        raise "BUG: unknown magic constant: #{name}"
       end
     end
 

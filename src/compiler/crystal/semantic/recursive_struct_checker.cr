@@ -56,7 +56,7 @@ class Crystal::RecursiveStructChecker
   def check_recursive(target, type, checked, path)
     if target == type
       msg = <<-MSG
-        recursive struct #{target} detected: #{path_to_s(path)}
+        Recursive struct #{target} detected: #{path_to_s(path)}
 
         The struct #{target} has, either directly or indirectly,
         an instance variable whose type is, eventually, this same

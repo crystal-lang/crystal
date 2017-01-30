@@ -46,7 +46,7 @@ struct String::Formatter(A)
     if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
       @io << arg[key]
     else
-      raise ArgumentError.new "one hash or named tuple required"
+      raise ArgumentError.new "One hash or named tuple required"
     end
   end
 
@@ -57,7 +57,7 @@ struct String::Formatter(A)
     if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
       target_arg = arg[key]
     else
-      raise ArgumentError.new "one hash or named tuple required"
+      raise ArgumentError.new "One hash or named tuple required"
     end
     flags = consume_flags
     consume_type flags, target_arg, true
@@ -68,7 +68,7 @@ struct String::Formatter(A)
       loop do
         case current_char
         when '\0'
-          raise ArgumentError.new "malformed name - unmatched parenthesis"
+          raise ArgumentError.new "Malformed name - unmatched parenthesis"
         when end_char
           break
         else
@@ -148,7 +148,7 @@ struct String::Formatter(A)
       next_arg
       value.to_i
     else
-      raise ArgumentError.new("expected dynamic value '*' to be an Int - #{value.inspect} (#{value.class.inspect})")
+      raise ArgumentError.new("Expected dynamic value '*' to be an Int - #{value.inspect} (#{value.class.inspect})")
     end
   end
 
@@ -193,7 +193,7 @@ struct String::Formatter(A)
     when '%'
       char '%'
     else
-      raise ArgumentError.new("malformed format string - %#{char.inspect}")
+      raise ArgumentError.new("Malformed format string - %#{char.inspect}")
     end
   end
 
@@ -237,7 +237,7 @@ struct String::Formatter(A)
         pad_int int, flags
       end
     else
-      raise ArgumentError.new("expected an integer, not #{arg.inspect}")
+      raise ArgumentError.new("Expected an integer, not #{arg.inspect}")
     end
   end
 
@@ -256,7 +256,7 @@ struct String::Formatter(A)
 
       @io.write_utf8 Slice.new(temp_buf, count)
     else
-      raise ArgumentError.new("expected a float, not #{arg.inspect}")
+      raise ArgumentError.new("Expected a float, not #{arg.inspect}")
     end
   end
 
@@ -308,7 +308,7 @@ struct String::Formatter(A)
   end
 
   private def current_arg
-    @args.at(@arg_index) { raise ArgumentError.new("too few arguments") }
+    @args.at(@arg_index) { raise ArgumentError.new("Too few arguments") }
   end
 
   def next_arg

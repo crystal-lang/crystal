@@ -274,7 +274,7 @@ describe UNIXServer do
       end
 
       exception.should be_a(IO::Error)
-      exception.try(&.message).should eq("closed stream")
+      exception.try(&.message).should eq("Closed stream")
     end
   end
 
@@ -379,11 +379,11 @@ describe UNIXSocket do
       right.read_timeout = 0.0001
       buf = ("a" * 4096).to_slice
 
-      expect_raises(IO::Timeout, "write timed out") do
+      expect_raises(IO::Timeout, "Write timed out") do
         loop { left.write buf }
       end
 
-      expect_raises(IO::Timeout, "read timed out") do
+      expect_raises(IO::Timeout, "Read timed out") do
         loop { right.read buf }
       end
     end

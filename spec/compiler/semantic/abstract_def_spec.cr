@@ -17,7 +17,7 @@ describe "Semantic: abstract def" do
       end
 
       (Bar.new || Baz.new).foo
-      ), "abstract `def Foo#foo()` must be implemented by Baz"
+      ), "Abstract `def Foo#foo()` must be implemented by Baz"
   end
 
   it "works on abstract method on abstract class" do
@@ -77,7 +77,7 @@ describe "Semantic: abstract def" do
 
       class Baz < Bar
       end
-      ), "abstract `def Foo#foo()` must be implemented by Baz"
+      ), "Abstract `def Foo#foo()` must be implemented by Baz"
   end
 
   it "gives correct error when no overload matches, when an abstract method is implemented (#1406)" do
@@ -94,7 +94,7 @@ describe "Semantic: abstract def" do
 
       Bar.new.foo(1 || 'a')
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "errors if using abstract def on non-abstract class" do
@@ -103,7 +103,7 @@ describe "Semantic: abstract def" do
         abstract def foo
       end
       ),
-      "can't define abstract def on non-abstract class"
+      "Can't define abstract def on non-abstract class"
   end
 
   it "errors if using abstract def on metaclass" do
@@ -112,7 +112,7 @@ describe "Semantic: abstract def" do
         abstract def self.foo
       end
       ),
-      "can't define abstract def on metaclass"
+      "Can't define abstract def on metaclass"
   end
 
   it "errors if abstract method is not implemented by subclass" do
@@ -124,7 +124,7 @@ describe "Semantic: abstract def" do
       class Bar < Foo
       end
       ),
-      "abstract `def Foo#foo()` must be implemented by Bar"
+      "Abstract `def Foo#foo()` must be implemented by Bar"
   end
 
   it "errors if abstract method with arguments is not implemented by subclass" do
@@ -136,7 +136,7 @@ describe "Semantic: abstract def" do
       class Bar < Foo
       end
       ),
-      "abstract `def Foo#foo(x, y)` must be implemented by Bar"
+      "Abstract `def Foo#foo(x, y)` must be implemented by Bar"
   end
 
   it "errors if abstract method with arguments is not implemented by subclass (wrong number of arguments)" do
@@ -150,7 +150,7 @@ describe "Semantic: abstract def" do
         end
       end
       ),
-      "abstract `def Foo#foo(x)` must be implemented by Bar"
+      "Abstract `def Foo#foo(x)` must be implemented by Bar"
   end
 
   it "errors if abstract method with arguments is not implemented by subclass (wrong type)" do
@@ -164,7 +164,7 @@ describe "Semantic: abstract def" do
         end
       end
       ),
-      "abstract `def Foo#foo(x, y : Int32)` must be implemented by Bar"
+      "Abstract `def Foo#foo(x, y : Int32)` must be implemented by Bar"
   end
 
   it "errors if abstract method with arguments is not implemented by subclass (block difference)" do
@@ -179,7 +179,7 @@ describe "Semantic: abstract def" do
         end
       end
       ),
-      "abstract `def Foo#foo()` must be implemented by Bar"
+      "Abstract `def Foo#foo()` must be implemented by Bar"
   end
 
   it "doesn't error if abstract method is implemented by subclass" do
@@ -249,7 +249,7 @@ describe "Semantic: abstract def" do
       class Baz < Bar
       end
       ),
-      "abstract `def Foo#foo()` must be implemented by Baz"
+      "Abstract `def Foo#foo()` must be implemented by Baz"
   end
 
   it "doesn't error if abstract method is implemented by subclass via module inclusion" do
@@ -279,7 +279,7 @@ describe "Semantic: abstract def" do
         include Foo
       end
       ),
-      "abstract `def Foo#foo()` must be implemented by Bar"
+      "Abstract `def Foo#foo()` must be implemented by Bar"
   end
 
   it "doesn't error if abstract method is implemented by including class" do
@@ -320,7 +320,7 @@ describe "Semantic: abstract def" do
       class Bar < Moo::Foo
       end
       ),
-      "abstract `def Moo::Foo#foo()` must be implemented by Bar"
+      "Abstract `def Moo::Foo#foo()` must be implemented by Bar"
   end
 
   it "doesn't error if abstract method with args is implemented by subclass (with one default arg)" do

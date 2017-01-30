@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "cleanup" do
   it "errors if assigning var to itself" do
-    assert_error "a = 1; a = a", "expression has no effect"
+    assert_error "a = 1; a = a", "Expression has no effect"
   end
 
   it "errors if assigning instance var to itself" do
@@ -13,7 +13,7 @@ describe "cleanup" do
         end
       end
       Foo.new
-      ), "expression has no effect"
+      ), "Expression has no effect"
   end
 
   # it "errors comparison of unsigned integer with zero or negative literal" do

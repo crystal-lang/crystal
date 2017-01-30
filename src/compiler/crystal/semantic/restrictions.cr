@@ -46,7 +46,7 @@ module Crystal
     end
 
     def restriction_of?(other, owner)
-      raise "Bug: called #{self}.restriction_of?(#{other})"
+      raise "BUG: called #{self}.restriction_of?(#{other})"
     end
   end
 
@@ -383,7 +383,7 @@ module Crystal
       end
 
       if had_ident_type
-        other.raise "undefined constant #{other}"
+        other.raise "Undefined constant #{other}"
       else
         other.raise_undefined_constant(context.defining_type)
       end
@@ -431,7 +431,7 @@ module Crystal
     end
 
     def restrict(other : ASTNode, context)
-      raise "Bug: unsupported restriction: #{self} vs. #{other}"
+      raise "BUG: unsupported restriction: #{self} vs. #{other}"
     end
 
     def restriction_of?(other : UnionType, owner)
@@ -459,7 +459,7 @@ module Crystal
     end
 
     def restriction_of?(other : ASTNode, owner)
-      raise "Bug: called #{self}.restriction_of?(#{other})"
+      raise "BUG: called #{self}.restriction_of?(#{other})"
     end
 
     def compatible_with?(type)
@@ -549,7 +549,7 @@ module Crystal
 
       if other.named_args
         unless generic_type.is_a?(NamedTupleType)
-          other.raise "can only instantiate NamedTuple with named arguments"
+          other.raise "Can only instantiate NamedTuple with named arguments"
         end
         # We match named tuples in NamedTupleInstanceType
         return nil
@@ -576,7 +576,7 @@ module Crystal
         found_splat = false
         other.type_vars.each do |type_var|
           if type_var.is_a?(Splat)
-            type_var.raise "can't specify more than one splat in restriction" if found_splat
+            type_var.raise "Can't specify more than one splat in restriction" if found_splat
             found_splat = true
 
             count = types.size - (other.type_vars.size - 1)
@@ -679,7 +679,7 @@ module Crystal
         i = 0
         other.type_vars.each do |type_var|
           if type_var.is_a?(Splat)
-            type_var.raise "can't specify more than one splat in restriction" if found_splat
+            type_var.raise "Can't specify more than one splat in restriction" if found_splat
             found_splat = true
 
             count = tuple_types.size - (other.type_vars.size - 1)
@@ -732,7 +732,7 @@ module Crystal
 
       other_named_args = other.named_args
       unless other_named_args
-        other.raise "can only instantiate NamedTuple with named arguments"
+        other.raise "Can only instantiate NamedTuple with named arguments"
       end
 
       # Check that the names are the same

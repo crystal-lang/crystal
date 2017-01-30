@@ -2534,7 +2534,7 @@ module Crystal
                 write_token :")"
               end
             else
-              raise "Bug: expected `[`, `[]` or `[]?`"
+              raise "BUG: expected `[`, `[]` or `[]?`"
             end
           elsif !call.obj && call.name == "[]="
             case @token.type
@@ -2560,7 +2560,7 @@ module Crystal
                 write_token :")"
               end
             else
-              raise "Bug: expected `[` or `[]=`"
+              raise "BUG: expected `[` or `[]=`"
             end
           else
             indent(@indent, call)
@@ -2602,7 +2602,7 @@ module Crystal
             accept body
           end
         else
-          raise "Bug: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
+          raise "BUG: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
         end
       end
 
@@ -2667,7 +2667,7 @@ module Crystal
             when :UNDERSCORE
               underscore = true
             else
-              raise "expecting block argument name, not #{@token.type}"
+              raise "Expecting block argument name, not #{@token.type}"
             end
 
             write(underscore ? "_" : @token.value)
@@ -2831,7 +2831,7 @@ module Crystal
         when Call
           accept_assign_value(right.args.last)
         else
-          raise "Bug: expected Assign or Call after op assign, at #{node.location}"
+          raise "BUG: expected Assign or Call after op assign, at #{node.location}"
         end
         return false
       end
@@ -3526,7 +3526,7 @@ module Crystal
             next_token_skip_space_or_newline
             accept node.ensure.not_nil!
           else
-            raise "expected 'rescue' or 'ensure'"
+            raise "Expected 'rescue' or 'ensure'"
           end
           return false
         end
@@ -3905,7 +3905,7 @@ module Crystal
     end
 
     def visit(node : ASTNode)
-      raise "Bug: unexpected node: #{node.class} at #{node.location}"
+      raise "BUG: unexpected node: #{node.class} at #{node.location}"
     end
 
     def to_s(io)
@@ -4461,11 +4461,11 @@ module Crystal
     end
 
     def check_keyword(*keywords)
-      raise "expecting keyword #{keywords.join " or "}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless keywords.any? { |k| @token.keyword?(k) }
+      raise "Expecting keyword #{keywords.join " or "}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless keywords.any? { |k| @token.keyword?(k) }
     end
 
     def check(token_type)
-      raise "expecting #{token_type}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless @token.type == token_type
+      raise "Expecting #{token_type}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless @token.type == token_type
     end
 
     def check_end

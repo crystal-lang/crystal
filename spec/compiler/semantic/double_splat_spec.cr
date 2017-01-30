@@ -32,7 +32,7 @@ describe "Semantic: double splat" do
       t2 = {z: 3, x: 4}
       foo **t1, **t2
       ),
-      "duplicate key: x"
+      "Duplicate key: x"
   end
 
   it "errors if duplicate keys on call side with double splat and named args" do
@@ -43,7 +43,7 @@ describe "Semantic: double splat" do
       t1 = {x: 1, y: 2}
       foo **t1, z: 3, x: 4
       ),
-      "duplicate key: x"
+      "Duplicate key: x"
   end
 
   it "errors missing argument with double splat" do
@@ -54,7 +54,7 @@ describe "Semantic: double splat" do
       tup = {x: 1}
       foo **tup
       ),
-      "missing argument: y"
+      "Missing argument: y"
   end
 
   it "matches double splat on method (empty)" do
@@ -122,7 +122,7 @@ describe "Semantic: double splat" do
 
       foo
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "uses restriction on double splat, doesn't match with empty named tuple (2)" do
@@ -132,7 +132,7 @@ describe "Semantic: double splat" do
 
       foo x: 1
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "uses restriction on double splat, means all types must be that type" do
@@ -142,7 +142,7 @@ describe "Semantic: double splat" do
 
       foo x: 1, y: 'a'
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "overloads based on double splat restriction" do
@@ -190,7 +190,7 @@ describe "Semantic: double splat" do
 
       NamedTuple(x: Int32, y: Char).foo(x: 1, y: true)
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "matches named args producing an empty double splat (#2678)" do

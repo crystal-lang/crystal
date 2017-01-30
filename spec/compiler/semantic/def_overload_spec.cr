@@ -542,7 +542,7 @@ describe "Semantic: def overload" do
 
       foo Foo(Int32 | Float64).new
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "gets free variable from union restriction" do
@@ -654,7 +654,7 @@ describe "Semantic: def overload" do
 
       foo({1, 2})
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "matches tuples of different sizes" do
@@ -706,7 +706,7 @@ describe "Semantic: def overload" do
 
       Bar.new.foo(1.5)
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "doesn't match with wrong number of type arguments (#313)" do
@@ -719,7 +719,7 @@ describe "Semantic: def overload" do
 
       foo Foo(Int32, Int32).new
       ),
-      "wrong number of type vars for Foo(A, B) (given 1, expected 2)"
+      "Wrong number of type vars for Foo(A, B) (given 1, expected 2)"
   end
 
   it "includes splat symbol in error message" do
@@ -741,7 +741,7 @@ describe "Semantic: def overload" do
 
       Foo.new('a')
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "finds method after including module in generic module (#1201)" do
@@ -806,7 +806,7 @@ describe "Semantic: def overload" do
 
       foo 1, 2, 3
       ),
-      "wrong number of arguments for 'foo' (given 3, expected 0..2)"
+      "Wrong number of arguments for 'foo' (given 3, expected 0..2)"
   end
 
   it "errors if no overload matches on union against named arg (#2640)" do
@@ -817,7 +817,7 @@ describe "Semantic: def overload" do
       a = 1 || nil
       f(a: a)
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "dispatches with named arg" do
@@ -929,7 +929,7 @@ describe "Semantic: def overload" do
 
       foo(1, 'a')
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "errors when binding free variable to different types (2)" do
@@ -942,6 +942,6 @@ describe "Semantic: def overload" do
 
       foo(1, Gen(Char).new)
       ),
-      "no overload matches"
+      "No overload matches"
   end
 end

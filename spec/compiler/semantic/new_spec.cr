@@ -150,7 +150,7 @@ describe "Semantic: new" do
 
       My.new("foo")
       ),
-      "instance variable '@caps' of My was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@caps' of My was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   it "errors if using self call in default argument (2)" do
@@ -170,7 +170,7 @@ describe "Semantic: new" do
 
       My.new("foo")
       ),
-      "instance variable '@caps' of My was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@caps' of My was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   it "errors if using self call in default argument (3)" do
@@ -189,7 +189,7 @@ describe "Semantic: new" do
 
       My.new("foo")
       ),
-      "instance variable '@caps' of My was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@caps' of My was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   it "inherits initialize and new methods if doesn't define new (#3238)" do
@@ -222,6 +222,6 @@ describe "Semantic: new" do
 
       Bar.new
       ),
-      "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
+      "Wrong number of arguments for 'Bar.new' (given 0, expected 1)"
   end
 end

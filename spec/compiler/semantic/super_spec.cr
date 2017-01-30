@@ -107,7 +107,7 @@ describe "Semantic: super" do
   it "errors no superclass method in top-level" do
     assert_error %(
       super
-      ), "there's no superclass in this scope"
+      ), "There's no superclass in this scope"
   end
 
   it "errors no superclass method in top-level def" do
@@ -117,7 +117,7 @@ describe "Semantic: super" do
       end
 
       foo
-      ), "there's no superclass in this scope"
+      ), "There's no superclass in this scope"
   end
 
   it "errors no superclass method" do
@@ -131,7 +131,7 @@ describe "Semantic: super" do
       end
 
       Foo.new.foo(1)
-      ), "undefined method 'foo'"
+      ), "Undefined method 'foo'"
   end
 
   it "finds super initialize if not explicitly defined in superclass, 1 (#273)" do
@@ -176,7 +176,7 @@ describe "Semantic: super" do
 
       Bar.new(1, 2)
       ),
-      "no overload matches 'Foo#initialize'"
+      "No overload matches 'Foo#initialize'"
   end
 
   it "calls super in module method (1) (#556)" do
@@ -270,7 +270,7 @@ describe "Semantic: super" do
 
       Child.new.a
       ),
-      "undefined method 'a'"
+      "Undefined method 'a'"
   end
 
   it "calls super in generic module method" do
@@ -338,7 +338,7 @@ describe "Semantic: super" do
       end
 
       Baz.new
-      ), "wrong number of argument"
+      ), "Wrong number of argument"
   end
 
   it "gives correct error when calling super and target is abstract method (#2675)" do
@@ -355,6 +355,6 @@ describe "Semantic: super" do
 
       Sub.new.method
       ),
-      "undefined method 'Base#method()'"
+      "Undefined method 'Base#method()'"
   end
 end

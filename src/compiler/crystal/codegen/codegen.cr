@@ -455,7 +455,7 @@ module Crystal
                 node_exp.obj.accept self
                 instance_var_ptr (node_exp.obj.type), node_exp.name, @last
               else
-                raise "Bug: #{node}"
+                raise "BUG: #{node}"
               end
       false
     end
@@ -784,7 +784,7 @@ module Crystal
         execute_ensures_until(node.target.as(While))
         br while_exit_block
       else
-        node.raise "Bug: unknown exit for break"
+        node.raise "BUG: unknown exit for break"
       end
 
       false
@@ -817,7 +817,7 @@ module Crystal
         return false
       end
 
-      node.raise "Bug: unknown exit for next"
+      node.raise "BUG: unknown exit for next"
     end
 
     def accept_control_expression(node)
@@ -900,7 +900,7 @@ module Crystal
                 target_type = var.type
                 var.pointer
               else
-                target.raise "Bug: missing var #{target}"
+                target.raise "BUG: missing var #{target}"
               end
             else
               node.raise "Unknown assign target in codegen: #{target}"
@@ -1059,7 +1059,7 @@ module Crystal
           @last = downcast llvm_self_ptr, node.type, context.type, true
         end
       else
-        node.raise "Bug: missing context var: #{node.name}"
+        node.raise "BUG: missing context var: #{node.name}"
       end
     end
 
@@ -1288,7 +1288,7 @@ module Crystal
 
     def visit(node : Yield)
       if node.expanded
-        raise "Bug: #{node} at #{node.location} should have been expanded"
+        raise "BUG: #{node} at #{node.location} should have been expanded"
       end
 
       block_context = context.block_context.not_nil!
@@ -1894,7 +1894,7 @@ module Crystal
     end
 
     def visit(node : ExpandableNode)
-      raise "Bug: #{node} at #{node.location} should have been expanded"
+      raise "BUG: #{node} at #{node.location} should have been expanded"
     end
 
     def visit(node : ASTNode)

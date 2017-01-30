@@ -232,7 +232,7 @@ describe "Semantic: virtual" do
       x = Foo.new || Bar.new
       x.foo
       ",
-      "undefined method 'foo' for Foo"
+      "Undefined method 'foo' for Foo"
   end
 
   it "doesn't check methods on abstract classes" do
@@ -314,7 +314,7 @@ describe "Semantic: virtual" do
       f = Bar2.new || Bar3.new || Baz.new
       x = f.foo
       ",
-      "undefined method 'foo' for Bar3"
+      "Undefined method 'foo' for Bar3"
   end
 
   it "doesn't check cover for abstract classes" do
@@ -385,7 +385,7 @@ describe "Semantic: virtual" do
       f = Bar1.new || Bar2.new || Baz.new
       foo(f)
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "checks cover in every concrete subclass" do
@@ -447,7 +447,7 @@ describe "Semantic: virtual" do
       f = Bar1.new || Bar2.new || Baz.new
       f.foo(f)
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "checks cover in every concrete subclass 3" do

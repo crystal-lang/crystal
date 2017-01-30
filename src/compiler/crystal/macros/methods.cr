@@ -25,7 +25,7 @@ module Crystal
       when "run"
         interpret_run(node)
       else
-        node.raise "undefined macro method: '#{node.name}'"
+        node.raise "Undefined macro method: '#{node.name}'"
       end
     end
 
@@ -141,9 +141,9 @@ module Crystal
       if $?.success?
         @last = MacroId.new(result)
       elsif result.empty?
-        node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}"
+        node.raise "Error executing command: #{cmd}, got exit status #{$?.exit_code}"
       else
-        node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}:\n\n#{result}\n"
+        node.raise "Error executing command: #{cmd}, got exit status #{$?.exit_code}:\n\n#{result}\n"
       end
     end
 
@@ -172,25 +172,25 @@ module Crystal
 
         if File.exists?(filename)
           unless File.file?(filename)
-            node.raise "error executing macro run: '#{filename}' is not a file"
+            node.raise "Error executing macro run: '#{filename}' is not a file"
           end
         else
-          node.raise "error executing macro run: can't find file '#{filename}'"
+          node.raise "Error executing macro run: can't find file '#{filename}'"
         end
       else
         begin
           relative_to = @location.try &.original_filename
           found_filenames = @program.find_in_path(filename, relative_to)
         rescue ex
-          node.raise "error executing macro run: #{ex.message}"
+          node.raise "Error executing macro run: #{ex.message}"
         end
 
         unless found_filenames
-          node.raise "error executing macro run: can't find file '#{filename}'"
+          node.raise "Error executing macro run: can't find file '#{filename}'"
         end
 
         if found_filenames.size > 1
-          node.raise "error executing macro run: '#{filename}' is a directory"
+          node.raise "Error executing macro run: '#{filename}' is a directory"
         end
 
         filename = found_filenames.first
@@ -224,7 +224,7 @@ module Crystal
       when SymbolLiteral then return self.value
       when MacroId       then return self.value
       else
-        raise "expected #{context} to be a StringLiteral, SymbolLiteral or MacroId, not #{class_desc}"
+        raise "Expected #{context} to be a StringLiteral, SymbolLiteral or MacroId, not #{class_desc}"
       end
     end
 
@@ -289,7 +289,7 @@ module Crystal
       when "!"
         BoolLiteral.new(!truthy?)
       else
-        raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
+        raise "Undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
       end
     end
 
@@ -315,7 +315,7 @@ module Crystal
     end
 
     def interpret_compare(other)
-      raise "can't compare #{self} to #{other}"
+      raise "Can't compare #{self} to #{other}"
     end
 
     def stringify
@@ -366,7 +366,7 @@ module Crystal
         if args.empty?
           num = to_number
           if num.is_a?(Int::Unsigned)
-            raise "undefined method '-' for unsigned integer literal: #{self}"
+            raise "Undefined method '-' for unsigned integer literal: #{self}"
           else
             NumberLiteral.new(-num)
           end
@@ -397,7 +397,7 @@ module Crystal
           if num.is_a?(Int)
             NumberLiteral.new(~num)
           else
-            raise "undefined method '~' for float literal: #{self}"
+            raise "Undefined method '~' for float literal: #{self}"
           end
         else
           wrong_number_of_arguments "NumberLiteral#~", args.size, 0
@@ -423,13 +423,13 @@ module Crystal
 
     def int_bin_op(op, args)
       if @kind == :f32 || @kind == :f64
-        raise "undefined method '#{op}' for float literal: #{self}"
+        raise "Undefined method '#{op}' for float literal: #{self}"
       end
 
       NumberLiteral.new(bin_op(op, args) { |me, other|
         other_kind = args.first.as(NumberLiteral).kind
         if other_kind == :f32 || other_kind == :f64
-          raise "argument to NumberLiteral##{op} can't be float literal: #{self}"
+          raise "Argument to NumberLiteral##{op} can't be float literal: #{self}"
         end
 
         yield me.to_i, other.to_i
@@ -443,7 +443,7 @@ module Crystal
 
       other = args.first
       unless other.is_a?(NumberLiteral)
-        raise "can't #{op} with #{other}"
+        raise "Can't #{op} with #{other}"
       end
 
       yield(to_number, other.to_number)
@@ -496,18 +496,18 @@ module Crystal
             to = interpreter.accept(to)
 
             unless from.is_a?(NumberLiteral)
-              raise "range from in StringLiteral#[] must be a number, not #{from.class_desc}: #{from}"
+              raise "Range from in StringLiteral#[] must be a number, not #{from.class_desc}: #{from}"
             end
 
             unless to.is_a?(NumberLiteral)
-              raise "range to in StringLiteral#[] must be a number, not #{to.class_desc}: #{from}"
+              raise "Range to in StringLiteral#[] must be a number, not #{to.class_desc}: #{from}"
             end
 
             from, to = from.to_number.to_i, to = to.to_number.to_i
             range = Range.new(from, to, arg.exclusive?)
             StringLiteral.new(@value[range])
           else
-            raise "wrong argument for StringLiteral#[] (#{arg.class_desc}): #{arg}"
+            raise "Wrong argument for StringLiteral#[] (#{arg.class_desc}): #{arg}"
           end
         end
       when "=~"
@@ -518,7 +518,7 @@ module Crystal
             if arg_value.is_a?(StringLiteral)
               regex = Regex.new(arg_value.value, arg.options)
             else
-              raise "regex interpolations not yet allowed in macros"
+              raise "Regex interpolations not yet allowed in macros"
             end
             BoolLiteral.new(!!(@value =~ regex))
           else
@@ -581,14 +581,14 @@ module Crystal
         end
       when "gsub"
         interpret_two_args_method(method, args) do |first, second|
-          raise "first arguent to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
-          raise "second arguent to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+          raise "First argument to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
+          raise "Second argument to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
 
           regex_value = first.value
           if regex_value.is_a?(StringLiteral)
             regex = Regex.new(regex_value.value, first.options)
           else
-            raise "regex interpolations not yet allowed in macros"
+            raise "Regex interpolations not yet allowed in macros"
           end
 
           StringLiteral.new(value.gsub(regex, second.value))
@@ -638,7 +638,7 @@ module Crystal
           value = @value.to_i64?
         when 1
           arg = args.first
-          raise "argument to StringLiteral#to_i must be a number, not #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+          raise "Argument to StringLiteral#to_i must be a number, not #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
 
           value = @value.to_i64?(arg.to_number.to_i)
         else
@@ -652,8 +652,8 @@ module Crystal
         end
       when "tr"
         interpret_two_args_method(method, args) do |first, second|
-          raise "first arguent to StringLiteral#tr must be a string, not #{first.class_desc}" unless first.is_a?(StringLiteral)
-          raise "second arguent to StringLiteral#tr must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+          raise "First argument to StringLiteral#tr must be a string, not #{first.class_desc}" unless first.is_a?(StringLiteral)
+          raise "Second argument to StringLiteral#tr must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
           StringLiteral.new(@value.tr(first.value, second.value))
         end
       when "underscore"
@@ -737,7 +737,7 @@ module Crystal
               to_double_splat
             else
               unless arg.is_a?(Crystal::StringLiteral)
-                arg.raise "argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
+                arg.raise "Argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
               end
               to_double_splat(arg.value)
             end
@@ -826,7 +826,7 @@ module Crystal
               to_double_splat
             else
               unless arg.is_a?(Crystal::StringLiteral)
-                arg.raise "argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
+                arg.raise "Argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
               end
               to_double_splat(arg.value)
             end
@@ -868,7 +868,7 @@ module Crystal
           when StringLiteral
             key = key.value
           else
-            raise "expected 'NamedTupleLiteral#[]=' first argument to be a SymbolLiteral or MacroId, not #{key.class_desc}"
+            raise "Expected 'NamedTupleLiteral#[]=' first argument to be a SymbolLiteral or MacroId, not #{key.class_desc}"
           end
 
           index = entries.index &.key.==(key)
@@ -948,11 +948,11 @@ module Crystal
       to = interpreter.accept(to)
 
       unless from.is_a?(NumberLiteral)
-        raise "range begin must be a NumberLiteral, not #{from.class_desc}"
+        raise "Range begin must be a NumberLiteral, not #{from.class_desc}"
       end
 
       unless to.is_a?(NumberLiteral)
-        raise "range end must be a NumberLiteral, not #{to.class_desc}"
+        raise "Range end must be a NumberLiteral, not #{to.class_desc}"
       end
 
       from = from.to_number.to_i
@@ -1256,7 +1256,7 @@ module Crystal
       value = MacroId.new(value.value) if value.is_a?(StringLiteral)
       value
     rescue UndefinedMacroMethodError
-      raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
+      raise "Undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
     end
 
     def interpret_compare(other : MacroId | StringLiteral)
@@ -1286,7 +1286,7 @@ module Crystal
       value = SymbolLiteral.new(value.value) if value.is_a?(StringLiteral)
       value
     rescue UndefinedMacroMethodError
-      raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
+      raise "Undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
     end
   end
 
@@ -1339,7 +1339,7 @@ module Crystal
           when NamedTupleInstanceType
             NumberLiteral.new(type.entries.size)
           else
-            raise "undefined method 'size' for TypeNode of type #{type} (must be a tuple or named tuple type)"
+            raise "Undefined method 'size' for TypeNode of type #{type} (must be a tuple or named tuple type)"
           end
         end
       when "keys"
@@ -1348,7 +1348,7 @@ module Crystal
           if type.is_a?(NamedTupleInstanceType)
             ArrayLiteral.map(type.entries) { |entry| MacroId.new(entry.name) }
           else
-            raise "undefined method 'keys' for TypeNode of type #{type} (must be a named tuple type)"
+            raise "Undefined method 'keys' for TypeNode of type #{type} (must be a named tuple type)"
           end
         end
       when "[]"
@@ -1382,7 +1382,7 @@ module Crystal
               return NilLiteral.new
             end
           else
-            raise "undefined method '[]' for TypeNode of type #{type} (must be a tuple or named tuple type)"
+            raise "Undefined method '[]' for TypeNode of type #{type} (must be a tuple or named tuple type)"
           end
         end
       when "class"
@@ -1473,7 +1473,7 @@ module Crystal
     end
 
     def self.union_types(type)
-      raise "undefined method 'union_types' for TypeNode of type #{type} (must be a union type)" unless type.is_a?(UnionType)
+      raise "Undefined method 'union_types' for TypeNode of type #{type} (must be a union type)" unless type.is_a?(UnionType)
       ArrayLiteral.map(type.union_types) { |uniontype| TypeNode.new(uniontype) }
     end
 
@@ -1830,7 +1830,7 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
           Crystal::MacroId.new("")
         else
           unless arg.is_a?(Crystal::StringLiteral)
-            arg.raise "argument to splat must be a StringLiteral, not #{arg.class_desc}"
+            arg.raise "Argument to splat must be a StringLiteral, not #{arg.class_desc}"
           end
           Crystal::MacroId.new((object.elements.join ", ") + arg.value)
         end
@@ -1907,7 +1907,7 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
           object.raise ex.message
         end
       else
-        arg.raise "argument to [] must be a number or range, not #{arg.class_desc}:\n\n#{arg}"
+        arg.raise "Argument to [] must be a number or range, not #{arg.class_desc}:\n\n#{arg}"
       end
     when 2
       from, to = args
@@ -1916,11 +1916,11 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
       to = interpreter.accept(to)
 
       unless from.is_a?(Crystal::NumberLiteral)
-        from.raise "expected first argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
+        from.raise "Expected first argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
       end
 
       unless to.is_a?(Crystal::NumberLiteral)
-        to.raise "expected second argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
+        to.raise "Expected second argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
       end
 
       from = from.to_number.to_i
@@ -1937,14 +1937,14 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
   when "[]="
     object.interpret_two_args_method(method, args) do |index_node, value|
       unless index_node.is_a?(Crystal::NumberLiteral)
-        index_node.raise "expected index argument to ArrayLiteral#[]= to be a number, not #{index_node.class_desc}"
+        index_node.raise "Expected index argument to ArrayLiteral#[]= to be a number, not #{index_node.class_desc}"
       end
 
       index = index_node.to_number.to_i
       index += object.elements.size if index < 0
 
       unless 0 <= index < object.elements.size
-        index_node.raise "index out of bounds (index: #{index}, size: #{object.elements.size}"
+        index_node.raise "Index out of bounds (index: #{index}, size: #{object.elements.size}"
       end
 
       object.elements[index] = value
@@ -1974,7 +1974,7 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
       when Crystal::ArrayLiteral
         other_elements = arg.elements
       else
-        arg.raise "argument to `#{klass}#+` must be a tuple or array, not #{arg.class_desc}:\n\n#{arg}"
+        arg.raise "Argument to `#{klass}#+` must be a tuple or array, not #{arg.class_desc}:\n\n#{arg}"
       end
       klass.new(object.elements + other_elements)
     end

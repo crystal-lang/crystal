@@ -28,7 +28,7 @@ struct LLVM::Function
       when AttributeIndex::FunctionIndex
         LibLLVM.add_function_attr(self, attribute)
       when AttributeIndex::ReturnIndex
-        raise "unsupported: can't set attributes on function return type in LLVM < 3.9"
+        raise "Unsupported: can't set attributes on function return type in LLVM < 3.9"
       else
         LibLLVM.add_attribute(params[index.to_i - 1], attribute)
       end
@@ -53,7 +53,7 @@ struct LLVM::Function
       when AttributeIndex::FunctionIndex
         LibLLVM.get_function_attr(self)
       when AttributeIndex::ReturnIndex
-        raise "unsupported: can't get attributes from function return type in LLVM < 3.9"
+        raise "Unsupported: can't get attributes from function return type in LLVM < 3.9"
       else
         LibLLVM.get_attribute(params[index.to_i - 1])
       end

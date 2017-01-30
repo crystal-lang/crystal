@@ -75,7 +75,7 @@ struct Slice(T)
   # ```
   def self.new(size : Int)
     {% unless T <= Int::Primitive || T <= Float::Primitive %}
-      {% raise "can only use primitive integers and floats with Slice.new(size), not #{T}" %}
+      {% raise "Can only use primitive integers and floats with Slice.new(size), not #{T}" %}
     {% end %}
 
     pointer = Pointer(T).malloc(size)

@@ -10,7 +10,7 @@ module Crystal
     @type : Type?
 
     def type
-      @type || ::raise "Bug: `#{self}` at #{self.location} has no type"
+      @type || ::raise "BUG: `#{self}` at #{self.location} has no type"
     end
 
     def type?
@@ -56,12 +56,12 @@ module Crystal
 
       if self.is_a?(MetaTypeVar)
         if self.global?
-          from.raise "global variable '#{self.name}' must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
+          from.raise "Global variable '#{self.name}' must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         else
-          from.raise "#{self.kind} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
+          from.raise "#{self.kind.to_s.capitalize} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         end
       else
-        from.raise "type must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
+        from.raise "Type must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
       end
     end
 
@@ -147,7 +147,7 @@ module Crystal
     end
 
     def set_enclosing_call(enclosing_call)
-      raise "Bug: already had enclosing call" if @enclosing_call
+      raise "BUG: already had enclosing call" if @enclosing_call
       @enclosing_call = enclosing_call
     end
 
@@ -232,7 +232,7 @@ module Crystal
       old_type = self.type?
       new_type = type.try &.program.pointer_of(type)
       if old_type && grew?(old_type, new_type)
-        raise "recursive pointerof expansion: #{old_type}, #{new_type}, ..."
+        raise "Recursive pointerof expansion: #{old_type}, #{new_type}, ..."
       end
 
       new_type
@@ -363,7 +363,7 @@ module Crystal
 
       expected_return_type = @expected_return_type
       if expected_return_type && !expected_return_type.nil_type? && !return_type.implements?(expected_return_type)
-        raise "expected block to return #{expected_return_type.devirtualize}, not #{return_type}"
+        raise "Expected block to return #{expected_return_type.devirtualize}, not #{return_type}"
       end
 
       types << (expected_return_type || return_type)
@@ -405,17 +405,17 @@ module Crystal
           end
 
           if node.is_a?(NumberLiteral)
-            node.raise "can't use number as type for NamedTuple"
+            node.raise "Can't use number as type for NamedTuple"
           end
 
           node_type = node.type?
           return unless node_type
 
           if node.is_a?(Path) && (target_const = node.target_const)
-            node.raise "can't use constant as type for NamedTuple"
+            node.raise "Can't use constant as type for NamedTuple"
           end
 
-          Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+          Crystal.check_type_allowed_in_generics(node, node_type, "Can't use #{node_type} as generic type argument")
           node_type = node_type.virtual_type
 
           NamedArgumentType.new(named_arg.name, node_type)
@@ -458,15 +458,15 @@ module Crystal
                 visitor = target_const.visitor
                 if visitor
                   numeric_value = visitor.interpret_enum_value(value)
-                  numeric_type = node_type.program.int?(numeric_value) || raise "Bug: expected integer type, not #{numeric_value.class}"
+                  numeric_type = node_type.program.int?(numeric_value) || raise "BUG: expected integer type, not #{numeric_value.class}"
                   type_var = NumberLiteral.new(numeric_value, numeric_type.kind)
                   type_var.set_type_from(numeric_type, from)
                 else
-                  node.raise "can't use constant #{node} (value = #{value}) as generic type argument, it must be a numeric constant"
+                  node.raise "Can't use constant #{node} (value = #{value}) as generic type argument, it must be a numeric constant"
                 end
               end
             else
-              Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+              Crystal.check_type_allowed_in_generics(node, node_type, "Can't use #{node_type} as generic type argument")
               type_var = node_type.virtual_type
             end
           end
@@ -482,7 +482,7 @@ module Crystal
       end
 
       if generic_type_too_nested?(generic_type.generic_nest)
-        raise "generic type too nested: #{generic_type}"
+        raise "Generic type too nested: #{generic_type}"
       end
 
       generic_type = generic_type.metaclass unless @in_type_args
@@ -500,11 +500,11 @@ module Crystal
       tuple_type = program.tuple_of types
 
       if generic_type_too_nested?(tuple_type.generic_nest)
-        raise "tuple type too nested: #{tuple_type}"
+        raise "Tuple type too nested: #{tuple_type}"
       end
 
       if types.size > 300
-        raise "tuple too big: Tuple(#{types[0...10].join(",")}, ...)"
+        raise "Tuple too big: Tuple(#{types[0...10].join(",")}, ...)"
       end
 
       self.type = tuple_type
@@ -524,11 +524,11 @@ module Crystal
       named_tuple_type = program.named_tuple_of(entries)
 
       if generic_type_too_nested?(named_tuple_type.generic_nest)
-        raise "named tuple type too nested: #{named_tuple_type}"
+        raise "Named tuple type too nested: #{named_tuple_type}"
       end
 
       if entries.size > 300
-        raise "named tuple too big: #{named_tuple_type}"
+        raise "Named tuple too big: #{named_tuple_type}"
       end
 
       self.type = named_tuple_type
@@ -593,7 +593,7 @@ module Crystal
 
           if exp.is_a?(Splat)
             unless exp_type.is_a?(TupleInstanceType)
-              exp.raise "expected splat expression to be a tuple type, not #{exp_type}"
+              exp.raise "Expected splat expression to be a tuple type, not #{exp_type}"
             end
 
             exps_types.concat(exp_type.tuple_types)
@@ -608,14 +608,14 @@ module Crystal
         # the (optional) block signature, and if they match the declared types
         if yield_vars
           if exps_types.size < yield_vars.size
-            a_yield.raise "wrong number of yield arguments (given #{exps_types.size}, expected #{yield_vars.size})"
+            a_yield.raise "Wrong number of yield arguments (given #{exps_types.size}, expected #{yield_vars.size})"
           end
 
           # Check that the types match
           i = 0
           yield_vars.zip(exps_types) do |yield_var, exp_type|
             unless exp_type.implements?(yield_var.type)
-              a_yield.raise "argument ##{i + 1} of yield expected to be #{yield_var.type}, not #{exp_type}"
+              a_yield.raise "Argument ##{i + 1} of yield expected to be #{yield_var.type}, not #{exp_type}"
             end
             i += 1
           end
@@ -625,7 +625,7 @@ module Crystal
         if splat_index
           # Error if there are less expressions than the number of block arguments
           if exps_types.size < (args_size - 1)
-            block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size}+)"
+            block.raise "Too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size}+)"
           end
 
           j = 0
@@ -646,7 +646,7 @@ module Crystal
              (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
              args_size > 1
             if block.args.size > exp_type.tuple_types.size
-              block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exp_type.tuple_types.size})"
+              block.raise "Too many block arguments (given #{block.args.size}, expected maximum #{exp_type.tuple_types.size})"
             end
 
             exp_type.tuple_types.each_with_index do |tuple_type, i|
@@ -657,7 +657,7 @@ module Crystal
             end
           else
             if block.args.size > exps_types.size
-              block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
+              block.raise "Too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
             end
 
             exps_types.each_with_index do |exp_type, i|
@@ -675,7 +675,7 @@ module Crystal
         if block_arg_type
           arg_type = Type.merge(block_arg_type) || @program.nil
           if i == splat_index && !arg_type.is_a?(TupleInstanceType)
-            arg.raise "block splat argument must be a tuple type, not #{arg_type}"
+            arg.raise "Block splat argument must be a tuple type, not #{arg_type}"
           end
           arg.type = arg_type
         else

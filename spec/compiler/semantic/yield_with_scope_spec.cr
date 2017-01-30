@@ -136,7 +136,7 @@ describe "Semantic: yield with scope" do
         @foo
       end
       ),
-      "can't use instance variables at the top level"
+      "Can't use instance variables at the top level"
   end
 
   it "uses instance variable of enclosing scope" do

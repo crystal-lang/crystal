@@ -25,7 +25,7 @@ describe "Semantic: splat" do
 
       foo
       ),
-      "wrong number of arguments"
+      "Wrong number of arguments"
   end
 
   it "redefines method with splat (bug #248)" do
@@ -58,7 +58,7 @@ describe "Semantic: splat" do
     assert_error %(
       foo *1
       ),
-      "argument to splat must be a tuple, not Int32"
+      "Argument to splat must be a tuple, not Int32"
   end
 
   it "forwards tuple with an extra argument" do
@@ -98,7 +98,7 @@ describe "Semantic: splat" do
 
       foo 1, 2, 3, 'a'
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "works if matches splat with type restriction" do
@@ -146,7 +146,7 @@ describe "Semantic: splat" do
 
       foo
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "oveloards with type restriction and splat (3)" do
@@ -304,7 +304,7 @@ describe "Semantic: splat" do
 
       bar 'a', 1
       ),
-      "wrong number of arguments for 'foo' (given 2, expected 1)"
+      "Wrong number of arguments for 'foo' (given 2, expected 1)"
   end
 
   it "gives correct error when forwarding splat (2)" do
@@ -318,7 +318,7 @@ describe "Semantic: splat" do
 
       bar 1, "a", 1.7
       ),
-      "no overload matches 'foo' with types Char, Int32, String, Float64"
+      "No overload matches 'foo' with types Char, Int32, String, Float64"
   end
 
   it "doesn't crash on non-match (#2521)" do
@@ -332,7 +332,7 @@ describe "Semantic: splat" do
 
       test_func(val, 1, 2, 3, 4, 5)
       ),
-      "missing arguments: c, d"
+      "Missing arguments: c, d"
   end
 
   it "says no overload matches on type restrictions past the splat arg" do
@@ -342,7 +342,7 @@ describe "Semantic: splat" do
 
       foo(1, 2, 3, ("foo" || nil), ("bar" || nil))
       ),
-      "missing arguments: a, b"
+      "Missing arguments: a, b"
   end
 
   it "says missing argument because positional args don't match past splat" do
@@ -352,7 +352,7 @@ describe "Semantic: splat" do
 
       foo 1, 2
       ),
-      "missing argument: z"
+      "Missing argument: z"
   end
 
   it "allows default value after splat index" do
@@ -382,7 +382,7 @@ describe "Semantic: splat" do
 
       foo 10, 20, y: 30
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "uses splat restriction" do
@@ -414,7 +414,7 @@ describe "Semantic: splat" do
 
       Tuple(Int32, Char).foo(1, true)
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "method with splat and optional named argument matches zero args call (#2746)" do
@@ -483,7 +483,7 @@ describe "Semantic: splat" do
       foo = Foo(Int32, Char, String, Bool).new
       method(foo)
       ),
-      "can't specify more than one splat in restriction"
+      "Can't specify more than one splat in restriction"
   end
 
   it "matches with splat" do
@@ -545,7 +545,7 @@ describe "Semantic: splat" do
       i.should eq(2)
 
       Splat.at(a_def, objs) do
-        fail "expected at_splat not to invoke the block"
+        fail "Expected Splat.at not to invoke the block"
       end
     end
 

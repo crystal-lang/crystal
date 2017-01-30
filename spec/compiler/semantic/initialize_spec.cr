@@ -22,7 +22,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       bar = Bar.new
       ),
-      "this 'initialize' doesn't initialize instance variable '@baz' of Foo, with Bar < Foo, rendering it nilable"
+      "This 'initialize' doesn't initialize instance variable '@baz' of Foo, with Bar < Foo, rendering it nilable"
   end
 
   it "types instance vars as nilable if doesn't invoke super in initialize with deep subclass" do
@@ -52,7 +52,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       bar = Bar.new
       ),
-      "this 'initialize' doesn't initialize instance variable '@baz' of Foo, with BarBar < Foo, rendering it nilable"
+      "This 'initialize' doesn't initialize instance variable '@baz' of Foo, with BarBar < Foo, rendering it nilable"
   end
 
   it "types instance vars as nilable if doesn't invoke super with default arguments" do
@@ -107,7 +107,7 @@ describe "Semantic: initialize" do
       f = Foo.new
       f.lala
       ),
-      "instance variable '@x' of Foo must be (Char | Nil), not Int32"
+      "Instance variable '@x' of Foo must be (Char | Nil), not Int32"
   end
 
   it "types instance var as nilable if not always assigned" do
@@ -127,7 +127,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       foo.x
       ),
-      "instance variable '@x' of Foo must be Int32, not Nil"
+      "Instance variable '@x' of Foo must be Int32, not Nil"
   end
 
   it "types instance var as nilable if assigned in block" do
@@ -151,7 +151,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       foo.x
       ),
-      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "types instance var as not-nilable if assigned in block but previosly assigned" do
@@ -194,7 +194,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       foo.x
       ),
-      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "types instance var as non-nilable if calls super and super defines it" do
@@ -290,7 +290,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       foo.x
       ),
-      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "types instance var as nilable if used after method call that reads var (2)" do
@@ -318,7 +318,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       foo.x
       ),
-      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "doesn't type instance var as nilable if used after global method call" do
@@ -417,7 +417,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       foo.x
       ),
-      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "doesn't type instance var as nilable if used after method call that assigns var" do
@@ -511,7 +511,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       foo.x
       ),
-      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "doesn't type instance var as nilable if assigned before method call" do
@@ -640,7 +640,7 @@ describe "Semantic: initialize" do
       a = 1 > 0 ? nil : 1
       Foo.new(a)
       ",
-      "no overload matches"
+      "No overload matches"
   end
 
   it "doesn't mark instance variable as nilable when using self.class" do
@@ -729,6 +729,6 @@ describe "Semantic: initialize" do
 
       Foo.new(x: 1)
       ),
-      "no argument named 'x'"
+      "No argument named 'x'"
   end
 end

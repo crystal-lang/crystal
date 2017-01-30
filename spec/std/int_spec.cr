@@ -28,7 +28,7 @@ describe "Int" do
     end
 
     it "raises with negative exponent" do
-      expect_raises(ArgumentError, "cannot raise an integer to a negative integer power, use floats for that") do
+      expect_raises(ArgumentError, "Cannot raise an integer to a negative integer power, use floats for that") do
         2 ** -1
       end
     end

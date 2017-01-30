@@ -18,7 +18,7 @@ describe CSV do
 
   it "raises if trying to access before first row" do
     csv = new_csv headers: true
-    expect_raises(CSV::Error, "before first row") do
+    expect_raises(CSV::Error, "Before first row") do
       csv["one"]
     end
   end
@@ -43,7 +43,7 @@ describe CSV do
 
     csv.next.should be_false
 
-    expect_raises(CSV::Error, "after last row") do
+    expect_raises(CSV::Error, "After last row") do
       csv["one"]
     end
   end

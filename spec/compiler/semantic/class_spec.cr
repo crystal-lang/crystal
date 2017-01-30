@@ -250,27 +250,27 @@ describe "Semantic: class" do
 
   it "reports uninitialized constant" do
     assert_error "Foo.new",
-      "undefined constant Foo"
+      "Undefined constant Foo"
   end
 
   it "reports undefined method when method inside a class" do
     assert_error "struct Int; def foo; 1; end; end; foo",
-      "undefined local variable or method 'foo'"
+      "Undefined local variable or method 'foo'"
   end
 
   it "reports undefined instance method" do
     assert_error "1.foo",
-      "undefined method 'foo' for Int"
+      "Undefined method 'foo' for Int"
   end
 
   it "reports unknown class when extending" do
     assert_error "class Foo < Bar; end",
-      "undefined constant Bar"
+      "Undefined constant Bar"
   end
 
   it "reports superclass mismatch" do
     assert_error "class Foo; end; class Bar; end; class Foo < Bar; end",
-      "superclass mismatch for class Foo (Bar for Reference)"
+      "Superclass mismatch for class Foo (Bar for Reference)"
   end
 
   it "reports wrong number of arguments for initialize" do
@@ -282,7 +282,7 @@ describe "Semantic: class" do
 
       f = Foo.new
       ",
-      "wrong number of arguments"
+      "Wrong number of arguments"
   end
 
   it "reports can't instantiate abstract class on new" do
@@ -290,7 +290,7 @@ describe "Semantic: class" do
       abstract class Foo; end
       Foo.new
       ",
-      "can't instantiate abstract class Foo"
+      "Can't instantiate abstract class Foo"
   end
 
   it "reports can't instantiate abstract class on allocate" do
@@ -298,7 +298,7 @@ describe "Semantic: class" do
       abstract class Foo; end
       Foo.allocate
       ",
-      "can't instantiate abstract class Foo"
+      "Can't instantiate abstract class Foo"
   end
 
   it "doesn't lookup new in supermetaclass" do
@@ -313,7 +313,7 @@ describe "Semantic: class" do
 
   it "errors when wrong arguments for new" do
     assert_error "Reference.new 1",
-      "wrong number of arguments"
+      "Wrong number of arguments"
   end
 
   it "types virtual method of generic class" do
@@ -474,11 +474,11 @@ describe "Semantic: class" do
   end
 
   it "errors when creating Value" do
-    assert_error "Value.allocate", "can't instantiate abstract struct Value"
+    assert_error "Value.allocate", "Can't instantiate abstract struct Value"
   end
 
   it "errors when creating Number" do
-    assert_error "Number.allocate", "can't instantiate abstract struct Number"
+    assert_error "Number.allocate", "Can't instantiate abstract struct Number"
   end
 
   it "reads an object instance var" do
@@ -523,7 +523,7 @@ describe "Semantic: class" do
     assert_error %(
       1.@y
       ),
-      "can't use instance variables inside primitive types (at Int32)"
+      "Can't use instance variables inside primitive types (at Int32)"
   end
 
   it "says that instance vars are not allowed in metaclass" do
@@ -553,7 +553,7 @@ describe "Semantic: class" do
 
       Bar.new(1)
       ),
-      "wrong number of arguments for 'Bar.new' (given 1, expected 2)"
+      "Wrong number of arguments for 'Bar.new' (given 1, expected 2)"
   end
 
   it "doesn't use initialize from base class with virtual type" do
@@ -571,7 +571,7 @@ describe "Semantic: class" do
       klass = 1 == 1 ? Foo : Bar
       klass.new(1)
       ),
-      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)"
+      "Wrong number of arguments for 'Bar#initialize' (given 1, expected 2)"
   end
 
   it "errors if using underscore in generic class" do
@@ -580,7 +580,7 @@ describe "Semantic: class" do
       end
 
       Foo(_).new
-      ), "can't use underscore as generic type argument"
+      ), "Can't use underscore as generic type argument"
   end
 
   it "types bug #168 (it inherits instance var even if not mentioned in initialize)" do
@@ -633,7 +633,7 @@ describe "Semantic: class" do
 
       Foo.new(1)
       ),
-      "wrong number of arguments for 'Foo.new' (given 1, expected 0)"
+      "Wrong number of arguments for 'Foo.new' (given 1, expected 0)"
   end
 
   it "says wrong number of arguments for abstract class new (2)" do
@@ -645,7 +645,7 @@ describe "Semantic: class" do
 
       Foo.new
       ),
-      "wrong number of arguments for 'Foo.new' (given 0, expected 1)"
+      "Wrong number of arguments for 'Foo.new' (given 0, expected 1)"
   end
 
   it "errors if reopening non-generic class as generic" do
@@ -667,7 +667,7 @@ describe "Semantic: class" do
       class Foo(U)
       end
       ),
-      "type var must be T, not U"
+      "Type var must be T, not U"
   end
 
   it "errors if reopening generic class with different type vars (2)" do
@@ -678,7 +678,7 @@ describe "Semantic: class" do
       class Foo(C)
       end
       ),
-      "type vars must be A, B, not C"
+      "Type vars must be A, B, not C"
   end
 
   it "allows declaring a variable in an initialize and using it" do
@@ -716,7 +716,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "cant't use implicit initialize if defined in parent" do
+  it "can't use implicit initialize if defined in parent" do
     assert_error %(
       class Foo
         def initialize(x)
@@ -728,7 +728,7 @@ describe "Semantic: class" do
 
       Bar.new
       ),
-      "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
+      "Wrong number of arguments for 'Bar.new' (given 0, expected 1)"
   end
 
   it "doesn't error on new on abstract virtual type class" do
@@ -761,7 +761,7 @@ describe "Semantic: class" do
 
       Foo.new 'a'
       ),
-      "no overload matches"
+      "No overload matches"
   end
 
   it "correctly types #680" do
@@ -804,7 +804,7 @@ describe "Semantic: class" do
 
       Bar.new.method
       ),
-      "instance variable '@method' of Foo must be Int32, not Nil"
+      "Instance variable '@method' of Foo must be Int32, not Nil"
   end
 
   it "can invoke method on abstract type without subclasses nor instances" do
@@ -868,7 +868,7 @@ describe "Semantic: class" do
         class Foo; end
       end
       ),
-      "can't declare class dynamically"
+      "Can't declare class dynamically"
   end
 
   it "can mark initialize as private" do
@@ -880,7 +880,7 @@ describe "Semantic: class" do
 
       Foo.new
       ),
-      "private method 'new' called for Foo"
+      "Private method 'new' called for Foo"
   end
 
   it "errors if creating instance before typing instance variable" do
@@ -895,7 +895,7 @@ describe "Semantic: class" do
         end
       end
       ),
-      "instance variable '@x' of Foo must be Int32"
+      "Instance variable '@x' of Foo must be Int32"
   end
 
   it "errors if assigning superclass to declared instance var" do
@@ -916,7 +916,7 @@ describe "Semantic: class" do
 
       Main.new
       ),
-      "instance variable '@bar' of Main must be Bar"
+      "Instance variable '@bar' of Main must be Bar"
   end
 
   it "hoists instance variable initializer" do
@@ -1015,7 +1015,7 @@ describe "Semantic: class" do
 
       Bar.t
       ),
-      "there's no self in this scope"
+      "There's no self in this scope"
   end
 
   it "preserves order of instance vars (#3050)" do
@@ -1059,6 +1059,6 @@ describe "Semantic: class" do
 
       Foo.bar
       ),
-      "undefined method 'bar' for Foo:Class"
+      "Undefined method 'bar' for Foo:Class"
   end
 end

@@ -196,7 +196,7 @@ module Crystal
       end
 
       if node.target == node.value
-        node.raise "expression has no effect"
+        node.raise "Expression has no effect"
       end
 
       # We don't want to transform constant assignments into no return
@@ -273,7 +273,7 @@ module Crystal
       if block && (freeze_type = block.freeze_type) && (block_type = block.type?)
         unless block_type.implements?(freeze_type)
           freeze_type = freeze_type.base_type if freeze_type.is_a?(VirtualType)
-          node.raise "expected block to return #{freeze_type}, not #{block_type}"
+          node.raise "Expected block to return #{freeze_type}, not #{block_type}"
         end
       end
 
@@ -298,9 +298,9 @@ module Crystal
 
         if target_defs.size == 1
           if target_defs[0].is_a?(External)
-            check_args_are_not_closure node, "can't send closure to C function"
+            check_args_are_not_closure node, "Can't send closure to C function"
           elsif obj_type && obj_type.extern? && node.name.ends_with?('=')
-            check_args_are_not_closure node, "can't set closure as C #{obj_type.type_desc} member"
+            check_args_are_not_closure node, "Can't set closure as C #{obj_type.type_desc} member"
           end
         end
 
@@ -424,7 +424,7 @@ module Crystal
 
     def untyped_expression(node, msg = nil)
       ex_msg = String.build do |str|
-        str << "can't execute `"
+        str << "Can't execute `"
         str << node
         str << "`"
         str << " at "
@@ -545,7 +545,7 @@ module Crystal
         if node.nil_check? && (obj_type = node.obj.type?)
           if obj_type.pointer? || (obj_type.is_a?(UnionType) && obj_type.union_types.any?(&.pointer?))
             node.raise <<-ERROR
-              use `null?` instead of `nil?` on pointer types.
+              Use `null?` instead of `nil?` on pointer types.
 
               The semantic of `nil?` changed in the last version of the language
               to mean `is_a?(Nil)`. `Pointer#nil?` meant "is it a null pointer?"
@@ -623,18 +623,18 @@ module Crystal
         if obj_type.pointer? || obj_type.reference_like?
           return node
         else
-          node.raise "can't cast #{obj_type} to #{to_type}"
+          node.raise "Can't cast #{obj_type} to #{to_type}"
         end
       end
 
       if obj_type.pointer?
         unless to_type.pointer? || to_type.reference_like?
-          node.raise "can't cast #{obj_type} to #{to_type}"
+          node.raise "Can't cast #{obj_type} to #{to_type}"
         end
       else
         resulting_type = obj_type.filter_by(to_type)
         unless resulting_type
-          node.raise "can't cast #{obj_type} to #{to_type}"
+          node.raise "Can't cast #{obj_type} to #{to_type}"
         end
       end
 
@@ -698,7 +698,7 @@ module Crystal
 
     def transform(node : CStructOrUnionDef)
       type = node.resolved_type.as(NonGenericClassType)
-      node.raise "empty #{type.type_desc}s are disallowed" if type.instance_vars.empty?
+      node.raise "Empty #{type.type_desc}s are disallowed" if type.instance_vars.empty?
       node
     end
 

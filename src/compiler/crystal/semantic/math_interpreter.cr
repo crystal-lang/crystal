@@ -11,19 +11,19 @@ struct Crystal::MathInterpreter
     when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64, :i64
       target_kind = target_type.try(&.kind) || node.kind
       case target_kind
-      when :i8  then node.value.to_i8? || node.raise "invalid Int8: #{node.value}"
-      when :u8  then node.value.to_u8? || node.raise "invalid UInt8: #{node.value}"
-      when :i16 then node.value.to_i16? || node.raise "invalid Int16: #{node.value}"
-      when :u16 then node.value.to_u16? || node.raise "invalid UInt16: #{node.value}"
-      when :i32 then node.value.to_i32? || node.raise "invalid Int32: #{node.value}"
-      when :u32 then node.value.to_u32? || node.raise "invalid UInt32: #{node.value}"
-      when :i64 then node.value.to_i64? || node.raise "invalid Int64: #{node.value}"
-      when :u64 then node.value.to_u64? || node.raise "invalid UInt64: #{node.value}"
+      when :i8  then node.value.to_i8? || node.raise "Invalid Int8: #{node.value}"
+      when :u8  then node.value.to_u8? || node.raise "Invalid UInt8: #{node.value}"
+      when :i16 then node.value.to_i16? || node.raise "Invalid Int16: #{node.value}"
+      when :u16 then node.value.to_u16? || node.raise "Invalid UInt16: #{node.value}"
+      when :i32 then node.value.to_i32? || node.raise "Invalid Int32: #{node.value}"
+      when :u32 then node.value.to_u32? || node.raise "Invalid UInt32: #{node.value}"
+      when :i64 then node.value.to_i64? || node.raise "Invalid Int64: #{node.value}"
+      when :u64 then node.value.to_u64? || node.raise "Invalid UInt64: #{node.value}"
       else
-        node.raise "enum type must be an integer, not #{target_kind}"
+        node.raise "Enum type must be an integer, not #{target_kind}"
       end
     else
-      node.raise "constant value must be an integer, not #{node.kind}"
+      node.raise "Constant value must be an integer, not #{node.kind}"
     end
   end
 
@@ -72,7 +72,7 @@ struct Crystal::MathInterpreter
           interpret_call_macro(node, target_type)
         end
       else
-        node.raise "invalid constant value"
+        node.raise "Invalid constant value"
       end
     else
       interpret_call_macro(node, target_type)
@@ -81,7 +81,7 @@ struct Crystal::MathInterpreter
 
   def interpret_call_macro(node : Call, target_type = nil)
     interpret_call_macro?(node, target_type) ||
-      node.raise("invalid constant value")
+      node.raise("Invalid constant value")
   end
 
   def interpret_call_macro?(node : Call, target_type = nil)
@@ -107,7 +107,7 @@ struct Crystal::MathInterpreter
     when Const
       interpret(type.value, target_type)
     else
-      node.raise "invalid constant value"
+      node.raise "Invalid constant value"
     end
   end
 
@@ -115,11 +115,11 @@ struct Crystal::MathInterpreter
     if node.expressions.size == 1
       interpret(node.expressions.first)
     else
-      node.raise "invalid constant value"
+      node.raise "Invalid constant value"
     end
   end
 
   def interpret(node : ASTNode, target_type = nil)
-    node.raise "invalid constant value"
+    node.raise "Invalid constant value"
   end
 end

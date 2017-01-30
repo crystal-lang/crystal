@@ -61,13 +61,13 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
     included_type = lookup_type(node.name)
     unless included_type.is_a?(NonGenericClassType) && included_type.extern? && !included_type.extern_union?
-      node.name.raise "can only include C struct, not #{included_type.type_desc}"
+      node.name.raise "Can only include C struct, not #{included_type.type_desc}"
     end
 
     included_type.instance_vars.each_value do |var|
       field_name = var.name[1..-1]
       if type.lookup_instance_var?(var.name)
-        node.raise "struct #{included_type} has a field named '#{field_name}', which #{type} already defines"
+        node.raise "Struct #{included_type} has a field named '#{field_name}', which #{type} already defines"
       end
       declare_c_struct_or_union_field(type, field_name, var, var.location || node.location)
     end
@@ -115,7 +115,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       arg_type = lookup_type(restriction)
       arg_type = check_allowed_in_lib(restriction, arg_type)
       if arg_type.remove_typedef.void?
-        restriction.raise "can't use Void as argument type"
+        restriction.raise "Can't use Void as argument type"
       end
       external.args << Arg.new(arg.name, type: arg_type).at(arg.location)
     end
@@ -178,14 +178,14 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     field_type = lookup_type(node.declared_type)
     field_type = check_allowed_in_lib node.declared_type, field_type
     if field_type.remove_typedef.void?
-      node.declared_type.raise "can't use Void as a #{type.type_desc} field type"
+      node.declared_type.raise "Can't use Void as a #{type.type_desc} field type"
     end
 
     field_name = node.var.as(Var).name
     var_name = '@' + field_name
 
     if type.lookup_instance_var?(var_name)
-      node.raise "#{type.type_desc} #{type} already defines a field named '#{field_name}'"
+      node.raise "#{type.type_desc.capitalize} #{type} already defines a field named '#{field_name}'"
     end
     ivar = MetaTypeVar.new(var_name, field_type)
     ivar.owner = type
@@ -200,7 +200,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
   def declare_instance_var(node, var)
     unless current_type.allows_instance_vars?
-      node.raise "can't declare instance variables in #{current_type}"
+      node.raise "Can't declare instance variables in #{current_type}"
     end
 
     case owner = current_type
@@ -223,7 +223,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       return
     end
 
-    node.raise "can only declare instance variables of a non-generic class, not a #{owner.type_desc} (#{owner})"
+    node.raise "Can only declare instance variables of a non-generic class, not a #{owner.type_desc} (#{owner})"
   end
 
   def declare_instance_var(owner, node, var)

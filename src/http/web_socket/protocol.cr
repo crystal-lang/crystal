@@ -68,7 +68,7 @@ class HTTP::WebSocket::Protocol
     end
 
     def read(slice : Bytes)
-      raise "this IO is write-only"
+      raise "This IO is write-only"
     end
 
     def flush(final = true)

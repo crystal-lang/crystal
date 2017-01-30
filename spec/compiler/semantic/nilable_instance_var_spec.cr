@@ -18,7 +18,7 @@ describe "Semantic: nilable instance var" do
 
       Foo.new.foo + 1
       ),
-      "this 'initialize' doesn't explicitly initialize instance variable '@foo' of Foo, rendering it nilable"
+      "This 'initialize' doesn't explicitly initialize instance variable '@foo' of Foo, rendering it nilable"
   end
 
   it "says instance var was not initialized in all of the initialize methods (2)" do
@@ -58,7 +58,7 @@ describe "Semantic: nilable instance var" do
 
       Foo.new.foo
       ),
-      "instance variable '@foo' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@foo' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   it "says instance var was used before initialized" do
@@ -76,7 +76,7 @@ describe "Semantic: nilable instance var" do
 
       Foo.new.foo + 1
       ),
-      "instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "says instance var was used before initialized (2)" do
@@ -94,7 +94,7 @@ describe "Semantic: nilable instance var" do
 
       Foo.new.foo + 1
       ),
-      "instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "says self was used before instance var was initialized" do
@@ -185,7 +185,7 @@ describe "Semantic: nilable instance var" do
 
       Derived.new.use_x
       ),
-      "this 'initialize' doesn't initialize instance variable '@x' of Base, with Unreferenced < Base, rendering it nilable"
+      "This 'initialize' doesn't initialize instance variable '@x' of Base, with Unreferenced < Base, rendering it nilable"
   end
 
   it "doesn't consider as nil if initialized with catch-all" do
@@ -224,7 +224,7 @@ describe "Semantic: nilable instance var" do
 
       Foo.new.foo
       ),
-      "instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "marks instance var as nilable if assigned inside proc literal" do
@@ -241,6 +241,6 @@ describe "Semantic: nilable instance var" do
 
       Foo.new.foo
       ),
-      "instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 end

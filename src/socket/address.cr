@@ -14,7 +14,7 @@ class Socket
       when Family::UNIX
         UNIXAddress.new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
       else
-        raise "unsupported family type: #{family} (#{family.value})"
+        raise "Unsupported family type: #{family} (#{family.value})"
       end
     end
 
@@ -71,7 +71,7 @@ class Socket
       when Family::INET
         new(sockaddr.as(LibC::SockaddrIn*), addrlen.to_i)
       else
-        raise "unsupported family type: #{family} (#{family.value})"
+        raise "Unsupported family type: #{family} (#{family.value})"
       end
     end
 
@@ -109,7 +109,7 @@ class Socket
         case family
         when Family::INET6 then address(@addr6.not_nil!)
         when Family::INET  then address(@addr4.not_nil!)
-        else                    raise "unsupported IP address family: #{family}"
+        else                    raise "Unsupported IP address family: #{family}"
         end
       end
     end
@@ -153,7 +153,7 @@ class Socket
       when Family::INET
         to_sockaddr_in
       else
-        raise "unsupported IP address family: #{family}"
+        raise "Unsupported IP address family: #{family}"
       end
     end
 

@@ -20,6 +20,6 @@ describe "Semantic: type" do
       end
 
       Lib.foo.baz
-    ", "undefined method 'baz'")
+    ", "Undefined method 'baz'")
   end
 end

@@ -48,7 +48,8 @@ describe "Semantic: pointer" do
   it "can't do Pointer.malloc without type var" do
     assert_error "
       Pointer.malloc(1_u64)
-    ", "can't malloc pointer without type, use Pointer(Type).malloc(size)"
+    ",
+    "Can't malloc pointer without type, use Pointer(Type).malloc(size)"
   end
 
   it "create pointer by address" do
@@ -79,11 +80,11 @@ describe "Semantic: pointer" do
   end
 
   it "pointer of class raises error" do
-    assert_error "pointerof(Int32)", "can't take address of Int32"
+    assert_error "pointerof(Int32)", "Can't take address of Int32"
   end
 
   it "pointer of value error" do
-    assert_error "pointerof(1)", "can't take address of 1"
+    assert_error "pointerof(1)", "Can't take address of 1"
   end
 
   it "types pointer value on typedef" do
@@ -102,7 +103,7 @@ describe "Semantic: pointer" do
       x = 1
       x = pointerof(x)
       ),
-      "recursive pointerof expansion"
+      "Recursive pointerof expansion"
   end
 
   it "detects recursive pointerof expansion (2) (#1654)" do
@@ -111,7 +112,7 @@ describe "Semantic: pointer" do
       pointer = pointerof(x)
       x = pointerof(pointer)
       ),
-      "recursive pointerof expansion"
+      "Recursive pointerof expansion"
   end
 
   it "errors if using nil? on pointer type" do
@@ -119,7 +120,7 @@ describe "Semantic: pointer" do
       a = 1
       pointerof(a).nil?
       ),
-      "use `null?`"
+      "Use `null?`"
   end
 
   it "errors if using nil? on union including pointer type" do
@@ -127,7 +128,7 @@ describe "Semantic: pointer" do
       a = 1
       (1 || pointerof(a)).nil?
       ),
-      "use `null?`"
+      "Use `null?`"
   end
 
   it "can assign nil to void pointer" do
@@ -167,6 +168,6 @@ describe "Semantic: pointer" do
     assert_error %(
       Pointer(Int32).allocate
       ),
-      "can't create instance of a pointer type"
+      "Can't create instance of a pointer type"
   end
 end

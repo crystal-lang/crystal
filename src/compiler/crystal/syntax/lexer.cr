@@ -111,7 +111,7 @@ module Crystal
           incr_line_number
           consume_newlines
         else
-          raise "expected '\\n' after '\\r'"
+          raise "Expected '\\n' after '\\r'"
         end
       when '='
         case next_char
@@ -163,7 +163,7 @@ module Crystal
             end
 
             unless ident_start?(char)
-              raise "heredoc identifier starts with invalid character"
+              raise "Heredoc identifier starts with invalid character"
             end
 
             here << char
@@ -174,7 +174,7 @@ module Crystal
                 if peek_next_char == '\n'
                   next
                 else
-                  raise "exepcting '\\n' after '\\r'"
+                  raise "Expecting '\\n' after '\\r'"
                 end
               when char == '\n'
                 incr_line_number 0
@@ -182,22 +182,22 @@ module Crystal
               when ident_part?(char)
                 here << char
               when char == '\0'
-                raise "unexpected EOF on heredoc identifier"
+                raise "Unexpected EOF on heredoc identifier"
               else
                 if char == '\'' && has_single_quote
                   found_closing_single_quote = true
                   peek = peek_next_char
                   if peek != '\r' && peek != '\n'
-                    raise "expecting '\\n' or '\\r' after closing single quote"
+                    raise "Expecting '\\n' or '\\r' after closing single quote"
                   end
                 else
-                  raise "invalid character #{char.inspect} for heredoc identifier"
+                  raise "Invalid character #{char.inspect} for heredoc identifier"
                 end
               end
             end
 
             if has_single_quote && !found_closing_single_quote
-              raise "expecting closing single quote"
+              raise "Expecting closing single quote"
             end
 
             here = here.to_s
@@ -232,7 +232,7 @@ module Crystal
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number(start)
         when '+'
-          raise "postfix increment is not supported, use `exp += 1`"
+          raise "Postfix increment is not supported, use `exp += 1`"
         else
           @token.type = :"+"
         end
@@ -248,7 +248,7 @@ module Crystal
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number start, negative: true
         when '-'
-          raise "postfix decrement is not supported, use `exp -= 1`"
+          raise "Postfix decrement is not supported, use `exp -= 1`"
         else
           @token.type = :"-"
         end
@@ -321,14 +321,14 @@ module Crystal
           when '(', '[', '{', '<'
             delimited_pair :regex, current_char, closing_char, start
           else
-            raise "unknown %r char"
+            raise "Unknown %r char"
           end
         when 'x'
           case next_char
           when '(', '[', '{', '<'
             delimited_pair :command, current_char, closing_char, start
           else
-            raise "unknown %x char"
+            raise "Unknown %x char"
           end
         when 'w'
           case peek_next_char
@@ -493,14 +493,14 @@ module Crystal
                 incr_line_number nil
                 io << "\n"
               when '\0'
-                raise "unterminated quoted symbol", line, column
+                raise "Unterminated quoted symbol", line, column
               else
                 io << char
               end
             when '"'
               break
             when '\0'
-              raise "unterminated quoted symbol", line, column
+              raise "Unterminated quoted symbol", line, column
             else
               io << char
             end
@@ -604,19 +604,19 @@ module Crystal
             char_value = consume_octal_escape(char2)
             @token.value = char_value.chr
           when '\0'
-            raise "unterminated char literal", line, column
+            raise "Unterminated char literal", line, column
           else
             @token.value = char2
           end
         when '\''
-          raise "invalid empty char literal (did you mean '\\\''?)", line, column
+          raise "Invalid empty char literal (did you mean '\\\''?)", line, column
         when '\0'
-          raise "unterminated char literal", line, column
+          raise "Unterminated char literal", line, column
         else
           @token.value = char1
         end
         if next_char != '\''
-          raise "unterminated char literal, use double quotes for strings", line, column
+          raise "Unterminated char literal, use double quotes for strings", line, column
         end
         next_char
         set_token_raw_from_start(start)
@@ -1180,7 +1180,7 @@ module Crystal
           @token.doc_buffer = nil
         when '\r'
           if next_char_no_column_increment != '\n'
-            raise "expected '\\n' after '\\r'"
+            raise "Expected '\\n' after '\\r'"
           end
           next_char_no_column_increment
           incr_line_number nil
@@ -1502,7 +1502,7 @@ module Crystal
         end
       else
         if next_char.ascii_number?
-          raise "octal constants should be prefixed with 0o"
+          raise "Octal constants should be prefixed with 0o"
         else
           finish_scan_prefixed_number 0_u64, false, start
         end
@@ -1613,7 +1613,7 @@ module Crystal
           @token.number_kind = :i16
           3
         else
-          raise "invalid int suffix"
+          raise "Invalid int suffix"
         end
       when '3'
         if next_char == '2'
@@ -1621,7 +1621,7 @@ module Crystal
           @token.number_kind = :i32
           3
         else
-          raise "invalid int suffix"
+          raise "Invalid int suffix"
         end
       when '6'
         if next_char == '4'
@@ -1629,10 +1629,10 @@ module Crystal
           @token.number_kind = :i64
           3
         else
-          raise "invalid int suffix"
+          raise "Invalid int suffix"
         end
       else
-        raise "invalid int suffix"
+        raise "Invalid int suffix"
       end
     end
 
@@ -1648,7 +1648,7 @@ module Crystal
           @token.number_kind = :u16
           3
         else
-          raise "invalid uint suffix"
+          raise "Invalid uint suffix"
         end
       when '3'
         if next_char == '2'
@@ -1656,7 +1656,7 @@ module Crystal
           @token.number_kind = :u32
           3
         else
-          raise "invalid uint suffix"
+          raise "Invalid uint suffix"
         end
       when '6'
         if next_char == '4'
@@ -1664,10 +1664,10 @@ module Crystal
           @token.number_kind = :u64
           3
         else
-          raise "invalid uint suffix"
+          raise "Invalid uint suffix"
         end
       else
-        raise "invalid uint suffix"
+        raise "Invalid uint suffix"
       end
     end
 
@@ -1679,7 +1679,7 @@ module Crystal
           @token.number_kind = :f32
           3
         else
-          raise "invalid float suffix"
+          raise "Invalid float suffix"
         end
       when '6'
         if next_char == '4'
@@ -1687,10 +1687,10 @@ module Crystal
           @token.number_kind = :f64
           3
         else
-          raise "invalid float suffix"
+          raise "Invalid float suffix"
         end
       else
-        raise "invalid float suffix"
+        raise "Invalid float suffix"
       end
     end
 
@@ -1807,7 +1807,7 @@ module Crystal
         is_slash_r = current_char == '\r'
         if is_slash_r
           if next_char != '\n'
-            raise "expecting '\\n' after '\\r'"
+            raise "Expecting '\\n' after '\\r'"
           end
         end
 
@@ -1885,10 +1885,10 @@ module Crystal
 
     def raise_unterminated_quoted(string_end)
       msg = case string_end
-            when '`'    then "unterminated command"
-            when '/'    then "unterminated regular expression"
-            when String then "unterminated heredoc"
-            else             "unterminated string literal"
+            when '`'    then "Unterminated command"
+            when '/'    then "Unterminated regular expression"
+            when String then "Unterminated heredoc"
+            else             "Unterminated string literal"
             end
       raise msg, @line_number, @column_number
     end
@@ -1999,7 +1999,7 @@ module Crystal
           when '{'
             break
           when '\0'
-            raise "unterminated macro"
+            raise "Unterminated macro"
           end
           char = next_char
         end
@@ -2320,7 +2320,7 @@ module Crystal
       if !found_digit
         expected_hexacimal_character_in_unicode_escape
       elsif codepoint > 0x10FFFF
-        raise "invalid unicode codepoint (too large)"
+        raise "Invalid unicode codepoint (too large)"
       end
 
       unless found_space
@@ -2329,7 +2329,7 @@ module Crystal
         end
 
         unless char == '}'
-          raise "expected '}' to close unicode escape"
+          raise "Expected '}' to close unicode escape"
         end
       end
 
@@ -2337,7 +2337,7 @@ module Crystal
     end
 
     def expected_hexacimal_character_in_unicode_escape
-      raise "expected hexadecimal character in unicode escape"
+      raise "Expected hexadecimal character in unicode escape"
     end
 
     def string_token_escape_value(value)
@@ -2408,7 +2408,7 @@ module Crystal
           when '"'
             break
           when '\0'
-            raise "unexpected end of file in loc pragma"
+            raise "Unexpected end of file in loc pragma"
           else
             next_char_no_column_increment
           end
@@ -2421,7 +2421,7 @@ module Crystal
         next_char
 
         unless current_char == ','
-          raise "expected ',' in loc pragma after filename"
+          raise "Expected ',' in loc pragma after filename"
         end
         next_char
 
@@ -2434,7 +2434,7 @@ module Crystal
             next_char
             break
           else
-            raise "expected digit or ',' in loc pragma for line number"
+            raise "Expected digit or ',' in loc pragma for line number"
           end
           next_char
         end
@@ -2448,7 +2448,7 @@ module Crystal
             next_char
             break
           else
-            raise "expected digit or '>' in loc pragma for column_number number"
+            raise "Expected digit or '>' in loc pragma for column_number number"
           end
           next_char
         end
@@ -2464,7 +2464,7 @@ module Crystal
         when 'o'
           unless next_char_no_column_increment == 'p' &&
                  next_char_no_column_increment == '>'
-            raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+            raise %(Expected #<loc:push>, #<loc:pop> or #<loc:"...>)
           end
 
           # skip '>'
@@ -2477,7 +2477,7 @@ module Crystal
           unless next_char_no_column_increment == 's' &&
                  next_char_no_column_increment == 'h' &&
                  next_char_no_column_increment == '>'
-            raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+            raise %(Expected #<loc:push>, #<loc:pop> or #<loc:"...>)
           end
 
           # skip '>'
@@ -2489,10 +2489,10 @@ module Crystal
           @token.column_number = @column_number
           push_location
         else
-          raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+          raise %(Expected #<loc:push>, #<loc:pop> or #<loc:"...>)
         end
       else
-        raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+        raise %(Expected #<loc:push>, #<loc:pop> or #<loc:"...>)
       end
     end
 
@@ -2665,7 +2665,7 @@ module Crystal
     end
 
     def unknown_token
-      raise "unknown token: #{current_char.inspect}", @line_number, @column_number
+      raise "Unknown token: #{current_char.inspect}", @line_number, @column_number
     end
 
     def set_token_raw_from_start(start)

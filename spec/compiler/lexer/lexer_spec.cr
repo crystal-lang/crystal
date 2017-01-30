@@ -226,8 +226,8 @@ describe "Lexer" do
   it_lexes_char "'\\10'", 8.chr
   it_lexes_char "'\\110'", 72.chr
   it_lexes_char "'\\8'", '8'
-  assert_syntax_error "'", "unterminated char literal"
-  assert_syntax_error "'\\", "unterminated char literal"
+  assert_syntax_error "'", "Unterminated char literal"
+  assert_syntax_error "'\\", "Unterminated char literal"
   it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"(", :")",
     :"==", :"!=", :"=~", :"!", :",", :".", :"..", :"...", :"&&", :"||",
     :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"%=", :"&=",
@@ -277,9 +277,9 @@ describe "Lexer" do
   assert_syntax_error "0o200_i8", "128 doesn't fit in an Int8"
   assert_syntax_error "0b10000000_i8", "128 doesn't fit in an Int8"
 
-  assert_syntax_error "0123", "octal constants should be prefixed with 0o"
-  assert_syntax_error "00", "octal constants should be prefixed with 0o"
-  assert_syntax_error "01_i64", "octal constants should be prefixed with 0o"
+  assert_syntax_error "0123", "Octal constants should be prefixed with 0o"
+  assert_syntax_error "00", "Octal constants should be prefixed with 0o"
+  assert_syntax_error "01_i64", "Octal constants should be prefixed with 0o"
 
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
@@ -352,8 +352,8 @@ describe "Lexer" do
     token.type.should eq(:EOF)
   end
 
-  assert_syntax_error "/foo", "unterminated regular expression"
-  assert_syntax_error ":\"foo", "unterminated quoted symbol"
+  assert_syntax_error "/foo", "Unterminated regular expression"
+  assert_syntax_error ":\"foo", "Unterminated quoted symbol"
 
   it "lexes utf-8 char" do
     lexer = Lexer.new "'á'"
@@ -385,7 +385,7 @@ describe "Lexer" do
     token.type.should eq(:NUMBER)
   end
 
-  assert_syntax_error "\r1", "expected '\\n' after '\\r'"
+  assert_syntax_error "\r1", "Expected '\\n' after '\\r'"
 
   it "lexes char with unicode codepoint" do
     lexer = Lexer.new "'\\uFEDA'"
@@ -445,8 +445,8 @@ describe "Lexer" do
     token.type.should eq(:"/=")
   end
 
-  assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"
-  assert_syntax_error "'\\u{}'", "expected hexadecimal character in unicode escape"
-  assert_syntax_error "'\\u{110000}'", "invalid unicode codepoint (too large)"
-  assert_syntax_error ":+1", "unexpected token"
+  assert_syntax_error "'\\uFEDZ'", "Expected hexadecimal character in unicode escape"
+  assert_syntax_error "'\\u{}'", "Expected hexadecimal character in unicode escape"
+  assert_syntax_error "'\\u{110000}'", "Invalid unicode codepoint (too large)"
+  assert_syntax_error ":+1", "Unexpected token"
 end
