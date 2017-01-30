@@ -126,22 +126,22 @@ describe "Lexer" do
   it_lexes "\n\n\n", :NEWLINE
   it_lexes "_", :UNDERSCORE
   it_lexes_keywords [:def, :if, :else, :elsif, :end, :true, :false, :class, :module, :include,
-    :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break,
-    :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-    :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
-    :pointerof, :sizeof, :instance_sizeof, :as, :as?, :typeof, :for, :in,
-    :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?]
+                     :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break,
+                     :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
+                     :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
+                     :pointerof, :sizeof, :instance_sizeof, :as, :as?, :typeof, :for, :in,
+                     :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
-    "❨╯°□°❩╯︵┻━┻"]
+                   "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",
-    "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
+                   "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!",
-    "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
+                   "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
   it_lexes_i32 ["1", ["0i32", "0"], ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234",
-    ["1.foo", "1"], ["1_000", "1000"], ["100_000", "100000"]]
+                ["1.foo", "1"], ["1_000", "1000"], ["100_000", "100000"]]
   it_lexes_i64 [["1i64", "1"], ["1_i64", "1"], ["1i64hello", "1"], ["+1_i64", "+1"], ["-1_i64", "-1"]]
   it_lexes_f32 [["0f32", "0"], ["0_f32", "0"], ["1.0f32", "1.0"], ["1.0f32hello", "1.0"],
-    ["+1.0f32", "+1.0"], ["-1.0f32", "-1.0"], ["-0.0f32", "-0.0"], ["1_234.567_890_f32", "1234.567890"]]
+                ["+1.0f32", "+1.0"], ["-1.0f32", "-1.0"], ["-0.0f32", "-0.0"], ["1_234.567_890_f32", "1234.567890"]]
   it_lexes_f64 ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0", ["1_234.567_890", "1234.567890"]]
   it_lexes_f32 [["1e+23_f32", "1e+23"], ["1.2e+23_f32", "1.2e+23"]]
   it_lexes_f64 ["1e23", "1e-23", "1e+23", "1.2e+23", ["1e23f64", "1e23"], ["1.2e+23_f64", "1.2e+23"]]
@@ -229,11 +229,11 @@ describe "Lexer" do
   assert_syntax_error "'", "unterminated char literal"
   assert_syntax_error "'\\", "unterminated char literal"
   it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"(", :")",
-    :"==", :"!=", :"=~", :"!", :",", :".", :"..", :"...", :"&&", :"||",
-    :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"%=", :"&=",
-    :"|=", :"^=", :"**=", :"<<", :">>", :"%", :"&", :"|", :"^", :"**", :"<<=",
-    :">>=", :"~", :"[]", :"[]=", :"[", :"]", :"::", :"<=>", :"=>", :"||=",
-    :"&&=", :"===", :";", :"->", :"[]?", :"{%", :"{{", :"%}", :"@[", :"!~"]
+                      :"==", :"!=", :"=~", :"!", :",", :".", :"..", :"...", :"&&", :"||",
+                      :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"%=", :"&=",
+                      :"|=", :"^=", :"**=", :"<<", :">>", :"%", :"&", :"|", :"^", :"**", :"<<=",
+                      :">>=", :"~", :"[]", :"[]=", :"[", :"]", :"::", :"<=>", :"=>", :"||=",
+                      :"&&=", :"===", :";", :"->", :"[]?", :"{%", :"{{", :"%}", :"@[", :"!~"]
   it_lexes "!@foo", :"!"
   it_lexes "+@foo", :"+"
   it_lexes "-@foo", :"-"
@@ -242,8 +242,8 @@ describe "Lexer" do
   it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123"]
   it_lexes_symbols [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/",
-    ":==", ":<", ":<=", ":>", ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|",
-    ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":===",
+                    ":==", ":<", ":<=", ":>", ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|",
+                    ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":===",
   ]
   it_lexes_global_match_data_index ["$1", "$10", "$1?", "$23?"]
 

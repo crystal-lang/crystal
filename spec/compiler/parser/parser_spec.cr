@@ -58,8 +58,8 @@ describe "Parser" do
   it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
 
   [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
-    ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
-    ":[]=", ":<=>", ":==="].each do |symbol|
+   ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
+   ":[]=", ":<=>", ":==="].each do |symbol|
     value = symbol[1, symbol.size - 1]
     value = value[1, value.size - 2] if value.starts_with?("\"")
     it_parses symbol, value.symbol
