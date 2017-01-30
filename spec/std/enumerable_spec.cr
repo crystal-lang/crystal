@@ -460,7 +460,7 @@ describe "Enumerable" do
 
     it "groups can group by size (like the doc example)" do
       %w(Alice Bob Ary).group_by { |e| e.size }.should eq({3 => ["Bob", "Ary"],
-        5 => ["Alice"]})
+                                                           5 => ["Alice"]})
     end
   end
 
