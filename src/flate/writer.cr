@@ -17,7 +17,7 @@ class Flate::Writer
                  strategy : Flate::Strategy = Flate::Strategy::DEFAULT,
                  @sync_close : Bool = false, @dict : Bytes? = nil)
     unless -1 <= level <= 9
-      raise ArgumentError.new("invalid Flate level: #{level} (must be in -1..9)")
+      raise ArgumentError.new("Invalid Flate level: #{level} (must be in -1..9)")
     end
 
     @buf = uninitialized UInt8[8192] # output buffer used by zlib
@@ -43,7 +43,7 @@ class Flate::Writer
 
   # Always raises `IO::Error` because this is a write-only `IO`.
   def read(slice : Bytes)
-    raise "can't read from Flate::Writer"
+    raise "Can't read from Flate::Writer"
   end
 
   # See `IO#write`.

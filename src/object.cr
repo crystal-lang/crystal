@@ -297,7 +297,7 @@ class Object
     macro {{macro_prefix}}getter(*names, &block)
       \{% if block %}
         \{% if names.size != 1 %}
-          \{{ raise "only one argument can be passed to `getter` with a block" }}
+          \{{ raise "Only one argument can be passed to `getter` with a block" }}
         \{% end %}
 
         \{% name = names[0] %}
@@ -751,7 +751,7 @@ class Object
     macro {{macro_prefix}}property(*names, &block)
       \{% if block %}
         \{% if names.size != 1 %}
-          \{{ raise "only one argument can be passed to `property` with a block" }}
+          \{{ raise "Only one argument can be passed to `property` with a block" }}
         \{% end %}
 
         \{% name = names[0] %}

@@ -31,7 +31,7 @@ struct BigInt < Int
   def initialize(str : String, base = 10)
     err = LibGMP.init_set_str(out @mpz, str, base)
     if err == -1
-      raise ArgumentError.new("invalid BigInt: #{str}")
+      raise ArgumentError.new("Invalid BigInt: #{str}")
     end
   end
 
@@ -237,7 +237,7 @@ struct BigInt < Int
 
   def **(other : Int) : BigInt
     if other < 0
-      raise ArgumentError.new("negative exponent isn't supported")
+      raise ArgumentError.new("Negative exponent isn't supported")
     end
     BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
   end

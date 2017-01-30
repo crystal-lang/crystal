@@ -289,7 +289,7 @@ struct HTTP::Headers
       char = byte.unsafe_chr
       next if char == '\t'
       if char < ' ' || char > '\u{ff}' || char == '\u{7f}'
-        raise ArgumentError.new("header content contains invalid character #{char.inspect}")
+        raise ArgumentError.new("Header content contains invalid character #{char.inspect}")
       end
     end
   end

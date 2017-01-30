@@ -185,7 +185,7 @@ class CSV
   # Returns this CSV headers. Their values are always stripped.
   # Raises `CSV::Error` if headers were not requested.
   def headers : Array(String)
-    @headers || raise(Error.new("headers not requested"))
+    @headers || raise(Error.new("Headers not requested"))
   end
 
   # Invokes the block once for each row in this CSV, yielding `self`.
@@ -268,15 +268,15 @@ class CSV
     return row if row
 
     if @traversed
-      raise Error.new("after last row")
+      raise Error.new("After last row")
     else
-      raise Error.new("before first row")
+      raise Error.new("Before first row")
     end
   end
 
   # :nodoc:
   def indices
-    @indices || raise(Error.new("headers not requested"))
+    @indices || raise(Error.new("Headers not requested"))
   end
 
   # :nodoc:

@@ -16,7 +16,7 @@ struct LLVM::FunctionCollection
 
   def [](name)
     func = self[name]?
-    func || raise "undefined llvm function: #{name}"
+    func || raise "Undefined llvm function: #{name}"
   end
 
   def []?(name)

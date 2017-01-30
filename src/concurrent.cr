@@ -7,7 +7,7 @@ require "./concurrent/*"
 # fibers might start their execution.
 def sleep(seconds : Number)
   if seconds < 0
-    raise ArgumentError.new "sleep seconds must be positive"
+    raise ArgumentError.new "Sleep seconds must be positive"
   end
 
   Fiber.sleep(seconds)

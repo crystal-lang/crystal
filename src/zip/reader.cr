@@ -81,7 +81,7 @@ class Zip::Reader
           read_data_descriptor(last_entry)
           next
         else
-          raise Error.new("unexpected data descriptor when reading zip")
+          raise Error.new("Unexpected data descriptor when reading zip")
         end
       else
         # Other signature: we are done with entries (next comes metadata)
@@ -134,7 +134,7 @@ class Zip::Reader
 
   private def verify_checksum(entry)
     if entry.crc32 != entry.checksum_io.crc32
-      raise Zip::Error.new("checksum failed for entry #{entry.filename} (expected #{entry.crc32}, got #{entry.checksum_io.crc32}")
+      raise Zip::Error.new("Checksum failed for entry #{entry.filename} (expected #{entry.crc32}, got #{entry.checksum_io.crc32}")
     end
   end
 

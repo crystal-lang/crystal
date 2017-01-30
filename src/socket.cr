@@ -189,7 +189,7 @@ class Socket < IO::FileDescriptor
   # socket.close
   # ```
   def accept
-    accept? || raise IO::Error.new("closed stream")
+    accept? || raise IO::Error.new("Closed stream")
   end
 
   # Accepts an incoming connection.

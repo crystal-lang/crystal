@@ -76,7 +76,7 @@ class Array(T)
   # ```
   def initialize(initial_capacity : Int)
     if initial_capacity < 0
-      raise ArgumentError.new("negative array size: #{initial_capacity}")
+      raise ArgumentError.new("Negative array size: #{initial_capacity}")
     end
 
     @size = 0
@@ -100,7 +100,7 @@ class Array(T)
   # ```
   def initialize(size : Int, value : T)
     if size < 0
-      raise ArgumentError.new("negative array size: #{size}")
+      raise ArgumentError.new("Negative array size: #{size}")
     end
 
     @size = size.to_i
@@ -339,7 +339,7 @@ class Array(T)
   # a # => [1, 6, 2, 3, 4, 5]
   # ```
   def []=(index : Int, count : Int, value : T)
-    raise ArgumentError.new "negative count: #{count}" if count < 0
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
 
     index = check_index_out_of_bounds index
     count = index + count <= size ? count : size - index
@@ -391,7 +391,7 @@ class Array(T)
   # a # => [1, 6, 7, 8, 9, 10, 5]
   # ```
   def []=(index : Int, count : Int, values : Array(T))
-    raise ArgumentError.new "negative count: #{count}" if count < 0
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
 
     index = check_index_out_of_bounds index
     count = index + count <= size ? count : size - index
@@ -474,7 +474,7 @@ class Array(T)
   # a[5, 1]  # => []
   # ```
   def [](start : Int, count : Int)
-    raise ArgumentError.new "negative count: #{count}" if count < 0
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
 
     if start == size
       return Array(T).new
@@ -974,7 +974,7 @@ class Array(T)
     n = self.size
     return if size > n
 
-    raise ArgumentError.new("size must be positive") if size < 0
+    raise ArgumentError.new("Size must be positive") if size < 0
 
     reuse = check_reuse(reuse, size)
     pool = self.dup
@@ -1024,7 +1024,7 @@ class Array(T)
   # used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_permutation(size : Int = self.size, reuse = false)
-    raise ArgumentError.new("size must be positive") if size < 0
+    raise ArgumentError.new("Size must be positive") if size < 0
 
     PermutationIterator.new(self, size.to_i, reuse)
   end
@@ -1040,7 +1040,7 @@ class Array(T)
   def each_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
     return if size > n
-    raise ArgumentError.new("size must be positive") if size < 0
+    raise ArgumentError.new("Size must be positive") if size < 0
 
     reuse = check_reuse(reuse, size)
     copy = self.dup
@@ -1086,7 +1086,7 @@ class Array(T)
   end
 
   def each_combination(size : Int = self.size, reuse = false)
-    raise ArgumentError.new("size must be positive") if size < 0
+    raise ArgumentError.new("Size must be positive") if size < 0
 
     CombinationIterator.new(self, size.to_i, reuse)
   end
@@ -1128,7 +1128,7 @@ class Array(T)
   def each_repeated_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
     return if size > n && n == 0
-    raise ArgumentError.new("size must be positive") if size < 0
+    raise ArgumentError.new("Size must be positive") if size < 0
 
     reuse = check_reuse(reuse, size)
     copy = self.dup
@@ -1160,7 +1160,7 @@ class Array(T)
   end
 
   def each_repeated_combination(size : Int = self.size, reuse = false)
-    raise ArgumentError.new("size must be positive") if size < 0
+    raise ArgumentError.new("Size must be positive") if size < 0
 
     RepeatedCombinationIterator.new(self, size.to_i, reuse)
   end
@@ -1228,7 +1228,7 @@ class Array(T)
   def each_repeated_permutation(size : Int = self.size, reuse = false) : Nil
     n = self.size
     return if size != 0 && n == 0
-    raise ArgumentError.new("size must be positive") if size < 0
+    raise ArgumentError.new("Size must be positive") if size < 0
 
     if size == 0
       yield([] of T)
@@ -1286,7 +1286,7 @@ class Array(T)
   # ```
   def pop(n : Int)
     if n < 0
-      raise ArgumentError.new("can't pop negative count")
+      raise ArgumentError.new("Can't pop negative count")
     end
 
     n = Math.min(n, @size)
@@ -1415,7 +1415,7 @@ class Array(T)
   # ```
   def sample(n : Int, random = Random::DEFAULT)
     if n < 0
-      raise ArgumentError.new("can't get negative count sample")
+      raise ArgumentError.new("Can't get negative count sample")
     end
 
     case n
@@ -1484,7 +1484,7 @@ class Array(T)
   # ```
   def shift(n : Int)
     if n < 0
-      raise ArgumentError.new("can't shift negative count")
+      raise ArgumentError.new("Can't shift negative count")
     end
 
     n = Math.min(n, @size)

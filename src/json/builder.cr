@@ -30,7 +30,7 @@ class JSON::Builder
     when DocumentEndState
       @state[-1] = DocumentStartState.new
     else
-      raise JSON::Error.new("starting document before ending previous one")
+      raise JSON::Error.new("Starting document before ending previous one")
     end
   end
 
@@ -38,13 +38,13 @@ class JSON::Builder
   def end_document : Nil
     case state = @state.last
     when StartState
-      raise JSON::Error.new("empty JSON")
+      raise JSON::Error.new("Empty JSON")
     when DocumentStartState
-      raise JSON::Error.new("empty JSON")
+      raise JSON::Error.new("Empty JSON")
     when ArrayState
-      raise JSON::Error.new("unterminated JSON array")
+      raise JSON::Error.new("Unterminated JSON array")
     when ObjectState
-      raise JSON::Error.new("unterminated JSON object")
+      raise JSON::Error.new("Unterminated JSON object")
     end
   end
 
@@ -151,7 +151,7 @@ class JSON::Builder
     when ArrayState
       @state.pop
     else
-      raise JSON::Error.new("can't do end_array: not inside an array")
+      raise JSON::Error.new("Can't do end_array: not inside an array")
     end
     write_indent state
     @io << "]"
@@ -179,11 +179,11 @@ class JSON::Builder
     case state = @state.last
     when ObjectState
       unless state.name
-        raise JSON::Error.new("missing object value")
+        raise JSON::Error.new("Missing object value")
       end
       @state.pop
     else
-      raise JSON::Error.new("can't do end_object: not inside an object")
+      raise JSON::Error.new("Can't do end_object: not inside an object")
     end
     write_indent state
     @io << "}"
@@ -266,14 +266,14 @@ class JSON::Builder
     object_value = false
     case state = @state.last
     when StartState
-      raise JSON::Error.new("write before start_document")
+      raise JSON::Error.new("Write before start_document")
     when DocumentEndState
-      raise JSON::Error.new("write past end_document and before start_document")
+      raise JSON::Error.new("Write past end_document and before start_document")
     when ArrayState
       comma unless state.empty
     when ObjectState
       if state.name && !string
-        raise JSON::Error.new("expected string for object name")
+        raise JSON::Error.new("Expected string for object name")
       end
       comma if state.name && !state.empty
       object_value = !state.name

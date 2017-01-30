@@ -187,7 +187,7 @@ module HTTP
     # of provided block when there is no such param.
     #
     # ```
-    # params.fetch("email") { raise "email is missing" }              # raises "email is missing"
+    # params.fetch("email") { raise "Email is missing" }              # raises "Email is missing"
     # params.fetch("non_existent_param") { "default computed value" } # => "default computed value"
     # ```
     def fetch(name)
