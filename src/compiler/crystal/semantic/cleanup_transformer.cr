@@ -182,6 +182,10 @@ module Crystal
       if target.is_a?(Path)
         const = target.target_const.not_nil!
         return node unless const.used?
+
+        unless const.value.type?
+          node.raise "can't infer type of constant #{const} (maybe the constant refers to itself?)"
+        end
       end
 
       node.value = node.value.transform self

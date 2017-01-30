@@ -372,6 +372,10 @@ module Crystal
       ident_type ||= context.defining_type.lookup_path other
 
       if ident_type
+        if ident_type.is_a?(Const)
+          other.raise "#{ident_type} is not a type, it's a constant"
+        end
+
         return restrict ident_type, context
       end
 

@@ -187,6 +187,11 @@ module Crystal
 
       return false if node.type?
 
+      name = node.name
+      if name.is_a?(Path) && name.target_const
+        node.raise "#{name} is not a type, it's a constant"
+      end
+
       instance_type = node.name.type.instance_type
       unless instance_type.is_a?(GenericType)
         node.raise "#{instance_type} is not a generic type, it's a #{instance_type.type_desc}"
@@ -355,6 +360,8 @@ module Crystal
         node.declared_type.accept self
         @in_type_args -= 1
 
+        check_not_a_constant(node.declared_type)
+
         if declared_type = node.declared_type.type?
           meta_var.freeze_type = declared_type
         else
@@ -412,6 +419,8 @@ module Crystal
         @in_type_args += 1
         node.declared_type.accept self
         @in_type_args -= 1
+
+        check_not_a_constant(node.declared_type)
 
         # TOOD: should we be using a binding here to recompute the type?
         if declared_type = node.declared_type.type?
@@ -476,6 +485,12 @@ module Crystal
       node.type = @program.nil unless node.type?
 
       false
+    end
+
+    def check_not_a_constant(node)
+      if node.is_a?(Path) && node.target_const
+        node.raise "#{node.target_const} is not a type, it's a constant"
+      end
     end
 
     def check_exception_handler_vars(var_name, node)
