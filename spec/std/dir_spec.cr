@@ -7,7 +7,7 @@ end
 
 private def it_raises_on_null_byte(operation, &block)
   it "errors on #{operation}" do
-    expect_raises(ArgumentError, "string contains null byte") do
+    expect_raises(ArgumentError, "String contains null byte") do
       block.call
     end
   end

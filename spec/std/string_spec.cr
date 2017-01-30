@@ -328,8 +328,8 @@ describe "String" do
     it { "1234123412341234".to_i64.should eq(1234123412341234_i64) }
     it { "9223372036854775808".to_u64.should eq(9223372036854775808_u64) }
 
-    it { expect_raises(ArgumentError, "invalid base 1") { "12ab".to_i(1) } }
-    it { expect_raises(ArgumentError, "invalid base 37") { "12ab".to_i(37) } }
+    it { expect_raises(ArgumentError, "Invalid base 1") { "12ab".to_i(1) } }
+    it { expect_raises(ArgumentError, "Invalid base 37") { "12ab".to_i(37) } }
 
     it { expect_raises { "1Y2P0IJ32E8E7".to_i(36) } }
     it { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }
@@ -457,7 +457,7 @@ describe "String" do
   end
 
   it "multiplies with negative size" do
-    expect_raises(ArgumentError, "negative argument") do
+    expect_raises(ArgumentError, "Negative argument") do
       "f" * -1
     end
   end
@@ -1317,7 +1317,7 @@ describe "String" do
     end
 
     it "raises with incomplete back-reference (2)" do
-      expect_raises(ArgumentError, "missing ending '>' for '\\\\k<...") do
+      expect_raises(ArgumentError, "Missing ending '>' for '\\\\k<...") do
         "foo".gsub(/o/, "\\k<")
       end
     end
@@ -1325,11 +1325,11 @@ describe "String" do
     it "replaces with back-reference to missing capture group" do
       "foo".gsub(/o/, "\\1").should eq("f")
 
-      expect_raises(IndexError, "undefined group name reference: \"bar\"") do
+      expect_raises(IndexError, "Undefined group name reference: \"bar\"") do
         "foo".gsub(/o/, "\\k<bar>").should eq("f")
       end
 
-      expect_raises(IndexError, "undefined group name reference: \"\"") do
+      expect_raises(IndexError, "Undefined group name reference: \"\"") do
         "foo".gsub(/o/, "\\k<>")
       end
     end
@@ -1539,7 +1539,7 @@ describe "String" do
 
     ("%.2f" % 2.536_f32).should eq("2.54")
     ("%0*.*f" % [10, 2, 2.536_f32]).should eq("0000002.54")
-    expect_raises(ArgumentError, "expected dynamic value '*' to be an Int - \"not a number\" (String)") do
+    expect_raises(ArgumentError, "Expected dynamic value '*' to be an Int - \"not a number\" (String)") do
       "%*f" % ["not a number", 2.536_f32]
     end
   end
@@ -2074,13 +2074,13 @@ describe "String" do
     end
 
     it "raises if expecting hash or named tuple but not given" do
-      expect_raises(ArgumentError, "one hash or named tuple required") do
+      expect_raises(ArgumentError, "One hash or named tuple required") do
         "change %{this}" % "this"
       end
     end
 
     it "raises on unbalanced curly" do
-      expect_raises(ArgumentError, "malformed name - unmatched parenthesis") do
+      expect_raises(ArgumentError, "Malformed name - unmatched parenthesis") do
         "change %{this" % {"this" => 1}
       end
     end
@@ -2095,25 +2095,25 @@ describe "String" do
   end
 
   it "raises if string capacity is negative" do
-    expect_raises(ArgumentError, "negative capacity") do
+    expect_raises(ArgumentError, "Negative capacity") do
       String.new(-1) { |buf| {0, 0} }
     end
   end
 
   it "raises if capacity too big on new with UInt32::MAX" do
-    expect_raises(ArgumentError, "capacity too big") do
+    expect_raises(ArgumentError, "Capacity too big") do
       String.new(UInt32::MAX) { {0, 0} }
     end
   end
 
   it "raises if capacity too big on new with UInt32::MAX - String::HEADER_SIZE - 1" do
-    expect_raises(ArgumentError, "capacity too big") do
+    expect_raises(ArgumentError, "Capacity too big") do
       String.new(UInt32::MAX - String::HEADER_SIZE) { {0, 0} }
     end
   end
 
   it "raises if capacity too big on new with UInt64::MAX" do
-    expect_raises(ArgumentError, "capacity too big") do
+    expect_raises(ArgumentError, "Capacity too big") do
       String.new(UInt64::MAX) { {0, 0} }
     end
   end
@@ -2137,13 +2137,13 @@ describe "String" do
   end
 
   it "raises if String.build negative capacity" do
-    expect_raises(ArgumentError, "negative capacity") do
+    expect_raises(ArgumentError, "Negative capacity") do
       String.build(-1) { }
     end
   end
 
   it "raises if String.build capacity too big" do
-    expect_raises(ArgumentError, "capacity too big") do
+    expect_raises(ArgumentError, "Capacity too big") do
       String.build(UInt32::MAX) { }
     end
   end
@@ -2155,19 +2155,19 @@ describe "String" do
     end
 
     it "raises if wrong encoding" do
-      expect_raises ArgumentError, "invalid encoding: FOO" do
+      expect_raises ArgumentError, "Invalid encoding: FOO" do
         "Hello".encode("FOO")
       end
     end
 
     it "raises if wrong encoding with skip" do
-      expect_raises ArgumentError, "invalid encoding: FOO" do
+      expect_raises ArgumentError, "Invalid encoding: FOO" do
         "Hello".encode("FOO", invalid: :skip)
       end
     end
 
     it "raises if illegal byte sequence" do
-      expect_raises ArgumentError, "invalid multibyte sequence" do
+      expect_raises ArgumentError, "Invalid multibyte sequence" do
         "ñ".encode("GB2312")
       end
     end
@@ -2177,7 +2177,7 @@ describe "String" do
     end
 
     it "raises if incomplete byte sequence" do
-      expect_raises ArgumentError, "incomplete multibyte sequence" do
+      expect_raises ArgumentError, "Incomplete multibyte sequence" do
         "好".byte_slice(0, 1).encode("GB2312")
       end
     end
@@ -2257,7 +2257,7 @@ describe "String" do
   end
 
   it "raises on String.new if returned bytesize is greater than capacity" do
-    expect_raises ArgumentError, "bytesize out of capacity bounds" do
+    expect_raises ArgumentError, "Bytesize out of capacity bounds" do
       String.new(123) do |buffer|
         {124, 0}
       end

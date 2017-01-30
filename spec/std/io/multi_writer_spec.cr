@@ -32,7 +32,7 @@ describe "IO::MultiWriter" do
 
       writer.close
 
-      expect_raises(IO::Error, "closed") do
+      expect_raises(IO::Error, "Closed") do
         writer.puts "foo"
       end
 

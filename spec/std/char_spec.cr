@@ -212,13 +212,13 @@ describe "Char" do
   end
 
   it "to_i rejects unsupported base (1)" do
-    expect_raises ArgumentError, "invalid base 1" do
+    expect_raises ArgumentError, "Invalid base 1" do
       '0'.to_i(1)
     end
   end
 
   it "to_i rejects unsupported base (37)" do
-    expect_raises ArgumentError, "invalid base 37" do
+    expect_raises ArgumentError, "Invalid base 37" do
       '0'.to_i(37)
     end
   end

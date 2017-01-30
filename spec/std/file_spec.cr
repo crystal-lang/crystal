@@ -22,7 +22,7 @@ end
 
 private def it_raises_on_null_byte(operation, &block)
   it "errors on #{operation}" do
-    expect_raises(ArgumentError, "string contains null byte") do
+    expect_raises(ArgumentError, "String contains null byte") do
       block.call
     end
   end
@@ -623,7 +623,7 @@ describe "File" do
   it "raises if invoking seek with a closed file" do
     file = File.new("#{__DIR__}/data/test_file.txt")
     file.close
-    expect_raises(IO::Error, "closed stream") { file.seek(1) }
+    expect_raises(IO::Error, "Closed stream") { file.seek(1) }
   end
 
   it "returns the current read position with tell" do
@@ -646,7 +646,7 @@ describe "File" do
   it "raises if invoking tell with a closed file" do
     file = File.new("#{__DIR__}/data/test_file.txt")
     file.close
-    expect_raises(IO::Error, "closed stream") { file.tell }
+    expect_raises(IO::Error, "Closed stream") { file.tell }
   end
 
   it "iterates with each_char" do
@@ -766,15 +766,15 @@ describe "File" do
 
     begin
       File.open(filename) do |io|
-        expect_raises(ArgumentError, "negative bytesize") do
+        expect_raises(ArgumentError, "Negative bytesize") do
           io.read_at(3, -1) { }
         end
 
-        expect_raises(ArgumentError, "offset out of bounds") do
+        expect_raises(ArgumentError, "Offset out of bounds") do
           io.read_at(12, 1) { }
         end
 
-        expect_raises(ArgumentError, "bytesize out of bounds") do
+        expect_raises(ArgumentError, "Bytesize out of bounds") do
           io.read_at(6, 6) { }
         end
       end
@@ -935,13 +935,13 @@ describe "File" do
       io = File.open(__FILE__, "r")
       io.close
 
-      expect_raises(IO::Error, "closed stream") { io.gets_to_end }
-      expect_raises(IO::Error, "closed stream") { io.print "hi" }
-      expect_raises(IO::Error, "closed stream") { io.puts "hi" }
-      expect_raises(IO::Error, "closed stream") { io.seek(1) }
-      expect_raises(IO::Error, "closed stream") { io.gets }
-      expect_raises(IO::Error, "closed stream") { io.read_byte }
-      expect_raises(IO::Error, "closed stream") { io.write_byte('a'.ord.to_u8) }
+      expect_raises(IO::Error, "Closed stream") { io.gets_to_end }
+      expect_raises(IO::Error, "Closed stream") { io.print "hi" }
+      expect_raises(IO::Error, "Closed stream") { io.puts "hi" }
+      expect_raises(IO::Error, "Closed stream") { io.seek(1) }
+      expect_raises(IO::Error, "Closed stream") { io.gets }
+      expect_raises(IO::Error, "Closed stream") { io.read_byte }
+      expect_raises(IO::Error, "Closed stream") { io.write_byte('a'.ord.to_u8) }
     end
   end
 

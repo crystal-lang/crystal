@@ -41,7 +41,7 @@ describe "IO::Sized" do
 
     it "raises on negative numbers" do
       io = IO::Memory.new
-      expect_raises(ArgumentError, "negative read_size") do
+      expect_raises(ArgumentError, "Negative read_size") do
         IO::Sized.new(io, read_size: -1)
       end
     end
@@ -66,7 +66,7 @@ describe "IO::Sized" do
 
       sized.close
       sized.closed?.should eq(true)
-      expect_raises(IO::Error, "closed stream") do
+      expect_raises(IO::Error, "Closed stream") do
         sized.read_char
       end
     end

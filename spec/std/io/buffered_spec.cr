@@ -133,7 +133,7 @@ describe "IO::Buffered" do
 
   it "raises if invoking gets with negative limit" do
     io = BufferedWrapper.new(IO::Memory.new("hello\nworld\n"))
-    expect_raises ArgumentError, "negative limit" do
+    expect_raises ArgumentError, "Negative limit" do
       io.gets(-1)
     end
   end
