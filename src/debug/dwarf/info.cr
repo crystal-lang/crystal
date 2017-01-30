@@ -11,11 +11,11 @@ module Debug
       property! abbreviations : Array(Abbrev)
 
       property dwarf64 : Bool
-      @offset : Int64
-      @ref_offset : UInt64
+      @offset : LibC::OffT
+      @ref_offset : LibC::OffT
 
       def initialize(@io : IO::FileDescriptor, @offset)
-        @ref_offset = offset.to_u64
+        @ref_offset = offset
 
         @unit_length = @io.read_bytes(UInt32)
         if @unit_length == 0xffffffff
@@ -31,7 +31,7 @@ module Debug
         @address_size = @io.read_byte.not_nil!
       end
 
-      alias Value = Bool | Int32 | Slice(UInt8) | String | UInt16 | UInt32 | UInt64 | UInt8
+      alias Value = Bool | Int32 | Int64 | Slice(UInt8) | String | UInt16 | UInt32 | UInt64 | UInt8
 
       def read_abbreviations(io)
         @abbreviations = Abbrev.read(io, debug_abbrev_offset)

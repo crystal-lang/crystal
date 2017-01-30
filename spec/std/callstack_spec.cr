@@ -17,9 +17,9 @@ describe "Backtrace" do
     output = `#{tempfile.path}`
 
     # resolved file line:column
-    output.should match(/#{sample} 3:10/) # callee1
-    output.should match(/#{sample} 15:3/) # callee3
-    output.should match(/#{sample} 17:1/) # ???
+    output.should match(/callee1 at #{sample} 3:10/)
+    output.should match(/callee3 at #{sample} 15:3/)
+    output.should match(/__crystal_main at #{sample} 17:1/)
 
     # skipped internal details
     output.should_not match(/src\/callstack\.cr/)
