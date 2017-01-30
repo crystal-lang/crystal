@@ -691,18 +691,24 @@ module Crystal
 
       skip_space
       if @token.type == :NEWLINE
+        # add one level of indentation for contents if a newline is present
+        offset = @indent + 2
+
         if elements.empty?
           skip_space_or_newline
           write_token suffix
           return false
         end
 
-        indent(@indent + 2) { consume_newlines }
+        indent(offset) { consume_newlines }
         skip_space_or_newline
         wrote_newline = true
         next_needs_indent = true
         has_newlines = true
         found_first_newline = true
+      else
+        # indent contents at the same column as starting token if no newline
+        offset = @column
       end
 
       elements.each_with_index do |element, i|
@@ -725,7 +731,7 @@ module Crystal
         end
 
         if next_needs_indent
-          write_indent(@indent + 2, element)
+          write_indent(offset, element)
         else
           accept element
         end
@@ -744,7 +750,7 @@ module Crystal
               write ","
               found_comment = true
             end
-            indent(@indent + 2) { consume_newlines }
+            indent(offset) { consume_newlines }
             skip_space_or_newline
             next_needs_indent = true
             has_newlines = true
