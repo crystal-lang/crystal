@@ -272,7 +272,7 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
-    raise "Bug: trying to assign #{target_type} <- #{value_type}"
+    raise "BUG: trying to assign #{target_type} <- #{value_type}"
   end
 
   def downcast(value, to_type, from_type : VoidType, already_loaded)
@@ -489,7 +489,7 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast_distinct(value, to_type : Type, from_type : Type)
-    raise "Bug: trying to downcast #{to_type} <- #{from_type}"
+    raise "BUG: trying to downcast #{to_type} <- #{from_type}"
   end
 
   def upcast(value, to_type, from_type)
@@ -656,7 +656,7 @@ class Crystal::CodeGenVisitor
   end
 
   def upcast_distinct(value, to_type : Type, from_type : Type)
-    raise "Bug: trying to upcast #{to_type} <- #{from_type}"
+    raise "BUG: trying to upcast #{to_type} <- #{from_type}"
   end
 
   def store_in_union(union_pointer, value_type, value)

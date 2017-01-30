@@ -46,7 +46,7 @@ module Crystal
     end
 
     def restriction_of?(other, owner)
-      raise "Bug: called #{self}.restriction_of?(#{other})"
+      raise "BUG: called #{self}.restriction_of?(#{other})"
     end
   end
 
@@ -435,7 +435,7 @@ module Crystal
     end
 
     def restrict(other : ASTNode, context)
-      raise "Bug: unsupported restriction: #{self} vs. #{other}"
+      raise "BUG: unsupported restriction: #{self} vs. #{other}"
     end
 
     def restriction_of?(other : UnionType, owner)
@@ -463,7 +463,7 @@ module Crystal
     end
 
     def restriction_of?(other : ASTNode, owner)
-      raise "Bug: called #{self}.restriction_of?(#{other})"
+      raise "BUG: called #{self}.restriction_of?(#{other})"
     end
 
     def compatible_with?(type)
