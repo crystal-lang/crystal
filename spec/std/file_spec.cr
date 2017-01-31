@@ -340,6 +340,14 @@ describe "File" do
       stat.file?.should be_true
       stat.symlink?.should be_false
       stat.socket?.should be_false
+      stat.pipe?.should be_false
+    end
+  end
+
+  it "gets stat for pipe" do
+    IO.pipe do |r, w|
+      r.stat.pipe?.should be_true
+      w.stat.pipe?.should be_true
     end
   end
 
