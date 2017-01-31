@@ -143,6 +143,7 @@ module Crystal
     end
 
     private def declare_local(type, alloca, location)
+      location = location.try &.original_location
       return unless location
 
       debug_type = get_debug_type(type)
@@ -173,21 +174,22 @@ module Crystal
       end
     end
 
-    def file_and_dir(file)
-      # @file_and_dir ||= {} of String | VirtualFile => {String, String}
-      realfile = case file
-                 when String then file
-                 when VirtualFile
-                   filename = "macro#{file.object_id}.cr"
-                   absolute_filename = CacheDir.instance.join(filename)
-                   File.write(absolute_filename, file.source)
-                   absolute_filename
-                 else
-                   raise "Unknown file type: #{file}"
-                 end
+    def file_and_dir(filename)
+      # We should have expanded locations with VirtualFiles in them to
+      # the location where they expanded. Debug locations will point
+      # to the single line where the macro was expanded. This is not
+      # convenient for debugging macro code, but the other solution
+      # involves creating temporary files to hold the expanded macro
+      # code, but that prevents reusing previous compilations. In
+      # any case, macro code *should* be simple so that it doesn't
+      # need to be debugged at runtime (because macros work at compile-time.)
+      unless filename.is_a?(String)
+        raise "Bug: expected debug filename to be a String, not #{filename.class}"
+      end
+
       {
-        File.basename(realfile), # File
-        File.dirname(realfile),  # Directory
+        File.basename(filename), # File
+        File.dirname(filename),  # Directory
       }
     end
 
@@ -230,7 +232,9 @@ module Crystal
     end
 
     def set_current_debug_location(location)
+      location = location.try &.original_location
       return unless location
+
       scope = get_current_debug_scope(location)
 
       if scope
@@ -253,7 +257,7 @@ module Crystal
     end
 
     def emit_def_debug_metadata(target_def)
-      location = target_def.location
+      location = target_def.location.try &.original_location
       return unless location
 
       file, dir = file_and_dir(location.filename)

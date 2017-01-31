@@ -105,6 +105,9 @@ class Crystal::Program
     # directory will be the oldest).
     compiler.cleanup = false
 
+    # No need to generate debug info for macro run programs
+    compiler.debug = Crystal::Debug::None
+
     safe_filename = filename.gsub(/[^a-zA-Z\_\-\.]/, "_")
     tempfile_path = @program.new_tempfile("macro-run-#{safe_filename}")
     compiler.compile Compiler::Source.new(filename, source), tempfile_path
