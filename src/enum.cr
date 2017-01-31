@@ -97,17 +97,34 @@ struct Enum
       if value == 0
         io << "None"
       else
-        found = false
+        found = nil
+        first = true
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
             if {{@type}}::{{member}}.value != 0 && (value & {{@type}}::{{member}}.value) == {{@type}}::{{member}}.value
-              io << ", " if found
-              io << {{member.stringify}}
-              found = true
+              if found
+                if first
+                  io << "("
+                  io << found
+                end
+                io << ", "
+                io << {{member.stringify}}
+                first = false
+              else
+                found = {{member.stringify}}
+              end
             end
           {% end %}
         {% end %}
-        io << value unless found
+        if found
+          if first
+            io << found
+          else
+            io << ")"
+          end
+        else
+          io << value
+        end
       end
     {% else %}
       io << to_s
