@@ -2,8 +2,8 @@ module Debug
   # Mach-O parser.
   #
   # Documentation:
-  # - <http://www.idea2ic.com/File_Formats/MachORuntime.pdf>
-  # - <http://wiki.dwarfstd.org/index.php?title=Apple%27s_%22Lazy%22_DWARF_Scheme>
+  # - [Mac OS X ABI Mach-O File Format Reference (pdf)](http://www.idea2ic.com/File_Formats/MachORuntime.pdf)
+  # - [Apple's "Lazy" DWARF Scheme](http://wiki.dwarfstd.org/index.php?title=Apple%27s_%22Lazy%22_DWARF_Scheme)
   struct MachO
     class Error < Exception
     end
