@@ -261,18 +261,30 @@ module Crystal
       object_names = units.map &.object_filename
 
       target_triple = target_machine.triple
+      reused = 0
 
       Crystal.timing("Codegen (bc+obj)", @stats) do
         if units.size == 1
           first_unit = units.first
 
           codegen_single_unit(program, first_unit, target_triple)
+          reused += 1 if first_unit.reused_previous_compilation?
 
           if emit = @emit
             first_unit.emit(emit, emit_base_filename || output_filename)
           end
         else
-          codegen_many_units(program, units, target_triple)
+          reused = codegen_many_units(program, units, target_triple)
+        end
+      end
+
+      if @stats
+        if units.size == reused
+          puts "Codegen (bc+obj): all previous .o files were reused"
+        elsif reused == 0
+          puts "Codegen (bc+obj): no previous .o files were reused"
+        else
+          puts "Codegen (bc+obj): #{reused}/#{units.size} .o files were reused"
         end
       end
 
@@ -292,14 +304,31 @@ module Crystal
 
     private def codegen_many_units(program, units, target_triple)
       jobs_count = 0
+      reused = 0
       wait_channel = Channel(Nil).new(@n_threads)
+
+      # For stats output we want to count how many previous
+      # .o files were reused, mainly to detect performance regressions.
+      # Because we fork, we must communicate using a pipe.
+      if @stats
+        pr, pw = IO.pipe
+        spawn do
+          pr.each_byte do |byte|
+            reused += byte
+          end
+        end
+      end
 
       units.each_slice(Math.max(units.size / @n_threads, 1)) do |slice|
         jobs_count += 1
         spawn do
           codegen_process = fork do
+            pipe_w = pw
             slice.each do |unit|
               codegen_single_unit(program, unit, target_triple)
+              if pipe_w && unit.reused_previous_compilation?
+                pipe_w.write_byte(1_u8)
+              end
             end
           end
           codegen_process.wait
@@ -308,6 +337,12 @@ module Crystal
       end
 
       jobs_count.times { wait_channel.receive }
+      if pipe_w = pw
+        pipe_w.close
+        Fiber.yield
+      end
+
+      reused
     end
 
     private def codegen_single_unit(program, unit, target_triple)
@@ -388,6 +423,7 @@ module Crystal
     class CompilationUnit
       getter compiler
       getter llvm_mod
+      getter? reused_previous_compilation = false
 
       def initialize(@compiler : Compiler, @name : String, @llvm_mod : LLVM::Module,
                      @output_dir : String, @bc_flags_changed : Bool)
@@ -484,6 +520,8 @@ module Crystal
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
           compiler.target_machine.emit_obj_to_file llvm_mod, object_name
+        else
+          @reused_previous_compilation = true
         end
 
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
