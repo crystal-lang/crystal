@@ -2,7 +2,7 @@ module Debug
   # DWARF reader.
   #
   # Documentation:
-  # - <http://dwarfstd.org>
+  # - [The DWARF Debugging Standard](http://dwarfstd.org)
   module DWARF
     # Standard Line Number opcodes.
     # :nodoc:
