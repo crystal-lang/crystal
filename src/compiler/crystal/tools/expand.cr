@@ -76,6 +76,18 @@ module Crystal
       @message = "no expansion found"
     end
 
+    def process_toplevel(toplevel)
+      return unless toplevel
+
+      toplevel.def_instances.each_value do |typed_def|
+        typed_def.accept(self)
+      end
+
+      toplevel.types?.try &.values.each do |type|
+        process_type type
+      end
+    end
+
     def process_type(type)
       if type.is_a?(NamedType)
         type.types?.try &.values.each do |inner_type|
@@ -102,13 +114,8 @@ module Crystal
 
     def process(result : Compiler::Result)
       @in_defs = true
-      result.program.def_instances.each_value do |typed_def|
-        typed_def.accept(self)
-      end
-
-      result.program.types?.try &.values.each do |type|
-        process_type type
-      end
+      process_toplevel result.program
+      process_toplevel result.program.file_module?(@target_location.original_filename)
       @in_defs = false
 
       result.node.accept(self)
@@ -136,7 +143,7 @@ module Crystal
           if node.expanded
             @found_nodes << node
           else
-            @message = "no expansion found: #{node} is not macro"
+            @message = "no expansion found: #{node} may not be a macro"
           end
           false
         else
