@@ -2358,7 +2358,6 @@ module Crystal
               end
             end
 
-            slash_is_regex!
             when_body = parse_expressions
             skip_space_or_newline
             whens << When.new(when_conds, when_body).at(location)
@@ -2366,7 +2365,6 @@ module Crystal
             if whens.size == 0
               unexpected_token @token.to_s, "expecting when"
             end
-            slash_is_regex!
             next_token_skip_statement_end
             a_else = parse_expressions
             skip_statement_end
