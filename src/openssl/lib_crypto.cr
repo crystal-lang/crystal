@@ -64,6 +64,7 @@ lib LibCrypto
   fun bio_free = BIO_free(bio : Bio*) : Int
 
   fun sha1 = SHA1(data : Char*, length : SizeT, md : Char*) : Char*
+  fun sha512 = SHA512(data : Char*, length : SizeT, md : Char*) : Char*
 
   type EVP_MD = Void*
 
