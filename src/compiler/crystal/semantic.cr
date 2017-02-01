@@ -60,7 +60,6 @@ class Crystal::Program
       visitor = TopLevelVisitor.new(self)
       node.accept visitor
       visitor.process_finished_hooks
-      process_finished_hooks(visitor)
       visitor.new_expansions
     end
     Crystal.timing("Semantic (new)", stats) do

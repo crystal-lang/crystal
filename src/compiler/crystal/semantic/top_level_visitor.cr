@@ -1034,6 +1034,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   # add them to the program
   def process_finished_hooks
     @finished_hooks.each do |hook|
+      self.current_type = hook.scope
       expansion = expand_macro(hook.macro, hook.macro) do
         @program.expand_macro hook.macro.body, hook.scope
       end
