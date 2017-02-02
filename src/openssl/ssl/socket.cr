@@ -52,6 +52,7 @@ abstract class OpenSSL::SSL::Socket
 
       ret = LibSSL.ssl_accept(@ssl)
       unless ret == 1
+        io.close if sync_close
         raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
