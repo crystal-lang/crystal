@@ -237,6 +237,8 @@ struct Enum
     value <=> other.value
   end
 
+  # TODO: Remove `#==` after release next version. It is no longer needed.
+
   # :nodoc:
   def ==(other)
     false
