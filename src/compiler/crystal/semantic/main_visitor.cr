@@ -177,6 +177,8 @@ module Crystal
         # It's different if from a virtual type we do `v.class.new`
         # because the class could be any in the hierarchy.
         node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
+      when Self
+        node.type = check_type_in_type_args(the_self(node).remove_alias_if_simple)
       when ASTNode
         type.accept self unless type.type?
         node.syntax_replacement = type
@@ -310,12 +312,7 @@ module Crystal
     end
 
     def visit(node : Self)
-      the_self = (@scope || current_type)
-      if the_self.is_a?(Program)
-        node.raise "there's no self in this scope"
-      end
-
-      node.type = the_self.instance_type
+      node.type = the_self(node).instance_type
     end
 
     def visit(node : Var)
@@ -3122,6 +3119,14 @@ module Crystal
       else
         type.metaclass
       end
+    end
+
+    def the_self(node)
+      the_self = (@scope || current_type)
+      if the_self.is_a?(Program)
+        node.raise "there's no self in this scope"
+      end
+      the_self
     end
 
     def visit(node : When | Unless | Until | MacroLiteral | OpAssign)

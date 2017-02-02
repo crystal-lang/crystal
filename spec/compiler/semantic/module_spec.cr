@@ -226,7 +226,115 @@ describe "Semantic: module" do
         end
       end
 
-      class Baz(X)
+      class Bar(U)
+        include Foo(self)
+      end
+
+      Bar(Int32).new.foo
+      ") { generic_class("Bar", int32).metaclass }
+  end
+
+  it "includes generic module with self, and inherits it" do
+    assert_type("
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      class Bar(U)
+        include Foo(self)
+      end
+
+      class Baz < Bar(Int32)
+      end
+
+      Baz.new.foo
+      ") { types["Baz"].metaclass }
+  end
+
+  it "includes generic module with self (check argument type, success)" do
+    assert_type("
+      module Foo(T)
+        def foo(x : T)
+          x
+        end
+      end
+
+      class Bar(U)
+        include Foo(self)
+      end
+
+      Bar(Int32).new.foo Bar(Int32).new
+      ") { generic_class("Bar", int32) }
+  end
+
+  it "includes generic module with self (check argument superclass type, success)" do
+    assert_type("
+      module Foo(T)
+        def foo(x : T)
+          x
+        end
+      end
+
+      class Bar(U)
+        include Foo(self)
+      end
+
+      class Baz < Bar(Int32)
+      end
+
+      Bar(Int32).new.foo Baz.new
+      ") { types["Baz"] }
+  end
+
+  it "includes generic module with self (check argument type, error)" do
+    assert_error "
+      module Foo(T)
+        def foo(x : T)
+          x
+        end
+      end
+
+      class Bar(U)
+        include Foo(self)
+      end
+
+      class Baz1 < Bar(Int32)
+      end
+
+      class Baz2 < Bar(Int32)
+      end
+
+      Baz1.new.foo Baz2.new
+      ", "no overload matches"
+  end
+
+  it "includes generic module with self (check argument superclass type, error)" do
+    assert_error "
+      module Foo(T)
+        def foo(x : T)
+          x
+        end
+      end
+
+      class Bar(U)
+        include Foo(self)
+      end
+
+      class Baz < Bar(Int32)
+      end
+
+      Baz.new.foo Bar(Int32).new
+      ", "no overload matches"
+  end
+
+  it "includes generic module with self (check return type, success)" do
+    assert_type("
+      module Foo(T)
+        def foo : T
+          Bar(Int32).new
+        end
       end
 
       class Bar(U)
@@ -234,7 +342,67 @@ describe "Semantic: module" do
       end
 
       Bar(Int32).new.foo
-      ") { generic_class("Bar", int32).metaclass }
+      ") { generic_class("Bar", int32) }
+  end
+
+  it "includes generic module with self (check return subclass type, success)" do
+    assert_type("
+      module Foo(T)
+        def foo : T
+          Baz.new
+        end
+      end
+
+      class Bar(U)
+        include Foo(self)
+      end
+
+      class Baz < Bar(Int32)
+      end
+
+      Bar(Int32).new.foo
+      ") { types["Baz"] }
+  end
+
+  it "includes generic module with self (check return type, error)" do
+    assert_error "
+      module Foo(T)
+        def foo : T
+          Bar(Int32).new
+        end
+      end
+
+      class Bar(U)
+        include Foo(self)
+      end
+
+      class Baz < Bar(Int32)
+      end
+
+      Baz.new.foo
+      ", "type must be Baz, not Bar(Int32)"
+  end
+
+  it "includes generic module with self (check return subclass type, error)" do
+    assert_error "
+      module Foo(T)
+        def foo : T
+          Baz2.new
+        end
+      end
+
+      class Bar(U)
+        include Foo(self)
+      end
+
+      class Baz1 < Bar(Int32)
+      end
+
+      class Baz2 < Bar(Int32)
+      end
+
+      Baz1.new.foo
+      ", "type must be Baz1, not Baz2"
   end
 
   it "includes module but can't access metaclass methods" do
