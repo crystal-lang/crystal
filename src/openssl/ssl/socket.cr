@@ -96,8 +96,9 @@ abstract class OpenSSL::SSL::Socket
 
     count = slice.size
     return 0 if count == 0
+
     LibSSL.ssl_read(@ssl, slice.pointer(count), count).tap do |bytes|
-      unless bytes > 0
+      if bytes <= 0 && !LibSSL.ssl_get_error(@ssl, bytes).zero_return?
         raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
       end
     end
