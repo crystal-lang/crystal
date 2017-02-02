@@ -8,7 +8,7 @@ struct Iconv
     original_from, original_to = from, to
 
     @skip_invalid = invalid == :skip
-    {% unless flag?(:freebsd) %}
+    {% unless flag?(:freebsd) || flag?(:musl) %}
     if @skip_invalid
       from = "#{from}//IGNORE"
       to = "#{to}//IGNORE"
