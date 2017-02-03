@@ -345,7 +345,7 @@ class Fiber
   end
 
   def resume
-    # The purpose of this method is to resume a fiber (F1) and give control back
+    # The purpose of this method is to suspend a fiber (F1) and give control back
     # to another one (F2).
     log "Resume '%s' -> '%s'", Fiber.current.name!, self.name!
     Fiber.gc_read_lock
@@ -354,7 +354,7 @@ class Fiber
     # self    <~~ F2
     current = Thread.current.current_fiber
 
-    # F1's resume callback is now stored in F2's @callback instance variable.
+    # F1's suspend callback is now stored in F2's @callback instance variable.
     @callback = current.transfer_callback
 
     # LibGC.set_stackbottom LibPThread.self as Void*, @stack_bottom
@@ -386,8 +386,8 @@ class Fiber
     # If execution continues here, that means F2 was suspended while giving
     # control to another fiber (F3).
     #
-    # Note that stacks were changed, so any local variable doesn't necessarily
-    # reference the same objects that before the switch. At this point we have:
+    # Note that stacks were changed, so local variables won't reference the same
+    # objects as before the switch. At this point we have:
     #   - current: F2
     #   - self:  F3
 
