@@ -353,7 +353,7 @@ class Fiber
     # LibGC.set_stackbottom LibPThread.self as Void*, @stack_bottom
     current.thread = Pointer(Void).null
     self.thread = LibC.pthread_self.as(Void*)
-    Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
+
     {% if flag?(:aarch64) %}
       Fiber.switch_stacks(pointerof(current.@stack_top), @stack_top)
     {% else %}
