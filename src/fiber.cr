@@ -345,8 +345,8 @@ class Fiber
   end
 
   def resume
-    # The purpose of this method is to resume a fiber (say, F1) and give control
-    # back to another one (say, F2).
+    # The purpose of this method is to resume a fiber (F1) and give control back
+    # to another one (F2).
     log "Resume '%s' -> '%s'", Fiber.current.name!, self.name!
     Fiber.gc_read_lock
 
@@ -384,7 +384,7 @@ class Fiber
     # on Fiber#run.
     #
     # If execution continues here, that means F2 was suspended while giving
-    # control to another fiber (say, F3).
+    # control to another fiber (F3).
     #
     # Note that stacks were changed, so any local variable doesn't necessarily
     # reference the same objects that before the switch. At this point we have:
