@@ -345,22 +345,56 @@ class Fiber
   end
 
   def resume
+    # The purpose of this method is to resume a fiber (say, F1) and give control
+    # back to another one (say, F2).
     log "Resume '%s' -> '%s'", Fiber.current.name!, self.name!
     Fiber.gc_read_lock
-    current, Thread.current.current_fiber = Thread.current.current_fiber, self
+
+    # current <~~ F1
+    # self    <~~ F2
+    current = Thread.current.current_fiber
+
+    # F1's resume callback is now stored in F2's @callback instance variable.
     @callback = current.transfer_callback
 
     # LibGC.set_stackbottom LibPThread.self as Void*, @stack_bottom
-    current.thread = Pointer(Void).null
+
+    # Tell F2 that it will be running in the current thread, and tell the thread
+    # that it will be running F2.
+    Thread.current.current_fiber = self
     self.thread = LibC.pthread_self.as(Void*)
 
+    # F1 will be suspended, therefore it won't be assigned to any execution thread.
+    current.thread = Pointer(Void).null
+
+    # Swith stacks. After this, execution continues in F2's context, which can be one
+    # of the following:
+    #
+    # - a call to run if it is a new fiber
+    # - a previous call to resume. if it was suspending while resuming another
+    #   thread.
     {% if flag?(:aarch64) %}
       Fiber.switch_stacks(pointerof(current.@stack_top), @stack_top)
     {% else %}
       Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
     {% end %}
 
+    # To finish the process of resuming F2, we need to release the GC lock and
+    # run F1's callback. This has to be done in both the end of Fiber#resume and
+    # on Fiber#run.
+    #
+    # If execution continues here, that means F2 was suspended while giving
+    # control to another fiber (say, F3).
+    #
+    # Note that stacks were changed, so any local variable doesn't necessarily
+    # reference the same objects that before the switch. At this point we have:
+    #   - current: F2
+    #   - self:  F3
+
     Fiber.gc_read_unlock
+
+    # Call F1's resume callback, which we had previously stored in F2's instance
+    # variable.
     current.flush_callback
   end
 
