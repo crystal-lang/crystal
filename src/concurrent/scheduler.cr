@@ -35,9 +35,9 @@ class Scheduler
 
     unless @own_event_loop
       @reschedule_fiber = Fiber.current
-      @@all_mutex.synchronize do
-        @@all << self
-      end
+    end
+    @@all_mutex.synchronize do
+      @@all << self
     end
   end
 
@@ -161,9 +161,9 @@ class Scheduler
   private def choose_other_sched
     @@all_mutex.synchronize do
       loop do
+        @victim += 1
         sched = @@all[@victim.remainder(@@all.size)]
         break sched unless sched == self && @@all.size > 1
-        @victim += 1
       end
     end
   end

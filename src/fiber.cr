@@ -425,6 +425,7 @@ class Fiber
   def yield
     @callback = ->{
       Scheduler.current.enqueue self
+      nil
     }
     Scheduler.current.reschedule
   end

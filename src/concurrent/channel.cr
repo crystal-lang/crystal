@@ -189,39 +189,63 @@ class Channel::Buffered(T) < Channel(T)
   end
 
   def send(value : T)
+    @mutex.lock
+
     while full?
       raise_if_closed
       @senders << Fiber.current
+      unlock_after_context_switch
       Scheduler.current.reschedule
+      @mutex.lock
     end
 
     raise_if_closed
 
     @queue << value
-    Scheduler.current.enqueue @receivers
-    @receivers.clear
+    unless @receivers.empty?
+      Scheduler.current.enqueue @receivers
+      @receivers.clear
+    end
+
+    @mutex.unlock
 
     self
   end
 
   private def receive_impl
+    @mutex.lock
+
     while empty?
-      yield if @closed
+      if @closed
+        @mutex.unlock
+        yield
+      end
       @receivers << Fiber.current
+
+      unlock_after_context_switch
       Scheduler.current.reschedule
+      @mutex.lock
     end
 
-    @queue.shift.tap do
-      Scheduler.current.enqueue @senders
-      @senders.clear
+    result = @queue.shift.tap do
+      unless @senders.empty?
+        Scheduler.current.enqueue @senders
+        @senders.clear
+      end
     end
+
+    @mutex.unlock
+
+    result
   end
 
-  def full?
+  # holds mutex
+  private def full?
     @queue.size >= @capacity
   end
 
-  def empty?
+  # holds mutex
+  private def empty?
     @queue.empty?
   end
 end
