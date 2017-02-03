@@ -29,7 +29,7 @@ class Process::Status
     (@exit_status & 0xff00) >> 8
   end
 
-  # Returns `true` if the process exited normally with an exit code of 0.
+  # Returns `true` if the process exited normally with an exit code of `0`.
   def success?
     normal_exit? && exit_code == 0
   end

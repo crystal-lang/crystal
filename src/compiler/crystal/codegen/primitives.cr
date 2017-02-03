@@ -47,6 +47,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_object_id node, target_def, call_args
             when "object_crystal_type_id"
               codegen_primitive_object_crystal_type_id node, target_def, call_args
+            when "class_crystal_instance_type_id"
+              codegen_primitive_class_crystal_instance_type_id node, target_def, call_args
             when "symbol_to_s"
               codegen_primitive_symbol_to_s node, target_def, call_args
             when "class"
@@ -566,6 +568,10 @@ class Crystal::CodeGenVisitor
     end
   end
 
+  def codegen_primitive_class_crystal_instance_type_id(node, target_def, call_args)
+    type_id(context.type.instance_type)
+  end
+
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
     load(gep @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0])
   end
@@ -613,12 +619,19 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_class_with_type(type : Type, value)
-    type_id(type)
+    type_id(type.metaclass)
   end
 
   def codegen_primitive_proc_call(node, target_def, call_args)
     closure_ptr = call_args[0]
+
+    # For non-closure args we use byval attribute and other things
+    # that the C ABI dictates, if needed (args).
+    # Otherwise we load the values (closure_args).
     args = call_args[1..-1]
+    closure_args = Array(LLVM::Value).new(args.size + 1)
+
+    c_calling_convention = target_def.proc_c_calling_convention?
 
     proc_type = context.type.as(ProcInstanceType)
     0.upto(target_def.args.size - 1) do |i|
@@ -626,6 +639,11 @@ class Crystal::CodeGenVisitor
       proc_arg_type = proc_type.arg_types[i]
       target_def_arg_type = target_def.args[i].type
       args[i] = upcast arg, proc_arg_type, target_def_arg_type
+      if proc_arg_type.passed_by_value?
+        closure_args << load(args[i])
+      else
+        closure_args << args[i]
+      end
     end
 
     fun_ptr = builder.extract_value closure_ptr, 0
@@ -648,25 +666,25 @@ class Crystal::CodeGenVisitor
       # closures are never generated with C ABI because C doesn't support closures.
       # But non-closures use C ABI, so if the target Proc is not a closure we cast the
       # arguments according to the ABI.
-      # For this we temporarily set the target_def's `abi_info` and `considered_external`
+      # For this we temporarily set the target_def's `abi_info` and `c_calling_convention`
       # properties for the non-closure branch, and then reset it.
-      if target_def.proc_considered_external?
+      if c_calling_convention
         null_fun_ptr, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
       else
-        null_fun_ptr, null_args = real_fun_ptr, args
+        null_fun_ptr, null_args = real_fun_ptr, closure_args
       end
 
       value = codegen_call_or_invoke(node, target_def, nil, null_fun_ptr, null_args, true, target_def.type, false, proc_type)
       phi.add value, node.type
 
-      # Reset abi_info + considered_external so the closure part is generated as usual
+      # Reset abi_info + c_calling_convention so the closure part is generated as usual
       target_def.abi_info = nil
-      target_def.considered_external = nil
+      target_def.c_calling_convention = nil
 
       position_at_end ctx_is_not_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
-      args.insert(0, ctx_ptr)
-      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true, proc_type)
+      closure_args.insert(0, ctx_ptr)
+      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
     end
 
@@ -717,7 +735,7 @@ class Crystal::CodeGenVisitor
 
     null_fun_llvm_type = LLVM::Type.function(null_fun_types, null_fun_return_type)
     null_fun_ptr = bit_cast fun_ptr, null_fun_llvm_type.pointer
-    target_def.considered_external = true
+    target_def.c_calling_convention = true
 
     {null_fun_ptr, null_args}
   end
@@ -818,7 +836,7 @@ class Crystal::CodeGenVisitor
     when CharType
       inst.alignment = 4
     else
-      inst.alignment = @program.has_flag?("x86_64") ? 8 : 4
+      inst.alignment = @program.has_flag?("x86_64") || @program.has_flag?("aarch64") ? 8 : 4
     end
   end
 

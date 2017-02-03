@@ -303,4 +303,19 @@ describe "Code gen: enum" do
       Foo::A.value
       )).to_i.should eq(30)
   end
+
+  it "adds a none? method to flags enum" do
+    run(%(
+      @[Flags]
+      enum Foo
+        A
+        B
+      end
+
+      x = 0
+      x += 1 if Foo::None.none?
+      x += 2 if Foo::A.none?
+      x
+      )).to_i.should eq(1)
+  end
 end

@@ -1,8 +1,9 @@
 require "spec"
 require "yaml"
+require "compiler/crystal/config"
 require "compiler/crystal/tools/init"
 
-def describe_file(name, &block : String ->)
+private def describe_file(name, &block : String ->)
   describe name do
     it "has proper contents" do
       block.call(File.read("tmp/#{name}"))
@@ -10,7 +11,7 @@ def describe_file(name, &block : String ->)
   end
 end
 
-def run_init_project(skeleton_type, name, dir, author, email, github_name)
+private def run_init_project(skeleton_type, name, dir, author, email, github_name)
   Crystal::Init::InitProject.new(
     Crystal::Init::Config.new(skeleton_type, name, dir, author, email, github_name, true)
   ).run
@@ -38,15 +39,13 @@ module Crystal
     describe_file "example/.gitignore" do |gitignore|
       gitignore.should contain("/.shards/")
       gitignore.should contain("/shard.lock")
-      gitignore.should contain("/libs/")
-      gitignore.should contain("/.crystal/")
+      gitignore.should contain("/lib/")
     end
 
     describe_file "example_app/.gitignore" do |gitignore|
       gitignore.should contain("/.shards/")
       gitignore.should_not contain("/shard.lock")
-      gitignore.should contain("/libs/")
-      gitignore.should contain("/.crystal/")
+      gitignore.should contain("/lib/")
     end
 
     describe_file "example/LICENSE" do |license|
@@ -91,6 +90,13 @@ dependencies:
       parsed["version"].should eq("0.1.0")
       parsed["authors"].should eq(["John Smith <john@smith.com>"])
       parsed["license"].should eq("MIT")
+      parsed["crystal"].should eq(Crystal::Config.version)
+      parsed["targets"]?.should be_nil
+    end
+
+    describe_file "example_app/shard.yml" do |shard_yml|
+      parsed = YAML.parse(shard_yml)
+      parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
     end
 
     describe_file "example/.travis.yml" do |travis|

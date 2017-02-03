@@ -7,6 +7,7 @@ require "./benchmark/**"
 #
 # ```
 # require "benchmark"
+#
 # Benchmark.ips do |x|
 #   x.report("short sleep") { sleep 0.01 }
 #   x.report("shorter sleep") { sleep 0.001 }
@@ -26,7 +27,7 @@ require "./benchmark/**"
 #
 # ```
 # Benchmark.ips(warmup: 4, calculation: 10) do |x|
-#   # …
+#   x.report("sleep") { sleep 0.01 }
 # end
 # ```
 #
@@ -82,7 +83,7 @@ module Benchmark
   # one can report the benchmarks. See the module's description.
   def bm
     {% if !flag?(:release) %}
-      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id }}
+      puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
 
     report = BM::Job.new
@@ -94,13 +95,13 @@ module Benchmark
   # Instruction per second interface of the `Benchmark` module. Yields a `Job`
   # to which one can report the benchmarks. See the module's description.
   #
-  # The optional parameters `calculation` and `warmup` set the duration of
+  # The optional parameters *calculation* and *warmup* set the duration of
   # those stages in seconds. For more detail on these stages see
-  # `Benchmark::IPS`. When the `interactive` parameter is true, results are
+  # `Benchmark::IPS`. When the *interactive* parameter is `true`, results are
   # displayed and updated as they are calculated, otherwise all at once.
   def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
     {% if !flag?(:release) %}
-      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id }}
+      puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
 
     job = IPS::Job.new(calculation, warmup, interactive)

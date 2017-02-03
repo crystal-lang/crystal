@@ -1,7 +1,7 @@
 require "spec"
 
 describe "GC" do
-  it "stats compiled" do
-    GC.stats.collections.should be >= 0
+  it "compiles GC.stats" do
+    typeof(GC.stats).should eq(GC::Stats)
   end
 end

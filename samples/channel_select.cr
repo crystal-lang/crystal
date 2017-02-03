@@ -1,4 +1,4 @@
-def generator(n : T)
+def generator(n : T) forall T
   channel = Channel(T).new
   spawn do
     loop do

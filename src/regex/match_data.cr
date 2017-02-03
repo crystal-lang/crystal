@@ -3,15 +3,8 @@ class Regex
   # returned by `Regex#match` and `String#match`. It encapsulates all the
   # results of a regular expression match.
   #
-  # `Regex#match` and `String#match` can return `nil`, to represent an
-  # unsuccessful match, but there are overloads of both methods that accept a
-  # block. These overloads are convenient to access the `Regex::MatchData` of a
-  # successful match, since the block argument can't be `nil`.
-  #
   # ```
-  # "Crystal".match(/[p-s]/).size # => undefined method 'size' for Nil
-  #
-  # "Crystal".match(/[p-s]/) do |md|
+  # if md = "Crystal".match(/[p-s]/)
   #   md.string # => "Crystal"
   #   md[0]     # => "r"
   #   md[1]?    # => nil
@@ -26,23 +19,23 @@ class Regex
     # Returns the original regular expression.
     #
     # ```
-    # "Crystal".match(/[p-s]/) { |md| md.regex } # => /[p-s]/
+    # "Crystal".match(/[p-s]/).not_nil!.regex # => /[p-s]/
     # ```
     getter regex : Regex
 
     # Returns the number of capture groups, including named capture groups.
     #
     # ```
-    # "Crystal".match(/[p-s]/) { |md| md.size }          # => 0
-    # "Crystal".match(/r(ys)/) { |md| md.size }          # => 1
-    # "Crystal".match(/r(ys)(?<ok>ta)/) { |md| md.size } # => 2
+    # "Crystal".match(/[p-s]/).not_nil!.size          # => 0
+    # "Crystal".match(/r(ys)/).not_nil!.size          # => 1
+    # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.size # => 2
     # ```
     getter size : Int32
 
     # Returns the original string.
     #
     # ```
-    # "Crystal".match(/[p-s]/) { |md| md.string } # => "Crystal"
+    # "Crystal".match(/[p-s]/).not_nil!.string # => "Crystal"
     # ```
     getter string : String
 
@@ -50,15 +43,15 @@ class Regex
     def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @size : Int32)
     end
 
-    # Return the position of the first character of the `n`th match.
+    # Return the position of the first character of the *n*th match.
     #
-    # When `n` is `0` or not given, uses the match of the entire `Regex`.
-    # Otherwise, uses the match of the `n`th capture group.
+    # When *n* is `0` or not given, uses the match of the entire `Regex`.
+    # Otherwise, uses the match of the *n*th capture group.
     #
     # ```
-    # "Crystal".match(/r/) { |md| md.begin(0) }     # => 1
-    # "Crystal".match(/r(ys)/) { |md| md.begin(1) } # => 2
-    # "クリスタル".match(/リ(ス)/) { |md| md.begin(0) }    # => 1
+    # "Crystal".match(/r/).not_nil!.begin(0)     # => 1
+    # "Crystal".match(/r(ys)/).not_nil!.begin(1) # => 2
+    # "クリスタル".match(/リ(ス)/).not_nil!.begin(0)    # => 1
     # ```
     def begin(n = 0)
       @string.byte_index_to_char_index byte_begin(n)
@@ -66,27 +59,27 @@ class Regex
 
     # Return the position of the next character after the match.
     #
-    # When `n` is `0` or not given, uses the match of the entire `Regex`.
-    # Otherwise, uses the match of the `n`th capture group.
+    # When *n* is `0` or not given, uses the match of the entire `Regex`.
+    # Otherwise, uses the match of the *n*th capture group.
     #
     # ```
-    # "Crystal".match(/r/) { |md| md.end(0) }     # => 2
-    # "Crystal".match(/r(ys)/) { |md| md.end(1) } # => 4
-    # "クリスタル".match(/リ(ス)/) { |md| md.end(0) }    # => 3
+    # "Crystal".match(/r/).not_nil!.end(0)     # => 2
+    # "Crystal".match(/r(ys)/).not_nil!.end(1) # => 4
+    # "クリスタル".match(/リ(ス)/).not_nil!.end(0)    # => 3
     # ```
     def end(n = 0)
       @string.byte_index_to_char_index byte_end(n)
     end
 
-    # Return the position of the first byte of the `n`th match.
+    # Return the position of the first byte of the *n*th match.
     #
-    # When `n` is `0` or not given, uses the match of the entire `Regex`.
-    # Otherwise, uses the match of the `n`th capture group.
+    # When *n* is `0` or not given, uses the match of the entire `Regex`.
+    # Otherwise, uses the match of the *n*th capture group.
     #
     # ```
-    # "Crystal".match(/r/) { |md| md.byte_begin(0) }     # => 1
-    # "Crystal".match(/r(ys)/) { |md| md.byte_begin(1) } # => 4
-    # "クリスタル".match(/リ(ス)/) { |md| md.byte_begin(0) }    # => 3
+    # "Crystal".match(/r/).not_nil!.byte_begin(0)     # => 1
+    # "Crystal".match(/r(ys)/).not_nil!.byte_begin(1) # => 2
+    # "クリスタル".match(/リ(ス)/).not_nil!.byte_begin(0)    # => 3
     # ```
     def byte_begin(n = 0)
       check_index_out_of_bounds n
@@ -95,28 +88,28 @@ class Regex
 
     # Return the position of the next byte after the match.
     #
-    # When `n` is `0` or not given, uses the match of the entire `Regex`.
-    # Otherwise, uses the match of the `n`th capture group.
+    # When *n* is `0` or not given, uses the match of the entire `Regex`.
+    # Otherwise, uses the match of the *n*th capture group.
     #
     # ```
-    # "Crystal".match(/r/) { |md| md.byte_end(0) }     # => 2
-    # "Crystal".match(/r(ys)/) { |md| md.byte_end(1) } # => 4
-    # "クリスタル".match(/リ(ス)/) { |md| md.byte_end(0) }    # => 9
+    # "Crystal".match(/r/).not_nil!.byte_end(0)     # => 2
+    # "Crystal".match(/r(ys)/).not_nil!.byte_end(1) # => 4
+    # "クリスタル".match(/リ(ス)/).not_nil!.byte_end(0)    # => 9
     # ```
     def byte_end(n = 0)
       check_index_out_of_bounds n
       @ovector[n * 2 + 1]
     end
 
-    # Returns the match of the `n`th capture group, or `nil` if there isn't
-    # an `n`th capture group.
+    # Returns the match of the *n*th capture group, or `nil` if there isn't
+    # an *n*th capture group.
     #
-    # When `n` is `0`, returns the match for the entire `Regex`.
+    # When *n* is `0`, returns the match for the entire `Regex`.
     #
     # ```
-    # "Crystal".match(/r(ys)/) { |md| md[0]? } # => "rys"
-    # "Crystal".match(/r(ys)/) { |md| md[1]? } # => "ys"
-    # "Crystal".match(/r(ys)/) { |md| md[2]? } # => nil
+    # "Crystal".match(/r(ys)/).not_nil![0]? # => "rys"
+    # "Crystal".match(/r(ys)/).not_nil![1]? # => "ys"
+    # "Crystal".match(/r(ys)/).not_nil![2]? # => nil
     # ```
     def []?(n)
       return unless valid_group?(n)
@@ -127,12 +120,12 @@ class Regex
       @string.byte_slice(start, finish - start)
     end
 
-    # Returns the match of the `n`th capture group, or raises an `IndexError`
-    # if there is no `n`th capture group.
+    # Returns the match of the *n*th capture group, or raises an `IndexError`
+    # if there is no *n*th capture group.
     #
     # ```
-    # "Crystal".match(/r(ys)/) { |md| md[1] } # => "ys"
-    # "Crystal".match(/r(ys)/) { |md| md[2] } # => raises IndexError
+    # "Crystal".match(/r(ys)/).not_nil![1] # => "ys"
+    # "Crystal".match(/r(ys)/).not_nil![2] # raises IndexError
     # ```
     def [](n)
       check_index_out_of_bounds n
@@ -140,12 +133,12 @@ class Regex
       self[n]?.not_nil!
     end
 
-    # Returns the match of the capture group named by `group_name`, or
+    # Returns the match of the capture group named by *group_name*, or
     # `nil` if there is no such named capture group.
     #
     # ```
-    # "Crystal".match(/r(?<ok>ys)/) { |md| md["ok"]? } # => "ys"
-    # "Crystal".match(/r(?<ok>ys)/) { |md| md["ng"]? } # => nil
+    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ok"]? # => "ys"
+    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"]? # => nil
     # ```
     def []?(group_name : String)
       ret = LibPCRE.get_stringnumber(@code, group_name)
@@ -153,12 +146,12 @@ class Regex
       self[ret]?
     end
 
-    # Returns the match of the capture group named by `group_name`, or
+    # Returns the match of the capture group named by *group_name*, or
     # raises an `ArgumentError` if there is no such named capture group.
     #
     # ```
-    # "Crystal".match(/r(?<ok>ys)/) { |md| md["ok"] } # => "ys"
-    # "Crystal".match(/r(?<ok>ys)/) { |md| md["ng"] } # => raises ArgumentError
+    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ok"] # => "ys"
+    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises ArgumentError
     # ```
     def [](group_name : String)
       match = self[group_name]?
@@ -172,7 +165,7 @@ class Regex
     # starts at the start of the string, returns the empty string.
     #
     # ```
-    # "Crystal".match(/yst/) { |md| md.pre_match } # => "Cr"
+    # "Crystal".match(/yst/).not_nil!.pre_match # => "Cr"
     # ```
     def pre_match
       @string.byte_slice(0, byte_begin(0))
@@ -182,7 +175,7 @@ class Regex
     # at the end of the string, returns the empty string.
     #
     # ```
-    # "Crystal".match(/yst/) { |md| md.post_match } # => "al"
+    # "Crystal".match(/yst/).not_nil!.post_match # => "al"
     # ```
     def post_match
       @string.byte_slice(byte_end(0))
@@ -215,6 +208,14 @@ class Regex
 
     def clone
       self
+    end
+
+    def ==(other : Regex::MatchData)
+      return false unless size == other.size
+      return false unless regex == other.regex
+      return false unless string == other.string
+
+      return @ovector.memcmp(other.@ovector, (size + 1) * 2) == 0
     end
 
     private def check_index_out_of_bounds(index)

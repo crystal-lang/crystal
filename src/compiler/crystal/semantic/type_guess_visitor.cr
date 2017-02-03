@@ -119,6 +119,7 @@ module Crystal
 
     def visit(node : Call)
       if @outside_def
+        node.scope = node.global? ? @program : current_type.metaclass
         super
       else
         # If it's "self.class", don't consider this as self being passed to a method
@@ -851,7 +852,7 @@ module Crystal
     end
 
     def guess_type(node : Path)
-      type = lookup_type?(node)
+      type = lookup_type_var?(node)
       return nil unless type
 
       if type.is_a?(Const)
@@ -868,7 +869,7 @@ module Crystal
           type
         end
       else
-        type.metaclass
+        type.virtual_type.metaclass
       end
     end
 
@@ -962,6 +963,14 @@ module Crystal
     def lookup_type?(node, root = current_type)
       type = root.lookup_type?(node, allow_typeof: false)
       check_allowed_in_generics(node, type)
+    end
+
+    def lookup_type_var?(node, root = current_type)
+      type_var = root.lookup_type_var?(node)
+      return nil unless type_var.is_a?(Type)
+
+      check_allowed_in_generics(node, type_var)
+      type_var
     end
 
     def lookup_type_no_check?(node)

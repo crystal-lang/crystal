@@ -20,6 +20,10 @@ class Crystal::CodeGenVisitor
 
     call_args, has_out = prepare_call_args node, owner
 
+    # It can happen that one of the arguments caused an unreacahble
+    # to happen, so we must stop here
+    return false if @builder.end
+
     if block = node.block
       if fun_literal = block.fun_literal
         codegen_call_with_block_as_fun_literal(node, fun_literal, owner, call_args)
@@ -46,7 +50,7 @@ class Crystal::CodeGenVisitor
 
   def prepare_call_args(node, owner)
     target_def = node.target_def
-    if external = target_def.considered_external?
+    if external = target_def.c_calling_convention?
       prepare_call_args_external(node, external, owner)
     else
       prepare_call_args_non_external(node, target_def, owner)
@@ -54,6 +58,8 @@ class Crystal::CodeGenVisitor
   end
 
   def prepare_call_args_non_external(node, target_def, owner)
+    is_primitive = target_def.body.is_a?(Primitive)
+
     call_args = Array(LLVM::Value).new(node.args.size + 1)
     old_needs_value = @needs_value
 
@@ -83,6 +89,8 @@ class Crystal::CodeGenVisitor
       end
     end
 
+    c_calling_convention = target_def.c_calling_convention?
+
     # Then the arguments.
     node.args.zip(target_def.args) do |arg, def_arg|
       @needs_value = true
@@ -95,6 +103,13 @@ class Crystal::CodeGenVisitor
         call_arg = llvm_nil if arg.type.nil_type?
         call_arg = downcast(call_arg, def_arg.type, arg.type, true)
       end
+
+      # - C calling convention passing needs a separate handling of pass-by-value
+      # - Primitives might need a separate handling (for example invoking a Proc)
+      if arg.type.passed_by_value? && !c_calling_convention && !is_primitive
+        call_arg = load(call_arg)
+      end
+
       call_args << call_arg
     end
 
@@ -108,9 +123,12 @@ class Crystal::CodeGenVisitor
       arg = target_def.args[index]
       default_value = arg.default_value.as(MagicConstant)
       location = node.location
+      end_location = node.end_location
       case default_value.name
       when :__LINE__
         call_args << int32(MagicConstant.expand_line(location))
+      when :__END_LINE__
+        call_args << int32(MagicConstant.expand_line(end_location))
       when :__FILE__
         call_args << build_string_constant(MagicConstant.expand_file(location))
       when :__DIR__
@@ -356,7 +374,7 @@ class Crystal::CodeGenVisitor
           end
           accept call
 
-          phi.add @last, a_def.type
+          phi.add @last, call.type
           position_at_end next_def_label
         end
         unreachable
@@ -390,9 +408,14 @@ class Crystal::CodeGenVisitor
 
   # If a method's body is just a simple literal, "self", or an instance variable,
   # we always inline it: less code generated, easier job for LLVM to optimize, and
-  # avoid a call in non-release builds. But do this only in non-debug builds, so we can still step.
+  # avoid a call in non-release builds.
+  #
+  # Do this even in debug mode, because there's not much use in stepping
+  # to read a constant value or the value of an instance variable.
+  # Additionally, not inlining instance variable getters changes the semantic
+  # a program, so we must always inline these.
   def try_inline_call(target_def, body, self_type, call_args)
-    return false if @debug || target_def.is_a?(External)
+    return false if target_def.is_a?(External)
 
     case body
     when Nop, NilLiteral, BoolLiteral, CharLiteral, StringLiteral, NumberLiteral, SymbolLiteral
@@ -429,7 +452,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
-    set_current_debug_location node if @debug
+    set_current_debug_location node if @debug.line_numbers?
 
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"
@@ -449,7 +472,7 @@ class Crystal::CodeGenVisitor
 
     set_call_attributes node, target_def, self_type, is_closure, fun_type
 
-    external = target_def.try &.considered_external?
+    external = target_def.try &.c_calling_convention?
 
     if external && (external.type.proc? || external.type.is_a?(NilableProcType))
       fun_ptr = bit_cast(@last, LLVM::VoidPointer)
@@ -500,21 +523,10 @@ class Crystal::CodeGenVisitor
   end
 
   def set_call_attributes(node : Call, target_def, self_type, is_closure, fun_type)
-    if external = target_def.considered_external?
+    if external = target_def.c_calling_convention?
       set_call_attributes_external(node, external)
     else
-      set_call_attributes_non_external(node, target_def, self_type, is_closure, fun_type)
-    end
-  end
-
-  def set_call_attributes_non_external(node, target_def, self_type, is_closure, fun_type)
-    arg_offset = 1
-    arg_offset += 1 if self_type.try(&.passed_as_self?)
-
-    node.args.each_with_index do |arg, i|
-      next unless arg.type.passed_by_value?
-
-      @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
+      # Non-external methods/functions have no arguments attributes
     end
   end
 
@@ -530,16 +542,8 @@ class Crystal::CodeGenVisitor
       next if node.args[i]?.try &.is_a?(Out)
 
       abi_arg_type = abi_info.arg_types[i]?
-      if abi_arg_type
-        if (attr = abi_arg_type.attr)
-          @last.add_instruction_attribute(i + arg_offset, attr)
-        end
-      else
-        # TODO: this is for variadic arguments, which is still not handled properly (in regards to the ABI for structs)
-        arg_type = arg.type
-        next unless arg_type.passed_by_value?
-
-        @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
+      if abi_arg_type && (attr = abi_arg_type.attr)
+        @last.add_instruction_attribute(i + arg_offset, attr)
       end
     end
 
@@ -555,13 +559,8 @@ class Crystal::CodeGenVisitor
     arg_offset = is_closure ? 2 : 1
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
     arg_types.try &.each_with_index do |arg_type, i|
-      if abi_info && (abi_arg_type = abi_info.arg_types[i]?)
-        if (attr = abi_arg_type.attr)
-          @last.add_instruction_attribute(i + arg_offset, attr)
-        end
-      else
-        next unless arg_type.passed_by_value?
-        @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
+      if abi_info && (abi_arg_type = abi_info.arg_types[i]?) && (attr = abi_arg_type.attr)
+        @last.add_instruction_attribute(i + arg_offset, attr)
       end
     end
   end

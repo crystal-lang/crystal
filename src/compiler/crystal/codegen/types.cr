@@ -80,7 +80,7 @@ module Crystal
   class NonGenericModuleType
     def append_to_expand_union_types(types)
       if including_types = @including_types
-        including_types.each &.append_to_expand_union_types(types)
+        including_types.each &.virtual_type.append_to_expand_union_types(types)
       else
         types << self
       end
@@ -90,7 +90,7 @@ module Crystal
   class GenericModuleInstanceType
     def append_to_expand_union_types(types)
       if including_types = @including_types
-        including_types.each &.append_to_expand_union_types(types)
+        including_types.each &.virtual_type.append_to_expand_union_types(types)
       else
         types << self
       end

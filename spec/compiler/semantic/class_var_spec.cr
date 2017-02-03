@@ -143,35 +143,32 @@ describe "Semantic: class var" do
       ") { int32 }
   end
 
-  it "errors if using class var in generic type without instance" do
-    assert_error %(
+  it "declares class var in generic class" do
+    assert_type(%(
       class Foo(T)
+        @@bar = 1
+
+        def bar
+          @@bar
+        end
+      end
+
+      Foo(Int32).new.bar
+      )) { int32 }
+  end
+
+  it "declares class var in generic module" do
+    assert_type(%(
+      module Foo(T)
+        @@bar = 1
+
         def self.bar
           @@bar
         end
       end
 
       Foo.bar
-      ),
-      "can't use class variables in generic types"
-  end
-
-  it "errors if using class var in generic type without instance (2)" do
-    assert_error %(
-      class Foo(T)
-        @@bar = 1
-      end
-      ),
-      "can't use class variables in generic types"
-  end
-
-  it "errors if using class var in generic module without instance (2)" do
-    assert_error %(
-      module Foo(T)
-        @@bar = 1
-      end
-      ),
-      "can't use class variables in generic types"
+      )) { int32 }
   end
 
   it "types class var as nil if assigned for the first time inside method (#2059)" do

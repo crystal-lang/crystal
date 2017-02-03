@@ -11,6 +11,7 @@ lib LibC
   SO_LINGER      = 13
   SO_RCVBUF      =  8
   SO_REUSEADDR   =  2
+  SO_REUSEPORT   = 15
   SO_SNDBUF      =  7
   PF_INET        =  2
   PF_INET6       = 10
@@ -35,6 +36,12 @@ lib LibC
     sa_data : StaticArray(Char, 14)
   end
 
+  struct SockaddrStorage
+    ss_family : SaFamilyT
+    __ss_align : ULong
+    __ss_padding : StaticArray(Char, 120)
+  end
+
   struct Linger
     l_onoff : Int
     l_linger : Int
@@ -47,10 +54,10 @@ lib LibC
   fun getsockname(fd : Int, addr : Sockaddr*, len : SocklenT*) : Int
   fun getsockopt(fd : Int, level : Int, optname : Int, optval : Void*, optlen : SocklenT*) : Int
   fun listen(fd : Int, n : Int) : Int
-  fun recv(fd : Int, buf : Void*, n : SizeT, flags : Int) : SSizeT
-  fun recvfrom(fd : Int, buf : Void*, n : SizeT, flags : Int, addr : Sockaddr*, addr_len : SocklenT*) : SSizeT
-  fun send(fd : Int, buf : Void*, n : SizeT, flags : Int) : SSizeT
-  fun sendto(fd : Int, buf : Void*, n : SizeT, flags : Int, addr : Sockaddr*, addr_len : SocklenT) : SSizeT
+  fun recv(fd : Int, buf : Void*, n : Int, flags : Int) : SSizeT
+  fun recvfrom(fd : Int, buf : Void*, n : Int, flags : Int, addr : Sockaddr*, addr_len : SocklenT*) : SSizeT
+  fun send(fd : Int, buf : Void*, n : Int, flags : Int) : SSizeT
+  fun sendto(fd : Int, buf : Void*, n : Int, flags : Int, addr : Sockaddr*, addr_len : SocklenT) : SSizeT
   fun setsockopt(fd : Int, level : Int, optname : Int, optval : Void*, optlen : SocklenT) : Int
   fun shutdown(fd : Int, how : Int) : Int
   fun socket(domain : Int, type : Int, protocol : Int) : Int

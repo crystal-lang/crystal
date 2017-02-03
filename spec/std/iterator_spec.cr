@@ -116,7 +116,7 @@ describe Iterator do
     it "yields the individual elements to the block" do
       iter = ["a", "b", "c"].each
       concatinated = ""
-      iter.each { |e| concatinated += e }
+      iter.each { |e| concatinated += e }.should be_nil
       concatinated.should eq "abc"
     end
   end
@@ -135,6 +135,30 @@ describe Iterator do
       iter.next.should eq [1, 2, 3]
       iter.next.should eq [4]
       iter.next.should be_a Iterator::Stop
+    end
+
+    it "returns each_slice iterator with reuse = true" do
+      iter = (1..5).each.each_slice(2, reuse: true)
+
+      a = iter.next
+      a.should eq([1, 2])
+
+      b = iter.next
+      b.should eq([3, 4])
+      b.should be(a)
+    end
+
+    it "returns each_slice iterator with reuse = array" do
+      reuse = [] of Int32
+      iter = (1..5).each.each_slice(2, reuse: reuse)
+
+      a = iter.next
+      a.should eq([1, 2])
+      a.should be(reuse)
+
+      b = iter.next
+      b.should eq([3, 4])
+      b.should be(reuse)
     end
   end
 
@@ -179,6 +203,22 @@ describe Iterator do
     it "still works with other iterator methods like to_a" do
       iter = (1..3).each.in_groups_of(2, 'z')
       iter.to_a.should eq [[1, 2], [3, 'z']]
+    end
+
+    it "creats a group of two with reuse = true" do
+      iter = (1..3).each.in_groups_of(2, reuse: true)
+
+      a = iter.next
+      a.should eq([1, 2])
+
+      b = iter.next
+      b.should eq([3, nil])
+      b.should be(a)
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq [1, 2]
     end
   end
 
@@ -409,7 +449,7 @@ describe Iterator do
     end
 
     it "with block" do
-      iter = (1..8).each.uniq { |x| x % 3 }
+      iter = (1..8).each.uniq { |x| (x % 3).to_s }
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(3)
@@ -441,6 +481,22 @@ describe Iterator do
 
       iter.rewind
       iter.next.should eq({1, 10})
+    end
+
+    it "does with_index from range, with block" do
+      tuples = [] of {Int32, Int32}
+      (1..3).each.with_index do |value, index|
+        tuples << {value, index}
+      end
+      tuples.should eq([{1, 0}, {2, 1}, {3, 2}])
+    end
+
+    it "does with_index from range, with block with offset" do
+      tuples = [] of {Int32, Int32}
+      (1..3).each.with_index(10) do |value, index|
+        tuples << {value, index}
+      end
+      tuples.should eq([{1, 10}, {2, 11}, {3, 12}])
     end
   end
 
@@ -486,87 +542,161 @@ describe Iterator do
     end
   end
 
-  # TODO: with the new global type inference algorithm we can't yet implement this.
-  #
-  # describe "flatten" do
-  #   it "flattens an iterator of mixed-type iterators" do
-  #     iter = [(1..2).each, ('a'..'b').each, {c: 3}.each].each.flatten
+  describe "flatten" do
+    it "flattens an iterator of mixed-type iterators" do
+      iter = [(1..2).each, ('a'..'b').each, {:c => 3}.each].each.flatten
 
-  #     iter.next.should eq(1)
-  #     iter.next.should eq(2)
-  #     iter.next.should eq('a')
-  #     iter.next.should eq('b')
-  #     iter.next.should eq(:c)
-  #     iter.next.should eq(3)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+      iter.next.should eq('b')
+      iter.next.should eq({:c, 3})
 
-  #     iter.next.should be_a(Iterator::Stop)
+      iter.next.should be_a(Iterator::Stop)
 
-  #     iter.rewind
-  #     iter.next.should eq(1)
+      iter.rewind
+      iter.next.should eq(1)
 
-  #     iter.rewind
-  #     iter.to_a.should eq([1, 2, 'a', 'b', :c, 3])
-  #   end
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a', 'b', {:c, 3}])
+    end
 
-  #   it "flattens an iterator of mixed-type elements and iterators" do
-  #     iter = [(1..2).each, 'a'].each.flatten
+    it "flattens an iterator of mixed-type elements and iterators" do
+      iter = [(1..2).each, 'a'].each.flatten
 
-  #     iter.next.should eq(1)
-  #     iter.next.should eq(2)
-  #     iter.next.should eq('a')
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
 
-  #     iter.next.should be_a(Iterator::Stop)
+      iter.next.should be_a(Iterator::Stop)
 
-  #     iter.rewind
-  #     iter.next.should eq(1)
+      iter.rewind
+      iter.next.should eq(1)
 
-  #     iter.rewind
-  #     iter.to_a.should eq([1, 2, 'a'])
-  #   end
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a'])
+    end
 
-  #   it "flattens an iterator of mixed-type elements and iterators and iterators of iterators" do
-  #     iter = [(1..2).each, [['a', 'b'].each].each, "foo"].each.flatten
+    it "flattens an iterator of mixed-type elements and iterators and iterators of iterators" do
+      iter = [(1..2).each, [['a', 'b'].each].each, "foo"].each.flatten
 
-  #     iter.next.should eq(1)
-  #     iter.next.should eq(2)
-  #     iter.next.should eq('a')
-  #     iter.next.should eq('b')
-  #     iter.next.should eq("foo")
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+      iter.next.should eq('b')
+      iter.next.should eq("foo")
 
-  #     iter.next.should be_a(Iterator::Stop)
+      iter.next.should be_a(Iterator::Stop)
 
-  #     iter.rewind
-  #     iter.next.should eq(1)
+      iter.rewind
+      iter.next.should eq(1)
 
-  #     iter.rewind
-  #     iter.to_a.should eq([1, 2, 'a', 'b', "foo"])
-  #   end
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a', 'b', "foo"])
+    end
 
-  #   it "flattens deeply-nested and mixed type iterators" do
-  #     iter = [[[1], 2], [3, [[4, 5], 6], 7], "a"].each.flatten
+    it "flattens deeply-nested and mixed type iterators" do
+      iter = [[[1], 2], [3, [[4, 5], 6], 7], "a"].each.flatten
 
-  #     iter.next.should eq(1)
-  #     iter.next.should eq(2)
-  #     iter.next.should eq(3)
-  #     iter.next.should eq(4)
-  #     iter.next.should eq(5)
-  #     iter.next.should eq(6)
-  #     iter.next.should eq(7)
-  #     iter.next.should eq("a")
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should eq(4)
+      iter.next.should eq(5)
+      iter.next.should eq(6)
+      iter.next.should eq(7)
+      iter.next.should eq("a")
 
-  #     iter.next.should be_a(Iterator::Stop)
+      iter.next.should be_a(Iterator::Stop)
 
-  #     iter.rewind
-  #     iter.next.should eq(1)
+      iter.rewind
+      iter.next.should eq(1)
 
-  #     iter.rewind
-  #     iter.to_a.should eq([1, 2, 3, 4, 5, 6, 7, "a"])
-  #   end
+      iter.rewind
+      iter.to_a.should eq([1, 2, 3, 4, 5, 6, 7, "a"])
+    end
 
-  #   it "flattens a variety of edge cases" do
-  #     ([] of Nil).each.flatten.to_a.should eq([] of Nil)
-  #     ['a'].each.flatten.to_a.should eq(['a'])
-  #     [[[[[["hi"]]]]]].each.flatten.to_a.should eq(["hi"])
-  #   end
-  # end
+    it "flattens a variety of edge cases" do
+      ([] of Nil).each.flatten.to_a.should eq([] of Nil)
+      ['a'].each.flatten.to_a.should eq(['a'])
+      [[[[[["hi"]]]]]].each.flatten.to_a.should eq(["hi"])
+    end
+
+    it "flattens a deeply-nested iterables and arrays (#3703)" do
+      iter = [[1, {2, 3}, 4], [{5 => 6}, 7]].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq({2, 3})
+      iter.next.should eq(4)
+      iter.next.should eq({5 => 6})
+      iter.next.should eq(7)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "return iterator itself by rewind" do
+      iter = [1, [2, 3], 4].each.flatten
+
+      iter.to_a.should eq([1, 2, 3, 4])
+      iter.rewind.to_a.should eq([1, 2, 3, 4])
+    end
+  end
+
+  describe "#flat_map" do
+    it "flattens returned arrays" do
+      iter = [1, 2, 3].each.flat_map { |x| [x, x] }
+
+      iter.next.should eq(1)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should eq(3)
+
+      iter.rewind.to_a.should eq([1, 1, 2, 2, 3, 3])
+    end
+
+    it "flattens returned items" do
+      iter = [1, 2, 3].each.flat_map { |x| x }
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+
+      iter.rewind.to_a.should eq([1, 2, 3])
+    end
+
+    it "flattens returned iterators" do
+      iter = [1, 2, 3].each.flat_map { |x| [x, x].each }
+
+      iter.next.should eq(1)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should eq(3)
+
+      iter.rewind.to_a.should eq([1, 1, 2, 2, 3, 3])
+    end
+
+    it "flattens returned values" do
+      iter = [1, 2, 3].each.flat_map do |x|
+        case x
+        when 1
+          x
+        when 2
+          [x, x]
+        else
+          [x, x].each
+        end
+      end
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should eq(3)
+
+      iter.rewind.to_a.should eq([1, 2, 2, 3, 3])
+    end
+  end
 end

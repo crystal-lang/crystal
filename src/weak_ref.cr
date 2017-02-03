@@ -9,7 +9,9 @@ class WeakRef(T)
   end
 
   def self.allocate
-    GC.malloc_atomic(sizeof(self)).as(self)
+    ptr = GC.malloc_atomic(sizeof(self)).as(self)
+    set_crystal_type_id(ptr)
+    ptr
   end
 
   # Returns the referenced object or `Nil` if it has been garbage-collected.

@@ -4,7 +4,7 @@
 # when it comes to obtaining a string representation of the object.
 #
 # Its first argument changes the foreground color:
-# ```crystal
+# ```
 # require "colorize"
 #
 # "foo".colorize(:green)
@@ -13,33 +13,33 @@
 # ```
 #
 # There are alternative ways to change the foreground color:
-# ```crystal
+# ```
 # "foo".colorize.fore(:green)
 # "foo".colorize.green
 # ```
 #
 # To change the background color, the following methods are available:
-# ```crystal
+# ```
 # "foo".colorize.back(:green)
 # "foo".colorize.on(:green)
 # "foo".colorize.on_green
 # ```
 #
 # It's also possible to change the text decoration:
-# ```crystal
+# ```
 # "foo".colorize.mode(:underline)
 # "foo".colorize.underline
 # ```
 #
 # The `colorize` method returns a `Colorize::Object` instance,
 # which allows chaining methods together:
-# ```crystal
+# ```
 # "foo".colorize.fore(:yellow).back(:blue).mode(:underline)
 # ```
 #
 # With the `toggle` method you can temporarily disable adding the escape codes.
 # Settings of the instance are preserved however and can be turned back on later:
-# ```crystal
+# ```
 # "foo".colorize(:red).toggle(false)
 # # => "foo" without color
 # "foo".colorize(:red).toggle(false).toggle(true)
@@ -47,7 +47,7 @@
 # ```
 #
 # Available colors are:
-# ```crystal
+# ```
 # :black
 # :red
 # :green
@@ -67,7 +67,7 @@
 # ```
 #
 # Available text decorations are:
-# ```crystal
+# ```
 # :bold
 # :bright
 # :dim

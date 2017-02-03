@@ -4240,13 +4240,6 @@ describe "Semantic: instance var" do
       "can't declare variable of generic non-instantiated type Foo"
   end
 
-  it "errors (for now) when typing a local variable" do
-    assert_error %(
-      x : Int32
-      ),
-      "declaring the type of a local variable is not yet supported"
-  end
-
   it "errors when typing an instance variable inside a method" do
     assert_error %(
       def foo
@@ -4409,5 +4402,203 @@ describe "Semantic: instance var" do
       Foo.new.test
       ),
       "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+  end
+
+  it "doesn't crash on #3580" do
+    assert_error %(
+      class Hoge
+        @hoge_dir : String = "~/.hoge" ? "~/.hoge" : default_hoge_dir
+      end
+      ),
+      "undefined local variable or method"
+  end
+
+  it "is more permissive with macro def initialize" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+            @{{ivar}} = 0
+          {% end %}
+        end
+      end
+
+      Foo.new
+      ), inject_primitives: false) { types["Foo"] }
+  end
+
+  it "is more permissive with macro def initialize, other initialize" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+        @y : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+            @{{ivar}} = 0
+          {% end %}
+        end
+
+        def initialize(@x, @y)
+        end
+      end
+
+      Foo.new
+      ), inject_primitives: false) { types["Foo"] }
+  end
+
+  it "errors with macro def but another def doesn't initialize all" do
+    assert_error %(
+      class Foo
+        @x : Int32
+        @y : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+            @{{ivar}} = 0
+          {% end %}
+        end
+
+        def initialize(@x)
+        end
+      end
+
+      Foo.new
+      ),
+      "instance variable '@y' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+  end
+
+  it "errors if finally not initialized in macro def" do
+    assert_error %(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% for ivar in @type.instance_vars %}
+          {% end %}
+        end
+      end
+
+      Foo.new
+      ),
+      "instance variable '@x' of Foo was not initialized in this 'initialize', rendering it nilable"
+  end
+
+  it "doesn't error if initializes via super in macro def" do
+    assert_type(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x)
+          super
+          {% for ivar in @type.instance_vars %}
+          {% end %}
+        end
+      end
+
+      Bar.new(1)
+      )) { types["Bar"] }
+  end
+
+  it "doesn't error if uses typeof(@var)" do
+    assert_type(%(
+      struct Int32
+        def self.zero
+          0
+        end
+      end
+
+      class Foo
+        @x : Int32
+
+        def initialize
+          @x = typeof(@x).zero
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "doesn't error if not initiliazed in macro def but outside it" do
+    assert_type(%(
+      class Foo
+        @x = 1
+
+        def initialize
+          {% @type %}
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "doesn't error if inheriting generic instance (#3635)" do
+    assert_type(%(
+      module Core(T)
+        @a : Bool
+      end
+
+      class Base(T)
+        include Core(Int32)
+
+        @a = true
+      end
+
+      class Foo < Base(String)
+        def a
+          @a
+        end
+      end
+
+      Foo.new.a
+      )) { bool }
+  end
+
+  it "doesn't consider var as nilable if conditionally assigned inside initialize, but has initializer (#3669)" do
+    assert_type(%(
+      class Foo
+        @x = 0
+
+        def initialize
+          @x = 1 if 1 == 2
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "types generic instance as virtual type if generic type has subclasses (#3805)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Qux
+        def initialize
+          @ptr = Pointer(Foo(Int32)).malloc(1_u64)
+        end
+
+        def ptr=(ptr)
+          @ptr = ptr
+        end
+      end
+
+      Bar(Int32).new
+      Qux.new
+      )) { types["Qux"] }
   end
 end

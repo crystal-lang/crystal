@@ -106,6 +106,9 @@ module Crystal
     # Whether to show error trace
     property? show_error_trace = false
 
+    # The main filename of this program
+    property filename : String?
+
     def initialize
       super(self, self, "main")
 
@@ -163,7 +166,7 @@ module Crystal
 
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
-      static_array.declare_instance_var("@buffer", TypeParameter.new(self, static_array, "T"))
+      static_array.declare_instance_var("@buffer", static_array.type_parameter("T"))
       static_array.allowed_in_generics = false
 
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
@@ -172,7 +175,6 @@ module Crystal
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      object.metaclass = klass
       klass.metaclass = klass
       klass.allowed_in_generics = false
 
@@ -252,7 +254,7 @@ module Crystal
 
     setter target_machine : LLVM::TargetMachine?
 
-    getter(target_machine) { TargetMachine.create(LLVM.default_target_triple, "", false) }
+    getter(target_machine) { TargetMachine.create(LLVM.default_target_triple) }
 
     # Returns the `Type` for `Array(type)`
     def array_of(type)

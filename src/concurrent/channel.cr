@@ -53,6 +53,10 @@ abstract class Channel(T)
     to_s(io)
   end
 
+  def pretty_print(pp)
+    pp.text inspect
+  end
+
   def wait_for_receive
     @receivers << Fiber.current
   end

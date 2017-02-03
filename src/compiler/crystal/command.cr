@@ -35,6 +35,7 @@ class Crystal::Command
 
     Tool:
         context                  show context for given location
+        expand                   show macro expansion for given location
         format                   format project, directories and/or files
         hierarchy                show type hierarchy
         implementations          show implementations for given call in location
@@ -52,6 +53,7 @@ class Crystal::Command
 
   def initialize(@options : Array(String))
     @color = true
+    @stats = @time = false
   end
 
   def run
@@ -140,6 +142,9 @@ class Crystal::Command
       when "format".starts_with?(tool)
         options.shift
         format
+      when "expand".starts_with?(tool)
+        options.shift
+        expand
       when "hierarchy".starts_with?(tool)
         options.shift
         hierarchy
@@ -172,7 +177,9 @@ class Crystal::Command
 
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
-    Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
+    Crystal.timing("Tool (hierarchy)", @stats, delay: true) do
+      Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
+    end
   end
 
   private def run_command(single_file = false)
@@ -190,27 +197,33 @@ class Crystal::Command
 
   private def types
     config, result = compile_no_codegen "tool types"
-    Crystal.print_types result.node
+    Crystal.timing("Tool (types)", @stats, delay: true) do
+      Crystal.print_types result.node
+    end
   end
 
-  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false, top_level = false)
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, no_cleanup = false, cursor_command = false, top_level = false)
     config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
     config.compiler.no_codegen = true
+    config.compiler.no_cleanup = no_cleanup
     config.compiler.wants_doc = wants_doc
     result = top_level ? config.top_level_semantic : config.compile
     {config, result}
   end
 
   private def execute(output_filename, run_args)
-    begin
-      Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
-        # Ignore the signal so we don't exit the running process
-        # (the running process can still handle this signal)
-        Signal::INT.ignore # do
+    stats = @stats || !@time
+    status = Crystal.timing("Execute", @stats || @time, delay: true, display_memory: stats, padding_size: stats ? 34 : 0) do
+      begin
+        Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
+          # Ignore the signal so we don't exit the running process
+          # (the running process can still handle this signal)
+          Signal::INT.ignore # do
+        end
+        $?
+      ensure
+        File.delete(output_filename) rescue nil
       end
-      status = $?
-    ensure
-      File.delete(output_filename) rescue nil
     end
 
     if status.normal_exit?
@@ -273,8 +286,11 @@ class Crystal::Command
             compiler.cross_compile = true
           end
         end
-        opts.on("-d", "--debug", "Add symbolic debug info") do
-          compiler.debug = true
+        opts.on("-d", "--debug", "Add full symbolic debug info") do
+          compiler.debug = Crystal::Debug::All
+        end
+        opts.on("", "--no-debug", "Skip any symbolic debug info") do
+          compiler.debug = Crystal::Debug::None
         end
       end
 
@@ -323,6 +339,9 @@ class Crystal::Command
         opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
           compiler.mcpu = cpu
         end
+        opts.on("--mattr CPU", "Target specific features") do |features|
+          compiler.mattr = features
+        end
       end
 
       opts.on("--no-color", "Disable colored output") do
@@ -348,9 +367,18 @@ class Crystal::Command
         opts.on("--release", "Compile in release mode") do
           compiler.release = true
         end
-        opts.on("-s", "--stats", "Enable statistics output") do
-          compiler.stats = true
-        end
+      end
+
+      opts.on("-s", "--stats", "Enable statistics output") do
+        @stats = true
+        compiler.stats = true
+      end
+
+      opts.on("-t", "--time", "Enable execution time output") do
+        @time = true
+      end
+
+      unless no_codegen
         opts.on("--single-module", "Generate a single LLVM module") do
           compiler.single_module = true
         end
@@ -423,8 +451,11 @@ class Crystal::Command
   end
 
   private def setup_simple_compiler_options(compiler, opts)
-    opts.on("-d", "--debug", "Add symbolic debug info") do
-      compiler.debug = true
+    opts.on("-d", "--debug", "Add full symbolic debug info") do
+      compiler.debug = Crystal::Debug::All
+    end
+    opts.on("", "--no-debug", "Skip any symbolic debug info") do
+      compiler.debug = Crystal::Debug::None
     end
     opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
       compiler.flags << flag
@@ -436,11 +467,19 @@ class Crystal::Command
       compiler.release = true
     end
     opts.on("-s", "--stats", "Enable statistics output") do
+      @stats = true
       compiler.stats = true
+    end
+    opts.on("-t", "--time", "Enable execution time output") do
+      @time = true
     end
     opts.on("-h", "--help", "Show this message") do
       puts opts
       exit
+    end
+    opts.on("--no-color", "Disable colored output") do
+      @color = false
+      compiler.color = false
     end
     opts.invalid_option { }
   end

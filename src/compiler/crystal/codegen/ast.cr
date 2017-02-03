@@ -97,20 +97,20 @@ module Crystal
       nil
     end
 
-    @considered_external : Bool? = nil
-    setter considered_external
+    @c_calling_convention : Bool? = nil
+    setter c_calling_convention
 
-    # Returns `self` as an `External` if this Def must be considered
-    # an external in the codegen, meaning we need to respect the C ABI.
-    def considered_external?
-      if @considered_external.nil?
-        @considered_external = compute_considered_external
+    # Returns `self` as an `External` if this Def is an External
+    # that must respect the C calling convention.
+    def c_calling_convention?
+      if @c_calling_convention.nil?
+        @c_calling_convention = compute_c_calling_convention
       end
 
-      @considered_external ? self : nil
+      @c_calling_convention ? self : nil
     end
 
-    private def compute_considered_external
+    private def compute_c_calling_convention
       # One case where this is not true if for LLVM instrinsics.
       # For example overflow intrincis return a tuple, like {i32, i1}:
       # in C ABI that is represented as i64, but we need to keep the original
@@ -129,10 +129,10 @@ module Crystal
         return false
       end
 
-      proc_considered_external?
+      proc_c_calling_convention?
     end
 
-    def proc_considered_external?
+    def proc_c_calling_convention?
       # We use C ABI if:
       # - all arguments are allowed in lib calls (because then it can be passed to C)
       # - at least one argument type, or the return type, is an extern struct

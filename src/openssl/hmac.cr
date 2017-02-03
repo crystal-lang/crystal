@@ -1,7 +1,7 @@
 require "./lib_crypto"
 
 class OpenSSL::HMAC
-  def self.digest(algorithm : Symbol, key, data) : Slice(UInt8)
+  def self.digest(algorithm : Symbol, key, data) : Bytes
     evp = case algorithm
           when :dss       then LibCrypto.evp_dss
           when :dss1      then LibCrypto.evp_dss1
@@ -17,7 +17,7 @@ class OpenSSL::HMAC
           end
     key_slice = key.to_slice
     data_slice = data.to_slice
-    buffer = Slice(UInt8).new(128)
+    buffer = Bytes.new(128)
     LibCrypto.hmac(evp, key_slice, key_slice.size, data_slice, data_slice.size, buffer, out buffer_len)
     buffer[0, buffer_len.to_i]
   end

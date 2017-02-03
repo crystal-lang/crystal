@@ -7,6 +7,8 @@ class JSON::PullParser
   getter string_value : String
   getter raw_value : String
 
+  property max_nesting = 512
+
   def initialize(input)
     @lexer = Lexer.new input
     @kind = :EOF
@@ -128,53 +130,46 @@ class JSON::PullParser
     when :string
       @string_value.to_json.tap { read_next }
     when :begin_array
-      String.build { |io| read_raw(io) }
+      JSON.build { |json| read_raw(json) }
     when :begin_object
-      String.build { |io| read_raw(io) }
+      JSON.build { |json| read_raw(json) }
     else
       unexpected_token
     end
   end
 
-  def read_raw(io)
+  def read_raw(json)
     case @kind
     when :null
       read_next
-      io << "null"
+      json.null
     when :bool
-      io << @bool_value
+      json.bool(@bool_value)
       read_next
     when :int, :float
-      io << @raw_value
+      json.raw(@raw_value)
       read_next
     when :string
-      @string_value.to_json(io)
+      json.string(@string_value)
       read_next
     when :begin_array
-      io << "["
-      read_begin_array
-      first = true
-      while kind != :end_array
-        io << "," unless first
-        read_raw(io)
-        first = false
+      json.array do
+        read_begin_array
+        while kind != :end_array
+          read_raw(json)
+        end
+        read_end_array
       end
-      io << "]"
-      read_end_array
     when :begin_object
-      io << "{"
-      read_begin_object
-      first = true
-      while kind != :end_object
-        io << "," unless first
-        @string_value.to_json(io)
-        read_object_key
-        io << ":"
-        read_raw(io)
-        first = false
+      json.object do
+        read_begin_object
+        while kind != :end_object
+          json.string(@string_value)
+          read_object_key
+          read_raw(json)
+        end
+        read_end_object
       end
-      io << "}"
-      read_end_object
     else
       unexpected_token
     end
@@ -431,7 +426,7 @@ class JSON::PullParser
 
   private def begin_array
     @kind = :begin_array
-    @object_stack << :array
+    push_in_object_stack :array
 
     case next_token.type
     when :",", :"}", :":", :EOF
@@ -441,7 +436,7 @@ class JSON::PullParser
 
   private def begin_object
     @kind = :begin_object
-    @object_stack << :object
+    push_in_object_stack :object
 
     case next_token_expect_object_key.type
     when :STRING, :"}"
@@ -498,5 +493,13 @@ class JSON::PullParser
 
   private def parse_exception(msg)
     raise ParseException.new(msg, token.line_number, token.column_number)
+  end
+
+  private def push_in_object_stack(symbol)
+    if @object_stack.size >= @max_nesting
+      parse_exception "nesting of #{@object_stack.size + 1} is too deep"
+    end
+
+    @object_stack.push(symbol)
   end
 end

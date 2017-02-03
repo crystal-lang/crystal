@@ -6,9 +6,9 @@ require "c/time"
 # ### Basic Usage
 #
 # ```
-# time = Time.now # => 2016-02-15 10:20:30 UTC
+# time = Time.new(2016, 2, 15, 10, 20, 30)
 #
-# time.year    # => 2015
+# time.year    # => 2016
 # time.month   # => 2
 # time.day     # => 15
 # time.hour    # => 10
@@ -28,7 +28,8 @@ require "c/time"
 # The `to_s` method returns a `String` value in the assigned format.
 #
 # ```
-# Time.now.to_s("%Y-%m-%d") # => "2015-10-12"
+# time = Time.new(2015, 10, 12)
+# time.to_s("%Y-%m-%d") # => "2015-10-12"
 # ```
 #
 # See `Time::Format` for all the directives.
@@ -72,20 +73,21 @@ struct Time
   # `Kind` represents a specified time zone.
   #
   # Initializing a `Time` instance with specified `Kind`:
-  # ```crystal
+  #
+  # ```
   # time = Time.new(2016, 2, 15, 21, 1, 10, 0, Time::Kind::Local)
   # ```
   #
   # Alternatively, you can switch the `Kind` for any instance:
   #
-  # ```crystal
+  # ```
   # time.to_utc   # => 2016-02-15 21:00:00 UTC
   # time.to_local # => 2016-02-16 05:01:10 +0800
   # ```
   #
   # Inspection:
   #
-  # ```crystal
+  # ```
   # time.local? # => true
   # time.utc?   # => false
   # ```
@@ -141,7 +143,7 @@ struct Time
   end
 
   # Returns a new `Time` instance that corresponds to the number
-  # seconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970)
+  # seconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970).
   #
   # ```
   # Time.epoch(981173106) # => 2001-02-03 04:05:06 UTC
@@ -151,10 +153,10 @@ struct Time
   end
 
   # Returns a new `Time` instance that corresponds to the number
-  # milliseconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970)
+  # milliseconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970).
   #
   # ```
-  # time = Time.epoch_ms(981173106789) # => 2001-02-03 04:05:06 UTC
+  # time = Time.epoch_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
   # time.millisecond                   # => 789
   # ```
   def self.epoch_ms(milliseconds : Int) : self
@@ -284,12 +286,12 @@ struct Time
     Kind.new((encoded.to_u64 >> KindShift).to_i64)
   end
 
-  # Returns *true* if `Kind` is set to *Utc*.
+  # Returns `true` if `Kind` is set to *Utc*.
   def utc?
     kind == Kind::Utc
   end
 
-  # Returns *true* if `Kind` is set to *Local*.
+  # Returns `true` if `Kind` is set to *Local*.
   def local?
     kind == Kind::Local
   end
@@ -339,7 +341,8 @@ struct Time
   # Formats this time using the given format (see `Time::Format`).
   #
   # ```
-  # Time.now.to_s("%F") # => "2016-04-05"
+  # time = Time.new(2016, 4, 5)
+  # time.to_s("%F") # => "2016-04-05"
   # ```
   def to_s(format : String) : String
     Format.new(format).format(self)
@@ -364,7 +367,8 @@ struct Time
   # Returns the number of seconds since the Epoch for this time.
   #
   # ```
-  # Time.new(2016, 1, 2, 3, 4, 5).epoch # => 1451714645
+  # time = Time.parse("2016-01-12 03:04:05 UTC", "%F %T %z")
+  # time.epoch # => 1452567845
   # ```
   def epoch : Int64
     (to_utc.ticks - UnixEpoch) / Span::TicksPerSecond
@@ -373,7 +377,8 @@ struct Time
   # Returns the number of milliseconds since the Epoch for this time.
   #
   # ```
-  # Time.new(2016, 1, 2, 3, 4, 5, 678).epoch_ms # => 1451714645678
+  # time = Time.parse("2016-01-12 03:04:05.678 UTC", "%F %T.%L %z")
+  # time.epoch_ms # => 1452567845678
   # ```
   def epoch_ms : Int64
     (to_utc.ticks - UnixEpoch) / Span::TicksPerMillisecond
@@ -383,7 +388,8 @@ struct Time
   # as a `Float64`.
   #
   # ```
-  # Time.new(2016, 1, 2, 3, 4, 5, 678).epoch_f # => 1.45171e+09
+  # time = Time.parse("2016-01-12 03:04:05.678 UTC", "%F %T.%L %z")
+  # time.epoch_f # => 1452567845.678
   # ```
   def epoch_f : Float64
     (to_utc.ticks - UnixEpoch) / Span::TicksPerSecond.to_f
@@ -405,7 +411,7 @@ struct Time
     end
   end
 
-  macro def_at(name)
+  private macro def_at(name)
     def at_{{name.id}}
       year, month, day, day_year = year_month_day_day_year
       mask({{yield}})

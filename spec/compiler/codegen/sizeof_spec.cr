@@ -108,6 +108,46 @@ describe "Code gen: sizeof" do
       )).to_i.should eq(8)
   end
 
+  it "can use sizeof of virtual type" do
+    size = run(%(
+      class Foo
+        @x = 1
+      end
+
+      class Bar < Foo
+        @y = 2
+      end
+
+      foo = Bar.new.as(Foo)
+      sizeof(typeof(foo))
+      )).to_i
+
+    {% if flag?(:x86_64) %}
+      size.should eq(8)
+    {% else %}
+      size.should eq(4)
+    {% end %}
+  end
+
+  it "can use instance_sizeof of virtual type" do
+    run(%(
+      class Foo
+        @x = 1
+      end
+
+      class Bar < Foo
+        @y = 2
+      end
+
+      class Baz < Bar
+        @z = 2
+      end
+
+      bar = Baz.new.as(Bar)
+      instance_sizeof(typeof(bar))
+      )).to_i.should eq(12)
+  end
+
   it "can use instance_sizeof in type argument" do
     run(%(
       struct StaticArray

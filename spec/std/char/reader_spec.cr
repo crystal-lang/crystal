@@ -67,7 +67,7 @@ describe "Char::Reader" do
     sum = 0
     reader.each do |char|
       sum += char.ord
-    end
+    end.should be_nil
     sum.should eq(294)
   end
 
@@ -75,7 +75,50 @@ describe "Char::Reader" do
     reader = Char::Reader.new("")
     reader.each do |char|
       fail "reader each shouldn't yield on empty string"
+    end.should be_nil
+  end
+
+  it "starts at end" do
+    reader = Char::Reader.new(at_end: "")
+    reader.pos.should eq(0)
+    reader.current_char.ord.should eq(0)
+    reader.has_previous?.should be_false
+  end
+
+  it "gets previous char (ascii)" do
+    reader = Char::Reader.new(at_end: "hello")
+    reader.pos.should eq(4)
+    reader.current_char.should eq('o')
+    reader.has_previous?.should be_true
+
+    reader.previous_char.should eq('l')
+    reader.previous_char.should eq('l')
+    reader.previous_char.should eq('e')
+    reader.previous_char.should eq('h')
+    reader.has_previous?.should be_false
+
+    expect_raises IndexError do
+      reader.previous_char
     end
+  end
+
+  it "gets previous char (unicode)" do
+    reader = Char::Reader.new(at_end: "há日本語")
+    reader.pos.should eq(9)
+    reader.current_char.should eq('語')
+    reader.has_previous?.should be_true
+
+    reader.previous_char.should eq('本')
+    reader.previous_char.should eq('日')
+    reader.previous_char.should eq('á')
+    reader.previous_char.should eq('h')
+    reader.has_previous?.should be_false
+  end
+
+  it "starts at pos" do
+    reader = Char::Reader.new("há日本語", pos: 9)
+    reader.pos.should eq(9)
+    reader.current_char.should eq('語')
   end
 
   it "errors if 0x80 <= first_byte < 0xC2" do
@@ -89,6 +132,10 @@ describe "Char::Reader" do
 
   it "errors if first_byte == 0xE0 && second_byte < 0xA0" do
     expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xe0, 0x9F, 0xA0]) }
+  end
+
+  it "errors if first_byte == 0xED && second_byte >= 0xA0" do
+    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xed, 0xB0, 0xA0]) }
   end
 
   it "errors if first_byte < 0xF0 && (third_byte & 0xC0) != 0x80" do

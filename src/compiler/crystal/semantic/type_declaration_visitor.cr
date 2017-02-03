@@ -69,7 +69,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       if type.lookup_instance_var?(var.name)
         node.raise "struct #{included_type} has a field named '#{field_name}', which #{type} already defines"
       end
-      declare_c_struct_or_union_field type, field_name, var
+      declare_c_struct_or_union_field(type, field_name, var, var.location || node.location)
     end
   end
 
@@ -149,12 +149,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   def visit(node : TypeDeclaration)
     case var = node.var
     when Var
-      if @in_c_struct_or_union
-        declare_c_struct_or_union_field(node)
-        return false
-      end
-
-      node.raise "declaring the type of a local variable is not yet supported"
+      declare_c_struct_or_union_field(node) if @in_c_struct_or_union
     when InstanceVar
       declare_instance_var(node, var)
     when ClassVar
@@ -194,12 +189,12 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     end
     ivar = MetaTypeVar.new(var_name, field_type)
     ivar.owner = type
-    declare_c_struct_or_union_field type, field_name, ivar
+    declare_c_struct_or_union_field(type, field_name, ivar, node.location)
   end
 
-  def declare_c_struct_or_union_field(type, field_name, var)
+  def declare_c_struct_or_union_field(type, field_name, var, location)
     type.instance_vars[var.name] = var
-    type.add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new("struct_or_union_set"))
+    type.add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new("struct_or_union_set").at(location))
     type.add_def Def.new(field_name, body: InstanceVar.new(var.name))
   end
 

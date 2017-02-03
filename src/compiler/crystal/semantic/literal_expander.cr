@@ -291,7 +291,7 @@ module Crystal
       Call.new(path, "new", [node.from, node.to, bool]).at(node)
     end
 
-    # Convert an interpolation to a concatenation with a MemoryIO:
+    # Convert an interpolation to a concatenation with an IO::Memory:
     #
     # From:
     #
@@ -299,7 +299,7 @@ module Crystal
     #
     # To:
     #
-    #     (MemoryIO.new << "foo" << bar << "baz").to_s
+    #     (IO::Memory.new << "foo" << bar << "baz").to_s
     def expand(node : StringInterpolation)
       # Compute how long at least the string will be, so we
       # can allocate enough space.
@@ -314,13 +314,13 @@ module Crystal
       end
 
       if capacity <= 64
-        call = Call.new(Path.global(["String", "Builder"]), "new")
+        call = Call.new(Path.global(["String", "Builder"]), "new").at(node)
       else
-        call = Call.new(Path.global(["String", "Builder"]), "new", NumberLiteral.new(capacity))
+        call = Call.new(Path.global(["String", "Builder"]), "new", NumberLiteral.new(capacity)).at(node)
       end
 
       node.expressions.each do |piece|
-        call = Call.new(call, "<<", piece)
+        call = Call.new(call, "<<", piece).at(node)
       end
       Call.new(call, "to_s").at(node)
     end
@@ -425,7 +425,7 @@ module Crystal
                 end
               end
             else
-              comp = case_when_comparison(TupleLiteral.new(temp_vars.not_nil!.clone), cond)
+              comp = case_when_comparison(TupleLiteral.new(temp_vars.not_nil!.clone), cond).at(cond)
             end
           else
             temp_var = temp_vars.try &.first

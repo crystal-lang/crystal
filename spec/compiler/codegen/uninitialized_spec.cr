@@ -105,4 +105,11 @@ describe "Code gen: uninitialized" do
       bar
       ), inject_primitives: false)
   end
+
+  it "codegens value (#3641)" do
+    run(%(
+      x = y = uninitialized Int32
+      x == y
+      )).to_b.should be_true
+  end
 end

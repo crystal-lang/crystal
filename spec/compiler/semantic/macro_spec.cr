@@ -547,14 +547,16 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "errors if using private on non-top-level macro" do
+  it "errors if applying protected modifier to macro" do
     assert_error %(
       class Foo
-        private macro bar
+        protected macro foo
+          1
         end
       end
-      ),
-      "private macros can only be declared at the top-level"
+
+      Foo.foo
+    ), "can only use 'private' for macros"
   end
 
   it "expands macro with break inside while (#1852)" do
@@ -773,6 +775,18 @@ describe "Semantic: macro" do
       )) { int32.metaclass }
   end
 
+  it "finds free type vars" do
+    assert_type(%(
+      module Foo(T)
+        def self.foo(foo : U) forall U
+          { {{ T }}, {{ U }} }
+        end
+      end
+
+      Foo(Int32).foo("foo")
+    )) { tuple_of([int32.metaclass, string.metaclass]) }
+  end
+
   it "gets named arguments in double splat" do
     assert_type(%(
       macro foo(**options)
@@ -933,5 +947,29 @@ describe "Semantic: macro" do
 
       Foo.foo
       ), inject_primitives: false) { int32 }
+  end
+
+  it "gives correct error when method is invoked but macro exists at the same scope" do
+    assert_error %(
+      macro foo(x)
+      end
+
+      class Foo
+      end
+
+      Foo.new.foo
+      ),
+      "undefined method 'foo'"
+  end
+
+  it "uses uninitialized variable with macros" do
+    assert_type(%(
+      macro foo(x)
+        {{x}}
+      end
+
+      a = uninitialized Int32
+      foo(a)
+      )) { int32 }
   end
 end

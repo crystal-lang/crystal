@@ -35,13 +35,15 @@ struct HTTP::Headers
 
         return false if byte1 != byte2
       end
+
+      true
     end
 
     private def normalize_byte(byte)
       char = byte.unsafe_chr
 
-      return byte if char.lowercase? || char == '-' # Optimize the common case
-      return byte + 32 if char.uppercase?
+      return byte if char.ascii_lowercase? || char == '-' # Optimize the common case
+      return byte + 32 if char.ascii_uppercase?
       return '-'.ord if char == '_'
 
       byte
@@ -71,22 +73,31 @@ struct HTTP::Headers
     values ? concat(values) : nil
   end
 
-  # Returns if among the headers for `key` there is some that contains `word` as a value.
-  # The `word` is expected to match between word boundaries (i.e. non-alphanumeric chars).
+  # Returns if among the headers for *key* there is some that contains *word* as a value.
+  # The *word* is expected to match between word boundaries (i.e. non-alphanumeric chars).
   #
   # ```
   # headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
   # headers.includes_word?("Connection", "Upgrade") # => true
   # ```
   def includes_word?(key, word)
+    return false if word.empty?
+
+    word = word.downcase
     # iterates over all header values avoiding the concatenation
     get?(key).try &.each do |value|
-      start = value.index(word)
-      next unless start
-      # check if the match is not surrounded by alphanumeric chars
-      next if start > 0 && value[start - 1].alphanumeric?
-      next if start + word.size < value.size && value[start + word.size].alphanumeric?
-      return true
+      value = value.downcase
+      offset = 0
+      while true
+        start = value.index(word, offset)
+        break unless start
+        offset = start + word.size
+
+        # check if the match is not surrounded by alphanumeric chars
+        next if start > 0 && value[start - 1].ascii_alphanumeric?
+        next if start + word.size < value.size && value[start + word.size].ascii_alphanumeric?
+        return true
+      end
     end
 
     false
@@ -225,6 +236,24 @@ struct HTTP::Headers
 
   def inspect(io : IO)
     to_s(io)
+  end
+
+  def pretty_print(pp)
+    pp.list("HTTP::Headers{", @hash.keys.sort_by(&.name), "}") do |key|
+      pp.group do
+        key.name.pretty_print(pp)
+        pp.text " =>"
+        pp.nest do
+          pp.breakable
+          values = get(key)
+          if values.size == 1
+            values.first.pretty_print(pp)
+          else
+            values.pretty_print(pp)
+          end
+        end
+      end
+    end
   end
 
   forward_missing_to @hash

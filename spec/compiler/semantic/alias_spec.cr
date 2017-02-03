@@ -248,4 +248,20 @@ describe "Semantic: alias" do
       Alias
       )) { static_array_of(uint8, 10).metaclass }
   end
+
+  it "looks up alias for macro resolution (#3548)" do
+    assert_type(%(
+      class Foo
+        class Bar
+          def self.baz
+            1
+          end
+        end
+      end
+
+      alias Baz = Foo
+
+      Baz::Bar.baz
+      )) { int32 }
+  end
 end

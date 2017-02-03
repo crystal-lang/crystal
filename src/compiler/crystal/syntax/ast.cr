@@ -40,6 +40,7 @@ module Crystal
       clone = clone_without_location
       clone.location = location
       clone.end_location = end_location
+      clone.doc = doc
       clone
     end
 
@@ -83,6 +84,10 @@ module Crystal
 
     def class_desc : String
       {{@type.name.split("::").last.id.stringify}}
+    end
+
+    def pretty_print(pp)
+      pp.text to_s
     end
   end
 
@@ -131,6 +136,10 @@ module Crystal
 
     def last
       @expressions.last
+    end
+
+    def location
+      @location || @expressions.first?.try &.location
     end
 
     def end_location
@@ -935,6 +944,7 @@ module Crystal
       a_def.uses_block_arg = uses_block_arg?
       a_def.assigns_special_var = assigns_special_var?
       a_def.name_column_number = name_column_number
+      a_def.visibility = visibility
       a_def
     end
 
@@ -2035,10 +2045,12 @@ module Crystal
       MagicConstant.new(@name)
     end
 
-    def expand_node(location)
+    def expand_node(location, end_location)
       case name
       when :__LINE__
         MagicConstant.expand_line_node(location)
+      when :__END_LINE__
+        MagicConstant.expand_line_node(end_location)
       when :__FILE__
         MagicConstant.expand_file_node(location)
       when :__DIR__
@@ -2053,7 +2065,7 @@ module Crystal
     end
 
     def self.expand_line(location)
-      location.try(&.line_number) || 0
+      (location.try(&.original_location) || location).try(&.line_number) || 0
     end
 
     def self.expand_file_node(location)
@@ -2061,7 +2073,7 @@ module Crystal
     end
 
     def self.expand_file(location)
-      location.try(&.filename.to_s) || "?"
+      location.try(&.original_filename.to_s) || "?"
     end
 
     def self.expand_dir_node(location)

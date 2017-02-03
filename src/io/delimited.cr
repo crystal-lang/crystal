@@ -1,21 +1,21 @@
 module IO
-  # An IO that wraps another IO, and only reads up to the beginning of a
+  # An `IO` that wraps another `IO`, and only reads up to the beginning of a
   # specified delimiter.
   #
   # This is useful for exposing part of an underlying stream to a client.
   #
   # ```
-  # io = MemoryIO.new "abc||123"
+  # io = IO::Memory.new "abc||123"
   # delimited = IO::Delimited.new(io, read_delimiter: "||")
   #
   # delimited.gets_to_end # => "abc"
-  # delimited.gets_to_end # => nil
+  # delimited.gets_to_end # => ""
   # io.gets_to_end        # => "123"
   # ```
   class Delimited
     include IO
 
-    # If `sync_close` is true, closing this IO will close the underlying IO.
+    # If `#sync_close?` is `true`, closing this `IO` will close the underlying `IO`.
     property? sync_close
 
     getter read_delimiter
@@ -27,14 +27,14 @@ module IO
     # Creates a new `IO::Delimited` which wraps *io*, and can read until the
     # byte sequence *read_delimiter* (interpreted as UTF-8) is found. If
     # *sync_close* is set, calling `#close` calls `#close` on the underlying
-    # IO.
+    # `IO`.
     def self.new(io : IO, read_delimiter : String, sync_close : Bool = false)
       new(io, read_delimiter.to_slice, sync_close)
     end
 
     # Creates a new `IO::Delimited` which wraps *io*, and can read until the
     # byte sequence *read_delimiter* is found. If *sync_close* is set, calling
-    # `#close` calls `#close` on the underlying IO.
+    # `#close` calls `#close` on the underlying `IO`.
     def initialize(@io : IO, @read_delimiter : Bytes, @sync_close : Bool = false)
       @closed = false
       @finished = false
@@ -42,10 +42,10 @@ module IO
       # The buffer where we do all our work.
       @delimiter_buffer = Bytes.new(@read_delimiter.size)
       # Slice inside delimiter buffer where bytes waiting to be read are stored.
-      @active_delimiter_buffer = Bytes.new(Pointer(UInt8).null, 0)
+      @active_delimiter_buffer = Bytes.empty
     end
 
-    def read(slice : Slice(UInt8))
+    def read(slice : Bytes)
       check_open
       return 0 if @finished
 
@@ -110,7 +110,7 @@ module IO
       read_bytes
     end
 
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       raise IO::Error.new "Can't write to IO::Delimited"
     end
 

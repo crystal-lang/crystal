@@ -2,19 +2,21 @@ require "c/stdlib"
 
 # `ENV` is a hash-like accessor for environment variables.
 #
-# __Note:__ All keys and values are strings. You must take care to cast other types
-# at runtime, e.g. integer port numbers.
-#
 # ### Example
 #
-#     # Set env var PORT to a default if not already set
-#     ENV["PORT"] ||= "5000"
-#     # Later use that env var.
-#     puts ENV["PORT"].to_i
+# ```
+# # Set env var PORT to a default if not already set
+# ENV["PORT"] ||= "5000"
+# # Later use that env var.
+# puts ENV["PORT"].to_i
+# ```
+#
+# NOTE: All keys and values are strings. You must take care to cast other types
+# at runtime, e.g. integer port numbers.
 module ENV
   extend Enumerable({String, String})
 
-  # Retrieves the value for environment variable named `key` as a `String`.
+  # Retrieves the value for environment variable named *key* as a `String`.
   # Raises `KeyError` if the named variable does not exist.
   def self.[](key : String) : String
     fetch(key)
@@ -28,8 +30,8 @@ module ENV
 
   # Sets the value for environment variable named *key* as *value*.
   # Overwrites existing environment variable if already present.
-  # Returns `value` if successful, otherwise raises an exception.
-  # If `value` is nil, the environment variable is deleted.
+  # Returns *value* if successful, otherwise raises an exception.
+  # If *value* is `nil`, the environment variable is deleted.
   def self.[]=(key : String, value : String?)
     if value
       if LibC.setenv(key, value, 1) != 0
@@ -56,13 +58,13 @@ module ENV
   end
 
   # Retrieves a value corresponding to the given *key*. Return the second argument's value
-  # if the key does not exist.
+  # if the *key* does not exist.
   def self.fetch(key, default)
     fetch(key) { default }
   end
 
-  # Retrieves a value corresponding to a key. Return the value of the block if
-  # the key does not exist.
+  # Retrieves a value corresponding to a given *key*. Return the value of the block if
+  # the *key* does not exist.
   def self.fetch(key : String, &block : String -> String? | NoReturn)
     value = LibC.getenv key
     return String.new(value) if value
@@ -95,11 +97,13 @@ module ENV
   end
 
   # Iterates over all `KEY=VALUE` pairs of environment variables, yielding both
-  # the `key` and `value`.
+  # the *key* and *value*.
   #
-  #     ENV.each do |key, value|
-  #       puts "#{key} => #{value}"
-  #     end
+  # ```
+  # ENV.each do |key, value|
+  #   puts "#{key} => #{value}"
+  # end
+  # ```
   def self.each
     environ_ptr = LibC.environ
     while environ_ptr
@@ -132,5 +136,18 @@ module ENV
       found_one = true
     end
     io << "}"
+  end
+
+  def self.pretty_print(pp)
+    pp.list("{", keys.sort, "}") do |key|
+      pp.group do
+        key.pretty_print(pp)
+        pp.text " =>"
+        pp.nest do
+          pp.breakable
+          self[key].pretty_print(pp)
+        end
+      end
+    end
   end
 end

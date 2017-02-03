@@ -1,7 +1,7 @@
 require "c/string"
 require "./big"
 
-# A BigInt can represent arbitrarily large integers.
+# A `BigInt` can represent arbitrarily large integers.
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
 struct BigInt < Int
@@ -10,16 +10,17 @@ struct BigInt < Int
   include Comparable(BigInt)
   include Comparable(Float)
 
-  # Creates a BigInt with the value zero.
+  # Creates a `BigInt` with the value zero.
   #
   # ```
+  # require "big"
   # BigInt.new # => 0
   # ```
   def initialize
     LibGMP.init(out @mpz)
   end
 
-  # Creates a BigInt with the value denoted by *str* in the given *base*.
+  # Creates a `BigInt` with the value denoted by *str* in the given *base*.
   #
   # Raises `ArgumentError` if the string doesn't denote a valid integer.
   #
@@ -34,7 +35,7 @@ struct BigInt < Int
     end
   end
 
-  # Creates a BigInt from the given *num*.
+  # Creates a `BigInt` from the given *num*.
   def initialize(num : Int::Signed)
     if LibC::Long::MIN <= num <= LibC::Long::MAX
       LibGMP.init_set_si(out @mpz, num)
@@ -57,7 +58,7 @@ struct BigInt < Int
     LibGMP.init_set_d(out @mpz, num)
   end
 
-  # Returns `num`. Useful for generic code that does `T.new(...)` with `T`
+  # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
   # being a `Number`.
   def self.new(num : BigInt)
     num
@@ -273,7 +274,7 @@ struct BigInt < Int
   # Returns a string representation of self.
   #
   # ```
-  # puts BigInt.new("123456789101101987654321").to_s # => 123456789101101987654321
+  # BigInt.new("123456789101101987654321").to_s # => 123456789101101987654321
   # ```
   def to_s
     String.new(to_cstr)
@@ -288,9 +289,9 @@ struct BigInt < Int
   # Returns a string containing the representation of big radix base (2 through 36).
   #
   # ```
-  # puts BigInt.new("123456789101101987654321").to_s(8)  # => 32111154373025463465765261
-  # puts BigInt.new("123456789101101987654321").to_s(16) # => 1a249b1f61599cd7eab1
-  # puts BigInt.new("123456789101101987654321").to_s(36) # => k3qmt029k48nmpd
+  # BigInt.new("123456789101101987654321").to_s(8)  # => "32111154373025463465765261"
+  # BigInt.new("123456789101101987654321").to_s(16) # => "1a249b1f61599cd7eab1"
+  # BigInt.new("123456789101101987654321").to_s(36) # => "k3qmt029k48nmpd"
   # ```
   def to_s(base : Int)
     raise "Invalid base #{base}" unless 2 <= base <= 36
@@ -431,7 +432,7 @@ struct Int
     other.lcm(self)
   end
 
-  # Returns a BigInt representing this integer.
+  # Returns a `BigInt` representing this integer.
   def to_big_i : BigInt
     BigInt.new(self)
   end
@@ -444,14 +445,14 @@ struct Float
     -(other <=> self)
   end
 
-  # Returns a BigInt representing this float (rounded using `floor`).
+  # Returns a `BigInt` representing this float (rounded using `floor`).
   def to_big_i : BigInt
     BigInt.new(self)
   end
 end
 
 class String
-  # Returns a BigInt from this string, in the given *base*.
+  # Returns a `BigInt` from this string, in the given *base*.
   #
   # Raises `ArgumentError` if this string doesn't denote a valid integer.
   def to_big_i(base = 10) : BigInt

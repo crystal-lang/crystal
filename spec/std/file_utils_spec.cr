@@ -1,7 +1,62 @@
 require "spec"
 require "file_utils"
 
+private class OneByOneIO
+  include IO
+
+  @bytes : Bytes
+
+  def initialize(string)
+    @bytes = string.to_slice
+    @pos = 0
+  end
+
+  def read(slice : Bytes)
+    return 0 if slice.empty?
+    return 0 if @pos >= @bytes.size
+
+    slice[0] = @bytes[@pos]
+    @pos += 1
+    1
+  end
+
+  def write(slice : Bytes) : Nil
+  end
+end
+
 describe "FileUtils" do
+  describe "cd" do
+    it "should work" do
+      cwd = Dir.current
+      FileUtils.cd("..")
+      Dir.current.should_not eq(cwd)
+      FileUtils.cd(cwd)
+      Dir.current.should eq(cwd)
+    end
+
+    it "raises" do
+      expect_raises do
+        FileUtils.cd("/nope")
+      end
+    end
+
+    it "accepts a block" do
+      cwd = Dir.current
+
+      FileUtils.cd("..") do
+        Dir.current.should_not eq(cwd)
+      end
+
+      Dir.current.should eq(cwd)
+    end
+  end
+
+  describe "pwd" do
+    it "returns the current working directory" do
+      FileUtils.pwd.should eq(Dir.current)
+    end
+  end
+
   describe "cmp" do
     it "compares two equal files" do
       FileUtils.cmp(
@@ -15,6 +70,30 @@ describe "FileUtils" do
         File.join(__DIR__, "data/test_file.txt"),
         File.join(__DIR__, "data/test_file.ini")
       ).should be_false
+    end
+
+    it "compares two ios, one way (true)" do
+      io1 = OneByOneIO.new("hello")
+      io2 = IO::Memory.new("hello")
+      FileUtils.cmp(io1, io2).should be_true
+    end
+
+    it "compares two ios, second way (true)" do
+      io1 = OneByOneIO.new("hello")
+      io2 = IO::Memory.new("hello")
+      FileUtils.cmp(io2, io1).should be_true
+    end
+
+    it "compares two ios, one way (false)" do
+      io1 = OneByOneIO.new("hello")
+      io2 = IO::Memory.new("hella")
+      FileUtils.cmp(io1, io2).should be_false
+    end
+
+    it "compares two ios, second way (false)" do
+      io1 = OneByOneIO.new("hello")
+      io2 = IO::Memory.new("hella")
+      FileUtils.cmp(io2, io1).should be_false
     end
   end
 
@@ -122,6 +201,244 @@ describe "FileUtils" do
         Dir.rmdir(linked_path) if Dir.exists?(linked_path)
         Dir.rmdir(removed_path) if Dir.exists?(removed_path)
       end
+    end
+  end
+
+  describe "rm_rf" do
+    it "delete recursively a directory" do
+      path = "/tmp/crystal_rm_rftest_#{Process.pid}/"
+      FileUtils.mkdir(path)
+      File.write(File.join(path, "a"), "")
+      FileUtils.mkdir(File.join(path, "b"))
+      FileUtils.rm_rf(path).should be_nil
+      Dir.exists?(path).should be_false
+    end
+
+    it "delete recursively multiple directory" do
+      path1 = "/tmp/crystal_rm_rftest_#{Process.pid}/"
+      path2 = "/tmp/crystal_rm_rftest_#{Process.pid + 1}/"
+      FileUtils.mkdir(path1)
+      FileUtils.mkdir(path2)
+      File.write(File.join(path1, "a"), "")
+      File.write(File.join(path2, "a"), "")
+      FileUtils.mkdir(File.join(path1, "b"))
+      FileUtils.mkdir(File.join(path2, "b"))
+      FileUtils.rm_rf([path1, path2]).should be_nil
+      Dir.exists?(path1).should be_false
+      Dir.exists?(path2).should be_false
+    end
+
+    it "doesn't return error on non existing file" do
+      path1 = "/tmp/crystal_rm_rftest_#{Process.pid}/"
+      path2 = File.join(path1, "a")
+      FileUtils.mkdir(path1)
+      FileUtils.rm_rf([path1, path2]).should be_nil
+    end
+  end
+
+  describe "mv" do
+    it "moves a file from one place to another" do
+      begin
+        path1 = "/tmp/crystal_rm_rftest_#{Process.pid}/"
+        path2 = "/tmp/crystal_rm_rftest_#{Process.pid + 1}/"
+        FileUtils.mkdir([path1, path2])
+        path1 = File.join(path1, "a")
+        path2 = File.join(path2, "b")
+        File.write(path1, "")
+        FileUtils.mv(path1, path2).should be_nil
+        File.exists?(path1).should be_false
+        File.exists?(path2).should be_true
+      ensure
+        path1 = "/tmp/crystal_rm_rftest_#{Process.pid}/"
+        path2 = "/tmp/crystal_rm_rftest_#{Process.pid + 1}/"
+        FileUtils.rm_rf([path1, path2])
+      end
+    end
+
+    it "raises an error if non correct arguments" do
+      expect_raises Errno do
+        FileUtils.mv("/tmp/crystal_mv_test/a", "/tmp/crystal_mv_test/b")
+      end
+    end
+
+    it "moves multiple files to one place" do
+      begin
+        path1 = "/tmp/crystal_rm_rftest_#{Process.pid}/"
+        path2 = "/tmp/crystal_rm_rftest_#{Process.pid + 1}/"
+        path3 = "/tmp/crystal_rm_rftest_#{Process.pid + 2}/"
+        FileUtils.mkdir([path1, path2, path3])
+        path1 = File.join(path1, "a")
+        path2 = File.join(path2, "b")
+        File.write(path1, "")
+        File.write(path2, "")
+        FileUtils.mv([path1, path2], path3).should be_nil
+        File.exists?(path1).should be_false
+        File.exists?(path2).should be_false
+        File.exists?(File.join(path3, "a")).should be_true
+        File.exists?(File.join(path3, "b")).should be_true
+      ensure
+        path1 = "/tmp/crystal_rm_rftest_#{Process.pid}/"
+        path2 = "/tmp/crystal_rm_rftest_#{Process.pid + 1}/"
+        path3 = "/tmp/crystal_rm_rftest_#{Process.pid + 2}/"
+        FileUtils.rm_rf([path1, path2, path3])
+      end
+    end
+
+    it "raises an error if dest is non correct" do
+      expect_raises ArgumentError do
+        FileUtils.mv(["/tmp/crystal_mv_test/a", "/tmp/crystal_mv_test/b"], "/tmp/crystal_not_here")
+      end
+    end
+
+    it "moves all existing files to destination" do
+      begin
+        path1 = "/tmp/crystal_rm_rftest_#{Process.pid}/"
+        path2 = "/tmp/crystal_rm_rftest_#{Process.pid + 1}/"
+        path3 = "/tmp/crystal_rm_rftest_#{Process.pid + 2}/"
+        path4 = "/tmp/crystal_rm_rftest_#{Process.pid + 3}/a"
+        FileUtils.mkdir([path1, path2, path3])
+        path1 = File.join(path1, "a")
+        path2 = File.join(path2, "b")
+        File.write(path1, "")
+        File.write(path2, "")
+        FileUtils.mv([path1, path2, path4], path3).should be_nil
+        File.exists?(path1).should be_false
+        File.exists?(path2).should be_false
+        File.exists?(File.join(path3, "a")).should be_true
+        File.exists?(File.join(path3, "b")).should be_true
+      ensure
+        path1 = "/tmp/crystal_rm_rftest_#{Process.pid}/"
+        path2 = "/tmp/crystal_rm_rftest_#{Process.pid + 1}/"
+        path3 = "/tmp/crystal_rm_rftest_#{Process.pid + 2}/"
+        FileUtils.rm_rf([path1, path2, path3])
+      end
+    end
+  end
+
+  it "tests mkdir and rmdir with a new path" do
+    path = "/tmp/crystal_mkdir_test_#{Process.pid}/"
+    FileUtils.mkdir(path, 0o700).should be_nil
+    Dir.exists?(path).should be_true
+    FileUtils.rmdir(path).should be_nil
+    Dir.exists?(path).should be_false
+  end
+
+  it "tests mkdir and rmdir with multiple new paths" do
+    path1 = "/tmp/crystal_mkdir_test_#{Process.pid}/"
+    path2 = "/tmp/crystal_mkdir_test_#{Process.pid + 1}/"
+    FileUtils.mkdir([path1, path2], 0o700).should be_nil
+    Dir.exists?(path1).should be_true
+    Dir.exists?(path2).should be_true
+    FileUtils.rmdir([path1, path2]).should be_nil
+    Dir.exists?(path1).should be_false
+    Dir.exists?(path2).should be_false
+  end
+
+  it "tests mkdir with an existing path" do
+    expect_raises Errno do
+      Dir.mkdir(__DIR__, 0o700)
+    end
+  end
+
+  it "tests mkdir with multiples existing paths" do
+    expect_raises Errno do
+      FileUtils.mkdir([__DIR__, __DIR__], 0o700)
+    end
+    expect_raises Errno do
+      FileUtils.mkdir(["/tmp/crystal_mkdir_test_#{Process.pid}/", __DIR__], 0o700)
+    end
+  end
+
+  it "tests mkdir_p with a new path" do
+    path = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
+    FileUtils.mkdir_p(path).should be_nil
+    Dir.exists?(path).should be_true
+    path = File.join({path, "a", "b", "c"})
+    FileUtils.mkdir_p(path).should be_nil
+    Dir.exists?(path).should be_true
+  end
+
+  it "tests mkdir_p with multiples new path" do
+    path1 = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
+    path2 = "/tmp/crystal_mkdir_ptest_#{Process.pid + 1}"
+    FileUtils.mkdir_p([path1, path2]).should be_nil
+    Dir.exists?(path1).should be_true
+    Dir.exists?(path2).should be_true
+    path1 = File.join({path1, "a", "b", "c"})
+    path2 = File.join({path2, "a", "b", "c"})
+    FileUtils.mkdir_p([path1, path2]).should be_nil
+    Dir.exists?(path1).should be_true
+    Dir.exists?(path2).should be_true
+  end
+
+  it "tests mkdir_p with an existing path" do
+    FileUtils.mkdir_p(__DIR__).should be_nil
+    expect_raises Errno do
+      FileUtils.mkdir_p(__FILE__)
+    end
+  end
+
+  it "tests mkdir_p with multiple existing path" do
+    FileUtils.mkdir_p([__DIR__, __DIR__]).should be_nil
+    expect_raises Errno do
+      FileUtils.mkdir_p([__FILE__, "/tmp/crystal_mkdir_ptest_#{Process.pid}/"])
+    end
+  end
+
+  it "tests rmdir with an non existing path" do
+    expect_raises Errno do
+      FileUtils.rmdir("/tmp/crystal_mkdir_test_#{Process.pid}/tmp/")
+    end
+  end
+
+  it "tests rmdir with multiple non existing path" do
+    expect_raises Errno do
+      FileUtils.rmdir(["/tmp/crystal_mkdir_test_#{Process.pid}/tmp/", "/tmp/crystal_mkdir_test_#{Process.pid + 1}/tmp/"])
+    end
+  end
+
+  it "tests rmdir with a path that cannot be removed" do
+    expect_raises Errno do
+      FileUtils.rmdir(__DIR__)
+    end
+  end
+
+  it "tests rmdir with multiple path that cannot be removed" do
+    expect_raises Errno do
+      FileUtils.rmdir([__DIR__, __DIR__])
+    end
+  end
+
+  it "tests rm with an existing path" do
+    path = "/tmp/crystal_rm_test_#{Process.pid}"
+    File.write(path, "")
+    FileUtils.rm(path).should be_nil
+    File.exists?(path).should be_false
+  end
+
+  it "tests rm with non existing path" do
+    expect_raises Errno do
+      FileUtils.rm("/tmp/crystal_rm_test_#{Process.pid}")
+    end
+  end
+
+  it "tests rm with multiple existing paths" do
+    path1 = "/tmp/crystal_rm_test_#{Process.pid}"
+    path2 = "/tmp/crystal_rm_test_#{Process.pid + 1}"
+    File.write(path1, "")
+    File.write(path2, "")
+    FileUtils.rm([path1, path2]).should be_nil
+    File.exists?(path1).should be_false
+    File.exists?(path2).should be_false
+  end
+
+  it "tests rm with some non existing paths" do
+    expect_raises Errno do
+      path1 = "/tmp/crystal_rm_test_#{Process.pid}"
+      path2 = "/tmp/crystal_rm_test_#{Process.pid + 1}"
+      File.write(path1, "")
+      File.write(path2, "")
+      FileUtils.rm([path1, path2, path2])
     end
   end
 end

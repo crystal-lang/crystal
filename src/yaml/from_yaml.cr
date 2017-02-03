@@ -1,5 +1,5 @@
-def Object.from_yaml(string : String) : self
-  YAML::PullParser.new(string) do |parser|
+def Object.from_yaml(string_or_io) : self
+  YAML::PullParser.new(string_or_io) do |parser|
     parser.read_stream do
       parser.read_document do
         new parser
@@ -8,8 +8,8 @@ def Object.from_yaml(string : String) : self
   end
 end
 
-def Array.from_yaml(string : String)
-  YAML::PullParser.new(string) do |parser|
+def Array.from_yaml(string_or_io)
+  YAML::PullParser.new(string_or_io) do |parser|
     parser.read_stream do
       parser.read_document do
         new(parser) do |element|
@@ -153,6 +153,10 @@ def Union.new(pull : YAML::PullParser)
     end
   {% end %}
   raise YAML::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
+end
+
+def Time.new(pull : YAML::PullParser)
+  Time::Format::ISO_8601_DATE_TIME.parse(pull.read_scalar)
 end
 
 struct Time::Format

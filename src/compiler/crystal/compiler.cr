@@ -5,6 +5,13 @@ require "colorize"
 require "crypto/md5"
 
 module Crystal
+  @[Flags]
+  enum Debug
+    LineNumbers
+    Variables
+    Default     = LineNumbers
+  end
+
   # Main interface to the compiler.
   #
   # A Compiler parses source code, type checks it and
@@ -35,7 +42,7 @@ module Crystal
 
     # If `true`, the executable will be generated with debug code
     # that can be understood by `gdb` and `lldb`.
-    property? debug = false
+    property debug = Debug::Default
 
     # If `true`, `.ll` files will be generated in the default cache
     # directory for each generated LLVM module.
@@ -47,8 +54,14 @@ module Crystal
     # Sets the mcpu. Check LLVM docs to learn about this.
     property mcpu : String?
 
+    # Sets the mattr (features). Check LLVM docs to learn about this.
+    property mattr : String?
+
     # If `false`, color won't be used in output messages.
     property? color = true
+
+    # If `true`, skip cleanup process on semantic analysis.
+    property? no_cleanup = false
 
     # If `true`, no executable will be generated after compilation
     # (useful to type-check a prorgam)
@@ -121,7 +134,7 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node = program.semantic node, @stats
+      node = program.semantic node, @stats, cleanup: !no_cleanup?
       codegen program, node, source, output_filename unless @no_codegen
       Result.new program, node
     end
@@ -146,10 +159,12 @@ module Crystal
 
     private def new_program(sources)
       program = Program.new
+      program.filename = sources.first.filename
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.target_machine = target_machine
-      program.flags << "release" if @release
-      program.flags.merge @flags
+      program.flags << "release" if release?
+      program.flags << "debug" unless debug.none?
+      program.flags.merge! @flags
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
@@ -168,7 +183,8 @@ module Crystal
         nodes = Expressions.from(nodes)
 
         # Prepend the prelude to the parsed program
-        nodes = Expressions.new([Require.new(prelude), nodes] of ASTNode)
+        location = Location.new(program.filename, 1, 1)
+        nodes = Expressions.new([Require.new(prelude).at(location), nodes] of ASTNode)
 
         # And normalize
         program.normalize(nodes)
@@ -189,7 +205,7 @@ module Crystal
 
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@release}|#{@link_flags}"
+      current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}"
       bc_flags_filename = "#{output_dir}/bc_flags"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
@@ -203,7 +219,7 @@ module Crystal
       @link_flags = "#{@link_flags} -rdynamic"
 
       llvm_modules = Crystal.timing("Codegen (crystal)", @stats) do
-        program.codegen node, debug: @debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
+        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
       end
 
       if @cross_compile
@@ -243,29 +259,32 @@ module Crystal
 
     private def codegen(program, units : Array(CompilationUnit), lib_flags, output_filename, output_dir)
       object_names = units.map &.object_filename
-      multithreaded = LLVM.start_multithreaded
 
-      # First write bitcodes: it breaks if we paralellize it
-      unless multithreaded
-        Crystal.timing("Codegen (cyrstal)", @stats) do
-          units.each &.write_bitcode
-        end
-      end
-
-      msg = multithreaded ? "Codegen (bc+obj)" : "Codegen (obj)"
       target_triple = target_machine.triple
+      reused = 0
 
-      Crystal.timing(msg, @stats) do
+      Crystal.timing("Codegen (bc+obj)", @stats) do
         if units.size == 1
           first_unit = units.first
 
-          codegen_single_unit(program, first_unit, target_triple, multithreaded)
+          codegen_single_unit(program, first_unit, target_triple)
+          reused += 1 if first_unit.reused_previous_compilation?
 
           if emit = @emit
             first_unit.emit(emit, emit_base_filename || output_filename)
           end
         else
-          codegen_many_units(program, units, target_triple, multithreaded)
+          reused = codegen_many_units(program, units, target_triple)
+        end
+      end
+
+      if @stats
+        if units.size == reused
+          puts "Codegen (bc+obj): all previous .o files were reused"
+        elsif reused == 0
+          puts "Codegen (bc+obj): no previous .o files were reused"
+        else
+          puts "Codegen (bc+obj): #{reused}/#{units.size} .o files were reused"
         end
       end
 
@@ -283,44 +302,58 @@ module Crystal
       end
     end
 
-    private def codegen_many_units(program, units, target_triple, multithreaded)
+    private def codegen_many_units(program, units, target_triple)
       jobs_count = 0
+      reused = 0
       wait_channel = Channel(Nil).new(@n_threads)
 
-      while unit = units.pop?
-        fork_and_codegen_single_unit(program, unit, target_triple, multithreaded, wait_channel)
-        jobs_count += 1
-
-        if jobs_count >= @n_threads
-          wait_channel.receive
-          jobs_count -= 1
+      # For stats output we want to count how many previous
+      # .o files were reused, mainly to detect performance regressions.
+      # Because we fork, we must communicate using a pipe.
+      if @stats
+        pr, pw = IO.pipe
+        spawn do
+          pr.each_byte do |byte|
+            reused += byte
+          end
         end
       end
 
-      while jobs_count > 0
-        wait_channel.receive
-        jobs_count -= 1
+      units.each_slice(Math.max(units.size / @n_threads, 1)) do |slice|
+        jobs_count += 1
+        spawn do
+          codegen_process = fork do
+            pipe_w = pw
+            slice.each do |unit|
+              codegen_single_unit(program, unit, target_triple)
+              if pipe_w && unit.reused_previous_compilation?
+                pipe_w.write_byte(1_u8)
+              end
+            end
+          end
+          codegen_process.wait
+          wait_channel.send nil
+        end
       end
+
+      jobs_count.times { wait_channel.receive }
+      if pipe_w = pw
+        pipe_w.close
+        Fiber.yield
+      end
+
+      reused
     end
 
-    private def fork_and_codegen_single_unit(program, unit, target_triple, multithreaded, wait_channel)
-      spawn do
-        codegen_process = fork { codegen_single_unit(program, unit, target_triple, multithreaded) }
-        codegen_process.wait
-        wait_channel.send nil
-      end
-    end
-
-    private def codegen_single_unit(program, unit, target_triple, multithreaded)
+    private def codegen_single_unit(program, unit, target_triple)
       unit.llvm_mod.target = target_triple
-      unit.write_bitcode if multithreaded
       unit.compile
     end
 
     protected def target_machine
       @target_machine ||= begin
         triple = @target_triple || LLVM.default_target_triple
-        TargetMachine.create(triple, @mcpu || "", @release)
+        TargetMachine.create(triple, @mcpu || "", @mattr || "", @release)
       end
     rescue ex : ArgumentError
       stdout.print colorize("Error: ").red.bold
@@ -331,7 +364,9 @@ module Crystal
 
     protected def optimize(llvm_mod)
       fun_pass_manager = llvm_mod.new_function_pass_manager
-      fun_pass_manager.add_target_data target_machine.data_layout
+      {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
+        fun_pass_manager.add_target_data target_machine.data_layout
+      {% end %}
       pass_manager_builder.populate fun_pass_manager
       fun_pass_manager.run llvm_mod
       module_pass_manager.run llvm_mod
@@ -342,7 +377,9 @@ module Crystal
     private def module_pass_manager
       @module_pass_manager ||= begin
         mod_pass_manager = LLVM::ModulePassManager.new
-        mod_pass_manager.add_target_data target_machine.data_layout
+        {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
+          mod_pass_manager.add_target_data target_machine.data_layout
+        {% end %}
         pass_manager_builder.populate mod_pass_manager
         mod_pass_manager
       end
@@ -386,6 +423,7 @@ module Crystal
     class CompilationUnit
       getter compiler
       getter llvm_mod
+      getter? reused_previous_compilation = false
 
       def initialize(@compiler : Compiler, @name : String, @llvm_mod : LLVM::Module,
                      @output_dir : String, @bc_flags_changed : Bool)
@@ -411,16 +449,9 @@ module Crystal
         end
       end
 
-      def write_bitcode
-        llvm_mod.write_bitcode(bc_name_new)
-      end
-
       def compile
         bc_name = self.bc_name
-        bc_name_new = self.bc_name_new
         object_name = self.object_name
-
-        must_compile = true
 
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
@@ -432,21 +463,65 @@ module Crystal
         # `.bc` file is exactly the same as the old one. In that case
         # the `.o` file will also be the same, so we simply reuse the
         # old one. Generating an `.o` file is what takes most time.
-        if !compiler.emit && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
-          if FileUtils.cmp(bc_name, bc_name_new)
-            # If the user cancelled a previous compilation it might be that
-            # the .o file is empty
-            if File.size(object_name) > 0
-              File.delete bc_name_new
-              must_compile = false
+
+        must_compile = true
+        can_reuse_previous_compilation =
+          !compiler.emit && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
+
+        {% if LibLLVM::IS_35 %}
+          # In LLVM 3.5 we can't write a bitcode to memory,
+          # so instead we write it to another file
+          bc_name_new = self.bc_name_new
+          llvm_mod.write_bitcode_to_file(bc_name_new)
+
+          if can_reuse_previous_compilation
+            if FileUtils.cmp(bc_name, bc_name_new)
+              # If the user cancelled a previous compilation it might be that
+              # the .o file is empty
+              if File.size(object_name) > 0
+                File.delete bc_name_new
+                must_compile = false
+              end
             end
           end
-        end
+
+          if must_compile
+            # Create/overwrite the .bc file (for next compilations)
+            File.rename(bc_name_new, bc_name)
+            compiler.optimize llvm_mod if compiler.release?
+            compiler.target_machine.emit_obj_to_file llvm_mod, object_name
+          end
+        {% else %}
+          memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
+
+          if can_reuse_previous_compilation
+            memory_io = IO::Memory.new(memory_buffer.to_slice)
+            changed = File.open(bc_name) { |bc_file| !FileUtils.cmp(bc_file, memory_io) }
+
+            # If the user cancelled a previous compilation
+            # it might be that the .o file is empty
+            if !changed && File.size(object_name) > 0
+              must_compile = false
+              memory_buffer.dispose
+              memory_buffer = nil
+            else
+              # We need to compile, so we'll write the memory buffer to file
+            end
+          end
+
+          # If there's a memory buffer, it means we must create a .o from it
+          if memory_buffer
+            # Create the .bc file (for next compilations)
+            File.write(bc_name, memory_buffer.to_slice)
+            memory_buffer.dispose
+          end
+        {% end %}
 
         if must_compile
-          File.rename(bc_name_new, bc_name)
           compiler.optimize llvm_mod if compiler.release?
           compiler.target_machine.emit_obj_to_file llvm_mod, object_name
+        else
+          @reused_previous_compilation = true
         end
 
         llvm_mod.print_to_file ll_name if compiler.dump_ll?

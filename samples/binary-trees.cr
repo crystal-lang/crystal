@@ -35,7 +35,7 @@ stretch_tree = nil
 
 long_lived_tree = bottom_up_tree(0, max_depth)
 
-min_depth.step(max_depth + 1, 2) do |depth|
+min_depth.step(to: max_depth + 1, by: 2) do |depth|
   iterations = 2**(max_depth - depth + min_depth)
 
   check = 0

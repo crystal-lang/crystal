@@ -525,4 +525,30 @@ describe "Codegen: class var" do
       Bar.bar
       )).to_i.should eq(1)
   end
+
+  it "codegens generic class class var" do
+    run(%(
+      class Foo(T)
+        @@bar = 1
+
+        def bar
+          @@bar
+        end
+
+        def bar=(@@bar)
+        end
+      end
+
+      f1 = Foo(Int32).new
+      f2 = Foo(String).new
+
+      a = f1.bar
+      b = f2.bar
+      f1.bar = 10
+      c = f2.bar
+      f2.bar = 20
+      d = f1.bar
+      a + b + c + d
+      )).to_i.should eq(1 + 1 + 10 + 20)
+  end
 end

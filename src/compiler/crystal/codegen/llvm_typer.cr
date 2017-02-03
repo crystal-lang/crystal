@@ -359,18 +359,6 @@ module Crystal
       raise "Bug: called llvm_struct_type for #{type}"
     end
 
-    def llvm_arg_type(type : AliasType)
-      llvm_arg_type(type.remove_alias)
-    end
-
-    def llvm_arg_type(type : Type)
-      if type.passed_by_value?
-        llvm_type(type).pointer
-      else
-        llvm_type(type)
-      end
-    end
-
     def llvm_embedded_type(type, wants_size = false)
       type = type.remove_indirection
       case type
@@ -404,8 +392,12 @@ module Crystal
     def llvm_c_type(type)
       if type.extern?
         llvm_struct_type(type)
+      elsif type.passed_by_value?
+        # C types that are passed by value must be considered,
+        # for the ABI, as being passed behind a pointer
+        llvm_type(type).pointer
       else
-        llvm_arg_type(type)
+        llvm_type(type)
       end
     end
 
@@ -426,13 +418,13 @@ module Crystal
     end
 
     def closure_type(type : ProcInstanceType)
-      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
+      arg_types = type.arg_types.map { |arg_type| llvm_type(arg_type) }
       arg_types.insert(0, LLVM::VoidPointer)
       LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
     end
 
     def proc_type(type : ProcInstanceType)
-      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type).as(LLVM::Type) }
+      arg_types = type.arg_types.map { |arg_type| llvm_type(arg_type).as(LLVM::Type) }
       LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
     end
 

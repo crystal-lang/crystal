@@ -328,7 +328,7 @@ module Crystal
     end
 
     def restrict(other : UnionType, context)
-      restricted = other.union_types.any? { |union_type| restriction_of?(union_type, context.instantiated_type) }
+      restricted = other.union_types.any? { |union_type| restrict(union_type, context) }
       restricted ? self : nil
     end
 
@@ -372,12 +372,16 @@ module Crystal
       ident_type ||= context.defining_type.lookup_path other
 
       if ident_type
+        if ident_type.is_a?(Const)
+          other.raise "#{ident_type} is not a type, it's a constant"
+        end
+
         return restrict ident_type, context
       end
 
       if single_name
         first_name = other.names.first
-        if context.defining_type.type_var?(first_name) || Parser.free_var_name?(first_name)
+        if context.defining_type.type_var?(first_name)
           return context.set_free_var(first_name, self)
         end
       end
@@ -423,6 +427,10 @@ module Crystal
     end
 
     def restrict(other : NumberLiteral, context)
+      nil
+    end
+
+    def restrict(other : Splat, context)
       nil
     end
 
@@ -815,6 +823,12 @@ module Crystal
     end
   end
 
+  class VirtualMetaclassType
+    def restrict(other : Metaclass, context)
+      instance_type.restrict(other.name, context).try &.metaclass
+    end
+  end
+
   class NonGenericModuleType
     def restrict(other, context)
       super || including_types.try(&.restrict(other, context))
@@ -846,12 +860,22 @@ module Crystal
         single_name = other.names.size == 1
         if single_name
           first_name = other.names.first
-          if context.defining_type.type_var?(first_name) || Parser.free_var_name?(first_name)
+          if context.defining_type.type_var?(first_name)
             return context.set_free_var(first_name, self)
           else
             other.raise_undefined_constant(context.defining_type)
           end
         end
+      end
+
+      remove_alias.restrict(other, context)
+    end
+
+    def restrict(other : AliasType, context)
+      return self if self == other
+
+      if !self.simple? && !other.simple?
+        return nil
       end
 
       remove_alias.restrict(other, context)

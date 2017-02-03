@@ -4,6 +4,8 @@ require "./csv"
 # parse a CSV without the need to allocate intermediate arrays.
 #
 # ```
+# require "csv"
+#
 # lexer = CSV::Lexer.new "one,two\nthree"
 # lexer.next_token # => CSV::Token(@kind=Cell, @value="one")
 # lexer.next_token # => CSV::Token(@kind=Cell, @value="two")
@@ -12,12 +14,12 @@ require "./csv"
 # lexer.next_token # => CSV::Token(@kind=Eof, @value="three")
 # ```
 abstract class CSV::Lexer
-  # Creates a CSV lexer from a string.
+  # Creates a CSV lexer from a `String`.
   def self.new(string : String, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
     StringBased.new(string, separator, quote_char)
   end
 
-  # Creates a CSV lexer from an IO.
+  # Creates a CSV lexer from an `IO`.
   def self.new(io : IO, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
     IOBased.new(io, separator, quote_char)
   end
@@ -30,7 +32,7 @@ abstract class CSV::Lexer
   # :nodoc:
   def initialize(@separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR)
     @token = Token.new
-    @buffer = MemoryIO.new
+    @buffer = IO::Memory.new
     @column_number = 1
     @line_number = 1
     @last_empty_column = false

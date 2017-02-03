@@ -13,15 +13,11 @@ require "./uri/uri_parser"
 # require "uri"
 #
 # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
-# # => #&lt;URI:0x1003f1e40 @scheme="http", @host="foo.com", @port=nil, @path="/posts", @query="id=30&limit=5", ... >
-# uri.scheme
-# # => "http"
-# uri.host
-# # => "foo.com"
-# uri.query
-# # => "id=30&limit=5"
-# uri.to_s
-# # => "http://foo.com/posts?id=30&limit=5#time=1305298413"
+# # => #<URI:0x1003f1e40 @scheme="http", @host="foo.com", @port=nil, @path="/posts", @query="id=30&limit=5", ... >
+# uri.scheme # => "http"
+# uri.host   # => "foo.com"
+# uri.query  # => "id=30&limit=5"
+# uri.to_s   # => "http://foo.com/posts?id=30&limit=5#time=1305298413"
 # ```
 class URI
   class Error < Exception
@@ -170,34 +166,45 @@ class URI
     end
   end
 
+  # Returns normalized URI.
+  def normalize
+    uri = dup
+    uri.normalize!
+    uri
+  end
+
+  # Destructive normalize.
+  def normalize!
+    @path = remove_dot_segments(path)
+  end
+
   # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
   #
   # ```
-  # require 'uri'
+  # require "uri"
   #
-  # uri = URI.parse("http://crystal-lang.org")
-  # # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >
-  # uri.scheme
-  # # => "http"
-  # uri.host
-  # # => "crystal-lang.org"
+  # uri = URI.parse("http://crystal-lang.org") # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >
+  # uri.scheme                                 # => "http"
+  # uri.host                                   # => "crystal-lang.org"
   # ```
   def self.parse(raw_url : String) : URI
     URI::Parser.new(raw_url).run.uri
   end
 
-  # URL-decode a string.
+  # URL-decode a `String`.
   #
-  # If *plus_to_space* is true, it replace plus character (0x2B) to ' '.
+  # If *plus_to_space* is `true`, it replace plus character (`0x2B`) to ' '.
   # e.g. `application/x-www-form-urlencoded` wants this replace.
   #
-  #     URI.unescape("%27Stop%21%27%20said%20Fred")                  #=> "'Stop!' said Fred"
-  #     URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) #=> "'Stop!' said Fred"
+  # ```
+  # URI.unescape("%27Stop%21%27%20said%20Fred")                  # => "'Stop!' said Fred"
+  # URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) # => "'Stop!' said Fred"
+  # ```
   def self.unescape(string : String, plus_to_space = false) : String
     String.build { |io| unescape(string, io, plus_to_space) }
   end
 
-  # URL-decode a string.
+  # URL-decode a `String`.
   #
   # This method requires block, the block is called with each bytes
   # whose is less than `0x80`. The bytes that block returns `true`
@@ -211,7 +218,7 @@ class URI
     self.unescape(string, io, plus_to_space) { false }
   end
 
-  # URL-decode a string and write the result to an `IO`.
+  # URL-decode a `String` and write the result to an `IO`.
   #
   # This method requires block.
   def self.unescape(string : String, io : IO, plus_to_space = false, &block)
@@ -225,38 +232,42 @@ class URI
     io
   end
 
-  # URL-encode a string.
+  # URL-encode a `String`.
   #
-  # If *space_to_plus* is true, it replace space character (0x20) to '+' and '+' is
-  # encoded to '%2B'. e.g. `application/x-www-form-urlencoded` want this replace.
+  # If *space_to_plus* is `true`, it replace space character (0x20) to `'+'` and `'+'` is
+  # encoded to `'%2B'`. e.g. `application/x-www-form-urlencoded` want this replace.
   #
-  #     URI.escape("'Stop!' said Fred")                      #=> "%27Stop%21%27%20said%20Fred"
-  #     URI.escape("'Stop!' said Fred", space_to_plus: true) #=> "%27Stop%21%27+said+Fred"
+  # ```
+  # URI.escape("'Stop!' said Fred")                      # => "%27Stop%21%27%20said%20Fred"
+  # URI.escape("'Stop!' said Fred", space_to_plus: true) # => "%27Stop%21%27+said+Fred"
+  # ```
   def self.escape(string : String, space_to_plus = false) : String
     String.build { |io| escape(string, io, space_to_plus) }
   end
 
-  # URL-encode a string.
+  # URL-encode a `String`.
   #
   # This method requires block, the block is called with each characters
   # whose code is less than `0x80`. The characters that block returns
   # `true` are not escaped, other characters are escaped.
   #
-  #     # Escape URI path
-  #     URI.escape("/foo/file?(1).txt") do |byte|
-  #       URI.unreserved?(byte) || byte.chr == '/'
-  #     end
-  #     #=> "/foo/file%3F%281%29.txt"
+  # ```
+  # # Escape URI path
+  # URI.escape("/foo/file?(1).txt") do |byte|
+  #   URI.unreserved?(byte) || byte.chr == '/'
+  # end
+  # # => "/foo/file%3F%281%29.txt"
+  # ```
   def self.escape(string : String, space_to_plus = false, &block) : String
     String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
   end
 
-  # URL-encode a string and write the result to an `IO`.
+  # URL-encode a `String` and write the result to an `IO`.
   def self.escape(string : String, io : IO, space_to_plus = false)
     self.escape(string, io, space_to_plus) { |byte| URI.unreserved? byte }
   end
 
-  # URL-encode a string and write the result to an `IO`.
+  # URL-encode a `String` and write the result to an `IO`.
   #
   # This method requires block.
   def self.escape(string : String, io : IO, space_to_plus = false, &block)
@@ -275,7 +286,8 @@ class URI
     io
   end
 
-  # Returns whether given byte is reserved character defined in RFC 3986.
+  # Returns whether given byte is reserved character defined in
+  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
   #
   # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
   # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
@@ -285,16 +297,18 @@ class URI
       {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
   end
 
-  # Returns whether given byte is unreserved character defined in RFC 3986.
+  # Returns whether given byte is unreserved character defined in
+  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
   #
   # Unreserved characters are alphabet, digit, '_', '.', '-', '~'.
   def self.unreserved?(byte) : Bool
     char = byte.unsafe_chr
-    char.alphanumeric? ||
+    char.ascii_alphanumeric? ||
       {'_', '.', '-', '~'}.includes?(char)
   end
 
-  # Returns the user-information component containing the provided username and password.
+  # Returns the user-information component containing
+  # the provided username and password.
   #
   # ```
   # uri = URI.parse "http://admin:password@foo.com"
@@ -353,6 +367,56 @@ class URI
     io.write_byte byte
     i += 1
     i
+  end
+
+  # [RFC 3986 6.2.2.3](https://tools.ietf.org/html/rfc3986#section-5.2.4)
+  private def remove_dot_segments(path : String?)
+    return if path.nil?
+
+    result = [] of String
+    while path.size > 0
+      # A.  If the input buffer begins with a prefix of "../" or "./",
+      #     then remove that prefix from the input buffer; otherwise,
+      if path.starts_with?("../")
+        path = path[3..-1]
+      elsif path.starts_with?("./")
+        path = path[2..-1]
+        # B.  if the input buffer begins with a prefix of "/./" or "/.",
+        #     where "." is a complete path segment, then replace that
+        #     prefix with "/" in the input buffer; otherwise,
+      elsif path.starts_with?("/./")
+        path = "/" + path[3..-1]
+      elsif path == "/."
+        path = "/" + path[2..-1]
+        # C.  if the input buffer begins with a prefix of "/../" or "/..",
+        #     where ".." is a complete path segment, then replace that
+        #     prefix with "/" in the input buffer and remove the last
+        #     segment and its preceding "/" (if any) from the output
+        #     buffer; otherwise,
+      elsif path.starts_with?("/../")
+        path = "/" + path[4..-1]
+        result.pop if result.size > 0
+      elsif path == "/.."
+        path = "/" + path[3..-1]
+        result.pop if result.size > 0
+        # D.  if the input buffer consists only of "." or "..", then remove
+        #     that from the input buffer; otherwise,
+      elsif path == ".." || path == "."
+        path = ""
+        # E.  move the first path segment in the input buffer to the end of
+        #     the output buffer, including the initial "/" character (if
+        #     any) and any subsequent characters up to, but not including,
+        #     the next "/" character or the end of the input buffer.
+      else
+        slash_search_idx = path[0] == '/' ? 1 : 0
+        segment_end_idx = path.index("/", slash_search_idx)
+        segment_end_idx ||= path.size
+        result << path[0...segment_end_idx]
+        path = path[segment_end_idx..-1]
+      end
+    end
+
+    result.join
   end
 
   private def userinfo(user, io)

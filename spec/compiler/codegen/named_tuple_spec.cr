@@ -297,4 +297,17 @@ describe "Code gen: named tuple" do
       t[:x]
       )).to_i.should eq(2)
   end
+
+  it "downcasts union inside tuple to value (#3907)" do
+    codegen(%(
+      struct Foo
+      end
+
+      foo = Foo.new
+
+      x = {a: 0, b: foo}
+      z = x[:a]
+      x = {a: 0, b: z}
+      ))
+  end
 end

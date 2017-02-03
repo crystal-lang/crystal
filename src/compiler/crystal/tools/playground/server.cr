@@ -67,11 +67,11 @@ module Crystal::Playground
         end
 
         @logger.error "Instrumention bug found (session=#{@session_key}, tag=#{tag})."
-        send_with_json_builder do |json, io|
+        send_with_json_builder do |json|
           json.field "type", "bug"
           json.field "tag", tag
           json.field "exception" do
-            append_exception io, ex
+            append_exception json, ex
           end
         end
 
@@ -80,7 +80,7 @@ module Crystal::Playground
 
       execute tag, output_filename
 
-      send_with_json_builder do |json, io|
+      send_with_json_builder do |json|
         json.field "type", "run"
         json.field "tag", tag
         json.field "filename", output_filename
@@ -100,28 +100,30 @@ module Crystal::Playground
     end
 
     def send_with_json_builder
-      send(String.build do |io|
-        io.json_object do |json|
-          yield json, io
+      send(JSON.build do |json|
+        json.object do
+          yield json
         end
       end)
     end
 
     def send_exception(ex, tag)
-      send_with_json_builder do |json, io|
+      send_with_json_builder do |json|
         json.field "type", "exception"
         json.field "tag", tag
         json.field "exception" do
-          append_exception io, ex
+          append_exception json, ex
         end
       end
     end
 
-    def append_exception(io, ex)
-      io.json_object do |json|
+    def append_exception(json, ex)
+      json.object do
         json.field "message", ex.to_s
         if ex.is_a?(Crystal::Exception)
-          json.field "payload", ex
+          json.field "payload" do
+            ex.to_json(json)
+          end
         end
       end
     end
@@ -151,7 +153,7 @@ module Crystal::Playground
         @logger.info "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
         exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
 
-        send_with_json_builder do |json, io|
+        send_with_json_builder do |json|
           json.field "type", "exit"
           json.field "tag", tag
           json.field "status", exit_status
@@ -244,7 +246,7 @@ module Crystal::Playground
     private def crystal_source_to_markdown(filename)
       String.build do |io|
         header = true
-        File.each_line(filename) do |line|
+        File.each_line(filename, chomp: false) do |line|
           if header && line[0] != '\n' && line[0] != '#'
             header = false
             io << "```playground\n"
@@ -291,7 +293,9 @@ module Crystal::Playground
     end
   end
 
-  class PageHandler < HTTP::Handler
+  class PageHandler
+    include HTTP::Handler
+
     @page : PlaygroundPage
 
     def initialize(@path : String, filename : String)
@@ -312,7 +316,9 @@ module Crystal::Playground
     end
   end
 
-  class WorkbookHandler < HTTP::Handler
+  class WorkbookHandler
+    include HTTP::Handler
+
     def call(context)
       case {context.request.method, context.request.path}
       when {"GET", /\/workbook\/playground\/(.*)/}
@@ -371,7 +377,9 @@ module Crystal::Playground
     end
   end
 
-  class EnvironmentHandler < HTTP::Handler
+  class EnvironmentHandler
+    include HTTP::Handler
+
     def initialize(@server : Playground::Server)
     end
 
@@ -450,20 +458,26 @@ module Crystal::Playground
         end
       end
 
-      client_ws = PathWebSocketHandler.new "/client" do |ws|
-        @sessions_key += 1
-        @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, @logger)
-        @logger.info "/client WebSocket connected as session=#{@sessions_key}"
+      client_ws = PathWebSocketHandler.new "/client" do |ws, context|
+        origin = context.request.headers["Origin"]
+        if !accept_request?(origin)
+          @logger.warn "Invalid Request Origin: #{origin}"
+          ws.close "Invalid Request Origin"
+        else
+          @sessions_key += 1
+          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, @logger)
+          @logger.info "/client WebSocket connected as session=#{@sessions_key}"
 
-        ws.on_message do |message|
-          json = JSON.parse(message)
-          case json["type"].as_s
-          when "run"
-            source = json["source"].as_s
-            tag = json["tag"].as_i
-            session.run source, tag
-          when "stop"
-            session.stop
+          ws.on_message do |message|
+            json = JSON.parse(message)
+            case json["type"].as_s
+            when "run"
+              source = json["source"].as_s
+              tag = json["tag"].as_i
+              session.run source, tag
+            when "stop"
+              session.stop
+            end
           end
         end
       end
@@ -490,11 +504,25 @@ module Crystal::Playground
       end
 
       puts "Listening on http://#{host}:#{@port}"
+      if host == "0.0.0.0"
+        puts "WARNING running playground with 0.0.0.0 is unsecure."
+      end
 
       begin
         server.listen
       rescue ex
         raise ToolException.new(ex.message)
+      end
+    end
+
+    private def accept_request?(origin)
+      case @host
+      when nil
+        origin == "http://127.0.0.1:#{@port}" || origin == "http://localhost:#{@port}"
+      when "0.0.0.0"
+        true
+      else
+        origin == "http://#{@host}:#{@port}"
       end
     end
   end

@@ -212,8 +212,7 @@ class Errno < Exception
   #   raise Errno.new("some_call")
   # end
   # ```
-  def initialize(message)
-    errno = Errno.value
+  def initialize(message, errno = Errno.value)
     @errno = errno
     super "#{message}: #{String.new(LibC.strerror(errno))}"
   end

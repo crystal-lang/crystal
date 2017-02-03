@@ -1,18 +1,15 @@
 # A container that allows accessing elements via a numeric index.
 #
-# Indexing starts at 0. A negative index is assumed to be
-# relative to the end of the container: -1 indicates the last element,
-# -2 is the next to last element, and so on.
+# Indexing starts at `0`. A negative index is assumed to be
+# relative to the end of the container: `-1` indicates the last element,
+# `-2` is the next to last element, and so on.
 #
 # Types including this module are typically `Array`-like types.
 module Indexable(T)
-  include Iterable
+  include Iterable(T)
+  include Enumerable(T)
 
-  # TODO: the compiler doesn't realize that if X includes Indexable then X is Enumerable
-  # This is fixed in 0.19.0
-  # include Enumerable(T)
-
-  # Returns the number of elements in this container
+  # Returns the number of elements in this container.
   abstract def size
 
   # Returns the element at the given *index*, without doing any bounds check.
@@ -28,7 +25,7 @@ module Indexable(T)
   # of performance.
   abstract def unsafe_at(index : Int)
 
-  # Returns the element at the given index, if in bounds,
+  # Returns the element at the given *index*, if in bounds,
   # otherwise executes the given block and returns its value.
   #
   # ```
@@ -43,20 +40,20 @@ module Indexable(T)
     unsafe_at(index)
   end
 
-  # Returns the element at the given index, if in bounds,
+  # Returns the element at the given *index*, if in bounds,
   # otherwise raises `IndexError`.
   #
   # ```
   # a = [:foo, :bar]
   # a.at(0) # => :foo
-  # a.at(2) # => IndexError
+  # a.at(2) # raises IndexError
   # ```
   @[AlwaysInline]
   def at(index : Int)
     at(index) { raise IndexError.new }
   end
 
-  # Returns the element at the given index.
+  # Returns the element at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the array.
   # Raises `IndexError` if trying to access an element outside the array's range.
@@ -76,7 +73,7 @@ module Indexable(T)
     at(index)
   end
 
-  # Returns the element at the given index.
+  # Returns the element at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the array.
   # Returns `nil` if trying to access an element outside the array's range.
@@ -103,7 +100,7 @@ module Indexable(T)
   # behind. If the block returns `true`, the finding element
   # is itself or exists infront.
   #
-  # Binary search needs sorted array, so self has to be sorted.
+  # Binary search needs sorted array, so `self` has to be sorted.
   #
   # Returns `nil` if the block didn't return `true` for any element.
   #
@@ -122,7 +119,7 @@ module Indexable(T)
   # behind. If the block returns `true`, the finding element
   # is itself or exists infront.
   #
-  # Binary search needs sorted array, so self has to be sorted.
+  # Binary search needs sorted array, so `self` has to be sorted.
   #
   # Returns `nil` if the block didn't return `true` for any element.
   #
@@ -181,13 +178,12 @@ module Indexable(T)
   # ```text
   # 0 -- 1 -- 2 --
   # ```
-  def each_index
+  def each_index : Nil
     i = 0
     while i < size
       yield i
       i += 1
     end
-    self
   end
 
   # Returns an `Iterator` for each index in `self`.
@@ -205,7 +201,7 @@ module Indexable(T)
     IndexIterator.new(self)
   end
 
-  # Returns *true* if `self` is empty, *false* otherwise.
+  # Returns `true` if `self` is empty, `false` otherwise.
   #
   # ```
   # ([] of Int32).empty? # => true
@@ -220,7 +216,7 @@ module Indexable(T)
   #
   # If `self`'s size is the same as *other*'s size, this method yields
   # elements from `self` and *other* in tandem: if the block returns true
-  # for all of them, this method returns *true*. Otherwise it returns *false*.
+  # for all of them, this method returns `true`. Otherwise it returns `false`.
   #
   # ```
   # a = [1, 2, 3]
@@ -240,7 +236,7 @@ module Indexable(T)
   #
   # ```
   # ([1, 2, 3]).first   # => 1
-  # ([] of Int32).first # => raises IndexError
+  # ([] of Int32).first # raises IndexError
   # ```
   def first
     first { raise IndexError.new }
@@ -268,7 +264,7 @@ module Indexable(T)
 
   # Returns a hash code based on `self`'s size and elements.
   #
-  # See `Object#hash`.
+  # See also: `Object#hash`.
   def hash
     reduce(31 * size) do |memo, elem|
       31 * memo + elem.hash
@@ -290,7 +286,7 @@ module Indexable(T)
   # is found.
   #
   # ```
-  # [1, 2, 3, 1, 2, 3].rindex(offset: 4) { |x| x < 2 } # => 4
+  # [1, 2, 3, 1, 2, 3].index(offset: 2) { |x| x < 2 } # => 3
   # ```
   def index(offset : Int = 0)
     offset += size if offset < 0
@@ -308,7 +304,7 @@ module Indexable(T)
   #
   # ```
   # ([1, 2, 3]).last   # => 3
-  # ([] of Int32).last # => raises IndexError
+  # ([] of Int32).last # raises IndexError
   # ```
   def last
     last { raise IndexError.new }
@@ -327,7 +323,7 @@ module Indexable(T)
   # Returns the last element of `self` if it's not empty, or `nil`.
   #
   # ```
-  # ([1, 2, 3]).last?   # => 1
+  # ([1, 2, 3]).last?   # => 3
   # ([] of Int32).last? # => nil
   # ```
   def last?
@@ -335,11 +331,10 @@ module Indexable(T)
   end
 
   # Same as `#each`, but works in reverse.
-  def reverse_each(&block)
+  def reverse_each(&block) : Nil
     (size - 1).downto(0) do |i|
       yield unsafe_at(i)
     end
-    self
   end
 
   # Returns an `Iterator` over the elements of `self` in reverse order.
@@ -385,7 +380,7 @@ module Indexable(T)
   end
 
   # Returns a random element from `self`, using the given *random* number generator.
-  # Raises IndexError if `self` is empty.
+  # Raises `IndexError` if `self` is empty.
   #
   # ```
   # a = [1, 2, 3]
@@ -398,7 +393,7 @@ module Indexable(T)
     unsafe_at(random.rand(size))
   end
 
-  # Returns a tuple populated with the elements at the given indexes.
+  # Returns a `Tuple` populated with the elements at the given indexes.
   # Raises `IndexError` if any index is invalid.
   #
   # ```
@@ -406,6 +401,30 @@ module Indexable(T)
   # ```
   def values_at(*indexes : Int)
     indexes.map { |index| self[index] }
+  end
+
+  def zip(other : Indexable)
+    each_with_index do |elem, i|
+      yield elem, other[i]
+    end
+  end
+
+  def zip(other : Indexable(U)) forall U
+    pairs = Array({T, U}).new(size)
+    zip(other) { |x, y| pairs << {x, y} }
+    pairs
+  end
+
+  def zip?(other : Indexable)
+    each_with_index do |elem, i|
+      yield elem, other[i]?
+    end
+  end
+
+  def zip?(other : Indexable(U)) forall U
+    pairs = Array({T, U?}).new(size)
+    zip?(other) { |x, y| pairs << {x, y} }
+    pairs
   end
 
   private def check_index_out_of_bounds(index)

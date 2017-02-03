@@ -875,4 +875,56 @@ describe "Semantic: lib" do
       ),
       "fun redefinition with different signature"
   end
+
+  it "specifies a call convention" do
+    result = semantic(%(
+      lib LibFoo
+        @[CallConvention("X86_StdCall")]
+        fun foo : Int32
+      end
+      ))
+    foo = result.program.types["LibFoo"].lookup_first_def("foo", nil).as(External)
+    foo.call_convention.should eq(LLVM::CallConvention::X86_StdCall)
+  end
+
+  it "specifies a call convention to a lib" do
+    result = semantic(%(
+      @[CallConvention("X86_StdCall")]
+      lib LibFoo
+        fun foo : Int32
+      end
+      ))
+    foo = result.program.types["LibFoo"].lookup_first_def("foo", nil).as(External)
+    foo.call_convention.should eq(LLVM::CallConvention::X86_StdCall)
+  end
+
+  it "errors if wrong number of arguments for CallConvention" do
+    assert_error %(
+      lib LibFoo
+        @[CallConvention("X86_StdCall", "bar")]
+        fun foo : Int32
+      end
+      ),
+      "wrong number of arguments for attribute CallConvention (given 2, expected 1)"
+  end
+
+  it "errors if CallConvention argument is not a string" do
+    assert_error %(
+      lib LibFoo
+        @[CallConvention(1)]
+        fun foo : Int32
+      end
+      ),
+      "argument to CallConvention must be a string"
+  end
+
+  it "errors if CallConvention argument is not a valid string" do
+    assert_error %(
+      lib LibFoo
+        @[CallConvention("foo")]
+        fun foo : Int32
+      end
+      ),
+      "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
+  end
 end

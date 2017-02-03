@@ -1,8 +1,16 @@
-require "./enums"
-
 {% begin %}
 lib LibLLVM
-  LLVM_CONFIG = {{`command -v llvm-config-3.8 || command -v llvm-config38 || (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || command -v llvm-config-3.6 || command -v llvm-config36 || command -v llvm-config-3.5 || command -v llvm-config35 || command -v llvm-config `.chomp.stringify}}
+  LLVM_CONFIG = {{
+                  `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
+                   command -v llvm-config-3.9 || command -v llvm-config39 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
+                   command -v llvm-config-3.8 || command -v llvm-config38 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
+                   command -v llvm-config-3.6 || command -v llvm-config36 || \
+                   command -v llvm-config-3.5 || command -v llvm-config35 || \
+                   command -v llvm-config
+                  `.chomp.stringify
+                }}
 end
 {% end %}
 
@@ -11,11 +19,14 @@ end
   @[Link(ldflags: "`{{LibLLVM::LLVM_CONFIG.id}} --libs --system-libs --ldflags 2> /dev/null`")]
   lib LibLLVM
     VERSION = {{`#{LibLLVM::LLVM_CONFIG} --version`.chomp.stringify}}
+    BUILT_TARGETS = {{ `#{LibLLVM::LLVM_CONFIG} --targets-built`.strip.downcase.split(' ').map(&.id.symbolize) }}
   end
 {% end %}
 
 {% begin %}
   lib LibLLVM
+    IS_40 = {{LibLLVM::VERSION.starts_with?("4.0")}}
+    IS_39 = {{LibLLVM::VERSION.starts_with?("3.9")}}
     IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
     IS_36 = {{LibLLVM::VERSION.starts_with?("3.6")}}
     IS_35 = {{LibLLVM::VERSION.starts_with?("3.5")}}
@@ -23,6 +34,10 @@ end
 {% end %}
 
 lib LibLLVM
+  alias Char = LibC::Char
+  alias Int = LibC::Int
+  alias UInt = LibC::UInt
+
   type ContextRef = Void*
   type ModuleRef = Void*
   type TypeRef = Void*
@@ -37,6 +52,7 @@ lib LibLLVM
   type PassManagerBuilderRef = Void*
   type PassManagerRef = Void*
   type PassRegistryRef = Void*
+  type MemoryBufferRef = Void*
 
   struct JITCompilerOptions
     opt_level : UInt32
@@ -45,13 +61,9 @@ lib LibLLVM
     enable_fast_isel : Int32
   end
 
-  fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : LLVM::Attribute)
-  fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : LLVM::Attribute)
   fun add_case = LLVMAddCase(switch : ValueRef, onval : ValueRef, dest : BasicBlockRef)
   fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
-  fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : LLVM::Attribute)
-  fun get_function_attr = LLVMGetFunctionAttr(fn : ValueRef) : LLVM::Attribute
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : UInt8*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : Int32)
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
@@ -142,7 +154,6 @@ lib LibLLVM
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : UInt64
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
-  fun get_attribute = LLVMGetAttribute(arg : ValueRef) : LLVM::Attribute
   fun get_current_debug_location = LLVMGetCurrentDebugLocation(builder : BuilderRef) : ValueRef
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
@@ -158,7 +169,6 @@ lib LibLLVM
   fun get_return_type = LLVMGetReturnType(function_type : TypeRef) : TypeRef
   fun get_target_name = LLVMGetTargetName(target : TargetRef) : UInt8*
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : UInt8*
-  fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
   fun get_target_machine_triple = LLVMGetTargetMachineTriple(t : TargetMachineRef) : UInt8*
   fun get_target_from_triple = LLVMGetTargetFromTriple(triple : UInt8*, target : TargetRef*, error_message : UInt8**) : Int32
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : LLVM::Type::Kind
@@ -169,6 +179,16 @@ lib LibLLVM
   fun initialize_x86_target = LLVMInitializeX86Target
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC
+  fun initialize_aarch64_asm_printer = LLVMInitializeAArch64AsmPrinter
+  fun initialize_aarch64_asm_parser = LLVMInitializeAArch64AsmParser
+  fun initialize_aarch64_target = LLVMInitializeAArch64Target
+  fun initialize_aarch64_target_info = LLVMInitializeAArch64TargetInfo
+  fun initialize_aarch64_target_mc = LLVMInitializeAArch64TargetMC
+  fun initialize_arm_asm_printer = LLVMInitializeARMAsmPrinter
+  fun initialize_arm_asm_parser = LLVMInitializeARMAsmParser
+  fun initialize_arm_target = LLVMInitializeARMTarget
+  fun initialize_arm_target_info = LLVMInitializeARMTargetInfo
+  fun initialize_arm_target_mc = LLVMInitializeARMTargetMC
   fun initialize_native_target = LLVMInitializeNativeTarget
   fun int1_type = LLVMInt1Type : TypeRef
   fun int8_type = LLVMInt8Type : TypeRef
@@ -202,7 +222,6 @@ lib LibLLVM
   fun run_function_pass_manager = LLVMRunFunctionPassManager(fpm : PassManagerRef, f : ValueRef) : Int32
   fun finalize_function_pass_manager = LLVMFinalizeFunctionPassManager(fpm : PassManagerRef) : Int32
   fun set_cleanup = LLVMSetCleanup(lpad : ValueRef, val : Int32)
-  fun set_data_layout = LLVMSetDataLayout(mod : ModuleRef, data : UInt8*)
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun is_global_constant = LLVMIsGlobalConstant(global : ValueRef) : Int32
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
@@ -244,7 +263,6 @@ lib LibLLVM
   fun initialize_ipa = LLVMInitializeIPA(r : PassRegistryRef)
   fun initialize_code_gen = LLVMInitializeCodeGen(r : PassRegistryRef)
   fun initialize_target = LLVMInitializeTarget(r : PassRegistryRef)
-  fun add_target_data = LLVMAddTargetData(td : TargetDataRef, pm : PassManagerRef)
   fun get_next_target = LLVMGetNextTarget(t : TargetRef) : TargetRef
   fun get_default_target_triple = LLVMGetDefaultTargetTriple : UInt8*
   fun print_module_to_string = LLVMPrintModuleToString(mod : ModuleRef) : UInt8*
@@ -276,4 +294,60 @@ lib LibLLVM
   fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
   fun set_volatile = LLVMSetVolatile(value : ValueRef, volatile : UInt32)
   fun set_alignment = LLVMSetAlignment(value : ValueRef, bytes : UInt32)
+
+  {% unless LibLLVM::IS_35 %}
+    fun write_bitcode_to_memory_buffer = LLVMWriteBitcodeToMemoryBuffer(mod : ModuleRef) : MemoryBufferRef
+  {% end %}
+
+  fun dispose_memory_buffer = LLVMDisposeMemoryBuffer(buf : MemoryBufferRef) : Void
+  fun get_buffer_start = LLVMGetBufferStart(buf : MemoryBufferRef) : UInt8*
+  fun get_buffer_size = LLVMGetBufferSize(buf : MemoryBufferRef) : LibC::SizeT
+
+  fun write_bitcode_to_fd = LLVMWriteBitcodeToFD(mod : ModuleRef, fd : LibC::Int, should_close : LibC::Int, unbuffered : LibC::Int) : LibC::Int
+
+  {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
+    fun add_target_data = LLVMAddTargetData(td : TargetDataRef, pm : PassManagerRef)
+  {% end %}
+
+  {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+    fun copy_string_rep_of_target_data = LLVMCopyStringRepOfTargetData(data : TargetDataRef) : UInt8*
+    fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
+    fun set_data_layout = LLVMSetDataLayout(mod : ModuleRef, data : UInt8*)
+  {% else %}
+    fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
+    fun set_module_data_layout = LLVMSetModuleDataLayout(mod : ModuleRef, data : TargetDataRef)
+  {% end %}
+
+  {% if LibLLVM::IS_35 %}
+    DEBUG_METADATA_VERSION = 1
+  {% elsif LibLLVM::IS_36 %}
+    DEBUG_METADATA_VERSION = 2
+  {% else %}
+    DEBUG_METADATA_VERSION = 3
+  {% end %}
+
+  {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+    fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : LLVM::Attribute)
+    fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : LLVM::Attribute)
+    fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : LLVM::Attribute)
+    fun get_function_attr = LLVMGetFunctionAttr(fn : ValueRef) : LLVM::Attribute
+    fun get_attribute = LLVMGetAttribute(arg : ValueRef) : LLVM::Attribute
+  {% else %}
+    type AttributeRef = Void*
+    alias AttributeIndex = UInt
+
+    fun get_module_context = LLVMGetModuleContext(m : ModuleRef) : ContextRef
+    fun get_global_parent = LLVMGetGlobalParent(global : ValueRef) : ModuleRef
+
+    fun get_last_enum_attribute_kind = LLVMGetLastEnumAttributeKind() : UInt
+    fun get_enum_attribute_kind_for_name = LLVMGetEnumAttributeKindForName(name : Char*, s_len : LibC::SizeT) : UInt
+    fun create_enum_attribute = LLVMCreateEnumAttribute(c : ContextRef, kind_id : UInt, val : UInt64) : AttributeRef
+    fun add_attribute_at_index = LLVMAddAttributeAtIndex(f : ValueRef, idx : AttributeIndex, a : AttributeRef)
+    fun get_enum_attribute_at_index = LLVMGetEnumAttributeAtIndex(f : ValueRef, idx : AttributeIndex, kind_id : UInt) : AttributeRef
+    fun add_call_site_attribute = LLVMAddCallSiteAttribute(f : ValueRef, idx : AttributeIndex, value : AttributeRef)
+  {% end %}
+
+  enum ModuleFlag : Int32
+    Warning = 2
+  end
 end

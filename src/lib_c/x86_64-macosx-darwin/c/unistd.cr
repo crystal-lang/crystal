@@ -30,6 +30,7 @@ lib LibC
   fun lseek(x0 : Int, x1 : OffT, x2 : Int) : OffT
   fun pipe(x0 : StaticArray(Int, 2)) : Int
   fun read(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
+  fun pread(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
   fun rmdir(x0 : Char*) : Int
   fun symlink(x0 : Char*, x1 : Char*) : Int
   fun sysconf(x0 : Int) : Long

@@ -2,14 +2,16 @@ require "c/dirent"
 require "c/unistd"
 require "c/sys/stat"
 
-# Objects of class Dir are directory streams representing directories in the underlying file system.
-# They provide a variety of ways to list directories and their contents. See also `File`.
+# Objects of class `Dir` are directory streams representing directories in the underlying file system.
+# They provide a variety of ways to list directories and their contents.
 #
-# The directory used in these examples contains the two regular files (config.h and main.rb),
-# the parent directory (..), and the directory itself (.).
+# The directory used in these examples contains the two regular files (`config.h` and `main.rb`),
+# the parent directory (`..`), and the directory itself (`.`).
+#
+# See also: `File`.
 class Dir
   include Enumerable(String)
-  include Iterable
+  include Iterable(String)
 
   getter path : String
 
@@ -42,6 +44,9 @@ class Dir
   # passing the filename of each entry as a parameter to the block.
   #
   # ```
+  # Dir.mkdir("testdir")
+  # File.write("testdir/config.h", "")
+  #
   # d = Dir.new("testdir")
   # d.each { |x| puts "Got #{x}" }
   # ```
@@ -52,9 +57,8 @@ class Dir
   # Got .
   # Got ..
   # Got config.h
-  # Got main.rb
   # ```
-  def each
+  def each : Nil
     while entry = read
       yield entry
     end
@@ -64,13 +68,15 @@ class Dir
     EntryIterator.new(self)
   end
 
-  # Reads the next entry from dir and returns it as a string. Returns nil at the end of the stream.
+  # Reads the next entry from dir and returns it as a string. Returns `nil` at the end of the stream.
   #
   # ```
   # d = Dir.new("testdir")
-  # d.read # => "."
-  # d.read # => ".."
-  # d.read # => "config.h"
+  # array = [] of String
+  # while file = d.read
+  #   array << file
+  # end
+  # array.sort # => [".", "..", "config.h"]
   # ```
   def read
     # readdir() returns NULL for failure and sets errno or returns NULL for EOF but leaves errno as is.  wtf.
@@ -148,7 +154,7 @@ class Dir
     entries
   end
 
-  # Returns true if the given path exists and is a directory
+  # Returns `true` if the given path exists and is a directory
   def self.exists?(path) : Bool
     if LibC.stat(path.check_no_null_byte, out stat) != 0
       if Errno.value == Errno::ENOENT || Errno.value == Errno::ENOTDIR
@@ -158,6 +164,24 @@ class Dir
       end
     end
     File::Stat.new(stat).directory?
+  end
+
+  # Returns `true` if the directory at *path* is empty, otherwise returns `false`.
+  # Raises `Errno` if the directory at *path* does not exist.
+  #
+  # ```
+  # Dir.mkdir("bar")
+  # Dir.empty?("bar") # => true
+  # File.write("bar/a_file", "The content")
+  # Dir.empty?("bar") # => false
+  # ```
+  def self.empty?(path) : Bool
+    raise Errno.new("Error determining size of '#{path}'") unless exists?(path)
+
+    foreach(path) do |f|
+      return false unless {".", ".."}.includes?(f)
+    end
+    true
   end
 
   # Creates a new directory at the given path. The linux-style permission mode
@@ -201,6 +225,14 @@ class Dir
 
   def to_s(io)
     io << "#<Dir:" << @path << ">"
+  end
+
+  def inspect(io)
+    to_s(io)
+  end
+
+  def pretty_print(pp)
+    pp.text inspect
   end
 
   private struct EntryIterator

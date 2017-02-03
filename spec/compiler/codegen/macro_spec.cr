@@ -1466,4 +1466,204 @@ describe "Code gen: macro" do
       Foo.x
       ), inject_primitives: false).to_i.should eq(1)
   end
+
+  it "expands @def in inline macro" do
+    run(%(
+      def foo
+        {{@def.name.stringify}}
+      end
+
+      foo
+      )).to_string.should eq("foo")
+  end
+
+  it "expands @def in macro" do
+    run(%(
+      macro foo
+        {{@def.name.stringify}}
+      end
+
+      def bar
+        foo
+      end
+
+      bar
+      )).to_string.should eq("bar")
+  end
+
+  it "gets constant" do
+    run(%(
+      class Foo
+        Bar = 42
+      end
+
+      {{ Foo.constant("Bar") }}
+      )).to_i.should eq(42)
+  end
+
+  it "determines if overrides (false)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      {{ Bar.overrides?(Foo, "foo") }}
+      )).to_b.should be_false
+  end
+
+  it "determines if overrides (true)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      {{ Bar.overrides?(Foo, "foo") }}
+      )).to_b.should be_true
+  end
+
+  it "determines if overrides, through another class (true)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      class Baz < Bar
+      end
+
+      {{ Baz.overrides?(Foo, "foo") }}
+      )).to_b.should be_true
+  end
+
+  it "determines if overrides, through module (true)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      module Moo
+        def foo
+          2
+        end
+      end
+
+      class Bar < Foo
+        include Moo
+      end
+
+      class Baz < Bar
+      end
+
+      {{ Baz.overrides?(Foo, "foo") }}
+      )).to_b.should be_true
+  end
+
+  it "determines if overrides, with macro method (false)" do
+    run(%(
+      class Foo
+        def foo
+          {{ @type }}
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      (Foo.new || Bar.new).foo
+
+      def x
+        {{ Bar.overrides?(Foo, "foo") }}
+      end
+
+      x
+      )).to_b.should be_false
+  end
+
+  it "forwards file location" do
+    run(%(
+      macro foo
+        bar
+      end
+
+      macro bar(file = __FILE__)
+        {{file}}
+      end
+
+      foo
+      ), filename: "bar.cr").to_string.should eq("bar.cr")
+  end
+
+  it "forwards dir location" do
+    run(%(
+      macro foo
+        bar
+      end
+
+      macro bar(dir = __DIR__)
+        {{dir}}
+      end
+
+      foo
+      ), filename: "somedir/bar.cr").to_string.should eq("somedir")
+  end
+
+  it "forwards line number" do
+    run(%(
+      macro foo
+        bar
+      end
+
+      macro bar(line = __LINE__)
+        {{line}}
+      end
+
+      foo
+      ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(10)
+  end
+
+  it "keeps line number with no block" do
+    run(%(
+      macro foo
+        {{ yield }}
+        __LINE__
+      end
+
+      foo
+    ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(7)
+  end
+
+  it "keeps line number with a block" do
+    run(%(
+      macro foo
+        {{ yield }}
+        __LINE__
+      end
+
+      foo do
+        1
+      end
+    ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(7)
+  end
 end

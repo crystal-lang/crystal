@@ -68,7 +68,7 @@ class Crystal::Type
       if root.is_a?(GenericType)
         free_vars ||= {} of String => TypeVar
         root.type_vars.each do |type_var|
-          free_vars[type_var] ||= TypeParameter.new(program, root, type_var)
+          free_vars[type_var] ||= root.type_parameter(type_var)
         end
         @free_vars = free_vars
       end
@@ -78,7 +78,13 @@ class Crystal::Type
 
     def lookup(node : Path)
       type_var = lookup_type_var?(node)
-      return type_var if type_var.is_a?(Type)
+
+      case type_var
+      when Const
+        node.raise "#{type_var} is not a type, it's a constant"
+      when Type
+        return type_var
+      end
 
       if @raise
         raise_undefined_constant(node)
@@ -324,7 +330,7 @@ class Crystal::Type
       end
 
       if (self_type = @self_type).is_a?(GenericType)
-        params = self_type.type_vars.map { |type_var| TypeParameter.new(self_type.program, self_type, type_var).as(TypeVar) }
+        params = self_type.type_vars.map { |type_var| self_type.type_parameter(type_var).as(TypeVar) }
         self_type.instantiate(params)
       else
         @self_type.virtual_type

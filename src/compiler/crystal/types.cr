@@ -542,6 +542,10 @@ module Crystal
     end
 
     abstract def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
+
+    def pretty_print(pp)
+      pp.text to_s
+    end
   end
 
   # A type that has a name and can be inside a namespace.
@@ -1153,6 +1157,12 @@ module Crystal
     # by the type variables.
     getter(generic_types) { {} of Array(TypeVar) => Type }
 
+    # Returns a TypeParameter relative to this type
+    def type_parameter(name) : TypeParameter
+      type_parameters = @type_parameters ||= {} of String => TypeParameter
+      type_parameters[name] ||= TypeParameter.new(program, self, name)
+    end
+
     def instantiate(type_vars)
       if (instance = generic_types[type_vars]?)
         return instance
@@ -1386,6 +1396,7 @@ module Crystal
   # A generic module type, like Enumerable(T).
   class GenericModuleType < ModuleType
     include GenericType
+    include ClassVarContainer
 
     def initialize(program, namespace, name, @type_vars)
       super(program, namespace, name)
@@ -1436,6 +1447,7 @@ module Crystal
   # A generic class type, like Array(T).
   class GenericClassType < ClassType
     include GenericType
+    include ClassVarContainer
 
     def initialize(program, namespace, name, superclass, @type_vars : Array(String), add_subclass = true)
       super(program, namespace, name, superclass, add_subclass)
@@ -1525,6 +1537,10 @@ module Crystal
 
     def initialize(program, @generic_type, @type_vars)
       super(program)
+    end
+
+    def class_var_owner
+      generic_type
     end
 
     def parents
@@ -1673,9 +1689,9 @@ module Crystal
     end
 
     def virtual_type
-      if leaf? && !abstract?
+      if generic_type.leaf? && !abstract?
         self
-      elsif struct? && abstract? && !leaf?
+      elsif struct? && abstract? && !generic_type.leaf?
         virtual_type!
       elsif struct?
         self
@@ -2161,6 +2177,7 @@ module Crystal
   class LibType < ModuleType
     getter link_attributes : Array(LinkAttribute)?
     property? used = false
+    property call_convention : LLVM::CallConvention?
 
     def add_link_attributes(link_attributes)
       if link_attributes
@@ -2219,6 +2236,7 @@ module Crystal
   class AliasType < NamedType
     getter? value_processed = false
     property! aliased_type : Type
+    getter? simple
 
     def initialize(program, namespace, name, @value : ASTNode)
       super(program, namespace, name)
@@ -2226,7 +2244,20 @@ module Crystal
     end
 
     delegate lookup_defs, lookup_defs_with_modules, lookup_first_def,
-      lookup_macro, lookup_macros, types, types?, to: aliased_type
+      lookup_macro, lookup_macros, to: aliased_type
+
+    def types?
+      process_value
+      if aliased_type = @aliased_type
+        aliased_type.types?
+      else
+        nil
+      end
+    end
+
+    def types
+      types?.not_nil!
+    end
 
     def remove_alias
       process_value
@@ -2424,6 +2455,14 @@ module Crystal
         parents << (instance_type.superclass.try(&.metaclass) || program.class_type)
         parents
       end
+    end
+
+    def virtual_type
+      instance_type.virtual_type.metaclass
+    end
+
+    def virtual_type!
+      instance_type.virtual_type!.metaclass
     end
 
     delegate defs, macros, to: instance_type.generic_type.metaclass

@@ -66,7 +66,7 @@ require "./common"
 # HTTP::Server.new("127.0.0.1", 8080, [
 #   HTTP::ErrorHandler.new,
 #   HTTP::LogHandler.new,
-#   HTTP::DeflateHandler.new,
+#   HTTP::CompressHandler.new,
 #   HTTP::StaticFileHandler.new("."),
 # ]).listen
 # ```
@@ -173,8 +173,8 @@ class HTTP::Server
     @processor.process(io, io)
   end
 
-  # Builds all handlers as the middleware for HTTP::Server.
-  def self.build_middleware(handlers, last_handler : Context -> = nil)
+  # Builds all handlers as the middleware for `HTTP::Server`.
+  def self.build_middleware(handlers, last_handler : (Context ->)? = nil)
     raise ArgumentError.new "You must specify at least one HTTP Handler." if handlers.empty?
     0.upto(handlers.size - 2) { |i| handlers[i].next = handlers[i + 1] }
     handlers.last.next = last_handler if last_handler

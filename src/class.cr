@@ -24,23 +24,24 @@ class Class
     {{ @type.name.stringify }}
   end
 
-  # Casts `other` to this class.
+  # Casts *other* to this class.
   #
   # This is the same as using `as`, but allows the class to be passed around as
-  # an argument. See the [documentation on
-  # as](//crystal-lang.org/docs/syntax_and_semantics/as.html) for more
-  # information.
+  # an argument. See the
+  # [documentation on as](//crystal-lang.org/docs/syntax_and_semantics/as.html)
+  # for more information.
   #
-  #     klass = Int32
-  #     number = [99, "str"][0]
-  #     typeof(number)             # => (String | Int32)
-  #     typeof(klass.cast(number)) # => Int32
-  #
+  # ```
+  # klass = Int32
+  # number = [99, "str"][0]
+  # typeof(number)             # => (String | Int32)
+  # typeof(klass.cast(number)) # => Int32
+  # ```
   def cast(other) : self
     other.as(self)
   end
 
-  # Returns the union type of `self` and `other`.
+  # Returns the union type of `self` and *other*.
   #
   # ```
   # Int32 | Char # => (Int32 | Char)

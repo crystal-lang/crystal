@@ -1,8 +1,12 @@
 require "../../spec_helper"
 
-private def expect_to_s(original, expected = original, file = __FILE__, line = __LINE__)
+private def expect_to_s(original, expected = original, emit_doc = false, file = __FILE__, line = __LINE__)
   it "does to_s of #{original.inspect}", file, line do
-    Parser.parse(original).to_s.should eq(expected), file, line
+    str = IO::Memory.new expected.bytesize
+    parser = Parser.new original
+    parser.wants_doc = emit_doc
+    parser.parse.to_s(str, emit_doc: emit_doc)
+    str.to_s.should eq(expected), file, line
   end
 end
 
@@ -29,6 +33,7 @@ describe "ASTNode#to_s" do
   expect_to_s %<%r(/)>, %(/\\//)
   expect_to_s %(foo &.bar), %(foo(&.bar))
   expect_to_s %(foo &.bar(1, 2, 3)), %(foo(&.bar(1, 2, 3)))
+  expect_to_s %(foo { |i| i.bar { i } }), "foo do |i|\n  i.bar do\n    i\n  end\nend"
   expect_to_s %(foo do |k, v|\n  k.bar(1, 2, 3)\nend)
   expect_to_s %(foo(3, &.*(2)))
   expect_to_s %(return begin\n  1\n  2\nend)
@@ -86,4 +91,6 @@ describe "ASTNode#to_s" do
   expect_to_s "macro foo\n\\{{ @type }}\nend"
   expect_to_s "macro foo\n{% @type %}\nend"
   expect_to_s "macro foo\n\\{%@type %}\nend"
+  expect_to_s "enum A : B\nend"
+  expect_to_s "# doc\ndef foo\nend", emit_doc: true
 end

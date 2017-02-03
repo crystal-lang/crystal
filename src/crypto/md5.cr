@@ -1,22 +1,27 @@
 class Crypto::MD5
-  # Returns a String the hexadecimal representation of the MD5 hash of *data*
+  # Returns a String the hexadecimal representation of the MD5 hash of *data*.
   #
-  #     Crypto::MD5.hex_digest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
-  def self.hex_digest(data : String | Slice(UInt8)) : String
+  # ```
+  # Crypto::MD5.hex_digest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
+  # ```
+  def self.hex_digest(data : String | Bytes) : String
     context = ContextImpl.new
     context.update data
     context.final
     context.hex
   end
 
-  # Yields a context object with an `#update(data : String | Slice(UInt8))`
+  # Yields a context object with an `#update(data : String | Bytes)`
   # method available. Returns a String the hexadecimal representation of the
   # MD5 hash all data passed in.
   #
-  #     Crypto::MD5.hex_digest do |ctx|
-  #        ctx.update "f"
-  #        ctx.update "oo"
-  #     end                            # => "acbd18db4cc2f85cedef654fccc4a4d8"
+  # ```
+  # Crypto::MD5.hex_digest do |ctx|
+  #   ctx.update "f"
+  #   ctx.update "oo"
+  # end
+  # # => "acbd18db4cc2f85cedef654fccc4a4d8"
+  # ```
   def self.hex_digest : String
     context = Context.new
     yield context
@@ -45,7 +50,7 @@ class Crypto::MD5
       @digest = uninitialized UInt8[16]
     end
 
-    def update(data : String | Slice(UInt8))
+    def update(data : String | Bytes)
       update(data.to_unsafe, data.bytesize.to_u32)
     end
 
@@ -70,8 +75,10 @@ class Crypto::MD5
         if mdi == 0x40
           ii = 0
           16.times do |i|
-            # TODO (formatter) split in multiple lines
-            in[i] = (@in[ii + 3].to_u32 << 24) | (@in[ii + 2].to_u32 << 16) | (@in[ii + 1].to_u32 << 8) | (@in[ii])
+            in[i] = (@in[ii + 3].to_u32 << 24) |
+                    (@in[ii + 2].to_u32 << 16) |
+                    (@in[ii + 1].to_u32 << 8) |
+                    (@in[ii])
             ii += 4
           end
           transform in
@@ -248,8 +255,10 @@ class Crypto::MD5
       # append length in bits and transform
       ii = 0
       14.times do |i|
-        # TODO (formatter) split in multiple lines
-        in[i] = (@in[ii + 3].to_u32 << 24) | (@in[ii + 2].to_u32 << 16) | (@in[ii + 1].to_u32 << 8) | (@in[ii])
+        in[i] = (@in[ii + 3].to_u32 << 24) |
+                (@in[ii + 2].to_u32 << 16) |
+                (@in[ii + 1].to_u32 << 8) |
+                (@in[ii])
         ii += 4
       end
       transform in

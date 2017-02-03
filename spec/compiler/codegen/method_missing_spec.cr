@@ -367,4 +367,67 @@ describe "Code gen: method_missing" do
       Foo.new(Wrapped.new).foo(1, 2, 3)
       )).to_i.should eq(6)
   end
+
+  it "does method_missing generating method" do
+    run(%(
+      class Foo
+        macro method_missing(call)
+          def {{call.name}}
+            {{call.name.stringify}}
+          end
+        end
+      end
+
+      Foo.new.bar
+      )).to_string.should eq("bar")
+  end
+
+  it "works with named arguments, using names (#3654)" do
+    run(%(
+      class A
+        macro method_missing(call)
+          x + y
+        end
+      end
+
+      a = A.new
+      a.b(x: 1, y: 2)
+      )).to_i.should eq(3)
+  end
+
+  it "works with named arguments, named args in call (#3654)" do
+    run(%(
+      class A
+        macro method_missing(call)
+          {{call.named_args[0].name}} +
+            {{call.named_args[1].name}}
+        end
+      end
+
+      a = A.new
+      a.b(x: 1, y: 2)
+      )).to_i.should eq(3)
+  end
+
+  it "finds method_missing with 'with ... yield'" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        macro method_missing(call)
+          @{{call.name.id}}
+        end
+      end
+
+      def bar
+        foo = Foo.new(10)
+        with foo yield
+      end
+
+      bar do
+        x
+      end
+      )).to_i.should eq(10)
+  end
 end

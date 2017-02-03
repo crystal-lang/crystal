@@ -226,8 +226,7 @@ module Spec
       Spec::MatchExpectation.new(value)
     end
 
-    # Passes if actual includes expected. Works on collections and String.
-    # @param expected - item expected to be contained in actual
+    # Passes if actual includes *expected*. Works on collections and `String`.
     def contain(expected)
       Spec::ContainExpectation.new(expected)
     end
@@ -274,6 +273,8 @@ module Spec
             fail "expected {{klass.id}} with #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
           end
         end
+
+        %ex
       rescue %ex
         if %failed
           raise %ex

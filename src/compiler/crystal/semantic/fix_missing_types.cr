@@ -9,7 +9,27 @@ class Crystal::FixMissingTypes < Crystal::Visitor
     @fixed = Set(typeof(object_id)).new
   end
 
-  def visit(node : Def | Macro)
+  def visit(node : Def)
+    node.hook_expansions.try &.each &.accept self
+    false
+  end
+
+  def visit(node : ClassDef)
+    node.hook_expansions.try &.each &.accept self
+    true
+  end
+
+  def visit(node : Include)
+    node.hook_expansions.try &.each &.accept self
+    false
+  end
+
+  def visit(node : Extend)
+    node.hook_expansions.try &.each &.accept self
+    false
+  end
+
+  def visit(node : Macro)
     false
   end
 

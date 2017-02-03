@@ -5,14 +5,14 @@ require "c/sys/stat"
 require "c/unistd"
 
 class File < IO::FileDescriptor
-  # The file/directory separator character. '/' in unix, '\\' in windows.
+  # The file/directory separator character. `'/'` in Unix, `'\\'` in Windows.
   SEPARATOR = {% if flag?(:windows) %}
     '\\'
   {% else %}
     '/'
   {% end %}
 
-  # The file/directory separator string. "/" in unix, "\\" in windows.
+  # The file/directory separator string. `"/"` in Unix, `"\\"` in Windows.
   SEPARATOR_STRING = {% if flag?(:windows) %}
     "\\"
   {% else %}
@@ -82,7 +82,7 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "foo")
-  # File.stat("foo").size  # => 4
+  # File.stat("foo").size  # => 3
   # File.stat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.stat(path) : Stat
@@ -98,7 +98,7 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "foo")
-  # File.lstat("foo").size  # => 4
+  # File.lstat("foo").size  # => 3
   # File.lstat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.lstat(path) : Stat
@@ -111,12 +111,30 @@ class File < IO::FileDescriptor
   # Returns `true` if *path* exists else returns `false`
   #
   # ```
+  # File.delete("foo") if File.exists?("foo")
   # File.exists?("foo") # => false
   # File.write("foo", "foo")
   # File.exists?("foo") # => true
   # ```
   def self.exists?(path) : Bool
     accessible?(path, LibC::F_OK)
+  end
+
+  # Returns `true` if the file at *path* is empty, otherwise returns `false`.
+  # Raises `Errno` if the file at *path* does not exist.
+  #
+  # ```
+  # File.write("foo", "")
+  # File.empty?("foo") # => true
+  # File.write("foo", "foo")
+  # File.empty?("foo") # => false
+  # ```
+  def self.empty?(path) : Bool
+    begin
+      stat(path).size == 0
+    rescue Errno
+      raise Errno.new("Error determining size of '#{path}'")
+    end
   end
 
   # Returns `true` if *path* is readable by the real user id of this process else returns `false`.
@@ -158,9 +176,9 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "")
-  # Dir.mkdir("bar")
+  # Dir.mkdir("dir1")
   # File.file?("foo")    # => true
-  # File.file?("bar")    # => false
+  # File.file?("dir1")   # => false
   # File.file?("foobar") # => false
   # ```
   def self.file?(path) : Bool
@@ -178,9 +196,9 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "")
-  # Dir.mkdir("bar")
+  # Dir.mkdir("dir2")
   # File.directory?("foo")    # => false
-  # File.directory?("bar")    # => true
+  # File.directory?("dir2")   # => true
   # File.directory?("foobar") # => false
   # ```
   def self.directory?(path) : Bool
@@ -247,7 +265,7 @@ class File < IO::FileDescriptor
   # File.chown("/foo/bar", gid: 100)
   # ```
   #
-  # Unless *follow_symlinks* is set to true, then the owner symlink itself will
+  # Unless *follow_symlinks* is set to `true`, then the owner symlink itself will
   # be changed, otherwise the owner of the symlink destination file will be
   # changed. For example, assuming symlinks as `foo -> bar -> baz`:
   #
@@ -270,8 +288,11 @@ class File < IO::FileDescriptor
   # destination are changed, never the permissions of the symlink itself.
   #
   # ```
-  # File.chmod("foo/bin", 0o755)
-  # File.chmod("foo/bin/exec", 0o700)
+  # File.chmod("foo", 0o755)
+  # File.stat("foo").perm # => 0o755
+  #
+  # File.chmod("foo", 0o700)
+  # File.stat("foo").perm # => 0o700
   # ```
   def self.chmod(path, mode : Int)
     if LibC.chmod(path, mode) == -1
@@ -284,7 +305,7 @@ class File < IO::FileDescriptor
   # ```
   # File.write("foo", "")
   # File.delete("./foo")
-  # File.delete("./bar") # => Error deleting file './bar': No such file or directory (Errno)
+  # File.delete("./bar") # raises Errno (No such file or directory)
   # ```
   def self.delete(path)
     err = LibC.unlink(path.check_no_null_byte)
@@ -324,6 +345,8 @@ class File < IO::FileDescriptor
 
     if path.starts_with?('~')
       home = ENV["HOME"]
+      home = home.chomp('/') unless home == "/"
+
       if path.size >= 2 && path[1] == SEPARATOR
         path = home + path[1..-1]
       elsif path.size < 2
@@ -421,10 +444,13 @@ class File < IO::FileDescriptor
         file.set_encoding(encoding, invalid: invalid)
         file.gets_to_end
       else
+        # We try to read a string with an initialize capacity
+        # equal to the file's size, but the size might not be
+        # correct or even be zero (for example for /proc files)
         size = file.size.to_i
-        String.new(size) do |buffer|
-          file.read Slice.new(buffer, size)
-          {size.to_i, 0}
+        size = 256 if size == 0
+        String.build(size) do |io|
+          IO.copy(file, io)
         end
       end
     end
@@ -433,47 +459,63 @@ class File < IO::FileDescriptor
   # Yields each line in *filename* to the given block.
   #
   # ```
-  # File.each_line("foo") do |line|
-  #   # loop
+  # File.write("foobar", "foo\nbar")
+  #
+  # array = [] of String
+  # File.each_line("foobar") do |line|
+  #   array << line
   # end
+  # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename, encoding = nil, invalid = nil)
+  def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
     File.open(filename, "r", encoding: encoding, invalid: invalid) do |file|
-      file.each_line do |line|
+      file.each_line(chomp: chomp) do |line|
         yield line
       end
     end
   end
 
   # Returns an `Iterator` for each line in *filename*.
-  def self.each_line(filename, encoding = nil, invalid = nil)
-    File.open(filename, "r", encoding: encoding, invalid: invalid).each_line
+  def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
+    File.open(filename, "r", encoding: encoding, invalid: invalid).each_line(chomp: chomp)
   end
 
   # Returns all lines in *filename* as an array of strings.
   #
   # ```
   # File.write("foobar", "foo\nbar")
-  # File.read_lines("foobar") # => ["foo\n", "bar\n"]
+  # File.read_lines("foobar") # => ["foo", "bar"]
   # ```
-  def self.read_lines(filename, encoding = nil, invalid = nil) : Array(String)
+  def self.read_lines(filename, encoding = nil, invalid = nil, chomp = true) : Array(String)
     lines = [] of String
-    each_line(filename, encoding: encoding, invalid: invalid) do |line|
+    each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp) do |line|
       lines << line
     end
     lines
   end
 
-  # Write the given content to *filename*.
+  # Write the given *content* to *filename*.
   #
   # An existing file will be overwritten, else a file will be created.
   #
   # ```
   # File.write("foo", "bar")
   # ```
+  #
+  # If the content is a `Slice(UInt8)`, those bytes will be written. If it's
+  # an `IO`, all bytes from the `IO` will be written. Otherwise, the string
+  # representation of *content* will be written (the result of invoking `to_s`
+  # on *content*)
   def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
     File.open(filename, "w", perm, encoding: encoding, invalid: invalid) do |file|
-      file.print(content)
+      case content
+      when Bytes
+        file.write(content)
+      when IO
+        IO.copy(content, file)
+      else
+        file.print(content)
+      end
     end
   end
 
@@ -527,7 +569,12 @@ class File < IO::FileDescriptor
   # Moves *old_filename* to *new_filename*.
   #
   # ```
+  # File.write("afile", "foo")
+  # File.exists?("afile") # => true
+  #
   # File.rename("afile", "afile.cr")
+  # File.exists?("afile")    # => false
+  # File.exists?("afile.cr") # => true
   # ```
   def self.rename(old_filename, new_filename)
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
@@ -553,6 +600,27 @@ class File < IO::FileDescriptor
     code
   end
 
+  # Yields an `IO` to read a section inside this file.
+  # Mutliple sections can be read concurrently.
+  def read_at(offset, bytesize, &block)
+    self_bytesize = self.size
+
+    unless 0 <= offset <= self_bytesize
+      raise ArgumentError.new("offset out of bounds")
+    end
+
+    if bytesize < 0
+      raise ArgumentError.new("negative bytesize")
+    end
+
+    unless 0 <= offset + bytesize <= self_bytesize
+      raise ArgumentError.new("bytesize out of bounds")
+    end
+
+    io = PReader.new(fd, offset, bytesize)
+    yield io ensure io.close
+  end
+
   def inspect(io)
     io << "#<File:" << @path
     io << " (closed)" if closed?
@@ -561,4 +629,4 @@ class File < IO::FileDescriptor
   end
 end
 
-require "file/*"
+require "./file/*"

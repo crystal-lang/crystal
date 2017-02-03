@@ -45,9 +45,10 @@ module Benchmark
         max_compare = ran_items.max_of &.human_compare.size
 
         ran_items.each do |item|
-          printf "%s %s (±%5.2f%%) %s\n",
+          printf "%s %s (%s) (±%5.2f%%) %s\n",
             item.label.rjust(max_label),
             item.human_mean,
+            item.human_iteration_time,
             item.relative_stddev,
             item.human_compare.rjust(max_compare)
         end
@@ -178,17 +179,43 @@ module Benchmark
       end
 
       def human_mean
-        pair = case Math.log10(mean)
-               when -1..3
-                 {mean, ' '}
-               when 3..6
-                 {mean/1_000, 'k'}
-               when 6..9
-                 {mean/1_000_000, 'M'}
-               else
-                 {mean/1_000_000_000, 'G'}
-               end
-        "#{pair[0].round(2).to_s.rjust(6)}#{pair[1]}"
+        case Math.log10(mean)
+        when Float64::MIN..3
+          digits = mean
+          suffix = ' '
+        when 3..6
+          digits = mean / 1000
+          suffix = 'k'
+        when 6..9
+          digits = mean / 1_000_000
+          suffix = 'M'
+        else
+          digits = mean / 1_000_000_000
+          suffix = 'G'
+        end
+
+        "#{digits.round(2).to_s.rjust(6)}#{suffix}"
+      end
+
+      def human_iteration_time
+        iteration_time = 1.0 / mean
+
+        case Math.log10(iteration_time)
+        when 0..Float64::MAX
+          digits = iteration_time
+          suffix = "s "
+        when -3..0
+          digits = iteration_time * 1000
+          suffix = "ms"
+        when -6..-3
+          digits = iteration_time * 1_000_000
+          suffix = "µs"
+        else
+          digits = iteration_time * 1_000_000_000
+          suffix = "ns"
+        end
+
+        "#{digits.round(2).to_s.rjust(6)}#{suffix}"
       end
 
       def human_compare

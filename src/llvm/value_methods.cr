@@ -10,16 +10,16 @@ module LLVM::ValueMethods
     String.new LibLLVM.get_value_name(self)
   end
 
-  def add_attribute(attribute)
-    LibLLVM.add_attribute self, attribute
-  end
-
   def add_instruction_attribute(index : Int, attribute : LLVM::Attribute)
-    LibLLVM.add_instr_attribute(self, index, attribute)
-  end
-
-  def attributes
-    LibLLVM.get_attribute(self)
+    return if attribute.value == 0
+    {% if LibLLVM.has_constant?(:AttributeRef) %}
+      attribute.each_kind do |kind|
+        attribute_ref = LibLLVM.create_enum_attribute(LLVM::Context.global, kind, 0)
+        LibLLVM.add_call_site_attribute(self, index, attribute_ref)
+      end
+    {% else %}
+      LibLLVM.add_instr_attribute(self, index, attribute)
+    {% end %}
   end
 
   def constant?

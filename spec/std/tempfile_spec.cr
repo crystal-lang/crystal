@@ -48,9 +48,9 @@ describe Tempfile do
     tempfile.seek(0, IO::Seek::Set)
     tempfile.tell.should eq(0)
     tempfile.pos.should eq(0)
-    tempfile.gets.should eq("Hello!\n")
+    tempfile.gets(chomp: false).should eq("Hello!\n")
     tempfile.pos = 0
-    tempfile.gets.should eq("Hello!\n")
+    tempfile.gets(chomp: false).should eq("Hello!\n")
     tempfile.close
   end
 

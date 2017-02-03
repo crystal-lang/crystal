@@ -182,6 +182,10 @@ module Crystal
       if target.is_a?(Path)
         const = target.target_const.not_nil!
         return node unless const.used?
+
+        unless const.value.type?
+          node.raise "can't infer type of constant #{const} (maybe the constant refers to itself?)"
+        end
       end
 
       node.value = node.value.transform self
@@ -357,7 +361,7 @@ module Crystal
       end
 
       def visit(node : Var)
-        if @a_def.vars.try &.[node.name].closured?
+        if @a_def.vars.try &.[node.name]?.try &.closured?
           @vars << node
         end
       end
@@ -677,7 +681,7 @@ module Crystal
       exp_type = node.exp.type?
 
       if exp_type
-        instance_type = exp_type.instance_type
+        instance_type = exp_type.instance_type.devirtualize
         unless instance_type.class?
           node.exp.raise "#{instance_type} is not a class, it's a #{instance_type.type_desc}"
         end

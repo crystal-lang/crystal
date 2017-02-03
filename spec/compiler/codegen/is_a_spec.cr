@@ -686,4 +686,15 @@ describe "Codegen: is_a?" do
       Bar(Int32).new.as(Foo(Int32)).is_a?(Bar) ? 2 : 3
       )).to_i.should eq(2)
   end
+
+  it "doesn't consider generic type to be a generic type of a recursive alias (#3524)" do
+    run(%(
+      class Gen(T)
+      end
+
+      alias Type = Int32 | Gen(Type)
+      a = Gen(Int32).new
+      a.is_a?(Type)
+      )).to_b.should be_false
+  end
 end

@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: static array" do
   it "types static array with var declaration" do
-    assert_type("x = uninitialized Char[3]") { nil_type }
+    assert_type("x = uninitialized Char[3]") { static_array_of(char, 3) }
   end
 
   it "types static array new" do

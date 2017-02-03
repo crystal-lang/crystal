@@ -134,7 +134,6 @@ describe "Parser" do
 
   it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
-  it_parses "A, b = 1, 2", MultiAssign.new(["A".path, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
   assert_syntax_error "1 == 2, a = 4"
   assert_syntax_error "x : String, a = 4"
@@ -340,6 +339,10 @@ describe "Parser" do
 
   it_parses "x.foo(a: 1, b: 2)", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
   it_parses "x.foo a: 1, b: 2 ", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
+
+  it_parses "x[a: 1, b: 2]", Call.new("x".call, "[]", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
+  it_parses "x[{1}]", Call.new("x".call, "[]", TupleLiteral.new([1.int32] of ASTNode))
+  it_parses "x[+ 1]", Call.new("x".call, "[]", Call.new(1.int32, "+"))
 
   it_parses "foo(a: 1, &block)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: 1, &block", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
@@ -705,6 +708,7 @@ describe "Parser" do
   it_parses "puts {{1}}", Call.new(nil, "puts", MacroExpression.new(1.int32))
   it_parses "puts {{\n1\n}}", Call.new(nil, "puts", MacroExpression.new(1.int32))
   it_parses "puts {{*1}}", Call.new(nil, "puts", MacroExpression.new(1.int32.splat))
+  it_parses "puts {{**1}}", Call.new(nil, "puts", MacroExpression.new(DoubleSplat.new(1.int32)))
   it_parses "{{a = 1 if 2}}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)))
   it_parses "{% a = 1 %}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false)
   it_parses "{%\na = 1\n%}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false)
@@ -879,6 +883,7 @@ describe "Parser" do
   it_parses "case / /\nwhen / /\n/ /\nelse\n/ /\nend", Case.new(regex(" "), [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "))
 
   it_parses "case 1; when 1 then 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1; when x then 2; else; 3; end", Case.new(1.int32, [When.new(["x".call] of ASTNode, 2.int32)], 3.int32)
   it_parses "case 1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
   it_parses "case\n1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
 
@@ -893,6 +898,8 @@ describe "Parser" do
   it_parses "case {1, 2}\nwhen {3, 4}, {5, 6}\n7\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode), TupleLiteral.new([5.int32, 6.int32] of ASTNode)] of ASTNode, 7.int32)])
   it_parses "case {1, 2}\nwhen {.foo, .bar}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new(ImplicitObj.new, "foo"), Call.new(ImplicitObj.new, "bar")] of ASTNode)] of ASTNode, 5.int32)])
   it_parses "case {1, 2}\nwhen foo\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new(["foo".call] of ASTNode, 5.int32)])
+  it_parses "case a\nwhen b\n1 / 2\nelse\n1 / 2\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, Call.new(1.int32, "/", 2.int32))], Call.new(1.int32, "/", 2.int32))
+  it_parses "case a\nwhen b\n/ /\n\nelse\n/ /\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, RegexLiteral.new(StringLiteral.new(" ")))], RegexLiteral.new(StringLiteral.new(" ")))
   assert_syntax_error "case {1, 2}; when {3}; 4; end", "wrong number of tuple elements (given 1, expected 2)", 1, 19
 
   it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
@@ -1021,6 +1028,8 @@ describe "Parser" do
   it_parses "{1, 2, 3}", TupleLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode)
   it_parses "{A::B}", TupleLiteral.new([Path.new(["A", "B"])] of ASTNode)
   it_parses "{\n1,\n2\n}", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
+  it_parses "{\n1\n}", TupleLiteral.new([1.int32] of ASTNode)
+  it_parses "{\n{1}\n}", TupleLiteral.new([TupleLiteral.new([1.int32] of ASTNode)] of ASTNode)
 
   it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", block: Block.new(body: Assign.new("a".var, 1.int32))), "a".call] of ASTNode
 
@@ -1216,6 +1225,14 @@ describe "Parser" do
 
   it_parses "Foo.foo(count: 3).bar { }", Call.new(Call.new("Foo".path, "foo", named_args: [NamedArgument.new("count", 3.int32)]), "bar", block: Block.new)
 
+  it_parses %(
+    class Foo
+      def bar
+        print as Foo
+      end
+    end
+  ), ClassDef.new("Foo".path, Def.new("bar", body: Call.new(nil, "print", Cast.new(Var.new("self"), "Foo".path))))
+
   assert_syntax_error "a = a", "can't use variable name 'a' inside assignment to variable 'a'"
 
   assert_syntax_error "{{ {{ 1 }} }}", "can't nest macro expressions"
@@ -1231,6 +1248,10 @@ describe "Parser" do
 
   it_parses "{1 => 2 / 3}", HashLiteral.new([HashLiteral::Entry.new(1.int32, Call.new(2.int32, "/", 3.int32))])
   it_parses "a { |x| x } / b", Call.new(Call.new(nil, "a", block: Block.new(args: ["x".var], body: "x".var)), "/", "b".call)
+
+  it_parses "1 if /x/", If.new(RegexLiteral.new("x".string), 1.int32)
+
+  it_parses "foo bar.baz(1) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
 
   assert_syntax_error "return do\nend", "unexpected token: do"
 
@@ -1314,6 +1335,8 @@ describe "Parser" do
     "can't change the value of self"
   assert_syntax_error "self += 1",
     "can't change the value of self"
+  assert_syntax_error "FOO, BAR = 1, 2",
+    "Multiple assignment is not allowed for constants"
   assert_syntax_error "self, x = 1, 2",
     "can't change the value of self"
   assert_syntax_error "x, self = 1, 2",
@@ -1428,6 +1451,10 @@ describe "Parser" do
   assert_syntax_error "class Foo(T, U V)"
   assert_syntax_error "->(x y) { }"
   assert_syntax_error "->(x, y z) { }"
+
+  assert_syntax_error "x[1:-2]"
+
+  assert_syntax_error "1 ? : 2 : 3"
 
   describe "end locations" do
     assert_end_location "nil"

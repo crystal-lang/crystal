@@ -24,12 +24,11 @@ struct LLVM::FunctionCollection
     func ? Function.new(func) : nil
   end
 
-  def each
+  def each : Nil
     f = LibLLVM.get_first_function(@mod)
     while f
       yield LLVM::Function.new f
       f = LibLLVM.get_next_function(f)
     end
-    self
   end
 end

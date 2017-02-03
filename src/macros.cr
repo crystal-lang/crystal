@@ -1,4 +1,4 @@
-# Defines a **struct** with the given name and properties.
+# Defines a **`Struct`** with the given name and properties.
 #
 # The generated struct has a constructor with the given properties
 # in the same order as declared. The struct only provides getters,
@@ -12,8 +12,7 @@
 # ```
 # record Point, x : Int32, y : Int32
 #
-# point = Point.new 1, 2
-# point.to_s # => "Point(@x=1, @y=2)"
+# Point.new 1, 2 # => #<Point(@x=1, @y=2)>
 # ```
 #
 # An example with the block version:
@@ -34,8 +33,8 @@
 # ```
 # record Point, x : Int32 = 0, y : Int32 = 0
 #
-# Point.new      # => Point(@x=0, @y=0)
-# Point.new y: 2 # => Point(@x=0, @y=2)
+# Point.new      # => #<Point(@x=0, @y=0)>
+# Point.new y: 2 # => #<Point(@x=0, @y=2)>
 # ```
 #
 # An example with assignments (in this case the compiler must be able to
@@ -44,8 +43,8 @@
 # ```
 # record Point, x = 0, y = 0
 #
-# Point.new      # => Point(@x=0, @y=0)
-# Point.new y: 2 # => Point(@x=0, @y=2)
+# Point.new      # => #<Point(@x=0, @y=0)>
+# Point.new y: 2 # => #<Point(@x=0, @y=2)>
 # ```
 macro record(name, *properties)
   struct {{name.id}}
@@ -84,29 +83,33 @@ macro record(name, *properties)
   end
 end
 
-# Prints a series of expressions together with their values. Useful for print style debugging.
+# Prints a series of expressions together with their values.
+# Useful for print style debugging.
 #
 # ```
 # a = 1
-# pp a # prints "a # => 1"
+# pp a # => "a # => 1"
 #
-# pp [1, 2, 3].map(&.to_s) # prints "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
+# pp [1, 2, 3].map(&.to_s) # => "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
 # ```
 macro pp(*exps)
   {% if exps.size == 0 %}
     # Nothing
   {% elsif exps.size == 1 %}
     {% exp = exps.first %}
-    ::puts "#{ {{exp.stringify}} } # => #{ ({{exp}}).inspect }"
+    %prefix = "#{{{ exp.stringify }}} # => "
+    ::print %prefix
+    PrettyPrint.format({{exp}}, STDOUT, width: 80 - %prefix.size, indent: %prefix.size)
+    ::puts
   {% else %}
-    %strings = [] of {String, String}
-    {% for exp in exps %}
-      %strings.push({ {{exp.stringify}}, ({{exp}}).inspect })
+    %names = { {{*exps.map(&.stringify)}} }
+    %max_size = %names.max_of &.size
+    {% for exp, i in exps %}
+      %prefix = "#{%names[{{i}}].ljust(%max_size)} # => "
+      ::print %prefix
+      PrettyPrint.format({{exp}}, STDOUT, width: 80 - %prefix.size, indent: %prefix.size)
+      ::puts
     {% end %}
-    %max_size = %strings.max_of &.[0].size
-    %strings.each do |%left, %right|
-      ::puts "#{%left.ljust(%max_size)} # => #{%right}"
-    end
   {% end %}
 end
 

@@ -5,19 +5,19 @@ class OAuth2::Session
   getter access_token : AccessToken
   getter expires_at : Time
 
-  # Creates an OAuth2::Session.
+  # Creates an `OAuth2::Session`.
   #
   # Params:
-  #   * oauth2_client: the OAuth2::Client used to refresh an access token.
-  #   * access_token: the OAuth2::AccessToken to make requests.
-  #   * expires_at: the Time when the access token expires.
-  #   * callback: invoked when an access token is refreshed, giving you a chance to persist it.
+  #   * *oauth2_client*: the OAuth2::Client used to refresh an access token.
+  #   * *access_token*: the OAuth2::AccessToken to make requests.
+  #   * *expires_at*: the Time when the access token expires.
+  #   * *callback*: invoked when an access token is refreshed, giving you a chance to persist it.
   def initialize(@oauth2_client : Client, @access_token : AccessToken, @expires_at = Time.utc_now, &@callback : OAuth2::Session ->)
   end
 
-  # Authenticates an HTTP::Client, refreshing the access token if it is expired.
+  # Authenticates an `HTTP::Client`, refreshing the access token if it is expired.
   #
-  # Invoke this method on an HTTP::Client before executing an HTTP request.
+  # Invoke this method on an `HTTP::Client` before executing an HTTP request.
   def authenticate(http_client)
     check_refresh_token
     @access_token.authenticate http_client

@@ -6,7 +6,7 @@ require "./type_lookup"
 class Crystal::Call
   property! scope : Type
   property with_scope : Type?
-  property! parent_visitor : MainVisitor?
+  property! parent_visitor : MainVisitor
   property target_defs : Array(Def)?
   property expanded : ASTNode?
   property? uses_with_scope = false
@@ -234,9 +234,15 @@ class Crystal::Call
     end
 
     if matches.empty?
-      defined_method_missing = owner.check_method_missing(signature)
+      defined_method_missing = owner.check_method_missing(signature, self)
       if defined_method_missing
         matches = owner.lookup_matches(signature)
+      elsif with_scope = @with_scope
+        defined_method_missing = with_scope.check_method_missing(signature, self)
+        if defined_method_missing
+          matches = with_scope.lookup_matches(signature)
+          @uses_with_scope = true
+        end
       end
     end
 
@@ -246,7 +252,7 @@ class Crystal::Call
       # don't give error. This is to allow small code comments without giving
       # compile errors, which will anyway appear once you add concrete
       # subclasses and instances.
-      if def_name == "new" || !(owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType)))
+      if def_name == "new" || !(!owner.metaclass? && owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType)))
         raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches)
       end
     end
@@ -356,7 +362,7 @@ class Crystal::Call
           bubbling_exception do
             visitor = MainVisitor.new(program, typed_def_args, typed_def)
             visitor.yield_vars = yield_vars
-            visitor.free_vars = match.context.free_vars
+            visitor.match_context = match.context
             visitor.untyped_def = match.def
             visitor.call = self
             visitor.scope = lookup_self_type
@@ -376,6 +382,9 @@ class Crystal::Call
             end
 
             if visitor.is_initialize
+              if match.def.macro_def?
+                visitor.check_initialize_instance_vars_types(owner)
+              end
               visitor.bind_initialize_instance_vars(owner)
             end
           end
@@ -457,10 +466,8 @@ class Crystal::Call
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
     arg = args.first
 
-    case arg # TODO: use || after 0.19
-    when SymbolLiteral
-      name = arg.value
-    when StringLiteral
+    case arg
+    when SymbolLiteral, StringLiteral
       name = arg.value
     end
 
@@ -492,7 +499,7 @@ class Crystal::Call
         arg_type.tuple_types.each_with_index do |tuple_type, index|
           num = NumberLiteral.new(index)
           num.type = program.int32
-          tuple_indexer = Call.new(arg.exp, "[]", num)
+          tuple_indexer = Call.new(arg.exp, "[]", num).at(arg)
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
           new_args << tuple_indexer
@@ -508,7 +515,7 @@ class Crystal::Call
           sym = SymbolLiteral.new(entry.name)
           sym.type = program.symbol
           program.symbols.add sym.value
-          tuple_indexer = Call.new(arg.exp, "[]", sym)
+          tuple_indexer = Call.new(arg.exp, "[]", sym).at(arg)
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
           new_args << tuple_indexer
@@ -531,7 +538,7 @@ class Crystal::Call
         vars << arg
         args << arg
       end
-      block = Block.new(vars, Call.new(block_arg.clone, "call", args))
+      block = Block.new(vars, Call.new(block_arg.clone, "call", args).at(block_arg))
       block.vars = self.before_vars
       self.block = block
     else
@@ -925,7 +932,14 @@ class Crystal::Call
       yield
     rescue ex : Crystal::Exception
       if obj = @obj
-        raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
+        if name == "initialize"
+          # Avoid putting 'initialize' in the error trace
+          # because it's most likely that this is happening
+          # inside a generated 'new' method
+          ::raise ex
+        else
+          raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
+        end
       else
         raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
       end
@@ -1008,7 +1022,7 @@ class Crystal::Call
       arg = typed_def.args[index]
       default_value = arg.default_value.as(MagicConstant)
       case default_value.name
-      when :__LINE__
+      when :__LINE__, :__END_LINE__
         type = program.int32
       when :__FILE__, :__DIR__
         type = program.string

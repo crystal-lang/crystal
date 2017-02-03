@@ -503,6 +503,10 @@ module Crystal
         raise "tuple type too nested: #{tuple_type}"
       end
 
+      if types.size > 300
+        raise "tuple too big: Tuple(#{types[0...10].join(",")}, ...)"
+      end
+
       self.type = tuple_type
     end
   end
@@ -521,6 +525,10 @@ module Crystal
 
       if generic_type_too_nested?(named_tuple_type.generic_nest)
         raise "named tuple type too nested: #{named_tuple_type}"
+      end
+
+      if entries.size > 300
+        raise "named tuple too big: #{named_tuple_type}"
       end
 
       self.type = named_tuple_type

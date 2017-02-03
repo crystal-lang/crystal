@@ -1,7 +1,7 @@
 require "./csv"
 
 class CSV
-  # Raises when an error related to a CSV is found
+  # Raises when an error related to a CSV is found.
   class Error < Exception
   end
 

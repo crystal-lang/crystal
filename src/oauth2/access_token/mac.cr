@@ -45,15 +45,15 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
     Base64.strict_encode OpenSSL::HMAC.digest(digest, mac_key, normalized_request_string)
   end
 
-  def to_json(io)
-    io.json_object do |object|
-      object.field "token_type", "mac"
-      object.field "access_token", access_token
-      object.field "expires_in", expires_in
-      object.field "refresh_token", refresh_token if refresh_token
-      object.field "scope", scope if scope
-      object.field "mac_algorithm", mac_algorithm
-      object.field "mac_key", mac_key
+  def to_json(json : JSON::Builder)
+    json.object do
+      json.field "token_type", "mac"
+      json.field "access_token", access_token
+      json.field "expires_in", expires_in
+      json.field "refresh_token", refresh_token if refresh_token
+      json.field "scope", scope if scope
+      json.field "mac_algorithm", mac_algorithm
+      json.field "mac_key", mac_key
     end
   end
 
