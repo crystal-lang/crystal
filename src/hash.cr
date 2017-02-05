@@ -590,6 +590,29 @@ class Hash(K, V)
     reject! { |key, value| value.nil? }
   end
 
+  # Returns a new hash with all keys converted using the block operation.
+  #
+  # ```
+  # hash = {:a => 1, :b => 2, :c => 3}
+  # hash.transform_keys { |key| key.to_s } # => {"A" => 1, "B" => 2, "C" => 3}
+  # ```
+  def transform_keys(&block : K -> K2) forall K2
+    each_with_object({} of K2 => V) do |(key, value), memo|
+      memo[yield(key)] = value
+    end
+  end
+
+  # Returns a new hash with the results of running block once for every value.
+  #
+  # ```
+  # hash = {:a => 1, :b => 2, :c => 3}
+  # hash.transform_values { |value| value + 1 } # => {:a => 2, :b => 3, :c => 4}
+  def transform_values(&block : V -> V2) forall V2
+    each_with_object({} of K => V2) do |(key, value), memo|
+      memo[key] = yield(value)
+    end
+  end
+
   # Zips two arrays into a `Hash`, taking keys from *ary1* and values from *ary2*.
   #
   # ```
