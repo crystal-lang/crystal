@@ -4,7 +4,6 @@ abstract class Channel(T)
   @mutex = Thread::Mutex.new
 
   module SelectAction
-    abstract def ready?
     abstract def execute
     abstract def wait
     abstract def unwait
@@ -31,15 +30,19 @@ abstract class Channel(T)
   end
 
   def close
-    @closed = true
-    Scheduler.current.enqueue @receivers
-    @receivers.clear
-    nil
+    @mutex.synchronize do
+      @closed = true
+      Scheduler.current.enqueue @receivers
+      @receivers.clear
+      nil
+    end
   end
 
   def closed?
     @closed
   end
+
+  abstract def receive_immediate
 
   def receive
     receive_impl { raise ClosedError.new }
@@ -48,6 +51,10 @@ abstract class Channel(T)
   def receive?
     receive_impl { return nil }
   end
+
+  abstract def send_immediate(value : T)
+
+  abstract def send(value : T)
 
   def inspect(io)
     to_s(io)
@@ -58,19 +65,33 @@ abstract class Channel(T)
   end
 
   def wait_for_receive
-    @receivers << Fiber.current
+    @mutex.synchronize do
+      @receivers << Fiber.current
+    end
   end
 
   def unwait_for_receive
-    @receivers.delete Fiber.current
+    @mutex.synchronize do
+      @receivers.delete Fiber.current
+    end
   end
 
   def wait_for_send
-    @senders << Fiber.current
+    @mutex.synchronize do
+      @senders << Fiber.current
+    end
   end
 
   def unwait_for_send
-    @senders.delete Fiber.current
+    @mutex.synchronize do
+      @senders.delete Fiber.current
+    end
+  end
+
+  def synchronize
+    @mutex.synchronize do
+      yield
+    end
   end
 
   protected def unlock_after_context_switch
@@ -111,8 +132,8 @@ abstract class Channel(T)
   def self.select(ops : Tuple | Array, has_else = false)
     loop do
       ops.each_with_index do |op, index|
-        if op.ready?
-          result = op.execute
+        ready, result = op.execute
+        if ready
           return index, result
         end
       end
@@ -141,12 +162,14 @@ abstract class Channel(T)
     def initialize(@channel : C)
     end
 
-    def ready?
-      !@channel.empty?
-    end
-
     def execute
-      @channel.receive
+      @channel.synchronize do
+        if !@channel.empty?
+          return true, @channel.receive_immediate
+        else
+          return false, nil
+        end
+      end
     end
 
     def wait
@@ -164,12 +187,14 @@ abstract class Channel(T)
     def initialize(@channel : C, @value : T)
     end
 
-    def ready?
-      !@channel.full?
-    end
-
     def execute
-      @channel.send(@value)
+      @channel.synchronize do
+        if !@channel.full?
+          return true, @channel.send_immediate(@value)
+        else
+          return false, nil
+        end
+      end
     end
 
     def wait
@@ -186,6 +211,18 @@ class Channel::Buffered(T) < Channel(T)
   def initialize(@capacity = 32)
     @queue = Deque(T).new(@capacity)
     super()
+  end
+
+  def send_immediate(value : T)
+    raise_if_closed
+
+    @queue << value
+    unless @receivers.empty?
+      Scheduler.current.enqueue @receivers
+      @receivers.clear
+    end
+
+    self
   end
 
   def send(value : T)
@@ -210,6 +247,19 @@ class Channel::Buffered(T) < Channel(T)
     @mutex.unlock
 
     self
+  end
+
+  def receive_immediate
+    raise "Trying to receive but channel is not ready" if empty?
+
+    result = @queue.shift.tap do
+      unless @senders.empty?
+        Scheduler.current.enqueue @senders
+        @senders.clear
+      end
+    end
+
+    result
   end
 
   private def receive_impl
@@ -239,13 +289,11 @@ class Channel::Buffered(T) < Channel(T)
     result
   end
 
-  # holds mutex
-  private def full?
+  def full?
     @queue.size >= @capacity
   end
 
-  # holds mutex
-  private def empty?
+  def empty?
     @queue.empty?
   end
 end
@@ -257,6 +305,24 @@ class Channel::Unbuffered(T) < Channel(T)
     @has_value = false
     @value = uninitialized T
     super
+  end
+
+  def send_immediate(value : T)
+    raise_if_closed
+
+    @value = value
+    @has_value = true
+    @sender = Fiber.current
+
+    receiver = @receivers.shift?
+    unlock_after_context_switch
+
+    if receiver
+      receiver.resume
+    else
+      Scheduler.current.reschedule
+    end
+    @mutex.lock
   end
 
   def send(value : T)
@@ -283,6 +349,17 @@ class Channel::Unbuffered(T) < Channel(T)
       receiver.resume
     else
       Scheduler.current.reschedule
+    end
+  end
+
+  def receive_immediate
+    if @closed
+      raise ClosedError.new
+    end
+
+    @value.tap do
+      @has_value = false
+      Scheduler.current.enqueue @sender.not_nil!
     end
   end
 
