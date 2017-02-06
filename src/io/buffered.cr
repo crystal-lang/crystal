@@ -190,10 +190,10 @@ module IO::Buffered
   end
 
   # Flushes and closes the underlying `IO`.
-  def close
+  def close : Nil
     flush if @out_count > 0
+  ensure
     unbuffered_close
-    nil
   end
 
   # Rewinds the underlying `IO`. Returns `self`.
