@@ -42,7 +42,7 @@ class Scheduler
   end
 
   def self.start
-    LibC.printf "Scheduler start\n"
+    tlog("Scheduler start")
     scheduler = new
     Thread.current.scheduler = scheduler
     scheduler.spin
@@ -58,7 +58,7 @@ class Scheduler
   protected def wait
     @@wait_mutex.synchronize do
       # @@sleeping.add(1)
-      log "Waiting (runnables: %d)", @runnables.size
+      tlog "Waiting (runnables: %d)", @runnables.size
       # LibC.printf "%ld Going to sleep\n", LibC.pthread_self
 
       if @@wake.get != 0
@@ -67,16 +67,16 @@ class Scheduler
         @@wait_cv.wait(@@wait_mutex)
       end
       # LibC.printf "%ld Waking up\n", LibC.pthread_self
-      log "Received signal"
+      tlog "Received signal"
       @@sleeping.add(-1)
     end
   end
 
   def reschedule(is_reschedule_fiber = false)
-    log "Reschedule"
+    tlog "Reschedule"
     while true
       if runnable = @runnables_lock.synchronize { @runnables.shift? }
-        log "Found in queue '%s'", runnable.name!
+        tlog "Found in queue '%s'", runnable.name!
         runnable.resume
         break
       elsif reschedule_fiber = @reschedule_fiber
@@ -89,7 +89,7 @@ class Scheduler
             wait
           end
         else
-          log "Switching to rescheduling fiber %ld", reschedule_fiber.object_id
+          tlog "Switching to rescheduling fiber %ld", reschedule_fiber.object_id
           reschedule_fiber.resume
           break
         end
@@ -133,7 +133,7 @@ class Scheduler
   end
 
   def enqueue(fiber : Fiber)
-    log "Enqueue '#{fiber.name}'"
+    tlog "Enqueue '#{fiber.name}'"
     @runnables_lock.synchronize { @runnables << fiber }
 
     if @@spinning.get != 0
