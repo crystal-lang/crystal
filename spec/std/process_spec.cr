@@ -178,7 +178,7 @@ describe Process do
     File.exists?(tmpfile.path).should be_false
 
     fork = Process.fork do
-      Process.exec("/usr/bin/touch", {tmpfile.path})
+      Process.exec("/usr/bin/env", {"touch", tmpfile.path})
     end
     fork.wait
 
