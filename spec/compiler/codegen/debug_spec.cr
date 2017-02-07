@@ -47,4 +47,20 @@ describe "Code gen: debug" do
       foo.bar.x
       ), debug: Crystal::Debug::All, filename: "foo.cr").to_i.should eq(2)
   end
+
+  it "codegens correct debug info for untyped expression (#4007 and #4008)" do
+    codegen(%(
+      require "prelude"
+
+      int = 3
+      case int
+      when 0
+          puts 0
+      when 1, 2, Int32
+          puts "1 | 2 | Int32"
+      else
+          puts int
+      end
+      ), debug: Crystal::Debug::All)
+  end
 end

@@ -439,11 +439,11 @@ module Crystal
         end
       end
 
-      build_raise ex_msg
+      build_raise ex_msg, node
     end
 
-    def build_raise(msg)
-      call = Call.global("raise", StringLiteral.new(msg))
+    def build_raise(msg, node)
+      call = Call.global("raise", StringLiteral.new(msg).at(node)).at(node)
       call.accept MainVisitor.new(@program)
       call
     end
