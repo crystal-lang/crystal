@@ -347,7 +347,7 @@ class Fiber
   def resume
     # The purpose of this method is to suspend a fiber (F1) and give control back
     # to another one (F2).
-    log "Resume '%s' -> '%s'", Fiber.current.name!, self.name!
+    # tlog "Resume '%s' -> '%s'", Fiber.current.name!, self.name!
     Fiber.gc_read_lock
 
     # current <~~ F1

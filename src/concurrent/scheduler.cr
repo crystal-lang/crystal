@@ -24,7 +24,9 @@ class Scheduler
   @@wake = Atomic(Int32).new(0)
 
   def self.print_state
-    LibC.printf "sleeping: %d, spinning: %d, wake: %d\n", @@sleeping.get, @@spinning.get, @@wake.get
+    @@all_mutex.synchronize do
+      log "schedulers: %d, sleeping: %d, spinning: %d, wake: %d\n", @@all.size, @@sleeping.get, @@spinning.get, @@wake.get
+    end
   end
 
   def initialize(@own_event_loop = false)
@@ -42,7 +44,7 @@ class Scheduler
   end
 
   def self.start
-    tlog("Scheduler start")
+    # tlog "Scheduler start"
     scheduler = new
     Thread.current.scheduler = scheduler
     scheduler.spin
@@ -73,14 +75,14 @@ class Scheduler
   end
 
   def reschedule(is_reschedule_fiber = false)
-    tlog "Reschedule"
     while true
       if runnable = @runnables_lock.synchronize { @runnables.shift? }
-        tlog "Found in queue '%s'", runnable.name!
+        # tlog "Reschedule #{self}: Found in queue '%s'", runnable.name!
         runnable.resume
         break
       elsif reschedule_fiber = @reschedule_fiber
         if is_reschedule_fiber
+          # tlog "Reschedule #{self}: Spinning"
           @@spinning.add(1)
           could_steal = spin
           unless could_steal
@@ -89,7 +91,7 @@ class Scheduler
             wait
           end
         else
-          tlog "Switching to rescheduling fiber %ld", reschedule_fiber.object_id
+          # tlog "Reschedule #{self}: Switching to rescheduling fiber %ld", reschedule_fiber.object_id
           reschedule_fiber.resume
           break
         end
@@ -106,6 +108,7 @@ class Scheduler
     100.times do
       sched = choose_other_sched
       if (stolen = sched.steal) && stolen.size > 0
+        # tlog "Stole #{stolen.size} runnables (#{stolen.map(&.name!).join(", ")}) from #{sched}"
         enqueue stolen
         could_steal = true
         break
@@ -113,12 +116,6 @@ class Scheduler
     end
 
     @@spinning.add(-1)
-
-    sched = choose_other_sched
-    if (stolen = sched.steal) && stolen.size > 0
-      enqueue stolen
-      could_steal = true
-    end
 
     could_steal
   end
@@ -133,9 +130,12 @@ class Scheduler
   end
 
   def enqueue(fiber : Fiber)
-    tlog "Enqueue '#{fiber.name}'"
+    # tlog "Enqueue '#{fiber.name}'"
     @runnables_lock.synchronize { @runnables << fiber }
+    ensure_workers_available
+  end
 
+  private def ensure_workers_available
     if @@spinning.get != 0
       return
     end
@@ -148,9 +148,12 @@ class Scheduler
       end
     end
 
+    # FIXME: race condition: this may result in more than 8 worker threads
+    # FIXME: make the number of threads CPU/arch dependent (configurable?)
     if @@all.size < 8
       @@spinning.add(1)
       Thread.new do
+        Fiber.current.name = "scheduler"
         Scheduler.start
       end
     end
@@ -170,5 +173,6 @@ class Scheduler
 
   def enqueue(fibers : Enumerable(Fiber))
     @runnables_lock.synchronize { @runnables.concat fibers }
+    ensure_workers_available
   end
 end

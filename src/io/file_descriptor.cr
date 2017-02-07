@@ -8,6 +8,7 @@ class IO::FileDescriptor
   @write_timeout : Float64?
   @read_event : Event::Event?
   @write_event : Event::Event?
+  @mutex = Thread::Mutex.new
 
   # :nodoc:
   property read_timed_out : Bool
@@ -95,7 +96,11 @@ class IO::FileDescriptor
 
   # :nodoc:
   def resume_read
-    if reader = @readers.try &.shift?
+    reader = @mutex.synchronize do
+      @readers.try &.shift?
+    end
+    if reader
+      # tlog "Resuming #{reader.name!} for read on #{self}"
       Scheduler.current.enqueue reader
       # reader.resume
     end
@@ -103,7 +108,12 @@ class IO::FileDescriptor
 
   # :nodoc:
   def resume_write
-    if writer = @writers.try &.shift?
+    tlog "resume_write #{self}"
+    writer = @mutex.synchronize do
+      @writers.try &.shift?
+    end
+    if writer
+      # tlog "Resuming #{writer.name!} for write on #{self}"
       Scheduler.current.enqueue writer
       # writer.resume
     end
@@ -252,7 +262,8 @@ class IO::FileDescriptor
       end
     end
   ensure
-    if (readers = @readers) && !readers.empty?
+    some_readers = @mutex.synchronize { (readers = @readers) && !readers.empty? }
+    if some_readers
       add_read_event
     end
   end
@@ -278,7 +289,9 @@ class IO::FileDescriptor
       end
     end
   ensure
-    if (writers = @writers) && !writers.empty?
+    some_writers = @mutex.synchronize { (writers = @writers) && !writers.empty? }
+    if some_writers
+      # tlog "Writers on #{self} remain, adding event"
       add_write_event
     end
   end
@@ -288,9 +301,12 @@ class IO::FileDescriptor
   end
 
   private def wait_readable
-    readers = (@readers ||= Deque(Fiber).new)
-    readers << Fiber.current
-    add_read_event
+    # tlog "#{Fiber.current.name!} waiting to read in file #{self}"
+    @mutex.synchronize do
+      readers = (@readers ||= Deque(Fiber).new)
+      readers << Fiber.current
+    end
+    add_read_event true
     EventLoop.wait
 
     if @read_timed_out
@@ -301,13 +317,17 @@ class IO::FileDescriptor
     nil
   end
 
-  private def add_read_event
+  private def add_read_event(delayed = false)
     return if @edge_triggerable
     event = @read_event ||= EventLoop.create_fd_read_event(self)
-    Fiber.current.callback = ->{
+    if delayed
+      Fiber.current.callback = ->{
+        event.add @read_timeout
+        nil
+      }
+    else
       event.add @read_timeout
-      nil
-    }
+    end
     nil
   end
 
@@ -317,9 +337,12 @@ class IO::FileDescriptor
 
   # msg/timeout are overridden in nonblock_connect
   private def wait_writable(msg = "write timed out", timeout = @write_timeout)
-    writers = (@writers ||= Deque(Fiber).new)
-    writers << Fiber.current
-    add_write_event timeout
+    # tlog "#{Fiber.current.name!} waiting to write in file #{self}"
+    @mutex.synchronize do
+      writers = (@writers ||= Deque(Fiber).new)
+      writers << Fiber.current
+    end
+    add_write_event timeout, true
     EventLoop.wait
 
     if @write_timed_out
@@ -330,13 +353,17 @@ class IO::FileDescriptor
     nil
   end
 
-  private def add_write_event(timeout = @write_timeout)
+  private def add_write_event(timeout = @write_timeout, delayed = false)
     return if @edge_triggerable
     event = @write_event ||= EventLoop.create_fd_write_event(self)
-    Fiber.current.callback = ->{
+    if delayed
+      Fiber.current.callback = ->{
+        event.add timeout
+        nil
+      }
+    else
       event.add timeout
-      nil
-    }
+    end
     nil
   end
 
@@ -360,18 +387,22 @@ class IO::FileDescriptor
 
     @closed = true
 
+    # FIXME: this should be inside a critical section as well
     @read_event.try &.free
     @read_event = nil
     @write_event.try &.free
     @write_event = nil
-    if readers = @readers
-      Scheduler.current.enqueue readers
-      readers.clear
-    end
 
-    if writers = @writers
-      Scheduler.current.enqueue writers
-      writers.clear
+    @mutex.synchronize do
+      if readers = @readers
+        Scheduler.current.enqueue readers
+        readers.clear
+      end
+
+      if writers = @writers
+        Scheduler.current.enqueue writers
+        writers.clear
+      end
     end
 
     raise err if err
