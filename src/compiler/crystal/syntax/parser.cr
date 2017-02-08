@@ -1122,6 +1122,10 @@ module Crystal
 
     def parse_ident_or_literal
       ident = parse_ident
+      parse_custom_literal ident
+    end
+
+    def parse_custom_literal(ident)
       skip_space
 
       if @token.type == :"{"
@@ -4097,10 +4101,11 @@ module Crystal
       when :IDENT
         set_visibility parse_var_or_call global: true
       when :CONST
-        parse_ident_after_colons location,
+        ident = parse_ident_after_colons location,
           global: true,
           allow_type_vars: true,
           parse_nilable: true
+        parse_custom_literal ident
       else
         unexpected_token
       end

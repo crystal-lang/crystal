@@ -469,6 +469,9 @@ describe "Parser" do
   it_parses %(Foo({"foo bar": X})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo bar", "X".path)])] of ASTNode)
   it_parses %(Foo({"foo": X, "bar": Y})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo", "X".path), NamedArgument.new("bar", "Y".path)])] of ASTNode)
 
+  it_parses %(Foo{"x" => "y"}), HashLiteral.new([HashLiteral::Entry.new("x".string, "y".string)], name: "Foo".path)
+  it_parses %(::Foo{"x" => "y"}), HashLiteral.new([HashLiteral::Entry.new("x".string, "y".string)], name: Path.global("Foo"))
+
   it_parses "Foo(*T)", Generic.new("Foo".path, ["T".path.splat] of ASTNode)
 
   it_parses "Foo(X, sizeof(Int32))", Generic.new("Foo".path, ["X".path, SizeOf.new("Int32".path)] of ASTNode)
