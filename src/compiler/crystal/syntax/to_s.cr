@@ -308,12 +308,7 @@ module Crystal
         in_parenthesis(need_parens, node_obj)
 
         @str << decorate_call(node, "[")
-
-        node.args.each_with_index do |arg, i|
-          @str << ", " if i > 0
-          arg.accept self
-        end
-
+        visit_args(node)
         if node.name == "[]"
           @str << decorate_call(node, "]")
         else
@@ -323,11 +318,7 @@ module Crystal
         in_parenthesis(need_parens, node_obj)
 
         @str << decorate_call(node, "[")
-        (0...node.args.size - 1).each do |i|
-          @str << ", " if i > 0
-          node.args[i].accept self
-        end
-
+        visit_args(node, excluse_last: true)
         @str << decorate_call(node, "]")
         @str << " "
         @str << decorate_call(node, "=")
@@ -363,25 +354,7 @@ module Crystal
           call_args_need_parens = node.has_parentheses? || !node.args.empty? || node.block_arg || node.named_args
 
           @str << "(" if call_args_need_parens
-
-          printed_arg = false
-          node.args.each_with_index do |arg, i|
-            @str << ", " if printed_arg
-            arg.accept self
-            printed_arg = true
-          end
-          if named_args = node.named_args
-            named_args.each do |named_arg|
-              @str << ", " if printed_arg
-              named_arg.accept self
-              printed_arg = true
-            end
-          end
-          if block_arg = node.block_arg
-            @str << ", " if printed_arg
-            @str << "&"
-            block_arg.accept self
-          end
+          visit_args(node)
         end
       end
 
@@ -419,6 +392,29 @@ module Crystal
       end
 
       false
+    end
+
+    private def visit_args(node, excluse_last = false)
+      printed_arg = false
+      node.args.each_with_index do |arg, i|
+        break if excluse_last && i == node.args.size - 1
+
+        @str << ", " if printed_arg
+        arg.accept self
+        printed_arg = true
+      end
+      if named_args = node.named_args
+        named_args.each do |named_arg|
+          @str << ", " if printed_arg
+          named_arg.accept self
+          printed_arg = true
+        end
+      end
+      if block_arg = node.block_arg
+        @str << ", " if printed_arg
+        @str << "&"
+        block_arg.accept self
+      end
     end
 
     private def need_parens(obj)
