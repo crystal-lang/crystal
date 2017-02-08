@@ -1045,6 +1045,14 @@ module Crystal
     end
 
     def visit(node : Var)
+      # It can happen that a variable ends up with no type, as in:
+      #
+      #     i = 0
+      #     i.is_a?(Int32) ? 1 : i # here
+      #
+      # In that case we treat it as NoReturn.
+      return unreachable unless node.type?
+
       var = context.vars[node.name]?
       if var
         return unreachable if var.type.no_return?
