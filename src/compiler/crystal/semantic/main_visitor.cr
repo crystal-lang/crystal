@@ -2485,7 +2485,14 @@ module Crystal
       # Any variable assigned in the body (begin) will have, inside rescue
       # blocks, all types that were assigned to them, because we can't know at which
       # point an exception is raised.
+      # We create different vars, though, to avoid changing the type of vars
+      # before the handler.
       exception_handler_vars = @exception_handler_vars = @vars.dup
+      exception_handler_vars.each do |name, var|
+        new_var = new_meta_var(name)
+        new_var.bind_to(var)
+        exception_handler_vars[name] = new_var
+      end
 
       node.body.accept self
 

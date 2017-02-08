@@ -442,4 +442,16 @@ describe "Semantic: exception" do
       a
       )) { int32 }
   end
+
+  it "doesn't infect type to variable before handler (#4002)" do
+    assert_type(%(
+      a = 1
+      b = a
+      begin
+        a = 'a'
+      rescue
+      end
+      b
+      )) { int32 }
+  end
 end
