@@ -63,4 +63,19 @@ describe "Code gen: debug" do
       end
       ), debug: Crystal::Debug::All)
   end
+
+  it "codegens correct debug info for new with custom allocate (#3945)" do
+    codegen(%(
+      class Foo
+        def initialize
+        end
+
+        def self.allocate
+          Pointer(UInt8).malloc(1_u64).as(self)
+        end
+      end
+
+      Foo.new
+      ), debug: Crystal::Debug::All)
+  end
 end

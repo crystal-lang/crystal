@@ -149,14 +149,14 @@ module Crystal
     def fill_body_from_initialize(instance_type)
       if instance_type.is_a?(GenericClassType)
         generic_type_args = instance_type.type_vars.map_with_index do |type_var, i|
-          arg = Path.new(type_var).as(ASTNode)
-          arg = Splat.new(arg) if instance_type.splat_index == i
+          arg = Path.new(type_var).as(ASTNode).at(self)
+          arg = Splat.new(arg).at(self) if instance_type.splat_index == i
           arg
         end
         new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
-        alloc = Call.new(new_generic, "allocate")
+        alloc = Call.new(new_generic, "allocate").at(self)
       else
-        alloc = Call.new(nil, "allocate")
+        alloc = Call.new(nil, "allocate").at(self)
       end
 
       # This creates:
@@ -178,44 +178,44 @@ module Crystal
         # Check if the argument has to be passed as a named argument
         if splat_index && i > splat_index
           named_args ||= [] of NamedArgument
-          named_args << NamedArgument.new(arg.name, Var.new(arg.name))
+          named_args << NamedArgument.new(arg.name, Var.new(arg.name).at(self)).at(self)
         else
-          new_var = Var.new(arg.name)
-          new_var = Splat.new(new_var) if i == splat_index
+          new_var = Var.new(arg.name).at(self)
+          new_var = Splat.new(new_var).at(self) if i == splat_index
           new_vars << new_var
         end
       end
 
       # Make sure to forward the double splat argument
       if double_splat = self.double_splat
-        new_vars << DoubleSplat.new(Var.new(double_splat.name))
+        new_vars << DoubleSplat.new(Var.new(double_splat.name).at(self)).at(self)
       end
 
-      assign = Assign.new(obj.clone, alloc)
+      assign = Assign.new(obj.clone, alloc).at(self)
       init = Call.new(obj.clone, "initialize", new_vars, named_args: named_args).at(self)
 
       # If the initialize yields, call it with a block
       # that yields those arguments.
       if block_args_count = self.yields
         block_args = Array.new(block_args_count) { |i| Var.new("_arg#{i}") }
-        vars = Array.new(block_args_count) { |i| Var.new("_arg#{i}").as(ASTNode) }
-        init.block = Block.new(block_args, Yield.new(vars))
+        vars = Array.new(block_args_count) { |i| Var.new("_arg#{i}").at(self).as(ASTNode) }
+        init.block = Block.new(block_args, Yield.new(vars).at(self)).at(self)
       end
 
       exps = Array(ASTNode).new(4)
       exps << assign
       exps << init
-      exps << If.new(RespondsTo.new(obj.clone, "finalize"),
-        Call.new(Path.global("GC"), "add_finalizer", obj.clone).at(self))
+      exps << If.new(RespondsTo.new(obj.clone, "finalize").at(self),
+        Call.new(Path.global("GC").at(self), "add_finalizer", obj.clone).at(self))
       exps << obj
 
       # Forward block argument if any
       if uses_block_arg?
         block_arg = self.block_arg.not_nil!
-        init.block_arg = Var.new(block_arg.name)
+        init.block_arg = Var.new(block_arg.name).at(self)
       end
 
-      self.body = Expressions.from(exps)
+      self.body = Expressions.from(exps).at(self)
     end
 
     def self.argless_new(instance_type)
@@ -228,14 +228,14 @@ module Crystal
       #      GC.add_finalizer x if x.responds_to? :finalize
       #      x
       #    end
-      var = Var.new("x")
+      var = Var.new("x").at(loc)
       alloc = Call.new(nil, "allocate").at(loc)
-      assign = Assign.new(var, alloc)
+      assign = Assign.new(var, alloc).at(loc)
 
-      call = Call.new(Path.global("GC"), "add_finalizer", var.clone).at(loc)
+      call = Call.new(Path.global("GC").at(loc), "add_finalizer", var.clone).at(loc)
       exps = Array(ASTNode).new(3)
       exps << assign
-      exps << If.new(RespondsTo.new(var.clone, "finalize"), call)
+      exps << If.new(RespondsTo.new(var.clone, "finalize").at(loc), call).at(loc)
       exps << var.clone
 
       a_def = Def.new("new", body: exps).at(loc)
