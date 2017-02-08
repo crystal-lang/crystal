@@ -363,7 +363,8 @@ module Crystal
         check_not_a_constant(node.declared_type)
 
         if declared_type = node.declared_type.type?
-          meta_var.freeze_type = declared_type
+          var_type = check_declare_var_type node, declared_type, "a variable"
+          meta_var.freeze_type = var_type
         else
           node.raise "can't infer type of type declaration"
         end

@@ -1413,6 +1413,8 @@ module Crystal
         var.name.size
       when InstanceVar
         var.name.size
+      when ClassVar
+        var.name.size
       else
         raise "can't happen"
       end
