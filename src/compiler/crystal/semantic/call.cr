@@ -534,11 +534,11 @@ class Crystal::Call
       vars = [] of Var
       args = [] of ASTNode
       block_arg_type.arg_types.map_with_index do |type, i|
-        arg = Var.new("__arg#{i}")
+        arg = Var.new("__arg#{i}").at(block_arg)
         vars << arg
         args << arg
       end
-      block = Block.new(vars, Call.new(block_arg.clone, "call", args).at(block_arg))
+      block = Block.new(vars, Call.new(block_arg.clone, "call", args).at(block_arg)).at(block_arg)
       block.vars = self.before_vars
       self.block = block
     else
