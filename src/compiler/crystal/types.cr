@@ -226,8 +226,17 @@ module Crystal
       false
     end
 
+    # Returns the non-virtual type of a given type
+    # (returns self if self is already non-virtual)
     def devirtualize
-      self.is_a?(VirtualTypeLookup) ? self.base_type : self
+      case self
+      when VirtualType
+        self.base_type
+      when VirtualMetaclassType
+        self.base_type.metaclass
+      else
+        self
+      end
     end
 
     def implements?(other_type : Type)
@@ -2796,6 +2805,7 @@ module Crystal
     include InstanceVarContainer
     include ClassVarContainer
 
+    # Given `Foo+`, this returns `Foo`.
     getter base_type : Type
 
     def initialize(program, @base_type)
@@ -2898,7 +2908,10 @@ module Crystal
       instance_type.leaf?
     end
 
-    delegate base_type, lookup_first_def, to: instance_type
+    # Given `Foo+:Class` returns `Foo` (not `Foo:Class`)
+    delegate base_type, to: instance_type
+
+    delegate lookup_first_def, to: instance_type.metaclass
 
     def each_concrete_type
       instance_type.subtypes.each do |type|

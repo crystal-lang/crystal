@@ -166,7 +166,17 @@ module Crystal
         node.target_const = type
         node.bind_to type.value
       when Type
-        node.type = check_type_in_type_args(type.remove_alias_if_simple)
+        # We devirtualize the type because in an expression like
+        #
+        #     T.new
+        #
+        # even if T is a virtual type that resulted from a generic
+        # type argument, creating an instance or invoking methods
+        # on the type itself don't need to resolve virtually.
+        #
+        # It's different if from a virtual type we do `v.class.new`
+        # because the class could be any in the hierarchy.
+        node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
       when ASTNode
         type.accept self unless type.type?
         node.syntax_replacement = type
