@@ -4541,11 +4541,12 @@ module Crystal
 
     def parse_visibility_modifier(modifier)
       doc = @token.doc
+      location = @token.location
 
       next_token_skip_space
       exp = parse_op_assign
 
-      modifier = VisibilityModifier.new(modifier, exp)
+      modifier = VisibilityModifier.new(modifier, exp).at(location).at_end(exp)
       modifier.doc = doc
       exp.doc = doc
       modifier

@@ -77,8 +77,10 @@ module Crystal
     end
 
     def process_type(type)
-      if type.is_a?(NamedType)
-        type.types?.try &.values.each do |inner_type|
+      return unless type
+
+      if type.is_a?(NamedType) || type.is_a?(Program) || type.is_a?(FileModule)
+        type.types?.try &.each_value do |inner_type|
           process_type(inner_type)
         end
       end
@@ -86,11 +88,7 @@ module Crystal
       process_type type.metaclass if type.metaclass != type
 
       if type.is_a?(DefInstanceContainer)
-        type.def_instances.values.try do |typed_defs|
-          typed_defs.each do |typed_def|
-            typed_def.accept(self)
-          end
-        end
+        type.def_instances.each_value &.accept(self)
       end
 
       if type.is_a?(GenericType)
@@ -102,13 +100,8 @@ module Crystal
 
     def process(result : Compiler::Result)
       @in_defs = true
-      result.program.def_instances.each_value do |typed_def|
-        typed_def.accept(self)
-      end
-
-      result.program.types?.try &.values.each do |type|
-        process_type type
-      end
+      process_type result.program
+      process_type result.program.file_module?(@target_location.original_filename)
       @in_defs = false
 
       result.node.accept(self)
@@ -136,7 +129,7 @@ module Crystal
           if node.expanded
             @found_nodes << node
           else
-            @message = "no expansion found: #{node} is not macro"
+            @message = "no expansion found: #{node} may not be a macro"
           end
           false
         else

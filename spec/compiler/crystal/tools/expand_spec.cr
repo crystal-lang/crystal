@@ -340,7 +340,7 @@ describe "expand" do
     assert_expand_simple code, original: "foo", expanded: ":Foo\n:foo\n"
   end
 
-  %w(module class struct lib enum).each do |keyword|
+  %w(module class struct enum lib).each do |keyword|
     it "expands macro expression inside #{keyword}" do
       code = <<-CODE
       #{keyword} Foo
@@ -349,6 +349,33 @@ describe "expand" do
       CODE
 
       assert_expand_simple code, original: %({{ "Foo = 1".id }}), expanded: "Foo = 1"
+    end
+
+    it "expands macro expression inside private #{keyword}" do
+      code = <<-CODE
+      private #{keyword} Foo
+        ‸{{ "Foo = 1".id }}
+      end
+      CODE
+
+      assert_expand_simple code, original: %({{ "Foo = 1".id }}), expanded: "Foo = 1"
+    end
+
+    unless keyword == "lib"
+      it "expands macro expression inside def of private #{keyword}" do
+        code = <<-CODE
+        private #{keyword} Foo
+          Foo = 1
+          def self.foo
+            {{ :‸foo }}
+          end
+        end
+
+        Foo.foo
+        CODE
+
+        assert_expand_simple code, original: "{{ :foo }}", expanded: ":foo"
+      end
     end
   end
 
@@ -364,42 +391,88 @@ describe "expand" do
 
       assert_expand_simple code, original: %({{ "Foo = 1".id }}), expanded: "Foo = 1"
     end
-  end
 
-  it "expands macro expression inside def" do
-    code = <<-CODE
-    def foo(x : T) forall T
-      ‸{{ T }}
-    end
-
-    foo 1
-    foo "bar"
-    CODE
-
-    assert_expand code, [
-      ["{{ T }}", "Int32"],
-      ["{{ T }}", "String"],
-    ]
-  end
-
-  it "expands macro expression inside def of module" do
-    code = <<-CODE
-    module Foo(T)
-      def self.foo
-        {{ ‸T }}
+    it "expands macro expression inside C #{keyword} of private lib" do
+      code = <<-CODE
+      private lib Foo
+        #{keyword} Foo
+          ‸{{ "Foo = 1".id }}
+        end
       end
+      CODE
+
+      assert_expand_simple code, original: %({{ "Foo = 1".id }}), expanded: "Foo = 1"
+    end
+  end
+
+  ["", "private "].each do |prefix|
+    it "expands macro expression inside #{prefix}def" do
+      code = <<-CODE
+      #{prefix}def foo(x : T) forall T
+        ‸{{ T }}
+      end
+
+      foo 1
+      foo "bar"
+      CODE
+
+      assert_expand code, [
+        ["{{ T }}", "Int32"],
+        ["{{ T }}", "String"],
+      ]
     end
 
-    Foo(Int32).foo
-    Foo(String).foo
-    Foo(1).foo
+    it "expands macro expression inside def of #{prefix}module" do
+      code = <<-CODE
+      #{prefix}module Foo(T)
+        def self.foo
+          {{ ‸T }}
+        end
+      end
+
+      Foo(Int32).foo
+      Foo(String).foo
+      Foo(1).foo
+      CODE
+
+      assert_expand code, [
+        ["{{ T }}", "Int32"],
+        ["{{ T }}", "String"],
+        ["{{ T }}", "1"],
+      ]
+    end
+
+    it "expands macro expression inside def of nested #{prefix}module" do
+      code = <<-CODE
+      #{prefix}module Foo
+        #{prefix}module Bar(T)
+          def self.foo
+            {{ ‸T }}
+          end
+        end
+
+        Bar(Int32).foo
+        Bar(String).foo
+        Bar(1).foo
+      end
+      CODE
+
+      assert_expand code, [
+        ["{{ T }}", "Int32"],
+        ["{{ T }}", "String"],
+        ["{{ T }}", "1"],
+      ]
+    end
+  end
+
+  it "expands macro expression inside fun" do
+    code = <<-CODE
+    fun foo
+      {{ :foo‸ }}
+    end
     CODE
 
-    assert_expand code, [
-      ["{{ T }}", "Int32"],
-      ["{{ T }}", "String"],
-      ["{{ T }}", "1"],
-    ]
+    assert_expand_simple code, original: "{{ :foo }}", expanded: ":foo"
   end
 
   it "doesn't expand macro expression" do
@@ -436,7 +509,7 @@ describe "expand" do
     ‸foo
     CODE
 
-    assert_expand_fail code, "no expansion found: foo is not macro"
+    assert_expand_fail code, "no expansion found: foo may not be a macro"
   end
 
   it "expands macro with doc" do
@@ -448,7 +521,7 @@ describe "expand" do
       end
       # symbol of {{ x }}
       def {{ x }}_sym
-        :{{ x }}
+        {{ x.symbolize }}
       end
     end
 
