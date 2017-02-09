@@ -944,4 +944,31 @@ describe "File" do
       expect_raises(IO::Error, "closed stream") { io.write_byte('a'.ord.to_u8) }
     end
   end
+
+  describe "utime" do
+    it "sets times with utime" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "")
+
+      atime = Time.new(2000, 1, 2)
+      mtime = Time.new(2000, 3, 4)
+
+      File.utime(atime, mtime, filename)
+
+      stat = File.stat(filename)
+      stat.atime.should eq(atime)
+      stat.mtime.should eq(mtime)
+
+      File.delete filename
+    end
+
+    it "raises if file not found" do
+      atime = Time.new(2000, 1, 2)
+      mtime = Time.new(2000, 3, 4)
+
+      expect_raises Errno, "Error setting time to file" do
+        File.utime(atime, mtime, "#{__DIR__}/nonexistent_file")
+      end
+    end
+  end
 end

@@ -584,6 +584,24 @@ class File < IO::FileDescriptor
     code
   end
 
+  # Sets the access and modification times of *filename*.
+  def self.utime(atime : Time, mtime : Time, filename : String) : Nil
+    timevals = uninitialized LibC::Timeval[2]
+    timevals[0] = to_timeval(atime)
+    timevals[1] = to_timeval(mtime)
+    ret = LibC.utimes(filename, timevals)
+    if ret != 0
+      raise Errno.new("Error setting time to file '#{filename}'")
+    end
+  end
+
+  private def self.to_timeval(time : Time)
+    t = uninitialized LibC::Timeval
+    t.tv_sec = typeof(t.tv_sec).new(time.to_local.epoch)
+    t.tv_usec = typeof(t.tv_usec).new(0)
+    t
+  end
+
   # Return the size in bytes of the currently opened file.
   def size
     stat.size
