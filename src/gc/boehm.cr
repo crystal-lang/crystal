@@ -52,6 +52,10 @@ lib LibGC
   fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : Void*, start : Void* ->, arg : Void*) : LibC::Int
   fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
   fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
+
+  fun atfork_prepare = GC_atfork_prepare : Void
+  fun atfork_parent = GC_atfork_parent : Void
+  fun atfork_child = GC_atfork_child : Void
 end
 
 # :nodoc:
@@ -71,7 +75,7 @@ end
 
 module GC
   def self.init
-    LibGC.set_handle_fork(1)
+    LibGC.set_handle_fork(0)
     LibGC.init
   end
 

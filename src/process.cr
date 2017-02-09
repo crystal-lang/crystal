@@ -118,13 +118,17 @@ class Process
   # *run_hooks* should ALWAYS be `true` unless `exec` is used immediately after fork.
   # Channels, `IO` and other will not work reliably if *run_hooks* is `false`.
   protected def self.fork_internal(run_hooks : Bool = true)
+    LibGC.atfork_prepare
     pid = LibC.fork
     case pid
     when 0
       pid = nil
+      LibGC.atfork_child
       Process.after_fork_child_callbacks.each(&.call) if run_hooks
     when -1
       raise Errno.new("fork")
+    else
+      LibGC.atfork_parent
     end
     pid
   end
