@@ -101,7 +101,7 @@ struct Enum
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
             if {{@type}}::{{member}}.value != 0 && (value & {{@type}}::{{member}}.value) == {{@type}}::{{member}}.value
-              io << ", " if found
+              io << " | " if found
               io << {{member.stringify}}
               found = true
             end
@@ -126,7 +126,7 @@ struct Enum
   # ```
   # Color::Red.to_s                     # => "Red"
   # IOMode::None.to_s                   # => "None"
-  # (IOMode::Read | IOMode::Write).to_s # => "Read, Write"
+  # (IOMode::Read | IOMode::Write).to_s # => "Read | Write"
   #
   # Color.new(10).to_s # => "10"
   # ```
