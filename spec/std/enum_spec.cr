@@ -28,8 +28,9 @@ describe Enum do
 
     it "for flags enum" do
       SpecEnumFlags::None.to_s.should eq("None")
-      SpecEnumFlags::All.to_s.should eq("One, Two, Three")
-      (SpecEnumFlags::One | SpecEnumFlags::Two).to_s.should eq("One, Two")
+      SpecEnumFlags::One.to_s.should eq("One")
+      SpecEnumFlags::All.to_s.should eq("(One, Two, Three)")
+      (SpecEnumFlags::One | SpecEnumFlags::Two).to_s.should eq("(One, Two)")
     end
   end
 
