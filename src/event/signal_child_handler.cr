@@ -13,6 +13,8 @@ class Event::SignalChildHandler
 
   alias ChanType = Channel::Buffered(Process::Status?)
 
+  @mutex = Thread::Mutex.new
+
   def initialize
     @pending = Hash(LibC::PidT, Process::Status).new
     @waiting = Hash(LibC::PidT, ChanType).new
@@ -41,24 +43,28 @@ class Event::SignalChildHandler
   end
 
   private def send_pending(pid, status)
-    # BUG: needs mutexes with threads
+    @mutex.lock
     if chan = @waiting[pid]?
-      chan.send status
       @waiting.delete pid
+      # TODO: verify that this cannot block
+      chan.send status
     else
       @pending[pid] = status
     end
+  ensure
+    @mutex.unlock
   end
 
   # Returns a future that sends a `Process::Status` or raises after forking.
   def waitpid(pid : LibC::PidT)
     chan = ChanType.new(1)
-    # BUG: needs mutexes with threads
-    if status = @pending[pid]?
-      chan.send status
-      @pending.delete pid
-    else
-      @waiting[pid] = chan
+    @mutex.synchronize do
+      if status = @pending[pid]?
+        chan.send status
+        @pending.delete pid
+      else
+        @waiting[pid] = chan
+      end
     end
 
     lazy do
