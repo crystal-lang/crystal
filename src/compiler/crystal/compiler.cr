@@ -321,25 +321,24 @@ module Crystal
 
       units.each_slice(Math.max(units.size / @n_threads, 1)) do |slice|
         jobs_count += 1
-        spawn do
-          codegen_process = fork do
-            pipe_w = pw
-            slice.each do |unit|
-              codegen_single_unit(program, unit, target_triple)
-              if pipe_w && unit.reused_previous_compilation?
-                pipe_w.write_byte(1_u8)
-              end
+        index = jobs_count
+        # spawn do
+        #   Fiber.current.name = "worker #{index}"
+          pipe_w = pw
+          slice.each do |unit|
+            codegen_single_unit(program, unit, target_triple)
+            if pipe_w && unit.reused_previous_compilation?
+              pipe_w.write_byte(1_u8)
             end
           end
-          codegen_process.wait
-          wait_channel.send nil
-        end
+          # wait_channel.send nil
+        # end
       end
 
-      jobs_count.times { wait_channel.receive }
+      # jobs_count.times { wait_channel.receive }
       if pipe_w = pw
         pipe_w.close
-        Fiber.yield
+        # Fiber.yield
       end
 
       reused
