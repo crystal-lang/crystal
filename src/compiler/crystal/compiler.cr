@@ -134,8 +134,10 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node = program.semantic node, @stats, cleanup: !no_cleanup?
-      codegen program, node, source, output_filename unless @no_codegen
+      node = program.semantic node, cleanup: !no_cleanup?
+      result = codegen program, node, source, output_filename unless @no_codegen
+      print_macro_run_stats(program)
+      print_codegen_stats(result)
       Result.new program, node
     end
 
@@ -153,7 +155,8 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node, processor = program.top_level_semantic(node, @stats)
+      node, processor = program.top_level_semantic(node)
+      print_macro_run_stats(program)
       Result.new program, node
     end
 
@@ -169,6 +172,7 @@ module Crystal
       program.color = color?
       program.stdout = stdout
       program.show_error_trace = show_error_trace?
+      program.wants_stats = @stats
       program
     end
 
@@ -239,10 +243,12 @@ module Crystal
       if @cross_compile
         cross_compile program, units, lib_flags, output_filename
       else
-        codegen program, units, lib_flags, output_filename, output_dir
+        result = codegen program, units, lib_flags, output_filename, output_dir
       end
 
       CacheDir.instance.cleanup if @cleanup
+
+      result
     end
 
     private def cross_compile(program, units, lib_flags, output_filename)
@@ -278,16 +284,6 @@ module Crystal
         end
       end
 
-      if @stats
-        if units.size == reused
-          puts "Codegen (bc+obj): all previous .o files were reused"
-        elsif reused == 0
-          puts "Codegen (bc+obj): no previous .o files were reused"
-        else
-          puts "Codegen (bc+obj): #{reused}/#{units.size} .o files were reused"
-        end
-      end
-
       # We check again because maybe this directory was created in between (maybe with a macro run)
       if Dir.exists?(output_filename)
         error "can't use `#{output_filename}` as output filename because it's a directory"
@@ -300,6 +296,8 @@ module Crystal
           system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
         end
       end
+
+      {units.size, reused}
     end
 
     private def codegen_many_units(program, units, target_triple)
@@ -348,6 +346,41 @@ module Crystal
     private def codegen_single_unit(program, unit, target_triple)
       unit.llvm_mod.target = target_triple
       unit.compile
+    end
+
+    private def print_macro_run_stats(program)
+      return unless @stats && !program.compiled_macros_cache.empty?
+
+      puts
+      puts "Macro runs:"
+      program.compiled_macros_cache.each do |filename, compiled_macro_run|
+        print " - "
+        print filename
+        print ": "
+        if compiled_macro_run.elapsed == Time::Span.zero
+          print "reused previous compilation"
+        else
+          print compiled_macro_run.elapsed
+        end
+        puts
+      end
+    end
+
+    private def print_codegen_stats(result)
+      return unless @stats
+      return unless result
+
+      units_size, reused = result
+
+      puts
+      puts "Codegen (bc+obj):"
+      if units_size == reused
+        puts " - all previous .o files were reused"
+      elsif reused == 0
+        puts " - no previous .o files were reused"
+      else
+        puts " - #{reused}/#{units_size} .o files were reused"
+      end
     end
 
     protected def target_machine

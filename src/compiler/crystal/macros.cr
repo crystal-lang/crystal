@@ -64,23 +64,30 @@ module Crystal::Macros
   # A simple example:
   #
   # ```
-  # # fetch.cr
-  # require "http/client"
-  #
-  # puts HTTP::Client.get(ARGV[0]).body
+  # # read.cr
+  # puts File.read(ARGV[0])
   # ```
   #
   # ```
   # # main.cr
-  # macro invoke_fetch
-  #   {{ run("./fetch", "http://example.com").stringify }}
+  # macro read_file_at_compile_time(filename)
+  #   {{ run("./read", filename).stringify }}
   # end
   #
-  # puts invoke_fetch
+  # puts read_file_at_compile_time("some_file.txt")
   # ```
   #
-  # The above generates a program that will have the contents of `http://example.com`.
-  # A connection to `http://example.com` is never made at runtime.
+  # The above generates a program that will have the contents of `some_file.txt`.
+  # The file, however, is read at compile time and will not be needed at runtime.
+  #
+  # NOTE: the compiler is allowed to cache the executable generated for
+  # *filename* and only recompile it if any of the files it depends on changes
+  # (their modified time). This is why it's **strongly discouraged** to use a program
+  # for `run` that changes in subsequent compilations (for example, if it executes
+  # shell commands at compile time, or other macro run programs). It's also strongly
+  # discouraged to have a macro run program take a lot of time, because this will
+  # slow down compilation times. Reading files is OK, opening an HTTP connection
+  # at compile-time will most likely result if very slow compilations.
   def run(filename, *args) : MacroId
   end
 
