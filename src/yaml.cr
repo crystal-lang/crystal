@@ -71,7 +71,7 @@ module YAML
     def initialize(message, line_number, column_number)
       @line_number = line_number.to_i
       @column_number = column_number.to_i
-      super "#{message} at #{@line_number}:#{@column_number}"
+      super(message)
     end
   end
 

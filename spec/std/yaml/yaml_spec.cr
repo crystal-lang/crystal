@@ -88,8 +88,8 @@ describe "YAML" do
             YAML
           fail "expected YAML.parse to raise"
         rescue ex : YAML::ParseException
-          ex.line_number.should eq(3)
-          ex.column_number.should eq(3)
+          ex.line_number.should eq(4)
+          ex.column_number.should eq(4)
         end
       end
 
@@ -107,8 +107,18 @@ describe "YAML" do
             end
           end
         rescue ex : YAML::ParseException
-          ex.line_number.should eq(1)
-          ex.column_number.should eq(2)
+          ex.line_number.should eq(2)
+          ex.column_number.should eq(3)
+        end
+      end
+
+      it "has correct message (#4006)" do
+        expect_raises YAML::ParseException, "could not find expected ':' at line 4, column 1, while scanning a simple key at line 3, column 5" do
+          YAML.parse <<-END
+            a:
+              - "b": >
+                c
+            END
         end
       end
 
