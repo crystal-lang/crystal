@@ -146,7 +146,7 @@ class Fiber
 
   def run
     Fiber.gc_read_unlock
-    log "Start with callback %ld", @callback
+    thread_log "Fiber started with callback %ld", @callback
     flush_callback
     @proc.call
   rescue ex
@@ -347,7 +347,7 @@ class Fiber
   def resume
     # The purpose of this method is to suspend a fiber (F1) and give control back
     # to another one (F2).
-    # tlog "Resume '%s' -> '%s'", Fiber.current.name!, self.name!
+    thread_log "Resume '%s' -> '%s'", Fiber.current.name!, self.name!
     Fiber.gc_read_lock
 
     # current <~~ F1

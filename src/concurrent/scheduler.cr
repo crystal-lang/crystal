@@ -25,7 +25,7 @@ class Scheduler
 
   def self.print_state
     @@all_mutex.synchronize do
-      log "schedulers: %d, sleeping: %d, spinning: %d, wake: %d\n", @@all.size, @@sleeping.get, @@spinning.get, @@wake.get
+      thread_log "schedulers: %d, sleeping: %d, spinning: %d, wake: %d\n", @@all.size, @@sleeping.get, @@spinning.get, @@wake.get
     end
   end
 
@@ -44,7 +44,7 @@ class Scheduler
   end
 
   def self.start
-    # tlog "Scheduler start"
+    thread_log "Scheduler start"
     scheduler = new
     Thread.current.scheduler = scheduler
     scheduler.spin
@@ -60,7 +60,7 @@ class Scheduler
   protected def wait
     @@wait_mutex.synchronize do
       # @@sleeping.add(1)
-      tlog "Waiting (runnables: %d)", @runnables.size
+      thread_log "Scheduler #{self} waiting (runnables: %d)", @runnables.size
       # LibC.printf "%ld Going to sleep\n", LibC.pthread_self
 
       if @@wake.get != 0
@@ -69,7 +69,7 @@ class Scheduler
         @@wait_cv.wait(@@wait_mutex)
       end
       # LibC.printf "%ld Waking up\n", LibC.pthread_self
-      tlog "Received signal"
+      thread_log "Scheduler #{self} waking up"
       @@sleeping.add(-1)
     end
   end
@@ -77,12 +77,12 @@ class Scheduler
   def reschedule(is_reschedule_fiber = false)
     while true
       if runnable = @runnables_lock.synchronize { @runnables.shift? }
-        # tlog "Reschedule #{self}: Found in queue '%s'", runnable.name!
+        thread_log "Reschedule #{self}: Found in queue '%s'", runnable.name!
         runnable.resume
         break
       elsif reschedule_fiber = @reschedule_fiber
         if is_reschedule_fiber
-          # tlog "Reschedule #{self}: Spinning"
+          thread_log "Reschedule #{self}: Spinning"
           @@spinning.add(1)
           could_steal = spin
           unless could_steal
@@ -91,7 +91,7 @@ class Scheduler
             wait
           end
         else
-          # tlog "Reschedule #{self}: Switching to rescheduling fiber %ld", reschedule_fiber.object_id
+          thread_log "Reschedule #{self}: Switching to rescheduling fiber %ld", reschedule_fiber.object_id
           reschedule_fiber.resume
           break
         end
@@ -108,7 +108,7 @@ class Scheduler
     100.times do
       sched = choose_other_sched
       if (stolen = sched.steal) && stolen.size > 0
-        # tlog "Stole #{stolen.size} runnables (#{stolen.map(&.name!).join(", ")}) from #{sched}"
+        thread_log "Stole #{stolen.size} runnables (#{stolen.map(&.name!).join(", ")}) from #{sched}"
         enqueue stolen
         could_steal = true
         break
@@ -130,7 +130,7 @@ class Scheduler
   end
 
   def enqueue(fiber : Fiber)
-    # tlog "Enqueue '#{fiber.name}'"
+    thread_log "Enqueue '#{fiber.name}'"
     @runnables_lock.synchronize { @runnables << fiber }
     ensure_workers_available
   end

@@ -178,16 +178,6 @@ def abort(message, status = 1) : NoReturn
   exit status
 end
 
-def log(msg, *args)
-  # LibC.printf "(%ld) #{msg}\n", LibC.pthread_self, *args
-end
-
-require "concurrent/thread_log"
-
-def tlog(msg, *args)
-  ThreadLog.tlog(msg, *args)
-end
-
 class Process
   # Hooks are defined here due to load order problems.
   def self.after_fork_child_callbacks

@@ -150,3 +150,11 @@ macro parallel(*jobs)
     {% end %}
   }
 end
+
+require "concurrent/thread_log"
+
+macro thread_log(msg, *args)
+  {% if flag?(:concurrency_debug) %}
+    ThreadLog.tlog({{msg}}, {{*args}})
+  {% end %}
+end
