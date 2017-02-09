@@ -420,4 +420,22 @@ describe "OptionParser" do
       value2.should eq("value2")
     end
   end
+
+  it "raises if flag doesn't start with dash (#4001)" do
+    OptionParser.parse([] of String) do |opts|
+      expect_raises ArgumentError, %(argument 'flag' ("foo") must start with a dash) do
+        opts.on("foo", "") { }
+      end
+
+      expect_raises ArgumentError, %(argument 'short_flag' ("foo") must start with a dash) do
+        opts.on("foo", "bar", "baz") { }
+      end
+
+      expect_raises ArgumentError, %(argument 'long_flag' ("bar") must start with a dash) do
+        opts.on("-foo", "bar", "baz") { }
+      end
+
+      opts.on("", "-bar", "baz") { }
+    end
+  end
 end

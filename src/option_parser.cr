@@ -93,7 +93,7 @@ class OptionParser
 
   # Establishes a handler for a *flag*.
   #
-  # Flags can (but don't have to) start with a dash. They can also have
+  # Flags must start with a dash or double dash. They can also have
   # an optional argument, which will get passed to the block.
   # Each flag has a description, which will be used for the help message.
   #
@@ -102,15 +102,20 @@ class OptionParser
   # * `-a`, `-B`
   # * `--something-longer`
   # * `-f FILE`, `--file FILE`, `--file=FILE` (these will yield the passed value to the block as a string)
-  def on(flag, description, &block : String ->)
-    append_flag flag.to_s, description
+  def on(flag : String, description : String, &block : String ->)
+    check_starts_with_dash flag, "flag"
+
+    append_flag flag, description
     @handlers << Handler.new(flag, block)
   end
 
   # Establishes a handler for a pair of short and long flags.
   #
   # See the other definition of `on` for examples.
-  def on(short_flag, long_flag, description, &block : String ->)
+  def on(short_flag : String, long_flag : String, description : String, &block : String ->)
+    check_starts_with_dash short_flag, "short_flag", allow_empty: true
+    check_starts_with_dash long_flag, "long_flag"
+
     append_flag "#{short_flag}, #{long_flag}", description
 
     has_argument = /([ =].+)/
@@ -178,6 +183,14 @@ class OptionParser
   # running the handlers associated to each option.
   def parse!
     parse ARGV
+  end
+
+  private def check_starts_with_dash(arg, name, allow_empty = false)
+    return if allow_empty && arg.empty?
+
+    unless arg.starts_with?('-')
+      raise ArgumentError.new("argument '#{name}' (#{arg.inspect}) must start with a dash (-)")
+    end
   end
 
   private struct ParseTask
