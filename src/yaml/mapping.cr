@@ -87,14 +87,14 @@ module YAML
       {% end %}
     {% end %}
 
-    def initialize(%pull : YAML::PullParser)
+    def initialize(%pull : ::YAML::PullParser)
       {% for key, value in properties %}
         %var{key.id} = nil
         %found{key.id} = false
       {% end %}
 
       %pull.read_mapping_start
-      while %pull.kind != YAML::EventKind::MAPPING_END
+      while %pull.kind != ::YAML::EventKind::MAPPING_END
         key = %pull.read_scalar.not_nil!
         case key
         {% for key, value in properties %}
@@ -108,14 +108,14 @@ module YAML
               {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
                 {{value[:type]}}.new(%pull)
               {% else %}
-                Union({{value[:type]}}).new(%pull)
+                ::Union({{value[:type]}}).new(%pull)
               {% end %}
 
             {% if value[:nilable] || value[:default] != nil %} } {% end %}
         {% end %}
         else
           {% if strict %}
-            raise YAML::ParseException.new("unknown yaml attribute: #{key}", 0, 0)
+            raise ::YAML::ParseException.new("unknown yaml attribute: #{key}", 0, 0)
           {% else %}
             %pull.skip
           {% end %}
@@ -125,8 +125,8 @@ module YAML
 
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
-          if %var{key.id}.is_a?(Nil) && !%found{key.id} && !Union({{value[:type]}}).nilable?
-            raise YAML::ParseException.new("missing yaml attribute: {{(value[:key] || key).id}}", 0, 0)
+          if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
+            raise ::YAML::ParseException.new("missing yaml attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
       {% end %}
@@ -139,19 +139,19 @@ module YAML
             @{{key.id}} = %var{key.id}
           {% end %}
         {% elsif value[:default] != nil %}
-          @{{key.id}} = %var{key.id}.is_a?(Nil) ? {{value[:default]}} : %var{key.id}
+          @{{key.id}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
         {% else %}
           @{{key.id}} = %var{key.id}.as({{value[:type]}})
         {% end %}
       {% end %}
     end
 
-    def to_yaml(%yaml : YAML::Builder)
+    def to_yaml(%yaml : ::YAML::Builder)
       %yaml.mapping do
         {% for key, value in properties %}
           _{{key.id}} = @{{key.id}}
 
-          unless _{{key.id}}.is_a?(Nil)
+          unless _{{key.id}}.nil?
             # Key
             {{value[:key] || key.id.stringify}}.to_yaml(%yaml)
 

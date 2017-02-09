@@ -80,7 +80,7 @@ module JSON
       {% end %}
     {% end %}
 
-    def initialize(%pull : JSON::PullParser)
+    def initialize(%pull : ::JSON::PullParser)
       {% for key, value in properties %}
         %var{key.id} = nil
         %found{key.id} = false
@@ -104,7 +104,7 @@ module JSON
               {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
                 {{value[:type]}}.new(%pull)
               {% else %}
-                Union({{value[:type]}}).new(%pull)
+                ::Union({{value[:type]}}).new(%pull)
               {% end %}
 
               {% if value[:root] %}
@@ -116,7 +116,7 @@ module JSON
         {% end %}
         else
           {% if strict %}
-            raise JSON::ParseException.new("unknown json attribute: #{key}", 0, 0)
+            raise ::JSON::ParseException.new("unknown json attribute: #{key}", 0, 0)
           {% else %}
             %pull.skip
           {% end %}
@@ -125,8 +125,8 @@ module JSON
 
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
-          if %var{key.id}.is_a?(Nil) && !%found{key.id} && !Union({{value[:type]}}).nilable?
-            raise JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
+          if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
+            raise ::JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
       {% end %}
@@ -139,26 +139,26 @@ module JSON
             @{{key.id}} = %var{key.id}
           {% end %}
         {% elsif value[:default] != nil %}
-          @{{key.id}} = %var{key.id}.is_a?(Nil) ? {{value[:default]}} : %var{key.id}
+          @{{key.id}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
         {% else %}
           @{{key.id}} = (%var{key.id}).as({{value[:type]}})
         {% end %}
       {% end %}
     end
 
-    def to_json(json : JSON::Builder)
+    def to_json(json : ::JSON::Builder)
       json.object do
         {% for key, value in properties %}
           _{{key.id}} = @{{key.id}}
 
           {% unless value[:emit_null] %}
-            unless _{{key.id}}.is_a?(Nil)
+            unless _{{key.id}}.nil?
           {% end %}
 
             json.field({{value[:key] || key.id.stringify}}) do
               {% if value[:root] %}
                 {% if value[:emit_null] %}
-                  if _{{key.id}}.is_a?(Nil)
+                  if _{{key.id}}.nil?
                     nil.to_json(json)
                   else
                 {% end %}
