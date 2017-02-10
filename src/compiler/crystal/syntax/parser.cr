@@ -1908,7 +1908,7 @@ module Crystal
             if this_piece_is_in_new_line || next_piece_is_in_new_line
               line = current_line.to_s
               line = remove_heredoc_from_line(line, indent, line_number - 1) if remove_indent
-              new_pieces << StringLiteral.new(line)
+              add_heredoc_piece new_pieces, line
               current_line.clear
               remove_indent = true
             end
@@ -1916,7 +1916,7 @@ module Crystal
             current_line << (slash_n ? "\n" : "\r\n")
             line = current_line.to_s
             line = remove_heredoc_from_line(line, indent, line_number - 1) if remove_indent
-            new_pieces << StringLiteral.new(line)
+            add_heredoc_piece new_pieces, line
             current_line.clear
             remove_indent = true
             current_line << value.byte_slice(slash_n ? 1 : 2)
@@ -1931,18 +1931,18 @@ module Crystal
             else
               line = line[indent..-1]
             end
-            new_pieces << StringLiteral.new(line) unless line.empty?
-            new_pieces << value
+            add_heredoc_piece new_pieces, line unless line.empty?
+            add_heredoc_piece new_pieces, value
             remove_indent = false
             current_line.clear
           else
             unless current_line.empty?
               line = current_line.to_s
-              new_pieces << StringLiteral.new(line)
+              add_heredoc_piece new_pieces, line
               current_line.clear
             end
 
-            new_pieces << value
+            add_heredoc_piece new_pieces, value
           end
         end
         previous_line_number = line_number
@@ -1950,9 +1950,22 @@ module Crystal
       unless current_line.empty?
         line = current_line.to_s
         line = remove_heredoc_from_line(line, indent, pieces.last.line_number) if remove_indent
-        new_pieces << StringLiteral.new(line)
+        add_heredoc_piece new_pieces, line
       end
       new_pieces
+    end
+
+    private def add_heredoc_piece(pieces, piece : String)
+      last = pieces.last?
+      if last.is_a?(StringLiteral)
+        last.value += piece
+      else
+        pieces << StringLiteral.new(piece)
+      end
+    end
+
+    private def add_heredoc_piece(pieces, piece : ASTNode)
+      pieces << piece
     end
 
     def remove_heredoc_from_line(line, indent, line_number)
