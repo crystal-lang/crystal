@@ -267,14 +267,14 @@ module Crystal
       object_names = units.map &.object_filename
 
       target_triple = target_machine.triple
-      reused = 0
+      reused = [] of String
 
       Crystal.timing("Codegen (bc+obj)", @stats) do
         if units.size == 1
           first_unit = units.first
 
           codegen_single_unit(program, first_unit, target_triple)
-          reused += 1 if first_unit.reused_previous_compilation?
+          reused << first_unit.name if first_unit.reused_previous_compilation?
 
           if emit = @emit
             first_unit.emit(emit, emit_base_filename || output_filename)
@@ -297,12 +297,12 @@ module Crystal
         end
       end
 
-      {units.size, reused}
+      {units, reused}
     end
 
     private def codegen_many_units(program, units, target_triple)
       jobs_count = 0
-      reused = 0
+      reused = [] of String
       wait_channel = Channel(Nil).new(@n_threads)
 
       # For stats output we want to count how many previous
@@ -311,8 +311,8 @@ module Crystal
       if @stats
         pr, pw = IO.pipe
         spawn do
-          pr.each_byte do |byte|
-            reused += byte
+          pr.each_line do |line|
+            reused << line
           end
         end
       end
@@ -325,7 +325,7 @@ module Crystal
             slice.each do |unit|
               codegen_single_unit(program, unit, target_triple)
               if pipe_w && unit.reused_previous_compilation?
-                pipe_w.write_byte(1_u8)
+                pipe_w.puts unit.name
               end
             end
           end
@@ -370,16 +370,22 @@ module Crystal
       return unless @stats
       return unless result
 
-      units_size, reused = result
+      units, reused = result
 
       puts
       puts "Codegen (bc+obj):"
-      if units_size == reused
+      if units.size == reused.size
         puts " - all previous .o files were reused"
-      elsif reused == 0
+      elsif reused.size == 0
         puts " - no previous .o files were reused"
       else
-        puts " - #{reused}/#{units_size} .o files were reused"
+        puts " - #{reused.size}/#{units.size} .o files were reused"
+        not_reused = units.reject { |u| reused.includes?(u.name) }
+        puts
+        puts "These modules were not reused:"
+        not_reused.each do |unit|
+          puts " - #{unit.original_name} (#{unit.name}.bc)"
+        end
       end
     end
 
@@ -455,12 +461,15 @@ module Crystal
     # An LLVM::Module with information to compile it.
     class CompilationUnit
       getter compiler
+      getter name
+      getter original_name
       getter llvm_mod
       getter? reused_previous_compilation = false
 
       def initialize(@compiler : Compiler, @name : String, @llvm_mod : LLVM::Module,
                      @output_dir : String, @bc_flags_changed : Bool)
         @name = "_main" if @name == ""
+        @original_name = @name
         @name = String.build do |str|
           @name.each_char do |char|
             case char
