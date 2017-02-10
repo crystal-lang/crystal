@@ -3406,6 +3406,7 @@ module Crystal
 
     def parse_arg_name(location, extra_assigns, allow_external_name)
       do_next_token = true
+      found_string_literal = false
 
       if allow_external_name && (@token.type == :IDENT || string_literal_start?)
         if @token.type == :IDENT
@@ -3413,6 +3414,7 @@ module Crystal
           next_token
         else
           external_name = parse_string_without_interpolation("external name")
+          found_string_literal = true
         end
         found_space = @token.type == :SPACE || @token.type == :NEWLINE
         skip_space
@@ -3462,6 +3464,9 @@ module Crystal
         do_next_token = true
       else
         if external_name
+          if found_string_literal
+            raise "unexpected token: #{@token}, expected argument internal name"
+          end
           arg_name = external_name
         else
           raise "unexpected token: #{@token}"
