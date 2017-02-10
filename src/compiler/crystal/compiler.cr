@@ -357,8 +357,8 @@ module Crystal
         print " - "
         print filename
         print ": "
-        if compiled_macro_run.elapsed == Time::Span.zero
-          print "reused previous compilation"
+        if compiled_macro_run.reused
+          print "reused previous compilation (#{compiled_macro_run.elapsed})"
         else
           print compiled_macro_run.elapsed
         end

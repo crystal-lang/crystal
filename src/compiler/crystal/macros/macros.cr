@@ -15,12 +15,12 @@ class Crystal::Program
   getter(macro_expander) { MacroExpander.new self }
 
   # A cache of compiled "macro run" files.
-  # The keys are filenames that were compiled, the values are  executable
+  # The keys are filenames that were compiled, the values are executable
   # filenames ready to be run (so they don't need to be compiled twice),
-  # together with the time it took to compile them (it could be zero
-  # if we could reuse a previous compilation).
+  # together with the time it took to compile them and whether a previous
+  # compilation was reused.
   # The elapsed time is only needed for stats.
-  record CompiledMacroRun, filename : String, elapsed : Time::Span
+  record CompiledMacroRun, filename : String, elapsed : Time::Span, reused : Bool
   property compiled_macros_cache = {} of String => CompiledMacroRun
 
   # Returns a new temporary file, which tries to be stored in the
@@ -123,7 +123,8 @@ class Crystal::Program
     File.utime(now, now, program_dir)
 
     if can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
-      return CompiledMacroRun.new(executable_path, Time::Span.zero)
+      elapsed_time = wants_stats? ? (Time.now - time) : Time::Span.zero
+      return CompiledMacroRun.new(executable_path, elapsed_time, true)
     end
 
     compiler = Compiler.new
@@ -163,7 +164,7 @@ class Crystal::Program
 
     elapsed_time = wants_stats? ? (Time.now - time) : Time::Span.zero
 
-    CompiledMacroRun.new(executable_path, elapsed_time)
+    CompiledMacroRun.new(executable_path, elapsed_time, false)
   end
 
   private def can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
