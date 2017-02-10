@@ -149,7 +149,7 @@ That only needs to be done once per clone. Next, let's fetch the latest state an
 ```sh
 git fetch upstream
 git checkout my_feature_branch
-git rebase -i upstream/master # Or upstream/gh-pages for contributing to the out of code documentation
+git rebase -i upstream/master
 ```
 
 Now you should be presented with a list of commits in your editor, with the first commit you made on your branch at the top. Always keep the first
