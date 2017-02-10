@@ -523,7 +523,7 @@ class HTTP::Client
     end
   end
 
-  private def exec_internal(request, &block)
+  private def exec_internal(request, &block : Response -> T) : T forall T
     exec_internal_single(request) do |response|
       if response
         return handle_response(response) { yield response }
@@ -538,10 +538,10 @@ class HTTP::Client
             yield response
           end
         end
-
-        raise "unexpected end of http response"
       end
     end
+
+    raise "unexpected end of http response"
   end
 
   private def exec_internal_single(request)
