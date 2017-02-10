@@ -302,24 +302,25 @@ module Crystal
 
     private def codegen_many_units(program, units, target_triple)
       jobs_count = 0
-      reused = [] of String
-      wait_channel = Channel(Nil).new(@n_threads)
-
-      # For stats output we want to count how many previous
-      # .o files were reused, mainly to detect performance regressions.
-      # Because we fork, we must communicate using a pipe.
-      if @stats
-        pr, pw = IO.pipe
-        spawn do
-          pr.each_line do |line|
-            reused << line
-          end
-        end
-      end
+      all_reused = [] of String
+      wait_channel = Channel(Array(String)).new(@n_threads)
 
       units.each_slice(Math.max(units.size / @n_threads, 1)) do |slice|
         jobs_count += 1
         spawn do
+          # For stats output we want to count how many previous
+          # .o files were reused, mainly to detect performance regressions.
+          # Because we fork, we must communicate using a pipe.
+          reused = [] of String
+          if @stats
+            pr, pw = IO.pipe
+            spawn do
+              pr.each_line do |line|
+                reused << line
+              end
+            end
+          end
+
           codegen_process = fork do
             pipe_w = pw
             slice.each do |unit|
@@ -330,17 +331,22 @@ module Crystal
             end
           end
           codegen_process.wait
-          wait_channel.send nil
+
+          if pipe_w = pw
+            pipe_w.close
+            Fiber.yield
+          end
+
+          wait_channel.send reused
         end
       end
 
-      jobs_count.times { wait_channel.receive }
-      if pipe_w = pw
-        pipe_w.close
-        Fiber.yield
+      jobs_count.times do
+        reused = wait_channel.receive
+        all_reused.concat(reused)
       end
 
-      reused
+      all_reused
     end
 
     private def codegen_single_unit(program, unit, target_triple)
