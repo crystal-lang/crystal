@@ -1337,6 +1337,9 @@ module Crystal
     property type_vars : Array(ASTNode)
     property named_args : Array(NamedArgument)?
 
+    # `true` if this Generic was parsed from `T?`
+    property? question = false
+
     def initialize(@name, @type_vars : Array, @named_args = nil)
     end
 
@@ -1351,7 +1354,9 @@ module Crystal
     end
 
     def clone_without_location
-      Generic.new(@name.clone, @type_vars.clone, @named_args.clone)
+      generic = Generic.new(@name.clone, @type_vars.clone, @named_args.clone)
+      generic.question = question?
+      generic
     end
 
     def_equals_and_hash @name, @type_vars, @named_args

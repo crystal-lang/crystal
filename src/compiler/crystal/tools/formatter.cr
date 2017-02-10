@@ -969,6 +969,12 @@ module Crystal
       name = node.name
       first_name = name.global? && name.names.size == 1 && name.names.first
 
+      if node.question?
+        node.type_vars[0].accept self
+        write_token :"?"
+        return false
+      end
+
       # Check if it's T* instead of Pointer(T)
       if first_name == "Pointer" && @token.value != "Pointer"
         type_var = node.type_vars.first
@@ -1032,13 +1038,6 @@ module Crystal
           end
         end
         write_token :"}"
-        return false
-      end
-
-      # Check if it's T? instead of Union(T, Nil)
-      if first_name == "Union" && @token.value != "Union"
-        node.type_vars.first.accept self
-        write_token :"?"
         return false
       end
 

@@ -4188,6 +4188,7 @@ module Crystal
           const = Generic.new(Path.global("Union").at(const), [
             const, Path.global("Nil").at(const),
           ] of ASTNode)
+          const.question = true
           next_token
         end
       end
