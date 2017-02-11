@@ -593,13 +593,24 @@ module IO
   # io.read_fully?(slice) # => nil
   # ```
   def read_fully?(slice : Bytes)
-    count = slice.size
+    count = read_fully_count(slice)
+    count == slice.size ? count : nil
+  end
+
+  # Tries to read exactly `slice.size` bytes from this `IO` into *slice*,
+  # and returns the number of bytes read.
+  #
+  # This method tries to fill `slice` and returns the number of bytes
+  # read, so later a check must be performed to know if it was fully
+  # filled.
+  def read_fully_count(slice : Bytes)
+    size = slice.size
     while slice.size > 0
       read_bytes = read slice
-      return nil if read_bytes == 0
+      break if read_bytes == 0
       slice += read_bytes
     end
-    count
+    size - slice.size
   end
 
   # Reads the rest of this `IO` data as a `String`.
@@ -834,7 +845,7 @@ module IO
   # io.gets("wo") # => "rld"
   # io.gets("wo") # => nil
   # ```
-  def gets(delimiter : String, chomp = false) : String?
+  def gets(delimiter : String, chomp = false)
     # Empty string: read all
     if delimiter.empty?
       return gets_to_end

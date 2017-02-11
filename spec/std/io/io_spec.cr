@@ -446,6 +446,13 @@ describe IO do
 
       str.read_fully?(slice).should be_nil
     end
+
+    it "does read_fully_count" do
+      str = SimpleIOMemory.new("hello")
+      slice = Bytes.new(10)
+      str.read_fully_count(slice).should eq(5)
+      String.new(slice[0, 5]).should eq("hello")
+    end
   end
 
   describe "write operations" do

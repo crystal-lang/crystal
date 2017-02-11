@@ -144,17 +144,15 @@ class Zip::Writer
     @entries << entry
   end
 
-  # Adds an entry that will have *string* as its contents.
-  def add(filename_or_entry : String | Entry, string : String)
-    add(filename_or_entry) do |io|
-      io << string
-    end
+  # Adds an entry that will have *data* as its contents.
+  def add(filename_or_entry : String | Entry, data : String)
+    add(filename_or_entry, data.to_slice)
   end
 
-  # Adds an entry that will have *bytes* as its contents.
-  def add(filename_or_entry : String | Entry, bytes : Bytes)
+  # Adds an entry that will have *data* as its contents.
+  def add(filename_or_entry : String | Entry, data : Bytes)
     add(filename_or_entry) do |io|
-      io.write(bytes)
+      io.write(data)
     end
   end
 
