@@ -318,14 +318,6 @@ lib LibLLVM
     fun set_module_data_layout = LLVMSetModuleDataLayout(mod : ModuleRef, data : TargetDataRef)
   {% end %}
 
-  {% if LibLLVM::IS_35 %}
-    DEBUG_METADATA_VERSION = 1
-  {% elsif LibLLVM::IS_36 %}
-    DEBUG_METADATA_VERSION = 2
-  {% else %}
-    DEBUG_METADATA_VERSION = 3
-  {% end %}
-
   {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
     fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : LLVM::Attribute)
     fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : LLVM::Attribute)
@@ -347,7 +339,33 @@ lib LibLLVM
     fun add_call_site_attribute = LLVMAddCallSiteAttribute(f : ValueRef, idx : AttributeIndex, value : AttributeRef)
   {% end %}
 
-  enum ModuleFlag : Int32
-    Warning = 2
-  end
+  fun create_memory_buffer_with_contents_of_file = LLVMCreateMemoryBufferWithContentsOfFile(path : UInt8*, out_mem_buf : MemoryBufferRef*, out_message : UInt8**) : Int32
+  fun parse_ir_in_context = LLVMParseIRInContext(context : ContextRef, mem_buf : MemoryBufferRef, out_m : ModuleRef*, out_message : UInt8**) : Int32
+  fun get_module_identifier = LLVMGetModuleIdentifier(m : ModuleRef, len : LibC::SizeT*) : UInt8*
+  fun set_module_identifier = LLVMSetModuleIdentifier(m : ModuleRef, ident : UInt8*, len : LibC::SizeT)
+  fun context_dispose = LLVMContextDispose(ContextRef)
+
+  fun void_type_in_context = LLVMVoidTypeInContext(ContextRef) : TypeRef
+  fun int1_type_in_context = LLVMInt1TypeInContext(ContextRef) : TypeRef
+  fun int8_type_in_context = LLVMInt8TypeInContext(ContextRef) : TypeRef
+  fun int16_type_in_context = LLVMInt16TypeInContext(ContextRef) : TypeRef
+  fun int32_type_in_context = LLVMInt32TypeInContext(ContextRef) : TypeRef
+  fun int64_type_in_context = LLVMInt64TypeInContext(ContextRef) : TypeRef
+  fun int128_type_in_context = LLVMInt128TypeInContext(ContextRef) : TypeRef
+  fun int_type_in_context = LLVMIntTypeInContext(ContextRef, num_bits : UInt) : TypeRef
+  fun float_type_in_context = LLVMFloatTypeInContext(ContextRef) : TypeRef
+  fun double_type_in_context = LLVMDoubleTypeInContext(ContextRef) : TypeRef
+  fun struct_type_in_context = LLVMStructTypeInContext(c : ContextRef, element_types : TypeRef*, element_count : UInt32, packed : Int32) : TypeRef
+
+  fun const_string_in_context = LLVMConstStringInContext(c : ContextRef, str : UInt8*, length : UInt32, dont_null_terminate : Int32) : ValueRef
+  fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, contant_vals : ValueRef*, count : UInt32, packed : Int32) : ValueRef
+
+  fun get_md_kind_id_in_context = LLVMGetMDKindIDInContext(c : ContextRef, name : UInt8*, slen : UInt32) : UInt32
+  fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, values : ValueRef*, count : Int32) : ValueRef
+  fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : UInt8*, length : Int32) : ValueRef
+
+  fun append_basic_block_in_context = LLVMAppendBasicBlockInContext(ctx : ContextRef, fn : ValueRef, name : UInt8*) : BasicBlockRef
+  fun create_builder_in_context = LLVMCreateBuilderInContext(c : ContextRef) : BuilderRef
+
+  fun get_type_context = LLVMGetTypeContext(TypeRef) : ContextRef
 end

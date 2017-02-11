@@ -55,36 +55,48 @@ module LLVM
     {% end %}
   end
 
-  def self.int(type, value) : Value
-    Value.new LibLLVM.const_int(type, value, 0)
+  def self.const_int(type, value) : Value
+    type.const_int(value)
   end
 
-  def self.float(value : Float32) : Value
-    Value.new LibLLVM.const_real(LLVM::Float, value)
+  def self.const_float(value : Float32) : Value
+    Float.const_float(value)
   end
 
-  def self.float(string : String) : Value
-    Value.new LibLLVM.const_real_of_string(LLVM::Float, string)
+  def self.const_float(value : String) : Value
+    Float.const_float(value)
   end
 
-  def self.double(value : Float64) : Value
-    Value.new LibLLVM.const_real(LLVM::Double, value)
+  def self.const_double(value : Float64) : Value
+    Double.const_double(value)
   end
 
-  def self.double(string : String) : Value
-    Value.new LibLLVM.const_real_of_string(LLVM::Double, string)
+  def self.const_double(value : String) : Value
+    Double.const_double(value)
   end
 
-  def self.array(type, values : Array(LLVM::Value)) : Value
-    Value.new LibLLVM.const_array(type, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+  def self.const_array(type, values : Array(Value)) : Value
+    type.const_array(values)
   end
 
-  def self.struct(values : Array(LLVM::Value), packed = false) : Value
+  def self.const_struct(values : Array(Value), packed = false) : Value
     Value.new LibLLVM.const_struct((values.to_unsafe.as(LibLLVM::ValueRef*)), values.size, packed ? 1 : 0)
   end
 
-  def self.string(string) : Value
+  def self.const_string(string) : Value
     Value.new LibLLVM.const_string(string, string.bytesize, 0)
+  end
+
+  def self.const_inline_asm(type, asm_string, constraints, has_side_effects = false, is_align_stack = false)
+    type.const_inline_asm(asm_string, constraints, has_side_effects, is_align_stack)
+  end
+
+  def self.md_string(value : String) : Value
+    Value.new LibLLVM.md_string(value, value.bytesize)
+  end
+
+  def self.md_node(values : Array(Value)) : Value
+    Value.new LibLLVM.md_node((values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
   def self.start_multithreaded : Bool
@@ -120,10 +132,6 @@ module LLVM
     LibLLVM.dispose_message(chars)
   end
 
-  def self.const_inline_asm(type, asm_string, constraints, has_side_effects = false, is_align_stack = false)
-    Value.new LibLLVM.const_inline_asm(type, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
-  end
-
   def self.string_and_dispose(chars) : String
     string = String.new(chars)
     LibLLVM.dispose_message(chars)
@@ -145,5 +153,13 @@ module LLVM
     SizeT = Int64
   {% else %}
     SizeT = Int32
+  {% end %}
+
+  {% if LibLLVM::IS_35 %}
+    DEBUG_METADATA_VERSION = 1
+  {% elsif LibLLVM::IS_36 %}
+    DEBUG_METADATA_VERSION = 2
+  {% else %}
+    DEBUG_METADATA_VERSION = 3
   {% end %}
 end

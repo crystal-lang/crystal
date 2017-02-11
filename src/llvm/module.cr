@@ -1,9 +1,24 @@
 class LLVM::Module
-  getter name : String
+  @owned = false
 
-  def initialize(@name : String)
-    @unwrap = LibLLVM.module_create_with_name @name
-    @owned = false
+  def self.new(name : String)
+    new(LibLLVM.module_create_with_name(name))
+  end
+
+  def initialize(@unwrap : LibLLVM::ModuleRef, @dispose_on_finalize = true)
+  end
+
+  def name : String
+    bytes = LibLLVM.get_module_identifier(self, out bytesize)
+    String.new(Slice.new(bytes, bytesize))
+  end
+
+  def name=(name : String)
+    LibLLVM.set_module_identifier(self, name, name.bytesize)
+  end
+
+  def context
+    Context.new LibLLVM.get_module_context(self), dispose_on_finalize: false
   end
 
   def target=(target)
@@ -66,6 +81,14 @@ class LLVM::Module
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
   end
 
+  def add_named_metadata_operand(name : String, value : Value) : Nil
+    LibLLVM.add_named_metadata_operand(self, name, value)
+  end
+
+  def ==(other : self)
+    @unwrap == other.@unwrap
+  end
+
   def to_s(io)
     LLVM.to_io(LibLLVM.print_module_to_string(self), io)
     self
@@ -85,6 +108,6 @@ class LLVM::Module
 
   def finalize
     return if @owned
-    LibLLVM.dispose_module(@unwrap)
+    LibLLVM.dispose_module(@unwrap) if @dispose_on_finalize
   end
 end

@@ -34,7 +34,7 @@ module Crystal
 
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LLVM::Type, main_return_type) do |func|
         func.basic_blocks.append "entry" do |builder|
-          argc = LLVM.int(LLVM::Int32, 0)
+          argc = LLVM::Int32.const_int(0)
           argv = LLVM::VoidPointer.pointer.null
           ret = builder.call(main, [argc, argv])
           (node.type.void? || node.type.nil_type?) ? builder.ret : builder.ret(ret)
@@ -172,7 +172,7 @@ module Crystal
 
       unless program.symbols.empty?
         symbol_table = define_symbol_table @llvm_mod
-        symbol_table.initializer = LLVM.array(llvm_type(@program.string), @symbol_table_values)
+        symbol_table.initializer = LLVM.const_array(llvm_type(@program.string), @symbol_table_values)
       end
 
       @last = llvm_nil
@@ -393,9 +393,9 @@ module Crystal
       when :u64
         @last = int64(node.value.to_u64)
       when :f32
-        @last = LLVM.float(node.value)
+        @last = LLVM.const_float(node.value)
       when :f64
-        @last = LLVM.double(node.value)
+        @last = LLVM.const_double(node.value)
       end
     end
 
@@ -1877,11 +1877,11 @@ module Crystal
         global = @llvm_mod.globals.add(@llvm_typer.llvm_string_type(str.bytesize), name)
         global.linkage = LLVM::Linkage::Private
         global.global_constant = true
-        global.initializer = LLVM.struct [
+        global.initializer = LLVM.const_struct [
           type_id(@program.string),
           int32(str.bytesize),
           int32(str.size),
-          LLVM.string(str),
+          LLVM.const_string(str),
         ]
         cast_to global, @program.string
       end

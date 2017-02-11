@@ -1,6 +1,9 @@
 class LLVM::Builder
-  def initialize
-    @unwrap = LibLLVM.create_builder
+  def self.new
+    new(LibLLVM.create_builder)
+  end
+
+  def initialize(@unwrap : LibLLVM::BuilderRef)
   end
 
   def position_at_end(block)

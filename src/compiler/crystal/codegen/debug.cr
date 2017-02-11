@@ -18,12 +18,12 @@ module Crystal
       # DebugInfo generation in LLVM by default uses a higher version of dwarf
       # than OS X currently understands. Android has the same problem.
       if @program.has_flag?("osx") || @program.has_flag?("android")
-        LibLLVM.add_named_metadata_operand(mod, "llvm.module.flags",
-          metadata([LibLLVM::ModuleFlag::Warning.value, "Dwarf Version", 2]))
+        mod.add_named_metadata_operand("llvm.module.flags",
+          metadata([LLVM::ModuleFlag::Warning.value, "Dwarf Version", 2]))
       end
 
-      LibLLVM.add_named_metadata_operand(mod, "llvm.module.flags",
-        metadata([LibLLVM::ModuleFlag::Warning.value, "Debug Info Version", LibLLVM::DEBUG_METADATA_VERSION]))
+      mod.add_named_metadata_operand("llvm.module.flags",
+        metadata([LLVM::ModuleFlag::Warning.value, "Debug Info Version", LLVM::DEBUG_METADATA_VERSION]))
     end
 
     def fun_metadatas
@@ -196,17 +196,17 @@ module Crystal
     def metadata(args)
       values = args.map do |value|
         case value
-        when String         then LLVM::Value.new LibLLVM.md_string(value, value.bytesize)
-        when Symbol         then LLVM::Value.new LibLLVM.md_string(value.to_s, value.to_s.bytesize)
+        when String         then LLVM.md_string(value.to_s)
+        when Symbol         then LLVM.md_string(value.to_s)
         when Number         then int32(value)
         when Bool           then int1(value ? 1 : 0)
         when LLVM::Value    then value
-        when LLVM::Function then LLVM::Value.new value.unwrap
-        when Nil            then LLVM::Value.new(Pointer(Void).null.as(LibLLVM::ValueRef))
+        when LLVM::Function then value.to_value
+        when Nil            then LLVM::Value.null
         else                     raise "Unsuported value type: #{value.class}"
         end
       end
-      LLVM::Value.new LibLLVM.md_node((values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+      LLVM.md_node(values)
     end
 
     def set_current_debug_location(node : ASTNode)

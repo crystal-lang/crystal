@@ -37,11 +37,9 @@ struct LLVM::Type
   end
 
   def self.struct(name : String, packed = false) : self
-    llvm_struct = LibLLVM.struct_create_named(Context.global, name)
-    the_struct = new llvm_struct
-    element_types = (yield the_struct).as(Array(LLVM::Type))
-    LibLLVM.struct_set_body(llvm_struct, (element_types.to_unsafe.as(LibLLVM::TypeRef*)), element_types.size, packed ? 1 : 0)
-    the_struct
+    Context.global.struct(name, packed) do |str|
+      yield str
+    end
   end
 
   def self.struct(element_types : Array(LLVM::Type), name = nil, packed = false) : self
@@ -59,7 +57,7 @@ struct LLVM::Type
   def size
     # Asking the size of void crashes the program, we definitely don't want that
     if void?
-      LLVM.int(LLVM::Int64, 1)
+      LLVM::Int64.const_int(1)
     else
       Value.new LibLLVM.size_of(self)
     end
@@ -125,6 +123,38 @@ struct LLVM::Type
   def array_size
     raise "not an Array" unless kind == Kind::Array
     LibLLVM.get_array_length(self).to_i32
+  end
+
+  def const_int(value) : Value
+    Value.new LibLLVM.const_int(self, value, 0)
+  end
+
+  def const_float(value : Float32) : Value
+    Value.new LibLLVM.const_real(self, value)
+  end
+
+  def const_float(value : String) : Value
+    Value.new LibLLVM.const_real_of_string(self, value)
+  end
+
+  def const_double(value : Float64) : Value
+    Value.new LibLLVM.const_real(self, value)
+  end
+
+  def const_double(string : String) : Value
+    Value.new LibLLVM.const_real_of_string(self, string)
+  end
+
+  def const_array(values : Array(LLVM::Value)) : Value
+    Value.new LibLLVM.const_array(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+  end
+
+  def const_inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false)
+    Value.new LibLLVM.const_inline_asm(self, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
+  end
+
+  def context : Context
+    Context.new(LibLLVM.get_type_context(self), dispose_on_finalize: false)
   end
 
   def inspect(io)

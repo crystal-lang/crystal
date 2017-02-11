@@ -372,4 +372,8 @@ module LLVM
     NoReturn            = 1 << 20
     MainSubprogram      = 1 << 21
   end
+
+  enum ModuleFlag : Int32
+    Warning = 2
+  end
 end

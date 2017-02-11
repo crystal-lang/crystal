@@ -1,23 +1,23 @@
 module Crystal
   module LLVMBuilderHelper
     def int1(n)
-      LLVM.int LLVM::Int1, n
+      LLVM::Int1.const_int(n)
     end
 
     def int8(n)
-      LLVM.int LLVM::Int8, n
+      LLVM::Int8.const_int(n)
     end
 
     def int16(n)
-      LLVM.int LLVM::Int16, n
+      LLVM::Int16.const_int(n)
     end
 
     def int32(n)
-      LLVM.int LLVM::Int32, n
+      LLVM::Int32.const_int(n)
     end
 
     def int64(n)
-      LLVM.int LLVM::Int64, n
+      LLVM::Int64.const_int(n)
     end
 
     def int(n)
@@ -25,7 +25,7 @@ module Crystal
     end
 
     def int(n, type)
-      LLVM.int llvm_type(type), n
+      llvm_type(type).const_int(n)
     end
 
     def llvm_nil

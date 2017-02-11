@@ -3,7 +3,8 @@ struct LLVM::BasicBlockCollection
   end
 
   def append(name = "")
-    BasicBlock.new LibLLVM.append_basic_block(@function, name)
+    context = LibLLVM.get_module_context(LibLLVM.get_global_parent(@function))
+    BasicBlock.new LibLLVM.append_basic_block_in_context(context, @function, name)
   end
 
   def append(name = "")

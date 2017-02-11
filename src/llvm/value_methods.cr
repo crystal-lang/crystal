@@ -87,6 +87,15 @@ module LLVM::ValueMethods
     LLVM::Value.new unwrap
   end
 
+  def global_parent : Module
+    ptr = LibLLVM.get_global_parent(self)
+    if ptr
+      Module.new(ptr, dispose_on_finalize: false)
+    else
+      raise "no global parent for value (maybe it's not a global?)"
+    end
+  end
+
   def dump
     LibLLVM.dump_value self
   end
