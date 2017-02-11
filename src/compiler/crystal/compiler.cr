@@ -18,6 +18,7 @@ module Crystal
   # optionally generates an executable.
   class Compiler
     CC = ENV["CC"]? || "cc"
+    property cc = CC
 
     # A source to the compiler: it's filename and source code.
     record Source,
@@ -222,6 +223,10 @@ module Crystal
     private def codegen(program : Program, node, sources, output_filename)
       @link_flags = "#{@link_flags} -rdynamic"
 
+      if @target_triple.to_s.includes?("emscripten")
+        @cc = ENV["CC"]? || "emcc"
+      end
+
       llvm_modules = Crystal.timing("Codegen (crystal)", @stats) do
         program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
       end
@@ -260,7 +265,7 @@ module Crystal
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
-      stdout.puts "#{CC} #{object_name} -o #{output_filename} #{@link_flags} #{lib_flags}"
+      stdout.puts "#{@cc} #{object_name} -o #{output_filename} #{@link_flags} #{lib_flags}"
     end
 
     private def codegen(program, units : Array(CompilationUnit), lib_flags, output_filename, output_dir)
@@ -293,7 +298,7 @@ module Crystal
 
       Crystal.timing("Codegen (linking)", @stats) do
         Dir.cd(output_dir) do
-          system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
+          system %(#{@cc} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
         end
       end
 

@@ -55,6 +55,21 @@ module LLVM
     {% end %}
   end
 
+  def self.init_js_backend
+    return if @@initialized_asmjs
+    @@initialized_asmjs = true
+
+    {% if LibLLVM::BUILT_TARGETS.includes?(:jsbackend) %}
+      LibLLVM.initialize_js_backend_target_info
+      LibLLVM.initialize_js_backend_target
+      LibLLVM.initialize_js_backend_target_mc
+      # LibLLVM.link_in_jit
+      LibLLVM.link_in_mc_jit
+    {% else %}
+      raise "ERROR: LLVM was built without JavaScript target"
+    {% end %}
+  end
+
   def self.int(type, value) : Value
     Value.new LibLLVM.const_int(type, value, 0)
   end

@@ -13,6 +13,8 @@ lib LibC
     fun __error : Int*
   {% elsif flag?(:openbsd) %}
     fun __error = __errno : Int*
+  {% elsif flag?(:javascript) %}
+    fun __errno_location : Int*
   {% end %}
 end
 
@@ -227,6 +229,8 @@ class Errno < Exception
       {% end %}
     {% elsif flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
       LibC.__error.value
+    {% elsif flag?(:javascript) %}
+      LibC.__errno_location.value
     {% end %}
   end
 
@@ -240,6 +244,8 @@ class Errno < Exception
       {% end %}
     {% elsif flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
       LibC.__error.value = value
+    {% elsif flag?(:javascript) %}
+      LibC.__errno_location.value = value
     {% end %}
   end
 end

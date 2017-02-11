@@ -34,6 +34,9 @@ class Crystal::Program
       set.add "armhf" if set.includes?("gnueabihf")
     end
 
+    set.add "javascript" if set.any?(&.starts_with?("asmjs"))
+    set.add "js" if set.any?(&.starts_with?("asmjs"))
+
     set
   end
 end
