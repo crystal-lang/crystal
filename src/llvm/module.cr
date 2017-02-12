@@ -1,11 +1,13 @@
 class LLVM::Module
-  @owned = false
+  # We let a module store a reference to the context so that if
+  # someone is still holding a reference to the module but not to
+  # the context, the context won't be disposed (if the context is disposed,
+  # the module will no longer be valid and segfaults will happen)
 
-  def self.new(name : String)
-    new(LibLLVM.module_create_with_name(name))
-  end
+  getter context : Context
 
-  def initialize(@unwrap : LibLLVM::ModuleRef, @dispose_on_finalize = true)
+  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
+    @owned = false
   end
 
   def name : String
@@ -15,10 +17,6 @@ class LLVM::Module
 
   def name=(name : String)
     LibLLVM.set_module_identifier(self, name, name.bytesize)
-  end
-
-  def context
-    Context.new LibLLVM.get_module_context(self), dispose_on_finalize: false
   end
 
   def target=(target)
@@ -104,10 +102,5 @@ class LLVM::Module
     else
       @owned = true
     end
-  end
-
-  def finalize
-    return if @owned
-    LibLLVM.dispose_module(@unwrap) if @dispose_on_finalize
   end
 end

@@ -4,14 +4,15 @@ class LLVM::Context
   end
 
   def initialize(@unwrap : LibLLVM::ContextRef, @dispose_on_finalize = true)
+    @disposed = false
   end
 
   def new_module(name : String) : Module
-    Module.new(LibLLVM.module_create_with_name_in_context(name, self))
+    Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
   end
 
   def new_builder : Builder
-    Builder.new LibLLVM.create_builder_in_context(self)
+    Builder.new(LibLLVM.create_builder_in_context(self))
   end
 
   def void : Type
@@ -54,6 +55,10 @@ class LLVM::Context
     Type.new LibLLVM.double_type_in_context(self)
   end
 
+  def void_pointer : Type
+    int8.pointer
+  end
+
   def struct(name : String, packed = false) : Type
     llvm_struct = LibLLVM.struct_create_named(self, name)
     the_struct = Type.new llvm_struct
@@ -91,11 +96,7 @@ class LLVM::Context
     if ret != 0 && msg
       raise LLVM.string_and_dispose(msg)
     end
-    Module.new(mod)
-  end
-
-  def self.global : self
-    new LibLLVM.get_global_context, dispose_on_finalize: false
+    Module.new(mod, self)
   end
 
   def ==(other : self)
@@ -107,6 +108,10 @@ class LLVM::Context
   end
 
   def finalize
-    LibLLVM.dispose_context(self) if @dispose_on_finalize
+    return unless @dispose_on_finalize
+    return if @disposed
+    @disposed = true
+
+    LibLLVM.dispose_context(self)
   end
 end

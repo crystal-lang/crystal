@@ -2,31 +2,31 @@ require "../abi"
 
 # Based on https://github.com/rust-lang/rust/blob/master/src/librustc_trans/trans/cabi_x86_64.rs
 class LLVM::ABI::X86_64 < LLVM::ABI
-  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool)
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
     arg_tys = Array(LLVM::Type).new(atys.size)
     arg_tys = atys.map do |arg_type|
-      x86_64_type(arg_type, Attribute::ByVal) { |cls| pass_by_val?(cls) }
+      x86_64_type(arg_type, Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
     end
 
     if ret_def
-      ret_ty = x86_64_type(rty, Attribute::StructRet) { |cls| sret?(cls) }
+      ret_ty = x86_64_type(rty, Attribute::StructRet, context) { |cls| sret?(cls) }
     else
-      ret_ty = ArgType.direct(LLVM::Void)
+      ret_ty = ArgType.direct(context.void)
     end
 
     FunctionType.new arg_tys, ret_ty
   end
 
-  def x86_64_type(type, ind_attr)
+  def x86_64_type(type, ind_attr, context)
     if register?(type)
-      attr = type == LLVM::Int1 ? Attribute::ZExt : nil
+      attr = type == context.int1 ? Attribute::ZExt : nil
       ArgType.direct(type, attr: attr)
     else
       cls = classify(type)
       if yield cls
         ArgType.indirect(type, ind_attr)
       else
-        ArgType.direct(type, llreg(cls))
+        ArgType.direct(type, llreg(context, cls))
       end
     end
   end
@@ -188,30 +188,30 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     reg_classes.fill(RegClass::Memory)
   end
 
-  def llreg(reg_classes)
+  def llreg(context, reg_classes)
     types = Array(Type).new
     i = 0
     e = reg_classes.size
     while i < e
       case reg_classes[i]
       when RegClass::Int
-        types << LLVM::Int64
+        types << context.int64
       when RegClass::SSEFv
         vec_len = llvec_len(reg_classes[i + 1..-1])
-        vec_type = Type.vector(LLVM::Float, vec_len * 2)
+        vec_type = context.float.vector(vec_len * 2)
         types << vec_type
         i += vec_len
         next
       when RegClass::SSEFs
-        types << LLVM::Float
+        types << context.float
       when RegClass::SSEDs
-        types << LLVM::Double
+        types << context.double
       else
         raise "Unhandled RegClass: #{reg_classes[i]}"
       end
       i += 1
     end
-    Type.struct(types)
+    context.struct(types)
   end
 
   def llvec_len(reg_classes)

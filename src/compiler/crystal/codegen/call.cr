@@ -199,7 +199,7 @@ class Crystal::CodeGenVisitor
             else
               # Def argument might be missing if it's a variadic call
               if arg.is_a?(NilLiteral)
-                call_arg = LLVM::VoidPointer.null
+                call_arg = llvm_context.void_pointer.null
               end
             end
           end
@@ -233,8 +233,8 @@ class Crystal::CodeGenVisitor
   def codegen_direct_abi_call(call_arg, abi_arg_type)
     if cast = abi_arg_type.cast
       final_value = alloca cast
-      final_value_casted = bit_cast final_value, LLVM::VoidPointer
-      gep_call_arg = bit_cast gep(call_arg, 0, 0), LLVM::VoidPointer
+      final_value_casted = bit_cast final_value, llvm_context.void_pointer
+      gep_call_arg = bit_cast gep(call_arg, 0, 0), llvm_context.void_pointer
       size = @abi.size(abi_arg_type.type)
       align = @abi.align(abi_arg_type.type)
       memcpy(final_value_casted, gep_call_arg, int32(size), int32(align), int1(0))
@@ -475,8 +475,8 @@ class Crystal::CodeGenVisitor
     external = target_def.try &.c_calling_convention?
 
     if external && (external.type.proc? || external.type.is_a?(NilableProcType))
-      fun_ptr = bit_cast(@last, LLVM::VoidPointer)
-      ctx_ptr = LLVM::VoidPointer.null
+      fun_ptr = bit_cast(@last, llvm_context.void_pointer)
+      ctx_ptr = llvm_context.void_pointer.null
       return @last = make_fun(external.type, fun_ptr, ctx_ptr)
     end
 
@@ -490,9 +490,9 @@ class Crystal::CodeGenVisitor
           if cast = abi_return.cast
             cast1 = alloca cast
             store @last, cast1
-            cast2 = bit_cast cast1, LLVM::VoidPointer
+            cast2 = bit_cast cast1, llvm_context.void_pointer
             final_value = alloca abi_return.type
-            final_value_casted = bit_cast final_value, LLVM::VoidPointer
+            final_value_casted = bit_cast final_value, llvm_context.void_pointer
             size = @abi.size(abi_return.type)
             align = @abi.align(abi_return.type)
             memcpy(final_value_casted, cast2, int32(size), int32(align), int1(0))
@@ -543,12 +543,12 @@ class Crystal::CodeGenVisitor
 
       abi_arg_type = abi_info.arg_types[i]?
       if abi_arg_type && (attr = abi_arg_type.attr)
-        @last.add_instruction_attribute(i + arg_offset, attr)
+        @last.add_instruction_attribute(i + arg_offset, attr, llvm_context)
       end
     end
 
     if sret
-      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet)
+      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet, llvm_context)
     end
   end
 
@@ -560,7 +560,7 @@ class Crystal::CodeGenVisitor
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
     arg_types.try &.each_with_index do |arg_type, i|
       if abi_info && (abi_arg_type = abi_info.arg_types[i]?) && (attr = abi_arg_type.attr)
-        @last.add_instruction_attribute(i + arg_offset, attr)
+        @last.add_instruction_attribute(i + arg_offset, attr, llvm_context)
       end
     end
   end

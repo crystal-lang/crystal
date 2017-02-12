@@ -1,7 +1,5 @@
 class LLVM::Builder
-  def self.new
-    new(LibLLVM.create_builder)
-  end
+  @disposed = false
 
   def initialize(@unwrap : LibLLVM::BuilderRef)
   end
@@ -182,6 +180,9 @@ class LLVM::Builder
   end
 
   def finalize
+    return if @disposed
+    @disposed = true
+
     LibLLVM.dispose_builder(@unwrap)
   end
 end

@@ -24,7 +24,7 @@ class Crystal::CodeGenVisitor
     initialized_flag_name = class_var_global_initialized_name(owner, name)
     initialized_flag = @main_mod.globals[initialized_flag_name]?
     unless initialized_flag
-      initialized_flag = @main_mod.globals.add(LLVM::Int1, initialized_flag_name)
+      initialized_flag = @main_mod.globals.add(llvm_context.int1, initialized_flag_name)
       initialized_flag.initializer = int1(0)
       initialized_flag.linkage = LLVM::Linkage::Internal if @single_module
       initialized_flag.thread_local = true if thread_local
@@ -60,7 +60,7 @@ class Crystal::CodeGenVisitor
       initialized_flag_name = class_var_global_initialized_name(owner, name)
       initialized_flag = @llvm_mod.globals[initialized_flag_name]?
       unless initialized_flag
-        initialized_flag = @llvm_mod.globals.add(LLVM::Int1, initialized_flag_name)
+        initialized_flag = @llvm_mod.globals.add(llvm_context.int1, initialized_flag_name)
         initialized_flag.thread_local = true if thread_local
       end
     end
@@ -122,7 +122,7 @@ class Crystal::CodeGenVisitor
   def create_initialize_class_var_function(fun_name, owner, name, type, thread_local, meta_vars, node)
     global = declare_class_var(owner, name, type, thread_local)
 
-    define_main_function(fun_name, ([] of LLVM::Type), LLVM::Void, needs_alloca: true) do |func|
+    define_main_function(fun_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
       with_cloned_context do
         # "self" in a constant is the class_var owner
         context.type = owner
@@ -204,7 +204,7 @@ class Crystal::CodeGenVisitor
   end
 
   def create_read_virtual_class_var_ptr_function(fun_name, node, class_var, owner)
-    define_main_function(fun_name, [LLVM::Int32], llvm_type(class_var.type).pointer) do |func|
+    define_main_function(fun_name, [llvm_context.int32], llvm_type(class_var.type).pointer) do |func|
       self_type_id = func.params[0]
 
       cmp = equal?(self_type_id, type_id(owner.base_type))
@@ -247,7 +247,7 @@ class Crystal::CodeGenVisitor
   end
 
   def create_read_virtual_metaclass_var_ptr_function(fun_name, node, class_var, owner)
-    define_main_function(fun_name, [LLVM::Int32], llvm_type(class_var.type).pointer) do |func|
+    define_main_function(fun_name, [llvm_context.int32], llvm_type(class_var.type).pointer) do |func|
       self_type_id = func.params[0]
 
       cmp = equal?(self_type_id, type_id(owner.base_type.metaclass))

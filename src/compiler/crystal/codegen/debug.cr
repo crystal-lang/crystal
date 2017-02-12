@@ -85,7 +85,7 @@ module Crystal
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_struct_type(type)
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type.to_s, nil, 1)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type.to_s, nil, 1, llvm_context)
       debug_type_cache[type] = tmp_debug_type
 
       ivars.each_with_index do |(name, ivar), idx|
@@ -196,8 +196,8 @@ module Crystal
     def metadata(args)
       values = args.map do |value|
         case value
-        when String         then LLVM.md_string(value.to_s)
-        when Symbol         then LLVM.md_string(value.to_s)
+        when String         then llvm_context.md_string(value.to_s)
+        when Symbol         then llvm_context.md_string(value.to_s)
         when Number         then int32(value)
         when Bool           then int1(value ? 1 : 0)
         when LLVM::Value    then value
@@ -206,7 +206,7 @@ module Crystal
         else                     raise "Unsuported value type: #{value.class}"
         end
       end
-      LLVM.md_node(values)
+      llvm_context.md_node(values)
     end
 
     def set_current_debug_location(node : ASTNode)

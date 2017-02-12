@@ -8,8 +8,9 @@ struct LLVM::BasicBlockCollection
   end
 
   def append(name = "")
+    context = LibLLVM.get_module_context(LibLLVM.get_global_parent(@function))
     block = append name
-    builder = Builder.new
+    builder = Builder.new(LibLLVM.create_builder_in_context(context))
     builder.position_at_end block
     yield builder
     block

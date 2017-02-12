@@ -55,50 +55,6 @@ module LLVM
     {% end %}
   end
 
-  def self.const_int(type, value) : Value
-    type.const_int(value)
-  end
-
-  def self.const_float(value : Float32) : Value
-    Float.const_float(value)
-  end
-
-  def self.const_float(value : String) : Value
-    Float.const_float(value)
-  end
-
-  def self.const_double(value : Float64) : Value
-    Double.const_double(value)
-  end
-
-  def self.const_double(value : String) : Value
-    Double.const_double(value)
-  end
-
-  def self.const_array(type, values : Array(Value)) : Value
-    type.const_array(values)
-  end
-
-  def self.const_struct(values : Array(Value), packed = false) : Value
-    Value.new LibLLVM.const_struct((values.to_unsafe.as(LibLLVM::ValueRef*)), values.size, packed ? 1 : 0)
-  end
-
-  def self.const_string(string) : Value
-    Value.new LibLLVM.const_string(string, string.bytesize, 0)
-  end
-
-  def self.const_inline_asm(type, asm_string, constraints, has_side_effects = false, is_align_stack = false)
-    type.const_inline_asm(asm_string, constraints, has_side_effects, is_align_stack)
-  end
-
-  def self.md_string(value : String) : Value
-    Value.new LibLLVM.md_string(value, value.bytesize)
-  end
-
-  def self.md_node(values : Array(Value)) : Value
-    Value.new LibLLVM.md_node((values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
-  end
-
   def self.start_multithreaded : Bool
     if multithreaded?
       true
@@ -137,23 +93,6 @@ module LLVM
     LibLLVM.dispose_message(chars)
     string
   end
-
-  Void   = Type.new LibLLVM.void_type
-  Int1   = Type.new LibLLVM.int1_type
-  Int8   = Type.new LibLLVM.int8_type
-  Int16  = Type.new LibLLVM.int16_type
-  Int32  = Type.new LibLLVM.int32_type
-  Int64  = Type.new LibLLVM.int64_type
-  Float  = Type.new LibLLVM.float_type
-  Double = Type.new LibLLVM.double_type
-
-  VoidPointer = Int8.pointer
-
-  {% if flag?(:x86_64) || flag?(:aarch64) %}
-    SizeT = Int64
-  {% else %}
-    SizeT = Int32
-  {% end %}
 
   {% if LibLLVM::IS_35 %}
     DEBUG_METADATA_VERSION = 1

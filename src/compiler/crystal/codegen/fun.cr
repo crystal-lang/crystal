@@ -200,7 +200,7 @@ class Crystal::CodeGenVisitor
     llvm_args_types = args.map_with_index do |arg, i|
       arg_type = arg.type
       if arg_type.void?
-        llvm_arg_type = LLVM::Int8
+        llvm_arg_type = llvm_context.int8
       else
         llvm_arg_type = llvm_type(arg_type)
 
@@ -220,7 +220,7 @@ class Crystal::CodeGenVisitor
     llvm_return_type = llvm_return_type(target_def.type)
 
     if is_closure
-      llvm_args_types.insert(0, LLVM::VoidPointer)
+      llvm_args_types.insert(0, llvm_context.void_pointer)
       offset = 1
     else
       offset = 0
@@ -274,9 +274,9 @@ class Crystal::CodeGenVisitor
       sret = true
       offset += 1
       llvm_args_types.insert 0, ret_type.type.pointer
-      llvm_return_type = LLVM::Void
+      llvm_return_type = llvm_context.void
     else
-      llvm_return_type = LLVM::Void
+      llvm_return_type = llvm_context.void
     end
 
     setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
@@ -311,14 +311,14 @@ class Crystal::CodeGenVisitor
     external.abi_info ||= begin
       llvm_args_types = external.args.map { |arg| llvm_c_type(arg.type) }
       llvm_return_type = llvm_c_return_type(external.type)
-      @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?)
+      @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?, llvm_context)
     end
   end
 
   def abi_info(external : Def, node : Call)
     llvm_args_types = node.args.map { |arg| llvm_c_type(arg.type) }
     llvm_return_type = llvm_c_return_type(external.type)
-    @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?)
+    @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?, llvm_context)
   end
 
   def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
@@ -472,7 +472,7 @@ class Crystal::CodeGenVisitor
       end
 
       @modules[type_name] ||= begin
-        llvm_mod = LLVM::Module.new(type_name)
+        llvm_mod = llvm_context.new_module(type_name)
         llvm_mod.data_layout = self.data_layout
         define_symbol_table llvm_mod
         llvm_mod

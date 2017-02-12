@@ -13,11 +13,13 @@ module Crystal
   end
 
   class HierarchyPrinter
+    @llvm_typer : LLVMTyper
+
     def initialize(@program : Program, exp : String?)
       @exp = exp ? Regex.new(exp) : nil
       @indents = [] of Bool
       @targets = Set(Type).new
-      @llvm_typer = LLVMTyper.new(@program)
+      @llvm_typer = @program.llvm_typer
     end
 
     def execute

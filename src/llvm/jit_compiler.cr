@@ -17,14 +17,14 @@ class LLVM::JITCompiler
     yield jit ensure jit.dispose
   end
 
-  def run_function(func)
+  def run_function(func, context : Context)
     ret = LibLLVM.run_function(self, func, 0, nil)
-    GenericValue.new(ret)
+    GenericValue.new(ret, context)
   end
 
-  def run_function(func, args : Array(LLVM::GenericValue))
+  def run_function(func, args : Array(LLVM::GenericValue), context : Context)
     ret = LibLLVM.run_function(self, func, args.size, (args.to_unsafe.as(LibLLVM::GenericValueRef*)))
-    GenericValue.new(ret)
+    GenericValue.new(ret, context)
   end
 
   def get_pointer_to_global(value)

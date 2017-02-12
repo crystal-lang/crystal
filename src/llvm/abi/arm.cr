@@ -2,9 +2,9 @@ require "../abi"
 
 # Based on https://github.com/rust-lang/rust/blob/dfe8bd10fe6763e0a1d5d55fa2574ecba27d3e2e/src/librustc_trans/cabi_arm.rs
 class LLVM::ABI::ARM < LLVM::ABI
-  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool)
-    ret_ty = compute_return_type(rty, ret_def)
-    arg_tys = compute_arg_types(atys)
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
+    ret_ty = compute_return_type(rty, ret_def, context)
+    arg_tys = compute_arg_types(atys, context)
     FunctionType.new(arg_tys, ret_ty)
   end
 
@@ -25,41 +25,41 @@ class LLVM::ABI::ARM < LLVM::ABI
     end
   end
 
-  private def compute_return_type(rty, ret_def)
+  private def compute_return_type(rty, ret_def, context)
     if !ret_def
-      ArgType.direct(LLVM::Void)
+      ArgType.direct(context.void)
     elsif register?(rty)
-      non_struct(rty)
+      non_struct(rty, context)
     else
       case size(rty)
       when 1
-        ArgType.direct(rty, LLVM::Int8)
+        ArgType.direct(rty, context.int8)
       when 2
-        ArgType.direct(rty, LLVM::Int16)
+        ArgType.direct(rty, context.int16)
       when 3, 4
-        ArgType.direct(rty, LLVM::Int32)
+        ArgType.direct(rty, context.int32)
       else
         ArgType.indirect(rty, LLVM::Attribute::StructRet)
       end
     end
   end
 
-  private def compute_arg_types(atys)
+  private def compute_arg_types(atys, context)
     atys.map do |aty|
       if register?(aty)
-        non_struct(aty)
+        non_struct(aty, context)
       else
         if align(aty) <= 4
-          ArgType.direct(aty, Type.new(LibLLVM.array_type(LLVM::Int32, ((size(aty) + 3) / 4).to_u64)))
+          ArgType.direct(aty, context.int32.array(((size(aty) + 3) / 4).to_u64))
         else
-          ArgType.direct(aty, Type.new(LibLLVM.array_type(LLVM::Int64, ((size(aty) + 7) / 8).to_u64)))
+          ArgType.direct(aty, context.int64.array(((size(aty) + 7) / 8).to_u64))
         end
       end
     end
   end
 
-  private def non_struct(type)
-    attr = type == LLVM::Int1 ? LLVM::Attribute::ZExt : nil
+  private def non_struct(type, context)
+    attr = type == context.int1 ? LLVM::Attribute::ZExt : nil
     ArgType.direct(type, attr: attr)
   end
 end

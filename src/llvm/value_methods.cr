@@ -10,11 +10,11 @@ module LLVM::ValueMethods
     String.new LibLLVM.get_value_name(self)
   end
 
-  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute)
+  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute, context : LLVM::Context)
     return if attribute.value == 0
     {% if LibLLVM.has_constant?(:AttributeRef) %}
       attribute.each_kind do |kind|
-        attribute_ref = LibLLVM.create_enum_attribute(LLVM::Context.global, kind, 0)
+        attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
         LibLLVM.add_call_site_attribute(self, index, attribute_ref)
       end
     {% else %}
@@ -85,15 +85,6 @@ module LLVM::ValueMethods
 
   def to_value
     LLVM::Value.new unwrap
-  end
-
-  def global_parent : Module
-    ptr = LibLLVM.get_global_parent(self)
-    if ptr
-      Module.new(ptr, dispose_on_finalize: false)
-    else
-      raise "no global parent for value (maybe it's not a global?)"
-    end
   end
 
   def dump

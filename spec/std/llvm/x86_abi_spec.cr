@@ -16,124 +16,132 @@ private def abi
   LLVM::ABI::X86.new(machine)
 end
 
+private def test(msg, &block : LLVM::ABI, LLVM::Context ->)
+  it msg do
+    abi = abi()
+    ctx = LLVM::Context.new
+    block.call(abi, ctx)
+  end
+end
+
 class LLVM::ABI
   describe X86 do
     {% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
     describe "align" do
-      it "for integer" do
-        abi.align(LLVM::Int1).should be_a(::Int32)
-        abi.align(LLVM::Int1).should eq(1)
-        abi.align(LLVM::Int8).should eq(1)
-        abi.align(LLVM::Int16).should eq(2)
-        abi.align(LLVM::Int32).should eq(4)
-        abi.align(LLVM::Int64).should eq(4)
+      test "for integer" do |abi, ctx|
+        abi.align(ctx.int1).should be_a(::Int32)
+        abi.align(ctx.int1).should eq(1)
+        abi.align(ctx.int8).should eq(1)
+        abi.align(ctx.int16).should eq(2)
+        abi.align(ctx.int32).should eq(4)
+        abi.align(ctx.int64).should eq(4)
       end
 
-      it "for pointer" do
-        abi.align(LLVM::Int8.pointer).should eq(4)
+      test "for pointer" do |abi, ctx|
+        abi.align(ctx.int8.pointer).should eq(4)
       end
 
-      it "for float" do
-        abi.align(LLVM::Float).should eq(4)
+      test "for float" do |abi, ctx|
+        abi.align(ctx.float).should eq(4)
       end
 
-      it "for double" do
-        abi.align(LLVM::Double).should eq(4)
+      test "for double" do |abi, ctx|
+        abi.align(ctx.double).should eq(4)
       end
 
-      it "for struct" do
-        abi.align(LLVM::Type.struct([LLVM::Int32, LLVM::Int64])).should eq(4)
-        abi.align(LLVM::Type.struct([LLVM::Int8, LLVM::Int16])).should eq(2)
+      test "for struct" do |abi, ctx|
+        abi.align(ctx.struct([ctx.int32, ctx.int64])).should eq(4)
+        abi.align(ctx.struct([ctx.int8, ctx.int16])).should eq(2)
       end
 
-      it "for packed struct" do
-        abi.align(LLVM::Type.struct([LLVM::Int32, LLVM::Int64], packed: true)).should eq(1)
+      test "for packed struct" do |abi, ctx|
+        abi.align(ctx.struct([ctx.int32, ctx.int64], packed: true)).should eq(1)
       end
 
-      it "for array" do
-        abi.align(LLVM::Int16.array(10)).should eq(2)
+      test "for array" do |abi, ctx|
+        abi.align(ctx.int16.array(10)).should eq(2)
       end
     end
 
     describe "size" do
-      it "for integer" do
-        abi.size(LLVM::Int1).should be_a(::Int32)
-        abi.size(LLVM::Int1).should eq(1)
-        abi.size(LLVM::Int8).should eq(1)
-        abi.size(LLVM::Int16).should eq(2)
-        abi.size(LLVM::Int32).should eq(4)
-        abi.size(LLVM::Int64).should eq(8)
+      test "for integer" do |abi, ctx|
+        abi.size(ctx.int1).should be_a(::Int32)
+        abi.size(ctx.int1).should eq(1)
+        abi.size(ctx.int8).should eq(1)
+        abi.size(ctx.int16).should eq(2)
+        abi.size(ctx.int32).should eq(4)
+        abi.size(ctx.int64).should eq(8)
       end
 
-      it "for pointer" do
-        abi.size(LLVM::Int8.pointer).should eq(4)
+      test "for pointer" do |abi, ctx|
+        abi.size(ctx.int8.pointer).should eq(4)
       end
 
-      it "for float" do
-        abi.size(LLVM::Float).should eq(4)
+      test "for float" do |abi, ctx|
+        abi.size(ctx.float).should eq(4)
       end
 
-      it "for double" do
-        abi.size(LLVM::Double).should eq(8)
+      test "for double" do |abi, ctx|
+        abi.size(ctx.double).should eq(8)
       end
 
-      it "for struct" do
-        abi.size(LLVM::Type.struct([LLVM::Int32, LLVM::Int64])).should eq(12)
-        abi.size(LLVM::Type.struct([LLVM::Int16, LLVM::Int8])).should eq(4)
-        abi.size(LLVM::Type.struct([LLVM::Int32, LLVM::Int8, LLVM::Int8])).should eq(8)
+      test "for struct" do |abi, ctx|
+        abi.size(ctx.struct([ctx.int32, ctx.int64])).should eq(12)
+        abi.size(ctx.struct([ctx.int16, ctx.int8])).should eq(4)
+        abi.size(ctx.struct([ctx.int32, ctx.int8, ctx.int8])).should eq(8)
       end
 
-      it "for packed struct" do
-        abi.size(LLVM::Type.struct([LLVM::Int32, LLVM::Int64], packed: true)).should eq(12)
+      test "for packed struct" do |abi, ctx|
+        abi.size(ctx.struct([ctx.int32, ctx.int64], packed: true)).should eq(12)
       end
 
-      it "for array" do
-        abi.size(LLVM::Int16.array(10)).should eq(20)
+      test "for array" do |abi, ctx|
+        abi.size(ctx.int16.array(10)).should eq(20)
       end
     end
 
     describe "abi_info" do
-      it "does with primitives" do
-        arg_types = [LLVM::Int32, LLVM::Int64]
-        return_type = LLVM::Int8
-        info = abi.abi_info(arg_types, return_type, true)
+      test "does with primitives" do |abi, ctx|
+        arg_types = [ctx.int32, ctx.int64]
+        return_type = ctx.int8
+        info = abi.abi_info(arg_types, return_type, true, ctx)
         info.arg_types.size.should eq(2)
 
-        info.arg_types[0].should eq(ArgType.direct(LLVM::Int32))
-        info.arg_types[1].should eq(ArgType.direct(LLVM::Int64))
-        info.return_type.should eq(ArgType.direct(LLVM::Int8))
+        info.arg_types[0].should eq(ArgType.direct(ctx.int32))
+        info.arg_types[1].should eq(ArgType.direct(ctx.int64))
+        info.return_type.should eq(ArgType.direct(ctx.int8))
       end
 
-      it "does with structs less than 64 bits" do
-        str = LLVM::Type.struct([LLVM::Int8, LLVM::Int16])
+      test "does with structs less than 64 bits" do |abi, ctx|
+        str = ctx.struct([ctx.int8, ctx.int16])
         arg_types = [str]
         return_type = str
 
-        info = abi.abi_info(arg_types, return_type, true)
+        info = abi.abi_info(arg_types, return_type, true, ctx)
         info.arg_types.size.should eq(1)
 
         info.arg_types[0].should eq(ArgType.indirect(str, attr: LLVM::Attribute::ByVal))
         info.return_type.should eq(ArgType.indirect(str, attr: LLVM::Attribute::StructRet))
       end
 
-      it "does with structs between 64 and 128 bits" do
-        str = LLVM::Type.struct([LLVM::Int64, LLVM::Int16])
+      test "does with structs between 64 and 128 bits" do |abi, ctx|
+        str = ctx.struct([ctx.int64, ctx.int16])
         arg_types = [str]
         return_type = str
 
-        info = abi.abi_info(arg_types, return_type, true)
+        info = abi.abi_info(arg_types, return_type, true, ctx)
         info.arg_types.size.should eq(1)
 
         info.arg_types[0].should eq(ArgType.indirect(str, attr: LLVM::Attribute::ByVal))
         info.return_type.should eq(ArgType.indirect(str, attr: LLVM::Attribute::StructRet))
       end
 
-      it "does with structs between 64 and 128 bits" do
-        str = LLVM::Type.struct([LLVM::Int64, LLVM::Int64, LLVM::Int8])
+      test "does with structs between 64 and 128 bits" do |abi, ctx|
+        str = ctx.struct([ctx.int64, ctx.int64, ctx.int8])
         arg_types = [str]
         return_type = str
 
-        info = abi.abi_info(arg_types, return_type, true)
+        info = abi.abi_info(arg_types, return_type, true, ctx)
         info.arg_types.size.should eq(1)
 
         info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))

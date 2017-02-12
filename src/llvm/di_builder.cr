@@ -86,9 +86,9 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_create_pointer_type(self, pointee, size_in_bits, align_in_bits, name)
   end
 
-  def create_replaceable_composite_type(scope, name, file, line)
+  def create_replaceable_composite_type(scope, name, file, line, context : Context)
     {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
-      LibLLVMExt.temporary_md_node(LLVM::Context.global, nil, 0).as(LibLLVMExt::Metadata)
+      LibLLVMExt.temporary_md_node(context, nil, 0).as(LibLLVMExt::Metadata)
     {% else %}
       LibLLVMExt.di_builder_create_replaceable_composite_type(self, scope, name, file, line)
     {% end %}

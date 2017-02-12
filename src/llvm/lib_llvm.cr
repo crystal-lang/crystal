@@ -68,7 +68,6 @@ lib LibLLVM
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : Int32)
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
   fun add_target_dependent_function_attr = LLVMAddTargetDependentFunctionAttr(fn : ValueRef, a : LibC::Char*, v : LibC::Char*)
-  fun append_basic_block = LLVMAppendBasicBlock(fn : ValueRef, name : UInt8*) : BasicBlockRef
   fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
   fun vector_type = LLVMVectorType(element_type : TypeRef, count : UInt32) : TypeRef
   fun build_add = LLVMBuildAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
@@ -134,10 +133,7 @@ lib LibLLVM
   fun const_pointer_null = LLVMConstPointerNull(ty : TypeRef) : ValueRef
   fun const_real = LLVMConstReal(real_ty : TypeRef, n : Float64) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : UInt8*) : ValueRef
-  fun const_string = LLVMConstString(str : UInt8*, length : UInt32, dont_null_terminate : Int32) : ValueRef
-  fun const_struct = LLVMConstStruct(contant_vals : ValueRef*, count : UInt32, packed : Int32) : ValueRef
   fun count_param_types = LLVMCountParamTypes(function_type : TypeRef) : UInt32
-  fun create_builder = LLVMCreateBuilder : BuilderRef
   fun create_generic_value_of_int = LLVMCreateGenericValueOfInt(ty : TypeRef, n : UInt64, is_signed : Int32) : GenericValueRef
   fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : UInt8**) : Int32
@@ -145,11 +141,9 @@ lib LibLLVM
   fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : UInt8*, cpu : UInt8*, features : UInt8*, level : LLVM::CodeGenOptLevel, reloc : LLVM::RelocMode, code_model : LLVM::CodeModel) : TargetMachineRef
   fun delete_basic_block = LLVMDeleteBasicBlock(block : BasicBlockRef)
   fun dispose_message = LLVMDisposeMessage(msg : UInt8*)
-  fun double_type = LLVMDoubleType : TypeRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
   fun target_machine_emit_to_file = LLVMTargetMachineEmitToFile(t : TargetMachineRef, m : ModuleRef, filename : UInt8*, codegen : LLVM::CodeGenFileType, error_msg : UInt8**) : Int32
-  fun float_type = LLVMFloatType : TypeRef
   fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : UInt32, is_var_arg : Int32) : TypeRef
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : UInt64
@@ -158,7 +152,6 @@ lib LibLLVM
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
   fun get_first_target = LLVMGetFirstTarget : TargetRef
-  fun get_global_context = LLVMGetGlobalContext : ContextRef
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : UInt8*) : ValueRef
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : UInt8*) : ValueRef
@@ -190,17 +183,8 @@ lib LibLLVM
   fun initialize_arm_target_info = LLVMInitializeARMTargetInfo
   fun initialize_arm_target_mc = LLVMInitializeARMTargetMC
   fun initialize_native_target = LLVMInitializeNativeTarget
-  fun int1_type = LLVMInt1Type : TypeRef
-  fun int8_type = LLVMInt8Type : TypeRef
-  fun int16_type = LLVMInt16Type : TypeRef
-  fun int32_type = LLVMInt32Type : TypeRef
-  fun int64_type = LLVMInt64Type : TypeRef
-  fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
   fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32
-  fun md_node = LLVMMDNode(values : ValueRef*, count : Int32) : ValueRef
-  fun md_string = LLVMMDString(str : UInt8*, length : Int32) : ValueRef
-  fun module_create_with_name = LLVMModuleCreateWithName(module_id : UInt8*) : ModuleRef
   fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : UInt8*, context : ContextRef) : ModuleRef
   fun offset_of_element = LLVMOffsetOfElement(td : TargetDataRef, struct_type : TypeRef, element : LibC::UInt) : Int64
   fun pass_manager_builder_create = LLVMPassManagerBuilderCreate : PassManagerBuilderRef
@@ -237,9 +221,7 @@ lib LibLLVM
   fun size_of_type_in_bits = LLVMSizeOfTypeInBits(ref : TargetDataRef, ty : TypeRef) : UInt64
   fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : UInt8*) : TypeRef
   fun struct_set_body = LLVMStructSetBody(struct_type : TypeRef, element_types : TypeRef*, element_count : UInt32, packed : Int32)
-  fun struct_type = LLVMStructType(element_types : TypeRef*, element_count : UInt32, packed : Int32) : TypeRef
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
-  fun void_type = LLVMVoidType : TypeRef
   fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : UInt8*) : Int32
   fun verify_module = LLVMVerifyModule(module : ModuleRef, action : LLVM::VerifierFailureAction, outmessage : UInt8**) : Int32
   fun link_in_jit = LLVMLinkInJIT
@@ -247,7 +229,6 @@ lib LibLLVM
   fun start_multithreaded = LLVMStartMultithreaded : Int32
   fun stop_multithreaded = LLVMStopMultithreaded
   fun is_multithreaded = LLVMIsMultithreaded : Int32
-  fun get_md_kind_id = LLVMGetMDKindID(name : UInt8*, slen : UInt32) : UInt32
   fun get_first_function = LLVMGetFirstFunction(m : ModuleRef) : ValueRef?
   fun get_next_function = LLVMGetNextFunction(f : ValueRef) : ValueRef?
   fun get_global_pass_registry = LLVMGetGlobalPassRegistry : PassRegistryRef
@@ -283,7 +264,6 @@ lib LibLLVM
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
   fun const_inline_asm = LLVMConstInlineAsm(t : TypeRef, asm_string : UInt8*, constraints : UInt8*, has_side_effects : Int32, is_align_stack : Int32) : ValueRef
   fun create_context = LLVMContextCreate : ContextRef
-  fun dispose_module = LLVMDisposeModule(ModuleRef)
   fun dispose_builder = LLVMDisposeBuilder(BuilderRef)
   fun dispose_target_machine = LLVMDisposeTargetMachine(TargetMachineRef)
   fun dispose_generic_value = LLVMDisposeGenericValue(GenericValueRef)

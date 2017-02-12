@@ -56,7 +56,7 @@ class Crystal::CodeGenVisitor
     initialized_flag_name = const.initialized_llvm_name
     initialized_flag = @main_mod.globals[initialized_flag_name]?
     unless initialized_flag
-      initialized_flag = @main_mod.globals.add(LLVM::Int1, initialized_flag_name)
+      initialized_flag = @main_mod.globals.add(llvm_context.int1, initialized_flag_name)
       initialized_flag.initializer = int1(0)
       initialized_flag.linkage = LLVM::Linkage::Internal if @single_module
     end
@@ -115,7 +115,7 @@ class Crystal::CodeGenVisitor
   def create_initialize_const_function(fun_name, const)
     global, initialized_flag = declare_const_and_initialized_flag(const)
 
-    define_main_function(fun_name, ([] of LLVM::Type), LLVM::Void, needs_alloca: true) do |func|
+    define_main_function(fun_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
       with_cloned_context do
         # "self" in a constant is the constant's namespace
         context.type = const.namespace
