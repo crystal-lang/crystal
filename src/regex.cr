@@ -112,6 +112,20 @@ require "./regex/*"
 # groups can also be given names, using the `(?&lt;name&gt;...)` syntax, as in the
 # previous example.
 #
+# Following a match, the special variables $N (e.g., $1, $2, $3, ...) can be used
+# to access a capture group. Trying to access an invalid capture group will raise an
+# exception. Note that it is possible to have a successful match with a nil capture:
+#
+# ```
+# /(spice)(s)?/.match("spice") # => #<Regex::MatchData "spice" 1:"spice" 2:nil>
+# $1                           # => "spice"
+# $2                           # => raises Exception
+# ```
+#
+# This can be mitigated by using the nilable version of the above: $N?,
+# (e.g., $1? $2?, $3?, ...). Changing the above to use `$2?` instead of `$2`
+# would return `nil`. `$2?.nil?` would return `true`.
+#
 # A character or group can be
 # [repeated](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC17)
 # or made optional using an asterisk (`*` - zero or more), a plus sign
