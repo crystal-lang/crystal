@@ -595,6 +595,18 @@ module Crystal
         end
       when "identify"
         interpret_argless_method(method, args) { StringLiteral.new(@value.tr(":", "_")) }
+      when "includes?"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when CharLiteral
+            piece = arg.value
+          when StringLiteral
+            piece = arg.value
+          else
+            raise "StringLiteral#includes? expects char or string, not #{arg.class_desc}"
+          end
+          BoolLiteral.new(@value.includes?(piece))
+        end
       when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(@value.size) }
       when "lines"
