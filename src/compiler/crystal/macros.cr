@@ -352,6 +352,10 @@ module Crystal::Macros
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : StringLiteral
     end
 
+    # Similar to `String#includes?`.
+    def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
+    end
+
     # Similar to `String#size`.
     def size : NumberLiteral
     end
@@ -447,6 +451,10 @@ module Crystal::Macros
 
     # Similar to `String#gsub`.
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : SymbolLiteral
+    end
+
+    # Similar to `String#includes?`.
+    def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
     end
 
     # Similar to `String#size`.
@@ -1402,6 +1410,10 @@ module Crystal::Macros
 
     # Similar to `String#gsub`.
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : MacroId
+    end
+
+    # Similar to `String#includes?`.
+    def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
     end
 
     # Similar to `String#size`.
