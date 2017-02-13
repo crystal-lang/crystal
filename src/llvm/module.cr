@@ -6,18 +6,28 @@ class LLVM::Module
 
   getter context : Context
 
-  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
-    @owned = false
-  end
+  {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+    def initialize(@unwrap : LibLLVM::ModuleRef, @name : String, @context : Context)
+      @owned = false
+    end
 
-  def name : String
-    bytes = LibLLVM.get_module_identifier(self, out bytesize)
-    String.new(Slice.new(bytes, bytesize))
-  end
+    def name : String
+      @name
+    end
+  {% else %}
+    def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
+      @owned = false
+    end
 
-  def name=(name : String)
-    LibLLVM.set_module_identifier(self, name, name.bytesize)
-  end
+    def name : String
+      bytes = LibLLVM.get_module_identifier(self, out bytesize)
+      String.new(Slice.new(bytes, bytesize))
+    end
+
+    def name=(name : String)
+      LibLLVM.set_module_identifier(self, name, name.bytesize)
+    end
+  {% end %}
 
   def target=(target)
     LibLLVM.set_target(self, target)

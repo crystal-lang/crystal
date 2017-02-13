@@ -8,7 +8,11 @@ class LLVM::Context
   end
 
   def new_module(name : String) : Module
-    Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
+    {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+      Module.new(LibLLVM.module_create_with_name_in_context(name, self), name, self)
+    {% else %}
+      Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
+    {% end %}
   end
 
   def new_builder : Builder
@@ -97,7 +101,11 @@ class LLVM::Context
     if ret != 0 && msg
       raise LLVM.string_and_dispose(msg)
     end
-    Module.new(mod, self)
+    {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+      Module.new(mod, "unknown", self)
+    {% else %}
+      Module.new(mod, self)
+    {% end %}
   end
 
   def ==(other : self)

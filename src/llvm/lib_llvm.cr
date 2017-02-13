@@ -318,6 +318,9 @@ lib LibLLVM
     fun add_attribute_at_index = LLVMAddAttributeAtIndex(f : ValueRef, idx : AttributeIndex, a : AttributeRef)
     fun get_enum_attribute_at_index = LLVMGetEnumAttributeAtIndex(f : ValueRef, idx : AttributeIndex, kind_id : UInt) : AttributeRef
     fun add_call_site_attribute = LLVMAddCallSiteAttribute(f : ValueRef, idx : AttributeIndex, value : AttributeRef)
+
+    fun get_module_identifier = LLVMGetModuleIdentifier(m : ModuleRef, len : LibC::SizeT*) : UInt8*
+    fun set_module_identifier = LLVMSetModuleIdentifier(m : ModuleRef, ident : UInt8*, len : LibC::SizeT)
   {% end %}
 
   fun get_module_context = LLVMGetModuleContext(m : ModuleRef) : ContextRef
@@ -325,8 +328,6 @@ lib LibLLVM
 
   fun create_memory_buffer_with_contents_of_file = LLVMCreateMemoryBufferWithContentsOfFile(path : UInt8*, out_mem_buf : MemoryBufferRef*, out_message : UInt8**) : Int32
   fun parse_ir_in_context = LLVMParseIRInContext(context : ContextRef, mem_buf : MemoryBufferRef, out_m : ModuleRef*, out_message : UInt8**) : Int32
-  fun get_module_identifier = LLVMGetModuleIdentifier(m : ModuleRef, len : LibC::SizeT*) : UInt8*
-  fun set_module_identifier = LLVMSetModuleIdentifier(m : ModuleRef, ident : UInt8*, len : LibC::SizeT)
   fun context_dispose = LLVMContextDispose(ContextRef)
 
   fun void_type_in_context = LLVMVoidTypeInContext(ContextRef) : TypeRef
