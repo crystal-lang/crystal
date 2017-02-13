@@ -63,6 +63,12 @@ struct LLVM::Type
     LibLLVM.is_packed_struct(self) != 0
   end
 
+  def struct_name
+    raise "not a Struct" unless kind == Kind::Struct
+
+    String.new(LibLLVM.get_struct_name(self))
+  end
+
   def struct_element_types
     raise "not a Struct" unless kind == Kind::Struct
     count = LibLLVM.count_struct_element_types(self)
@@ -85,6 +91,34 @@ struct LLVM::Type
   def array_size
     raise "not an Array" unless kind == Kind::Array
     LibLLVM.get_array_length(self).to_i32
+  end
+
+  def vector_size
+    raise "not a Vector" unless kind == Kind::Vector
+    LibLLVM.get_vector_size(self).to_i32
+  end
+
+  def return_type
+    raise "not a Function" unless kind == Kind::Function
+    Type.new LibLLVM.get_return_type(self)
+  end
+
+  def params_types
+    params_size = self.params_size
+    Array(LLVM::Type).build(params_size) do |buffer|
+      LibLLVM.get_param_types(self, buffer.as(LibLLVM::TypeRef*))
+      params_size
+    end
+  end
+
+  def params_size
+    raise "not a Function" unless kind == Kind::Function
+    LibLLVM.count_param_types(self).to_i
+  end
+
+  def varargs?
+    raise "not a Function" unless kind == Kind::Function
+    LibLLVM.is_function_var_arg(self) != 0
   end
 
   def const_int(value) : Value

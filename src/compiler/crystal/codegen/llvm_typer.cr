@@ -10,6 +10,8 @@ module Crystal
     @layout : LLVM::TargetData
     @landing_pad_type : LLVM::Type
 
+    @@closure_counter = 0
+
     def initialize(@program : Program, @llvm_context : LLVM::Context)
       @cache = TypeCache.new
       @struct_cache = TypeCache.new
@@ -45,7 +47,7 @@ module Crystal
       @wants_size_struct_cache = TypeCache.new
       @wants_size_union_value_cache = TypeCache.new
 
-      @types_being_computed = Set(Type).new
+      @structs = {} of String => LLVM::Type
 
       machine = program.target_machine
       @layout = machine.data_layout
@@ -59,13 +61,13 @@ module Crystal
     @proc_type : LLVM::Type?
 
     def proc_type
-      @proc_type ||= @llvm_context.struct [@llvm_context.void_pointer, @llvm_context.void_pointer], "->"
+      @proc_type ||= @structs["->"] ||= @llvm_context.struct [@llvm_context.void_pointer, @llvm_context.void_pointer], "->"
     end
 
     @nil_type : LLVM::Type?
 
     def nil_type
-      @nil_type ||= @llvm_context.struct([] of LLVM::Type, "Nil")
+      @nil_type ||= @structs["Nil"] ||= @llvm_context.struct([] of LLVM::Type, "Nil")
     end
 
     def nil_value
@@ -176,11 +178,18 @@ module Crystal
     end
 
     private def create_llvm_type(type : TupleInstanceType, wants_size)
-      @llvm_context.struct(type.llvm_name) do |a_struct|
+      llvm_name = llvm_name(type, wants_size)
+
+      if s = @structs[llvm_name]?
+        return s
+      end
+
+      @llvm_context.struct(llvm_name) do |a_struct|
         if wants_size
           @wants_size_cache[type] = a_struct
         else
           @cache[type] = a_struct
+          @structs[llvm_name] = a_struct
         end
 
         type.tuple_types.map { |tuple_type| llvm_embedded_type(tuple_type, wants_size).as(LLVM::Type) }
@@ -188,11 +197,17 @@ module Crystal
     end
 
     private def create_llvm_type(type : NamedTupleInstanceType, wants_size)
-      @llvm_context.struct(type.llvm_name) do |a_struct|
+      llvm_name = llvm_name(type, wants_size)
+      if s = @structs[llvm_name]?
+        return s
+      end
+
+      @llvm_context.struct(llvm_name) do |a_struct|
         if wants_size
           @wants_size_cache[type] = a_struct
         else
           @cache[type] = a_struct
+          @structs[llvm_name] = a_struct
         end
 
         type.entries.map { |entry| llvm_embedded_type(entry.type, wants_size).as(LLVM::Type) }
@@ -220,11 +235,17 @@ module Crystal
     end
 
     private def create_llvm_type(type : MixedUnionType, wants_size)
-      @llvm_context.struct(type.llvm_name) do |a_struct|
+      llvm_name = llvm_name(type, wants_size)
+      if s = @structs[llvm_name]?
+        return s
+      end
+
+      @llvm_context.struct(llvm_name) do |a_struct|
         if wants_size
           @wants_size_cache[type] = a_struct
         else
           @cache[type] = a_struct
+          @structs[llvm_name] = a_struct
         end
 
         max_size = 0
@@ -300,11 +321,17 @@ module Crystal
         return create_llvm_c_union_struct_type(type, wants_size)
       end
 
-      @llvm_context.struct(type.llvm_name, type.packed?) do |a_struct|
+      llvm_name = llvm_name(type, wants_size)
+      if s = @structs[llvm_name]?
+        return s
+      end
+
+      @llvm_context.struct(llvm_name, type.packed?) do |a_struct|
         if wants_size
           @wants_size_struct_cache[type] = a_struct
         else
           @struct_cache[type] = a_struct
+          @structs[llvm_name] = a_struct
         end
 
         ivars = type.all_instance_vars
@@ -314,7 +341,6 @@ module Crystal
         element_types = Array(LLVM::Type).new(ivars_size)
         element_types.push @llvm_context.int32 unless type.struct? # For the type id
 
-        @types_being_computed.add(type)
         ivars.each do |name, ivar|
           if type.extern?
             element_types.push llvm_embedded_c_type(ivar.type, wants_size)
@@ -322,18 +348,23 @@ module Crystal
             element_types.push llvm_embedded_type(ivar.type, wants_size)
           end
         end
-        @types_being_computed.delete(type)
 
         element_types
       end
     end
 
     private def create_llvm_c_union_struct_type(type, wants_size)
-      @llvm_context.struct(type.llvm_name) do |a_struct|
+      llvm_name = llvm_name(type, wants_size)
+      if s = @structs[llvm_name]?
+        return s
+      end
+
+      @llvm_context.struct(llvm_name) do |a_struct|
         if wants_size
           @wants_size_struct_cache[type] = a_struct
         else
           @struct_cache[type] = a_struct
+          @structs[llvm_name] = a_struct
         end
 
         max_size = 0
@@ -444,12 +475,69 @@ module Crystal
     end
 
     def closure_context_type(vars, parent_llvm_type, self_type)
-      @llvm_context.struct("closure") do |a_struct|
+      @@closure_counter += 1
+      llvm_name = "closure_#{@@closure_counter}"
+
+      @llvm_context.struct(llvm_name) do |a_struct|
+        @structs[llvm_name] = a_struct
+
         elems = vars.map { |var| llvm_type(var.type).as(LLVM::Type) }
-        elems << parent_llvm_type.pointer if parent_llvm_type
+
+        # Make sure to copy the given LLVM::Type to this context
+        elems << copy_type(parent_llvm_type).pointer if parent_llvm_type
+
         elems << llvm_type(self_type) if self_type
         elems
       end
+    end
+
+    # Copy existing LLVM types, possibly from another context,
+    # into this typer's context.
+    def copy_types(types : Array(LLVM::Type))
+      types.map do |type|
+        copy_type(type).as(LLVM::Type)
+      end
+    end
+
+    # Copy an existing LLVM type, possibly from another context,
+    # into this typer's context.
+    def copy_type(type : LLVM::Type)
+      case type.kind
+      when .void?
+        @llvm_context.void
+      when .integer?
+        @llvm_context.int(type.int_width)
+      when .float?
+        @llvm_context.float
+      when .double?
+        @llvm_context.double
+      when .pointer?
+        copy_type(type.element_type).pointer
+      when .array?
+        copy_type(type.element_type).array(type.array_size)
+      when .vector?
+        copy_type(type.element_type).vector(type.vector_size)
+      when .function?
+        params_types = copy_types(type.params_types)
+        ret_type = copy_type(type.return_type)
+        LLVM::Type.function(params_types, ret_type, type.varargs?)
+      when .struct?
+        llvm_name = type.struct_name
+        @structs[llvm_name] ||= begin
+          @llvm_context.struct(llvm_name, type.packed_struct?) do |the_struct|
+            @structs[llvm_name] = the_struct
+            copy_types(type.struct_element_types)
+          end
+        end
+      else
+        raise "don't know how to copy type: #{type} (#{type.kind})"
+      end
+    end
+
+    def llvm_name(type, wants_size)
+      llvm_name = type.llvm_name
+      llvm_name = "#{llvm_name}.wants_size" if wants_size
+      llvm_name
     end
 
     def size_of(type)
@@ -479,7 +567,7 @@ module Crystal
     end
 
     def union_value_type(type : MixedUnionType)
-      @union_value_cache[type]
+      @union_value_cache[type] ||= llvm_type(type).struct_element_types[1]
     end
   end
 end

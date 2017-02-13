@@ -65,11 +65,11 @@ struct LLVM::Function
   end
 
   def return_type
-    Type.new LibLLVM.get_return_type(function_type)
+    function_type.return_type
   end
 
   def varargs?
-    LibLLVM.is_function_var_arg(function_type) != 0
+    function_type.varargs?
   end
 
   def params

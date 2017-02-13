@@ -596,25 +596,27 @@ class Crystal::CodeGenVisitor
   def create_metaclass_fun(name)
     id_to_metaclass = @llvm_id.id_to_metaclass.to_a.sort_by! &.[0]
 
-    define_main_function(name, ([llvm_context.int32]), llvm_context.int32) do |func|
-      arg = func.params.first
+    in_main do
+      define_main_function(name, ([llvm_context.int32]), llvm_context.int32) do |func|
+        arg = func.params.first
 
-      current_block = insert_block
+        current_block = insert_block
 
-      cases = {} of LLVM::Value => LLVM::BasicBlock
-      id_to_metaclass.each do |(type_id, metaclass_id)|
-        block = new_block "type_#{type_id}"
-        cases[int32(type_id)] = block
-        position_at_end block
-        ret int32(metaclass_id)
+        cases = {} of LLVM::Value => LLVM::BasicBlock
+        id_to_metaclass.each do |(type_id, metaclass_id)|
+          block = new_block "type_#{type_id}"
+          cases[int32(type_id)] = block
+          position_at_end block
+          ret int32(metaclass_id)
+        end
+
+        otherwise = new_block "otherwise"
+        position_at_end otherwise
+        unreachable
+
+        position_at_end current_block
+        @builder.switch arg, otherwise, cases
       end
-
-      otherwise = new_block "otherwise"
-      position_at_end otherwise
-      unreachable
-
-      position_at_end current_block
-      @builder.switch arg, otherwise, cases
     end
   end
 
@@ -678,7 +680,9 @@ class Crystal::CodeGenVisitor
       phi.add value, node.type
 
       # Reset abi_info + c_calling_convention so the closure part is generated as usual
-      target_def.abi_info = nil
+      old_abi_info = target_def.abi_info?
+      old_c_calling_convention = target_def.c_calling_convention?
+      target_def.abi_info = false
       target_def.c_calling_convention = nil
 
       position_at_end ctx_is_not_null_block
@@ -686,6 +690,9 @@ class Crystal::CodeGenVisitor
       closure_args.insert(0, ctx_ptr)
       value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
+
+      target_def.abi_info = old_abi_info
+      target_def.c_calling_convention = !!old_c_calling_convention
     end
 
     old_needs_value = @needs_value

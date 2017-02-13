@@ -167,6 +167,7 @@ lib LibLLVM
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : LLVM::Type::Kind
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun get_value_name = LLVMGetValueName(value : ValueRef) : UInt8*
+  fun get_value_kind = LLVMGetValueKind(value : ValueRef) : LLVM::Value::Kind
   fun initialize_x86_asm_printer = LLVMInitializeX86AsmPrinter
   fun initialize_x86_asm_parser = LLVMInitializeX86AsmParser
   fun initialize_x86_target = LLVMInitializeX86Target
@@ -255,10 +256,12 @@ lib LibLLVM
   fun get_instruction_call_convention = LLVMGetInstructionCallConv(instr : ValueRef) : LLVM::CallConvention
   fun get_int_type_width = LLVMGetIntTypeWidth(ty : TypeRef) : UInt32
   fun is_packed_struct = LLVMIsPackedStruct(ty : TypeRef) : Int32
+  fun get_struct_name = LLVMGetStructName(ty : TypeRef) : UInt8*
   fun get_struct_element_types = LLVMGetStructElementTypes(ty : TypeRef, dest : TypeRef*)
   fun count_struct_element_types = LLVMCountStructElementTypes(ty : TypeRef) : UInt32
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_array_length = LLVMGetArrayLength(ty : TypeRef) : UInt32
+  fun get_vector_size = LLVMGetVectorSize(ty : TypeRef) : UInt32
   fun abi_size_of_type = LLVMABISizeOfType(td : TargetDataRef, ty : TypeRef) : UInt64
   fun abi_alignment_of_type = LLVMABIAlignmentOfType(td : TargetDataRef, ty : TypeRef) : UInt32
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
@@ -274,6 +277,7 @@ lib LibLLVM
   fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
   fun set_volatile = LLVMSetVolatile(value : ValueRef, volatile : UInt32)
   fun set_alignment = LLVMSetAlignment(value : ValueRef, bytes : UInt32)
+  fun get_return_type = LLVMGetReturnType(TypeRef) : TypeRef
 
   {% unless LibLLVM::IS_35 %}
     fun write_bitcode_to_memory_buffer = LLVMWriteBitcodeToMemoryBuffer(mod : ModuleRef) : MemoryBufferRef

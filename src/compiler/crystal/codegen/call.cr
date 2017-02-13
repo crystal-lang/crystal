@@ -554,7 +554,9 @@ class Crystal::CodeGenVisitor
 
   # This is for function pointer calls and exception handler re-raise
   def set_call_attributes(node, target_def, self_type, is_closure, fun_type)
-    abi_info = target_def.abi_info if target_def
+    if target_def && target_def.abi_info?
+      abi_info = abi_info(target_def)
+    end
 
     arg_offset = is_closure ? 2 : 1
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type

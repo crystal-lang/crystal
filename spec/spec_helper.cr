@@ -279,7 +279,7 @@ def codegen(code, inject_primitives = true, debug = Crystal::Debug::None)
   code = inject_primitives(code) if inject_primitives
   node = parse code
   result = semantic node
-  result.program.codegen result.node, single_module: false, debug: debug
+  result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
 end
 
 class Crystal::SpecRunOutput

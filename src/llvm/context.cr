@@ -12,6 +12,7 @@ class LLVM::Context
   end
 
   def new_builder : Builder
+    # Builder.new(LibLLVM.create_builder_in_context(self), self)
     Builder.new(LibLLVM.create_builder_in_context(self))
   end
 
@@ -114,4 +115,21 @@ class LLVM::Context
 
     LibLLVM.dispose_context(self)
   end
+
+  # The next lines are for ease debugging when a types/values
+  # are incorrectly used across contexts.
+
+  # @@info = {} of UInt64 => String
+
+  # def self.register(context : Context, name : String)
+  #   @@info[context.@unwrap.address] = name
+  # end
+
+  # def self.lookup(context : Context)
+  #   @@info[context.@unwrap.address]? || "global"
+  # end
+
+  # def self.wrong(expected, got, msg)
+  #   raise "#{msg} (expected #{lookup(expected)}, got #{lookup(got)})"
+  # end
 end

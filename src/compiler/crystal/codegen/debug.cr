@@ -4,6 +4,8 @@ module Crystal
   class CodeGenVisitor
     CRYSTAL_LANG_DEBUG_IDENTIFIER = 0x8002_u32
 
+    @current_debug_location : Location?
+
     def di_builder(llvm_module = @llvm_mod || @main_mod)
       di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
       di_builders[llvm_module] ||= LLVM::DIBuilder.new(llvm_module).tap do |di_builder|
@@ -223,6 +225,7 @@ module Crystal
         main_scopes = (@main_scopes ||= {} of {String, String} => LibLLVMExt::Metadata)
         file, dir = file_and_dir(location.filename)
         main_scopes[{file, dir}] ||= begin
+          di_builder = di_builder(@main_mod)
           file = di_builder.create_file(file, dir)
           di_builder.create_lexical_block(fun_metadatas[context.fun], file, 1, 1)
         end
@@ -235,6 +238,8 @@ module Crystal
       location = location.try &.original_location
       return unless location
 
+      @current_debug_location = location
+
       scope = get_current_debug_scope(location)
 
       if scope
@@ -245,6 +250,8 @@ module Crystal
     end
 
     def clear_current_debug_location
+      @current_debug_location = nil
+
       builder.set_current_debug_location(0, 0, nil)
     end
 

@@ -24,7 +24,7 @@ module Crystal
     end
 
     def evaluate(node, debug = Debug::Default)
-      llvm_mod = codegen(node, single_module: true, debug: debug)[""]
+      llvm_mod = codegen(node, single_module: true, debug: debug)[""].mod
       main = llvm_mod.functions[MAIN_NAME]
 
       main_return_type = main.return_type
@@ -91,7 +91,7 @@ module Crystal
     getter llvm_mod : LLVM::Module
     getter builder : CrystalLLVMBuilder
     getter main : LLVM::Function
-    getter modules : Hash(String, LLVM::Module)
+    getter modules : Hash(String, ModuleInfo)
     getter context : Context
     getter llvm_typer : LLVMTyper
     getter alloca_block : LLVM::BasicBlock
@@ -120,6 +120,7 @@ module Crystal
 
     record Handler, node : ExceptionHandler, context : Context
     record StringKey, mod : LLVM::Module, string : String
+    record ModuleInfo, mod : LLVM::Module, typer : LLVMTyper, builder : CrystalLLVMBuilder
 
     @abi : LLVM::ABI
     @main_ret_type : Type
@@ -131,14 +132,21 @@ module Crystal
     @sret_value : LLVM::Value?
     @cant_pass_closure_to_c_exception_call : Call?
     @realloc_fun : LLVM::Function?
+    @main_llvm_context : LLVM::Context
+    @main_llvm_typer : LLVMTyper
+    @main_module_info : ModuleInfo
+    @main_builder : CrystalLLVMBuilder
 
     def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default, expose_crystal_main = true)
       @single_module = !!single_module
       @abi = @program.target_machine.abi
       @llvm_context = LLVM::Context.new
+      # LLVM::Context.register(@llvm_context, "main")
       @llvm_mod = @llvm_context.new_module("main_module")
       @main_mod = @llvm_mod
+      @main_llvm_context = @main_mod.context
       @llvm_typer = LLVMTyper.new(@program, @llvm_context)
+      @main_llvm_typer = @llvm_typer
       @llvm_id = LLVMId.new(@program)
       @main_ret_type = node.type? || @program.nil_type
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
@@ -156,11 +164,12 @@ module Crystal
       @argv = @main.params[1]
       @argv.name = "argv"
 
-      builder = new_builder
-      @builder = wrap_builder builder
+      @builder = new_builder(@main_llvm_context)
+      @main_builder = @builder
 
-      @modules = {"" => @main_mod} of String => LLVM::Module
-      @types_to_modules = {} of Type => LLVM::Module
+      @main_module_info = ModuleInfo.new(@main_mod, @main_llvm_typer, @builder)
+      @modules = {"" => @main_module_info} of String => ModuleInfo
+      @types_to_modules = {} of Type => ModuleInfo
 
       @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
 
@@ -174,7 +183,7 @@ module Crystal
       end
 
       unless program.symbols.empty?
-        symbol_table = define_symbol_table @llvm_mod
+        symbol_table = define_symbol_table @llvm_mod, @llvm_typer
         symbol_table.initializer = llvm_type(@program.string).const_array(@symbol_table_values)
       end
 
@@ -214,8 +223,8 @@ module Crystal
     getter llvm_typer
     getter llvm_context
 
-    def new_builder
-      llvm_context.new_builder
+    def new_builder(llvm_context)
+      wrap_builder(llvm_context.new_builder)
     end
 
     # Here we only initialize simple constants and class variables, those
@@ -242,8 +251,8 @@ module Crystal
       CrystalLLVMBuilder.new builder, llvm_typer, @program.printf(@llvm_mod, llvm_context)
     end
 
-    def define_symbol_table(llvm_mod)
-      llvm_mod.globals.add llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
+    def define_symbol_table(llvm_mod, llvm_typer)
+      llvm_mod.globals.add llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
     end
 
     def data_layout
@@ -315,7 +324,8 @@ module Crystal
         dump_llvm_regex = Regex.new(env_dump)
       end
 
-      @modules.each do |name, mod|
+      @modules.each do |name, info|
+        mod = info.mod
         push_debug_info_metadata(mod) unless @debug.none?
 
         mod.dump if dump_all_llvm || name =~ dump_llvm_regex
@@ -485,7 +495,7 @@ module Crystal
         node.def.set_type node.return_type
       end
 
-      the_fun = codegen_fun fun_literal_name, node.def, context.type, fun_module: @main_mod, is_fun_literal: true, is_closure: is_closure
+      the_fun = codegen_fun fun_literal_name, node.def, context.type, fun_module_info: @main_module_info, is_fun_literal: true, is_closure: is_closure
       the_fun = check_main_fun fun_literal_name, the_fun
 
       fun_ptr = bit_cast(the_fun, llvm_context.void_pointer)
@@ -965,8 +975,9 @@ module Crystal
           # Define it in main if it's not already defined
           main_ptr = @main_mod.globals[name]?
           unless main_ptr
-            main_ptr = @main_mod.globals.add(llvm_type, name)
-            main_ptr.initializer = initial_value || llvm_type.null
+            main_llvm_type = @main_llvm_typer.llvm_type(type)
+            main_ptr = @main_mod.globals.add(main_llvm_type, name)
+            main_ptr.initializer = initial_value || main_llvm_type.null
             main_ptr.thread_local = true if thread_local
           end
         end
@@ -993,9 +1004,11 @@ module Crystal
       fun_name = "*#{name}"
       thread_local_fun = @main_mod.functions[fun_name]?
       unless thread_local_fun
-        thread_local_fun = define_main_function(fun_name, [llvm_type(type).pointer.pointer], llvm_context.void) do |func|
-          builder.store get_global_var(name, type, real_var), func.params[0]
-          builder.ret
+        thread_local_fun = in_main do
+          define_main_function(fun_name, [llvm_type(type).pointer.pointer], llvm_context.void) do |func|
+            builder.store get_global_var(name, type, real_var), func.params[0]
+            builder.ret
+          end
         end
         thread_local_fun.add_attribute LLVM::Attribute::NoInline
       end
@@ -1428,23 +1441,25 @@ module Crystal
     end
 
     def create_check_proc_is_not_closure_fun(fun_name)
-      define_main_function(fun_name, [llvm_typer.proc_type], llvm_context.void_pointer) do |func|
-        param = func.params.first
+      in_main do
+        define_main_function(fun_name, [llvm_typer.proc_type], llvm_context.void_pointer) do |func|
+          param = func.params.first
 
-        fun_ptr = extract_value param, 0
-        ctx_ptr = extract_value param, 1
+          fun_ptr = extract_value param, 0
+          ctx_ptr = extract_value param, 1
 
-        ctx_is_null_block = new_block "ctx_is_null"
-        ctx_is_not_null_block = new_block "ctx_is_not_null"
+          ctx_is_null_block = new_block "ctx_is_null"
+          ctx_is_not_null_block = new_block "ctx_is_not_null"
 
-        ctx_is_null = equal? ctx_ptr, llvm_context.void_pointer.null
-        cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
+          ctx_is_null = equal? ctx_ptr, llvm_context.void_pointer.null
+          cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
 
-        position_at_end ctx_is_null_block
-        ret fun_ptr
+          position_at_end ctx_is_null_block
+          ret fun_ptr
 
-        position_at_end ctx_is_not_null_block
-        accept cant_pass_closure_to_c_exception_call
+          position_at_end ctx_is_not_null_block
+          accept cant_pass_closure_to_c_exception_call
+        end
       end
     end
 
@@ -1460,9 +1475,12 @@ module Crystal
       make_fun type, null, null
     end
 
-    def define_main_function(name, arg_types, return_type, needs_alloca = false)
+    def in_main
       old_builder = self.builder
+      old_position = old_builder.insert_block
       old_llvm_mod = @llvm_mod
+      old_llvm_context = @llvm_context
+      old_llvm_typer = @llvm_typer
       old_fun = context.fun
       old_ensure_exception_handlers = @ensure_exception_handlers
       old_rescue_block = @rescue_block
@@ -1470,28 +1488,21 @@ module Crystal
       old_alloca_block = @alloca_block
       old_needs_value = @needs_value
       @llvm_mod = @main_mod
+      @llvm_context = @main_llvm_context
+      @llvm_typer = @main_llvm_typer
+      @builder = @main_builder
+
       @ensure_exception_handlers = nil
       @rescue_block = nil
 
-      a_fun = @main_mod.functions.add(name, arg_types, return_type) do |func|
-        context.fun = func
-        context.fun.linkage = LLVM::Linkage::Internal if @single_module
-        if needs_alloca
-          builder = new_builder
-          @builder = wrap_builder builder
-          new_entry_block
-          yield func
-          br_from_alloca_to_entry
-        else
-          func.basic_blocks.append "entry" do |builder|
-            @builder = wrap_builder builder
-            yield func
-          end
-        end
-      end
+      block_value = yield
 
       @builder = old_builder
+      position_at_end old_position
+
       @llvm_mod = old_llvm_mod
+      @llvm_context = old_llvm_context
+      @llvm_typer = old_llvm_typer
       @ensure_exception_handlers = old_ensure_exception_handlers
       @rescue_block = old_rescue_block
       @entry_block = old_entry_block
@@ -1499,7 +1510,27 @@ module Crystal
       @needs_value = old_needs_value
       context.fun = old_fun
 
-      a_fun
+      block_value
+    end
+
+    def define_main_function(name, arg_types, return_type, needs_alloca = false)
+      if @llvm_mod != @main_mod
+        raise "wrong usage of define_main_function: you must put it inside an `in_main` block"
+      end
+
+      @main_mod.functions.add(name, arg_types, return_type) do |func|
+        context.fun = func
+        context.fun.linkage = LLVM::Linkage::Internal if @single_module
+        if needs_alloca
+          new_entry_block
+          yield func
+          br_from_alloca_to_entry
+        else
+          block = func.basic_blocks.append "entry"
+          position_at_end block
+          yield func
+        end
+      end
     end
 
     def llvm_self(type = context.type)
