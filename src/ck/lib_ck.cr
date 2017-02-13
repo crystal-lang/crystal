@@ -25,6 +25,7 @@ lib LibCK
   fun brlock_init : BRLock
   fun brlock_reader_init : BRLockReader
   fun brlock_read_register(lock : BRLock*, reader : BRLockReader*)
+  fun brlock_read_unregister(lock : BRLock*, reader : BRLockReader*)
   fun brlock_read_lock(lock : BRLock*, reader : BRLockReader*)
   fun brlock_read_unlock(reader : BRLockReader*)
   fun brlock_write_lock(lock : BRLock*)

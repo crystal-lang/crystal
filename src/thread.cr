@@ -87,12 +87,14 @@ class Thread
     {% unless flag?(:openbsd) %}
     @@current = self
     {% end %}
+    Fiber.gc_register_thread
     Fiber.current = Fiber.new
     begin
       @func.call
     rescue ex
       @exception = ex
     ensure
+      Fiber.gc_unregister_thread
       @@threads.delete(self)
     end
   end

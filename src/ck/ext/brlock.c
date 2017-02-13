@@ -14,6 +14,10 @@ void brlock_read_register(ck_brlock_t *lock, ck_brlock_reader_t *reader) {
   ck_brlock_read_register(lock, reader);
 }
 
+void brlock_read_unregister(ck_brlock_t *lock, ck_brlock_reader_t *reader) {
+  ck_brlock_read_unregister(lock, reader);
+}
+
 void brlock_read_lock(ck_brlock_t *lock, ck_brlock_reader_t *reader) {
   ck_brlock_read_lock(lock, reader);
 }

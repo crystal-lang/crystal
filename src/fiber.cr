@@ -102,8 +102,6 @@ class Fiber
     @stack_top = _fiber_get_stack_top
     @stack_bottom = LibGC.get_stackbottom
 
-    Fiber.gc_register_thread
-
     Fiber.gc_read_lock
     @@fiber_list_mutex.synchronize do
       if last_fiber = @@last_fiber
@@ -194,8 +192,12 @@ class Fiber
     }
   end
 
-  protected def self.gc_register_thread
+  def self.gc_register_thread
     LibCK.brlock_read_register pointerof(@@gc_lock), pointerof(@@gc_lock_reader)
+  end
+
+  def self.gc_unregister_thread
+    LibCK.brlock_read_unregister pointerof(@@gc_lock), pointerof(@@gc_lock_reader)
   end
 
   @[NoInline]
