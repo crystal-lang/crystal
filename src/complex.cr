@@ -223,6 +223,10 @@ struct Complex
   def self.zero : Complex
     new 0, 0
   end
+
+  def zero? : Bool
+    self == typeof(self).zero
+  end
 end
 
 struct Number
