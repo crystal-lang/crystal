@@ -233,9 +233,11 @@ module Crystal
       end
 
       bc_flags_changed = bc_flags_changed? output_dir
+      target_triple = target_machine.triple
 
       units = llvm_modules.map do |type_name, info|
         llvm_mod = info.mod
+        llvm_mod.target = target_triple
         CompilationUnit.new(self, type_name, llvm_mod, output_dir, bc_flags_changed)
       end
 
@@ -273,8 +275,7 @@ module Crystal
       Crystal.timing("Codegen (bc+obj)", @stats) do
         if units.size == 1
           first_unit = units.first
-
-          codegen_single_unit(program, first_unit, target_triple)
+          first_unit.compile
           reused << first_unit.name if first_unit.reused_previous_compilation?
 
           if emit = @emit
@@ -325,7 +326,7 @@ module Crystal
           codegen_process = fork do
             pipe_w = pw
             slice.each do |unit|
-              codegen_single_unit(program, unit, target_triple)
+              unit.compile
               if pipe_w && unit.reused_previous_compilation?
                 pipe_w.puts unit.name
               end
@@ -348,11 +349,6 @@ module Crystal
       end
 
       all_reused
-    end
-
-    private def codegen_single_unit(program, unit, target_triple)
-      unit.llvm_mod.target = target_triple
-      unit.compile
     end
 
     private def print_macro_run_stats(program)
