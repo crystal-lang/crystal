@@ -15,6 +15,16 @@ describe Digest::SHA1 do
       bytes.to_slice.hexstring.should eq(hexdigest)
     end
 
+    it "does digest for #{string.inspect} in a block" do
+      bytes = Digest::SHA1.digest do |ctx|
+        string.each_char do |chr|
+          ctx.update chr.to_s
+        end
+      end
+
+      bytes.to_slice.hexstring.should eq(hexdigest)
+    end
+
     it "does hexdigest for #{string.inspect}" do
       Digest::SHA1.hexdigest(string).should eq(hexdigest)
     end
