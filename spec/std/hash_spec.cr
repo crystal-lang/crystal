@@ -323,6 +323,12 @@ describe "Hash" do
     h1["bar"].should eq([2])
   end
 
+  it "raises on initialize if set to a non-postive value" do
+    expect_raises ArgumentError, "Hash capacity must be positive" do
+      Hash(Int32, Int32).new(initial_capacity: -1) { 1234 }
+    end
+  end
+
   it "initializes with default value" do
     h = Hash(Int32, Int32).new(10)
     h[0].should eq(10)

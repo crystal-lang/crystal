@@ -13,8 +13,8 @@ class Hash(K, V)
 
   def initialize(block : (Hash(K, V), K -> V)? = nil, initial_capacity = nil)
     initial_capacity ||= 11
-    initial_capacity = 11 if initial_capacity < 11
     initial_capacity = initial_capacity.to_i
+    raise ArgumentError.new("Hash capacity must be positive") if initial_capacity <= 0
     @buckets = Pointer(Entry(K, V)?).malloc(initial_capacity)
     @buckets_size = initial_capacity
     @size = 0
