@@ -2,7 +2,7 @@ require "option_parser"
 require "file_utils"
 require "socket"
 require "colorize"
-require "crypto/md5"
+require "digest/md5"
 
 module Crystal
   @[Flags]
@@ -490,7 +490,7 @@ module Crystal
 
         if @name.size > 50
           # 17 chars from name + 1 (dash) + 32 (md5) = 50
-          @name = "#{@name[0..16]}-#{Crypto::MD5.hex_digest(@name)}"
+          @name = "#{@name[0..16]}-#{Digest::MD5.hexdigest(@name)}"
         end
       end
 
