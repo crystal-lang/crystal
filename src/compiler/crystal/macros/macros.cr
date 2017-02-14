@@ -192,7 +192,7 @@ class Crystal::Program
     recorded_requires.map do |recorded_require|
       begin
         files = @program.find_in_path(recorded_require.filename, recorded_require.relative_to)
-        required_files.merge!(files) if files
+        required_files.concat(files) if files
       rescue Crystal::CrystalPath::Error
         # Maybe the file is gone
         next

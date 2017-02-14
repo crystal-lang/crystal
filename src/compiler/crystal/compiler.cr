@@ -167,7 +167,7 @@ module Crystal
       program.target_machine = target_machine
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
-      program.flags.merge! @flags
+      program.flags.concat @flags
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout

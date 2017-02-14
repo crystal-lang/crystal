@@ -45,7 +45,7 @@ struct Set(T)
   # s.empty? # => false
   # ```
   def self.new(enumerable : Enumerable(T))
-    Set(T).new.merge!(enumerable)
+    Set(T).new.concat(enumerable)
   end
 
   # Alias for `add`
@@ -70,12 +70,12 @@ struct Set(T)
   #
   # ```
   # s = Set{1, 5}
-  # s.merge! [5, 5, 8, 9]
+  # s.concat [5, 5, 8, 9]
   # s.size # => 4
   # ```
   #
   # See also: `#|` to merge two sets and return a new one.
-  def merge!(elems)
+  def concat(elems)
     elems.each { |elem| self << elem }
     self
   end
@@ -172,7 +172,7 @@ struct Set(T)
   # Set{'a', 'b', 'b', 'z'} | Set{'a', 'b', 'c'} # => Set{'a', 'b', 'z', 'c'}
   # ```
   #
-  # See also: `#merge` to add elements from a set to `self`.
+  # See also: `#concat` to add elements from a set to `self`.
   def |(other : Set(U)) forall U
     set = Set(T | U).new
     each { |value| set.add value }
