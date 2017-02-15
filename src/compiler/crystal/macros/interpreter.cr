@@ -98,13 +98,35 @@ module Crystal
       node.exp.accept self
 
       if node.output?
-        # In the caseof {{yield}}, we want to paste the block's body
+        # In the case of {{yield}}, we want to paste the block's body
         # retaining the original node's location, so error messages
         # are shown in the block instead of in the generated macro source
         is_yield = node.exp.is_a?(Yield) && !@last.is_a?(Nop)
-        @str << " #<loc:push>begin " if is_yield
+        # In the case of {{@type}}, the type may be file private.
+        if (exp = node.exp).is_a?(InstanceVar) && exp.name == "@type" && (last = @last).is_a?(TypeNode)
+          type_loc = last.type.locations.try &.first?.try &.original_location
+        end
+
+        if is_yield
+          @str << " #<loc:push>begin "
+        elsif type_loc
+          @str << " #<loc:push>"
+          @str << "#<loc:"
+          type_loc.filename.inspect @str
+          @str << ","
+          @str << type_loc.line_number
+          @str << ","
+          @str << type_loc.column_number
+          @str << ">"
+        end
+
         @last.to_s(@str, emit_loc_pragma: is_yield, emit_doc: is_yield)
-        @str << " end#<loc:pop> " if is_yield
+
+        if is_yield
+          @str << " end#<loc:pop> "
+        elsif type_loc
+          @str << "#<loc:pop>"
+        end
       end
 
       false
