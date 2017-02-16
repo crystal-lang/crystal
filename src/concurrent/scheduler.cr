@@ -23,6 +23,8 @@ class Scheduler
   @@spinning = Atomic(Int32).new(0)
   @@wake = Atomic(Int32).new(0)
 
+  @@stamp = Atomic(Int32).new(0)
+
   def self.print_state
     @@all_mutex.synchronize do
       thread_log "schedulers: %d, sleeping: %d, spinning: %d, wake: %d\n", @@all.size, @@sleeping.get, @@spinning.get, @@wake.get
@@ -105,17 +107,25 @@ class Scheduler
 
   protected def spin
     could_steal = false
-    100.times do
-      sched = choose_other_sched
-      if (stolen = sched.steal) && stolen.size > 0
-        thread_log "Stole #{stolen.size} runnables (#{stolen.map(&.name!).join(", ")}) from #{sched}"
-        enqueue stolen
-        could_steal = true
+    while !could_steal
+      begin_stamp = @@stamp.get
+      scheduler_count = @@all.size
+      scheduler_count.times do
+        sched = choose_other_sched
+        if (stolen = sched.steal) && stolen.size > 0
+          thread_log "Stole #{stolen.size} runnables (#{stolen.map(&.name!).join(", ")}) from #{sched}"
+          enqueue_stolen stolen
+          could_steal = true
+          break
+        end
+      end
+
+      @@spinning.add(-1)
+      if could_steal || begin_stamp == @@stamp.get
         break
       end
+      @@spinning.add(1)
     end
-
-    @@spinning.add(-1)
 
     could_steal
   end
@@ -135,7 +145,18 @@ class Scheduler
     ensure_workers_available
   end
 
+  def enqueue(fibers : Enumerable(Fiber))
+    @runnables_lock.synchronize { @runnables.concat fibers }
+    ensure_workers_available
+  end
+
+  protected def enqueue_stolen(fibers : Enumerable(Fiber))
+    @runnables_lock.synchronize { @runnables.concat fibers }
+  end
+
   private def ensure_workers_available
+    @@stamp.add(1)
+
     if @@spinning.get != 0
       return
     end
@@ -150,6 +171,7 @@ class Scheduler
 
     # FIXME: race condition: this may result in more than 8 worker threads
     # FIXME: make the number of threads CPU/arch dependent (configurable?)
+    # FIXME: this access to @@all is not synchronized
     if @@all.size < 8
       @@spinning.add(1)
       Thread.new do
