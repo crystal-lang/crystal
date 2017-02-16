@@ -4,10 +4,14 @@ require "c/sys/wait"
 # Singleton that handles `SIG_CHLD` and queues events for `Process#waitpid`.
 # `Process.waitpid` uses this class for nonblocking operation.
 class Event::SignalChildHandler
+  @@instance_lock = SpinLock.new
+
   def self.instance : self
-    @@instance ||= begin
-      Signal.setup_default_handlers
-      new
+    @@instance_lock.synchronize do
+      @@instance ||= begin
+        Signal.setup_default_handlers
+        new
+      end
     end
   end
 

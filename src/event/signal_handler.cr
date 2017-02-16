@@ -90,6 +90,6 @@ class Event::SignalHandler
   end
 
   private def spawn_reader
-    spawn { run }
+    spawn(name: "Event::SignalHandler") { run }
   end
 end
