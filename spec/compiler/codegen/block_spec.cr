@@ -1493,4 +1493,20 @@ describe "Code gen: block" do
       end
       )).to_i.should eq(123)
   end
+
+  it "dispatches with captured and non-captured block (#3969)" do
+    run(%(
+      def fn(x : Int32, &block)
+        x
+      end
+
+      def fn(x : Char, &block : -> Int32)
+        block.call
+      end
+
+      a = fn(1 || 'a') { 2 }
+      b = fn('a' || 1) { 2 }
+      a + b
+      )).to_i.should eq(3)
+  end
 end
