@@ -3636,6 +3636,7 @@ module Crystal
         # doesn't have parentheses, we don't parse "x do end" as an invocation
         # to a method x with a block. Instead, we just stop on x and we don't
         # consume the block, leaving the block for 'foo' to consume.
+        block = parse_curly_block(block)
       elsif @stop_on_do && call_args && call_args.has_parentheses
         # This is the case when we have:
         #
@@ -3644,6 +3645,7 @@ module Crystal
         #    end
         #
         # We don't want to attach the block to `x`, but to `foo`.
+        block = parse_curly_block(block)
       else
         block = parse_block(block)
       end
@@ -3699,7 +3701,13 @@ module Crystal
 
         raise "block already specified with &" if block
         parse_block2 { check_ident :end }
-      elsif @token.type == :"{"
+      else
+        parse_curly_block(block)
+      end
+    end
+
+    def parse_curly_block(block)
+      if @token.type == :"{"
         raise "block already specified with &" if block
         parse_block2 { check :"}" }
       else
