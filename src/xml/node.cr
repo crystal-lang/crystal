@@ -94,9 +94,15 @@ struct XML::Node
     Node.new @node.value.doc
   end
 
-  # Returns `true` if this is a Document node.
+  # Returns `true` if this is a Document or HTML Document node.
   def document?
-    type == XML::Type::DOCUMENT_NODE
+    case type
+    when XML::Type::DOCUMENT_NODE,
+         XML::Type::HTML_DOCUMENT_NODE
+      true
+    else
+      false
+    end
   end
 
   # Returns the encoding of this node's document.
@@ -246,8 +252,10 @@ struct XML::Node
       "#cdata-section"
     elsif fragment?
       "#document-fragment"
-    else
+    elsif @node.value && @node.value.name
       String.new(@node.value.name)
+    else
+      ""
     end
   end
 

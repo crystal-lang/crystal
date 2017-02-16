@@ -69,4 +69,14 @@ describe XML do
       XML.parse_html("")
     end
   end
+
+  it "gets name of HTML document node (#4040)" do
+    doc = XML.parse_html(%(\
+      <!doctype html>
+      <html>
+      </html>
+    ))
+    doc.document?.should be_true
+    doc.name.should eq("document")
+  end
 end
