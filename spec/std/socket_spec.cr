@@ -260,6 +260,7 @@ describe UNIXServer do
       server = UNIXServer.new("/tmp/crystal-test-unix-sock")
       exception = nil
 
+      server.close
       spawn do
         begin
           server.accept
@@ -268,7 +269,6 @@ describe UNIXServer do
         end
       end
 
-      server.close
       until exception
         Fiber.yield
       end
@@ -293,8 +293,8 @@ describe UNIXServer do
       server = UNIXServer.new("/tmp/crystal-test-unix-sock")
       ret = :initial
 
-      spawn { ret = server.accept? }
       server.close
+      spawn { ret = server.accept? }
 
       while ret == :initial
         Fiber.yield
