@@ -21,6 +21,20 @@ describe "Char" do
     it { 'ぃ'.pred.should eq('あ') }
   end
 
+  describe "*" do
+    assert { ('-' * 0).should eq("") }
+    assert { ('-' * 1).should eq("-") }
+    assert { ('-' * 10).should eq("----------") }
+    assert { ('🚀' * 1).should eq("🚀") }
+    assert { ('🚀' * 3).should eq("🚀🚀🚀") }
+
+    it "multiplies with negative size" do
+      expect_raises(ArgumentError, "negative argument") do
+        '-' * -1
+      end
+    end
+  end
+
   describe "+" do
     it { ('a' + 2).should eq('c') }
   end

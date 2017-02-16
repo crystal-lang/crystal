@@ -69,6 +69,38 @@ struct Char
     ord - other.ord
   end
 
+  # Makes a new string by adding *str* to itself *times* times.
+  #
+  # ```
+  # '-' * 10 # => "----------"
+  # ```
+  def *(times count : Int)
+    raise ArgumentError.new "negative argument" if count < 0
+
+    if count == 0
+      return ""
+    elsif bytesize == 1
+      return String.new(count) do |buffer|
+        Intrinsics.memset(buffer.as(Void*), bytes[0], count, 0, false)
+        {count, count}
+      end
+    end
+
+    total_bytesize = bytesize * count
+    String.new(total_bytesize) do |buffer|
+      buffer.copy_from(bytes.to_unsafe, bytesize)
+      n = bytesize
+
+      while n <= total_bytesize / 2
+        (buffer + n).copy_from(buffer, n)
+        n *= 2
+      end
+
+      (buffer + n).copy_from(buffer, total_bytesize - n)
+      {total_bytesize, count}
+    end
+  end
+
   # Concatenates this char and *string*.
   #
   # ```
