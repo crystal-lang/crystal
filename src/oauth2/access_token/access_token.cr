@@ -26,7 +26,6 @@ abstract class OAuth2::AccessToken
     end
 
     access_token = access_token.not_nil!
-    expires_in = expires_in.not_nil!
 
     if token_type
       case token_type.downcase
@@ -43,12 +42,12 @@ abstract class OAuth2::AccessToken
   end
 
   property access_token : String
-  property expires_in : Int64
+  property expires_in : Int64?
   property refresh_token : String?
   property scope : String?
 
-  def initialize(@access_token : String, expires_in : Int, @refresh_token : String? = nil, @scope : String? = nil)
-    @expires_in = expires_in.to_i64
+  def initialize(@access_token : String, expires_in : Int?, @refresh_token : String? = nil, @scope : String? = nil)
+    @expires_in = expires_in.try &.to_i64
   end
 
   abstract def authenticate(request : HTTP::Request, tls)

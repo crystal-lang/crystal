@@ -3,7 +3,7 @@
 class OAuth2::Session
   getter oauth2_client : Client
   getter access_token : AccessToken
-  getter expires_at : Time
+  getter expires_at : Time?
 
   # Creates an `OAuth2::Session`.
   #
@@ -32,13 +32,25 @@ class OAuth2::Session
   end
 
   private def access_token_expired?
-    Time.utc_now >= @expires_at
+    if expires_at = @expires_at
+      Time.utc_now >= expires_at
+    else
+      false
+    end
   end
 
   private def refresh_access_token
     old_access_token = @access_token
     @access_token = @oauth2_client.get_access_token_using_refresh_token(@access_token.refresh_token)
-    @expires_at = Time.utc_now + @access_token.expires_in.seconds
+
+    expires_in = @access_token.expires_in
+    if expires_in
+      @expires_at = Time.utc_now + expires_in.seconds
+    else
+      # If there's no expires_in in the access token, we assume it never expires
+      @expires_at = nil
+    end
+
     @access_token.refresh_token ||= old_access_token.refresh_token
   end
 end
