@@ -52,6 +52,7 @@ Documentation
 
 * [Official docs](http://crystal-lang.org/docs)
 * [Standard library API](https://crystal-lang.org/api)
+* [Roadmap](https://github.com/crystal-lang/crystal/wiki/Roadmap)
 
 Community
 ---------
