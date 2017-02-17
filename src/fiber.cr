@@ -476,6 +476,18 @@ class Fiber
     Thread.current.current_fiber = fiber
   end
 
+  {% if flag?(:concurrency_debug) %}
+  def self.dump_fibers
+    @@fiber_list_mutex.synchronize do
+      fiber = @@first_fiber
+      while fiber
+        LibC.printf "Fiber %p %s\n", fiber.not_nil!.object_id, fiber.name!
+        fiber = fiber.next_fiber
+      end
+    end
+  end
+  {% end %}
+
   @@prev_push_other_roots : ->
   @@prev_push_other_roots = LibGC.get_push_other_roots
 

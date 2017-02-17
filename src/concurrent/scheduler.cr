@@ -31,6 +31,25 @@ class Scheduler
     end
   end
 
+  {% if flag?(:concurrency_debug) %}
+  def self.dump_schedulers
+    @@all_mutex.synchronize do
+      @@all.each do |scheduler|
+        LibC.printf "Scheduler %p\n", scheduler.object_id
+        scheduler.dump_scheduler
+      end
+    end
+  end
+
+  protected def dump_scheduler
+    @runnables_lock.synchronize do
+      @runnables.each do |fiber|
+        LibC.printf " - fiber %p %s\n", fiber.object_id, fiber.name!
+      end
+    end
+  end
+  {% end %}
+
   def initialize(@own_event_loop = false)
     @runnables = Deque(Fiber).new
     @runnables_lock = SpinLock.new
