@@ -6,7 +6,7 @@ lib LibExt
 end
 
 fun __crystal_debug_helper : Void
-  if LibExt.debug_helper_func
+  if LibExt.debug_helper_func.pointer != Pointer(Void).null
     LibExt.debug_helper_func.call
   else
     STDERR.puts "Debug helper function not setup"
