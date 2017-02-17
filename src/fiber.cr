@@ -170,26 +170,28 @@ class Fiber
   def set_callback
     @callback = ->{
       @@stack_pool_mutex.synchronize { @@stack_pool << @stack }
-
-      # Remove the current fiber from the linked list
-      Fiber.gc_read_lock
-      @@fiber_list_mutex.synchronize do
-        if prev_fiber = @prev_fiber
-          prev_fiber.next_fiber = @next_fiber
-        else
-          @@first_fiber = @next_fiber
-        end
-
-        if next_fiber = @next_fiber
-          next_fiber.prev_fiber = @prev_fiber
-        else
-          @@last_fiber = @prev_fiber
-        end
-      end
-      Fiber.gc_read_unlock
-
+      remove
       nil
     }
+  end
+
+  # Remove the current fiber from the linked list
+  def remove
+    Fiber.gc_read_lock
+    @@fiber_list_mutex.synchronize do
+      if prev_fiber = @prev_fiber
+        prev_fiber.next_fiber = @next_fiber
+      else
+        @@first_fiber = @next_fiber
+      end
+
+      if next_fiber = @next_fiber
+        next_fiber.prev_fiber = @prev_fiber
+      else
+        @@last_fiber = @prev_fiber
+      end
+    end
+    Fiber.gc_read_unlock
   end
 
   def self.gc_register_thread

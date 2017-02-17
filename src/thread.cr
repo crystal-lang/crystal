@@ -94,6 +94,7 @@ class Thread
     rescue ex
       @exception = ex
     ensure
+      Fiber.current.remove
       Fiber.gc_unregister_thread
       @@threads.delete(self)
     end
