@@ -424,9 +424,17 @@ describe TCPServer do
     end
   end
 
-  it "allows to share the same port (SO_REUSEPORT)" do
+  it "doesn't reuse the TCP port by default (SO_REUSEPORT)" do
     TCPServer.open("::", 0) do |server|
-      TCPServer.open("::", server.local_address.port) { }
+      expect_raises(Errno) do
+        TCPServer.open("::", server.local_address.port) { }
+      end
+    end
+  end
+
+  it "reuses the TCP port (SO_REUSEPORT)" do
+    TCPServer.open("::", 0, reuse_port: true) do |server|
+      TCPServer.open("::", server.local_address.port, reuse_port: true) { }
     end
   end
 end
