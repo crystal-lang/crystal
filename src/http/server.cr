@@ -149,6 +149,14 @@ class HTTP::Server
     end
   end
 
+  def run
+    if server = @server
+      until @wants_close
+        spawn handle_client(server.accept?)
+      end
+    end
+  end
+
   def close
     @wants_close = true
     @processor.close
