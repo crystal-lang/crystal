@@ -207,7 +207,11 @@ class Process
       fork_input, process_input = IO.pipe(read_blocking: true)
       if input
         @wait_count += 1
-        spawn { copy_io(input, process_input, channel, close_dst: true) }
+        # Reify wait channel to avoid race conditions due to lazy initialization
+        wait_channel = channel
+        spawn(name: "process #{object_id} input copy") {
+          copy_io(input, process_input, wait_channel, close_dst: true)
+        }
       else
         @input = process_input
       end
@@ -217,7 +221,11 @@ class Process
       process_output, fork_output = IO.pipe(write_blocking: true)
       if output
         @wait_count += 1
-        spawn { copy_io(process_output, output, channel, close_src: true) }
+        # Reify wait channel to avoid race conditions due to lazy initialization
+        wait_channel = channel
+        spawn(name: "process #{object_id} output copy") {
+          copy_io(process_output, output, wait_channel, close_src: true)
+        }
       else
         @output = process_output
       end
@@ -227,11 +235,18 @@ class Process
       process_error, fork_error = IO.pipe(write_blocking: true)
       if error
         @wait_count += 1
-        spawn { copy_io(process_error, error, channel, close_src: true) }
+        # Reify wait channel to avoid race conditions due to lazy initialization
+        wait_channel = channel
+        spawn(name: "process #{object_id} error copy") {
+          copy_io(process_error, error, wait_channel, close_src: true)
+        }
       else
         @error = process_error
       end
     end
+
+    # This needs to happen before the fork. Otherwise we might miss the SIGCHLD signal.
+    Signal.setup_default_handlers
 
     @pid = Process.fork_internal(run_hooks: false) do
       begin

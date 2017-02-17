@@ -192,9 +192,4 @@ class Scheduler
       end
     end
   end
-
-  def enqueue(fibers : Enumerable(Fiber))
-    @runnables_lock.synchronize { @runnables.concat fibers }
-    ensure_workers_available
-  end
 end

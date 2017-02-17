@@ -74,7 +74,7 @@ class Concurrent::Future(R)
 
     @state = @delay > 0 ? State::Delayed : State::Running
 
-    spawn { run_compute }
+    spawn(name: "future #{object_id}") { run_compute }
   end
 
   private def run_compute
