@@ -66,6 +66,10 @@ class Scheduler
 
   def self.start
     thread_log "Scheduler start"
+    if @@spinning.get == 0
+      # @@spinning count should be above zero under normal circumstances
+      STDERR.puts "WARNING: Scheduler started with spinning count in zero. Did you start a scheduler manually?"
+    end
     scheduler = new
     Thread.current.scheduler = scheduler
     scheduler.spin
@@ -176,11 +180,11 @@ class Scheduler
   private def ensure_workers_available
     @@stamp.add(1)
 
-    if @@spinning.get != 0
+    if @@spinning.get > 0
       return
     end
 
-    if @@sleeping.get != 0
+    if @@sleeping.get > 0
       @@wait_mutex.synchronize do
         @@wake.add(1)
         @@wait_cv.signal
