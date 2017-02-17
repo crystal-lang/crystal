@@ -211,6 +211,15 @@ module Indexable(T)
     size == 0
   end
 
+  # Optimized version of `equals?` used when `other` is also an `Indexable`.
+  def equals?(other : Indexable)
+    return false if size != other.size
+    each_with_index do |item, i|
+      return false unless yield(item, other.unsafe_at(i))
+    end
+    true
+  end
+
   # Determines if `self` equals *other* according to a comparison
   # done by the given block.
   #
