@@ -14,6 +14,10 @@ require "./tcp_socket"
 #   end
 # end
 # ```
+#
+# Options:
+# - *backlog* to specify how many pending connections are allowed;
+# - *reuse_port* to enable multiple processes to bind to the same port (`SO_REUSEPORT`).
 class TCPServer < TCPSocket
   include Socket::Server
 
@@ -22,15 +26,13 @@ class TCPServer < TCPSocket
     super(family)
   end
 
-  def initialize(host : String, port : Int, backlog = SOMAXCONN, dns_timeout = nil)
+  # Binds a socket to the *host* and *port* combination.
+  def initialize(host : String, port : Int, backlog = SOMAXCONN, dns_timeout = nil, reuse_port = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
 
       self.reuse_address = true
-      begin
-        self.reuse_port = true
-      rescue Errno
-      end
+      self.reuse_port = true if reuse_port
 
       if errno = bind(addrinfo) { |errno| errno }
         close
@@ -45,16 +47,16 @@ class TCPServer < TCPSocket
   end
 
   # Creates a new TCP server, listening on all local interfaces (`::`).
-  def self.new(port : Int, backlog = SOMAXCONN)
-    new("::", port, backlog)
+  def self.new(port : Int, backlog = SOMAXCONN, reuse_port = false)
+    new("::", port, backlog, reuse_port: reuse_port)
   end
 
   # Creates a new TCP server and yields it to the block. Eventually closes the
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(host, port, backlog = SOMAXCONN)
-    server = new(host, port, backlog)
+  def self.open(host, port, backlog = SOMAXCONN, reuse_port = false)
+    server = new(host, port, backlog, reuse_port: reuse_port)
     begin
       yield server
     ensure
@@ -66,8 +68,8 @@ class TCPServer < TCPSocket
   # block. Eventually closes the server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(port : Int, backlog = SOMAXCONN)
-    server = new(port, backlog)
+  def self.open(port : Int, backlog = SOMAXCONN, reuse_port = false)
+    server = new(port, backlog, reuse_port: reuse_port)
     begin
       yield server
     ensure

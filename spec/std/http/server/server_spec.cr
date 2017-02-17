@@ -221,6 +221,17 @@ module HTTP
 
       server.listen
     end
+
+    it "reuses the TCP port (SO_REUSEPORT)" do
+      s1 = Server.new(0) { |ctx| }
+      s1.bind(reuse_port: true)
+
+      s2 = Server.new(s1.port) { |ctx| }
+      s2.bind(reuse_port: true)
+
+      s1.close
+      s2.close
+    end
   end
 
   describe HTTP::Server::RequestProcessor do

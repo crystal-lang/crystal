@@ -130,6 +130,14 @@ class HTTP::Server
     @processor = RequestProcessor.new(handler)
   end
 
+  # Returns the TCP port the server is connected to.
+  #
+  # For example you may let the system choose a port, then report it:
+  # ```
+  # server = HTTP::Server.new(0) { }
+  # server.bind
+  # server.port # => 12345
+  # ```
   def port
     if server = @server
       server.local_address.port.to_i
@@ -138,17 +146,26 @@ class HTTP::Server
     end
   end
 
-  def bind
-    @server ||= TCPServer.new(@host, @port)
+  # Creates the underlying `TCPServer` if the doesn't already exist.
+  #
+  # You may set *reuse_port* to true to enable the `SO_REUSEPORT` socket option,
+  # which allows multiple processes to bind to the same port.
+  def bind(reuse_port = false)
+    @server ||= TCPServer.new(@host, @port, reuse_port: reuse_port)
   end
 
-  def listen
-    server = bind
+  # Starts the server. Blocks until the server is closed.
+  #
+  # See `#bind` for details on the *reuse_port* argument.
+  def listen(reuse_port = false)
+    server = bind(reuse_port)
     until @wants_close
       spawn handle_client(server.accept?)
     end
   end
 
+  # Gracefully terminates the server. It will process currently accepted
+  # requests, but it won't accept new connections.
   def close
     @wants_close = true
     @processor.close
