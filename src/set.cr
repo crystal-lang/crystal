@@ -37,6 +37,11 @@ struct Set(T)
     @hash = Hash(T, Nil).new(initial_capacity: initial_capacity)
   end
 
+  # Optimized version of `new` used when *other* is also an `Indexable`
+  def self.new(other : Indexable(T))
+    Set(T).new(other.size).concat(other)
+  end
+
   # Creates a new set from the elements in *enumerable*.
   #
   # ```
@@ -158,9 +163,14 @@ struct Set(T)
   # Set{'a', 'b', 'b', 'z'} & Set{'a', 'b', 'c'} # => Set{'a', 'b'}
   # ```
   def &(other : Set)
+    smallest, largest = self, other
+    if largest.size < smallest.size
+      smallest, largest = largest, smallest
+    end
+
     set = Set(T).new
-    each do |value|
-      set.add value if other.includes?(value)
+    smallest.each do |value|
+      set.add value if largest.includes?(value)
     end
     set
   end
@@ -174,7 +184,7 @@ struct Set(T)
   #
   # See also: `#concat` to add elements from a set to `self`.
   def |(other : Set(U)) forall U
-    set = Set(T | U).new
+    set = Set(T | U).new(Math.max(size, other.size))
     each { |value| set.add value }
     other.each { |value| set.add value }
     set
@@ -273,7 +283,7 @@ struct Set(T)
 
   # Returns a new `Set` with all of the elements cloned.
   def clone
-    clone = Set(T).new
+    clone = Set(T).new(self.size)
     each do |element|
       clone << element.clone
     end
