@@ -137,14 +137,6 @@ describe "Char" do
     '\\'.ord.should eq(92)
   end
 
-  it "escapes with octal" do
-    '\0'.ord.should eq(0)
-    '\3'.ord.should eq(3)
-    '\23'.ord.should eq((2 * 8) + 3)
-    '\123'.ord.should eq((1 * 8 * 8) + (2 * 8) + 3)
-    '\033'.ord.should eq((3 * 8) + 3)
-  end
-
   it "escapes with unicode" do
     '\u{12}'.ord.should eq(1 * 16 + 2)
     '\u{A}'.ord.should eq(10)

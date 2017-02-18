@@ -24,15 +24,6 @@ require "c/string"
 # "\v" # vertical tab
 # ```
 #
-# You can use a backslash followed by at most three digits to denote a code point written in octal:
-#
-# ```
-# "\101" # == "A"
-# "\123" # == "S"
-# "\12"  # == "\n"
-# "\1"   # string with one character with code point 1
-# ```
-#
 # You can use a backslash followed by an *u* and four hexadecimal characters to denote a unicode codepoint written:
 #
 # ```
@@ -100,6 +91,45 @@ require "c/string"
 # This ends up invoking `Object#to_s(IO)` on each expression enclosed by `#{...}`.
 #
 # If you need to dynamically build a string, use `String#build` or `IO::Memory`.
+#
+# ### Non UTF-8 valid strings
+#
+# String might end up being conformed of bytes which are an invalid
+# byte sequence according to UTF-8. This can happen if the string is created
+# via one of the constructors that accept bytes, or when getting a string
+# from `String.build` or `IO::Memory`. No exception will be raised, but
+# invalid byte sequences, when asked as chars, will use the unicode replamcenet
+# char (value 0xFFFD). For example:
+#
+# ```
+# # here 255 is not a valid byte value in the UTF-8 encoding
+# string = String.new(Bytes[255, 97])
+# string.valid_encoding? # => false
+#
+# # The first char here is the unicode replacemnt char
+# string.chars # => ['�', 'a']
+# ```
+#
+# One can also create strings with specific byte value in them by
+# using octal and hexadecimal escape sequences:
+#
+# ```
+# # Octal escape sequences
+# "\101" # # => "A"
+# "\12"  # # => "\n"
+# "\1"   # string with one character with code point 1
+# "\377" # string with one byte with value 255
+#
+# # Hexadecimal escape sequences
+# "\x45" # # => "A"
+# "\xFF" # string with one byte with value 255
+# ```
+#
+# The reason for allowing strings that don't have a valid UTF-8 sequence
+# is that the world is full of content that isn't properly encoded,
+# and having a program raise an exception or stop because of this
+# is not good. It's better if programs are more resilient, but
+# show a replacement character when there's an error in incoming data.
 class String
   # :nodoc:
   TYPE_ID = "".crystal_type_id
@@ -122,9 +152,6 @@ class String
   # slice = Slice.new(4) { |i| ('a'.ord + i).to_u8 }
   # String.new(slice) # => "abcd"
   # ```
-  #
-  # NOTE: If the slice doesn't denote a valid UTF-8 sequence, this method still succeeds.
-  # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(slice : Bytes)
     new(slice.pointer(slice.size), slice.size)
   end
@@ -161,9 +188,6 @@ class String
   # ptr = Pointer.malloc(5) { |i| i == 4 ? 0_u8 : ('a'.ord + i).to_u8 }
   # String.new(ptr) # => "abcd"
   # ```
-  #
-  # NOTE: If the chars don't denote a valid UTF-8 sequence, this method still succeeds.
-  # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(chars : UInt8*)
     new(chars, LibC.strlen(chars))
   end
@@ -179,9 +203,6 @@ class String
   # ptr = Pointer.malloc(4) { |i| ('a'.ord + i).to_u8 }
   # String.new(ptr, 2) # => "ab"
   # ```
-  #
-  # NOTE: If the chars don't denote a valid UTF-8 sequence, this method still succeeds.
-  # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(chars : UInt8*, bytesize, size = 0)
     # Avoid allocating memory for the empty string
     return "" if bytesize == 0
@@ -210,9 +231,6 @@ class String
   # end
   # str # => "ab"
   # ```
-  #
-  # NOTE: If the buffer doesn't end up denoting a valid UTF-8 sequence, this method still succeeds.
-  # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(capacity : Int)
     check_capacity_in_bounds(capacity)
 
@@ -810,7 +828,11 @@ class String
   def at(index : Int)
     if ascii_only?
       byte = byte_at?(index)
-      return byte ? byte.unsafe_chr : yield
+      if byte
+        return byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT
+      else
+        return yield
+      end
     end
 
     index += size if index < 0
@@ -3560,7 +3582,7 @@ class String
   def each_char : Nil
     if ascii_only?
       each_byte do |byte|
-        yield byte.unsafe_chr
+        yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
       end
     else
       Char::Reader.new(self).each do |char|
@@ -3698,8 +3720,8 @@ class String
   end
 
   def inspect(io)
-    dump_or_inspect(io) do |char|
-      inspect_char(char, io)
+    dump_or_inspect(io) do |char, error|
+      inspect_char(char, error, io)
     end
   end
 
@@ -3714,8 +3736,8 @@ class String
   end
 
   def inspect_unquoted(io)
-    dump_or_inspect_unquoted(io) do |char|
-      inspect_char(char, io)
+    dump_or_inspect_unquoted(io) do |char, error|
+      inspect_char(char, error, io)
     end
   end
 
@@ -3726,8 +3748,8 @@ class String
   end
 
   def dump(io)
-    dump_or_inspect(io) do |char|
-      dump_char(char, io)
+    dump_or_inspect(io) do |char, error|
+      dump_char(char, error, io)
     end
   end
 
@@ -3738,15 +3760,15 @@ class String
   end
 
   def dump_unquoted(io)
-    dump_or_inspect_unquoted(io) do |char|
-      dump_char(char, io)
+    dump_or_inspect_unquoted(io) do |char, error|
+      dump_char(char, error, io)
     end
   end
 
   private def dump_or_inspect(io)
     io << "\""
-    dump_or_inspect_unquoted(io) do |char|
-      yield char
+    dump_or_inspect_unquoted(io) do |char, error|
+      yield char, error
     end
     io << "\""
   end
@@ -3776,30 +3798,53 @@ class String
           next
         end
       else
-        yield current_char
+        if reader.error
+          reader.current_char_width.times do |i|
+            yield '\0', to_unsafe[reader.pos + i]
+          end
+        else
+          yield current_char, nil
+        end
       end
       reader.next_char
     end
   end
 
-  private def inspect_char(char, io)
-    if char.ascii_control?
-      io << "\\u{"
-      char.ord.to_s(16, io)
-      io << "}"
+  private def inspect_char(char, error, io)
+    dump_or_inspect_char char, error, io do
+      char.ascii_control?
+    end
+  end
+
+  private def dump_char(char, error, io)
+    dump_or_inspect_char(char, error, io) do
+      char.ascii_control? || char.ord >= 0x80
+    end
+  end
+
+  private def dump_or_inspect_char(char, error, io)
+    if error
+      dump_hex(error, io)
+    elsif yield
+      dump_unicode(char, io)
     else
       io << char
     end
   end
 
-  private def dump_char(char, io)
-    if char.ascii_control? || char.ord >= 0x80
-      io << "\\u{"
-      char.ord.to_s(16, io)
-      io << "}"
-    else
-      io << char
-    end
+  private def dump_hex(error, io)
+    io << "\\x"
+    io << "0" if error < 16
+    error.to_s(16, io, upcase: true)
+  end
+
+  private def dump_unicode(char, io)
+    io << "\\u"
+    io << "0" if char.ord < 4096
+    io << "0" if char.ord < 256
+    io << "0" if char.ord < 16
+    char.ord.to_s(16, io)
+    io << ""
   end
 
   def starts_with?(str : String)
@@ -3871,21 +3916,90 @@ class String
     @length = each_byte_index_and_char_index { }
   end
 
+  # Returns `true` if this String is comprised in its entirety
+  # by ASCII characters.
+  #
+  # ```
+  # "hello".ascii_only? # => true
+  # "你好".ascii_only?    # => false
+  # ```
   def ascii_only?
     @bytesize == size
   end
 
-  protected def char_bytesize_at(byte_index)
-    case unsafe_byte_at(byte_index)
-    when .< 0x80
-      1
-    when .< 0xe0
-      2
-    when .< 0xf0
-      3
-    else
-      4
+  # Returns `true` if this String is encoded correctly
+  # according to the UTF-8 encoding.
+  def valid_encoding?
+    reader = Char::Reader.new(self)
+    while reader.has_next?
+      return false if reader.error
+      reader.next_char
     end
+    true
+  end
+
+  # Returns a String where bytes that are invalid in the
+  # UTF-8 encoding are replaced with *replacement*.
+  def scrub(replacement = Char::REPLACEMENT) : String
+    # If the string is valid we have a chance of returning self
+    # to avoid creating a new string
+    result = nil
+
+    reader = Char::Reader.new(self)
+    while reader.has_next?
+      if reader.error
+        unless result
+          result = String::Builder.new(bytesize)
+          result.write(to_unsafe_slice[0, reader.pos])
+        end
+        result << replacement
+      else
+        result << reader.current_char if result
+      end
+      reader.next_char
+    end
+
+    result ? result.to_s : self
+  end
+
+  protected def char_bytesize_at(byte_index)
+    first = unsafe_byte_at(byte_index)
+
+    if first < 0x80
+      return 1
+    end
+
+    if first < 0xc2
+      return 1
+    end
+
+    second = unsafe_byte_at(byte_index + 1)
+    if (second & 0xc0) != 0x80
+      return 1
+    end
+
+    if first < 0xe0
+      return 2
+    end
+
+    third = unsafe_byte_at(byte_index + 2)
+    if (third & 0xc0) != 0x80
+      return 2
+    end
+
+    if first < 0xf0
+      return 3
+    end
+
+    if first == 0xf0 && second < 0x90
+      return 3
+    end
+
+    if first == 0xf4 && second >= 0x90
+      return 3
+    end
+
+    return 4
   end
 
   protected def size_known?

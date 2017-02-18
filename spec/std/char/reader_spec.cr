@@ -1,11 +1,19 @@
 require "spec"
 require "char/reader"
 
+private def assert_invalid_byte_sequence(bytes, width)
+  reader = Char::Reader.new(String.new bytes)
+  reader.current_char.should eq(Char::REPLACEMENT)
+  reader.current_char_width.should eq(width)
+  reader.error.should eq(bytes[0])
+end
+
 describe "Char::Reader" do
   it "iterates through empty string" do
     reader = Char::Reader.new("")
     reader.pos.should eq(0)
     reader.current_char.ord.should eq(0)
+    reader.error.should be_nil
     reader.has_next?.should be_false
 
     expect_raises IndexError do
@@ -122,39 +130,39 @@ describe "Char::Reader" do
   end
 
   it "errors if 0x80 <= first_byte < 0xC2" do
-    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0x80]) }
-    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xC1]) }
+    assert_invalid_byte_sequence Bytes[0x80], 1
+    assert_invalid_byte_sequence Bytes[0xC1], 1
   end
 
   it "errors if (second_byte & 0xC0) != 0x80" do
-    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xd0, 0]) }
+    assert_invalid_byte_sequence Bytes[0xd0], 1
   end
 
   it "errors if first_byte == 0xE0 && second_byte < 0xA0" do
-    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xe0, 0x9F, 0xA0]) }
+    assert_invalid_byte_sequence Bytes[0xe0, 0x9F, 0xA0], 3
   end
 
   it "errors if first_byte == 0xED && second_byte >= 0xA0" do
-    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xed, 0xB0, 0xA0]) }
+    assert_invalid_byte_sequence Bytes[0xed, 0xB0, 0xA0], 3
   end
 
   it "errors if first_byte < 0xF0 && (third_byte & 0xC0) != 0x80" do
-    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xe0, 0xA0, 0]) }
+    assert_invalid_byte_sequence Bytes[0xe0, 0xA0, 0], 2
   end
 
   it "errors if first_byte == 0xF0 && second_byte < 0x90" do
-    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xf0, 0x8F, 0xA0]) }
+    assert_invalid_byte_sequence Bytes[0xf0, 0x8F, 0xA0], 3
   end
 
   it "errors if first_byte == 0xF4 && second_byte >= 0x90" do
-    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xf4, 0x90, 0xA0]) }
+    assert_invalid_byte_sequence Bytes[0xf4, 0x90, 0xA0], 3
   end
 
   it "errors if first_byte < 0xF5 && (fourth_byte & 0xC0) != 0x80" do
-    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xf4, 0x8F, 0xA0, 0]) }
+    assert_invalid_byte_sequence Bytes[0xf4, 0x8F, 0xA0, 0], 4
   end
 
   it "errors if first_byte >= 0xF5" do
-    expect_raises(InvalidByteSequenceError) { Char::Reader.new(String.new Bytes[0xf5, 0x8F, 0xA0, 0xA0]) }
+    assert_invalid_byte_sequence Bytes[0xf5, 0x8F, 0xA0, 0xA0], 4
   end
 end

@@ -47,6 +47,11 @@ struct Char
     # ```
     getter pos : Int32
 
+    # If there was an error decoding the current char because
+    # of an invalid UTF-8 byte sequence, returns the byte
+    # that produced the invalid encoding. Otherwise returns `nil`.
+    getter error : UInt8?
+
     # Creates a reader with the specified *string* positioned at
     # byte index *pos*.
     def initialize(@string : String, pos = 0)
@@ -114,7 +119,7 @@ struct Char
         raise IndexError.new
       end
 
-      decode_char_at(next_pos) do |code_point, width|
+      decode_char_at(next_pos) do |code_point|
         code_point.unsafe_chr
       end
     end
@@ -181,68 +186,69 @@ struct Char
     private def decode_char_at(pos)
       first = byte_at(pos)
       if first < 0x80
-        return yield first, 1
+        return yield first, 1, nil
       end
 
       if first < 0xc2
-        invalid_byte_sequence(first, pos)
+        invalid_byte_sequence 1
       end
 
       second = byte_at(pos + 1)
       if (second & 0xc0) != 0x80
-        invalid_byte_sequence(second, pos + 1)
+        invalid_byte_sequence 1
       end
 
       if first < 0xe0
-        return yield (first << 6) + (second - 0x3080), 2
+        return yield (first << 6) + (second - 0x3080), 2, nil
       end
 
       third = byte_at(pos + 2)
       if (third & 0xc0) != 0x80
-        invalid_byte_sequence(third, pos + 2)
+        invalid_byte_sequence 2
       end
 
       if first < 0xf0
         if first == 0xe0 && second < 0xa0
-          invalid_byte_sequence(second, pos + 1)
+          invalid_byte_sequence 3
         end
 
         if first == 0xed && second >= 0xa0
-          invalid_byte_sequence(second, pos + 1)
+          invalid_byte_sequence 3
         end
 
-        return yield (first << 12) + (second << 6) + (third - 0xE2080), 3
+        return yield (first << 12) + (second << 6) + (third - 0xE2080), 3, nil
       end
 
       if first == 0xf0 && second < 0x90
-        invalid_byte_sequence(second, pos + 1)
+        invalid_byte_sequence 3
       end
 
       if first == 0xf4 && second >= 0x90
-        invalid_byte_sequence(second, pos + 1)
+        invalid_byte_sequence 3
       end
 
       fourth = byte_at(pos + 3)
       if (fourth & 0xc0) != 0x80
-        invalid_byte_sequence(fourth, pos + 3)
+        invalid_byte_sequence 4
       end
 
       if first < 0xf5
-        return yield (first << 18) + (second << 12) + (third << 6) + (fourth - 0x3C82080), 4
+        return yield (first << 18) + (second << 12) + (third << 6) + (fourth - 0x3C82080), 4, nil
       end
 
-      invalid_byte_sequence(first, pos)
+      invalid_byte_sequence 4
     end
 
-    private def invalid_byte_sequence(byte, byte_position)
-      raise InvalidByteSequenceError.new("Unexpected byte 0x#{byte.to_s(16)} at position #{byte_position}, malformed UTF-8")
+    private macro invalid_byte_sequence(width)
+      return yield Char::REPLACEMENT.ord, {{width}}, first.to_u8
     end
 
     @[AlwaysInline]
     private def decode_current_char
-      decode_char_at(@pos) do |code_point, width|
+      decode_char_at(@pos) do |code_point, width, error|
         @current_char_width = width
         @end = @pos == @string.bytesize
+        @error = error
         @current_char = code_point.unsafe_chr
       end
     end
@@ -255,9 +261,10 @@ struct Char
           @pos -= 1
           break if (byte_at(@pos) & 0xC0) != 0x80
         end
-        decode_char_at(@pos) do |code_point, width|
+        decode_char_at(@pos) do |code_point, width, error|
           @current_char_width = width
           @end = @pos == @string.bytesize
+          @error = error
           @current_char = code_point.unsafe_chr
         end
       end

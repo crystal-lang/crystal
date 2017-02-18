@@ -1377,15 +1377,15 @@ describe "String" do
     "\t".dump.should eq("\"\\t\"")
     "\v".dump.should eq("\"\\v\"")
     "\#{".dump.should eq("\"\\\#{\"")
-    "á".dump.should eq("\"\\u{e1}\"")
-    "\u{81}".dump.should eq("\"\\u{81}\"")
+    "á".dump.should eq("\"\\u00e1\"")
+    "\u{81}".dump.should eq("\"\\u0081\"")
   end
 
   it "dumps unquoted" do
     "a".dump_unquoted.should eq("a")
     "\\".dump_unquoted.should eq("\\\\")
-    "á".dump_unquoted.should eq("\\u{e1}")
-    "\u{81}".dump_unquoted.should eq("\\u{81}")
+    "á".dump_unquoted.should eq("\\u00e1")
+    "\u{81}".dump_unquoted.should eq("\\u0081")
   end
 
   it "inspects" do
@@ -1401,14 +1401,14 @@ describe "String" do
     "\v".inspect.should eq("\"\\v\"")
     "\#{".inspect.should eq("\"\\\#{\"")
     "á".inspect.should eq("\"á\"")
-    "\u{81}".inspect.should eq("\"\\u{81}\"")
+    "\u{81}".inspect.should eq("\"\\u0081\"")
   end
 
   it "inspects unquoted" do
     "a".inspect_unquoted.should eq("a")
     "\\".inspect_unquoted.should eq("\\\\")
     "á".inspect_unquoted.should eq("á")
-    "\u{81}".inspect_unquoted.should eq("\\u{81}")
+    "\u{81}".inspect_unquoted.should eq("\\u0081")
   end
 
   it "does *" do
@@ -2287,6 +2287,42 @@ describe "String" do
       String.new(123) do |buffer|
         {124, 0}
       end
+    end
+  end
+
+  describe "invalide utf-8 byte sequence" do
+    it "gets size" do
+      string = String.new(Bytes[255, 0, 0, 0, 65])
+      string.size.should eq(5)
+    end
+
+    it "gets size (2)" do
+      string = String.new(Bytes[104, 101, 108, 108, 111, 32, 255, 32, 255, 32, 119, 111, 114, 108, 100, 33])
+      string.size.should eq(16)
+    end
+
+    it "gets chars" do
+      string = String.new(Bytes[255, 0, 0, 0, 65])
+      string.chars.should eq([Char::REPLACEMENT, 0.chr, 0.chr, 0.chr, 65.chr])
+    end
+
+    it "gets chars (2)" do
+      string = String.new(Bytes[255, 0])
+      string.chars.should eq([Char::REPLACEMENT, 0.chr])
+    end
+
+    it "valid_encoding?" do
+      "hello".valid_encoding?.should be_true
+      String.new(Bytes[255, 0]).valid_encoding?.should be_false
+    end
+
+    it "scrubs" do
+      string = String.new(Bytes[255, 129, 97, 255, 97])
+      string.scrub.bytes.should eq([239, 191, 189, 97, 239, 191, 189, 97])
+
+      string.scrub("?").should eq("?a?a")
+
+      "hello".scrub.should eq("hello")
     end
   end
 end

@@ -179,8 +179,6 @@ module Base64
   end
 
   # Returns the base64-decoded version of *data* as a string.
-  # If the data doesn't decode to a valid UTF8 string,
-  # ` InvalidByteSequenceError` will be raised.
   # This will decode either the normal or urlsafe alphabets.
   def decode_string(data) : String
     slice = Slice.unsafe_readonly(data)

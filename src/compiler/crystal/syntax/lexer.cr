@@ -2554,7 +2554,11 @@ module Crystal
     end
 
     def next_char_no_column_increment
-      @reader.next_char
+      char = @reader.next_char
+      if error = @reader.error
+        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
+      end
+      char
     end
 
     def next_char

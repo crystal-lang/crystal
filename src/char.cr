@@ -58,6 +58,9 @@ struct Char
   # The maximum valid codepoint for a character.
   MAX_CODEPOINT = 0x10ffff
 
+  # The replacement character, used on invalid utf-8 byte sequences
+  REPLACEMENT = '\ufffd'
+
   # Returns the difference of the codepoint values of this char and *other*.
   #
   # ```
