@@ -129,8 +129,9 @@ class Regex
     # ```
     def [](n)
       check_index_out_of_bounds n
-
-      self[n]?.not_nil!
+      value = self[n]?
+      raise_invalid_group_index(n) if value.nil?
+      value
     end
 
     # Returns the match of the capture group named by *group_name*, or
@@ -219,11 +220,15 @@ class Regex
     end
 
     private def check_index_out_of_bounds(index)
-      raise IndexError.new unless valid_group?(index)
+      raise_invalid_group_index(index) unless valid_group?(index)
     end
 
     private def valid_group?(index)
       index <= @size
+    end
+
+    private def raise_invalid_group_index(index)
+      raise IndexError.new("Invalid capture group index: #{index}")
     end
   end
 end
