@@ -475,7 +475,7 @@ class Crystal::CodeGenVisitor
       if type.extern_union?
         union_field_ptr(field_type, call_args[0])
       else
-        name = target_def.name.chop
+        name = target_def.name.rchop
         struct_field_ptr(type, name, call_args[0])
       end
     end
@@ -494,7 +494,7 @@ class Crystal::CodeGenVisitor
       context.vars["value"] = existing_value if existing_value
     end
 
-    var_name = '@' + target_def.name.chop
+    var_name = '@' + target_def.name.rchop
     scope = context.type.as(NonGenericClassType)
     field_type = scope.instance_vars[var_name].type
 

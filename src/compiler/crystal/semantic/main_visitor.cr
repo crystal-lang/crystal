@@ -2333,7 +2333,7 @@ module Crystal
     def visit_struct_or_union_set(node)
       scope = @scope.as(NonGenericClassType)
 
-      field_name = call.not_nil!.name.chop
+      field_name = call.not_nil!.name.rchop
       expected_type = scope.instance_vars['@' + field_name].type
       value = @vars["value"]
       actual_type = value.type

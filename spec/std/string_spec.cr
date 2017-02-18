@@ -490,18 +490,6 @@ describe "String" do
     it { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
   end
 
-  describe "lchomp" do
-    it { "hello".lchomp('g').should eq("hello") }
-    it { "hello".lchomp('h').should eq("ello") }
-    it { "かたな".lchomp('か').should eq("たな") }
-
-    it { "hello".lchomp("good").should eq("hello") }
-    it { "hello".lchomp("hel").should eq("lo") }
-    it { "かたな".lchomp("かた").should eq("な") }
-
-    it { "\n\n\n\nhello".lchomp("").should eq("\n\n\n\nhello") }
-  end
-
   describe "chomp" do
     it { "hello\n".chomp.should eq("hello") }
     it { "hello\r".chomp.should eq("hello") }
@@ -524,17 +512,43 @@ describe "String" do
     it { "かたな".chomp("たな").should eq("か") }
 
     it { "hello\n\n\n\n".chomp("").should eq("hello\n\n\n\n") }
+
+    it { "hello\r\n".chomp("\n").should eq("hello") }
   end
 
-  describe "chop" do
-    it { "foo".chop.should eq("fo") }
-    it { "foo\n".chop.should eq("foo") }
-    it { "foo\r".chop.should eq("foo") }
-    it { "foo\r\n".chop.should eq("foo") }
-    it { "\r\n".chop.should eq("") }
-    it { "かたな".chop.should eq("かた") }
-    it { "かたな\n".chop.should eq("かたな") }
-    it { "かたな\r\n".chop.should eq("かたな") }
+  describe "rchop" do
+    it { "".rchop.should eq("") }
+    it { "foo".rchop.should eq("fo") }
+    it { "foo\n".rchop.should eq("foo") }
+    it { "foo\r".rchop.should eq("foo") }
+    it { "foo\r\n".rchop.should eq("foo\r") }
+    it { "\r\n".rchop.should eq("\r") }
+    it { "かたな".rchop.should eq("かた") }
+    it { "かたな\n".rchop.should eq("かたな") }
+    it { "かたな\r\n".rchop.should eq("かたな\r") }
+
+    it { "foo".rchop('o').should eq("fo") }
+    it { "foo".rchop('x').should eq("foo") }
+
+    it { "foobar".rchop("bar").should eq("foo") }
+    it { "foobar".rchop("baz").should eq("foobar") }
+  end
+
+  describe "lchomp" do
+    it { "".lchop.should eq("") }
+    it { "h".lchop.should eq("") }
+    it { "hello".lchop.should eq("ello") }
+    it { "かたな".lchop.should eq("たな") }
+
+    it { "hello".lchop('g').should eq("hello") }
+    it { "hello".lchop('h').should eq("ello") }
+    it { "かたな".lchop('か').should eq("たな") }
+
+    it { "hello".lchop("good").should eq("hello") }
+    it { "hello".lchop("hel").should eq("lo") }
+    it { "かたな".lchop("かた").should eq("な") }
+
+    it { "\n\n\n\nhello".lchop("").should eq("\n\n\n\nhello") }
   end
 
   describe "strip" do

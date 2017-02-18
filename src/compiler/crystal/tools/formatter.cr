@@ -2218,7 +2218,7 @@ module Crystal
       assignment = node.name.ends_with?('=') && node.name.chars.any?(&.ascii_letter?)
 
       if assignment
-        write node.name.chop
+        write node.name.rchop
       else
         write node.name
       end

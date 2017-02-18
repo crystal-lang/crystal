@@ -890,7 +890,7 @@ module Crystal
         else
           if value.ends_with? '?'
             method = "[]?"
-            value = value.chop
+            value = value.rchop
           else
             method = "[]"
           end

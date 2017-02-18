@@ -7,7 +7,7 @@ def process(client)
   puts "#{client_addr} connected"
 
   while msg = client.read_line
-    puts "#{client_addr} msg '#{msg.chop}'"
+    puts "#{client_addr} msg '#{msg}'"
     client << msg
   end
 rescue IO::EOFError

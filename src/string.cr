@@ -971,34 +971,6 @@ class String
     end
   end
 
-  # Returns a new `String` with *char* removed if the string starts with it.
-  #
-  # ```
-  # "hello".lchomp('h') # => "ello"
-  # "hello".lchomp('g') # => "hello"
-  # ```
-  def lchomp(char : Char)
-    if starts_with?(char)
-      unsafe_byte_slice_string(char.bytesize, bytesize - char.bytesize)
-    else
-      self
-    end
-  end
-
-  # Returns a new `String` with *str* removed if the string starts with it.
-  #
-  # ```
-  # "hello".lchomp("hel") # => "lo"
-  # "hello".lchomp("eh")  # => "hello"
-  # ```
-  def lchomp(str : String)
-    if starts_with?(str)
-      unsafe_byte_slice_string(str.bytesize, bytesize - str.bytesize)
-    else
-      self
-    end
-  end
-
   # Returns a new `String` with the last carriage return removed (that is, it
   # will remove \n, \r, and \r\n).
   #
@@ -1028,61 +1000,132 @@ class String
     end
   end
 
-  # Returns a new `String` with *char* removed if the string ends with it.
+  # Returns a new `String` with *suffix* removed from the end of the string.
+  # If *suffix* is `'\n'` then `"\r\n"` is also removed if the string ends with it,
   #
   # ```
   # "hello".chomp('o') # => "hell"
   # "hello".chomp('a') # => "hello"
   # ```
-  def chomp(char : Char)
-    if char == '\n'
+  def chomp(suffix : Char)
+    if suffix == '\n'
       chomp
-    elsif ends_with?(char)
-      unsafe_byte_slice_string(0, bytesize - char.bytesize)
+    elsif ends_with?(suffix)
+      unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
     else
       self
     end
   end
 
-  # Returns a new `String` with *str* removed if the string ends with it.
+  # Returns a new `String` with *suffix* removed from the end of the string.
+  # If *suffix* is `"\n"` then `"\r\n"` is also removed if the string ends with it,
   #
   # ```
   # "hello".chomp("llo") # => "he"
   # "hello".chomp("ol")  # => "hello"
   # ```
-  def chomp(str : String)
-    if ends_with?(str)
-      unsafe_byte_slice_string(0, bytesize - str.bytesize)
+  def chomp(suffix : String)
+    if suffix.bytesize == 1
+      chomp(suffix.to_unsafe[0].unsafe_chr)
+    elsif ends_with?(suffix)
+      unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
+    else
+      self
+    end
+  end
+
+  # Returns a new `String` with the first char removed from it.
+  # Applying lchop to an empty string returns an empty string.
+  #
+  # ```
+  # "hello".lchop # => "ello"
+  # "".lchop      # => ""
+  # ```
+  def lchop
+    return "" if empty?
+
+    reader = Char::Reader.new(self)
+    unsafe_byte_slice_string(reader.current_char_width, bytesize - reader.current_char_width)
+  end
+
+  # Returns a new `String` with *prefix* removed from the beginning of the string.
+  #
+  # ```
+  # "hello".lchop('h') # => "ello"
+  # "hello".lchop('g') # => "hello"
+  # ```
+  def lchop(prefix : Char)
+    if starts_with?(prefix)
+      unsafe_byte_slice_string(prefix.bytesize, bytesize - prefix.bytesize)
+    else
+      self
+    end
+  end
+
+  # Returns a new `String` with *prefix* removed from the beginning of the string.
+  #
+  # ```
+  # "hello".lchop("hel") # => "lo"
+  # "hello".lchop("eh")  # => "hello"
+  # ```
+  def lchop(prefix : String)
+    if starts_with?(prefix)
+      unsafe_byte_slice_string(prefix.bytesize, bytesize - prefix.bytesize)
     else
       self
     end
   end
 
   # Returns a new `String` with the last character removed.
-  # If the string ends with `\r\n`, both characters are removed.
-  # Applying chop to an empty string returns an empty string.
+  # Applying rchop to an empty string returns an empty string.
   #
   # ```
-  # "string\r\n".chop # => "string"
-  # "string\n\r".chop # => "string\n"
-  # "string\n".chop   # => "string"
-  # "string".chop     # => "strin"
-  # "x".chop.chop     # => ""
+  # "string\r\n".rchop # => "string\r"
+  # "string\n\r".rchop # => "string\n"
+  # "string\n".rchop   # => "string"
+  # "string".rchop     # => "strin"
+  # "x".rchop.rchop    # => ""
   # ```
-  #
-  # See also: `#chomp`.
-  def chop
+  def rchop
     return "" if bytesize <= 1
-
-    if bytesize >= 2 && to_unsafe[bytesize - 1] === '\n' && to_unsafe[bytesize - 2] === '\r'
-      return unsafe_byte_slice_string(0, bytesize - 2)
-    end
 
     if to_unsafe[bytesize - 1] < 128 || ascii_only?
       return unsafe_byte_slice_string(0, bytesize - 1)
     end
 
     self[0, size - 1]
+  end
+
+  # Returns a new `String` with *suffix* removed from the end of the string.
+  #
+  # ```
+  # "string".rchop('g') # => "strin"
+  # "string".rchop('x') # => "string"
+  # ```
+  def rchop(suffix : Char)
+    return "" if empty?
+
+    if ends_with?(suffix)
+      unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
+    else
+      self
+    end
+  end
+
+  # Returns a new `String` with *suffix* removed from the end of the string.
+  #
+  # ```
+  # "string".rchop("ing") # => "str"
+  # "string".rchop("inx") # => "string"
+  # ```
+  def rchop(suffix : String)
+    return "" if empty?
+
+    if ends_with?(suffix)
+      unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
+    else
+      self
+    end
   end
 
   # Returns a slice of bytes containing this string encoded in the given encoding.
