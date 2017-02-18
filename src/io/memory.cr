@@ -68,7 +68,7 @@ class IO::Memory
   # io.print "hi" # raises IO::Error
   # ```
   def self.new(string : String)
-    new string.to_slice, writeable: false
+    new string.to_unsafe_slice, writeable: false
   end
 
   # See `IO#read(slice)`.
@@ -361,7 +361,7 @@ class IO::Memory
 
     old_writeable = @writeable
     old_resizeable = @resizeable
-    io = IO::Memory.new(to_slice[offset, bytesize], writeable: false)
+    io = IO::Memory.new(to_unsafe_slice[offset, bytesize], writeable: false)
     begin
       @writeable = false
       @resizeable = false
@@ -410,19 +410,32 @@ class IO::Memory
   # Returns a `Slice` over the internal buffer. Modifying the slice
   # modifies the internal buffer.
   #
-  # ```
-  # io = IO::Memory.new "hello"
-  # slice = io.to_slice
-  # slice[0] = 97_u8
-  # io.gets_to_end # => "aello"
-  # ```
-  def to_slice
+  # This method is **unsafe** because the internal buffer might
+  # point to bytes that came from a string literal, which are
+  # placed in the ROM (read-only memory) section data of the program,
+  # and attempting to mutate the returned Bytes might result
+  # in segmentation fault. You should use `to_slice` instead unless
+  # you know the returned bytes won't be mutated, to save an
+  # extra memory allocation.
+  def to_unsafe_slice : Bytes
     Slice.new(@buffer, @bytesize)
+  end
+
+  # Returns a copy of the underlying bytes.
+  #
+  # ```
+  # io = IO::Memory.new
+  # io.print "hello"
+  #
+  # io.to_slice # => Bytes[104, 101, 108, 108, 111]
+  # ```
+  def to_slice : Bytes
+    to_unsafe_slice.clone
   end
 
   # Appends this internal buffer to the given `IO`.
   def to_s(io)
-    io.write Slice.new(@buffer, @bytesize)
+    io.write(to_unsafe_slice)
   end
 
   private def check_writeable

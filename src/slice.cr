@@ -112,6 +112,14 @@ struct Slice(T)
     new(size) { value }
   end
 
+  # Returns a copy of this slice.
+  # This method allocates memory for the slice copy.
+  def clone
+    copy = self.class.new(size)
+    copy.copy_from(self)
+    copy
+  end
+
   # Creates an empty slice.
   #
   # ```
@@ -460,6 +468,21 @@ struct Slice(T)
     end
 
     nil
+  end
+
+  # Turns data into Bytes that are supposed to only be
+  # used in a read-only fashion. This method is unsafe because
+  # it can't check that the data will be used like that.
+  #
+  # Only use this method to save an extra allocation when
+  # converting a String, Slice or StaticArray to Bytes.
+  #
+  # Invoking `to_slice` on `data` works too, but in the case
+  # of a `String` this creates an unnecessary copy, so this
+  # macro takes cares to invoke `to_unsafe_slice` in the
+  # case of a `String`.
+  macro unsafe_readonly(data)
+    {{data}}.is_a?(String) ? {{data}}.to_unsafe_slice : {{data}}.to_slice
   end
 end
 

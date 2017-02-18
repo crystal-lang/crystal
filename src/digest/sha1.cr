@@ -19,8 +19,9 @@ class Digest::SHA1 < Digest::Base
     @intermediate_hash[4] = 0xC3D2E1F0_u32
   end
 
-  def update(message_array : String | Bytes)
-    message_array.to_slice.each do |byte|
+  def update(data)
+    message_array = Slice.unsafe_readonly(data)
+    message_array.each do |byte|
       @message_block[@message_block_index] = byte & 0xFF_u8
       @message_block_index += 1
       @length_low += 8

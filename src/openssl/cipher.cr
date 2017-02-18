@@ -50,14 +50,8 @@ class OpenSSL::Cipher
     cipherinit
   end
 
-  def update(data : (String | Slice))
-    slice = case data
-            when String
-              data.to_slice
-            else
-              data
-            end
-
+  def update(data)
+    slice = Slice.unsafe_readonly(data)
     buffer_length = slice.size + block_size
     buffer = Bytes.new(buffer_length)
     if LibCrypto.evp_cipherupdate(@ctx, buffer, pointerof(buffer_length), slice, slice.size) != 1

@@ -13,8 +13,9 @@ class Digest::MD5 < Digest::Base
     @digest = uninitialized UInt8[16]
   end
 
-  def update(data : String | Bytes)
-    update(data.to_unsafe, data.bytesize.to_u32)
+  def update(data)
+    slice = Slice.unsafe_readonly(data)
+    update(slice.to_unsafe, slice.bytesize.to_u32)
   end
 
   def update(inBuf, inLen)

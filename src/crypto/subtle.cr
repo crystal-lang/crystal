@@ -10,8 +10,8 @@ module Crypto::Subtle
   #
   # NOTE: *x* and *y* must be able to respond to `to_slice`.
   def self.constant_time_compare(x, y) : Bool
-    x = x.to_slice
-    y = y.to_slice
+    x = Slice.unsafe_readonly(x)
+    y = Slice.unsafe_readonly(y)
     return false if x.size != y.size
 
     v = 0_u8

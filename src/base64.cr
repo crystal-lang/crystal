@@ -42,7 +42,7 @@ module Base64
   # Q3J5c3RhbA==
   # ```
   def encode(data) : String
-    slice = data.to_slice
+    slice = Slice.unsafe_readonly(data)
     String.new(encode_size(slice.size, new_lines: true)) do |buf|
       appender = buf.appender
       encode_with_new_lines(slice) { |byte| appender << byte }
@@ -60,7 +60,7 @@ module Base64
   # ```
   def encode(data, io : IO)
     count = 0
-    encode_with_new_lines(data.to_slice) do |byte|
+    encode_with_new_lines(Slice.unsafe_readonly(data)) do |byte|
       io.write_byte byte
       count += 1
     end
@@ -70,7 +70,7 @@ module Base64
 
   private def encode_with_new_lines(data)
     inc = 0
-    to_base64(data.to_slice, CHARS_STD, pad: true) do |byte|
+    to_base64(Slice.unsafe_readonly(data), CHARS_STD, pad: true) do |byte|
       yield byte
       inc += 1
       if inc >= LINE_SIZE
@@ -100,7 +100,7 @@ module Base64
   end
 
   private def strict_encode(data, alphabet, pad = false)
-    slice = data.to_slice
+    slice = Slice.unsafe_readonly(data)
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
       to_base64(slice, alphabet, pad: pad) { |byte| appender << byte }
@@ -121,7 +121,7 @@ module Base64
 
   private def strict_encode_to_io_internal(data, io, alphabet, pad)
     count = 0
-    to_base64(data.to_slice, alphabet, pad: pad) do |byte|
+    to_base64(Slice.unsafe_readonly(data), alphabet, pad: pad) do |byte|
       count += 1
       io.write_byte byte
     end
@@ -138,7 +138,7 @@ module Base64
   # The *padding* parameter defaults to `true`. When `false`, enough `=` characters
   # are not added to make the output divisible by 4.
   def urlsafe_encode(data, padding = true) : String
-    slice = data.to_slice
+    slice = Slice.unsafe_readonly(data)
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
       to_base64(slice, CHARS_SAFE, pad: padding) { |byte| appender << byte }
@@ -159,7 +159,7 @@ module Base64
   # Returns the base64-decoded version of *data* as a `Bytes`.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data) : Bytes
-    slice = data.to_slice
+    slice = Slice.unsafe_readonly(data)
     buf = Pointer(UInt8).malloc(decode_size(slice.size))
     appender = buf.appender
     from_base64(slice) { |byte| appender << byte }
@@ -170,7 +170,7 @@ module Base64
   # This will decode either the normal or urlsafe alphabets.
   def decode(data, io : IO)
     count = 0
-    from_base64(data.to_slice) do |byte|
+    from_base64(Slice.unsafe_readonly(data)) do |byte|
       io.write_byte byte
       count += 1
     end
@@ -183,7 +183,7 @@ module Base64
   # ` InvalidByteSequenceError` will be raised.
   # This will decode either the normal or urlsafe alphabets.
   def decode_string(data) : String
-    slice = data.to_slice
+    slice = Slice.unsafe_readonly(data)
     String.new(decode_size(slice.size)) do |buf|
       appender = buf.appender
       from_base64(slice) { |byte| appender << byte }

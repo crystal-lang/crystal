@@ -231,26 +231,20 @@ class Socket < IO::FileDescriptor
     end
   end
 
-  # Sends a text message to a previously connected remote address.
+  # Sends a message to a previously connected remote address.
   #
   # ```
   # sock = Socket.udp(Socket::Family::INET)
   # sock.connect("example.com", 2000)
   # sock.send("text message")
-  # ```
-  def send(message)
-    send(message.to_slice)
-  end
-
-  # Sends a binary message to a previously connected remote address.
   #
-  # ```
   # sock = Socket.unix(Socket::Type::DGRAM)
   # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
   # sock.send(Bytes[0])
   # ```
-  def send(message : Bytes)
-    bytes_sent = LibC.send(fd, message.to_unsafe.as(Void*), message.size, 0)
+  def send(message)
+    slice = Slice.unsafe_readonly(message)
+    bytes_sent = LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
     raise Errno.new("Error sending datagram") if bytes_sent == -1
     bytes_sent
   ensure
@@ -260,7 +254,7 @@ class Socket < IO::FileDescriptor
     end
   end
 
-  # Sends a text message to the specified remote address.
+  # Sends a message to the specified remote address.
   #
   # ```
   # server = Socket::IPAddress.new("10.0.3.1", 2022)
@@ -269,19 +263,8 @@ class Socket < IO::FileDescriptor
   # sock.send("text query", to: server)
   # ```
   def send(message, to addr : Address)
-    send(message.to_slice, to: addr)
-  end
-
-  # Sends a binary message to the specified remote address.
-  #
-  # ```
-  # server = Socket::IPAddress.new("10.0.3.1", 53)
-  # sock = Socket.udp(Socket::Family::INET)
-  # sock.connect("example.com", 2000)
-  # sock.send(dns_query, to: server)
-  # ```
-  def send(message : Bytes, to addr : Address)
-    bytes_sent = LibC.sendto(fd, message.to_unsafe.as(Void*), message.size, 0, addr, addr.size)
+    slice = Slice.unsafe_readonly(message)
+    bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
     raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
     bytes_sent
   end

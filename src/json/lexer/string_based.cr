@@ -55,7 +55,7 @@ class JSON::Lexer::StringBased < JSON::Lexer
   end
 
   def slice_range(start_pos, end_pos)
-    @reader.string.to_slice.to_slice[start_pos, end_pos - start_pos]
+    @reader.string.to_unsafe_slice[start_pos, end_pos - start_pos]
   end
 
   private def next_char_no_column_increment

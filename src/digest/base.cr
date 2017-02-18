@@ -4,7 +4,7 @@ abstract class Digest::Base
   # Returns the hash of *data*. *data* must respond to `#to_slice`.
   def self.digest(data)
     digest do |ctx|
-      ctx.update(data.to_slice)
+      ctx.update(Slice.unsafe_readonly(data))
     end
   end
 
@@ -31,7 +31,7 @@ abstract class Digest::Base
   # Digest::MD5.hexdigest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
   # ```
   def self.hexdigest(data) : String
-    digest(data).to_slice.hexstring
+    hexdigest &.update(data)
   end
 
   # Yields a context object with an `#update(data : String | Bytes)`
@@ -50,7 +50,7 @@ abstract class Digest::Base
       yield ctx
     end
 
-    hashsum.to_slice.hexstring
+    Slice.unsafe_readonly(hashsum).hexstring
   end
 
   # Returns the base64-encoded hash of *data*.
@@ -59,7 +59,7 @@ abstract class Digest::Base
   # Digest::SHA1.base64digest("foo") # => "C+7Hteo/D9vJXQ3UfzxbwnXaijM="
   # ```
   def self.base64digest(data) : String
-    Base64.strict_encode(digest(data).to_slice)
+    base64digest &.update(data)
   end
 
   # Returns the base64-encoded hash of *data*.
@@ -76,6 +76,6 @@ abstract class Digest::Base
       yield ctx
     end
 
-    Base64.strict_encode(hashsum.to_slice)
+    Base64.strict_encode(hashsum)
   end
 end

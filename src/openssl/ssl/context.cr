@@ -295,7 +295,7 @@ abstract class OpenSSL::SSL::Context
   def alpn_protocol=(protocol : String)
     proto = Bytes.new(protocol.bytesize + 1)
     proto[0] = protocol.bytesize.to_u8
-    protocol.to_slice.copy_to(proto.to_unsafe + 1, protocol.bytesize)
+    protocol.to_unsafe_slice.copy_to(proto.to_unsafe + 1, protocol.bytesize)
     self.alpn_protocol = proto
   end
 

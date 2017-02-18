@@ -60,7 +60,7 @@ require "./openssl/lib_ssl"
 #   context = OpenSSL::SSL::Context::Client.new
 #
 #   ssl_socket = OpenSSL::SSL::Socket::Client.new(socket, context)
-#   ssl_socket.write("Testing".to_slice)
+#   ssl_socket << "Testing"
 # end
 # ```
 module OpenSSL
