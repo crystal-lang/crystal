@@ -1165,6 +1165,50 @@ class String
     end
   end
 
+  # Interprets this string as containing a sequence of hexadecimal values
+  # and decodes it as a slice of bytes. Two consecutive bytes in the string
+  # represent a byte in the returned slice.
+  #
+  # Raises `ArgumentError` if this string does not denote an hexstring.
+  #
+  # ```
+  # "0102031aff".hexbytes  # => Bytes[1, 2, 3, 26, 255]
+  # "1".hexbytes           # raises ArgumentError
+  # "hello world".hexbytes # raises ArgumentError
+  # ```
+  def hexbytes : Bytes
+    hexbytes? || raise(ArgumentError.new("#{self} is not a hexstring"))
+  end
+
+  # Interprets this string as containing a sequence of hexadecimal values
+  # and decodes it as a slice of bytes. Two consecutive bytes in the string
+  # represent a byte in the returned slice.
+  #
+  # Returns `nil` if this string does not denote an hexstring.
+  #
+  # ```
+  # "0102031aff".hexbytes? # => Bytes[1, 2, 3, 26, 255]
+  # "1".hexbytes?          # => nil
+  # "hello world".hexbytes # => nil
+  # ```
+  def hexbytes? : Bytes?
+    return unless bytesize.divisible_by?(2)
+
+    bytes = Bytes.new(bytesize / 2)
+
+    i = 0
+    while i < bytesize
+      high_nibble = to_unsafe[i].unsafe_chr.to_u8?(16)
+      low_nibble = to_unsafe[i + 1].unsafe_chr.to_u8?(16)
+      return unless high_nibble && low_nibble
+
+      bytes[i / 2] = (high_nibble << 4) | low_nibble
+      i += 2
+    end
+
+    bytes
+  end
+
   # Returns a new `String` that results of inserting *other* in `self` at *index*.
   # Negative indices count from the end of the string, and insert **after**
   # the given index.

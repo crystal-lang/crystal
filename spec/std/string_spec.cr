@@ -2242,6 +2242,18 @@ describe "String" do
     "ともだち".insert(0, "ねこ").size.should eq(6)
   end
 
+  it "hexbytes" do
+    expect_raises(ArgumentError) { "abc".hexbytes }
+    expect_raises(ArgumentError) { "abc ".hexbytes }
+    "abcd".hexbytes.should eq(Bytes[171, 205])
+  end
+
+  it "hexbytes?" do
+    "abc".hexbytes?.should be_nil
+    "abc ".hexbytes?.should be_nil
+    "abcd".hexbytes?.should eq(Bytes[171, 205])
+  end
+
   it "dups" do
     string = "foo"
     dup = string.dup
