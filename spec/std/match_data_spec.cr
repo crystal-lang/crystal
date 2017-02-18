@@ -39,7 +39,13 @@ describe "Regex::MatchData" do
 
     it "raises if outside match range with []" do
       "foo" =~ /foo/
-      expect_raises(IndexError) { $~[1] }
+      expect_raises(IndexError, "Invalid capture group index: 1") { $~[1] }
+    end
+
+    it "raises if special variable accessed on invalid capture group" do
+      "spice" =~ /spice(s)?/
+      expect_raises(IndexError, "Invalid capture group index: 1") { $1 }
+      expect_raises(IndexError, "Invalid capture group index: 3") { $3 }
     end
   end
 
