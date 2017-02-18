@@ -485,10 +485,12 @@ module Crystal
                 io << "\f"
               when 'e'
                 io << "\e"
+              when 'x'
+                io.write_byte consume_string_hex_escape
               when 'u'
                 io << consume_string_unicode_escape
               when '0', '1', '2', '3', '4', '5', '6', '7'
-                io << consume_octal_escape(char)
+                io.write_byte consume_octal_escape(char)
               when '\n'
                 incr_line_number nil
                 io << "\n"
@@ -600,9 +602,8 @@ module Crystal
           when 'u'
             value = consume_char_unicode_escape
             @token.value = value.chr
-          when '0', '1', '2', '3', '4', '5', '6', '7'
-            char_value = consume_octal_escape(char2)
-            @token.value = char_value.chr
+          when '0'
+            @token.value = '\0'
           when '\0'
             raise "unterminated char literal", line, column
           else
@@ -1746,16 +1747,27 @@ module Crystal
               string_token_escape_value "\f"
             when 'e'
               string_token_escape_value "\e"
+            when 'x'
+              value = consume_string_hex_escape
+              next_char
+              @token.type = :STRING
+              @token.value = String.new(1) do |buffer|
+                buffer[0] = value
+                {1, 0}
+              end
             when 'u'
               value = consume_string_unicode_escape
               next_char
               @token.type = :STRING
               @token.value = value
             when '0', '1', '2', '3', '4', '5', '6', '7'
-              char_value = consume_octal_escape(char)
+              value = consume_octal_escape(char)
               next_char
               @token.type = :STRING
-              @token.value = char_value.chr.to_s
+              @token.value = String.new(1) do |buffer|
+                buffer[0] = value
+                {1, 0}
+              end
             when '\n'
               incr_line_number
               @token.line_number = @line_number
@@ -2242,14 +2254,17 @@ module Crystal
     end
 
     def consume_octal_escape(char)
-      char_value = char - '0'
+      value = char - '0'
       count = 1
       while count <= 3 && '0' <= peek_next_char < '8'
         next_char
-        char_value = char_value * 8 + (current_char - '0')
+        value = value * 8 + (current_char - '0')
         count += 1
       end
-      char_value
+      if value >= 256
+        raise "octal value too big"
+      end
+      value.to_u8
     end
 
     def consume_char_unicode_escape
@@ -2260,6 +2275,18 @@ module Crystal
       else
         consume_non_braced_unicode_escape
       end
+    end
+
+    def consume_string_hex_escape
+      char = next_char
+      high = char.to_i?(16)
+      raise "invalid hex escape" unless high
+
+      char = next_char
+      low = char.to_i?(16)
+      raise "invalid hex escape" unless low
+
+      ((high << 4) | low).to_u8
     end
 
     def consume_string_unicode_escape

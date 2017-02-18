@@ -82,6 +82,17 @@ private def it_lexes_char(string, value)
   end
 end
 
+private def it_lexes_string(string, value)
+  it "lexes #{string}" do
+    lexer = Lexer.new string
+    token = lexer.next_token
+    token.type.should eq(:DELIMITER_START)
+
+    token = lexer.next_string_token(token.delimiter_state)
+    token.value.should eq(value)
+  end
+end
+
 private def it_lexes_operators(ops)
   ops.each do |op|
     it_lexes op.to_s, op
@@ -221,11 +232,6 @@ describe "Lexer" do
   it_lexes_char "'\\0'", '\0'
   it_lexes_char "'\\''", '\''
   it_lexes_char "'\\\\'", '\\'
-  it_lexes_char "'\\1'", '\1'
-  it_lexes_char "'\\4'", 4.chr
-  it_lexes_char "'\\10'", 8.chr
-  it_lexes_char "'\\110'", 72.chr
-  it_lexes_char "'\\8'", '8'
   assert_syntax_error "'", "unterminated char literal"
   assert_syntax_error "'\\", "unterminated char literal"
   it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"(", :")",
@@ -449,4 +455,16 @@ describe "Lexer" do
   assert_syntax_error "'\\u{}'", "expected hexadecimal character in unicode escape"
   assert_syntax_error "'\\u{110000}'", "invalid unicode codepoint (too large)"
   assert_syntax_error ":+1", "unexpected token"
+
+  it_lexes_string %("\\1"), String.new(Bytes[1])
+  it_lexes_string %("\\4"), String.new(Bytes[4])
+  it_lexes_string %("\\10"), String.new(Bytes[8])
+  it_lexes_string %("\\110"), String.new(Bytes[72])
+  it_lexes_string %("\\8"), "8"
+  assert_syntax_error %("\\400"), "octal value too big"
+
+  it_lexes_string %("\\x12"), String.new(Bytes[0x12])
+  it_lexes_string %("\\xFF"), String.new(Bytes[0xFF])
+  assert_syntax_error %("\\xz"), "invalid hex escape"
+  assert_syntax_error %("\\x1z"), "invalid hex escape"
 end
