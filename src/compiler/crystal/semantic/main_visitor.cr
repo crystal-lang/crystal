@@ -3009,7 +3009,7 @@ module Crystal
       @vars.each do |name, var|
         if name.starts_with? '@'
           if var.nil_if_read?
-            ivar = owner.lookup_instance_var(name)
+            ivar = lookup_instance_var(var, owner)
             ivar.bind_to program.nil_var
           end
 
