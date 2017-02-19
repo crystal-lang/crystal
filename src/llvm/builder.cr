@@ -1,9 +1,6 @@
 class LLVM::Builder
   @disposed = false
 
-  # def initialize(@unwrap : LibLLVM::BuilderRef, @context : Context)
-  # end
-
   def initialize(@unwrap : LibLLVM::BuilderRef)
   end
 
@@ -239,7 +236,7 @@ class LLVM::Builder
     @unwrap
   end
 
-  def finalize
+  protected def dispose
     return if @disposed
     @disposed = true
 

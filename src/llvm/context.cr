@@ -5,6 +5,7 @@ class LLVM::Context
 
   def initialize(@unwrap : LibLLVM::ContextRef, @dispose_on_finalize = true)
     @disposed = false
+    @builders = [] of LLVM::Builder
   end
 
   def new_module(name : String) : Module
@@ -16,8 +17,10 @@ class LLVM::Context
   end
 
   def new_builder : Builder
-    # Builder.new(LibLLVM.create_builder_in_context(self), self)
-    Builder.new(LibLLVM.create_builder_in_context(self))
+    # builder = Builder.new(LibLLVM.create_builder_in_context(self), self)
+    builder = Builder.new(LibLLVM.create_builder_in_context(self))
+    @builders << builder
+    builder
   end
 
   def void : Type
@@ -120,6 +123,8 @@ class LLVM::Context
     return unless @dispose_on_finalize
     return if @disposed
     @disposed = true
+
+    @builders.each &.dispose
 
     LibLLVM.dispose_context(self)
   end
