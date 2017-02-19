@@ -98,7 +98,7 @@ require "c/string"
 # byte sequence according to UTF-8. This can happen if the string is created
 # via one of the constructors that accept bytes, or when getting a string
 # from `String.build` or `IO::Memory`. No exception will be raised, but
-# invalid byte sequences, when asked as chars, will use the unicode replamcenet
+# invalid byte sequences, when asked as chars, will use the unicode replacement
 # char (value 0xFFFD). For example:
 #
 # ```
@@ -106,7 +106,7 @@ require "c/string"
 # string = String.new(Bytes[255, 97])
 # string.valid_encoding? # => false
 #
-# # The first char here is the unicode replacemnt char
+# # The first char here is the unicode replacement char
 # string.chars # => ['�', 'a']
 # ```
 #
@@ -1209,9 +1209,9 @@ class String
   # Returns `nil` if this string does not denote an hexstring.
   #
   # ```
-  # "0102031aff".hexbytes? # => Bytes[1, 2, 3, 26, 255]
-  # "1".hexbytes?          # => nil
-  # "hello world".hexbytes # => nil
+  # "0102031aff".hexbytes?  # => Bytes[1, 2, 3, 26, 255]
+  # "1".hexbytes?           # => nil
+  # "hello world".hexbytes? # => nil
   # ```
   def hexbytes? : Bytes?
     return unless bytesize.divisible_by?(2)
