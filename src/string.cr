@@ -1162,7 +1162,7 @@ class String
   # ```
   def encode(encoding : String, invalid : Symbol? = nil) : Bytes
     io = IO::Memory.new
-    String.encode(to_unsafe_slice, "UTF-8", encoding, io, invalid)
+    String.encode(to_slice, "UTF-8", encoding, io, invalid)
     io.to_slice
   end
 
@@ -1933,7 +1933,7 @@ class String
   # but `'\\'` is probably used for back references, so this check is faster than parsing
   # the whole thing.
   def has_back_references?
-    to_unsafe_slice.index('\\'.ord.to_u8)
+    to_slice.index('\\'.ord.to_u8)
   end
 
   private def scan_backreferences(replacement, match_data, buffer)
@@ -2525,7 +2525,7 @@ class String
   def index(search : Char, offset = 0)
     # If it's ASCII we can delegate to slice
     if search.ascii? && ascii_only?
-      return to_unsafe_slice.index(search.ord.to_u8, offset)
+      return to_slice.index(search.ord.to_u8, offset)
     end
 
     offset += size if offset < 0
@@ -2632,7 +2632,7 @@ class String
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
     if search.ascii? && ascii_only?
-      return to_unsafe_slice.rindex(search.ord.to_u8, offset)
+      return to_slice.rindex(search.ord.to_u8, offset)
     end
 
     offset += size if offset < 0
@@ -2668,7 +2668,7 @@ class String
 
     # calculate a rolling hash of search text (needle)
     search_hash = 0u32
-    search.to_unsafe_slice.reverse_each do |b|
+    search.to_slice.reverse_each do |b|
       search_hash = search_hash * PRIME_RK + b
     end
     pow = PRIME_RK ** search.bytesize
@@ -3689,7 +3689,7 @@ class String
   # array # => [97, 98, 226, 152, 131]
   # ```
   def each_byte
-    to_unsafe_slice.each do |byte|
+    to_slice.each do |byte|
       yield byte
     end
     nil
@@ -3706,7 +3706,7 @@ class String
   # bytes.next # => 131
   # ```
   def each_byte
-    to_unsafe_slice.each
+    to_slice.each
   end
 
   # Returns this string's bytes as an `Array(UInt8)`.
@@ -3950,7 +3950,7 @@ class String
       if reader.error
         unless result
           result = String::Builder.new(bytesize)
-          result.write(to_unsafe_slice[0, reader.pos])
+          result.write(to_slice[0, reader.pos])
         end
         result << replacement
       else
@@ -4032,53 +4032,27 @@ class String
   end
 
   def to_s(io)
-    io.write_utf8 Slice.new(to_unsafe, bytesize)
-  end
-
-  # Returns a copy of the underlying bytes as a slice.
-  def to_slice : Bytes
-    to_unsafe_slice.clone
+    io.write_utf8(to_slice)
   end
 
   # Returns the underlying bytes of this String in an **unsafe** way.
   #
-  # This method is **unsafe** because the returned `Bytes` is not a copy
-  # of this String's bytes, it points directly to the underlying bytes.
-  # This can be a problem is the String came from a string literal.
-  # String literals are stored in the ROM (read-only memory) of a program.
-  # Because `Bytes` is mutable one could modify it and thus try to modify
-  # read-only memory. This will immediately result in a segmentation fault:
-  #
-  # ```
-  # string = "hello"
-  # string.to_unsafe[0] = 0_u8 # segmentation fault
-  # ```
-  #
-  # If, however, the string exists in the heap because it was dynamically
-  # created, mutating the returned bytes is safe but also unexpected because
-  # strings are considered immutable.
-  #
-  # Only use this method when you only intend to read from the returned
-  # bytes and to save the extra allocation performed by `to_slice`. In
-  # every other case you should use `to_slice`.
-  def to_unsafe_slice : Bytes
-    Slice.new(to_unsafe, bytesize)
+  # The returned slice is read-only.
+  def to_slice : Bytes
+    Slice.new(to_unsafe, bytesize, read_only: true)
   end
 
   # Returns a pointer to the underlying bytes of this String.
-  #
-  # This method is **unsafe** because of the same reasons explained
-  # in `to_unsafe_slice`.
   def to_unsafe : UInt8*
     pointerof(@c)
   end
 
   def unsafe_byte_slice(byte_offset, count)
-    Slice.new(to_unsafe + byte_offset, count)
+    Slice.new(to_unsafe + byte_offset, count, read_only: true)
   end
 
   def unsafe_byte_slice(byte_offset)
-    Slice.new(to_unsafe + byte_offset, bytesize - byte_offset)
+    Slice.new(to_unsafe + byte_offset, bytesize - byte_offset, read_only: true)
   end
 
   protected def unsafe_byte_slice_string(byte_offset)

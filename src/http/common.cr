@@ -237,7 +237,7 @@ module HTTP
   # HTTP.dequote_string(quoted) # => %q("foo\bar")
   # ```
   def self.dequote_string(str)
-    data = Slice.unsafe_readonly(str)
+    data = str.to_slice
     quoted_pair_index = data.index('\\'.ord)
     return str unless quoted_pair_index
 

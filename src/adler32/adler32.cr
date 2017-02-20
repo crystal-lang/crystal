@@ -10,7 +10,7 @@ module Adler32
   end
 
   def self.update(data, adler32 : UInt32) : UInt32
-    slice = Slice.unsafe_readonly(data)
+    slice = data.to_slice
     LibZ.adler32(adler32, slice, slice.size).to_u32
   end
 

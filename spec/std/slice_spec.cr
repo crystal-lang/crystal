@@ -366,6 +366,18 @@ describe "Slice" do
     slice = Slice(Int32).empty
     slice.empty?.should be_true
   end
+
+  it "creates read-only slice" do
+    slice = Slice.new(3, 0, read_only: true)
+    expect_raises { slice[0] = 1 }
+    expect_raises { slice.copy_from(slice) }
+
+    subslice = slice[0, 1]
+    expect_raises { subslice[0] = 1 }
+
+    slice = Bytes[1, 2, 3, read_only: true]
+    expect_raises { slice[0] = 0_u8 }
+  end
 end
 
 private def itself(*args)

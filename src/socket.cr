@@ -243,7 +243,7 @@ class Socket < IO::FileDescriptor
   # sock.send(Bytes[0])
   # ```
   def send(message)
-    slice = Slice.unsafe_readonly(message)
+    slice = message.to_slice
     bytes_sent = LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
     raise Errno.new("Error sending datagram") if bytes_sent == -1
     bytes_sent
@@ -263,7 +263,7 @@ class Socket < IO::FileDescriptor
   # sock.send("text query", to: server)
   # ```
   def send(message, to addr : Address)
-    slice = Slice.unsafe_readonly(message)
+    slice = message.to_slice
     bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
     raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
     bytes_sent

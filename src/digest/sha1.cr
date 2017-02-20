@@ -20,7 +20,7 @@ class Digest::SHA1 < Digest::Base
   end
 
   def update(data)
-    message_array = Slice.unsafe_readonly(data)
+    message_array = data.to_slice
     message_array.each do |byte|
       @message_block[@message_block_index] = byte & 0xFF_u8
       @message_block_index += 1

@@ -44,8 +44,8 @@ struct Number
   # ints = Int64.slice(1, 2, 3)
   # ints.class # => Slice(Int64)
   # ```
-  macro slice(*nums)
-    %slice = Slice({{@type}}).new({{nums.size}})
+  macro slice(*nums, read_only = false)
+    %slice = Slice({{@type}}).new({{nums.size}}, read_only: {{read_only}})
     {% for num, i in nums %}
       %slice.to_unsafe[{{i}}] = {{@type}}.new({{num}})
     {% end %}

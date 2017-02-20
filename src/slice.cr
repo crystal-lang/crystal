@@ -5,6 +5,10 @@ require "c/string"
 # While a pointer is unsafe because no bound checks are performed when reading from and writing to it,
 # reading from and writing to a slice involve bound checks.
 # In this way, a slice is a safe alternative to `Pointer`.
+#
+# A Slice can be created as read-only: trying to write to it
+# will raise. For example the slice of bytes returned by
+# `String#to_slice` is read-only.
 struct Slice(T)
   include Indexable(T)
 
@@ -24,17 +28,17 @@ struct Slice(T)
   # `Number.slice` (numbers will be coerced to the type `T`)
   #
   # See also: `Number.slice`.
-  macro [](*args)
+  macro [](*args, read_only = false)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
     {% if @type.name != "Slice(T)" && T < Number %}
-      {{T}}.slice({{*args}})
+      {{T}}.slice({{*args}}, read_only: {{read_only}})
     {% else %}
       %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
       {% for arg, i in args %}
         %ptr[{{i}}] = {{arg}}
       {% end %}
-      Slice.new(%ptr, {{args.size}})
+      Slice.new(%ptr, {{args.size}}, read_only: {{read_only}})
     {% end %}
   end
 
@@ -44,6 +48,9 @@ struct Slice(T)
   # Slice(UInt8).new(3).size # => 3
   # ```
   getter size : Int32
+
+  # Returns `true` if this slice cannot be written to.
+  getter? read_only : Bool
 
   # Creates a slice to the given *pointer*, bounded by the given *size*. This
   # method does not allocate heap memory.
@@ -57,7 +64,7 @@ struct Slice(T)
   #
   # String.new(slice) # => "abc"
   # ```
-  def initialize(@pointer : Pointer(T), size : Int)
+  def initialize(@pointer : Pointer(T), size : Int, *, @read_only = false)
     @size = size.to_i32
   end
 
@@ -73,13 +80,13 @@ struct Slice(T)
   # slice = Slice(UInt8).new(3)
   # slice # => Bytes[0, 0, 0]
   # ```
-  def self.new(size : Int)
+  def self.new(size : Int, *, read_only = false)
     {% unless T <= Int::Primitive || T <= Float::Primitive %}
       {% raise "Can only use primitive integers and floats with Slice.new(size), not #{T}" %}
     {% end %}
 
     pointer = Pointer(T).malloc(size)
-    new(pointer, size)
+    new(pointer, size, read_only: read_only)
   end
 
   # Allocates `size * sizeof(T)` bytes of heap memory initialized to the value
@@ -93,9 +100,9 @@ struct Slice(T)
   # slice = Slice.new(3) { |i| i + 10 }
   # slice # => Slice[10, 11, 12]
   # ```
-  def self.new(size : Int)
+  def self.new(size : Int, *, read_only = false)
     pointer = Pointer.malloc(size) { |i| yield i }
-    new(pointer, size)
+    new(pointer, size, read_only: read_only)
   end
 
   # Allocates `size * sizeof(T)` bytes of heap memory initialized to *value*
@@ -108,8 +115,8 @@ struct Slice(T)
   # slice = Slice.new(3, 10)
   # slice # => Slice[10, 10, 10]
   # ```
-  def self.new(size : Int, value : T)
-    new(size) { value }
+  def self.new(size : Int, value : T, *, read_only = false)
+    new(size, read_only: read_only) { value }
   end
 
   # Returns a copy of this slice.
@@ -144,7 +151,7 @@ struct Slice(T)
       raise IndexError.new
     end
 
-    Slice.new(@pointer + offset, @size - offset)
+    Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
   end
 
   # Sets the given value at the given *index*.
@@ -162,6 +169,8 @@ struct Slice(T)
   # ```
   @[AlwaysInline]
   def []=(index : Int, value : T)
+    check_writable
+
     index += size if index < 0
     unless 0 <= index < size
       raise IndexError.new
@@ -191,7 +200,7 @@ struct Slice(T)
       raise IndexError.new
     end
 
-    Slice.new(@pointer + start, count)
+    Slice.new(@pointer + start, count, read_only: @read_only)
   end
 
   @[AlwaysInline]
@@ -201,6 +210,8 @@ struct Slice(T)
 
   # Reverses in-place all the elements of `self`.
   def reverse!
+    check_writable
+
     i = 0
     j = size - 1
     while i < j
@@ -220,10 +231,14 @@ struct Slice(T)
   end
 
   def shuffle!(random = Random::DEFAULT)
+    check_writable
+
     @pointer.shuffle!(size, random)
   end
 
   def copy_from(source : Pointer(T), count)
+    check_writable
+
     pointer(count).copy_from(source, count)
   end
 
@@ -244,6 +259,8 @@ struct Slice(T)
   # dst.copy_to src # raises IndexError
   # ```
   def copy_to(target : self)
+    target.check_writable
+
     @pointer.copy_to(target.pointer(size), size)
   end
 
@@ -256,6 +273,8 @@ struct Slice(T)
   end
 
   def move_from(source : Pointer(T), count)
+    check_writable
+
     pointer(count).move_from(source, count)
   end
 
@@ -279,6 +298,8 @@ struct Slice(T)
   #
   # See also: `Pointer#move_to`.
   def move_to(target : self)
+    target.check_writable
+
     @pointer.move_to(target.pointer(size), size)
   end
 
@@ -470,19 +491,8 @@ struct Slice(T)
     nil
   end
 
-  # Turns data into Bytes that are supposed to only be
-  # used in a read-only fashion. This method is unsafe because
-  # it can't check that the data will be used like that.
-  #
-  # Only use this method to save an extra allocation when
-  # converting a String, Slice or StaticArray to Bytes.
-  #
-  # Invoking `to_slice` on `data` works too, but in the case
-  # of a `String` this creates an unnecessary copy, so this
-  # macro takes cares to invoke `to_unsafe_slice` in the
-  # case of a `String`.
-  macro unsafe_readonly(data)
-    {{data}}.is_a?(String) ? {{data}}.to_unsafe_slice : {{data}}.to_slice
+  protected def check_writable
+    raise "can't write to read-only Slice" if @read_only
   end
 end
 

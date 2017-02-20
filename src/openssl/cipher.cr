@@ -51,7 +51,7 @@ class OpenSSL::Cipher
   end
 
   def update(data)
-    slice = Slice.unsafe_readonly(data)
+    slice = data.to_slice
     buffer_length = slice.size + block_size
     buffer = Bytes.new(buffer_length)
     if LibCrypto.evp_cipherupdate(@ctx, buffer, pointerof(buffer_length), slice, slice.size) != 1

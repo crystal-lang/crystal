@@ -4,7 +4,7 @@ abstract class Digest::Base
   # Returns the hash of *data*. *data* must respond to `#to_slice`.
   def self.digest(data)
     digest do |ctx|
-      ctx.update(Slice.unsafe_readonly(data))
+      ctx.update(data.to_slice)
     end
   end
 
@@ -50,7 +50,7 @@ abstract class Digest::Base
       yield ctx
     end
 
-    Slice.unsafe_readonly(hashsum).hexstring
+    hashsum.to_slice.hexstring
   end
 
   # Returns the base64-encoded hash of *data*.

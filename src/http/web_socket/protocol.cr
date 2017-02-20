@@ -84,7 +84,7 @@ class HTTP::WebSocket::Protocol
   end
 
   def send(data : String)
-    send(data.to_unsafe_slice, Opcode::TEXT)
+    send(data.to_slice, Opcode::TEXT)
   end
 
   def send(data : Bytes)
@@ -215,7 +215,7 @@ class HTTP::WebSocket::Protocol
 
   def ping(message = nil)
     if message
-      send(Slice.unsafe_readonly(message), Opcode::PING)
+      send(message.to_slice, Opcode::PING)
     else
       send(Bytes.empty, Opcode::PING)
     end
@@ -223,7 +223,7 @@ class HTTP::WebSocket::Protocol
 
   def pong(message = nil)
     if message
-      send(Slice.unsafe_readonly(message), Opcode::PONG)
+      send(message.to_slice, Opcode::PONG)
     else
       send(Bytes.empty, Opcode::PONG)
     end
@@ -231,7 +231,7 @@ class HTTP::WebSocket::Protocol
 
   def close(message = nil)
     if message
-      send(Slice.unsafe_readonly(message), Opcode::CLOSE)
+      send(message.to_slice, Opcode::CLOSE)
     else
       send(Bytes.empty, Opcode::CLOSE)
     end

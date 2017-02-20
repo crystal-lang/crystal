@@ -14,7 +14,7 @@ class Digest::MD5 < Digest::Base
   end
 
   def update(data)
-    slice = Slice.unsafe_readonly(data)
+    slice = data.to_slice
     update(slice.to_unsafe, slice.bytesize.to_u32)
   end
 
