@@ -1006,4 +1006,5 @@ describe Crystal::Formatter do
   assert_format "Union(Int32, String)?"
 
   assert_format "<<-HEREDOC\n  \#{foo}\n  H\#{bar}\n  HEREDOC"
+  assert_format "foo[a, b: 2]"
 end

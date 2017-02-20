@@ -2105,7 +2105,7 @@ module Crystal
               last_arg = args.pop
             end
 
-            has_newlines, found_comment, _ = format_args args, true
+            has_newlines, found_comment, _ = format_args args, true, node.named_args
             if @token.type == :"," || @token.type == :NEWLINE
               if has_newlines
                 write ","
