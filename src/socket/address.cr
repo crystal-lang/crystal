@@ -179,17 +179,21 @@ class Socket
   # Holds the local path of an UNIX address, usually coming from an opened
   # connection (e.g. `Socket#local_address`, `Socket#receive`).
   #
+  # You may also declare an abstract UNIX address, that is a virtual file
+  # that will never be created on the filesystem.
+  #
   # Example:
   # ```
   # Socket::UNIXAddress.new("/tmp/my.sock")
   # ```
   struct UNIXAddress < Address
     getter path : String
+    getter? abstract : Bool
 
     # :nodoc:
     MAX_PATH_SIZE = LibC::SockaddrUn.new.sun_path.size - 1
 
-    def initialize(@path : String)
+    def initialize(@path : String, @abstract = false)
       if @path.bytesize + 1 > MAX_PATH_SIZE
         raise ArgumentError.new("Path size exceeds the maximum size of #{MAX_PATH_SIZE} bytes")
       end
@@ -204,7 +208,16 @@ class Socket
 
     protected def initialize(sockaddr : LibC::SockaddrUn*, size)
       @family = Family::UNIX
-      @path = String.new(sockaddr.value.sun_path.to_unsafe)
+
+      path = sockaddr.value.sun_path
+      if path[0] == 0
+        @abstract = true
+        @path = String.new(path.to_unsafe + 1)
+      else
+        @abstract = false
+        @path = String.new(path.to_unsafe)
+      end
+
       @size = size || sizeof(LibC::SockaddrUn)
     end
 
@@ -219,7 +232,14 @@ class Socket
     def to_unsafe : LibC::Sockaddr*
       sockaddr = Pointer(LibC::SockaddrUn).malloc
       sockaddr.value.sun_family = family
-      sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, @path.bytesize + 1)
+
+      destination = sockaddr.value.sun_path.to_unsafe
+      if @abstract
+        destination[0] = 0_u8
+        destination += 1
+      end
+      destination.copy_from(@path.to_unsafe, @path.bytesize + 1)
+
       sockaddr.as(LibC::Sockaddr*)
     end
   end

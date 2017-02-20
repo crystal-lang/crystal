@@ -1,4 +1,4 @@
-# A local interprocess communication clientsocket.
+# A local interprocess communication client socket.
 #
 # Only available on UNIX and UNIX-like operating systems.
 #
@@ -13,22 +13,23 @@
 # ```
 class UNIXSocket < Socket
   getter path : String?
+  getter? abstract : Bool
 
-  # Connects a named UNIX socket, bound to a filesystem pathname.
-  def initialize(@path : String, type : Type = Type::STREAM)
+  # Connects a named UNIX socket, bound to a filesystem.
+  def initialize(@path : String, type : Type = Type::STREAM, @abstract = false)
     super(Family::UNIX, type, Protocol::IP)
 
-    connect(UNIXAddress.new(path)) do |error|
+    connect(UNIXAddress.new(path, @abstract)) do |error|
       close
       raise error
     end
   end
 
-  protected def initialize(family : Family, type : Type)
+  protected def initialize(family : Family, type : Type, @abstract = false)
     super family, type, Protocol::IP
   end
 
-  protected def initialize(fd : Int32, type : Type)
+  protected def initialize(fd : Int32, type : Type, @abstract = false)
     super fd, Family::UNIX, type, Protocol::IP
   end
 
@@ -36,8 +37,8 @@ class UNIXSocket < Socket
   # eventually closes the socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM)
-    sock = new(path, type)
+  def self.open(path, type : Type = Type::STREAM, abstract is_abstract = false)
+    sock = new(path, type, is_abstract)
     begin
       yield sock
     ensure
@@ -89,11 +90,11 @@ class UNIXSocket < Socket
   end
 
   def local_address
-    UNIXAddress.new(path.to_s)
+    UNIXAddress.new(path.to_s, @abstract)
   end
 
   def remote_address
-    UNIXAddress.new(path.to_s)
+    UNIXAddress.new(path.to_s, @abstract)
   end
 
   def receive
