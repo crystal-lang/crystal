@@ -1,11 +1,5 @@
 require "http/server"
 
-3.times do
-  Thread.new do
-    Scheduler.start
-  end
-end
-
 handler = HTTP::StaticFileHandler.new(".")
 
 # server = HTTP::Server.new "0.0.0.0", 8080 do |context|

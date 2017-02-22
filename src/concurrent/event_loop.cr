@@ -3,16 +3,19 @@ require "./scheduler"
 
 class EventLoop
   @@eb = Event::Base.new
-  @@loop_fiber = Fiber.new(name: "event-loop") do
-    inf_event = @@eb.new_event(-1, LibEvent2::EventFlags::Persist, nil) { }
-    inf_event.add(86400)
 
-    @@eb.run_loop
-    LibC.printf "FATAL: Event loop has exited"
-  end
+  def self.start
+    Thread.new do
+      Fiber.current.name = "event-loop"
+      Scheduler.start_for_event_loop
+      thread_log "Starting event loop"
 
-  def self.resume
-    @@loop_fiber.not_nil!.resume
+      inf_event = @@eb.new_event(-1, LibEvent2::EventFlags::Persist, nil) { }
+      inf_event.add(86400)
+
+      @@eb.run_loop
+      LibC.printf "FATAL: Event loop has exited"
+    end
   end
 
   def self.after_fork
@@ -21,13 +24,11 @@ class EventLoop
 
   def self.wait
     Scheduler.current.reschedule
-    # Scheduler.current.enqueue @@loop_fiber.not_nil!
   end
 
   def self.create_resume_event(fiber)
     @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       Scheduler.current.enqueue data.as(Fiber)
-      # (data as Fiber).resume
     end
   end
 
@@ -82,3 +83,5 @@ class EventLoop
     dns_base.getaddrinfo(nodename, servname, hints, data, &callback)
   end
 end
+
+EventLoop.start

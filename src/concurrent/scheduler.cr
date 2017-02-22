@@ -5,7 +5,7 @@ class Thread
   property! scheduler : Scheduler
 end
 
-Thread.current.scheduler = Scheduler.new(true)
+Scheduler.start_for_main_thread
 
 # :nodoc:
 class Scheduler
@@ -50,36 +50,68 @@ class Scheduler
   end
   {% end %}
 
-  def initialize(@own_event_loop = false)
+  def initialize
     @runnables = Deque(Fiber).new
     @runnables_lock = SpinLock.new
     @thread = LibC.pthread_self.address
     @victim = 0
 
-    unless @own_event_loop
-      @reschedule_fiber = Fiber.current
-    end
     @@all_mutex.synchronize do
       @@all << self
     end
   end
 
-  def self.start
-    thread_log "Scheduler start"
+  def self.current
+    Thread.current.scheduler
+  end
+
+  def self.start_for_main_thread
+    scheduler = new
+    Thread.current.scheduler = scheduler
+
+    # the main thread has a separate rescheduling fiber
+    scheduler.reschedule_fiber = Fiber.new(name: "main-thread-scheduler") do
+      scheduler.reschedule_loop
+    end
+  end
+
+  def self.start_for_background_thread
     if @@spinning.get == 0
       # @@spinning count should be above zero under normal circumstances
       STDERR.puts "WARNING: Scheduler started with spinning count in zero. Did you start a scheduler manually?"
     end
+
     scheduler = new
     Thread.current.scheduler = scheduler
+
+    # background threads use the initialization fiber for rescheduling, to keep
+    # the thread running the main rescheduling loop.
+    scheduler.reschedule_fiber = Fiber.current
+    Fiber.current.name = "scheduler"
+
+    # spinning should have been incremented before initializing the thread, to
+    # prevent more threads than needed to be started. that's we we don't call
+    # reschedule directly.
     scheduler.spin
+    scheduler.reschedule_loop
+  end
+
+  def self.start_for_event_loop
+    # The event loop's thread has a scheduler that allows it to enqueue ready events
+    # It never executes any of these runnables, but instead leaves them there to be
+    # stolen by other schedulers.
+    scheduler = Scheduler.new
+    Thread.current.scheduler = scheduler
+  end
+
+  protected def reschedule_loop
     loop do
-      scheduler.reschedule(true)
+      reschedule(true)
     end
   end
 
-  def self.current
-    Thread.current.scheduler
+  protected def reschedule_fiber=(fiber)
+    @reschedule_fiber = fiber
   end
 
   protected def wait
@@ -102,26 +134,22 @@ class Scheduler
   def reschedule(is_reschedule_fiber = false)
     while true
       if runnable = @runnables_lock.synchronize { @runnables.shift? }
-        thread_log "Reschedule #{self}: Found in queue '%s'", runnable.name!
+        thread_log "Reschedule: Found in queue '%s'", runnable.name!
         runnable.resume
         break
-      elsif reschedule_fiber = @reschedule_fiber
-        if is_reschedule_fiber
-          thread_log "Reschedule #{self}: Spinning"
-          @@spinning.add(1)
-          could_steal = spin
-          unless could_steal
-            # ...
-            @@sleeping.add(1)
-            wait
-          end
-        else
-          thread_log "Reschedule #{self}: Switching to rescheduling fiber %ld", reschedule_fiber.object_id
-          reschedule_fiber.resume
-          break
+      elsif is_reschedule_fiber
+        thread_log "Reschedule: Spinning"
+        @@spinning.add(1)
+        could_steal = spin
+        unless could_steal
+          # ...
+          @@sleeping.add(1)
+          wait
         end
       else
-        EventLoop.resume
+        reschedule_fiber = @reschedule_fiber.not_nil!
+        thread_log "Reschedule: Switching to rescheduling fiber %ld", reschedule_fiber.object_id
+        reschedule_fiber.resume
         break
       end
     end
@@ -200,8 +228,7 @@ class Scheduler
       if @@all.size < 8
         @@spinning.add(1)
         Thread.new do
-          Fiber.current.name = "scheduler"
-          Scheduler.start
+          Scheduler.start_for_background_thread
         end
       end
     {% end %}

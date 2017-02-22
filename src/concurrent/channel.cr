@@ -265,7 +265,7 @@ class Channel::Buffered(T) < Channel(T)
 
     while internal_full?
       raise_if_closed
-      thread_log "#{Fiber.current.name!} waiting to send in channel #{self}"
+      # thread_log "#{Fiber.current.name!} waiting to send in channel #{self}"
       @senders << FiberTicket.for_current
       unlock_after_context_switch
       Scheduler.current.reschedule
@@ -305,7 +305,7 @@ class Channel::Buffered(T) < Channel(T)
         @mutex.unlock
         yield
       end
-      thread_log "#{Fiber.current.name!} waiting to receive in channel #{self}"
+      # thread_log "#{Fiber.current.name!} waiting to receive in channel #{self}"
       @receivers << FiberTicket.for_current
 
       unlock_after_context_switch
@@ -350,7 +350,7 @@ class Channel::Unbuffered(T) < Channel(T)
 
     while @has_value
       raise_if_closed
-      thread_log "#{Fiber.current.name!} waiting to send in channel #{self}"
+      # thread_log "#{Fiber.current.name!} waiting to send in channel #{self}"
       @senders << FiberTicket.for_current
       unlock_after_context_switch
       Scheduler.current.reschedule
