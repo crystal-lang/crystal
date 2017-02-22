@@ -6,9 +6,8 @@ abstract class Channel(T)
   module SelectAction
     # Executes the action if the channel is ready
     # Returns a tuple { is_ready, result } (where result is nil if the result is not ready)
-    abstract def try_execute
-    abstract def wait
-    abstract def unwait
+    abstract def execute_or_wait(ticket : FiberTicket)
+    abstract def unwait(ticket : FiberTicket)
   end
 
   class ClosedError < Exception
@@ -19,8 +18,8 @@ abstract class Channel(T)
 
   def initialize
     @closed = false
-    @senders = Deque(Fiber).new
-    @receivers = Deque(Fiber).new
+    @senders = Deque(FiberTicket).new
+    @receivers = Deque(FiberTicket).new
   end
 
   def self.new : Unbuffered(T)
@@ -34,7 +33,14 @@ abstract class Channel(T)
   def close
     @mutex.synchronize do
       @closed = true
-      Scheduler.current.enqueue @receivers
+      fibers = @receivers.reduce([] of Fiber) do |acc, ticket|
+        if fiber = ticket.checkout!
+          acc << fiber
+        else
+          acc
+        end
+      end
+      Scheduler.current.enqueue fibers
       @receivers.clear
       nil
     end
@@ -68,27 +74,25 @@ abstract class Channel(T)
     pp.text inspect
   end
 
-  def wait_for_receive
+  # holds lock
+  protected def wait_for_receive(ticket)
+    @receivers << ticket
+  end
+
+  def unwait_for_receive(ticket)
     @mutex.synchronize do
-      @receivers << Fiber.current
+      @receivers.delete ticket
     end
   end
 
-  def unwait_for_receive
-    @mutex.synchronize do
-      @receivers.delete Fiber.current
-    end
+  # holds lock
+  def wait_for_send(ticket)
+    @senders << ticket
   end
 
-  def wait_for_send
+  def unwait_for_send(ticket)
     @mutex.synchronize do
-      @senders << Fiber.current
-    end
-  end
-
-  def unwait_for_send
-    @mutex.synchronize do
-      @senders.delete Fiber.current
+      @senders.delete ticket
     end
   end
 
@@ -135,20 +139,38 @@ abstract class Channel(T)
 
   def self.select(ops : Tuple | Array, has_else = false)
     loop do
-      ops.each_with_index do |op, index|
-        ready, result = op.try_execute
-        if ready
-          return index, result
+      thread_log "Trying to execute select operations"
+      ticket = FiberTicket.for_current
+      ticket.lock
+      begin
+        ops.each_with_index do |op, index|
+          ready, result = op.execute_or_wait(ticket)
+          if ready
+            return index, result
+          end
+        end
+
+        # TODO: we can optimize this case by not creating a ticket in the first
+        # place since we are never going to block on the channels
+        if has_else
+          return ops.size, nil
+        end
+
+        thread_log "Waiting for operations"
+        Fiber.current.callback = ->{
+          ticket.unlock
+          nil
+        }
+        Scheduler.current.reschedule
+        thread_log "Done waiting"
+      ensure
+        ticket.clear_and_unlock!
+        # TODO: this may not be necessary... we can let the channels clean up
+        # since the ticket is invalidated anyway
+        ops.each_with_index do |op, index|
+          op.unwait ticket
         end
       end
-
-      if has_else
-        return ops.size, nil
-      end
-
-      ops.each &.wait
-      Scheduler.current.reschedule
-      ops.each &.unwait
     end
   end
 
@@ -166,22 +188,19 @@ abstract class Channel(T)
     def initialize(@channel : C)
     end
 
-    def try_execute
+    def execute_or_wait(ticket)
       @channel.synchronize do
         if !@channel.empty?
           return true, @channel.receive_immediate
         else
+          @channel.wait_for_receive ticket
           return false, nil
         end
       end
     end
 
-    def wait
-      @channel.wait_for_receive
-    end
-
-    def unwait
-      @channel.unwait_for_receive
+    def unwait(ticket)
+      @channel.unwait_for_receive(ticket)
     end
   end
 
@@ -191,22 +210,19 @@ abstract class Channel(T)
     def initialize(@channel : C, @value : T)
     end
 
-    def try_execute
+    def execute_or_wait(ticket)
       @channel.synchronize do
         if !@channel.full?
           return true, @channel.send_immediate(@value)
         else
+          @channel.wait_for_send ticket
           return false, nil
         end
       end
     end
 
-    def wait
-      @channel.wait_for_send
-    end
-
-    def unwait
-      @channel.unwait_for_send
+    def unwait(ticket)
+      @channel.unwait_for_send(ticket)
     end
   end
 end
@@ -222,7 +238,14 @@ class Channel::Buffered(T) < Channel(T)
 
     @queue << value
     unless @receivers.empty?
-      Scheduler.current.enqueue @receivers
+      fibers = @receivers.reduce([] of Fiber) do |acc, ticket|
+        if fiber = ticket.checkout!
+          acc << fiber
+        else
+          acc
+        end
+      end
+      Scheduler.current.enqueue fibers
       @receivers.clear
     end
 
@@ -235,7 +258,7 @@ class Channel::Buffered(T) < Channel(T)
     while full?
       raise_if_closed
       thread_log "#{Fiber.current.name!} waiting to send in channel #{self}"
-      @senders << Fiber.current
+      @senders << FiberTicket.for_current
       unlock_after_context_switch
       Scheduler.current.reschedule
       @mutex.lock
@@ -251,7 +274,14 @@ class Channel::Buffered(T) < Channel(T)
   def receive_immediate
     result = @queue.shift.tap do
       unless @senders.empty?
-        Scheduler.current.enqueue @senders
+        fibers = @senders.reduce([] of Fiber) do |acc, ticket|
+          if fiber = ticket.checkout!
+            acc << fiber
+          else
+            acc
+          end
+        end
+        Scheduler.current.enqueue fibers
         @senders.clear
       end
     end
@@ -268,7 +298,7 @@ class Channel::Buffered(T) < Channel(T)
         yield
       end
       thread_log "#{Fiber.current.name!} waiting to receive in channel #{self}"
-      @receivers << Fiber.current
+      @receivers << FiberTicket.for_current
 
       unlock_after_context_switch
       Scheduler.current.reschedule
@@ -292,7 +322,7 @@ class Channel::Buffered(T) < Channel(T)
 end
 
 class Channel::Unbuffered(T) < Channel(T)
-  @sender : Fiber?
+  @current_sender : Fiber?
 
   def initialize
     @has_value = false
@@ -311,7 +341,7 @@ class Channel::Unbuffered(T) < Channel(T)
     while @has_value
       raise_if_closed
       thread_log "#{Fiber.current.name!} waiting to send in channel #{self}"
-      @senders << Fiber.current
+      @senders << FiberTicket.for_current
       unlock_after_context_switch
       Scheduler.current.reschedule
       @mutex.lock
@@ -326,15 +356,19 @@ class Channel::Unbuffered(T) < Channel(T)
 
     @value = value
     @has_value = true
-    @sender = Fiber.current
+    @current_sender = Fiber.current
 
-    receiver = @receivers.shift?
+    while !@receivers.empty?
+      receiver = @receivers.shift.checkout!
+      break if receiver
+    end
     unlock_after_context_switch
 
-    thread_log "#{Fiber.current.name!} waiting for value to be read in channel #{self}"
     if receiver
+      thread_log "#{Fiber.current.name!} resuming receiver #{receiver.name!} for read in channel #{self}"
       receiver.resume
     else
+      thread_log "#{Fiber.current.name!} waiting for value to be read in channel #{self}"
       Scheduler.current.reschedule
     end
   end
@@ -346,7 +380,7 @@ class Channel::Unbuffered(T) < Channel(T)
 
     @value.tap do
       @has_value = false
-      Scheduler.current.enqueue @sender.not_nil!
+      Scheduler.current.enqueue @current_sender.not_nil!
     end
   end
 
@@ -359,15 +393,18 @@ class Channel::Unbuffered(T) < Channel(T)
         yield
       end
 
-      thread_log "#{Fiber.current.name!} waiting to receive in channel #{self}"
-      @receivers << Fiber.current
-      sender = @senders.shift?
-
+      @receivers << FiberTicket.for_current
+      while !@senders.empty?
+        sender = @senders.shift.checkout!
+        break if sender
+      end
       unlock_after_context_switch
 
       if sender
+        thread_log "#{Fiber.current.name!} resuming #{sender.name!} for receive in channel #{self}"
         sender.resume
       else
+        thread_log "#{Fiber.current.name!} waiting to receive in channel #{self}"
         Scheduler.current.reschedule
       end
 
@@ -381,7 +418,7 @@ class Channel::Unbuffered(T) < Channel(T)
 
     @value.tap do
       @has_value = false
-      Scheduler.current.enqueue @sender.not_nil!
+      Scheduler.current.enqueue @current_sender.not_nil!
       @mutex.unlock
     end
   end
@@ -392,5 +429,41 @@ class Channel::Unbuffered(T) < Channel(T)
 
   def full?
     @has_value || @receivers.empty?
+  end
+end
+
+# This class represents a fiber willing to send/receive on a channel.
+# Can be safely enqueued into multiple channels without fear of resuming
+# twice since only the first channel will be able to checkout the fiber.
+class FiberTicket
+  @lock = SpinLock.new
+  @fiber : Fiber?
+
+  def initialize(@fiber)
+  end
+
+  def checkout!
+    @lock.synchronize do
+      fiber = @fiber
+      @fiber = nil
+      fiber
+    end
+  end
+
+  def clear_and_unlock!
+    @fiber = nil
+    @lock.unlock
+  end
+
+  def lock
+    @lock.lock
+  end
+
+  def unlock
+    @lock.unlock
+  end
+
+  def self.for_current
+    new Fiber.current
   end
 end
