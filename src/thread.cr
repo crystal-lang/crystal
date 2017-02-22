@@ -14,7 +14,9 @@ class Thread
 
   def initialize(&@func : ->)
     @current_fiber = uninitialized Fiber
-    @@threads << self
+    @@threads_mutex.synchronize {
+      @@threads << self
+    }
 
     ret = LibGC.pthread_create(out th, nil, ->(data) {
       (data.as(Thread)).start
@@ -29,7 +31,9 @@ class Thread
   def initialize
     @current_fiber = uninitialized Fiber
     @func = ->{}
-    @@threads << self
+    @@threads_mutex.synchronize {
+      @@threads << self
+    }
     @th = LibC.pthread_self
   end
 
@@ -52,6 +56,7 @@ class Thread
   # and we can find the current thread on platforms that don't support
   # thread local storage (eg: OpenBSD)
   @@threads = Set(Thread).new
+  @@threads_mutex = Thread::Mutex.new
 
   {% if flag?(:openbsd) %}
     @@main = new
@@ -63,9 +68,11 @@ class Thread
 
       current_thread_id = LibC.pthread_self
 
-      current_thread = @@threads.find do |thread|
-        LibC.pthread_equal(thread.id, current_thread_id) != 0
-      end
+      current_thread = @@threads_mutex.synchronize {
+        @@threads.find do |thread|
+          LibC.pthread_equal(thread.id, current_thread_id) != 0
+        end
+      }
 
       raise "Error: failed to find current thread" unless current_thread
       current_thread
@@ -96,7 +103,7 @@ class Thread
     ensure
       Fiber.current.remove
       Fiber.gc_unregister_thread
-      @@threads.delete(self)
+      @@threads_mutex.synchronize { @@threads.delete(self) }
     end
   end
 end
