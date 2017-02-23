@@ -87,7 +87,7 @@ class Gzip::Header
 
     unless @extra.empty?
       io.write_byte @extra.size.to_u8
-      io.write(extra)
+      io.write(@extra)
     end
 
     if name = @name
