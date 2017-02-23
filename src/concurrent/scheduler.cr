@@ -169,6 +169,7 @@ class Scheduler
   end
 
   def enqueue(fibers : Enumerable(Fiber))
+    thread_log "Enqueue #{fibers.map(&.name!).join(", ")}"
     @runnables_lock.synchronize { @runnables.concat fibers }
     ensure_workers_available
   end
@@ -192,16 +193,18 @@ class Scheduler
       end
     end
 
-    # FIXME: race condition: this may result in more than 8 worker threads
-    # FIXME: make the number of threads CPU/arch dependent (configurable?)
-    # FIXME: this access to @@all is not synchronized
-    if @@all.size < 8
-      @@spinning.add(1)
-      Thread.new do
-        Fiber.current.name = "scheduler"
-        Scheduler.start
+    {% if !flag?(:single_thread) %}
+      # FIXME: race condition: this may result in more than 8 worker threads
+      # FIXME: make the number of threads CPU/arch dependent (configurable?)
+      # FIXME: this access to @@all is not synchronized
+      if @@all.size < 8
+        @@spinning.add(1)
+        Thread.new do
+          Fiber.current.name = "scheduler"
+          Scheduler.start
+        end
       end
-    end
+    {% end %}
 
     # ...
   end
