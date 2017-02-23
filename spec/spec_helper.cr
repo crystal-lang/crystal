@@ -354,3 +354,39 @@ end
 private def inject_primitives(code)
   %(require "primitives"\n) + code
 end
+
+# Helper to coordinate and synchronize execute between fibers
+# Execution is assumed to start at fiber identified by 0
+class FiberSwitch
+  @runner = Atomic(Int32).new(0)
+
+  def wait(wait_for)
+    while @runner.get != wait_for; end
+  end
+
+  def yield(yield_to)
+    @runner.set yield_to
+    Fiber.yield
+  end
+
+  def defer_yield(yield_to)
+    Fiber.current.append_callback ->{
+      @runner.set yield_to
+    }
+  end
+
+  def wait_and_yield(wait_for, yield_to)
+    wait wait_for
+    self.yield yield_to
+  end
+
+  def yield_and_wait(yield_to, wait_for)
+    self.yield yield_to
+    wait wait_for
+  end
+
+  def wait_and_defer_yield(wait_for, yield_to)
+    wait wait_for
+    defer_yield yield_to
+  end
+end

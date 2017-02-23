@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 
 describe Channel do
   it "creates unbuffered with no arguments" do
@@ -38,20 +38,27 @@ describe Channel::Unbuffered do
   end
 
   it "blocks if there is no receiver" do
+    switch = FiberSwitch.new
     ch = Channel::Unbuffered(Int32).new
     state = 0
+
     spawn do
-      state = 1
+      switch.wait_and_defer_yield 1, 0
+
       ch.send 123
-      state = 2
+      state = 1
+
+      switch.wait_and_yield 1, 0
     end
 
-    Fiber.yield
-    state.should eq(1)
+    switch.yield_and_wait 1, 0
+
+    state.should eq(0)
     ch.receive.should eq(123)
+
+    switch.yield_and_wait 1, 0
+
     state.should eq(1)
-    Fiber.yield
-    state.should eq(2)
   end
 
   it "deliver many senders" do
@@ -63,12 +70,16 @@ describe Channel::Unbuffered do
     (1..6).map { ch.receive }.sort.should eq([1, 2, 3, 4, 5, 6])
   end
 
-  it "gets not full when there is a sender" do
+  it "gets not empty when there is a sender" do
+    switch = FiberSwitch.new
     ch = Channel::Unbuffered(Int32).new
     ch.full?.should be_true
     ch.empty?.should be_true
-    spawn { ch.send 123 }
-    Fiber.yield
+    spawn do
+      switch.wait_and_defer_yield 1, 0
+      ch.send 123
+    end
+    switch.yield_and_wait 1, 0
     ch.empty?.should be_false
     ch.full?.should be_true
     ch.receive.should eq(123)
@@ -87,9 +98,13 @@ describe Channel::Unbuffered do
   end
 
   it "can send and receive nil" do
+    switch = FiberSwitch.new
     ch = Channel::Unbuffered(Nil).new
-    spawn { ch.send nil }
-    Fiber.yield
+    spawn do
+      switch.wait_and_defer_yield 1, 0
+      ch.send nil
+    end
+    switch.yield_and_wait 1, 0
     ch.empty?.should be_false
     ch.receive.should be_nil
     ch.empty?.should be_true
@@ -111,12 +126,18 @@ describe Channel::Unbuffered do
   end
 
   it "can be closed from different fiber" do
+    switch = FiberSwitch.new
     ch = Channel::Unbuffered(Int32).new
     received = false
-    spawn { expect_raises(Channel::ClosedError) { ch.receive }; received = true }
-    Fiber.yield
+    spawn do
+      switch.wait_and_defer_yield 1, 0
+      expect_raises(Channel::ClosedError) { ch.receive }
+      received = true
+      switch.wait_and_yield 1, 0
+    end
+    switch.yield_and_wait 1, 0
     ch.close
-    Fiber.yield
+    switch.yield_and_wait 1, 0
     received.should be_true
   end
 
@@ -148,9 +169,15 @@ describe Channel::Buffered do
   end
 
   it "blocks when full" do
+    switch = FiberSwitch.new
     ch = Channel::Buffered(Int32).new(2)
     freed = false
-    spawn { 2.times { ch.receive }; freed = true }
+    spawn do
+      switch.wait 1
+      2.times { ch.receive }
+      freed = true
+      switch.yield 0
+    end
 
     ch.send 1
     ch.full?.should be_false
@@ -160,17 +187,25 @@ describe Channel::Buffered do
     ch.full?.should be_true
     freed.should be_false
 
+    switch.defer_yield 1
     ch.send 3
+    switch.wait 0
     ch.full?.should be_false
     freed.should be_true
   end
 
   it "doesn't block when not full" do
+    switch = FiberSwitch.new
     ch = Channel::Buffered(Int32).new
     done = false
-    spawn { ch.send 123; done = true }
+    spawn do
+      switch.wait 1
+      ch.send 123
+      done = true
+      switch.yield 0
+    end
     done.should be_false
-    Fiber.yield
+    switch.yield_and_wait 1, 0
     done.should be_true
   end
 
@@ -189,9 +224,14 @@ describe Channel::Buffered do
   end
 
   it "can send and receive nil" do
+    switch = FiberSwitch.new
     ch = Channel::Buffered(Nil).new
-    spawn { ch.send nil }
-    Fiber.yield
+    spawn do
+      switch.wait 1
+      ch.send nil
+      switch.yield 0
+    end
+    switch.yield_and_wait 1, 0
     ch.empty?.should be_false
     ch.receive.should be_nil
     ch.empty?.should be_true
@@ -213,12 +253,18 @@ describe Channel::Buffered do
   end
 
   it "can be closed from different fiber" do
+    switch = FiberSwitch.new
     ch = Channel::Buffered(Int32).new
     received = false
-    spawn { expect_raises(Channel::ClosedError) { ch.receive }; received = true }
-    Fiber.yield
+    spawn do
+      switch.wait_and_defer_yield 1, 0
+      expect_raises(Channel::ClosedError) { ch.receive }
+      received = true
+      switch.wait_and_yield 1, 0
+    end
+    switch.yield_and_wait 1, 0
     ch.close
-    Fiber.yield
+    switch.yield_and_wait 1, 0
     received.should be_true
   end
 
