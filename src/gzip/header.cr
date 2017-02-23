@@ -44,6 +44,8 @@ class Gzip::Header
       xlen = io.read_byte.not_nil!
       @extra = Bytes.new(xlen)
       io.read_fully(@extra)
+    else
+      @extra = Bytes.empty
     end
 
     if flg.name?
@@ -69,26 +71,31 @@ class Gzip::Header
     # compression method
     io.write_byte DEFLATE
 
+    io.write_bytes 0_u32
+
     # flg
     flg = Flg::None
     flg |= Flg::EXTRA if @extra
     flg |= Flg::NAME if @name
     flg |= Flg::COMMENT if @comment
-    io.write_byte flg.value
+      
+    # io.write_byte flg.value
 
     # time
-    io.write_bytes(modification_time.epoch.to_u32, IO::ByteFormat::LittleEndian)
+    #io.write_bytes(modification_time.epoch.to_u32, IO::ByteFormat::LittleEndian)
 
     # xfl
     io.write_byte 0_u8
 
     # os
-    io.write_byte os
+    #io.write_byte @os
 
     if extra = @extra
       io.write_byte extra.size.to_u8
       io.write(extra)
     end
+
+    io.write_byte 3_u8 # adding this and removing time, and os seemed to fix, no idea why
 
     if name = @name
       io << name
