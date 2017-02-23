@@ -111,7 +111,7 @@ abstract class Channel(T)
   end
 
   protected def unlock_after_context_switch
-    Fiber.current.callback = ->{
+    Fiber.current.append_callback ->{
       @mutex.unlock
       nil
     }
@@ -165,7 +165,7 @@ abstract class Channel(T)
         end
 
         thread_log "Waiting for operations"
-        Fiber.current.callback = ->{
+        Fiber.current.append_callback ->{
           ticket.unlock
           nil
         }

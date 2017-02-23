@@ -168,7 +168,9 @@ class Fiber
   end
 
   def set_callback
+    current_cb = @callback
     @callback = ->{
+      current_cb.not_nil!.call if current_cb
       @@stack_pool_mutex.synchronize { @@stack_pool << @stack }
       remove
       nil
@@ -402,7 +404,18 @@ class Fiber
     current.flush_callback
   end
 
-  property callback
+  getter callback
+
+  def append_callback(cb : ->)
+    if current_cb = @callback
+      @callback = ->{
+        current_cb.not_nil!.call
+        cb.call
+      }
+    else
+      @callback = cb
+    end
+  end
 
   protected def flush_callback
     if callback = @callback

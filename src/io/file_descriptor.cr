@@ -321,7 +321,7 @@ class IO::FileDescriptor
     return if @edge_triggerable
     event = @read_event ||= EventLoop.create_fd_read_event(self)
     if delayed
-      Fiber.current.callback = ->{
+      Fiber.current.append_callback ->{
         event.add @read_timeout
         nil
       }
@@ -357,7 +357,7 @@ class IO::FileDescriptor
     return if @edge_triggerable
     event = @write_event ||= EventLoop.create_fd_write_event(self)
     if delayed
-      Fiber.current.callback = ->{
+      Fiber.current.append_callback ->{
         event.add timeout
         nil
       }
