@@ -71,7 +71,7 @@ class Gzip::Header
 
     # flg
     flg = Flg::None
-    flg |= Flg::EXTRA unless @extra.empty?
+    flg |= Flg::EXTRA if @extra.any?
     flg |= Flg::NAME if @name
     flg |= Flg::COMMENT if @comment
     io.write_byte flg.value
@@ -85,7 +85,7 @@ class Gzip::Header
     # os
     io.write_byte os
 
-    unless @extra.empty?
+    if @extra.any?
       io.write_byte @extra.size.to_u8
       io.write(extra)
     end
