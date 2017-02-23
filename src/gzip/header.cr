@@ -44,8 +44,6 @@ class Gzip::Header
       xlen = io.read_byte.not_nil!
       @extra = Bytes.new(xlen)
       io.read_fully(@extra)
-    else
-      @extra = Bytes.empty
     end
 
     if flg.name?
