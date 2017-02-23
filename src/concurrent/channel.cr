@@ -50,6 +50,14 @@ abstract class Channel(T)
     @closed
   end
 
+  def empty?
+    synchronize { internal_empty? }
+  end
+
+  def full?
+    synchronize { internal_full? }
+  end
+
   # Perform the receive operation, assuming the access is synchronized (see Channel#synchronize)
   abstract def receive_immediate
 
@@ -190,7 +198,7 @@ abstract class Channel(T)
 
     def execute_or_wait(ticket)
       @channel.synchronize do
-        if !@channel.empty?
+        if !@channel.internal_empty?
           return true, @channel.receive_immediate
         else
           @channel.wait_for_receive ticket
@@ -212,7 +220,7 @@ abstract class Channel(T)
 
     def execute_or_wait(ticket)
       @channel.synchronize do
-        if !@channel.full?
+        if !@channel.internal_full?
           return true, @channel.send_immediate(@value)
         else
           @channel.wait_for_send ticket
@@ -255,7 +263,7 @@ class Channel::Buffered(T) < Channel(T)
   def send(value : T)
     @mutex.lock
 
-    while full?
+    while internal_full?
       raise_if_closed
       thread_log "#{Fiber.current.name!} waiting to send in channel #{self}"
       @senders << FiberTicket.for_current
@@ -292,7 +300,7 @@ class Channel::Buffered(T) < Channel(T)
   private def receive_impl
     @mutex.lock
 
-    while empty?
+    while internal_empty?
       if @closed
         @mutex.unlock
         yield
@@ -312,11 +320,13 @@ class Channel::Buffered(T) < Channel(T)
     end
   end
 
-  def full?
+  # holds lock
+  protected def internal_full?
     @queue.size >= @capacity
   end
 
-  def empty?
+  # holds lock
+  protected def internal_empty?
     @queue.empty?
   end
 end
@@ -423,11 +433,13 @@ class Channel::Unbuffered(T) < Channel(T)
     end
   end
 
-  def empty?
+  # holds lock
+  protected def internal_empty?
     !@has_value
   end
 
-  def full?
+  # holds lock
+  protected def internal_full?
     @has_value || @receivers.empty?
   end
 end
