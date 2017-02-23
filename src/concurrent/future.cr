@@ -13,7 +13,7 @@ class Concurrent::Future(R)
   @delay : Float64
 
   def initialize(run_immediately = true, delay = 0.0, &@block : -> R)
-    @state = State::Idle
+    @state = Atomic(State).new(State::Idle)
     @value = nil
     @error = nil
     @channel = Channel(Nil).new
@@ -37,42 +37,42 @@ class Concurrent::Future(R)
   end
 
   def canceled?
-    @state == State::Canceled
+    @state.get == State::Canceled
   end
 
   def completed?
-    @state == State::Completed
+    @state.get == State::Completed
   end
 
   def running?
-    @state == State::Running
+    @state.get == State::Running
   end
 
   def delayed?
-    @state == State::Delayed
+    @state.get == State::Delayed
   end
 
   def idle?
-    @state == State::Idle
+    @state.get == State::Idle
   end
 
   def cancel(msg = "Future canceled, you reached the [End of Time]")
-    return if @state >= State::Completed
-    @state = State::Canceled
+    return if @state.get >= State::Completed
     @cancel_msg = msg
     @channel.close
+    @state.set State::Canceled
     nil
   end
 
   private def compute
-    return if @state >= State::Delayed
+    return if @state.get >= State::Delayed
     run_compute
   end
 
   private def spawn_compute
-    return if @state >= State::Delayed
+    return if @state.get >= State::Delayed
 
-    @state = @delay > 0 ? State::Delayed : State::Running
+    @state.set @delay > 0 ? State::Delayed : State::Running
 
     spawn(name: "future #{object_id}") { run_compute }
   end
@@ -82,8 +82,8 @@ class Concurrent::Future(R)
 
     if delay > 0
       sleep delay
-      return if @state >= State::Canceled
-      @state = State::Running
+      return if @state.get >= State::Canceled
+      @state.set State::Running
     end
 
     begin
@@ -91,19 +91,19 @@ class Concurrent::Future(R)
     rescue ex
       @error = ex
     ensure
+      @state.set State::Completed
       @channel.close
-      @state = State::Completed
     end
   end
 
   private def wait
-    return if @state >= State::Completed
+    return if @state.get >= State::Completed
     compute
     @channel.receive?
   end
 
   private def value_or_raise
-    raise Concurrent::CanceledError.new(@cancel_msg) if @state == State::Canceled
+    raise Concurrent::CanceledError.new(@cancel_msg) if @state.get == State::Canceled
 
     value = @value
     if value.is_a?(R)

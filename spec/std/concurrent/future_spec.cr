@@ -1,11 +1,11 @@
-require "spec"
+require "../../spec_helper"
 
 describe Concurrent::Future do
   describe "delay" do
     it "computes a value" do
       chan = Channel(Int32).new(1)
 
-      d = delay(0.05) { chan.receive }
+      d = delay(0.01) { chan.receive }
       d.delayed?.should be_true
 
       chan.send 3
@@ -34,13 +34,18 @@ describe Concurrent::Future do
 
   describe "future" do
     it "computes a value" do
+      switch = FiberSwitch.new
       chan = Channel(Int32).new(1)
 
-      f = future { chan.receive }
+      f = future do
+        value = chan.receive
+        switch.defer_yield 1
+        value
+      end
       f.running?.should be_true
 
       chan.send 42
-      Fiber.yield
+      switch.wait 1
       f.completed?.should be_true
 
       f.get.should eq(42)
@@ -48,10 +53,17 @@ describe Concurrent::Future do
     end
 
     it "can't cancel a completed computation" do
-      f = future { 42 }
+      switch = FiberSwitch.new
+      f = future do
+        switch.wait 1
+        switch.defer_yield 0
+        42
+      end
       f.running?.should be_true
+      switch.yield 1
 
       f.get.should eq(42)
+      switch.wait 0
       f.completed?.should be_true
 
       f.cancel
@@ -59,10 +71,16 @@ describe Concurrent::Future do
     end
 
     it "raises" do
-      f = future { raise IndexError.new("test error") }
+      switch = FiberSwitch.new
+      f = future do
+        switch.wait 1
+        switch.defer_yield 0
+        raise IndexError.new("test error")
+      end
       f.running?.should be_true
+      switch.yield 1
 
-      Fiber.yield
+      switch.wait 0
       f.completed?.should be_true
 
       expect_raises(IndexError) { f.get }
