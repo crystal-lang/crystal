@@ -269,15 +269,16 @@ def assert_macro_internal(program, sub_node, macro_args, macro_body, expected)
   result.should eq(expected)
 end
 
-def parse(string, wants_doc = false)
+def parse(string, filename = nil, wants_doc = false)
   parser = Parser.new(string)
+  parser.filename = filename
   parser.wants_doc = wants_doc
   parser.parse
 end
 
-def codegen(code, inject_primitives = true, debug = Crystal::Debug::None)
+def codegen(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None)
   code = inject_primitives(code) if inject_primitives
-  node = parse code
+  node = parse(code, filename: filename)
   result = semantic node
   result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
 end
