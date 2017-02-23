@@ -20,7 +20,7 @@ class Mutex
       @thread_mutex.unlock
     else
       queue = @queue ||= Deque(Fiber).new
-      current_fiber.callback = ->{
+      current_fiber.append_callback ->{
         queue << current_fiber
         @thread_mutex.unlock
         nil
