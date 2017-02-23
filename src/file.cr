@@ -595,6 +595,15 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Attempts to set the access and modification times of the file named
+  # in the *filename* parameter to the value given in *time*.
+  #
+  # If the file does not exist, it will be created.
+  def self.touch(filename : String, time : Time = Time.now)
+    open(filename, "a") { } unless exists?(filename)
+    utime time, time, filename
+  end
+
   private def self.to_timeval(time : Time)
     t = uninitialized LibC::Timeval
     t.tv_sec = typeof(t.tv_sec).new(time.to_local.epoch)
