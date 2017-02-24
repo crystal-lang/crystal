@@ -497,4 +497,22 @@ describe "Semantic: class var" do
       ),
       "class variable '@@foo' of Foo is not nilable (it's Int32) so it must have an initializer"
   end
+
+  it "instance variables initializers are used in class variables initialized objects (#3988)" do
+    assert_type(%(
+      class Foo
+        @@foo = Foo.new
+
+        @never_nil = 1
+
+        def initialize
+          if false
+            @never_nil = 2
+          end
+        end
+      end
+
+      Foo.new.@never_nil
+      )) { int32 }
+  end
 end
