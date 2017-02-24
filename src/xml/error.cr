@@ -11,33 +11,8 @@ class XML::Error < Exception
     super(message)
   end
 
-  @[ThreadLocal]
-  @@errors = [] of self
-
-  @[ThreadLocal]
-  @@initialized = false
-
   def self.init_thread_error_handling
-    return if @@initialized
-
-    LibXML.xmlSetStructuredErrorFunc nil, ->(ctx, error) {
-      @@errors << XML::Error.new(error)
-    }
-
-    LibXML.xmlSetGenericErrorFunc nil, ->(ctx, fmt) {
-      # TODO: use va_start and va_end to
-      message = String.new(fmt).chomp
-      error = XML::Error.new(message, 0)
-
-      {% if flag?(:arm) || flag?(:aarch64) %}
-        # libxml2 is likely missing ARM unwind tables (.ARM.extab and .ARM.exidx
-        # sections) which prevent raising from a libxml2 context.
-        @@errors << error
-      {% else %}
-        raise error
-      {% end %}
-    }
-    @@initialized = true
+    Thread.current.xml_init_error_handling
   end
 
   # :nodoc:
@@ -48,12 +23,47 @@ class XML::Error < Exception
   end
 
   def self.errors
-    if @@errors.empty?
+    xml_errors = Thread.current.xml_errors
+    if xml_errors.empty?
       nil
     else
-      errors = @@errors.dup
-      @@errors.clear
+      errors = xml_errors.dup
+      xml_errors.clear
       errors
     end
+  end
+end
+
+class Thread
+  @__xml_errors = [] of XML::Error
+  @__xml_errors_initialized = false
+
+  def xml_errors
+    @__xml_errors
+  end
+
+  def xml_init_error_handling
+    return if @__xml_errors_initialized
+
+    LibXML.xmlSetStructuredErrorFunc self.as(Void*), ->(ctx, error) {
+      thread = ctx.as(Thread)
+      thread.xml_errors << XML::Error.new(error)
+    }
+
+    LibXML.xmlSetGenericErrorFunc self.as(Void*), ->(ctx, fmt) {
+      thread = ctx.as(Thread)
+      # TODO: use va_start and va_end to
+      message = String.new(fmt).chomp
+      error = XML::Error.new(message, 0)
+
+      {% if flag?(:arm) || flag?(:aarch64) %}
+        # libxml2 is likely missing ARM unwind tables (.ARM.extab and .ARM.exidx
+        # sections) which prevent raising from a libxml2 context.
+        thread.xml_errors << error
+      {% else %}
+        raise error
+      {% end %}
+    }
+    @__xml_errors_initialized = true
   end
 end
