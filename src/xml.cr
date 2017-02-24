@@ -63,6 +63,7 @@ module XML
   #
   # See `ParserOptions.default` for default options.
   def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Node
+    XML::Error.init_thread_error_handling
     raise XML::Error.new("Document is empty", 0) if string.empty?
     from_ptr LibXML.xmlReadMemory(string, string.bytesize, nil, nil, options)
   end
@@ -71,6 +72,7 @@ module XML
   #
   # See `ParserOptions.default` for default options.
   def self.parse(io : IO, options : ParserOptions = ParserOptions.default) : Node
+    XML::Error.init_thread_error_handling
     from_ptr LibXML.xmlReadIO(
       ->(ctx, buffer, len) {
         LibC::Int.new(Box(IO).unbox(ctx).read Slice.new(buffer, len))
@@ -87,6 +89,7 @@ module XML
   #
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
+    XML::Error.init_thread_error_handling
     raise XML::Error.new("Document is empty", 0) if string.empty?
     from_ptr LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options)
   end
@@ -95,6 +98,7 @@ module XML
   #
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default) : Node
+    XML::Error.init_thread_error_handling
     from_ptr LibXML.htmlReadIO(
       ->(ctx, buffer, len) {
         LibC::Int.new(Box(IO).unbox(ctx).read Slice.new(buffer, len))

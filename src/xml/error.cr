@@ -11,27 +11,34 @@ class XML::Error < Exception
     super(message)
   end
 
-  # TODO: this logic isn't thread/fiber safe, but error checking is less needed than
-  # the ability to parse HTML5 and malformed documents. In any case, fix this.
+  @[ThreadLocal]
   @@errors = [] of self
 
-  LibXML.xmlSetStructuredErrorFunc nil, ->(ctx, error) {
-    @@errors << XML::Error.new(error)
-  }
+  @[ThreadLocal]
+  @@initialized = false
 
-  LibXML.xmlSetGenericErrorFunc nil, ->(ctx, fmt) {
-    # TODO: use va_start and va_end to
-    message = String.new(fmt).chomp
-    error = XML::Error.new(message, 0)
+  def self.init_thread_error_handling
+    return if @@initialized
 
-    {% if flag?(:arm) || flag?(:aarch64) %}
-      # libxml2 is likely missing ARM unwind tables (.ARM.extab and .ARM.exidx
-      # sections) which prevent raising from a libxml2 context.
-      @@errors << error
-    {% else %}
-      raise error
-    {% end %}
-  }
+    LibXML.xmlSetStructuredErrorFunc nil, ->(ctx, error) {
+      @@errors << XML::Error.new(error)
+    }
+
+    LibXML.xmlSetGenericErrorFunc nil, ->(ctx, fmt) {
+      # TODO: use va_start and va_end to
+      message = String.new(fmt).chomp
+      error = XML::Error.new(message, 0)
+
+      {% if flag?(:arm) || flag?(:aarch64) %}
+        # libxml2 is likely missing ARM unwind tables (.ARM.extab and .ARM.exidx
+        # sections) which prevent raising from a libxml2 context.
+        @@errors << error
+      {% else %}
+        raise error
+      {% end %}
+    }
+    @@initialized = true
+  end
 
   # :nodoc:
   def self.set_errors(node)

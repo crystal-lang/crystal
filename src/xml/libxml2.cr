@@ -124,6 +124,8 @@ lib LibXML
   fun xmlNodeSetContent(node : Node*, content : UInt8*)
   fun xmlNodeSetName(node : Node*, name : UInt8*)
 
+  fun xmlInitParser : Void
+
   fun xmlGcMemSetup(free_func : Void* ->,
                     malloc_func : LibC::SizeT -> Void*,
                     malloc_atomic_func : LibC::SizeT -> Void*,
@@ -305,3 +307,4 @@ LibXML.xmlGcMemSetup(
     copy
   }
 )
+LibXML.xmlInitParser
