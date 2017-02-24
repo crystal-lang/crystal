@@ -158,11 +158,13 @@ struct Colorize::Object(T)
   COLORS = %w(black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
   MODES  = %w(bold bright dim underline blink reverse hidden)
 
+  class_property? enabled : Bool = STDOUT.tty? && STDERR.tty?
+
   def initialize(@object : T)
     @fore = FORE_DEFAULT
     @back = BACK_DEFAULT
     @mode = 0
-    @on = true
+    @enabled = @@enabled
   end
 
   {% for name in COLORS %}
@@ -221,8 +223,8 @@ struct Colorize::Object(T)
     back color
   end
 
-  def toggle(on)
-    @on = !!on
+  def toggle(flag)
+    @enabled = !!flag
     self
   end
 
@@ -263,7 +265,7 @@ struct Colorize::Object(T)
   end
 
   protected def append_start(io, reset = false)
-    return false unless @on
+    return false unless @enabled
 
     fore_is_default = @fore == FORE_DEFAULT
     back_is_default = @back == BACK_DEFAULT
