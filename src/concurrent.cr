@@ -58,7 +58,7 @@ end
 # ```
 def spawn(*, name : String? = nil, &block)
   fiber = Fiber.new(name, &block)
-  Scheduler.current.enqueue fiber
+  Scheduler.enqueue fiber
   fiber
 end
 

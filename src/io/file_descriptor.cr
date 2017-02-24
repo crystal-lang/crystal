@@ -101,7 +101,7 @@ class IO::FileDescriptor
     end
     if reader
       # thread_log "Resuming #{reader.name!} for read on #{self}"
-      Scheduler.current.enqueue reader
+      EventLoop.enqueue reader
       # reader.resume
     end
   end
@@ -114,7 +114,7 @@ class IO::FileDescriptor
     end
     if writer
       # thread_log "Resuming #{writer.name!} for write on #{self}"
-      Scheduler.current.enqueue writer
+      EventLoop.enqueue writer
       # writer.resume
     end
   end
@@ -395,12 +395,12 @@ class IO::FileDescriptor
 
     @mutex.synchronize do
       if readers = @readers
-        Scheduler.current.enqueue readers
+        Scheduler.enqueue readers
         readers.clear
       end
 
       if writers = @writers
-        Scheduler.current.enqueue writers
+        Scheduler.enqueue writers
         writers.clear
       end
     end

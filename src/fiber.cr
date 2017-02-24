@@ -441,7 +441,7 @@ class Fiber
 
   def yield
     @callback = ->{
-      Scheduler.current.enqueue self
+      Scheduler.enqueue self
       nil
     }
     Scheduler.current.reschedule

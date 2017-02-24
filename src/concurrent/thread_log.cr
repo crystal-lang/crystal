@@ -9,8 +9,8 @@ module ThreadLog
 
   def self.tlog(msg, *args)
     begin
-      sched = Thread.current.scheduler
-      msg = "#{sched} - #{msg}"
+      sched = Scheduler.current
+      msg = "#{sched.object_id} - #{msg}"
       thread_color = ThreadLog.color_for(sched)
       LibC.printf "#{msg.colorize(thread_color)}\n", *args
     rescue

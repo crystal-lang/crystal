@@ -48,7 +48,7 @@ class Mutex
     if fiber = @queue.try &.shift?
       @mutex_fiber = fiber
       @thread_mutex.unlock
-      Scheduler.current.enqueue fiber
+      Scheduler.enqueue fiber
     else
       @mutex_fiber = nil
       @thread_mutex.unlock

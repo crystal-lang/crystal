@@ -40,7 +40,7 @@ abstract class Channel(T)
           acc
         end
       end
-      Scheduler.current.enqueue fibers
+      Scheduler.enqueue fibers
       @receivers.clear
       nil
     end
@@ -253,7 +253,7 @@ class Channel::Buffered(T) < Channel(T)
           acc
         end
       end
-      Scheduler.current.enqueue fibers
+      Scheduler.enqueue fibers
       @receivers.clear
     end
 
@@ -289,7 +289,7 @@ class Channel::Buffered(T) < Channel(T)
             acc
           end
         end
-        Scheduler.current.enqueue fibers
+        Scheduler.enqueue fibers
         @senders.clear
       end
     end
@@ -390,7 +390,7 @@ class Channel::Unbuffered(T) < Channel(T)
 
     @value.tap do
       @has_value = false
-      Scheduler.current.enqueue @current_sender.not_nil!
+      Scheduler.enqueue @current_sender.not_nil!
     end
   end
 
@@ -428,7 +428,7 @@ class Channel::Unbuffered(T) < Channel(T)
 
     @value.tap do
       @has_value = false
-      Scheduler.current.enqueue @current_sender.not_nil!
+      Scheduler.enqueue @current_sender.not_nil!
       @mutex.unlock
     end
   end

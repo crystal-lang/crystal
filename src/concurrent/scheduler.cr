@@ -1,5 +1,6 @@
 require "event"
 require "thread"
+require "./runnable_queue"
 
 class Thread
   property! scheduler : Scheduler
@@ -9,11 +10,10 @@ Scheduler.start_for_main_thread
 
 # :nodoc:
 class Scheduler
-  @runnables : Deque(Fiber)
+  @@events_queue = RunnableQueue.new("event-loop-queue")
+  @@queues : Array(RunnableQueue) = [@@events_queue]
+  @@queues_mutex = Thread::Mutex.new
 
-  @@all = [] of Scheduler
-  @@all_mutex = Thread::Mutex.new
-  @thread : UInt64
   @reschedule_fiber : Fiber?
 
   @@wait_mutex = Thread::Mutex.new
@@ -25,40 +25,54 @@ class Scheduler
 
   @@stamp = Atomic(Int32).new(0)
 
+  @thread : UInt64
+
   def self.print_state
-    @@all_mutex.synchronize do
-      thread_log "schedulers: %d, sleeping: %d, spinning: %d, wake: %d\n", @@all.size, @@sleeping.get, @@spinning.get, @@wake.get
+    @@queues_mutex.synchronize do
+      thread_log "schedulers: %d, sleeping: %d, spinning: %d, wake: %d\n", @@queues.size, @@sleeping.get, @@spinning.get, @@wake.get
     end
   end
 
   {% if flag?(:concurrency_debug) %}
   def self.dump_schedulers
-    @@all_mutex.synchronize do
-      @@all.each do |scheduler|
-        LibC.printf "Scheduler %p\n", scheduler.object_id
-        scheduler.dump_scheduler
-      end
-    end
-  end
-
-  protected def dump_scheduler
-    @runnables_lock.synchronize do
-      @runnables.each do |fiber|
-        LibC.printf " - fiber %p %s\n", fiber.object_id, fiber.name!
+    @@queues_mutex.synchronize do
+      @@queues.each do |queue|
+        # LibC.printf "Scheduler %p\n", scheduler.object_id
+        queue.dump_scheduler
       end
     end
   end
   {% end %}
 
   def initialize
-    @runnables = Deque(Fiber).new
-    @runnables_lock = SpinLock.new
+    @q = RunnableQueue.new(name: "#{object_id}-queue")
     @thread = LibC.pthread_self.address
     @victim = 0
 
-    @@all_mutex.synchronize do
-      @@all << self
+    @@queues_mutex.synchronize do
+      @@queues << @q
     end
+  end
+
+  protected def queue
+    @q
+  end
+
+  def self.enqueue(fiber : Fiber)
+    thread_log "Enqueue '#{fiber.name}'"
+    current.queue.enqueue(fiber)
+    Scheduler.ensure_workers_available
+  end
+
+  def self.enqueue(fibers : Enumerable(Fiber))
+    thread_log "Enqueue #{fibers.map(&.name!).join(", ")}"
+    current.queue.enqueue(fibers)
+    Scheduler.ensure_workers_available
+  end
+
+  def self.enqueue_event(fiber : Fiber)
+    @@events_queue.enqueue(fiber)
+    Scheduler.ensure_workers_available
   end
 
   def self.current
@@ -96,14 +110,6 @@ class Scheduler
     scheduler.reschedule_loop
   end
 
-  def self.start_for_event_loop
-    # The event loop's thread has a scheduler that allows it to enqueue ready events
-    # It never executes any of these runnables, but instead leaves them there to be
-    # stolen by other schedulers.
-    scheduler = Scheduler.new
-    Thread.current.scheduler = scheduler
-  end
-
   protected def reschedule_loop
     loop do
       reschedule(true)
@@ -117,7 +123,7 @@ class Scheduler
   protected def wait
     @@wait_mutex.synchronize do
       # @@sleeping.add(1)
-      thread_log "Scheduler #{self} waiting (runnables: %d)", @runnables.size
+      thread_log "Scheduler #{self} waiting (runnables: %d)", @q.size
       # LibC.printf "%ld Going to sleep\n", LibC.pthread_self
 
       if @@wake.get != 0
@@ -133,7 +139,7 @@ class Scheduler
 
   def reschedule(is_reschedule_fiber = false)
     while true
-      if runnable = @runnables_lock.synchronize { @runnables.shift? }
+      if runnable = @q.shift?
         thread_log "Reschedule: Found in queue '%s'", runnable.name!
         runnable.resume
         break
@@ -160,12 +166,12 @@ class Scheduler
     could_steal = false
     while !could_steal
       begin_stamp = @@stamp.get
-      scheduler_count = @@all.size
+      scheduler_count = @@queues.size
       scheduler_count.times do
-        sched = choose_other_sched
-        if (stolen = sched.steal) && stolen.size > 0
-          thread_log "Stole #{stolen.size} runnables (#{stolen.map(&.name!).join(", ")}) from #{sched}"
-          enqueue_stolen stolen
+        queue = choose_other_queue
+        if (stolen = queue.steal) && stolen.size > 0
+          thread_log "Stole #{stolen.size} runnables (#{stolen.map(&.name!).join(", ")}) from #{queue.name}"
+          @q.enqueue_stolen stolen
           could_steal = true
           break
         end
@@ -181,32 +187,7 @@ class Scheduler
     could_steal
   end
 
-  protected def steal
-    @runnables_lock.synchronize do
-      steal_size = @runnables.size == 1 ? 1 : @runnables.size / 2
-      steal_size.times.map do
-        @runnables.pop
-      end.to_a
-    end
-  end
-
-  def enqueue(fiber : Fiber)
-    thread_log "Enqueue '#{fiber.name}'"
-    @runnables_lock.synchronize { @runnables << fiber }
-    ensure_workers_available
-  end
-
-  def enqueue(fibers : Enumerable(Fiber))
-    thread_log "Enqueue #{fibers.map(&.name!).join(", ")}"
-    @runnables_lock.synchronize { @runnables.concat fibers }
-    ensure_workers_available
-  end
-
-  protected def enqueue_stolen(fibers : Enumerable(Fiber))
-    @runnables_lock.synchronize { @runnables.concat fibers }
-  end
-
-  private def ensure_workers_available
+  def self.ensure_workers_available
     @@stamp.add(1)
 
     if @@spinning.get > 0
@@ -224,8 +205,8 @@ class Scheduler
     {% if !flag?(:single_thread) %}
       # FIXME: race condition: this may result in more than 8 worker threads
       # FIXME: make the number of threads CPU/arch dependent (configurable?)
-      # FIXME: this access to @@all is not synchronized
-      if @@all.size < 8
+      # FIXME: this access to @@queues is not synchronized
+      if @@queues.size < 8 + 1 # worker thread queues + event loop's dedicated queue
         @@spinning.add(1)
         Thread.new do
           Scheduler.start_for_background_thread
@@ -236,12 +217,12 @@ class Scheduler
     # ...
   end
 
-  private def choose_other_sched
-    @@all_mutex.synchronize do
+  private def choose_other_queue
+    @@queues_mutex.synchronize do
       loop do
         @victim += 1
-        sched = @@all[@victim.remainder(@@all.size)]
-        break sched unless sched == self && @@all.size > 1
+        queue = @@queues[@victim.remainder(@@queues.size)]
+        break queue unless queue == @q && @@queues.size > 1
       end
     end
   end

@@ -7,8 +7,6 @@ class EventLoop
   def self.start
     Thread.new do
       Fiber.current.name = "event-loop"
-      Scheduler.start_for_event_loop
-      thread_log "Starting event loop"
 
       inf_event = @@eb.new_event(-1, LibEvent2::EventFlags::Persist, nil) { }
       inf_event.add(86400)
@@ -16,6 +14,10 @@ class EventLoop
       @@eb.run_loop
       LibC.printf "FATAL: Event loop has exited"
     end
+  end
+
+  def self.enqueue(fiber : Fiber)
+    Scheduler.enqueue_event(fiber)
   end
 
   def self.after_fork
@@ -28,7 +30,7 @@ class EventLoop
 
   def self.create_resume_event(fiber)
     @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      Scheduler.current.enqueue data.as(Fiber)
+      enqueue data.as(Fiber)
     end
   end
 
