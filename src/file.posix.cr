@@ -5,10 +5,10 @@ require "c/sys/stat"
 require "c/unistd"
 
 class File < IO::FileDescriptor
-  # The file/directory separator character. '/' in unix, '\\' in windows.
+  # The file/directory separator character. `'/'` in Unix, `'\\'` in Windows.
   SEPARATOR = '/'
 
-  # The file/directory separator string. "/" in unix, "\\" in windows.
+  # The file/directory separator string. `"/"` in Unix, `"\\"` in Windows.
   SEPARATOR_STRING = "/"
 
   # :nodoc:
@@ -29,7 +29,7 @@ class File < IO::FileDescriptor
 
   protected def open_flag(mode)
     if mode.size == 0
-      raise "invalid access mode #{mode}"
+      raise "Invalid access mode #{mode}"
     end
 
     m = 0
@@ -44,7 +44,7 @@ class File < IO::FileDescriptor
       m = LibC::O_WRONLY
       o = LibC::O_CREAT | LibC::O_APPEND
     else
-      raise "invalid access mode #{mode}"
+      raise "Invalid access mode #{mode}"
     end
 
     case mode.size
@@ -57,10 +57,10 @@ class File < IO::FileDescriptor
       when 'b'
         # Nothing
       else
-        raise "invalid access mode #{mode}"
+        raise "Invalid access mode #{mode}"
       end
     else
-      raise "invalid access mode #{mode}"
+      raise "Invalid access mode #{mode}"
     end
 
     oflag = m | o
@@ -257,7 +257,7 @@ class File < IO::FileDescriptor
   # File.chown("/foo/bar", gid: 100)
   # ```
   #
-  # Unless *follow_symlinks* is set to true, then the owner symlink itself will
+  # Unless *follow_symlinks* is set to `true`, then the owner symlink itself will
   # be changed, otherwise the owner of the symlink destination file will be
   # changed. For example, assuming symlinks as `foo -> bar -> baz`:
   #
@@ -576,6 +576,24 @@ class File < IO::FileDescriptor
     code
   end
 
+  # Sets the access and modification times of *filename*.
+  def self.utime(atime : Time, mtime : Time, filename : String) : Nil
+    timevals = uninitialized LibC::Timeval[2]
+    timevals[0] = to_timeval(atime)
+    timevals[1] = to_timeval(mtime)
+    ret = LibC.utimes(filename, timevals)
+    if ret != 0
+      raise Errno.new("Error setting time to file '#{filename}'")
+    end
+  end
+
+  private def self.to_timeval(time : Time)
+    t = uninitialized LibC::Timeval
+    t.tv_sec = typeof(t.tv_sec).new(time.to_local.epoch)
+    t.tv_usec = typeof(t.tv_usec).new(0)
+    t
+  end
+
   # Return the size in bytes of the currently opened file.
   def size
     stat.size
@@ -590,6 +608,27 @@ class File < IO::FileDescriptor
       raise Errno.new("Error truncating file '#{path}'")
     end
     code
+  end
+
+  # Yields an `IO` to read a section inside this file.
+  # Mutliple sections can be read concurrently.
+  def read_at(offset, bytesize, &block)
+    self_bytesize = self.size
+
+    unless 0 <= offset <= self_bytesize
+      raise ArgumentError.new("Offset out of bounds")
+    end
+
+    if bytesize < 0
+      raise ArgumentError.new("Negative bytesize")
+    end
+
+    unless 0 <= offset + bytesize <= self_bytesize
+      raise ArgumentError.new("Bytesize out of bounds")
+    end
+
+    io = PReader.new(fd, offset, bytesize)
+    yield io ensure io.close
   end
 
   def inspect(io)

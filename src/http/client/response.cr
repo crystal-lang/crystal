@@ -16,7 +16,7 @@ class HTTP::Client::Response
       @body = "" unless @body || @body_io
     else
       if (@body || @body_io) && (headers["Content-Length"]? != "0")
-        raise ArgumentError.new("status #{status_code} should not have a body")
+        raise ArgumentError.new("Status #{status_code} should not have a body")
       end
     end
   end
@@ -29,7 +29,7 @@ class HTTP::Client::Response
     @body
   end
 
-  # Returns true if the response status code is between 200 and 299
+  # Returns `true` if the response status code is between 200 and 299.
   def success?
     (200..299).includes?(status_code)
   end
@@ -85,11 +85,11 @@ class HTTP::Client::Response
 
   def self.from_io(io, ignore_body = false, decompress = true)
     from_io?(io, ignore_body, decompress) ||
-      raise("unexpected end of http request")
+      raise("Unexpected end of http request")
   end
 
-  # Parses an HTTP::Client::Response from the given IO.
-  # Might return `nil` if there's no data in the IO,
+  # Parses an `HTTP::Client::Response` from the given `IO`.
+  # Might return `nil` if there's no data in the `IO`,
   # which probably means that the connection was closed.
   def self.from_io?(io, ignore_body = false, decompress = true)
     from_io?(io, ignore_body: ignore_body, decompress: decompress) do |response|
@@ -107,13 +107,13 @@ class HTTP::Client::Response
       if response
         yield response
       else
-        raise("unexpected end of http request")
+        raise("Unexpected end of http request")
       end
     end
   end
 
-  # Parses an HTTP::Client::Response from the given IO and yields
-  # it to the block. Might yield `nil` if there's no data in the IO,
+  # Parses an `HTTP::Client::Response` from the given `IO` and yields
+  # it to the block. Might yield `nil` if there's no data in the `IO`,
   # which probably means that the connection was closed.
   def self.from_io?(io, ignore_body = false, decompress = true, &block)
     line = io.gets

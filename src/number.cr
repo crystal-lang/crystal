@@ -44,8 +44,8 @@ struct Number
   # ints = Int64.slice(1, 2, 3)
   # ints.class # => Slice(Int64)
   # ```
-  macro slice(*nums)
-    %slice = Slice({{@type}}).new({{nums.size}})
+  macro slice(*nums, read_only = false)
+    %slice = Slice({{@type}}).new({{nums.size}}, read_only: {{read_only}})
     {% for num, i in nums %}
       %slice.to_unsafe[{{i}}] = {{@type}}.new({{num}})
     {% end %}
@@ -136,10 +136,10 @@ struct Number
     self * self
   end
 
-  # Returns the sign of this number as an Int32.
-  # * -1 if this number is negative
-  # * 0 if this number is zero
-  # * 1 if this number is positive
+  # Returns the sign of this number as an `Int32`.
+  # * `-1` if this number is negative
+  # * `0` if this number is zero
+  # * `1` if this number is positive
   #
   # ```
   # 123.sign # => 1
@@ -216,17 +216,19 @@ struct Number
   end
 
   # Clamps a value within *range*.
+  #
   # ```
   # 5.clamp(10..100)   # => 10
   # 50.clamp(10..100)  # => 50
   # 500.clamp(10..100) # => 100
   # ```
   def clamp(range : Range)
-    raise ArgumentError.new("can't clamp an exclusive range") if range.exclusive?
+    raise ArgumentError.new("Can't clamp an exclusive range") if range.exclusive?
     clamp range.begin, range.end
   end
 
   # Clamps a value between *min* and *max*.
+  #
   # ```
   # 5.clamp(10, 100)   # => 10
   # 50.clamp(10, 100)  # => 50

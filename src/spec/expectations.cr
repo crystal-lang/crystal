@@ -15,11 +15,11 @@ module Spec
         expected += " : #{@expected_value.class}"
         got += " : #{actual_value.class}"
       end
-      "expected: #{expected}\n     got: #{got}"
+      "Expected: #{expected}\n     got: #{got}"
     end
 
     def negative_failure_message(actual_value)
-      "expected: actual_value != #{@expected_value.inspect}\n     got: #{actual_value.inspect}"
+      "Expected: actual_value != #{@expected_value.inspect}\n     got: #{actual_value.inspect}"
     end
   end
 
@@ -33,11 +33,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "expected: #{@expected_value.inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.inspect} (object_id: #{actual_value.object_id})"
+      "Expected: #{@expected_value.inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.inspect} (object_id: #{actual_value.object_id})"
     end
 
     def negative_failure_message(actual_value)
-      "expected: value.same? #{@expected_value.inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.inspect} (object_id: #{actual_value.object_id})"
+      "Expected: value.same? #{@expected_value.inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.inspect} (object_id: #{actual_value.object_id})"
     end
   end
 
@@ -48,11 +48,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "expected: #{actual_value.inspect} to be truthy"
+      "Expected: #{actual_value.inspect} to be truthy"
     end
 
     def negative_failure_message(actual_value)
-      "expected: #{actual_value.inspect} not to be truthy"
+      "Expected: #{actual_value.inspect} not to be truthy"
     end
   end
 
@@ -63,11 +63,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "expected: #{actual_value.inspect} to be falsey"
+      "Expected: #{actual_value.inspect} to be falsey"
     end
 
     def negative_failure_message(actual_value)
-      "expected: #{actual_value.inspect} not to be falsey"
+      "Expected: #{actual_value.inspect} not to be falsey"
     end
   end
 
@@ -81,11 +81,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "expected #{actual_value.inspect} to be within #{@delta} of #{@expected_value}"
+      "Expected #{actual_value.inspect} to be within #{@delta} of #{@expected_value}"
     end
 
     def negative_failure_message(actual_value)
-      "expected #{actual_value.inspect} not to be within #{@delta} of #{@expected_value}"
+      "Expected #{actual_value.inspect} not to be within #{@delta} of #{@expected_value}"
     end
   end
 
@@ -96,11 +96,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "expected #{actual_value.inspect} (#{actual_value.class}) to be a #{T}"
+      "Expected #{actual_value.inspect} (#{actual_value.class}) to be a #{T}"
     end
 
     def negative_failure_message(actual_value)
-      "expected #{actual_value.inspect} (#{actual_value.class}) not to be a #{T}"
+      "Expected #{actual_value.inspect} (#{actual_value.class}) not to be a #{T}"
     end
   end
 
@@ -141,11 +141,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "expected #{actual_value.inspect} to be #{@op} #{@expected_value}"
+      "Expected #{actual_value.inspect} to be #{@op} #{@expected_value}"
     end
 
     def negative_failure_message(actual_value)
-      "expected #{actual_value.inspect} not to be #{@op} #{@expected_value}"
+      "Expected #{actual_value.inspect} not to be #{@op} #{@expected_value}"
     end
   end
 
@@ -159,11 +159,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "expected: #{actual_value.inspect}\nto match: #{@expected_value.inspect}"
+      "Expected: #{actual_value.inspect}\nto match: #{@expected_value.inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "expected: value #{actual_value.inspect}\n to not match: #{@expected_value.inspect}"
+      "Expected: value #{actual_value.inspect}\n to not match: #{@expected_value.inspect}"
     end
   end
 
@@ -177,11 +177,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "expected:   #{actual_value.inspect}\nto include: #{@expected_value.inspect}"
+      "Expected:   #{actual_value.inspect}\nto include: #{@expected_value.inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "expected: value #{actual_value.inspect}\nto not include: #{@expected_value.inspect}"
+      "Expected: value #{actual_value.inspect}\nto not include: #{@expected_value.inspect}"
     end
   end
 
@@ -226,8 +226,7 @@ module Spec
       Spec::MatchExpectation.new(value)
     end
 
-    # Passes if actual includes expected. Works on collections and String.
-    # @param expected - item expected to be contained in actual
+    # Passes if actual includes *expected*. Works on collections and `String`.
     def contain(expected)
       Spec::ContainExpectation.new(expected)
     end
@@ -253,7 +252,7 @@ module Spec
       begin
         {{yield}}
         %failed = true
-        fail "expected {{klass.id}} but nothing was raised", {{file}}, {{line}}
+        fail "Expected {{klass.id}} but nothing was raised", {{file}}, {{line}}
       rescue %ex : {{klass.id}}
         # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
         if %ex.class == Spec::AssertionFailed && {{klass}} != Spec::AssertionFailed
@@ -266,21 +265,23 @@ module Spec
         when Regex
           unless (%ex_to_s =~ %msg)
             backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-            fail "expected {{klass.id}} with message matching #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
+            fail "Expected {{klass.id}} with message matching #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
           end
         when String
           unless %ex_to_s.includes?(%msg)
             backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-            fail "expected {{klass.id}} with #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
+            fail "Expected {{klass.id}} with #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
           end
         end
+
+        %ex
       rescue %ex
         if %failed
           raise %ex
         else
           %ex_to_s = %ex.to_s
           backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-          fail "expected {{klass.id}}, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
+          fail "Expected {{klass.id}}, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
         end
       end
     end

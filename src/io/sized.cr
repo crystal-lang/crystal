@@ -1,5 +1,5 @@
 module IO
-  # An IO that wraps another IO, setting a limit for the number of bytes that can be read.
+  # An `IO` that wraps another `IO`, setting a limit for the number of bytes that can be read.
   #
   # ```
   # io = IO::Memory.new "abcde"
@@ -12,7 +12,7 @@ module IO
   class Sized
     include IO
 
-    # If `sync_close` is true, closing this IO will close the underlying IO.
+    # If `#sync_close?` is `true`, closing this `IO` will close the underlying `IO`.
     property? sync_close : Bool
 
     # The number of remaining bytes to be read.
@@ -21,9 +21,9 @@ module IO
 
     # Creates a new `IO::Sized` which wraps *io*, and can read a maximum of
     # *read_size* bytes. If *sync_close* is set, calling `#close` calls
-    # `#close` on the underlying IO.
+    # `#close` on the underlying `IO`.
     def initialize(@io : IO, read_size : Int, @sync_close = false)
-      raise ArgumentError.new "negative read_size" if read_size < 0
+      raise ArgumentError.new "Negative read_size" if read_size < 0
       @closed = false
       @read_remaining = read_size.to_u64
     end
@@ -49,20 +49,28 @@ module IO
       end
     end
 
-    def gets(delimiter : Char, limit : Int, chomp = false) : String?
+    def peek
       check_open
 
-      return super if @encoding
-      return nil if @read_remaining == 0
+      peek = @io.peek
+      return nil unless peek
 
-      # We can't pass chomp here, because it will remove part of the delimiter
-      # and then we won't know how much we consumed from @io, so we chomp later
-      string = @io.gets(delimiter, Math.min(limit, @read_remaining))
-      if string
-        @read_remaining -= string.bytesize
-        string = string.chomp(delimiter) if chomp
+      if @read_remaining < peek.size
+        peek = peek[0, @read_remaining]
       end
-      string
+
+      peek.empty? ? nil : peek
+    end
+
+    def skip(bytes_count) : Nil
+      check_open
+
+      if bytes_count <= @read_remaining
+        @io.skip(bytes_count)
+        @read_remaining -= bytes_count
+      else
+        raise IO::EOFError.new
+      end
     end
 
     def write(slice : Bytes)

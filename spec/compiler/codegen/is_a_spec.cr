@@ -697,4 +697,13 @@ describe "Codegen: is_a?" do
       a.is_a?(Type)
       )).to_b.should be_false
   end
+
+  it "codegens untyped var (#4009)" do
+    codegen(%(
+      require "prelude"
+
+      i = 1
+      1 || i.is_a?(Int32) ? "" : i
+      ))
+  end
 end

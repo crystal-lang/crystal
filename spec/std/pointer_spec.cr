@@ -38,7 +38,7 @@ describe "Pointer" do
 
     it "raises on negative count" do
       p1 = Pointer.malloc(4, 0)
-      expect_raises(ArgumentError, "negative count") do
+      expect_raises(ArgumentError, "Negative count") do
         p1.copy_from(p1, -1)
       end
     end
@@ -64,7 +64,7 @@ describe "Pointer" do
 
     it "raises on negative count" do
       p1 = Pointer.malloc(4, 0)
-      expect_raises(ArgumentError, "negative count") do
+      expect_raises(ArgumentError, "Negative count") do
         p1.copy_to(p1, -1)
       end
     end
@@ -99,7 +99,7 @@ describe "Pointer" do
 
     it "raises on negative count" do
       p1 = Pointer.malloc(4, 0)
-      expect_raises(ArgumentError, "negative count") do
+      expect_raises(ArgumentError, "Negative count") do
         p1.move_from(p1, -1)
       end
     end
@@ -134,7 +134,7 @@ describe "Pointer" do
 
     it "raises on negative count" do
       p1 = Pointer.malloc(4, 0)
-      expect_raises(ArgumentError, "negative count") do
+      expect_raises(ArgumentError, "Negative count") do
         p1.move_to(p1, -1)
       end
     end
@@ -149,7 +149,7 @@ describe "Pointer" do
   end
 
   describe "memcmp" do
-    assert do
+    it do
       p1 = Pointer.malloc(4) { |i| i }
       p2 = Pointer.malloc(4) { |i| i }
       p3 = Pointer.malloc(4) { |i| i + 1 }

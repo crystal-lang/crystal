@@ -2,6 +2,9 @@ require "./config"
 
 module Crystal
   struct CrystalPath
+    class Error < Exception
+    end
+
     def self.default_path
       ENV["CRYSTAL_PATH"]? || Crystal::Config.path
     end
@@ -40,7 +43,7 @@ module Crystal
       end
     end
 
-    def find(filename, relative_to = nil)
+    def find(filename, relative_to = nil) : Array(String)?
       relative_to = File.dirname(relative_to) if relative_to.is_a?(String)
       if filename.starts_with? '.'
         result = find_in_path_relative_to_dir(filename, relative_to)
@@ -157,9 +160,9 @@ module Crystal
       end
 
       if relative_to
-        raise "can't find file '#{filename}' relative to '#{relative_to}'"
+        raise Error.new("can't find file '#{filename}' relative to '#{relative_to}'")
       else
-        raise "can't find file '#{filename}'"
+        raise Error.new("can't find file '#{filename}'")
       end
     end
   end

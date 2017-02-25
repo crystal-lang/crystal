@@ -128,4 +128,14 @@ describe "Semantic: var" do
       ),
       "variable 'a' already declared"
   end
+
+  it "errors if declaring generic type without type vars (with local var)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      x : Foo
+      ),
+      "can't declare variable of generic non-instantiated type Foo"
+  end
 end

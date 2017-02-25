@@ -9,7 +9,7 @@ class Crystal::CodeGenVisitor
             when "argv"
               @argv
             else
-              raise "Bug: unhandled primitive in codegen visit: #{node.name}"
+              raise "BUG: unhandled primitive in codegen visit: #{node.name}"
             end
   end
 
@@ -70,7 +70,7 @@ class Crystal::CodeGenVisitor
             when "store_atomic"
               codegen_primitive_store_atomic call, node, target_def, call_args
             else
-              raise "Bug: unhandled primitive in codegen: #{node.name}"
+              raise "BUG: unhandled primitive in codegen: #{node.name}"
             end
   end
 
@@ -84,7 +84,7 @@ class Crystal::CodeGenVisitor
     case op
     when "==" then builder.icmp LLVM::IntPredicate::EQ, p1, p2
     when "!=" then builder.icmp LLVM::IntPredicate::NE, p1, p2
-    else           raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+    else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
@@ -96,7 +96,7 @@ class Crystal::CodeGenVisitor
     when "<=" then return builder.icmp LLVM::IntPredicate::ULE, p1, p2
     when ">"  then return builder.icmp LLVM::IntPredicate::UGT, p1, p2
     when ">=" then return builder.icmp LLVM::IntPredicate::UGE, p1, p2
-    else           raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+    else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
@@ -104,7 +104,7 @@ class Crystal::CodeGenVisitor
     case op
     when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
     when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-    else           raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+    else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
@@ -133,7 +133,7 @@ class Crystal::CodeGenVisitor
             when "^"               then builder.xor(p1, p2)
             when "=="              then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
             when "!="              then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-            else                        raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+            else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
             end
 
     if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
@@ -334,7 +334,7 @@ class Crystal::CodeGenVisitor
             when "<=" then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
             when ">"  then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
             when ">=" then return builder.fcmp LLVM::RealPredicate::OGE, p1, p2
-            else           raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+            else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
             end
     @last = trunc_float t1, @last if t1.rank < t2.rank
     @last
@@ -345,7 +345,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op(op, t1, t2, p1, p2)
-    raise "Bug: codegen_binary_op called with #{t1} #{op} #{t2}"
+    raise "BUG: codegen_binary_op called with #{t1} #{op} #{t2}"
   end
 
   def codegen_primitive_cast(node, target_def, call_args)
@@ -399,7 +399,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_cast(from_type, to_type, arg)
-    raise "Bug: codegen_cast called from #{from_type} to #{to_type}"
+    raise "BUG: codegen_cast called from #{from_type} to #{to_type}"
   end
 
   def codegen_primitive_allocate(node, target_def, call_args)
@@ -444,7 +444,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pointer_address(node, target_def, call_args)
-    ptr2int call_args[0], LLVM::Int64
+    ptr2int call_args[0], llvm_context.int64
   end
 
   def codegen_primitive_pointer_new(node, target_def, call_args)
@@ -475,7 +475,7 @@ class Crystal::CodeGenVisitor
       if type.extern_union?
         union_field_ptr(field_type, call_args[0])
       else
-        name = target_def.name.chop
+        name = target_def.name.rchop
         struct_field_ptr(type, name, call_args[0])
       end
     end
@@ -494,7 +494,7 @@ class Crystal::CodeGenVisitor
       context.vars["value"] = existing_value if existing_value
     end
 
-    var_name = '@' + target_def.name.chop
+    var_name = '@' + target_def.name.rchop
     scope = context.type.as(NonGenericClassType)
     field_type = scope.instance_vars[var_name].type
 
@@ -557,7 +557,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_object_id(node, target_def, call_args)
-    ptr2int call_args[0], LLVM::Int64
+    ptr2int call_args[0], llvm_context.int64
   end
 
   def codegen_primitive_object_crystal_type_id(node, target_def, call_args)
@@ -596,25 +596,27 @@ class Crystal::CodeGenVisitor
   def create_metaclass_fun(name)
     id_to_metaclass = @llvm_id.id_to_metaclass.to_a.sort_by! &.[0]
 
-    define_main_function(name, ([LLVM::Int32]), LLVM::Int32) do |func|
-      arg = func.params.first
+    in_main do
+      define_main_function(name, ([llvm_context.int32]), llvm_context.int32) do |func|
+        arg = func.params.first
 
-      current_block = insert_block
+        current_block = insert_block
 
-      cases = {} of LLVM::Value => LLVM::BasicBlock
-      id_to_metaclass.each do |(type_id, metaclass_id)|
-        block = new_block "type_#{type_id}"
-        cases[int32(type_id)] = block
-        position_at_end block
-        ret int32(metaclass_id)
+        cases = {} of LLVM::Value => LLVM::BasicBlock
+        id_to_metaclass.each do |(type_id, metaclass_id)|
+          block = new_block "type_#{type_id}"
+          cases[int32(type_id)] = block
+          position_at_end block
+          ret int32(metaclass_id)
+        end
+
+        otherwise = new_block "otherwise"
+        position_at_end otherwise
+        unreachable
+
+        position_at_end current_block
+        @builder.switch arg, otherwise, cases
       end
-
-      otherwise = new_block "otherwise"
-      position_at_end otherwise
-      unreachable
-
-      position_at_end current_block
-      @builder.switch arg, otherwise, cases
     end
   end
 
@@ -652,7 +654,7 @@ class Crystal::CodeGenVisitor
     ctx_is_null_block = new_block "ctx_is_null"
     ctx_is_not_null_block = new_block "ctx_is_not_null"
 
-    ctx_is_null = equal? ctx_ptr, LLVM::VoidPointer.null
+    ctx_is_null = equal? ctx_ptr, llvm_context.void_pointer.null
     cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
 
     old_needs_value = @needs_value
@@ -678,7 +680,9 @@ class Crystal::CodeGenVisitor
       phi.add value, node.type
 
       # Reset abi_info + c_calling_convention so the closure part is generated as usual
-      target_def.abi_info = nil
+      old_abi_info = target_def.abi_info?
+      old_c_calling_convention = target_def.c_calling_convention?
+      target_def.abi_info = false
       target_def.c_calling_convention = nil
 
       position_at_end ctx_is_not_null_block
@@ -686,6 +690,9 @@ class Crystal::CodeGenVisitor
       closure_args.insert(0, ctx_ptr)
       value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
+
+      target_def.abi_info = old_abi_info
+      target_def.c_calling_convention = !!old_c_calling_convention
     end
 
     old_needs_value = @needs_value
@@ -702,7 +709,7 @@ class Crystal::CodeGenVisitor
       sret_value = @sret_value = alloca abi_info.return_type.type
       null_args << sret_value
       null_fun_types << abi_info.return_type.type.pointer
-      null_fun_return_type = LLVM::Void
+      null_fun_return_type = llvm_context.void
     else
       if cast = abi_info.return_type.cast
         null_fun_return_type = cast
@@ -741,10 +748,10 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pointer_diff(node, target_def, call_args)
-    p0 = ptr2int(call_args[0], LLVM::Int64)
-    p1 = ptr2int(call_args[1], LLVM::Int64)
+    p0 = ptr2int(call_args[0], llvm_context.int64)
+    p1 = ptr2int(call_args[1], llvm_context.int64)
     sub = builder.sub p0, p1
-    builder.exact_sdiv sub, ptr2int(gep(call_args[0].type.null_pointer, 1), LLVM::Int64)
+    builder.exact_sdiv sub, ptr2int(gep(call_args[0].type.null_pointer, 1), llvm_context.int64)
   end
 
   def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)
@@ -768,7 +775,7 @@ class Crystal::CodeGenVisitor
 
   def check_c_fun(type, value)
     if type.proc?
-      make_fun(type, bit_cast(value, LLVM::VoidPointer), LLVM::VoidPointer.null)
+      make_fun(type, bit_cast(value, llvm_context.void_pointer), llvm_context.void_pointer.null)
     else
       value
     end
@@ -842,7 +849,7 @@ class Crystal::CodeGenVisitor
 
   def atomic_ordering_from_symbol_literal(node)
     unless node.is_a?(SymbolLiteral)
-      node.raise "Bug: expected symbol literal"
+      node.raise "BUG: expected symbol literal"
     end
 
     ordering = LLVM::AtomicOrdering.parse?(node.value)
@@ -855,7 +862,7 @@ class Crystal::CodeGenVisitor
 
   def atomicrwm_bin_op_from_symbol_literal(node)
     unless node.is_a?(SymbolLiteral)
-      node.raise "Bug: expected symbol literal"
+      node.raise "BUG: expected symbol literal"
     end
 
     op = LLVM::AtomicRMWBinOp.parse?(node.value)
@@ -868,7 +875,7 @@ class Crystal::CodeGenVisitor
 
   def bool_from_bool_literal(node)
     unless node.is_a?(BoolLiteral)
-      node.raise "Bug: expected bool literal"
+      node.raise "BUG: expected bool literal"
     end
 
     node.value

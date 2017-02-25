@@ -1,6 +1,6 @@
 require "c/fcntl"
 
-# An IO over a file descriptor.
+# An `IO` over a file descriptor.
 class IO::FileDescriptor
   include Buffered
 
@@ -158,7 +158,7 @@ class IO::FileDescriptor
     pos
   end
 
-  # Returns the current position (in bytes) in this IO.
+  # Returns the current position (in bytes) in this `IO`.
   #
   # ```
   # File.write("testfile", "hello")
@@ -177,7 +177,7 @@ class IO::FileDescriptor
     seek_value - @in_buffer_rem.size
   end
 
-  # Sets the current position (in bytes) in this IO.
+  # Sets the current position (in bytes) in this `IO`.
   #
   # ```
   # File.write("testfile", "hello")
@@ -293,7 +293,7 @@ class IO::FileDescriptor
 
     if @read_timed_out
       @read_timed_out = false
-      yield Timeout.new("read timed out")
+      yield Timeout.new("Read timed out")
     end
 
     nil
@@ -311,7 +311,7 @@ class IO::FileDescriptor
   end
 
   # msg/timeout are overridden in nonblock_connect
-  private def wait_writable(msg = "write timed out", timeout = @write_timeout)
+  private def wait_writable(msg = "Write timed out", timeout = @write_timeout)
     writers = (@writers ||= Deque(Fiber).new)
     writers << Fiber.current
     add_write_event timeout

@@ -5,7 +5,7 @@
 #
 # This class also provides methods to build authorize URIs
 # and get access tokens with different methods, as specified by
-# [RFC6749](https://tools.ietf.org/html/rfc6749).
+# [RFC 6749](https://tools.ietf.org/html/rfc6749).
 #
 # ### Example
 #
@@ -69,13 +69,13 @@ class OAuth2::Client
   end
 
   # Builds an authorize URI, as specified by
-  # [RFC6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.1)
+  # [RFC 6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.1).
   def get_authorize_uri(scope = nil, state = nil) : String
     get_authorize_uri(scope, state) { }
   end
 
   # Builds an authorize URI, as specified by
-  # [RFC6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.1)
+  # [RFC 6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.1).
   #
   # Yields an `HTTP::Params::Builder` to add extra parameters other than those
   # defined by the standard.
@@ -105,7 +105,7 @@ class OAuth2::Client
   end
 
   # Gets an access token using an authorization code, as specified by
-  # [RFC6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.3)
+  # [RFC 6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.3).
   def get_access_token_using_authorization_code(authorization_code) : AccessToken
     get_access_token do |form|
       form.add("redirect_uri", @redirect_uri)
@@ -115,7 +115,7 @@ class OAuth2::Client
   end
 
   # Gets an access token using a refresh token, as specified by
-  # [RFC6749, Section 6](https://tools.ietf.org/html/rfc6749#section-6)
+  # [RFC 6749, Section 6](https://tools.ietf.org/html/rfc6749#section-6).
   def get_access_token_using_refresh_token(refresh_token, scope = nil) : AccessToken
     get_access_token do |form|
       form.add("grant_type", "refresh_token")
@@ -125,7 +125,7 @@ class OAuth2::Client
   end
 
   # Gets an access token using client credentials, as specified by
-  # [RFC 6749, Section 4.4.2](https://tools.ietf.org/html/rfc6749#section-4.4.2)
+  # [RFC 6749, Section 4.4.2](https://tools.ietf.org/html/rfc6749#section-4.4.2).
   def get_access_token_using_client_credentials(scope = nil)
     get_access_token do |form|
       form.add("grant_type", "client_credentials")
@@ -140,7 +140,11 @@ class OAuth2::Client
       yield form
     end
 
-    response = HTTP::Client.post_form(token_uri, body)
+    headers = HTTP::Headers{
+      "Accept" => "application/json",
+    }
+
+    response = HTTP::Client.post_form(token_uri, body, headers)
     case response.status_code
     when 200, 201
       OAuth2::AccessToken.from_json(response.body)

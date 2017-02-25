@@ -1,5 +1,5 @@
 module IO
-  # An IO which writes to a number of underlying writer IOs.
+  # An `IO` which writes to a number of underlying writer IOs.
   #
   # ```
   # io1 = IO::Memory.new
@@ -12,7 +12,7 @@ module IO
   class MultiWriter
     include IO
 
-    # If `sync_close` is true, closing this IO will close all of the underlying
+    # If `#sync_close?` is `true`, closing this `IO` will close all of the underlying
     # IOs.
     property? sync_close
     getter? closed = false

@@ -1,3 +1,51 @@
+# 0.21.0 (20-02-2017)
+
+* **(breaking-change)** The compiler now reuses previous macro run compilations so `{{ run(...) }}` is only re-run if the code changes
+* **(breaking-change)** Spec: `assert { ... }` is now `it { ... }` (thanks @TheLonelyGhost)
+* **(breaking-change)** Renamed `Set#merge!` to `Set#concat`
+* **(breaking-change)** `Zlib` was split into `Flate`, `Gzip` and `Zlib` ([bda40f](https://github.com/crystal-lang/crystal/commit/bda40f))
+* **(breaking-change)** `Crypto::MD5` is now `Digest::MD5`
+* **(breaking-change)** `String#chop` is now `String#rchop`
+* **(breaking-change)** `String#to_slice` now returns a read-only Slice
+* **(breaking-change)** `String` can now hold invalid UTF-8 byte sequences, and they produce a unicode replacement character when traversed
+* **(breaking-change)** Removed `String#lchomp`. Use `String#lchop`
+* **(breaking-change)** Octal escapes inside strings incorrectly produced a codepoint value instead of a byte value
+* **(breaking-change)** Removed octal escape from char literals
+* Fixed compiler performance regression related to cached files ([f69e37e](https://github.com/crystal-lang/crystal/commit/f69e37e))
+* Added `\xHH` escape sequence in string literals
+* `Char::Reader` can now traverse a string backwards
+* `Enum#to_s` now uses pipes instead of commas for flag enums
+* `IO#read_string` is now encoding-aware
+* `OAuth2::Client` now sends `application/json` Accept header, and considers the `expires_in` access token property as optional
+* `Slice` can now be read-only
+* `TCPServer` no longer set SO_REUSEPORT to true by default
+* Added `HTTP::Multipart` and `HTTP::FormData` (thanks @RX14)
+* Added `File::Stat#pipe?`
+* Added `File.utime`
+* Added `IO#peek`
+* Added `String#strip(arg)`, `String#lstrip(arg)`, `String#rstrip(arg)`
+* Added `String#lchop`, `String#lchop(prefix)`, `String#rchop` and `String#rchop(suffix)`
+* Added `String#hexbytes` and `String#hexbytes?`
+* Added `String#scrub` and `String#valid_encoding?`
+* Added `include?` macro method for StringLiteral, SymbolLiteral and MacroId (thanks @karlseguin)
+* Added "view source" links to GitLab (thanks @ezrast)
+* Updated CONTRIBUTING.md guidelines
+* [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.21.0)
+
+# 0.20.5 (20-01-2017)
+
+* Improved performance in `String#index`, `String#rindex` due to Rabin-Karp algorithm (thanks @MakeNowJust).
+* Improved performance in `Crypto::Bcrypt` (see #3880, thanks @ysbaddaden).
+* `expect_raises` returns raised exception (thanks @kostya).
+* Line numbers debug information is always generated (see #3831, thanks @ysbaddaden).
+* Added `Zip::File`, `Zip::Reader` and `Zip::Writer`. Native readers for zip files that delegate compression to existing zlib module.
+* Added `Hash#delete` with block (see #3856, thanks @bmulvihill).
+* Added `String#[](char : Char)` (see #3855, thanks @Sija).
+* Added `crystal tool expand` to expand macro call in a given location (see #3732, thanks @MakeNowJust).
+* Fixed `crystal play` is able to show compilation errors again.
+* `crystal doc` recognizes `crystal-lang/crystal` in any remote (thanks @MaxLap).
+* [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.5)
+
 # 0.20.4 (06-01-2017)
 
 * **(breaking change)** A type that wants to convert itself to JSON now must override `to_json(builder : JSON::Builder)` instead of `to_json(io : IO)`. The same is true for custom JSON converters. If you are using `JSON.mapping` then your code will continue to work without changes.

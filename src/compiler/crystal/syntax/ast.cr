@@ -138,6 +138,10 @@ module Crystal
       @expressions.last
     end
 
+    def location
+      @location || @expressions.first?.try &.location
+    end
+
     def end_location
       @end_location || @expressions.last?.try &.end_location
     end
@@ -1333,6 +1337,9 @@ module Crystal
     property type_vars : Array(ASTNode)
     property named_args : Array(NamedArgument)?
 
+    # `true` if this Generic was parsed from `T?`
+    property? question = false
+
     def initialize(@name, @type_vars : Array, @named_args = nil)
     end
 
@@ -1347,7 +1354,9 @@ module Crystal
     end
 
     def clone_without_location
-      Generic.new(@name.clone, @type_vars.clone, @named_args.clone)
+      generic = Generic.new(@name.clone, @type_vars.clone, @named_args.clone)
+      generic.question = question?
+      generic
     end
 
     def_equals_and_hash @name, @type_vars, @named_args
@@ -1408,6 +1417,8 @@ module Crystal
       when Var
         var.name.size
       when InstanceVar
+        var.name.size
+      when ClassVar
         var.name.size
       else
         raise "can't happen"
@@ -2052,7 +2063,7 @@ module Crystal
       when :__DIR__
         MagicConstant.expand_dir_node(location)
       else
-        raise "Bug: unknown magic constant: #{name}"
+        raise "BUG: unknown magic constant: #{name}"
       end
     end
 

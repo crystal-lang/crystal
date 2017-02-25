@@ -59,12 +59,12 @@ class Class
 end
 
 struct Bool
-  # Returns true if `self` is equal to *other*.
+  # Returns `true` if `self` is equal to *other*.
   @[Primitive(:binary)]
   def ==(other : Bool) : Bool
   end
 
-  # Returns true if `self` is not equal to *other*.
+  # Returns `true` if `self` is not equal to *other*.
   @[Primitive(:binary)]
   def !=(other : Bool) : Bool
   end
@@ -73,10 +73,9 @@ end
 struct Char
   # Returns the codepoint of this char.
   #
-  # The codepoint is the integer
-  # representation. The Universal Coded Character Set (UCS) standard,
-  # commonly known as Unicode, assigns names and meanings to numbers, these
-  # numbers are called codepoints.
+  # The codepoint is the integer representation.
+  # The Universal Coded Character Set (UCS) standard, commonly known as Unicode,
+  # assigns names and meanings to numbers, these numbers are called codepoints.
   #
   # For values below and including 127 this matches the ASCII codes
   # and thus its byte representation.
@@ -99,7 +98,7 @@ struct Char
                        ">"  => "greater than",
                        ">=" => "greater than or equal to",
                      } %}
-    # Returns true if `self`'s codepoint is {{desc.id}} *other*'s codepoint.
+    # Returns `true` if `self`'s codepoint is {{desc.id}} *other*'s codepoint.
     @[Primitive(:binary)]
     def {{op.id}}(other : Char) : Bool
     end
@@ -107,12 +106,12 @@ struct Char
 end
 
 struct Symbol
-  # Returns true if `self` is equal to *other*.
+  # Returns `true` if `self` is equal to *other*.
   @[Primitive(:binary)]
   def ==(other : Symbol) : Bool
   end
 
-  # Returns true if `self` is not equal to *other*.
+  # Returns `true` if `self` is not equal to *other*.
   @[Primitive(:binary)]
   def !=(other : Symbol) : Bool
   end
@@ -154,7 +153,8 @@ struct Pointer(T)
   def self.malloc(size : UInt64)
   end
 
-  # Returns a pointer that points to the given memory address. This doesn't allocate memory.
+  # Returns a pointer that points to the given memory address.
+  # This doesn't allocate memory.
   #
   # ```
   # ptr = Pointer(Int32).new(5678_u64)
@@ -215,7 +215,8 @@ struct Pointer(T)
   def realloc(size : UInt64) : self
   end
 
-  # Returns a new pointer whose address is this pointer's address incremented by `other * sizeof(T)`.
+  # Returns a new pointer whose address is this pointer's address
+  # incremented by `other * sizeof(T)`.
   #
   # ```
   # ptr = Pointer(Int32).new(1234)
@@ -256,12 +257,12 @@ struct Proc
 end
 
 # All `Number` methods are defined on concrete structs (for example `Int32`, `UInt8`, etc.),
-# never on Number, Int or Float because we don't want to handle a primitive for
-# other types that could extend these types (for example BigInt): if we do that
+# never on `Number`, `Int` or `Float` because we don't want to handle a primitive for
+# other types that could extend these types (for example `BigInt`): if we do that
 # a compiler crash will happen.
 #
 # A similar logic is applied to method arguments: they are always concrete, to avoid
-# unintentionally handling a BigInt and have a crash. We also can't have an argument
+# unintentionally handling a `BigInt` and have a crash. We also can't have an argument
 # be a union, because the codegen primitives always consider primitive types, never
 # unions.
 
@@ -279,7 +280,7 @@ end
                              to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64,
                              to_f32: Float32, to_f64: Float64,
                            } %}
-        # Returns `self` converted to {{type}}.
+        # Returns `self` converted to `{{type}}`.
         @[Primitive(:cast)]
         def {{name.id}} : {{type}}
         end
@@ -294,7 +295,7 @@ end
                              ">"  => "greater than",
                              ">=" => "greater than or equal to",
                            } %}
-          # Returns true if `self` is {{desc.id}} *other*.
+          # Returns `true` if `self` is {{desc.id}} *other*.
           @[Primitive(:binary)]
           def {{op.id}}(other : {{num2.id}}) : Bool
           end

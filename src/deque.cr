@@ -29,7 +29,7 @@ class Deque(T)
     @buffer = Pointer(T).null
   end
 
-  # Creates a new empty Deque backed by a buffer that is initially `initial_capacity` big.
+  # Creates a new empty `Deque` backed by a buffer that is initially `initial_capacity` big.
   #
   # The `initial_capacity` is useful to avoid unnecessary reallocations of the internal buffer in case of growth. If you
   # have an estimate of the maximum number of elements a deque will hold, you should initialize it with that capacity
@@ -41,7 +41,7 @@ class Deque(T)
   # ```
   def initialize(initial_capacity : Int)
     if initial_capacity < 0
-      raise ArgumentError.new("negative deque capacity: #{initial_capacity}")
+      raise ArgumentError.new("Negative deque capacity: #{initial_capacity}")
     end
     @size = 0
     @capacity = initial_capacity.to_i
@@ -53,14 +53,14 @@ class Deque(T)
     end
   end
 
-  # Creates a new Deque of the given size filled with the same value in each position.
+  # Creates a new `Deque` of the given size filled with the same value in each position.
   #
   # ```
   # Deque.new(3, 'a') # => Deque{'a', 'a', 'a'}
   # ```
   def initialize(size : Int, value : T)
     if size < 0
-      raise ArgumentError.new("negative deque size: #{size}")
+      raise ArgumentError.new("Negative deque size: #{size}")
     end
     @size = size.to_i
     @capacity = size.to_i
@@ -72,15 +72,15 @@ class Deque(T)
     end
   end
 
-  # Creates a new Deque of the given size and invokes the block once for each index of the deque, assigning the block's
-  # value in that index.
+  # Creates a new `Deque` of the given size and invokes the block once for
+  # each index of the deque, assigning the block's value in that index.
   #
   # ```
   # Deque.new(3) { |i| (i + 1) ** 2 } # => Deque{1, 4, 9}
   # ```
   def self.new(size : Int, &block : Int32 -> T)
     if size < 0
-      raise ArgumentError.new("negative deque size: #{size}")
+      raise ArgumentError.new("Negative deque size: #{size}")
     end
 
     deque = Deque(T).new(size)
@@ -91,7 +91,7 @@ class Deque(T)
     deque
   end
 
-  # Creates a new Deque that copies its items from an Array.
+  # Creates a new `Deque` that copies its items from an Array.
   #
   # ```
   # Deque.new([1, 2, 3]) # => Deque{1, 2, 3}
@@ -100,8 +100,8 @@ class Deque(T)
     Deque(T).new(array.size) { |i| array[i] }
   end
 
-  # Equality. Returns true if it is passed a Deque and `equals?` returns true for both deques, the caller and the
-  # argument.
+  # Returns `true` if it is passed a `Deque` and `equals?` returns `true`
+  # for both deques, the caller and the argument.
   #
   # ```
   # deq = Deque{2, 3}
@@ -118,8 +118,9 @@ class Deque(T)
     false
   end
 
-  # Concatenation. Returns a new Deque built by concatenating two deques together to create a third. The type of the new
-  # deque is the union of the types of both the other deques.
+  # Concatenation. Returns a new `Deque` built by concatenating
+  # two deques together to create a third. The type of the new deque
+  # is the union of the types of both the other deques.
   def +(other : Deque(U)) forall U
     Deque(T | U).new.concat(self).concat(other)
   end
@@ -134,9 +135,9 @@ class Deque(T)
     push(value)
   end
 
-  # Sets the given value at the given index.
+  # Sets the given value at the given *index*.
   #
-  # Raises `IndexError` if the deque had no previous value at the given index.
+  # Raises `IndexError` if the deque had no previous value at the given *index*.
   def []=(index : Int, value : T)
     index += @size if index < 0
     unless 0 <= index < @size
@@ -153,7 +154,7 @@ class Deque(T)
     @buffer[index]
   end
 
-  # Removes all elements from self.
+  # Removes all elements from `self`.
   def clear
     halfs do |r|
       (@buffer + r.begin).clear(r.end - r.begin)
@@ -163,7 +164,7 @@ class Deque(T)
     self
   end
 
-  # Returns a new Deque that has this deque's elements cloned.
+  # Returns a new `Deque` that has this deque's elements cloned.
   # That is, it returns a deep copy of this deque.
   #
   # Use `#dup` if you want a shallow copy.
@@ -200,7 +201,8 @@ class Deque(T)
     found
   end
 
-  # Delete the item that is present at the *index*. Items to the right of this one will have their indices decremented.
+  # Delete the item that is present at the *index*. Items to the right
+  # of this one will have their indices decremented.
   # Raises `IndexError` if trying to delete an element outside the deque's range.
   #
   # ```
@@ -256,7 +258,7 @@ class Deque(T)
     value
   end
 
-  # Returns a new Deque that has exactly this deque's elements.
+  # Returns a new `Deque` that has exactly this deque's elements.
   # That is, it returns a shallow copy of this deque.
   def dup
     Deque(T).new(size) { |i| self[i].as(T) }
@@ -273,7 +275,8 @@ class Deque(T)
     end
   end
 
-  # Insert a new item before the item at *index*. Items to the right of this one will have their indices incremented.
+  # Insert a new item before the item at *index*. Items to the right
+  # of this one will have their indices incremented.
   #
   # ```
   # a = Deque{0, 1, 2}
@@ -363,7 +366,8 @@ class Deque(T)
     pop { raise IndexError.new }
   end
 
-  # Removes and returns the last item, if not empty, otherwise executes the given block and returns its value.
+  # Removes and returns the last item, if not empty, otherwise executes
+  # the given block and returns its value.
   def pop
     if @size == 0
       yield
@@ -385,7 +389,7 @@ class Deque(T)
   # Removes the last *n* (at most) items in the deque.
   def pop(n : Int)
     if n < 0
-      raise ArgumentError.new("can't pop negative count")
+      raise ArgumentError.new("Can't pop negative count")
     end
     n = Math.min(n, @size)
     n.times { pop }
@@ -409,8 +413,8 @@ class Deque(T)
 
   # Rotates this deque in place so that the element at *n* becomes first.
   #
-  # For positive *n*, equivalent to `n.times { push(shift) }`.
-  # For negative *n*, equivalent to `(-n).times { unshift(pop) }`.
+  # * For positive *n*, equivalent to `n.times { push(shift) }`.
+  # * For negative *n*, equivalent to `(-n).times { unshift(pop) }`.
   def rotate!(n : Int = 1)
     if @size == @capacity
       @start = (@start + n) % @capacity
@@ -442,7 +446,8 @@ class Deque(T)
     shift { raise IndexError.new }
   end
 
-  # Removes and returns the first item, if not empty, otherwise executes the given block and returns its value.
+  # Removes and returns the first item, if not empty, otherwise executes
+  # the given block and returns its value.
   def shift
     if @size == 0
       yield
@@ -464,7 +469,7 @@ class Deque(T)
   # Removes the first *n* (at most) items in the deque.
   def shift(n : Int)
     if n < 0
-      raise ArgumentError.new("can't shift negative count")
+      raise ArgumentError.new("Can't shift negative count")
     end
     n = Math.min(n, @size)
     n.times { shift }

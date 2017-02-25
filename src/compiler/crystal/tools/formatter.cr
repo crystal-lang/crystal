@@ -691,18 +691,24 @@ module Crystal
 
       skip_space
       if @token.type == :NEWLINE
+        # add one level of indentation for contents if a newline is present
+        offset = @indent + 2
+
         if elements.empty?
           skip_space_or_newline
           write_token suffix
           return false
         end
 
-        indent(@indent + 2) { consume_newlines }
+        indent(offset) { consume_newlines }
         skip_space_or_newline
         wrote_newline = true
         next_needs_indent = true
         has_newlines = true
         found_first_newline = true
+      else
+        # indent contents at the same column as starting token if no newline
+        offset = @column
       end
 
       elements.each_with_index do |element, i|
@@ -725,7 +731,7 @@ module Crystal
         end
 
         if next_needs_indent
-          write_indent(@indent + 2, element)
+          write_indent(offset, element)
         else
           accept element
         end
@@ -744,7 +750,7 @@ module Crystal
               write ","
               found_comment = true
             end
-            indent(@indent + 2) { consume_newlines }
+            indent(offset) { consume_newlines }
             skip_space_or_newline
             next_needs_indent = true
             has_newlines = true
@@ -963,6 +969,12 @@ module Crystal
       name = node.name
       first_name = name.global? && name.names.size == 1 && name.names.first
 
+      if node.question?
+        node.type_vars[0].accept self
+        write_token :"?"
+        return false
+      end
+
       # Check if it's T* instead of Pointer(T)
       if first_name == "Pointer" && @token.value != "Pointer"
         type_var = node.type_vars.first
@@ -1026,13 +1038,6 @@ module Crystal
           end
         end
         write_token :"}"
-        return false
-      end
-
-      # Check if it's T? instead of Union(T, Nil)
-      if first_name == "Union" && @token.value != "Union"
-        node.type_vars.first.accept self
-        write_token :"?"
         return false
       end
 
@@ -2100,7 +2105,7 @@ module Crystal
               last_arg = args.pop
             end
 
-            has_newlines, found_comment, _ = format_args args, true
+            has_newlines, found_comment, _ = format_args args, true, node.named_args
             if @token.type == :"," || @token.type == :NEWLINE
               if has_newlines
                 write ","
@@ -2213,7 +2218,7 @@ module Crystal
       assignment = node.name.ends_with?('=') && node.name.chars.any?(&.ascii_letter?)
 
       if assignment
-        write node.name.chop
+        write node.name.rchop
       else
         write node.name
       end
@@ -2534,7 +2539,7 @@ module Crystal
                 write_token :")"
               end
             else
-              raise "Bug: expected `[`, `[]` or `[]?`"
+              raise "BUG: expected `[`, `[]` or `[]?`"
             end
           elsif !call.obj && call.name == "[]="
             case @token.type
@@ -2560,7 +2565,7 @@ module Crystal
                 write_token :")"
               end
             else
-              raise "Bug: expected `[` or `[]=`"
+              raise "BUG: expected `[` or `[]=`"
             end
           else
             indent(@indent, call)
@@ -2602,7 +2607,7 @@ module Crystal
             accept body
           end
         else
-          raise "Bug: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
+          raise "BUG: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
         end
       end
 
@@ -2831,7 +2836,7 @@ module Crystal
         when Call
           accept_assign_value(right.args.last)
         else
-          raise "Bug: expected Assign or Call after op assign, at #{node.location}"
+          raise "BUG: expected Assign or Call after op assign, at #{node.location}"
         end
         return false
       end
@@ -3905,7 +3910,7 @@ module Crystal
     end
 
     def visit(node : ASTNode)
-      raise "Bug: unexpected node: #{node.class} at #{node.location}"
+      raise "BUG: unexpected node: #{node.class} at #{node.location}"
     end
 
     def to_s(io)

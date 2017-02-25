@@ -53,7 +53,7 @@
 # of the returned IO (or used for creating a String for the body). Invalid bytes in the given encoding
 # are silently ignored when reading text content.
 class HTTP::Client
-  # The set of possible valid body types
+  # The set of possible valid body types.
   alias BodyType = String | Bytes | IO | Nil
 
   # Returns the target host.
@@ -83,7 +83,7 @@ class HTTP::Client
   {% if flag?(:without_openssl) %}
     getter! tls : Nil
   {% else %}
-    getter! tls : OpenSSL::SSL::Context::Client?
+    getter! tls : OpenSSL::SSL::Context::Client
   {% end %}
 
   # Whether automatic compression/decompression is enabled.
@@ -332,7 +332,7 @@ class HTTP::Client
     #
     # ```
     # client = HTTP::Client.new("www.example.com")
-    # response = client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!")
+    # response = client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, body : BodyType = nil) : HTTP::Client::Response
@@ -344,7 +344,7 @@ class HTTP::Client
     #
     # ```
     # client = HTTP::Client.new("www.example.com")
-    # client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!") do |response|
+    # client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!") do |response|
     #   response.body_io.gets #=> "..."
     # end
     # ```
@@ -358,7 +358,7 @@ class HTTP::Client
     # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
     #
     # ```
-    # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!")
+    # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
     def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil) : HTTP::Client::Response
@@ -369,7 +369,7 @@ class HTTP::Client
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     #
     # ```
-    # HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!") do |response|
+    # HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!") do |response|
     #   response.body_io.gets #=> "..."
     # end
     # ```
@@ -492,7 +492,7 @@ class HTTP::Client
     response = exec_internal_single(request)
     return handle_response(response) if response
 
-    raise "unexpected end of http response"
+    raise "Unexpected end of http response"
   end
 
   private def exec_internal_single(request)
@@ -523,7 +523,7 @@ class HTTP::Client
     end
   end
 
-  private def exec_internal(request, &block)
+  private def exec_internal(request, &block : Response -> T) : T forall T
     exec_internal_single(request) do |response|
       if response
         return handle_response(response) { yield response }
@@ -538,10 +538,9 @@ class HTTP::Client
             yield response
           end
         end
-
-        raise "unexpected end of http response"
       end
     end
+    raise "Unexpected end of http response"
   end
 
   private def exec_internal_single(request)
@@ -561,7 +560,7 @@ class HTTP::Client
   end
 
   private def set_defaults(request)
-    request.headers["User-agent"] ||= "Crystal"
+    request.headers["User-Agent"] ||= "Crystal"
     {% if flag?(:without_zlib) %}
       false
     {% else %}
@@ -691,7 +690,7 @@ class HTTP::Client
       scheme = uri.scheme
       case scheme
       when nil
-        raise ArgumentError.new("missing scheme: #{uri}")
+        raise ArgumentError.new("Missing scheme: #{uri}")
       when "http"
         false
       when "https"
@@ -705,7 +704,7 @@ class HTTP::Client
       scheme = uri.scheme
       case {scheme, context}
       when {nil, _}
-        raise ArgumentError.new("missing scheme: #{uri}")
+        raise ArgumentError.new("Missing scheme: #{uri}")
       when {"http", nil}
         false
       when {"http", OpenSSL::SSL::Context::Client}

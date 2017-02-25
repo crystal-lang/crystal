@@ -1,13 +1,13 @@
 require "spec"
 require "http/cookie"
 
-def parse_first_cookie(header)
+private def parse_first_cookie(header)
   cookies = HTTP::Cookie::Parser.parse_cookies(header)
   cookies.size.should eq(1)
   cookies.first
 end
 
-def parse_set_cookie(header)
+private def parse_set_cookie(header)
   cookie = HTTP::Cookie::Parser.parse_set_cookie(header)
   cookie.should_not be_nil
   cookie.not_nil!

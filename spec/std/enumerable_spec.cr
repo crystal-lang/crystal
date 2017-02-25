@@ -52,7 +52,7 @@ describe "Enumerable" do
   end
 
   describe "compact map" do
-    assert { Set{1, nil, 2, nil, 3}.compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
+    it { Set{1, nil, 2, nil, 3}.compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
   end
 
   describe "size without block" do
@@ -410,7 +410,7 @@ describe "Enumerable" do
       end
     end
 
-    assert { [-1, -2, -3].first.should eq(-1) }
+    it { [-1, -2, -3].first.should eq(-1) }
   end
 
   describe "first?" do
@@ -456,23 +456,23 @@ describe "Enumerable" do
   end
 
   describe "group_by" do
-    assert { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
+    it { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
 
     it "groups can group by size (like the doc example)" do
       %w(Alice Bob Ary).group_by { |e| e.size }.should eq({3 => ["Bob", "Ary"],
-        5 => ["Alice"]})
+                                                           5 => ["Alice"]})
     end
   end
 
   describe "in_groups_of" do
-    assert { [1, 2, 3].in_groups_of(1).should eq([[1], [2], [3]]) }
-    assert { [1, 2, 3].in_groups_of(2).should eq([[1, 2], [3, nil]]) }
-    assert { [1, 2, 3, 4].in_groups_of(3).should eq([[1, 2, 3], [4, nil, nil]]) }
-    assert { ([] of Int32).in_groups_of(2).should eq([] of Array(Array(Int32 | Nil))) }
-    assert { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
+    it { [1, 2, 3].in_groups_of(1).should eq([[1], [2], [3]]) }
+    it { [1, 2, 3].in_groups_of(2).should eq([[1, 2], [3, nil]]) }
+    it { [1, 2, 3, 4].in_groups_of(3).should eq([[1, 2, 3], [4, nil, nil]]) }
+    it { ([] of Int32).in_groups_of(2).should eq([] of Array(Array(Int32 | Nil))) }
+    it { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
 
     it "raises argument error if size is less than 0" do
-      expect_raises ArgumentError, "size must be positive" do
+      expect_raises ArgumentError, "Size must be positive" do
         [1, 2, 3].in_groups_of(0)
       end
     end
@@ -548,8 +548,8 @@ describe "Enumerable" do
   end
 
   describe "reduce" do
-    assert { [1, 2, 3].reduce { |memo, i| memo + i }.should eq(6) }
-    assert { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }
+    it { [1, 2, 3].reduce { |memo, i| memo + i }.should eq(6) }
+    it { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -612,7 +612,7 @@ describe "Enumerable" do
   end
 
   describe "max" do
-    assert { [1, 2, 3].max.should eq(3) }
+    it { [1, 2, 3].max.should eq(3) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -628,7 +628,7 @@ describe "Enumerable" do
   end
 
   describe "max_by" do
-    assert { [-1, -2, -3].max_by { |x| -x }.should eq(-3) }
+    it { [-1, -2, -3].max_by { |x| -x }.should eq(-3) }
   end
 
   describe "max_by?" do
@@ -638,7 +638,7 @@ describe "Enumerable" do
   end
 
   describe "max_of" do
-    assert { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
+    it { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
   end
 
   describe "max_of?" do
@@ -648,7 +648,7 @@ describe "Enumerable" do
   end
 
   describe "min" do
-    assert { [1, 2, 3].min.should eq(1) }
+    it { [1, 2, 3].min.should eq(1) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -664,7 +664,7 @@ describe "Enumerable" do
   end
 
   describe "min_by" do
-    assert { [1, 2, 3].min_by { |x| -x }.should eq(3) }
+    it { [1, 2, 3].min_by { |x| -x }.should eq(3) }
   end
 
   describe "min_by?" do
@@ -674,7 +674,7 @@ describe "Enumerable" do
   end
 
   describe "min_of" do
-    assert { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
+    it { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
   end
 
   describe "min_of?" do
@@ -684,7 +684,7 @@ describe "Enumerable" do
   end
 
   describe "minmax" do
-    assert { [1, 2, 3].minmax.should eq({1, 3}) }
+    it { [1, 2, 3].minmax.should eq({1, 3}) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -700,7 +700,7 @@ describe "Enumerable" do
   end
 
   describe "minmax_by" do
-    assert { [-1, -2, -3].minmax_by { |x| -x }.should eq({-1, -3}) }
+    it { [-1, -2, -3].minmax_by { |x| -x }.should eq({-1, -3}) }
   end
 
   describe "minmax_by?" do
@@ -710,7 +710,7 @@ describe "Enumerable" do
   end
 
   describe "minmax_of" do
-    assert { [-1, -2, -3].minmax_of { |x| -x }.should eq({1, 3}) }
+    it { [-1, -2, -3].minmax_of { |x| -x }.should eq({1, 3}) }
   end
 
   describe "minmax_of?" do
@@ -720,24 +720,24 @@ describe "Enumerable" do
   end
 
   describe "none?" do
-    assert { [1, 2, 2, 3].none? { |x| x == 1 }.should eq(false) }
-    assert { [1, 2, 2, 3].none? { |x| x == 0 }.should eq(true) }
+    it { [1, 2, 2, 3].none? { |x| x == 1 }.should eq(false) }
+    it { [1, 2, 2, 3].none? { |x| x == 0 }.should eq(true) }
   end
 
   describe "none? without block" do
-    assert { [nil, false].none?.should be_true }
-    assert { [nil, false, true].none?.should be_false }
+    it { [nil, false].none?.should be_true }
+    it { [nil, false, true].none?.should be_false }
   end
 
   describe "one?" do
-    assert { [1, 2, 2, 3].one? { |x| x == 1 }.should eq(true) }
-    assert { [1, 2, 2, 3].one? { |x| x == 2 }.should eq(false) }
-    assert { [1, 2, 2, 3].one? { |x| x == 0 }.should eq(false) }
+    it { [1, 2, 2, 3].one? { |x| x == 1 }.should eq(true) }
+    it { [1, 2, 2, 3].one? { |x| x == 2 }.should eq(false) }
+    it { [1, 2, 2, 3].one? { |x| x == 0 }.should eq(false) }
   end
 
   describe "partition" do
-    assert { [1, 2, 2, 3].partition { |x| x == 2 }.should eq({[2, 2], [1, 3]}) }
-    assert { [1, 2, 3, 4, 5, 6].partition(&.even?).should eq({[2, 4, 6], [1, 3, 5]}) }
+    it { [1, 2, 2, 3].partition { |x| x == 2 }.should eq({[2, 2], [1, 3]}) }
+    it { [1, 2, 3, 4, 5, 6].partition(&.even?).should eq({[2, 4, 6], [1, 3, 5]}) }
   end
 
   describe "reject" do
@@ -793,12 +793,12 @@ describe "Enumerable" do
   end
 
   describe "sum" do
-    assert { ([] of Int32).sum.should eq(0) }
-    assert { [1, 2, 3].sum.should eq(6) }
-    assert { [1, 2, 3].sum(4).should eq(10) }
-    assert { [1, 2, 3].sum(4.5).should eq(10.5) }
-    assert { (1..3).sum { |x| x * 2 }.should eq(12) }
-    assert { (1..3).sum(1.5) { |x| x * 2 }.should eq(13.5) }
+    it { ([] of Int32).sum.should eq(0) }
+    it { [1, 2, 3].sum.should eq(6) }
+    it { [1, 2, 3].sum(4).should eq(10) }
+    it { [1, 2, 3].sum(4.5).should eq(10.5) }
+    it { (1..3).sum { |x| x * 2 }.should eq(12) }
+    it { (1..3).sum(1.5) { |x| x * 2 }.should eq(13.5) }
 
     it "uses zero from type" do
       typeof([1, 2, 3].sum).should eq(Int32)
@@ -808,12 +808,12 @@ describe "Enumerable" do
   end
 
   describe "product" do
-    assert { ([] of Int32).product.should eq(1) }
-    assert { [1, 2, 3].product.should eq(6) }
-    assert { [1, 2, 3].product(4).should eq(24) }
-    assert { [1, 2, 3].product(4.5).should eq(27) }
-    assert { (1..3).product { |x| x * 2 }.should eq(48) }
-    assert { (1..3).product(1.5) { |x| x * 2 }.should eq(72) }
+    it { ([] of Int32).product.should eq(1) }
+    it { [1, 2, 3].product.should eq(6) }
+    it { [1, 2, 3].product(4).should eq(24) }
+    it { [1, 2, 3].product(4.5).should eq(27) }
+    it { (1..3).product { |x| x * 2 }.should eq(48) }
+    it { (1..3).product(1.5) { |x| x * 2 }.should eq(72) }
 
     it "uses zero from type" do
       typeof([1, 2, 3].product).should eq(Int32)
@@ -823,8 +823,8 @@ describe "Enumerable" do
   end
 
   describe "first" do
-    assert { (1..3).first(1).should eq([1]) }
-    assert { (1..3).first(4).should eq([1, 2, 3]) }
+    it { (1..3).first(1).should eq([1]) }
+    it { (1..3).first(4).should eq([1, 2, 3]) }
 
     it "raises if count is negative" do
       expect_raises(ArgumentError) do

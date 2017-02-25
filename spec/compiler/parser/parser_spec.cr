@@ -58,8 +58,8 @@ describe "Parser" do
   it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
 
   [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
-    ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
-    ":[]=", ":<=>", ":==="].each do |symbol|
+   ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
+   ":[]=", ":<=>", ":==="].each do |symbol|
     value = symbol[1, symbol.size - 1]
     value = value[1, value.size - 2] if value.starts_with?("\"")
     it_parses symbol, value.symbol
@@ -340,6 +340,10 @@ describe "Parser" do
   it_parses "x.foo(a: 1, b: 2)", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
   it_parses "x.foo a: 1, b: 2 ", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
 
+  it_parses "x[a: 1, b: 2]", Call.new("x".call, "[]", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
+  it_parses "x[{1}]", Call.new("x".call, "[]", TupleLiteral.new([1.int32] of ASTNode))
+  it_parses "x[+ 1]", Call.new("x".call, "[]", Call.new(1.int32, "+"))
+
   it_parses "foo(a: 1, &block)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: 1, &block", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: b(1) do\nend", Call.new(nil, "foo", named_args: [NamedArgument.new("a", Call.new(nil, "b", 1.int32))], block: Block.new)
@@ -465,6 +469,9 @@ describe "Parser" do
   it_parses %(Foo({"foo bar": X})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo bar", "X".path)])] of ASTNode)
   it_parses %(Foo({"foo": X, "bar": Y})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo", "X".path), NamedArgument.new("bar", "Y".path)])] of ASTNode)
 
+  it_parses %(Foo{"x" => "y"}), HashLiteral.new([HashLiteral::Entry.new("x".string, "y".string)], name: "Foo".path)
+  it_parses %(::Foo{"x" => "y"}), HashLiteral.new([HashLiteral::Entry.new("x".string, "y".string)], name: Path.global("Foo"))
+
   it_parses "Foo(*T)", Generic.new("Foo".path, ["T".path.splat] of ASTNode)
 
   it_parses "Foo(X, sizeof(Int32))", Generic.new("Foo".path, ["X".path, SizeOf.new("Int32".path)] of ASTNode)
@@ -491,6 +498,7 @@ describe "Parser" do
   it_parses "foo { |a| 1 }", Call.new(nil, "foo", block: Block.new(["a".var], 1.int32))
   it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
   it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", block: Block.new(body: 1.int32))
+  it_parses "a b() {}", Call.new(nil, "a", Call.new(nil, "b", block: Block.new))
 
   it_parses "foo { |a, (b, c), (d, e)| a; b; c; d; e }", Call.new(nil, "foo",
     block: Block.new(["a".var, "__arg0".var, "__arg1".var],
@@ -894,6 +902,8 @@ describe "Parser" do
   it_parses "case {1, 2}\nwhen {3, 4}, {5, 6}\n7\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode), TupleLiteral.new([5.int32, 6.int32] of ASTNode)] of ASTNode, 7.int32)])
   it_parses "case {1, 2}\nwhen {.foo, .bar}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new(ImplicitObj.new, "foo"), Call.new(ImplicitObj.new, "bar")] of ASTNode)] of ASTNode, 5.int32)])
   it_parses "case {1, 2}\nwhen foo\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new(["foo".call] of ASTNode, 5.int32)])
+  it_parses "case a\nwhen b\n1 / 2\nelse\n1 / 2\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, Call.new(1.int32, "/", 2.int32))], Call.new(1.int32, "/", 2.int32))
+  it_parses "case a\nwhen b\n/ /\n\nelse\n/ /\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, RegexLiteral.new(StringLiteral.new(" ")))], RegexLiteral.new(StringLiteral.new(" ")))
   assert_syntax_error "case {1, 2}; when {3}; 4; end", "wrong number of tuple elements (given 1, expected 2)", 1, 19
 
   it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
@@ -1122,7 +1132,7 @@ describe "Parser" do
   it_parses "<<-HERE\n   One\n\n  Zero\n  HERE", " One\n\nZero".string
   it_parses "<<-HERE\n   One\n \n  Zero\n  HERE", " One\n\nZero".string
   it_parses "<<-HERE\n   \#{1}One\n  \#{2}Zero\n  HERE", StringInterpolation.new([" ".string, 1.int32, "One\n".string, 2.int32, "Zero".string] of ASTNode)
-  it_parses "<<-HERE\n  foo\#{1}bar\n   baz\n  HERE", StringInterpolation.new(["foo".string, 1.int32, "bar\n".string, " baz".string] of ASTNode)
+  it_parses "<<-HERE\n  foo\#{1}bar\n   baz\n  HERE", StringInterpolation.new(["foo".string, 1.int32, "bar\n baz".string] of ASTNode)
   it_parses "<<-HERE\r\n   One\r\n  Zero\r\n  HERE", " One\r\nZero".string
   it_parses "<<-HERE\r\n   One\r\n  Zero\r\n  HERE\r\n", " One\r\nZero".string
   it_parses "<<-SOME\n  Sa\n  Se\n  SOME", "Sa\nSe".string
@@ -1244,6 +1254,8 @@ describe "Parser" do
   it_parses "a { |x| x } / b", Call.new(Call.new(nil, "a", block: Block.new(args: ["x".var], body: "x".var)), "/", "b".call)
 
   it_parses "1 if /x/", If.new(RegexLiteral.new("x".string), 1.int32)
+
+  it_parses "foo bar.baz(1) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
 
   assert_syntax_error "return do\nend", "unexpected token: do"
 
@@ -1447,6 +1459,8 @@ describe "Parser" do
   assert_syntax_error "x[1:-2]"
 
   assert_syntax_error "1 ? : 2 : 3"
+
+  assert_syntax_error %(def foo("bar");end), "expected argument internal name"
 
   describe "end locations" do
     assert_end_location "nil"

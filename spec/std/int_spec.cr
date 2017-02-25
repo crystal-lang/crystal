@@ -28,7 +28,7 @@ describe "Int" do
     end
 
     it "raises with negative exponent" do
-      expect_raises(ArgumentError, "cannot raise an integer to a negative integer power, use floats for that") do
+      expect_raises(ArgumentError, "Cannot raise an integer to a negative integer power, use floats for that") do
         2 ** -1
       end
     end
@@ -40,44 +40,44 @@ describe "Int" do
     end
 
     describe "with float" do
-      assert { (2 ** 2.0).should be_close(4, 0.0001) }
-      assert { (2 ** 2.5_f32).should be_close(5.656854249492381, 0.0001) }
-      assert { (2 ** 2.5).should be_close(5.656854249492381, 0.0001) }
+      it { (2 ** 2.0).should be_close(4, 0.0001) }
+      it { (2 ** 2.5_f32).should be_close(5.656854249492381, 0.0001) }
+      it { (2 ** 2.5).should be_close(5.656854249492381, 0.0001) }
     end
   end
 
   describe "#===(:Char)" do
-    assert { (99 === 'c').should be_true }
-    assert { (99_u8 === 'c').should be_true }
-    assert { (99 === 'z').should be_false }
-    assert { (37202 === '酒').should be_true }
+    it { (99 === 'c').should be_true }
+    it { (99_u8 === 'c').should be_true }
+    it { (99 === 'z').should be_false }
+    it { (37202 === '酒').should be_true }
   end
 
   describe "divisible_by?" do
-    assert { 10.divisible_by?(5).should be_true }
-    assert { 10.divisible_by?(3).should be_false }
+    it { 10.divisible_by?(5).should be_true }
+    it { 10.divisible_by?(3).should be_false }
   end
 
   describe "even?" do
-    assert { 2.even?.should be_true }
-    assert { 3.even?.should be_false }
+    it { 2.even?.should be_true }
+    it { 3.even?.should be_false }
   end
 
   describe "odd?" do
-    assert { 2.odd?.should be_false }
-    assert { 3.odd?.should be_true }
+    it { 2.odd?.should be_false }
+    it { 3.odd?.should be_true }
   end
 
   describe "succ" do
-    assert { 8.succ.should eq(9) }
-    assert { -2147483648.succ.should eq(-2147483647) }
-    assert { 2147483646.succ.should eq(2147483647) }
+    it { 8.succ.should eq(9) }
+    it { -2147483648.succ.should eq(-2147483647) }
+    it { 2147483646.succ.should eq(2147483647) }
   end
 
   describe "pred" do
-    assert { 9.pred.should eq(8) }
-    assert { -2147483647.pred.should eq(-2147483648) }
-    assert { 2147483647.pred.should eq(2147483646) }
+    it { 9.pred.should eq(8) }
+    it { -2147483647.pred.should eq(-2147483648) }
+    it { 2147483647.pred.should eq(2147483646) }
   end
 
   describe "abs" do
@@ -101,38 +101,38 @@ describe "Int" do
   end
 
   describe "lcm" do
-    assert { 2.lcm(2).should eq(2) }
-    assert { 3.lcm(-7).should eq(21) }
-    assert { 4.lcm(6).should eq(12) }
-    assert { 0.lcm(2).should eq(0) }
-    assert { 2.lcm(0).should eq(0) }
+    it { 2.lcm(2).should eq(2) }
+    it { 3.lcm(-7).should eq(21) }
+    it { 4.lcm(6).should eq(12) }
+    it { 0.lcm(2).should eq(0) }
+    it { 2.lcm(0).should eq(0) }
   end
 
   describe "to_s in base" do
-    assert { 12.to_s(2).should eq("1100") }
-    assert { -12.to_s(2).should eq("-1100") }
-    assert { -123456.to_s(2).should eq("-11110001001000000") }
-    assert { 1234.to_s(16).should eq("4d2") }
-    assert { -1234.to_s(16).should eq("-4d2") }
-    assert { 1234.to_s(36).should eq("ya") }
-    assert { -1234.to_s(36).should eq("-ya") }
-    assert { 1234.to_s(16, upcase: true).should eq("4D2") }
-    assert { -1234.to_s(16, upcase: true).should eq("-4D2") }
-    assert { 1234.to_s(36, upcase: true).should eq("YA") }
-    assert { -1234.to_s(36, upcase: true).should eq("-YA") }
-    assert { 0.to_s(2).should eq("0") }
-    assert { 0.to_s(16).should eq("0") }
-    assert { 1.to_s(2).should eq("1") }
-    assert { 1.to_s(16).should eq("1") }
-    assert { 0.to_s(62).should eq("0") }
-    assert { 1.to_s(62).should eq("1") }
-    assert { 10.to_s(62).should eq("a") }
-    assert { 35.to_s(62).should eq("z") }
-    assert { 36.to_s(62).should eq("A") }
-    assert { 61.to_s(62).should eq("Z") }
-    assert { 62.to_s(62).should eq("10") }
-    assert { 97.to_s(62).should eq("1z") }
-    assert { 3843.to_s(62).should eq("ZZ") }
+    it { 12.to_s(2).should eq("1100") }
+    it { -12.to_s(2).should eq("-1100") }
+    it { -123456.to_s(2).should eq("-11110001001000000") }
+    it { 1234.to_s(16).should eq("4d2") }
+    it { -1234.to_s(16).should eq("-4d2") }
+    it { 1234.to_s(36).should eq("ya") }
+    it { -1234.to_s(36).should eq("-ya") }
+    it { 1234.to_s(16, upcase: true).should eq("4D2") }
+    it { -1234.to_s(16, upcase: true).should eq("-4D2") }
+    it { 1234.to_s(36, upcase: true).should eq("YA") }
+    it { -1234.to_s(36, upcase: true).should eq("-YA") }
+    it { 0.to_s(2).should eq("0") }
+    it { 0.to_s(16).should eq("0") }
+    it { 1.to_s(2).should eq("1") }
+    it { 1.to_s(16).should eq("1") }
+    it { 0.to_s(62).should eq("0") }
+    it { 1.to_s(62).should eq("1") }
+    it { 10.to_s(62).should eq("a") }
+    it { 35.to_s(62).should eq("z") }
+    it { 36.to_s(62).should eq("A") }
+    it { 61.to_s(62).should eq("Z") }
+    it { 62.to_s(62).should eq("10") }
+    it { 97.to_s(62).should eq("1z") }
+    it { 3843.to_s(62).should eq("ZZ") }
 
     it "raises on base 1" do
       expect_raises { 123.to_s(1) }
@@ -146,30 +146,30 @@ describe "Int" do
       expect_raises { 123.to_s(62, upcase: true) }
     end
 
-    assert { to_s_with_io(12, 2).should eq("1100") }
-    assert { to_s_with_io(-12, 2).should eq("-1100") }
-    assert { to_s_with_io(-123456, 2).should eq("-11110001001000000") }
-    assert { to_s_with_io(1234, 16).should eq("4d2") }
-    assert { to_s_with_io(-1234, 16).should eq("-4d2") }
-    assert { to_s_with_io(1234, 36).should eq("ya") }
-    assert { to_s_with_io(-1234, 36).should eq("-ya") }
-    assert { to_s_with_io(1234, 16, upcase: true).should eq("4D2") }
-    assert { to_s_with_io(-1234, 16, upcase: true).should eq("-4D2") }
-    assert { to_s_with_io(1234, 36, upcase: true).should eq("YA") }
-    assert { to_s_with_io(-1234, 36, upcase: true).should eq("-YA") }
-    assert { to_s_with_io(0, 2).should eq("0") }
-    assert { to_s_with_io(0, 16).should eq("0") }
-    assert { to_s_with_io(1, 2).should eq("1") }
-    assert { to_s_with_io(1, 16).should eq("1") }
-    assert { to_s_with_io(0, 62).should eq("0") }
-    assert { to_s_with_io(1, 62).should eq("1") }
-    assert { to_s_with_io(10, 62).should eq("a") }
-    assert { to_s_with_io(35, 62).should eq("z") }
-    assert { to_s_with_io(36, 62).should eq("A") }
-    assert { to_s_with_io(61, 62).should eq("Z") }
-    assert { to_s_with_io(62, 62).should eq("10") }
-    assert { to_s_with_io(97, 62).should eq("1z") }
-    assert { to_s_with_io(3843, 62).should eq("ZZ") }
+    it { to_s_with_io(12, 2).should eq("1100") }
+    it { to_s_with_io(-12, 2).should eq("-1100") }
+    it { to_s_with_io(-123456, 2).should eq("-11110001001000000") }
+    it { to_s_with_io(1234, 16).should eq("4d2") }
+    it { to_s_with_io(-1234, 16).should eq("-4d2") }
+    it { to_s_with_io(1234, 36).should eq("ya") }
+    it { to_s_with_io(-1234, 36).should eq("-ya") }
+    it { to_s_with_io(1234, 16, upcase: true).should eq("4D2") }
+    it { to_s_with_io(-1234, 16, upcase: true).should eq("-4D2") }
+    it { to_s_with_io(1234, 36, upcase: true).should eq("YA") }
+    it { to_s_with_io(-1234, 36, upcase: true).should eq("-YA") }
+    it { to_s_with_io(0, 2).should eq("0") }
+    it { to_s_with_io(0, 16).should eq("0") }
+    it { to_s_with_io(1, 2).should eq("1") }
+    it { to_s_with_io(1, 16).should eq("1") }
+    it { to_s_with_io(0, 62).should eq("0") }
+    it { to_s_with_io(1, 62).should eq("1") }
+    it { to_s_with_io(10, 62).should eq("a") }
+    it { to_s_with_io(35, 62).should eq("z") }
+    it { to_s_with_io(36, 62).should eq("A") }
+    it { to_s_with_io(61, 62).should eq("Z") }
+    it { to_s_with_io(62, 62).should eq("10") }
+    it { to_s_with_io(97, 62).should eq("1z") }
+    it { to_s_with_io(3843, 62).should eq("ZZ") }
 
     it "raises on base 1 with io" do
       expect_raises { to_s_with_io(123, 1) }
@@ -185,45 +185,45 @@ describe "Int" do
   end
 
   describe "bit" do
-    assert { 5.bit(0).should eq(1) }
-    assert { 5.bit(1).should eq(0) }
-    assert { 5.bit(2).should eq(1) }
-    assert { 5.bit(3).should eq(0) }
-    assert { 0.bit(63).should eq(0) }
-    assert { Int64::MAX.bit(63).should eq(0) }
-    assert { UInt64::MAX.bit(63).should eq(1) }
-    assert { UInt64::MAX.bit(64).should eq(0) }
+    it { 5.bit(0).should eq(1) }
+    it { 5.bit(1).should eq(0) }
+    it { 5.bit(2).should eq(1) }
+    it { 5.bit(3).should eq(0) }
+    it { 0.bit(63).should eq(0) }
+    it { Int64::MAX.bit(63).should eq(0) }
+    it { UInt64::MAX.bit(63).should eq(1) }
+    it { UInt64::MAX.bit(64).should eq(0) }
   end
 
   describe "divmod" do
-    assert { 5.divmod(3).should eq({1, 2}) }
+    it { 5.divmod(3).should eq({1, 2}) }
   end
 
   describe "fdiv" do
-    assert { 1.fdiv(1).should eq 1.0 }
-    assert { 1.fdiv(2).should eq 0.5 }
-    assert { 1.fdiv(0.5).should eq 2.0 }
-    assert { 0.fdiv(1).should eq 0.0 }
-    assert { 1.fdiv(0).should eq 1.0/0.0 }
+    it { 1.fdiv(1).should eq 1.0 }
+    it { 1.fdiv(2).should eq 0.5 }
+    it { 1.fdiv(0.5).should eq 2.0 }
+    it { 0.fdiv(1).should eq 0.0 }
+    it { 1.fdiv(0).should eq 1.0/0.0 }
   end
 
   describe "~" do
-    assert { (~1).should eq(-2) }
-    assert { (~1_u32).should eq(4294967294) }
+    it { (~1).should eq(-2) }
+    it { (~1_u32).should eq(4294967294) }
   end
 
   describe ">>" do
-    assert { (8000 >> 1).should eq(4000) }
-    assert { (8000 >> 2).should eq(2000) }
-    assert { (8000 >> 32).should eq(0) }
-    assert { (8000 >> -1).should eq(16000) }
+    it { (8000 >> 1).should eq(4000) }
+    it { (8000 >> 2).should eq(2000) }
+    it { (8000 >> 32).should eq(0) }
+    it { (8000 >> -1).should eq(16000) }
   end
 
   describe "<<" do
-    assert { (8000 << 1).should eq(16000) }
-    assert { (8000 << 2).should eq(32000) }
-    assert { (8000 << 32).should eq(0) }
-    assert { (8000 << -1).should eq(4000) }
+    it { (8000 << 1).should eq(16000) }
+    it { (8000 << 2).should eq(32000) }
+    it { (8000 << 32).should eq(0) }
+    it { (8000 << -1).should eq(4000) }
   end
 
   describe "to" do
@@ -467,25 +467,25 @@ describe "Int" do
   end
 
   describe "#popcount" do
-    assert { 5_i8.popcount.should eq(2) }
-    assert { 127_i8.popcount.should eq(7) }
-    assert { -1_i8.popcount.should eq(8) }
-    assert { -128_i8.popcount.should eq(1) }
+    it { 5_i8.popcount.should eq(2) }
+    it { 127_i8.popcount.should eq(7) }
+    it { -1_i8.popcount.should eq(8) }
+    it { -128_i8.popcount.should eq(1) }
 
-    assert { 0_u8.popcount.should eq(0) }
-    assert { 255_u8.popcount.should eq(8) }
+    it { 0_u8.popcount.should eq(0) }
+    it { 255_u8.popcount.should eq(8) }
 
-    assert { 5_i16.popcount.should eq(2) }
-    assert { -6_i16.popcount.should eq(14) }
-    assert { 65535_u16.popcount.should eq(16) }
+    it { 5_i16.popcount.should eq(2) }
+    it { -6_i16.popcount.should eq(14) }
+    it { 65535_u16.popcount.should eq(16) }
 
-    assert { 0_i32.popcount.should eq(0) }
-    assert { 2147483647_i32.popcount.should eq(31) }
-    assert { 4294967295_u32.popcount.should eq(32) }
+    it { 0_i32.popcount.should eq(0) }
+    it { 2147483647_i32.popcount.should eq(31) }
+    it { 4294967295_u32.popcount.should eq(32) }
 
-    assert { 5_i64.popcount.should eq(2) }
-    assert { 9223372036854775807_i64.popcount.should eq(63) }
-    assert { 18446744073709551615_u64.popcount.should eq(64) }
+    it { 5_i64.popcount.should eq(2) }
+    it { 9223372036854775807_i64.popcount.should eq(63) }
+    it { 18446744073709551615_u64.popcount.should eq(64) }
   end
 
   it "compares signed vs. unsigned integers" do

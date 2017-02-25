@@ -1,9 +1,8 @@
 # A JSON builder generates valid JSON.
 #
-# A `JSON::Error` is raised if attempting to generate
-# an invalid JSON (for example, if invoking `end_array`
-# without a matching `start_array`, or trying to use
-# a non-string value as an object's field name)
+# A `JSON::Error` is raised if attempting to generate an invalid JSON
+# (for example, if invoking `end_array` without a matching `start_array`,
+# or trying to use a non-string value as an object's field name).
 class JSON::Builder
   private getter io
 
@@ -12,11 +11,12 @@ class JSON::Builder
   record ArrayState, empty : Bool
   record ObjectState, empty : Bool, name : Bool
   record DocumentEndState
+
   alias State = StartState | DocumentStartState | ArrayState | ObjectState | DocumentEndState
 
   @indent : String?
 
-  # Creates a JSON::Builder that will write to the given IO.
+  # Creates a `JSON::Builder` that will write to the given `IO`.
   def initialize(@io : IO)
     @state = [StartState.new] of State
     @current_indent = 0
@@ -30,7 +30,7 @@ class JSON::Builder
     when DocumentEndState
       @state[-1] = DocumentStartState.new
     else
-      raise JSON::Error.new("starting document before ending previous one")
+      raise JSON::Error.new("Starting document before ending previous one")
     end
   end
 
@@ -38,13 +38,13 @@ class JSON::Builder
   def end_document : Nil
     case state = @state.last
     when StartState
-      raise JSON::Error.new("empty JSON")
+      raise JSON::Error.new("Empty JSON")
     when DocumentStartState
-      raise JSON::Error.new("empty JSON")
+      raise JSON::Error.new("Empty JSON")
     when ArrayState
-      raise JSON::Error.new("unterminated JSON array")
+      raise JSON::Error.new("Unterminated JSON array")
     when ObjectState
-      raise JSON::Error.new("unterminated JSON object")
+      raise JSON::Error.new("Unterminated JSON object")
     end
   end
 
@@ -151,7 +151,7 @@ class JSON::Builder
     when ArrayState
       @state.pop
     else
-      raise JSON::Error.new("can't do end_array: not inside an array")
+      raise JSON::Error.new("Can't do end_array: not inside an array")
     end
     write_indent state
     @io << "]"
@@ -179,11 +179,11 @@ class JSON::Builder
     case state = @state.last
     when ObjectState
       unless state.name
-        raise JSON::Error.new("missing object value")
+        raise JSON::Error.new("Missing object value")
       end
       @state.pop
     else
-      raise JSON::Error.new("can't do end_object: not inside an object")
+      raise JSON::Error.new("Can't do end_object: not inside an object")
     end
     write_indent state
     @io << "}"
@@ -234,12 +234,12 @@ class JSON::Builder
     yield
   end
 
-  # Flushes the underlying IO.
+  # Flushes the underlying `IO`.
   def flush
     @io.flush
   end
 
-  # Sets the indent string.
+  # Sets the indent *string*.
   def indent=(string : String)
     if string.empty?
       @indent = nil
@@ -248,7 +248,7 @@ class JSON::Builder
     end
   end
 
-  # Sets the indent level (number of spaces)
+  # Sets the indent *level* (number of spaces).
   def indent=(level : Int)
     if level < 0
       @indent = nil
@@ -266,14 +266,14 @@ class JSON::Builder
     object_value = false
     case state = @state.last
     when StartState
-      raise JSON::Error.new("write before start_document")
+      raise JSON::Error.new("Write before start_document")
     when DocumentEndState
-      raise JSON::Error.new("write past end_document and before start_document")
+      raise JSON::Error.new("Write past end_document and before start_document")
     when ArrayState
       comma unless state.empty
     when ObjectState
       if state.name && !string
-        raise JSON::Error.new("expected string for object name")
+        raise JSON::Error.new("Expected string for object name")
       end
       comma if state.name && !state.empty
       object_value = !state.name
@@ -333,7 +333,7 @@ class JSON::Builder
 end
 
 module JSON
-  # Returns the resulting String of writing JSON to the yielded `JSON::Builder`.
+  # Returns the resulting `String` of writing JSON to the yielded `JSON::Builder`.
   #
   # ```
   # require "json"
@@ -360,7 +360,7 @@ module JSON
     end
   end
 
-  # Writes JSON into the given IO. A `JSON::Builder` is yielded to the block.
+  # Writes JSON into the given `IO`. A `JSON::Builder` is yielded to the block.
   def self.build(io : IO, indent = nil)
     builder = JSON::Builder.new(io)
     builder.indent = indent if indent

@@ -13,7 +13,7 @@ describe "Code gen: debug" do
       end
 
       x = Foo.new || Bar.new
-      ), debug: true)
+      ), debug: Crystal::Debug::All)
   end
 
   it "inlines instance var access through getter in debug mode" do
@@ -45,6 +45,37 @@ describe "Code gen: debug" do
       foo = Foo.new
       foo.set
       foo.bar.x
-      ), debug: true, filename: "foo.cr").to_i.should eq(2)
+      ), debug: Crystal::Debug::All, filename: "foo.cr").to_i.should eq(2)
+  end
+
+  it "codegens correct debug info for untyped expression (#4007 and #4008)" do
+    codegen(%(
+      require "prelude"
+
+      int = 3
+      case int
+      when 0
+          puts 0
+      when 1, 2, Int32
+          puts "1 | 2 | Int32"
+      else
+          puts int
+      end
+      ), debug: Crystal::Debug::All)
+  end
+
+  it "codegens correct debug info for new with custom allocate (#3945)" do
+    codegen(%(
+      class Foo
+        def initialize
+        end
+
+        def self.allocate
+          Pointer(UInt8).malloc(1_u64).as(self)
+        end
+      end
+
+      Foo.new
+      ), debug: Crystal::Debug::All)
   end
 end

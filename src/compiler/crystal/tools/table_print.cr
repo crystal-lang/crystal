@@ -51,7 +51,7 @@ module Crystal
 
     alias RowTypes = Array(Cell) | Separator
 
-    property! last_string_row : Array(Cell)?
+    property! last_string_row : Array(Cell)
     property columns : Array(Column)
 
     def initialize(@io : IO)

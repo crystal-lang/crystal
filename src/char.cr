@@ -1,6 +1,6 @@
 require "comparable"
 
-# A Char represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point).
+# A `Char` represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point).
 # It occupies 32 bits.
 #
 # It is created by enclosing an UTF-8 character in single quotes.
@@ -52,11 +52,14 @@ struct Char
   # The character representing the end of a C string.
   ZERO = '\0'
 
-  # The maximum character
+  # The maximum character.
   MAX = 0x10ffff.unsafe_chr
 
-  # The maximum valid codepoint for a character
+  # The maximum valid codepoint for a character.
   MAX_CODEPOINT = 0x10ffff
+
+  # The replacement character, used on invalid utf-8 byte sequences
+  REPLACEMENT = '\ufffd'
 
   # Returns the difference of the codepoint values of this char and *other*.
   #
@@ -122,12 +125,6 @@ struct Char
   # (codepoint is in (0..127))
   def ascii?
     ord < 128
-  end
-
-  # DEPRECATED: use `#ascii_number?` or `#number?`. This method will be removed after 0.20.0.
-  def digit?(base : Int = 10)
-    {{ puts "Warning: `Char#digit?` is deprecated and will be removed after 0.20.0, use `Char#ascii_number?` or `Char#number?` instead".id }}
-    ascii_number?(base)
   end
 
   # Returns `true` if this char is an ASCII number in specified base.
@@ -201,12 +198,6 @@ struct Char
     ascii? ? ascii_uppercase? : Unicode.uppercase?(self)
   end
 
-  # DEPRECATED: use `#ascii_letter?` or `#letter?`. This method will be removed after 0.20.0.
-  def alpha?
-    {{ puts "Warning: `Char#alpha?` is deprecated and will be removed after 0.20.0, use `Char#ascii_letter?` or `Char#letter?` instead".id }}
-    ascii_letter?
-  end
-
   # Returns `true` if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
   #
   # ```
@@ -229,7 +220,7 @@ struct Char
     ascii? ? ascii_letter? : Unicode.letter?(self)
   end
 
-  # Returns true if this char is an ASCII letter or number ('0' to '9', 'a' to 'z', 'A' to 'Z').
+  # Returns `true` if this char is an ASCII letter or number ('0' to '9', 'a' to 'z', 'A' to 'Z').
   #
   # ```
   # 'c'.ascii_alphanumeric? # => true
@@ -240,7 +231,7 @@ struct Char
     ascii_letter? || ascii_number?
   end
 
-  # Returns true if this char is a letter or a number according to unicode.
+  # Returns `true` if this char is a letter or a number according to unicode.
   #
   # ```
   # 'c'.alphanumeric? # => true
@@ -503,7 +494,7 @@ struct Char
   end
 
   # Returns this char as a string that contains a char literal as written in Crystal,
-  # with characters with a codepoint greater than 0x79 written as `\u{...}`.
+  # with characters with a codepoint greater than `0x79` written as `\u{...}`.
   #
   # ```
   # 'a'.dump      # => "'a'"
@@ -580,7 +571,7 @@ struct Char
   # 'z'.to_i(16) # raises ArgumentError
   # ```
   def to_i?(base : Int = 10) : Int32?
-    raise ArgumentError.new "invalid base #{base}, expected 2 to 36" unless 2 <= base <= 36
+    raise ArgumentError.new "Invalid base #{base}, expected 2 to 36" unless 2 <= base <= 36
 
     if base == 10
       return unless '0' <= self <= '9'

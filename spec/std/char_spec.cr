@@ -2,100 +2,100 @@ require "spec"
 
 describe "Char" do
   describe "upcase" do
-    assert { 'a'.upcase.should eq('A') }
-    assert { '1'.upcase.should eq('1') }
+    it { 'a'.upcase.should eq('A') }
+    it { '1'.upcase.should eq('1') }
   end
 
   describe "downcase" do
-    assert { 'A'.downcase.should eq('a') }
-    assert { '1'.downcase.should eq('1') }
+    it { 'A'.downcase.should eq('a') }
+    it { '1'.downcase.should eq('1') }
   end
 
   describe "succ" do
-    assert { 'a'.succ.should eq('b') }
-    assert { 'あ'.succ.should eq('ぃ') }
+    it { 'a'.succ.should eq('b') }
+    it { 'あ'.succ.should eq('ぃ') }
   end
 
   describe "pred" do
-    assert { 'b'.pred.should eq('a') }
-    assert { 'ぃ'.pred.should eq('あ') }
+    it { 'b'.pred.should eq('a') }
+    it { 'ぃ'.pred.should eq('あ') }
   end
 
   describe "+" do
-    assert { ('a' + 2).should eq('c') }
+    it { ('a' + 2).should eq('c') }
   end
 
   describe "-" do
-    assert { ('c' - 2).should eq('a') }
+    it { ('c' - 2).should eq('a') }
   end
 
   describe "ascii_uppercase?" do
-    assert { 'a'.ascii_uppercase?.should be_false }
-    assert { 'A'.ascii_uppercase?.should be_true }
-    assert { '1'.ascii_uppercase?.should be_false }
-    assert { ' '.ascii_uppercase?.should be_false }
+    it { 'a'.ascii_uppercase?.should be_false }
+    it { 'A'.ascii_uppercase?.should be_true }
+    it { '1'.ascii_uppercase?.should be_false }
+    it { ' '.ascii_uppercase?.should be_false }
   end
 
   describe "uppercase?" do
-    assert { 'A'.uppercase?.should be_true }
-    assert { 'Á'.uppercase?.should be_true }
-    assert { 'Ā'.uppercase?.should be_true }
-    assert { 'Ą'.uppercase?.should be_true }
-    assert { 'ā'.uppercase?.should be_false }
-    assert { 'á'.uppercase?.should be_false }
-    assert { 'a'.uppercase?.should be_false }
-    assert { '1'.uppercase?.should be_false }
-    assert { ' '.uppercase?.should be_false }
+    it { 'A'.uppercase?.should be_true }
+    it { 'Á'.uppercase?.should be_true }
+    it { 'Ā'.uppercase?.should be_true }
+    it { 'Ą'.uppercase?.should be_true }
+    it { 'ā'.uppercase?.should be_false }
+    it { 'á'.uppercase?.should be_false }
+    it { 'a'.uppercase?.should be_false }
+    it { '1'.uppercase?.should be_false }
+    it { ' '.uppercase?.should be_false }
   end
 
   describe "ascii_lowercase?" do
-    assert { 'a'.ascii_lowercase?.should be_true }
-    assert { 'A'.ascii_lowercase?.should be_false }
-    assert { '1'.ascii_lowercase?.should be_false }
-    assert { ' '.ascii_lowercase?.should be_false }
+    it { 'a'.ascii_lowercase?.should be_true }
+    it { 'A'.ascii_lowercase?.should be_false }
+    it { '1'.ascii_lowercase?.should be_false }
+    it { ' '.ascii_lowercase?.should be_false }
   end
 
   describe "lowercase?" do
-    assert { 'a'.lowercase?.should be_true }
-    assert { 'á'.lowercase?.should be_true }
-    assert { 'ā'.lowercase?.should be_true }
-    assert { 'ă'.lowercase?.should be_true }
-    assert { 'A'.lowercase?.should be_false }
-    assert { 'Á'.lowercase?.should be_false }
-    assert { '1'.lowercase?.should be_false }
-    assert { ' '.lowercase?.should be_false }
+    it { 'a'.lowercase?.should be_true }
+    it { 'á'.lowercase?.should be_true }
+    it { 'ā'.lowercase?.should be_true }
+    it { 'ă'.lowercase?.should be_true }
+    it { 'A'.lowercase?.should be_false }
+    it { 'Á'.lowercase?.should be_false }
+    it { '1'.lowercase?.should be_false }
+    it { ' '.lowercase?.should be_false }
   end
 
   describe "ascii_letter?" do
-    assert { 'a'.ascii_letter?.should be_true }
-    assert { 'A'.ascii_letter?.should be_true }
-    assert { '1'.ascii_letter?.should be_false }
-    assert { ' '.ascii_letter?.should be_false }
+    it { 'a'.ascii_letter?.should be_true }
+    it { 'A'.ascii_letter?.should be_true }
+    it { '1'.ascii_letter?.should be_false }
+    it { ' '.ascii_letter?.should be_false }
   end
 
   describe "alphanumeric?" do
-    assert { 'a'.alphanumeric?.should be_true }
-    assert { 'A'.alphanumeric?.should be_true }
-    assert { '1'.alphanumeric?.should be_true }
-    assert { ' '.alphanumeric?.should be_false }
+    it { 'a'.alphanumeric?.should be_true }
+    it { 'A'.alphanumeric?.should be_true }
+    it { '1'.alphanumeric?.should be_true }
+    it { ' '.alphanumeric?.should be_false }
   end
 
   describe "ascii_whitespace?" do
     [' ', '\t', '\n', '\v', '\f', '\r'].each do |char|
-      assert { char.ascii_whitespace?.should be_true }
+      it { char.ascii_whitespace?.should be_true }
     end
-    assert { 'A'.ascii_whitespace?.should be_false }
+    it { 'A'.ascii_whitespace?.should be_false }
   end
 
   describe "hex?" do
     "0123456789abcdefABCDEF".each_char do |char|
-      assert { char.hex?.should be_true }
+      it { char.hex?.should be_true }
     end
     ('g'..'z').each do |char|
-      assert { char.hex?.should be_false }
+      it { char.hex?.should be_false }
     end
     [' ', '-', '\0'].each do |char|
-      assert { char.hex?.should be_false }
+      it { char.hex?.should be_false }
     end
   end
 
@@ -135,14 +135,6 @@ describe "Char" do
     '\e'.ord.should eq(27)
     '\''.ord.should eq(39)
     '\\'.ord.should eq(92)
-  end
-
-  it "escapes with octal" do
-    '\0'.ord.should eq(0)
-    '\3'.ord.should eq(3)
-    '\23'.ord.should eq((2 * 8) + 3)
-    '\123'.ord.should eq((1 * 8 * 8) + (2 * 8) + 3)
-    '\033'.ord.should eq((3 * 8) + 3)
   end
 
   it "escapes with unicode" do
@@ -212,13 +204,13 @@ describe "Char" do
   end
 
   it "to_i rejects unsupported base (1)" do
-    expect_raises ArgumentError, "invalid base 1" do
+    expect_raises ArgumentError, "Invalid base 1" do
       '0'.to_i(1)
     end
   end
 
   it "to_i rejects unsupported base (37)" do
-    expect_raises ArgumentError, "invalid base 37" do
+    expect_raises ArgumentError, "Invalid base 37" do
       '0'.to_i(37)
     end
   end
@@ -248,8 +240,8 @@ describe "Char" do
   end
 
   describe "index" do
-    assert { "foo".index('o').should eq(1) }
-    assert { "foo".index('x').should be_nil }
+    it { "foo".index('o').should eq(1) }
+    it { "foo".index('x').should be_nil }
   end
 
   it "does <=>" do
@@ -290,41 +282,41 @@ describe "Char" do
   end
 
   describe "in_set?" do
-    assert { 'a'.in_set?("a").should be_true }
-    assert { 'a'.in_set?("b").should be_false }
-    assert { 'a'.in_set?("a-c").should be_true }
-    assert { 'b'.in_set?("a-c").should be_true }
-    assert { 'c'.in_set?("a-c").should be_true }
-    assert { 'c'.in_set?("a-bc").should be_true }
-    assert { 'b'.in_set?("a-bc").should be_true }
-    assert { 'd'.in_set?("a-c").should be_false }
-    assert { 'b'.in_set?("^a-c").should be_false }
-    assert { 'd'.in_set?("^a-c").should be_true }
-    assert { 'a'.in_set?("ab-c").should be_true }
-    assert { 'a'.in_set?("\\^ab-c").should be_true }
-    assert { '^'.in_set?("\\^ab-c").should be_true }
-    assert { '^'.in_set?("a^b-c").should be_true }
-    assert { '^'.in_set?("ab-c^").should be_true }
-    assert { '^'.in_set?("a0-^").should be_true }
-    assert { '^'.in_set?("^-c").should be_true }
-    assert { '^'.in_set?("a^-c").should be_true }
-    assert { '\\'.in_set?("ab-c\\").should be_true }
-    assert { '\\'.in_set?("a\\b-c").should be_false }
-    assert { '\\'.in_set?("a0-\\c").should be_true }
-    assert { '\\'.in_set?("a\\-c").should be_false }
-    assert { '-'.in_set?("a-c").should be_false }
-    assert { '-'.in_set?("a-c").should be_false }
-    assert { '-'.in_set?("a\\-c").should be_true }
-    assert { '-'.in_set?("-c").should be_true }
-    assert { '-'.in_set?("a-").should be_true }
-    assert { '-'.in_set?("^-c").should be_false }
-    assert { '-'.in_set?("^\\-c").should be_false }
-    assert { 'b'.in_set?("^\\-c").should be_true }
-    assert { '-'.in_set?("a^-c").should be_false }
-    assert { 'a'.in_set?("a", "ab").should be_true }
-    assert { 'a'.in_set?("a", "^b").should be_true }
-    assert { 'a'.in_set?("a", "b").should be_false }
-    assert { 'a'.in_set?("ab", "ac", "ad").should be_true }
+    it { 'a'.in_set?("a").should be_true }
+    it { 'a'.in_set?("b").should be_false }
+    it { 'a'.in_set?("a-c").should be_true }
+    it { 'b'.in_set?("a-c").should be_true }
+    it { 'c'.in_set?("a-c").should be_true }
+    it { 'c'.in_set?("a-bc").should be_true }
+    it { 'b'.in_set?("a-bc").should be_true }
+    it { 'd'.in_set?("a-c").should be_false }
+    it { 'b'.in_set?("^a-c").should be_false }
+    it { 'd'.in_set?("^a-c").should be_true }
+    it { 'a'.in_set?("ab-c").should be_true }
+    it { 'a'.in_set?("\\^ab-c").should be_true }
+    it { '^'.in_set?("\\^ab-c").should be_true }
+    it { '^'.in_set?("a^b-c").should be_true }
+    it { '^'.in_set?("ab-c^").should be_true }
+    it { '^'.in_set?("a0-^").should be_true }
+    it { '^'.in_set?("^-c").should be_true }
+    it { '^'.in_set?("a^-c").should be_true }
+    it { '\\'.in_set?("ab-c\\").should be_true }
+    it { '\\'.in_set?("a\\b-c").should be_false }
+    it { '\\'.in_set?("a0-\\c").should be_true }
+    it { '\\'.in_set?("a\\-c").should be_false }
+    it { '-'.in_set?("a-c").should be_false }
+    it { '-'.in_set?("a-c").should be_false }
+    it { '-'.in_set?("a\\-c").should be_true }
+    it { '-'.in_set?("-c").should be_true }
+    it { '-'.in_set?("a-").should be_true }
+    it { '-'.in_set?("^-c").should be_false }
+    it { '-'.in_set?("^\\-c").should be_false }
+    it { 'b'.in_set?("^\\-c").should be_true }
+    it { '-'.in_set?("a^-c").should be_false }
+    it { 'a'.in_set?("a", "ab").should be_true }
+    it { 'a'.in_set?("a", "^b").should be_true }
+    it { 'a'.in_set?("a", "b").should be_false }
+    it { 'a'.in_set?("ab", "ac", "ad").should be_true }
 
     it "rejects invalid ranges" do
       expect_raises do
@@ -374,10 +366,10 @@ describe "Char" do
   end
 
   it "does number?" do
-    assert { '1'.number?.should be_true }
-    assert { '٠'.number?.should be_true }
-    assert { '٢'.number?.should be_true }
-    assert { 'a'.number?.should be_false }
+    it { '1'.number?.should be_true }
+    it { '٠'.number?.should be_true }
+    it { '٢'.number?.should be_true }
+    it { 'a'.number?.should be_false }
   end
 
   it "does ascii_control?" do
@@ -398,6 +390,6 @@ describe "Char" do
   end
 
   describe "clone" do
-    assert { 'a'.clone.should eq('a') }
+    it { 'a'.clone.should eq('a') }
   end
 end

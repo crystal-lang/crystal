@@ -46,7 +46,7 @@ describe "String" do
       end
     end
 
-    assert { "foo"[3..-10].should eq("") }
+    it { "foo"[3..-10].should eq("") }
 
     it "gets when index is last and count is negative at last with utf-8" do
       expect_raises(ArgumentError) do
@@ -121,14 +121,14 @@ describe "String" do
     end
 
     describe "with a regex" do
-      assert { "FooBar"[/o+/].should eq "oo" }
-      assert { "FooBar"[/([A-Z])/, 1].should eq "F" }
-      assert { "FooBar"[/x/]?.should be_nil }
-      assert { "FooBar"[/x/, 1]?.should be_nil }
-      assert { "FooBar"[/(x)/, 1]?.should be_nil }
-      assert { "FooBar"[/o(o)/, 2]?.should be_nil }
-      assert { "FooBar"[/o(?<this>o)/, "this"].should eq "o" }
-      assert { "FooBar"[/(?<this>x)/, "that"]?.should be_nil }
+      it { "FooBar"[/o+/].should eq "oo" }
+      it { "FooBar"[/([A-Z])/, 1].should eq "F" }
+      it { "FooBar"[/x/]?.should be_nil }
+      it { "FooBar"[/x/, 1]?.should be_nil }
+      it { "FooBar"[/(x)/, 1]?.should be_nil }
+      it { "FooBar"[/o(o)/, 2]?.should be_nil }
+      it { "FooBar"[/o(?<this>o)/, "this"].should eq "o" }
+      it { "FooBar"[/(?<this>x)/, "that"]?.should be_nil }
     end
 
     it "gets with a string" do
@@ -136,6 +136,13 @@ describe "String" do
       expect_raises { "FooBar"["Baz"] }
       "FooBar"["Bar"]?.should eq "Bar"
       "FooBar"["Baz"]?.should be_nil
+    end
+
+    it "gets with a char" do
+      "foo/bar"['/'].should eq '/'
+      expect_raises { "foo/bar"['-'] }
+      "foo/bar"['/']?.should eq '/'
+      "foo/bar"['-']?.should be_nil
     end
 
     it "gets with index and []?" do
@@ -179,153 +186,153 @@ describe "String" do
   end
 
   describe "i" do
-    assert { "1234".to_i.should eq(1234) }
-    assert { "   +1234   ".to_i.should eq(1234) }
-    assert { "   -1234   ".to_i.should eq(-1234) }
-    assert { "   +1234   ".to_i.should eq(1234) }
-    assert { "   -00001234".to_i.should eq(-1234) }
-    assert { "1_234".to_i(underscore: true).should eq(1234) }
-    assert { "1101".to_i(base: 2).should eq(13) }
-    assert { "12ab".to_i(16).should eq(4779) }
-    assert { "0x123abc".to_i(prefix: true).should eq(1194684) }
-    assert { "0b1101".to_i(prefix: true).should eq(13) }
-    assert { "0b001101".to_i(prefix: true).should eq(13) }
-    assert { "0123".to_i(prefix: true).should eq(83) }
-    assert { "123hello".to_i(strict: false).should eq(123) }
-    assert { "99 red balloons".to_i(strict: false).should eq(99) }
-    assert { "   99 red balloons".to_i(strict: false).should eq(99) }
-    assert { expect_raises(ArgumentError) { "hello".to_i } }
-    assert { expect_raises(ArgumentError) { "1__234".to_i } }
-    assert { expect_raises(ArgumentError) { "1_234".to_i } }
-    assert { expect_raises(ArgumentError) { "   1234   ".to_i(whitespace: false) } }
-    assert { expect_raises(ArgumentError) { "0x123".to_i } }
-    assert { expect_raises(ArgumentError) { "0b123".to_i } }
-    assert { expect_raises(ArgumentError) { "000b123".to_i(prefix: true) } }
-    assert { expect_raises(ArgumentError) { "000x123".to_i(prefix: true) } }
-    assert { expect_raises(ArgumentError) { "123hello".to_i } }
-    assert { "z".to_i(36).should eq(35) }
-    assert { "Z".to_i(36).should eq(35) }
-    assert { "0".to_i(62).should eq(0) }
-    assert { "1".to_i(62).should eq(1) }
-    assert { "a".to_i(62).should eq(10) }
-    assert { "z".to_i(62).should eq(35) }
-    assert { "A".to_i(62).should eq(36) }
-    assert { "Z".to_i(62).should eq(61) }
-    assert { "10".to_i(62).should eq(62) }
-    assert { "1z".to_i(62).should eq(97) }
-    assert { "ZZ".to_i(62).should eq(3843) }
+    it { "1234".to_i.should eq(1234) }
+    it { "   +1234   ".to_i.should eq(1234) }
+    it { "   -1234   ".to_i.should eq(-1234) }
+    it { "   +1234   ".to_i.should eq(1234) }
+    it { "   -00001234".to_i.should eq(-1234) }
+    it { "1_234".to_i(underscore: true).should eq(1234) }
+    it { "1101".to_i(base: 2).should eq(13) }
+    it { "12ab".to_i(16).should eq(4779) }
+    it { "0x123abc".to_i(prefix: true).should eq(1194684) }
+    it { "0b1101".to_i(prefix: true).should eq(13) }
+    it { "0b001101".to_i(prefix: true).should eq(13) }
+    it { "0123".to_i(prefix: true).should eq(83) }
+    it { "123hello".to_i(strict: false).should eq(123) }
+    it { "99 red balloons".to_i(strict: false).should eq(99) }
+    it { "   99 red balloons".to_i(strict: false).should eq(99) }
+    it { expect_raises(ArgumentError) { "hello".to_i } }
+    it { expect_raises(ArgumentError) { "1__234".to_i } }
+    it { expect_raises(ArgumentError) { "1_234".to_i } }
+    it { expect_raises(ArgumentError) { "   1234   ".to_i(whitespace: false) } }
+    it { expect_raises(ArgumentError) { "0x123".to_i } }
+    it { expect_raises(ArgumentError) { "0b123".to_i } }
+    it { expect_raises(ArgumentError) { "000b123".to_i(prefix: true) } }
+    it { expect_raises(ArgumentError) { "000x123".to_i(prefix: true) } }
+    it { expect_raises(ArgumentError) { "123hello".to_i } }
+    it { "z".to_i(36).should eq(35) }
+    it { "Z".to_i(36).should eq(35) }
+    it { "0".to_i(62).should eq(0) }
+    it { "1".to_i(62).should eq(1) }
+    it { "a".to_i(62).should eq(10) }
+    it { "z".to_i(62).should eq(35) }
+    it { "A".to_i(62).should eq(36) }
+    it { "Z".to_i(62).should eq(61) }
+    it { "10".to_i(62).should eq(62) }
+    it { "1z".to_i(62).should eq(97) }
+    it { "ZZ".to_i(62).should eq(3843) }
 
     describe "to_i8" do
-      assert { "127".to_i8.should eq(127) }
-      assert { "-128".to_i8.should eq(-128) }
-      assert { expect_raises(ArgumentError) { "128".to_i8 } }
-      assert { expect_raises(ArgumentError) { "-129".to_i8 } }
+      it { "127".to_i8.should eq(127) }
+      it { "-128".to_i8.should eq(-128) }
+      it { expect_raises(ArgumentError) { "128".to_i8 } }
+      it { expect_raises(ArgumentError) { "-129".to_i8 } }
 
-      assert { "127".to_i8?.should eq(127) }
-      assert { "128".to_i8?.should be_nil }
-      assert { "128".to_i8 { 0 }.should eq(0) }
+      it { "127".to_i8?.should eq(127) }
+      it { "128".to_i8?.should be_nil }
+      it { "128".to_i8 { 0 }.should eq(0) }
 
-      assert { expect_raises(ArgumentError) { "18446744073709551616".to_i8 } }
+      it { expect_raises(ArgumentError) { "18446744073709551616".to_i8 } }
     end
 
     describe "to_u8" do
-      assert { "255".to_u8.should eq(255) }
-      assert { "0".to_u8.should eq(0) }
-      assert { expect_raises(ArgumentError) { "256".to_u8 } }
-      assert { expect_raises(ArgumentError) { "-1".to_u8 } }
+      it { "255".to_u8.should eq(255) }
+      it { "0".to_u8.should eq(0) }
+      it { expect_raises(ArgumentError) { "256".to_u8 } }
+      it { expect_raises(ArgumentError) { "-1".to_u8 } }
 
-      assert { "255".to_u8?.should eq(255) }
-      assert { "256".to_u8?.should be_nil }
-      assert { "256".to_u8 { 0 }.should eq(0) }
+      it { "255".to_u8?.should eq(255) }
+      it { "256".to_u8?.should be_nil }
+      it { "256".to_u8 { 0 }.should eq(0) }
 
-      assert { expect_raises(ArgumentError) { "18446744073709551616".to_u8 } }
+      it { expect_raises(ArgumentError) { "18446744073709551616".to_u8 } }
     end
 
     describe "to_i16" do
-      assert { "32767".to_i16.should eq(32767) }
-      assert { "-32768".to_i16.should eq(-32768) }
-      assert { expect_raises(ArgumentError) { "32768".to_i16 } }
-      assert { expect_raises(ArgumentError) { "-32769".to_i16 } }
+      it { "32767".to_i16.should eq(32767) }
+      it { "-32768".to_i16.should eq(-32768) }
+      it { expect_raises(ArgumentError) { "32768".to_i16 } }
+      it { expect_raises(ArgumentError) { "-32769".to_i16 } }
 
-      assert { "32767".to_i16?.should eq(32767) }
-      assert { "32768".to_i16?.should be_nil }
-      assert { "32768".to_i16 { 0 }.should eq(0) }
+      it { "32767".to_i16?.should eq(32767) }
+      it { "32768".to_i16?.should be_nil }
+      it { "32768".to_i16 { 0 }.should eq(0) }
 
-      assert { expect_raises(ArgumentError) { "18446744073709551616".to_i16 } }
+      it { expect_raises(ArgumentError) { "18446744073709551616".to_i16 } }
     end
 
     describe "to_u16" do
-      assert { "65535".to_u16.should eq(65535) }
-      assert { "0".to_u16.should eq(0) }
-      assert { expect_raises(ArgumentError) { "65536".to_u16 } }
-      assert { expect_raises(ArgumentError) { "-1".to_u16 } }
+      it { "65535".to_u16.should eq(65535) }
+      it { "0".to_u16.should eq(0) }
+      it { expect_raises(ArgumentError) { "65536".to_u16 } }
+      it { expect_raises(ArgumentError) { "-1".to_u16 } }
 
-      assert { "65535".to_u16?.should eq(65535) }
-      assert { "65536".to_u16?.should be_nil }
-      assert { "65536".to_u16 { 0 }.should eq(0) }
+      it { "65535".to_u16?.should eq(65535) }
+      it { "65536".to_u16?.should be_nil }
+      it { "65536".to_u16 { 0 }.should eq(0) }
 
-      assert { expect_raises(ArgumentError) { "18446744073709551616".to_u16 } }
+      it { expect_raises(ArgumentError) { "18446744073709551616".to_u16 } }
     end
 
     describe "to_i32" do
-      assert { "2147483647".to_i32.should eq(2147483647) }
-      assert { "-2147483648".to_i32.should eq(-2147483648) }
-      assert { expect_raises(ArgumentError) { "2147483648".to_i32 } }
-      assert { expect_raises(ArgumentError) { "-2147483649".to_i32 } }
+      it { "2147483647".to_i32.should eq(2147483647) }
+      it { "-2147483648".to_i32.should eq(-2147483648) }
+      it { expect_raises(ArgumentError) { "2147483648".to_i32 } }
+      it { expect_raises(ArgumentError) { "-2147483649".to_i32 } }
 
-      assert { "2147483647".to_i32?.should eq(2147483647) }
-      assert { "2147483648".to_i32?.should be_nil }
-      assert { "2147483648".to_i32 { 0 }.should eq(0) }
+      it { "2147483647".to_i32?.should eq(2147483647) }
+      it { "2147483648".to_i32?.should be_nil }
+      it { "2147483648".to_i32 { 0 }.should eq(0) }
 
-      assert { expect_raises(ArgumentError) { "18446744073709551616".to_i32 } }
+      it { expect_raises(ArgumentError) { "18446744073709551616".to_i32 } }
     end
 
     describe "to_u32" do
-      assert { "4294967295".to_u32.should eq(4294967295) }
-      assert { "0".to_u32.should eq(0) }
-      assert { expect_raises(ArgumentError) { "4294967296".to_u32 } }
-      assert { expect_raises(ArgumentError) { "-1".to_u32 } }
+      it { "4294967295".to_u32.should eq(4294967295) }
+      it { "0".to_u32.should eq(0) }
+      it { expect_raises(ArgumentError) { "4294967296".to_u32 } }
+      it { expect_raises(ArgumentError) { "-1".to_u32 } }
 
-      assert { "4294967295".to_u32?.should eq(4294967295) }
-      assert { "4294967296".to_u32?.should be_nil }
-      assert { "4294967296".to_u32 { 0 }.should eq(0) }
+      it { "4294967295".to_u32?.should eq(4294967295) }
+      it { "4294967296".to_u32?.should be_nil }
+      it { "4294967296".to_u32 { 0 }.should eq(0) }
 
-      assert { expect_raises(ArgumentError) { "18446744073709551616".to_u32 } }
+      it { expect_raises(ArgumentError) { "18446744073709551616".to_u32 } }
     end
 
     describe "to_i64" do
-      assert { "9223372036854775807".to_i64.should eq(9223372036854775807) }
-      assert { "-9223372036854775808".to_i64.should eq(-9223372036854775808) }
-      assert { expect_raises(ArgumentError) { "9223372036854775808".to_i64 } }
-      assert { expect_raises(ArgumentError) { "-9223372036854775809".to_i64 } }
+      it { "9223372036854775807".to_i64.should eq(9223372036854775807) }
+      it { "-9223372036854775808".to_i64.should eq(-9223372036854775808) }
+      it { expect_raises(ArgumentError) { "9223372036854775808".to_i64 } }
+      it { expect_raises(ArgumentError) { "-9223372036854775809".to_i64 } }
 
-      assert { "9223372036854775807".to_i64?.should eq(9223372036854775807) }
-      assert { "9223372036854775808".to_i64?.should be_nil }
-      assert { "9223372036854775808".to_i64 { 0 }.should eq(0) }
+      it { "9223372036854775807".to_i64?.should eq(9223372036854775807) }
+      it { "9223372036854775808".to_i64?.should be_nil }
+      it { "9223372036854775808".to_i64 { 0 }.should eq(0) }
 
-      assert { expect_raises(ArgumentError) { "18446744073709551616".to_i64 } }
+      it { expect_raises(ArgumentError) { "18446744073709551616".to_i64 } }
     end
 
     describe "to_u64" do
-      assert { "18446744073709551615".to_u64.should eq(18446744073709551615) }
-      assert { "0".to_u64.should eq(0) }
-      assert { expect_raises(ArgumentError) { "18446744073709551616".to_u64 } }
-      assert { expect_raises(ArgumentError) { "-1".to_u64 } }
+      it { "18446744073709551615".to_u64.should eq(18446744073709551615) }
+      it { "0".to_u64.should eq(0) }
+      it { expect_raises(ArgumentError) { "18446744073709551616".to_u64 } }
+      it { expect_raises(ArgumentError) { "-1".to_u64 } }
 
-      assert { "18446744073709551615".to_u64?.should eq(18446744073709551615) }
-      assert { "18446744073709551616".to_u64?.should be_nil }
-      assert { "18446744073709551616".to_u64 { 0 }.should eq(0) }
+      it { "18446744073709551615".to_u64?.should eq(18446744073709551615) }
+      it { "18446744073709551616".to_u64?.should be_nil }
+      it { "18446744073709551616".to_u64 { 0 }.should eq(0) }
     end
 
-    assert { "1234".to_i32.should eq(1234) }
-    assert { "1234123412341234".to_i64.should eq(1234123412341234_i64) }
-    assert { "9223372036854775808".to_u64.should eq(9223372036854775808_u64) }
+    it { "1234".to_i32.should eq(1234) }
+    it { "1234123412341234".to_i64.should eq(1234123412341234_i64) }
+    it { "9223372036854775808".to_u64.should eq(9223372036854775808_u64) }
 
-    assert { expect_raises(ArgumentError, "invalid base 1") { "12ab".to_i(1) } }
-    assert { expect_raises(ArgumentError, "invalid base 37") { "12ab".to_i(37) } }
+    it { expect_raises(ArgumentError, "Invalid base 1") { "12ab".to_i(1) } }
+    it { expect_raises(ArgumentError, "Invalid base 37") { "12ab".to_i(37) } }
 
-    assert { expect_raises { "1Y2P0IJ32E8E7".to_i(36) } }
-    assert { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }
+    it { expect_raises { "1Y2P0IJ32E8E7".to_i(36) } }
+    it { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }
   end
 
   it "does to_f" do
@@ -450,212 +457,276 @@ describe "String" do
   end
 
   it "multiplies with negative size" do
-    expect_raises(ArgumentError, "negative argument") do
+    expect_raises(ArgumentError, "Negative argument") do
       "f" * -1
     end
   end
 
   describe "downcase" do
-    assert { "HELLO!".downcase.should eq("hello!") }
-    assert { "HELLO MAN!".downcase.should eq("hello man!") }
-    assert { "ÁÉÍÓÚĀ".downcase.should eq("áéíóúā") }
-    assert { "AEIİOU".downcase(Unicode::CaseOptions::Turkic).should eq("aeıiou") }
-    assert { "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII).should eq("ÁeÍoÚ") }
-    assert { "İ".downcase.should eq("i̇") }
+    it { "HELLO!".downcase.should eq("hello!") }
+    it { "HELLO MAN!".downcase.should eq("hello man!") }
+    it { "ÁÉÍÓÚĀ".downcase.should eq("áéíóúā") }
+    it { "AEIİOU".downcase(Unicode::CaseOptions::Turkic).should eq("aeıiou") }
+    it { "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII).should eq("ÁeÍoÚ") }
+    it { "İ".downcase.should eq("i̇") }
   end
 
   describe "upcase" do
-    assert { "hello!".upcase.should eq("HELLO!") }
-    assert { "hello man!".upcase.should eq("HELLO MAN!") }
-    assert { "áéíóúā".upcase.should eq("ÁÉÍÓÚĀ") }
-    assert { "aeıiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEIİOU") }
-    assert { "áeíoú".upcase(Unicode::CaseOptions::ASCII).should eq("áEíOú") }
-    assert { "aeiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEİOU") }
-    assert { "baﬄe".upcase.should eq("BAFFLE") }
-    assert { "ﬀ".upcase.should eq("FF") }
+    it { "hello!".upcase.should eq("HELLO!") }
+    it { "hello man!".upcase.should eq("HELLO MAN!") }
+    it { "áéíóúā".upcase.should eq("ÁÉÍÓÚĀ") }
+    it { "aeıiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEIİOU") }
+    it { "áeíoú".upcase(Unicode::CaseOptions::ASCII).should eq("áEíOú") }
+    it { "aeiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEİOU") }
+    it { "baﬄe".upcase.should eq("BAFFLE") }
+    it { "ﬀ".upcase.should eq("FF") }
   end
 
   describe "capitalize" do
-    assert { "HELLO!".capitalize.should eq("Hello!") }
-    assert { "HELLO MAN!".capitalize.should eq("Hello man!") }
-    assert { "".capitalize.should eq("") }
-    assert { "ﬄİ".capitalize.should eq("FFLi̇") }
-    assert { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
-  end
-
-  describe "lchomp" do
-    assert { "hello".lchomp('g').should eq("hello") }
-    assert { "hello".lchomp('h').should eq("ello") }
-    assert { "かたな".lchomp('か').should eq("たな") }
-
-    assert { "hello".lchomp("good").should eq("hello") }
-    assert { "hello".lchomp("hel").should eq("lo") }
-    assert { "かたな".lchomp("かた").should eq("な") }
-
-    assert { "\n\n\n\nhello".lchomp("").should eq("\n\n\n\nhello") }
+    it { "HELLO!".capitalize.should eq("Hello!") }
+    it { "HELLO MAN!".capitalize.should eq("Hello man!") }
+    it { "".capitalize.should eq("") }
+    it { "ﬄİ".capitalize.should eq("FFLi̇") }
+    it { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
   end
 
   describe "chomp" do
-    assert { "hello\n".chomp.should eq("hello") }
-    assert { "hello\r".chomp.should eq("hello") }
-    assert { "hello\r\n".chomp.should eq("hello") }
-    assert { "hello".chomp.should eq("hello") }
-    assert { "hello".chomp.should eq("hello") }
-    assert { "かたな\n".chomp.should eq("かたな") }
-    assert { "かたな\r".chomp.should eq("かたな") }
-    assert { "かたな\r\n".chomp.should eq("かたな") }
-    assert { "hello\n\n".chomp.should eq("hello\n") }
-    assert { "hello\r\n\n".chomp.should eq("hello\r\n") }
-    assert { "hello\r\n".chomp('\n').should eq("hello") }
+    it { "hello\n".chomp.should eq("hello") }
+    it { "hello\r".chomp.should eq("hello") }
+    it { "hello\r\n".chomp.should eq("hello") }
+    it { "hello".chomp.should eq("hello") }
+    it { "hello".chomp.should eq("hello") }
+    it { "かたな\n".chomp.should eq("かたな") }
+    it { "かたな\r".chomp.should eq("かたな") }
+    it { "かたな\r\n".chomp.should eq("かたな") }
+    it { "hello\n\n".chomp.should eq("hello\n") }
+    it { "hello\r\n\n".chomp.should eq("hello\r\n") }
+    it { "hello\r\n".chomp('\n').should eq("hello") }
 
-    assert { "hello".chomp('a').should eq("hello") }
-    assert { "hello".chomp('o').should eq("hell") }
-    assert { "かたな".chomp('な').should eq("かた") }
+    it { "hello".chomp('a').should eq("hello") }
+    it { "hello".chomp('o').should eq("hell") }
+    it { "かたな".chomp('な').should eq("かた") }
 
-    assert { "hello".chomp("good").should eq("hello") }
-    assert { "hello".chomp("llo").should eq("he") }
-    assert { "かたな".chomp("たな").should eq("か") }
+    it { "hello".chomp("good").should eq("hello") }
+    it { "hello".chomp("llo").should eq("he") }
+    it { "かたな".chomp("たな").should eq("か") }
 
-    assert { "hello\n\n\n\n".chomp("").should eq("hello\n\n\n\n") }
+    it { "hello\n\n\n\n".chomp("").should eq("hello\n\n\n\n") }
+
+    it { "hello\r\n".chomp("\n").should eq("hello") }
   end
 
-  describe "chop" do
-    assert { "foo".chop.should eq("fo") }
-    assert { "foo\n".chop.should eq("foo") }
-    assert { "foo\r".chop.should eq("foo") }
-    assert { "foo\r\n".chop.should eq("foo") }
-    assert { "\r\n".chop.should eq("") }
-    assert { "かたな".chop.should eq("かた") }
-    assert { "かたな\n".chop.should eq("かたな") }
-    assert { "かたな\r\n".chop.should eq("かたな") }
+  describe "rchop" do
+    it { "".rchop.should eq("") }
+    it { "foo".rchop.should eq("fo") }
+    it { "foo\n".rchop.should eq("foo") }
+    it { "foo\r".rchop.should eq("foo") }
+    it { "foo\r\n".rchop.should eq("foo\r") }
+    it { "\r\n".rchop.should eq("\r") }
+    it { "かたな".rchop.should eq("かた") }
+    it { "かたな\n".rchop.should eq("かたな") }
+    it { "かたな\r\n".rchop.should eq("かたな\r") }
+
+    it { "foo".rchop('o').should eq("fo") }
+    it { "foo".rchop('x').should eq("foo") }
+
+    it { "foobar".rchop("bar").should eq("foo") }
+    it { "foobar".rchop("baz").should eq("foobar") }
+  end
+
+  describe "lchomp" do
+    it { "".lchop.should eq("") }
+    it { "h".lchop.should eq("") }
+    it { "hello".lchop.should eq("ello") }
+    it { "かたな".lchop.should eq("たな") }
+
+    it { "hello".lchop('g').should eq("hello") }
+    it { "hello".lchop('h').should eq("ello") }
+    it { "かたな".lchop('か').should eq("たな") }
+
+    it { "hello".lchop("good").should eq("hello") }
+    it { "hello".lchop("hel").should eq("lo") }
+    it { "かたな".lchop("かた").should eq("な") }
+
+    it { "\n\n\n\nhello".lchop("").should eq("\n\n\n\nhello") }
   end
 
   describe "strip" do
-    assert { "  hello  \n\t\f\v\r".strip.should eq("hello") }
-    assert { "hello".strip.should eq("hello") }
-    assert { "かたな \n\f\v".strip.should eq("かたな") }
-    assert { "  \n\t かたな \n\f\v".strip.should eq("かたな") }
-    assert { "  \n\t かたな".strip.should eq("かたな") }
-    assert { "かたな".strip.should eq("かたな") }
-    assert { "".strip.should eq("") }
-    assert { "\n".strip.should eq("") }
-    assert { "\n\t  ".strip.should eq("") }
+    it { "  hello  \n\t\f\v\r".strip.should eq("hello") }
+    it { "hello".strip.should eq("hello") }
+    it { "かたな \n\f\v".strip.should eq("かたな") }
+    it { "  \n\t かたな \n\f\v".strip.should eq("かたな") }
+    it { "  \n\t かたな".strip.should eq("かたな") }
+    it { "かたな".strip.should eq("かたな") }
+    it { "".strip.should eq("") }
+    it { "\n".strip.should eq("") }
+    it { "\n\t  ".strip.should eq("") }
 
     # TODO: add spec tags so this can be run with tag:slow
-    # assert { (" " * 167772160).strip.should eq("") }
+    # it { (" " * 167772160).strip.should eq("") }
+
+    it { "".strip("xyz").should eq("") }
+    it { "foobar".strip("").should eq("foobar") }
+    it { "rrfoobarr".strip("r").should eq("fooba") }
+    it { "rfoobar".strip("x").should eq("rfoobar") }
+    it { "rrrfooba".strip("r").should eq("fooba") }
+    it { "foobarrr".strip("r").should eq("fooba") }
+    it { "rabfooabr".strip("bar").should eq("foo") }
+    it { "rabfooabr".strip("xyz").should eq("rabfooabr") }
+    it { "fooabr".strip("bar").should eq("foo") }
+    it { "rabfoo".strip("bar").should eq("foo") }
+    it { "rababr".strip("bar").should eq("") }
+
+    it { "aaabcdaaa".strip('a').should eq("bcd") }
+    it { "bcdaaa".strip('a').should eq("bcd") }
+    it { "aaabcd".strip('a').should eq("bcd") }
+
+    it { "ababcdaba".strip { |c| c == 'a' || c == 'b' }.should eq("cd") }
   end
 
   describe "rstrip" do
-    assert { "  hello  ".rstrip.should eq("  hello") }
-    assert { "hello".rstrip.should eq("hello") }
-    assert { "  かたな \n\f\v".rstrip.should eq("  かたな") }
-    assert { "かたな".rstrip.should eq("かたな") }
+    it { "".rstrip.should eq("") }
+    it { "  hello  ".rstrip.should eq("  hello") }
+    it { "hello".rstrip.should eq("hello") }
+    it { "  かたな \n\f\v".rstrip.should eq("  かたな") }
+    it { "かたな".rstrip.should eq("かたな") }
+
+    it { "".rstrip("xyz").should eq("") }
+    it { "foobar".rstrip("").should eq("foobar") }
+    it { "foobarrrr".rstrip("r").should eq("fooba") }
+    it { "foobars".rstrip("r").should eq("foobars") }
+    it { "foobar".rstrip("rab").should eq("foo") }
+    it { "foobar".rstrip("foo").should eq("foobar") }
+    it { "bararbr".rstrip("bar").should eq("") }
+
+    it { "foobarrrr".rstrip('r').should eq("fooba") }
+    it { "foobar".rstrip('x').should eq("foobar") }
+
+    it { "foobar".rstrip { |c| c == 'a' || c == 'r' }.should eq("foob") }
   end
 
   describe "lstrip" do
-    assert { "  hello  ".lstrip.should eq("hello  ") }
-    assert { "hello".lstrip.should eq("hello") }
-    assert { "  \n\v かたな  ".lstrip.should eq("かたな  ") }
-    assert { "  かたな".lstrip.should eq("かたな") }
+    it { "  hello  ".lstrip.should eq("hello  ") }
+    it { "hello".lstrip.should eq("hello") }
+    it { "  \n\v かたな  ".lstrip.should eq("かたな  ") }
+    it { "  かたな".lstrip.should eq("かたな") }
+
+    it { "".lstrip("xyz").should eq("") }
+    it { "barfoo".lstrip("").should eq("barfoo") }
+    it { "bbbarfoo".lstrip("b").should eq("arfoo") }
+    it { "sbarfoo".lstrip("r").should eq("sbarfoo") }
+    it { "barfoo".lstrip("rab").should eq("foo") }
+    it { "barfoo".lstrip("foo").should eq("barfoo") }
+    it { "b".lstrip("bar").should eq("") }
+
+    it { "bbbbarfoo".lstrip('b').should eq("arfoo") }
+    it { "barfoo".lstrip('x').should eq("barfoo") }
+
+    it { "barfoo".lstrip { |c| c == 'a' || c == 'b' }.should eq("rfoo") }
   end
 
   describe "empty?" do
-    assert { "a".empty?.should be_false }
-    assert { "".empty?.should be_true }
+    it { "a".empty?.should be_false }
+    it { "".empty?.should be_true }
   end
 
   describe "blank?" do
-    assert { " \t\n".blank?.should be_true }
-    assert { "\u{1680}\u{2029}".blank?.should be_true }
-    assert { "hello".blank?.should be_false }
+    it { " \t\n".blank?.should be_true }
+    it { "\u{1680}\u{2029}".blank?.should be_true }
+    it { "hello".blank?.should be_false }
   end
 
   describe "index" do
     describe "by char" do
-      assert { "foo".index('o').should eq(1) }
-      assert { "foo".index('g').should be_nil }
-      assert { "bar".index('r').should eq(2) }
-      assert { "日本語".index('本').should eq(1) }
-      assert { "bar".index('あ').should be_nil }
-      assert { "あいう_えお".index('_').should eq(3) }
+      it { "foo".index('o').should eq(1) }
+      it { "foo".index('g').should be_nil }
+      it { "bar".index('r').should eq(2) }
+      it { "日本語".index('本').should eq(1) }
+      it { "bar".index('あ').should be_nil }
+      it { "あいう_えお".index('_').should eq(3) }
 
       describe "with offset" do
-        assert { "foobarbaz".index('a', 5).should eq(7) }
-        assert { "foobarbaz".index('a', -4).should eq(7) }
-        assert { "foo".index('g', 1).should be_nil }
-        assert { "foo".index('g', -20).should be_nil }
-        assert { "日本語日本語".index('本', 2).should eq(4) }
+        it { "foobarbaz".index('a', 5).should eq(7) }
+        it { "foobarbaz".index('a', -4).should eq(7) }
+        it { "foo".index('g', 1).should be_nil }
+        it { "foo".index('g', -20).should be_nil }
+        it { "日本語日本語".index('本', 2).should eq(4) }
       end
     end
 
     describe "by string" do
-      assert { "foo bar".index("o b").should eq(2) }
-      assert { "foo".index("fg").should be_nil }
-      assert { "foo".index("").should eq(0) }
-      assert { "foo".index("foo").should eq(0) }
-      assert { "日本語日本語".index("本語").should eq(1) }
+      it { "foo bar".index("o b").should eq(2) }
+      it { "foo".index("fg").should be_nil }
+      it { "foo".index("").should eq(0) }
+      it { "foo".index("foo").should eq(0) }
+      it { "日本語日本語".index("本語").should eq(1) }
 
       describe "with offset" do
-        assert { "foobarbaz".index("ba", 4).should eq(6) }
-        assert { "foobarbaz".index("ba", -5).should eq(6) }
-        assert { "foo".index("ba", 1).should be_nil }
-        assert { "foo".index("ba", -20).should be_nil }
-        assert { "日本語日本語".index("本語", 2).should eq(4) }
+        it { "foobarbaz".index("ba", 4).should eq(6) }
+        it { "foobarbaz".index("ba", -5).should eq(6) }
+        it { "foo".index("ba", 1).should be_nil }
+        it { "foo".index("ba", -20).should be_nil }
+        it { "foo".index("", 3).should eq(3) }
+        it { "foo".index("", 4).should be_nil }
+        it { "日本語日本語".index("本語", 2).should eq(4) }
       end
     end
 
     describe "by regex" do
-      assert { "string 12345".index(/\d+/).should eq(7) }
-      assert { "12345".index(/\d/).should eq(0) }
-      assert { "Hello, world!".index(/\d/).should be_nil }
-      assert { "abcdef".index(/[def]/).should eq(3) }
-      assert { "日本語日本語".index(/本語/).should eq(1) }
+      it { "string 12345".index(/\d+/).should eq(7) }
+      it { "12345".index(/\d/).should eq(0) }
+      it { "Hello, world!".index(/\d/).should be_nil }
+      it { "abcdef".index(/[def]/).should eq(3) }
+      it { "日本語日本語".index(/本語/).should eq(1) }
 
       describe "with offset" do
-        assert { "abcDef".index(/[A-Z]/).should eq(3) }
-        assert { "foobarbaz".index(/ba/, -5).should eq(6) }
-        assert { "Foo".index(/[A-Z]/, 1).should be_nil }
-        assert { "foo".index(/o/, 2).should eq(2) }
-        assert { "日本語日本語".index(/本語/, 2).should eq(4) }
+        it { "abcDef".index(/[A-Z]/).should eq(3) }
+        it { "foobarbaz".index(/ba/, -5).should eq(6) }
+        it { "Foo".index(/[A-Z]/, 1).should be_nil }
+        it { "foo".index(/o/, 2).should eq(2) }
+        it { "foo".index(//, 3).should eq(3) }
+        it { "foo".index(//, 4).should be_nil }
+        it { "日本語日本語".index(/本語/, 2).should eq(4) }
       end
     end
   end
 
   describe "rindex" do
     describe "by char" do
-      assert { "foobar".rindex('a').should eq(4) }
-      assert { "foobar".rindex('g').should be_nil }
-      assert { "日本語日本語".rindex('本').should eq(4) }
-      assert { "あいう_えお".rindex('_').should eq(3) }
+      it { "foobar".rindex('a').should eq(4) }
+      it { "foobar".rindex('g').should be_nil }
+      it { "日本語日本語".rindex('本').should eq(4) }
+      it { "あいう_えお".rindex('_').should eq(3) }
 
       describe "with offset" do
-        assert { "faobar".rindex('a', 3).should eq(1) }
-        assert { "faobarbaz".rindex('a', -3).should eq(4) }
-        assert { "日本語日本語".rindex('本', 3).should eq(1) }
+        it { "faobar".rindex('a', 3).should eq(1) }
+        it { "faobarbaz".rindex('a', -3).should eq(4) }
+        it { "日本語日本語".rindex('本', 3).should eq(1) }
       end
     end
 
     describe "by string" do
-      assert { "foo baro baz".rindex("o b").should eq(7) }
-      assert { "foo baro baz".rindex("fg").should be_nil }
-      assert { "日本語日本語".rindex("日本").should eq(3) }
+      it { "foo baro baz".rindex("o b").should eq(7) }
+      it { "foo baro baz".rindex("fg").should be_nil }
+      it { "日本語日本語".rindex("日本").should eq(3) }
 
       describe "with offset" do
-        assert { "foo baro baz".rindex("o b", 6).should eq(2) }
-        assert { "foo baro baz".rindex("fg").should be_nil }
-        assert { "日本語日本語".rindex("日本", 2).should eq(0) }
+        it { "foo baro baz".rindex("o b", 6).should eq(2) }
+        it { "foo".rindex("", 3).should eq(3) }
+        it { "foo".rindex("", 4).should eq(3) }
+        it { "日本語日本語".rindex("日本", 2).should eq(0) }
       end
     end
 
     describe "by regex" do
-      assert { "bbbb".rindex(/b/).should eq(3) }
-      assert { "a43b53".rindex(/\d+/).should eq(4) }
-      assert { "bbbb".rindex(/\d/).should be_nil }
+      it { "bbbb".rindex(/b/).should eq(3) }
+      it { "a43b53".rindex(/\d+/).should eq(4) }
+      it { "bbbb".rindex(/\d/).should be_nil }
 
       describe "with offset" do
-        assert { "bbbb".rindex(/b/, -3).should eq(2) }
-        assert { "bbbb".rindex(/b/, -1235).should be_nil }
-        assert { "日本語日本語".rindex(/日本/, 2).should eq(0) }
+        it { "bbbb".rindex(/b/, -3).should eq(2) }
+        it { "bbbb".rindex(/b/, -1235).should be_nil }
+        it { "日本語日本語".rindex(/日本/, 2).should eq(0) }
       end
     end
   end
@@ -717,9 +788,9 @@ describe "String" do
   end
 
   describe "byte_index" do
-    assert { "foo".byte_index('o'.ord).should eq(1) }
-    assert { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
-    assert { "foo".byte_index('a'.ord).should be_nil }
+    it { "foo".byte_index('o'.ord).should eq(1) }
+    it { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
+    it { "foo".byte_index('a'.ord).should be_nil }
 
     it "gets byte index of string" do
       "hello world".byte_index("lo").should eq(3)
@@ -728,85 +799,87 @@ describe "String" do
 
   describe "includes?" do
     describe "by char" do
-      assert { "foo".includes?('o').should be_true }
-      assert { "foo".includes?('g').should be_false }
+      it { "foo".includes?('o').should be_true }
+      it { "foo".includes?('g').should be_false }
     end
 
     describe "by string" do
-      assert { "foo bar".includes?("o b").should be_true }
-      assert { "foo".includes?("fg").should be_false }
-      assert { "foo".includes?("").should be_true }
+      it { "foo bar".includes?("o b").should be_true }
+      it { "foo".includes?("fg").should be_false }
+      it { "foo".includes?("").should be_true }
     end
   end
 
   describe "split" do
     describe "by char" do
-      assert { "".split(',').should eq([""]) }
-      assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz", ""]) }
-      assert { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
-      assert { "foo".split(',').should eq(["foo"]) }
-      assert { "foo".split(' ').should eq(["foo"]) }
-      assert { "   foo".split(' ').should eq(["", "", "", "foo"]) }
-      assert { "foo   ".split(' ').should eq(["foo", "", "", ""]) }
-      assert { "   foo  bar".split(' ').should eq(["", "", "", "foo", "", "bar"]) }
-      assert { "   foo   bar\n\t  baz   ".split(' ').should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
-      assert { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
-      assert { "   foo   bar\n\t  baz   ".split(1).should eq(["   foo   bar\n\t  baz   "]) }
-      assert { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
-      assert { "   foo   bar\n\t  baz   ".split(" ").should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
-      assert { "foo,bar,baz,qux".split(',', 1).should eq(["foo,bar,baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(',', 3).should eq(["foo", "bar", "baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(',', 30).should eq(["foo", "bar", "baz", "qux"]) }
-      assert { "foo bar baz qux".split(' ', 1).should eq(["foo bar baz qux"]) }
-      assert { "foo bar baz qux".split(' ', 3).should eq(["foo", "bar", "baz qux"]) }
-      assert { "foo bar baz qux".split(' ', 30).should eq(["foo", "bar", "baz", "qux"]) }
-      assert { "a,b,".split(',', 3).should eq(["a", "b", ""]) }
-      assert { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
-      assert { "日本ん語日本ん語".split('ん').should eq(["日本", "語日本", "語"]) }
-      assert { "=".split('=').should eq(["", ""]) }
-      assert { "a=".split('=').should eq(["a", ""]) }
-      assert { "=b".split('=').should eq(["", "b"]) }
-      assert { "=".split('=', 2).should eq(["", ""]) }
+      it { "".split(',').should eq([""]) }
+      it { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz", ""]) }
+      it { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
+      it { "foo".split(',').should eq(["foo"]) }
+      it { "foo".split(' ').should eq(["foo"]) }
+      it { "   foo".split(' ').should eq(["", "", "", "foo"]) }
+      it { "foo   ".split(' ').should eq(["foo", "", "", ""]) }
+      it { "   foo  bar".split(' ').should eq(["", "", "", "foo", "", "bar"]) }
+      it { "   foo   bar\n\t  baz   ".split(' ').should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
+      it { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
+      it { "   foo   bar\n\t  baz   ".split(1).should eq(["   foo   bar\n\t  baz   "]) }
+      it { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
+      it { "   foo   bar\n\t  baz   ".split(" ").should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
+      it { "foo,bar,baz,qux".split(',', 1).should eq(["foo,bar,baz,qux"]) }
+      it { "foo,bar,baz,qux".split(',', 3).should eq(["foo", "bar", "baz,qux"]) }
+      it { "foo,bar,baz,qux".split(',', 30).should eq(["foo", "bar", "baz", "qux"]) }
+      it { "foo bar baz qux".split(' ', 1).should eq(["foo bar baz qux"]) }
+      it { "foo bar baz qux".split(' ', 3).should eq(["foo", "bar", "baz qux"]) }
+      it { "foo bar baz qux".split(' ', 30).should eq(["foo", "bar", "baz", "qux"]) }
+      it { "a,b,".split(',', 3).should eq(["a", "b", ""]) }
+      it { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
+      it { "日本ん語日本ん語".split('ん').should eq(["日本", "語日本", "語"]) }
+      it { "=".split('=').should eq(["", ""]) }
+      it { "a=".split('=').should eq(["a", ""]) }
+      it { "=b".split('=').should eq(["", "b"]) }
+      it { "=".split('=', 2).should eq(["", ""]) }
     end
 
     describe "by string" do
-      assert { "".split(",").should eq([""]) }
-      assert { "".split(":-").should eq([""]) }
-      assert { "foo:-bar:-:-baz:-".split(":-").should eq(["foo", "bar", "", "baz", ""]) }
-      assert { "foo:-bar:-:-baz".split(":-").should eq(["foo", "bar", "", "baz"]) }
-      assert { "foo".split(":-").should eq(["foo"]) }
-      assert { "foo".split("").should eq(["f", "o", "o"]) }
-      assert { "日本さん語日本さん語".split("さん").should eq(["日本", "語日本", "語"]) }
-      assert { "foo,bar,baz,qux".split(",", 1).should eq(["foo,bar,baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(",", 3).should eq(["foo", "bar", "baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(",", 30).should eq(["foo", "bar", "baz", "qux"]) }
-      assert { "a b c".split(" ", 2).should eq(["a", "b c"]) }
-      assert { "=".split("=").should eq(["", ""]) }
-      assert { "a=".split("=").should eq(["a", ""]) }
-      assert { "=b".split("=").should eq(["", "b"]) }
-      assert { "=".split("=", 2).should eq(["", ""]) }
+      it { "".split(",").should eq([""]) }
+      it { "".split(":-").should eq([""]) }
+      it { "foo:-bar:-:-baz:-".split(":-").should eq(["foo", "bar", "", "baz", ""]) }
+      it { "foo:-bar:-:-baz".split(":-").should eq(["foo", "bar", "", "baz"]) }
+      it { "foo".split(":-").should eq(["foo"]) }
+      it { "foo".split("").should eq(["f", "o", "o"]) }
+      it { "日本さん語日本さん語".split("さん").should eq(["日本", "語日本", "語"]) }
+      it { "foo,bar,baz,qux".split(",", 1).should eq(["foo,bar,baz,qux"]) }
+      it { "foo,bar,baz,qux".split(",", 3).should eq(["foo", "bar", "baz,qux"]) }
+      it { "foo,bar,baz,qux".split(",", 30).should eq(["foo", "bar", "baz", "qux"]) }
+      it { "a b c".split(" ", 2).should eq(["a", "b c"]) }
+      it { "=".split("=").should eq(["", ""]) }
+      it { "a=".split("=").should eq(["a", ""]) }
+      it { "=b".split("=").should eq(["", "b"]) }
+      it { "=".split("=", 2).should eq(["", ""]) }
     end
 
     describe "by regex" do
-      assert { "".split(/\n\t/).should eq([""] of String) }
-      assert { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
-      assert { "foo\n\tbar\n\t\n\tbaz".split(/(?:\n\t)+/).should eq(["foo", "bar", "baz"]) }
-      assert { "foo,bar".split(/,/, 1).should eq(["foo,bar"]) }
-      assert { "foo,bar,".split(/,/).should eq(["foo", "bar", ""]) }
-      assert { "foo,bar,baz,qux".split(/,/, 1).should eq(["foo,bar,baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(/,/, 3).should eq(["foo", "bar", "baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(/,/, 30).should eq(["foo", "bar", "baz", "qux"]) }
-      assert { "a b c".split(Regex.new(" "), 2).should eq(["a", "b c"]) }
-      assert { "日本ん語日本ん語".split(/ん/).should eq(["日本", "語日本", "語"]) }
-      assert { "hello world".split(/\b/).should eq(["hello", " ", "world", ""]) }
-      assert { "abc".split(//).should eq(["a", "b", "c"]) }
-      assert { "hello".split(/\w+/).should eq(["", ""]) }
-      assert { "foo".split(/o/).should eq(["f", "", ""]) }
-      assert { "=".split(/\=/).should eq(["", ""]) }
-      assert { "a=".split(/\=/).should eq(["a", ""]) }
-      assert { "=b".split(/\=/).should eq(["", "b"]) }
-      assert { "=".split(/\=/, 2).should eq(["", ""]) }
-      assert { ",".split(/(?:(x)|(,))/).should eq(["", ",", ""]) }
+      it { "".split(/\n\t/).should eq([""] of String) }
+      it { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
+      it { "foo\n\tbar\n\t\n\tbaz".split(/(?:\n\t)+/).should eq(["foo", "bar", "baz"]) }
+      it { "foo,bar".split(/,/, 1).should eq(["foo,bar"]) }
+      it { "foo,bar,".split(/,/).should eq(["foo", "bar", ""]) }
+      it { "foo,bar,baz,qux".split(/,/, 1).should eq(["foo,bar,baz,qux"]) }
+      it { "foo,bar,baz,qux".split(/,/, 3).should eq(["foo", "bar", "baz,qux"]) }
+      it { "foo,bar,baz,qux".split(/,/, 30).should eq(["foo", "bar", "baz", "qux"]) }
+      it { "a b c".split(Regex.new(" "), 2).should eq(["a", "b c"]) }
+      it { "日本ん語日本ん語".split(/ん/).should eq(["日本", "語日本", "語"]) }
+      it { "九十九十九".split(/(?=十)/).should eq(["九", "十九", "十九"]) }
+      it { "hello world".split(/\b/).should eq(["hello", " ", "world", ""]) }
+      it { "hello world".split(/\w+|(?= )/).should eq(["", " ", ""]) }
+      it { "abc".split(//).should eq(["a", "b", "c"]) }
+      it { "hello".split(/\w+/).should eq(["", ""]) }
+      it { "foo".split(/o/).should eq(["f", "", ""]) }
+      it { "=".split(/\=/).should eq(["", ""]) }
+      it { "a=".split(/\=/).should eq(["a", ""]) }
+      it { "=b".split(/\=/).should eq(["", "b"]) }
+      it { "=".split(/\=/, 2).should eq(["", ""]) }
+      it { ",".split(/(?:(x)|(,))/).should eq(["", ",", ""]) }
 
       it "keeps groups" do
         s = "split on the word on okay?"
@@ -816,26 +889,26 @@ describe "String" do
   end
 
   describe "starts_with?" do
-    assert { "foobar".starts_with?("foo").should be_true }
-    assert { "foobar".starts_with?("").should be_true }
-    assert { "foobar".starts_with?("foobarbaz").should be_false }
-    assert { "foobar".starts_with?("foox").should be_false }
-    assert { "foobar".starts_with?('f').should be_true }
-    assert { "foobar".starts_with?('g').should be_false }
-    assert { "よし".starts_with?('よ').should be_true }
-    assert { "よし!".starts_with?("よし").should be_true }
+    it { "foobar".starts_with?("foo").should be_true }
+    it { "foobar".starts_with?("").should be_true }
+    it { "foobar".starts_with?("foobarbaz").should be_false }
+    it { "foobar".starts_with?("foox").should be_false }
+    it { "foobar".starts_with?('f').should be_true }
+    it { "foobar".starts_with?('g').should be_false }
+    it { "よし".starts_with?('よ').should be_true }
+    it { "よし!".starts_with?("よし").should be_true }
   end
 
   describe "ends_with?" do
-    assert { "foobar".ends_with?("bar").should be_true }
-    assert { "foobar".ends_with?("").should be_true }
-    assert { "foobar".ends_with?("foobarbaz").should be_false }
-    assert { "foobar".ends_with?("xbar").should be_false }
-    assert { "foobar".ends_with?('r').should be_true }
-    assert { "foobar".ends_with?('x').should be_false }
-    assert { "よし".ends_with?('し').should be_true }
-    assert { "よし".ends_with?('な').should be_false }
-    assert { "あいう_".ends_with?('_').should be_true }
+    it { "foobar".ends_with?("bar").should be_true }
+    it { "foobar".ends_with?("").should be_true }
+    it { "foobar".ends_with?("foobarbaz").should be_false }
+    it { "foobar".ends_with?("xbar").should be_false }
+    it { "foobar".ends_with?('r').should be_true }
+    it { "foobar".ends_with?('x').should be_false }
+    it { "よし".ends_with?('し').should be_true }
+    it { "よし".ends_with?('な').should be_false }
+    it { "あいう_".ends_with?('_').should be_true }
   end
 
   describe "=~" do
@@ -855,16 +928,16 @@ describe "String" do
   end
 
   describe "delete" do
-    assert { "foobar".delete { |char| char == 'o' }.should eq("fbar") }
-    assert { "hello world".delete("lo").should eq("he wrd") }
-    assert { "hello world".delete("lo", "o").should eq("hell wrld") }
-    assert { "hello world".delete("hello", "^l").should eq("ll wrld") }
-    assert { "hello world".delete("ej-m").should eq("ho word") }
-    assert { "hello^world".delete("\\^aeiou").should eq("hllwrld") }
-    assert { "hello-world".delete("a\\-eo").should eq("hllwrld") }
-    assert { "hello world\\r\\n".delete("\\").should eq("hello worldrn") }
-    assert { "hello world\\r\\n".delete("\\A").should eq("hello world\\r\\n") }
-    assert { "hello world\\r\\n".delete("X-\\w").should eq("hello orldrn") }
+    it { "foobar".delete { |char| char == 'o' }.should eq("fbar") }
+    it { "hello world".delete("lo").should eq("he wrd") }
+    it { "hello world".delete("lo", "o").should eq("hell wrld") }
+    it { "hello world".delete("hello", "^l").should eq("ll wrld") }
+    it { "hello world".delete("ej-m").should eq("ho word") }
+    it { "hello^world".delete("\\^aeiou").should eq("hllwrld") }
+    it { "hello-world".delete("a\\-eo").should eq("hllwrld") }
+    it { "hello world\\r\\n".delete("\\").should eq("hello worldrn") }
+    it { "hello world\\r\\n".delete("\\A").should eq("hello world\\r\\n") }
+    it { "hello world\\r\\n".delete("X-\\w").should eq("hello orldrn") }
 
     it "deletes one char" do
       deleted = "foobar".delete('o')
@@ -1258,7 +1331,7 @@ describe "String" do
     end
 
     it "raises with incomplete back-reference (2)" do
-      expect_raises(ArgumentError, "missing ending '>' for '\\\\k<...") do
+      expect_raises(ArgumentError, "Missing ending '>' for '\\\\k<...") do
         "foo".gsub(/o/, "\\k<")
       end
     end
@@ -1266,11 +1339,11 @@ describe "String" do
     it "replaces with back-reference to missing capture group" do
       "foo".gsub(/o/, "\\1").should eq("f")
 
-      expect_raises(IndexError, "undefined group name reference: \"bar\"") do
+      expect_raises(IndexError, "Undefined group name reference: \"bar\"") do
         "foo".gsub(/o/, "\\k<bar>").should eq("f")
       end
 
-      expect_raises(IndexError, "undefined group name reference: \"\"") do
+      expect_raises(IndexError, "Undefined group name reference: \"\"") do
         "foo".gsub(/o/, "\\k<>")
       end
     end
@@ -1304,15 +1377,15 @@ describe "String" do
     "\t".dump.should eq("\"\\t\"")
     "\v".dump.should eq("\"\\v\"")
     "\#{".dump.should eq("\"\\\#{\"")
-    "á".dump.should eq("\"\\u{e1}\"")
-    "\u{81}".dump.should eq("\"\\u{81}\"")
+    "á".dump.should eq("\"\\u00e1\"")
+    "\u{81}".dump.should eq("\"\\u0081\"")
   end
 
   it "dumps unquoted" do
     "a".dump_unquoted.should eq("a")
     "\\".dump_unquoted.should eq("\\\\")
-    "á".dump_unquoted.should eq("\\u{e1}")
-    "\u{81}".dump_unquoted.should eq("\\u{81}")
+    "á".dump_unquoted.should eq("\\u00e1")
+    "\u{81}".dump_unquoted.should eq("\\u0081")
   end
 
   it "inspects" do
@@ -1328,14 +1401,14 @@ describe "String" do
     "\v".inspect.should eq("\"\\v\"")
     "\#{".inspect.should eq("\"\\\#{\"")
     "á".inspect.should eq("\"á\"")
-    "\u{81}".inspect.should eq("\"\\u{81}\"")
+    "\u{81}".inspect.should eq("\"\\u0081\"")
   end
 
   it "inspects unquoted" do
     "a".inspect_unquoted.should eq("a")
     "\\".inspect_unquoted.should eq("\\\\")
     "á".inspect_unquoted.should eq("á")
-    "\u{81}".inspect_unquoted.should eq("\\u{81}")
+    "\u{81}".inspect_unquoted.should eq("\\u0081")
   end
 
   it "does *" do
@@ -1480,7 +1553,7 @@ describe "String" do
 
     ("%.2f" % 2.536_f32).should eq("2.54")
     ("%0*.*f" % [10, 2, 2.536_f32]).should eq("0000002.54")
-    expect_raises(ArgumentError, "expected dynamic value '*' to be an Int - \"not a number\" (String)") do
+    expect_raises(ArgumentError, "Expected dynamic value '*' to be an Int - \"not a number\" (String)") do
       "%*f" % ["not a number", 2.536_f32]
     end
   end
@@ -1662,6 +1735,7 @@ describe "String" do
     it "works when match is empty" do
       r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
       "hello".scan(r).map(&.[0]).should eq(["hello", ""])
+      "hello world".scan(/\w+|(?= )/).map(&.[0]).should eq(["hello", "", "world"])
     end
 
     it "works with strings with block" do
@@ -1706,39 +1780,39 @@ describe "String" do
   end
 
   describe "count" do
-    assert { "hello world".count("lo").should eq(5) }
-    assert { "hello world".count("lo", "o").should eq(2) }
-    assert { "hello world".count("hello", "^l").should eq(4) }
-    assert { "hello world".count("ej-m").should eq(4) }
-    assert { "hello^world".count("\\^aeiou").should eq(4) }
-    assert { "hello-world".count("a\\-eo").should eq(4) }
-    assert { "hello world\\r\\n".count("\\").should eq(2) }
-    assert { "hello world\\r\\n".count("\\A").should eq(0) }
-    assert { "hello world\\r\\n".count("X-\\w").should eq(3) }
-    assert { "aabbcc".count('a').should eq(2) }
-    assert { "aabbcc".count { |c| ['a', 'b'].includes?(c) }.should eq(4) }
+    it { "hello world".count("lo").should eq(5) }
+    it { "hello world".count("lo", "o").should eq(2) }
+    it { "hello world".count("hello", "^l").should eq(4) }
+    it { "hello world".count("ej-m").should eq(4) }
+    it { "hello^world".count("\\^aeiou").should eq(4) }
+    it { "hello-world".count("a\\-eo").should eq(4) }
+    it { "hello world\\r\\n".count("\\").should eq(2) }
+    it { "hello world\\r\\n".count("\\A").should eq(0) }
+    it { "hello world\\r\\n".count("X-\\w").should eq(3) }
+    it { "aabbcc".count('a').should eq(2) }
+    it { "aabbcc".count { |c| ['a', 'b'].includes?(c) }.should eq(4) }
   end
 
   describe "squeeze" do
-    assert { "aaabbbccc".squeeze { |c| ['a', 'b'].includes?(c) }.should eq("abccc") }
-    assert { "aaabbbccc".squeeze { |c| ['a', 'c'].includes?(c) }.should eq("abbbc") }
-    assert { "a       bbb".squeeze.should eq("a b") }
-    assert { "a    bbb".squeeze(' ').should eq("a bbb") }
-    assert { "aaabbbcccddd".squeeze("b-d").should eq("aaabcd") }
+    it { "aaabbbccc".squeeze { |c| ['a', 'b'].includes?(c) }.should eq("abccc") }
+    it { "aaabbbccc".squeeze { |c| ['a', 'c'].includes?(c) }.should eq("abbbc") }
+    it { "a       bbb".squeeze.should eq("a b") }
+    it { "a    bbb".squeeze(' ').should eq("a bbb") }
+    it { "aaabbbcccddd".squeeze("b-d").should eq("aaabcd") }
   end
 
   describe "ljust" do
-    assert { "123".ljust(2).should eq("123") }
-    assert { "123".ljust(5).should eq("123  ") }
-    assert { "12".ljust(7, '-').should eq("12-----") }
-    assert { "12".ljust(7, 'あ').should eq("12あああああ") }
+    it { "123".ljust(2).should eq("123") }
+    it { "123".ljust(5).should eq("123  ") }
+    it { "12".ljust(7, '-').should eq("12-----") }
+    it { "12".ljust(7, 'あ').should eq("12あああああ") }
   end
 
   describe "rjust" do
-    assert { "123".rjust(2).should eq("123") }
-    assert { "123".rjust(5).should eq("  123") }
-    assert { "12".rjust(7, '-').should eq("-----12") }
-    assert { "12".rjust(7, 'あ').should eq("あああああ12") }
+    it { "123".rjust(2).should eq("123") }
+    it { "123".rjust(5).should eq("  123") }
+    it { "12".rjust(7, '-').should eq("-----12") }
+    it { "12".rjust(7, 'あ').should eq("あああああ12") }
   end
 
   describe "succ" do
@@ -2014,13 +2088,13 @@ describe "String" do
     end
 
     it "raises if expecting hash or named tuple but not given" do
-      expect_raises(ArgumentError, "one hash or named tuple required") do
+      expect_raises(ArgumentError, "One hash or named tuple required") do
         "change %{this}" % "this"
       end
     end
 
     it "raises on unbalanced curly" do
-      expect_raises(ArgumentError, "malformed name - unmatched parenthesis") do
+      expect_raises(ArgumentError, "Malformed name - unmatched parenthesis") do
         "change %{this" % {"this" => 1}
       end
     end
@@ -2035,25 +2109,25 @@ describe "String" do
   end
 
   it "raises if string capacity is negative" do
-    expect_raises(ArgumentError, "negative capacity") do
+    expect_raises(ArgumentError, "Negative capacity") do
       String.new(-1) { |buf| {0, 0} }
     end
   end
 
   it "raises if capacity too big on new with UInt32::MAX" do
-    expect_raises(ArgumentError, "capacity too big") do
+    expect_raises(ArgumentError, "Capacity too big") do
       String.new(UInt32::MAX) { {0, 0} }
     end
   end
 
   it "raises if capacity too big on new with UInt32::MAX - String::HEADER_SIZE - 1" do
-    expect_raises(ArgumentError, "capacity too big") do
+    expect_raises(ArgumentError, "Capacity too big") do
       String.new(UInt32::MAX - String::HEADER_SIZE) { {0, 0} }
     end
   end
 
   it "raises if capacity too big on new with UInt64::MAX" do
-    expect_raises(ArgumentError, "capacity too big") do
+    expect_raises(ArgumentError, "Capacity too big") do
       String.new(UInt64::MAX) { {0, 0} }
     end
   end
@@ -2077,13 +2151,13 @@ describe "String" do
   end
 
   it "raises if String.build negative capacity" do
-    expect_raises(ArgumentError, "negative capacity") do
+    expect_raises(ArgumentError, "Negative capacity") do
       String.build(-1) { }
     end
   end
 
   it "raises if String.build capacity too big" do
-    expect_raises(ArgumentError, "capacity too big") do
+    expect_raises(ArgumentError, "Capacity too big") do
       String.build(UInt32::MAX) { }
     end
   end
@@ -2095,19 +2169,19 @@ describe "String" do
     end
 
     it "raises if wrong encoding" do
-      expect_raises ArgumentError, "invalid encoding: FOO" do
+      expect_raises ArgumentError, "Invalid encoding: FOO" do
         "Hello".encode("FOO")
       end
     end
 
     it "raises if wrong encoding with skip" do
-      expect_raises ArgumentError, "invalid encoding: FOO" do
+      expect_raises ArgumentError, "Invalid encoding: FOO" do
         "Hello".encode("FOO", invalid: :skip)
       end
     end
 
     it "raises if illegal byte sequence" do
-      expect_raises ArgumentError, "invalid multibyte sequence" do
+      expect_raises ArgumentError, "Invalid multibyte sequence" do
         "ñ".encode("GB2312")
       end
     end
@@ -2117,7 +2191,7 @@ describe "String" do
     end
 
     it "raises if incomplete byte sequence" do
-      expect_raises ArgumentError, "incomplete multibyte sequence" do
+      expect_raises ArgumentError, "Incomplete multibyte sequence" do
         "好".byte_slice(0, 1).encode("GB2312")
       end
     end
@@ -2168,6 +2242,18 @@ describe "String" do
     "ともだち".insert(0, "ねこ").size.should eq(6)
   end
 
+  it "hexbytes" do
+    expect_raises(ArgumentError) { "abc".hexbytes }
+    expect_raises(ArgumentError) { "abc ".hexbytes }
+    "abcd".hexbytes.should eq(Bytes[171, 205])
+  end
+
+  it "hexbytes?" do
+    "abc".hexbytes?.should be_nil
+    "abc ".hexbytes?.should be_nil
+    "abcd".hexbytes?.should eq(Bytes[171, 205])
+  end
+
   it "dups" do
     string = "foo"
     dup = string.dup
@@ -2197,10 +2283,46 @@ describe "String" do
   end
 
   it "raises on String.new if returned bytesize is greater than capacity" do
-    expect_raises ArgumentError, "bytesize out of capacity bounds" do
+    expect_raises ArgumentError, "Bytesize out of capacity bounds" do
       String.new(123) do |buffer|
         {124, 0}
       end
+    end
+  end
+
+  describe "invalide utf-8 byte sequence" do
+    it "gets size" do
+      string = String.new(Bytes[255, 0, 0, 0, 65])
+      string.size.should eq(5)
+    end
+
+    it "gets size (2)" do
+      string = String.new(Bytes[104, 101, 108, 108, 111, 32, 255, 32, 255, 32, 119, 111, 114, 108, 100, 33])
+      string.size.should eq(16)
+    end
+
+    it "gets chars" do
+      string = String.new(Bytes[255, 0, 0, 0, 65])
+      string.chars.should eq([Char::REPLACEMENT, 0.chr, 0.chr, 0.chr, 65.chr])
+    end
+
+    it "gets chars (2)" do
+      string = String.new(Bytes[255, 0])
+      string.chars.should eq([Char::REPLACEMENT, 0.chr])
+    end
+
+    it "valid_encoding?" do
+      "hello".valid_encoding?.should be_true
+      String.new(Bytes[255, 0]).valid_encoding?.should be_false
+    end
+
+    it "scrubs" do
+      string = String.new(Bytes[255, 129, 97, 255, 97])
+      string.scrub.bytes.should eq([239, 191, 189, 97, 239, 191, 189, 97])
+
+      string.scrub("?").should eq("?a?a")
+
+      "hello".scrub.should eq("hello")
     end
   end
 end

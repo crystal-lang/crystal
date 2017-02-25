@@ -228,7 +228,7 @@ module Debug
       case ident.klass
       when Klass::ELF32 then @io.read_bytes(UInt32, endianness)
       when Klass::ELF64 then @io.read_bytes(UInt64, endianness)
-      else                   raise Error.new("unsupported")
+      else                   raise Error.new("Unsupported")
       end
     end
 

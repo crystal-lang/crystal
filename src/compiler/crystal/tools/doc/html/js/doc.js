@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
-  var sessionStorage = window.sessionStorage;
+  var sessionStorage;
+  try {
+    sessionStorage = window.sessionStorage;
+  } catch (e) { }
   if(!sessionStorage) {
     sessionStorage = {
       setItem: function() {},

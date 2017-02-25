@@ -155,7 +155,7 @@ module HTTP
       self
     end
 
-    # Create a new empty instance
+    # Create a new empty instance.
     def initialize
       @cookies = {} of String => Cookie
     end
@@ -267,7 +267,7 @@ module HTTP
       headers
     end
 
-    # Returns this collection as a plain Hash.
+    # Returns this collection as a plain `Hash`.
     def to_h
       @cookies.dup
     end

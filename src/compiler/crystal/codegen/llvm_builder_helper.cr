@@ -1,23 +1,23 @@
 module Crystal
   module LLVMBuilderHelper
     def int1(n)
-      LLVM.int LLVM::Int1, n
+      llvm_context.int1.const_int(n)
     end
 
     def int8(n)
-      LLVM.int LLVM::Int8, n
+      llvm_context.int8.const_int(n)
     end
 
     def int16(n)
-      LLVM.int LLVM::Int16, n
+      llvm_context.int16.const_int(n)
     end
 
     def int32(n)
-      LLVM.int LLVM::Int32, n
+      llvm_context.int32.const_int(n)
     end
 
     def int64(n)
-      LLVM.int LLVM::Int64, n
+      llvm_context.int64.const_int(n)
     end
 
     def int(n)
@@ -25,11 +25,11 @@ module Crystal
     end
 
     def int(n, type)
-      LLVM.int llvm_type(type), n
+      llvm_type(type).const_int(n)
     end
 
     def llvm_nil
-      LLVMTyper::NIL_VALUE
+      llvm_typer.nil_value
     end
 
     def llvm_false
@@ -89,7 +89,7 @@ module Crystal
     end
 
     def cast_to_void_pointer(pointer)
-      bit_cast pointer, LLVM::VoidPointer
+      bit_cast pointer, llvm_context.void_pointer
     end
 
     def extend_int(from_type, to_type, value)

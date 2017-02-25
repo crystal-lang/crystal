@@ -6,7 +6,7 @@
 class YAML::Builder
   @box : Void*
 
-  # Creates a YAML::Builder that will write to the given IO.
+  # Creates a `YAML::Builder` that will write to the given `IO`.
   def initialize(@io : IO)
     @box = Box.box(io)
     @emitter = Pointer(Void).malloc(LibYAML::EMITTER_SIZE).as(LibYAML::Emitter*)
@@ -20,7 +20,7 @@ class YAML::Builder
     }, @box)
   end
 
-  # Creates a YAML::Builder that will write to the given IO,
+  # Creates a `YAML::Builder` that will write to the given `IO`,
   # invokes the block and closes the builder.
   def self.new(io : IO)
     emitter = new(io)
@@ -97,7 +97,7 @@ class YAML::Builder
     yield.tap { end_mapping }
   end
 
-  # Flushes any pending data to the underlying IO.
+  # Flushes any pending data to the underlying `IO`.
   def flush
     LibYAML.yaml_emitter_flush(@emitter)
   end
@@ -113,7 +113,7 @@ class YAML::Builder
     @closed = true
   end
 
-  macro emit(event_name, *args)
+  private macro emit(event_name, *args)
     LibYAML.yaml_{{event_name}}_event_initialize(pointerof(@event), {{*args}})
     yaml_emit({{event_name.stringify}})
   end
@@ -121,7 +121,7 @@ class YAML::Builder
   private def yaml_emit(event_name)
     ret = LibYAML.yaml_emitter_emit(@emitter, pointerof(@event))
     if ret != 1
-      raise YAML::Error.new("error emitting #{event_name}")
+      raise YAML::Error.new("Error emitting #{event_name}")
     end
   end
 end
@@ -151,7 +151,7 @@ module YAML
     end
   end
 
-  # Writes YAML into the given IO. A `YAML::Builder` is yielded to the block.
+  # Writes YAML into the given `IO`. A `YAML::Builder` is yielded to the block.
   def self.build(io : IO)
     YAML::Builder.new(io) do |yaml|
       yaml.stream do

@@ -41,6 +41,20 @@ describe "Semantic: uninitialized" do
       "can't declare variable of generic non-instantiated type Foo"
   end
 
+  it "errors if declaring generic type without type vars (with class var)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Bar
+        @@x = uninitialized Foo
+      end
+
+      Bar.new
+      ),
+      "can't declare variable of generic non-instantiated type Foo"
+  end
+
   it "errors if declares var and then assigns other type" do
     assert_error %(
       x = uninitialized Int32

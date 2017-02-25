@@ -3,6 +3,8 @@ class Crystal::Doc::Generator
 
   @base_dir : String
   @is_crystal_repo : Bool
+  @repository : String? = nil
+  getter repository_name = ""
 
   # Adding a flag and associated css class will add support in parser
   FLAG_COLORS = {
@@ -15,12 +17,23 @@ class Crystal::Doc::Generator
   }
   FLAGS = FLAG_COLORS.keys
 
+  GIT_REMOTE_PATTERNS = {
+    /github\.com(?:\:|\/)(?<user>(?:\w|-|_)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:.git)?\b/ => {
+      repository: "https://github.com/%{user}/%{repo}/blob/%{rev}",
+      repo_name:  "github.com/%{user}/%{repo}",
+    },
+    /gitlab\.com(?:\:|\/)(?<user>(?:\w|-|_|\.)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:.git)?\b/ => {
+      repository: "https://gitlab.com/%{user}/%{repo}/blob/%{rev}",
+      repo_name:  "gitlab.com/%{user}/%{repo}",
+    },
+  }
+
   def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
+    @is_crystal_repo = false
     compute_repository
-    @is_crystal_repo = @repo_name == "github.com/crystal-lang/crystal"
   end
 
   def run
@@ -159,7 +172,7 @@ class Crystal::Doc::Generator
     return false unless type.namespace == crystal_type
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
-      "DESCRIPTION", "PATH", "VERSION"}.each do |name|
+     "DESCRIPTION", "PATH", "VERSION"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 
@@ -281,17 +294,22 @@ class Crystal::Doc::Generator
     remotes = `git remote -v`
     return unless $?.success?
 
-    github_remote_pattern = /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_|\.)+)/
-    github_remotes = remotes.lines.select &.match(github_remote_pattern)
-    remote = github_remotes.find(&.starts_with?("origin")) || github_remotes.first?
-    return unless remote
+    git_matches = remotes.each_line.compact_map do |line|
+      GIT_REMOTE_PATTERNS.each_key.compact_map(&.match(line)).first?
+    end.to_a
 
-    _, user, repo = remote.match(github_remote_pattern).not_nil!
-    repo = repo.gsub(/\.git$/, "")
+    @is_crystal_repo = git_matches.any? { |gr| gr.string =~ %r{github\.com[/:]crystal-lang/crystal} }
+
+    origin = git_matches.find(&.string.starts_with?("origin")) || git_matches.first?
+    return unless origin
+
+    user = origin["user"]
+    repo = origin["repo"]
     rev = `git rev-parse HEAD`.chomp
 
-    @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
-    @repo_name = "github.com/#{user}/#{repo}"
+    info = GIT_REMOTE_PATTERNS[origin.regex]
+    @repository = info[:repository] % {user: user, repo: repo, rev: rev}
+    @repository_name = info[:repo_name] % {user: user, repo: repo}
   end
 
   def source_link(node)
@@ -350,9 +368,5 @@ class Crystal::Doc::Generator
       locations << RelativeLocation.new(filename, location.line_number, url)
     end
     locations
-  end
-
-  def repository_name
-    @repo_name ? @repo_name : ""
   end
 end

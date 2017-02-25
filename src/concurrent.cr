@@ -10,7 +10,7 @@ require "./concurrent/scheduler"
 # fibers might start their execution.
 def sleep(seconds : Number)
   if seconds < 0
-    raise ArgumentError.new "sleep seconds must be positive"
+    raise ArgumentError.new "Sleep seconds must be positive"
   end
 
   Fiber.sleep(seconds)
@@ -35,9 +35,10 @@ end
 #
 # The newly created fiber doesn't run as soon as spawned.
 #
-# Example: writing "1" every 1 second and "2" every 2 seconds for 6 seconds.
-#
+# Example:
 # ```
+# # Write "1" every 1 second and "2" every 2 seconds for 6 seconds.
+#
 # ch = Channel(Nil).new
 #
 # spawn do
@@ -64,7 +65,7 @@ def spawn(*, name : String? = nil, &block)
   fiber
 end
 
-# Spawns a fiber by first creating a Proc, passing the *call*'s
+# Spawns a fiber by first creating a `Proc`, passing the *call*'s
 # expressions to it, and letting the `Proc` finally invoke the *call*.
 #
 # Compare this:

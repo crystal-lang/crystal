@@ -1,5 +1,5 @@
 module IO
-  # An IO that wraps another IO, and only reads up to the beginning of a
+  # An `IO` that wraps another `IO`, and only reads up to the beginning of a
   # specified delimiter.
   #
   # This is useful for exposing part of an underlying stream to a client.
@@ -15,7 +15,7 @@ module IO
   class Delimited
     include IO
 
-    # If `sync_close` is true, closing this IO will close the underlying IO.
+    # If `#sync_close?` is `true`, closing this `IO` will close the underlying `IO`.
     property? sync_close
 
     getter read_delimiter
@@ -27,14 +27,14 @@ module IO
     # Creates a new `IO::Delimited` which wraps *io*, and can read until the
     # byte sequence *read_delimiter* (interpreted as UTF-8) is found. If
     # *sync_close* is set, calling `#close` calls `#close` on the underlying
-    # IO.
+    # `IO`.
     def self.new(io : IO, read_delimiter : String, sync_close : Bool = false)
       new(io, read_delimiter.to_slice, sync_close)
     end
 
     # Creates a new `IO::Delimited` which wraps *io*, and can read until the
     # byte sequence *read_delimiter* is found. If *sync_close* is set, calling
-    # `#close` calls `#close` on the underlying IO.
+    # `#close` calls `#close` on the underlying `IO`.
     def initialize(@io : IO, @read_delimiter : Bytes, @sync_close : Bool = false)
       @closed = false
       @finished = false

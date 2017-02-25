@@ -272,7 +272,7 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
-    raise "Bug: trying to assign #{target_type} <- #{value_type}"
+    raise "BUG: trying to assign #{target_type} <- #{value_type}"
   end
 
   def downcast(value, to_type, from_type : VoidType, already_loaded)
@@ -346,7 +346,7 @@ class Crystal::CodeGenVisitor
 
   def downcast_distinct(value, to_type : PointerInstanceType, from_type : PointerInstanceType)
     # cast of a pointer being cast to Void*
-    bit_cast value, LLVM::VoidPointer
+    bit_cast value, llvm_context.void_pointer
   end
 
   def downcast_distinct(value, to_type : TypeDefType, from_type : NilablePointerType)
@@ -433,7 +433,7 @@ class Crystal::CodeGenVisitor
     value_ptr = union_value(value)
     value = cast_to_pointer(value_ptr, @program.int8)
     value = load(value)
-    trunc value, LLVM::Int1
+    trunc value, llvm_context.int1
   end
 
   def downcast_distinct(value, to_type : Type, from_type : MixedUnionType)
@@ -467,6 +467,7 @@ class Crystal::CodeGenVisitor
       value_ptr = gep value, 0, index
       loaded_value = to_lhs(value_ptr, value_tuple_type)
       downcasted_value = downcast(loaded_value, target_tuple_type, value_tuple_type, true)
+      downcasted_value = to_rhs(downcasted_value, target_tuple_type)
       store downcasted_value, target_ptr
       index += 1
     end
@@ -481,13 +482,14 @@ class Crystal::CodeGenVisitor
       target_index = to_type.name_index(entry.name).not_nil!
       target_index_type = to_type.name_type(entry.name)
       downcasted_value = downcast(value_at_index, target_index_type, entry.type, true)
+      downcasted_value = to_rhs(downcasted_value, target_index_type)
       store downcasted_value, aggregate_index(target_pointer, target_index)
     end
     target_pointer
   end
 
   def downcast_distinct(value, to_type : Type, from_type : Type)
-    raise "Bug: trying to downcast #{to_type} <- #{from_type}"
+    raise "BUG: trying to downcast #{to_type} <- #{from_type}"
   end
 
   def upcast(value, to_type, from_type)
@@ -654,7 +656,7 @@ class Crystal::CodeGenVisitor
   end
 
   def upcast_distinct(value, to_type : Type, from_type : Type)
-    raise "Bug: trying to upcast #{to_type} <- #{from_type}"
+    raise "BUG: trying to upcast #{to_type} <- #{from_type}"
   end
 
   def store_in_union(union_pointer, value_type, value)
@@ -670,7 +672,7 @@ class Crystal::CodeGenVisitor
     # we sign-extend it to the size in bits of the union
     union_value_type = llvm_union_value_type(union_type)
     union_size = @llvm_typer.size_of(union_value_type)
-    int_type = LLVM::Type.int((union_size * 8).to_i32)
+    int_type = llvm_context.int((union_size * 8).to_i32)
 
     bool_as_extended_int = builder.zext(value, int_type)
     casted_value_ptr = bit_cast(union_value(union_pointer), int_type.pointer)

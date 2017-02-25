@@ -1,22 +1,78 @@
 # Contributing to Crystal
 
-You've decided to contribute to Crystal. Excellent!
+So you've decided to contribute to Crystal. Excellent!
 
-## What's needed right now
+## Using the issue tracker
+
+The [issue tracker](https://github.com/crystal-lang/crystal/issues) is the heart of Crystal's work. Use it for bugs, questions, proposals and feature requests.
+
+Please always **open a new issue before sending a pull request** if you want to add a new feature to Crystal, unless it is a minor fix, and wait until someone from the core team approves it before you actually start working on it. Otherwise, you risk having the pull request rejected, and the effort implementing it goes to waste. And if you start working on an implementation for an issue, please **let everyone know in the comments** so someone else does not start working on the same thing.
+
+Regardless of the kind of issue, please make sure to look for similar existing issues before posting; otherwise, your issue may be flagged as `duplicated` and closed in favour of the original one. Also, once you open a new issue, please make sure to honour the items listed in the issue template.
+
+If you open a question, remember to close the issue once you are satisfied with the answer and you think
+there's no more room for discussion. We'll anyway close the issue after some days.
+
+If something is missing from the language it might be that it's not yet implemented or that it was purposely left out. If in doubt, just ask.
+
+### What's needed right now
 
 You can find a list of tasks that we consider suitable for a first time contribution at
-the [newcomer label](https://github.com/crystal-lang/crystal/labels/newcomer).
+the [newcomer label](https://github.com/crystal-lang/crystal/issues?q=is%3Aissue+is%3Aopen+label%3Acommunity%3Anewcomer).
 
-Furthermore these are the most important general things in need right now:
+As you feel more confident, you can keep an eye out for open issues with the following labels:
+* [`community:to-research`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-research): Help needed on **researching and investigating** the issue at hand; could be from going through an RFC to figure out how something _should_ be working, to go through details on a C-library we'd like to bind.
+* [`community:to-design`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-design): As an issue has been accepted, we are looking for **ideas on how it could be implemented**, this is, a high-level design for the feature at hand.
+* [`community:to-implement`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-implement): After a design has been agreed upon, the remaining task is to actually **code** it and send a PR!
+* [`community:to-document`](https://github.com/crystal-lang/crystal/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3Acommunity%3Ato-document): Similar to the one above, but this one is for those awesome devs that are happy to **contribute with documentation** instead of just code.
+
+Furthermore, these are the most important general topics in need right now, so if you are interested open an issue to start working on it:
 
 * Documenting the language
 * Documenting the standard library
 * Adding missing bits of the standard library, and/or improving its performance
 
-## Contributing to the documentation
+### Labels
 
-The main website is at [crystal-lang/crystal-website](https://github.com/crystal-lang/crystal-website),
-please have a look over there if you want to contribute to it.
+Issue tracker labels are sorted by category: community, kind, pr, status and topic.
+
+#### Community
+
+These are the issues where help from the community is most welcome. See above for a description on `newcomer`, `to-research`, `to-design`, `to-implement` and `to-document`.
+
+Label `in-progress` is used to signal that someone from the community is already working on the issue (since Github does not allow for a non-team member to be _assigned_ to an issue).
+
+The label `shard-idea` refers to a feature proposal that, albeit good, is better suited as a separate shard rather than as part of the core library; so if you are looking for a shard of your own to start working on, these issues are good starting points.
+
+#### Kind
+
+The most basic category is the kind of the issue: `bug`, `feature` and `question` speak for themselves, while `refactor` is left for changes that do not actually introduce a new a feature, and are not fixing something that is broken, but rather clean up the code (or documentation!).
+
+#### PR
+
+Pull-request only labels, used to signal that a pull request `needs-review` by a core team member, or that is still `wip` (work in progress).
+
+#### Topic
+
+Topic encompasses the broad aspect of the language that the issue refers to: could be performance, the compiler, the type system, the code formatter, concurrency, and quite a large etc.
+
+#### Status
+
+Status labels attempt to capture the lifecycle of an issue:
+
+* A detailed proposal on a feature is marked as `draft`, while a more general argument is usually labelled as `discussion` until a consensus is achieved.
+
+* An issue is `accepted` when it describes a feature or bugfix that a core team member has agreed to have added to the language, so as soon as a design is discussed (if needed), it's safe to start working on a pull request.
+
+* Bug reports are marked as `needs-more-info`, where the author is requested to provide the info required; note that the issue may be closed after some time if it is not supplied.
+
+* Issues that are batched in an epic to be worked on as a group are typically marked as `deferred`, while low-prio issues or tasks far away in the roadmap are marked as `someday`.
+
+* Closed issues are marked as `implemented`, `invalid`, `duplicate` or `wontfix`, depending on their resolution.
+
+## Contributing to...
+
+### The documentation
 
 We use [GitBook](https://www.gitbook.com/) for the [language documentation](https://crystal-lang.org/docs/).
 See the repository at [crystal-lang/crystal-book](https://github.com/crystal-lang/crystal-book) for how to contribute to it.
@@ -28,7 +84,7 @@ of inspiration](https://twitter.com/yukihiro_matz/status/549317901002342400) whe
 the docs execute `make doc`. Please follow the guidelines described in our
 [language documentation](https://crystal-lang.org/docs/conventions/documenting_code.html), like the use of the third person.
 
-## Contributing to the standard library
+### The standard library
 
 1. Fork it ( https://github.com/crystal-lang/crystal/fork )
 2. Clone it
@@ -52,7 +108,7 @@ You can run `crystal tool format` to automate this.
 
 Then push your changes and create a pull request.
 
-## Contributing to the compiler itself
+### The compiler itself
 
 If you want to add/change something in the compiler,
 the first thing you will need to do is to [install the compiler](https://crystal-lang.org/docs/installation/index.html).
@@ -65,7 +121,12 @@ These set-up LLVM 3.6 and its required libraries.
 Next, executing `make clean crystal spec` should compile a compiler and using that compiler compile and execute
 the specs. All specs should pass. You can use `make help` for a list of available make targets.
 
-## Maintain clean pull requests
+## This guide
+
+If this guide is not clear and it needs improvements, please send pull requests against it. Thanks! :-)
+
+
+## Making good pull requests
 
 The commit history should consist of commits that transform the codebase from one state into another one, motivated by something that
 should change, be it a bugfix, a new feature or some ground work to support a new feature, like changing an existing API or introducing
@@ -88,7 +149,7 @@ That only needs to be done once per clone. Next, let's fetch the latest state an
 ```sh
 git fetch upstream
 git checkout my_feature_branch
-git rebase -i upstream/master # Or upstream/gh-pages for contributing to the out of code documentation
+git rebase -i upstream/master
 ```
 
 Now you should be presented with a list of commits in your editor, with the first commit you made on your branch at the top. Always keep the first
@@ -107,21 +168,6 @@ your own projects; a not so clean history is to prefer once a commit landed ther
 ```sh
 git push -f origin my_feature_branch
 ```
-
-## Using the issue tracker
-
-Use the issue tracker for bugs, questions, proposals and feature requests.
-The issue tracker is very convenient for all of this because of its ability to link to a particular commit
-or another issue, include code snippets, etc.
-If you open a question, remember to close the issue once you are satisfied with the answer and you think
-there's no more room for discussion. We'll anyway close the issue after some days.
-
-If something is missing from the language it might be that it's not yet implemented
-(the language is still very young) or that it was purposely left out. If in doubt, just ask.
-
-## Contributing to this guide
-
-If this guide is not clear and it needs improvements, please send pull requests against it. Thanks! :-)
 
 ## Code of Conduct
 

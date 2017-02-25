@@ -46,7 +46,7 @@ module Crystal
     end
 
     def restriction_of?(other, owner)
-      raise "Bug: called #{self}.restriction_of?(#{other})"
+      raise "BUG: called #{self}.restriction_of?(#{other})"
     end
   end
 
@@ -372,6 +372,10 @@ module Crystal
       ident_type ||= context.defining_type.lookup_path other
 
       if ident_type
+        if ident_type.is_a?(Const)
+          other.raise "#{ident_type} is not a type, it's a constant"
+        end
+
         return restrict ident_type, context
       end
 
@@ -431,7 +435,7 @@ module Crystal
     end
 
     def restrict(other : ASTNode, context)
-      raise "Bug: unsupported restriction: #{self} vs. #{other}"
+      raise "BUG: unsupported restriction: #{self} vs. #{other}"
     end
 
     def restriction_of?(other : UnionType, owner)
@@ -459,7 +463,7 @@ module Crystal
     end
 
     def restriction_of?(other : ASTNode, owner)
-      raise "Bug: called #{self}.restriction_of?(#{other})"
+      raise "BUG: called #{self}.restriction_of?(#{other})"
     end
 
     def compatible_with?(type)

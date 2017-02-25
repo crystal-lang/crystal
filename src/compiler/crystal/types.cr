@@ -199,7 +199,7 @@ module Crystal
     end
 
     def generic_type
-      raise "Bug: #{self} doesn't implement generic_type"
+      raise "BUG: #{self} doesn't implement generic_type"
     end
 
     def includes_type?(type)
@@ -226,8 +226,17 @@ module Crystal
       false
     end
 
+    # Returns the non-virtual type of a given type
+    # (returns self if self is already non-virtual)
     def devirtualize
-      self.is_a?(VirtualTypeLookup) ? self.base_type : self
+      case self
+      when VirtualType
+        self.base_type
+      when VirtualMetaclassType
+        self.base_type.metaclass
+      else
+        self
+      end
     end
 
     def implements?(other_type : Type)
@@ -270,7 +279,7 @@ module Crystal
     end
 
     def add_instance_var_initializer(name, value, meta_vars)
-      raise "Bug: #{self} doesn't implement add_instance_var_initializer"
+      raise "BUG: #{self} doesn't implement add_instance_var_initializer"
     end
 
     def declare_instance_var(name, type : Type)
@@ -283,7 +292,7 @@ module Crystal
     end
 
     def types
-      raise "Bug: #{self} has no types"
+      raise "BUG: #{self} has no types"
     end
 
     def types?
@@ -395,11 +404,11 @@ module Crystal
     end
 
     def add_including_type(mod)
-      raise "Bug: #{self} doesn't implement add_including_type"
+      raise "BUG: #{self} doesn't implement add_including_type"
     end
 
     def including_types
-      raise "Bug: #{self} doesn't implement including_types"
+      raise "BUG: #{self} doesn't implement including_types"
     end
 
     # Returns `true` if this type can have instance vars.
@@ -417,7 +426,7 @@ module Crystal
     end
 
     def instance_vars
-      raise "Bug: #{self} doesn't implement instance_vars"
+      raise "BUG: #{self} doesn't implement instance_vars"
     end
 
     def all_instance_vars
@@ -460,7 +469,7 @@ module Crystal
     end
 
     def lookup_class_var(name)
-      raise "Bug: #{self} doesn't implement lookup_class_var"
+      raise "BUG: #{self} doesn't implement lookup_class_var"
     end
 
     def has_instance_var_initializer?(name)
@@ -472,7 +481,7 @@ module Crystal
     end
 
     def add_subclass(subclass)
-      raise "Bug: #{self} doesn't implement add_subclass"
+      raise "BUG: #{self} doesn't implement add_subclass"
     end
 
     # Replace type parameetrs in this type with the type parameters
@@ -514,7 +523,7 @@ module Crystal
     end
 
     def type_vars
-      raise "Bug: #{self} doesn't implement type_vars"
+      raise "BUG: #{self} doesn't implement type_vars"
     end
 
     def unbound?
@@ -1892,7 +1901,7 @@ module Crystal
     end
 
     def new_generic_instance(program, generic_type, type_vars)
-      raise "Bug: ProcType#new_generic_instance shouldn't be invoked"
+      raise "BUG: ProcType#new_generic_instance shouldn't be invoked"
     end
 
     def type_desc
@@ -1966,7 +1975,7 @@ module Crystal
     end
 
     def new_generic_instance(program, generic_type, type_vars)
-      raise "Bug: TupleType#new_generic_instance shouldn't be invoked"
+      raise "BUG: TupleType#new_generic_instance shouldn't be invoked"
     end
 
     def type_desc
@@ -2072,7 +2081,7 @@ module Crystal
     end
 
     def new_generic_instance(program, generic_type, type_vars)
-      raise "Bug: NamedTupleType#new_generic_instance shouldn't be invoked"
+      raise "BUG: NamedTupleType#new_generic_instance shouldn't be invoked"
     end
 
     def type_desc
@@ -2539,7 +2548,7 @@ module Crystal
     end
 
     def new_generic_instance(program, generic_type, type_vars)
-      raise "Bug: GenericUnionType#new_generic_instance shouldn't be invoked"
+      raise "BUG: GenericUnionType#new_generic_instance shouldn't be invoked"
     end
 
     def type_desc
@@ -2796,6 +2805,7 @@ module Crystal
     include InstanceVarContainer
     include ClassVarContainer
 
+    # Given `Foo+`, this returns `Foo`.
     getter base_type : Type
 
     def initialize(program, @base_type)
@@ -2898,7 +2908,10 @@ module Crystal
       instance_type.leaf?
     end
 
-    delegate base_type, lookup_first_def, to: instance_type
+    # Given `Foo+:Class` returns `Foo` (not `Foo:Class`)
+    delegate base_type, to: instance_type
+
+    delegate lookup_first_def, to: instance_type.metaclass
 
     def each_concrete_type
       instance_type.subtypes.each do |type|

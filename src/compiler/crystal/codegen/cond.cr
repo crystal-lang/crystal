@@ -44,7 +44,7 @@ class Crystal::CodeGenVisitor
       end
 
       if has_bool
-        value = load(bit_cast union_value(@last), LLVM::Int1.pointer)
+        value = load(bit_cast union_value(@last), llvm_context.int1.pointer)
         is_bool = equal? type_id, type_id(@program.bool)
         cond = and cond, not(and(is_bool, not(value)))
       end

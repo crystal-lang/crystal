@@ -27,7 +27,7 @@ module FileUtils
   end
 
   # Compares two files *filename1* to *filename2* to determine if they are identical.
-  # Returns true if content are the same, false otherwise.
+  # Returns `true` if content are the same, `false` otherwise.
   #
   # ```
   # File.write("file.cr", "1")
@@ -45,7 +45,7 @@ module FileUtils
   end
 
   # Compares two streams *stream1* to *stream2* to determine if they are identical.
-  # Returns true if content are the same, false otherwise.
+  # Returns `true` if content are the same, `false` otherwise.
   #
   # ```
   # File.write("afile", "123")
@@ -93,14 +93,14 @@ module FileUtils
   # FileUtils.cp({"bar.cr", "afile"}, "files")
   # ```
   def cp(srcs : Enumerable(String), dest : String)
-    raise ArgumentError.new("no such directory : #{dest}") unless Dir.exists?(dest)
+    raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
       cp(src, dest)
     end
   end
 
   # Copies a file or directory *src_path* to *dest_path*.
-  # If *src_path* is a directory, this method copies all its contents recursively
+  # If *src_path* is a directory, this method copies all its contents recursively.
   #
   # ```
   # FileUtils.cp_r("files", "dir")
@@ -189,7 +189,7 @@ module FileUtils
   # FileUtils.mv(["foo", "bar"], "src")
   # ```
   def mv(srcs : Enumerable(String), dest : String) : Nil
-    raise ArgumentError.new("no such directory : #{dest}") unless Dir.exists?(dest)
+    raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
       begin
         mv(src, File.join(dest, File.basename(src)))
@@ -232,7 +232,7 @@ module FileUtils
   end
 
   # Deletes a file or directory *path*.
-  # If *path* is a directory, this method removes all its contents recursively
+  # If *path* is a directory, this method removes all its contents recursively.
   #
   # ```
   # FileUtils.rm_r("dir")
@@ -255,7 +255,7 @@ module FileUtils
   end
 
   # Deletes a list of files or directories *paths*.
-  # If one path is a directory, this method removes all its contents recursively
+  # If one path is a directory, this method removes all its contents recursively.
   #
   # ```
   # FileUtils.rm_r(["files", "bar.cr"])
@@ -267,7 +267,7 @@ module FileUtils
   end
 
   # Deletes a file or directory *path*.
-  # If *path* is a directory, this method removes all its contents recursively
+  # If *path* is a directory, this method removes all its contents recursively.
   # Ignore all errors.
   #
   # ```
@@ -283,7 +283,7 @@ module FileUtils
   end
 
   # Deletes a list of files or directories *paths*.
-  # If one path is a directory, this method removes all its contents recursively
+  # If one path is a directory, this method removes all its contents recursively.
   # Ignore all errors.
   #
   # ```

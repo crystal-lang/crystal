@@ -47,7 +47,7 @@ class Crystal::CodeGenVisitor
   def declare_const(const)
     global_name = const.llvm_name
     global = @main_mod.globals[global_name]? ||
-             @main_mod.globals.add(llvm_type(const.value.type), global_name)
+             @main_mod.globals.add(@main_llvm_typer.llvm_type(const.value.type), global_name)
     global.linkage = LLVM::Linkage::Internal if @single_module
     global
   end
@@ -56,8 +56,8 @@ class Crystal::CodeGenVisitor
     initialized_flag_name = const.initialized_llvm_name
     initialized_flag = @main_mod.globals[initialized_flag_name]?
     unless initialized_flag
-      initialized_flag = @main_mod.globals.add(LLVM::Int1, initialized_flag_name)
-      initialized_flag.initializer = int1(0)
+      initialized_flag = @main_mod.globals.add(@main_llvm_context.int1, initialized_flag_name)
+      initialized_flag.initializer = @main_llvm_context.int1.const_int(0)
       initialized_flag.linkage = LLVM::Linkage::Internal if @single_module
     end
     initialized_flag
@@ -115,48 +115,45 @@ class Crystal::CodeGenVisitor
   def create_initialize_const_function(fun_name, const)
     global, initialized_flag = declare_const_and_initialized_flag(const)
 
-    define_main_function(fun_name, ([] of LLVM::Type), LLVM::Void, needs_alloca: true) do |func|
-      with_cloned_context do
-        # "self" in a constant is the constant's namespace
-        context.type = const.namespace
+    in_main do
+      define_main_function(fun_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
+        with_cloned_context do
+          # "self" in a constant is the constant's namespace
+          context.type = const.namespace
 
-        # Start with fresh variables
-        context.vars = LLVMVars.new
+          # Start with fresh variables
+          context.vars = LLVMVars.new
 
-        alloca_vars const.vars
+          alloca_vars const.vars
 
-        request_value do
-          accept const.value
-        end
-
-        if const.value.type.passed_by_value?
-          @last = load @last
-        end
-
-        if @last.constant?
-          global.initializer = @last
-          global.global_constant = true
-
-          const_type = const.value.type
-          if const_type.is_a?(PrimitiveType) || const_type.is_a?(EnumType)
-            const.initializer = @last
+          request_value do
+            accept const.value
           end
-        else
-          global.initializer = llvm_type(const.value.type).null
-          store @last, global
-        end
 
-        ret
+          if const.value.type.passed_by_value?
+            @last = load @last
+          end
+
+          if @last.constant?
+            global.initializer = @last
+            global.global_constant = true
+
+            const_type = const.value.type
+            if const_type.is_a?(PrimitiveType) || const_type.is_a?(EnumType)
+              const.initializer = @last
+            end
+          else
+            global.initializer = llvm_type(const.value.type).null
+            store @last, global
+          end
+
+          ret
+        end
       end
     end
   end
 
   def read_const(const)
-    if initializer = const.initializer
-      @last = initializer
-      return
-    end
-
     @last = read_const_pointer(const)
     @last = to_lhs @last, const.value.type
   end
@@ -184,24 +181,26 @@ class Crystal::CodeGenVisitor
   def create_read_const_function(fun_name, const)
     global, initialized_flag = declare_const_and_initialized_flag(const)
 
-    define_main_function(fun_name, ([] of LLVM::Type), llvm_type(const.value.type).pointer) do |func|
-      initialized_block, not_initialized_block = new_blocks "initialized", "not_initialized"
+    in_main do
+      define_main_function(fun_name, ([] of LLVM::Type), llvm_type(const.value.type).pointer) do |func|
+        initialized_block, not_initialized_block = new_blocks "initialized", "not_initialized"
 
-      initialized = load(initialized_flag)
-      cond initialized, initialized_block, not_initialized_block
+        initialized = load(initialized_flag)
+        cond initialized, initialized_block, not_initialized_block
 
-      position_at_end not_initialized_block
-      store int1(1), initialized_flag
+        position_at_end not_initialized_block
+        store int1(1), initialized_flag
 
-      init_function_name = "~#{const.initialized_llvm_name}"
-      func = @main_mod.functions[init_function_name]? || create_initialize_const_function(init_function_name, const)
-      call func
+        init_function_name = "~#{const.initialized_llvm_name}"
+        func = @main_mod.functions[init_function_name]? || create_initialize_const_function(init_function_name, const)
+        call func
 
-      br initialized_block
+        br initialized_block
 
-      position_at_end initialized_block
+        position_at_end initialized_block
 
-      ret global
+        ret global
+      end
     end
   end
 end

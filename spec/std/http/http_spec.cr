@@ -2,12 +2,17 @@ require "spec"
 require "http"
 
 describe HTTP do
-  it "parses RFC1123" do
+  it "parses RFC 1123" do
     time = Time.new(1994, 11, 6, 8, 49, 37)
     HTTP.parse_time("Sun, 06 Nov 1994 08:49:37 GMT").should eq(time)
   end
 
-  it "parses RFC1036" do
+  it "parses RFC 1123 without day name" do
+    time = Time.new(1994, 11, 6, 8, 49, 37)
+    HTTP.parse_time("06 Nov 1994 08:49:37 GMT").should eq(time)
+  end
+
+  it "parses RFC 1036" do
     time = Time.new(1994, 11, 6, 8, 49, 37)
     HTTP.parse_time("Sunday, 06-Nov-94 08:49:37 GMT").should eq(time)
   end
@@ -32,7 +37,7 @@ describe HTTP do
     parsed_time.to_utc.to_s.should eq("2011-09-10 02:36:00 UTC")
   end
 
-  describe "generates RFC1123" do
+  describe "generates RFC 1123" do
     it "without time zone" do
       time = Time.new(1994, 11, 6, 8, 49, 37, 0, Time::Kind::Utc)
       HTTP.rfc1123_date(time).should eq("Sun, 06 Nov 1994 08:49:37 GMT")
@@ -48,6 +53,35 @@ describe HTTP do
       ensure
         ENV["TZ"] = tz
         LibC.tzset
+      end
+    end
+  end
+
+  describe ".dequote_string" do
+    it "dequotes a string" do
+      HTTP.dequote_string(%q(foo\"\\bar\ baz\\)).should eq(%q(foo"\bar baz\))
+    end
+  end
+
+  describe ".quote_string" do
+    it "quotes a string" do
+      HTTP.quote_string("foo!#():;?~").should eq("foo!#():;?~")
+      HTTP.quote_string(%q(foo"bar\baz)).should eq(%q(foo\"bar\\baz))
+      HTTP.quote_string("\t ").should eq("\\\t\\ ")
+      HTTP.quote_string("it works 😂😂😂👌👌👌😂😂😂").should eq("it\\ works\\ 😂😂😂👌👌👌😂😂😂")
+    end
+
+    it "raises on invalid characters" do
+      expect_raises(ArgumentError, "String contained invalid character") do
+        HTTP.quote_string("foo\0bar")
+      end
+
+      expect_raises(ArgumentError, "String contained invalid character") do
+        HTTP.quote_string("foo\u{1B}bar")
+      end
+
+      expect_raises(ArgumentError, "String contained invalid character") do
+        HTTP.quote_string("foo\u{7F}bar")
       end
     end
   end

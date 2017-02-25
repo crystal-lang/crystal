@@ -1,11 +1,11 @@
-# Object is the base type of all Crystal objects.
+# `Object` is the base type of all Crystal objects.
 class Object
-  # Returns true if this object is equal to *other*.
+  # Returns `true` if this object is equal to *other*.
   #
   # Subclasses override this method to provide class-specific meaning.
   abstract def ==(other)
 
-  # Returns true if this object is not equal to *other*.
+  # Returns `true` if this object is not equal to *other*.
   #
   # By default this method is implemented as `!(self == other)`
   # so there's no need to override this unless there's a more efficient
@@ -14,7 +14,7 @@ class Object
     !(self == other)
   end
 
-  # Shortcut to `!(self =~ other)`
+  # Shortcut to `!(self =~ other)`.
   def !~(other)
     !(self =~ other)
   end
@@ -110,7 +110,7 @@ class Object
   # Pretty prints `self` into the given printer.
   #
   # By default appends a text that is the result of invoking
-  # `#inspect` on self. Subclasses should override
+  # `#inspect` on `self`. Subclasses should override
   # for custom pretty printing.
   def pretty_print(pp : PrettyPrint) : Nil
     pp.text(inspect)
@@ -139,10 +139,10 @@ class Object
     self
   end
 
-  # Yields self. Nil overrides this method and doesn't yield.
+  # Yields `self`. `Nil` overrides this method and doesn't yield.
   #
   # This method is useful for dealing with nilable types, to safely
-  # perform operations only when the value is not nil.
+  # perform operations only when the value is not `nil`.
   #
   # ```
   # # First program argument in downcase, or nil
@@ -152,12 +152,12 @@ class Object
     yield self
   end
 
-  # Returns self. Nil overrides this method and raises an exception.
+  # Returns `self`. `Nil` overrides this method and raises an exception.
   def not_nil!
     self
   end
 
-  # Return self.
+  # Return `self`.
   #
   # ```
   # str = "hello"
@@ -297,7 +297,7 @@ class Object
     macro {{macro_prefix}}getter(*names, &block)
       \{% if block %}
         \{% if names.size != 1 %}
-          \{{ raise "only one argument can be passed to `getter` with a block" }}
+          \{{ raise "Only one argument can be passed to `getter` with a block" }}
         \{% end %}
 
         \{% name = names[0] %}
@@ -751,7 +751,7 @@ class Object
     macro {{macro_prefix}}property(*names, &block)
       \{% if block %}
         \{% if names.size != 1 %}
-          \{{ raise "only one argument can be passed to `property` with a block" }}
+          \{{ raise "Only one argument can be passed to `property` with a block" }}
         \{% end %}
 
         \{% name = names[0] %}
@@ -1115,7 +1115,7 @@ class Object
     def_hash {{*fields}}
   end
 
-  # Forwards missing methods to delegate.
+  # Forwards missing methods to *delegate*.
   #
   # ```
   # class StringWrapper
@@ -1135,9 +1135,8 @@ class Object
     end
   end
 
-  # Defines a `clone` method that returns a copy of this
-  # object with all instance variables cloned (`clone` is
-  # in turn invoked on them).
+  # Defines a `clone` method that returns a copy of this object with all
+  # instance variables cloned (`clone` is in turn invoked on them).
   macro def_clone
     # Returns a copy of `self` with all instance variables cloned.
     def clone

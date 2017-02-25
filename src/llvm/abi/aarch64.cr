@@ -3,9 +3,9 @@ require "../abi"
 # Based on
 # https://github.com/rust-lang/rust/blob/master/src/librustc_trans/cabi_aarch64.rs
 class LLVM::ABI::AArch64 < LLVM::ABI
-  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool)
-    ret_ty = compute_return_type(rty, ret_def)
-    arg_tys = atys.map { |aty| compute_arg_type(aty) }
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
+    ret_ty = compute_return_type(rty, ret_def, context)
+    arg_tys = atys.map { |aty| compute_arg_type(aty, context) }
     FunctionType.new(arg_tys, ret_ty)
   end
 
@@ -81,27 +81,27 @@ class LLVM::ABI::AArch64 < LLVM::ABI
     end
   end
 
-  private def compute_return_type(rty, ret_def)
+  private def compute_return_type(rty, ret_def, context)
     if !ret_def
-      ArgType.direct(LLVM::Void)
+      ArgType.direct(context.void)
     elsif register?(rty)
-      non_struct(rty)
+      non_struct(rty, context)
     elsif homog_agg = homogeneous_aggregate?(rty)
       base_type, members = homog_agg
-      ArgType.direct(rty, LLVM::Type.array(base_type, members))
+      ArgType.direct(rty, base_type.array(members))
     else
       size = size(rty)
       if size <= 16
         cast = if size <= 1
-                 LLVM::Int8
+                 context.int8
                elsif size <= 2
-                 LLVM::Int16
+                 context.int16
                elsif size <= 4
-                 LLVM::Int32
+                 context.int32
                elsif size <= 8
-                 LLVM::Int64
+                 context.int64
                else
-                 LLVM::Type.array(LLVM::Int64, ((size + 7) / 8).to_u64)
+                 context.int64.array(((size + 7) / 8).to_u64)
                end
         ArgType.direct(rty, cast)
       else
@@ -110,27 +110,27 @@ class LLVM::ABI::AArch64 < LLVM::ABI
     end
   end
 
-  private def compute_arg_type(aty)
+  private def compute_arg_type(aty, context)
     if register?(aty)
-      non_struct(aty)
+      non_struct(aty, context)
     elsif homog_agg = homogeneous_aggregate?(aty)
       base_type, members = homog_agg
-      ArgType.direct(aty, LLVM::Type.array(base_type, members))
+      ArgType.direct(aty, base_type.array(members))
     else
       size = size(aty)
       if size <= 16
         cast = if size == 0
-                 LLVM::Type.array(LLVM::Int64, 0)
+                 context.int64.array(0)
                elsif size <= 1
-                 LLVM::Int8
+                 context.int8
                elsif size <= 2
-                 LLVM::Int16
+                 context.int16
                elsif size <= 4
-                 LLVM::Int32
+                 context.int32
                elsif size <= 8
-                 LLVM::Int64
+                 context.int64
                else
-                 LLVM::Type.array(LLVM::Int64, ((size + 7) / 8).to_u64)
+                 context.int64.array(((size + 7) / 8).to_u64)
                end
         ArgType.direct(aty, cast)
       else
@@ -151,8 +151,8 @@ class LLVM::ABI::AArch64 < LLVM::ABI
     end
   end
 
-  private def non_struct(type)
-    attr = type == LLVM::Int1 ? LLVM::Attribute::ZExt : nil
+  private def non_struct(type, context)
+    attr = type == context.int1 ? LLVM::Attribute::ZExt : nil
     ArgType.direct(type, attr: attr)
   end
 end

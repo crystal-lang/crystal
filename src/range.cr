@@ -10,8 +10,9 @@
 # An easy way to remember which one is inclusive and which one is exclusive it
 # to think of the extra dot as if it pushes *y* further away, thus leaving it outside of the range.
 #
-# Ranges typically involve integers, but can be created using arbitrary objects as long as they define `succ` (or `pred`
-# for `reverse_each`), to get the next element in the range, and `<` and `==`, to know when the range reached the end:
+# Ranges typically involve integers, but can be created using arbitrary objects
+# as long as they define `succ` (or `pred` for `reverse_each`), to get the
+# next element in the range, and `<` and `==`, to know when the range reached the end:
 #
 # ```
 # # Represents a string of 'x's.
@@ -74,7 +75,7 @@ struct Range(B, E)
   # Returns `false` otherwise (default).
   getter? exclusive : Bool
 
-  # Constructs a range using the given beginning and end.
+  # Constructs a `Range` using the given beginning and end.
   #
   # ```
   # Range.new(1, 10)                  # => 1..10
@@ -116,7 +117,8 @@ struct Range(B, E)
     ItemIterator.new(self)
   end
 
-  # Iterates over the elements of this range in reverse order, passing each in turn to the block.
+  # Iterates over the elements of this range in reverse order,
+  # passing each in turn to the block.
   #
   # ```
   # (10...15).reverse_each { |n| print n, ' ' }
@@ -184,7 +186,7 @@ struct Range(B, E)
     StepIterator(self, B, typeof(by)).new(self, by)
   end
 
-  # Returns true if this range excludes the *end* element.
+  # Returns `true` if this range excludes the *end* element.
   #
   # ```
   # (1..10).excludes_end?  # => false
@@ -194,7 +196,7 @@ struct Range(B, E)
     @exclusive
   end
 
-  # Returns true if this range includes the given *value*.
+  # Returns `true` if this range includes the given *value*.
   #
   # ```
   # (1..10).includes?(4)  # => true

@@ -111,7 +111,7 @@ describe "FileUtils" do
     end
 
     it "raises an error if the directory doesn't exists" do
-      expect_raises(ArgumentError, "no such directory : not_existing_dir") do
+      expect_raises(ArgumentError, "No such directory : not_existing_dir") do
         FileUtils.cp({File.join(__DIR__, "data/test_file.text")}, "not_existing_dir")
       end
     end

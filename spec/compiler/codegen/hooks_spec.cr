@@ -168,4 +168,47 @@ describe "Code gen: hooks" do
       Foo.foo
       )).to_i.should eq(4)
   end
+
+  it "fixes empty types in hooks (#3946)" do
+    codegen(%(
+      lib LibC
+        fun exit(x : Int32) : NoReturn
+      end
+
+      def bar(x)
+      end
+
+      module Moo
+        def foo
+          bar(moo)
+        end
+      end
+
+      class Moo1
+        include Moo
+
+        def moo
+          0
+        end
+      end
+
+      class Moo2
+        include Moo
+
+        def moo
+          LibC.exit(1)
+        end
+      end
+
+      class Foo
+        macro inherited
+          io = uninitialized Moo
+          io.foo
+        end
+      end
+
+      class Bar < Foo
+      end
+    ))
+  end
 end

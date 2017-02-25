@@ -78,7 +78,13 @@ class Crystal::Type
 
     def lookup(node : Path)
       type_var = lookup_type_var?(node)
-      return type_var if type_var.is_a?(Type)
+
+      case type_var
+      when Const
+        node.raise "#{type_var} is not a type, it's a constant"
+      when Type
+        return type_var
+      end
 
       if @raise
         raise_undefined_constant(node)
@@ -369,7 +375,7 @@ class Crystal::Type
     end
 
     def lookup(node : ASTNode)
-      raise "Bug: unknown node in TypeLookup: #{node} #{node.class_desc}"
+      raise "BUG: unknown node in TypeLookup: #{node} #{node.class_desc}"
     end
 
     def raise_undefined_constant(node)

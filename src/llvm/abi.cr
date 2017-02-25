@@ -11,7 +11,7 @@ abstract class LLVM::ABI
     @windows = !!(triple =~ /windows/)
   end
 
-  abstract def abi_info(atys : Array(Type), rty : Type, ret_def : Bool)
+  abstract def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
   abstract def size(type : Type)
   abstract def align(type : Type)
 

@@ -22,9 +22,10 @@ struct Symbol
     to_i
   end
 
-  # Compares symbol with other based on `String#<=>` method. Returns -1, 0
-  # or +1 depending on whether symbol is less than, equal to, or greater than
-  # other_symbol.
+  # Compares symbol with other based on `String#<=>` method. Returns `-1`, `0`
+  # or `+1` depending on whether symbol is less than, equal to,
+  # or greater than *other*.
+  #
   # See `String#<=>` for more information.
   def <=>(other : Symbol)
     to_s <=> other.to_s
@@ -46,7 +47,7 @@ struct Symbol
     end
   end
 
-  # Appends the symbol's name to the passed IO.
+  # Appends the symbol's name to the passed `IO`.
   #
   # ```
   # :crystal.to_s # => "crystal"

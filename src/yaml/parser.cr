@@ -109,6 +109,6 @@ class YAML::Parser
   end
 
   private def raise(msg)
-    ::raise ParseException.new(msg, @pull_parser.problem_line_number, @pull_parser.problem_column_number)
+    @pull_parser.raise(msg)
   end
 end

@@ -46,6 +46,16 @@ class OAuth2::AccessToken
       token.authenticate request, false
       request.headers["Authorization"].should eq("Bearer access token")
     end
+
+    it "builds from json without expires_in (#4041)" do
+      access_token = AccessToken.from_json(%({
+        "access_token" : "foo",
+        "token_type" : "Bearer",
+        "refresh_token" : "bar",
+        "scope" : "baz"
+        }))
+      access_token.expires_in.should be_nil
+    end
   end
 
   describe Mac do

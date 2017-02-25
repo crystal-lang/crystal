@@ -150,7 +150,7 @@ class Hash(K, V)
     entry ? entry.value : yield key
   end
 
-  # Returns a tuple populated with the elements at the given indexes.
+  # Returns a tuple populated with the elements at the given *indexes*.
   # Raises if any index is invalid.
   #
   # ```
@@ -198,12 +198,24 @@ class Hash(K, V)
     yield value
   end
 
-  # Deletes the key-value pair and returns the value.
+  # Deletes the key-value pair and returns the value, otherwise returns `nil`.
   #
   # ```
   # h = {"foo" => "bar"}
   # h.delete("foo")     # => "bar"
   # h.fetch("foo", nil) # => nil
+  # ```
+  def delete(key)
+    delete(key) { nil }
+  end
+
+  # Deletes the key-value pair and returns the value, else yields *key* with given block.
+  #
+  # ```
+  # h = {"foo" => "bar"}
+  # h.delete("foo") { |key| "#{key} not found" } # => "bar"
+  # h.fetch("foo", nil)                          # => nil
+  # h.delete("baz") { |key| "#{key} not found" } # => "baz not found"
   # ```
   def delete(key)
     index = bucket_index(key)
@@ -242,7 +254,7 @@ class Hash(K, V)
       previous_entry = entry
       entry = entry.next
     end
-    nil
+    yield key
   end
 
   # Deletes each key-value pair for which the given block returns `true`.
@@ -462,7 +474,7 @@ class Hash(K, V)
     self
   end
 
-  # Returns a new hash consisting of entries for which the block returns true.
+  # Returns a new hash consisting of entries for which the block returns `true`.
   # ```
   # h = {"a" => 100, "b" => 200, "c" => 300}
   # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
@@ -472,12 +484,12 @@ class Hash(K, V)
     reject { |k, v| !yield(k, v) }
   end
 
-  # Equivalent to `Hash#select` but makes modification on the current object rather that returning a new one. Returns nil if no changes were made
+  # Equivalent to `Hash#select` but makes modification on the current object rather that returning a new one. Returns `nil` if no changes were made
   def select!(&block : K, V -> _)
     reject! { |k, v| !yield(k, v) }
   end
 
-  # Returns a new hash consisting of entries for which the block returns false.
+  # Returns a new hash consisting of entries for which the block returns `false`.
   # ```
   # h = {"a" => 100, "b" => 200, "c" => 300}
   # h.reject { |k, v| k > "a" } # => {"a" => 100}
@@ -489,7 +501,7 @@ class Hash(K, V)
     end
   end
 
-  # Equivalent to `Hash#reject`, but makes modification on the current object rather that returning a new one. Returns nil if no changes were made.
+  # Equivalent to `Hash#reject`, but makes modification on the current object rather that returning a new one. Returns `nil` if no changes were made.
   def reject!(&block : K, V -> _)
     num_entries = size
     each do |key, value|
@@ -565,7 +577,7 @@ class Hash(K, V)
     end
   end
 
-  # Removes all `nil` value from `self`. Returns nil if no changes were made.
+  # Removes all `nil` value from `self`. Returns `nil` if no changes were made.
   #
   # ```
   # hash = {"hello" => "world", "foo" => nil}
@@ -632,7 +644,7 @@ class Hash(K, V)
     shift { raise IndexError.new }
   end
 
-  # Same as `#shift`, but returns nil if the hash is empty.
+  # Same as `#shift`, but returns `nil` if the hash is empty.
   #
   # ```
   # hash = {"foo" => "bar", "baz" => "qux"}
@@ -684,7 +696,7 @@ class Hash(K, V)
     self
   end
 
-  # Compares with *other*. Returns *true* if all key-value pairs are the same.
+  # Compares with *other*. Returns `true` if all key-value pairs are the same.
   def ==(other : Hash)
     return false unless size == other.size
     each do |key, value|
@@ -783,7 +795,7 @@ class Hash(K, V)
     pp.text "{...}" unless executed
   end
 
-  # Returns self.
+  # Returns `self`.
   def to_h
     self
   end

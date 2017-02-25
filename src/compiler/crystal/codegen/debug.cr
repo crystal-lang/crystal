@@ -4,6 +4,8 @@ module Crystal
   class CodeGenVisitor
     CRYSTAL_LANG_DEBUG_IDENTIFIER = 0x8002_u32
 
+    @current_debug_location : Location?
+
     def di_builder(llvm_module = @llvm_mod || @main_mod)
       di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
       di_builders[llvm_module] ||= LLVM::DIBuilder.new(llvm_module).tap do |di_builder|
@@ -18,12 +20,12 @@ module Crystal
       # DebugInfo generation in LLVM by default uses a higher version of dwarf
       # than OS X currently understands. Android has the same problem.
       if @program.has_flag?("osx") || @program.has_flag?("android")
-        LibLLVM.add_named_metadata_operand(mod, "llvm.module.flags",
-          metadata([LibLLVM::ModuleFlag::Warning.value, "Dwarf Version", 2]))
+        mod.add_named_metadata_operand("llvm.module.flags",
+          metadata([LLVM::ModuleFlag::Warning.value, "Dwarf Version", 2]))
       end
 
-      LibLLVM.add_named_metadata_operand(mod, "llvm.module.flags",
-        metadata([LibLLVM::ModuleFlag::Warning.value, "Debug Info Version", LibLLVM::DEBUG_METADATA_VERSION]))
+      mod.add_named_metadata_operand("llvm.module.flags",
+        metadata([LLVM::ModuleFlag::Warning.value, "Debug Info Version", LLVM::DEBUG_METADATA_VERSION]))
     end
 
     def fun_metadatas
@@ -85,7 +87,7 @@ module Crystal
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_struct_type(type)
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type.to_s, nil, 1)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type.to_s, nil, 1, llvm_context)
       debug_type_cache[type] = tmp_debug_type
 
       ivars.each_with_index do |(name, ivar), idx|
@@ -143,6 +145,7 @@ module Crystal
     end
 
     private def declare_local(type, alloca, location)
+      location = location.try &.original_location
       return unless location
 
       debug_type = get_debug_type(type)
@@ -173,38 +176,39 @@ module Crystal
       end
     end
 
-    def file_and_dir(file)
-      # @file_and_dir ||= {} of String | VirtualFile => {String, String}
-      realfile = case file
-                 when String then file
-                 when VirtualFile
-                   filename = "macro#{file.object_id}.cr"
-                   absolute_filename = CacheDir.instance.join(filename)
-                   File.write(absolute_filename, file.source)
-                   absolute_filename
-                 else
-                   raise "Unknown file type: #{file}"
-                 end
+    def file_and_dir(filename)
+      # We should have expanded locations with VirtualFiles in them to
+      # the location where they expanded. Debug locations will point
+      # to the single line where the macro was expanded. This is not
+      # convenient for debugging macro code, but the other solution
+      # involves creating temporary files to hold the expanded macro
+      # code, but that prevents reusing previous compilations. In
+      # any case, macro code *should* be simple so that it doesn't
+      # need to be debugged at runtime (because macros work at compile-time.)
+      unless filename.is_a?(String)
+        raise "BUG: expected debug filename to be a String, not #{filename.class}"
+      end
+
       {
-        File.basename(realfile), # File
-        File.dirname(realfile),  # Directory
+        File.basename(filename), # File
+        File.dirname(filename),  # Directory
       }
     end
 
     def metadata(args)
       values = args.map do |value|
         case value
-        when String         then LLVM::Value.new LibLLVM.md_string(value, value.bytesize)
-        when Symbol         then LLVM::Value.new LibLLVM.md_string(value.to_s, value.to_s.bytesize)
+        when String         then llvm_context.md_string(value.to_s)
+        when Symbol         then llvm_context.md_string(value.to_s)
         when Number         then int32(value)
         when Bool           then int1(value ? 1 : 0)
         when LLVM::Value    then value
-        when LLVM::Function then LLVM::Value.new value.unwrap
-        when Nil            then LLVM::Value.new(Pointer(Void).null.as(LibLLVM::ValueRef))
+        when LLVM::Function then value.to_value
+        when Nil            then LLVM::Value.null
         else                     raise "Unsuported value type: #{value.class}"
         end
       end
-      LLVM::Value.new LibLLVM.md_node((values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+      llvm_context.md_node(values)
     end
 
     def set_current_debug_location(node : ASTNode)
@@ -221,6 +225,7 @@ module Crystal
         main_scopes = (@main_scopes ||= {} of {String, String} => LibLLVMExt::Metadata)
         file, dir = file_and_dir(location.filename)
         main_scopes[{file, dir}] ||= begin
+          di_builder = di_builder(@main_mod)
           file = di_builder.create_file(file, dir)
           di_builder.create_lexical_block(fun_metadatas[context.fun], file, 1, 1)
         end
@@ -230,7 +235,11 @@ module Crystal
     end
 
     def set_current_debug_location(location)
+      location = location.try &.original_location
       return unless location
+
+      @current_debug_location = location
+
       scope = get_current_debug_scope(location)
 
       if scope
@@ -241,6 +250,8 @@ module Crystal
     end
 
     def clear_current_debug_location
+      @current_debug_location = nil
+
       builder.set_current_debug_location(0, 0, nil)
     end
 
@@ -253,7 +264,7 @@ module Crystal
     end
 
     def emit_def_debug_metadata(target_def)
-      location = target_def.location
+      location = target_def.location.try &.original_location
       return unless location
 
       file, dir = file_and_dir(location.filename)

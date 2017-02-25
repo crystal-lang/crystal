@@ -32,10 +32,12 @@ module HTTP
       @io.read_byte
     end
 
-    def gets(delimiter : Char, limit : Int, chomp = false) : String?
-      return super if @encoding
+    def peek
+      @io.peek
+    end
 
-      @io.gets(delimiter, limit, chomp)
+    def skip(bytes_count)
+      @io.skip(bytes_count)
     end
 
     def write(slice : Bytes)
@@ -62,10 +64,7 @@ module HTTP
       # Check if the last read consumed a chunk and we
       # need to start consuming the next one.
       if @read_chunk_start
-        read_chunk_end
-        @chunk_remaining = @io.gets.not_nil!.to_i(16)
-        check_last_chunk
-        @read_chunk_start = false
+        read_chunk_start
       end
 
       return 0 if @chunk_remaining == 0
@@ -93,6 +92,38 @@ module HTTP
       end
     end
 
+    def peek
+      while true
+        if @chunk_remaining > 0
+          peek = @io.peek
+          return nil unless peek
+
+          if @chunk_remaining < peek.size
+            peek = peek[0, @chunk_remaining]
+          end
+
+          return peek.empty? ? nil : peek
+        elsif @read_chunk_start
+          read_chunk_start
+          next
+        end
+
+        break
+      end
+
+      nil
+    end
+
+    def skip(bytes_count)
+      if bytes_count <= @chunk_remaining
+        @io.skip(bytes_count)
+        @chunk_remaining -= bytes_count
+        check_chunk_remaining_is_zero
+      else
+        super
+      end
+    end
+
     private def check_chunk_remaining_is_zero
       # As soon as we finish reading a chunk we return,
       # in case the next content is delayed (see #3270).
@@ -101,6 +132,13 @@ module HTTP
       if @chunk_remaining == 0
         @read_chunk_start = true
       end
+    end
+
+    private def read_chunk_start
+      read_chunk_end
+      @chunk_remaining = @io.gets.not_nil!.to_i(16)
+      check_last_chunk
+      @read_chunk_start = false
     end
 
     private def read_chunk_end

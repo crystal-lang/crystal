@@ -389,7 +389,7 @@ class Crystal::Call
       if defs.size > 1 && a_def.same?(matched_def)
         str << colorize(" (trying this one)").blue
       end
-      if a_def.args.any? { |arg| arg.default_value && arg.name == argument_name }
+      if a_def.args.any? { |arg| arg.default_value && arg.external_name == argument_name }
         str << colorize(" (did you mean this one?)").yellow.bold
       end
     end
@@ -496,7 +496,7 @@ class Crystal::Call
     all_arguments_sizes = Set(String).new
     macros.each do |a_macro|
       named_args.try &.each do |named_arg|
-        index = a_macro.args.index { |arg| arg.name == named_arg.name }
+        index = a_macro.args.index { |arg| arg.external_name == named_arg.name }
         if index
           if index < args.size
             raise "argument '#{named_arg.name}' already specified"
@@ -536,14 +536,14 @@ class Crystal::Call
 
   def check_named_args_mismatch(owner, arg_types, named_args, a_def)
     named_args.each do |named_arg|
-      found_index = a_def.args.index { |arg| arg.name == named_arg.name }
+      found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
       if found_index
         min_size = args.size
         if found_index < min_size
           raise "argument '#{named_arg.name}' already specified"
         end
       elsif !a_def.double_splat
-        similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.name))
+        similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.external_name))
 
         msg = String.build do |str|
           str << "no argument named '"

@@ -147,6 +147,10 @@ class File
       (@stat.st_mode & LibC::S_IFMT) == LibC::S_IFREG
     end
 
+    def pipe?
+      (@stat.st_mode & LibC::S_IFMT) == LibC::S_IFIFO
+    end
+
     def setuid?
       (@stat.st_mode & LibC::S_IFMT) == LibC::S_ISUID
     end

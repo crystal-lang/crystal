@@ -267,6 +267,6 @@ describe URI::Parser, "#run" do
   end
 
   context "bad urls" do
-    assert { expect_raises(URI::Error) { URI::Parser.new("http://some.com:8f80/path").run } }
+    it { expect_raises(URI::Error) { URI::Parser.new("http://some.com:8f80/path").run } }
   end
 end

@@ -4601,4 +4601,28 @@ describe "Semantic: instance var" do
       Qux.new
       )) { types["Qux"] }
   end
+
+  it "errors if unknown ivar through macro (#4050)" do
+    assert_error %(
+      class Foo
+        def initialize(**attributes)
+          {% for var in @type.instance_vars %}
+            if arg = attributes[:{{var.name.id}}]?
+              @{{var.name.id}} = arg
+            end
+          {% end %}
+        end
+      end
+
+      class Bar < Foo
+        def initialize(**attributes)
+          @bar = true
+          super
+        end
+      end
+
+      Bar.new
+      ),
+      "Can't infer the type of instance variable '@bar' of Foo"
+  end
 end

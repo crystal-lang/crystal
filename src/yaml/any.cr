@@ -18,10 +18,10 @@
 #
 # Note that methods used to traverse a YAML structure, `#[]`, `#[]?` and `#each`,
 # always return a `YAML::Any` to allow further traversal. To convert them to `String`,
-# `Array`, etc., use the "as_" methods, such as `#as_s`, `#as_a`, which perform
+# `Array`, etc., use the `as_` methods, such as `#as_s`, `#as_a`, which perform
 # a type check against the raw underlying value. This means that invoking `#as_s`
-# when the underlying value is not a String will raise: the value won't automatically
-# be converted (parsed) to a String.
+# when the underlying value is not a `String` will raise: the value won't automatically
+# be converted (parsed) to a `String`.
 struct YAML::Any
   include Enumerable(self)
 
@@ -58,8 +58,8 @@ struct YAML::Any
   def initialize(@raw : YAML::Type)
   end
 
-  # Assumes the underlying value is an `Array` or `Hash` and returns
-  # its size.
+  # Assumes the underlying value is an `Array` or `Hash` and returns its size.
+  #
   # Raises if the underlying value is not an `Array` or `Hash`.
   def size : Int
     case object = @raw
@@ -68,62 +68,67 @@ struct YAML::Any
     when Hash
       object.size
     else
-      raise "expected Array or Hash for #size, not #{object.class}"
+      raise "Expected Array or Hash for #size, not #{object.class}"
     end
   end
 
-  # Assumes the underlying value is an Array and returns the element
-  # at the given index.
-  # Raises if the underlying value is not an Array.
+  # Assumes the underlying value is an `Array` and returns the element
+  # at the given *index*.
+  #
+  # Raises if the underlying value is not an `Array`.
   def [](index : Int) : YAML::Any
     case object = @raw
     when Array
       Any.new object[index]
     else
-      raise "expected Array for #[](index : Int), not #{object.class}"
+      raise "Expected Array for #[](index : Int), not #{object.class}"
     end
   end
 
-  # Assumes the underlying value is an Array and returns the element
-  # at the given index, or nil if out of bounds.
-  # Raises if the underlying value is not an Array.
+  # Assumes the underlying value is an `Array` and returns the element
+  # at the given *index*, or `nil` if out of bounds.
+  #
+  # Raises if the underlying value is not an `Array`.
   def []?(index : Int) : YAML::Any?
     case object = @raw
     when Array
       value = object[index]?
       value ? Any.new(value) : nil
     else
-      raise "expected Array for #[]?(index : Int), not #{object.class}"
+      raise "Expected Array for #[]?(index : Int), not #{object.class}"
     end
   end
 
-  # Assumes the underlying value is a Hash and returns the element
-  # with the given key.
-  # Raises if the underlying value is not a Hash.
+  # Assumes the underlying value is a `Hash` and returns the element
+  # with the given *key*.
+  #
+  # Raises if the underlying value is not a `Hash`.
   def [](key : String) : YAML::Any
     case object = @raw
     when Hash
       Any.new object[key]
     else
-      raise "expected Hash for #[](key : String), not #{object.class}"
+      raise "Expected Hash for #[](key : String), not #{object.class}"
     end
   end
 
-  # Assumes the underlying value is a Hash and returns the element
-  # with the given key, or nil if the key is not present.
-  # Raises if the underlying value is not a Hash.
+  # Assumes the underlying value is a `Hash` and returns the element
+  # with the given *key*, or `nil` if the key is not present.
+  #
+  # Raises if the underlying value is not a `Hash`.
   def []?(key : String) : YAML::Any?
     case object = @raw
     when Hash
       value = object[key]?
       value ? Any.new(value) : nil
     else
-      raise "expected Hash for #[]?(key : String), not #{object.class}"
+      raise "Expected Hash for #[]?(key : String), not #{object.class}"
     end
   end
 
   # Assumes the underlying value is an `Array` or `Hash` and yields each
   # of the elements or key/values, always as `YAML::Any`.
+  #
   # Raises if the underlying value is not an `Array` or `Hash`.
   def each
     case object = @raw
@@ -136,26 +141,30 @@ struct YAML::Any
         yield Any.new(key), Any.new(value)
       end
     else
-      raise "expected Array or Hash for #each, not #{object.class}"
+      raise "Expected Array or Hash for #each, not #{object.class}"
     end
   end
 
-  # Checks that the underlying value is `Nil`, and returns `nil`. Raises otherwise.
+  # Checks that the underlying value is `Nil`, and returns `nil`.
+  # Raises otherwise.
   def as_nil : Nil
     @raw.as(Nil)
   end
 
-  # Checks that the underlying value is `String`, and returns its value. Raises otherwise.
+  # Checks that the underlying value is `String`, and returns its value.
+  # Raises otherwise.
   def as_s : String
     @raw.as(String)
   end
 
-  # Checks that the underlying value is `Array`, and returns its value. Raises otherwise.
+  # Checks that the underlying value is `Array`, and returns its value.
+  # Raises otherwise.
   def as_a : Array(Type)
     @raw.as(Array)
   end
 
-  # Checks that the underlying value is `Hash`, and returns its value. Raises otherwise.
+  # Checks that the underlying value is `Hash`, and returns its value.
+  # Raises otherwise.
   def as_h : Hash(Type, Type)
     @raw.as(Hash)
   end
@@ -175,12 +184,12 @@ struct YAML::Any
     @raw.pretty_print(pp)
   end
 
-  # Returns true if both `self` and *other*'s raw object are equal.
+  # Returns `true` if both `self` and *other*'s raw object are equal.
   def ==(other : YAML::Any)
     raw == other.raw
   end
 
-  # Returns true if the raw object is equal to *other*.
+  # Returns `true` if the raw object is equal to *other*.
   def ==(other)
     raw == other
   end

@@ -1,10 +1,33 @@
 class LLVM::Module
-  getter name : String
+  # We let a module store a reference to the context so that if
+  # someone is still holding a reference to the module but not to
+  # the context, the context won't be disposed (if the context is disposed,
+  # the module will no longer be valid and segfaults will happen)
 
-  def initialize(@name : String)
-    @unwrap = LibLLVM.module_create_with_name @name
-    @owned = false
-  end
+  getter context : Context
+
+  {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+    def initialize(@unwrap : LibLLVM::ModuleRef, @name : String, @context : Context)
+      @owned = false
+    end
+
+    def name : String
+      @name
+    end
+  {% else %}
+    def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
+      @owned = false
+    end
+
+    def name : String
+      bytes = LibLLVM.get_module_identifier(self, out bytesize)
+      String.new(Slice.new(bytes, bytesize))
+    end
+
+    def name=(name : String)
+      LibLLVM.set_module_identifier(self, name, name.bytesize)
+    end
+  {% end %}
 
   def target=(target)
     LibLLVM.set_target(self, target)
@@ -66,6 +89,14 @@ class LLVM::Module
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
   end
 
+  def add_named_metadata_operand(name : String, value : Value) : Nil
+    LibLLVM.add_named_metadata_operand(self, name, value)
+  end
+
+  def ==(other : self)
+    @unwrap == other.@unwrap
+  end
+
   def to_s(io)
     LLVM.to_io(LibLLVM.print_module_to_string(self), io)
     self
@@ -81,10 +112,5 @@ class LLVM::Module
     else
       @owned = true
     end
-  end
-
-  def finalize
-    return if @owned
-    LibLLVM.dispose_module(@unwrap)
   end
 end

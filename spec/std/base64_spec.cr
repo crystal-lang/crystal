@@ -1,12 +1,12 @@
 require "spec"
 require "base64"
-require "crypto/md5"
+require "digest/md5"
 
 describe "Base64" do
   context "simple test" do
     eqs = {"" => "", "a" => "YQ==\n", "ab" => "YWI=\n", "abc" => "YWJj\n",
-      "abcd" => "YWJjZA==\n", "abcde" => "YWJjZGU=\n", "abcdef" => "YWJjZGVm\n",
-      "abcdefg" => "YWJjZGVmZw==\n"}
+           "abcd" => "YWJjZA==\n", "abcde" => "YWJjZGU=\n", "abcdef" => "YWJjZGVm\n",
+           "abcdefg" => "YWJjZGVmZw==\n"}
     eqs.each do |a, b|
       it "encode #{a.inspect} to #{b.inspect}" do
         Base64.encode(a).should eq(b)
@@ -20,7 +20,7 @@ describe "Base64" do
 
   context "\n in multiple places" do
     eqs = {"abcd" => "YWJj\nZA==\n", "abcde" => "YWJj\nZGU=\n", "abcdef" => "YWJj\nZGVm\n",
-      "abcdefg" => "YWJj\nZGVmZw==\n", "abcdefg" => "YWJj\nZGVm\nZw==\n",
+           "abcdefg" => "YWJj\nZGVmZw==\n", "abcdefg" => "YWJj\nZGVm\nZw==\n",
     }
     eqs.each do |a, b|
       it "decode from #{b.inspect} to #{a.inspect}" do
@@ -45,9 +45,9 @@ describe "Base64" do
 
   describe "base" do
     eqs = {"Send reinforcements"                                                    => "U2VuZCByZWluZm9yY2VtZW50cw==\n",
-      "Now is the time for all good coders\nto learn Crystal"                  => "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g\nQ3J5c3RhbA==\n",
-      "This is line one\nThis is line two\nThis is line three\nAnd so on...\n" => "VGhpcyBpcyBsaW5lIG9uZQpUaGlzIGlzIGxpbmUgdHdvClRoaXMgaXMgbGlu\nZSB0aHJlZQpBbmQgc28gb24uLi4K\n",
-      "hahah⊙ⓧ⊙"                                                               => "aGFoYWjiipnik6fiipk=\n"}
+           "Now is the time for all good coders\nto learn Crystal"                  => "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g\nQ3J5c3RhbA==\n",
+           "This is line one\nThis is line two\nThis is line three\nAnd so on...\n" => "VGhpcyBpcyBsaW5lIG9uZQpUaGlzIGlzIGxpbmUgdHdvClRoaXMgaXMgbGlu\nZSB0aHJlZQpBbmQgc28gb24uLi4K\n",
+           "hahah⊙ⓧ⊙"                                                               => "aGFoYWjiipnik6fiipk=\n"}
     eqs.each do |a, b|
       it "encode #{a.inspect} to #{b.inspect}" do
         Base64.encode(a).should eq(b)
@@ -82,7 +82,7 @@ describe "Base64" do
     it "big message" do
       a = "a" * 100000
       b = Base64.encode(a)
-      Crypto::MD5.hex_digest(Base64.decode_string(b)).should eq(Crypto::MD5.hex_digest(a))
+      Digest::MD5.hexdigest(Base64.decode_string(b)).should eq(Digest::MD5.hexdigest(a))
     end
 
     it "works for most characters" do
@@ -90,7 +90,7 @@ describe "Base64" do
         65536.times { |i| buf << (i + 1).chr }
       end
       b = Base64.encode(a)
-      Crypto::MD5.hex_digest(Base64.decode_string(b)).should eq(Crypto::MD5.hex_digest(a))
+      Digest::MD5.hexdigest(Base64.decode_string(b)).should eq(Digest::MD5.hexdigest(a))
     end
   end
 
@@ -106,8 +106,8 @@ describe "Base64" do
     it "decode \n in multiple places" do
       decoded = "hahah⊙ⓧ⊙"
       {"aGFoYWjiipnik6fiipk=", "aGFo\nYWjiipnik6fiipk=", "aGFo\nYWji\nipnik6fiipk=",
-        "aGFo\nYWji\nipni\nk6fiipk=", "aGFo\nYWji\nipni\nk6fi\nipk=",
-        "aGFo\nYWji\nipni\nk6fi\nipk=\n"}.each do |encoded|
+       "aGFo\nYWji\nipni\nk6fiipk=", "aGFo\nYWji\nipni\nk6fi\nipk=",
+       "aGFo\nYWji\nipni\nk6fi\nipk=\n"}.each do |encoded|
         Base64.decode(encoded).should eq(decoded.to_slice)
         Base64.decode_string(encoded).should eq(decoded)
       end

@@ -3,7 +3,7 @@ require "./codegen"
 class Crystal::CodeGenVisitor
   def target_def_fun(target_def, self_type)
     mangled_name = target_def.mangled_name(@program, self_type)
-    self_type_mod = type_module(self_type)
+    self_type_mod = type_module(self_type).mod
 
     func = self_type_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
     check_mod_fun self_type_mod, mangled_name, func
@@ -12,7 +12,7 @@ class Crystal::CodeGenVisitor
   def main_fun(name)
     func = @main_mod.functions[name]?
     unless func
-      raise "Bug: #{name} is not defined"
+      raise "BUG: #{name} is not defined"
     end
 
     check_main_fun name, func
@@ -28,10 +28,13 @@ class Crystal::CodeGenVisitor
   end
 
   def declare_fun(mangled_name, func)
+    param_types = @llvm_typer.copy_types(func.params.types)
+    return_type = @llvm_typer.copy_type(func.return_type)
+
     new_fun = @llvm_mod.functions.add(
       mangled_name,
-      func.params.types,
-      func.return_type,
+      param_types,
+      return_type,
       func.varargs?
     )
 
@@ -45,13 +48,18 @@ class Crystal::CodeGenVisitor
     new_fun
   end
 
-  def codegen_fun(mangled_name, target_def, self_type, is_exported_fun = false, fun_module = type_module(self_type), is_fun_literal = false, is_closure = false)
+  def codegen_fun(mangled_name, target_def, self_type, is_exported_fun = false, fun_module_info = type_module(self_type), is_fun_literal = false, is_closure = false)
     old_position = insert_block
     old_entry_block = @entry_block
     old_alloca_block = @alloca_block
     old_ensure_exception_handlers = @ensure_exception_handlers
     old_rescue_block = @rescue_block
     old_llvm_mod = @llvm_mod
+    old_llvm_context = @llvm_context
+    old_llvm_typer = @llvm_typer
+    old_builder = self.builder
+    old_debug_location = @current_debug_location
+
     old_needs_value = @needs_value
 
     with_cloned_context do |old_context|
@@ -59,7 +67,10 @@ class Crystal::CodeGenVisitor
       context.vars = LLVMVars.new
       context.block_context = nil
 
-      @llvm_mod = fun_module
+      @llvm_mod = fun_module_info.mod
+      @llvm_context = @llvm_mod.context
+      @llvm_typer = fun_module_info.typer
+      @builder = fun_module_info.builder
 
       @ensure_exception_handlers = nil
       @rescue_block = nil
@@ -69,7 +80,7 @@ class Crystal::CodeGenVisitor
 
       needs_body = !target_def.is_a?(External) || is_exported_fun
       if needs_body
-        emit_def_debug_metadata target_def if @debug
+        emit_def_debug_metadata target_def unless @debug.none?
 
         context.fun.add_attribute LLVM::Attribute::UWTable
         if @program.has_flag?("darwin")
@@ -81,7 +92,7 @@ class Crystal::CodeGenVisitor
         new_entry_block
 
         if is_closure
-          clear_current_debug_location if @debug
+          clear_current_debug_location if @debug.line_numbers?
           setup_closure_vars context.closure_vars.not_nil!
         else
           context.reset_closure
@@ -99,12 +110,12 @@ class Crystal::CodeGenVisitor
           context.closure_parent_context = closure_parent_context
         end
 
-        set_current_debug_location target_def if @debug
+        set_current_debug_location target_def if @debug.line_numbers?
         alloca_vars target_def.vars, target_def, args, context.closure_parent_context
 
         create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)
 
-        if @debug
+        if @debug.variables?
           in_alloca_block do
             args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
             location = target_def.location
@@ -125,23 +136,30 @@ class Crystal::CodeGenVisitor
 
         accept target_def.body
 
-        set_current_debug_location target_def.end_location if @debug
+        if @debug.line_numbers?
+          set_current_debug_location target_def.end_location
+        end
 
         codegen_return(target_def)
 
         br_from_alloca_to_entry
       end
 
-      position_at_end old_position
-
       @last = llvm_nil
 
       @llvm_mod = old_llvm_mod
+      @llvm_context = old_llvm_context
+      @llvm_typer = old_llvm_typer
+      @builder = old_builder
+      position_at_end old_position
+
       @ensure_exception_handlers = old_ensure_exception_handlers
       @rescue_block = old_rescue_block
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
       @needs_value = old_needs_value
+
+      set_current_debug_location(old_debug_location)
 
       context.fun
     end
@@ -150,7 +168,8 @@ class Crystal::CodeGenVisitor
   def codegen_return(target_def : Def)
     # Check if this def must use the C calling convention and the return
     # value must be either casted or passed by sret
-    if target_def.c_calling_convention? && (abi_info = target_def.abi_info)
+    if target_def.c_calling_convention? && target_def.abi_info?
+      abi_info = abi_info(target_def)
       ret_type = abi_info.return_type
       if cast = ret_type.cast
         casted_last = bit_cast @last, cast.pointer
@@ -198,7 +217,7 @@ class Crystal::CodeGenVisitor
     llvm_args_types = args.map_with_index do |arg, i|
       arg_type = arg.type
       if arg_type.void?
-        llvm_arg_type = LLVM::Int8
+        llvm_arg_type = llvm_context.int8
       else
         llvm_arg_type = llvm_type(arg_type)
 
@@ -218,7 +237,7 @@ class Crystal::CodeGenVisitor
     llvm_return_type = llvm_return_type(target_def.type)
 
     if is_closure
-      llvm_args_types.insert(0, LLVM::VoidPointer)
+      llvm_args_types.insert(0, llvm_context.void_pointer)
       offset = 1
     else
       offset = 0
@@ -272,9 +291,9 @@ class Crystal::CodeGenVisitor
       sret = true
       offset += 1
       llvm_args_types.insert 0, ret_type.type.pointer
-      llvm_return_type = LLVM::Void
+      llvm_return_type = llvm_context.void
     else
-      llvm_return_type = LLVM::Void
+      llvm_return_type = llvm_context.void
     end
 
     setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
@@ -306,17 +325,17 @@ class Crystal::CodeGenVisitor
   end
 
   def abi_info(external : Def)
-    external.abi_info ||= begin
-      llvm_args_types = external.args.map { |arg| llvm_c_type(arg.type) }
-      llvm_return_type = llvm_c_return_type(external.type)
-      @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?)
-    end
+    external.abi_info = true
+
+    llvm_args_types = external.args.map { |arg| llvm_c_type(arg.type) }
+    llvm_return_type = llvm_c_return_type(external.type)
+    @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?, llvm_context)
   end
 
   def abi_info(external : Def, node : Call)
     llvm_args_types = node.args.map { |arg| llvm_c_type(arg.type) }
     llvm_return_type = llvm_c_return_type(external.type)
-    @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?)
+    @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?, llvm_context)
   end
 
   def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
@@ -357,13 +376,13 @@ class Crystal::CodeGenVisitor
 
   def fun_literal_closure_ptr
     void_ptr = context.fun.params.first
-    bit_cast void_ptr, context.closure_type.not_nil!.pointer
+    bit_cast void_ptr, llvm_typer.copy_type(context.closure_type.not_nil!).pointer
   end
 
   def create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)
     offset = is_closure ? 1 : 0
 
-    abi_info = target_def.abi_info
+    abi_info = target_def.abi_info? ? abi_info(target_def) : nil
     sret = abi_info && sret?(abi_info)
     offset += 1 if sret
 
@@ -458,7 +477,7 @@ class Crystal::CodeGenVisitor
   end
 
   def type_module(type)
-    return @main_mod if @single_module
+    return @main_module_info if @single_module
 
     @types_to_modules[type] ||= begin
       type = type.remove_typedef
@@ -470,10 +489,16 @@ class Crystal::CodeGenVisitor
       end
 
       @modules[type_name] ||= begin
-        llvm_mod = LLVM::Module.new(type_name)
+        llvm_context = LLVM::Context.new
+        # LLVM::Context.register(llvm_context, type_name)
+
+        llvm_typer = LLVMTyper.new(@program, llvm_context)
+        llvm_mod = llvm_context.new_module(type_name)
         llvm_mod.data_layout = self.data_layout
-        define_symbol_table llvm_mod
-        llvm_mod
+        llvm_builder = new_builder(llvm_context)
+
+        define_symbol_table llvm_mod, llvm_typer
+        ModuleInfo.new(llvm_mod, llvm_typer, llvm_builder)
       end
     end
   end

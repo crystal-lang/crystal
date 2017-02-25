@@ -215,25 +215,25 @@ def assert_after_cleanup(before, after)
   result.node.to_s.strip.should eq(after.strip)
 end
 
-def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile = __FILE__, metaline = __LINE__)
-  it "says syntax error on #{str.inspect}", metafile, metaline do
+def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile = __FILE__, metaline = __LINE__, metaendline = __END_LINE__)
+  it "says syntax error on #{str.inspect}", metafile, metaline, metaendline do
     begin
       parse str
-      fail "expected SyntaxException to be raised", metafile, metaline
+      fail "Expected SyntaxException to be raised", metafile, metaline
     rescue ex : SyntaxException
       if message
         unless ex.message.not_nil!.includes?(message.not_nil!)
-          fail "expected message to include #{message.inspect} but got #{ex.message.inspect}", metafile, metaline
+          fail "Expected message to include #{message.inspect} but got #{ex.message.inspect}", metafile, metaline
         end
       end
       if line
         unless ex.line_number == line
-          fail "expected line number to be #{line} but got #{ex.line_number}", metafile, metaline
+          fail "Expected line number to be #{line} but got #{ex.line_number}", metafile, metaline
         end
       end
       if column
         unless ex.column_number == column
-          fail "expected column number to be #{column} but got #{ex.column_number}", metafile, metaline
+          fail "Expected column number to be #{column} but got #{ex.column_number}", metafile, metaline
         end
       end
     end
@@ -275,11 +275,11 @@ def parse(string, wants_doc = false)
   parser.parse
 end
 
-def codegen(code, inject_primitives = true, debug = false)
+def codegen(code, inject_primitives = true, debug = Crystal::Debug::None)
   code = inject_primitives(code) if inject_primitives
   node = parse code
   result = semantic node
-  result.program.codegen result.node, single_module: false, debug: debug
+  result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
 end
 
 class Crystal::SpecRunOutput
@@ -299,7 +299,7 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = false)
+def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT

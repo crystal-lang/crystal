@@ -1,4 +1,5 @@
 require "llvm"
+require "json"
 require "./types"
 
 module Crystal
@@ -109,6 +110,9 @@ module Crystal
     # The main filename of this program
     property filename : String?
 
+    # If `true`, prints time and memory stats to `stdout`.
+    property? wants_stats = false
+
     def initialize
       super(self, self, "main")
 
@@ -175,7 +179,6 @@ module Crystal
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      object.metaclass = klass
       klass.metaclass = klass
       klass.allowed_in_generics = false
 
@@ -407,9 +410,19 @@ module Crystal
       end
     end
 
+    record RecordedRequire, filename : String, relative_to : String? do
+      JSON.mapping(filename: String, relative_to: String?)
+    end
+    property recorded_requires = [] of RecordedRequire
+
+    # Rmembers that the program depends on this require.
+    def record_require(filename, relative_to) : Nil
+      recorded_requires << RecordedRequire.new(filename, relative_to)
+    end
+
     # Finds *filename* in the configured CRYSTAL_PATH for this program,
     # relative to *relative_to*.
-    def find_in_path(filename, relative_to = nil)
+    def find_in_path(filename, relative_to = nil) : Array(String)?
       crystal_path.find filename, relative_to
     end
 

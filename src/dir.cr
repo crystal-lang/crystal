@@ -2,11 +2,11 @@ require "c/dirent"
 require "c/unistd"
 require "c/sys/stat"
 
-# Objects of class Dir are directory streams representing directories in the underlying file system.
+# Objects of class `Dir` are directory streams representing directories in the underlying file system.
 # They provide a variety of ways to list directories and their contents.
 #
-# The directory used in these examples contains the two regular files (config.h and main.rb),
-# the parent directory (..), and the directory itself (.).
+# The directory used in these examples contains the two regular files (`config.h` and `main.rb`),
+# the parent directory (`..`), and the directory itself (`.`).
 #
 # See also: `File`.
 class Dir
@@ -68,7 +68,7 @@ class Dir
     EntryIterator.new(self)
   end
 
-  # Reads the next entry from dir and returns it as a string. Returns nil at the end of the stream.
+  # Reads the next entry from dir and returns it as a string. Returns `nil` at the end of the stream.
   #
   # ```
   # d = Dir.new("testdir")
@@ -154,7 +154,7 @@ class Dir
     entries
   end
 
-  # Returns true if the given path exists and is a directory
+  # Returns `true` if the given path exists and is a directory
   def self.exists?(path) : Bool
     if LibC.stat(path.check_no_null_byte, out stat) != 0
       if Errno.value == Errno::ENOENT || Errno.value == Errno::ENOTDIR

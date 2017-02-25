@@ -14,7 +14,7 @@ class Socket
       when Family::UNIX
         UNIXAddress.new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
       else
-        raise "unsupported family type: #{family} (#{family.value})"
+        raise "Unsupported family type: #{family} (#{family.value})"
       end
     end
 
@@ -31,7 +31,7 @@ class Socket
   # IP address representation.
   #
   # Holds a binary representation of an IP address, either translated from a
-  # String, or directly received from an opened connection (e.g.
+  # `String`, or directly received from an opened connection (e.g.
   # `Socket#local_address`, `Socket#receive`).
   #
   # Example:
@@ -41,7 +41,7 @@ class Socket
   # ```
   #
   # `IPAddress` won't resolve domains, including `localhost`. If you must
-  # resolve an IP, or don't know whether a String constains an IP or a domain
+  # resolve an IP, or don't know whether a `String` constains an IP or a domain
   # name, you should use `Addrinfo.resolve` instead.
   struct IPAddress < Address
     getter port : Int32
@@ -71,7 +71,7 @@ class Socket
       when Family::INET
         new(sockaddr.as(LibC::SockaddrIn*), addrlen.to_i)
       else
-        raise "unsupported family type: #{family} (#{family.value})"
+        raise "Unsupported family type: #{family} (#{family.value})"
       end
     end
 
@@ -97,7 +97,7 @@ class Socket
       addr if LibC.inet_pton(LibC::AF_INET, address, pointerof(addr)) == 1
     end
 
-    # Returns a String representation of the IP address.
+    # Returns a `String` representation of the IP address.
     #
     # Example:
     # ```
@@ -107,9 +107,9 @@ class Socket
     def address
       @address ||= begin
         case family
-        when Family::INET6 then address(@addr6)
-        when Family::INET  then address(@addr4)
-        else                    raise "unsupported IP address family: #{family}"
+        when Family::INET6 then address(@addr6.not_nil!)
+        when Family::INET  then address(@addr4.not_nil!)
+        else                    raise "Unsupported IP address family: #{family}"
         end
       end
     end
@@ -130,10 +130,6 @@ class Socket
         end
         {LibC.strlen(buffer), 0}
       end
-    end
-
-    private def address(addr) : Nil
-      # shouldn't happen
     end
 
     def ==(other : IPAddress)
@@ -157,7 +153,7 @@ class Socket
       when Family::INET
         to_sockaddr_in
       else
-        raise "unsupported IP address family: #{family}"
+        raise "Unsupported IP address family: #{family}"
       end
     end
 

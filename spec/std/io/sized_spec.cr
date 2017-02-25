@@ -41,7 +41,7 @@ describe "IO::Sized" do
 
     it "raises on negative numbers" do
       io = IO::Memory.new
-      expect_raises(ArgumentError, "negative read_size") do
+      expect_raises(ArgumentError, "Negative read_size") do
         IO::Sized.new(io, read_size: -1)
       end
     end
@@ -66,7 +66,7 @@ describe "IO::Sized" do
 
       sized.close
       sized.closed?.should eq(true)
-      expect_raises(IO::Error, "closed stream") do
+      expect_raises(IO::Error, "Closed stream") do
         sized.read_char
       end
     end
@@ -107,5 +107,24 @@ describe "IO::Sized" do
     sized.gets(chomp: false).should eq("bar\n")
     sized.gets(chomp: false).should eq("b")
     sized.gets(chomp: false).should be_nil
+  end
+
+  it "peeks" do
+    io = IO::Memory.new "123456789"
+    sized = IO::Sized.new(io, read_size: 6)
+    sized.peek.should eq("123456".to_slice)
+    sized.gets_to_end.should eq("123456")
+    sized.peek.should be_nil
+  end
+
+  it "skips" do
+    io = IO::Memory.new "123456789"
+    sized = IO::Sized.new(io, read_size: 6)
+    sized.skip(3)
+    sized.read_char.should eq('4')
+
+    expect_raises(IO::EOFError) do
+      sized.skip(6)
+    end
   end
 end

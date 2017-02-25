@@ -133,7 +133,7 @@ describe "IO::Buffered" do
 
   it "raises if invoking gets with negative limit" do
     io = BufferedWrapper.new(IO::Memory.new("hello\nworld\n"))
-    expect_raises ArgumentError, "negative limit" do
+    expect_raises ArgumentError, "Negative limit" do
       io.gets(-1)
     end
   end
@@ -304,6 +304,33 @@ describe "IO::Buffered" do
     io = BufferedWrapper.new(str)
     io.read(Bytes.new(0))
     io.called_unbuffered_read.should be_false
+  end
+
+  it "peeks" do
+    str = IO::Memory.new("foo")
+    io = BufferedWrapper.new(str)
+
+    io.peek.should eq("foo".to_slice)
+
+    # Peek doesn't advance
+    io.gets_to_end.should eq("foo")
+
+    # Returns nil if no more data
+    io.peek.should be_nil
+  end
+
+  it "skips" do
+    str = IO::Memory.new("123456789")
+    io = BufferedWrapper.new(str)
+    io.skip(3)
+    io.read_char.should eq('4')
+  end
+
+  it "skips big" do
+    str = IO::Memory.new(("a" * 10_000) + "b")
+    io = BufferedWrapper.new(str)
+    io.skip(10_000)
+    io.read_char.should eq('b')
   end
 
   describe "encoding" do

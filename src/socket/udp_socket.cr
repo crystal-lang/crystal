@@ -16,6 +16,7 @@ require "./ip_socket"
 # `Socket::Family::INET` family (default) or `Socket::Family::INET6` for IPv6 # addresses.
 #
 # Usage example:
+#
 # ```
 # require "socket"
 #

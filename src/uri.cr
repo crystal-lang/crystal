@@ -13,7 +13,7 @@ require "./uri/uri_parser"
 # require "uri"
 #
 # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
-# # => #&lt;URI:0x1003f1e40 @scheme="http", @host="foo.com", @port=nil, @path="/posts", @query="id=30&limit=5", ... >
+# # => #<URI:0x1003f1e40 @scheme="http", @host="foo.com", @port=nil, @path="/posts", @query="id=30&limit=5", ... >
 # uri.scheme # => "http"
 # uri.host   # => "foo.com"
 # uri.query  # => "id=30&limit=5"
@@ -166,14 +166,14 @@ class URI
     end
   end
 
-  # Returns normalized URI
+  # Returns normalized URI.
   def normalize
     uri = dup
     uri.normalize!
     uri
   end
 
-  # Destructive normalize
+  # Destructive normalize.
   def normalize!
     @path = remove_dot_segments(path)
   end
@@ -191,9 +191,9 @@ class URI
     URI::Parser.new(raw_url).run.uri
   end
 
-  # URL-decode a string.
+  # URL-decode a `String`.
   #
-  # If *plus_to_space* is true, it replace plus character (0x2B) to ' '.
+  # If *plus_to_space* is `true`, it replace plus character (`0x2B`) to ' '.
   # e.g. `application/x-www-form-urlencoded` wants this replace.
   #
   # ```
@@ -204,7 +204,7 @@ class URI
     String.build { |io| unescape(string, io, plus_to_space) }
   end
 
-  # URL-decode a string.
+  # URL-decode a `String`.
   #
   # This method requires block, the block is called with each bytes
   # whose is less than `0x80`. The bytes that block returns `true`
@@ -218,7 +218,7 @@ class URI
     self.unescape(string, io, plus_to_space) { false }
   end
 
-  # URL-decode a string and write the result to an `IO`.
+  # URL-decode a `String` and write the result to an `IO`.
   #
   # This method requires block.
   def self.unescape(string : String, io : IO, plus_to_space = false, &block)
@@ -232,10 +232,10 @@ class URI
     io
   end
 
-  # URL-encode a string.
+  # URL-encode a `String`.
   #
-  # If *space_to_plus* is true, it replace space character (0x20) to '+' and '+' is
-  # encoded to '%2B'. e.g. `application/x-www-form-urlencoded` want this replace.
+  # If *space_to_plus* is `true`, it replace space character (0x20) to `'+'` and `'+'` is
+  # encoded to `'%2B'`. e.g. `application/x-www-form-urlencoded` want this replace.
   #
   # ```
   # URI.escape("'Stop!' said Fred")                      # => "%27Stop%21%27%20said%20Fred"
@@ -245,7 +245,7 @@ class URI
     String.build { |io| escape(string, io, space_to_plus) }
   end
 
-  # URL-encode a string.
+  # URL-encode a `String`.
   #
   # This method requires block, the block is called with each characters
   # whose code is less than `0x80`. The characters that block returns
@@ -262,12 +262,12 @@ class URI
     String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
   end
 
-  # URL-encode a string and write the result to an `IO`.
+  # URL-encode a `String` and write the result to an `IO`.
   def self.escape(string : String, io : IO, space_to_plus = false)
     self.escape(string, io, space_to_plus) { |byte| URI.unreserved? byte }
   end
 
-  # URL-encode a string and write the result to an `IO`.
+  # URL-encode a `String` and write the result to an `IO`.
   #
   # This method requires block.
   def self.escape(string : String, io : IO, space_to_plus = false, &block)
@@ -286,7 +286,8 @@ class URI
     io
   end
 
-  # Returns whether given byte is reserved character defined in RFC 3986.
+  # Returns whether given byte is reserved character defined in
+  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
   #
   # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
   # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
@@ -296,7 +297,8 @@ class URI
       {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
   end
 
-  # Returns whether given byte is unreserved character defined in RFC 3986.
+  # Returns whether given byte is unreserved character defined in
+  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
   #
   # Unreserved characters are alphabet, digit, '_', '.', '-', '~'.
   def self.unreserved?(byte) : Bool
@@ -305,7 +307,8 @@ class URI
       {'_', '.', '-', '~'}.includes?(char)
   end
 
-  # Returns the user-information component containing the provided username and password.
+  # Returns the user-information component containing
+  # the provided username and password.
   #
   # ```
   # uri = URI.parse "http://admin:password@foo.com"
@@ -366,8 +369,7 @@ class URI
     i
   end
 
-  # RFC 3986 6.2.2.3
-  # https://tools.ietf.org/html/rfc3986#section-5.2.4
+  # [RFC 3986 6.2.2.3](https://tools.ietf.org/html/rfc3986#section-5.2.4)
   private def remove_dot_segments(path : String?)
     return if path.nil?
 

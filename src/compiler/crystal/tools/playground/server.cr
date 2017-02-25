@@ -121,7 +121,9 @@ module Crystal::Playground
       json.object do
         json.field "message", ex.to_s
         if ex.is_a?(Crystal::Exception)
-          json.field "payload", ex.to_s
+          json.field "payload" do
+            ex.to_json(json)
+          end
         end
       end
     end
@@ -244,7 +246,7 @@ module Crystal::Playground
     private def crystal_source_to_markdown(filename)
       String.build do |io|
         header = true
-        File.each_line(filename) do |line|
+        File.each_line(filename, chomp: false) do |line|
           if header && line[0] != '\n' && line[0] != '#'
             header = false
             io << "```playground\n"

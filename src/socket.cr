@@ -154,8 +154,8 @@ class Socket < IO::FileDescriptor
     bind(addr) { |errno| raise errno }
   end
 
-  # Tries to bind the socket to a local address. Yields an `Errno` if the
-  # binding failed.
+  # Tries to bind the socket to a local address.
+  # Yields an `Errno` if the binding failed.
   def bind(addr)
     unless LibC.bind(fd, addr, addr.size) == 0
       yield Errno.new("bind")
@@ -167,8 +167,8 @@ class Socket < IO::FileDescriptor
     listen(backlog) { |errno| raise errno }
   end
 
-  # Tries to listen for connections on the previously bound socket. Yields an
-  # `Errno` on failure.
+  # Tries to listen for connections on the previously bound socket.
+  # Yields an `Errno` on failure.
   def listen(backlog = SOMAXCONN)
     unless LibC.listen(fd, backlog) == 0
       yield Errno.new("listen")
@@ -189,7 +189,7 @@ class Socket < IO::FileDescriptor
   # socket.close
   # ```
   def accept
-    accept? || raise IO::Error.new("closed stream")
+    accept? || raise IO::Error.new("Closed stream")
   end
 
   # Accepts an incoming connection.
@@ -231,26 +231,20 @@ class Socket < IO::FileDescriptor
     end
   end
 
-  # Sends a text message to a previously connected remote address.
+  # Sends a message to a previously connected remote address.
   #
   # ```
   # sock = Socket.udp(Socket::Family::INET)
   # sock.connect("example.com", 2000)
   # sock.send("text message")
-  # ```
-  def send(message)
-    send(message.to_slice)
-  end
-
-  # Sends a binary message to a previously connected remote address.
   #
-  # ```
   # sock = Socket.unix(Socket::Type::DGRAM)
   # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
   # sock.send(Bytes[0])
   # ```
-  def send(message : Bytes)
-    bytes_sent = LibC.send(fd, message.to_unsafe.as(Void*), message.size, 0)
+  def send(message)
+    slice = message.to_slice
+    bytes_sent = LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
     raise Errno.new("Error sending datagram") if bytes_sent == -1
     bytes_sent
   ensure
@@ -260,7 +254,7 @@ class Socket < IO::FileDescriptor
     end
   end
 
-  # Sends a text message to the specified remote address.
+  # Sends a message to the specified remote address.
   #
   # ```
   # server = Socket::IPAddress.new("10.0.3.1", 2022)
@@ -269,19 +263,8 @@ class Socket < IO::FileDescriptor
   # sock.send("text query", to: server)
   # ```
   def send(message, to addr : Address)
-    send(message.to_slice, to: addr)
-  end
-
-  # Sends a binary message to the specified remote address.
-  #
-  # ```
-  # server = Socket::IPAddress.new("10.0.3.1", 53)
-  # sock = Socket.udp(Socket::Family::INET)
-  # sock.connect("example.com", 2000)
-  # sock.send(dns_query, to: server)
-  # ```
-  def send(message : Bytes, to addr : Address)
-    bytes_sent = LibC.sendto(fd, message.to_unsafe.as(Void*), message.size, 0, addr, addr.size)
+    slice = message.to_slice
+    bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
     raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
     bytes_sent
   end
@@ -341,12 +324,12 @@ class Socket < IO::FileDescriptor
     end
   end
 
-  # Calls shutdown(2) with SHUT_RD
+  # Calls `shutdown(2)` with `SHUT_RD`
   def close_read
     shutdown LibC::SHUT_RD
   end
 
-  # Calls shutdown(2) with SHUT_WR
+  # Calls `shutdown(2)` with `SHUT_WR`
   def close_write
     shutdown LibC::SHUT_WR
   end
@@ -417,14 +400,15 @@ class Socket < IO::FileDescriptor
     ret.l_onoff == 0 ? nil : ret.l_linger
   end
 
-  # WARNING: The behavior of SO_LINGER is platform specific.  Bad things may happen especially with nonblocking sockets.
-  # See https://www.nybek.com/blog/2015/04/29/so_linger-on-non-blocking-sockets/ for more information.
+  # WARNING: The behavior of `SO_LINGER` is platform specific.
+  # Bad things may happen especially with nonblocking sockets.
+  # See [Cross-Platform Testing of SO_LINGER by Nybek](https://www.nybek.com/blog/2015/04/29/so_linger-on-non-blocking-sockets/)
+  # for more information.
   #
-  # nil => disable SO_LINGER
-  # Int => enable SO_LINGER and set timeout to Int seconds.
-  #
-  #   0 => abort on close (socket buffer is discarded and RST sent to peer).  Depends on platform and whether shutdown() was called first.
-  # >=1 => abort after Num seconds on close.  Linux and Cygwin may block on close.
+  # * `nil`: disable `SO_LINGER`
+  # * `Int`: enable `SO_LINGER` and set timeout to `Int` seconds
+  #   * `0`: abort on close (socket buffer is discarded and RST sent to peer). Depends on platform and whether `shutdown()` was called first.
+  #   * `>=1`: abort after `Int` seconds on close. Linux and Cygwin may block on close.
   def linger=(val : Int?)
     v = LibC::Linger.new
     case val
@@ -439,7 +423,7 @@ class Socket < IO::FileDescriptor
     val
   end
 
-  # returns the modified optval
+  # Returns the modified *optval*.
   def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
@@ -447,7 +431,7 @@ class Socket < IO::FileDescriptor
     optval
   end
 
-  # optval is restricted to `Int32` until sizeof works on variables
+  # NOTE: *optval* is restricted to `Int32` until sizeof works on variables.
   def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.setsockopt(fd, level, optname, (pointerof(optval).as(Void*)), optsize)
@@ -466,7 +450,7 @@ class Socket < IO::FileDescriptor
     optval
   end
 
-  # Returns true if the string represents a valid IPv4 or IPv6 address.
+  # Returns `true` if the string represents a valid IPv4 or IPv6 address.
   def self.ip?(string : String)
     addr = LibC::In6Addr.new
     ptr = pointerof(addr).as(Void*)

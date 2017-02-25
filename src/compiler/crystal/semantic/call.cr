@@ -6,7 +6,7 @@ require "./type_lookup"
 class Crystal::Call
   property! scope : Type
   property with_scope : Type?
-  property! parent_visitor : MainVisitor?
+  property! parent_visitor : MainVisitor
   property target_defs : Array(Def)?
   property expanded : ASTNode?
   property? uses_with_scope = false
@@ -493,7 +493,7 @@ class Crystal::Call
       when Splat
         arg_type = arg.type
         unless arg_type.is_a?(TupleInstanceType)
-          arg.raise "Bug: splat expects a tuple, not #{arg_type}"
+          arg.raise "BUG: splat expects a tuple, not #{arg_type}"
         end
 
         arg_type.tuple_types.each_with_index do |tuple_type, index|
@@ -508,7 +508,7 @@ class Crystal::Call
       when DoubleSplat
         arg_type = arg.type
         unless arg_type.is_a?(NamedTupleInstanceType)
-          arg.raise "Bug: double splat expects a named tuple, not #{arg_type}"
+          arg.raise "BUG: double splat expects a named tuple, not #{arg_type}"
         end
 
         arg_type.entries.each do |entry|
@@ -534,11 +534,11 @@ class Crystal::Call
       vars = [] of Var
       args = [] of ASTNode
       block_arg_type.arg_types.map_with_index do |type, i|
-        arg = Var.new("__arg#{i}")
+        arg = Var.new("__arg#{i}").at(block_arg)
         vars << arg
         args << arg
       end
-      block = Block.new(vars, Call.new(block_arg.clone, "call", args).at(block_arg))
+      block = Block.new(vars, Call.new(block_arg.clone, "call", args).at(block_arg)).at(block_arg)
       block.vars = self.before_vars
       self.block = block
     else
@@ -1027,7 +1027,7 @@ class Crystal::Call
       when :__FILE__, :__DIR__
         type = program.string
       else
-        default_value.raise "Bug: unknown magic constant: #{default_value.name}"
+        default_value.raise "BUG: unknown magic constant: #{default_value.name}"
       end
       var = MetaVar.new(arg.name, type).at(arg.location)
       var.bind_to(var)

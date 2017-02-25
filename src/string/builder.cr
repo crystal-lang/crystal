@@ -62,8 +62,7 @@ class String::Builder
   end
 
   # Chomps the last byte from the string buffer.
-  # If the byte is '\n' and there's a '\r' before it, it is
-  # also removed.
+  # If the byte is `'\n'` and there's a `'\r'` before it, it is also removed.
   def chomp!(byte : UInt8)
     if bytesize > 0 && buffer[bytesize - 1] == byte
       back(1)
@@ -75,17 +74,17 @@ class String::Builder
   end
 
   # Moves the write pointer, and the resulting string bytesize,
-  # by the given amount
+  # by the given *amount*.
   def back(amount : Int)
     unless 0 <= amount <= @bytesize
-      raise ArgumentError.new "invalid back amount"
+      raise ArgumentError.new "Invalid back amount"
     end
 
     @bytesize -= amount
   end
 
   def to_s
-    raise "can only invoke 'to_s' once on String::Builder" if @finished
+    raise "Can only invoke 'to_s' once on String::Builder" if @finished
     @finished = true
 
     write_byte 0_u8

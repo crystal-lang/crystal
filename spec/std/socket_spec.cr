@@ -128,7 +128,7 @@ describe Socket::Addrinfo do
   end
 
   describe "#ip_address" do
-    assert do
+    it do
       addrinfos = Socket::Addrinfo.udp("localhost", 80)
       typeof(addrinfos.first.ip_address).should eq(Socket::IPAddress)
     end
@@ -142,6 +142,7 @@ describe Socket::IPAddress do
 
     addr2.family.should eq(addr1.family)
     addr2.port.should eq(addr1.port)
+    typeof(addr2.address).should eq(String)
     addr2.address.should eq(addr1.address)
   end
 
@@ -151,6 +152,7 @@ describe Socket::IPAddress do
 
     addr2.family.should eq(addr1.family)
     addr2.port.should eq(addr1.port)
+    typeof(addr2.address).should eq(String)
     addr2.address.should eq(addr1.address)
   end
 
@@ -272,7 +274,7 @@ describe UNIXServer do
       end
 
       exception.should be_a(IO::Error)
-      exception.try(&.message).should eq("closed stream")
+      exception.try(&.message).should eq("Closed stream")
     end
   end
 
@@ -377,11 +379,11 @@ describe UNIXSocket do
       right.read_timeout = 0.0001
       buf = ("a" * 4096).to_slice
 
-      expect_raises(IO::Timeout, "write timed out") do
+      expect_raises(IO::Timeout, "Write timed out") do
         loop { left.write buf }
       end
 
-      expect_raises(IO::Timeout, "read timed out") do
+      expect_raises(IO::Timeout, "Read timed out") do
         loop { right.read buf }
       end
     end
@@ -422,9 +424,17 @@ describe TCPServer do
     end
   end
 
-  it "allows to share the same port (SO_REUSEPORT)" do
+  it "doesn't reuse the TCP port by default (SO_REUSEPORT)" do
     TCPServer.open("::", 0) do |server|
-      TCPServer.open("::", server.local_address.port) { }
+      expect_raises(Errno) do
+        TCPServer.open("::", server.local_address.port) { }
+      end
+    end
+  end
+
+  it "reuses the TCP port (SO_REUSEPORT)" do
+    TCPServer.open("::", 0, reuse_port: true) do |server|
+      TCPServer.open("::", server.local_address.port, reuse_port: true) { }
     end
   end
 end

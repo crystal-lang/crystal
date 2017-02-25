@@ -57,7 +57,7 @@ struct XML::Builder
     call EndElement
   end
 
-  # Emits the start of an element with the given attributes,
+  # Emits the start of an element with the given *attributes*,
   # invokes the block and then emits the end of the element.
   def element(__name__ : String, **attributes)
     element(__name__, attributes) do
@@ -72,7 +72,7 @@ struct XML::Builder
     yield.tap { end_element }
   end
 
-  # Emits an element with the given attributes.
+  # Emits an element with the given *attributes*.
   def element(__name__ : String, **attributes)
     element(__name__, attributes)
   end
@@ -82,7 +82,7 @@ struct XML::Builder
     element(name, attributes) { }
   end
 
-  # Emits the start of an element with namespace info with the given attributes,
+  # Emits the start of an element with namespace info with the given *attributes*,
   # invokes the block and then emits the end of the element.
   def element(__prefix__ : String?, __name__ : String, __namespace_uri__ : String?, **attributes)
     element(__prefix__, __name__, __namespace_uri__, attributes) do
@@ -97,7 +97,7 @@ struct XML::Builder
     yield.tap { end_element }
   end
 
-  # Emits an element with namespace info with the given attributes.
+  # Emits an element with namespace info with the given *attributes*.
   def element(prefix : String?, name : String, namespace_uri : String?, **attributes)
     element(prefix, name, namespace_uri, attributes)
   end
@@ -131,17 +131,17 @@ struct XML::Builder
     yield.tap { end_attribute }
   end
 
-  # Emits an attribute with a value.
+  # Emits an attribute with a *value*.
   def attribute(name : String, value) : Nil
     call WriteAttribute, name, value.to_s
   end
 
-  # Emits an attribute with namespace info and a value.
+  # Emits an attribute with namespace info and a *value*.
   def attribute(prefix : String?, name : String, namespace_uri : String?, value) : Nil
     call WriteAttributeNS, string_to_unsafe(prefix), name, string_to_unsafe(namespace_uri), value.to_s
   end
 
-  # Emits the given attributes with their values.
+  # Emits the given *attributes* with their values.
   def attributes(**attributes)
     attributes(attributes)
   end
@@ -160,24 +160,24 @@ struct XML::Builder
     call WriteString, content
   end
 
-  # Emits the start of a CDATA section.
+  # Emits the start of a `CDATA` section.
   def start_cdata : Nil
     call StartCDATA
   end
 
-  # Emits the end of a CDATA section.
+  # Emits the end of a `CDATA` section.
   def end_cdata : Nil
     call EndCDATA
   end
 
-  # Emits the start of a CDATA section, invokes the block
-  # and then emits the end of the CDATA section.
+  # Emits the start of a `CDATA` section, invokes the block
+  # and then emits the end of the `CDATA` section.
   def cdata
     start_cdata
     yield.tap { end_cdata }
   end
 
-  # Emits a CDATA section.
+  # Emits a `CDATA` section.
   def cdata(text : String) : Nil
     call WriteCDATA, text
   end
@@ -204,24 +204,24 @@ struct XML::Builder
     call WriteComment, text
   end
 
-  # Emits the start of a DTD.
+  # Emits the start of a `DTD`.
   def start_dtd(name : String, pubid : String, sysid : String) : Nil
     call StartDTD, name, pubid, sysid
   end
 
-  # Emits the end of a DTD.
+  # Emits the end of a `DTD`.
   def end_dtd : Nil
     call EndDTD
   end
 
-  # Emits the start of a DTD, invokes the block
-  # and then emits the end of the DTD.
+  # Emits the start of a `DTD`, invokes the block
+  # and then emits the end of the `DTD`.
   def dtd(name : String, pubid : String, sysid : String) : Nil
     start_dtd name, pubid, sysid
     yield.tap { end_dtd }
   end
 
-  # Emits a DTD.
+  # Emits a `DTD`.
   def dtd(name : String, pubid : String, sysid : String, subset : String? = nil) : Nil
     call WriteDTD, name, pubid, sysid, string_to_unsafe(subset)
   end
@@ -232,7 +232,7 @@ struct XML::Builder
   end
 
   # Forces content written to this writer to be flushed to
-  # this writer's IO.
+  # this writer's `IO`.
   def flush
     call Flush
   end
@@ -247,7 +247,7 @@ struct XML::Builder
     end
   end
 
-  # Sets the indent level (number of spaces)
+  # Sets the indent *level* (number of spaces).
   def indent=(level : Int)
     if level <= 0
       call SetIndent, 0
@@ -257,23 +257,22 @@ struct XML::Builder
     end
   end
 
-  # Set the quote char to use, either ' or ".
+  # Sets the quote char to use, either `'` or `"`.
   def quote_char=(char : Char)
     unless char == '\'' || char == '"'
-      raise ArgumentError.new("quote char must be ' or \", not #{char}")
+      raise ArgumentError.new("Quote char must be ' or \", not #{char}")
     end
 
     call SetQuoteChar, char.ord
   end
 
-  # TODO: mark as private
-  macro call(name, *args)
-      ret = LibXML.xmlTextWriter{{name}}(@writer, {{*args}})
-      check ret, {{@def.name.stringify}}
-    end
+  private macro call(name, *args)
+    ret = LibXML.xmlTextWriter{{name}}(@writer, {{*args}})
+    check ret, {{@def.name.stringify}}
+  end
 
   private def check(ret, msg)
-    raise XML::Error.new("error in #{msg}", 0) if ret < 0
+    raise XML::Error.new("Error in #{msg}", 0) if ret < 0
   end
 
   private def string_to_unsafe(string)
@@ -282,7 +281,7 @@ struct XML::Builder
 end
 
 module XML
-  # Returns the resulting String of writing XML to the yielded `XML::Builder`.
+  # Returns the resulting `String` of writing XML to the yielded `XML::Builder`.
   #
   # ```
   # require "xml"
@@ -304,7 +303,7 @@ module XML
     end
   end
 
-  # Writes XML into the given IO. An `XML::Builder` is yielded to the block.
+  # Writes XML into the given `IO`. An `XML::Builder` is yielded to the block.
   def self.build(io : IO, version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil)
     xml = XML::Builder.new(io)
     xml.indent = indent if indent

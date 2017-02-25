@@ -54,7 +54,7 @@ struct Pointer(T)
 
   include Comparable(self)
 
-  # Returns true if this pointer's address is zero.
+  # Returns `true` if this pointer's address is zero.
   #
   # ```
   # a = 1
@@ -153,7 +153,7 @@ struct Pointer(T)
 
   # :nodoc:
   def copy_from(source : Pointer(NoReturn), count : Int)
-    raise ArgumentError.new("negative count") if count < 0
+    raise ArgumentError.new("Negative count") if count < 0
 
     # We need this overload for cases when we have a pointer to unreachable
     # data, like when doing Tuple.new.to_a
@@ -205,7 +205,7 @@ struct Pointer(T)
 
   # :nodoc:
   def move_from(source : Pointer(NoReturn), count : Int)
-    raise ArgumentError.new("negative count") if count < 0
+    raise ArgumentError.new("Negative count") if count < 0
 
     # We need this overload for cases when we have a pointer to unreachable
     # data, like when doing Tuple.new.to_a
@@ -239,7 +239,7 @@ struct Pointer(T)
   # and so if either self or the arguments are unions a dispatch
   # will happen and unions will disappear.
   protected def copy_from_impl(source : Pointer(T), count : Int)
-    raise ArgumentError.new("negative count") if count < 0
+    raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
       Intrinsics.memcpy(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
@@ -252,7 +252,7 @@ struct Pointer(T)
   end
 
   protected def move_from_impl(source : Pointer(T), count : Int)
-    raise ArgumentError.new("negative count") if count < 0
+    raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
       Intrinsics.memmove(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
@@ -418,7 +418,7 @@ struct Pointer(T)
   # ```
   def self.malloc(size : Int = 1)
     if size < 0
-      raise ArgumentError.new("negative Pointer#malloc size")
+      raise ArgumentError.new("Negative Pointer#malloc size")
     end
 
     malloc(size.to_u64)

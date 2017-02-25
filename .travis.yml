@@ -10,8 +10,6 @@ matrix:
     - env: ARCH=x86_64 ARCH_CMD=linux64 DEPLOY=true
       os: linux
     - os: osx
-    - os: osx
-      osx_image: xcode7.3
 before_install:
   - bin/ci prepare_system
 install:

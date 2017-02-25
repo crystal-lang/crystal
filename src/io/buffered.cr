@@ -1,4 +1,4 @@
-# The IO::Buffered mixin enhances the IO module with input/output buffering.
+# The `IO::Buffered` mixin enhances the `IO` module with input/output buffering.
 #
 # The buffering behaviour can be turned on/off with the `#sync=` method.
 #
@@ -14,106 +14,22 @@ module IO::Buffered
   @sync = false
   @flush_on_newline = false
 
-  # Reads at most *slice.size* bytes from the wrapped IO into *slice*. Returns the number of bytes read.
+  # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
+  # Returns the number of bytes read.
   abstract def unbuffered_read(slice : Bytes)
 
-  # Writes at most *slice.size* bytes from *slice* into the wrapped IO. Returns the number of bytes written.
+  # Writes at most *slice.size* bytes from *slice* into the wrapped `IO`.
+  # Returns the number of bytes written.
   abstract def unbuffered_write(slice : Bytes)
 
-  # Flushes the wrapped IO.
+  # Flushes the wrapped `IO`.
   abstract def unbuffered_flush
 
-  # Closes the wrapped IO.
+  # Closes the wrapped `IO`.
   abstract def unbuffered_close
 
-  # Rewinds the wrapped IO.
+  # Rewinds the wrapped `IO`.
   abstract def unbuffered_rewind
-
-  # :nodoc:
-  def gets(delimiter : Char, limit : Int, chomp = false)
-    check_open
-
-    if delimiter.ord >= 128 || @encoding
-      return super
-    end
-
-    raise ArgumentError.new "negative limit" if limit < 0
-
-    limit = Int32::MAX if limit < 0
-
-    delimiter_byte = delimiter.ord.to_u8
-
-    # We first check, after filling the buffer, if the delimiter
-    # is already in the buffer. In that case it's much faster to create
-    # a String from a slice of the buffer instead of appending to a
-    # IO::Memory, which happens in the other case.
-    fill_buffer if @in_buffer_rem.empty?
-    if @in_buffer_rem.empty?
-      return nil
-    end
-
-    index = @in_buffer_rem.index(delimiter_byte)
-    if index
-      # If we find it past the limit, limit the result
-      if index >= limit
-        index = limit
-      else
-        index += 1
-      end
-
-      advance = index
-
-      if chomp && index > 0 && @in_buffer_rem[index - 1] === delimiter_byte
-        index -= 1
-
-        if delimiter == '\n' && index > 0 && @in_buffer_rem[index - 1] === '\r'
-          index -= 1
-        end
-      end
-
-      string = String.new(@in_buffer_rem[0, index])
-      @in_buffer_rem += advance
-      return string
-    end
-
-    # We didn't find the delimiter, so we append to an IO::Memory until we find it,
-    # or we reach the limit
-    String.build do |buffer|
-      loop do
-        available = Math.min(@in_buffer_rem.size, limit)
-        buffer.write @in_buffer_rem[0, available]
-        @in_buffer_rem += available
-        limit -= available
-
-        if limit == 0
-          break
-        end
-
-        fill_buffer if @in_buffer_rem.empty?
-
-        if @in_buffer_rem.empty?
-          if buffer.bytesize == 0
-            return nil
-          else
-            break
-          end
-        end
-
-        index = @in_buffer_rem.index(delimiter_byte)
-        if index
-          if index >= limit
-            index = limit
-          else
-            index += 1
-          end
-          buffer.write @in_buffer_rem[0, index]
-          @in_buffer_rem += index
-          break
-        end
-      end
-      buffer.chomp!(delimiter_byte) if chomp
-    end
-  end
 
   # :nodoc:
   def read_byte : UInt8?
@@ -127,36 +43,6 @@ module IO::Buffered
       @in_buffer_rem += 1
       b
     end
-  end
-
-  private def read_char_with_bytesize
-    return super if @encoding || @in_buffer_rem.size < 4
-
-    first = @in_buffer_rem[0].to_u32
-    if first < 0x80
-      @in_buffer_rem += 1
-      return first.unsafe_chr, 1
-    end
-
-    second = (@in_buffer_rem[1] & 0x3f).to_u32
-    if first < 0xe0
-      @in_buffer_rem += 2
-      return ((first & 0x1f) << 6 | second).unsafe_chr, 2
-    end
-
-    third = (@in_buffer_rem[2] & 0x3f).to_u32
-    if first < 0xf0
-      @in_buffer_rem += 3
-      return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3
-    end
-
-    fourth = (@in_buffer_rem[3] & 0x3f).to_u32
-    if first < 0xf8
-      @in_buffer_rem += 4
-      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4
-    end
-
-    raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
   end
 
   # Buffered implementation of `IO#read(slice)`.
@@ -182,6 +68,40 @@ module IO::Buffered
     slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
     @in_buffer_rem += to_read
     to_read
+  end
+
+  # Returns the bytes hold in the read buffer.
+  #
+  # This method only performs a read to return
+  # peek data if the current buffer is empty:
+  # otherwise no read is performed and whatever
+  # is in the buffer is returned.
+  def peek : Bytes?
+    check_open
+
+    if @in_buffer_rem.empty?
+      fill_buffer
+      if @in_buffer_rem.empty?
+        return nil
+      end
+    end
+
+    @in_buffer_rem
+  end
+
+  # :nodoc:
+  def skip(bytes_count) : Nil
+    check_open
+
+    if bytes_count <= @in_buffer_rem.size
+      @in_buffer_rem += bytes_count
+      return
+    end
+
+    bytes_count -= @in_buffer_rem.size
+    @in_buffer_rem = Bytes.empty
+
+    super(bytes_count)
   end
 
   # Buffered implementation of `IO#write(slice)`.
@@ -238,30 +158,30 @@ module IO::Buffered
     end
   end
 
-  # Turns on/off flushing the underlying IO when a newline is written.
+  # Turns on/off flushing the underlying `IO` when a newline is written.
   def flush_on_newline=(flush_on_newline)
     @flush_on_newline = !!flush_on_newline
   end
 
-  # Determines if this IO flushes automatically when a newline is written.
+  # Determines if this `IO` flushes automatically when a newline is written.
   def flush_on_newline?
     @flush_on_newline
   end
 
-  # Turns on/off IO buffering. When *sync* is set to `true`, no buffering
-  # will be done (that is, writing to this IO is immediately synced to the
-  # underlying IO).
+  # Turns on/off `IO` buffering. When *sync* is set to `true`, no buffering
+  # will be done (that is, writing to this `IO` is immediately synced to the
+  # underlying `IO`).
   def sync=(sync)
     flush if sync && !@sync
     @sync = !!sync
   end
 
-  # Determines if this IO does buffering. If `true`, no buffering is done.
+  # Determines if this `IO` does buffering. If `true`, no buffering is done.
   def sync?
     @sync
   end
 
-  # Flushes any buffered data and the underlying IO. Returns `self`.
+  # Flushes any buffered data and the underlying `IO`. Returns `self`.
   def flush
     unbuffered_write(Slice.new(out_buffer, @out_count)) if @out_count > 0
     unbuffered_flush
@@ -269,14 +189,14 @@ module IO::Buffered
     self
   end
 
-  # Flushes and closes the underlying IO.
-  def close
+  # Flushes and closes the underlying `IO`.
+  def close : Nil
     flush if @out_count > 0
+  ensure
     unbuffered_close
-    nil
   end
 
-  # Rewinds the underlying IO. Returns `self`.
+  # Rewinds the underlying `IO`. Returns `self`.
   def rewind
     unbuffered_rewind
     @in_buffer_rem = Bytes.empty

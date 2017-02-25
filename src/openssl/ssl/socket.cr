@@ -52,6 +52,7 @@ abstract class OpenSSL::SSL::Socket
 
       ret = LibSSL.ssl_accept(@ssl)
       unless ret == 1
+        io.close if sync_close
         raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
@@ -69,7 +70,7 @@ abstract class OpenSSL::SSL::Socket
 
   include IO
 
-  # If `sync_close` is true, closing this socket will
+  # If `#sync_close?` is `true`, closing this socket will
   # close the underlying IO.
   property? sync_close : Bool
 
@@ -95,8 +96,9 @@ abstract class OpenSSL::SSL::Socket
 
     count = slice.size
     return 0 if count == 0
+
     LibSSL.ssl_read(@ssl, slice.pointer(count), count).tap do |bytes|
-      unless bytes > 0
+      if bytes <= 0 && !LibSSL.ssl_get_error(@ssl, bytes).zero_return?
         raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
       end
     end
@@ -118,7 +120,7 @@ abstract class OpenSSL::SSL::Socket
   end
 
   {% if LibSSL::OPENSSL_102 %}
-  # Returns the negotiated ALPN protocol (eg: "h2") of nil if no protocol was
+  # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
   # negotiated.
   def alpn_protocol
     LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)

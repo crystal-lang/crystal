@@ -1,7 +1,7 @@
 require "spec"
 require "big_int"
 
-module StructSpec
+private module StructSpec
   struct TestClass
     @x : Int32
     @y : String

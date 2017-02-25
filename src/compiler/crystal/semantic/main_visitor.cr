@@ -2,7 +2,7 @@ require "./semantic_visitor"
 
 module Crystal
   class Program
-    def visit_main(node, visitor = MainVisitor.new(self), process_finished_hooks = false)
+    def visit_main(node, visitor = MainVisitor.new(self), process_finished_hooks = false, cleanup = true)
       node.accept visitor
       program.process_finished_hooks(visitor) if process_finished_hooks
 
@@ -10,7 +10,7 @@ module Crystal
       node.accept missing_types
       program.process_finished_hooks(missing_types) if process_finished_hooks
 
-      node = cleanup node
+      node = cleanup node if cleanup
 
       if process_finished_hooks
         finished_hooks.map! do |hook|
@@ -166,7 +166,17 @@ module Crystal
         node.target_const = type
         node.bind_to type.value
       when Type
-        node.type = check_type_in_type_args(type.remove_alias_if_simple)
+        # We devirtualize the type because in an expression like
+        #
+        #     T.new
+        #
+        # even if T is a virtual type that resulted from a generic
+        # type argument, creating an instance or invoking methods
+        # on the type itself don't need to resolve virtually.
+        #
+        # It's different if from a virtual type we do `v.class.new`
+        # because the class could be any in the hierarchy.
+        node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
       when ASTNode
         type.accept self unless type.type?
         node.syntax_replacement = type
@@ -186,6 +196,11 @@ module Crystal
       @in_type_args -= 1
 
       return false if node.type?
+
+      name = node.name
+      if name.is_a?(Path) && name.target_const
+        node.raise "#{name} is not a type, it's a constant"
+      end
 
       instance_type = node.name.type.instance_type
       unless instance_type.is_a?(GenericType)
@@ -355,8 +370,11 @@ module Crystal
         node.declared_type.accept self
         @in_type_args -= 1
 
+        check_not_a_constant(node.declared_type)
+
         if declared_type = node.declared_type.type?
-          meta_var.freeze_type = declared_type
+          var_type = check_declare_var_type node, declared_type, "a variable"
+          meta_var.freeze_type = var_type
         else
           node.raise "can't infer type of type declaration"
         end
@@ -412,6 +430,8 @@ module Crystal
         @in_type_args += 1
         node.declared_type.accept self
         @in_type_args -= 1
+
+        check_not_a_constant(node.declared_type)
 
         # TOOD: should we be using a binding here to recompute the type?
         if declared_type = node.declared_type.type?
@@ -478,6 +498,12 @@ module Crystal
       false
     end
 
+    def check_not_a_constant(node)
+      if node.is_a?(Path) && node.target_const
+        node.raise "#{node.target_const} is not a type, it's a constant"
+      end
+    end
+
     def check_exception_handler_vars(var_name, node)
       # If inside a begin part of an exception handler, bind this type to
       # the variable that will be used in the rescue/else blocks.
@@ -507,7 +533,7 @@ module Crystal
       when Underscore
         # Nothing to do
       else
-        node.raise "Bug: unexpected out exp: #{exp}"
+        node.raise "BUG: unexpected out exp: #{exp}"
       end
 
       node.bind_to node.exp
@@ -667,7 +693,7 @@ module Crystal
         check_self_closured
         var
       else
-        node.raise "Bug: #{scope} is not an InstanceVarContainer"
+        node.raise "BUG: #{scope} is not an InstanceVarContainer"
       end
     end
 
@@ -866,7 +892,7 @@ module Crystal
     end
 
     def type_assign(target, value, node)
-      raise "Bug: unknown assign target in MainVisitor: #{target}"
+      raise "BUG: unknown assign target in MainVisitor: #{target}"
     end
 
     def visit(node : Yield)
@@ -1670,6 +1696,12 @@ module Crystal
     end
 
     def visit(node : Cast | NilableCast)
+      # If there's an `x.as(T)` inside a method, that method
+      # has a chance to raise, so we must mark it as such
+      if typed_def = @typed_def
+        typed_def.raises = true
+      end
+
       node.obj.accept self
 
       @in_type_args += 1
@@ -2202,7 +2234,7 @@ module Crystal
       when "store_atomic"
         node.type = program.nil_type
       else
-        node.raise "Bug: unhandled primitive in MainVisitor: #{node.name}"
+        node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
     end
 
@@ -2217,7 +2249,7 @@ module Crystal
       when "%", "unsafe_shl", "unsafe_shr", "|", "&", "^", "unsafe_mod"
         node.type = scope
       else
-        raise "Bug: unknown binary operator #{typed_def.name}"
+        raise "BUG: unknown binary operator #{typed_def.name}"
       end
     end
 
@@ -2238,7 +2270,7 @@ module Crystal
         when "to_f32"                then program.float32
         when "unsafe_chr"            then program.char
         else
-          raise "Bug: unknown cast operator #{typed_def.name}"
+          raise "BUG: unknown cast operator #{typed_def.name}"
         end
     end
 
@@ -2301,7 +2333,7 @@ module Crystal
     def visit_struct_or_union_set(node)
       scope = @scope.as(NonGenericClassType)
 
-      field_name = call.not_nil!.name.chop
+      field_name = call.not_nil!.name.rchop
       expected_type = scope.instance_vars['@' + field_name].type
       value = @vars["value"]
       actual_type = value.type
@@ -2401,7 +2433,7 @@ module Crystal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if (type = node.exp.type?) && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.size_of(type))
+        expanded = NumberLiteral.new(@program.size_of(type.devirtualize))
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2417,8 +2449,8 @@ module Crystal
       # Try to resolve the instance_sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if (type = node.exp.type?) && type.instance_type.class? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.instance_size_of(type))
+      if (type = node.exp.type?) && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
+        expanded = NumberLiteral.new(@program.instance_size_of(type.devirtualize))
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2470,7 +2502,14 @@ module Crystal
       # Any variable assigned in the body (begin) will have, inside rescue
       # blocks, all types that were assigned to them, because we can't know at which
       # point an exception is raised.
+      # We create different vars, though, to avoid changing the type of vars
+      # before the handler.
       exception_handler_vars = @exception_handler_vars = @vars.dup
+      exception_handler_vars.each do |name, var|
+        new_var = new_meta_var(name)
+        new_var.bind_to(var)
+        exception_handler_vars[name] = new_var
+      end
 
       node.body.accept self
 
@@ -2548,9 +2587,18 @@ module Crystal
             end
           end
 
+          before_ensure_vars = @vars.dup
+
           node_ensure.accept self
 
           @vars = after_handler_vars
+
+          # Variables declared or overwritten inside the ensure block
+          # must remain after the exception handler
+          exception_handler_vars.each do |name, var|
+            before_var = before_ensure_vars[name]?
+            @vars[name] = var unless var.same?(before_var)
+          end
         else
           @vars = exception_handler_vars
         end
@@ -2940,7 +2988,7 @@ module Crystal
     end
 
     def lookup_var_or_instance_var(var)
-      raise "Bug: trying to lookup var or instance var but got #{var}"
+      raise "BUG: trying to lookup var or instance var but got #{var}"
     end
 
     def bind_meta_var(var : Var)
@@ -2952,7 +3000,7 @@ module Crystal
     end
 
     def bind_meta_var(var)
-      raise "Bug: trying to bind var or instance var but got #{var}"
+      raise "BUG: trying to bind var or instance var but got #{var}"
     end
 
     def bind_initialize_instance_vars(owner)
@@ -2961,7 +3009,7 @@ module Crystal
       @vars.each do |name, var|
         if name.starts_with? '@'
           if var.nil_if_read?
-            ivar = owner.lookup_instance_var(name)
+            ivar = lookup_instance_var(var, owner)
             ivar.bind_to program.nil_var
           end
 
@@ -3077,7 +3125,7 @@ module Crystal
     end
 
     def visit(node : When | Unless | Until | MacroLiteral | OpAssign)
-      raise "Bug: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
+      raise "BUG: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end

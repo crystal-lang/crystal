@@ -1,7 +1,7 @@
 require "c/string"
 require "./big"
 
-# A BigInt can represent arbitrarily large integers.
+# A `BigInt` can represent arbitrarily large integers.
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
 struct BigInt < Int
@@ -10,7 +10,7 @@ struct BigInt < Int
   include Comparable(BigInt)
   include Comparable(Float)
 
-  # Creates a BigInt with the value zero.
+  # Creates a `BigInt` with the value zero.
   #
   # ```
   # require "big"
@@ -20,7 +20,7 @@ struct BigInt < Int
     LibGMP.init(out @mpz)
   end
 
-  # Creates a BigInt with the value denoted by *str* in the given *base*.
+  # Creates a `BigInt` with the value denoted by *str* in the given *base*.
   #
   # Raises `ArgumentError` if the string doesn't denote a valid integer.
   #
@@ -31,11 +31,11 @@ struct BigInt < Int
   def initialize(str : String, base = 10)
     err = LibGMP.init_set_str(out @mpz, str, base)
     if err == -1
-      raise ArgumentError.new("invalid BigInt: #{str}")
+      raise ArgumentError.new("Invalid BigInt: #{str}")
     end
   end
 
-  # Creates a BigInt from the given *num*.
+  # Creates a `BigInt` from the given *num*.
   def initialize(num : Int::Signed)
     if LibC::Long::MIN <= num <= LibC::Long::MAX
       LibGMP.init_set_si(out @mpz, num)
@@ -237,7 +237,7 @@ struct BigInt < Int
 
   def **(other : Int) : BigInt
     if other < 0
-      raise ArgumentError.new("negative exponent isn't supported")
+      raise ArgumentError.new("Negative exponent isn't supported")
     end
     BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
   end
@@ -432,7 +432,7 @@ struct Int
     other.lcm(self)
   end
 
-  # Returns a BigInt representing this integer.
+  # Returns a `BigInt` representing this integer.
   def to_big_i : BigInt
     BigInt.new(self)
   end
@@ -445,14 +445,14 @@ struct Float
     -(other <=> self)
   end
 
-  # Returns a BigInt representing this float (rounded using `floor`).
+  # Returns a `BigInt` representing this float (rounded using `floor`).
   def to_big_i : BigInt
     BigInt.new(self)
   end
 end
 
 class String
-  # Returns a BigInt from this string, in the given *base*.
+  # Returns a `BigInt` from this string, in the given *base*.
   #
   # Raises `ArgumentError` if this string doesn't denote a valid integer.
   def to_big_i(base = 10) : BigInt

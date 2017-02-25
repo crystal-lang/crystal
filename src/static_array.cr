@@ -52,7 +52,7 @@ struct StaticArray(T, N)
   private def initialize
   end
 
-  # Equality. Returns *true* if each element in `self` is equal to each
+  # Equality. Returns `true` if each element in `self` is equal to each
   # corresponding element in *other*.
   #
   # ```
@@ -70,7 +70,7 @@ struct StaticArray(T, N)
     true
   end
 
-  # Equality with another object. Always returns *false*.
+  # Equality with another object. Always returns `false`.
   #
   # ```
   # array = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]
@@ -85,7 +85,7 @@ struct StaticArray(T, N)
     to_unsafe[index]
   end
 
-  # Sets the given value at the given index.
+  # Sets the given value at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the array.
   # Raises `IndexError` if trying to set an element outside the array's range.
@@ -102,7 +102,8 @@ struct StaticArray(T, N)
     to_unsafe[index] = value
   end
 
-  # Yields the current element at the given index and updates the value at the given index with the block's value
+  # Yields the current element at the given index and updates the value
+  # at the given *index* with the block's value.
   # Raises `IndexError` if trying to set an element outside the array's range.
   #
   # ```
@@ -126,7 +127,7 @@ struct StaticArray(T, N)
     N
   end
 
-  # Fills the array by substituting all elements with the given value
+  # Fills the array by substituting all elements with the given value.
   #
   # ```
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
@@ -164,7 +165,7 @@ struct StaticArray(T, N)
     self
   end
 
-  # Reverses the elements of this array in-place, then returns `self`
+  # Reverses the elements of this array in-place, then returns `self`.
   #
   # ```
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
@@ -198,7 +199,7 @@ struct StaticArray(T, N)
     pointerof(@buffer)
   end
 
-  # Appends a string representation of this static array to the given IO.
+  # Appends a string representation of this static array to the given `IO`.
   #
   # ```
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
@@ -214,11 +215,11 @@ struct StaticArray(T, N)
     # Don't pass `self` here because we'll pass `self` by
     # value and for big static arrays that seems to make
     # LLVM really slow.
-    # # TODO: investigate why, maybe report a bug to LLVM?
+    # TODO: investigate why, maybe report a bug to LLVM?
     pp.list("StaticArray[", to_slice, "]")
   end
 
-  # Returns a new StaticArray where each element is cloned from elements in `self`.
+  # Returns a new `StaticArray` where each element is cloned from elements in `self`.
   def clone
     array = uninitialized self
     N.times do |i|

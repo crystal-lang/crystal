@@ -69,8 +69,8 @@ lib LibSSL
     TLS_BLOCK_PADDING_BUG            = 0x00000200
     DONT_INSERT_EMPTY_FRAGMENTS      = 0x00000800
 
-    # Various bug workarounds that should be rather harmless
-    # This used to be 0x000FFFFF before 0.9.7
+    # Various bug workarounds that should be rather harmless.
+    # This used to be `0x000FFFFF` before 0.9.7
     ALL = 0x80000BFF
 
     NO_QUERY_MTU     = 0x00001000
@@ -162,7 +162,7 @@ lib LibSSL
   @[Raises]
   fun ssl_ctx_load_verify_locations = SSL_CTX_load_verify_locations(ctx : SSLContext, ca_file : UInt8*, ca_path : UInt8*) : Int
 
-  # hostname validation for OpenSSL <= 1.0.1
+  # Hostname validation for OpenSSL <= 1.0.1
   fun ssl_ctx_set_cert_verify_callback = SSL_CTX_set_cert_verify_callback(ctx : SSLContext, callback : CertVerifyCallback, arg : Void*)
 end
 

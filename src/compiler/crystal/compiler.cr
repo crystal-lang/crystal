@@ -2,9 +2,16 @@ require "option_parser"
 require "file_utils"
 require "socket"
 require "colorize"
-require "crypto/md5"
+require "digest/md5"
 
 module Crystal
+  @[Flags]
+  enum Debug
+    LineNumbers
+    Variables
+    Default     = LineNumbers
+  end
+
   # Main interface to the compiler.
   #
   # A Compiler parses source code, type checks it and
@@ -35,7 +42,7 @@ module Crystal
 
     # If `true`, the executable will be generated with debug code
     # that can be understood by `gdb` and `lldb`.
-    property? debug = false
+    property debug = Debug::Default
 
     # If `true`, `.ll` files will be generated in the default cache
     # directory for each generated LLVM module.
@@ -52,6 +59,9 @@ module Crystal
 
     # If `false`, color won't be used in output messages.
     property? color = true
+
+    # If `true`, skip cleanup process on semantic analysis.
+    property? no_cleanup = false
 
     # If `true`, no executable will be generated after compilation
     # (useful to type-check a prorgam)
@@ -124,8 +134,10 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node = program.semantic node, @stats
-      codegen program, node, source, output_filename unless @no_codegen
+      node = program.semantic node, cleanup: !no_cleanup?
+      result = codegen program, node, source, output_filename unless @no_codegen
+      print_macro_run_stats(program)
+      print_codegen_stats(result)
       Result.new program, node
     end
 
@@ -143,7 +155,8 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node, processor = program.top_level_semantic(node, @stats)
+      node, processor = program.top_level_semantic(node)
+      print_macro_run_stats(program)
       Result.new program, node
     end
 
@@ -153,12 +166,13 @@ module Crystal
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.target_machine = target_machine
       program.flags << "release" if release?
-      program.flags << "debug" if debug?
-      program.flags.merge! @flags
+      program.flags << "debug" unless debug.none?
+      program.flags.concat @flags
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
       program.show_error_trace = show_error_trace?
+      program.wants_stats = @stats
       program
     end
 
@@ -209,7 +223,7 @@ module Crystal
       @link_flags = "#{@link_flags} -rdynamic"
 
       llvm_modules = Crystal.timing("Codegen (crystal)", @stats) do
-        program.codegen node, debug: @debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
+        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
       end
 
       if @cross_compile
@@ -219,8 +233,11 @@ module Crystal
       end
 
       bc_flags_changed = bc_flags_changed? output_dir
+      target_triple = target_machine.triple
 
-      units = llvm_modules.map do |type_name, llvm_mod|
+      units = llvm_modules.map do |type_name, info|
+        llvm_mod = info.mod
+        llvm_mod.target = target_triple
         CompilationUnit.new(self, type_name, llvm_mod, output_dir, bc_flags_changed)
       end
 
@@ -229,10 +246,12 @@ module Crystal
       if @cross_compile
         cross_compile program, units, lib_flags, output_filename
       else
-        codegen program, units, lib_flags, output_filename, output_dir
+        result = codegen program, units, lib_flags, output_filename, output_dir
       end
 
       CacheDir.instance.cleanup if @cleanup
+
+      result
     end
 
     private def cross_compile(program, units, lib_flags, output_filename)
@@ -251,18 +270,19 @@ module Crystal
       object_names = units.map &.object_filename
 
       target_triple = target_machine.triple
+      reused = [] of String
 
       Crystal.timing("Codegen (bc+obj)", @stats) do
         if units.size == 1
           first_unit = units.first
-
-          codegen_single_unit(program, first_unit, target_triple)
+          first_unit.compile
+          reused << first_unit.name if first_unit.reused_previous_compilation?
 
           if emit = @emit
             first_unit.emit(emit, emit_base_filename || output_filename)
           end
         else
-          codegen_many_units(program, units, target_triple)
+          reused = codegen_many_units(program, units, target_triple)
         end
       end
 
@@ -278,31 +298,98 @@ module Crystal
           system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
         end
       end
+
+      {units, reused}
     end
 
     private def codegen_many_units(program, units, target_triple)
       jobs_count = 0
-      wait_channel = Channel(Nil).new(@n_threads)
+      all_reused = [] of String
+      wait_channel = Channel(Array(String)).new(@n_threads)
 
       units.each_slice(Math.max(units.size / @n_threads, 1)) do |slice|
         jobs_count += 1
         spawn do
+          # For stats output we want to count how many previous
+          # .o files were reused, mainly to detect performance regressions.
+          # Because we fork, we must communicate using a pipe.
+          reused = [] of String
+          if @stats
+            pr, pw = IO.pipe
+            spawn do
+              pr.each_line do |line|
+                reused << line
+              end
+            end
+          end
+
           codegen_process = fork do
+            pipe_w = pw
             slice.each do |unit|
-              codegen_single_unit(program, unit, target_triple)
+              unit.compile
+              if pipe_w && unit.reused_previous_compilation?
+                pipe_w.puts unit.name
+              end
             end
           end
           codegen_process.wait
-          wait_channel.send nil
+
+          if pipe_w = pw
+            pipe_w.close
+            Fiber.yield
+          end
+
+          wait_channel.send reused
         end
       end
 
-      jobs_count.times { wait_channel.receive }
+      jobs_count.times do
+        reused = wait_channel.receive
+        all_reused.concat(reused)
+      end
+
+      all_reused
     end
 
-    private def codegen_single_unit(program, unit, target_triple)
-      unit.llvm_mod.target = target_triple
-      unit.compile
+    private def print_macro_run_stats(program)
+      return unless @stats && !program.compiled_macros_cache.empty?
+
+      puts
+      puts "Macro runs:"
+      program.compiled_macros_cache.each do |filename, compiled_macro_run|
+        print " - "
+        print filename
+        print ": "
+        if compiled_macro_run.reused
+          print "reused previous compilation (#{compiled_macro_run.elapsed})"
+        else
+          print compiled_macro_run.elapsed
+        end
+        puts
+      end
+    end
+
+    private def print_codegen_stats(result)
+      return unless @stats
+      return unless result
+
+      units, reused = result
+
+      puts
+      puts "Codegen (bc+obj):"
+      if units.size == reused.size
+        puts " - all previous .o files were reused"
+      elsif reused.size == 0
+        puts " - no previous .o files were reused"
+      else
+        puts " - #{reused.size}/#{units.size} .o files were reused"
+        not_reused = units.reject { |u| reused.includes?(u.name) }
+        puts
+        puts "These modules were not reused:"
+        not_reused.each do |unit|
+          puts " - #{unit.original_name} (#{unit.name}.bc)"
+        end
+      end
     end
 
     protected def target_machine
@@ -377,11 +464,15 @@ module Crystal
     # An LLVM::Module with information to compile it.
     class CompilationUnit
       getter compiler
+      getter name
+      getter original_name
       getter llvm_mod
+      getter? reused_previous_compilation = false
 
       def initialize(@compiler : Compiler, @name : String, @llvm_mod : LLVM::Module,
                      @output_dir : String, @bc_flags_changed : Bool)
         @name = "_main" if @name == ""
+        @original_name = @name
         @name = String.build do |str|
           @name.each_char do |char|
             case char
@@ -399,7 +490,7 @@ module Crystal
 
         if @name.size > 50
           # 17 chars from name + 1 (dash) + 32 (md5) = 50
-          @name = "#{@name[0..16]}-#{Crypto::MD5.hex_digest(@name)}"
+          @name = "#{@name[0..16]}-#{Digest::MD5.hexdigest(@name)}"
         end
       end
 
@@ -474,6 +565,8 @@ module Crystal
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
           compiler.target_machine.emit_obj_to_file llvm_mod, object_name
+        else
+          @reused_previous_compilation = true
         end
 
         llvm_mod.print_to_file ll_name if compiler.dump_ll?

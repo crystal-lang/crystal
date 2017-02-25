@@ -994,4 +994,52 @@ describe "Semantic: generic class" do
       ),
       "private method 'new' called"
   end
+
+  it "never types Path as virtual outside generic type parameter (#3989)" do
+    assert_type(%(
+      class Base
+      end
+
+      class Derived < Base
+        def initialize(x : Int32)
+        end
+      end
+
+      class Generic(T)
+        def initialize
+          T.new
+        end
+
+        def t
+          T
+        end
+      end
+
+      Generic(Base).new.t
+    )) { types["Base"].metaclass }
+  end
+
+  it "never types Generic as virtual outside generic type parameter (#3989)" do
+    assert_type(%(
+      class Base(T)
+      end
+
+      class Derived(T) < Base(T)
+        def initialize(x : Int32)
+        end
+      end
+
+      class Generic(T)
+        def initialize
+          T.new
+        end
+
+        def t
+          T
+        end
+      end
+
+      Generic(Base(Int32)).new.t
+    )) { generic_class("Base", int32).metaclass }
+  end
 end

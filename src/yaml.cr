@@ -71,11 +71,11 @@ module YAML
     def initialize(message, line_number, column_number)
       @line_number = line_number.to_i
       @column_number = column_number.to_i
-      super "#{message} at #{@line_number}:#{@column_number}"
+      super(message)
     end
   end
 
-  # All valid YAML types
+  # All valid YAML types.
   alias Type = String | Hash(Type, Type) | Array(Type) | Nil
   alias EventKind = LibYAML::EventType
 
@@ -129,7 +129,7 @@ module YAML
     YAML::Parser.new data, &.parse_all
   end
 
-  # Serializes an object to YAML, returning it as a string.
+  # Serializes an object to YAML, returning it as a `String`.
   def self.dump(object) : String
     object.to_yaml
   end

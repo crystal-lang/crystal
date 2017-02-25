@@ -10,11 +10,15 @@ module LLVM::ValueMethods
     String.new LibLLVM.get_value_name(self)
   end
 
-  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute)
+  def kind
+    LibLLVM.get_value_kind(self)
+  end
+
+  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute, context : LLVM::Context)
     return if attribute.value == 0
     {% if LibLLVM.has_constant?(:AttributeRef) %}
       attribute.each_kind do |kind|
-        attribute_ref = LibLLVM.create_enum_attribute(LLVM::Context.global, kind, 0)
+        attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
         LibLLVM.add_call_site_attribute(self, index, attribute_ref)
       end
     {% else %}

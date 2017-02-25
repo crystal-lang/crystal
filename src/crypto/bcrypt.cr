@@ -19,7 +19,8 @@ require "./subtle"
 #
 # This implementation of Bcrypt is currently 50% slower than pure C solutions,
 # so keep this in mind when selecting your cost. It may be wise to test with
-# Ruby's bcrypt gem which is a binding to OpenBSD's implementation.
+# Ruby's [bcrypt gem](https://github.com/codahale/bcrypt-ruby)
+# which is a binding to OpenBSD's implementation.
 #
 # Last but not least: beware of denial of services! Always protect your
 # application using an external strategy (eg: rate limiting), otherwise
@@ -37,19 +38,21 @@ class Crypto::Bcrypt
   private DIGEST_SIZE = 31
 
   # bcrypt IV: "OrpheanBeholderScryDoubt"
-  private CIPHER_TEXT = Int32[
+  private CIPHER_TEXT = UInt32.static_array(
     0x4f727068, 0x65616e42, 0x65686f6c,
     0x64657253, 0x63727944, 0x6f756274,
-  ]
+  )
 
   def self.hash_secret(password, cost = DEFAULT_COST) : String
-    passwordb = password.to_unsafe.to_slice(password.bytesize + 1) # include leading 0
+    # We make a clone here to we don't keep a mutable reference to the original string
+    passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
     saltb = SecureRandom.random_bytes(SALT_SIZE)
     new(passwordb, saltb, cost).to_s
   end
 
   def self.new(password : String, salt : String, cost = DEFAULT_COST)
-    passwordb = password.to_unsafe.to_slice(password.bytesize + 1) # include leading 0
+    # We make a clone here to we don't keep a mutable reference to the original string
+    passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
     saltb = Base64.decode(salt, SALT_SIZE)
     new(passwordb, saltb, cost)
   end
@@ -94,8 +97,8 @@ class Crypto::Bcrypt
     blowfish = Blowfish.new(BLOWFISH_ROUNDS)
     blowfish.enhance_key_schedule(salt, password, cost)
 
-    cdata = CIPHER_TEXT.dup
-    size = cdata.size
+    cipher = CIPHER_TEXT.dup
+    cdata = cipher.to_unsafe
 
     0.step(to: 4, by: 2) do |i|
       64.times do
@@ -104,10 +107,10 @@ class Crypto::Bcrypt
       end
     end
 
-    ret = Bytes.new(size * 4)
+    ret = Bytes.new(cipher.size * 4)
     j = -1
 
-    size.times do |i|
+    cipher.size.times do |i|
       ret[j += 1] = (cdata[i] >> 24).to_u8
       ret[j += 1] = (cdata[i] >> 16).to_u8
       ret[j += 1] = (cdata[i] >> 8).to_u8

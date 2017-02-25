@@ -6,7 +6,7 @@ module Crystal::Conversions
     begin
       convert_call.accept visitor
     rescue ex : Crystal::Exception
-      if ex.message.try(&.includes?("undefined method '#{convert_call_name}'")) || ex.message.try(&.includes?("has no field '#{convert_call_name}'"))
+      if ex.message.try(&.includes?("undefined method '#{convert_call_name}'"))
         return nil
       end
 
@@ -44,6 +44,6 @@ module Crystal::Conversions
   end
 
   def self.to_unsafe_lookup_failed?(ex)
-    ex.message.try(&.includes?("undefined method 'to_unsafe'")) || ex.message.try(&.includes?("has no field 'to_unsafe'"))
+    ex.message.try(&.includes?("undefined method 'to_unsafe'"))
   end
 end

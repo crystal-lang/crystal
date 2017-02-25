@@ -15,7 +15,7 @@ ARGV         = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.
 ARGF         = IO::ARGF.new(ARGV, STDIN)
 
 # Repeatedly executes the block, passing an incremental `Int32`
-# that starts with 0.
+# that starts with `0`.
 #
 # ```
 # loop do |i|
@@ -33,14 +33,14 @@ def loop
   end
 end
 
-# Reads a line from STDIN.
+# Reads a line from `STDIN`.
 #
 # See also: `IO#gets`.
 def gets(*args, **options)
   STDIN.gets(*args, **options)
 end
 
-# Reads a line from STDIN.
+# Reads a line from `STDIN`.
 #
 # See also: `IO#read_line`.
 def read_line(*args, **options)
@@ -55,7 +55,7 @@ def print(*objects : _) : Nil
   STDOUT.flush
 end
 
-# Prints a formatted string to STDOUT.
+# Prints a formatted string to `STDOUT`.
 #
 # See also: `IO#printf`.
 def printf(format_string, *args) : Nil
@@ -81,14 +81,14 @@ def sprintf(format_string, args : Array | Tuple) : String
   end
 end
 
-# Prints objects to STDOUT, each followed by a newline.
+# Prints objects to `STDOUT`, each followed by a newline.
 #
 # See also: `IO#puts`.
 def puts(*objects) : Nil
   STDOUT.puts *objects
 end
 
-# Pretty prints *object* to STDOUT followed
+# Pretty prints *object* to `STDOUT` followed
 # by a newline. Returns *object*.
 #
 # See also: `Object#pretty_print(pp)`.
@@ -98,7 +98,7 @@ def p(object)
   object
 end
 
-# Pretty prints each object in *objects* to STDOUT, followed
+# Pretty prints each object in *objects* to `STDOUT`, followed
 # by a newline. Returns *objects*.
 #
 # See also: `Object#pretty_print(pp)`.
@@ -109,7 +109,7 @@ def p(*objects)
   objects
 end
 
-# Pretty prints each object in *objects* to STDOUT, followed
+# Pretty prints each object in *objects* to `STDOUT`, followed
 # by a newline. Returns *objects*.
 #
 # ```
@@ -177,7 +177,7 @@ def exit(status = 0) : NoReturn
   Process.exit(status)
 end
 
-# Terminates execution immediately, printing *message* to STDERR and
+# Terminates execution immediately, printing *message* to `STDERR` and
 # then calling `exit(status)`.
 def abort(message, status = 1) : NoReturn
   STDERR.puts message if message
@@ -185,7 +185,7 @@ def abort(message, status = 1) : NoReturn
 end
 
 class Process
-  # hooks defined here due to load order problems
+  # Hooks are defined here due to load order problems.
   def self.after_fork_child_callbacks
     @@after_fork_child_callbacks ||= [
       ->{ Scheduler.after_fork; nil },
@@ -201,7 +201,7 @@ end
   at_exit { Event::SignalHandler.close }
 {% end %}
 
-# Background loop to cleanup unused fiber stacks
+# Background loop to cleanup unused fiber stacks.
 spawn do
   loop do
     sleep 5

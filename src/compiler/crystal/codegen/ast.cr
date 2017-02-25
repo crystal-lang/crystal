@@ -33,7 +33,7 @@ module Crystal
   end
 
   class Def
-    property abi_info : LLVM::ABI::FunctionType?
+    property? abi_info = false
 
     def mangled_name(program, self_type)
       name = String.build do |str|

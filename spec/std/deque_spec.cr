@@ -112,13 +112,13 @@ describe "Deque" do
     end
 
     it "raises on negative count" do
-      expect_raises(ArgumentError, "negative deque size") do
+      expect_raises(ArgumentError, "Negative deque size") do
         Deque.new(-1, 3)
       end
     end
 
     it "raises on negative capacity" do
-      expect_raises(ArgumentError, "negative deque capacity") do
+      expect_raises(ArgumentError, "Negative deque capacity") do
         Deque(Int32).new(-1)
       end
     end
@@ -374,7 +374,7 @@ describe "Deque" do
   end
 
   describe "inspect" do
-    assert { Deque{1, 2, 3}.inspect.should eq("Deque{1, 2, 3}") }
+    it { Deque{1, 2, 3}.inspect.should eq("Deque{1, 2, 3}") }
   end
 
   describe "last" do
@@ -537,7 +537,7 @@ describe "Deque" do
 
   describe "to_s" do
     it "does to_s" do
-      assert { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
+      it { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
     end
 
     it "does with recursive" do

@@ -38,13 +38,13 @@ module JSON
   # The value can also be another hash literal with the following options:
   # * **type**: (required) the single type described above (you can use `JSON::Any` too)
   # * **key**: the property name in the JSON document (as opposed to the property name in the Crystal code)
-  # * **nilable**: if true, the property can be `Nil`. Passing `T | Nil` as a type has the same effect.
+  # * **nilable**: if `true`, the property can be `Nil`. Passing `T?` as a type has the same effect.
   # * **default**: value to use if the property is missing in the JSON document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a JSON document is parsed.
-  # * **emit_null**: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
+  # * **emit_null**: if `true`, emits a `null` value for nilable properties (by default nulls are not emitted)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
-  # * **setter**: if true, will generate a setter for the variable, true by default
-  # * **getter**: if true, will generate a getter for the variable, true by default
+  # * **setter**: if `true`, will generate a setter for the variable, `true` by default
+  # * **getter**: if `true`, will generate a getter for the variable, `true` by default
   #
   # This macro by default defines getters and setters for each variable (this can be overrided with *setter* and *getter*).
   # The mapping doesn't define a constructor accepting these variables as arguments, but you can provide an overload.
@@ -56,7 +56,7 @@ module JSON
   #
   # This macro also declares instance variables of the types given in the mapping.
   #
-  # If *strict* is true, unknown properties in the JSON
+  # If *strict* is `true`, unknown properties in the JSON
   # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
   macro mapping(properties, strict = false)
@@ -80,7 +80,7 @@ module JSON
       {% end %}
     {% end %}
 
-    def initialize(%pull : JSON::PullParser)
+    def initialize(%pull : ::JSON::PullParser)
       {% for key, value in properties %}
         %var{key.id} = nil
         %found{key.id} = false
@@ -104,7 +104,7 @@ module JSON
               {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
                 {{value[:type]}}.new(%pull)
               {% else %}
-                Union({{value[:type]}}).new(%pull)
+                ::Union({{value[:type]}}).new(%pull)
               {% end %}
 
               {% if value[:root] %}
@@ -116,7 +116,7 @@ module JSON
         {% end %}
         else
           {% if strict %}
-            raise JSON::ParseException.new("unknown json attribute: #{key}", 0, 0)
+            raise ::JSON::ParseException.new("Unknown json attribute: #{key}", 0, 0)
           {% else %}
             %pull.skip
           {% end %}
@@ -125,8 +125,8 @@ module JSON
 
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
-          if %var{key.id}.is_a?(Nil) && !%found{key.id} && !Union({{value[:type]}}).nilable?
-            raise JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
+          if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
+            raise ::JSON::ParseException.new("Missing json attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
       {% end %}
@@ -139,26 +139,26 @@ module JSON
             @{{key.id}} = %var{key.id}
           {% end %}
         {% elsif value[:default] != nil %}
-          @{{key.id}} = %var{key.id}.is_a?(Nil) ? {{value[:default]}} : %var{key.id}
+          @{{key.id}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
         {% else %}
           @{{key.id}} = (%var{key.id}).as({{value[:type]}})
         {% end %}
       {% end %}
     end
 
-    def to_json(json : JSON::Builder)
+    def to_json(json : ::JSON::Builder)
       json.object do
         {% for key, value in properties %}
           _{{key.id}} = @{{key.id}}
 
           {% unless value[:emit_null] %}
-            unless _{{key.id}}.is_a?(Nil)
+            unless _{{key.id}}.nil?
           {% end %}
 
             json.field({{value[:key] || key.id.stringify}}) do
               {% if value[:root] %}
                 {% if value[:emit_null] %}
-                  if _{{key.id}}.is_a?(Nil)
+                  if _{{key.id}}.nil?
                     nil.to_json(json)
                   else
                 {% end %}
