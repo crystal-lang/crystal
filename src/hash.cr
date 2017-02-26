@@ -11,20 +11,50 @@ class Hash(K, V)
   @last : Entry(K, V)?
   @block : (self, K -> V)?
 
+  # Instantiates a new Hash. The initial capacity of the
+  # buckets is determined by finding the nearest prime of the form 2^n + a
+  # above the number you passed in. In the following example, the size of the
+  # hash would be 2053.
+  #
+  # ```
+  # hash = Hash(Int32, Int32).new(default_value: 3, initial_capacity: 1234)
+  # hash[1] # => 3
+  # ```
   def initialize(block : (Hash(K, V), K -> V)? = nil, initial_capacity = nil)
-    initial_capacity ||= 11
-    initial_capacity = initial_capacity.to_i
-    raise ArgumentError.new("Hash capacity must be positive") if initial_capacity <= 0
+    initial_capacity = if initial_capacity.nil?
+      PRIMES[0]
+    else
+      raise ArgumentError.new("Hash capacity cannot be negative") if initial_capacity < 0
+      next_largest_prime(initial_capacity)
+    end
     @buckets = Pointer(Entry(K, V)?).malloc(initial_capacity)
     @buckets_size = initial_capacity
     @size = 0
     @block = block
   end
 
+  # Instantiates a new Hash with an initial capacity. The initial capacity of
+  # the buckets is determined by finding the nearest prime of the form 2^n + a
+  # above the number you passed in.
+  #
+  # A block can be used to specify the values of the hash.
+  #
+  # ```
+  # hash = Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 3 }
+  # hash[1] # => 3
+  # ```
   def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
     new block, initial_capacity: initial_capacity
   end
 
+  # Instantiates a new Hash with a default value. The initial capacity of the
+  # buckets is determined by finding the nearest prime of the form 2^n + a
+  # above the number you passed in.
+  #
+  # ```
+  # hash = Hash(Int32, Int32).new(default_value: 3, initial_capacity: 1234)
+  # hash[1] # => 3
+  # ```
   def self.new(default_value : V, initial_capacity = nil)
     new(initial_capacity: initial_capacity) { default_value }
   end
@@ -832,6 +862,50 @@ class Hash(K, V)
     index = bucket_index key
     entry = @buckets[index]
     find_entry_in_bucket entry, key
+  end
+
+  # Table of prime numbers 2^n+a, 2<=n<=30.
+  PRIMES = Int32.static_array(
+    8 + 3,
+    16 + 3,
+    32 + 5,
+    64 + 3,
+    128 + 3,
+    256 + 27,
+    512 + 9,
+    1024 + 9,
+    2048 + 5,
+    4096 + 3,
+    8192 + 27,
+    16384 + 43,
+    32768 + 3,
+    65536 + 45,
+    131072 + 29,
+    262144 + 3,
+    524288 + 21,
+    1048576 + 7,
+    2097152 + 17,
+    4194304 + 15,
+    8388608 + 9,
+    16777216 + 43,
+    33554432 + 35,
+    67108864 + 15,
+    134217728 + 29,
+    268435456 + 3,
+    536870912 + 11,
+    1073741824 + 85
+  )
+  MINSIZE = 8
+
+  private def next_largest_prime(passed_size)
+    new_size = MINSIZE
+    PRIMES.each do |prime|
+      if new_size > passed_size
+        return prime
+      end
+      new_size <<= 1
+    end
+    raise "Requested initial capacity for hash was too high"
   end
 
   private def insert_in_bucket(index, key, value)

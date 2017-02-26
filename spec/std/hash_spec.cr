@@ -324,7 +324,7 @@ describe "Hash" do
   end
 
   it "raises on initialize if set to a non-postive value" do
-    expect_raises ArgumentError, "Hash capacity must be positive" do
+    expect_raises ArgumentError, "Hash capacity cannot be negative" do
       Hash(Int32, Int32).new(initial_capacity: -1) { 1234 }
     end
   end
@@ -811,20 +811,25 @@ describe "Hash" do
     items.uniq.size
   end
 
-  it "creates with initial capacity" do
+  it "sets the initial capacity when not passed" do
+    hash = Hash(Int32, Int32).new
+    hash.@buckets_size.should eq(Hash::PRIMES[0])
+  end
+
+  it "creates the initial capacity from next largest prime of passed capacity" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234)
-    hash.@buckets_size.should eq(1234)
+    hash.@buckets_size.should eq(2053)
   end
 
   it "creates with initial capacity and default value" do
     hash = Hash(Int32, Int32).new(default_value: 3, initial_capacity: 1234)
     hash[1].should eq(3)
-    hash.@buckets_size.should eq(1234)
+    hash.@buckets_size.should eq(2053)
   end
 
   it "creates with initial capacity and block" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 3 }
     hash[1].should eq(3)
-    hash.@buckets_size.should eq(1234)
+    hash.@buckets_size.should eq(2053)
   end
 end
