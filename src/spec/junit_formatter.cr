@@ -27,14 +27,20 @@ module Spec
 
     def finish
       io = @output
-      io << "<testsuite tests=\"#{@results.size}\" \
-                        errors=\"#{@summary[:error]? || 0}\" \
-                        failed=\"#{@summary[:fail]? || 0}\">\n"
 
-      @results.each { |r| write_report(r, io) }
+      XML.build(io, indent: 2) do |xml|
+        attributes = {
+          tests:  @results.size,
+          errors: @summary[:error]? || 0,
+          failed: @summary[:fail]? || 0,
+        }
 
-      io << "</testsuite>"
-      io.close
+        xml.element("testsuite", attributes) do
+          @results.each { |r| write_report(r, xml) }
+        end
+      end
+    ensure
+      io.try &.close
     end
 
     def self.file(output_dir)
@@ -44,46 +50,44 @@ module Spec
       JUnitFormatter.new(file)
     end
 
-    # -------- private utility methods
-    private def write_report(result, io)
-      io << "<testcase file=\"#{result.file}\" classname=\"#{classname(result)}\" name=\"#{XML.escape(result.description)}\">\n"
+    private def write_report(result, xml)
+      attributes = {
+        file:      result.file,
+        classname: classname(result),
+        name:      result.description,
+      }
 
-      if (has_inner_content(result.kind))
-        tag = inner_content_tag(result.kind)
-        ex = result.exception
-        if ex
-          write_inner_content(tag, ex, io)
-        else
-          io << "<#{tag} />\n"
+      xml.element("testcase", attributes) do
+        if tag = inner_content_tag(result.kind)
+          if ex = result.exception
+            write_inner_content(tag, ex, xml)
+          else
+            xml.element(tag)
+          end
         end
       end
-
-      io << "</testcase>\n"
-    end
-
-    private def has_inner_content(kind)
-      kind == :fail || kind == :error
     end
 
     private def inner_content_tag(kind)
       case kind
       when :error
-        :error
+        "error"
       when :fail
-        :failure
+        "failure"
       end
     end
 
-    private def write_inner_content(tag, exception, io)
-      m = exception.message
-      if m
-        io << "<#{tag} message=\"#{XML.escape(m)}\">"
+    private def write_inner_content(tag, exception, xml)
+      if message = exception.message
+        attributes = {message: message}
       else
-        io << "<#{tag}>"
+        attributes = NamedTuple.new
       end
-      backtrace = exception.backtrace? || ([] of String)
-      io << XML.escape(backtrace.join("\n"))
-      io << "</#{tag}>\n"
+
+      xml.element(tag, attributes) do
+        backtrace = exception.backtrace? || Array(String).new
+        xml.text backtrace.join('\n')
+      end
     end
 
     private def classname(result)
