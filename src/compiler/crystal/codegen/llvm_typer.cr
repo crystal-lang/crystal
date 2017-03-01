@@ -523,11 +523,17 @@ module Crystal
         LLVM::Type.function(params_types, ret_type, type.varargs?)
       when .struct?
         llvm_name = type.struct_name
-        @structs[llvm_name] ||= begin
-          @llvm_context.struct(llvm_name, type.packed_struct?) do |the_struct|
-            @structs[llvm_name] = the_struct
-            copy_types(type.struct_element_types)
+        if llvm_name
+          @structs[llvm_name] ||= begin
+            @llvm_context.struct(llvm_name, type.packed_struct?) do |the_struct|
+              @structs[llvm_name] = the_struct
+              copy_types(type.struct_element_types)
+            end
           end
+        else
+          # The case of an anonymous struct (only happens with C bindings and C ABI,
+          # where structs like `{ double, double }` are generated)
+          @llvm_context.struct(copy_types(type.struct_element_types), packed: type.packed_struct?)
         end
       else
         raise "don't know how to copy type: #{type} (#{type.kind})"
