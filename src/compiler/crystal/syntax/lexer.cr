@@ -2032,6 +2032,7 @@ module Crystal
           while ident_part?(char)
             char = next_char
           end
+          beginning_of_line = false
           @token.type = :MACRO_VAR
           @token.value = string_range_from_pool(start)
           @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
