@@ -599,6 +599,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def visit(node : Assign)
     type_assign(node.target, node.value, node)
+
+    target = node.target
+    type = current_type
+
+    if target.is_a?(InstanceVar) && type.is_a?(InstanceVarInitializerContainer)
+      type.lazy_add_instance_var_initializer target.name, node.value
+    end
+
     false
   end
 

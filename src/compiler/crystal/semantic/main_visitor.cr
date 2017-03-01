@@ -117,6 +117,14 @@ module Crystal
       @meta_vars = meta_vars
     end
 
+    def scope=(value)
+      super
+
+      if value.is_a?(InstanceVarInitializerContainer)
+        value.convert_lazy_initializers @meta_vars
+      end
+    end
+
     def visit_any(node)
       @unreachable = false
       @or_left_type_filters = nil
