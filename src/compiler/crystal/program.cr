@@ -242,6 +242,7 @@ module Crystal
       define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
       define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
       define_crystal_string_constant "VERSION", version
+      define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
     end
 
     private def define_crystal_string_constant(name, value)
