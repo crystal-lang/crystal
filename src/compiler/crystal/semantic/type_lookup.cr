@@ -81,7 +81,11 @@ class Crystal::Type
 
       case type_var
       when Const
-        node.raise "#{type_var} is not a type, it's a constant"
+        if @raise
+          node.raise "#{type_var} is not a type, it's a constant"
+        else
+          return nil
+        end
       when Type
         return type_var
       end

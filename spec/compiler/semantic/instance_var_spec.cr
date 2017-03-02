@@ -4625,4 +4625,19 @@ describe "Semantic: instance var" do
       ),
       "Can't infer the type of instance variable '@bar' of Foo"
   end
+
+  it "can't infer type when using operation on const (#4054)" do
+    assert_error %(
+      class Foo
+        BAR = 5
+
+        def initialize
+          @baz = BAR + 5
+        end
+      end
+
+      Foo.new
+      ),
+      "Can't infer the type of instance variable '@baz' of Foo"
+  end
 end
