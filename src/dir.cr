@@ -257,9 +257,7 @@ class Dir
   # Dir.tmpdir # => "/tmp"
   # ```
   def self.tmpdir
-    unless tmpdir = ENV["TMPDIR"]?
-      tmpdir = "/tmp"
-    end
+    tmpdir = ENV["TMPDIR"]? || "/tmp"
     tmpdir = tmpdir + File::SEPARATOR unless tmpdir.ends_with? File::SEPARATOR
 
     File.dirname(tmpdir)
