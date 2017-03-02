@@ -1414,8 +1414,8 @@ module Crystal
           printed_arg = true
         end
         if named_args = node.named_args
-          @str << ", " if printed_arg
           named_args.each do |named_arg|
+            @str << ", " if printed_arg
             visit_named_arg_name(named_arg.name)
             @str << ": "
             named_arg.value.accept self
