@@ -29,6 +29,10 @@ module Crystal::Playground
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
+        require "colorize/io"
+
+        STDOUT.colorize_when = Colorize::When::Always
+        STDERR.colorize_when = Colorize::When::Always
 
         class Crystal::Playground::Agent
           @@instance = Crystal::Playground::Agent.new("ws://localhost:#{@port}/agent/#{@session_key}/#{tag}", #{tag})
@@ -49,7 +53,6 @@ module Crystal::Playground
       ]
       output_filename = tempfile "play-#{@session_key}-#{tag}"
       compiler = Compiler.new
-      compiler.color = false
       begin
         @logger.info "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})."
         result = compiler.compile sources, output_filename

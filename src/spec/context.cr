@@ -111,10 +111,8 @@ module Spec
         top_n.each do |res|
           puts "  #{res.description}"
           res_elapsed = res.elapsed.not_nil!.total_seconds.to_s
-          if Spec.use_colors?
-            res_elapsed = res_elapsed.colorize.bold
-          end
-          puts "    #{res_elapsed} seconds #{Spec.relative_file(res.file)}:#{res.line}"
+          STDOUT << "    " << res_elapsed.colorize.red << " seconds #{Spec.relative_file(res.file)}:#{res.line}"
+          puts
         end
       end
 

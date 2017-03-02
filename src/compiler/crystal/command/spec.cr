@@ -60,6 +60,10 @@ class Crystal::Command
       end
     end
 
+    unless STDOUT.colorize_when.auto?
+      options << "--color=#{STDOUT.colorize_when.to_s.underscore}"
+    end
+
     source_filename = File.expand_path("spec")
 
     source = target_filenames.map { |filename| %(require "./#{filename}") }.join("\n")

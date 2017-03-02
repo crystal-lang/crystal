@@ -52,7 +52,6 @@ class Crystal::Command
   private getter options
 
   def initialize(@options : Array(String))
-    @color = true
     @stats = @time = false
   end
 
@@ -114,7 +113,6 @@ class Crystal::Command
   rescue ex : Crystal::ToolException
     error ex.message
   rescue ex : Crystal::Exception
-    ex.color = @color
     if @config.try(&.output_format) == "json"
       puts ex.to_json
     else
@@ -344,9 +342,15 @@ class Crystal::Command
         end
       end
 
+      opts.on("--color auto|always|never", "Colorize the output") do |policy|
+        color = Colorize::When.parse policy
+        STDOUT.colorize_when = color
+        STDERR.colorize_when = color
+      end
+
       opts.on("--no-color", "Disable colored output") do
-        @color = false
-        compiler.color = false
+        STDOUT.colorize_when = Colorize::When::Never
+        STDERR.colorize_when = Colorize::When::Never
       end
 
       unless no_codegen
@@ -477,9 +481,14 @@ class Crystal::Command
       puts opts
       exit
     end
+    opts.on("--color auto|always|never", "Colorize the output") do |policy|
+      color = Colorize::When.parse policy
+      STDOUT.colorize_when = color
+      STDERR.colorize_when = color
+    end
     opts.on("--no-color", "Disable colored output") do
-      @color = false
-      compiler.color = false
+      STDOUT.colorize_when = Colorize::When::Never
+      STDERR.colorize_when = Colorize::When::Never
     end
     opts.invalid_option { }
   end
@@ -495,7 +504,11 @@ class Crystal::Command
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color")
-    Crystal.error msg, @color, exit_code: exit_code
+    if ARGV.includes?("--no-color")
+      STDOUT.colorize_when = Colorize::When::Never
+      STDERR.colorize_when = Colorize::When::Never
+    end
+
+    Crystal.error msg, exit_code: exit_code
   end
 end

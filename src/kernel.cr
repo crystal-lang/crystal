@@ -132,7 +132,8 @@ module AtExitHandlers
       begin
         handler.call status
       rescue handler_ex
-        STDERR.puts "Error running at_exit handler: #{handler_ex}"
+        STDERR << "Error running at_exit handler: " << handler_ex
+        STDERR.puts
       end
     end
   end

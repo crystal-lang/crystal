@@ -17,9 +17,9 @@ module Crystal
     filename
   end
 
-  def self.error(msg, color, exit_code = 1, stderr = STDERR)
-    stderr.print "Error: ".colorize.toggle(color).red.bold
-    stderr.puts msg.colorize.toggle(color).bright
+  def self.error(msg, exit_code = 1, stderr = STDERR)
+    stderr << "Error: ".colorize.red.bold << msg.colorize.bright
+    stderr.puts
     exit(exit_code) if exit_code
   end
 
@@ -47,18 +47,21 @@ module Crystal
     CacheDir.instance.join("crystal-run-#{basename}.tmp")
   end
 
-  def self.with_line_numbers(source : String, highlight_line_number = nil, color = false)
-    source.lines.map_with_index do |line, i|
-      str = "#{"%4d" % (i + 1)}. #{line.to_s.chomp}"
-      target = i + 1 == highlight_line_number
-      if target
-        if color
-          str = ">".colorize.green.bold.to_s + str[1..-1].colorize.bold.to_s
-        else
-          str = ">" + str[1..-1]
-        end
+  def self.with_line_numbers(source : String, highlight_line_number, io)
+    source.lines.each_with_index do |line, i|
+      str = "#{"%4d" % (i + 1)}: #{line}"
+      if i + 1 == highlight_line_number
+        io << ">".colorize.green.bold << str[1..-1].colorize.bold
+      else
+        io << str
       end
-      str
+      io.puts
+    end
+  end
+
+  def self.with_line_numbers(source : String)
+    source.lines.map_with_index do |line, i|
+      "#{"%3d" % (i + 1)}: #{line}"
     end.join "\n"
   end
 end
