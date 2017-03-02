@@ -232,7 +232,7 @@ class Dir
   end
 
   # Creates a new temporary directory within the lifecycle
-  # of the given block and destroys it, and its content, later on.
+  # of the given block and destroys it, and its content, when the block returns.
   #
   # ```
   # Dir.mktmpdir do |dir|
