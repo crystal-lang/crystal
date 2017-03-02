@@ -844,7 +844,16 @@ module Crystal
       end
     end
 
+    class LazyInstanceVarInitializer
+      getter name : String
+      getter value : ASTNode
+
+      def initialize(@name, @value)
+      end
+    end
+
     getter instance_vars_initializers : Array(InstanceVarInitializer)?
+    getter lazy_instance_vars_initializers : Array(LazyInstanceVarInitializer)?
 
     def add_instance_var_initializer(name, value, meta_vars)
       initializers = @instance_vars_initializers ||= [] of InstanceVarInitializer
@@ -875,6 +884,23 @@ module Crystal
     def has_instance_var_initializer?(name)
       @instance_vars_initializers.try(&.any? { |init| init.name == name }) ||
         ancestors.any?(&.has_instance_var_initializer?(name))
+    end
+
+    def lazy_add_instance_var_initializer(name, value)
+      initializers = @lazy_instance_vars_initializers ||= [] of LazyInstanceVarInitializer
+      initializers << LazyInstanceVarInitializer.new(name, value)
+    end
+
+    def convert_lazy_initializers(meta_vars)
+      initializers = @lazy_instance_vars_initializers
+      if initializers
+        initializers.each do |lazy_ivar_init|
+          if lookup_instance_var?(lazy_ivar_init.name)
+            add_instance_var_initializer(lazy_ivar_init.name, lazy_ivar_init.value, meta_vars)
+          end
+        end
+        @lazy_instance_vars_initializers = nil
+      end
     end
   end
 

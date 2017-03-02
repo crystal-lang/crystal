@@ -117,6 +117,18 @@ module Crystal
       @meta_vars = meta_vars
     end
 
+    def scope=(value)
+      super
+
+      # TODO tidy up the design of how to grab the instance variable initializers.
+      # currently the LazyInstanceVarInitializer serves for collecting them
+      # and when the MainVisitor is used to expand the #initialize method
+      # the following code will convert lazy to proper instance variable initializer.
+      if value.is_a?(InstanceVarInitializerContainer)
+        value.convert_lazy_initializers MetaVars.new
+      end
+    end
+
     def visit_any(node)
       @unreachable = false
       @or_left_type_filters = nil
