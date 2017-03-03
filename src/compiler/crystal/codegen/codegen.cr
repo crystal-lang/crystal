@@ -277,7 +277,7 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, REALLOC_NAME, RAISE_NAME, PERSONALITY_NAME, GET_EXCEPTION_NAME
+        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, PERSONALITY_NAME, GET_EXCEPTION_NAME
           @codegen.accept node
         end
         false
