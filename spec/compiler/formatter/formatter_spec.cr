@@ -1007,4 +1007,11 @@ describe Crystal::Formatter do
 
   assert_format "<<-HEREDOC\n  \#{foo}\n  H\#{bar}\n  HEREDOC"
   assert_format "foo[a, b: 2]"
+
+  assert_format "def a\n  {\n    1, # x\n    # y\n  }\nend"
+  assert_format "def a\n  [\n    1, # x\n    # y\n  ]\nend"
+  assert_format "def a\n  b(\n    1, # x\n    # y\n  )\nend"
+  assert_format "def a\n  b(\n    1, # x\n    # y\n    2\n  )\nend"
+  assert_format "def a\n  b(\n    a: 1, # x\n    # y\n    b: 2\n  )\nend"
+  assert_format "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2 # z\n  )\nend"
 end
