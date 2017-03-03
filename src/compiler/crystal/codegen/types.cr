@@ -45,7 +45,7 @@ module Crystal
     # `malloc` in `Pointer.malloc` for a tiny performance boost.
     def has_inner_pointers?
       case self
-      when void?
+      when .void?
         # We consider Void to have pointers, so doing
         # Pointer(Void).malloc(...).as(ReferenceType)
         # will consider potential inner pointers as such.
