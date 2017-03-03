@@ -74,7 +74,7 @@ class Crystal::AbstractDefChecker
                end
 
     subtypes.try &.each do |subtype|
-      next if implements_with_parents?(subtype, method, base)
+      next if implements_with_ancestors?(subtype, method, base)
 
       # Union doesn't need a hash, dup, to_s, etc., methods because it's special
       next if subtype == @program.union
@@ -87,15 +87,12 @@ class Crystal::AbstractDefChecker
     end
   end
 
-  def implements_with_parents?(type : Type, method : Def, base)
+  def implements_with_ancestors?(type : Type, method : Def, base)
     return true if implements?(type, method, base)
 
-    type.parents.try &.each do |parent|
-      break if parent == base
-      return true if implements?(parent, method, base)
+    type.ancestors.any? do |ancestor|
+      implements?(ancestor, method, base)
     end
-
-    return false
   end
 
   def implements?(type : Type, method : Def, base)
