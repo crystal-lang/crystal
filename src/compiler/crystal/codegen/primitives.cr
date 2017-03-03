@@ -423,7 +423,11 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_pointer_malloc(node, target_def, call_args)
     type = node.type.as(PointerInstanceType)
     llvm_type = llvm_embedded_type(type.element_type)
-    last = array_malloc(llvm_type, call_args[1])
+    if type.element_type.has_inner_pointers?
+      last = array_malloc(llvm_type, call_args[1])
+    else
+      last = array_malloc_atomic(llvm_type, call_args[1])
+    end
     last
   end
 
