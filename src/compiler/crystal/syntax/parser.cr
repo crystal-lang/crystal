@@ -28,6 +28,7 @@ module Crystal
       @assigns_special_var = false
       @def_nest = 0
       @type_nest = 0
+      @call_args_nest = 0
       @block_arg_count = 0
       @in_macro_expression = false
       @stop_on_yield = 0
@@ -77,7 +78,7 @@ module Crystal
     end
 
     def parse_expressions
-      preserve_stop_on_do { parse_expressions_internal }
+      preserve_stop_on_do(call_args?: false) { parse_expressions_internal }
     end
 
     def parse_expressions_internal
@@ -1640,7 +1641,7 @@ module Crystal
       elsif @token.type == :"{"
         next_token_skip_statement_end
         check_not_pipe_before_proc_literal_body
-        body = preserve_stop_on_do { parse_expressions }
+        body = preserve_stop_on_do(call_args?: false) { parse_expressions }
         end_location = token_end_location
         check :"}"
       else
@@ -1843,7 +1844,7 @@ module Crystal
           line_number = @token.line_number
           delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
-          exp = preserve_stop_on_do { parse_expression }
+          exp = preserve_stop_on_do(call_args?: false) { parse_expression }
 
           if exp.is_a?(StringLiteral)
             pieces << Piece.new(exp.value, line_number)
@@ -3665,7 +3666,7 @@ module Crystal
           else
             if @no_type_declaration == 0 && @token.type == :":"
               declare_var = parse_type_declaration(Var.new(name).at(location))
-              push_var declare_var
+              push_var declare_var if @call_args_nest == 0
               declare_var
             elsif (!force_call && is_var)
               if @block_arg_name && !@uses_block_arg && name == @block_arg_name
@@ -3687,10 +3688,12 @@ module Crystal
       node
     end
 
-    def preserve_stop_on_do(new_value = false)
+    def preserve_stop_on_do(new_value = false, call_args? = true)
       old_stop_on_do = @stop_on_do
       @stop_on_do = new_value
+      @call_args_nest += 1 if call_args?
       value = yield
+      @call_args_nest -= 1 if call_args?
       @stop_on_do = old_stop_on_do
       value
     end
