@@ -290,6 +290,8 @@ module Crystal
       case exp
       when Assign
         exp.target.is_a?(Path)
+      when VisibilityModifier
+        assign? exp.exp
       when Arg
         true
       else
@@ -303,6 +305,8 @@ module Crystal
         assign_length exp.target
       when Arg
         exp.name.size
+      when VisibilityModifier
+        assign_length exp.exp
       when Path
         exp.names.first.size
       else

@@ -628,6 +628,7 @@ describe Crystal::Formatter do
   assert_format "A = 1\nFOO = 2\n\nEX = 3", "A   = 1\nFOO = 2\n\nEX = 3"
   assert_format "FOO = 2\nA = 1", "FOO = 2\nA   = 1"
   assert_format "FOO = 2 + 3\nA = 1 - 10", "FOO = 2 + 3\nA   = 1 - 10"
+  assert_format "private FOO = 2\nprivate A = 1", "private FOO = 2\nprivate A   = 1"
   assert_format "enum Baz\nA = 1\nFOO = 2\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO = 2\n\n  EX = 3\nend"
   assert_format "enum Baz\nA = 1\nFOO\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO\n\n  EX = 3\nend"
 
