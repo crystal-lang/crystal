@@ -1002,7 +1002,7 @@ module IO
     LineIterator.new(self, args, options)
   end
 
-  # Inovkes the given block with each `Char` in this `IO`.
+  # Invokes the given block with each `Char` in this `IO`.
   #
   # ```
   # io = IO::Memory.new("あめ")
@@ -1035,7 +1035,7 @@ module IO
     CharIterator.new(self)
   end
 
-  # Inovkes the given block with each byte (`UInt8`) in this `IO`.
+  # Invokes the given block with each byte (`UInt8`) in this `IO`.
   #
   # ```
   # io = IO::Memory.new("aあ")
