@@ -176,6 +176,7 @@ describe "File" do
       begin
         File.link("#{__DIR__}/data/test_file.txt", out_path)
         File.exists?(out_path).should be_true
+        File.symlink?(out_path).should be_false
       ensure
         File.delete(out_path) if File.exists?(out_path)
       end
