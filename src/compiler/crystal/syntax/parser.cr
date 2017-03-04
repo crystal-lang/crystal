@@ -78,7 +78,7 @@ module Crystal
     end
 
     def parse_expressions
-      preserve_stop_on_do(call_args?: false) { parse_expressions_internal }
+      preserve_stop_on_do { parse_expressions_internal }
     end
 
     def parse_expressions_internal
@@ -1641,7 +1641,7 @@ module Crystal
       elsif @token.type == :"{"
         next_token_skip_statement_end
         check_not_pipe_before_proc_literal_body
-        body = preserve_stop_on_do(call_args?: false) { parse_expressions }
+        body = preserve_stop_on_do { parse_expressions }
         end_location = token_end_location
         check :"}"
       else
@@ -1844,7 +1844,7 @@ module Crystal
           line_number = @token.line_number
           delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
-          exp = preserve_stop_on_do(call_args?: false) { parse_expression }
+          exp = preserve_stop_on_do { parse_expression }
 
           if exp.is_a?(StringLiteral)
             pieces << Piece.new(exp.value, line_number)
@@ -3688,12 +3688,10 @@ module Crystal
       node
     end
 
-    def preserve_stop_on_do(new_value = false, call_args? = true)
+    def preserve_stop_on_do(new_value = false)
       old_stop_on_do = @stop_on_do
       @stop_on_do = new_value
-      @call_args_nest += 1 if call_args?
       value = yield
-      @call_args_nest -= 1 if call_args?
       @stop_on_do = old_stop_on_do
       value
     end
@@ -3851,6 +3849,8 @@ module Crystal
       has_parentheses : Bool
 
     def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false)
+      @call_args_nest += 1
+
       case @token.type
       when :"{"
         nil
@@ -3913,9 +3913,15 @@ module Crystal
       else
         nil
       end
+    ensure
+      @call_args_nest -= 1
     end
 
     def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token = :")")
+      # This method is called by `parse_call_args`, so it increments once too much in this case.
+      # But it is no problem, because it decrements once too much.
+      @call_args_nest += 1
+
       if @token.keyword?(:end) && !next_comes_colon_space?
         return nil
       end
@@ -3997,6 +4003,8 @@ module Crystal
       end
 
       CallArgs.new args, nil, nil, nil, false, end_location, has_parentheses: false
+    ensure
+      @call_args_nest -= 1
     end
 
     def parse_call_args_named_args(location, args, first_name, allow_newline)
