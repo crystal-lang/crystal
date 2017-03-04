@@ -20,12 +20,12 @@ module Base64
 
   class Error < Exception; end
 
-  private CHARS_STD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  private CHARS_STD  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
   private CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-  private LINE_SIZE = 60
-  private PAD = '='.ord.to_u8
-  private NL = '\n'.ord.to_u8
-  private NR = '\r'.ord.to_u8
+  private LINE_SIZE  = 60
+  private PAD        = '='.ord.to_u8
+  private NL         = '\n'.ord.to_u8
+  private NR         = '\r'.ord.to_u8
 
   # Returns the base64-encoded version of *data*.
   # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
