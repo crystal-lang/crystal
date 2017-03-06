@@ -71,7 +71,14 @@ class Scheduler
   end
 
   def self.enqueue_event(fiber : Fiber)
+    thread_log "Enqueue '#{fiber.name}' (event wakeup)"
     @@events_queue.enqueue(fiber)
+    Scheduler.ensure_workers_available
+  end
+
+  def self.enqueue_event(fibers : Enumerable(Fiber))
+    thread_log "Enqueue #{fibers.map(&.name!).join(", ")} (event wakeup)"
+    @@events_queue.enqueue(fibers)
     Scheduler.ensure_workers_available
   end
 

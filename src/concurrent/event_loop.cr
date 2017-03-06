@@ -20,6 +20,10 @@ class EventLoop
     Scheduler.enqueue_event(fiber)
   end
 
+  def self.enqueue(fibers : Enumerable(Fiber))
+    Scheduler.enqueue_event(fibers)
+  end
+
   def self.after_fork
     @@eb.reinit
   end

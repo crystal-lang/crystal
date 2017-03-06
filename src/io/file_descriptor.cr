@@ -395,12 +395,12 @@ class IO::FileDescriptor
 
     @mutex.synchronize do
       if readers = @readers
-        Scheduler.enqueue readers
+        EventLoop.enqueue readers
         readers.clear
       end
 
       if writers = @writers
-        Scheduler.enqueue writers
+        EventLoop.enqueue writers
         writers.clear
       end
     end
