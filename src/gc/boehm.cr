@@ -5,24 +5,38 @@ lib LibGC
   alias SizeT = LibC::SizeT
   alias Word = LibC::ULong
 
+  {% if flag?(:gc_debug) %}
+    fun malloc = GC_debug_malloc(size : SizeT) : Void*
+    fun malloc_atomic = GC_debug_malloc_atomic(size : SizeT) : Void*
+    fun realloc = GC_debug_realloc(ptr : Void*, size : SizeT) : Void*
+    fun free = GC_debug_free(ptr : Void*)
+  {% else %}
+    fun malloc = GC_malloc(size : SizeT) : Void*
+    fun malloc_atomic = GC_malloc_atomic(size : SizeT) : Void*
+    fun realloc = GC_realloc(ptr : Void*, size : SizeT) : Void*
+    fun free = GC_free(ptr : Void*)
+  {% end %}
+
   fun init = GC_init
-  fun malloc = GC_malloc(size : SizeT) : Void*
-  fun malloc_atomic = GC_malloc_atomic(size : SizeT) : Void*
-  fun realloc = GC_realloc(ptr : Void*, size : SizeT) : Void*
-  fun free = GC_free(ptr : Void*)
   fun collect_a_little = GC_collect_a_little : Int
   fun collect = GC_gcollect
   fun add_roots = GC_add_roots(low : Void*, high : Void*)
   fun enable = GC_enable
   fun disable = GC_disable
   fun set_handle_fork = GC_set_handle_fork(value : Int)
-
   fun base = GC_base(displaced_pointer : Void*) : Void*
-  fun general_register_disappearing_link = GC_general_register_disappearing_link(link : Void**, obj : Void*) : Int
+
+  {% if flag?(:gc_debug) %}
+    fun general_register_disappearing_link = GC_general_register_disappearing_link(link : Void**, obj : Void*) : Int
+    fun register_finalizer = GC_debug_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
+    fun register_finalizer_ignore_self = GC_debug_register_finalizer_ignore_self(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
+  {% else %}
+    fun general_register_disappearing_link = GC_general_register_disappearing_link(link : Void**, obj : Void*) : Int
+    fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
+    fun register_finalizer_ignore_self = GC_register_finalizer_ignore_self(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
+  {% end %}
 
   type Finalizer = Void*, Void* ->
-  fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
-  fun register_finalizer_ignore_self = GC_register_finalizer_ignore_self(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun invoke_finalizers = GC_invoke_finalizers : Int
 
   fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : Word*, free_bytes : Word*, unmapped_bytes : Word*, bytes_since_gc : Word*, total_bytes : Word*)
