@@ -37,6 +37,11 @@ end
 class Thread
   @__xml_errors = [] of XML::Error
   @__xml_errors_initialized = false
+  @__xml_global_state : Void* = Pointer(Void).null
+
+  # FIXME: "fix" this magic number; this is sizeof(xmlGlobalState) for Mac OS X
+  # 64 bits
+  XML_GLOBAL_STATE_SIZE = 968
 
   def xml_errors
     @__xml_errors
@@ -65,5 +70,25 @@ class Thread
       {% end %}
     }
     @__xml_errors_initialized = true
+    @__xml_global_state = LibXML.xmlGetGlobalState
+  end
+
+  protected def xml_push_gc_roots
+    return unless @__xml_global_state
+    LibGC.push_all @__xml_global_state, @__xml_global_state + XML_GLOBAL_STATE_SIZE
+  end
+
+  # TODO: provide a nicer interface to registering other roots pushers in GC
+  # See also fiber.cr
+  @@__xml_prev_push_other_roots : ->
+  @@__xml_prev_push_other_roots = LibGC.get_push_other_roots
+
+  LibGC.set_push_other_roots ->do
+    @@threads_mutex.synchronize do
+      @@threads.each do |thread|
+        thread.xml_push_gc_roots
+      end
+    end
+    @@__xml_prev_push_other_roots.call
   end
 end

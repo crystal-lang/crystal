@@ -293,6 +293,8 @@ lib LibXML
   fun xmlSetGenericErrorFunc(ctx : Void*, f : GenericErrorFunc)
 
   fun xmlGetNsList(doc : Doc*, node : Node*) : NS**
+
+  fun xmlGetGlobalState : Void*
 end
 
 LibXML.xmlGcMemSetup(
