@@ -1,3 +1,15 @@
+# 0.21.1 (06-03-2017)
+
+* Improved lookup of abstract def implementors (see #4052)
+* Improved allocation of objects without pointer instance variables using `malloc_atomic` (see #4081)
+* Added `crystal --version` reports also the LLVM version (see #4095, thanks @matiasgarciaisaia)
+* Fixed instance variables initializers corner cases (see #3988)
+* Fixed `crystal play` was broken (see #4061)
+* Fixed `Atomic` can be set to `nil` (see #4062)
+* Fixed `GZip::Header` extra byte (see #4068, thanks @crisward)
+* Fixed `ASTNode#to_s` for `Attribute` (see #4098, thanks @olbat)
+* [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.21.1)
+
 # 0.21.0 (20-02-2017)
 
 * **(breaking-change)** The compiler now reuses previous macro run compilations so `{{ run(...) }}` is only re-run if the code changes
