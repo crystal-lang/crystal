@@ -4,6 +4,10 @@ require "./runnable_queue"
 
 class Thread
   property! scheduler : Scheduler
+
+  def scheduler?
+    @scheduler
+  end
 end
 
 Scheduler.start_for_main_thread
@@ -130,7 +134,7 @@ class Scheduler
   protected def wait
     @@wait_mutex.synchronize do
       # @@sleeping.add(1)
-      thread_log "Scheduler #{self} waiting (runnables: %d)", @q.size
+      thread_log "Scheduler %p waiting (runnables: %d)", self.object_id, @q.size
       # LibC.printf "%ld Going to sleep\n", LibC.pthread_self
 
       if @@wake.get != 0
@@ -139,7 +143,7 @@ class Scheduler
         @@wait_cv.wait(@@wait_mutex)
       end
       # LibC.printf "%ld Waking up\n", LibC.pthread_self
-      thread_log "Scheduler #{self} waking up"
+      thread_log "Scheduler %p waking up", self.object_id
       @@sleeping.add(-1)
     end
   end

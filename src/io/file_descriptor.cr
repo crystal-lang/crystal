@@ -100,7 +100,7 @@ class IO::FileDescriptor
       @readers.try &.shift?
     end
     if reader
-      # thread_log "Resuming #{reader.name!} for read on #{self}"
+      thread_log "Resuming #{reader.name!} for read on #{self}"
       EventLoop.enqueue reader
       # reader.resume
     end
@@ -108,12 +108,12 @@ class IO::FileDescriptor
 
   # :nodoc:
   def resume_write
-    # thread_log "resume_write #{self}"
+    thread_log "resume_write #{self}"
     writer = @mutex.synchronize do
       @writers.try &.shift?
     end
     if writer
-      # thread_log "Resuming #{writer.name!} for write on #{self}"
+      thread_log "Resuming #{writer.name!} for write on #{self}"
       EventLoop.enqueue writer
       # writer.resume
     end
@@ -291,7 +291,7 @@ class IO::FileDescriptor
   ensure
     some_writers = @mutex.synchronize { (writers = @writers) && !writers.empty? }
     if some_writers
-      # thread_log "Writers on #{self} remain, adding event"
+      thread_log "Writers on #{self} remain, adding event"
       add_write_event
     end
   end
@@ -301,7 +301,7 @@ class IO::FileDescriptor
   end
 
   private def wait_readable
-    # thread_log "#{Fiber.current.name!} waiting to read in file #{self}"
+    thread_log "#{Fiber.current.name!} waiting to read in file #{self}"
     @mutex.synchronize do
       readers = (@readers ||= Deque(Fiber).new)
       readers << Fiber.current
@@ -337,7 +337,7 @@ class IO::FileDescriptor
 
   # msg/timeout are overridden in nonblock_connect
   private def wait_writable(msg = "write timed out", timeout = @write_timeout)
-    # thread_log "#{Fiber.current.name!} waiting to write in file #{self}"
+    thread_log "#{Fiber.current.name!} waiting to write in file #{self}"
     @mutex.synchronize do
       writers = (@writers ||= Deque(Fiber).new)
       writers << Fiber.current

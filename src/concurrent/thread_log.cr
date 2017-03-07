@@ -8,13 +8,14 @@ module ThreadLog
   @@thread_colors = {} of Scheduler => Symbol
 
   def self.tlog(msg, *args)
-    begin
-      sched = Scheduler.current
+    sched = Thread.current.scheduler?
+    if sched
       msg = "#{sched.object_id} - #{msg}"
       thread_color = ThreadLog.color_for(sched)
       LibC.printf "#{msg.colorize(thread_color)}\n", *args
-    rescue
-      LibC.printf "Failure logging. Maybe current thread's scheduler isn't initialized yet?\n", *args
+    else
+      # No current scheduler, this is the EventLoop thread
+      LibC.printf "EventLoop - #{msg}\n", *args
     end
   end
 

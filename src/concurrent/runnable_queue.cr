@@ -11,18 +11,21 @@ class RunnableQueue
 
   def enqueue(fiber : Fiber)
     @runnables_lock.synchronize do
+      # FIXME: this can trigger a GC collect
       @runnables << fiber
     end
   end
 
   def enqueue(fibers : Enumerable(Fiber))
     @runnables_lock.synchronize do
+      # FIXME: this can trigger a GC collect
       @runnables.concat fibers
     end
   end
 
   def enqueue_stolen(fibers : Enumerable(Fiber))
     @runnables_lock.synchronize do
+      # FIXME: this can trigger a GC collect
       @runnables.concat fibers
     end
   end
@@ -30,8 +33,9 @@ class RunnableQueue
   def steal
     @runnables_lock.synchronize do
       steal_size = @runnables.size == 1 ? 1 : @runnables.size / 2
+      # FIXME: this can trigger a GC collect
       steal_size.times.map do
-        @runnables.pop
+        @runnables.shift
       end.to_a
     end
   end
