@@ -5,11 +5,9 @@ require "http/server"
 
 private class TestServer < TCPServer
   def self.open(host, port, read_time = 0)
-    switch = FiberSwitch.new
     server = new(host, port)
     begin
-      spawn do
-        switch.defer_yield 1
+      spawn(name: "TestServer") do
         io = server.accept
         sleep read_time
         response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type" => "text/plain"}, body: "OK")
@@ -17,7 +15,6 @@ private class TestServer < TCPServer
         io.flush
       end
 
-      switch.wait 1
       yield server
     ensure
       server.close
