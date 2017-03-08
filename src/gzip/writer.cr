@@ -1,10 +1,10 @@
 # A write-only `IO` object to compress data in the gzip format.
 #
-# Instances of this class wrap another IO object. When you write to this
-# instance, it compresses the data and writes it to the underlying IO.
+# Instances of this class wrap another `IO` object. When you write to this
+# instance, it compresses the data and writes it to the underlying `IO`.
 #
-# **Note**: unless created with a block, `close` must be invoked after all
-# data has been written to a Gzip::Writer instance.
+# NOTE: unless created with a block, `close` must be invoked after all
+# data has been written to a `Gzip::Writer` instance.
 #
 # ### Example: compress a file
 #
@@ -15,7 +15,7 @@
 #
 # File.open("./file.txt", "r") do |input_file|
 #   File.open("./file.gzip", "w") do |output_file|
-#     Gzip::Writre.open(output_file) do |gzip|
+#     Gzip::Writer.open(output_file) do |gzip|
 #       IO.copy(input_file, gzip)
 #     end
 #   end
