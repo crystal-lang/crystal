@@ -349,6 +349,10 @@ module Crystal
       end
 
       unless node.external.dead?
+        # Mark as dead so we don't generate it twice
+        # (can happen with well known functions like __crystal_raise)
+        node.external.dead = true
+
         if node.external.used?
           codegen_fun node.real_name, node.external, @program, is_exported_fun: true
         else
