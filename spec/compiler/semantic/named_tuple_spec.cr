@@ -285,4 +285,13 @@ describe "Semantic: named tuples" do
       a[0]
       )) { named_tuple_of({"x": types["Foo"].virtual_type!, "y": types["Foo"].virtual_type!}) }
   end
+
+  it "does not compile to_h of empty tuples" do
+    # TODO change the location of this spec upon #2391
+    assert_error %(
+      require "prelude"
+      NamedTuple.new.to_h
+      ),
+      "Can't convert an empty NamedTuple to a Hash"
+  end
 end
