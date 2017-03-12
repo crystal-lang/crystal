@@ -212,10 +212,7 @@ module Crystal
           needs_two_lines = false
         else
           next_exp = node.expressions[i + 1]
-          needs_two_lines = !last?(i, node.expressions) && !exp.is_a?(Attribute) &&
-                            !exp.is_a?(MacroIf) &&
-                            (!(exp.is_a?(Def) && exp.abstract? && next_exp.is_a?(Def) && next_exp.abstract?)) &&
-                            (needs_two_lines?(exp) || needs_two_lines?(next_exp))
+          needs_two_lines = needs_two_lines?(exp, next_exp)
         end
 
         @assign_length = max_length
@@ -336,10 +333,30 @@ module Crystal
       {last, max_length}
     end
 
+    def needs_two_lines?(node, next_node)
+      return false if node.is_a?(Attribute) || node.is_a?(MacroIf)
+      return false if abstract_def?(node) && abstract_def?(next_node)
+
+      needs_two_lines?(node) || needs_two_lines?(next_node)
+    end
+
+    def abstract_def?(node)
+      case node
+      when Def
+        node.abstract?
+      when VisibilityModifier
+        abstract_def? node.exp
+      else
+        false
+      end
+    end
+
     def needs_two_lines?(node)
       case node
       when Def, ClassDef, ModuleDef, LibDef, CStructOrUnionDef, Macro
         true
+      when VisibilityModifier
+        needs_two_lines? node.exp
       else
         false
       end

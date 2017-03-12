@@ -539,6 +539,7 @@ describe Crystal::Formatter do
 
   assert_format "def foo\na = bar do\n1\nend\nend", "def foo\n  a = bar do\n    1\n  end\nend"
   assert_format "def foo\nend\ndef bar\nend", "def foo\nend\n\ndef bar\nend"
+  assert_format "def foo\nend\nprivate def bar\nend", "def foo\nend\n\nprivate def bar\nend"
   assert_format "a = 1\ndef bar\nend", "a = 1\n\ndef bar\nend"
   assert_format "def foo\nend\n\n\n\ndef bar\nend", "def foo\nend\n\ndef bar\nend"
   assert_format "def foo\nend;def bar\nend", "def foo\nend\n\ndef bar\nend"
