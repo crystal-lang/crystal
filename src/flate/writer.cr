@@ -3,7 +3,7 @@
 # Instances of this class wrap another IO object. When you write to this
 # instance, it compresses the data and writes it to the underlying IO.
 #
-# **Note**: unless created with a block, `close` must be invoked after all
+# NOTE: unless created with a block, `close` must be invoked after all
 # data has been written to a Flate::Writer instance.
 class Flate::Writer
   include IO
