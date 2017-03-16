@@ -390,7 +390,7 @@ class File < IO::FileDescriptor
   # Creates a new link (also known as a hard link) at *new_path* to an existing file
   # given by *old_path*.
   def self.link(old_path, new_path)
-    ret = LibC.symlink(old_path.check_no_null_byte, new_path.check_no_null_byte)
+    ret = LibC.link(old_path.check_no_null_byte, new_path.check_no_null_byte)
     raise Errno.new("Error creating link from #{old_path} to #{new_path}") if ret != 0
     ret
   end
