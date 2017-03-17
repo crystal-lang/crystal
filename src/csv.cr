@@ -386,7 +386,7 @@ class CSV
     # Raises `IndexError` if any column doesn't exist
     # The behavior of returning a tuple is similar to `Hash#values_at` 
     def values_at(*columns : Int)
-      columns.map { |column| self.[](column) }
+      columns.map { |column| self[column] }
     end
 
     # Returns a tuple of this row's values corresponding to the given *headers*
@@ -394,7 +394,7 @@ class CSV
     # Raises `CSV::Error` if headers were not requested
     # The behavior of returning a tuple is similar to `Hash#values_at` 
     def values_at(*headers : String)
-      headers.map { |header| self.[](header) }
+      headers.map { |header| self[header] }
     end
 
     private def maybe_strip(value)
