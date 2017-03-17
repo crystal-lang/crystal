@@ -116,7 +116,7 @@ class Crystal::Program
     # that way if it's already there from a previous compilation, and no file
     # that this program uses changes, we can simply avoid recompiling it again
     #
-    # Note: it could happen that a macro run program runs macros that could
+    # NOTE: it could happen that a macro run program runs macros that could
     # change the program behaviour even if files don't change, but this is
     # discouraged (and we should strongly document it) because it prevents
     # incremental compiles.
