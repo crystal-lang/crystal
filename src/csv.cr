@@ -384,7 +384,7 @@ class CSV
     # Returns a tuple of this row's values at given indices
     # A negative index counts from the end.
     # Raises `IndexError` if any column doesn't exist
-    # The behavior of returning a tuple is similar to `Hash#values_at` 
+    # The behavior of returning a tuple is similar to `Hash#values_at`
     def values_at(*columns : Int)
       columns.map { |column| self[column] }
     end
@@ -392,7 +392,7 @@ class CSV
     # Returns a tuple of this row's values corresponding to the given *headers*
     # Raises `KeyError` if any header doesn't exist.
     # Raises `CSV::Error` if headers were not requested
-    # The behavior of returning a tuple is similar to `Hash#values_at` 
+    # The behavior of returning a tuple is similar to `Hash#values_at`
     def values_at(*headers : String)
       headers.map { |header| self[header] }
     end
