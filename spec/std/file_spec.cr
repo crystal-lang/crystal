@@ -972,4 +972,57 @@ describe "File" do
       end
     end
   end
+
+  describe "touch" do
+    it "creates file if it doesn't exists" do
+      filename = "#{__DIR__}/data/temp_touch.txt"
+      begin
+        File.exists?(filename).should be_false
+        File.touch(filename)
+        File.exists?(filename).should be_true
+      ensure
+        File.delete filename
+      end
+    end
+
+    it "sets file times to given time" do
+      filename = "#{__DIR__}/data/temp_touch.txt"
+      time = Time.new(2000, 3, 4)
+      begin
+        File.touch(filename, time)
+
+        stat = File.stat(filename)
+        stat.atime.should eq(time)
+        stat.mtime.should eq(time)
+      ensure
+        File.delete filename
+      end
+    end
+
+    it "sets file times to Time.now if no time argument given" do
+      filename = "#{__DIR__}/data/temp_touch.txt"
+      time = Time.now
+      begin
+        File.touch(filename)
+
+        stat = File.stat(filename)
+        stat.atime.should be_close(time, 1.second)
+        stat.mtime.should be_close(time, 1.second)
+      ensure
+        File.delete filename
+      end
+    end
+
+    it "raises if path contains non-existent directory" do
+      expect_raises Errno, "Error opening file" do
+        File.touch("/tmp/non/existent/directory/test.tmp")
+      end
+    end
+
+    it "raises if file cannot be accessed" do
+      expect_raises Errno, "Operation not permitted" do
+        File.touch("/bin/ls")
+      end
+    end
+  end
 end

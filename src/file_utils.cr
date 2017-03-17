@@ -67,6 +67,34 @@ module FileUtils
     end
   end
 
+  # Attempts to set the access and modification times of the file named
+  # in the *path* parameter to the value given in *time*.
+  #
+  # If the file does not exist, it will be created.
+  #
+  # ```
+  # FileUtils.touch("afile.cr")
+  # ```
+  #
+  # NOTE: Alias of `File.touch`
+  def touch(path : String, time : Time = Time.now)
+    File.touch(path, time)
+  end
+
+  # Attempts to set the access and modification times of each file given
+  # in the *paths* parameter to the value given in *time*.
+  #
+  # If the file does not exist, it will be created.
+  #
+  # ```
+  # FileUtils.touch(["foo", "bar"])
+  # ```
+  def touch(paths : Enumerable(String), time : Time = Time.now)
+    paths.each do |path|
+      touch(path, time)
+    end
+  end
+
   # Copies the file *src_path* to the file or directory *dest*.
   # If *dest* is a directory, a file with the same basename as *src_path* is created in *dest*
   # Permission bits are copied too.
