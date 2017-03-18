@@ -128,4 +128,32 @@ describe CSV do
       break
     end
   end
+
+  it "returns a Tuple(String, String) for current row with indices" do
+    CSV.new("John,20\nPeter,30") do |csv|
+      csv.values_at(0, -1).should eq({"John", "20"})
+      break
+    end
+  end
+
+  it "returns a Tuple(String, String) for current row with headers" do
+    CSV.new("Name,Age\nJohn,20\nPeter,30", headers: true) do |csv|
+      csv.values_at("Name", "Age").should eq({"John", "20"})
+      break
+    end
+  end
+
+  it "returns a Tuple(String, String) for this row with indices" do
+    CSV.new("John,20\nPeter,30") do |csv|
+      csv.row.values_at(0, -1).should eq({"John", "20"})
+      break
+    end
+  end
+
+  it "returns a Tuple(String, String) for this row with headers" do
+    CSV.new("Name,Age\nJohn,20\nPeter,30", headers: true) do |csv|
+      csv.row.values_at("Name", "Age").should eq({"John", "20"})
+      break
+    end
+  end
 end
