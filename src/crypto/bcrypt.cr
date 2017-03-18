@@ -35,7 +35,7 @@ class Crypto::Bcrypt
   SALT_SIZE      = 16
 
   private BLOWFISH_ROUNDS = 16
-  private DIGEST_SIZE = 31
+  private DIGEST_SIZE     = 31
 
   # bcrypt IV: "OrpheanBeholderScryDoubt"
   private CIPHER_TEXT = UInt32.static_array(

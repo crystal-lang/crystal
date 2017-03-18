@@ -9,9 +9,9 @@ module Gzip
   BEST_COMPRESSION    = Flate::BEST_COMPRESSION
   DEFAULT_COMPRESSION = Flate::DEFAULT_COMPRESSION
 
-  private ID1 = 0x1f_u8
-  private ID2 = 0x8b_u8
-  private DEFLATE = 8_u8
+  private ID1     = 0x1f_u8
+  private ID2     = 0x8b_u8
+  private DEFLATE =    8_u8
 
   class Error < Exception
   end
