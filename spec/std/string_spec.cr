@@ -2240,6 +2240,11 @@ describe "String" do
 
     "barbar".insert(0, "foo").size.should eq(9)
     "ともだち".insert(0, "ねこ").size.should eq(6)
+
+    "foo".insert(0, 'a').ascii_only?.should be_true
+    "foo".insert(0, 'あ').ascii_only?.should be_false
+    "".insert(0, 'a').ascii_only?.should be_true
+    "".insert(0, 'あ').ascii_only?.should be_false
   end
 
   it "hexbytes" do

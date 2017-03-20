@@ -1257,7 +1257,7 @@ class String
     bytes, count = String.char_bytes_and_bytesize(other)
 
     new_bytesize = bytesize + count
-    new_size = ascii_only? ? new_bytesize : 0
+    new_size = (ascii_only? && other.ascii?) ? new_bytesize : 0
 
     insert_impl(byte_index, bytes.to_unsafe, count, new_bytesize, new_size)
   end
