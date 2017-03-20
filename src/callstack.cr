@@ -131,15 +131,15 @@ struct CallStack
     if frame
       offset, sname = frame
       if repeated_frame.count == 0
-        LibC.printf "[%ld] %s +%ld\n", repeated_frame.ip, sname, offset
+        LibC.dprintf 2, "[%ld] %s +%ld\n", repeated_frame.ip, sname, offset
       else
-        LibC.printf "[%ld] %s +%ld (%ld times)\n", repeated_frame.ip, sname, offset, repeated_frame.count + 1
+        LibC.dprintf 2, "[%ld] %s +%ld (%ld times)\n", repeated_frame.ip, sname, offset, repeated_frame.count + 1
       end
     else
       if repeated_frame.count == 0
-        LibC.printf "[%ld] ???\n", repeated_frame.ip
+        LibC.dprintf 2, "[%ld] ???\n", repeated_frame.ip
       else
-        LibC.printf "[%ld] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
+        LibC.dprintf 2, "[%ld] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
       end
     end
   end
