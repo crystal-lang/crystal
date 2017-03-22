@@ -163,6 +163,10 @@ struct Time
     new(UnixEpoch + milliseconds.to_i64 * Span::TicksPerMillisecond, Kind::Utc)
   end
 
+  def clone
+    dup
+  end
+
   def +(other : Span)
     add_ticks other.ticks
   end
