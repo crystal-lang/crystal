@@ -373,6 +373,7 @@ module Crystal
       with_context(Context.new(context.fun, context.type)) do
         file_module = @program.file_module(node.filename)
         if vars = file_module.vars?
+          set_current_debug_location Location.new(node.filename, 1, 1)
           alloca_vars vars, file_module
 
           emit_vars_debug_info(vars) if @debug.variables?
