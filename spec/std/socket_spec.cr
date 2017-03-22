@@ -542,6 +542,12 @@ describe TCPSocket do
       TCPSocket.new("localhostttttt", 12345)
     end
   end
+
+  it "fails (rather than segfault on darwin) when host doesn't exist and port is 0" do
+    expect_raises(Socket::Error, /No address found for localhostttttt:0/) do
+      TCPSocket.new("localhostttttt", 0)
+    end
+  end
 end
 
 describe UDPSocket do
