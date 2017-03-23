@@ -19,6 +19,9 @@ describe Crystal::Doc::Generator do
       assert_matches_pattern "https://github.com/foo/bar.cr", user: "foo", repo: "bar.cr"
       assert_matches_pattern "https://github.com/foo/bar.cr.git", user: "foo", repo: "bar.cr"
 
+      assert_matches_pattern "origin\thttps://github.com/foo/bar.cr.git (fetch)\n", user: "foo", repo: "bar.cr"
+      assert_matches_pattern "origin\tgit@github.com/foo/bar.cr.git (fetch)\n", user: "foo", repo: "bar.cr"
+
       assert_matches_pattern "https://github.com/fOO-Bar/w00den-baRK.ab.cd", user: "fOO-Bar", repo: "w00den-baRK.ab.cd"
       assert_matches_pattern "https://github.com/fOO-Bar/w00den-baRK.ab.cd.git", user: "fOO-Bar", repo: "w00den-baRK.ab.cd"
       assert_matches_pattern "https://github.com/foo_bar/_baz-buzz.cx", user: "foo_bar", repo: "_baz-buzz.cx"
@@ -33,6 +36,9 @@ describe Crystal::Doc::Generator do
       assert_matches_pattern "https://gitlab.com/foo/bar.git", user: "foo", repo: "bar"
       assert_matches_pattern "https://gitlab.com/foo/bar.cr", user: "foo", repo: "bar.cr"
       assert_matches_pattern "https://gitlab.com/foo/bar.cr.git", user: "foo", repo: "bar.cr"
+
+      assert_matches_pattern "origin\thttps://gitlab.com/foo/bar.cr.git (fetch)\n", user: "foo", repo: "bar.cr"
+      assert_matches_pattern "origin\tgit@gitlab.com/foo/bar.cr.git (fetch)\n", user: "foo", repo: "bar.cr"
 
       assert_matches_pattern "https://gitlab.com/fOO-Bar/w00den-baRK.ab.cd", user: "fOO-Bar", repo: "w00den-baRK.ab.cd"
       assert_matches_pattern "https://gitlab.com/fOO-Bar/w00den-baRK.ab.cd.git", user: "fOO-Bar", repo: "w00den-baRK.ab.cd"
