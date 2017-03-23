@@ -133,4 +133,7 @@ struct Struct
   def to_s(io)
     inspect(io)
   end
+
+  # See `def_clone`.
+  def_clone
 end
