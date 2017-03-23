@@ -3892,6 +3892,7 @@ module Crystal
             end
           end
           end_location = token_end_location
+          @wants_regex = false
           next_token_skip_space
         end
 

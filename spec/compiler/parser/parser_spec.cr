@@ -836,6 +836,9 @@ describe "Parser" do
   it_parses "begin\n/ /\nend", Expressions.new([regex(" ")] of ASTNode)
   it_parses "/\\//", regex("/")
   it_parses "%r(/)", regex("/")
+  it_parses "a()/3", Call.new("a".call, "/", 3.int32)
+  it_parses "a() /3", Call.new("a".call, "/", 3.int32)
+  it_parses "a.b() /3", Call.new(Call.new("a".call, "b"), "/", 3.int32)
 
   it_parses "1 =~ 2", Call.new(1.int32, "=~", 2.int32)
   it_parses "1.=~(2)", Call.new(1.int32, "=~", 2.int32)
