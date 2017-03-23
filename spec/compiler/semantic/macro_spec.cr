@@ -775,6 +775,22 @@ describe "Semantic: macro" do
       )) { int32.metaclass }
   end
 
+  it "finds generic type argument of included module with self" do
+    assert_type(%(
+      module Bar(T)
+        def t
+          {{ T }}
+        end
+      end
+
+      class Foo(U)
+        include Bar(self)
+      end
+
+      Foo(Int32).new.t
+      )) { generic_class("Foo", int32).metaclass }
+  end
+
   it "finds free type vars" do
     assert_type(%(
       module Foo(T)
