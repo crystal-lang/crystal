@@ -298,7 +298,7 @@ class Crystal::Doc::Generator
       GIT_REMOTE_PATTERNS.each_key.compact_map(&.match(line)).first?
     end.to_a
 
-    @is_crystal_repo = git_matches.any? { |gr| gr.string =~ %r{github\.com[/:]crystal-lang/crystal} }
+    @is_crystal_repo = git_matches.any? { |gr| gr.string =~ %r{github\.com[/:]crystal-lang/crystal(?:\.git)?\s} }
 
     origin = git_matches.find(&.string.starts_with?("origin")) || git_matches.first?
     return unless origin
