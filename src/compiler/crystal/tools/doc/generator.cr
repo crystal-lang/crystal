@@ -18,11 +18,11 @@ class Crystal::Doc::Generator
   FLAGS = FLAG_COLORS.keys
 
   GIT_REMOTE_PATTERNS = {
-    /github\.com(?:\:|\/)(?<user>(?:\w|-|_)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:\.git)?$/ => {
+    /github\.com(?:\:|\/)(?<user>(?:\w|-|_)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:\.git)?\s/ => {
       repository: "https://github.com/%{user}/%{repo}/blob/%{rev}",
       repo_name:  "github.com/%{user}/%{repo}",
     },
-    /gitlab\.com(?:\:|\/)(?<user>(?:\w|-|_|\.)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:\.git)?$/ => {
+    /gitlab\.com(?:\:|\/)(?<user>(?:\w|-|_|\.)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:\.git)?\s/ => {
       repository: "https://gitlab.com/%{user}/%{repo}/blob/%{rev}",
       repo_name:  "gitlab.com/%{user}/%{repo}",
     },
