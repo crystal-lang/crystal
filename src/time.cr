@@ -164,7 +164,7 @@ struct Time
   end
 
   def clone
-    dup
+    self
   end
 
   def +(other : Span)
