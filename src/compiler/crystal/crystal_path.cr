@@ -20,8 +20,13 @@ module Crystal
       triple = target_triple.split('-')
       triple.delete(triple[1]) if triple.size == 4 # skip vendor
 
-      if %w(i386 i486 i586).includes?(triple[0])
+      case triple[0]
+      when "i386", "i486", "i586"
         triple[0] = "i686"
+      when .starts_with?("armv8")
+        triple[0] = "aarch64"
+      when .starts_with?("arm")
+        triple[0] = "arm"
       end
 
       target = if triple.any?(&.includes?("macosx")) || triple.any?(&.includes?("darwin"))
