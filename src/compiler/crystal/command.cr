@@ -53,7 +53,7 @@ class Crystal::Command
 
   def initialize(@options : Array(String))
     @color = true
-    @stats = @time = false
+    @progress_tracker = ProgressTracker.new
   end
 
   def run
@@ -177,7 +177,7 @@ class Crystal::Command
 
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
-    Crystal.timing("Tool (hierarchy)", @stats, delay: true) do
+    @progress_tracker.stage("Tool (hierarchy)") do
       Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
     end
   end
@@ -197,7 +197,7 @@ class Crystal::Command
 
   private def types
     config, result = compile_no_codegen "tool types"
-    Crystal.timing("Tool (types)", @stats, delay: true) do
+    @progress_tracker.stage("Tool (types)") do
       Crystal.print_types result.node
     end
   end
@@ -212,18 +212,23 @@ class Crystal::Command
   end
 
   private def execute(output_filename, run_args)
-    stats = @stats || !@time
-    status = Crystal.timing("Execute", @stats || @time, delay: true, display_memory: stats, padding_size: stats ? 34 : 0) do
+    time? = @time && !@progress_tracker.stats?
+    status, elapsed_time = @progress_tracker.stage("Execute") do
       begin
+        start_time = Time.now
         Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
           # Ignore the signal so we don't exit the running process
           # (the running process can still handle this signal)
           Signal::INT.ignore # do
         end
-        $?
+        {$?, Time.now - start_time}
       ensure
         File.delete(output_filename) rescue nil
       end
+    end
+
+    if time?
+      puts "Execute: #{elapsed_time}"
     end
 
     if status.normal_exit?
@@ -268,6 +273,8 @@ class Crystal::Command
                               hierarchy = false, cursor_command = false,
                               single_file = false)
     compiler = Compiler.new
+    compiler.progress_tracker = @progress_tracker
+    @progress_tracker.progress = true
     link_flags = [] of String
     opt_filenames = nil
     opt_arguments = nil
@@ -370,8 +377,11 @@ class Crystal::Command
       end
 
       opts.on("-s", "--stats", "Enable statistics output") do
-        @stats = true
-        compiler.stats = true
+        @progress_tracker.stats = true
+      end
+
+      opts.on("--no-progress", "Disable progress output") do
+        @progress_tracker.progress = false
       end
 
       opts.on("-t", "--time", "Enable execution time output") do
@@ -451,6 +461,7 @@ class Crystal::Command
   end
 
   private def setup_simple_compiler_options(compiler, opts)
+    compiler.progress_tracker.progress = true
     opts.on("-d", "--debug", "Add full symbolic debug info") do
       compiler.debug = Crystal::Debug::All
     end
@@ -467,8 +478,10 @@ class Crystal::Command
       compiler.release = true
     end
     opts.on("-s", "--stats", "Enable statistics output") do
-      @stats = true
-      compiler.stats = true
+      compiler.progress_tracker.stats = true
+    end
+    opts.on("--no-progress", "Disable progress output") do
+      compiler.progress_tracker.progress = false
     end
     opts.on("-t", "--time", "Enable execution time output") do
       @time = true
