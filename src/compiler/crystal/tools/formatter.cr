@@ -1477,10 +1477,8 @@ module Crystal
             comma_written = true
           end
           write_token :"**"
-          skip_space
-          check :IDENT
-          write double_splat
-          next_token_skip_space
+          double_splat.accept self
+          skip_space_or_newline
           if block_arg
             check :","
             write ","
