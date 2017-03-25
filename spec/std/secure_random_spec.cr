@@ -68,6 +68,13 @@ describe SecureRandom do
       bytes = SecureRandom.random_bytes(10000)
       bytes[9990, 10].should_not eq(Bytes.new(10))
     end
+
+    it "fills given buffer with random bytes" do
+      bytes = Bytes.new(2000)
+      SecureRandom.random_bytes(bytes)
+      bytes.size.should eq 2000
+      bytes[1990, 10].should_not eq(Bytes.new(10))
+    end
   end
 
   describe "uuid" do
