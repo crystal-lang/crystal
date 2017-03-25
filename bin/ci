@@ -160,7 +160,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
   on_linux docker run \
-    --rm \
+    --rm -t \
     -u $(id -u) \
     -v $(pwd):/mnt \
     -w /mnt \
