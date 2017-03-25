@@ -286,9 +286,9 @@ struct Time::Span
   def self.zero
     new(0)
   end
-              
+
   def zero?
-    self == typeof(self).zero
+    @ticks == 0
   end
 end
 

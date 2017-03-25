@@ -225,7 +225,7 @@ struct Complex
   end
 
   def zero? : Bool
-    self == typeof(self).zero
+    @real == 0 && @imag == 0
   end
 end
 

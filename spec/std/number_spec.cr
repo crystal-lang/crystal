@@ -165,12 +165,10 @@ describe "Number" do
     ary[1].should eq(2)
     ary[2].should eq(300.to_u8)
   end
-  
   it "test zero?" do
     0.zero?.should eq true
     0.0.zero?.should eq true
     0f32.zero?.should eq true
-    
     1.zero?.should eq false
     1.0.zero?.should eq false
     1f32.zero?.should eq false
