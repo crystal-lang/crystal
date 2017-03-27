@@ -93,10 +93,6 @@ describe "colorize" do
     end
   end
 
-  it "inspects" do
-    "hello".colorize(:red).inspect.should eq("\e[31m\"hello\"\e[0m")
-  end
-
   it "colorizes io with method" do
     io = IO::Memory.new
     with_color.red.surround(io) do
