@@ -1,6 +1,10 @@
+require "./addrinfo/blocking"
+
 class Socket
   # Domain name resolver.
   struct Addrinfo
+    alias Service = String | Int32
+
     getter family : Family
     getter type : Type
     getter protocol : Protocol
@@ -28,7 +32,7 @@ class Socket
     def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
       addrinfos = [] of Addrinfo
 
-      getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
+      resolver.getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
         loop do
           addrinfos << addrinfo.not_nil!
           unless addrinfo = addrinfo.next?
@@ -52,7 +56,7 @@ class Socket
     # The iteration will be stopped once the block returns something that isn't
     # an `Exception` (e.g. a `Socket` or `nil`).
     def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil)
-      getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
+      resolver.getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
         error = nil
 
         loop do
@@ -72,33 +76,6 @@ class Socket
             end
           end
         end
-      end
-    end
-
-    private def self.getaddrinfo(domain, service, family, type, protocol, timeout)
-      hints = LibC::Addrinfo.new
-      hints.ai_family = (family || Family::UNSPEC).to_i32
-      hints.ai_socktype = type
-      hints.ai_protocol = protocol
-      hints.ai_flags = 0
-
-      if service.is_a?(Int)
-        hints.ai_flags |= LibC::AI_NUMERICSERV
-      end
-
-      case ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
-      when 0
-        # success
-      when LibC::EAI_NONAME
-        raise Socket::Error.new("No address found for #{domain}:#{service} over #{protocol}")
-      else
-        raise Socket::Error.new("getaddrinfo: #{String.new(LibC.gai_strerror(ret))}")
-      end
-
-      begin
-        yield new(ptr)
-      ensure
-        LibC.freeaddrinfo(ptr)
       end
     end
 
