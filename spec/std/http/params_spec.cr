@@ -49,6 +49,18 @@ module HTTP
       end
     end
 
+    describe ".encode" do
+      it "builds from hash" do
+        encoded = Params.encode({"foo" => "bar", "baz" => "quux"})
+        encoded.should eq("foo=bar&baz=quux")
+      end
+
+      it "builds from named tuple" do
+        encoded = Params.encode({foo: "bar", baz: "quux"})
+        encoded.should eq("foo=bar&baz=quux")
+      end
+    end
+
     describe "#to_s" do
       it "serializes params to http form" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
