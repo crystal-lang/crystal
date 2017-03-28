@@ -355,7 +355,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.raise "method marked as Primitive must have an empty body"
     end
 
-    node.body = Primitive.new(value)
+    primitive = Primitive.new(value)
+    primitive.location = node.location
+
+    node.body = primitive
   end
 
   def visit(node : Include)
