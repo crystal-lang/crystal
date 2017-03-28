@@ -128,7 +128,7 @@ module Crystal
     # Raises `Crystal::Exception` if there's an error in the
     # source code.
     #
-    # Raies `InvalidByteSequenceError` if the source code is not
+    # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
     def compile(source : Source | Array(Source), output_filename : String) : Result
       source = [source] unless source.is_a?(Array)
@@ -149,7 +149,7 @@ module Crystal
     # Raises `Crystal::Exception` if there's an error in the
     # source code.
     #
-    # Raies `InvalidByteSequenceError` if the source code is not
+    # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
     def top_level_semantic(source : Source | Array(Source)) : Result
       source = [source] unless source.is_a?(Array)
