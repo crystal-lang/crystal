@@ -3,7 +3,7 @@
 # Licensed under the BSD 3-clause
 
 # :nodoc:
-class Thread(T, R)
+class Thread
   # :nodoc:
   class Queue(T)
     class Error < Exception; end
