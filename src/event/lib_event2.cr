@@ -11,6 +11,7 @@ require "c/netdb"
 @[Link("event")]
 {% end %}
 lib LibEvent2
+  alias Char = LibC::Char
   alias Int = LibC::Int
 
   {% if flag?(:windows) %}
@@ -52,4 +53,35 @@ lib LibEvent2
   fun event_free(event : Event)
   fun event_add(event : Event, timeout : LibC::Timeval*) : Int
   fun event_del(event : Event) : Int
+
+  struct EvutilAddrinfo
+    ai_flags : Int
+    ai_family : Int
+    ai_socktype : Int
+    ai_protocol : Int
+    ai_addrlen : LibC::SizeT
+    ai_canonname : Char*
+    ai_addr : LibC::Sockaddr*
+    ai_next : EvutilAddrinfo*
+  end
+
+  # EVUTIL_AI_PASSIVE     = 0
+  # EVUTIL_AI_CANONNAME   = 0
+  # EVUTIL_AI_NUMERICHOST = 0
+  # EVUTIL_AI_NUMERICSERV = 0
+  # EVUTIL_AI_V4MAPPED    = 0
+  # EVUTIL_AI_ALL         = 0
+  # EVUTIL_AI_ADDRCONFIG  = 0
+
+  type EvdnsBase = Void*
+  type EvdnsGetaddrinfoRequest = Void*
+
+  alias EvdnsGetaddrinfoCallback = (Int, EvutilAddrinfo*, Void*) ->
+
+  fun evdns_base_new(event_base : EventBase, initialize : Int) : EvdnsBase
+  fun evdns_base_free(base : EvdnsBase, fail_requests : Int)
+  fun evdns_getaddrinfo(dns_base : EvdnsBase*, nodename : Char*, servname : Char*, hints_in : EvutilAddrinfo*, cb : EvdnsGetaddrinfoCallback*, arg : Void*) : EvdnsGetaddrinfoRequest
+  fun evdns_getaddrinfo_cancel(req : EvdnsGetaddrinfoRequest) : Void
+  fun evutil_freeaddrinfo(ai : EvutilAddrinfo*) : Void
+  fun evutil_gai_strerror(err : Int) : Char*
 end

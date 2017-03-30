@@ -79,5 +79,58 @@ module Event
     def loop_break
       LibEvent2.event_base_loopbreak(@base)
     end
+
+    def to_unsafe
+      @base
+    end
+  end
+
+  # :nodoc:
+  class DnsBase
+    def initialize(base : Base)
+      @dns_base = LibEvent2.evdns_base_new(base, 1)
+    end
+
+    def finalize
+      LibEvent2.evdns_base_free(@dns_base)
+    end
+
+    def getaddrinfo(domain, service, hints, timeout = nil)
+      addrinfo = error = nil
+
+      request = LibEvent2.evdns_getaddrinfo(domain, service, hints, ->(result, addr, data) {
+        if result == 0
+          addrinfo = addr
+        else
+          error = errcode
+        end
+        Box(Fiber).unbox(data).resume
+      }, Box.box(Fiber.current))
+
+      if request
+        # TODO: consider configuring DNS timeout globally:
+        # (evdns_base_set_option("timeout", "5"))
+        if timeout
+          spawn do
+            sleep timeout
+            LibEvent2.evdns_getaddrinfo_cancel(request)
+          end
+        end
+
+        Fiber.yield
+      end
+
+      if addrinfo
+        yield addrinfo
+      elsif error == LibEvent2::EVUTIL_EAI_CANCEL
+        raise IO::Timeout.new("Failed to resolve #{domain} in #{timeout} seconds")
+      else
+        raise Socket::Error.new("evdns_getaddrinfo: #{String.new(LibEvent2.evutil_gai_strerror(error))}")
+      end
+
+      # TODO
+    ensure
+      LibEvent2.evutil_freeaddrinfo(addrinfo) if addrinfo
+    end
   end
 end
