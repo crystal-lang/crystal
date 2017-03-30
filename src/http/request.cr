@@ -130,7 +130,7 @@ class HTTP::Request
     host = @headers["Host"]?
     return unless host
     index = host.index(":")
-    index ? host[0...index] : host
+    index ? host[0..index - 1] : host
   end
 
   # Return request host with port from headers.

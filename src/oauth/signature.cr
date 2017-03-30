@@ -91,7 +91,7 @@ struct OAuth::Signature
   private def host_and_port(request, tls)
     host_header = request.headers["Host"]
     if colon_index = host_header.index ':'
-      host = host_header[0...colon_index]
+      host = host_header[0..colon_index - 1]
       port = host_header[colon_index + 1..-1].to_i
       {host, port}
     else

@@ -91,7 +91,7 @@ end
 struct Tuple
   def to_json(json : JSON::Builder)
     json.array do
-      {% for i in 0...T.size %}
+      {% for i in 0..T.size - 1 %}
         self[{{i}}].to_json(json)
       {% end %}
     end

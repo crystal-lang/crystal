@@ -124,13 +124,13 @@ struct Proc
     {% begin %}
       {% remaining = (T.size - U.size) %}
       ->(
-          {% for i in 0...remaining %}
+          {% for i in 0..remaining - 1 %}
             arg{{i}} : {{T[i + U.size]}},
           {% end %}
         ) {
         call(
           *args,
-          {% for i in 0...remaining %}
+          {% for i in 0..remaining - 1 %}
             arg{{i}},
           {% end %}
         )

@@ -248,7 +248,7 @@ module Crystal
       # If there are arguments past the splat index and no named args, there's no match,
       # unless all args past it have default values
       if splat_index && my_args_size > splat_index + 1 && !named_args
-        unless (splat_index + 1...args.size).all? { |i| args[i].default_value }
+        unless (splat_index + 1..args.size - 1).all? { |i| args[i].default_value }
           return false
         end
       end

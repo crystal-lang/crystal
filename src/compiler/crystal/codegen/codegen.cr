@@ -532,7 +532,7 @@ module Crystal
 
       if proc_count > 1
         if proc_name
-          fun_literal_name = "#{fun_literal_name[0...5]}#{proc_count}#{fun_literal_name[5..-1]}"
+          fun_literal_name = "#{fun_literal_name[0..4]}#{proc_count}#{fun_literal_name[5..-1]}"
         else
           fun_literal_name = "#{fun_literal_name}#{proc_count}"
         end

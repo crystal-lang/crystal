@@ -155,7 +155,7 @@ module Crystal
       # If there are arguments past the splat index and no named args, there's no match,
       # unless all args past it have default values
       if splat_index && a_def.args.size > splat_index + 1 && !named_args
-        unless (splat_index + 1...a_def.args.size).all? { |i| a_def.args[i].default_value }
+        unless (splat_index + 1..a_def.args.size - 1).all? { |i| a_def.args[i].default_value }
           return nil
         end
       end

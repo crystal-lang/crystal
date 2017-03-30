@@ -201,7 +201,7 @@ struct String::Formatter(A)
     arg = next_arg unless arg_specified
 
     if precision = flags.precision
-      arg = arg.to_s[0...precision]
+      arg = arg.to_s[0..precision - 1]
     end
 
     pad arg.to_s.size, flags if flags.left_padding?

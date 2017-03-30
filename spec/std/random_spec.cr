@@ -18,11 +18,11 @@ private class TestRNG(T)
   end
 end
 
-private RNG_DATA_8  = [234u8, 153u8, 0u8, 0u8, 127u8, 128u8, 255u8, 255u8]
+private RNG_DATA_8 = [234u8, 153u8, 0u8, 0u8, 127u8, 128u8, 255u8, 255u8]
 private RNG_DATA_32 = [31541451u32, 0u32, 1u32, 234u32, 342475672u32, 863u32, 0xffffffffu32, 50967465u32]
 private RNG_DATA_64 = [148763248732657823u64, 18446744073709551615u64, 0u64,
-                       32456325635673576u64, 2456245614625u64, 32452456246u64, 3956529762u64,
-                       9823674982364u64, 234253464546456u64, 14345435645646u64]
+  32456325635673576u64, 2456245614625u64, 32452456246u64, 3956529762u64,
+  9823674982364u64, 234253464546456u64, 14345435645646u64]
 
 describe "Random" do
   it "limited number" do
@@ -58,19 +58,10 @@ describe "Random" do
 
   it "does with inclusive range" do
     [1..1, 1..3, 0u8..255u8, -1..1, Int64::MIN..7i64,
-     -7i64..Int64::MAX, 0u64..0u64].each do |range|
+      -7i64..Int64::MAX, 0u64..0u64].each do |range|
       x = rand(range)
       x.should be >= range.begin
       x.should be <= range.end
-    end
-  end
-
-  it "does with exclusive range" do
-    [1...2, 1...4, 0u8...255u8, -1...1, Int64::MIN...7i64,
-     -7i64...Int64::MAX, -1i8...0i8].each do |range|
-      x = rand(range)
-      x.should be >= range.begin
-      x.should be < range.end
     end
   end
 
@@ -81,21 +72,9 @@ describe "Random" do
     x.should be <= 3.2
   end
 
-  it "does with exclusive range of floats" do
-    x = rand(1.8...3.3)
-    x.should be >= 1.8
-    x.should be < 3.3
-  end
-
   it "raises on invalid range" do
-    expect_raises ArgumentError, "Invalid range for rand: 1...1" do
-      rand(1...1)
-    end
     expect_raises ArgumentError, "Invalid range for rand: 1..0" do
       rand(1..0)
-    end
-    expect_raises ArgumentError, "Invalid range for rand: 1.0...1.0" do
-      rand(1.0...1.0)
     end
     expect_raises ArgumentError, "Invalid range for rand: 1.0..0.0" do
       rand(1.0..0.0)

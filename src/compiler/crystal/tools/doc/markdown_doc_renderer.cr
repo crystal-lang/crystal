@@ -59,12 +59,12 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       # Type#method(...)
       if match[1]?
         separator_index = (sharp_index || dot_index).not_nil!
-        type_name = match_text[0...separator_index]
+        type_name = match_text[0..separator_index - 1]
 
         paren_index = match_text.index('(')
 
         if paren_index
-          method_name = match_text[separator_index + 1...paren_index]
+          method_name = match_text[separator_index + 1..paren_index - 1]
           method_args = match_text[paren_index + 1..-2]
         else
           method_name = match_text[separator_index + 1..-1]
@@ -93,7 +93,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
         paren_index = match_text.index('(')
 
         if paren_index
-          method_name = match_text[1...paren_index]
+          method_name = match_text[1..paren_index - 1]
           method_args = match_text[paren_index + 1..-2]
         else
           method_name = match_text[1..-1]

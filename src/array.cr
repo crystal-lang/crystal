@@ -1046,7 +1046,7 @@ class Array(T)
     copy = self.dup
     pool = self.dup
 
-    indices = (0...size).to_a
+    indices = (0..size - 1).to_a
 
     yield pool_slice(pool, size, reuse)
 
@@ -1621,7 +1621,7 @@ class Array(T)
     return Array(Array(typeof(first.first))).new if empty?
 
     len = at(0).size
-    (1...@size).each do |i|
+    (1..@size - 1).each do |i|
       l = at(i).size
       raise IndexError.new if len != l
     end
@@ -1846,7 +1846,7 @@ class Array(T)
   end
 
   protected def self.insertion_sort!(a, n)
-    (1...n).each do |i|
+    (1..n - 1).each do |i|
       l = a + i
       v = l.value
       p = l - 1
@@ -1944,7 +1944,7 @@ class Array(T)
   end
 
   protected def self.insertion_sort!(a, n, comp)
-    (1...n).each do |i|
+    (1..n - 1).each do |i|
       l = a + i
       v = l.value
       p = l - 1
@@ -2079,7 +2079,7 @@ class Array(T)
       @n = array.size
       @copy = array.dup
       @pool = array.dup
-      @indices = (0...@size).to_a
+      @indices = (0..@size - 1).to_a
       @stop = @size > @n
       @i = @size - 1
       @first = true
@@ -2124,7 +2124,7 @@ class Array(T)
 
     def rewind
       @pool.replace(@copy)
-      @indices = (0...@size).to_a
+      @indices = (0..@size - 1).to_a
       @stop = @size > @n
       @i = @size - 1
       @first = true

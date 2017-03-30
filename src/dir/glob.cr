@@ -85,7 +85,7 @@ class Dir
           escaped = false
         end
       end
-      nested_path = nested_path[0...lastidx]
+      nested_path = nested_path[0..lastidx - 1]
 
       recursion_depth -= depth if recursion_depth != Int32::MAX
       dir = File.join(dir, nested_path)

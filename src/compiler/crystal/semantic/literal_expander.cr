@@ -520,9 +520,9 @@ module Crystal
     def select_action_name(name)
       case name
       when .ends_with? "!"
-        name[0...-1] + "_select_action!"
+        name[0..-2] + "_select_action!"
       when .ends_with? "?"
-        name[0...-1] + "_select_action?"
+        name[0..-2] + "_select_action?"
       else
         name + "_select_action"
       end

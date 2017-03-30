@@ -162,7 +162,7 @@ module Crystal
         unexpected_token
       end
 
-      targets = exps[0...assign_index].map { |exp| to_lhs(exp) }
+      targets = exps[0..assign_index - 1].map { |exp| to_lhs(exp) }
 
       assign = exps[assign_index]
       values = [] of ASTNode

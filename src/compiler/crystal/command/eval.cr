@@ -14,7 +14,7 @@ class Crystal::Command
     else
       double_dash_index = options.index("--")
       if double_dash_index
-        program_source = options[0...double_dash_index].join " "
+        program_source = options[0..double_dash_index - 1].join " "
         program_args = options[double_dash_index + 1..-1]
       else
         program_source = options.join " "

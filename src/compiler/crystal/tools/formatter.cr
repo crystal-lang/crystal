@@ -443,7 +443,7 @@ module Crystal
         if indent_difference > 0
           @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
         end
-        (heredoc_line...heredoc_end).each do |line|
+        (heredoc_line..heredoc_end - 1).each do |line|
           @no_rstrip_lines.add line
         end
       end
@@ -546,7 +546,7 @@ module Crystal
         if indent_difference > 0
           @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
         end
-        (heredoc_line...heredoc_end).each do |line|
+        (heredoc_line..heredoc_end - 1).each do |line|
           @no_rstrip_lines.add line
         end
       end
@@ -4276,7 +4276,7 @@ module Crystal
       @heredoc_fixes.each do |fix|
         fix.start_line.upto(fix.end_line) do |line_number|
           line = lines[line_number]
-          if (0...fix.difference).all? { |index| line[index]?.try &.ascii_whitespace? }
+          if (0..fix.difference - 1).all? { |index| line[index]?.try &.ascii_whitespace? }
             lines[line_number] = line[fix.difference..-1]
           end
         end
@@ -4333,7 +4333,7 @@ module Crystal
         middle = info.middle_column
       end
 
-      before = line[0...middle]
+      before = line[0..middle - 1]
       after = line[middle..-1]
       result = String.build do |str|
         str << before
@@ -4385,7 +4385,7 @@ module Crystal
     def align_comment(line, i, comment_column, max_column)
       return line if comment_column == max_column
 
-      source_line = line[0...comment_column]
+      source_line = line[0..comment_column - 1]
       comment_line = line[comment_column..-1]
       gap = max_column - comment_column
 

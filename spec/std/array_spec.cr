@@ -119,11 +119,11 @@ describe "Array" do
     end
 
     it "gets on exclusive range" do
-      [1, 2, 3, 4, 5, 6][1...4].should eq([2, 3, 4])
+      [1, 2, 3, 4, 5, 6][1..3].should eq([2, 3, 4])
     end
 
     it "gets on exclusive range with negative indices" do
-      [1, 2, 3, 4, 5, 6][-5...-2].should eq([2, 3, 4])
+      [1, 2, 3, 4, 5, 6][-5..-3].should eq([2, 3, 4])
     end
 
     it "gets on range with start higher than end" do
@@ -192,7 +192,7 @@ describe "Array" do
       a[0, 0].should eq(a)
     end
 
-    it "gets 0 ... 0 on empty array" do
+    it "gets 0 .. 0 on empty array" do
       a = [] of Int32
       a[0..0].should eq(a)
     end
@@ -273,7 +273,7 @@ describe "Array" do
       a.should eq([1, 2, 6, 5])
 
       a = [1, 2, 3, 4, 5]
-      a[1...1] = 6
+      a[1..0] = 6
       a.should eq([1, 6, 2, 3, 4, 5])
     end
 
