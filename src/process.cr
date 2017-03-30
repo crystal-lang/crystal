@@ -81,7 +81,7 @@ class Process
     pid = fork_internal do
       with self yield self
     end
-    Process.new pid
+    new pid
   end
 
   # Duplicates the current process.
@@ -89,7 +89,7 @@ class Process
   # and `nil` inside the new child process.
   def self.fork : self?
     if pid = fork_internal
-      Process.new pid
+      new pid
     else
       nil
     end
@@ -255,7 +255,7 @@ class Process
     fork_error.try &.close
   end
 
-  protected def initialize(@pid)
+  private def initialize(@pid)
     @waitpid_future = Event::SignalChildHandler.instance.waitpid(pid)
     @wait_count = 0
   end
