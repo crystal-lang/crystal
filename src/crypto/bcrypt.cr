@@ -1,4 +1,4 @@
-require "secure_random"
+require "securerandom"
 require "./subtle"
 
 # Pure Crystal implementation of the Bcrypt algorithm by Niels Provos and David

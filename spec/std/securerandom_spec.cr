@@ -1,5 +1,5 @@
 require "spec"
-require "secure_random"
+require "securerandom"
 
 describe SecureRandom do
   describe "base64" do
