@@ -1,3 +1,10 @@
+{% begin %}
+  lib LibCrypto
+    OPENSSL_110 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.1.0 libcrypto || printf %s false`.stringify != "false" }}
+    OPENSSL_102 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libcrypto || printf %s false`.stringify != "false" }}
+  end
+{% end %}
+
 @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs libcrypto || printf %s '-lcrypto'`")]
 lib LibCrypto
   alias Char = LibC::Char
@@ -72,9 +79,6 @@ lib LibCrypto
   fun evp_md4 = EVP_md4 : EVP_MD
   fun evp_md5 = EVP_md5 : EVP_MD
   fun evp_ripemd160 = EVP_ripemd160 : EVP_MD
-  {% if !flag?(:openbsd) %}
-  fun evp_sha = EVP_sha : EVP_MD
-  {% end %}
   fun evp_sha1 = EVP_sha1 : EVP_MD
   fun evp_sha224 = EVP_sha224 : EVP_MD
   fun evp_sha256 = EVP_sha256 : EVP_MD
@@ -159,8 +163,6 @@ lib LibCrypto
   fun rand_bytes = RAND_bytes(buf : Char*, num : Int) : Int
   fun err_get_error = ERR_get_error : ULong
   fun err_error_string = ERR_error_string(e : ULong, buf : Char*) : Char*
-  fun openssl_add_all_algorithms = OPENSSL_add_all_algorithms_noconf
-  fun err_load_crypto_strings = ERR_load_crypto_strings
 
   struct MD5Context
     a : UInt
@@ -237,50 +239,43 @@ lib LibCrypto
   fun x509_extension_create_by_nid = X509_EXTENSION_create_by_NID(ex : X509_EXTENSION, nid : Int, crit : Int, data : ASN1_STRING) : X509_EXTENSION
   fun x509v3_ext_nconf_nid = X509V3_EXT_nconf_nid(conf : Void*, ctx : Void*, ext_nid : Int, value : Char*) : X509_EXTENSION
   fun x509v3_ext_print = X509V3_EXT_print(out : Bio*, ext : X509_EXTENSION, flag : Int, indent : Int) : Int
-end
 
-{% if `(command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libcrypto && printf %s true) || printf %s false` == "true" %}
-lib LibCrypto
-  OPENSSL_102 = true
-end
-{% else %}
-lib LibCrypto
-  OPENSSL_102 = false
-end
-{% end %}
+  {% unless OPENSSL_110 %}
+    fun err_load_crypto_strings = ERR_load_crypto_strings
+    fun openssl_add_all_algorithms = OPENSSL_add_all_algorithms_noconf
+  {% end %}
 
-{% if LibCrypto::OPENSSL_102 %}
-lib LibCrypto
-  type X509VerifyParam = Void*
+  {% if OPENSSL_102 %}
+    type X509VerifyParam = Void*
 
-  @[Flags]
-  enum X509VerifyFlags : ULong
-    CB_ISSUER_CHECK      =      0x1
-    USE_CHECK_TIME       =      0x2
-    CRL_CHECK            =      0x4
-    CRL_CHECK_ALL        =      0x8
-    IGNORE_CRITICAL      =     0x10
-    X509_STRICT          =     0x20
-    ALLOW_PROXY_CERTS    =     0x40
-    POLICY_CHECK         =     0x80
-    EXPLICIT_POLICY      =    0x100
-    INHIBIT_ANY          =    0x200
-    INHIBIT_MAP          =    0x400
-    NOTIFY_POLICY        =    0x800
-    EXTENDED_CRL_SUPPORT =   0x1000
-    USE_DELTAS           =   0x2000
-    CHECK_SS_SIGNATURE   =   0x4000
-    TRUSTED_FIRST        =   0x8000
-    SUITEB_128_LOS_ONLY  =  0x10000
-    SUITEB_192_LOS       =  0x20000
-    SUITEB_128_LOS       =  0x30000
-    PARTIAL_CHAIN        =  0x80000
-    NO_ALT_CHAINS        = 0x100000
-  end
+    @[Flags]
+    enum X509VerifyFlags : ULong
+      CB_ISSUER_CHECK      =      0x1
+      USE_CHECK_TIME       =      0x2
+      CRL_CHECK            =      0x4
+      CRL_CHECK_ALL        =      0x8
+      IGNORE_CRITICAL      =     0x10
+      X509_STRICT          =     0x20
+      ALLOW_PROXY_CERTS    =     0x40
+      POLICY_CHECK         =     0x80
+      EXPLICIT_POLICY      =    0x100
+      INHIBIT_ANY          =    0x200
+      INHIBIT_MAP          =    0x400
+      NOTIFY_POLICY        =    0x800
+      EXTENDED_CRL_SUPPORT =   0x1000
+      USE_DELTAS           =   0x2000
+      CHECK_SS_SIGNATURE   =   0x4000
+      TRUSTED_FIRST        =   0x8000
+      SUITEB_128_LOS_ONLY  =  0x10000
+      SUITEB_192_LOS       =  0x20000
+      SUITEB_128_LOS       =  0x30000
+      PARTIAL_CHAIN        =  0x80000
+      NO_ALT_CHAINS        = 0x100000
+    end
 
-  fun x509_verify_param_lookup = X509_VERIFY_PARAM_lookup(name : UInt8*) : X509VerifyParam
-  fun x509_verify_param_set1_host = X509_VERIFY_PARAM_set1_host(param : X509VerifyParam, name : UInt8*, len : SizeT) : Int
-  fun x509_verify_param_set1_ip_asc = X509_VERIFY_PARAM_set1_ip_asc(param : X509VerifyParam, ip : UInt8*) : Int
-  fun x509_verify_param_set_flags = X509_VERIFY_PARAM_set_flags(param : X509VerifyParam, flags : X509VerifyFlags) : Int
+    fun x509_verify_param_lookup = X509_VERIFY_PARAM_lookup(name : UInt8*) : X509VerifyParam
+    fun x509_verify_param_set1_host = X509_VERIFY_PARAM_set1_host(param : X509VerifyParam, name : UInt8*, len : SizeT) : Int
+    fun x509_verify_param_set1_ip_asc = X509_VERIFY_PARAM_set1_ip_asc(param : X509VerifyParam, ip : UInt8*) : Int
+    fun x509_verify_param_set_flags = X509_VERIFY_PARAM_set_flags(param : X509VerifyParam, flags : X509VerifyFlags) : Int
+  {% end %}
 end
-{% end %}
