@@ -442,8 +442,6 @@ module Crystal
         case @token.type
         when :".."
           exp = new_range(exp, location, false)
-        when :"..."
-          exp = new_range(exp, location, true)
         else
           return exp
         end
