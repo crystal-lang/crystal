@@ -11,7 +11,7 @@ class Socket
     getter size : Int32
 
     @addr : LibC::SockaddrIn6
-    @next : LibC::Addrinfo*
+    @next : LibC::Addrinfo* | LibEvent2::EvutilAddrinfo*
 
     # Resolves a domain that best matches the given options.
     #
@@ -115,7 +115,7 @@ class Socket
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP) { |addrinfo| yield addrinfo }
     end
 
-    protected def initialize(addrinfo : LibC::Addrinfo*)
+    protected def initialize(addrinfo : LibC::Addrinfo* | LibEvent2::EvutilAddrinfo*)
       @family = Family.from_value(addrinfo.value.ai_family)
       @type = Type.from_value(addrinfo.value.ai_socktype)
       @protocol = Protocol.from_value(addrinfo.value.ai_protocol)

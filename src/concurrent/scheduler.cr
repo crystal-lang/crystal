@@ -76,4 +76,8 @@ class Scheduler
   def self.enqueue(fibers : Enumerable(Fiber))
     @@runnables.concat fibers
   end
+
+  def self.new_dns_base
+    Event::DnsBase.new(@@eb)
+  end
 end
