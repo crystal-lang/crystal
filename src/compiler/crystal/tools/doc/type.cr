@@ -565,7 +565,7 @@ class Crystal::Doc::Type
     io << "?"
   end
 
-  private def nil_type?(node : ASTNode)
+  def nil_type?(node : ASTNode)
     return false unless node.is_a?(Path)
 
     match = lookup_path(node)
