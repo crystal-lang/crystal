@@ -1,5 +1,12 @@
 require "./lib_crypto"
 
+{% begin %}
+  lib LibSSL
+    OPENSSL_110 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.1.0 libssl || printf %s false`.stringify != "false" }}
+    OPENSSL_102 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libssl || printf %s false`.stringify != "false" }}
+  end
+{% end %}
+
 @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs libssl || printf %s '-lssl -lcrypto'`")]
 lib LibSSL
   alias Int = LibC::Int
@@ -118,14 +125,11 @@ lib LibSSL
   SSL_TLSEXT_ERR_ALERT_FATAL   = 2
   SSL_TLSEXT_ERR_NOACK         = 3
 
-  fun sslv23_method = SSLv23_method : SSLMethod
   fun tlsv1_method = TLSv1_method : SSLMethod
   fun tlsv1_1_method = TLSv1_1_method : SSLMethod
   fun tlsv1_2_method = TLSv1_2_method : SSLMethod
 
-  fun ssl_load_error_strings = SSL_load_error_strings
   fun ssl_get_error = SSL_get_error(handle : SSL, ret : Int) : SSLError
-  fun ssl_library_init = SSL_library_init
   fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
   fun ssl_select_next_proto = SSL_select_next_proto(output : Char**, output_len : Char*, input : Char*, input_len : Int, client : Char*, client_len : Int) : Int
   fun ssl_ctrl = SSL_ctrl(handle : SSL, cmd : Int, larg : Long, parg : Void*) : Long
@@ -164,32 +168,30 @@ lib LibSSL
 
   # Hostname validation for OpenSSL <= 1.0.1
   fun ssl_ctx_set_cert_verify_callback = SSL_CTX_set_cert_verify_callback(ctx : SSLContext, callback : CertVerifyCallback, arg : Void*)
+
+  {% if OPENSSL_110 %}
+    fun tls_method = TLS_method : SSLMethod
+  {% else %}
+    fun ssl_library_init = SSL_library_init
+    fun ssl_load_error_strings = SSL_load_error_strings
+    fun sslv23_method = SSLv23_method : SSLMethod
+  {% end %}
+
+  {% if OPENSSL_102 %}
+    alias ALPNCallback = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
+    alias X509VerifyParam = LibCrypto::X509VerifyParam
+
+    fun ssl_get0_param = SSL_get0_param(handle : SSL) : X509VerifyParam
+    fun ssl_get0_alpn_selected = SSL_get0_alpn_selected(handle : SSL, data : Char**, len : LibC::UInt*) : Void
+    fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPNCallback, arg : Void*) : Void
+    fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
+    fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
+  {% end %}
 end
 
-{% if `(command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libssl && printf %s true) || printf %s false` == "true" %}
-lib LibSSL
-  OPENSSL_102 = true
-end
-{% else %}
-lib LibSSL
-  OPENSSL_102 = false
-end
+{% unless LibSSL::OPENSSL_110 %}
+  LibSSL.ssl_library_init
+  LibSSL.ssl_load_error_strings
+  LibCrypto.openssl_add_all_algorithms
+  LibCrypto.err_load_crypto_strings
 {% end %}
-
-{% if LibSSL::OPENSSL_102 %}
-lib LibSSL
-  alias ALPNCallback = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
-  alias X509VerifyParam = LibCrypto::X509VerifyParam
-
-  fun ssl_get0_param = SSL_get0_param(handle : SSL) : X509VerifyParam
-  fun ssl_get0_alpn_selected = SSL_get0_alpn_selected(handle : SSL, data : Char**, len : LibC::UInt*) : Void
-  fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPNCallback, arg : Void*) : Void
-  fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
-  fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
-end
-{% end %}
-
-LibSSL.ssl_library_init
-LibSSL.ssl_load_error_strings
-LibCrypto.openssl_add_all_algorithms
-LibCrypto.err_load_crypto_strings
