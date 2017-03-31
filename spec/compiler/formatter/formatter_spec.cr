@@ -463,7 +463,6 @@ describe Crystal::Formatter do
   assert_format "foo.bar. as?   Int32", "foo.bar.as? Int32"
 
   assert_format "1 .. 2", "1..2"
-  assert_format "1 ... 2", "1...2"
 
   assert_format "typeof( 1, 2, 3 )", "typeof(1, 2, 3)"
   assert_format "sizeof( Int32 )", "sizeof(Int32)"

@@ -25,7 +25,7 @@ describe "String" do
     end
 
     it "gets with inclusive range with unicode" do
-      "há日本語"[1..2].should eq("á日本")
+      "há日本語"[1..3].should eq("á日本")
     end
 
     it "gets when index is last and count is zero" do
