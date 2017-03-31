@@ -38,6 +38,10 @@ class Crystal::Doc::Method
     end
   end
 
+  def constructor?
+    @class_method && name == "new"
+  end
+
   def abstract?
     @def.abstract?
   end
