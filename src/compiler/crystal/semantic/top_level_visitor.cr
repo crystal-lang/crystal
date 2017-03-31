@@ -600,6 +600,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     enum_type.add_def a_def
   end
 
+  def visit(node : Expressions)
+    node.expressions.each_with_index do |child, i|
+      begin
+        child.accept self
+      rescue SkipFileException
+        node.expressions.delete_at(i..-1)
+        break
+      end
+    end
+    false
+  end
+
   def visit(node : Assign)
     type_assign(node.target, node.value, node)
     false

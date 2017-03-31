@@ -369,12 +369,22 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
     the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
 
+    skip_file_exception = nil
+
     generated_nodes = expand_macro(the_macro, node, mode: mode) do
-      @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
+      begin
+        @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
+      rescue ex : SkipFileException
+        #node.expanded = NilLiteral.new
+        skip_file_exception = ex
+        ex.expanded_before_skip
+      end
     end
 
     node.expanded = generated_nodes
     node.bind_to generated_nodes
+
+    raise skip_file_exception if skip_file_exception
 
     generated_nodes
   end

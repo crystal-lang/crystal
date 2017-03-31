@@ -988,4 +988,40 @@ describe "Semantic: macro" do
       foo(a)
       )) { int32 }
   end
+
+  it "skip_file skips expanding the rest of the current file" do
+    res = semantic(%(
+      class A
+      end
+
+      {% skip_file() %}
+
+      class B
+      end
+    ))
+
+    res.program.types.has_key?("A").should be_true
+    res.program.types.has_key?("B").should be_false
+  end
+
+  it "skips file inside an if macro expression" do
+    res = semantic(%(
+      class A
+      end
+
+      {% if true %}
+        class C; end
+        {% skip_file() %}
+        class D; end
+      {% end %}
+
+      class B
+      end
+    ))
+
+    res.program.types.has_key?("A").should be_true
+    res.program.types.has_key?("B").should be_false
+    res.program.types.has_key?("C").should be_true
+    res.program.types.has_key?("D").should be_false
+  end
 end

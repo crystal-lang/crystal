@@ -5,6 +5,7 @@ require "semantic_version"
 module Crystal
   class MacroInterpreter
     def interpret_top_level_call(node)
+      # Please order method names in lexicographical order, because OCD
       case node.name
       when "compare_versions"
         interpret_compare_versions(node)
@@ -18,6 +19,8 @@ module Crystal
         interpret_puts(node)
       when "pp"
         interpret_pp(node)
+      when "skip_file"
+        interpret_skip_file(node)
       when "system", "`"
         interpret_system(node)
       when "raise"
@@ -128,6 +131,10 @@ module Crystal
       end
 
       @last = Nop.new
+    end
+
+    def interpret_skip_file(node)
+      raise SkipFileException.new(@str.to_s)
     end
 
     def interpret_system(node)
