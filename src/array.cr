@@ -113,8 +113,8 @@ class Array(T)
     end
   end
 
-  # Creates a new `Array` of the given *size* and invokes the given block once for each index of `self`,
-  # assigning the block's value in that index.
+  # Creates a new `Array` of the given *size* and invokes the given block once
+  # for each index of `self`, assigning the block's value in that index.
   #
   # ```
   # Array.new(3) { |i| (i + 1) ** 2 } # => [1, 4, 9]
@@ -133,7 +133,7 @@ class Array(T)
     end
   end
 
-  # Creates a new Array, allocating an internal buffer with the given capacity,
+  # Creates a new `Array`, allocating an internal buffer with the given *capacity*,
   # and yielding that buffer. The given block must return the desired size of the array.
   #
   # This method is **unsafe**, but is usually used to initialize the buffer
@@ -144,7 +144,7 @@ class Array(T)
   #   LibSome.fill_buffer_and_return_number_of_elements_filled(buffer)
   # end
   # ```
-  def self.build(capacity : Int)
+  def self.build(capacity : Int) : self
     ary = Array(T).new(capacity)
     ary.size = (yield ary.to_unsafe).to_i
     ary

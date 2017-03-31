@@ -48,7 +48,7 @@ struct NamedTuple
   # NamedTuple(name: String, val: Int32).from({"name" => "number", "val" => num_or_str}) # raises TypeCastError (cast from String to Int32 failed)
   # ```
   # See also: `#from`.
-  def self.from(hash : Hash)
+  def self.from(hash : Hash) : self
     {% begin %}
     NamedTuple.new(**{{T}}).from(hash)
     {% end %}

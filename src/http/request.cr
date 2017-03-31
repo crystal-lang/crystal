@@ -85,7 +85,8 @@ class HTTP::Request
   # :nodoc:
   record BadRequest
 
-  # Returns a `HTTP::Request` instance if successfully parsed, returns `nil` on EOF, or returns `BadRequest`.
+  # Returns a `HTTP::Request` instance if successfully parsed,
+  # `nil` on EOF or `BadRequest` otherwise.
   def self.from_io(io)
     request_line = io.gets(4096, chomp: true)
     return unless request_line
