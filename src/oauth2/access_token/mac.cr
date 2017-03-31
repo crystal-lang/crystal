@@ -1,4 +1,4 @@
-require "secure_random"
+require "securerandom"
 require "openssl/hmac"
 require "base64"
 require "./access_token"
