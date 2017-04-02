@@ -132,15 +132,21 @@ lib LibCrypto
   fun hmac_ctx_copy = HMAC_CTX_copy(dst : HMAC_CTX, src : HMAC_CTX) : Int32
 
   fun evp_get_digestbyname = EVP_get_digestbyname(name : UInt8*) : EVP_MD
-  fun evp_md_ctx_create = EVP_MD_CTX_create : EVP_MD_CTX
   fun evp_digestinit_ex = EVP_DigestInit_ex(ctx : EVP_MD_CTX, type : EVP_MD, engine : Void*) : Int32
   fun evp_digestupdate = EVP_DigestUpdate(ctx : EVP_MD_CTX, data : UInt8*, count : LibC::SizeT) : Int32
-  fun evp_md_ctx_destroy = EVP_MD_CTX_destroy(ctx : EVP_MD_CTX)
   fun evp_md_ctx_copy = EVP_MD_CTX_copy(dst : EVP_MD_CTX, src : EVP_MD_CTX) : Int32
   fun evp_md_ctx_md = EVP_MD_CTX_md(ctx : EVP_MD_CTX) : EVP_MD
   fun evp_md_size = EVP_MD_size(md : EVP_MD) : Int32
   fun evp_md_block_size = EVP_MD_block_size(md : EVP_MD) : LibC::Int
   fun evp_digestfinal_ex = EVP_DigestFinal_ex(ctx : EVP_MD_CTX, md : UInt8*, size : UInt32*) : Int32
+
+  {% if OPENSSL_110 %}
+    fun evp_md_ctx_new = EVP_MD_CTX_new : EVP_MD_CTX
+    fun evp_md_ctx_free = EVP_MD_CTX_free(ctx : EVP_MD_CTX)
+  {% else %}
+    fun evp_md_ctx_new = EVP_MD_CTX_create : EVP_MD_CTX
+    fun evp_md_ctx_free = EVP_MD_CTX_destroy(ctx : EVP_MD_CTX)
+  {% end %}
 
   fun evp_get_cipherbyname = EVP_get_cipherbyname(name : UInt8*) : EVP_CIPHER
   fun evp_cipher_name = EVP_CIPHER_name(cipher : EVP_CIPHER) : UInt8*
@@ -202,10 +208,17 @@ lib LibCrypto
   NID_commonName       = 13
   NID_subject_alt_name = 85
 
-  fun sk_free(st : Void*)
-  fun sk_num = sk_num(x0 : Void*) : Int
-  fun sk_pop_free(st : Void*, callback : (Void*) ->)
-  fun sk_value = sk_value(x0 : Void*, x1 : Int) : Void*
+  {% if OPENSSL_110 %}
+    fun sk_free = OPENSSL_sk_free(st : Void*)
+    fun sk_num = OPENSSL_sk_num(x0 : Void*) : Int
+    fun sk_pop_free = OPENSSL_sk_pop_free(st : Void*, callback : (Void*) ->)
+    fun sk_value = OPENSSL_sk_value(x0 : Void*, x1 : Int) : Void*
+  {% else %}
+    fun sk_free(st : Void*)
+    fun sk_num(x0 : Void*) : Int
+    fun sk_pop_free(st : Void*, callback : (Void*) ->)
+    fun sk_value(x0 : Void*, x1 : Int) : Void*
+  {% end %}
 
   fun x509_dup = X509_dup(a : X509) : X509
   fun x509_free = X509_free(a : X509)
