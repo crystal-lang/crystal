@@ -3,8 +3,6 @@ require "./lib_crypto"
 class OpenSSL::HMAC
   def self.digest(algorithm : Symbol, key, data) : Bytes
     evp = case algorithm
-          when :dss       then LibCrypto.evp_dss
-          when :dss1      then LibCrypto.evp_dss1
           when :md4       then LibCrypto.evp_md4
           when :md5       then LibCrypto.evp_md5
           when :ripemd160 then LibCrypto.evp_ripemd160
