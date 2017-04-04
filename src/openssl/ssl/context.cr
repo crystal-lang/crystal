@@ -252,7 +252,12 @@ abstract class OpenSSL::SSL::Context
 
   # Returns the current options set on the TLS context.
   def options
-    OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
+    opts = {% if LibSSL::OPENSSL_110 %}
+      LibSSL.ssl_ctx_get_options(@handle)
+    {% else %}
+      LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
+    {% end %}
+    OpenSSL::SSL::Options.new(opts)
   end
 
   # Adds options to the TLS context.
@@ -266,7 +271,12 @@ abstract class OpenSSL::SSL::Context
   # )
   # ```
   def add_options(options : OpenSSL::SSL::Options)
-    OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
+    opts = {% if LibSSL::OPENSSL_110 %}
+      LibSSL.ssl_ctx_set_options(@handle, options)
+    {% else %}
+      LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
+    {% end %}
+    OpenSSL::SSL::Options.new(opts)
   end
 
   # Removes options from the TLS context.
@@ -276,7 +286,12 @@ abstract class OpenSSL::SSL::Context
   # context.remove_options(OpenSSL::SSL::Options::NO_SSLV3)
   # ```
   def remove_options(options : OpenSSL::SSL::Options)
-    OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
+    opts = {% if LibSSL::OPENSSL_110 %}
+      LibSSL.ssl_ctx_clear_options(@handle, options)
+    {% else %}
+      LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
+    {% end %}
+    OpenSSL::SSL::Options.new(opts)
   end
 
   # Returns the current verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.

@@ -64,17 +64,9 @@ lib LibSSL
   SSL_CTRL_CLEAR_MODE    = 78
 
   enum Options : ULong
-    MICROSOFT_SESS_ID_BUG            = 0x00000001
-    NETSCAPE_CHALLENGE_BUG           = 0x00000002
-    LEGACY_SERVER_CONNECT            = 0x00000004
-    NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000008
-    SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000010
-    MICROSOFT_BIG_SSLV3_BUFFER       = 0x00000020
-    SAFARI_ECDHE_ECDSA_BUG           = 0x00000040
-    SSLEAY_080_CLIENT_DH_BUG         = 0x00000080
-    TLS_D5_BUG                       = 0x00000100
-    TLS_BLOCK_PADDING_BUG            = 0x00000200
-    DONT_INSERT_EMPTY_FRAGMENTS      = 0x00000800
+    LEGACY_SERVER_CONNECT       = 0x00000004
+    SAFARI_ECDHE_ECDSA_BUG      = 0x00000040
+    DONT_INSERT_EMPTY_FRAGMENTS = 0x00000800
 
     # Various bug workarounds that should be rather harmless.
     # This used to be `0x000FFFFF` before 0.9.7
@@ -88,12 +80,9 @@ lib LibSSL
     NO_SESSION_RESUMPTION_ON_RENEGOTIATION = 0x00010000
     NO_COMPRESSION                         = 0x00020000
     ALLOW_UNSAFE_LEGACY_RENEGOTIATION      = 0x00040000
-    SINGLE_ECDH_USE                        = 0x00080000
-    SINGLE_DH_USE                          = 0x00100000
     CIPHER_SERVER_PREFERENCE               = 0x00400000
     TLS_ROLLBACK_BUG                       = 0x00800000
 
-    NO_SSLV2   = 0x01000000
     NO_SSLV3   = 0x02000000
     NO_TLSV1   = 0x04000000
     NO_TLSV1_2 = 0x08000000
@@ -102,6 +91,32 @@ lib LibSSL
     NETSCAPE_CA_DN_BUG              = 0x20000000
     NETSCAPE_DEMO_CIPHER_CHANGE_BUG = 0x40000000
     CRYPTOPRO_TLSEXT_BUG            = 0x80000000
+
+    {% if OPENSSL_110 %}
+      MICROSOFT_SESS_ID_BUG            = 0x00000000
+      NETSCAPE_CHALLENGE_BUG           = 0x00000000
+      NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000000
+      SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000000
+      MICROSOFT_BIG_SSLV3_BUFFER       = 0x00000000
+      SSLEAY_080_CLIENT_DH_BUG         = 0x00000000
+      TLS_D5_BUG                       = 0x00000000
+      TLS_BLOCK_PADDING_BUG            = 0x00000000
+      NO_SSLV2                         = 0x00000000
+      SINGLE_ECDH_USE                  = 0x00000000
+      SINGLE_DH_USE                    = 0x00000000
+    {% else %}
+      MICROSOFT_SESS_ID_BUG            = 0x00000001
+      NETSCAPE_CHALLENGE_BUG           = 0x00000002
+      NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000008
+      SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000010
+      MICROSOFT_BIG_SSLV3_BUFFER       = 0x00000020
+      SSLEAY_080_CLIENT_DH_BUG         = 0x00000080
+      TLS_D5_BUG                       = 0x00000100
+      TLS_BLOCK_PADDING_BUG            = 0x00000200
+      NO_SSLV2                         = 0x01000000
+      SINGLE_ECDH_USE                  = 0x00080000
+      SINGLE_DH_USE                    = 0x00100000
+    {% end %}
   end
 
   @[Flags]
@@ -162,6 +177,12 @@ lib LibSSL
   fun ssl_ctx_set_verify = SSL_CTX_set_verify(ctx : SSLContext, mode : VerifyMode, callback : VerifyCallback)
   fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
   fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
+
+  {% if OPENSSL_110 %}
+    fun ssl_ctx_get_options = SSL_CTX_get_options(ctx : SSLContext) : ULong
+    fun ssl_ctx_set_options = SSL_CTX_set_options(ctx : SSLContext, larg : ULong) : ULong
+    fun ssl_ctx_clear_options = SSL_CTX_clear_options(ctx : SSLContext, larg : ULong) : ULong
+  {% end %}
 
   @[Raises]
   fun ssl_ctx_load_verify_locations = SSL_CTX_load_verify_locations(ctx : SSLContext, ca_file : UInt8*, ca_path : UInt8*) : Int
