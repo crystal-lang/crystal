@@ -162,6 +162,5 @@ end
 {% if flag?(:concurrency_debug) %}
   LibExt.debug_helper_func = ->{
     Fiber.dump_fibers
-    Scheduler.dump_schedulers
   }
 {% end %}
