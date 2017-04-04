@@ -294,7 +294,7 @@ module Crystal
   class MacroRaiseException < TypeException
   end
 
-  class SkipFileException < ::Exception
+  class SkipMacroException < ::Exception
     getter expanded_before_skip : String
 
     def initialize(@expanded_before_skip)

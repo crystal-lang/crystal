@@ -604,7 +604,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.expressions.each_with_index do |child, i|
       begin
         child.accept self
-      rescue SkipFileException
+      rescue SkipMacroException
         node.expressions.delete_at(i..-1)
         break
       end

@@ -19,8 +19,8 @@ module Crystal
         interpret_puts(node)
       when "pp"
         interpret_pp(node)
-      when "skip_file"
-        interpret_skip_file(node)
+      when "skip"
+        interpret_skip(node)
       when "system", "`"
         interpret_system(node)
       when "raise"
@@ -133,8 +133,8 @@ module Crystal
       @last = Nop.new
     end
 
-    def interpret_skip_file(node)
-      raise SkipFileException.new(@str.to_s)
+    def interpret_skip(node)
+      raise SkipMacroException.new(@str.to_s)
     end
 
     def interpret_system(node)
