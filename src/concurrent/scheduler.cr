@@ -43,35 +43,35 @@ class Scheduler
 
   def self.enqueue(fiber : Fiber)
     thread_log "Enqueue '#{fiber.name}'"
-    Scheduler.current.internal_enqueue(fiber)
-    Scheduler.ensure_workers_available
+    internal_enqueue(fiber)
+    ensure_workers_available
   end
 
   def self.enqueue(fibers : Enumerable(Fiber))
     thread_log "Enqueue #{fibers.map(&.name!).join(", ")}"
-    Scheduler.current.internal_enqueue(fibers)
-    Scheduler.ensure_workers_available
+    internal_enqueue(fibers)
+    ensure_workers_available
   end
 
   def self.enqueue_event(fiber : Fiber)
     thread_log "Enqueue '#{fiber.name}' (event wakeup)"
-    Scheduler.current.internal_enqueue(fiber)
-    Scheduler.ensure_workers_available
+    internal_enqueue(fiber)
+    ensure_workers_available
   end
 
   def self.enqueue_event(fibers : Enumerable(Fiber))
     thread_log "Enqueue #{fibers.map(&.name!).join(", ")} (event wakeup)"
-    Scheduler.current.internal_enqueue(fibers)
-    Scheduler.ensure_workers_available
+    internal_enqueue(fibers)
+    ensure_workers_available
   end
 
-  protected def internal_enqueue(fibers : Enumerable(Fiber))
+  protected def self.internal_enqueue(fibers : Enumerable(Fiber))
     fibers.each do |fiber|
       internal_enqueue(fiber)
     end
   end
 
-  protected def internal_enqueue(fiber : Fiber)
+  protected def self.internal_enqueue(fiber : Fiber)
     node = Node.new(fiber)
     while true
       tail = @@tail.get
@@ -90,7 +90,7 @@ class Scheduler
     nil
   end
 
-  protected def internal_dequeue : Fiber?
+  protected def self.internal_dequeue : Fiber?
     while true
       head = @@head.get
       tail = @@tail.get
@@ -174,7 +174,7 @@ class Scheduler
 
   def reschedule(is_reschedule_fiber = false)
     while true
-      if runnable = internal_dequeue
+      if runnable = Scheduler.internal_dequeue
         thread_log "Reschedule: Found in queue '%s'", runnable.name!
         runnable.resume
         break
