@@ -392,8 +392,12 @@ module IO
   private def read_char_with_bytesize
     # For UTF-8 encoding, try to see if we can peek 4 bytes.
     # If so, this will be faster than reading byte per byte.
-    if !decoder && (peek = self.peek) && peek.size == 4
-      read_char_with_bytesize_peek(peek)
+    if !decoder && (peek = self.peek)
+      if peek.empty?
+        return nil
+      else
+        return read_char_with_bytesize_peek(peek)
+      end
     else
       read_char_with_bytesize_slow
     end
@@ -401,26 +405,23 @@ module IO
 
   private def read_char_with_bytesize_peek(peek)
     first = peek[0].to_u32
+    skip(1)
     if first < 0x80
-      skip(1)
       return first.unsafe_chr, 1
     end
 
-    second = (peek[1] & 0x3f).to_u32
+    second = peek_or_read_masked(peek, 1)
     if first < 0xe0
-      skip(2)
       return ((first & 0x1f) << 6 | second).unsafe_chr, 2
     end
 
-    third = (peek[2] & 0x3f).to_u32
+    third = peek_or_read_masked(peek, 2)
     if first < 0xf0
-      skip(3)
       return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3
     end
 
-    fourth = (peek[3] & 0x3f).to_u32
+    fourth = peek_or_read_masked(peek, 3)
     if first < 0xf8
-      skip(4)
       return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4
     end
 
@@ -449,6 +450,15 @@ module IO
   private def read_utf8_masked_byte
     byte = read_utf8_byte || raise InvalidByteSequenceError.new("Incomplete UTF-8 byte sequence")
     (byte & 0x3f).to_u32
+  end
+
+  private def peek_or_read_masked(peek, index)
+    if byte = peek[index]?
+      skip(1)
+      (byte & 0x3f).to_u32
+    else
+      read_utf8_masked_byte
+    end
   end
 
   # Reads a single decoded UTF-8 byte from this `IO`.
@@ -527,9 +537,10 @@ module IO
 
   # Peeks into this IO, if possible.
   #
-  # If this IO can peek into some data, it returns a slice
-  # with that data. Returns `nil` if this IO isn't peekable,
-  # or if there's no data to peek.
+  # It returns:
+  # - `nil` if this IO isn't peekable
+  # - an empty slice if it is, but EOF was reached
+  # - a non-empty slice if some data can be peeked
   #
   # The returned bytes are only valid data until a next call
   # to any method that reads from this IO is invoked.
@@ -698,7 +709,11 @@ module IO
     # If there's no encoding, the delimiter is ASCII and we can peek,
     # use a faster algorithm
     if ascii && !decoder && (peek = self.peek)
-      gets_peek(delimiter, limit, chomp, peek)
+      if peek.empty?
+        nil
+      else
+        gets_peek(delimiter, limit, chomp, peek)
+      end
     else
       gets_slow(delimiter, limit, chomp)
     end
@@ -756,7 +771,7 @@ module IO
           peek = self.peek
         end
 
-        unless peek
+        if !peek || peek.empty?
           if buffer.bytesize == 0
             return nil
           else
@@ -786,7 +801,7 @@ module IO
     buffer = String::Builder.new
     total = 0
     while true
-      info = read_char_with_bytesize
+      info = read_char_with_bytesize_slow
       unless info
         return buffer.empty? ? nil : buffer.to_s
       end
@@ -795,7 +810,7 @@ module IO
 
       # Consider the case of \r\n when the delimiter is \n and chomp = true
       if chomp_rn && char == '\r'
-        info2 = read_char_with_bytesize
+        info2 = read_char_with_bytesize_slow
         unless info2
           buffer << char
           break

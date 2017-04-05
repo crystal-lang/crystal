@@ -114,7 +114,7 @@ describe "IO::Sized" do
     sized = IO::Sized.new(io, read_size: 6)
     sized.peek.should eq("123456".to_slice)
     sized.gets_to_end.should eq("123456")
-    sized.peek.should be_nil
+    sized.peek.should eq(Bytes.empty)
   end
 
   it "skips" do

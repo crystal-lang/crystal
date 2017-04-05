@@ -59,7 +59,7 @@ module IO
         peek = peek[0, @read_remaining]
       end
 
-      peek.empty? ? nil : peek
+      peek
     end
 
     def skip(bytes_count) : Nil
