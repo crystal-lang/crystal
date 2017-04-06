@@ -7,6 +7,15 @@ class Mutex
     @lock_count = 0
   end
 
+  private record MutexCallback, queue : Deque(Fiber), thread_mutex : Thread::Mutex, current_fiber : Fiber do
+    include Fiber::Callback
+
+    def run
+      queue << current_fiber
+      thread_mutex.unlock
+    end
+  end
+
   def lock
     @thread_mutex.lock
     mutex_fiber = @mutex_fiber
@@ -20,11 +29,7 @@ class Mutex
       @thread_mutex.unlock
     else
       queue = @queue ||= Deque(Fiber).new
-      current_fiber.append_callback ->{
-        queue << current_fiber
-        @thread_mutex.unlock
-        nil
-      }
+      current_fiber.append_callback MutexCallback.new(queue, @thread_mutex, current_fiber)
       Scheduler.current.reschedule
     end
 

@@ -18,7 +18,14 @@ class Fiber
   @@stack_pool_mutex = SpinLock.new
   @@fiber_list_mutex = SpinLock.new
   @thread : Void*
-  @callback : (->)?
+
+  protected def self.stack_pool_mutex
+    @@stack_pool_mutex
+  end
+
+  protected def self.stack_pool
+    @@stack_pool
+  end
 
   # @@gc_lock = LibCK.rwlock_init
   @@gc_lock = LibCK.brlock_init
@@ -144,7 +151,7 @@ class Fiber
 
   def run
     Fiber.gc_read_unlock
-    thread_log "Fiber started with callback %ld", @callback
+    thread_log "Fiber started with callbacks %s", @callbacks.to_s
     flush_callback
     @proc.call
   rescue ex
@@ -168,13 +175,7 @@ class Fiber
   end
 
   def set_callback
-    current_cb = @callback
-    @callback = ->{
-      current_cb.not_nil!.call if current_cb
-      @@stack_pool_mutex.synchronize { @@stack_pool << @stack }
-      remove
-      nil
-    }
+    append_callback LastCallback.new(self, @stack)
   end
 
   # Remove the current fiber from the linked list
@@ -361,7 +362,7 @@ class Fiber
     current = Thread.current.current_fiber
 
     # F1's suspend callback is now stored in F2's @callback instance variable.
-    @callback = current.transfer_callback
+    @callbacks = current.transfer_callback
 
     # LibGC.set_stackbottom LibPThread.self as Void*, @stack_bottom
 
@@ -404,46 +405,70 @@ class Fiber
     current.flush_callback
   end
 
-  getter callback
+  module Callback
+    abstract def run
+  end
 
-  def append_callback(cb : ->)
-    if current_cb = @callback
-      @callback = ->{
-        current_cb.not_nil!.call
-        cb.call
-      }
-    else
-      @callback = cb
+  record EventTimeoutCallback, event : Event::Event, timeout : Float64? do
+    include Fiber::Callback
+
+    def run
+      event.add timeout
     end
+  end
+
+  private record LastCallback, fiber : Fiber, stack : Void* do
+    include Callback
+
+    def run
+      Fiber.stack_pool_mutex.synchronize { Fiber.stack_pool << stack }
+      fiber.remove
+    end
+  end
+
+  getter callbacks = StaticArray(Callback?, 2).new(nil)
+
+  def append_callback(callback : Callback)
+    callbacks = @callbacks
+    if callbacks[0]
+      if callbacks[1]
+        abort "Fiber (BUG): more than two callbacks"
+      else
+        callbacks[1] = callback
+      end
+    else
+      callbacks[0] = callback
+    end
+    @callbacks = callbacks
   end
 
   protected def flush_callback
-    if callback = @callback
-      callback.call
-      @callback = nil
-    end
+    callbacks.each &.try &.run
+    @callbacks[] = nil
   end
 
   protected def transfer_callback
-    @callback.tap do
-      @callback = nil
-    end
+    callbacks = @callbacks
+    @callbacks[] = nil
+    callbacks
   end
 
   def sleep(time)
     event = @resume_event ||= EventLoop.create_resume_event(self)
-    @callback = ->{
-      event.add(time)
-      nil
-    }
+    append_callback EventTimeoutCallback.new(event, time.try(&.to_f))
     EventLoop.wait
   end
 
+  record EnqueueCallback, fiber : Fiber do
+    include Callback
+
+    def run
+      Scheduler.enqueue fiber
+    end
+  end
+
   def yield
-    @callback = ->{
-      Scheduler.enqueue self
-      nil
-    }
+    append_callback EnqueueCallback.new(self)
     Scheduler.current.reschedule
   end
 

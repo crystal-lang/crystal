@@ -110,11 +110,16 @@ abstract class Channel(T)
     end
   end
 
+  private record UnlockMutexCallback, mutex : Thread::Mutex do
+    include Fiber::Callback
+
+    def run
+      mutex.unlock
+    end
+  end
+
   protected def unlock_after_context_switch
-    Fiber.current.append_callback ->{
-      @mutex.unlock
-      nil
-    }
+    Fiber.current.append_callback UnlockMutexCallback.new(@mutex)
   end
 
   protected def raise_if_closed
@@ -145,6 +150,14 @@ abstract class Channel(T)
     self.select ops
   end
 
+  private record UnlockTicketCallback, ticket : FiberTicket do
+    include Fiber::Callback
+
+    def run
+      ticket.unlock
+    end
+  end
+
   def self.select(ops : Tuple | Array, has_else = false)
     loop do
       thread_log "Trying to execute select operations"
@@ -165,10 +178,7 @@ abstract class Channel(T)
         end
 
         thread_log "Waiting for operations"
-        Fiber.current.append_callback ->{
-          ticket.unlock
-          nil
-        }
+        Fiber.current.append_callback UnlockTicketCallback.new(ticket)
         Scheduler.current.reschedule
         thread_log "Done waiting"
       ensure

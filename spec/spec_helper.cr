@@ -358,6 +358,17 @@ end
 # Helper to coordinate and synchronize execute between fibers
 # Execution is assumed to start at fiber identified by 0
 class FiberSwitch
+  struct ProcCallback
+    include ::Fiber::Callback
+
+    def initialize(&@block)
+    end
+
+    def run
+      @block.call
+    end
+  end
+
   @runner = Atomic(Int32).new(0)
 
   def wait(wait_for)
@@ -370,9 +381,9 @@ class FiberSwitch
   end
 
   def defer_yield(yield_to)
-    Fiber.current.append_callback ->{
+    Fiber.current.append_callback(ProcCallback.new do
       @runner.set yield_to
-    }
+    end)
   end
 
   def wait_and_yield(wait_for, yield_to)

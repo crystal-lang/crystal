@@ -20,7 +20,8 @@ end
 ch = Channel(Int32).new
 spawn generate(ch)
 
-1000.times do
+n = (ARGV[0]? || "1000").to_i
+n.times do
   prime = ch.receive
   puts prime
   ch1 = Channel(Int32).new
