@@ -2118,7 +2118,12 @@ module Crystal
             break
           end
         when '}'
-          if @macro_curly_count > 0
+          if delimiter_state && delimiter_state.end == '}'
+            delimiter_state = delimiter_state.with_open_count_delta(-1)
+            if delimiter_state.open_count == 0
+              delimiter_state = nil
+            end
+          elsif @macro_curly_count > 0
             # Once we find the final '}' that closes the interpolation,
             # we are back inside the delimiter
             if @macro_curly_count == 1
