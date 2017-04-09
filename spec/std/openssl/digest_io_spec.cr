@@ -31,7 +31,7 @@ describe OpenSSL::DigestIO do
     base_io = IO::Memory.new("foo")
     base_digest = OpenSSL::Digest.new("SHA256")
     empty_digest = OpenSSL::Digest.new("SHA256").digest
-    io = OpenSSL::DigestIO.new(base_io, base_digest, digest_on_read: false)
+    io = OpenSSL::DigestIO.new(base_io, base_digest, OpenSSL::DigestIO::DigestMode::Write)
     slice = Bytes.new(256)
     io.read(slice).should eq(3)
     slice[0, 3].should eq("foo".to_slice)
@@ -41,7 +41,7 @@ describe OpenSSL::DigestIO do
   it "calculates digest from writing" do
     base_io = IO::Memory.new
     base_digest = OpenSSL::Digest.new("SHA256")
-    io = OpenSSL::DigestIO.new(base_io, base_digest)
+    io = OpenSSL::DigestIO.new(base_io, base_digest, OpenSSL::DigestIO::DigestMode::Write)
     io.write("foo".to_slice)
 
     base_io.to_slice[0, 3].should eq("foo".to_slice)
@@ -51,7 +51,7 @@ describe OpenSSL::DigestIO do
   it "calculates digest from writing a string" do
     base_io = IO::Memory.new
     base_digest = OpenSSL::Digest.new("SHA256")
-    io = OpenSSL::DigestIO.new(base_io, base_digest)
+    io = OpenSSL::DigestIO.new(base_io, base_digest, OpenSSL::DigestIO::DigestMode::Write)
     io.print("foo")
 
     base_io.to_slice[0, 3].should eq("foo".to_slice)
@@ -61,7 +61,7 @@ describe OpenSSL::DigestIO do
   it "calculates digest from multiple writes" do
     base_io = IO::Memory.new
     base_digest = OpenSSL::Digest.new("SHA256")
-    io = OpenSSL::DigestIO.new(base_io, base_digest)
+    io = OpenSSL::DigestIO.new(base_io, base_digest, OpenSSL::DigestIO::DigestMode::Write)
     io.write("fo".to_slice)
     io.write("o".to_slice)
     base_io.to_slice[0, 3].should eq("foo".to_slice)
@@ -73,7 +73,7 @@ describe OpenSSL::DigestIO do
     base_io = IO::Memory.new
     base_digest = OpenSSL::Digest.new("SHA256")
     empty_digest = OpenSSL::Digest.new("SHA256").digest
-    io = OpenSSL::DigestIO.new(base_io, base_digest, digest_on_write: false)
+    io = OpenSSL::DigestIO.new(base_io, base_digest, OpenSSL::DigestIO::DigestMode::Read)
     io.write("foo".to_slice)
 
     base_io.to_slice[0, 3].should eq("foo".to_slice)
