@@ -1003,8 +1003,6 @@ class String
   # "string".chomp     # => "string"
   # "x".chomp.chomp    # => "x"
   # ```
-  #
-  # See also: `#chop`.
   def chomp
     return self if empty?
 
