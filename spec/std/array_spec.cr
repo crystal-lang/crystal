@@ -10,6 +10,12 @@ private class BadSortingClass
   end
 end
 
+class ArrayEql
+  def eql?(other)
+    return true if other.is_a?(ArrayEql)
+  end
+end
+
 describe "Array" do
   describe "new" do
     it "creates with default value" do
@@ -1105,6 +1111,13 @@ describe "Array" do
       b = a.uniq
       b.should eq([1, 2, 3, 4, 5])
       a.same?(b).should be_false
+    end
+
+    it "uniqs calling class hash" do
+      a = [] of ArrayEql
+      a = [ArrayEql.new, ArrayEql.new]
+      b = a.uniq
+      b.size.should eq(1)
     end
 
     it "uniqs with block" do

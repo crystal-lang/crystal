@@ -1963,8 +1963,11 @@ class Array(T)
   protected def to_lookup_hash(&block : T -> U) forall U
     each_with_object(Hash(U, T).new) do |o, h|
       key = yield o
+      if o.responds_to?(:eql?)
+        duplicated = h.values.any? { |x| o.eql?(x) }
+      end
       unless h.has_key?(key)
-        h[key] = o
+        h[key] = o unless duplicated
       end
     end
   end
