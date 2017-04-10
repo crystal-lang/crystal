@@ -2850,10 +2850,15 @@ module Crystal
       node.update
 
       if needs_type_filters? && (type_filters = @type_filters)
-        @type_filters = type_filters.not
-      else
-        @type_filters = nil
+        # `Not` can only deduce type filters for these nodes
+        case exp = node.exp
+        when Var, IsA, RespondsTo, Not
+          @type_filters = type_filters.not
+          return false
+        end
       end
+
+      @type_filters = nil
 
       false
     end
