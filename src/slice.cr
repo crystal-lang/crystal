@@ -492,7 +492,7 @@ struct Slice(T)
   end
 
   protected def check_writable
-    raise "can't write to read-only Slice" if @read_only
+    raise "Can't write to read-only Slice" if @read_only
   end
 end
 
