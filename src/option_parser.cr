@@ -189,7 +189,7 @@ class OptionParser
     return if allow_empty && arg.empty?
 
     unless arg.starts_with?('-')
-      raise ArgumentError.new("argument '#{name}' (#{arg.inspect}) must start with a dash (-)")
+      raise ArgumentError.new("Argument '#{name}' (#{arg.inspect}) must start with a dash (-)")
     end
   end
 
