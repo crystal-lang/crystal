@@ -48,7 +48,7 @@ class HTTP::WebSocket
   def on_message(&@on_message : String ->)
   end
 
-  def on_binary(&@on_binary : Slice(UInt8) ->)
+  def on_binary(&@on_binary : Bytes ->)
   end
 
   def on_close(&@on_close : String ->)
