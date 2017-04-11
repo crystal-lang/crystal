@@ -182,7 +182,7 @@ class YAML::PullParser
     when EventKind::SEQUENCE_START, EventKind::MAPPING_START
       String.build { |io| read_raw(io) }
     else
-      raise "unexpected kind: #{kind}"
+      raise "Unexpected kind: #{kind}"
     end
   end
 
@@ -216,7 +216,7 @@ class YAML::PullParser
       io << "}"
       read_next
     else
-      raise "unexpected kind: #{kind}"
+      raise "Unexpected kind: #{kind}"
     end
   end
 
@@ -299,7 +299,7 @@ class YAML::PullParser
   end
 
   private def expect_kind(kind)
-    raise "expected #{kind} but was #{self.kind}" unless kind == self.kind
+    raise "Expected #{kind} but was #{self.kind}" unless kind == self.kind
   end
 
   private def read_anchor(anchor)
