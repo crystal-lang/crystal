@@ -340,4 +340,32 @@ describe "implementations" do
     Bar::Foo.bar_foo
     )
   end
+
+  it "find implementation inside contained file private method" do
+    assert_implementations %(
+    private ༓def foo
+    end
+
+    private def bar
+      f‸oo
+    end
+
+    bar
+    )
+  end
+
+  it "find implementation inside contained file private class' class method" do
+    assert_implementations %(
+    private ༓def foo
+    end
+
+    private class Bar
+      def self.bar
+        f‸oo
+      end
+    end
+
+    Bar.bar
+    )
+  end
 end
