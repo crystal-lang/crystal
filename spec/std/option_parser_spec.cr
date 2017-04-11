@@ -423,15 +423,15 @@ describe "OptionParser" do
 
   it "raises if flag doesn't start with dash (#4001)" do
     OptionParser.parse([] of String) do |opts|
-      expect_raises ArgumentError, %(argument 'flag' ("foo") must start with a dash) do
+      expect_raises ArgumentError, %(Argument 'flag' ("foo") must start with a dash) do
         opts.on("foo", "") { }
       end
 
-      expect_raises ArgumentError, %(argument 'short_flag' ("foo") must start with a dash) do
+      expect_raises ArgumentError, %(Argument 'short_flag' ("foo") must start with a dash) do
         opts.on("foo", "bar", "baz") { }
       end
 
-      expect_raises ArgumentError, %(argument 'long_flag' ("bar") must start with a dash) do
+      expect_raises ArgumentError, %(Argument 'long_flag' ("bar") must start with a dash) do
         opts.on("-foo", "bar", "baz") { }
       end
 
