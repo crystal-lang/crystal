@@ -80,7 +80,7 @@ module Colorize
   # If this value is `true`, `Colorize::Object` is enabled by default.
   # But if this value is `false`, `Colorize::Object` is disabled.
   #
-  # This defaule value is `true` only if both of `STDOUT.tty?` and `STDERR.tty?` are `true`.
+  # The default value is `true`.
   #
   # ```
   # Colorize.enabled = true
@@ -89,7 +89,12 @@ module Colorize
   # Colorize.enabled = false
   # "hello".colorize.red.to_s # => "hello"
   # ```
-  class_property? enabled : Bool = STDOUT.tty? && STDERR.tty?
+  class_property? enabled : Bool = true
+
+  # Make `Colorize.enabled` `true` if and only if both of `STDOUT.tty?` and `STDERR.tty?` are `true`.
+  def self.on_tty_only!
+    self.enabled = STDOUT.tty? && STDERR.tty?
+  end
 end
 
 def with_color
