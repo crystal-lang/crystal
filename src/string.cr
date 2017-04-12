@@ -3284,11 +3284,13 @@ class String
     first = true
     last_is_downcase = false
     last_is_upcase = false
+    last_is_digit = false
     mem = nil
 
     String.build(bytesize + 10) do |str|
       each_char do |char|
-        downcase = 'a' <= char <= 'z'
+        digit = '0' <= char <= '9'
+        downcase = 'a' <= char <= 'z' || digit
         upcase = 'A' <= char <= 'Z'
 
         if first
@@ -3296,9 +3298,13 @@ class String
         elsif last_is_downcase && upcase
           # This is the case of AbcDe, we need to put an underscore before the 'D'
           #                        ^
+          if mem
+            str << mem.downcase
+            mem = nil
+          end
           str << '_'
           str << char.downcase
-        elsif last_is_upcase && upcase
+        elsif (last_is_upcase || last_is_digit) && (upcase || digit)
           # This is the case of 1) ABCde, 2) ABCDe or 3) ABC_de:if the next char is upcase (case 1) we need
           #                          ^         ^           ^
           # 1) we need to append this char as downcase
@@ -3314,7 +3320,7 @@ class String
           if mem
             if char == '_'
               # case 3
-            else
+            elsif last_is_upcase && downcase
               # case 1
               str << '_'
             end
@@ -3327,6 +3333,7 @@ class String
 
         last_is_downcase = downcase
         last_is_upcase = upcase
+        last_is_digit = digit
         first = false
       end
 
