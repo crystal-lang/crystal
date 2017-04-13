@@ -1672,6 +1672,8 @@ describe "String" do
     "C_".underscore.should eq("c_")
     "HTTP".underscore.should eq("http")
     "HTTP_CLIENT".underscore.should eq("http_client")
+    "Foo123".underscore.should eq("foo123")
+    "FOO123".underscore.should eq("foo123")
   end
 
   it "does camelcase" do
