@@ -1675,6 +1675,7 @@ describe "String" do
     "CSS3".underscore.should eq("css3")
     "HTTP1.1".underscore.should eq("http1.1")
     "3.14IsPi".underscore.should eq("3.14_is_pi")
+    "I2C".underscore.should eq("i2_c")
   end
 
   it "does camelcase" do
