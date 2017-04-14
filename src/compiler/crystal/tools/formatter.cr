@@ -632,36 +632,39 @@ module Crystal
         write "[]"
         next_token
       when :STRING_ARRAY_START, :SYMBOL_ARRAY_START
-        first = true
-        if @token.type == :STRING_ARRAY_START
-          write "%w("
-        else
-          write "%i("
-        end
-        count = 0
-        while true
+        has_rparen = false
+        tokens = [{false, @token.dup}]
+        until @token.type == :STRING_ARRAY_END
           has_space_newline = space_newline?
-          if has_space_newline
-            write_line
-            if count == node.elements.size
-              write_indent
-            else
-              write_indent(@indent + 2)
+          next_string_array_token
+          has_rparen = true if @token.raw.includes?(')')
+          tokens << {has_space_newline, @token.dup}
+        end
+        next_token
+
+        tokens.each_with_index do |(has_space_newline, token), i|
+          if i == 0
+            write token.type == :STRING_ARRAY_START ? "%w" : "%i"
+            write has_rparen ? token.delimiter_state.nest : "("
+          else
+            if has_space_newline
+              write_line
+              if i == tokens.size - 1
+                write_indent
+              else
+                write_indent(@indent + 2)
+              end
+            end
+            case token.type
+            when :STRING
+              write " " unless i == 1 || has_space_newline
+              write token.raw
+            when :STRING_ARRAY_END
+              write has_rparen ? token.delimiter_state.end : ")"
             end
           end
-          next_string_array_token
-          case @token.type
-          when :STRING
-            write " " unless first || has_space_newline
-            write @token.raw
-            first = false
-          when :STRING_ARRAY_END
-            write ")"
-            next_token
-            break
-          end
-          count += 1
         end
+
         return false
       else
         name = node.name.not_nil!
