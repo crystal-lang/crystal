@@ -27,11 +27,23 @@ private class Foo
 end
 
 describe WeakRef do
-  it "should get dereference object" do
+  it "should get dereferenced object" do
     foo = Foo.new :foo
     ref = WeakRef.new(foo)
     ref.should_not be_nil
     ref.target.should be(foo)
+  end
+
+  it "should get dereferenced object in data section" do
+    foo = "foo"
+    ref = WeakRef.new(foo)
+    ref.target.should be(foo)
+  end
+
+  it "should not crash with object in data section during GC" do
+    foo = "foo"
+    ref = WeakRef.new(foo)
+    GC.collect
   end
 
   it "State counts released objects" do
