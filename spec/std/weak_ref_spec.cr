@@ -31,13 +31,13 @@ describe WeakRef do
     foo = Foo.new :foo
     ref = WeakRef.new(foo)
     ref.should_not be_nil
-    ref.target.should be(foo)
+    ref.value.should be(foo)
   end
 
   it "should get dereferenced object in data section" do
     foo = "foo"
     ref = WeakRef.new(foo)
-    ref.target.should be(foo)
+    ref.value.should be(foo)
   end
 
   it "should not crash with object in data section during GC" do
@@ -77,7 +77,7 @@ describe WeakRef do
     end
     GC.collect
     State.count(:weak_foo_ref).should be > 0
-    instances.select { |wr| wr.target.nil? }.size.should be > 0
-    instances[-1].target.should_not be_nil
+    instances.select { |wr| wr.value.nil? }.size.should be > 0
+    instances[-1].value.should_not be_nil
   end
 end
