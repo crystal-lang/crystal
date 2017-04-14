@@ -274,7 +274,6 @@ class Crystal::Command
                               single_file = false)
     compiler = Compiler.new
     compiler.progress_tracker = @progress_tracker
-    @progress_tracker.progress = true
     link_flags = [] of String
     opt_filenames = nil
     opt_arguments = nil
@@ -380,8 +379,8 @@ class Crystal::Command
         @progress_tracker.stats = true
       end
 
-      opts.on("--no-progress", "Disable progress output") do
-        @progress_tracker.progress = false
+      opts.on("-p", "--progress", "Enable progress output") do
+        @progress_tracker.progress = true
       end
 
       opts.on("-t", "--time", "Enable execution time output") do
@@ -461,7 +460,6 @@ class Crystal::Command
   end
 
   private def setup_simple_compiler_options(compiler, opts)
-    compiler.progress_tracker.progress = true
     opts.on("-d", "--debug", "Add full symbolic debug info") do
       compiler.debug = Crystal::Debug::All
     end
@@ -480,8 +478,8 @@ class Crystal::Command
     opts.on("-s", "--stats", "Enable statistics output") do
       compiler.progress_tracker.stats = true
     end
-    opts.on("--no-progress", "Disable progress output") do
-      compiler.progress_tracker.progress = false
+    opts.on("-p", "--progress", "Enable progress output") do
+      compiler.progress_tracker.progress = true
     end
     opts.on("-t", "--time", "Enable execution time output") do
       @time = true
