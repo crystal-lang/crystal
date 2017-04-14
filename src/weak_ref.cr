@@ -17,7 +17,7 @@ class WeakRef(T)
   end
 
   # Returns the referenced object or `Nil` if it has been garbage-collected.
-  def target
+  def value
     @target.as(T?)
   end
 end
