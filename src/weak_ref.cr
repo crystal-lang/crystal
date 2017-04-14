@@ -5,7 +5,9 @@ class WeakRef(T)
 
   def initialize(target : T)
     @target = target.as(Void*)
-    GC.register_disappearing_link(pointerof(@target))
+    if GC.is_heap_ptr(@target)
+      GC.register_disappearing_link(pointerof(@target))
+    end
   end
 
   def self.allocate
