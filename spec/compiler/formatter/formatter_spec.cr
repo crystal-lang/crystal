@@ -336,6 +336,14 @@ describe Crystal::Formatter do
 
   assert_format "%w(one   two  three)", "%w(one two three)"
   assert_format "%i(one   two  three)", "%i(one two three)"
+  assert_format "%w(one\n   two\n  three)", "%w(one\n  two\n  three)"
+  assert_format "%i(one\n   two\n  three)", "%i(one\n  two\n  three)"
+  assert_format "%w(\n   one\n   two\n  three\n)", "%w(\n  one\n  two\n  three\n)"
+  assert_format "%i(\n   one\n   two\n  three\n)", "%i(\n  one\n  two\n  three\n)"
+  assert_format "%w{one   two  three}", "%w(one two three)"
+  assert_format "%i{one   two  three}", "%i(one two three)"
+  assert_format "%w{one)   two)  three)}", "%w{one) two) three)}"
+  assert_format "%i{one)   two)  three)}", "%i{one) two) three)}"
 
   assert_format "/foo/"
   assert_format "/foo/imx"
