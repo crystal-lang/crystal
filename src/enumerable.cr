@@ -670,6 +670,14 @@ module Enumerable(T)
       yield elem, io
     end
   end
+  
+  def last
+    last = first
+    each do |e|
+      last = e
+    end
+    last
+  end
 
   # Returns an `Array` with the results of running the block against each element of the collection.
   #

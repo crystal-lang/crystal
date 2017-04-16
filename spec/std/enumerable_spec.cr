@@ -412,6 +412,19 @@ describe "Enumerable" do
 
     it { [-1, -2, -3].first.should eq(-1) }
   end
+  
+  describe "last" do
+    it "returns the last element" do
+      (0..5).last.should eq(5)
+      (0...5).last.should eq(4)
+    end
+
+    it "raises if empty" do
+      expect_raises EmptyEnumerable do
+        (5...5).last
+      end
+    end
+  end
 
   describe "first?" do
     it "gets first?" do

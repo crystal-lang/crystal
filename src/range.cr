@@ -218,6 +218,10 @@ struct Range(B, E)
   def covers?(value)
     includes?(value)
   end
+  
+  def last
+    @exclusive ? super : @end
+  end
 
   # Same as `includes?`, useful for the `case` expression.
   #
