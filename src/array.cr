@@ -1580,6 +1580,16 @@ class Array(T)
   def to_a
     self
   end
+  
+  def to_h
+    result = {first.first => last[last.length - 1]}
+
+    each_with_index do |pair, index|
+      result[pair.first] = pair[last.length - 1]
+    end
+
+    result
+  end
 
   def to_s(io : IO)
     executed = exec_recursive(:to_s) do
@@ -1608,6 +1618,18 @@ class Array(T)
   # ```
   def to_unsafe : Pointer(T)
     @buffer
+  end
+  
+  def transpose
+    result = Array(T).new
+    
+    return result if length == 0
+
+    first.length.times do |i|
+      result << map { |pair| pair[i] }
+    end
+
+    result
   end
 
   # Assumes that `self` is an array of arrays and transposes the rows and columns.

@@ -1086,6 +1086,25 @@ describe "Array" do
       end
     end
   end
+  
+  describe "to_h" do
+    it "returns the result of interpreting self as an array of [k, v] arrays" do
+      a = [[:foo, :bar], [1, 2]]
+      expected = {:foo => :bar, 1 => 2}
+      a.to_h.should eq(expected)
+    end
+    
+    it "works with different types" do
+      a = [['a', :b], ["c", [:d]], [1, 2], [{x: :y}, {3 => 4}]]
+      expected = {'a' => :b, "c" => [:d], 1 => 2, {:x => :y} => {3 => 4}}
+      a.to_h.should eq(expected)
+    end
+    
+    it "works with an array of tuple pairs" do
+      h = {a: 0, b: 1, c: 2}
+      h.to_a.to_h.should eq(h)
+    end
+  end
 
   describe "to_s" do
     it "does to_s" do
@@ -1096,6 +1115,31 @@ describe "Array" do
       ary = [] of RecursiveArray
       ary << ary
       ary.to_s.should eq("[[...]]")
+    end
+  end
+  
+  describe "transpose" do
+    it "transposes rows and columns correctly" do
+      a = [[1, 2], [3, 4]]
+      expected = [[1, 3], [2, 4]]
+      a.transpose.should eq(expected)
+
+      a = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]]
+      expected = [[1, 6, 11], [2, 7, 12], [3, 8, 13], [4, 9, 14], [5, 10, 15]]
+      a.transpose.should eq(expected)
+      a.transpose.transpose.should eq(a)
+    end
+
+    it "works with different types" do
+      a = [['a', :b, "c", 1], ['d', :e, "f", 2], ['g', :h, "i", 3]]
+      expected = [['a', 'd', 'g'], [:b, :e, :h], ["c", "f", "i"], [1, 2, 3]]
+      a.transpose.should eq(expected)
+    end
+    
+    it "returns an empty array when self is empty" do
+      a = [[1, 2], [3, 4]]
+      a.clear
+      a.transpose.should eq(a)
     end
   end
 
