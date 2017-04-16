@@ -3242,7 +3242,7 @@ class String
   #   puts stanza.upcase
   # end
   # # => THE FIRST COLD SHOWER
-  # # => EVEN THE MONKEY SEEMS TO want
+  # # => EVEN THE MONKEY SEEMS TO WANT
   # # => A LITTLE COAT OF STRAW
   # ```
   def each_line(chomp = true) : Nil
