@@ -633,11 +633,7 @@ module Crystal
         next_token
       when :STRING_ARRAY_START, :SYMBOL_ARRAY_START
         first = true
-        if @token.type == :STRING_ARRAY_START
-          write "%w("
-        else
-          write "%i("
-        end
+        write @token.raw
         count = 0
         while true
           has_space_newline = space_newline?
@@ -656,7 +652,7 @@ module Crystal
             write @token.raw
             first = false
           when :STRING_ARRAY_END
-            write ")"
+            write @token.raw
             next_token
             break
           end
