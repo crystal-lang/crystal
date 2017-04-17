@@ -63,6 +63,8 @@ require "./spec/dsl"
 # ```shell
 # crystal spec spec/my/test/file_spec.cr:14
 # ```
+module Spec
+end
 
 OptionParser.parse! do |opts|
   opts.banner = "crystal spec runner"
