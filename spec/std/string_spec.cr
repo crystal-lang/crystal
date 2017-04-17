@@ -446,12 +446,14 @@ describe "String" do
 
   it "multiplies" do
     str = "foo"
+    (str * -1).should eq("")
     (str * 0).should eq("")
     (str * 3).should eq("foofoofoo")
   end
 
   it "multiplies with size one" do
     str = "f"
+    (str * -1).should eq("")
     (str * 0).should eq("")
     (str * 10).should eq("ffffffffff")
   end
