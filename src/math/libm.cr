@@ -98,6 +98,8 @@ lib LibM
   fun log1p_f64 = log1p(value : Float64) : Float64
   fun logb_f32 = logbf(value : Float32) : Float32
   fun logb_f64 = logb(value : Float64) : Float64
+  fun remainder_f32 = remainder(value1 : Float32, value2 : Float32) : Float32
+  fun remainder_f64 = remainder(value1 : Float64, value2 : Float64) : Float64
   fun scalbln_f32 = scalblnf(value1 : Float32, value2 : Int64) : Float32
   fun scalbln_f64 = scalbln(value1 : Float64, value2 : Int64) : Float64
   fun scalbn_f32 = scalbnf(value1 : Float32, value2 : Int32) : Float32

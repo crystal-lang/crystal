@@ -53,6 +53,16 @@ describe "Float" do
     end
   end
 
+  describe "%" do
+    it "raises when mods by zero" do
+      expect_raises(DivisionByZero) { 1.2 % 0.0 }
+    end
+
+    assert { (2.5 % 2.0).should eq(0.5) }
+    assert { (4.0 % 2.0).should eq(0.0) }
+    assert { (2.0 % 4.0).should eq(2.0) }
+  end
+
   describe "round" do
     it { 2.5.round.should eq(3) }
     it { 2.4.round.should eq(2) }

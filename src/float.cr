@@ -109,6 +109,14 @@ struct Float32
     value.to_f32
   end
 
+  def %(other)
+    if other == 0.0
+      raise DivisionByZero.new
+    else
+      LibM.remainder_f64(self, other)
+    end
+  end
+
   def ceil
     LibM.ceil_f32(self)
   end
@@ -190,6 +198,14 @@ struct Float64
   # Returns a `Float64` by invoking `to_f64` on *value*.
   def Float64.new(value)
     value.to_f64
+  end
+
+  def %(other)
+    if other == 0.0
+      raise DivisionByZero.new
+    else
+      LibM.remainder_f64(self, other)
+    end
   end
 
   def ceil
