@@ -108,6 +108,11 @@ describe "Int" do
     it { 2.lcm(0).should eq(0) }
   end
 
+  describe "[]" do
+    assert { 28[1].should eq(0) }
+    assert { 28[2].should eq(1) }
+  end
+
   describe "to_s in base" do
     it { 12.to_s(2).should eq("1100") }
     it { -12.to_s(2).should eq("-1100") }
