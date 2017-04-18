@@ -2250,6 +2250,15 @@ module Crystal
 
     def visit_binary(node)
       case typed_def.name
+      when "+", "-", "*", "|", "&", "^"
+        t1 = scope.remove_typedef
+        t2 = typed_def.args[0].type
+        case {t1.to_s, t2.to_s}
+        when {"Int32", "Int64"}, {"UInt32", "Int64"}, {"UInt32", "UInt64"}
+          return node.type = t2
+        end
+      end
+      case typed_def.name
       when "+", "-", "*", "/", "unsafe_div"
         t1 = scope.remove_typedef
         t2 = typed_def.args[0].type
