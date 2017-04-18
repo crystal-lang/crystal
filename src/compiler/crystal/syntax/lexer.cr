@@ -587,6 +587,10 @@ module Crystal
         case char1 = next_char
         when '\\'
           case char2 = next_char
+          when '\\'
+            @token.value = '\\'
+          when '\''
+            @token.value = '\''
           when 'b'
             @token.value = '\b'
           when 'e'
@@ -609,7 +613,7 @@ module Crystal
           when '\0'
             raise "unterminated char literal", line, column
           else
-            @token.value = char2
+            raise "invalid char escape sequence", line, column
           end
         when '\''
           raise "invalid empty char literal (did you mean '\\\''?)", line, column
