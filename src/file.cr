@@ -493,6 +493,21 @@ class File < IO::FileDescriptor
     end
     lines
   end
+  
+  # Returns the number of lines in a file.
+  def self.count_lines(filename, encoding = nil, invalid = nil)
+    if File.exists?(filename)
+      file = File.new(filename) # .each_line.size
+      begin
+        yield file
+      ensure
+        file.close
+      end
+    else
+      raise Errno.new("Error file does not exist")
+    end
+  end
+
 
   # Write the given *content* to *filename*.
   #
