@@ -144,7 +144,8 @@ module Crystal
       end
       cmd = cmd.join " "
 
-      result = `#{cmd}`
+      dir = node.location.try(&.dirname)
+      result = Process.run(cmd, shell: true, chdir: dir, &.output.gets_to_end)
       if $?.success?
         @last = MacroId.new(result)
       elsif result.empty?
