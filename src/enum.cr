@@ -100,7 +100,8 @@ struct Enum
         found = false
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
-            if {{@type}}::{{member}}.value != 0 && (value & {{@type}}::{{member}}.value) == {{@type}}::{{member}}.value
+            {% value = @type.constant member %}
+            if {{value}} != 0 && (value & {{value}}) == {{value}}
               io << " | " if found
               io << {{member.stringify}}
               found = true
@@ -136,7 +137,7 @@ struct Enum
     {% else %}
       case value
       {% for member in @type.constants %}
-      when {{@type}}::{{member}}.value
+      when {{@type.constant member}}
         {{member.stringify}}
       {% end %}
       else
@@ -299,9 +300,9 @@ struct Enum
       return if value == 0
       {% for member in @type.constants %}
         {% if member.stringify != "All" %}
-          if includes?({{@type}}::{{member}})
-            yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
-          end
+          {% value = @type.constant member %}
+          obj = self.class.new({{value}})
+          yield obj, obj.value if includes?(obj)
         {% end %}
       {% end %}
     {% else %}
@@ -329,9 +330,9 @@ struct Enum
   # ```
   def self.values : Array(self)
     {% if @type.has_attribute?("Flags") %}
-      {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map { |e| "#{@type}::#{e.id}".id } }}
+      {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map { |e| "new(#{@type.constant e})".id } }}
     {% else %}
-      {{ @type.constants.map { |e| "#{@type}::#{e.id}".id } }}
+      {{ @type.constants.map { |e| "new(#{@type.constant e})".id } }}
     {% end %}
   end
 
@@ -348,12 +349,13 @@ struct Enum
     {% if @type.has_attribute?("Flags") %}
       mask = {% for member, i in @type.constants %}\
         {% if i != 0 %} | {% end %}\
-        {{@type}}::{{member}}.value{% end %}
+        {{@type.constant member}}{% end %}
       return if (mask & value != value) || (value == 0 && values.none? { |val| val.to_i == 0 })
       return new(value)
     {% else %}
       {% for member in @type.constants %}
-        return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
+        {% value = @type.constant member %}
+        return new({{value}}) if {{value}} == value
       {% end %}
     {% end %}
     nil
@@ -413,7 +415,7 @@ struct Enum
       case string.camelcase.downcase
       {% for member in @type.constants %}
         when {{member.stringify.camelcase.downcase}}
-          {{@type}}::{{member}}
+          new({{@type.constant member}})
       {% end %}
       else
         nil
@@ -430,10 +432,12 @@ struct Enum
   # ```
   # IOMode.flags(Read, Write) # => IOMode::Read | IOMode::Write
   # ```
+  #
+  # TODO: It does not work for private enums.
   macro flags(*values)
     {% for value, i in values %}\
       {% if i != 0 %} | {% end %}\
-      {{ @type }}::{{ value }}{% end %}\
+      {{@type}}::{{value}}{% end %}\
   end
 
   # Iterates each member of the enum.
@@ -449,7 +453,8 @@ struct Enum
   def self.each
     {% for member in @type.constants %}
       {% unless @type.has_attribute?("Flags") && %w(none all).includes?(member.stringify.downcase) %}
-        yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+        obj = new({{@type.constant member}})
+        yield obj, obj.value
       {% end %}
     {% end %}
   end

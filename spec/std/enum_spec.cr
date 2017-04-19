@@ -1,18 +1,18 @@
 require "spec"
 
-enum SpecEnum : Int8
+private enum SpecEnum : Int8
   One
   Two
   Three
 end
 
-enum SpecEnum2
+private enum SpecEnum2
   FourtyTwo
   FOURTY_FOUR
 end
 
 @[Flags]
-enum SpecEnumFlags
+private enum SpecEnumFlags
   One
   Two
   Three
