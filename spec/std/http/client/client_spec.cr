@@ -37,8 +37,10 @@ module HTTP
       typeof(Client.new("host").{{method.id}}("uri", body: "body"))
     {% end %}
 
-    typeof(Client.post_form "url", {"a" => "b"})
-    typeof(Client.post_form("url", {"a" => "b"}) { })
+    {% for method in %w(post put) %}
+      typeof(Client.{{method.id}}_form "url", {"a" => "b"})
+      typeof(Client.{{method.id}}_form("url", {"a" => "b"}) { })
+    {% end %}
     typeof(Client.new("host").basic_auth("username", "password"))
     typeof(Client.new("host").before_request { |req| })
     typeof(Client.new("host").close)
