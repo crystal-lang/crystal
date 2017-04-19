@@ -616,6 +616,30 @@ class File < IO::FileDescriptor
     stat.size
   end
 
+  # Tail a file like in UNIX
+  # ```
+  # File.tail("/tmp/mytest.txt") do |n|
+  #   puts n
+  # end
+  # ```
+  def self.tail(target_path : String, delay : Number = 1, &block)
+    if File.exists?(target_path)
+      last_line_count = self.read_lines(target_path).size
+      loop do
+        content = self.read_lines(target_path)
+        line_count = content.size
+        if line_count > last_line_count
+          new_lines = content[last_line_count..-1][0]
+          yield new_lines
+        end
+        last_line_count = line_count
+        sleep delay
+      end
+    else
+      raise Errno.new("Error file does not exist") 
+    end
+  end
+
   # Truncates the file to the specified *size*. Requires that the current file is opened
   # for writing.
   def truncate(size = 0)
