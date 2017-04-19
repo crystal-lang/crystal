@@ -349,6 +349,15 @@ module IO
     nil
   end
 
+  # Writes the formatted string to STDOUT. The format can include
+  # format specifiers(subsequences beginning with %). The arguments
+  # replace the format specifiers in the format string.
+  #
+  # ```
+  # io = MemoryIO.new
+  # io.printf("Hello %s", "Crystal")
+  # io.to_s # => "Hello Crystal"
+  # ```
   def printf(format_string, *args) : Nil
     printf format_string, args
   end
