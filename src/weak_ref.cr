@@ -1,5 +1,15 @@
 # Weak Reference class that allows a referenced object to be garbage-collected.
 #
+# ```
+# ref = WeakRef.new("oof".reverse)
+# p ref.target # => "foo"
+# GC.collect
+# p ref.target # => nil
+# ```
+#
+# NOTE: Creating a weak reference of a literal (e.g. "foo") will crash your
+# application. This is the reason for using `"oof".reverse` in the above
+# example.
 class WeakRef(T)
   @target : Void*
 
