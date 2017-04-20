@@ -1,5 +1,11 @@
 # Weak Reference class that allows a referenced object to be garbage-collected.
 #
+# ```
+# ref = WeakRef.new("oof".reverse)
+# p ref.value # => "foo"
+# GC.collect
+# p ref.value # => nil
+# ```
 class WeakRef(T)
   @target : Void*
 
@@ -10,6 +16,7 @@ class WeakRef(T)
     end
   end
 
+  # :nodoc:
   def self.allocate
     ptr = GC.malloc_atomic(instance_sizeof(self)).as(self)
     set_crystal_type_id(ptr)
