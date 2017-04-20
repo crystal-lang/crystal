@@ -1,4 +1,7 @@
+require "./dwarf/abbrev"
+require "./dwarf/info"
 require "./dwarf/line_numbers"
+require "./dwarf/strings"
 
 module Debug
   module DWARF
