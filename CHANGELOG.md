@@ -4,6 +4,7 @@
 * **(breaking-change)** IO#peek now returns an empty slice on EOF (See #4240, #4261)
 * **(breaking-change)** Rename `WeakRef#target` to `WeakRef#value` (See #4293)
 * **(breaking-change)** Rename `HTTP::Params.from_hash` to `HTTP::Params.encode` (See #4205)
+* **(breaking-change)** `'\"'` is now invalid, use `'"'` (See #4309)
 * Improved backtrace function names are now read from DWARF sections (See #3958, thanks @ysbaddaden)
 * Improved sigfaults and exceptions are printed to STDERR (See #4163, thanks @Sija)
 * Improved SSL Sockets are now buffered (See #4248)
