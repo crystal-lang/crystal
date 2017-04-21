@@ -618,6 +618,8 @@ module Crystal
         interpret_argless_method(method, args) { NumberLiteral.new(@value.size) }
       when "lines"
         interpret_argless_method(method, args) { ArrayLiteral.map(@value.lines) { |value| StringLiteral.new(value) } }
+      when "reverse"
+        interpret_argless_method(method, args) { StringLiteral.new(@value.reverse) }
       when "split"
         case args.size
         when 0
