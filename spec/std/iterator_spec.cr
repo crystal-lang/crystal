@@ -11,7 +11,7 @@ describe Iterator do
     it "creates singleton from block" do
       a = 0
       iter = Iterator.of { a += 1 }
-      iter.first(3).to_a.should eq([1, 2, 3])
+      iter = iter.first(3).to_a.should eq([1, 2, 3])
     end
 
     it "creates singleton from block can call Iterator.stop" do
@@ -710,6 +710,31 @@ describe Iterator do
       iter.next.should eq(3)
 
       iter.rewind.to_a.should eq([1, 2, 2, 3, 3])
+    end
+  end
+
+  describe "auto_rewind?" do
+    it "default value is true" do
+      [1, 2, 3].each.auto_rewind?.should be_true
+    end
+
+    it "rewinds after each" do
+      iter = [1, 2, 3].each
+      iter.to_a.should eq([1, 2, 3])
+      iter.to_a.should eq([1, 2, 3])
+    end
+
+    it "doesn't rewind after each if auto_rewind? is false" do
+      iter = [1, 2, 3].each
+      iter.auto_rewind = false
+      iter.to_a.should eq([1, 2, 3])
+      iter.to_a.should eq([] of Int32)
+    end
+
+    it "inherits value" do
+      iter = [1, 2, 3].each
+      iter.auto_rewind = false
+      iter.first(2).auto_rewind?.should be_false
     end
   end
 end
