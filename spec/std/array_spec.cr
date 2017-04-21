@@ -1062,14 +1062,16 @@ describe "Array" do
   describe "swap" do
     it "swaps" do
       a = [1, 2, 3]
-      a.swap(0, 2)
-      a.should eq([3, 2, 1])
+      b = a.swap(0, 2)
+      a.should eq([1, 2, 3])
+      b.should eq([3, 2, 1])
     end
 
     it "swaps with negative indices" do
       a = [1, 2, 3]
-      a.swap(-3, -1)
-      a.should eq([3, 2, 1])
+      b = a.swap(-3, -1)
+      a.should eq([1, 2, 3])
+      b.should eq([3, 2, 1])
     end
 
     it "swaps but raises out of bounds on left" do
@@ -1083,6 +1085,34 @@ describe "Array" do
       a = [1, 2, 3]
       expect_raises IndexError do
         a.swap(0, 3)
+      end
+    end
+  end
+
+  describe "swap!" do
+    it "swaps" do
+      a = [1, 2, 3]
+      a.swap!(0, 2)
+      a.should eq([3, 2, 1])
+    end
+
+    it "swaps with negative indices" do
+      a = [1, 2, 3]
+      a.swap!(-3, -1)
+      a.should eq([3, 2, 1])
+    end
+
+    it "swaps but raises out of bounds on left" do
+      a = [1, 2, 3]
+      expect_raises IndexError do
+        a.swap!(3, 0)
+      end
+    end
+
+    it "swaps but raises out of bounds on right" do
+      a = [1, 2, 3]
+      expect_raises IndexError do
+        a.swap!(0, 3)
       end
     end
   end

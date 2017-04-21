@@ -992,7 +992,7 @@ class Array(T)
           pool[n - 1] = e
           cycles[i] = n - i
         else
-          pool.swap i, -ci
+          pool.swap! i, -ci
           yield pool_slice(pool, size, reuse)
           stop = false
           break
@@ -1565,7 +1565,7 @@ class Array(T)
     self
   end
 
-  def swap(index0, index1)
+  private def internal_swap(index0, index1, arr)
     index0 += size if index0 < 0
     index1 += size if index1 < 0
 
@@ -1573,8 +1573,31 @@ class Array(T)
       raise IndexError.new
     end
 
-    @buffer[index0], @buffer[index1] = @buffer[index1], @buffer[index0]
+    arr[index0], arr[index1] = arr[index1], arr[index0]
+    arr
+  end
 
+  # Returns a new array with elements at *index0* and *index1* swapped. If the
+  # arguments are negative, indices are counted from the end of the array. 
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.swap(0, 2) # => [3, 2, 1]
+  # ```
+  def swap(index0, index1)
+    internal_swap(index0, index1, dup)
+  end
+
+  # Modifies `self` in place so that elements at *index0* and *index1* are
+  # swapped. If the arguments are negative, indices are counted from the end of
+  # the array.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.swap!(0, 2) # => [3, 2, 1]
+  # ```
+  def swap!(index0, index1)
+    internal_swap(index0, index1, @buffer)
     self
   end
 
@@ -2041,7 +2064,7 @@ class Array(T)
           @pool[@n - 1] = e
           @cycles[@i] = @n - @i
         else
-          @pool.swap @i, -ci
+          @pool.swap! @i, -ci
           value = pool_slice(@pool, @size, @reuse)
           @i = @size - 1
           return value
