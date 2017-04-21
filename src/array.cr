@@ -554,12 +554,24 @@ class Array(T)
 
   # Appends the elements of *other* to `self`, and returns `self`.
   #
+  # It is synonym for `other.concat_to(self)`.
+  #
   # ```
   # ary = ["a", "b"]
   # ary.concat(["c", "d"])
   # ary # => ["a", "b", "c", "d"]
   # ```
-  def concat(other : Array)
+  def concat(other)
+    other.concat_to(self)
+  end
+
+  # :nodoc:
+  def concat_to(array)
+    array.concat_array(self)
+  end
+
+  # :nodoc:
+  def concat_array(other : Array(T))
     other_size = other.size
     new_size = size + other_size
     if new_size > @capacity
@@ -572,8 +584,8 @@ class Array(T)
     self
   end
 
-  # ditto
-  def concat(other : Enumerable)
+  # :nodoc:
+  def concat_enumerable(other : Enumerable(T))
     left_before_resize = @capacity - @size
     len = @size
     buf = @buffer + len
