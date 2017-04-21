@@ -390,6 +390,19 @@ struct Pointer(T)
     new 0_u64
   end
 
+  # Allocates `sizeof(T)` bytes from the system's heap initialized
+  # to zero and returns a pointer to the first byte from that memory.
+  # The memory is allocated by the `GC`, so when there are
+  # no pointers to this memory, it will be automatically freed.
+  #
+  # ```
+  # # Allocating memory for an Int32
+  # ptr = Pointer(Int32).new
+  # ```
+  def self.new
+    malloc(1_u64)
+  end
+
   # Returns a pointer that points to the given memory address. This doesn't allocate memory.
   #
   # ```
