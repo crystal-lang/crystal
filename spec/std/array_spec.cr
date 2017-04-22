@@ -1404,6 +1404,16 @@ describe "Array" do
     end
   end
 
+  describe "to_unsafe_slice" do
+    it "returns a slice" do
+      ary = [1, 2, 3]
+      ary.to_unsafe_slice.should be_a(Slice(Int32))
+      ary.to_unsafe_slice.to_unsafe.should eq(ary.to_unsafe)
+      ary.to_unsafe_slice.size.should eq(3)
+      ary.to_unsafe_slice[0].should eq(1)
+    end
+  end
+
   describe "transpose" do
     it "transeposes elements" do
       [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])

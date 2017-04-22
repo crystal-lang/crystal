@@ -1611,6 +1611,28 @@ class Array(T)
     @buffer
   end
 
+  # Returns the internal buffer as slice, pointing to the `self`'s elements.
+  #
+  # This method is **unsafe** because when the array shrinks or grows, it might
+  # change the position of the internal buffer. The slice would then point to an
+  # uninitialized memory region.
+  #
+  # ```
+  # # Safe usage
+  # ary = [1, 2, 3]
+  # ary.to_unsafe_slice[0] # => 1
+  # ary.to_unsafe_slice[1] = 4
+  # ary.to_unsafe_slice.size # => 3
+  #
+  # # Dangerous, will crash the program or introduce security issues
+  # slice = ary.to_unsafe_slice
+  # ary << 4
+  # # `slice` must not be used here anymore
+  # ```
+  def to_unsafe_slice : Slice(T)
+    @buffer.to_slice(size)
+  end
+
   # Assumes that `self` is an array of arrays and transposes the rows and columns.
   #
   # ```
