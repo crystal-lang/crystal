@@ -1414,6 +1414,14 @@ describe "Array" do
     end
   end
 
+  describe "bytesize" do
+    it "returns the size of the array in bytes" do
+      [1, 2, 3].bytesize.should eq(3 * sizeof(Int32))
+      ["1", "2", "3"].bytesize.should eq(3 * sizeof(String))
+      [Pointer(Int32).null].bytesize.should eq(sizeof(Pointer(Int32)))
+    end
+  end
+
   describe "transpose" do
     it "transeposes elements" do
       [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])

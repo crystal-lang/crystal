@@ -1633,6 +1633,19 @@ class Array(T)
     @buffer.to_slice(size)
   end
 
+  # Returns the total size in bytes of the array.
+  #
+  # The returned value is equivalent to the `#size` multiplied by the size of `T`.
+  #
+  # ```
+  # ary = [1, 2, 3]
+  # ary.bytesize # => 12 (3 elements, each using sizeof(Int32) bytes)
+  # ary.size     # => 3
+  # ```
+  def bytesize
+    size * sizeof(T)
+  end
+
   # Assumes that `self` is an array of arrays and transposes the rows and columns.
   #
   # ```
