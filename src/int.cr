@@ -652,6 +652,10 @@ struct UInt8
     value.to_u8
   end
 
+  def -
+    0_i16 - self
+  end
+
   def abs
     self
   end
@@ -672,6 +676,10 @@ struct UInt16
   # Returns an `UInt16` by invoking `to_u16` on *value*.
   def self.new(value)
     value.to_u16
+  end
+
+  def -
+    0_i32 - self
   end
 
   def abs
@@ -696,6 +704,10 @@ struct UInt32
     value.to_u32
   end
 
+  def -
+    0_i64 - self
+  end
+
   def abs
     self
   end
@@ -716,6 +728,10 @@ struct UInt64
   # Returns an `UInt64` by invoking `to_u64` on *value*.
   def self.new(value)
     value.to_u64
+  end
+
+  def -
+    0_i64 - self
   end
 
   def abs
