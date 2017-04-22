@@ -1398,6 +1398,12 @@ describe "Array" do
     end
   end
 
+  describe "to_unsafe" do
+    it "returns the internal buffer" do
+      [2, 3, 4].to_unsafe[1].should eq 3
+    end
+  end
+
   describe "transpose" do
     it "transeposes elements" do
       [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])
