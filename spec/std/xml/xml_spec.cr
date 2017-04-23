@@ -310,8 +310,8 @@ describe XML do
     doc = XML.parse(string)
     doc.xpath_node("//name").try(&.unlink)
     doc.to_xml.should eq(<<-XML
-    <?xml version="1.0" encoding="UTF-8"?>\n
-    XML
+        <?xml version="1.0" encoding="UTF-8"?>\n
+      XML
     )
   end
 end
