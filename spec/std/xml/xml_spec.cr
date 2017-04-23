@@ -300,4 +300,18 @@ describe XML do
       str.should eq("&lt; &amp; &gt;")
     end
   end
+
+  it "unlink node" do
+    string = <<-XML
+    <?xml version='1.0' encoding='UTF-8'?>
+    <name>Jonh</name>
+    XML
+    
+    doc = XML.parse(string)
+    doc.xpath_node("//name").try(&.unlink)
+    doc.to_xml.should eq(<<-XML
+      <?xml version="1.0" encoding="UTF-8"?>\n
+      XML
+    )
+  end
 end
