@@ -39,11 +39,11 @@ module FloatPrinter::Grisu3
   # outside the safe interval, or if we cannot prove that it is closer to the
   # input than a neighboring representation of the same length.
   #
-  # Input: * buffer containing the digits of too_high / 10^kappa
+  # Input: * buffer pointer containing the digits of too_high / 10^kappa
   #        * the buffer's length
-  #        * distance_too_high_w == (too_high - w).f() * unit
-  #        * unsafe_interval == (too_high - too_low).f() * unit
-  #        * rest = (too_high - buffer * 10^kappa).f() * unit
+  #        * distance_too_high_w == (too_high - w).frac * unit
+  #        * unsafe_interval == (too_high - too_low).frac * unit
+  #        * rest = (too_high - buffer * 10^kappa).frac * unit
   #        * ten_kappa = 10^kappa * unit
   #        * unit = the common multiplier
   # Output: returns true if the buffer is guaranteed to contain the closest
@@ -293,16 +293,19 @@ module FloatPrinter::Grisu3
     end
   end
 
-  # Provides a decimal representation of v.
-  # Returns true if it succeeds, otherwise the result cannot be trusted.
-  # There will be *length digits inside the buffer (not null-terminated).
-  # If the function returns true then
-  #        v == (double) (buffer * 10^decimal_exponent).
+  # Provides a decimal representation of *v*.
+  #
+  # Returns a `Tuple` of `{status, decimal_exponent, length}`
+  # *status* will be true if it succeeds, otherwise the result cannot be
+  # trusted.
+  # There will be *length* digits inside the buffer (not null-terminated).
+  # If the function returns satatus as true true then
+  #        v == (buffer * 10^decimal_exponent).to_f
   # The digits in the buffer are the shortest representation possible: no
   # 0.09999999999999999 instead of 0.1. The shorter representation will even be
-  # chosen even if the longer one would be closer to v.
-  # The last digit will be closest to the actual v. That is, even if several
-  # digits might correctly yield 'v' when read again, the closest will be
+  # chosen even if the longer one would be closer to *v*.
+  # The last digit will be closest to the actual *v*. That is, even if several
+  # digits might correctly yield *v* when read again, the closest will be
   # computed.
   def grisu3(v : Float64, buffer_p) : {Bool, Int32, Int32}
     buffer = buffer_p.to_slice(128)
@@ -311,7 +314,7 @@ module FloatPrinter::Grisu3
 
     # boundary_minus and boundary_plus are the boundaries between v and its
     # closest floating-point neighbors. Any number strictly between
-    # boundary_minus and boundary_plus will round to v when convert to a double.
+    # boundary_minus and boundary_plus will round to v when convert to a float.
     # Grisu3 will never output representations that lie exactly on a boundary.
     boundaries = IEEE.normalized_boundaries(v)
     _invariant boundaries[:plus].exp == w.exp
@@ -338,8 +341,8 @@ module FloatPrinter::Grisu3
     scaled_boundary_minus = boundaries[:minus] * ten_mk
     scaled_boundary_plus = boundaries[:plus] * ten_mk
 
-    # DigitGen will generate the digits of scaled_w. Therefore we have
-    # v == (double) (scaled_w * 10^-mk).
+    # #digit_gen will generate the digits of scaled_w. Therefore we have
+    # v == (scaled_w * 10^-mk).to_f
     # Set decimal_exponent == -mk and pass it to DigitGen. If scaled_w is not an
     # integer than it will be updated. For instance if scaled_w == 1.23 then
     # the buffer will be filled with "123" und the decimal_exponent will be
