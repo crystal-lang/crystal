@@ -29,8 +29,11 @@
 
 require "./ieee"
 
-# Do it yourself Floating Point
-# Does not support special NaN and Infinity
+# This "Do It Yourself Floating Point" struct implements a floating-point number
+# with a `UIht64` significand and an `Int32` exponent. Normalized DiyFP numbers will
+# have the most significant bit of the significand set.
+# Multiplication and Subtraction do not normalize their results.
+# DiyFP is not designed to contain special Floats (NaN and Infinity).
 struct FloatPrinter::DiyFP
   SIGNIFICAND_SIZE = 64
   # Also known as the significand
@@ -49,7 +52,11 @@ struct FloatPrinter::DiyFP
     new frac.to_u64, exp
   end
 
-  # The exponents of both numbers must be the same and the frac of self must be greater than the other.
+  # Returns a new `DiyFP` caculated as self - *other*.
+  #
+  # The exponents of both numbers must be the same and the frac of self must be
+  # greater than the other.
+  #
   # This result is not normalized.
   def -(other : DiyFP)
     _invariant self.exp == other.exp && frac >= other.frac
@@ -58,11 +65,14 @@ struct FloatPrinter::DiyFP
 
   MASK32 = 0xFFFFFFFF_u32
 
-  # does not normalize result
+  # Returns a new `DiyFP` caculated as self * *other*.
+  #
   # Simply "emulates" a 128 bit multiplication.
   # However: the resulting number only contains 64 bits. The least
   # significant 64 bits are only used for rounding the most significant 64
   # bits.
+  #
+  # This result is not normalized.
   def *(other : DiyFP)
     a = frac >> 32
     b = frac & MASK32

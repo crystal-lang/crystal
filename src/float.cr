@@ -223,12 +223,12 @@ struct Float64
 
   def to_s
     String.build(22) do |buffer|
-      FloatPrinter.to_s(self, buffer)
+      FloatPrinter.print(self, buffer)
     end
   end
 
   def to_s(io : IO)
-    FloatPrinter.to_s(self, io)
+    FloatPrinter.print(self, io)
   end
 
   def hash

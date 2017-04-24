@@ -1,10 +1,17 @@
 require "float_printer/*"
 
+# FloatPrinter is based on Grisu3 algorithm described in the 2004 paper
+# "Printing Floating-Point Numbers Quickly and Accurately with Integers" by
+# Florian Loitsch.
 module FloatPrinter
   extend self
   BUFFER_SIZE = 128
 
-  def to_s(v : Float64, io : IO)
+  # Converts Float *v* to a string representation and prints it onto *io*
+  #
+  # It is used by `Float64#to_s` and it is probably not necessary to use
+  # this directly.
+  def print(v : Float64, io : IO)
     d64 = IEEE.to_d64(v)
 
     if IEEE.sign(d64) < 0

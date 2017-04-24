@@ -59,10 +59,10 @@ module FloatPrinter::IEEE
     special?(d64) && (d64 & SIGNIFICAND_MASK != 0)
   end
 
-  # Computes the two boundaries of v.
+  # Computes the two boundaries of *v*.
   # The bigger boundary (m_plus) is normalized. The lower boundary has the same
   # exponent as m_plus.
-  # Precondition: the value encoded by this Double must be greater than 0.
+  # Precondition: the value encoded by this Flaot must be greater than 0.
   def normalized_boundaries(v : Float64)
     _invariant v > 0
     w = DiyFP.from_f64(v)

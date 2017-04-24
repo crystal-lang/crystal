@@ -4,7 +4,7 @@ include FloatPrinter
 
 private def float_to_s(v)
   String.build(22) do |buff|
-    FloatPrinter.to_s(v, buff)
+    FloatPrinter.print(v, buff)
   end
 end
 
@@ -22,7 +22,7 @@ private def test_pair(v : Float64, str, file = __FILE__, line = __LINE__)
   float_to_s(v).should eq(str), file, line
 end
 
-describe "to_s" do
+describe "#print" do
   it { test_str "0.0" }
 
   it { test_str "Infinity" }

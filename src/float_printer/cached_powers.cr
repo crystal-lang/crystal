@@ -38,11 +38,15 @@ module FloatPrinter::CachedPowers
   MIN_TARGET_EXP = -60
   MAX_TARGET_EXP = -32
 
-  CACHED_POWER_OFFSET =                 348 # -1 * the first decimal_exp
-  CACHED_EXP_STEP     =                   8 # decimal exponent distance
-  MIN_CACHED_EXP      =                -348
-  MAX_CACHED_EXP      =                 340
-  D_1_LOG2_10         = 0.30102999566398114 # 1 / lg(10)
+  CACHED_POWER_OFFSET = 348 # -1 * the first decimal_exp
+
+  # Not all powers of ten are cached. The decimal exponent of two neighboring
+  # cached numbers will differ by `CACHED_EXP_STEP`
+  CACHED_EXP_STEP =    8
+  MIN_CACHED_EXP  = -348
+  MAX_CACHED_EXP  =  340
+
+  D_1_LOG2_10 = 0.30102999566398114 # 1 / lg(10)
 
   PowCache = [
     {0xfa8fd5a0081c0288_u64, -1220_i16, -348_i16},
@@ -147,6 +151,8 @@ module FloatPrinter::CachedPowers
     return Pow10Cache[guess], guess
   end
 
+  # Returns a cached power-of-ten with a binary exponent in the range
+  # around *exp* (boundaries included).
   def self.get_cached_power_for_binary_exponent(exp) : {DiyFP, Int32}
     min_exp = MIN_TARGET_EXP - (exp + DiyFP::SIGNIFICAND_SIZE)
     max_exp = MAX_TARGET_EXP - (exp + DiyFP::SIGNIFICAND_SIZE)
