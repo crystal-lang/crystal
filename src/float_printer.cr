@@ -59,11 +59,11 @@ module FloatPrinter
     # add integer part digits
     if decimal_exponent > 0 && !exp_mode
       # whole number but not big enough to be exp form
-      io.write_utf8 buffer.to_slice[i, length-i]
+      io.write_utf8 buffer.to_slice[i, length - i]
       i = length
       (point - length).times { io << '0' }
     elsif i < point
-      io.write_utf8 buffer.to_slice[i, point-i]
+      io.write_utf8 buffer.to_slice[i, point - i]
       i = point
     end
 
@@ -75,9 +75,8 @@ module FloatPrinter
     end
 
     # add fractional part digits
-    io.write_utf8 buffer.to_slice[i, length-i]
+    io.write_utf8 buffer.to_slice[i, length - i]
     i = length
-
 
     # print trailing 0 if whole number or exp notation of power of ten
     if (decimal_exponent >= 0 && !exp_mode) || (exp != point && length == 1)

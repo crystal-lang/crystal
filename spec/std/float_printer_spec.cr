@@ -27,7 +27,8 @@ describe "#print" do
 
   it { test_str "Infinity" }
 
-  it { test_str "NaN" }
+  it { test_pair 0x7ff8000000000000_u64, "NaN" }
+  it { test_pair 0xfff8000000000000_u64, "-NaN" }
 
   it { test_str "0.01" }
   it { test_str "0.1" }
