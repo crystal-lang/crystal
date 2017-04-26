@@ -126,6 +126,9 @@ module Crystal
     # Whether to link statically
     property? static = false
 
+    # Whether to use llvm ThinLTO for linking
+    property thin_lto = false
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -232,7 +235,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit
+        program.codegen node, debug: debug, single_module: @single_module || (!@thin_lto && @release) || @cross_compile || @emit
       end
 
       if @cross_compile
@@ -283,10 +286,10 @@ module Crystal
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
-      stdout.puts linker_command(program, object_name, output_filename)
+      stdout.puts linker_command(program, object_name, output_filename, nil)
     end
 
-    private def linker_command(program : Program, object_name, output_filename)
+    private def linker_command(program : Program, object_name, output_filename, output_dir)
       if program.has_flag? "windows"
         if object_name
           object_name = %("#{object_name}")
@@ -300,6 +303,18 @@ module Crystal
 
         %(#{CL} #{object_name} "/Fe#{output_filename}" #{program.lib_flags} #{link_flags})
       else
+        if thin_lto
+          lto_cache_dir = "#{output_dir}/lto.cache"
+          Dir.mkdir_p(lto_cache_dir)
+          {% if flag?(:darwin) %}
+            cc = ENV["CC"]? || "clang-4.0 -flto=thin -Wl,-mllvm,-threads=#{n_threads},-cache_path_lto,#{lto_cache_dir},#{@release ? "-mllvm,-O2" : "-mllvm,-O0"}"
+          {% else %}
+            cc = ENV["CC"]? || "clang-4.0 -flto=thin -Wl,-plugin-opt,jobs=#{n_threads},-plugin-opt,cache-dir=#{lto_cache_dir} #{@release ? "-O2" : "-O0"}"
+          {% end %}
+        else
+          cc = CC
+        end
+
         if object_name
           object_name = %('#{object_name}')
         else
@@ -310,7 +325,7 @@ module Crystal
         link_flags += " -rdynamic"
         link_flags += " -static" if static?
 
-        %(#{CC} #{object_name} -o '#{output_filename}' #{link_flags} #{program.lib_flags})
+        %(#{cc} #{object_name} -o '#{output_filename}' #{link_flags} #{program.lib_flags})
       end
     end
 
@@ -345,7 +360,7 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          system(linker_command(program, nil, output_filename), object_names)
+          system(linker_command(program, nil, output_filename, output_dir), object_names)
         end
       end
 
@@ -545,6 +560,15 @@ module Crystal
       def compile
         bc_name = self.bc_name
         object_name = self.object_name
+
+        {% if LibLLVM::IS_40 %}
+        if compiler.thin_lto
+          @llvm_mod.write_bitcode_with_summary_to_file(object_name)
+          @reused_previous_compilation = false
+          llvm_mod.print_to_file ll_name if compiler.dump_ll?
+          return
+        end
+        {% end %}
 
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored

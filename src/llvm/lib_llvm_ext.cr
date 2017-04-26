@@ -134,4 +134,8 @@ lib LibLLVMExt
                                         then : LibLLVM::BasicBlockRef, catch : LibLLVM::BasicBlockRef,
                                         bundle : LibLLVMExt::OperandBundleDefRef,
                                         name : LibC::Char*) : LibLLVM::ValueRef
+
+  {% if LibLLVM::IS_40 %}
+    fun write_bitcode_with_summary_to_file = LLVMWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void
+  {% end %}
 end
