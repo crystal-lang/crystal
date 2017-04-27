@@ -15,9 +15,11 @@ class Thread
   def initialize(&@func : ->)
     @current_fiber = uninitialized Fiber
     @@threads << self
+    @th = th = uninitialized LibC::PthreadT
 
-    ret = LibGC.pthread_create(out th, nil, ->(data) {
+    ret = GC.pthread_create(pointerof(th), Pointer(LibC::PthreadAttrT).null, ->(data : Void*) {
       (data.as(Thread)).start
+      Pointer(Void).null
     }, self.as(Void*))
     @th = th
 
@@ -34,13 +36,11 @@ class Thread
   end
 
   def finalize
-    LibGC.pthread_detach(@th.not_nil!) unless @detached
+    GC.pthread_detach(@th.not_nil!) unless @detached
   end
 
   def join
-    if LibGC.pthread_join(@th.not_nil!, out _ret) != 0
-      raise Errno.new("pthread_join")
-    end
+    GC.pthread_join(@th.not_nil!)
     @detached = true
 
     if exception = @exception

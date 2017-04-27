@@ -55,60 +55,27 @@ lib LibGC
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
   # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
-  fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : Void*, start : Void* ->, arg : Void*) : LibC::Int
+  fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
   fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
   fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
 end
 
-# :nodoc:
-fun __crystal_malloc(size : UInt32) : Void*
-  LibGC.malloc(size)
-end
-
-# :nodoc:
-fun __crystal_malloc_atomic(size : UInt32) : Void*
-  LibGC.malloc_atomic(size)
-end
-
-# :nodoc:
-fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
-  LibGC.realloc(ptr, size)
-end
-
-# :nodoc:
-fun __crystal_malloc64(size : UInt64) : Void*
-  {% if flag?(:bits32) %}
-    if size > UInt32::MAX
-      raise ArgumentError.new("Given size is bigger than UInt32::MAX")
-    end
-  {% end %}
-
-  LibGC.malloc(size)
-end
-
-# :nodoc:
-fun __crystal_malloc_atomic64(size : UInt64) : Void*
-  {% if flag?(:bits32) %}
-    if size > UInt32::MAX
-      raise ArgumentError.new("Given size is bigger than UInt32::MAX")
-    end
-  {% end %}
-
-  LibGC.malloc_atomic(size)
-end
-
-# :nodoc:
-fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
-  {% if flag?(:bits32) %}
-    if size > UInt32::MAX
-      raise ArgumentError.new("Given size is bigger than UInt32::MAX")
-    end
-  {% end %}
-
-  LibGC.realloc(ptr, size)
-end
-
 module GC
+  # :nodoc:
+  def self.malloc(size : LibC::SizeT) : Void*
+    LibGC.malloc(size)
+  end
+
+  # :nodoc:
+  def self.malloc_atomic(size : LibC::SizeT) : Void*
+    LibGC.malloc_atomic(size)
+  end
+
+  # :nodoc:
+  def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
+    LibGC.realloc(ptr, size)
+  end
+
   def self.init
     LibGC.set_handle_fork(1)
     LibGC.init
@@ -163,15 +130,6 @@ module GC
     LibGC.is_heap_ptr(pointer) != 0
   end
 
-  record Stats,
-    # collections : LibC::ULong,
-    # bytes_found : LibC::Long,
-    heap_size : LibC::ULong,
-    free_bytes : LibC::ULong,
-    unmapped_bytes : LibC::ULong,
-    bytes_since_gc : LibC::ULong,
-    total_bytes : LibC::ULong
-
   def self.stats
     LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
     # collections = LibGC.gc_no - 1
@@ -186,5 +144,48 @@ module GC
       bytes_since_gc: bytes_since_gc,
       total_bytes: total_bytes
     )
+  end
+
+  # :nodoc:
+  def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
+    LibGC.pthread_create(thread, attr, start, arg)
+  end
+
+  # :nodoc:
+  def self.pthread_join(thread : LibC::PthreadT) : Void*
+    ret = LibGC.pthread_join(thread, out value)
+    raise Errno.new("pthread_join") unless ret == 0
+    value
+  end
+
+  # :nodoc:
+  def self.pthread_detach(thread : LibC::PthreadT)
+    LibGC.pthread_detach(thread)
+  end
+
+  # :nodoc:
+  def self.stack_bottom
+    LibGC.stackbottom
+  end
+
+  # :nodoc:
+  def self.stack_bottom=(pointer : Void*)
+    LibGC.stackbottom = pointer
+  end
+
+  # :nodoc:
+  def self.push_stack(stack_top, stack_bottom)
+    LibGC.push_all_eager(stack_top, stack_bottom)
+  end
+
+  # :nodoc:
+  def self.before_collect(&block)
+    @@prev_push_other_roots = LibGC.get_push_other_roots
+    @@curr_push_other_roots = block
+
+    LibGC.set_push_other_roots ->do
+      @@prev_push_other_roots.try(&.call)
+      @@curr_push_other_roots.try(&.call)
+    end
   end
 end

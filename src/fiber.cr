@@ -83,7 +83,7 @@ class Fiber
     @proc = Proc(Void).new { }
     @stack = Pointer(Void).null
     @stack_top = _fiber_get_stack_top
-    @stack_bottom = LibGC.stackbottom
+    @stack_bottom = GC.stack_bottom
     @name = "main"
 
     @@first_fiber = @@last_fiber = self
@@ -257,7 +257,7 @@ class Fiber
 
   def resume : Nil
     current, Thread.current.current_fiber = Thread.current.current_fiber, self
-    LibGC.stackbottom = @stack_bottom
+    GC.stack_bottom = @stack_bottom
     {% if flag?(:aarch64) %}
       Fiber.switch_stacks(pointerof(current.@stack_top), @stack_top)
     {% else %}
@@ -302,7 +302,7 @@ class Fiber
 
   protected def push_gc_roots
     # Push the used section of the stack
-    LibGC.push_all_eager @stack_top, @stack_bottom
+    GC.push_stack @stack_top, @stack_bottom
   end
 
   @@root = new
@@ -317,12 +317,8 @@ class Fiber
     Thread.current.current_fiber
   end
 
-  @@prev_push_other_roots = LibGC.get_push_other_roots
-
   # This will push all fibers stacks whenever the GC wants to collect some memory
-  LibGC.set_push_other_roots ->do
-    @@prev_push_other_roots.call
-
+  GC.before_collect do
     fiber = @@first_fiber
     while fiber
       fiber.push_gc_roots unless fiber == Thread.current.current_fiber
