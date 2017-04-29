@@ -30,33 +30,62 @@
 module FloatPrinter::IEEE
   extend self
 
-  EXPONENT_MASK             = 0x7FF0000000000000_u64
-  SIGNIFICAND_MASK          = 0x000FFFFFFFFFFFFF_u64
-  HIDDEN_BIT                = 0x0010000000000000_u64 # hiden bit
-  PHYSICAL_SIGNIFICAND_SIZE =                     52 # Excludes the hidden bit
-  SIGNIFICAND_SIZE          =                     53 # float64
-  EXPONENT_BIAS             = 0x3FF + PHYSICAL_SIGNIFICAND_SIZE
-  DENORMAL_EXPONENT         = -EXPONENT_BIAS + 1
-  SIGN_MASK                 = 0x8000000000000000_u64
+  EXPONENT_MASK_64             = 0x7FF0000000000000_u64
+  SIGNIFICAND_MASK_64          = 0x000FFFFFFFFFFFFF_u64
+  HIDDEN_BIT_64                = 0x0010000000000000_u64
+  PHYSICAL_SIGNIFICAND_SIZE_64 =                     52 # Excludes the hidden bit
+  SIGNIFICAND_SIZE_64          =                     53
+  EXPONENT_BIAS_64             = 0x3FF + PHYSICAL_SIGNIFICAND_SIZE_64
+  DENORMAL_EXPONENT_64         = -EXPONENT_BIAS_64 + 1
+  SIGN_MASK_64                 = 0x8000000000000000_u64
 
-  def to_d64(v : Float64)
-    d64 = (pointerof(v).as UInt64*).value
+  EXPONENT_MASK_32             = 0x7F800000_u32
+  SIGNIFICAND_MASK_32          = 0x007FFFFF_u32
+  HIDDEN_BIT_32                = 0x00800000_u32
+  PHYSICAL_SIGNIFICAND_SIZE_32 =             23 # Excludes the hidden bit
+  SIGNIFICAND_SIZE_32          =             24
+  EXPONENT_BIAS_32             = 0x7F + PHYSICAL_SIGNIFICAND_SIZE_32
+  DENORMAL_EXPONENT_32         = -EXPONENT_BIAS_32 + 1
+  SIGN_MASK_32                 = 0x80000000_u32
+
+  def to_uint(v : Float64)
+    pointerof(v).as(UInt64*).value
+  end
+
+  def to_uint(v : Float32)
+    pointerof(v).as(UInt32*).value
   end
 
   def sign(d64 : UInt64)
-    (d64 & SIGN_MASK) == 0 ? 1 : -1
+    (d64 & SIGN_MASK_64) == 0 ? 1 : -1
+  end
+
+  def sign(d32 : UInt32)
+    (d32 & SIGN_MASK_32) == 0 ? 1 : -1
   end
 
   def special?(d64 : UInt64)
-    (d64 & EXPONENT_MASK) == EXPONENT_MASK
+    (d64 & EXPONENT_MASK_64) == EXPONENT_MASK_64
+  end
+
+  def special?(d32 : UInt32)
+    (d32 & EXPONENT_MASK_32) == EXPONENT_MASK_32
   end
 
   def inf?(d64 : UInt64)
-    special?(d64) && (d64 & SIGNIFICAND_MASK == 0)
+    special?(d64) && (d64 & SIGNIFICAND_MASK_64 == 0)
+  end
+
+  def inf?(d32 : UInt32)
+    special?(d32) && (d32 & SIGNIFICAND_MASK_32 == 0)
   end
 
   def nan?(d64 : UInt64)
-    special?(d64) && (d64 & SIGNIFICAND_MASK != 0)
+    special?(d64) && (d64 & SIGNIFICAND_MASK_64 != 0)
+  end
+
+  def nan?(d32 : UInt32)
+    special?(d32) && (d32 & SIGNIFICAND_MASK_32 != 0)
   end
 
   # Computes the two boundaries of *v*.
@@ -65,13 +94,10 @@ module FloatPrinter::IEEE
   # Precondition: the value encoded by this Flaot must be greater than 0.
   def normalized_boundaries(v : Float64)
     _invariant v > 0
-    w = DiyFP.from_f64(v)
-    # pp w
-    # p "inner: #{DiyFP.new((w.frac << 1) + 1, w.exp - 1).inspect}"
+    w = DiyFP.from_f(v)
     m_plus = DiyFP.new((w.frac << 1) + 1, w.exp - 1).normalize
-    # pp m_plus
 
-    d64 = to_d64(v)
+    d64 = to_uint(v)
 
     # The boundary is closer if the significand is of the form f == 2^p-1 then
     # the lower boundary is closer.
@@ -81,53 +107,89 @@ module FloatPrinter::IEEE
     # The only exception is for the smallest normal: the largest denormal is
     # at the same distance as its successor.
     # Note: denormals have the same exponent as the smallest normals.
-    physical_significand_is_zero = (d64 & SIGNIFICAND_MASK) == 0
-    # pp physical_significand_is_zero
+    physical_significand_is_zero = (d64 & SIGNIFICAND_MASK_64) == 0
 
-    lower_bound_closer = physical_significand_is_zero && (exponent(d64) != DENORMAL_EXPONENT)
+    lower_bound_closer = physical_significand_is_zero && (exponent(d64) != DENORMAL_EXPONENT_64)
     calcualted_exp = exponent(d64)
-    # pp calcualted_exp
     calc_denormal = denormal?(d64)
-    # pp calc_denormal
-    # pp lower_bound_closer
-    # pp w
     f, e = if lower_bound_closer
              {(w.frac << 2) - 1, w.exp - 2}
            else
              {(w.frac << 1) - 1, w.exp - 1}
            end
-    # pp ["pre", f,e]
     m_minus = DiyFP.new(f << (e - m_plus.exp), m_plus.exp)
-    # pp m_minus
+    return {minus: m_minus, plus: m_plus}
+  end
+
+  def normalized_boundaries(v : Float32)
+    _invariant v > 0
+    w = DiyFP.from_f(v)
+    m_plus = DiyFP.new((w.frac << 1) + 1, w.exp - 1).normalize
+
+    d32 = to_uint(v)
+
+    physical_significand_is_zero = (d32 & SIGNIFICAND_MASK_32) == 0
+
+    lower_bound_closer = physical_significand_is_zero && (exponent(d32) != DENORMAL_EXPONENT_32)
+    calcualted_exp = exponent(d32)
+    calc_denormal = denormal?(d32)
+    f, e = if lower_bound_closer
+             {(w.frac << 2) - 1, w.exp - 2}
+           else
+             {(w.frac << 1) - 1, w.exp - 1}
+           end
+    m_minus = DiyFP.new(f << (e - m_plus.exp), m_plus.exp)
     return {minus: m_minus, plus: m_plus}
   end
 
   def frac_and_exp(v : Float64)
-    d64 = to_d64(v)
-    _invariant (d64 & EXPONENT_MASK) != EXPONENT_MASK
+    d64 = to_uint(v)
+    _invariant (d64 & EXPONENT_MASK_64) != EXPONENT_MASK_64
 
-    if (d64 & EXPONENT_MASK) == 0 # denormal float
-      frac = d64 & SIGNIFICAND_MASK
-      exp = 1 - EXPONENT_BIAS
+    if (d64 & EXPONENT_MASK_64) == 0 # denormal float
+      frac = d64 & SIGNIFICAND_MASK_64
+      exp = 1 - EXPONENT_BIAS_64
     else
-      frac = (d64 & SIGNIFICAND_MASK) + HIDDEN_BIT
-      exp = (((d64 & EXPONENT_MASK) >> PHYSICAL_SIGNIFICAND_SIZE) - EXPONENT_BIAS).to_i
+      frac = (d64 & SIGNIFICAND_MASK_64) + HIDDEN_BIT_64
+      exp = (((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64) - EXPONENT_BIAS_64).to_i
     end
 
     {frac, exp}
   end
 
+  def frac_and_exp(v : Float32)
+    d32 = to_uint(v)
+    _invariant (d32 & EXPONENT_MASK_32) != EXPONENT_MASK_32
+
+    if (d32 & EXPONENT_MASK_32) == 0 # denormal float
+      frac = d32 & SIGNIFICAND_MASK_32
+      exp = 1 - EXPONENT_BIAS_32
+    else
+      frac = (d32 & SIGNIFICAND_MASK_32) + HIDDEN_BIT_32
+      exp = (((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32) - EXPONENT_BIAS_32).to_i
+    end
+
+    {frac.to_u64, exp}
+  end
+
   private def denormal?(d64 : UInt64) : Bool
-    (d64 & EXPONENT_MASK) == 0
+    (d64 & EXPONENT_MASK_64) == 0
+  end
+
+  private def denormal?(d32 : UInt32) : Bool
+    (d32 & EXPONENT_MASK_32) == 0
   end
 
   private def exponent(d64 : UInt64)
-    # pp (denormal?(d64))
-    return DENORMAL_EXPONENT if denormal?(d64)
-    baised_e = ((d64 & EXPONENT_MASK) >> PHYSICAL_SIGNIFICAND_SIZE).to_i
-    # puts [(d64 & EXPONENT_MASK).to_i, PHYSICAL_SIGNIFICAND_SIZE]
-    # pp [baised_e, EXPONENT_BIAS]
-    baised_e - EXPONENT_BIAS
+    return DENORMAL_EXPONENT_64 if denormal?(d64)
+    baised_e = ((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64).to_i
+    baised_e - EXPONENT_BIAS_64
+  end
+
+  private def exponent(d32 : UInt32)
+    return DENORMAL_EXPONENT_32 if denormal?(d32)
+    baised_e = ((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32).to_i
+    baised_e - EXPONENT_BIAS_32
   end
 
   private macro _invariant(exp, file = __FILE__, line = __LINE__)

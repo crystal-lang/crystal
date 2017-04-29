@@ -307,10 +307,10 @@ module FloatPrinter::Grisu3
   # The last digit will be closest to the actual *v*. That is, even if several
   # digits might correctly yield *v* when read again, the closest will be
   # computed.
-  def grisu3(v : Float64, buffer_p) : {Bool, Int32, Int32}
+  def grisu3(v : Float64 | Float32, buffer_p) : {Bool, Int32, Int32}
     buffer = buffer_p.to_slice(128)
 
-    w = DiyFP.from_f64_normalized(v)
+    w = DiyFP.from_f_normalized(v)
 
     # boundary_minus and boundary_plus are the boundaries between v and its
     # closest floating-point neighbors. Any number strictly between
