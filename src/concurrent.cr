@@ -164,9 +164,7 @@ def every(time_span : Time::Span)
     yield i
     delta = Time.now - t1
 
-    sleep_time = time_span - delta
-    sleep_time = 0 if sleep_time < Time::Span.zero
-
+    sleep_time = {time_span - delta, Time::Span.zero}.max
     sleep sleep_time
   end
 end
