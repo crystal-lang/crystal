@@ -91,3 +91,16 @@ class DivisionByZero < Exception
     super(message)
   end
 end
+
+# Raised when a feature is not implemented yet or when it cannot be implemented
+# on a certain system or platform
+#
+# ```
+# Sysctl.get_int("net.ipv4.forward") # Sysctl doesn't exist on Windows
+# ````
+#
+class NotImplemented < Exception
+  def initialize(what : String, reason = "is not implemented")
+    super [what, reason].join(" ")
+  end
+end
