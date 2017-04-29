@@ -46,20 +46,23 @@ describe "concurrent" do
     counter = 0
 
     spawn do
-      every(10.milliseconds) do |i|
-        sleep 3.milliseconds
+      every(20.milliseconds) do |i|
+        sleep 5.milliseconds
         counter = i
       end
     end
 
-    sleep 15.milliseconds
+    sleep 40.milliseconds
     counter.should eq(1)
 
-    sleep 10.milliseconds
+    sleep 20.milliseconds
     counter.should eq(2)
 
-    sleep 20.milliseconds
+    sleep 40.milliseconds
     counter.should eq(4)
+
+    sleep 40.milliseconds
+    counter.should eq(6)
   end
 
   it "runs something every X time even if the task takes longer than that" do
