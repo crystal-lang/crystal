@@ -18,11 +18,17 @@ private def test_pair(v : UInt64, str, file = __FILE__, line = __LINE__)
   d = pointerof(v).as(Float64*).value
   test_pair(d, str, file, line)
 end
-private def test_pair(v : Float64, str, file = __FILE__, line = __LINE__)
+
+private def test_pair(v : UInt32, str, file = __FILE__, line = __LINE__)
+  d = pointerof(v).as(Float32*).value
+  test_pair(d, str, file, line)
+end
+
+private def test_pair(v : Float64 | Float32, str, file = __FILE__, line = __LINE__)
   float_to_s(v).should eq(str), file, line
 end
 
-describe "#print" do
+describe "#print Float64" do
   it { test_str "0.0" }
 
   it { test_str "Infinity" }
@@ -85,5 +91,42 @@ describe "#print" do
 
   it "largest denormal" do
     test_pair 0x000FFFFFFFFFFFFF_u64, "2.225073858507201e-308"
+  end
+end
+
+describe "#print Float32" do
+  it { test_pair 0_f32, "0.0" }
+  it { test_pair -0_f32, "-0.0" }
+  it { test_pair Float32::INFINITY, "Infinity" }
+  it { test_pair -Float32::INFINITY, "-Infinity" }
+  it { test_pair 0x7fc00000_u32, "NaN" }
+  it { test_pair 0xffc80000_u32, "-NaN" }
+  it { test_pair 0.000001_f32, "1.0e-6" }
+  it { test_pair -0.0001_f32, "-0.0001" }
+  it { test_pair -0.00001_f32, "-1.0e-5" }
+  it { test_pair -12345e23_f32, "-1.2345e+27" }
+  it { test_pair 100000000000000.0_f32, "100000000000000.0" }
+  it { test_pair 1000000000000000.0_f32, "1.0e+15" }
+  it { test_pair 1111111111111111.0_f32, "1.1111111e+15" }
+  it { test_pair -3.9292015898194142585311918e-10_f32, "-3.9292017e-10" }
+
+  it "largest float" do
+    test_pair 3.4028234e38_f32, "3.4028235e+38"
+  end
+
+  it "largest normal" do
+    test_pair 0x7f7fffff_u32, "3.4028235e+38"
+  end
+
+  it "smallest positive normal" do
+    test_pair 0x00800000_u32, "1.1754944e-38"
+  end
+
+  it "largest denormal" do
+    test_pair 0x007fffff_u32, "1.1754942e-38"
+  end
+
+  it "smallest positive denormal" do
+    test_pair 0x00000001_u32, "1.0e-45"
   end
 end

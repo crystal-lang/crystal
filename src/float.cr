@@ -139,37 +139,13 @@ struct Float32
   end
 
   def to_s
-    String.new(22) do |buffer|
-      len = to_s_internal(buffer)
-      {len, len}
+    String.build(22) do |buffer|
+      FloatPrinter.print(self, buffer)
     end
   end
 
   def to_s(io : IO)
-    chars = StaticArray(UInt8, 22).new(0_u8)
-    len = to_s_internal(chars.to_unsafe)
-    io.write_utf8 chars.to_slice[0, len]
-  end
-
-  private def to_s_internal(buffer)
-    LibC.snprintf(buffer, 22, "%g", to_f64)
-    len = LibC.strlen(buffer)
-
-    # If it's "inf", return "Infinity"
-    if buffer[0] === 'i'
-      buffer.copy_from("Infinity".to_unsafe, 8)
-      len = 8
-      return len
-    end
-
-    # If it's "-inf", return "-inf"
-    if len >= 2 && buffer[1] === 'i'
-      buffer.copy_from("-Infinity".to_unsafe, 9)
-      len = 9
-      return len
-    end
-
-    len
+    FloatPrinter.print(self, io)
   end
 
   def hash

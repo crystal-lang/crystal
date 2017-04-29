@@ -116,27 +116,27 @@ struct FloatPrinter::DiyFP
     DiyFP.new(f, e)
   end
 
-  def self.from_f64(d : Float64)
+  def self.from_f(d : Float64 | Float32)
     _invariant d > 0
     frac, exp = IEEE.frac_and_exp(d)
     new(frac, exp)
   end
 
   # Normalize such that the most signficiant bit of frac is set
-  def self.from_f64_normalized(v : Float64)
-    pre_normalized = from_f64(v)
+  def self.from_f_normalized(v : Float64 | Float32)
+    pre_normalized = from_f(v)
     f = pre_normalized.frac
     e = pre_normalized.exp
 
     # could be a denormal
-    while (f & IEEE::HIDDEN_BIT) == 0
+    while (f & IEEE::HIDDEN_BIT_64) == 0
       f <<= 1
       e -= 1
     end
 
     # do the final shifts in one go
-    f <<= DiyFP::SIGNIFICAND_SIZE - IEEE::SIGNIFICAND_SIZE
-    e -= DiyFP::SIGNIFICAND_SIZE - IEEE::SIGNIFICAND_SIZE
+    f <<= DiyFP::SIGNIFICAND_SIZE - IEEE::SIGNIFICAND_SIZE_64
+    e -= DiyFP::SIGNIFICAND_SIZE - IEEE::SIGNIFICAND_SIZE_64
     DiyFP.new(f, e)
   end
 

@@ -11,18 +11,18 @@ module FloatPrinter
   #
   # It is used by `Float64#to_s` and it is probably not necessary to use
   # this directly.
-  def print(v : Float64, io : IO)
-    d64 = IEEE.to_d64(v)
+  def print(v : Float64 | Float32, io : IO)
+    d = IEEE.to_uint(v)
 
-    if IEEE.sign(d64) < 0
+    if IEEE.sign(d) < 0
       io << '-'
       v = -v
     end
 
     if v == 0.0
       io << "0.0"
-    elsif IEEE.special?(d64)
-      if IEEE.inf?(d64)
+    elsif IEEE.special?(d)
+      if IEEE.inf?(d)
         io << "Infinity"
       else
         io << "NaN"
@@ -32,14 +32,18 @@ module FloatPrinter
     end
   end
 
-  private def internal(v : Float64, io : IO)
+  private def internal(v : Float64 | Float32, io : IO)
     buffer = StaticArray(UInt8, BUFFER_SIZE).new(0_u8)
-    status, decimal_exponent, length = Grisu3.grisu3(v, buffer.to_unsafe)
+    success, decimal_exponent, length = Grisu3.grisu3(v, buffer.to_unsafe)
 
-    unless status
+    unless success
       # grisu3 does not work for ~0.5% of floats
       # when this happens, fallback to another, slower approach
-      LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%.17g", v)
+      if v.class == Float64
+        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%.17g", v)
+      else
+        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v)
+      end
       len = LibC.strlen(buffer)
       io.write_utf8 buffer.to_slice[0, len]
       return
