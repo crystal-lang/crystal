@@ -150,3 +150,15 @@ macro parallel(*jobs)
     {% end %}
   }
 end
+
+# Runs the given block every *time_span*. This method takes into account the
+# execution time for the block to keep the intervals accurate. The block is
+# passed a counter of the number of previous executions, starting at 0.
+def every(time_span : Time::Span)
+  loop do |i|
+    t1 = Time.now
+    yield i
+    delta = Time.now - t1
+    sleep time_span - delta
+  end
+end
