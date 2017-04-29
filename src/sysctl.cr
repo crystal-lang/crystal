@@ -17,7 +17,7 @@ module Sysctl
   # Sysctl.get_int("hw.ncpu") # => 8
   # ```
   #
-  def get_i32(name : String) : Int32
+  def i32(name : String) : Int32
     {% if flag?(:darwin) || flag?(:freebsd) %}
       value = GC.malloc_atomic(sizeof(Int32)).as(Int32*)
       value_len = GC.malloc_atomic(sizeof(Int32)).as(Int32*)
@@ -35,7 +35,7 @@ module Sysctl
       path = name_to_path name
       read_proc_sys(path).to_i32
     {% else %}
-      raise NotImplemented("Sysctl", "is not supported on this platform")
+      raise NotImplemented.new("Sysctl", "is not supported on this platform")
     {% end %}
   end
 
@@ -47,7 +47,7 @@ module Sysctl
   # Sysctl.get_str("kernel.random.boot_id", 42) # => "1c629298-a60b-48df-bba1-9ea77f6b37ba"
   # ```
   #
-  def get_str(name : String, max_size : Int32) : String
+  def str(name : String, max_size : Int32) : String
     {% if flag?(:darwin) || flag?(:freebsd) %}
       value = GC.malloc_atomic(max_size).as(LibC::Char*)
       value_len = GC.malloc_atomic(sizeof(Int32)).as(Int32*)
@@ -65,7 +65,7 @@ module Sysctl
       path = name_to_path name
       read_proc_sys(path)
     {% else %}
-      raise NotImplemented("Sysctl", "is not supported on this platform")
+      raise NotImplemented.new("Sysctl", "is not supported on this platform")
     {% end %}
   end
 

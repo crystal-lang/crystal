@@ -9,7 +9,7 @@ describe Sysctl do
       {% elsif flag?(:linux) %}
         ["net.ipv4.ip_forward", "kernel.pty.max"]
       {% else %}
-        []
+        [] of String
       {% end %}
 
       keys.each do |key|
@@ -32,9 +32,9 @@ describe Sysctl do
       keys = {% if flag?(:darwin) %}
           ["kern.version", "kern.corefile"]
         {% elsif flag?(:linux) %}
-          []
+          [] of String
         {% else %}
-          []
+          [] of String
         {% end %}
 
       keys.each do |key|

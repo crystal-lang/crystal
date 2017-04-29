@@ -96,11 +96,11 @@ end
 # on a certain system or platform
 #
 # ```
-# Sysctl.get_int("net.ipv4.forward") # Sysctl doesn't exist on Windows
+# Sysctl.get_int("net.ipv4.forward") # raises NotImplemented ("Sysctl is not implemented on that platform")
 # ````
 #
 class NotImplemented < Exception
   def initialize(what : String, reason = "is not implemented")
-    super [what, reason].join(" ")
+    super {what, reason}.join(" ")
   end
 end
