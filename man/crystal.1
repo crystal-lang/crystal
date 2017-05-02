@@ -1,0 +1,259 @@
+.\"Crystal Programming Language
+.Dd February 11, 2016
+.Dt CRYSTAL(1) "" "Crystal Programmers Reference Guide"
+.\".Dt CRYSTAL 1
+.Os UNIX
+.Sh NAME
+.Nm crystal
+.Nd Compiler for the statically type-checked programming language Crystal.
+.Sh SYNOPSYS
+.Nm
+.Op command
+.Op switches
+.Op program file
+.Op --
+.Op arguments
+.Sh DESCRIPTION
+Once you install the compiler you will have a crystal binary at your disposal.
+
+.Bl -tag -width "12345678" -compact
+.It Compiling 
+.Pp
+To compile and run a program in a single shot you can invoke crystal with a single filename:
+
+$ crystal some_program.cr
+
+Crystal files end with the .cr extension.
+
+Alternative you can use the run command:
+
+$ crystal run some_program.cr
+
+.It Creating an executable
+.Pp
+To create an executable use the build command:
+
+$ crystal build some_program.cr
+
+This will create a some_program file that you can execute:
+
+$ ./some_program
+
+Note: By default the generated executables are not fully optimized. 
+To turn optimizations on, use the --release flag:
+
+$ crystal build some_program.cr --release
+
+Make sure to always use --release for production-ready executables and when performing benchmarks.
+
+The reason for this is that performance without full optimizations is still pretty good and provides fast compile times, so you can use the crystal command almost as if it were an interpreter.
+
+.Sh OPTIONS
+The crystal command line accepts the following options 
+
+.Bl -tag -width "12345678" -compact
+.Pp
+.It 
+.Cm init
+.Ar TYPE
+.Ar NAME
+.Op DIR
+.Pp
+Generate a new project.
+.Pp
+TYPE is one of:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Sy lib
+creates library skeleton
+.It Sy app
+creates application skeleton
+.El
+.Bd -literal -offset
+NAME - name of project to be generated,
+eg: example
+.Pp
+DIR  - directory where project will be generated,
+default: NAME, eg: ./custom/path/example
+.Ed
+
+.Pp
+.It
+.Cm build
+.Op options
+.Op programfile
+.Op --
+.Op arguments
+.Pp
+Compile program.
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl -cross-compile flags
+cross-compile
+.It Fl -d, Fl -debug
+Add symbolic debug info
+.It Fl D FLAG, -define FLAG
+Define a compile-time flag
+.It Fl -emit [asm|llvm-bc|llvm-ir|obj]
+Comma separated list of types of output for the compiler to emit
+.It Fl f text|json, -format text|json
+Output format text (default) or json
+.It Fl -ll
+Dump ll to .crystal directory
+.It Fl -link-flags FLAGS
+Additional flags to pass to the linker
+.It Fl -mcpu CPU
+Target specific cpu type
+.It Fl -no-color
+Disable colored output
+.It Fl -no-codegen
+Don't do code generation
+.It Fl o
+Output filename
+.It Fl -prelude
+Use given file as prelude
+.It Fl -release
+Compile in release mode
+.It Fl s, -stats
+Enable statistics output
+.It Fl -single-module
+Generate a single LLVM module
+.It Fl -threads
+Maximum number of threads to use
+.It Fl -target TRIPLE
+Target triple
+.It Fl -verbose
+Display executed commands
+.El
+
+.Pp
+.It
+.Cm deps
+.Op options
+.Ar <command>
+.Pp
+Install project dependencies.
+.Pp
+Commands:
+
+.Bl -tag -width "12345678" -compact
+.It Cm init
+Creates a shard.yml file with an initial template, this is already done when crystal init command is executed.
+.It Cm check
+Checks all dependencies are satisfied.
+.It Cm install
+Install all dependencies defined in shard.yml file.
+.It Cm update
+updates dependencies defined in shard.yml file.
+.It Cm list
+lists all dependencies installed.
+.It Cm prune
+removes unused dependencies.
+.El
+.Pp
+Options:
+.Bl -tag -offset indent
+.It Fl -no-colors                      
+.It Fl -version                        
+.It Fl -production                     
+.It Fl v, -verbose                    
+.It Fl q, -quiet                      
+.It Fl h, -help 
+.El
+.Pp
+.It Cm docs
+.Pp
+generate documentation.
+.Pp
+.It Cm eval
+.Pp
+Eval code from args or standard input.
+.Pp
+.It
+.Cm run
+.Op options
+.Op programfile
+.Op Fl -
+.Op arguments
+.Pp
+Compile and run program.
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl d, -debug                      
+Add symbolic debug info
+.It Fl D FLAG, -define FLAG           
+Define a compile-time flag
+.It Fl -emit [asm|llvm-bc|llvm-ir|obj]
+Comma separated list of types of output for the compiler to emit
+.It Fl f text|json, -format text|json
+Output format text (default) or json
+.It Fl -ll
+Dump ll to .crystal directory
+.It Fl -link-flags FLAGS
+Additional flags to pass to the linker
+.It Fl -mcpu CPU
+Target specific cpu type
+.It Fl -no-color
+Disable colored output
+.It Fl -no-codegen
+Don't do code generation
+.It Fl o
+Output filename
+.It Fl -prelude
+Use given file as prelude
+.It Fl -release
+Compile in release mode
+.It Fl s, -stats
+Enable statistics output
+.It Fl -single-module
+Generate a single LLVM module
+.It Fl -threads
+Maximum number of threads to use
+.It Fl -verbose
+Display executed commands
+.El
+.Pp
+.It
+.Cm spec
+.Pp
+Compile and run specs (in spec directory).
+.Pp
+.It
+.Cm tool
+.Op tool
+.Op switches
+.Op program file
+.Op Fl -
+.Op arguments
+.Pp
+Run a tool.
+.Pp
+Tools:
+.Bl -tag -offset indent
+.It Cm context
+show context for given location
+.It Cm format
+format project, directories and/or files
+.It Cm hierarchy
+show type hierarchy
+.It Cm implementations
+show implementations for given call in location
+.It Cm types
+show type of main variables
+.El
+.Pp
+.It Cm version, Fl -version, v
+.Pp
+Show version.
+.El
+.Sh SEE ALSO
+.Bl -hang -compact -width "https://github.com/manastech/crystal/1234"
+.It http://crystal-lang.org/
+The official web site.
+.It https://github.com/manastech/crystal
+Official Repository.
+.El
