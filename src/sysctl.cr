@@ -1,3 +1,5 @@
+{% if flag?(:darwin) || flag?(:freebsd) | flag?(:linux) %}
+
 lib LibC
   {% if flag?(:darwin) || flag?(:freebsd) %}
     fun sysctlbyname(LibC::Char*, Void*, LibC::SizeT*, Void*, LibC::SizeT) : Int32
@@ -34,8 +36,6 @@ module Sysctl
     {% elsif flag?(:linux) %}
       path = name_to_path name
       read_proc_sys(path).to_i32
-    {% else %}
-      raise NotImplemented.new("Sysctl", "is not supported on this platform")
     {% end %}
   end
 
@@ -64,8 +64,6 @@ module Sysctl
     {% elsif flag?(:linux) %}
       path = name_to_path name
       read_proc_sys(path)
-    {% else %}
-      raise NotImplemented.new("Sysctl", "is not supported on this platform")
     {% end %}
   end
 
@@ -85,3 +83,5 @@ module Sysctl
     end
   {% end %}
 end
+
+{% end %}
