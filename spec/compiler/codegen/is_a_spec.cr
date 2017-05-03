@@ -715,4 +715,16 @@ describe "Codegen: is_a?" do
       1.to_s.is_a?(B)
       )).to_b.should be_true
   end
+
+  it "says true for Class.is_a?(Class.class) (#4374)" do
+    run("
+      Class.is_a?(Class.class)
+    ").to_b.should be_true
+  end
+
+  it "says true for Class.is_a?(Class.class.class) (#4374)" do
+    run("
+      Class.is_a?(Class.class.class)
+    ").to_b.should be_true
+  end
 end
