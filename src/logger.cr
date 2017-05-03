@@ -58,11 +58,12 @@ class Logger
     UNKNOWN
   end
 
-  alias Formatter = String, Time, String, String, IO ->
+  alias Formatter = Severity, Time, String, String, IO ->
 
   private DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
-    io << severity[0] << ", [" << datetime << " #" << Process.pid << "] "
-    io << severity.rjust(5) << " -- " << progname << ": " << message
+    label = severity.unknown? ? "ANY" : severity.to_s
+    io << label[0] << ", [" << datetime << " #" << Process.pid << "] "
+    io << label.rjust(5) << " -- " << progname << ": " << message
   end
 
   # :nodoc:
@@ -134,11 +135,10 @@ class Logger
     io = @io
     return unless io
 
-    label = severity == Severity::UNKNOWN ? "ANY" : severity.to_s
     progname_to_s = progname.to_s
     message_to_s = message.to_s
     @mutex.synchronize do
-      formatter.call(label, datetime, progname_to_s, message_to_s, io)
+      formatter.call(severity, datetime, progname_to_s, message_to_s, io)
       io.puts
       io.flush
     end
