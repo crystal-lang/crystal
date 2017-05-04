@@ -1,6 +1,7 @@
 require "../syntax/ast"
 require "../compiler"
 require "./table_print"
+require "./typed_def_processor"
 require "json"
 
 module Crystal
@@ -99,6 +100,8 @@ module Crystal
   end
 
   class ContextVisitor < Visitor
+    include TypedDefProcessor
+
     getter contexts : Array(HashStringType)
     getter def_with_yield : Def?
 
@@ -108,64 +111,32 @@ module Crystal
       @def_with_yield = nil
     end
 
-    def process_instance_defs(type)
-      if type.is_a?(DefInstanceContainer)
-        type.def_instances.values.try do |typed_defs|
-          typed_defs.each do |typed_def|
-            if loc = typed_def.location
-              if loc.filename == typed_def.end_location.try(&.filename) && contains_target(typed_def)
-                visit_and_append_context(typed_def) do
-                  yield
-                  add_context "self", type
-                  if type.is_a?(InstanceVarContainer)
-                    type.instance_vars.values.each do |ivar|
-                      add_context ivar.name, ivar.type
-                    end
-                  end
-                end
-              end
-            end
-          end
+    def process_typed_def(typed_def)
+      return unless loc = typed_def.location
+      return unless loc.filename == typed_def.end_location.try &.filename
+      return unless contains_target typed_def
+
+      @context = HashStringType.new
+
+      type = typed_def.owner
+      if type.is_a?(GenericInstanceType)
+        type.type_vars.each_value do |type_var|
+          add_context type_var.name, type_var.type if type_var.is_a?(Var)
         end
       end
-    end
-
-    def process_type(type)
-      process_type(type) { }
-    end
-
-    def process_type(type, &block)
-      if type.is_a?(NamedType)
-        type.types?.try &.values.each do |inner_type|
-          process_type(inner_type)
+      add_context "self", type
+      if type.is_a?(InstanceVarContainer)
+        type.instance_vars.each_value do |ivar|
+          add_context ivar.name, ivar.type
         end
       end
+      typed_def.accept(self)
 
-      if type.is_a?(GenericType)
-        type_vars = type.type_vars
-        type.generic_types.each do |type_vars_args, instanced_types|
-          process_type(instanced_types) do
-            type_vars.each.zip(type_vars_args.each).each do |e|
-              generic_arg_name, generic_arg_type = e
-              # TODO handle generic_arg_type that are not types but ASTNode
-              add_context generic_arg_name, generic_arg_type if generic_arg_type.is_a?(Type)
-            end
-          end
-        end
-      else
-        process_instance_defs type.metaclass, &block
-        process_instance_defs type, &block
-      end
+      @contexts << @context unless @context.empty?
     end
 
     def process(result : Compiler::Result)
-      result.program.def_instances.each_value do |typed_def|
-        visit_and_append_context typed_def
-      end
-
-      result.program.types?.try &.values.each do |type|
-        process_type type
-      end
+      process_result result
 
       if @contexts.empty?
         @context = HashStringType.new
@@ -192,48 +163,40 @@ module Crystal
       end
     end
 
-    def visit_and_append_context(node)
-      visit_and_append_context(node) { }
-    end
-
-    def visit_and_append_context(node, &block)
-      @context = HashStringType.new
-      yield
-      node.accept(self)
-      @contexts << @context unless @context.empty?
-    end
-
     def visit(node : Def)
-      if contains_target(node)
-        if @def_with_yield.nil? && !node.yields.nil?
-          @def_with_yield = node
-          return false
-        end
+      return false unless contains_target(node)
 
-        node.args.each do |arg|
-          add_context arg.name, arg.type
-        end
-        node.vars.try do |vars|
-          vars.each do |name, meta_var|
-            add_context name, meta_var.type
-          end
-        end
-        return true
+      if @def_with_yield.nil? && !node.yields.nil?
+        @def_with_yield = node
+        return false
       end
+
+      node.args.each do |arg|
+        add_context arg.name, arg.type
+      end
+      node.vars.try do |vars|
+        vars.each do |name, meta_var|
+          add_context name, meta_var.type
+        end
+      end
+
+      true
     end
 
     def visit(node : Block)
-      if contains_target(node)
-        node.args.each do |arg|
-          add_context arg.name, arg.type
-        end
-        node.vars.try do |vars|
-          vars.each do |_, var|
-            add_context var.name, var.type
-          end
-        end
-        return true
+      return false unless contains_target(node)
+
+      node.args.each do |arg|
+        add_context arg.name, arg.type
       end
+
+      node.vars.try do |vars|
+        vars.each do |_, var|
+          add_context var.name, var.type
+        end
+      end
+
+      true
     end
 
     def visit(node : Call)
@@ -247,34 +210,34 @@ module Crystal
     # TODO handle type filters of case statements
 
     def visit(node : If)
-      if contains_target(node)
-        # TODO handle conditions in expressions
-        case cond = node.cond
-        when Var
-          filters = TypeFilters.truthy(cond)
-        when IsA
-          if (obj = cond.obj).is_a?(Var)
-            filters = TypeFilters.new(obj, SimpleTypeFilter.new(cond.const.type))
-          end
+      return false unless contains_target(node)
+
+      # TODO handle conditions in expressions
+      case cond = node.cond
+      when Var
+        filters = TypeFilters.truthy(cond)
+      when IsA
+        if (obj = cond.obj).is_a?(Var)
+          filters = TypeFilters.new(obj, SimpleTypeFilter.new(cond.const.type))
         end
-
-        if filters
-          # make a copy of the current context
-          current_context = {} of String => MetaVar
-          @context.each do |name, type|
-            current_context[name] = MetaVar.new(name, type)
-          end
-
-          # restrict the whole context
-          filters.each do |name, filter|
-            filtered_var = current_context[name]
-            filtered_var.bind_to(current_context[name].filtered_by(filter))
-            add_context name, filtered_var.type
-          end
-        end
-
-        return true
       end
+
+      if filters
+        # make a copy of the current context
+        current_context = {} of String => MetaVar
+        @context.each do |name, type|
+          current_context[name] = MetaVar.new(name, type)
+        end
+
+        # restrict the whole context
+        filters.each do |name, filter|
+          filtered_var = current_context[name]
+          filtered_var.bind_to(current_context[name].filtered_by(filter))
+          add_context name, filtered_var.type
+        end
+      end
+
+      true
     end
 
     def visit(node)
@@ -283,22 +246,9 @@ module Crystal
 
     private def add_context(name, type)
       return if name.starts_with?("__temp_") # ignore temp vars
-      return if name == "self" && type.to_s == "<Program>"
+      return if type.is_a?(Program) || type.is_a?(FileModule)
 
       @context[name] = type
-    end
-
-    private def contains_target(node)
-      if loc_start = node.location
-        loc_end = node.end_location || loc_start
-        # if it is not between, it could be the case that node is the top level Expressions
-        # in which the (start) location might be in one file and the end location in another.
-        @target_location.between?(loc_start, loc_end) || loc_start.filename != loc_end.filename
-      else
-        # if node has no location, assume they may contain the target.
-        # for example with the main expressions ast node this matters
-        true
-      end
     end
   end
 end
