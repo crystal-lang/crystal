@@ -8,7 +8,7 @@ def process(client)
 
   while msg = client.read_line
     puts "#{client_addr} msg '#{msg}'"
-    client << msg
+    client.puts msg
   end
 rescue IO::EOFError
   puts "#{client_addr} disconnected"
