@@ -58,6 +58,11 @@ class Logger
     UNKNOWN
   end
 
+  # `Proc` used to format logged messages.
+  # Takes *severity*, *datetime*, *progname*, *message* and *io* as arguments.
+  # Formatted message ought to be written back into the passed `IO`.
+  #
+  # See `Logger#formatter`.
   alias Formatter = Severity, Time, String, String, IO ->
 
   private DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
