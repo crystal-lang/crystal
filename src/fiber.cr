@@ -265,9 +265,19 @@ class Fiber
   end
 
   def sleep(time)
+    schedule_resume_event(time)
+    Scheduler.reschedule
+  end
+
+  def schedule_resume_event(time)
     event = @resume_event ||= Scheduler.create_resume_event(self)
     event.add(time)
-    Scheduler.reschedule
+  end
+
+  def unschedule_resume_event
+    if event = @resume_event
+      event.del
+    end
   end
 
   def yield

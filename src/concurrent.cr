@@ -150,3 +150,30 @@ macro parallel(*jobs)
     {% end %}
   }
 end
+
+struct TimeoutAction
+  include Channel::SelectAction
+
+  def initialize(@t : Time::Span)
+    @start = Time.now
+  end
+
+  def ready?
+    @t == 0 || (@start + @t) < Time.now
+  end
+
+  def execute
+  end
+
+  def wait
+    Fiber.current.schedule_resume_event(@t.total_seconds)
+  end
+
+  def unwait
+    Fiber.current.unschedule_resume_event
+  end
+end
+
+def timeout_select_action(t : Time::Span)
+  TimeoutAction.new(t)
+end

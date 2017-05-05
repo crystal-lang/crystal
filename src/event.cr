@@ -27,6 +27,10 @@ module Event
       end
     end
 
+    def del
+      LibEvent2.event_del(@event)
+    end
+
     def free
       LibEvent2.event_free(@event) unless @freed
       @freed = true
