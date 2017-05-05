@@ -12,6 +12,7 @@ matrix:
     - os: osx
     - os: osx
       osx_image: xcode8.2
+  fast_finish: true
 before_install:
   - bin/ci prepare_system
 install:
