@@ -36,6 +36,38 @@
 class Logger
   property level : Severity
   property progname : String
+
+  # Customizable `Proc` (with a reasonable default)
+  # which the `Logger` uses to format and print its entries.
+  #
+  # Use this setter to provide a custom formatter.
+  # The `Logger` will invoke it with the following arguments:
+  #  - severity: a `Logger::Severity`
+  #  - datetime: `Time`, the entry's timestamp
+  #  - progname: `String`, the program name, if set when the logger was built
+  #  - message: `String`, the body of a message
+  #  - io: `IO`, the Logger's stream, to which you must write the final output
+  #
+  # Example:
+  #
+  # ```
+  # require "logger"
+  #
+  # logger = Logger.new(STDOUT)
+  # logger.progname = "YodaBot"
+  #
+  # logger.formatter = Logger::Formatter.new do |severity, datetime, progname, message, io|
+  #   label = severity.unknown? ? "ANY" : severity.to_s
+  #   io << label[0] << ", [" << datetime << " #" << Process.pid << "] "
+  #   io << label.rjust(5) << " -- " << progname << ": " << message
+  # end
+  #
+  # logger.warn("Fear leads to anger. Anger leads to hate. Hate leads to suffering.")
+  #
+  # # Prints to the console:
+  # # "W, [2017-05-06 18:00:41 -0300 #11927]  WARN --
+  # #  YodaBot: Fear leads to anger. Anger leads to hate. Hate leads to suffering."
+  # ```
   property formatter
 
   # A logger severity level.
@@ -58,11 +90,6 @@ class Logger
     UNKNOWN
   end
 
-  # `Proc` used to format logged messages.
-  # Takes *severity*, *datetime*, *progname*, *message* and *io* as arguments.
-  # Formatted message ought to be written back into the passed `IO`.
-  #
-  # See `Logger#formatter`.
   alias Formatter = Severity, Time, String, String, IO ->
 
   private DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
