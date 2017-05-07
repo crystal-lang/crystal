@@ -300,6 +300,7 @@ describe HTTP::WebSocket do
       http_ref = nil
       ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
         ctx.request.path.should eq("/")
+
         ws.on_message do |str|
           ws.send("pong #{str}")
         end
@@ -307,7 +308,6 @@ describe HTTP::WebSocket do
         ws.on_close do
           http_ref.not_nil!.close
         end
-        ws.run
       end
 
       http_server = http_ref = HTTP::Server.new(0, [ws_handler])
@@ -337,6 +337,7 @@ describe HTTP::WebSocket do
       http_ref = nil
       ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
         ctx.request.path.should eq("/")
+
         ws.on_message do |str|
           ws.send("pong #{str}")
         end
@@ -344,7 +345,6 @@ describe HTTP::WebSocket do
         ws.on_close do
           http_ref.not_nil!.close
         end
-        ws.run
       end
 
       http_server = http_ref = HTTP::Server.new(0, [ws_handler])
