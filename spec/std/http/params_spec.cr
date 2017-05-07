@@ -68,6 +68,16 @@ module HTTP
       end
     end
 
+    describe "#to_h" do
+      it "returns internal Hash(String, Array(String)) representation" do
+        params = Params.parse("foo=bar&foo=baz&baz=qux").to_h
+
+        params["foo"].should eq(["bar", "baz"])
+        params["baz"].should eq(["qux"])
+        expect_raises(KeyError) { params["non_existent_param"] }
+      end
+    end
+
     describe "#[](name)" do
       it "returns first value for provided param name" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")

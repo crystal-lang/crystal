@@ -291,6 +291,17 @@ module HTTP
       end
     end
 
+    # Returns internal representation of +HTTP::Params+ as
+    # +Hash(String, Array(String))+
+    #
+    # ```
+    # param_hash = HTTP::Params.parse(query).to_h
+    # # => {"foo" => ["bar", "baz"], "baz" => ["qux"]}
+    # ```
+    def to_h
+      raw_params
+    end
+
     # :nodoc:
     def self.encode_www_form_component(string : String, io : IO)
       URI.escape(string, io, true)
