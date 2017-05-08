@@ -3343,17 +3343,21 @@ class String
     return self if empty?
 
     first = true
-    last_is_underscore = false
+    last_is_seperator = false
 
     String.build(bytesize) do |str|
       each_char do |char|
         if first
           str << char.upcase
+        elsif char == '-'
+          last_is_seperator = true
+          str << ':'
+          str << ':'
         elsif char == '_'
-          last_is_underscore = true
-        elsif last_is_underscore
+          last_is_seperator = true
+        elsif last_is_seperator
           str << char.upcase
-          last_is_underscore = false
+          last_is_seperator = false
         else
           str << char
         end
