@@ -17,6 +17,7 @@ module HTTP
         {"foo", {"foo" => [""]}},
         {"foo=&bar", {"foo" => [""], "bar" => [""]}},
         {"bar&foo", {"bar" => [""], "foo" => [""]}},
+        {"foo=bar=qux", {"foo" => ["bar=qux"]}},
       }.each do |(from, to)|
         it "parses #{from}" do
           Params.parse(from).should eq(Params.new(to))
