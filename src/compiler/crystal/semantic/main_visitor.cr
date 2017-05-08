@@ -1660,7 +1660,9 @@ module Crystal
       # When doing x.is_a?(A) and A turns out to be a constant (not a type),
       # replace it with a === comparison. Most usually this happens in a case expression.
       if const.is_a?(Path) && const.target_const
-        comp = Call.new(const, "===", node.obj).at(node.location)
+        obj = node.obj.clone.at(node.obj)
+        const = node.const.clone.at(node.const)
+        comp = Call.new(const, "===", obj).at(node.location)
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
