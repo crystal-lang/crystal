@@ -9,6 +9,7 @@
 # an executable.
 
 require "json"
+require "yaml"
 require "./command/*"
 
 class Crystal::Command
@@ -413,8 +414,17 @@ class Crystal::Command
     end
 
     if filenames.size == 0 || (cursor_command && cursor_location.nil?)
-      puts option_parser
-      exit 1
+      unless shard_yml_exists?
+        puts option_parser
+        exit 1
+      else
+        if shard_proj_name.is_a?(String)
+          filenames << "./src/#{shard_proj_name}.cr"
+        else
+          error "\'name\' key is missing in shard.yml"
+          exit 1
+        end
+      end
     end
 
     sources = gather_sources(filenames)
@@ -491,6 +501,16 @@ class Crystal::Command
       end
     end
     values
+  end
+
+  private def shard_yml_exists?
+    return true if File.exists?("shard.yml") && File.file?("shard.yml")
+    false
+  end
+
+  private def shard_proj_name
+    config = YAML.parse(File.read("shard.yml")).as_h
+    config["name"].to_s if config.has_key?("name")
   end
 
   private def error(msg, exit_code = 1)
