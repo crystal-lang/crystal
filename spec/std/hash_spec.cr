@@ -473,7 +473,7 @@ describe "Hash" do
     h2.should eq({2 => :a, 3 => :b, 4 => :c})
   end
 
-  it "transforms keys with type casting keys" do
+  it "transforms keys with type casting" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
     h2 = h1.transform_keys { |x| x.to_s.upcase }
@@ -510,6 +510,20 @@ describe "Hash" do
     h2 = h1.transform_values { |x| x + 1 }
     h2.should be_a(Hash(Symbol, Int32))
     h2.empty?.should be_true
+  end
+
+  it "transform keys in place" do
+    h = {"a" => 1, "b" => 2, "c" => 3}
+
+    h.transform_keys!(&.succ)
+    h.should eq({"b" => 1, "c" => 2, "d" => 3})
+  end
+
+  it "transform values in place" do
+    h = {:a => 1, :b => 2, :c => 3}
+
+    h.transform_values!(&.+(1))
+    h.should eq({:a => 2, :b => 3, :c => 4})
   end
 
   it "zips" do

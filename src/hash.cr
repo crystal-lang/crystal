@@ -591,6 +591,7 @@ class Hash(K, V)
   end
 
   # Returns a new hash with all keys converted using the block operation.
+  # The block can change a type of keys.
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
@@ -603,6 +604,7 @@ class Hash(K, V)
   end
 
   # Returns a new hash with the results of running block once for every value.
+  # The block can change a type of values.
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
@@ -610,6 +612,36 @@ class Hash(K, V)
   def transform_values(&block : V -> V2) forall V2
     each_with_object({} of K => V2) do |(key, value), memo|
       memo[key] = yield(value)
+    end
+  end
+
+  # Destructively transforms all keys using a block. Same as transform_keys but modifies in place.
+  # The block cannot change a type of keys.
+  #
+  # ```
+  # hash = {"a" => 1, "b" => 2, "c" => 3}
+  # hash.transform_key! { |key| key.succ }
+  # hash # => {"b" => 1, "c" => 2, "d" => 3}
+  def transform_keys!(&block : K -> K)
+    current = @first
+    while current
+      current.key = yield(current.key)
+      current = current.fore
+    end
+  end
+
+  # Destructively transforms all values using a block. Same as transform_values but modifies in place.
+  # The block cannot change a type of values.
+  #
+  # ```
+  # hash = {:a => 1, :b => 2, :c => 3}
+  # hash.transform_values! { |value| value + 1 }
+  # hash # => {:a => 2, :b => 3, :c => 4}
+  def transform_values!(&block : V -> V)
+    current = @first
+    while current
+      current.value = yield(current.value)
+      current = current.fore
     end
   end
 
@@ -952,7 +984,7 @@ class Hash(K, V)
   end
 
   private class Entry(K, V)
-    getter key : K
+    property key : K
     property value : V
 
     # Next in the linked list of each bucket
