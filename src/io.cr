@@ -120,7 +120,7 @@ module IO
       sec = LibC::TimeT.new(timeout_sec)
 
       if timeout_sec.is_a? Float
-        usec = (timeout_sec - sec) * 10e6
+        usec = (timeout_sec - sec) * 1e6
       else
         usec = 0
       end
