@@ -81,28 +81,6 @@ private class SimpleIOMemory
 end
 
 describe IO do
-  describe ".select" do
-    it "returns the available readable ios" do
-      IO.pipe do |read, write|
-        write.puts "hey"
-        write.close
-        IO.select({read}).includes?(read).should be_true
-      end
-    end
-
-    it "returns the available writable ios" do
-      IO.pipe do |read, write|
-        IO.select(nil, {write}).includes?(write).should be_true
-      end
-    end
-
-    it "times out" do
-      IO.pipe do |read, write|
-        IO.select({read}, nil, nil, 0.00001).should be_nil
-      end
-    end
-  end
-
   describe "partial read" do
     it "doesn't block on first read.  blocks on 2nd read" do
       IO.pipe do |read, write|
