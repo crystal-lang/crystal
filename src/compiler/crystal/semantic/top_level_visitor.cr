@@ -550,7 +550,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.raise "can't reopen enum and add more constants to it"
       end
 
-      if is_flags && {"None", "All"}.includes?(member.name)
+      if is_flags && !@in_lib && {"None", "All"}.includes?(member.name)
         member.raise "flags enum can't contain None or All members"
       end
 

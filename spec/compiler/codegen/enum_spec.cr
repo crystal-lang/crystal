@@ -104,6 +104,34 @@ describe "Code gen: enum" do
       )).to_i.should eq(1 + 2 + 4)
   end
 
+  it "codegens enum None redefined" do
+    run(%(
+      lib Lib
+        @[Flags]
+        enum Foo
+          A
+          None = 10
+        end
+      end
+
+      Lib::Foo::None
+      )).to_i.should eq(10)
+  end
+
+  it "codegens enum All redefined" do
+    run(%(
+      lib Lib
+        @[Flags]
+        enum Foo
+          A
+          All = 10
+        end
+      end
+
+      Lib::Foo::All
+      )).to_i.should eq(10)
+  end
+
   it "allows class vars in enum" do
     run(%(
       enum Foo

@@ -214,6 +214,20 @@ describe "Semantic: enum" do
       )) { int32 }
   end
 
+  it "doesn't error when defining a flags enum in a lib with None or All" do
+    assert_type(%(
+      lib Lib
+        @[Flags]
+        enum Foo
+          None
+          All = 50
+        end
+      end
+
+      Lib::Foo::None.value
+      )) { int32 }
+  end
+
   it "doesn't error when defining a method for an enum with flags" do
     assert_type(%(
       @[Flags]
