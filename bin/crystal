@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 ################## https://github.com/mkropat/sh-realpath #####################
 #
@@ -111,6 +111,34 @@ remove_path_item() {
 
 ##############################################################################
 
+__has_colors() {
+  local num_colors=$(tput colors 2>/dev/null)
+
+  if [ "$num_colors" -gt 2 ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+SUPPORTS_COLORS=$(__has_colors)
+__error_msg() {
+  if $SUPPORTS_COLORS; then
+    # bold red coloring
+    printf '%b\n' "\033[31;1m$@\033[0m" 1>&2
+  else
+    printf '%b\n' "$@" 1>&2
+  fi
+}
+__warning_msg() {
+  if $SUPPORTS_COLORS; then
+    # brown coloring
+    printf '%b\n' "\033[33m$@\033[0m" 1>&2
+  else
+    printf '%b\n' "$@" 1>&2
+  fi
+}
+
+
 SCRIPT_PATH="$(realpath "$0")"
 SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
@@ -121,11 +149,11 @@ export CRYSTAL_HAS_WRAPPER=true
 
 if [ -x "$CRYSTAL_DIR/crystal" ]
 then
-  >&2 echo -e "\x1B[33mUsing compiled compiler at .build/crystal\x1B[0m"
+  __warning_msg "Using compiled compiler at \`.build/crystal'"
   exec "$CRYSTAL_DIR/crystal" "$@"
 elif ! command -v crystal > /dev/null
 then
-  echo -e "\x1B[31mYou need to have a crystal executable in your path!\x1B[0m" 1>&2
+  __error_msg 'You need to have a crystal executable in your path!'
   exit 1
 elif [ "$(command -v crystal)" = "$SCRIPT_PATH" ] || [ "$(command -v crystal)" = "bin/crystal" ]
 then
