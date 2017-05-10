@@ -160,7 +160,7 @@ describe "BitArray" do
       a[0, 0].should eq(a)
     end
 
-    it "gets 0 ... 0 on empty array" do
+    it "gets (0..0) on empty array" do
       a = BitArray.new(0)
       a[0..0].should eq(a)
     end

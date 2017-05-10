@@ -123,7 +123,7 @@ struct BitArray
 
     count = Math.min(count, size - start)
 
-    if @size <= 32
+    if size <= 32
       # Fits in a single int32, we can use bit ops
       bits = @bits[0]
 
