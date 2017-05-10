@@ -32,6 +32,17 @@ struct BitArray
     @bits = Pointer(UInt32).malloc(malloc_size, value)
   end
 
+  def ==(other : BitArray)
+    return false if size != other.size
+    # NOTE: If BitArray implements resizing, there may be more than 1 binary
+    # representation for equivalent BitArrays after a downsize.
+    return LibC.memcmp(@bits, other.@bits, malloc_size) == 0
+  end
+
+  def ==(other)
+    false
+  end
+
   def unsafe_at(index : Int)
     bit_index, sub_index = index.divmod(32)
     (@bits[bit_index] & (1 << sub_index)) > 0

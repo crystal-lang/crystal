@@ -1,6 +1,12 @@
 require "spec"
 require "bit_array"
 
+private def from_int(size : Int32, int : Int32)
+  ba = BitArray.new(size)
+  (0).upto(size - 1) { |i| ba[i] = int.bit(size - i - 1) > 0 }
+  ba
+end
+
 describe "BitArray" do
   it "has size" do
     ary = BitArray.new(100)
@@ -45,6 +51,30 @@ describe "BitArray" do
     ary[-1] = true
     ary[-1].should be_true
     ary[99].should be_true
+  end
+
+  describe "==" do
+    it "compares empty" do
+      (BitArray.new(0)).should eq(BitArray.new(0))
+      from_int(1, 0b1).should_not eq(BitArray.new(0))
+      (BitArray.new(0)).should_not eq(from_int(1, 0b1))
+    end
+
+    it "compares elements" do
+      from_int(3, 0b101).should eq(from_int(3, 0b101))
+      from_int(3, 0b101).should_not eq(from_int(3, 0b010))
+    end
+
+    it "compares other" do
+      a = from_int(3, 0b101)
+      b = from_int(3, 0b101)
+      c = from_int(4, 0b1111)
+      d = [1, 2, 4]
+      d = from_int()
+      (a == b).should be_true
+      (b == c).should be_false
+      (a == d).should be_false
+    end
   end
 
   it "toggles a bit" do
