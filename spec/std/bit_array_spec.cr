@@ -69,11 +69,126 @@ describe "BitArray" do
       a = from_int(3, 0b101)
       b = from_int(3, 0b101)
       c = from_int(4, 0b1111)
-      d = [1, 2, 4]
-      d = from_int()
+      d = from_int(3, 0b010)
       (a == b).should be_true
       (b == c).should be_false
       (a == d).should be_false
+    end
+  end
+
+  describe "[]" do
+    it "gets on inclusive range" do
+      from_int(6, 0b011110)[1..4].should eq(from_int(4, 0b1111))
+    end
+
+    it "gets on inclusive range with negative indices" do
+      from_int(6, 0b011110)[-5..-2].should eq(from_int(4, 0b1111))
+    end
+
+    it "gets on exclusive range" do
+      from_int(6, 0b010100)[1...4].should eq(from_int(3, 0b101))
+    end
+
+    it "gets on exclusive range with negative indices" do
+      from_int(6, 0b010100)[-5...-2].should eq(from_int(3, 0b101))
+    end
+
+    it "gets on range with start higher than end" do
+      from_int(3, 0b101)[2..1].should eq(BitArray.new(0))
+      from_int(3, 0b101)[3..1].should eq(BitArray.new(0))
+      expect_raises IndexError do
+        from_int(3, 0b101)[4..1]
+      end
+    end
+
+    it "gets on range with start higher than negative end" do
+      from_int(3, 0b011)[1..-1].should eq(from_int(2, 0b11))
+      from_int(3, 0b011)[2..-2].should eq(BitArray.new(0))
+    end
+
+    it "raises on index out of bounds with range" do
+      expect_raises IndexError do
+        from_int(3, 0b111)[4..6]
+      end
+    end
+
+    it "gets with start and count" do
+      from_int(6, 0b011100)[1, 3].should eq(from_int(3, 0b111))
+    end
+
+    it "gets with start and count exceeding size" do
+      from_int(3, 0b011)[1, 3].should eq(from_int(2, 0b11))
+    end
+
+    it "gets with negative start" do
+      from_int(6, 0b001100)[-4, 2].should eq(from_int(2, 0b11))
+    end
+
+    it "raises on index out of bounds with start and count" do
+      expect_raises IndexError do
+        from_int(3, 0b101)[4, 0]
+      end
+    end
+
+    it "raises on negative count" do
+      expect_raises ArgumentError do
+        from_int(3, 0b101)[3, -1]
+      end
+    end
+
+    it "raises on index out of bounds" do
+      expect_raises IndexError do
+        from_int(3, 0b101)[-4, 2]
+      end
+    end
+
+    it "raises on negative count" do
+      expect_raises ArgumentError, /Negative count: -1/ do
+        from_int(3, 0b101)[1, -1]
+      end
+    end
+
+    it "raises on negative count on empty Array" do
+      ba = BitArray.new(0)
+      expect_raises ArgumentError, /Negative count: -1/ do
+        ba[0, -1]
+      end
+    end
+
+    it "gets 0, 0 on empty array" do
+      a = BitArray.new(0)
+      a[0, 0].should eq(a)
+    end
+
+    it "gets 0 ... 0 on empty array" do
+      a = BitArray.new(0)
+      a[0..0].should eq(a)
+    end
+
+    it "doesn't exceed limits" do
+      from_int(1, 0b1)[0..3].should eq(from_int(1, 0b1))
+    end
+
+    it "returns empty if at end" do
+      from_int(1, 0b1)[1, 0].should eq(BitArray.new(0))
+      from_int(1, 0b1)[1, 10].should eq(BitArray.new(0))
+    end
+
+    it "raises on too negative left bound" do
+      expect_raises IndexError do
+        from_int(3, 0b101)[-4..0]
+      end
+    end
+
+    it "gets on large bitarrays" do
+      ba = BitArray.new(100)
+      ba[30] = true
+      ba[31] = true
+      ba[32] = true
+      ba[34] = true
+      ba[37] = true
+
+      ba[28..40].should eq(from_int(13, 0b0011101001000))
     end
   end
 

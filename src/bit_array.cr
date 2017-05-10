@@ -65,6 +65,92 @@ struct BitArray
     end
   end
 
+  # Returns all elements that are within the given range.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Additionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # ba = BitArray.new(5)
+  # ba[0] = true; ba[2] = true; ba[4] = true
+  # ba # => BitArray[10101]
+  #
+  # ba[1..3]    # => BitArray[010]
+  # ba[4..7]    # => BitArray[1]
+  # ba[6..10]   # raise IndexError
+  # ba[5..10]   # => BitArray[]
+  # ba[-2...-1] # => BitArray[0]
+  # ```
+  def [](range : Range(Int, Int))
+    self[*range_to_index_and_count(range)]
+  end
+
+  # Returns count or less (if there aren't enough) elements starting at the
+  # given start index.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Additionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # ba = BitArray.new(5)
+  # ba[0] = true; ba[2] = true; ba[4] = true
+  # ba # => BitArray[10101]
+  #
+  # ba[-3, 3] # => BitArray[101]
+  # ba[6, 1]  # raise indexError
+  # ba[1, 2]  # => BitArray[01]
+  # ba[5, 1]  # => BitArray[]
+  # ```
+  def [](start : Int, count : Int)
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+
+    if start == size
+      return BitArray.new(0)
+    end
+
+    start += size if start < 0
+    raise IndexError.new unless 0 <= start <= size
+
+    if count == 0
+      return BitArray.new(0)
+    end
+
+    count = Math.min(count, size - start)
+
+    if @size <= 32
+      # Fits in a single int32, we can use bit ops
+      bits = @bits[0]
+
+      bits >>= start
+      bits &= (1 << count) - 1
+
+      BitArray.new(count).tap { |ba| ba.@bits[0] = bits }
+    else
+      ba = BitArray.new(count)
+      0.upto(count - 1) do |i|
+        # First, mask off only the bit we want
+        source_bit_index, source_sub_index = (i + start).divmod(32)
+        bit = @bits[source_bit_index] & (1 << source_sub_index)
+
+        # Second, shift the bit to be in the correct sub index for the new BitArray
+        dest_bit_index, dest_sub_index = i.divmod(32)
+        bit <<= (dest_sub_index - source_sub_index)
+
+        # Third, set the bit in the final bit array
+        # Assumes @bits is initialised to all zeroes
+        ba.@bits[dest_bit_index] |= bit
+      end
+
+      ba
+    end
+  end
+
   # Toggles the bit at the given *index*. A false bit becomes a `true` bit, and
   # vice versa.
   # Negative indices can be used to start counting from the end of the array.
@@ -135,5 +221,21 @@ struct BitArray
 
   private def malloc_size
     (@size / 32.0).ceil.to_i
+  end
+
+  # FIXME: this was copied from Array, we should deduplicate implementations
+  # but where should we put it?
+  private def range_to_index_and_count(range)
+    from = range.begin
+    from += size if from < 0
+    raise IndexError.new if from < 0
+
+    to = range.end
+    to += size if to < 0
+    to -= 1 if range.excludes_end?
+    size = to - from + 1
+    size = 0 if size < 0
+
+    {from, size}
   end
 end
