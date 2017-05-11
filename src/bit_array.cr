@@ -35,7 +35,8 @@ struct BitArray
   def ==(other : BitArray)
     return false if size != other.size
     # NOTE: If BitArray implements resizing, there may be more than 1 binary
-    # representation for equivalent BitArrays after a downsize.
+    # representation for equivalent BitArrays after a downsize as the discarded
+    # bits may not have been zeroed.
     return LibC.memcmp(@bits, other.@bits, malloc_size) == 0
   end
 
