@@ -125,7 +125,7 @@ struct BitArray
     count = Math.min(count, size - start)
 
     if size <= 32
-      # Fits in a single int32, we can use bit ops
+      # Result *and* original fit in a single int32, we can use only bitshifts
       bits = @bits[0]
 
       bits >>= start
