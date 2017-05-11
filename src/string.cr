@@ -731,8 +731,7 @@ class String
   # "hello"[1...-1] # "ell"
   # ```
   def [](range : Range(Int, Int))
-    from, size = range_to_index_and_size(range)
-    self[from, size]
+    self[*Indexable.range_to_index_and_count(range, size)]
   end
 
   # Returns a substring starting from the *start* character
@@ -1904,7 +1903,7 @@ class String
   end
 
   private def sub_range(range, replacement)
-    from, size = range_to_index_and_size(range)
+    from, size = Indexable.range_to_index_and_count(range, self.size)
 
     from_index = char_index_to_byte_index(from)
     raise IndexError.new unless from_index
@@ -4071,20 +4070,6 @@ class String
     end
 
     {bytes, bytesize}
-  end
-
-  private def range_to_index_and_size(range)
-    from = range.begin
-    from += size if from < 0
-    raise IndexError.new if from < 0
-
-    to = range.end
-    to += size if to < 0
-    to -= 1 if range.excludes_end?
-    size = to - from + 1
-    size = 0 if size < 0
-
-    {from, size}
   end
 
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.

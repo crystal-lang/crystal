@@ -85,7 +85,7 @@ struct BitArray
   # ba[-2...-1] # => BitArray[0]
   # ```
   def [](range : Range(Int, Int))
-    self[*range_to_index_and_count(range)]
+    self[*Indexable.range_to_index_and_count(range, size)]
   end
 
   # Returns count or less (if there aren't enough) elements starting at the
@@ -221,21 +221,5 @@ struct BitArray
 
   private def malloc_size
     (@size / 32.0).ceil.to_i
-  end
-
-  # FIXME: this was copied from Array, we should deduplicate implementations
-  # but where should we put it?
-  private def range_to_index_and_count(range)
-    from = range.begin
-    from += size if from < 0
-    raise IndexError.new if from < 0
-
-    to = range.end
-    to += size if to < 0
-    to -= 1 if range.excludes_end?
-    size = to - from + 1
-    size = 0 if size < 0
-
-    {from, size}
   end
 end
