@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 ################## https://github.com/mkropat/sh-realpath #####################
 #
@@ -94,19 +94,14 @@ _canonicalize_file_path() {
 
 ##############################################################################
 
-# Based on http://stackoverflow.com/a/2108540/2199687
+# Based on http://stackoverflow.com/q/370047/641451
 remove_path_item() {
-  local path item work
+  local path item
 
   path="$1"
   item="$2"
 
-  work=":$path:"
-  work="${work/:$item:/:}"
-  work="${work%:}"
-  work="${work#:}"
-
-  echo "$work"
+  echo -n $path | awk -v RS=: -v ORS=: '$0 != "'$item'"' | sed 's/:$//'
 }
 
 ##############################################################################
