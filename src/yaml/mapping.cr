@@ -66,7 +66,7 @@ module YAML
   # it and initializes this type's instance variables.
   #
   # This macro also declares instance variables of the types given in the mapping.
-  macro mapping(properties, strict = false)
+  macro mapping(properties, strict = false, extra = nil)
     {% for key, value in properties %}
       {% properties[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
@@ -86,11 +86,23 @@ module YAML
         end
       {% end %}
     {% end %}
+    
+    {% if extra %}
+      @{{extra.id}} : Hash(String, ::YAML::Any)
+      
+      def {{extra.id}}
+        @{{extra.id}}
+      end
+    {% end %}
 
     def initialize(%pull : ::YAML::PullParser)
       {% for key, value in properties %}
         %var{key.id} = nil
         %found{key.id} = false
+      {% end %}
+      
+      {% if extra %}
+        {{extra.id}} = Hash(String, ::YAML::Any).new
       {% end %}
 
       %pull.read_mapping_start
@@ -116,6 +128,8 @@ module YAML
         else
           {% if strict %}
             raise ::YAML::ParseException.new("Unknown yaml attribute: #{key}", 0, 0)
+          {% elsif extra %}
+            {{extra.id}}[key] = ::YAML::Any.new(%pull)
           {% else %}
             %pull.skip
           {% end %}
@@ -143,6 +157,10 @@ module YAML
         {% else %}
           @{{key.id}} = %var{key.id}.as({{value[:type]}})
         {% end %}
+      {% end %}
+      
+      {% if extra %}
+        @{{extra.id}} = {{extra.id}}
       {% end %}
     end
 
