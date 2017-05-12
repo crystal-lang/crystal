@@ -641,8 +641,8 @@ class Array(T)
   # a.delete_at(99..100) # raises IndexError
   # ```
   def delete_at(range : Range(Int, Int))
-    from, size = Indexable.range_to_index_and_count(range, self.size)
-    delete_at(from, size)
+    index, count = Indexable.range_to_index_and_count(range, self.size)
+    delete_at(index, count)
   end
 
   # Removes *count* elements from `self` starting at *index*.
