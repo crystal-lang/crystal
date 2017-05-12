@@ -132,20 +132,37 @@ struct BitArray
       bits &= (1 << count) - 1
 
       BitArray.new(count).tap { |ba| ba.@bits[0] = bits }
+    elsif size <= 64
+      # Original fits in int64, we can use bitshifts
+      bits = @bits.as(UInt64*)[0]
+
+      bits >>= start
+      bits &= (1 << count) - 1
+
+      if count <= 32
+        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32 }
+      else
+        BitArray.new(count).tap { |ba| ba.@bits.as(UInt64*)[0] = bits }
+      end
     else
       ba = BitArray.new(count)
-      0.upto(count - 1) do |i|
-        # First, mask off only the bit we want
-        source_bit_index, source_sub_index = (i + start).divmod(32)
-        bit = @bits[source_bit_index] & (1 << source_sub_index)
+      start_bit_index, start_sub_index = start.divmod(32)
+      end_bit_index = (start + count) / 32
 
-        # Second, shift the bit to be in the correct sub index for the new BitArray
-        dest_bit_index, dest_sub_index = i.divmod(32)
-        bit <<= (dest_sub_index - source_sub_index)
+      i = 0
+      bits = @bits[start_bit_index]
+      while start_bit_index + i <= end_bit_index
+        low_bits = bits
+        low_bits >>= start_sub_index
 
-        # Third, set the bit in the final bit array
-        # Assumes @bits is initialised to all zeroes
-        ba.@bits[dest_bit_index] |= bit
+        bits = @bits[start_bit_index + i + 1]
+
+        high_bits = bits
+        high_bits &= (1 << start_sub_index) - 1
+        high_bits <<= 32 - start_sub_index
+
+        ba.@bits[i] = low_bits | high_bits
+        i += 1
       end
 
       ba

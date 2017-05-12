@@ -190,6 +190,33 @@ describe "BitArray" do
 
       ba[28..40].should eq(from_int(13, 0b0011101001000))
     end
+
+    it "preserves equality" do
+      ba = BitArray.new(100)
+      25.upto(42) { |i| ba[i] = true }
+
+      ba[28..40].should eq(from_int(13, 0b1111111111111))
+    end
+
+    it "works the same as Array(Bool)" do
+      seed = Random.new_seed
+      begin
+        random = Random.new(seed)
+        10_000.times do
+          array = Array(Bool).new(random.rand(100..200)) { random.next_bool }
+          ba = BitArray.new(array.size)
+          array.each_with_index { |bool, i| ba[i] = bool }
+
+          start_index = random.rand(array.size)
+          end_index = random.rand(start_index...array.size)
+
+          ba[start_index..end_index].map(&.itself).should eq(array[start_index..end_index])
+        end
+      rescue ex : Exception
+        puts "Random Seed: #{seed}"
+        raise ex
+      end
+    end
   end
 
   it "toggles a bit" do
