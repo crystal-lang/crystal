@@ -15,7 +15,7 @@ class Regex
   # argument to select the desired capture group. Capture groups are numbered
   # starting from `1`, so that `0` can be used to refer to the entire regular
   # expression without needing to capture it explicitly.
-  class MatchData
+  struct MatchData
     # Returns the original regular expression.
     #
     # ```
