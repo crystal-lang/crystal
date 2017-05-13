@@ -67,6 +67,10 @@ module YAML
   #
   # This macro also declares instance variables of the types given in the mapping.
   macro mapping(properties, strict = false, extra = nil)
+    {% if extra && properties.keys.includes? extra.id %}
+      {{ raise "Name for extra property already in use: #{extra.id}" }}
+    {% end %}
+  
     {% for key, value in properties %}
       {% properties[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
