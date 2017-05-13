@@ -86,10 +86,10 @@ module YAML
         end
       {% end %}
     {% end %}
-    
+
     {% if extra %}
       @{{extra.id}} : Hash(String, ::YAML::Any)
-      
+
       def {{extra.id}}
         @{{extra.id}}
       end
@@ -100,7 +100,7 @@ module YAML
         %var{key.id} = nil
         %found{key.id} = false
       {% end %}
-      
+
       {% if extra %}
         {{extra.id}} = Hash(String, ::YAML::Any).new
       {% end %}
@@ -158,7 +158,7 @@ module YAML
           @{{key.id}} = %var{key.id}.as({{value[:type]}})
         {% end %}
       {% end %}
-      
+
       {% if extra %}
         @{{extra.id}} = {{extra.id}}
       {% end %}
