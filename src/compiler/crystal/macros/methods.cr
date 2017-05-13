@@ -1740,14 +1740,7 @@ module Crystal
       when "resolve"
         interpret_argless_method(method, args) { interpreter.resolve(self) }
       when "resolve?"
-        interpret_argless_method(method, args) do
-          begin
-            interpreter.resolve(self)
-          rescue ex : Crystal::TypeException
-            ::raise ex unless ex.message.try &.includes? "undefined constant"
-            NilLiteral.new
-          end
-        end
+        interpret_argless_method(method, args) { interpreter.resolve?(self) || NilLiteral.new }
       else
         super
       end
