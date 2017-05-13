@@ -109,7 +109,7 @@ remove_path_item() {
 __has_colors() {
   local num_colors=$(tput colors 2>/dev/null)
 
-  if [ "0$num_colors" -gt 2 ]; then
+  if [ -n "$num_colors" ] && [ "$num_colors" -gt 2 ]; then
     return 0
   else
     return 1
