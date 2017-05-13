@@ -70,7 +70,7 @@ module YAML
     {% if extra && properties.keys.includes? extra.id %}
       {{ raise "Name for extra property already in use: #{extra.id}" }}
     {% end %}
-  
+
     {% for key, value in properties %}
       {% properties[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
