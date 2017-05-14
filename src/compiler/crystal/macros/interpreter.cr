@@ -371,15 +371,17 @@ module Crystal
     end
 
     def resolve(node : Path)
+      resolve?(node) || node.raise_undefined_constant(@path_lookup)
+    end
+
+    def resolve?(node : Path)
       if node.names.size == 1 && (match = @free_vars.try &.[node.names.first]?)
         matched_type = match
       else
         matched_type = @path_lookup.lookup_path(node)
       end
 
-      unless matched_type
-        node.raise_undefined_constant(@path_lookup)
-      end
+      return unless matched_type
 
       case matched_type
       when Const
