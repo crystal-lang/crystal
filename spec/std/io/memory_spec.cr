@@ -331,6 +331,12 @@ describe IO::Memory do
     end
   end
 
+  it "consumes with gets_to_end" do
+    io = IO::Memory.new("hello world")
+    io.gets_to_end.should eq("hello world")
+    io.gets_to_end.should eq("")
+  end
+
   it "peeks" do
     str = "hello world"
     io = IO::Memory.new(str)

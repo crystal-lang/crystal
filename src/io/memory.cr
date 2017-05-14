@@ -225,7 +225,9 @@ class IO::Memory
     if pos == @bytesize
       ""
     else
-      String.new(@buffer + @pos, @bytesize - @pos)
+      String.new(@buffer + @pos, @bytesize - @pos).tap {
+        @pos = @bytesize
+      }
     end
   end
 
