@@ -2,7 +2,6 @@ module LLVM
   {% if LibLLVM.has_constant?(:AttributeRef) %}
     @[Flags]
     enum Attribute : UInt64
-      None = 0
       Alignment = 1 << 0
       AllocSize = 1 << 1
       AlwaysInline = 1 << 2
