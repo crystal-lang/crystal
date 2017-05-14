@@ -97,6 +97,34 @@ describe "FileUtils" do
     end
   end
 
+  describe "touch" do
+    it "creates file if it doesn't exists" do
+      filename = File.join(__DIR__, "data/test_touch.txt")
+      begin
+        File.exists?(filename).should be_false
+        FileUtils.touch(filename)
+        File.exists?(filename).should be_true
+      ensure
+        File.delete filename
+      end
+    end
+
+    it "creates multiple files if they doesn't exists" do
+      paths = [
+        File.join(__DIR__, "data/test_touch_1.txt"),
+        File.join(__DIR__, "data/test_touch_2.txt"),
+        File.join(__DIR__, "data/test_touch_3.txt"),
+      ]
+      begin
+        paths.each { |path| File.exists?(path).should be_false }
+        FileUtils.touch(paths)
+        paths.each { |path| File.exists?(path).should be_true }
+      ensure
+        FileUtils.rm_rf(paths)
+      end
+    end
+  end
+
   describe "cp" do
     it "copies a file" do
       src_path = File.join(__DIR__, "data/test_file.txt")

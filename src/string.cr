@@ -1003,8 +1003,6 @@ class String
   # "string".chomp     # => "string"
   # "x".chomp.chomp    # => "x"
   # ```
-  #
-  # See also: `#chop`.
   def chomp
     return self if empty?
 
@@ -1257,7 +1255,7 @@ class String
     bytes, count = String.char_bytes_and_bytesize(other)
 
     new_bytesize = bytesize + count
-    new_size = ascii_only? ? new_bytesize : 0
+    new_size = (ascii_only? && other.ascii?) ? new_bytesize : 0
 
     insert_impl(byte_index, bytes.to_unsafe, count, new_bytesize, new_size)
   end
@@ -3244,7 +3242,7 @@ class String
   #   puts stanza.upcase
   # end
   # # => THE FIRST COLD SHOWER
-  # # => EVEN THE MONKEY SEEMS TO want
+  # # => EVEN THE MONKEY SEEMS TO WANT
   # # => A LITTLE COAT OF STRAW
   # ```
   def each_line(chomp = true) : Nil

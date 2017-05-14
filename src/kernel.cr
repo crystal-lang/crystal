@@ -118,7 +118,7 @@ end
 #
 # See `Object#pretty_print(pp)`
 def p(**objects)
-  p(objects)
+  p(objects) unless objects.empty?
 end
 
 # :nodoc:

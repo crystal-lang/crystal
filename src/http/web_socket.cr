@@ -48,6 +48,9 @@ class HTTP::WebSocket
   def on_message(&@on_message : String ->)
   end
 
+  def on_binary(&@on_binary : Bytes ->)
+  end
+
   def on_close(&@on_close : String ->)
   end
 
@@ -119,6 +122,12 @@ class HTTP::WebSocket
         @current_message.write @buffer[0, info.size]
         if info.final
           @on_message.try &.call(@current_message.to_s)
+          @current_message.clear
+        end
+      when Protocol::Opcode::BINARY
+        @current_message.write @buffer[0, info.size]
+        if info.final
+          @on_binary.try &.call(@current_message.to_slice)
           @current_message.clear
         end
       when Protocol::Opcode::CLOSE

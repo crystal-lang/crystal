@@ -571,3 +571,14 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 end
+
+private def assert_compile(source)
+  sources = Playground::Session.instrument_and_prelude("", "", 0, source, Logger.new(nil))
+  compiler = Compiler.new
+  compiler.no_codegen = true
+  result = compiler.compile sources, "fake-no-build"
+end
+
+describe Playground::Session do
+  it { assert_compile %(puts "1") }
+end

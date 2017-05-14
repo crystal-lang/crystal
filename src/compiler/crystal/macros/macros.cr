@@ -91,16 +91,9 @@ class Crystal::Program
     compiled_macro_run = @compiled_macros_cache[filename] ||= macro_compile(filename)
     compiled_file = compiled_macro_run.filename
 
-    command = String.build do |str|
-      str << compiled_file.inspect
-      args.each do |arg|
-        str << " "
-        str << arg.inspect
-      end
-    end
-
-    result = `#{command}`
-    {$?.success?, result}
+    io = IO::Memory.new
+    Process.run(compiled_file, args: args, shell: true, output: io)
+    {$?.success?, io.to_s}
   end
 
   record RequireWithTimestamp, filename : String, epoch : Int64 do
@@ -116,7 +109,7 @@ class Crystal::Program
     # that way if it's already there from a previous compilation, and no file
     # that this program uses changes, we can simply avoid recompiling it again
     #
-    # Note: it could happen that a macro run program runs macros that could
+    # NOTE: it could happen that a macro run program runs macros that could
     # change the program behaviour even if files don't change, but this is
     # discouraged (and we should strongly document it) because it prevents
     # incremental compiles.

@@ -13,25 +13,17 @@ module Crystal::Playground
       @tag = 0
     end
 
-    def run(source, tag)
-      @logger.info "Request to run code (session=#{@session_key}, tag=#{tag}).\n#{source}"
-
-      @tag = tag
-      begin
-        ast = Parser.new(source).parse
-      rescue ex : Crystal::Exception
-        send_exception ex, tag
-        return
-      end
+    def self.instrument_and_prelude(session_key, port, tag, source, logger)
+      ast = Parser.new(source).parse
 
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
-      @logger.info "Code instrumentation (session=#{@session_key}, tag=#{tag}).\n#{instrumented}"
+      logger.info "Code instrumentation (session=#{session_key}, tag=#{tag}).\n#{instrumented}"
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
 
         class Crystal::Playground::Agent
-          @@instance = Crystal::Playground::Agent.new("ws://localhost:#{@port}/agent/#{@session_key}/#{tag}", #{tag})
+          @@instance = Crystal::Playground::Agent.new("ws://localhost:#{port}/agent/#{session_key}/#{tag}", #{tag})
 
           def self.instance
             @@instance
@@ -43,10 +35,23 @@ module Crystal::Playground
         end
         )
 
-      sources = [
+      [
         Compiler::Source.new("playground_prelude", prelude),
         Compiler::Source.new("play", instrumented),
       ]
+    end
+
+    def run(source, tag)
+      @logger.info "Request to run code (session=#{@session_key}, tag=#{tag}).\n#{source}"
+
+      @tag = tag
+      begin
+        sources = self.class.instrument_and_prelude(@session_key, @port, tag, source, @logger)
+      rescue ex : Crystal::Exception
+        send_exception ex, tag
+        return
+      end
+
       output_filename = tempfile "play-#{@session_key}-#{tag}"
       compiler = Compiler.new
       compiler.color = false

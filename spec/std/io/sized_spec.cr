@@ -1,5 +1,21 @@
 require "spec"
 
+private class NoPeekIO
+  include IO
+
+  def read(bytes : Bytes)
+    0
+  end
+
+  def write(bytes : Bytes)
+    0
+  end
+
+  def peek
+    raise "shouldn't be invoked"
+  end
+end
+
 describe "IO::Sized" do
   describe "#read" do
     it "doesn't read past the limit when reading char-by-char" do
@@ -114,7 +130,12 @@ describe "IO::Sized" do
     sized = IO::Sized.new(io, read_size: 6)
     sized.peek.should eq("123456".to_slice)
     sized.gets_to_end.should eq("123456")
-    sized.peek.should be_nil
+    sized.peek.should eq(Bytes.empty)
+  end
+
+  it "doesn't peek when remaining = 0 (#4261)" do
+    sized = IO::Sized.new(NoPeekIO.new, read_size: 0)
+    sized.peek.should eq(Bytes.empty)
   end
 
   it "skips" do

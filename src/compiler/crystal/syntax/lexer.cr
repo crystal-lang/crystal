@@ -296,6 +296,7 @@ module Crystal
           when '(', '{', '[', '<'
             start_char = next_char
             next_char :SYMBOL_ARRAY_START
+            @token.raw = "%i#{start_char}" if @wants_raw
             @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char))
           else
             @token.type = :"%"
@@ -335,6 +336,7 @@ module Crystal
           when '(', '{', '[', '<'
             start_char = next_char
             next_char :STRING_ARRAY_START
+            @token.raw = "%w#{start_char}" if @wants_raw
             @token.delimiter_state = Token::DelimiterState.new(:string_array, start_char, closing_char(start_char))
           else
             @token.type = :"%"
@@ -585,6 +587,10 @@ module Crystal
         case char1 = next_char
         when '\\'
           case char2 = next_char
+          when '\\'
+            @token.value = '\\'
+          when '\''
+            @token.value = '\''
           when 'b'
             @token.value = '\b'
           when 'e'
@@ -607,7 +613,7 @@ module Crystal
           when '\0'
             raise "unterminated char literal", line, column
           else
-            @token.value = char2
+            raise "invalid char escape sequence", line, column
           end
         when '\''
           raise "invalid empty char literal (did you mean '\\\''?)", line, column
@@ -2032,6 +2038,7 @@ module Crystal
           while ident_part?(char)
             char = next_char
           end
+          beginning_of_line = false
           @token.type = :MACRO_VAR
           @token.value = string_range_from_pool(start)
           @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
@@ -2117,7 +2124,12 @@ module Crystal
             break
           end
         when '}'
-          if @macro_curly_count > 0
+          if delimiter_state && delimiter_state.end == '}'
+            delimiter_state = delimiter_state.with_open_count_delta(-1)
+            if delimiter_state.open_count == 0
+              delimiter_state = nil
+            end
+          elsif @macro_curly_count > 0
             # Once we find the final '}' that closes the interpolation,
             # we are back inside the delimiter
             if @macro_curly_count == 1
@@ -2393,6 +2405,7 @@ module Crystal
       end
 
       if current_char == @token.delimiter_state.end
+        @token.raw = current_char.to_s if @wants_raw
         next_char
         @token.type = :STRING_ARRAY_END
         return @token

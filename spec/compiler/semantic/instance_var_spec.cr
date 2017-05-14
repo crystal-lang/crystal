@@ -4625,4 +4625,64 @@ describe "Semantic: instance var" do
       ),
       "Can't infer the type of instance variable '@bar' of Foo"
   end
+
+  it "can't infer type when using operation on const (#4054)" do
+    assert_error %(
+      class Foo
+        BAR = 5
+
+        def initialize
+          @baz = BAR + 5
+        end
+      end
+
+      Foo.new
+      ),
+      "Can't infer the type of instance variable '@baz' of Foo"
+  end
+
+  it "instance variables initializers are used in class variables initialized objects (#3988)" do
+    assert_type(%(
+       class Foo
+         @@foo = Foo.new
+
+        @never_nil = 1
+
+        def initialize
+          if false
+            @never_nil = 2
+          end
+        end
+      end
+
+      Foo.new.@never_nil
+      )) { int32 }
+  end
+
+  it "allow usage of instance variable initializer from instance variable initializer" do
+    assert_type(%(
+      class Foo
+        @bar = Bar.new
+        @never_nil = 1
+
+        def initialize
+          if false
+            @never_nil = 2
+          end
+        end
+      end
+
+      class Bar
+        @never_nil = 1
+
+        def initialize
+          if false
+            @never_nil = 2
+          end
+        end
+      end
+
+      {Foo.new.@never_nil, Bar.new.@never_nil}
+    )) { tuple_of([int32, int32]) }
+  end
 end

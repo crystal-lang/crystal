@@ -69,20 +69,29 @@ module SecureRandom
     if n < 0
       raise ArgumentError.new "Negative size: #{n}"
     end
+    Bytes.new(n).tap { |buf| random_bytes(buf) }
+  end
 
+  # Fills a given slice with random bytes.
+  #
+  # ```
+  # slice = Bytes.new(4)             # => [0, 0, 0, 0]
+  # SecureRandom.random_bytes(slice) #
+  # slice                            # => [217, 118, 38, 196]
+  # ```
+  def self.random_bytes(buf : Bytes) : Nil
     init unless @@initialized
 
     {% if flag?(:linux) %}
       if @@getrandom_available
-        return getrandom(n)
+        getrandom(buf)
+        return
       end
     {% end %}
 
-    buf = Bytes.new(n)
-
     if urandom = @@urandom
       urandom.read_fully(buf)
-      return buf
+      return
     end
 
     raise "Failed to access secure source to generate random bytes!"
@@ -92,7 +101,7 @@ module SecureRandom
     @@initialized = true
 
     {% if flag?(:linux) %}
-      if getrandom(Bytes.new(16)) >= 0
+      if sys_getrandom(Bytes.new(16)) >= 0
         @@getrandom_available = true
         return
       end
@@ -106,22 +115,20 @@ module SecureRandom
     @@getrandom_available = false
 
     # Reads n random bytes using the Linux `getrandom(2)` syscall.
-    private def self.getrandom(n : Int)
-      Bytes.new(n).tap do |buf|
-        # getrandom(2) may only read up to 256 bytes at once without being
-        # interrupted or returning early
-        chunk_size = 256
+    private def self.getrandom(buf : Bytes)
+      # getrandom(2) may only read up to 256 bytes at once without being
+      # interrupted or returning early
+      chunk_size = 256
 
-        while buf.size > 0
-          if buf.size < chunk_size
-            chunk_size = buf.size
-          end
-
-          read_bytes = getrandom(buf[0, chunk_size])
-          raise Errno.new("getrandom") if read_bytes == -1
-
-          buf += read_bytes
+      while buf.size > 0
+        if buf.size < chunk_size
+          chunk_size = buf.size
         end
+
+        read_bytes = sys_getrandom(buf[0, chunk_size])
+        raise Errno.new("getrandom") if read_bytes == -1
+
+        buf += read_bytes
       end
     end
 
@@ -133,7 +140,7 @@ module SecureRandom
     # binary compiled for Linux will always use getrandom if the kernel is 3.17+
     # and silently fallback to read from /dev/urandom if not (so it's more
     # portable).
-    private def self.getrandom(buf : Bytes)
+    private def self.sys_getrandom(buf : Bytes)
       loop do
         read_bytes = LibC.syscall(LibC::SYS_getrandom, buf, LibC::SizeT.new(buf.size), 0)
         if read_bytes < 0 && (Errno.value == Errno::EINTR || Errno.value == Errno::EAGAIN)

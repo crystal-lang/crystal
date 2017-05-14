@@ -6,3 +6,4 @@
 {% end %}
 
 require "file/stat"
+require "file/preader"

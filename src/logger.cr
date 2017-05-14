@@ -36,6 +36,38 @@
 class Logger
   property level : Severity
   property progname : String
+
+  # Customizable `Proc` (with a reasonable default)
+  # which the `Logger` uses to format and print its entries.
+  #
+  # Use this setter to provide a custom formatter.
+  # The `Logger` will invoke it with the following arguments:
+  #  - severity: a `Logger::Severity`
+  #  - datetime: `Time`, the entry's timestamp
+  #  - progname: `String`, the program name, if set when the logger was built
+  #  - message: `String`, the body of a message
+  #  - io: `IO`, the Logger's stream, to which you must write the final output
+  #
+  # Example:
+  #
+  # ```
+  # require "logger"
+  #
+  # logger = Logger.new(STDOUT)
+  # logger.progname = "YodaBot"
+  #
+  # logger.formatter = Logger::Formatter.new do |severity, datetime, progname, message, io|
+  #   label = severity.unknown? ? "ANY" : severity.to_s
+  #   io << label[0] << ", [" << datetime << " #" << Process.pid << "] "
+  #   io << label.rjust(5) << " -- " << progname << ": " << message
+  # end
+  #
+  # logger.warn("Fear leads to anger. Anger leads to hate. Hate leads to suffering.")
+  #
+  # # Prints to the console:
+  # # "W, [2017-05-06 18:00:41 -0300 #11927]  WARN --
+  # #  YodaBot: Fear leads to anger. Anger leads to hate. Hate leads to suffering."
+  # ```
   property formatter
 
   # A logger severity level.
@@ -58,11 +90,12 @@ class Logger
     UNKNOWN
   end
 
-  alias Formatter = String, Time, String, String, IO ->
+  alias Formatter = Severity, Time, String, String, IO ->
 
   private DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
-    io << severity[0] << ", [" << datetime << " #" << Process.pid << "] "
-    io << severity.rjust(5) << " -- " << progname << ": " << message
+    label = severity.unknown? ? "ANY" : severity.to_s
+    io << label[0] << ", [" << datetime << " #" << Process.pid << "] "
+    io << label.rjust(5) << " -- " << progname << ": " << message
   end
 
   # :nodoc:
@@ -134,11 +167,10 @@ class Logger
     io = @io
     return unless io
 
-    label = severity == Severity::UNKNOWN ? "ANY" : severity.to_s
     progname_to_s = progname.to_s
     message_to_s = message.to_s
     @mutex.synchronize do
-      formatter.call(label, datetime, progname_to_s, message_to_s, io)
+      formatter.call(severity, datetime, progname_to_s, message_to_s, io)
       io.puts
       io.flush
     end

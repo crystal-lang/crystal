@@ -342,7 +342,7 @@ describe IO::Memory do
     io.peek.should eq("lo world".to_slice)
 
     io.skip_to_end
-    io.peek.should be_nil
+    io.peek.should eq(Bytes.empty)
   end
 
   it "skips" do

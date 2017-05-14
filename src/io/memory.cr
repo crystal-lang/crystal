@@ -192,8 +192,7 @@ class IO::Memory
   def peek
     check_open
 
-    peek = Slice.new(@buffer + @pos, @bytesize - @pos)
-    peek.empty? ? nil : peek
+    Slice.new(@buffer + @pos, @bytesize - @pos)
   end
 
   # :nodoc:

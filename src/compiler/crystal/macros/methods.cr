@@ -5,6 +5,7 @@ require "semantic_version"
 module Crystal
   class MacroInterpreter
     def interpret_top_level_call(node)
+      # Please order method names in lexicographical order, because OCD
       case node.name
       when "compare_versions"
         interpret_compare_versions(node)
@@ -18,6 +19,8 @@ module Crystal
         interpret_puts(node)
       when "pp"
         interpret_pp(node)
+      when "skip"
+        interpret_skip(node)
       when "system", "`"
         interpret_system(node)
       when "raise"
@@ -128,6 +131,10 @@ module Crystal
       end
 
       @last = Nop.new
+    end
+
+    def interpret_skip(node)
+      raise SkipMacroException.new(@str.to_s)
     end
 
     def interpret_system(node)
@@ -1317,6 +1324,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.type_vars(type) }
       when "instance_vars"
         interpret_argless_method(method, args) { TypeNode.instance_vars(type) }
+      when "ancestors"
+        interpret_argless_method(method, args) { TypeNode.ancestors(type) }
       when "superclass"
         interpret_argless_method(method, args) { TypeNode.superclass(type) }
       when "subclasses"
@@ -1467,6 +1476,10 @@ module Crystal
       else
         ArrayLiteral.new
       end
+    end
+
+    def self.ancestors(type)
+      ArrayLiteral.map(type.ancestors) { |ancestor| TypeNode.new(ancestor) }
     end
 
     def self.superclass(type)

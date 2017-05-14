@@ -203,6 +203,10 @@ module Debug
       def ==(other : UUID)
         bytes == other.bytes
       end
+
+      def inspect(io)
+        io << bytes.to_slice.hexstring
+      end
     end
 
     struct Section64
@@ -490,8 +494,9 @@ module Debug
 
     def read_section?(name)
       if sh = sections.find { |s| s.sectname == name }
-        @io.seek(sh.offset)
-        yield sh, @io
+        @io.seek(sh.offset) do
+          yield sh, @io
+        end
       end
     end
   end

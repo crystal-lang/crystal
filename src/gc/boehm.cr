@@ -23,6 +23,7 @@ lib LibGC
   fun set_handle_fork = GC_set_handle_fork(value : Int)
 
   fun base = GC_base(displaced_pointer : Void*) : Void*
+  fun is_heap_ptr = GC_is_heap_ptr(pointer : Void*) : Int
   fun general_register_disappearing_link = GC_general_register_disappearing_link(link : Void**, obj : Void*) : Int
 
   type Finalizer = Void*, Void* ->
@@ -126,6 +127,10 @@ module GC
   def self.register_disappearing_link(pointer : Void**)
     base = LibGC.base(pointer.value)
     LibGC.general_register_disappearing_link(pointer, base)
+  end
+
+  def self.is_heap_ptr(pointer : Void*)
+    LibGC.is_heap_ptr(pointer) != 0
   end
 
   record Stats,

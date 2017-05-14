@@ -88,6 +88,9 @@ module Crystal
     @or_left_type_filters : TypeFilters?
     @or_right_type_filters : TypeFilters?
 
+    # Type filters for `exp` in `!exp`, used after a `while`
+    @before_not_type_filters : TypeFilters?
+
     def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       super(program, vars)
       @while_stack = [] of While
@@ -177,6 +180,8 @@ module Crystal
         # It's different if from a virtual type we do `v.class.new`
         # because the class could be any in the hierarchy.
         node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
+      when Self
+        node.type = check_type_in_type_args(the_self(node).remove_alias_if_simple)
       when ASTNode
         type.accept self unless type.type?
         node.syntax_replacement = type
@@ -310,12 +315,7 @@ module Crystal
     end
 
     def visit(node : Self)
-      the_self = (@scope || current_type)
-      if the_self.is_a?(Program)
-        node.raise "there's no self in this scope"
-      end
-
-      node.type = the_self.instance_type
+      node.type = the_self(node).instance_type
     end
 
     def visit(node : Var)
@@ -1660,7 +1660,9 @@ module Crystal
       # When doing x.is_a?(A) and A turns out to be a constant (not a type),
       # replace it with a === comparison. Most usually this happens in a case expression.
       if const.is_a?(Path) && const.target_const
-        comp = Call.new(const, "===", node.obj).at(node.location)
+        obj = node.obj.clone.at(node.obj)
+        const = node.const.clone.at(node.const)
+        comp = Call.new(const, "===", obj).at(node.location)
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
@@ -1979,6 +1981,16 @@ module Crystal
         if endless_while
           node.type = program.no_return
           return
+        end
+
+        if node.cond.is_a?(Not)
+          after_while_type_filters = @not_type_filters
+        else
+          after_while_type_filters = not_type_filters(node.cond, cond_type_filters)
+        end
+
+        if after_while_type_filters
+          filter_vars(after_while_type_filters)
         end
       end
 
@@ -2852,13 +2864,26 @@ module Crystal
       node.exp.add_observer node
       node.update
 
-      if needs_type_filters? && (type_filters = @type_filters)
-        @type_filters = type_filters.not
+      if needs_type_filters?
+        @not_type_filters = @type_filters
+        @type_filters = not_type_filters(node.exp, @type_filters)
       else
         @type_filters = nil
+        @not_type_filters = nil
       end
 
       false
+    end
+
+    private def not_type_filters(exp, type_filters)
+      if type_filters
+        case exp
+        when Var, IsA, RespondsTo, Not
+          return type_filters.not
+        end
+      end
+
+      nil
     end
 
     def visit(node : VisibilityModifier)
@@ -3122,6 +3147,14 @@ module Crystal
       else
         type.metaclass
       end
+    end
+
+    def the_self(node)
+      the_self = (@scope || current_type)
+      if the_self.is_a?(Program)
+        node.raise "there's no self in this scope"
+      end
+      the_self
     end
 
     def visit(node : When | Unless | Until | MacroLiteral | OpAssign)

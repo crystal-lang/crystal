@@ -2900,6 +2900,10 @@ module Crystal
       super(program)
     end
 
+    def metaclass
+      program.class_type
+    end
+
     def parents
       @parents ||= [instance_type.superclass.try(&.metaclass) || program.class_type] of Type
     end

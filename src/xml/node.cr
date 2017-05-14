@@ -21,17 +21,28 @@ struct XML::Node
   end
 
   # Gets the attribute content for the *attribute* given by name.
-  #
   # Raises `KeyError` if attribute is not found.
   def [](attribute : String) : String
     attributes[attribute].content || raise(KeyError.new("Missing attribute: #{attribute}"))
   end
 
   # Gets the attribute content for the *attribute* given by name.
-  #
   # Returns `nil` if attribute is not found.
   def []?(attribute : String) : String?
     attributes[attribute]?.try &.content
+  end
+
+  # Sets *attribute* of this node to *value*.
+  # Raises `XML::Error` if this node does not support attributes.
+  def []=(name : String, value : String)
+    raise XML::Error.new("Can't set attribute of #{type}", 0) unless element?
+    attributes[name] = value
+  end
+
+  # Deletes attribute given by *name*.
+  # Returns attributes value, or `nil` if attribute not found.
+  def delete(name : String)
+    attributes.delete(name)
   end
 
   # Compares with *other*.

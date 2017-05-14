@@ -86,6 +86,15 @@ class Socket
         hints.ai_flags |= LibC::AI_NUMERICSERV
       end
 
+      # On OS X < 10.12, the libsystem implementation of getaddrinfo segfaults
+      # if AI_NUMERICSERV is set, and servname is NULL or 0.
+      {% if flag?(:darwin) %}
+        if (service == 0 || service == nil) && (hints.ai_flags & LibC::AI_NUMERICSERV)
+          hints.ai_flags |= LibC::AI_NUMERICSERV
+          service = "00"
+        end
+      {% end %}
+
       case ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
       when 0
         # success

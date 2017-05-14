@@ -21,6 +21,12 @@ class Crystal::Program
   def semantic(node : ASTNode, cleanup = true) : ASTNode
     node, processor = top_level_semantic(node)
 
+    Crystal.timing("Semantic (ivars initializers)", @wants_stats) do
+      visitor = InstanceVarsInitializerVisitor.new(self)
+      visit_with_finished_hooks(node, visitor)
+      visitor.finish
+    end
+
     Crystal.timing("Semantic (cvars initializers)", @wants_stats) do
       visit_class_vars_initializers(node)
     end
@@ -28,11 +34,6 @@ class Crystal::Program
     # Check that class vars without an initializer are nilable,
     # give an error otherwise
     processor.check_non_nilable_class_vars_without_initializers
-
-    Crystal.timing("Semantic (ivars initializers)", @wants_stats) do
-      visitor = InstanceVarsInitializerVisitor.new(self)
-      visit_with_finished_hooks(node, visitor)
-    end
 
     result = Crystal.timing("Semantic (main)", @wants_stats) do
       visit_main(node, process_finished_hooks: true, cleanup: cleanup)

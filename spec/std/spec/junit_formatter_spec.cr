@@ -8,15 +8,14 @@ describe "JUnit Formatter" do
     end
 
     expected = <<-XML
+                 <?xml version="1.0"?>
                  <testsuite tests="2" errors="0" failed="0">
-                 <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something">
-                 </testcase>
-                 <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something else">
-                 </testcase>
+                   <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something"/>
+                   <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something else"/>
                  </testsuite>
                  XML
 
-    output.should eq(expected)
+    output.chomp.should eq(expected)
   end
 
   it "reports failures" do
@@ -25,14 +24,15 @@ describe "JUnit Formatter" do
     end
 
     expected = <<-XML
+                 <?xml version="1.0"?>
                  <testsuite tests="1" errors="0" failed="1">
-                 <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something">
-                 <failure />
-                 </testcase>
+                   <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something">
+                     <failure/>
+                   </testcase>
                  </testsuite>
                  XML
 
-    output.should eq(expected)
+    output.chomp.should eq(expected)
   end
 
   it "reports errors" do
@@ -41,14 +41,15 @@ describe "JUnit Formatter" do
     end
 
     expected = <<-XML
+                 <?xml version="1.0"?>
                  <testsuite tests="1" errors="1" failed="0">
-                 <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something">
-                 <error />
-                 </testcase>
+                   <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something">
+                     <error/>
+                   </testcase>
                  </testsuite>
                  XML
 
-    output.should eq(expected)
+    output.chomp.should eq(expected)
   end
 
   it "reports mixed results" do
@@ -60,22 +61,22 @@ describe "JUnit Formatter" do
     end
 
     expected = <<-XML
+                 <?xml version="1.0"?>
                  <testsuite tests="4" errors="2" failed="1">
-                 <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something1">
-                 </testcase>
-                 <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something2">
-                 <failure />
-                 </testcase>
-                 <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something3">
-                 <error />
-                 </testcase>
-                 <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something4">
-                 <error />
-                 </testcase>
+                   <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something1"/>
+                   <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something2">
+                     <failure/>
+                   </testcase>
+                   <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something3">
+                     <error/>
+                   </testcase>
+                   <testcase file=\"spec/some_spec.cr\" classname=\"spec.some_spec\" name="should do something4">
+                     <error/>
+                   </testcase>
                  </testsuite>
                  XML
 
-    output.should eq(expected)
+    output.chomp.should eq(expected)
   end
 
   it "escapes spec names" do

@@ -102,7 +102,7 @@ module HTTP
             peek = peek[0, @chunk_remaining]
           end
 
-          return peek.empty? ? nil : peek
+          return peek
         elsif @read_chunk_start
           read_chunk_start
           next

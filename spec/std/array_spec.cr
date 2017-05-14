@@ -1785,6 +1785,14 @@ describe "Array" do
   end
 
   describe "Array.each_product" do
+    it "one empty array" do
+      empty = [] of Int32
+      res = [] of Array(Int32)
+      Array.each_product([empty, [1, 2, 3]]) { |r| res << r }
+      Array.each_product([[1, 2, 3], empty]) { |r| res << r }
+      res.size.should eq(0)
+    end
+
     it "single array" do
       res = [] of Array(Int32)
       Array.each_product([[1]]) { |r| res << r }

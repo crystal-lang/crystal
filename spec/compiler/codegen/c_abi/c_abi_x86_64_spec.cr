@@ -85,6 +85,30 @@ require "../../../spec_helper"
       str.should contain("declare void @foo({ i64, i64 })")
     end
 
+    it "passes struct between 64 and 128 bits as { i64, i64 } (with multiple modules/contexts)" do
+      codegen(%(
+        require "prelude"
+
+        lib LibFoo
+          struct Struct
+            x : Int64
+            y : Int16
+          end
+
+          fun foo(s : Struct)
+        end
+
+        module Moo
+          def self.moo
+            s = LibFoo::Struct.new
+            LibFoo.foo(s)
+          end
+        end
+
+        Moo.moo
+        ))
+    end
+
     it "passes struct between 64 and 128 bits (for real)" do
       test_c(
         %(

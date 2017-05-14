@@ -1178,9 +1178,10 @@ class Array(T)
   end
 
   def self.each_product(arrays : Array(Array), reuse = false)
-    pool = arrays.map &.first
     lens = arrays.map &.size
     return if lens.any? &.==(0)
+
+    pool = arrays.map &.first
 
     n = arrays.size
     indices = Array.new(n, 0)

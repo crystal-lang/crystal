@@ -63,6 +63,11 @@ describe Time do
     time.epoch_ms.should eq(milliseconds)
   end
 
+  it "clones" do
+    time = Time.now
+    (time == time.clone).should be_true
+  end
+
   it "fields" do
     Time::MaxValue.ticks.should eq(3155378975999999999)
     Time::MinValue.ticks.should eq(0)

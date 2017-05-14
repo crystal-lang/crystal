@@ -38,28 +38,28 @@ class Crystal::Type
   # ```
   #
   # If `self` is `Foo` and `Bar(Baz)` is given, the result will be `Foo::Bar(Baz)`.
-  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil) : Type
-    TypeLookup.new(self, self_type, true, allow_typeof, free_vars).lookup(node).not_nil!
+  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, lazy_self = false, free_vars : Hash(String, TypeVar)? = nil) : Type
+    TypeLookup.new(self, self_type, true, allow_typeof, lazy_self, free_vars).lookup(node).not_nil!
   end
 
   # Similar to `lookup_type`, but returns `nil` if a type can't be found.
-  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil) : Type?
-    TypeLookup.new(self, self_type, false, allow_typeof, free_vars).lookup(node)
+  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, lazy_self = false, free_vars : Hash(String, TypeVar)? = nil) : Type?
+    TypeLookup.new(self, self_type, false, allow_typeof, lazy_self, free_vars).lookup(node)
   end
 
   # Similar to `lookup_type`, but the result might also be an ASTNode, for example when
   # looking `N` relative to a StaticArray.
   def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil) : Type | ASTNode
-    TypeLookup.new(self, self.instance_type, true, false, free_vars).lookup_type_var(node).not_nil!
+    TypeLookup.new(self, self.instance_type, true, false, false, free_vars).lookup_type_var(node).not_nil!
   end
 
   # Similar to `lookup_type_var`, but might return `nil`.
   def lookup_type_var?(node : Path, free_vars : Hash(String, TypeVar)? = nil, raise = false) : Type | ASTNode | Nil
-    TypeLookup.new(self, self.instance_type, raise, false, free_vars).lookup_type_var?(node)
+    TypeLookup.new(self, self.instance_type, raise, false, false, free_vars).lookup_type_var?(node)
   end
 
   private struct TypeLookup
-    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(String, TypeVar)? = nil)
+    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @lazy_self : Bool, @free_vars : Hash(String, TypeVar)? = nil)
       @in_generic_args = 0
 
       # If we are looking types inside a non-instantiated generic type,
@@ -81,9 +81,15 @@ class Crystal::Type
 
       case type_var
       when Const
-        node.raise "#{type_var} is not a type, it's a constant"
+        if @raise
+          node.raise "#{type_var} is not a type, it's a constant"
+        else
+          return nil
+        end
       when Type
         return type_var
+      when Self
+        return lookup(type_var)
       end
 
       if @raise
@@ -211,8 +217,14 @@ class Crystal::Type
       type_vars = Array(TypeVar).new(node.type_vars.size + 1)
       node.type_vars.each do |type_var|
         case type_var
+        when Self
+          if @lazy_self
+            type_vars << type_var
+            next
+          end
         when NumberLiteral
           type_vars << type_var
+          next
         when Splat
           type = in_generic_args { lookup(type_var.exp) }
           return if !@raise && !type
@@ -230,37 +242,38 @@ class Crystal::Type
 
             type_var.raise "can only splat tuple type, not #{splat_type}"
           end
-        else
-          # Check the case of T resolving to a number
-          if type_var.is_a?(Path) && type_var.names.size == 1
-            type = @root.lookup_path(type_var)
-            case type
-            when Const
-              interpreter = MathInterpreter.new(@root)
-              begin
-                num = interpreter.interpret(type.value)
-                type_vars << NumberLiteral.new(num)
-              rescue ex : Crystal::Exception
-                type_var.raise "expanding constant value for a number value", inner: ex
-              end
-              next
-            when ASTNode
-              type_vars << type
-              next
-            end
-          end
-
-          type = in_generic_args { lookup(type_var) }
-          return if !@raise && !type
-          type = type.not_nil!
-
-          case instance_type
-          when GenericUnionType, PointerType, StaticArrayType, TupleType, ProcType
-            check_type_allowed_in_generics(type_var, type, "can't use #{type} as a generic type argument")
-          end
-
-          type_vars << type.virtual_type
+          next
         end
+
+        # Check the case of T resolving to a number
+        if type_var.is_a?(Path) && type_var.names.size == 1
+          type = @root.lookup_path(type_var)
+          case type
+          when Const
+            interpreter = MathInterpreter.new(@root)
+            begin
+              num = interpreter.interpret(type.value)
+              type_vars << NumberLiteral.new(num)
+            rescue ex : Crystal::Exception
+              type_var.raise "expanding constant value for a number value", inner: ex
+            end
+            next
+            # when ASTNode
+            #   type_vars << type
+            #   next
+          end
+        end
+
+        type = in_generic_args { lookup(type_var) }
+        return if !@raise && !type
+        type = type.not_nil!
+
+        case instance_type
+        when GenericUnionType, PointerType, StaticArrayType, TupleType, ProcType
+          check_type_allowed_in_generics(type_var, type, "can't use #{type} as a generic type argument")
+        end
+
+        type_vars << type.virtual_type
       end
 
       begin

@@ -775,6 +775,22 @@ describe "Semantic: macro" do
       )) { int32.metaclass }
   end
 
+  it "finds generic type argument of included module with self" do
+    assert_type(%(
+      module Bar(T)
+        def t
+          {{ T }}
+        end
+      end
+
+      class Foo(U)
+        include Bar(self)
+      end
+
+      Foo(Int32).new.t
+      )) { generic_class("Foo", int32).metaclass }
+  end
+
   it "finds free type vars" do
     assert_type(%(
       module Foo(T)
@@ -971,5 +987,43 @@ describe "Semantic: macro" do
       a = uninitialized Int32
       foo(a)
       )) { int32 }
+  end
+
+  describe "skip macro directive" do
+    it "skips expanding the rest of the current file" do
+      res = semantic(%(
+        class A
+        end
+
+        {% skip() %}
+
+        class B
+        end
+      ))
+
+      res.program.types.has_key?("A").should be_true
+      res.program.types.has_key?("B").should be_false
+    end
+
+    it "skips file inside an if macro expression" do
+      res = semantic(%(
+        class A
+        end
+
+        {% if true %}
+          class C; end
+          {% skip() %}
+          class D; end
+        {% end %}
+
+        class B
+        end
+      ))
+
+      res.program.types.has_key?("A").should be_true
+      res.program.types.has_key?("B").should be_false
+      res.program.types.has_key?("C").should be_true
+      res.program.types.has_key?("D").should be_false
+    end
   end
 end

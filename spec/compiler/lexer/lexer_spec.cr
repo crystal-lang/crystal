@@ -456,6 +456,8 @@ describe "Lexer" do
   assert_syntax_error "'\\u{110000}'", "invalid unicode codepoint (too large)"
   assert_syntax_error ":+1", "unexpected token"
 
+  assert_syntax_error "'\\1'", "invalid char escape sequence"
+
   it_lexes_string %("\\1"), String.new(Bytes[1])
   it_lexes_string %("\\4"), String.new(Bytes[4])
   it_lexes_string %("\\10"), String.new(Bytes[8])

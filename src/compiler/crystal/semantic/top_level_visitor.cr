@@ -355,7 +355,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.raise "method marked as Primitive must have an empty body"
     end
 
-    node.body = Primitive.new(value)
+    primitive = Primitive.new(value)
+    primitive.location = node.location
+
+    node.body = primitive
   end
 
   def visit(node : Include)
@@ -597,6 +600,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     enum_type.add_def a_def
   end
 
+  def visit(node : Expressions)
+    node.expressions.each_with_index do |child, i|
+      begin
+        child.accept self
+      rescue SkipMacroException
+        node.expressions.delete_at(i..-1)
+        break
+      end
+    end
+    false
+  end
+
   def visit(node : Assign)
     type_assign(node.target, node.value, node)
     false
@@ -811,7 +826,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def include_in(current_type, node, kind)
     node_name = node.name
 
-    type = lookup_type(node_name)
+    type = lookup_type(node_name, lazy_self: true)
     case type
     when GenericModuleType
       node.raise "wrong number of type vars for #{type} (given 0, expected #{type.type_vars.size})"

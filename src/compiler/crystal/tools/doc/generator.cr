@@ -18,11 +18,11 @@ class Crystal::Doc::Generator
   FLAGS = FLAG_COLORS.keys
 
   GIT_REMOTE_PATTERNS = {
-    /github\.com(?:\:|\/)(?<user>(?:\w|-|_)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:.git)?\b/ => {
+    /github\.com(?:\:|\/)(?<user>(?:\w|-|_)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:\.git)?\s/ => {
       repository: "https://github.com/%{user}/%{repo}/blob/%{rev}",
       repo_name:  "github.com/%{user}/%{repo}",
     },
-    /gitlab\.com(?:\:|\/)(?<user>(?:\w|-|_|\.)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:.git)?\b/ => {
+    /gitlab\.com(?:\:|\/)(?<user>(?:\w|-|_|\.)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:\.git)?\s/ => {
       repository: "https://gitlab.com/%{user}/%{repo}/blob/%{rev}",
       repo_name:  "gitlab.com/%{user}/%{repo}",
     },
@@ -172,7 +172,7 @@ class Crystal::Doc::Generator
     return false unless type.namespace == crystal_type
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
-     "DESCRIPTION", "PATH", "VERSION"}.each do |name|
+     "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 
@@ -298,7 +298,7 @@ class Crystal::Doc::Generator
       GIT_REMOTE_PATTERNS.each_key.compact_map(&.match(line)).first?
     end.to_a
 
-    @is_crystal_repo = git_matches.any? { |gr| gr.string =~ %r{github\.com[/:]crystal-lang/crystal} }
+    @is_crystal_repo = git_matches.any? { |gr| gr.string =~ %r{github\.com[/:]crystal-lang/crystal(?:\.git)?\s} }
 
     origin = git_matches.find(&.string.starts_with?("origin")) || git_matches.first?
     return unless origin

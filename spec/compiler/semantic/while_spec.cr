@@ -116,4 +116,49 @@ describe "Semantic: while" do
       x
       )) { union_of(int32, char) }
   end
+
+  it "restricts type after while (#4242)" do
+    assert_type(%(
+      a = nil
+      while a.nil?
+        a = 1
+      end
+      a
+      )) { int32 }
+  end
+
+  it "restricts type after while with not (#4242)" do
+    assert_type(%(
+      a = nil
+      while !a
+        a = 1
+      end
+      a
+      )) { int32 }
+  end
+
+  it "restricts type after while with not and and (#4242)" do
+    assert_type(%(
+      a = nil
+      b = nil
+      while !(a && b)
+        a = 1
+        b = 'a'
+      end
+      {a, b}
+      )) { tuple_of [int32, char] }
+  end
+
+  it "doesn't restrict type after while if there's a break (#4242)" do
+    assert_type(%(
+      a = nil
+      while a.nil?
+        if 1 == 1
+          break
+        end
+        a = 1
+      end
+      a
+      )) { nilable int32 }
+  end
 end

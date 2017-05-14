@@ -131,13 +131,19 @@ module Iterator(T)
   end
 
   def self.of(&block : -> T)
-    SingletonProc(T).new(block)
+    SingletonProc(typeof(without_stop(&block))).new(block)
+  end
+
+  private def self.without_stop(&block : -> T)
+    e = block.call
+    raise "" if e.is_a?(Iterator::Stop)
+    e
   end
 
   private struct SingletonProc(T)
     include Iterator(T)
 
-    def initialize(@proc : -> T)
+    def initialize(@proc : (-> (T | Iterator::Stop)) | (-> T))
     end
 
     def next

@@ -9,6 +9,7 @@ module Crystal
   MAIN_NAME          = "__crystal_main"
   RAISE_NAME         = "__crystal_raise"
   MALLOC_NAME        = "__crystal_malloc"
+  MALLOC_ATOMIC_NAME = "__crystal_malloc_atomic"
   REALLOC_NAME       = "__crystal_realloc"
   PERSONALITY_NAME   = "__crystal_personality"
   GET_EXCEPTION_NAME = "__crystal_get_exception"
@@ -129,6 +130,7 @@ module Crystal
     @empty_md_list : LLVM::Value
     @rescue_block : LLVM::BasicBlock?
     @malloc_fun : LLVM::Function?
+    @malloc_atomic_fun : LLVM::Function?
     @sret_value : LLVM::Value?
     @cant_pass_closure_to_c_exception_call : Call?
     @realloc_fun : LLVM::Function?
@@ -275,7 +277,7 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, REALLOC_NAME, RAISE_NAME, PERSONALITY_NAME, GET_EXCEPTION_NAME
+        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, PERSONALITY_NAME, GET_EXCEPTION_NAME
           @codegen.accept node
         end
         false
@@ -347,6 +349,10 @@ module Crystal
       end
 
       unless node.external.dead?
+        # Mark as dead so we don't generate it twice
+        # (can happen with well known functions like __crystal_raise)
+        node.external.dead = true
+
         if node.external.used?
           codegen_fun node.real_name, node.external, @program, is_exported_fun: true
         else
@@ -367,6 +373,7 @@ module Crystal
       with_context(Context.new(context.fun, context.type)) do
         file_module = @program.file_module(node.filename)
         if vars = file_module.vars?
+          set_current_debug_location Location.new(node.filename, 1, 1) if @debug.line_numbers?
           alloca_vars vars, file_module
 
           emit_vars_debug_info(vars) if @debug.variables?
@@ -1225,7 +1232,7 @@ module Crystal
       ] of ASTNode
 
       if location = node.location
-        pieces << StringLiteral.new(", at #{location.filename}:#{location.line_number}").at(node)
+        pieces << StringLiteral.new(", at #{location.original_location}:#{location.line_number}").at(node)
       end
 
       ex = Call.new(Path.global("TypeCastError").at(node), "new", StringInterpolation.new(pieces).at(node)).at(node)
@@ -1746,7 +1753,12 @@ module Crystal
       if type.passed_by_value?
         @last = alloca struct_type
       else
-        @last = malloc struct_type
+        if type.is_a?(InstanceVarContainer) && !type.struct? &&
+           type.all_instance_vars.each_value.any? &.type.has_inner_pointers?
+          @last = malloc struct_type
+        else
+          @last = malloc_atomic struct_type
+        end
       end
       memset @last, int8(0), struct_type.size
       type_ptr = @last
@@ -1806,9 +1818,15 @@ module Crystal
     end
 
     def malloc(type)
-      @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
-      if malloc_fun = @malloc_fun
-        malloc_fun = check_main_fun MALLOC_NAME, malloc_fun
+      generic_malloc(type) { malloc_fun }
+    end
+
+    def malloc_atomic(type)
+      generic_malloc(type) { malloc_atomic_fun }
+    end
+
+    def generic_malloc(type)
+      if malloc_fun = yield
         size = trunc(type.size, llvm_context.int32)
         pointer = call malloc_fun, size
         bit_cast pointer, type.pointer
@@ -1818,12 +1836,18 @@ module Crystal
     end
 
     def array_malloc(type, count)
-      @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
+      generic_array_malloc(type, count) { malloc_fun }
+    end
+
+    def array_malloc_atomic(type, count)
+      generic_array_malloc(type, count) { malloc_atomic_fun }
+    end
+
+    def generic_array_malloc(type, count)
       size = trunc(type.size, llvm_context.int32)
       count = trunc(count, llvm_context.int32)
       size = builder.mul size, count
-      if malloc_fun = @malloc_fun
-        malloc_fun = check_main_fun MALLOC_NAME, malloc_fun
+      if malloc_fun = yield
         pointer = call malloc_fun, size
         memset pointer, int8(0), size
         bit_cast pointer, type.pointer
@@ -1832,6 +1856,24 @@ module Crystal
         void_pointer = bit_cast pointer, llvm_context.void_pointer
         memset void_pointer, int8(0), size
         pointer
+      end
+    end
+
+    def malloc_fun
+      @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
+      if malloc_fun = @malloc_fun
+        check_main_fun MALLOC_NAME, malloc_fun
+      else
+        nil
+      end
+    end
+
+    def malloc_atomic_fun
+      @malloc_atomic_fun ||= @main_mod.functions[MALLOC_ATOMIC_NAME]?
+      if malloc_fun = @malloc_atomic_fun
+        check_main_fun MALLOC_ATOMIC_NAME, malloc_fun
+      else
+        nil
       end
     end
 

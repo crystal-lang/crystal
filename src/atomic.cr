@@ -168,7 +168,7 @@ struct Atomic(T)
   # atomic.get     # => 10
   # ```
   def set(value : T)
-    Ops.store(pointerof(@value), value, :sequentially_consistent, true)
+    Ops.store(pointerof(@value), value.as(T), :sequentially_consistent, true)
     value
   end
 

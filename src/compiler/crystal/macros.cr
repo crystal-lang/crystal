@@ -91,6 +91,23 @@ module Crystal::Macros
   def run(filename, *args) : MacroId
   end
 
+  # Skips the rest of the file from which it is executed.
+  # Typical usage is to skip files that have platform specific code,
+  # without having to surround the most relevant code in `{%...%}` macro blocks.
+  #
+  # Example:
+  #
+  # ```
+  # # sth_for_osx.cr
+  # {% skip() unless flag?(:darwin) %}
+  #
+  # # Class FooForMac will only be defined if we're compiling on OS X
+  # class FooForMac
+  # end
+  # ```
+  def skip : Nop
+  end
+
   # This is the base class of all AST nodes. This methods are
   # available to all AST nodes.
   abstract class ASTNode
@@ -1479,6 +1496,10 @@ module Crystal::Macros
 
     # Returns the instance variables of this type.
     def instance_vars : ArrayLiteral(MetaVar)
+    end
+
+    # Returns all ancestors of this type.
+    def ancestors : ArrayLiteral(TypeNode)
     end
 
     # Returns the direct superclass of this type.

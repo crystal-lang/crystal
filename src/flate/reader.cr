@@ -77,7 +77,6 @@ class Flate::Reader
           @stream.next_in = @buf.to_unsafe
           @stream.avail_in = @io.read(@buf.to_slice).to_u32
         end
-        return 0 if @stream.avail_in == 0
       end
 
       old_avail_in = @stream.avail_in

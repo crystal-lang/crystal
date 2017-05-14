@@ -179,7 +179,6 @@ module Crystal
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      klass.metaclass = klass
       klass.allowed_in_generics = false
 
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
@@ -242,6 +241,7 @@ module Crystal
       define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
       define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
       define_crystal_string_constant "VERSION", version
+      define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
     end
 
     private def define_crystal_string_constant(name, value)

@@ -149,7 +149,7 @@ prepare_build() {
 
   on_linux docker pull "jhass/crystal-build-$ARCH"
 
-  on_osx brew install llvm pcre crystal-lang
+  on_osx brew install llvm crystal-lang
 }
 
 with_build_env() {
@@ -160,7 +160,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
   on_linux docker run \
-    --rm \
+    --rm -t \
     -u $(id -u) \
     -v $(pwd):/mnt \
     -w /mnt \

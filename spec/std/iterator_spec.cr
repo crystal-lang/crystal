@@ -13,6 +13,19 @@ describe Iterator do
       iter = Iterator.of { a += 1 }
       iter.first(3).to_a.should eq([1, 2, 3])
     end
+
+    it "creates singleton from block can call Iterator.stop" do
+      a = 0
+      iter = Iterator.of do
+        if a >= 5
+          Iterator.stop
+        else
+          a += 1
+        end
+      end
+      iter.should be_a(Iterator(Int32))
+      iter.first(10).to_a.should eq([1, 2, 3, 4, 5])
+    end
   end
 
   describe "compact_map" do

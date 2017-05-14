@@ -28,6 +28,7 @@ module Crystal
       @assigns_special_var = false
       @def_nest = 0
       @type_nest = 0
+      @call_args_nest = 0
       @block_arg_count = 0
       @in_macro_expression = false
       @stop_on_yield = 0
@@ -3665,7 +3666,7 @@ module Crystal
           else
             if @no_type_declaration == 0 && @token.type == :":"
               declare_var = parse_type_declaration(Var.new(name).at(location))
-              push_var declare_var
+              push_var declare_var if @call_args_nest == 0
               declare_var
             elsif (!force_call && is_var)
               if @block_arg_name && !@uses_block_arg && name == @block_arg_name
@@ -3848,6 +3849,8 @@ module Crystal
       has_parentheses : Bool
 
     def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false)
+      @call_args_nest += 1
+
       case @token.type
       when :"{"
         nil
@@ -3889,6 +3892,7 @@ module Crystal
             end
           end
           end_location = token_end_location
+          @wants_regex = false
           next_token_skip_space
         end
 
@@ -3910,9 +3914,15 @@ module Crystal
       else
         nil
       end
+    ensure
+      @call_args_nest -= 1
     end
 
     def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token = :")")
+      # This method is called by `parse_call_args`, so it increments once too much in this case.
+      # But it is no problem, because it decrements once too much.
+      @call_args_nest += 1
+
       if @token.keyword?(:end) && !next_comes_colon_space?
         return nil
       end
@@ -3994,6 +4004,8 @@ module Crystal
       end
 
       CallArgs.new args, nil, nil, nil, false, end_location, has_parentheses: false
+    ensure
+      @call_args_nest -= 1
     end
 
     def parse_call_args_named_args(location, args, first_name, allow_newline)

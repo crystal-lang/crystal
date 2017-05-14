@@ -148,6 +148,16 @@ describe Atomic do
     atomic.get.should eq(2)
   end
 
+  it "#set with nil (#4062)" do
+    atomic = Atomic(String?).new(nil)
+
+    atomic.set("foo")
+    atomic.get.should eq("foo")
+
+    atomic.set(nil)
+    atomic.get.should eq(nil)
+  end
+
   it "#lazy_set" do
     atomic = Atomic.new(1)
     atomic.lazy_set(2).should eq(2)
