@@ -106,7 +106,7 @@ module YAML
       {% end %}
 
       {% if extra %}
-        {{extra.id}} = Hash(String, ::YAML::Any).new
+        @{{extra.id}} = Hash(String, ::YAML::Any).new
       {% end %}
 
       %pull.read_mapping_start
@@ -133,7 +133,7 @@ module YAML
           {% if strict %}
             raise ::YAML::ParseException.new("Unknown yaml attribute: #{key}", 0, 0)
           {% elsif extra %}
-            {{extra.id}}[key] = ::YAML::Any.new(%pull)
+            @{{extra.id}}[key] = ::YAML::Any.new(%pull)
           {% else %}
             %pull.skip
           {% end %}
@@ -161,10 +161,6 @@ module YAML
         {% else %}
           @{{key.id}} = %var{key.id}.as({{value[:type]}})
         {% end %}
-      {% end %}
-
-      {% if extra %}
-        @{{extra.id}} = {{extra.id}}
       {% end %}
     end
 
