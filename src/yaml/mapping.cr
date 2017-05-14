@@ -183,7 +183,7 @@ module YAML
         {% end %}
         {% if extra %}
           _{{extra.id}} = @{{extra.id}}
-          
+
           unless _{{extra.id}}.nil?
             "{{extra.id}}".to_yaml(%yaml)
             _{{extra.id}}.to_yaml(%yaml)
