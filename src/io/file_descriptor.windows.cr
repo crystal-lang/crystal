@@ -1,4 +1,3 @@
-
 # An `IO` over a file descriptor.
 class IO::FileDescriptor
   include Buffered
