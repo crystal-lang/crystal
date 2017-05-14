@@ -1140,6 +1140,12 @@ module Crystal::Macros
     # gives a compile-time error.
     def resolve : ASTNode
     end
+
+    # Resolves this path to a `TypeNode` if it denotes a type, to
+    # the value of a constant if it denotes a constant, or otherwise
+    # returns a `NilLiteral`.
+    def resolve? : ASTNode | NilLiteral
+    end
   end
 
   # A class definition.
