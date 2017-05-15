@@ -15,11 +15,11 @@ require "./benchmark/**"
 # ```
 #
 # This generates the following output showing the mean iterations per second,
-# the standard deviation relative to the mean, and a comparison:
+# the mean times per iteration, the standard deviation relative to the mean, and a comparison:
 #
 # ```text
-#   short sleep    91.82 (± 2.51%)  8.72× slower
-# shorter sleep   800.98 (± 1.10%)       fastest
+#   short sleep   88.7  ( 11.27ms) (± 3.33%)  8.90× slower
+# shorter sleep  789.7  (  1.27ms) (± 3.02%)       fastest
 # ```
 #
 # `Benchmark::IPS` defaults to 2 seconds of warmup time and 5 seconds of
