@@ -70,7 +70,7 @@ abstract class OpenSSL::SSL::Context
     # require "openssl"
     #
     # context = OpenSSL::SSL::Context::Client.new
-    # context.add_options(OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3)
+    # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
@@ -123,7 +123,7 @@ abstract class OpenSSL::SSL::Context
     #
     # ```
     # context = OpenSSL::SSL::Context::Server.new
-    # context.add_options(OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3)
+    # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
@@ -151,8 +151,8 @@ abstract class OpenSSL::SSL::Context
 
     add_options(OpenSSL::SSL::Options.flags(
       ALL,
-      NO_SSLV2,
-      NO_SSLV3,
+      NO_SSL_V2,
+      NO_SSL_V3,
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
       SINGLE_ECDH_USE,
       SINGLE_DH_USE
@@ -265,9 +265,9 @@ abstract class OpenSSL::SSL::Context
   # Example:
   # ```
   # context.add_options(
-  #   OpenSSL::SSL::Options::ALL |      # various workarounds
-  #   OpenSSL::SSL::Options::NO_SSLV2 | # disable overly deprecated SSLv2
-  #   OpenSSL::SSL::Options::NO_SSLV3   # disable deprecated SSLv3
+  #   OpenSSL::SSL::Options::ALL |       # various workarounds
+  #   OpenSSL::SSL::Options::NO_SSL_V2 | # disable overly deprecated SSLv2
+  #   OpenSSL::SSL::Options::NO_SSL_V3   # disable deprecated SSLv3
   # )
   # ```
   def add_options(options : OpenSSL::SSL::Options)
@@ -283,7 +283,7 @@ abstract class OpenSSL::SSL::Context
   #
   # Example:
   # ```
-  # context.remove_options(OpenSSL::SSL::Options::NO_SSLV3)
+  # context.remove_options(OpenSSL::SSL::Options::NO_SSL_V3)
   # ```
   def remove_options(options : OpenSSL::SSL::Options)
     opts = {% if LibSSL::OPENSSL_110 %}
