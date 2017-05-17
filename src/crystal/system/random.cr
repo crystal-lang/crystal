@@ -12,6 +12,8 @@ end
 
 {% if flag?(:linux) %}
   require "./unix/getrandom"
+{% elsif flag?(:openbsd) %}
+  require "./unix/arc4random"
 {% else %}
   require "./unix/urandom"
 {% end %}
