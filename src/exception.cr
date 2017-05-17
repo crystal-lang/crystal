@@ -2,15 +2,19 @@ require "callstack"
 
 CallStack.skip(__FILE__)
 
-# Descendants of class `Exception` are used to communicate between raise and rescue statements in begin ... end blocks.
-# `Exception` objects carry information about the exception – its type (the exception’s class name),
-# an optional descriptive string, and optional traceback information.
-# `Exception` subclasses may add additional information like `OpenSSL::Error#code`.
+# Represents errors that occur during application execution.
+#
+# Descendants of class Exception are used to communicate between raise and
+# rescue statements in begin ... end blocks.
+# Exception objects carry information about the exception – its type (the
+# exception’s class name), an optional descriptive string, and
+# optional traceback information.
+# Exception subclasses may add additional information.
 class Exception
-  # Returns message of this exception.
   getter message : String?
   # Returns the previous exception at the time this exception was raised.
-  # This is useful for wrapping exceptions and retaining the original exception information.
+  # This is useful for wrapping exceptions and retaining the original
+  # exception information.
   getter cause : Exception?
   property callstack : CallStack?
 
@@ -18,22 +22,23 @@ class Exception
   end
 
   # Returns any backtrace associated with the exception.
-  # The backtrace is an array of strings, each containing “0xAddress Function at #{File Line Column}”‘.
+  # The backtrace is an array of strings, each containing
+  # “0xAddress: Function at File Line Column”.
   #
-  # See also: `CallStack`.
+  # See also: `CallStack#decode_backtrace`.
   def backtrace
     self.backtrace?.not_nil!
   end
 
   # Returns any backtrace associated with the exception if the call stack exists.
-  # The backtrace is an array of strings, each containing “0xAddress Function at #{File Line Column}”‘.
+  # The backtrace is an array of strings, each containing
+  # “0xAddress: Function at File Line Column”.
   #
-  # See also: `CallStack`.
+  # See also: `CallStack#decode_backtrace`.
   def backtrace?
     @callstack.try &.printable_backtrace
   end
 
-  # Appends a `message` of this exception to the given *io*.
   def to_s(io : IO)
     io << message
   end
@@ -102,6 +107,11 @@ end
 class KeyError < Exception
 end
 
+# Raised when attempting to divide an integer by 0.
+#
+# ```
+# 1 / 0 # raises DivisionByZero (Division by zero)
+# ```
 class DivisionByZero < Exception
   def initialize(message = "Division by zero")
     super(message)
