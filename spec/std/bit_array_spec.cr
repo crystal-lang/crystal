@@ -1,7 +1,7 @@
 require "spec"
 require "bit_array"
 
-private def from_int(size : Int32, int : Int32)
+private def from_int(size : Int32, int : Int)
   ba = BitArray.new(size)
   (0).upto(size - 1) { |i| ba[i] = int.bit(size - i - 1) > 0 }
   ba
@@ -180,6 +180,17 @@ describe "BitArray" do
       end
     end
 
+    it "gets on medium bitarrays" do
+      ba = BitArray.new(40)
+      ba[30] = true
+      ba[31] = true
+      ba[32] = true
+      ba[34] = true
+      ba[37] = true
+
+      ba[28..-1].should eq(from_int(12, 0b001110100100))
+    end
+
     it "gets on large bitarrays" do
       ba = BitArray.new(100)
       ba[30] = true
@@ -189,6 +200,15 @@ describe "BitArray" do
       ba[37] = true
 
       ba[28..40].should eq(from_int(13, 0b0011101001000))
+
+      ba[62] = true
+      ba[63] = true
+      ba[64] = true
+      ba[66] = true
+      ba[69] = true
+
+      ba[60..72].should eq(from_int(13, 0b0011101001000))
+      ba[28..72].should eq(from_int(45, 0b001110100100000000000000000000000011101001000_u64))
     end
 
     it "preserves equality" do
