@@ -2391,7 +2391,7 @@ module Crystal
             break
           when :end
             if whens.empty?
-              unexpected_token @token.to_s, "expecting when, else or end"
+              unexpected_token @token.to_s, "expecting when or else"
             end
             next_token
             break
