@@ -4,8 +4,8 @@ CallStack.skip(__FILE__)
 
 # Represents errors that occur during application execution.
 #
-# Descendants of class Exception are used to communicate between raise and
-# rescue statements in begin ... end blocks.
+# Exception and it's descendants are used to communicate between raise and
+# rescue statements in `begin ... end` blocks.
 # Exception objects carry information about the exception – its type (the
 # exception’s class name), an optional descriptive string, and
 # optional traceback information.
@@ -24,8 +24,6 @@ class Exception
   # Returns any backtrace associated with the exception.
   # The backtrace is an array of strings, each containing
   # “0xAddress: Function at File Line Column”.
-  #
-  # See also: `CallStack#decode_backtrace`.
   def backtrace
     self.backtrace?.not_nil!
   end
@@ -33,8 +31,6 @@ class Exception
   # Returns any backtrace associated with the exception if the call stack exists.
   # The backtrace is an array of strings, each containing
   # “0xAddress: Function at File Line Column”.
-  #
-  # See also: `CallStack#decode_backtrace`.
   def backtrace?
     @callstack.try &.printable_backtrace
   end
