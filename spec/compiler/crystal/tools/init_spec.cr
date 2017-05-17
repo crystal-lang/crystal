@@ -1,5 +1,6 @@
 require "spec"
 require "yaml"
+require "ini"
 require "compiler/crystal/config"
 require "compiler/crystal/tools/init"
 
@@ -46,6 +47,19 @@ module Crystal
       gitignore.should contain("/.shards/")
       gitignore.should_not contain("/shard.lock")
       gitignore.should contain("/lib/")
+    end
+
+    ["example", "example_app", "example-lib", "camel_example-camel_lib"].each do |name|
+      describe_file "#{name}/.editorconfig" do |editorconfig|
+        parsed = INI.parse(editorconfig)
+        cr_ext = parsed["*.cr"]
+        cr_ext["charset"].should eq("utf-8")
+        cr_ext["end_of_line"].should eq("lf")
+        cr_ext["insert_final_newline"].should eq("true")
+        cr_ext["indent_style"].should eq("space")
+        cr_ext["indent_size"].should eq("2")
+        cr_ext["trim_trailing_whitespace"].should eq("true")
+      end
     end
 
     describe_file "example/LICENSE" do |license|
