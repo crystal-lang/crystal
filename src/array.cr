@@ -372,7 +372,7 @@ class Array(T)
   # a # => [1, 6, 2, 3, 4, 5]
   # ```
   def []=(range : Range(Int, Int), value : T)
-    self[*range_to_index_and_count(range)] = value
+    self[*Indexable.range_to_index_and_count(range, size)] = value
   end
 
   # Replaces a subrange with the elements of the given array.
@@ -434,7 +434,7 @@ class Array(T)
   # a # => [1, 6, 7, 8, 9, 10, 5]
   # ```
   def []=(range : Range(Int, Int), values : Array(T))
-    self[*range_to_index_and_count(range)] = values
+    self[*Indexable.range_to_index_and_count(range, size)] = values
   end
 
   # Returns all elements that are within the given range.
@@ -454,7 +454,7 @@ class Array(T)
   # a[-2...-1] # => ["d"]
   # ```
   def [](range : Range(Int, Int))
-    self[*range_to_index_and_count(range)]
+    self[*Indexable.range_to_index_and_count(range, size)]
   end
 
   # Returns count or less (if there aren't enough) elements starting at the
@@ -641,8 +641,8 @@ class Array(T)
   # a.delete_at(99..100) # raises IndexError
   # ```
   def delete_at(range : Range(Int, Int))
-    from, size = range_to_index_and_count(range)
-    delete_at(from, size)
+    index, count = Indexable.range_to_index_and_count(range, self.size)
+    delete_at(index, count)
   end
 
   # Removes *count* elements from `self` starting at *index*.
@@ -752,7 +752,7 @@ class Array(T)
   # a.fill(2..3) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
   def fill(range : Range(Int, Int))
-    fill(*range_to_index_and_count(range)) do |i|
+    fill(*Indexable.range_to_index_and_count(range, size)) do |i|
       yield i
     end
   end
@@ -1968,20 +1968,6 @@ class Array(T)
         h[key] = o
       end
     end
-  end
-
-  private def range_to_index_and_count(range)
-    from = range.begin
-    from += size if from < 0
-    raise IndexError.new if from < 0
-
-    to = range.end
-    to += size if to < 0
-    to -= 1 if range.excludes_end?
-    size = to - from + 1
-    size = 0 if size < 0
-
-    {from, size}
   end
 
   # :nodoc:

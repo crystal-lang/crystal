@@ -449,6 +449,21 @@ module Indexable(T)
     end
   end
 
+  # :nodoc:
+  def self.range_to_index_and_count(range, collection_size)
+    start_index = range.begin
+    start_index += collection_size if start_index < 0
+    raise IndexError.new if start_index < 0
+
+    end_index = range.end
+    end_index += collection_size if end_index < 0
+    end_index -= 1 if range.excludes_end?
+    count = end_index - start_index + 1
+    count = 0 if count < 0
+
+    {start_index, count}
+  end
+
   private class ItemIterator(A, T)
     include Iterator(T)
 
