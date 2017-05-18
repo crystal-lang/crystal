@@ -2,7 +2,7 @@ require "./base"
 
 # Implements the MD5 digest algorithm.
 #
-# Warning: MD5 is no longer a cryptograpically safe hash, and should not be
+# Warning: MD5 is no longer a cryptographically safe hash, and should not be
 # used for secure applications.
 class Digest::MD5 < Digest::Base
   def initialize
