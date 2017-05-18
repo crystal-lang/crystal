@@ -289,11 +289,11 @@ module Crystal
         case next_char
         when '='
           next_char :"%="
-        when '(', '[', '{', '<'
+        when '(', '[', '{', '<', '|'
           delimited_pair :string, current_char, closing_char, start
         when 'i'
           case peek_next_char
-          when '(', '{', '[', '<'
+          when '(', '{', '[', '<', '|'
             start_char = next_char
             next_char :SYMBOL_ARRAY_START
             @token.raw = "%i#{start_char}" if @wants_raw
@@ -303,7 +303,7 @@ module Crystal
           end
         when 'q'
           case peek_next_char
-          when '(', '{', '[', '<'
+          when '(', '{', '[', '<', '|'
             next_char
             delimited_pair :string, current_char, closing_char, start, allow_escapes: false
           else
@@ -311,7 +311,7 @@ module Crystal
           end
         when 'Q'
           case peek_next_char
-          when '(', '{', '[', '<'
+          when '(', '{', '[', '<', '|'
             next_char
             delimited_pair :string, current_char, closing_char, start
           else
@@ -319,21 +319,21 @@ module Crystal
           end
         when 'r'
           case next_char
-          when '(', '[', '{', '<'
+          when '(', '[', '{', '<', '|'
             delimited_pair :regex, current_char, closing_char, start
           else
             raise "unknown %r char"
           end
         when 'x'
           case next_char
-          when '(', '[', '{', '<'
+          when '(', '[', '{', '<', '|'
             delimited_pair :command, current_char, closing_char, start
           else
             raise "unknown %x char"
           end
         when 'w'
           case peek_next_char
-          when '(', '{', '[', '<'
+          when '(', '{', '[', '<', '|'
             start_char = next_char
             next_char :STRING_ARRAY_START
             @token.raw = "%w#{start_char}" if @wants_raw

@@ -132,6 +132,15 @@ describe "Lexer string" do
     tester.string_should_end_correctly
   end
 
+  it "lexes simple string with %|" do
+    lexer = Lexer.new("%|hello|")
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('|', '|')
+    tester.next_string_token_should_be("hello")
+    tester.string_should_end_correctly
+  end
+
   [['(', ')'], ['[', ']'], ['{', '}'], ['<', '>']].each do |(left, right)|
     it "lexes simple string with nested %#{left}" do
       lexer = Lexer.new("%#{left}hello #{left}world#{right}#{right}")
