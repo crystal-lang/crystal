@@ -176,6 +176,16 @@ module HTTP
       request.should be_a(Request::BadRequest)
     end
 
+    it "handles long request lines" do
+      request = Request.from_io(IO::Memory.new("GET /#{"a" * 4096} HTTP/1.1\r\n\r\n"))
+      request.should be_a(Request::BadRequest)
+    end
+
+    it "handles long headers" do
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n#{"X-Test-Header: A pretty log header value\r\n" * 1000}\r\n"))
+      request.should be_a(Request::BadRequest)
+    end
+
     describe "keep-alive" do
       it "is false by default in HTTP/1.0" do
         request = Request.new "GET", "/", version: "HTTP/1.0"
