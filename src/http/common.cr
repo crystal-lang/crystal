@@ -224,6 +224,11 @@ module HTTP
     nil
   end
 
+  # Format a Time object as a String using the format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  #
+  # ```
+  # HTTP.rfc1123_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
+  # ```
   def self.rfc1123_date(time : Time) : String
     # TODO: GMT should come from the Time classes instead
     time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
