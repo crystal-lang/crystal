@@ -1,6 +1,9 @@
 require "./base"
 
 # Implements the MD5 digest algorithm.
+#
+# Warning: MD5 is no longer a cryptograpically safe hash, and should not be
+# used for secure applications.
 class Digest::MD5 < Digest::Base
   def initialize
     @i = StaticArray(UInt32, 2).new(0_u32)
