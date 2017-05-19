@@ -82,8 +82,8 @@ module Crystal
     # one LLVM module is created for each type in a program.
     property? single_module = false
 
-    # If `true`, prints time and memory stats to `stdout`.
-    property? stats = false
+    # Set to a `ProgressTracker` object which tracks compilation progress.
+    property progress_tracker = ProgressTracker.new
 
     # Target triple to use in the compilation.
     # If not set, asks LLVM the default one for the current machine.
@@ -136,8 +136,11 @@ module Crystal
       node = parse program, source
       node = program.semantic node, cleanup: !no_cleanup?
       result = codegen program, node, source, output_filename unless @no_codegen
+
+      @progress_tracker.clear
       print_macro_run_stats(program)
       print_codegen_stats(result)
+
       Result.new program, node
     end
 
@@ -156,7 +159,10 @@ module Crystal
       program = new_program(source)
       node = parse program, source
       node, processor = program.top_level_semantic(node)
+
+      @progress_tracker.clear
       print_macro_run_stats(program)
+
       Result.new program, node
     end
 
@@ -172,12 +178,12 @@ module Crystal
       program.color = color?
       program.stdout = stdout
       program.show_error_trace = show_error_trace?
-      program.wants_stats = @stats
+      program.progress_tracker = @progress_tracker
       program
     end
 
     private def parse(program, sources : Array)
-      Crystal.timing("Parse", @stats) do
+      @progress_tracker.stage("Parse") do
         nodes = sources.map do |source|
           # We add the source to the list of required file,
           # so it can't be required again
@@ -222,7 +228,7 @@ module Crystal
     private def codegen(program : Program, node, sources, output_filename)
       @link_flags = "#{@link_flags} -rdynamic"
 
-      llvm_modules = Crystal.timing("Codegen (crystal)", @stats) do
+      llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
         program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
       end
 
@@ -272,7 +278,9 @@ module Crystal
       target_triple = target_machine.triple
       reused = [] of String
 
-      Crystal.timing("Codegen (bc+obj)", @stats) do
+      @progress_tracker.stage("Codegen (bc+obj)") do
+        @progress_tracker.stage_progress_total = units.size
+
         if units.size == 1
           first_unit = units.first
           first_unit.compile
@@ -293,7 +301,7 @@ module Crystal
 
       output_filename = File.expand_path(output_filename)
 
-      Crystal.timing("Codegen (linking)", @stats) do
+      @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
           system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
         end
@@ -314,11 +322,13 @@ module Crystal
           # .o files were reused, mainly to detect performance regressions.
           # Because we fork, we must communicate using a pipe.
           reused = [] of String
-          if @stats
+          if @progress_tracker.stats? || @progress_tracker.progress?
             pr, pw = IO.pipe
             spawn do
               pr.each_line do |line|
-                reused << line
+                unit = JSON.parse(line)
+                reused << unit["name"].as_s if unit["reused"].as_bool
+                @progress_tracker.stage_progress += 1
               end
             end
           end
@@ -327,8 +337,9 @@ module Crystal
             pipe_w = pw
             slice.each do |unit|
               unit.compile
-              if pipe_w && unit.reused_previous_compilation?
-                pipe_w.puts unit.name
+              if pipe_w
+                unit_json = {name: unit.name, reused: unit.reused_previous_compilation?}.to_json
+                pipe_w.puts unit_json
               end
             end
           end
@@ -352,7 +363,8 @@ module Crystal
     end
 
     private def print_macro_run_stats(program)
-      return unless @stats && !program.compiled_macros_cache.empty?
+      return unless @progress_tracker.stats?
+      return if program.compiled_macros_cache.empty?
 
       puts
       puts "Macro runs:"
@@ -370,7 +382,7 @@ module Crystal
     end
 
     private def print_codegen_stats(result)
-      return unless @stats
+      return unless @progress_tracker.stats?
       return unless result
 
       units, reused = result

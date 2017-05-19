@@ -110,8 +110,8 @@ module Crystal
     # The main filename of this program
     property filename : String?
 
-    # If `true`, prints time and memory stats to `stdout`.
-    property? wants_stats = false
+    # Set to a `ProgressTracker` object which tracks compilation progress.
+    property progress_tracker = ProgressTracker.new
 
     def initialize
       super(self, self, "main")
