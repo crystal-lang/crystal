@@ -58,7 +58,7 @@ describe "Parser" do
   it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
 
   [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
-   ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
+   ":>=", ":!", ":!=", ":=~", ":!~", ":?~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
    ":[]=", ":<=>", ":==="].each do |symbol|
     value = symbol[1, symbol.size - 1]
     value = value[1, value.size - 2] if value.starts_with?("\"")
@@ -118,6 +118,7 @@ describe "Parser" do
 
   it_parses "1 <=> 2", Call.new(1.int32, "<=>", 2.int32)
   it_parses "1 !~ 2", Call.new(1.int32, "!~", 2.int32)
+  it_parses "1 ?~ 2", Call.new(1.int32, "?~", 2.int32)
 
   it_parses "a = 1", Assign.new("a".var, 1.int32)
   it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int32))
@@ -370,19 +371,19 @@ describe "Parser" do
     it_parses "f.x #{op}= 2", OpAssign.new(Call.new("f".call, "x"), op, 2.int32)
   end
 
-  ["/", "<", "<=", "==", "!=", "=~", "!~", ">", ">=", "+", "-", "*", "/", "~", "%", "&", "|", "^", "**", "==="].each do |op|
+  ["/", "<", "<=", "==", "!=", "=~", "!~", "?~", ">", ">=", "+", "-", "*", "/", "~", "%", "&", "|", "^", "**", "==="].each do |op|
     it_parses "def #{op}; end;", Def.new(op)
   end
 
   it_parses "def %(); end;", Def.new("%")
   it_parses "def /(); end;", Def.new("/")
 
-  ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |op|
+  ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "===", "=~", "!~", "?~"].each do |op|
     it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)
     it_parses "n #{op} 2", Call.new("n".call, op, 2.int32)
   end
 
-  ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |name|
+  ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!~", "?~"].each do |name|
     it_parses "foo.#{name}", Call.new("foo".call, name)
     it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, 1.int32, 2.int32)
     it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
