@@ -1,3 +1,6 @@
+require "../lib_ssl"
+require "../error"
+
 abstract class OpenSSL::SSL::Socket
   class Client < Socket
     def initialize(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)

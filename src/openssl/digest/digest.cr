@@ -1,4 +1,5 @@
 require "../lib_crypto"
+require "../error"
 require "./digest_base"
 
 module OpenSSL

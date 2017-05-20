@@ -1,5 +1,5 @@
 require "socket"
-require "openssl"
+require "../lib_crypto"
 
 # :nodoc:
 module OpenSSL::SSL::HostnameValidation

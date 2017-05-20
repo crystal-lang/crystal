@@ -1,3 +1,6 @@
+require "../lib_ssl"
+require "../error"
+
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method

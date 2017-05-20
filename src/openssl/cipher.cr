@@ -1,4 +1,5 @@
-require "./openssl"
+require "./lib_crypto"
+require "./error"
 
 class OpenSSL::Cipher
   class Error < OpenSSL::Error
