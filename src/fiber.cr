@@ -271,7 +271,8 @@ class Fiber
   end
 
   def yield
-    sleep(0)
+    Scheduler.enqueue self
+    Scheduler.reschedule
   end
 
   def self.sleep(time)
