@@ -376,23 +376,55 @@ module Crystal
       defs.try(&.has_key?(name)) || parents.try(&.any?(&.has_def?(name)))
     end
 
+    record DefInMacroLookup
+
+    # Looks up a macro with the give name and matching the given args
+    # and named_args. Returns:
+    # - a `Macro`, if found
+    # - `nil`, if not found
+    # - `DefInMacroLookup` if not found and a Def was found instead
+    #
+    # In the case of `DefInMacroLookup`, it means that macros shouldn't
+    # be looked up in implicit enclosing scopes such as Object
+    # or the Program.
     def lookup_macro(name, args : Array, named_args)
-      if macros = self.macros.try &.[name]?
+      # Macros are always stored in a type's metaclass
+      macros_scope = self.metaclass? ? self : self.metaclass
+
+      if macros = macros_scope.macros.try &.[name]?
         match = macros.find &.matches?(args, named_args)
         return match if match
       end
 
-      instance_type.parents.try &.each do |parent|
-        parent_macro = parent.metaclass.lookup_macro(name, args, named_args)
+      # First check if there are defs at this scope with that name.
+      # If so, make that a priority in the lookup and don't consider
+      # macro matches.
+      if has_def?(name)
+        return DefInMacroLookup.new
+      end
+
+      parents.try &.each do |parent|
+        parent_macro = parent.lookup_macro(name, args, named_args)
         return parent_macro if parent_macro
       end
 
       nil
     end
 
+    # Looks up macros with the given name. Returns:
+    # - an Array of Macro if found
+    # - `nil` if not found
+    # - `DefInMacroLookup` if not found and some Defs were found instead
     def lookup_macros(name)
-      if macros = self.macros.try &.[name]?
+      # Macros are always stored in a type's metaclass
+      macros_scope = self.metaclass? ? self : self.metaclass
+
+      if macros = macros_scope.macros.try &.[name]?
         return macros
+      end
+
+      if has_def?(name)
+        return DefInMacroLookup.new
       end
 
       parents.try &.each do |parent|
@@ -949,6 +981,14 @@ module Crystal
 
     def vars?
       @vars
+    end
+
+    def metaclass?
+      true
+    end
+
+    def metaclass
+      self
     end
   end
 

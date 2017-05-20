@@ -1026,4 +1026,38 @@ describe "Semantic: macro" do
       res.program.types.has_key?("D").should be_false
     end
   end
+
+  it "finds method before macro (#236)" do
+    assert_type(%(
+      macro global
+        1
+      end
+
+      class Foo
+        def global
+          'a'
+        end
+
+        def bar
+          global
+        end
+      end
+
+      Foo.new.bar
+      )) { char }
+  end
+
+  it "finds macro and method at the same scope" do
+    assert_type(%(
+      macro global(x)
+        1
+      end
+
+      def global(x, y)
+        'a'
+      end
+
+      {global(1), global(1, 2)}
+      )) { tuple_of [int32, char] }
+  end
 end

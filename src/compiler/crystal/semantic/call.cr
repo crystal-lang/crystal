@@ -637,23 +637,29 @@ class Crystal::Call
   end
 
   def lookup_macro
-    in_macro_target &.lookup_macro(name, args, named_args)
+    in_macro_target do |target|
+      result = target.lookup_macro(name, args, named_args)
+      case result
+      when Macro
+        return result
+      when Type::DefInMacroLookup
+        return nil
+      end
+    end
   end
 
   def in_macro_target
     if with_scope = @with_scope
-      with_scope = with_scope.metaclass unless with_scope.metaclass?
       macros = yield with_scope
       return macros if macros
     end
 
     node_scope = scope
     node_scope = node_scope.base_type if node_scope.is_a?(VirtualType)
-    node_scope = node_scope.metaclass unless node_scope.metaclass?
 
     macros = yield node_scope
-    if !macros && node_scope.metaclass? && node_scope.instance_type.module?
-      macros = yield program.object.metaclass
+    if !macros && node_scope.module?
+      macros = yield program.object
     end
 
     macros ||= yield program

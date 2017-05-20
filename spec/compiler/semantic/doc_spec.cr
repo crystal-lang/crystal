@@ -145,7 +145,7 @@ describe "Semantic: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    bar = foo.metaclass.lookup_macros("bar").not_nil!.first
+    bar = foo.metaclass.lookup_macros("bar").as(Array(Macro)).first
     bar.doc.should eq("Hello")
   end
 

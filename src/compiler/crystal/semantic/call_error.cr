@@ -484,7 +484,7 @@ class Crystal::Call
     return if obj && !obj.is_a?(Path)
 
     macros = in_macro_target &.lookup_macros(def_name)
-    return unless macros
+    return unless macros.is_a?(Array(Macro))
     macros = macros.reject &.visibility.private?
 
     if macros.size == 1
