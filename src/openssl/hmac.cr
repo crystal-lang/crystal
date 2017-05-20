@@ -6,8 +6,12 @@ require "./lib_crypto"
 # involving a hash function in combination with a key.
 #
 # HMAC can be used to verify the integrity of a message as well as the authenticity.
+#
+# See also [RFC2104](https://tools.ietf.org/html/rfc2104.html).
 class OpenSSL::HMAC
-  # Returns the *data* in combination with the *key* hash computed with *algorithm* Digest.
+  # Returns the HMAC digest of *data* using the secret *key*.
+  #
+  # It may contain non-ASCII bytes, including NUL bytes.
   #
   # *algorithm* is a `Symbol` of a supported digest algorithm:
   # * `:md4`.
@@ -37,8 +41,9 @@ class OpenSSL::HMAC
     buffer[0, buffer_len.to_i]
   end
 
-  # Returns the *data* in combination with the *key* hash computed with *algorithm* Digest
-  # as hexadecimal string.
+  # Returns the HMAC digest of *data* using the secret *key*,
+  # formatted as a hexadecimal string. This is neccesary to safely transfer
+  # the digest where binary messages are not allowed.
   #
   # See also `#digest`.
   def self.hexdigest(algorithm : Symbol, key, data) : String
