@@ -1,3 +1,4 @@
+require "./openssl/error"
 require "./openssl/lib_ssl"
 
 # ## OpenSSL Integration
