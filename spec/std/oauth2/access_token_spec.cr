@@ -56,6 +56,17 @@ class OAuth2::AccessToken
         }))
       access_token.expires_in.should be_nil
     end
+
+    it "builds from json with unknown key (#4437)" do
+      token = AccessToken.from_json(%({
+        "access_token" : "foo",
+        "token_type" : "Bearer",
+        "refresh_token" : "bar",
+        "scope" : "baz",
+        "unknown": [1, 2, 3]
+        }))
+      token.extra.not_nil!["unknown"].should eq("[1,2,3]")
+    end
   end
 
   describe Mac do
