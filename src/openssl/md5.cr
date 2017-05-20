@@ -2,8 +2,10 @@ require "./lib_crypto"
 
 # Binds the OpenSSL MD5 hash functions.
 #
-# Warning: MD5 is no longer a cryptographically safe hash, and should not be
-# used for secure applications.
+# Warning: MD5 is no longer a cryptographically secure hash, and should not be
+# used in security-related components, like password hashing. For passwords, see
+# `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
+# `OpenSSL::Digest.new("SHA256")`.
 class OpenSSL::MD5
   def self.hash(data : String) : UInt8[16]
     hash(data.to_unsafe, data.bytesize)
