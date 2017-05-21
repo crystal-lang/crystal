@@ -1,4 +1,4 @@
-require "../spec_helper"
+require "spec"
 require "tempfile"
 
 describe "Backtrace" do
