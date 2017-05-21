@@ -1248,7 +1248,8 @@ module Crystal
 
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
-        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed"))
+        location = Location.new(@program.filename, 1, 1)
+        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(location)
         @program.visit_main call
         call
       end
