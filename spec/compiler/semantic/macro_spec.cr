@@ -1060,4 +1060,28 @@ describe "Semantic: macro" do
       {global(1), global(1, 2)}
       )) { tuple_of [int32, char] }
   end
+
+  it "finds macro and method at the same scope inside included module" do
+    assert_type(%(
+      module Moo
+        macro global(x)
+          1
+        end
+
+        def global(x, y)
+          'a'
+        end
+      end
+
+      class Foo
+        include Moo
+
+        def main
+          {global(1), global(1, 2)}
+        end
+      end
+
+      Foo.new.main
+      )) { tuple_of [int32, char] }
+  end
 end

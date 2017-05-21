@@ -373,7 +373,11 @@ module Crystal
     end
 
     def has_def?(name)
-      defs.try(&.has_key?(name)) || parents.try(&.any?(&.has_def?(name)))
+      has_def_without_parents?(name) || parents.try(&.any?(&.has_def?(name)))
+    end
+
+    def has_def_without_parents?(name)
+      defs.try(&.has_key?(name))
     end
 
     record DefInMacroLookup
@@ -399,7 +403,7 @@ module Crystal
       # First check if there are defs at this scope with that name.
       # If so, make that a priority in the lookup and don't consider
       # macro matches.
-      if has_def?(name)
+      if has_def_without_parents?(name)
         return DefInMacroLookup.new
       end
 
@@ -423,7 +427,7 @@ module Crystal
         return macros
       end
 
-      if has_def?(name)
+      if has_def_without_parents?(name)
         return DefInMacroLookup.new
       end
 
