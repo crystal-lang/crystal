@@ -145,7 +145,9 @@ abstract class OpenSSL::SSL::Socket
             # assume we're done
             break
           when Errno::EAGAIN
-            # Ignore, shutdown did not complete yet
+            # Ignore/retry, shutdown did not complete yet
+          when Errno::EINPROGRESS
+            # Ignore/retry, another operation not complete yet
           else
             raise e
           end
