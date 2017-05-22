@@ -13,4 +13,8 @@ describe "Exception" do
     ex.to_s.should eq("foo? -- bar!")
     ex.inspect_with_backtrace.should contain("foo? -- bar!")
   end
+
+  it "can raise without message" do
+    expect_raises(Exception, "") { raise }
+  end
 end
