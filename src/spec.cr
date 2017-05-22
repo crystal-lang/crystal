@@ -37,12 +37,12 @@ require "./spec/dsl"
 # `Array` with elements. The `context` method behaves just like the `describe` method
 # and may be used instead, to emphasize context to the reader.
 #
-# Within a `describe` block concrete test cases are defined with `it` . A
+# Within a `describe` block, concrete test cases are defined with `it` . A
 # descriptive string is supplied to `it` describing what the test case
 # tests specifically.
 #
 # Specs then use the `should` method to verify that the expected value is
-# returned (see the example above for details).
+# returned. See the example above for details.
 #
 # By convention, specs live in the `spec` directory of a project. You can compile
 # and run the specs of a project by running:
