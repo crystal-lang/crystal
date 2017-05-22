@@ -237,6 +237,10 @@ struct Time::Format
   end
 end
 
+def Time::Span.new(pull : JSON::PullParser)
+  pull.read_float.seconds
+end
+
 module Time::EpochConverter
   def self.from_json(value : JSON::PullParser) : Time
     Time.epoch(value.read_int)

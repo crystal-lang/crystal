@@ -128,6 +128,12 @@ struct Time
   end
 end
 
+struct Time::Span
+  def to_json(json : JSON::Builder)
+    json.number(self.to_f)
+  end
+end
+
 # Converter to be used with `JSON.mapping` and `YAML.mapping`
 # to serialize a `Time` instance as the number of seconds
 # since the unix epoch. See `Time.epoch`.
