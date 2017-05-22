@@ -91,7 +91,7 @@ class CSV
   # ["three"]
   # ```
   def self.each_row(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
-    Parser.new(string_or_io).each_row do |row|
+    Parser.new(string_or_io, separator, quote_char).each_row do |row|
       yield row
     end
   end
@@ -106,7 +106,7 @@ class CSV
   # rows.next # => ["three"]
   # ```
   def self.each_row(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
-    Parser.new(string_or_io).each_row
+    Parser.new(string_or_io, separator, quote_char).each_row
   end
 
   # Builds a CSV. This yields a `CSV::Builder` to the given block.

@@ -95,6 +95,14 @@ describe CSV do
     sum.should eq(10)
   end
 
+  it "does CSV.each_row with separator and quotes" do
+    sum = 0
+    CSV.each_row("1\t'2'\n3\t4\n", '\t', '\'') do |row|
+      sum += row.map(&.to_i).sum
+    end.should be_nil
+    sum.should eq(10)
+  end
+
   it "gets row iterator" do
     iter = CSV.each_row("1,2\n3,4\n")
     iter.next.should eq(["1", "2"])
