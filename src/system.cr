@@ -18,4 +18,13 @@ module System
       {len, len}
     end
   end
+
+  # Returns number of online CPUs
+  #
+  # ```
+  # System.num_cpus # => 4
+  # ```
+  def self.num_cpus
+    LibC.sysconf(LibC::SC_NPROCESSORS_ONLN)
+  end
 end

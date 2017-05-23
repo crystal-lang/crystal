@@ -10,4 +10,12 @@ describe System do
       hostname.should eq(shell_hostname)
     end
   end
+
+  describe "num_cpus" do
+    it "returns current CPU count" do
+      shell_cpus = `getconf _NPROCESSORS_ONLN || nproc --all || grep -c '^processor' /proc/cpuinfo`.to_i
+      num_cpus = System.num_cpus
+      num_cpus.should eq(shell_cpus)
+    end
+  end
 end
