@@ -25,7 +25,7 @@ struct UUID
   def initialize(version : Version)
     case version
     when Version::V4
-      @data = SecureRandom.random_bytes(16)
+      @bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
       variant = Variant::RFC4122
       version = Version::V4
     else
@@ -57,12 +57,12 @@ struct UUID
 
   # Returns version based on RFC 4122 format. See also `UUID#variant`.
   def version
-    UUID.byte_version @data[6]
+    UUID.byte_version @bytes[6]
   end
 
   # Sets variant to a specified `value`. Doesn't set variant (see `UUID#variant=(value : Variant)`).
   def version=(value : Version)
-    @data[6] = UUID.byte_version @data[6], value
+    @bytes[6] = UUID.byte_version @bytes[6], value
   end
 
   {% for v in %w(1 2 3 4 5) %}

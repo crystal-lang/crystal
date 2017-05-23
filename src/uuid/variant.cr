@@ -52,11 +52,11 @@ struct UUID
 
   # Returns UUID variant.
   def variant
-    UUID.byte_variant @data[8]
+    UUID.byte_variant @bytes[8]
   end
 
   # Sets UUID variant to specified `value`.
   def variant=(value : Variant)
-    @data[8] = UUID.byte_variant @data[8], value
+    @bytes[8] = UUID.byte_variant @bytes[8], value
   end
 end
