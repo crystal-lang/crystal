@@ -10,7 +10,7 @@
 # end
 # ```
 #
-# Values start with the value 0 and are incremented by one, but can be overwritten.
+# Values start with the value `0` and are incremented by one, but can be overwritten.
 #
 # To get the underlying value you invoke value on it:
 #
@@ -26,7 +26,7 @@
 #
 # ### Flags enum
 #
-# An enum can be marked with the @[Flags] attribute. This changes the default values:
+# An enum can be marked with the `@[Flags]` attribute. This changes the default values:
 #
 # ```
 # @[Flags]
@@ -44,23 +44,26 @@
 # An enum can be created from an integer:
 #
 # ```
-# puts Color.new(1) # => prints "Green"
+# Color.new(1).to_s # => "Green"
 # ```
 #
-# Values that don't correspond to an enum's constants are allowed: the value will still be of type Color,
-# but when printed you will get the underlying value:
+# Values that don't correspond to an enum's constants are allowed: the value
+# will still be of type Color, but when printed you will get the underlying value:
 #
 # ```
-# puts Color.new(10) # => prints "10"
+# Color.new(10).to_s # => "10"
 # ```
 #
 # This method is mainly intended to convert integers from C to enums in Crystal.
 #
 # ### Question methods
 #
-# An enum automatically defines question methods for each member, using `String#underscore` for the
-# method name. If the case of regular enums, this compares by equality (`==`). In the case of flags enums,
-# this invokes `includes?`. For example:
+# An enum automatically defines question methods for each member, using
+# `String#underscore` for the method name.
+# * In the case of regular enums, this compares by equality (`==`).
+# * In the case of flags enums, this invokes `includes?`.
+#
+# For example:
 #
 # ```
 # color = Color::Blue
@@ -86,7 +89,9 @@
 struct Enum
   include Comparable(self)
 
-  # Appends a String representation of this enum member to the given IO. See `to_s`.
+  # Appends a `String` representation of this enum member to the given *io*.
+  #
+  # See also: `to_s`.
   def to_s(io : IO) : Nil
     {% if @type.has_attribute?("Flags") %}
       if value == 0
@@ -96,7 +101,7 @@ struct Enum
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
             if {{@type}}::{{member}}.value != 0 && (value & {{@type}}::{{member}}.value) == {{@type}}::{{member}}.value
-              io << ", " if found
+              io << " | " if found
               io << {{member.stringify}}
               found = true
             end
@@ -110,7 +115,7 @@ struct Enum
     nil
   end
 
-  # Returns a String representation of this enum member.
+  # Returns a `String` representation of this enum member.
   # In the case of regular enums, this is just the name of the member.
   # In the case of flag enums, it's the names joined by commas, or "None",
   # if the value is zero.
@@ -121,7 +126,7 @@ struct Enum
   # ```
   # Color::Red.to_s                     # => "Red"
   # IOMode::None.to_s                   # => "None"
-  # (IOMode::Read | IOMode::Write).to_s # => "Read, Write"
+  # (IOMode::Read | IOMode::Write).to_s # => "Read | Write"
   #
   # Color.new(10).to_s # => "10"
   # ```
@@ -165,9 +170,9 @@ struct Enum
   # to this enum member's value.
   #
   # ```
-  # Color::Red + 1 # => Color::Blue
-  # Color::Red + 2 # => Color::Green
-  # Color::Red + 3 # => 3
+  # Color::Red + 1 # => Color::Green
+  # Color::Red + 2 # => Color::Blue
+  # Color::Red + 3 # => Color.new(3)
   # ```
   def +(other : Int)
     self.class.new(value + other)
@@ -179,7 +184,7 @@ struct Enum
   # ```
   # Color::Blue - 1 # => Color::Green
   # Color::Blue - 2 # => Color::Red
-  # Color::Blue - 3 # => -1
+  # Color::Blue - 3 # => Color.new(-1)
   # ```
   def -(other : Int)
     self.class.new(value - other)
@@ -232,6 +237,13 @@ struct Enum
     value <=> other.value
   end
 
+  # TODO: Remove `#==` after release next version. It is no longer needed.
+
+  # :nodoc:
+  def ==(other)
+    false
+  end
+
   # Returns `true` if this enum member's value includes *other*. This
   # performs a logical "and" between this enum member's value and *other*'s,
   # so instead of writing:
@@ -274,6 +286,29 @@ struct Enum
     value.hash
   end
 
+  # Iterates each values in a Flags Enum.
+  #
+  # ```
+  # (IOMode::Read | IOMode::Async).each do |member, value|
+  #   # yield IOMode::Read, 1
+  #   # yield IOMode::Async, 3
+  # end
+  # ```
+  def each
+    {% if @type.has_attribute?("Flags") %}
+      return if value == 0
+      {% for member in @type.constants %}
+        {% if member.stringify != "All" %}
+          if includes?({{@type}}::{{member}})
+            yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+          end
+        {% end %}
+      {% end %}
+    {% else %}
+      {% raise "Can't iterate #{@type}: only Flags Enum can be iterated" %}
+    {% end %}
+  end
+
   # Returns all enum members as an `Array(String)`.
   #
   # ```
@@ -309,9 +344,17 @@ struct Enum
   # Color.from_value?(2) # => Color::Blue
   # Color.from_value?(3) # => nil
   # ```
-  def self.from_value?(value) : self | Nil
-    {% for member in @type.constants %}
-      return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
+  def self.from_value?(value) : self?
+    {% if @type.has_attribute?("Flags") %}
+      mask = {% for member, i in @type.constants %}\
+        {% if i != 0 %} | {% end %}\
+        {{@type}}::{{member}}.value{% end %}
+      return if (mask & value != value) || (value == 0 && values.none? { |val| val.to_i == 0 })
+      return new(value)
+    {% else %}
+      {% for member in @type.constants %}
+        return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
+      {% end %}
     {% end %}
     nil
   end
@@ -323,7 +366,7 @@ struct Enum
   # Color.from_value(0) # => Color::Red
   # Color.from_value(1) # => Color::Green
   # Color.from_value(2) # => Color::Blue
-  # Color.from_value(3) # => Exception
+  # Color.from_value(3) # raises Exception
   # ```
   def self.from_value(value) : self
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
@@ -347,7 +390,7 @@ struct Enum
   # ```
   # Color.parse("Red")    # => Color::Red
   # Color.parse("BLUE")   # => Color::Blue
-  # Color.parse("Yellow") # => Exception
+  # Color.parse("Yellow") # raises ArgumentError
   # ```
   def self.parse(string) : self
     parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")
@@ -393,9 +436,21 @@ struct Enum
       {{ @type }}::{{ value }}{% end %}\
   end
 
-  # def self.each
-  #   to_h.each do |key, value|
-  #     yield key, value
-  #   end
+  # Iterates each member of the enum.
+  # It won't iterate the `None` and `All` members of flags enums.
+  #
+  # ```
+  # IOMode.each do |member, value|
+  #   # yield IOMode::Read, 1
+  #   # yield IOMode::Write, 2
+  #   # yield IOMode::Async, 3
   # end
+  # ```
+  def self.each
+    {% for member in @type.constants %}
+      {% unless @type.has_attribute?("Flags") && %w(none all).includes?(member.stringify.downcase) %}
+        yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+      {% end %}
+    {% end %}
+  end
 end

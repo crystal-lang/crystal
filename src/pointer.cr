@@ -11,14 +11,14 @@ require "c/string"
 # You can obtain pointers in four ways: `#new`, `#malloc`, `pointerof` and by calling a C
 # function that returns a pointer.
 #
-# `pointerof(x)`, where `x` is a variable or an instance variable, returns a pointer to
+# `pointerof(x)`, where *x* is a variable or an instance variable, returns a pointer to
 # that variable:
 #
-# ```crystal
+# ```
 # x = 1
 # ptr = pointerof(x)
 # ptr.value = 2
-# puts x # => 2
+# x # => 2
 # ```
 #
 # Note that a pointer is *falsey* if it's null (if it's address is zero).
@@ -30,7 +30,9 @@ require "c/string"
 struct Pointer(T)
   # Unsafe wrapper around a `Pointer` that allows to write values to
   # it while advancing the location and keeping track of how many elements
-  # were written. See `Pointer#appender`
+  # were written.
+  #
+  # See also: `Pointer#appender`.
   struct Appender(T)
     def initialize(@pointer : Pointer(T))
       @start = @pointer
@@ -52,9 +54,9 @@ struct Pointer(T)
 
   include Comparable(self)
 
-  # Returns true if this pointer's address is zero.
+  # Returns `true` if this pointer's address is zero.
   #
-  # ```crystal
+  # ```
   # a = 1
   # pointerof(a).null? # => false
   #
@@ -96,7 +98,7 @@ struct Pointer(T)
   # Returns -1, 0 or 1 if this pointer's address is less, equal or greater than *other*'s address,
   # respectively.
   #
-  # See `Object#<=>`.
+  # See also: `Object#<=>`.
   def <=>(other : self)
     address <=> other.address
   end
@@ -127,8 +129,8 @@ struct Pointer(T)
     (self + offset).value = value
   end
 
-  # Copies *count* elements from *source* into *self*.
-  # If *source* and *self* overlap, behaviour is undefined.
+  # Copies *count* elements from *source* into `self`.
+  # If *source* and `self` overlap, behaviour is undefined.
   # Use `#move_from` if they overlap (slower but always works).
   #
   # ```
@@ -146,29 +148,20 @@ struct Pointer(T)
   # ptr1[3] # => 4
   # ```
   def copy_from(source : Pointer(T), count : Int)
-    raise ArgumentError.new("negative count") if count < 0
-
-    if self.class == source.class
-      Intrinsics.memcpy(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
-    else
-      while (count -= 1) >= 0
-        self[count] = source[count]
-      end
-    end
-    self
+    source.copy_to(self, count)
   end
 
   # :nodoc:
   def copy_from(source : Pointer(NoReturn), count : Int)
-    raise ArgumentError.new("negative count") if count < 0
+    raise ArgumentError.new("Negative count") if count < 0
 
     # We need this overload for cases when we have a pointer to unreachable
     # data, like when doing Tuple.new.to_a
     self
   end
 
-  # Copies *count* elements from *self* into *target*.
-  # If *self* and *target* overlap, behaviour is undefined.
+  # Copies *count* elements from `self` into *target*.
+  # If `self` and *target* overlap, behaviour is undefined.
   # Use `#move_to` if they overlap (slower but always works).
   #
   # ```
@@ -186,11 +179,11 @@ struct Pointer(T)
   # ptr2[3] # => 14
   # ```
   def copy_to(target : Pointer, count : Int)
-    target.copy_from(self, count)
+    target.copy_from_impl(self, count)
   end
 
-  # Copies *count* elements from *source* into *self*.
-  # *source* and *self* may overlap; the copy is always done in a non-destructive manner.
+  # Copies *count* elements from *source* into `self`.
+  # *source* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
   # ptr1 = Pointer.malloc(4) { |i| i + 1 } # ptr1 -> [1, 2, 3, 4]
@@ -207,33 +200,20 @@ struct Pointer(T)
   # ptr1[3] # => 3
   # ```
   def move_from(source : Pointer(T), count : Int)
-    raise ArgumentError.new("negative count") if count < 0
-
-    if self.class == source.class
-      Intrinsics.memmove(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
-    else
-      if source.address < address
-        copy_from source, count
-      else
-        count.times do |i|
-          self[i] = source[i]
-        end
-      end
-    end
-    self
+    source.move_to(self, count)
   end
 
   # :nodoc:
   def move_from(source : Pointer(NoReturn), count : Int)
-    raise ArgumentError.new("negative count") if count < 0
+    raise ArgumentError.new("Negative count") if count < 0
 
     # We need this overload for cases when we have a pointer to unreachable
     # data, like when doing Tuple.new.to_a
     self
   end
 
-  # Copies *count* elements from *self* into *source*.
-  # *source* and *self* may overlap; the copy is always done in a non-destructive manner.
+  # Copies *count* elements from `self` into *source*.
+  # *source* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
   # ptr1 = Pointer.malloc(4) { |i| i + 1 } # ptr1 -> [1, 2, 3, 4]
@@ -250,7 +230,42 @@ struct Pointer(T)
   # ptr1[3] # => 3
   # ```
   def move_to(target : Pointer, count : Int)
-    target.move_from(self, count)
+    target.move_from_impl(self, count)
+  end
+
+  # We use separate method in which we make sure that `source`
+  # is never a union of pointers. This is guaranteed because both
+  # copy_from/move_from/copy_to/move_to reverse self and caller,
+  # and so if either self or the arguments are unions a dispatch
+  # will happen and unions will disappear.
+  protected def copy_from_impl(source : Pointer(T), count : Int)
+    raise ArgumentError.new("Negative count") if count < 0
+
+    if self.class == source.class
+      Intrinsics.memcpy(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
+    else
+      while (count -= 1) >= 0
+        self[count] = source[count]
+      end
+    end
+    self
+  end
+
+  protected def move_from_impl(source : Pointer(T), count : Int)
+    raise ArgumentError.new("Negative count") if count < 0
+
+    if self.class == source.class
+      Intrinsics.memmove(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
+    else
+      if source.address < address
+        copy_from source, count
+      else
+        count.times do |i|
+          self[i] = source[i]
+        end
+      end
+    end
+    self
   end
 
   # Compares *count* elements from this pointer and *other*, byte by byte.
@@ -270,7 +285,7 @@ struct Pointer(T)
     LibC.memcmp(self.as(Void*), (other.as(Void*)), (count * sizeof(T)))
   end
 
-  # Swaps the contents pointed at the offsets `i` and `j`.
+  # Swaps the contents pointed at the offsets *i* and *j*.
   #
   # ```
   # ptr = Pointer.malloc(4) { |i| i + 1 }
@@ -297,10 +312,10 @@ struct Pointer(T)
   #
   # ```
   # ptr1 = Pointer(Int32).new(1234)
-  # ptr1.to_s # => Pointer(Int32)@0x4D2
+  # ptr1.to_s # => "Pointer(Int32)@0x4d2"
   #
   # ptr2 = Pointer(Int32).new(0)
-  # ptr2.to_s # => Pointer(Int32).null
+  # ptr2.to_s # => "Pointer(Int32).null"
   # ```
   def to_s(io : IO)
     io << "Pointer("
@@ -393,18 +408,17 @@ struct Pointer(T)
   # ```
   # # Allocate memory for an Int32: 4 bytes
   # ptr = Pointer(Int32).malloc
-  # ptr.value #=> 0
+  # ptr.value # => 0
   #
   # # Allocate memory for 10 Int32: 40 bytes
   # ptr = Pointer(Int32).malloc(10)
-  # ptr[0] #=> 0
-  # ...
-  # ptr[9] #=> 0
-  #
+  # ptr[0] # => 0
+  # # ...
+  # ptr[9] # => 0
   # ```
   def self.malloc(size : Int = 1)
     if size < 0
-      raise ArgumentError.new("negative Pointer#malloc size")
+      raise ArgumentError.new("Negative Pointer#malloc size")
     end
 
     malloc(size.to_u64)
@@ -457,8 +471,8 @@ struct Pointer(T)
   # Returns a `Slice` that points to this pointer and is bounded by the given *size*.
   #
   # ```
-  # ptr = Pointer.malloc(6) { |i| i + 10 } #   [10, 11, 12, 13, 14, 15]
-  # slice = ptr.to_slice(4)                # => [10, 11, 12, 13]
+  # ptr = Pointer.malloc(6) { |i| i + 10 } # [10, 11, 12, 13, 14, 15]
+  # slice = ptr.to_slice(4)                # => Slice[10, 11, 12, 13]
   # slice.class                            # => Slice(Int32)
   # ```
   def to_slice(size)
@@ -468,9 +482,9 @@ struct Pointer(T)
   # Clears (sets to "zero" bytes) a number of values pointed by this pointer.
   #
   # ```
-  # ptr = Pointer.malloc(6) { |i| i + 10 } #   [10, 11, 12, 13, 14, 15]
+  # ptr = Pointer.malloc(6) { |i| i + 10 } # [10, 11, 12, 13, 14, 15]
   # ptr.clear(3)
-  # ptr #   [0, 0, 0, 13, 14, 15]
+  # ptr.to_slice(6) # => Slice[0, 0, 0, 13, 14, 15]
   # ```
   def clear(count = 1)
     ptr = self.as(Pointer(Void))

@@ -65,9 +65,6 @@ module Crystal
 
           match = signature.match(item, context)
 
-          context.defining_type = path_lookup if macro_owner
-          context.def_free_vars = nil
-
           if match
             matches_array ||= [] of Match
             matches_array << match
@@ -91,6 +88,11 @@ module Crystal
             if arg_types_equal && named_arg_types_equal
               return Matches.new(matches_array, true, owner)
             end
+
+            context = MatchContext.new(owner, path_lookup)
+          else
+            context.defining_type = path_lookup if macro_owner
+            context.def_free_vars = nil
           end
         end
       end

@@ -17,12 +17,16 @@ class JSON::Lexer::StringBased < JSON::Lexer
     while true
       case char = next_char
       when '\0'
-        raise "unterminated string"
+        raise "Unterminated string"
       when '\\'
         return consume_string_slow_path start_pos
       when '"'
         next_char
         break
+      else
+        if 0 <= current_char.ord < 32
+          unexpected_char
+        end
       end
     end
 
@@ -51,11 +55,15 @@ class JSON::Lexer::StringBased < JSON::Lexer
   end
 
   def slice_range(start_pos, end_pos)
-    @reader.string.to_slice.to_slice[start_pos, end_pos - start_pos]
+    @reader.string.to_slice[start_pos, end_pos - start_pos]
   end
 
   private def next_char_no_column_increment
-    @reader.next_char
+    char = @reader.next_char
+    if char == '\0' && @reader.pos != @reader.string.bytesize
+      unexpected_char
+    end
+    char
   end
 
   private def current_char

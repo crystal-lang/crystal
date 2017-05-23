@@ -1,10 +1,6 @@
 require "spec"
 require "http/web_socket"
 
-private macro packet(*bytes)
-  Bytes[{{*bytes}}].pointer({{bytes.size}})
-end
-
 private def assert_text_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
 end
@@ -30,23 +26,23 @@ end
 describe HTTP::WebSocket do
   describe "receive" do
     it "can read a small text packet" do
-      data = packet(0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f)
-      io = PointerIO.new(pointerof(data))
+      data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
+      io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(64)
+      buffer = Bytes.new(64)
       result = ws.receive(buffer)
       assert_text_packet result, 5, final: true
       String.new(buffer[0, result.size]).should eq("Hello")
     end
 
     it "can read partial packets" do
-      data = packet(0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
-        0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f)
-      io = PointerIO.new(pointerof(data))
+      data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
+        0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
+      io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(3)
+      buffer = Bytes.new(3)
 
       2.times do
         result = ws.receive(buffer)
@@ -60,12 +56,12 @@ describe HTTP::WebSocket do
     end
 
     it "can read masked text message" do
-      data = packet(0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58,
-        0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58)
-      io = PointerIO.new(pointerof(data))
+      data = Bytes[0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58,
+        0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58]
+      io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(3)
+      buffer = Bytes.new(3)
 
       2.times do
         result = ws.receive(buffer)
@@ -79,13 +75,13 @@ describe HTTP::WebSocket do
     end
 
     it "can read fragmented packets" do
-      data = packet(0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f,
-        0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f)
+      data = Bytes[0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f,
+        0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f]
 
-      io = PointerIO.new(pointerof(data))
+      io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(10)
+      buffer = Bytes.new(10)
 
       2.times do
         result = ws.receive(buffer)
@@ -99,24 +95,24 @@ describe HTTP::WebSocket do
     end
 
     it "read ping packet" do
-      data = packet(0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f)
-      io = PointerIO.new(pointerof(data))
+      data = Bytes[0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
+      io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(64)
+      buffer = Bytes.new(64)
       result = ws.receive(buffer)
       assert_ping_packet result, 5, final: true
       String.new(buffer[0, result.size]).should eq("Hello")
     end
 
     it "read ping packet in between fragmented packet" do
-      data = packet(0x01, 0x03, 0x48, 0x65, 0x6c,
+      data = Bytes[0x01, 0x03, 0x48, 0x65, 0x6c,
         0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
-        0x80, 0x02, 0x6c, 0x6f)
-      io = PointerIO.new(pointerof(data))
+        0x80, 0x02, 0x6c, 0x6f]
+      io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(64)
+      buffer = Bytes.new(64)
 
       result = ws.receive(buffer)
       assert_text_packet result, 3, final: false
@@ -132,11 +128,11 @@ describe HTTP::WebSocket do
     end
 
     it "read long packet" do
-      data = File.read("#{__DIR__}/../data/websocket_longpacket.bin").to_unsafe
-      io = PointerIO.new(pointerof(data))
+      data = File.read("#{__DIR__}/../data/websocket_longpacket.bin")
+      io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(2048)
+      buffer = Bytes.new(2048)
 
       result = ws.receive(buffer)
       assert_text_packet result, 1023, final: true
@@ -144,27 +140,26 @@ describe HTTP::WebSocket do
     end
 
     it "read very long packet" do
-      data_slice = Slice(UInt8).new(10 + 0x010000)
-      header = packet(0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00)
-      data_slice.copy_from(header, 10)
+      data = Bytes.new(10 + 0x010000)
 
-      data = data_slice.pointer(data_slice.bytesize)
+      header = Bytes[0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x0]
+      data.copy_from(header)
 
-      io = PointerIO.new(pointerof(data))
+      io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(0x010000)
+      buffer = Bytes.new(0x010000)
 
       result = ws.receive(buffer)
       assert_binary_packet result, 0x010000, final: true
     end
 
     it "can read a close packet" do
-      data = packet(0x88, 0x00)
-      io = PointerIO.new(pointerof(data))
+      data = Bytes[0x88, 0x00]
+      io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
-      buffer = Slice(UInt8).new(64)
+      buffer = Bytes.new(64)
       result = ws.receive(buffer)
       assert_close_packet result, 0, final: true
     end
@@ -174,7 +169,7 @@ describe HTTP::WebSocket do
     it "sends long data with correct header" do
       size = UInt16::MAX.to_u64 + 1
       big_string = "a" * size
-      io = MemoryIO.new
+      io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.send(big_string)
       bytes = io.to_slice
@@ -191,7 +186,7 @@ describe HTTP::WebSocket do
     it "sets binary opcode if used with slice" do
       sent_bytes = uninitialized UInt8[4]
 
-      io = MemoryIO.new
+      io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io, masked: true)
       ws.send(sent_bytes.to_slice)
       bytes = io.to_slice
@@ -201,7 +196,7 @@ describe HTTP::WebSocket do
 
   describe "stream" do
     it "sends continuous data and splits it to frames" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.stream do |io| # default frame size of 1024
         3.times { io.write(("a" * 512).to_slice) }
@@ -232,7 +227,7 @@ describe HTTP::WebSocket do
     end
 
     it "sets opcode of first frame to binary if stream is called with binary = true" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.stream(binary: true) { |io| }
 
@@ -244,7 +239,7 @@ describe HTTP::WebSocket do
   describe "send_masked" do
     it "sends the data with a bitmask" do
       sent_string = "hello"
-      io = MemoryIO.new
+      io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io, masked: true)
       ws.send(sent_string)
       bytes = io.to_slice
@@ -261,7 +256,7 @@ describe HTTP::WebSocket do
     it "sends long data with correct header" do
       size = UInt16::MAX.to_u64 + 1
       big_string = "a" * size
-      io = MemoryIO.new
+      io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io, masked: true)
       ws.send(big_string)
       bytes = io.to_slice
@@ -280,7 +275,7 @@ describe HTTP::WebSocket do
   describe "close" do
     it "closes with message" do
       message = "bye"
-      io = MemoryIO.new
+      io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close(message)
       bytes = io.to_slice
@@ -289,13 +284,91 @@ describe HTTP::WebSocket do
     end
 
     it "closes without message" do
-      io = MemoryIO.new
+      io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close
       bytes = io.to_slice
       (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
       bytes[1].should eq(0)
     end
+  end
+
+  it "negotiates over HTTP correctly" do
+    port_chan = Channel(Int32).new
+
+    spawn do
+      http_ref = nil
+      ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+        ctx.request.path.should eq("/")
+
+        ws.on_message do |str|
+          ws.send("pong #{str}")
+        end
+
+        ws.on_close do
+          http_ref.not_nil!.close
+        end
+      end
+
+      http_server = http_ref = HTTP::Server.new(0, [ws_handler])
+      http_server.bind
+      port_chan.send(http_server.port)
+      http_server.listen
+    end
+
+    listen_port = port_chan.receive
+
+    ws2 = HTTP::WebSocket.new("ws://127.0.0.1:#{listen_port}")
+
+    random = SecureRandom.hex
+    ws2.on_message do |str|
+      str.should eq("pong #{random}")
+      ws2.close
+    end
+    ws2.send(random)
+
+    ws2.run
+  end
+
+  it "negotiates over HTTPS correctly" do
+    port_chan = Channel(Int32).new
+
+    spawn do
+      http_ref = nil
+      ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+        ctx.request.path.should eq("/")
+
+        ws.on_message do |str|
+          ws.send("pong #{str}")
+        end
+
+        ws.on_close do
+          http_ref.not_nil!.close
+        end
+      end
+
+      http_server = http_ref = HTTP::Server.new(0, [ws_handler])
+      tls = http_server.tls = OpenSSL::SSL::Context::Server.new
+      tls.certificate_chain = File.join(__DIR__, "../openssl/ssl/openssl.crt")
+      tls.private_key = File.join(__DIR__, "../openssl/ssl/openssl.key")
+      http_server.bind
+      port_chan.send(http_server.port)
+      http_server.listen
+    end
+
+    listen_port = port_chan.receive
+
+    client_context = OpenSSL::SSL::Context::Client.insecure
+    ws2 = HTTP::WebSocket.new("127.0.0.1", port: listen_port, path: "/", tls: client_context)
+
+    random = SecureRandom.hex
+    ws2.on_message do |str|
+      str.should eq("pong #{random}")
+      ws2.close
+    end
+    ws2.send(random)
+
+    ws2.run
   end
 
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost")))

@@ -22,7 +22,7 @@ class YAML::PullParser
     end
 
     read_next
-    parse_exception "Expected STREAM_START" unless kind == LibYAML::EventType::STREAM_START
+    raise "Expected STREAM_START" unless kind == LibYAML::EventType::STREAM_START
   end
 
   def self.new(content)
@@ -76,6 +76,14 @@ class YAML::PullParser
   def read_next
     LibYAML.yaml_event_delete(pointerof(@event))
     LibYAML.yaml_parser_parse(@parser, pointerof(@event))
+    if problem = problem?
+      if context = context?
+        msg = "#{String.new(problem)} at line #{problem_line_number}, column #{problem_column_number}, #{String.new(context)} at line #{context_line_number}, column #{context_column_number}"
+      else
+        msg = "#{String.new(problem)} at line #{problem_line_number}, column #{problem_column_number}"
+      end
+      raise msg
+    end
     kind
   end
 
@@ -174,7 +182,7 @@ class YAML::PullParser
     when EventKind::SEQUENCE_START, EventKind::MAPPING_START
       String.build { |io| read_raw(io) }
     else
-      parse_exception "unexpected kind: #{kind}"
+      raise "Unexpected kind: #{kind}"
     end
   end
 
@@ -208,7 +216,7 @@ class YAML::PullParser
       io << "}"
       read_next
     else
-      parse_exception "unexpected kind: #{kind}"
+      raise "Unexpected kind: #{kind}"
     end
   end
 
@@ -243,19 +251,39 @@ class YAML::PullParser
   end
 
   def problem_line_number
-    problem? ? problem_mark.line : line_number
+    # YAML starts counting from 0, we want to count from 1
+    (problem? ? problem_mark?.line : line_number) + 1
   end
 
   def problem_column_number
-    problem? ? problem_mark.column : column_number
+    # YAML starts counting from 0, we want to count from 1
+    (problem? ? problem_mark?.column : column_number) + 1
   end
 
-  def problem_mark
+  private def problem_mark?
     @parser.value.problem_mark
   end
 
   private def problem?
     @parser.value.problem
+  end
+
+  private def context?
+    @parser.value.context
+  end
+
+  private def context_mark?
+    @parser.value.context_mark
+  end
+
+  private def context_line_number
+    # YAML starts counting from 0, we want to count from 1
+    context_mark?.line + 1
+  end
+
+  private def context_column_number
+    # YAML starts counting from 0, we want to count from 1
+    context_mark?.column + 1
   end
 
   def finalize
@@ -271,14 +299,14 @@ class YAML::PullParser
   end
 
   private def expect_kind(kind)
-    parse_exception "expected #{kind} but was #{self.kind}" unless kind == self.kind
+    raise "Expected #{kind} but was #{self.kind}" unless kind == self.kind
   end
 
   private def read_anchor(anchor)
     anchor ? String.new(anchor) : nil
   end
 
-  private def parse_exception(msg)
-    raise ParseException.new(msg, problem_line_number, problem_column_number)
+  def raise(msg : String)
+    ::raise ParseException.new(msg, problem_line_number, problem_column_number)
   end
 end

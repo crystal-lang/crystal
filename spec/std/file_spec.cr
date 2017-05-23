@@ -14,12 +14,15 @@ private def rootdir
 end
 
 private def home
-  ENV["HOME"]
+  home = ENV["HOME"]
+  return home if home == "/"
+
+  home.chomp('/')
 end
 
 private def it_raises_on_null_byte(operation, &block)
   it "errors on #{operation}" do
-    expect_raises(ArgumentError, "string contains null byte") do
+    expect_raises(ArgumentError, "String contains null byte") do
       block.call
     end
   end
@@ -37,8 +40,23 @@ describe "File" do
     str.should eq("Hello World\n" * 20)
   end
 
+  {% if flag?(:linux) %}
+    it "reads entire file from proc virtual filesystem" do
+      str1 = File.open "/proc/self/cmdline", &.gets_to_end
+      str2 = File.read "/proc/self/cmdline"
+      str2.empty?.should be_false
+      str2.should eq(str1)
+    end
+  {% end %}
+
   it "reads lines from file" do
     lines = File.read_lines "#{__DIR__}/data/test_file.txt"
+    lines.size.should eq(20)
+    lines.first.should eq("Hello World")
+  end
+
+  it "reads lines from file with chomp = false" do
+    lines = File.read_lines "#{__DIR__}/data/test_file.txt", chomp: false
     lines.size.should eq(20)
     lines.first.should eq("Hello World\n")
   end
@@ -46,6 +64,17 @@ describe "File" do
   it "reads lines from file with each" do
     idx = 0
     File.each_line("#{__DIR__}/data/test_file.txt") do |line|
+      if idx == 0
+        line.should eq("Hello World")
+      end
+      idx += 1
+    end
+    idx.should eq(20)
+  end
+
+  it "reads lines from file with each, chomp = false" do
+    idx = 0
+    File.each_line("#{__DIR__}/data/test_file.txt", chomp: false) do |line|
       if idx == 0
         line.should eq("Hello World\n")
       end
@@ -58,11 +87,39 @@ describe "File" do
     idx = 0
     File.each_line("#{__DIR__}/data/test_file.txt").each do |line|
       if idx == 0
+        line.should eq("Hello World")
+      end
+      idx += 1
+    end
+    idx.should eq(20)
+  end
+
+  it "reads lines from file with each as iterator, chomp = false" do
+    idx = 0
+    File.each_line("#{__DIR__}/data/test_file.txt", chomp: false).each do |line|
+      if idx == 0
         line.should eq("Hello World\n")
       end
       idx += 1
     end
     idx.should eq(20)
+  end
+
+  describe "empty?" do
+    it "gives true when file is empty" do
+      File.empty?("#{__DIR__}/data/blank_test_file.txt").should be_true
+    end
+
+    it "gives false when file is not empty" do
+      File.empty?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+
+    it "raises an error when the file does not exist" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      expect_raises Errno do
+        File.empty?(filename)
+      end
+    end
   end
 
   describe "exists?" do
@@ -119,6 +176,7 @@ describe "File" do
       begin
         File.link("#{__DIR__}/data/test_file.txt", out_path)
         File.exists?(out_path).should be_true
+        File.symlink?(out_path).should be_false
       ensure
         File.delete(out_path) if File.exists?(out_path)
       end
@@ -184,7 +242,7 @@ describe "File" do
     File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
   end
 
-  assert "chown" do
+  it "chown" do
     # changing owners requires special privileges, so we test that method calls do compile
     typeof(File.chown("/tmp/test"))
     typeof(File.chown("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
@@ -283,6 +341,14 @@ describe "File" do
       stat.file?.should be_true
       stat.symlink?.should be_false
       stat.socket?.should be_false
+      stat.pipe?.should be_false
+    end
+  end
+
+  it "gets stat for pipe" do
+    IO.pipe do |r, w|
+      r.stat.pipe?.should be_true
+      w.stat.pipe?.should be_true
     end
   end
 
@@ -304,8 +370,8 @@ describe "File" do
   end
 
   describe "size" do
-    assert { File.size("#{__DIR__}/data/test_file.txt").should eq(240) }
-    assert do
+    it { File.size("#{__DIR__}/data/test_file.txt").should eq(240) }
+    it do
       File.open("#{__DIR__}/data/test_file.txt", "r") do |file|
         file.size.should eq(240)
       end
@@ -413,6 +479,38 @@ describe "File" do
       File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
       File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
     end
+
+    it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
+      prev_home = home
+      begin
+        ENV["HOME"] = __DIR__ + "/"
+        File.expand_path("~/").should eq(home)
+        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
+        File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
+        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
+        File.expand_path("~").should eq(home)
+        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
+        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+      ensure
+        ENV["HOME"] = prev_home
+      end
+    end
+
+    it "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
+      prev_home = home
+      begin
+        ENV["HOME"] = "/"
+        File.expand_path("~/").should eq(home)
+        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
+        File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
+        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
+        File.expand_path("~").should eq(home)
+        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
+        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+      ensure
+        ENV["HOME"] = prev_home
+      end
+    end
   end
 
   describe "real_path" do
@@ -446,6 +544,22 @@ describe "File" do
       filename = "#{__DIR__}/data/temp_write.txt"
       File.write(filename, "hello")
       File.read(filename).should eq("hello")
+      File.delete(filename)
+    end
+
+    it "writes bytes" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello".to_slice)
+      File.read(filename).should eq("hello")
+      File.delete(filename)
+    end
+
+    it "writes io" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.open("#{__DIR__}/data/test_file.txt") do |file|
+        File.write(filename, file)
+      end
+      File.read(filename).should eq(File.read("#{__DIR__}/data/test_file.txt"))
       File.delete(filename)
     end
 
@@ -510,7 +624,7 @@ describe "File" do
   it "raises if invoking seek with a closed file" do
     file = File.new("#{__DIR__}/data/test_file.txt")
     file.close
-    expect_raises(IO::Error, "closed stream") { file.seek(1) }
+    expect_raises(IO::Error, "Closed stream") { file.seek(1) }
   end
 
   it "returns the current read position with tell" do
@@ -533,7 +647,7 @@ describe "File" do
   it "raises if invoking tell with a closed file" do
     file = File.new("#{__DIR__}/data/test_file.txt")
     file.close
-    expect_raises(IO::Error, "closed stream") { file.tell }
+    expect_raises(IO::Error, "Closed stream") { file.tell }
   end
 
   it "iterates with each_char" do
@@ -633,6 +747,40 @@ describe "File" do
           end
         end
       end
+    end
+  end
+
+  it "reads at offset" do
+    filename = "#{__DIR__}/data/test_file.txt"
+    file = File.open(filename)
+    file.read_at(6, 100) do |io|
+      io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
+    end
+    file.read_at(0, 240) do |io|
+      io.gets_to_end.should eq(File.read(filename))
+    end
+  end
+
+  it "raises when reading at offset outside of bounds" do
+    filename = "#{__DIR__}/data/temp_write.txt"
+    File.write(filename, "hello world")
+
+    begin
+      File.open(filename) do |io|
+        expect_raises(ArgumentError, "Negative bytesize") do
+          io.read_at(3, -1) { }
+        end
+
+        expect_raises(ArgumentError, "Offset out of bounds") do
+          io.read_at(12, 1) { }
+        end
+
+        expect_raises(ArgumentError, "Bytesize out of bounds") do
+          io.read_at(6, 6) { }
+        end
+      end
+    ensure
+      File.delete(filename)
     end
   end
 
@@ -788,13 +936,93 @@ describe "File" do
       io = File.open(__FILE__, "r")
       io.close
 
-      expect_raises(IO::Error, "closed stream") { io.gets_to_end }
-      expect_raises(IO::Error, "closed stream") { io.print "hi" }
-      expect_raises(IO::Error, "closed stream") { io.puts "hi" }
-      expect_raises(IO::Error, "closed stream") { io.seek(1) }
-      expect_raises(IO::Error, "closed stream") { io.gets }
-      expect_raises(IO::Error, "closed stream") { io.read_byte }
-      expect_raises(IO::Error, "closed stream") { io.write_byte('a'.ord.to_u8) }
+      expect_raises(IO::Error, "Closed stream") { io.gets_to_end }
+      expect_raises(IO::Error, "Closed stream") { io.print "hi" }
+      expect_raises(IO::Error, "Closed stream") { io.puts "hi" }
+      expect_raises(IO::Error, "Closed stream") { io.seek(1) }
+      expect_raises(IO::Error, "Closed stream") { io.gets }
+      expect_raises(IO::Error, "Closed stream") { io.read_byte }
+      expect_raises(IO::Error, "Closed stream") { io.write_byte('a'.ord.to_u8) }
+    end
+  end
+
+  describe "utime" do
+    it "sets times with utime" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "")
+
+      atime = Time.new(2000, 1, 2)
+      mtime = Time.new(2000, 3, 4)
+
+      File.utime(atime, mtime, filename)
+
+      stat = File.stat(filename)
+      stat.atime.should eq(atime)
+      stat.mtime.should eq(mtime)
+
+      File.delete filename
+    end
+
+    it "raises if file not found" do
+      atime = Time.new(2000, 1, 2)
+      mtime = Time.new(2000, 3, 4)
+
+      expect_raises Errno, "Error setting time to file" do
+        File.utime(atime, mtime, "#{__DIR__}/nonexistent_file")
+      end
+    end
+  end
+
+  describe "touch" do
+    it "creates file if it doesn't exists" do
+      filename = "#{__DIR__}/data/temp_touch.txt"
+      begin
+        File.exists?(filename).should be_false
+        File.touch(filename)
+        File.exists?(filename).should be_true
+      ensure
+        File.delete filename
+      end
+    end
+
+    it "sets file times to given time" do
+      filename = "#{__DIR__}/data/temp_touch.txt"
+      time = Time.new(2000, 3, 4)
+      begin
+        File.touch(filename, time)
+
+        stat = File.stat(filename)
+        stat.atime.should eq(time)
+        stat.mtime.should eq(time)
+      ensure
+        File.delete filename
+      end
+    end
+
+    it "sets file times to Time.now if no time argument given" do
+      filename = "#{__DIR__}/data/temp_touch.txt"
+      time = Time.now
+      begin
+        File.touch(filename)
+
+        stat = File.stat(filename)
+        stat.atime.should be_close(time, 1.second)
+        stat.mtime.should be_close(time, 1.second)
+      ensure
+        File.delete filename
+      end
+    end
+
+    it "raises if path contains non-existent directory" do
+      expect_raises Errno, "Error opening file" do
+        File.touch("/tmp/non/existent/directory/test.tmp")
+      end
+    end
+
+    it "raises if file cannot be accessed" do
+      expect_raises Errno, "Operation not permitted" do
+        File.touch("/bin/ls")
+      end
     end
   end
 end

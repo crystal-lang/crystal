@@ -121,7 +121,7 @@ end
 # :nodoc:
 fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
   # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
-  LibC.printf "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+  LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
   CallStack.print_backtrace
   LibC._exit sig
 end

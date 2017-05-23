@@ -1,9 +1,10 @@
 {% if !flag?(:without_zlib) %}
-  require "zlib"
+  require "flate"
+  require "gzip"
 {% end %}
 
 module HTTP
-  private DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
+  private DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
 
   # :nodoc:
   enum BodyType
@@ -17,7 +18,7 @@ module HTTP
     headers = Headers.new
 
     while line = io.gets
-      if line == "\r\n" || line == "\n"
+      if line.empty?
         body = nil
         if body_type.prohibited?
           body = nil
@@ -40,9 +41,9 @@ module HTTP
             encoding = headers["Content-Encoding"]?
             case encoding
             when "gzip"
-              body = Zlib::Inflate.gzip(body, sync_close: true)
+              body = Gzip::Reader.new(body, sync_close: true)
             when "deflate"
-              body = Zlib::Inflate.new(body, sync_close: true)
+              body = Flate::Reader.new(body, sync_close: true)
             end
           {% end %}
         end
@@ -70,8 +71,11 @@ module HTTP
   def self.parse_header(line)
     # This is basically
     #
-    #     name, value = line.split ':', 2
-    #     {name, value.lstrip}
+    # ```
+    # line = "Server: nginx"
+    # name, value = line.split ':', 2
+    # {name, value.lstrip} # => {"Server", "nginx"}
+    # ```
     #
     # except that it's faster because we only create 2 strings
     # instead of 3 (two from the split and one for the lstrip),
@@ -86,7 +90,7 @@ module HTTP
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
-    while middle_index < bytesize && cstr[middle_index].unsafe_chr.whitespace?
+    while middle_index < bytesize && cstr[middle_index].unsafe_chr.ascii_whitespace?
       middle_index += 1
     end
 
@@ -107,46 +111,58 @@ module HTTP
 
   # :nodoc:
   def self.serialize_headers_and_body(io, headers, body, body_io, version)
-    # prepare either chunked response headers if protocol supports it
-    # or consume the io to get the Content-Length header
-    unless body
-      if body_io
-        if Client::Response.supports_chunked?(version)
-          headers["Transfer-Encoding"] = "chunked"
-          body = nil
-        else
-          body = body_io.gets_to_end
-          body_io = nil
-        end
-      end
-    end
-
     if body
-      headers["Content-Length"] = body.bytesize.to_s
+      serialize_headers_and_string_body(io, headers, body)
+    elsif body_io
+      content_length = content_length(headers)
+      if content_length
+        serialize_headers(io, headers)
+        copied = IO.copy(body_io, io)
+        if copied != content_length
+          raise ArgumentError.new("Content-Length header is #{content_length} but body had #{copied} bytes")
+        end
+      elsif Client::Response.supports_chunked?(version)
+        headers["Transfer-Encoding"] = "chunked"
+        serialize_headers(io, headers)
+        serialize_chunked_body(io, body_io)
+      else
+        body = body_io.gets_to_end
+        serialize_headers_and_string_body(io, headers, body)
+      end
+    else
+      serialize_headers(io, headers)
     end
+  end
 
+  def self.serialize_headers_and_string_body(io, headers, body)
+    headers["Content-Length"] = body.bytesize.to_s
+    serialize_headers(io, headers)
+    io << body
+  end
+
+  def self.serialize_headers(io, headers)
     headers.each do |name, values|
       values.each do |value|
         io << name << ": " << value << "\r\n"
       end
     end
-
     io << "\r\n"
+  end
 
-    if body
-      io << body
+  def self.serialize_chunked_body(io, body)
+    buf = uninitialized UInt8[8192]
+    while (buf_length = body.read(buf.to_slice)) > 0
+      buf_length.to_s(16, io)
+      io << "\r\n"
+      io.write(buf.to_slice[0, buf_length])
+      io << "\r\n"
     end
+    io << "0\r\n\r\n"
+  end
 
-    if body_io
-      buf = uninitialized UInt8[8192]
-      while (buf_length = body_io.read(buf.to_slice)) > 0
-        buf_length.to_s(16, io)
-        io << "\r\n"
-        io.write(buf.to_slice[0, buf_length])
-        io << "\r\n"
-      end
-      io << "0\r\n\r\n"
-    end
+  # :nodoc:
+  def self.content_length(headers)
+    headers["Content-Length"]?.try &.to_u64?
   end
 
   # :nodoc:
@@ -208,9 +224,75 @@ module HTTP
     nil
   end
 
+  # Format a Time object as a String using the format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  #
+  # ```
+  # HTTP.rfc1123_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
+  # ```
   def self.rfc1123_date(time : Time) : String
     # TODO: GMT should come from the Time classes instead
     time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
+  end
+
+  # Dequotes an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
+  # quoted-string.
+  #
+  # ```
+  # quoted = %q(\"foo\\bar\")
+  # HTTP.dequote_string(quoted) # => %q("foo\bar")
+  # ```
+  def self.dequote_string(str)
+    data = str.to_slice
+    quoted_pair_index = data.index('\\'.ord)
+    return str unless quoted_pair_index
+
+    String.build do |io|
+      while quoted_pair_index
+        io.write(data[0, quoted_pair_index])
+        io << data[quoted_pair_index + 1].chr
+
+        data += quoted_pair_index + 2
+        quoted_pair_index = data.index('\\'.ord)
+      end
+      io.write(data)
+    end
+  end
+
+  # Encodes a string to an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
+  # quoted-string. Encoded string is written to *io*. May raise when *string*
+  # contains an invalid character.
+  #
+  # ```
+  # string = %q("foo\ bar")
+  # io = IO::Memory.new
+  # HTTP.quote_string(string, io)
+  # io.gets_to_end # => %q(\"foo\\\ bar\")
+  # ```
+  def self.quote_string(string, io)
+    # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
+
+    string.each_byte do |byte|
+      case byte
+      when '\t'.ord, ' '.ord, '"'.ord, '\\'.ord
+        io << '\\'
+      when 0x00..0x1F, 0x7F
+        raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+      end
+      io.write_byte byte
+    end
+  end
+
+  # Encodes a string to an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
+  # quoted-string. May raise when *string* contains an invalid character.
+  #
+  # ```
+  # string = %q("foo\ bar")
+  # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
+  # ```
+  def self.quote_string(string)
+    String.build do |io|
+      quote_string(string, io)
+    end
   end
 
   # Returns the default status message of the given HTTP status code.
@@ -218,6 +300,7 @@ module HTTP
     case status_code
     when 100 then "Continue"
     when 101 then "Switching Protocols"
+    when 102 then "Processing" # RFC 2518 (WebDAV)
     when 200 then "OK"
     when 201 then "Created"
     when 202 then "Accepted"
@@ -225,6 +308,8 @@ module HTTP
     when 204 then "No Content"
     when 205 then "Reset Content"
     when 206 then "Partial Content"
+    when 207 then "Multi-Status"     # RFC 2518 (WebDAV)
+    when 208 then "Already Reported" # RFC 5842
     when 226 then "IM Used"
     when 300 then "Multiple Choices"
     when 301 then "Moved Permanently"
@@ -233,7 +318,7 @@ module HTTP
     when 304 then "Not Modified"
     when 305 then "Use Proxy"
     when 307 then "Temporary Redirect"
-    when 308 then "Permanent Redirect"
+    when 308 then "Permanent Redirect" # RFC 7238
     when 400 then "Bad Request"
     when 401 then "Unauthorized"
     when 402 then "Payment Required"
@@ -252,12 +337,16 @@ module HTTP
     when 415 then "Unsupported Media Type"
     when 416 then "Requested Range Not Satisfiable"
     when 417 then "Expectation Failed"
+    when 418 then "I'm a teapot" # RFC 2324
     when 421 then "Misdirected Request"
-    when 423 then "Locked"
-    when 426 then "Upgrade Required"
+    when 422 then "Unprocessable Entity" # RFC 2518 (WebDAV)
+    when 423 then "Locked"               # RFC 2518 (WebDAV)
+    when 424 then "Failed Dependency"    # RFC 2518 (WebDAV)
+    when 426 then "Upgrade Required"     # RFC 2817
     when 428 then "Precondition Required"
     when 429 then "Too Many Requests"
     when 431 then "Request Header Fields Too Large"
+    when 449 then "Retry With" # unofficial Microsoft
     when 451 then "Unavailable For Legal Reasons"
     when 500 then "Internal Server Error"
     when 501 then "Not Implemented"
@@ -265,8 +354,11 @@ module HTTP
     when 503 then "Service Unavailable"
     when 504 then "Gateway Timeout"
     when 505 then "HTTP Version Not Supported"
-    when 506 then "Variant Also Negotiates"
-    when 510 then "Not Extended"
+    when 506 then "Variant Also Negotiates"  # RFC 2295
+    when 507 then "Insufficient Storage"     # RFC 2518 (WebDAV)
+    when 509 then "Bandwidth Limit Exceeded" # unofficial
+    when 510 then "Not Extended"             # RFC 2774
+    when 511 then "Network Authentication Required"
     else          ""
     end
   end

@@ -39,7 +39,13 @@ describe "Regex::MatchData" do
 
     it "raises if outside match range with []" do
       "foo" =~ /foo/
-      expect_raises(IndexError) { $~[1] }
+      expect_raises(IndexError, "Invalid capture group index: 1") { $~[1] }
+    end
+
+    it "raises if special variable accessed on invalid capture group" do
+      "spice" =~ /spice(s)?/
+      expect_raises(IndexError, "Invalid capture group index: 1") { $1 }
+      expect_raises(IndexError, "Invalid capture group index: 3") { $3 }
     end
   end
 
@@ -99,5 +105,14 @@ describe "Regex::MatchData" do
     it "works with unicode" do
       "há日本語".match(/本/).not_nil!.pre_match.should eq "há日"
     end
+  end
+
+  it "can check equality" do
+    re = /((?<hello>he)llo)/
+    m1 = re.match("hello")
+    m2 = re.match("hello")
+    m1.should be_truthy
+    m2.should be_truthy
+    m1.should eq(m2)
   end
 end

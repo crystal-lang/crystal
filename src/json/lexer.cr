@@ -16,7 +16,7 @@ abstract class JSON::Lexer
     @token = Token.new
     @line_number = 1
     @column_number = 1
-    @buffer = MemoryIO.new
+    @buffer = IO::Memory.new
     @string_pool = StringPool.new
     @skip = false
     @expects_object_key = false
@@ -128,12 +128,16 @@ abstract class JSON::Lexer
     while true
       case next_char
       when '\0'
-        raise "unterminated string"
+        raise "Unterminated string"
       when '\\'
         consume_string_escape_sequence
       when '"'
         next_char
         break
+      else
+        if 0 <= current_char.ord < 32
+          unexpected_char
+        end
       end
     end
   end
@@ -148,14 +152,18 @@ abstract class JSON::Lexer
     while true
       case char = next_char
       when '\0'
-        raise "unterminated string"
+        raise "Unterminated string"
       when '\\'
         @buffer << consume_string_escape_sequence
       when '"'
         next_char
         break
       else
-        @buffer << char
+        if 0 <= current_char.ord < 32
+          unexpected_char
+        else
+          @buffer << char
+        end
       end
     end
     if @expects_object_key
@@ -191,7 +199,7 @@ abstract class JSON::Lexer
         hexnum1.chr
       end
     else
-      raise "uknown escape char: #{char}"
+      raise "Unknown escape char: #{char}"
     end
   end
 
@@ -199,7 +207,7 @@ abstract class JSON::Lexer
     hexnum = 0
     4.times do
       char = next_char
-      hexnum = (hexnum << 4) | (char.to_i?(16) || raise "unexpected char in hex number: #{char.inspect}")
+      hexnum = (hexnum << 4) | (char.to_i?(16) || raise "Unexpected char in hex number: #{char.inspect}")
     end
     hexnum
   end
@@ -265,6 +273,11 @@ abstract class JSON::Lexer
     append_number_char
     divisor = 1_u64
     char = next_char
+
+    unless '0' <= char <= '9'
+      unexpected_char
+    end
+
     while '0' <= char <= '9'
       append_number_char
       integer *= 10
@@ -344,7 +357,7 @@ abstract class JSON::Lexer
   end
 
   private def unexpected_char(char = current_char)
-    raise "unexpected char '#{char}'"
+    raise "Unexpected char '#{char}'"
   end
 
   private def raise(msg)

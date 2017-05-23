@@ -1,4 +1,13 @@
 abstract class OpenSSL::SSL::Context
+  # :nodoc:
+  def self.default_method
+    {% if LibSSL::OPENSSL_110 %}
+      LibSSL.tls_method
+    {% else %}
+      LibSSL.sslv23_method
+    {% end %}
+  end
+
   # The list of secure ciphers (intermediate security) as of May 2016 as per
   # https://wiki.mozilla.org/Security/Server_Side_TLS
   CIPHERS = %w(
@@ -47,8 +56,8 @@ abstract class OpenSSL::SSL::Context
   class Client < Context
     # Generates a new TLS client context with sane defaults for a client connection.
     #
-    # By default it defaults to the `SSLv23_method` which actually means that
-    # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
+    # Defaults to `TLS_method` or `SSLv23_method` (depending on OpenSSL version)
+    # which tells OpenSSL to negotiate the TLS or SSL protocol with the remote
     # endpoint.
     #
     # Don't change the method unless you must restrict a specific protocol to be
@@ -58,10 +67,12 @@ abstract class OpenSSL::SSL::Context
     # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
     #
     # ```
+    # require "openssl"
+    #
     # context = OpenSSL::SSL::Context::Client.new
-    # context.options = OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3
+    # context.add_options(OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3)
     # ```
-    def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+    def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
@@ -74,7 +85,7 @@ abstract class OpenSSL::SSL::Context
     #
     # For everything else this uses the defaults of your OpenSSL.
     # Use this only if undoing the defaults that `new` sets is too much hassle.
-    def self.insecure(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+    def self.insecure(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
     end
 
@@ -100,8 +111,8 @@ abstract class OpenSSL::SSL::Context
   class Server < Context
     # Generates a new TLS server context with sane defaults for a server connection.
     #
-    # By default it defaults to the `SSLv23_method` which actually means that
-    # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
+    # Defaults to `TLS_method` or `SSLv23_method` (depending on OpenSSL version)
+    # which tells OpenSSL to negotiate the TLS or SSL protocol with the remote
     # endpoint.
     #
     # Don't change the method unless you must restrict a specific protocol to be
@@ -112,9 +123,9 @@ abstract class OpenSSL::SSL::Context
     #
     # ```
     # context = OpenSSL::SSL::Context::Server.new
-    # context.options = OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3
+    # context.add_options(OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3)
     # ```
-    def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+    def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
       add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
@@ -127,7 +138,7 @@ abstract class OpenSSL::SSL::Context
     #
     # For everything else this uses the defaults of your OpenSSL.
     # Use this only if undoing the defaults that `new` sets is too much hassle.
-    def self.insecure(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+    def self.insecure(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
     end
   end
@@ -241,32 +252,46 @@ abstract class OpenSSL::SSL::Context
 
   # Returns the current options set on the TLS context.
   def options
-    OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
+    opts = {% if LibSSL::OPENSSL_110 %}
+      LibSSL.ssl_ctx_get_options(@handle)
+    {% else %}
+      LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
+    {% end %}
+    OpenSSL::SSL::Options.new(opts)
   end
-
-  # TODO (formatetr) enclose the next doc in ```...```
 
   # Adds options to the TLS context.
   #
   # Example:
-  #
+  # ```
   # context.add_options(
-  #   OpenSSL::SSL::Options::ALL |        # various workarounds
+  #   OpenSSL::SSL::Options::ALL |      # various workarounds
   #   OpenSSL::SSL::Options::NO_SSLV2 | # disable overly deprecated SSLv2
   #   OpenSSL::SSL::Options::NO_SSLV3   # disable deprecated SSLv3
   # )
+  # ```
   def add_options(options : OpenSSL::SSL::Options)
-    OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
+    opts = {% if LibSSL::OPENSSL_110 %}
+      LibSSL.ssl_ctx_set_options(@handle, options)
+    {% else %}
+      LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
+    {% end %}
+    OpenSSL::SSL::Options.new(opts)
   end
 
   # Removes options from the TLS context.
   #
   # Example:
   # ```
-  # context.remove_options(OpenSSL::SSL::NO_SSLV3)
+  # context.remove_options(OpenSSL::SSL::Options::NO_SSLV3)
   # ```
   def remove_options(options : OpenSSL::SSL::Options)
-    OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
+    opts = {% if LibSSL::OPENSSL_110 %}
+      LibSSL.ssl_ctx_clear_options(@handle, options)
+    {% else %}
+      LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
+    {% end %}
+    OpenSSL::SSL::Options.new(opts)
   end
 
   # Returns the current verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
@@ -292,15 +317,15 @@ abstract class OpenSSL::SSL::Context
   # context.alpn_protocol = "h2"
   # ```
   def alpn_protocol=(protocol : String)
-    proto = Slice(UInt8).new(protocol.bytesize + 1)
+    proto = Bytes.new(protocol.bytesize + 1)
     proto[0] = protocol.bytesize.to_u8
     protocol.to_slice.copy_to(proto.to_unsafe + 1, protocol.bytesize)
     self.alpn_protocol = proto
   end
 
-  private def alpn_protocol=(protocol : Slice(UInt8))
+  private def alpn_protocol=(protocol : Bytes)
     alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
-      proto = Box(Slice(UInt8)).unbox(data)
+      proto = Box(Bytes).unbox(data)
       ret = LibSSL.ssl_select_next_proto(o, olen, proto, 2, i, ilen)
       if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
         LibSSL::SSL_TLSEXT_ERR_NOACK
@@ -315,7 +340,7 @@ abstract class OpenSSL::SSL::Context
   # Set this context verify param to the default one of the given name.
   #
   # Depending on the OpenSSL version, the available defaults are
-  # default, pkcs7, smime_sign, ssl_client and ssl_server
+  # `default`, `pkcs7`, `smime_sign`, `ssl_client` and `ssl_server`.
   def default_verify_param=(name : String)
     param = LibCrypto.x509_verify_param_lookup(name)
     raise ArgumentError.new("#{name} is an unsupported default verify param") unless param

@@ -43,12 +43,10 @@ struct String::Formatter(A)
   private def consume_substitution
     key = consume_substitution_key '}'
     arg = current_arg
-    if arg.is_a?(Hash)
-      @io << arg[key]
-    elsif arg.is_a?(NamedTuple) # TODO: join with || after 0.19
+    if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
       @io << arg[key]
     else
-      raise ArgumentError.new "one hash or named tuple required"
+      raise ArgumentError.new "One hash or named tuple required"
     end
   end
 
@@ -56,12 +54,10 @@ struct String::Formatter(A)
     key = consume_substitution_key '>'
     next_char
     arg = current_arg
-    if arg.is_a?(Hash)
-      target_arg = arg[key]
-    elsif arg.is_a?(NamedTuple) # TODO: join with || after 0.19
+    if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
       target_arg = arg[key]
     else
-      raise ArgumentError.new "one hash or named tuple required"
+      raise ArgumentError.new "One hash or named tuple required"
     end
     flags = consume_flags
     consume_type flags, target_arg, true
@@ -72,7 +68,7 @@ struct String::Formatter(A)
       loop do
         case current_char
         when '\0'
-          raise ArgumentError.new "malformed name - unmatched parenthesis"
+          raise ArgumentError.new "Malformed name - unmatched parenthesis"
         when end_char
           break
         else
@@ -117,10 +113,11 @@ struct String::Formatter(A)
     when '1'..'9'
       num, size = consume_number
       flags.width = num
-      flags.width_size
+      flags.width_size = size
     when '*'
-      flags.width = consume_dynamic_value
-      flags.width_size = 1
+      val = consume_dynamic_value
+      flags.width = val
+      flags.width_size = val.to_s.size
     end
     flags
   end
@@ -133,8 +130,9 @@ struct String::Formatter(A)
         flags.precision = num
         flags.precision_size = size
       when '*'
-        flags.precision = consume_dynamic_value
-        flags.precision_size = 1
+        val = consume_dynamic_value
+        flags.precision = val
+        flags.precision_size = val.to_s.size
       else
         flags.precision = 0
         flags.precision_size = 1
@@ -150,7 +148,7 @@ struct String::Formatter(A)
       next_arg
       value.to_i
     else
-      raise ArgumentError.new("expected dynamic value '*' to be an Int - #{value.inspect} (#{value.class.inspect})")
+      raise ArgumentError.new("Expected dynamic value '*' to be an Int - #{value.inspect} (#{value.class.inspect})")
     end
   end
 
@@ -195,7 +193,7 @@ struct String::Formatter(A)
     when '%'
       char '%'
     else
-      raise ArgumentError.new("malformed format string - %#{char.inspect}")
+      raise ArgumentError.new("Malformed format string - %#{char.inspect}")
     end
   end
 
@@ -239,7 +237,7 @@ struct String::Formatter(A)
         pad_int int, flags
       end
     else
-      raise ArgumentError.new("expected an integer, not #{arg.inspect}")
+      raise ArgumentError.new("Expected an integer, not #{arg.inspect}")
     end
   end
 
@@ -258,7 +256,7 @@ struct String::Formatter(A)
 
       @io.write_utf8 Slice.new(temp_buf, count)
     else
-      raise ArgumentError.new("expected a float, not #{arg.inspect}")
+      raise ArgumentError.new("Expected a float, not #{arg.inspect}")
     end
   end
 
@@ -266,7 +264,7 @@ struct String::Formatter(A)
   def recreate_float_format_string(flags)
     capacity = 3 # percent + type + \0
     capacity += flags.width_size
-    capacity += flags.precision_size
+    capacity += flags.precision_size + 1 # size + .
     capacity += 1 if flags.plus
     capacity += 1 if flags.minus
     capacity += 1 if flags.zero
@@ -275,7 +273,7 @@ struct String::Formatter(A)
     format_buf = format_buf(capacity)
     original_format_buf = format_buf
 
-    io = PointerIO.new(pointerof(format_buf))
+    io = IO::Memory.new(Bytes.new(format_buf, capacity))
     io << '%'
     io << '+' if flags.plus
     io << '-' if flags.minus
@@ -294,7 +292,7 @@ struct String::Formatter(A)
 
   def pad(consumed, flags)
     padding_char = flags.padding_char
-    (flags.width - consumed).times do
+    (flags.width.abs - consumed).times do
       @io << padding_char
     end
   end
@@ -310,7 +308,7 @@ struct String::Formatter(A)
   end
 
   private def current_arg
-    @args.at(@arg_index) { raise ArgumentError.new("too few arguments") }
+    @args.at(@arg_index) { raise ArgumentError.new("Too few arguments") }
   end
 
   def next_arg
@@ -368,16 +366,12 @@ struct String::Formatter(A)
       @precision_size = 0
     end
 
-    def wants_padding?
-      @width > 0
-    end
-
     def left_padding?
-      wants_padding? && !@minus
+      @minus ? @width < 0 : @width > 0
     end
 
     def right_padding?
-      wants_padding? && @minus
+      @minus ? @width > 0 : @width < 0
     end
 
     def padding_char

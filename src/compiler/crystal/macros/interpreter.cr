@@ -3,7 +3,7 @@ module Crystal
     getter last : ASTNode
     property free_vars : Hash(String, TypeVar)?
 
-    def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call)
+    def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call, a_def : Def? = nil)
       vars = {} of String => ASTNode
       splat_index = a_macro.splat_index
       double_splat = a_macro.double_splat
@@ -50,7 +50,7 @@ module Crystal
 
         next if vars.has_key?(macro_arg.name)
 
-        default_value = default_value.expand_node(call.location) if default_value.is_a?(MagicConstant)
+        default_value = default_value.expand_node(call.location, call.end_location) if default_value.is_a?(MagicConstant)
         vars[macro_arg.name] = default_value
       end
 
@@ -68,15 +68,15 @@ module Crystal
         vars[macro_block_arg.name] = call_block || Nop.new
       end
 
-      new(program, scope, path_lookup, a_macro.location, vars, call.block)
+      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def)
     end
 
     record MacroVarKey, name : String, exps : Array(ASTNode)?
 
     def initialize(@program : Program,
                    @scope : Type, @path_lookup : Type, @location : Location?,
-                   @vars = {} of String => ASTNode, @block : Block? = nil)
-      @str = MemoryIO.new(512) # Can't be String::Builder because of `{{debug()}}
+                   @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil)
+      @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug()}}
       @last = Nop.new
     end
 
@@ -102,9 +102,9 @@ module Crystal
         # retaining the original node's location, so error messages
         # are shown in the block instead of in the generated macro source
         is_yield = node.exp.is_a?(Yield) && !@last.is_a?(Nop)
-        @str << " begin " if is_yield
-        @last.to_s(@str, emit_loc_pragma: is_yield)
-        @str << " end " if is_yield
+        @str << " #<loc:push>begin " if is_yield
+        @last.to_s(@str, emit_loc_pragma: is_yield, emit_doc: is_yield)
+        @str << " end#<loc:pop> " if is_yield
       end
 
       false
@@ -371,15 +371,17 @@ module Crystal
     end
 
     def resolve(node : Path)
+      resolve?(node) || node.raise_undefined_constant(@path_lookup)
+    end
+
+    def resolve?(node : Path)
       if node.names.size == 1 && (match = @free_vars.try &.[node.names.first]?)
         matched_type = match
       else
         matched_type = @path_lookup.lookup_path(node)
       end
 
-      unless matched_type
-        node.raise_undefined_constant(@path_lookup)
-      end
+      return unless matched_type
 
       case matched_type
       when Const
@@ -397,8 +399,8 @@ module Crystal
             produce_tuple = node.names.first == "T"
           when GenericInstanceType
             produce_tuple = ((splat_index = path_lookup.splat_index) &&
-              path_lookup.type_vars.keys.index(node.names.first) == splat_index) ||
-              (path_lookup.double_variadic? && path_lookup.type_vars.first_key == node.names.first)
+                             path_lookup.type_vars.keys.index(node.names.first) == splat_index) ||
+                            (path_lookup.double_variadic? && path_lookup.type_vars.first_key == node.names.first)
           else
             produce_tuple = false
           end
@@ -418,6 +420,9 @@ module Crystal
         end
 
         TypeNode.new(matched_type)
+      when Self
+        target = @scope == @program.class_type ? @scope : @scope.instance_type
+        TypeNode.new(target)
       when ASTNode
         matched_type
       else
@@ -427,7 +432,13 @@ module Crystal
 
     def visit(node : Splat)
       node.exp.accept self
-      @last = @last.interpret("argify", [] of ASTNode, nil, self)
+      @last = @last.interpret("splat", [] of ASTNode, nil, self)
+      false
+    end
+
+    def visit(node : DoubleSplat)
+      node.exp.accept self
+      @last = @last.interpret("double_splat", [] of ASTNode, nil, self)
       false
     end
 
@@ -444,6 +455,8 @@ module Crystal
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
         return @last = TypeNode.new(target)
+      when "@def"
+        return @last = @def || NilLiteral.new
       end
 
       node.raise "unknown macro instance var: '#{node.name}'"

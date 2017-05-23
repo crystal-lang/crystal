@@ -55,12 +55,12 @@ class OAuth::AccessToken
     new token.not_nil!, secret.not_nil!, extra
   end
 
-  def to_json(io : IO)
-    io.json_object do |object|
-      object.field "oauth_token", @token
-      object.field "oauth_token_secret", @secret
+  def to_json(json : JSON::Builder)
+    json.object do
+      json.field "oauth_token", @token
+      json.field "oauth_token_secret", @secret
       @extra.try &.each do |key, value|
-        object.field key, value
+        json.field key, value
       end
     end
   end

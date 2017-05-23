@@ -47,11 +47,11 @@ class HTTP::WebSocket::Protocol
 
     def initialize(@websocket : Protocol, binary, frame_size)
       @opcode = binary ? Opcode::BINARY : Opcode::TEXT
-      @buffer = Slice(UInt8).new(frame_size)
+      @buffer = Bytes.new(frame_size)
       @pos = 0
     end
 
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       count = Math.min(@buffer.size - @pos, slice.size)
       (@buffer + @pos).copy_from(slice.pointer(count), count)
       @pos += count
@@ -67,8 +67,8 @@ class HTTP::WebSocket::Protocol
       nil
     end
 
-    def read(slice : Slice(UInt8))
-      raise "this IO is write-only"
+    def read(slice : Bytes)
+      raise "This IO is write-only"
     end
 
     def flush(final = true)
@@ -87,7 +87,7 @@ class HTTP::WebSocket::Protocol
     send(data.to_slice, Opcode::TEXT)
   end
 
-  def send(data : Slice(UInt8))
+  def send(data : Bytes)
     send(data, Opcode::BINARY)
   end
 
@@ -97,13 +97,13 @@ class HTTP::WebSocket::Protocol
     stream_io.flush
   end
 
-  def send(data : Slice(UInt8), opcode : Opcode, flags = Flags::FINAL, flush = true)
+  def send(data : Bytes, opcode : Opcode, flags = Flags::FINAL, flush = true)
     write_header(data.size, opcode, flags)
     write_payload(data)
     @io.flush if flush
   end
 
-  def receive(buffer : Slice(UInt8))
+  def receive(buffer : Bytes)
     if @remaining == 0
       opcode = read_header
     else
@@ -213,11 +213,27 @@ class HTTP::WebSocket::Protocol
     (@header[1] & 0x80_u8) != 0_u8
   end
 
+  def ping(message = nil)
+    if message
+      send(message.to_slice, Opcode::PING)
+    else
+      send(Bytes.empty, Opcode::PING)
+    end
+  end
+
+  def pong(message = nil)
+    if message
+      send(message.to_slice, Opcode::PONG)
+    else
+      send(Bytes.empty, Opcode::PONG)
+    end
+  end
+
   def close(message = nil)
     if message
       send(message.to_slice, Opcode::CLOSE)
     else
-      send(Slice.new(Pointer(UInt8).null, 0), Opcode::CLOSE)
+      send(Bytes.empty, Opcode::CLOSE)
     end
   end
 
@@ -253,6 +269,7 @@ class HTTP::WebSocket::Protocol
     path = "/" if path.empty?
     handshake = HTTP::Request.new("GET", path, headers)
     handshake.to_io(socket)
+    socket.flush
     handshake_response = HTTP::Client::Response.from_io(socket)
     unless handshake_response.status_code == 101
       raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status_code}")

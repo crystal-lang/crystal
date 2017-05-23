@@ -183,6 +183,51 @@ describe "Semantic: enum" do
       )) { int32 }
   end
 
+  it "disallows None value when defined with @[Flags]" do
+    assert_error %(
+      @[Flags]
+      enum Foo
+        None
+      end
+      ),
+      "flags enum can't contain None or All members"
+  end
+
+  it "disallows All value when defined with @[Flags]" do
+    assert_error %(
+      @[Flags]
+      enum Foo
+        All = 50
+      end
+      ),
+      "flags enum can't contain None or All members"
+  end
+
+  it "doesn't error when defining a non-flags enum with None or All" do
+    assert_type(%(
+      enum Foo
+        None
+        All = 50
+      end
+
+      Foo::None.value
+      )) { int32 }
+  end
+
+  it "doesn't error when defining a flags enum in a lib with None or All" do
+    assert_type(%(
+      lib Lib
+        @[Flags]
+        enum Foo
+          None
+          All = 50
+        end
+      end
+
+      Lib::Foo::None.value
+      )) { int32 }
+  end
+
   it "doesn't error when defining a method for an enum with flags" do
     assert_type(%(
       @[Flags]
@@ -289,5 +334,45 @@ describe "Semantic: enum" do
 
       Foo::A
       )) { types["Foo"] }
+  end
+
+  it "errors if inheriting Enum (#3592)" do
+    assert_error %(
+      struct Foo < Enum
+      end
+      ),
+      "can't inherit Enum. Use the enum keyword to define enums"
+  end
+
+  it "errors on enum without members (#3447)" do
+    assert_error %(
+      enum Foo
+      end
+      ),
+      "enum Foo must have at least one member"
+  end
+
+  it "errors if declaring type inside enum (#3127)" do
+    assert_error %(
+      enum Foo
+        A
+      end
+
+      class Foo::Bar
+      end
+      ),
+      "can't declare type inside enum Foo"
+  end
+
+  it "errors if declaring type inside enum, nested (#3127)" do
+    assert_error %(
+      enum Foo
+        A
+      end
+
+      class Foo::Bar::Baz
+      end
+      ),
+      "can't declare type inside enum"
   end
 end

@@ -4,12 +4,19 @@ require "./ip_socket"
 #
 # Usage example:
 # ```
+# require "socket"
+#
 # client = TCPSocket.new("localhost", 1234)
 # client << "message\n"
 # response = client.gets
 # client.close
 # ```
 class TCPSocket < IPSocket
+  # Creates a new `TCPSocket`, waiting to be connected.
+  def self.new(family : Family = Family::INET)
+    super(family, Type::STREAM, Protocol::TCP)
+  end
+
   # Creates a new TCP connection to a remote TCP server.
   #
   # You may limit the DNS resolution time with `dns_timeout` and limit the
@@ -18,21 +25,21 @@ class TCPSocket < IPSocket
   #
   # Note that `dns_timeout` is currently ignored.
   def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
-    getaddrinfo(host, port, nil, Type::STREAM, Protocol::TCP, timeout: dns_timeout) do |addrinfo|
-      super create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol)
-
-      if err = nonblocking_connect(host, port, addrinfo, timeout: connect_timeout)
+    Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
+      super(addrinfo.family, addrinfo.type, addrinfo.protocol)
+      connect(addrinfo, timeout: connect_timeout) do |error|
         close
-        next false if addrinfo.ai_next
-        raise err
+        error
       end
-
-      true
     end
   end
 
-  protected def initialize(fd : Int32)
-    super fd
+  protected def initialize(family : Family, type : Type, protocol : Protocol)
+    super family, type, protocol
+  end
+
+  protected def initialize(fd : Int32, family : Family, type : Type, protocol : Protocol)
+    super fd, family, type, protocol
   end
 
   # Opens a TCP socket to a remote TCP server, yields it to the block, then
@@ -48,12 +55,12 @@ class TCPSocket < IPSocket
     end
   end
 
-  # Returns true if the Nable algorithm is disabled.
+  # Returns `true` if the Nable algorithm is disabled.
   def tcp_nodelay?
     getsockopt_bool LibC::TCP_NODELAY, level: Protocol::TCP
   end
 
-  # Disable the Nagle algorithm when set to true, otherwise enables it.
+  # Disable the Nagle algorithm when set to `true`, otherwise enables it.
   def tcp_nodelay=(val : Bool)
     setsockopt_bool LibC::TCP_NODELAY, val, level: Protocol::TCP
   end

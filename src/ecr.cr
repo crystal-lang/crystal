@@ -14,56 +14,60 @@
 #
 # Quick Example:
 #
-#     require "ecr"
+# ```
+# require "ecr"
 #
-#     class Greeting
-#       def initialize(@name : String)
-#       end
+# class Greeting
+#   def initialize(@name : String)
+#   end
 #
-#       ECR.def_to_s "greeting.ecr"
-#     end
+#   ECR.def_to_s "greeting.ecr"
+# end
 #
-#     # greeting.ecr
-#     Greeting, <%= @name %>!
+# # greeting.ecr
+# Greeting, <%= @name %>!
 #
-#     Greeting.new("John").to_s
-#     #=> Greeting, John!
+# Greeting.new("John").to_s #=> Greeting, John!
+# ```
 #
 # Using logical statements:
 #
-#     # greeting.ecr
-#     <%- if @name -%>
-#     Greeting, <%= @name %>!
-#     <%- else -%>
-#     Greeting!
-#     <%- end -%>
+# ```
+# # greeting.ecr
+# <%- if @name -%>
+# Greeting, <%= @name %>!
+# <%- else -%>
+# Greeting!
+# <%- end -%>
 #
-#     Greeting.new(nil).to_s
-#     #=> Greeting!
+# Greeting.new(nil).to_s #=> Greeting!
+# ```
 #
 # Using loops:
 #
-#     require "ecr"
+# ```
+# require "ecr"
 #
-#     class Greeting
-#       @names : Array(String)
+# class Greeting
+#   @names : Array(String)
 #
-#       def initialize(*names)
-#        @names = names.to_a
-#       end
+#   def initialize(*names)
+#    @names = names.to_a
+#   end
 #
-#       ECR.def_to_s "greeting.ecr"
-#     end
+#   ECR.def_to_s "greeting.ecr"
+# end
 #
-#     # greeting.ecr
-#     <%- @names.each do |name| -%>
-#     Hi, <%= name %>!
-#     <%- end -%>
+# # greeting.ecr
+# <%- @names.each do |name| -%>
+# Hi, <%= name %>!
+# <%- end -%>
 #
-#     Greeting.new("John", "Zoe", "Ben").to_s
-#     #=> Hi, John!
-#     #=> Hi, Zoe!
-#     #=> Hi, Ben!
+# Greeting.new("John", "Zoe", "Ben").to_s
+# #=> Hi, John!
+# #=> Hi, Zoe!
+# #=> Hi, Ben!
+# ```
 #
 # Likewise, other Crystal logic can be implemented in ECR text.
 module ECR

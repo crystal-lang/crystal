@@ -1,16 +1,21 @@
 require "io"
 
-# Similar to `MemoryIO`, but optimized for building a single string.
+# Similar to `IO::Memory`, but optimized for building a single string.
 #
 # You should never have to deal with this class. Instead, use `String.build`.
 class String::Builder
   include IO
 
   getter bytesize : Int32
-  @capacity : Int32
-  @buffer : Pointer(UInt8)
+  getter capacity : Int32
+  getter buffer : Pointer(UInt8)
 
   def initialize(capacity : Int = 64)
+    String.check_capacity_in_bounds(capacity)
+
+    # Make sure to also be able to hold
+    # the header size plus the trailing zero byte
+    capacity += String::HEADER_SIZE + 1
     String.check_capacity_in_bounds(capacity)
 
     @buffer = GC.malloc_atomic(capacity.to_u32).as(UInt8*)
@@ -31,11 +36,11 @@ class String::Builder
     io
   end
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Bytes)
     raise "Not implemented"
   end
 
-  def write(slice : Slice(UInt8))
+  def write(slice : Bytes)
     count = slice.size
     new_bytesize = real_bytesize + count
     if new_bytesize > @capacity
@@ -56,8 +61,30 @@ class String::Builder
     @bytesize == 0
   end
 
+  # Chomps the last byte from the string buffer.
+  # If the byte is `'\n'` and there's a `'\r'` before it, it is also removed.
+  def chomp!(byte : UInt8)
+    if bytesize > 0 && buffer[bytesize - 1] == byte
+      back(1)
+
+      if byte === '\n' && bytesize > 0 && buffer[bytesize - 1] === '\r'
+        back(1)
+      end
+    end
+  end
+
+  # Moves the write pointer, and the resulting string bytesize,
+  # by the given *amount*.
+  def back(amount : Int)
+    unless 0 <= amount <= @bytesize
+      raise ArgumentError.new "Invalid back amount"
+    end
+
+    @bytesize -= amount
+  end
+
   def to_s
-    raise "can only invoke 'to_s' once on String::Builder" if @finished
+    raise "Can only invoke 'to_s' once on String::Builder" if @finished
     @finished = true
 
     write_byte 0_u8

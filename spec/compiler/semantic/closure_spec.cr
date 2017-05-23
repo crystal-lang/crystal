@@ -508,4 +508,20 @@ describe "Semantic: closure" do
       ),
       "can't send closure to C function (closured vars: a)"
   end
+
+  it "doesn't crash for non-existing variable (#3789)" do
+    assert_error %(
+      lib LibFoo
+        fun foo(->)
+      end
+
+      x = 0
+      LibFoo.foo(->{
+        x = ->(data : Int32) {
+          data
+        }
+      })
+      ),
+      "can't send closure to C function (closured vars: x)"
+  end
 end

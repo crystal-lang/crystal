@@ -15,12 +15,12 @@ module OpenSSL
       raise Error.new("Invalid EVP_MD_CTX") unless @ctx
     end
 
-    protected def self.create_evp_mt_ctx(name)
+    protected def self.new_evp_mt_ctx(name)
       md = LibCrypto.evp_get_digestbyname(name)
       unless md
         raise UnsupportedError.new("Unsupported digest algorithm: #{name}")
       end
-      ctx = LibCrypto.evp_md_ctx_create
+      ctx = LibCrypto.evp_md_ctx_new
       unless ctx
         raise Error.new "Digest initialization failed."
       end
@@ -31,17 +31,17 @@ module OpenSSL
     end
 
     def self.new(name)
-      new(name, create_evp_mt_ctx(name))
+      new(name, new_evp_mt_ctx(name))
     end
 
     def finalize
-      LibCrypto.evp_md_ctx_destroy(self)
+      LibCrypto.evp_md_ctx_free(self)
     end
 
     def clone
-      ctx = LibCrypto.evp_md_ctx_create
+      ctx = LibCrypto.evp_md_ctx_new
       if LibCrypto.evp_md_ctx_copy(ctx, @ctx) == 0
-        LibCrypto.evp_md_ctx_destroy(ctx)
+        LibCrypto.evp_md_ctx_free(ctx)
         raise Error.new("Unable to clone digest")
       end
       Digest.new(@name, ctx)

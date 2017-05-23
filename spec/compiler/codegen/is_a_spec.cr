@@ -686,4 +686,45 @@ describe "Codegen: is_a?" do
       Bar(Int32).new.as(Foo(Int32)).is_a?(Bar) ? 2 : 3
       )).to_i.should eq(2)
   end
+
+  it "doesn't consider generic type to be a generic type of a recursive alias (#3524)" do
+    run(%(
+      class Gen(T)
+      end
+
+      alias Type = Int32 | Gen(Type)
+      a = Gen(Int32).new
+      a.is_a?(Type)
+      )).to_b.should be_false
+  end
+
+  it "codegens untyped var (#4009)" do
+    codegen(%(
+      require "prelude"
+
+      i = 1
+      1 || i.is_a?(Int32) ? "" : i
+      ))
+  end
+
+  it "visits 1.to_s twice, may trigger enclosing_call (#4364)" do
+    run(%(
+      require "prelude"
+
+      B = String
+      1.to_s.is_a?(B)
+      )).to_b.should be_true
+  end
+
+  it "says true for Class.is_a?(Class.class) (#4374)" do
+    run("
+      Class.is_a?(Class.class)
+    ").to_b.should be_true
+  end
+
+  it "says true for Class.is_a?(Class.class.class) (#4374)" do
+    run("
+      Class.is_a?(Class.class.class)
+    ").to_b.should be_true
+  end
 end

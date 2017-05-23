@@ -291,7 +291,7 @@ module Crystal
       Call.new(path, "new", [node.from, node.to, bool]).at(node)
     end
 
-    # Convert an interpolation to a concatenation with a MemoryIO:
+    # Convert an interpolation to a concatenation with an String::Builder:
     #
     # From:
     #
@@ -299,7 +299,7 @@ module Crystal
     #
     # To:
     #
-    #     (MemoryIO.new << "foo" << bar << "baz").to_s
+    #     (String::Builder.new << "foo" << bar << "baz").to_s
     def expand(node : StringInterpolation)
       # Compute how long at least the string will be, so we
       # can allocate enough space.
@@ -314,13 +314,13 @@ module Crystal
       end
 
       if capacity <= 64
-        call = Call.new(Path.global(["String", "Builder"]), "new")
+        call = Call.new(Path.global(["String", "Builder"]), "new").at(node)
       else
-        call = Call.new(Path.global(["String", "Builder"]), "new", NumberLiteral.new(capacity))
+        call = Call.new(Path.global(["String", "Builder"]), "new", NumberLiteral.new(capacity)).at(node)
       end
 
       node.expressions.each do |piece|
-        call = Call.new(call, "<<", piece)
+        call = Call.new(call, "<<", piece).at(node)
       end
       Call.new(call, "to_s").at(node)
     end
@@ -425,7 +425,7 @@ module Crystal
                 end
               end
             else
-              comp = case_when_comparison(TupleLiteral.new(temp_vars.not_nil!.clone), cond)
+              comp = case_when_comparison(TupleLiteral.new(temp_vars.not_nil!.clone), cond).at(cond)
             end
           else
             temp_var = temp_vars.try &.first
@@ -497,14 +497,14 @@ module Crystal
           new_body = Expressions.new([new_assign, a_when.body.clone] of ASTNode)
           case_whens << When.new([NumberLiteral.new(index).at(node)] of ASTNode, new_body)
         else
-          node.raise "Bug: expected select when expression to be Assign or Call, not #{condition}"
+          node.raise "BUG: expected select when expression to be Assign or Call, not #{condition}"
         end
       end
 
       if node_else = node.else
         case_else = node_else.clone
       else
-        case_else = Call.new(nil, "raise", args: [StringLiteral.new("Bug: invalid select index")] of ASTNode, global: true).at(node)
+        case_else = Call.new(nil, "raise", args: [StringLiteral.new("BUG: invalid select index")] of ASTNode, global: true).at(node)
       end
 
       call_args = [TupleLiteral.new(tuple_values).at(node)] of ASTNode

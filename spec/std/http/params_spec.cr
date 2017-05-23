@@ -17,6 +17,7 @@ module HTTP
         {"foo", {"foo" => [""]}},
         {"foo=&bar", {"foo" => [""], "bar" => [""]}},
         {"bar&foo", {"bar" => [""], "foo" => [""]}},
+        {"foo=bar=qux", {"foo" => ["bar=qux"]}},
       }.each do |(from, to)|
         it "parses #{from}" do
           Params.parse(from).should eq(Params.new(to))
@@ -46,6 +47,18 @@ module HTTP
 
           encoded.should eq(to)
         end
+      end
+    end
+
+    describe ".encode" do
+      it "builds from hash" do
+        encoded = Params.encode({"foo" => "bar", "baz" => "quux"})
+        encoded.should eq("foo=bar&baz=quux")
+      end
+
+      it "builds from named tuple" do
+        encoded = Params.encode({foo: "bar", baz: "quux"})
+        encoded.should eq("foo=bar&baz=quux")
       end
     end
 

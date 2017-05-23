@@ -11,7 +11,7 @@ module ECR
   # require "ecr/macros"
   #
   # class Greeting
-  #   def initialize(@name)
+  #   def initialize(@name : String)
   #   end
   #
   #   ECR.def_to_s "greeting.ecr"
@@ -54,7 +54,7 @@ module ECR
   #
   # name = "World"
   #
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # ECR.embed "greeting.ecr", io
   # io.to_s # => "Hello World!"
   # ```

@@ -36,7 +36,7 @@ class Crystal::CodeGenVisitor
     br exit_block
 
     position_at_end exit_block
-    phi LLVM::Int32, phi_table
+    phi llvm_context.int32, phi_table
   end
 
   private def type_id_impl(value, type : NilablePointerType)

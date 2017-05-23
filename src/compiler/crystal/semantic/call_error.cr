@@ -194,7 +194,7 @@ class Crystal::Call
     end
 
     if defs_matching_args_size.size > 0
-      str = MemoryIO.new
+      str = IO::Memory.new
       if check_single_def_error_message(defs_matching_args_size, named_args_types, str)
         raise str.to_s
       else
@@ -389,7 +389,7 @@ class Crystal::Call
       if defs.size > 1 && a_def.same?(matched_def)
         str << colorize(" (trying this one)").blue
       end
-      if a_def.args.any? { |arg| arg.default_value && arg.name == argument_name }
+      if a_def.args.any? { |arg| arg.default_value && arg.external_name == argument_name }
         str << colorize(" (did you mean this one?)").yellow.bold
       end
     end
@@ -480,8 +480,12 @@ class Crystal::Call
   end
 
   def check_macro_wrong_number_of_arguments(def_name)
+    obj = self.obj
+    return if obj && !obj.is_a?(Path)
+
     macros = in_macro_target &.lookup_macros(def_name)
-    return unless macros
+    return unless macros.is_a?(Array(Macro))
+    macros = macros.reject &.visibility.private?
 
     if macros.size == 1
       if msg = check_named_args_and_splats(macros.first, named_args)
@@ -492,7 +496,7 @@ class Crystal::Call
     all_arguments_sizes = Set(String).new
     macros.each do |a_macro|
       named_args.try &.each do |named_arg|
-        index = a_macro.args.index { |arg| arg.name == named_arg.name }
+        index = a_macro.args.index { |arg| arg.external_name == named_arg.name }
         if index
           if index < args.size
             raise "argument '#{named_arg.name}' already specified"
@@ -532,14 +536,14 @@ class Crystal::Call
 
   def check_named_args_mismatch(owner, arg_types, named_args, a_def)
     named_args.each do |named_arg|
-      found_index = a_def.args.index { |arg| arg.name == named_arg.name }
+      found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
       if found_index
         min_size = args.size
         if found_index < min_size
           raise "argument '#{named_arg.name}' already specified"
         end
       elsif !a_def.double_splat
-        similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.name))
+        similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.external_name))
 
         msg = String.build do |str|
           str << "no argument named '"

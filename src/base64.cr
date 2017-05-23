@@ -1,16 +1,17 @@
-# The Base64 module provides for the encoding (`encode`, `strict_encode`,
-# `urlsafe_encode`) and decoding (`decode`, `strict_decode`, `urlsafe_decode`)
-# of binary data using a Base64 representation.
+# The `Base64` module provides for the encoding (`encode`, `strict_encode`,
+# `urlsafe_encode`) and decoding (`decode`)
+# of binary data using a base64 representation.
 #
-# ###Example
+# ### Example
 #
 # A simple encoding and decoding.
 #
-#     require "base64"
-#     enc   = Base64.encode("Send reinforcements")
-#                         # => "U2VuZCByZWluZm9yY2VtZW50cw==\n"
-#     plain = Base64.decode(enc)
-#                         # => "Send reinforcements"
+# ```
+# require "base64"
+#
+# enc = Base64.encode("Send reinforcements") # => "U2VuZCByZWluZm9yY2VtZW50cw==\n"
+# plain = Base64.decode_string(enc)          # => "Send reinforcements"
+# ```
 #
 # The purpose of using base64 to encode data is that it translates any binary
 # data into purely printable characters.
@@ -19,24 +20,26 @@ module Base64
 
   class Error < Exception; end
 
-  private CHARS_STD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  private CHARS_STD  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
   private CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-  private LINE_SIZE = 60
-  private PAD = '='.ord.to_u8
-  private NL = '\n'.ord.to_u8
-  private NR = '\r'.ord.to_u8
+  private LINE_SIZE  = 60
+  private PAD        = '='.ord.to_u8
+  private NL         = '\n'.ord.to_u8
+  private NR         = '\r'.ord.to_u8
 
-  # Returns the Base64-encoded version of `data`.
-  # This method complies with RFC 2045.
+  # Returns the base64-encoded version of *data*.
+  # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
   # Line feeds are added to every 60 encoded characters.
   #
-  #     require "base64"
-  #     puts Base64.encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
+  # puts Base64.encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
   #
   # Generates:
   #
   # ```text
   # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
+  # Q3J5c3RhbA==
   # ```
   def encode(data) : String
     slice = data.to_slice
@@ -48,12 +51,13 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of `data` to `io`.
-  # This method complies with RFC 2045.
+  # Write the base64-encoded version of *data* to *io*.
+  # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
   # Line feeds are added to every 60 encoded characters.
   #
-  #     require "base64"
-  #     Base64.encode("Now is the time for all good coders\nto learn Crystal", io)
+  # ```
+  # Base64.encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
+  # ```
   def encode(data, io : IO)
     count = 0
     encode_with_new_lines(data.to_slice) do |byte|
@@ -64,7 +68,6 @@ module Base64
     count
   end
 
-  # :nodoc:
   private def encode_with_new_lines(data)
     inc = 0
     to_base64(data.to_slice, CHARS_STD, pad: true) do |byte|
@@ -80,11 +83,12 @@ module Base64
     end
   end
 
-  # Returns the Base64-encoded version of `data` with no newlines.
-  # This method complies with RFC 4648.
+  # Returns the base64-encoded version of *data* with no newlines.
+  # This method complies with [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
-  #     require "base64"
-  #     puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
+  # puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
+  # ```
   #
   # Generates:
   #
@@ -95,8 +99,7 @@ module Base64
     strict_encode data, CHARS_STD, pad: true
   end
 
-  # :nodoc:
-  def strict_encode(data, alphabet, pad = false)
+  private def strict_encode(data, alphabet, pad = false)
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -106,16 +109,16 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of `data` with no newlines to `io`.
-  # This method complies with RFC 4648.
+  # Write the base64-encoded version of *data* with no newlines to *io*.
+  # This method complies with [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
-  #     require "base64"
-  #     Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", io)
+  # ```
+  # Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
+  # ```
   def strict_encode(data, io : IO)
     strict_encode_to_io_internal(data, io, CHARS_STD, pad: true)
   end
 
-  # :nodoc:
   private def strict_encode_to_io_internal(data, io, alphabet, pad)
     count = 0
     to_base64(data.to_slice, alphabet, pad: pad) do |byte|
@@ -126,15 +129,15 @@ module Base64
     count
   end
 
-  # Returns the Base64-encoded version of `data` using a urlsafe alphabet.
+  # Returns the base64-encoded version of *data* using a urlsafe alphabet.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
-  # Alphabet" in RFC 4648.
+  # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
-  # The alphabet uses '-' instead of '+' and '_' instead of '/'.
+  # The alphabet uses `'-'` instead of `'+'` and `'_'` instead of `'/'`.
   #
-  # The `padding` parameter defaults to false. When true, enough `=` characters
-  # are added to make the output divisible by 3.
-  def urlsafe_encode(data, padding = false) : String
+  # The *padding* parameter defaults to `true`. When `false`, enough `=` characters
+  # are not added to make the output divisible by 4.
+  def urlsafe_encode(data, padding = true) : String
     slice = data.to_slice
     String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
@@ -144,19 +147,16 @@ module Base64
     end
   end
 
-  # Write the Base64-encoded version of `data` using a urlsafe alphabet to `io`.
+  # Write the base64-encoded version of *data* using a urlsafe alphabet to *io*.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
-  # Alphabet" in RFC 4648.
+  # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
-  # The alphabet uses '-' instead of '+' and '_' instead of '/'.
-  #
-  # The `padding` parameter defaults to false. When true, enough `=` characters
-  # are added to make the output divisible by 3.
+  # The alphabet uses `'-'` instead of `'+'` and `'_'` instead of `'/'`.
   def urlsafe_encode(data, io : IO)
-    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: false)
+    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: true)
   end
 
-  # Returns the Base64-decoded version of `data` as a *Slice(UInt8)*.
+  # Returns the base64-decoded version of *data* as a `Bytes`.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data) : Bytes
     slice = data.to_slice
@@ -166,7 +166,7 @@ module Base64
     Slice.new(buf, appender.size.to_i32)
   end
 
-  # Write the Base64-decoded version of `data` to `io`.
+  # Write the base64-decoded version of *data* to *io*.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data, io : IO)
     count = 0
@@ -178,9 +178,7 @@ module Base64
     count
   end
 
-  # Returns the Base64-decoded version of `data` as a string.
-  # If the data doesn't decode to a valid UTF8 string,
-  # *InvalidByteSequenceError* will be raised.
+  # Returns the base64-decoded version of *data* as a string.
   # This will decode either the normal or urlsafe alphabets.
   def decode_string(data) : String
     slice = data.to_slice
@@ -274,8 +272,7 @@ module Base64
     end
   end
 
-  # :nodoc:
-  macro next_decoded_value
+  private macro next_decoded_value
     sym = cstr.value
     res = dt[sym]
     cstr += 1

@@ -1255,4 +1255,22 @@ describe "Code gen: exception" do
       print 5
       )).to_i.should eq(123)
   end
+
+  it "catches exception thrown by as inside method (#4030)" do
+    run(%(
+      require "prelude"
+
+      def foo
+        a = 1 || ""
+        a.as(String)
+      end
+
+      begin
+        foo
+        "bad"
+      rescue ex : TypeCastError
+        "good"
+      end
+      )).to_string.should eq("good")
+  end
 end

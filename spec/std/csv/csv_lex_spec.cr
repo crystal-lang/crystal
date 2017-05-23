@@ -122,21 +122,21 @@ describe CSV do
     end
 
     it "raises if single quote in the middle" do
-      expect_raises CSV::MalformedCSVError, "unexpected quote at 1:4" do
+      expect_raises CSV::MalformedCSVError, "Unexpected quote at 1:4" do
         lexer = CSV::Lexer.new %(hel"lo)
         lexer.next_token
       end
     end
 
     it "raises if command, newline or end doesn't follow quote" do
-      expect_raises CSV::MalformedCSVError, "expecting comma, newline or end, not 'a' at 1:6" do
+      expect_raises CSV::MalformedCSVError, "Expecting comma, newline or end, not 'a' at 1:6" do
         lexer = CSV::Lexer.new %("hel"a)
         lexer.next_token
       end
     end
 
     it "raises on unclosed quote" do
-      expect_raises CSV::MalformedCSVError, "unclosed quote at 1:5" do
+      expect_raises CSV::MalformedCSVError, "Unclosed quote at 1:5" do
         lexer = CSV::Lexer.new %("foo)
         lexer.next_token
       end

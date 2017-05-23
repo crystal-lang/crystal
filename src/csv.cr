@@ -59,9 +59,10 @@ class CSV
   DEFAULT_SEPARATOR  = ','
   DEFAULT_QUOTE_CHAR = '"'
 
-  # Parses a CSV or IO into an array.
-  # takes optional *separator* and *quote_char* arguments for defining
-  # non-standard csv cell separators and quote characters
+  # Parses a CSV or `IO` into an array.
+  #
+  # Takes optional *separator* and *quote_char* arguments for defining
+  # non-standard csv cell separators and quote characters.
   #
   # ```
   # CSV.parse("one,two\nthree")
@@ -74,7 +75,8 @@ class CSV
   end
 
   # Yields each of a CSV's rows as an `Array(String)`.
-  # see `CSV.parse` about the *separator* and *quote_char* arguments
+  #
+  # See `CSV.parse` about the *separator* and *quote_char* arguments.
   #
   # ```
   # CSV.each_row("one,two\nthree") do |row|
@@ -95,7 +97,8 @@ class CSV
   end
 
   # Returns an `Iterator` of `Array(String)` over a CSV's rows.
-  # see `CSV.parse` about the *separator* and *quote_char* arguments
+  #
+  # See `CSV.parse` about the *separator* and *quote_char* arguments.
   #
   # ```
   # rows = CSV.each_row("one,two\nthree")
@@ -113,7 +116,7 @@ class CSV
   #   csv.row "one", "two"
   #   csv.row "three"
   # end
-  # result # => "one,two\nthree"
+  # result # => "one,two\nthree\n"
   # ```
   def self.build : String
     String.build do |io|
@@ -121,17 +124,17 @@ class CSV
     end
   end
 
-  # Appends CSV data to the given IO. This yields a `CSV::Builder`
-  # that writes to the given IO.
+  # Appends CSV data to the given `IO`. This yields a `CSV::Builder`
+  # that writes to the given `IO`.
   #
   # ```
-  # io = MemoryIO.new
+  # io = IO::Memory.new
   # io.puts "HEADER"
   # CSV.build(io) do |csv|
   #   csv.row "one", "two"
   #   csv.row "three"
   # end
-  # io.to_s # => "HEADER\none,two\nthree"
+  # io.to_s # => "HEADER\none,two\nthree\n"
   # ```
   def self.build(io : IO)
     builder = Builder.new(io)
@@ -143,13 +146,12 @@ class CSV
 
   # Creates a new instance from the given `String` or `IO`.
   #
-  # If *strip* is true, row values are stripped with `String#strip` before being
+  # * If *strip* is `true`, row values are stripped with `String#strip` before being
   # returned from methods.
-  #
-  # If *headers* is true, row values can be accessed with header names or patterns.
+  # * If *headers* is `true`, row values can be accessed with header names or patterns.
   # Headers are always stripped.
   #
-  # see `CSV.parse` about the *separator* and *quote_char* arguments
+  # See `CSV.parse` about the *separator* and *quote_char* arguments.
   def initialize(string_or_io : String | IO, headers = false, @strip = false, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
     @parser = Parser.new(string_or_io, separator, quote_char)
     if headers
@@ -166,13 +168,12 @@ class CSV
   # Creates a new instance from the given `String` or `IO`, and yields it to
   # the given block once for each row in the CSV.
   #
-  # If *strip* is true, row values are stripped with `String#strip` before being
+  # * If *strip* is `true`, row values are stripped with `String#strip` before being
   # returned from methods.
-  #
-  # If *headers* is true, row values can be accessed with header names or patterns.
+  # * If *headers* is `true`, row values can be accessed with header names or patterns.
   # Headers are always stripped.
   #
-  # see `CSV.parse` about the *separator* and *quote_char* arguments
+  # See `CSV.parse` about the *separator* and *quote_char* arguments.
   def self.new(string_or_io : String | IO, headers = false, strip = false, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
     csv = new(string_or_io, headers, strip, separator, quote_char)
     csv.each do
@@ -184,11 +185,11 @@ class CSV
   # Returns this CSV headers. Their values are always stripped.
   # Raises `CSV::Error` if headers were not requested.
   def headers : Array(String)
-    @headers || raise(Error.new("headers not requested"))
+    @headers || raise(Error.new("Headers not requested"))
   end
 
   # Invokes the block once for each row in this CSV, yielding `self`.
-  def each
+  def each : Nil
     while self.next
       yield self
     end
@@ -219,7 +220,7 @@ class CSV
   end
 
   # Returns the current row's value corresponding to the given *header* name.
-  # Returns nil if no such header exists.
+  # Returns `nil` if no such header exists.
   # Raises `CSV::Error` if headers were not requested.
   def []?(header : String) : String?
     row_internal[header]?
@@ -234,7 +235,7 @@ class CSV
 
   # Returns the current row's value at the given column index.
   # A negative index counts from the end.
-  # Returns nil if no such column exists.
+  # Returns `nil` if no such column exists.
   def []?(column : Int) : String?
     row_internal[column]?
   end
@@ -247,10 +248,26 @@ class CSV
   end
 
   # Returns the current row's value corresponding to the given *header_pattern*.
-  # Returns nil if no such header exists.
+  # Returns `nil` if no such header exists.
   # Raises `CSV::Error` if headers were not requested.
   def []?(header_pattern : Regex) : String?
     row_internal[header_pattern]?
+  end
+
+  # Returns a tuple of the current row's values at given indices
+  # A negative index counts from the end.
+  # Raises `IndexError` if any column doesn't exist
+  # The behavior of returning a tuple is similar to `Hash#values_at`
+  def values_at(*columns : Int)
+    columns.map { |column| row_internal[column] }
+  end
+
+  # Returns a tuple of the current row's values corresponding to the given *headers*
+  # Raises `KeyError` if any header doesn't exist.
+  # Raises `CSV::Error` if headers were not requested
+  # The behavior of returning a tuple is similar to `Hash#values_at`
+  def values_at(*headers : String)
+    headers.map { |header| row_internal[header] }
   end
 
   # Returns the current row as a `Row` instance.
@@ -267,15 +284,15 @@ class CSV
     return row if row
 
     if @traversed
-      raise Error.new("after last row")
+      raise Error.new("After last row")
     else
-      raise Error.new("before first row")
+      raise Error.new("Before first row")
     end
   end
 
   # :nodoc:
   def indices
-    @indices || raise(Error.new("headers not requested"))
+    @indices || raise(Error.new("Headers not requested"))
   end
 
   # :nodoc:
@@ -305,7 +322,7 @@ class CSV
     end
 
     # Returns this row's value corresponding to the given *header* name.
-    # Returns nil if no such header exists.
+    # Returns `nil` if no such header exists.
     # Raises `CSV::Error` if headers were not requested.
     def []?(header : String) : String?
       index = csv.indices[header]?
@@ -327,7 +344,7 @@ class CSV
 
     # Returns this row's value at the given column index.
     # A negative index counts from the end.
-    # Returns nil if no such column exists.
+    # Returns `nil` if no such column exists.
     def []?(column : Int) : String?
       size = csv.headers?.try(&.size) || @row.size
 
@@ -348,7 +365,7 @@ class CSV
     end
 
     # Returns this row's value corresponding to the given *header_pattern*.
-    # Returns nil if no such header exists.
+    # Returns `nil` if no such header exists.
     # Raises `CSV::Error` if headers were not requested.
     def []?(header_pattern : Regex) : String?
       csv.headers.each_with_index do |header, i|
@@ -378,6 +395,22 @@ class CSV
         h[header] = maybe_strip(@row[i]? || "")
       end
       h
+    end
+
+    # Returns a tuple of this row's values at given indices
+    # A negative index counts from the end.
+    # Raises `IndexError` if any column doesn't exist
+    # The behavior of returning a tuple is similar to `Hash#values_at`
+    def values_at(*columns : Int)
+      columns.map { |column| self[column] }
+    end
+
+    # Returns a tuple of this row's values corresponding to the given *headers*
+    # Raises `KeyError` if any header doesn't exist.
+    # Raises `CSV::Error` if headers were not requested
+    # The behavior of returning a tuple is similar to `Hash#values_at`
+    def values_at(*headers : String)
+      headers.map { |header| self[header] }
     end
 
     private def maybe_strip(value)

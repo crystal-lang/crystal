@@ -102,7 +102,7 @@ struct Crystal::MathInterpreter
   end
 
   def interpret(node : Path, target_type = nil)
-    type = @path_lookup.lookup_type(node, allow_typeof: false)
+    type = @path_lookup.lookup_type_var(node)
     case type
     when Const
       interpret(type.value, target_type)

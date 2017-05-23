@@ -2,11 +2,7 @@ require "../../spec_helper"
 
 class Crystal::Program
   def t(type)
-    if type.ends_with?('+')
-      types[type.chop].virtual_type
-    else
-      types[type]
-    end
+    types[type.rchop('+')].virtual_type
   end
 end
 
@@ -380,5 +376,42 @@ describe "Restrictions" do
 
       Foo.new(1)
       )) { generic_class "Foo", int32 }
+  end
+
+  it "restricts virtual metaclass type against metaclass (#3438)" do
+    assert_type(%(
+      class Parent
+      end
+
+      class Child < Parent
+      end
+
+      def foo(x : Parent.class)
+        x
+      end
+
+      foo(Parent || Child)
+      )) { types["Parent"].metaclass.virtual_type! }
+  end
+
+  it "doesn't crash on invalid splat restriction (#3698)" do
+    assert_error %(
+      def foo(arg : *String)
+      end
+
+      foo(1)
+      ),
+      "no overload matches"
+  end
+
+  it "errors if using free var without forall" do
+    assert_error %(
+      def foo(x : T)
+        T
+      end
+
+      foo(1)
+      ),
+      "undefined constant T"
   end
 end

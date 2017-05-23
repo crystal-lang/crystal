@@ -26,6 +26,9 @@ require "./semantic_visitor"
 # end
 # ```
 class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
+  record Initializer, scope : Type, target : InstanceVar, value : ASTNode, meta_vars : MetaVars
+  getter initializers = [] of Initializer
+
   def visit_any(node)
     case node
     when Assign
@@ -60,21 +63,33 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
     when Program, FileModule
       node.raise "can't use instance variables at the top level"
     when ClassType, NonGenericModuleType, GenericModuleType
-      meta_vars = MetaVars.new
-      ivar_visitor = MainVisitor.new(program, meta_vars: meta_vars)
-      ivar_visitor.scope = current_type
-
-      unless current_type.is_a?(GenericType)
-        value.accept ivar_visitor
-      end
-
-      unless current_type.lookup_instance_var?(target.name)
-        ivar_visitor.undefined_instance_variable(current_type, target)
-      end
-
-      current_type.add_instance_var_initializer(target.name, value, current_type.is_a?(GenericType) ? nil : meta_vars)
+      initializers << Initializer.new(current_type, target, value, MetaVars.new)
       node.type = @program.nil
       return
+    end
+  end
+
+  def finish
+    # First declare them, so when we type all of them we will have
+    # the info of which instance vars have initializers (so they are not nil)
+    initializers.each do |i|
+      scope = i.scope
+      unless scope.lookup_instance_var?(i.target.name)
+        program.undefined_instance_variable(i.target, scope, nil)
+      end
+
+      scope.add_instance_var_initializer(i.target.name, i.value, scope.is_a?(GenericType) ? nil : i.meta_vars)
+    end
+
+    # Now type them
+    initializers.each do |i|
+      scope = i.scope
+
+      unless scope.is_a?(GenericType)
+        ivar_visitor = MainVisitor.new(program, meta_vars: i.meta_vars)
+        ivar_visitor.scope = scope
+        i.value.accept ivar_visitor
+      end
     end
   end
 end

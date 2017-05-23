@@ -1,5 +1,13 @@
 require "spec"
 
+private class SpecException < Exception
+  getter value : Int32
+
+  def initialize(@value, msg)
+    super(msg)
+  end
+end
+
 describe "Spec matchers" do
   describe "should be_truthy" do
     it "passes for true" do
@@ -59,7 +67,7 @@ describe "Spec matchers" do
     end
 
     it "does not pass when string does not includes? specified substring" do
-      expect_raises Spec::AssertionFailed, %{expected:   "hello world!"\nto include: "crystal"} do
+      expect_raises Spec::AssertionFailed, %{Expected:   "hello world!"\nto include: "crystal"} do
         "hello world!".should contain("crystal")
       end
     end
@@ -71,9 +79,17 @@ describe "Spec matchers" do
     end
 
     it "does not pass when string does not includes? specified substring" do
-      expect_raises Spec::AssertionFailed, %{expected: value "hello world!"\nto not include: "world"} do
+      expect_raises Spec::AssertionFailed, %{Expected: value "hello world!"\nto not include: "world"} do
         "hello world!".should_not contain("world")
       end
+    end
+  end
+
+  describe "expect_raises" do
+    it "return exception" do
+      ex = expect_raises(SpecException) { raise SpecException.new(11, "O_o") }
+      ex.value.should eq 11
+      ex.message.should eq "O_o"
     end
   end
 

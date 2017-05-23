@@ -50,10 +50,9 @@ Try it online
 Documentation
 ----------
 
-Both in progress:
-
 * [Official docs](http://crystal-lang.org/docs)
 * [Standard library API](https://crystal-lang.org/api)
+* [Roadmap](https://github.com/crystal-lang/crystal/wiki/Roadmap)
 
 Community
 ---------
@@ -63,7 +62,7 @@ Questions or suggestions? Ask in our [Google Group](https://groups.google.com/fo
 Contributing
 ---------
 
-Read the general [Contributing guide](https://github.com/crystal-lang/crystal/blob/master/Contributing.md), and then:
+Read the general [Contributing guide](https://github.com/crystal-lang/crystal/blob/master/CONTRIBUTING.md), and then:
 
 1. Fork it ( https://github.com/crystal-lang/crystal/fork )
 2. Create your feature branch (git checkout -b my-new-feature)

@@ -237,4 +237,61 @@ describe "Semantic: const" do
       FOO
       )) { types["Foo"] }
   end
+
+  it "errors if can't infer constant type (#3240, #3948)" do
+    assert_error %(
+      A = A.b
+      A
+      ),
+      "can't infer type of constant A"
+  end
+
+  it "errors if using constant as generic type (#3240)" do
+    assert_error %(
+      Foo = Foo(Int32).new
+      Foo
+      ),
+      "Foo is not a type, it's a constant"
+  end
+
+  it "errors if using const in type declaration" do
+    assert_error %(
+      A = 1
+
+      class Foo
+        @x : A
+      end
+      ),
+      "A is not a type, it's a constant"
+  end
+
+  it "errors if using const in unintialized" do
+    assert_error %(
+      A = 1
+
+      x = uninitialized A
+      ),
+      "A is not a type, it's a constant"
+  end
+
+  it "errors if using const in var declaration" do
+    assert_error %(
+      A = 1
+
+      x : A
+      ),
+      "A is not a type, it's a constant"
+  end
+
+  it "errors if using const in restriction" do
+    assert_error %(
+      A = 1
+
+      def foo(x : A)
+      end
+
+      foo(1)
+      ),
+      "A is not a type, it's a constant"
+  end
 end

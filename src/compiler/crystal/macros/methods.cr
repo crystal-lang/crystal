@@ -1,10 +1,14 @@
 require "../semantic/ast"
 require "./macros"
+require "semantic_version"
 
 module Crystal
   class MacroInterpreter
     def interpret_top_level_call(node)
+      # Please order method names in lexicographical order, because OCD
       case node.name
+      when "compare_versions"
+        interpret_compare_versions(node)
       when "debug"
         interpret_debug(node)
       when "env"
@@ -15,6 +19,8 @@ module Crystal
         interpret_puts(node)
       when "pp"
         interpret_pp(node)
+      when "skip"
+        interpret_skip(node)
       when "system", "`"
         interpret_system(node)
       when "raise"
@@ -24,6 +30,34 @@ module Crystal
       else
         node.raise "undefined macro method: '#{node.name}'"
       end
+    end
+
+    def interpret_compare_versions(node)
+      unless node.args.size == 2
+        node.wrong_number_of_arguments "macro call 'compare_versions'", node.args.size, 2
+      end
+
+      first_arg = node.args[0]
+      first = accept first_arg
+      first_string = first.to_string("first argument to 'compare_versions'")
+
+      second_arg = node.args[1]
+      second = accept second_arg
+      second_string = second.to_string("second argument to 'compare_versions'")
+
+      first_version = begin
+        SemanticVersion.parse(first_string)
+      rescue ex
+        first_arg.raise ex.message
+      end
+
+      second_version = begin
+        SemanticVersion.parse(second_string)
+      rescue ex
+        second_arg.raise ex.message
+      end
+
+      @last = NumberLiteral.new(first_version <=> second_version)
     end
 
     def interpret_debug(node)
@@ -99,6 +133,10 @@ module Crystal
       @last = Nop.new
     end
 
+    def interpret_skip(node)
+      raise SkipMacroException.new(@str.to_s)
+    end
+
     def interpret_system(node)
       cmd = node.args.map do |arg|
         arg.accept self
@@ -123,7 +161,7 @@ module Crystal
       end
       msg = msg.join " "
 
-      node.raise "can't expand macro: #{msg}"
+      node.raise msg, exception_type: MacroRaiseException
     end
 
     def interpret_run(node)
@@ -133,7 +171,7 @@ module Crystal
 
       node.args.first.accept self
       filename = @last.to_macro_id
-      original_filanme = filename
+      original_filename = filename
 
       # Support absolute paths
       if filename.starts_with?("/")
@@ -177,7 +215,7 @@ module Crystal
       if success
         @last = MacroId.new(result)
       else
-        node.raise "Error executing run: #{original_filanme} #{run_args.map(&.inspect).join " "}\n\nGot:\n\n#{result}\n"
+        node.raise "Error executing run: #{original_filename} #{run_args.map(&.inspect).join " "}\n\nGot:\n\n#{result}\n"
       end
     end
   end
@@ -185,6 +223,16 @@ module Crystal
   class ASTNode
     def to_macro_id
       to_s
+    end
+
+    def to_string(context)
+      case self
+      when StringLiteral then return self.value
+      when SymbolLiteral then return self.value
+      when MacroId       then return self.value
+      else
+        raise "expected #{context} to be a StringLiteral, SymbolLiteral or MacroId, not #{class_desc}"
+      end
     end
 
     def truthy?
@@ -554,6 +602,18 @@ module Crystal
         end
       when "identify"
         interpret_argless_method(method, args) { StringLiteral.new(@value.tr(":", "_")) }
+      when "includes?"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when CharLiteral
+            piece = arg.value
+          when StringLiteral
+            piece = arg.value
+          else
+            raise "StringLiteral#includes? expects char or string, not #{arg.class_desc}"
+          end
+          BoolLiteral.new(@value.includes?(piece))
+        end
       when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(@value.size) }
       when "lines"
@@ -686,6 +746,24 @@ module Crystal
             interpreter.accept block.body
           end
         }
+      when "double_splat"
+        case args.size
+        when 0
+          to_double_splat
+        when 1
+          interpret_one_arg_method(method, args) do |arg|
+            if entries.empty?
+              to_double_splat
+            else
+              unless arg.is_a?(Crystal::StringLiteral)
+                arg.raise "argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
+              end
+              to_double_splat(arg.value)
+            end
+          end
+        else
+          wrong_number_of_arguments "double_splat", args.size, 0..1
+        end
       when "[]"
         case args.size
         when 1
@@ -721,6 +799,12 @@ module Crystal
         super
       end
     end
+
+    private def to_double_splat(trailing_string = "")
+      MacroId.new(entries.join(", ") do |entry|
+        "#{entry.key} => #{entry.value}"
+      end + trailing_string)
+    end
   end
 
   class NamedTupleLiteral
@@ -751,6 +835,24 @@ module Crystal
             interpreter.accept block.body
           end
         }
+      when "double_splat"
+        case args.size
+        when 0
+          to_double_splat
+        when 1
+          interpret_one_arg_method(method, args) do |arg|
+            if entries.empty?
+              to_double_splat
+            else
+              unless arg.is_a?(Crystal::StringLiteral)
+                arg.raise "argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
+              end
+              to_double_splat(arg.value)
+            end
+          end
+        else
+          wrong_number_of_arguments "double_splat", args.size, 0..1
+        end
       when "[]"
         case args.size
         when 1
@@ -802,6 +904,16 @@ module Crystal
       else
         super
       end
+    end
+
+    private def to_double_splat(trailing_string = "")
+      MacroId.new(entries.join(", ") do |entry|
+        if Symbol.needs_quotes?(entry.key)
+          "#{entry.key.inspect}: #{entry.value}"
+        else
+          "#{entry.key}: #{entry.value}"
+        end
+      end + trailing_string)
     end
   end
 
@@ -1146,13 +1258,7 @@ module Crystal
       case method
       when "==", "!="
         case arg = args.first?
-        when StringLiteral
-          if method == "=="
-            return BoolLiteral.new(@value == arg.value)
-          else
-            return BoolLiteral.new(@value != arg.value)
-          end
-        when SymbolLiteral
+        when StringLiteral, SymbolLiteral
           if method == "=="
             return BoolLiteral.new(@value == arg.value)
           else
@@ -1218,6 +1324,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.type_vars(type) }
       when "instance_vars"
         interpret_argless_method(method, args) { TypeNode.instance_vars(type) }
+      when "ancestors"
+        interpret_argless_method(method, args) { TypeNode.ancestors(type) }
       when "superclass"
         interpret_argless_method(method, args) { TypeNode.superclass(type) }
       when "subclasses"
@@ -1226,30 +1334,21 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
       when "constants"
         interpret_argless_method(method, args) { TypeNode.constants(type) }
+      when "constant"
+        interpret_one_arg_method(method, args) do |arg|
+          value = arg.to_string("argument to 'TypeNode#constant'")
+          TypeNode.constant(type, value)
+        end
       when "has_constant?"
         interpret_one_arg_method(method, args) do |arg|
-          case arg
-          when StringLiteral
-            value = arg.value
-          when SymbolLiteral
-            value = arg.value.to_s
-          else
-            raise "argument to has_constant? must be a StringLiteral or SymbolLiteral, not #{arg.class_desc}"
-          end
+          value = arg.to_string("argument to 'TypeNode#has_constant?'")
           TypeNode.has_constant?(type, value)
         end
       when "methods"
         interpret_argless_method(method, args) { TypeNode.methods(type) }
       when "has_attribute?"
         interpret_one_arg_method(method, args) do |arg|
-          case arg
-          when StringLiteral
-            value = arg.value
-          when SymbolLiteral
-            value = arg.value
-          else
-            raise "argument to has_attribtue? must be a StringLiteral or SymbolLiteral, not #{arg.class_desc}"
-          end
+          value = arg.to_string("argument to 'TypeNode#has_attribute?'")
           BoolLiteral.new(!!type.has_attribute?(value))
         end
       when "size"
@@ -1331,6 +1430,15 @@ module Crystal
           end
           BoolLiteral.new(!!value)
         end
+      when "overrides?"
+        interpret_two_args_method(method, args) do |arg1, arg2|
+          unless arg1.is_a?(TypeNode)
+            raise "TypeNode##{method} expects TypeNode as a first argument, not #{arg1.class_desc}"
+          end
+
+          value = arg2.to_string("second argument to 'TypeNode#overrides?")
+          TypeNode.overrides?(type, arg1.type, value)
+        end
       else
         super
       end
@@ -1370,6 +1478,10 @@ module Crystal
       end
     end
 
+    def self.ancestors(type)
+      ArrayLiteral.map(type.ancestors) { |ancestor| TypeNode.new(ancestor) }
+    end
+
     def self.superclass(type)
       superclass = type.superclass
       superclass ? TypeNode.new(superclass) : NilLiteral.new
@@ -1399,6 +1511,18 @@ module Crystal
       BoolLiteral.new(type.types.has_key?(name))
     end
 
+    def self.constant(type, name)
+      type = type.types[name]?
+      case type
+      when Const
+        type.value
+      when Type
+        TypeNode.new(type)
+      else
+        NilLiteral.new
+      end
+    end
+
     def self.methods(type)
       defs = [] of ASTNode
       type.defs.try &.each do |name, metadatas|
@@ -1407,6 +1531,13 @@ module Crystal
         end
       end
       ArrayLiteral.new(defs)
+    end
+
+    def self.overrides?(type, target, method)
+      overrides = type.lookup_defs(method).any? do |a_def|
+        a_def.owner != target && a_def.macro_owner != target && !target.implements?(a_def.owner)
+      end
+      BoolLiteral.new(!!overrides)
     end
   end
 
@@ -1608,6 +1739,8 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(@global) }
       when "resolve"
         interpret_argless_method(method, args) { interpreter.resolve(self) }
+      when "resolve?"
+        interpret_argless_method(method, args) { interpreter.resolve?(self) || NilLiteral.new }
       else
         super
       end
@@ -1714,9 +1847,21 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
         interpreter.accept(block.body).truthy?
       end)
     end
-  when "argify"
-    object.interpret_argless_method(method, args) do
+  when "splat"
+    case args.size
+    when 0
       Crystal::MacroId.new(object.elements.join ", ")
+    when 1
+      object.interpret_one_arg_method(method, args) do |arg|
+        if object.elements.empty?
+          Crystal::MacroId.new("")
+        else
+          unless arg.is_a?(Crystal::StringLiteral)
+            arg.raise "argument to splat must be a StringLiteral, not #{arg.class_desc}"
+          end
+          Crystal::MacroId.new((object.elements.join ", ") + arg.value)
+        end
+      end
     end
   when "empty?"
     object.interpret_argless_method(method, args) { Crystal::BoolLiteral.new(object.elements.empty?) }
@@ -1815,6 +1960,22 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
       end
     else
       object.wrong_number_of_arguments "#{klass}#[]", args.size, 1
+    end
+  when "[]="
+    object.interpret_two_args_method(method, args) do |index_node, value|
+      unless index_node.is_a?(Crystal::NumberLiteral)
+        index_node.raise "expected index argument to ArrayLiteral#[]= to be a number, not #{index_node.class_desc}"
+      end
+
+      index = index_node.to_number.to_i
+      index += object.elements.size if index < 0
+
+      unless 0 <= index < object.elements.size
+        index_node.raise "index out of bounds (index: #{index}, size: #{object.elements.size}"
+      end
+
+      object.elements[index] = value
+      value
     end
   when "unshift"
     case args.size

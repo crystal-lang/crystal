@@ -4,4 +4,12 @@ version: 0.1.0
 authors:
   - <%= config.author %> <<%= config.email %>>
 
+<%- if config.skeleton_type == "app" -%>
+targets:
+  <%= config.name %>:
+    main: src/<%= config.name %>.cr
+
+<%- end -%>
+crystal: <%= Crystal::Config.version %>
+
 license: MIT

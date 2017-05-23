@@ -3,7 +3,7 @@ struct LLVM::ParameterCollection
   end
 
   def size
-    LibLLVM.count_param_types(@function.function_type).to_i
+    @function.function_type.params_size
   end
 
   def to_a
@@ -32,10 +32,6 @@ struct LLVM::ParameterCollection
   end
 
   def types
-    param_size = size()
-    Array(LLVM::Type).build(param_size) do |buffer|
-      LibLLVM.get_param_types(@function.function_type, buffer.as(LibLLVM::TypeRef*))
-      param_size
-    end
+    @function.function_type.params_types
   end
 end

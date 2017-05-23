@@ -1,5 +1,5 @@
-def Object.from_yaml(string : String) : self
-  YAML::PullParser.new(string) do |parser|
+def Object.from_yaml(string_or_io) : self
+  YAML::PullParser.new(string_or_io) do |parser|
     parser.read_stream do
       parser.read_document do
         new parser
@@ -8,8 +8,8 @@ def Object.from_yaml(string : String) : self
   end
 end
 
-def Array.from_yaml(string : String)
-  YAML::PullParser.new(string) do |parser|
+def Array.from_yaml(string_or_io)
+  YAML::PullParser.new(string_or_io) do |parser|
     parser.read_stream do
       parser.read_document do
         new(parser) do |element|
@@ -25,7 +25,7 @@ def Nil.new(pull : YAML::PullParser)
   if value.empty?
     nil
   else
-    raise YAML::ParseException.new("expected nil, not #{value}", 0, 0)
+    raise YAML::ParseException.new("Expected nil, not #{value}", 0, 0)
   end
 end
 
@@ -122,7 +122,7 @@ def NamedTuple.new(pull : YAML::PullParser)
 
     {% for key in T.keys %}
       if %var{key.id}.nil?
-        raise YAML::ParseException.new("missing yaml attribute: {{key}}", 0, 0)
+        raise YAML::ParseException.new("Missing yaml attribute: {{key}}", 0, 0)
       end
     {% end %}
 
@@ -152,7 +152,11 @@ def Union.new(pull : YAML::PullParser)
       # Ignore
     end
   {% end %}
-  raise YAML::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
+  raise YAML::ParseException.new("Couldn't parse #{self} from #{string}", 0, 0)
+end
+
+def Time.new(pull : YAML::PullParser)
+  Time::Format::ISO_8601_DATE_TIME.parse(pull.read_scalar)
 end
 
 struct Time::Format

@@ -966,4 +966,80 @@ describe "Semantic: generic class" do
       foo(Gen(String).new.as(Gen(String)))
       )) { int32 }
   end
+
+  it "subclasses twice with same generic class (#3423)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      Bar(Int32).new
+      )) { generic_class "Bar", int32 }
+  end
+
+  it "errors if invoking new on private new in generic type (#3485)" do
+    assert_error %(
+      class Foo(T)
+        private def self.new
+          super
+        end
+      end
+
+      Foo(String).new
+      ),
+      "private method 'new' called"
+  end
+
+  it "never types Path as virtual outside generic type parameter (#3989)" do
+    assert_type(%(
+      class Base
+      end
+
+      class Derived < Base
+        def initialize(x : Int32)
+        end
+      end
+
+      class Generic(T)
+        def initialize
+          T.new
+        end
+
+        def t
+          T
+        end
+      end
+
+      Generic(Base).new.t
+    )) { types["Base"].metaclass }
+  end
+
+  it "never types Generic as virtual outside generic type parameter (#3989)" do
+    assert_type(%(
+      class Base(T)
+      end
+
+      class Derived(T) < Base(T)
+        def initialize(x : Int32)
+        end
+      end
+
+      class Generic(T)
+        def initialize
+          T.new
+        end
+
+        def t
+          T
+        end
+      end
+
+      Generic(Base(Int32)).new.t
+    )) { generic_class("Base", int32).metaclass }
+  end
 end

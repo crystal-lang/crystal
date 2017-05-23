@@ -1,6 +1,6 @@
 require "c/fcntl"
 
-# An IO over a file descriptor.
+# An `IO` over a file descriptor.
 class IO::FileDescriptor
   include Buffered
 
@@ -118,6 +118,8 @@ class IO::FileDescriptor
   # Returns `self`.
   #
   # ```
+  # File.write("testfile", "abc")
+  #
   # file = File.new("testfile")
   # file.gets(3) # => "abc"
   # file.seek(1, IO::Seek::Set)
@@ -134,9 +136,21 @@ class IO::FileDescriptor
       raise Errno.new "Unable to seek"
     end
 
-    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+    @in_buffer_rem = Bytes.empty
 
     self
+  end
+
+  # Same as `seek` but yields to the block after seeking and eventually seeks
+  # back to the original position when the block returns.
+  def seek(offset, whence : Seek = Seek::Set)
+    original_pos = tell
+    begin
+      seek(offset, whence)
+      yield
+    ensure
+      seek(original_pos)
+    end
   end
 
   # Same as `pos`.
@@ -144,13 +158,15 @@ class IO::FileDescriptor
     pos
   end
 
-  # Returns the current position (in bytes) in this IO.
+  # Returns the current position (in bytes) in this `IO`.
   #
   # ```
-  # io = MemoryIO.new "hello"
-  # io.pos     # => 0
-  # io.gets(2) # => "he"
-  # io.pos     # => 2
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos     # => 0
+  # file.gets(2) # => "he"
+  # file.pos     # => 2
   # ```
   def pos
     check_open
@@ -161,12 +177,14 @@ class IO::FileDescriptor
     seek_value - @in_buffer_rem.size
   end
 
-  # Sets the current position (in bytes) in this IO.
+  # Sets the current position (in bytes) in this `IO`.
   #
   # ```
-  # io = MemoryIO.new "hello"
-  # io.pos = 3
-  # io.gets_to_end # => "lo"
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos = 3
+  # file.gets_to_end # => "lo"
   # ```
   def pos=(value)
     seek value
@@ -213,7 +231,11 @@ class IO::FileDescriptor
     io
   end
 
-  private def unbuffered_read(slice : Slice(UInt8))
+  def pretty_print(pp)
+    pp.text inspect
+  end
+
+  private def unbuffered_read(slice : Bytes)
     count = slice.size
     loop do
       bytes_read = LibC.read(@fd, slice.pointer(count).as(Void*), count)
@@ -233,7 +255,7 @@ class IO::FileDescriptor
     end
   end
 
-  private def unbuffered_write(slice : Slice(UInt8))
+  private def unbuffered_write(slice : Bytes)
     count = slice.size
     total = count
     loop do
@@ -271,7 +293,7 @@ class IO::FileDescriptor
 
     if @read_timed_out
       @read_timed_out = false
-      yield Timeout.new("read timed out")
+      yield Timeout.new("Read timed out")
     end
 
     nil
@@ -289,7 +311,7 @@ class IO::FileDescriptor
   end
 
   # msg/timeout are overridden in nonblock_connect
-  private def wait_writable(msg = "write timed out", timeout = @write_timeout)
+  private def wait_writable(msg = "Write timed out", timeout = @write_timeout)
     writers = (@writers ||= Deque(Fiber).new)
     writers << Fiber.current
     add_write_event timeout

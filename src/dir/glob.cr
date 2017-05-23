@@ -38,7 +38,7 @@ class Dir
       # directories: regex is the same as the one without that last char
       wants_dir = false
       if ptrn.ends_with?(File::SEPARATOR)
-        ptrn = ptrn.chop
+        ptrn = ptrn.rchop
         wants_dir = true
       end
 

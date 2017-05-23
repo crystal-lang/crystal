@@ -23,6 +23,7 @@ lib LibGC
   fun set_handle_fork = GC_set_handle_fork(value : Int)
 
   fun base = GC_base(displaced_pointer : Void*) : Void*
+  fun is_heap_ptr = GC_is_heap_ptr(pointer : Void*) : Int
   fun general_register_disappearing_link = GC_general_register_disappearing_link(link : Void**, obj : Void*) : Int
 
   type Finalizer = Void*, Void* ->
@@ -120,11 +121,32 @@ module GC
     LibGC.general_register_disappearing_link(pointer, base)
   end
 
+  def self.is_heap_ptr(pointer : Void*)
+    LibGC.is_heap_ptr(pointer) != 0
+  end
+
   record Stats,
-    collections : LibC::ULong,
-    bytes_found : LibC::Long
+    # collections : LibC::ULong,
+    # bytes_found : LibC::Long,
+    heap_size : LibC::ULong,
+    free_bytes : LibC::ULong,
+    unmapped_bytes : LibC::ULong,
+    bytes_since_gc : LibC::ULong,
+    total_bytes : LibC::ULong
 
   def self.stats
-    Stats.new LibGC.gc_no - 1, LibGC.bytes_found
+    LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
+    # collections = LibGC.gc_no - 1
+    # bytes_found = LibGC.bytes_found
+
+    Stats.new(
+      # collections: collections,
+      # bytes_found: bytes_found,
+      heap_size: heap_size,
+      free_bytes: free_bytes,
+      unmapped_bytes: unmapped_bytes,
+      bytes_since_gc: bytes_since_gc,
+      total_bytes: total_bytes
+    )
   end
 end

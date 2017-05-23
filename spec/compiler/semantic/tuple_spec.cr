@@ -249,4 +249,16 @@ describe "Semantic: tuples" do
       ),
       "can't specify more than one splat in restriction"
   end
+
+  it "errors on tuple too big (#3816)" do
+    assert_error %(
+      require "prelude"
+
+      pos = {0, 0}
+      while true
+        pos += {0, 0}
+      end
+      ),
+      "tuple too big"
+  end
 end

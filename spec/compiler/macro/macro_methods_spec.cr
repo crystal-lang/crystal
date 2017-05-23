@@ -280,7 +280,7 @@ describe "macro methods" do
     end
 
     it "executes lines" do
-      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1\\n", "2\\n", "3"])
+      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
     end
 
     it "executes size" do
@@ -398,6 +398,37 @@ describe "macro methods" do
     it "executes to_i(base)" do
       assert_macro "", %({{"1234".to_i(16)}}), [] of ASTNode, %(4660)
     end
+
+    it "executes string includes? char (true)" do
+      assert_macro "", %({{"spice".includes?('s')}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"spice".includes?('p')}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"spice".includes?('i')}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"spice".includes?('c')}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"spice".includes?('e')}}), [] of ASTNode, %(true)
+    end
+
+    it "executes string includes? char (false)" do
+      assert_macro "", %({{"spice".includes?('S')}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"spice".includes?(' ')}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"spice".includes?('!')}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"spice".includes?('b')}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string includes? string (true)" do
+      assert_macro "", %({{"spice".includes?("s")}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"spice".includes?("e")}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"spice".includes?("sp")}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"spice".includes?("ce")}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"spice".includes?("pic")}}), [] of ASTNode, %(true)
+    end
+
+    it "executes string includes? string (false)" do
+      assert_macro "", %({{"spice".includes?("Spi")}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"spice".includes?(" spi")}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"spice".includes?("ce ")}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"spice".includes?("b")}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"spice".includes?("spice ")}}), [] of ASTNode, %(false)
+    end
   end
 
   describe "macro id methods" do
@@ -407,6 +438,10 @@ describe "macro methods" do
       assert_macro "x", %({{x.starts_with?("hel")}}), [MacroId.new("hello")] of ASTNode, %(true)
       assert_macro "x", %({{x.chomp}}), [MacroId.new("hello\n")] of ASTNode, %(hello)
       assert_macro "x", %({{x.upcase}}), [MacroId.new("hello")] of ASTNode, %(HELLO)
+      assert_macro "x", %({{x.includes?("el")}}), [MacroId.new("hello")] of ASTNode, %(true)
+      assert_macro "x", %({{x.includes?("he")}}), [MacroId.new("hello")] of ASTNode, %(true)
+      assert_macro "x", %({{x.includes?("EL")}}), [MacroId.new("hello")] of ASTNode, %(false)
+      assert_macro "x", %({{x.includes?("cat")}}), [MacroId.new("hello")] of ASTNode, %(false)
     end
 
     it "compares with string" do
@@ -445,6 +480,10 @@ describe "macro methods" do
       assert_macro "x", %({{x.starts_with?("hel")}}), ["hello".symbol] of ASTNode, %(true)
       assert_macro "x", %({{x.chomp}}), [SymbolLiteral.new("hello\n")] of ASTNode, %(:hello)
       assert_macro "x", %({{x.upcase}}), ["hello".symbol] of ASTNode, %(:HELLO)
+      assert_macro "x", %({{x.includes?("el")}}), ["hello".symbol] of ASTNode, %(true)
+      assert_macro "x", %({{x.includes?("he")}}), ["hello".symbol] of ASTNode, %(true)
+      assert_macro "x", %({{x.includes?("EL")}}), ["hello".symbol] of ASTNode, %(false)
+      assert_macro "x", %({{x.includes?("cat")}}), ["hello".symbol] of ASTNode, %(false)
     end
 
     it "executes symbol == symbol" do
@@ -564,15 +603,15 @@ describe "macro methods" do
       assert_macro "", %({{[1, 2, 3].last}}), [] of ASTNode, "3"
     end
 
-    it "executes argify" do
-      assert_macro "", %({{[1, 2, 3].argify}}), [] of ASTNode, "1, 2, 3"
+    it "executes splat" do
+      assert_macro "", %({{[1, 2, 3].splat}}), [] of ASTNode, "1, 2, 3"
     end
 
-    it "executes argify with symbols and strings" do
-      assert_macro "", %({{[:foo, "hello", 3].argify}}), [] of ASTNode, %(:foo, "hello", 3)
+    it "executes splat with symbols and strings" do
+      assert_macro "", %({{[:foo, "hello", 3].splat}}), [] of ASTNode, %(:foo, "hello", 3)
     end
 
-    it "executes argify with splat" do
+    it "executes splat with splat" do
       assert_macro "", %({{*[1, 2, 3]}}), [] of ASTNode, "1, 2, 3"
     end
 
@@ -632,6 +671,10 @@ describe "macro methods" do
 
     it "executes [] with two numbers" do
       assert_macro "", %({{ [1, 2, 3, 4, 5][1, 3] }}), [] of ASTNode, %([2, 3, 4])
+    end
+
+    it "executes []=" do
+      assert_macro "", %({% a = [0]; a[0] = 2 %}{{a[0]}}), [] of ASTNode, "2"
     end
 
     it "executes of" do
@@ -722,9 +765,21 @@ describe "macro methods" do
     it "executes type (nop)" do
       assert_macro "", %({{ {'z' => 6, 'a' => 9}.type }}), [] of ASTNode, %()
     end
+
+    it "executes double splat" do
+      assert_macro "", %({{**{1 => 2, 3 => 4}}}), [] of ASTNode, "1 => 2, 3 => 4"
+    end
+
+    it "executes double splat" do
+      assert_macro "", %({{{1 => 2, 3 => 4}.double_splat}}), [] of ASTNode, "1 => 2, 3 => 4"
+    end
+
+    it "executes double splat with arg" do
+      assert_macro "", %({{{1 => 2, 3 => 4}.double_splat(", ")}}), [] of ASTNode, "1 => 2, 3 => 4, "
+    end
   end
 
-  describe "named literal methods" do
+  describe "named tuple literal methods" do
     it "executes size" do
       assert_macro "", %({{{a: 1, b: 3}.size}}), [] of ASTNode, "2"
     end
@@ -771,6 +826,18 @@ describe "macro methods" do
 
     it "executes to_a" do
       assert_macro "", %({{{a: 1, b: 3}.to_a}}), [] of ASTNode, "[{a, 1}, {b, 3}]"
+    end
+
+    it "executes double splat" do
+      assert_macro "", %({{**{a: 1, "foo bar": 2}}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+    end
+
+    it "executes double splat" do
+      assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+    end
+
+    it "executes double splat with arg" do
+      assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, )
     end
   end
 
@@ -855,15 +922,19 @@ describe "macro methods" do
       assert_macro "", %({{ {1, 2, 3}.last }}), [] of ASTNode, "3"
     end
 
-    it "executes argify" do
-      assert_macro "", %({{ {1, 2, 3}.argify }}), [] of ASTNode, "1, 2, 3"
+    it "executes splat" do
+      assert_macro "", %({{ {1, 2, 3}.splat }}), [] of ASTNode, "1, 2, 3"
     end
 
-    it "executes argify with symbols and strings" do
-      assert_macro "", %({{ {:foo, "hello", 3}.argify }}), [] of ASTNode, %(:foo, "hello", 3)
+    it "executes splat with arg" do
+      assert_macro "", %({{ {1, 2, 3}.splat(", ") }}), [] of ASTNode, "1, 2, 3, "
     end
 
-    it "executes argify with splat" do
+    it "executes splat with symbols and strings" do
+      assert_macro "", %({{ {:foo, "hello", 3}.splat }}), [] of ASTNode, %(:foo, "hello", 3)
+    end
+
+    it "executes splat with splat" do
       assert_macro "", %({{ *{1, 2, 3} }}), [] of ASTNode, "1, 2, 3"
     end
 
@@ -979,6 +1050,31 @@ describe "macro methods" do
     it "executes instance_vars" do
       assert_macro("x", "{{x.instance_vars.map &.stringify}}", %(["bytesize", "length", "c"])) do |program|
         [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes ancestors" do
+      assert_macro("x", "{{x.ancestors}}", %([SomeModule, Reference, Object])) do |program|
+        mod = NonGenericModuleType.new(program, program, "SomeModule")
+        klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+        klass.include mod
+
+        [TypeNode.new(klass)] of ASTNode
+      end
+    end
+
+    it "executes ancestors (with generic)" do
+      assert_macro("x", "{{x.ancestors}}", %([SomeGenericModule(String), SomeGenericType(String), Reference, Object])) do |program|
+        generic_type = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+        generic_mod = GenericModuleType.new(program, program, "SomeGenericModule", ["T"])
+        type_var = {"T" => TypeNode.new(program.string)} of String => ASTNode
+        type = GenericClassInstanceType.new(program, generic_type, program.reference, type_var)
+        mod = GenericModuleInstanceType.new(program, generic_mod, type_var)
+
+        klass = NonGenericClassType.new(program, program, "SomeType", type)
+        klass.include mod
+
+        [TypeNode.new(klass)] of ASTNode
       end
     end
 
@@ -1470,6 +1566,21 @@ describe "macro methods" do
     end
   end
 
+  describe "path methods" do
+    it "executes resolve" do
+      assert_macro "x", %({{x.resolve}}), [Path.new("String")] of ASTNode, %(String)
+
+      expect_raises(Crystal::TypeException, "undefined constant Foo") do
+        assert_macro "x", %({{x.resolve}}), [Path.new("Foo")] of ASTNode, %(Foo)
+      end
+    end
+
+    it "executes resolve?" do
+      assert_macro "x", %({{x.resolve?}}), [Path.new("String")] of ASTNode, %(String)
+      assert_macro "x", %({{x.resolve?}}), [Path.new("Foo")] of ASTNode, %(nil)
+    end
+  end
+
   describe "env" do
     it "has key" do
       ENV["FOO"] = "foo"
@@ -1491,5 +1602,9 @@ describe "macro methods" do
     it "doesn't have flag" do
       assert_macro "", %({{flag?(:foo)}}), [] of ASTNode, %(false)
     end
+  end
+
+  it "compares versions" do
+    assert_macro "", %({{compare_versions("1.10.3", "1.2.3")}}), [] of ASTNode, %(1)
   end
 end

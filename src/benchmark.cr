@@ -7,6 +7,7 @@ require "./benchmark/**"
 #
 # ```
 # require "benchmark"
+#
 # Benchmark.ips do |x|
 #   x.report("short sleep") { sleep 0.01 }
 #   x.report("shorter sleep") { sleep 0.001 }
@@ -14,11 +15,11 @@ require "./benchmark/**"
 # ```
 #
 # This generates the following output showing the mean iterations per second,
-# the standard deviation relative to the mean, and a comparison:
+# the mean times per iteration, the standard deviation relative to the mean, and a comparison:
 #
 # ```text
-#   short sleep    91.82 (± 2.51%)  8.72× slower
-# shorter sleep   800.98 (± 1.10%)       fastest
+#   short sleep   88.7  ( 11.27ms) (± 3.33%)  8.90× slower
+# shorter sleep  789.7  (  1.27ms) (± 3.02%)       fastest
 # ```
 #
 # `Benchmark::IPS` defaults to 2 seconds of warmup time and 5 seconds of
@@ -26,7 +27,7 @@ require "./benchmark/**"
 #
 # ```
 # Benchmark.ips(warmup: 4, calculation: 10) do |x|
-#   # …
+#   x.report("sleep") { sleep 0.01 }
 # end
 # ```
 #
@@ -82,7 +83,7 @@ module Benchmark
   # one can report the benchmarks. See the module's description.
   def bm
     {% if !flag?(:release) %}
-      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id }}
+      puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
 
     report = BM::Job.new
@@ -94,13 +95,13 @@ module Benchmark
   # Instruction per second interface of the `Benchmark` module. Yields a `Job`
   # to which one can report the benchmarks. See the module's description.
   #
-  # The optional parameters `calculation` and `warmup` set the duration of
+  # The optional parameters *calculation* and *warmup* set the duration of
   # those stages in seconds. For more detail on these stages see
-  # `Benchmark::IPS`. When the `interactive` parameter is true, results are
+  # `Benchmark::IPS`. When the *interactive* parameter is `true`, results are
   # displayed and updated as they are calculated, otherwise all at once.
   def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
     {% if !flag?(:release) %}
-      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id }}
+      puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
 
     job = IPS::Job.new(calculation, warmup, interactive)

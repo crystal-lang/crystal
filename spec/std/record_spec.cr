@@ -1,6 +1,6 @@
 require "spec"
 
-module RecordSpec
+private module RecordSpec
   record Record1,
     x : Int32,
     y : Array(Int32)

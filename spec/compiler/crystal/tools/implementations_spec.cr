@@ -1,10 +1,6 @@
-require "spec"
-require "yaml"
-require "../../../../src/compiler/crystal/**"
+require "../../../spec_helper"
 
-include Crystal
-
-def processed_implementation_visitor(code, cursor_location)
+private def processed_implementation_visitor(code, cursor_location)
   compiler = Compiler.new
   compiler.no_codegen = true
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
@@ -15,7 +11,7 @@ def processed_implementation_visitor(code, cursor_location)
   {visitor, process_result}
 end
 
-def assert_implementations(code)
+private def assert_implementations(code)
   cursor_location = nil
   expected_locations = [] of Location
 
@@ -342,6 +338,34 @@ describe "implementations" do
     end
 
     Bar::Foo.bar_foo
+    )
+  end
+
+  it "find implementation inside contained file private method" do
+    assert_implementations %(
+    private ༓def foo
+    end
+
+    private def bar
+      f‸oo
+    end
+
+    bar
+    )
+  end
+
+  it "find implementation inside contained file private class' class method" do
+    assert_implementations %(
+    private ༓def foo
+    end
+
+    private class Bar
+      def self.bar
+        f‸oo
+      end
+    end
+
+    Bar.bar
     )
   end
 end

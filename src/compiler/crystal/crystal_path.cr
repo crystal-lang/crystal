@@ -2,6 +2,9 @@ require "./config"
 
 module Crystal
   struct CrystalPath
+    class Error < Exception
+    end
+
     def self.default_path
       ENV["CRYSTAL_PATH"]? || Crystal::Config.path
     end
@@ -17,11 +20,16 @@ module Crystal
       triple = target_triple.split('-')
       triple.delete(triple[1]) if triple.size == 4 # skip vendor
 
-      if %w(i386 i486 i586).includes?(triple[0])
+      case triple[0]
+      when "i386", "i486", "i586"
         triple[0] = "i686"
+      when .starts_with?("armv8")
+        triple[0] = "aarch64"
+      when .starts_with?("arm")
+        triple[0] = "arm"
       end
 
-      target = if triple.any?(&.includes?("macosx"))
+      target = if triple.any?(&.includes?("macosx")) || triple.any?(&.includes?("darwin"))
                  {triple[0], "macosx", "darwin"}.join('-')
                elsif triple.any?(&.includes?("freebsd"))
                  {triple[0], triple[1], "freebsd"}.join('-')
@@ -40,7 +48,7 @@ module Crystal
       end
     end
 
-    def find(filename, relative_to = nil)
+    def find(filename, relative_to = nil) : Array(String)?
       relative_to = File.dirname(relative_to) if relative_to.is_a?(String)
       if filename.starts_with? '.'
         result = find_in_path_relative_to_dir(filename, relative_to)
@@ -157,9 +165,9 @@ module Crystal
       end
 
       if relative_to
-        raise "can't find file '#{filename}' relative to '#{relative_to}'"
+        raise Error.new("can't find file '#{filename}' relative to '#{relative_to}'")
       else
-        raise "can't find file '#{filename}'"
+        raise Error.new("can't find file '#{filename}'")
       end
     end
   end

@@ -1051,4 +1051,14 @@ describe "Semantic: class" do
       T.new
       )) { types["T"] }
   end
+
+  it "errors on no method found on abstract class, class method (#2241)" do
+    assert_error %(
+      abstract class Foo
+      end
+
+      Foo.bar
+      ),
+      "undefined method 'bar' for Foo:Class"
+  end
 end

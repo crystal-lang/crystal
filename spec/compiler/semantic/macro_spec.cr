@@ -547,14 +547,16 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "errors if using private on non-top-level macro" do
+  it "errors if applying protected modifier to macro" do
     assert_error %(
       class Foo
-        private macro bar
+        protected macro foo
+          1
         end
       end
-      ),
-      "private macros can only be declared at the top-level"
+
+      Foo.foo
+    ), "can only use 'private' for macros"
   end
 
   it "expands macro with break inside while (#1852)" do
@@ -773,6 +775,34 @@ describe "Semantic: macro" do
       )) { int32.metaclass }
   end
 
+  it "finds generic type argument of included module with self" do
+    assert_type(%(
+      module Bar(T)
+        def t
+          {{ T }}
+        end
+      end
+
+      class Foo(U)
+        include Bar(self)
+      end
+
+      Foo(Int32).new.t
+      )) { generic_class("Foo", int32).metaclass }
+  end
+
+  it "finds free type vars" do
+    assert_type(%(
+      module Foo(T)
+        def self.foo(foo : U) forall U
+          { {{ T }}, {{ U }} }
+        end
+      end
+
+      Foo(Int32).foo("foo")
+    )) { tuple_of([int32.metaclass, string.metaclass]) }
+  end
+
   it "gets named arguments in double splat" do
     assert_type(%(
       macro foo(**options)
@@ -933,5 +963,125 @@ describe "Semantic: macro" do
 
       Foo.foo
       ), inject_primitives: false) { int32 }
+  end
+
+  it "gives correct error when method is invoked but macro exists at the same scope" do
+    assert_error %(
+      macro foo(x)
+      end
+
+      class Foo
+      end
+
+      Foo.new.foo
+      ),
+      "undefined method 'foo'"
+  end
+
+  it "uses uninitialized variable with macros" do
+    assert_type(%(
+      macro foo(x)
+        {{x}}
+      end
+
+      a = uninitialized Int32
+      foo(a)
+      )) { int32 }
+  end
+
+  describe "skip macro directive" do
+    it "skips expanding the rest of the current file" do
+      res = semantic(%(
+        class A
+        end
+
+        {% skip() %}
+
+        class B
+        end
+      ))
+
+      res.program.types.has_key?("A").should be_true
+      res.program.types.has_key?("B").should be_false
+    end
+
+    it "skips file inside an if macro expression" do
+      res = semantic(%(
+        class A
+        end
+
+        {% if true %}
+          class C; end
+          {% skip() %}
+          class D; end
+        {% end %}
+
+        class B
+        end
+      ))
+
+      res.program.types.has_key?("A").should be_true
+      res.program.types.has_key?("B").should be_false
+      res.program.types.has_key?("C").should be_true
+      res.program.types.has_key?("D").should be_false
+    end
+  end
+
+  it "finds method before macro (#236)" do
+    assert_type(%(
+      macro global
+        1
+      end
+
+      class Foo
+        def global
+          'a'
+        end
+
+        def bar
+          global
+        end
+      end
+
+      Foo.new.bar
+      )) { char }
+  end
+
+  it "finds macro and method at the same scope" do
+    assert_type(%(
+      macro global(x)
+        1
+      end
+
+      def global(x, y)
+        'a'
+      end
+
+      {global(1), global(1, 2)}
+      )) { tuple_of [int32, char] }
+  end
+
+  it "finds macro and method at the same scope inside included module" do
+    assert_type(%(
+      module Moo
+        macro global(x)
+          1
+        end
+
+        def global(x, y)
+          'a'
+        end
+      end
+
+      class Foo
+        include Moo
+
+        def main
+          {global(1), global(1, 2)}
+        end
+      end
+
+      Foo.new.main
+      )) { tuple_of [int32, char] }
   end
 end

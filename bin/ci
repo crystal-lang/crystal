@@ -86,7 +86,7 @@ build() {
   with_build_env 'make std_spec clean'
   with_build_env 'make crystal spec doc'
   with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
-  with_build_env './bin/crystal tool format --check'
+  with_build_env './bin/crystal tool format --check samples spec src'
 }
 
 deploy() {
@@ -149,7 +149,7 @@ prepare_build() {
 
   on_linux docker pull "jhass/crystal-build-$ARCH"
 
-  on_osx brew install llvm libevent pcre crystal-lang
+  on_osx brew install llvm crystal-lang
 }
 
 with_build_env() {
@@ -160,11 +160,12 @@ with_build_env() {
 
   on_linux verify_linux_environment
   on_linux docker run \
-    --rm \
+    --rm -t \
     -u $(id -u) \
     -v $(pwd):/mnt \
     -w /mnt \
     -e LIBRARY_PATH="/opt/crystal/embedded/lib/" \
+    -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     "jhass/crystal-build-$ARCH" \
     "$ARCH_CMD" /bin/bash -c "'$command'"
 

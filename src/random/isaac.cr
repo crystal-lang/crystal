@@ -23,7 +23,7 @@ class Random::ISAAC
     init_by_array(seeds)
   end
 
-  def next_u32
+  def next_u
     if (@counter -= 1) == -1
       isaac
       @counter = 255
@@ -68,7 +68,7 @@ class Random::ISAAC
     4.times(&mix)
 
     scramble = ->(seed : StaticArray(UInt32, 256)) {
-      0.step(255, 8) do |i|
+      0.step(to: 255, by: 8) do |i|
         a += seed[i]; b += seed[i + 1]; c += seed[i + 2]; d += seed[i + 3]
         e += seed[i + 4]; f += seed[i + 5]; g += seed[i + 6]; h += seed[i + 7]
         mix.call

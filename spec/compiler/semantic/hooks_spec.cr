@@ -182,4 +182,32 @@ describe "Semantic: hooks" do
       Klass.method
       )) { int32 }
   end
+
+  it "types macro finished hook bug regarding initialize (#3964)" do
+    assert_type(%(
+      class A1
+        macro finished
+          @x : String
+          def initialize(@x)
+          end
+
+          def x; @x; end
+        end
+      end
+
+      class A2
+        macro finished
+          @y : Int32
+          def initialize(@y)
+          end
+
+          def y; @y; end
+        end
+      end
+
+      a1 = A1.new("x")
+      a2 = A2.new(1)
+      {a1.x, a2.y}
+      ), inject_primitives: false) { tuple_of([string, int32]) }
+  end
 end

@@ -10,7 +10,7 @@ module Crystal
     @type : Type?
 
     def type
-      @type || ::raise "Bug: `#{self}` at #{self.location} has no type"
+      @type || ::raise "BUG: `#{self}` at #{self.location} has no type"
     end
 
     def type?
@@ -147,7 +147,7 @@ module Crystal
     end
 
     def set_enclosing_call(enclosing_call)
-      raise "Bug: already had enclosing call" if @enclosing_call
+      raise "BUG: already had enclosing call" if @enclosing_call
       @enclosing_call = enclosing_call
     end
 
@@ -458,7 +458,7 @@ module Crystal
                 visitor = target_const.visitor
                 if visitor
                   numeric_value = visitor.interpret_enum_value(value)
-                  numeric_type = node_type.program.int?(numeric_value) || raise "Bug: expected integer type, not #{numeric_value.class}"
+                  numeric_type = node_type.program.int?(numeric_value) || raise "BUG: expected integer type, not #{numeric_value.class}"
                   type_var = NumberLiteral.new(numeric_value, numeric_type.kind)
                   type_var.set_type_from(numeric_type, from)
                 else
@@ -503,6 +503,10 @@ module Crystal
         raise "tuple type too nested: #{tuple_type}"
       end
 
+      if types.size > 300
+        raise "tuple too big: Tuple(#{types[0...10].join(",")}, ...)"
+      end
+
       self.type = tuple_type
     end
   end
@@ -521,6 +525,10 @@ module Crystal
 
       if generic_type_too_nested?(named_tuple_type.generic_nest)
         raise "named tuple type too nested: #{named_tuple_type}"
+      end
+
+      if entries.size > 300
+        raise "named tuple too big: #{named_tuple_type}"
       end
 
       self.type = named_tuple_type

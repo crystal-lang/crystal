@@ -47,6 +47,10 @@ module HTTP
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get("http://www.example.com"))
+    typeof(Client.post("http://www.example.com", body: IO::Memory.new))
+    typeof(Client.new("host").post("/", body: IO::Memory.new))
+    typeof(Client.post("http://www.example.com", body: Bytes[65]))
+    typeof(Client.new("host").post("/", body: Bytes[65]))
 
     describe "from URI" do
       it "has sane defaults" do
@@ -99,6 +103,20 @@ module HTTP
           Client.new(URI.parse("http:/"))
         end
       end
+
+      it "yields to a block" do
+        Client.new(URI.parse("http://example.com")) do |client|
+          typeof(client)
+        end
+      end
+    end
+
+    context "from a host" do
+      it "yields to a block" do
+        Client.new("example.com") do |client|
+          typeof(client)
+        end
+      end
     end
 
     it "doesn't read the body if request was HEAD" do
@@ -116,7 +134,7 @@ module HTTP
     end
 
     it "raises if URI is missing scheme" do
-      expect_raises(ArgumentError, "missing scheme") do
+      expect_raises(ArgumentError, "Missing scheme") do
         HTTP::Client.get URI.parse("www.example.com")
       end
     end
@@ -136,7 +154,7 @@ module HTTP
 
       TestServer.open("localhost", 0, 0.5) do |server|
         client = Client.new("localhost", server.local_address.port)
-        expect_raises(IO::Timeout, "read timed out") do
+        expect_raises(IO::Timeout, "Read timed out") do
           client.read_timeout = 0.001
           client.get("/?sleep=1")
         end

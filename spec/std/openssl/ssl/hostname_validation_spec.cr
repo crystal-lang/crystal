@@ -1,7 +1,7 @@
 require "spec"
 require "openssl/ssl/hostname_validation"
 
-def openssl_create_cert(subject = nil, san = nil)
+private def openssl_create_cert(subject = nil, san = nil)
   cert = OpenSSL::X509::Certificate.new
   cert.subject = subject if subject
   cert.add_extension(OpenSSL::X509::Extension.new("subjectAltName", san)) if san
@@ -61,7 +61,7 @@ describe OpenSSL::SSL::HostnameValidation do
       OpenSSL::SSL::HostnameValidation.matches_hostname?("foo.bar.example.com", "foo.bar.example.com").should be_true
     end
 
-    it "wildcard matches according to RFC6125, section 6.4.3" do
+    it "wildcard matches according to RFC 6125, section 6.4.3" do
       OpenSSL::SSL::HostnameValidation.matches_hostname?("*.com", "example.com").should be_false
       OpenSSL::SSL::HostnameValidation.matches_hostname?("bar.*.example.com", "bar.foo.example.com").should be_false
 

@@ -52,7 +52,7 @@ describe "Enumerable" do
   end
 
   describe "compact map" do
-    assert { Set{1, nil, 2, nil, 3}.compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
+    it { Set{1, nil, 2, nil, 3}.compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
   end
 
   describe "size without block" do
@@ -92,6 +92,137 @@ describe "Enumerable" do
     end
   end
 
+  describe "chunk" do
+    it "works" do
+      [1].chunk { true }.to_a.should eq [{true, [1]}]
+      [1, 2].chunk { false }.to_a.should eq [{false, [1, 2]}]
+      [1, 1, 2, 3, 3].chunk(&.itself).to_a.should eq [{1, [1, 1]}, {2, [2]}, {3, [3, 3]}]
+      [1, 1, 2, 3, 3].chunk(&.<=(2)).to_a.should eq [{true, [1, 1, 2]}, {false, [3, 3]}]
+      (0..10).chunk(&./(3)).to_a.should eq [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7, 8]}, {3, [9, 10]}]
+    end
+
+    it "work with class" do
+      [1, 1, 2, 3, 3].chunk(&.class).to_a.should eq [{Int32, [1, 1, 2, 3, 3]}]
+    end
+
+    it "works with block" do
+      res = [] of Tuple(Bool, Array(Int32))
+      [1, 2, 3].chunk { |x| x < 3 }.each { |(k, v)| res << {k, v} }
+      res.should eq [{true, [1, 2]}, {false, [3]}]
+    end
+
+    it "rewind" do
+      i = (0..10).chunk(&./(3))
+      i.next.should eq({0, [0, 1, 2]})
+      i.next.should eq({1, [3, 4, 5]})
+      i.rewind
+      i.next.should eq({0, [0, 1, 2]})
+      i.next.should eq({1, [3, 4, 5]})
+    end
+
+    it "returns elements of the Enumerable in an Array of Tuple, {v, ary}, where 'ary' contains the consecutive elements for which the block returned the value 'v'" do
+      result = [1, 2, 3, 2, 3, 2, 1].chunk { |x| x < 3 ? 1 : 0 }.to_a
+      result.should eq [{1, [1, 2]}, {0, [3]}, {1, [2]}, {0, [3]}, {1, [2, 1]}]
+    end
+
+    it "returns elements for which the block returns Enumerable::Chunk::Alone in separate Arrays" do
+      result = [1, 2, 3, 2, 1].chunk { |x| x < 2 ? Enumerable::Chunk::Alone : false }.to_a
+      result.should eq [{Enumerable::Chunk::Alone, [1]}, {false, [2, 3, 2]}, {Enumerable::Chunk::Alone, [1]}]
+    end
+
+    it "alone all" do
+      result = [1, 2].chunk { Enumerable::Chunk::Alone }.to_a
+      result.should eq [{Enumerable::Chunk::Alone, [1]}, {Enumerable::Chunk::Alone, [2]}]
+    end
+
+    it "does not return elements for which the block returns Enumerable::Chunk::Drop" do
+      result = [1, 2, 3, 3, 2, 1].chunk { |x| x == 2 ? Enumerable::Chunk::Drop : 1 }.to_a
+      result.should eq [{1, [1]}, {1, [3, 3]}, {1, [1]}]
+    end
+
+    it "drop all" do
+      result = [1, 2].chunk { Enumerable::Chunk::Drop }.to_a
+      result.size.should eq 0
+    end
+
+    it "nil allowed as value" do
+      result = [1, 2, 3, 2, 1].chunk { |x| x == 2 ? nil : 1 }.to_a
+      result.should eq [{1, [1]}, {nil, [2]}, {1, [3]}, {nil, [2]}, {1, [1]}]
+    end
+
+    it "nil 2 case" do
+      result = [nil, nil, 1, 1, nil].chunk(&.itself).to_a
+      result.should eq [{nil, [nil, nil]}, {1, [1, 1]}, {nil, [nil]}]
+    end
+
+    it "reuses true" do
+      iter = [1, 1, 2, 3, 3].chunk(reuse: true, &.itself)
+      a = iter.next.as(Tuple)
+      a.should eq({1, [1, 1]})
+
+      b = iter.next.as(Tuple)
+      b.should eq({2, [2]})
+      b[1].should be(a[1])
+
+      c = iter.next.as(Tuple)
+      c.should eq({3, [3, 3]})
+      c[1].should be(a[1])
+
+      iter.rewind
+      a1 = iter.next.as(Tuple)
+      a1.should eq({1, [1, 1]})
+      a1[1].should be(a[1])
+    end
+  end
+
+  describe "chunks" do
+    it "works" do
+      [1].chunks { true }.should eq [{true, [1]}]
+      [1, 2].chunks { false }.should eq [{false, [1, 2]}]
+      [1, 1, 2, 3, 3].chunks(&.itself).should eq [{1, [1, 1]}, {2, [2]}, {3, [3, 3]}]
+      [1, 1, 2, 3, 3].chunks(&.<=(2)).should eq [{true, [1, 1, 2]}, {false, [3, 3]}]
+      (0..10).chunks(&./(3)).should eq [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7, 8]}, {3, [9, 10]}]
+    end
+
+    it "work with class" do
+      [1, 1, 2, 3, 3].chunks(&.class).should eq [{Int32, [1, 1, 2, 3, 3]}]
+    end
+
+    it "work with pure enumerable" do
+      SpecEnumerable.new.chunks(&./(2)).should eq [{0, [1]}, {1, [2, 3]}]
+    end
+
+    it "returns elements for which the block returns Enumerable::Chunk::Alone in separate Arrays" do
+      result = [1, 2, 3, 2, 1].chunks { |x| x < 2 ? Enumerable::Chunk::Alone : false }
+      result.should eq [{Enumerable::Chunk::Alone, [1]}, {false, [2, 3, 2]}, {Enumerable::Chunk::Alone, [1]}]
+    end
+
+    it "alone all" do
+      result = [1, 2].chunks { Enumerable::Chunk::Alone }
+      result.should eq [{Enumerable::Chunk::Alone, [1]}, {Enumerable::Chunk::Alone, [2]}]
+    end
+
+    it "does not return elements for which the block returns Enumerable::Chunk::Drop" do
+      result = [1, 2, 3, 3, 2, 1].chunks { |x| x == 2 ? Enumerable::Chunk::Drop : 1 }
+      result.should eq [{1, [1]}, {1, [3, 3]}, {1, [1]}]
+    end
+
+    it "drop all" do
+      result = [1, 2].chunks { Enumerable::Chunk::Drop }
+      result.size.should eq 0
+    end
+
+    it "nil allowed as value" do
+      result = [1, 2, 3, 2, 1].chunks { |x| x == 2 ? nil : 1 }
+      result.should eq [{1, [1]}, {nil, [2]}, {1, [3]}, {nil, [2]}, {1, [1]}]
+    end
+
+    it "nil 2 case" do
+      result = [nil, nil, 1, 1, nil].chunks(&.itself)
+      result.should eq [{nil, [nil, nil]}, {1, [1, 1]}, {nil, [nil]}]
+    end
+  end
+
   describe "each_cons" do
     it "returns running pairs" do
       array = [] of Array(Int32)
@@ -115,6 +246,46 @@ describe "Enumerable" do
       iter.rewind
       iter.next.should eq([1, 2, 3])
     end
+
+    it "returns each_cons iterator with reuse = true" do
+      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: true)
+
+      a = iter.next
+      a.should eq([1, 2, 3])
+
+      b = iter.next
+      b.should be(a)
+    end
+
+    it "returns each_cons iterator with reuse = array" do
+      reuse = [] of Int32
+      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
+
+      a = iter.next
+      a.should eq([1, 2, 3])
+      a.should be(reuse)
+    end
+
+    it "returns running pairs with reuse = true" do
+      array = [] of Array(Int32)
+      object_ids = Set(UInt64).new
+      [1, 2, 3, 4].each_cons(2, reuse: true) do |pair|
+        object_ids << pair.object_id
+        array << pair.dup
+      end
+      array.should eq([[1, 2], [2, 3], [3, 4]])
+      object_ids.size.should eq(1)
+    end
+
+    it "returns running pairs with reuse = array" do
+      array = [] of Array(Int32)
+      reuse = [] of Int32
+      [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
+        pair.should be(reuse)
+        array << pair.dup
+      end
+      array.should eq([[1, 2], [2, 3], [3, 4]])
+    end
   end
 
   describe "each_slice" do
@@ -122,11 +293,34 @@ describe "Enumerable" do
       array = [] of Array(Int32)
       [1, 2, 3].each_slice(2) { |slice| array << slice }
       array.should eq([[1, 2], [3]])
+      array[0].should_not be(array[1])
     end
 
     it "returns full slices" do
       array = [] of Array(Int32)
       [1, 2, 3, 4].each_slice(2) { |slice| array << slice }
+      array.should eq([[1, 2], [3, 4]])
+      array[0].should_not be(array[1])
+    end
+
+    it "reuses with true" do
+      array = [] of Array(Int32)
+      object_ids = Set(UInt64).new
+      [1, 2, 3, 4].each_slice(2, reuse: true) do |slice|
+        object_ids << slice.object_id
+        array << slice.dup
+      end
+      array.should eq([[1, 2], [3, 4]])
+      object_ids.size.should eq(1)
+    end
+
+    it "reuses with existing array" do
+      array = [] of Array(Int32)
+      reuse = [] of Int32
+      [1, 2, 3, 4].each_slice(2, reuse: reuse) do |slice|
+        slice.should be(reuse)
+        array << slice.dup
+      end
       array.should eq([[1, 2], [3, 4]])
     end
 
@@ -216,7 +410,7 @@ describe "Enumerable" do
       end
     end
 
-    assert { [-1, -2, -3].first.should eq(-1) }
+    it { [-1, -2, -3].first.should eq(-1) }
   end
 
   describe "first?" do
@@ -237,6 +431,18 @@ describe "Enumerable" do
     it "does example 2" do
       [[1, 2], [3, 4]].flat_map { |e| e + [100] }.should eq([1, 2, 100, 3, 4, 100])
     end
+
+    it "does example 3" do
+      [[1, 2, 3], 4, 5].flat_map { |e| e }.should eq([1, 2, 3, 4, 5])
+    end
+
+    it "does example 4" do
+      [{1 => 2}, {3 => 4}].flat_map { |e| e }.should eq([{1 => 2}, {3 => 4}])
+    end
+
+    it "flattens iterators" do
+      [[1, 2], [3, 4]].flat_map(&.each).should eq([1, 2, 3, 4])
+    end
   end
 
   describe "grep" do
@@ -250,23 +456,23 @@ describe "Enumerable" do
   end
 
   describe "group_by" do
-    assert { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
+    it { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
 
     it "groups can group by size (like the doc example)" do
       %w(Alice Bob Ary).group_by { |e| e.size }.should eq({3 => ["Bob", "Ary"],
-        5 => ["Alice"]})
+                                                           5 => ["Alice"]})
     end
   end
 
   describe "in_groups_of" do
-    assert { [1, 2, 3].in_groups_of(1).should eq([[1], [2], [3]]) }
-    assert { [1, 2, 3].in_groups_of(2).should eq([[1, 2], [3, nil]]) }
-    assert { [1, 2, 3, 4].in_groups_of(3).should eq([[1, 2, 3], [4, nil, nil]]) }
-    assert { ([] of Int32).in_groups_of(2).should eq([] of Array(Array(Int32 | Nil))) }
-    assert { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
+    it { [1, 2, 3].in_groups_of(1).should eq([[1], [2], [3]]) }
+    it { [1, 2, 3].in_groups_of(2).should eq([[1, 2], [3, nil]]) }
+    it { [1, 2, 3, 4].in_groups_of(3).should eq([[1, 2, 3], [4, nil, nil]]) }
+    it { ([] of Int32).in_groups_of(2).should eq([] of Array(Array(Int32 | Nil))) }
+    it { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
 
     it "raises argument error if size is less than 0" do
-      expect_raises ArgumentError, "size must be positive" do
+      expect_raises ArgumentError, "Size must be positive" do
         [1, 2, 3].in_groups_of(0)
       end
     end
@@ -275,6 +481,27 @@ describe "Enumerable" do
       sums = [] of Int32
       [1, 2, 4, 5].in_groups_of(3, 10) { |a| sums << a.sum }
       sums.should eq([7, 25])
+    end
+
+    it "reuses with true" do
+      array = [] of Array(Int32)
+      object_ids = Set(UInt64).new
+      [1, 2, 4, 5].in_groups_of(3, 10, reuse: true) do |group|
+        object_ids << group.object_id
+        array << group.dup
+      end
+      array.should eq([[1, 2, 4], [5, 10, 10]])
+      object_ids.size.should eq(1)
+    end
+
+    it "reuses with existing array" do
+      array = [] of Array(Int32)
+      reuse = [] of Int32
+      [1, 2, 4, 5].in_groups_of(3, 10, reuse: reuse) do |slice|
+        slice.should be(reuse)
+        array << slice.dup
+      end
+      array.should eq([[1, 2, 4], [5, 10, 10]])
     end
   end
 
@@ -321,8 +548,8 @@ describe "Enumerable" do
   end
 
   describe "reduce" do
-    assert { [1, 2, 3].reduce { |memo, i| memo + i }.should eq(6) }
-    assert { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }
+    it { [1, 2, 3].reduce { |memo, i| memo + i }.should eq(6) }
+    it { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -348,7 +575,7 @@ describe "Enumerable" do
     end
 
     it "joins with io and block" do
-      str = MemoryIO.new
+      str = IO::Memory.new
       [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
       str.to_s.should eq("2, 3, 4")
     end
@@ -376,10 +603,16 @@ describe "Enumerable" do
       result = ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }
       result.should eq ["User #0: Alice", "User #1: Bob"]
     end
+
+    it "yields the element and the index of an iterator" do
+      str = "hello"
+      result = str.each_char.map_with_index { |char, i| "#{char}#{i}" }
+      result.should eq ["h0", "e1", "l2", "l3", "o4"]
+    end
   end
 
   describe "max" do
-    assert { [1, 2, 3].max.should eq(3) }
+    it { [1, 2, 3].max.should eq(3) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -395,7 +628,7 @@ describe "Enumerable" do
   end
 
   describe "max_by" do
-    assert { [-1, -2, -3].max_by { |x| -x }.should eq(-3) }
+    it { [-1, -2, -3].max_by { |x| -x }.should eq(-3) }
   end
 
   describe "max_by?" do
@@ -405,7 +638,7 @@ describe "Enumerable" do
   end
 
   describe "max_of" do
-    assert { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
+    it { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
   end
 
   describe "max_of?" do
@@ -415,7 +648,7 @@ describe "Enumerable" do
   end
 
   describe "min" do
-    assert { [1, 2, 3].min.should eq(1) }
+    it { [1, 2, 3].min.should eq(1) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -431,7 +664,7 @@ describe "Enumerable" do
   end
 
   describe "min_by" do
-    assert { [1, 2, 3].min_by { |x| -x }.should eq(3) }
+    it { [1, 2, 3].min_by { |x| -x }.should eq(3) }
   end
 
   describe "min_by?" do
@@ -441,7 +674,7 @@ describe "Enumerable" do
   end
 
   describe "min_of" do
-    assert { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
+    it { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
   end
 
   describe "min_of?" do
@@ -451,7 +684,7 @@ describe "Enumerable" do
   end
 
   describe "minmax" do
-    assert { [1, 2, 3].minmax.should eq({1, 3}) }
+    it { [1, 2, 3].minmax.should eq({1, 3}) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -467,7 +700,7 @@ describe "Enumerable" do
   end
 
   describe "minmax_by" do
-    assert { [-1, -2, -3].minmax_by { |x| -x }.should eq({-1, -3}) }
+    it { [-1, -2, -3].minmax_by { |x| -x }.should eq({-1, -3}) }
   end
 
   describe "minmax_by?" do
@@ -477,7 +710,7 @@ describe "Enumerable" do
   end
 
   describe "minmax_of" do
-    assert { [-1, -2, -3].minmax_of { |x| -x }.should eq({1, 3}) }
+    it { [-1, -2, -3].minmax_of { |x| -x }.should eq({1, 3}) }
   end
 
   describe "minmax_of?" do
@@ -487,24 +720,24 @@ describe "Enumerable" do
   end
 
   describe "none?" do
-    assert { [1, 2, 2, 3].none? { |x| x == 1 }.should eq(false) }
-    assert { [1, 2, 2, 3].none? { |x| x == 0 }.should eq(true) }
+    it { [1, 2, 2, 3].none? { |x| x == 1 }.should eq(false) }
+    it { [1, 2, 2, 3].none? { |x| x == 0 }.should eq(true) }
   end
 
   describe "none? without block" do
-    assert { [nil, false].none?.should be_true }
-    assert { [nil, false, true].none?.should be_false }
+    it { [nil, false].none?.should be_true }
+    it { [nil, false, true].none?.should be_false }
   end
 
   describe "one?" do
-    assert { [1, 2, 2, 3].one? { |x| x == 1 }.should eq(true) }
-    assert { [1, 2, 2, 3].one? { |x| x == 2 }.should eq(false) }
-    assert { [1, 2, 2, 3].one? { |x| x == 0 }.should eq(false) }
+    it { [1, 2, 2, 3].one? { |x| x == 1 }.should eq(true) }
+    it { [1, 2, 2, 3].one? { |x| x == 2 }.should eq(false) }
+    it { [1, 2, 2, 3].one? { |x| x == 0 }.should eq(false) }
   end
 
   describe "partition" do
-    assert { [1, 2, 2, 3].partition { |x| x == 2 }.should eq({[2, 2], [1, 3]}) }
-    assert { [1, 2, 3, 4, 5, 6].partition(&.even?).should eq({[2, 4, 6], [1, 3, 5]}) }
+    it { [1, 2, 2, 3].partition { |x| x == 2 }.should eq({[2, 2], [1, 3]}) }
+    it { [1, 2, 3, 4, 5, 6].partition(&.even?).should eq({[2, 4, 6], [1, 3, 5]}) }
   end
 
   describe "reject" do
@@ -560,12 +793,12 @@ describe "Enumerable" do
   end
 
   describe "sum" do
-    assert { ([] of Int32).sum.should eq(0) }
-    assert { [1, 2, 3].sum.should eq(6) }
-    assert { [1, 2, 3].sum(4).should eq(10) }
-    assert { [1, 2, 3].sum(4.5).should eq(10.5) }
-    assert { (1..3).sum { |x| x * 2 }.should eq(12) }
-    assert { (1..3).sum(1.5) { |x| x * 2 }.should eq(13.5) }
+    it { ([] of Int32).sum.should eq(0) }
+    it { [1, 2, 3].sum.should eq(6) }
+    it { [1, 2, 3].sum(4).should eq(10) }
+    it { [1, 2, 3].sum(4.5).should eq(10.5) }
+    it { (1..3).sum { |x| x * 2 }.should eq(12) }
+    it { (1..3).sum(1.5) { |x| x * 2 }.should eq(13.5) }
 
     it "uses zero from type" do
       typeof([1, 2, 3].sum).should eq(Int32)
@@ -575,12 +808,12 @@ describe "Enumerable" do
   end
 
   describe "product" do
-    assert { ([] of Int32).product.should eq(1) }
-    assert { [1, 2, 3].product.should eq(6) }
-    assert { [1, 2, 3].product(4).should eq(24) }
-    assert { [1, 2, 3].product(4.5).should eq(27) }
-    assert { (1..3).product { |x| x * 2 }.should eq(48) }
-    assert { (1..3).product(1.5) { |x| x * 2 }.should eq(72) }
+    it { ([] of Int32).product.should eq(1) }
+    it { [1, 2, 3].product.should eq(6) }
+    it { [1, 2, 3].product(4).should eq(24) }
+    it { [1, 2, 3].product(4.5).should eq(27) }
+    it { (1..3).product { |x| x * 2 }.should eq(48) }
+    it { (1..3).product(1.5) { |x| x * 2 }.should eq(72) }
 
     it "uses zero from type" do
       typeof([1, 2, 3].product).should eq(Int32)
@@ -590,8 +823,8 @@ describe "Enumerable" do
   end
 
   describe "first" do
-    assert { (1..3).first(1).should eq([1]) }
-    assert { (1..3).first(4).should eq([1, 2, 3]) }
+    it { (1..3).first(1).should eq([1]) }
+    it { (1..3).first(4).should eq([1, 2, 3]) }
 
     it "raises if count is negative" do
       expect_raises(ArgumentError) do

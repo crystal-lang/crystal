@@ -8,50 +8,6 @@ struct LLVM::Type
     @unwrap
   end
 
-  def self.void : self
-    new LibLLVM.void_type
-  end
-
-  def self.int(bits) : self
-    new LibLLVM.int_type(bits)
-  end
-
-  def self.float : self
-    new LibLLVM.float_type
-  end
-
-  def self.double : self
-    new LibLLVM.double_type
-  end
-
-  def self.pointer(element_type) : self
-    new LibLLVM.pointer_type(element_type, 0)
-  end
-
-  def self.array(element_type, count) : self
-    new LibLLVM.array_type(element_type, count)
-  end
-
-  def self.vector(element_type, count) : self
-    new LibLLVM.vector_type(element_type, count)
-  end
-
-  def self.struct(name : String, packed = false) : self
-    llvm_struct = LibLLVM.struct_create_named(Context.global, name)
-    the_struct = new llvm_struct
-    element_types = (yield the_struct).as(Array(LLVM::Type))
-    LibLLVM.struct_set_body(llvm_struct, (element_types.to_unsafe.as(LibLLVM::TypeRef*)), element_types.size, packed ? 1 : 0)
-    the_struct
-  end
-
-  def self.struct(element_types : Array(LLVM::Type), name = nil, packed = false) : self
-    if name
-      self.struct(name, packed) { element_types }
-    else
-      new LibLLVM.struct_type((element_types.to_unsafe.as(LibLLVM::TypeRef*)), element_types.size, packed ? 1 : 0)
-    end
-  end
-
   def self.function(arg_types : Array(LLVM::Type), return_type, varargs = false) : self
     new LibLLVM.function_type(return_type, (arg_types.to_unsafe.as(LibLLVM::TypeRef*)), arg_types.size, varargs ? 1 : 0)
   end
@@ -59,7 +15,7 @@ struct LLVM::Type
   def size
     # Asking the size of void crashes the program, we definitely don't want that
     if void?
-      LLVM.int(LLVM::Int64, 1)
+      context.int64.const_int(1)
     else
       Value.new LibLLVM.size_of(self)
     end
@@ -86,25 +42,39 @@ struct LLVM::Type
   end
 
   def pointer
-    Type.pointer self
+    Type.new LibLLVM.pointer_type(self, 0)
   end
 
   def array(count)
-    Type.array self, count
+    Type.new LibLLVM.array_type(self, count)
+  end
+
+  def vector(count) : self
+    Type.new LibLLVM.vector_type(self, count)
   end
 
   def int_width
-    raise "not an Integer" unless kind == Kind::Integer
+    raise "Not an Integer" unless kind == Kind::Integer
     LibLLVM.get_int_type_width(self).to_i32
   end
 
   def packed_struct?
-    raise "not a Struct" unless kind == Kind::Struct
+    raise "Not a Struct" unless kind == Kind::Struct
     LibLLVM.is_packed_struct(self) != 0
   end
 
-  def struct_element_types
+  # Assuming this type is a struct, returns its name.
+  # The name can be `nil` if the struct is anynomous.
+  # Raises if this type is not a struct.
+  def struct_name : String?
     raise "not a Struct" unless kind == Kind::Struct
+
+    name = LibLLVM.get_struct_name(self)
+    name ? String.new(name) : nil
+  end
+
+  def struct_element_types
+    raise "Not a Struct" unless kind == Kind::Struct
     count = LibLLVM.count_struct_element_types(self)
 
     Array(LLVM::Type).build(count) do |buffer|
@@ -118,13 +88,73 @@ struct LLVM::Type
     when Kind::Array, Kind::Vector, Kind::Pointer
       Type.new LibLLVM.get_element_type(self)
     else
-      raise "not a sequential type"
+      raise "Not a sequential type"
     end
   end
 
   def array_size
-    raise "not an Array" unless kind == Kind::Array
+    raise "Not an Array" unless kind == Kind::Array
     LibLLVM.get_array_length(self).to_i32
+  end
+
+  def vector_size
+    raise "not a Vector" unless kind == Kind::Vector
+    LibLLVM.get_vector_size(self).to_i32
+  end
+
+  def return_type
+    raise "not a Function" unless kind == Kind::Function
+    Type.new LibLLVM.get_return_type(self)
+  end
+
+  def params_types
+    params_size = self.params_size
+    Array(LLVM::Type).build(params_size) do |buffer|
+      LibLLVM.get_param_types(self, buffer.as(LibLLVM::TypeRef*))
+      params_size
+    end
+  end
+
+  def params_size
+    raise "not a Function" unless kind == Kind::Function
+    LibLLVM.count_param_types(self).to_i
+  end
+
+  def varargs?
+    raise "not a Function" unless kind == Kind::Function
+    LibLLVM.is_function_var_arg(self) != 0
+  end
+
+  def const_int(value) : Value
+    Value.new LibLLVM.const_int(self, value, 0)
+  end
+
+  def const_float(value : Float32) : Value
+    Value.new LibLLVM.const_real(self, value)
+  end
+
+  def const_float(value : String) : Value
+    Value.new LibLLVM.const_real_of_string(self, value)
+  end
+
+  def const_double(value : Float64) : Value
+    Value.new LibLLVM.const_real(self, value)
+  end
+
+  def const_double(string : String) : Value
+    Value.new LibLLVM.const_real_of_string(self, string)
+  end
+
+  def const_array(values : Array(LLVM::Value)) : Value
+    Value.new LibLLVM.const_array(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+  end
+
+  def const_inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false)
+    Value.new LibLLVM.const_inline_asm(self, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
+  end
+
+  def context : Context
+    Context.new(LibLLVM.get_type_context(self), dispose_on_finalize: false)
   end
 
   def inspect(io)

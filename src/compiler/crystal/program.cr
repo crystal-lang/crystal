@@ -1,4 +1,5 @@
 require "llvm"
+require "json"
 require "./types"
 
 module Crystal
@@ -106,6 +107,12 @@ module Crystal
     # Whether to show error trace
     property? show_error_trace = false
 
+    # The main filename of this program
+    property filename : String?
+
+    # Set to a `ProgressTracker` object which tracks compilation progress.
+    property progress_tracker = ProgressTracker.new
+
     def initialize
       super(self, self, "main")
 
@@ -163,7 +170,7 @@ module Crystal
 
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
-      static_array.declare_instance_var("@buffer", TypeParameter.new(self, static_array, "T"))
+      static_array.declare_instance_var("@buffer", static_array.type_parameter("T"))
       static_array.allowed_in_generics = false
 
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
@@ -172,8 +179,6 @@ module Crystal
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      object.metaclass = klass
-      klass.metaclass = klass
       klass.allowed_in_generics = false
 
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
@@ -236,6 +241,7 @@ module Crystal
       define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
       define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
       define_crystal_string_constant "VERSION", version
+      define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
     end
 
     private def define_crystal_string_constant(name, value)
@@ -252,7 +258,7 @@ module Crystal
 
     setter target_machine : LLVM::TargetMachine?
 
-    getter(target_machine) { TargetMachine.create(LLVM.default_target_triple, "", false) }
+    getter(target_machine) { TargetMachine.create(LLVM.default_target_triple) }
 
     # Returns the `Type` for `Array(type)`
     def array_of(type)
@@ -404,9 +410,19 @@ module Crystal
       end
     end
 
+    record RecordedRequire, filename : String, relative_to : String? do
+      JSON.mapping(filename: String, relative_to: String?)
+    end
+    property recorded_requires = [] of RecordedRequire
+
+    # Rmembers that the program depends on this require.
+    def record_require(filename, relative_to) : Nil
+      recorded_requires << RecordedRequire.new(filename, relative_to)
+    end
+
     # Finds *filename* in the configured CRYSTAL_PATH for this program,
     # relative to *relative_to*.
-    def find_in_path(filename, relative_to = nil)
+    def find_in_path(filename, relative_to = nil) : Array(String)?
       crystal_path.find filename, relative_to
     end
 

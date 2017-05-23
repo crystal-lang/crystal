@@ -7,7 +7,7 @@ end
 
 private def it_raises_on_null_byte(operation, &block)
   it "errors on #{operation}" do
-    expect_raises(ArgumentError, "string contains null byte") do
+    expect_raises(ArgumentError, "String contains null byte") do
       block.call
     end
   end
@@ -28,6 +28,24 @@ describe "Dir" do
 
   it "tests exists? on a directory path to a file" do
     Dir.exists?("#{__FILE__}/").should be_false
+  end
+
+  describe "empty?" do
+    it "tests empty? on a full directory" do
+      Dir.empty?(File.join([__DIR__, "../"])).should be_false
+    end
+
+    it "tests empty? on an empty directory" do
+      path = "/tmp/crystal_empty_test_#{Process.pid}/"
+      Dir.mkdir(path, 0o700).should eq(0)
+      Dir.empty?(path).should be_true
+    end
+
+    it "tests empty? on nonexistent directory" do
+      expect_raises Errno do
+        Dir.empty?(File.join([__DIR__, "/foo/bar/"]))
+      end
+    end
   end
 
   it "tests mkdir and rmdir with a new path" do
@@ -218,7 +236,7 @@ describe "Dir" do
     dir = Dir.new(__DIR__)
     dir.each do |filename|
       filenames << filename
-    end
+    end.should be_nil
     dir.close
 
     filenames.includes?("dir_spec.cr").should be_true
@@ -230,7 +248,7 @@ describe "Dir" do
     Dir.open(__DIR__) do |dir|
       dir.each do |filename|
         filenames << filename
-      end
+      end.should be_nil
     end
 
     filenames.includes?("dir_spec.cr").should be_true

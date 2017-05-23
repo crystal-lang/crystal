@@ -102,7 +102,7 @@ describe "Deque" do
     end
 
     it "creates with default value in block" do
-      deq = Deque(Int32).new(5) { |i| i * 2 }
+      deq = Deque.new(5) { |i| i * 2 }
       deq.should eq(Deque{0, 2, 4, 6, 8})
     end
 
@@ -112,13 +112,13 @@ describe "Deque" do
     end
 
     it "raises on negative count" do
-      expect_raises(ArgumentError, "negative deque size") do
+      expect_raises(ArgumentError, "Negative deque size") do
         Deque.new(-1, 3)
       end
     end
 
     it "raises on negative capacity" do
-      expect_raises(ArgumentError, "negative deque capacity") do
+      expect_raises(ArgumentError, "Negative deque capacity") do
         Deque(Int32).new(-1)
       end
     end
@@ -277,10 +277,17 @@ describe "Deque" do
     a.should eq(Deque{x})
   end
 
+  it "does each" do
+    a = Deque{1, 1, 1}
+    b = 0
+    a.each { |i| b += i }.should be_nil
+    b.should eq(3)
+  end
+
   it "does each_index" do
     a = Deque{1, 1, 1}
     b = 0
-    a.each_index { |i| b += i }
+    a.each_index { |i| b += i }.should be_nil
     b.should eq(3)
   end
 
@@ -367,7 +374,7 @@ describe "Deque" do
   end
 
   describe "inspect" do
-    assert { Deque{1, 2, 3}.inspect.should eq("Deque{1, 2, 3}") }
+    it { Deque{1, 2, 3}.inspect.should eq("Deque{1, 2, 3}") }
   end
 
   describe "last" do
@@ -530,7 +537,7 @@ describe "Deque" do
 
   describe "to_s" do
     it "does to_s" do
-      assert { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
+      it { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
     end
 
     it "does with recursive" do

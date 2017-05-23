@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: uninitialized" do
   it "declares as uninitialized" do
-    assert_type("a = uninitialized Int32") { nil_type }
+    assert_type("a = uninitialized Int32") { int32 }
   end
 
   it "declares as uninitialized and reads it" do
@@ -34,6 +34,20 @@ describe "Semantic: uninitialized" do
         def initialize
           @x = uninitialized Foo
         end
+      end
+
+      Bar.new
+      ),
+      "can't declare variable of generic non-instantiated type Foo"
+  end
+
+  it "errors if declaring generic type without type vars (with class var)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Bar
+        @@x = uninitialized Foo
       end
 
       Bar.new
@@ -125,5 +139,11 @@ describe "Semantic: uninitialized" do
 
       bar
       )) { nil_type }
+  end
+
+  it "has type (#3641)" do
+    assert_type(%(
+      x = uninitialized Int32
+      )) { int32 }
   end
 end

@@ -530,4 +530,32 @@ describe "Code gen: def" do
       fn(n)
       )).to_i.should eq(10)
   end
+
+  it "uses dispatch call type for phi (#3529)" do
+    codegen(%(
+      def foo(x : Int32)
+        yield
+        1.0
+      end
+
+      def foo(x : Int64)
+        yield
+        1.0
+      end
+
+      foo(1 || 1_i64) do
+        break
+      end
+      ), inject_primitives: false)
+  end
+
+  it "codegens union to union assignment of mutable arg (#3691)" do
+    codegen(%(
+      def foo(arg)
+        arg = ""
+      end
+
+      foo(1 || true)
+      ))
+  end
 end

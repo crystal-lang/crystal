@@ -68,6 +68,38 @@ describe "Lexer: location" do
     token.filename.should eq("foo")
   end
 
+  it "pushes and pops its location" do
+    lexer = Lexer.new %(#<loc:push>#<loc:"foo",12,34>1 + #<loc:pop>2)
+    lexer.filename = "bar"
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.line_number.should eq(12)
+    token.column_number.should eq(34)
+    token.filename.should eq("foo")
+
+    token = lexer.next_token
+    token.type.should eq(:SPACE)
+    token.line_number.should eq(12)
+    token.column_number.should eq(35)
+
+    token = lexer.next_token
+    token.type.should eq(:"+")
+    token.line_number.should eq(12)
+    token.column_number.should eq(36)
+
+    token = lexer.next_token
+    token.type.should eq(:SPACE)
+    token.line_number.should eq(12)
+    token.column_number.should eq(37)
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.line_number.should eq(1)
+    token.column_number.should eq(44)
+    token.filename.should eq("bar")
+  end
+
   it "uses two consecutive loc pragma " do
     lexer = Lexer.new %(1#<loc:"foo",12,34>#<loc:"foo",56,78>2)
     lexer.filename = "bar"

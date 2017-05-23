@@ -1,15 +1,18 @@
-# The Logger class provides a simple but sophisticated logging utility that you can use to output messages.
+# The `Logger` class provides a simple but sophisticated logging utility that you can use to output messages.
 #
-# The messages have associated levels, such as INFO or ERROR that indicate their importance.
-# You can then give the Logger a level, and only messages at that level of higher will be printed.
+# The messages have associated levels, such as `INFO` or `ERROR` that indicate their importance.
+# You can then give the `Logger` a level, and only messages at that level of higher will be printed.
 #
-# For instance, in a production system, you may have your Logger set to INFO or even WARN.
+# For instance, in a production system, you may have your `Logger` set to `INFO` or even `WARN`.
 # When you are developing the system, however, you probably want to know about the program’s internal state,
-# and would set the Logger to DEBUG.
+# and would set the `Logger` to `DEBUG`.
+#
+# If logging to multiple locations is required, an `IO::MultiWriter` can be
+# used.
 #
 # ### Example
 #
-# ```crystal
+# ```
 # require "logger"
 #
 # log = Logger.new(STDOUT)
@@ -20,7 +23,7 @@
 # log.warn("Nothing to do!")
 #
 # begin
-#   File.each_line(path) do |line|
+#   File.each_line("/foo/bar.log") do |line|
 #     unless line =~ /^(\w+) = (.*)$/
 #       log.error("Line in wrong format: #{line}")
 #     end
@@ -33,9 +36,41 @@
 class Logger
   property level : Severity
   property progname : String
+
+  # Customizable `Proc` (with a reasonable default)
+  # which the `Logger` uses to format and print its entries.
+  #
+  # Use this setter to provide a custom formatter.
+  # The `Logger` will invoke it with the following arguments:
+  #  - severity: a `Logger::Severity`
+  #  - datetime: `Time`, the entry's timestamp
+  #  - progname: `String`, the program name, if set when the logger was built
+  #  - message: `String`, the body of a message
+  #  - io: `IO`, the Logger's stream, to which you must write the final output
+  #
+  # Example:
+  #
+  # ```
+  # require "logger"
+  #
+  # logger = Logger.new(STDOUT)
+  # logger.progname = "YodaBot"
+  #
+  # logger.formatter = Logger::Formatter.new do |severity, datetime, progname, message, io|
+  #   label = severity.unknown? ? "ANY" : severity.to_s
+  #   io << label[0] << ", [" << datetime << " #" << Process.pid << "] "
+  #   io << label.rjust(5) << " -- " << progname << ": " << message
+  # end
+  #
+  # logger.warn("Fear leads to anger. Anger leads to hate. Hate leads to suffering.")
+  #
+  # # Prints to the console:
+  # # "W, [2017-05-06 18:00:41 -0300 #11927]  WARN --
+  # #  YodaBot: Fear leads to anger. Anger leads to hate. Hate leads to suffering."
+  # ```
   property formatter
 
-  # A logger severity level
+  # A logger severity level.
   enum Severity
     # Low-level information for developers
     DEBUG
@@ -55,11 +90,12 @@ class Logger
     UNKNOWN
   end
 
-  alias Formatter = String, Time, String, String, IO ->
+  alias Formatter = Severity, Time, String, String, IO ->
 
   private DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
-    io << severity[0] << ", [" << datetime << " #" << Process.pid << "] "
-    io << severity.rjust(5) << " -- " << progname << ": " << message
+    label = severity.unknown? ? "ANY" : severity.to_s
+    io << label[0] << ", [" << datetime << " #" << Process.pid << "] "
+    io << label.rjust(5) << " -- " << progname << ": " << message
   end
 
   # :nodoc:
@@ -79,7 +115,7 @@ class Logger
     @mutex = Mutex.new
   end
 
-  # Calls the *close* method on the object passed to `initialize`
+  # Calls the *close* method on the object passed to `initialize`.
   def close
     return if @closed
     return unless io = @io
@@ -131,11 +167,10 @@ class Logger
     io = @io
     return unless io
 
-    label = severity == Severity::UNKNOWN ? "ANY" : severity.to_s
     progname_to_s = progname.to_s
     message_to_s = message.to_s
     @mutex.synchronize do
-      formatter.call(label, datetime, progname_to_s, message_to_s, io)
+      formatter.call(severity, datetime, progname_to_s, message_to_s, io)
       io.puts
       io.flush
     end

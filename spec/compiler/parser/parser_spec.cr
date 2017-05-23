@@ -58,8 +58,8 @@ describe "Parser" do
   it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
 
   [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
-    ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
-    ":[]=", ":<=>", ":==="].each do |symbol|
+   ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
+   ":[]=", ":<=>", ":==="].each do |symbol|
     value = symbol[1, symbol.size - 1]
     value = value[1, value.size - 2] if value.starts_with?("\"")
     it_parses symbol, value.symbol
@@ -129,12 +129,11 @@ describe "Parser" do
   it_parses "a[0] = 1, 2", MultiAssign.new([Call.new("a".call, "[]", 0.int32)] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a[0], a[1] = 1, 2", MultiAssign.new([Call.new("a".call, "[]", 0.int32), Call.new("a".call, "[]", 1.int32)] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a.foo, a.bar = 1, 2", MultiAssign.new([Call.new("a".call, "foo"), Call.new("a".call, "bar")] of ASTNode, [1.int32, 2.int32] of ASTNode)
-  it_parses "x = 0; a, b = x += 1", [Assign.new("x".var, 0.int32), MultiAssign.new(["a".var, "b".var] of ASTNode, [Assign.new("x".var, Call.new("x".var, "+", 1.int32))] of ASTNode)] of ASTNode
+  it_parses "x = 0; a, b = x += 1", [Assign.new("x".var, 0.int32), MultiAssign.new(["a".var, "b".var] of ASTNode, [OpAssign.new("x".var, "+", 1.int32)] of ASTNode)] of ASTNode
   it_parses "a, b = 1, 2 if 3", If.new(3.int32, MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode))
 
   it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
-  it_parses "A, b = 1, 2", MultiAssign.new(["A".path, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
   assert_syntax_error "1 == 2, a = 4"
   assert_syntax_error "x : String, a = 4"
@@ -341,6 +340,10 @@ describe "Parser" do
   it_parses "x.foo(a: 1, b: 2)", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
   it_parses "x.foo a: 1, b: 2 ", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
 
+  it_parses "x[a: 1, b: 2]", Call.new("x".call, "[]", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
+  it_parses "x[{1}]", Call.new("x".call, "[]", TupleLiteral.new([1.int32] of ASTNode))
+  it_parses "x[+ 1]", Call.new("x".call, "[]", Call.new(1.int32, "+"))
+
   it_parses "foo(a: 1, &block)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: 1, &block", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: b(1) do\nend", Call.new(nil, "foo", named_args: [NamedArgument.new("a", Call.new(nil, "b", 1.int32))], block: Block.new)
@@ -364,7 +367,7 @@ describe "Parser" do
   it_parses "f.x = - 1", Call.new("f".call, "x=", [Call.new(1.int32, "-")] of ASTNode)
 
   ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
-    it_parses "f.x #{op}= 2", Call.new("f".call, "x=", Call.new(Call.new("f".call, "x"), op, 2.int32))
+    it_parses "f.x #{op}= 2", OpAssign.new(Call.new("f".call, "x"), op, 2.int32)
   end
 
   ["/", "<", "<=", "==", "!=", "=~", "!~", ">", ">=", "+", "-", "*", "/", "~", "%", "&", "|", "^", "**", "==="].each do |op|
@@ -386,16 +389,16 @@ describe "Parser" do
   end
 
   ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
-    it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), Assign.new("a".var, Call.new("a".var, op, 1.int32))] of ASTNode
-    it_parses "a = 1; a #{op}=\n1", [Assign.new("a".var, 1.int32), Assign.new("a".var, Call.new("a".var, op, 1.int32))] of ASTNode
-    it_parses "a.b #{op}=\n1", Call.new("a".call, "b=", Call.new(Call.new("a".call, "b"), op, 1.int32))
+    it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
+    it_parses "a = 1; a #{op}=\n1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
+    it_parses "a.b #{op}=\n1", OpAssign.new(Call.new("a".call, "b"), op, 1.int32)
   end
 
-  it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int32), And.new("a".var, Assign.new("a".var, 1.int32))]
-  it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int32), Or.new("a".var, Assign.new("a".var, 1.int32))]
+  it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, "&&", 1.int32)]
+  it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, "||", 1.int32)]
 
-  it_parses "a = 1; a[2] &&= 3", [Assign.new("a".var, 1.int32), And.new(Call.new("a".var, "[]?", 2.int32), Call.new("a".var, "[]=", 2.int32, 3.int32))]
-  it_parses "a = 1; a[2] ||= 3", [Assign.new("a".var, 1.int32), Or.new(Call.new("a".var, "[]?", 2.int32), Call.new("a".var, "[]=", 2.int32, 3.int32))]
+  it_parses "a = 1; a[2] &&= 3", [Assign.new("a".var, 1.int32), OpAssign.new(Call.new("a".var, "[]", 2.int32), "&&", 3.int32)]
+  it_parses "a = 1; a[2] ||= 3", [Assign.new("a".var, 1.int32), OpAssign.new(Call.new("a".var, "[]", 2.int32), "||", 3.int32)]
 
   it_parses "if foo; 1; end", If.new("foo".call, 1.int32)
   it_parses "if foo\n1\nend", If.new("foo".call, 1.int32)
@@ -466,6 +469,9 @@ describe "Parser" do
   it_parses %(Foo({"foo bar": X})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo bar", "X".path)])] of ASTNode)
   it_parses %(Foo({"foo": X, "bar": Y})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo", "X".path), NamedArgument.new("bar", "Y".path)])] of ASTNode)
 
+  it_parses %(Foo{"x" => "y"}), HashLiteral.new([HashLiteral::Entry.new("x".string, "y".string)], name: "Foo".path)
+  it_parses %(::Foo{"x" => "y"}), HashLiteral.new([HashLiteral::Entry.new("x".string, "y".string)], name: Path.global("Foo"))
+
   it_parses "Foo(*T)", Generic.new("Foo".path, ["T".path.splat] of ASTNode)
 
   it_parses "Foo(X, sizeof(Int32))", Generic.new("Foo".path, ["X".path, SizeOf.new("Int32".path)] of ASTNode)
@@ -492,6 +498,7 @@ describe "Parser" do
   it_parses "foo { |a| 1 }", Call.new(nil, "foo", block: Block.new(["a".var], 1.int32))
   it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
   it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", block: Block.new(body: 1.int32))
+  it_parses "a b() {}", Call.new(nil, "a", Call.new(nil, "b", block: Block.new))
 
   it_parses "foo { |a, (b, c), (d, e)| a; b; c; d; e }", Call.new(nil, "foo",
     block: Block.new(["a".var, "__arg0".var, "__arg1".var],
@@ -531,12 +538,12 @@ describe "Parser" do
 
   it_parses "1 if 3", If.new(3.int32, 1.int32)
   it_parses "1 unless 3", Unless.new(3.int32, 1.int32)
-  it_parses "r = 1; r.x += 2", [Assign.new("r".var, 1.int32), Call.new("r".var, "x=", Call.new(Call.new("r".var, "x"), "+", 2.int32))] of ASTNode
+  it_parses "r = 1; r.x += 2", [Assign.new("r".var, 1.int32), OpAssign.new(Call.new("r".var, "x"), "+", 2.int32)] of ASTNode
 
   it_parses "foo if 3", If.new(3.int32, "foo".call)
   it_parses "foo unless 3", Unless.new(3.int32, "foo".call)
 
-  it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int32), If.new(Assign.new("a".var, Call.new("a".var, "+", 20.int32)), Assign.new("a".var, Call.new("a".var, "+", 10.int32)))]
+  it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int32), If.new(OpAssign.new("a".var, "+", 20.int32), OpAssign.new("a".var, "+", 10.int32))]
   it_parses "puts a if true", If.new(true.bool, Call.new(nil, "puts", "a".call))
   it_parses "puts ::foo", Call.new(nil, "puts", Call.new(nil, "foo", global: true))
 
@@ -705,6 +712,7 @@ describe "Parser" do
   it_parses "puts {{1}}", Call.new(nil, "puts", MacroExpression.new(1.int32))
   it_parses "puts {{\n1\n}}", Call.new(nil, "puts", MacroExpression.new(1.int32))
   it_parses "puts {{*1}}", Call.new(nil, "puts", MacroExpression.new(1.int32.splat))
+  it_parses "puts {{**1}}", Call.new(nil, "puts", MacroExpression.new(DoubleSplat.new(1.int32)))
   it_parses "{{a = 1 if 2}}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)))
   it_parses "{% a = 1 %}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false)
   it_parses "{%\na = 1\n%}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false)
@@ -748,6 +756,8 @@ describe "Parser" do
 
   it_parses "macro foo;bar{% begin %}body{% end %}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new(true.bool, "body".macro_literal), "baz;".macro_literal] of ASTNode))
 
+  it_parses "macro x\n%{}\nend", Macro.new("x", body: MacroLiteral.new("%{}\n"))
+
   it_parses "def foo : Int32\n1\nend", Def.new("foo", body: 1.int32, return_type: "Int32".path)
   it_parses "def foo(x) : Int32\n1\nend", Def.new("foo", args: ["x".arg], body: 1.int32, return_type: "Int32".path)
 
@@ -760,6 +770,13 @@ describe "Parser" do
 
   it_parses "macro foo;%var;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroLiteral.new(";")] of ASTNode))
   it_parses "macro foo;%var{1, x} = hello;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [1.int32, "x".var] of ASTNode), MacroLiteral.new(" = hello;")] of ASTNode))
+
+  ["if", "unless"].each do |keyword|
+    it_parses "macro foo;%var #{keyword} true;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), " #{keyword} true;".macro_literal] of ASTNode))
+    it_parses "macro foo;var #{keyword} true;end", Macro.new("foo", [] of Arg, "var #{keyword} true;".macro_literal)
+    it_parses "macro foo;#{keyword} %var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["#{keyword} ".macro_literal, MacroVar.new("var"), ";true;".macro_literal, "end;".macro_literal] of ASTNode))
+    it_parses "macro foo;#{keyword} var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["#{keyword} var;true;".macro_literal, "end;".macro_literal] of ASTNode))
+  end
 
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
@@ -821,6 +838,9 @@ describe "Parser" do
   it_parses "begin\n/ /\nend", Expressions.new([regex(" ")] of ASTNode)
   it_parses "/\\//", regex("/")
   it_parses "%r(/)", regex("/")
+  it_parses "a()/3", Call.new("a".call, "/", 3.int32)
+  it_parses "a() /3", Call.new("a".call, "/", 3.int32)
+  it_parses "a.b() /3", Call.new(Call.new("a".call, "b"), "/", 3.int32)
 
   it_parses "1 =~ 2", Call.new(1.int32, "=~", 2.int32)
   it_parses "1.=~(2)", Call.new(1.int32, "=~", 2.int32)
@@ -879,6 +899,7 @@ describe "Parser" do
   it_parses "case / /\nwhen / /\n/ /\nelse\n/ /\nend", Case.new(regex(" "), [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "))
 
   it_parses "case 1; when 1 then 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1; when x then 2; else; 3; end", Case.new(1.int32, [When.new(["x".call] of ASTNode, 2.int32)], 3.int32)
   it_parses "case 1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
   it_parses "case\n1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
 
@@ -893,7 +914,10 @@ describe "Parser" do
   it_parses "case {1, 2}\nwhen {3, 4}, {5, 6}\n7\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode), TupleLiteral.new([5.int32, 6.int32] of ASTNode)] of ASTNode, 7.int32)])
   it_parses "case {1, 2}\nwhen {.foo, .bar}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new(ImplicitObj.new, "foo"), Call.new(ImplicitObj.new, "bar")] of ASTNode)] of ASTNode, 5.int32)])
   it_parses "case {1, 2}\nwhen foo\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new(["foo".call] of ASTNode, 5.int32)])
+  it_parses "case a\nwhen b\n1 / 2\nelse\n1 / 2\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, Call.new(1.int32, "/", 2.int32))], Call.new(1.int32, "/", 2.int32))
+  it_parses "case a\nwhen b\n/ /\n\nelse\n/ /\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, RegexLiteral.new(StringLiteral.new(" ")))], RegexLiteral.new(StringLiteral.new(" ")))
   assert_syntax_error "case {1, 2}; when {3}; 4; end", "wrong number of tuple elements (given 1, expected 2)", 1, 19
+  assert_syntax_error "case 1; end", "unexpected token: end (expecting when or else)", 1, 9
 
   it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
   it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
@@ -1021,13 +1045,15 @@ describe "Parser" do
   it_parses "{1, 2, 3}", TupleLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode)
   it_parses "{A::B}", TupleLiteral.new([Path.new(["A", "B"])] of ASTNode)
   it_parses "{\n1,\n2\n}", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
+  it_parses "{\n1\n}", TupleLiteral.new([1.int32] of ASTNode)
+  it_parses "{\n{1}\n}", TupleLiteral.new([TupleLiteral.new([1.int32] of ASTNode)] of ASTNode)
 
   it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", block: Block.new(body: Assign.new("a".var, 1.int32))), "a".call] of ASTNode
 
   it_parses "foo.bar(1).baz", Call.new(Call.new("foo".call, "bar", 1.int32), "baz")
 
-  it_parses "b.c ||= 1", Or.new(Call.new("b".call, "c"), Call.new("b".call, "c=", 1.int32))
-  it_parses "b.c &&= 1", And.new(Call.new("b".call, "c"), Call.new("b".call, "c=", 1.int32))
+  it_parses "b.c ||= 1", OpAssign.new(Call.new("b".call, "c"), "||", 1.int32)
+  it_parses "b.c &&= 1", OpAssign.new(Call.new("b".call, "c"), "&&", 1.int32)
 
   it_parses "a = 1; class Foo; @x = a; end", [Assign.new("a".var, 1.int32), ClassDef.new("Foo".path, Assign.new("@x".instance_var, "a".call))]
 
@@ -1119,7 +1145,7 @@ describe "Parser" do
   it_parses "<<-HERE\n   One\n\n  Zero\n  HERE", " One\n\nZero".string
   it_parses "<<-HERE\n   One\n \n  Zero\n  HERE", " One\n\nZero".string
   it_parses "<<-HERE\n   \#{1}One\n  \#{2}Zero\n  HERE", StringInterpolation.new([" ".string, 1.int32, "One\n".string, 2.int32, "Zero".string] of ASTNode)
-  it_parses "<<-HERE\n  foo\#{1}bar\n   baz\n  HERE", StringInterpolation.new(["foo".string, 1.int32, "bar\n".string, " baz".string] of ASTNode)
+  it_parses "<<-HERE\n  foo\#{1}bar\n   baz\n  HERE", StringInterpolation.new(["foo".string, 1.int32, "bar\n baz".string] of ASTNode)
   it_parses "<<-HERE\r\n   One\r\n  Zero\r\n  HERE", " One\r\nZero".string
   it_parses "<<-HERE\r\n   One\r\n  Zero\r\n  HERE\r\n", " One\r\nZero".string
   it_parses "<<-SOME\n  Sa\n  Se\n  SOME", "Sa\nSe".string
@@ -1216,6 +1242,14 @@ describe "Parser" do
 
   it_parses "Foo.foo(count: 3).bar { }", Call.new(Call.new("Foo".path, "foo", named_args: [NamedArgument.new("count", 3.int32)]), "bar", block: Block.new)
 
+  it_parses %(
+    class Foo
+      def bar
+        print as Foo
+      end
+    end
+  ), ClassDef.new("Foo".path, Def.new("bar", body: Call.new(nil, "print", Cast.new(Var.new("self"), "Foo".path))))
+
   assert_syntax_error "a = a", "can't use variable name 'a' inside assignment to variable 'a'"
 
   assert_syntax_error "{{ {{ 1 }} }}", "can't nest macro expressions"
@@ -1231,6 +1265,10 @@ describe "Parser" do
 
   it_parses "{1 => 2 / 3}", HashLiteral.new([HashLiteral::Entry.new(1.int32, Call.new(2.int32, "/", 3.int32))])
   it_parses "a { |x| x } / b", Call.new(Call.new(nil, "a", block: Block.new(args: ["x".var], body: "x".var)), "/", "b".call)
+
+  it_parses "1 if /x/", If.new(RegexLiteral.new("x".string), 1.int32)
+
+  it_parses "foo bar.baz(1) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
 
   assert_syntax_error "return do\nend", "unexpected token: do"
 
@@ -1314,6 +1352,8 @@ describe "Parser" do
     "can't change the value of self"
   assert_syntax_error "self += 1",
     "can't change the value of self"
+  assert_syntax_error "FOO, BAR = 1, 2",
+    "Multiple assignment is not allowed for constants"
   assert_syntax_error "self, x = 1, 2",
     "can't change the value of self"
   assert_syntax_error "x, self = 1, 2",
@@ -1428,6 +1468,12 @@ describe "Parser" do
   assert_syntax_error "class Foo(T, U V)"
   assert_syntax_error "->(x y) { }"
   assert_syntax_error "->(x, y z) { }"
+
+  assert_syntax_error "x[1:-2]"
+
+  assert_syntax_error "1 ? : 2 : 3"
+
+  assert_syntax_error %(def foo("bar");end), "expected argument internal name"
 
   describe "end locations" do
     assert_end_location "nil"

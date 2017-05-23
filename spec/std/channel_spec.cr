@@ -249,4 +249,14 @@ describe Channel::Buffered do
     ch = Channel::Buffered(Int32).new(10)
     ch.inspect.should eq("#<Channel::Buffered(Int32):0x#{ch.object_id.to_s(16)}>")
   end
+
+  it "does pretty_inspect on unbuffered channel" do
+    ch = Channel::Unbuffered(Int32).new
+    ch.pretty_inspect.should eq("#<Channel::Unbuffered(Int32):0x#{ch.object_id.to_s(16)}>")
+  end
+
+  it "does pretty_inspect on buffered channel" do
+    ch = Channel::Buffered(Int32).new(10)
+    ch.pretty_inspect.should eq("#<Channel::Buffered(Int32):0x#{ch.object_id.to_s(16)}>")
+  end
 end

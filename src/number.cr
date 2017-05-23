@@ -13,8 +13,8 @@ struct Number
     self
   end
 
-  # Creates an `Array` of self with the given values, which will be casted
-  # to this type with the `new` method (defined in each Number type).
+  # Creates an `Array` of `self` with the given values, which will be casted
+  # to this type with the `new` method (defined in each `Number` type).
   #
   # ```
   # floats = Float64[1, 2, 3, 4]
@@ -32,8 +32,8 @@ struct Number
     end
   end
 
-  # Creates a `Slice` of self with the given values, which will be casted
-  # to this type with the `new` method (defined in each Number type).
+  # Creates a `Slice` of `self` with the given values, which will be casted
+  # to this type with the `new` method (defined in each `Number` type).
   #
   # The slice is allocated on the heap.
   #
@@ -44,16 +44,16 @@ struct Number
   # ints = Int64.slice(1, 2, 3)
   # ints.class # => Slice(Int64)
   # ```
-  macro slice(*nums)
-    %slice = Slice({{@type}}).new({{nums.size}})
+  macro slice(*nums, read_only = false)
+    %slice = Slice({{@type}}).new({{nums.size}}, read_only: {{read_only}})
     {% for num, i in nums %}
       %slice.to_unsafe[{{i}}] = {{@type}}.new({{num}})
     {% end %}
     %slice
   end
 
-  # Creates a `StaticArray` of self with the given values, which will be casted
-  # to this type with the `new` method (defined in each Number type).
+  # Creates a `StaticArray` of `self` with the given values, which will be casted
+  # to this type with the `new` method (defined in each `Number` type).
   #
   # ```
   # floats = Float64.static_array(1, 2, 3, 4)
@@ -71,10 +71,10 @@ struct Number
   end
 
   # Invokes the given block with the sequence of numbers starting at `self`,
-  # incremented by `by` on each call, and with an optional `limit`.
+  # incremented by *by* on each call, and with an optional *to*.
   #
   # ```
-  # 3.step(by: 2, limit: 10) do |n|
+  # 3.step(to: 10, by: 2) do |n|
   #   puts n
   # end
   # ```
@@ -87,17 +87,17 @@ struct Number
   # 7
   # 9
   # ```
-  def step(limit = nil, by = 1)
+  def step(*, to = nil, by = 1)
     x = self + (by - by)
 
-    if limit
+    if to
       if by > 0
-        while x <= limit
+        while x <= to
           yield x
           x += by
         end
       elsif by < 0
-        while x >= limit
+        while x >= to
           yield x
           x += by
         end
@@ -112,8 +112,8 @@ struct Number
     self
   end
 
-  def step(limit = nil, by = 1)
-    StepIterator.new(self + (by - by), limit, by)
+  def step(*, to = nil, by = 1)
+    StepIterator.new(self + (by - by), to, by)
   end
 
   # Returns the absolute value of this number.
@@ -126,7 +126,7 @@ struct Number
     self < 0 ? -self : self
   end
 
-  # Returns the square of self (`self * self`).
+  # Returns the square of `self` (`self * self`).
   #
   # ```
   # 4.abs2   # => 16
@@ -136,10 +136,10 @@ struct Number
     self * self
   end
 
-  # Returns the sign of this number as an Int32.
-  # * -1 if this number is negative
-  # * 0 if this number is zero
-  # * 1 if this number is positive
+  # Returns the sign of this number as an `Int32`.
+  # * `-1` if this number is negative
+  # * `0` if this number is zero
+  # * `1` if this number is positive
   #
   # ```
   # 123.sign # => 1
@@ -151,19 +151,19 @@ struct Number
   end
 
   # Returns a `Tuple` of two elements containing the quotient
-  # and modulus obtained by dividing self by *number*.
+  # and modulus obtained by dividing `self` by *number*.
   #
   # ```
   # 11.divmod(3)  # => {3, 2}
-  # 11.divmod(-3) # => {-3, 2}
+  # 11.divmod(-3) # => {-4, -1}
   # ```
   def divmod(number)
-    {self / number, self % number}
+    {(self / number).floor, self % number}
   end
 
   # Implements the comparison operator.
   #
-  # See `Object#<=>`
+  # See also: `Object#<=>`.
   def <=>(other)
     self > other ? 1 : (self < other ? -1 : 0)
   end
@@ -215,18 +215,20 @@ struct Number
     self.class.new((x * y).round / y)
   end
 
-  # Clamps a value within `range`.
+  # Clamps a value within *range*.
+  #
   # ```
   # 5.clamp(10..100)   # => 10
   # 50.clamp(10..100)  # => 50
   # 500.clamp(10..100) # => 100
   # ```
   def clamp(range : Range)
-    raise ArgumentError.new("can't clamp an exclusive range") if range.exclusive?
+    raise ArgumentError.new("Can't clamp an exclusive range") if range.exclusive?
     clamp range.begin, range.end
   end
 
   # Clamps a value between *min* and *max*.
+  #
   # ```
   # 5.clamp(10, 100)   # => 10
   # 50.clamp(10, 100)  # => 50
@@ -242,20 +244,20 @@ struct Number
     include Iterator(T)
 
     @n : T
-    @limit : L
+    @to : L
     @by : B
     @original : T
 
-    def initialize(@n : T, @limit : L, @by : B)
+    def initialize(@n : T, @to : L, @by : B)
       @original = @n
     end
 
     def next
-      if limit = @limit
+      if to = @to
         if @by > 0
-          return stop if @n > limit
+          return stop if @n > to
         elsif @by < 0
-          return stop if @n < limit
+          return stop if @n < to
         end
 
         value = @n

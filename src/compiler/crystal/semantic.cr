@@ -18,10 +18,16 @@ class Crystal::Program
   # Runs semantic analysis on the given node, returning a node
   # that's typed. In the process types and methods are defined in
   # this program.
-  def semantic(node : ASTNode, stats = false) : ASTNode
-    node, processor = top_level_semantic(node, stats: stats)
+  def semantic(node : ASTNode, cleanup = true) : ASTNode
+    node, processor = top_level_semantic(node)
 
-    Crystal.timing("Semantic (cvars initializers)", stats) do
+    @progress_tracker.stage("Semantic (ivars initializers)") do
+      visitor = InstanceVarsInitializerVisitor.new(self)
+      visit_with_finished_hooks(node, visitor)
+      visitor.finish
+    end
+
+    @progress_tracker.stage("Semantic (cvars initializers)") do
       visit_class_vars_initializers(node)
     end
 
@@ -29,19 +35,19 @@ class Crystal::Program
     # give an error otherwise
     processor.check_non_nilable_class_vars_without_initializers
 
-    Crystal.timing("Semantic (ivars initializers)", stats) do
-      node.accept InstanceVarsInitializerVisitor.new(self)
+    result = @progress_tracker.stage("Semantic (main)") do
+      visit_main(node, process_finished_hooks: true, cleanup: cleanup)
     end
-    result = Crystal.timing("Semantic (main)", stats) do
-      visit_main(node)
-    end
-    Crystal.timing("Semantic (cleanup)", stats) do
+
+    @progress_tracker.stage("Semantic (cleanup)") do
       cleanup_types
       cleanup_files
     end
-    Crystal.timing("Semantic (recursive struct check)", stats) do
+
+    @progress_tracker.stage("Semantic (recursive struct check)") do
       RecursiveStructChecker.new(self).run
     end
+
     result
   end
 
@@ -50,19 +56,20 @@ class Crystal::Program
   #
   # This alone is useful for some tools like doc or hierarchy
   # where a full semantic of the program is not needed.
-  def top_level_semantic(node, stats = false)
-    new_expansions = Crystal.timing("Semantic (top level)", stats) do
+  def top_level_semantic(node)
+    new_expansions = @progress_tracker.stage("Semantic (top level)") do
       visitor = TopLevelVisitor.new(self)
       node.accept visitor
+      visitor.process_finished_hooks
       visitor.new_expansions
     end
-    Crystal.timing("Semantic (new)", stats) do
+    @progress_tracker.stage("Semantic (new)") do
       define_new_methods(new_expansions)
     end
-    node, processor = Crystal.timing("Semantic (type declarations)", stats) do
+    node, processor = @progress_tracker.stage("Semantic (type declarations)") do
       TypeDeclarationProcessor.new(self).process(node)
     end
-    Crystal.timing("Semantic (abstract def check)", stats) do
+    @progress_tracker.stage("Semantic (abstract def check)") do
       AbstractDefChecker.new(self).run
     end
     {node, processor}

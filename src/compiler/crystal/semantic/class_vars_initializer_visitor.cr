@@ -14,7 +14,7 @@ module Crystal
   class Program
     def visit_class_vars_initializers(node)
       visitor = ClassVarsInitializerVisitor.new(self)
-      node.accept visitor
+      visit_with_finished_hooks(node, visitor)
 
       # First gather them all
       class_var_initializers = [] of ClassVarInitializer

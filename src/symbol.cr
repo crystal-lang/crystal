@@ -17,14 +17,15 @@ struct Symbol
 
   # Generates an `Int32` hash value for this symbol.
   #
-  # See `Object#hash`.
+  # See also: `Object#hash`.
   def hash : Int32
     to_i
   end
 
-  # Compares symbol with other based on `String#<=>` method. Returns -1, 0
-  # or +1 depending on whether symbol is less than, equal to, or greater than
-  # other_symbol.
+  # Compares symbol with other based on `String#<=>` method. Returns `-1`, `0`
+  # or `+1` depending on whether symbol is less than, equal to,
+  # or greater than *other*.
+  #
   # See `String#<=>` for more information.
   def <=>(other : Symbol)
     to_s <=> other.to_s
@@ -46,7 +47,7 @@ struct Symbol
     end
   end
 
-  # Appends the symbol's name to the passed IO.
+  # Appends the symbol's name to the passed `IO`.
   #
   # ```
   # :crystal.to_s # => "crystal"
@@ -69,12 +70,12 @@ struct Symbol
       # Nothing
     else
       string.each_char_with_index do |char, i|
-        if i == 0 && char.digit?
+        if i == 0 && char.ascii_number?
           return true
         end
 
         case char
-        when .alphanumeric?, '_'
+        when .ascii_alphanumeric?, '_'
           # Nothing
         else
           return true

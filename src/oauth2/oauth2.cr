@@ -1,5 +1,5 @@
 # The OAuth module provides an `OAuth2::Client` as specified
-# by [RFC6749](https://tools.ietf.org/html/rfc6749).
+# by [RFC 6749](https://tools.ietf.org/html/rfc6749).
 #
 # ### Performing HTTP client requests with OAuth2 authentication
 #
@@ -10,8 +10,9 @@
 # require "http/client"
 # require "oauth2"
 #
-# # Here we use a bearer token, but it could be a mac token
-# access_token = OAuth2::AccessToken::Bearer.new("some_access_token")
+# # Here we use a bearer token, but it could be a mac token. We also set the
+# # expires in value to 172,800 seconds, or 48 hours
+# access_token = OAuth2::AccessToken::Bearer.new("some_access_token", 172_800)
 #
 # # Create an HTTP::Client
 # client = HTTP::Client.new("api.example.com", tls: true)

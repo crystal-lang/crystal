@@ -62,7 +62,7 @@ describe "Hash" do
   end
 
   describe "==" do
-    assert do
+    it do
       a = {1 => 2, 3 => 4}
       b = {3 => 4, 1 => 2}
       c = {2 => 3}
@@ -75,7 +75,7 @@ describe "Hash" do
       d.should_not eq(a)
     end
 
-    assert do
+    it do
       a = {1 => nil}
       b = {3 => 4}
       a.should_not eq(b)
@@ -257,6 +257,22 @@ describe "Hash" do
       a = {1 => 2}
       a.delete(2).should be_nil
     end
+
+    describe "with block" do
+      it "returns the value if a key is found" do
+        a = {1 => 2}
+        a.delete(1) { 5 }.should eq(2)
+      end
+
+      it "returns the value of the block if key is not found" do
+        a = {1 => 2}
+        a.delete(3) { |key| key }.should eq(3)
+      end
+
+      it "returns nil if key is found and value is nil" do
+        {3 => nil}.delete(3) { 7 }.should be_nil
+      end
+    end
   end
 
   describe "size" do
@@ -279,9 +295,9 @@ describe "Hash" do
   end
 
   describe "to_s" do
-    assert { {1 => 2, 3 => 4}.to_s.should eq("{1 => 2, 3 => 4}") }
+    it { {1 => 2, 3 => 4}.to_s.should eq("{1 => 2, 3 => 4}") }
 
-    assert do
+    it do
       h = {} of RecursiveHash => RecursiveHash
       h[h] = h
       h.to_s.should eq("{{...} => {...}}")
@@ -420,6 +436,30 @@ describe "Hash" do
     h1.should eq({:a => 1, :b => 2, :c => 3})
   end
 
+  it "compacts" do
+    h1 = {:a => 1, :b => 2, :c => nil}
+
+    h2 = h1.compact
+    h2.should be_a(Hash(Symbol, Int32))
+    h2.should eq({:a => 1, :b => 2})
+  end
+
+  it "compacts!" do
+    h1 = {:a => 1, :b => 2, :c => nil}
+
+    h2 = h1.compact!
+    h2.should eq({:a => 1, :b => 2})
+    h2.should be(h1)
+  end
+
+  it "returns nil when using compact! and no changes were made" do
+    h1 = {:a => 1, :b => 2, :c => 3}
+
+    h2 = h1.compact!
+    h2.should be_nil
+    h1.should eq({:a => 1, :b => 2, :c => 3})
+  end
+
   it "zips" do
     ary1 = [1, 2, 3]
     ary2 = ['a', 'b', 'c']
@@ -535,6 +575,36 @@ describe "Hash" do
     %w(a c).should contain h3[1]
   end
 
+  it "does each" do
+    hash = {"foo" => 1, "bar" => 2}
+    ks = [] of String
+    vs = [] of Int32
+    hash.each do |k, v|
+      ks << k
+      vs << v
+    end.should be_nil
+    ks.should eq(["foo", "bar"])
+    vs.should eq([1, 2])
+  end
+
+  it "does each_key" do
+    hash = {"foo" => 1, "bar" => 2}
+    ks = [] of String
+    hash.each_key do |k|
+      ks << k
+    end.should be_nil
+    ks.should eq(["foo", "bar"])
+  end
+
+  it "does each_value" do
+    hash = {"foo" => 1, "bar" => 2}
+    vs = [] of Int32
+    hash.each_value do |v|
+      vs << v
+    end.should be_nil
+    vs.should eq([1, 2])
+  end
+
   it "gets each iterator" do
     iter = {:a => 1, :b => 2}.each
     iter.next.should eq({:a, 1})
@@ -569,14 +639,14 @@ describe "Hash" do
     it "pass key, value, index values into block" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      hash.each_with_index { |(k, v), i| results << k + v + i }
+      hash.each_with_index { |(k, v), i| results << k + v + i }.should be_nil
       results.should eq [6, 16, 23]
     end
 
     it "can be used with offset" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      hash.each_with_index(3) { |(k, v), i| results << k + v + i }
+      hash.each_with_index(3) { |(k, v), i| results << k + v + i }.should be_nil
       results.should eq [9, 19, 26]
     end
   end
@@ -685,9 +755,9 @@ describe "Hash" do
   end
 
   describe "reject" do
-    assert { {:a => 2, :b => 3}.reject(:b, :d).should eq({:a => 2}) }
-    assert { {:a => 2, :b => 3}.reject(:b, :a).should eq({} of Symbol => Int32) }
-    assert { {:a => 2, :b => 3}.reject([:b, :a]).should eq({} of Symbol => Int32) }
+    it { {:a => 2, :b => 3}.reject(:b, :d).should eq({:a => 2}) }
+    it { {:a => 2, :b => 3}.reject(:b, :a).should eq({} of Symbol => Int32) }
+    it { {:a => 2, :b => 3}.reject([:b, :a]).should eq({} of Symbol => Int32) }
     it "does not change currrent hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h2 = h.reject(:b, :c)
@@ -696,9 +766,9 @@ describe "Hash" do
   end
 
   describe "reject!" do
-    assert { {:a => 2, :b => 3}.reject!(:b, :d).should eq({:a => 2}) }
-    assert { {:a => 2, :b => 3}.reject!(:b, :a).should eq({} of Symbol => Int32) }
-    assert { {:a => 2, :b => 3}.reject!([:b, :a]).should eq({} of Symbol => Int32) }
+    it { {:a => 2, :b => 3}.reject!(:b, :d).should eq({:a => 2}) }
+    it { {:a => 2, :b => 3}.reject!(:b, :a).should eq({} of Symbol => Int32) }
+    it { {:a => 2, :b => 3}.reject!([:b, :a]).should eq({} of Symbol => Int32) }
     it "changes currrent hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h.reject!(:b, :c)
@@ -707,10 +777,10 @@ describe "Hash" do
   end
 
   describe "select" do
-    assert { {:a => 2, :b => 3}.select(:b, :d).should eq({:b => 3}) }
-    assert { {:a => 2, :b => 3}.select.should eq({} of Symbol => Int32) }
-    assert { {:a => 2, :b => 3}.select(:b, :a).should eq({:a => 2, :b => 3}) }
-    assert { {:a => 2, :b => 3}.select([:b, :a]).should eq({:a => 2, :b => 3}) }
+    it { {:a => 2, :b => 3}.select(:b, :d).should eq({:b => 3}) }
+    it { {:a => 2, :b => 3}.select.should eq({} of Symbol => Int32) }
+    it { {:a => 2, :b => 3}.select(:b, :a).should eq({:a => 2, :b => 3}) }
+    it { {:a => 2, :b => 3}.select([:b, :a]).should eq({:a => 2, :b => 3}) }
     it "does not change currrent hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h2 = h.select(:b, :c)
@@ -719,10 +789,10 @@ describe "Hash" do
   end
 
   describe "select!" do
-    assert { {:a => 2, :b => 3}.select!(:b, :d).should eq({:b => 3}) }
-    assert { {:a => 2, :b => 3}.select!.should eq({} of Symbol => Int32) }
-    assert { {:a => 2, :b => 3}.select!(:b, :a).should eq({:a => 2, :b => 3}) }
-    assert { {:a => 2, :b => 3}.select!([:b, :a]).should eq({:a => 2, :b => 3}) }
+    it { {:a => 2, :b => 3}.select!(:b, :d).should eq({:b => 3}) }
+    it { {:a => 2, :b => 3}.select!.should eq({} of Symbol => Int32) }
+    it { {:a => 2, :b => 3}.select!(:b, :a).should eq({:a => 2, :b => 3}) }
+    it { {:a => 2, :b => 3}.select!([:b, :a]).should eq({:a => 2, :b => 3}) }
     it "does change currrent hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h.select!(:b, :c)

@@ -20,15 +20,33 @@ class XML::Error < Exception
   }
 
   LibXML.xmlSetGenericErrorFunc nil, ->(ctx, fmt) {
-    # TODO: use va_start and va_end
-    raise XML::Error.new(String.new(fmt).chomp, 0)
+    # TODO: use va_start and va_end to
+    message = String.new(fmt).chomp
+    error = XML::Error.new(message, 0)
+
+    {% if flag?(:arm) || flag?(:aarch64) %}
+      # libxml2 is likely missing ARM unwind tables (.ARM.extab and .ARM.exidx
+      # sections) which prevent raising from a libxml2 context.
+      @@errors << error
+    {% else %}
+      raise error
+    {% end %}
   }
 
   # :nodoc:
   def self.set_errors(node)
-    unless @@errors.empty?
-      node.errors = @@errors.dup
+    if errors = self.errors
+      node.errors = errors
+    end
+  end
+
+  def self.errors
+    if @@errors.empty?
+      nil
+    else
+      errors = @@errors.dup
       @@errors.clear
+      errors
     end
   end
 end

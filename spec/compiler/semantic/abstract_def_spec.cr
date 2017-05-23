@@ -375,4 +375,23 @@ describe "Semantic: abstract def" do
       end
       )
   end
+
+  it "finds implements in included module in disorder (#4052)" do
+    semantic %(
+      module B
+        abstract def x
+      end
+
+      module C
+        def x
+          :x
+        end
+      end
+
+      class A
+        include C
+        include B
+      end
+      )
+  end
 end

@@ -52,6 +52,7 @@ abstract class OpenSSL::SSL::Socket
 
       ret = LibSSL.ssl_accept(@ssl)
       unless ret == 1
+        io.close if sync_close
         raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
@@ -67,9 +68,9 @@ abstract class OpenSSL::SSL::Socket
     end
   end
 
-  include IO
+  include IO::Buffered
 
-  # If `sync_close` is true, closing this socket will
+  # If `#sync_close?` is `true`, closing this socket will
   # close the underlying IO.
   property? sync_close : Bool
 
@@ -90,19 +91,20 @@ abstract class OpenSSL::SSL::Socket
     LibSSL.ssl_free(@ssl)
   end
 
-  def read(slice : Slice(UInt8))
+  def unbuffered_read(slice : Bytes)
     check_open
 
     count = slice.size
     return 0 if count == 0
+
     LibSSL.ssl_read(@ssl, slice.pointer(count), count).tap do |bytes|
-      unless bytes > 0
+      if bytes <= 0 && !LibSSL.ssl_get_error(@ssl, bytes).zero_return?
         raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
       end
     end
   end
 
-  def write(slice : Slice(UInt8))
+  def unbuffered_write(slice : Bytes)
     check_open
 
     count = slice.size
@@ -113,12 +115,12 @@ abstract class OpenSSL::SSL::Socket
     nil
   end
 
-  def flush
+  def unbuffered_flush
     @bio.io.flush
   end
 
   {% if LibSSL::OPENSSL_102 %}
-  # Returns the negotiated ALPN protocol (eg: "h2") of nil if no protocol was
+  # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
   # negotiated.
   def alpn_protocol
     LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
@@ -126,7 +128,7 @@ abstract class OpenSSL::SSL::Socket
   end
   {% end %}
 
-  def close
+  def unbuffered_close
     return if @closed
     @closed = true
 
@@ -143,7 +145,9 @@ abstract class OpenSSL::SSL::Socket
             # assume we're done
             break
           when Errno::EAGAIN
-            # Ignore, shutdown did not complete yet
+            # Ignore/retry, shutdown did not complete yet
+          when Errno::EINPROGRESS
+            # Ignore/retry, another operation not complete yet
           else
             raise e
           end
@@ -162,5 +166,9 @@ abstract class OpenSSL::SSL::Socket
     ensure
       @bio.io.close if @sync_close
     end
+  end
+
+  def unbuffered_rewind
+    raise IO::Error.new("Can't rewind OpenSSL::SSL::Socket::Client")
   end
 end

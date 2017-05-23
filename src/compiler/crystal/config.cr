@@ -8,12 +8,16 @@ module Crystal
       version_and_sha.first
     end
 
+    def self.llvm_version
+      LibLLVM::VERSION
+    end
+
     def self.description
       version, sha = version_and_sha
       if sha
-        "Crystal #{version} [#{sha}] (#{date})"
+        "Crystal #{version} [#{sha}] (#{date}) LLVM #{llvm_version}"
       else
-        "Crystal #{version} (#{date})"
+        "Crystal #{version} (#{date}) LLVM #{llvm_version}"
       end
     end
 

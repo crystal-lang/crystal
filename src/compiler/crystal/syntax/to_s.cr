@@ -7,8 +7,8 @@ module Crystal
       to_s(io)
     end
 
-    def to_s(io, emit_loc_pragma = false)
-      visitor = ToSVisitor.new(io, emit_loc_pragma: emit_loc_pragma)
+    def to_s(io, emit_loc_pragma = false, emit_doc = false)
+      visitor = ToSVisitor.new(io, emit_loc_pragma: emit_loc_pragma, emit_doc: emit_doc)
       self.accept visitor
     end
   end
@@ -16,28 +16,31 @@ module Crystal
   class ToSVisitor < Visitor
     @str : IO
 
-    def initialize(@str = MemoryIO.new, @emit_loc_pragma = false)
+    def initialize(@str = IO::Memory.new, @emit_loc_pragma = false, @emit_doc = false)
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
     end
 
     def visit_any(node)
-      return true unless @emit_loc_pragma
+      if @emit_doc && (doc = node.doc) && !doc.empty?
+        doc.each_line(chomp: false) do |line|
+          append_indent
+          @str << "# "
+          @str << line
+        end
+        @str.puts
+      end
 
-      location = node.location
-      return true unless location
-
-      filename = location.filename
-      return true unless filename.is_a?(String)
-
-      @str << "#<loc:"
-      filename.inspect(@str)
-      @str << ","
-      @str << location.line_number
-      @str << ","
-      @str << location.column_number
-      @str << ">"
+      if @emit_loc_pragma && (loc = node.location) && loc.filename.is_a?(String)
+        @str << "#<loc:"
+        loc.filename.inspect(@str)
+        @str << ","
+        @str << loc.line_number
+        @str << ","
+        @str << loc.column_number
+        @str << ">"
+      end
 
       true
     end
@@ -305,12 +308,7 @@ module Crystal
         in_parenthesis(need_parens, node_obj)
 
         @str << decorate_call(node, "[")
-
-        node.args.each_with_index do |arg, i|
-          @str << ", " if i > 0
-          arg.accept self
-        end
-
+        visit_args(node)
         if node.name == "[]"
           @str << decorate_call(node, "]")
         else
@@ -320,17 +318,16 @@ module Crystal
         in_parenthesis(need_parens, node_obj)
 
         @str << decorate_call(node, "[")
-
-        node.args[0].accept self
+        visit_args(node, excluse_last: true)
         @str << decorate_call(node, "]")
         @str << " "
         @str << decorate_call(node, "=")
         @str << " "
-        node.args[1].accept self
-      elsif node_obj && !alpha_or_underscore?(node.name) && node.args.size == 0
+        node.args.last.accept self
+      elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 0
         @str << decorate_call(node, node.name)
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !alpha_or_underscore?(node.name) && node.args.size == 1
+      elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 1
         in_parenthesis(need_parens, node_obj)
 
         @str << " "
@@ -344,8 +341,8 @@ module Crystal
           in_parenthesis(need_parens, node_obj)
           @str << "."
         end
-        if node.name.ends_with?('=') && node.name[0].alpha?
-          @str << decorate_call(node, node.name.chop)
+        if node.name.ends_with?('=') && node.name[0].ascii_letter?
+          @str << decorate_call(node, node.name.rchop)
           @str << " = "
           node.args.each_with_index do |arg, i|
             @str << ", " if i > 0
@@ -357,25 +354,7 @@ module Crystal
           call_args_need_parens = node.has_parentheses? || !node.args.empty? || node.block_arg || node.named_args
 
           @str << "(" if call_args_need_parens
-
-          printed_arg = false
-          node.args.each_with_index do |arg, i|
-            @str << ", " if printed_arg
-            arg.accept self
-            printed_arg = true
-          end
-          if named_args = node.named_args
-            named_args.each do |named_arg|
-              @str << ", " if printed_arg
-              named_arg.accept self
-              printed_arg = true
-            end
-          end
-          if block_arg = node.block_arg
-            @str << ", " if printed_arg
-            @str << "&"
-            block_arg.accept self
-          end
+          visit_args(node)
         end
       end
 
@@ -384,7 +363,7 @@ module Crystal
       if block
         # Check if this is foo &.bar
         first_block_arg = block.args.first?
-        if first_block_arg && block.args.size == 1
+        if first_block_arg && block.args.size == 1 && block.args.first.name.starts_with?("__arg")
           block_body = block.body
           if block_body.is_a?(Call)
             block_obj = block_body.obj
@@ -415,17 +394,45 @@ module Crystal
       false
     end
 
+    private def visit_args(node, excluse_last = false)
+      printed_arg = false
+      node.args.each_with_index do |arg, i|
+        break if excluse_last && i == node.args.size - 1
+
+        @str << ", " if printed_arg
+        arg.accept self
+        printed_arg = true
+      end
+      if named_args = node.named_args
+        named_args.each do |named_arg|
+          @str << ", " if printed_arg
+          named_arg.accept self
+          printed_arg = true
+        end
+      end
+      if block_arg = node.block_arg
+        @str << ", " if printed_arg
+        @str << "&"
+        block_arg.accept self
+      end
+    end
+
     private def need_parens(obj)
       case obj
       when Call
         case obj.args.size
         when 0
-          !alpha_or_underscore?(obj.name)
+          !letter_or_underscore?(obj.name)
         else
-          true
+          case obj.name
+          when "[]", "[]?"
+            false
+          else
+            true
+          end
         end
       when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
-           StringInterpolation, Path, Generic, InstanceVar, Global
+           StringInterpolation, Path, Generic, InstanceVar, ClassVar, Global
         false
       when ArrayLiteral
         !!obj.of
@@ -507,17 +514,24 @@ module Crystal
       str
     end
 
-    def alpha?(string)
-      string[0].alpha?
+    def letter?(string)
+      string[0].ascii_letter?
     end
 
-    def alpha_or_underscore?(string)
-      string[0].alpha? || string[0] == '_'
+    def letter_or_underscore?(string)
+      string[0].ascii_letter? || string[0] == '_'
     end
 
     def visit(node : Assign)
       node.target.accept self
       @str << " = "
+      accept_with_maybe_begin_end node.value
+      false
+    end
+
+    def visit(node : OpAssign)
+      node.target.accept self
+      @str << " " << node.op << "=" << " "
       accept_with_maybe_begin_end node.value
       false
     end
@@ -1155,7 +1169,7 @@ module Crystal
       @str << " "
       @str << node.name.to_s
       if base_type = node.base_type
-        @str << " < "
+        @str << " : "
         base_type.accept self
       end
       newline
@@ -1400,8 +1414,8 @@ module Crystal
           printed_arg = true
         end
         if named_args = node.named_args
-          @str << ", " if printed_arg
           named_args.each do |named_arg|
+            @str << ", " if printed_arg
             visit_named_arg_name(named_arg.name)
             @str << ": "
             named_arg.value.accept self

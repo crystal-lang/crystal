@@ -20,14 +20,29 @@ struct XML::Node
   def initialize(@node : LibXML::Node*)
   end
 
-  # Gets the attribute content for the *attribute* given by name. Raises `KeyError` if attribute is not found.
-  def [](attribute : String)
-    attributes[attribute].content
+  # Gets the attribute content for the *attribute* given by name.
+  # Raises `KeyError` if attribute is not found.
+  def [](attribute : String) : String
+    attributes[attribute].content || raise(KeyError.new("Missing attribute: #{attribute}"))
   end
 
-  # Gets the attribute content for the *attribute* given by name. Returns `nil` if attribute is not found.
-  def []?(attribute : String)
+  # Gets the attribute content for the *attribute* given by name.
+  # Returns `nil` if attribute is not found.
+  def []?(attribute : String) : String?
     attributes[attribute]?.try &.content
+  end
+
+  # Sets *attribute* of this node to *value*.
+  # Raises `XML::Error` if this node does not support attributes.
+  def []=(name : String, value : String)
+    raise XML::Error.new("Can't set attribute of #{type}", 0) unless element?
+    attributes[name] = value
+  end
+
+  # Deletes attribute given by *name*.
+  # Returns attributes value, or `nil` if attribute not found.
+  def delete(name : String)
+    attributes.delete(name)
   end
 
   # Compares with *other*.
@@ -40,12 +55,12 @@ struct XML::Node
     Attributes.new(self)
   end
 
-  # Returns true if this is an attribute node.
+  # Returns `true` if this is an attribute node.
   def attribute?
     type == XML::Type::ATTRIBUTE_NODE
   end
 
-  # Returns true if this is a CDATA section node.
+  # Returns `true` if this is a `CDATA` section node.
   def cdata?
     type == XML::Type::CDATA_SECTION_NODE
   end
@@ -67,22 +82,20 @@ struct XML::Node
     NodeSet.new(document, set)
   end
 
-  # Returns true if this is a comment node.
+  # Returns `true` if this is a comment node.
   def comment?
     type == XML::Type::COMMENT_NODE
   end
 
-  # Returns the content for this Node. Returns `nil` if node does not have any content.
-  def content
+  # Returns the content for this Node. An empty string is
+  # returned if the node has no content.
+  def content : String
     content = LibXML.xmlNodeGetContent(self)
-    if content
-      String.new(content)
-    else
-      nil
-    end
+    content ? String.new(content) : ""
   end
 
-  # Sets the Node's content to a Text node containing string. The string gets XML escaped, not interpreted as markup.
+  # Sets the Node's content to a Text node containing string.
+  # The string gets XML escaped, not interpreted as markup.
   def content=(content)
     LibXML.xmlNodeSetContent(self, content.to_s)
   end
@@ -92,12 +105,18 @@ struct XML::Node
     Node.new @node.value.doc
   end
 
-  # Returns true if this is a Document node.
+  # Returns `true` if this is a Document or HTML Document node.
   def document?
-    type == XML::Type::DOCUMENT_NODE
+    case type
+    when XML::Type::DOCUMENT_NODE,
+         XML::Type::HTML_DOCUMENT_NODE
+      true
+    else
+      false
+    end
   end
 
-  # Returns the encoding of this node's document
+  # Returns the encoding of this node's document.
   def encoding
     if document?
       encoding = @node.as(LibXML::Doc*).value.encoding
@@ -107,7 +126,7 @@ struct XML::Node
     end
   end
 
-  # Returns the version of this node's document
+  # Returns the version of this node's document.
   def version
     if document?
       version = @node.as(LibXML::Doc*).value.version
@@ -117,12 +136,13 @@ struct XML::Node
     end
   end
 
-  # Returns true if this is an Element node.
+  # Returns `true` if this is an Element node.
   def element?
     type == XML::Type::ELEMENT_NODE
   end
 
-  # Returns the first child node of this node that is an element. Returns `nil` if not found.
+  # Returns the first child node of this node that is an element.
+  # Returns `nil` if not found.
   def first_element_child
     child = @node.value.children
     while child
@@ -134,7 +154,7 @@ struct XML::Node
     nil
   end
 
-  # Returns true if this is a DocumentFragment.
+  # Returns `true` if this is a DocumentFragment.
   def fragment?
     type == XML::Type::DOCUMENT_FRAG_NODE
   end
@@ -243,15 +263,17 @@ struct XML::Node
       "#cdata-section"
     elsif fragment?
       "#document-fragment"
-    else
+    elsif @node.value && @node.value.name
       String.new(@node.value.name)
+    else
+      ""
     end
   end
 
   # Sets the name for this Node.
   def name=(name)
     if document? || text? || cdata? || fragment?
-      raise XML::Error.new("can't set name of XML #{type}", 0)
+      raise XML::Error.new("Can't set name of XML #{type}", 0)
     end
     LibXML.xmlNodeSetName(self, name.to_s)
   end
@@ -267,10 +289,13 @@ struct XML::Node
     ns ? Namespace.new(document, ns) : nil
   end
 
-  # Returns namespaces in scope for self – those defined on self element directly or any ancestor node –
-  # as an `Array` of `XML::Namespace` objects.
-  # Default namespaces ("xmlns=" style) for self are included in this array;
-  # Default namespaces for ancestors, however, are not. See also `#namespaces`
+  # Returns namespaces in scope for self – those defined on self element
+  # directly or any ancestor node – as an `Array` of `XML::Namespace` objects.
+  #
+  # Default namespaces (`"xmlns="` style) for self are included in this array;
+  # Default namespaces for ancestors, however, are not.
+  #
+  # See also `#namespaces`
   def namespace_scopes
     scopes = [] of Namespace
 
@@ -286,13 +311,16 @@ struct XML::Node
     scopes
   end
 
-  # Returns a Hash(String, String?) of prefix => href for all namespaces on this node and its ancestors.
+  # Returns a `Hash(String, String?) of prefix => href` for all namespaces
+  # on this node and its ancestors.
   #
   # This method returns the same namespaces as `#namespace_scopes`.
   #
-  # Returns namespaces in scope for self – those defined on self element directly or any ancestor node – as a
-  # Hash of attribute-name/value pairs. Note that the keys in this hash XML attributes that would be used to
-  # define this namespace, such as "xmlns:prefix", not just the prefix.
+  # Returns namespaces in scope for self – those defined on self element
+  # directly or any ancestor node – as a `Hash` of attribute-name/value pairs.
+  #
+  # NOTE: Note that the keys in this hash XML attributes that would be used to
+  # define this namespace, such as `"xmlns:prefix"`, not just the prefix.
   def namespaces
     namespaces = {} of String => String?
 
@@ -310,7 +338,7 @@ struct XML::Node
     namespaces
   end
 
-  # Returns the address of underlying `LibXML::Node*` in memory,
+  # Returns the address of underlying `LibXML::Node*` in memory.
   def object_id
     @node.address
   end
@@ -339,12 +367,13 @@ struct XML::Node
     nil
   end
 
-  # Returns the previous sibling node or `nil` if not found. Same with `#previous`.
+  # Returns the previous sibling node or `nil` if not found.
+  # Same with `#previous`.
   def previous_sibling
     previous
   end
 
-  # Returns true if this is a Processing Instruction node.
+  # Returns `true` if this is a Processing Instruction node.
   def processing_instruction?
     type == XML::Type::PI_NODE
   end
@@ -365,17 +394,19 @@ struct XML::Node
     self.content = text
   end
 
-  # Returns true if this is a Text node.
+  # Returns `true` if this is a Text node.
   def text?
     type == XML::Type::TEXT_NODE
   end
 
-  # Serialize this Node as XML to *io* using default options. See `#to_xml`.
+  # Serialize this Node as XML to *io* using default options.
+  #
+  # See `#to_xml`.
   def to_s(io : IO)
     to_xml io
   end
 
-  # Serialize this Node as XML and return a String using default options.
+  # Serialize this Node as XML and return a `String` using default options.
   #
   # See `XML::SaveOptions.xml_default` for default options.
   def to_xml(indent : Int = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
@@ -431,13 +462,15 @@ struct XML::Node
     @node.value.type
   end
 
-  # Returns true if this is an xml Document node.
+  # Returns `true` if this is an xml Document node.
   def xml?
     type == XML::Type::DOCUMENT_NODE
   end
 
-  # Searches this node for XPath *path*. Returns result with appropriate type (Bool | Float64 | String |
-  # XML::NodeSet). Raises `XML::Error` on evaluation error.
+  # Searches this node for XPath *path*. Returns result with appropriate type
+  # (`Bool | Float64 | String | XML::NodeSet`).
+  #
+  # Raises `XML::Error` on evaluation error.
   def xpath(path, namespaces = nil, variables = nil)
     ctx = XPathContext.new(self)
     ctx.register_namespaces namespaces if namespaces
@@ -448,7 +481,10 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `Bool`.
   #
   # ```
-  # node.xpath_bool("count(//person) > 0")
+  # require "xml"
+  # doc = XML.parse("<person></person>")
+  #
+  # doc.xpath_bool("count(//person) > 0") # => true
   # ```
   def xpath_bool(path, namespaces = nil, variables = nil)
     xpath(path, namespaces).as(Bool)
@@ -457,7 +493,7 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `Float64`.
   #
   # ```
-  # node.xpath_float("count(//person)")
+  # doc.xpath_float("count(//person)") # => 1.0
   # ```
   def xpath_float(path, namespaces = nil, variables = nil)
     xpath(path, namespaces).as(Float64)
@@ -466,16 +502,20 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `NodeSet`.
   #
   # ```
-  # node.xpath_nodes("//person")
+  # nodes = doc.xpath_nodes("//person")
+  # nodes.class       # => XML::NodeSet
+  # nodes.map(&.name) # => ["person"]
   # ```
   def xpath_nodes(path, namespaces = nil, variables = nil)
     xpath(path, namespaces).as(NodeSet)
   end
 
   # Searches this node for XPath *path* for nodes and returns the first one.
-  # or nil if not found
+  # or `nil` if not found
+  #
   # ```
-  # node.xpath_node("//person")
+  # doc.xpath_node("//person")  # => #<XML::Node:0x2013e80 name="person">
+  # doc.xpath_node("//invalid") # => nil
   # ```
   def xpath_node(path, namespaces = nil, variables = nil)
     xpath_nodes(path, namespaces).first?
@@ -484,7 +524,7 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `String`.
   #
   # ```
-  # node.xpath_string("string(/persons/person[1])")
+  # doc.xpath_string("string(/persons/person[1])")
   # ```
   def xpath_string(path, namespaces = nil, variables = nil)
     xpath(path, namespaces).as(String)
@@ -495,7 +535,8 @@ struct XML::Node
     @node.value._private = errors.as(Void*)
   end
 
-  # Returns the list of `XML::Error` found when parsing this document. Returns `nil` if no errors were found.
+  # Returns the list of `XML::Error` found when parsing this document.
+  # Returns `nil` if no errors were found.
   def errors
     ptr = @node.value._private
     ptr ? (ptr.as(Array(XML::Error))) : nil

@@ -1,12 +1,15 @@
 require "c/string"
 
-# A Slice is a `Pointer` with an associated size.
+# A `Slice` is a `Pointer` with an associated size.
 #
 # While a pointer is unsafe because no bound checks are performed when reading from and writing to it,
 # reading from and writing to a slice involve bound checks.
-# In this way, a slice is a safe alternative to Pointer.
+# In this way, a slice is a safe alternative to `Pointer`.
+#
+# A Slice can be created as read-only: trying to write to it
+# will raise. For example the slice of bytes returned by
+# `String#to_slice` is read-only.
 struct Slice(T)
-  include Enumerable(T)
   include Indexable(T)
 
   # Create a new `Slice` with the given *args*. The type of the
@@ -21,21 +24,21 @@ struct Slice(T)
   # slice.class # => Slice(Char | Int32)
   # ```
   #
-  # If T is a `Number` then this is equivalent to
-  # `Number.slice` (numbers will be coerced to the type T)
+  # If `T` is a `Number` then this is equivalent to
+  # `Number.slice` (numbers will be coerced to the type `T`)
   #
   # See also: `Number.slice`.
-  macro [](*args)
+  macro [](*args, read_only = false)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
     {% if @type.name != "Slice(T)" && T < Number %}
-      {{T}}.slice({{*args}})
+      {{T}}.slice({{*args}}, read_only: {{read_only}})
     {% else %}
-      %slice = Slice(typeof({{*args}})).new({{args.size}})
+      %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
       {% for arg, i in args %}
-        %slice.to_unsafe[{{i}}] = {{arg}}
+        %ptr[{{i}}] = {{arg}}
       {% end %}
-      %slice
+      Slice.new(%ptr, {{args.size}}, read_only: {{read_only}})
     {% end %}
   end
 
@@ -46,6 +49,9 @@ struct Slice(T)
   # ```
   getter size : Int32
 
+  # Returns `true` if this slice cannot be written to.
+  getter? read_only : Bool
+
   # Creates a slice to the given *pointer*, bounded by the given *size*. This
   # method does not allocate heap memory.
   #
@@ -54,11 +60,11 @@ struct Slice(T)
   #
   # slice = Slice.new(ptr, 3)
   # slice.size # => 3
-  # slice      # => [97, 98, 99]
+  # slice      # => Bytes[97, 98, 99]
   #
   # String.new(slice) # => "abc"
   # ```
-  def initialize(@pointer : Pointer(T), size : Int)
+  def initialize(@pointer : Pointer(T), size : Int, *, @read_only = false)
     @size = size.to_i32
   end
 
@@ -68,13 +74,19 @@ struct Slice(T)
   # The memory is allocated by the `GC`, so when there are
   # no pointers to this memory, it will be automatically freed.
   #
+  # Only works for primitive integers and floats (`UInt8`, `Int32`, `Float64`, etc.)
+  #
   # ```
   # slice = Slice(UInt8).new(3)
-  # slice # => [0, 0, 0]
+  # slice # => Bytes[0, 0, 0]
   # ```
-  def self.new(size : Int)
+  def self.new(size : Int, *, read_only = false)
+    {% unless T <= Int::Primitive || T <= Float::Primitive %}
+      {% raise "Can only use primitive integers and floats with Slice.new(size), not #{T}" %}
+    {% end %}
+
     pointer = Pointer(T).malloc(size)
-    new(pointer, size)
+    new(pointer, size, read_only: read_only)
   end
 
   # Allocates `size * sizeof(T)` bytes of heap memory initialized to the value
@@ -86,11 +98,11 @@ struct Slice(T)
   #
   # ```
   # slice = Slice.new(3) { |i| i + 10 }
-  # slice # => [10, 11, 12]
+  # slice # => Slice[10, 11, 12]
   # ```
-  def self.new(size : Int)
+  def self.new(size : Int, *, read_only = false)
     pointer = Pointer.malloc(size) { |i| yield i }
-    new(pointer, size)
+    new(pointer, size, read_only: read_only)
   end
 
   # Allocates `size * sizeof(T)` bytes of heap memory initialized to *value*
@@ -101,30 +113,48 @@ struct Slice(T)
   #
   # ```
   # slice = Slice.new(3, 10)
-  # slice # => [10, 10, 10]
+  # slice # => Slice[10, 10, 10]
   # ```
-  def self.new(size : Int, value : T)
-    new(size) { value }
+  def self.new(size : Int, value : T, *, read_only = false)
+    new(size, read_only: read_only) { value }
   end
 
-  # Returns a new slice that i *offset* elements apart from this slice.
+  # Returns a copy of this slice.
+  # This method allocates memory for the slice copy.
+  def clone
+    copy = self.class.new(size)
+    copy.copy_from(self)
+    copy
+  end
+
+  # Creates an empty slice.
+  #
+  # ```
+  # slice = Slice(UInt8).empty
+  # slice.size # => 0
+  # ```
+  def self.empty
+    new(Pointer(T).null, 0)
+  end
+
+  # Returns a new slice that is *offset* elements apart from this slice.
   #
   # ```
   # slice = Slice.new(5) { |i| i + 10 }
-  # slice # => [10, 11, 12, 13, 14]
+  # slice # => Slice[10, 11, 12, 13, 14]
   #
   # slice2 = slice + 2
-  # slice2 # => [12, 13, 14]
+  # slice2 # => Slice[12, 13, 14]
   # ```
   def +(offset : Int)
     unless 0 <= offset <= size
       raise IndexError.new
     end
 
-    Slice.new(@pointer + offset, @size - offset)
+    Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
   end
 
-  # Sets the given value at the given index.
+  # Sets the given value at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the slice.
   # Raises `IndexError` if trying to set an element outside the slice's range.
@@ -133,12 +163,14 @@ struct Slice(T)
   # slice = Slice.new(5) { |i| i + 10 }
   # slice[0] = 20
   # slice[-1] = 30
-  # slice # => [20, 11, 12, 13, 30]
+  # slice # => Slice[20, 11, 12, 13, 30]
   #
-  # slice[4] = 1 # => IndexError
+  # slice[10] = 1 # raises IndexError
   # ```
   @[AlwaysInline]
   def []=(index : Int, value : T)
+    check_writable
+
     index += size if index < 0
     unless 0 <= index < size
       raise IndexError.new
@@ -154,10 +186,10 @@ struct Slice(T)
   #
   # ```
   # slice = Slice.new(5) { |i| i + 10 }
-  # slice # => [10, 11, 12, 13, 14]
+  # slice # => Slice[10, 11, 12, 13, 14]
   #
   # slice2 = slice[1, 3]
-  # slice2 # => [11, 12, 13]
+  # slice2 # => Slice[11, 12, 13]
   # ```
   def [](start, count)
     unless 0 <= start <= @size
@@ -168,7 +200,7 @@ struct Slice(T)
       raise IndexError.new
     end
 
-    Slice.new(@pointer + start, count)
+    Slice.new(@pointer + start, count, read_only: @read_only)
   end
 
   @[AlwaysInline]
@@ -178,6 +210,8 @@ struct Slice(T)
 
   # Reverses in-place all the elements of `self`.
   def reverse!
+    check_writable
+
     i = 0
     j = size - 1
     while i < j
@@ -197,10 +231,14 @@ struct Slice(T)
   end
 
   def shuffle!(random = Random::DEFAULT)
+    check_writable
+
     @pointer.shuffle!(size, random)
   end
 
   def copy_from(source : Pointer(T), count)
+    check_writable
+
     pointer(count).copy_from(source, count)
   end
 
@@ -218,9 +256,11 @@ struct Slice(T)
   # dst = Slice['b', 'b', 'b', 'b', 'b']
   # src.copy_to dst
   # dst             # => Slice['a', 'a', 'a', 'b', 'b']
-  # dst.copy_to src # => IndexError
+  # dst.copy_to src # raises IndexError
   # ```
   def copy_to(target : self)
+    target.check_writable
+
     @pointer.copy_to(target.pointer(size), size)
   end
 
@@ -233,6 +273,8 @@ struct Slice(T)
   end
 
   def move_from(source : Pointer(T), count)
+    check_writable
+
     pointer(count).move_from(source, count)
   end
 
@@ -240,26 +282,28 @@ struct Slice(T)
     pointer(count).move_to(target, count)
   end
 
-  # Moves the contents of this slice into *target*. *target* and *self* may
+  # Moves the contents of this slice into *target*. *target* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
   # Raises if the desination slice cannot fit the data being transferred
-  # e.g. dest.size < self.size.
-  #
-  # See `Pointer#move_to`
+  # e.g. `dest.size < self.size`.
   #
   # ```
   # src = Slice['a', 'a', 'a']
   # dst = Slice['b', 'b', 'b', 'b', 'b']
   # src.move_to dst
   # dst             # => Slice['a', 'a', 'a', 'b', 'b']
-  # dst.move_to src # => IndexError
+  # dst.move_to src # raises IndexError
   # ```
+  #
+  # See also: `Pointer#move_to`.
   def move_to(target : self)
+    target.check_writable
+
     @pointer.move_to(target.pointer(size), size)
   end
 
-  # Moves the contents of *source* into this slice. *source* and *self* may
+  # Moves the contents of *source* into this slice. *source* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
   # Truncates if the other slice doesn't fit. The same as `source.move_to(self)`.
@@ -277,7 +321,7 @@ struct Slice(T)
   #
   # ```
   # slice = UInt8.slice(97, 62, 63, 8, 255)
-  # slice.hexstring # => "61626308ff"
+  # slice.hexstring # => "613e3f08ff"
   # ```
   def hexstring
     self.as(Slice(UInt8))
@@ -313,6 +357,8 @@ struct Slice(T)
   # ```
   def hexdump
     self.as(Slice(UInt8))
+
+    return "" if empty?
 
     full_lines, leftover = size.divmod(16)
     if leftover == 0
@@ -399,6 +445,11 @@ struct Slice(T)
     io << "]"
   end
 
+  def pretty_print(pp) : Nil
+    prefix = T == UInt8 ? "Bytes[" : "Slice["
+    pp.list(prefix, self, "]")
+  end
+
   def to_a
     Array(T).build(@size) do |pointer|
       pointer.copy_from(@pointer, @size)
@@ -415,6 +466,36 @@ struct Slice(T)
   def to_unsafe : Pointer(T)
     @pointer
   end
+
+  # :nodoc:
+  def index(object, offset : Int = 0)
+    # Optimize for the case of looking for a byte in a byte slice
+    if T.is_a?(UInt8.class) &&
+       (object.is_a?(UInt8) || (object.is_a?(Int) && 0 <= object < 256))
+      return fast_index(object, offset)
+    end
+
+    super
+  end
+
+  # :nodoc:
+  def fast_index(object, offset)
+    offset += size if offset < 0
+    if 0 <= offset < size
+      result = LibC.memchr(to_unsafe + offset, object, size - offset)
+      if result
+        return (result - to_unsafe.as(Void*)).to_i32
+      end
+    end
+
+    nil
+  end
+
+  protected def check_writable
+    raise "Can't write to read-only Slice" if @read_only
+  end
 end
 
+# A convenient alias for the most common slice type,
+# a slice of bytes, used for example in `IO#read` and `IO#write`.
 alias Bytes = Slice(UInt8)

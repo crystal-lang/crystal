@@ -3,10 +3,10 @@ module Crystal
     dir = Dir.current
     if filename.starts_with?(dir)
       filename = filename[dir.size..-1]
-      if filename.starts_with? "/"
-        ".#{filename}"
+      if filename.starts_with? '/'
+        filename[1..-1]
       else
-        "./#{filename}"
+        filename
       end
     else
       filename
@@ -21,21 +21,6 @@ module Crystal
     stderr.print "Error: ".colorize.toggle(color).red.bold
     stderr.puts msg.colorize.toggle(color).bright
     exit(exit_code) if exit_code
-  end
-
-  def self.timing(label, stats)
-    if stats
-      print "%-34s" % "#{label}:"
-      time = Time.now
-      value = yield
-      elapsed_time = Time.now - time
-      LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
-      mb = heap_size / 1024.0 / 1024.0
-      puts " %s (%7.2fMB)" % {elapsed_time, mb}
-      value
-    else
-      yield
-    end
   end
 
   def self.tempfile(basename)

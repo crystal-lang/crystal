@@ -15,9 +15,13 @@ class Crystal::Program
   getter(macro_expander) { MacroExpander.new self }
 
   # A cache of compiled "macro run" files.
-  # The keys are filenames that were compiled, the values are  executable
-  # filenames ready to be run (so they don't need to be compiled twice)
-  @compiled_macros_cache = {} of String => String
+  # The keys are filenames that were compiled, the values are executable
+  # filenames ready to be run (so they don't need to be compiled twice),
+  # together with the time it took to compile them and whether a previous
+  # compilation was reused.
+  # The elapsed time is only needed for stats.
+  record CompiledMacroRun, filename : String, elapsed : Time::Span, reused : Bool
+  property compiled_macros_cache = {} of String => CompiledMacroRun
 
   # Returns a new temporary file, which tries to be stored in the
   # cache directory associated to a program. This file is then added
@@ -32,14 +36,14 @@ class Crystal::Program
     filename
   end
 
-  def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil)
-    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call
+  def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
+    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def
     a_macro.body.accept interpreter
     interpreter.to_s
   end
 
-  def expand_macro(node : ASTNode, scope : Type, path_lookup : Type? = nil, free_vars = nil)
-    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, node.location
+  def expand_macro(node : ASTNode, scope : Type, path_lookup : Type? = nil, free_vars = nil, a_def : Def? = nil)
+    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, node.location, def: a_def
     interpreter.free_vars = free_vars
     node.accept interpreter
     interpreter.to_s
@@ -71,27 +75,58 @@ class Crystal::Program
       generated_node = yield parser
       normalize(generated_node, inside_exp: inside_exp)
     rescue ex : Crystal::SyntaxException
-      node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{Crystal.with_line_numbers(generated_source)}\n#{"-" * 80}\n#{ex.to_s_with_source(generated_source)}\n#{"=" * 80}"
+      expanded_source = String.build do |str|
+        str << ("=" * 80) << '\n'
+        str << ("-" * 80) << '\n'
+        str << Crystal.with_line_numbers(generated_source) << '\n'
+        str << ("-" * 80) << '\n'
+        str << ex.to_s_with_source(generated_source) << '\n'
+        str << ("=" * 80)
+      end
+      node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{expanded_source}"
     end
   end
 
   def macro_run(filename, args)
-    compiled_file = @compiled_macros_cache[filename] ||= macro_compile(filename)
+    compiled_macro_run = @compiled_macros_cache[filename] ||= macro_compile(filename)
+    compiled_file = compiled_macro_run.filename
 
-    command = String.build do |str|
-      str << compiled_file.inspect
-      args.each do |arg|
-        str << " "
-        str << arg.inspect
-      end
-    end
+    io = IO::Memory.new
+    Process.run(compiled_file, args: args, shell: true, output: io)
+    {$?.success?, io.to_s}
+  end
 
-    result = `#{command}`
-    {$?.success?, result}
+  record RequireWithTimestamp, filename : String, epoch : Int64 do
+    JSON.mapping(filename: String, epoch: Int64)
   end
 
   def macro_compile(filename)
+    time = Time.now
+
     source = File.read(filename)
+
+    # We store the executable relative to the cache directory for 'filename',
+    # that way if it's already there from a previous compilation, and no file
+    # that this program uses changes, we can simply avoid recompiling it again
+    #
+    # NOTE: it could happen that a macro run program runs macros that could
+    # change the program behaviour even if files don't change, but this is
+    # discouraged (and we should strongly document it) because it prevents
+    # incremental compiles.
+    program_dir = CacheDir.instance.directory_for(filename)
+    executable_path = File.join(program_dir, "macro_run")
+    recorded_requires_path = File.join(program_dir, "recorded_requires")
+    requires_path = File.join(program_dir, "requires")
+
+    # First, update times for the program dir, so it remains in the cache longer
+    # (this is specially useful if a macro run program is used by multiple programs)
+    now = Time.now
+    File.utime(now, now, program_dir)
+
+    if can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
+      elapsed_time = Time.now - time
+      return CompiledMacroRun.new(executable_path, elapsed_time, true)
+    end
 
     compiler = Compiler.new
 
@@ -105,9 +140,78 @@ class Crystal::Program
     # directory will be the oldest).
     compiler.cleanup = false
 
-    safe_filename = filename.gsub(/[^a-zA-Z\_\-\.]/, "_")
-    tempfile_path = @program.new_tempfile("macro-run-#{safe_filename}")
-    compiler.compile Compiler::Source.new(filename, source), tempfile_path
-    tempfile_path
+    # No need to generate debug info for macro run programs
+    compiler.debug = Crystal::Debug::None
+
+    result = compiler.compile Compiler::Source.new(filename, source), executable_path
+
+    # Write the new files from which 'filename' depends into the cache dir
+    # (here we store how to obtain these files, because a require might use
+    # '/*' or '/**' and we need to recompile if a file is added or removed)
+    File.open(recorded_requires_path, "w") do |file|
+      result.program.recorded_requires.to_json(file)
+    end
+
+    # Together with their timestamp
+    # (this is the list of all effective files that were required)
+    requires_with_timestamps = result.program.requires.map do |required_file|
+      epoch = File.stat(required_file).mtime.epoch
+      RequireWithTimestamp.new(required_file, epoch)
+    end
+
+    File.open(requires_path, "w") do |file|
+      requires_with_timestamps.to_json(file)
+    end
+
+    elapsed_time = Time.now - time
+    CompiledMacroRun.new(executable_path, elapsed_time, false)
+  end
+
+  private def can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
+    return false unless File.exists?(executable_path)
+    return false unless File.exists?(recorded_requires_path)
+    return false unless File.exists?(requires_path)
+
+    recorded_requires =
+      begin
+        Array(Program::RecordedRequire).from_json(File.read(recorded_requires_path))
+      rescue JSON::Error
+        return false
+      end
+
+    requires_with_timestamps =
+      begin
+        Array(RequireWithTimestamp).from_json(File.read(requires_path))
+      rescue JSON::Error
+        return false
+      end
+
+    # From the recorded requires we reconstruct the effective required files.
+    # We start with the target filename
+    required_files = Set{filename}
+    recorded_requires.map do |recorded_require|
+      begin
+        files = @program.find_in_path(recorded_require.filename, recorded_require.relative_to)
+        required_files.concat(files) if files
+      rescue Crystal::CrystalPath::Error
+        # Maybe the file is gone
+        next
+      end
+    end
+
+    new_requires_with_timestamps = required_files.map do |required_file|
+      epoch = File.stat(required_file).mtime.epoch
+      RequireWithTimestamp.new(required_file, epoch)
+    end
+
+    # Quick check: if there are a different number of files, something changed
+    if requires_with_timestamps.size != new_requires_with_timestamps.size
+      return false
+    end
+
+    # Sort both requires and check if they are the same
+    requires_with_timestamps.sort_by! &.filename
+    new_requires_with_timestamps.sort_by! &.filename
+    requires_with_timestamps == new_requires_with_timestamps
   end
 end

@@ -4,7 +4,7 @@ TODO: Write a description here
 
 ## Installation
 
-<% if config.skeleton_type == "lib" %>
+<%- if config.skeleton_type == "lib" -%>
 Add this to your application's `shard.yml`:
 
 ```yaml
@@ -12,18 +12,18 @@ dependencies:
   <%= config.name %>:
     github: <%= config.github_name %>/<%= config.name %>
 ```
-<% else %>
+<%- else -%>
 TODO: Write installation instructions here
-<% end %>
+<%- end -%>
 
 ## Usage
 
-<% if config.skeleton_type == "lib" %>
+<%- if config.skeleton_type == "lib" -%>
 ```crystal
 require "<%= config.name %>"
 ```
-<% end %>
 
+<%- end -%>
 TODO: Write usage instructions here
 
 ## Development

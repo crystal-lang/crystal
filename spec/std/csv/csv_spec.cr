@@ -18,7 +18,7 @@ describe CSV do
 
   it "raises if trying to access before first row" do
     csv = new_csv headers: true
-    expect_raises(CSV::Error, "before first row") do
+    expect_raises(CSV::Error, "Before first row") do
       csv["one"]
     end
   end
@@ -43,7 +43,7 @@ describe CSV do
 
     csv.next.should be_false
 
-    expect_raises(CSV::Error, "after last row") do
+    expect_raises(CSV::Error, "After last row") do
       csv["one"]
     end
   end
@@ -118,13 +118,41 @@ describe CSV do
     csv.each do
       csv["one"].should eq("1")
       break
-    end
+    end.should be_nil
   end
 
   it "can do new with block" do
     CSV.new(%(one, two\n1, 2\n3, 4\n5), headers: true, strip: true) do |csv|
       csv["one"].should eq("1")
       csv["two"].should eq("2")
+      break
+    end
+  end
+
+  it "returns a Tuple(String, String) for current row with indices" do
+    CSV.new("John,20\nPeter,30") do |csv|
+      csv.values_at(0, -1).should eq({"John", "20"})
+      break
+    end
+  end
+
+  it "returns a Tuple(String, String) for current row with headers" do
+    CSV.new("Name,Age\nJohn,20\nPeter,30", headers: true) do |csv|
+      csv.values_at("Name", "Age").should eq({"John", "20"})
+      break
+    end
+  end
+
+  it "returns a Tuple(String, String) for this row with indices" do
+    CSV.new("John,20\nPeter,30") do |csv|
+      csv.row.values_at(0, -1).should eq({"John", "20"})
+      break
+    end
+  end
+
+  it "returns a Tuple(String, String) for this row with headers" do
+    CSV.new("Name,Age\nJohn,20\nPeter,30", headers: true) do |csv|
+      csv.row.values_at("Name", "Age").should eq({"John", "20"})
       break
     end
   end

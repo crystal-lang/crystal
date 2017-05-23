@@ -555,7 +555,7 @@ Playground.Session = function(options) {
   //stdout
   this._appendStdout = function(content) {
     this.stdoutRawContent += content;
-    this.stdout[0].innerHTML = ansi_up.ansi_to_html(this.stdoutRawContent, {"use_classes": true});
+    this.stdout[0].innerHTML = ansi_up.ansi_to_html(ansi_up.escape_for_html(this.stdoutRawContent), {"use_classes": true});
   }.bind(this);
 
   this._clearStdout = function() {

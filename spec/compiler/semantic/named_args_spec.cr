@@ -284,4 +284,15 @@ describe "Semantic: named args" do
       foo nil, z: 1, y: 2
       )) { bool }
   end
+
+  it "gives correct error message with external names (#3934)" do
+    assert_error %(
+      def foo(*, arg a : String)
+        a
+      end
+
+      foo(arg: 10)
+      ),
+      "no overload matches"
+  end
 end

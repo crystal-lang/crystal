@@ -12,4 +12,5 @@ lib LibC
   end
 
   fun gettimeofday(tv : Timeval*, tz : Void*) : Int
+  fun utimes(path : Char*, times : Timeval[2]) : Int
 end

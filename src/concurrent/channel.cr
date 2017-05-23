@@ -51,6 +51,10 @@ abstract class Channel(T)
     to_s(io)
   end
 
+  def pretty_print(pp)
+    pp.text inspect
+  end
+
   def wait_for_receive
     @receivers << Fiber.current
   end
@@ -259,7 +263,7 @@ class Channel::Unbuffered(T) < Channel(T)
   end
 
   def empty?
-    !@has_value
+    !@has_value && @senders.empty?
   end
 
   def full?

@@ -3,11 +3,6 @@ require "llvm"
 
 module Crystal
   class LLVMTyper
-    TYPE_ID_POINTER = LLVM::Int32.pointer
-    PROC_TYPE       = LLVM::Type.struct [LLVM::VoidPointer, LLVM::VoidPointer], "->"
-    NIL_TYPE        = LLVM::Type.struct([] of LLVM::Type, "Nil")
-    NIL_VALUE       = NIL_TYPE.null
-
     getter landing_pad_type : LLVM::Type
 
     alias TypeCache = Hash(Type, LLVM::Type)
@@ -15,7 +10,9 @@ module Crystal
     @layout : LLVM::TargetData
     @landing_pad_type : LLVM::Type
 
-    def initialize(@program : Program)
+    @@closure_counter = 0
+
+    def initialize(@program : Program, @llvm_context : LLVM::Context)
       @cache = TypeCache.new
       @struct_cache = TypeCache.new
       @union_value_cache = TypeCache.new
@@ -50,19 +47,39 @@ module Crystal
       @wants_size_struct_cache = TypeCache.new
       @wants_size_union_value_cache = TypeCache.new
 
-      @types_being_computed = Set(Type).new
+      @structs = {} of String => LLVM::Type
 
       machine = program.target_machine
       @layout = machine.data_layout
-      @landing_pad_type = LLVM::Type.struct([LLVM::VoidPointer, LLVM::Int32], "landing_pad")
+      @landing_pad_type = @llvm_context.struct([@llvm_context.void_pointer, @llvm_context.int32], "landing_pad")
+    end
+
+    def type_id_pointer
+      @llvm_context.int32.pointer
+    end
+
+    @proc_type : LLVM::Type?
+
+    def proc_type
+      @proc_type ||= @structs["->"] ||= @llvm_context.struct [@llvm_context.void_pointer, @llvm_context.void_pointer], "->"
+    end
+
+    @nil_type : LLVM::Type?
+
+    def nil_type
+      @nil_type ||= @structs["Nil"] ||= @llvm_context.struct([] of LLVM::Type, "Nil")
+    end
+
+    def nil_value
+      nil_type.null
     end
 
     def llvm_string_type(bytesize)
-      LLVM::Type.struct [
-        LLVM::Int32,                    # type_id
-        LLVM::Int32,                    # @bytesize
-        LLVM::Int32,                    # @length
-        LLVM::Int8.array(bytesize + 1), # @c
+      @llvm_context.struct [
+        @llvm_context.int32,                    # type_id
+        @llvm_context.int32,                    # @bytesize
+        @llvm_context.int32,                    # @length
+        @llvm_context.int8.array(bytesize + 1), # @c
       ]
     end
 
@@ -77,35 +94,35 @@ module Crystal
     end
 
     private def create_llvm_type(type : NoReturnType, wants_size)
-      LLVM::Void
+      @llvm_context.void
     end
 
     private def create_llvm_type(type : VoidType, wants_size)
-      LLVM::Void
+      @llvm_context.void
     end
 
     private def create_llvm_type(type : NilType, wants_size)
-      NIL_TYPE
+      nil_type
     end
 
     private def create_llvm_type(type : BoolType, wants_size)
-      LLVM::Int1
+      @llvm_context.int1
     end
 
     private def create_llvm_type(type : CharType, wants_size)
-      LLVM::Int32
+      @llvm_context.int32
     end
 
     private def create_llvm_type(type : IntegerType, wants_size)
-      LLVM::Type.int(8 * type.bytes)
+      @llvm_context.int(8 * type.bytes)
     end
 
     private def create_llvm_type(type : FloatType, wants_size)
-      type.bytes == 4 ? LLVM::Float : LLVM::Double
+      type.bytes == 4 ? @llvm_context.float : @llvm_context.double
     end
 
     private def create_llvm_type(type : SymbolType, wants_size)
-      LLVM::Int32
+      @llvm_context.int32
     end
 
     private def create_llvm_type(type : EnumType, wants_size)
@@ -113,7 +130,7 @@ module Crystal
     end
 
     private def create_llvm_type(type : ProcInstanceType, wants_size)
-      PROC_TYPE
+      proc_type
     end
 
     private def create_llvm_type(type : InstanceVarContainer, wants_size)
@@ -125,47 +142,54 @@ module Crystal
     end
 
     private def create_llvm_type(type : MetaclassType, wants_size)
-      LLVM::Int32
+      @llvm_context.int32
     end
 
     private def create_llvm_type(type : LibType, wants_size)
-      LLVM::Int32
+      @llvm_context.int32
     end
 
     private def create_llvm_type(type : GenericClassInstanceMetaclassType, wants_size)
-      LLVM::Int32
+      @llvm_context.int32
     end
 
     private def create_llvm_type(type : GenericModuleInstanceMetaclassType, wants_size)
-      LLVM::Int32
+      @llvm_context.int32
     end
 
     private def create_llvm_type(type : VirtualMetaclassType, wants_size)
-      LLVM::Int32
+      @llvm_context.int32
     end
 
     private def create_llvm_type(type : PointerInstanceType, wants_size)
       if wants_size
-        return LLVM::VoidPointer
+        return @llvm_context.void_pointer
       end
 
       pointed_type = llvm_embedded_type(type.element_type, wants_size)
-      pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
+      pointed_type = @llvm_context.int8 if pointed_type.void?
       pointed_type.pointer
     end
 
     private def create_llvm_type(type : StaticArrayInstanceType, wants_size)
       pointed_type = llvm_embedded_type(type.element_type, wants_size)
-      pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
+      pointed_type = @llvm_context.int8 if pointed_type.void?
       pointed_type.array type.size.as(NumberLiteral).value.to_i
     end
 
     private def create_llvm_type(type : TupleInstanceType, wants_size)
-      LLVM::Type.struct(type.llvm_name) do |a_struct|
+      llvm_name = llvm_name(type, wants_size)
+
+      if s = @structs[llvm_name]?
+        return s
+      end
+
+      @llvm_context.struct(llvm_name) do |a_struct|
         if wants_size
           @wants_size_cache[type] = a_struct
         else
           @cache[type] = a_struct
+          @structs[llvm_name] = a_struct
         end
 
         type.tuple_types.map { |tuple_type| llvm_embedded_type(tuple_type, wants_size).as(LLVM::Type) }
@@ -173,11 +197,17 @@ module Crystal
     end
 
     private def create_llvm_type(type : NamedTupleInstanceType, wants_size)
-      LLVM::Type.struct(type.llvm_name) do |a_struct|
+      llvm_name = llvm_name(type, wants_size)
+      if s = @structs[llvm_name]?
+        return s
+      end
+
+      @llvm_context.struct(llvm_name) do |a_struct|
         if wants_size
           @wants_size_cache[type] = a_struct
         else
           @cache[type] = a_struct
+          @structs[llvm_name] = a_struct
         end
 
         type.entries.map { |entry| llvm_embedded_type(entry.type, wants_size).as(LLVM::Type) }
@@ -189,15 +219,15 @@ module Crystal
     end
 
     private def create_llvm_type(type : ReferenceUnionType, wants_size)
-      TYPE_ID_POINTER
+      type_id_pointer
     end
 
     private def create_llvm_type(type : NilableReferenceUnionType, wants_size)
-      TYPE_ID_POINTER
+      type_id_pointer
     end
 
     private def create_llvm_type(type : NilableProcType, wants_size)
-      PROC_TYPE
+      proc_type
     end
 
     private def create_llvm_type(type : NilablePointerType, wants_size)
@@ -205,11 +235,17 @@ module Crystal
     end
 
     private def create_llvm_type(type : MixedUnionType, wants_size)
-      LLVM::Type.struct(type.llvm_name) do |a_struct|
+      llvm_name = llvm_name(type, wants_size)
+      if s = @structs[llvm_name]?
+        return s
+      end
+
+      @llvm_context.struct(llvm_name) do |a_struct|
         if wants_size
           @wants_size_cache[type] = a_struct
         else
           @cache[type] = a_struct
+          @structs[llvm_name] = a_struct
         end
 
         max_size = 0
@@ -225,7 +261,7 @@ module Crystal
 
         max_size = 1 if max_size == 0
 
-        llvm_value_type = LLVM::SizeT.array(max_size)
+        llvm_value_type = size_t.array(max_size)
 
         if wants_size
           @wants_size_union_value_cache[type] = llvm_value_type
@@ -233,7 +269,7 @@ module Crystal
           @union_value_cache[type] = llvm_value_type
         end
 
-        [LLVM::Int32, llvm_value_type]
+        [@llvm_context.int32, llvm_value_type]
       end
     end
 
@@ -242,7 +278,7 @@ module Crystal
     end
 
     private def create_llvm_type(type : VirtualType, wants_size)
-      TYPE_ID_POINTER
+      type_id_pointer
     end
 
     private def create_llvm_type(type : AliasType, wants_size)
@@ -251,11 +287,11 @@ module Crystal
 
     private def create_llvm_type(type : NonGenericModuleType | GenericClassType, wants_size)
       # This can only be reached if the module or generic class don't have implementors
-      LLVM::Int1
+      @llvm_context.int1
     end
 
     private def create_llvm_type(type : Type, wants_size)
-      raise "Bug: called create_llvm_type for #{type}"
+      raise "BUG: called create_llvm_type for #{type}"
     end
 
     def llvm_struct_type(type, wants_size = false)
@@ -285,11 +321,17 @@ module Crystal
         return create_llvm_c_union_struct_type(type, wants_size)
       end
 
-      LLVM::Type.struct(type.llvm_name, type.packed?) do |a_struct|
+      llvm_name = llvm_name(type, wants_size)
+      if s = @structs[llvm_name]?
+        return s
+      end
+
+      @llvm_context.struct(llvm_name, type.packed?) do |a_struct|
         if wants_size
           @wants_size_struct_cache[type] = a_struct
         else
           @struct_cache[type] = a_struct
+          @structs[llvm_name] = a_struct
         end
 
         ivars = type.all_instance_vars
@@ -297,9 +339,8 @@ module Crystal
         ivars_size += 1 unless type.struct?
 
         element_types = Array(LLVM::Type).new(ivars_size)
-        element_types.push LLVM::Int32 unless type.struct? # For the type id
+        element_types.push @llvm_context.int32 unless type.struct? # For the type id
 
-        @types_being_computed.add(type)
         ivars.each do |name, ivar|
           if type.extern?
             element_types.push llvm_embedded_c_type(ivar.type, wants_size)
@@ -307,18 +348,23 @@ module Crystal
             element_types.push llvm_embedded_type(ivar.type, wants_size)
           end
         end
-        @types_being_computed.delete(type)
 
         element_types
       end
     end
 
     private def create_llvm_c_union_struct_type(type, wants_size)
-      LLVM::Type.struct(type.llvm_name) do |a_struct|
+      llvm_name = llvm_name(type, wants_size)
+      if s = @structs[llvm_name]?
+        return s
+      end
+
+      @llvm_context.struct(llvm_name) do |a_struct|
         if wants_size
           @wants_size_struct_cache[type] = a_struct
         else
           @struct_cache[type] = a_struct
+          @structs[llvm_name] = a_struct
         end
 
         max_size = 0
@@ -348,7 +394,7 @@ module Crystal
         max_align_type = max_align_type.not_nil!
         union_fill = [max_align_type] of LLVM::Type
         if max_align_type_size < max_size
-          union_fill << LLVM::Int8.array(max_size - max_align_type_size)
+          union_fill << @llvm_context.int8.array(max_size - max_align_type_size)
         end
 
         union_fill
@@ -356,26 +402,14 @@ module Crystal
     end
 
     private def create_llvm_struct_type(type : Type, wants_size)
-      raise "Bug: called llvm_struct_type for #{type}"
-    end
-
-    def llvm_arg_type(type : AliasType)
-      llvm_arg_type(type.remove_alias)
-    end
-
-    def llvm_arg_type(type : Type)
-      if type.passed_by_value?
-        llvm_type(type).pointer
-      else
-        llvm_type(type)
-      end
+      raise "BUG: called llvm_struct_type for #{type}"
     end
 
     def llvm_embedded_type(type, wants_size = false)
       type = type.remove_indirection
       case type
       when NoReturnType, VoidType
-        LLVM::Int8
+        @llvm_context.int8
       else
         llvm_type(type, wants_size)
       end
@@ -404,13 +438,17 @@ module Crystal
     def llvm_c_type(type)
       if type.extern?
         llvm_struct_type(type)
+      elsif type.passed_by_value?
+        # C types that are passed by value must be considered,
+        # for the ABI, as being passed behind a pointer
+        llvm_type(type).pointer
       else
-        llvm_arg_type(type)
+        llvm_type(type)
       end
     end
 
     def llvm_c_return_type(type : NilType)
-      LLVM::Void
+      @llvm_context.void
     end
 
     def llvm_c_return_type(type)
@@ -418,7 +456,7 @@ module Crystal
     end
 
     def llvm_return_type(type : NilType)
-      LLVM::Void
+      @llvm_context.void
     end
 
     def llvm_return_type(type)
@@ -426,23 +464,86 @@ module Crystal
     end
 
     def closure_type(type : ProcInstanceType)
-      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
-      arg_types.insert(0, LLVM::VoidPointer)
+      arg_types = type.arg_types.map { |arg_type| llvm_type(arg_type) }
+      arg_types.insert(0, @llvm_context.void_pointer)
       LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
     end
 
     def proc_type(type : ProcInstanceType)
-      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type).as(LLVM::Type) }
+      arg_types = type.arg_types.map { |arg_type| llvm_type(arg_type).as(LLVM::Type) }
       LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
     end
 
     def closure_context_type(vars, parent_llvm_type, self_type)
-      LLVM::Type.struct("closure") do |a_struct|
+      @@closure_counter += 1
+      llvm_name = "closure_#{@@closure_counter}"
+
+      @llvm_context.struct(llvm_name) do |a_struct|
+        @structs[llvm_name] = a_struct
+
         elems = vars.map { |var| llvm_type(var.type).as(LLVM::Type) }
-        elems << parent_llvm_type.pointer if parent_llvm_type
+
+        # Make sure to copy the given LLVM::Type to this context
+        elems << copy_type(parent_llvm_type).pointer if parent_llvm_type
+
         elems << llvm_type(self_type) if self_type
         elems
       end
+    end
+
+    # Copy existing LLVM types, possibly from another context,
+    # into this typer's context.
+    def copy_types(types : Array(LLVM::Type))
+      types.map do |type|
+        copy_type(type).as(LLVM::Type)
+      end
+    end
+
+    # Copy an existing LLVM type, possibly from another context,
+    # into this typer's context.
+    def copy_type(type : LLVM::Type)
+      case type.kind
+      when .void?
+        @llvm_context.void
+      when .integer?
+        @llvm_context.int(type.int_width)
+      when .float?
+        @llvm_context.float
+      when .double?
+        @llvm_context.double
+      when .pointer?
+        copy_type(type.element_type).pointer
+      when .array?
+        copy_type(type.element_type).array(type.array_size)
+      when .vector?
+        copy_type(type.element_type).vector(type.vector_size)
+      when .function?
+        params_types = copy_types(type.params_types)
+        ret_type = copy_type(type.return_type)
+        LLVM::Type.function(params_types, ret_type, type.varargs?)
+      when .struct?
+        llvm_name = type.struct_name
+        if llvm_name
+          @structs[llvm_name] ||= begin
+            @llvm_context.struct(llvm_name, type.packed_struct?) do |the_struct|
+              @structs[llvm_name] = the_struct
+              copy_types(type.struct_element_types)
+            end
+          end
+        else
+          # The case of an anonymous struct (only happens with C bindings and C ABI,
+          # where structs like `{ double, double }` are generated)
+          @llvm_context.struct(copy_types(type.struct_element_types), packed: type.packed_struct?)
+        end
+      else
+        raise "don't know how to copy type: #{type} (#{type.kind})"
+      end
+    end
+
+    def llvm_name(type, wants_size)
+      llvm_name = type.llvm_name
+      llvm_name = "#{llvm_name}.wants_size" if wants_size
+      llvm_name
     end
 
     def size_of(type)
@@ -457,14 +558,22 @@ module Crystal
       @layout.abi_alignment(type)
     end
 
+    def size_t
+      if @program.has_flag?("x86_64") || @program.has_flag?("aarch64")
+        @llvm_context.int64
+      else
+        @llvm_context.int32
+      end
+    end
+
     @pointer_size : UInt64?
 
     def pointer_size
-      @pointer_size ||= size_of(LLVM::VoidPointer)
+      @pointer_size ||= size_of(@llvm_context.void_pointer)
     end
 
     def union_value_type(type : MixedUnionType)
-      @union_value_cache[type]
+      @union_value_cache[type] ||= llvm_type(type).struct_element_types[1]
     end
   end
 end

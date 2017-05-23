@@ -64,7 +64,7 @@ class HTTP::Server
     end
 
     # See `IO#write(slice)`.
-    def write(slice : Slice(UInt8))
+    def write(slice : Bytes)
       @output.write(slice)
     end
 
@@ -74,8 +74,8 @@ class HTTP::Server
     end
 
     # :nodoc:
-    def read(slice : Slice(UInt8))
-      raise "can't read from HTTP::Server::Response"
+    def read(slice : Bytes)
+      raise "Can't read from HTTP::Server::Response"
     end
 
     # Upgrades this response, writing headers and yieling the connection `IO` (a socket) to the given block.
@@ -149,18 +149,18 @@ class HTTP::Server
       end
 
       def reset
-        @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+        @in_buffer_rem = Bytes.empty
         @out_count = 0
         @sync = false
         @flush_on_newline = false
         @chunked = false
       end
 
-      private def unbuffered_read(slice : Slice(UInt8))
-        raise "can't read from HTTP::Server::Response"
+      private def unbuffered_read(slice : Bytes)
+        raise "Can't read from HTTP::Server::Response"
       end
 
-      private def unbuffered_write(slice : Slice(UInt8))
+      private def unbuffered_write(slice : Bytes)
         unless response.wrote_headers?
           if response.version != "HTTP/1.0" && !response.headers.has_key?("Content-Length")
             response.headers["Transfer-Encoding"] = "chunked"
@@ -205,7 +205,7 @@ class HTTP::Server
       end
 
       private def unbuffered_rewind
-        raise "can't rewind to HTTP::Server::Response"
+        raise "Can't rewind to HTTP::Server::Response"
       end
 
       private def unbuffered_flush

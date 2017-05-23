@@ -378,6 +378,12 @@ module Crystal
       node
     end
 
+    def transform(node : OpAssign)
+      node.target = node.target.transform(self)
+      node.value = node.value.transform(self)
+      node
+    end
+
     def transform(node : Out)
       node.exp = node.exp.transform(self)
       node
@@ -568,7 +574,7 @@ module Crystal
 
     def transform(node : Asm)
       node.output = node.output.try &.transform(self)
-      node.inputs = node.inputs.try &.each &.transform(self)
+      node.inputs.try &.each &.transform(self)
       node
     end
 

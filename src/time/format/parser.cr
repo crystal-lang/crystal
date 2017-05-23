@@ -50,7 +50,7 @@ struct Time::Format
       elsif 0 <= year
         @year = year + 2000
       else
-        raise "invalid year"
+        raise "Invalid year"
       end
     end
 
@@ -73,7 +73,7 @@ struct Time::Format
     def month_name
       string = consume_string
       if string.size < 3
-        raise "invalid month"
+        raise "Invalid month"
       end
 
       string = string.capitalize
@@ -81,7 +81,7 @@ struct Time::Format
       if index
         @month = 1 + index
       else
-        raise "invalid month"
+        raise "Invalid month"
       end
     end
 
@@ -112,13 +112,13 @@ struct Time::Format
     def day_name
       string = consume_string
       if string.size < 3
-        raise "invalid day name"
+        raise "Invalid day name"
       end
 
       string = string.capitalize
       index = DAY_NAMES.index &.starts_with?(string)
       unless index
-        raise "invalid day name"
+        raise "Invalid day name"
       end
     end
 
@@ -183,7 +183,7 @@ struct Time::Format
       when "pm"
         @pm = true
       else
-        raise "invalid am/pm"
+        raise "Invalid am/pm"
       end
     end
 
@@ -224,26 +224,26 @@ struct Time::Format
           @kind = Time::Kind::Utc
           next_char
         else
-          raise "invalid timezone"
+          raise "Invalid timezone"
         end
       when '-', '+'
         sign = char == '-' ? -1 : 1
 
         char = next_char
-        raise "invalid timezone" unless char.digit?
+        raise "Invalid timezone" unless char.ascii_number?
         hours = char.to_i
 
         char = next_char
-        raise "invalid timezone" unless char.digit?
+        raise "Invalid timezone" unless char.ascii_number?
         hours = 10*hours + char.to_i
 
         char = next_char
         char = next_char if char == ':'
-        raise "invalid timezone" unless char.digit?
+        raise "Invalid timezone" unless char.ascii_number?
         minutes = char.to_i
 
         char = next_char
-        raise "invalid timezone" unless char.digit?
+        raise "Invalid timezone" unless char.ascii_number?
         minutes = 10*minutes + char.to_i
 
         @offset_in_minutes = sign * (60*hours + minutes)
@@ -252,9 +252,9 @@ struct Time::Format
 
         if @reader.has_next?
           pos = @reader.pos
-          if char == ':' && next_char.digit? && @reader.has_next? && next_char.digit?
+          if char == ':' && next_char.ascii_number? && @reader.has_next? && next_char.ascii_number?
             next_char
-          elsif char.digit? && next_char.digit?
+          elsif char.ascii_number? && next_char.ascii_number?
             next_char
           else
             @reader.pos = pos
@@ -275,7 +275,7 @@ struct Time::Format
       if current_char == char
         next_char
       else
-        raise "unexpected char: #{char.inspect} (#{@reader.pos})"
+        raise "Unexpected char: #{char.inspect} (#{@reader.pos})"
       end
     end
 
@@ -287,16 +287,16 @@ struct Time::Format
       n = 0_i64
       char = current_char
 
-      if char.digit?
+      if char.ascii_number?
         n = (char - '0').to_i64
         char = next_char
       else
-        raise "expecting number"
+        raise "Expecting number"
       end
 
       max_digits -= 1
 
-      while max_digits > 0 && char.digit?
+      while max_digits > 0 && char.ascii_number?
         n = n * 10 + (char - '0')
         char = next_char
         max_digits -= 1
@@ -306,7 +306,7 @@ struct Time::Format
     end
 
     def consume_number_blank_padded(max_digits)
-      if current_char.whitespace?
+      if current_char.ascii_whitespace?
         max_digits -= 1
         next_char
       end
@@ -316,14 +316,14 @@ struct Time::Format
 
     def consume_string
       start_pos = @reader.pos
-      while current_char.alpha?
+      while current_char.ascii_letter?
         next_char
       end
       @reader.string.byte_slice(start_pos, @reader.pos - start_pos)
     end
 
     def skip_space
-      next_char if current_char.whitespace?
+      next_char if current_char.ascii_whitespace?
     end
 
     def current_char

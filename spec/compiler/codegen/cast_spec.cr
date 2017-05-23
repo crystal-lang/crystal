@@ -358,4 +358,57 @@ describe "Code gen: cast" do
       (v || {v}).as(Bool | Float64)
       ))
   end
+
+  it "codegens class method when type id is available but not a virtual type (#3490)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Super
+      end
+
+      module Mixin
+      end
+
+      class A < Super
+        include Mixin
+      end
+
+      class B < Super
+        include Mixin
+      end
+
+      a = A.new.as(Super)
+      if a.is_a?(Mixin)
+        a.class.name
+      else
+        "Nope"
+      end
+      )).to_string.should eq("A")
+  end
+
+  it "casts from nilable type to virtual type (#3512)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      foo = 1 == 2 ? nil : Foo.new
+      x = foo.as(Foo)
+      x.foo
+      )).to_i.should eq(1)
+  end
 end

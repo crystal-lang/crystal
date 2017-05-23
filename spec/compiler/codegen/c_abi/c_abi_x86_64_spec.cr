@@ -15,7 +15,7 @@ require "../../../spec_helper"
 
         s = LibFoo::Struct.new
         LibFoo.foo(s)
-        )).first_value
+        ))
       str = mod.to_s
       str.should contain("call void @foo({ i64 }")
       str.should contain("declare void @foo({ i64 })")
@@ -61,7 +61,7 @@ require "../../../spec_helper"
 
         s = LibFoo::Struct.new
         LibFoo.foo(s)
-        )).first_value
+        ))
       str = mod.to_s
       str.should contain("call void (...)")
     end
@@ -79,10 +79,34 @@ require "../../../spec_helper"
 
         s = LibFoo::Struct.new
         LibFoo.foo(s)
-        )).first_value
+        ))
       str = mod.to_s
       str.should contain("call void @foo({ i64, i64 }")
       str.should contain("declare void @foo({ i64, i64 })")
+    end
+
+    it "passes struct between 64 and 128 bits as { i64, i64 } (with multiple modules/contexts)" do
+      codegen(%(
+        require "prelude"
+
+        lib LibFoo
+          struct Struct
+            x : Int64
+            y : Int16
+          end
+
+          fun foo(s : Struct)
+        end
+
+        module Moo
+          def self.moo
+            s = LibFoo::Struct.new
+            LibFoo.foo(s)
+          end
+        end
+
+        Moo.moo
+        ))
     end
 
     it "passes struct between 64 and 128 bits (for real)" do
@@ -126,7 +150,7 @@ require "../../../spec_helper"
 
         s = LibFoo::Struct.new
         LibFoo.foo(s)
-        )).first_value
+        ))
       str = mod.to_s
       str.scan(/byval/).size.should eq(2)
     end
@@ -172,7 +196,7 @@ require "../../../spec_helper"
         end
 
         str = LibFoo.foo
-        )).first_value
+        ))
       str = mod.to_s
       str.should contain("call { i64 } @foo()")
       str.should contain("declare { i64 } @foo()")
@@ -218,7 +242,7 @@ require "../../../spec_helper"
         end
 
         str = LibFoo.foo
-        )).first_value
+        ))
       str = mod.to_s
       str.should contain("call { i64, i64 } @foo()")
       str.should contain("declare { i64, i64 } @foo()")
@@ -265,7 +289,7 @@ require "../../../spec_helper"
         end
 
         str = LibFoo.foo(1)
-        )).first_value
+        ))
       str = mod.to_s
       str.scan(/sret/).size.should eq(2)
       str.should contain("sret, i32") # sret goes as first argument

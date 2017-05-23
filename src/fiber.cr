@@ -48,6 +48,24 @@ class Fiber
       stack_ptr[0] = self.as(Void*)      # First argument passed on the stack
       stack_ptr[-1] = Pointer(Void).null # Empty space to keep the stack alignment (16 bytes)
       stack_ptr[-2] = fiber_main.pointer # Initial `resume` will `ret` to this address
+    {% elsif flag?(:aarch64) %}
+      # In ARMv8, the context switch push/pops 12 registers + 8 FPU registers.
+      # Add one more to store the argument of `fiber_main` (+ alignment)
+      @stack_top = (stack_ptr - 22).as(Void*)
+      stack_ptr[-2] = self.as(Void*)      # This will be `pop` into r0 (first argument)
+      stack_ptr[-14] = fiber_main.pointer # Initial `resume` will `ret` to this address
+    {% elsif flag?(:arm) %}
+      # In ARMv6 / ARVMv7, the context switch push/pops 8 registers.
+      # Add one more to store the argument of `fiber_main`
+      {% if flag?(:armhf) %}
+        # Add 8 FPU registers.
+        @stack_top = (stack_ptr - (9 + 16)).as(Void*)
+      {% else %}
+        @stack_top = (stack_ptr - 9).as(Void*)
+      {% end %}
+
+      stack_ptr[0] = fiber_main.pointer # Initial `resume` will `ret` to this address
+      stack_ptr[-9] = self.as(Void*)    # This will be `pop` into r0 (first argument)
     {% else %}
       {{ raise "Unsupported platform, only x86_64 and i686 are supported." }}
     {% end %}
@@ -127,48 +145,123 @@ class Fiber
 
   @[NoInline]
   @[Naked]
-  protected def self.switch_stacks(current, to)
-    # TODO: these \% escapes are needed because of https://github.com/crystal-lang/crystal/issues/2178
-    # Remove them once that issue is fixed.
+  protected def self.switch_stacks(current, to) : Nil
     {% if flag?(:x86_64) %}
       asm("
-        pushq \%rdi
-        pushq \%rbx
-        pushq \%rbp
-        pushq \%r12
-        pushq \%r13
-        pushq \%r14
-        pushq \%r15
-        movq \%rsp, ($0)
-        movq ($1), \%rsp
-        popq \%r15
-        popq \%r14
-        popq \%r13
-        popq \%r12
-        popq \%rbp
-        popq \%rbx
-        popq \%rdi"
+        pushq %rdi
+        pushq %rbx
+        pushq %rbp
+        pushq %r12
+        pushq %r13
+        pushq %r14
+        pushq %r15
+        movq %rsp, ($0)
+        movq ($1), %rsp
+        popq %r15
+        popq %r14
+        popq %r13
+        popq %r12
+        popq %rbp
+        popq %rbx
+        popq %rdi"
               :: "r"(current), "r"(to))
     {% elsif flag?(:i686) %}
       asm("
-        pushl \%edi
-        pushl \%ebx
-        pushl \%ebp
-        pushl \%esi
-        movl \%esp, ($0)
-        movl ($1), \%esp
-        popl \%esi
-        popl \%ebp
-        popl \%ebx
-        popl \%edi"
+        pushl %edi
+        pushl %ebx
+        pushl %ebp
+        pushl %esi
+        movl %esp, ($0)
+        movl ($1), %esp
+        popl %esi
+        popl %ebp
+        popl %ebx
+        popl %edi"
+              :: "r"(current), "r"(to))
+    {% elsif flag?(:aarch64) %}
+      # Adapted from https://github.com/ldc-developers/druntime/blob/ldc/src/core/threadasm.S
+      #
+      # preserve/restore AAPCS64 registers
+      # x19-x28   5.1.1 64-bit callee saved
+      # x29       fp, or possibly callee saved reg - depends on platform choice 5.2.3)
+      # x30       lr
+      # x0        self argument (initial call)
+      # d8-d15    5.1.2 says callee only must save bottom 64-bits (the "d" regs)
+      asm("
+        stp     d15, d14, [sp, #-22*8]!
+        stp     d13, d12, [sp, #2*8]
+        stp     d11, d10, [sp, #4*8]
+        stp     d9,  d8,  [sp, #6*8]
+        stp     x30, x29, [sp, #8*8]  // lr, fp
+        stp     x28, x27, [sp, #10*8]
+        stp     x26, x25, [sp, #12*8]
+        stp     x24, x23, [sp, #14*8]
+        stp     x22, x21, [sp, #16*8]
+        stp     x20, x19, [sp, #18*8]
+        stp     x0,  x1,  [sp, #20*8] // self, alignment
+
+        mov     x19, sp
+        str     x19, [$0]
+        mov     sp, $1
+
+        ldp     x0,  x1,  [sp, #20*8] // self, alignment
+        ldp     x20, x19, [sp, #18*8]
+        ldp     x22, x21, [sp, #16*8]
+        ldp     x24, x23, [sp, #14*8]
+        ldp     x26, x25, [sp, #12*8]
+        ldp     x28, x27, [sp, #10*8]
+        ldp     x30, x29, [sp, #8*8]  // lr, fp
+        ldp     d9,  d8,  [sp, #6*8]
+        ldp     d11, d10, [sp, #4*8]
+        ldp     d13, d12, [sp, #2*8]
+        ldp     d15, d14, [sp], #22*8
+
+        // avoid a stack corruption that will confuse the unwinder
+        mov     x16, x30 // save lr
+        mov     x30, #0  // reset lr
+        br      x16      // jump to new pc value
+        "
+              :: "r"(current), "r"(to))
+    {% elsif flag?(:armhf) %}
+      # we eventually reset LR to zero to avoid the ARM unwinder to mistake the
+      # context switch as a regular call.
+      asm("
+        .fpu vfp
+        stmdb  sp!, {r0, r4-r11, lr}
+        vstmdb sp!, {d8-d15}
+        str    sp, [$0]
+        ldr    sp, [$1]
+        vldmia sp!, {d8-d15}
+        ldmia  sp!, {r0, r4-r11, lr}
+        mov    r1, lr
+        mov    lr, #0
+        mov    pc, r1
+        "
+              :: "r"(current), "r"(to))
+    {% elsif flag?(:arm) %}
+      # we eventually reset LR to zero to avoid the ARM unwinder to mistake the
+      # context switch as a regular call.
+      asm("
+        stmdb  sp!, {r0, r4-r11, lr}
+        str    sp, [$0]
+        ldr    sp, [$1]
+        ldmia  sp!, {r0, r4-r11, lr}
+        mov    r1, lr
+        mov    lr, #0
+        mov    pc, r1
+        "
               :: "r"(current), "r"(to))
     {% end %}
   end
 
-  def resume
+  def resume : Nil
     current, Thread.current.current_fiber = Thread.current.current_fiber, self
     LibGC.stackbottom = @stack_bottom
-    Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
+    {% if flag?(:aarch64) %}
+      Fiber.switch_stacks(pointerof(current.@stack_top), @stack_top)
+    {% else %}
+      Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
+    {% end %}
   end
 
   def sleep(time)

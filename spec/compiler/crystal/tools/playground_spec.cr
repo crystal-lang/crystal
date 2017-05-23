@@ -1,8 +1,4 @@
-require "spec"
-require "yaml"
-require "../../../../src/compiler/crystal/**"
-
-include Crystal
+require "../../../spec_helper"
 
 private def instrument(source)
   ast = Parser.new(source).parse
@@ -26,11 +22,11 @@ private def assert_agent_eq(source, expected)
   instrument(source).should eq(expected)
 end
 
-class Crystal::Playground::Agent
-  @ws : HTTP::WebSocket | Crystal::Playground::TestAgent::FakeSocket
+class Playground::Agent
+  @ws : HTTP::WebSocket | TestAgent::FakeSocket
 end
 
-class Crystal::Playground::TestAgent < Playground::Agent
+private class TestAgent < Playground::Agent
   class FakeSocket
     property message
 
@@ -47,13 +43,9 @@ class Crystal::Playground::TestAgent < Playground::Agent
   end
 end
 
-def a_sample_void
-  Pointer(Void).malloc(1_u64).value
-end
-
 describe Playground::Agent do
   it "should send json messages and return inspected value" do
-    agent = Crystal::Playground::TestAgent.new(".", 32)
+    agent = TestAgent.new(".", 32)
     agent.i(1) { 5 }.should eq(5)
     agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"5","value_type":"Int32"}))
     x, y = 3, 4
@@ -578,4 +570,15 @@ describe Playground::AgentInstrumentorTransformer do
     end
     CR
   end
+end
+
+private def assert_compile(source)
+  sources = Playground::Session.instrument_and_prelude("", "", 0, source, Logger.new(nil))
+  compiler = Compiler.new
+  compiler.no_codegen = true
+  result = compiler.compile sources, "fake-no-build"
+end
+
+describe Playground::Session do
+  it { assert_compile %(puts "1") }
 end

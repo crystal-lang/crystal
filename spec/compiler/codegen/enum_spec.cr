@@ -106,25 +106,29 @@ describe "Code gen: enum" do
 
   it "codegens enum None redefined" do
     run(%(
-      @[Flags]
-      enum Foo
-        A
-        None = 10
+      lib Lib
+        @[Flags]
+        enum Foo
+          A
+          None = 10
+        end
       end
 
-      Foo::None
+      Lib::Foo::None
       )).to_i.should eq(10)
   end
 
   it "codegens enum All redefined" do
     run(%(
-      @[Flags]
-      enum Foo
-        A
-        All = 10
+      lib Lib
+        @[Flags]
+        enum Foo
+          A
+          All = 10
+        end
       end
 
-      Foo::All
+      Lib::Foo::All
       )).to_i.should eq(10)
   end
 
@@ -302,5 +306,20 @@ describe "Code gen: enum" do
 
       Foo::A.value
       )).to_i.should eq(30)
+  end
+
+  it "adds a none? method to flags enum" do
+    run(%(
+      @[Flags]
+      enum Foo
+        A
+        B
+      end
+
+      x = 0
+      x += 1 if Foo::None.none?
+      x += 2 if Foo::A.none?
+      x
+      )).to_i.should eq(1)
   end
 end

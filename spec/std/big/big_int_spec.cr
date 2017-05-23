@@ -25,7 +25,7 @@ describe "BigInt" do
   end
 
   it "raises if creates from string but invalid" do
-    expect_raises ArgumentError, "invalid BigInt: 123 hello 456" do
+    expect_raises ArgumentError, "Invalid BigInt: 123 hello 456" do
       BigInt.new("123 hello 456")
     end
   end

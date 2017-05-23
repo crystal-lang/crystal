@@ -72,7 +72,8 @@ module Spec
         failures_and_errors.each_with_index do |fail, i|
           if ex = fail.exception
             puts
-            puts "  #{i + 1}) #{fail.description}"
+            puts "#{(i + 1).to_s.rjust(3, ' ')}) #{fail.description}"
+
             if ex.is_a?(AssertionFailed)
               source_line = Spec.read_line(ex.file, ex.line)
               if source_line
@@ -94,7 +95,7 @@ module Spec
 
             if ex.is_a?(AssertionFailed)
               puts
-              puts "     # #{Spec.relative_file(ex.file)}:#{ex.line}".colorize.cyan
+              puts Spec.color("     # #{Spec.relative_file(ex.file)}:#{ex.line}", :comment)
             end
           end
         end
@@ -136,8 +137,8 @@ module Spec
         puts "Failed examples:"
         puts
         failures_and_errors.each do |fail|
-          print "crystal spec #{Spec.relative_file(fail.file)}:#{fail.line}".colorize.red
-          puts " # #{fail.description}".colorize.cyan
+          print Spec.color("crystal spec #{Spec.relative_file(fail.file)}:#{fail.line}", :error)
+          puts Spec.color(" # #{fail.description}", :comment)
         end
       end
     end
