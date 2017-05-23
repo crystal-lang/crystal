@@ -29,6 +29,20 @@ module Crystal::System::Random
     end
   end
 
+  def self.next_u : UInt8
+    init unless @@initialized
+
+    if @@getrandom_available
+      buf = uninitialized UInt8[1]
+      getrandom(buf.to_slice)
+      buf.to_unsafe.as(UInt8*).value
+    elsif urandom = @@urandom
+      urandom.read_byte.not_nil!
+    else
+      raise "Failed to access secure source to generate random bytes!"
+    end
+  end
+
   # Reads n random bytes using the Linux `getrandom(2)` syscall.
   private def self.getrandom(buf)
     # getrandom(2) may only read up to 256 bytes at once without being

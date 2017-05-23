@@ -16,4 +16,14 @@ module Crystal::System::Random
       raise "Failed to access secure source to generate random bytes!"
     end
   end
+
+  def self.next_u : UInt8
+    init unless @@initialized
+
+    if urandom = @@urandom
+      urandom.read_bytes(UInt8)
+    else
+      raise "Failed to access secure source to generate random bytes!"
+    end
+  end
 end
