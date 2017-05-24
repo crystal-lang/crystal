@@ -35,12 +35,12 @@ describe "UUID" do
 
   it "compares to strings" do
     uuid = UUID.new "c3b46146eb794e18877b4d46a10d1517"
-    ->{ uuid == "c3b46146eb794e18877b4d46a10d1517" }.call.should eq(true)
-    ->{ uuid == "c3b46146-eb79-4e18-877b-4d46a10d1517" }.call.should eq(true)
-    ->{ uuid == "C3B46146-EB79-4E18-877B-4D46A10D1517" }.call.should eq(true)
-    ->{ uuid == "urn:uuid:C3B46146-EB79-4E18-877B-4D46A10D1517" }.call.should eq(true)
-    ->{ uuid == "urn:uuid:c3b46146-eb79-4e18-877b-4d46a10d1517" }.call.should eq(true)
-    ->{ UUID.new == "C3B46146-EB79-4E18-877B-4D46A10D1517" }.call.should eq(false)
+    uuid.should eq("c3b46146eb794e18877b4d46a10d1517")
+    uuid.should eq("c3b46146-eb79-4e18-877b-4d46a10d1517")
+    uuid.should eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
+    uuid.should eq("urn:uuid:C3B46146-EB79-4E18-877B-4D46A10D1517")
+    uuid.should eq("urn:uuid:c3b46146-eb79-4e18-877b-4d46a10d1517")
+    (UUID.new).should_not eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
   end
 
   it "fails on invalid arguments when creating" do
