@@ -59,4 +59,14 @@ struct Bool
   def clone
     self
   end
+
+  # Yields the block for `true` and returns `"nil"` for `false`.
+  # ```
+  # true.if {
+  #   puts "Is true."
+  # }
+  # ```
+  def if(&block)
+    self ? yield : nil
+  end
 end
