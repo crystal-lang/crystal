@@ -19,12 +19,12 @@ module System
     end
   end
 
-  # Returns number of online CPUs
+  # Returns the number of logical processors available to the system.
   #
   # ```
-  # System.num_cpus # => 4
+  # System.cpu_count # => 4
   # ```
-  def self.num_cpus
+  def self.cpu_count
     LibC.sysconf(LibC::SC_NPROCESSORS_ONLN)
   end
 end

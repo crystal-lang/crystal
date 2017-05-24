@@ -11,11 +11,11 @@ describe System do
     end
   end
 
-  describe "num_cpus" do
+  describe "cpu_count" do
     it "returns current CPU count" do
       shell_cpus = `getconf _NPROCESSORS_ONLN || nproc --all || grep -c '^processor' /proc/cpuinfo`.to_i
-      num_cpus = System.num_cpus
-      num_cpus.should eq(shell_cpus)
+      cpu_count = System.cpu_count
+      cpu_count.should eq(shell_cpus)
     end
   end
 end
