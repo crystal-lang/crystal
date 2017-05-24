@@ -60,7 +60,7 @@ struct UUID
     UUID.byte_version @bytes[6]
   end
 
-  # Sets variant to a specified `value`. Doesn't set variant (see `UUID#variant=(value : Variant)`).
+  # Sets Version to a specified `value`. Doesn't set variant (see `UUID#variant=(value : Variant)`).
   def version=(value : Version)
     @bytes[6] = UUID.byte_version @bytes[6], value
   end
