@@ -2,11 +2,12 @@ require "./sys/types"
 require "./stdint"
 
 lib LibC
-  F_OK       = 0
-  R_OK       = 4
-  W_OK       = 2
-  X_OK       = 1
-  SC_CLK_TCK = 2
+  F_OK                =  0
+  R_OK                =  4
+  W_OK                =  2
+  X_OK                =  1
+  SC_CLK_TCK          =  2
+  SC_NPROCESSORS_ONLN = 84
 
   fun access(x0 : Char*, x1 : Int) : Int
   fun chdir(x0 : Char*) : Int
