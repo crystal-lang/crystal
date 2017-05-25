@@ -254,11 +254,11 @@ describe "Semantic: tuples" do
     assert_error %(
       require "prelude"
 
-      pos = {0, 0}
+      pos = {0,0,0,0,0,0,0,0,0,0}
       while true
-        pos += {0, 0}
+        pos += {0,0,0,0,0,0,0,0,0,0}
       end
-      ),
-      "tuple too big"
+    ),
+    "tuple too big"
   end
 end
