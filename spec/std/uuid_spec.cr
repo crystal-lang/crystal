@@ -3,16 +3,9 @@ require "uuid"
 
 describe "UUID" do
   it "has working zero UUID" do
-    UUID.empty.should eq UUID.empty
-    UUID.empty.to_s.should eq "00000000-0000-0000-0000-000000000000"
-    UUID.empty.variant.should eq UUID::Variant::NCS
-  end
-
-  it "doesn't overwrite empty" do
-    empty = UUID.empty
-    empty.should eq empty
-    empty.decode "a01a5a94-7b52-4ca8-b310-382436650336"
-    UUID.empty.should_not eq empty
+    UUID::EMPTY.should eq UUID.new(StaticArray(UInt8, 16).new(0_u8))
+    UUID::EMPTY.to_s.should eq "00000000-0000-0000-0000-000000000000"
+    UUID::EMPTY.variant.should eq UUID::Variant::NCS
   end
 
   it "can be built from strings" do
