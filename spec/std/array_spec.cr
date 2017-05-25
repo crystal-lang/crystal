@@ -1319,6 +1319,15 @@ describe "Array" do
     ary2.should eq([1, 2, 4, 5])
   end
 
+  it "does map_with_index!" do
+    ary = [0, 1, 2]
+    ary2 = ary.map_with_index! { |e, i| i * 2 }
+    ary[0].should eq(0)
+    ary[1].should eq(2)
+    ary[2].should eq(4)
+    ary2.should be(ary)
+  end
+
   it "does + with different types (#568)" do
     a = [1, 2, 3]
     a += ["hello"]
