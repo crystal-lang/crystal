@@ -436,6 +436,23 @@ describe "String" do
     "foo".should_not eq("bar")
   end
 
+  it "securely compares strings: different size" do
+    "foo".secure_compare("abcde").should eq(false)
+  end
+
+  it "securely compares strings: same object" do
+    f = "foo"
+    f.secure_compare(f).should eq(true)
+  end
+
+  it "securely compares strings: same size, same string" do
+    "foo".secure_compare("fo" + "o").should eq(true)
+  end
+
+  it "securely compares strings: same size, different string" do
+    "foo".secure_compare("bar").should eq(false)
+  end
+
   it "interpolates string" do
     foo = "<foo>"
     bar = 123

@@ -2398,6 +2398,31 @@ class String
     end
   end
 
+  # Compares this string with *other* in polynomial time for strings of the same length,
+  # returning true for matching strings and false for strings that don't match. Helpful in
+  # preventing timing attacks.
+  # ```
+  # "abcdef".secure_compare("abcde")  # => false
+  # "abcdef".secure_compare("abcdef") # => true
+  # ```
+  def secure_compare(other : String)
+    return false unless bytesize == other.bytesize
+
+    reader1 = Char::Reader.new(self)
+    reader2 = Char::Reader.new(other)
+
+    res = 0
+
+    while reader1.has_next? && reader2.has_next?
+      res |= reader2.current_char.ord ^ reader1.current_char.ord
+
+      reader1.next_char
+      reader2.next_char
+    end
+
+    res == 0
+  end
+
   # Tests whether *str* matches *regex*.
   # If successful, it returns the position of the first match.
   # If unsuccessful, it returns `nil`.
