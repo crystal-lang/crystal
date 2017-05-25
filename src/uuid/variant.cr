@@ -55,7 +55,7 @@ struct UUID
     UUID.byte_variant @bytes[8]
   end
 
-  # Sets UUID variant to specified `value`.
+  # Sets UUID variant to specified *value*.
   def variant=(value : Variant)
     @bytes[8] = UUID.byte_variant @bytes[8], value
   end

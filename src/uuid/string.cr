@@ -51,7 +51,7 @@ struct UUID
     end
   end
 
-  #  Returns string in specified `format`.
+  #  Returns string in specified *format*.
   def to_s(format = Format::Hyphenated)
     slice = to_slice
     case format
