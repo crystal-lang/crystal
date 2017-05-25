@@ -281,7 +281,6 @@ class Screen
   end
 
   def put_pixel(point, color)
-    color = color.to_u32
     offset = @surface.offset(point.x, point.y)
     @surface[offset] = color
 
@@ -449,11 +448,11 @@ while true
   end
 
   points.each do |point|
-    screen.put_pixel(point, point.color)
+    screen.put_pixel(point, point.color.to_u32)
   end
 
   main_points.each do |main_point|
-    screen.put_pixel(main_point, main_point.color)
+    screen.put_pixel(main_point, main_point.color.to_u32)
   end
 
   main_points.each do |main_point|
