@@ -72,6 +72,8 @@ end
   end
 
 {% elsif flag?(:freebsd) %}
+  require "c/sysctl"
+
   class Process
     private def self.executable_path_impl
       mib = Int32[LibC::CTL_KERN, LibC::KERN_PROC, LibC::KERN_PROC_PATHNAME, -1]
