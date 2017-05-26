@@ -72,14 +72,6 @@ end
   end
 
 {% elsif flag?(:freebsd) %}
-  lib LibC
-    PATH_MAX = 1024
-    CTL_KERN = 1
-    KERN_PROC = 14
-    KERN_PROC_PATHNAME = 12
-    fun sysctl(name : Int*, namelen : UInt, oldp : Void*, oldlenp : SizeT*, newp : Void*, newlen : SizeT) : Int
-  end
-
   class Process
     private def self.executable_path_impl
       mib = Int32[LibC::CTL_KERN, LibC::KERN_PROC, LibC::KERN_PROC_PATHNAME, -1]
