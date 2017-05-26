@@ -3,9 +3,9 @@ require "uuid"
 
 describe "UUID" do
   it "has working zero UUID" do
-    UUID::EMPTY.should eq UUID.new(StaticArray(UInt8, 16).new(0_u8))
-    UUID::EMPTY.to_s.should eq "00000000-0000-0000-0000-000000000000"
-    UUID::EMPTY.variant.should eq UUID::Variant::NCS
+    UUID.empty.should eq UUID.new(StaticArray(UInt8, 16).new(0_u8))
+    UUID.empty.to_s.should eq "00000000-0000-0000-0000-000000000000"
+    UUID.empty.variant.should eq UUID::Variant::NCS
   end
 
   it "can be built from strings" do

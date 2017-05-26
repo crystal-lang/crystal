@@ -22,7 +22,7 @@ struct UUID
   end
 
   # Generates RFC 4122 UUID `variant` with specified `version`.
-  def initialize(version : Version)
+  def initialize(version : Version, @bytes = StaticArray(UInt8, 16).new(0_u8))
     case version
     when Version::V4
       @bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
