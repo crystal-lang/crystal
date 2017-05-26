@@ -60,19 +60,19 @@ struct UUID
     UUID.byte_version @bytes[6]
   end
 
-  # Sets variant to a specified `value`. Doesn't set variant (see `UUID#variant=(value : Variant)`).
+  # Sets `version` to a specified `value`. Doesn't set variant (see `UUID#variant=(value : Variant)`).
   def version=(value : Version)
     @bytes[6] = UUID.byte_version @bytes[6], value
   end
 
   {% for v in %w(1 2 3 4 5) %}
 
-    # Returns `true` if UUID looks like V{{ v.id }}, `false` otherwise.
+    # Returns `true` if UUID looks is a V{{ v.id }}, `false` otherwise.
     def v{{ v.id }}?
       variant == Variant::RFC4122 && version == RFC4122::Version::V{{ v.id }}
     end
 
-    # Returns `true` if UUID looks like V{{ v.id }}, raises `Error` otherwise.
+    # Returns `true` if UUID looks is a V{{ v.id }}, raises `Error` otherwise.
     def v{{ v.id }}!
       unless v{{ v.id }}?
         raise Error.new("Invalid UUID variant #{variant} version #{version}, expected RFC 4122 V{{ v.id }}.")

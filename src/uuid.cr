@@ -41,7 +41,7 @@ struct UUID
     @bytes.to_unsafe
   end
 
-  # Writes hyphenated format string to `io`.
+  # Writes hyphenated format string to the *io*.
   def to_s(io : IO)
     io << to_s
   end

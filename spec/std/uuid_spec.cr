@@ -3,16 +3,9 @@ require "uuid"
 
 describe "UUID" do
   it "has working zero UUID" do
-    UUID.empty.should eq UUID.empty
-    UUID.empty.to_s.should eq "00000000-0000-0000-0000-000000000000"
-    UUID.empty.variant.should eq UUID::Variant::NCS
-  end
-
-  it "doesn't overwrite empty" do
-    empty = UUID.empty
-    empty.should eq empty
-    empty.decode "a01a5a94-7b52-4ca8-b310-382436650336"
-    UUID.empty.should_not eq empty
+    UUID::EMPTY.should eq UUID.new(StaticArray(UInt8, 16).new(0_u8))
+    UUID::EMPTY.to_s.should eq "00000000-0000-0000-0000-000000000000"
+    UUID::EMPTY.variant.should eq UUID::Variant::NCS
   end
 
   it "can be built from strings" do
@@ -35,12 +28,12 @@ describe "UUID" do
 
   it "compares to strings" do
     uuid = UUID.new "c3b46146eb794e18877b4d46a10d1517"
-    ->{ uuid == "c3b46146eb794e18877b4d46a10d1517" }.call.should eq(true)
-    ->{ uuid == "c3b46146-eb79-4e18-877b-4d46a10d1517" }.call.should eq(true)
-    ->{ uuid == "C3B46146-EB79-4E18-877B-4D46A10D1517" }.call.should eq(true)
-    ->{ uuid == "urn:uuid:C3B46146-EB79-4E18-877B-4D46A10D1517" }.call.should eq(true)
-    ->{ uuid == "urn:uuid:c3b46146-eb79-4e18-877b-4d46a10d1517" }.call.should eq(true)
-    ->{ UUID.new == "C3B46146-EB79-4E18-877B-4D46A10D1517" }.call.should eq(false)
+    uuid.should eq("c3b46146eb794e18877b4d46a10d1517")
+    uuid.should eq("c3b46146-eb79-4e18-877b-4d46a10d1517")
+    uuid.should eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
+    uuid.should eq("urn:uuid:C3B46146-EB79-4E18-877B-4D46A10D1517")
+    uuid.should eq("urn:uuid:c3b46146-eb79-4e18-877b-4d46a10d1517")
+    (UUID.new).should_not eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
   end
 
   it "fails on invalid arguments when creating" do
