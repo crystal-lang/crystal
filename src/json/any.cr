@@ -236,6 +236,32 @@ struct JSON::Any
     as_h if @raw.is_a?(Hash(String, Type))
   end
 
+  # Creates a new array with `JSON::Any` values.
+  def to_a : Array(Any)
+    as_a.map do |value|
+      Any.new value
+    end
+  end
+
+  # Checks that underlying value is `Array`, and creates a new array with `JSON::Any` values.
+  # Returns nil otherwise.
+  def to_a? : Array(Any)?
+    to_a if @raw.is_a?(Array(Type))
+  end
+
+  # Creates a new hash with `String` keys and `JSON::Any` values.
+  def to_h : Hash(String, Any)
+    as_h.each_with_object(Hash(String, Any).new) do |(key, value), hash|
+      hash[key] = Any.new value
+    end
+  end
+
+  # Checks that underlying value is `Hash`, and creates a new hash with `String` keys and `JSON::Any` values.
+  # Returns nil otherwise.
+  def to_h? : Hash(String, Any)?
+    to_h if @raw.is_a?(Hash(String, Type))
+  end
+
   # :nodoc:
   def inspect(io)
     @raw.inspect(io)
