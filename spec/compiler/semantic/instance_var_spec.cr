@@ -4685,4 +4685,39 @@ describe "Semantic: instance var" do
       {Foo.new.@never_nil, Bar.new.@never_nil}
     )) { tuple_of([int32, int32]) }
   end
+
+  it "errors if assigning instance variable at top level block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        @foo = 1
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
+
+  it "errors when assigning instance variable at top level block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        @foo = 1
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
+
+  it "errors when assigning instance variable at top level control block" do
+    assert_error %(
+    if true
+      @foo = 1
+    end
+    ),
+      "can't use instance variables at the top level"
+  end
 end
