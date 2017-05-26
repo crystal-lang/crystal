@@ -139,19 +139,6 @@ describe "Semantic: yield with scope" do
       "can't use instance variables at the top level"
   end
 
-  it "errors if assigning instance variable at top level" do
-    assert_error %(
-      def foo
-        yield
-      end
-
-      foo do
-        @foo = 1
-      end
-      ),
-      "can't use instance variables at the top level"
-  end
-
   it "uses instance variable of enclosing scope" do
     assert_type(%(
       class Foo
