@@ -29,8 +29,8 @@ describe "UUID" do
 
   it "supports different string formats" do
     UUID.new("ee843b2656d8472bb3430b94ed9077ff").to_s.should eq "ee843b26-56d8-472b-b343-0b94ed9077ff"
-    UUID.new("3e806983-eca4-4fc5-b581-f30fb03ec9e5").to_s(UUID::Format::Hexstring).should eq "3e806983eca44fc5b581f30fb03ec9e5"
-    UUID.new("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").to_s(UUID::Format::URN).should eq "urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892"
+    UUID.new("3e806983-eca4-4fc5-b581-f30fb03ec9e5").hexstring.should eq "3e806983eca44fc5b581f30fb03ec9e5"
+    UUID.new("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").urn.should eq "urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892"
   end
 
   it "compares to strings" do

@@ -13,13 +13,6 @@ struct UUID
     end
   end
 
-  # String format.
-  enum Format
-    Hyphenated
-    Hexstring
-    URN
-  end
-
   # Creates new UUID by decoding `value` string from hyphenated (ie. `ba714f86-cac6-42c7-8956-bcf5105e1b81`),
   # hexstring (ie. `89370a4ab66440c8add39e06f2bb6af6`) or URN (ie. `urn:uuid:3f9eaf9e-cdb0-45cc-8ecb-0e5b2bfb0c20`)
   # format.
@@ -51,30 +44,28 @@ struct UUID
     end
   end
 
-  #  Returns string in specified `format`.
-  def to_s(format = Format::Hyphenated)
+  def to_s
     slice = to_slice
-    case format
-    when Format::Hyphenated
-      String.new(36) do |buffer|
-        buffer[8] = buffer[13] = buffer[18] = buffer[23] = 45_u8
-        slice[0, 4].hexstring(buffer + 0)
-        slice[4, 2].hexstring(buffer + 9)
-        slice[6, 2].hexstring(buffer + 14)
-        slice[8, 2].hexstring(buffer + 19)
-        slice[10, 6].hexstring(buffer + 24)
-        {36, 36}
-      end
-    when Format::Hexstring
-      slice.hexstring
-    when Format::URN
-      String.new(45) do |buffer|
-        buffer.copy_from "urn:uuid:".to_unsafe, 9
-        (buffer + 9).copy_from to_s.to_unsafe, 36
-        {45, 45}
-      end
-    else
-      raise ArgumentError.new "Unexpected format #{format}."
+    String.new(36) do |buffer|
+      buffer[8] = buffer[13] = buffer[18] = buffer[23] = 45_u8
+      slice[0, 4].hexstring(buffer + 0)
+      slice[4, 2].hexstring(buffer + 9)
+      slice[6, 2].hexstring(buffer + 14)
+      slice[8, 2].hexstring(buffer + 19)
+      slice[10, 6].hexstring(buffer + 24)
+      {36, 36}
+    end
+  end
+
+  def hexstring
+    to_slice.hexstring
+  end
+
+  def urn
+    String.new(45) do |buffer|
+      buffer.copy_from "urn:uuid:".to_unsafe, 9
+      (buffer + 9).copy_from to_s.to_unsafe, 36
+      {45, 45}
     end
   end
 
