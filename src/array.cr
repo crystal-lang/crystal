@@ -937,13 +937,8 @@ class Array(T)
   end
 
   # Like `map_with_index`, but mutates `self` instead of allocating a new object.
-  def map_with_index!(&block : T, Int32 -> U) forall U
-    i = 0
-    to_unsafe.map!(size) do |e|
-      res = yield e, i
-      i += 1
-      res
-    end
+  def map_with_index!(&block : (T, Int32) -> T)
+    to_unsafe.map_with_index!(size) { |e, i| yield e, i }
     self
   end
 
