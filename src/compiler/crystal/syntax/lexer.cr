@@ -1144,8 +1144,15 @@ module Crystal
 
     def skip_comment
       char = current_char
-      while char != '\n' && char != '\0'
-        char = next_char_no_column_increment
+      if char == '['
+        while char != '#' && peek_next_char != ']'
+          char = next_char_no_column_increment
+        end
+        2.times { next_char_no_column_increment }
+      else
+        while char != '\n' && char != '\0'
+          char = next_char_no_column_increment
+        end
       end
     end
 

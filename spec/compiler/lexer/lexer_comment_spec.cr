@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 describe "Lexer comments" do
-  it "lexes without comments enabled" do
+  it "lexes line comments without comments enabled" do
     lexer = Lexer.new(%(# Hello\n1))
 
     token = lexer.next_token
@@ -11,7 +11,7 @@ describe "Lexer comments" do
     token.type.should eq(:NUMBER)
   end
 
-  it "lexes with comments enabled" do
+  it "lexes line comments with comments enabled" do
     lexer = Lexer.new(%(# Hello\n1))
     lexer.comments_enabled = true
 
@@ -60,5 +60,37 @@ describe "Lexer comments" do
 
     token = lexer.next_token
     token.type.should eq(:EOF)
+  end
+
+  it "lexes block comments without comments enabled" do
+    lexer = Lexer.new(%(1#[\n2\n3\n#]4))
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.value.should eq("1")
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.value.should eq("4")
+
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+  end
+
+  it "lexes block comments with comments enabled" do
+    lexer = Lexer.new(%(1#[\n2\n3\n#]4))
+    lexer.comments_enabled = true
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.value.should eq("1")
+
+    token = lexer.next_token
+    token.type.should eq(:COMMENT)
+    token.value.should eq("#[\n2\n3\n#]")
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.value.should eq("4")
   end
 end
