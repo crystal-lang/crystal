@@ -195,18 +195,31 @@ class Crystal::CodeGenVisitor
     false
   end
 
+  @last_accepted_ensure : ASTNode?
+
   def execute_ensures_until(node)
     stop_exception_handler = @node_ensure_exception_handlers[node.object_id]?.try &.node
+
+    found = !@last_accepted_ensure
 
     @ensure_exception_handlers.try &.reverse_each do |exception_handler|
       break if exception_handler.node.same?(stop_exception_handler)
 
       target_ensure = exception_handler.node.ensure
       next unless target_ensure
+      if last_accepted_ensure = @last_accepted_ensure
+        if target_ensure.same?(last_accepted_ensure)
+          found = true
+          next
+        end
+      end
+      next unless found
 
+      @last_accepted_ensure = target_ensure
       with_context(exception_handler.context) do
         target_ensure.accept self
       end
+      @last_accepted_ensure = nil
     end
   end
 
