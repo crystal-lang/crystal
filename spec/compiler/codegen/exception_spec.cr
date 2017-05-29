@@ -1321,4 +1321,72 @@ describe "Code gen: exception" do
       foo
     )).to_i.should eq(2)
   end
+
+  it "breaks from a loop inside ensure block with rescue" do
+    run(%(
+      require "prelude"
+
+      loop do
+        begin
+          break 0
+        ensure
+          break 1
+        end
+      end
+     )).to_i.should eq(1)
+  end
+
+  it "breaks from a loop inside ensure block with rescue" do
+    run(%(
+      require "prelude"
+
+      loop do
+        begin
+          raise "foo"
+        rescue
+          break 0
+        ensure
+          break 1
+        end
+      end
+     )).to_i.should eq(1)
+  end
+
+  it "breaks from a loop inside nested ensure block" do
+    run(%(
+      require "prelude"
+
+      loop do
+        begin
+          begin
+            break 0
+          ensure
+            break 1
+          end
+        ensure
+          break 2
+        end
+      end
+     )).to_i.should eq(2)
+  end
+
+  it "continue a loop inside ensure block" do
+    run(%(
+      require "prelude"
+
+      a = b = 0
+      loop do
+        b += 1
+        break if a == 1
+        a = 1
+        begin
+          break
+        ensure
+          next
+        end
+      end
+
+      b
+    )).to_i.should eq(2)
+  end
 end
