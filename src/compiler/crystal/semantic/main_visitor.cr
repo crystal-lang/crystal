@@ -80,6 +80,7 @@ module Crystal
     @block_context : Block?
     @file_module : FileModule?
     @while_vars : MetaVars?
+    @ensure : ASTNode?
 
     # Separate type filters for an `a || b` expression.
     # We need these to filter types on an else branch of an
@@ -1623,6 +1624,10 @@ module Crystal
     end
 
     def visit(node : Return)
+      if @ensure
+        node.raise "can't use return inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
+      end
+
       typed_def = @typed_def || node.raise("can't return from top level")
 
       if typed_def.captured_block?
@@ -1978,6 +1983,7 @@ module Crystal
 
       @type_filters = nil
       @block, old_block = nil, @block
+      @ensure, old_ensure = nil, @ensure
 
       @while_stack.push node
       node.body.accept self
@@ -1986,6 +1992,7 @@ module Crystal
       merge_while_vars node.cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
+      @ensure, old_ensure = nil, @ensure
       @block = old_block
       @while_vars = old_while_vars
 
@@ -2144,6 +2151,10 @@ module Crystal
     end
 
     def end_visit(node : Break)
+      if @ensure
+        node.raise "can't use break inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
+      end
+
       if block = @block
         node.target = block.call.not_nil!
 
@@ -2169,6 +2180,10 @@ module Crystal
     end
 
     def end_visit(node : Next)
+      if @ensure
+        node.raise "can't use next inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
+      end
+
       if block = @block
         node.target = block
 
@@ -2594,7 +2609,11 @@ module Crystal
           merge_rescue_vars exception_handler_vars, all_rescue_vars
 
           # And then accept the ensure part
+          @ensure, old_ensure = node.ensure, @ensure
+          @block, old_block = nil, @block
           node.ensure.try &.accept self
+          @block = old_block
+          @ensure = old_ensure
         end
       end
 
@@ -2613,10 +2632,14 @@ module Crystal
           end
 
           before_ensure_vars = @vars.dup
+          @ensure, old_ensure = node.ensure, @ensure
+          @block, old_block = nil, @block
 
           node_ensure.accept self
 
           @vars = after_handler_vars
+          @ensure = old_ensure
+          @block = old_block
 
           # Variables declared or overwritten inside the ensure block
           # must remain after the exception handler

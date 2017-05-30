@@ -476,4 +476,132 @@ describe "Semantic: exception" do
     program = result.program
     program.vars["foo"].type.should be(program.nilable program.int32)
   end
+
+  it "can't use return inside ensure (#4470)" do
+    assert_error(%(
+      def foo
+        return 1
+      ensure
+        return 2
+      end
+
+      foo
+    ), "can't use return inside ensure")
+  end
+
+  it "can't use break from while inside ensure (#4470)" do
+    assert_error(%(
+      while true
+        begin
+          break
+        ensure
+          break
+        end
+      end
+    ), "can't use break inside ensure")
+  end
+
+  it "can use break inside while inside ensure (#4470)" do
+    assert_type(%(
+      while true
+        begin
+          break
+        ensure
+          while true
+            break
+          end
+        end
+      end
+    )) { nil_type }
+  end
+
+  it "can't use break from block inside ensure (#4470)" do
+    assert_error(%(
+      def loop
+        while true
+          yield
+        end
+      end
+
+      loop do
+        begin
+          break
+        ensure
+          break
+        end
+      end
+    ), "can't use break inside ensure")
+  end
+
+  it "can use break inside block inside ensure (#4470)" do
+    assert_type(%(
+      def loop
+        while true
+          yield
+        end
+      end
+
+      loop do
+        begin
+          break
+        ensure
+          loop do
+            break
+          end
+        end
+      end
+    )) { nil_type }
+  end
+
+  it "can't use next from while inside ensure (#4470)" do
+    assert_error(%(
+      while true
+        begin
+          break
+        ensure
+          next
+        end
+      end
+    ), "can't use next inside ensure")
+  end
+
+  it "can use next inside while inside ensure (#4470)" do
+    assert_type(%(
+      while true
+        begin
+          break
+        ensure
+          a = 0
+          while a < 1
+            a = 1
+            next
+          end
+        end
+      end
+    )) { nil_type }
+  end
+
+  it "can use next inside block inside ensure (#4470)" do
+    assert_type(%(
+      def loop
+        while true
+          yield
+        end
+      end
+
+      def once
+        yield
+      end
+
+      loop do
+        begin
+          break
+        ensure
+          once do
+            next
+          end
+        end
+      end
+    )) { nil_type }
+  end
 end
