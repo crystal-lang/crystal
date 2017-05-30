@@ -177,8 +177,8 @@ end
 
 # Raises the *exception*.
 #
-# Note that exception callstack will only be set if it's not already set.
-# It's useful for reraising of exceptions in `rescue` blocks.
+# This will set the exception's callstack if it hasn't been already.
+# Re-raising a previously catched exception won't replace the callstack.
 def raise(exception : Exception) : NoReturn
   exception.callstack ||= CallStack.new
   unwind_ex = Pointer(LibUnwind::Exception).malloc
