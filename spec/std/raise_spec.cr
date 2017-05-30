@@ -1,25 +1,24 @@
 require "spec"
 
-struct CallStack # allow clone and equality
-  def_clone
-  def_equals @callstack
-end
-
 describe "raise" do
+  callstack_on_rescue = nil
+
   it "should set exception's callstack" do
-    ex = expect_raises Exception, "without callstack" do
-      raise Exception.new "without callstack"
+    exception = expect_raises Exception, "without callstack" do
+      raise "without callstack"
     end
-    ex.callstack.should_not be_nil
+    exception.callstack.should_not be_nil
   end
 
-  it "shouldn't overwrite the callstack" do
-    ex = Exception.new "with callstack"
-    ex.callstack = CallStack.new
-    callstack_to_match = ex.callstack.clone
-    expect_raises Exception, "with callstack" do
-      raise ex
+  it "shouldn't overwrite the callstack on re-raise" do
+    exception_after_reraise = expect_raises Exception, "exception to be rescued" do
+      begin
+        raise "exception to be rescued"
+      rescue exception_on_rescue
+        callstack_on_rescue = exception_on_rescue.callstack
+        raise exception_on_rescue
+      end
     end
-    ex.callstack.should eq(callstack_to_match)
+    exception_after_reraise.callstack.should eq(callstack_on_rescue)
   end
 end
