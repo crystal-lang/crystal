@@ -75,6 +75,19 @@ module Random
     rand_type(Int32)
   end
 
+  # Generates a slice filled with *n* random bytes.
+  #
+  # ```
+  # Random.random_bytes    # => [145, 255, 191, 133, 132, 139, 53, 136, 93, 238, 2, 37, 138, 244, 3, 216]
+  # Random.random_bytes(4) # => [217, 118, 38, 196]
+  # ```
+  def self.random_bytes(n : Int = 16) : Bytes
+    if n < 0
+      raise ArgumentError.new "Negative size: #{n}"
+    end
+    Bytes.new(n).tap { |buf| rand_type(Int8) }
+  end
+
   # See `#rand`.
   def next_float : Float64
     max_prec = 1u64 << 53 # Float64, excluding mantissa, has 2^53 values

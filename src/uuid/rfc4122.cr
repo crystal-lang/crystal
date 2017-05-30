@@ -22,16 +22,17 @@ struct UUID
   end
 
   # Generates RFC 4122 UUID `variant` with specified `version`.
-  def initialize(version : Version, @bytes = StaticArray(UInt8, 16).new(0_u8))
-    case version
-    when Version::V4
-      @bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
-      variant = Variant::RFC4122
-      version = Version::V4
-    else
-      raise ArgumentError.new "Creating #{version} not supported."
-    end
-  end
+#  def initialize(@bytes : StaticArray(UInt8, 16), version = Version::V4)
+#    #@bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
+#
+#    case version
+#    when Version::V4
+#      variant = Variant::RFC4122
+#      version = Version::V4
+#    else
+#      raise ArgumentError.new "Creating #{version} not supported."
+#    end
+#  end
 
   # Returns version based on provided 6th `byte` (0-indexed).
   def self.byte_version(byte : UInt8)
