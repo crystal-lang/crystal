@@ -19,6 +19,7 @@ describe "raise" do
         raise exception_on_rescue
       end
     end
+    exception_after_reraise.callstack.should_not be_nil
     exception_after_reraise.callstack.should eq(callstack_on_rescue)
   end
 end
