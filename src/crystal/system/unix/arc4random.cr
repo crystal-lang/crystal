@@ -1,3 +1,5 @@
+{% skip_file unless flag?(:openbsd) %}
+
 require "c/stdlib"
 
 module Crystal::System::Random
