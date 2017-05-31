@@ -13,7 +13,7 @@ struct UUID
   def initialize
     bytes = StaticArray(UInt8, 16).new(0_u8)
     bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
-    initialize
+    initialize bytes
   end
 
   # Creates UUID from 16-`bytes` slice.
