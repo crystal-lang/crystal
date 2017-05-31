@@ -278,7 +278,6 @@ module Crystal
           print_type(@program.object, json)
         end
       end
-      STDOUT.flush
     end
 
     def print_subtypes(types, json)

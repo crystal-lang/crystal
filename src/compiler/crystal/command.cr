@@ -116,19 +116,19 @@ class Crystal::Command
   rescue ex : Crystal::Exception
     ex.color = @color
     if @config.try(&.output_format) == "json"
-      puts ex.to_json
+      STDERR.puts ex.to_json
     else
-      puts ex
+      STDERR.puts ex
     end
     exit 1
   rescue ex : OptionParser::Exception
     error ex.message
   rescue ex
-    puts ex
+    STDERR.puts ex
     ex.backtrace.each do |frame|
-      puts frame
+      STDERR.puts frame
     end
-    puts
+    STDERR.puts
     error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues"
   end
 
@@ -422,7 +422,7 @@ class Crystal::Command
     end
 
     if filenames.size == 0 || (cursor_command && cursor_location.nil?)
-      puts option_parser
+      STDERR.puts option_parser
       exit 1
     end
 
