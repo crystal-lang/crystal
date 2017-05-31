@@ -3313,7 +3313,7 @@ class String
           if mem
             if char == '_'
               # case 3
-            else
+            elsif upcase || downcase
               # case 1
               str << '_'
             end
