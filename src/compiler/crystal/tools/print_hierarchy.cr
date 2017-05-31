@@ -261,10 +261,6 @@ module Crystal
       yield
       @indents.pop
     end
-
-    def with_color
-      ::with_color.toggle(@program.color?)
-    end
   end
 
   class JSONHierarchyPrinter < HierarchyPrinter

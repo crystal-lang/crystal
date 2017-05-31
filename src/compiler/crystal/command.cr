@@ -52,11 +52,12 @@ class Crystal::Command
   private getter options
 
   def initialize(@options : Array(String))
-    @color = true
     @progress_tracker = ProgressTracker.new
   end
 
   def run
+    Colorize.on_tty_only!
+
     command = options.first?
     case
     when !command
@@ -106,7 +107,6 @@ class Crystal::Command
   rescue ex : Crystal::LocationlessException
     error ex.message
   rescue ex : Crystal::Exception
-    ex.color = @color
     if @config.try(&.output_format) == "json"
       STDERR.puts ex.to_json
     else
@@ -359,9 +359,12 @@ class Crystal::Command
         end
       end
 
+      opts.on("--color", "Enable colored output") do
+        Colorize.enabled = true
+      end
+
       opts.on("--no-color", "Disable colored output") do
-        @color = false
-        compiler.color = false
+        Colorize.enabled = false
       end
 
       unless no_codegen
@@ -509,9 +512,11 @@ class Crystal::Command
       puts opts
       exit
     end
+    opts.on("--color", "Enable colored output") do
+      Colorize.enabled = true
+    end
     opts.on("--no-color", "Disable colored output") do
-      @color = false
-      compiler.color = false
+      Colorize.enabled = false
     end
     opts.invalid_option { }
   end
@@ -527,7 +532,17 @@ class Crystal::Command
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color")
-    Crystal.error msg, @color, exit_code: exit_code
+    ARGV.each do |arg|
+      case arg
+      when "--"
+        break
+      when "--color"
+        Colorize.enabled = true
+      when "--no-color"
+        Colorize.enabled = false
+      end
+    end
+
+    Crystal.error msg, exit_code: exit_code
   end
 end

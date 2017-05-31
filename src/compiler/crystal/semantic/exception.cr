@@ -9,11 +9,6 @@ module Crystal
     @column : Int32
     @size : Int32
 
-    def color=(color)
-      @color = !!color
-      inner.try &.color=(color)
-    end
-
     def self.for_node(node, message, inner = nil)
       location = node.location
       if location
@@ -104,7 +99,7 @@ module Crystal
         end
       when VirtualFile
         io << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
-        io << Crystal.with_line_numbers(filename.source, @line, @color)
+        io << Crystal.with_line_numbers(filename.source, @line)
         is_macro = true
       else
         lines = source ? source.lines.to_a : nil
@@ -141,7 +136,7 @@ module Crystal
       if @inner
         io << msg
       else
-        io << colorize(msg).bold
+        io << msg.colorize.bold
       end
     end
 
@@ -224,14 +219,14 @@ module Crystal
     end
 
     def print_nil_reason(nil_reason, io)
-      io << colorize("Error: ").bold
+      io << "Error: ".colorize.bold
       case nil_reason.reason
       when :used_before_initialized
-        io << colorize("instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
+        io << "instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable".colorize.bold
       when :used_self_before_initialized
-        io << colorize("'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable").bold
+        io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable".colorize.bold
       when :initialized_in_rescue
-        io << colorize("instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued").bold
+        io << "instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued".colorize.bold
       end
     end
 
@@ -307,7 +302,7 @@ module Crystal
       common = String.build do |str|
         str << "Can't infer the type of global variable '#{node.name}'"
         if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+          str << " (did you mean #{similar_name}?)".colorize.yellow.bold.to_s
         end
       end
 
@@ -325,7 +320,7 @@ module Crystal
       common = String.build do |str|
         str << "Can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+          str << " (did you mean #{similar_name}?)".colorize.yellow.bold.to_s
         end
       end
 
@@ -343,7 +338,7 @@ module Crystal
       common = String.build do |str|
         str << "Can't infer the type of instance variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+          str << " (did you mean #{similar_name}?)".colorize.yellow.bold.to_s
         end
       end
 

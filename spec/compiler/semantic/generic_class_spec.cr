@@ -636,7 +636,9 @@ describe "Semantic: generic class" do
     begin
       semantic(nodes)
     rescue ex : TypeException
+      old_enabled, Colorize.enabled = Colorize.enabled?, false
       msg = ex.to_s.lines.map(&.strip)
+      Colorize.enabled = old_enabled
       msg.count("- Foo(T).foo(x : Int32)").should eq(1)
     end
   end
