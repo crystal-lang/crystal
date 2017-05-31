@@ -1,5 +1,7 @@
-require "c/signal"
-require "c/unistd"
+{% if !flag?(:windows) %}
+  require "c/signal"
+  require "c/unistd"
+{% end %}
 
 # :nodoc:
 # Singleton that runs Signal events (libevent2) in it's own Fiber.

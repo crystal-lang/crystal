@@ -25,6 +25,7 @@ branches:
   only:
     - master
     - /\Arelease\/.+\z/
+    - /^win\W/
 notifications:
   irc:
     channels:

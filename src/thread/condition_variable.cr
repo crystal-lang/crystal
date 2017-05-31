@@ -1,4 +1,6 @@
-require "c/pthread"
+{% if !flag?(:windows) %}
+  require "c/pthread"
+{% end %}
 
 # :nodoc:
 class Thread

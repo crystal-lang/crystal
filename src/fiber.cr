@@ -1,4 +1,6 @@
-require "c/sys/mman"
+{% if !flag?(:windows) %}
+  require "c/sys/mman"
+{% end %}
 
 # :nodoc:
 @[NoInline]
@@ -15,7 +17,6 @@ class Fiber
   @@stack_pool = [] of Void*
 
   @stack : Void*
-  @resume_event : Event::Event?
   @stack_top = uninitialized Void*
   protected property stack_top : Void*
   protected property stack_bottom : Void*
@@ -23,18 +24,35 @@ class Fiber
   protected property prev_fiber : Fiber?
   property name : String?
 
+  {% if !flag?(:windows) %}
+    @resume_event : Event::Event?
+  {% end %}
+
   def initialize(@name : String? = nil, &@proc : ->)
     @stack = Fiber.allocate_stack
     @stack_bottom = @stack + STACK_SIZE
     fiber_main = ->(f : Fiber) { f.run }
 
+    stack_ptr = nil
+    {% if flag?(:windows) %}
+      # It's the caller's responsibility to allocate 32 bytes of "shadow space" on the stack right
+      # before calling the function (regardless of the actual number of parameters used)
+      stack_ptr = @stack + STACK_SIZE - sizeof(Void*) * 4
+    {% else %}
     stack_ptr = @stack + STACK_SIZE - sizeof(Void*)
+    {% end %}
 
     # Align the stack pointer to 16 bytes
     stack_ptr = Pointer(Void*).new(stack_ptr.address & ~0x0f_u64)
 
     # @stack_top will be the stack pointer on the initial call to `resume`
-    {% if flag?(:x86_64) %}
+    {% if flag?(:x86_64) && flag?(:windows) %}
+      # In x86-64, the context switch push/pop 9 registers
+      @stack_top = (stack_ptr - 9).as(Void*)
+
+      stack_ptr[0] = fiber_main.pointer # Initial `resume` will `ret` to this address
+      stack_ptr[-1] = self.as(Void*)    # This will be `pop` into %rcx (first argument)
+    {% elsif flag?(:x86_64) %}
       # In x86-64, the context switch push/pop 7 registers
       @stack_top = (stack_ptr - 7).as(Void*)
 
@@ -90,16 +108,20 @@ class Fiber
   end
 
   protected def self.allocate_stack
-    @@stack_pool.pop? || LibC.mmap(nil, Fiber::STACK_SIZE,
+    {% if flag?(:windows) %}
+      @@stack_pool.pop? || LibC.malloc(Fiber::STACK_SIZE)
+    {% else %}
+      @@stack_pool.pop? || LibC.mmap(nil, Fiber::STACK_SIZE,
       LibC::PROT_READ | LibC::PROT_WRITE,
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
       -1, 0).tap do |pointer|
-      raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
-      {% if flag?(:linux) %}
-        LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
-      {% end %}
-      LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
-    end
+        raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
+        {% if flag?(:linux) %}
+          LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
+          {% end %}
+          LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
+        end
+    {% end %}
   end
 
   def self.stack_pool_collect
@@ -107,7 +129,11 @@ class Fiber
     free_count = @@stack_pool.size > 1 ? @@stack_pool.size / 2 : 1
     free_count.times do
       stack = @@stack_pool.pop
-      LibC.munmap(stack, Fiber::STACK_SIZE)
+      {% if flag?(:windows) %}
+
+      {% else %}
+        LibC.munmap(stack, Fiber::STACK_SIZE)
+      {% end %}
     end
   end
 
@@ -115,12 +141,12 @@ class Fiber
     @proc.call
   rescue ex
     if name = @name
-      STDERR.puts "Unhandled exception in spawn(name: #{name}):"
+      # STDERR.puts "Unhandled exception in spawn(name: #{name}):"
     else
-      STDERR.puts "Unhandled exception in spawn:"
+      # STDERR.puts "Unhandled exception in spawn:"
     end
-    ex.inspect_with_backtrace STDERR
-    STDERR.flush
+    # ex.inspect_with_backtrace STDERR
+    # STDERR.flush
   ensure
     @@stack_pool << @stack
 
@@ -137,8 +163,10 @@ class Fiber
       @@last_fiber = @prev_fiber
     end
 
-    # Delete the resume event if it was used by `yield` or `sleep`
-    @resume_event.try &.free
+    {% if !flag?(:windows) %}
+      # Delete the resume event if it was used by `yield` or `sleep`
+      @resume_event.try &.free
+    {% end %}
 
     Scheduler.reschedule
   end
@@ -146,7 +174,30 @@ class Fiber
   @[NoInline]
   @[Naked]
   protected def self.switch_stacks(current, to) : Nil
-    {% if flag?(:x86_64) %}
+    {% if flag?(:x86_64) && flag?(:windows) %}
+      asm("
+        pushq %rcx
+        pushq %rdi
+        pushq %rbx
+        pushq %rbp
+        pushq %rsi
+        pushq %r12
+        pushq %r13
+        pushq %r14
+        pushq %r15
+        movq %rsp, ($0)
+        movq ($1), %rsp
+        popq %r15
+        popq %r14
+        popq %r13
+        popq %r12
+        popq %rsi
+        popq %rbp
+        popq %rbx
+        popq %rdi
+        popq %rcx"
+              :: "r"(current), "r"(to))
+    {% elsif flag?(:x86_64) %}
       asm("
         pushq %rdi
         pushq %rbx
@@ -265,13 +316,22 @@ class Fiber
   end
 
   def sleep(time)
-    event = @resume_event ||= Scheduler.create_resume_event(self)
-    event.add(time)
+    {% if flag?(:windows) %}
+      Scheduler.create_sleep_event(self, time)
+    {% else %}
+      event = @resume_event ||= Scheduler.create_resume_event(self)
+      event.add(time)
+    {% end %}
     Scheduler.reschedule
   end
 
   def yield
-    sleep(0)
+    {% if flag?(:windows) %}
+      Scheduler.create_resume_event(self)
+      Scheduler.reschedule
+    {% else %}
+      sleep(0)
+    {% end %}
   end
 
   def self.sleep(time)
