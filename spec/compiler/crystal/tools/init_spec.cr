@@ -163,7 +163,7 @@ end
     it "prints error if a directory already present" do
       Dir.mkdir_p("#{__DIR__}/tmp")
 
-      `bin/crystal init lib "#{__DIR__}/tmp" 2>/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
+      `bin/crystal init lib "#{__DIR__}/tmp" 2>&1 >/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
 
       `rm -rf #{__DIR__}/tmp`
     end
@@ -171,7 +171,7 @@ end
     it "prints error if a file already present" do
       File.open("#{__DIR__}/tmp", "w")
 
-      `bin/crystal init lib "#{__DIR__}/tmp" 2>/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
+      `bin/crystal init lib "#{__DIR__}/tmp" 2>&1 >/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
 
       File.delete("#{__DIR__}/tmp")
     end
@@ -179,11 +179,11 @@ end
     it "honors the custom set directory name" do
       Dir.mkdir_p("tmp")
 
-      `bin/crystal init lib tmp 2>/dev/null`.should contain("file or directory tmp already exists")
+      `bin/crystal init lib tmp 2>&1 >/dev/null`.should contain("file or directory tmp already exists")
 
-      `bin/crystal init lib tmp "#{__DIR__}/fresh-new-tmp" 2>/dev/null`.should_not contain("file or directory tmp already exists")
+      `bin/crystal init lib tmp "#{__DIR__}/fresh-new-tmp" 2>&1 >/dev/null`.should_not contain("file or directory tmp already exists")
 
-      `bin/crystal init lib tmp "#{__DIR__}/fresh-new-tmp" 2>/dev/null`.should contain("file or directory #{__DIR__}/fresh-new-tmp already exists")
+      `bin/crystal init lib tmp "#{__DIR__}/fresh-new-tmp" 2>&1 >/dev/null`.should contain("file or directory #{__DIR__}/fresh-new-tmp already exists")
 
       `rm -rf tmp #{__DIR__}/fresh-new-tmp`
     end
