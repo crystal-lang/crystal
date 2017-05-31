@@ -779,6 +779,13 @@ module Crystal
     def type_assign(target : InstanceVar, value, node)
       # Check if this is an instance variable initializer
       unless @scope
+        # `InstanceVar` assignment appered in block is not checked
+        # by `Crystal::InstanceVarsInitializerVisitor` because this block
+        # may be passed to a macro. So, it checks here.
+        if current_type.is_a?(Program) || current_type.is_a?(FileModule)
+          node.raise "can't use instance variables at the top level"
+        end
+
         # Already handled by InstanceVarsInitializerVisitor
         return
       end

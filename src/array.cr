@@ -936,6 +936,12 @@ class Array(T)
     Array(U).new(size) { |i| yield @buffer[i], i }
   end
 
+  # Like `map_with_index`, but mutates `self` instead of allocating a new object.
+  def map_with_index!(&block : (T, Int32) -> T)
+    to_unsafe.map_with_index!(size) { |e, i| yield e, i }
+    self
+  end
+
   # Returns an `Array` with all possible permutations of *size*.
   #
   # ```

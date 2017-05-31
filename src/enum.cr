@@ -237,13 +237,6 @@ struct Enum
     value <=> other.value
   end
 
-  # TODO: Remove `#==` after release next version. It is no longer needed.
-
-  # :nodoc:
-  def ==(other)
-    false
-  end
-
   # Returns `true` if this enum member's value includes *other*. This
   # performs a logical "and" between this enum member's value and *other*'s,
   # so instead of writing:
