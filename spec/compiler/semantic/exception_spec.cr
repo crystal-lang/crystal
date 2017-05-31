@@ -489,6 +489,38 @@ describe "Semantic: exception" do
     ), "can't use return inside ensure")
   end
 
+  it "can't use return inside block inside ensure (#4470)" do
+    assert_error(%(
+      def once
+        yield
+      end
+
+      def foo
+        return 1
+      ensure
+        once do
+          return 2
+        end
+      end
+
+      foo
+    ), "can't use return inside ensure")
+  end
+
+  it "can't use return inside while inside ensure (#4470)" do
+    assert_error(%(
+      def foo
+        return 1
+      ensure
+        while true
+          return 2
+        end
+      end
+
+      foo
+    ), "can't use return inside ensure")
+  end
+
   it "can't use break from while inside ensure (#4470)" do
     assert_error(%(
       while true
@@ -556,6 +588,24 @@ describe "Semantic: exception" do
   it "can't use next from while inside ensure (#4470)" do
     assert_error(%(
       while true
+        begin
+          break
+        ensure
+          next
+        end
+      end
+    ), "can't use next inside ensure")
+  end
+
+  it "can't use next from block inside ensure (#4470)" do
+    assert_error(%(
+      def loop
+        while true
+          yield
+        end
+      end
+
+      loop do
         begin
           break
         ensure

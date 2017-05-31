@@ -80,7 +80,7 @@ module Crystal
     @block_context : Block?
     @file_module : FileModule?
     @while_vars : MetaVars?
-    @ensure : ASTNode?
+    @while_ensure_stack : Array(Symbol)
 
     # Separate type filters for an `a || b` expression.
     # We need these to filter types on an else branch of an
@@ -92,7 +92,7 @@ module Crystal
     # Type filters for `exp` in `!exp`, used after a `while`
     @before_not_type_filters : TypeFilters?
 
-    def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
+    def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil, @while_ensure_stack = [] of Symbol)
       super(program, vars)
       @while_stack = [] of While
       @needs_type_filters = 0
@@ -1008,7 +1008,7 @@ module Crystal
 
       @block_nest += 1
 
-      block_visitor = MainVisitor.new(program, before_block_vars, @typed_def, meta_vars)
+      block_visitor = MainVisitor.new(program, before_block_vars, @typed_def, meta_vars, @while_ensure_stack)
       block_visitor.yield_vars = @yield_vars
       block_visitor.match_context = @match_context
       block_visitor.untyped_def = @untyped_def
@@ -1027,7 +1027,9 @@ module Crystal
       block_visitor.path_lookup = path_lookup || current_type
       block_visitor.block_nest = @block_nest
 
+      @while_ensure_stack.push :block
       node.body.accept block_visitor
+      @while_ensure_stack.pop
 
       @block_nest -= 1
 
@@ -1624,7 +1626,7 @@ module Crystal
     end
 
     def visit(node : Return)
-      if @ensure
+      if @while_ensure_stack.includes?(:ensure)
         node.raise "can't use return inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
       end
 
@@ -1983,8 +1985,8 @@ module Crystal
 
       @type_filters = nil
       @block, old_block = nil, @block
-      @ensure, old_ensure = nil, @ensure
 
+      @while_ensure_stack.push :while
       @while_stack.push node
       node.body.accept self
 
@@ -1992,7 +1994,7 @@ module Crystal
       merge_while_vars node.cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
-      @ensure, old_ensure = nil, @ensure
+      @while_ensure_stack.pop
       @block = old_block
       @while_vars = old_while_vars
 
@@ -2151,11 +2153,9 @@ module Crystal
     end
 
     def end_visit(node : Break)
-      if @ensure
+      if @while_ensure_stack.last? == :ensure
         node.raise "can't use break inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
-      end
-
-      if block = @block
+      elsif block = @block
         node.target = block.call.not_nil!
 
         block.break.bind_to(node.exp || program.nil_var)
@@ -2180,11 +2180,9 @@ module Crystal
     end
 
     def end_visit(node : Next)
-      if @ensure
+      if @while_ensure_stack.last? == :ensure
         node.raise "can't use next inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
-      end
-
-      if block = @block
+      elsif block = @block
         node.target = block
 
         block.bind_to(node.exp || program.nil_var)
@@ -2609,11 +2607,9 @@ module Crystal
           merge_rescue_vars exception_handler_vars, all_rescue_vars
 
           # And then accept the ensure part
-          @ensure, old_ensure = node.ensure, @ensure
-          @block, old_block = nil, @block
+          @while_ensure_stack.push :ensure
           node.ensure.try &.accept self
-          @block = old_block
-          @ensure = old_ensure
+          @while_ensure_stack.pop
         end
       end
 
@@ -2632,14 +2628,12 @@ module Crystal
           end
 
           before_ensure_vars = @vars.dup
-          @ensure, old_ensure = node.ensure, @ensure
-          @block, old_block = nil, @block
 
+          @while_ensure_stack.push :ensure
           node_ensure.accept self
+          @while_ensure_stack.pop
 
           @vars = after_handler_vars
-          @ensure = old_ensure
-          @block = old_block
 
           # Variables declared or overwritten inside the ensure block
           # must remain after the exception handler
