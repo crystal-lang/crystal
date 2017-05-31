@@ -1522,7 +1522,8 @@ module Crystal
     end
 
     def accept_with_maybe_begin_end(node)
-      if node.is_a?(Expressions)
+      case node
+      when Expressions
         if node.expressions.size == 1
           @str << "("
           node.expressions.first.accept self
@@ -1534,6 +1535,12 @@ module Crystal
           append_indent
           @str << keyword("end")
         end
+      when If, Unless, While, Until
+        @str << keyword("begin")
+        newline
+        accept_with_indent(node)
+        append_indent
+        @str << keyword("end")
       else
         node.accept self
       end
