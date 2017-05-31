@@ -175,16 +175,21 @@ fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
   unwind_ex.value.exception_object
 end
 
-def raise(ex : Exception) : NoReturn
-  ex.callstack = CallStack.new
+# Raises the *exception*.
+#
+# This will set the exception's callstack if it hasn't been already.
+# Re-raising a previously catched exception won't replace the callstack.
+def raise(exception : Exception) : NoReturn
+  exception.callstack ||= CallStack.new
   unwind_ex = Pointer(LibUnwind::Exception).malloc
   unwind_ex.value.exception_class = LibC::SizeT.zero
   unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-  unwind_ex.value.exception_object = ex.object_id
-  unwind_ex.value.exception_type_id = ex.crystal_type_id
+  unwind_ex.value.exception_object = exception.object_id
+  unwind_ex.value.exception_type_id = exception.crystal_type_id
   __crystal_raise(unwind_ex)
 end
 
+# Raises an Exception with the *message*.
 def raise(message : String) : NoReturn
   raise Exception.new(message)
 end
