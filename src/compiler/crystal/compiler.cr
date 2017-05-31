@@ -18,6 +18,7 @@ module Crystal
   # optionally generates an executable.
   class Compiler
     CC = ENV["CC"]? || "cc"
+    CL = "cl"
 
     # A source to the compiler: it's filename and source code.
     record Source,
@@ -225,9 +226,7 @@ module Crystal
       bc_flags_changed
     end
 
-    private def codegen(program : Program, node, sources, output_filename)
-      @link_flags = "#{@link_flags} -rdynamic"
-
+    private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
         program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
       end
@@ -247,12 +246,10 @@ module Crystal
         CompilationUnit.new(self, type_name, llvm_mod, output_dir, bc_flags_changed)
       end
 
-      lib_flags = program.lib_flags
-
       if @cross_compile
-        cross_compile program, units, lib_flags, output_filename
+        cross_compile program, units, output_filename
       else
-        result = codegen program, units, lib_flags, output_filename, output_dir
+        result = codegen program, units, output_filename, output_dir
       end
 
       CacheDir.instance.cleanup if @cleanup
@@ -260,7 +257,7 @@ module Crystal
       result
     end
 
-    private def cross_compile(program, units, lib_flags, output_filename)
+    private def cross_compile(program, units, output_filename)
       llvm_mod = units.first.llvm_mod
       object_name = "#{output_filename}.o"
 
@@ -269,10 +266,34 @@ module Crystal
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
-      stdout.puts "#{CC} #{object_name} -o #{output_filename} #{@link_flags} #{lib_flags}"
+      stdout.puts linker_command(program, object_name, output_filename)
     end
 
-    private def codegen(program, units : Array(CompilationUnit), lib_flags, output_filename, output_dir)
+    private def linker_command(program : Program, object_name, output_filename)
+      if program.has_flag? "windows"
+        if object_name
+          object_name = %("#{object_name}")
+        else
+          object_name = %(%*)
+        end
+
+        if (link_flags = @link_flags) && !link_flags.empty?
+          link_flags = "/link #{link_flags}"
+        end
+
+        %(#{CL} #{object_name} "/Fe#{output_filename}" #{program.lib_flags} #{link_flags})
+      else
+        if object_name
+          object_name = %('#{object_name}')
+        else
+          object_name = %("${@}")
+        end
+
+        %(#{CC} #{object_name} -o '#{output_filename}' #{@link_flags} -rdynamic #{program.lib_flags})
+      end
+    end
+
+    private def codegen(program, units : Array(CompilationUnit), output_filename, output_dir)
       object_names = units.map &.object_filename
 
       target_triple = target_machine.triple
@@ -303,7 +324,7 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
+          system(linker_command(program, nil, output_filename), object_names)
         end
       end
 
