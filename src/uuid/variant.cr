@@ -17,46 +17,35 @@ struct UUID
     Future
   end
 
-  # Returns UUID variant based on provided 8th `byte` (0-indexed).
-  def self.byte_variant(byte : UInt8)
+  # Returns UUID variant.
+  def variant
     case
-    when byte & 0x80 == 0x00
+    when @bytes[8] & 0x80 == 0x00
       Variant::NCS
-    when byte & 0xc0 == 0x80
+    when @bytes[8] & 0xc0 == 0x80
       Variant::RFC4122
-    when byte & 0xe0 == 0xc0
+    when @bytes[8] & 0xe0 == 0xc0
       Variant::Microsoft
-    when byte & 0xe0 == 0xe0
+    when @bytes[8] & 0xe0 == 0xe0
       Variant::Future
     else
       Variant::Unknown
     end
   end
 
-  # Returns byte with encoded `variant` based on provided 8th `byte` (0-indexed) for known variants.
-  # For `Variant::Unknown` `variant` raises `ArgumentError`.
-  def self.byte_variant(byte : UInt8, variant : Variant) : UInt8
-    case variant
+  # Sets UUID variant to specified *value*.
+  def variant=(value : Variant)
+    case value
     when Variant::NCS
-      byte & 0x7f
+      @bytes[8] = (@bytes[8] & 0x7f)
     when Variant::RFC4122
-      (byte & 0x3f) | 0x80
+      @bytes[8] = (@bytes[8] & 0x3f) | 0x80
     when Variant::Microsoft
-      (byte & 0x1f) | 0xc0
+      @bytes[8] = (@bytes[8] & 0x1f) | 0xc0
     when Variant::Future
-      (byte & 0x1f) | 0xe0
+      @bytes[8] = (@bytes[8] & 0x1f) | 0xe0
     else
       raise ArgumentError.new "Can't set unknown variant."
     end
-  end
-
-  # Returns UUID variant.
-  def variant
-    UUID.byte_variant @bytes[8]
-  end
-
-  # Sets UUID variant to specified *value*.
-  def variant=(value : Variant)
-    @bytes[8] = UUID.byte_variant @bytes[8], value
   end
 end
