@@ -13,7 +13,7 @@ describe "Code gen: debug" do
       end
 
       x = Foo.new || Bar.new
-      ), debug: Crystal::Debug::All)
+      ), debug: Crystal::Debug::All, filename: "foo.cr")
   end
 
   it "inlines instance var access through getter in debug mode" do
@@ -61,7 +61,7 @@ describe "Code gen: debug" do
       else
           puts int
       end
-      ), debug: Crystal::Debug::All)
+      ), debug: Crystal::Debug::All, filename: "foo.cr")
   end
 
   it "codegens correct debug info for new with custom allocate (#3945)" do
@@ -76,7 +76,7 @@ describe "Code gen: debug" do
       end
 
       Foo.new
-      ), debug: Crystal::Debug::All)
+      ), debug: Crystal::Debug::All, filename: "foo.cr")
   end
 
   it "correctly restores debug location after fun change (#4254)" do
