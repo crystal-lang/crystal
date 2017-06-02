@@ -2,7 +2,7 @@ module Debug
   # ELF reader.
   #
   # Documentation:
-  # - <http://www.sco.com/developers/gabi/latest/contents.html>
+  # - [ELF Documentation](http://www.sco.com/developers/gabi/latest/contents.html)
   struct ELF
     MAGIC = UInt8.slice(0x7f, 'E'.ord, 'L'.ord, 'F'.ord)
 
