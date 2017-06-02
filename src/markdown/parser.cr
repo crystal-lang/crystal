@@ -195,14 +195,17 @@ class Markdown::Parser
   def render_quote
     @renderer.begin_quote
 
+    oneline_quote = true
     while true
       break unless @lines[@line].starts_with? ">"
 
       join_next_lines continue_on: :none, stop_on: :quote
 
       line = @lines[@line]
+      text = line.byte_slice(Math.min(line.bytesize, 2)).strip
+      text = " " + text unless oneline_quote
 
-      if empty? line
+      if empty? text
         @line += 1
 
         if @line == @lines.size
@@ -212,12 +215,15 @@ class Markdown::Parser
         next
       end
 
-      @renderer.text line.byte_slice(Math.min(line.bytesize, 2))
+      @renderer.text text
+
       @line += 1
 
       if @line == @lines.size
         break
       end
+
+      oneline_quote = false
     end
 
     @renderer.end_quote
