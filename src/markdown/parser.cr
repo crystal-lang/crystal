@@ -203,7 +203,7 @@ class Markdown::Parser
 
       line = @lines[@line]
       text = line.byte_slice(Math.min(line.bytesize, 2)).strip
-      text = " " + text unless oneline_quote
+      text = "\n" + text unless oneline_quote
 
       if empty? text
         @line += 1
