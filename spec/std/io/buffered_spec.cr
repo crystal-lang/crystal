@@ -49,6 +49,12 @@ private class BufferedWrapper
   end
 end
 
+class NoRewindIO < MemoryIO
+  def rewind
+    raise "not allowed rewind"
+  end
+end
+
 describe "IO::Buffered" do
   it "does gets" do
     io = BufferedWrapper.new(IO::Memory.new("hello\r\nworld\n"))
@@ -196,6 +202,14 @@ describe "IO::Buffered" do
     io.gets.should eq("hello")
     io.rewind
     io.gets.should eq("hello")
+  end
+
+  it "rewind_buffer" do
+    str = NoRewindIO.new("hello\nworld\n")
+    io = IO::BufferedWrapper.new str
+    io.gets.should eq "hello\n"
+    io.rewind_buffer
+    io.gets.should eq "hello\n"
   end
 
   it "reads more than the buffer's internal capacity" do
