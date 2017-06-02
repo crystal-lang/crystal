@@ -380,7 +380,7 @@ class HTTP::Client
     end
   {% end %}
 
-  {% for http_method in ["post", "put"] %}
+  {% for http_method in %w(post put patch) %}
     # Executes a {{http_method.id.upcase}} with form data. The "Content-type" header is set
     # to "application/x-www-form-urlencoded".
     #
