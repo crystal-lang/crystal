@@ -44,6 +44,33 @@ describe "Lexer comments" do
     token.type.should eq(:EOF)
   end
 
+  it "lexes with block comments" do
+    lexer = Lexer.new(%(
+##
+Foo
+Bar
+##
+100))
+    
+    lexer.comments_enabled = true
+
+    token = lexer.next_token
+    token.type.should eq(:NEWLINE)
+    
+    token = lexer.next_token
+    token.type.should eq(:COMMENT)
+    token.value.should eq("##\nFoo\nBar\n##")
+
+    token = lexer.next_token
+    token.type.should eq(:NEWLINE)
+    
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+end
+
   it "lexes correct number of spaces" do
     lexer = Lexer.new(%(1   2))
     lexer.count_whitespace = true

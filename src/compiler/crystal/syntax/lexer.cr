@@ -68,6 +68,14 @@ module Crystal
           next_char_no_column_increment
           consume_loc_pragma
           start = current_pos
+        elsif char == '#'
+          if @doc_enabled
+            consume_doc_block
+          elsif @comments_enabled
+            return comsume_comment_block(start)
+          else
+            skip_comment
+          end
         else
           if @doc_enabled
             consume_doc
@@ -1118,6 +1126,38 @@ module Crystal
       @token.value = string_range(start_pos)
       @token
     end
+    
+    def skip_comment
+      char = current_char
+      while char != '\n' && char != '\0'
+        char = next_char_no_column_increment
+      end
+    end
+
+    def comsume_comment_block(start_pos)
+      skip_comment_block
+      @token.type = :COMMENT
+      @token.value = string_range(start_pos)
+      @token
+    end
+
+    def skip_comment_block
+      char = current_char
+      return if char == '\0'
+
+      while true
+        if char == '#'
+          if next_char_no_column_increment == '#'
+            skip_comment
+            break
+          else
+            skip_comment
+          end
+        else
+          skip_comment
+        end
+      end
+    end
 
     def consume_doc
       char = current_char
@@ -1142,10 +1182,32 @@ module Crystal
       doc_buffer.write slice_range(start_pos)
     end
 
-    def skip_comment
+    def consume_doc_block
       char = current_char
-      while char != '\n' && char != '\0'
+      start_pos = current_pos
+
+      while true
         char = next_char_no_column_increment
+        break if char == '\0'
+
+        # Ignore gutter hash in blcok comments '# '
+        if char == '#'
+          char = next_char
+          start_pos = current_pos
+          # This is the last line '##'
+          if char == '#'
+            consume_doc
+            break
+          elsif char == ' '
+            cahr = next_char
+            start_pos = current_pos
+            consume_doc
+          else
+            consume_doc
+          end
+        else
+          consume_doc
+        end
       end
     end
 
