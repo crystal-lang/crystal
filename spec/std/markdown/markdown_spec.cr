@@ -71,11 +71,11 @@ describe Markdown do
 
   assert_render "> Hello World\n", "<blockquote>Hello World</blockquote>"
   assert_render "> This spawns\nmultiple\nlines\n\ntext", "<blockquote>This spawns\nmultiple\nlines</blockquote>\n\n<p>text</p>"
-  assert_render "> Hello World\n> and Crystal", "<blockquote>Hello World and Crystal</blockquote>"
+  assert_render "> Hello World\n> and Crystal", "<blockquote>Hello World\nand Crystal</blockquote>"
   assert_render "> Hello World\n     \n>     and Crystal", "<blockquote>Hello World</blockquote>\n\n<blockquote>and Crystal</blockquote>"
-  assert_render "> Hello World\n>\n> \n> and Crystal", "<blockquote>Hello World and Crystal</blockquote>"
-  assert_render "> This spawns\n> multiple\n> lines\n\ntext", "<blockquote>This spawns multiple lines</blockquote>\n\n<p>text</p>"
-  assert_render "> This spawns\nmultiple \n> lines\n\ntext", "<blockquote>This spawns\nmultiple lines</blockquote>\n\n<p>text</p>"
+  assert_render "> Hello World\n>\n> \n> and Crystal", "<blockquote>Hello World\nand Crystal</blockquote>"
+  assert_render "> This spawns\n> multiple\n> lines\n\ntext", "<blockquote>This spawns\nmultiple\nlines</blockquote>\n\n<p>text</p>"
+  assert_render "> This spawns\nmultiple \n> lines\n\ntext", "<blockquote>This spawns\nmultiple\nlines</blockquote>\n\n<p>text</p>"
 
   assert_render "* Hello", "<ul><li>Hello</li></ul>"
   assert_render "* Hello\n* World", "<ul><li>Hello</li><li>World</li></ul>"
