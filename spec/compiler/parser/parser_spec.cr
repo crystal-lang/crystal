@@ -1475,6 +1475,9 @@ describe "Parser" do
 
   assert_syntax_error %(def foo("bar");end), "expected argument internal name"
 
+  assert_syntax_error %({"a" : 1})
+  assert_syntax_error %({"a": 1, "b" : 2})
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"
