@@ -4139,7 +4139,7 @@ module Crystal
     def consume_newlines
       if @token.type == :NEWLINE
         write_line
-        next_token
+        next_token_skip_space
 
         if @token.type == :NEWLINE
           write_line
@@ -4210,6 +4210,7 @@ module Crystal
       else
         @column += string.size
       end
+
       @wrote_newline = false
       @last_write = string
     end

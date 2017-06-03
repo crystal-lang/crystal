@@ -1020,4 +1020,6 @@ describe Crystal::Formatter do
   assert_format "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2 # z\n  )\nend"
 
   assert_format "def foo(a, **b : Int32)\nend"
+
+  assert_format "foo\n  \nbar", "foo\n\nbar"
 end
