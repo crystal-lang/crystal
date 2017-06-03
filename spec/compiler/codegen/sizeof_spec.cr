@@ -167,4 +167,29 @@ describe "Code gen: sizeof" do
       x.size
       )).to_i.should eq(12)
   end
+
+  {% if flag?(:x86_64) %}
+    it "returns correct sizeof for abstract struct (#4319)" do
+      size = run(%(
+        abstract struct Entry
+        end
+
+        struct FooEntry < Entry
+          def initialize
+            @uid = ""
+          end
+        end
+
+        struct BarEntry < Entry
+          def initialize
+            @uid = ""
+          end
+        end
+
+        sizeof(Entry)
+        )).to_i
+
+      size.should eq(16)
+    end
+  {% end %}
 end

@@ -578,6 +578,17 @@ module Crystal
       false
     end
 
+    # Returns the type that has to be used in sizeof and instance_sizeof computations
+    def sizeof_type
+      if struct?
+        # In the case of an abstract struct we want to consider the union type
+        # of all subtypes (if it's not abstract it's concrete and this will return self)
+        virtual_type.remove_indirection
+      else
+        devirtualize
+      end
+    end
+
     def inspect(io)
       to_s(io)
     end
