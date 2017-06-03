@@ -2378,7 +2378,7 @@ module Crystal
         end
       end
 
-      unsafe_call = Conversions.to_unsafe(node, Var.new("value"), self, actual_type, expected_type)
+      unsafe_call = Conversions.to_unsafe(node, Var.new("value").at(node), self, actual_type, expected_type)
       if unsafe_call
         node.extra = unsafe_call
         return
