@@ -37,7 +37,7 @@ abstract class OAuth2::AccessToken
     when "mac"
       Mac.new(access_token, expires_in, mac_algorithm.not_nil!, mac_key.not_nil!, refresh_token, scope, Time.now.epoch, extra)
     else
-      raise "Uknown token_type in access token json: #{token_type}"
+      raise "Unknown token_type in access token json: #{token_type}"
     end
   end
 
