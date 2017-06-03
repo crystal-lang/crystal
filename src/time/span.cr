@@ -42,11 +42,11 @@ struct Time::Span
 
   include Comparable(self)
 
-  TicksPerMillisecond = 10_000_i64
-  TicksPerSecond      = TicksPerMillisecond * 1000
-  TicksPerMinute      = TicksPerSecond * 60
-  TicksPerHour        = TicksPerMinute * 60
-  TicksPerDay         = TicksPerHour * 24
+  TicksPerMillisecond = Crystal::System::Time::TicksPerMillisecond
+  TicksPerSecond      = Crystal::System::Time::TicksPerSecond
+  TicksPerMinute      = Crystal::System::Time::TicksPerMinute
+  TicksPerHour        = Crystal::System::Time::TicksPerHour
+  TicksPerDay         = Crystal::System::Time::TicksPerDay
 
   MaxValue = new Int64::MAX
   MinValue = new Int64::MIN
