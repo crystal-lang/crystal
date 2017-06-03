@@ -71,6 +71,12 @@ module Crystal
         self.aliased_type.has_inner_pointers?
       when TypeDefType
         self.typedef.has_inner_pointers?
+      when VirtualType
+        if struct?
+          self.subtypes.any? &.has_inner_pointers?
+        else
+          true
+        end
       when InstanceVarContainer
         if struct?
           all_instance_vars.each_value.any? &.type.has_inner_pointers?
