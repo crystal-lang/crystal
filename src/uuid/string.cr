@@ -1,11 +1,7 @@
 struct UUID
   # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex digit followed by another hex digit.
-  # TODO: Move to String#digits?(base, offset, size) or introduce strict String#[index, size].to_u8(base)! which doesn't
-  #       allow non-digits. The problem it solves is that " 1".to_u8(16) is fine but if it appears inside hexstring
-  #       it's not correct and there should be stdlib function to support it, without a need to build this kind of
-  #       helpers.
   def self.string_has_hex_pair_at!(value : String, i)
-    unless value[i].hex? && value[i + 1].hex?
+    unless value[i, 2].to_u8(16, whitespace: false, underscore: false, prefix: false)
       raise ArgumentError.new [
         "Invalid hex character at position #{i * 2} or #{i * 2 + 1}",
         "expected '0' to '9', 'a' to 'f' or 'A' to 'F'.",
