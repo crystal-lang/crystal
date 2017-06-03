@@ -87,7 +87,7 @@ class HTTP::Request
 
   # Returns a `HTTP::Request` instance if successfully parsed, returns `nil` on EOF, or returns `BadRequest`.
   def self.from_io(io)
-    request_line = io.gets
+    request_line = io.gets(4096, chomp: true)
     return unless request_line
 
     parts = request_line.split

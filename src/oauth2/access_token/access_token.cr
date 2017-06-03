@@ -29,17 +29,15 @@ abstract class OAuth2::AccessToken
 
     access_token = access_token.not_nil!
 
-    if token_type
-      case token_type.downcase
-      when "bearer"
-        Bearer.new(access_token, expires_in, refresh_token, scope, extra)
-      when "mac"
-        Mac.new(access_token, expires_in, mac_algorithm.not_nil!, mac_key.not_nil!, refresh_token, scope, Time.now.epoch, extra)
-      else
-        raise "Uknown token_type in access token json: #{token_type}"
-      end
+    token_type ||= "bearer"
+
+    case token_type.downcase
+    when "bearer"
+      Bearer.new(access_token, expires_in, refresh_token, scope, extra)
+    when "mac"
+      Mac.new(access_token, expires_in, mac_algorithm.not_nil!, mac_key.not_nil!, refresh_token, scope, Time.now.epoch, extra)
     else
-      raise "Missing token_type in access token json"
+      raise "Uknown token_type in access token json: #{token_type}"
     end
   end
 

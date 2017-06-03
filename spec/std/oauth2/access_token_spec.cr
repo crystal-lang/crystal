@@ -67,6 +67,16 @@ class OAuth2::AccessToken
         }))
       token.extra.not_nil!["unknown"].should eq("[1,2,3]")
     end
+
+    it "builds from json without token_type, assumes Bearer (#4503)" do
+      token = AccessToken.from_json(%({
+        "access_token" : "foo",
+        "refresh_token" : "bar",
+        "scope" : "baz"
+        }))
+      token.should be_a(AccessToken::Bearer)
+      token.access_token.should eq("foo")
+    end
   end
 
   describe Mac do
