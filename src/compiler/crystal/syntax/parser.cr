@@ -1743,7 +1743,7 @@ module Crystal
       value : String | ASTNode,
       line_number : Int32
 
-    def parse_delimiter(want_skip_space = true)
+    def parse_delimiter
       if @token.type == :STRING
         return node_and_next_token StringLiteral.new(@token.value.to_s)
       end
@@ -1761,7 +1761,7 @@ module Crystal
 
       delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
 
-      if delimiter_state.kind == :string && want_skip_space
+      if delimiter_state.kind == :string
         while true
           passed_backslash_newline = @token.passed_backslash_newline
           skip_space
@@ -1981,14 +1981,14 @@ module Crystal
       end
     end
 
-    def parse_string_without_interpolation(context, want_skip_space = true)
+    def parse_string_without_interpolation(context)
       location = @token.location
 
       unless string_literal_start?
         raise "expected string literal for #{context}, not #{@token}"
       end
 
-      string = parse_delimiter(want_skip_space)
+      string = parse_delimiter
       if string.is_a?(StringLiteral)
         string.value
       else
@@ -2096,22 +2096,18 @@ module Crystal
           end
           return parse_named_tuple(location)
         else
-          if string_literal_start?
-            first_key = parse_delimiter(want_skip_space: false)
-            if first_key.is_a?(StringLiteral) && @token.type == :":"
+          first_key = parse_op_assign_no_control
+          case @token.type
+          when :":"
+            if first_key.is_a?(StringLiteral)
               # It's a named tuple
               unless allow_of
                 raise "can't use named tuple syntax for Hash-like literal, use '=>'", @token
               end
               return parse_named_tuple(location, first_key.value)
+            else
+              check :"=>"
             end
-          else
-            first_key = parse_op_assign_no_control
-          end
-
-          skip_space
-
-          case @token.type
           when :","
             slash_is_regex!
             next_token_skip_space_or_newline
@@ -2125,10 +2121,10 @@ module Crystal
           else
             check :"=>"
           end
-          slash_is_regex!
-          next_token_skip_space
-          parse_hash_literal first_key, location, allow_of
         end
+        slash_is_regex!
+        next_token_skip_space
+        parse_hash_literal first_key, location, allow_of
       end
     end
 
@@ -2269,7 +2265,7 @@ module Crystal
           if named_tuple_start?
             next_token
           elsif string_literal_start?
-            key = parse_string_without_interpolation("named tuple name", want_skip_space: false)
+            key = parse_string_without_interpolation("named tuple name")
           else
             raise "expected '}' or named tuple name, not #{@token}", @token
           end
