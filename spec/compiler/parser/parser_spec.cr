@@ -1271,6 +1271,9 @@ describe "Parser" do
 
   it_parses "foo bar.baz(1) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
 
+  it_parses "1 rescue 2 if 3", If.new(3.int32, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
+  it_parses "1 ensure 2 if 3", If.new(3.int32, ExceptionHandler.new(1.int32, ensure: 2.int32))
+
   assert_syntax_error "return do\nend", "unexpected token: do"
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|

@@ -254,7 +254,7 @@ module Crystal
             raise "trailing `until` is not supported", @token
           when :rescue
             next_token_skip_space
-            rescue_body = parse_expression
+            rescue_body = parse_op_assign
             rescues = [Rescue.new(rescue_body)] of Rescue
             if atomic.is_a?(Assign)
               atomic.value = ExceptionHandler.new(atomic.value, rescues).at(location).tap { |e| e.suffix = true }
@@ -263,7 +263,7 @@ module Crystal
             end
           when :ensure
             next_token_skip_space
-            ensure_body = parse_expression
+            ensure_body = parse_op_assign
             if atomic.is_a?(Assign)
               atomic.value = ExceptionHandler.new(atomic.value, ensure: ensure_body).at(location).tap { |e| e.suffix = true }
             else
