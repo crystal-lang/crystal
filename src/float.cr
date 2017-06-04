@@ -1,6 +1,6 @@
 require "c/stdio"
 require "c/string"
-require "float_printer"
+require "./float/printer"
 
 # Float is the base type of all floating point numbers.
 #
@@ -140,12 +140,12 @@ struct Float32
 
   def to_s
     String.build(22) do |buffer|
-      FloatPrinter.print(self, buffer)
+      Printer.print(self, buffer)
     end
   end
 
   def to_s(io : IO)
-    FloatPrinter.print(self, io)
+    Printer.print(self, io)
   end
 
   def hash
@@ -199,12 +199,12 @@ struct Float64
 
   def to_s
     String.build(22) do |buffer|
-      FloatPrinter.print(self, buffer)
+      Printer.print(self, buffer)
     end
   end
 
   def to_s(io : IO)
-    FloatPrinter.print(self, io)
+    Printer.print(self, io)
   end
 
   def hash

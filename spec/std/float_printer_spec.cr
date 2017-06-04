@@ -27,12 +27,10 @@
 #   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 require "spec"
-require "float_printer"
-include FloatPrinter
 
 private def float_to_s(v)
   String.build(22) do |buff|
-    FloatPrinter.print(v, buff)
+    Float::Printer.print(v, buff)
   end
 end
 

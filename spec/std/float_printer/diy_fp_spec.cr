@@ -27,8 +27,8 @@
 #   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 require "spec"
-require "float_printer/diy_fp"
-include FloatPrinter
+
+private alias DiyFP = Float::Printer::DiyFP
 
 describe DiyFP do
   it "multiply" do

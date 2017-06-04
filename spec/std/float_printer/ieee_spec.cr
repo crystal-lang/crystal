@@ -27,9 +27,6 @@
 #   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 require "spec"
-require "float_printer/diy_fp"
-require "float_printer/ieee"
-include FloatPrinter
 
 private def gen_bound(v : UInt64)
   f = pointerof(v).as(Float64*).value
@@ -42,8 +39,8 @@ private def gen_bound(v : UInt32)
 end
 
 private def gen_bound(v : Float64 | Float32)
-  fp = DiyFP.from_f_normalized(v)
-  b = IEEE.normalized_boundaries(v)
+  fp = Float::Printer::DiyFP.from_f_normalized(v)
+  b = Float::Printer::IEEE.normalized_boundaries(v)
   b[:minus].exp.should eq fp.exp
   b[:plus].exp.should eq fp.exp
 

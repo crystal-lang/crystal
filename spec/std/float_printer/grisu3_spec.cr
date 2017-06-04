@@ -27,8 +27,6 @@
 #   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 require "spec"
-require "float_printer/grisu3"
-include FloatPrinter
 
 private def test_grisu(v : UInt64)
   test_grisu pointerof(v).as(Float64*).value
@@ -40,7 +38,7 @@ end
 
 private def test_grisu(v : Float64 | Float32)
   buffer = StaticArray(UInt8, 128).new(0_u8)
-  status, decimal_exponent, length = Grisu3.grisu3(v, buffer.to_unsafe)
+  status, decimal_exponent, length = Float::Printer::Grisu3.grisu3(v, buffer.to_unsafe)
   point = decimal_exponent + length
   return status, point, String.new(buffer.to_unsafe)
 end

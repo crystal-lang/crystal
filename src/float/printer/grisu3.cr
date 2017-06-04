@@ -31,7 +31,7 @@ require "./diy_fp"
 require "./ieee"
 require "./cached_powers"
 
-module FloatPrinter::Grisu3
+module Float::Printer::Grisu3
   extend self
 
   # Adjusts the last digit of the generated number, and screens out generated

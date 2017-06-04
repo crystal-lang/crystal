@@ -1,9 +1,9 @@
-require "float_printer/*"
+require "./printer/*"
 
-# FloatPrinter is based on Grisu3 algorithm described in the 2004 paper
+# Float::Printer is based on Grisu3 algorithm described in the 2004 paper
 # "Printing Floating-Point Numbers Quickly and Accurately with Integers" by
 # Florian Loitsch.
-module FloatPrinter
+module Float::Printer
   extend self
   BUFFER_SIZE = 128
 

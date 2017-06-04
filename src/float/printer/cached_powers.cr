@@ -27,7 +27,7 @@
 #   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-module FloatPrinter::CachedPowers
+module Float::Printer::CachedPowers
   record Power, significand : UInt64, binary_exp : Int16, decimal_exp : Int16
   # The minimal and maximal target exponent define the range of w's binary
   # exponent, where 'w' is the result of multiplying the input by a cached power

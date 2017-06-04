@@ -34,7 +34,7 @@ require "./ieee"
 # have the most significant bit of the significand set.
 # Multiplication and Subtraction do not normalize their results.
 # DiyFP is not designed to contain special Floats (NaN and Infinity).
-struct FloatPrinter::DiyFP
+struct Float::Printer::DiyFP
   SIGNIFICAND_SIZE = 64
   # Also known as the significand
   property frac : UInt64
