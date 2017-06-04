@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  %w(precise trusty vivid).product([32, 64]).each do |dist, bits|
+  %w(precise trusty xenial).product([32, 64]).each do |dist, bits|
     box_name = "#{dist}#{bits}"
 
     config.vm.define(box_name) do |c|
