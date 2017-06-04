@@ -78,7 +78,7 @@ describe DiyFP do
 
   it "converts ordered 64" do
     ordered = 0x0123456789ABCDEF_u64
-    f = pointerof(ordered).as(Float64*).value
+    f = ordered.unsafe_as(Float64)
     f.should eq 3512700564088504e-318 # ensure byte order
 
     fp = DiyFP.from_f(f)
@@ -90,7 +90,7 @@ describe DiyFP do
 
   it "converts ordered 32" do
     ordered = 0x01234567_u32
-    f = pointerof(ordered).as(Float32*).value
+    f = ordered.unsafe_as(Float32)
     f.should eq(2.9988165487136453e-38_f32)
 
     fp = DiyFP.from_f(f)
@@ -103,7 +103,7 @@ describe DiyFP do
 
   it "converts min f64" do
     min = 0x0000000000000001_u64
-    f = pointerof(min).as(Float64*).value
+    f = min.unsafe_as(Float64)
     f.should eq 5e-324 # ensure byte order
 
     fp = DiyFP.from_f(f)
@@ -115,7 +115,7 @@ describe DiyFP do
 
   it "converts min f32" do
     min = 0x00000001_u32
-    f = pointerof(min).as(Float32*).value
+    f = min.unsafe_as(Float32)
     fp = DiyFP.from_f(f)
 
     fp.exp.should eq -0x7F - 23 + 1
@@ -125,7 +125,7 @@ describe DiyFP do
 
   it "converts max f64" do
     max = 0x7fefffffffffffff_u64
-    f = pointerof(max).as(Float64*).value
+    f = max.unsafe_as(Float64)
     f.should eq 1.7976931348623157e308 # ensure byte order
 
     fp = DiyFP.from_f(f)
@@ -136,7 +136,7 @@ describe DiyFP do
 
   it "converts max f32" do
     max = 0x7f7fffff_u64
-    f = pointerof(max).as(Float32*).value
+    f = max.unsafe_as(Float32)
     f.should eq 3.4028234e38_f32 # ensure byte order
 
     fp = DiyFP.from_f(f)
@@ -147,7 +147,7 @@ describe DiyFP do
 
   it "normalizes ordered" do
     ordered = 0x0123456789ABCDEF_u64
-    f = pointerof(ordered).as(Float64*).value
+    f = ordered.unsafe_as(Float64)
 
     fp = DiyFP.from_f_normalized(f)
 
@@ -157,7 +157,7 @@ describe DiyFP do
 
   it "normalizes min f64" do
     min = 0x0000000000000001_u64
-    f = pointerof(min).as(Float64*).value
+    f = min.unsafe_as(Float64)
 
     fp = DiyFP.from_f_normalized(f)
 
@@ -168,7 +168,7 @@ describe DiyFP do
 
   it "normalizes max f64" do
     max = 0x7fefffffffffffff_u64
-    f = pointerof(max).as(Float64*).value
+    f = max.unsafe_as(Float64)
 
     fp = DiyFP.from_f_normalized(f)
 

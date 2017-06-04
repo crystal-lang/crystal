@@ -29,12 +29,12 @@
 require "spec"
 
 private def gen_bound(v : UInt64)
-  f = pointerof(v).as(Float64*).value
+  f = v.unsafe_as(Float64)
   gen_bound(f)
 end
 
 private def gen_bound(v : UInt32)
-  f = pointerof(v).as(Float32*).value
+  f = v.unsafe_as(Float32)
   gen_bound(f)
 end
 

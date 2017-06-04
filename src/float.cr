@@ -149,8 +149,7 @@ struct Float32
   end
 
   def hash
-    n = self
-    pointerof(n).as(Int32*).value
+    unsafe_as(Int32)
   end
 
   def clone
@@ -208,8 +207,7 @@ struct Float64
   end
 
   def hash
-    n = self
-    pointerof(n).as(Int64*).value
+    unsafe_as(Int64)
   end
 
   def clone

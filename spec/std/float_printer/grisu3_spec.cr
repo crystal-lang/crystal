@@ -29,11 +29,11 @@
 require "spec"
 
 private def test_grisu(v : UInt64)
-  test_grisu pointerof(v).as(Float64*).value
+  test_grisu v.unsafe_as(Float64)
 end
 
 private def test_grisu(v : UInt32)
-  test_grisu pointerof(v).as(Float32*).value
+  test_grisu v.unsafe_as(Float32)
 end
 
 private def test_grisu(v : Float64 | Float32)

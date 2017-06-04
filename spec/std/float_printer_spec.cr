@@ -41,12 +41,12 @@ private def test_str(s, file = __FILE__, line = __LINE__)
 end
 
 private def test_pair(v : UInt64, str, file = __FILE__, line = __LINE__)
-  d = pointerof(v).as(Float64*).value
+  d = v.unsafe_as(Float64)
   test_pair(d, str, file, line)
 end
 
 private def test_pair(v : UInt32, str, file = __FILE__, line = __LINE__)
-  d = pointerof(v).as(Float32*).value
+  d = v.unsafe_as(Float32)
   test_pair(d, str, file, line)
 end
 

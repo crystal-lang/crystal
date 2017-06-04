@@ -49,11 +49,11 @@ module Float::Printer::IEEE
   SIGN_MASK_32                 = 0x80000000_u32
 
   def to_uint(v : Float64)
-    pointerof(v).as(UInt64*).value
+    v.unsafe_as(UInt64)
   end
 
   def to_uint(v : Float32)
-    pointerof(v).as(UInt32*).value
+    v.unsafe_as(UInt32)
   end
 
   def sign(d64 : UInt64)
