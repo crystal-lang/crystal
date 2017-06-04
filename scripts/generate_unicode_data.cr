@@ -6,7 +6,7 @@ require "http/client"
 require "ecr"
 require "../src/compiler/crystal/formatter"
 
-UNICODE_UCD_ROOT = "http://www.unicode.org/Public/9.0.0/ucd/"
+UCD_ROOT = "http://www.unicode.org/Public/9.0.0/ucd/"
 
 # Each entry in UnicodeData.txt
 # (some info is missing but we don't use it yet)
@@ -15,15 +15,11 @@ record Entry,
   name : String,
   general_category : String,
   upcase : Int32?,
-  downcase : Int32?
+  downcase : Int32?,
+  casefold : Int32?
 
 record SpecialCase,
   codepoint : Int32,
-  value : Array(Int32)
-
-record FoldCase,
-  codepoint : Int32,
-  status : Char,
   value : Array(Int32)
 
 record CaseRange, low : Int32, high : Int32, delta : Int32
@@ -136,9 +132,34 @@ end
 entries = [] of Entry
 special_cases_downcase = [] of SpecialCase
 special_cases_upcase = [] of SpecialCase
-fold_cases = [] of FoldCase
+special_cases_casefold = [] of SpecialCase
+casefold_mapping = Hash(Int32, Int32).new
 
-url = "#{UNICODE_UCD_ROOT}UnicodeData.txt"
+url = "#{UCD_ROOT}CaseFolding.txt"
+body = HTTP::Client.get(url).body
+body.each_line do |line|
+  line = line.strip
+  next if line.empty?
+  next if line.starts_with?('#')
+
+  pieces = line.split(';')
+  codepoint = pieces[0].to_i(16)
+  status = pieces[1].strip[0]
+  casefold = pieces[2].split.map(&.to_i(16))
+  next if status != 'C' && status != 'F' # casefold uses full case folding (C and F)
+  if casefold.size == 1
+    casefold_mapping[codepoint] = casefold[0]
+    casefold = nil
+  end
+  if casefold
+    while casefold.size < 4
+      casefold << 0
+    end
+    special_cases_casefold << SpecialCase.new(codepoint, casefold)
+  end
+end
+
+url = "#{UCD_ROOT}UnicodeData.txt"
 body = HTTP::Client.get(url).body
 body.each_line do |line|
   line = line.strip
@@ -150,10 +171,11 @@ body.each_line do |line|
   general_category = pieces[2]
   upcase = pieces[12].to_i?(16)
   downcase = pieces[13].to_i?(16)
-  entries << Entry.new(codepoint, name, general_category, upcase, downcase)
+  casefold = casefold_mapping[codepoint]?
+  entries << Entry.new(codepoint, name, general_category, upcase, downcase, casefold)
 end
 
-url = "#{UNICODE_UCD_ROOT}SpecialCasing.txt"
+url = "#{UCD_ROOT}SpecialCasing.txt"
 body = HTTP::Client.get(url).body
 body.each_line do |line|
   line = line.strip
@@ -181,27 +203,6 @@ body.each_line do |line|
   end
 end
 
-url = "#{UNICODE_UCD_ROOT}CaseFolding.txt"
-body = HTTP::Client.get(url).body
-body.each_line do |line|
-  line = line.strip
-  next if line.empty?
-  next if line.starts_with?('#')
-
-  pieces = line.split(';')
-  codepoint = pieces[0].to_i(16)
-  status = pieces[1].strip[0]
-  value = pieces[2].split.map(&.to_i(16))
-
-  next if status != 'C' && status != 'F' # casefold uses full case folding (C and F)
-
-  while value.size != 4
-    value << 0
-  end
-
-  fold_cases << FoldCase.new codepoint, status, value
-end
-
 downcase_ranges = case_ranges entries, &.downcase
 downcase_one_ranges, downcase_ranges = downcase_ranges.partition { |r| r.delta == 1 }
 
@@ -209,6 +210,8 @@ upcase_ranges = case_ranges entries, &.upcase
 upcase_ranges.select! { |r| r.delta != -1 }
 
 alternate_ranges = alternate_ranges(downcase_one_ranges)
+
+casefold_ranges = case_ranges entries, &.casefold
 
 all_strides = {} of String => Array(Stride)
 categories = %w(Lu Ll Lt Mn Mc Me Nd Nl No Zs Zl Zp Cc Cf Cs Co Cn)

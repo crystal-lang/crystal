@@ -155,6 +155,9 @@ module Unicode
 
   private def self.check_downcase_fold(char, options)
     if options.fold?
+      result = search_ranges(casefold_ranges, char.ord)
+      return {char.ord + result} if result
+
       return fold_cases[char.ord]?
     end
     nil

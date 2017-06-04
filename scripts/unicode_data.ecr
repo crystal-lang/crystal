@@ -68,6 +68,19 @@ module Unicode
     end
   <%- end %>
 
+  # Most casefold conversions map a range to another range.
+  # Here we store: {from, to, delta}
+  @@casefold_ranges : Array({Int32, Int32, Int32})?
+  private def self.casefold_ranges
+    @@casefold_ranges ||= begin
+      data = Array({Int32, Int32, Int32}).new(<%= casefold_ranges.size %>)
+      <%- casefold_ranges.each do |range| -%>
+        put(data, <%= range.low %>, <%= range.high %>, <%= range.delta %>)
+      <%- end -%>
+      data
+    end
+  end
+
   # Special downcase transformation that involve mapping a codepoint
   # to multiple codepoints. The maximum transformation is always 3
   # codepoints, so we store them all as 3 codepoints and 0 means end.
@@ -102,8 +115,8 @@ module Unicode
   @@fold_cases : Hash(Int32, {Int32, Int32, Int32, Int32})?
   private def self.fold_cases
     @@fold_cases ||= begin
-      data = Hash(Int32, {Int32, Int32, Int32, Int32}).new(initial_capacity: <%= fold_cases.size %>)
-      <%- fold_cases.each do |a_case| -%>
+      data = Hash(Int32, {Int32, Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_casefold.size %>)
+      <%- special_cases_casefold.each do |a_case| -%>
         put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
       <%- end -%>
       data
@@ -113,6 +126,7 @@ module Unicode
   # TODO: this is needed to avoid generating lots of allocas
   # in LLVM, which makes LLVM really slow. The compiler should
   # try to avoid/reuse temporary allocas.
+  # Explanation: https://github.com/crystal-lang/crystal/issues/4516#issuecomment-306226171
   private def self.put(array : Array, *values) : Nil
     array << values
   end

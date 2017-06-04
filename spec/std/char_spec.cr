@@ -10,7 +10,12 @@ describe "Char" do
   describe "downcase" do
     it { 'A'.downcase.should eq('a') }
     it { '1'.downcase.should eq('1') }
-    it { '\u00df'.downcase(Unicode::CaseOptions::Fold) { |equiv| equiv.should eq('s') } }
+    it do
+      actual = [] of Char
+      'ß'.downcase(Unicode::CaseOptions::Fold) { |c| actual << c }
+      actual.should eq(['s', 's'])
+    end
+    it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }
   end
 
   describe "succ" do
