@@ -469,6 +469,10 @@ describe "String" do
     it { "AEIİOU".downcase(Unicode::CaseOptions::Turkic).should eq("aeıiou") }
     it { "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII).should eq("ÁeÍoÚ") }
     it { "İ".downcase.should eq("i̇") }
+    it { "Baﬄe".downcase(Unicode::CaseOptions::Fold).should eq("baffle") }
+    it { "ﬀ".downcase(Unicode::CaseOptions::Fold).should eq("ff") }
+    it { "tschüß".downcase(Unicode::CaseOptions::Fold).should eq("tschüss") }
+    it { "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold).should eq("σίσυφοσfiæ") }
   end
 
   describe "upcase" do
