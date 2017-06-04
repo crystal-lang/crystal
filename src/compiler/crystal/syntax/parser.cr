@@ -1743,7 +1743,7 @@ module Crystal
       value : String | ASTNode,
       line_number : Int32
 
-    def parse_delimiter
+    def parse_delimiter(want_skip_space = true)
       if @token.type == :STRING
         return node_and_next_token StringLiteral.new(@token.value.to_s)
       end
@@ -1761,7 +1761,7 @@ module Crystal
 
       delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
 
-      if delimiter_state.kind == :string
+      if want_skip_space && delimiter_state.kind == :string
         while true
           passed_backslash_newline = @token.passed_backslash_newline
           skip_space
@@ -1981,14 +1981,14 @@ module Crystal
       end
     end
 
-    def parse_string_without_interpolation(context)
+    def parse_string_without_interpolation(context, want_skip_space = true)
       location = @token.location
 
       unless string_literal_start?
         raise "expected string literal for #{context}, not #{@token}"
       end
 
-      string = parse_delimiter
+      string = parse_delimiter(want_skip_space)
       if string.is_a?(StringLiteral)
         string.value
       else
@@ -2099,6 +2099,11 @@ module Crystal
           first_key = parse_op_assign_no_control
           case @token.type
           when :":"
+            # Check that there's no space before the ':'
+            if @token.column_number != first_key.end_location.not_nil!.column_number + 1
+              raise "space not allowed between named argument name and ':'"
+            end
+
             if first_key.is_a?(StringLiteral)
               # It's a named tuple
               unless allow_of
@@ -2265,9 +2270,13 @@ module Crystal
           if named_tuple_start?
             next_token
           elsif string_literal_start?
-            key = parse_string_without_interpolation("named tuple name")
+            key = parse_string_without_interpolation("named tuple name", want_skip_space: false)
           else
             raise "expected '}' or named tuple name, not #{@token}", @token
+          end
+
+          if @token.type == :SPACE
+            raise "space not allowed between named argument name and ':'"
           end
 
           check :":"

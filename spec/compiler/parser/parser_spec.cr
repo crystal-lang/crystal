@@ -1047,6 +1047,7 @@ describe "Parser" do
   it_parses "{\n1,\n2\n}", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
   it_parses "{\n1\n}", TupleLiteral.new([1.int32] of ASTNode)
   it_parses "{\n{1}\n}", TupleLiteral.new([TupleLiteral.new([1.int32] of ASTNode)] of ASTNode)
+  it_parses %({"".id}), TupleLiteral.new([Call.new("".string, "id")] of ASTNode)
 
   it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", block: Block.new(body: Assign.new("a".var, 1.int32))), "a".call] of ASTNode
 
@@ -1531,6 +1532,9 @@ describe "Parser" do
     assert_end_location "extend Foo"
     assert_end_location "1.as(Int32)"
     assert_end_location "puts obj.foo"
+
+    assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
+    assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
 
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")
