@@ -6,6 +6,8 @@ require "http/client"
 require "ecr"
 require "../src/compiler/crystal/formatter"
 
+UNICODE_UCD_ROOT = "http://www.unicode.org/Public/9.0.0/ucd/"
+
 # Each entry in UnicodeData.txt
 # (some info is missing but we don't use it yet)
 record Entry,
@@ -17,6 +19,11 @@ record Entry,
 
 record SpecialCase,
   codepoint : Int32,
+  value : Array(Int32)
+
+record FoldCase,
+  codepoint : Int32,
+  status : Char,
   value : Array(Int32)
 
 record CaseRange, low : Int32, high : Int32, delta : Int32
@@ -129,8 +136,9 @@ end
 entries = [] of Entry
 special_cases_downcase = [] of SpecialCase
 special_cases_upcase = [] of SpecialCase
+fold_cases = [] of FoldCase
 
-url = "http://www.unicode.org/Public/9.0.0/ucd/UnicodeData.txt"
+url = "#{UNICODE_UCD_ROOT}UnicodeData.txt"
 body = HTTP::Client.get(url).body
 body.each_line do |line|
   line = line.strip
@@ -145,7 +153,7 @@ body.each_line do |line|
   entries << Entry.new(codepoint, name, general_category, upcase, downcase)
 end
 
-url = "http://www.unicode.org/Public/9.0.0/ucd/SpecialCasing.txt"
+url = "#{UNICODE_UCD_ROOT}SpecialCasing.txt"
 body = HTTP::Client.get(url).body
 body.each_line do |line|
   line = line.strip
@@ -171,6 +179,27 @@ body.each_line do |line|
     end
     special_cases_upcase << SpecialCase.new(codepoint, upcase)
   end
+end
+
+url = "#{UNICODE_UCD_ROOT}CaseFolding.txt"
+body = HTTP::Client.get(url).body
+body.each_line do |line|
+  line = line.strip
+  next if line.empty?
+  next if line.starts_with?('#')
+
+  pieces = line.split(';')
+  codepoint = pieces[0].to_i(16)
+  status = pieces[1].strip[0]
+  value = pieces[2].split.map(&.to_i(16))
+
+  next if status != 'C' && status != 'F' # casefold uses full case folding (C and F)
+
+  while value.size != 4
+    value << 0
+  end
+
+  fold_cases << FoldCase.new codepoint, status, value
 end
 
 downcase_ranges = case_ranges entries, &.downcase
