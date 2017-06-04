@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 private def it_should_be_valid_string_array_lexer(lexer)
   token = lexer.next_token

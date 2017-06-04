@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 private def expect_to_s(original, expected = original, emit_doc = false, file = __FILE__, line = __LINE__)
   it "does to_s of #{original.inspect}", file, line do

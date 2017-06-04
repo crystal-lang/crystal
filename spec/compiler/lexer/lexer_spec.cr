@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 private def it_lexes(string, type)
   it "lexes #{string.inspect}" do
