@@ -226,22 +226,22 @@ describe PrettyPrint do
     END
 
   it "tail group" do
-    text = String.build { |io|
-      PrettyPrint.format(io, 10) { |q|
-        q.group {
-          q.group {
+    text = String.build do |io|
+      PrettyPrint.format(io, 10) do |q|
+        q.group do
+          q.group do
             q.text "abc"
             q.breakable
             q.text "def"
-          }
-          q.group {
+          end
+          q.group do
             q.text "ghi"
             q.breakable
             q.text "jkl"
-          }
-        }
-      }
-    }
+          end
+        end
+      end
+    end
     text.should eq("abc defghi\njkl")
   end
 end
@@ -258,14 +258,14 @@ private class Tree
   end
 
   def show(q)
-    q.group {
+    q.group do
       q.text @string
-      q.nest(@string.size) {
+      q.nest(@string.size) do
         unless @children.empty?
           q.text '['
-          q.nest(1) {
+          q.nest(1) do
             first = true
-            @children.each { |t|
+            @children.each do |t|
               if first
                 first = false
               else
@@ -273,23 +273,23 @@ private class Tree
                 q.breakable
               end
               t.show(q)
-            }
-          }
+            end
+          end
           q.text ']'
         end
-      }
-    }
+      end
+    end
   end
 
   def altshow(q)
-    q.group {
+    q.group do
       q.text @string
       unless @children.empty?
         q.text '['
-        q.nest(2) {
+        q.nest(2) do
           q.breakable
           first = true
-          @children.each { |t|
+          @children.each do |t|
             if first
               first = false
             else
@@ -297,12 +297,12 @@ private class Tree
               q.breakable
             end
             t.altshow(q)
-          }
-        }
+          end
+        end
         q.breakable
         q.text ']'
       end
-    }
+    end
   end
 end
 
@@ -319,79 +319,85 @@ private def tree
 end
 
 private def tree(width)
-  String.build { |io|
+  String.build do |io|
     PrettyPrint.format(io, width) { |q| tree.show(q) }
-  }
+  end
 end
 
 private def tree_alt(width)
-  String.build { |io|
+  String.build do |io|
     PrettyPrint.format(io, width) { |q| tree.altshow(q) }
-  }
+  end
 end
 
 private def hello(width)
-  String.build { |io|
-    PrettyPrint.format(io, width) { |hello|
-      hello.group {
-        hello.group {
-          hello.group {
-            hello.group {
+  String.build do |io|
+    PrettyPrint.format(io, width) do |hello|
+      hello.group do
+        hello.group do
+          hello.group do
+            hello.group do
               hello.text "hello"
               hello.breakable; hello.text "a"
-            }
+            end
             hello.breakable; hello.text "b"
-          }
+          end
           hello.breakable; hello.text "c"
-        }
+        end
         hello.breakable; hello.text "d"
-      }
-    }
-  }
+      end
+    end
+  end
 end
 
 private def stritc_pretty(width)
   String.build do |io|
-    PrettyPrint.format(io, width) { |q|
-      q.group {
-        q.group { q.nest(2) {
-          q.text "if"; q.breakable
-          q.group {
-            q.nest(2) {
-              q.group { q.text "a"; q.breakable; q.text "==" }
-              q.breakable; q.text "b"
-            }
-          }
-        } }
+    PrettyPrint.format(io, width) do |q|
+      q.group do
+        q.group do
+          q.nest(2) do
+            q.text "if"; q.breakable
+            q.group do
+              q.nest(2) do
+                q.group { q.text "a"; q.breakable; q.text "==" }
+                q.breakable; q.text "b"
+              end
+            end
+          end
+        end
         q.breakable
-        q.group { q.nest(2) {
-          q.text "then"; q.breakable
-          q.group {
-            q.nest(2) {
-              q.group { q.text "a"; q.breakable; q.text "<<" }
-              q.breakable; q.text "2"
-            }
-          }
-        } }
+        q.group do
+          q.nest(2) do
+            q.text "then"; q.breakable
+            q.group do
+              q.nest(2) do
+                q.group { q.text "a"; q.breakable; q.text "<<" }
+                q.breakable; q.text "2"
+              end
+            end
+          end
+        end
         q.breakable
-        q.group { q.nest(2) {
-          q.text "else"; q.breakable
-          q.group {
-            q.nest(2) {
-              q.group { q.text "a"; q.breakable; q.text "+" }
-              q.breakable; q.text "b"
-            }
-          }
-        } }
-      }
-    }
+        q.group do
+          q.nest(2) do
+            q.text "else"; q.breakable
+            q.group do
+              q.nest(2) do
+                q.group { q.text "a"; q.breakable; q.text "+" }
+                q.breakable; q.text "b"
+              end
+            end
+          end
+        end
+      end
+    end
   end
 end
 
 private def fill(width)
-  String.build { |io|
-    PrettyPrint.format(io, width) { |q|
-      q.group {
+  String.build do |io|
+    PrettyPrint.format(io, width) do |q|
+      q.group do
         q.text "abc"
         q.fill_breakable
         q.text "def"
@@ -405,9 +411,9 @@ private def fill(width)
         q.text "pqr"
         q.fill_breakable
         q.text "stu"
-      }
-    }
-  }
+      end
+    end
+  end
 end
 
 private def assert_hello(range, expected)

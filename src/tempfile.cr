@@ -7,9 +7,9 @@ require "c/stdlib"
 # ```
 # tempfile = Tempfile.new("foo")
 # # or
-# tempfile = Tempfile.open("foo") { |file|
+# tempfile = Tempfile.open("foo") do |file|
 #   file.print("foobar")
-# }
+# end
 #
 # File.size(tempfile.path)       # => 6
 # File.stat(tempfile.path).mtime # => 2015-10-20 13:11:12 UTC
@@ -54,9 +54,9 @@ class Tempfile < IO::FileDescriptor
   # It is closed and returned at the end of this method call.
   #
   # ```
-  # tempfile = Tempfile.open("foo") { |file|
+  # tempfile = Tempfile.open("foo") do |file|
   #   file.print("bar")
-  # }
+  # end
   # File.read(tempfile.path) # => "bar"
   # ```
   def self.open(filename)

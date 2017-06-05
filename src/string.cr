@@ -1742,13 +1742,13 @@ class String
   # "hello".sub(/(he|l|o)/, {"l": "la"})             # => "hello"
   # ```
   def sub(pattern : Regex, hash : Hash(String, _) | NamedTuple)
-    sub(pattern) { |match|
+    sub(pattern) do |match|
       if hash.has_key?(match)
         hash[match]
       else
         return self
       end
-    }
+    end
   end
 
   # Returns a `String` where the first occurrences of the given *string* is replaced
