@@ -433,14 +433,14 @@ module Crystal
         raise "undefined method '#{op}' for float literal: #{self}"
       end
 
-      NumberLiteral.new(bin_op(op, args) { |me, other|
+      NumberLiteral.new(bin_op(op, args) do |me, other|
         other_kind = args.first.as(NumberLiteral).kind
         if other_kind == :f32 || other_kind == :f64
           raise "argument to NumberLiteral##{op} can't be float literal: #{self}"
         end
 
         yield me.to_i, other.to_i
-      })
+      end)
     end
 
     def bin_op(op, args)
@@ -734,7 +734,7 @@ module Crystal
       when "values"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
       when "map"
-        interpret_argless_method(method, args) {
+        interpret_argless_method(method, args) do
           raise "map expects a block" unless block
 
           block_arg_key = block.args[0]?
@@ -745,7 +745,7 @@ module Crystal
             interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
             interpreter.accept block.body
           end
-        }
+        end
       when "double_splat"
         case args.size
         when 0
@@ -823,7 +823,7 @@ module Crystal
       when "values"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
       when "map"
-        interpret_argless_method(method, args) {
+        interpret_argless_method(method, args) do
           raise "map expects a block" unless block
 
           block_arg_key = block.args[0]?
@@ -834,7 +834,7 @@ module Crystal
             interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
             interpreter.accept block.body
           end
-        }
+        end
       when "double_splat"
         case args.size
         when 0
@@ -2026,9 +2026,9 @@ end
 def filter(object, klass, block, interpreter, keep = true)
   block_arg = block.args.first?
 
-  klass.new(object.elements.select { |elem|
+  klass.new(object.elements.select do |elem|
     interpreter.define_var(block_arg.name, elem) if block_arg
     block_result = interpreter.accept(block.body).truthy?
     keep ? block_result : !block_result
-  })
+  end)
 end
