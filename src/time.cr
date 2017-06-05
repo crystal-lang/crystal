@@ -590,8 +590,7 @@ struct Time
   end
 
   private def self.compute_ticks(second, tenth_microsecond)
-    UnixEpoch +
-      second.to_i64 * Span::TicksPerSecond +
+    second.to_i64 * Span::TicksPerSecond +
       tenth_microsecond.to_i64
   end
 

@@ -2,6 +2,8 @@ require "c/sys/time"
 require "c/time"
 
 module Crystal::System::Time
+  UnixEpochInSeconds = 62135596800_i64
+
   def self.compute_utc_offset(second)
     LibC.tzset
     offset = nil
@@ -27,11 +29,11 @@ module Crystal::System::Time
     {% if flag?(:darwin) %}
       ret = LibC.gettimeofday(out timeval, nil)
       raise Errno.new("gettimeofday") unless ret == 0
-      {timeval.tv_sec, timeval.tv_usec.to_i64 * 10}
+      {timeval.tv_sec + UnixEpochInSeconds, timeval.tv_usec.to_i64 * 10}
     {% else %}
       ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
       raise Errno.new("clock_gettime") unless ret == 0
-      {timespec.tv_sec, timespec.tv_nsec / 100}
+      {timespec.tv_sec + UnixEpochInSeconds, timespec.tv_nsec / 100}
     {% end %}
   end
 end
