@@ -1,4 +1,3 @@
-# :nodoc:
 module Crystal
   # :nodoc:
   module System
