@@ -986,6 +986,11 @@ module Crystal
       name = node.name
       first_name = name.global? && name.names.size == 1 && name.names.first
 
+      if name.global? && @token.type == :"::"
+        write "::"
+        next_token_skip_space_or_newline
+      end
+
       if node.question?
         node.type_vars[0].accept self
         write_token :"?"
