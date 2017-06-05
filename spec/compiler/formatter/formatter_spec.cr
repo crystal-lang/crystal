@@ -97,6 +97,11 @@ describe Crystal::Formatter do
   assert_format "Foo( x:  Int32  )", "Foo(x: Int32)"
   assert_format "Foo( x:  Int32  ,  y: Float64 )", "Foo(x: Int32, y: Float64)"
 
+  assert_format "::Tuple(T)"
+  assert_format "::NamedTuple(T)"
+  assert_format "::Pointer(T)"
+  assert_format "::StaticArray(T)"
+
   %w(if unless).each do |keyword|
     assert_format "#{keyword} a\n2\nend", "#{keyword} a\n  2\nend"
     assert_format "#{keyword} a\n2\n3\nend", "#{keyword} a\n  2\n  3\nend"
