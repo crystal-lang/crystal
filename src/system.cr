@@ -3,7 +3,8 @@ require "crystal/system/system"
 module System
   # Returns the hostname.
   #
-  # NOTE: Maximum of 253 characters are allowed, with 2 bytes reserved for storage.
+  # NOTE: Maximum of 253 characters are allowed, with 2 bytes reserved for
+	# storage.
   # In practice, many platforms will disallow anything longer than 63 characters.
   #
   # ```
