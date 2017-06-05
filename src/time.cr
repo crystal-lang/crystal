@@ -601,11 +601,11 @@ struct Time
   end
 
   private def self.compute_offset(second)
-    Crystal::System::Time.compute_offset(second)
+    Crystal::System::Time.compute_utc_offset(second) / 60 * Span::TicksPerMinute
   end
 
   private def self.compute_second_and_tenth_microsecond
-    Crystal::System::Time.compute_second_and_tenth_microsecond
+    Crystal::System::Time.compute_utc_second_and_tenth_microsecond
   end
 end
 

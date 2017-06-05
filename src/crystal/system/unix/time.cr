@@ -2,7 +2,7 @@ require "c/sys/time"
 require "c/time"
 
 module Crystal::System::Time
-  def self.compute_offset(second)
+  def self.compute_utc_offset(second)
     LibC.tzset
     offset = nil
 
@@ -20,10 +20,10 @@ module Crystal::System::Time
       offset = tm.tm_gmtoff.to_i64
     end
 
-    offset / 60 * TicksPerMinute
+    offset
   end
 
-  def self.compute_second_and_tenth_microsecond
+  def self.compute_utc_second_and_tenth_microsecond
     {% if flag?(:darwin) %}
       ret = LibC.gettimeofday(out timeval, nil)
       raise Errno.new("gettimeofday") unless ret == 0
