@@ -200,7 +200,7 @@ describe Crystal::Formatter do
   assert_format "foo do   # hello\nend", "foo do # hello\nend"
   assert_format "foo{}", "foo { }"
   assert_format "foo{|x| x}", "foo { |x| x }"
-  assert_format "foo{|x|\n x}", "foo { |x|\n  x\n}"
+  assert_format "foo{|x|\n x}", "foo do |x|\n  x\nend"
   assert_format "foo   &.bar", "foo &.bar"
   assert_format "foo   &.bar( 1 , 2 )", "foo &.bar(1, 2)"
   assert_format "foo.bar  &.baz( 1 , 2 )", "foo.bar &.baz(1, 2)"
@@ -947,6 +947,9 @@ describe Crystal::Formatter do
   assert_format "foo { | a, ( b , c ) | a + b + c }", "foo { |a, (b, c)| a + b + c }"
   assert_format "foo { | a, ( b , c, ), | a + b + c }", "foo { |a, (b, c)| a + b + c }"
   assert_format "foo { | a, ( _ , c ) | a + c }", "foo { |a, (_, c)| a + c }"
+
+  assert_format "foo do |a| 2 end", "foo do |a|\n  2\nend"
+  assert_format "foo { |a|\n  2\n}", "foo do |a|\n  2\nend"
 
   assert_format "def foo\n  {{@type}}\nend"
 

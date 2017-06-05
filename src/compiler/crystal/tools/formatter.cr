@@ -1260,13 +1260,13 @@ module Crystal
       end
     end
 
-    def format_nested_with_end(node, column = @indent, write_end_line = true)
+    def format_nested_with_end(node, column = @indent, write_end_line = true, force_end = false)
       skip_space(column + 2)
 
       if @token.type == :";"
         if node.is_a?(Nop)
           skip_semicolon_or_space_or_newline
-          check_end
+          check_end unless force_end
           write "; end"
           next_token
           return false
@@ -1276,12 +1276,12 @@ module Crystal
       end
 
       format_nested node, column, write_end_line: write_end_line
-      format_end(column)
+      format_end(column, force_end: force_end)
     end
 
-    def format_end(column)
+    def format_end(column, force_end = false)
       skip_space_or_newline(column + 2, last: true)
-      check_end
+      check_end unless force_end
       write_indent(column)
       write "end"
       next_token
@@ -2497,11 +2497,13 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      if @token.keyword?(:do)
+      needs_do_block = node.location.try(&.line_number) != node.end_location.try(&.line_number)
+
+      if @token.keyword?(:do) || (@token.type == :"{" && needs_do_block)
         write " do"
         next_token_skip_space
         body = format_block_args node.args, node
-        format_nested_with_end body
+        format_nested_with_end body, force_end: needs_do_block
       elsif @token.type == :"{"
         write "," if needs_comma
         write " {"
