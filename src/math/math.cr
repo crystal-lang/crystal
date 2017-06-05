@@ -62,7 +62,7 @@ module Math
 
   # ditto
   def gamma(value)
-    LibM.tgamma(value)
+    gamma(value.to_f)
   end
 
   # Calculates the logarithmic gamma of *value*.
@@ -89,7 +89,7 @@ module Math
 
   # ditto
   def lgamma(value)
-    LibM.gamma(value.to_f)
+    lgamma(value.to_f)
   end
 
   {% for name in %w(atan2 copysign hypot) %}

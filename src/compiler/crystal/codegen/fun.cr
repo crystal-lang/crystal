@@ -59,6 +59,7 @@ class Crystal::CodeGenVisitor
     old_llvm_typer = @llvm_typer
     old_builder = self.builder
     old_debug_location = @current_debug_location
+    old_fun = context.fun
 
     old_needs_value = @needs_value
 
@@ -159,7 +160,20 @@ class Crystal::CodeGenVisitor
       @alloca_block = old_alloca_block
       @needs_value = old_needs_value
 
-      set_current_debug_location(old_debug_location)
+      if @debug.line_numbers?
+        # set_current_debug_location associates a scope from the current fun,
+        # and at this point the current one should be the old one before
+        # defining the fun. We do that. We also clear the debug location
+        # if there was none before.
+        if old_debug_location
+          new_fun = context.fun
+          context.fun = old_fun
+          set_current_debug_location(old_debug_location)
+          context.fun = new_fun
+        else
+          clear_current_debug_location
+        end
+      end
 
       context.fun
     end

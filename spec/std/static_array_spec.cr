@@ -117,6 +117,15 @@ describe "StaticArray" do
     a[2].should eq(4)
   end
 
+  it "map_with_index!" do
+    a = StaticArray(Int32, 3).new { |i| i + 1 }
+    a.map_with_index! { |e, i| i * 2 }
+    a[0].should eq(0)
+    a[1].should eq(2)
+    a[2].should eq(4)
+    a.should be_a(StaticArray(Int32, 3))
+  end
+
   it "updates value" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.update(1) { |x| x * 2 }

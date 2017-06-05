@@ -18,4 +18,13 @@ module System
       {len, len}
     end
   end
+
+  # Returns the number of logical processors available to the system.
+  #
+  # ```
+  # System.cpu_count # => 4
+  # ```
+  def self.cpu_count
+    LibC.sysconf(LibC::SC_NPROCESSORS_ONLN)
+  end
 end

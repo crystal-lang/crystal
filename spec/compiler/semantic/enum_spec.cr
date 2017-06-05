@@ -183,6 +183,51 @@ describe "Semantic: enum" do
       )) { int32 }
   end
 
+  it "disallows None value when defined with @[Flags]" do
+    assert_error %(
+      @[Flags]
+      enum Foo
+        None
+      end
+      ),
+      "flags enum can't contain None or All members"
+  end
+
+  it "disallows All value when defined with @[Flags]" do
+    assert_error %(
+      @[Flags]
+      enum Foo
+        All = 50
+      end
+      ),
+      "flags enum can't contain None or All members"
+  end
+
+  it "doesn't error when defining a non-flags enum with None or All" do
+    assert_type(%(
+      enum Foo
+        None
+        All = 50
+      end
+
+      Foo::None.value
+      )) { int32 }
+  end
+
+  it "doesn't error when defining a flags enum in a lib with None or All" do
+    assert_type(%(
+      lib Lib
+        @[Flags]
+        enum Foo
+          None
+          All = 50
+        end
+      end
+
+      Lib::Foo::None.value
+      )) { int32 }
+  end
+
   it "doesn't error when defining a method for an enum with flags" do
     assert_type(%(
       @[Flags]

@@ -8,6 +8,7 @@ module Spec
     fail:    :red,
     error:   :red,
     pending: :yellow,
+    comment: :cyan,
   }
 
   private LETTERS = {

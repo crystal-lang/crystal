@@ -3,8 +3,6 @@ require "openssl/hmac"
 
 describe OpenSSL::HMAC do
   [
-    {:dss, "46b4ec586117154dacd49d664e5d63fdc88efb51"},
-    {:dss1, "46b4ec586117154dacd49d664e5d63fdc88efb51"},
     {:md4, "f3593b56f00b25c8af31d02ddef6d2d0"},
     {:md5, "0c7a250281315ab863549f66cd8a3a53"},
     {:sha1, "46b4ec586117154dacd49d664e5d63fdc88efb51"},

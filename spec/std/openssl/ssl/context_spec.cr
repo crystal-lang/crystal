@@ -4,9 +4,14 @@ require "openssl"
 describe OpenSSL::SSL::Context do
   it "new for client" do
     context = OpenSSL::SSL::Context::Client.new
-    context.options.should eq(OpenSSL::SSL::Options.flags(
-      ALL, NO_SSLV2, NO_SSLV3, NO_SESSION_RESUMPTION_ON_RENEGOTIATION, SINGLE_ECDH_USE, SINGLE_DH_USE
-    ))
+
+    (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    (context.options & OpenSSL::SSL::Options::NO_SSL_V2).should eq(OpenSSL::SSL::Options::NO_SSL_V2)
+    (context.options & OpenSSL::SSL::Options::NO_SSL_V3).should eq(OpenSSL::SSL::Options::NO_SSL_V3)
+    (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
+    (context.options & OpenSSL::SSL::Options::SINGLE_ECDH_USE).should eq(OpenSSL::SSL::Options::SINGLE_ECDH_USE)
+    (context.options & OpenSSL::SSL::Options::SINGLE_DH_USE).should eq(OpenSSL::SSL::Options::SINGLE_DH_USE)
+
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
 
@@ -15,9 +20,15 @@ describe OpenSSL::SSL::Context do
 
   it "new for server" do
     context = OpenSSL::SSL::Context::Server.new
-    context.options.should eq(OpenSSL::SSL::Options.flags(
-      ALL, NO_SSLV2, NO_SSLV3, NO_SESSION_RESUMPTION_ON_RENEGOTIATION, SINGLE_ECDH_USE, SINGLE_DH_USE, CIPHER_SERVER_PREFERENCE
-    ))
+
+    (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    (context.options & OpenSSL::SSL::Options::NO_SSL_V2).should eq(OpenSSL::SSL::Options::NO_SSL_V2)
+    (context.options & OpenSSL::SSL::Options::NO_SSL_V3).should eq(OpenSSL::SSL::Options::NO_SSL_V3)
+    (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
+    (context.options & OpenSSL::SSL::Options::SINGLE_ECDH_USE).should eq(OpenSSL::SSL::Options::SINGLE_ECDH_USE)
+    (context.options & OpenSSL::SSL::Options::SINGLE_DH_USE).should eq(OpenSSL::SSL::Options::SINGLE_DH_USE)
+    (context.options & OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE).should eq(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
+
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
 
@@ -81,23 +92,26 @@ describe OpenSSL::SSL::Context do
     context = OpenSSL::SSL::Context::Client.new
     context.remove_options(context.options) # reset
     default_options = context.options       # options we can't unset
-    context.add_options(OpenSSL::SSL::Options::ALL).should eq(default_options | OpenSSL::SSL::Options::ALL)
-    context.add_options(OpenSSL::SSL::Options.flags(NO_SSLV2, NO_SSLV3))
-           .should eq(OpenSSL::SSL::Options.flags(ALL, NO_SSLV2, NO_SSLV3))
+
+    context.add_options(OpenSSL::SSL::Options::ALL)
+           .should eq(default_options | OpenSSL::SSL::Options::ALL)
+
+    context.add_options(OpenSSL::SSL::Options.flags(NO_SSL_V2, NO_SSL_V3))
+           .should eq(OpenSSL::SSL::Options.flags(ALL, NO_SSL_V2, NO_SSL_V3))
   end
 
   it "removes options" do
     context = OpenSSL::SSL::Context::Client.insecure
     default_options = context.options
-    context.add_options(OpenSSL::SSL::Options.flags(NO_TLSV1, NO_SSLV2))
-    context.remove_options(OpenSSL::SSL::Options::NO_TLSV1).should eq(default_options | OpenSSL::SSL::Options::NO_SSLV2)
+    context.add_options(OpenSSL::SSL::Options.flags(NO_TLS_V1, NO_SSL_V2))
+    context.remove_options(OpenSSL::SSL::Options::NO_TLS_V1).should eq(default_options | OpenSSL::SSL::Options::NO_SSL_V2)
   end
 
   it "returns options" do
     context = OpenSSL::SSL::Context::Client.insecure
     default_options = context.options
-    context.add_options(OpenSSL::SSL::Options.flags(ALL, NO_SSLV2))
-    context.options.should eq(default_options | OpenSSL::SSL::Options.flags(ALL, NO_SSLV2))
+    context.add_options(OpenSSL::SSL::Options.flags(ALL, NO_SSL_V2))
+    context.options.should eq(default_options | OpenSSL::SSL::Options.flags(ALL, NO_SSL_V2))
   end
 
   it "adds modes" do

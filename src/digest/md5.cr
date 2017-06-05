@@ -1,6 +1,11 @@
 require "./base"
 
 # Implements the MD5 digest algorithm.
+#
+# Warning: MD5 is no longer a cryptographically secure hash, and should not be
+# used in security-related components, like password hashing. For passwords, see
+# `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
+# `OpenSSL::Digest.new("SHA256")`.
 class Digest::MD5 < Digest::Base
   def initialize
     @i = StaticArray(UInt32, 2).new(0_u32)

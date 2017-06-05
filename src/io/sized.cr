@@ -52,6 +52,8 @@ module IO
     def peek
       check_open
 
+      return Bytes.empty if @read_remaining == 0 # EOF
+
       peek = @io.peek
       return nil unless peek
 
@@ -59,7 +61,7 @@ module IO
         peek = peek[0, @read_remaining]
       end
 
-      peek.empty? ? nil : peek
+      peek
     end
 
     def skip(bytes_count) : Nil

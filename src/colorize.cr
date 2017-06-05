@@ -77,6 +77,24 @@
 # :hidden
 # ```
 module Colorize
+  # If this value is `true`, `Colorize::Object` is enabled by default.
+  # But if this value is `false`, `Colorize::Object` is disabled.
+  #
+  # The default value is `true`.
+  #
+  # ```
+  # Colorize.enabled = true
+  # "hello".colorize.red.to_s # => "\e[31mhello\e[0m"
+  #
+  # Colorize.enabled = false
+  # "hello".colorize.red.to_s # => "hello"
+  # ```
+  class_property? enabled : Bool = true
+
+  # Make `Colorize.enabled` `true` if and only if both of `STDOUT.tty?` and `STDERR.tty?` are `true`.
+  def self.on_tty_only!
+    self.enabled = STDOUT.tty? && STDERR.tty?
+  end
 end
 
 def with_color
@@ -162,7 +180,7 @@ struct Colorize::Object(T)
     @fore = FORE_DEFAULT
     @back = BACK_DEFAULT
     @mode = 0
-    @on = true
+    @enabled = Colorize.enabled?
   end
 
   {% for name in COLORS %}
@@ -221,8 +239,8 @@ struct Colorize::Object(T)
     back color
   end
 
-  def toggle(on)
-    @on = !!on
+  def toggle(flag)
+    @enabled = !!flag
     self
   end
 
@@ -257,7 +275,7 @@ struct Colorize::Object(T)
   end
 
   protected def append_start(io, reset = false)
-    return false unless @on
+    return false unless @enabled
 
     fore_is_default = @fore == FORE_DEFAULT
     back_is_default = @back == BACK_DEFAULT

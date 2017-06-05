@@ -1053,6 +1053,31 @@ describe "macro methods" do
       end
     end
 
+    it "executes ancestors" do
+      assert_macro("x", "{{x.ancestors}}", %([SomeModule, Reference, Object])) do |program|
+        mod = NonGenericModuleType.new(program, program, "SomeModule")
+        klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+        klass.include mod
+
+        [TypeNode.new(klass)] of ASTNode
+      end
+    end
+
+    it "executes ancestors (with generic)" do
+      assert_macro("x", "{{x.ancestors}}", %([SomeGenericModule(String), SomeGenericType(String), Reference, Object])) do |program|
+        generic_type = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+        generic_mod = GenericModuleType.new(program, program, "SomeGenericModule", ["T"])
+        type_var = {"T" => TypeNode.new(program.string)} of String => ASTNode
+        type = GenericClassInstanceType.new(program, generic_type, program.reference, type_var)
+        mod = GenericModuleInstanceType.new(program, generic_mod, type_var)
+
+        klass = NonGenericClassType.new(program, program, "SomeType", type)
+        klass.include mod
+
+        [TypeNode.new(klass)] of ASTNode
+      end
+    end
+
     it "executes superclass" do
       assert_macro("x", "{{x.superclass}}", %(Reference)) do |program|
         [TypeNode.new(program.string)] of ASTNode
@@ -1538,6 +1563,21 @@ describe "macro methods" do
     it "executes to_a" do
       assert_macro "x", %({{x.to_a}}), [RangeLiteral.new(1.int32, 3.int32, false)] of ASTNode, %([1, 2, 3])
       assert_macro "x", %({{x.to_a}}), [RangeLiteral.new(1.int32, 3.int32, true)] of ASTNode, %([1, 2])
+    end
+  end
+
+  describe "path methods" do
+    it "executes resolve" do
+      assert_macro "x", %({{x.resolve}}), [Path.new("String")] of ASTNode, %(String)
+
+      expect_raises(Crystal::TypeException, "undefined constant Foo") do
+        assert_macro "x", %({{x.resolve}}), [Path.new("Foo")] of ASTNode, %(Foo)
+      end
+    end
+
+    it "executes resolve?" do
+      assert_macro "x", %({{x.resolve?}}), [Path.new("String")] of ASTNode, %(String)
+      assert_macro "x", %({{x.resolve?}}), [Path.new("Foo")] of ASTNode, %(nil)
     end
   end
 

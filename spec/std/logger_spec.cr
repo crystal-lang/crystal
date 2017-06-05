@@ -45,7 +45,7 @@ describe "Logger" do
     IO.pipe do |r, w|
       logger = Logger.new(w)
       logger.formatter = Logger::Formatter.new do |severity, datetime, progname, message, io|
-        io << severity[0] << " " << progname << ": " << message
+        io << severity.to_s[0] << " " << progname << ": " << message
       end
       logger.warn "message", "prog"
 

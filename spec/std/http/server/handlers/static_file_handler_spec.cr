@@ -1,11 +1,11 @@
 require "spec"
 require "http/server"
 
-private def handle(request, fallthrough = true)
+private def handle(request, fallthrough = true, directory_listing = true)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
-  handler = HTTP::StaticFileHandler.new "#{__DIR__}/static", fallthrough
+  handler = HTTP::StaticFileHandler.new "#{__DIR__}/static", fallthrough, directory_listing
   handler.call context
   response.close
   io.rewind
@@ -25,6 +25,11 @@ describe HTTP::StaticFileHandler do
     response = handle HTTP::Request.new("GET", "/")
     response.status_code.should eq(200)
     response.body.should match(/test.txt/)
+  end
+
+  it "should not list directory's entries when directory_listing is set to false" do
+    response = handle HTTP::Request.new("GET", "/"), directory_listing: false
+    response.status_code.should eq(404)
   end
 
   it "should not serve a not found file" do

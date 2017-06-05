@@ -1,10 +1,29 @@
 require "./lib_crypto"
 
+# Allows computing Hash-based Message Authentication Code (HMAC).
+#
+# It is a type of message authentication code (MAC)
+# involving a hash function in combination with a key.
+#
+# HMAC can be used to verify the integrity of a message as well as the authenticity.
+#
+# See also [RFC2104](https://tools.ietf.org/html/rfc2104.html).
 class OpenSSL::HMAC
+  # Returns the HMAC digest of *data* using the secret *key*.
+  #
+  # It may contain non-ASCII bytes, including NUL bytes.
+  #
+  # *algorithm* is a `Symbol` of a supported digest algorithm:
+  # * `:md4`.
+  # * `:md5`.
+  # * `:ripemd160`.
+  # * `:sha1`.
+  # * `:sha224`.
+  # * `:sha256`.
+  # * `:sha384`.
+  # * `:sha512`.
   def self.digest(algorithm : Symbol, key, data) : Bytes
     evp = case algorithm
-          when :dss       then LibCrypto.evp_dss
-          when :dss1      then LibCrypto.evp_dss1
           when :md4       then LibCrypto.evp_md4
           when :md5       then LibCrypto.evp_md5
           when :ripemd160 then LibCrypto.evp_ripemd160
@@ -22,6 +41,11 @@ class OpenSSL::HMAC
     buffer[0, buffer_len.to_i]
   end
 
+  # Returns the HMAC digest of *data* using the secret *key*,
+  # formatted as a hexadecimal string. This is neccesary to safely transfer
+  # the digest where binary messages are not allowed.
+  #
+  # See also `#digest`.
   def self.hexdigest(algorithm : Symbol, key, data) : String
     digest(algorithm, key, data).hexstring
   end

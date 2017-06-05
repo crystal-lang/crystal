@@ -92,7 +92,7 @@ struct Nil
     io << "nil"
   end
 
-  # Doesn't yields to the block.
+  # Doesn't yield to the block.
   #
   # See also: `Object#try`.
   def try(&block)

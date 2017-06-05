@@ -404,7 +404,7 @@ struct NamedTuple
     {% else %}
       {
         {% for key in T %}
-          {{key.symbolize}} => self[{{key.symbolize}}].clone,
+          {{key.symbolize}} => self[{{key.symbolize}}],
         {% end %}
       }
     {% end %}

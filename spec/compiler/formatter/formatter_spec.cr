@@ -1,4 +1,5 @@
-require "../../spec_helper"
+require "spec"
+require "../../../src/compiler/crystal/formatter"
 
 private def assert_format(input, output = input, strict = false, file = __FILE__, line = __LINE__)
   it "formats #{input.inspect}", file, line do
@@ -336,6 +337,8 @@ describe Crystal::Formatter do
 
   assert_format "%w(one   two  three)", "%w(one two three)"
   assert_format "%i(one   two  three)", "%i(one two three)"
+  assert_format "%w{one(   two(  three)}", "%w{one( two( three)}"
+  assert_format "%i{one(   two(  three)}", "%i{one( two( three)}"
 
   assert_format "/foo/"
   assert_format "/foo/imx"
@@ -536,6 +539,7 @@ describe Crystal::Formatter do
 
   assert_format "def foo\na = bar do\n1\nend\nend", "def foo\n  a = bar do\n    1\n  end\nend"
   assert_format "def foo\nend\ndef bar\nend", "def foo\nend\n\ndef bar\nend"
+  assert_format "private def foo\nend\nprivate def bar\nend", "private def foo\nend\n\nprivate def bar\nend"
   assert_format "a = 1\ndef bar\nend", "a = 1\n\ndef bar\nend"
   assert_format "def foo\nend\n\n\n\ndef bar\nend", "def foo\nend\n\ndef bar\nend"
   assert_format "def foo\nend;def bar\nend", "def foo\nend\n\ndef bar\nend"
@@ -1017,4 +1021,6 @@ describe Crystal::Formatter do
   assert_format "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2 # z\n  )\nend"
 
   assert_format "def foo(a, **b : Int32)\nend"
+
+  assert_format "foo\n  \nbar", "foo\n\nbar"
 end

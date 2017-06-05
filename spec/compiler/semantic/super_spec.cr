@@ -357,4 +357,13 @@ describe "Semantic: super" do
       ),
       "undefined method 'Base#method()'"
   end
+
+  it "errors on super outside method (#4481)" do
+    assert_error %(
+      class Foo
+        super
+      end
+      ),
+      "can't use 'super' outside method"
+  end
 end

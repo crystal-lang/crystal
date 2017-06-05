@@ -263,7 +263,7 @@ class Channel::Unbuffered(T) < Channel(T)
   end
 
   def empty?
-    !@has_value
+    !@has_value && @senders.empty?
   end
 
   def full?

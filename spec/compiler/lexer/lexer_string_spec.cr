@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 require "./lexer_objects/strings"
 
 describe "Lexer string" do
@@ -128,6 +128,15 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_be_delimited_by('(', ')')
+    tester.next_string_token_should_be("hello")
+    tester.string_should_end_correctly
+  end
+
+  it "lexes simple string with %|" do
+    lexer = Lexer.new("%|hello|")
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('|', '|')
     tester.next_string_token_should_be("hello")
     tester.string_should_end_correctly
   end

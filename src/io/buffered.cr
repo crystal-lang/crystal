@@ -82,7 +82,7 @@ module IO::Buffered
     if @in_buffer_rem.empty?
       fill_buffer
       if @in_buffer_rem.empty?
-        return nil
+        return Bytes.empty # EOF
       end
     end
 

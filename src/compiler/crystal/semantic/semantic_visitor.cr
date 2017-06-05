@@ -248,7 +248,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       macro_scope = macro_scope.remove_alias
 
       the_macro = macro_scope.metaclass.lookup_macro(node.name, node.args, node.named_args)
-      node.raise "private macro '#{node.name}' called for #{obj}" if the_macro && the_macro.visibility.private?
+      node.raise "private macro '#{node.name}' called for #{obj}" if the_macro.is_a?(Macro) && the_macro.visibility.private?
     when Nil
       return false if node.name == "super" || node.name == "previous_def"
       the_macro = node.lookup_macro
@@ -256,7 +256,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       return false
     end
 
-    return false unless the_macro
+    return false unless the_macro.is_a?(Macro)
 
     # If we find a macro outside a def/block and this is not the first pass it means that the
     # macro was defined before we first found this call, so it's an error
@@ -369,12 +369,21 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
     the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
 
+    skip_macro_exception = nil
+
     generated_nodes = expand_macro(the_macro, node, mode: mode) do
-      @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
+      begin
+        @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
+      rescue ex : SkipMacroException
+        skip_macro_exception = ex
+        ex.expanded_before_skip
+      end
     end
 
     node.expanded = generated_nodes
     node.bind_to generated_nodes
+
+    raise skip_macro_exception if skip_macro_exception
 
     generated_nodes
   end

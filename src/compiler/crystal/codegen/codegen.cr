@@ -678,12 +678,12 @@ module Crystal
     end
 
     def visit(node : SizeOf)
-      @last = trunc(llvm_size(node.exp.type.instance_type.devirtualize), llvm_context.int32)
+      @last = trunc(llvm_size(node.exp.type.sizeof_type), llvm_context.int32)
       false
     end
 
     def visit(node : InstanceSizeOf)
-      @last = trunc(llvm_struct_size(node.exp.type.instance_type.devirtualize), llvm_context.int32)
+      @last = trunc(llvm_struct_size(node.exp.type.sizeof_type), llvm_context.int32)
       false
     end
 
@@ -1232,7 +1232,7 @@ module Crystal
       ] of ASTNode
 
       if location = node.location
-        pieces << StringLiteral.new(", at #{location.filename}:#{location.line_number}").at(node)
+        pieces << StringLiteral.new(", at #{location.original_location}:#{location.line_number}").at(node)
       end
 
       ex = Call.new(Path.global("TypeCastError").at(node), "new", StringInterpolation.new(pieces).at(node)).at(node)
@@ -1248,7 +1248,8 @@ module Crystal
 
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
-        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed"))
+        location = Location.new(@program.filename, 1, 1)
+        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(location)
         @program.visit_main call
         call
       end

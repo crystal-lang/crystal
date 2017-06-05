@@ -462,6 +462,11 @@ struct XML::Node
     @node.value.type
   end
 
+  # Removes the node from the XML document.
+  def unlink
+    LibXML.xmlUnlinkNode(self)
+  end
+
   # Returns `true` if this is an xml Document node.
   def xml?
     type == XML::Type::DOCUMENT_NODE

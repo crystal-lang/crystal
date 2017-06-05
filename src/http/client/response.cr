@@ -116,7 +116,7 @@ class HTTP::Client::Response
   # it to the block. Might yield `nil` if there's no data in the `IO`,
   # which probably means that the connection was closed.
   def self.from_io?(io, ignore_body = false, decompress = true, &block)
-    line = io.gets
+    line = io.gets(4096, chomp: true)
     return yield nil unless line
 
     pieces = line.split(3)

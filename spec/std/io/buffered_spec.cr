@@ -315,8 +315,8 @@ describe "IO::Buffered" do
     # Peek doesn't advance
     io.gets_to_end.should eq("foo")
 
-    # Returns nil if no more data
-    io.peek.should be_nil
+    # Returns EOF if no more data
+    io.peek.should eq(Bytes.empty)
   end
 
   it "skips" do

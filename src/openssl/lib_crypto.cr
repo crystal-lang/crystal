@@ -1,3 +1,10 @@
+{% begin %}
+  lib LibCrypto
+    OPENSSL_110 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.1.0 libcrypto || printf %s false`.stringify != "false" }}
+    OPENSSL_102 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libcrypto || printf %s false`.stringify != "false" }}
+  end
+{% end %}
+
 @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs libcrypto || printf %s '-lcrypto'`")]
 lib LibCrypto
   alias Char = LibC::Char
@@ -67,14 +74,9 @@ lib LibCrypto
 
   type EVP_MD = Void*
 
-  fun evp_dss = EVP_dss : EVP_MD
-  fun evp_dss1 = EVP_dss1 : EVP_MD
   fun evp_md4 = EVP_md4 : EVP_MD
   fun evp_md5 = EVP_md5 : EVP_MD
   fun evp_ripemd160 = EVP_ripemd160 : EVP_MD
-  {% if !flag?(:openbsd) %}
-  fun evp_sha = EVP_sha : EVP_MD
-  {% end %}
   fun evp_sha1 = EVP_sha1 : EVP_MD
   fun evp_sha224 = EVP_sha224 : EVP_MD
   fun evp_sha256 = EVP_sha256 : EVP_MD
@@ -128,15 +130,21 @@ lib LibCrypto
   fun hmac_ctx_copy = HMAC_CTX_copy(dst : HMAC_CTX, src : HMAC_CTX) : Int32
 
   fun evp_get_digestbyname = EVP_get_digestbyname(name : UInt8*) : EVP_MD
-  fun evp_md_ctx_create = EVP_MD_CTX_create : EVP_MD_CTX
   fun evp_digestinit_ex = EVP_DigestInit_ex(ctx : EVP_MD_CTX, type : EVP_MD, engine : Void*) : Int32
   fun evp_digestupdate = EVP_DigestUpdate(ctx : EVP_MD_CTX, data : UInt8*, count : LibC::SizeT) : Int32
-  fun evp_md_ctx_destroy = EVP_MD_CTX_destroy(ctx : EVP_MD_CTX)
   fun evp_md_ctx_copy = EVP_MD_CTX_copy(dst : EVP_MD_CTX, src : EVP_MD_CTX) : Int32
   fun evp_md_ctx_md = EVP_MD_CTX_md(ctx : EVP_MD_CTX) : EVP_MD
   fun evp_md_size = EVP_MD_size(md : EVP_MD) : Int32
   fun evp_md_block_size = EVP_MD_block_size(md : EVP_MD) : LibC::Int
   fun evp_digestfinal_ex = EVP_DigestFinal_ex(ctx : EVP_MD_CTX, md : UInt8*, size : UInt32*) : Int32
+
+  {% if OPENSSL_110 %}
+    fun evp_md_ctx_new = EVP_MD_CTX_new : EVP_MD_CTX
+    fun evp_md_ctx_free = EVP_MD_CTX_free(ctx : EVP_MD_CTX)
+  {% else %}
+    fun evp_md_ctx_new = EVP_MD_CTX_create : EVP_MD_CTX
+    fun evp_md_ctx_free = EVP_MD_CTX_destroy(ctx : EVP_MD_CTX)
+  {% end %}
 
   fun evp_get_cipherbyname = EVP_get_cipherbyname(name : UInt8*) : EVP_CIPHER
   fun evp_cipher_name = EVP_CIPHER_name(cipher : EVP_CIPHER) : UInt8*
@@ -159,8 +167,6 @@ lib LibCrypto
   fun rand_bytes = RAND_bytes(buf : Char*, num : Int) : Int
   fun err_get_error = ERR_get_error : ULong
   fun err_error_string = ERR_error_string(e : ULong, buf : Char*) : Char*
-  fun openssl_add_all_algorithms = OPENSSL_add_all_algorithms_noconf
-  fun err_load_crypto_strings = ERR_load_crypto_strings
 
   struct MD5Context
     a : UInt
@@ -200,10 +206,17 @@ lib LibCrypto
   NID_commonName       = 13
   NID_subject_alt_name = 85
 
-  fun sk_free(st : Void*)
-  fun sk_num = sk_num(x0 : Void*) : Int
-  fun sk_pop_free(st : Void*, callback : (Void*) ->)
-  fun sk_value = sk_value(x0 : Void*, x1 : Int) : Void*
+  {% if OPENSSL_110 %}
+    fun sk_free = OPENSSL_sk_free(st : Void*)
+    fun sk_num = OPENSSL_sk_num(x0 : Void*) : Int
+    fun sk_pop_free = OPENSSL_sk_pop_free(st : Void*, callback : (Void*) ->)
+    fun sk_value = OPENSSL_sk_value(x0 : Void*, x1 : Int) : Void*
+  {% else %}
+    fun sk_free(st : Void*)
+    fun sk_num(x0 : Void*) : Int
+    fun sk_pop_free(st : Void*, callback : (Void*) ->)
+    fun sk_value(x0 : Void*, x1 : Int) : Void*
+  {% end %}
 
   fun x509_dup = X509_dup(a : X509) : X509
   fun x509_free = X509_free(a : X509)
@@ -237,50 +250,43 @@ lib LibCrypto
   fun x509_extension_create_by_nid = X509_EXTENSION_create_by_NID(ex : X509_EXTENSION, nid : Int, crit : Int, data : ASN1_STRING) : X509_EXTENSION
   fun x509v3_ext_nconf_nid = X509V3_EXT_nconf_nid(conf : Void*, ctx : Void*, ext_nid : Int, value : Char*) : X509_EXTENSION
   fun x509v3_ext_print = X509V3_EXT_print(out : Bio*, ext : X509_EXTENSION, flag : Int, indent : Int) : Int
-end
 
-{% if `(command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libcrypto && printf %s true) || printf %s false` == "true" %}
-lib LibCrypto
-  OPENSSL_102 = true
-end
-{% else %}
-lib LibCrypto
-  OPENSSL_102 = false
-end
-{% end %}
+  {% unless OPENSSL_110 %}
+    fun err_load_crypto_strings = ERR_load_crypto_strings
+    fun openssl_add_all_algorithms = OPENSSL_add_all_algorithms_noconf
+  {% end %}
 
-{% if LibCrypto::OPENSSL_102 %}
-lib LibCrypto
-  type X509VerifyParam = Void*
+  {% if OPENSSL_102 %}
+    type X509VerifyParam = Void*
 
-  @[Flags]
-  enum X509VerifyFlags : ULong
-    CB_ISSUER_CHECK      =      0x1
-    USE_CHECK_TIME       =      0x2
-    CRL_CHECK            =      0x4
-    CRL_CHECK_ALL        =      0x8
-    IGNORE_CRITICAL      =     0x10
-    X509_STRICT          =     0x20
-    ALLOW_PROXY_CERTS    =     0x40
-    POLICY_CHECK         =     0x80
-    EXPLICIT_POLICY      =    0x100
-    INHIBIT_ANY          =    0x200
-    INHIBIT_MAP          =    0x400
-    NOTIFY_POLICY        =    0x800
-    EXTENDED_CRL_SUPPORT =   0x1000
-    USE_DELTAS           =   0x2000
-    CHECK_SS_SIGNATURE   =   0x4000
-    TRUSTED_FIRST        =   0x8000
-    SUITEB_128_LOS_ONLY  =  0x10000
-    SUITEB_192_LOS       =  0x20000
-    SUITEB_128_LOS       =  0x30000
-    PARTIAL_CHAIN        =  0x80000
-    NO_ALT_CHAINS        = 0x100000
-  end
+    @[Flags]
+    enum X509VerifyFlags : ULong
+      CB_ISSUER_CHECK      =      0x1
+      USE_CHECK_TIME       =      0x2
+      CRL_CHECK            =      0x4
+      CRL_CHECK_ALL        =      0x8
+      IGNORE_CRITICAL      =     0x10
+      X509_STRICT          =     0x20
+      ALLOW_PROXY_CERTS    =     0x40
+      POLICY_CHECK         =     0x80
+      EXPLICIT_POLICY      =    0x100
+      INHIBIT_ANY          =    0x200
+      INHIBIT_MAP          =    0x400
+      NOTIFY_POLICY        =    0x800
+      EXTENDED_CRL_SUPPORT =   0x1000
+      USE_DELTAS           =   0x2000
+      CHECK_SS_SIGNATURE   =   0x4000
+      TRUSTED_FIRST        =   0x8000
+      SUITEB_128_LOS_ONLY  =  0x10000
+      SUITEB_192_LOS       =  0x20000
+      SUITEB_128_LOS       =  0x30000
+      PARTIAL_CHAIN        =  0x80000
+      NO_ALT_CHAINS        = 0x100000
+    end
 
-  fun x509_verify_param_lookup = X509_VERIFY_PARAM_lookup(name : UInt8*) : X509VerifyParam
-  fun x509_verify_param_set1_host = X509_VERIFY_PARAM_set1_host(param : X509VerifyParam, name : UInt8*, len : SizeT) : Int
-  fun x509_verify_param_set1_ip_asc = X509_VERIFY_PARAM_set1_ip_asc(param : X509VerifyParam, ip : UInt8*) : Int
-  fun x509_verify_param_set_flags = X509_VERIFY_PARAM_set_flags(param : X509VerifyParam, flags : X509VerifyFlags) : Int
+    fun x509_verify_param_lookup = X509_VERIFY_PARAM_lookup(name : UInt8*) : X509VerifyParam
+    fun x509_verify_param_set1_host = X509_VERIFY_PARAM_set1_host(param : X509VerifyParam, name : UInt8*, len : SizeT) : Int
+    fun x509_verify_param_set1_ip_asc = X509_VERIFY_PARAM_set1_ip_asc(param : X509VerifyParam, ip : UInt8*) : Int
+    fun x509_verify_param_set_flags = X509_VERIFY_PARAM_set_flags(param : X509VerifyParam, flags : X509VerifyFlags) : Int
+  {% end %}
 end
-{% end %}

@@ -731,8 +731,7 @@ class String
   # "hello"[1...-1] # "ell"
   # ```
   def [](range : Range(Int, Int))
-    from, size = range_to_index_and_size(range)
-    self[from, size]
+    self[*Indexable.range_to_index_and_count(range, size)]
   end
 
   # Returns a substring starting from the *start* character
@@ -1003,8 +1002,6 @@ class String
   # "string".chomp     # => "string"
   # "x".chomp.chomp    # => "x"
   # ```
-  #
-  # See also: `#chop`.
   def chomp
     return self if empty?
 
@@ -1906,7 +1903,7 @@ class String
   end
 
   private def sub_range(range, replacement)
-    from, size = range_to_index_and_size(range)
+    from, size = Indexable.range_to_index_and_count(range, self.size)
 
     from_index = char_index_to_byte_index(from)
     raise IndexError.new unless from_index
@@ -3244,7 +3241,7 @@ class String
   #   puts stanza.upcase
   # end
   # # => THE FIRST COLD SHOWER
-  # # => EVEN THE MONKEY SEEMS TO want
+  # # => EVEN THE MONKEY SEEMS TO WANT
   # # => A LITTLE COAT OF STRAW
   # ```
   def each_line(chomp = true) : Nil
@@ -3281,27 +3278,37 @@ class String
   # "DoesWhatItSaysOnTheTin".underscore # => "does_what_it_says_on_the_tin"
   # "PartyInTheUSA".underscore          # => "party_in_the_usa"
   # "HTTP_CLIENT".underscore            # => "http_client"
+  # "3.14IsPi".underscore               # => "3.14_is_pi"
   # ```
   def underscore
     first = true
     last_is_downcase = false
     last_is_upcase = false
+    last_is_digit = false
     mem = nil
 
     String.build(bytesize + 10) do |str|
       each_char do |char|
-        downcase = 'a' <= char <= 'z'
+        digit = '0' <= char <= '9'
+        downcase = 'a' <= char <= 'z' || digit
         upcase = 'A' <= char <= 'Z'
 
         if first
           str << char.downcase
         elsif last_is_downcase && upcase
+          if mem
+            # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
+            #                       ^
+            # because 'mem' is digit surely) before putting this char as downcase.
+            str << mem
+            mem = nil
+          end
           # This is the case of AbcDe, we need to put an underscore before the 'D'
           #                        ^
           str << '_'
           str << char.downcase
-        elsif last_is_upcase && upcase
-          # This is the case of 1) ABCde, 2) ABCDe or 3) ABC_de:if the next char is upcase (case 1) we need
+        elsif (last_is_upcase || last_is_digit) && (upcase || digit)
+          # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
           #                          ^         ^           ^
           # 1) we need to append this char as downcase
           # 2) we need to append an underscore and then the char as downcase, so we save this char
@@ -3316,7 +3323,7 @@ class String
           if mem
             if char == '_'
               # case 3
-            else
+            elsif last_is_upcase && downcase
               # case 1
               str << '_'
             end
@@ -3329,6 +3336,7 @@ class String
 
         last_is_downcase = downcase
         last_is_upcase = upcase
+        last_is_digit = digit
         first = false
       end
 
@@ -4073,20 +4081,6 @@ class String
     end
 
     {bytes, bytesize}
-  end
-
-  private def range_to_index_and_size(range)
-    from = range.begin
-    from += size if from < 0
-    raise IndexError.new if from < 0
-
-    to = range.end
-    to += size if to < 0
-    to -= 1 if range.excludes_end?
-    size = to - from + 1
-    size = 0 if size < 0
-
-    {from, size}
   end
 
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.

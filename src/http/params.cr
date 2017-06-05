@@ -35,6 +35,7 @@ module HTTP
       buffer = IO::Memory.new
 
       i = 0
+      first_equal = true
       bytesize = query.bytesize
       while i < bytesize
         byte = query.unsafe_byte_at(i)
@@ -42,9 +43,14 @@ module HTTP
 
         case char
         when '='
-          key = buffer.to_s
-          buffer.clear
-          i += 1
+          if first_equal
+            key = buffer.to_s
+            buffer.clear
+            i += 1
+            first_equal = false
+          else
+            i = decode_one_www_form_component query, bytesize, i, byte, char, buffer
+          end
         when '&', ';'
           value = buffer.to_s
           buffer.clear
@@ -56,6 +62,7 @@ module HTTP
           end
 
           key = nil
+          first_equal = true
           i += 1
         else
           i = decode_one_www_form_component query, bytesize, i, byte, char, buffer
@@ -69,12 +76,21 @@ module HTTP
       end
     end
 
-    # Creates an `HTTP::Params` instance from the key-value
-    # pairs of the given *hash*.
-    def self.from_hash(hash : Hash)
+    # Returns the given key value pairs as a
+    # url-encoded HTTP form/query.
+    def self.encode(hash : Hash(String, _))
       build do |builder|
         hash.each do |key, value|
           builder.add key, value
+        end
+      end
+    end
+
+    # ditto
+    def self.encode(named_tuple : NamedTuple)
+      build do |builder|
+        named_tuple.each do |key, value|
+          builder.add key.to_s, value
         end
       end
     end

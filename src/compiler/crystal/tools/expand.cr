@@ -1,3 +1,5 @@
+require "./typed_def_processor"
+
 module Crystal
   struct ExpandResult
     JSON.mapping({
@@ -70,38 +72,17 @@ module Crystal
   end
 
   class ExpandVisitor < Visitor
+    include TypedDefProcessor
+
     def initialize(@target_location : Location)
       @found_nodes = [] of ASTNode
       @in_defs = false
       @message = "no expansion found"
     end
 
-    def process_type(type)
-      return unless type
-
-      if type.is_a?(NamedType) || type.is_a?(Program) || type.is_a?(FileModule)
-        type.types?.try &.each_value do |inner_type|
-          process_type(inner_type)
-        end
-      end
-
-      process_type type.metaclass if type.metaclass != type
-
-      if type.is_a?(DefInstanceContainer)
-        type.def_instances.each_value &.accept(self)
-      end
-
-      if type.is_a?(GenericType)
-        type.generic_types.values.each do |instanced_type|
-          process_type(instanced_type)
-        end
-      end
-    end
-
     def process(result : Compiler::Result)
       @in_defs = true
-      process_type result.program
-      process_type result.program.file_module?(@target_location.original_filename)
+      process_result result
       @in_defs = false
 
       result.node.accept(self)

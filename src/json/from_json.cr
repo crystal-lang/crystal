@@ -1,7 +1,7 @@
 # Deserializes the given JSON in *string_or_io* into
 # an instance of `self`. This simply creates a `parser = JSON::PullParser`
 # and invokes `new(parser)`: classes that want to provide JSON
-# deserialization must provide an `def initialize(parser : JSON::PullParser`
+# deserialization must provide an `def initialize(parser : JSON::PullParser)`
 # method.
 #
 # ```

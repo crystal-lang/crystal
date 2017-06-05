@@ -385,4 +385,26 @@ describe "context" do
     foo(1 < 0 ? nil : "s")
     ), "c", ["String"]
   end
+
+  it "can get context in file private method" do
+    assert_context_keys %(
+    private def foo(a)
+      ‸
+    end
+
+    foo 100
+    ), "a"
+  end
+
+  it "can get context in file private module" do
+    assert_context_keys %(
+    private module Foo
+      def self.foo(a)
+        ‸
+      end
+    end
+
+    Foo.foo 100
+    ), "self", "a"
+  end
 end

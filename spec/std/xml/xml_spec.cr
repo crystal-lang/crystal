@@ -275,6 +275,21 @@ describe XML do
     doc.version.should eq("1.0")
   end
 
+  it "unlinks nodes" do
+    xml = <<-XML
+        <person id="1">
+          <firstname>Jane</firstname>
+          <lastname>Doe</lastname>
+        </person>
+        XML
+    document = XML.parse(xml)
+
+    node = document.xpath_node("//lastname").not_nil!
+    node.unlink
+
+    document.xpath_node("//lastname").should eq(nil)
+  end
+
   it "does to_s with correct encoding (#2319)" do
     xml_str = <<-XML
     <?xml version='1.0' encoding='UTF-8'?>

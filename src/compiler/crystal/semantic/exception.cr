@@ -294,6 +294,14 @@ module Crystal
   class MacroRaiseException < TypeException
   end
 
+  class SkipMacroException < ::Exception
+    getter expanded_before_skip : String
+
+    def initialize(@expanded_before_skip)
+      super()
+    end
+  end
+
   class Program
     def undefined_global_variable(node, similar_name)
       common = String.build do |str|

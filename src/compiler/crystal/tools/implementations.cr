@@ -1,5 +1,6 @@
 require "../syntax/ast"
 require "../compiler"
+require "./typed_def_processor"
 require "json"
 
 module Crystal
@@ -84,44 +85,16 @@ module Crystal
   end
 
   class ImplementationsVisitor < Visitor
+    include TypedDefProcessor
+
     getter locations : Array(Location)
 
     def initialize(@target_location : Location)
       @locations = [] of Location
     end
 
-    def process_type(type)
-      if type.is_a?(NamedType)
-        type.types?.try &.values.each do |inner_type|
-          process_type(inner_type)
-        end
-      end
-
-      process_type type.metaclass if type.metaclass != type
-
-      if type.is_a?(DefInstanceContainer)
-        type.def_instances.values.try do |typed_defs|
-          typed_defs.each do |typed_def|
-            typed_def.accept(self)
-          end
-        end
-      end
-
-      if type.is_a?(GenericType)
-        type.generic_types.values.each do |instanced_type|
-          process_type(instanced_type)
-        end
-      end
-    end
-
     def process(result : Compiler::Result)
-      result.program.def_instances.each_value do |typed_def|
-        typed_def.accept(self)
-      end
-
-      result.program.types?.try &.values.each do |type|
-        process_type type
-      end
+      process_result result
 
       result.node.accept(self)
 

@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 private def regex(string, options = Regex::Options::None)
   RegexLiteral.new(StringLiteral.new(string), options)
@@ -756,6 +756,8 @@ describe "Parser" do
 
   it_parses "macro foo;bar{% begin %}body{% end %}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new(true.bool, "body".macro_literal), "baz;".macro_literal] of ASTNode))
 
+  it_parses "macro x\n%{}\nend", Macro.new("x", body: MacroLiteral.new("%{}\n"))
+
   it_parses "def foo : Int32\n1\nend", Def.new("foo", body: 1.int32, return_type: "Int32".path)
   it_parses "def foo(x) : Int32\n1\nend", Def.new("foo", args: ["x".arg], body: 1.int32, return_type: "Int32".path)
 
@@ -915,6 +917,7 @@ describe "Parser" do
   it_parses "case a\nwhen b\n1 / 2\nelse\n1 / 2\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, Call.new(1.int32, "/", 2.int32))], Call.new(1.int32, "/", 2.int32))
   it_parses "case a\nwhen b\n/ /\n\nelse\n/ /\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, RegexLiteral.new(StringLiteral.new(" ")))], RegexLiteral.new(StringLiteral.new(" ")))
   assert_syntax_error "case {1, 2}; when {3}; 4; end", "wrong number of tuple elements (given 1, expected 2)", 1, 19
+  assert_syntax_error "case 1; end", "unexpected token: end (expecting when or else)", 1, 9
 
   it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
   it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
@@ -1044,6 +1047,7 @@ describe "Parser" do
   it_parses "{\n1,\n2\n}", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
   it_parses "{\n1\n}", TupleLiteral.new([1.int32] of ASTNode)
   it_parses "{\n{1}\n}", TupleLiteral.new([TupleLiteral.new([1.int32] of ASTNode)] of ASTNode)
+  it_parses %({"".id}), TupleLiteral.new([Call.new("".string, "id")] of ASTNode)
 
   it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", block: Block.new(body: Assign.new("a".var, 1.int32))), "a".call] of ASTNode
 
@@ -1266,6 +1270,9 @@ describe "Parser" do
   it_parses "1 if /x/", If.new(RegexLiteral.new("x".string), 1.int32)
 
   it_parses "foo bar.baz(1) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
+
+  it_parses "1 rescue 2 if 3", If.new(3.int32, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
+  it_parses "1 ensure 2 if 3", If.new(3.int32, ExceptionHandler.new(1.int32, ensure: 2.int32))
 
   assert_syntax_error "return do\nend", "unexpected token: do"
 
@@ -1528,6 +1535,9 @@ describe "Parser" do
     assert_end_location "extend Foo"
     assert_end_location "1.as(Int32)"
     assert_end_location "puts obj.foo"
+
+    assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
+    assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
 
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")

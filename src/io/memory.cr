@@ -192,8 +192,7 @@ class IO::Memory
   def peek
     check_open
 
-    peek = Slice.new(@buffer + @pos, @bytesize - @pos)
-    peek.empty? ? nil : peek
+    Slice.new(@buffer + @pos, @bytesize - @pos)
   end
 
   # :nodoc:
@@ -226,7 +225,9 @@ class IO::Memory
     if pos == @bytesize
       ""
     else
-      String.new(@buffer + @pos, @bytesize - @pos)
+      String.new(@buffer + @pos, @bytesize - @pos).tap {
+        @pos = @bytesize
+      }
     end
   end
 

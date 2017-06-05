@@ -134,12 +134,12 @@ struct Char
     # is decremented.
     # Raises `IndexError` if the reader is at the begining of
     # the `#string`
-    def previous_char
+    def previous_char : Char
       unless has_previous?
         raise IndexError.new
       end
 
-      decode_previous_char
+      decode_previous_char.as(Char)
     end
 
     # Sets `#pos` to *pos*.

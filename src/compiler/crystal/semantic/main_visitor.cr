@@ -88,6 +88,9 @@ module Crystal
     @or_left_type_filters : TypeFilters?
     @or_right_type_filters : TypeFilters?
 
+    # Type filters for `exp` in `!exp`, used after a `while`
+    @before_not_type_filters : TypeFilters?
+
     def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       super(program, vars)
       @while_stack = [] of While
@@ -776,6 +779,13 @@ module Crystal
     def type_assign(target : InstanceVar, value, node)
       # Check if this is an instance variable initializer
       unless @scope
+        # `InstanceVar` assignment appered in block is not checked
+        # by `Crystal::InstanceVarsInitializerVisitor` because this block
+        # may be passed to a macro. So, it checks here.
+        if current_type.is_a?(Program) || current_type.is_a?(FileModule)
+          node.raise "can't use instance variables at the top level"
+        end
+
         # Already handled by InstanceVarsInitializerVisitor
         return
       end
@@ -1657,7 +1667,9 @@ module Crystal
       # When doing x.is_a?(A) and A turns out to be a constant (not a type),
       # replace it with a === comparison. Most usually this happens in a case expression.
       if const.is_a?(Path) && const.target_const
-        comp = Call.new(const, "===", node.obj).at(node.location)
+        obj = node.obj.clone.at(node.obj)
+        const = node.const.clone.at(node.const)
+        comp = Call.new(const, "===", obj).at(node.location)
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
@@ -1976,6 +1988,16 @@ module Crystal
         if endless_while
           node.type = program.no_return
           return
+        end
+
+        if node.cond.is_a?(Not)
+          after_while_type_filters = @not_type_filters
+        else
+          after_while_type_filters = not_type_filters(node.cond, cond_type_filters)
+        end
+
+        if after_while_type_filters
+          filter_vars(after_while_type_filters)
         end
       end
 
@@ -2356,7 +2378,7 @@ module Crystal
         end
       end
 
-      unsafe_call = Conversions.to_unsafe(node, Var.new("value"), self, actual_type, expected_type)
+      unsafe_call = Conversions.to_unsafe(node, Var.new("value").at(node), self, actual_type, expected_type)
       if unsafe_call
         node.extra = unsafe_call
         return
@@ -2430,7 +2452,7 @@ module Crystal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if (type = node.exp.type?) && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.size_of(type.devirtualize))
+        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type))
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2447,7 +2469,7 @@ module Crystal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if (type = node.exp.type?) && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.instance_size_of(type.devirtualize))
+        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type))
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2849,13 +2871,26 @@ module Crystal
       node.exp.add_observer node
       node.update
 
-      if needs_type_filters? && (type_filters = @type_filters)
-        @type_filters = type_filters.not
+      if needs_type_filters?
+        @not_type_filters = @type_filters
+        @type_filters = not_type_filters(node.exp, @type_filters)
       else
         @type_filters = nil
+        @not_type_filters = nil
       end
 
       false
+    end
+
+    private def not_type_filters(exp, type_filters)
+      if type_filters
+        case exp
+        when Var, IsA, RespondsTo, Not
+          return type_filters.not
+        end
+      end
+
+      nil
     end
 
     def visit(node : VisibilityModifier)
