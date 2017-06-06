@@ -24,8 +24,6 @@ private module StructSpec
       @x = 1
       @y = [1, 2, 3]
     end
-
-    def_clone
   end
 end
 
@@ -59,7 +57,7 @@ describe "Struct" do
     duplicate.x.should_not eq(10)
   end
 
-  it "clones with def_clone" do
+  it "clones" do
     original = StructSpec::DupCloneStruct.new
     clone = original.clone
     clone.x.should eq(original.x)
