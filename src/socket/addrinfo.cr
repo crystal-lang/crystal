@@ -25,7 +25,7 @@ class Socket
     # ```
     # addrinfos = Socket::Addrinfo.resolve("example.org", "http", type: Socket::Type::STREAM, protocol: Socket::Protocol::TCP)
     # ```
-    def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
+    def self.resolve(domain, service, family : Family? = nil, type : Type? = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
       addrinfos = [] of Addrinfo
 
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
@@ -51,7 +51,7 @@ class Socket
     #
     # The iteration will be stopped once the block returns something that isn't
     # an `Exception` (e.g. a `Socket` or `nil`).
-    def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil)
+    def self.resolve(domain, service, family : Family? = nil, type : Type? = nil, protocol : Protocol = Protocol::IP, timeout = nil)
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
         error = nil
 
@@ -78,7 +78,7 @@ class Socket
     private def self.getaddrinfo(domain, service, family, type, protocol, timeout)
       hints = LibC::Addrinfo.new
       hints.ai_family = (family || Family::UNSPEC).to_i32
-      hints.ai_socktype = type
+      hints.ai_socktype = (type || Type::STREAM).to_i32
       hints.ai_protocol = protocol
       hints.ai_flags = 0
 
