@@ -15,6 +15,7 @@ module Crystal
     def stage(name)
       @current_stage_name = name
 
+      print_stats
       print_progress
 
       start_time = Time.now
@@ -37,13 +38,17 @@ module Crystal
       print "\r"
     end
 
-    def print_stats(time_taken)
+    def print_stats(time_taken = nil)
       return unless @stats
 
-      memory_usage_mb = GC.stats.heap_size / 1024.0 / 1024.0
-      memory_usage_str = " (%7.2fMB)" % {memory_usage_mb} if true # display_memory?
       justified_name = "#{current_stage_name}:".ljust(STAGE_PADDING)
-      puts "#{justified_name} #{time_taken}#{memory_usage_str}"
+      if time_taken
+        memory_usage_mb = GC.stats.heap_size / 1024.0 / 1024.0
+        memory_usage_str = " (%7.2fMB)" % {memory_usage_mb} if true # display_memory?
+        puts "#{justified_name} #{time_taken}#{memory_usage_str}"
+      else
+        print "#{justified_name}\r" unless @progress
+      end
     end
 
     def print_progress

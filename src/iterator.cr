@@ -1160,11 +1160,9 @@ module Iterator(T)
   # For example, consecutive even numbers and odd numbers can be chunked as follows.
   #
   # ```
-  # [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5].chunk { |n|
-  #   n.even?
-  # }.each { |even, ary|
+  # [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5].chunk(&.even?).each do |even, ary|
   #   p [even, ary]
-  # }
+  # end
   #
   # # => [false, [3, 1]]
   # #    [true, [4]]

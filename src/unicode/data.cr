@@ -9,6 +9,7 @@ module Unicode
   # Most case conversions map a range to another range.
   # Here we store: {from, to, delta}
   @@upcase_ranges : Array({Int32, Int32, Int32})?
+
   private def self.upcase_ranges
     @@upcase_ranges ||= begin
       data = Array({Int32, Int32, Int32}).new(131)
@@ -150,6 +151,7 @@ module Unicode
   # Most case conversions map a range to another range.
   # Here we store: {from, to, delta}
   @@downcase_ranges : Array({Int32, Int32, Int32})?
+
   private def self.downcase_ranges
     @@downcase_ranges ||= begin
       data = Array({Int32, Int32, Int32}).new(115)
@@ -276,6 +278,7 @@ module Unicode
   # of uppercase/lowercase transformations
   # Here we store {from, to}
   @@alternate_ranges : Array({Int32, Int32})?
+
   private def self.alternate_ranges
     @@alternate_ranges ||= begin
       data = Array({Int32, Int32}).new(56)
@@ -349,6 +352,7 @@ module Unicode
   # The values are: 1..10, 11, 13, 15
 
   @@category_Lu : Array({Int32, Int32, Int32})?
+
   private def self.category_Lu
     @@category_Lu ||= begin
       data = Array({Int32, Int32, Int32}).new(138)
@@ -493,7 +497,9 @@ module Unicode
       data
     end
   end
+
   @@category_Ll : Array({Int32, Int32, Int32})?
+
   private def self.category_Ll
     @@category_Ll ||= begin
       data = Array({Int32, Int32, Int32}).new(150)
@@ -650,7 +656,9 @@ module Unicode
       data
     end
   end
+
   @@category_Lt : Array({Int32, Int32, Int32})?
+
   private def self.category_Lt
     @@category_Lt ||= begin
       data = Array({Int32, Int32, Int32}).new(7)
@@ -664,7 +672,9 @@ module Unicode
       data
     end
   end
+
   @@category_Mn : Array({Int32, Int32, Int32})?
+
   private def self.category_Mn
     @@category_Mn ||= begin
       data = Array({Int32, Int32, Int32}).new(250)
@@ -921,7 +931,9 @@ module Unicode
       data
     end
   end
+
   @@category_Mc : Array({Int32, Int32, Int32})?
+
   private def self.category_Mc
     @@category_Mc ||= begin
       data = Array({Int32, Int32, Int32}).new(136)
@@ -1064,7 +1076,9 @@ module Unicode
       data
     end
   end
+
   @@category_Me : Array({Int32, Int32, Int32})?
+
   private def self.category_Me
     @@category_Me ||= begin
       data = Array({Int32, Int32, Int32}).new(5)
@@ -1076,7 +1090,9 @@ module Unicode
       data
     end
   end
+
   @@category_Nd : Array({Int32, Int32, Int32})?
+
   private def self.category_Nd
     @@category_Nd ||= begin
       data = Array({Int32, Int32, Int32}).new(54)
@@ -1137,7 +1153,9 @@ module Unicode
       data
     end
   end
+
   @@category_Nl : Array({Int32, Int32, Int32})?
+
   private def self.category_Nl
     @@category_Nl ||= begin
       data = Array({Int32, Int32, Int32}).new(11)
@@ -1155,7 +1173,9 @@ module Unicode
       data
     end
   end
+
   @@category_No : Array({Int32, Int32, Int32})?
+
   private def self.category_No
     @@category_No ||= begin
       data = Array({Int32, Int32, Int32}).new(59)
@@ -1221,7 +1241,9 @@ module Unicode
       data
     end
   end
+
   @@category_Zs : Array({Int32, Int32, Int32})?
+
   private def self.category_Zs
     @@category_Zs ||= begin
       data = Array({Int32, Int32, Int32}).new(5)
@@ -1233,7 +1255,9 @@ module Unicode
       data
     end
   end
+
   @@category_Zl : Array({Int32, Int32, Int32})?
+
   private def self.category_Zl
     @@category_Zl ||= begin
       data = Array({Int32, Int32, Int32}).new(1)
@@ -1241,7 +1265,9 @@ module Unicode
       data
     end
   end
+
   @@category_Zp : Array({Int32, Int32, Int32})?
+
   private def self.category_Zp
     @@category_Zp ||= begin
       data = Array({Int32, Int32, Int32}).new(1)
@@ -1249,7 +1275,9 @@ module Unicode
       data
     end
   end
+
   @@category_Cc : Array({Int32, Int32, Int32})?
+
   private def self.category_Cc
     @@category_Cc ||= begin
       data = Array({Int32, Int32, Int32}).new(2)
@@ -1258,7 +1286,9 @@ module Unicode
       data
     end
   end
+
   @@category_Cf : Array({Int32, Int32, Int32})?
+
   private def self.category_Cf
     @@category_Cf ||= begin
       data = Array({Int32, Int32, Int32}).new(16)
@@ -1281,7 +1311,9 @@ module Unicode
       data
     end
   end
+
   @@category_Cs : Array({Int32, Int32, Int32})?
+
   private def self.category_Cs
     @@category_Cs ||= begin
       data = Array({Int32, Int32, Int32}).new(3)
@@ -1291,7 +1323,9 @@ module Unicode
       data
     end
   end
+
   @@category_Co : Array({Int32, Int32, Int32})?
+
   private def self.category_Co
     @@category_Co ||= begin
       data = Array({Int32, Int32, Int32}).new(3)
@@ -1301,7 +1335,9 @@ module Unicode
       data
     end
   end
+
   @@category_Cn : Array({Int32, Int32, Int32})?
+
   private def self.category_Cn
     @@category_Cn ||= begin
       data = Array({Int32, Int32, Int32}).new(0)
@@ -1313,6 +1349,7 @@ module Unicode
   # to multiple codepoints. The maximum transformation is always 3
   # codepoints, so we store them all as 3 codepoints and 0 means end.
   @@special_cases_downcase : Hash(Int32, {Int32, Int32, Int32})?
+
   private def self.special_cases_downcase
     @@special_cases_downcase ||= begin
       data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: 1)
@@ -1326,6 +1363,7 @@ module Unicode
   # to multiple codepoints. The maximum transformation is always 3
   # codepoints, so we store them all as 3 codepoints and 0 means end.
   @@special_cases_upcase : Hash(Int32, {Int32, Int32, Int32})?
+
   private def self.special_cases_upcase
     @@special_cases_upcase ||= begin
       data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: 102)

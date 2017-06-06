@@ -1,8 +1,8 @@
 require "./spec/dsl"
 
-# Crystal's builtin testing library.
+# Crystal's built-in testing library.
 #
-# A basic spec looks like this:
+# A basic spec looks something like this:
 #
 # ```
 # require "spec"
@@ -24,25 +24,25 @@ require "./spec/dsl"
 #     end
 #   end
 #
-#   # lots of more specs
+#   # lots more specs
 #
 # end
 # ```
 #
-# With `describe` and a descriptive string test files are structured.
-# There commonly is one top level `describe` that defines which greater unit,
-# such as a class, is tested in this spec file. Further `describe` calls can
-# be nested within to specify smaller units under test like individual methods.
-# It can also be used to set up a certain context - think empty `Array` versus
-# `Array` with elements. There is also the `context` method that behaves just like
-# `describe` but has a lightly different meaning to the reader.
+# Test files are structured by use of the `describe` or `context` methods.
+# Typically a top level `describe` defines the `outer` unit (such as a class)
+# that is to be tested by the spec. Further `describe` calls can be nested within
+# the outer unit to specify smaller units under test (such as individual methods).
+# `describe` can also be used to set up a certain context - think empty `Array` versus
+# `Array` with elements. The `context` method behaves just like the `describe` method
+# and may be used instead, to emphasize context to the reader.
 #
-# Concrete test cases are defined with `it` within a `describe` block. A
-# descriptive string is supplied to `it` describing what that test case
+# Within a `describe` block, concrete test cases are defined with `it` . A
+# descriptive string is supplied to `it` describing what the test case
 # tests specifically.
 #
 # Specs then use the `should` method to verify that the expected value is
-# returned, see the example above for details.
+# returned. See the example above for details.
 #
 # By convention, specs live in the `spec` directory of a project. You can compile
 # and run the specs of a project by running:
@@ -51,14 +51,13 @@ require "./spec/dsl"
 # crystal spec
 # ```
 #
-# Also, you can compile and run individual spec files by providing their path:
+# You can also compile and run individual spec files by providing their path:
 #
 # ```shell
 # crystal spec spec/my/test/file_spec.cr
 # ```
 #
-# In addition, you can also run individual specs by optionally providing a line
-# number:
+# In addition, you may run individual specs by providing a line number:
 #
 # ```shell
 # crystal spec spec/my/test/file_spec.cr:14

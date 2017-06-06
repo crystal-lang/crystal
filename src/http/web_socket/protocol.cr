@@ -134,7 +134,7 @@ class HTTP::WebSocket::Protocol
     return @io.write(data) unless @masked
 
     key = Random::DEFAULT.next_int
-    mask_array = pointerof(key).as(Pointer(UInt8[4])).value
+    mask_array = key.unsafe_as(StaticArray(UInt8, 4))
     @io.write mask_array.to_slice
 
     data.each_with_index do |byte, index|

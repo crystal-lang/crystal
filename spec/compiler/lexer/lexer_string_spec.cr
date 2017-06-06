@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 require "./lexer_objects/strings"
 
 describe "Lexer string" do

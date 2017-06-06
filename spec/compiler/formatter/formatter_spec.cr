@@ -200,7 +200,7 @@ describe Crystal::Formatter do
   assert_format "foo do   # hello\nend", "foo do # hello\nend"
   assert_format "foo{}", "foo { }"
   assert_format "foo{|x| x}", "foo { |x| x }"
-  assert_format "foo{|x|\n x}", "foo { |x|\n  x\n}"
+  assert_format "foo{|x|\n x}", "foo do |x|\n  x\nend"
   assert_format "foo   &.bar", "foo &.bar"
   assert_format "foo   &.bar( 1 , 2 )", "foo &.bar(1, 2)"
   assert_format "foo.bar  &.baz( 1 , 2 )", "foo.bar &.baz(1, 2)"
@@ -539,6 +539,7 @@ describe Crystal::Formatter do
 
   assert_format "def foo\na = bar do\n1\nend\nend", "def foo\n  a = bar do\n    1\n  end\nend"
   assert_format "def foo\nend\ndef bar\nend", "def foo\nend\n\ndef bar\nend"
+  assert_format "private def foo\nend\nprivate def bar\nend", "private def foo\nend\n\nprivate def bar\nend"
   assert_format "a = 1\ndef bar\nend", "a = 1\n\ndef bar\nend"
   assert_format "def foo\nend\n\n\n\ndef bar\nend", "def foo\nend\n\ndef bar\nend"
   assert_format "def foo\nend;def bar\nend", "def foo\nend\n\ndef bar\nend"
@@ -947,6 +948,9 @@ describe Crystal::Formatter do
   assert_format "foo { | a, ( b , c, ), | a + b + c }", "foo { |a, (b, c)| a + b + c }"
   assert_format "foo { | a, ( _ , c ) | a + c }", "foo { |a, (_, c)| a + c }"
 
+  assert_format "foo do |a| 2 end", "foo do |a|\n  2\nend"
+  assert_format "foo { |a|\n  2\n}", "foo do |a|\n  2\nend"
+
   assert_format "def foo\n  {{@type}}\nend"
 
   assert_format "[\n  1, # foo\n  3,\n]"
@@ -1020,4 +1024,6 @@ describe Crystal::Formatter do
   assert_format "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2 # z\n  )\nend"
 
   assert_format "def foo(a, **b : Int32)\nend"
+
+  assert_format "foo\n  \nbar", "foo\n\nbar"
 end

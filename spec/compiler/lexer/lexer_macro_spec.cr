@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 describe "Lexer macro" do
   it "lexes simple macro" do

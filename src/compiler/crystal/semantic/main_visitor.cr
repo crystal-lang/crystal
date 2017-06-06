@@ -779,6 +779,13 @@ module Crystal
     def type_assign(target : InstanceVar, value, node)
       # Check if this is an instance variable initializer
       unless @scope
+        # `InstanceVar` assignment appered in block is not checked
+        # by `Crystal::InstanceVarsInitializerVisitor` because this block
+        # may be passed to a macro. So, it checks here.
+        if current_type.is_a?(Program) || current_type.is_a?(FileModule)
+          node.raise "can't use instance variables at the top level"
+        end
+
         # Already handled by InstanceVarsInitializerVisitor
         return
       end
@@ -2371,7 +2378,7 @@ module Crystal
         end
       end
 
-      unsafe_call = Conversions.to_unsafe(node, Var.new("value"), self, actual_type, expected_type)
+      unsafe_call = Conversions.to_unsafe(node, Var.new("value").at(node), self, actual_type, expected_type)
       if unsafe_call
         node.extra = unsafe_call
         return
@@ -2445,7 +2452,7 @@ module Crystal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if (type = node.exp.type?) && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.size_of(type.devirtualize))
+        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type))
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2462,7 +2469,7 @@ module Crystal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if (type = node.exp.type?) && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.instance_size_of(type.devirtualize))
+        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type))
         expanded.type = @program.int32
         node.expanded = expanded
       end

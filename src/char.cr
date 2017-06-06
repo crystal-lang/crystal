@@ -408,7 +408,7 @@ struct Char
   #
   # ```
   # 'z'.upcase { |v| puts v } # prints 'Z'
-  # 'ﬄ'.upcase { |v| puts v } # prints 'F', 'F', 'F'
+  # 'ﬄ'.upcase { |v| puts v } # prints 'F', 'F', 'L'
   # ```
   def upcase(options = Unicode::CaseOptions::None)
     Unicode.upcase(self, options) { |char| yield char }

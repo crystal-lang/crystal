@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 private def regex(string, options = Regex::Options::None)
   RegexLiteral.new(StringLiteral.new(string), options)
@@ -1047,6 +1047,7 @@ describe "Parser" do
   it_parses "{\n1,\n2\n}", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
   it_parses "{\n1\n}", TupleLiteral.new([1.int32] of ASTNode)
   it_parses "{\n{1}\n}", TupleLiteral.new([TupleLiteral.new([1.int32] of ASTNode)] of ASTNode)
+  it_parses %({"".id}), TupleLiteral.new([Call.new("".string, "id")] of ASTNode)
 
   it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", block: Block.new(body: Assign.new("a".var, 1.int32))), "a".call] of ASTNode
 
@@ -1269,6 +1270,9 @@ describe "Parser" do
   it_parses "1 if /x/", If.new(RegexLiteral.new("x".string), 1.int32)
 
   it_parses "foo bar.baz(1) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
+
+  it_parses "1 rescue 2 if 3", If.new(3.int32, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
+  it_parses "1 ensure 2 if 3", If.new(3.int32, ExceptionHandler.new(1.int32, ensure: 2.int32))
 
   assert_syntax_error "return do\nend", "unexpected token: do"
 
@@ -1531,6 +1535,9 @@ describe "Parser" do
     assert_end_location "extend Foo"
     assert_end_location "1.as(Int32)"
     assert_end_location "puts obj.foo"
+
+    assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
+    assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
 
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")

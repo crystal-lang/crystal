@@ -194,12 +194,7 @@ module Random
             end
 
           loop do
-            # Build up the number combining multiple outputs from the RNG.
-            result = {{utype}}.new(next_u)
-            (needed_parts - 1).times do
-              result <<= sizeof(typeof(next_u))*8
-              result |= {{utype}}.new(next_u)
-            end
+            result = rand_type({{utype}}, needed_parts)
 
             # For a uniform distribution we may need to throw away some numbers.
             if result < limit || limit == 0
@@ -228,9 +223,7 @@ module Random
       end
 
       # Generates a random integer in range `{{type}}::MIN..{{type}}::MAX`.
-      private def rand_type(type : {{type}}.class) : {{type}}
-        needed_parts = {{size/8}} / sizeof(typeof(next_u))
-
+      private def rand_type(type : {{type}}.class, needed_parts = sizeof({{type}}) / sizeof(typeof(next_u))) : {{type}}
         # Build up the number combining multiple outputs from the RNG.
         result = {{utype}}.new(next_u)
         (needed_parts - 1).times do

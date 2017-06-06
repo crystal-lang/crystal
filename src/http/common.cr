@@ -17,7 +17,11 @@ module HTTP
   def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
     headers = Headers.new
 
-    while line = io.gets
+    headers_size = 0
+    while line = io.gets(16_384, chomp: true)
+      headers_size += line.bytesize
+      break if headers_size > 16_384
+
       if line.empty?
         body = nil
         if body_type.prohibited?

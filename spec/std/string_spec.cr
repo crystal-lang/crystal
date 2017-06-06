@@ -984,10 +984,10 @@ describe "String" do
     end
 
     it "subs char with string" do
-      replaced = "foobar".sub { |char|
+      replaced = "foobar".sub do |char|
         char.should eq 'f'
         "some"
-      }
+      end
       replaced.bytesize.should eq(9)
       replaced.should eq("someoobar")
 
@@ -996,16 +996,16 @@ describe "String" do
     end
 
     it "subs with regex and block" do
-      actual = "foo booor booooz".sub(/o+/) { |str|
+      actual = "foo booor booooz".sub(/o+/) do |str|
         "#{str}#{str.size}"
-      }
+      end
       actual.should eq("foo2 booor booooz")
     end
 
     it "subs with regex and block with group" do
-      actual = "foo booor booooz".sub(/(o+).*?(o+)/) { |str, match|
+      actual = "foo booor booooz".sub(/(o+).*?(o+)/) do |str, match|
         "#{match[1].size}#{match[2].size}"
-      }
+      end
       actual.should eq("f23r booooz")
     end
 
@@ -1053,10 +1053,10 @@ describe "String" do
     end
 
     it "subs with string and block" do
-      result = "foo boo".sub("oo") { |value|
+      result = "foo boo".sub("oo") do |value|
         value.should eq("oo")
         "a"
-      }
+      end
       result.should eq("fa boo")
     end
 
@@ -1672,6 +1672,10 @@ describe "String" do
     "C_".underscore.should eq("c_")
     "HTTP".underscore.should eq("http")
     "HTTP_CLIENT".underscore.should eq("http_client")
+    "CSS3".underscore.should eq("css3")
+    "HTTP1.1".underscore.should eq("http1.1")
+    "3.14IsPi".underscore.should eq("3.14_is_pi")
+    "I2C".underscore.should eq("i2_c")
   end
 
   it "does camelcase" do

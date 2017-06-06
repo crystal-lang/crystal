@@ -551,7 +551,7 @@ class Crystal::Call
       raise "there's no superclass in this scope"
     end
 
-    enclosing_def = enclosing_def()
+    enclosing_def = enclosing_def("super")
 
     # TODO: do this better
     lookup = enclosing_def.owner
@@ -594,7 +594,7 @@ class Crystal::Call
   end
 
   def lookup_previous_def_matches(arg_types, named_args_types)
-    enclosing_def = enclosing_def()
+    enclosing_def = enclosing_def("previous_def")
 
     previous_item = enclosing_def.previous
     unless previous_item
@@ -623,13 +623,18 @@ class Crystal::Call
     typed_defs
   end
 
-  def enclosing_def
+  def enclosing_def(context)
     fun_literal_context = parent_visitor.fun_literal_context
     if fun_literal_context.is_a?(Def)
-      fun_literal_context
-    else
-      parent_visitor.untyped_def
+      return fun_literal_context
     end
+
+    untyped_def = parent_visitor.untyped_def?
+    if untyped_def
+      return untyped_def
+    end
+
+    raise "can't use '#{context}' outside method"
   end
 
   def on_new_subclass

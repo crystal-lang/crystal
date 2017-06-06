@@ -55,7 +55,7 @@ module OpenSSL::SSL::HostnameValidation
         when 16
           addr6 = uninitialized LibC::In6Addr
           if LibC.inet_pton(LibC::AF_INET6, hostname, pointerof(addr6).as(Void*)) > 0
-            return Result::MatchFound if pointerof(addr6).as(StaticArray(UInt32, 4)*).value == data.as(StaticArray(UInt32, 4)*).value
+            return Result::MatchFound if addr6.unsafe_as(StaticArray(UInt32, 4)) == data.as(StaticArray(UInt32, 4)*).value
           end
         end
       end
