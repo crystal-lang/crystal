@@ -134,6 +134,11 @@ module Crystal
     end
 
     private def create_llvm_type(type : InstanceVarContainer, wants_size)
+      # The size of a class is the same as the size of a pointer
+      if wants_size && !type.struct?
+        return @llvm_context.void_pointer
+      end
+
       final_type = llvm_struct_type(type, wants_size)
       unless type.struct?
         final_type = final_type.pointer
