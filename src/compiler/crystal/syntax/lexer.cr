@@ -174,7 +174,7 @@ module Crystal
                 if peek_next_char == '\n'
                   next
                 else
-                  raise "exepcting '\\n' after '\\r'"
+                  raise "expecting '\\n' after '\\r'"
                 end
               when char == '\n'
                 incr_line_number 0
@@ -2504,7 +2504,7 @@ module Crystal
         when 'o'
           unless next_char_no_column_increment == 'p' &&
                  next_char_no_column_increment == '>'
-            raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+            raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...">)
           end
 
           # skip '>'
@@ -2517,7 +2517,7 @@ module Crystal
           unless next_char_no_column_increment == 's' &&
                  next_char_no_column_increment == 'h' &&
                  next_char_no_column_increment == '>'
-            raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+            raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...">)
           end
 
           # skip '>'
@@ -2529,10 +2529,10 @@ module Crystal
           @token.column_number = @column_number
           push_location
         else
-          raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+          raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...">)
         end
       else
-        raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...>)
+        raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...">)
       end
     end
 
