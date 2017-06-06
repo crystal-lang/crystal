@@ -169,6 +169,11 @@ struct XML::Node
     content
   end
 
+  # Returns only this node's text
+  def normalized_text
+    children.select(&.text?).join("", &.to_s)
+  end
+
   # Returns detailed information for this node including node type, name, attributes and children.
   def inspect(io)
     io << "#<XML::"

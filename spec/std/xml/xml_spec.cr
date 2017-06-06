@@ -234,6 +234,12 @@ describe XML do
     doc.children.first.content.should eq("")
   end
 
+  it "gets the content" do
+    doc = XML.parse("<foo>foo<bar>bar</bar></foo>")
+    doc.children.first.normalized_text.should eq("foo")
+    doc.children.first.content.should eq("foobar")
+  end
+
   it "sets node name" do
     doc = XML.parse(<<-XML
       <?xml version='1.0' encoding='UTF-8'?>
