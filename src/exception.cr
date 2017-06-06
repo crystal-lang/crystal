@@ -113,3 +113,11 @@ class DivisionByZero < Exception
     super(message)
   end
 end
+
+# Raised when a feature is not implemented yet or when it cannot be implemented
+# on a certain system or platform
+class NotImplemented < Exception
+  def initialize(what : String, reason = "is not implemented")
+    super {what, reason}.join(" ")
+  end
+end
