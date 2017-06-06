@@ -287,22 +287,56 @@ module Spec
     end
   end
 
-  module ObjectExtensions
-    def should(expectation, file = __FILE__, line = __LINE__)
-      unless expectation.match self
-        fail(expectation.failure_message(self), file, line)
+  struct ExpectationTarget(T)
+    getter :target
+
+    # :nodoc:
+    def initialize(@target : T)
+    end
+
+    def to(expectation, file = __FILE__, line = __LINE__)
+      unless expectation.match @target
+        fail(expectation.failure_message(@target), file, line)
       end
     end
 
-    def should_not(expectation, file = __FILE__, line = __LINE__)
-      if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+    def to_not(expectation, file = __FILE__, line = __LINE__)
+      if expectation.match @target
+        fail(expectation.negative_failure_message(@target), file, line)
       end
+    end
+
+    # alias to `to_not`
+    def not_to(expectation, file = __FILE__, line = __LINE__)
+      to_not(expectation, file = __FILE__, line = __LINE__)
+    end
+  end
+
+  module ObjectExtensions
+    def should(expectation, file = __FILE__, line = __LINE__)
+      target = ExpectationTarget.new self
+      target.to(expectation, file, line)
+    end
+
+    def should_not(expectation, file = __FILE__, line = __LINE__)
+      target = ExpectationTarget.new self
+      target.to_not(expectation, file, line)
+    end
+  end
+
+  module ExpectExtentions
+    def expect(value)
+      ExpectationTarget.new(value)
+    end
+
+    def expect
+      ExpectationTarget.new(yield)
     end
   end
 end
 
 include Spec::Expectations
+include Spec::ExpectExtentions
 
 class Object
   include Spec::ObjectExtensions
