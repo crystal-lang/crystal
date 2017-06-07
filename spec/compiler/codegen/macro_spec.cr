@@ -1601,6 +1601,30 @@ describe "Code gen: macro" do
       )).to_b.should be_false
   end
 
+  it "determines if method exists (true)" do
+    run(%(
+      class Foo
+        def foo
+          42
+        end
+      end
+
+      {{ Foo.has_method?(:foo) }}
+      )).to_b.should be_true
+  end
+
+  it "determines if method exists (false)" do
+    run(%(
+      class Foo
+        def foo
+          42
+        end
+      end
+
+      {{ Foo.has_method?(:bar) }}
+      )).to_b.should be_false
+  end
+
   it "forwards file location" do
     run(%(
       macro foo
