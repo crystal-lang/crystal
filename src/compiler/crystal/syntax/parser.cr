@@ -640,10 +640,19 @@ module Crystal
               next_token
 
               if @token.type == :"("
-                next_token_skip_space
-                arg = parse_single_arg
-                check :")"
-                next_token
+                # If we have `f.x=(exp1).a.b.c`, consider it the same as `f.x = (exp1).a.b.c`
+                # and not as `(f.x = exp1).a.b.c` because a difference in space
+                # should not make a difference in semantic (#4399)
+                # The only exception is doing a splat, in which case this can only
+                # be expanded arguments for the call.
+                if current_char == '*'
+                  next_token_skip_space
+                  arg = parse_single_arg
+                  check :")"
+                  next_token
+                else
+                  arg = parse_op_assign_no_control
+                end
               else
                 skip_space_or_newline
                 arg = parse_single_arg
