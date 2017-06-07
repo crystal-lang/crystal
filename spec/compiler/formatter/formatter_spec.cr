@@ -1031,4 +1031,6 @@ describe Crystal::Formatter do
   assert_format "def foo(a, **b : Int32)\nend"
 
   assert_format "foo\n  \nbar", "foo\n\nbar"
+
+  assert_format "\"\" + <<-END\n  bar\n  END"
 end

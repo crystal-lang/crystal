@@ -606,7 +606,7 @@ module Crystal
     end
 
     def space_slash_newline?
-      pos = @lexer.current_pos
+      pos, line, col = @lexer.current_pos, @lexer.line_number, @lexer.column_number
       while true
         char = @lexer.current_char
         case char
@@ -620,11 +620,13 @@ module Crystal
         end
       end
       @lexer.current_pos = pos
+      @lexer.line_number = line
+      @lexer.column_number = col
       false
     end
 
     def space_newline?
-      pos = @lexer.current_pos
+      pos, line, col = @lexer.current_pos, @lexer.line_number, @lexer.column_number
       while true
         char = @lexer.current_char
         case char
@@ -638,6 +640,8 @@ module Crystal
         end
       end
       @lexer.current_pos = pos
+      @lexer.line_number = line
+      @lexer.column_number = col
       false
     end
 

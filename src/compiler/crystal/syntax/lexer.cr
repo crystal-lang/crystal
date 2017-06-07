@@ -11,7 +11,8 @@ module Crystal
     property? slash_is_regex : Bool
     getter reader : Char::Reader
     getter token : Token
-    getter line_number : Int32
+    property line_number : Int32
+    property column_number : Int32
     @filename : String | VirtualFile | Nil
     @stacked_filename : String | VirtualFile | Nil
     @token_end_location : Location?
