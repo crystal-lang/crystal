@@ -1490,11 +1490,11 @@ module Crystal
     end
 
     def self.subclasses(type)
-      ArrayLiteral.map(type.subclasses) { |subtype| TypeNode.new(subtype) }
+      ArrayLiteral.map(type.devirtualize.subclasses) { |subtype| TypeNode.new(subtype) }
     end
 
     def self.all_subclasses(type)
-      ArrayLiteral.map(type.all_subclasses) { |subtype| TypeNode.new(subtype) }
+      ArrayLiteral.map(type.devirtualize.all_subclasses) { |subtype| TypeNode.new(subtype) }
     end
 
     def self.union_types(type)
