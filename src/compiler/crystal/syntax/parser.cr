@@ -4737,7 +4737,7 @@ module Crystal
       end_location = token_end_location
       next_token
 
-      call_args = preserve_stop_on_do { parse_call_args }
+      call_args = preserve_stop_on_do { parse_call_args control: true }
 
       if call_args
         args = call_args.args
