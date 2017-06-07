@@ -1543,6 +1543,12 @@ module Crystal::Macros
     def methods : ArrayLiteral(Def)
     end
 
+    # Returns `true` if this type has a method. For example `default_options`
+    # (the name you pass to this method is "default_options" or :default_options
+    # in this cases).
+    def has_method?(name : StringLiteral | SymbolLiteral) : BoolLiteral
+    end
+
     # Returns true if this type has an attribute. For example `@[Flags]`
     # or `@[Packed]` (the name you pass to this method is "Flags" or "Packed"
     # in these cases).
