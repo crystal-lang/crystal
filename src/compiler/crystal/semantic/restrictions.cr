@@ -95,7 +95,7 @@ module Crystal
         min = Math.min(max_size, other.max_size)
       end
 
-      (0...min).each do |index|
+      (0..min - 1).each do |index|
         self_arg = self.def.args[index]
         other_arg = other.def.args[index]
 

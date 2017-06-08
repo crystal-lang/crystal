@@ -58,8 +58,8 @@ describe "Parser" do
   it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
 
   [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
-   ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
-   ":[]=", ":<=>", ":==="].each do |symbol|
+    ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
+    ":[]=", ":<=>", ":==="].each do |symbol|
     value = symbol[1, symbol.size - 1]
     value = value[1, value.size - 2] if value.starts_with?("\"")
     it_parses symbol, value.symbol
@@ -582,9 +582,7 @@ describe "Parser" do
     assert_syntax_error "#{keyword}[0]", "void value expression"
     assert_syntax_error "#{keyword}[0]= 1", "void value expression"
     assert_syntax_error "#{keyword} .. 1", "void value expression"
-    assert_syntax_error "#{keyword} ... 1", "void value expression"
     assert_syntax_error "1 .. #{keyword}", "void value expression"
-    assert_syntax_error "1 ... #{keyword}", "void value expression"
     assert_syntax_error "#{keyword} ? 1 : 2", "void value expression"
     assert_syntax_error "+#{keyword}", "void value expression"
 
@@ -702,7 +700,6 @@ describe "Parser" do
   it_parses "lib LibC; struct Foo; {% if 1 %}2{% end %}; end; end", LibDef.new("LibC", body: CStructOrUnionDef.new("Foo", Expressions.from([MacroIf.new(1.int32, MacroLiteral.new("2"))] of ASTNode)))
 
   it_parses "1 .. 2", RangeLiteral.new(1.int32, 2.int32, false)
-  it_parses "1 ... 2", RangeLiteral.new(1.int32, 2.int32, true)
 
   it_parses "A = 1", Assign.new("A".path, 1.int32)
 

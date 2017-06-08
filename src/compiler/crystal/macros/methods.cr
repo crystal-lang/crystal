@@ -977,7 +977,7 @@ module Crystal
       from = from.to_number.to_i
       to = to.to_number.to_i
 
-      self.exclusive? ? (from...to) : (from..to)
+      self.exclusive? ? (from..to - 1) : (from..to)
     end
   end
 

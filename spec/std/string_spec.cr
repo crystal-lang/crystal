@@ -20,15 +20,11 @@ describe "String" do
       "hello!"[-5..-2].should eq("ello")
     end
 
-    it "gets with exclusive range" do
-      "hello!"[1...4].should eq("ell")
-    end
-
     it "gets with start and count" do
       "hello"[1, 3].should eq("ell")
     end
 
-    it "gets with exclusive range with unicode" do
+    it "gets with inclusive range with unicode" do
       "há日本語"[1..3].should eq("á日本")
     end
 

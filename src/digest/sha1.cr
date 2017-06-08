@@ -49,14 +49,14 @@ class Digest::SHA1 < Digest::Base
 
     w = uninitialized UInt32[80]
 
-    {% for t in (0...16) %}
+    {% for t in (0..15) %}
       w[{{t}}] = @message_block[{{t}} * 4].to_u32 << 24
       w[{{t}}] |= @message_block[{{t}} * 4 + 1].to_u32 << 16
       w[{{t}}] |= @message_block[{{t}} * 4 + 2].to_u32 << 8
       w[{{t}}] |= @message_block[{{t}} * 4 + 3].to_u32
     {% end %}
 
-    {% for t in (16...80) %}
+    {% for t in (16..79) %}
       w[{{t}}] = circular_shift(1, w[{{t - 3}}] ^ w[{{t - 8}}] ^ w[{{t - 14}}] ^ w[{{t - 16}}])
     {% end %}
 
@@ -66,7 +66,7 @@ class Digest::SHA1 < Digest::Base
     d = @intermediate_hash[3]
     e = @intermediate_hash[4]
 
-    {% for t in (0...20) %}
+    {% for t in (0..19) %}
       temp = circular_shift(5, a) +
         ((b & c) | ((~b) & d)) + e + w[{{t}}] + k[0]
       e = d
@@ -76,7 +76,7 @@ class Digest::SHA1 < Digest::Base
       a = temp
     {% end %}
 
-    {% for t in (20...40) %}
+    {% for t in (20..39) %}
       temp = circular_shift(5, a) + (b ^ c ^ d) + e + w[{{t}}] + k[1]
       e = d
       d = c
@@ -85,7 +85,7 @@ class Digest::SHA1 < Digest::Base
       a = temp
     {% end %}
 
-    {% for t in (40...60) %}
+    {% for t in (40..59) %}
       temp = circular_shift(5, a) +
         ((b & c) | (b & d) | (c & d)) + e + w[{{t}}] + k[2]
       e = d
@@ -95,7 +95,7 @@ class Digest::SHA1 < Digest::Base
       a = temp
     {% end %}
 
-    {% for t in (60...80) %}
+    {% for t in (60..79) %}
       temp = circular_shift(5, a) + (b ^ c ^ d) + e + w[{{t}}] + k[3]
       e = d
       d = c
@@ -126,7 +126,7 @@ class Digest::SHA1 < Digest::Base
 
     @length_low = 0_u32
     @length_high = 0_u32
-    {% for i in 0...20 %}
+    {% for i in 0..19 %}
       message_digest[{{i}}] = (@intermediate_hash[{{i >> 2}}] >> 8 * (3 - ({{i & 0x03}}))).to_u8
     {% end %}
 

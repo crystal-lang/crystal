@@ -162,7 +162,7 @@ module Crystal
         unexpected_token
       end
 
-      targets = exps[0...assign_index].map { |exp| to_lhs(exp) }
+      targets = exps[0..assign_index - 1].map { |exp| to_lhs(exp) }
 
       assign = exps[assign_index]
       values = [] of ASTNode
@@ -442,8 +442,6 @@ module Crystal
         case @token.type
         when :".."
           exp = new_range(exp, location, false)
-        when :"..."
-          exp = new_range(exp, location, true)
         else
           return exp
         end

@@ -520,10 +520,10 @@ class Deque(T)
     b = @start + size
     b -= @capacity if b > @capacity
     if a < b
-      yield a...b
+      yield a..b - 1
     else
-      yield a...@capacity
-      yield 0...b
+      yield a..@capacity - 1
+      yield 0..b - 1
     end
   end
 

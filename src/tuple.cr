@@ -115,7 +115,7 @@ struct Tuple
 
     {% begin %}
     Tuple.new(
-    {% for i in 0...@type.size %}
+    {% for i in 0..@type.size - 1 %}
       self[{{i}}].cast(array[{{i}}]),
     {% end %}
     )
@@ -175,7 +175,7 @@ struct Tuple
   # tuple.at(3) { 10 } # => 10
   # ```
   def at(index : Int)
-    {% for i in 0...T.size %}
+    {% for i in 0..T.size - 1 %}
       return self[{{i}}] if {{i}} == index
     {% end %}
     yield
@@ -198,7 +198,7 @@ struct Tuple
   # 'x'
   # ```
   def each : Nil
-    {% for i in 0...T.size %}
+    {% for i in 0..T.size - 1 %}
       yield self[{{i}}]
     {% end %}
   end
@@ -215,7 +215,7 @@ struct Tuple
   # t1 == t3 # => false
   # ```
   def ==(other : self)
-    {% for i in 0...T.size %}
+    {% for i in 0..T.size - 1 %}
       return false unless self[{{i}}] == other[{{i}}]
     {% end %}
     true
@@ -244,7 +244,7 @@ struct Tuple
   #
   # See also: `Object#===`.
   def ===(other : self)
-    {% for i in 0...T.size %}
+    {% for i in 0..T.size - 1 %}
       return false unless self[{{i}}] === other[{{i}}]
     {% end %}
     true
@@ -289,7 +289,7 @@ struct Tuple
   #
   # See also: `Object#<=>`.
   def <=>(other : self)
-    {% for i in 0...T.size %}
+    {% for i in 0..T.size - 1 %}
       cmp = self[{{i}}] <=> other[{{i}}]
       return cmp unless cmp == 0
     {% end %}
@@ -311,7 +311,7 @@ struct Tuple
   # See also: `Object#hash`.
   def hash
     hash = 31 * size
-    {% for i in 0...T.size %}
+    {% for i in 0..T.size - 1 %}
       hash = 31 * hash + self[{{i}}].hash
     {% end %}
     hash
@@ -321,7 +321,7 @@ struct Tuple
   def clone
     {% if true %}
       Tuple.new(
-        {% for i in 0...T.size %}
+        {% for i in 0..T.size - 1 %}
           self[{{i}}].clone,
         {% end %}
       )
@@ -344,10 +344,10 @@ struct Tuple
   private def plus_implementation(other : U) forall U
     {% begin %}
       Tuple.new(
-        {% for i in 0...@type.size %}
+        {% for i in 0..@type.size - 1 %}
           self[{{i}}],
         {% end %}
-        {% for i in 0...U.size %}
+        {% for i in 0..U.size - 1 %}
           other[{{i}}],
         {% end %}
       )
@@ -403,7 +403,7 @@ struct Tuple
   def map
     {% if true %}
       Tuple.new(
-        {% for i in 0...T.size %}
+        {% for i in 0..T.size - 1 %}
           (yield self[{{i}}]),
         {% end %}
       )

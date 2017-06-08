@@ -411,7 +411,7 @@ class URI
         slash_search_idx = path[0] == '/' ? 1 : 0
         segment_end_idx = path.index("/", slash_search_idx)
         segment_end_idx ||= path.size
-        result << path[0...segment_end_idx]
+        result << path[0..segment_end_idx - 1]
         path = path[segment_end_idx..-1]
       end
     end

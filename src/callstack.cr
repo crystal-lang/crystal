@@ -57,7 +57,7 @@ struct CallStack
           makecontext_end += 1
         end
 
-        (makecontext_start...makecontext_end)
+        (makecontext_start..makecontext_end-1)
       end
     end
   {% end %}

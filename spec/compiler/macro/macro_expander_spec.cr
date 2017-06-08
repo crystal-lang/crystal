@@ -135,10 +135,6 @@ describe "MacroExpander" do
     it "expands macro with for over range literal, evaluating elements" do
       assert_macro "x, y", "{%for e in x..y %}{{e}}{%end%}", [3.int32, 6.int32] of ASTNode, "3456"
     end
-
-    it "expands macro with for over range literal, evaluating elements (exclusive)" do
-      assert_macro "x, y", "{%for e in x...y %}{{e}}{%end%}", [3.int32, 6.int32] of ASTNode, "345"
-    end
   end
 
   it "does regular if" do

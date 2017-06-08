@@ -134,14 +134,14 @@ module HTTP::FormData
     parts = content_disposition.split(';')
     type = parts[0]
     raise Error.new("Invalid Content-Disposition: not form-data") unless type == "form-data"
-    (1...parts.size).each do |i|
+    (1..parts.size - 1).each do |i|
       part = parts[i]
 
       key, value = part.split('=', 2)
       key = key.strip
       value = value.strip
       if value[0] == '"'
-        value = HTTP.dequote_string(value[1...-1])
+        value = HTTP.dequote_string(value[1..-2])
       end
 
       case key

@@ -199,11 +199,11 @@ module HTTP
     if content_type.index(';')
       pieces = content_type.split(';')
       content_type = pieces[0].strip
-      (1...pieces.size).each do |i|
+      (1..pieces.size - 1).each do |i|
         piece = pieces[i]
         eq_index = piece.index('=')
         if eq_index
-          key = piece[0...eq_index].strip
+          key = piece[0..eq_index - 1].strip
           if key == "charset"
             value = piece[eq_index + 1..-1].strip
             return ComputedContentTypeHeader.new(content_type, value)

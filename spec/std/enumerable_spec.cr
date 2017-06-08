@@ -406,7 +406,7 @@ describe "Enumerable" do
 
     it "raises if enumerable empty" do
       expect_raises Enumerable::EmptyError do
-        (1...1).first
+        (1..0).first
       end
     end
 
@@ -419,7 +419,7 @@ describe "Enumerable" do
     end
 
     it "returns nil if enumerable empty" do
-      (1...1).first?.should be_nil
+      (1..0).first?.should be_nil
     end
   end
 
@@ -460,7 +460,7 @@ describe "Enumerable" do
 
     it "groups can group by size (like the doc example)" do
       %w(Alice Bob Ary).group_by { |e| e.size }.should eq({3 => ["Bob", "Ary"],
-                                                           5 => ["Alice"]})
+        5 => ["Alice"]})
     end
   end
 

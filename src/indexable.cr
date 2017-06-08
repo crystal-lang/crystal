@@ -128,7 +128,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
   def bsearch_index
-    (0...size).bsearch { |index| yield unsafe_at(index), index }
+    (0..size - 1).bsearch { |index| yield unsafe_at(index), index }
   end
 
   # Calls the given block once for each element in `self`, passing that

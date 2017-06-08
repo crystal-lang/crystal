@@ -211,7 +211,7 @@ class OptionParser
       if unknown_args = @parser.unknown_args
         double_dash_index = @double_dash_index
         if double_dash_index
-          before_dash = @args[0...double_dash_index]
+          before_dash = @args[0..double_dash_index - 1]
           after_dash = @args[double_dash_index..-1]
         else
           before_dash = @args
