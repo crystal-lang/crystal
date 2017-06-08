@@ -2,6 +2,7 @@ require "spec"
 require "json"
 require "big"
 require "big/json"
+require "yaml"
 
 enum JSONSpecEnum
   Zero
@@ -231,6 +232,25 @@ describe "JSON serialization" do
     it "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       big.to_json.should eq("1234.567891011121314")
+    end
+
+    it "does for YAML::Any" do
+      doc = YAML.parse(%(---
+        string: hello crystal
+        integer: 10
+        float: 1.0
+        true: true
+        false: false
+        array:
+          - item1
+          - item2
+        hash:
+          key1: value1
+          key2: value2
+        empty_value:
+      ))
+
+      doc.to_json.should eq("{\"string\":\"hello crystal\",\"integer\":10,\"float\":1.0,\"true\":true,\"false\":false,\"array\":[\"item1\",\"item2\"],\"hash\":{\"key1\":\"value1\",\"key2\":\"value2\"},\"empty_value\":null}")
     end
   end
 

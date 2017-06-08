@@ -128,6 +128,37 @@ struct Time
   end
 end
 
+struct YAML::Any
+  def to_json(json : JSON::Builder)
+    case object = @raw
+    when Array
+      json.array do
+        each &.to_json(json)
+      end
+    when Hash
+      json.object do
+        each do |key, value|
+          json.field key do
+            value.to_json(json)
+          end
+        end
+      end
+    when "true"
+      json.bool(true)
+    when "false"
+      json.bool(false)
+    when ""
+      json.null
+    when Nil
+      json.null
+    when /^[+-]?([0-9]*[.])?[0-9]+$/
+      object.includes?(".") ? json.number(object.to_f) : json.number(object.to_i)
+    else
+      json.string(object)
+    end
+  end
+end
+
 # Converter to be used with `JSON.mapping` and `YAML.mapping`
 # to serialize a `Time` instance as the number of seconds
 # since the unix epoch. See `Time.epoch`.
