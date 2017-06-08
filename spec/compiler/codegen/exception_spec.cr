@@ -621,14 +621,13 @@ describe "Code gen: exception" do
       require "prelude"
 
       x = 0
-      f = -> { raise "Foo" if 1 == 1 }
       begin
-        f.call
+        -> { raise "Foo" if true }.call
       rescue
         x = 1
       end
       x
-      )).to_i.should eq(1)
+    )).to_i.should eq(1)
   end
 
   it "codegens issue #118 (1)" do
