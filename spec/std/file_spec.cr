@@ -369,6 +369,17 @@ describe "File" do
     end
   end
 
+  it "should return local times for atime, ctime and mtime" do
+    tmp = Tempfile.new "tmp"
+    begin
+      tmp.stat.atime.local?.should be_true
+      tmp.stat.ctime.local?.should be_true
+      tmp.stat.mtime.local?.should be_true
+    ensure
+      tmp.delete
+    end
+  end
+
   describe "size" do
     it { File.size("#{__DIR__}/data/test_file.txt").should eq(240) }
     it do
