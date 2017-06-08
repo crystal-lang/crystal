@@ -216,4 +216,15 @@ describe "Code gen: lib" do
       LibFoo.foo(-1)
       ))
   end
+
+  it "doesn't crash with nil and varargs (#4414)" do
+    codegen(%(
+      lib LibFoo
+        fun foo(Void*, ...)
+      end
+
+      x = nil
+      LibFoo.foo(x)
+      ))
+  end
 end
