@@ -160,7 +160,7 @@ module Base64
   # This will decode either the normal or urlsafe alphabets.
   def decode(data) : Bytes
     slice = data.to_slice
-    buf = Pointer(UInt8).malloc(decode_size(slice.size))
+    buf = GC.malloc_atomic(decode_size(slice.size)).as(UInt8*)
     appender = buf.appender
     from_base64(slice) { |byte| appender << byte }
     Slice.new(buf, appender.size.to_i32)
