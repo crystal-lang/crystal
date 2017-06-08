@@ -1937,11 +1937,11 @@ class Array(T)
   protected def self.partition_for_quick_sort!(a, n, comp)
     v, l, r = a[n / 2], a + 1, a + n - 1
     loop do
-      while comp.call(l.value, v) < 0
+      while l < a + n && comp.call(l.value, v) < 0
         l += 1
       end
       r -= 1
-      while comp.call(v, r.value) < 0
+      while r >= a && comp.call(v, r.value) < 0
         r -= 1
       end
       return l unless l < r

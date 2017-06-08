@@ -1026,6 +1026,12 @@ describe "Array" do
       a.sort! { |x, y| x.size <=> y.size }
       a.should eq(["a", "foo", "hello"])
     end
+
+    it "sorts with invalid block (#4379)" do
+      a = [1] * 17
+      b = a.sort { -1 }
+      a.should eq(b)
+    end
   end
 
   describe "sort_by" do
