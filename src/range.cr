@@ -393,6 +393,46 @@ struct Range(B, E)
       end
     end
   end
+
+  # By using binary search, finds a value in range which meets
+  # the given condition in O(log n) where n is the size of the range.
+  #
+  # If x is within the range, this method returns the value x. Otherwise, it returns nil.
+  #
+  # Based on Marc-André Lafortune's Ruby backports implementation, ported by T. Yamada
+  def bsearch(&block : B -> Int|Float|Bool?)
+    from = self.begin
+    to   = self.end
+    unless from.is_a?(Number) && to.is_a?(Number)
+      raise "can't do binary search for #{from.class}"
+    end
+
+    midpoint = 0 # placeholder
+    convert = ->{ midpoint }
+
+    to -= 1 if excludes_end?
+    satisfied = nil
+    while from <= to
+      midpoint = from + (to - from)/2
+      result = yield(cur = convert.call)
+      case result
+      when Number
+        return cur if result == 0
+        result = result < 0
+      when true
+        satisfied = cur
+      when nil, false
+        # nothing to do
+      end
+
+      if result
+        to = midpoint - 1
+      else
+        from = midpoint + 1
+      end
+    end
+    satisfied
+  end
 end
 
 require "./range/*"

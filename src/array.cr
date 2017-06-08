@@ -2228,6 +2228,17 @@ class Array(T)
       end
     end
   end
+
+  # This method returns the i-th element. If i is equal to ary.size, it returns nil.
+  def bsearch(&block : T -> Int|Float|Bool?)
+    idx=bsearch_index(&block)
+    idx ? self[idx] : nil
+  end
+
+  # This method returns the index of the element instead of the element itself.
+  def bsearch_index(&block : T -> Int|Float|Bool?)
+    (0...self.size).bsearch{|i|yield self[i]}
+  end
 end
 
 private def pool_slice(pool, size, reuse)
