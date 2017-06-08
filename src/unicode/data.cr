@@ -1348,6 +1348,7 @@ module Unicode
   # Most casefold conversions map a range to another range.
   # Here we store: {from, to, delta}
   @@casefold_ranges : Array({Int32, Int32, Int32})?
+
   private def self.casefold_ranges
     @@casefold_ranges ||= begin
       data = Array({Int32, Int32, Int32}).new(659)
@@ -2147,6 +2148,7 @@ module Unicode
   # to multiple codepoints. The maximum transformation is always 4
   # codepoints, so we store them all as 4 codepoints and 0 means end.
   @@fold_cases : Hash(Int32, {Int32, Int32, Int32, Int32})?
+
   private def self.fold_cases
     @@fold_cases ||= begin
       data = Hash(Int32, {Int32, Int32, Int32, Int32}).new(initial_capacity: 104)
