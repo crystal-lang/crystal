@@ -167,6 +167,10 @@ module Crystal
     def transform(node : Assign)
       reset_last_status
 
+      if void_lib_call?(node.value)
+        node.value.raise "assigning Void return value of lib fun call has no effect"
+      end
+
       target = node.target
 
       # Ignore class var initializers
@@ -213,6 +217,18 @@ module Crystal
       node
     end
 
+    private def void_lib_call?(node)
+      return unless node.is_a?(Call)
+
+      obj = node.obj
+      return unless obj.is_a?(Path)
+
+      type = obj.type?
+      return unless type.is_a?(LibType)
+
+      node.type?.try &.nil_type?
+    end
+
     def transform(node : Global)
       if expanded = node.expanded
         return expanded
@@ -246,6 +262,18 @@ module Crystal
         named_args.map! { |named_arg| named_arg.transform(self).as(NamedArgument) }
       end
       # ~~~
+
+      node.args.each do |arg|
+        if void_lib_call?(arg)
+          arg.raise "passing Void return value of lib fun call has no effect"
+        end
+      end
+
+      named_args.try &.each do |arg|
+        if void_lib_call?(arg)
+          arg.raise "passing Void return value of lib fun call has no effect"
+        end
+      end
 
       obj = node.obj
       obj_type = obj.try &.type?
