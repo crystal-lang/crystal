@@ -139,6 +139,12 @@ describe "JSON serialization" do
     it "deserializes Time" do
       Time.from_json(%("2016-11-16T09:55:48-0300")).to_utc.should eq(Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc))
     end
+
+    it "Time::Span" do
+      Time::Span.from_json("1.5").should eq 1.5.seconds
+      Time::Span.from_json("0.001").should eq 1.millisecond
+      Time::Span.from_json("86400").should eq 1.day
+    end
   end
 
   describe "to_json" do
@@ -231,6 +237,12 @@ describe "JSON serialization" do
     it "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       big.to_json.should eq("1234.567891011121314")
+    end
+
+    it "Time::Span" do
+      1.5.seconds.to_json.should eq "1.5"
+      1.millisecond.to_json.should eq "0.001"
+      1.day.to_json.should eq "86400.0"
     end
   end
 
