@@ -1,4 +1,5 @@
 require "spec"
+require "unicode"
 
 describe "Char" do
   describe "upcase" do
@@ -9,6 +10,7 @@ describe "Char" do
   describe "downcase" do
     it { 'A'.downcase.should eq('a') }
     it { '1'.downcase.should eq('1') }
+    it { '\u00df'.downcase(Unicode::CaseOptions::Fold) { |equiv| equiv.should eq('s') } }
   end
 
   describe "succ" do
