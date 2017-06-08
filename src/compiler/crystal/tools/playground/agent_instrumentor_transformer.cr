@@ -152,7 +152,6 @@ module Crystal
     end
 
     def transform(node : Yield)
-      node.exps[0] = instrument(node.exps[0]) if node.exps.size == 1
       node
     end
 

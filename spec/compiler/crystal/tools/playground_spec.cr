@@ -469,7 +469,7 @@ describe Playground::AgentInstrumentorTransformer do
     end
     ), <<-CR
     def foo(x)
-      yield _p.i(3) { x }
+      yield x
     end
     _p.i(5) do
       foo do |a|
