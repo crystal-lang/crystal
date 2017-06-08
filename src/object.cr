@@ -19,6 +19,11 @@ class Object
     !(self =~ other)
   end
 
+  # Shortcut to `!!(self =~ other)`.
+  def ?~(other)
+    !!(self =~ other)
+  end
+
   # Case equality.
   #
   # The `===` method is used in a `case ... when ... end` expression.

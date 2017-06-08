@@ -139,6 +139,13 @@ module Crystal
         else
           @token.type = :"!"
         end
+      when '?'
+        case next_char
+        when '~'
+          next_char :"?~"
+        else
+          @token.type = :"?"
+        end
       when '<'
         case next_char
         when '='
@@ -350,8 +357,7 @@ module Crystal
       when '(' then next_char :"("
       when ')' then next_char :")"
       when '{'
-        char = next_char
-        case char
+        case next_char
         when '%'
           next_char :"{%"
         when '{'
@@ -376,7 +382,6 @@ module Crystal
         end
       when ']' then next_char :"]"
       when ',' then next_char :","
-      when '?' then next_char :"?"
       when ';'
         reset_regex_flags = false
         next_char :";"
@@ -418,6 +423,13 @@ module Crystal
             next_char_and_symbol "!~"
           else
             symbol "!"
+          end
+        when '?'
+          case next_char
+          when '~'
+            next_char_and_symbol "?~"
+          else
+            symbol "?"
           end
         when '<'
           case next_char
