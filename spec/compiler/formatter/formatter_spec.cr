@@ -1033,4 +1033,14 @@ describe Crystal::Formatter do
   assert_format "foo\n  \nbar", "foo\n\nbar"
 
   assert_format "\"\" + <<-END\n  bar\n  END"
+
+  assert_format "1 + \\\n2", "1 + \\\n  2"
+  assert_format "1 + \\\n2 + \\\n3", "1 + \\\n  2 + \\\n  3"
+  assert_format "1 + \\\n2\n3", "1 + \\\n  2\n3"
+  assert_format "1 \\\n+ 2", "1 \\\n  + 2"
+  assert_format "foo \\\nbar", "foo \\\n  bar"
+  assert_format "1 \\\nif 2", "1 \\\n  if 2"
+  assert_format "1 \\\nrescue 2", "1 \\\n  rescue 2"
+  assert_format "1 \\\nensure 2", "1 \\\n  ensure 2"
+  assert_format "foo bar, \\\nbaz", "foo bar,\n  baz"
 end
