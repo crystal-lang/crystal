@@ -1,4 +1,4 @@
-# The Macros module is a fictitious module used to document macros
+# The `Macros` module is a fictitious module used to document macros
 # and macro methods.
 #
 # You can invoke a **fixed subset** of methods on AST nodes at compile-time. These methods
@@ -44,7 +44,7 @@ module Crystal::Macros
   def system(command) : MacroId
   end
 
-  # Gives a compile-time error with the given message.
+  # Gives a compile-time error with the given *message*.
   def raise(message) : NoReturn
   end
 
@@ -133,7 +133,7 @@ module Crystal::Macros
     end
 
     # Returns a `StringLiteral` that contains this node's textual representation.
-    # Note that invoking stringify on a string literal will return a StringLiteral
+    # Note that invoking stringify on a string literal will return a `StringLiteral`
     # that contains a string literal.
     #
     # ```
@@ -159,49 +159,49 @@ module Crystal::Macros
     end
 
     # Returns the filename where this node is located.
-    # Might return nil if the location is not known.
+    # Might return `nil` if the location is not known.
     def filename : StringLiteral | NilLiteral
     end
 
     # Returns the line number where this node begins.
-    # Might return nil if the location is not known.
+    # Might return `nil` if the location is not known.
     #
     # The first line number in a file is 1.
     def line_number : StringLiteral | NilLiteral
     end
 
     # Returns the column number where this node begins.
-    # Might return nil if the location is not known.
+    # Might return `nil` if the location is not known.
     #
-    # The first column number in a line is 1.
+    # The first column number in a line is `1`.
     def column_number : StringLiteral | NilLiteral
     end
 
     # Returns the line number where this node ends.
-    # Might return nil if the location is not known.
+    # Might return `nil` if the location is not known.
     #
-    # The first line number in a file is 1.
+    # The first line number in a file is `1`.
     def end_line_number : StringLiteral | NilLiteral
     end
 
     # Returns the column number where this node ends.
-    # Might return nil if the location is not known.
+    # Might return `nil` if the location is not known.
     #
-    # The first column number in a line is 1.
+    # The first column number in a line is `1`.
     def end_column_number : StringLiteral | NilLiteral
     end
 
-    # Returns true if this node's textual representation is the same as
-    # the other node.
+    # Returns `true` if this node's textual representation is the same as
+    # the *other* node.
     def ==(other : ASTNode) : BoolLiteral
     end
 
-    # Returns true if this node's textual representation is not the same as
-    # the other node.
+    # Returns `true` if this node's textual representation is not the same as
+    # the *other* node.
     def !=(other : ASTNode) : BoolLiteral
     end
 
-    # Gives a compile-time error with the given message. This will
+    # Gives a compile-time error with the given *message*. This will
     # highlight this node in the error message.
     def raise(message) : NoReturn
     end
@@ -535,7 +535,7 @@ module Crystal::Macros
     def find(&block) : ASTNode | NilLiteral
     end
 
-    # Similar to `Array#first`, but returns a NilLiteral if the array is empty.
+    # Similar to `Array#first`, but returns a `NilLiteral` if the array is empty.
     def first : ASTNode | NilLiteral
     end
 
@@ -547,7 +547,7 @@ module Crystal::Macros
     def join(separator) : StringLiteral
     end
 
-    # Similar to `Array#last`, but returns a NilLiteral if the array is empty.
+    # Similar to `Array#last`, but returns a `NilLiteral` if the array is empty.
     def last : ASTNode | NilLiteral
     end
 
@@ -738,7 +738,7 @@ module Crystal::Macros
     end
 
     # Similar to `Regex#options`,
-    # but returns an array of symbols such as [:i, :m, :x]
+    # but returns an array of symbols such as `[:i, :m, :x]`
     def options : ArrayLiteral(SymbolLiteral)
     end
   end
@@ -838,11 +838,11 @@ module Crystal::Macros
     def cond : ASTNode
     end
 
-    # Returns this if's "then" clause's body.
+    # Returns this if's `then` clause's body.
     def then : ASTNode
     end
 
-    # Returns this if's "else" clause's body.
+    # Returns this if's `else` clause's body.
     def else : ASTNode
     end
   end
@@ -927,13 +927,13 @@ module Crystal::Macros
   class Arg < ASTNode
     # Returns the external name of this argument.
     #
-    # For example, for `def write(to file)` this returns "to".
+    # For example, for `def write(to file)` returns `to`.
     def name : MacroId
     end
 
     # Returns the internal name of this argument.
     #
-    # For example, for `def write(to file)` this returns "file".
+    # For example, for `def write(to file)` returns `file`.
     def internal_name : MacroId
     end
 
@@ -1027,7 +1027,7 @@ module Crystal::Macros
     end
   end
 
-  # An unary "not" (`!`).
+  # An unary `not` (`!`).
   class Not < UnaryExpression
   end
 
@@ -1131,7 +1131,7 @@ module Crystal::Macros
     def names : ArrayLiteral(MacroId)
     end
 
-    # Returns true if this is a global path (starts with `::`)
+    # Returns `true` if this is a global path (starts with `::`)
     def global? : BoolLiteral
     end
 
@@ -1346,7 +1346,7 @@ module Crystal::Macros
   # A fictitious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
   #
   # The parser doesn't create this nodes. Instead, you create them by invoking `id`
-  # on some nodes. For example, invoking `id` on a `StringLiteral` returns a MacroId
+  # on some nodes. For example, invoking `id` on a `StringLiteral` returns a `MacroId`
   # for the string's content. Similarly, invoking ID on a `SymbolLiteral`, `Call`, `Var` and `Path`
   # return MacroIds for the node's content.
   #
@@ -1474,11 +1474,11 @@ module Crystal::Macros
 
   # Represents a type in the program, like `Int32` or `String`.
   class TypeNode < ASTNode
-    # Returns true if this type is abstract.
+    # Returns `true` if this type is abstract.
     def abstract? : BoolLiteral
     end
 
-    # Returns true if this type is a union type, false otherwise.
+    # Returns `true` if this type is a union type, `false` otherwise.
     #
     # See also: `union_types`.
     def union? : BoolLiteral
@@ -1527,13 +1527,13 @@ module Crystal::Macros
     # Returns a constant defined in this type.
     #
     # If the constant is a constant (like `A = 1`), then its value
-    # as an ASTNode is returned. If the constant is a type, the
+    # as an `ASTNode` is returned. If the constant is a type, the
     # type is returned as a `TypeNode`. Otherwise, `NilLiteral` is returned.
     def constant(name : StringLiteral | SymbolLiteral | MacroId) : ASTNode
     end
 
-    # Returns true if this type has a constant. For example `DEFAULT_OPTIONS`
-    # (the name you pass to this method is "DEFAULT_OPTIONS" or :DEFAULT_OPTIONS
+    # Returns `true` if this type has a constant. For example `DEFAULT_OPTIONS`
+    # (the name you pass to this method is `"DEFAULT_OPTIONS"` or `:DEFAULT_OPTIONS`
     # in this cases).
     def has_constant?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
@@ -1544,13 +1544,13 @@ module Crystal::Macros
     end
 
     # Returns `true` if this type has a method. For example `default_options`
-    # (the name you pass to this method is "default_options" or :default_options
+    # (the name you pass to this method is `"default_options"` or `:default_options`
     # in this cases).
     def has_method?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
-    # Returns true if this type has an attribute. For example `@[Flags]`
-    # or `@[Packed]` (the name you pass to this method is "Flags" or "Packed"
+    # Returns `true` if this type has an attribute. For example `@[Flags]`
+    # or `@[Packed]` (the name you pass to this method is `"Flags"` or `"Packed"`
     # in these cases).
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
