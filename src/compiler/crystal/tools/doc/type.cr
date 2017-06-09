@@ -176,7 +176,7 @@ class Crystal::Doc::Type
 
   @class_methods : Array(Method)?
 
-  def class_methods
+  def all_class_methods
     @class_methods ||= begin
       class_methods = [] of Method
       @type.metaclass.defs.try &.each_value do |defs_with_metadata|
@@ -201,6 +201,14 @@ class Crystal::Doc::Type
       end
       class_methods.sort_by! &.name.downcase
     end
+  end
+
+  def class_methods
+    all_class_methods - constructors
+  end
+
+  def constructors
+    all_class_methods.select &.constructor?
   end
 
   @macros : Array(Macro)?
@@ -557,7 +565,7 @@ class Crystal::Doc::Type
     io << "?"
   end
 
-  private def nil_type?(node : ASTNode)
+  def nil_type?(node : ASTNode)
     return false unless node.is_a?(Path)
 
     match = lookup_path(node)

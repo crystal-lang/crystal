@@ -213,7 +213,7 @@ class Crystal::Call
     end
 
     @uses_with_scope = true
-    instantiate matches, owner, self_type: nil, named_args_types: named_args_types
+    instantiate matches, owner, self_type: nil
   end
 
   def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents)
@@ -267,7 +267,7 @@ class Crystal::Call
       attach_subclass_observer instance_type.base_type
     end
 
-    instantiate matches, owner, self_type, named_args_types
+    instantiate matches, owner, self_type
   end
 
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true)
@@ -318,7 +318,7 @@ class Crystal::Call
     end
   end
 
-  def instantiate(matches, owner, self_type, named_args_types)
+  def instantiate(matches, owner, self_type)
     block = @block
 
     typed_defs = Array(Def).new(matches.size)
@@ -346,6 +346,7 @@ class Crystal::Call
       end
       match_owner = match.context.instantiated_type
       def_instance_owner = (self_type || match_owner).as(DefInstanceContainer)
+      named_args_types = match.named_arg_types
 
       def_instance_key = DefInstanceKey.new(match.def.object_id, lookup_arg_types, block_type, named_args_types)
       typed_def = def_instance_owner.lookup_def_instance def_instance_key if use_cache
@@ -616,7 +617,7 @@ class Crystal::Call
       parent_visitor.check_self_closured
     end
 
-    typed_defs = instantiate matches, scope, self_type: nil, named_args_types: named_args_types
+    typed_defs = instantiate matches, scope, self_type: nil
     typed_defs.each do |typed_def|
       typed_def.next = parent_visitor.typed_def
     end

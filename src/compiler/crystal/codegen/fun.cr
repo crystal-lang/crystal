@@ -347,7 +347,9 @@ class Crystal::CodeGenVisitor
   end
 
   def abi_info(external : Def, node : Call)
-    llvm_args_types = node.args.map { |arg| llvm_c_type(arg.type) }
+    llvm_args_types = node.args.map_with_index do |arg, i|
+      llvm_c_type((external.args[i]? || arg).type)
+    end
     llvm_return_type = llvm_c_return_type(external.type)
     @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?, llvm_context)
   end

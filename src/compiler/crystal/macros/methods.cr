@@ -1346,6 +1346,11 @@ module Crystal
         end
       when "methods"
         interpret_argless_method(method, args) { TypeNode.methods(type) }
+      when "has_method?"
+        interpret_one_arg_method(method, args) do |arg|
+          value = arg.to_string("argument to 'TypeNode#has_method?'")
+          TypeNode.has_method?(type, value)
+        end
       when "has_attribute?"
         interpret_one_arg_method(method, args) do |arg|
           value = arg.to_string("argument to 'TypeNode#has_attribute?'")
@@ -1490,11 +1495,11 @@ module Crystal
     end
 
     def self.subclasses(type)
-      ArrayLiteral.map(type.subclasses) { |subtype| TypeNode.new(subtype) }
+      ArrayLiteral.map(type.devirtualize.subclasses) { |subtype| TypeNode.new(subtype) }
     end
 
     def self.all_subclasses(type)
-      ArrayLiteral.map(type.all_subclasses) { |subtype| TypeNode.new(subtype) }
+      ArrayLiteral.map(type.devirtualize.all_subclasses) { |subtype| TypeNode.new(subtype) }
     end
 
     def self.union_types(type)
@@ -1531,6 +1536,10 @@ module Crystal
         end
       end
       ArrayLiteral.new(defs)
+    end
+
+    def self.has_method?(type, name)
+      BoolLiteral.new(!!type.has_def?(name))
     end
 
     def self.overrides?(type, target, method)

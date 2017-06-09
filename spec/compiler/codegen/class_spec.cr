@@ -1009,4 +1009,26 @@ describe "Code gen: class" do
       Foo.new.as(Core).class.name
       )).to_string.should eq("Foo")
   end
+
+  it "codegens class with recursive tuple to class (#4520)" do
+    run(%(
+      class Foo
+        @foo : {Foo, Foo}?
+
+        def initialize(@x : Int32)
+        end
+
+        def foo=(@foo)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(1)
+      foo.foo = {Foo.new(2), Foo.new(3)}
+      foo.x
+      ), inject_primitives: false).to_i.should eq(1)
+  end
 end

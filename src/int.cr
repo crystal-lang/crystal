@@ -463,7 +463,7 @@ struct Int
   # Reads an integer from the given *io* in the given *format*.
   #
   # See also: `IO#read_bytes`.
-  def self.from_io(io : IO, format : IO::ByteFormat)
+  def self.from_io(io : IO, format : IO::ByteFormat) : self
     format.decode(self, io)
   end
 
