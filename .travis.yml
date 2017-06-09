@@ -23,6 +23,7 @@ script:
   - bin/ci build
 after_success:
   - bin/ci deploy
+  - bash <(curl -s https://codecov.io/bash) -s .build/coverage
 branches:
   only:
     - master

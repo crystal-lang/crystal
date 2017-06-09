@@ -84,7 +84,11 @@ prepare_system() {
 
 build() {
   with_build_env 'make std_spec clean'
-  with_build_env 'make crystal std_spec compiler_spec doc'
+
+  with_build_env 'make crystal doc'
+  on_linux with_build_env 'make std_spec compiler_spec coverage_output=.build/coverage'
+  on_osx with_build_env 'make spec'
+
   with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
   with_build_env './bin/crystal tool format --check samples spec src'
 }
@@ -147,7 +151,7 @@ EOF
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_linux docker pull "jhass/crystal-build-$ARCH"
+  on_linux docker pull "rx14/crystal-build-$ARCH"
 
   on_osx brew install llvm crystal-lang
 }
@@ -166,7 +170,7 @@ with_build_env() {
     -w /mnt \
     -e LIBRARY_PATH="/opt/crystal/embedded/lib/" \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
-    "jhass/crystal-build-$ARCH" \
+    "rx14/crystal-build-$ARCH" \
     "$ARCH_CMD" /bin/bash -c "'$command'"
 
   on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
