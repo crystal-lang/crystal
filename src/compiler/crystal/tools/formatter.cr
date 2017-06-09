@@ -943,6 +943,9 @@ module Crystal
         write "("
         next_token_skip_space
         @paren_count += 1
+        true
+      else
+        false
       end
     end
 
@@ -1995,15 +1998,26 @@ module Crystal
       paren_count = @paren_count
 
       if inputs = node.inputs
+        # Check if it's ((X, Y) -> Z)
+        #                ^    ^
+        sub_paren_count = @paren_count
+        if check_open_paren
+          sub_paren_count = @paren_count
+        end
+
         inputs.each_with_index do |input, i|
           accept input
-          if @paren_count == paren_count
+          if @paren_count == sub_paren_count
             skip_space_or_newline
             if @token.type == :","
               write ", " unless last?(i, inputs)
               next_token_skip_space_or_newline
             end
           end
+        end
+
+        if sub_paren_count != paren_count
+          check_close_paren
         end
       end
 
