@@ -11,9 +11,11 @@ struct UUID
 
   # Generates RFC 4122 v4 UUID.
   def initialize
-    bytes = StaticArray(UInt8, 16).new(0_u8)
-    bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
-    initialize bytes
+    @bytes = uninitialized UInt8[16]
+    @bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
+
+    variant = Variant::RFC4122
+    version = Version::V4
   end
 
   # Creates UUID from 16-`bytes` slice.
@@ -21,13 +23,18 @@ struct UUID
     if slice.size != 16
       raise ArgumentError.new "Invalid bytes length #{@bytes.size}, expected 16."
     end
+
     @bytes = uninitialized UInt8[16]
     @bytes.to_unsafe.copy_from slice
+
+    variant = Variant::RFC4122
+    version = Version::V4
   end
 
   # Generates UUID from static 16-`bytes`.
   def initialize(@bytes : StaticArray(UInt8, 16))
-    initialize @bytes, Version::V4
+    variant = Variant::RFC4122
+    version = Version::V4
   end
 
   # Creates UUID from string `value`. See `UUID#decode(value : String)` for details on supported string formats.
@@ -36,10 +43,24 @@ struct UUID
     decode value
   end
 
+  def initialize(version : Version)
+    @bytes = uninitialized UInt8[16]
+    @bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
+
+    variant = Variant::RFC4122
+    version = version
+  end
+
+  def initialize(variant : Variant)
+    @bytes = uninitialized UInt8[16]
+    @bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
+
+    variant = variant
+    version = Version::V4
+  end
+
   # Generates RFC 4122 UUID `variant` with specified `version`.
   def initialize(@bytes : StaticArray(UInt8, 16), version = Version::V4)
-    #@bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
-
     case version
     when Version::V4
       variant = Variant::RFC4122
