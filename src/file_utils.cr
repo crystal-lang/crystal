@@ -14,7 +14,7 @@ module FileUtils
     Dir.cd(path)
   end
 
-  # Changes the current working firectory of the process to the given string *path*
+  # Changes the current working directory of the process to the given string *path*
   # and invoked the block, restoring the original working directory when the block exits.
   #
   # ```
