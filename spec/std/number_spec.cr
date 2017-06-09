@@ -53,6 +53,15 @@ describe "Number" do
       123.round(2).should eq(123)
       123.round(2).should be_a(Int32)
     end
+
+    it "accepts negative precision" do
+      123.round(-2).should eq(100)
+      123.round(-3).should eq(0)
+      523.round(-3).should eq(1000)
+
+      123.456.round(-2).should eq(100)
+      753.155.round(-5, base: 2).should eq(768)
+    end
   end
 
   describe "clamp" do

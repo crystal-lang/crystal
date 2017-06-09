@@ -211,6 +211,7 @@ struct Number
   # ```
   def round(digits, base = 10)
     x = self.to_f
+    base = base.to_f if digits < 0
     y = base ** digits
     self.class.new((x * y).round / y)
   end
