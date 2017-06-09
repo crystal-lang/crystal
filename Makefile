@@ -15,13 +15,14 @@
 
 LLVM_CONFIG ?= ## llvm-config command path to use
 
-release ?=      ## Compile in release mode
-stats ?=        ## Enable statistics output
-progress ?=     ## Enable progress output
-threads ?=      ## Maximum number of threads to use
-debug ?=        ## Add symbolic debug info
-verbose ?=      ## Run specs in verbose mode
-junit_output ?= ## Directory to output junit results
+release ?=         ## Compile in release mode
+stats ?=           ## Enable statistics output
+progress ?=        ## Enable progress output
+threads ?=         ## Maximum number of threads to use
+debug ?=           ## Add symbolic debug info
+verbose ?=         ## Run specs in verbose mode
+junit_output ?=    ## Directory to output junit results
+coverage_output ?= ## Directory to output coverage results
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
@@ -48,6 +49,7 @@ LIB_CRYSTAL_TARGET = src/ext/libcrystal.a
 DEPS = $(LLVM_EXT_OBJ) $(LIB_CRYSTAL_TARGET)
 CFLAGS += -fPIC $(if $(debug),-g -O0)
 CXXFLAGS += $(if $(debug),-g -O0)
+COVERAGE := $(if $(coverage_output),kcov --verify --include-path=. $(coverage_output) )
 
 ifeq (${LLVM_CONFIG},)
   $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
@@ -77,15 +79,15 @@ help: ## Show this help
 
 .PHONY: spec
 spec: $(O)/all_spec ## Run all specs
-	$(O)/all_spec $(SPEC_FLAGS)
+	$(COVERAGE)$(O)/all_spec $(SPEC_FLAGS)
 
 .PHONY: std_spec
 std_spec: $(O)/std_spec ## Run standard library specs
-	$(O)/std_spec $(SPEC_FLAGS)
+	$(COVERAGE)$(O)/std_spec $(SPEC_FLAGS)
 
 .PHONY: compiler_spec
 compiler_spec: $(O)/compiler_spec ## Run compiler specs
-	$(O)/compiler_spec $(SPEC_FLAGS)
+	$(COVERAGE)$(O)/compiler_spec $(SPEC_FLAGS)
 
 .PHONY: doc
 doc: ## Generate standard library documentation
