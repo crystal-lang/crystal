@@ -2,7 +2,7 @@
 
 require "c/sysctl"
 
-module Crystal::System::System
+module Crystal::System
   def self.cpu_count
     mib = Int32[LibC::CTL_HW, LibC::HW_NCPU]
     ncpus = 0

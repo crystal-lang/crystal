@@ -2,7 +2,7 @@
 
 require "c/unistd"
 
-module Crystal::System::System
+module Crystal::System
   def self.cpu_count
     LibC.sysconf(LibC::SC_NPROCESSORS_ONLN)
   end

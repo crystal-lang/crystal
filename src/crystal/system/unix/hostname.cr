@@ -1,6 +1,6 @@
 require "c/unistd"
 
-module Crystal::System::System
+module Crystal::System
   def self.hostname
     String.new(255) do |buffer|
       unless LibC.gethostname(buffer, LibC::SizeT.new(255)) == 0

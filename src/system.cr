@@ -1,4 +1,4 @@
-require "crystal/system/system"
+require "crystal/system"
 
 module System
   # Returns the hostname.
@@ -11,7 +11,7 @@ module System
   # System.hostname # => "host.example.org"
   # ```
   def self.hostname
-    Crystal::System::System.hostname
+    Crystal::System.hostname
   end
 
   # Returns the number of logical processors available to the system.
@@ -20,6 +20,6 @@ module System
   # System.cpu_count # => 4
   # ```
   def self.cpu_count
-    Crystal::System::System.cpu_count
+    Crystal::System.cpu_count
   end
 end
