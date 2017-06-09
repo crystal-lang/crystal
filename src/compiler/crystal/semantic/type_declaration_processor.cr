@@ -240,6 +240,10 @@ struct Crystal::TypeDeclarationProcessor
     # set from uninstantiated generic types
     return if owner.is_a?(GenericInstanceType)
 
+    if owner.metaclass?
+      raise TypeException.new("can't declare instance variables in #{owner}", type_decl.location)
+    end
+
     # Check if a superclass already defined this variable
     supervar = owner.lookup_instance_var?(name)
 

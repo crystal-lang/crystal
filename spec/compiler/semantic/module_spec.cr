@@ -1242,4 +1242,21 @@ describe "Semantic: module" do
       mooer.moo
       )) { union_of int32, char }
   end
+
+  it "errors when extending module that defines instance vars (#4065)" do
+    assert_error %(
+      module Foo
+        @foo : Int32?
+
+        def foo
+          @foo
+        end
+      end
+
+      class Bar
+        extend Foo
+      end
+      ),
+      "can't declare instance variables in Bar:Class"
+  end
 end
