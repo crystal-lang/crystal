@@ -5,6 +5,11 @@ require "crystal/system/random"
 # For example `arc4random` is used on OpenBSD, whereas on Linux it uses
 # `getrandom` (if the kernel supports it) and fallbacks on reading from
 # `/dev/urandom` on UNIX systems.
+#
+# ```
+# Random::System.rand(6)            # => 4
+# [1, 5, 6].shuffle(Random::System) # => [6, 1, 5]
+# ```
 module Random::System
   extend Random
   extend self
