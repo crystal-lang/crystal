@@ -561,10 +561,22 @@ describe "Array" do
       a.fill('x', -2).should eq(expected)
     end
 
+    it "raises when given big negative number (#4539)" do
+      expect_raises(IndexError) do
+        ['a', 'b', 'c'].fill('x', -4)
+      end
+    end
+
     it "replaces only values between negative index and size" do
       a = ['a', 'b', 'c']
       expected = ['a', 'b', 'x']
       a.fill('x', -1, 1).should eq(expected)
+    end
+
+    it "raises when given big negative number in from/count (#4539)" do
+      expect_raises(IndexError) do
+        ['a', 'b', 'c'].fill('x', -4, 1)
+      end
     end
 
     it "replaces only values in range" do
