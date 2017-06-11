@@ -1278,6 +1278,8 @@ describe "Parser" do
 
   it_parses "x.y=(1).to_s", Call.new("x".call, "y=", Call.new(Expressions.new([1.int32] of ASTNode), "to_s"))
 
+  it_parses "1 ** -x", Call.new(1.int32, "**", Call.new("x".call, "-"))
+
   assert_syntax_error "return do\nend", "unexpected token: do"
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
