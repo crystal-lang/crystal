@@ -211,9 +211,13 @@ struct Number
   # ```
   def round(digits, base = 10)
     x = self.to_f
-    base = base.to_f if digits < 0
-    y = base ** digits
-    self.class.new((x * y).round / y)
+    if digits < 0
+      y = base ** (digits * -1)
+      self.class.new((x / y).round * y)
+    else
+      y = base ** digits
+      self.class.new((x * y).round / y)
+    end
   end
 
   # Clamps a value within *range*.

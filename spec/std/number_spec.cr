@@ -60,6 +60,7 @@ describe "Number" do
       523.round(-3).should eq(1000)
 
       123.456.round(-2).should eq(100)
+      123_456.123456.round(-5).should eq(100_000)
       753.155.round(-5, base: 2).should eq(768)
     end
   end
