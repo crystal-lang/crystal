@@ -22,6 +22,9 @@ module Unicode
     # 'ı'.upcase(Unicode::CaseOptions::Turkic)   # => 'I'
     # ```
     Turkic
+
+    # Unicode case folding, which is more far-reaching than Unicode case mapping.
+    Fold
   end
 
   def self.upcase(char : Char, options : CaseOptions)
@@ -94,6 +97,9 @@ module Unicode
     result = check_downcase_turkic(char, options)
     return result if result
 
+    results = check_downcase_fold(char, options)
+    return results[0].unsafe_chr if results && results.size == 1
+
     check_downcase_ranges(char)
   end
 
@@ -107,6 +113,12 @@ module Unicode
     result = check_downcase_turkic(char, options)
     if result
       yield result
+      return
+    end
+
+    result = check_downcase_fold(char, options)
+    if result
+      result.each { |c| yield c.unsafe_chr if c != 0 }
       return
     end
 
@@ -137,6 +149,16 @@ module Unicode
       when 'I'; return 'ı'
       when 'İ'; return 'i'
       end
+    end
+    nil
+  end
+
+  private def self.check_downcase_fold(char, options)
+    if options.fold?
+      result = search_ranges(casefold_ranges, char.ord)
+      return {char.ord + result} if result
+
+      return fold_cases[char.ord]?
     end
     nil
   end
