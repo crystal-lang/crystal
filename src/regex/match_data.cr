@@ -193,9 +193,9 @@ class Regex
     def captures
       name_table = @regex.name_table
 
-      caps = [] of String
+      caps = [] of String?
       (1..size).each do |i|
-        caps << self[i] unless name_table.has_key? i
+        caps << self[i]? unless name_table.has_key? i
       end
 
       caps
@@ -210,10 +210,10 @@ class Regex
     def named_captures
       name_table = @regex.name_table
 
-      caps = {} of String => String
+      caps = {} of String => String?
       (1..size).each do |i|
         if name = name_table[i]?
-          caps[name] = self[i]
+          caps[name] = self[i]?
         end
       end
 
@@ -227,7 +227,7 @@ class Regex
     # match.to_a # => ["Crystal", "Cr", "y", "st", "al"]
     # ```
     def to_a
-      (0..size).map { |i| self[i] }
+      (0..size).map { |i| self[i]? }
     end
 
     # Convert this match data into a hash.
@@ -239,9 +239,9 @@ class Regex
     def to_h
       name_table = @regex.name_table
 
-      hash = {} of (String | Int32) => String
+      hash = {} of (String | Int32) => String?
       (0..size).each do |i|
-        hash[name_table.fetch(i) { i }] = self[i]
+        hash[name_table.fetch(i) { i }] = self[i]?
       end
 
       hash
