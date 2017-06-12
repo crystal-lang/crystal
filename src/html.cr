@@ -1,11 +1,41 @@
 # Handles encoding and decoding of HTML entities.
 module HTML
-  SUBSTITUTIONS = {
+  # `HTML.escape` escaping mode.
+  enum EscapeMode
+    # Escapes '&', '"', '\'', '/', '<' and '>' chars.
+    Default,
+    # Escapes '&', '"', '<' and '>' chars.
+    Short,
+    # Escapes a lot of chars according to XSS.
+    XSS,
+  end
+
+  # Simular to Ruby CGI::escapeHTML.
+  SHORT_ESCAPE = {
+    '&' => "&amp;",
+    '"' => "&quot;",
+    '<' => "&lt;",
+    '>' => "&gt;",
+  }
+
+  # Simular to Rack::Utils.escape_html. Most used one.
+  DEFAULT_ESCAPE = {
+    '&'  => "&amp;",
+    '"'  => "&quot;",
+    '<'  => "&lt;",
+    '>'  => "&gt;",
+    '\'' => "&#27;",
+    '/'  => "&#2F;",
+  }
+
+  # XSS escaping set.
+  XSS_ESCAPE = {
     '!'      => "&#33;",
     '"'      => "&quot;",
     '$'      => "&#36;",
     '%'      => "&#37;",
     '&'      => "&amp;",
+    '/'      => "&#2F;",
     '\''     => "&#39;",
     '('      => "&#40;",
     ')'      => "&#41;",
@@ -28,9 +58,17 @@ module HTML
   # require "html"
   #
   # HTML.escape("Crystal & You") # => "Crystal &amp; You"
+  #
+  # HTML.escape("Crystal = Me", HTML::EscapeMode::XSS) # => "Crystal &#61; Me"
   # ```
-  def self.escape(string : String) : String
-    string.gsub(SUBSTITUTIONS)
+  def self.escape(string : String, mode : EscapeMode = EscapeMode::Default) : String
+    subst = case mode
+            when EscapeMode::Default then DEFAULT_ESCAPE
+            when EscapeMode::Short   then SHORT_ESCAPE
+            when EscapeMode::XSS     then XSS_ESCAPE
+            else                          DEFAULT_ESCAPE
+            end
+    string.gsub(subst)
   end
 
   # Encodes a string to HTML, but writes to the `IO` instance provided.
@@ -40,9 +78,15 @@ module HTML
   # HTML.escape("Crystal & You", io) # => nil
   # io.to_s                          # => "Crystal &amp; You"
   # ```
-  def self.escape(string : String, io : IO)
+  def self.escape(string : String, io : IO, mode : EscapeMode = EscapeMode::Default)
+    subst = case mode
+            when EscapeMode::Default then DEFAULT_ESCAPE
+            when EscapeMode::Short   then SHORT_ESCAPE
+            when EscapeMode::XSS     then XSS_ESCAPE
+            else                          DEFAULT_ESCAPE
+            end
     string.each_char do |char|
-      io << SUBSTITUTIONS.fetch(char, char)
+      io << subst.fetch(char, char)
     end
   end
 

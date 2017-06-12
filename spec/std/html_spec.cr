@@ -15,14 +15,26 @@ describe "HTML" do
       str.should eq("&lt; &amp; &gt;")
     end
 
-    it "escapes javascript example from a string" do
-      str = HTML.escape("<script>alert('You are being hacked')</script>")
+    it "escapes as documented in default mode" do
+      str = HTML.escape("Crystal & You")
 
-      str.should eq("&lt;script&gt;alert&#40;&#39;You are being hacked&#39;&#41;&lt;/script&gt;")
+      str.should eq("Crystal &amp; You")
+    end
+
+    it "escapes as documented in XSS mode" do
+      str = HTML.escape("Crystal = Me", HTML::EscapeMode::XSS)
+
+      str.should eq("Crystal &#61; Me")
+    end
+
+    it "escapes javascript example from a string" do
+      str = HTML.escape("<script>alert('You are being hacked')</script>", HTML::EscapeMode::XSS)
+
+      str.should eq("&lt;script&gt;alert&#40;&#39;You are being hacked&#39;&#41;&lt;&#2F;script&gt;")
     end
 
     it "escapes nonbreakable space but not normal space" do
-      str = HTML.escape("nbsp space ")
+      str = HTML.escape("nbsp space ", HTML::EscapeMode::XSS)
 
       str.should eq("nbsp&nbsp;space ")
     end
