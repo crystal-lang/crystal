@@ -1,34 +1,19 @@
 # Handles encoding and decoding of HTML entities.
 module HTML
   # `HTML.escape` escaping mode.
-  enum EscapeMode
-    # Escapes '&', '<' and '>' chars.
-    CGI,
-    # Escapes '&', '"', '\'', '<' and '>' chars.
-    Default,
-    # Escapes a XSS chars according to OWASP recommendation, rule 1.
-    OWASP,
-  end
-
   ESCAPE_SUBST = {
+    # Escapes '&', '<' and '>' chars.
+    #
     # Like PHP htmlspecialchars (with ENT_NOQUOTES), Python cgi.escape, W3C recommendation.
-    EscapeMode::CGI => {
+    false => {
       '&' => "&amp;",
       '<' => "&lt;",
       '>' => "&gt;",
     },
-    # Like Python html.escape, Phoenix Phoenix.HTML, Go html.EscapeString, Django, Jinja, W3C recommendation.
-    EscapeMode::Default => {
-      '&'  => "&amp;",
-      '"'  => "&quot;",
-      '\'' => "&#27;",
-      '<'  => "&lt;",
-      '>'  => "&gt;",
-    },
     # Like Ruby CGI.escape, PHP htmlspecialchars (with ENT_QUOTES), Rack::Utils.escape_html, OWASP recommendation.
     #
     # https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet#RULE_.231_-_HTML_Escape_Before_Inserting_Untrusted_Data_into_HTML_Element_Content
-    EscapeMode::OWASP => {
+    true => {
       '&'  => "&amp;",
       '"'  => "&quot;",
       '<'  => "&lt;",
@@ -45,8 +30,8 @@ module HTML
   #
   # HTML.escape("Crystal & You") # => "Crystal &amp; You"
   # ```
-  def self.escape(string : String, mode : EscapeMode = EscapeMode::Default) : String
-    string.gsub(ESCAPE_SUBST[mode])
+  def self.escape(string : String, escape_quotes : Bool = true) : String
+    string.gsub(ESCAPE_SUBST[escape_quotes])
   end
 
   # Encodes a string to HTML, but writes to the `IO` instance provided.
@@ -56,8 +41,8 @@ module HTML
   # HTML.escape("Crystal & You", io) # => nil
   # io.to_s                          # => "Crystal &amp; You"
   # ```
-  def self.escape(string : String, io : IO, mode : EscapeMode = EscapeMode::Default)
-    subst = ESCAPE_SUBST[mode]
+  def self.escape(string : String, io : IO, escape_quotes : Bool = true)
+    subst = ESCAPE_SUBST[escape_quotes]
     string.each_char do |char|
       io << subst.fetch(char, char)
     end

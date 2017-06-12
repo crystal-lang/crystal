@@ -10,9 +10,9 @@ describe "HTML" do
     end
 
     it "escapes dangerous characters from a string" do
-      str = HTML.escape("< & >")
+      str = HTML.escape("< & > \"")
 
-      str.should eq("&lt; &amp; &gt;")
+      str.should eq("&lt; &amp; &gt; &quot;")
     end
 
     it "escapes as documented in default mode" do
@@ -21,20 +21,14 @@ describe "HTML" do
       str.should eq("Crystal &amp; You")
     end
 
-    it "escapes characters according CGI mode" do
-      str = HTML.escape("< & '", HTML::EscapeMode::CGI)
+    it "escapes characters according no escape_quotes mode" do
+      str = HTML.escape("< & ' \"", escape_quotes: false)
 
-      str.should eq("&lt; &amp; '")
-    end
-
-    it "escapes characters according Default mode" do
-      str = HTML.escape("< & '")
-
-      str.should eq("&lt; &amp; &#27;")
+      str.should eq("&lt; &amp; ' \"")
     end
 
     it "escapes characters according OWASP recommendation" do
-      str = HTML.escape("\\/", HTML::EscapeMode::OWASP)
+      str = HTML.escape("\\/")
 
       str.should eq("\\&#2F;")
     end
