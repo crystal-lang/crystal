@@ -148,20 +148,20 @@ class Regex
     end
 
     # Returns the match of the capture group named by *group_name*, or
-    # raises an `ArgumentError` if there is no such named capture group.
+    # raises an `KeyError` if there is no such named capture group.
     #
     # ```
     # "Crystal".match(/r(?<ok>ys)/).not_nil!["ok"] # => "ys"
-    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises ArgumentError
+    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises KeyError
     # ```
     def [](group_name : String)
       match = self[group_name]?
       unless match
         ret = LibPCRE.get_stringnumber(@code, group_name)
         if ret < 0
-          raise ArgumentError.new("Capture group named '#{group_name}' does not exist")
+          raise KeyError.new("Capture group named '#{group_name}' does not exist")
         else
-          raise ArgumentError.new("Capture group named '#{group_name}' is not matched")
+          raise KeyError.new("Capture group named '#{group_name}' is not matched")
         end
       end
       match
@@ -185,6 +185,91 @@ class Regex
     # ```
     def post_match
       @string.byte_slice(byte_end(0))
+    end
+
+    # Returns an array of unnamed capture groups.
+    #
+    # It is a difference from `to_a` that the result array does not contain the match for the entire `Regex` (`self[0]`).
+    #
+    # ```
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match.captures # => ["Cr", "st"]
+    #
+    # # When this regex has an optional group, result array may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(Cr)(stal)?/).not_nil!
+    # match.captures # => ["Cr", nil]
+    # ```
+    def captures
+      name_table = @regex.name_table
+
+      caps = [] of String?
+      (1..size).each do |i|
+        caps << self[i]? unless name_table.has_key? i
+      end
+
+      caps
+    end
+
+    # Returns a hash of named capture groups.
+    #
+    # ```
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match.named_captures # => {"name1" => "y", "name2" => "al"}
+    #
+    # # When this regex has an optional group, result hash may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(?<name1>Cr)(?<name2>stal)?/).not_nil!
+    # match.named_captures # => {"name1" => "Cr", "name2" => nil}
+    # ```
+    def named_captures
+      name_table = @regex.name_table
+
+      caps = {} of String => String?
+      (1..size).each do |i|
+        if name = name_table[i]?
+          caps[name] = self[i]?
+        end
+      end
+
+      caps
+    end
+
+    # Convert this match data into an array.
+    #
+    # ```
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match.to_a # => ["Crystal", "Cr", "y", "st", "al"]
+    #
+    # # When this regex has an optional group, result array may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(Cr)(?<name1>stal)?/).not_nil!
+    # match.to_a # => ["Cr", "Cr", nil]
+    # ```
+    def to_a
+      (0..size).map { |i| self[i]? }
+    end
+
+    # Convert this match data into a hash.
+    #
+    # ```
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match.to_h # => {0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"}
+    #
+    # # When this regex has an optional group, result array may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(Cr)(?<name1>stal)?/).not_nil!
+    # match.to_h # => {0 => "Cr", 1 => "Cr", "name1" => nil}
+    # ```
+    def to_h
+      name_table = @regex.name_table
+
+      hash = {} of (String | Int32) => String?
+      (0..size).each do |i|
+        hash[name_table.fetch(i) { i }] = self[i]?
+      end
+
+      hash
     end
 
     def inspect(io : IO)
