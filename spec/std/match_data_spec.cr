@@ -34,7 +34,7 @@ describe "Regex::MatchData" do
 
     it "raises exception when named group doesn't exist" do
       ("foo" =~ /foo/).should eq(0)
-      expect_raises(ArgumentError) { $~["group"] }
+      expect_raises(KeyError) { $~["group"] }
     end
 
     it "raises if outside match range with []" do
