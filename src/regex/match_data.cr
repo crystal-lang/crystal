@@ -187,8 +187,13 @@ class Regex
     # It is a difference from `to_a` that the result array does not contain the match for the entire `Regex` (`self[0]`).
     #
     # ```
-    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/)
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
     # match.captures # => ["Cr", "st"]
+    #
+    # # When this regex has an optional group, result array may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(Cr)(stal)?/).not_nil!
+    # match.captures # => ["Cr", nil]
     # ```
     def captures
       name_table = @regex.name_table
@@ -204,8 +209,13 @@ class Regex
     # Returns a hash of named capture groups.
     #
     # ```
-    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/)
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
     # match.named_captures # => {"name1" => "y", "name2" => "al"}
+    #
+    # # When this regex has an optional group, result hash may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(?<name1>Cr)(?<name2>stal)?/).not_nil!
+    # match.named_captures # => {"name1" => "Cr", "name2" => nil}
     # ```
     def named_captures
       name_table = @regex.name_table
@@ -223,8 +233,13 @@ class Regex
     # Convert this match data into an array.
     #
     # ```
-    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/)
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
     # match.to_a # => ["Crystal", "Cr", "y", "st", "al"]
+    #
+    # # When this regex has an optional group, result array may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(Cr)(?<name1>stal)?/).not_nil!
+    # match.to_a # => ["Cr", "Cr", nil]
     # ```
     def to_a
       (0..size).map { |i| self[i]? }
@@ -233,8 +248,13 @@ class Regex
     # Convert this match data into a hash.
     #
     # ```
-    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/)
-    # match.to_a # => {0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"}
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match.to_h # => {0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"}
+    #
+    # # When this regex has an optional group, result array may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(Cr)(?<name1>stal)?/).not_nil!
+    # match.to_h # => {0 => "Cr", 1 => "Cr", "name1" => nil}
     # ```
     def to_h
       name_table = @regex.name_table
