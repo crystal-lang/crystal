@@ -19,11 +19,11 @@ module HTML
     },
     # Like Python html.escape, Phoenix Phoenix.HTML, Go html.EscapeString, Django, Jinja, W3C recommendation.
     EscapeMode::Default => {
-      '&' => "&amp;",
-      '"' => "&quot;",
+      '&'  => "&amp;",
+      '"'  => "&quot;",
       '\'' => "&#27;",
-      '<' => "&lt;",
-      '>' => "&gt;",
+      '<'  => "&lt;",
+      '>'  => "&gt;",
     },
     # Like Ruby CGI.escape, PHP htmlspecialchars (with ENT_QUOTES), Rack::Utils.escape_html, OWASP recommendation.
     #
