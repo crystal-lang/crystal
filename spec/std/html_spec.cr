@@ -21,22 +21,22 @@ describe "HTML" do
       str.should eq("Crystal &amp; You")
     end
 
-    it "escapes as documented in XSS mode" do
-      str = HTML.escape("Crystal = Me", HTML::EscapeMode::XSS)
+    it "escapes characters according CGI mode" do
+      str = HTML.escape("< & '", HTML::EscapeMode::CGI)
 
-      str.should eq("Crystal &#61; Me")
+      str.should eq("&lt; &amp; '")
     end
 
-    it "escapes javascript example from a string" do
-      str = HTML.escape("<script>alert('You are being hacked')</script>", HTML::EscapeMode::XSS)
+    it "escapes characters according Default mode" do
+      str = HTML.escape("< & '")
 
-      str.should eq("&lt;script&gt;alert&#40;&#39;You are being hacked&#39;&#41;&lt;&#2F;script&gt;")
+      str.should eq("&lt; &amp; &#27;")
     end
 
-    it "escapes nonbreakable space but not normal space" do
-      str = HTML.escape("nbsp space ", HTML::EscapeMode::XSS)
+    it "escapes characters according OWASP recommendation" do
+      str = HTML.escape("\\/", HTML::EscapeMode::OWASP)
 
-      str.should eq("nbsp&nbsp;space ")
+      str.should eq("\\&#2F;")
     end
   end
 

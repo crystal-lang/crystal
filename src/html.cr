@@ -2,54 +2,40 @@
 module HTML
   # `HTML.escape` escaping mode.
   enum EscapeMode
-    # Escapes '&', '"', '\'', '/', '<' and '>' chars.
+    # Escapes '&', '<' and '>' chars.
+    CGI,
+    # Escapes '&', '"', '\'', '<' and '>' chars.
     Default,
-    # Escapes '&', '"', '<' and '>' chars.
-    Short,
-    # Escapes a lot of chars according to XSS.
-    XSS,
+    # Escapes a XSS chars according to OWASP recommendation, rule 1.
+    OWASP,
   end
 
-  # Simular to Ruby CGI::escapeHTML.
-  SHORT_ESCAPE = {
-    '&' => "&amp;",
-    '"' => "&quot;",
-    '<' => "&lt;",
-    '>' => "&gt;",
-  }
-
-  # Simular to Rack::Utils.escape_html. Most used one.
-  DEFAULT_ESCAPE = {
-    '&'  => "&amp;",
-    '"'  => "&quot;",
-    '<'  => "&lt;",
-    '>'  => "&gt;",
-    '\'' => "&#27;",
-    '/'  => "&#2F;",
-  }
-
-  # XSS escaping set.
-  XSS_ESCAPE = {
-    '!'      => "&#33;",
-    '"'      => "&quot;",
-    '$'      => "&#36;",
-    '%'      => "&#37;",
-    '&'      => "&amp;",
-    '/'      => "&#2F;",
-    '\''     => "&#39;",
-    '('      => "&#40;",
-    ')'      => "&#41;",
-    '='      => "&#61;",
-    '>'      => "&gt;",
-    '<'      => "&lt;",
-    '+'      => "&#43;",
-    '@'      => "&#64;",
-    '['      => "&#91;",
-    ']'      => "&#93;",
-    '`'      => "&#96;",
-    '{'      => "&#123;",
-    '}'      => "&#125;",
-    '\u{a0}' => "&nbsp;",
+  ESCAPE_SUBST = {
+    # Like PHP htmlspecialchars (with ENT_NOQUOTES), Python cgi.escape, W3C recommendation.
+    EscapeMode::CGI => {
+      '&' => "&amp;",
+      '<' => "&lt;",
+      '>' => "&gt;",
+    },
+    # Like Python html.escape, Phoenix Phoenix.HTML, Go html.EscapeString, Django, Jinja, W3C recommendation.
+    EscapeMode::Default => {
+      '&' => "&amp;",
+      '"' => "&quot;",
+      '\'' => "&#27;",
+      '<' => "&lt;",
+      '>' => "&gt;",
+    },
+    # Like Ruby CGI.escape, PHP htmlspecialchars (with ENT_QUOTES), Rack::Utils.escape_html, OWASP recommendation.
+    #
+    # https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet#RULE_.231_-_HTML_Escape_Before_Inserting_Untrusted_Data_into_HTML_Element_Content
+    EscapeMode::OWASP => {
+      '&'  => "&amp;",
+      '"'  => "&quot;",
+      '<'  => "&lt;",
+      '>'  => "&gt;",
+      '\'' => "&#27;",
+      '/'  => "&#2F;",
+    },
   }
 
   # Encodes a string with HTML entity substitutions.
@@ -58,17 +44,9 @@ module HTML
   # require "html"
   #
   # HTML.escape("Crystal & You") # => "Crystal &amp; You"
-  #
-  # HTML.escape("Crystal = Me", HTML::EscapeMode::XSS) # => "Crystal &#61; Me"
   # ```
   def self.escape(string : String, mode : EscapeMode = EscapeMode::Default) : String
-    subst = case mode
-            when EscapeMode::Default then DEFAULT_ESCAPE
-            when EscapeMode::Short   then SHORT_ESCAPE
-            when EscapeMode::XSS     then XSS_ESCAPE
-            else                          DEFAULT_ESCAPE
-            end
-    string.gsub(subst)
+    string.gsub(ESCAPE_SUBST[mode])
   end
 
   # Encodes a string to HTML, but writes to the `IO` instance provided.
@@ -79,12 +57,7 @@ module HTML
   # io.to_s                          # => "Crystal &amp; You"
   # ```
   def self.escape(string : String, io : IO, mode : EscapeMode = EscapeMode::Default)
-    subst = case mode
-            when EscapeMode::Default then DEFAULT_ESCAPE
-            when EscapeMode::Short   then SHORT_ESCAPE
-            when EscapeMode::XSS     then XSS_ESCAPE
-            else                          DEFAULT_ESCAPE
-            end
+    subst = ESCAPE_SUBST[mode]
     string.each_char do |char|
       io << subst.fetch(char, char)
     end
