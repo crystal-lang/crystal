@@ -148,16 +148,16 @@ class Regex
     end
 
     # Returns the match of the capture group named by *group_name*, or
-    # raises an `ArgumentError` if there is no such named capture group.
+    # raises an `KeyError` if there is no such named capture group.
     #
     # ```
     # "Crystal".match(/r(?<ok>ys)/).not_nil!["ok"] # => "ys"
-    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises ArgumentError
+    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises KeyError
     # ```
     def [](group_name : String)
       match = self[group_name]?
       unless match
-        raise ArgumentError.new("Match group named '#{group_name}' does not exist")
+        raise KeyError.new("Match group named '#{group_name}' does not exist")
       end
       match
     end
