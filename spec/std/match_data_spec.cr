@@ -107,6 +107,74 @@ describe "Regex::MatchData" do
     end
   end
 
+  describe "#captures" do
+    it "gets an array of unnamed captures" do
+      "Crystal".match(/(Cr)y/).not_nil!.captures.should eq(["Cr"])
+      "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.captures.should eq(["Cr", "st"])
+    end
+
+    it "gets an array of unnamed captures with optional" do
+      "Crystal".match(/(Cr)(s)?/).not_nil!.captures.should eq(["Cr", nil])
+      "Crystal".match(/(Cr)(?<name1>s)?(tal)?/).not_nil!.captures.should eq(["Cr", nil])
+    end
+  end
+
+  describe "#named_captures" do
+    it "gets a hash of named captures" do
+      "Crystal".match(/(?<name1>Cr)y/).not_nil!.named_captures.should eq({"name1" => "Cr"})
+      "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.named_captures.should eq({"name1" => "y", "name2" => "al"})
+    end
+
+    it "gets a hash of named captures with optional" do
+      "Crystal".match(/(?<name1>Cr)(?<name2>s)?/).not_nil!.named_captures.should eq({"name1" => "Cr", "name2" => nil})
+      "Crystal".match(/(Cr)(?<name1>s)?(t)?(?<name2>al)?/).not_nil!.named_captures.should eq({"name1" => nil, "name2" => nil})
+    end
+  end
+
+  describe "#to_a" do
+    it "converts into an array" do
+      "Crystal".match(/(?<name1>Cr)(y)/).not_nil!.to_a.should eq(["Cry", "Cr", "y"])
+      "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.to_a.should eq(["Crystal", "Cr", "y", "st", "al"])
+    end
+
+    it "converts into an array having nil" do
+      "Crystal".match(/(?<name1>Cr)(s)?/).not_nil!.to_a.should eq(["Cr", "Cr", nil])
+      "Crystal".match(/(Cr)(?<name1>s)?(yst)?(?<name2>al)?/).not_nil!.to_a.should eq(["Crystal", "Cr", nil, "yst", "al"])
+    end
+  end
+
+  describe "#to_h" do
+    it "converts into a hash" do
+      "Crystal".match(/(?<name1>Cr)(y)/).not_nil!.to_h.should eq({
+              0 => "Cry",
+        "name1" => "Cr",
+              2 => "y",
+      })
+      "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.to_h.should eq({
+              0 => "Crystal",
+              1 => "Cr",
+        "name1" => "y",
+              3 => "st",
+        "name2" => "al",
+      })
+    end
+
+    it "converts into a hash having nil" do
+      "Crystal".match(/(?<name1>Cr)(s)?/).not_nil!.to_h.should eq({
+              0 => "Cr",
+        "name1" => "Cr",
+              2 => nil,
+      })
+      "Crystal".match(/(Cr)(?<name1>s)?(yst)?(?<name2>al)?/).not_nil!.to_h.should eq({
+              0 => "Crystal",
+              1 => "Cr",
+        "name1" => nil,
+              3 => "yst",
+        "name2" => "al",
+      })
+    end
+  end
+
   it "can check equality" do
     re = /((?<hello>he)llo)/
     m1 = re.match("hello")
