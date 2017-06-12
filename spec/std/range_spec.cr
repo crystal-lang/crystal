@@ -356,6 +356,18 @@ describe "Range" do
     end
   end
 
+  describe "map" do
+    it "optimizes for int range" do
+      (5..12).map(&.itself).should eq([5, 6, 7, 8, 9, 10, 11, 12])
+      (5...12).map(&.itself).should eq([5, 6, 7, 8, 9, 10, 11])
+      (5..4).map(&.itself).size.should eq(0)
+    end
+
+    it "works for other types" do
+      ('a'..'c').map(&.itself).should eq(['a', 'b', 'c'])
+    end
+  end
+
   it "clones" do
     range = [1]..[2]
     clone = range.clone
