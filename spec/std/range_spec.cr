@@ -368,6 +368,18 @@ describe "Range" do
     end
   end
 
+  describe "size" do
+    it "optimizes for int range" do
+      (5..12).size.should eq(8)
+      (5...12).size.should eq(7)
+      (5..4).size.should eq(0)
+    end
+
+    it "works for other types" do
+      ('a'..'c').size.should eq(3)
+    end
+  end
+
   it "clones" do
     range = [1]..[2]
     clone = range.clone
