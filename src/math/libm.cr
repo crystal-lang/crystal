@@ -2,6 +2,8 @@
   @[Link("m")]
 {% end %}
 
+require "llvm"
+
 lib LibM
   # ## To be uncommented once LLVM is updated
   # LLVM binary operations
@@ -13,6 +15,10 @@ lib LibM
   # fun rem_f64 = "llvm.frem"(value1 : Float64, value2 : Float64) : Float64
 
   # LLVM standard C library intrinsics
+  {% if !LibLLVM::IS_5 %}
+    fun canonicalize_f32 = "llvm.canonicalize.f32"(value : Float32) : Float32
+    fun canonicalize_f64 = "llvm.canonicalize.f64"(value : Float64) : Float64
+  {% end %}
   fun ceil_f32 = "llvm.ceil.f32"(value : Float32) : Float32
   fun ceil_f64 = "llvm.ceil.f64"(value : Float64) : Float64
   fun copysign_f32 = "llvm.copysign.f32"(magnitude : Float32, sign : Float32) : Float32
@@ -31,11 +37,12 @@ lib LibM
   fun log2_f64 = "llvm.log2.f64"(value : Float64) : Float64
   fun log10_f32 = "llvm.log10.f32"(value : Float32) : Float32
   fun log10_f64 = "llvm.log10.f64"(value : Float64) : Float64
-  # ## To be uncommented once LLVM is updated
-  # fun min_f32 = "llvm.minnum.f32"(value1 : Float32, value2 : Float32) : Float32
-  # fun min_f64 = "llvm.minnum.f64"(value1 : Float64, value2 : Float64) : Float64
-  # fun max_f32 = "llvm.maxnum.f32"(value1 : Float32, value2 : Float32) : Float32
-  # fun max_f64 = "llvm.maxnum.f64"(value1 : Float64, value2 : Float64) : Float64
+  {% if !LibLLVM::IS_35 %}
+    fun min_f32 = "llvm.minnum.f32"(value1 : Float32, value2 : Float32) : Float32
+    fun min_f64 = "llvm.minnum.f64"(value1 : Float64, value2 : Float64) : Float64
+    fun max_f32 = "llvm.maxnum.f32"(value1 : Float32, value2 : Float32) : Float32
+    fun max_f64 = "llvm.maxnum.f64"(value1 : Float64, value2 : Float64) : Float64
+  {% end %}
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
   fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32

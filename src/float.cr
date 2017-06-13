@@ -149,7 +149,7 @@ struct Float32
   end
 
   def hash
-    unsafe_as(Int32)
+    Math.canonicalize(self).unsafe_as(Int32)
   end
 
   def clone
@@ -207,7 +207,7 @@ struct Float64
   end
 
   def hash
-    unsafe_as(Int64)
+    Math.canonicalize(self).unsafe_as(Int64)
   end
 
   def clone
