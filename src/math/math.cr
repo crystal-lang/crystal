@@ -131,32 +131,79 @@ module Math
     log(numeric) / log(base)
   end
 
-  # ## To be uncommented once LLVM is updated
-  # def max(value1 : Float32, value2 : Float32)
-  #   LibM.max_f32(value1, value2)
-  # end
-  #
-  # def max(value1 : Float64, value2 : Float64)
-  #   LibM.max_f64(value1, value2)
-  # end
+  {% if !LibLLVM::IS_35 %}
+    # Returns the greater of *value1* and *value2*.
+    def max(value1 : Float32, value2 : Float32): Float32
+      LibM.max_f32(value1, value2)
+    end
+
+    # Returns the greater of *value1* and *value2*.
+    def max(value1 : Float64, value2 : Float64): Float64
+      LibM.max_f64(value1, value2)
+    end
+  {% end %}
 
   # Returns the greater of *value1* and *value2*.
   def max(value1, value2)
     value1 >= value2 ? value1 : value2
   end
 
-  # ## To be uncommented once LLVM is updated
-  # def min(value1 : Float32, value2 : Float32)
-  #  LibM.min_f32(value1, value2)
-  # end
-  #
-  # def min(value1 : Float64, value2 : Float64)
-  #  LibM.min_f64(value1, value2)
-  # end
+  {% if !LibLLVM::IS_35 %}
+    # Returns the smaller of *value1* and *value2*.
+    def min(value1 : Float32, value2 : Float32): Float32
+      LibM.min_f32(value1, value2)
+    end
+
+    # Returns the smaller of *value1* and *value2*.
+    def min(value1 : Float64, value2 : Float64): Float64
+      LibM.min_f64(value1, value2)
+    end
+  {% end %}
 
   # Returns the smaller of *value1* and *value2*.
   def min(value1, value2)
     value1 <= value2 ? value1 : value2
+  end
+
+  {% if LibLLVM::IS_5 %}
+    # Returns the platform specific canonical encoding of a floating point number.
+    #
+    # See http://llvm.org/docs/LangRef.html#llvm-canonicalize-intrinsic for details.
+    def canonicalize(value : Float32)
+      LibM.canonicalize_f32(value)
+    end
+
+    # Returns the platform specific canonical encoding of a floating point number.
+    #
+    # See http://llvm.org/docs/LangRef.html#llvm-canonicalize-intrinsic for details.
+    def canonicalize(value : Float64)
+      LibM.canonicalize_f64(value)
+    end
+  {% elsif !LibLLVM::IS_35 %}
+    # Returns the platform specific canonical encoding of a floating point number.
+    #
+    # See http://llvm.org/docs/LangRef.html#llvm-canonicalize-intrinsic for details.
+    def canonicalize(value : Float32)
+      LibM.min_f32(value, value)
+    end
+
+    # Returns the platform specific canonical encoding of a floating point number.
+    #
+    # See http://llvm.org/docs/LangRef.html#llvm-canonicalize-intrinsic for details.
+    def canonicalize(value : Float64)
+      LibM.min_f64(value, value)
+    end
+  {% end %}
+
+  # Returns the platform specific canonical encoding of a floating point number.
+  #
+  # See http://llvm.org/docs/LangRef.html#llvm-canonicalize-intrinsic for details.
+  def canonicalize(value)
+    # This function should always be implementable as multiplication by 1.0, provided
+    # that the compiler does not constant fold the operation.  Likewise, division by
+    # +1.0 and ``llvm.minnum(x, x)`` are possible implementations.  Addition with
+    # -0.0 is also sufficient provided that the rounding mode is not -Infinity.
+    1_f64 * value.to_f
   end
 
   # ## To be uncommented once LLVM is updated
