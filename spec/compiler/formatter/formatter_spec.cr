@@ -1045,4 +1045,6 @@ describe Crystal::Formatter do
   assert_format "foo bar, \\\nbaz", "foo bar,\n  baz"
 
   assert_format "alias X = ((Y, Z) ->)"
+
+  assert_format "def x(@y = ->(z) {})\nend"
 end

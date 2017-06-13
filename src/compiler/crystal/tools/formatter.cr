@@ -1953,6 +1953,10 @@ module Crystal
       end
 
       if default_value
+        # The default value might be a Proc with args, so
+        # we need to remember this and restore it later
+        old_last_arg_is_skip = @last_arg_is_skip
+
         skip_space_or_newline
 
         check_align = check_assign_length node
@@ -1961,6 +1965,8 @@ module Crystal
         skip_space_or_newline
         accept default_value
         check_assign_align before_column, default_value if check_align
+
+        @last_arg_is_skip = old_last_arg_is_skip
       end
 
       # This is the case of an enum member
