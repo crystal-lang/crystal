@@ -83,6 +83,11 @@ describe "Math" do
       Math.scalbln(0.11_f32, 2).should be_close(0.44, 1e-7)
       Math.scalbln(0.11, 2).should be_close(0.44, 1e-7)
     end
+
+    it "frexp" do
+      Math.frexp(0.2_f32).should eq({0.8_f32, -2})
+      Math.frexp(0.2).should eq({0.8, -2})
+    end
   end
 
   describe "Logarithms" do
