@@ -131,7 +131,9 @@ class IO::FileDescriptor
     check_open
 
     flush
+    offset -= @in_buffer_rem.size if whence.current?
     seek_value = LibC.lseek(@fd, offset, whence)
+
     if seek_value == -1
       raise Errno.new "Unable to seek"
     end

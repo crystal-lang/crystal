@@ -621,6 +621,13 @@ describe "File" do
     file.gets(4).should eq("ello")
   end
 
+  it "seeks from the current position" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    file.gets(5)
+    file.seek(-4, IO::Seek::Current)
+    file.tell.should eq(1)
+  end
+
   it "raises if invoking seek with a closed file" do
     file = File.new("#{__DIR__}/data/test_file.txt")
     file.close
