@@ -149,8 +149,6 @@ struct Float32
   end
 
   def hash
-    return NAN.unsafe_as(Int32) if nan?
-    return INFINITY.unsafe_as(Int32) if infinite?
     Math.canonicalize(self).unsafe_as(Int32)
   end
 
@@ -209,8 +207,6 @@ struct Float64
   end
 
   def hash
-    return Float32::NAN.unsafe_as(Int32) if nan?
-    return Float32::INFINITY.unsafe_as(Int32) if infinite?
     Math.canonicalize(self).unsafe_as(Int64)
   end
 
