@@ -22,15 +22,9 @@ describe "HTML" do
     end
 
     it "escapes characters according no escape_quotes mode" do
-      str = HTML.escape("< & ' \"", escape_quotes: false)
+      str = HTML.escape("< & ' \" \\", escape_quotes: false)
 
-      str.should eq("&lt; &amp; ' \"")
-    end
-
-    it "escapes characters according OWASP recommendation" do
-      str = HTML.escape("\\/")
-
-      str.should eq("\\&#2F;")
+      str.should eq("&lt; &amp; ' \" \\")
     end
   end
 
