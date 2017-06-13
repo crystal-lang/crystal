@@ -229,6 +229,23 @@ module Math
     scalbln(value.to_f, exp.to_i64)
   end
 
+  # Decomposes given floating point *value* into a normalized fraction and an integral power of two.
+  def frexp(value : Float32)
+    frac = LibM.frexp_f32(value, out exp)
+    {frac, exp}
+  end
+
+  # ditto
+  def frexp(value : Float64)
+    frac = LibM.frexp_f64(value, out exp)
+    {frac, exp}
+  end
+
+  # ditto
+  def frexp(value)
+    frexp(value.to_f)
+  end
+
   # Computes the next highest power of 2 of *v*.
   #
   # ```
