@@ -1273,4 +1273,120 @@ describe "Code gen: exception" do
       end
       )).to_string.should eq("good")
   end
+
+  it "returns a value of ensure block (#4470)" do
+    run(%(
+      require "prelude"
+
+      def foo
+        return 0
+      ensure
+        return 1
+      end
+
+      foo
+    )).to_i.should eq(1)
+  end
+
+  it "returns a value of ensure block with rescue (#4470)" do
+    run(%(
+      require "prelude"
+
+      def foo
+        raise "foo"
+      rescue
+        return 0
+      ensure
+        return 1
+      end
+
+      foo
+    )).to_i.should eq(1)
+  end
+
+  it "returns a value of nested ensure block (#4470)" do
+    run(%(
+      require "prelude"
+
+      def foo
+        begin
+          return 0
+        ensure
+          return 1
+        end
+      ensure
+        return 2
+      end
+
+      foo
+    )).to_i.should eq(2)
+  end
+
+  it "breaks from a loop inside ensure block with rescue" do
+    run(%(
+      require "prelude"
+
+      loop do
+        begin
+          break 0
+        ensure
+          break 1
+        end
+      end
+     )).to_i.should eq(1)
+  end
+
+  it "breaks from a loop inside ensure block with rescue" do
+    run(%(
+      require "prelude"
+
+      loop do
+        begin
+          raise "foo"
+        rescue
+          break 0
+        ensure
+          break 1
+        end
+      end
+     )).to_i.should eq(1)
+  end
+
+  it "breaks from a loop inside nested ensure block" do
+    run(%(
+      require "prelude"
+
+      loop do
+        begin
+          begin
+            break 0
+          ensure
+            break 1
+          end
+        ensure
+          break 2
+        end
+      end
+     )).to_i.should eq(2)
+  end
+
+  it "continue a loop inside ensure block" do
+    run(%(
+      require "prelude"
+
+      a = b = 0
+      loop do
+        b += 1
+        break if a == 1
+        a = 1
+        begin
+          break
+        ensure
+          next
+        end
+      end
+
+      b
+    )).to_i.should eq(2)
+  end
 end
