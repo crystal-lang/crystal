@@ -26,15 +26,15 @@ describe "Regex::MatchData" do
       $~["g2"].should eq("ba")
     end
 
-    it "raises exception on optional empty group" do
-      ("foo" =~ /(?<g1>z)?foo/).should eq(0)
-      expect_raises(Exception) { $~[1] }
-      expect_raises(Exception) { $~["g1"] }
-    end
-
     it "raises exception when named group doesn't exist" do
       ("foo" =~ /foo/).should eq(0)
-      expect_raises(KeyError) { $~["group"] }
+      expect_raises(KeyError, "Capture group 'group' does not exist") { $~["group"] }
+    end
+
+    it "raises exception on optional empty group" do
+      ("foo" =~ /(?<g1>z)?foo/).should eq(0)
+      expect_raises(IndexError, "Capture group 1 was not matched") { $~[1] }
+      expect_raises(KeyError, "Capture group 'g1' was not matched") { $~["g1"] }
     end
 
     it "raises if outside match range with []" do
@@ -44,7 +44,7 @@ describe "Regex::MatchData" do
 
     it "raises if special variable accessed on invalid capture group" do
       "spice" =~ /spice(s)?/
-      expect_raises(IndexError, "Invalid capture group index: 1") { $1 }
+      expect_raises(IndexError, "Capture group 1 was not matched") { $1 }
       expect_raises(IndexError, "Invalid capture group index: 3") { $3 }
     end
   end

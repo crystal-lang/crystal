@@ -130,7 +130,7 @@ class Regex
     def [](n)
       check_index_out_of_bounds n
       value = self[n]?
-      raise_invalid_group_index(n) if value.nil?
+      raise_capture_group_was_not_matched n if value.nil?
       value
     end
 
@@ -157,7 +157,12 @@ class Regex
     def [](group_name : String)
       match = self[group_name]?
       unless match
-        raise KeyError.new("Match group named '#{group_name}' does not exist")
+        ret = LibPCRE.get_stringnumber(@code, group_name)
+        if ret < 0
+          raise KeyError.new("Capture group '#{group_name}' does not exist")
+        else
+          raise KeyError.new("Capture group '#{group_name}' was not matched")
+        end
       end
       match
     end
@@ -314,6 +319,10 @@ class Regex
 
     private def raise_invalid_group_index(index)
       raise IndexError.new("Invalid capture group index: #{index}")
+    end
+
+    private def raise_capture_group_was_not_matched(index)
+      raise IndexError.new("Capture group #{index} was not matched")
     end
   end
 end
