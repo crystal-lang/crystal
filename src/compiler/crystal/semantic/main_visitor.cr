@@ -67,6 +67,26 @@ module Crystal
     property is_initialize : Bool
     property exception_handler_vars : MetaVars? = nil
 
+    # It means the last block kind, that is one of `block`, `while` and
+    # `ensure`. It is used to detect `break` or `next` from `ensure`.
+    #
+    # ```
+    # begin
+    #   # `last_block_kind == nil`
+    # ensure
+    #   # `last_block_kind == :ensure`
+    #   while true
+    #     # `last_block_kind == :while`
+    #   end
+    #   loop do
+    #     # `last_block_kind == :block`
+    #   end
+    #   # `last_block_kind == :ensure`
+    # end
+    # ```
+    property last_block_kind : Symbol?
+    property? inside_ensure : Bool = false
+
     @unreachable = false
     @is_initialize = false
     @in_type_args = 0
@@ -80,7 +100,6 @@ module Crystal
     @block_context : Block?
     @file_module : FileModule?
     @while_vars : MetaVars?
-    @while_ensure_stack : Array(Symbol)
 
     # Separate type filters for an `a || b` expression.
     # We need these to filter types on an else branch of an
@@ -92,7 +111,7 @@ module Crystal
     # Type filters for `exp` in `!exp`, used after a `while`
     @before_not_type_filters : TypeFilters?
 
-    def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil, @while_ensure_stack = [] of Symbol)
+    def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       super(program, vars)
       @while_stack = [] of While
       @needs_type_filters = 0
@@ -1008,7 +1027,7 @@ module Crystal
 
       @block_nest += 1
 
-      block_visitor = MainVisitor.new(program, before_block_vars, @typed_def, meta_vars, @while_ensure_stack)
+      block_visitor = MainVisitor.new(program, before_block_vars, @typed_def, meta_vars)
       block_visitor.yield_vars = @yield_vars
       block_visitor.match_context = @match_context
       block_visitor.untyped_def = @untyped_def
@@ -1027,9 +1046,10 @@ module Crystal
       block_visitor.path_lookup = path_lookup || current_type
       block_visitor.block_nest = @block_nest
 
-      @while_ensure_stack.push :block
+      block_visitor.last_block_kind = :block
+      block_visitor.inside_ensure = inside_ensure?
+
       node.body.accept block_visitor
-      @while_ensure_stack.pop
 
       @block_nest -= 1
 
@@ -1626,8 +1646,8 @@ module Crystal
     end
 
     def visit(node : Return)
-      if @while_ensure_stack.includes?(:ensure)
-        node.raise "can't use return inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
+      if inside_ensure?
+        node.raise "can't return from ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
       end
 
       typed_def = @typed_def || node.raise("can't return from top level")
@@ -1986,15 +2006,16 @@ module Crystal
       @type_filters = nil
       @block, old_block = nil, @block
 
-      @while_ensure_stack.push :while
       @while_stack.push node
-      node.body.accept self
+
+      with_block_kind :while do
+        node.body.accept self
+      end
 
       endless_while = node.cond.true_literal?
       merge_while_vars node.cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
-      @while_ensure_stack.pop
       @block = old_block
       @while_vars = old_while_vars
 
@@ -2153,9 +2174,11 @@ module Crystal
     end
 
     def end_visit(node : Break)
-      if @while_ensure_stack.last? == :ensure
+      if last_block_kind == :ensure
         node.raise "can't use break inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
-      elsif block = @block
+      end
+
+      if block = @block
         node.target = block.call.not_nil!
 
         block.break.bind_to(node.exp || program.nil_var)
@@ -2180,9 +2203,11 @@ module Crystal
     end
 
     def end_visit(node : Next)
-      if @while_ensure_stack.last? == :ensure
+      if last_block_kind == :ensure
         node.raise "can't use next inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
-      elsif block = @block
+      end
+
+      if block = @block
         node.target = block
 
         block.bind_to(node.exp || program.nil_var)
@@ -2206,6 +2231,14 @@ module Crystal
       node.type = @program.no_return
 
       @unreachable = true
+    end
+
+    def with_block_kind(kind)
+      old_block_kind, @last_block_kind = last_block_kind, kind
+      old_inside_ensure, @inside_ensure = @inside_ensure, @inside_ensure || kind == :ensure
+      yield
+      @last_block_kind = old_block_kind
+      @inside_ensure = old_inside_ensure
     end
 
     def visit(node : Primitive)
@@ -2607,9 +2640,9 @@ module Crystal
           merge_rescue_vars exception_handler_vars, all_rescue_vars
 
           # And then accept the ensure part
-          @while_ensure_stack.push :ensure
-          node.ensure.try &.accept self
-          @while_ensure_stack.pop
+          with_block_kind :ensure do
+            node.ensure.try &.accept self
+          end
         end
       end
 
@@ -2629,9 +2662,9 @@ module Crystal
 
           before_ensure_vars = @vars.dup
 
-          @while_ensure_stack.push :ensure
-          node_ensure.accept self
-          @while_ensure_stack.pop
+          with_block_kind :ensure do
+            node_ensure.accept self
+          end
 
           @vars = after_handler_vars
 

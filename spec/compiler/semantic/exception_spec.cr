@@ -477,7 +477,7 @@ describe "Semantic: exception" do
     program.vars["foo"].type.should be(program.nilable program.int32)
   end
 
-  it "can't use return inside ensure (#4470)" do
+  it "can't return from ensure (#4470)" do
     assert_error(%(
       def foo
         return 1
@@ -486,10 +486,10 @@ describe "Semantic: exception" do
       end
 
       foo
-    ), "can't use return inside ensure")
+    ), "can't return from ensure")
   end
 
-  it "can't use return inside block inside ensure (#4470)" do
+  it "can't return from block inside ensure (#4470)" do
     assert_error(%(
       def once
         yield
@@ -504,10 +504,10 @@ describe "Semantic: exception" do
       end
 
       foo
-    ), "can't use return inside ensure")
+    ), "can't return from ensure")
   end
 
-  it "can't use return inside while inside ensure (#4470)" do
+  it "can't return from while inside ensure (#4470)" do
     assert_error(%(
       def foo
         return 1
@@ -518,10 +518,10 @@ describe "Semantic: exception" do
       end
 
       foo
-    ), "can't use return inside ensure")
+    ), "can't return from ensure")
   end
 
-  it "can't use break from while inside ensure (#4470)" do
+  it "can't use break inside while inside ensure (#4470)" do
     assert_error(%(
       while true
         begin
@@ -547,7 +547,7 @@ describe "Semantic: exception" do
     )) { nil_type }
   end
 
-  it "can't use break from block inside ensure (#4470)" do
+  it "can't use break inside block inside ensure (#4470)" do
     assert_error(%(
       def loop
         while true
@@ -585,7 +585,7 @@ describe "Semantic: exception" do
     )) { nil_type }
   end
 
-  it "can't use next from while inside ensure (#4470)" do
+  it "can't use next inside while inside ensure (#4470)" do
     assert_error(%(
       while true
         begin
@@ -597,7 +597,7 @@ describe "Semantic: exception" do
     ), "can't use next inside ensure")
   end
 
-  it "can't use next from block inside ensure (#4470)" do
+  it "can't use next inside block inside ensure (#4470)" do
     assert_error(%(
       def loop
         while true
