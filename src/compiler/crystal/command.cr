@@ -275,6 +275,8 @@ class Crystal::Command
     compiler = Compiler.new
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
+    filenames = [] of String
+    is_fake_source_filename = false
     opt_filenames = nil
     opt_arguments = nil
     opt_output_filename = nil
@@ -404,6 +406,12 @@ class Crystal::Command
         end
       end
 
+      opts.on("--fake-source ", "Fake source file name to be read from STDIN") do |a_fake_source_filename|
+        is_fake_source_filename = true
+        filenames << a_fake_source_filename
+        single_file = true
+      end
+
       opts.unknown_args do |before, after|
         opt_filenames = before
         opt_arguments = after
@@ -413,12 +421,15 @@ class Crystal::Command
     compiler.link_flags = link_flags.join(" ") unless link_flags.empty?
 
     output_filename = opt_output_filename
-    filenames = opt_filenames.not_nil!
-    arguments = opt_arguments.not_nil!
-
-    if single_file && filenames.size > 1
-      arguments = filenames[1..-1] + arguments
-      filenames = [filenames[0]]
+    if is_fake_source_filename
+      arguments = opt_filenames.not_nil! + opt_arguments.not_nil!
+    else
+      filenames = opt_filenames.not_nil!
+      arguments = opt_arguments.not_nil!
+      if single_file && filenames.size > 1
+        arguments = filenames[1..-1] + arguments
+        filenames = [filenames[0]]
+      end
     end
 
     if filenames.size == 0 || (cursor_command && cursor_location.nil?)
@@ -426,7 +437,11 @@ class Crystal::Command
       exit 1
     end
 
-    sources = gather_sources(filenames)
+    if is_fake_source_filename
+      sources = [Compiler::Source.new(filenames.first, STDIN.gets_to_end)]
+    else
+      sources = gather_sources(filenames.not_nil!)
+    end
     first_filename = sources.first.filename
     first_file_ext = File.extname(first_filename)
     original_output_filename = File.basename(first_filename, first_file_ext)
