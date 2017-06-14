@@ -13,6 +13,12 @@ describe "Regex::MatchData" do
     /fox/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox">))
   end
 
+  it "does size" do
+    "Crystal".match(/[p-s]/).not_nil!.size.should eq(1)
+    "Crystal".match(/r(ys)/).not_nil!.size.should eq(2)
+    "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.size.should eq(3)
+  end
+
   describe "#[]" do
     it "captures empty group" do
       ("foo" =~ /(?<g1>z?)foo/).should eq(0)

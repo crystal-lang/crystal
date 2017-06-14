@@ -1779,7 +1779,7 @@ describe "String" do
 
   it "matches empty string" do
     match = "".match(/.*/).not_nil!
-    match.size.should eq(0)
+    match.group_size.should eq(0)
     match[0].should eq("")
   end
 
