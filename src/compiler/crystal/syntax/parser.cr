@@ -3743,6 +3743,7 @@ module Crystal
       arg_index = 0
       splat_index = nil
 
+      slash_is_regex!
       next_token_skip_space
       if @token.type == :"|"
         next_token_skip_space_or_newline

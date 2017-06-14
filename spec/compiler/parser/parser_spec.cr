@@ -358,6 +358,10 @@ describe "Parser" do
   it_parses "1.x; foo do\nend", [Call.new(1.int32, "x"), Call.new(nil, "foo", block: Block.new)] of ASTNode
   it_parses "x = 1; foo.bar x do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
 
+  it_parses "foo do\n//\nend", Call.new(nil, "foo", [] of ASTNode, Block.new(body: regex("")))
+  it_parses "foo x do\n//\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new(body: regex("")))
+  it_parses "foo(x) do\n//\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new(body: regex("")))
+
   it_parses "foo !false", Call.new(nil, "foo", [Not.new(false.bool)] of ASTNode)
   it_parses "!a && b", And.new(Not.new("a".call), "b".call)
 
