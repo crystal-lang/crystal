@@ -26,11 +26,11 @@ class Regex
     # Returns the number of capture groups, including named capture groups.
     #
     # ```
-    # "Crystal".match(/[p-s]/).not_nil!.size          # => 0
-    # "Crystal".match(/r(ys)/).not_nil!.size          # => 1
-    # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.size # => 2
+    # "Crystal".match(/[p-s]/).not_nil!.group_size          # => 0
+    # "Crystal".match(/r(ys)/).not_nil!.group_size          # => 1
+    # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.group_size # => 2
     # ```
-    getter size : Int32
+    getter group_size : Int32
 
     # Returns the original string.
     #
@@ -40,7 +40,18 @@ class Regex
     getter string : String
 
     # :nodoc:
-    def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @size : Int32)
+    def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @group_size : Int32)
+    end
+
+    # Returns the number of elements in this match object.
+    #
+    # ```
+    # "Crystal".match(/[p-s]/).not_nil!.size          # => 1
+    # "Crystal".match(/r(ys)/).not_nil!.size          # => 2
+    # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.size # => 3
+    # ```
+    def size
+      group_size + 1
     end
 
     # Return the position of the first character of the *n*th match.
@@ -204,7 +215,7 @@ class Regex
       name_table = @regex.name_table
 
       caps = [] of String?
-      (1..size).each do |i|
+      (1...size).each do |i|
         caps << self[i]? unless name_table.has_key? i
       end
 
@@ -226,7 +237,7 @@ class Regex
       name_table = @regex.name_table
 
       caps = {} of String => String?
-      (1..size).each do |i|
+      (1...size).each do |i|
         if name = name_table[i]?
           caps[name] = self[i]?
         end
@@ -247,7 +258,7 @@ class Regex
     # match.to_a # => ["Cr", "Cr", nil]
     # ```
     def to_a
-      (0..size).map { |i| self[i]? }
+      (0...size).map { |i| self[i]? }
     end
 
     # Convert this match data into a hash.
@@ -265,7 +276,7 @@ class Regex
       name_table = @regex.name_table
 
       hash = {} of (String | Int32) => String?
-      (0..size).each do |i|
+      (0...size).each do |i|
         hash[name_table.fetch(i) { i }] = self[i]?
       end
 
@@ -281,13 +292,12 @@ class Regex
 
       io << "#<Regex::MatchData "
       self[0].inspect(io)
-      if size > 0
+      if size > 1
         io << " "
-        size.times do |i|
-          io << " " if i > 0
-          io << name_table.fetch(i + 1) { i + 1 }
+        (1...size).join " ", io do |i|
+          io << name_table.fetch(i) { i }
           io << ":"
-          self[i + 1]?.inspect(io)
+          self[i]?.inspect(io)
         end
       end
       io << ">"
@@ -306,7 +316,7 @@ class Regex
       return false unless regex == other.regex
       return false unless string == other.string
 
-      return @ovector.memcmp(other.@ovector, (size + 1) * 2) == 0
+      return @ovector.memcmp(other.@ovector, size * 2) == 0
     end
 
     private def check_index_out_of_bounds(index)
@@ -314,7 +324,7 @@ class Regex
     end
 
     private def valid_group?(index)
-      index <= @size
+      index < size
     end
 
     private def raise_invalid_group_index(index)
