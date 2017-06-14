@@ -43,6 +43,14 @@ describe "Regex::MatchData" do
       $~["g2"].should eq("ba")
     end
 
+    it "can use negative index" do
+      "foo" =~ /(f)(oo)/
+      $~[-1].should eq("oo")
+      $~[-2].should eq("f")
+      $~[-3].should eq("foo")
+      expect_raises(IndexError, "Invalid capture group index: -4") { $~[-4] }
+    end
+
     it "raises exception when named group doesn't exist" do
       ("foo" =~ /foo/).should eq(0)
       expect_raises(KeyError, "Capture group 'group' does not exist") { $~["group"] }
@@ -83,6 +91,14 @@ describe "Regex::MatchData" do
       ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
       $~["g1"]?.should eq("oo")
       $~["g2"]?.should eq("ba")
+    end
+
+    it "can use negative index" do
+      "foo" =~ /(b)?(f)(oo)/
+      $~[-1]?.should eq("oo")
+      $~[-2]?.should eq("f")
+      $~[-3]?.should be_nil
+      $~[-4]?.should eq("foo")
     end
 
     it "returns nil exception when named group doesn't exist" do

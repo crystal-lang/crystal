@@ -94,6 +94,7 @@ class Regex
     # ```
     def byte_begin(n = 0)
       check_index_out_of_bounds n
+      n += size if n < 0
       @ovector[n * 2]
     end
 
@@ -109,6 +110,7 @@ class Regex
     # ```
     def byte_end(n = 0)
       check_index_out_of_bounds n
+      n += size if n < 0
       @ovector[n * 2 + 1]
     end
 
@@ -125,6 +127,7 @@ class Regex
     def []?(n)
       return unless valid_group?(n)
 
+      n += size if n < 0
       start = @ovector[n * 2]
       finish = @ovector[n * 2 + 1]
       return if start < 0
@@ -140,6 +143,8 @@ class Regex
     # ```
     def [](n)
       check_index_out_of_bounds n
+      n += size if n < 0
+
       value = self[n]?
       raise_capture_group_was_not_matched n if value.nil?
       value
@@ -345,7 +350,7 @@ class Regex
     end
 
     private def valid_group?(index)
-      index < size
+      -size <= index < size
     end
 
     private def raise_invalid_group_index(index)
