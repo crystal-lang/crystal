@@ -303,6 +303,27 @@ class Regex
       io << ">"
     end
 
+    def pretty_print(pp) : Nil
+      name_table = @regex.name_table
+
+      pp.surround("#<Regex::MatchData", ">", left_break: nil, right_break: nil) do
+        size.times do |i|
+          pp.breakable
+          pp.group do
+            if i == 0
+              self[i].pretty_print pp
+            else
+              pp.text "#{name_table.fetch(i) { i }}:"
+              pp.nest do
+                pp.breakable ""
+                self[i].pretty_print pp
+              end
+            end
+          end
+        end
+      end
+    end
+
     def dup
       self
     end

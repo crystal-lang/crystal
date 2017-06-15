@@ -13,6 +13,17 @@ describe "Regex::MatchData" do
     /fox/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox">))
   end
 
+  it "does pretty_print" do
+    /f(o)(x)/.match("the fox").pretty_inspect.should eq(%(#<Regex::MatchData "fox" 1:"o" 2:"x">))
+    /(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o))))/.match("fooooo").pretty_inspect.should eq(%(#<Regex::MatchData
+ "foooo"
+ first:"f"
+ second:"oooo"
+ third:"ooo"
+ fourth:"oo"
+ fifth:"o">))
+  end
+
   it "does size" do
     "Crystal".match(/[p-s]/).not_nil!.size.should eq(1)
     "Crystal".match(/r(ys)/).not_nil!.size.should eq(2)
