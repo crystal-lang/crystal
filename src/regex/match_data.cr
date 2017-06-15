@@ -295,15 +295,11 @@ class Regex
     def to_s(io : IO)
       name_table = @regex.name_table
 
-      io << "#<Regex::MatchData "
-      self[0].inspect(io)
-      if size > 1
+      io << "#<Regex::MatchData"
+      size.times do |i|
         io << " "
-        (1...size).join " ", io do |i|
-          io << name_table.fetch(i) { i }
-          io << ":"
-          self[i]?.inspect(io)
-        end
+        io << name_table.fetch(i) { i } << ":" if i > 0
+        self[i]?.inspect(io)
       end
       io << ">"
     end
