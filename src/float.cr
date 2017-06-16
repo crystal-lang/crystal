@@ -101,7 +101,7 @@ struct Float
   module Hasher
     private HASH_NAN      =      0
     private HASH_INFINITY = 314159
-    private HASH_BITS     = 31 # sizeof(Hashing::Type) >= 8 ? 61 : 31
+    private HASH_BITS     =     31 # sizeof(Hashing::Type) >= 8 ? 61 : 31
     private HASH_MODULUS  = (1 << HASH_BITS) - 1
     private U32_MINUS_ONE = -1.unsafe_as(UInt32)
     private U32_MINUS_TWO = -2.unsafe_as(UInt32)
