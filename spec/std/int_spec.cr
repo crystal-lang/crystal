@@ -524,4 +524,10 @@ describe "Int" do
     65.unsafe_chr.should eq('A')
     (0x10ffff + 1).unsafe_chr.ord.should eq(0x10ffff + 1)
   end
+  describe "#factorial" do
+    assert { 0.factorial.should eq(1.0) }
+    assert { 1.factorial.should eq(1.0) }
+    assert { 5.factorial.should eq(120.0) }
+    assert { 171.factorial.should eq(Float32::INFINITY) }
+  end
 end

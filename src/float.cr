@@ -97,6 +97,10 @@ struct Float
   def self.from_io(io : IO, format : IO::ByteFormat) : self
     format.decode(self, io)
   end
+
+  def factorial
+    self * Math.gamma(self)
+  end
 end
 
 struct Float32

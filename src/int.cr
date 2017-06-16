@@ -553,6 +553,10 @@ struct Int
       self
     end
   end
+
+  def factorial
+    self == 0 ? 1.0 : 1.upto(self).reduce(1.0) { |a, e| a * e }
+  end
 end
 
 struct Int8
