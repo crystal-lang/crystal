@@ -197,7 +197,7 @@ module Indexable(T)
   #
   # ```
   # array = ["a", "b", "c", "d", "e"]
-  # array.each(1..3) { |x| print x, " -- " }
+  # array.each(within: 1..3) { |x| print x, " -- " }
   # ```
   #
   # produces:
