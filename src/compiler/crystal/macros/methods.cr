@@ -601,7 +601,7 @@ module Crystal
           StringLiteral.new(value.gsub(regex, second.value))
         end
       when "identify"
-        interpret_argless_method(method, args) { StringLiteral.new(@value.tr(":", "_")) }
+        interpret_argless_method(method, args) { StringLiteral.new(@value.gsub(":", "_")) }
       when "includes?"
         interpret_one_arg_method(method, args) do |arg|
           case arg
