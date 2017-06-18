@@ -257,13 +257,13 @@ module Indexable(T)
   #
   # ```
   # array = ["a", "b", "c", "d", "e"]
-  # array.each(start: 1, count: 3) { |x| print x, " -- " }
+  # array.each_index(start: -3, count: 2) { |x| print x, " -- " }
   # ```
   #
   # produces:
   #
   # ```text
-  # 1 -- 2 -- 3 --
+  # 2 -- 3 --
   # ```
   def each_index(*, start : Int, count : Int)
     raise ArgumentError.new "negative count: #{count}" if count < 0
