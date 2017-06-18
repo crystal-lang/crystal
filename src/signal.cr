@@ -72,18 +72,43 @@ require "c/unistd"
   end
 {% end %}
 
-# Signals are processed through the event loop and run in their own Fiber.
-# Signals may be lost if the event loop doesn't run before exit.
-# An uncaught exceptions in a signal handler is a fatal error.
+# This module provides a way to handle OS signals passed to the process.
+#
+# ```
+# puts "Ctrl+C still has the OS default action (stops the program)"
+# sleep 3
+#
+# Signal::INT.trap do
+#   puts "Gotcha!"
+# end
+# puts "Ctrl+C will be caught from now on"
+# sleep 3
+#
+# Signal::INT.reset
+# puts "Ctrl+C is back to the OS default action"
+# sleep 3
+# ```
+#
+# Note:
+# - Signals are processed through the event loop and run in their own Fiber.
+# - Signals may be lost if the event loop doesn't run before exit.
+# - An uncaught exception in a signal handler is a fatal error.
 enum Signal
+  # Sets the handler for this signal to the passed function.
+  #
+  # After executing this, whenever the current process receives the
+  # corresponding signal, the passed function will be run (instead of the OS
+  # default).
   def trap(block : Signal ->)
     trap &block
   end
 
+  # ditto
   def trap(&block : Signal ->)
     Event::SignalHandler.add_handler self, block
   end
 
+  # Resets the handler for this signal to the OS default.
   def reset
     case self
     when CHLD
@@ -97,6 +122,7 @@ enum Signal
     end
   end
 
+  # Clears the handler for this signal and prevents the OS default action.
   def ignore
     del_handler Proc(Int32, Void).new(Pointer(Void).new(1_u64), Pointer(Void).null)
   end
