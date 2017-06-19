@@ -960,7 +960,7 @@ describe "Parser" do
   it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)
   it_parses "@@a = uninitialized Foo", UninitializedVar.new("@@a".class_var, "Foo".path)
 
-  it_parses "()", NilLiteral.new
+  it_parses "()", Expressions.new([Nop.new] of ASTNode)
   it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32] of ASTNode
 
   it_parses "begin; rescue; end", ExceptionHandler.new(Nop.new, [Rescue.new])

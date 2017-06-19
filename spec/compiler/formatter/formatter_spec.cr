@@ -32,6 +32,9 @@ describe Crystal::Formatter do
   assert_format ":foo"
   assert_format ":\"foo\""
 
+  assert_format "()"
+  assert_format "(())"
+
   assert_format "1"
   assert_format "1   ;    2", "1; 2"
   assert_format "1   ;\n    2", "1\n2"
