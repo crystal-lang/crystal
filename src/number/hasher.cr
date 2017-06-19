@@ -7,7 +7,6 @@ module Number::Hasher
   private HASH_BITS     =     31 # sizeof(Hashing::Type) >= 8 ? 61 : 31
   private HASH_MODULUS  = (1 << HASH_BITS) - 1
   private U32_MINUS_ONE = -1.unsafe_as(UInt32)
-  private U32_MINUS_TWO = -2.unsafe_as(UInt32)
 
   # For numeric types, the hash of a number x is based on the reduction
   # of x modulo the prime P = 2**HASH_BITS - 1.  It's designed so that
@@ -73,7 +72,7 @@ module Number::Hasher
     x = ((x << exp) & HASH_MODULUS) | x >> (HASH_BITS - exp)
 
     x = x * sign
-    x = U32_MINUS_TWO if x == U32_MINUS_ONE
+    return -2 if x == U32_MINUS_ONE
     x.unsafe_as(Int32)
   end
 end
