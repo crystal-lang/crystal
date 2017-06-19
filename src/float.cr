@@ -1,6 +1,6 @@
 require "c/stdio"
 require "c/string"
-require "./number"
+require "./number/hasher"
 require "./float/printer"
 
 # Float is the base type of all floating point numbers.
