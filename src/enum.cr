@@ -145,6 +145,36 @@ struct Enum
     {% end %}
   end
 
+  # Returns a `Symbol` representation of this enum member.
+  # This is just the symbol of the underscored name of the member.
+  # In the case of flag enums, the :flags is returned as a symbol.
+  #
+  # If an enum's value doesn't match a member's value, the :unknown
+  # is returned as a symbol.
+  #
+  # ```
+  # Color::Red.to_sym                     # => :red
+  # Color::Green.to_sym                   # => :green
+  # IOMode::None.to_sym                   # => :flags
+  # (IOMode::Read | IOMode::Write).to_sym # => :flags
+  #
+  # Color.new(10).to_sym # => :unknown
+  # ```
+  def to_sym : Symbol
+    {% if @type.has_attribute?("Flags") %}
+      :flags
+    {% else %}
+      case value
+        {% for member in @type.constants %}
+        when {{@type}}::{{member}}.value
+          :{{member.stringify.underscore}}
+        {% end %}
+        else
+          :unknown
+      end
+    {% end %}
+  end
+
   # Returns the value of this enum member as an `Int32`.
   #
   # ```

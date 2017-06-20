@@ -33,6 +33,26 @@ describe Enum do
     end
   end
 
+  describe "to_sym" do
+    it "for simple enum" do
+      SpecEnum::One.to_sym.should eq(:one)
+      SpecEnum::Two.to_sym.should eq(:two)
+      SpecEnum::Three.to_sym.should eq(:three)
+      SpecEnum.new(Int8::MAX).to_sym.should eq(:unknown)
+    end
+
+    it "for enum with complex identifiers" do
+      SpecEnum2::FourtyTwo.to_sym.should eq(:fourty_two)
+      SpecEnum2::FOURTY_FOUR.to_sym.should eq(:fourty_four)
+    end
+
+    it "for flags enum" do
+      SpecEnumFlags::None.to_sym.should eq(:flags)
+      SpecEnumFlags::All.to_sym.should eq(:flags)
+      (SpecEnumFlags::One | SpecEnumFlags::Two).to_sym.should eq(:flags)
+    end
+  end
+
   it "gets value" do
     SpecEnum::Two.value.should eq(1)
     SpecEnum::Two.value.should be_a(Int8)
