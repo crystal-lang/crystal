@@ -1647,7 +1647,7 @@ module Crystal
 
     def visit(node : Return)
       if inside_ensure?
-        node.raise "can't return from ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
+        node.raise "can't return from ensure"
       end
 
       typed_def = @typed_def || node.raise("can't return from top level")
@@ -2175,7 +2175,7 @@ module Crystal
 
     def end_visit(node : Break)
       if last_block_kind == :ensure
-        node.raise "can't use break inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
+        node.raise "can't use break inside ensure"
       end
 
       if block = @block
@@ -2204,7 +2204,7 @@ module Crystal
 
     def end_visit(node : Next)
       if last_block_kind == :ensure
-        node.raise "can't use next inside ensure (see https://github.com/crystal-lang/crystal/issues/4470)"
+        node.raise "can't use next inside ensure"
       end
 
       if block = @block
