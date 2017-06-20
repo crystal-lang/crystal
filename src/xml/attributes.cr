@@ -37,6 +37,11 @@ struct XML::Attributes
     find { |node| node.name == name }
   end
 
+  def []=(name : String, value)
+    LibXML.xmlSetProp(@node, name, value.to_s)
+    value
+  end
+
   def each : Nil
     return unless @node.element?
 

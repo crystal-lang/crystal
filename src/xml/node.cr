@@ -34,7 +34,7 @@ struct XML::Node
 
   # Sets *attribute* of this node to *value*.
   # Raises `XML::Error` if this node does not support attributes.
-  def []=(name : String, value : String)
+  def []=(name : String, value)
     raise XML::Error.new("Can't set attribute of #{type}", 0) unless element?
     attributes[name] = value
   end

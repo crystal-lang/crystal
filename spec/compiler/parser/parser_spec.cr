@@ -358,6 +358,10 @@ describe "Parser" do
   it_parses "1.x; foo do\nend", [Call.new(1.int32, "x"), Call.new(nil, "foo", block: Block.new)] of ASTNode
   it_parses "x = 1; foo.bar x do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
 
+  it_parses "foo do\n//\nend", Call.new(nil, "foo", [] of ASTNode, Block.new(body: regex("")))
+  it_parses "foo x do\n//\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new(body: regex("")))
+  it_parses "foo(x) do\n//\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new(body: regex("")))
+
   it_parses "foo !false", Call.new(nil, "foo", [Not.new(false.bool)] of ASTNode)
   it_parses "!a && b", And.new(Not.new("a".call), "b".call)
 
@@ -1277,6 +1281,8 @@ describe "Parser" do
   it_parses "yield foo do\nend", Yield.new([Call.new(nil, "foo", block: Block.new)] of ASTNode)
 
   it_parses "x.y=(1).to_s", Call.new("x".call, "y=", Call.new(Expressions.new([1.int32] of ASTNode), "to_s"))
+
+  it_parses "1 ** -x", Call.new(1.int32, "**", Call.new("x".call, "-"))
 
   assert_syntax_error "return do\nend", "unexpected token: do"
 

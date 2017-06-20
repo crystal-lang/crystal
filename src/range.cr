@@ -276,6 +276,37 @@ struct Range(B, E)
     Range.new(@begin.clone, @end.clone, @exclusive)
   end
 
+  # :nodoc:
+  def map(&block : B -> U) forall U
+    b = self.begin
+    e = self.end
+
+    # Optimized implementation for int range
+    if b.is_a?(Int) && e.is_a?(Int)
+      e -= 1 if @exclusive
+      n = e - b + 1
+      n = 0 if n < 0
+      Array(U).new(n) { |i| yield b + i }
+    else
+      super { |i| yield i }
+    end
+  end
+
+  # :nodoc:
+  def size
+    b = self.begin
+    e = self.end
+
+    # Optimized implementation for int range
+    if b.is_a?(Int) && e.is_a?(Int)
+      e -= 1 if @exclusive
+      n = e - b + 1
+      n < 0 ? 0 : n
+    else
+      super
+    end
+  end
+
   private class ItemIterator(B, E)
     include Iterator(B)
 

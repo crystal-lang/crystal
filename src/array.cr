@@ -706,6 +706,8 @@ class Array(T)
   #
   # Negative values of *from* count from the end of the array.
   #
+  # Raises `IndexError` if *from* is outside the array range.
+  #
   # ```
   # a = [1, 2, 3, 4]
   # a.fill(2) { |i| i * i } # => [1, 2, 4, 9]
@@ -713,7 +715,7 @@ class Array(T)
   def fill(from : Int)
     from += size if from < 0
 
-    raise IndexError.new if from >= size
+    raise IndexError.new unless 0 <= from < size
 
     from.upto(size - 1) { |i| @buffer[i] = yield i }
 
@@ -725,21 +727,22 @@ class Array(T)
   #
   # Negative values of *from* count from the end of the array.
   #
+  # Raises `IndexError` if *from* is outside the array range.
+  #
+  # Has no effect if *count* is zero or negative.
+  #
   # ```
   # a = [1, 2, 3, 4, 5, 6]
   # a.fill(2, 2) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
   def fill(from : Int, count : Int)
-    return self if count < 0
+    return self if count <= 0
 
     from += size if from < 0
-    count += size if count < 0
 
-    raise IndexError.new if from >= size || count + from > size
+    raise IndexError.new unless 0 <= from < size && from + count <= size
 
-    count += from - 1
-
-    from.upto(count) { |i| @buffer[i] = yield i }
+    from.upto(from + count - 1) { |i| @buffer[i] = yield i }
 
     self
   end

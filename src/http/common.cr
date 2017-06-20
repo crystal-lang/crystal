@@ -300,11 +300,24 @@ module HTTP
   end
 
   # Returns the default status message of the given HTTP status code.
+  #
+  # Based on [Hypertext Transfer Protocol (HTTP) Status Code Registry](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml)
+  #
+  # Last Updated 2017-04-14
+  #
+  # HTTP Status Codes (source: [http-status-codes-1.csv](https://www.iana.org/assignments/http-status-codes/http-status-codes-1.csv))
+  #
+  # * 1xx: Informational - Request received, continuing process
+  # * 2xx: Success - The action was successfully received, understood, and accepted
+  # * 3xx: Redirection - Further action must be taken in order to complete the request
+  # * 4xx: Client Error - The request contains bad syntax or cannot be fulfilled
+  # * 5xx: Server Error - The server failed to fulfill an apparently valid request
+  #
   def self.default_status_message_for(status_code : Int) : String
     case status_code
     when 100 then "Continue"
     when 101 then "Switching Protocols"
-    when 102 then "Processing" # RFC 2518 (WebDAV)
+    when 102 then "Processing"
     when 200 then "OK"
     when 201 then "Created"
     when 202 then "Accepted"
@@ -312,8 +325,8 @@ module HTTP
     when 204 then "No Content"
     when 205 then "Reset Content"
     when 206 then "Partial Content"
-    when 207 then "Multi-Status"     # RFC 2518 (WebDAV)
-    when 208 then "Already Reported" # RFC 5842
+    when 207 then "Multi-Status"
+    when 208 then "Already Reported"
     when 226 then "IM Used"
     when 300 then "Multiple Choices"
     when 301 then "Moved Permanently"
@@ -322,7 +335,7 @@ module HTTP
     when 304 then "Not Modified"
     when 305 then "Use Proxy"
     when 307 then "Temporary Redirect"
-    when 308 then "Permanent Redirect" # RFC 7238
+    when 308 then "Permanent Redirect"
     when 400 then "Bad Request"
     when 401 then "Unauthorized"
     when 402 then "Payment Required"
@@ -336,21 +349,19 @@ module HTTP
     when 410 then "Gone"
     when 411 then "Length Required"
     when 412 then "Precondition Failed"
-    when 413 then "Request Entity Too Large"
-    when 414 then "Request-URI Too Long"
+    when 413 then "Payload Too Large"
+    when 414 then "URI Too Long"
     when 415 then "Unsupported Media Type"
-    when 416 then "Requested Range Not Satisfiable"
+    when 416 then "Range Not Satisfiable"
     when 417 then "Expectation Failed"
-    when 418 then "I'm a teapot" # RFC 2324
     when 421 then "Misdirected Request"
-    when 422 then "Unprocessable Entity" # RFC 2518 (WebDAV)
-    when 423 then "Locked"               # RFC 2518 (WebDAV)
-    when 424 then "Failed Dependency"    # RFC 2518 (WebDAV)
-    when 426 then "Upgrade Required"     # RFC 2817
+    when 422 then "Unprocessable Entity"
+    when 423 then "Locked"
+    when 424 then "Failed Dependency"
+    when 426 then "Upgrade Required"
     when 428 then "Precondition Required"
     when 429 then "Too Many Requests"
     when 431 then "Request Header Fields Too Large"
-    when 449 then "Retry With" # unofficial Microsoft
     when 451 then "Unavailable For Legal Reasons"
     when 500 then "Internal Server Error"
     when 501 then "Not Implemented"
@@ -358,10 +369,10 @@ module HTTP
     when 503 then "Service Unavailable"
     when 504 then "Gateway Timeout"
     when 505 then "HTTP Version Not Supported"
-    when 506 then "Variant Also Negotiates"  # RFC 2295
-    when 507 then "Insufficient Storage"     # RFC 2518 (WebDAV)
-    when 509 then "Bandwidth Limit Exceeded" # unofficial
-    when 510 then "Not Extended"             # RFC 2774
+    when 506 then "Variant Also Negotiates"
+    when 507 then "Insufficient Storage"
+    when 508 then "Loop Detected"
+    when 510 then "Not Extended"
     when 511 then "Network Authentication Required"
     else          ""
     end

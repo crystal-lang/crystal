@@ -26,11 +26,11 @@ class Regex
     # Returns the number of capture groups, including named capture groups.
     #
     # ```
-    # "Crystal".match(/[p-s]/).not_nil!.size          # => 0
-    # "Crystal".match(/r(ys)/).not_nil!.size          # => 1
-    # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.size # => 2
+    # "Crystal".match(/[p-s]/).not_nil!.group_size          # => 0
+    # "Crystal".match(/r(ys)/).not_nil!.group_size          # => 1
+    # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.group_size # => 2
     # ```
-    getter size : Int32
+    getter group_size : Int32
 
     # Returns the original string.
     #
@@ -40,7 +40,18 @@ class Regex
     getter string : String
 
     # :nodoc:
-    def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @size : Int32)
+    def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @group_size : Int32)
+    end
+
+    # Returns the number of elements in this match object.
+    #
+    # ```
+    # "Crystal".match(/[p-s]/).not_nil!.size          # => 1
+    # "Crystal".match(/r(ys)/).not_nil!.size          # => 2
+    # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.size # => 3
+    # ```
+    def size
+      group_size + 1
     end
 
     # Return the position of the first character of the *n*th match.
@@ -83,6 +94,7 @@ class Regex
     # ```
     def byte_begin(n = 0)
       check_index_out_of_bounds n
+      n += size if n < 0
       @ovector[n * 2]
     end
 
@@ -98,6 +110,7 @@ class Regex
     # ```
     def byte_end(n = 0)
       check_index_out_of_bounds n
+      n += size if n < 0
       @ovector[n * 2 + 1]
     end
 
@@ -114,6 +127,7 @@ class Regex
     def []?(n)
       return unless valid_group?(n)
 
+      n += size if n < 0
       start = @ovector[n * 2]
       finish = @ovector[n * 2 + 1]
       return if start < 0
@@ -129,8 +143,10 @@ class Regex
     # ```
     def [](n)
       check_index_out_of_bounds n
+      n += size if n < 0
+
       value = self[n]?
-      raise_invalid_group_index(n) if value.nil?
+      raise_capture_group_was_not_matched n if value.nil?
       value
     end
 
@@ -148,16 +164,21 @@ class Regex
     end
 
     # Returns the match of the capture group named by *group_name*, or
-    # raises an `ArgumentError` if there is no such named capture group.
+    # raises an `KeyError` if there is no such named capture group.
     #
     # ```
     # "Crystal".match(/r(?<ok>ys)/).not_nil!["ok"] # => "ys"
-    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises ArgumentError
+    # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises KeyError
     # ```
     def [](group_name : String)
       match = self[group_name]?
       unless match
-        raise ArgumentError.new("Match group named '#{group_name}' does not exist")
+        ret = LibPCRE.get_stringnumber(@code, group_name)
+        if ret < 0
+          raise KeyError.new("Capture group '#{group_name}' does not exist")
+        else
+          raise KeyError.new("Capture group '#{group_name}' was not matched")
+        end
       end
       match
     end
@@ -182,6 +203,91 @@ class Regex
       @string.byte_slice(byte_end(0))
     end
 
+    # Returns an array of unnamed capture groups.
+    #
+    # It is a difference from `to_a` that the result array does not contain the match for the entire `Regex` (`self[0]`).
+    #
+    # ```
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match.captures # => ["Cr", "st"]
+    #
+    # # When this regex has an optional group, result array may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(Cr)(stal)?/).not_nil!
+    # match.captures # => ["Cr", nil]
+    # ```
+    def captures
+      name_table = @regex.name_table
+
+      caps = [] of String?
+      (1...size).each do |i|
+        caps << self[i]? unless name_table.has_key? i
+      end
+
+      caps
+    end
+
+    # Returns a hash of named capture groups.
+    #
+    # ```
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match.named_captures # => {"name1" => "y", "name2" => "al"}
+    #
+    # # When this regex has an optional group, result hash may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(?<name1>Cr)(?<name2>stal)?/).not_nil!
+    # match.named_captures # => {"name1" => "Cr", "name2" => nil}
+    # ```
+    def named_captures
+      name_table = @regex.name_table
+
+      caps = {} of String => String?
+      (1...size).each do |i|
+        if name = name_table[i]?
+          caps[name] = self[i]?
+        end
+      end
+
+      caps
+    end
+
+    # Convert this match data into an array.
+    #
+    # ```
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match.to_a # => ["Crystal", "Cr", "y", "st", "al"]
+    #
+    # # When this regex has an optional group, result array may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(Cr)(?<name1>stal)?/).not_nil!
+    # match.to_a # => ["Cr", "Cr", nil]
+    # ```
+    def to_a
+      (0...size).map { |i| self[i]? }
+    end
+
+    # Convert this match data into a hash.
+    #
+    # ```
+    # match = "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!
+    # match.to_h # => {0 => "Crystal", 1 => "Cr", "name1" => "y", 3 => "st", "name2" => "al"}
+    #
+    # # When this regex has an optional group, result array may contain
+    # # a `nil` if this group is not matched.
+    # match = "Crystal".match(/(Cr)(?<name1>stal)?/).not_nil!
+    # match.to_h # => {0 => "Cr", 1 => "Cr", "name1" => nil}
+    # ```
+    def to_h
+      name_table = @regex.name_table
+
+      hash = {} of (String | Int32) => String?
+      (0...size).each do |i|
+        hash[name_table.fetch(i) { i }] = self[i]?
+      end
+
+      hash
+    end
+
     def inspect(io : IO)
       to_s(io)
     end
@@ -191,16 +297,36 @@ class Regex
 
       io << "#<Regex::MatchData "
       self[0].inspect(io)
-      if size > 0
+      if size > 1
         io << " "
-        size.times do |i|
-          io << " " if i > 0
-          io << name_table.fetch(i + 1) { i + 1 }
+        (1...size).join " ", io do |i|
+          io << name_table.fetch(i) { i }
           io << ":"
-          self[i + 1]?.inspect(io)
+          self[i]?.inspect(io)
         end
       end
       io << ">"
+    end
+
+    def pretty_print(pp) : Nil
+      name_table = @regex.name_table
+
+      pp.surround("#<Regex::MatchData", ">", left_break: nil, right_break: nil) do
+        size.times do |i|
+          pp.breakable
+          pp.group do
+            if i == 0
+              self[i].pretty_print pp
+            else
+              pp.text "#{name_table.fetch(i) { i }}:"
+              pp.nest do
+                pp.breakable ""
+                self[i].pretty_print pp
+              end
+            end
+          end
+        end
+      end
     end
 
     def dup
@@ -216,7 +342,7 @@ class Regex
       return false unless regex == other.regex
       return false unless string == other.string
 
-      return @ovector.memcmp(other.@ovector, (size + 1) * 2) == 0
+      return @ovector.memcmp(other.@ovector, size * 2) == 0
     end
 
     private def check_index_out_of_bounds(index)
@@ -224,11 +350,15 @@ class Regex
     end
 
     private def valid_group?(index)
-      index <= @size
+      -size <= index < size
     end
 
     private def raise_invalid_group_index(index)
       raise IndexError.new("Invalid capture group index: #{index}")
+    end
+
+    private def raise_capture_group_was_not_matched(index)
+      raise IndexError.new("Capture group #{index} was not matched")
     end
   end
 end

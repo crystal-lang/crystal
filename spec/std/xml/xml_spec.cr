@@ -315,4 +315,25 @@ describe XML do
       str.should eq("&lt; &amp; &gt;")
     end
   end
+
+  it "sets an attribute" do
+    doc = XML.parse(%{<foo />})
+    root = doc.root.not_nil!
+
+    root["bar"] = "baz"
+    root["bar"].should eq("baz")
+    root.to_s.should eq(%{<foo bar="baz"/>})
+  end
+
+  it "changes an attribute" do
+    doc = XML.parse(%{<foo bar="baz"></foo>})
+    root = doc.root.not_nil!
+
+    root["bar"] = "baz"
+    root["bar"].should eq("baz")
+    root.to_s.should eq(%{<foo bar="baz"/>})
+
+    root["bar"] = 1
+    root["bar"].should eq("1")
+  end
 end

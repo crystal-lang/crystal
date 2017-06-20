@@ -85,4 +85,14 @@ describe HTTP do
       end
     end
   end
+
+  describe ".default_status_message_for" do
+    it "returns a default message for status 200" do
+      HTTP.default_status_message_for(200).should eq("OK")
+    end
+
+    it "returns an empty string on non-existent status" do
+      HTTP.default_status_message_for(0).should eq("")
+    end
+  end
 end

@@ -194,7 +194,7 @@ class Object
   # 1.234_f64.unsafe_as(Int64) # => 4608236261112822104
   # ```
   #
-  # This method is **unsafe** becuase it behaves unpredictably when the given
+  # This method is **unsafe** because it behaves unpredictably when the given
   # `type` doesn't have the same bytesize as the receiver, or when the given
   # `type` representation doesn't semantically match the underlying bytes.
   #
