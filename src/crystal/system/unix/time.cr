@@ -27,14 +27,14 @@ module Crystal::System::Time
   end
 
   def self.compute_utc_second_and_tenth_microsecond
-    {% if flag?(:darwin) %}
-      ret = LibC.gettimeofday(out timeval, nil)
-      raise Errno.new("gettimeofday") unless ret == 0
-      {timeval.tv_sec + UnixEpochInSeconds, timeval.tv_usec.to_i64 * 10}
-    {% else %}
+    {% if LibC.methods.includes?("clock_gettime".id) %}
       ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
       raise Errno.new("clock_gettime") unless ret == 0
       {timespec.tv_sec.to_i64 + UnixEpochInSeconds, timespec.tv_nsec / 100}
+    {% else %}
+      ret = LibC.gettimeofday(out timeval, nil)
+      raise Errno.new("gettimeofday") unless ret == 0
+      {timeval.tv_sec + UnixEpochInSeconds, timeval.tv_usec.to_i64 * 10}
     {% end %}
   end
 end
