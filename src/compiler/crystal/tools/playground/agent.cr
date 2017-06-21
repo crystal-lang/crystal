@@ -59,8 +59,6 @@ class Crystal::Playground::Agent
       .pretty_inspect
       .gsub("&", "&amp;") # HTML-sanitize
       .gsub("<", "&lt;")
-      .gsub(/\n/, "<br/>")
-      .gsub(/ /, "&nbsp;")
   end
 
   private def send(message_type)
