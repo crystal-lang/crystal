@@ -25,6 +25,7 @@ class Crystal::Playground::Agent
     send "value" do |json|
       json.field "line", line
       json.field "value", safe_to_value(value)
+      json.field "html_value", safe_to_html_value(value)
       json.field "value_type", typeof(value).to_s
 
       if names && value.is_a?(Tuple)
@@ -45,8 +46,21 @@ class Crystal::Playground::Agent
     to_value(value) rescue "(error)"
   end
 
+  def safe_to_html_value(value)
+    to_html_value(value) rescue "(error)"
+  end
+
   def to_value(value)
     value.inspect
+  end
+
+  def to_html_value(value)
+    value
+      .pretty_inspect
+      .gsub("&", "&amp;") # HTML-sanitize
+      .gsub("<", "&lt;")
+      .gsub(/\n/, "<br/>")
+      .gsub(/ /, "&nbsp;")
   end
 
   private def send(message_type)
