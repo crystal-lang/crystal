@@ -2827,16 +2827,46 @@ class String
     nil
   end
 
-  def byte_index(string : String, offset = 0)
+  def byte_index(search : String, offset = 0)
     offset += bytesize if offset < 0
-    return nil if offset < 0
+    return if offset < 0
 
-    end_pos = bytesize - string.bytesize
+    return bytesize < offset ? nil : offset if search.empty?
 
-    offset.upto(end_pos) do |pos|
-      if (to_unsafe + pos).memcmp(string.to_unsafe, string.bytesize) == 0
-        return pos
+    # Rabin-Karp algorithm
+    # https://en.wikipedia.org/wiki/Rabin%E2%80%93Karp_algorithm
+
+    # calculate a rolling hash of search text (needle)
+    search_hash = 0u32
+    search.each_byte do |b|
+      search_hash = search_hash * PRIME_RK + b
+    end
+    pow = PRIME_RK ** search.bytesize
+
+    # calculate a rolling hash of this text (haystack)
+    pointer = head_pointer = to_unsafe + offset
+    hash_end_pointer = pointer + search.bytesize
+    end_pointer = to_unsafe + bytesize
+    hash = 0u32
+    return if hash_end_pointer > end_pointer
+    while pointer < hash_end_pointer
+      hash = hash * PRIME_RK + pointer.value
+      pointer += 1
+    end
+
+    while true
+      # check hash equality and real string equality
+      if hash == search_hash && head_pointer.memcmp(search.to_unsafe, search.bytesize) == 0
+        return offset
       end
+
+      return if pointer >= end_pointer
+
+      # update a rolling hash of this text (haystack)
+      hash = hash * PRIME_RK + pointer.value - pow * head_pointer.value
+      pointer += 1
+      head_pointer += 1
+      offset += 1
     end
 
     nil
