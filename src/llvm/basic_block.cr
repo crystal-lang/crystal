@@ -2,6 +2,10 @@ struct LLVM::BasicBlock
   def initialize(@unwrap : LibLLVM::BasicBlockRef)
   end
 
+  def self.null
+    LLVM::BasicBlock.new(Pointer(::Void).null.as(LibLLVM::BasicBlockRef))
+  end
+
   def instructions
     InstructionCollection.new self
   end
