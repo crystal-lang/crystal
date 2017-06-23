@@ -165,6 +165,7 @@ describe "Number" do
     ary[1].should eq(2)
     ary[2].should eq(300.to_u8)
   end
+
   it "test zero?" do
     0.zero?.should eq true
     0.0.zero?.should eq true

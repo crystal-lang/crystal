@@ -168,6 +168,7 @@ describe "Complex" do
     c = Complex.new(4, 6.2)
     c.clone.should eq(c)
   end
+
   it "test zero?" do
     Complex.new(0, 0).zero?.should eq true
     Complex.new(0, 3.4).zero?.should eq false
