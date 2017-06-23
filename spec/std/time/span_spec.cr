@@ -240,4 +240,9 @@ describe Time::Span do
   it "should sum" do
     [1.second, 5.seconds].sum.should eq(6.seconds)
   end
+
+  it "test zero?" do
+    Time::Span.new(0).zero?.should eq true
+    Time::Span.new(123456789).zero?.should eq false
+  end
 end

@@ -223,6 +223,10 @@ struct Complex
   def self.zero : Complex
     new 0, 0
   end
+
+  def zero? : Bool
+    @real == 0 && @imag == 0
+  end
 end
 
 struct Number

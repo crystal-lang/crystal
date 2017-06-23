@@ -245,6 +245,16 @@ struct Number
     self
   end
 
+  # Returns `true` if value is equal to zero.
+  #
+  # ```
+  # 0.zero? # => true
+  # 5.zero? # => false
+  # ```
+  def zero? : Bool
+    self == 0
+  end
+
   private class StepIterator(T, L, B)
     include Iterator(T)
 

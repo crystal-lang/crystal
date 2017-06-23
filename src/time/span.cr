@@ -286,6 +286,10 @@ struct Time::Span
   def self.zero
     new(0)
   end
+
+  def zero?
+    @ticks == 0
+  end
 end
 
 struct Int
