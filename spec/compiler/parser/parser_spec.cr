@@ -108,6 +108,9 @@ describe "Parser" do
   it_parses "@foo/2", Call.new("@foo".instance_var, "/", 2.int32)
   it_parses "@@foo/2", Call.new("@@foo".class_var, "/", 2.int32)
   it_parses "1+2*3", Call.new(1.int32, "+", Call.new(2.int32, "*", 3.int32))
+  it_parses "foo[] /2", Call.new(Call.new("foo".call, "[]"), "/", 2.int32)
+  it_parses "foo[1] /2", Call.new(Call.new("foo".call, "[]", 1.int32), "/", 2.int32)
+  it_parses "[1] /2", Call.new(([1.int32] of ASTNode).array, "/", 2.int32)
 
   it_parses "!1", Not.new(1.int32)
   it_parses "- 1", Call.new(1.int32, "-")
