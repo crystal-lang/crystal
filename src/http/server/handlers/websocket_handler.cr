@@ -14,7 +14,7 @@ class HTTP::WebSocketHandler
   end
 
   def call(context)
-    if context.request.headers["Upgrade"]? == "websocket" && context.request.headers.includes_word?("Connection", "Upgrade")
+    if context.request.headers["Upgrade"]?.try(&.compare("websocket", case_insensitive: true)) == 0 && context.request.headers.includes_word?("Connection", "Upgrade")
       key = context.request.headers["Sec-Websocket-Key"]
 
       accept_code =
