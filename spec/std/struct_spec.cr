@@ -42,11 +42,15 @@ describe "Struct" do
 
   it "does hash" do
     s = StructSpec::TestClass.new(1, "hello")
-    s.hash.should eq(31 + "hello".hash)
+    h = StdHasher.build do |b|
+      b << 1
+      b << "hello"
+    end
+    s.hash.should eq(h)
   end
 
   it "does hash for struct wrapper (#1940)" do
-    StructSpec::BigIntWrapper.new(BigInt.new(0)).hash.should eq(0)
+    StructSpec::BigIntWrapper.new(BigInt.new(0)).hash.should eq(BigInt.new(0).hash)
   end
 
   it "does dup" do

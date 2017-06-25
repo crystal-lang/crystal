@@ -310,11 +310,18 @@ struct Tuple
   #
   # See also: `Object#hash`.
   def hash
-    hash = 31 * size
-    {% for i in 0...T.size %}
-      hash = 31 * hash + self[{{i}}].hash
+    {% if T.size == 1 %}
+      self[0].hash
+    {% else %}
+      StdHasher.hashit self
     {% end %}
-    hash
+  end
+
+  # Protocol method for generic hashing
+  def hashme(hasher)
+    {% for i in 0...T.size %}
+      hasher << self[{{i}}]
+    {% end %}
   end
 
   # Returns a tuple containing cloned elements of this tuple using the `clone` method.

@@ -143,6 +143,10 @@ struct BigRational < Number
     to_f64.hash
   end
 
+  def hashme(h)
+    h << to_f64
+  end
+
   # Returns the `Float64` representing this rational.
   def to_f
     to_f64

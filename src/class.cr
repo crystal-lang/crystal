@@ -4,7 +4,11 @@ class Class
   end
 
   def hash
-    crystal_type_id
+    crystal_type_id.hash
+  end
+
+  def hashme(hasher)
+    hasher << crystal_type_id
   end
 
   def ==(other : Class)

@@ -275,8 +275,16 @@ struct Enum
   end
 
   # Returns a hash value. This is the hash of the underlying value.
+  # Enum hash is exception from random seeding, cause several Hashes are
+  # initialized on very early stages of bootstrap, and StdHasher seed is not
+  # filled yet.
   def hash
-    value.hash
+    StdHasher.unseeded value
+  end
+
+  # Protocol method for safe hashing.
+  def hashme(hasher)
+    hasher << value
   end
 
   # Iterates each values in a Flags Enum.

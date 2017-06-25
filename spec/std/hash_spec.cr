@@ -146,7 +146,12 @@ describe "Hash" do
     end
 
     it "works with mixed types" do
-      {1 => :a, "a" => 1, 1.0 => "a", :a => 1.0}.values_at(1, "a", 1.0, :a).should eq({:a, 1, "a", 1.0})
+      {1 => :a, "a" => 1, 2.0 => "a", :a => 1.0}.values_at(1, 2, "a", 1.0, 2.0, :a).should eq({:a, "a", 1, :a, "a", 1.0})
+      # following line test is broken: 1==1.0,
+      # and if it maps to same bucket, then they collapse.
+      # ruby distinguish them by hash value, but still there could be collapse
+      # with probability 1/(2**64).
+      # {1 => :a, "a" => 1, 1.0 => "a", :a => 1.0}.values_at(1, "a", 1.0, :a).should eq({:a, 1, "a", 1.0})
     end
   end
 

@@ -3902,12 +3902,8 @@ class String
   # Returns a hash based on this string’s size and content.
   #
   # See also: `Object#hash`.
-  def hash
-    h = 0
-    each_byte do |c|
-      h = 31 * h + c
-    end
-    h
+  def hashme(hasher)
+    hasher << to_slice
   end
 
   # Returns the number of unicode codepoints in this string.

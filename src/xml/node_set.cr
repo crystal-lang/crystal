@@ -28,8 +28,8 @@ struct XML::NodeSet
     size == 0
   end
 
-  def hash
-    object_id
+  def hashme(hasher)
+    hasher << object_id
   end
 
   def inspect(io)

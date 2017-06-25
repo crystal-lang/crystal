@@ -710,14 +710,17 @@ class Hash(K, V)
   #
   # ```
   # foo = {"foo" => "bar"}
-  # foo.hash # => 3247054
+  # foo.hash # => 3247054 (not exactly)
   # ```
-  def hash
-    hash = size
+  def hashme(hasher)
+    hasher << size
+    dgst = hasher.digest
     each do |key, value|
-      hash += key.hash ^ value.hash
+      dgst += hasher.clone_build do |hh|
+        hh << key << value
+      end
     end
-    hash
+    hasher << dgst
   end
 
   # Duplicates a `Hash`.

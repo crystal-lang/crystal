@@ -73,12 +73,19 @@ struct Struct
   # Returns a hash value based on this struct's instance variables hash values.
   #
   # See also: `Object#hash`
-  def hash : Int32
-    hash = 0
-    {% for ivar in @type.instance_vars %}
-      hash = 31 * hash + @{{ivar.id}}.hash.to_i32
+  def hash
+    {% if @type.instance_vars.size == 1 %}
+      @{{@type.instance_vars[0].id}}.hash
+    {% else %}
+      StdHasher.hashit self
     {% end %}
-    hash
+  end
+
+  # Protocol method for generic hashing
+  def hashme(hasher)
+    {% for ivar in @type.instance_vars %}
+      hasher << @{{ivar.id}}
+    {% end %}
   end
 
   # Appends this struct's name and instance variables names and values

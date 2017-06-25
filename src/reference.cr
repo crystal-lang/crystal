@@ -51,8 +51,8 @@ class Reference
   end
 
   # Returns this reference's `object_id` as the hash value.
-  def hash
-    object_id
+  def hashme(hasher)
+    hasher << object_id
   end
 
   def inspect(io : IO) : Nil

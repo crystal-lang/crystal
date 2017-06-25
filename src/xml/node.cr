@@ -160,8 +160,8 @@ struct XML::Node
   end
 
   # Returns this node's `#object_id` as the hash value.
-  def hash
-    object_id
+  def hashme(hasher)
+    hasher << object_id
   end
 
   # Returns the content for this Node.

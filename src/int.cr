@@ -317,7 +317,15 @@ struct Int
   end
 
   def hash
-    self
+    if self.is_a? Primitive
+      StdHasher.fasthash self
+    else
+      raise "Int#hash should be overloaded in proper way"
+    end
+  end
+
+  def hashme(hasher)
+    hasher << self
   end
 
   def succ

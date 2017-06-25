@@ -287,8 +287,7 @@ describe "BigInt" do
 
   it "#hash" do
     hash = 5.to_big_i.hash
-    hash.should eq(5)
-    typeof(hash).should eq(UInt64)
+    hash.should eq(5.hash)
   end
 
   it "clones" do

@@ -148,8 +148,17 @@ struct Float32
     Printer.print(self, io)
   end
 
+  private def hash_normalize
+    t = to_i32
+    t == self ? t : unsafe_as(Int32)
+  end
+
   def hash
-    unsafe_as(Int32)
+    hash_normalize.hash
+  end
+
+  def hashme(h)
+    h << hash_normalize
   end
 
   def clone
@@ -206,8 +215,17 @@ struct Float64
     Printer.print(self, io)
   end
 
+  private def hash_normalize
+    t = to_i64
+    t == self ? t : unsafe_as(Int64)
+  end
+
   def hash
-    unsafe_as(Int64)
+    hash_normalize.hash
+  end
+
+  def hashme(h)
+    h << hash_normalize
   end
 
   def clone

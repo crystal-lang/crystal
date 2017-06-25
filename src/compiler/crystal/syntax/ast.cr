@@ -1178,6 +1178,10 @@ module Crystal
     def hash
       0
     end
+
+    def hashme(hasher)
+      hasher << 0
+    end
   end
 
   # A qualified identifier.
@@ -1547,6 +1551,10 @@ module Crystal
 
     def hash
       0
+    end
+
+    def hashme(hasher)
+      hasher << 0
     end
   end
 
@@ -2027,6 +2035,10 @@ module Crystal
 
     def hash
       0
+    end
+
+    def hashme(hasher)
+      hasher << 0
     end
   end
 

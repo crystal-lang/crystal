@@ -267,8 +267,22 @@ struct BigInt < Int
     to_s io
   end
 
+  private def hash_normalize
+    if self == to_i64
+      to_i64
+    elsif self == to_u64
+      to_u64
+    else
+      (self % 0x7fffffffffffffe7_i64).to_i64
+    end
+  end
+
   def hash
-    to_u64
+    hash_normalize.hash
+  end
+
+  def hashme(h)
+    h << hash_normalize
   end
 
   # Returns a string representation of self.

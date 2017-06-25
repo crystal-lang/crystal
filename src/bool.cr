@@ -46,6 +46,10 @@ struct Bool
     self ? 1 : 0
   end
 
+  def hashme(hasher)
+    hasher << (self ? 1 : 0)
+  end
+
   # Returns `"true"` for `true` and `"false"` for `false`.
   def to_s
     self ? "true" : "false"

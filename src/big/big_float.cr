@@ -39,6 +39,10 @@ struct BigFloat < Float
     to_f64.hash
   end
 
+  def hashme(h)
+    h << to_f64
+  end
+
   def self.default_precision
     LibGMP.mpf_get_default_prec
   end

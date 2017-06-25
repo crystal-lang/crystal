@@ -48,6 +48,11 @@ class Thread
     end
   end
 
+  # override, cause StdHasher's seed is not initialized yet
+  def hash
+    StdHasher.unseeded object_id
+  end
+
   # All threads, so the GC can see them (GC doesn't scan thread locals)
   # and we can find the current thread on platforms that don't support
   # thread local storage (eg: OpenBSD)

@@ -308,10 +308,6 @@ struct Set(T)
     pp.list("Set{", self, "}")
   end
 
-  def hash
-    @hash.hash
-  end
-
   # Returns `true` if the set and the given set have at least one element in
   # common.
   #

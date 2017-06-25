@@ -4,8 +4,8 @@ struct XML::Namespace
   def initialize(@document : Node, @ns : LibXML::NS*)
   end
 
-  def hash
-    object_id
+  def hashme(hasher)
+    hasher << object_id
   end
 
   def href

@@ -10,12 +10,19 @@ struct HTTP::Headers
     forward_missing_to @name
 
     def hash
-      h = 0
+      StdHasher.hashit self
+    end
+
+    def hashme(h)
+      v = 0_u32
       name.each_byte do |c|
-        c = normalize_byte(c)
-        h = 31 * h + c
+        v = (v<<8) | normalize_byte(c).to_u32
+        if v >= 0x1000000_u32
+          h << v
+          v = 0_u32
+        end
       end
-      h
+      h << v if v != 0_u32
     end
 
     def ==(key2)
