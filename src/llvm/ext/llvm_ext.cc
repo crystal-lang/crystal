@@ -48,6 +48,9 @@ template <typename T> T *unwrapDIptr(LLVMMetadataRef v) {
 }
 #endif /* LLVM <= 3.6 */
 
+#if LLVM_VERSION_LE(3, 6)
+#define OperandBundleDef void
+#endif
 
 #define DIDescriptor DIScope
 #define unwrapDI unwrapDIptr
