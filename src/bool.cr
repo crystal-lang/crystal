@@ -41,9 +41,10 @@ struct Bool
     self != other
   end
 
-  # Returns a hash value for this boolean: 0 for `false`, 1 for `true`.
-  def hash
-    self ? 1 : 0
+  # Protocol method for generic hashing.
+  def hash(hasher)
+    hasher << (self ? 1 : 0)
+    hasher
   end
 
   # Returns `"true"` for `true` and `"false"` for `false`.

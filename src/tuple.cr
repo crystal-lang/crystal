@@ -307,15 +307,12 @@ struct Tuple
     size <=> other.size
   end
 
-  # Returns a hash value based on this tuple's length and contents.
-  #
-  # See also: `Object#hash`.
-  def hash
-    hash = 31 * size
+  # Protocol method for generic hashing.
+  def hash(hasher)
     {% for i in 0...T.size %}
-      hash = 31 * hash + self[{{i}}].hash
+      hasher << self[{{i}}]
     {% end %}
-    hash
+    hasher
   end
 
   # Returns a tuple containing cloned elements of this tuple using the `clone` method.

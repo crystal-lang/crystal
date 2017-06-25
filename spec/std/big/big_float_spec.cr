@@ -165,8 +165,26 @@ describe "BigFloat" do
   end
 
   it "#hash" do
-    b = 123.to_big_f
-    b.hash.should eq(b.to_f64.hash)
+    big_float = 123.to_big_f
+    big_float.hash.should eq(123.hash)
+    big_float.hash.should eq(big_float.to_f64.hash)
+
+    big_integer = "123456789012345678901".to_big_i
+    big_float = big_integer.to_big_f
+    big_float.should eq(big_integer)
+    big_float.hash_normalize.should eq(big_integer.hash_normalize)
+    big_float.hash.should eq(big_integer.hash)
+
+    float = 123.06125
+    big_float = float.to_big_f
+    big_float.hash.should eq(float.hash)
+
+    big_float = 1.to_big_f
+    big_float = big_float * 0x80000000 * 0x80000000 * 0x80000000
+    float = 1.0_f64
+    float = float * 0x80000000 * 0x80000000 * 0x80000000
+    big_float.hash_normalize.should eq(float.hash_normalize)
+    big_float.hash.should eq(float.hash)
   end
 
   it "clones" do

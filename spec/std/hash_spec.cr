@@ -145,8 +145,8 @@ describe "Hash" do
       end
     end
 
-    it "works with mixed types" do
-      {1 => :a, "a" => 1, 1.0 => "a", :a => 1.0}.values_at(1, "a", 1.0, :a).should eq({:a, 1, "a", 1.0})
+    it "works with mixed types and normalized numbers" do
+      {1 => :a, "a" => 1, 2.0 => "a", :a => 1.0}.values_at(1, 2, "a", 1.0, 2.0, :a).should eq({:a, "a", 1, :a, "a", 1.0})
     end
   end
 

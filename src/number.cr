@@ -1,3 +1,5 @@
+require "./number/hash_normalize"
+
 # The top-level number type.
 struct Number
   include Comparable(Number)
@@ -253,6 +255,22 @@ struct Number
   # ```
   def zero? : Bool
     self == 0
+  end
+
+  include Number::HashNormalize
+
+  # Protocol method for generic hashing
+  # All number types should define `hash_normalize`, so equal number will
+  # produce equal normalized value.
+  # Integer numbers should calculate `self.remainder(HASH_MODULUS)`
+  # Float64 and Float32 version generalize it for numbers with fractional part.
+  # BigFloat and BigRational should calculate it as equivalent to
+  # `(v.remainder HASH_MODULUS).to_f.hash_normalize`, though more precise
+  # calculation used.
+  # See comments in "number/hash_normalize.cr"
+  def hash(hasher)
+    hasher.raw hash_normalize.to_i64
+    hasher
   end
 
   private class StepIterator(T, L, B)

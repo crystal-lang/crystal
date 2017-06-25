@@ -64,7 +64,29 @@ class Object
   #
   # The hash value is used along with `==` by the `Hash` class to determine if two objects
   # reference the same hash key.
-  abstract def hash
+  def hash
+    Hash::Hasher.hashit self
+  end
+
+  # Protocol method for generic hashing.
+  #
+  # You should use `hasher << @v` for mixing values. It will recursively call
+  # `hash(hasher)` on values. `hash(hasher)` on numbers defined to generate
+  # same hash value for equal number of different types. For performance sake
+  # use `hasher.raw @v` if you want mix integer as abstract value and not as a
+  # number.
+  #
+  # Cause hasher could be a struct, `hash(hasher)` have to return hasher.
+  # Also, `hasher.<<` method is not chainable, unlike other `<<` methods.
+  #
+  #    def hash(hasher)
+  #      hasher.raw @size
+  #      each do |elem|
+  #        hasher << elem
+  #      end
+  #      hasher
+  #    end
+  abstract def hash(hasher)
 
   # Returns a string representation of this object.
   #
@@ -1078,7 +1100,7 @@ class Object
     {% end %}
   end
 
-  # Defines a `hash` method computed from the given fields.
+  # Defines a `hash(hasher)` method computed from the given fields.
   #
   # ```
   # class Person
@@ -1090,16 +1112,11 @@ class Object
   # end
   # ```
   macro def_hash(*fields)
-    def hash
-      {% if fields.size == 1 %}
-        {{fields[0]}}.hash
-      {% else %}
-        hash = 0
-        {% for field in fields %}
-          hash = 31 * hash + {{field}}.hash
-        {% end %}
-        hash
+    def hash(hasher)
+      {% for field in fields %}
+        hasher << {{field}}
       {% end %}
+      hasher
     end
   end
 

@@ -67,9 +67,10 @@ struct Nil
     false
   end
 
-  # Returns `0`.
-  def hash
-    0
+  # Protocol method for generic hashing.
+  def hash(hasher)
+    hasher << nil
+    hasher
   end
 
   # Returns an empty string.

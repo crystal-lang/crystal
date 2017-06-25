@@ -262,11 +262,6 @@ struct JSON::Any
   end
 
   # :nodoc:
-  def hash
-    raw.hash
-  end
-
-  # :nodoc:
   def to_json(json : JSON::Builder)
     raw.to_json(json)
   end

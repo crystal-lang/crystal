@@ -176,7 +176,7 @@ describe Time::Span do
   end
 
   it "test hash code" do
-    Time::Span.new(77).hash.should eq(77)
+    Time::Span.new(77).hash.should eq(77.hash)
   end
 
   it "test subtract" do

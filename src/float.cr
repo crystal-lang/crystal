@@ -1,6 +1,7 @@
 require "c/stdio"
 require "c/string"
 require "./float/printer"
+require "./number/hash_normalize"
 
 # Float is the base type of all floating point numbers.
 #
@@ -153,12 +154,34 @@ struct Float32
     io << "_f32"
   end
 
-  def hash
-    unsafe_as(Int32)
-  end
-
   def clone
     self
+  end
+
+  include Number::HashNormalize
+
+  def hash_normalize
+    float_normalize_wrap do
+      # Reference implementation:
+      # ```
+      # frac, exp = Math.frexp self
+      # float_normalize_reference(frac, exp)
+      # ```
+      # This optimized version works on every architecture where endianess
+      # of Float32 and Int32 matches and float is IEEE754. All supported
+      # architectures fall into this category.
+      unsafe_int = unsafe_as(Int32)
+      exp = (((unsafe_int >> 23) & 0xff) - 127)
+      mantissa = unsafe_int & ((1 << 23) - 1)
+      if exp > -127
+        exp -= 23
+        mantissa |= 1 << 23
+      else
+        # subnormals
+        exp -= 22
+      end
+      {int_to_hashnorm(mantissa), exp}
+    end
   end
 end
 
@@ -211,11 +234,34 @@ struct Float64
     Printer.print(self, io)
   end
 
-  def hash
-    unsafe_as(Int64)
-  end
-
   def clone
     self
+  end
+
+  include Number::HashNormalize
+
+  def hash_normalize
+    float_normalize_wrap do
+      # Reference implementation:
+      # ```
+      # frac, exp = Math.frexp self
+      # float_normalize_reference(frac, exp)
+      # ```
+      # This optimized version works on every architecture where endianess
+      # of Float64 and Int64 matches and float is IEEE754. All supported
+      # architectures fall into this category.
+      unsafe_int = unsafe_as(Int64)
+      exp = (((unsafe_int >> 52) & 0x7ff) - 1023)
+      mantissa = unsafe_int & ((1_u64 << 52) - 1)
+      if exp > -1023
+        exp -= 52
+        mantissa |= 1_u64 << 52
+      else
+        # subnormals
+        exp -= 51
+      end
+
+      {int_to_hashnorm(mantissa), exp}
+    end
   end
 end

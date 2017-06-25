@@ -50,9 +50,10 @@ class Reference
     {% end %}
   end
 
-  # Returns this reference's `object_id` as the hash value.
-  def hash
-    object_id
+  # Protocol method for generic hashing.
+  def hash(hasher)
+    hasher.raw object_id
+    hasher
   end
 
   def inspect(io : IO) : Nil

@@ -141,6 +141,17 @@ enum Signal
     Signal::PIPE.ignore
     Signal::CHLD.reset
   end
+
+  # There is no much of signals, so don't bother with hashing.
+  # And we couldn't use seeded hash, because seed is not filled yet.
+  # :nodoc:
+  def hash
+    value
+  end
+
+  def hash(hasher)
+    hasher.raw value
+  end
 end
 
 # :nodoc:

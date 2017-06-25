@@ -3,8 +3,9 @@ class Class
     to_s(io)
   end
 
-  def hash
-    crystal_type_id
+  def hash(hasher)
+    hasher.raw(crystal_type_id)
+    hasher
   end
 
   def ==(other : Class)

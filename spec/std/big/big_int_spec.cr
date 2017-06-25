@@ -325,12 +325,35 @@ describe "BigInt" do
 
   it "#hash" do
     hash = 5.to_big_i.hash
-    hash.should eq(5)
-    typeof(hash).should eq(UInt64)
+    hash.should eq(5.hash)
+  end
+
+  it "#hash_normalize" do
+    hn = 5.to_big_i.hash_normalize
+    hn.should eq(5.hash_normalize)
+    hn = (-5).to_big_i.hash_normalize
+    hn.should eq((-5).hash_normalize)
+    hn = 500000000000000_u64.to_big_i.hash_normalize
+    hn.should eq(500000000000000_u64.hash_normalize)
+    hn = (-500000000000000_i64).to_big_i.hash_normalize
+    hn.should eq((-500000000000000_i64).hash_normalize)
+
+    bi = 1.to_big_i
+    bi = bi << 93
+    f = 1.0_f64
+    f = f * 0x80000000 * 0x80000000 * 0x80000000
+    bi.hash_normalize.should eq(f.hash_normalize)
+    (-bi).hash_normalize.should eq((-f).hash_normalize)
   end
 
   it "clones" do
     x = 1.to_big_i
     x.clone.should eq(x)
+  end
+
+  it "#to_big_f" do
+    s = "123456789012345678901"
+    x = BigInt.new(s)
+    x.to_big_f.should eq BigFloat.new(s)
   end
 end

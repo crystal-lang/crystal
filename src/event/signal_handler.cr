@@ -1,5 +1,6 @@
 require "c/signal"
 require "c/unistd"
+require "signal"
 
 # :nodoc:
 # Singleton that runs Signal events (libevent2) in it's own Fiber.

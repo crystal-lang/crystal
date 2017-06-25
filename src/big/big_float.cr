@@ -76,8 +76,19 @@ struct BigFloat < Float
     new(mpf)
   end
 
-  def hash
-    to_f64.hash
+  def hash_normalize
+    # more exact version of `remainder(HASH_MODULUS).to_f.hash_normalize`
+    LibGMP.mpf_get_d_2exp(out exp, self)
+    frac = BigFloat.new { |mpf|
+      if exp >= 0
+        LibGMP.mpf_div_2exp(mpf, self, exp)
+      else
+        LibGMP.mpf_mul_2exp(mpf, self, -exp)
+      end
+    }
+    float_normalize_wrap do
+      float_normalize_reference(frac, exp)
+    end
   end
 
   def self.default_precision
