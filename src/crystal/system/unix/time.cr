@@ -4,7 +4,7 @@ require "c/time"
 module Crystal::System::Time
   UnixEpochInSeconds = 62135596800_i64
 
-  def self.compute_utc_offset(seconds)
+  def self.compute_utc_offset(seconds : Int64) : Int64
     LibC.tzset
     offset = nil
 
@@ -26,7 +26,7 @@ module Crystal::System::Time
     offset
   end
 
-  def self.compute_utc_second_and_tenth_microsecond
+  def self.compute_utc_second_and_tenth_microsecond : {Int64, Int64}
     {% if LibC.methods.includes?("clock_gettime".id) %}
       ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
       raise Errno.new("clock_gettime") unless ret == 0
@@ -34,7 +34,7 @@ module Crystal::System::Time
     {% else %}
       ret = LibC.gettimeofday(out timeval, nil)
       raise Errno.new("gettimeofday") unless ret == 0
-      {timeval.tv_sec + UnixEpochInSeconds, timeval.tv_usec.to_i64 * 10}
+      {timeval.tv_sec.to_i64 + UnixEpochInSeconds, timeval.tv_usec.to_i64 * 10}
     {% end %}
   end
 end
