@@ -242,7 +242,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memcpy(self.as(Void*), source.as(Void*), Intrinsics::SizeT.new(count * sizeof(T)), 0_u32, false)
+      Intrinsics.memcpy(self.as(Void*), source.as(Void*), Intrinsics::SizeT.new(count) * sizeof(T), 0_u32, false)
     else
       while (count -= 1) >= 0
         self[count] = source[count]
@@ -255,7 +255,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memmove(self.as(Void*), source.as(Void*), Intrinsics::SizeT.new(count * sizeof(T)), 0_u32, false)
+      Intrinsics.memmove(self.as(Void*), source.as(Void*), Intrinsics::SizeT.new(count) * sizeof(T), 0_u32, false)
     else
       if source.address < address
         copy_from source, count
@@ -282,7 +282,7 @@ struct Pointer(T)
   # ptr1.memcmp(ptr1, 4) # => 0
   # ```
   def memcmp(other : Pointer(T), count : Int)
-    LibC.memcmp(self.as(Void*), (other.as(Void*)), LibC::SizeT.new(count * sizeof(T)))
+    LibC.memcmp(self.as(Void*), (other.as(Void*)), LibC::SizeT.new(count) * sizeof(T))
   end
 
   # Swaps the contents pointed at the offsets *i* and *j*.
@@ -496,7 +496,7 @@ struct Pointer(T)
   # ```
   def clear(count = 1)
     ptr = self.as(Pointer(Void))
-    Intrinsics.memset(self.as(Void*), 0_u8, Intrinsics::SizeT.new(count * sizeof(T)), 0_u32, false)
+    Intrinsics.memset(self.as(Void*), 0_u8, Intrinsics::SizeT.new(count) * sizeof(T), 0_u32, false)
   end
 
   def clone
