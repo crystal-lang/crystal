@@ -9,7 +9,7 @@
 # ### Example: compress a file
 #
 # ```
-# require "zlib"
+# require "gzip"
 #
 # File.write("file.txt", "abc")
 #
