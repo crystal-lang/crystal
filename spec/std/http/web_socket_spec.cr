@@ -374,4 +374,5 @@ describe HTTP::WebSocket do
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost")))
   typeof(HTTP::WebSocket.new("localhost", "/"))
   typeof(HTTP::WebSocket.new("ws://localhost"))
+  typeof(HTTP::WebSocket.new(URI.parse("ws://localhost"), headers: HTTP::Headers{"X-TEST_HEADER" => "some-text"}))
 end
