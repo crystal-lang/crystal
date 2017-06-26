@@ -6,7 +6,6 @@ module Number::Hasher
   private HASH_INFINITY = 314159
   private HASH_BITS     =     31 # sizeof(Hashing::Type) >= 8 ? 61 : 31
   private HASH_MODULUS  = (1 << HASH_BITS) - 1
-  private U32_MINUS_ONE = -1.unsafe_as(UInt32)
 
   # For numeric types, the hash of a number x is based on the reduction
   # of x modulo the prime P = 2**HASH_BITS - 1.  It's designed so that
@@ -50,9 +49,9 @@ module Number::Hasher
       return self > 0 ? +HASH_INFINITY : -HASH_INFINITY
     end
     frac, exp = Math.frexp self
-    sign = 1u32
+    sign = 1
     if self < 0
-      sign = U32_MINUS_ONE
+      sign = -1
       frac = -frac
     end
     # process 28 bits at a time;  this should work well both for binary
@@ -71,8 +70,6 @@ module Number::Hasher
     exp = exp >= 0 ? exp % HASH_BITS : HASH_BITS - 1 - ((-1 - exp) % HASH_BITS)
     x = ((x << exp) & HASH_MODULUS) | x >> (HASH_BITS - exp)
 
-    x = x * sign
-    return -2 if x == U32_MINUS_ONE
-    x.unsafe_as(Int32)
+    x.unsafe_as(Int32) * sign
   end
 end
