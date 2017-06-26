@@ -78,7 +78,7 @@ struct Pointer(T)
   # ptr2.address # => 1238
   # ```
   def +(other : Int)
-    self + other.to_i64
+    self + LibC::PtrdiffT.new(other)
   end
 
   # Returns a new pointer whose address is this pointer's address decremented by `other * sizeof(T)`.
@@ -242,7 +242,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memcpy(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
+      Intrinsics.memcpy(self.as(Void*), source.as(Void*), Intrinsics::SizeT.new(count * sizeof(T)), 0_u32, false)
     else
       while (count -= 1) >= 0
         self[count] = source[count]
@@ -255,7 +255,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memmove(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
+      Intrinsics.memmove(self.as(Void*), source.as(Void*), Intrinsics::SizeT.new(count * sizeof(T)), 0_u32, false)
     else
       if source.address < address
         copy_from source, count
@@ -282,7 +282,7 @@ struct Pointer(T)
   # ptr1.memcmp(ptr1, 4) # => 0
   # ```
   def memcmp(other : Pointer(T), count : Int)
-    LibC.memcmp(self.as(Void*), (other.as(Void*)), (count * sizeof(T)))
+    LibC.memcmp(self.as(Void*), (other.as(Void*)), LibC::SizeT.new(count * sizeof(T)))
   end
 
   # Swaps the contents pointed at the offsets *i* and *j*.
@@ -345,7 +345,7 @@ struct Pointer(T)
   # ptr # [1, 2, 3, 4, 0, 0, 0, 0]
   # ```
   def realloc(size : Int)
-    realloc(size.to_u64)
+    realloc(LibC::SizeT.new(size))
   end
 
   # Shuffles *count* consecutive values pointed by this pointer.
@@ -395,7 +395,7 @@ struct Pointer(T)
   # ptr.address # => 0
   # ```
   def self.null
-    new 0_u64
+    new LibC::SizeT.new(0)
   end
 
   # Returns a pointer that points to the given memory address. This doesn't allocate memory.
@@ -405,7 +405,7 @@ struct Pointer(T)
   # ptr.address # => 5678
   # ```
   def self.new(address : Int)
-    new address.to_u64
+    new LibC::SizeT.new(address)
   end
 
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized
@@ -429,7 +429,7 @@ struct Pointer(T)
       raise ArgumentError.new("Negative Pointer#malloc size")
     end
 
-    malloc(size.to_u64)
+    malloc(LibC::SizeT.new(size))
   end
 
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized
@@ -496,7 +496,7 @@ struct Pointer(T)
   # ```
   def clear(count = 1)
     ptr = self.as(Pointer(Void))
-    Intrinsics.memset(self.as(Void*), 0_u8, (count * sizeof(T)).to_u32, 0_u32, false)
+    Intrinsics.memset(self.as(Void*), 0_u8, Intrinsics::SizeT.new(count * sizeof(T)), 0_u32, false)
   end
 
   def clone
