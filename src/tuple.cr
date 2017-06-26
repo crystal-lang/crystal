@@ -309,16 +309,9 @@ struct Tuple
   # Returns a hash value based on this tuple's length and contents.
   #
   # See also: `Object#hash`.
-  def hash
-    {% if T.size == 1 %}
-      self[0].hash
-    {% else %}
-      StdHasher.hashit self
-    {% end %}
-  end
-
+  #
   # Protocol method for generic hashing
-  def hashme(hasher)
+  def hash(hasher)
     {% for i in 0...T.size %}
       hasher << self[{{i}}]
     {% end %}

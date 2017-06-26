@@ -1175,11 +1175,7 @@ module Crystal
       self
     end
 
-    def hash
-      0
-    end
-
-    def hashme(hasher)
+    def hash(hasher)
       hasher << 0
     end
   end
@@ -1549,11 +1545,7 @@ module Crystal
       Self.new
     end
 
-    def hash
-      0
-    end
-
-    def hashme(hasher)
+    def hash(hasher)
       hasher << 0
     end
   end
@@ -2033,11 +2025,7 @@ module Crystal
       Underscore.new
     end
 
-    def hash
-      0
-    end
-
-    def hashme(hasher)
+    def hash(hasher)
       hasher << 0
     end
   end

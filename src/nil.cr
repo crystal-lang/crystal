@@ -68,7 +68,7 @@ struct Nil
   end
 
   # Returns `0`.
-  def hashme(hasher)
+  def hash(hasher)
     hasher << nil
   end
 

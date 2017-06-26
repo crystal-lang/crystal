@@ -162,7 +162,7 @@ struct NamedTuple
   # Protocol method for generic hashing. Mixes tuple's size, keys and values
   #
   # See also: `Object#hash`.
-  def hashme(hasher)
+  def hash(hasher)
     hasher << size
     {% for key in T.keys.sort %}
       hasher << {{key.symbolize}}

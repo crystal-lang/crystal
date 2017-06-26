@@ -712,7 +712,7 @@ class Hash(K, V)
   # foo = {"foo" => "bar"}
   # foo.hash # => 3247054 (not exactly)
   # ```
-  def hashme(hasher)
+  def hash(hasher)
     hasher << size
     dgst = hasher.digest
     each do |key, value|

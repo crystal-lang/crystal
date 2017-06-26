@@ -181,7 +181,7 @@ struct Proc
     call(other)
   end
 
-  def hashme(h)
+  def hash(h)
     h << internal_representation
   end
 

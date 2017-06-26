@@ -3,11 +3,7 @@ class Class
     to_s(io)
   end
 
-  def hash
-    crystal_type_id.hash
-  end
-
-  def hashme(hasher)
+  def hash(hasher)
     hasher << crystal_type_id
   end
 

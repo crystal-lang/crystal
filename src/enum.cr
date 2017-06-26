@@ -283,7 +283,7 @@ struct Enum
   end
 
   # Protocol method for safe hashing.
-  def hashme(hasher)
+  def hash(hasher)
     hasher << value
   end
 

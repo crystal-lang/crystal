@@ -3902,7 +3902,7 @@ class String
   # Returns a hash based on this string’s size and content.
   #
   # See also: `Object#hash`.
-  def hashme(hasher)
+  def hash(hasher)
     hasher << to_slice
   end
 

@@ -35,11 +35,7 @@ struct BigFloat < Float
     new(mpf)
   end
 
-  def hash
-    to_f64.hash
-  end
-
-  def hashme(h)
+  def hash(h)
     h << to_f64
   end
 

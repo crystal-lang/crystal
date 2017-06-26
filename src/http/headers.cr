@@ -9,20 +9,20 @@ struct HTTP::Headers
   record Key, name : String do
     forward_missing_to @name
 
-    def hash
-      StdHasher.hashit self
-    end
-
-    def hashme(h)
+    def hash(h)
       v = 0_u32
+      c = 0
       name.each_byte do |c|
-        v = (v<<8) | normalize_byte(c).to_u32
-        if v >= 0x1000000_u32
+        v |= normalize_byte(c).to_u32 << (c*8)
+        if c == 3
           h << v
           v = 0_u32
+          c = 0
+        else
+          c += 1
         end
       end
-      h << v if v != 0_u32
+      h << v if c != 0
     end
 
     def ==(key2)

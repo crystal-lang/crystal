@@ -277,11 +277,7 @@ struct BigInt < Int
     end
   end
 
-  def hash
-    hash_normalize.hash
-  end
-
-  def hashme(h)
+  def hash(h)
     h << hash_normalize
   end
 

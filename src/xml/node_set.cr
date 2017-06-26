@@ -28,7 +28,7 @@ struct XML::NodeSet
     size == 0
   end
 
-  def hashme(hasher)
+  def hash(hasher)
     hasher << object_id
   end
 

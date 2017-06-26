@@ -18,12 +18,9 @@ struct Symbol
   # Generates an `Int32` hash value for this symbol.
   #
   # See also: `Object#hash`.
-  def hash
-    StdHasher.fasthash to_i
-  end
 
   # Protocol method for safe hashing
-  def hashme(hasher)
+  def hash(hasher)
     hasher << to_i
   end
 

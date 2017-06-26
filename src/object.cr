@@ -64,13 +64,12 @@ class Object
   #
   # The hash value is used along with `==` by the `Hash` class to determine if two objects
   # reference the same hash key.
-  abstract def hash
   def hash
     StdHasher.hashit self
   end
 
   # Protocol method for safe hashing
-  abstract def hashme(hasher)
+  abstract def hash(hasher)
 
   # Returns a string representation of this object.
   #
@@ -1096,15 +1095,7 @@ class Object
   # end
   # ```
   macro def_hash(*fields)
-    def hash
-      {% if fields.size == 1 %}
-        {{fields[0]}}.hash
-      {% else %}
-        StdHasher.hashit self
-      {% end %}
-    end
-
-    def hashme(hasher)
+    def hash(hasher)
       {% for field in fields %}
         hasher << {{field}}
       {% end %}

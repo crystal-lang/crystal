@@ -119,11 +119,7 @@ struct StdHasher
   end
 
   def <<(v)
-    if v.responds_to?(:hashme)
-      v.hashme(self)
-    else
-      self << v.hash
-    end
+    v.hash(self)
     self
   end
 

@@ -153,11 +153,7 @@ struct Float32
     t == self ? t : unsafe_as(Int32)
   end
 
-  def hash
-    hash_normalize.hash
-  end
-
-  def hashme(h)
+  def hash(h)
     h << hash_normalize
   end
 
@@ -220,11 +216,7 @@ struct Float64
     t == self ? t : unsafe_as(Int64)
   end
 
-  def hash
-    hash_normalize.hash
-  end
-
-  def hashme(h)
+  def hash(h)
     h << hash_normalize
   end
 
