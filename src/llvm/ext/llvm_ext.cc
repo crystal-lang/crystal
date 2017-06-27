@@ -48,6 +48,9 @@ template <typename T> T *unwrapDIptr(LLVMMetadataRef v) {
 }
 #endif /* LLVM <= 3.6 */
 
+#if LLVM_VERSION_LE(3, 6)
+#define OperandBundleDef void
+#endif
 
 #define DIDescriptor DIScope
 #define unwrapDI unwrapDIptr
@@ -497,6 +500,92 @@ void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering)
   if (LoadInst *LI = dyn_cast<LoadInst>(P))
     return LI->setOrdering(O);
   return cast<StoreInst>(P)->setOrdering(O);
+}
+
+LLVMValueRef LLVMExtBuildCatchPad(LLVMBuilderRef B, LLVMValueRef ParentPad,
+                                  unsigned ArgCount, LLVMValueRef *LLArgs, const char *Name) {
+#if LLVM_VERSION_GE(3, 8)
+  Value **Args = unwrap(LLArgs);
+  return wrap(unwrap(B)->CreateCatchPad(
+      unwrap(ParentPad), ArrayRef<Value *>(Args, ArgCount), Name));
+#else
+  return nullptr;
+#endif
+}
+
+LLVMValueRef LLVMExtBuildCatchRet(LLVMBuilderRef B,
+                                  LLVMValueRef Pad,
+                                  LLVMBasicBlockRef BB) {
+#if LLVM_VERSION_GE(3, 8)
+  return wrap(unwrap(B)->CreateCatchRet(cast<CatchPadInst>(unwrap(Pad)),
+                                              unwrap(BB)));
+#else
+  return nullptr;
+#endif
+}
+
+LLVMValueRef LLVMExtBuildCatchSwitch(LLVMBuilderRef B,
+                                     LLVMValueRef ParentPad,
+                                     LLVMBasicBlockRef BB,
+                                     unsigned NumHandlers,
+                                     const char *Name) {
+#if LLVM_VERSION_GE(3, 8)
+  if (ParentPad == nullptr) {
+    Type *Ty = Type::getTokenTy(unwrap(B)->getContext());
+    ParentPad = wrap(Constant::getNullValue(Ty));
+  }
+  return wrap(unwrap(B)->CreateCatchSwitch(unwrap(ParentPad), unwrap(BB),
+                                                 NumHandlers, Name));
+#else
+  return nullptr;
+#endif
+}
+
+void LLVMExtAddHandler(LLVMValueRef CatchSwitchRef,
+                       LLVMBasicBlockRef Handler) {
+#if LLVM_VERSION_GE(3, 8)
+  Value *CatchSwitch = unwrap(CatchSwitchRef);
+  cast<CatchSwitchInst>(CatchSwitch)->addHandler(unwrap(Handler));
+#endif
+}
+
+OperandBundleDef *LLVMExtBuildOperandBundleDef(const char *Name,
+                                                           LLVMValueRef *Inputs,
+                                                           unsigned NumInputs) {
+#if LLVM_VERSION_GE(3, 8)
+  return new OperandBundleDef(Name, makeArrayRef(unwrap(Inputs), NumInputs));
+#else
+  return nullptr;
+#endif
+}
+
+LLVMValueRef LLVMExtBuildCall(LLVMBuilderRef B, LLVMValueRef Fn,
+                                          LLVMValueRef *Args, unsigned NumArgs,
+                                          OperandBundleDef *Bundle,
+                                          const char *Name) {
+#if LLVM_VERSION_GE(3, 8)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateCall(
+      unwrap(Fn), makeArrayRef(unwrap(Args), NumArgs), Bundles, Name));
+#else
+  return LLVMBuildCall(B, Fn, Args, NumArgs, Name);
+#endif
+}
+
+LLVMValueRef LLVMExtBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef *Args,
+                    unsigned NumArgs, LLVMBasicBlockRef Then,
+                    LLVMBasicBlockRef Catch, OperandBundleDef *Bundle,
+                    const char *Name) {
+#if LLVM_VERSION_GE(3, 8)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateInvoke(unwrap(Fn), unwrap(Then), unwrap(Catch),
+                                      makeArrayRef(unwrap(Args), NumArgs),
+                                      Bundles, Name));
+#else
+  return LLVMBuildInvoke(B, Fn, Args, NumArgs, Then, Catch, Name);
+#endif
 }
 
 }

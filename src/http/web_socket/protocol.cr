@@ -237,7 +237,7 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def self.new(host : String, path : String, port = nil, tls = false)
+  def self.new(host : String, path : String, port = nil, tls = false, headers = HTTP::Headers.new)
     {% if flag?(:without_openssl) %}
       if tls
         raise "WebSocket TLS is disabled because `-D without_openssl` was passed at compile time"
@@ -259,7 +259,6 @@ class HTTP::WebSocket::Protocol
       end
     {% end %}
 
-    headers = HTTP::Headers.new
     headers["Host"] = "#{host}:#{port}"
     headers["Connection"] = "Upgrade"
     headers["Upgrade"] = "websocket"
@@ -278,12 +277,12 @@ class HTTP::WebSocket::Protocol
     new(socket, masked: true)
   end
 
-  def self.new(uri : URI | String)
+  def self.new(uri : URI | String, headers = HTTP::Headers.new)
     uri = URI.parse(uri) if uri.is_a?(String)
 
     if (host = uri.host) && (path = uri.path)
       tls = uri.scheme == "https" || uri.scheme == "wss"
-      return new(host, path, uri.port, tls)
+      return new(host, path, uri.port, tls, headers)
     end
 
     raise ArgumentError.new("No host or path specified which are required.")
