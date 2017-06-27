@@ -2,9 +2,17 @@ require "secure_random"
 
 # Hasher usable for `def hash(hasher)` should satisfy protocol:
 #   class MyHasher
-#     def <<(v : Int::Primitive)
+#     # Value should implement commutative `+` for `Hash#hash(hasher)`
+#     alias Value
+#
+#     # must be implemented to mix sizes of collections, and pointers (object_id)
+#     def raw(v : Int::Primitive)
 #       # mutate
 #       self
+#     end
+#
+#     # must be implemented for Hash#hash
+#     def raw(v : Value)
 #     end
 #
 #     def <<(b : Bytes)
@@ -18,16 +26,16 @@ require "secure_random"
 #     end
 #
 #     def <<(v)
+#       # v.hash will mutate hasher
 #       v.hash(self)
 #       self
 #     end
 #
 #     # digest returns hashsum for current state without state mutation
-#     # Note: hashsum should implement commutative `+` if MyHasher used
-#     # for `Hasher#hash(hasher)`
-#     def digest
+#     def digest : Value
 #     end
 #
+#     # should be implemented for `Hash#hash(hasher)`
 #     def clone_build
 #       with_state_copy do |copy|
 #         yield copy
@@ -43,13 +51,11 @@ require "secure_random"
 #
 # Also it has specialized methods for primitive keys with different seeds.
 struct StdHasher
-  @@seed = StaticArray(UInt32, 7).new { |i| 0_u32 }
+  alias Value = UInt32
 
-  def self.init
-    raise "#{@@seed[0]} #{@@seed[1]}" unless @@seed[0] == 0_u32 && @@seed[1] == 0_u32
-    buf = pointerof(@@seed).as(Pointer(UInt8))
-    SecureRandom.random_bytes(buf.to_slice(sizeof(typeof(@@seed))))
-  end
+  @@seed = StaticArray(UInt32, 7).new { |i| 0_u32 }
+  buf = pointerof(@@seed).as(Pointer(UInt8))
+  SecureRandom.random_bytes(buf.to_slice(sizeof(typeof(@@seed))))
 
   private def initialize(@h : Pointer(Impl))
   end
@@ -97,21 +103,22 @@ struct StdHasher
     self
   end
 
-  def <<(v : Int8 | Int16 | Int32 | UInt8 | UInt16 | UInt32)
+  # mix raw value without number normalizing
+  def raw(v : Int8 | Int16 | Int32 | UInt8 | UInt16 | UInt32)
     @h.value.permute(v.to_u32, @@seed[2])
     self
   end
 
-  def <<(v : UInt64)
-    high = (v >> 32).to_u32
-    if high != 0
-      self << high
-    end
-    self << v.to_u32
+  # mix raw value without number normalizing
+  def raw(v : Int64 | UInt64)
+    @h.value.permute((v >> 32).to_u32, @@seed[2])
+    @h.value.permute(v.to_u32, @@seed[2])
+    self
   end
 
-  def <<(v : Int64)
-    self << v.to_u64
+  def <<(v : Int8 | Int16 | UInt8 | UInt16)
+    @h.value.permute(v.to_u32, @@seed[2])
+    self
   end
 
   def <<(b : Bytes)
@@ -122,6 +129,10 @@ struct StdHasher
   def <<(v)
     v.hash(self)
     self
+  end
+
+  def remix(v : Value)
+    self << Raw32.new(v)
   end
 
   def digest

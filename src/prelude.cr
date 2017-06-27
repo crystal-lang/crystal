@@ -17,9 +17,7 @@ require "iterable"
 require "iterator"
 require "indexable"
 require "string"
-
 require "stdhasher"
-StdHasher.init
 
 # Alpha-sorted list
 require "array"

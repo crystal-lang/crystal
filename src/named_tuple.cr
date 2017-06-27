@@ -163,7 +163,7 @@ struct NamedTuple
   #
   # See also: `Object#hash`.
   def hash(hasher)
-    hasher << size
+    hasher.raw(size)
     {% for key in T.keys.sort %}
       hasher << {{key.symbolize}}
       hasher << self[{{key.symbolize}}]

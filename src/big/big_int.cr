@@ -277,8 +277,8 @@ struct BigInt < Int
     end
   end
 
-  def hash(h)
-    h << hash_normalize
+  def hash(hasher)
+    hasher << hash_normalize
   end
 
   # Returns a string representation of self.

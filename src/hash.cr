@@ -713,14 +713,14 @@ class Hash(K, V)
   # foo.hash # => 3247054 (not exactly)
   # ```
   def hash(hasher)
-    hasher << size
-    dgst = hasher.digest
+    hasher.raw(size)
+    digest = hasher.digest
     each do |key, value|
-      dgst += hasher.clone_build do |hh|
+      digest += hasher.clone_build do |hh|
         hh << key << value
       end
     end
-    hasher << dgst
+    hasher.raw(digest)
   end
 
   # Duplicates a `Hash`.

@@ -29,7 +29,7 @@ struct XML::NodeSet
   end
 
   def hash(hasher)
-    hasher << object_id
+    hasher.raw object_id
   end
 
   def inspect(io)

@@ -52,7 +52,7 @@ class Reference
 
   # Returns this reference's `object_id` as the hash value.
   def hash(hasher)
-    hasher << object_id
+    hasher.raw object_id
   end
 
   def inspect(io : IO) : Nil

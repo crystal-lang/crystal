@@ -181,8 +181,8 @@ struct Proc
     call(other)
   end
 
-  def hash(h)
-    h << internal_representation
+  def hash(hasher)
+    hasher << internal_representation
   end
 
   def clone

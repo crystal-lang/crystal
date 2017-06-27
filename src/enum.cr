@@ -276,7 +276,7 @@ struct Enum
 
   # Protocol method for safe hashing.
   def hash(hasher)
-    hasher << value
+    hasher.raw(value)
   end
 
   # Iterates each values in a Flags Enum.

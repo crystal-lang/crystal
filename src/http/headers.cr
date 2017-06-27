@@ -9,20 +9,27 @@ struct HTTP::Headers
   record Key, name : String do
     forward_missing_to @name
 
-    def hash(h)
-      v = 0_u32
+    def hash(hasher)
+      # hash 4 bytes at a row
       c = 0
-      name.each_byte do |c|
-        v |= normalize_byte(c).to_u32 << (c*8)
-        if c == 3
-          h << v
-          v = 0_u32
-          c = 0
-        else
-          c += 1
+      bytesize = name.bytesize
+      slice = name.to_slice
+      hasher.raw(bytesize)
+      while c + 4 < bytesize
+        v = 0_u32
+        4.times do |i|
+          v |= normalize_byte(slice.unsafe_at(c + i)).to_u32 << (i*8)
         end
+        hasher.raw(v)
+        c += 4
       end
-      h << v if c != 0
+      v = 0_u32
+      while c < bytesize
+        v <<= 8
+        v |= normalize_byte(slice.unsafe_at(c)).to_u32
+        c += 1
+      end
+      hasher.raw(v)
     end
 
     def ==(key2)
