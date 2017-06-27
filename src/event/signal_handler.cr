@@ -1,5 +1,6 @@
 require "c/signal"
 require "c/unistd"
+require "signal"
 
 # :nodoc:
 # Singleton that runs Signal events (libevent2) in it's own Fiber.
@@ -32,7 +33,7 @@ class Event::SignalHandler
   @@write_pipe : IO::FileDescriptor?
 
   def initialize
-    @callbacks = Hash(Signal, (Signal ->)).new
+    @callbacks = SignalHash.new
     @read_pipe, @write_pipe = IO.pipe
     @@write_pipe = @write_pipe
 
@@ -91,5 +92,11 @@ class Event::SignalHandler
 
   private def spawn_reader
     spawn { run }
+  end
+
+  class SignalHash < Hash(Signal, (Signal -> ))
+    protected def hash_key(key)
+      key.to_u32
+    end
   end
 end

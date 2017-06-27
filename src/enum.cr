@@ -274,14 +274,6 @@ struct Enum
     value == other.value
   end
 
-  # Returns a hash value. This is the hash of the underlying value.
-  # Enum hash is exception from random seeding, cause several Hashes are
-  # initialized on very early stages of bootstrap, and StdHasher seed is not
-  # filled yet.
-  def hash
-    StdHasher.unseeded value
-  end
-
   # Protocol method for safe hashing.
   def hash(hasher)
     hasher << value
