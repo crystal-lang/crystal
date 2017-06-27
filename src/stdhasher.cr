@@ -43,7 +43,8 @@ require "secure_random"
 #
 # Also it has specialized methods for primitive keys with different seeds.
 struct StdHasher
-  @@seed = StaticArray(UInt32, 7).new{|i| 0_u32}
+  @@seed = StaticArray(UInt32, 7).new { |i| 0_u32 }
+
   def self.init
     raise "#{@@seed[0]} #{@@seed[1]}" unless @@seed[0] == 0_u32 && @@seed[1] == 0_u32
     buf = pointerof(@@seed).as(Pointer(UInt8))
@@ -96,13 +97,13 @@ struct StdHasher
     self
   end
 
-  def <<(v : Int8|Int16|Int32|UInt8|UInt16|UInt32)
+  def <<(v : Int8 | Int16 | Int32 | UInt8 | UInt16 | UInt32)
     @h.value.permute(v.to_u32, @@seed[2])
     self
   end
 
   def <<(v : UInt64)
-    high = (v>>32).to_u32
+    high = (v >> 32).to_u32
     if high != 0
       self << high
     end
@@ -130,6 +131,7 @@ struct StdHasher
   private struct Impl
     getter a : UInt32 = 0_u32
     getter b : UInt32 = 0_u32
+
     def initialize(@a : UInt32, @b : UInt32)
     end
 
@@ -138,7 +140,7 @@ struct StdHasher
     end
 
     def permute_nil(s : UInt32)
-      @a += s|1
+      @a += s | 1
       # LFSR
       mx = (@b.to_i32 >> 31).to_u32 & 0xa8888eef_u32
       @b = (@b << 1) ^ mx
@@ -167,9 +169,9 @@ struct StdHasher
         u += 4
         i -= 1
       end
-      r = (bsz&3).to_u32
+      r = (bsz & 3).to_u32
       if r != 0
-        v |= u[0].to_u32|(u[r/2].to_u32<<8)|(u[r-1].to_u32<<16)
+        v |= u[0].to_u32 | (u[r/2].to_u32 << 8) | (u[r - 1].to_u32 << 16)
       end
       permute(v, s, pointerof(a), pointerof(b))
       @a, @b = a, b
@@ -194,7 +196,7 @@ struct StdHasher
   end
 
   # separate method for faster default hashtable with UInt32, Int32, Float32 and Symbol keys
-  def self.fasthash(v : UInt32|Int32|UInt16|Int16|UInt8|Int8)
+  def self.fasthash(v : UInt32 | Int32 | UInt16 | Int16 | UInt8 | Int8)
     h = @@seed[4] + v.to_u32
     h ^= h >> 16
     h *= 0x52c6a2d9_u32
@@ -205,7 +207,7 @@ struct StdHasher
   end
 
   # separate method for faster default hashtable with UInt64, Int64 and Float64 keys
-  def self.fasthash(v : UInt64|Int64)
+  def self.fasthash(v : UInt64 | Int64)
     high = (v >> 32).to_u32
     if high != 0
       h = @@seed[5] + high
@@ -224,7 +226,7 @@ struct StdHasher
   end
 
   # unseeded is used for types that are used in early startup
-  def self.unseeded(v : Int8|Int16|UInt8|UInt16|Int32|UInt32)
+  def self.unseeded(v : Int8 | Int16 | UInt8 | UInt16 | Int32 | UInt32)
     h = v.to_u32
     h ^= h >> 16
     h *= 0x52c6a2d9_u32
@@ -232,7 +234,7 @@ struct StdHasher
   end
 
   # unseeded is used for types that are used in early startup
-  def self.unseeded(v : Int64|UInt64)
+  def self.unseeded(v : Int64 | UInt64)
     h = (v >> 32).to_u32
     h ^= h >> 16
     h *= 0xb8b34b2d_u32

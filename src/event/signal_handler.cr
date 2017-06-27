@@ -94,7 +94,7 @@ class Event::SignalHandler
     spawn { run }
   end
 
-  class SignalHash < Hash(Signal, (Signal -> ))
+  class SignalHash < Hash(Signal, (Signal -> Nil))
     protected def hash_key(key)
       key.to_u32
     end
