@@ -191,6 +191,7 @@ class Crystal::Command
     STDERR.puts
     STDERR.puts
 
+    STDERR.puts ex
     ex.backtrace.each do |frame|
       STDERR.puts frame
     end
