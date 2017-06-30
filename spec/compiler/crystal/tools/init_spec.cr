@@ -122,8 +122,9 @@ dependencies:
     describe_file "example/src/example.cr" do |example|
       example.should eq(%{require "./example/*"
 
+# TODO: Write documentation for `Example`
 module Example
-  # TODO Put your code here
+  # TODO: Put your code here
 end
 })
     end
