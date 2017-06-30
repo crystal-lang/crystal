@@ -145,7 +145,7 @@ body.each_line do |line|
   pieces = line.split(';')
   codepoint = pieces[0].to_i(16)
   status = pieces[1].strip[0]
-  casefold = pieces[2].split.map(&.to_i(16))
+  casefold = pieces[2].words.map(&.to_i(16))
   next if status != 'C' && status != 'F' # casefold uses full case folding (C and F)
   if casefold.size == 1
     casefold_mapping[codepoint] = casefold[0]
@@ -185,8 +185,8 @@ body.each_line do |line|
 
   pieces = line.split(';')
   codepoint = pieces[0].to_i(16)
-  downcase = pieces[1].split.map(&.to_i(16))
-  upcase = pieces[3].split.map(&.to_i(16))
+  downcase = pieces[1].words.map(&.to_i(16))
+  upcase = pieces[3].words.map(&.to_i(16))
   downcase = nil if downcase.size == 1
   upcase = nil if upcase.size == 1
   if downcase

@@ -381,7 +381,11 @@ module Crystal::Macros
     def lines : ArrayLiteral(StringLiteral)
     end
 
-    # Similar to `String#split`.
+    # Similar to `String#words`.
+    def words : ArrayLiteral(StringLiteral)
+    end
+
+    # DEPRECATED: Use `#words`
     def split : ArrayLiteral(StringLiteral)
     end
 

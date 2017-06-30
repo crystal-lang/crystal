@@ -119,7 +119,7 @@ class HTTP::Client::Response
     line = io.gets(4096, chomp: true)
     return yield nil unless line
 
-    pieces = line.split(3)
+    pieces = line.words(3)
     http_version = pieces[0]
     status_code = pieces[1].to_i
     status_message = pieces[2]? ? pieces[2].chomp : ""

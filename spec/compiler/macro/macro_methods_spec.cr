@@ -247,8 +247,8 @@ describe "macro methods" do
       assert_macro "", %({{"foo" != "bar"}}), [] of ASTNode, %(true)
     end
 
-    it "executes split without arguments" do
-      assert_macro "", %({{"1 2 3".split}}), [] of ASTNode, %(["1", "2", "3"])
+    it "executes words" do
+      assert_macro "", %({{"1 2 3".words}}), [] of ASTNode, %(["1", "2", "3"])
     end
 
     it "executes split with argument" do

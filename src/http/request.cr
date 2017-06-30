@@ -91,7 +91,7 @@ class HTTP::Request
     request_line = io.gets(4096, chomp: true)
     return unless request_line
 
-    parts = request_line.split
+    parts = request_line.words
     return BadRequest.new unless parts.size == 3
 
     method, resource, http_version = parts
