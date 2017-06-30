@@ -146,7 +146,7 @@ module Crystal
       if system("pkg-config #{libname}")
         if static
           flags = [] of String
-          `pkg-config #{libname} --libs --static`.split.each do |cfg|
+          `pkg-config #{libname} --libs --static`.words.each do |cfg|
             if cfg.starts_with?("-L")
               library_path << cfg[2..-1]
             elsif cfg.starts_with?("-l")

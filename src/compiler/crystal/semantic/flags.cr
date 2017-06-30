@@ -13,7 +13,7 @@ class Crystal::Program
 
   # Overrides the default flags with the given ones.
   def flags=(flags : String)
-    @flags = parse_flags(flags.split)
+    @flags = parse_flags(flags.words)
   end
 
   # Returns `true` if *name* is in the program's flags.

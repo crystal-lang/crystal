@@ -618,24 +618,22 @@ module Crystal
         interpret_argless_method(method, args) { NumberLiteral.new(@value.size) }
       when "lines"
         interpret_argless_method(method, args) { ArrayLiteral.map(@value.lines) { |value| StringLiteral.new(value) } }
+      when "words"
+        interpret_argless_method(method, args) { ArrayLiteral.map(@value.words) { |value| StringLiteral.new(value) } }
       when "split"
-        case args.size
-        when 0
-          ArrayLiteral.map(@value.split) { |value| StringLiteral.new(value) }
-        when 1
-          first_arg = args.first
-          case first_arg
+        raise "StringLiteral#split without separator was removed: use StringLiteral#words instead" if args.empty?
+
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
           when CharLiteral
-            splitter = first_arg.value
+            splitter = arg.value
           when StringLiteral
-            splitter = first_arg.value
+            splitter = arg.value
           else
-            splitter = first_arg.to_s
+            splitter = arg.to_s
           end
 
           ArrayLiteral.map(@value.split(splitter)) { |value| StringLiteral.new(value) }
-        else
-          wrong_number_of_arguments "StringLiteral#split", args.size, "0..1"
         end
       when "starts_with?"
         interpret_one_arg_method(method, args) do |arg|

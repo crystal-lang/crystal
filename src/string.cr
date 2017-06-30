@@ -2891,8 +2891,8 @@ class String
     !!index(search)
   end
 
-  # Makes an array by splitting the string on any ASCII whitespace characters
-  # (and removing that whitespace).
+  # Makes an array of words, it means splitting the string
+  # on any ASCII whitespace characters (and removing that whitespace).
   #
   # If *limit* is present, up to *limit* new strings will be created,
   # with the entire remainder added to the last string.
@@ -2903,18 +2903,18 @@ class String
   #   a frog leaps in
   #   water's sound
   # "
-  # old_pond.split    # => ["Old", "pond", "a", "frog", "leaps", "in", "water's", "sound"]
-  # old_pond.split(3) # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
+  # old_pond.words    # => ["Old", "pond", "a", "frog", "leaps", "in", "water's", "sound"]
+  # old_pond.words(3) # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
   # ```
-  def split(limit : Int32? = nil)
+  def words(limit : Int32? = nil)
     ary = Array(String).new
-    split(limit) do |string|
+    each_word(limit) do |string|
       ary << string
     end
     ary
   end
 
-  # Splits the string after any ASCII whitespace character and yields each part to a block.
+  # Splits the string by words and yields each part to a block.
   #
   # If *limit* is present, up to *limit* new strings will be created,
   # with the entire remainder added to the last string.
@@ -2927,14 +2927,14 @@ class String
   #   water's sound
   # "
   #
-  # old_pond.split { |s| ary << s }
+  # old_pond.each_word { |s| ary << s }
   # ary # => ["Old", "pond", "a", "frog", "leaps", "in", "water's", "sound"]
   # ary.clear
   #
-  # old_pond.split(3) { |s| ary << s }
+  # old_pond.each_word(3) { |s| ary << s }
   # ary # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
   # ```
-  def split(limit : Int32? = nil, &block : String -> _)
+  def each_word(limit : Int32? = nil, &block : String -> _)
     if limit && limit <= 1
       yield self
       return
@@ -2984,6 +2984,16 @@ class String
       piece_size = single_byte_optimizable ? piece_bytesize : 0
       yield String.new(to_unsafe + index, piece_bytesize, piece_size)
     end
+  end
+
+  # DEPRECATED: Use `#words`
+  def split(limit : Int32? = nil)
+    {{ raise "'split' without separator was removed: use 'words' instead".id }}
+  end
+
+  # DEPRECATED: Use `#each_word`
+  def split(limit : Int32? = nil, &block : String ->)
+    {{ raise "'split' without separator was removed: use 'each_word' instead".id }}
   end
 
   # Makes an `Array` by splitting the string on the given character *separator*
