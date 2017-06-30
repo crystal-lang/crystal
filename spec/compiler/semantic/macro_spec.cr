@@ -1084,4 +1084,42 @@ describe "Semantic: macro" do
       Foo.new.main
       )) { tuple_of [int32, char] }
   end
+
+  it "finds macro in included module at class level (#4639)" do
+    assert_type(%(
+      module Moo
+        macro foo
+          def self.bar
+            2
+          end
+        end
+      end
+
+      class Foo
+        include Moo
+
+        foo
+      end
+
+      Foo.bar
+      ), inject_primitives: false) { int32 }
+  end
+
+  it "finds macro in module in Object" do
+    assert_type(%(
+      class Object
+        macro foo
+          def self.bar
+            2
+          end
+        end
+      end
+
+      module Moo
+        foo
+      end
+
+      Moo.bar
+      ), inject_primitives: false) { int32 }
+  end
 end
