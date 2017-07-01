@@ -53,6 +53,7 @@ class Crystal::Command
 
   def initialize(@options : Array(String))
     @color = true
+    @show_backtrace = false
     @progress_tracker = ProgressTracker.new
   end
 
@@ -118,7 +119,16 @@ class Crystal::Command
     if @config.try(&.output_format) == "json"
       puts ex.to_json
     else
-      puts ex
+      if @show_backtrace
+        puts ex
+        puts
+        puts "(#{ex.class})"
+        ex.backtrace.each do |frame|
+          puts frame
+        end
+      else
+        puts ex
+      end
     end
     exit 1
   rescue ex : OptionParser::Exception
@@ -355,6 +365,10 @@ class Crystal::Command
         compiler.color = false
       end
 
+      opts.on("--show-backtrace", "Show backtrace on compile error") do
+        @show_backtrace = true
+      end
+
       unless no_codegen
         opts.on("--no-codegen", "Don't do code generation") do
           compiler.no_codegen = true
@@ -491,6 +505,9 @@ class Crystal::Command
     opts.on("--no-color", "Disable colored output") do
       @color = false
       compiler.color = false
+    end
+    opts.on("--show-backtrace", "Show backtrace on compile error") do
+      @show_backtrace = true
     end
     opts.invalid_option { }
   end
