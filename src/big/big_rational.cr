@@ -8,7 +8,7 @@ require "big"
 # ```
 # require "big_rational"
 #
-# r = BigRational.new(BigInt.new(7), BigInt.new(3))
+# r = BigRational.new(7.to_big_i, 3.to_big_i)
 # r.to_s # => "7/3"
 #
 # r = BigRational.new(3, -9)
@@ -41,6 +41,22 @@ struct BigRational < Number
     initialize(num, 1)
   end
 
+  # Creates a exact representation of float as rational.
+  #
+  # It ensures that `BigRational.new(f) == f`
+  # It relies on fact, that mantissa is at most 53 bits
+  def initialize(num : Float)
+    frac, exp = Math.frexp num
+    ifrac = (frac.to_f64 * (1.to_i64 << 53).to_f64).to_i64
+    exp -= 53
+    initialize ifrac, 1
+    if exp >= 0
+      LibGMP.mpq_mul_2exp(out @mpq, self, exp)
+    else
+      LibGMP.mpq_div_2exp(out @mpq, self, -exp)
+    end
+  end
+
   # :nodoc:
   def initialize(@mpq : LibGMP::MPQ)
   end
@@ -64,8 +80,12 @@ struct BigRational < Number
     LibGMP.mpq_cmp(mpq, other)
   end
 
+  def <=>(other : Float32 | Float64)
+    self <=> BigRational.new(other)
+  end
+
   def <=>(other : Float)
-    self.to_f <=> other
+    to_big_f <=> other.to_big_f
   end
 
   def <=>(other : Int)
@@ -156,6 +176,12 @@ struct BigRational < Number
     LibGMP.mpq_get_d(mpq)
   end
 
+  def to_big_f
+    BigFloat.new { |mpf|
+      LibGMP.mpf_set_q(mpf, mpq)
+    }
+  end
+
   # Returns the string representing this rational.
   #
   # Optionally takes a radix base (2 through 36).
@@ -237,7 +263,18 @@ end
 struct Float
   include Comparable(BigRational)
 
+  # Returns a `BigRational` representing this float.
+  def to_big_r
+    BigRational.new(self)
+  end
+
   def <=>(other : BigRational)
     -(other <=> self)
+  end
+end
+
+module Math
+  def frexp(value : BigRational)
+    frexp value.to_big_f
   end
 end

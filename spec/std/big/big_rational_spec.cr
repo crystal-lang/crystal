@@ -72,8 +72,22 @@ describe BigRational do
     r.to_f32.should be_close(f, 0.001)
   end
 
+  it "#to_big_f" do
+    r = br(10, 3)
+    f = 10.to_big_f / 3.to_big_f
+    r.to_big_f.should be_close(f, 0.001)
+  end
+
   it "Int#to_big_r" do
     3.to_big_r.should eq(br(3, 1))
+  end
+
+  it "Float32#to_big_r" do
+    0.3333333333333333333333_f32.to_big_r.should eq(br(11184811, 33554432))
+  end
+
+  it "Float64#to_big_r" do
+    0.3333333333333333333333_f64.to_big_r.should eq(br(6004799503160661, 18014398509481984))
   end
 
   it "#<=>(:BigRational) and Comparable" do
@@ -159,5 +173,11 @@ describe BigRational do
   it "clones" do
     x = br(10, 3)
     x.clone.should eq(x)
+  end
+end
+
+describe "BigRational Math" do
+  it "frexp" do
+    Math.frexp(500.to_big_r).should eq({0.9765625, 9})
   end
 end

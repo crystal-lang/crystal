@@ -2,6 +2,67 @@ require "spec"
 require "big_float"
 
 describe "BigFloat" do
+  describe "new" do
+    bsi = "123456789012345678901"
+    bfsi = BigFloat.new(bsi)
+    bsf = "1234567890.12345678901"
+    bfsf = BigFloat.new(bsf)
+
+    it "new(String)" do
+      bfsi.to_s.should eq(bsi)
+      bfsf.to_s.should eq(bsf)
+    end
+
+    it "new(BigInt)" do
+      bi = BigInt.new(bsi)
+      bfi = BigFloat.new(bi)
+      bfi.should eq(bfsi)
+      bfi.to_s.should eq(bsi)
+    end
+
+    it "new(BigRational)" do
+      br = BigRational.new(1, 3)
+      bfr = BigFloat.new(br)
+      bf = BigFloat.new(1) / BigFloat.new(3)
+      bfr.should eq(bf)
+    end
+
+    it "new(BigFloat)" do
+      bffi = BigFloat.new(bfsi)
+      bffi.should eq(bfsi)
+      bfff = BigFloat.new(bfsf)
+      bfff.should eq(bfsf)
+    end
+
+    it "new(Int)" do
+      BigFloat.new(1_u8).to_s.should eq("1")
+      BigFloat.new(1_u16).to_s.should eq("1")
+      BigFloat.new(1_u32).to_s.should eq("1")
+      BigFloat.new(1_u64).to_s.should eq("1")
+      BigFloat.new(1_i8).to_s.should eq("1")
+      BigFloat.new(1_i16).to_s.should eq("1")
+      BigFloat.new(1_i32).to_s.should eq("1")
+      BigFloat.new(1_i64).to_s.should eq("1")
+      BigFloat.new(-1_i8).to_s.should eq("-1")
+      BigFloat.new(-1_i16).to_s.should eq("-1")
+      BigFloat.new(-1_i32).to_s.should eq("-1")
+      BigFloat.new(-1_i64).to_s.should eq("-1")
+
+      BigFloat.new(255_u8).to_s.should eq("255")
+      BigFloat.new(65535_u16).to_s.should eq("65535")
+      BigFloat.new(4294967295_u32).to_s.should eq("4294967295")
+      BigFloat.new(18446744073709551615_u64).to_s.should eq("18446744073709551615")
+      BigFloat.new(127_i8).to_s.should eq("127")
+      BigFloat.new(32767_i16).to_s.should eq("32767")
+      BigFloat.new(2147483647_i32).to_s.should eq("2147483647")
+      BigFloat.new(9223372036854775807_i64).to_s.should eq("9223372036854775807")
+      BigFloat.new(-128_i8).to_s.should eq("-128")
+      BigFloat.new(-32768_i16).to_s.should eq("-32768")
+      BigFloat.new(-2147483648_i32).to_s.should eq("-2147483648")
+      BigFloat.new(-9223372036854775808_i64).to_s.should eq("-9223372036854775808")
+    end
+  end
+
   describe "-@" do
     bf = "0.12345".to_big_f
     it { (-bf).to_s.should eq("-0.12345") }
@@ -40,6 +101,7 @@ describe "BigFloat" do
     it { ("-5.5".to_big_f / "5.5".to_big_f).to_s.should eq("-1") }
     it { ("5.5".to_big_f / "-5.5".to_big_f).to_s.should eq("-1") }
     expect_raises(DivisionByZero) { 0.1.to_big_f / 0 }
+    it { ("5.5".to_big_f / 16.to_u64).to_s.should eq("0.34375") }
   end
 
   describe "**" do
@@ -65,6 +127,13 @@ describe "BigFloat" do
   describe "floor" do
     it { 2.1.to_big_f.floor.should eq(2) }
     it { 2.9.to_big_f.floor.should eq(2) }
+    it { -2.9.to_big_f.floor.should eq(-3) }
+  end
+
+  describe "trunc" do
+    it { 2.1.to_big_f.trunc.should eq(2) }
+    it { 2.9.to_big_f.trunc.should eq(2) }
+    it { -2.9.to_big_f.trunc.should eq(-2) }
   end
 
   describe "to_f" do
@@ -92,6 +161,7 @@ describe "BigFloat" do
     it { "12345678.87654321".to_big_f.to_s.should eq("12345678.87654321") }
     it { "9.000000000000987".to_big_f.to_s.should eq("9.000000000000987") }
     it { "12345678901234567".to_big_f.to_s.should eq("12345678901234567") }
+    it { "1234567890123456789".to_big_f.to_s.should eq("1234567890123456789") }
   end
 
   it "#hash" do
@@ -102,5 +172,11 @@ describe "BigFloat" do
   it "clones" do
     x = 1.to_big_f
     x.clone.should eq(x)
+  end
+end
+
+describe "BigFloat Math" do
+  it "frexp" do
+    Math.frexp(0.2.to_big_f).should eq({0.8, -2})
   end
 end

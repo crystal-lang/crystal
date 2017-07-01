@@ -18,7 +18,39 @@ struct BigFloat < Float
   end
 
   def initialize(num : Number)
-    LibGMP.mpf_init_set_d(out @mpf, num.to_f64)
+    # XXX: this case is workaround of Crystal's unrealiable method overloading
+    # remove it when separate BigFloat.new(BigInt) will pass the spec
+    case num
+    when BigInt
+      LibGMP.mpf_init(out @mpf)
+      LibGMP.mpf_set_z(self, num)
+    when BigRational
+      LibGMP.mpf_init(out @mpf)
+      LibGMP.mpf_set_q(self, num)
+    when BigFloat
+      LibGMP.mpf_init(out @mpf)
+      LibGMP.mpf_set(self, num)
+    when Int8, Int16, Int32
+      LibGMP.mpf_init_set_si(out @mpf, num)
+    when UInt8, UInt16, UInt32
+      LibGMP.mpf_init_set_ui(out @mpf, num)
+    when Int64
+      if LibGMP::Long == Int64
+        LibGMP.mpf_init_set_si(out @mpf, num)
+      else
+        LibGMP.mpf_init(out @mpf)
+        LibGMP.mpf_set_z(self, num.to_big_i)
+      end
+    when UInt64
+      if LibGMP::ULong == UInt64
+        LibGMP.mpf_init_set_ui(out @mpf, num)
+      else
+        LibGMP.mpf_init(out @mpf)
+        LibGMP.mpf_set_z(self, num.to_big_i)
+      end
+    else
+      LibGMP.mpf_init_set_d(out @mpf, num.to_f64)
+    end
   end
 
   def initialize(num : Float, precision : Int)
@@ -51,16 +83,36 @@ struct BigFloat < Float
     LibGMP.mpf_cmp(self, other)
   end
 
-  def <=>(other : Float)
+  def <=>(other : BigInt)
+    LibGMP.mpf_cmp_z(self, other)
+  end
+
+  def <=>(other : Float32 | Float64)
     LibGMP.mpf_cmp_d(self, other.to_f64)
   end
 
   def <=>(other : Int::Signed)
-    LibGMP.mpf_cmp_si(self, other.to_i64)
+    if LibGMP::Long == Int64
+      LibGMP.mpf_cmp_si(self, other.to_i64)
+    elsif other.is_a?(Int8 | Int16 | Int32)
+      LibGMP.mpf_cmp_si(self, LibGMP::Long.new(other))
+    else
+      LibGMP.mpf_cmp(self, other.to_big_f)
+    end
   end
 
   def <=>(other : Int::Unsigned)
-    LibGMP.mpf_cmp_ui(self, other.to_u64)
+    if LibGMP::ULong == UInt64
+      LibGMP.mpf_cmp_ui(self, other.to_u64)
+    elsif other.is_a?(UInt8 | UInt16 | UInt32)
+      LibGMP.mpf_cmp_ui(self, LibGMP::ULong.new(other))
+    else
+      LibGMP.mpf_cmp(self, other.to_big_f)
+    end
+  end
+
+  def <=>(other : Number)
+    LibGMP.mpf_cmp(self, other.to_big_f)
   end
 
   def -
@@ -77,6 +129,15 @@ struct BigFloat < Float
 
   def *(other : Number)
     BigFloat.new { |mpf| LibGMP.mpf_mul(mpf, self, other.to_big_f) }
+  end
+
+  def /(other : LibGMP::ULong)
+    raise DivisionByZero.new if other == 0
+    BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, other) }
+  end
+
+  def /(other : UInt8 | UInt16 | UInt32)
+    self / LibGMP::ULong.new(other)
   end
 
   def /(other : Number)
@@ -98,6 +159,10 @@ struct BigFloat < Float
 
   def floor
     BigFloat.new { |mpf| LibGMP.mpf_floor(mpf, self) }
+  end
+
+  def trunc
+    BigFloat.new { |mpf| LibGMP.mpf_trunc(mpf, self) }
   end
 
   def to_f64
@@ -219,5 +284,19 @@ end
 class String
   def to_big_f
     BigFloat.new(self)
+  end
+end
+
+module Math
+  def frexp(value : BigFloat)
+    LibGMP.mpf_get_d_2exp(out exp, value) # we need BigFloat frac, so will skip Float64 one.
+    frac = BigFloat.new do |mpf|
+      if exp >= 0
+        LibGMP.mpf_div_2exp(mpf, value, exp)
+      else
+        LibGMP.mpf_mul_2exp(mpf, value, -exp)
+      end
+    end
+    {frac, exp}
   end
 end
