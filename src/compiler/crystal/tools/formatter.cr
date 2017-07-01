@@ -3873,27 +3873,24 @@ module Crystal
 
       skip_space_or_newline
 
+      colon_column = @column + 1
       if @token.type == :"::"
         write " ::"
         next_token_skip_space_or_newline
       elsif @token.type == :":"
-        dot_column = @column + 1
         space_after_output = true
 
         write " :"
-        next_token
+        next_token_skip_space_or_newline
 
-        skip_space_or_newline
-
-        output = node.output
-        if output
+        if output = node.output
           write " "
           accept output
           skip_space
           if @token.type == :NEWLINE
             if node.inputs
               consume_newlines
-              write_indent(dot_column)
+              write_indent(colon_column)
               space_after_output = false
             else
               skip_space_or_newline
@@ -3909,55 +3906,23 @@ module Crystal
       end
 
       if inputs = node.inputs
-        write " "
-        input_column = @column
-        inputs.each_with_index do |input, i|
+        visit_asm_parts inputs, colon_column, write_colon: false do |input|
           accept input
-          skip_space
-
-          if @token.type == :","
-            write "," unless last?(i, inputs)
-            next_token_skip_space
-
-            unless last?(i, inputs)
-              if @token.type == :NEWLINE
-                consume_newlines
-                write_indent(input_column)
-              else
-                write " " unless last?(i, inputs)
-              end
-              skip_space_or_newline
-            end
-          end
         end
       end
 
       if clobbers = node.clobbers
-        write_token :":"
-        write " "
-        skip_space_or_newline
-        clobbers.each_with_index do |clobber, i|
+        visit_asm_parts clobbers, colon_column, write_colon: true do |clobber|
           accept StringLiteral.new(clobber)
-          skip_space_or_newline
-          if @token.type == :","
-            write ", " unless last?(i, clobbers)
-            next_token_skip_space_or_newline
-          end
         end
       end
 
       if @token.type == :"::" || @token.type == :":"
-        write " " if inputs || clobbers
-        write @token.type
-        write " "
-        next_token_skip_space_or_newline
-        while @token.type == :DELIMITER_START
+        write_token @token.type
+        skip_space_or_newline
+        parts = [node.volatile?, node.alignstack?, node.intel?].select(&.itself)
+        visit_asm_parts parts, colon_column, write_colon: false do
           accept StringLiteral.new("")
-          skip_space_or_newline
-          if @token.type == :","
-            write ", "
-            next_token_skip_space_or_newline
-          end
         end
       end
 
@@ -3984,6 +3949,48 @@ module Crystal
       write_token :")"
 
       false
+    end
+
+    def visit_asm_parts(parts, colon_column, write_colon) : Nil
+      if write_colon
+        write_token :":"
+        skip_space_or_newline
+      end
+      write " "
+      column = @column
+
+      parts.each_with_index do |part, i|
+        yield part
+        skip_space
+
+        if @token.type == :","
+          write "," unless last?(i, parts)
+          next_token_skip_space
+        end
+
+        if @token.type == :NEWLINE
+          if last?(i, parts)
+            next_token_skip_space_or_newline
+            if @token.type == :":" || @token.type == :"::"
+              write_line
+              write_indent(colon_column)
+            end
+          else
+            consume_newlines
+            write_indent(last?(i, parts) ? colon_column : column)
+            skip_space_or_newline
+          end
+        else
+          skip_space_or_newline
+          if last?(i, parts)
+            if @token.type == :":" || @token.type == :"::"
+              write " "
+            end
+          else
+            write " "
+          end
+        end
+      end
     end
 
     def visit(node : ASTNode)
