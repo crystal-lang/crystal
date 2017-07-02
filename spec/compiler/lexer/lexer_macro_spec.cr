@@ -596,4 +596,12 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_EXPRESSION_START)
   end
+
+  it "keeps correct line number after lexes the part of keyword and newline (#4656)" do
+    lexer = Lexer.new(%(ab\ncd)) # 'ab' means the part of 'abstract'
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("ab\ncd")
+    lexer.line_number.should eq(2)
+  end
 end
