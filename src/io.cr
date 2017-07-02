@@ -86,7 +86,8 @@ module IO
   end
 
   # Reads at most *slice.size* bytes from this `IO` into *slice*.
-  # Returns the number of bytes read.
+  # Returns the number of bytes read, which is 0 if and only if there is no
+  # more data to read (so checking for 0 is the way to detect end of file).
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -95,6 +96,7 @@ module IO
   # slice          # => Bytes[104, 101, 108, 108]
   # io.read(slice) # => 1
   # slice          # => Bytes[111, 101, 108, 108]
+  # io.read(slice) # => 0
   # ```
   abstract def read(slice : Bytes)
 
@@ -883,7 +885,7 @@ module IO
   # `from_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)`
   # method can be read in this way.
   #
-  # See `Int#from_io` and `Float#from_io`.
+  # See `Int.from_io` and `Float.from_io`.
   #
   # ```
   # io = IO::Memory.new
