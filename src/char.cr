@@ -419,6 +419,11 @@ struct Char
     ord
   end
 
+  # Protocol method for safe hashing
+  def hash(hasher)
+    hasher << ord
+  end
+
   # Returns a Char that is one codepoint bigger than this char's codepoint.
   #
   # ```

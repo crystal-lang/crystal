@@ -48,10 +48,15 @@ class Thread
     end
   end
 
+  # override, cause StdHasher's seed is not initialized yet
+  def hash
+    StdHasher.unseeded object_id
+  end
+
   # All threads, so the GC can see them (GC doesn't scan thread locals)
   # and we can find the current thread on platforms that don't support
   # thread local storage (eg: OpenBSD)
-  @@threads = Set(Thread).new
+  @@threads = ThreadSet.new
 
   {% if flag?(:openbsd) %}
     @@main = new
@@ -63,8 +68,10 @@ class Thread
 
       current_thread_id = LibC.pthread_self
 
-      current_thread = @@threads.find do |thread|
-        LibC.pthread_equal(thread.id, current_thread_id) != 0
+      current_thread = @@threads.each_key do |thread|
+        if LibC.pthread_equal(thread.id, current_thread_id) != 0
+          break thread
+        end
       end
 
       raise "Error: failed to find current thread" unless current_thread
@@ -93,6 +100,16 @@ class Thread
       @exception = ex
     ensure
       @@threads.delete(self)
+    end
+  end
+
+  private class ThreadSet < Hash(Thread, Nil)
+    def hash_key(th)
+      th.object_id
+    end
+
+    def <<(th)
+      self[th] = nil
     end
   end
 end

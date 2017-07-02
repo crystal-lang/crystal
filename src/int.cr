@@ -316,8 +316,8 @@ struct Int
     !even?
   end
 
-  def hash
-    self
+  def hash(hasher)
+    hasher << self
   end
 
   def succ
@@ -619,6 +619,11 @@ struct Int32
   def clone
     self
   end
+
+  def hash(hasher)
+    # to be replaced with number normalizer
+    hasher.raw(self)
+  end
 end
 
 struct Int64
@@ -640,6 +645,15 @@ struct Int64
 
   def clone
     self
+  end
+
+  def hash(hasher)
+    # to be replaced with number normalizer
+    high = (self >> 32).to_u32
+    if high != 0_u32
+      hasher.raw(high)
+    end
+    hasher.raw(self.to_u32)
   end
 end
 
@@ -707,6 +721,11 @@ struct UInt32
   def clone
     self
   end
+
+  def hash(hasher)
+    # to be replaced with number normalizer
+    hasher.raw(self)
+  end
 end
 
 struct UInt64
@@ -728,5 +747,14 @@ struct UInt64
 
   def clone
     self
+  end
+
+  def hash(hasher)
+    # to be replaced with number normalizer
+    high = (self >> 32).to_u32
+    if high != 0_u32
+      hasher.raw(high)
+    end
+    hasher.raw(self.to_u32)
   end
 end

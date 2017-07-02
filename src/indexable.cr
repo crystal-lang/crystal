@@ -274,9 +274,10 @@ module Indexable(T)
   # Returns a hash code based on `self`'s size and elements.
   #
   # See also: `Object#hash`.
-  def hash
-    reduce(31 * size) do |memo, elem|
-      31 * memo + elem.hash
+  def hash(hasher)
+    hasher.raw(size.to_u32)
+    each do |elem|
+      hasher << elem
     end
   end
 

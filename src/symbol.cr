@@ -18,8 +18,10 @@ struct Symbol
   # Generates an `Int32` hash value for this symbol.
   #
   # See also: `Object#hash`.
-  def hash : Int32
-    to_i
+
+  # Protocol method for safe hashing
+  def hash(hasher)
+    hasher << to_i
   end
 
   # Compares symbol with other based on `String#<=>` method. Returns `-1`, `0`

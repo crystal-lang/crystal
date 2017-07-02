@@ -58,13 +58,18 @@ class Object
     nil
   end
 
-  # Generates an `Int` hash value for this object.
+  # Generates an `Int` hash value for this object (usually `UInt32`)
   #
   # This method must have the property that `a == b` implies `a.hash == b.hash`.
   #
   # The hash value is used along with `==` by the `Hash` class to determine if two objects
   # reference the same hash key.
-  abstract def hash
+  def hash
+    StdHasher.hashit self
+  end
+
+  # Protocol method for safe hashing
+  abstract def hash(hasher)
 
   # Returns a string representation of this object.
   #
@@ -1090,15 +1095,9 @@ class Object
   # end
   # ```
   macro def_hash(*fields)
-    def hash
-      {% if fields.size == 1 %}
-        {{fields[0]}}.hash
-      {% else %}
-        hash = 0
-        {% for field in fields %}
-          hash = 31 * hash + {{field}}.hash
-        {% end %}
-        hash
+    def hash(hasher)
+      {% for field in fields %}
+        hasher << {{field}}
       {% end %}
     end
   end

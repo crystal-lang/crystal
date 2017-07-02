@@ -35,8 +35,8 @@ struct BigFloat < Float
     new(mpf)
   end
 
-  def hash
-    to_f64.hash
+  def hash(hasher)
+    hasher << to_f64
   end
 
   def self.default_precision

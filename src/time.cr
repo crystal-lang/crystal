@@ -309,10 +309,6 @@ struct Time
     end
   end
 
-  def hash
-    @encoded
-  end
-
   def self.days_in_month(year, month) : Int32
     unless 1 <= month <= 12
       raise ArgumentError.new "Invalid month"
