@@ -4709,7 +4709,7 @@ module Crystal
       intel = false
       while true
         location = @token.location
-        option = parse_string_without_interpolation("asm clobber")
+        option = parse_string_without_interpolation("asm option")
         skip_space_or_newline
         case option
         when "volatile"
