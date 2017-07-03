@@ -1,5 +1,6 @@
 require "c/stdio"
 require "c/string"
+require "./number/hasher"
 require "./float/printer"
 
 # Float is the base type of all floating point numbers.
@@ -100,6 +101,8 @@ struct Float
 end
 
 struct Float32
+  include Number::Hasher
+
   NAN      = (0_f32 / 0_f32).as Float32
   INFINITY = (1_f32 / 0_f32).as Float32
   MIN      = (-INFINITY).as Float32
@@ -148,16 +151,14 @@ struct Float32
     Printer.print(self, io)
   end
 
-  def hash
-    unsafe_as(Int32)
-  end
-
   def clone
     self
   end
 end
 
 struct Float64
+  include Number::Hasher
+
   NAN      = (0_f64 / 0_f64).as Float64
   INFINITY = (1_f64 / 0_f64).as Float64
   MIN      = (-INFINITY).as Float64
@@ -204,10 +205,6 @@ struct Float64
 
   def to_s(io : IO)
     Printer.print(self, io)
-  end
-
-  def hash
-    unsafe_as(Int64)
   end
 
   def clone
