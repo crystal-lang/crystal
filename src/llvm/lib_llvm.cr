@@ -15,7 +15,7 @@ end
 {% end %}
 
 {% begin %}
-  @[Link("stdc++")]
+  @[Link("stdc++", ldflags: "-Wl,-Bstatic -lstdc++ -Wl,-Bdynamic")]
   @[Link(ldflags: "`{{LibLLVM::LLVM_CONFIG.id}} --libs --system-libs --ldflags 2> /dev/null`")]
   lib LibLLVM
     VERSION = {{`#{LibLLVM::LLVM_CONFIG} --version`.chomp.stringify}}
