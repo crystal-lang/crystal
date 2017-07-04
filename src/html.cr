@@ -30,7 +30,9 @@ module HTML
   # HTML.escape("Crystal & You") # => "Crystal &amp; You"
   # ```
   def self.escape(string : String) : String
-    string.gsub(SUBSTITUTIONS)
+    io = IO::Memory.new
+    escape(string, io)
+    io.to_s
   end
 
   # Encodes a string to HTML, but writes to the `IO` instance provided.
