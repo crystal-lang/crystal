@@ -888,7 +888,7 @@ describe "Array" do
 
     it "sample with random" do
       x = [1, 2, 3]
-      x.sample(Random.new(1)).should eq(3)
+      x.sample(Random.new(1)).should eq(2)
     end
 
     it "gets sample of negative count elements raises" do
@@ -936,7 +936,7 @@ describe "Array" do
     it "gets sample of k elements out of n, with random" do
       a = [1, 2, 3, 4, 5]
       b = a.sample(3, Random.new(1))
-      b.should eq([4, 3, 5])
+      b.should eq([4, 3, 1])
     end
   end
 
@@ -995,13 +995,13 @@ describe "Array" do
     it "shuffle! with random" do
       a = [1, 2, 3]
       a.shuffle!(Random.new(1))
-      a.should eq([2, 1, 3])
+      a.should eq([1, 3, 2])
     end
 
     it "shuffle with random" do
       a = [1, 2, 3]
       b = a.shuffle(Random.new(1))
-      b.should eq([2, 1, 3])
+      b.should eq([1, 3, 2])
     end
   end
 
