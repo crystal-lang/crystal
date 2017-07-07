@@ -35,8 +35,15 @@ module Crystal
       git_version = {{`(git describe --tags --long --always 2>/dev/null) || true`.stringify.chomp}}
 
       # Failed git and no explicit version set: ""
-      # We inherit the version of the compiler building us for now.
-      return { {{Crystal::VERSION}}, nil } if git_version.empty?
+      # We try to get the version from CHANGELOG.md.
+      # It is useful when build crystal from release archive.
+      # See: https://github.com/crystal-lang/crystal/issues/4642
+      if git_version.empty?
+        changelog_version = {{`(grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+' CHANGELOG.md | head -n1) || true`.stringify.chomp}}
+        # As final fallback, we inherit the version of the compiler building us for now.
+        changelog_version = {{Crystal::VERSION}} if changelog_version.empty?
+        return {changelog_version, nil}
+      end
 
       # Shallow clone with no tag in reach: abcd123
       # We assume being compiled with the latest released compiler
