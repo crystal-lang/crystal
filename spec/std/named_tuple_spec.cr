@@ -296,4 +296,10 @@ describe "NamedTuple" do
     tup = {a: 1, b: 'a'}
     tup.values.should eq({1, 'a'})
   end
+
+  it "merges with other named tuple" do
+    a = {one: 1, two: 2, three: 3, four: 4, five: 5, "im \"string": "works"}
+    b = {two: "Two", three: true, "new one": "ok"}
+    c = a.merge(b).merge(four: "Four").should eq({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
+  end
 end
