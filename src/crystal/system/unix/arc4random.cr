@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:openbsd) %}
+{% skip() unless flag?(:openbsd) %}
 
 require "c/stdlib"
 
