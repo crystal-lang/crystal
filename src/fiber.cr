@@ -28,7 +28,7 @@ class Fiber
     @stack_bottom = @stack + STACK_SIZE
     fiber_main = ->(f : Fiber) { f.run }
 
-    stack_ptr = @stack + STACK_SIZE - sizeof(Void*)
+    stack_ptr = @stack_bottom - sizeof(Void*)
 
     # Align the stack pointer to 16 bytes
     stack_ptr = Pointer(Void*).new(stack_ptr.address & ~0x0f_u64)
@@ -93,7 +93,8 @@ class Fiber
     @@stack_pool.pop? || LibC.mmap(nil, Fiber::STACK_SIZE,
       LibC::PROT_READ | LibC::PROT_WRITE,
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
-      -1, 0).tap do |pointer|
+      -1, 0
+    ).tap do |pointer|
       raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
       {% if flag?(:linux) %}
         LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
