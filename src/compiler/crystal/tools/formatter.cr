@@ -54,6 +54,7 @@ module Crystal
     @output : IO::Memory
     @line_output : IO::Memory
     @wrote_newline : Bool
+    @wrote_double_newlines : Bool
     @wrote_comment : Bool
     @macro_state : Token::MacroState
     @inside_macro : Int32
@@ -91,6 +92,7 @@ module Crystal
       @output = IO::Memory.new(source.bytesize)
       @line_output = IO::Memory.new
       @wrote_newline = false
+      @wrote_double_newlines = false
       @wrote_comment = false
       @macro_state = Token::MacroState.default
       @inside_macro = 0
@@ -257,7 +259,7 @@ module Crystal
             unless found_comment
               skip_space_write_line
               found_comment = skip_space_or_newline last: true, at_least_one: true
-              write_line unless found_comment
+              write_line unless found_comment || @wrote_double_newlines
             end
           else
             consume_newlines
@@ -4275,6 +4277,7 @@ module Crystal
 
         if @token.type == :NEWLINE
           write_line
+          @wrote_double_newlines = true
         end
 
         skip_space_or_newline
@@ -4352,6 +4355,7 @@ module Crystal
     end
 
     def write_line
+      @wrote_double_newlines = false
       @current_doc_comment = nil unless @wrote_comment
       @wrote_comment = false
 
