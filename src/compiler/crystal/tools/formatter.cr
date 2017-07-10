@@ -4354,6 +4354,8 @@ module Crystal
     end
 
     def finish
+      raise "BUG: unclosed parenthesis" if @paren_count > 0
+
       skip_space
       write_line
       skip_space_or_newline last: true
