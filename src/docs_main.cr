@@ -3,6 +3,7 @@
 # the fictitious API for the Crystal::Macros module.
 
 require "./big"
+require "./callstack"
 require "./compiler/crystal/macros"
 require "./crypto/**"
 require "./csv"

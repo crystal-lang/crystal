@@ -17,6 +17,19 @@ require "callstack/lib_unwind"
   require "debug/dwarf"
 {% end %}
 
+# `caller` returns the current execution stack (a backtrace) in the form
+# of an Array of strings:
+#
+# ```
+# ["0x102902805: *CallStack::unwind:Array(Pointer(Void)) at ??",
+#  "0x1029027a1: *CallStack#initialize:Array(Pointer(Void)) at ??",
+#  "0x102902778: *CallStack::new:CallStack at ??",
+#  "0x102901845: *caller:Array(String) at ??",
+#  "0x102901829: *__icr_exec__:Array(String) at ??",
+#  "0x1028f1612: __crystal_main at ??",
+#  "0x102901708: main at ??"]
+# ```
+#
 def caller
   CallStack.new.printable_backtrace
 end
