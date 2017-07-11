@@ -17,10 +17,10 @@ require "callstack/lib_unwind"
   require "debug/dwarf"
 {% end %}
 
-# Returns the current execution stack (a backtrace) as `Array(String)`.
+# Returns the current execution stack (a backtrace) of the current
+# `Fiber` as `Array(String)`.
 #
-# Formatting and content detail can vary between debug and release builds.
-#
+# Formatting and content detail may vary between debug and release builds.
 def caller
   CallStack.new.printable_backtrace
 end
