@@ -274,7 +274,7 @@ describe JSON::Builder do
     assert_built(%<{"hash":{"hash":"value"},"object":{"int":12}}>) do
       object do
         field "hash", {"hash" => "value"}
-	field "object", TestObject.new
+        field "object", TestObject.new
       end
     end
   end
