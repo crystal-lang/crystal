@@ -42,6 +42,20 @@ class Scheduler
     event
   end
 
+  def self.create_fd_write_event(sock : Socket, edge_triggered : Bool = false)
+    flags = LibEvent2::EventFlags::Write
+    flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
+    event = @@eb.new_event(sock.fd, flags, sock) do |s, flags, data|
+      sock_ref = data.as(Socket)
+      if flags.includes?(LibEvent2::EventFlags::Write)
+        sock_ref.resume_write
+      elsif flags.includes?(LibEvent2::EventFlags::Timeout)
+        sock_ref.resume_write(timed_out: true)
+      end
+    end
+    event
+  end
+
   def self.create_fd_read_event(io : IO::FileDescriptor, edge_triggered : Bool = false)
     flags = LibEvent2::EventFlags::Read
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
@@ -51,6 +65,20 @@ class Scheduler
         fd_io.resume_read
       elsif flags.includes?(LibEvent2::EventFlags::Timeout)
         fd_io.resume_read(timed_out: true)
+      end
+    end
+    event
+  end
+
+  def self.create_fd_read_event(sock : Socket, edge_triggered : Bool = false)
+    flags = LibEvent2::EventFlags::Read
+    flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
+    event = @@eb.new_event(sock.fd, flags, sock) do |s, flags, data|
+      sock_ref = data.as(Socket)
+      if flags.includes?(LibEvent2::EventFlags::Read)
+        sock_ref.resume_read
+      elsif flags.includes?(LibEvent2::EventFlags::Timeout)
+        sock_ref.resume_read(timed_out: true)
       end
     end
     event
