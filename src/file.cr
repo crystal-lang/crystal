@@ -32,7 +32,7 @@ class File < IO::FileDescriptor
 
     @path = filename
     self.set_encoding(encoding, invalid: invalid) if encoding
-    super(fd, blocking: true)
+    super(Crystal::System::FileHandle.new(fd), blocking: true)
   end
 
   protected def open_flag(mode)
@@ -620,7 +620,7 @@ class File < IO::FileDescriptor
   # for writing.
   def truncate(size = 0)
     flush
-    code = LibC.ftruncate(fd, size)
+    code = LibC.ftruncate(@handle.platform_specific, size)
     if code != 0
       raise Errno.new("Error truncating file '#{path}'")
     end
@@ -644,7 +644,7 @@ class File < IO::FileDescriptor
       raise ArgumentError.new("Bytesize out of bounds")
     end
 
-    io = PReader.new(fd, offset, bytesize)
+    io = PReader.new(@handle.platform_specific, offset, bytesize)
     yield io ensure io.close
   end
 

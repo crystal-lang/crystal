@@ -28,31 +28,27 @@ class Scheduler
     end
   end
 
-  def self.create_fd_write_event(io : IO::FileDescriptor, edge_triggered : Bool = false)
+  def self.create_fd_write_event(handle : Crystal::System::FileHandle)
     flags = LibEvent2::EventFlags::Write
-    flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
-    event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|
-      fd_io = data.as(IO::FileDescriptor)
+    event = @@eb.new_event(handle.platform_specific, flags, handle) do |s, flags, data|
+      fd_handle = data.as(Crystal::System::FileHandle)
       if flags.includes?(LibEvent2::EventFlags::Write)
-        fd_io.resume_write
+        fd_handle.resume_write
       elsif flags.includes?(LibEvent2::EventFlags::Timeout)
-        fd_io.write_timed_out = true
-        fd_io.resume_write
+        fd_handle.resume_write(timed_out: true)
       end
     end
     event
   end
 
-  def self.create_fd_read_event(io : IO::FileDescriptor, edge_triggered : Bool = false)
+  def self.create_fd_read_event(handle : Crystal::System::FileHandle)
     flags = LibEvent2::EventFlags::Read
-    flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
-    event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|
-      fd_io = data.as(IO::FileDescriptor)
+    event = @@eb.new_event(handle.platform_specific, flags, handle) do |s, flags, data|
+      fd_handle = data.as(Crystal::System::FileHandle)
       if flags.includes?(LibEvent2::EventFlags::Read)
-        fd_io.resume_read
+        fd_handle.resume_read
       elsif flags.includes?(LibEvent2::EventFlags::Timeout)
-        fd_io.read_timed_out = true
-        fd_io.resume_read
+        fd_handle.resume_read(timed_out: true)
       end
     end
     event

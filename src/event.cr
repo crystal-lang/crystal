@@ -32,22 +32,21 @@ module Event
       @freed = true
     end
 
+    private def to_timeval(time : LibC::Timeval)
+      time
+    end
+
     private def to_timeval(time : Int)
-      t = uninitialized LibC::Timeval
-      t.tv_sec = typeof(t.tv_sec).new(time)
-      t.tv_usec = typeof(t.tv_usec).new(0)
-      t
+      LibC::Timeval.new(tv_sec: time, tv_usec: 0)
     end
 
     private def to_timeval(time : Float)
-      t = uninitialized LibC::Timeval
+      LibC::Timeval.new(tv_sec: time, tv_usec: (time - time.to_u64) * 1e6)
+    end
 
-      seconds = typeof(t.tv_sec).new(time)
-      useconds = typeof(t.tv_usec).new((time - seconds) * 1e6)
-
-      t.tv_sec = seconds
-      t.tv_usec = useconds
-      t
+    private def to_timeval(time : Time::Span)
+      seconds, remainder_ticks = time.ticks.divmod(Time::Span::TicksPerSecond)
+      LibC::Timeval.new(tv_sec: seconds, tv_usec: remainder_ticks / Time::Span::TicksPerMicrosecond)
     end
   end
 
@@ -63,8 +62,8 @@ module Event
       end
     end
 
-    def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
-      event = LibEvent2.event_new(@base, s, flags, callback, data.as(Void*))
+    def new_event(fd : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
+      event = LibEvent2.event_new(@base, fd, flags, callback, data.as(Void*))
       Event.new(event)
     end
 

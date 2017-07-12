@@ -60,13 +60,13 @@ class Socket < IO::FileDescriptor
     fd = LibC.socket(family, type, protocol)
     raise Errno.new("failed to create socket:") if fd == -1
     init_close_on_exec(fd)
-    super(fd, blocking)
+    super(Crystal::System::FileHandle.new(fd), blocking)
     self.sync = true
   end
 
   protected def initialize(fd : Int32, @family, @type, @protocol = Protocol::IP)
     init_close_on_exec(fd)
-    super fd, blocking: false
+    super Crystal::System::FileHandle.new(fd), blocking: false
     self.sync = true
   end
 
@@ -104,15 +104,15 @@ class Socket < IO::FileDescriptor
   # `Errno` error if the connection failed.
   def connect(addr, timeout = nil)
     loop do
-      if LibC.connect(fd, addr, addr.size) == 0
+      if LibC.connect(@handle.platform_specific, addr, addr.size) == 0
         return
       end
       case Errno.value
       when Errno::EISCONN
         return
       when Errno::EINPROGRESS, Errno::EALREADY
-        wait_writable(msg: "connect timed out", timeout: timeout) do |error|
-          return yield error
+        @handle.wait_writable(timeout: timeout) do |error|
+          return yield IO::Timeout.new("connect timed out")
         end
       else
         return yield Errno.new("connect")
@@ -157,7 +157,7 @@ class Socket < IO::FileDescriptor
   # Tries to bind the socket to a local address.
   # Yields an `Errno` if the binding failed.
   def bind(addr)
-    unless LibC.bind(fd, addr, addr.size) == 0
+    unless LibC.bind(@handle.platform_specific, addr, addr.size) == 0
       yield Errno.new("bind")
     end
   end
@@ -170,7 +170,7 @@ class Socket < IO::FileDescriptor
   # Tries to listen for connections on the previously bound socket.
   # Yields an `Errno` on failure.
   def listen(backlog = SOMAXCONN)
-    unless LibC.listen(fd, backlog) == 0
+    unless LibC.listen(@handle.platform_specific, backlog) == 0
       yield Errno.new("listen")
     end
   end
@@ -216,12 +216,12 @@ class Socket < IO::FileDescriptor
 
   protected def accept_impl
     loop do
-      client_fd = LibC.accept(fd, out client_addr, out client_addrlen)
+      client_fd = LibC.accept(@handle.platform_specific, out client_addr, out client_addrlen)
       if client_fd == -1
         if closed?
           return
         elsif Errno.value == Errno::EAGAIN
-          wait_readable
+          @handle.wait_readable
         else
           raise Errno.new("accept")
         end
@@ -244,13 +244,13 @@ class Socket < IO::FileDescriptor
   # ```
   def send(message)
     slice = message.to_slice
-    bytes_sent = LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
+    bytes_sent = LibC.send(@handle.platform_specific, slice.to_unsafe.as(Void*), slice.size, 0)
     raise Errno.new("Error sending datagram") if bytes_sent == -1
     bytes_sent
   ensure
     # see IO::FileDescriptor#unbuffered_write
-    if (writers = @writers) && !writers.empty?
-      add_write_event
+    if (writers = @handle.writers) && !writers.empty?
+      @handle.add_write_event
     end
   end
 
@@ -264,7 +264,7 @@ class Socket < IO::FileDescriptor
   # ```
   def send(message, to addr : Address)
     slice = message.to_slice
-    bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
+    bytes_sent = LibC.sendto(@handle.platform_specific, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
     raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
     bytes_sent
   end
@@ -306,10 +306,10 @@ class Socket < IO::FileDescriptor
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
 
     loop do
-      bytes_read = LibC.recvfrom(fd, message.to_unsafe.as(Void*), message.size, 0, sockaddr, pointerof(addrlen))
+      bytes_read = LibC.recvfrom(@handle.platform_specific, message.to_unsafe.as(Void*), message.size, 0, sockaddr, pointerof(addrlen))
       if bytes_read == -1
         if Errno.value == Errno::EAGAIN
-          wait_readable
+          @handle.wait_readable
         else
           raise Errno.new("Error receiving datagram")
         end
@@ -319,8 +319,8 @@ class Socket < IO::FileDescriptor
     end
   ensure
     # see IO::FileDescriptor#unbuffered_read
-    if (readers = @readers) && !readers.empty?
-      add_read_event
+    if (readers = @handle.readers) && !readers.empty?
+      @handle.add_read_event
     end
   end
 
@@ -335,13 +335,13 @@ class Socket < IO::FileDescriptor
   end
 
   private def shutdown(how)
-    if LibC.shutdown(@fd, how) != 0
+    if LibC.shutdown(@handle.platform_specific, how) != 0
       raise Errno.new("shutdown #{how}")
     end
   end
 
   def inspect(io)
-    io << "#<#{self.class}:fd #{@fd}>"
+    io << "#<#{self.class}:fd #{@handle.platform_specific}>"
   end
 
   def send_buffer_size
@@ -426,7 +426,7 @@ class Socket < IO::FileDescriptor
   # Returns the modified *optval*.
   def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
-    ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
+    ret = LibC.getsockopt(@handle.platform_specific, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
     raise Errno.new("getsockopt") if ret == -1
     optval
   end
@@ -434,7 +434,7 @@ class Socket < IO::FileDescriptor
   # NOTE: *optval* is restricted to `Int32` until sizeof works on variables.
   def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
-    ret = LibC.setsockopt(fd, level, optname, (pointerof(optval).as(Void*)), optsize)
+    ret = LibC.setsockopt(@handle.platform_specific, level, optname, (pointerof(optval).as(Void*)), optsize)
     raise Errno.new("setsockopt") if ret == -1
     ret
   end

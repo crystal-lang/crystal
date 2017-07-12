@@ -35,12 +35,15 @@ class Tempfile < IO::FileDescriptor
   # Creates a `Tempfile` with the given filename.
   def initialize(name)
     tmpdir = self.class.dirname + File::SEPARATOR
+
+    # mkstemp modifies @path to replace XXXXXX
     @path = "#{tmpdir}#{name}.XXXXXX"
-    fileno = LibC.mkstemp(@path)
-    if fileno == -1
+    fd = LibC.mkstemp(@path)
+    if fd == -1
       raise Errno.new("mkstemp")
     end
-    super(fileno, blocking: true)
+
+    super(Crystal::System::FileHandle.new(fd), blocking: true)
   end
 
   # Retrieves the full path of a this tempfile.
