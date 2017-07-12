@@ -220,10 +220,10 @@ class JSON::Builder
 
   # Writes an object's field and value.
   # The field's name is first converted to a `String` by invoking
-  # `to_s` on it. The field's value can only be a `scalar`.
+  # `to_s` on it.
   def field(name, value)
     string(name)
-    scalar(value)
+    value.to_json(self)
   end
 
   # Writes an object's field and then invokes the block.
