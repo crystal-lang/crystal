@@ -5,7 +5,10 @@ require "c/netinet/tcp"
 require "c/sys/socket"
 require "c/sys/un"
 
-class Socket < IO::FileDescriptor
+class Socket
+  include IO::Buffered
+  include IO::Syscall
+
   class Error < Exception
   end
 
@@ -34,6 +37,13 @@ class Socket < IO::FileDescriptor
   # :nodoc:
   SOMAXCONN = 128
 
+  getter fd : Int32
+
+  @read_event : Event::Event?
+  @write_event : Event::Event?
+
+  @closed = false
+
   getter family : Family
   getter type : Type
   getter protocol : Protocol
@@ -60,14 +70,21 @@ class Socket < IO::FileDescriptor
     fd = LibC.socket(family, type, protocol)
     raise Errno.new("failed to create socket:") if fd == -1
     init_close_on_exec(fd)
-    super(fd, blocking)
+    @fd = fd
+
     self.sync = true
+    unless blocking
+      self.blocking = false
+    end
   end
 
-  protected def initialize(fd : Int32, @family, @type, @protocol = Protocol::IP)
-    init_close_on_exec(fd)
-    super fd, blocking: false
+  protected def initialize(@fd : Int32, @family, @type, @protocol = Protocol::IP, blocking = false)
+    init_close_on_exec(@fd)
+
     self.sync = true
+    unless blocking
+      self.blocking = false
+    end
   end
 
   # Force opened sockets to be closed on `exec(2)`. Only for platforms that don't
@@ -456,6 +473,112 @@ class Socket < IO::FileDescriptor
     addr = LibC::In6Addr.new
     ptr = pointerof(addr).as(Void*)
     LibC.inet_pton(LibC::AF_INET, string, ptr) > 0 || LibC.inet_pton(LibC::AF_INET6, string, ptr) > 0
+  end
+
+  def blocking
+    fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  def blocking=(value)
+    flags = fcntl(LibC::F_GETFL)
+    if value
+      flags &= ~LibC::O_NONBLOCK
+    else
+      flags |= LibC::O_NONBLOCK
+    end
+    fcntl(LibC::F_SETFL, flags)
+  end
+
+  def close_on_exec?
+    flags = fcntl(LibC::F_GETFD)
+    (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
+  end
+
+  def close_on_exec=(arg : Bool)
+    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
+    arg
+  end
+
+  def self.fcntl(fd, cmd, arg = 0)
+    r = LibC.fcntl fd, cmd, arg
+    raise Errno.new("fcntl() failed") if r == -1
+    r
+  end
+
+  def fcntl(cmd, arg = 0)
+    self.class.fcntl @fd, cmd, arg
+  end
+
+  def finalize
+    return if closed?
+
+    close rescue nil
+  end
+
+  def closed?
+    @closed
+  end
+
+  def tty?
+    LibC.isatty(fd) == 1
+  end
+
+  private def unbuffered_read(slice : Bytes)
+    read_syscall_helper(slice, "Error reading socket") do
+      # `to_i32` is acceptable because `Slice#size` is a Int32
+      LibC.recv(@fd, slice, slice.size, 0).to_i32
+    end
+  end
+
+  private def unbuffered_write(slice : Bytes)
+    write_syscall_helper(slice, "Error writing to socket") do |slice|
+      LibC.send(@fd, slice, slice.size, 0)
+    end
+  end
+
+  private def add_read_event(timeout = @read_timeout)
+    event = @read_event ||= Scheduler.create_fd_read_event(self)
+    event.add timeout
+    nil
+  end
+
+  private def add_write_event(timeout = @write_timeout)
+    event = @write_event ||= Scheduler.create_fd_write_event(self)
+    event.add timeout
+    nil
+  end
+
+  private def unbuffered_rewind
+    raise IO::Error.new("Can't rewind")
+  end
+
+  private def unbuffered_close
+    return if @closed
+
+    err = nil
+    if LibC.close(@fd) != 0
+      case Errno.value
+      when Errno::EINTR, Errno::EINPROGRESS
+        # ignore
+      else
+        err = Errno.new("Error closing socket")
+      end
+    end
+
+    @closed = true
+
+    @read_event.try &.free
+    @read_event = nil
+    @write_event.try &.free
+    @write_event = nil
+
+    reschedule_waiting
+
+    raise err if err
+  end
+
+  private def unbuffered_flush
+    # Nothing
   end
 end
 
