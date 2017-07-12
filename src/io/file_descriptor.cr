@@ -9,17 +9,11 @@ class IO::FileDescriptor
   @read_event : Event::Event?
   @write_event : Event::Event?
 
-  def initialize(@fd : Int32, blocking = false, edge_triggerable = false)
-    @edge_triggerable = !!edge_triggerable
+  def initialize(@fd : Int32, blocking = false)
     @closed = false
-    @fd = fd
 
     unless blocking
       self.blocking = false
-      if @edge_triggerable
-        @read_event = Scheduler.create_fd_read_event(self, @edge_triggerable)
-        @write_event = Scheduler.create_fd_write_event(self, @edge_triggerable)
-      end
     end
   end
 
@@ -205,14 +199,12 @@ class IO::FileDescriptor
   end
 
   private def add_read_event(timeout = @read_timeout)
-    return if @edge_triggerable
     event = @read_event ||= Scheduler.create_fd_read_event(self)
     event.add timeout
     nil
   end
 
   private def add_write_event(timeout = @write_timeout)
-    return if @edge_triggerable
     event = @write_event ||= Scheduler.create_fd_write_event(self)
     event.add timeout
     nil
