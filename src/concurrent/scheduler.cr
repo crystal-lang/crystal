@@ -36,8 +36,7 @@ class Scheduler
       if flags.includes?(LibEvent2::EventFlags::Write)
         fd_io.resume_write
       elsif flags.includes?(LibEvent2::EventFlags::Timeout)
-        fd_io.write_timed_out = true
-        fd_io.resume_write
+        fd_io.resume_write(timed_out: true)
       end
     end
     event
@@ -51,8 +50,7 @@ class Scheduler
       if flags.includes?(LibEvent2::EventFlags::Read)
         fd_io.resume_read
       elsif flags.includes?(LibEvent2::EventFlags::Timeout)
-        fd_io.read_timed_out = true
-        fd_io.resume_read
+        fd_io.resume_read(timed_out: true)
       end
     end
     event

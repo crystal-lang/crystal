@@ -1,23 +1,17 @@
+require "./syscall"
 require "c/fcntl"
 
 # An `IO` over a file descriptor.
 class IO::FileDescriptor
-  include Buffered
+  include IO::Buffered
+  include IO::Syscall
 
-  @read_timeout : Float64?
-  @write_timeout : Float64?
   @read_event : Event::Event?
   @write_event : Event::Event?
-
-  # :nodoc:
-  property read_timed_out : Bool
-  property write_timed_out : Bool
 
   def initialize(@fd : Int32, blocking = false, edge_triggerable = false)
     @edge_triggerable = !!edge_triggerable
     @closed = false
-    @read_timed_out = false
-    @write_timed_out = false
     @fd = fd
 
     unless blocking
@@ -27,36 +21,6 @@ class IO::FileDescriptor
         @write_event = Scheduler.create_fd_write_event(self, @edge_triggerable)
       end
     end
-  end
-
-  # Set the number of seconds to wait when reading before raising an `IO::Timeout`.
-  def read_timeout=(read_timeout : Number)
-    @read_timeout = read_timeout.to_f
-  end
-
-  # ditto
-  def read_timeout=(read_timeout : Time::Span)
-    self.read_timeout = read_timeout.total_seconds
-  end
-
-  # Sets no timeout on read operations, so an `IO::Timeout` will never be raised.
-  def read_timeout=(read_timeout : Nil)
-    @read_timeout = nil
-  end
-
-  # Set the number of seconds to wait when writing before raising an `IO::Timeout`.
-  def write_timeout=(write_timeout : Number)
-    @write_timeout = write_timeout.to_f
-  end
-
-  # ditto
-  def write_timeout=(write_timeout : Time::Span)
-    self.write_timeout = write_timeout.total_seconds
-  end
-
-  # Sets no timeout on write operations, so an `IO::Timeout` will never be raised.
-  def write_timeout=(write_timeout : Nil)
-    @write_timeout = nil
   end
 
   def blocking
@@ -91,20 +55,6 @@ class IO::FileDescriptor
 
   def fcntl(cmd, arg = 0)
     self.class.fcntl @fd, cmd, arg
-  end
-
-  # :nodoc:
-  def resume_read
-    if reader = @readers.try &.shift?
-      reader.resume
-    end
-  end
-
-  # :nodoc:
-  def resume_write
-    if writer = @writers.try &.shift?
-      writer.resume
-    end
   end
 
   def stat
@@ -238,92 +188,26 @@ class IO::FileDescriptor
   end
 
   private def unbuffered_read(slice : Bytes)
-    count = slice.size
-    loop do
-      bytes_read = LibC.read(@fd, slice.pointer(count).as(Void*), count)
-      if bytes_read != -1
-        return bytes_read
-      end
-
-      if Errno.value == Errno::EAGAIN
-        wait_readable
-      else
-        raise Errno.new "Error reading file"
-      end
-    end
-  ensure
-    if (readers = @readers) && !readers.empty?
-      add_read_event
+    read_syscall_helper(slice, "Error reading file") do
+      # `to_i32` is acceptable because `Slice#size` is a Int32
+      LibC.read(@fd, slice, slice.size).to_i32
     end
   end
 
   private def unbuffered_write(slice : Bytes)
-    count = slice.size
-    total = count
-    loop do
-      bytes_written = LibC.write(@fd, slice.pointer(count).as(Void*), count)
-      if bytes_written != -1
-        count -= bytes_written
-        return total if count == 0
-        slice += bytes_written
-      else
-        if Errno.value == Errno::EAGAIN
-          wait_writable
-          next
-        elsif Errno.value == Errno::EBADF
+    write_syscall_helper(slice, "Error writing file") do |slice|
+      LibC.write(@fd, slice, slice.size).tap do |return_code|
+        if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing"
-        else
-          raise Errno.new "Error writing file"
         end
       end
     end
-  ensure
-    if (writers = @writers) && !writers.empty?
-      add_write_event
-    end
   end
 
-  private def wait_readable
-    wait_readable { |err| raise err }
-  end
-
-  private def wait_readable
-    readers = (@readers ||= Deque(Fiber).new)
-    readers << Fiber.current
-    add_read_event
-    Scheduler.reschedule
-
-    if @read_timed_out
-      @read_timed_out = false
-      yield Timeout.new("Read timed out")
-    end
-
-    nil
-  end
-
-  private def add_read_event
+  private def add_read_event(timeout = @read_timeout)
     return if @edge_triggerable
     event = @read_event ||= Scheduler.create_fd_read_event(self)
-    event.add @read_timeout
-    nil
-  end
-
-  private def wait_writable(timeout = @write_timeout)
-    wait_writable(timeout: timeout) { |err| raise err }
-  end
-
-  # msg/timeout are overridden in nonblock_connect
-  private def wait_writable(msg = "Write timed out", timeout = @write_timeout)
-    writers = (@writers ||= Deque(Fiber).new)
-    writers << Fiber.current
-    add_write_event timeout
-    Scheduler.reschedule
-
-    if @write_timed_out
-      @write_timed_out = false
-      yield Timeout.new(msg)
-    end
-
+    event.add timeout
     nil
   end
 
@@ -358,15 +242,8 @@ class IO::FileDescriptor
     @read_event = nil
     @write_event.try &.free
     @write_event = nil
-    if readers = @readers
-      Scheduler.enqueue readers
-      readers.clear
-    end
 
-    if writers = @writers
-      Scheduler.enqueue writers
-      writers.clear
-    end
+    reschedule_waiting
 
     raise err if err
   end
