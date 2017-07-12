@@ -82,6 +82,11 @@ describe "Regex" do
     $2.should eq("ba")
   end
 
+  it "matches with Unicode properties for \d, \w, etc." do
+    (/[[:alnum:]]/.match "à").should be_true
+    (/\w/.match "à").should be_true
+  end
+
   describe "name_table" do
     it "is a map of capture group number to name" do
       table = (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).name_table
