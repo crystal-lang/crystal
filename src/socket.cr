@@ -103,6 +103,7 @@ class Socket < IO::FileDescriptor
   # Tries to connect to a remote address. Yields an `IO::Timeout` or an
   # `Errno` error if the connection failed.
   def connect(addr, timeout = nil)
+    timeout = timeout.seconds unless timeout.is_a? Time::Span | Nil
     loop do
       if LibC.connect(fd, addr, addr.size) == 0
         return
@@ -111,8 +112,8 @@ class Socket < IO::FileDescriptor
       when Errno::EISCONN
         return
       when Errno::EINPROGRESS, Errno::EALREADY
-        wait_writable(msg: "connect timed out", timeout: timeout) do |error|
-          return yield error
+        wait_writable(timeout: timeout) do |error|
+          return yield IO::Timeout.new("connect timed out")
         end
       else
         return yield Errno.new("connect")
