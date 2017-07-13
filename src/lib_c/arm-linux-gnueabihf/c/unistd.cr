@@ -14,6 +14,7 @@ lib LibC
   fun chown(file : Char*, owner : UidT, group : GidT) : Int
   fun close(fd : Int) : Int
   fun dup2(fd : Int, fd2 : Int) : Int
+  fun dup3(fd : Int, fd2 : Int, flags : Int) : Int
   fun _exit(status : Int) : NoReturn
   fun execvp(file : Char*, argv : Char**) : Int
   @[ReturnsTwice]
