@@ -105,4 +105,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(alias Foo = Void)
   expect_to_s %(type(Foo = Void))
   expect_to_s %(return true ? 1 : 2), %(return begin\n  if true\n    1\n  else\n    2\n  end\nend)
+  expect_to_s %(1 <= 2 <= 3)
+  expect_to_s %((1 <= 2) <= 3)
+  expect_to_s %(1 <= (2 <= 3))
 end
