@@ -1,4 +1,4 @@
-@[Link("libpcre")]
+@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs libpcre || printf %s '-lpcre'`")]
 lib LibPCRE
   alias Int = LibC::Int
 
