@@ -83,8 +83,8 @@ describe "Regex" do
   end
 
   it "matches with Unicode properties for \d, \w, etc." do
-    (/[[:alnum:]]/.match "à").should be_true
-    (/\w/.match "à").should be_true
+    (/(*UCP)[[:alnum:]]/.match "à").should be_truthy
+    (/(*UCP)\w/.match "à").should be_truthy
   end
 
   describe "name_table" do

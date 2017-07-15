@@ -1,4 +1,4 @@
-@[Link("pcre")]
+@[Link("libpcre")]
 lib LibPCRE
   alias Int = LibC::Int
 
