@@ -26,7 +26,9 @@ class StringPool
 
   # Creates a new empty string pool.
   def initialize
-    @buckets = Array(Array(String)?).new(11, nil)
+    @capacity = 8
+    @hashes = Pointer(Hash::Hasher::Value).malloc(@capacity, 0_u32)
+    @values = Pointer(String).malloc(@capacity, "")
     @size = 0
   end
 
@@ -70,24 +72,43 @@ class StringPool
   # pool.size # => 1
   # ```
   def get(str : UInt8*, len)
-    rehash if @size > 5 * @buckets.size
+    hash = hash(str, len)
+    get(hash, str, len)
+  end
 
-    index = bucket_index str, len
-    bucket = @buckets[index]
+  private def get(hash : Hash::Hasher::Value, str : UInt8*, len)
+    rehash if @size >= @capacity / 4 * 3
 
-    if bucket
-      entry = find_entry_in_bucket(bucket, str, len)
-      if entry
-        return entry
+    mask = (@capacity - 1).to_u32
+    index, d = hash & mask, 1
+    while (h = @hashes[index]) != 0
+      if h == hash && @values[index].bytesize == len
+        if str.memcmp(@values[index].to_unsafe, len) == 0
+          return @values[index]
+        end
       end
-    else
-      @buckets[index] = bucket = Array(String).new
+      index = (index + d) & mask
+      d += 1
     end
 
     @size += 1
     entry = String.new(str, len)
-    bucket.push entry
+    @hashes[index] = hash
+    @values[index] = entry
     entry
+  end
+
+  private def put_on_rehash(hash : Hash::Hasher::Value, entry : String)
+    mask = (@capacity - 1).to_u32
+    index, d = hash & mask, 1
+    while @hashes[index] != 0
+      index = (index + d) & mask
+      d += 1
+    end
+
+    @size += 1
+    @hashes[index] = hash
+    @values[index] = entry
   end
 
   # Returns a `String` with the contents of the given `IO::Memory`.
@@ -127,48 +148,30 @@ class StringPool
   #
   # Call this method if you modified a string submitted to the pool.
   def rehash
-    new_size = calculate_new_size(@size)
-    old_buckets = @buckets
-    @buckets = Array(Array(String)?).new(new_size, nil)
+    if @capacity * 2 <= 0
+      raise "Hash table too big"
+    end
+
+    old_capacity = @capacity
+    old_hashes = @hashes
+    old_values = @values
+
+    @capacity *= 2
+    @hashes = Pointer(Hash::Hasher::Value).malloc(@capacity, 0_u32)
+    @values = Pointer(String).malloc(@capacity, "")
     @size = 0
 
-    old_buckets.each do |bucket|
-      bucket.try &.each do |entry|
-        get(entry.to_unsafe, entry.size)
+    0.upto(old_capacity - 1) do |i|
+      if old_hashes[i] != 0
+        put_on_rehash(old_hashes[i], old_values[i])
       end
     end
-  end
-
-  private def bucket_index(str, len)
-    hash = hash(str, len)
-    (hash % @buckets.size).to_i
-  end
-
-  private def find_entry_in_bucket(bucket, str, len)
-    bucket.each do |entry|
-      if entry.size == len
-        if str.memcmp(entry.to_unsafe, len) == 0
-          return entry
-        end
-      end
-    end
-    nil
   end
 
   private def hash(str, len)
-    h = 0
-    str.to_slice(len).each do |c|
-      h = 31 * h + c
-    end
-    h
-  end
-
-  private def calculate_new_size(size)
-    new_size = 8
-    Hash::HASH_PRIMES.each do |hash_size|
-      return hash_size if new_size > size
-      new_size <<= 1
-    end
-    raise "Hash table too big"
+    hasher = Hash::Hasher.new
+    hasher << str.to_slice(len)
+    # hash should be non-zero, so `or` it with high bit
+    hasher.digest | 0x80000000_u32
   end
 end
