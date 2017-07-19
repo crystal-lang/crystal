@@ -233,9 +233,9 @@ module HTTP
   # ```
   # HTTP.rfc1123_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
   # ```
+  # DEPRECATED: Use `Time#to_rfc1123` directly
   def self.rfc1123_date(time : Time) : String
-    # TODO: GMT should come from the Time classes instead
-    time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
+    time.to_rfc1123
   end
 
   # Dequotes an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)

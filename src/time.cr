@@ -357,6 +357,66 @@ struct Time
     Format.new(format).format(self, io)
   end
 
+  # Format this time using the format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  #
+  # ```
+  # Time.new(2016, 2, 15).to_rfc1123 # => "Sun, 14 Feb 2016 21:00:00 GMT"
+  # ```
+  def to_rfc1123
+    Format::RFC_1123.format(to_utc)
+  end
+
+  # Format this time using the format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  # into the given *io*.
+  def to_rfc1123(io : IO)
+    Format::RFC_1123.format(to_utc, io)
+  end
+
+  # Parse time in format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  def self.parse_rfc1123(time : String)
+    Format::RFC_1123.parse(time)
+  end
+
+  # Format this time using the format specified by [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+  #
+  # ```
+  # Time.new(2016, 2, 15).to_iso8601 # => "2016-02-15T00:00:00+0000"
+  # ```
+  def to_iso8601
+    Format::ISO_8601_DATE_TIME.format(to_utc)
+  end
+
+  # Format this time using the format specified by [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+  # into the given *io*.
+  def to_iso8601(io : IO)
+    Format::ISO_8601_DATE_TIME.format(to_utc, io)
+  end
+
+  # Parse time in format specified by [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+  def self.parse_iso8601(time : String)
+    Format::ISO_8601_DATE_TIME.parse(time)
+  end
+
+  # Format this time using the format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
+  #
+  # ```
+  # Time.new(2016, 2, 15).to_rfc2822 # => "Mon, 15 Feb 2016 00:00:00 -0400"
+  # ```
+  def to_rfc2822
+    Format::RFC_2822.format(to_utc)
+  end
+
+  # Format this time using the format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
+  # into the given *io*.
+  def to_rfc2822(io : IO)
+    Format::RFC_2822.format(to_utc, io)
+  end
+
+  # Parse time in format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
+  def self.parse_rfc2822(time : String)
+    Format::RFC_2822.parse(time)
+  end
+
   # Parses a Time in the given *time* string, using the given *pattern* (see
   # `Time::Format`).
   #

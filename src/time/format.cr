@@ -49,11 +49,17 @@
 # * **%:z**: time zone as hour and minute offset from UTC with a colon (+09:00)
 # * **%::z**: time zone as hour, minute and second offset from UTC with a colon (+09:00:00)
 struct Time::Format
-  # The ISO 8601 date format. This is just `"%F"`.
+  # The [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) date format. This is just `"%F"`.
   ISO_8601_DATE = new "%F"
 
-  # The ISO 8601 datetime format. This is just `"%FT%X%z"`.
+  # The [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) datetime format. This is just `"%FT%X%z"`.
   ISO_8601_DATE_TIME = new "%FT%X%z"
+
+  # The [RFC 1123](http://xml.coverpages.org/ISO-FDIS-8601.pdf) datetime format.
+  RFC_1123 = new "%a, %d %b %Y %H:%M:%S GMT", Time::Kind::Utc
+
+  # The [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt) datetime format.
+  RFC_2822 = new "%a, %d %b %Y %H:%M:%S %z"
 
   # Error raised when an invalid pattern is used.
   class Error < ::Exception
