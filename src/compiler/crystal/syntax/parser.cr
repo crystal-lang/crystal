@@ -1861,6 +1861,7 @@ module Crystal
             has_interpolation = true
           end
 
+          skip_space_or_newline
           if @token.type != :"}"
             raise "Unterminated string interpolation"
           end
