@@ -159,6 +159,35 @@ struct NamedTuple
     yield
   end
 
+  # Merges values from *other* into `self`, returning a new named tuple of the same type.
+  #
+  # ```
+  # a = {foo: "Hello", bar: "Old"}
+  # b = {bar: "New"}
+  # a.update(b) # => {foo: "Hello", bar: "New"}
+  # ```
+  #
+  # Adding keys or changing types will fail at compile time:
+  # ```
+  # {one: 1}.update(three: 3)
+  # {one: 1}.update(one: true)
+  # ```
+  def update(other : NamedTuple)
+    update(**other)
+  end
+
+  def update(**other : **U) forall U
+    {% begin %}
+      self.class.new(
+      {% for key, value in U %}
+        {{key.stringify}}: other[:{{key.stringify}}].as({{value.id}}),
+      {% end %}{% for key, value in T %}{% unless U.keys.includes?(key) %}
+        {{key.stringify}}: self[:{{key.stringify}}],
+      {% end %}{% end %}
+      )
+    {% end %}
+  end
+
   # Returns a hash value based on this name tuple's size, keys and values.
   #
   # See also: `Object#hash`.

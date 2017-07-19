@@ -296,4 +296,10 @@ describe "NamedTuple" do
     tup = {a: 1, b: 'a'}
     tup.values.should eq({1, 'a'})
   end
+
+  it "updates with values from other named tuple" do
+    a = {one: 1, two: 2, three: 3, four: 4, five: 5, "im \"string": "works"}
+    b = {two: 22, three: 33, "im \"string": "ok"}
+    c = a.update(b).update(three: 333, four: 44).should eq({one: 1, two: 22, three: 333, four: 44, five: 5, "im \"string": "ok"})
+  end
 end
