@@ -543,8 +543,21 @@ module Crystal
           check :INTERPOLATION_START
           write "\#{"
           delimiter_state = @token.delimiter_state
-          next_token_skip_space_or_newline
-          indent(@column, exp)
+
+          wrote_comment = next_token_skip_space
+          has_newline = wrote_comment || @token.type == :NEWLINE
+          skip_space_or_newline
+
+          if has_newline
+            write_line unless wrote_comment
+            write_indent(@column + 2)
+            indent(@column + 2, exp)
+            wrote_comment = skip_space_or_newline
+            write_line unless wrote_comment
+          else
+            indent(@column, exp)
+          end
+
           skip_space_or_newline
           check :"}"
           write "}"
