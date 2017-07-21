@@ -343,6 +343,11 @@ describe Crystal::Formatter do
   assert_format "__DIR__", "__DIR__"
   assert_format "__LINE__", "__LINE__"
 
+  assert_format %("\#{foo = 1\n}"), %("\#{foo = 1}")
+  assert_format %("\#{\n  foo = 1\n}")
+  assert_format %("\#{\n  foo = 1}"), %("\#{\n  foo = 1\n}")
+  assert_format %("\#{ # foo\n  foo = 1\n}")
+
   assert_format "%w(one   two  three)", "%w(one two three)"
   assert_format "%i(one   two  three)", "%i(one two three)"
   assert_format "%w{one(   two(  three)}", "%w{one( two( three)}"
