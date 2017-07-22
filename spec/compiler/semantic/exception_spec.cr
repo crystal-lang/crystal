@@ -454,4 +454,26 @@ describe "Semantic: exception" do
       b
       )) { int32 }
   end
+
+  it "detects reading nil-if-read variable after exception handler (#4723)" do
+    result = assert_type(%(
+      if true
+        foo = 42
+      end
+
+      # Now, `@vars["foo"].type` is `Int32` and `@vars["foo"].nil_if_read?` is `true`.
+
+      begin
+      rescue
+      end
+
+      # If `@vars["foo"].nil_if_read?` is `true`, `foo` on `program.vars`
+      # binds to `nil` node, so `program.vars["foo"].type` becomes `Int32 | Nil`.
+      # However if not (it is BUG), `program.vars["foo"].type` is `Int32`
+      # even though the type of the node `foo` is `Int32 | Nil`.
+      foo
+    )) { nilable int32 }
+    program = result.program
+    program.vars["foo"].type.should be(program.nilable program.int32)
+  end
 end
