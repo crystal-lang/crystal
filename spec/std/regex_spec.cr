@@ -82,9 +82,18 @@ describe "Regex" do
     $2.should eq("ba")
   end
 
-  it "matches with Unicode properties for \d, \w, etc." do
-    (/(*UCP)[[:alnum:]]/.match "à").should be_truthy
-    (/(*UCP)\w/.match "à").should be_truthy
+  if LibPCRE::HAS_UCP
+    it "matches with Unicode properties for alnum character class with UCP flag" do
+      (/(*UCP)[[:alnum:]]/.match "à").should be_truthy
+    end
+
+    it "matches with Unicode properties for \w with UCP option" do
+      (Regex.new("\\w", Regex::Options::UCP).match "à").should be_truthy
+    end
+  else
+    pending "PCRE built without Unicode properties support" do
+      nothing
+    end
   end
 
   describe "name_table" do
