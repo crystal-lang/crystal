@@ -1,4 +1,11 @@
-@[Link("pcre")]
+{% begin %}
+  lib LibPCRE
+    PCRE_810 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=8.10 libpcre || pkg-config --atleast-version=8.10 pcre || printf %s false`.stringify != "false" }}
+    HAS_UCP  = PCRE_810 && {{ `command -v pcretest > /dev/null && command -v grep > /dev/null && pcretest -C | grep 'Unicode properties support' || printf %s false`.stringify != "false" }}
+  end
+{% end %}
+
+@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs libpcre || pkg-config --libs pcre || printf %s '-lpcre'`")]
 lib LibPCRE
   alias Int = LibC::Int
 

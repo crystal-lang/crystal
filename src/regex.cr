@@ -210,6 +210,8 @@ class Regex
     UTF_8 = 0x00000800
     # :nodoc:
     NO_UTF8_CHECK = 0x00002000
+    # :nodoc:
+    UCP = 0x20000000
   end
 
   # Return a `Regex::Options` representing the optional flags applied to this `Regex`.
