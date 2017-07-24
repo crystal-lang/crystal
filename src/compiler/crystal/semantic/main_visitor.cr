@@ -2526,6 +2526,7 @@ module Crystal
       exception_handler_vars = @exception_handler_vars = @vars.dup
       exception_handler_vars.each do |name, var|
         new_var = new_meta_var(name)
+        new_var.nil_if_read = var.nil_if_read?
         new_var.bind_to(var)
         exception_handler_vars[name] = new_var
       end
