@@ -366,8 +366,8 @@ describe Time do
 
   it "formats standard formats" do
     time = Time.new(2016, 2, 15, kind: Time::Kind::Utc)
-    time.to_iso8601.should eq "2016-02-15T00:00:00+0000"
-    Time.parse_iso8601(time.to_iso8601).should eq time
+    time.to_rfc3339.should eq "2016-02-15T00:00:00+00:00"
+    Time.parse_rfc3339(time.to_rfc3339).should eq time
     time.to_rfc1123.should eq "Mon, 15 Feb 2016 00:00:00 GMT"
     Time.parse_rfc1123(time.to_rfc1123).should eq time
     time.to_rfc2822.should eq "Mon, 15 Feb 2016 00:00:00 +0000"

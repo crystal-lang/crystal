@@ -52,13 +52,16 @@ struct Time::Format
   # The [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) date format. This is just `"%F"`.
   ISO_8601_DATE = new "%F"
 
-  # The [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) datetime format. This is just `"%FT%X%z"`.
   ISO_8601_DATE_TIME = new "%FT%X%z"
 
-  # The [RFC 1123](http://xml.coverpages.org/ISO-FDIS-8601.pdf) datetime format.
+  # The [RFC 3339](https://tools.ietf.org/html/rfc3339)/[ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) datetime format.
+  # This is just `"%FT%X%z"`.
+  RFC_3339 = new "%FT%X%:z"
+
+  # The [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55) datetime format.
   RFC_1123 = new "%a, %d %b %Y %H:%M:%S GMT", Time::Kind::Utc
 
-  # The [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt) datetime format.
+  # The [RFC 2822](https://tools.ietf.org/html/rfc2822) datetime format.
   RFC_2822 = new "%a, %d %b %Y %H:%M:%S %z"
 
   # Error raised when an invalid pattern is used.

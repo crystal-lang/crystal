@@ -377,24 +377,28 @@ struct Time
     Format::RFC_1123.parse(time)
   end
 
-  # Format this time using the format specified by [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
-  # Time.new(2016, 2, 15).to_iso8601 # => "2016-02-15T00:00:00+0000"
+  # Time.new(2016, 2, 15).to_rfc3339 # => "2016-02-15T00:00:00+00:00"
   # ```
-  def to_iso8601
-    Format::ISO_8601_DATE_TIME.format(to_utc)
+  #
+  # ISO 8601 allows some freedom over the syntax and RFC 3339 exercises that
+  # freedom to rigidly define a fixed format intended for use in internet
+  # protocols and standards.
+  def to_rfc3339
+    Format::RFC_3339.format(to_utc)
   end
 
-  # Format this time using the format specified by [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   # into the given *io*.
-  def to_iso8601(io : IO)
-    Format::ISO_8601_DATE_TIME.format(to_utc, io)
+  def to_rfc3339(io : IO)
+    Format::RFC_3339.format(to_utc, io)
   end
 
-  # Parse time in format specified by [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
-  def self.parse_iso8601(time : String)
-    Format::ISO_8601_DATE_TIME.parse(time)
+  # Parse time in format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  def self.parse_rfc3339(time : String)
+    Format::RFC_3339.parse(time)
   end
 
   # Format this time using the format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
