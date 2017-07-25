@@ -429,6 +429,8 @@ struct Int
   end
 
   private def internal_to_s(base, upcase = false)
+    # Given sizeof(self) <= 64 bits, we need at most 64 bytes for a base 2
+    # representation, plus one byte for the trailing 0.
     chars = uninitialized UInt8[65]
     ptr_end = chars.to_unsafe + 64
     ptr = ptr_end
@@ -451,6 +453,23 @@ struct Int
 
     count = (ptr_end - ptr).to_i32
     yield ptr, count
+  end
+
+  def inspect(io)
+    type = case self
+           when Int8   then "_i8"
+           when Int16  then "_i16"
+           when Int32  then ""
+           when Int64  then "_i64"
+           when UInt8  then "_u8"
+           when UInt16 then "_u16"
+           when UInt32 then "_u32"
+           when UInt64 then "_u64"
+           else             raise "BUG: impossible"
+           end
+
+    to_s(io)
+    io << type
   end
 
   # Writes this integer to the given *io* in the given *format*.
