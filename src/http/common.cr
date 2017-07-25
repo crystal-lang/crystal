@@ -233,9 +233,9 @@ module HTTP
   # ```
   # HTTP.rfc1123_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
   # ```
-  # DEPRECATED: Use `Time#to_rfc1123` directly
+  # DEPRECATED: Use `Time#to_rfc2822` instead.
   def self.rfc1123_date(time : Time) : String
-    time.to_rfc1123
+    time.to_rfc2822
   end
 
   # Dequotes an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)

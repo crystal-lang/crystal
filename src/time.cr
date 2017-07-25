@@ -357,26 +357,6 @@ struct Time
     Format.new(format).format(self, io)
   end
 
-  # Format this time using the format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
-  #
-  # ```
-  # Time.new(2016, 2, 15).to_rfc1123 # => "Sun, 14 Feb 2016 21:00:00 GMT"
-  # ```
-  def to_rfc1123
-    Format::RFC_1123.format(to_utc)
-  end
-
-  # Format this time using the format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
-  # into the given *io*.
-  def to_rfc1123(io : IO)
-    Format::RFC_1123.format(to_utc, io)
-  end
-
-  # Parse time in format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
-  def self.parse_rfc1123(time : String)
-    Format::RFC_1123.parse(time)
-  end
-
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
@@ -406,17 +386,23 @@ struct Time
   # ```
   # Time.new(2016, 2, 15).to_rfc2822 # => "Mon, 15 Feb 2016 00:00:00 -0400"
   # ```
+  #
+  # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
   def to_rfc2822
     Format::RFC_2822.format(to_utc)
   end
 
-  # Format this time using the format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
+  # Format this time using the format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt)
   # into the given *io*.
+  #
+  # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
   def to_rfc2822(io : IO)
     Format::RFC_2822.format(to_utc, io)
   end
 
   # Parse time in format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
+  #
+  # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
   def self.parse_rfc2822(time : String)
     Format::RFC_2822.parse(time)
   end
