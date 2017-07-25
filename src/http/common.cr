@@ -228,14 +228,22 @@ module HTTP
     nil
   end
 
-  # Format a Time object as a String using the format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  # Format a `Time` object as a `String` using the format specified as `sane-cookie-date`
+  # by [RFC 6265](https://tools.ietf.org/html/rfc6265#section-4.1.1) which is
+  # according to [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1) a
+  # [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55) format with explicit
+  # timezone `GMT` (interpreted as `UTC`).
   #
   # ```
-  # HTTP.rfc1123_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
+  # HTTP.format_http_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
   # ```
-  # DEPRECATED: Use `Time#to_rfc2822` instead.
+  def self.format_date(time : Time) : String
+    time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
+  end
+
+  # DEPRECATED: Use `HTTP.format_http_date` instead.
   def self.rfc1123_date(time : Time) : String
-    time.to_rfc2822
+    format_date(time)
   end
 
   # Dequotes an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
