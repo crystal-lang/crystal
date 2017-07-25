@@ -94,6 +94,10 @@ describe "BigFloat" do
     it { "12345678901234567".to_big_f.to_s.should eq("12345678901234567") }
   end
 
+  describe "#inspect" do
+    it { "2.3".to_big_f.inspect.should eq("2.3_big_f") }
+  end
+
   it "#hash" do
     b = 123.to_big_f
     b.hash.should eq(b.to_f64.hash)

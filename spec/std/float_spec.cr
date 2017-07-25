@@ -184,6 +184,26 @@ describe "Float" do
     end
   end
 
+  describe "#inspect" do
+    it "does inspect for f64" do
+      3.2.inspect.should eq("3.2")
+    end
+
+    it "does inspect for f32" do
+      3.2_f32.inspect.should eq("3.2_f32")
+    end
+
+    it "does inspect for f64 with IO" do
+      str = String.build { |io| 3.2.inspect(io) }
+      str.should eq("3.2")
+    end
+
+    it "does inspect for f32" do
+      str = String.build { |io| 3.2_f32.inspect(io) }
+      str.should eq("3.2_f32")
+    end
+  end
+
   describe "hash" do
     it "does for Float32" do
       1.2_f32.hash.should_not eq(0)

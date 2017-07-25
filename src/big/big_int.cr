@@ -259,12 +259,9 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
 
-  def inspect
-    to_s
-  end
-
   def inspect(io)
     to_s io
+    io << "_big_i"
   end
 
   def hash
