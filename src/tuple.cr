@@ -175,6 +175,7 @@ struct Tuple
   # tuple.at(3) { 10 } # => 10
   # ```
   def at(index : Int)
+    index += size if index < 0
     {% for i in 0...T.size %}
       return self[{{i}}] if {{i}} == index
     {% end %}
