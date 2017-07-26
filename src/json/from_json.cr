@@ -133,7 +133,7 @@ def Hash.new(pull : JSON::PullParser)
 end
 
 def Tuple.new(pull : JSON::PullParser)
-  {% if true %}
+  {% begin %}
     pull.read_begin_array
     value = Tuple.new(
       {% for i in 0...T.size %}
