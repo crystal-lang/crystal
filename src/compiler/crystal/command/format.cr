@@ -179,19 +179,23 @@ class Crystal::Command
       if check_files
         check_files << FormatResult.new(filename, FormatResult::Code::BUG)
       else
-        couldnt_format "'#{filename}'", ex
+        couldnt_format "'#{filename}'"
         STDERR.puts
       end
     end
   end
 
-  private def couldnt_format(file, ex)
-    STDERR << "Error:".colorize(:red).toggle(@color) << ", " <<
-      "couldn't format " << file << ", please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
-    STDERR.puts
-    STDERR.puts
+  private def couldnt_format(file, ex = nil)
+    STDERR << "Error:".colorize(:red).toggle(@color) << ", "
 
-    ex.inspect_with_backtrace STDERR
+    if ex
+      STDERR.puts "couldn't format #{file}, please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
+      STDERR.puts
+
+      ex.inspect_with_backtrace STDERR
+    else
+      STDERR << "there's a bug formatting #{file}, to show more information, please run:\n\n  $ crystal tool format #{file}"
+    end
 
     STDERR.puts
     STDERR.flush
