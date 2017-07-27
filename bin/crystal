@@ -115,9 +115,8 @@ __has_colors() {
     return 1
   fi
 }
-SUPPORTS_COLORS=$(__has_colors)
 __error_msg() {
-  if $SUPPORTS_COLORS; then
+  if __has_colors; then
     # bold red coloring
     printf '%b\n' "\033[31;1m$@\033[0m" 1>&2
   else
@@ -125,7 +124,7 @@ __error_msg() {
   fi
 }
 __warning_msg() {
-  if $SUPPORTS_COLORS; then
+  if __has_colors; then
     # brown coloring
     printf '%b\n' "\033[33m$@\033[0m" 1>&2
   else
