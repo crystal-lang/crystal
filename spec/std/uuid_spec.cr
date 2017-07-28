@@ -67,7 +67,8 @@ describe "UUID" do
     uuid = UUID.new
     expect_raises(ArgumentError) { uuid.version = UUID::Version::Unknown }
     {% for version in %w(1 2 3 4 5) %}
-      uuid.version = UUID::Version::V{{ version.id }}
+      uuid.version = UUID::Version::V{
+        { version.id }}
       uuid.version.should eq UUID::Version::V{{ version.id }}
     {% end %}
   end

@@ -1,5 +1,0 @@
-struct UUID
-  def self.empty
-    new StaticArray(UInt8, 16).new(0_u8)
-  end
-end
