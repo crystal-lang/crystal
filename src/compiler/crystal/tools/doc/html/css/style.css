@@ -333,6 +333,23 @@ h2 {
     color: #47266E;
 }
 
+.source-link {
+  font-weight: bold;
+  text-decoration: none;
+}
+.source-link::before,
+.source-link::after {
+  color: #bbbbbb;
+}
+.source-link::before {
+  content: "[";
+  padding-right: 2px;
+}
+.source-link::after {
+  content: "]";
+  padding-left: 2px;
+}
+
 pre {
   padding: 10px 20px;
   margin-top: 4px;
