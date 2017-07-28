@@ -208,9 +208,9 @@ module Crystal
       parser.wants_doc = wants_doc?
       parser.parse
     rescue ex : InvalidByteSequenceError
-      stdout.print colorize("Error: ").red.bold
-      stdout.print colorize("file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ").bold
-      stdout.puts ex.message
+      stderr.print colorize("Error: ").red.bold
+      stderr.print colorize("file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ").bold
+      stderr.puts ex.message
       exit 1
     end
 
@@ -431,9 +431,9 @@ module Crystal
         TargetMachine.create(triple, @mcpu || "", @mattr || "", @release)
       end
     rescue ex : ArgumentError
-      stdout.print colorize("Error: ").red.bold
-      stdout.print "llc: "
-      stdout.puts ex.message
+      stderr.print colorize("Error: ").red.bold
+      stderr.print "llc: "
+      stderr.puts ex.message
       exit 1
     end
 

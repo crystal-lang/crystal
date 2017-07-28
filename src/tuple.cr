@@ -175,6 +175,7 @@ struct Tuple
   # tuple.at(3) { 10 } # => 10
   # ```
   def at(index : Int)
+    index += size if index < 0
     {% for i in 0...T.size %}
       return self[{{i}}] if {{i}} == index
     {% end %}
@@ -319,7 +320,7 @@ struct Tuple
 
   # Returns a tuple containing cloned elements of this tuple using the `clone` method.
   def clone
-    {% if true %}
+    {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
           self[{{i}}].clone,
@@ -401,7 +402,7 @@ struct Tuple
   # tuple.map &.to_s # => {"1", "2.5", "a"}
   # ```
   def map
-    {% if true %}
+    {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
           (yield self[{{i}}]),
@@ -417,7 +418,7 @@ struct Tuple
   # tuple.reverse # => {"a", 2.5, 1}
   # ```
   def reverse
-    {% if true %}
+    {% begin %}
       Tuple.new(
         {% for i in 1..T.size %}
           self[{{T.size - i}}],
@@ -486,7 +487,7 @@ struct Tuple
   # tuple.last # => 2.5
   # ```
   def last
-    {% if true %}
+    {% begin %}
       self[{{T.size - 1}}]
     {% end %}
   end

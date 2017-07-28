@@ -88,7 +88,7 @@ def Hash.new(pull : YAML::PullParser)
 end
 
 def Tuple.new(pull : YAML::PullParser)
-  {% if true %}
+  {% begin %}
     pull.read_sequence_start
     value = Tuple.new(
       {% for i in 0...T.size %}

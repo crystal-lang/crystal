@@ -32,6 +32,9 @@ describe Crystal::Formatter do
   assert_format ":foo"
   assert_format ":\"foo\""
 
+  assert_format "()"
+  assert_format "(())"
+
   assert_format "1"
   assert_format "1   ;    2", "1; 2"
   assert_format "1   ;\n    2", "1\n2"
@@ -339,6 +342,11 @@ describe Crystal::Formatter do
   assert_format "__FILE__", "__FILE__"
   assert_format "__DIR__", "__DIR__"
   assert_format "__LINE__", "__LINE__"
+
+  assert_format %("\#{foo = 1\n}"), %("\#{foo = 1}")
+  assert_format %("\#{\n  foo = 1\n}")
+  assert_format %("\#{\n  foo = 1}"), %("\#{\n  foo = 1\n}")
+  assert_format %("\#{ # foo\n  foo = 1\n}")
 
   assert_format "%w(one   two  three)", "%w(one two three)"
   assert_format "%i(one   two  three)", "%i(one two three)"

@@ -797,7 +797,12 @@ describe "String" do
     it { "foo".byte_index('a'.ord).should be_nil }
 
     it "gets byte index of string" do
+      "hello world".byte_index("he").should eq(0)
       "hello world".byte_index("lo").should eq(3)
+      "hello world".byte_index("world", 7).should be_nil
+      "foo foo".byte_index("oo").should eq(1)
+      "foo foo".byte_index("oo", 2).should eq(5)
+      "こんにちは世界".byte_index("ちは").should eq(9)
     end
   end
 

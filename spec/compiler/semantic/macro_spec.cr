@@ -989,13 +989,13 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  describe "skip macro directive" do
+  describe "skip_file macro directive" do
     it "skips expanding the rest of the current file" do
       res = semantic(%(
         class A
         end
 
-        {% skip() %}
+        {% skip_file() %}
 
         class B
         end
@@ -1012,7 +1012,7 @@ describe "Semantic: macro" do
 
         {% if true %}
           class C; end
-          {% skip() %}
+          {% skip_file() %}
           class D; end
         {% end %}
 

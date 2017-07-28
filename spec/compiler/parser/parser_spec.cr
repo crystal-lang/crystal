@@ -934,6 +934,7 @@ describe "Parser" do
 
   it_parses "\"foo\#{bar}baz\"", StringInterpolation.new(["foo".string, "bar".call, "baz".string])
   it_parses "qux \"foo\#{bar do end}baz\"", Call.new(nil, "qux", StringInterpolation.new(["foo".string, Call.new(nil, "bar", block: Block.new), "baz".string]))
+  it_parses "\"\#{1\n}\"", StringInterpolation.new([1.int32] of ASTNode)
 
   # When interpolating a string we don't necessarily need interpolation.
   # This is useful for example when interpolating __FILE__ and __DIR__
@@ -960,7 +961,7 @@ describe "Parser" do
   it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)
   it_parses "@@a = uninitialized Foo", UninitializedVar.new("@@a".class_var, "Foo".path)
 
-  it_parses "()", NilLiteral.new
+  it_parses "()", Expressions.new([Nop.new] of ASTNode)
   it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32] of ASTNode
 
   it_parses "begin; rescue; end", ExceptionHandler.new(Nop.new, [Rescue.new])
@@ -1229,6 +1230,9 @@ describe "Parser" do
   it_parses %(asm("nop" :: "b"(1), "c"(2) : "eax", "ebx" : "volatile", "alignstack", "intel")), Asm.new("nop", inputs: [AsmOperand.new("b", 1.int32), AsmOperand.new("c", 2.int32)], clobbers: %w(eax ebx), volatile: true, alignstack: true, intel: true)
   it_parses %(asm("nop" :: "b"(1), "c"(2) : "eax", "ebx"\n: "volatile", "alignstack"\n,\n"intel"\n)), Asm.new("nop", inputs: [AsmOperand.new("b", 1.int32), AsmOperand.new("c", 2.int32)], clobbers: %w(eax ebx), volatile: true, alignstack: true, intel: true)
   it_parses %(asm("nop" :::: "volatile")), Asm.new("nop", volatile: true)
+
+  assert_syntax_error %q(asm("nop" ::: "#{foo}")), "interpolation not allowed in asm clobber"
+  assert_syntax_error %q(asm("nop" :::: "#{volatile}")), "interpolation not allowed in asm option"
 
   it_parses "foo begin\nbar do\nend\nend", Call.new(nil, "foo", Expressions.new([Call.new(nil, "bar", block: Block.new)] of ASTNode))
   it_parses "foo 1.bar do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)

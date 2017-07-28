@@ -1581,7 +1581,9 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.type == :")"
-        return node_and_next_token NilLiteral.new
+        node = Expressions.new([Nop.new] of ASTNode)
+        node.keyword = :"("
+        return node_and_next_token node
       end
 
       exps = [] of ASTNode
@@ -1861,6 +1863,7 @@ module Crystal
             has_interpolation = true
           end
 
+          skip_space_or_newline
           if @token.type != :"}"
             raise "Unterminated string interpolation"
           end
@@ -4709,7 +4712,7 @@ module Crystal
       intel = false
       while true
         location = @token.location
-        option = parse_string_without_interpolation("asm clobber")
+        option = parse_string_without_interpolation("asm option")
         skip_space_or_newline
         case option
         when "volatile"

@@ -450,6 +450,7 @@ class Crystal::Call
     arg = args.first
     if arg.is_a?(NumberLiteral) && arg.kind == :i32
       index = arg.value.to_i
+      index += instance_type.size if index < 0
       in_bounds = (0 <= index < instance_type.size)
       if nilable || in_bounds
         indexer_def = yield instance_type, (in_bounds ? index : -1)
@@ -458,7 +459,7 @@ class Crystal::Call
       elsif instance_type.size == 0
         raise "index '#{arg}' out of bounds for empty tuple"
       else
-        raise "index out of bounds for #{owner} (#{arg} not in 0..#{instance_type.size - 1})"
+        raise "index out of bounds for #{owner} (#{arg} not in #{-instance_type.size}..#{instance_type.size - 1})"
       end
     end
     nil
