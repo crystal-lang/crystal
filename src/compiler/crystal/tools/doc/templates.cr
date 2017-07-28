@@ -29,6 +29,10 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/main.html"
   end
 
+  record HeadTemplate, base_path : String do
+    ECR.def_to_s "#{__DIR__}/html/_head.html"
+  end
+
   struct JsTypeTemplate
     ECR.def_to_s "#{__DIR__}/html/js/doc.js"
   end
