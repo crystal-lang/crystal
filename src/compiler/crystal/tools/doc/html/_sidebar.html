@@ -1,0 +1,16 @@
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1><%= repository_name %></h1>
+  </div>
+  <div class="search-box">
+    <input type="search" class="search-input" placeholder="Search...">
+  </div>
+
+  <div class="types-list">
+    <ul>
+      <li><a href="<%= current_type.try(&.path_to("")) %>index.html">README</a></li>
+    </ul>
+
+    <%= ListItemsTemplate.new(types, current_type) %>
+  </div>
+</div>

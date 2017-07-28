@@ -33,6 +33,10 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/_head.html"
   end
 
+  record SidebarTemplate, repository_name : String, types : Array(Type), current_type : Type? do
+    ECR.def_to_s "#{__DIR__}/html/_sidebar.html"
+  end
+
   struct JsTypeTemplate
     ECR.def_to_s "#{__DIR__}/html/js/doc.js"
   end

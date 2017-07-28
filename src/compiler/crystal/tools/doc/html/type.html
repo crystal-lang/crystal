@@ -7,19 +7,9 @@
 </head>
 <body>
 
-<div id="types-list">
-  <div id="search-box">
-    <input type="search" id="search-input" placeholder="Search...">
-  </div>
+<%= SidebarTemplate.new(type.repository_name, types, type) %>
 
-  <ul>
-    <li><a href="<%= type.path_to("index.html") %>">README</a></li>
-  </ul>
-
-  <%= ListItemsTemplate.new(types, type) %>
-</div>
-
-<div id="main-content">
+<div class="main-content">
 <h1 class="type-name">
 <% if type.program? %>
   <%= type.full_name %>
