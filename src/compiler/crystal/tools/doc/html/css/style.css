@@ -19,6 +19,10 @@ a {
 a:visited {
   color: #112750;
 }
+a:hover,
+a:focus {
+  color: #522050;
+}
 
 h1, h2, h3, h4, h5, h6 {
   margin: 35px 0 25px;
@@ -35,7 +39,7 @@ h1.type-name {
 }
 
 h2 {
-  border-bottom: 1px solid #E6E6E6;
+  border-bottom: 3px solid #E6E6E6;
   padding-bottom: 5px;
 }
 
@@ -44,6 +48,10 @@ h2 {
   top: 0;
   bottom: 0;
   overflow: auto;
+}
+
+p {
+  max-width: 55em;
 }
 
 #types-list {
@@ -220,6 +228,7 @@ h2 {
 
 .entry-const {
   font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+  margin: 5px 0;
 }
 
 .entry-summary {
@@ -360,10 +369,22 @@ pre {
   background: #fdfdfd;
   font-size: 14px;
   border: 1px solid #eee;
+  max-width: 55em;
 }
 
 code {
   font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+  background-color: rgba(0,0,0,.01);
+  border-radius: .2em;
+  padding: 0 .15em;
+  border: 1px solid rgba(0,0,0,.07);
+}
+
+pre code {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
 }
 
 span.flag {
