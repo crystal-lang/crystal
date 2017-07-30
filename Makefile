@@ -52,7 +52,7 @@ CXXFLAGS += $(if $(debug),-g -O0)
 ifeq (${LLVM_CONFIG},)
   $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
 else
-  $(info $(shell printf '\033[33m')Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m'))
+  $(shell echo $(shell printf '\033[33m')Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m') >/dev/stderr)
 endif
 
 .PHONY: all
