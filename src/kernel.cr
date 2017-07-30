@@ -178,6 +178,14 @@ def abort(message, status = 1) : NoReturn
   exit status
 end
 
+# Expresses an unreachable code explicitly.
+#
+# When it is called, it raises `UnreachableError` with given *message*.
+# However you will never see it if you use this method accurately.
+def unreachable!(message = "unreachable") : NoReturn
+  raise UnreachableError.new("BUG: #{message}")
+end
+
 class Process
   # Hooks are defined here due to load order problems.
   def self.after_fork_child_callbacks

@@ -113,3 +113,11 @@ class DivisionByZero < Exception
     super(message)
   end
 end
+
+# Raised when `unreachable!` is called (It must mean a BUG.)
+#
+# ```
+# unreachable! # raises UnreachableError (BUG: unreachable)
+# ```
+class UnreachableError < Exception
+end
