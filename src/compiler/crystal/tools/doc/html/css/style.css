@@ -132,16 +132,16 @@ body {
   transition: color .14s;
 }
 
-.types-list {
+.types-list a {
   display: block;
-}
-
-.sidebar a:focus {
-  outline: 1px solid #D1B7F1;
 }
 
 .types-list a {
   padding: 5px 15px 5px 30px;
+}
+
+.types-list a:focus {
+  outline: 1px solid #D1B7F1;
 }
 
 .sidebar .current > a,
