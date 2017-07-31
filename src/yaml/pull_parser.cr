@@ -41,7 +41,7 @@ class YAML::PullParser
 
   def value
     ptr = @event.data.scalar.value
-    ptr ? String.new(ptr) : nil
+    ptr ? String.new(ptr, @event.data.scalar.length) : nil
   end
 
   def anchor
