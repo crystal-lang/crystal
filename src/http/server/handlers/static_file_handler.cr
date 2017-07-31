@@ -71,7 +71,6 @@ class HTTP::StaticFileHandler
           return
         end
       end
-      context.response.headers["Cache-Control"] = "public"
       context.response.headers["Last-Modified"] = last_modified
       context.response.content_type = mime_type(file_path)
       context.response.content_length = File.size(file_path)
