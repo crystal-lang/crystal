@@ -1,26 +1,28 @@
 require "spec"
 require "json"
 
-private record JSONPerson, name : String, age : String? = nil do
+private class JSONPerson
+  getter name : String
+  getter age : String?
+
   JSON.def_to_json({
     name: true,
     age:  true,
   })
+
+  def initialize(@name, @age = nil)
+  end
 
   def to_s(io : IO)
     io << name << " (age " << (age || "unknown") << ")"
   end
 end
 
-private record JSONPersonEmittingNull, name : String, age : String? = nil do
+private class JSONPersonEmittingNull < JSONPerson
   JSON.def_to_json({
     name: true,
     age:  {emit_null: true},
   })
-end
-
-private record JSONWithBool, value : Bool do
-  JSON.def_to_json value: Bool
 end
 
 private class JSONWithTime
@@ -64,28 +66,44 @@ private class JSONKeywordProperties
   getter abstract_value = "abstract"
 end
 
-private record JSONWithTimeEpoch, value : Time do
+private class JSONWithTimeEpoch
+  getter value : Time
   JSON.def_to_json({
     value: {converter: Time::EpochConverter},
   })
+
+  def initialize(@value)
+  end
 end
 
-private record JSONWithTimeEpochMillis, value : Time do
+private class JSONWithTimeEpochMillis
+  getter value : Time
   JSON.def_to_json({
     value: {converter: Time::EpochMillisConverter},
   })
+
+  def initialize(@value)
+  end
 end
 
-private record JSONWithRaw, value : String do
+private class JSONWithRaw
+  getter value : String
   JSON.def_to_json({
     value: {converter: String::RawConverter},
   })
+
+  def initialize(@value)
+  end
 end
 
-private record JSONWithRoot, result : Array(JSONPerson) do
+private class JSONWithRoot
+  getter result : Array(JSONPerson)
   JSON.def_to_json({
     result: {root: "heroes"},
   })
+
+  def initialize(@result)
+  end
 end
 
 private class JSONWithNilableRoot
@@ -102,22 +120,36 @@ private class JSONWithNilableRootEmitNull
   getter result : String? = nil
 end
 
-private record JSONStringConverted, value : JSONPerson do
+private class JSONStringConverted
+  getter value : JSONPerson
   JSON.def_to_json({
     value: {converter: JSON::StringConverter},
   })
+  def initialize(@value)
+  end
 end
 
-private record Location, lat : Float64, long : Float64 do
+private class Location
+  getter lat : Float64
+  getter long : Float64
   JSON.def_to_json([lat, long])
+
+  def initialize(@lat, @long)
+  end
 end
 
-private record House, street : String, street_number : Int32, location : Location do
+private class House
+  getter street : String
+  getter street_number : Int32
+  getter location : Location
   JSON.def_to_json(
     address: true,
     loc: {property: location},
     empty_field: {emit_null: true},
   )
+
+  def initialize(@street, @street_number, @location)
+  end
 
   def address
     "#{street} #{street_number}"
