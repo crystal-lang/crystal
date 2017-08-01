@@ -420,7 +420,7 @@ class HTTP::Client
     # response = client.{{http_method.id}}_form "/", {"foo" => "bar"}
     # ```
     def {{http_method.id}}_form(path, form : Hash(String, _) | NamedTuple, headers : HTTP::Headers? = nil) : HTTP::Client::Response
-      body = HTTP::Params.from_hash(form)
+      body = HTTP::Params.encode(form)
       {{http_method.id}}_form path, body, headers
     end
 
@@ -435,7 +435,7 @@ class HTTP::Client
     # end
     # ```
     def {{http_method.id}}_form(path, form : Hash(String, _) | NamedTuple, headers : HTTP::Headers? = nil)
-      body = HTTP::Params.from_hash(form)
+      body = HTTP::Params.encode(form)
       {{http_method.id}}_form(path, body, headers) do |response|
         yield response
       end
