@@ -169,46 +169,7 @@ module JSON
     def to_json(json : ::JSON::Builder)
       json.object do
         {% for key, value in _properties_ %}
-          _{{key.id}} = @{{key.id}}
-
-          {% unless value[:emit_null] %}
-            unless _{{key.id}}.nil?
-          {% end %}
-
-            json.field({{value[:key] || key.id.stringify}}) do
-              {% if value[:root] %}
-                {% if value[:emit_null] %}
-                  if _{{key.id}}.nil?
-                    nil.to_json(json)
-                  else
-                {% end %}
-
-                json.object do
-                  json.field({{value[:root]}}) do
-              {% end %}
-
-              {% if value[:converter] %}
-                if _{{key.id}}
-                  {{ value[:converter] }}.to_json(_{{key.id}}, json)
-                else
-                  nil.to_json(json)
-                end
-              {% else %}
-                _{{key.id}}.to_json(json)
-              {% end %}
-
-              {% if value[:root] %}
-                {% if value[:emit_null] %}
-                  end
-                {% end %}
-                  end
-                end
-              {% end %}
-            end
-
-          {% unless value[:emit_null] %}
-            end
-          {% end %}
+          ::JSON.field_to_json("@{{key.id}}", {{value[:key] || key.stringify}}, {{value}})
         {% end %}
       end
     end

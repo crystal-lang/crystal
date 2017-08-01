@@ -1,0 +1,176 @@
+module JSON
+  # The `def_to_json` macro generates a `to_json(json : JSON::Builder)` method based on provided *mappings*.
+  #
+  # It is a lightweight alternative to `JSON.mapping` if you don't need to declare instance variables and a parser.
+  #
+  # The generated method invoks `to_json(JSON::Builder)` on each of the values returned
+  # by `self`'s properties from *mappings*, or - if a converter is specified - `to_json(value, JSON::Builder)` on the converter.
+  #
+  # ### Example
+  #
+  # ```
+  # require "json"
+  #
+  # record Location, lat : Float64, long : Float64 do
+  #   JSON.def_to_json([lat, long])
+  # end
+  #
+  # record House, street : String, street_number : Int32, location : Location do
+  #   JSON.def_to_json(
+  #     address: true,
+  #     loc: {property: location},
+  #     empty_field: {emit_null: true},
+  #   )
+  #
+  #   def address
+  #     "#{street} #{street_number}"
+  #   end
+  #
+  #   def empty_field
+  #     nil
+  #   end
+  # end
+  #
+  # house = House.new("Crystal Road", 1234, Location.new(12.3, 34.5))
+  # house.to_json # => %({"address":"Crystal Road 1234","loc":{"lat":12.3,"long":34.5},"empty_field":null})
+  # ```
+  #
+  # ### Usage
+  #
+  # `JSON.def_to_json` must receive a series of named arguments, or a named tuple literal, or a hash literal,
+  # whose keys will define JSON properties.
+  #
+  # The value of each key can either be `true` or a hash or named tuple literal with the following options:
+  # * **property**: the property name on the Crystal object (as opposed to the key in the in the JSON document)
+  # * **emit_null**: if `true`, emits a `null` value if the property value is nil (by default nulls are not emitted)
+  # * **converter**: specify an alternate type for generation. The converter must define `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
+  # * **root**: assume the value is inside a JSON object with a given key
+  macro def_to_json(mappings)
+    def to_json(json : ::JSON::Builder)
+      json.object do
+        {% for key, options in mappings %}
+          {% unless options.is_a?(HashLiteral) || options.is_a?(NamedTupleLiteral) %}
+            {% options = {nil: nil} %}
+          {% end %}
+          ::JSON.field_to_json({{(options[:property] || key).id}}, {{key.id.stringify}}, {{options}})
+        {% end %}
+      end
+    end
+  end
+
+  # This is a convenience method to allow invoking `JSON.def_to_json`
+  # with named arguments instead of with a hash/named-tuple literal.
+  macro def_to_json(**mappings)
+    ::JSON.def_to_json({{mappings}})
+  end
+
+  # This `def_to_json` macro generates a `to_json(value : {{type}}, json : JSON::Builder)` method based on provided type and mappings.
+  #
+  # This is useful to create a JSON converter which responds to a number of `to_json(value, builder : JSON::Builder)` overloads.
+  #
+  # In contrast to the `to_json(JSON::Builder)` method defined by `def_to_json(mapping)` the values for this JSON generator
+  # are retrieved from calling a method on the object provided as the first argument whose type is declared as first argument
+  # to this macro.
+  #
+  # ```
+  # require "json"
+  #
+  # module NeighborhoodConverter
+  #   extend self
+  #   JSON.def_to_json(House, {street_number: true})
+  # end
+  #
+  # class House
+  #   getter street : String
+  #   getter street_number : Int32
+  #   getter neighbor : House? = nil
+  #
+  #   JSON.def_to_json(
+  #     address: true,
+  #     neighbor: {converter: NeighborhoodConverter}
+  #   )
+  #
+  #   def initialize(@street, @street_number, @neighbor = nil)
+  #   end
+  #
+  #   def address
+  #     "#{street} #{street_number}"
+  #   end
+  # end
+  #
+  # neighbor = House.new("Crystal Road", 1235)
+  # house = House.new("Crystal Road", 1234, neighbor)
+  # house.to_json # => %({"address":"Crystal Road 1234","neighbor":{"street_number":1235}})
+  # ```
+  macro def_to_json(type, mappings)
+    def to_json(value : {{type.id}}, json : ::JSON::Builder)
+      json.object do
+        {% for key, options in mappings %}
+          {% unless options.is_a?(HashLiteral) || options.is_a?(NamedTupleLiteral) %}
+            {% options = {nil: nil} %}
+          {% end %}
+          ::JSON.field_to_json(value.{{(options[:property] || key).id}}, {{key.id.stringify}}, {{options}})
+        {% end %}
+      end
+    end
+  end
+
+  # This is a convenience method to allow invoking `JSON.def_to_json`
+  # with named arguments instead of with a hash/named-tuple literal.
+  macro def_to_json(type, **mappings)
+    ::JSON.def_to_json({{type}}, {{mappings}})
+  end
+
+  # The `StringConverter` has a class method `to_json` wich can be used as a converter for `JSON.def_to_json`. The value is added
+  # to the builder as a string.
+  module StringConverter
+    def self.to_json(value, builder)
+      value.to_s.to_json(builder)
+    end
+  end
+
+  # :nodoc:
+  macro field_to_json(value_name, field_name, options)
+    # this macro is used by `.mapping` and `.def_to_json`
+    %value = {{value_name.id}}
+    {% unless options[:emit_null] %}
+      unless %value.nil?
+    {% end %}
+
+       json.field({{field_name}}) do
+        {% if options[:root] %}
+          {% if options[:emit_null] %}
+            if %value.nil?
+              nil.to_json(json)
+            else
+          {% end %}
+
+          json.object do
+            json.field({{options[:root]}}) do
+        {% end %}
+
+        {% if options[:converter] %}
+          if %value
+            {{ options[:converter] }}.to_json(%value, json)
+          else
+            nil.to_json(json)
+          end
+        {% else %}
+           %value.to_json(json)
+        {% end %}
+
+        {% if options[:root] %}
+          {% if options[:emit_null] %}
+            # TODO: Remove workarounds when #4769 is resolved
+            {{"end".id}}
+          {% end %}
+            {{"end".id}}
+          {{"end".id}}
+        {% end %}
+       end
+
+    {% unless options[:emit_null] %}
+      {{"end".id}}
+    {% end %}
+  end
+end
