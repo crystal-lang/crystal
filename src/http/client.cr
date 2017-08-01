@@ -394,7 +394,7 @@ class HTTP::Client
       exec request
     end
 
-    # Executes a {{http_method.id.upcase}} with form data and yields the response to the block.
+    # Executes a {{http_method.id.upcase}} request with form data and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     # The "Content-Type" header is set to "application/x-www-form-urlencoded".
     #
