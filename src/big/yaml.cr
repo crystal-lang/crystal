@@ -1,5 +1,5 @@
 require "yaml"
-require "./big"
+require "big"
 
 def BigInt.new(pull : YAML::PullParser)
   BigInt.new(pull.read_scalar)

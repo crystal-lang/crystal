@@ -1,5 +1,5 @@
 require "json"
-require "./big"
+require "big"
 
 def BigInt.new(pull : JSON::PullParser)
   pull.read_int

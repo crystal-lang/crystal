@@ -1,5 +1,5 @@
 require "spec"
-require "../src/openssl"
+require "../../../src/openssl"
 
 describe OpenSSL::DigestIO do
   it "calculates digest from reading" do
