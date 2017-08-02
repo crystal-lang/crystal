@@ -2728,5 +2728,9 @@ module Crystal
     def raise(message, location : Location)
       raise message, location.line_number, location.column_number, location.filename
     end
+
+    def unreachable!(message)
+      raise "BUG: #{message}"
+    end
   end
 end

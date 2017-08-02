@@ -11,9 +11,7 @@ class Crystal::CodeGenVisitor
 
   def main_fun(name)
     func = @main_mod.functions[name]?
-    unless func
-      raise "BUG: #{name} is not defined"
-    end
+    unreachable! "#{name} is not defined" unless func
 
     check_main_fun name, func
   end

@@ -388,7 +388,7 @@ class Crystal::Type
     end
 
     def lookup(node : ASTNode)
-      raise "BUG: unknown node in TypeLookup: #{node} #{node.class_desc}"
+      unreachable! "unknown node in TypeLookup: #{node} #{node.class_desc}"
     end
 
     def raise_undefined_constant(node)

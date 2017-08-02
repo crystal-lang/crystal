@@ -176,7 +176,7 @@ module Crystal
         targets << assign
         values << assign.args.pop
       else
-        raise "BUG: multiassign index expression can only be Assign or Call"
+        unreachable! "multiassign index expression can only be Assign or Call"
       end
 
       values.concat exps[assign_index + 1..-1]
@@ -1154,7 +1154,7 @@ module Crystal
           tuple_or_hash.name = ident
           return tuple_or_hash
         else
-          raise "BUG: tuple_or_hash should be tuple or hash, not #{tuple_or_hash}"
+          unreachable! "tuple_or_hash should be tuple or hash, not #{tuple_or_hash}"
         end
       end
       ident
@@ -1412,7 +1412,7 @@ module Crystal
           if call.is_a?(Call)
             call.obj = obj
           else
-            raise "BUG: #{call} should be a call"
+            unreachable! "#{call} should be a call"
           end
 
           call = call.as(Call)
@@ -1495,7 +1495,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      raise "BUG: ClassDef name can only be a Path" unless name.is_a?(Path)
+      unreachable! "ClassDef name can only be a Path" unless name.is_a?(Path)
 
       @type_nest -= 1
 
@@ -1566,7 +1566,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      raise "BUG: ModuleDef name can only be a Path" unless name.is_a?(Path)
+      unreachable! "ModuleDef name can only be a Path" unless name.is_a?(Path)
 
       @type_nest -= 1
 
@@ -2459,7 +2459,7 @@ module Crystal
         when Cast        then call.obj = ImplicitObj.new
         when NilableCast then call.obj = ImplicitObj.new
         else
-          raise "BUG: expected Call, RespondsTo, IsA, Cast or NilableCast"
+          unreachable! "expected Call, RespondsTo, IsA, Cast or NilableCast"
         end
         call
       else
@@ -3404,7 +3404,7 @@ module Crystal
         end
       end
 
-      raise "BUG: arg_name is nil" unless arg_name
+      unreachable! "arg_name is nil" unless arg_name
 
       arg = Arg.new(arg_name, default_value, restriction, external_name: external_name).at(arg_location)
       args << arg
@@ -5174,7 +5174,7 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      raise "BUG: EnumDef name can only be a Path" unless name.is_a?(Path)
+      unreachable! "EnumDef name can only be a Path" unless name.is_a?(Path)
 
       enum_def = EnumDef.new name, members, base_type
       enum_def.doc = doc

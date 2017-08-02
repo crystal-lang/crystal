@@ -2611,7 +2611,7 @@ module Crystal
                 write_token :")"
               end
             else
-              raise "BUG: expected `[`, `[]` or `[]?`"
+              unreachable! "expected `[`, `[]` or `[]?`"
             end
           elsif !call.obj && call.name == "[]="
             case @token.type
@@ -2637,7 +2637,7 @@ module Crystal
                 write_token :")"
               end
             else
-              raise "BUG: expected `[` or `[]=`"
+              unreachable! "expected `[` or `[]=`"
             end
           else
             indent(@indent, call)
@@ -2679,7 +2679,7 @@ module Crystal
             accept body
           end
         else
-          raise "BUG: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
+          unreachable! "expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
         end
       end
 
@@ -2908,7 +2908,7 @@ module Crystal
         when Call
           accept_assign_value(right.args.last)
         else
-          raise "BUG: expected Assign or Call after op assign, at #{node.location}"
+          unreachable! "expected Assign or Call after op assign, at #{node.location}"
         end
         return false
       end
@@ -3983,7 +3983,7 @@ module Crystal
     end
 
     def visit(node : ASTNode)
-      raise "BUG: unexpected node: #{node.class} at #{node.location}"
+      unreachable! "unexpected node: #{node.class} at #{node.location}"
     end
 
     def to_s(io)
