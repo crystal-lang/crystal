@@ -9,7 +9,7 @@ class Crystal::CodeGenVisitor
             when "argv"
               @argv
             else
-              unreachable! "unhandled primitive in codegen visit: #{node.name}"
+              raise "BUG: unhandled primitive in codegen visit: #{node.name}"
             end
   end
 
@@ -70,7 +70,7 @@ class Crystal::CodeGenVisitor
             when "store_atomic"
               codegen_primitive_store_atomic call, node, target_def, call_args
             else
-              unreachable! "unhandled primitive in codegen: #{node.name}"
+              raise "BUG: unhandled primitive in codegen: #{node.name}"
             end
   end
 
@@ -84,7 +84,7 @@ class Crystal::CodeGenVisitor
     case op
     when "==" then builder.icmp LLVM::IntPredicate::EQ, p1, p2
     when "!=" then builder.icmp LLVM::IntPredicate::NE, p1, p2
-    else           unreachable! "trying to codegen #{t1} #{op} #{t2}"
+    else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
@@ -96,7 +96,7 @@ class Crystal::CodeGenVisitor
     when "<=" then return builder.icmp LLVM::IntPredicate::ULE, p1, p2
     when ">"  then return builder.icmp LLVM::IntPredicate::UGT, p1, p2
     when ">=" then return builder.icmp LLVM::IntPredicate::UGE, p1, p2
-    else           unreachable! "trying to codegen #{t1} #{op} #{t2}"
+    else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
@@ -104,7 +104,7 @@ class Crystal::CodeGenVisitor
     case op
     when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
     when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-    else           unreachable! "trying to codegen #{t1} #{op} #{t2}"
+    else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
@@ -133,7 +133,7 @@ class Crystal::CodeGenVisitor
             when "^"               then builder.xor(p1, p2)
             when "=="              then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
             when "!="              then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-            else                        unreachable! "trying to codegen #{t1} #{op} #{t2}"
+            else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
             end
 
     if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
@@ -334,7 +334,7 @@ class Crystal::CodeGenVisitor
             when "<=" then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
             when ">"  then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
             when ">=" then return builder.fcmp LLVM::RealPredicate::OGE, p1, p2
-            else           unreachable! "trying to codegen #{t1} #{op} #{t2}"
+            else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
             end
     @last = trunc_float t1, @last if t1.rank < t2.rank
     @last
@@ -345,7 +345,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op(op, t1, t2, p1, p2)
-    unreachable! "codegen_binary_op called with #{t1} #{op} #{t2}"
+    raise "BUG: codegen_binary_op called with #{t1} #{op} #{t2}"
   end
 
   def codegen_primitive_cast(node, target_def, call_args)
@@ -399,7 +399,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_cast(from_type, to_type, arg)
-    unreachable! "codegen_cast called from #{from_type} to #{to_type}"
+    raise "BUG: codegen_cast called from #{from_type} to #{to_type}"
   end
 
   def codegen_primitive_allocate(node, target_def, call_args)
@@ -864,7 +864,7 @@ class Crystal::CodeGenVisitor
 
   def atomic_ordering_from_symbol_literal(node)
     unless node.is_a?(SymbolLiteral)
-      node.unreachable! "expected symbol literal"
+      node.raise "BUG: expected symbol literal"
     end
 
     ordering = LLVM::AtomicOrdering.parse?(node.value)
@@ -877,7 +877,7 @@ class Crystal::CodeGenVisitor
 
   def atomicrwm_bin_op_from_symbol_literal(node)
     unless node.is_a?(SymbolLiteral)
-      node.unreachable! "expected symbol literal"
+      node.raise "BUG: expected symbol literal"
     end
 
     op = LLVM::AtomicRMWBinOp.parse?(node.value)
@@ -890,7 +890,7 @@ class Crystal::CodeGenVisitor
 
   def bool_from_bool_literal(node)
     unless node.is_a?(BoolLiteral)
-      node.unreachable! "expected bool literal"
+      node.raise "BUG: expected bool literal"
     end
 
     node.value

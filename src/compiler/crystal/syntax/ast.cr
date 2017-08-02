@@ -2063,7 +2063,7 @@ module Crystal
       when :__DIR__
         MagicConstant.expand_dir_node(location)
       else
-        unreachable! "unknown magic constant: #{name}"
+        raise "BUG: unknown magic constant: #{name}"
       end
     end
 

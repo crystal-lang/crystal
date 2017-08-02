@@ -13,10 +13,6 @@ module Crystal
       ::raise exception_type.for_node(self, message, inner)
     end
 
-    def unreachable!(message = "unreachable", inner = nil, exception_type = Crystal::TypeException)
-      ::raise exception_type.for_node(self, "BUG: #{message}", inner)
-    end
-
     def simple_literal?
       case self
       when Nop, NilLiteral, BoolLiteral, NumberLiteral, CharLiteral,

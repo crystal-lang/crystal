@@ -533,7 +533,7 @@ module Crystal
       when Underscore
         # Nothing to do
       else
-        node.unreachable! "unexpected out exp: #{exp}"
+        node.raise "BUG: unexpected out exp: #{exp}"
       end
 
       node.bind_to node.exp
@@ -693,7 +693,7 @@ module Crystal
         check_self_closured
         var
       else
-        node.unreachable! "#{scope} is not an InstanceVarContainer"
+        node.raise "BUG: #{scope} is not an InstanceVarContainer"
       end
     end
 
@@ -899,7 +899,7 @@ module Crystal
     end
 
     def type_assign(target, value, node)
-      unreachable! "unknown assign target in MainVisitor: #{target}"
+      raise "BUG: unknown assign target in MainVisitor: #{target}"
     end
 
     def visit(node : Yield)
@@ -2253,7 +2253,7 @@ module Crystal
       when "store_atomic"
         node.type = program.nil_type
       else
-        node.unreachable! "unhandled primitive in MainVisitor: #{node.name}"
+        node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
     end
 
@@ -2268,7 +2268,7 @@ module Crystal
       when "%", "unsafe_shl", "unsafe_shr", "|", "&", "^", "unsafe_mod"
         node.type = scope
       else
-        unreachable! "unknown binary operator #{typed_def.name}"
+        raise "BUG: unknown binary operator #{typed_def.name}"
       end
     end
 
@@ -2289,7 +2289,7 @@ module Crystal
         when "to_f32"                then program.float32
         when "unsafe_chr"            then program.char
         else
-          unreachable! "unknown cast operator #{typed_def.name}"
+          raise "BUG: unknown cast operator #{typed_def.name}"
         end
     end
 
@@ -2922,13 +2922,13 @@ module Crystal
       obj.accept self
 
       unless context = match_context
-        node.unreachable! "there is no match context"
+        node.raise "BUG: there is no match context"
       end
 
       if type = obj.type.restrict(to, context)
         node.type = type
       else
-        node.unreachable! "can't restrict #{obj.type} to #{to}"
+        node.raise "can't restrict #{obj.type} to #{to}"
       end
 
       false
@@ -3021,7 +3021,7 @@ module Crystal
     end
 
     def lookup_var_or_instance_var(var)
-      unreachable! "trying to lookup var or instance var but got #{var}"
+      raise "BUG: trying to lookup var or instance var but got #{var}"
     end
 
     def bind_meta_var(var : Var)
@@ -3033,7 +3033,7 @@ module Crystal
     end
 
     def bind_meta_var(var)
-      unreachable! "trying to bind var or instance var but got #{var}"
+      raise "BUG: trying to bind var or instance var but got #{var}"
     end
 
     def bind_initialize_instance_vars(owner)
@@ -3166,7 +3166,7 @@ module Crystal
     end
 
     def visit(node : When | Unless | Until | MacroLiteral | OpAssign)
-      unreachable! "#{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
+      raise "BUG: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end

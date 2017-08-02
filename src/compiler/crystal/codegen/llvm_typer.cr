@@ -296,7 +296,7 @@ module Crystal
     end
 
     private def create_llvm_type(type : Type, wants_size)
-      unreachable! "called create_llvm_type for #{type}"
+      raise "BUG: called create_llvm_type for #{type}"
     end
 
     def llvm_struct_type(type, wants_size = false)
@@ -407,7 +407,7 @@ module Crystal
     end
 
     private def create_llvm_struct_type(type : Type, wants_size)
-      unreachable! "called llvm_struct_type for #{type}"
+      raise "BUG: called llvm_struct_type for #{type}"
     end
 
     def llvm_embedded_type(type, wants_size = false)
