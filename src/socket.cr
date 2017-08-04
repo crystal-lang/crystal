@@ -216,7 +216,7 @@ class Socket < IO::FileDescriptor
 
   protected def accept_impl
     loop do
-      client_fd = LibC.accept(fd, out client_addr, out client_addrlen)
+      client_fd = LibC.accept(fd, nil, nil)
       if client_fd == -1
         if closed?
           return
