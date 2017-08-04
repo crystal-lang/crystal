@@ -33,7 +33,6 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "freebsd11" do |c|
-    c.ssh.shell = "csh"
     c.vm.box = "freebsd/FreeBSD-11.1-RELEASE"
     c.vm.guest = :freebsd
     c.vm.hostname = "freebsd11"
@@ -41,10 +40,7 @@ Vagrant.configure("2") do |config|
     c.vm.network "private_network", type: "dhcp"
     c.vm.synced_folder ".", "/vagrant", disabled: true
 
-    # to build boehm-gc from git repository:
-    #c.vm.provision :shell, inline: %(
-    #  pkg install -y libtool automake autoconf libatomic_ops
-    #)
+    c.ssh.shell = "sh"
 
     c.vm.provision :shell, inline: %(
       pkg install -qy git bash gmake pkgconf pcre libunwind clang35 libyaml gmp libevent boehm-gc-threaded
