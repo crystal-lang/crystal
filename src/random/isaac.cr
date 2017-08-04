@@ -1,3 +1,5 @@
+require "crystal/system/random"
+
 # (c) Bob Jenkins, March 1996, Public Domain
 # You may use this code in any way you wish, and it is free.  No warrantee.
 # http://burtleburtle.net/bob/rand/isaacafa.html
@@ -10,7 +12,13 @@ class Random::ISAAC
   private getter bb
   private getter cc
 
-  def initialize(seeds = StaticArray(UInt32, 8).new { Random.new_seed })
+  private def self.random_seeds
+    (uninitialized StaticArray(UInt32, 8)).tap do |seeds|
+      System::Random.random_bytes(seeds.to_slice)
+    end
+  end
+
+  def initialize(seeds = self.random_seeds)
     @rsl = StaticArray(UInt32, 256).new { 0_u32 }
     @mm = StaticArray(UInt32, 256).new { 0_u32 }
     @counter = 0
@@ -18,7 +26,7 @@ class Random::ISAAC
     init_by_array(seeds)
   end
 
-  def new_seed(seeds = StaticArray(UInt32, 8).new { Random.new_seed })
+  def new_seed(seeds = self.random_seeds)
     @aa = @bb = @cc = 0_u32
     init_by_array(seeds)
   end
