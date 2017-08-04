@@ -39,7 +39,7 @@ Vagrant.configure("2") do |config|
     #)
 
     c.vm.provision :shell, inline: %(
-      pkg install -y git gmake pkgconf pcre libunwind clang36 libyaml gmp libevent2
+      pkg install -qy git bash gmake pkgconf pcre libunwind clang35 libyaml gmp libevent boehm-gc-threaded
     )
 
     clone_crystal_from_vagrant.call(c)
