@@ -26,9 +26,11 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  config.vm.define "freebsd" do |c|
+  config.vm.define "freebsd11" do |c|
     c.ssh.shell = "csh"
-    c.vm.box = "freebsd/FreeBSD-10.2-RELEASE"
+    c.vm.box = "freebsd/FreeBSD-11.1-RELEASE"
+    c.vm.guest = :freebsd
+    c.vm.hostname = "freebsd11"
 
     c.vm.network "private_network", type: "dhcp"
     c.vm.synced_folder ".", "/vagrant", type: "nfs"
