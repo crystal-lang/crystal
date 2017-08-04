@@ -7,6 +7,12 @@ clone_crystal_from_vagrant = lambda do |config|
   )
 end
 
+clone_crystal_from_upstream = lambda do |config|
+  config.vm.provision :shell, privileged: false, inline: %(
+    git clone https://github.com/crystal-lang/crystal
+  )
+end
+
 Vagrant.configure("2") do |config|
   %w(precise trusty xenial).product([32, 64]).each do |dist, bits|
     box_name = "#{dist}#{bits}"
@@ -33,7 +39,7 @@ Vagrant.configure("2") do |config|
     c.vm.hostname = "freebsd11"
 
     c.vm.network "private_network", type: "dhcp"
-    c.vm.synced_folder ".", "/vagrant", type: "nfs"
+    c.vm.synced_folder ".", "/vagrant", disabled: true
 
     # to build boehm-gc from git repository:
     #c.vm.provision :shell, inline: %(
@@ -44,7 +50,7 @@ Vagrant.configure("2") do |config|
       pkg install -qy git bash gmake pkgconf pcre libunwind clang35 libyaml gmp libevent boehm-gc-threaded
     )
 
-    clone_crystal_from_vagrant.call(c)
+    clone_crystal_from_upstream.call(c)
   end
 
   config.vm.provider "virtualbox" do |vb|
