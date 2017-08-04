@@ -36,7 +36,7 @@ Vagrant.configure("2") do |config|
     c.vm.box = "freebsd/FreeBSD-11.1-RELEASE"
     c.vm.guest = :freebsd
     c.vm.hostname = "freebsd11"
-
+    c.vm.base_mac = "6658695E16F0"
     c.vm.network "private_network", type: "dhcp"
     c.vm.synced_folder ".", "/vagrant", disabled: true
 
