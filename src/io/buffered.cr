@@ -50,24 +50,28 @@ module IO::Buffered
     check_open
 
     count = slice.size
-    return 0 if count == 0
-
-    if @in_buffer_rem.empty?
-      # If we are asked to read more than half the buffer's size,
-      # read directly into the slice, as it's not worth the extra
-      # memory copy.
-      if count >= BUFFER_SIZE / 2
-        return unbuffered_read(slice[0, count]).to_i
-      else
-        fill_buffer
-        return 0 if @in_buffer_rem.empty?
+    total_read = 0
+    while count > 0
+      if @in_buffer_rem.empty?
+        # If we are asked to read more than half the buffer's size,
+        # read directly into the slice, as it's not worth the extra
+        # memory copy.
+        if count >= BUFFER_SIZE / 2
+          return unbuffered_read(slice[0, count]).to_i
+        else
+          fill_buffer
+          return total_read if @in_buffer_rem.empty?
+        end
       end
-    end
 
-    to_read = Math.min(count, @in_buffer_rem.size)
-    slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
-    @in_buffer_rem += to_read
-    to_read
+      to_read = Math.min(count, @in_buffer_rem.size)
+      slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
+      @in_buffer_rem += to_read
+      total_read += to_read
+      slice += to_read
+      count -= to_read
+    end
+    total_read
   end
 
   # Returns the bytes hold in the read buffer.

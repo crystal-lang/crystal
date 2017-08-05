@@ -219,6 +219,29 @@ describe "IO::Buffered" do
     end
   end
 
+  it "reads across buffer boundary" do
+    s = String.build do |str|
+      900.times do
+        10.times do |i|
+          str << ('a' + i)
+        end
+      end
+    end
+    io = BufferedWrapper.new(IO::Memory.new(s))
+
+    3.times do
+      slice = Bytes.new(3000)
+      count = io.read(slice)
+      count.should eq(3000)
+
+      300.times do |j|
+        10.times do |i|
+          slice[i].should eq('a'.ord + i)
+        end
+      end
+    end
+  end
+
   it "writes more than the buffer's internal capacity" do
     s = String.build do |str|
       900.times do
