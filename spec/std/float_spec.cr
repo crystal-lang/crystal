@@ -239,4 +239,15 @@ describe "Float" do
     1.0.clone.should eq(1.0)
     1.0_f32.clone.should eq(1.0_f32)
   end
+
+  it "constants have right decimal value" do
+    Float32::MIN.should eq -3.40282347e+38_f32
+    Float32::MAX.should eq 3.40282347e+38_f32
+    Float32::EPSILON.should eq 1.19209290e-07_f32
+    Float32::MIN_POSITIVE.should eq 1.17549435e-38_f32
+    Float64::MIN.should eq -1.7976931348623157e+308_f64
+    Float64::MAX.should eq 1.7976931348623157e+308_f64
+    Float64::EPSILON.should eq 2.2204460492503131e-16_f64
+    Float64::MIN_POSITIVE.should eq 2.2250738585072014e-308_f64
+  end
 end
