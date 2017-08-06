@@ -5,11 +5,9 @@ module Crystal
     # def self.hostname
 
     # Returns the number of logical processors available to the system.
-    #
     # def self.cpu_count
 
     # Returns the short user name of the currently logged in user.
-    #
     # def self.login
   end
 end

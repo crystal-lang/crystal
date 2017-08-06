@@ -20,10 +20,9 @@ describe System do
   end
 
   describe "login" do
-    it "returns String or nil" do
+    it "returns String when found" do
       shell_login = `echo $USER`.strip
       login = System.login
-      login.should be_a(String)
       login.should eq(shell_login)
     end
   end
