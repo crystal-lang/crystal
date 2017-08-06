@@ -18,4 +18,10 @@ describe System do
       cpu_count.should eq(shell_cpus)
     end
   end
+
+  describe "login" do
+    it "returns String or nil" do
+      System.login.should be_a(String | Nil)
+    end
+  end
 end

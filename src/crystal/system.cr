@@ -11,6 +11,7 @@ module Crystal
 end
 
 require "./system/unix/hostname"
+require "./system/unix/login"
 
 {% if flag?(:freebsd) || flag?(:openbsd) %}
   require "./system/unix/sysctl_cpucount"
