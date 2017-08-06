@@ -3,9 +3,9 @@ lib LibCrystalMain
   fun __crystal_main(argc : Int32, argv : UInt8**)
 end
 
-macro redefine_main(name = main)
+macro redefine_main(name = main, alt_name = main)
   # :nodoc:
-  fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
+  fun {{alt_name.id}} = {{name.id}}(argc : Int32, argv : UInt8**) : Int32
     %ex = nil
     %status = begin
       GC.init
