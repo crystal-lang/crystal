@@ -21,7 +21,10 @@ describe System do
 
   describe "login" do
     it "returns String or nil" do
-      System.login.should be_a(String | Nil)
+      shell_login = `echo $USER`.strip
+      login = System.login
+      login.should be_a(String)
+      login.should eq(shell_login)
     end
   end
 end
