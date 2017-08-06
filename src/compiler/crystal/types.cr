@@ -407,7 +407,9 @@ module Crystal
         return DefInMacroLookup.new
       end
 
-      parents.try &.each do |parent|
+      # We need to go through the instance type because of module
+      # inclusion and inheritance.
+      instance_type.parents.try &.each do |parent|
         parent_macro = parent.lookup_macro(name, args, named_args)
         return parent_macro if parent_macro
       end
@@ -431,7 +433,9 @@ module Crystal
         return DefInMacroLookup.new
       end
 
-      parents.try &.each do |parent|
+      # We need to go through the instance type because of module
+      # inclusion and inheritance.
+      instance_type.parents.try &.each do |parent|
         parent_macros = parent.lookup_macros(name)
         return parent_macros if parent_macros
       end

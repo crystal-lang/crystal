@@ -425,7 +425,7 @@ module Crystal
           !letter_or_underscore?(obj.name)
         else
           case obj.name
-          when "[]", "[]?"
+          when "[]", "[]?", "<", "<=", ">", ">="
             false
           else
             true

@@ -538,13 +538,13 @@ describe TCPSocket do
   end
 
   it "fails when host doesn't exist" do
-    expect_raises(Socket::Error, /No address found for doesnotexist.example.org.:12345/) do
+    expect_raises(Socket::Error, /No address/i) do
       TCPSocket.new("doesnotexist.example.org.", 12345)
     end
   end
 
   it "fails (rather than segfault on darwin) when host doesn't exist and port is 0" do
-    expect_raises(Socket::Error, /No address found for doesnotexist.example.org.:0/) do
+    expect_raises(Socket::Error, /No address/i) do
       TCPSocket.new("doesnotexist.example.org.", 0)
     end
   end

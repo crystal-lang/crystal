@@ -1,5 +1,5 @@
 require "c/string"
-require "./big"
+require "big"
 
 # A `BigInt` can represent arbitrarily large integers.
 #

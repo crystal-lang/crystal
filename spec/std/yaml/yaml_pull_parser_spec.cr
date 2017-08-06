@@ -39,6 +39,15 @@ module YAML
       end
     end
 
+    it "reads a scalar having a null character" do
+      parser = PullParser.new(%(--- "foo\\0bar"\n...\n))
+      parser.read_stream do
+        parser.read_document do
+          parser.read_scalar.should eq("foo\0bar")
+        end
+      end
+    end
+
     it "reads a sequence" do
       parser = PullParser.new("---\n- 1\n- 2\n- 3\n")
       parser.read_stream do

@@ -1,4 +1,4 @@
-require "./big"
+require "big"
 
 # Rational numbers are represented as the quotient of arbitrarily large
 # numerators and denominators. Rationals are canonicalized such that the

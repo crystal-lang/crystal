@@ -98,6 +98,10 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %(a || b), %(_p.i(1) { a || b })
   end
 
+  it "instrument chained comparisons (#4663)" do
+    assert_agent %(1 <= 2 <= 3), %(_p.i(1) { 1 <= 2 <= 3 })
+  end
+
   it "instrument unary expressions" do
     assert_agent %(pointerof(x)), %(_p.i(1) { pointerof(x) })
   end

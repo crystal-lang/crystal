@@ -665,7 +665,10 @@ class Crystal::Call
     node_scope = node_scope.base_type if node_scope.is_a?(VirtualType)
 
     macros = yield node_scope
-    if !macros && node_scope.module?
+
+    # If the scope is a module (through its instance type), lookup in Object too
+    # (so macros like `property` and others, defined in Object, work at the module level)
+    if !macros && node_scope.instance_type.module?
       macros = yield program.object
     end
 
