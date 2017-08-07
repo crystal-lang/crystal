@@ -5,7 +5,7 @@ module Crystal::System
     if login = LibC.getlogin
       String.new(login)
     else
-      Nil
+      nil
     end
   end
 end
