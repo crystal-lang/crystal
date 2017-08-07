@@ -165,7 +165,7 @@ module Crystal
 
       if @contexts.empty?
         if @found_untyped_def
-          return ContextResult.new("failed", "no context information found (never called method has no context anytime)")
+          return ContextResult.new("failed", "no context information found (methods which are never called don't have a context)")
         else
           return ContextResult.new("failed", "no context information found")
         end
