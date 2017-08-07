@@ -20,8 +20,8 @@ describe System do
   end
 
   describe "login" do
-    it "returns String when found" do
-      shell_login = `echo $USER`.strip
+    it "returns current session login" do
+      shell_login = ENV["USER"]
       login = System.login
       login.should eq(shell_login)
     end
