@@ -407,4 +407,15 @@ describe "context" do
     Foo.foo 100
     ), "self", "a"
   end
+
+  it "can't get a context from never called method" do
+    run_context_tool %(
+    def foo(value)
+      ‸
+    end
+    ) do |result|
+      result.status.should eq("failed")
+      result.message.should match(/never called method/)
+    end
+  end
 end
