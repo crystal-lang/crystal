@@ -21,7 +21,8 @@ describe System do
 
   describe "login" do
     it "returns current session login" do
-      shell_login = ENV["USER"]?
+      shell_login = `logname`.strip
+      shell_login = nil if shell_login.match(/no login name/)
       login = System.login
       login.should eq(shell_login)
     end
