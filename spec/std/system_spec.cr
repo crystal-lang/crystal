@@ -21,7 +21,7 @@ describe System do
 
   describe "login" do
     it "returns current session login" do
-      shell_login = ENV["USER"]
+      shell_login = ENV["USER"]?
       login = System.login
       login.should eq(shell_login)
     end
