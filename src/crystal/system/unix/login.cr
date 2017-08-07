@@ -2,8 +2,8 @@ require "c/unistd"
 
 module Crystal::System
   def self.login
-    if LibC.getlogin
-      String.new(LibC.getlogin)
+    if login = LibC.getlogin
+      String.new(login)
     else
       Nil
     end
