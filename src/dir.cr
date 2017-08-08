@@ -154,13 +154,21 @@ class Dir
     entries
   end
 
+  # Calls the block once for each entry except for `.` and `..` in the named
+  # directory, passing the filename of each entry as a parameter to the block.
+  def self.each_child(dirname)
+    excluded = {".", ".."}
+    foreach(dirname) do |filename|
+      yield filename unless excluded.includes?(filename)
+    end
+  end
+
   # Returns an array containing all of the filenames except for `.` and `..`
   # in the given directory.
   def self.children(dirname) : Array(String)
-    excluded = {".", ".."}
     entries = [] of String
-    foreach(dirname) do |filename|
-      entries << filename unless excluded.includes?(filename)
+    each_child(dirname) do |filename|
+      entries << filename
     end
     entries
   end
