@@ -154,6 +154,17 @@ class Dir
     entries
   end
 
+  # Returns an array containing all of the filenames except for `.` and `..`
+  # in the given directory.
+  def self.children(dirname) : Array(String)
+    excluded = {".", ".."}
+    entries = [] of String
+    foreach(dirname) do |filename|
+      entries << filename unless excluded.includes?(filename)
+    end
+    entries
+  end
+
   # Returns `true` if the given path exists and is a directory
   def self.exists?(path) : Bool
     if LibC.stat(path.check_no_null_byte, out stat) != 0
