@@ -248,6 +248,61 @@ describe "OptionParser" do
     called.should be_true
   end
 
+  it "parses in order, calling handlers" do
+    x = false
+    vv = false
+    data : String? = nil
+    parser = OptionParser.new do |opts|
+      opts.on("-x", "test x") do
+        x = true
+      end
+      opts.on("--vv", "test vv") do
+        vv = true
+      end
+      opts.on("--data DATA", "test with data") do |d|
+        data = d
+      end
+    end
+
+    args = parser.order(["-x", "--vv", "--data", "some data", "other", "rest", "--vv"])
+    x.should be_true
+    vv.should be_true
+    data.should eq "some data"
+  end
+
+  it "parses in order, returning unknown args" do
+    parser = OptionParser.new do |opts|
+      opts.on("-x", "test x") do
+      end
+      opts.on("--vv", "test vv") do
+      end
+      opts.on("--data DATA", "test with data") do |d|
+      end
+    end
+
+    args = parser.order(["-x", "--vv", "--data", "some data", "other", "rest", "--vv"])
+    args.should eq ["other", "rest", "--vv"]
+
+    arg = args.shift
+    arg.should eq "other"
+
+    args = parser.order args
+    args.should eq ["rest", "--vv"]
+
+    arg = args.shift
+    arg.should eq "rest"
+    args = parser.order args
+    args.should eq [] of String
+
+    op = OptionParser.new
+    [""].should eq op.order [""]
+    ["foo bar"].should eq op.order ["foo bar"]
+    ["- foo bar"].should eq op.order ["- foo bar"]
+    ["foo - bar"].should eq op.order ["foo - bar"]
+    ["foo -- bar"].should eq op.order ["foo -- bar"]
+    ["foo -- --help bar"].should eq op.order ["foo -- --help bar"]
+  end
+
   describe "multiple times" do
     it "gets an existence flag multiple times" do
       args = %w(-f -f -f)

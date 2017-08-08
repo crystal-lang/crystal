@@ -43,7 +43,9 @@ class OptionParser
   # :nodoc:
   record Handler,
     flag : String,
-    block : String ->
+    block : String ->,
+    has_value : Int32?,
+    prefix : String?
 
   # Creates a new parser, with its configuration specified in the block,
   # and uses it to parse the passed *args*.
@@ -106,7 +108,16 @@ class OptionParser
     check_starts_with_dash flag, "flag"
 
     append_flag flag, description
-    @handlers << Handler.new(flag, block)
+
+    has_value = /([ =].+)/
+    if has_arg = flag =~ has_value
+      argument = $1
+      flag += argument unless flag =~ has_value
+    end
+
+    prefix = flag.split(/[ =]/)[0]
+
+    @handlers << Handler.new(flag, block, has_arg, prefix)
   end
 
   # Establishes a handler for a pair of short and long flags.
@@ -118,14 +129,17 @@ class OptionParser
 
     append_flag "#{short_flag}, #{long_flag}", description
 
-    has_argument = /([ =].+)/
-    if long_flag =~ has_argument
+    has_value = /([ =].+)/
+    if has_arg = long_flag =~ has_value
       argument = $1
-      short_flag += argument unless short_flag =~ has_argument
+      short_flag += argument unless short_flag =~ has_value
     end
 
-    @handlers << Handler.new(short_flag, block)
-    @handlers << Handler.new(long_flag, block)
+    short_prefix = short_flag.split(/[ =]/)[0]
+    long_prefix = long_flag.split(/[ =]/)[0]
+
+    @handlers << Handler.new(short_flag, block, has_arg, short_prefix)
+    @handlers << Handler.new(long_flag, block, has_arg, long_prefix)
   end
 
   # Adds a separator, with an optional header message,
@@ -183,6 +197,22 @@ class OptionParser
   # running the handlers associated to each option.
   def parse!
     parse ARGV
+  end
+
+  # Parses the passed *args* in order, running the handlers associated to each option,
+  # until unhandle arg.
+  #
+  # Returns unhandled args for further processing.
+  def order(args)
+    OrderTask.new(self, args).parse
+  end
+
+  # Parses the passed *args* in order, running the handlers associated to each option,
+  # until unhandle arg.
+  #
+  # Returns unhandled args for further processing.
+  def order!
+    order ARGV
   end
 
   private def check_starts_with_dash(arg, name, allow_empty = false)
@@ -328,6 +358,47 @@ class OptionParser
           @parser.invalid_option.call(arg)
         end
       end
+    end
+  end
+
+  private struct OrderTask
+    def initialize(@parser : OptionParser, @args : Array(String))
+    end
+
+    private def find_handler(arg : String)
+      arg_prefix = arg.split(/[=]/)[0]
+      @parser.handlers.each do |handler|
+        if handler.prefix == arg_prefix
+          return handler
+        end
+      end
+    end
+
+    def parse
+      args = @args.dup
+      while arg = args.shift?
+        if handler = find_handler(arg)
+          flag = handler.flag
+          block = handler.block
+
+          if handler.has_value
+            pair = arg.split(/\=/, 2)
+            value = if pair.size == 2
+                      pair[1]
+                    else
+                      args.shift
+                    end
+            block.call value
+          else
+            block.call ""
+          end
+        else
+          args.unshift arg
+          return args
+        end
+      end
+
+      args
     end
   end
 end
