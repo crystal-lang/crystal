@@ -256,7 +256,13 @@ describe "Dir" do
 
   it "lists entries" do
     filenames = Dir.entries(__DIR__)
+    filenames.includes?(".").should be_true
+    filenames.includes?("..").should be_true
     filenames.includes?("dir_spec.cr").should be_true
+  end
+
+  it "lists children" do
+    Dir.children(__DIR__).should eq(Dir.entries(__DIR__) - %w(. ..))
   end
 
   it "does to_s" do
