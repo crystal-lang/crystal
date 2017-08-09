@@ -83,7 +83,8 @@ macro record(name, *properties)
   end
 end
 
-private record TypeSentinel
+private struct TypeSentinel
+end
 
 class Array(T)
   macro collect(expr)
