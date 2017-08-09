@@ -64,7 +64,7 @@ module HTTP
         Weekday        = /(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/
         Wkday          = /(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)/
         PathValue      = /[^\x00-\x1f\x7f;]+/
-        DomainValue    = /(?:#{DomainLabel}(?:\.#{DomainLabel})?|#{DomainIp})+/
+        DomainValue    = /(?:\.*(?:#{DomainLabel})?|#{DomainIp})+/
         Zone           = /(?:UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[+-]?\d{4})/
         RFC1036Date    = /#{Weekday}, \d{2}-#{Month}-\d{2} #{Time} GMT/
         RFC1123Date    = /#{Wkday}, \d{1,2} #{Month} \d{2,4} #{Time} #{Zone}/
@@ -95,9 +95,12 @@ module HTTP
         cookies
       end
 
-      def parse_set_cookie(header)
+      def parse_set_cookie(header, domain : String? = nil)
         match = header.match(SetCookieString)
         return unless match
+
+        domain = match["domain"]? || domain
+        domain = domain.downcase unless domain.nil?
 
         expires = if max_age = match["max_age"]?
                     Time.now + max_age.to_i.seconds
@@ -109,7 +112,7 @@ module HTTP
           match["name"], match["value"],
           path: match["path"]? || "/",
           expires: expires,
-          domain: match["domain"]?,
+          domain: domain,
           secure: match["secure"]? != nil,
           http_only: match["http_only"]? != nil,
           extension: match["extension"]?
@@ -134,13 +137,13 @@ module HTTP
     # headers in the given `HTTP::Headers`.
     #
     # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
-    def self.from_headers(headers) : self
-      new.tap { |cookies| cookies.fill_from_headers(headers) }
+    def self.from_headers(headers, domain : String? = nil) : self
+      new.tap { |cookies| cookies.fill_from_headers(headers, domain) }
     end
 
     # Filling cookies by parsing the `Cookie` and `Set-Cookie`
     # headers in the given `HTTP::Headers`.
-    def fill_from_headers(headers)
+    def fill_from_headers(headers, domain : String? = nil)
       if values = headers.get?("Cookie")
         values.each do |header|
           Cookie::Parser.parse_cookies(header) { |cookie| self << cookie }
@@ -149,7 +152,7 @@ module HTTP
 
       if values = headers.get?("Set-Cookie")
         values.each do |header|
-          Cookie::Parser.parse_set_cookie(header).try { |cookie| self << cookie }
+          Cookie::Parser.parse_set_cookie(header, domain).try { |cookie| self << cookie }
         end
       end
       self

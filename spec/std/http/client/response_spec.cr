@@ -79,9 +79,13 @@ class HTTP::Client
     end
 
     it "parses response with cookies" do
-      response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: a=b\r\nSet-Cookie: c=d\r\n\r\nhelloworld"))
+      response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nCookie: a=b\r\nSet-Cookie: c=d\r\nSet-Cookie: e=f; domain=.ExAmPlE.COM\r\n\r\nhelloworld"), domain: "www.example.com")
       response.cookies["a"].value.should eq("b")
+      response.cookies["a"].domain.should eq(nil)
       response.cookies["c"].value.should eq("d")
+      response.cookies["c"].domain.should eq("www.example.com")
+      response.cookies["e"].value.should eq("f")
+      response.cookies["e"].domain.should eq(".example.com")
     end
 
     it "parses response with chunked body" do
