@@ -83,6 +83,25 @@ macro record(name, *properties)
   end
 end
 
+private record TypeSentinel
+
+class Array(T)
+  macro collect(expr)
+    %arr = [] of typeof(begin
+      %item = TypeSentinel.new
+      {{expr}} do |x|
+        %item = x
+      end
+      raise "Impossible" if %item.is_a? TypeSentinel
+      %item
+    end)
+    {{expr}} do |x|
+      %arr << x
+    end
+    %arr
+  end
+end
+
 # Prints a series of expressions together with their values.
 # Useful for print style debugging.
 #

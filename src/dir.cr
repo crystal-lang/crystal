@@ -147,11 +147,7 @@ class Dir
 
   # Returns an array containing all of the filenames in the given directory.
   def self.entries(dirname) : Array(String)
-    entries = [] of String
-    foreach(dirname) do |filename|
-      entries << filename
-    end
-    entries
+    Array.collect foreach(dirname)
   end
 
   # Returns an array containing all of the filenames except for `.` and `..`

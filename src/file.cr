@@ -487,11 +487,7 @@ class File < IO::FileDescriptor
   # File.read_lines("foobar") # => ["foo", "bar"]
   # ```
   def self.read_lines(filename, encoding = nil, invalid = nil, chomp = true) : Array(String)
-    lines = [] of String
-    each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp) do |line|
-      lines << line
-    end
-    lines
+    Array.collect each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp)
   end
 
   # Write the given *content* to *filename*.

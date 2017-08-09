@@ -52,10 +52,7 @@ describe "YAML serialization" do
     end
 
     it "does Array#from_yaml with block" do
-      elements = [] of Int32
-      Array(Int32).from_yaml("---\n- 1\n- 2\n- 3\n") do |element|
-        elements << element
-      end
+      elements = Array.collect Array(Int32).from_yaml("---\n- 1\n- 2\n- 3\n")
       elements.should eq([1, 2, 3])
     end
 

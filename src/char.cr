@@ -739,11 +739,7 @@ struct Char
   # 'あ'.bytes # => [227, 129, 130]
   # ```
   def bytes
-    bytes = [] of UInt8
-    each_byte do |byte|
-      bytes << byte
-    end
-    bytes
+    Array.collect each_byte
   end
 
   # Returns this char as a string containing this char as a single character.

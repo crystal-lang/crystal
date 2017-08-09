@@ -18,11 +18,7 @@ class Dir
   end
 
   def self.glob(patterns : Enumerable(String)) : Array(String)
-    paths = [] of String
-    glob(patterns) do |path|
-      paths << path
-    end
-    paths
+    Array.collect glob(patterns)
   end
 
   def self.glob(patterns : Enumerable(String))

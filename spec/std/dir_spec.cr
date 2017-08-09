@@ -109,10 +109,7 @@ describe "Dir" do
     end
 
     it "tests glob with a single pattern with block" do
-      result = [] of String
-      Dir.glob("#{__DIR__}/data/dir/*.txt") do |filename|
-        result << filename
-      end
+      result = Array.collect Dir.glob("#{__DIR__}/data/dir/*.txt")
       result.sort.should eq([
         "#{__DIR__}/data/dir/f1.txt",
         "#{__DIR__}/data/dir/f2.txt",

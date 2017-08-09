@@ -957,11 +957,7 @@ class Array(T)
   # a.permutations(4) # => []
   # ```
   def permutations(size : Int = self.size)
-    ary = [] of Array(T)
-    each_permutation(size) do |a|
-      ary << a
-    end
-    ary
+    Array.collect each_permutation(size)
   end
 
   # Yields each possible permutation of *size* of `self`.
@@ -1039,11 +1035,7 @@ class Array(T)
   end
 
   def combinations(size : Int = self.size)
-    ary = [] of Array(T)
-    each_combination(size) do |a|
-      ary << a
-    end
-    ary
+    Array.collect each_combination(size)
   end
 
   def each_combination(size : Int = self.size, reuse = false) : Nil
@@ -1127,11 +1119,7 @@ class Array(T)
   end
 
   def repeated_combinations(size : Int = self.size)
-    ary = [] of Array(T)
-    each_repeated_combination(size) do |a|
-      ary << a
-    end
-    ary
+    Array.collect each_repeated_combination(size)
   end
 
   def each_repeated_combination(size : Int = self.size, reuse = false) : Nil
@@ -1175,11 +1163,7 @@ class Array(T)
   end
 
   def self.product(arrays)
-    result = [] of Array(typeof(arrays.first.first))
-    each_product(arrays) do |product|
-      result << product
-    end
-    result
+    Array.collect each_product(arrays)
   end
 
   def self.product(*arrays : Array)
@@ -1228,11 +1212,7 @@ class Array(T)
   end
 
   def repeated_permutations(size : Int = self.size)
-    ary = [] of Array(T)
-    each_repeated_permutation(size) do |a|
-      ary << a
-    end
-    ary
+    Array.collect each_repeated_permutation(size)
   end
 
   def each_repeated_permutation(size : Int = self.size, reuse = false) : Nil
