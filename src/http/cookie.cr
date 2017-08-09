@@ -90,9 +90,7 @@ module HTTP
       end
 
       def parse_cookies(header)
-        cookies = [] of Cookie
-        parse_cookies(header) { |cookie| cookies << cookie }
-        cookies
+        Array.collect parse_cookies(header)
       end
 
       def parse_set_cookie(header)

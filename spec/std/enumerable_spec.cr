@@ -225,14 +225,12 @@ describe "Enumerable" do
 
   describe "each_cons" do
     it "returns running pairs" do
-      array = [] of Array(Int32)
-      [1, 2, 3, 4].each_cons(2) { |pair| array << pair }
+      array = Array.collect [1, 2, 3, 4].each_cons(2)
       array.should eq([[1, 2], [2, 3], [3, 4]])
     end
 
     it "returns running triples" do
-      array = [] of Array(Int32)
-      [1, 2, 3, 4, 5].each_cons(3) { |triple| array << triple }
+      array = Array.collect [1, 2, 3, 4, 5].each_cons(3)
       array.should eq([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
     end
 
@@ -290,15 +288,13 @@ describe "Enumerable" do
 
   describe "each_slice" do
     it "returns partial slices" do
-      array = [] of Array(Int32)
-      [1, 2, 3].each_slice(2) { |slice| array << slice }
+      array = Array.collect [1, 2, 3].each_slice(2)
       array.should eq([[1, 2], [3]])
       array[0].should_not be(array[1])
     end
 
     it "returns full slices" do
-      array = [] of Array(Int32)
-      [1, 2, 3, 4].each_slice(2) { |slice| array << slice }
+      array = Array.collect [1, 2, 3, 4].each_slice(2)
       array.should eq([[1, 2], [3, 4]])
       array[0].should_not be(array[1])
     end

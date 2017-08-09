@@ -170,15 +170,13 @@ describe "Range" do
   describe "each" do
     it "gives correct values with inclusive range" do
       range = -1..3
-      arr = [] of Int32
-      range.each { |x| arr << x }
+      arr = Array.collect range.each
       arr.should eq([-1, 0, 1, 2, 3])
     end
 
     it "gives correct values with exclusive range" do
       range = 'a'...'c'
-      arr = [] of Char
-      range.each { |x| arr << x }
+      arr = Array.collect range.each
       arr.should eq(['a', 'b'])
     end
 
@@ -193,15 +191,13 @@ describe "Range" do
   describe "reverse_each" do
     it "gives correct values with inclusive range" do
       range = 'a'..'c'
-      arr = [] of Char
-      range.reverse_each { |x| arr << x }
+      arr = Array.collect range.reverse_each
       arr.should eq(['c', 'b', 'a'])
     end
 
     it "gives correct values with exclusive range" do
       range = -1...3
-      arr = [] of Int32
-      range.reverse_each { |x| arr << x }
+      arr = Array.collect range.reverse_each
       arr.should eq([2, 1, 0, -1])
     end
 
