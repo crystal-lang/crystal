@@ -1761,7 +1761,6 @@ module Crystal
       end
       write "{% "
 
-      macro_state = @macro_state
       next_token_skip_space_or_newline
 
       if @token.keyword?(:begin)
@@ -1780,7 +1779,7 @@ module Crystal
         outside_macro { indent(@column, node.cond) }
       end
 
-      format_macro_if_epilogue node, macro_state
+      format_macro_if_epilogue(node, @macro_state)
     end
 
     def format_macro_if_epilogue(node, macro_state, check_end = true)
@@ -1789,6 +1788,7 @@ module Crystal
       write " %}"
 
       @macro_state = macro_state
+      @macro_state.control_nest += 1
       check_macro_whitespace
       next_macro_token
 
@@ -1796,7 +1796,6 @@ module Crystal
 
       unless node.else.is_a?(Nop)
         check :MACRO_CONTROL_START
-        macro_state = @macro_state
         next_token_skip_space_or_newline
 
         if @token.keyword?(:elsif)
@@ -1811,6 +1810,9 @@ module Crystal
           check :"%}"
 
           write "{% else %}"
+
+          @macro_state = macro_state
+          @macro_state.control_nest += 1
           check_macro_whitespace
           next_macro_token
 
@@ -1818,9 +1820,9 @@ module Crystal
         end
       end
 
+      @macro_state = macro_state
       if check_end
         check :MACRO_CONTROL_START
-        macro_state = @macro_state
         next_token_skip_space_or_newline
 
         check_end
@@ -1842,6 +1844,7 @@ module Crystal
 
     def visit(node : MacroFor)
       reset_macro_state
+      old_macro_state = @macro_state
 
       if inside_macro?
         check :MACRO_CONTROL_START
@@ -1876,13 +1879,14 @@ module Crystal
       check :"%}"
       write " %}"
 
+      @macro_state.control_nest += 1
       check_macro_whitespace
       next_macro_token
 
       inside_macro { no_indent node.body }
+      @macro_state = old_macro_state
 
       check :MACRO_CONTROL_START
-      macro_state = @macro_state
       next_token_skip_space_or_newline
 
       check_end

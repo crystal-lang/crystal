@@ -770,6 +770,7 @@ describe "Parser" do
 
   it_parses "{% for x in y %}body{% end %}", MacroFor.new(["x".var], "y".var, "body".macro_literal)
   it_parses "{% if x %}body{% end %}", MacroIf.new("x".var, "body".macro_literal)
+  it_parses "{% begin %}{% if true %}if true{% end %}\n{% if true %}end{% end %}{% end %}", MacroIf.new(true.bool, [MacroIf.new(true.bool, "if true".macro_literal), "\n".macro_literal, MacroIf.new(true.bool, "end".macro_literal)] of ASTNode)
   it_parses "{{ foo }}", MacroExpression.new("foo".var)
 
   it_parses "macro foo;%var;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroLiteral.new(";")] of ASTNode))

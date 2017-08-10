@@ -2896,7 +2896,9 @@ module Crystal
 
           check :"%}"
 
+          macro_state.control_nest += 1
           body, end_location = parse_macro_body(start_line, start_column, macro_state)
+          macro_state.control_nest -= 1
 
           check_ident :end
           next_token_skip_space
@@ -2920,7 +2922,9 @@ module Crystal
           next_token_skip_space
           check :"%}"
 
+          macro_state.control_nest += 1
           body, end_location = parse_macro_body(start_line, start_column, macro_state)
+          macro_state.control_nest -= 1
 
           check_ident :end
           next_token_skip_space
@@ -2953,7 +2957,9 @@ module Crystal
 
       check :"%}"
 
+      macro_state.control_nest += 1
       a_then, end_location = parse_macro_body(start_line, start_column, macro_state)
+      macro_state.control_nest -= 1
 
       if @token.type == :IDENT
         case @token.value
@@ -2961,7 +2967,9 @@ module Crystal
           next_token_skip_space
           check :"%}"
 
+          macro_state.control_nest += 1
           a_else, end_location = parse_macro_body(start_line, start_column, macro_state)
+          macro_state.control_nest -= 1
 
           if check_end
             check_ident :end
