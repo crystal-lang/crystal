@@ -197,8 +197,8 @@ class Dir
   def self.empty?(path) : Bool
     raise Errno.new("Error determining size of '#{path}'") unless exists?(path)
 
-    foreach(path) do |f|
-      return false unless {".", ".."}.includes?(f)
+    each_child(path) do |f|
+      return false
     end
     true
   end
