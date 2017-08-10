@@ -137,7 +137,7 @@ class Dir
 
   # Calls the block once for each entry in the named directory,
   # passing the filename of each entry as a parameter to the block.
-  def self.foreach(dirname)
+  def self.each_entry(dirname)
     Dir.open(dirname) do |dir|
       dir.each do |filename|
         yield filename
@@ -148,7 +148,7 @@ class Dir
   # Returns an array containing all of the filenames in the given directory.
   def self.entries(dirname) : Array(String)
     entries = [] of String
-    foreach(dirname) do |filename|
+    each_entry(dirname) do |filename|
       entries << filename
     end
     entries
@@ -158,7 +158,7 @@ class Dir
   # directory, passing the filename of each entry as a parameter to the block.
   def self.each_child(dirname)
     excluded = {".", ".."}
-    foreach(dirname) do |filename|
+    each_entry(dirname) do |filename|
       yield filename unless excluded.includes?(filename)
     end
   end
