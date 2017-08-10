@@ -48,7 +48,7 @@ class Dir
   # File.write("testdir/config.h", "")
   #
   # d = Dir.new("testdir")
-  # d.each { |x| puts "Got #{x}" }
+  # d.each_entry { |x| puts "Got #{x}" }
   # ```
   #
   # produces:
@@ -58,13 +58,13 @@ class Dir
   # Got ..
   # Got config.h
   # ```
-  def each : Nil
+  def each_entry : Nil
     while entry = read
       yield entry
     end
   end
 
-  def each
+  def each_entry
     EntryIterator.new(self)
   end
 
@@ -139,7 +139,7 @@ class Dir
   # passing the filename of each entry as a parameter to the block.
   def self.each_entry(dirname)
     Dir.open(dirname) do |dir|
-      dir.each do |filename|
+      dir.each_entry do |filename|
         yield filename
       end
     end
