@@ -100,6 +100,10 @@ class Dir
     end
   end
 
+  def each_child
+    ChildIterator.new(self)
+  end
+
   # Returns an array containing all of the filenames except for `.` and `..`
   # in the given directory.
   def children : Array(String)
@@ -298,6 +302,26 @@ class Dir
 
     def next
       @dir.read || stop
+    end
+
+    def rewind
+      @dir.rewind
+      self
+    end
+  end
+
+  private struct ChildIterator
+    include Iterator(String)
+
+    def initialize(@dir : Dir)
+    end
+
+    def next
+      excluded = {".", ".."}
+      while entry = @dir.read
+        return entry unless excluded.includes?(entry)
+      end
+      stop
     end
 
     def rewind

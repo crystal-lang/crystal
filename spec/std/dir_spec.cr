@@ -277,6 +277,21 @@ describe "Dir" do
       filenames << filename
     end
 
+    filenames.includes?(".").should be_true
+    filenames.includes?("..").should be_true
+    filenames.includes?("dir_spec.cr").should be_true
+  end
+
+  it "gets child iterator" do
+    filenames = [] of String
+
+    iter = Dir.new(__DIR__).each_child
+    iter.each do |filename|
+      filenames << filename
+    end
+
+    filenames.includes?(".").should be_false
+    filenames.includes?("..").should be_false
     filenames.includes?("dir_spec.cr").should be_true
   end
 
