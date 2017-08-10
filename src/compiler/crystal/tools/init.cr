@@ -112,7 +112,11 @@ module Crystal
     end
 
     def self.fetch_name(opts, args)
-      fetch_required_parameter(opts, args, "NAME")
+      name = fetch_required_parameter(opts, args, "NAME")
+      if name.index %r(/|\\)
+        raise Error.new "invalid NAME value: Cannot contain '\\' or '/'"
+      end
+      name
     end
 
     def self.fetch_directory(args, project_name)

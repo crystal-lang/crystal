@@ -200,6 +200,12 @@ end
       end
     end
 
+    it "prints error on invalid project name" do
+      expect_raises(Crystal::Init::Error, "invalid NAME value") do
+        Crystal::Init.parse_args %w(lib dir/project)
+      end
+    end
+
     it "honors the custom set directory name" do
       within_temporary_directory do
         project_name = "my_project"
