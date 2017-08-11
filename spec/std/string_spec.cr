@@ -1752,8 +1752,7 @@ describe "String" do
     end
 
     it "works with strings with block" do
-      res = [] of String
-      "bla bla ablf".scan("bl") { |s| res << s }
+      res = Array.collect "bla bla ablf".scan("bl")
       res.should eq(["bl", "bl", "bl"])
     end
 

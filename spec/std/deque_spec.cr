@@ -633,10 +633,7 @@ describe "Deque" do
     end
 
     it "cycles N times" do
-      a = [] of Int32
-      Deque{1, 2, 3}.cycle(2) do |x|
-        a << x
-      end
+      a = Array.collect Deque{1, 2, 3}.cycle(2)
       a.should eq([1, 2, 3, 1, 2, 3])
     end
 

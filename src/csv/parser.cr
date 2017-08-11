@@ -14,9 +14,7 @@ class CSV::Parser
 
   # Returns the remaining rows.
   def parse : Array(Array(String))
-    rows = [] of Array(String)
-    each_row { |row| rows << row }
-    rows
+    Array.collect each_row
   end
 
   # Yields each of the remaining rows as an `Array(String)`.

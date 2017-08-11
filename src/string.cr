@@ -3254,11 +3254,7 @@ class String
   end
 
   def lines(chomp = true)
-    lines = [] of String
-    each_line(chomp: chomp) do |line|
-      lines << line
-    end
-    lines
+    Array.collect each_line(chomp: chomp)
   end
 
   # Splits the string after each newline and yields each line to a block.
@@ -3579,11 +3575,7 @@ class String
   # Searches the string for instances of *pattern*,
   # returning an `Array` of `Regex::MatchData` for each match.
   def scan(pattern : Regex)
-    matches = [] of Regex::MatchData
-    scan(pattern) do |match|
-      matches << match
-    end
-    matches
+    Array.collect scan(pattern)
   end
 
   # Searches the string for instances of *pattern*,
@@ -3601,11 +3593,7 @@ class String
   # Searches the string for instances of *pattern*,
   # returning an array of the matched string for each match.
   def scan(pattern : String)
-    matches = [] of String
-    scan(pattern) do |match|
-      matches << match
-    end
-    matches
+    Array.collect scan(pattern)
   end
 
   # Yields each character in the string to the block.

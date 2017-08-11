@@ -11,8 +11,7 @@ describe "Char" do
     it { 'A'.downcase.should eq('a') }
     it { '1'.downcase.should eq('1') }
     it do
-      actual = [] of Char
-      'ß'.downcase(Unicode::CaseOptions::Fold) { |c| actual << c }
+      actual = Array.collect 'ß'.downcase(Unicode::CaseOptions::Fold)
       actual.should eq(['s', 's'])
     end
     it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }

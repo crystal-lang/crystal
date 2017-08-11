@@ -2588,9 +2588,7 @@ module Crystal
   # A type that consists of other types, like unions and virtual types.
   module MultiType
     def concrete_types
-      types = [] of Type
-      each_concrete_type { |type| types << type }
-      types
+      Array.collect each_concrete_type
     end
 
     def union_types

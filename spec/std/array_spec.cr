@@ -1409,10 +1409,7 @@ describe "Array" do
     end
 
     it "cycles N times" do
-      a = [] of Int32
-      [1, 2, 3].cycle(2) do |x|
-        a << x
-      end
+      a = Array.collect [1, 2, 3].cycle(2)
       a.should eq([1, 2, 3, 1, 2, 3])
     end
 

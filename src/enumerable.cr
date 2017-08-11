@@ -1274,9 +1274,7 @@ module Enumerable(T)
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
   def to_a
-    ary = [] of T
-    each { |e| ary << e }
-    ary
+    Array.collect each
   end
 
   # Creates a `Hash` out of an Enumerable where each element is a
