@@ -18,6 +18,7 @@ using namespace llvm;
 #define LLVM_VERSION_LE(major, minor) \
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
 
+#if LLVM_VERSION_LE(4, 0)
 typedef struct LLVMOpaqueDIBuilder *LLVMDIBuilderRef;
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(DIBuilder, LLVMDIBuilderRef)
 
@@ -26,6 +27,7 @@ DEFINE_ISA_CONVERSION_FUNCTIONS(Metadata, LLVMMetadataRef)
 inline Metadata **unwrap(LLVMMetadataRef *Vals) {
   return reinterpret_cast<Metadata **>(Vals);
 }
+#endif
 
 typedef DIBuilder *DIBuilderRef;
 #define DIArray DINodeArray
@@ -283,7 +285,11 @@ LLVMMetadataRef LLVMDIBuilderCreatePointerType(DIBuilderRef Dref,
                                                uint64_t AlignInBits,
                                                const char *Name) {
   DIDerivedType *T = Dref->createPointerType(unwrapDI<DIType>(PointeeType),
-                                             SizeInBits, AlignInBits, Name);
+                                             SizeInBits, AlignInBits,
+#if LLVM_VERSION_GE(5, 0)
+                                             None,
+#endif
+                                             Name);
   return wrap(T);
 }
 
