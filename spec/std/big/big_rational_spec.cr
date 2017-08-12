@@ -175,9 +175,3 @@ describe BigRational do
     x.clone.should eq(x)
   end
 end
-
-describe "BigRational Math" do
-  it "frexp" do
-    Math.frexp(500.to_big_r).should eq({0.9765625, 9})
-  end
-end

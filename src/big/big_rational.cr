@@ -272,9 +272,3 @@ struct Float
     -(other <=> self)
   end
 end
-
-module Math
-  def frexp(value : BigRational)
-    frexp value.to_big_f
-  end
-end
