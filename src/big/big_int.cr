@@ -427,9 +427,7 @@ struct BigInt < Int
   end
 
   def to_big_f
-    BigFloat.new { |mpf|
-      LibGMP.mpf_set_z(mpf, mpz)
-    }
+    BigFloat.new { |mpf| LibGMP.mpf_set_z(mpf, mpz) }
   end
 
   def clone

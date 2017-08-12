@@ -21,6 +21,9 @@ struct BigRational < Number
   include Comparable(Int)
   include Comparable(Float)
 
+  private MANTISSA_BITS = 53
+  private MANTISSA_SHIFT = (1_i64 << MANTISSA_BITS).to_f64
+
   # Create a new `BigRational`.
   #
   # If *denominator* is 0, this will raise an exception.
@@ -42,13 +45,12 @@ struct BigRational < Number
   end
 
   # Creates a exact representation of float as rational.
-  #
-  # It ensures that `BigRational.new(f) == f`
-  # It relies on fact, that mantissa is at most 53 bits
   def initialize(num : Float)
+    # It ensures that `BigRational.new(f) == f`
+    # It relies on fact, that mantissa is at most 53 bits
     frac, exp = Math.frexp num
-    ifrac = (frac.to_f64 * (1.to_i64 << 53).to_f64).to_i64
-    exp -= 53
+    ifrac = (frac.to_f64 * MANTISSA_SHIFT).to_i64
+    exp -= MANTISSA_BITS
     initialize ifrac, 1
     if exp >= 0
       LibGMP.mpq_mul_2exp(out @mpq, self, exp)
@@ -177,9 +179,7 @@ struct BigRational < Number
   end
 
   def to_big_f
-    BigFloat.new { |mpf|
-      LibGMP.mpf_set_q(mpf, mpq)
-    }
+    BigFloat.new { |mpf| LibGMP.mpf_set_q(mpf, mpq) }
   end
 
   # Returns the string representing this rational.
