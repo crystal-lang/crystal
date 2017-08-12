@@ -21,7 +21,7 @@ struct BigRational < Number
   include Comparable(Int)
   include Comparable(Float)
 
-  private MANTISSA_BITS = 53
+  private MANTISSA_BITS  = 53
   private MANTISSA_SHIFT = (1_i64 << MANTISSA_BITS).to_f64
 
   # Create a new `BigRational`.
