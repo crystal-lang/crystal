@@ -549,6 +549,7 @@ describe Crystal::Formatter do
   assert_format "macro foo\n  \\{\nend"
   assert_format "macro foo\n  {% if 1 %} 2 {% elsif 3 %} 4 {% else %} 5 {% end %}\nend"
   assert_format "macro [](x)\nend"
+  assert_format "macro foo\n  {% if true %}if true{% end %}\n  {% if true %}end{% end %}\nend"
 
   assert_format "def foo\na = bar do\n1\nend\nend", "def foo\n  a = bar do\n    1\n  end\nend"
   assert_format "def foo\nend\ndef bar\nend", "def foo\nend\n\ndef bar\nend"

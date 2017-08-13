@@ -1914,6 +1914,7 @@ module Crystal
 
     def next_macro_token(macro_state, skip_whitespace)
       nest = macro_state.nest
+      control_nest = macro_state.control_nest
       whitespace = macro_state.whitespace
       delimiter_state = macro_state.delimiter_state
       beginning_of_line = macro_state.beginning_of_line
@@ -1964,7 +1965,7 @@ module Crystal
 
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
         set_token_raw_from_start(start)
         return @token
       end
@@ -1975,7 +1976,7 @@ module Crystal
         next_char
         @token.type = :MACRO_LITERAL
         @token.value = "%"
-        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
         @token.raw = "%"
         return @token
       end
@@ -1986,13 +1987,13 @@ module Crystal
           beginning_of_line = false
           next_char
           @token.type = :MACRO_EXPRESSION_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
           return @token
         when '%'
           beginning_of_line = false
           next_char
           @token.type = :MACRO_CONTROL_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
           return @token
         else
           # Make sure to decrease the '}' count if inside an interpolation
@@ -2024,7 +2025,7 @@ module Crystal
         end
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
         set_token_raw_from_start(start)
         return @token
       end
@@ -2042,7 +2043,7 @@ module Crystal
           beginning_of_line = false
           @token.type = :MACRO_VAR
           @token.value = string_range_from_pool(start)
-          @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
           return @token
         end
       end
@@ -2052,7 +2053,7 @@ module Crystal
         case next_char
         when 'd'
           if whitespace && !ident_part_or_end?(peek_next_char)
-            if nest == 0
+            if nest == 0 && control_nest == 0
               next_char
               @token.type = :MACRO_END
               @token.macro_state = Token::MacroState.default
@@ -2192,7 +2193,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
       set_token_raw_from_start(start)
 
       @token
