@@ -180,7 +180,7 @@ module Crystal
       end
 
       values.concat exps[assign_index + 1..-1]
-      if values.size != 1 && targets.size != 1 && targets.size != values.size
+      if values.size != 1 && targets.size != values.size
         raise "Multiple assignment count mismatch", location
       end
 

@@ -122,11 +122,9 @@ describe "Parser" do
   it_parses "a = 1", Assign.new("a".var, 1.int32)
   it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int32))
 
-  it_parses "a = 1, 2", MultiAssign.new(["a".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
   it_parses "_, _ = 1, 2", MultiAssign.new([Underscore.new, Underscore.new] of ASTNode, [1.int32, 2.int32] of ASTNode)
-  it_parses "a[0] = 1, 2", MultiAssign.new([Call.new("a".call, "[]", 0.int32)] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a[0], a[1] = 1, 2", MultiAssign.new([Call.new("a".call, "[]", 0.int32), Call.new("a".call, "[]", 1.int32)] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a.foo, a.bar = 1, 2", MultiAssign.new([Call.new("a".call, "foo"), Call.new("a".call, "bar")] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "x = 0; a, b = x += 1", [Assign.new("x".var, 0.int32), MultiAssign.new(["a".var, "b".var] of ASTNode, [OpAssign.new("x".var, "+", 1.int32)] of ASTNode)] of ASTNode
@@ -138,6 +136,8 @@ describe "Parser" do
   assert_syntax_error "1 == 2, a = 4"
   assert_syntax_error "x : String, a = 4"
   assert_syntax_error "b, 1 == 2, a = 4"
+  assert_syntax_error "a = 1, 2, 3", "Multiple assignment count mismatch"
+  assert_syntax_error "a = 1, b = 2", "Multiple assignment count mismatch"
 
   it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
   it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
