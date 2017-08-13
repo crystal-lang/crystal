@@ -127,11 +127,11 @@ module Crystal
       files = [] of String
       dirs = [] of String
 
-      Dir.foreach(dir) do |filename|
+      Dir.each_child(dir) do |filename|
         full_name = "#{dir}/#{filename}"
 
         if File.directory?(full_name)
-          if filename != "." && filename != ".." && recursive
+          if recursive
             dirs << filename
           end
         else
