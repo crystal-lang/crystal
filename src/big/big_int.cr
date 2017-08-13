@@ -524,9 +524,3 @@ class String
     BigInt.new(self, base)
   end
 end
-
-module Math
-  def frexp(value : BigInt)
-    frexp value.to_big_f
-  end
-end

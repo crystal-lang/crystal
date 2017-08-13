@@ -324,9 +324,3 @@ describe "BigInt" do
     x.clone.should eq(x)
   end
 end
-
-describe "BigInt Math" do
-  it "frexp" do
-    Math.frexp(500.to_big_i).should eq({0.9765625, 9})
-  end
-end
