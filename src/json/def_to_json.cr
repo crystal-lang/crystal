@@ -52,7 +52,7 @@ module JSON
           {% unless options.is_a?(HashLiteral) || options.is_a?(NamedTupleLiteral) %}
             {% options = {nil: nil} %}
           {% end %}
-          ::JSON.field_to_json({{(options[:property] || key).id}}, {{key.id.stringify}}, {{options}})
+          ::JSON.emit_value_to_json({{(options[:property] || key).id}}, {{key.id.stringify}}, {{options}})
         {% end %}
       end
     end
@@ -109,7 +109,7 @@ module JSON
           {% unless options.is_a?(HashLiteral) || options.is_a?(NamedTupleLiteral) %}
             {% options = {nil: nil} %}
           {% end %}
-          ::JSON.field_to_json(value.{{(options[:property] || key).id}}, {{key.id.stringify}}, {{options}})
+          ::JSON.emit_value_to_json(value.{{(options[:property] || key).id}}, {{key.id.stringify}}, {{options}})
         {% end %}
       end
     end
@@ -130,19 +130,19 @@ module JSON
   end
 
   # :nodoc:
-  macro field_to_json(value_name, field_name, options)
+  macro emit_value_to_json(value_expression, json_key, options)
     # this macro is used by `.mapping` and `.def_to_json`
     # TODO: Remove wrapping branch keywords in macro expressions after #4769 is included in the next release (after 0.23.1)
-    # TODO: Replace {{value_name.id}} with %value in unwrapped keywords
-    %value = {{value_name.id}}
+    # TODO: Replace {{value_expression.id}} with %value in unwrapped keywords
+    %value = {{value_expression.id}}
     {% unless options[:emit_null] %}
-      {{ "unless #{value_name.id}.nil?".id }}
+      {{ "unless #{value_expression.id}.nil?".id }}
     {% end %}
 
-      json.field({{field_name}}) do
+      json.field({{json_key}}) do
         {% if options[:root] %}
           {% if options[:emit_null] %}
-            {{ "if #{value_name.id}.nil?".id }}
+            {{ "if #{value_expression.id}.nil?".id }}
               nil.to_json(json)
             {{ "else".id }}
           {% end %}

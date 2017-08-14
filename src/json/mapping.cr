@@ -169,7 +169,7 @@ module JSON
     def to_json(json : ::JSON::Builder)
       json.object do
         {% for key, value in _properties_ %}
-          ::JSON.field_to_json("@{{key.id}}", {{value[:key] || key.stringify}}, {{value}})
+          ::JSON.emit_value_to_json("@{{key.id}}", {{value[:key] || key.stringify}}, {{value}})
         {% end %}
       end
     end
