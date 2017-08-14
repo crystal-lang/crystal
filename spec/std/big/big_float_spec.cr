@@ -3,35 +3,30 @@ require "big_float"
 
 describe "BigFloat" do
   describe "new" do
-    bsi = "123456789012345678901"
-    bfsi = BigFloat.new(bsi)
-    bsf = "1234567890.12345678901"
-    bfsf = BigFloat.new(bsf)
+    int_str = "123456789012345678901"
+    int_bigf = BigFloat.new(int_str)
+    float_str = "1234567890.12345678901"
+    float_bigf = BigFloat.new(float_str)
 
     it "new(String)" do
-      bfsi.to_s.should eq(bsi)
-      bfsf.to_s.should eq(bsf)
+      int_bigf.to_s.should eq(int_str)
+      float_bigf.to_s.should eq(float_str)
     end
 
     it "new(BigInt)" do
-      bi = BigInt.new(bsi)
-      bfi = BigFloat.new(bi)
-      bfi.should eq(bfsi)
-      bfi.to_s.should eq(bsi)
+      bigf_on_bigi = BigFloat.new(BigInt.new(int_str))
+      bigf_on_bigi.should eq(int_bigf)
+      bigf_on_bigi.to_s.should eq(int_str)
     end
 
     it "new(BigRational)" do
-      br = BigRational.new(1, 3)
-      bfr = BigFloat.new(br)
-      bf = BigFloat.new(1) / BigFloat.new(3)
-      bfr.should eq(bf)
+      bigf_on_bigr = BigFloat.new(BigRational.new(1, 3))
+      bigf_on_bigr.should eq(BigFloat.new(1) / BigFloat.new(3))
     end
 
     it "new(BigFloat)" do
-      bffi = BigFloat.new(bfsi)
-      bffi.should eq(bfsi)
-      bfff = BigFloat.new(bfsf)
-      bfff.should eq(bfsf)
+      BigFloat.new(int_bigf).should eq(int_bigf)
+      BigFloat.new(float_bigf).should eq(float_bigf)
     end
 
     it "new(Int)" do
