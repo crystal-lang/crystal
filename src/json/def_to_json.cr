@@ -41,7 +41,7 @@ module JSON
   # whose keys will define JSON properties.
   #
   # The value of each key can either be `true` or a hash or named tuple literal with the following options:
-  # * **property**: the property name on the Crystal object (as opposed to the key in the in the JSON document)
+  # * **property**: the property name on the Crystal object (as opposed to the key in the JSON document)
   # * **emit_null**: if `true`, emits a `null` value if the property value is nil (by default nulls are not emitted)
   # * **converter**: specify an alternate type for generation. The converter must define `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
   # * **root**: assume the value is inside a JSON object with a given key
@@ -121,7 +121,7 @@ module JSON
     ::JSON.def_to_json({{type}}, {{mappings}})
   end
 
-  # The `StringConverter` has a class method `to_json` wich can be used as a converter for `JSON.def_to_json`. The value is added
+  # The `StringConverter` has a class method `to_json` which can be used as a converter for `JSON.def_to_json`. The value is added
   # to the builder as a string.
   module StringConverter
     def self.to_json(value, builder)

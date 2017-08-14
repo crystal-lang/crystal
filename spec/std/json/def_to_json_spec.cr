@@ -125,6 +125,7 @@ private class JSONStringConverted
   JSON.def_to_json({
     value: {converter: JSON::StringConverter},
   })
+
   def initialize(@value)
   end
 end
