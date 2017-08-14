@@ -91,20 +91,10 @@ struct BigFloat < Float
     LibGMP.mpf_cmp_d(self, other.to_f64)
   end
 
-  def <=>(other : Int::Signed)
-    if LibGMP::Long == Int64
-      LibGMP.mpf_cmp_si(self, other.to_i64)
-    elsif other.is_a?(Int8 | Int16 | Int32)
+  def <=>(other : Int)
+    if other.is_a?(Int8 | Int16 | Int32) || (LibGMP::Long == Int64 && other.is_a?(Int64))
       LibGMP.mpf_cmp_si(self, other)
-    else
-      LibGMP.mpf_cmp(self, other.to_big_f)
-    end
-  end
-
-  def <=>(other : Int::Unsigned)
-    if LibGMP::ULong == UInt64
-      LibGMP.mpf_cmp_ui(self, other.to_u64)
-    elsif other.is_a?(UInt8 | UInt16 | UInt32)
+    elsif other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
       LibGMP.mpf_cmp_ui(self, other)
     else
       LibGMP.mpf_cmp(self, other.to_big_f)
