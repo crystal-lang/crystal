@@ -184,6 +184,16 @@ private class HouseInNeighborhood
   end
 end
 
+private class FooBar
+  JSON.def_to_json({
+    foo: {property: foo("BAR") }
+  })
+
+  def foo(prefix)
+    prefix
+  end
+end
+
 describe "JSON.def_to_json" do
   it "doesn't emit null by default when doing to_json" do
     person = JSONPerson.new("John")
@@ -272,5 +282,10 @@ describe "JSON.def_to_json" do
     neighbor = HouseInNeighborhood.new("Crystal Road", 1235)
     house = HouseInNeighborhood.new("Crystal Road", 1234, neighbor)
     house.to_json.should eq(%({"address":"Crystal Road 1234","neighbor":{"street_number":1235}}))
+  end
+
+  it "accepts macro expression as property" do
+    foo = FooBar.new
+    foo.to_json.should eq (%({"foo":"BAR"}))
   end
 end

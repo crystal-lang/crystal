@@ -3,8 +3,8 @@ module JSON
   #
   # It is a lightweight alternative to `JSON.mapping` if you don't need to declare instance variables and a parser.
   #
-  # The generated method invoks `to_json(JSON::Builder)` on each of the values returned
-  # by `self`'s properties from *mappings*, or - if a converter is specified - `to_json(value, JSON::Builder)` on the converter.
+  # The generated method invoks `to_json(JSON::Builder)` on each of the values returned by the *property* expression,
+  # or - if a converter is specified - `to_json(value, JSON::Builder)` on the converter.
   #
   # ### Example
   #
@@ -41,7 +41,8 @@ module JSON
   # whose keys will define JSON properties.
   #
   # The value of each key can either be `true` or a hash or named tuple literal with the following options:
-  # * **property**: the property name on the Crystal object (as opposed to the key in the JSON document)
+  # * **property**: the Crystal expression to determine the value. By default it is equal to the property name of the current  *key*
+  #   on the Crystal object (as opposed to the key in the JSON document)
   # * **emit_null**: if `true`, emits a `null` value if the property value is nil (by default nulls are not emitted)
   # * **converter**: specify an alternate type for generation. The converter must define `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
   # * **root**: assume the value is inside a JSON object with a given key
