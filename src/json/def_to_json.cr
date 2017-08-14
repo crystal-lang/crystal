@@ -132,21 +132,23 @@ module JSON
   # :nodoc:
   macro field_to_json(value_name, field_name, options)
     # this macro is used by `.mapping` and `.def_to_json`
+    # TODO: Remove wrapping branch keywords in macro expressions after #4769 is included in the next release (after 0.23.1)
+    # TODO: Replace {{value_name.id}} with %value in unwrapped keywords
     %value = {{value_name.id}}
     {% unless options[:emit_null] %}
-      unless %value.nil?
+      {{ "unless #{value_name.id}.nil?".id }}
     {% end %}
 
-       json.field({{field_name}}) do
+      json.field({{field_name}}) do
         {% if options[:root] %}
           {% if options[:emit_null] %}
-            if %value.nil?
+            {{ "if #{value_name.id}.nil?".id }}
               nil.to_json(json)
-            else
+            {{ "else".id }}
           {% end %}
 
-          json.object do
-            json.field({{options[:root]}}) do
+          {{ "json.object do".id }}
+            {{ "json.field(#{options[:root]}) do".id }}
         {% end %}
 
         {% if options[:converter] %}
@@ -161,16 +163,15 @@ module JSON
 
         {% if options[:root] %}
           {% if options[:emit_null] %}
-            # TODO: Remove workarounds when #4769 is resolved
-            {{"end".id}}
+            {{ "end".id }}
           {% end %}
-            {{"end".id}}
-          {{"end".id}}
+            {{ "end".id }}
+          {{ "end".id }}
         {% end %}
-       end
+      end
 
     {% unless options[:emit_null] %}
-      {{"end".id}}
+      {{ "end".id }}
     {% end %}
   end
 end
