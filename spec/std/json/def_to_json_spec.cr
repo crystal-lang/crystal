@@ -58,8 +58,8 @@ end
 
 private class JSONKeywordProperties
   JSON.def_to_json(
-    end: {property: end_value},
-    abstract: {property: :abstract_value}
+    end: {value: end_value},
+    abstract: {value: :abstract_value}
   )
 
   getter end_value = "end"
@@ -145,8 +145,9 @@ private class House
   getter location : Location
   JSON.def_to_json(
     address: true,
-    loc: {property: location},
+    loc: {value: location},
     empty_field: {emit_null: true},
+    next_number: {value: street_number + 1},
   )
 
   def initialize(@street, @street_number, @location)
@@ -186,7 +187,7 @@ end
 
 private class FooBar
   JSON.def_to_json({
-    foo: {property: foo("BAR") }
+    foo: {value: foo("BAR")},
   })
 
   def foo(prefix)
@@ -275,7 +276,7 @@ describe "JSON.def_to_json" do
 
   it "base example works" do
     house = House.new("Crystal Road", 1234, Location.new(12.3, 34.5))
-    house.to_json.should eq(%({"address":"Crystal Road 1234","loc":{"lat":12.3,"long":34.5},"empty_field":null}))
+    house.to_json.should eq(%({"address":"Crystal Road 1234","loc":{"lat":12.3,"long":34.5},"empty_field":null,"next_number":1235}))
   end
 
   it "converter example works" do
@@ -284,7 +285,7 @@ describe "JSON.def_to_json" do
     house.to_json.should eq(%({"address":"Crystal Road 1234","neighbor":{"street_number":1235}}))
   end
 
-  it "accepts macro expression as property" do
+  it "accepts macro expression as value" do
     foo = FooBar.new
     foo.to_json.should eq (%({"foo":"BAR"}))
   end
