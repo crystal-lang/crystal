@@ -153,6 +153,10 @@ describe "Parser" do
   it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call(Call.new("n".var, "-", 1.int32)))
   it_parses "def type(type); end", Def.new("type", ["type".arg])
 
+  # #4815
+  assert_syntax_error "def foo!=; end", "unexpected token: !="
+  assert_syntax_error "def foo?=(x); end", "unexpected token: ?"
+
   it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
   it_parses "def self.foo()\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
   it_parses "def self.foo=\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
