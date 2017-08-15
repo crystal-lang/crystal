@@ -56,9 +56,9 @@ lib LibWindows
   fun write_file = WriteFile(file : Handle, buffer : UInt8*, size : DWord, written : DWord*, overlapped : Overlapped*) : Bool
   fun close_handle = CloseHandle(file : Handle) : Bool
 
-  fun get_current_directory = GetCurrentDirectoryA(size : DWord,  buffer : UInt8*) : DWord
+  fun get_current_directory = GetCurrentDirectoryA(size : DWord, buffer : UInt8*) : DWord
   fun set_current_directory = SetCurrentDirectoryA(path : UInt8*) : BOOL
-  fun create_directory = CreateDirectoryA(path : UInt8*, security_attribute : Void*): BOOL
+  fun create_directory = CreateDirectoryA(path : UInt8*, security_attribute : Void*) : BOOL
   fun remove_directory = RemoveDirectoryA(path : UInt8*) : BOOL
   fun get_temp_path = GetTempPathA(len : DWord, buffer : UInt8*) : DWord
 
@@ -68,40 +68,40 @@ lib LibWindows
     dwLowDateTime : DWord
     dwHighDateTime : DWord
   end
-  
+
   struct WIN32_FIND_DATA_A
-    dwFileAttributes: DWord
-    ftCreationTime: FILETIME
-    ftLastAccessTime: FILETIME
-    ftLastWriteTime: FILETIME
-    nFileSizeHigh: DWord
-    nFileSizeLow: DWord
-    dwReserved0: DWord
-    dwReserved1: DWord
-    cFileName: StaticArray(UInt8, MAX_PATH)
-    cAlternateFileName: StaticArray(UInt8, 14)
+    dwFileAttributes : DWord
+    ftCreationTime : FILETIME
+    ftLastAccessTime : FILETIME
+    ftLastWriteTime : FILETIME
+    nFileSizeHigh : DWord
+    nFileSizeLow : DWord
+    dwReserved0 : DWord
+    dwReserved1 : DWord
+    cFileName : StaticArray(UInt8, MAX_PATH)
+    cAlternateFileName : StaticArray(UInt8, 14)
   end
 
-  FILE_ATTRIBUTE_ARCHIVE        = 32_i32
-  FILE_ATTRIBUTE_COMPRESSED     = 2048_i32
-  FILE_ATTRIBUTE_NORMAL         = 128_i32
-  FILE_ATTRIBUTE_DIRECTORY      = 16_i32
-  FILE_ATTRIBUTE_HIDDEN         = 2_i32
-  FILE_ATTRIBUTE_READONLY       = 1_i32
-  FILE_ATTRIBUTE_REPARSE_POINT  = 1024_i32
-  FILE_ATTRIBUTE_SYSTEM         = 4_i32
-  FILE_ATTRIBUTE_TEMPORARY      = 256_i32
-  INVALID_FILE_ATTRIBUTES       = -1_i32
-  
-  FILE_BEGIN                    = 0_i32
-  FILE_CURRENT                  = 1_i32
-  FILE_END                      = 2_i32
-  INVALID_SET_FILE_POINTER      = (-1).to_u32
+  FILE_ATTRIBUTE_ARCHIVE       =   32_i32
+  FILE_ATTRIBUTE_COMPRESSED    = 2048_i32
+  FILE_ATTRIBUTE_NORMAL        =  128_i32
+  FILE_ATTRIBUTE_DIRECTORY     =   16_i32
+  FILE_ATTRIBUTE_HIDDEN        =    2_i32
+  FILE_ATTRIBUTE_READONLY      =    1_i32
+  FILE_ATTRIBUTE_REPARSE_POINT = 1024_i32
+  FILE_ATTRIBUTE_SYSTEM        =    4_i32
+  FILE_ATTRIBUTE_TEMPORARY     =  256_i32
+  INVALID_FILE_ATTRIBUTES      =   -1_i32
 
-  fun find_first_file = FindFirstFileA(fileName: UInt8*, filedata: WIN32_FIND_DATA_A*) : Handle
-  fun find_next_file = FindNextFileA(file: Handle, filedata: WIN32_FIND_DATA_A*) : BOOL
-  fun find_close = FindClose(file: Handle) : BOOL
-  fun get_file_attributes = GetFileAttributesA(filename : UInt8*) : DWord;
+  FILE_BEGIN               = 0_i32
+  FILE_CURRENT             = 1_i32
+  FILE_END                 = 2_i32
+  INVALID_SET_FILE_POINTER = (-1).to_u32
+
+  fun find_first_file = FindFirstFileA(fileName : UInt8*, filedata : WIN32_FIND_DATA_A*) : Handle
+  fun find_next_file = FindNextFileA(file : Handle, filedata : WIN32_FIND_DATA_A*) : BOOL
+  fun find_close = FindClose(file : Handle) : BOOL
+  fun get_file_attributes = GetFileAttributesA(filename : UInt8*) : DWord
   fun get_file_size = GetFileSize(file : Handle, fileSizeHigh : DWord*) : DWord
   fun get_file_size_ex = GetFileSizeEx(file : Handle, size : UInt64*) : BOOL
   fun get_file_time = GetFileTime(file : Handle, lpCreationTime : FILETIME*, lpLastAccessTime : FILETIME*, lpLastWriteTime : FILETIME*) : BOOL
@@ -138,7 +138,7 @@ lib LibWindows
 
   # CreateProcessA.dwCreationFlags
   NORMAL_PRIORITY_CLASS = 0x00000020_u32
-  CREATE_NO_WINDOW = 0x08000000_u32
+  CREATE_NO_WINDOW      = 0x08000000_u32
 
   struct StartupInfoA
     cb : DWord
@@ -155,7 +155,7 @@ lib LibWindows
     dwFlags : DWord
     wShowWindow : Word
     cbReserved2 : Word
-    lpReserved2: UInt8*
+    lpReserved2 : UInt8*
     hStdInput : Handle
     hStdOutput : Handle
     hStdError : Handle
@@ -167,14 +167,14 @@ lib LibWindows
     dwProcessId : DWord
     dwThreadId : DWord
   end
-  
-  fun create_process = CreateProcessA(lpApplicationName : UInt8*, lpCommandLine : UInt8*, 
+
+  fun create_process = CreateProcessA(lpApplicationName : UInt8*, lpCommandLine : UInt8*,
                                       lpProcessAttributes : SecurityAttributes*, lpThreadAttributes : SecurityAttributes*, bInheritHandles : BOOL,
-                                      dwCreationFlags : DWord, lpEnvironment : Void*, lpCurrentDirectory : UInt8*, 
+                                      dwCreationFlags : DWord, lpEnvironment : Void*, lpCurrentDirectory : UInt8*,
                                       lpStartupInfo : StartupInfoA*, lpProcessInformation : Process_Information*) : BOOL
   fun kill_process = KillProcess(hProcess : Handle, uExitCode : UInt32) : BOOL
   fun get_exit_code_process = GetExitCodeProcess(hProcess : Handle, lpExitCode : DWord*) : BOOL
-  
+
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
   FORMAT_MESSAGE_IGNORE_INSERTS  = 0x00000200_u32
   FORMAT_MESSAGE_FROM_STRING     = 0x00000400_u32
@@ -233,7 +233,6 @@ lib LibWindows
 
   fun get_time_zone_information = GetTimeZoneInformation(tz_info : TimeZoneInformation*) : DWord
   fun get_system_time_as_file_time = GetSystemTimeAsFileTime(time : FileTime*)
-
 
   fun get_computer_name = GetComputerNameA(buffer : UInt8*, size : DWord*) : BOOL
 
