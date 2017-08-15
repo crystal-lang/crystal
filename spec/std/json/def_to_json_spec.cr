@@ -6,8 +6,8 @@ private class JSONPerson
   getter age : String?
 
   JSON.def_to_json({
-    name: true,
-    age:  true,
+    name: _,
+    age:  _,
   })
 
   def initialize(@name, @age = nil)
@@ -20,7 +20,7 @@ end
 
 private class JSONPersonEmittingNull < JSONPerson
   JSON.def_to_json({
-    name: true,
+    name: _,
     age:  {emit_null: true},
   })
 end
@@ -47,13 +47,6 @@ private class JSONWithNilableTimeEmittingNull
     value: {converter: Time::Format.new("%F"), emit_null: true},
   })
   getter value : Time? = nil
-end
-
-private class JSONSimpleSyntax
-  JSON.def_to_json([name, :age])
-
-  getter name = "John"
-  getter age = 12
 end
 
 private class JSONKeywordProperties
@@ -133,7 +126,7 @@ end
 private class Location
   getter lat : Float64
   getter long : Float64
-  JSON.def_to_json([lat, long])
+  JSON.def_to_json({lat: _, long: _})
 
   def initialize(@lat, @long)
   end
@@ -144,10 +137,10 @@ private class House
   getter street_number : Int32
   getter location : Location
   JSON.def_to_json(
-    address: true,
-    loc: {value: location},
+    address: _,
+    loc: location,
     empty_field: {emit_null: true},
-    next_number: {value: street_number + 1},
+    next_number: street_number + 1,
   )
 
   def initialize(@street, @street_number, @location)
@@ -164,7 +157,7 @@ end
 
 private module NeighborhoodConverter
   extend self
-  JSON.def_to_json(HouseInNeighborhood, {street_number: true})
+  JSON.def_to_json(HouseInNeighborhood, {street_number: _})
 end
 
 private class HouseInNeighborhood
@@ -173,7 +166,7 @@ private class HouseInNeighborhood
   getter neighbor : self? = nil
 
   JSON.def_to_json(
-    address: true,
+    address: _,
     neighbor: {converter: NeighborhoodConverter}
   )
 
@@ -259,10 +252,6 @@ describe "JSON.def_to_json" do
   it "uses root and emit null" do
     result = JSONWithNilableRootEmitNull.new
     result.to_json.should eq(%({"result":null}))
-  end
-
-  it "supports simple array syntax" do
-    JSONSimpleSyntax.new.to_json.should eq(%({"name":"John","age":12}))
   end
 
   it "supports keywords with alternate properties" do

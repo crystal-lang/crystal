@@ -17,8 +17,8 @@ module JSON
   #
   # record House, street : String, street_number : Int32, location : Location do
   #   JSON.def_to_json(
-  #     address: true,
-  #     loc: {value: location},
+  #     address: _,
+  #     loc: location,
   #     empty_field: {emit_null: true},
   #     next_number: {value: street_number + 1},
   #   )
@@ -41,18 +41,23 @@ module JSON
   # `JSON.def_to_json` must receive a series of named arguments, or a named tuple literal, or a hash literal,
   # whose keys will define JSON properties.
   #
-  # The value of each key can either be `true` or a hash or named tuple literal with the following options:
+  # The value of each key can be a hash or named tuple literal with the following options:
   # * **value**: the Crystal expression to determine the value. By default it is equal to the property name of the current  *key*
   #   on the Crystal object (as opposed to the key in the JSON document)
   # * **emit_null**: if `true`, emits a `null` value if the *value* is `nil` (by default nulls are not emitted)
   # * **converter**: specify an alternate type for generation. The converter must define `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
   # * **root**: assume the value is inside a JSON object with a given key
+  #
+  # If it is not a hash or named tuple literal, the expression will be interpreted as `value` parameter. As a shortcut `_` represents
+  # a call to a method of the same name as `key`: so `location: _`, ``location: location` and `location: { value: location }` are equivalent.
   macro def_to_json(mappings)
     def to_json(json : ::JSON::Builder)
       json.object do
         {% for key, options in mappings %}
-          {% unless options.is_a?(HashLiteral) || options.is_a?(NamedTupleLiteral) %}
-            {% options = {nil: nil} %}
+          {% if options.is_a?(Underscore) %}
+            {% options = {value: key} %}
+          {% elsif !options.is_a?(HashLiteral) && !options.is_a?(NamedTupleLiteral) %}
+            {% options = {value: options} %}
           {% end %}
           ::JSON.emit_value_to_json({{(options[:value] || key).id}}, {{key.id.stringify}}, {{options}})
         {% end %}
@@ -79,7 +84,7 @@ module JSON
   #
   # module NeighborhoodConverter
   #   extend self
-  #   JSON.def_to_json(House, {street_number: true})
+  #   JSON.def_to_json(House, {street_number: _})
   # end
   #
   # class House
@@ -88,7 +93,7 @@ module JSON
   #   getter neighbor : House? = nil
   #
   #   JSON.def_to_json(
-  #     address: true,
+  #     address: _,
   #     neighbor: {converter: NeighborhoodConverter}
   #   )
   #
@@ -108,8 +113,10 @@ module JSON
     def to_json(value : {{type.id}}, json : ::JSON::Builder)
       json.object do
         {% for key, options in mappings %}
-          {% unless options.is_a?(HashLiteral) || options.is_a?(NamedTupleLiteral) %}
-            {% options = {nil: nil} %}
+          {% if options.is_a?(Underscore) %}
+            {% options = {value: key} %}
+          {% elsif !options.is_a?(HashLiteral) && !options.is_a?(NamedTupleLiteral) %}
+            {% options = {value: options} %}
           {% end %}
           ::JSON.emit_value_to_json(value.{{(options[:value] || key).id}}, {{key.id.stringify}}, {{options}})
         {% end %}
