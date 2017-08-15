@@ -9,6 +9,7 @@ class Crystal::Call
   property! parent_visitor : MainVisitor
   property target_defs : Array(Def)?
   property expanded : ASTNode?
+  property expanded_macro : Macro?
   property? uses_with_scope = false
   getter? raises = false
 

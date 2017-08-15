@@ -280,6 +280,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     @exp_nest += 1
 
     node.expanded = generated_nodes
+    node.expanded_macro = the_macro
     node.bind_to generated_nodes
 
     true

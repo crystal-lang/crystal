@@ -38,6 +38,10 @@ private def expansion_to_a(expansion)
 end
 
 private def assert_expand(code, expected_result)
+  assert_expand(code, expected_result) { }
+end
+
+private def assert_expand(code, expected_result)
   run_expand_tool code do |result|
     result.status.should eq("ok")
     result.message.should eq("#{expected_result.size} expansion#{expected_result.size >= 2 ? "s" : ""} found")
@@ -46,11 +50,17 @@ private def assert_expand(code, expected_result)
         result.should eq(expected)
       end
     end
+
+    yield result
   end
 end
 
 private def assert_expand_simple(code, expanded, original = code.gsub('‸', ""))
-  assert_expand(code, [[original, expanded]])
+  assert_expand_simple(code, expanded, original) { }
+end
+
+private def assert_expand_simple(code, expanded, original = code.gsub('‸', ""))
+  assert_expand(code, [[original, expanded]]) { |result| yield result.expansions.not_nil![0] }
 end
 
 private def assert_expand_fail(code, message = "no expansion found")
@@ -196,7 +206,17 @@ describe "expand" do
     ‸foo
     CODE
 
-    assert_expand_simple code, original: "foo", expanded: "1"
+    assert_expand_simple code, original: "foo", expanded: "1" do |expansion|
+      expansion.expanded_macros.size.should eq(1)
+      macros = expansion.expanded_macros[0]
+      macros.size.should eq(1)
+
+      a_macro = macros[0]
+      a_macro[:name].should eq("foo")
+      a_macro[:implementation].filename.should eq(".")
+      a_macro[:implementation].line.should eq(1)
+      a_macro[:implementation].column.should eq(1)
+    end
   end
 
   it "expands simple macro with cursor inside it" do
@@ -254,7 +274,26 @@ describe "expand" do
     b‸ar
     CODE
 
-    assert_expand code, [["bar", "foo\n:bar\n", ":foo\n:bar\n"]]
+    assert_expand code, [["bar", "foo\n:bar\n", ":foo\n:bar\n"]] do |result|
+      expansion = result.expansions.not_nil![0]
+
+      macros = expansion.expanded_macros
+      macros.size.should eq(2)
+      macros[0].size.should eq(1)
+      macros[1].size.should eq(1)
+
+      macro1 = macros[0][0]
+      macro1[:name].should eq("bar")
+      macro1[:implementation].filename.should eq(".")
+      macro1[:implementation].line.should eq(5)
+      macro1[:implementation].column.should eq(1)
+
+      macro2 = macros[1][0]
+      macro2[:name].should eq("foo")
+      macro2[:implementation].filename.should eq(".")
+      macro2[:implementation].line.should eq(1)
+      macro2[:implementation].column.should eq(1)
+    end
   end
 
   it "expands macros with 3 level" do
@@ -277,7 +316,39 @@ describe "expand" do
     ba‸z
     CODE
 
-    assert_expand code, [["baz", "foo\nbar\n:baz\n", ":foo\nfoo\n:bar\n:baz\n", ":foo\n:foo\n:bar\n:baz\n"]]
+    assert_expand code, [["baz", "foo\nbar\n:baz\n", ":foo\nfoo\n:bar\n:baz\n", ":foo\n:foo\n:bar\n:baz\n"]] do |result|
+      expansion = result.expansions.not_nil![0]
+
+      macros = expansion.expanded_macros
+      macros.size.should eq(3)
+      macros[0].size.should eq(1)
+      macros[1].size.should eq(2)
+      macros[2].size.should eq(1)
+
+      macro1 = macros[0][0]
+      macro1[:name].should eq("baz")
+      macro1[:implementation].filename.should eq(".")
+      macro1[:implementation].line.should eq(10)
+      macro1[:implementation].column.should eq(1)
+
+      macro2 = macros[1][0]
+      macro2[:name].should eq("foo")
+      macro2[:implementation].filename.should eq(".")
+      macro2[:implementation].line.should eq(1)
+      macro2[:implementation].column.should eq(1)
+
+      macro3 = macros[1][1]
+      macro3[:name].should eq("bar")
+      macro3[:implementation].filename.should eq(".")
+      macro3[:implementation].line.should eq(5)
+      macro3[:implementation].column.should eq(1)
+
+      macro4 = macros[2][0]
+      macro4[:name].should eq("foo")
+      macro4[:implementation].filename.should eq(".")
+      macro4[:implementation].line.should eq(1)
+      macro4[:implementation].column.should eq(1)
+    end
   end
 
   it "expands macro of module" do
@@ -292,7 +363,17 @@ describe "expand" do
     Foo.f‸oo
     CODE
 
-    assert_expand_simple code, original: "Foo.foo", expanded: ":Foo\n:foo\n"
+    assert_expand_simple code, original: "Foo.foo", expanded: ":Foo\n:foo\n" do |expansion|
+      expansion.expanded_macros.size.should eq(1)
+      macros = expansion.expanded_macros[0]
+      macros.size.should eq(1)
+
+      a_macro = macros[0]
+      a_macro[:name].should eq("Foo.foo")
+      a_macro[:implementation].filename.should eq(".")
+      a_macro[:implementation].line.should eq(2)
+      a_macro[:implementation].column.should eq(3)
+    end
   end
 
   it "expands macro of module with cursor at module name" do
