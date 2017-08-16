@@ -1,17 +1,94 @@
-class WinError < Exception
-  property code : UInt32
-
+class WinError < Errno
   # NOTE: `get_last_error` must be called BEFORE an instance of this class
   # is malloced as it would change the "last error" to SUCCESS
   def self.new(message)
-    new(message, LibWindows.get_last_error)
+    new(message, LibC.get_last_error)
   end
 
-  def initialize(message, @code)
+  def initialize(message, code)
     buffer = uninitialized UInt8[256]
-    size = LibWindows.format_message(LibWindows::FORMAT_MESSAGE_FROM_SYSTEM, nil, @code, 0, buffer, buffer.size, nil)
+    size = LibC.format_message(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, code, 0, buffer, buffer.size, nil)
     details = String.new(buffer.to_unsafe, size).strip
-    super "#{message}: #{details}"
+    super "#{message}: [WinError #{code}, #{details}]", winerror_to_errno(code)
+  end
+
+  def winerror_to_errno(winerror)
+    case winerror
+    when    2; return 2
+    when    3; return 2
+    when    4; return 24
+    when    5; return 13
+    when    6; return 9
+    when    7; return 12
+    when    8; return 12
+    when    9; return 12
+    when   10; return 7
+    when   11; return 8
+    when   15; return 2
+    when   16; return 13
+    when   17; return 18
+    when   18; return 2
+    when   19; return 13
+    when   20; return 13
+    when   21; return 13
+    when   22; return 13
+    when   23; return 13
+    when   24; return 13
+    when   25; return 13
+    when   26; return 13
+    when   27; return 13
+    when   28; return 13
+    when   29; return 13
+    when   30; return 13
+    when   31; return 13
+    when   32; return 13
+    when   33; return 13
+    when   34; return 13
+    when   35; return 13
+    when   36; return 13
+    when   53; return 2
+    when   65; return 13
+    when   67; return 2
+    when   80; return 17
+    when   82; return 13
+    when   83; return 13
+    when   89; return 11
+    when  108; return 13
+    when  109; return 32
+    when  112; return 28
+    when  114; return 9
+    when  128; return 10
+    when  129; return 10
+    when  130; return 9
+    when  132; return 13
+    when  145; return 41
+    when  158; return 13
+    when  161; return 2
+    when  164; return 11
+    when  167; return 13
+    when  183; return 17
+    when  188; return 8
+    when  189; return 8
+    when  190; return 8
+    when  191; return 8
+    when  192; return 8
+    when  193; return 8
+    when  194; return 8
+    when  195; return 8
+    when  196; return 8
+    when  197; return 8
+    when  198; return 8
+    when  199; return 8
+    when  200; return 8
+    when  201; return 8
+    when  202; return 8
+    when  206; return 2
+    when  215; return 11
+    when  232; return 32
+    when  267; return 20
+    when 1816; return 12
+    else       return Errno::EINVAL
+    end
   end
 
   ERROR_SUCCESS                                                 =          0_u32
