@@ -148,6 +148,7 @@ module Unicode
       case char
       when 'I'; return 'ı'
       when 'İ'; return 'i'
+      else # nothing
       end
     end
     nil

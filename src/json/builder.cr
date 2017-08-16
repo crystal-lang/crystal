@@ -41,6 +41,8 @@ class JSON::Builder
       raise JSON::Error.new("Empty JSON")
     when DocumentStartState
       raise JSON::Error.new("Empty JSON")
+    when DocumentEndState
+      # nothing
     when ArrayState
       raise JSON::Error.new("Unterminated JSON array")
     when ObjectState
@@ -285,6 +287,8 @@ class JSON::Builder
     case state = @state.last
     when StartState
       raise JSON::Error.new("Write before start_document")
+    when DocumentStartState
+      # nothing
     when DocumentEndState
       raise JSON::Error.new("Write past end_document and before start_document")
     when ArrayState
@@ -308,6 +312,8 @@ class JSON::Builder
     when ObjectState
       colon if state.name
       @state[-1] = ObjectState.new(empty: false, name: !state.name)
+    else
+      # nothing
     end
   end
 

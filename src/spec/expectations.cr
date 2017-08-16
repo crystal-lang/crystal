@@ -347,6 +347,8 @@ module Spec
           fail "Expected #{klass} with #{message.inspect}, got #<#{ex.class}: " \
                "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
+      else
+        # skip
       end
 
       ex

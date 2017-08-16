@@ -50,6 +50,8 @@ module HTTP
               body = Gzip::Reader.new(body, sync_close: true)
             when "deflate"
               body = Flate::Reader.new(body, sync_close: true)
+            else
+              # ignore unsupported encoding
             end
           {% end %}
         end
@@ -184,14 +186,11 @@ module HTTP
       return true
     when "close", "upgrade"
       return false
+    else
+      # nothing
     end
 
-    case message.version
-    when "HTTP/1.0"
-      false
-    else
-      true
-    end
+    message.version != "HTTP/1.0"
   end
 
   record ComputedContentTypeHeader,

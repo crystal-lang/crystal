@@ -141,6 +141,8 @@ class HTTP::WebSocket
           @current_message.clear
           break
         end
+      when Protocol::Opcode::CONTINUATION
+        raise "BUG: CONTINUATION does not appear here"
       end
     end
   end

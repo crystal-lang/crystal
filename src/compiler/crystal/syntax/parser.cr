@@ -3105,6 +3105,8 @@ module Crystal
           check :"%}"
 
           return MacroVerbatim.new(body).at_end(token_end_location)
+        else
+          # nothing
         end
       end
 
@@ -3755,6 +3757,8 @@ module Crystal
           a_else = parse_expressions
         when :elsif
           a_else = parse_if check_end: false
+        else
+          # nothing
         end
       end
 
@@ -3817,6 +3821,8 @@ module Crystal
       when :nil?
         obj = Var.new("self").at(location)
         return parse_nil?(obj)
+      else
+        # nothing
       end
 
       name = @token.value.to_s
@@ -3846,6 +3852,8 @@ module Crystal
         @calls_initialize = true
       when "previous_def"
         @calls_previous_def = true
+      else
+        # nothing
       end
 
       call_args = preserve_stop_on_do(@stop_on_do) { parse_call_args stop_on_do_after_space: @stop_on_do }
@@ -4200,6 +4208,8 @@ module Crystal
         return nil unless next_comes_colon_space?
       when :yield
         return nil if @stop_on_yield > 0 && !next_comes_colon_space?
+      else
+        # nothing
       end
 
       args = [] of ASTNode
@@ -4357,6 +4367,8 @@ module Crystal
           arg = Splat.new(arg).at(arg.location)
         when :double
           arg = DoubleSplat.new(arg).at(arg.location)
+        else
+          # nothing
         end
 
         arg
@@ -4807,12 +4819,16 @@ module Crystal
           case @token.value
           when :typeof, :self, :sizeof, :instance_sizeof
             return true
+          else
+            # nothing
           end
         when :"::"
           next_token_skip_space
           if @token.type == :CONST
             return true
           end
+        else
+          # nothing
         end
 
         false
@@ -5471,6 +5487,8 @@ module Crystal
           when :protected
             visibility = Visibility::Protected
             next_token_skip_space
+          else
+            # nothing
           end
 
           def_location = @token.location
@@ -5515,21 +5533,16 @@ module Crystal
       node
     end
 
+    END_TOKEN = {:do, :end, :else, :elsif, :when, :rescue, :ensure, :then}
+
     def end_token?
       case @token.type
       when :"}", :"]", :"%}", :EOF
         return true
       end
 
-      if @token.type == :IDENT
-        case @token.value
-        when :do, :end, :else, :elsif, :when, :rescue, :ensure, :then
-          if next_comes_colon_space?
-            return false
-          end
-
-          return true
-        end
+      if @token.type == :IDENT && END_TOKEN.includes?(@token.value)
+        return !next_comes_colon_space?
       end
 
       false
@@ -5612,13 +5625,14 @@ module Crystal
     end
 
     def check_void_expression_keyword
-      case @token.type
-      when :IDENT
+      if @token.type == :IDENT
         case @token.value
         when :break, :next, :return
           unless next_comes_colon_space?
             raise "void value expression", @token, @token.value.to_s.size
           end
+        else
+          # nothing
         end
       end
     end

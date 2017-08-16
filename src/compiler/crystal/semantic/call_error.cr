@@ -573,6 +573,8 @@ class Crystal::Call
 
   def check_visibility(match)
     case match.def.visibility
+    when .public?
+      # nothing
     when .private?
       if obj = @obj
         if obj.is_a?(Var) && obj.name == "self"

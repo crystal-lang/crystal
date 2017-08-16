@@ -2786,6 +2786,8 @@ module Crystal
         else
           clear_object(node.obj)
         end
+      else
+        # nothing
       end
     end
 
@@ -3089,6 +3091,8 @@ module Crystal
 
     def visit(node : VisibilityModifier)
       case node.modifier
+      when .public?
+        # nothing to do because 'public' is default modifier
       when .private?
         write_keyword :private, " "
       when .protected?

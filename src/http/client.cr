@@ -117,12 +117,12 @@ class HTTP::Client
   {% else %}
     def initialize(@host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
       @tls = case tls
-             when true
-               OpenSSL::SSL::Context::Client.new
+             when Bool
+               if tls
+                 OpenSSL::SSL::Context::Client.new
+               end
              when OpenSSL::SSL::Context::Client
                tls
-             when false
-               nil
              end
 
       @port = (port || (@tls ? 443 : 80)).to_i

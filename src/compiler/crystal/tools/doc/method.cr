@@ -160,6 +160,8 @@ class Crystal::Doc::Method
     when Crystal::Type
       io << " : "
       @type.type_to_html return_type, io, links: links
+    when Nil
+      # nothing
     end
 
     if free_vars = @def.free_vars

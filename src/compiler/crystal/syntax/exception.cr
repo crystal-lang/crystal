@@ -64,11 +64,12 @@ module Crystal
     def fetch_source(source)
       case filename = @filename
       when String
-        source = File.read(filename) if File.file?(filename)
+        File.read(filename) if File.file?(filename)
       when VirtualFile
-        source = filename.source
+        filename.source
+      when Nil
+        nil
       end
-      source
     end
 
     def deepest_error_message

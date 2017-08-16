@@ -2527,10 +2527,12 @@ module Crystal
 
     getter base_type : IntegerType
     property? flags = false
+    getter question_methods
 
     def initialize(program, namespace, name, @base_type)
       super(program, namespace, name)
 
+      @question_methods = Set(String).new
       add_def Def.new("value", [] of Arg, Primitive.new("enum_value", @base_type))
       metaclass.as(ModuleType).add_def Def.new("new", [Arg.new("value", type: @base_type)], Primitive.new("enum_new", self))
     end
@@ -2543,6 +2545,16 @@ module Crystal
       types[constant.name] = const = Const.new(program, self, constant.name, constant.default_value.not_nil!)
       program.class_var_and_const_initializers << const
       const
+    end
+
+    def add_def(a_def, question_method = false)
+      if question_method
+        question_methods.add(a_def.name)
+      else
+        question_methods.delete(a_def.name)
+      end
+
+      super(a_def)
     end
 
     def has_attribute?(name)

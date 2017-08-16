@@ -43,6 +43,8 @@ class Crystal::Call
     when LibType
       # `LibFoo.call` has a separate logic
       return recalculate_lib_call obj_type
+    else
+      # nothing
     end
 
     # Check if it's call inside LibFoo
@@ -672,6 +674,8 @@ class Crystal::Call
         return result
       when Type::DefInMacroLookup
         return nil
+      else
+        # nothing
       end
     end
   end

@@ -93,6 +93,8 @@ class Crystal::Type
         return type_var
       when Self
         return lookup(type_var)
+      else
+        # nothing
       end
 
       if @raise

@@ -608,15 +608,8 @@ module Crystal
         return IsA.new(right_side, cond)
       when Call
         obj = cond.obj
-        case obj
-        when Path
-          if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
-          end
-        when Generic
-          if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
-          end
+        if (obj.is_a?(Path) || obj.is_a?(Generic)) && cond.name == "class"
+          return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
         end
       end
 

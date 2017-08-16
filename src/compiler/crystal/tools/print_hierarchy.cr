@@ -9,6 +9,8 @@ module Crystal
       HierarchyPrinter.new(program, exp).execute
     when "json"
       JSONHierarchyPrinter.new(program, exp).execute
+    else
+      raise "BUG: invalid format: #{format}"
     end
   end
 

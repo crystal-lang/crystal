@@ -239,6 +239,8 @@ class YAML::PullParser
         skip
       end
       read_next
+    else
+      # not skip this event
     end
   end
 
