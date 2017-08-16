@@ -459,7 +459,7 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(:"!=")
     token = lexer.next_token
-    token.type.should eq(:IDENT)
+    token.type.should eq(:NUMBER)
   end
 
   assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"
