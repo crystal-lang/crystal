@@ -1137,8 +1137,9 @@ module Crystal
     property cond : ASTNode?
     property whens : Array(When)
     property else : ASTNode?
+    property? check_exhaustiveness : Bool
 
-    def initialize(@cond, @whens, @else = nil)
+    def initialize(@cond, @whens, @else = nil, @check_exhaustiveness = false)
     end
 
     def accept_children(visitor)
@@ -1147,7 +1148,7 @@ module Crystal
     end
 
     def clone_without_location
-      Case.new(@cond.clone, @whens.clone, @else.clone)
+      Case.new(@cond.clone, @whens.clone, @else.clone, @check_exhaustiveness)
     end
 
     def_equals_and_hash @cond, @whens, @else

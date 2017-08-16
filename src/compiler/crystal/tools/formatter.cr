@@ -3284,7 +3284,11 @@ module Crystal
 
     def visit(node : Case)
       slash_is_regex!
-      write_keyword :case
+      if node.check_exhaustiveness?
+        write_keyword :case!
+      else
+        write_keyword :case
+      end
       skip_space
 
       if cond = node.cond
@@ -3335,7 +3339,7 @@ module Crystal
 
       slash_is_regex!
       write_indent
-      write_keyword :when, " "
+      write_keyword :when, case_node.check_exhaustiveness? ? "  " : " "
       base_indent = @column
       when_start_line = @line
       when_start_column = @column

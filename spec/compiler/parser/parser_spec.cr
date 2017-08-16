@@ -977,6 +977,10 @@ describe "Parser" do
   assert_syntax_error "case 1; end", "unexpected token: end (expecting when or else)", 1, 9
   it_parses "a = 1\ncase 1\nwhen a then 1\nend", [Assign.new("a".var, 1.int32), Case.new(1.int32, [When.new(["a".var] of ASTNode, 1.int32)])] of ASTNode
 
+  it_parses "case! a\nwhen Int32\n1\nend", Case.new("a".call, [When.new(["Int32".path] of ASTNode, 1.int32)], check_exhaustiveness: true)
+  assert_syntax_error "case!\nwhen Int32\n1\nend", "unexpected token: when ('case!' must have a condition)", 2, 1
+  assert_syntax_error "case! a\nelse\n1\nend", "unexpected token: else ('case!' cannot have 'else', use 'when _' instead)", 2, 1
+
   it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
   it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
   it_parses "select\nwhen foo\n2\nelse\n3\nend", Select.new([Select::When.new("foo".call, 2.int32)], 3.int32)

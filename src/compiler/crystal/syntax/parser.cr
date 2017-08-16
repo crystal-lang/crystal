@@ -973,7 +973,9 @@ module Crystal
         when :require
           check_type_declaration { parse_require }
         when :case
-          check_type_declaration { parse_case }
+          check_type_declaration { parse_case(check_exhaustiveness: false) }
+        when :case!
+          check_type_declaration { parse_case(check_exhaustiveness: true) }
         when :select
           check_type_declaration { parse_select }
         when :if
@@ -2419,10 +2421,12 @@ module Crystal
       Require.new string
     end
 
-    def parse_case
+    def parse_case(check_exhaustiveness)
       slash_is_regex!
       next_token_skip_space_or_newline
-      unless @token.keyword?(:when)
+      if @token.keyword?(:when)
+        unexpected_token @token.to_s, "'case!' must have a condition" if check_exhaustiveness
+      else
         cond = parse_op_assign_no_control
         skip_statement_end
       end
@@ -2495,6 +2499,9 @@ module Crystal
             skip_space_or_newline
             whens << When.new(when_conds, when_body).at(location)
           when :else
+            if check_exhaustiveness
+              unexpected_token @token.to_s, "'case!' cannot have 'else', use 'when _' instead"
+            end
             if whens.size == 0
               unexpected_token @token.to_s, "expecting when"
             end
@@ -2518,7 +2525,7 @@ module Crystal
         end
       end
 
-      Case.new(cond, whens, a_else)
+      Case.new(cond, whens, a_else, check_exhaustiveness)
     end
 
     # Add an expression to all when expressions and error on duplicates

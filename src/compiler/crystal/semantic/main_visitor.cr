@@ -2862,7 +2862,18 @@ module Crystal
     end
 
     def visit(node : Case)
-      expand(node)
+      expand node
+
+      if node.check_exhaustiveness?
+        if case_cond = node.cond
+          case_cond.add_observer node
+        end
+
+        node.scope = @path_lookup || @scope || @current_type
+        node.parent_visitor = self
+        node.update
+      end
+
       false
     end
 

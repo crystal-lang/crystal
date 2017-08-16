@@ -1265,7 +1265,12 @@ module Crystal
     end
 
     def visit(node : Case)
-      @str << keyword("case")
+      if node.check_exhaustiveness?
+        @str << keyword("case!")
+      else
+        @str << keyword("case")
+      end
+
       if cond = node.cond
         @str << ' '
         cond.accept self

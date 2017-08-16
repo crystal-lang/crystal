@@ -755,6 +755,10 @@ module Crystal
         case next_char
         when 'a'
           if next_char == 's' && next_char == 'e'
+            if peek_next_char == '!'
+              next_char
+              return check_ident_or_keyword(:case!, start)
+            end
             return check_ident_or_keyword(:case, start)
           end
         when 'l'
