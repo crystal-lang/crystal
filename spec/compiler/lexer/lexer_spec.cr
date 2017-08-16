@@ -451,6 +451,17 @@ describe "Lexer" do
     token.type.should eq(:"/=")
   end
 
+  it "lexes != after identifier (#4815)" do
+    lexer = Lexer.new("some_method!=5")
+    token = lexer.next_token
+    token.type.should eq(:IDENT)
+    token.value.should eq("some_method")
+    token = lexer.next_token
+    token.type.should eq(:"!=")
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+  end
+
   assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"
   assert_syntax_error "'\\u{}'", "expected hexadecimal character in unicode escape"
   assert_syntax_error "'\\u{110000}'", "invalid unicode codepoint (too large)"
