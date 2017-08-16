@@ -1,5 +1,4 @@
-@[CallConvention("X86_StdCall")]
-lib LibWindows
+lib LibC
   STD_INPUT_HANDLE  = 0xFFFFFFF6_u32
   STD_OUTPUT_HANDLE = 0xFFFFFFF5_u32
   STD_ERROR_HANDLE  = 0xFFFFFFF4_u32
@@ -243,11 +242,4 @@ module WindowsExt
   @[Primitive(:throw_info)]
   def self.throw_info : Void*
   end
-end
-
-require "winerror.cr"
-
-data = uninitialized LibWindows::WSAData
-if LibWindows.wsa_startup(0x0202, pointerof(data)) != 0
-  raise WinError.new "WSAStartup"
 end
