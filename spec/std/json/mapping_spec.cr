@@ -146,6 +146,13 @@ private class JSONWithNilableUnion2
   })
 end
 
+private class JSONWithPresence
+  JSON.mapping({
+    first_name: {type: String?, presence: true, nilable: true},
+    last_name:  {type: String?, presence: true, nilable: true},
+  })
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -426,5 +433,15 @@ describe "JSON mapping" do
     obj = JSONWithNilableUnion2.from_json(%({}))
     obj.value.should be_nil
     obj.to_json.should eq(%({}))
+  end
+
+  describe "parses JSON with presence markers" do
+    it "parses person with absent attributes" do
+      json = JSONWithPresence.from_json(%({"first_name": null}))
+      json.first_name.should be_nil
+      json.first_name_present?.should be_true
+      json.last_name.should be_nil
+      json.last_name_present?.should be_false
+    end
   end
 end

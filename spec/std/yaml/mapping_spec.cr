@@ -89,6 +89,13 @@ private class YAMLWithTimeEpochMillis
   })
 end
 
+private class YAMLWithPresence
+  YAML.mapping({
+    first_name: {type: String?, presence: true, nilable: true},
+    last_name:  {type: String?, presence: true, nilable: true},
+  })
+end
+
 describe "YAML mapping" do
   it "parses person" do
     person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
@@ -287,5 +294,15 @@ describe "YAML mapping" do
     yaml.value.should be_a(Time)
     yaml.value.should eq(Time.epoch_ms(1459860483856))
     yaml.to_yaml.should eq("---\nvalue: 1459860483856\n")
+  end
+
+  describe "parses YAML with presence markers" do
+    it "parses person with absent attributes" do
+      yaml = YAMLWithPresence.from_yaml("---\nfirst_name:\n")
+      yaml.first_name.should be_nil
+      yaml.first_name_present?.should be_true
+      yaml.last_name.should be_nil
+      yaml.last_name_present?.should be_false
+    end
   end
 end
