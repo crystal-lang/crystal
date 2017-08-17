@@ -495,7 +495,6 @@ struct Pointer(T)
   # ptr.to_slice(6) # => Slice[0, 0, 0, 13, 14, 15]
   # ```
   def clear(count = 1)
-    ptr = self.as(Pointer(Void))
     Intrinsics.memset(self.as(Void*), 0_u8, (count * sizeof(T)).to_u32, 0_u32, false)
   end
 
