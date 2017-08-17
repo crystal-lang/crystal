@@ -215,7 +215,7 @@ describe Process do
   end
 
   describe "find_executable" do
-    pwd = Process::INITIAL_PWD
+    pwd = Dir.current
     crystal_path = File.join(pwd, "bin", "crystal")
 
     it "resolves absolute executable" do
