@@ -9,7 +9,7 @@ class WinError < Errno
     buffer = uninitialized UInt8[256]
     size = LibC._FormatMessageA(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, code, 0, buffer, buffer.size, nil)
     details = String.new(buffer.to_unsafe, size).strip
-    super "#{message}: [WinError #{code}, #{details}]", winerror_to_errno(code)
+    super("#{message}: [WinError #{code}, #{details}]", winerror_to_errno(code))
   end
 
   # https://github.com/python/cpython/blob/master/PC/generrmap.c
