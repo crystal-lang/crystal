@@ -225,13 +225,8 @@ lib LibC
     daylight_bias : Long
   end
 
-  struct FileTime
-    low_date_time : DWord
-    high_date_time : DWord
-  end
-
   fun get_time_zone_information = GetTimeZoneInformation(tz_info : TimeZoneInformation*) : DWord
-  fun get_system_time_as_file_time = GetSystemTimeAsFileTime(time : FileTime*)
+  fun get_system_time_as_file_time = GetSystemTimeAsFileTime(time : FILETIME*)
 
   fun get_computer_name = GetComputerNameA(buffer : UInt8*, size : DWord*) : BOOL
 
