@@ -58,6 +58,7 @@ module YAML
   # * *converter* takes an alternate type for parsing. It requires a `#from_yaml` method in that class, and returns an instance of the given type. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
   # * **setter**: if `true`, will generate a setter for the variable, `true` by default
   # * **getter**: if `true`, will generate a getter for the variable, `true` by default
+  # * **presence**: if `true`, a `{{key}}_present?` method will be generated when the key was present (even if it has a `null` value), `false` by default
   #
   # This macro by default defines getters and setters for each variable (this can be overrided with *setter* and *getter*).
   # The mapping doesn't define a constructor accepting these variables as arguments, but you can provide an overload.
@@ -85,6 +86,14 @@ module YAML
           @{{key.id}}
         end
       {% end %}
+
+      {% if value[:presence] %}
+        @{{key.id}}_present : Bool = false
+
+        def {{key.id}}_present?
+          @{{key.id}}_present
+        end
+      {% end %}
     {% end %}
 
     def initialize(%pull : ::YAML::PullParser)
@@ -100,6 +109,7 @@ module YAML
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
             %found{key.id} = true
+
             %var{key.id} =
               {% if value[:nilable] || value[:default] != nil %} %pull.read_null_or { {% end %}
 
@@ -142,6 +152,12 @@ module YAML
           @{{key.id}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
         {% else %}
           @{{key.id}} = %var{key.id}.as({{value[:type]}})
+        {% end %}
+      {% end %}
+
+      {% for key, value in properties %}
+        {% if value[:presence] %}
+          @{{key.id}}_present = %found{key.id}
         {% end %}
       {% end %}
     end
