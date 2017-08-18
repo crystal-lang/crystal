@@ -2,12 +2,12 @@ class WinError < Errno
   # NOTE: `get_last_error` must be called BEFORE an instance of this class
   # is malloced as it would change the "last error" to SUCCESS
   def self.new(message)
-    new(message, LibC.get_last_error)
+    new(message, LibC._GetLastError)
   end
 
   def initialize(message, code)
     buffer = uninitialized UInt8[256]
-    size = LibC.format_message(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, code, 0, buffer, buffer.size, nil)
+    size = LibC._FormatMessageA(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, code, 0, buffer, buffer.size, nil)
     details = String.new(buffer.to_unsafe, size).strip
     super "#{message}: [WinError #{code}, #{details}]", winerror_to_errno(code)
   end
