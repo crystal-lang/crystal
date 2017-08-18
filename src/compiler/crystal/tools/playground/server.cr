@@ -424,6 +424,9 @@ module Crystal::Playground
     end
   end
 
+  class Error < Crystal::LocationlessException
+  end
+
   class Server
     @sessions = {} of Int32 => Session
     @sessions_key = 0
@@ -516,7 +519,7 @@ module Crystal::Playground
       begin
         server.listen
       rescue ex
-        raise ToolException.new(ex.message)
+        raise Playground::Error.new(ex.message)
       end
     end
 
