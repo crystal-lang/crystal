@@ -1080,13 +1080,22 @@ module Crystal
       skip_space_or_newline
 
       check_open_paren
-      skip_space_or_newline
 
       paren_count = @paren_count
 
       if named_args = node.named_args
-        format_named_args([] of ASTNode, named_args, @indent)
+        has_newlines, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
+        # `format_named_args` doesn't skip trailing comma
+        if @paren_count == paren_count && @token.type == :","
+          next_token_skip_space_or_newline
+          if has_newlines
+            write ","
+            write_line
+            write_indent
+          end
+        end
       else
+        skip_space_or_newline
         node.type_vars.each_with_index do |type_var, i|
           accept type_var
           if @paren_count == paren_count

@@ -100,6 +100,11 @@ describe Crystal::Formatter do
   assert_format "Foo( x:  Int32  )", "Foo(x: Int32)"
   assert_format "Foo( x:  Int32  ,  y: Float64 )", "Foo(x: Int32, y: Float64)"
 
+  assert_format "NamedTuple(a: Int32,)", "NamedTuple(a: Int32)"
+  assert_format "NamedTuple(\n  a: Int32,\n)"
+  assert_format "NamedTuple(\n  a: Int32,)", "NamedTuple(\n  a: Int32,\n)"
+  assert_format "class Foo\n  NamedTuple(\n    a: Int32,\n  )\nend"
+
   assert_format "::Tuple(T)"
   assert_format "::NamedTuple(T)"
   assert_format "::Pointer(T)"
