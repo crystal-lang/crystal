@@ -16,79 +16,79 @@ class WinError < Errno
   # https://github.com/python/cpython/blob/master/PC/errmap.h
   def winerror_to_errno(winerror)
     case winerror
-    when ERROR_FILE_NOT_FOUND           ; return Errno::ENOENT
-    when ERROR_PATH_NOT_FOUND           ; return Errno::ENOENT
-    when ERROR_TOO_MANY_OPEN_FILES      ; return Errno::EMFILE
-    when ERROR_ACCESS_DENIED            ; return Errno::EACCES
-    when ERROR_INVALID_HANDLE           ; return Errno::EBADF
-    when ERROR_ARENA_TRASHED            ; return Errno::ENOMEM
-    when ERROR_NOT_ENOUGH_MEMORY        ; return Errno::ENOMEM
-    when ERROR_INVALID_BLOCK            ; return Errno::ENOMEM
-    when ERROR_BAD_ENVIRONMENT          ; return Errno::E2BIG
-    when ERROR_BAD_FORMAT               ; return Errno::ENOEXEC
-    when ERROR_INVALID_DRIVE            ; return Errno::ENOENT
-    when ERROR_CURRENT_DIRECTORY        ; return Errno::EACCES
-    when ERROR_NOT_SAME_DEVICE          ; return Errno::EXDEV
-    when ERROR_NO_MORE_FILES            ; return Errno::ENOENT
-    when ERROR_WRITE_PROTECT            ; return Errno::EACCES
-    when ERROR_BAD_UNIT                 ; return Errno::EACCES
-    when ERROR_NOT_READY                ; return Errno::EACCES
-    when ERROR_BAD_COMMAND              ; return Errno::EACCES
-    when ERROR_CRC                      ; return Errno::EACCES
-    when ERROR_BAD_LENGTH               ; return Errno::EACCES
-    when ERROR_SEEK                     ; return Errno::EACCES
-    when ERROR_NOT_DOS_DISK             ; return Errno::EACCES
-    when ERROR_SECTOR_NOT_FOUND         ; return Errno::EACCES
-    when ERROR_OUT_OF_PAPER             ; return Errno::EACCES
-    when ERROR_WRITE_FAULT              ; return Errno::EACCES
-    when ERROR_READ_FAULT               ; return Errno::EACCES
-    when ERROR_GEN_FAILURE              ; return Errno::EACCES
-    when ERROR_SHARING_VIOLATION        ; return Errno::EACCES
-    when ERROR_LOCK_VIOLATION           ; return Errno::EACCES
-    when ERROR_WRONG_DISK               ; return Errno::EACCES
-    when ERROR_SHARING_BUFFER_EXCEEDED  ; return Errno::EACCES
-    when ERROR_BAD_NETPATH              ; return Errno::ENOENT
-    when ERROR_NETWORK_ACCESS_DENIED    ; return Errno::EACCES
-    when ERROR_BAD_NET_NAME             ; return Errno::ENOENT
-    when ERROR_FILE_EXISTS              ; return Errno::EEXIST
-    when ERROR_CANNOT_MAKE              ; return Errno::EACCES
-    when ERROR_FAIL_I24                 ; return Errno::EACCES
-    when ERROR_NO_PROC_SLOTS            ; return Errno::EAGAIN
-    when ERROR_DRIVE_LOCKED             ; return Errno::EACCES
-    when ERROR_BROKEN_PIPE              ; return Errno::EPIPE
-    when ERROR_DISK_FULL                ; return Errno::ENOSPC
-    when ERROR_INVALID_TARGET_HANDLE    ; return Errno::EBADF
-    when ERROR_WAIT_NO_CHILDREN         ; return Errno::ECHILD
-    when ERROR_CHILD_NOT_COMPLETE       ; return Errno::ECHILD
-    when ERROR_DIRECT_ACCESS_HANDLE     ; return Errno::EBADF
-    when ERROR_SEEK_ON_DEVICE           ; return Errno::EACCES
-    when ERROR_DIR_NOT_EMPTY            ; return Errno::ENOTEMPTY
-    when ERROR_NOT_LOCKED               ; return Errno::EACCES
-    when ERROR_BAD_PATHNAME             ; return Errno::ENOENT
-    when ERROR_MAX_THRDS_REACHED        ; return Errno::EAGAIN
-    when ERROR_LOCK_FAILED              ; return Errno::EACCES
-    when ERROR_ALREADY_EXISTS           ; return Errno::EEXIST
-    when ERROR_INVALID_STARTING_CODESEG ; return Errno::ENOEXEC
-    when ERROR_INVALID_STACKSEG         ; return Errno::ENOEXEC
-    when ERROR_INVALID_MODULETYPE       ; return Errno::ENOEXEC
-    when ERROR_INVALID_EXE_SIGNATURE    ; return Errno::ENOEXEC
-    when ERROR_EXE_MARKED_INVALID       ; return Errno::ENOEXEC
-    when ERROR_BAD_EXE_FORMAT           ; return Errno::ENOEXEC
-    when ERROR_ITERATED_DATA_EXCEEDS_64k; return Errno::ENOEXEC
-    when ERROR_INVALID_MINALLOCSIZE     ; return Errno::ENOEXEC
-    when ERROR_DYNLINK_FROM_INVALID_RING; return Errno::ENOEXEC
-    when ERROR_IOPL_NOT_ENABLED         ; return Errno::ENOEXEC
-    when ERROR_INVALID_SEGDPL           ; return Errno::ENOEXEC
-    when ERROR_AUTODATASEG_EXCEEDS_64k  ; return Errno::ENOEXEC
-    when ERROR_RING2SEG_MUST_BE_MOVABLE ; return Errno::ENOEXEC
-    when ERROR_RELOC_CHAIN_XEEDS_SEGLIM ; return Errno::ENOEXEC
-    when ERROR_INFLOOP_IN_RELOC_CHAIN   ; return Errno::ENOEXEC
-    when ERROR_FILENAME_EXCED_RANGE     ; return Errno::ENOENT
-    when ERROR_NESTING_NOT_ALLOWED      ; return Errno::EAGAIN
-    when ERROR_NO_DATA                  ; return Errno::EPIPE
-    when ERROR_DIRECTORY                ; return Errno::ENOTDIR
-    when ERROR_NOT_ENOUGH_QUOTA         ; return Errno::ENOMEM
-    else                                  return Errno::EINVAL
+    when ERROR_FILE_NOT_FOUND            then Errno::ENOENT
+    when ERROR_PATH_NOT_FOUND            then Errno::ENOENT
+    when ERROR_TOO_MANY_OPEN_FILES       then Errno::EMFILE
+    when ERROR_ACCESS_DENIED             then Errno::EACCES
+    when ERROR_INVALID_HANDLE            then Errno::EBADF
+    when ERROR_ARENA_TRASHED             then Errno::ENOMEM
+    when ERROR_NOT_ENOUGH_MEMORY         then Errno::ENOMEM
+    when ERROR_INVALID_BLOCK             then Errno::ENOMEM
+    when ERROR_BAD_ENVIRONMENT           then Errno::E2BIG
+    when ERROR_BAD_FORMAT                then Errno::ENOEXEC
+    when ERROR_INVALID_DRIVE             then Errno::ENOENT
+    when ERROR_CURRENT_DIRECTORY         then Errno::EACCES
+    when ERROR_NOT_SAME_DEVICE           then Errno::EXDEV
+    when ERROR_NO_MORE_FILES             then Errno::ENOENT
+    when ERROR_WRITE_PROTECT             then Errno::EACCES
+    when ERROR_BAD_UNIT                  then Errno::EACCES
+    when ERROR_NOT_READY                 then Errno::EACCES
+    when ERROR_BAD_COMMAND               then Errno::EACCES
+    when ERROR_CRC                       then Errno::EACCES
+    when ERROR_BAD_LENGTH                then Errno::EACCES
+    when ERROR_SEEK                      then Errno::EACCES
+    when ERROR_NOT_DOS_DISK              then Errno::EACCES
+    when ERROR_SECTOR_NOT_FOUND          then Errno::EACCES
+    when ERROR_OUT_OF_PAPER              then Errno::EACCES
+    when ERROR_WRITE_FAULT               then Errno::EACCES
+    when ERROR_READ_FAULT                then Errno::EACCES
+    when ERROR_GEN_FAILURE               then Errno::EACCES
+    when ERROR_SHARING_VIOLATION         then Errno::EACCES
+    when ERROR_LOCK_VIOLATION            then Errno::EACCES
+    when ERROR_WRONG_DISK                then Errno::EACCES
+    when ERROR_SHARING_BUFFER_EXCEEDED   then Errno::EACCES
+    when ERROR_BAD_NETPATH               then Errno::ENOENT
+    when ERROR_NETWORK_ACCESS_DENIED     then Errno::EACCES
+    when ERROR_BAD_NET_NAME              then Errno::ENOENT
+    when ERROR_FILE_EXISTS               then Errno::EEXIST
+    when ERROR_CANNOT_MAKE               then Errno::EACCES
+    when ERROR_FAIL_I24                  then Errno::EACCES
+    when ERROR_NO_PROC_SLOTS             then Errno::EAGAIN
+    when ERROR_DRIVE_LOCKED              then Errno::EACCES
+    when ERROR_BROKEN_PIPE               then Errno::EPIPE
+    when ERROR_DISK_FULL                 then Errno::ENOSPC
+    when ERROR_INVALID_TARGET_HANDLE     then Errno::EBADF
+    when ERROR_WAIT_NO_CHILDREN          then Errno::ECHILD
+    when ERROR_CHILD_NOT_COMPLETE        then Errno::ECHILD
+    when ERROR_DIRECT_ACCESS_HANDLE      then Errno::EBADF
+    when ERROR_SEEK_ON_DEVICE            then Errno::EACCES
+    when ERROR_DIR_NOT_EMPTY             then Errno::ENOTEMPTY
+    when ERROR_NOT_LOCKED                then Errno::EACCES
+    when ERROR_BAD_PATHNAME              then Errno::ENOENT
+    when ERROR_MAX_THRDS_REACHED         then Errno::EAGAIN
+    when ERROR_LOCK_FAILED               then Errno::EACCES
+    when ERROR_ALREADY_EXISTS            then Errno::EEXIST
+    when ERROR_INVALID_STARTING_CODESEG  then Errno::ENOEXEC
+    when ERROR_INVALID_STACKSEG          then Errno::ENOEXEC
+    when ERROR_INVALID_MODULETYPE        then Errno::ENOEXEC
+    when ERROR_INVALID_EXE_SIGNATURE     then Errno::ENOEXEC
+    when ERROR_EXE_MARKED_INVALID        then Errno::ENOEXEC
+    when ERROR_BAD_EXE_FORMAT            then Errno::ENOEXEC
+    when ERROR_ITERATED_DATA_EXCEEDS_64k then Errno::ENOEXEC
+    when ERROR_INVALID_MINALLOCSIZE      then Errno::ENOEXEC
+    when ERROR_DYNLINK_FROM_INVALID_RING then Errno::ENOEXEC
+    when ERROR_IOPL_NOT_ENABLED          then Errno::ENOEXEC
+    when ERROR_INVALID_SEGDPL            then Errno::ENOEXEC
+    when ERROR_AUTODATASEG_EXCEEDS_64k   then Errno::ENOEXEC
+    when ERROR_RING2SEG_MUST_BE_MOVABLE  then Errno::ENOEXEC
+    when ERROR_RELOC_CHAIN_XEEDS_SEGLIM  then Errno::ENOEXEC
+    when ERROR_INFLOOP_IN_RELOC_CHAIN    then Errno::ENOEXEC
+    when ERROR_FILENAME_EXCED_RANGE      then Errno::ENOENT
+    when ERROR_NESTING_NOT_ALLOWED       then Errno::EAGAIN
+    when ERROR_NO_DATA                   then Errno::EPIPE
+    when ERROR_DIRECTORY                 then Errno::ENOTDIR
+    when ERROR_NOT_ENOUGH_QUOTA          then Errno::ENOMEM
+    else                                      Errno::EINVAL
     end
   end
 
