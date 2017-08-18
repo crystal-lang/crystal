@@ -233,6 +233,7 @@ module Crystal
             result.stdout.each_line do |line|
               message << "    "
               message << line
+              message << '\n'
             end
             message << '\n'
           end
@@ -245,6 +246,7 @@ module Crystal
             result.stderr.each_line do |line|
               message << "    "
               message << line
+              message << '\n'
             end
             message << '\n'
           end
