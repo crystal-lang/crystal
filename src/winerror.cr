@@ -12,82 +12,83 @@ class WinError < Errno
     super "#{message}: [WinError #{code}, #{details}]", winerror_to_errno(code)
   end
 
+  # https://github.com/python/cpython/blob/master/PC/generrmap.c
+  # https://github.com/python/cpython/blob/master/PC/errmap.h
   def winerror_to_errno(winerror)
     case winerror
-    when    2; return 2
-    when    3; return 2
-    when    4; return 24
-    when    5; return 13
-    when    6; return 9
-    when    7; return 12
-    when    8; return 12
-    when    9; return 12
-    when   10; return 7
-    when   11; return 8
-    when   15; return 2
-    when   16; return 13
-    when   17; return 18
-    when   18; return 2
-    when   19; return 13
-    when   20; return 13
-    when   21; return 13
-    when   22; return 13
-    when   23; return 13
-    when   24; return 13
-    when   25; return 13
-    when   26; return 13
-    when   27; return 13
-    when   28; return 13
-    when   29; return 13
-    when   30; return 13
-    when   31; return 13
-    when   32; return 13
-    when   33; return 13
-    when   34; return 13
-    when   35; return 13
-    when   36; return 13
-    when   53; return 2
-    when   65; return 13
-    when   67; return 2
-    when   80; return 17
-    when   82; return 13
-    when   83; return 13
-    when   89; return 11
-    when  108; return 13
-    when  109; return 32
-    when  112; return 28
-    when  114; return 9
-    when  128; return 10
-    when  129; return 10
-    when  130; return 9
-    when  132; return 13
-    when  145; return 41
-    when  158; return 13
-    when  161; return 2
-    when  164; return 11
-    when  167; return 13
-    when  183; return 17
-    when  188; return 8
-    when  189; return 8
-    when  190; return 8
-    when  191; return 8
-    when  192; return 8
-    when  193; return 8
-    when  194; return 8
-    when  195; return 8
-    when  196; return 8
-    when  197; return 8
-    when  198; return 8
-    when  199; return 8
-    when  200; return 8
-    when  201; return 8
-    when  202; return 8
-    when  206; return 2
-    when  215; return 11
-    when  232; return 32
-    when  267; return 20
-    when 1816; return 12
-    else       return Errno::EINVAL
+    when ERROR_FILE_NOT_FOUND           ; return Errno::ENOENT
+    when ERROR_PATH_NOT_FOUND           ; return Errno::ENOENT
+    when ERROR_TOO_MANY_OPEN_FILES      ; return Errno::EMFILE
+    when ERROR_ACCESS_DENIED            ; return Errno::EACCES
+    when ERROR_INVALID_HANDLE           ; return Errno::EBADF
+    when ERROR_ARENA_TRASHED            ; return Errno::ENOMEM
+    when ERROR_NOT_ENOUGH_MEMORY        ; return Errno::ENOMEM
+    when ERROR_INVALID_BLOCK            ; return Errno::ENOMEM
+    when ERROR_BAD_ENVIRONMENT          ; return Errno::E2BIG
+    when ERROR_BAD_FORMAT               ; return Errno::ENOEXEC
+    when ERROR_INVALID_DRIVE            ; return Errno::ENOENT
+    when ERROR_CURRENT_DIRECTORY        ; return Errno::EACCES
+    when ERROR_NOT_SAME_DEVICE          ; return Errno::EXDEV
+    when ERROR_NO_MORE_FILES            ; return Errno::ENOENT
+    when ERROR_WRITE_PROTECT            ; return Errno::EACCES
+    when ERROR_BAD_UNIT                 ; return Errno::EACCES
+    when ERROR_NOT_READY                ; return Errno::EACCES
+    when ERROR_BAD_COMMAND              ; return Errno::EACCES
+    when ERROR_CRC                      ; return Errno::EACCES
+    when ERROR_BAD_LENGTH               ; return Errno::EACCES
+    when ERROR_SEEK                     ; return Errno::EACCES
+    when ERROR_NOT_DOS_DISK             ; return Errno::EACCES
+    when ERROR_SECTOR_NOT_FOUND         ; return Errno::EACCES
+    when ERROR_OUT_OF_PAPER             ; return Errno::EACCES
+    when ERROR_WRITE_FAULT              ; return Errno::EACCES
+    when ERROR_READ_FAULT               ; return Errno::EACCES
+    when ERROR_GEN_FAILURE              ; return Errno::EACCES
+    when ERROR_SHARING_VIOLATION        ; return Errno::EACCES
+    when ERROR_LOCK_VIOLATION           ; return Errno::EACCES
+    when ERROR_WRONG_DISK               ; return Errno::EACCES
+    when ERROR_SHARING_BUFFER_EXCEEDED  ; return Errno::EACCES
+    when ERROR_BAD_NETPATH              ; return Errno::ENOENT
+    when ERROR_NETWORK_ACCESS_DENIED    ; return Errno::EACCES
+    when ERROR_BAD_NET_NAME             ; return Errno::ENOENT
+    when ERROR_FILE_EXISTS              ; return Errno::EEXIST
+    when ERROR_CANNOT_MAKE              ; return Errno::EACCES
+    when ERROR_FAIL_I24                 ; return Errno::EACCES
+    when ERROR_NO_PROC_SLOTS            ; return Errno::EAGAIN
+    when ERROR_DRIVE_LOCKED             ; return Errno::EACCES
+    when ERROR_BROKEN_PIPE              ; return Errno::EPIPE
+    when ERROR_DISK_FULL                ; return Errno::ENOSPC
+    when ERROR_INVALID_TARGET_HANDLE    ; return Errno::EBADF
+    when ERROR_WAIT_NO_CHILDREN         ; return Errno::ECHILD
+    when ERROR_CHILD_NOT_COMPLETE       ; return Errno::ECHILD
+    when ERROR_DIRECT_ACCESS_HANDLE     ; return Errno::EBADF
+    when ERROR_SEEK_ON_DEVICE           ; return Errno::EACCES
+    when ERROR_DIR_NOT_EMPTY            ; return Errno::ENOTEMPTY
+    when ERROR_NOT_LOCKED               ; return Errno::EACCES
+    when ERROR_BAD_PATHNAME             ; return Errno::ENOENT
+    when ERROR_MAX_THRDS_REACHED        ; return Errno::EAGAIN
+    when ERROR_LOCK_FAILED              ; return Errno::EACCES
+    when ERROR_ALREADY_EXISTS           ; return Errno::EEXIST
+    when ERROR_INVALID_STARTING_CODESEG ; return Errno::ENOEXEC
+    when ERROR_INVALID_STACKSEG         ; return Errno::ENOEXEC
+    when ERROR_INVALID_MODULETYPE       ; return Errno::ENOEXEC
+    when ERROR_INVALID_EXE_SIGNATURE    ; return Errno::ENOEXEC
+    when ERROR_EXE_MARKED_INVALID       ; return Errno::ENOEXEC
+    when ERROR_BAD_EXE_FORMAT           ; return Errno::ENOEXEC
+    when ERROR_ITERATED_DATA_EXCEEDS_64k; return Errno::ENOEXEC
+    when ERROR_INVALID_MINALLOCSIZE     ; return Errno::ENOEXEC
+    when ERROR_DYNLINK_FROM_INVALID_RING; return Errno::ENOEXEC
+    when ERROR_IOPL_NOT_ENABLED         ; return Errno::ENOEXEC
+    when ERROR_INVALID_SEGDPL           ; return Errno::ENOEXEC
+    when ERROR_AUTODATASEG_EXCEEDS_64k  ; return Errno::ENOEXEC
+    when ERROR_RING2SEG_MUST_BE_MOVABLE ; return Errno::ENOEXEC
+    when ERROR_RELOC_CHAIN_XEEDS_SEGLIM ; return Errno::ENOEXEC
+    when ERROR_INFLOOP_IN_RELOC_CHAIN   ; return Errno::ENOEXEC
+    when ERROR_FILENAME_EXCED_RANGE     ; return Errno::ENOENT
+    when ERROR_NESTING_NOT_ALLOWED      ; return Errno::EAGAIN
+    when ERROR_NO_DATA                  ; return Errno::EPIPE
+    when ERROR_DIRECTORY                ; return Errno::ENOTDIR
+    when ERROR_NOT_ENOUGH_QUOTA         ; return Errno::ENOMEM
+    else                                  return Errno::EINVAL
     end
   end
 
