@@ -1,6 +1,32 @@
 require "../../spec_helper"
 
 describe "Semantic: case" do
+  it "check exhaustiveness for neither enum nor union types" do
+    assert_type %(
+      require "prelude"
+
+      a = 42
+
+      case a
+      when Int32
+        1
+      end
+    ) { int32 }
+  end
+
+  it "don't report exhaustiveness error for neither enum nor union types" do
+    assert_type %(
+      require "prelude"
+
+      a = 42
+
+      case a
+      when 1
+        1
+      end
+    ) { nilable(int32) }
+  end
+
   it "check exhaustiveness for union types (Path)" do
     assert_error %(
       foo = true ? 42 : "foo"
@@ -23,6 +49,8 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness for enum types (Path)" do
     assert_error %(
+      require "prelude"
+
       enum FooBar
         Foo
         Bar
@@ -38,6 +66,8 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness for enum types (Call)" do
     assert_error %(
+      require "prelude"
+
       enum FooBar
         Foo
         Bar
@@ -53,6 +83,8 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness for bool type (BoolLiteral)" do
     assert_error %(
+      require "prelude"
+
       foo = true
 
       case foo
@@ -73,6 +105,9 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness for complex type" do
     assert_error %(
+      require "prelude"
+
+      foo = true ? "foo" : nil
       enum FooBar
         Foo
         Bar
@@ -81,7 +116,7 @@ describe "Semantic: case" do
       foo = nil.as(Nil | Bool | FooBar)
 
       case foo
-      when .foo?
+      when FooBar::Foo
       when true
       end
       ), "found non-exhaustive patterns: nil, false, FooBar::Bar"
@@ -183,5 +218,21 @@ describe "Semantic: case" do
       when _
       end
       ) { nil_type }
+  end
+
+  it "checks exhaustiveness after loop" do
+    assert_error %(
+      require "prelude"
+
+      a = 42
+
+      while true
+        case a
+        when Int32
+        end
+
+        a = :foo
+      end
+    ), "found non-exhaustive pattern: Symbol"
   end
 end
