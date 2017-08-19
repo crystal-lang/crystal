@@ -20,4 +20,8 @@ describe "Normalize: chained comparisons" do
   it "normalizes two comparisons with calls" do
     assert_normalize "1 <= a <= b <= 4", "((1 <= (__temp_2 = a)) && (__temp_2 <= (__temp_1 = b))) && (__temp_1 <= 4)"
   end
+
+  it "keeps parenthesis enclosing comparison receiver" do
+    assert_normalize "(1 <= 2) <= 3", "(1 <= 2) <= 3"
+  end
 end

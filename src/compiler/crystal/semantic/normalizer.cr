@@ -75,21 +75,32 @@ module Crystal
         end
       end
 
-      # Convert 'a <= b <= c' to 'a <= b && b <= c'
-      if comparison?(node.name) && (obj = node.obj) && obj.is_a?(Call) && comparison?(obj.name)
-        case middle = obj.args.first
-        when NumberLiteral, Var, InstanceVar
-          transform_many node.args
-          left = obj
-          right = Call.new(middle.clone, node.name, node.args).at(middle)
+      if comparison?(node.name)
+        obj = node.obj
+        # Convert 'a <= b <= c' to 'a <= b && b <= c'
+        if obj.is_a?(Call) && comparison?(obj.name)
+          case middle = obj.args.first
+          when NumberLiteral, Var, InstanceVar
+            transform_many node.args
+            left = obj
+            right = Call.new(middle.clone, node.name, node.args).at(middle)
+          else
+            temp_var = program.new_temp_var
+            temp_assign = Assign.new(temp_var.clone, middle)
+            left = Call.new(obj.obj, obj.name, temp_assign).at(obj.obj)
+            right = Call.new(temp_var.clone, node.name, node.args).at(node)
+          end
+          node = And.new(left, right)
+          node = node.transform self
         else
-          temp_var = program.new_temp_var
-          temp_assign = Assign.new(temp_var.clone, middle)
-          left = Call.new(obj.obj, obj.name, temp_assign).at(obj.obj)
-          right = Call.new(temp_var.clone, node.name, node.args).at(node)
+          node = super
+          # But keep '(a <= b) <= c'
+          if obj.is_a?(Expressions) && obj.expressions.size == 1 && (first = obj[0]).is_a?(Call) && comparison?(first.name)
+            new_obj = Expressions.new([node.obj.not_nil!])
+            new_obj.keyword = obj.keyword
+            node.obj = new_obj
+          end
         end
-        node = And.new(left, right)
-        node = node.transform self
       else
         node = super
       end
