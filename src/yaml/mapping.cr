@@ -102,8 +102,11 @@ module YAML
         %found{key.id} = false
       {% end %}
 
+      %mapping_location = %pull.location
+
       %pull.read_mapping_start
       while %pull.kind != ::YAML::EventKind::MAPPING_END
+        %key_location = %pull.location
         key = %pull.read_scalar.not_nil!
         case key
         {% for key, value in properties %}
@@ -125,7 +128,7 @@ module YAML
         {% end %}
         else
           {% if strict %}
-            raise ::YAML::ParseException.new("Unknown yaml attribute: #{key}", 0, 0)
+            raise ::YAML::ParseException.new("Unknown yaml attribute: #{key}", *%key_location)
           {% else %}
             %pull.skip
           {% end %}
@@ -136,7 +139,7 @@ module YAML
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
-            raise ::YAML::ParseException.new("Missing yaml attribute: {{(value[:key] || key).id}}", 0, 0)
+            raise ::YAML::ParseException.new("Missing yaml attribute: {{(value[:key] || key).id}}", *%mapping_location)
           end
         {% end %}
       {% end %}
