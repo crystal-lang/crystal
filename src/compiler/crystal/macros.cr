@@ -27,6 +27,14 @@ module Crystal::Macros
   def env(name) : StringLiteral | NilLiteral
   end
 
+  # Returns whether a compile-time flag is set.
+  #
+  # ```
+  # {{ flag?(:x86_64) }} # true or false
+  # ```
+  def flag?(name) : BoolLiteral
+  end
+
   # Prints an AST node at compile-time. Useful for debugging macros.
   def puts(expression) : Nop
   end
