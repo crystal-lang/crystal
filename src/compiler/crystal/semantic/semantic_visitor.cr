@@ -373,6 +373,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
               expanded = expanded_type.value
             when Type
               expanded = TypeNode.new(expanded_type)
+            else
+              # skip
             end
           end
           expanded
