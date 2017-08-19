@@ -1,3 +1,11 @@
+# 0.23.1 (27-06-2017)
+
+* Added `Random::PCG32` generator (See #4536, thanks @konovod)
+* WebSocket should compare "Upgrade" header value with case insensitive (See #4617, thanks @MakeNowJust)
+* Fixed macro lookup from included module (See #4639, thanks @asterite)
+* Explained "crystal tool expand" in crystal(1) man page (See #4643, thanks @MakeNowJust)
+* Explained how to detect end of file in `IO` (See #4661, thanks @oprypin)
+
 # 0.23.0 (27-06-2017)
 
 * **(breaking-change)** `Logger#formatter` takes a `Severity` instead of a `String` (See #4355, #4369, thanks @Sija)
