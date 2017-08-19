@@ -766,6 +766,20 @@ describe "Block inference" do
       )) { int32 }
   end
 
+  it "ignores void return type (4)" do
+    assert_type(%(
+      alias Alias = Void
+
+      def foo(&block : -> Alias)
+        yield
+      end
+
+      foo do
+        1
+      end
+      )) { int32 }
+  end
+
   it "uses block return type as return type, even if can't infer block type" do
     assert_type(%(
       class Foo
