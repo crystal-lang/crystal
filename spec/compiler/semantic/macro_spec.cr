@@ -1122,4 +1122,51 @@ describe "Semantic: macro" do
       Moo.bar
       ), inject_primitives: false) { int32 }
   end
+
+  it "passes #4739" do
+    assert_type(%(
+      class Parent
+        macro foo
+          def self.bar
+            1
+          end
+        end
+      end
+
+      class Child < Parent
+        def foo
+        end
+      end
+
+      class GrandChild < Child
+        foo
+      end
+
+      GrandChild.bar
+    )) { int32 }
+  end
+
+  it "passes #4639" do
+    assert_type(%(
+      module Include
+        macro foo
+          def foo
+            1
+          end
+        end
+      end
+
+      class Parent
+        include Include
+
+        foo
+      end
+
+      class Foo < Parent
+        foo
+      end
+
+      Foo.new.foo
+    )) { int32 }
+  end
 end
