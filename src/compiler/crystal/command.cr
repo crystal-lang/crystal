@@ -216,7 +216,7 @@ class Crystal::Command
     status, elapsed_time = @progress_tracker.stage("Execute") do
       begin
         start_time = Time.now
-        Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
+        Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
           # Ignore the signal so we don't exit the running process
           # (the running process can still handle this signal)
           Signal::INT.ignore # do
