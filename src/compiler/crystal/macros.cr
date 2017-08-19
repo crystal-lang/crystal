@@ -27,7 +27,7 @@ module Crystal::Macros
   def env(name) : StringLiteral | NilLiteral
   end
 
-  # Returns whether a compile-time flag is set.
+  # Returns whether a [compile-time flag](https://crystal-lang.org/docs/syntax_and_semantics/compile_time_flags.html) is set.
   #
   # ```
   # {{ flag?(:x86_64) }} # true or false
