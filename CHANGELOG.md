@@ -1,4 +1,4 @@
-# 0.23.1 (27-06-2017)
+# 0.23.1 (01-07-2017)
 
 * Added `Random::PCG32` generator (See #4536, thanks @konovod)
 * WebSocket should compare "Upgrade" header value with case insensitive (See #4617, thanks @MakeNowJust)
