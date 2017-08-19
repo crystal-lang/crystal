@@ -139,6 +139,30 @@ describe "JSON serialization" do
     it "deserializes Time" do
       Time.from_json(%("2016-11-16T09:55:48-0300")).to_utc.should eq(Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc))
     end
+
+    describe "parse exceptions" do
+      it "has correct location when raises in NamedTuple#from_json" do
+        ex = expect_raises(JSON::ParseException) do
+          Array({foo: Int32, bar: String}).from_json <<-JSON
+            [
+              {"foo": 1}
+            ]
+            JSON
+        end
+        ex.location.should eq({2, 3})
+      end
+
+      it "has correct location when raises in Union#from_json" do
+        ex = expect_raises(JSON::ParseException) do
+          Array(Int32 | Bool).from_json <<-JSON
+            [
+              {"foo": "bar"}
+            ]
+            JSON
+        end
+        ex.location.should eq({2, 3})
+      end
+    end
   end
 
   describe "to_json" do

@@ -121,5 +121,22 @@ module YAML
     assert_raw %(["hello"])
     assert_raw %(["hello","world"])
     assert_raw %({"hello":"world"})
+
+    it "raises exception at correct location" do
+      parser = PullParser.new("[1]")
+      parser.read_stream do
+        parser.read_document do
+          parser.read_sequence do
+            ex = expect_raises(YAML::ParseException) do
+              parser.read_mapping do
+              end
+            end
+            ex.location.should eq({1, 2})
+
+            parser.read_scalar
+          end
+        end
+      end
+    end
   end
 end

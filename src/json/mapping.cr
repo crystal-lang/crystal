@@ -95,7 +95,11 @@ module JSON
         %found{key.id} = false
       {% end %}
 
-      %pull.read_object do |key|
+      %location = %pull.location
+      %pull.read_begin_object
+      while %pull.kind != :end_object
+        %key_location = %pull.location
+        key = %pull.read_object_key
         case key
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
@@ -125,17 +129,18 @@ module JSON
         {% end %}
         else
           {% if strict %}
-            raise ::JSON::ParseException.new("Unknown json attribute: #{key}", 0, 0)
+            raise ::JSON::ParseException.new("Unknown json attribute: #{key}", *%key_location)
           {% else %}
             %pull.skip
           {% end %}
         end
       end
+      %pull.read_next
 
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
-            raise ::JSON::ParseException.new("Missing json attribute: {{(value[:key] || key).id}}", 0, 0)
+            raise ::JSON::ParseException.new("Missing json attribute: {{(value[:key] || key).id}}", *%location)
           end
         {% end %}
       {% end %}
