@@ -1123,7 +1123,7 @@ describe "Semantic: macro" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "passes #4739" do
+  it "finds metaclass instance of instance method (#4739)" do
     assert_type(%(
       class Parent
         macro foo
@@ -1146,7 +1146,7 @@ describe "Semantic: macro" do
     )) { int32 }
   end
 
-  it "passes #4639" do
+  it "finds metaclass instance of instance method (#4639)" do
     assert_type(%(
       module Include
         macro foo
