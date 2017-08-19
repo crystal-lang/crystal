@@ -299,7 +299,7 @@ module Crystal
 
       node_obj = ignore_obj ? nil : node.obj
 
-      need_parens = need_parens(node_obj)
+      need_parens = need_parens(node_obj, node)
       call_args_need_parens = false
 
       @str << "::" if node.global?
@@ -417,7 +417,7 @@ module Crystal
       end
     end
 
-    private def need_parens(obj)
+    private def need_parens(obj, parent = nil)
       case obj
       when Call
         case obj.args.size
@@ -425,8 +425,15 @@ module Crystal
           !letter_or_underscore?(obj.name)
         else
           case obj.name
-          when "[]", "[]?", "<", "<=", ">", ">="
+          when "[]", "[]?"
             false
+          when "<", "<=", ">", ">="
+            # to keep chained comparisions
+            if parent.is_a?(Call) && {"<", "<=", ">", ">="}.includes?(parent.name)
+              false
+            else
+              true
+            end
           else
             true
           end
