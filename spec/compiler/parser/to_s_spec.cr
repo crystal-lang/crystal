@@ -18,9 +18,9 @@ describe "ASTNode#to_s" do
   expect_to_s "1 && (a = 2)"
   expect_to_s "(a = 2) && 1"
   expect_to_s "foo(a.as(Int32))"
-  expect_to_s "(1 + 2).as(Int32)", "((1 + 2)).as(Int32)"
+  expect_to_s "(1 + 2).as(Int32)", "(1 + 2).as(Int32)"
   expect_to_s "a.as?(Int32)"
-  expect_to_s "(1 + 2).as?(Int32)", "((1 + 2)).as?(Int32)"
+  expect_to_s "(1 + 2).as?(Int32)", "(1 + 2).as?(Int32)"
   expect_to_s "@foo.bar"
   expect_to_s %(:foo)
   expect_to_s %(:"{")
@@ -47,7 +47,7 @@ describe "ASTNode#to_s" do
   expect_to_s %({% for foo in bar %}\n  {{ foo }}\n{% end %})
   expect_to_s %(macro foo\n  {% for foo in bar %}\n    {{ foo }}\n  {% end %}\nend)
   expect_to_s %[1.as(Int32)]
-  expect_to_s %[(1 || 1.1).as(Int32)], %[((1 || 1.1)).as(Int32)]
+  expect_to_s %[(1 || 1.1).as(Int32)], %[(1 || 1.1).as(Int32)]
   expect_to_s %[1 & 2 & (3 | 4)], %[(1 & 2) & (3 | 4)]
   expect_to_s %[(1 & 2) & (3 | 4)]
   expect_to_s "def foo(x : T = 1)\nend"
