@@ -150,6 +150,18 @@ module Crystal
       @expressions.each &.accept visitor
     end
 
+    def nop?
+      self.expressions.size == 1 && self[0].nop?
+    end
+
+    def true_literal?
+      self.expressions.size == 1 && self[0].true_literal?
+    end
+
+    def false_literal?
+      self.expressions.size == 1 && self[0].false_literal?
+    end
+
     def clone_without_location
       Expressions.new(@expressions.clone)
     end

@@ -1737,6 +1737,9 @@ module Crystal
       when Assign
         target = exp.target
         return target if target.is_a?(Var)
+      when Expressions
+        return unless exp.expressions.size == 1
+        return get_expression_var(exp[0])
       end
       nil
     end
@@ -1848,10 +1851,14 @@ module Crystal
         filter_vars cond_type_filters, &.not
       when Or
         # Try to apply boolean logic: `!(a || b)` is `!a && !b`
+        cond_left = cond.left
+        cond_left = cond_left[0] if cond_left.is_a?(Expressions) && cond_left.expressions.size == 1
+        cond_right = cond.right
+        cond_right = cond_right[0] if cond_right.is_a?(Expressions) && cond_right.expressions.size == 1
 
         #  We can't deduce anything for sub && or || expressions
-        or_left_type_filters = nil if cond.left.is_a?(And) || cond.left.is_a?(Or)
-        or_right_type_filters = nil if cond.right.is_a?(And) || cond.right.is_a?(Or)
+        or_left_type_filters = nil if cond_left.is_a?(And) || cond_left.is_a?(Or)
+        or_right_type_filters = nil if cond_right.is_a?(And) || cond_right.is_a?(Or)
 
         # No need to deduce anything for temp vars created by the compiler (won't be used by a user)
         or_left_type_filters = nil if or_left_type_filters && or_left_type_filters.temp_var?
@@ -2146,6 +2153,9 @@ module Crystal
         end
       when Call
         return get_while_cond_assign_target(node.obj)
+      when Expressions
+        return unless node.expressions.size == 1
+        return get_while_cond_assign_target(node[0])
       end
 
       nil
