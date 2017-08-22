@@ -112,13 +112,17 @@ module JSON
                 %pull.on_key!({{value[:root]}}) do
               {% end %}
 
-              {% if value[:converter] %}
-                {{value[:converter]}}.from_json(%pull)
-              {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                {{value[:type]}}.new(%pull)
-              {% else %}
-                ::Union({{value[:type]}}).new(%pull)
-              {% end %}
+              begin
+                {% if value[:converter] %}
+                  {{value[:converter]}}.from_json(%pull)
+                {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
+                  {{value[:type]}}.new(%pull)
+                {% else %}
+                  ::Union({{value[:type]}}).new(%pull)
+                {% end %}
+              rescue ex : JSON::ParseException
+                raise ::JSON::ParseException.new("Error parsing attribute #{self.class}.{{key.id}}: #{ex.message}", *%key_location, false)
+              end
 
               {% if value[:root] %}
                 end
