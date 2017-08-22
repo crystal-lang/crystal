@@ -1738,8 +1738,8 @@ module Crystal
         target = exp.target
         return target if target.is_a?(Var)
       when Expressions
-        return unless exp.expressions.size == 1
-        return get_expression_var(exp[0])
+        return unless exp = single_expression(exp)
+        return get_expression_var(exp)
       end
       nil
     end
@@ -1851,10 +1851,8 @@ module Crystal
         filter_vars cond_type_filters, &.not
       when Or
         # Try to apply boolean logic: `!(a || b)` is `!a && !b`
-        cond_left = cond.left
-        cond_left = cond_left[0] if cond_left.is_a?(Expressions) && cond_left.expressions.size == 1
-        cond_right = cond.right
-        cond_right = cond_right[0] if cond_right.is_a?(Expressions) && cond_right.expressions.size == 1
+        cond_left = single_expression(cond.left) || cond.left
+        cond_right = single_expression(cond.right) || cond.right
 
         #  We can't deduce anything for sub && or || expressions
         or_left_type_filters = nil if cond_left.is_a?(And) || cond_left.is_a?(Or)
@@ -2154,8 +2152,8 @@ module Crystal
       when Call
         return get_while_cond_assign_target(node.obj)
       when Expressions
-        return unless node.expressions.size == 1
-        return get_while_cond_assign_target(node[0])
+        return unless node = single_expression(node)
+        return get_while_cond_assign_target(node)
       end
 
       nil
@@ -2185,6 +2183,12 @@ module Crystal
         filtered_var = MetaVar.new(name)
         filtered_var.bind_to(existing_var.filtered_by(yield filter))
         @vars[name] = filtered_var
+      end
+    end
+
+    def single_expression(node)
+      if node.is_a?(Expressions) && node.expressions.size == 1
+        node[0]
       end
     end
 
