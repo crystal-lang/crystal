@@ -46,6 +46,8 @@ class JSON::PullParser
       begin_array
     when :"{"
       begin_object
+    when :EOF
+      empty_string_given
     else
       unexpected_token
     end
@@ -508,6 +510,10 @@ class JSON::PullParser
 
   private def expect_kind(kind)
     parse_exception "Expected #{kind} but was #{@kind}" unless @kind == kind
+  end
+
+  private def empty_string_given
+    parse_exception "Expected JSON object but an empty string given"
   end
 
   private def unexpected_token
