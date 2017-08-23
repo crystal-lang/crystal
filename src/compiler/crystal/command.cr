@@ -402,6 +402,9 @@ class Crystal::Command
         opts.on("--verbose", "Display executed commands") do
           compiler.verbose = true
         end
+        opts.on("--static", "Link statically") do
+          compiler.static = true
+        end
       end
 
       opts.unknown_args do |before, after|

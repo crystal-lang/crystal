@@ -123,6 +123,9 @@ module Crystal
     # Whether to show error trace
     property? show_error_trace = false
 
+    # Whether to link statically
+    property? static = false
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -174,6 +177,7 @@ module Crystal
       program.target_machine = target_machine
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
+      program.flags << "static" if static?
       program.flags.concat @flags
       program.wants_doc = wants_doc?
       program.color = color?
@@ -289,7 +293,11 @@ module Crystal
           object_name = %("${@}")
         end
 
-        %(#{CC} #{object_name} -o '#{output_filename}' #{@link_flags} -rdynamic #{program.lib_flags})
+        link_flags = @link_flags || ""
+        link_flags += " -rdynamic"
+        link_flags += " -static" if static?
+
+        %(#{CC} #{object_name} -o '#{output_filename}' #{link_flags} #{program.lib_flags})
       end
     end
 
