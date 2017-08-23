@@ -161,6 +161,7 @@ describe JSON::PullParser do
   assert_pull_parse_error %({"foo": {})
   assert_pull_parse_error %({"name": "John", "age", 1})
   assert_pull_parse_error %({"name": "John", "age": "foo", "bar"})
+  assert_pull_parse_error ""
 
   it "prevents stack overflow for arrays" do
     parser = JSON::PullParser.new(("[" * 513) + ("]" * 513))
