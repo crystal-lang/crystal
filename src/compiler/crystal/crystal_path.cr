@@ -11,12 +11,12 @@ module Crystal
 
     @crystal_path : Array(String)
 
-    def initialize(path = CrystalPath.default_path, target_triple = LLVM.default_target_triple)
+    def initialize(path = CrystalPath.default_path, target_triple = Crystal::Config.default_target_triple)
       @crystal_path = path.split(':').reject &.empty?
       add_target_path(target_triple)
     end
 
-    private def add_target_path(target_triple = LLVM.default_target_triple)
+    private def add_target_path(target_triple = Crystal::Config.default_target_triple)
       triple = target_triple.split('-')
       triple.delete(triple[1]) if triple.size == 4 # skip vendor
 

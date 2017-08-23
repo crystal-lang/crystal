@@ -435,7 +435,7 @@ module Crystal
 
     protected def target_machine
       @target_machine ||= begin
-        triple = @target_triple || LLVM.default_target_triple
+        triple = @target_triple || Crystal::Config.default_target_triple
         TargetMachine.create(triple, @mcpu || "", @mattr || "", @release)
       end
     rescue ex : ArgumentError
