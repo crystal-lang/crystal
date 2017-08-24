@@ -250,6 +250,10 @@ describe "BigInt" do
     a.to_big_f.should eq(BigFloat.new("1234567890123456789.0"))
   end
 
+  describe "#inspect" do
+    it { "2".to_big_i.inspect.should eq("2_big_i") }
+  end
+
   it "does gcd and lcm" do
     # 3 primes
     a = BigInt.new("48112959837082048697")

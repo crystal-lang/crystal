@@ -45,6 +45,7 @@ module JSON
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
   # * **setter**: if `true`, will generate a setter for the variable, `true` by default
   # * **getter**: if `true`, will generate a getter for the variable, `true` by default
+  # * **presence**: if `true`, a `{{key}}_present?` method will be generated when the key was present (even if it has a `null` value), `false` by default
   #
   # This macro by default defines getters and setters for each variable (this can be overrided with *setter* and *getter*).
   # The mapping doesn't define a constructor accepting these variables as arguments, but you can provide an overload.
@@ -78,6 +79,14 @@ module JSON
           @{{key.id}}
         end
       {% end %}
+
+      {% if value[:presence] %}
+        @{{key.id}}_present : Bool = false
+
+        def {{key.id}}_present?
+          @{{key.id}}_present
+        end
+      {% end %}
     {% end %}
 
     def initialize(%pull : ::JSON::PullParser)
@@ -86,7 +95,11 @@ module JSON
         %found{key.id} = false
       {% end %}
 
-      %pull.read_object do |key|
+      %location = %pull.location
+      %pull.read_begin_object
+      while %pull.kind != :end_object
+        %key_location = %pull.location
+        key = %pull.read_object_key
         case key
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
@@ -116,17 +129,18 @@ module JSON
         {% end %}
         else
           {% if strict %}
-            raise ::JSON::ParseException.new("Unknown json attribute: #{key}", 0, 0)
+            raise ::JSON::ParseException.new("Unknown json attribute: #{key}", *%key_location)
           {% else %}
             %pull.skip
           {% end %}
         end
       end
+      %pull.read_next
 
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
-            raise ::JSON::ParseException.new("Missing json attribute: {{(value[:key] || key).id}}", 0, 0)
+            raise ::JSON::ParseException.new("Missing json attribute: {{(value[:key] || key).id}}", *%location)
           end
         {% end %}
       {% end %}
@@ -142,6 +156,12 @@ module JSON
           @{{key.id}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
         {% else %}
           @{{key.id}} = (%var{key.id}).as({{value[:type]}})
+        {% end %}
+      {% end %}
+
+      {% for key, value in properties %}
+        {% if value[:presence] %}
+          @{{key.id}}_present = %found{key.id}
         {% end %}
       {% end %}
     end

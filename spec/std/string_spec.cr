@@ -2163,6 +2163,17 @@ describe "String" do
     "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
   end
 
+  it "builds with write_byte" do
+    string = String.build do |io|
+      255_u8.times do |byte|
+        io.write_byte(byte)
+      end
+    end
+    255.times do |i|
+      string.byte_at(i).should eq(i)
+    end
+  end
+
   it "raises if String.build negative capacity" do
     expect_raises(ArgumentError, "Negative capacity") do
       String.build(-1) { }

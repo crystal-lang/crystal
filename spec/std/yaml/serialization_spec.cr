@@ -117,6 +117,53 @@ describe "YAML serialization" do
     it "deserializes time" do
       Time.from_yaml(%(2016-11-16T09:55:48-0300)).to_utc.should eq(Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc))
     end
+
+    describe "parse exceptions" do
+      it "has correct location when raises in Nil#from_yaml" do
+        ex = expect_raises(YAML::ParseException) do
+          Array(Nil).from_yaml <<-YAML
+            [
+              1
+            ]
+            YAML
+        end
+        ex.message.should eq("Expected nil, not 1 at line 2, column 3")
+        ex.location.should eq({2, 3})
+      end
+
+      it "has correct location when raises in Int32#from_yaml" do
+        ex = expect_raises(YAML::ParseException) do
+          Array(Int32).from_yaml <<-YAML
+            [
+              "hello"
+            ]
+            YAML
+        end
+        ex.location.should eq({2, 3})
+      end
+
+      it "has correct location when raises in NamedTuple#from_yaml" do
+        ex = expect_raises(YAML::ParseException) do
+          Array({foo: Int32, bar: String}).from_yaml <<-YAML
+            [
+              {"foo": 1}
+            ]
+            YAML
+        end
+        ex.location.should eq({2, 3})
+      end
+
+      it "has correct location when raises in Union#from_yaml" do
+        ex = expect_raises(YAML::ParseException) do
+          Array(Int32 | Bool).from_yaml <<-YAML
+            [
+              {"foo": "bar"}
+            ]
+            YAML
+        end
+        ex.location.should eq({2, 3})
+      end
+    end
   end
 
   describe "to_yaml" do

@@ -150,7 +150,7 @@ module Crystal::Playground
       stop_process
 
       @logger.info "Code execution started (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
-      process = @process = Process.new(output_filename, args: [] of String, input: nil, output: nil, error: nil)
+      process = @process = Process.new(output_filename, args: [] of String, input: Process::Redirect::Pipe, output: Process::Redirect::Pipe, error: Process::Redirect::Pipe)
       @running_process_filename = output_filename
 
       spawn do

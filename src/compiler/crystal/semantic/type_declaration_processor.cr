@@ -652,11 +652,11 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def raise_not_initialized_in_all_initialize(node : ASTNode, name, owner)
-    node.raise "instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable"
+    node.raise "instance variable '#{name}' of #{owner} was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   private def raise_not_initialized_in_all_initialize(location : Location, name, owner)
-    raise TypeException.new "instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable", location
+    raise TypeException.new "instance variable '#{name}' of #{owner} was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported.", location
   end
 
   private def raise_doesnt_explicitly_initializes(info, name, ivar)

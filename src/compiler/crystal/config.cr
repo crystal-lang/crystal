@@ -14,11 +14,13 @@ module Crystal
 
     def self.description
       version, sha = version_and_sha
-      if sha
-        "Crystal #{version} [#{sha}] (#{date}) LLVM #{llvm_version}"
-      else
-        "Crystal #{version} (#{date}) LLVM #{llvm_version}"
-      end
+      formatted_sha = "[#{sha}] " if sha
+      <<-DOC
+        Crystal #{version} #{formatted_sha}(#{date})
+
+        LLVM: #{llvm_version}
+        Default target: #{self.default_target_triple}
+        DOC
     end
 
     @@version_and_sha : {String, String?}?
@@ -53,6 +55,10 @@ module Crystal
 
     def self.date
       {{ `date "+%Y-%m-%d"`.stringify.chomp }}
+    end
+
+    def self.default_target_triple
+      {{env("CRYSTAL_CONFIG_TARGET")}} || LLVM.default_target_triple
     end
   end
 end
