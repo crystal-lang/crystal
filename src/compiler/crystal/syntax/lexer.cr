@@ -1214,8 +1214,7 @@ module Crystal
       while ident_part?(current_char)
         next_char
       end
-      case current_char
-      when '!', '?'
+      if (current_char == '?' || current_char == '!') && peek_next_char != '='
         next_char
       end
       @token.type = :IDENT

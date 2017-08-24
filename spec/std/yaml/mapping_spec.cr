@@ -89,6 +89,13 @@ private class YAMLWithTimeEpochMillis
   })
 end
 
+private class YAMLWithPresence
+  YAML.mapping({
+    first_name: {type: String?, presence: true, nilable: true},
+    last_name:  {type: String?, presence: true, nilable: true},
+  })
+end
+
 describe "YAML mapping" do
   it "parses person" do
     person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
@@ -128,9 +135,15 @@ describe "YAML mapping" do
   end
 
   it "parses strict person with unknown attributes" do
-    expect_raises YAML::ParseException, "Unknown yaml attribute: foo" do
-      StrictYAMLPerson.from_yaml("---\nname: John\nfoo: [1, 2, 3]\nage: 30\n")
+    ex = expect_raises YAML::ParseException, "Unknown yaml attribute: foo" do
+      StrictYAMLPerson.from_yaml <<-YAML
+        ---
+        name: John
+        foo: [1, 2, 3]
+        age: 30
+        YAML
     end
+    ex.location.should eq({3, 1})
   end
 
   it "does to_yaml" do
@@ -145,9 +158,13 @@ describe "YAML mapping" do
   end
 
   it "raises if non-nilable attribute is nil" do
-    expect_raises YAML::ParseException, "Missing yaml attribute: name" do
-      YAMLPerson.from_yaml("---\nage: 30\n")
+    ex = expect_raises YAML::ParseException, "Missing yaml attribute: name" do
+      YAMLPerson.from_yaml <<-YAML
+        ---
+        age: 30
+        YAML
     end
+    ex.location.should eq({2, 1})
   end
 
   it "doesn't raises on false value when not-nil" do
@@ -287,5 +304,15 @@ describe "YAML mapping" do
     yaml.value.should be_a(Time)
     yaml.value.should eq(Time.epoch_ms(1459860483856))
     yaml.to_yaml.should eq("---\nvalue: 1459860483856\n")
+  end
+
+  describe "parses YAML with presence markers" do
+    it "parses person with absent attributes" do
+      yaml = YAMLWithPresence.from_yaml("---\nfirst_name:\n")
+      yaml.first_name.should be_nil
+      yaml.first_name_present?.should be_true
+      yaml.last_name.should be_nil
+      yaml.last_name_present?.should be_false
+    end
   end
 end

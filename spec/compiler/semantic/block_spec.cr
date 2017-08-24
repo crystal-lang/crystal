@@ -245,6 +245,21 @@ describe "Block inference" do
       "type must be Float64"
   end
 
+  it "reports error on method instantiate (#4543)" do
+    assert_error %(
+      class Foo
+        @foo = 42
+
+        def initialize(&block : -> Int32)
+          @foo = yield
+        end
+      end
+
+      Foo.new { 42u32 }
+      ),
+      "expected block to return Int32, not UInt32"
+  end
+
   it "matches block arg return type" do
     assert_type("
       class Foo(T)
@@ -758,6 +773,20 @@ describe "Block inference" do
 
       def foo(&block : Alias)
         yield 1
+      end
+
+      foo do
+        1
+      end
+      )) { int32 }
+  end
+
+  it "ignores void return type (4)" do
+    assert_type(%(
+      alias Alias = Void
+
+      def foo(&block : -> Alias)
+        yield
       end
 
       foo do

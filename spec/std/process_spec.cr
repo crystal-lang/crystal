@@ -37,7 +37,7 @@ describe Process do
 
   it "redirects output to /dev/null" do
     # This doesn't test anything but no output should be seen while running tests
-    Process.run("/bin/ls", output: false).exit_code.should eq(0)
+    Process.run("/bin/ls", output: Process::Redirect::Close).exit_code.should eq(0)
   end
 
   it "gets output" do
@@ -83,7 +83,7 @@ describe Process do
 
   it "sets working directory" do
     parent = File.dirname(Dir.current)
-    value = Process.run("pwd", shell: true, chdir: parent, output: nil) do |proc|
+    value = Process.run("pwd", shell: true, chdir: parent, output: Process::Redirect::Pipe) do |proc|
       proc.output.gets_to_end
     end
     value.should eq "#{parent}\n"
@@ -96,19 +96,19 @@ describe Process do
   end
 
   it "looks up programs in the $PATH with a shell" do
-    proc = Process.run("uname", {"-a"}, shell: true, output: false)
+    proc = Process.run("uname", {"-a"}, shell: true, output: Process::Redirect::Close)
     proc.exit_code.should eq(0)
   end
 
   it "allows passing huge argument lists to a shell" do
-    proc = Process.new(%(echo "${@}"), {"a", "b"}, shell: true, output: nil)
+    proc = Process.new(%(echo "${@}"), {"a", "b"}, shell: true, output: Process::Redirect::Pipe)
     output = proc.output.gets_to_end
     proc.wait
     output.should eq "a b\n"
   end
 
   it "does not run shell code in the argument list" do
-    proc = Process.new("echo", {"`echo hi`"}, shell: true, output: nil)
+    proc = Process.new("echo", {"`echo hi`"}, shell: true, output: Process::Redirect::Pipe)
     output = proc.output.gets_to_end
     proc.wait
     output.should eq "`echo hi`\n"
