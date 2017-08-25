@@ -91,7 +91,7 @@ struct BigFloat < Float
     LibGMP.mpf_cmp_d(self, other.to_f64)
   end
 
-  def <=>(other : Int)
+  def <=>(other : Number)
     if other.is_a?(Int8 | Int16 | Int32) || (LibGMP::Long == Int64 && other.is_a?(Int64))
       LibGMP.mpf_cmp_si(self, other)
     elsif other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
@@ -99,10 +99,6 @@ struct BigFloat < Float
     else
       LibGMP.mpf_cmp(self, other.to_big_f)
     end
-  end
-
-  def <=>(other : Number)
-    LibGMP.mpf_cmp(self, other.to_big_f)
   end
 
   def -
