@@ -28,6 +28,26 @@ describe "HTML" do
     end
   end
 
+  describe ".escape_javascript" do
+    it "does not change a safe string" do
+      str = HTML.escape_javascript("safe_string")
+
+      str.should eq("safe_string")
+    end
+
+    it "escapes dangerous characters from a string" do
+      str = HTML.escape_javascript("</tag> \r\n \r \n \u2028 \u2029")
+
+      str.should eq("<\\/tag> \\n \\n \\n &#x2028; &#x2029;")
+    end
+
+    it "escapes dangerous characters from an IO" do
+      io = IO::Memory.new
+      HTML.escape_javascript("</tag> \r\n \r \n \u2028 \u2029", io).should be_nil
+      io.to_s.should eq("<\\/tag> \\n \\n \\n &#x2028; &#x2029;")
+    end
+  end
+
   describe ".unescape" do
     it "does not change a safe string" do
       str = HTML.unescape("safe_string")
