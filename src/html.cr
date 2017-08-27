@@ -10,6 +10,8 @@ module HTML
       '<' => "&lt;",
       '>' => "&gt;",
     },
+    # Escapes '&', '<' and '>', '"' and '\'' chars.
+    #
     # Like Ruby CGI.escape, PHP htmlspecialchars (with ENT_QUOTES), Rack::Utils.escape_html.
     true => {
       '&'  => "&amp;",
