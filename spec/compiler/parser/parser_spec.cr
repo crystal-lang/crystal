@@ -1022,6 +1022,8 @@ describe "Parser" do
   it_parses "->foo(Void*)", ProcPointer.new(nil, "foo", ["Void".path.pointer_of] of ASTNode)
   it_parses "call ->foo", Call.new(nil, "call", ProcPointer.new(nil, "foo"))
   it_parses "[] of ->\n", ArrayLiteral.new(of: ProcNotation.new)
+  it_parses "->foo=", ProcPointer.new(nil, "foo=")
+  it_parses "foo = 1; ->foo.foo=", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, "foo=")]
 
   it_parses "foo.bar = {} of Int32 => Int32", Call.new("foo".call, "bar=", HashLiteral.new(of: HashLiteral::Entry.new("Int32".path, "Int32".path)))
 
