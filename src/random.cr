@@ -1,3 +1,4 @@
+require "base64"
 require "random/pcg32"
 
 # `Random` provides an interface for random values generation, using a pseudo random number generator (PRNG).
@@ -37,6 +38,18 @@ require "random/pcg32"
 # produce uniformly distributed results. Your `Random` class should also have a way to initialize
 # it. For pseudo-random number generators that will usually be an integer seed, but there are no
 # rigid requirements for the initialization.
+#
+# The default PRNG is `Random::PCG32` which has a good overall statistical
+# distribution (low bias of generated numbers) and is fast for overall usages on
+# different platforms, but isn't cryptographically secure. If a third party has
+# access to some generated numbers, she may deduce incoming numbers, putting
+# your application at risk.
+#
+# It is recommended to use a secure source, such as `Random::Secure`,
+# `Random::ISAAC` or ChaCha20 for anything that needs security, such as online
+# games, identification tokens, salts, initializing a PRNG, ... These PRNG are
+# slower but cryptographically secure, so a third party can't deduce incoming
+# numbers.
 module Random
   DEFAULT = PCG32.new
 
@@ -278,6 +291,115 @@ module Random
         raise ArgumentError.new "Invalid range for rand: #{range}"
       end
       range.begin + rand * span
+    end
+  end
+
+  # Fills a given slice with random bytes.
+  #
+  # ```
+  # slice = Bytes.new(4) # => [0, 0, 0, 0]
+  # Random.new.random_bytes(slice)
+  # slice # => [217, 118, 38, 196]
+  # ```
+  def random_bytes(buf : Bytes) : Nil
+    n = buf.size / sizeof(typeof(next_u))
+    remaining = buf.size - n * sizeof(typeof(next_u))
+
+    slice = buf.to_unsafe.as(typeof(next_u)*).to_slice(n)
+    slice.each_index { |i| slice[i] = next_u }
+
+    if remaining > 0
+      bytes = next_u
+      remaining.times do |i|
+        bits = i * 8
+        mask = typeof(next_u).new(0xff << bits)
+        buf[-i - 1] = UInt8.new((bytes & mask) >> bits)
+      end
+    end
+  end
+
+  # Generates a slice filled with *n* random bytes.
+  #
+  # ```
+  # Random.new.random_bytes    # => [145, 255, 191, 133, 132, 139, 53, 136, 93, 238, 2, 37, 138, 244, 3, 216]
+  # Random.new.random_bytes(4) # => [217, 118, 38, 196]
+  # ```
+  def random_bytes(n : Int = 16) : Bytes
+    raise ArgumentError.new "Negative size: #{n}" if n < 0
+    Bytes.new(n).tap { |buf| random_bytes(buf) }
+  end
+
+  # Generates *n* random bytes that are encoded into base64.
+  #
+  # Check `Base64#strict_encode` for details.
+  #
+  # ```
+  # Random::Secure.base64(4) # => "fK1eYg=="
+  # ```
+  #
+  # It is recommended to use the secure `Random::Secure` as a source or another
+  # cryptographically quality PRNG such as `Random::ISAAC` or ChaCha20.
+  def base64(n : Int = 16) : String
+    Base64.strict_encode(random_bytes(n))
+  end
+
+  # URL-safe variant of `#base64`.
+  #
+  # Check `Base64#urlsafe_encode` for details.
+  #
+  # ```
+  # Random::Secure.urlsafe_base64                    # => "MAD2bw8QaBdvITCveBNCrw"
+  # Random::Secure.urlsafe_base64(8, padding: true)  # => "vvP1kcs841I="
+  # Random::Secure.urlsafe_base64(16, padding: true) # => "og2aJrELDZWSdJfVGkxNKw=="
+  # ```
+  #
+  # It is recommended to use the secure `Random::Secure` as a source or another
+  # cryptographically quality PRNG such as `Random::ISAAC` or ChaCha20.
+  def urlsafe_base64(n : Int = 16, padding = false) : String
+    Base64.urlsafe_encode(random_bytes(n), padding)
+  end
+
+  # Generates a hexadecimal string based on *n* random bytes.
+  #
+  # The bytes are encoded into a string of two-digit hexadecimal
+  # number (00-ff) per byte.
+  #
+  # ```
+  # Random::Secure.hex    # => "05f100a1123f6bdbb427698ab664ff5f"
+  # Random::Secure.hex(1) # => "1a"
+  # ```
+  #
+  # It is recommended to use the secure `Random::Secure` as a source or another
+  # cryptographically quality PRNG such as `Random::ISAAC` or ChaCha20.
+  def hex(n : Int = 16) : String
+    random_bytes(n).hexstring
+  end
+
+  # Generates a UUID (Universally Unique Identifier).
+  #
+  # It generates a random v4 UUID. See
+  # [RFC 4122 Section 4.4](https://tools.ietf.org/html/rfc4122#section-4.4)
+  # for the used algorithm and its implications.
+  #
+  # ```
+  # Random::Secure.uuid # => "a4e319dd-a778-4a51-804e-66a07bc63358"
+  # ```
+  #
+  # It is recommended to use the secure `Random::Secure` as a source or another
+  # cryptographically quality PRNG such as `Random::ISAAC` or ChaCha20.
+  def uuid : String
+    bytes = random_bytes(16)
+    bytes[6] = (bytes[6] & 0x0f) | 0x40
+    bytes[8] = (bytes[8] & 0x3f) | 0x80
+
+    String.new(36) do |buffer|
+      buffer[8] = buffer[13] = buffer[18] = buffer[23] = 45_u8
+      bytes[0, 4].hexstring(buffer + 0)
+      bytes[4, 2].hexstring(buffer + 9)
+      bytes[6, 2].hexstring(buffer + 14)
+      bytes[8, 2].hexstring(buffer + 19)
+      bytes[10, 6].hexstring(buffer + 24)
+      {36, 36}
     end
   end
 

@@ -1,5 +1,6 @@
 require "spec"
 require "http/web_socket"
+require "random/secure"
 
 private def assert_text_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
@@ -320,7 +321,7 @@ describe HTTP::WebSocket do
 
     ws2 = HTTP::WebSocket.new("ws://127.0.0.1:#{listen_port}")
 
-    random = SecureRandom.hex
+    random = Random::Secure.hex
     ws2.on_message do |str|
       str.should eq("pong #{random}")
       ws2.close
@@ -361,7 +362,7 @@ describe HTTP::WebSocket do
     client_context = OpenSSL::SSL::Context::Client.insecure
     ws2 = HTTP::WebSocket.new("127.0.0.1", port: listen_port, path: "/", tls: client_context)
 
-    random = SecureRandom.hex
+    random = Random::Secure.hex
     ws2.on_message do |str|
       str.should eq("pong #{random}")
       ws2.close
