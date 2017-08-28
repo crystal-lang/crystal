@@ -3,30 +3,30 @@ require "big_float"
 
 describe "BigFloat" do
   describe "new" do
-    int_str = "123456789012345678901"
-    int_bigf = BigFloat.new(int_str)
-    float_str = "1234567890.12345678901"
-    float_bigf = BigFloat.new(float_str)
+    string_of_integer_value = "123456789012345678901"
+    bigfloat_of_integer_value = BigFloat.new(string_of_integer_value)
+    string_of_float_value = "1234567890.12345678901"
+    bigfloat_of_float_value = BigFloat.new(string_of_float_value)
 
     it "new(String)" do
-      int_bigf.to_s.should eq(int_str)
-      float_bigf.to_s.should eq(float_str)
+      bigfloat_of_integer_value.to_s.should eq(string_of_integer_value)
+      bigfloat_of_float_value.to_s.should eq(string_of_float_value)
     end
 
     it "new(BigInt)" do
-      bigf_on_bigi = BigFloat.new(BigInt.new(int_str))
-      bigf_on_bigi.should eq(int_bigf)
-      bigf_on_bigi.to_s.should eq(int_str)
+      bigfloat_on_bigint_value = BigFloat.new(BigInt.new(string_of_integer_value))
+      bigfloat_on_bigint_value.should eq(bigfloat_of_integer_value)
+      bigfloat_on_bigint_value.to_s.should eq(string_of_integer_value)
     end
 
     it "new(BigRational)" do
-      bigf_on_bigr = BigFloat.new(BigRational.new(1, 3))
-      bigf_on_bigr.should eq(BigFloat.new(1) / BigFloat.new(3))
+      bigfloat_on_bigrational_value = BigFloat.new(BigRational.new(1, 3))
+      bigfloat_on_bigrational_value.should eq(BigFloat.new(1) / BigFloat.new(3))
     end
 
     it "new(BigFloat)" do
-      BigFloat.new(int_bigf).should eq(int_bigf)
-      BigFloat.new(float_bigf).should eq(float_bigf)
+      BigFloat.new(bigfloat_of_integer_value).should eq(bigfloat_of_integer_value)
+      BigFloat.new(bigfloat_of_float_value).should eq(bigfloat_of_float_value)
     end
 
     it "new(Int)" do
