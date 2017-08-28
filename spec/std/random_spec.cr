@@ -190,6 +190,18 @@ describe "Random" do
   end
 
   describe "random_bytes" do
+    it "generates random bytes" do
+      rng = TestRNG.new([0xfa19443eu32, 1u32, 0x12345678u32])
+      rng.random_bytes(9).should eq Bytes[0x3e, 0x44, 0x19, 0xfa, 1, 0, 0, 0, 0x78]
+      rng.random_bytes(1).should eq Bytes[0x3e]
+      rng.random_bytes(4).should eq Bytes[1, 0, 0, 0]
+      rng.random_bytes(3).should eq Bytes[0x78, 0x56, 0x34]
+      rng.random_bytes(0).should eq Bytes.new(0)
+
+      rng = TestRNG.new([12u8, 255u8, 11u8, 5u8, 122u8, 200u8, 192u8])
+      rng.random_bytes(7).should eq Bytes[12, 255, 11, 5, 122, 200, 192]
+    end
+
     it "gets random bytes with default number of digits" do
       bytes = TestRNG.new(RNG_DATA_32).random_bytes
       bytes.size.should eq(16)

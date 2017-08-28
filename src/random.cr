@@ -302,19 +302,17 @@ module Random
   # slice # => [217, 118, 38, 196]
   # ```
   def random_bytes(buf : Bytes) : Nil
-    n = buf.size / sizeof(typeof(next_u))
-    remaining = buf.size - n * sizeof(typeof(next_u))
+    ptr = buf.to_unsafe
+    finish = buf.to_unsafe + buf.size
 
-    slice = buf.to_unsafe.as(typeof(next_u)*).to_slice(n)
-    slice.each_index { |i| slice[i] = next_u }
-
-    if remaining > 0
-      bytes = next_u
-      remaining.times do |i|
-        bits = i * 8
-        mask = typeof(next_u).new(0xff << bits)
-        buf[-i - 1] = UInt8.new((bytes & mask) >> bits)
+    while ptr < finish
+      random = next_u
+      rand_ptr = pointerof(random).as(UInt8*)
+      if IO::ByteFormat::SystemEndian != IO::ByteFormat::LittleEndian
+        rand_ptr.to_slice(sizeof(typeof(next_u))).reverse!
       end
+      rand_ptr.copy_to(ptr, {finish - ptr, sizeof(typeof(next_u))}.min)
+      ptr += sizeof(typeof(next_u))
     end
   end
 
