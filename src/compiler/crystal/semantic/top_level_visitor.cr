@@ -647,6 +647,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def type_assign(target, value, node)
     value.accept self
+
+    # Prevent to assign instance variables inside nested expressions.
+    # `@exp_nest > 1` is to check nested expressions. We cannot use `inside_exp?` simply
+    # because `@exp_nest` is increased when `node` is `Assign`.
+    if @exp_nest > 1 && target.is_a?(InstanceVar)
+      node.raise "can't use instance variables at the top level"
+    end
+
     false
   end
 
