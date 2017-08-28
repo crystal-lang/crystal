@@ -17,6 +17,12 @@ struct BigFloat < Float
     LibGMP.mpf_init_set_str(out @mpf, str, 10)
   end
 
+  def initialize(rat : BigRational)
+    raise "Rat"
+    LibGMP.mpf_init(out @mpf)
+    # LibGMP.mpf_set_q(self, num)
+  end
+
   def initialize(num : Number)
     LibGMP.mpf_init_set_d(out @mpf, num.to_f64)
   end
