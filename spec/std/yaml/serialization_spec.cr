@@ -127,7 +127,7 @@ describe "YAML serialization" do
             ]
             YAML
         end
-        ex.message.should eq("Expected nil, not 1 at line 2, column 3")
+        ex.message.should eq("Expected null, not '1' at line 2, column 3")
         ex.location.should eq({2, 3})
       end
 

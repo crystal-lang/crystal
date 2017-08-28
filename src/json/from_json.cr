@@ -232,6 +232,8 @@ end
 
 def Time.new(pull : JSON::PullParser)
   Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
+rescue e : Time::Format::Error
+  raise JSON::ParseException.new(e.message, 0, 0)
 end
 
 struct Time::Format

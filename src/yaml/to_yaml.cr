@@ -52,7 +52,19 @@ end
 
 class String
   def to_yaml(yaml : YAML::Builder)
-    yaml.scalar self
+    style = LibYAML::ScalarStyle::PLAIN
+    reserved = YAML::NULL_VALUES.includes?(self) ||
+               YAML::BOOL_VALUES.includes?(self) ||
+               YAML::INFINITY_VALUES.includes?(self.lchop('+')) ||
+               YAML::INFINITY_VALUES.includes?(self.lchop('-')) ||
+               YAML::NAN_VALUES.includes?(self) ||
+               self.to_i64?(underscore: true, prefix: true) ||
+               self.to_f64? ||
+               begin
+                 Time::Format::ISO_8601_DATE_TIME.parse(self)
+               rescue Time::Format::Error
+               end
+    yaml.scalar self, reserved ? LibYAML::ScalarStyle::DOUBLE_QUOTED : LibYAML::ScalarStyle::ANY
   end
 end
 
@@ -61,6 +73,22 @@ struct Number
     yaml.scalar self
   end
 end
+
+{% for type in %w(Float32 Float64) %}
+  struct {{type.id}}
+    def to_yaml(yaml : YAML::Builder)
+      if self == INFINITY
+        yaml.scalar ".inf", LibYAML::ScalarStyle::PLAIN
+      elsif self == -INFINITY
+        yaml.scalar "-.inf", LibYAML::ScalarStyle::PLAIN
+      elsif self.nan?
+        yaml.scalar ".nan", LibYAML::ScalarStyle::PLAIN
+      else
+        yaml.scalar self
+      end
+    end
+  end
+{% end %}
 
 struct Nil
   def to_yaml(yaml : YAML::Builder)
@@ -102,7 +130,7 @@ end
 
 struct Time::Format
   def to_yaml(value : Time, yaml : YAML::Builder)
-    format(value).to_yaml(yaml)
+    yaml.scalar format(value)
   end
 end
 

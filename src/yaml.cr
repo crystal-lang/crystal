@@ -60,6 +60,13 @@ require "./yaml/*"
 # File.open("foo.yml", "w") { |f| {hello: "world"}.to_yaml(f) } # writes it to the file
 # ```
 module YAML
+  NULL_VALUES     = {"", "~", "null", "Null", "NULL"}
+  TRUE_VALUES     = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"}
+  FALSE_VALUES    = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"}
+  BOOL_VALUES     = TRUE_VALUES + FALSE_VALUES
+  INFINITY_VALUES = {".inf", ".Inf", ".INF"}
+  NAN_VALUES      = {".nan", ".NaN", ".NAN"}
+
   class Error < Exception
   end
 

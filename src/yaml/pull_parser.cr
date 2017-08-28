@@ -34,6 +34,10 @@ class YAML::PullParser
     @event.type
   end
 
+  def data
+    @event.data
+  end
+
   def tag
     ptr = @event.data.scalar.tag
     ptr ? String.new(ptr) : nil
@@ -120,6 +124,17 @@ class YAML::PullParser
     anchor = alias_anchor
     read_next
     anchor
+  end
+
+  def read_plain_scalar
+    read_scalar(LibYAML::ScalarStyle::PLAIN)
+  end
+
+  def read_scalar(style : LibYAML::ScalarStyle)
+    unless @event.data.scalar.style == style
+      raise "Expected #{style} scaler but was #{@event.data.scalar.style}"
+    end
+    read_scalar
   end
 
   def read_scalar

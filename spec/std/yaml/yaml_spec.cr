@@ -130,14 +130,14 @@ describe "YAML" do
 
   describe "dump" do
     it "returns YAML as a string" do
-      YAML.dump(%w(1 2 3)).should eq("---\n- 1\n- 2\n- 3\n")
+      YAML.dump(%w(1 2 3)).should eq("---\n- \"1\"\n- \"2\"\n- \"3\"\n")
     end
 
     it "writes YAML to a stream" do
       string = String.build do |str|
         YAML.dump(%w(1 2 3), str)
       end
-      string.should eq("---\n- 1\n- 2\n- 3\n")
+      string.should eq("---\n- \"1\"\n- \"2\"\n- \"3\"\n")
     end
   end
 end
