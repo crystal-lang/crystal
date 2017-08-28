@@ -42,34 +42,38 @@ def Bool.new(pull : YAML::PullParser)
   end
 end
 
-{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
-  def {{type.id}}.new(pull : YAML::PullParser)
-    location = pull.location
-    value = pull.read_plain_scalar
-    begin
-      value.to_{{type.gsub(/^(U|I)I?nt/, "\\1").downcase.id}}(prefix: true, underscore: true)
-    rescue ex
-      raise YAML::ParseException.new(ex.message.not_nil!, *location)
+{% for bits in [8, 16, 32, 64] %}
+  {% for type in %w(Int UInt) %}
+    def {{type.id}}{{bits}}.new(pull : YAML::PullParser)
+      location = pull.location
+      value = pull.read_plain_scalar
+
+      number = {% if type == "UInt" %}
+        value.to_u{{bits}}?(underscore: false, prefix: true)
+      {% else %}
+        value.to_i{{bits}}?(underscore: false, prefix: true)
+      {% end %}
+      return number if number
+
+      raise YAML::ParseException.new("Invalid {{type.id}}{{bits}} number", *location)
     end
-  end
+  {% end %}
 {% end %}
 
-{% for type in %w(Float32 Float64) %}
-  def {{type.id}}.new(pull : YAML::PullParser)
+{% for bits in [32, 64] %}
+  def Float{{bits}}.new(pull : YAML::PullParser)
     location = pull.location
     value = pull.read_plain_scalar
-    if YAML::INFINITY_VALUES.includes? value.lchop('+')
+    if float = value.to_f{{bits}}?
+      float
+    elsif YAML::INFINITY_VALUES.includes? value.lchop('+')
       INFINITY
     elsif value[0]? == '-' && YAML::INFINITY_VALUES.includes?(value.lchop('-'))
       -INFINITY
     elsif YAML::NAN_VALUES.includes? value
       NAN
     else
-      begin
-        value.to_f{{type.gsub(/^Float/, "").id}}
-      rescue ex
-        raise YAML::ParseException.new(ex.message.not_nil!, *location)
-      end
+      raise YAML::ParseException.new("Invalid Float{{bits}} number", *location)
     end
   end
 {% end %}

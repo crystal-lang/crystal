@@ -52,19 +52,15 @@ end
 
 class String
   def to_yaml(yaml : YAML::Builder)
-    style = LibYAML::ScalarStyle::PLAIN
-    reserved = YAML::NULL_VALUES.includes?(self) ||
-               YAML::BOOL_VALUES.includes?(self) ||
-               YAML::INFINITY_VALUES.includes?(self.lchop('+')) ||
-               YAML::INFINITY_VALUES.includes?(self.lchop('-')) ||
-               YAML::NAN_VALUES.includes?(self) ||
+    style = if YAML::RESERVED_VALUES.includes?(self) ||
                self.to_i64?(underscore: true, prefix: true) ||
                self.to_f64? ||
-               begin
-                 Time::Format::ISO_8601_DATE_TIME.parse(self)
-               rescue Time::Format::Error
-               end
-    yaml.scalar self, reserved ? LibYAML::ScalarStyle::DOUBLE_QUOTED : LibYAML::ScalarStyle::ANY
+               (Time::Format::ISO_8601_DATE_TIME.parse(self) rescue nil)
+              LibYAML::ScalarStyle::DOUBLE_QUOTED
+            else
+              LibYAML::ScalarStyle::PLAIN
+            end
+    yaml.scalar self, style
   end
 end
 

@@ -66,6 +66,8 @@ module YAML
   BOOL_VALUES     = TRUE_VALUES + FALSE_VALUES
   INFINITY_VALUES = {".inf", ".Inf", ".INF"}
   NAN_VALUES      = {".nan", ".NaN", ".NAN"}
+  FLOAT_VALUES    = INFINITY_VALUES + INFINITY_VALUES.map { |v| "-#{v}" } + INFINITY_VALUES.map { |v| "+#{v}" } + NAN_VALUES
+  RESERVED_VALUES = NULL_VALUES + BOOL_VALUES + FLOAT_VALUES
 
   class Error < Exception
   end
