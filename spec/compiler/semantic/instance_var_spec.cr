@@ -4732,4 +4732,15 @@ describe "Semantic: instance var" do
       Container.new(container, "foo2")
       )) { types["Container"] }
   end
+
+  it "errors when assigning instance variable inside nested expression" do
+    assert_error %(
+      class Foo
+        if true
+          @foo = 1
+        end
+      end
+      ),
+      "can't assign instance variables outside method dynamically"
+  end
 end
