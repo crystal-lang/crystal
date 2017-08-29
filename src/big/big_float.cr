@@ -40,10 +40,6 @@ struct BigFloat < Float
     LibGMP.mpf_init_set_ui(out @mpf, num)
   end
 
-  def initialize(num : UInt8 | UInt16 | UInt32)
-    LibGMP.mpf_init_set_ui(out @mpf, num)
-  end
-
   def initialize(num : Int64)
     if LibGMP::Long == Int64
       LibGMP.mpf_init_set_si(out @mpf, num)
