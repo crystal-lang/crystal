@@ -42,6 +42,8 @@ def Bool.new(pull : YAML::PullParser)
   end
 end
 
+# TODO: Ideally, it may be beter to use `for type in Int::Primitive.union_types`
+# but it is currently broken due to: https://github.com/crystal-lang/crystal/issues/4301
 {% for bits in [8, 16, 32, 64] %}
   {% for type in %w(Int UInt) %}
     def {{type.id}}{{bits}}.new(pull : YAML::PullParser)
