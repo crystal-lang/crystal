@@ -65,11 +65,12 @@ end
 {% for type in %w(Float32 Float64) %}
   struct {{type.id}}
     def to_yaml(yaml : YAML::Builder)
-      if self == INFINITY
+      case self
+      when INFINITY
         yaml.scalar ".inf", LibYAML::ScalarStyle::PLAIN
-      elsif self == -INFINITY
+      when -INFINITY
         yaml.scalar "-.inf", LibYAML::ScalarStyle::PLAIN
-      elsif self.nan?
+      when .nan?
         yaml.scalar ".nan", LibYAML::ScalarStyle::PLAIN
       else
         yaml.scalar self
