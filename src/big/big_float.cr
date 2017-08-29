@@ -17,41 +17,53 @@ struct BigFloat < Float
     LibGMP.mpf_init_set_str(out @mpf, str, 10)
   end
 
-  def initialize(num : Number)
-    # FIXME: this case is workaround of Crystal's unrealiable method overloading
-    # as described by #4897.
-    # Remove it when separate BigFloat.new(BigInt) will pass the spec
-    case num
-    when BigInt
-      LibGMP.mpf_init(out @mpf)
-      LibGMP.mpf_set_z(self, num)
-    when BigRational
-      LibGMP.mpf_init(out @mpf)
-      LibGMP.mpf_set_q(self, num)
-    when BigFloat
-      LibGMP.mpf_init(out @mpf)
-      LibGMP.mpf_set(self, num)
-    when Int8, Int16, Int32
+  def initialize(num : BigInt)
+    LibGMP.mpf_init(out @mpf)
+    LibGMP.mpf_set_z(self, num)
+  end
+
+  def initialize(num : BigRational)
+    LibGMP.mpf_init(out @mpf)
+    LibGMP.mpf_set_q(self, num)
+  end
+
+  def initialize(num : BigFloat)
+    LibGMP.mpf_init(out @mpf)
+    LibGMP.mpf_set(self, num)
+  end
+
+  def initialize(num : Int8 | Int16 | Int32)
+    LibGMP.mpf_init_set_si(out @mpf, num)
+  end
+
+  def initialize(num : UInt8 | UInt16 | UInt32)
+    LibGMP.mpf_init_set_ui(out @mpf, num)
+  end
+
+  def initialize(num : UInt8 | UInt16 | UInt32)
+    LibGMP.mpf_init_set_ui(out @mpf, num)
+  end
+
+  def initialize(num : Int64)
+    if LibGMP::Long == Int64
       LibGMP.mpf_init_set_si(out @mpf, num)
-    when UInt8, UInt16, UInt32
-      LibGMP.mpf_init_set_ui(out @mpf, num)
-    when Int64
-      if LibGMP::Long == Int64
-        LibGMP.mpf_init_set_si(out @mpf, num)
-      else
-        LibGMP.mpf_init(out @mpf)
-        LibGMP.mpf_set_z(self, num.to_big_i)
-      end
-    when UInt64
-      if LibGMP::ULong == UInt64
-        LibGMP.mpf_init_set_ui(out @mpf, num)
-      else
-        LibGMP.mpf_init(out @mpf)
-        LibGMP.mpf_set_z(self, num.to_big_i)
-      end
     else
-      LibGMP.mpf_init_set_d(out @mpf, num.to_f64)
+      LibGMP.mpf_init(out @mpf)
+      LibGMP.mpf_set_z(self, num.to_big_i)
     end
+  end
+
+  def initialize(num : UInt64)
+    if LibGMP::ULong == UInt64
+      LibGMP.mpf_init_set_ui(out @mpf, num)
+    else
+      LibGMP.mpf_init(out @mpf)
+      LibGMP.mpf_set_z(self, num.to_big_i)
+    end
+  end
+
+  def initialize(num : Number)
+    LibGMP.mpf_init_set_d(out @mpf, num.to_f64)
   end
 
   def initialize(num : Float, precision : Int)
