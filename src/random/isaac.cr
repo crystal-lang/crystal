@@ -12,13 +12,16 @@ class Random::ISAAC
   private getter bb
   private getter cc
 
-  private def self.random_seeds
-    (uninitialized StaticArray(UInt32, 8)).tap do |seeds|
-      System::Random.random_bytes(seeds.to_slice)
-    end
+  private alias Seeds = StaticArray(UInt32, 8)
+
+  private def random_seeds
+    result = uninitialized Seeds
+    result_slice = result.unsafe_as(StaticArray(UInt8, sizeof(Seeds))).to_slice
+    Crystal::System::Random.random_bytes(result_slice)
+    result
   end
 
-  def initialize(seeds = self.random_seeds)
+  def initialize(seeds = random_seeds)
     @rsl = StaticArray(UInt32, 256).new { 0_u32 }
     @mm = StaticArray(UInt32, 256).new { 0_u32 }
     @counter = 0
@@ -26,7 +29,7 @@ class Random::ISAAC
     init_by_array(seeds)
   end
 
-  def new_seed(seeds = self.random_seeds)
+  def new_seed(seeds = random_seeds)
     @aa = @bb = @cc = 0_u32
     init_by_array(seeds)
   end

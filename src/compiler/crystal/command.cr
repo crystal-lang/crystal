@@ -111,7 +111,7 @@ class Crystal::Command
       puts USAGE
       exit
     end
-  rescue ex : Crystal::ToolException
+  rescue ex : Crystal::LocationlessException
     error ex.message
   rescue ex : Crystal::Exception
     ex.color = @color
@@ -401,6 +401,9 @@ class Crystal::Command
         end
         opts.on("--verbose", "Display executed commands") do
           compiler.verbose = true
+        end
+        opts.on("--static", "Link statically") do
+          compiler.static = true
         end
       end
 

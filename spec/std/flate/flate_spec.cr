@@ -20,6 +20,19 @@ module Flate
 
       str.should eq("line1111\nline2222\n")
     end
+
+    describe ".open" do
+      it "yields itself to block" do
+        # Hello Crystal!
+        message = Bytes[243, 72, 205, 201, 201, 87, 112, 46, 170, 44, 46, 73,
+          204, 81, 4, 0]
+
+        io = IO::Memory.new(message)
+        Reader.open(io) do |reader|
+          reader.gets_to_end.should eq("Hello Crystal!")
+        end
+      end
+    end
   end
 
   describe Writer do
@@ -62,6 +75,19 @@ module Flate
       writer.close
       writer.closed?.should be_true
       io.closed?.should be_true
+    end
+
+    describe ".open" do
+      it "yields itself to block" do
+        io = IO::Memory.new
+        Writer.open(io) do |writer|
+          writer.write "Hello Crystal!".to_slice
+        end
+
+        io.rewind
+        io.to_slice.should eq(Bytes[243, 72, 205, 201, 201, 87, 112, 46, 170, 44, 46, 73,
+          204, 81, 4, 0])
+      end
     end
   end
 end
