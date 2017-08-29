@@ -156,4 +156,15 @@ module YAML
   def self.dump(object, io : IO)
     object.to_yaml(io)
   end
+
+  # Checks to see if the value is reserved
+  def self.reserved_value?(value)
+    if v = YAML::RESERVED_VALUES.find { |v| v == value }
+      v
+    elsif (['.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] & value[0..1].chars).first?
+      value.to_i64?(underscore: true, prefix: true) ||
+      value.to_f64? ||
+      (Time::Format::ISO_8601_DATE_TIME.parse(value) rescue nil)
+    end
+  end
 end

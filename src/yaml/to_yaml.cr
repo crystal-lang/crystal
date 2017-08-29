@@ -52,15 +52,7 @@ end
 
 class String
   def to_yaml(yaml : YAML::Builder)
-    style = if YAML::RESERVED_VALUES.includes?(self) ||
-               self.to_i64?(underscore: true, prefix: true) ||
-               self.to_f64? ||
-               (Time::Format::ISO_8601_DATE_TIME.parse(self) rescue nil)
-              LibYAML::ScalarStyle::DOUBLE_QUOTED
-            else
-              LibYAML::ScalarStyle::PLAIN
-            end
-    yaml.scalar self, style
+    yaml.scalar self, YAML.reserved_value?(self) ? LibYAML::ScalarStyle::DOUBLE_QUOTED : LibYAML::ScalarStyle::PLAIN
   end
 end
 

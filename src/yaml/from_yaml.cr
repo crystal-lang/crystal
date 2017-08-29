@@ -91,14 +91,14 @@ end
 
 def String.new(pull : YAML::PullParser)
   location = pull.location
-  return pull.read_scalar unless pull.data.scalar.style == LibYAML::ScalarStyle::PLAIN
-  pull.read_plain_scalar.tap do |value|
-    reserved = YAML::RESERVED_VALUES.includes?(value) ||
-               value.to_i64?(underscore: true, prefix: true) ||
-               value.to_f64? ||
-               (Time::Format::ISO_8601_DATE_TIME.parse(value) rescue nil)
-
-    raise YAML::ParseException.new(%(Expected string, not "#{value}"), *location) if reserved
+  if pull.data.scalar.style == LibYAML::ScalarStyle::PLAIN
+    pull.read_plain_scalar.tap do |value|
+      if YAML.reserved_value?(value)
+        raise YAML::ParseException.new(%(Expected string, not "#{value}"), *location)
+      end
+    end
+  else
+    pull.read_scalar
   end
 end
 
