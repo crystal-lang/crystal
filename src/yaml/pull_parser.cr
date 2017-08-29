@@ -132,7 +132,7 @@ class YAML::PullParser
 
   def read_scalar(style : LibYAML::ScalarStyle)
     unless @event.data.scalar.style == style
-      raise "Expected #{style} scaler but was #{@event.data.scalar.style}"
+      raise "Expected #{style} scalar but was #{@event.data.scalar.style}"
     end
     read_scalar
   end
