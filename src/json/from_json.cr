@@ -231,9 +231,12 @@ def Union.new(pull : JSON::PullParser)
 end
 
 def Time.new(pull : JSON::PullParser)
-  Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
-rescue e : Time::Format::Error
-  raise JSON::ParseException.new(e.message, 0, 0)
+  location = pull.location
+  begin
+    Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
+  rescue e : Time::Format::Error
+    raise JSON::ParseException.new(e.message, *location)
+  end
 end
 
 struct Time::Format
