@@ -18,6 +18,9 @@ struct BigFloat < Float
   end
 
   def initialize(num : Number)
+    # FIXME: this case is workaround of Crystal's unrealiable method overloading
+    # as described by #4897.
+    # Remove it when separate BigFloat.new(BigInt) will pass the spec
     case num
     when BigInt
       LibGMP.mpf_init(out @mpf)
