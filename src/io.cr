@@ -5,9 +5,9 @@ require "c/sys/wait"
 require "c/errno"
 require "c/unistd"
 
-# The `IO` module is the basis for all input and output in Crystal.
+# The `IO` class is the basis for all input and output in Crystal.
 #
-# This module is included by types like `File`, `Socket` and `IO::Memory` and
+# This class is inherited by types like `File`, `Socket` and `IO::Memory` and
 # provide many useful methods for reading to and writing from an IO, like `print`, `puts`,
 # `gets` and `printf`.
 #
@@ -20,9 +20,7 @@ require "c/unistd"
 # For example, this is a simple `IO` on top of a `Bytes`:
 #
 # ```
-# class SimpleSliceIO
-#   include IO
-#
+# class SimpleSliceIO < IO
 #   def initialize(@slice : Bytes)
 #   end
 #
@@ -61,7 +59,7 @@ require "c/unistd"
 # Mixing string and byte operations might not give correct results and should be
 # avoided, as string operations might need to read extra bytes in order to get characters
 # in the given encoding.
-module IO
+abstract class IO
   # Argument to a `seek` operation.
   enum Seek
     # Seeks to an absolute location
@@ -1046,6 +1044,75 @@ module IO
   # Returns this `IO`'s encoding. The default is `UTF-8`.
   def encoding : String
     @encoding.try(&.name) || "UTF-8"
+  end
+
+  # Seeks to a given *offset* (in bytes) according to the *whence* argument.
+  #
+  # The `IO` class raises on this method, but some subclasses, notable
+  # `IO::FileDescriptor` and `IO::Memory` implement it.
+  #
+  # Returns `self`.
+  #
+  # ```
+  # File.write("testfile", "abc")
+  #
+  # file = File.new("testfile")
+  # file.gets(3) # => "abc"
+  # file.seek(1, IO::Seek::Set)
+  # file.gets(2) # => "bc"
+  # file.seek(-1, IO::Seek::Current)
+  # file.gets(1) # => "c"
+  # ```
+  def seek(offset, whence : Seek = Seek::Set)
+    raise Error.new "Unable to seek"
+  end
+
+  # Returns the current position (in bytes) in this `IO`.
+  #
+  # The `IO` class raises on this method, but some subclasses, notable
+  # `IO::FileDescriptor` and `IO::Memory` implement it.
+  #
+  # ```
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos     # => 0
+  # file.gets(2) # => "he"
+  # file.pos     # => 2
+  # ```
+  def pos
+    raise Error.new "Unable to pos"
+  end
+
+  # Sets the current position (in bytes) in this `IO`.
+  #
+  # The `IO` class raises on this method, but some subclasses, notable
+  # `IO::FileDescriptor` and `IO::Memory` implement it.
+  #
+  # ```
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos = 3
+  # file.gets_to_end # => "lo"
+  # ```
+  def pos=(value)
+    raise Error.new "Unable to pos="
+  end
+
+  # Same as `pos`.
+  def tell
+    pos
+  end
+
+  # Yields an `IO` to read a section inside this IO.
+  #
+  # The `IO` class raises on this method, but some subclasses, notable
+  # `File` and `IO::Memory` implement it.
+  #
+  # Mutliple sections can be read concurrently.
+  def read_at(offset, bytesize, &block)
+    raise Error.new "Unable to read_at"
   end
 
   # Copy all contents from *src* to *dst*.

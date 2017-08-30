@@ -1,6 +1,6 @@
 require "termios"
 
-class IO::FileDescriptor
+class IO::FileDescriptor < IO
   # Turn off character echoing for the duration of the given block.
   # This will prevent displaying back to the user what they enter on the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.

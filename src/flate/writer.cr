@@ -5,9 +5,7 @@
 #
 # NOTE: unless created with a block, `close` must be invoked after all
 # data has been written to a Flate::Writer instance.
-class Flate::Writer
-  include IO
-
+class Flate::Writer < IO
   # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
   property? sync_close : Bool
 

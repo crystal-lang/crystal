@@ -1,9 +1,7 @@
 require "spec"
 require "file_utils"
 
-private class OneByOneIO
-  include IO
-
+private class OneByOneIO < IO
   @bytes : Bytes
 
   def initialize(string)

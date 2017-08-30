@@ -1,6 +1,6 @@
 require "spec"
 
-private class BufferedWrapper
+private class BufferedWrapper < IO
   include IO::Buffered
 
   getter called_unbuffered_read

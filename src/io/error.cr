@@ -1,4 +1,4 @@
-module IO
+class IO
   class Error < Exception
   end
 

@@ -42,9 +42,7 @@ class HTTP::WebSocket::Protocol
     @masked = !!masked
   end
 
-  class StreamIO
-    include IO
-
+  class StreamIO < IO
     def initialize(@websocket : Protocol, binary, frame_size)
       @opcode = binary ? Opcode::BINARY : Opcode::TEXT
       @buffer = Bytes.new(frame_size)

@@ -22,43 +22,39 @@
 # 00000000  00                                                .
 # 00000000  00 00 00 00                                       ....
 # ```
-module IO
-  class Hexdump
-    include IO
+class IO::Hexdump < IO
+  def initialize(@io : IO, @output : IO = STDERR, @read = false, @write = false)
+  end
 
-    def initialize(@io : IO, @output : IO = STDERR, @read = false, @write = false)
+  def read(buf : Bytes)
+    @io.read(buf).tap do |read_bytes|
+      @output.puts buf[0, read_bytes].hexdump if @read && read_bytes
     end
+  end
 
-    def read(buf : Bytes)
-      @io.read(buf).tap do |read_bytes|
-        @output.puts buf[0, read_bytes].hexdump if @read && read_bytes
-      end
+  def write(buf : Bytes)
+    @io.write(buf).tap do
+      @output.puts buf.hexdump if @write
     end
+  end
 
-    def write(buf : Bytes)
-      @io.write(buf).tap do
-        @output.puts buf.hexdump if @write
-      end
-    end
+  def peek
+    @io.peek
+  end
 
-    def peek
-      @io.peek
-    end
+  def closed?
+    @io.closed?
+  end
 
-    def closed?
-      @io.closed?
-    end
+  def close
+    @io.close
+  end
 
-    def close
-      @io.close
-    end
+  def flush
+    @io.flush
+  end
 
-    def flush
-      @io.flush
-    end
-
-    def tty?
-      @io.tty?
-    end
+  def tty?
+    @io.tty?
   end
 end

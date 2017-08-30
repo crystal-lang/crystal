@@ -26,9 +26,7 @@
 # end
 # string # => "abc"
 # ```
-class Gzip::Reader
-  include IO
-
+class Gzip::Reader < IO
   # Whether to close the enclosed `IO` when closing this reader.
   property? sync_close = false
 

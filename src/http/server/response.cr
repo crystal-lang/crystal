@@ -12,9 +12,7 @@ class HTTP::Server
   # are written and the connection `IO` (a socket) is yielded to the given block.
   # The block must invoke `close` afterwards, the server won't do it in this case.
   # This is useful to implement protocol upgrades, such as websockets.
-  class Response
-    include IO
-
+  class Response < IO
     # The response headers (`HTTP::Headers`). These must be set before writing to the response.
     getter headers : HTTP::Headers
 
@@ -136,7 +134,7 @@ class HTTP::Server
     end
 
     # :nodoc:
-    class Output
+    class Output < IO
       include IO::Buffered
 
       property! response : Response
