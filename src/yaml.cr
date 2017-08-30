@@ -167,41 +167,19 @@ module YAML
 
   # Checks to see if the value is reserved
   def self.reserved_value?(value, checks = 0)
-    if YAML::RESERVED_VALUES.includes?(value)
-      true
-    else
-      reserved = nil
-      reader = Char::Reader.new(value)
-      hint = ScalarHint::Any
-      while reserved.nil?
-        case {reader.pos, hint, reader.current_char}
-        when {0, ScalarHint::Any, .ascii_number?}
-          hint = ScalarHint::Int | ScalarHint::Date | ScalarHint::Float
-        when {0, _, '-'}, {0, _, '+'}
-          hint = ScalarHint::Int | ScalarHint::Float
-          reader.next_char
-        when {.<=(1), .includes?(ScalarHint::Float), '.'}
-          hint = ScalarHint::Float
-          reader.next_char
-        when {.<=(2), .includes?(ScalarHint::Float), .ascii_number?}
-          reserved = value.gsub('_', "").to_f64?
-          if hint.includes?(ScalarHint::Int)
-            hint = ScalarHint::Int
-          else
-            reserved = reserved || false
-          end
-        when {_, .includes?(ScalarHint::Int), .ascii_number?}
-          reserved = value.gsub('_', "").to_i64?(prefix: true)
-          hint = ScalarHint::Date
-        when {.<(4), ScalarHint::Date, .ascii_number?}
-          reader.next_char
-        when {4, ScalarHint::Date, '-'}
-          reserved = (Time::Format::ISO_8601_DATE_TIME.parse(value) rescue false)
-        else
-          reserved = false
-        end
-      end
-      reserved
+    return true if YAML::RESERVED_VALUES.includes?(value)
+    just_value = value.ljust(5, 'x')
+    case {just_value[0], just_value[1], just_value[2], just_value[3], just_value[4]}
+    when {.ascii_number?, .ascii_number?, .ascii_number?, .ascii_number?, '-'}
+      (Time::Format::ISO_8601_DATE_TIME.parse(value) rescue false)
+    when {.ascii_number?, _, _, _, _},
+         {'-', .ascii_number?, _, _, _},
+         {'+', .ascii_number?, _, _, _},
+         {'.', .ascii_number?, _, _, _},
+         {'-', '.', .ascii_number?, _, _},
+         {'+', '.', .ascii_number?, _, _}
+      clean_value = value.gsub('_', "")
+      clean_value.to_f64? || clean_value.to_i64?(prefix: true)
     end
   end
 end
