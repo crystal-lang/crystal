@@ -1,4 +1,4 @@
-class Crystal::System::DirHandle
+struct Crystal::System::DirHandle
   # Creates a new `DirHandle`
   # def self.new(path : String) : DirHandle
 

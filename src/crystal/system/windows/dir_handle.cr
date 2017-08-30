@@ -1,7 +1,7 @@
 require "c/winapi"
 require "winerror"
 
-class Crystal::System::DirHandle
+struct Crystal::System::DirHandle
   @dir_handle : LibC::Handle
 
   def initialize(path : String)

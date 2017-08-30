@@ -2,7 +2,7 @@ require "c/dirent"
 require "c/unistd"
 require "c/sys/stat"
 
-class Crystal::System::DirHandle
+struct Crystal::System::DirHandle
   @dirhandle : LibC::DIR*
 
   @closed = false
