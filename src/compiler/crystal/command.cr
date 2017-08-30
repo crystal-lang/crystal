@@ -111,7 +111,7 @@ class Crystal::Command
       puts USAGE
       exit
     end
-  rescue ex : Crystal::ToolException
+  rescue ex : Crystal::LocationlessException
     error ex.message
   rescue ex : Crystal::Exception
     ex.color = @color

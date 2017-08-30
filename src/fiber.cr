@@ -265,10 +265,14 @@ class Fiber
     {% end %}
   end
 
-  def sleep(time)
+  def sleep(time : Time::Span)
     event = @resume_event ||= Scheduler.create_resume_event(self)
     event.add(time)
     Scheduler.reschedule
+  end
+
+  def sleep(time : Number)
+    sleep(time.seconds)
   end
 
   def yield
