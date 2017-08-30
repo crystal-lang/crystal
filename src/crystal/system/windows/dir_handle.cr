@@ -1,5 +1,5 @@
-require "c/winapi.cr"
-require "winerror.cr"
+require "c/winapi"
+require "winerror"
 
 class Crystal::System::DirHandle
   @dir_handle : LibC::Handle
