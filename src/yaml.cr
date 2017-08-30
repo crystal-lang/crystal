@@ -168,16 +168,15 @@ module YAML
   # Checks to see if the value is reserved
   def self.reserved_value?(value, checks = 0)
     return true if YAML::RESERVED_VALUES.includes?(value)
-    just_value = value.ljust(5, 'x')
-    case {just_value[0], just_value[1], just_value[2], just_value[3], just_value[4]}
-    when {.ascii_number?, .ascii_number?, .ascii_number?, .ascii_number?, '-'}
+    case {value[0]?, value[1]?, value[2]?, value[3]?, value[4]?}
+    when {.try(&.ascii_number?), .try(&.ascii_number?), .try(&.ascii_number?), .try(&.ascii_number?), '-'}
       (Time::Format::ISO_8601_DATE_TIME.parse(value) rescue false)
-    when {.ascii_number?, _, _, _, _},
-         {'-', .ascii_number?, _, _, _},
-         {'+', .ascii_number?, _, _, _},
-         {'.', .ascii_number?, _, _, _},
-         {'-', '.', .ascii_number?, _, _},
-         {'+', '.', .ascii_number?, _, _}
+    when {.try(&.ascii_number?), _, _, _, _},
+         {'-', .try(&.ascii_number?), _, _, _},
+         {'+', .try(&.ascii_number?), _, _, _},
+         {'.', .try(&.ascii_number?), _, _, _},
+         {'-', '.', .try(&.ascii_number?), _, _},
+         {'+', '.', .try(&.ascii_number?), _, _}
       clean_value = value.gsub('_', "")
       clean_value.to_f64? || clean_value.to_i64?(prefix: true)
     end
