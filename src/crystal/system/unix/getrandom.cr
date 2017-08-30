@@ -3,7 +3,7 @@
 require "c/unistd"
 require "c/sys/syscall"
 
-module Crystal::System::Random
+module Random::System
   @@initialized = false
   @@getrandom_available = false
   @@urandom : File?

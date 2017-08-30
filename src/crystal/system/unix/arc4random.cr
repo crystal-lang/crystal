@@ -2,7 +2,7 @@
 
 require "c/stdlib"
 
-module Crystal::System::Random
+module Random::System
   # Fills *buffer* with random bytes using arc4random.
   #
   # NOTE: only secure on OpenBSD and CloudABI
