@@ -51,9 +51,9 @@ end
       value = pull.read_plain_scalar
 
       number = {% if type == "UInt" %}
-        value.to_u{{bits}}?(underscore: false, prefix: true)
+        value.gsub('_', "").to_u{{bits}}?(prefix: true)
       {% else %}
-        value.to_i{{bits}}?(underscore: false, prefix: true)
+        value.gsub('_', "").to_i{{bits}}?(prefix: true)
       {% end %}
       return number if number
 
@@ -66,7 +66,7 @@ end
   def Float{{bits}}.new(pull : YAML::PullParser)
     location = pull.location
     value = pull.read_plain_scalar
-    if float = value.to_f{{bits}}?
+    if float = value.gsub('_', "").to_f{{bits}}?
       float
     elsif YAML::INFINITY_VALUES.includes? value.lchop('+')
       INFINITY

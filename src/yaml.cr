@@ -69,6 +69,14 @@ module YAML
   FLOAT_VALUES    = INFINITY_VALUES + INFINITY_VALUES.map { |v| "-#{v}" } + INFINITY_VALUES.map { |v| "+#{v}" } + NAN_VALUES
   RESERVED_VALUES = NULL_VALUES + BOOL_VALUES + FLOAT_VALUES
 
+  @[Flags]
+  private enum ScalarHint
+    Any
+    Int
+    Float
+    Date
+  end
+
   class Error < Exception
   end
 
@@ -158,13 +166,42 @@ module YAML
   end
 
   # Checks to see if the value is reserved
-  def self.reserved_value?(value)
-    if v = YAML::RESERVED_VALUES.find { |v| v == value }
-      v
-    elsif (['.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] & value[0..1].chars).first?
-      value.to_i64?(underscore: true, prefix: true) ||
-        value.to_f64? ||
-        (Time::Format::ISO_8601_DATE_TIME.parse(value) rescue nil)
+  def self.reserved_value?(value, checks = 0)
+    if YAML::RESERVED_VALUES.includes?(value)
+      true
+    else
+      reserved = nil
+      reader = Char::Reader.new(value)
+      hint = ScalarHint::Any
+      while reserved.nil?
+        case {reader.pos, hint, reader.current_char}
+        when {0, ScalarHint::Any, .ascii_number?}
+          hint = ScalarHint::Int | ScalarHint::Date | ScalarHint::Float
+        when {0, _, '-'}, {0, _, '+'}
+          hint = ScalarHint::Int | ScalarHint::Float
+          reader.next_char
+        when {.<=(1), .includes?(ScalarHint::Float), '.'}
+          hint = ScalarHint::Float
+          reader.next_char
+        when {.<=(2), .includes?(ScalarHint::Float), .ascii_number?}
+          reserved = value.gsub('_', "").to_f64?
+          if hint.includes?(ScalarHint::Int)
+            hint = ScalarHint::Int
+          else
+            reserved = reserved || false
+          end
+        when {_, .includes?(ScalarHint::Int), .ascii_number?}
+          reserved = value.gsub('_', "").to_i64?(prefix: true)
+          hint = ScalarHint::Date
+        when {.<(4), ScalarHint::Date, .ascii_number?}
+          reader.next_char
+        when {4, ScalarHint::Date, '-'}
+          reserved = (Time::Format::ISO_8601_DATE_TIME.parse(value) rescue false)
+        else
+          reserved = false
+        end
+      end
+      reserved
     end
   end
 end

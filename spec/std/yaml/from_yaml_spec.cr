@@ -211,10 +211,13 @@ describe "String.from_yaml" do
       ".inf", ".Inf", ".INF", "+.inf", "+.Inf", "+.INF",
       "-.inf", "-.Inf", "-.INF",
       ".nan", ".NaN", ".NAN",
-      "1", "1.1",
+      "+1", "1", "-1",
+      "1.1", "+1.1", "-1.1",
+      "0x_0A_74_AE", "0b1010_0111_0100_1010_1110", "02472256",
+      "2001-12-15T02:59:43.1Z"
     }
     values.each do |value|
-      it "should raise if a reserved value" do
+      it %(should raise if a reserved value "#{value}") do
         expect_raises(YAML::ParseException) do
           String.from_yaml(value)
         end
