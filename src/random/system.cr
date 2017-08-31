@@ -62,4 +62,4 @@ module Random::System
   {% end %}
 end
 
-require "crystal/system/random"
+require "platform_specific/random"

@@ -619,4 +619,4 @@ struct Time
 end
 
 require "./time/**"
-require "crystal/system/time"
+require "platform_specific/time"

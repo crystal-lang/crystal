@@ -22,4 +22,4 @@ module System
   end
 end
 
-require "crystal/system"
+require "platform_specific/system"
