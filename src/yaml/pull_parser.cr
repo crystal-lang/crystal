@@ -126,15 +126,73 @@ class YAML::PullParser
     anchor
   end
 
-  def read_plain_scalar
-    read_scalar(LibYAML::ScalarStyle::PLAIN)
+  def read_null
+    expect_scalar_style LibYAML::ScalarStyle::PLAIN
+    unless YAML::NULL_VALUES.includes?(self.value)
+      raise "Expected null, not '#{self.value}'", *location
+    end
+    read_next
+    nil
   end
 
-  def read_scalar(style : LibYAML::ScalarStyle)
-    unless @event.data.scalar.style == style
-      raise "Expected #{style} scalar but was #{@event.data.scalar.style}"
+  def read_bool
+    expect_scalar_style LibYAML::ScalarStyle::PLAIN
+    value = if YAML::TRUE_VALUES.includes?(self.value)
+              true
+            elsif YAML::FALSE_VALUES.includes?(self.value)
+              false
+            else
+              raise "Expected boolean, not '#{self.value}'", *location
+            end
+    read_next
+    value
+  end
+
+  def read_int
+    expect_scalar_style LibYAML::ScalarStyle::PLAIN
+    if value = self.value.to_s.gsub('_', "").to_i64?(prefix: true)
+      value
+    else
+      raise "Expected integer not '#{self.value}'", *location
     end
-    read_scalar
+    read_next
+    value
+  end
+
+  def read_float
+    expect_scalar_style LibYAML::ScalarStyle::PLAIN
+    value = if float = self.value.to_s.gsub('_', "").to_f?
+              float
+            elsif YAML::INFINITY_VALUES.includes? self.value.to_s.lchop('+')
+              Float64::INFINITY
+            elsif self.value.try(&.[0]?) == '-' && YAML::INFINITY_VALUES.includes?(self.value.try(&.lchop('-')))
+              -Float64::INFINITY
+            elsif YAML::NAN_VALUES.includes? self.value
+              Float64::NAN
+            else
+              raise "Expected float not '#{self.value}'", *location
+            end
+    read_next
+    value
+  end
+
+  def read_timestamp
+    value = begin
+      Time::Format::ISO_8601_DATE_TIME.parse(self.value.to_s)
+    rescue ex : Time::Format::Error
+      raise "Could not parse time from '#{self.value}'", *location
+    end
+    read_next
+    value
+  end
+
+  def read_string
+    value = self.value.to_s
+    if data.scalar.style == LibYAML::ScalarStyle::PLAIN && YAML.reserved_value?(value)
+      raise "Expected string, not '#{value}'", *location
+    end
+    read_next
+    value
   end
 
   def read_scalar
@@ -177,12 +235,9 @@ class YAML::PullParser
   end
 
   def read_null_or
-    if kind == EventKind::SCALAR && (value = self.value).nil? || (value && value.empty?)
-      read_next
-      nil
-    else
-      yield
-    end
+    read_null
+  rescue ParseException
+    yield
   end
 
   def read(expected_kind)
@@ -319,6 +374,11 @@ class YAML::PullParser
 
   private def expect_kind(kind)
     raise "Expected #{kind} but was #{self.kind}" unless kind == self.kind
+  end
+
+  private def expect_scalar_style(style)
+    expect_kind EventKind::SCALAR
+    raise "Expected #{style} scalar but was #{data.scalar.style}" unless data.scalar.style == style
   end
 
   private def read_anchor(anchor)

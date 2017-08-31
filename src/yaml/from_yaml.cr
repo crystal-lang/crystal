@@ -21,25 +21,11 @@ def Array.from_yaml(string_or_io)
 end
 
 def Nil.new(pull : YAML::PullParser)
-  location = pull.location
-  value = pull.read_plain_scalar
-  if YAML::NULL_VALUES.includes? value
-    nil
-  else
-    raise YAML::ParseException.new("Expected null, not '#{value}'", *location)
-  end
+  pull.read_null
 end
 
 def Bool.new(pull : YAML::PullParser)
-  location = pull.location
-  value = pull.read_plain_scalar
-  if YAML::TRUE_VALUES.includes? value
-    true
-  elsif YAML::FALSE_VALUES.includes? value
-    false
-  else
-    raise YAML::ParseException.new("Expected boolean, not '#{value}'", *location)
-  end
+  pull.read_bool
 end
 
 # TODO: Ideally, it may be beter to use `for type in Int::Primitive.union_types`
@@ -47,61 +33,28 @@ end
 {% for bits in [8, 16, 32, 64] %}
   {% for type in %w(Int UInt) %}
     def {{type.id}}{{bits}}.new(pull : YAML::PullParser)
-      location = pull.location
-      value = pull.read_plain_scalar
-
-      number = {% if type == "UInt" %}
-        value.gsub('_', "").to_u{{bits}}?(prefix: true)
+      {% if type == "UInt" %}
+        pull.read_int.to_u{{bits}}
       {% else %}
-        value.gsub('_', "").to_i{{bits}}?(prefix: true)
+        pull.read_int.to_i{{bits}}
       {% end %}
-      return number if number
-
-      raise YAML::ParseException.new("Invalid {{type.id}}{{bits}} number", *location)
     end
   {% end %}
 {% end %}
 
 {% for bits in [32, 64] %}
   def Float{{bits}}.new(pull : YAML::PullParser)
-    location = pull.location
-    value = pull.read_plain_scalar
-    if float = value.gsub('_', "").to_f{{bits}}?
-      float
-    elsif YAML::INFINITY_VALUES.includes? value.lchop('+')
-      INFINITY
-    elsif value[0]? == '-' && YAML::INFINITY_VALUES.includes?(value.lchop('-'))
-      -INFINITY
-    elsif YAML::NAN_VALUES.includes? value
-      NAN
-    else
-      raise YAML::ParseException.new("Invalid Float{{bits}} number", *location)
-    end
+    pull.read_float.to_f{{bits}}
   end
 {% end %}
 
 # TODO: Implement a Time parser that supports all the YAML formats
 def Time.new(pull : YAML::PullParser)
-  location = pull.location
-  begin
-    value = pull.read_plain_scalar
-    Time::Format::ISO_8601_DATE_TIME.parse(value)
-  rescue ex : Time::Format::Error
-    raise YAML::ParseException.new("Could not parse time from '#{value}'", *location)
-  end
+  pull.read_timestamp
 end
 
 def String.new(pull : YAML::PullParser)
-  location = pull.location
-  if pull.data.scalar.style == LibYAML::ScalarStyle::PLAIN
-    pull.read_plain_scalar.tap do |value|
-      if YAML.reserved_value?(value)
-        raise YAML::ParseException.new(%(Expected string, not "#{value}"), *location)
-      end
-    end
-  else
-    pull.read_scalar
-  end
+  pull.read_string
 end
 
 def Array.new(pull : YAML::PullParser)
