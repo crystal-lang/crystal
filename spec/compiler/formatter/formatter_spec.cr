@@ -601,9 +601,12 @@ describe Crystal::Formatter do
   assert_format "lib Bar\n  enum Foo\n    A\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A = 1\n  end\nend"
 
+  assert_format "->foo="
   assert_format "foo = 1\n->foo.bar"
+  assert_format "foo = 1\n->foo.bar="
   assert_format "foo = 1\n->foo.bar(Int32)"
   assert_format "foo = 1\n->foo.bar(Int32*)"
+  assert_format "foo = 1\n->foo.bar=(Int32)"
   assert_format "->{ x }"
   assert_format "->{\nx\n}", "->{\n  x\n}"
   assert_format "->do\nx\nend", "->do\n  x\nend"
