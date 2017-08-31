@@ -10,10 +10,9 @@
 # ```
 module Random::System
   extend Random
-  extend self
 
   # Fills *buffer* with random bytes from a secure source.
-  def random_bytes(buffer : Bytes) : Nil
+  def self.random_bytes(buffer : Bytes) : Nil
     {% raise "Not implemented for this system" %}
   end
 
@@ -22,7 +21,7 @@ module Random::System
   # provides. They may choose to return a single byte (UInt8) in which case
   # `::Random` will prefer `#random_bytes` to read as many bytes as required
   # at once, avoiding multiple reads or reading too many bytes.
-  def next_u
+  def self.next_u
     {% raise "Not implemented for this system" %}
   end
 
@@ -30,7 +29,7 @@ module Random::System
     # Generates a random integer of a given type. The number of bytes to
     # generate can be limited; by default it will generate as many bytes as
     # needed to fill the integer size.
-    private def rand_type(type : {{type}}.class, needed_parts = nil) : {{type}}
+    private def self.rand_type(type : {{type}}.class, needed_parts = nil) : {{type}}
       needed_bytes =
         if needed_parts
           needed_parts * sizeof(typeof(next_u))
@@ -55,7 +54,7 @@ module Random::System
   {% end %}
 
   {% for type in [Int8, Int16, Int32, Int64] %}
-    private def rand_type(type : {{type}}.class, needed_bytes = sizeof({{type}})) : {{type}}
+    private def self.rand_type(type : {{type}}.class, needed_bytes = sizeof({{type}})) : {{type}}
       result = rand_type({{"U#{type}".id}}, needed_bytes)
       {{type}}.new(result)
     end

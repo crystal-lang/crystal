@@ -23,8 +23,8 @@ module Random::System
     end
   end
 
-  # Reads n random bytes using the Linux `getrandom(2)` syscall.
   def self.random_bytes(buf : Bytes) : Nil
+    # Reads n random bytes using the Linux `getrandom(2)` syscall.
     init unless @@initialized
 
     if @@getrandom_available
