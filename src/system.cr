@@ -9,7 +9,7 @@ module System
   # System.hostname # => "host.example.org"
   # ```
   def self.hostname
-    raise "Not implemented for this system"
+    {% raise "Not implemented for this system" %}
   end
 
   # Returns the number of logical processors available to the system.
@@ -18,7 +18,7 @@ module System
   # System.cpu_count # => 4
   # ```
   def self.cpu_count
-    raise "Not implemented for this system"
+    {% raise "Not implemented for this system" %}
   end
 end
 

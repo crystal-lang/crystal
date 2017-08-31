@@ -14,7 +14,7 @@ module Random::System
 
   # Fills *buffer* with random bytes from a secure source.
   def random_bytes(buffer : Bytes) : Nil
-    raise "Not implemented for this system"
+    {% raise "Not implemented for this system" %}
   end
 
   # Returns a random unsigned integer from a secure source. Implementations
@@ -23,7 +23,7 @@ module Random::System
   # `::Random` will prefer `#random_bytes` to read as many bytes as required
   # at once, avoiding multiple reads or reading too many bytes.
   def next_u
-    raise "Not implemented for this system"
+    {% raise "Not implemented for this system" %}
   end
 
   {% for type in [UInt8, UInt16, UInt32, UInt64] %}
