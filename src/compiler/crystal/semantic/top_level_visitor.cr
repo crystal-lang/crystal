@@ -47,9 +47,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : ClassDef)
     check_outside_exp node, "declare class"
 
-    scope, name = lookup_type_def_name(node)
-
-    type = scope.types[name]?
+    scope, name, type = lookup_type_def(node)
 
     created_new_type = false
     extern = false
@@ -185,9 +183,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : ModuleDef)
     check_outside_exp node, "declare module"
 
-    scope, name = lookup_type_def_name(node)
+    scope, name, type = lookup_type_def(node)
 
-    type = scope.types[name]?
     if type
       type = type.remove_alias
 
@@ -450,9 +447,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attributes = check_valid_attributes node, ValidEnumDefAttributes, "enum"
     attributes_doc = attributes_doc()
 
-    scope, name = lookup_type_def_name(node)
+    scope, name, enum_type = lookup_type_def(node)
 
-    enum_type = scope.types[name]?
     if enum_type
       unless enum_type.is_a?(EnumType)
         node.raise "#{name} is not a enum, it's a #{enum_type.type_desc}"
@@ -983,6 +979,15 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     @attributes = nil
 
     {extern, extern_union, packed}
+  end
+
+  def lookup_type_def(node : ASTNode)
+    scope, name = lookup_type_def_name(node)
+    type = scope.types[name]?
+    if type && node.doc
+      type.doc = node.doc
+    end
+    {scope, name, type}
   end
 
   def lookup_type_def_name(node : ASTNode)
