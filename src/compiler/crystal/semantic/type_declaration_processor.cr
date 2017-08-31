@@ -498,6 +498,10 @@ struct Crystal::TypeDeclarationProcessor
         # It's non-nilable if it's initialized outside
         next if initialized_outside?(owner, instance_var)
 
+        # If an initialize with an ivar calls super and an ancestor has already
+        # typed the instance var as non-nilable
+        next if info.def.calls_super? && ancestor_non_nilable.try(&.includes?(instance_var))
+
         unless info.try(&.instance_vars.try(&.includes?(instance_var)))
           all_assigned = false
           # Rememebr that this variable wasn't initialized here, and later error
