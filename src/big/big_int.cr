@@ -195,6 +195,35 @@ struct BigInt < Int
     unsafe_truncated_mod(other)
   end
 
+  def divmod(number : BigInt)
+    check_division_by_zero number
+
+    unsafe_floored_divmod(number)
+  end
+
+  def divmod(number : LibGMP::ULong)
+    check_division_by_zero number
+    unsafe_floored_divmod(number)
+  end
+
+  def divmod(number : Int::Signed)
+    check_division_by_zero number
+    if number > 0 && number <= LibC::Long::MAX
+      unsafe_floored_divmod(LibGMP::ULong.new(number))
+    else
+      divmod(number.to_big_i)
+    end
+  end
+
+  def divmod(number : Int::Unsigned)
+    check_division_by_zero number
+    if number <= LibC::ULong::MAX
+      unsafe_floored_divmod(LibGMP::ULong.new(number))
+    else
+      divmod(number.to_big_i)
+    end
+  end
+
   def unsafe_floored_mod(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.fdiv_r(mpz, self, other) }
   end
@@ -209,6 +238,30 @@ struct BigInt < Int
 
   def unsafe_truncated_mod(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, other.abs) }
+  end
+
+  def unsafe_floored_divmod(number : BigInt)
+    the_q = BigInt.new
+    the_r = BigInt.new { |r| LibGMP.fdiv_qr(the_q, r, self, number) }
+    {the_q, the_r}
+  end
+
+  def unsafe_floored_divmod(number : LibGMP::ULong)
+    the_q = BigInt.new
+    the_r = BigInt.new { |r| LibGMP.fdiv_qr_ui(the_q, r, self, number) }
+    {the_q, the_r}
+  end
+
+  def unsafe_truncated_divmod(number : BigInt)
+    the_q = BigInt.new
+    the_r = BigInt.new { |r| LibGMP.tdiv_qr(the_q, r, self, number) }
+    {the_q, the_r}
+  end
+
+  def unsafe_truncated_divmod(number : LibGMP::ULong)
+    the_q = BigInt.new
+    the_r = BigInt.new { |r| LibGMP.tdiv_qr_ui(the_q, r, self, number) }
+    {the_q, the_r}
   end
 
   def ~ : BigInt
@@ -311,19 +364,23 @@ struct BigInt < Int
   end
 
   def to_i8
-    to_i64.to_i8
+    to_i32.to_i8
   end
 
   def to_i16
-    to_i64.to_i16
+    to_i32.to_i16
   end
 
   def to_i32
-    to_i64.to_i32
+    LibGMP.get_si(self).to_i32
   end
 
   def to_i64
-    LibGMP.get_si(self)
+    if LibGMP::Long == Int64 || (self <= Int32::MAX && self >= Int32::MIN)
+      LibGMP.get_si(self).to_i64
+    else
+      to_s.to_i64
+    end
   end
 
   def to_u
@@ -331,19 +388,23 @@ struct BigInt < Int
   end
 
   def to_u8
-    to_u64.to_u8
+    to_u32.to_u8
   end
 
   def to_u16
-    to_u64.to_u16
+    to_u32.to_u16
   end
 
   def to_u32
-    to_u64.to_u32
+    LibGMP.get_ui(self).to_u32
   end
 
   def to_u64
-    LibGMP.get_ui(self).to_u64
+    if LibGMP::ULong == UInt64 || (self <= UInt32::MAX && self >= UInt32::MIN)
+      LibGMP.get_ui(self).to_u64
+    else
+      to_s.to_u64
+    end
   end
 
   def to_f
@@ -360,6 +421,10 @@ struct BigInt < Int
 
   def to_big_i
     self
+  end
+
+  def to_big_f
+    BigFloat.new { |mpf| LibGMP.mpf_set_z(mpf, mpz) }
   end
 
   def clone

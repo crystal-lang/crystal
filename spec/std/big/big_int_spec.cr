@@ -53,6 +53,29 @@ describe "BigInt" do
     [1.1, 1.to_big_i, 3.to_big_i, 2.2].sort.should eq([1, 1.1, 2.2, 3])
   end
 
+  it "divides and calculs the modulo" do
+    11.to_big_i.divmod(3.to_big_i).should eq({3, 2})
+    11.to_big_i.divmod(-3.to_big_i).should eq({-4, -1})
+
+    11.to_big_i.divmod(3_i32).should eq({3, 2})
+    11.to_big_i.divmod(-3_i32).should eq({-4, -1})
+
+    10.to_big_i.divmod(2).should eq({5, 0})
+    11.to_big_i.divmod(2).should eq({5, 1})
+
+    10.to_big_i.divmod(2.to_big_i).should eq({5, 0})
+    11.to_big_i.divmod(2.to_big_i).should eq({5, 1})
+
+    10.to_big_i.divmod(-2).should eq({-5, 0})
+    11.to_big_i.divmod(-2).should eq({-6, -1})
+
+    -10.to_big_i.divmod(2).should eq({-5, 0})
+    -11.to_big_i.divmod(2).should eq({-6, 1})
+
+    -10.to_big_i.divmod(-2).should eq({5, 0})
+    -11.to_big_i.divmod(-2).should eq({5, -1})
+  end
+
   it "adds" do
     (1.to_big_i + 2.to_big_i).should eq(3.to_big_i)
     (1.to_big_i + 2).should eq(3.to_big_i)
@@ -220,6 +243,11 @@ describe "BigInt" do
     a.to_s(2).should eq(b)
     a.to_s(16).should eq(c)
     a.to_s(32).should eq(d)
+  end
+
+  it "does to_big_f" do
+    a = BigInt.new("1234567890123456789")
+    a.to_big_f.should eq(BigFloat.new("1234567890123456789.0"))
   end
 
   describe "#inspect" do
