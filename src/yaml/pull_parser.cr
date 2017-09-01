@@ -235,9 +235,12 @@ class YAML::PullParser
   end
 
   def read_null_or
-    read_null
-  rescue ParseException
-    yield
+    if kind == EventKind::SCALAR && data.scalar.style.plain? && (value = self.value).nil? || (value && value.empty?)
+      read_next
+      nil
+    else
+      yield
+    end
   end
 
   def read(expected_kind)
