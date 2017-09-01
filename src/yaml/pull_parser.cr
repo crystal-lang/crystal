@@ -188,7 +188,7 @@ class YAML::PullParser
 
   def read_string
     value = self.value.to_s
-    if data.scalar.style == LibYAML::ScalarStyle::PLAIN && YAML.reserved_value?(value)
+    if data.scalar.style.plain? && YAML.reserved_value?(value)
       raise "Expected string, not '#{value}'", *location
     end
     read_next
