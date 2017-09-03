@@ -1,3 +1,5 @@
+require "random/system"
+
 # This is a Crystal conversion of basic C PCG implementation
 #
 #  Original file notice:
@@ -37,14 +39,22 @@ class Random::PCG32
   @state : UInt64
   @inc : UInt64
 
-  def initialize(initstate = UInt64.new(Random.new_seed), initseq = 0_u64)
+  def self.new
+    new(Random::System.rand(UInt64::MIN..UInt64::MAX), Random::System.rand(UInt64::MIN..UInt64::MAX))
+  end
+
+  def initialize(initstate : UInt64, initseq = 0_u64)
     # initialize to zeros to prevent compiler complains
     @state = 0_u64
     @inc = 0_u64
     new_seed(initstate, initseq)
   end
 
-  def new_seed(initstate = UInt64.new(Random.new_seed), initseq = 0_u64)
+  def new_seed
+    new_seed(Random::System.rand(UInt64::MIN..UInt64::MAX), Random::System.rand(UInt64::MIN..UInt64::MAX))
+  end
+
+  def new_seed(initstate : UInt64, initseq = 0_u64)
     @state = 0_u64
     @inc = (initseq << 1) | 1
     next_u

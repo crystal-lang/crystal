@@ -1454,7 +1454,7 @@ class Array(T)
   end
 
   # Removes the first value of `self`, at index 0. This method returns the removed value.
-  # Raises `IndexError` if array is of 0 size.
+  # If the array is empty, it raises `IndexError`.
   #
   # ```
   # a = ["a", "b", "c"]
@@ -1507,6 +1507,18 @@ class Array(T)
     ary
   end
 
+  # Removes the first value of `self`, at index 0. This method returns the removed value.
+  # If the array is empty, it returns `nil` without raising any error.
+  #
+  # ```
+  # a = ["a", "b"]
+  # a.shift? # => "a"
+  # a        # => ["b"]
+  # a.shift? # => "b"
+  # a        # => []
+  # a.shift? # => nil
+  # a        # => []
+  # ```
   def shift?
     shift { nil }
   end

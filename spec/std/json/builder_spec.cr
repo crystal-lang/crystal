@@ -8,6 +8,12 @@ private def assert_built(expected)
   string.should eq(expected)
 end
 
+private class TestObject
+  def to_json(builder)
+    {"int" => 12}.to_json(builder)
+  end
+end
+
 describe JSON::Builder do
   it "writes null" do
     assert_built("null") do
@@ -249,6 +255,27 @@ describe JSON::Builder do
     json.start_object
     expect_raises JSON::Error, "Unterminated JSON object" do
       json.end_document
+    end
+  end
+
+  it "writes field with scalar in object" do
+    assert_built(%<{"int":42,"float":0.815,"null":null,"bool":true,"string":"string"}>) do
+      object do
+        field "int", 42
+        field "float", 0.815
+        field "null", nil
+        field "bool", true
+        field "string", "string"
+      end
+    end
+  end
+
+  it "writes field with arbitrary value in object" do
+    assert_built(%<{"hash":{"hash":"value"},"object":{"int":12}}>) do
+      object do
+        field "hash", {"hash" => "value"}
+        field "object", TestObject.new
+      end
     end
   end
 end

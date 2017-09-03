@@ -234,7 +234,7 @@ describe "Dir" do
     filenames = [] of String
 
     dir = Dir.new(__DIR__)
-    dir.each do |filename|
+    dir.each_entry do |filename|
       filenames << filename
     end.should be_nil
     dir.close
@@ -246,7 +246,7 @@ describe "Dir" do
     filenames = [] of String
 
     Dir.open(__DIR__) do |dir|
-      dir.each do |filename|
+      dir.each_entry do |filename|
         filenames << filename
       end.should be_nil
     end
@@ -256,7 +256,13 @@ describe "Dir" do
 
   it "lists entries" do
     filenames = Dir.entries(__DIR__)
+    filenames.includes?(".").should be_true
+    filenames.includes?("..").should be_true
     filenames.includes?("dir_spec.cr").should be_true
+  end
+
+  it "lists children" do
+    Dir.children(__DIR__).should eq(Dir.entries(__DIR__) - %w(. ..))
   end
 
   it "does to_s" do
@@ -266,11 +272,26 @@ describe "Dir" do
   it "gets dir iterator" do
     filenames = [] of String
 
-    iter = Dir.new(__DIR__).each
+    iter = Dir.new(__DIR__).each_entry
     iter.each do |filename|
       filenames << filename
     end
 
+    filenames.includes?(".").should be_true
+    filenames.includes?("..").should be_true
+    filenames.includes?("dir_spec.cr").should be_true
+  end
+
+  it "gets child iterator" do
+    filenames = [] of String
+
+    iter = Dir.new(__DIR__).each_child
+    iter.each do |filename|
+      filenames << filename
+    end
+
+    filenames.includes?(".").should be_false
+    filenames.includes?("..").should be_false
     filenames.includes?("dir_spec.cr").should be_true
   end
 

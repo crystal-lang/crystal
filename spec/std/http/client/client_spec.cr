@@ -39,6 +39,8 @@ module HTTP
 
     typeof(Client.post_form "url", {"a" => "b"})
     typeof(Client.post_form("url", {"a" => "b"}) { })
+    typeof(Client.put_form "url", {"a" => "b"})
+    typeof(Client.put_form("url", {"a" => "b"}) { })
     typeof(Client.new("host").basic_auth("username", "password"))
     typeof(Client.new("host").before_request { |req| })
     typeof(Client.new("host").close)

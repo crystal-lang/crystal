@@ -58,7 +58,7 @@ describe "Semantic: nilable instance var" do
 
       Foo.new.foo
       ),
-      "instance variable '@foo' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@foo' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   it "says instance var was used before initialized" do

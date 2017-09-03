@@ -14,40 +14,24 @@ module Event
       @freed = false
     end
 
-    def add
-      LibEvent2.event_add(@event, nil)
+    def add(timeout : LibC::Timeval? = nil)
+      if timeout
+        timeout_copy = timeout
+        LibEvent2.event_add(@event, pointerof(timeout_copy))
+      else
+        LibEvent2.event_add(@event, nil)
+      end
     end
 
-    def add(timeout)
-      if timeout
-        t = to_timeval(timeout)
-        LibEvent2.event_add(@event, pointerof(t))
-      else
-        add
-      end
+    def add(timeout : Time::Span)
+      seconds, remainder_ticks = timeout.ticks.divmod(Time::Span::TicksPerSecond)
+      timeval = LibC::Timeval.new(tv_sec: seconds, tv_usec: remainder_ticks / Time::Span::TicksPerMicrosecond)
+      add(timeval)
     end
 
     def free
       LibEvent2.event_free(@event) unless @freed
       @freed = true
-    end
-
-    private def to_timeval(time : Int)
-      t = uninitialized LibC::Timeval
-      t.tv_sec = typeof(t.tv_sec).new(time)
-      t.tv_usec = typeof(t.tv_usec).new(0)
-      t
-    end
-
-    private def to_timeval(time : Float)
-      t = uninitialized LibC::Timeval
-
-      seconds = typeof(t.tv_sec).new(time)
-      useconds = typeof(t.tv_usec).new((time - seconds) * 1e6)
-
-      t.tv_sec = seconds
-      t.tv_usec = useconds
-      t
     end
   end
 

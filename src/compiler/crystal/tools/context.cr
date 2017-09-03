@@ -82,7 +82,9 @@ module Crystal
         defs.each do |typed_def|
           typed_def.accept(self)
           next unless @context_visitor.def_with_yield.not_nil!.location == typed_def.location
-          typed_def.accept(@context_visitor)
+          @context_visitor.inside_typed_def do
+            typed_def.accept(@context_visitor)
+          end
         end
       end
       true
@@ -109,6 +111,13 @@ module Crystal
       @contexts = Array(HashStringType).new
       @context = HashStringType.new
       @def_with_yield = nil
+      @inside_typed_def = false
+      @found_untyped_def = false
+    end
+
+    def inside_typed_def
+      @inside_typed_def = true
+      yield.tap { @inside_typed_def = false }
     end
 
     def process_typed_def(typed_def)
@@ -130,7 +139,7 @@ module Crystal
           add_context ivar.name, ivar.type
         end
       end
-      typed_def.accept(self)
+      inside_typed_def { typed_def.accept(self) }
 
       @contexts << @context unless @context.empty?
     end
@@ -155,7 +164,11 @@ module Crystal
       end
 
       if @contexts.empty?
-        return ContextResult.new("failed", "no context information found")
+        if @found_untyped_def
+          return ContextResult.new("failed", "no context information found (methods which are never called don't have a context)")
+        else
+          return ContextResult.new("failed", "no context information found")
+        end
       else
         res = ContextResult.new("ok", "#{@contexts.size} possible context#{@contexts.size > 1 ? "s" : ""} found")
         res.contexts = @contexts
@@ -168,6 +181,11 @@ module Crystal
 
       if @def_with_yield.nil? && !node.yields.nil?
         @def_with_yield = node
+        return false
+      end
+
+      unless @inside_typed_def
+        @found_untyped_def = true
         return false
       end
 

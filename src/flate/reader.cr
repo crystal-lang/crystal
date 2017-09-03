@@ -29,10 +29,10 @@ class Flate::Reader
     @end = false
   end
 
-  # Creates an instance of Flate::Reader, yields it to the given block, and closes
-  # it at its end.
-  def self.new(input : IO, sync_close : Bool = false, dict : Bytes? = nil)
-    reader = new input, sync_close: sync_close, dict: dict
+  # Creates a new reader from the given *io*, yields it to the given block,
+  # and closes it at its end.
+  def self.open(io : IO, sync_close : Bool = false, dict : Bytes? = nil)
+    reader = new(io, sync_close: sync_close, dict: dict)
     yield reader ensure reader.close
   end
 
