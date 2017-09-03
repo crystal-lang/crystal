@@ -106,7 +106,7 @@ struct BigInt < Int
   def +(other : Int) : BigInt
     if other < 0
       self - other.abs
-    elsif LibGMP::ULong == UInt64 || other <= UInt32::MAX
+    elsif other <= LibGMP::ULong::MAX
       BigInt.new { |mpz| LibGMP.add_ui(mpz, self, other) }
     else
       self + other.to_big_i
@@ -120,7 +120,7 @@ struct BigInt < Int
   def -(other : Int) : BigInt
     if other < 0
       self + other.abs
-    elsif LibGMP::ULong == UInt64 || other <= UInt32::MAX
+    elsif other <= LibGMP::ULong::MAX
       BigInt.new { |mpz| LibGMP.sub_ui(mpz, self, other) }
     else
       self - other.to_big_i
@@ -172,7 +172,13 @@ struct BigInt < Int
   end
 
   def unsafe_floored_div(other : Int) : BigInt
-    BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, other.abs) }
+    if LibGMP::ULong == UInt32 && (other < Int32::MIN || other > UInt32::MAX)
+      unsafe_floored_div(other.to_big_i)
+    elsif other < 0
+      -BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, other.abs) }
+    else
+      BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, other) }
+    end
   end
 
   def unsafe_truncated_div(other : BigInt) : BigInt
@@ -239,7 +245,13 @@ struct BigInt < Int
   end
 
   def unsafe_floored_mod(other : Int) : BigInt
-    BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, other.abs) }
+    if (other < LibGMP::Long::MIN || other > LibGMP::ULong::MAX)
+      unsafe_floored_mod(other.to_big_i)
+    elsif other < 0
+      -BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, other.abs) }
+    else
+      BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, other) }
+    end
   end
 
   def unsafe_truncated_mod(other : BigInt) : BigInt
