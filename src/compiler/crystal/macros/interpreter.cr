@@ -117,10 +117,25 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
-        @last = var
-      else
-        node.raise "undefined macro variable '#{node.name}'"
+        return @last = var
       end
+
+      # Try to consider the var as a top-level macro call.
+      #
+      # Note: this should really be done at the parser level. However,
+      # currently macro calls with blocks are possible, for example:
+      #
+      # some_macro_call do |arg|
+      #   {{arg}}
+      # end
+      #
+      # and in this case the parser has no idea about this, so the only
+      # solution is to do it now.
+      if value = interpret_top_level_call?(Call.new(nil, node.name))
+        return @last = value
+      end
+
+      node.raise "undefined macro variable '#{node.name}'"
     end
 
     def visit(node : StringInterpolation)

@@ -5,6 +5,11 @@ require "semantic_version"
 module Crystal
   class MacroInterpreter
     def interpret_top_level_call(node)
+      interpret_top_level_call?(node) ||
+        node.raise("undefined macro method: '#{node.name}'")
+    end
+
+    def interpret_top_level_call?(node)
       # Please order method names in lexicographical order, because OCD
       case node.name
       when "compare_versions"
@@ -28,7 +33,7 @@ module Crystal
       when "run"
         interpret_run(node)
       else
-        node.raise "undefined macro method: '#{node.name}'"
+        nil
       end
     end
 
