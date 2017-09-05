@@ -6,7 +6,8 @@ private def assert_raw(string, file = __FILE__, line = __LINE__)
     pull = YAML::PullParser.new(string)
     pull.read_stream do
       pull.read_document do
-        YAML.parse(pull.read_raw).should eq(YAML.parse(string))
+        raw = pull.read_raw
+        YAML.parse(raw).should eq(YAML.parse(string))
       end
     end
   end
