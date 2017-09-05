@@ -72,6 +72,7 @@ describe Markdown do
   assert_render "```\n---\n```", "<pre><code>---</code></pre>"
 
   assert_render "> Hello World\n", "<blockquote>Hello World</blockquote>"
+  assert_render "> __Hello World__", "<blockquote><strong>Hello World</strong></blockquote>"
   assert_render "> This spawns\nmultiple\nlines\n\ntext", "<blockquote>This spawns\nmultiple\nlines</blockquote>\n\n<p>text</p>"
 
   assert_render "* Hello", "<ul><li>Hello</li></ul>"
