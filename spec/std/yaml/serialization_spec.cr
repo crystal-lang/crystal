@@ -111,7 +111,8 @@ describe "YAML serialization" do
     end
 
     it "deserializes union" do
-      Array(Int32 | String).from_yaml(%([1, "hello"])).should eq([1, "hello"])
+      Array(Int32 | String).from_yaml(%([1, "hello\n\n"])).should eq([1, "hello\n"])
+      (Int32 | YAML::Any).from_yaml(%(" hello ")).should eq(" hello ")
     end
 
     it "deserializes time" do
