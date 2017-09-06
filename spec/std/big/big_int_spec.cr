@@ -109,6 +109,7 @@ describe "BigInt" do
     (2.to_big_i * 3_u8).should eq(6.to_big_i)
     (3 * 2.to_big_i).should eq(6.to_big_i)
     (3_u8 * 2.to_big_i).should eq(6.to_big_i)
+    (2.to_big_i * Int64::MAX).should be eq(2.to_big_i * Int64::MAX.to_big_i)
   end
 
   it "gets absolute value" do
@@ -119,6 +120,7 @@ describe "BigInt" do
     (10.to_big_i / 3.to_big_i).should eq(3.to_big_i)
     (10.to_big_i / 3).should eq(3.to_big_i)
     (10 / 3.to_big_i).should eq(3.to_big_i)
+    (2.to_big_i / Int64::MAX).should be eq(2.to_big_i / Int64::MAX.to_big_i)
   end
 
   it "divides with negative numbers" do
