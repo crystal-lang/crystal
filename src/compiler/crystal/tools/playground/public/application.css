@@ -13,7 +13,12 @@ nav ul a {
 }
 
 footer > div > div {
-  margin-bottom: 1em;
+  margin-bottom: 4px;
+}
+
+footer small {
+  display: block;
+  margin-bottom: 1.5em;
 }
 
 html {
@@ -167,6 +172,15 @@ h4 {
 .inspect-table th {
   font-weight: 400;
 }
+
+.code-btn {
+  font-size: 11px;
+  padding:1px 12px 0;
+  height: 26px;
+  line-height: 26px;
+}
+.code-btn .icon { margin-right: 3px; }
+.code-btn .icon :before { font-size:14px;}
 
 .run-button {
   padding-top: 5px;

@@ -128,20 +128,20 @@ Playground.OutputIndicator = function(dom) {
   this.dom = dom;
   this.blinkTimeout = null;
 
-  this.dom.append($("<span>").addClass("octicon octicon-terminal"));
+  this.dom.addClass("octicon octicon-terminal");
 
   this.turnOnWithBlink = function () {
-    this.dom.addClass('grey-text').removeClass('teal-text red-text');
+    this.dom.removeClass('teal-text red-text');
     this.blinkTimeout = window.setTimeout(function(){
       if (this.isError) return;
-      this.dom.removeClass('grey-text').addClass('teal-text');
+      this.dom.addClass('teal-text');
     }.bind(this), 200);
   }.bind(this);
 
   this.turnOff = function () {
     this.isError = false;
     this._cancelBlink();
-    this.dom.addClass('grey-text').removeClass('teal-text red-text');
+    this.dom.removeClass('teal-text red-text');
   }.bind(this);
 
   this.turnError = function () {
@@ -375,6 +375,10 @@ Playground.Session = function(options) {
             $("<pre>").append(message.exception.message)).openModal();
 
           break;
+        case "format":
+          codeFormatter.stop();
+          this.setSource(message.value);
+          break;
         default:
           console.error("ws message not handled", message);
       }
@@ -382,6 +386,21 @@ Playground.Session = function(options) {
   }.bind(this);
 
   this.runTag = 0;
+
+  this.format = function() {
+    this._removeScheduledRun();
+
+    this._clearInspectors();
+    this._hideEditorErrors();
+    this._clearStdout();
+
+    this.ws.send(JSON.stringify({
+      type: "format",
+      source: this.editor.getValue(),
+      tag: this.runTag
+    }));
+  }.bind(this);
+
   this.run = function() {
     if (Playground.connectLostShown) return;
 
@@ -433,6 +452,9 @@ Playground.Session = function(options) {
 
     this.onFinish = function() {
       runButtons.showPlay();
+      if (codeFormatter && codeFormatter.isRunning) {
+        codeFormatter.stop();
+      }
     }.bind(this);
 
     this.onDisconnect = function() {
@@ -577,6 +599,45 @@ Playground.Session = function(options) {
     this._matchEditorSidebarHeight();
     this._scheduleRun();
   }.bind(this));
+
+  // code formatter
+  var sessionInstance = this;
+  var codeFormatter = (function() {
+    var isRunning = false;
+    var btn = document.getElementById('runFormatterBtn');
+    if (!btn) { return; }
+    btn.addEventListener('click', function(evt) {
+      evt.preventDefault();
+      run();
+    });
+
+    var iconCont = btn.getElementsByClassName('icon')[0];
+    if (iconCont) {
+      iconCont.classList.add('octicon', 'octicon-checklist');
+    }
+
+    function run() {
+      if (isRunning) {
+        return console.info('code formatter is already running. Attempt aborted...');
+      }
+      btn.classList.add('running');
+      isRunning = true;
+      sessionInstance.format();
+    };
+
+    function stop() {
+      isRunning = false;
+      btn.classList.remove('running');
+    }
+
+    var publicProps = { run, stop };
+
+    Object.defineProperty(publicProps, "isRunning", {
+      get: function() { return isRunning; }
+    });
+
+    return publicProps;
+  })();
 
   // when clicking below the editor, set the cursor at the very end
   this.editorDom.click(function(e){
