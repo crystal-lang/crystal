@@ -27,8 +27,8 @@ describe "Nil.from_yaml" do
   values = {"", "NULL", "Null", "null", "~"}
 
   values.each do |value|
-    it %(zshould return nil if "#{value}") do
-      # Test will an array since a standalone empty value shows as STREAM_END
+    it %(should return nil if "#{value}") do
+      # Test with an array since a standalone empty value shows as STREAM_END
       Array(Nil).from_yaml("- " + value).should eq [nil]
     end
   end
@@ -239,7 +239,7 @@ describe "Array.from_yaml" do
     Array(String).from_yaml(["hi"].to_yaml).should eq ["hi"]
   end
 
-  it "it should an array of the correct objects" do
+  it "it should parse an array of the correct objects" do
     result = Array(String).from_yaml <<-YAML
       - one
       - two
@@ -249,7 +249,7 @@ describe "Array.from_yaml" do
   end
 
   context "with a union type" do
-    it "it should an array of the correct objects" do
+    it "it should parse an array of the correct objects" do
       result = Array(String | Int32 | Float64).from_yaml <<-YAML
         - one
         - 1
@@ -265,7 +265,7 @@ describe "Hash.from_yaml" do
     Hash(String, String).from_yaml({"hello" => "world"}.to_yaml).should eq ({"hello" => "world"})
   end
 
-  it "it should an array of the correct objects" do
+  it "it should parse an array of the correct objects" do
     result = Hash(String, String).from_yaml <<-YAML
       foo: one
       bar: two
@@ -275,7 +275,7 @@ describe "Hash.from_yaml" do
   end
 
   context "with a union type" do
-    it "it should an array of the correct objects" do
+    it "it should parse an array of the correct objects" do
       result = Hash(String, String | Int32 | Float64).from_yaml <<-YAML
         foo: 1
         bar: two
@@ -291,13 +291,13 @@ describe "Tuple.from_yaml" do
     Tuple(String, String).from_yaml({"hello", "world"}.to_yaml).should eq ({"hello", "world"})
   end
 
-  it "it should an array of the correct objects" do
+  it "it should parse an array of the correct objects" do
     result = Tuple(String, String, String).from_yaml "- one\n- two\n- three"
     result.should eq ({"one", "two", "three"})
   end
 
   context "with a union type" do
-    it "it should an array of the correct objects" do
+    it "it should parse an array of the correct objects" do
       result = Tuple(String | Int32 | Float64, String | Int32 | Float64, String | Int32 | Float64).from_yaml "- one\n- 1\n- 1.0"
       result.should eq ({"one", 1, 1.0})
     end
@@ -305,7 +305,7 @@ describe "Tuple.from_yaml" do
 end
 
 describe "NamedTuple.from_yaml" do
-  it "it should an array of the correct objects" do
+  it "it should parse an array of the correct objects" do
     result = NamedTuple(foo: String, bar: String, baz: String).from_yaml "foo: one\nbar: two\nbaz: three"
     result.should eq ({foo: "one", bar: "two", baz: "three"})
   end
