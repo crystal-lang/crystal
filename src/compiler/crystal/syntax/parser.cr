@@ -180,7 +180,7 @@ module Crystal
       end
 
       values.concat exps[assign_index + 1..-1]
-      if values.size != 1 && targets.size != 1 && targets.size != values.size
+      if values.size != 1 && targets.size != values.size
         raise "Multiple assignment count mismatch", location
       end
 
@@ -692,6 +692,7 @@ module Crystal
           check_void_value atomic, location
 
           column_number = @token.column_number
+          @wants_regex = false
           next_token_skip_space
           atomic = Call.new(atomic, "[]", name_column_number: column_number).at(location)
           atomic.name_size = 0 if atomic.is_a?(Call)
@@ -704,6 +705,7 @@ module Crystal
           call_args = preserve_stop_on_do { parse_call_args_space_consumed check_plus_and_minus: false, allow_curly: true, end_token: :"]" }
           skip_space_or_newline
           check :"]"
+          @wants_regex = false
           next_token
 
           if call_args
@@ -894,18 +896,14 @@ module Crystal
         end
       when :GLOBAL_MATCH_DATA_INDEX
         value = @token.value.to_s
-        if value == "0"
-          node_and_next_token Path.global("PROGRAM_NAME")
+        if value.ends_with? '?'
+          method = "[]?"
+          value = value.rchop
         else
-          if value.ends_with? '?'
-            method = "[]?"
-            value = value.rchop
-          else
-            method = "[]"
-          end
-          location = @token.location
-          node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(value.to_i))
+          method = "[]"
         end
+        location = @token.location
+        node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(value.to_i))
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
       when :__END_LINE__
@@ -1203,6 +1201,7 @@ module Crystal
         end
       end
       check :"]"
+      @wants_regex = false
       next_token_skip_space
 
       attr = Attribute.new(name, args, named_args)
@@ -1712,16 +1711,28 @@ module Crystal
       case @token.type
       when :IDENT
         name = @token.value.to_s
-        next_token_skip_space
-        if @token.type == :"."
+        next_token
+        if @token.type == :"="
+          name = "#{name}="
           next_token_skip_space
-          second_name = check_ident
-          if name != "self" && !@def_vars.last.includes?(name)
-            raise "undefined variable '#{name}'", location.line_number, location.column_number
+        else
+          skip_space
+          if @token.type == :"."
+            next_token_skip_space
+            second_name = check_ident
+            if name != "self" && !@def_vars.last.includes?(name)
+              raise "undefined variable '#{name}'", location.line_number, location.column_number
+            end
+            obj = Var.new(name)
+            name = second_name
+            next_token
+            if @token.type == :"="
+              name = "#{name}="
+              next_token_skip_space
+            else
+              skip_space
+            end
           end
-          obj = Var.new(name)
-          name = second_name
-          next_token_skip_space
         end
       when :CONST
         obj = parse_ident
@@ -2075,6 +2086,7 @@ module Crystal
             break
           end
         end
+        @wants_regex = false
         next_token_skip_space
       end
 
@@ -2896,7 +2908,9 @@ module Crystal
 
           check :"%}"
 
+          macro_state.control_nest += 1
           body, end_location = parse_macro_body(start_line, start_column, macro_state)
+          macro_state.control_nest -= 1
 
           check_ident :end
           next_token_skip_space
@@ -2920,7 +2934,9 @@ module Crystal
           next_token_skip_space
           check :"%}"
 
+          macro_state.control_nest += 1
           body, end_location = parse_macro_body(start_line, start_column, macro_state)
+          macro_state.control_nest -= 1
 
           check_ident :end
           next_token_skip_space
@@ -2953,7 +2969,9 @@ module Crystal
 
       check :"%}"
 
+      macro_state.control_nest += 1
       a_then, end_location = parse_macro_body(start_line, start_column, macro_state)
+      macro_state.control_nest -= 1
 
       if @token.type == :IDENT
         case @token.value
@@ -2961,7 +2979,9 @@ module Crystal
           next_token_skip_space
           check :"%}"
 
+          macro_state.control_nest += 1
           a_else, end_location = parse_macro_body(start_line, start_column, macro_state)
+          macro_state.control_nest -= 1
 
           if check_end
             check_ident :end
@@ -4081,7 +4101,7 @@ module Crystal
         skip_space_or_newline if allow_newline
         if @token.type == :","
           next_token_skip_space_or_newline
-          if @token.type == :")" || @token.type == :"&"
+          if @token.type == :")" || @token.type == :"&" || @token.type == :"]"
             break
           end
         else
@@ -4490,6 +4510,7 @@ module Crystal
           next_token_skip_space
           size = parse_single_type allow_primitives: true
           check :"]"
+          @wants_regex = false
           next_token_skip_space
           type = make_static_array_type(type, size).at(type.location)
         when :"."

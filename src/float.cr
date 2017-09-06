@@ -148,6 +148,11 @@ struct Float32
     Printer.print(self, io)
   end
 
+  def inspect(io)
+    to_s(io)
+    io << "_f32"
+  end
+
   def hash
     unsafe_as(Int32)
   end

@@ -49,14 +49,6 @@ class Markdown::Parser
       return :empty
     end
 
-    if next_line_is_all?('=')
-      return :header1
-    end
-
-    if next_line_is_all?('-')
-      return :header2
-    end
-
     if pounds = count_pounds line
       return PrefixHeader.new(pounds)
     end
@@ -91,6 +83,14 @@ class Markdown::Parser
 
     if line.starts_with? ">"
       return :quote
+    end
+
+    if next_line_is_all?('=')
+      return :header1
+    end
+
+    if next_line_is_all?('-')
+      return :header2
     end
 
     nil

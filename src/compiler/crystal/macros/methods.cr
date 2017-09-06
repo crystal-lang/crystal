@@ -5,6 +5,11 @@ require "semantic_version"
 module Crystal
   class MacroInterpreter
     def interpret_top_level_call(node)
+      interpret_top_level_call?(node) ||
+        node.raise("undefined macro method: '#{node.name}'")
+    end
+
+    def interpret_top_level_call?(node)
       # Please order method names in lexicographical order, because OCD
       case node.name
       when "compare_versions"
@@ -28,7 +33,7 @@ module Crystal
       when "run"
         interpret_run(node)
       else
-        node.raise "undefined macro method: '#{node.name}'"
+        nil
       end
     end
 
@@ -211,11 +216,48 @@ module Crystal
         run_args << @last.to_macro_id
       end
 
-      success, result = @program.macro_run(filename, run_args)
-      if success
-        @last = MacroId.new(result)
+      result = @program.macro_run(filename, run_args)
+      if result.status.success?
+        @last = MacroId.new(result.stdout)
       else
-        node.raise "Error executing run: #{original_filename} #{run_args.map(&.inspect).join " "}\n\nGot:\n\n#{result}\n"
+        command = "#{original_filename} #{run_args.map(&.inspect).join " "}"
+
+        message = IO::Memory.new
+        message << "Error executing run (exit code: #{result.status.exit_code}): #{command}\n"
+
+        if result.stdout.empty? && result.stderr.empty?
+          message << "\nGot no output."
+        else
+          Colorize.reset(message)
+
+          unless result.stdout.empty?
+            message.puts
+            message << "stdout:".colorize.mode(:bold)
+            message.puts
+            message.puts
+            result.stdout.each_line do |line|
+              message << "    "
+              message << line
+              message << '\n'
+            end
+            message << '\n'
+          end
+
+          unless result.stderr.empty?
+            message.puts
+            message << "stderr:".colorize.mode(:bold)
+            message.puts
+            message.puts
+            result.stderr.each_line do |line|
+              message << "    "
+              message << line
+              message << '\n'
+            end
+            message << '\n'
+          end
+        end
+
+        node.raise message.to_s
       end
     end
   end

@@ -95,6 +95,10 @@ module Colorize
   def self.on_tty_only!
     self.enabled = STDOUT.tty? && STDERR.tty?
   end
+
+  def self.reset(io = STDOUT)
+    io << "\e[0m" if enabled?
+  end
 end
 
 def with_color
@@ -329,6 +333,6 @@ struct Colorize::Object(T)
   end
 
   protected def append_end(io)
-    io << "\e[0m"
+    Colorize.reset(io)
   end
 end

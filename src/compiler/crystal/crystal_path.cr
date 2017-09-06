@@ -11,12 +11,12 @@ module Crystal
 
     @crystal_path : Array(String)
 
-    def initialize(path = CrystalPath.default_path, target_triple = LLVM.default_target_triple)
+    def initialize(path = CrystalPath.default_path, target_triple = Crystal::Config.default_target_triple)
       @crystal_path = path.split(':').reject &.empty?
       add_target_path(target_triple)
     end
 
-    private def add_target_path(target_triple = LLVM.default_target_triple)
+    private def add_target_path(target_triple = Crystal::Config.default_target_triple)
       triple = target_triple.split('-')
       triple.delete(triple[1]) if triple.size == 4 # skip vendor
 
@@ -127,11 +127,11 @@ module Crystal
       files = [] of String
       dirs = [] of String
 
-      Dir.foreach(dir) do |filename|
+      Dir.each_child(dir) do |filename|
         full_name = "#{dir}/#{filename}"
 
         if File.directory?(full_name)
-          if filename != "." && filename != ".." && recursive
+          if recursive
             dirs << filename
           end
         else
