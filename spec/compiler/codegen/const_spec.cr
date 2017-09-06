@@ -380,4 +380,63 @@ describe "Codegen: const" do
       Foo.new.z
       )).to_i.should eq(42)
   end
+
+  it "inlines simple const" do
+    mod = codegen(%(
+      CONST = 1
+      CONST
+      ))
+
+    mod.to_s.should_not contain("CONST")
+  end
+
+  it "inlines enum value" do
+    mod = codegen(%(
+      enum Foo
+        CONST
+      end
+
+      Foo::CONST
+      ))
+
+    mod.to_s.should_not contain("CONST")
+  end
+
+  it "inlines const with math" do
+    mod = codegen(%(
+      CONST = (1 + 2) * 3
+      ))
+
+    mod.to_s.should_not contain("CONST")
+  end
+
+  it "inlines const referencing another const" do
+    mod = codegen(%(
+      OTHER = 1
+
+      CONST = OTHER
+      CONST
+      ))
+
+    mod.to_s.should_not contain("CONST")
+    mod.to_s.should_not contain("OTHER")
+  end
+
+  it "inlines bool const" do
+    mod = codegen(%(
+      CONST = true
+      CONST
+      ))
+
+    mod.to_s.should_not contain("CONST")
+  end
+
+  it "inlines char const" do
+    mod = codegen(%(
+      CONST = 'a'
+      CONST
+      ))
+
+    mod.to_s.should_not contain("CONST")
+  end
 end
