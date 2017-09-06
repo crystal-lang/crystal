@@ -61,7 +61,7 @@ module HTML
   # ```
   # require "html"
   #
-  # HTML.escape_javascript("</crystal> \u2028") # => ""<\\/crystal> &#x2028;""
+  # HTML.escape_javascript("</crystal> \u2028") # => "<\\/crystal> &#x2028;"
   # ```
   def self.escape_javascript(string : String) : String
     string.gsub("\r\n", "\n").gsub(ESCAPE_JAVASCRIPT_SUBST).gsub("</", "<\\/")
