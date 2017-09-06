@@ -81,6 +81,8 @@ describe "BigInt" do
     (1.to_big_i + 2).should eq(3.to_big_i)
     (1.to_big_i + 2_u8).should eq(3.to_big_i)
     (5.to_big_i + (-2_i64)).should eq(3.to_big_i)
+    (5.to_big_i + Int64::MAX).should be > Int64::MAX.to_big_i
+    (5.to_big_i + Int64::MAX).should eq(Int64::MAX.to_big_i + 5)
 
     (2 + 1.to_big_i).should eq(3.to_big_i)
   end
