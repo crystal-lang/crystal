@@ -319,7 +319,7 @@ describe "YAML mapping" do
   it "handles extra whitespace properly" do
     person = YAMLPerson.from_yaml("name: |\n  John\n  \n  X\n\n  Doe\n")
     person.name.should eq("John\n\nX\n\nDoe\n")
-    yaml = YAMLWithAny.from_yaml( %<obj: "   \n  \\ x\n"\n>)
+    yaml = YAMLWithAny.from_yaml(%<obj: "   \n  \\ x\n"\n>)
     yaml.obj.should eq("  x ")
   end
 end
