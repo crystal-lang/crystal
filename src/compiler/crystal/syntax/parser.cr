@@ -550,7 +550,7 @@ module Crystal
       end
     end
 
-    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"["]
+    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"["]
 
     def parse_atomic_with_method
       location = @token.location
@@ -619,7 +619,12 @@ module Crystal
           elsif @token.type == :"["
             return parse_atomic_method_suffix(atomic, location)
           else
-            name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
+            name = case @token.type
+                   when :IDENT, :CONST
+                     @token.value.to_s
+                   else
+                     @token.type.to_s
+                   end
             end_location = token_end_location
 
             @wants_regex = false
@@ -4925,7 +4930,10 @@ module Crystal
       push_def if require_body
 
       next_token_skip_space_or_newline
-      name = check_ident
+
+      check IdentOrConst
+      name = @token.value.to_s
+
       next_token_skip_space_or_newline
 
       if @token.type == :"="
