@@ -1031,7 +1031,7 @@ module Crystal
         when :fun
           check_type_declaration do
             check_not_inside_def("can't define fun inside def") do
-              parse_fun_def require_body: true
+              parse_fun_def top_level: true, require_body: true
             end
           end
         when :alias
@@ -4869,7 +4869,7 @@ module Crystal
         when :alias
           parse_alias
         when :fun
-          parse_fun_def
+          parse_fun_def(top_level: false)
         when :type
           parse_type_def
         when :struct
@@ -4923,7 +4923,7 @@ module Crystal
 
     IdentOrConst = [:IDENT, :CONST]
 
-    def parse_fun_def(require_body = false)
+    def parse_fun_def(top_level, require_body = false)
       location = @token.location
       doc = @token.doc
 
@@ -4931,8 +4931,12 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      check IdentOrConst
-      name = @token.value.to_s
+      name = if top_level
+               check_ident
+             else
+               check IdentOrConst
+               @token.value.to_s
+             end
 
       next_token_skip_space_or_newline
 

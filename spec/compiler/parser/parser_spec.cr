@@ -708,6 +708,7 @@ describe "Parser" do
   it_parses "lib LibC\nfun SomeFun\nend", LibDef.new("LibC", [FunDef.new("SomeFun")] of ASTNode)
 
   it_parses "fun foo(x : Int32) : Int64\nx\nend", FunDef.new("foo", [Arg.new("x", restriction: "Int32".path)], "Int64".path, body: "x".var)
+  assert_syntax_error "fun Foo : Int64\nend"
 
   it_parses "lib LibC; {{ 1 }}; end", LibDef.new("LibC", body: [MacroExpression.new(1.int32)] of ASTNode)
   it_parses "lib LibC; {% if 1 %}2{% end %}; end", LibDef.new("LibC", body: [MacroIf.new(1.int32, MacroLiteral.new("2"))] of ASTNode)
