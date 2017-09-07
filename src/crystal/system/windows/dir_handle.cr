@@ -14,12 +14,12 @@ struct Crystal::System::DirHandle
   def read
     data = LibC::WIN32_FIND_DATA_A.new
     if @dir_handle == LibC::INVALID_HANDLE_VALUE
-      @dir_handle = LibC._FindFirstFileA((path + "\\*").check_no_null_byte, pointerof(data))
+      @dir_handle = LibC.FindFirstFileA((path + "\\*").check_no_null_byte, pointerof(data))
       if @dir_handle == LibC::INVALID_HANDLE_VALUE
         raise WinError.new("FindFirstFileA")
       end
-    elsif LibC._FindNextFileA(@dir_handle, pointerof(data)) == 0
-      error = LibC._GetLastError
+    elsif LibC.FindNextFileA(@dir_handle, pointerof(data)) == 0
+      error = LibC.GetLastError
       if error == WinError::ERROR_NO_MORE_FILES
         return nil
       else
@@ -35,7 +35,7 @@ struct Crystal::System::DirHandle
 
   def close
     if @dir_handle != LibC::INVALID_HANDLE_VALUE
-      if LibC._FindClose(@dir_handle) == 0
+      if LibC.FindClose(@dir_handle) == 0
         raise WinError.new("FindClose")
       end
       @dir_handle = LibC::INVALID_HANDLE_VALUE
@@ -43,12 +43,12 @@ struct Crystal::System::DirHandle
   end
 
   def self.current : String
-    len = LibC._GetCurrentDirectoryA(0, nil)
+    len = LibC.GetCurrentDirectoryA(0, nil)
     if len == 0
       raise WinError.new("_GetCurrentDirectoryA")
     end
     String.new(len) do |buffer|
-      if LibC._GetCurrentDirectoryA(len, buffer) == 0
+      if LibC.GetCurrentDirectoryA(len, buffer) == 0
         raise WinError.new("_GetCurrentDirectoryA")
       end
       {len - 1, len - 1} # remove \0 at the end
@@ -56,13 +56,13 @@ struct Crystal::System::DirHandle
   end
 
   def self.cd(path : String)
-    if LibC._SetCurrentDirectoryA(path.check_no_null_byte) == 0
+    if LibC.SetCurrentDirectoryA(path.check_no_null_byte) == 0
       raise WinError.new("Error while changing directory to #{path.inspect}")
     end
   end
 
   def self.exists?(path : String) : Bool
-    atr = LibC._GetFileAttributesA(path.check_no_null_byte)
+    atr = LibC.GetFileAttributesA(path.check_no_null_byte)
     if (atr == LibWindows::INVALID_FILE_ATTRIBUTES)
       return false
     end
@@ -70,13 +70,13 @@ struct Crystal::System::DirHandle
   end
 
   def self.mkdir(path : String, mode)
-    if LibC._CreateDirectoryA(path.check_no_null_byte, nil) == 0
+    if LibC.CreateDirectoryA(path.check_no_null_byte, nil) == 0
       raise WinError.new("Unable to create directory '#{path}'")
     end
   end
 
   def self.rmdir(path : String)
-    if LibC._RemoveDirectoryA(path.check_no_null_byte) == 0
+    if LibC.RemoveDirectoryA(path.check_no_null_byte) == 0
       raise WinError.new("Unable to remove directory '#{path}'")
     end
   end
