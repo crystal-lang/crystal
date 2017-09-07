@@ -1376,8 +1376,16 @@ module Crystal
         @block_arg_count += 1
 
         obj = Var.new(block_arg_name)
+
         @wants_regex = false
-        next_token_skip_space
+        if current_char == '%'
+          next_char
+          @token.type = :"%"
+          @token.column_number += 1
+          skip_space
+        else
+          next_token_skip_space
+        end
 
         location = @token.location
 
