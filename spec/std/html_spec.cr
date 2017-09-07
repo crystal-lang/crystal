@@ -9,7 +9,7 @@ describe "HTML" do
       str.should eq("safe_string")
     end
 
-    it "escapes dangerous characters from a string" do
+    it "escapes special characters from an HTML string" do
       str = HTML.escape("< & > \"")
 
       str.should eq("&lt; &amp; &gt; &quot;")
@@ -35,13 +35,13 @@ describe "HTML" do
       str.should eq("safe_string")
     end
 
-    it "escapes dangerous characters from a string" do
+    it "escapes special characters from a JavaScript string" do
       str = HTML.escape_javascript("</tag> \r\n \r \n \u2028 \u2029")
 
       str.should eq("<\\/tag> \\n \\n \\n &#x2028; &#x2029;")
     end
 
-    it "escapes dangerous characters from an IO" do
+    it "escapes special characters from a JavaScript IO" do
       io = IO::Memory.new
       HTML.escape_javascript("</tag> \r\n \r \n \u2028 \u2029", io).should be_nil
       io.to_s.should eq("<\\/tag> \\n \\n \\n &#x2028; &#x2029;")
