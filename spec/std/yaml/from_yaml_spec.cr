@@ -26,56 +26,62 @@ describe "Nil.from_yaml" do
 
   values = {"", "NULL", "Null", "null", "~"}
 
-  values.each do |value|
-    it %(should return nil if "#{value}") do
+  it "should return nil if a YAML null value" do
+    values.each do |value|
       # Test with an array since a standalone empty value shows as STREAM_END
       Array(Nil).from_yaml("- " + value).should eq [nil]
     end
   end
 
-  values.each do |value|
-    it %(should raise if "#{value}" is quoted with double quotes) do
+  it "should raise if a YAML null value is quoted with double quotes" do
+    values.each do |value|
       expect_raises(YAML::ParseException) do
         Nil.from_yaml %("#{value}")
       end
     end
+  end
 
-    it %(should raise if "#{value}" is quoted with single quotes) do
+  it "should raise if YAML null value is quoted with single quotes" do
+    values.each do |value|
       expect_raises(YAML::ParseException) do
         Nil.from_yaml "'#{value}'"
       end
     end
-
-    it "should raise if not a null value" do
-      expect_raises(YAML::ParseException) do
-        Nil.from_yaml "hello"
-      end
-    end
   end
 
-  describe "Bool.from_yaml" do
-    describe "true values" do
-      it "should serialize and deserialize" do
-        Bool.from_yaml(true.to_yaml).should eq true
-      end
+  it "should raise if not a null value" do
+    expect_raises(YAML::ParseException) do
+      Nil.from_yaml "hello"
+    end
+  end
+end
 
-      values = {"true", "True", "TRUE", "on", "On", "ON", "y", "Y", "yes", "Yes", "YES"}
+describe "Bool.from_yaml" do
+  describe "true values" do
+    it "should serialize and deserialize" do
+      Bool.from_yaml(true.to_yaml).should eq true
+    end
 
+    values = {"true", "True", "TRUE", "on", "On", "ON", "y", "Y", "yes", "Yes", "YES"}
+
+    it "should return true if a truthy value" do
       values.each do |value|
-        it %(should return true if "#{value}") do
-          Bool.from_yaml(value).should eq true
-        end
+        Bool.from_yaml(value).should eq true
+      end
+    end
 
-        it %(should raise if "#{value}" is quoted with double quotes) do
-          expect_raises(YAML::ParseException) do
-            Bool.from_yaml %("#{value}")
-          end
+    it "should raise if a truthy value is quoted with double quotes" do
+      values.each do |value|
+        expect_raises(YAML::ParseException) do
+          Bool.from_yaml %("#{value}")
         end
+      end
+    end
 
-        it %(should raise if "#{value}" is quoted with single quotes) do
-          expect_raises(YAML::ParseException) do
-            Bool.from_yaml "'#{value}'"
-          end
+    it "should raise if truthy is quoted with single quotes" do
+      values.each do |value|
+        expect_raises(YAML::ParseException) do
+          Bool.from_yaml "'#{value}'"
         end
       end
     end
@@ -88,18 +94,22 @@ describe "Nil.from_yaml" do
 
     values = {"false", "False", "FALSE", "off", "Off", "OFF", "n", "N", "no", "No", "NO"}
 
-    values.each do |value|
-      it %(should return false if "#{value}") do
+    it "should return true if a falsey value" do
+      values.each do |value|
         Bool.from_yaml(value).should eq false
       end
+    end
 
-      it %(should raise if "#{value}" is quoted with double quotes) do
+    it "should raise if a falsey value is quoted with double quotes" do
+      values.each do |value|
         expect_raises(YAML::ParseException) do
           Bool.from_yaml %("#{value}")
         end
       end
+    end
 
-      it %(should raise if "#{value}" is quoted with single quotes) do
+    it "should raise if falsey is quoted with single quotes" do
+      values.each do |value|
         expect_raises(YAML::ParseException) do
           Bool.from_yaml "'#{value}'"
         end
@@ -121,7 +131,7 @@ end
     end
 
     it "should parse a number into an #{type.name}" do
-      type.from_yaml(type.new("1").to_yaml).should eq type.new("1")
+      type.from_yaml("1").should eq type.new("1")
     end
 
     it "should raise if quoted with double quotes" do
@@ -150,11 +160,11 @@ end
       type.from_yaml(type.new("1.0").to_yaml).should eq type.new("1.0")
     end
 
-    it "should parse a number into an {{type.id}}" do
+    it "should parse a number into an #{type.name}" do
       type.from_yaml("1").should eq type.new("1")
     end
 
-    it "should parse a float into an {{type.id}}" do
+    it "should parse a float into an #{type.name}" do
       type.from_yaml("1.1").should eq type.new("1.1")
     end
 
@@ -216,18 +226,23 @@ describe "String.from_yaml" do
       "0x_0A_74_AE", "0b1010_0111_0100_1010_1110", "02472256",
       "2001-12-15T02:59:43.1Z",
     }
-    values.each do |value|
-      it %(should raise if a reserved value "#{value}") do
+
+    it "should raise if a reserved value" do
+      values.each do |value|
         expect_raises(YAML::ParseException) do
           String.from_yaml(value)
         end
       end
+    end
 
-      it "should parse if a reserved value is quoted with double quotes" do
+    it "should parse if a reserved value is quoted with double quotes" do
+      values.each do |value|
         String.from_yaml(%("#{value}")).should eq value
       end
+    end
 
-      it "should parse if a reserved value is quoted with single quotes" do
+    it "should parse if a reserved value is quoted with single quotes" do
+      values.each do |value|
         String.from_yaml("'#{value}'").should eq value
       end
     end

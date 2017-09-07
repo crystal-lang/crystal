@@ -12,9 +12,9 @@ describe "String.to_yaml" do
     "1", "1.0", "-1", "0",
   }
 
-  values.each do |value|
-    it "should quote the non-string scalars" do
-      [value].to_yaml.should eq %(---\n- "#{value}"\n)
+  it "should quote non-string scalars" do
+    values.each do |value|
+      [value].to_yaml.should eq "---\n- \"#{value}\"\n"
     end
   end
 end
