@@ -24,7 +24,7 @@ describe "Nil.from_yaml" do
     Nil.from_yaml(nil.to_yaml).should eq nil
   end
 
-  values = {"", "NULL", "Null", "null", "~"}
+  values = YAML::NULL_VALUES
 
   it "should return nil if a YAML null value" do
     values.each do |value|
@@ -62,7 +62,7 @@ describe "Bool.from_yaml" do
       Bool.from_yaml(true.to_yaml).should eq true
     end
 
-    values = {"true", "True", "TRUE", "on", "On", "ON", "y", "Y", "yes", "Yes", "YES"}
+    values = YAML::TRUE_VALUES
 
     it "should return true if a truthy value" do
       values.each do |value|
@@ -87,7 +87,7 @@ describe "Bool.from_yaml" do
       Bool.from_yaml(false.to_yaml).should eq false
     end
 
-    values = {"false", "False", "FALSE", "off", "Off", "OFF", "n", "N", "no", "No", "NO"}
+    values = YAML::FALSE_VALUES
 
     it "should return true if a falsey value" do
       values.each do |value|
@@ -122,6 +122,13 @@ end
       type.from_yaml(type.new("1").to_yaml).should eq type.new("1")
     end
 
+    it "should parse possible values" do
+      values = {"1", "-1", "0x_0A_74_AE", "0b1010_0111_0100_1010_1110", "02472256"}
+      values.each do |value|
+        type.from_yaml(value).class.should eq type
+      end
+    end
+
     it "should parse a number into an #{type.name}" do
       type.from_yaml("1").should eq type.new("1")
     end
@@ -141,6 +148,19 @@ end
   describe "#{type.name}.from_yaml" do
     it "should serialize and deserialize" do
       type.from_yaml(type.new("1.0").to_yaml).should eq type.new("1.0")
+    end
+
+    it "should parse possible values" do
+      values = {
+        ".inf", ".Inf", ".INF", "+.inf", "+.Inf", "+.INF",
+        "-.inf", "-.Inf", "-.INF",
+        ".nan", ".NaN", ".NAN",
+        "+1", "1", "-1",
+        "1.1", "+1.1", "-1.1",
+      }
+      values.each do |value|
+        type.from_yaml(value).class.should eq type
+      end
     end
 
     it "should parse a number into an #{type.name}" do
