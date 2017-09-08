@@ -33,16 +33,11 @@ describe "Nil.from_yaml" do
     end
   end
 
-  it "should raise if a YAML null value is quoted with double quotes" do
+  it "should raise if a YAML null value is quoted" do
     values.each do |value|
       expect_raises(YAML::ParseException) do
         Nil.from_yaml %("#{value}")
       end
-    end
-  end
-
-  it "should raise if YAML null value is quoted with single quotes" do
-    values.each do |value|
       expect_raises(YAML::ParseException) do
         Nil.from_yaml "'#{value}'"
       end
