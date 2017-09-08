@@ -31,15 +31,13 @@ end
 # TODO: Ideally, it may be beter to use `for type in Int::Primitive.union_types`
 # but it is currently broken due to: https://github.com/crystal-lang/crystal/issues/4301
 {% for bits in [8, 16, 32, 64] %}
-  {% for type in %w(Int UInt) %}
-    def {{type.id}}{{bits}}.new(pull : YAML::PullParser)
-      {% if type == "UInt" %}
-        pull.read_int.to_u{{bits}}
-      {% else %}
-        pull.read_int.to_i{{bits}}
-      {% end %}
-    end
-  {% end %}
+  def Int{{bits}}.new(pull : YAML::PullParser)
+     pull.read_int.to_i{{bits}}
+  end
+
+  def UInt{{bits}}.new(pull : YAML::PullParser)
+   pull.read_int.to_u{{bits}}
+  end
 {% end %}
 
 {% for bits in [32, 64] %}

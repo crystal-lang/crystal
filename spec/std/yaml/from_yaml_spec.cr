@@ -70,18 +70,13 @@ describe "Bool.from_yaml" do
       end
     end
 
-    it "should raise if a truthy value is quoted with double quotes" do
+    it "should raise if a truthy value is quoted" do
       values.each do |value|
         expect_raises(YAML::ParseException) do
           Bool.from_yaml %("#{value}")
         end
-      end
-    end
-
-    it "should raise if truthy is quoted with single quotes" do
-      values.each do |value|
         expect_raises(YAML::ParseException) do
-          Bool.from_yaml "'#{value}'"
+          Bool.from_yaml %('#{value}')
         end
       end
     end
@@ -100,18 +95,15 @@ describe "Bool.from_yaml" do
       end
     end
 
-    it "should raise if a falsey value is quoted with double quotes" do
+    it "should raise if a falsey value is quoted" do
       values.each do |value|
         expect_raises(YAML::ParseException) do
           Bool.from_yaml %("#{value}")
         end
       end
-    end
-
-    it "should raise if falsey is quoted with single quotes" do
       values.each do |value|
         expect_raises(YAML::ParseException) do
-          Bool.from_yaml "'#{value}'"
+          Bool.from_yaml %('#{value}')
         end
       end
     end
@@ -134,21 +126,12 @@ end
       type.from_yaml("1").should eq type.new("1")
     end
 
-    it "should raise if quoted with double quotes" do
+    it "should raise if an int is quoted" do
       expect_raises(YAML::ParseException) do
         type.from_yaml %("1")
       end
-    end
-
-    it "should raise if quoted with single quotes" do
       expect_raises(YAML::ParseException) do
-        type.from_yaml "'1'"
-      end
-    end
-
-    it "should raise when not a number" do
-      expect_raises(YAML::ParseException) do
-        type.from_yaml("hi")
+        type.from_yaml %('1')
       end
     end
   end
@@ -168,21 +151,12 @@ end
       type.from_yaml("1.1").should eq type.new("1.1")
     end
 
-    it "should raise if quoted with double quotes" do
+    it "should raise if a float value is quoted" do
       expect_raises(YAML::ParseException) do
         type.from_yaml %("1.1")
       end
-    end
-
-    it "should raise if quoted with single quotes" do
       expect_raises(YAML::ParseException) do
-        type.from_yaml "'1.1'"
-      end
-    end
-
-    it "should raise when not a float or number" do
-      expect_raises(YAML::ParseException) do
-        type.from_yaml("hi")
+        type.from_yaml %('1.1')
       end
     end
   end
@@ -197,12 +171,9 @@ describe "String.from_yaml" do
     String.from_yaml("hello").should eq "hello"
   end
 
-  it "should parse a single quoted string" do
-    String.from_yaml("'hello'").should eq "hello"
-  end
-
-  it "should parse a double quoted string" do
+  it "should parse a quoted string" do
     String.from_yaml(%("hello")).should eq "hello"
+    String.from_yaml(%('hello')).should eq "hello"
   end
 
   it "should parse a literal string" do
@@ -235,15 +206,12 @@ describe "String.from_yaml" do
       end
     end
 
-    it "should parse if a reserved value is quoted with double quotes" do
+    it "should parse if a reserved value is quoted" do
       values.each do |value|
         String.from_yaml(%("#{value}")).should eq value
       end
-    end
-
-    it "should parse if a reserved value is quoted with single quotes" do
       values.each do |value|
-        String.from_yaml("'#{value}'").should eq value
+        String.from_yaml(%('#{value}')).should eq value
       end
     end
   end

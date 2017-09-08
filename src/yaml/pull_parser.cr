@@ -150,11 +150,8 @@ class YAML::PullParser
 
   def read_int
     expect_scalar_style LibYAML::ScalarStyle::PLAIN
-    if value = self.value.to_s.gsub('_', "").to_i64?(prefix: true)
-      value
-    else
-      raise "Expected integer not '#{self.value}'", *location
-    end
+    value = self.value.to_s.gsub('_', "").to_i64?(prefix: true)
+    raise "Expected integer not '#{self.value}'", *location unless value
     read_next
     value
   end
