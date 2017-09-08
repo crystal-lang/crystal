@@ -13,19 +13,11 @@ lib LibLLVMExt
   fun create_di_builder = LLVMNewDIBuilder(LibLLVM::ModuleRef) : DIBuilder
   fun di_builder_finalize = LLVMDIBuilderFinalize(DIBuilder)
 
-  {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
-    fun di_builder_create_function = LLVMDIBuilderCreateFunction(
-                                                                 builder : DIBuilder, scope : Metadata, name : Char*,
-                                                                 linkage_name : Char*, file : Metadata, line : UInt,
-                                                                 composite_type : Metadata, is_local_to_unit : Int, is_definition : Int,
-                                                                 scope_line : UInt, flags : LLVM::DIFlags, is_optimized : Int, func : LibLLVM::ValueRef) : Metadata
-  {% else %}
-    fun di_builder_create_function = LLVMDIBuilderCreateFunction(
-                                                                 builder : DIBuilder, scope : Metadata, name : Char*,
-                                                                 linkage_name : Char*, file : Metadata, line : UInt,
-                                                                 composite_type : Metadata, is_local_to_unit : Bool, is_definition : Bool,
-                                                                 scope_line : UInt, flags : LLVM::DIFlags, is_optimized : Bool, func : LibLLVM::ValueRef) : Metadata
-  {% end %}
+  fun di_builder_create_function = LLVMDIBuilderCreateFunction(
+                                                               builder : DIBuilder, scope : Metadata, name : Char*,
+                                                               linkage_name : Char*, file : Metadata, line : UInt,
+                                                               composite_type : Metadata, is_local_to_unit : Bool, is_definition : Bool,
+                                                               scope_line : UInt, flags : LLVM::DIFlags, is_optimized : Bool, func : LibLLVM::ValueRef) : Metadata
 
   fun di_builder_create_file = LLVMDIBuilderCreateFile(builder : DIBuilder, file : Char*, dir : Char*) : Metadata
   fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit(builder : DIBuilder,
@@ -94,17 +86,12 @@ lib LibLLVMExt
                                                                       align_in_bits : UInt64,
                                                                       name : Char*) : Metadata
 
-  {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
-    fun temporary_md_node = LLVMTemporaryMDNode(context : LibLLVM::ContextRef, mds : Metadata*, count : UInt) : Metadata
-    fun metadata_replace_all_uses_with = LLVMMetadataReplaceAllUsesWith(Metadata, Metadata)
-  {% else %}
-    fun di_builder_create_replaceable_composite_type = LLVMDIBuilderCreateReplaceableCompositeType(builder : DIBuilder,
-                                                                                                   scope : Metadata,
-                                                                                                   name : Char*,
-                                                                                                                    file : Metadata,
-                                                                                                   line : UInt) : Metadata
-    fun di_builder_replace_temporary = LLVMDIBuilderReplaceTemporary(builder : DIBuilder, from : Metadata, to : Metadata)
-  {% end %}
+  fun di_builder_create_replaceable_composite_type = LLVMDIBuilderCreateReplaceableCompositeType(builder : DIBuilder,
+                                                                                                 scope : Metadata,
+                                                                                                 name : Char*,
+                                                                                                 file : Metadata,
+                                                                                                 line : UInt) : Metadata
+  fun di_builder_replace_temporary = LLVMDIBuilderReplaceTemporary(builder : DIBuilder, from : Metadata, to : Metadata)
 
   fun set_current_debug_location = LLVMSetCurrentDebugLocation2(LibLLVM::BuilderRef, Int, Int, Metadata, Metadata)
 
