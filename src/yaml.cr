@@ -166,7 +166,7 @@ module YAML
   end
 
   # Checks to see if the value is reserved
-  def self.reserved_value?(value, checks = 0)
+  def self.reserved_value?(value)
     return true if YAML::RESERVED_VALUES.includes?(value)
     case {value[0]?, value[1]?, value[2]?, value[3]?, value[4]?}
     when {.try(&.ascii_number?), .try(&.ascii_number?), .try(&.ascii_number?), .try(&.ascii_number?), '-'}
