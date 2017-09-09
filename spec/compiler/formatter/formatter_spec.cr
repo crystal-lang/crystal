@@ -100,6 +100,11 @@ describe Crystal::Formatter do
   assert_format "Foo( x:  Int32  )", "Foo(x: Int32)"
   assert_format "Foo( x:  Int32  ,  y: Float64 )", "Foo(x: Int32, y: Float64)"
 
+  assert_format "NamedTuple(a: Int32,)", "NamedTuple(a: Int32)"
+  assert_format "NamedTuple(\n  a: Int32,\n)"
+  assert_format "NamedTuple(\n  a: Int32,)", "NamedTuple(\n  a: Int32,\n)"
+  assert_format "class Foo\n  NamedTuple(\n    a: Int32,\n  )\nend"
+
   assert_format "::Tuple(T)"
   assert_format "::NamedTuple(T)"
   assert_format "::Pointer(T)"
@@ -596,9 +601,12 @@ describe Crystal::Formatter do
   assert_format "lib Bar\n  enum Foo\n    A\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A = 1\n  end\nend"
 
+  assert_format "->foo="
   assert_format "foo = 1\n->foo.bar"
+  assert_format "foo = 1\n->foo.bar="
   assert_format "foo = 1\n->foo.bar(Int32)"
   assert_format "foo = 1\n->foo.bar(Int32*)"
+  assert_format "foo = 1\n->foo.bar=(Int32)"
   assert_format "->{ x }"
   assert_format "->{\nx\n}", "->{\n  x\n}"
   assert_format "->do\nx\nend", "->do\n  x\nend"
@@ -634,6 +642,13 @@ describe Crystal::Formatter do
   assert_format %(asm("nop" :::: "volatile"  , "alignstack"  ,  "intel"   )), %(asm("nop" :::: "volatile", "alignstack", "intel"))
   assert_format %(asm("nop" ::: "eax" ,  "ebx" :   "volatile"  ,  "alignstack" )), %(asm("nop" ::: "eax", "ebx" : "volatile", "alignstack"))
   assert_format %(asm("a" : "b"(c) : "d"(e) :: "volatile"))
+  assert_format %(asm("a" : "b"(c)\n)), %(asm("a" : "b"(c)))
+  assert_format %(asm("a" :: "d"(e)\n)), %(asm("a" :: "d"(e)))
+  assert_format %(asm("a" ::: "f"\n)), %(asm("a" ::: "f"))
+  assert_format %(asm("a" :::: "volatile"\n)), %(asm("a" :::: "volatile"))
+  assert_format %(asm("a" : "b"(c) : "d"(e)\n        : "f"))
+  assert_format %(asm("a" : "b"(c) : "d"(e)\n        : "f",\n          "g"))
+  assert_format %(asm("a" ::: "a"\n        : "volatile",\n          "intel"))
 
   assert_format "1 # foo\n1234 # bar", "1    # foo\n1234 # bar"
   assert_format "1234 # foo\n1 # bar", "1234 # foo\n1    # bar"
@@ -868,6 +883,8 @@ describe Crystal::Formatter do
   assert_format "foo.[1]"
 
   assert_format "@foo : Int32 # comment\n\ndef foo\nend"
+  assert_format "getter foo # comment\n\ndef foo\nend"
+  assert_format "getter foo : Int32 # comment\n\ndef foo\nend"
 
   assert_format "a &.b.as C", "a &.b.as C"
   assert_format "a &.b.c.as C", "a &.b.c.as C"

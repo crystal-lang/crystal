@@ -235,6 +235,8 @@ module Crystal
       @program.class_var_and_const_initializers.each do |initializer|
         case initializer
         when Const
+          # Simple constants are never initialized: they are always inlined
+          next if initializer.compile_time_value
           next unless initializer.simple?
 
           initialize_simple_const(initializer)
@@ -873,7 +875,7 @@ module Crystal
 
     def codegen_assign(target : Path, value, node)
       const = target.target_const.not_nil!
-      if const.used? && !const.simple?
+      if const.used? && !const.simple? && !const.compile_time_value
         initialize_const(const)
       end
       @last = llvm_nil

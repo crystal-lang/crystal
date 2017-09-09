@@ -111,7 +111,7 @@ class Crystal::Command
       puts USAGE
       exit
     end
-  rescue ex : Crystal::ToolException
+  rescue ex : Crystal::LocationlessException
     error ex.message
   rescue ex : Crystal::Exception
     ex.color = @color
@@ -216,7 +216,7 @@ class Crystal::Command
     status, elapsed_time = @progress_tracker.stage("Execute") do
       begin
         start_time = Time.now
-        Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
+        Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
           # Ignore the signal so we don't exit the running process
           # (the running process can still handle this signal)
           Signal::INT.ignore # do
@@ -295,7 +295,7 @@ class Crystal::Command
         opts.on("-d", "--debug", "Add full symbolic debug info") do
           compiler.debug = Crystal::Debug::All
         end
-        opts.on("", "--no-debug", "Skip any symbolic debug info") do
+        opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
         end
       end
@@ -402,6 +402,9 @@ class Crystal::Command
         opts.on("--verbose", "Display executed commands") do
           compiler.verbose = true
         end
+        opts.on("--static", "Link statically") do
+          compiler.static = true
+        end
       end
 
       opts.unknown_args do |before, after|
@@ -463,7 +466,7 @@ class Crystal::Command
     opts.on("-d", "--debug", "Add full symbolic debug info") do
       compiler.debug = Crystal::Debug::All
     end
-    opts.on("", "--no-debug", "Skip any symbolic debug info") do
+    opts.on("--no-debug", "Skip any symbolic debug info") do
       compiler.debug = Crystal::Debug::None
     end
     opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|

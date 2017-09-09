@@ -875,7 +875,7 @@ class Crystal::Call
           match.context.def_free_vars = match.def.free_vars
           matched = block_type.restrict(output, match.context)
           if (!matched || (matched && !block_type.implements?(matched))) && !void_return_type?(match.context, output)
-            if output.is_a?(ASTNode) && !output.is_a?(Underscore)
+            if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
               begin
                 block_type = lookup_node_type(match.context, output).virtual_type
               rescue ex : Crystal::Exception
@@ -922,7 +922,7 @@ class Crystal::Call
 
   private def void_return_type?(match_context, output)
     if output.is_a?(Path)
-      type = match_context.defining_type.lookup_path(output)
+      type = lookup_node_type(match_context, output)
     else
       type = output
     end

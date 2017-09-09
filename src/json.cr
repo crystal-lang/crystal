@@ -69,6 +69,10 @@ module JSON
     def initialize(message, @line_number, @column_number)
       super "#{message} at #{@line_number}:#{@column_number}"
     end
+
+    def location
+      {line_number, column_number}
+    end
   end
 
   # All valid JSON types.

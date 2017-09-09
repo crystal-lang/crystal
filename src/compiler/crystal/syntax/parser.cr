@@ -550,7 +550,7 @@ module Crystal
       end
     end
 
-    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"["]
+    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"["]
 
     def parse_atomic_with_method
       location = @token.location
@@ -619,7 +619,12 @@ module Crystal
           elsif @token.type == :"["
             return parse_atomic_method_suffix(atomic, location)
           else
-            name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
+            name = case @token.type
+                   when :IDENT, :CONST
+                     @token.value.to_s
+                   else
+                     @token.type.to_s
+                   end
             end_location = token_end_location
 
             @wants_regex = false
@@ -692,6 +697,7 @@ module Crystal
           check_void_value atomic, location
 
           column_number = @token.column_number
+          @wants_regex = false
           next_token_skip_space
           atomic = Call.new(atomic, "[]", name_column_number: column_number).at(location)
           atomic.name_size = 0 if atomic.is_a?(Call)
@@ -704,6 +710,7 @@ module Crystal
           call_args = preserve_stop_on_do { parse_call_args_space_consumed check_plus_and_minus: false, allow_curly: true, end_token: :"]" }
           skip_space_or_newline
           check :"]"
+          @wants_regex = false
           next_token
 
           if call_args
@@ -894,18 +901,14 @@ module Crystal
         end
       when :GLOBAL_MATCH_DATA_INDEX
         value = @token.value.to_s
-        if value == "0"
-          node_and_next_token Path.global("PROGRAM_NAME")
+        if value.ends_with? '?'
+          method = "[]?"
+          value = value.rchop
         else
-          if value.ends_with? '?'
-            method = "[]?"
-            value = value.rchop
-          else
-            method = "[]"
-          end
-          location = @token.location
-          node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(value.to_i))
+          method = "[]"
         end
+        location = @token.location
+        node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(value.to_i))
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
       when :__END_LINE__
@@ -1028,7 +1031,7 @@ module Crystal
         when :fun
           check_type_declaration do
             check_not_inside_def("can't define fun inside def") do
-              parse_fun_def require_body: true
+              parse_fun_def top_level: true, require_body: true
             end
           end
         when :alias
@@ -1203,6 +1206,7 @@ module Crystal
         end
       end
       check :"]"
+      @wants_regex = false
       next_token_skip_space
 
       attr = Attribute.new(name, args, named_args)
@@ -1372,8 +1376,16 @@ module Crystal
         @block_arg_count += 1
 
         obj = Var.new(block_arg_name)
+
         @wants_regex = false
-        next_token_skip_space
+        if current_char == '%'
+          next_char
+          @token.type = :"%"
+          @token.column_number += 1
+          skip_space
+        else
+          next_token_skip_space
+        end
 
         location = @token.location
 
@@ -1712,16 +1724,28 @@ module Crystal
       case @token.type
       when :IDENT
         name = @token.value.to_s
-        next_token_skip_space
-        if @token.type == :"."
+        next_token
+        if @token.type == :"="
+          name = "#{name}="
           next_token_skip_space
-          second_name = check_ident
-          if name != "self" && !@def_vars.last.includes?(name)
-            raise "undefined variable '#{name}'", location.line_number, location.column_number
+        else
+          skip_space
+          if @token.type == :"."
+            next_token_skip_space
+            second_name = check_ident
+            if name != "self" && !@def_vars.last.includes?(name)
+              raise "undefined variable '#{name}'", location.line_number, location.column_number
+            end
+            obj = Var.new(name)
+            name = second_name
+            next_token
+            if @token.type == :"="
+              name = "#{name}="
+              next_token_skip_space
+            else
+              skip_space
+            end
           end
-          obj = Var.new(name)
-          name = second_name
-          next_token_skip_space
         end
       when :CONST
         obj = parse_ident
@@ -2075,6 +2099,7 @@ module Crystal
             break
           end
         end
+        @wants_regex = false
         next_token_skip_space
       end
 
@@ -4498,6 +4523,7 @@ module Crystal
           next_token_skip_space
           size = parse_single_type allow_primitives: true
           check :"]"
+          @wants_regex = false
           next_token_skip_space
           type = make_static_array_type(type, size).at(type.location)
         when :"."
@@ -4851,7 +4877,7 @@ module Crystal
         when :alias
           parse_alias
         when :fun
-          parse_fun_def
+          parse_fun_def(top_level: false)
         when :type
           parse_type_def
         when :struct
@@ -4905,14 +4931,21 @@ module Crystal
 
     IdentOrConst = [:IDENT, :CONST]
 
-    def parse_fun_def(require_body = false)
+    def parse_fun_def(top_level, require_body = false)
       location = @token.location
       doc = @token.doc
 
       push_def if require_body
 
       next_token_skip_space_or_newline
-      name = check_ident
+
+      name = if top_level
+               check_ident
+             else
+               check IdentOrConst
+               @token.value.to_s
+             end
+
       next_token_skip_space_or_newline
 
       if @token.type == :"="

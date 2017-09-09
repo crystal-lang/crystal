@@ -345,4 +345,8 @@ describe "Random::ISAAC" do
       m.next_u.should eq(n)
     end
   end
+
+  it "can be initialized without explicit seed" do
+    Random::ISAAC.new.should be_a Random::ISAAC
+  end
 end

@@ -22,11 +22,12 @@ threads ?=      ## Maximum number of threads to use
 debug ?=        ## Add symbolic debug info
 verbose ?=      ## Run specs in verbose mode
 junit_output ?= ## Directory to output junit results
+static ?=       ## Enable static linking
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
-FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )
+FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
 EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
 SHELL = bash
@@ -36,8 +37,6 @@ LLVM_CONFIG_FINDER := \
     (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
   command -v llvm-config-3.8 || command -v llvm-config38 || \
     (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-3.6 || command -v llvm-config36 || \
-  command -v llvm-config-3.5 || command -v llvm-config35 || \
   command -v llvm-config
 LLVM_CONFIG := $(shell $(LLVM_CONFIG_FINDER))
 LLVM_EXT_DIR = src/llvm/ext

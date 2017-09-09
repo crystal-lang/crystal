@@ -32,12 +32,12 @@ class Flate::Writer
     end
   end
 
-  # Creates an instance of Flate::Writer, yields it to the given block, and closes
-  # it at its end.
-  def self.new(output : IO, level : Int32 = Flate::DEFAULT_COMPRESSION,
-               strategy : Flate::Strategy = Flate::Strategy::DEFAULT,
-               sync_close : Bool = false, dict : Bytes? = nil)
-    writer = new(output, level: level, strategy: strategy, sync_close: sync_close, dict: dict)
+  # Creates a new writer for the given *io*, yields it to the given block,
+  # and closes it at its end.
+  def self.open(io : IO, level : Int32 = Flate::DEFAULT_COMPRESSION,
+                strategy : Flate::Strategy = Flate::Strategy::DEFAULT,
+                sync_close : Bool = false, dict : Bytes? = nil)
+    writer = new(io, level: level, strategy: strategy, sync_close: sync_close, dict: dict)
     yield writer ensure writer.close
   end
 
