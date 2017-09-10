@@ -3277,12 +3277,8 @@ module Crystal
         write_keyword :else
         found_comment = skip_space
         if @token.type == :NEWLINE || found_comment
-          unless found_comment
-            write_line
-            next_token
-          end
-          skip_space_or_newline(@indent + 2)
-          format_nested(a_else, @indent)
+          write_line unless found_comment
+          format_nested(a_else)
           skip_space_or_newline(@indent + 2)
         else
           while @token.type == :";"
