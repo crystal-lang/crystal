@@ -198,7 +198,8 @@ class Markdown::Parser
     join_next_lines continue_on: :quote
     line = @lines[@line]
 
-    @renderer.text line.byte_slice(Math.min(line.bytesize, 2))
+    process_line line.byte_slice(line.index('>').not_nil! + 1)
+
     @line += 1
 
     @renderer.end_quote

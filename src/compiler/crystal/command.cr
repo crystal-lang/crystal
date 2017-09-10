@@ -295,7 +295,7 @@ class Crystal::Command
         opts.on("-d", "--debug", "Add full symbolic debug info") do
           compiler.debug = Crystal::Debug::All
         end
-        opts.on("", "--no-debug", "Skip any symbolic debug info") do
+        opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
         end
       end
@@ -466,7 +466,7 @@ class Crystal::Command
     opts.on("-d", "--debug", "Add full symbolic debug info") do
       compiler.debug = Crystal::Debug::All
     end
-    opts.on("", "--no-debug", "Skip any symbolic debug info") do
+    opts.on("--no-debug", "Skip any symbolic debug info") do
       compiler.debug = Crystal::Debug::None
     end
     opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|

@@ -1578,6 +1578,11 @@ module Crystal
           return false
         end
 
+        if obj && !(obj.is_a?(Var) && obj.name == "self")
+          # not a self-instance method: only verify arguments
+          return true
+        end
+
         visited = @visited
 
         node.target_defs.try &.each do |target_def|
