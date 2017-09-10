@@ -159,16 +159,13 @@ struct NamedTuple
     yield
   end
 
-  # Returns a hash value based on this name tuple's size, keys and values.
-  #
-  # See also: `Object#hash`.
-  def hash
-    hash = 31 * size
+  # See `Object#hash(hasher)`
+  def hash(hasher)
     {% for key in T.keys.sort %}
-      hash = 31 * hash + {{key.symbolize}}.hash
-      hash = 31 * hash + self[{{key.symbolize}}].hash
+      hasher = {{key.symbolize}}.hash(hasher)
+      hasher = self[{{key.symbolize}}].hash(hasher)
     {% end %}
-    hash
+    hasher
   end
 
   # Same as `to_s`.

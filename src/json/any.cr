@@ -261,10 +261,8 @@ struct JSON::Any
     raw == other
   end
 
-  # :nodoc:
-  def hash
-    raw.hash
-  end
+  # See `Object#hash(hasher)`
+  def_hash raw
 
   # :nodoc:
   def to_json(json : JSON::Builder)

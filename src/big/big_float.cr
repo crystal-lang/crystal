@@ -76,9 +76,8 @@ struct BigFloat < Float
     new(mpf)
   end
 
-  def hash
-    to_f64.hash
-  end
+  # TODO: improve this
+  def_hash to_f64
 
   def self.default_precision
     LibGMP.mpf_get_default_prec
