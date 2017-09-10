@@ -324,9 +324,12 @@ describe "BigInt" do
   end
 
   it "#hash" do
-    hash = 5.to_big_i.hash
-    hash.should eq(5)
-    typeof(hash).should eq(UInt64)
+    b1 = 5.to_big_i
+    b2 = 5.to_big_i
+    b3 = 6.to_big_i
+
+    b1.hash.should eq(b2.hash)
+    b1.hash.should_not eq(b3.hash)
   end
 
   it "clones" do

@@ -3929,15 +3929,9 @@ class String
     sprintf self, other
   end
 
-  # Returns a hash based on this string’s size and content.
-  #
-  # See also: `Object#hash`.
-  def hash
-    h = 0
-    each_byte do |c|
-      h = 31 * h + c
-    end
-    h
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.string(self)
   end
 
   # Returns the number of unicode codepoints in this string.
