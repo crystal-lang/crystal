@@ -161,8 +161,20 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_abs(mpq, self) }
   end
 
-  def hash
-    to_f64.hash
+  private HASH_MODULUS_RAT_P = BigRational.new((1_u64 << HASH_BITS) - 1)
+  private HASH_MODULUS_RAT_N = -BigRational.new((1_u64 << HASH_BITS) - 1)
+
+  def hash_normalize
+    # more exact version of `remainder(HASH_MODULUS).to_f.hash_normalize`
+    rem = self
+    if self >= HASH_MODULUS_RAT_P || self <= HASH_MODULUS_RAT_N
+      num = numerator
+      denom = denominator
+      div = num.tdiv(denom)
+      floor = div.tdiv(HASH_MODULUS)
+      rem -= floor * HASH_MODULUS
+    end
+    rem.to_big_f.hash_normalize
   end
 
   # Returns the `Float64` representing this rational.

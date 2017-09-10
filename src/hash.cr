@@ -706,18 +706,19 @@ class Hash(K, V)
     true
   end
 
-  # See also: `Object#hash`.
-  #
-  # ```
-  # foo = {"foo" => "bar"}
-  # foo.hash # => 3247054
-  # ```
-  def hash
-    hash = size
+  # Protocol method for generic hashing.
+  # NOTE: it should be independent of iteration order.
+  def hash(hasher)
+    hasher.raw(size)
+    digest = hasher.digest
     each do |key, value|
-      hash += key.hash ^ value.hash
+      copy = hasher.clone
+      copy << key
+      copy << value
+      digest += copy.digest
     end
-    hash
+    hasher.raw(digest)
+    hasher
   end
 
   # Duplicates a `Hash`.
@@ -864,7 +865,11 @@ class Hash(K, V)
   end
 
   private def bucket_index(key)
-    key.hash.to_u32.remainder(@buckets_size).to_i
+    hash_key(key).to_u32.remainder(@buckets_size).to_i
+  end
+
+  protected def hash_key(key)
+    key.hash
   end
 
   private def calculate_new_size(size)

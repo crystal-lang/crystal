@@ -163,7 +163,25 @@ describe BigRational do
   it "#hash" do
     b = br(10, 3)
     hash = b.hash
-    hash.should eq(b.to_f64.hash)
+    hash.should eq(b.to_big_f.hash)
+  end
+
+  it "#hash_normalize" do
+    hn = 5.to_big_i.hash_normalize
+    hn.should eq(5.hash_normalize)
+    hn = (-5).to_big_i.hash_normalize
+    hn.should eq((-5).hash_normalize)
+    hn = 500000000000000_u64.to_big_i.hash_normalize
+    hn.should eq(500000000000000_u64.hash_normalize)
+    hn = (-500000000000000_i64).to_big_i.hash_normalize
+    hn.should eq((-500000000000000_i64).hash_normalize)
+
+    bi = 1.to_big_r
+    bi = bi << 93
+    f = 1.0_f64
+    f = f * 0x80000000 * 0x80000000 * 0x80000000
+    bi.hash_normalize.should eq(f.hash_normalize)
+    (-bi).hash_normalize.should eq((-f).hash_normalize)
   end
 
   it "is a number" do
@@ -173,5 +191,11 @@ describe BigRational do
   it "clones" do
     x = br(10, 3)
     x.clone.should eq(x)
+  end
+
+  it "#to_big_f" do
+    x = br(10, 3)
+    f = BigFloat.new(10) / BigFloat.new(3)
+    x.to_big_f.should eq(f)
   end
 end

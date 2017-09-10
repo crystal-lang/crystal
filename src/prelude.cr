@@ -17,6 +17,7 @@ require "iterable"
 require "iterator"
 require "indexable"
 require "string"
+require "hash/hasher"
 
 # Alpha-sorted list
 require "array"

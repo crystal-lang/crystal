@@ -316,10 +316,6 @@ struct Int
     !even?
   end
 
-  def hash
-    self
-  end
-
   def succ
     self + 1
   end
@@ -594,6 +590,10 @@ struct Int8
   def clone
     self
   end
+
+  def hash_normalize
+    self
+  end
 end
 
 struct Int16
@@ -614,6 +614,10 @@ struct Int16
   end
 
   def clone
+    self
+  end
+
+  def hash_normalize
     self
   end
 end
@@ -638,6 +642,10 @@ struct Int32
   def clone
     self
   end
+
+  def hash_normalize
+    self
+  end
 end
 
 struct Int64
@@ -660,6 +668,10 @@ struct Int64
   def clone
     self
   end
+
+  def hash_normalize
+    unsafe_mod(HASH_MODULUS)
+  end
 end
 
 struct UInt8
@@ -680,6 +692,10 @@ struct UInt8
   end
 
   def clone
+    self
+  end
+
+  def hash_normalize
     self
   end
 end
@@ -704,6 +720,10 @@ struct UInt16
   def clone
     self
   end
+
+  def hash_normalize
+    self
+  end
 end
 
 struct UInt32
@@ -724,6 +744,10 @@ struct UInt32
   end
 
   def clone
+    self
+  end
+
+  def hash_normalize
     self
   end
 end
@@ -747,5 +771,9 @@ struct UInt64
 
   def clone
     self
+  end
+
+  def hash_normalize
+    unsafe_mod(HASH_MODULUS)
   end
 end

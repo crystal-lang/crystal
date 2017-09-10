@@ -274,9 +274,10 @@ struct Enum
     value == other.value
   end
 
-  # Returns a hash value. This is the hash of the underlying value.
-  def hash
-    value.hash
+  # Protocol method for generic hashing.
+  def hash(hasher)
+    hasher.raw(value)
+    hasher
   end
 
   # Iterates each values in a Flags Enum.

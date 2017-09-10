@@ -9,13 +9,12 @@ struct HTTP::Headers
   record Key, name : String do
     forward_missing_to @name
 
-    def hash
-      h = 0
-      name.each_byte do |c|
-        c = normalize_byte(c)
-        h = 31 * h + c
+    def hash(hasher)
+      hasher.raw(bytesize.to_u32)
+      name.each_byte do |b|
+        hasher.raw normalize_byte(b)
       end
-      h
+      hasher
     end
 
     def ==(key2)
@@ -44,7 +43,7 @@ struct HTTP::Headers
 
       return byte if char.ascii_lowercase? || char == '-' # Optimize the common case
       return byte + 32 if char.ascii_uppercase?
-      return '-'.ord if char == '_'
+      return '-'.ord.to_u8 if char == '_'
 
       byte
     end

@@ -419,6 +419,12 @@ struct Char
     ord
   end
 
+  # Protocol method for generic hashing.
+  def hash(hasher)
+    hasher.raw ord
+    hasher
+  end
+
   # Returns a Char that is one codepoint bigger than this char's codepoint.
   #
   # ```

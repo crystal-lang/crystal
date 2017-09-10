@@ -15,11 +15,10 @@
 struct Symbol
   include Comparable(Symbol)
 
-  # Generates an `Int32` hash value for this symbol.
-  #
-  # See also: `Object#hash`.
-  def hash : Int32
-    to_i
+  # Protocol method for generic hashing.
+  def hash(hasher)
+    hasher.raw to_i
+    hasher
   end
 
   # Compares symbol with other based on `String#<=>` method. Returns `-1`, `0`

@@ -343,8 +343,19 @@ struct BigInt < Int
     io << "_big_i"
   end
 
-  def hash
-    to_u64
+  private HASH_MODULUS_INT_P = BigInt.new((1_u64 << HASH_BITS) - 1)
+  private HASH_MODULUS_INT_N = -BigInt.new((1_u64 << HASH_BITS) - 1)
+
+  def hash_normalize
+    # it should calculate `remainder(HASH_MODULUS)`
+    if LibGMP::ULong == UInt64
+      v = int_to_hashnorm(LibGMP.tdiv_ui(self, HASH_MODULUS))
+      self < 0 ? -v : v
+    elsif self >= HASH_MODULUS_INT_P || self <= HASH_MODULUS_INT_N
+      unsafe_truncated_mod(HASH_MODULUS_INT_P).to_i64
+    else
+      self.to_i64
+    end
   end
 
   # Returns a string representation of self.

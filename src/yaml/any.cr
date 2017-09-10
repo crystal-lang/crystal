@@ -195,11 +195,6 @@ struct YAML::Any
   end
 
   # :nodoc:
-  def hash
-    raw.hash
-  end
-
-  # :nodoc:
   def to_yaml(io)
     raw.to_yaml(io)
   end
