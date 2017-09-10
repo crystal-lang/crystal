@@ -170,7 +170,7 @@ module YAML
     return true if YAML::RESERVED_VALUES.includes?(value)
     case {value[0]?, value[1]?, value[2]?, value[3]?, value[4]?}
     when {.try(&.ascii_number?), .try(&.ascii_number?), .try(&.ascii_number?), .try(&.ascii_number?), '-'}
-      !!(Time::Format::ISO_8601_DATE_TIME.parse(value) rescue false)
+      !!Time::Format::ISO_8601_DATE_TIME.parse(value) rescue false
     when {.try(&.ascii_number?), _, _, _, _},
          {'-', .try(&.ascii_number?), _, _, _},
          {'+', .try(&.ascii_number?), _, _, _},
@@ -179,6 +179,8 @@ module YAML
          {'+', '.', .try(&.ascii_number?), _, _}
       clean_value = value.gsub('_', "")
       !!clean_value.to_f64? || !!clean_value.to_i64?(prefix: true)
+    else
+      false
     end
   end
 end
