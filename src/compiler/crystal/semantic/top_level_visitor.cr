@@ -646,7 +646,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def type_assign(target, value, node)
+    @exp_nest -= 1
     value.accept self
+    if inside_exp?
+      if target.is_a?(InstanceVar)
+        node.raise "can't assign instance variables outside method dynamically"
+      end
+      if target.is_a?(ClassVar)
+        node.raise "can't assign class variables outside method dynamically"
+      end
+    end
+    @exp_nest += 1
     false
   end
 

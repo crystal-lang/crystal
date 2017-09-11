@@ -515,4 +515,15 @@ describe "Semantic: class var" do
       Bar.x
       )) { nilable(int32) }
   end
+
+  it "errors when assigning class variable inside nested expression" do
+    assert_error %(
+      class Foo
+        if true
+          @@foo = 1
+        end
+      end
+      ),
+      "can't assign class variables outside method dynamically"
+  end
 end
