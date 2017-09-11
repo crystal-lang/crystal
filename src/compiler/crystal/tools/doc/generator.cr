@@ -247,9 +247,12 @@ class Crystal::Doc::Generator
 
   def doc(context, string)
     string = isolate_flag_lines string
-    markdown = String.build do |io|
-      Markdown.parse string, MarkdownDocRenderer.new(context, io)
-    end
+
+    options = Markd::Options.new
+    document = Markd::Parser.parse(string, options)
+    renderer = MarkdownDocRenderer.new(context, options)
+    markdown = renderer.render(document)
+
     generate_flags markdown
   end
 

@@ -1,34 +1,16 @@
-require "markdown"
+require "markd"
 
-class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
-  def self.new(obj : Constant | Macro | Method, io)
-    new obj.type, io
+class Crystal::Doc::MarkdownDocRenderer < Markd::HTMLRenderer
+  def self.new(obj : Constant | Macro | Method, options = Options.new)
+    new(obj.type, options)
   end
 
-  def initialize(@type : Type, io)
-    super(io)
-
-    @inside_inline_code = false
-    @code_buffer = IO::Memory.new
-    @inside_code = false
-    @inside_link = false
+  def initialize(@type : Type, @options = Options.new)
+    super(options)
   end
 
-  # For inline code we search if there's a method with that name in
-  # the current type (it's usual to refer to these as `method`).
-  #
-  # If there is a match, we output the link without the <code>...</code>
-  # tag (looks better). If there isn't a match, we want to preserve the code tag.
-  def begin_inline_code
-    super
-    @inside_inline_code = true
-    @code_buffer.clear
-  end
-
-  def end_inline_code
-    @inside_inline_code = false
-
-    text = @code_buffer.to_s
+  def code(node, entering)
+    text = node.text
 
     # Check method reference (without #, but must be the whole text)
     if text =~ /\A((?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?)(\(.+?\))?\Z/
@@ -38,8 +20,9 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       method = lookup_method @type, name, args
       if method
         text = method_link method, "#{method.prefix}#{text}"
-        @io << text
-        super
+        tag("code")
+        lit(text)
+        tag("/code")
         return
       end
     end
@@ -109,71 +92,44 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       match_text
     end
 
-    @io << text
-
-    super
+    tag("code")
+    lit(text)
+    tag("/code")
   end
 
-  def begin_code(language = nil)
-    super
+  def code_block(node, entering)
+    text = Highlighter.highlight(node.text)
 
-    if !language || language == "crystal"
-      @inside_code = true
-      @code_buffer.clear
+    cr
+    tag("pre")
+    tag("code")
+    lit(text)
+    tag("/code")
+    tag("/pre")
+    cr
+  end
+
+  def link(node, entering)
+    if entering
+      tag("a", {href: node.data["destination"].as(String), target: "_blank"})
+    else
+      tag("/a")
     end
   end
 
-  def end_code
-    if @inside_code
-      text = Highlighter.highlight @code_buffer.to_s
-      @io << text
-    end
-
-    @inside_code = false
-
-    super
+  def escape(text)
+    text
   end
 
-  def begin_link(url)
-    @io << %(<a href=")
-    @io << url
-    @io << %(" target="_blank">)
-    @inside_link = true
-  end
-
-  def end_link
-    super
-    @inside_link = false
-  end
-
-  def text(text)
-    if @inside_code
-      @code_buffer << text
-      return
-    end
-
-    if @inside_link
-      super
-      return
-    end
-
-    if @inside_inline_code
-      @code_buffer << text
-      return
-    end
-
-    super(text)
-  end
-
-  def type_link(type, text)
+  private def type_link(type, text)
     %(<a href="#{type.path_from(@type)}">#{text}</a>)
   end
 
-  def method_link(method, text)
+  private def method_link(method, text)
     %(<a href="#{method.type.path_from(@type)}#{method.anchor}">#{text}</a>)
   end
 
-  def lookup_method(type, name, args, kind = nil)
+  private def lookup_method(type, name, args, kind = nil)
     case args
     when ""
       args_count = nil

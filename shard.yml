@@ -1,4 +1,9 @@
 name: crystal
 version: 0.23.1
 
+dependencies:
+  markd:
+    github: icyleaf/markd
+    branch: master
+
 license: apache2
