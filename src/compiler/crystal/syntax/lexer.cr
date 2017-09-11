@@ -2139,18 +2139,12 @@ module Crystal
             @macro_curly_count -= 1
           end
         else
-          # In the following codes `check_macro_opening_keyword(beginning_of_line)` and some `next_char` may let `@rader` forward.
-          # When `@reader` is forwarded and `@reader` points valuable character (i.e. `'\n'`),
-          # however this character is ignored by `char = next_char` on the last line of this loop.
-          # To prevent it, we must save `@reader.pos` to detect `@reader` is forwarded when below `if` conditions are failed.
-          old_pos = @reader.pos
-
-          if !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(peek_next_char)
+          if !delimiter_state && whitespace && lookahead { char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(peek_next_char) }
             yields = true
             char = current_char
             whitespace = true
             beginning_of_line = false
-          elsif !delimiter_state && whitespace && (keyword = check_macro_opening_keyword(beginning_of_line))
+          elsif !delimiter_state && whitespace && (keyword = lookahead { check_macro_opening_keyword(beginning_of_line) })
             char = current_char
 
             if keyword == :macro && char.ascii_whitespace?
@@ -2191,13 +2185,6 @@ module Crystal
                 beginning_of_line = false
               end
             end
-
-            # As explained above, when `@reader` is forwarded, it must keep `char` as `current_char`.
-            if old_pos == @reader.pos
-              char = next_char
-            end
-
-            next
           end
         end
         char = next_char
@@ -2209,6 +2196,18 @@ module Crystal
       set_token_raw_from_start(start)
 
       @token
+    end
+
+    def lookahead
+      old_pos = @reader.pos
+      old_line_number, old_column_number = @line_number, @column_number
+
+      result = yield
+      unless result
+        @reader.pos = old_pos
+        @line_number, @column_number = old_line_number, old_column_number
+      end
+      result
     end
 
     def skip_macro_whitespace
