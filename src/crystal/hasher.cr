@@ -28,7 +28,7 @@ struct Crystal::Hasher
   end
 
   def float(value)
-    @result *= @result * 31 + value.to_f64.unsafe_as(UInt64)
+    @result = @result * 31 + value.to_f64.unsafe_as(UInt64)
     self
   end
 
