@@ -282,7 +282,7 @@ class Regex
 
       hash = {} of (String | Int32) => String?
       (0...size).each do |i|
-        hash[name_table.fetch(i) { i }] = self[i]?
+        hash[name_table.fetch(i, i)] = self[i]?
       end
 
       hash
@@ -298,7 +298,7 @@ class Regex
       io << "#<Regex::MatchData"
       size.times do |i|
         io << " "
-        io << name_table.fetch(i) { i } << ":" if i > 0
+        io << name_table.fetch(i, i) << ":" if i > 0
         self[i]?.inspect(io)
       end
       io << ">"
@@ -314,7 +314,7 @@ class Regex
             if i == 0
               self[i].pretty_print pp
             else
-              pp.text "#{name_table.fetch(i) { i }}:"
+              pp.text "#{name_table.fetch(i, i)}:"
               pp.nest do
                 pp.breakable ""
                 self[i].pretty_print pp
