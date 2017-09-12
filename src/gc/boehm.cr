@@ -74,6 +74,21 @@ fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
   LibGC.realloc(ptr, size)
 end
 
+# :nodoc:
+fun __crystal_malloc64(size : UInt64) : Void*
+  LibGC.malloc(size)
+end
+
+# :nodoc:
+fun __crystal_malloc_atomic64(size : UInt64) : Void*
+  LibGC.malloc_atomic(size)
+end
+
+# :nodoc:
+fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
+  LibGC.realloc(ptr, size)
+end
+
 module GC
   def self.init
     LibGC.set_handle_fork(1)
