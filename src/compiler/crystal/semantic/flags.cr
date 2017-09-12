@@ -21,6 +21,10 @@ class Crystal::Program
     flags.includes?(name)
   end
 
+  def bits64?
+    has_flag?("x86_64") || has_flag?("aarch64")
+  end
+
   private def parse_flags(flags_name)
     set = flags_name.map(&.downcase).to_set
     set.add "darwin" if set.any?(&.starts_with?("macosx")) || set.any?(&.starts_with?("darwin"))
