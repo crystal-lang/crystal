@@ -87,7 +87,7 @@ module GC
 
   def self.enable
     unless LibGC.is_disabled != 0
-      raise "GC.enable: GC is not disabled"
+      raise "GC is not disabled"
     end
 
     LibGC.enable
