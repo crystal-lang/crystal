@@ -511,7 +511,7 @@ struct Pointer(T)
       count.to_u64 * sizeof(T)
     {% else %}
       if count > UInt32::MAX
-        raise ArgumentError.new("Negative count")
+        raise ArgumentError.new("Given count is bigger than UInt32::MAX")
       end
 
       count.to_u32 * sizeof(T)
