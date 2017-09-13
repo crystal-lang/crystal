@@ -184,14 +184,9 @@ struct CallStack
       # and adds no info.
       if function.starts_with?("*raise<") ||
          function.starts_with?("*CallStack::") ||
-         function.starts_with?("*CallStack#") ||
-         function == "main"
+         function.starts_with?("*CallStack#")
         next
       end
-
-      # We rename __crystal_main to main as this the the "main"
-      # Crystal function that's always invoked from main.
-      function = "main" if function == "__crystal_main"
 
       # Crystal methods (their mangled name) start with `*`, so
       # we remove that to have less clutter in the output.
