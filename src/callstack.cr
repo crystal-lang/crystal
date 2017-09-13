@@ -145,14 +145,20 @@ struct CallStack
   end
 
   private def decode_backtrace
+    current_dir = Dir.current
+    current_dir += '/' unless current_dir.ends_with?('/')
+
     @callstack.compact_map do |ip|
       pc = CallStack.decode_address(ip)
 
       file, line, column = CallStack.decode_line_number(pc)
-      if file == "??"
-        file_line_column = "??"
-      else
+
+      if file && file != "??"
         next if @@skip.includes?(file)
+
+        # Turn to relative to the current dir, if possible
+        file = file.lchop(current_dir)
+
         file_line_column = "#{file} #{line}:#{column}"
       end
 
@@ -165,7 +171,32 @@ struct CallStack
         function = "???"
       end
 
-      "0x#{ip.address.to_s(16)}: #{function} at #{file_line_column}"
+      # We ignore these because they are part of `raise`'s internals,
+      # and we can't rely on a correct filename being available
+      # (for example if on Mac and without running `dsymutil`)
+      #
+      # We also ignore `main` because it's always at the same place
+      # and adds no info.
+      if function.starts_with?("*raise<") ||
+         function.starts_with?("*CallStack::") ||
+         function.starts_with?("*CallStack#") ||
+         function == "main"
+        next
+      end
+
+      # We rename __crystal_main to main as this the the "main"
+      # Crystal function that's always invoked from main.
+      function = "main" if function == "__crystal_main"
+
+      # Crystal methods (their mangled name) start with `*`, so
+      # we remove that to have less clutter in the output.
+      function = function.lchop('*')
+
+      if file_line_column
+        "#{file_line_column} in '#{function}'"
+      else
+        function
+      end
     end
   end
 
