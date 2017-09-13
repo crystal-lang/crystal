@@ -168,6 +168,16 @@ struct NamedTuple
     hasher
   end
 
+  # Returns the types of this named tuple type.
+  #
+  # ```
+  # tuple = {a: 1, b: "hello", c: 'x'}
+  # tuple.class.types # => {a: Int32, b: String, c: Char}
+  # ```
+  def self.types
+    NamedTuple.new(**{{T}})
+  end
+
   # Same as `to_s`.
   def inspect
     to_s

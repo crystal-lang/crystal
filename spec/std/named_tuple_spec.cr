@@ -296,4 +296,9 @@ describe "NamedTuple" do
     tup = {a: 1, b: 'a'}
     tup.values.should eq({1, 'a'})
   end
+
+  it "does types" do
+    tuple = {a: 1, b: 'a', c: "hello"}
+    tuple.class.types.to_s.should eq("{a: Int32, b: Char, c: String}")
+  end
 end
