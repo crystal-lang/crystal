@@ -111,7 +111,7 @@ describe "Semantic: splat" do
       )) { int32 }
   end
 
-  it "oveloards with type restriction and splat (1)" do
+  it "overloads with type restriction and splat (1)" do
     assert_type(%(
       def foo(arg : Int32)
         1
@@ -125,7 +125,7 @@ describe "Semantic: splat" do
       )) { int32 }
   end
 
-  it "oveloards with type restriction and splat (2)" do
+  it "overloads with type restriction and splat (2)" do
     assert_type(%(
       def foo(arg : Int32)
         1
@@ -149,7 +149,7 @@ describe "Semantic: splat" do
       "no overload matches"
   end
 
-  it "oveloards with type restriction and splat (3)" do
+  it "overloads with type restriction and splat (3)" do
     assert_type(%(
       def foo(*args : Char)
         "hello"
@@ -163,7 +163,7 @@ describe "Semantic: splat" do
       )) { string }
   end
 
-  it "oveloards with type restriction and splat (4)" do
+  it "overloads with type restriction and splat (4)" do
     assert_type(%(
       def foo(*args : Char)
         "hello"
@@ -177,7 +177,7 @@ describe "Semantic: splat" do
       )) { float64 }
   end
 
-  it "oveloards with type restriction and splat (5)" do
+  it "overloads with type restriction and splat (5)" do
     assert_type(%(
       def foo(*args : Int32)
         "hello"
@@ -191,7 +191,7 @@ describe "Semantic: splat" do
       )) { string }
   end
 
-  it "oveloards with type restriction and splat (6)" do
+  it "overloads with type restriction and splat (6)" do
     assert_type(%(
       def foo(*args : Int32)
         "hello"
@@ -205,7 +205,7 @@ describe "Semantic: splat" do
       )) { float64 }
   end
 
-  it "oveloards with type restriction and splat (7)" do
+  it "overloads with type restriction and splat (7)" do
     assert_type(%(
       def foo(*args)
         foo args
