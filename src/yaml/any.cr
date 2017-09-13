@@ -157,16 +157,34 @@ struct YAML::Any
     @raw.as(String)
   end
 
+  # Checks that the underlying value is `String`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_s? : String?
+    as_s if @raw.is_a?(String)
+  end
+
   # Checks that the underlying value is `Array`, and returns its value.
   # Raises otherwise.
   def as_a : Array(Type)
     @raw.as(Array)
   end
 
+  # Checks that the underlying value is `Array`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_a? : Array(Type)?
+    as_a if @raw.is_a?(Array(Type))
+  end
+
   # Checks that the underlying value is `Hash`, and returns its value.
   # Raises otherwise.
   def as_h : Hash(Type, Type)
     @raw.as(Hash)
+  end
+
+  # Checks that the underlying value is `Hash`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_h? : Hash(Type, Type)?
+    as_h if @raw.is_a?(Hash(Type, Type))
   end
 
   # :nodoc:
