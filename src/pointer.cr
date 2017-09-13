@@ -503,7 +503,7 @@ struct Pointer(T)
   end
 
   private def bytesize(count)
-    {% if flag?(:x86_64) %}
+    {% if flag?(:bits64) %}
       count.to_u64 * sizeof(T)
     {% else %}
       count.to_u32 * sizeof(T)

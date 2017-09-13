@@ -22,7 +22,7 @@ class Crystal::Program
   end
 
   def bits64?
-    has_flag?("x86_64") || has_flag?("aarch64")
+    has_flag?("bits64")
   end
 
   private def parse_flags(flags_name)
@@ -39,6 +39,12 @@ class Crystal::Program
     if set.any?(&.starts_with?("arm"))
       set.add "arm"
       set.add "armhf" if set.includes?("gnueabihf")
+    end
+
+    if set.includes?("x86_64") || set.includes?("aarch64")
+      set.add "bits64"
+    else
+      set.add "bits32"
     end
 
     set
