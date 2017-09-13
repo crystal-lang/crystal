@@ -159,7 +159,7 @@ struct CallStack
         # Turn to relative to the current dir, if possible
         file = file.lchop(current_dir)
 
-        file_line_column = "#{file} #{line}:#{column}"
+        file_line_column = "#{file}:#{line}:#{column}"
       end
 
       if name = CallStack.decode_function_name(pc)
