@@ -318,4 +318,30 @@ describe "Pointer" do
     ptr = Pointer(Int32).new(123)
     ptr.clone.should eq(ptr)
   end
+
+  {% if flag?(:bits32) %}
+    it "raises on copy_from with size bigger than UInt32::MAX" do
+      ptr = Pointer(Int32).new(123)
+
+      expect_raises(ArgumentError) do
+        ptr.copy_from(ptr, UInt32::MAX.to_u64 + 1)
+      end
+    end
+
+    it "raises on move_from with size bigger than UInt32::MAX" do
+      ptr = Pointer(Int32).new(123)
+
+      expect_raises(ArgumentError) do
+        ptr.move_from(ptr, UInt32::MAX.to_u64 + 1)
+      end
+    end
+
+    it "raises on clear with size bigger than UInt32::MAX" do
+      ptr = Pointer(Int32).new(123)
+
+      expect_raises(ArgumentError) do
+        ptr.clear(UInt32::MAX.to_u64 + 1)
+      end
+    end
+  {% end %}
 end
