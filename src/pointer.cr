@@ -345,6 +345,10 @@ struct Pointer(T)
   # ptr # [1, 2, 3, 4, 0, 0, 0, 0]
   # ```
   def realloc(size : Int)
+    if size < 0
+      raise ArgumentError.new("Negative size")
+    end
+
     realloc(size.to_u64)
   end
 
