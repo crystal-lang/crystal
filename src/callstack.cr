@@ -25,11 +25,7 @@ end
 struct CallStack
   # Compute current directory at the beginning so filenames
   # are always shown relative to the *starting* working directory.
-  CURRENT_DIR = begin
-    current_dir = Dir.current
-    current_dir += '/' unless current_dir.ends_with?('/')
-    current_dir
-  end
+  CURRENT_DIR = Process::INITIAL_PWD + '/'
 
   @@skip = [] of String
 
