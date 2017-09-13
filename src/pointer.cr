@@ -506,6 +506,10 @@ struct Pointer(T)
     {% if flag?(:bits64) %}
       count.to_u64 * sizeof(T)
     {% else %}
+      if count > UInt32::MAX
+        raise ArgumentError.new("Negative count")
+      end
+
       count.to_u32 * sizeof(T)
     {% end %}
   end

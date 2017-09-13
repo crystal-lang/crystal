@@ -76,16 +76,34 @@ end
 
 # :nodoc:
 fun __crystal_malloc64(size : UInt64) : Void*
+  {% if flag?(:bits32) %}
+    if size > UInt32::MAX
+      raise ArgumentError.new("Negative size")
+    end
+  {% end %}
+
   LibGC.malloc(size)
 end
 
 # :nodoc:
 fun __crystal_malloc_atomic64(size : UInt64) : Void*
+  {% if flag?(:bits32) %}
+    if size > UInt32::MAX
+      raise ArgumentError.new("Negative size")
+    end
+  {% end %}
+
   LibGC.malloc_atomic(size)
 end
 
 # :nodoc:
 fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
+  {% if flag?(:bits32) %}
+    if size > UInt32::MAX
+      raise ArgumentError.new("Negative size")
+    end
+  {% end %}
+
   LibGC.realloc(ptr, size)
 end
 
