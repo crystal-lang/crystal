@@ -23,8 +23,8 @@ describe "Backtrace" do
     output = `#{tempfile.path}`
 
     # resolved file line:column
-    output.should match(/#{sample} 3:10 in 'callee1'/)
-    output.should match(/#{sample} 15:3 in 'callee3'/)
+    output.should match(/#{sample}:3:10 in 'callee1'/)
+    output.should match(/#{sample}:15:3 in 'callee3'/)
 
     # skipped internal details
     output.should_not match(/src\/callstack\.cr/)
