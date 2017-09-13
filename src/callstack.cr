@@ -195,7 +195,7 @@ struct CallStack
       if file_line_column
         "#{file_line_column} in '#{function}'"
       else
-        function
+        "0x#{ip.address.to_s(16)} | #{function}"
       end
     end
   end
