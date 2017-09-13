@@ -23,6 +23,14 @@ end
 
 # :nodoc:
 struct CallStack
+  # Compute current directory at the beginning so filenames
+  # are always shown relative to the *starting* working directory.
+  CURRENT_DIR = begin
+    current_dir = Dir.current
+    current_dir += '/' unless current_dir.ends_with?('/')
+    current_dir
+  end
+
   @@skip = [] of String
 
   def self.skip(filename)
@@ -145,9 +153,6 @@ struct CallStack
   end
 
   private def decode_backtrace
-    current_dir = Dir.current
-    current_dir += '/' unless current_dir.ends_with?('/')
-
     @callstack.compact_map do |ip|
       pc = CallStack.decode_address(ip)
 
@@ -157,7 +162,7 @@ struct CallStack
         next if @@skip.includes?(file)
 
         # Turn to relative to the current dir, if possible
-        file = file.lchop(current_dir)
+        file = file.lchop(CURRENT_DIR)
 
         file_line_column = "#{file}:#{line}:#{column}"
       end
