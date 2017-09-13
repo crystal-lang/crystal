@@ -334,7 +334,6 @@ module Crystal
         mod = info.mod
         push_debug_info_metadata(mod) unless @debug.none?
 
-        # puts mod
         mod.dump if dump_all_llvm || name =~ dump_llvm_regex
 
         # Always run verifications so we can catch bugs earlier and more often.
