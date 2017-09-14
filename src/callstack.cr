@@ -149,6 +149,8 @@ struct CallStack
   end
 
   private def decode_backtrace
+    show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
+
     @callstack.compact_map do |ip|
       pc = CallStack.decode_address(ip)
 
@@ -188,11 +190,17 @@ struct CallStack
       # we remove that to have less clutter in the output.
       function = function.lchop('*')
 
-      if file_line_column
-        "#{file_line_column} in '#{function}'"
-      else
-        "0x#{ip.address.to_s(16)} | #{function}"
+      line = if file_line_column
+               "#{file_line_column} in '#{function}'"
+             else
+               function
+             end
+
+      if show_full_info
+        line = "#{line} at 0x#{ip.address.to_s(16)}"
       end
+
+      line
     end
   end
 
