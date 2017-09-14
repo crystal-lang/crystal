@@ -254,11 +254,24 @@ module Crystal
         cross_compile program, units, output_filename
       else
         result = codegen program, units, output_filename, output_dir
+
+        {% if flag?(:darwin) %}
+          run_dsymutil(output_filename) unless debug.none?
+        {% end %}
       end
 
       CacheDir.instance.cleanup if @cleanup
 
       result
+    end
+
+    private def run_dsymutil(filename)
+      dsymutil = Process.find_executable("dsymutil")
+      return unless dsymutil
+
+      @progress_tracker.stage("dsymutil") do
+        Process.run(dsymutil, ["--flat", filename])
+      end
     end
 
     private def cross_compile(program, units, output_filename)
