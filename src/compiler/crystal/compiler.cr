@@ -273,11 +273,11 @@ module Crystal
     end
 
     private def run_dsymutil(filename)
-      `which dsymutil`
-      return unless $?.success?
+      dsymutil = Process.find_executable("dsymutil")
+      return unless dsymutil
 
       @progress_tracker.stage("dsymutil") do
-        Process.run("dsymutil", ["--flat", filename], shell: true)
+        Process.run(dsymutil, ["--flat", filename])
       end
     end
 
