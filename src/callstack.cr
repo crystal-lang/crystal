@@ -194,11 +194,16 @@ struct CallStack
         function = "???"
       end
 
-      line = if file_line_column
-               "#{file_line_column} in '#{function}'"
-             else
-               function
-             end
+      if file_line_column
+        if show_full_info && (frame = CallStack.decode_frame(ip))
+          _, sname = frame
+          line = "#{file_line_column} in '#{String.new(sname)}'"
+        else
+          line = "#{file_line_column} in '#{function}'"
+        end
+      else
+        line = function
+      end
 
       if show_full_info
         line = "#{line} at 0x#{ip.address.to_s(16)}"
