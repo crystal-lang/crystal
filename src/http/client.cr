@@ -501,7 +501,7 @@ class HTTP::Client
     decompress = set_defaults request
     request.to_io(socket)
     socket.flush
-    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress)
+    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress, domain: request.host)
   end
 
   private def handle_response(response)
@@ -549,7 +549,7 @@ class HTTP::Client
     decompress = set_defaults request
     request.to_io(socket)
     socket.flush
-    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress, domain: request.host) do |response|
       yield response
     end
   end

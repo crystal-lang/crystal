@@ -9,7 +9,7 @@ class HTTP::Client::Response
   getter! body_io : IO
   @cookies : Cookies?
 
-  def initialize(@status_code, @body : String? = nil, @headers : Headers = Headers.new, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
+  def initialize(@status_code, @body : String? = nil, @headers : Headers = Headers.new, status_message = nil, @version = "HTTP/1.1", @body_io = nil, @domain : String? = nil)
     @status_message = status_message || HTTP.default_status_message_for(@status_code)
 
     if Response.mandatory_body?(@status_code)
@@ -37,7 +37,7 @@ class HTTP::Client::Response
   # Returns a convenience wrapper around querying and setting cookie related
   # headers, see `HTTP::Cookies`.
   def cookies
-    @cookies ||= Cookies.from_headers(headers)
+    @cookies ||= Cookies.from_headers(headers, @domain)
   end
 
   def keep_alive?
@@ -83,16 +83,16 @@ class HTTP::Client::Response
     version == "HTTP/1.1"
   end
 
-  def self.from_io(io, ignore_body = false, decompress = true)
-    from_io?(io, ignore_body, decompress) ||
+  def self.from_io(io, ignore_body = false, decompress = true, domain : String? = nil)
+    from_io?(io, ignore_body, decompress, domain) ||
       raise("Unexpected end of http request")
   end
 
   # Parses an `HTTP::Client::Response` from the given `IO`.
   # Might return `nil` if there's no data in the `IO`,
   # which probably means that the connection was closed.
-  def self.from_io?(io, ignore_body = false, decompress = true)
-    from_io?(io, ignore_body: ignore_body, decompress: decompress) do |response|
+  def self.from_io?(io, ignore_body = false, decompress = true, domain : String? = nil)
+    from_io?(io, ignore_body: ignore_body, decompress: decompress, domain: domain) do |response|
       if response
         response.consume_body_io
         return response
@@ -102,8 +102,8 @@ class HTTP::Client::Response
     end
   end
 
-  def self.from_io(io, ignore_body = false, decompress = true)
-    from_io?(io, ignore_body, decompress) do |response|
+  def self.from_io(io, ignore_body = false, decompress = true, domain : String? = nil)
+    from_io?(io, ignore_body, decompress, domain) do |response|
       if response
         yield response
       else
@@ -115,7 +115,7 @@ class HTTP::Client::Response
   # Parses an `HTTP::Client::Response` from the given `IO` and yields
   # it to the block. Might yield `nil` if there's no data in the `IO`,
   # which probably means that the connection was closed.
-  def self.from_io?(io, ignore_body = false, decompress = true, &block)
+  def self.from_io?(io, ignore_body = false, decompress = true, domain : String? = nil, &block)
     line = io.gets(4096, chomp: true)
     return yield nil unless line
 
@@ -129,7 +129,7 @@ class HTTP::Client::Response
     body_type = HTTP::BodyType::Prohibited if ignore_body
 
     HTTP.parse_headers_and_body(io, body_type: body_type, decompress: decompress) do |headers, body|
-      return yield new status_code, nil, headers, status_message, http_version, body
+      return yield new status_code, nil, headers, status_message, http_version, body, domain
     end
   end
 end
