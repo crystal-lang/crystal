@@ -24,7 +24,14 @@ describe "Backtrace" do
 
     # resolved file line:column
     output.should match(/#{sample}:3:10 in 'callee1'/)
-    output.should match(/#{sample}:15:3 in 'callee3'/)
+
+    # The first line is the old (incorrect) behaviour,
+    # the second line is the new (correct) behaviour.
+    # TODO: keep only the second one after Crystal 0.23.1
+    unless output =~ /#{sample}:15:3 in 'callee3'/ ||
+           output =~ /#{sample}:13:5 in 'callee3'/
+      fail "didn't find callee3 in the backtrace"
+    end
 
     # skipped internal details
     output.should_not match(/src\/callstack\.cr/)
