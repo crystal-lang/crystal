@@ -139,6 +139,13 @@ module HTTP
   end
 
   def self.serialize_headers_and_string_body(io, headers, body)
+    if headers.includes_word?("Content-Encoding", "gzip")
+      body = IO::Memory.new.tap do |buf|
+        gzip = Gzip::Writer.new(buf)
+        gzip.print body
+        gzip.close
+      end
+    end
     headers["Content-Length"] = body.bytesize.to_s
     serialize_headers(io, headers)
     io << body

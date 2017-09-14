@@ -249,6 +249,17 @@ class HTTP::Client
       response.body.should eq("")
     end
 
+    it "gzip body if has 'gzip' in Content-Encoding header" do
+      gzipped_body = String.build do |io|
+        Gzip::Writer.new(io).tap { |io| io.print "Hello"; io.close }
+      end
+
+      response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\n\r\n#{gzipped_body}"))
+      raw = IO::Memory.new.tap { |io| response.to_io(io) }
+      raw.to_s.split(/\r\n\r\n/, 2).last.should eq(gzipped_body)
+      Response.from_io(raw.rewind).body.should eq("Hello")
+    end
+
     describe "success?" do
       it "returns true for the 2xx" do
         response = Response.new(200)
