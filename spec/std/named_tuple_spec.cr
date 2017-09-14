@@ -296,4 +296,15 @@ describe "NamedTuple" do
     tup = {a: 1, b: 'a'}
     tup.values.should eq({1, 'a'})
   end
+
+  it "merges two named tuples" do
+    tup1 = {a: 1, b: '2'}
+    tup2 = {c: 4, d: true}
+
+    merged_tup = tup1 + tup2
+    expected = {a: 1, b: '2', c: 4, d: true}
+
+    merged_tup.should eq(expected)
+    typeof(merged_tup).should eq(typeof(expected))
+  end
 end
