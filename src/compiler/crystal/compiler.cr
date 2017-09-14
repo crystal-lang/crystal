@@ -68,9 +68,6 @@ module Crystal
     # (useful to type-check a prorgam)
     property? no_codegen = false
 
-    # If `true`, dsymutil won't be run for executables
-    property? no_dsymutil = false
-
     # Maximum number of LLVM modules that are compiled in parallel
     property n_threads = 8
 
@@ -173,10 +170,6 @@ module Crystal
       Result.new program, node
     end
 
-    def generates_dsymutil?
-      !no_dsymutil? && !debug.none?
-    end
-
     private def new_program(sources)
       program = Program.new
       program.filename = sources.first.filename
@@ -263,7 +256,7 @@ module Crystal
         result = codegen program, units, output_filename, output_dir
 
         {% if flag?(:darwin) %}
-          run_dsymutil(output_filename) if generates_dsymutil?
+          run_dsymutil(output_filename) unless debug.none?
         {% end %}
       end
 
