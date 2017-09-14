@@ -10,7 +10,7 @@ describe "Backtrace" do
     # CallStack tries to make files relative to the current dir,
     # so we do the same for tests
     current_dir = Dir.current
-    current_dir += '/' unless current_dir.ends_with?('/')
+    current_dir += File::SEPARATOR unless current_dir.ends_with?(File::SEPARATOR)
     sample = sample.lchop(current_dir)
 
     `bin/crystal build --debug #{sample.inspect} -o #{tempfile.path.inspect}`
