@@ -1,14 +1,13 @@
 require "../syntax"
 
 module Crystal
-  def self.format(source, filename = nil)
-    Crystal::Formatter.format(source, filename: filename)
+  def self.format(source)
+    Crystal::Formatter.format(source)
   end
 
   class Formatter < Visitor
-    def self.format(source, filename = nil)
+    def self.format(source)
       parser = Parser.new(source)
-      parser.filename = filename
       nodes = parser.parse
 
       formatter = new(source)
