@@ -174,25 +174,25 @@ struct CallStack
       elsif frame = CallStack.decode_frame(ip)
         _, sname = frame
         function = String.new(sname)
+
+        # We ignore these because they are part of `raise`'s internals,
+        # and we can't rely on a correct filename being available
+        # (for example if on Mac and without running `dsymutil`)
+        #
+        # We also ignore `main` because it's always at the same place
+        # and adds no info.
+        if function.starts_with?("*raise<") ||
+           function.starts_with?("*CallStack::") ||
+           function.starts_with?("*CallStack#")
+          next
+        end
+
+        # Crystal methods (their mangled name) start with `*`, so
+        # we remove that to have less clutter in the output.
+        function = function.lchop('*')
       else
         function = "???"
       end
-
-      # We ignore these because they are part of `raise`'s internals,
-      # and we can't rely on a correct filename being available
-      # (for example if on Mac and without running `dsymutil`)
-      #
-      # We also ignore `main` because it's always at the same place
-      # and adds no info.
-      if function.starts_with?("*raise<") ||
-         function.starts_with?("*CallStack::") ||
-         function.starts_with?("*CallStack#")
-        next
-      end
-
-      # Crystal methods (their mangled name) start with `*`, so
-      # we remove that to have less clutter in the output.
-      function = function.lchop('*')
 
       line = if file_line_column
                "#{file_line_column} in '#{function}'"
