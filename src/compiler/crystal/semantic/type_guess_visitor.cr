@@ -33,6 +33,11 @@ module Crystal
 
     @type_override : Type?
 
+    # We increment this when we start searching types inside another
+    # type that's not the current type we are guessing vars for.
+    # See more comments in `lookup_type?` below.
+    @dont_find_root_generic_type_parameters = 0
+
     def initialize(mod,
                    @explicit_instance_vars : Hash(Type, Hash(String, TypeDeclarationWithLocation)),
                    @guessed_instance_vars : Hash(Type, Hash(String, InstanceVarTypeInfo)),
@@ -667,6 +672,16 @@ module Crystal
     end
 
     def guess_type_from_method(obj_type, node : Call)
+      @dont_find_root_generic_type_parameters += 1 if obj_type != current_type
+
+      type = guess_type_from_method_impl(obj_type, node)
+
+      @dont_find_root_generic_type_parameters -= 1 if obj_type != current_type
+
+      type
+    end
+
+    def guess_type_from_method_impl(obj_type, node : Call)
       metaclass = obj_type.devirtualize.metaclass
 
       defs = metaclass.lookup_defs(node.name)
@@ -960,8 +975,51 @@ module Crystal
       @found_self = true if node.name == "self"
     end
 
-    def lookup_type?(node, root = current_type)
-      type = root.lookup_type?(node, allow_typeof: false)
+    def lookup_type?(node, root = nil)
+      find_root_generic_type_parameters =
+        @dont_find_root_generic_type_parameters == 0
+
+      # When searching a type that's not relative to the current type,
+      # we don't want to find type parameters of those types, because they
+      # are not bound.
+      #
+      # For example:
+      #
+      #    class Gen(T)
+      #      def self.new
+      #        Gen(T).new
+      #      end
+      #    end
+      #
+      #    class Foo
+      #      @x = Gen.new
+      #    end
+      #
+      # In the above example we would find `Gen.new`'s body to be
+      # `Gen(T).new` so infer it to return `Gen(T)`, and `T` would be
+      # found because we are searching types relative to `Gen`. But
+      # since our current type is Foo, `T` is unbound, and we don't
+      # want to find it.
+      #
+      # For this code:
+      #
+      #    class Foo(T)
+      #      @x : T
+      #    end
+      #
+      # we *do* want to find T as a type parameter relative to Foo,
+      # even if it's unbound, because we are in the context of Foo.
+      if root
+        find_root_generic_type_parameters = root == current_type
+      else
+        root = current_type
+      end
+
+      type = root.lookup_type?(
+        node,
+        allow_typeof: false,
+        find_root_generic_type_parameters: find_root_generic_type_parameters
+      )
       check_allowed_in_generics(node, type)
     end
 
