@@ -1042,4 +1042,16 @@ describe "Semantic: generic class" do
       Generic(Base(Int32)).new.t
     )) { generic_class("Base", int32).metaclass }
   end
+
+  it "doesn't find T type parameter of current type in superclass (#4604)" do
+    assert_error %(
+      class X(T)
+        abstract class A(T); end
+
+        class B < A(T)
+        end
+      end
+      ),
+      "undefined constant "
+  end
 end
