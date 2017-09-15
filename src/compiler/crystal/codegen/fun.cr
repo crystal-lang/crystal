@@ -137,10 +137,6 @@ class Crystal::CodeGenVisitor
 
         accept target_def.body
 
-        if @debug.line_numbers?
-          set_current_debug_location target_def.end_location
-        end
-
         codegen_return(target_def)
 
         br_from_alloca_to_entry
