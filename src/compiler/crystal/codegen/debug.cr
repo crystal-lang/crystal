@@ -38,14 +38,14 @@ module Crystal
       di_builder.create_subroutine_type(nil, int1)
     end
 
-    def debug_type_cache(llvm_module = @llvm_mod)
+    def debug_type_cache
       # We must cache debug types per module so metadata of a type
       # from one module isn't incorrectly used in another module.
       debug_types_per_module =
         @debug_types_per_module ||=
           {} of LLVM::Module => Hash(Type, LibLLVMExt::Metadata?)
 
-      debug_types_per_module[llvm_module] ||= {} of Type => LibLLVMExt::Metadata?
+      debug_types_per_module[@llvm_mod] ||= {} of Type => LibLLVMExt::Metadata?
     end
 
     def get_debug_type(type)
