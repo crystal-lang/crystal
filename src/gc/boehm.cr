@@ -20,6 +20,7 @@ lib LibGC
   fun add_roots = GC_add_roots(low : Void*, high : Void*)
   fun enable = GC_enable
   fun disable = GC_disable
+  fun is_disabled = GC_is_disabled : Int
   fun set_handle_fork = GC_set_handle_fork(value : Int)
 
   fun base = GC_base(displaced_pointer : Void*) : Void*
@@ -118,6 +119,10 @@ module GC
   end
 
   def self.enable
+    unless LibGC.is_disabled != 0
+      raise "GC is not disabled"
+    end
+
     LibGC.enable
   end
 
