@@ -2179,6 +2179,11 @@ module Crystal
       tuple_indexer(indexers, index)
     end
 
+    def tuple_metaclass_indexer(index)
+      indexers = @tuple_metaclass_indexers ||= {} of Int32 => Def
+      tuple_indexer(indexers, index)
+    end
+
     private def tuple_indexer(indexers, index)
       indexers[index] ||= begin
         body = index == -1 ? NilLiteral.new : TupleIndexer.new(index)

@@ -361,14 +361,14 @@ struct Tuple
     {{T.size}}
   end
 
-  # Returns the types of this tuple.
+  # Returns the types of this tuple type.
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple.types # => Tuple(Int32, String, Char)
+  # tuple.class.types # => {Int32, String, Char}
   # ```
-  def types
-    T
+  def self.types
+    Tuple.new(*{{T}})
   end
 
   # Same as `to_s`.
