@@ -37,8 +37,6 @@ LLVM_CONFIG_FINDER := \
     (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
   command -v llvm-config-3.8 || command -v llvm-config38 || \
     (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-3.6 || command -v llvm-config36 || \
-  command -v llvm-config-3.5 || command -v llvm-config35 || \
   command -v llvm-config
 LLVM_CONFIG := $(shell $(LLVM_CONFIG_FINDER))
 LLVM_EXT_DIR = src/llvm/ext

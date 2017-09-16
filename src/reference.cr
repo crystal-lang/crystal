@@ -50,9 +50,9 @@ class Reference
     {% end %}
   end
 
-  # Returns this reference's `object_id` as the hash value.
-  def hash
-    object_id
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.reference(self)
   end
 
   def inspect(io : IO) : Nil

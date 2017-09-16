@@ -1175,9 +1175,7 @@ module Crystal
       self
     end
 
-    def hash
-      0
-    end
+    def_hash
   end
 
   # A qualified identifier.
@@ -1545,9 +1543,7 @@ module Crystal
       Self.new
     end
 
-    def hash
-      0
-    end
+    def_hash
   end
 
   abstract class ControlExpression < ASTNode
@@ -2025,9 +2021,7 @@ module Crystal
       Underscore.new
     end
 
-    def hash
-      0
-    end
+    def_hash
   end
 
   class Splat < UnaryExpression

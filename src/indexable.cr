@@ -271,13 +271,13 @@ module Indexable(T)
     first { nil }
   end
 
-  # Returns a hash code based on `self`'s size and elements.
-  #
-  # See also: `Object#hash`.
-  def hash
-    reduce(31 * size) do |memo, elem|
-      31 * memo + elem.hash
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher = size.hash(hasher)
+    each do |elem|
+      hasher = elem.hash(hasher)
     end
+    hasher
   end
 
   # Returns the index of the first appearance of *value* in `self`

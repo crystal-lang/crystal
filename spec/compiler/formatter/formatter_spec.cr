@@ -460,6 +460,7 @@ describe Crystal::Formatter do
   assert_format "case  1 \n when  .foo? \n 3 \n end", "case 1\nwhen .foo?\n  3\nend"
   assert_format "case 1\nwhen 1 then\n2\nwhen 3\n4\nend", "case 1\nwhen 1\n  2\nwhen 3\n  4\nend"
   assert_format "case  1 \n when 2 \n 3 \n else 4 \n end", "case 1\nwhen 2\n  3\nelse 4\nend"
+  assert_format "a = 1\ncase\nwhen 2\nelse\n  a /= 3\nend"
 
   assert_format "select   \n when  foo \n 2 \n end", "select\nwhen foo\n  2\nend"
   assert_format "select   \n when  foo \n 2 \n when bar \n 3 \n end", "select\nwhen foo\n  2\nwhen bar\n  3\nend"
@@ -601,9 +602,12 @@ describe Crystal::Formatter do
   assert_format "lib Bar\n  enum Foo\n    A\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A = 1\n  end\nend"
 
+  assert_format "->foo="
   assert_format "foo = 1\n->foo.bar"
+  assert_format "foo = 1\n->foo.bar="
   assert_format "foo = 1\n->foo.bar(Int32)"
   assert_format "foo = 1\n->foo.bar(Int32*)"
+  assert_format "foo = 1\n->foo.bar=(Int32)"
   assert_format "->{ x }"
   assert_format "->{\nx\n}", "->{\n  x\n}"
   assert_format "->do\nx\nend", "->do\n  x\nend"
@@ -880,6 +884,8 @@ describe Crystal::Formatter do
   assert_format "foo.[1]"
 
   assert_format "@foo : Int32 # comment\n\ndef foo\nend"
+  assert_format "getter foo # comment\n\ndef foo\nend"
+  assert_format "getter foo : Int32 # comment\n\ndef foo\nend"
 
   assert_format "a &.b.as C", "a &.b.as C"
   assert_format "a &.b.c.as C", "a &.b.c.as C"

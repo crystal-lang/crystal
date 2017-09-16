@@ -104,4 +104,28 @@ describe "Code gen: debug" do
       ONE.three
       ), debug: Crystal::Debug::All)
   end
+
+  it "has correct debug location after constant initialization in call with block (#4719)" do
+    codegen(%(
+      fun __crystal_malloc_atomic(size : UInt32) : Void*
+        x = uninitialized Void*
+        x
+      end
+
+      class Foo
+      end
+
+      class Bar
+        def initialize
+          yield
+        end
+      end
+
+      A = Foo.new
+
+      Bar.new { }
+
+      A
+      ), debug: Crystal::Debug::All)
+  end
 end

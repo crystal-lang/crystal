@@ -6,7 +6,7 @@ class LLVM::Module
 
   getter context : Context
 
-  {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+  {% if LibLLVM::IS_38 %}
     def initialize(@unwrap : LibLLVM::ModuleRef, @name : String, @context : Context)
       @owned = false
     end
@@ -14,7 +14,7 @@ class LLVM::Module
     def name : String
       @name
     end
-  {% else %}
+  {% else %} # LLVM >= 3.9
     def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
       @owned = false
     end
@@ -34,9 +34,9 @@ class LLVM::Module
   end
 
   def data_layout=(data : TargetData)
-    {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+    {% if LibLLVM::IS_38 %}
       LibLLVM.set_data_layout(self, data.to_data_layout_string)
-    {% else %}
+    {% else %} # LLVM >= 3.9
       LibLLVM.set_module_data_layout(self, data)
     {% end %}
   end
@@ -57,11 +57,9 @@ class LLVM::Module
     LibLLVM.write_bitcode_to_file self, filename
   end
 
-  {% unless LibLLVM::IS_35 %}
-    def write_bitcode_to_memory_buffer
-      MemoryBuffer.new(LibLLVM.write_bitcode_to_memory_buffer self)
-    end
-  {% end %}
+  def write_bitcode_to_memory_buffer
+    MemoryBuffer.new(LibLLVM.write_bitcode_to_memory_buffer self)
+  end
 
   def write_bitcode_to_fd(fd : Int, should_close = false, buffered = false)
     LibLLVM.write_bitcode_to_fd(self, fd, should_close ? 1 : 0, buffered ? 1 : 0)

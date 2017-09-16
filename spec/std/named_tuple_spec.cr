@@ -135,7 +135,7 @@ describe "NamedTuple" do
 
   it "computes a hash value" do
     tup1 = {a: 1, b: 'a'}
-    tup1.hash.should_not eq(0)
+    tup1.hash.should eq(tup1.dup.hash)
 
     tup2 = {b: 'a', a: 1}
     tup2.hash.should eq(tup1.hash)

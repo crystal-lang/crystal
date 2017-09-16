@@ -2139,12 +2139,12 @@ module Crystal
             @macro_curly_count -= 1
           end
         else
-          if !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(peek_next_char)
+          if !delimiter_state && whitespace && lookahead { char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(peek_next_char) }
             yields = true
             char = current_char
             whitespace = true
             beginning_of_line = false
-          elsif !delimiter_state && whitespace && (keyword = check_macro_opening_keyword(beginning_of_line))
+          elsif !delimiter_state && whitespace && (keyword = lookahead { check_macro_opening_keyword(beginning_of_line) })
             char = current_char
 
             if keyword == :macro && char.ascii_whitespace?
@@ -2196,6 +2196,18 @@ module Crystal
       set_token_raw_from_start(start)
 
       @token
+    end
+
+    def lookahead
+      old_pos = @reader.pos
+      old_line_number, old_column_number = @line_number, @column_number
+
+      result = yield
+      unless result
+        @reader.pos = old_pos
+        @line_number, @column_number = old_line_number, old_column_number
+      end
+      result
     end
 
     def skip_macro_whitespace

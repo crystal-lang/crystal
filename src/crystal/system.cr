@@ -1,13 +1,11 @@
-module Crystal
-  # :nodoc
-  module System
-    # Returns the hostname
-    # def self.hostname
+# :nodoc:
+module Crystal::System
+  # Returns the hostname
+  # def self.hostname
 
-    # Returns the number of logical processors available to the system.
-    #
-    # def self.cpu_count
-  end
+  # Returns the number of logical processors available to the system.
+  #
+  # def self.cpu_count
 end
 
 require "./system/unix/hostname"

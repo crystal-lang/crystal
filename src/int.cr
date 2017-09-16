@@ -316,8 +316,9 @@ struct Int
     !even?
   end
 
-  def hash
-    self
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.int(self)
   end
 
   def succ

@@ -550,7 +550,7 @@ module Crystal
       end
     end
 
-    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"["]
+    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"["]
 
     def parse_atomic_with_method
       location = @token.location
@@ -619,7 +619,12 @@ module Crystal
           elsif @token.type == :"["
             return parse_atomic_method_suffix(atomic, location)
           else
-            name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
+            name = case @token.type
+                   when :IDENT, :CONST
+                     @token.value.to_s
+                   else
+                     @token.type.to_s
+                   end
             end_location = token_end_location
 
             @wants_regex = false
@@ -1026,7 +1031,7 @@ module Crystal
         when :fun
           check_type_declaration do
             check_not_inside_def("can't define fun inside def") do
-              parse_fun_def require_body: true
+              parse_fun_def top_level: true, require_body: true
             end
           end
         when :alias
@@ -1371,8 +1376,16 @@ module Crystal
         @block_arg_count += 1
 
         obj = Var.new(block_arg_name)
+
         @wants_regex = false
-        next_token_skip_space
+        if current_char == '%'
+          next_char
+          @token.type = :"%"
+          @token.column_number += 1
+          skip_space
+        else
+          next_token_skip_space
+        end
 
         location = @token.location
 
@@ -1711,16 +1724,28 @@ module Crystal
       case @token.type
       when :IDENT
         name = @token.value.to_s
-        next_token_skip_space
-        if @token.type == :"."
+        next_token
+        if @token.type == :"="
+          name = "#{name}="
           next_token_skip_space
-          second_name = check_ident
-          if name != "self" && !@def_vars.last.includes?(name)
-            raise "undefined variable '#{name}'", location.line_number, location.column_number
+        else
+          skip_space
+          if @token.type == :"."
+            next_token_skip_space
+            second_name = check_ident
+            if name != "self" && !@def_vars.last.includes?(name)
+              raise "undefined variable '#{name}'", location.line_number, location.column_number
+            end
+            obj = Var.new(name)
+            name = second_name
+            next_token
+            if @token.type == :"="
+              name = "#{name}="
+              next_token_skip_space
+            else
+              skip_space
+            end
           end
-          obj = Var.new(name)
-          name = second_name
-          next_token_skip_space
         end
       when :CONST
         obj = parse_ident
@@ -4852,7 +4877,7 @@ module Crystal
         when :alias
           parse_alias
         when :fun
-          parse_fun_def
+          parse_fun_def(top_level: false)
         when :type
           parse_type_def
         when :struct
@@ -4906,14 +4931,21 @@ module Crystal
 
     IdentOrConst = [:IDENT, :CONST]
 
-    def parse_fun_def(require_body = false)
+    def parse_fun_def(top_level, require_body = false)
       location = @token.location
       doc = @token.doc
 
       push_def if require_body
 
       next_token_skip_space_or_newline
-      name = check_ident
+
+      name = if top_level
+               check_ident
+             else
+               check IdentOrConst
+               @token.value.to_s
+             end
+
       next_token_skip_space_or_newline
 
       if @token.type == :"="

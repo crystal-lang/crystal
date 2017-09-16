@@ -4707,4 +4707,40 @@ describe "Semantic: instance var" do
       ),
       "can't use instance variables at the top level"
   end
+
+  it "doesn't check call of non-self instance (#4830)" do
+    assert_type(%(
+      class Container
+        def initialize(other : Container, x)
+          initialize(other)
+          @foo = "x"
+        end
+
+        def initialize(other : Container)
+          @foo = other.foo
+        end
+
+        def initialize(@foo : String, bar)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      container = Container.new("foo", nil)
+      Container.new(container, "foo2")
+      )) { types["Container"] }
+  end
+
+  it "errors when assigning instance variable inside nested expression" do
+    assert_error %(
+      class Foo
+        if true
+          @foo = 1
+        end
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
 end

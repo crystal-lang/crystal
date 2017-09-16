@@ -159,10 +159,8 @@ struct XML::Node
     type == XML::Type::DOCUMENT_FRAG_NODE
   end
 
-  # Returns this node's `#object_id` as the hash value.
-  def hash
-    object_id
-  end
+  # See `Object#hash(hasher)`
+  def_hash object_id
 
   # Returns the content for this Node.
   def inner_text

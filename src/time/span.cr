@@ -42,7 +42,8 @@ struct Time::Span
 
   include Comparable(self)
 
-  TicksPerMillisecond = 10_000_i64
+  TicksPerMicrosecond = 10_i64
+  TicksPerMillisecond = TicksPerMicrosecond * 1000
   TicksPerSecond      = TicksPerMillisecond * 1000
   TicksPerMinute      = TicksPerSecond * 60
   TicksPerHour        = TicksPerMinute * 60
@@ -52,7 +53,7 @@ struct Time::Span
   MinValue = new Int64::MIN
   Zero     = new 0
 
-  # 1 tick is a tenth of a millisecond
+  # 1 tick is a tenth of a microsecond
   @ticks : Int64
 
   getter ticks

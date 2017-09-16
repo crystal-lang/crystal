@@ -748,6 +748,7 @@ module Crystal
           if ex_item.restriction_of?(item, self)
             list[i] = item
             a_def.previous = ex_item
+            a_def.doc ||= ex_item.def.doc
             ex_item.def.next = a_def
             return ex_item.def
           else
@@ -781,6 +782,7 @@ module Crystal
       array = (macros[a_def.name] ||= [] of Macro)
       index = array.index { |existing_macro| a_def.overrides?(existing_macro) }
       if index
+        a_def.doc ||= array[index].doc
         array[index] = a_def
       else
         array.push a_def

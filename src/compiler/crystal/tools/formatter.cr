@@ -54,6 +54,7 @@ module Crystal
     @output : IO::Memory
     @line_output : IO::Memory
     @wrote_newline : Bool
+    @wrote_double_newlines : Bool
     @wrote_comment : Bool
     @macro_state : Token::MacroState
     @inside_macro : Int32
@@ -91,6 +92,7 @@ module Crystal
       @output = IO::Memory.new(source.bytesize)
       @line_output = IO::Memory.new
       @wrote_newline = false
+      @wrote_double_newlines = false
       @wrote_comment = false
       @macro_state = Token::MacroState.default
       @inside_macro = 0
@@ -257,7 +259,7 @@ module Crystal
             unless found_comment
               skip_space_write_line
               found_comment = skip_space_or_newline last: true, at_least_one: true
-              write_line unless found_comment
+              write_line unless found_comment || @wrote_double_newlines
             end
           else
             consume_newlines
@@ -3275,12 +3277,8 @@ module Crystal
         write_keyword :else
         found_comment = skip_space
         if @token.type == :NEWLINE || found_comment
-          unless found_comment
-            write_line
-            next_token
-          end
-          skip_space_or_newline(@indent + 2)
-          format_nested(a_else, @indent)
+          write_line unless found_comment
+          format_nested(a_else)
           skip_space_or_newline(@indent + 2)
         else
           while @token.type == :";"
@@ -3708,8 +3706,30 @@ module Crystal
       write_token :"->"
       skip_space_or_newline
 
-      call = Call.new(node.obj, node.name, node.args)
-      accept call
+      if obj = node.obj
+        accept obj
+        write_token :"."
+        skip_space_or_newline
+      end
+
+      write node.name
+      next_token_skip_space
+      next_token_skip_space if @token.type == :"="
+
+      if @token.type == :"("
+        write "(" unless node.args.empty?
+        next_token_skip_space
+        node.args.each_with_index do |arg, i|
+          accept arg
+          skip_space_or_newline
+          if @token.type == :","
+            write ", " unless last?(i, node.args)
+            next_token_skip_space_or_newline
+          end
+        end
+        write ")" unless node.args.empty?
+        next_token_skip_space
+      end
 
       false
     end
@@ -4253,6 +4273,7 @@ module Crystal
 
         if @token.type == :NEWLINE
           write_line
+          @wrote_double_newlines = true
         end
 
         skip_space_or_newline
@@ -4330,6 +4351,7 @@ module Crystal
     end
 
     def write_line
+      @wrote_double_newlines = false
       @current_doc_comment = nil unless @wrote_comment
       @wrote_comment = false
 

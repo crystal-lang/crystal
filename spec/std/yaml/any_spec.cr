@@ -9,14 +9,20 @@ describe YAML::Any do
 
     it "gets string" do
       YAML.parse("hello").as_s.should eq("hello")
+      YAML.parse("hello").as_s?.should eq("hello")
+      YAML.parse("hello:\n- cruel\n- world\n").as_s?.should be_nil
     end
 
     it "gets array" do
       YAML.parse("- foo\n- bar\n").as_a.should eq(["foo", "bar"])
+      YAML.parse("- foo\n- bar\n").as_a?.should eq(["foo", "bar"])
+      YAML.parse("hello").as_a?.should be_nil
     end
 
     it "gets hash" do
       YAML.parse("foo: bar").as_h.should eq({"foo" => "bar"})
+      YAML.parse("foo: bar").as_h?.should eq({"foo" => "bar"})
+      YAML.parse("foo: bar")["foo"].as_h?.should be_nil
     end
   end
 

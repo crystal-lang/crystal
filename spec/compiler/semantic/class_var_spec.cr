@@ -497,4 +497,22 @@ describe "Semantic: class var" do
       ),
       "class variable '@@foo' of Foo is not nilable (it's Int32) so it must have an initializer"
   end
+
+  it "can assign to class variable if this type can be up-casted to ancestors class variable type (#4869)" do
+    assert_type(%(
+      class Foo
+        @@x : Int32?
+
+        def self.x
+          @@x
+        end
+      end
+
+      class Bar < Foo
+        @@x = 42
+      end
+
+      Bar.x
+      )) { nilable(int32) }
+  end
 end

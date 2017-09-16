@@ -23,6 +23,14 @@ end
 
 # :nodoc:
 struct CallStack
+  # Compute current directory at the beginning so filenames
+  # are always shown relative to the *starting* working directory.
+  CURRENT_DIR = begin
+    dir = Process::INITIAL_PWD
+    dir += File::SEPARATOR unless dir.ends_with?(File::SEPARATOR)
+    dir
+  end
+
   @@skip = [] of String
 
   def self.skip(filename)
@@ -145,15 +153,20 @@ struct CallStack
   end
 
   private def decode_backtrace
+    show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
+
     @callstack.compact_map do |ip|
       pc = CallStack.decode_address(ip)
 
       file, line, column = CallStack.decode_line_number(pc)
-      if file == "??"
-        file_line_column = "??"
-      else
+
+      if file && file != "??"
         next if @@skip.includes?(file)
-        file_line_column = "#{file} #{line}:#{column}"
+
+        # Turn to relative to the current dir, if possible
+        file = file.lchop(CURRENT_DIR)
+
+        file_line_column = "#{file}:#{line}:#{column}"
       end
 
       if name = CallStack.decode_function_name(pc)
@@ -161,11 +174,42 @@ struct CallStack
       elsif frame = CallStack.decode_frame(ip)
         _, sname = frame
         function = String.new(sname)
+
+        # We ignore these because they are part of `raise`'s internals,
+        # and we can't rely on a correct filename being available
+        # (for example if on Mac and without running `dsymutil`)
+        #
+        # We also ignore `main` because it's always at the same place
+        # and adds no info.
+        if function.starts_with?("*raise<") ||
+           function.starts_with?("*CallStack::") ||
+           function.starts_with?("*CallStack#")
+          next
+        end
+
+        # Crystal methods (their mangled name) start with `*`, so
+        # we remove that to have less clutter in the output.
+        function = function.lchop('*')
       else
         function = "???"
       end
 
-      "0x#{ip.address.to_s(16)}: #{function} at #{file_line_column}"
+      if file_line_column
+        if show_full_info && (frame = CallStack.decode_frame(ip))
+          _, sname = frame
+          line = "#{file_line_column} in '#{String.new(sname)}'"
+        else
+          line = "#{file_line_column} in '#{function}'"
+        end
+      else
+        line = function
+      end
+
+      if show_full_info
+        line = "#{line} at 0x#{ip.address.to_s(16)}"
+      end
+
+      line
     end
   end
 
