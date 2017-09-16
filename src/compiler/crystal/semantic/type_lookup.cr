@@ -25,6 +25,9 @@ class Crystal::Type
   # If *free_vars* is given, when resolving a Path, types will be first searched
   # in the given Hash.
   #
+  # If *find_root_generic_type_parameters* is `true` (the default), type parameters
+  # relative to `self_type` will be found. If `false`, they won't be found.
+  #
   # For example, given:
   #
   # ```
@@ -38,13 +41,13 @@ class Crystal::Type
   # ```
   #
   # If `self` is `Foo` and `Bar(Baz)` is given, the result will be `Foo::Bar(Baz)`.
-  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, lazy_self = false, free_vars : Hash(String, TypeVar)? = nil) : Type
-    TypeLookup.new(self, self_type, true, allow_typeof, lazy_self, free_vars).lookup(node).not_nil!
+  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, lazy_self = false, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type
+    TypeLookup.new(self, self_type, true, allow_typeof, lazy_self, free_vars, find_root_generic_type_parameters).lookup(node).not_nil!
   end
 
   # Similar to `lookup_type`, but returns `nil` if a type can't be found.
-  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, lazy_self = false, free_vars : Hash(String, TypeVar)? = nil) : Type?
-    TypeLookup.new(self, self_type, false, allow_typeof, lazy_self, free_vars).lookup(node)
+  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, lazy_self = false, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type?
+    TypeLookup.new(self, self_type, false, allow_typeof, lazy_self, free_vars, find_root_generic_type_parameters).lookup(node)
   end
 
   # Similar to `lookup_type`, but the result might also be an ASTNode, for example when
@@ -59,13 +62,13 @@ class Crystal::Type
   end
 
   private struct TypeLookup
-    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @lazy_self : Bool, @free_vars : Hash(String, TypeVar)? = nil)
+    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @lazy_self : Bool, @free_vars : Hash(String, TypeVar)? = nil, @find_root_generic_type_parameters = true)
       @in_generic_args = 0
 
       # If we are looking types inside a non-instantiated generic type,
       # for example Hash(K, V), we want to find K and V as type parameters
       # of that type.
-      if root.is_a?(GenericType)
+      if @find_root_generic_type_parameters && root.is_a?(GenericType)
         free_vars ||= {} of String => TypeVar
         root.type_vars.each do |type_var|
           free_vars[type_var] ||= root.type_parameter(type_var)

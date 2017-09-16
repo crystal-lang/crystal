@@ -307,15 +307,12 @@ struct Tuple
     size <=> other.size
   end
 
-  # Returns a hash value based on this tuple's length and contents.
-  #
-  # See also: `Object#hash`.
-  def hash
-    hash = 31 * size
+  # See `Object#hash(hasher)`
+  def hash(hasher)
     {% for i in 0...T.size %}
-      hash = 31 * hash + self[{{i}}].hash
+      hasher = self[{{i}}].hash(hasher)
     {% end %}
-    hash
+    hasher
   end
 
   # Returns a tuple containing cloned elements of this tuple using the `clone` method.
@@ -364,14 +361,14 @@ struct Tuple
     {{T.size}}
   end
 
-  # Returns the types of this tuple.
+  # Returns the types of this tuple type.
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple.types # => Tuple(Int32, String, Char)
+  # tuple.class.types # => {Int32, String, Char}
   # ```
-  def types
-    T
+  def self.types
+    Tuple.new(*{{T}})
   end
 
   # Same as `to_s`.

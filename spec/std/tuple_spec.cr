@@ -283,7 +283,7 @@ describe "Tuple" do
 
   it "does types" do
     tuple = {1, 'a', "hello"}
-    tuple.types.to_s.should eq("Tuple(Int32, Char, String)")
+    tuple.class.types.to_s.should eq("{Int32, Char, String}")
   end
 
   it "does ===" do

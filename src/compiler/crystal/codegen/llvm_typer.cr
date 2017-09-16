@@ -564,7 +564,7 @@ module Crystal
     end
 
     def size_t
-      if @program.has_flag?("x86_64") || @program.has_flag?("aarch64")
+      if @program.bits64?
         @llvm_context.int64
       else
         @llvm_context.int32

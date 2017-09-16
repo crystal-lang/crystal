@@ -2703,8 +2703,12 @@ module Crystal
         node.type = scope.tuple_types[node.index].as(Type)
       elsif scope.is_a?(NamedTupleInstanceType)
         node.type = scope.entries[node.index].type
-      elsif scope
-        node.type = (scope.instance_type.as(TupleInstanceType).tuple_types[node.index].as(Type)).metaclass
+      elsif scope && (instance_type = scope.instance_type).is_a?(TupleInstanceType)
+        node.type = instance_type.tuple_types[node.index].as(Type).metaclass
+      elsif scope && (instance_type = scope.instance_type).is_a?(NamedTupleInstanceType)
+        node.type = instance_type.entries[node.index].type.metaclass
+      else
+        node.raise "unsupported TupleIndexer scope"
       end
       false
     end

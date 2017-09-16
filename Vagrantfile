@@ -26,6 +26,25 @@ Vagrant.configure("2") do |config|
     end
   end
 
+  [[:jessie, '3.5'], [:stretch, '3.9']].product([32, 64]).each do |(dist, ver), bits|
+    box_name = "#{dist}#{bits}"
+
+    config.vm.define(box_name) do |c|
+      c.vm.box = "debian/#{box_name}"
+
+      c.vm.provision :shell, inline: %(
+        apt-get -y install apt-transport-https dirmngr
+        apt-key adv --keyserver keys.gnupg.net --recv-keys 09617FD37CC06B54
+        echo 'deb https://dist.crystal-lang.org/apt crystal main' > /etc/apt/sources.list.d/crystal.list
+        apt-get update
+        apt-get -y install crystal curl git libgmp3-dev zlib1g-dev libedit-dev libxml2-dev libssl-dev libyaml-dev libreadline-dev g++ llvm-#{ver} llvm-#{ver}-dev
+        echo 'export LIBRARY_PATH="/opt/crystal/embedded/lib"' > /etc/profile.d/crystal.sh
+      )
+
+      clone_crystal_from_vagrant.call(c)
+    end
+  end
+
   config.vm.define "freebsd" do |c|
     c.ssh.shell = "csh"
     c.vm.box = "freebsd/FreeBSD-10.2-RELEASE"

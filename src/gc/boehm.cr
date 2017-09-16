@@ -20,6 +20,7 @@ lib LibGC
   fun add_roots = GC_add_roots(low : Void*, high : Void*)
   fun enable = GC_enable
   fun disable = GC_disable
+  fun is_disabled = GC_is_disabled : Int
   fun set_handle_fork = GC_set_handle_fork(value : Int)
 
   fun base = GC_base(displaced_pointer : Void*) : Void*
@@ -74,6 +75,39 @@ fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
   LibGC.realloc(ptr, size)
 end
 
+# :nodoc:
+fun __crystal_malloc64(size : UInt64) : Void*
+  {% if flag?(:bits32) %}
+    if size > UInt32::MAX
+      raise ArgumentError.new("Given size is bigger than UInt32::MAX")
+    end
+  {% end %}
+
+  LibGC.malloc(size)
+end
+
+# :nodoc:
+fun __crystal_malloc_atomic64(size : UInt64) : Void*
+  {% if flag?(:bits32) %}
+    if size > UInt32::MAX
+      raise ArgumentError.new("Given size is bigger than UInt32::MAX")
+    end
+  {% end %}
+
+  LibGC.malloc_atomic(size)
+end
+
+# :nodoc:
+fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
+  {% if flag?(:bits32) %}
+    if size > UInt32::MAX
+      raise ArgumentError.new("Given size is bigger than UInt32::MAX")
+    end
+  {% end %}
+
+  LibGC.realloc(ptr, size)
+end
+
 module GC
   def self.init
     LibGC.set_handle_fork(1)
@@ -85,6 +119,10 @@ module GC
   end
 
   def self.enable
+    unless LibGC.is_disabled != 0
+      raise "GC is not disabled"
+    end
+
     LibGC.enable
   end
 

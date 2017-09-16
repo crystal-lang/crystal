@@ -343,9 +343,8 @@ struct BigInt < Int
     io << "_big_i"
   end
 
-  def hash
-    to_u64
-  end
+  # TODO: improve this
+  def_hash to_u64
 
   # Returns a string representation of self.
   #

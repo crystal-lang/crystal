@@ -28,8 +28,7 @@ describe "Bool" do
   end
 
   describe "hash" do
-    it { true.hash.should eq(1) }
-    it { false.hash.should eq(0) }
+    it { true.hash.should_not eq(false.hash) }
   end
 
   describe "to_s" do

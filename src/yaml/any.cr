@@ -157,10 +157,22 @@ struct YAML::Any
     @raw.as(String)
   end
 
+  # Checks that the underlying value is `String`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_s? : String?
+    as_s if @raw.is_a?(String)
+  end
+
   # Checks that the underlying value is `Int64`, and returns its value.
   # Raises otherwise.
   def as_i64 : Int64
     @raw.as(Int64)
+  end
+
+  # Checks that the underlying value is `Int64`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_i64? : Int64?
+    as_i64 if @raw.is_a? Int64
   end
 
   # Checks that the underlying value is `Int64`, and returns its value as `Int32`.
@@ -169,10 +181,22 @@ struct YAML::Any
     @raw.as(Int64).to_i32
   end
 
+  # Checks that the underlying value is `Int64`, and returns its value as `Int32`.
+  # Returns `nil` otherwise.
+  def as_i? : Int32?
+    as_i if @raw.is_a? Int64
+  end
+
   # Checks that the underlying value is `Float64`, and returns its value.
   # Raises otherwise.
   def as_f : Float64
     @raw.as(Float64)
+  end
+
+  # Checks that the underlying value is `Float64`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_f? : Float64?
+    as_f if @raw.is_a? Float64
   end
 
   # Checks that the underlying value is `Time`, and returns its value.
@@ -181,16 +205,34 @@ struct YAML::Any
     @raw.as(Time)
   end
 
+  # Checks that the underlying value is `Time`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_time? : Time?
+    as_time if @raw.is_a? Time
+  end
+
   # Checks that the underlying value is `Array`, and returns its value.
   # Raises otherwise.
   def as_a : Array(Type)
     @raw.as(Array)
   end
 
+  # Checks that the underlying value is `Array`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_a? : Array(Type)?
+    as_a if @raw.is_a?(Array(Type))
+  end
+
   # Checks that the underlying value is `Hash`, and returns its value.
   # Raises otherwise.
   def as_h : Hash(Type, Type)
     @raw.as(Hash)
+  end
+
+  # Checks that the underlying value is `Hash`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_h? : Hash(Type, Type)?
+    as_h if @raw.is_a?(Hash(Type, Type))
   end
 
   # :nodoc:
@@ -218,10 +260,8 @@ struct YAML::Any
     raw == other
   end
 
-  # :nodoc:
-  def hash
-    raw.hash
-  end
+  # See `Object#hash(hasher)`
+  def_hash raw
 
   # :nodoc:
   def to_yaml(io)

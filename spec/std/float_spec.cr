@@ -206,11 +206,11 @@ describe "Float" do
 
   describe "hash" do
     it "does for Float32" do
-      1.2_f32.hash.should_not eq(0)
+      1.2_f32.hash.should eq(1.2_f32.hash)
     end
 
     it "does for Float64" do
-      1.2.hash.should_not eq(0)
+      1.2.hash.should eq(1.2.hash)
     end
   end
 

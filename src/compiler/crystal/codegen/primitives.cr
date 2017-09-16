@@ -783,8 +783,15 @@ class Crystal::CodeGenVisitor
       ptr = aggregate_index value, index
       to_lhs ptr, type.entries[index].type
     else
-      type = (type.instance_type.as(TupleInstanceType))
-      type_id(type.tuple_types[index].as(Type).metaclass)
+      type = type.instance_type
+      case type
+      when TupleInstanceType
+        type_id(type.tuple_types[index].as(Type).metaclass)
+      when NamedTupleInstanceType
+        type_id(type.entries[index].type.as(Type).metaclass)
+      else
+        raise "BUG: unsupported codegen for tuple_indexer"
+      end
     end
   end
 
@@ -858,7 +865,7 @@ class Crystal::CodeGenVisitor
     when CharType
       inst.alignment = 4
     else
-      inst.alignment = @program.has_flag?("x86_64") || @program.has_flag?("aarch64") ? 8 : 4
+      inst.alignment = @program.bits64? ? 8 : 4
     end
   end
 
