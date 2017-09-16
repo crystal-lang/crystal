@@ -1446,6 +1446,7 @@ module Crystal
         old_indent = @indent
         next_needs_indent = false
         has_parentheses = false
+        found_first_newline = false
         found_comment = false
 
         if @token.type == :"("
@@ -1454,7 +1455,9 @@ module Crystal
           next_token_skip_space
           if @token.type == :NEWLINE
             write_line
+            prefix_size = old_indent + 2
             skip_space_or_newline(prefix_size)
+            found_first_newline = true
             next_needs_indent = true
           end
           skip_space_or_newline
@@ -1481,10 +1484,19 @@ module Crystal
             to_skip += 1 if @last_arg_is_skip
           end
 
+          if found_first_newline && last?(i, args) && !double_splat && !block_arg && !variadic
+            next_token if @token.type == :","
+            comma_written = true
+            found_comment = skip_space_or_newline
+            write_line unless found_comment
+            next_needs_indent = true
+            next
+          end
+
           skip_space
 
           if @token.type == :","
-            has_more = !last?(i, args) || double_splat || block_arg
+            has_more = !last?(i, args) || double_splat || block_arg || variadic
 
             if has_more
               write ","
@@ -1520,21 +1532,29 @@ module Crystal
           end
           write_token :"**"
           double_splat.accept self
-          skip_space_or_newline
-          if block_arg
-            check :","
-            write ","
+          if found_first_newline && !block_arg
+            next_token if @token.type == :","
             comma_written = true
-            found_comment = next_token_skip_space
-            if found_comment
-              next_needs_indent = true
-              found_comment = false
-            else
-              if @token.type == :NEWLINE
-                indent(prefix_size) { consume_newlines }
+            found_comment = skip_space_or_newline
+            write_line unless found_comment
+            next_needs_indent = true
+          else
+            skip_space_or_newline
+            if block_arg
+              check :","
+              write ","
+              comma_written = true
+              found_comment = next_token_skip_space
+              if found_comment
                 next_needs_indent = true
+                found_comment = false
               else
-                write " "
+                if @token.type == :NEWLINE
+                  indent(prefix_size) { consume_newlines }
+                  next_needs_indent = true
+                else
+                  write " "
+                end
               end
             end
           end
@@ -1553,18 +1573,40 @@ module Crystal
           skip_space
           to_skip += 1 if at_skip?
           accept block_arg
-          skip_space
+          if found_first_newline
+            found_comment = skip_space_or_newline
+            write_line unless found_comment
+            next_needs_indent = true
+          else
+            skip_space_or_newline
+          end
         end
 
         if variadic
-          write_token ", ", :"..."
-          skip_space_or_newline
+          if next_needs_indent
+            write_indent(prefix_size)
+            next_needs_indent = false
+          end
+          if found_first_newline
+            write_token :"..."
+            found_comment = skip_space_or_newline
+            write_line unless found_comment
+          else
+            write_token :"..."
+            found_comment = skip_space_or_newline
+          end
         end
 
         if has_parentheses
-          skip_space_or_newline
-          write_indent(prefix_size) if found_comment
-          write_token :")"
+          if found_first_newline
+            skip_space_or_newline
+            write_indent(old_indent)
+            write_token :")"
+          else
+            skip_space_or_newline
+            write_indent(prefix_size) if found_comment
+            write_token :")"
+          end
         else
           write_indent(prefix_size) if found_comment
           write ")"
