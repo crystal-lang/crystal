@@ -264,4 +264,28 @@ describe "Semantic: alias" do
       Baz::Bar.baz
       )) { int32 }
   end
+
+  it "finds type through alias (#4645)" do
+    assert_type(%(
+      module FooBar
+        module Foo
+          A = 10
+        end
+
+        module Bar
+          include Foo
+        end
+      end
+
+      class Baz
+        alias Bar = FooBar::Bar
+
+        def test
+          Bar::A
+        end
+      end
+
+      Baz.new.test
+      )) { int32 }
+  end
 end
