@@ -15,8 +15,7 @@ module Crystal::Macros
   end
 
   # Outputs the current macro's buffer to the standard output. Useful for debugging
-  # a macro to see what's being generated. Use it like `{{debug()}}`, the parenthesis
-  # are mandatory.
+  # a macro to see what's being generated.
   #
   # By default, the output is tried to be formatted using Crystal's
   # formatter, but you can disable this by passing `false` to this method.
@@ -107,7 +106,7 @@ module Crystal::Macros
   #
   # ```
   # # sth_for_osx.cr
-  # {% skip() unless flag?(:darwin) %}
+  # {% skip unless flag?(:darwin) %}
   #
   # # Class FooForMac will only be defined if we're compiling on OS X
   # class FooForMac

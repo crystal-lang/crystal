@@ -135,7 +135,8 @@ struct Crystal::TypeDeclarationProcessor
     # Process class variables
     type_guess_visitor.class_vars.each do |owner, vars|
       vars.each do |name, info|
-        declare_meta_type_var(owner.class_vars, owner, name, info)
+        # No need to freeze its type because it is frozen by check_class_var_errors
+        declare_meta_type_var(owner.class_vars, owner, name, info, freeze_type: false)
       end
     end
 
@@ -155,7 +156,7 @@ struct Crystal::TypeDeclarationProcessor
     {node, self}
   end
 
-  private def declare_meta_type_var(vars, owner, name, type : Type, location : Location? = nil, instance_var = false)
+  private def declare_meta_type_var(vars, owner, name, type : Type, location : Location? = nil, instance_var = false, freeze_type = true)
     if instance_var && location && !owner.allows_instance_vars?
       raise_cant_declare_instance_var(owner, location)
     end
@@ -174,24 +175,24 @@ struct Crystal::TypeDeclarationProcessor
     var.owner = owner
     var.type = type
     var.bind_to(var)
-    var.freeze_type = type
+    var.freeze_type = type if freeze_type
     var.location = location
     vars[name] = var
     var
   end
 
-  private def declare_meta_type_var(vars, owner, name, info : TypeGuessVisitor::TypeInfo)
+  private def declare_meta_type_var(vars, owner, name, info : TypeGuessVisitor::TypeInfo, freeze_type = true)
     type = info.type
     type = Type.merge!(type, @program.nil) unless info.outside_def
-    declare_meta_type_var(vars, owner, name, type)
+    declare_meta_type_var(vars, owner, name, type, freeze_type: freeze_type)
   end
 
-  private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation, instance_var = false, check_nilable = true)
+  private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation, instance_var = false, check_nilable = true, freeze_type = true)
     if instance_var && !owner.allows_instance_vars?
       raise_cant_declare_instance_var(owner, info.location)
     end
 
-    var = declare_meta_type_var(vars, owner, name, info.type.as(Type), info.location)
+    var = declare_meta_type_var(vars, owner, name, info.type.as(Type), info.location, freeze_type: freeze_type)
     var.location = info.location
 
     # Check if var is uninitialized
@@ -646,10 +647,16 @@ struct Crystal::TypeDeclarationProcessor
             ancestor_class_var = ancestor.lookup_class_var?(name)
             next unless ancestor_class_var
 
+            if owner_class_var.type.implements?(ancestor_class_var.type)
+              owner_class_var.type = ancestor_class_var.type
+            end
+
             if owner_class_var.type != ancestor_class_var.type
               raise TypeException.new("class variable '#{name}' of #{owner} is already defined as #{ancestor_class_var.type} in #{ancestor}", info.location)
             end
           end
+
+          owner_class_var.freeze_type = owner_class_var.type
         end
       end
     end
