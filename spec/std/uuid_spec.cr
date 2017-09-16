@@ -3,9 +3,10 @@ require "uuid"
 
 describe "UUID" do
   it "has working zero UUID" do
-    #UUID.empty.should eq UUID.new(UUID::Version::V4, StaticArray(UInt8, 16).new(0_u8))
-    UUID.empty.to_s.should eq "00000000-0000-0000-0000-000000000000"
+    UUID.empty.should eq UUID.new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
+    UUID.empty.to_s.should eq "00000000-0000-4000-0000-000000000000"
     UUID.empty.variant.should eq UUID::Variant::NCS
+    UUID.empty.version.should eq UUID::Version::V4
   end
 
   it "can be built from strings" do
@@ -67,8 +68,7 @@ describe "UUID" do
     uuid = UUID.new
     expect_raises(ArgumentError) { uuid.version = UUID::Version::Unknown }
     {% for version in %w(1 2 3 4 5) %}
-      uuid.version = UUID::Version::V{
-        { version.id }}
+      uuid.version = UUID::Version::V{{ version.id }}
       uuid.version.should eq UUID::Version::V{{ version.id }}
     {% end %}
   end
