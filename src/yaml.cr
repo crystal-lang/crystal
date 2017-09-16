@@ -102,7 +102,7 @@ module YAML
   end
 
   # All valid YAML types.
-  alias Type = String | Hash(Type, Type) | Array(Type) | Nil
+  alias Type = String | Bool | Int64 | Float64 | Nil | Time | Hash(Type, Type) | Array(Type)
   alias EventKind = LibYAML::EventType
 
   # Deserializes a YAML document.

@@ -135,6 +135,15 @@ class YAML::PullParser
     nil
   end
 
+  def read_null_or(advance = true)
+    if kind == EventKind::SCALAR && data.scalar.style.plain? && (value = self.value).nil? || (value && value.empty?)
+      read_next if advance
+      nil
+    else
+      yield
+    end
+  end
+
   def read_bool
     expect_scalar_style LibYAML::ScalarStyle::PLAIN
     value = if YAML::TRUE_VALUES.includes?(self.value)
@@ -148,12 +157,37 @@ class YAML::PullParser
     value
   end
 
+  def read_bool_or(advance = true)
+    if !data.scalar.style.plain?
+      yield
+    elsif YAML::TRUE_VALUES.includes?(self.value)
+      read_next if advance
+      true
+    elsif YAML::FALSE_VALUES.includes?(self.value)
+      read_next if advance
+      false
+    else
+      yield
+    end
+  end
+
   def read_int
     expect_scalar_style LibYAML::ScalarStyle::PLAIN
     value = self.value.to_s.gsub('_', "").to_i64?(prefix: true)
     raise "Expected integer not '#{self.value}'", *location unless value
     read_next
     value
+  end
+
+  def read_int_or(advance = true)
+    if !data.scalar.style.plain?
+      yield
+    elsif value = self.value.to_s.gsub('_', "").to_i64?(prefix: true)
+      read_next if advance
+      value
+    else
+      yield
+    end
   end
 
   def read_float
@@ -173,6 +207,26 @@ class YAML::PullParser
     value
   end
 
+  def read_float_or(advance = true)
+    if !data.scalar.style.plain?
+      yield
+    elsif float = self.value.to_s.gsub('_', "").to_f?
+      read_next if advance
+      float
+    elsif YAML::INFINITY_VALUES.includes? self.value.to_s.lchop('+')
+      read_next if advance
+      Float64::INFINITY
+    elsif self.value.try(&.[0]?) == '-' && YAML::INFINITY_VALUES.includes?(self.value.try(&.lchop('-')))
+      read_next if advance
+      -Float64::INFINITY
+    elsif YAML::NAN_VALUES.includes? self.value
+      read_next if advance
+      Float64::NAN
+    else
+      yield
+    end
+  end
+
   def read_timestamp
     value = begin
       Time::Format::ISO_8601_DATE_TIME.parse(self.value.to_s)
@@ -183,6 +237,16 @@ class YAML::PullParser
     value
   end
 
+  def read_timestamp_or(advance = true)
+    begin
+      value = Time::Format::ISO_8601_DATE_TIME.parse(self.value.to_s)
+      read_next if advance
+      value
+    rescue ex : Time::Format::Error
+      yield
+    end if data.scalar.style.plain?
+  end
+
   def read_string
     value = self.value.to_s
     if data.scalar.style.plain? && YAML.reserved_value?(value)
@@ -190,6 +254,32 @@ class YAML::PullParser
     end
     read_next
     value
+  end
+
+  def read_string_or(advance = true)
+    value = self.value.to_s
+    if data.scalar.style.plain? && YAML.reserved_value?(value)
+      yield
+    else
+      read_next if advance
+      value
+    end
+  end
+
+  def read_value(advance = true)
+    read_string_or(advance) do
+      read_int_or(advance) do
+        read_float_or(advance) do
+          read_bool_or(advance) do
+            read_null_or(advance) do
+              read_timestamp_or(advance) do
+                raise "invalid value: #{value}"
+              end
+            end
+          end
+        end
+      end
+    end
   end
 
   def read_scalar
@@ -229,15 +319,6 @@ class YAML::PullParser
 
   def read_mapping_end
     read EventKind::MAPPING_END
-  end
-
-  def read_null_or
-    if kind == EventKind::SCALAR && data.scalar.style.plain? && (value = self.value).nil? || (value && value.empty?)
-      read_next
-      nil
-    else
-      yield
-    end
   end
 
   def read(expected_kind)
