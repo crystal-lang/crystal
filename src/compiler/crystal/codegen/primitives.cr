@@ -651,7 +651,7 @@ class Crystal::CodeGenVisitor
     c_calling_convention = target_def.proc_c_calling_convention?
 
     proc_type = context.type.as(ProcInstanceType)
-    0.upto(target_def.args.size - 1) do |i|
+    target_def.args.size.times do |i|
       arg = args[i]
       proc_arg_type = proc_type.arg_types[i]
       target_def_arg_type = target_def.args[i].type
@@ -685,6 +685,9 @@ class Crystal::CodeGenVisitor
       # arguments according to the ABI.
       # For this we temporarily set the target_def's `abi_info` and `c_calling_convention`
       # properties for the non-closure branch, and then reset it.
+      old_abi_info = target_def.abi_info?
+      old_c_calling_convention = target_def.c_calling_convention
+
       if c_calling_convention
         null_fun_ptr, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
       else
@@ -695,8 +698,6 @@ class Crystal::CodeGenVisitor
       phi.add value, node.type
 
       # Reset abi_info + c_calling_convention so the closure part is generated as usual
-      old_abi_info = target_def.abi_info?
-      old_c_calling_convention = target_def.c_calling_convention?
       target_def.abi_info = false
       target_def.c_calling_convention = nil
 
@@ -707,7 +708,7 @@ class Crystal::CodeGenVisitor
       phi.add value, node.type, true
 
       target_def.abi_info = old_abi_info
-      target_def.c_calling_convention = !!old_c_calling_convention
+      target_def.c_calling_convention = old_c_calling_convention
     end
 
     old_needs_value = @needs_value
