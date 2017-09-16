@@ -817,15 +817,20 @@ module Crystal
           simple_var.bind_to(target)
         end
 
-        used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
-        if (found_self = @found_self_in_initialize_call) || (used_ivars_node = used_ivars_in_calls_in_initialize.try(&.[var_name]?)) || (@block_nest > 0 && !@vars.has_key?(var_name))
-          ivar = scope.lookup_instance_var(var_name)
-          if found_self
-            ivar.nil_reason = NilReason.new(var_name, :used_self_before_initialized, found_self)
-          else
-            ivar.nil_reason = NilReason.new(var_name, :used_before_initialized, used_ivars_node)
+        # Check if an instance variable is being assigned (for the first time)
+        # and self, or that same instance variable, was used (read) before that.
+        unless @vars.has_key?(var_name)
+          if (found_self = @found_self_in_initialize_call) ||
+             (used_ivars_node = @used_ivars_in_calls_in_initialize.try(&.[var_name]?)) ||
+             (@block_nest > 0)
+            ivar = scope.lookup_instance_var(var_name)
+            if found_self
+              ivar.nil_reason = NilReason.new(var_name, :used_self_before_initialized, found_self)
+            else
+              ivar.nil_reason = NilReason.new(var_name, :used_before_initialized, used_ivars_node)
+            end
+            ivar.bind_to program.nil_var
           end
-          ivar.bind_to program.nil_var
         end
 
         if simple_var

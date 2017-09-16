@@ -4758,4 +4758,25 @@ describe "Semantic: instance var" do
       ),
       "can't use Gen(T) as the type of instance variable @x of Foo"
   end
+
+  it "doesn't consider instance var as nilable if assigned before self access (#4981)" do
+    assert_type(%(
+      def f(x)
+      end
+
+      class A
+        def initialize
+          @a = 0
+          f(self)
+          @a = 0
+        end
+
+        def a
+          @a
+        end
+      end
+
+      A.new.a
+      )) { int32 }
+  end
 end
