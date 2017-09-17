@@ -11,13 +11,13 @@ struct UUID
     Future     # Reserved for future expansion.
   end
 
-  enum Version     # RFC4122 UUID versions.
+  enum Version  # RFC4122 UUID versions.
     Unknown = 0 # Unknown version.
-    V1 = 1      # date-time and MAC address.
-    V2 = 2      # DCE security.
-    V3 = 3      # MD5 hash and namespace.
-    V4 = 4      # random.
-    V5 = 5      # SHA1 hash and namespace.
+    V1      = 1 # date-time and MAC address.
+    V2      = 2 # DCE security.
+    V3      = 3 # MD5 hash and namespace.
+    V4      = 4 # random.
+    V5      = 5 # SHA1 hash and namespace.
   end
 
   # Internal representation.
@@ -68,7 +68,6 @@ struct UUID
     self.variant = variant
     self.version = version
   end
-
 
   def initialize(variant : Variant)
     @bytes = uninitialized UInt8[16]
