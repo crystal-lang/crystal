@@ -1476,44 +1476,40 @@ module Crystal
 
     def format_def_arg(wrote_newline, has_more)
       write_indent if wrote_newline
-      wrote_newline = false
 
       yield
 
       # Write "," before skipping spaces to prevent inserting comment between argument and comma.
       write "," if has_more
 
-      found_comment = skip_space
-      if found_comment
-        wrote_newline = true
-      elsif @token.type == :NEWLINE
-        if !has_more
-          # `last: true` is needed to write newline and comment only if comment is found.
-          wrote_newline = skip_space_or_newline(last: true)
-        else
+      just_wrote_newline = skip_space
+      if @token.type == :NEWLINE
+        if has_more
           consume_newlines
-          wrote_newline = true
+          just_wrote_newline = true
+        else
+          # `last: true` is needed to write newline and comment only if comment is found.
+          just_wrote_newline = skip_space_or_newline(last: true)
         end
       end
 
       if @token.type == :","
         found_comment = next_token_skip_space
         if found_comment
-          wrote_newline = true
+          just_wrote_newline = true
         elsif @token.type == :NEWLINE
-          if wrote_newline || !has_more
-            wrote_newline |= skip_space_or_newline(last: true)
-          else
+          if has_more && !just_wrote_newline
             consume_newlines
-            wrote_newline = true
+            just_wrote_newline = true
+          else
+            just_wrote_newline |= skip_space_or_newline(last: true)
           end
         else
-          write " " if has_more && !wrote_newline
-          wrote_newline ||= false
+          write " " if has_more && !just_wrote_newline
         end
       end
 
-      wrote_newline
+      just_wrote_newline
     end
 
     # The parser transforms `def foo(@x); end` to `def foo(x); @x = x; end` so if we
