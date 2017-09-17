@@ -60,8 +60,8 @@ module Crystal
       end
     end
 
-    def codegen(node, single_module = false, debug = Debug::Default, expose_crystal_main = true)
-      visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, expose_crystal_main: expose_crystal_main
+    def codegen(node, single_module = false, debug = Debug::Default)
+      visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug
       node.accept visitor
       visitor.process_finished_hooks
       visitor.finish
@@ -141,7 +141,7 @@ module Crystal
     @main_module_info : ModuleInfo
     @main_builder : CrystalLLVMBuilder
 
-    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default, expose_crystal_main = true)
+    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
       @single_module = !!single_module
       @abi = @program.target_machine.abi
       @llvm_context = LLVM::Context.new
@@ -155,7 +155,6 @@ module Crystal
       @main_ret_type = node.type? || @program.nil_type
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [llvm_context.int32, llvm_context.void_pointer.pointer], ret_type)
-      @main.linkage = LLVM::Linkage::Internal unless expose_crystal_main
 
       emit_main_def_debug_metadata(@main, "??") unless @debug.none?
 
