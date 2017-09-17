@@ -2375,7 +2375,9 @@ module Crystal
     def process_value
       return if @value_processed
       @value_processed = true
-      @aliased_type = namespace.lookup_type(@value, allow_typeof: false)
+      @aliased_type = namespace.lookup_type(@value,
+        allow_typeof: false,
+        find_root_generic_type_parameters: false)
     end
 
     def includes_type?(other)
