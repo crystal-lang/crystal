@@ -1411,18 +1411,18 @@ module Crystal
             write_token :"**"
             double_splat.accept self
             skip_space_or_newline
-          end
-
-          if block_arg
-            if double_splat
-              write_token :","
-              found_comment = skip_space_or_newline
+            if @token.type == :","
+              write "," if block_arg
+              found_comment = next_token_skip_space_or_newline
               if found_comment
                 write_indent(prefix_size)
               else
-                write " "
+                write " " if block_arg
               end
             end
+          end
+
+          if block_arg
             write_token :"&"
             skip_space
             to_skip += 1 if at_skip?
@@ -1521,15 +1521,16 @@ module Crystal
           write_token :"**"
           double_splat.accept self
           skip_space_or_newline
-          if block_arg
-            check :","
-            write ","
-            comma_written = true
+          if @token.type == :","
+            if block_arg
+              write ","
+              comma_written = true
+            end
             found_comment = next_token_skip_space
             if found_comment
               next_needs_indent = true
               found_comment = false
-            else
+            elsif block_arg
               if @token.type == :NEWLINE
                 indent(prefix_size) { consume_newlines }
                 next_needs_indent = true
@@ -1537,6 +1538,7 @@ module Crystal
                 write " "
               end
             end
+            skip_space_or_newline
           end
         end
 
