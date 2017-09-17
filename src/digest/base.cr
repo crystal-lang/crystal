@@ -16,7 +16,7 @@ abstract class Digest::Base
   #   ctx.update "f"
   #   ctx.update "oo"
   # end
-  # digest.to_slice.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
+  # digest.to_slice.hexstring # => "6163626431386462346363326638356365646566363534666363633461346438"
   # ```
   def self.digest
     context = new
