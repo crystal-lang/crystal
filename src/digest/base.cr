@@ -12,11 +12,11 @@ abstract class Digest::Base
   # method available. Returns the resulting digest afterwards.
   #
   # ```
-  # digest = Digest::MD5.hexdigest do |ctx|
+  # digest = Digest::MD5.digest do |ctx|
   #   ctx.update "f"
   #   ctx.update "oo"
   # end
-  # digest.to_slice.hexstring # => "6163626431386462346363326638356365646566363534666363633461346438"
+  # digest.to_slice.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
   # ```
   def self.digest
     context = new
