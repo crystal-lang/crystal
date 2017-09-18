@@ -1,5 +1,6 @@
-# `YAML::Any` is a convenient wrapper around all possible YAML types (`YAML::Type`)
-# and can be used for traversing dynamic or unknown YAML structures.
+# `YAML::Any` is a convenient wrapper around all possible YAML core types
+# (`YAML::Type`) and can be used for traversing dynamic or
+# unknown YAML structures.
 #
 # ```
 # require "yaml"
@@ -25,29 +26,43 @@
 struct YAML::Any
   include Enumerable(self)
 
-  # Reads a `YAML::Any` value from the given pull parser.
-  def self.new(pull : YAML::PullParser)
-    case pull.kind
-    when .scalar?
-      new pull.read_scalar
-    when .sequence_start?
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    anchors = {} of String => Type
+    new(convert(node, anchors))
+  end
+
+  private def self.convert(node, anchors)
+    case node
+    when YAML::Nodes::Scalar
+      YAML::Schema::Core.parse_scalar(node.value)
+    when YAML::Nodes::Sequence
       ary = [] of Type
-      pull.read_sequence do
-        while pull.kind != YAML::EventKind::SEQUENCE_END
-          ary << new(pull).raw
-        end
+
+      if anchor = node.anchor
+        anchors[anchor] = ary
       end
-      new ary
-    when .mapping_start?
+
+      node.each do |value|
+        ary << convert(value, anchors)
+      end
+
+      ary
+    when YAML::Nodes::Mapping
       hash = {} of Type => Type
-      pull.read_mapping do
-        while pull.kind != YAML::EventKind::MAPPING_END
-          hash[new(pull).raw] = new(pull).raw
-        end
+
+      if anchor = node.anchor
+        anchors[anchor] = hash
       end
-      new hash
+
+      node.each do |key, value|
+        hash[convert(key, anchors)] = convert(value, anchors)
+      end
+
+      hash
+    when YAML::Nodes::Alias
+      anchors[node.anchor]
     else
-      raise "Unknown pull kind: #{pull.kind}"
+      raise "Unknown node: #{node.class}"
     end
   end
 
@@ -72,57 +87,43 @@ struct YAML::Any
     end
   end
 
-  # Assumes the underlying value is an `Array` and returns the element
-  # at the given *index*.
+  # Assumes the underlying value is an `Array` or `Hash`
+  # and returns the element at the given *index_or_key*.
   #
-  # Raises if the underlying value is not an `Array`.
-  def [](index : Int) : YAML::Any
+  # Raises if the underlying value is not an `Array` nor a `Hash`.
+  def [](index_or_key) : YAML::Any
     case object = @raw
     when Array
-      Any.new object[index]
+      if index_or_key.is_a?(Int)
+        Any.new object[index_or_key]
+      else
+        raise "Expected int key for Array#[], not #{object.class}"
+      end
+    when Hash
+      Any.new object[index_or_key]
     else
-      raise "Expected Array for #[](index : Int), not #{object.class}"
+      raise "Expected Array or Hash, not #{object.class}"
     end
   end
 
-  # Assumes the underlying value is an `Array` and returns the element
-  # at the given *index*, or `nil` if out of bounds.
+  # Assumes the underlying value is an `Array` or `Hash` and returns the element
+  # at the given *index_or_key*, or `nil` if out of bounds or the key is missing.
   #
-  # Raises if the underlying value is not an `Array`.
-  def []?(index : Int) : YAML::Any?
+  # Raises if the underlying value is not an `Array` nor a `Hash`.
+  def []?(index_or_key) : YAML::Any?
     case object = @raw
     when Array
-      value = object[index]?
+      if index_or_key.is_a?(Int)
+        value = object[index_or_key]?
+        value ? Any.new(value) : nil
+      else
+        nil
+      end
+    when Hash
+      value = object[index_or_key]?
       value ? Any.new(value) : nil
     else
-      raise "Expected Array for #[]?(index : Int), not #{object.class}"
-    end
-  end
-
-  # Assumes the underlying value is a `Hash` and returns the element
-  # with the given *key*.
-  #
-  # Raises if the underlying value is not a `Hash`.
-  def [](key : String) : YAML::Any
-    case object = @raw
-    when Hash
-      Any.new object[key]
-    else
-      raise "Expected Hash for #[](key : String), not #{object.class}"
-    end
-  end
-
-  # Assumes the underlying value is a `Hash` and returns the element
-  # with the given *key*, or `nil` if the key is not present.
-  #
-  # Raises if the underlying value is not a `Hash`.
-  def []?(key : String) : YAML::Any?
-    case object = @raw
-    when Hash
-      value = object[key]?
-      value ? Any.new(value) : nil
-    else
-      raise "Expected Hash for #[]?(key : String), not #{object.class}"
+      raise "Expected Array or Hash, not #{object.class}"
     end
   end
 
@@ -141,7 +142,7 @@ struct YAML::Any
         yield Any.new(key), Any.new(value)
       end
     else
-      raise "Expected Array or Hash for #each, not #{object.class}"
+      raise "Expected Array or Hash, not #{object.class}"
     end
   end
 
@@ -160,7 +161,55 @@ struct YAML::Any
   # Checks that the underlying value is `String`, and returns its value.
   # Returns `nil` otherwise.
   def as_s? : String?
-    as_s if @raw.is_a?(String)
+    @raw.as?(String)
+  end
+
+  # Checks that the underlying value is `Int64`, and returns its value.
+  # Raises otherwise.
+  def as_i64 : Int64
+    @raw.as(Int64)
+  end
+
+  # Checks that the underlying value is `Int64`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_i64? : Int64?
+    @raw.as?(Int64)
+  end
+
+  # Checks that the underlying value is `Int64`, and returns its value as `Int32`.
+  # Raises otherwise.
+  def as_i : Int32
+    @raw.as(Int64).to_i
+  end
+
+  # Checks that the underlying value is `Int64`, and returns its value as `Int32`.
+  # Returns `nil` otherwise.
+  def as_i? : Int32?
+    @raw.as?(Int64).try &.to_i
+  end
+
+  # Checks that the underlying value is `Float64`, and returns its value.
+  # Raises otherwise.
+  def as_f : Float64
+    @raw.as(Float64)
+  end
+
+  # Checks that the underlying value is `Float64`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_f? : Float64?
+    @raw.as?(Float64)
+  end
+
+  # Checks that the underlying value is `Time`, and returns its value.
+  # Raises otherwise.
+  def as_time : Time
+    @raw.as(Time)
+  end
+
+  # Checks that the underlying value is `Time`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_time? : Time?
+    @raw.as?(Time)
   end
 
   # Checks that the underlying value is `Array`, and returns its value.
@@ -172,7 +221,7 @@ struct YAML::Any
   # Checks that the underlying value is `Array`, and returns its value.
   # Returns `nil` otherwise.
   def as_a? : Array(Type)?
-    as_a if @raw.is_a?(Array(Type))
+    @raw.as?(Array)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
@@ -184,7 +233,19 @@ struct YAML::Any
   # Checks that the underlying value is `Hash`, and returns its value.
   # Returns `nil` otherwise.
   def as_h? : Hash(Type, Type)?
-    as_h if @raw.is_a?(Hash(Type, Type))
+    @raw.as?(Hash)
+  end
+
+  # Checks that the underlying value is `Bytes`, and returns its value.
+  # Raises otherwise.
+  def as_bytes : Bytes
+    @raw.as(Bytes)
+  end
+
+  # Checks that the underlying value is `Bytes`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_bytes? : Bytes?
+    @raw.as?(Bytes)
   end
 
   # :nodoc:

@@ -1,3 +1,12 @@
+# A pull parser allows parsing a YAML document by events.
+#
+# When creating an instance, the parser is positioned in
+# the first event. To get the event kind invoke `kind`.
+# If the event is a scalar you can invoke `value` to get
+# its **string** value. Other methods like `tag`, `anchor`
+# and `scalar_style` let you inspect other information from events.
+#
+# Invoking `read_next` reads the next event.
 class YAML::PullParser
   protected getter content
 
@@ -22,58 +31,84 @@ class YAML::PullParser
     end
 
     read_next
-    raise "Expected STREAM_START" unless kind == LibYAML::EventType::STREAM_START
+    raise "Expected STREAM_START" unless kind.stream_start?
   end
 
+  # Creates a parser, yields it to the block, and closes
+  # the parser at the end of it.
   def self.new(content)
     parser = new(content)
     yield parser ensure parser.close
   end
 
-  def kind
+  # The current event kind.
+  def kind : EventKind
     @event.type
   end
 
-  def tag
-    ptr = @event.data.scalar.tag
+  # Returns the tag associated to the current event, or `nil`
+  # if there's no tag.
+  def tag : String?
+    case kind
+    when .mapping_start?
+      ptr = @event.data.mapping_start.tag
+    when .sequence_start?
+      ptr = @event.data.sequence_start.tag
+    when .scalar?
+      ptr = @event.data.scalar.tag
+    end
     ptr ? String.new(ptr) : nil
   end
 
-  def value
+  # Returns the scalar value, assuming the pull parser
+  # is located at a scalar. Raises otherwise.
+  def value : String
+    expect_kind EventKind::SCALAR
+
     ptr = @event.data.scalar.value
-    ptr ? String.new(ptr, @event.data.scalar.length) : nil
+    ptr ? String.new(ptr, @event.data.scalar.length) : ""
   end
 
+  # Returns the anchor associated to the current event, or `nil`
+  # if there's no anchor.
   def anchor
     case kind
-    when LibYAML::EventType::SCALAR
-      scalar_anchor
-    when LibYAML::EventType::SEQUENCE_START
-      sequence_anchor
-    when LibYAML::EventType::MAPPING_START
-      mapping_anchor
+    when .scalar?
+      read_anchor @event.data.scalar.anchor
+    when .sequence_start?
+      read_anchor @event.data.sequence_start.anchor
+    when .mapping_start?
+      read_anchor @event.data.mapping_start.anchor
+    when .alias?
+      read_anchor @event.data.alias.anchor
     else
       nil
     end
   end
 
-  def scalar_anchor
-    read_anchor @event.data.scalar.anchor
+  # Returns the sequence style, assuming the pull parser is located
+  # at a sequence begin event. Raises otherwise.
+  def sequence_style : SequenceStyle
+    expect_kind EventKind::SEQUENCE_START
+    @event.data.sequence_start.style
   end
 
-  def sequence_anchor
-    read_anchor @event.data.sequence_start.anchor
+  # Returns the mapping style, assuming the pull parser is located
+  # at a mapping begin event. Raises otherwise.
+  def mapping_style : MappingStyle
+    expect_kind EventKind::MAPPING_START
+    @event.data.mapping_start.style
   end
 
-  def mapping_anchor
-    read_anchor @event.data.mapping_start.anchor
+  # Returns the scalar style, assuming the pull parser is located
+  # at a scalar event. Raises otherwise.
+  def scalar_style : ScalarStyle
+    expect_kind EventKind::SCALAR
+    @event.data.scalar.style
   end
 
-  def alias_anchor
-    read_anchor @event.data.alias.anchor
-  end
-
-  def read_next
+  # Reads the next event.
+  def read_next : EventKind
     LibYAML.yaml_event_delete(pointerof(@event))
     LibYAML.yaml_parser_parse(@parser, pointerof(@event))
     if problem = problem?
@@ -87,6 +122,8 @@ class YAML::PullParser
     kind
   end
 
+  # Reads a "stream start" event, yields to the block,
+  # and then reads a "stream end" event.
   def read_stream
     read_stream_start
     value = yield
@@ -94,6 +131,8 @@ class YAML::PullParser
     value
   end
 
+  # Reads a "document start" event, yields to the block,
+  # and then reads a "document end" event.
   def read_document
     read_document_start
     value = yield
@@ -101,6 +140,8 @@ class YAML::PullParser
     value
   end
 
+  # Reads a "sequence start" event, yields to the block,
+  # and then reads a "sequence end" event.
   def read_sequence
     read_sequence_start
     value = yield
@@ -108,6 +149,8 @@ class YAML::PullParser
     value
   end
 
+  # Reads a "mapping start" event, yields to the block,
+  # and then reads a "mapping end" event.
   def read_mapping
     read_mapping_start
     value = yield
@@ -115,126 +158,83 @@ class YAML::PullParser
     value
   end
 
+  # Reads an alias event, returning its anchor.
   def read_alias
     expect_kind EventKind::ALIAS
-    anchor = alias_anchor
+    anchor = self.anchor
     read_next
     anchor
   end
 
+  # Reads a scalar, returning its value.
   def read_scalar
     expect_kind EventKind::SCALAR
-    value = self.value.not_nil!
+    value = self.value
     read_next
     value
   end
 
+  # Reads a "stream start" event.
   def read_stream_start
     read EventKind::STREAM_START
   end
 
+  # Reads a "stream end" event.
   def read_stream_end
     read EventKind::STREAM_END
   end
 
+  # Reads a "document start" event.
   def read_document_start
     read EventKind::DOCUMENT_START
   end
 
+  # Reads a "document end" event.
   def read_document_end
     read EventKind::DOCUMENT_END
   end
 
+  # Reads a "sequence start" event.
   def read_sequence_start
     read EventKind::SEQUENCE_START
   end
 
+  # Reads a "sequence end" event.
   def read_sequence_end
     read EventKind::SEQUENCE_END
   end
 
+  # Reads a "mapping start" event.
   def read_mapping_start
     read EventKind::MAPPING_START
   end
 
+  # Reads a "mapping end" event.
   def read_mapping_end
     read EventKind::MAPPING_END
   end
 
-  def read_null_or
-    if kind == EventKind::SCALAR && (value = self.value).nil? || (value && value.empty?)
-      read_next
-      nil
-    else
-      yield
-    end
-  end
-
-  def read(expected_kind)
+  # Reads an expected event kind.
+  def read(expected_kind : EventKind) : EventKind
     expect_kind expected_kind
     read_next
   end
 
-  def read_raw
-    case kind
-    when EventKind::SCALAR
-      self.value.not_nil!.tap { read_next }
-    when EventKind::SEQUENCE_START, EventKind::MAPPING_START
-      String.build { |io| read_raw(io) }
-    else
-      raise "Unexpected kind: #{kind}"
-    end
-  end
-
-  def read_raw(io)
-    case kind
-    when EventKind::SCALAR
-      self.value.not_nil!.inspect(io)
-      read_next
-    when EventKind::SEQUENCE_START
-      io << "["
-      read_next
-      first = true
-      while kind != EventKind::SEQUENCE_END
-        io << "," unless first
-        read_raw(io)
-        first = false
-      end
-      io << "]"
-      read_next
-    when EventKind::MAPPING_START
-      io << "{"
-      read_next
-      first = true
-      while kind != EventKind::MAPPING_END
-        io << "," unless first
-        read_raw(io)
-        io << ":"
-        read_raw(io)
-        first = false
-      end
-      io << "}"
-      read_next
-    else
-      raise "Unexpected kind: #{kind}"
-    end
-  end
-
   def skip
     case kind
-    when EventKind::SCALAR
+    when .scalar?
       read_next
-    when EventKind::ALIAS
+    when .alias?
       read_next
-    when EventKind::SEQUENCE_START
+    when .sequence_start?
       read_next
-      while kind != EventKind::SEQUENCE_END
+      until kind.sequence_end?
         skip
       end
       read_next
-    when EventKind::MAPPING_START
+    when .mapping_start?
       read_next
-      while kind != EventKind::MAPPING_END
+      until kind.mapping_end?
         skip
         skip
       end
@@ -245,23 +245,31 @@ class YAML::PullParser
   # Note: YAML starts counting from 0, we want to count from 1
 
   def location
-    {line_number, column_number}
+    {start_line, start_column}
   end
 
-  def line_number
+  def start_line
     @event.start_mark.line + 1
   end
 
-  def column_number
+  def start_column
     @event.start_mark.column + 1
   end
 
+  def end_line
+    @event.end_mark.line + 1
+  end
+
+  def end_column
+    @event.end_mark.column + 1
+  end
+
   private def problem_line_number
-    (problem? ? problem_mark?.line : line_number) + 1
+    (problem? ? problem_mark?.line : start_line) + 1
   end
 
   private def problem_column_number
-    (problem? ? problem_mark?.column : column_number) + 1
+    (problem? ? problem_mark?.column : start_column) + 1
   end
 
   private def problem_mark?
@@ -302,7 +310,8 @@ class YAML::PullParser
     @closed = true
   end
 
-  private def expect_kind(kind)
+  # Raises if the current kind is not the expected one.
+  def expect_kind(kind : EventKind)
     raise "Expected #{kind} but was #{self.kind}" unless kind == self.kind
   end
 
@@ -310,7 +319,7 @@ class YAML::PullParser
     anchor ? String.new(anchor) : nil
   end
 
-  def raise(msg : String, line_number = self.line_number, column_number = self.column_number, context_info = nil)
+  def raise(msg : String, line_number = self.start_line, column_number = self.start_column, context_info = nil)
     ::raise ParseException.new(msg, line_number, column_number, context_info)
   end
 end
