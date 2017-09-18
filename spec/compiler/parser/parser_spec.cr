@@ -237,7 +237,9 @@ describe "Parser" do
   it_parses "def foo(**args : Foo)\n1\nend", Def.new("foo", body: 1.int32, double_splat: Arg.new("args", restriction: "Foo".path))
   it_parses "def foo(**args : **Foo)\n1\nend", Def.new("foo", body: 1.int32, double_splat: Arg.new("args", restriction: DoubleSplat.new("Foo".path)))
 
-  assert_syntax_error "def foo(**args, **args2)"
+  assert_syntax_error "def foo(**args, **args2); end", "only block argument is allowed after double splat"
+  assert_syntax_error "def foo(**args, x); end", "only block argument is allowed after double splat"
+  assert_syntax_error "def foo(**args, *x); end", "only block argument is allowed after double splat"
 
   it_parses "def foo(x y); y; end", Def.new("foo", args: [Arg.new("y", external_name: "x")], body: "y".var)
   it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
@@ -257,6 +259,8 @@ describe "Parser" do
   it_parses "macro foo(**args)\n1\nend", Macro.new("foo", body: MacroLiteral.new("1\n"), double_splat: "args".arg)
 
   assert_syntax_error "macro foo(x, *); 1; end", "named arguments must follow bare *"
+  assert_syntax_error "macro foo(**x, **y)", "only block argument is allowed after double splat"
+  assert_syntax_error "macro foo(**x, y)", "only block argument is allowed after double splat"
 
   it_parses "abstract def foo", Def.new("foo", abstract: true)
   it_parses "abstract def foo; 1", [Def.new("foo", abstract: true), 1.int32]
@@ -1120,8 +1124,14 @@ describe "Parser" do
   it_parses "foo 1, **bar, &block", Call.new(nil, "foo", args: [1.int32, DoubleSplat.new("bar".call)], block_arg: "block".call)
   it_parses "foo(1, **bar, &block)", Call.new(nil, "foo", args: [1.int32, DoubleSplat.new("bar".call)], block_arg: "block".call)
 
-  # assert_syntax_error "foo **bar, 1"
-  # assert_syntax_error "foo(**bar, 1)"
+  assert_syntax_error "foo **bar, 1", "argument not allowed after double splat"
+  assert_syntax_error "foo(**bar, 1)", "argument not allowed after double splat"
+
+  assert_syntax_error "foo **bar, *x", "splat not allowed after double splat"
+  assert_syntax_error "foo(**bar, *x)", "splat not allowed after double splat"
+
+  assert_syntax_error "foo **bar, out x", "out argument not allowed after double splat"
+  assert_syntax_error "foo(**bar, out x)", "out argument not allowed after double splat"
 
   it_parses "private def foo; end", VisibilityModifier.new(Visibility::Private, Def.new("foo"))
   it_parses "protected def foo; end", VisibilityModifier.new(Visibility::Protected, Def.new("foo"))

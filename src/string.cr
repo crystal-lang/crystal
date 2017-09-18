@@ -1590,6 +1590,11 @@ class String
   # ```
   def tr(from : String, to : String)
     return delete(from) if to.empty?
+
+    if from.bytesize == 1
+      return gsub(from.unsafe_byte_at(0).unsafe_chr, to)
+    end
+
     multi = nil
     table = StaticArray(Int32, 256).new(-1)
     reader = Char::Reader.new(to)
@@ -2005,10 +2010,31 @@ class String
   # "hello world".gsub('o', 'a') # => "hella warld"
   # ```
   def gsub(char : Char, replacement)
+    if replacement.is_a?(String) && replacement.bytesize == 1
+      return gsub(char, replacement.unsafe_byte_at(0).unsafe_chr)
+    end
+
     if includes?(char)
+      if replacement.is_a?(Char) && char.ascii? && replacement.ascii?
+        return gsub_ascii_char(char, replacement)
+      end
+
       gsub { |my_char| char == my_char ? replacement : my_char }
     else
       self
+    end
+  end
+
+  private def gsub_ascii_char(char, replacement)
+    String.new(bytesize) do |buffer|
+      each_char_with_index do |my_char, i|
+        buffer[i] = if my_char == char
+                      replacement.ord.to_u8
+                    else
+                      unsafe_byte_at(i)
+                    end
+      end
+      {bytesize, bytesize}
     end
   end
 
@@ -2094,7 +2120,11 @@ class String
   # "hello yellow".gsub("ll", "dd") # => "heddo yeddow"
   # ```
   def gsub(string : String, replacement)
-    gsub(string) { replacement }
+    if string.bytesize == 1
+      gsub(string.unsafe_byte_at(0).unsafe_chr, replacement)
+    else
+      gsub(string) { replacement }
+    end
   end
 
   # Returns a `String` where all occurrences of the given *string* are replaced

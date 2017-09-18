@@ -67,6 +67,26 @@ module Crystal
     property is_initialize : Bool
     property exception_handler_vars : MetaVars? = nil
 
+    # It means the last block kind, that is one of `block`, `while` and
+    # `ensure`. It is used to detect `break` or `next` from `ensure`.
+    #
+    # ```
+    # begin
+    #   # `last_block_kind == nil`
+    # ensure
+    #   # `last_block_kind == :ensure`
+    #   while true
+    #     # `last_block_kind == :while`
+    #   end
+    #   loop do
+    #     # `last_block_kind == :block`
+    #   end
+    #   # `last_block_kind == :ensure`
+    # end
+    # ```
+    property last_block_kind : Symbol?
+    property? inside_ensure : Bool = false
+
     @unreachable = false
     @is_initialize = false
     @in_type_args = 0
@@ -817,15 +837,20 @@ module Crystal
           simple_var.bind_to(target)
         end
 
-        used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
-        if (found_self = @found_self_in_initialize_call) || (used_ivars_node = used_ivars_in_calls_in_initialize.try(&.[var_name]?)) || (@block_nest > 0 && !@vars.has_key?(var_name))
-          ivar = scope.lookup_instance_var(var_name)
-          if found_self
-            ivar.nil_reason = NilReason.new(var_name, :used_self_before_initialized, found_self)
-          else
-            ivar.nil_reason = NilReason.new(var_name, :used_before_initialized, used_ivars_node)
+        # Check if an instance variable is being assigned (for the first time)
+        # and self, or that same instance variable, was used (read) before that.
+        unless @vars.has_key?(var_name)
+          if (found_self = @found_self_in_initialize_call) ||
+             (used_ivars_node = @used_ivars_in_calls_in_initialize.try(&.[var_name]?)) ||
+             (@block_nest > 0)
+            ivar = scope.lookup_instance_var(var_name)
+            if found_self
+              ivar.nil_reason = NilReason.new(var_name, :used_self_before_initialized, found_self)
+            else
+              ivar.nil_reason = NilReason.new(var_name, :used_before_initialized, used_ivars_node)
+            end
+            ivar.bind_to program.nil_var
           end
-          ivar.bind_to program.nil_var
         end
 
         if simple_var
@@ -1025,6 +1050,9 @@ module Crystal
       block_visitor.block = node
       block_visitor.path_lookup = path_lookup || current_type
       block_visitor.block_nest = @block_nest
+
+      block_visitor.last_block_kind = :block
+      block_visitor.inside_ensure = inside_ensure?
 
       node.body.accept block_visitor
 
@@ -1623,6 +1651,10 @@ module Crystal
     end
 
     def visit(node : Return)
+      if inside_ensure?
+        node.raise "can't return from ensure"
+      end
+
       typed_def = @typed_def || node.raise("can't return from top level")
 
       if typed_def.captured_block?
@@ -1980,7 +2012,10 @@ module Crystal
       @block, old_block = nil, @block
 
       @while_stack.push node
-      node.body.accept self
+
+      with_block_kind :while do
+        node.body.accept self
+      end
 
       endless_while = node.cond.true_literal?
       merge_while_vars node.cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
@@ -2144,6 +2179,10 @@ module Crystal
     end
 
     def end_visit(node : Break)
+      if last_block_kind == :ensure
+        node.raise "can't use break inside ensure"
+      end
+
       if block = @block
         node.target = block.call.not_nil!
 
@@ -2169,6 +2208,10 @@ module Crystal
     end
 
     def end_visit(node : Next)
+      if last_block_kind == :ensure
+        node.raise "can't use next inside ensure"
+      end
+
       if block = @block
         node.target = block
 
@@ -2193,6 +2236,14 @@ module Crystal
       node.type = @program.no_return
 
       @unreachable = true
+    end
+
+    def with_block_kind(kind)
+      old_block_kind, @last_block_kind = last_block_kind, kind
+      old_inside_ensure, @inside_ensure = @inside_ensure, @inside_ensure || kind == :ensure
+      yield
+      @last_block_kind = old_block_kind
+      @inside_ensure = old_inside_ensure
     end
 
     def visit(node : Primitive)
@@ -2594,7 +2645,9 @@ module Crystal
           merge_rescue_vars exception_handler_vars, all_rescue_vars
 
           # And then accept the ensure part
-          node.ensure.try &.accept self
+          with_block_kind :ensure do
+            node.ensure.try &.accept self
+          end
         end
       end
 
@@ -2614,7 +2667,9 @@ module Crystal
 
           before_ensure_vars = @vars.dup
 
-          node_ensure.accept self
+          with_block_kind :ensure do
+            node_ensure.accept self
+          end
 
           @vars = after_handler_vars
 

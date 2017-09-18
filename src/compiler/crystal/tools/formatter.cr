@@ -1390,190 +1390,126 @@ module Crystal
     end
 
     def format_def_args(args : Array, block_arg, splat_index, variadic, double_splat)
-      to_skip = 0
-
-      # If there are no args, remove extra "()", if any
-      if args.empty?
+      # If there are no args, remove extra "()"
+      if args.empty? && !block_arg && !double_splat && !variadic
         if @token.type == :"("
-          prefix_size = @column + 1
-
-          write "(" if block_arg || double_splat || variadic
-          next_token
-
-          skip_space
-          if @token.type == :NEWLINE
-            write_line
-            write_indent(prefix_size)
-            skip_space_or_newline(prefix_size)
-          end
-
-          if double_splat
-            write_token :"**"
-            double_splat.accept self
-            skip_space_or_newline
-          end
-
-          if block_arg
-            if double_splat
-              write_token :","
-              found_comment = skip_space_or_newline
-              if found_comment
-                write_indent(prefix_size)
-              else
-                write " "
-              end
-            end
-            write_token :"&"
-            skip_space
-            to_skip += 1 if at_skip?
-            accept block_arg
-            skip_space_or_newline
-          end
-
-          if variadic
-            skip_space_or_newline
-            write_token :"..."
-            skip_space_or_newline
-          end
-
+          next_token_skip_space_or_newline
           check :")"
           next_token
-          write ")" if block_arg || double_splat || variadic
         end
-      else
-        prefix_size = @column + 1
+        return 0
+      end
 
-        old_indent = @indent
-        next_needs_indent = false
-        has_parentheses = false
-        found_comment = false
+      # Count instance variable arguments. See `at_skip?`.
+      to_skip = 0
 
-        if @token.type == :"("
-          has_parentheses = true
-          write "("
-          next_token_skip_space
-          if @token.type == :NEWLINE
-            write_line
-            skip_space_or_newline(prefix_size)
-            next_needs_indent = true
-          end
-          skip_space_or_newline
-        else
-          write "("
-        end
+      wrote_newline = false
+      found_first_newline = false
 
-        comma_written = false
+      old_indent = @indent
+      @indent = @column + 1
 
-        args.each_with_index do |arg, i|
-          if next_needs_indent
-            write_indent(prefix_size)
-          end
+      write_token :"("
+      skip_space
 
+      # When "(" follows newline, it turns on two spaces indentation mode.
+      if @token.type == :NEWLINE
+        @indent = old_indent + 2
+        found_first_newline = true
+        wrote_newline = true
+
+        write_line
+        next_token_skip_space_or_newline
+      end
+
+      args.each_with_index do |arg, i|
+        has_more = !last?(i, args) || double_splat || block_arg || variadic
+        wrote_newline = format_def_arg(wrote_newline, has_more) do
           if i == splat_index
             write_token :"*"
             skip_space_or_newline
+            next if arg.external_name.empty? # skip empty splat argument.
           end
 
-          if i == splat_index && arg.external_name.empty?
-            # Nothing
-          else
-            indent(prefix_size, arg)
-            to_skip += 1 if @last_arg_is_skip
-          end
-
-          skip_space
-
-          if @token.type == :","
-            has_more = !last?(i, args) || double_splat || block_arg
-
-            if has_more
-              write ","
-              comma_written = true
-            end
-            next_token
-            found_comment = skip_space
-            if @token.type == :NEWLINE
-              if has_more
-                indent(prefix_size) { consume_newlines }
-                next_needs_indent = true
-              end
-            elsif found_comment
-              next_needs_indent = true
-            else
-              next_needs_indent = false
-              write " " if has_more
-            end
-            skip_space_or_newline
-          else
-            comma_written = false
-          end
+          arg.accept self
+          to_skip += 1 if @last_arg_is_skip
         end
-
-        if double_splat
-          if next_needs_indent
-            write_indent(prefix_size)
-            next_needs_indent = false
-          end
-          unless comma_written
-            write ", "
-            comma_written = true
-          end
-          write_token :"**"
-          double_splat.accept self
-          skip_space_or_newline
-          if block_arg
-            check :","
-            write ","
-            comma_written = true
-            found_comment = next_token_skip_space
-            if found_comment
-              next_needs_indent = true
-              found_comment = false
-            else
-              if @token.type == :NEWLINE
-                indent(prefix_size) { consume_newlines }
-                next_needs_indent = true
-              else
-                write " "
-              end
-            end
-          end
-        end
-
-        if block_arg
-          if next_needs_indent
-            write_indent(prefix_size)
-            next_needs_indent = false
-          end
-          unless comma_written
-            write ", "
-            comma_written = true
-          end
-          write_token :"&"
-          skip_space
-          to_skip += 1 if at_skip?
-          accept block_arg
-          skip_space
-        end
-
-        if variadic
-          write_token ", ", :"..."
-          skip_space_or_newline
-        end
-
-        if has_parentheses
-          skip_space_or_newline
-          write_indent(prefix_size) if found_comment
-          write_token :")"
-        else
-          write_indent(prefix_size) if found_comment
-          write ")"
-        end
-
-        @indent = old_indent
       end
 
+      if double_splat
+        wrote_newline = format_def_arg(wrote_newline, block_arg) do
+          write_token :"**"
+          skip_space_or_newline
+
+          to_skip += 1 if at_skip?
+          double_splat.accept self
+        end
+      end
+
+      if block_arg
+        wrote_newline = format_def_arg(wrote_newline, false) do
+          write_token :"&"
+          skip_space_or_newline
+
+          to_skip += 1 if at_skip?
+          block_arg.accept self
+        end
+      end
+
+      if variadic
+        wrote_newline = format_def_arg(wrote_newline, false) do
+          write_token :"..."
+        end
+      end
+
+      if found_first_newline && !wrote_newline
+        write_line
+        wrote_newline = true
+      end
+      write_indent(found_first_newline ? old_indent : @indent) if wrote_newline
+      write_token :")"
+
+      @indent = old_indent
+
       to_skip
+    end
+
+    def format_def_arg(wrote_newline, has_more)
+      write_indent if wrote_newline
+
+      yield
+
+      # Write "," before skipping spaces to prevent inserting comment between argument and comma.
+      write "," if has_more
+
+      just_wrote_newline = skip_space
+      if @token.type == :NEWLINE
+        if has_more
+          consume_newlines
+          just_wrote_newline = true
+        else
+          # `last: true` is needed to write newline and comment only if comment is found.
+          just_wrote_newline = skip_space_or_newline(last: true)
+        end
+      end
+
+      if @token.type == :","
+        found_comment = next_token_skip_space
+        if found_comment
+          just_wrote_newline = true
+        elsif @token.type == :NEWLINE
+          if has_more && !just_wrote_newline
+            consume_newlines
+            just_wrote_newline = true
+          else
+            just_wrote_newline |= skip_space_or_newline(last: true)
+          end
+        else
+          write " " if has_more && !just_wrote_newline
+        end
+      end
+
+      just_wrote_newline
     end
 
     # The parser transforms `def foo(@x); end` to `def foo(x); @x = x; end` so if we
