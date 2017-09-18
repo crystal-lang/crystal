@@ -393,6 +393,13 @@ describe "File" do
         File.delete(filename)
       end
     end
+
+    it "raises when it's a directory" do
+      filename = "#{__DIR__}/data/dir/subdir2"
+      expect_raises (OSError::IsADirectory | OSError::PermissionError) do
+        File.delete(filename)
+      end
+    end
   end
 
   describe "rename" do

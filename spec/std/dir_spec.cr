@@ -219,6 +219,12 @@ describe "Dir" do
       end
     end
 
+    it "raises for file" do
+      expect_raises OSError::NotADirectory do
+        Dir.cd("/usr/bin/env")
+      end
+    end
+
     it "accepts a block" do
       cwd = Dir.current
 
