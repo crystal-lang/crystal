@@ -3,6 +3,8 @@ require "crystal/system/unix/errno"
 # `OSError` is an exception that is raised when something goes wrong when using the operating
 # system's API (for example, it can be based on libc's errno). More specific subclasses of it are
 # available (see `OSError.create`).
+#
+# See also: `WindowsError`.
 class OSError < Exception
   # Argument list too long
   E2BIG = LibC::E2BIG
@@ -195,7 +197,8 @@ class OSError < Exception
     Crystal::System::Errno.value = value
   end
 
-  private def self.errno_to_class(errno) : OSError.class
+  # :nodoc:
+  def self.errno_to_class(errno) : OSError.class
     {% begin %}
       case errno
         {% for cls in OSError.all_subclasses %}

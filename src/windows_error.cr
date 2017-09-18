@@ -1,20 +1,61 @@
-class WinError < OSError
-  # NOTE: `get_last_error` must be called BEFORE an instance of this class
-  # is malloced as it would change the "last error" to SUCCESS
-  def self.new(message)
-    new(message, LibC._GetLastError)
-  end
-
-  def initialize(message, code)
+# This module is included by `OSError` only on Windows. It also provides constants with error codes
+# from Windows API.
+#
+# If you wish to obtain the Windows-specific error codes in your application, rescue `WindowsError`
+# and read its `windows_error` member.
+#
+# ```
+# begin
+#   Dir.mkdir("foo/bar")
+# rescue OSError::FileNotFound
+#   # Can't create foo/bar because foo does not exist
+# rescue WindowsError # Some other OSError happened, and we're on Windows
+#   e.windows_error == WindowsError::ERROR_ACCESS_DENIED
+# rescue e : OSError # Some other OSError happened, and we're not on Windows
+#   e.errno
+# end
+# ```
+#
+# Note that the `errno` member of `OSError` will still be set to one of the error codes in `OSError`
+# but it will be a guess of what this error would have meant in POSIX.
+#
+# If you are implementing a wrapper for a Windows API and expecting get an error code in
+# `GetLastError`, just use `WindowsError.create` to get the appropriate subclass of
+# `OSError` based on the error code.
+module WindowsError
+  # Creates an object of some subclass of `OSError` with the given message,
+  # based on the *windows_error* code (the last set error by default).
+  #
+  # ```
+  # if Windows.CreateDirectoryA("foo\\bar", nil) == 0
+  #   raise WindowsError.create("Unable to create directory")
+  #   # Actually a `OSError::FileNotFound` if "foo" does not exist.
+  # end
+  # ```
+  def self.create(message = nil, windows_error code : UInt32 = WindowsError.windows_error) : WindowsError
+    # NOTE: `GetLastError` must be called BEFORE an instance of this class
+    # is malloced as it would change the "last error" to SUCCESS
     buffer = uninitialized UInt8[256]
     size = LibC._FormatMessageA(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, code, 0, buffer, buffer.size, nil)
     details = String.new(buffer.to_unsafe, size).strip
-    super("#{message}: [WinError #{code}, #{details}]", winerror_to_errno(code))
+    errno = winerror_to_errno(code)
+    cls = OSError.errno_to_class(errno)
+    message ||= cls.name
+    cls.new("#{message}: [WinError #{code}, #{details}]", errno, windows_error: code)
   end
 
-  # https://github.com/python/cpython/blob/master/PC/generrmap.c
-  # https://github.com/python/cpython/blob/master/PC/errmap.h
+  # Returns the Windows-specific error code that this exception is based on.
+  getter windows_error : UInt32
+
+  # Returns the value of the last Windows-specific error (`GetLastError`).
+  def self.windows_error : UInt32
+    LibC._GetLastError
+  end
+
+  # :nodoc:
   def self.winerror_to_errno(winerror)
+    # https://github.com/python/cpython/blob/master/PC/generrmap.c
+    # https://github.com/python/cpython/blob/master/PC/errmap.h
     case winerror
     when ERROR_FILE_NOT_FOUND            then OSError::ENOENT
     when ERROR_PATH_NOT_FOUND            then OSError::ENOENT
@@ -2180,3 +2221,16 @@ class WinError < OSError
   ERROR_STATE_CONTAINER_NAME_SIZE_LIMIT_EXCEEDED                = 15818_u32
   ERROR_API_UNAVAILABLE                                         = 15841_u32
 end
+
+{% if flag?(:windows) %}
+  class OSError < Exception
+    include WindowsError
+
+    @windows_error = 0u32
+
+    def initialize(message, errno : Int32?, *, @windows_error : UInt32)
+      @errno = errno || WindowsError.winerror_to_errno(windows_error)
+      super(message)
+    end
+  end
+{% end %}
