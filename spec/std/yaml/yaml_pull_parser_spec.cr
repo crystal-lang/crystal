@@ -1,17 +1,6 @@
 require "spec"
 require "yaml"
 
-private def assert_raw(string, expected = string, file = __FILE__, line = __LINE__)
-  it "parses raw #{string.inspect}", file, line do
-    pull = YAML::PullParser.new(string)
-    pull.read_stream do
-      pull.read_document do
-        pull.read_raw.should eq(expected)
-      end
-    end
-  end
-end
-
 module YAML
   describe PullParser do
     it "reads empty stream" do
@@ -115,12 +104,6 @@ module YAML
         end
       end
     end
-
-    assert_raw %(hello)
-    assert_raw %("hello"), %(hello)
-    assert_raw %(["hello"])
-    assert_raw %(["hello","world"])
-    assert_raw %({"hello":"world"})
 
     it "raises exception at correct location" do
       parser = PullParser.new("[1]")

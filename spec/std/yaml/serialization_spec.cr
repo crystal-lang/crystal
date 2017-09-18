@@ -9,19 +9,31 @@ enum YAMLSpecEnum
   Two
 end
 
+alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
+
 describe "YAML serialization" do
   describe "from_yaml" do
     it "does Nil#from_yaml" do
+      %w(~ null Null NULL).each do |string|
+        Nil.from_yaml(string).should be_nil
+      end
       Nil.from_yaml("--- \n...\n").should be_nil
     end
 
     it "does Bool#from_yaml" do
-      Bool.from_yaml("true").should be_true
-      Bool.from_yaml("false").should be_false
+      %w(yes Yes YES true True TRUE on On ON).each do |string|
+        Bool.from_yaml(string).should be_true
+      end
+
+      %w(no No NO false False FALSE off Off OFF).each do |string|
+        Bool.from_yaml(string).should be_false
+      end
     end
 
     it "does Int32#from_yaml" do
       Int32.from_yaml("123").should eq(123)
+      Int32.from_yaml("0xabc").should eq(0xabc)
+      Int32.from_yaml("0b10110").should eq(0b10110)
     end
 
     it "does Int64#from_yaml" do
@@ -32,8 +44,15 @@ describe "YAML serialization" do
       String.from_yaml("hello").should eq("hello")
     end
 
+    it "raises on reserved string" do
+      expect_raises(YAML::ParseException) do
+        String.from_yaml(%(1.2))
+      end
+    end
+
     it "does Float32#from_yaml" do
-      Float32.from_yaml("1.5").should eq(1.5)
+      Float32.from_yaml("1.5").should eq(1.5_f32)
+      Float32.from_yaml(".inf").should eq(Float32::INFINITY)
     end
 
     it "does Float64#from_yaml" do
@@ -61,6 +80,35 @@ describe "YAML serialization" do
 
     it "does Hash#from_yaml" do
       Hash(Int32, Bool).from_yaml("---\n1: true\n2: false\n").should eq({1 => true, 2 => false})
+    end
+
+    it "does Hash#from_yaml with merge" do
+      yaml = <<-YAML
+        - &foo
+          bar: 1
+          baz: 2
+        -
+          <<: *foo
+        YAML
+
+      array = Array(Hash(String, Int32)).from_yaml(yaml)
+      array[1].should eq(array[0])
+    end
+
+    it "does Hash#from_yaml with merge (recursive)" do
+      yaml = <<-YAML
+        - &foo
+          foo: 1
+
+        - &bar
+          bar: 2
+          <<: *foo
+        -
+          <<: *bar
+        YAML
+
+      array = Array(Hash(String, Int32)).from_yaml(yaml)
+      array[2].should eq({"foo" => 1, "bar" => 2})
     end
 
     it "does Tuple#from_yaml" do
@@ -102,12 +150,10 @@ describe "YAML serialization" do
     end
 
     it "does Time::Format#from_yaml" do
-      pull = YAML::PullParser.new("--- 2014-01-02\n...\n")
-      pull.read_stream do
-        pull.read_document do
-          Time::Format.new("%F").from_yaml(pull).should eq(Time.new(2014, 1, 2))
-        end
-      end
+      ctx = YAML::ParseContext.new
+      nodes = YAML::Nodes.parse("--- 2014-01-02\n...\n").nodes.first
+      value = Time::Format.new("%F").from_yaml(ctx, nodes)
+      value.should eq(Time.new(2014, 1, 2))
     end
 
     it "deserializes union" do
@@ -115,7 +161,11 @@ describe "YAML serialization" do
     end
 
     it "deserializes time" do
-      Time.from_yaml(%(2016-11-16T09:55:48-0300)).to_utc.should eq(Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc))
+      Time.from_yaml("2010-11-12").should eq(Time.new(2010, 11, 12, kind: Time::Kind::Utc))
+    end
+
+    it "deserializes bytes" do
+      Bytes.from_yaml("!!binary aGVsbG8=").should eq("hello".to_slice)
     end
 
     describe "parse exceptions" do
@@ -127,7 +177,7 @@ describe "YAML serialization" do
             ]
             YAML
         end
-        ex.message.should eq("Expected nil, not 1 at line 2, column 3")
+        ex.message.should eq("Expected Nil, not 1 at line 2, column 3")
         ex.location.should eq({2, 3})
       end
 
@@ -200,6 +250,12 @@ describe "YAML serialization" do
       String.from_yaml("hel\\lo".to_yaml).should eq("hel\\lo")
     end
 
+    it "quotes string if reserved" do
+      ["1", "1.2", "true", "2010-11-12"].each do |string|
+        string.to_yaml.should eq(%(--- "#{string}"\n))
+      end
+    end
+
     it "does for Array" do
       Array(Int32).from_yaml([1, 2, 3].to_yaml).should eq([1, 2, 3])
     end
@@ -238,8 +294,23 @@ describe "YAML serialization" do
       YAMLSpecEnum.from_yaml(YAMLSpecEnum::One.to_yaml).should eq(YAMLSpecEnum::One)
     end
 
-    it "does for time" do
-      Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc).to_yaml.should eq("--- 2016-11-16T12:55:48+0000\n...\n")
+    it "does for utc time" do
+      time = Time.new(2010, 11, 12, 1, 2, 3, kind: Time::Kind::Utc)
+      time.to_yaml.should eq("--- 2010-11-12 01:02:03\n...\n")
+    end
+
+    it "does for time at date" do
+      time = Time.new(2010, 11, 12, kind: Time::Kind::Utc)
+      time.to_yaml.should eq("--- 2010-11-12\n...\n")
+    end
+
+    it "does for utc time with milliseconds" do
+      time = Time.new(2010, 11, 12, 1, 2, 3, 456, kind: Time::Kind::Utc)
+      time.to_yaml.should eq("--- 2010-11-12 01:02:03.456\n...\n")
+    end
+
+    it "does for bytes" do
+      "hello".to_slice.to_yaml.should eq("--- !!binary 'aGVsbG8=\n\n'\n")
     end
 
     it "does a full document" do
@@ -265,6 +336,20 @@ describe "YAML serialization" do
         %w(a b c).to_yaml(str)
       end
       string.should eq("---\n- a\n- b\n- c\n")
+    end
+
+    it "serializes recursive data structures" do
+      a = [] of YamlRec
+      a << 1
+      a << a
+
+      a.to_yaml.should eq("--- &1\n- 1\n- *1\n")
+
+      h = {} of YamlRec => YamlRec
+      h[1] = 2
+      h[h] = h
+
+      h.to_yaml.should eq("--- &1\n1: 2\n*1: *1\n")
     end
   end
 end
