@@ -121,7 +121,9 @@ class File < IO::FileDescriptor
   end
 
   # Returns `true` if the file at *path* is empty, otherwise returns `false`.
-  # Raises `OSError` if the file at *path* does not exist.
+  #
+  # Raises `OSError::FileNotFound` if the file at *path* does not exist, or
+  # other kinds of `OSError` in unusual cases.
   #
   # ```
   # File.write("foo", "")
@@ -300,12 +302,15 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Delete the file at *path*. Deleting non-existent file will raise an exception.
+  # Delete the file at *path*.
+  #
+  # Raises `OSError::FileNotFound` if the file does not exist, or
+  # other kinds of `OSError` in unusual cases.
   #
   # ```
   # File.write("foo", "")
   # File.delete("./foo")
-  # File.delete("./bar") # raises OSError (No such file or directory)
+  # File.delete("./bar") # raises OSError::FileNotFound
   # ```
   def self.delete(path)
     err = LibC.unlink(path.check_no_null_byte)

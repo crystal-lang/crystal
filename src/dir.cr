@@ -16,6 +16,8 @@ class Dir
   getter path : String
 
   # Returns a new directory object for the named directory.
+  #
+  # Raises `OSError` on failure.
   def initialize(@path)
     @dir = LibC.opendir(@path.check_no_null_byte)
     unless @dir
@@ -162,6 +164,10 @@ class Dir
   end
 
   # Changes the current working directory of the process to the given string.
+  #
+  # Raises `OSError::FileNotFound` if the directory does not exist,
+  # `OSError::NotADirectory` if the path points to a file, or
+  # other kinds of `OSError` in unusual cases.
   def self.cd(path)
     if LibC.chdir(path.check_no_null_byte) != 0
       raise OSError.create("Error while changing directory to #{path.inspect}")
@@ -226,7 +232,9 @@ class Dir
   end
 
   # Returns `true` if the directory at *path* is empty, otherwise returns `false`.
-  # Raises `OSError` if the directory at *path* does not exist.
+  #
+  # Raises `OSError::FileNotFound` if the directory at *path* does not exist, or
+  # other kinds of `OSError` in unusual cases.
   #
   # ```
   # Dir.mkdir("bar")
@@ -245,6 +253,10 @@ class Dir
 
   # Creates a new directory at the given path. The linux-style permission mode
   # can be specified, with a default of 777 (0o777).
+  #
+  # Raises `OSError::FileExists` if the directory already exists,
+  # `OSError::FileNotFound` if the parent directory does not exist, or
+  # other kinds of `OSError` in unusual cases.
   def self.mkdir(path, mode = 0o777)
     if LibC.mkdir(path.check_no_null_byte, mode) == -1
       raise OSError.create("Unable to create directory '#{path}'")
@@ -255,6 +267,9 @@ class Dir
   # Creates a new directory at the given path, including any non-existing
   # intermediate directories. The linux-style permission mode can be specified,
   # with a default of 777 (0o777).
+  #
+  # Raises `OSError::FileExists` if the directory already exists, or
+  # other kinds of `OSError` in unusual cases.
   def self.mkdir_p(path, mode = 0o777)
     return 0 if Dir.exists?(path)
 
