@@ -1,9 +1,8 @@
 require "crystal/system/unix/errno"
 
-# OSError wraps and gives access to libc's errno. This is mostly useful when
-# dealing with C libraries.
-#
-# This class is the exception thrown when errno errors are encountered.
+# `OSError` is an exception that is raised when something goes wrong when using the operating
+# system's API (for example, it can be based on libc's errno). More specific subclasses of it are
+# available (see `OSError.create`).
 class OSError < Exception
   # Argument list too long
   E2BIG = LibC::E2BIG
@@ -182,7 +181,8 @@ class OSError < Exception
   # Previous owner died
   EOWNERDEAD = LibC::EOWNERDEAD
 
-  # Returns the numeric value of errno.
+  # Returns the error code from libc's `errno` that this exception is based on
+  # (one of the constants in this module).
   getter errno : Int32
 
   # Returns the value of libc's errno.
@@ -195,23 +195,77 @@ class OSError < Exception
     Crystal::System::Errno.value = value
   end
 
+  private def self.errno_to_class(errno) : OSError.class
+    {% begin %}
+      case errno
+        {% for cls in OSError.all_subclasses %}
+          {% for errno in cls.constant("ERRORS") || [] of ASTNode %}
+            when {{errno}} then {{cls}}
+          {% end %}
+        {% end %}
+      else OSError
+      end
+    {% end %}
+  end
+
   def initialize(message, @errno)
     super(message)
   end
 
-  # Creates a new OSError with the given message. The message will
-  # have concatenated the message denoted by `OSError.errno`.
-  #
-  # Typical usage:
+  # Creates an object of some subclass of `OSError` with the given message,
+  # based on the *errno* code (the last set error by default).
   #
   # ```
-  # err = LibC.some_call
-  # if err == -1
-  #   raise OSError.create("some_call")
+  # if LibC.mkdir("foo/bar", mode) == -1
+  #   raise OSError.create("Unable to create directory")
+  #   # Actually a `OSError::FileNotFound` if "foo" does not exist.
   # end
   # ```
-  def self.create(message, errno = OSError.errno)
-    new("#{message}: #{String.new(LibC.strerror(errno))}", errno)
+  def self.create(message = nil, errno = OSError.errno) : OSError
+    cls = errno_to_class(errno)
+    message ||= cls.name
+    cls.new("#{message}: #{String.new(LibC.strerror(errno))}", errno)
   end
 
+  class BlockingIO < OSError
+    ERRORS = {EAGAIN, EALREADY, EINPROGRESS, EWOULDBLOCK}
+  end
+
+  class FileExists < OSError
+    ERRORS = {EEXIST}
+  end
+
+  class FileNotFound < OSError
+    ERRORS = {ENOENT}
+  end
+
+  class IsADirectory < OSError
+    ERRORS = {EISDIR}
+  end
+
+  class NotADirectory < OSError
+    ERRORS = {ENOTDIR}
+  end
+
+  class PermissionError < OSError
+    ERRORS = {EACCES, EPERM}
+  end
+end
+
+class ConnectionError < OSError
+  class BrokenPipe < ConnectionError
+    ERRORS = {EPIPE} # ESHUTDOWN is missing
+  end
+
+  class ConnectionAborted < ConnectionError
+    ERRORS = {ECONNABORTED}
+  end
+
+  class ConnectionRefused < ConnectionError
+    ERRORS = {ECONNREFUSED}
+  end
+
+  class ConnectionReset < ConnectionError
+    ERRORS = {ECONNRESET}
+  end
 end

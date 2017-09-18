@@ -532,7 +532,7 @@ describe TCPSocket do
       server.local_address.port
     end
 
-    expect_raises(OSError, "Error connecting to 'localhost:#{port}': Connection refused") do
+    expect_raises(ConnectionError::ConnectionRefused, "Error connecting to 'localhost:#{port}': Connection refused") do
       TCPSocket.new("localhost", port)
     end
   end

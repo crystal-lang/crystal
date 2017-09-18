@@ -5,11 +5,7 @@ buffer_name = ARGV[1]
 
 begin
   puts ECR.process_file(filename, buffer_name)
-rescue ex : OSError
-  if {OSError::ENOENT, OSError::EISDIR}.includes?(ex.errno)
-    STDERR.puts ex.message
-    exit 1
-  else
-    raise ex
-  end
+rescue ex : OSError::FileNotFound | OSError::IsADirectory
+  STDERR.puts ex.message
+  exit 1
 end
