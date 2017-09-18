@@ -43,7 +43,7 @@ class IO::FileDescriptor
 
   def self.fcntl(fd, cmd, arg = 0)
     r = LibC.fcntl fd, cmd, arg
-    raise Errno.new("fcntl() failed") if r == -1
+    raise OSError.create("fcntl() failed") if r == -1
     r
   end
 
@@ -53,7 +53,7 @@ class IO::FileDescriptor
 
   def stat
     if LibC.fstat(@fd, out stat) != 0
-      raise Errno.new("Unable to get stat")
+      raise OSError.create("Unable to get stat")
     end
     File::Stat.new(stat)
   end
@@ -79,7 +79,7 @@ class IO::FileDescriptor
     seek_value = LibC.lseek(@fd, offset, whence)
 
     if seek_value == -1
-      raise Errno.new "Unable to seek"
+      raise OSError.create "Unable to seek"
     end
 
     @in_buffer_rem = Bytes.empty
@@ -118,7 +118,7 @@ class IO::FileDescriptor
     check_open
 
     seek_value = LibC.lseek(@fd, 0, Seek::Current)
-    raise Errno.new "Unable to tell" if seek_value == -1
+    raise OSError.create "Unable to tell" if seek_value == -1
 
     seek_value - @in_buffer_rem.size
   end
@@ -157,7 +157,7 @@ class IO::FileDescriptor
 
   def reopen(other : IO::FileDescriptor)
     if LibC.dup2(other.fd, self.fd) == -1
-      raise Errno.new("Could not reopen file descriptor")
+      raise OSError.create("Could not reopen file descriptor")
     end
 
     # flag is lost after dup
@@ -191,7 +191,7 @@ class IO::FileDescriptor
   private def unbuffered_write(slice : Bytes)
     write_syscall_helper(slice, "Error writing file") do |slice|
       LibC.write(@fd, slice, slice.size).tap do |return_code|
-        if return_code == -1 && Errno.value == Errno::EBADF
+        if return_code == -1 && OSError.errno == OSError::EBADF
           raise IO::Error.new "File not open for writing"
         end
       end
@@ -220,11 +220,11 @@ class IO::FileDescriptor
 
     err = nil
     if LibC.close(@fd) != 0
-      case Errno.value
-      when Errno::EINTR, Errno::EINPROGRESS
+      case OSError.errno
+      when OSError::EINTR, OSError::EINPROGRESS
         # ignore
       else
-        err = Errno.new("Error closing file")
+        err = OSError.create("Error closing file")
       end
     end
 

@@ -18,7 +18,7 @@ struct Iconv
     @iconv = LibC.iconv_open(to, from)
 
     if @iconv.address == LibC::SizeT.new(-1)
-      if Errno.value == Errno::EINVAL
+      if OSError.errno == OSError::EINVAL
         if original_from == "UTF-8"
           raise ArgumentError.new("Invalid encoding: #{original_to}")
         elsif original_to == "UTF-8"
@@ -27,7 +27,7 @@ struct Iconv
           raise ArgumentError.new("Invalid encoding: #{original_from} -> #{original_to}")
         end
       else
-        raise Errno.new("iconv_open")
+        raise OSError.create("iconv_open")
       end
     end
   end
@@ -59,10 +59,10 @@ struct Iconv
         inbytesleft.value -= 1
       end
     else
-      case Errno.value
-      when Errno::EINVAL
+      case OSError.errno
+      when OSError::EINVAL
         raise ArgumentError.new "Incomplete multibyte sequence"
-      when Errno::EILSEQ
+      when OSError::EILSEQ
         raise ArgumentError.new "Invalid multibyte sequence"
       end
     end
@@ -70,7 +70,7 @@ struct Iconv
 
   def close
     if LibC.iconv_close(@iconv) == -1
-      raise Errno.new("iconv_close")
+      raise OSError.create("iconv_close")
     end
   end
 end

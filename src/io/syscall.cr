@@ -47,10 +47,10 @@ module IO::Syscall
         return bytes_read
       end
 
-      if Errno.value == Errno::EAGAIN
+      if OSError.errno == OSError::EAGAIN
         wait_readable
       else
-        raise Errno.new(errno_msg)
+        raise OSError.create(errno_msg)
       end
     end
   ensure
@@ -66,10 +66,10 @@ module IO::Syscall
         slice += bytes_written
         return if slice.size == 0
       else
-        if Errno.value == Errno::EAGAIN
+        if OSError.errno == OSError::EAGAIN
           wait_writable
         else
-          raise Errno.new(errno_msg)
+          raise OSError.create(errno_msg)
         end
       end
     end

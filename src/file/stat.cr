@@ -4,7 +4,7 @@ class File
   struct Stat
     def initialize(filename : String)
       if LibC.stat(filename, out @stat) != 0
-        raise Errno.new("Unable to get stat for '#{filename}'")
+        raise OSError.create("Unable to get stat for '#{filename}'")
       end
     end
 

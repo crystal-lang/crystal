@@ -27,7 +27,7 @@ class Process
   # Returns the process group identifier of the process identified by *pid*.
   def self.pgid(pid : Int32) : LibC::PidT
     ret = LibC.getpgid(pid)
-    raise Errno.new("getpgid") if ret < 0
+    raise OSError.create("getpgid") if ret < 0
     ret
   end
 
@@ -40,7 +40,7 @@ class Process
   def self.kill(signal : Signal, *pids : Int)
     pids.each do |pid|
       ret = LibC.kill(pid, signal.value)
-      raise Errno.new("kill") if ret < 0
+      raise OSError.create("kill") if ret < 0
     end
     nil
   end
@@ -53,8 +53,8 @@ class Process
     if ret == 0
       true
     else
-      return false if Errno.value == Errno::ESRCH
-      raise Errno.new("kill")
+      return false if OSError.errno == OSError::ESRCH
+      raise OSError.create("kill")
     end
   end
 
@@ -124,7 +124,7 @@ class Process
       pid = nil
       Process.after_fork_child_callbacks.each(&.call) if run_hooks
     when -1
-      raise Errno.new("fork")
+      raise OSError.create("fork")
     end
     pid
   end
@@ -390,7 +390,7 @@ class Process
     Dir.cd(chdir) if chdir
 
     if LibC.execvp(command, argv) == -1
-      raise Errno.new("execvp")
+      raise OSError.create("execvp")
     end
   end
 

@@ -116,7 +116,7 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = "#{__DIR__}/data/non_existing_file.txt"
-      expect_raises Errno do
+      expect_raises OSError do
         File.empty?(filename)
       end
     end
@@ -286,7 +286,7 @@ describe "File" do
     end
 
     it "raises when destination doesn't exist" do
-      expect_raises(Errno) do
+      expect_raises(OSError) do
         File.chmod("#{__DIR__}/data/unknown_chmod_path.txt", 0o664)
       end
     end
@@ -353,7 +353,7 @@ describe "File" do
   end
 
   it "gets stat for non-existent file and raises" do
-    expect_raises Errno do
+    expect_raises OSError do
       File.stat("non-existent")
     end
   end
@@ -389,7 +389,7 @@ describe "File" do
 
     it "raises errno when file doesn't exist" do
       filename = "#{__DIR__}/data/temp1.txt"
-      expect_raises Errno do
+      expect_raises OSError do
         File.delete(filename)
       end
     end
@@ -409,7 +409,7 @@ describe "File" do
 
     it "raises if old file doesn't exist" do
       filename = "#{__DIR__}/data/temp1.txt"
-      expect_raises Errno do
+      expect_raises OSError do
         File.rename(filename, "#{filename}.new")
       end
     end
@@ -519,8 +519,8 @@ describe "File" do
       File.real_path("/usr/share/..").should eq("/usr")
     end
 
-    it "raises Errno if file doesn't exist" do
-      expect_raises Errno do
+    it "raises OSError if file doesn't exist" do
+      expect_raises OSError do
         File.real_path("/usr/share/foo/bar")
       end
     end
@@ -724,7 +724,7 @@ describe "File" do
       filename = "#{__DIR__}/data/temp_write.txt"
       File.write(filename, "0123456789")
       File.open(filename, "r") do |f|
-        expect_raises(Errno) do
+        expect_raises(OSError) do
           f.truncate(4)
         end
       end
@@ -738,7 +738,7 @@ describe "File" do
         File.open(__FILE__) do |file2|
           file1.flock_exclusive do
             # BUG: check for EWOULDBLOCK when exception filters are implemented
-            expect_raises(Errno) do
+            expect_raises(OSError) do
               file2.flock_exclusive(blocking: false) { }
             end
           end
@@ -974,7 +974,7 @@ describe "File" do
       atime = Time.new(2000, 1, 2)
       mtime = Time.new(2000, 3, 4)
 
-      expect_raises Errno, "Error setting time to file" do
+      expect_raises OSError, "Error setting time to file" do
         File.utime(atime, mtime, "#{__DIR__}/nonexistent_file")
       end
     end
@@ -1021,13 +1021,13 @@ describe "File" do
     end
 
     it "raises if path contains non-existent directory" do
-      expect_raises Errno, "Error opening file" do
+      expect_raises OSError, "Error opening file" do
         File.touch("/tmp/non/existent/directory/test.tmp")
       end
     end
 
     it "raises if file cannot be accessed" do
-      expect_raises Errno, "Operation not permitted" do
+      expect_raises OSError, "Operation not permitted" do
         File.touch("/bin/ls")
       end
     end

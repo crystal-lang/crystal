@@ -22,7 +22,7 @@ class IO::FileDescriptor
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   def noecho!
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new "can't set IO#noecho!"
+      raise OSError.create "can't set IO#noecho!"
     end
     noecho_from_tc_mode!
   end
@@ -51,7 +51,7 @@ class IO::FileDescriptor
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   def cooked!
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new "can't set IO#cooked!"
+      raise OSError.create "can't set IO#cooked!"
     end
     cooked_from_tc_mode!
   end
@@ -89,7 +89,7 @@ class IO::FileDescriptor
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   def raw!
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new "can't set IO#raw!"
+      raise OSError.create "can't set IO#raw!"
     end
 
     raw_from_tc_mode!
@@ -102,7 +102,7 @@ class IO::FileDescriptor
 
   private def preserving_tc_mode(msg)
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new msg
+      raise OSError.create msg
     end
     before = mode
     begin

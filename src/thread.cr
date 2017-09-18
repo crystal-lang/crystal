@@ -22,7 +22,7 @@ class Thread
     @th = th
 
     if ret != 0
-      raise Errno.new("pthread_create")
+      raise OSError.create("pthread_create")
     end
   end
 
@@ -39,7 +39,7 @@ class Thread
 
   def join
     if LibGC.pthread_join(@th.not_nil!, out _ret) != 0
-      raise Errno.new("pthread_join")
+      raise OSError.create("pthread_join")
     end
     @detached = true
 

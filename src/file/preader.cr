@@ -16,7 +16,7 @@ class File::PReader
 
     bytes_read = LibC.pread(@fd, slice.pointer(count).as(Void*), count, @offset + @pos)
     if bytes_read == -1
-      raise Errno.new "Error reading file"
+      raise OSError.create "Error reading file"
     end
 
     @pos += bytes_read

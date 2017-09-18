@@ -5,8 +5,8 @@ buffer_name = ARGV[1]
 
 begin
   puts ECR.process_file(filename, buffer_name)
-rescue ex : Errno
-  if {Errno::ENOENT, Errno::EISDIR}.includes?(ex.errno)
+rescue ex : OSError
+  if {OSError::ENOENT, OSError::EISDIR}.includes?(ex.errno)
     STDERR.puts ex.message
     exit 1
   else

@@ -42,7 +42,7 @@ describe "Dir" do
     end
 
     it "tests empty? on nonexistent directory" do
-      expect_raises Errno do
+      expect_raises OSError do
         Dir.empty?(File.join([__DIR__, "/foo/bar/"]))
       end
     end
@@ -57,7 +57,7 @@ describe "Dir" do
   end
 
   it "tests mkdir with an existing path" do
-    expect_raises Errno do
+    expect_raises OSError do
       Dir.mkdir(__DIR__, 0o700)
     end
   end
@@ -73,19 +73,19 @@ describe "Dir" do
 
   it "tests mkdir_p with an existing path" do
     Dir.mkdir_p(__DIR__).should eq(0)
-    expect_raises Errno do
+    expect_raises OSError do
       Dir.mkdir_p(__FILE__)
     end
   end
 
   it "tests rmdir with an nonexistent path" do
-    expect_raises Errno do
+    expect_raises OSError do
       Dir.rmdir("/tmp/crystal_mkdir_test_#{Process.pid}/")
     end
   end
 
   it "tests rmdir with a path that cannot be removed" do
-    expect_raises Errno do
+    expect_raises OSError do
       Dir.rmdir(__DIR__)
     end
   end

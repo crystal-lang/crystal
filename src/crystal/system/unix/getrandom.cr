@@ -62,7 +62,7 @@ module Crystal::System::Random
       end
 
       read_bytes = sys_getrandom(buf[0, chunk_size])
-      raise Errno.new("getrandom") if read_bytes == -1
+      raise OSError.create("getrandom") if read_bytes == -1
 
       buf += read_bytes
     end
@@ -70,7 +70,7 @@ module Crystal::System::Random
 
   # Low-level wrapper for the `getrandom(2)` syscall, returns the number of
   # bytes read or `-1` if an error occured (or the syscall isn't available)
-  # and sets `Errno.value`.
+  # and sets `OSError.errno`.
   #
   # We use the kernel syscall instead of the `getrandom` C function so any
   # binary compiled for Linux will always use getrandom if the kernel is 3.17+
@@ -79,7 +79,7 @@ module Crystal::System::Random
   private def self.sys_getrandom(buf : Bytes)
     loop do
       read_bytes = LibC.syscall(LibC::SYS_getrandom, buf, LibC::SizeT.new(buf.size), 0)
-      if read_bytes < 0 && (Errno.value == Errno::EINTR || Errno.value == Errno::EAGAIN)
+      if read_bytes < 0 && (OSError.errno == OSError::EINTR || OSError.errno == OSError::EAGAIN)
         Fiber.yield
       else
         return read_bytes

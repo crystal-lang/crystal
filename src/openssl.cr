@@ -110,7 +110,7 @@ module OpenSSL
             when 0
               message = "Unexpected EOF"
             when -1
-              raise Errno.new(func || "OpenSSL")
+              raise OSError.create(func || "OpenSSL")
             else
               message = "Unknown error"
             end

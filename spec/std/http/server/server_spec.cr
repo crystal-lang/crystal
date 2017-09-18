@@ -8,8 +8,8 @@ private class RaiseErrno
   include IO
 
   def read(slice : Bytes)
-    Errno.value = @value
-    raise Errno.new "..."
+    OSError.errno = @value
+    raise OSError.create "..."
   end
 
   def write(slice : Bytes) : Nil
@@ -294,9 +294,9 @@ module HTTP
       ))
     end
 
-    it "handles Errno" do
+    it "handles OSError" do
       processor = HTTP::Server::RequestProcessor.new { }
-      input = RaiseErrno.new(Errno::ECONNRESET)
+      input = RaiseErrno.new(OSError::ECONNRESET)
       output = IO::Memory.new
       processor.process(input, output)
       output.rewind.gets_to_end.empty?.should be_true

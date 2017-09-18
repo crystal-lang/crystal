@@ -6,31 +6,31 @@ class Thread
   class ConditionVariable
     def initialize
       if LibC.pthread_cond_init(out @cond, nil) != 0
-        raise Errno.new("pthread_cond_init")
+        raise OSError.create("pthread_cond_init")
       end
     end
 
     def signal
       if LibC.pthread_cond_signal(self) != 0
-        raise Errno.new("pthread_cond_signal")
+        raise OSError.create("pthread_cond_signal")
       end
     end
 
     def broadcast
       if LibC.pthread_cond_broadcast(self) != 0
-        raise Errno.new("pthread_cond_broadcast")
+        raise OSError.create("pthread_cond_broadcast")
       end
     end
 
     def wait(mutex : Thread::Mutex)
       if LibC.pthread_cond_wait(self, mutex) != 0
-        raise Errno.new("pthread_cond_wait")
+        raise OSError.create("pthread_cond_wait")
       end
     end
 
     def finalize
       if LibC.pthread_cond_destroy(self) != 0
-        raise Errno.new("pthread_cond_broadcast")
+        raise OSError.create("pthread_cond_broadcast")
       end
     end
 

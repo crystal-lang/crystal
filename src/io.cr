@@ -146,7 +146,7 @@ module IO
   def self.pipe(read_blocking = false, write_blocking = false)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
     if LibC.pipe(pipe_fds) != 0
-      raise Errno.new("Could not create pipe")
+      raise OSError.create("Could not create pipe")
     end
 
     r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)

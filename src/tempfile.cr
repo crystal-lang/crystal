@@ -38,7 +38,7 @@ class Tempfile < IO::FileDescriptor
     @path = "#{tmpdir}#{name}.XXXXXX"
     fileno = LibC.mkstemp(@path)
     if fileno == -1
-      raise Errno.new("mkstemp")
+      raise OSError.create("mkstemp")
     end
     super(fileno, blocking: true)
   end

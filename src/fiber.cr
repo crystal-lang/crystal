@@ -95,7 +95,7 @@ class Fiber
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
       -1, 0
     ).tap do |pointer|
-      raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
+      raise OSError.create("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
       {% if flag?(:linux) %}
         LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
       {% end %}

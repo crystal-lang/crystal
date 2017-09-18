@@ -27,7 +27,7 @@ class File < IO::FileDescriptor
 
     fd = LibC.open(filename.check_no_null_byte, oflag, perm)
     if fd < 0
-      raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
+      raise OSError.create("Error opening file '#{filename}' with mode '#{mode}'")
     end
 
     @path = filename
@@ -77,7 +77,7 @@ class File < IO::FileDescriptor
   getter path : String
 
   # Returns a `File::Stat` object for the file given by *path* or raises
-  # `Errno` in case of an error. In case of a symbolic link
+  # `OSError` in case of an error. In case of a symbolic link
   # it is followed and information about the target is returned.
   #
   # ```
@@ -87,13 +87,13 @@ class File < IO::FileDescriptor
   # ```
   def self.stat(path) : Stat
     if LibC.stat(path.check_no_null_byte, out stat) != 0
-      raise Errno.new("Unable to get stat for '#{path}'")
+      raise OSError.create("Unable to get stat for '#{path}'")
     end
     Stat.new(stat)
   end
 
   # Returns a `File::Stat` object for the file given by *path* or raises
-  # `Errno` in case of an error. In case of a symbolic link
+  # `OSError` in case of an error. In case of a symbolic link
   # information about it is returned.
   #
   # ```
@@ -103,7 +103,7 @@ class File < IO::FileDescriptor
   # ```
   def self.lstat(path) : Stat
     if LibC.lstat(path.check_no_null_byte, out stat) != 0
-      raise Errno.new("Unable to get lstat for '#{path}'")
+      raise OSError.create("Unable to get lstat for '#{path}'")
     end
     Stat.new(stat)
   end
@@ -121,7 +121,7 @@ class File < IO::FileDescriptor
   end
 
   # Returns `true` if the file at *path* is empty, otherwise returns `false`.
-  # Raises `Errno` if the file at *path* does not exist.
+  # Raises `OSError` if the file at *path* does not exist.
   #
   # ```
   # File.write("foo", "")
@@ -132,8 +132,8 @@ class File < IO::FileDescriptor
   def self.empty?(path) : Bool
     begin
       stat(path).size == 0
-    rescue Errno
-      raise Errno.new("Error determining size of '#{path}'")
+    rescue OSError
+      raise OSError.create("Error determining size of '#{path}'")
     end
   end
 
@@ -183,10 +183,10 @@ class File < IO::FileDescriptor
   # ```
   def self.file?(path) : Bool
     if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT
+      if OSError.errno == OSError::ENOENT
         return false
       else
-        raise Errno.new("stat")
+        raise OSError.create("stat")
       end
     end
     File::Stat.new(stat).file?
@@ -279,7 +279,7 @@ class File < IO::FileDescriptor
           else
             LibC.chown(path, uid, gid)
           end
-    raise Errno.new("Error changing owner of '#{path}'") if ret == -1
+    raise OSError.create("Error changing owner of '#{path}'") if ret == -1
   end
 
   # Changes the permissions of the specified file.
@@ -296,7 +296,7 @@ class File < IO::FileDescriptor
   # ```
   def self.chmod(path, mode : Int)
     if LibC.chmod(path, mode) == -1
-      raise Errno.new("Error changing permissions of '#{path}'")
+      raise OSError.create("Error changing permissions of '#{path}'")
     end
   end
 
@@ -305,12 +305,12 @@ class File < IO::FileDescriptor
   # ```
   # File.write("foo", "")
   # File.delete("./foo")
-  # File.delete("./bar") # raises Errno (No such file or directory)
+  # File.delete("./bar") # raises OSError (No such file or directory)
   # ```
   def self.delete(path)
     err = LibC.unlink(path.check_no_null_byte)
     if err == -1
-      raise Errno.new("Error deleting file '#{path}'")
+      raise OSError.create("Error deleting file '#{path}'")
     end
   end
 
@@ -383,7 +383,7 @@ class File < IO::FileDescriptor
   # Resolves the real path of *path* by following symbolic links.
   def self.real_path(path) : String
     real_path_ptr = LibC.realpath(path, nil)
-    raise Errno.new("Error resolving real path of #{path}") unless real_path_ptr
+    raise OSError.create("Error resolving real path of #{path}") unless real_path_ptr
     String.new(real_path_ptr).tap { LibC.free(real_path_ptr.as(Void*)) }
   end
 
@@ -391,24 +391,24 @@ class File < IO::FileDescriptor
   # given by *old_path*.
   def self.link(old_path, new_path)
     ret = LibC.link(old_path.check_no_null_byte, new_path.check_no_null_byte)
-    raise Errno.new("Error creating link from #{old_path} to #{new_path}") if ret != 0
+    raise OSError.create("Error creating link from #{old_path} to #{new_path}") if ret != 0
     ret
   end
 
   # Creates a symbolic link at *new_path* to an existing file given by *old_path.
   def self.symlink(old_path, new_path)
     ret = LibC.symlink(old_path.check_no_null_byte, new_path.check_no_null_byte)
-    raise Errno.new("Error creating symlink from #{old_path} to #{new_path}") if ret != 0
+    raise OSError.create("Error creating symlink from #{old_path} to #{new_path}") if ret != 0
     ret
   end
 
   # Returns `true` if the *path* is a symbolic link.
   def self.symlink?(path) : Bool
     if LibC.lstat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT
+      if OSError.errno == OSError::ENOENT
         return false
       else
-        raise Errno.new("stat")
+        raise OSError.create("stat")
       end
     end
     (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
@@ -579,7 +579,7 @@ class File < IO::FileDescriptor
   def self.rename(old_filename, new_filename)
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0
-      raise Errno.new("Error renaming file '#{old_filename}' to '#{new_filename}'")
+      raise OSError.create("Error renaming file '#{old_filename}' to '#{new_filename}'")
     end
     code
   end
@@ -591,7 +591,7 @@ class File < IO::FileDescriptor
     timevals[1] = to_timeval(mtime)
     ret = LibC.utimes(filename, timevals)
     if ret != 0
-      raise Errno.new("Error setting time to file '#{filename}'")
+      raise OSError.create("Error setting time to file '#{filename}'")
     end
   end
 
@@ -622,7 +622,7 @@ class File < IO::FileDescriptor
     flush
     code = LibC.ftruncate(fd, size)
     if code != 0
-      raise Errno.new("Error truncating file '#{path}'")
+      raise OSError.create("Error truncating file '#{path}'")
     end
     code
   end

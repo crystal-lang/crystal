@@ -1,26 +1,10 @@
-require "c/errno"
-require "c/string"
+require "crystal/system/unix/errno"
 
-lib LibC
-  {% if flag?(:linux) %}
-    {% if flag?(:musl) %}
-      fun __errno_location : Int*
-    {% else %}
-      @[ThreadLocal]
-      $errno : Int
-    {% end %}
-  {% elsif flag?(:darwin) || flag?(:freebsd) %}
-    fun __error : Int*
-  {% elsif flag?(:openbsd) %}
-    fun __error = __errno : Int*
-  {% end %}
-end
-
-# Errno wraps and gives access to libc's errno. This is mostly useful when
+# OSError wraps and gives access to libc's errno. This is mostly useful when
 # dealing with C libraries.
 #
 # This class is the exception thrown when errno errors are encountered.
-class Errno < Exception
+class OSError < Exception
   # Argument list too long
   E2BIG = LibC::E2BIG
   # Operation not permitted
@@ -201,45 +185,33 @@ class Errno < Exception
   # Returns the numeric value of errno.
   getter errno : Int32
 
-  # Creates a new Errno with the given message. The message will
-  # have concatenated the message denoted by `Errno#value`.
+  # Returns the value of libc's errno.
+  def self.errno : LibC::Int
+    Crystal::System::Errno.value
+  end
+
+  # Sets the value of libc's errno.
+  def self.errno=(value)
+    Crystal::System::Errno.value = value
+  end
+
+  def initialize(message, @errno)
+    super(message)
+  end
+
+  # Creates a new OSError with the given message. The message will
+  # have concatenated the message denoted by `OSError.errno`.
   #
   # Typical usage:
   #
   # ```
   # err = LibC.some_call
   # if err == -1
-  #   raise Errno.new("some_call")
+  #   raise OSError.create("some_call")
   # end
   # ```
-  def initialize(message, errno = Errno.value)
-    @errno = errno
-    super "#{message}: #{String.new(LibC.strerror(errno))}"
+  def self.create(message, errno = OSError.errno)
+    new("#{message}: #{String.new(LibC.strerror(errno))}", errno)
   end
 
-  # Returns the value of libc's errno.
-  def self.value : LibC::Int
-    {% if flag?(:linux) %}
-      {% if flag?(:musl) %}
-        LibC.__errno_location.value
-      {% else %}
-        LibC.errno
-      {% end %}
-    {% elsif flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
-      LibC.__error.value
-    {% end %}
-  end
-
-  # Sets the value of libc's errno.
-  def self.value=(value)
-    {% if flag?(:linux) %}
-      {% if flag?(:musl) %}
-        LibC.__errno_location.value = value
-      {% else %}
-        LibC.errno = value
-      {% end %}
-    {% elsif flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
-      LibC.__error.value = value
-    {% end %}
-  end
 end

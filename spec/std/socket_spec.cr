@@ -222,7 +222,7 @@ describe UNIXServer do
     server = UNIXServer.new(path)
 
     begin
-      expect_raises(Errno) { UNIXServer.new(path) }
+      expect_raises(OSError) { UNIXServer.new(path) }
     ensure
       server.close
     end
@@ -235,7 +235,7 @@ describe UNIXServer do
     File.exists?(path).should be_true
 
     begin
-      expect_raises Errno, /(already|Address) in use/ do
+      expect_raises OSError, /(already|Address) in use/ do
         UNIXServer.new(path)
       end
 
@@ -416,7 +416,7 @@ describe TCPServer do
   it "fails when port is in use" do
     port = free_udp_socket_port
 
-    expect_raises Errno, /(already|Address) in use/ do
+    expect_raises OSError, /(already|Address) in use/ do
       sock = Socket.tcp(Socket::Family::INET6)
       sock.bind(Socket::IPAddress.new("::1", port))
 
@@ -426,7 +426,7 @@ describe TCPServer do
 
   it "doesn't reuse the TCP port by default (SO_REUSEPORT)" do
     TCPServer.open("::", 0) do |server|
-      expect_raises(Errno) do
+      expect_raises(OSError) do
         TCPServer.open("::", server.local_address.port) { }
       end
     end
@@ -532,7 +532,7 @@ describe TCPSocket do
       server.local_address.port
     end
 
-    expect_raises(Errno, "Error connecting to 'localhost:#{port}': Connection refused") do
+    expect_raises(OSError, "Error connecting to 'localhost:#{port}': Connection refused") do
       TCPSocket.new("localhost", port)
     end
   end

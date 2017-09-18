@@ -59,12 +59,12 @@ class HTTP::Server::RequestProcessor
         # didn't read it all, for the next request
         request.body.try &.close
       end
-    rescue ex : Errno
+    rescue ex : OSError
       # IO-related error, nothing to do
     ensure
       begin
         input.close if must_close
-      rescue ex : Errno
+      rescue ex : OSError
         # IO-related error, nothing to do
       end
     end

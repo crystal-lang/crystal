@@ -81,7 +81,7 @@ module Crystal
         begin
           Dir.mkdir_p(candidate)
           return @dir = candidate
-        rescue Errno
+        rescue OSError
           # Try next one
         end
       end

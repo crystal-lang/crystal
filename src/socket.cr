@@ -68,7 +68,7 @@ class Socket
 
   def initialize(@family, @type, @protocol = Protocol::IP, blocking = false)
     fd = LibC.socket(family, type, protocol)
-    raise Errno.new("failed to create socket:") if fd == -1
+    raise OSError.create("failed to create socket:") if fd == -1
     init_close_on_exec(fd)
     @fd = fd
 
@@ -118,22 +118,22 @@ class Socket
   end
 
   # Tries to connect to a remote address. Yields an `IO::Timeout` or an
-  # `Errno` error if the connection failed.
+  # `OSError` error if the connection failed.
   def connect(addr, timeout = nil)
     timeout = timeout.seconds unless timeout.is_a? Time::Span | Nil
     loop do
       if LibC.connect(fd, addr, addr.size) == 0
         return
       end
-      case Errno.value
-      when Errno::EISCONN
+      case OSError.errno
+      when OSError::EISCONN
         return
-      when Errno::EINPROGRESS, Errno::EALREADY
+      when OSError::EINPROGRESS, OSError::EALREADY
         wait_writable(timeout: timeout) do |error|
           return yield IO::Timeout.new("connect timed out")
         end
       else
-        return yield Errno.new("connect")
+        return yield OSError.create("connect")
       end
     end
   end
@@ -173,10 +173,10 @@ class Socket
   end
 
   # Tries to bind the socket to a local address.
-  # Yields an `Errno` if the binding failed.
+  # Yields an `OSError` if the binding failed.
   def bind(addr)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield Errno.new("bind")
+      yield OSError.create("bind")
     end
   end
 
@@ -186,10 +186,10 @@ class Socket
   end
 
   # Tries to listen for connections on the previously bound socket.
-  # Yields an `Errno` on failure.
+  # Yields an `OSError` on failure.
   def listen(backlog = SOMAXCONN)
     unless LibC.listen(fd, backlog) == 0
-      yield Errno.new("listen")
+      yield OSError.create("listen")
     end
   end
 
@@ -238,10 +238,10 @@ class Socket
       if client_fd == -1
         if closed?
           return
-        elsif Errno.value == Errno::EAGAIN
+        elsif OSError.errno == OSError::EAGAIN
           wait_readable
         else
-          raise Errno.new("accept")
+          raise OSError.create("accept")
         end
       else
         return client_fd
@@ -263,7 +263,7 @@ class Socket
   def send(message)
     slice = message.to_slice
     bytes_sent = LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
-    raise Errno.new("Error sending datagram") if bytes_sent == -1
+    raise OSError.create("Error sending datagram") if bytes_sent == -1
     bytes_sent
   ensure
     # see IO::FileDescriptor#unbuffered_write
@@ -283,7 +283,7 @@ class Socket
   def send(message, to addr : Address)
     slice = message.to_slice
     bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
-    raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
+    raise OSError.create("Error sending datagram to #{addr}") if bytes_sent == -1
     bytes_sent
   end
 
@@ -326,10 +326,10 @@ class Socket
     loop do
       bytes_read = LibC.recvfrom(fd, message.to_unsafe.as(Void*), message.size, 0, sockaddr, pointerof(addrlen))
       if bytes_read == -1
-        if Errno.value == Errno::EAGAIN
+        if OSError.errno == OSError::EAGAIN
           wait_readable
         else
-          raise Errno.new("Error receiving datagram")
+          raise OSError.create("Error receiving datagram")
         end
       else
         return {bytes_read.to_i, sockaddr, addrlen}
@@ -354,7 +354,7 @@ class Socket
 
   private def shutdown(how)
     if LibC.shutdown(@fd, how) != 0
-      raise Errno.new("shutdown #{how}")
+      raise OSError.create("shutdown #{how}")
     end
   end
 
@@ -445,7 +445,7 @@ class Socket
   def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
-    raise Errno.new("getsockopt") if ret == -1
+    raise OSError.create("getsockopt") if ret == -1
     optval
   end
 
@@ -453,7 +453,7 @@ class Socket
   def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.setsockopt(fd, level, optname, (pointerof(optval).as(Void*)), optsize)
-    raise Errno.new("setsockopt") if ret == -1
+    raise OSError.create("setsockopt") if ret == -1
     ret
   end
 
@@ -501,7 +501,7 @@ class Socket
 
   def self.fcntl(fd, cmd, arg = 0)
     r = LibC.fcntl fd, cmd, arg
-    raise Errno.new("fcntl() failed") if r == -1
+    raise OSError.create("fcntl() failed") if r == -1
     r
   end
 
@@ -557,11 +557,11 @@ class Socket
 
     err = nil
     if LibC.close(@fd) != 0
-      case Errno.value
-      when Errno::EINTR, Errno::EINPROGRESS
+      case OSError.errno
+      when OSError::EINTR, OSError::EINPROGRESS
         # ignore
       else
-        err = Errno.new("Error closing socket")
+        err = OSError.create("Error closing socket")
       end
     end
 

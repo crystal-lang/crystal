@@ -19,7 +19,7 @@ class Dir
   def initialize(@path)
     @dir = LibC.opendir(@path.check_no_null_byte)
     unless @dir
-      raise Errno.new("Error opening directory '#{@path}'")
+      raise OSError.create("Error opening directory '#{@path}'")
     end
     @closed = false
   end
@@ -126,12 +126,12 @@ class Dir
   # ```
   def read
     # readdir() returns NULL for failure and sets errno or returns NULL for EOF but leaves errno as is.  wtf.
-    Errno.value = 0
+    OSError.errno = 0
     ent = LibC.readdir(@dir)
     if ent
       String.new(ent.value.d_name.to_unsafe)
-    elsif Errno.value != 0
-      raise Errno.new("readdir")
+    elsif OSError.errno != 0
+      raise OSError.create("readdir")
     else
       nil
     end
@@ -147,7 +147,7 @@ class Dir
   def close
     return if @closed
     if LibC.closedir(@dir) != 0
-      raise Errno.new("closedir")
+      raise OSError.create("closedir")
     end
     @closed = true
   end
@@ -157,14 +157,14 @@ class Dir
     if dir = LibC.getcwd(nil, 0)
       String.new(dir).tap { LibC.free(dir.as(Void*)) }
     else
-      raise Errno.new("getcwd")
+      raise OSError.create("getcwd")
     end
   end
 
   # Changes the current working directory of the process to the given string.
   def self.cd(path)
     if LibC.chdir(path.check_no_null_byte) != 0
-      raise Errno.new("Error while changing directory to #{path.inspect}")
+      raise OSError.create("Error while changing directory to #{path.inspect}")
     end
   end
 
@@ -216,17 +216,17 @@ class Dir
   # Returns `true` if the given path exists and is a directory
   def self.exists?(path) : Bool
     if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT || Errno.value == Errno::ENOTDIR
+      if OSError.errno == OSError::ENOENT || OSError.errno == OSError::ENOTDIR
         return false
       else
-        raise Errno.new("stat")
+        raise OSError.create("stat")
       end
     end
     File::Stat.new(stat).directory?
   end
 
   # Returns `true` if the directory at *path* is empty, otherwise returns `false`.
-  # Raises `Errno` if the directory at *path* does not exist.
+  # Raises `OSError` if the directory at *path* does not exist.
   #
   # ```
   # Dir.mkdir("bar")
@@ -235,7 +235,7 @@ class Dir
   # Dir.empty?("bar") # => false
   # ```
   def self.empty?(path) : Bool
-    raise Errno.new("Error determining size of '#{path}'") unless exists?(path)
+    raise OSError.create("Error determining size of '#{path}'") unless exists?(path)
 
     each_child(path) do |f|
       return false
@@ -247,7 +247,7 @@ class Dir
   # can be specified, with a default of 777 (0o777).
   def self.mkdir(path, mode = 0o777)
     if LibC.mkdir(path.check_no_null_byte, mode) == -1
-      raise Errno.new("Unable to create directory '#{path}'")
+      raise OSError.create("Unable to create directory '#{path}'")
     end
     0
   end
@@ -277,7 +277,7 @@ class Dir
   # Removes the directory at the given path.
   def self.rmdir(path)
     if LibC.rmdir(path.check_no_null_byte) == -1
-      raise Errno.new("Unable to remove directory '#{path}'")
+      raise OSError.create("Unable to remove directory '#{path}'")
     end
     0
   end

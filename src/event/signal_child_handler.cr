@@ -31,7 +31,7 @@ class Event::SignalChildHandler
       when 0
         return nil
       when -1
-        raise Errno.new("waitpid") unless Errno.value == Errno::ECHILD
+        raise OSError.create("waitpid") unless OSError.errno == OSError::ECHILD
         return nil
       else
         status = Process::Status.new exit_code

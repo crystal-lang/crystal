@@ -35,7 +35,7 @@ module ENV
   def self.[]=(key : String, value : String?)
     if value
       if LibC.setenv(key, value, 1) != 0
-        raise Errno.new("Error setting environment variable \"#{key}\"")
+        raise OSError.create("Error setting environment variable \"#{key}\"")
       end
     else
       LibC.unsetenv(key)
