@@ -6,7 +6,7 @@ describe "unreachable!" do
   end
 
   it "can set an error message" do
-    expect_raises UnreachableError, "BUG: i'm bag" do
+    expect_raises UnreachableError, "i'm bag" do
       unreachable! "i'm bag"
     end
   end

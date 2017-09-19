@@ -182,8 +182,8 @@ end
 #
 # When it is called, it raises `UnreachableError` with given *message*.
 # However you will never see it if you use this method accurately.
-def unreachable!(message = "unreachable") : NoReturn
-  raise UnreachableError.new("BUG: #{message}")
+def unreachable!(message = "BUG: unreachable") : NoReturn
+  raise UnreachableError.new(message)
 end
 
 class Process
