@@ -175,7 +175,7 @@ struct BigDecimal
   end
 
   def <=>(other : Int)
-    @value <=> other
+    self <=> BigDecimal.new(other)
   end
 
   def ==(other : BigDecimal) : Bool
