@@ -197,6 +197,9 @@ describe BigDecimal do
 
     (1 <= BigDecimal.new(1)).should be_true
     (0 <= BigDecimal.new(1)).should be_true
+
+    (BigDecimal.new("6.5") > 7).should be_false
+    (BigDecimal.new("7.5") > 6).should be_true
   end
 
   it "keeps precision" do
