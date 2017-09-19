@@ -193,6 +193,10 @@ describe BigDecimal do
     (BigDecimal.new("-1") < BigDecimal.new("1")).should be_true
 
     (1 >= BigDecimal.new(1)).should be_true
+    (2 >= BigDecimal.new(1)).should be_true
+
+    (1 <= BigDecimal.new(1)).should be_true
+    (0 <= BigDecimal.new(1)).should be_true
   end
 
   it "keeps precision" do
