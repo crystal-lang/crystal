@@ -2334,12 +2334,10 @@ module Crystal
         when "to_i", "to_i32", "ord" then program.int32
         when "to_i8"                 then program.int8
         when "to_i16"                then program.int16
-        when "to_i32"                then program.int32
         when "to_i64"                then program.int64
         when "to_u", "to_u32"        then program.uint32
         when "to_u8"                 then program.uint8
         when "to_u16"                then program.uint16
-        when "to_u32"                then program.uint32
         when "to_u64"                then program.uint64
         when "to_f", "to_f64"        then program.float64
         when "to_f32"                then program.float32
