@@ -9,22 +9,42 @@ describe "HTML" do
       str.should eq("safe_string")
     end
 
-    it "escapes dangerous characters from a string" do
-      str = HTML.escape("< & >")
+    it "escapes special characters from an HTML string" do
+      str = HTML.escape("< & > \"")
 
-      str.should eq("&lt; &amp; &gt;")
+      str.should eq("&lt; &amp; &gt; &quot;")
     end
 
-    it "escapes javascript example from a string" do
-      str = HTML.escape("<script>alert('You are being hacked')</script>")
+    it "escapes as documented in default mode" do
+      str = HTML.escape("Crystal & You")
 
-      str.should eq("&lt;script&gt;alert&#40;&#39;You are being hacked&#39;&#41;&lt;/script&gt;")
+      str.should eq("Crystal &amp; You")
     end
 
-    it "escapes nonbreakable space but not normal space" do
-      str = HTML.escape("nbsp space ")
+    it "escapes characters according no escape_quotes mode" do
+      str = HTML.escape("< & ' \" \\", escape_quotes: false)
 
-      str.should eq("nbsp&nbsp;space ")
+      str.should eq("&lt; &amp; ' \" \\")
+    end
+  end
+
+  describe ".escape_javascript" do
+    it "does not change a safe string" do
+      str = HTML.escape_javascript("safe_string")
+
+      str.should eq("safe_string")
+    end
+
+    it "escapes special characters from a JavaScript string" do
+      str = HTML.escape_javascript("</tag> \r\n \r \n \u2028 \u2029")
+
+      str.should eq("<\\/tag> \\n \\n \\n &#x2028; &#x2029;")
+    end
+
+    it "escapes special characters from a JavaScript IO" do
+      io = IO::Memory.new
+      HTML.escape_javascript("</tag> \r\n \r \n \u2028 \u2029", io).should be_nil
+      io.to_s.should eq("<\\/tag> \\n \\n \\n &#x2028; &#x2029;")
     end
   end
 
