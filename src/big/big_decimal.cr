@@ -73,10 +73,10 @@ struct BigDecimal
     initialize(num.to_big_i, 0)
   end
 
-  # Creating a `BigDecimal` from `Float` is not supported due to precision loss risks. This call fails at compile time.
+  # Creating a `BigDecimal` from `Float` is not supported due to precision loss risks.
   def initialize(num : Float)
-    {% raise "Initializing from Float is risky due to loss of precision -- use Int, String or BigRational" %}
-    initialize num.to_s # to appease the compiler
+    STDERR.puts "WARNING: Initializing from Float is risky due to loss of precision -- initializing from Int or String is recommended"
+    initialize num.to_s
   end
 
   # Creates a new `BigDecimal` from `BigInt`/`UInt64`, which matches the internal representation
@@ -282,6 +282,6 @@ end
 struct Float
   # Casting from `Float` is not supported due to precision loss risks. This call fails at compile time.
   def to_big_d
-    {% raise "Initializing from Float is risky due to loss of precision -- convert rather from Int or String" %}
+    BigDecimal.new(self)
   end
 end
