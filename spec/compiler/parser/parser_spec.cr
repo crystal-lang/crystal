@@ -1406,7 +1406,7 @@ describe "Parser" do
 
   assert_syntax_error "/foo)/", "invalid regex"
   assert_syntax_error "def =\nend"
-  assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment"
+  assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
   assert_syntax_error "{1, ->{ |x| x } }", "unexpected token '|'"
   assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token '|'"
 

@@ -216,7 +216,7 @@ module Crystal
 
     def to_lhs(exp)
       if exp.is_a?(Path) && inside_def?
-        raise "dynamic constant assignment"
+        raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
       end
 
       if exp.is_a?(Call) && !exp.obj && exp.args.empty?
@@ -324,7 +324,7 @@ module Crystal
             break unless can_be_assigned?(atomic)
 
             if atomic.is_a?(Path) && inside_def?
-              raise "dynamic constant assignment"
+              raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
             end
 
             if atomic.is_a?(Var) && atomic.name == "self"
