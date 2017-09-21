@@ -1082,7 +1082,7 @@ describe "Code gen: macro" do
 
       bar
       ),
-      "dynamic constant assignment"
+      "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
   end
 
   it "finds macro from virtual type" do
