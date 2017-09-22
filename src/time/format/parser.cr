@@ -13,7 +13,7 @@ struct Time::Format
       @hour = 0
       @minute = 0
       @second = 0
-      @millisecond = 0
+      @nanosecond = 0
       @pm = false
     end
 
@@ -26,7 +26,7 @@ struct Time::Format
         return Time.epoch(epoch)
       end
 
-      time = Time.new @year, @month, @day, @hour, @minute, @second, @millisecond, time_kind
+      time = Time.new @year, @month, @day, @hour, @minute, @second, @nanosecond, time_kind
 
       if offset_in_minutes = @offset_in_minutes
         time -= offset_in_minutes.minutes if offset_in_minutes != 0
@@ -168,11 +168,12 @@ struct Time::Format
       # and later just use the first 3 digits because Time
       # only has microsecond precision.
       pos = @reader.pos
-      @millisecond = consume_number(12)
+      millisecond = consume_number(12)
       digits = @reader.pos - pos
       if digits > 3
-        @millisecond /= 10 ** (digits - 3)
+        millisecond /= 10 ** (digits - 3)
       end
+      @nanosecond = millisecond * Time::NANOSECONDS_PER_MILLISECOND
     end
 
     def am_pm

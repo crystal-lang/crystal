@@ -5,9 +5,9 @@
 # Check all `#new` methods for details.
 #
 # ```
-# Time::Span.new(10000)          # => 00:00:00.001
-# Time::Span.new(10, 10, 10)     # => 10:10:10
-# Time::Span.new(10, 10, 10, 10) # => 10.10:10:10
+# Time::Span.new(nanoseconds: 10_000) # => 00:00:00.000010000
+# Time::Span.new(10, 10, 10)          # => 10:10:10
+# Time::Span.new(10, 10, 10, 10)      # => 10.10:10:10
 # ```
 #
 # Calculation between `Time` also returns a `Time::Span`.
@@ -42,49 +42,65 @@ struct Time::Span
 
   include Comparable(self)
 
-  TicksPerMicrosecond = 10_i64
-  TicksPerMillisecond = TicksPerMicrosecond * 1000
-  TicksPerSecond      = TicksPerMillisecond * 1000
-  TicksPerMinute      = TicksPerSecond * 60
-  TicksPerHour        = TicksPerMinute * 60
-  TicksPerDay         = TicksPerHour * 24
+  MAX  = new seconds: Int64::MAX, nanoseconds: 999_999_999
+  MIN  = new seconds: Int64::MIN, nanoseconds: -999_999_999
+  ZERO = new nanoseconds: 0
 
-  MaxValue = new Int64::MAX
-  MinValue = new Int64::MIN
-  Zero     = new 0
+  @seconds : Int64
 
-  # 1 tick is a tenth of a microsecond
-  @ticks : Int64
+  # Nanoseconds are always in the range (-999_999_999..999_999_999)
+  # and always have the same sign as @seconds (if seconds is zero,
+  # @nanoseconds can either be negative or positive).
+  @nanoseconds : Int32
 
-  getter ticks
-
-  def initialize(ticks)
-    @ticks = ticks.to_i64
+  def self.new(hours, minutes, seconds)
+    new(0, hours, minutes, seconds)
   end
 
-  def initialize(hours, minutes, seconds)
-    @ticks = calculate_ticks! 0, hours, minutes, seconds, 0
+  def self.new(days, hours, minutes, seconds, nanoseconds = 0)
+    new(
+      seconds: compute_seconds!(days, hours, minutes, seconds),
+      nanoseconds: nanoseconds.to_i64,
+    )
   end
 
-  def initialize(days, hours, minutes, seconds)
-    @ticks = calculate_ticks! days, hours, minutes, seconds, 0
+  def initialize(*, seconds : Int, nanoseconds : Int)
+    # Normalize nanoseconds in the range 0...1_000_000_000
+    seconds += nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
+    nanoseconds = nanoseconds.remainder(NANOSECONDS_PER_SECOND)
+
+    # Make sure that if seconds is positive, nanoseconds is
+    # positive too. Likewise, if seconds is negative, make
+    # sure that nanoseconds is negative too.
+    if seconds > 0 && nanoseconds < 0
+      seconds -= 1
+      nanoseconds += NANOSECONDS_PER_SECOND
+    elsif seconds < 0 && nanoseconds > 0
+      seconds += 1
+      nanoseconds -= NANOSECONDS_PER_SECOND
+    end
+
+    @seconds = seconds.to_i64
+    @nanoseconds = nanoseconds.to_i32
   end
 
-  def initialize(days, hours, minutes, seconds, milliseconds)
-    @ticks = calculate_ticks! days, hours, minutes, seconds, milliseconds
+  def self.new(*, nanoseconds : Int)
+    new(
+      seconds: nanoseconds.to_i64.tdiv(NANOSECONDS_PER_SECOND),
+      nanoseconds: nanoseconds.to_i64.remainder(NANOSECONDS_PER_SECOND),
+    )
   end
 
-  private def calculate_ticks!(days, hours, minutes, seconds, milliseconds)
-    calculate_ticks(days, hours, minutes, seconds, milliseconds, true).not_nil!
+  private def self.compute_seconds!(days, hours, minutes, seconds)
+    compute_seconds(days, hours, minutes, seconds, true).not_nil!
   end
 
-  private def calculate_ticks(days, hours, minutes, seconds, milliseconds, raise_exception)
+  private def self.compute_seconds(days, hours, minutes, seconds, raise_exception)
     # there's no overflow checks for hours, minutes, ...
     # so big hours/minutes values can overflow at some point and change expected values
     hrssec = hours * 3600 # break point at (Int32::MAX - 596523)
     minsec = minutes * 60
-    t = (hrssec + minsec + seconds).to_i64 * 1000_i64 + milliseconds.to_i64
-    t *= 10000_i64
+    s = (hrssec + minsec + seconds).to_i64
 
     result = 0_i64
 
@@ -93,28 +109,32 @@ struct Time::Span
     # "legal" (i.e. temporary) (e.g. if other parameters are negative) or
     # illegal (e.g. sign change).
     if days > 0
-      td = TicksPerDay * days
-      if t < 0
-        ticks = t
-        t += td
-        # positive days -> total ticks should be lower
-        overflow = ticks > t
+      sd = SECONDS_PER_DAY.to_i64 * days
+      if sd < days
+        overflow = true
+      elsif s < 0
+        temp = s
+        s += sd
+        # positive days -> total seconds should be lower
+        overflow = temp > s
       else
-        t += td
+        s += sd
         # positive + positive != negative result
-        overflow = t < 0
+        overflow = s < 0
       end
     elsif days < 0
-      td = TicksPerDay * days
-      if t <= 0
-        t += td
+      sd = SECONDS_PER_DAY.to_i64 * days
+      if sd > days
+        overflow = true
+      elsif s <= 0
+        s += sd
         # negative + negative != positive result
-        overflow = t > 0
+        overflow = s > 0
       else
-        ticks = t
-        t += td
-        # negative days -> total ticks should be lower
-        overflow = t > ticks
+        nanos = s
+        s += sd
+        # negative days -> total nanos should be lower
+        overflow = s > nanos
       end
     end
 
@@ -125,27 +145,36 @@ struct Time::Span
       return nil
     end
 
-    t
+    s
   end
 
   def days
-    (ticks.tdiv TicksPerDay).to_i32
+    to_i.tdiv(SECONDS_PER_DAY)
   end
 
   def hours
-    (ticks.remainder(TicksPerDay).tdiv TicksPerHour).to_i32
+    to_i.remainder(SECONDS_PER_DAY)
+        .tdiv(SECONDS_PER_HOUR)
+        .to_i
   end
 
   def minutes
-    (ticks.remainder(TicksPerHour).tdiv TicksPerMinute).to_i32
+    to_i.remainder(SECONDS_PER_HOUR)
+        .tdiv(SECONDS_PER_MINUTE)
+        .to_i
   end
 
   def seconds
-    (ticks.remainder(TicksPerMinute).tdiv TicksPerSecond).to_i32
+    to_i.remainder(SECONDS_PER_MINUTE)
+        .to_i
   end
 
   def milliseconds
-    (ticks.remainder(TicksPerSecond).tdiv TicksPerMillisecond).to_i32
+    nanoseconds / NANOSECONDS_PER_MILLISECOND
+  end
+
+  def nanoseconds
+    @nanoseconds
   end
 
   def total_weeks
@@ -153,19 +182,23 @@ struct Time::Span
   end
 
   def total_days
-    ticks.to_f / TicksPerDay
+    total_hours / 24
   end
 
   def total_hours
-    ticks.to_f / TicksPerHour
+    total_minutes / 60
   end
 
   def total_minutes
-    ticks.to_f / TicksPerMinute
+    total_seconds / 60
   end
 
   def total_seconds
-    ticks.to_f / TicksPerSecond
+    to_i.to_f + (nanoseconds.to_f / NANOSECONDS_PER_SECOND)
+  end
+
+  def total_nanoseconds
+    (to_i.to_f * NANOSECONDS_PER_SECOND) + nanoseconds
   end
 
   def to_f
@@ -173,11 +206,11 @@ struct Time::Span
   end
 
   def to_i
-    ticks / TicksPerSecond
+    @seconds
   end
 
   def total_milliseconds
-    ticks.to_f / TicksPerMillisecond
+    total_nanoseconds / NANOSECONDS_PER_MILLISECOND
   end
 
   def duration
@@ -185,7 +218,7 @@ struct Time::Span
   end
 
   def abs
-    Span.new(ticks.abs)
+    Span.new(seconds: to_i.abs, nanoseconds: nanoseconds.abs)
   end
 
   def from_now
@@ -198,17 +231,26 @@ struct Time::Span
 
   def -(other : self)
     # TODO check overflow
-    Span.new(ticks - other.ticks)
+    Span.new(
+      seconds: to_i - other.to_i,
+      nanoseconds: nanoseconds - other.nanoseconds,
+    )
   end
 
   def -
     # TODO check overflow
-    Span.new(-ticks)
+    Span.new(
+      seconds: -to_i,
+      nanoseconds: -nanoseconds,
+    )
   end
 
   def +(other : self)
     # TODO check overflow
-    Span.new(ticks + other.ticks)
+    Span.new(
+      seconds: to_i + other.to_i,
+      nanoseconds: nanoseconds + other.nanoseconds,
+    )
   end
 
   def +
@@ -217,24 +259,38 @@ struct Time::Span
 
   def *(number : Number)
     # TODO check overflow
-    Span.new(ticks * number)
+    Span.new(
+      seconds: to_i.to_i64 * number,
+      nanoseconds: nanoseconds.to_i64 * number,
+    )
   end
 
   def /(number : Number)
+    seconds = to_i.tdiv(number)
+    nanoseconds = self.nanoseconds.tdiv(number)
+
+    remainder = to_i.remainder(number)
+    nanoseconds += (remainder * NANOSECONDS_PER_SECOND) / number
+
     # TODO check overflow
-    Span.new(ticks / number)
+    Span.new(
+      seconds: seconds,
+      nanoseconds: nanoseconds,
+    )
   end
 
   def /(other : self)
-    ticks.to_f64 / other.ticks.to_f64
+    total_nanoseconds.to_f64 / other.total_nanoseconds.to_f64
   end
 
   def <=>(other : self)
-    ticks <=> other.ticks
+    cmp = to_i <=> other.to_i
+    cmp = nanoseconds <=> other.nanoseconds if cmp == 0
+    cmp
   end
 
   def inspect(io : IO)
-    if ticks < 0
+    if to_i < 0 || nanoseconds < 0
       io << '-'
     end
 
@@ -263,33 +319,27 @@ struct Time::Span
     io << '0' if seconds < 10
     io << seconds
 
-    fractional = ticks.remainder(TicksPerSecond).abs.to_i32
-    if fractional != 0
+    nanoseconds = self.nanoseconds.abs
+    if nanoseconds != 0
       io << '.'
-      io << '0' if fractional < 1000000
-      io << '0' if fractional < 100000
-      io << '0' if fractional < 10000
-      io << '0' if fractional < 1000
-      io << '0' if fractional < 100
-      io << '0' if fractional < 10
-      io << fractional
+      io << '0' if nanoseconds < 100000000
+      io << '0' if nanoseconds < 10000000
+      io << '0' if nanoseconds < 1000000
+      io << '0' if nanoseconds < 100000
+      io << '0' if nanoseconds < 10000
+      io << '0' if nanoseconds < 1000
+      io << '0' if nanoseconds < 100
+      io << '0' if nanoseconds < 10
+      io << nanoseconds
     end
   end
 
-  def self.from(value, tick_multiplicator) : self
-    # TODO check nan
-    # TODO check infinity and overflow
-    value = value * (tick_multiplicator / TicksPerMillisecond)
-    val = (value < 0 ? (value - 0.5) : (value + 0.5)).to_i64 # round away from zero
-    Span.new(val * TicksPerMillisecond)
-  end
-
   def self.zero
-    new(0)
+    ZERO
   end
 
   def zero?
-    @ticks == 0
+    to_i == 0 && nanoseconds == 0
   end
 end
 
@@ -339,29 +389,59 @@ struct Int
   end
 
   def milliseconds
-    Time::Span.new 0, 0, 0, 0, self
+    Time::Span.new 0, 0, 0, 0, (self.to_i64 * Time::NANOSECONDS_PER_MILLISECOND)
+  end
+
+  def nanosecond
+    nanoseconds
+  end
+
+  def nanoseconds
+    Time::Span.new(nanoseconds: self.to_i64)
   end
 end
 
 struct Float
   def days
-    Time::Span.from self, Time::Span::TicksPerDay
+    (self * 24).hours
   end
 
   def hours
-    Time::Span.from self, Time::Span::TicksPerHour
+    (self * 60).minutes
   end
 
   def minutes
-    Time::Span.from self, Time::Span::TicksPerMinute
+    (self * 60).seconds
   end
 
   def seconds
-    Time::Span.from self, Time::Span::TicksPerSecond
+    seconds = self.to_i64
+    nanoseconds = (self - seconds) * Time::NANOSECONDS_PER_SECOND
+
+    # round away from zero
+    nanoseconds = (nanoseconds < 0 ? (nanoseconds - 0.5) : (nanoseconds + 0.5)).to_i64
+
+    Time::Span.new(
+      seconds: seconds,
+      nanoseconds: nanoseconds,
+    )
   end
 
   def milliseconds
-    Time::Span.from self, Time::Span::TicksPerMillisecond
+    (self / 1_000).seconds
+  end
+
+  def nanoseconds
+    seconds = (self / Time::NANOSECONDS_PER_SECOND).to_i64
+    nanoseconds = self.remainder(Time::NANOSECONDS_PER_SECOND)
+
+    # round away from zero
+    nanoseconds = (nanoseconds < 0 ? (nanoseconds - 0.5) : (nanoseconds + 0.5)).to_i64
+
+    Time::Span.new(
+      seconds: seconds,
+      nanoseconds: nanoseconds,
+    )
   end
 end
 

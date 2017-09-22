@@ -1,11 +1,5 @@
 require "spec"
 
-private TimeSpecTicks = [
-  631501920000000000_i64, # 25 Feb 2002 - 00:00:00
-  631502475130080000_i64, # 25 Feb 2002 - 15:25:13,8
-  631502115130080000_i64, # 25 Feb 2002 - 05:25:13,8
-]
-
 def Time.expect_invalid
   expect_raises ArgumentError, "Invalid time" do
     yield
@@ -15,26 +9,29 @@ end
 describe Time do
   it "initialize" do
     t1 = Time.new 2002, 2, 25
-    t1.ticks.should eq(TimeSpecTicks[0])
+    t1.year.should eq(2002)
+    t1.month.should eq(2)
+    t1.day.should eq(25)
 
     t2 = Time.new 2002, 2, 25, 15, 25, 13, 8
-    t2.ticks.should eq(TimeSpecTicks[1])
-
-    t2.date.ticks.should eq(TimeSpecTicks[0])
     t2.year.should eq(2002)
     t2.month.should eq(2)
     t2.day.should eq(25)
     t2.hour.should eq(15)
     t2.minute.should eq(25)
     t2.second.should eq(13)
-    t2.millisecond.should eq(8)
-
-    t3 = Time.new 2002, 2, 25, 5, 25, 13, 8
-    t3.ticks.should eq(TimeSpecTicks[2])
+    t2.nanosecond.should eq(8)
   end
 
   it "initialize max" do
-    Time.new(9999, 12, 31, 23, 59, 59, 999).ticks.should eq(3155378975999990000)
+    time = Time.new(9999, 12, 31, 23, 59, 59, 999_999_999)
+    time.year.should eq(9999)
+    time.month.should eq(12)
+    time.day.should eq(31)
+    time.hour.should eq(23)
+    time.minute.should eq(59)
+    time.second.should eq(59)
+    time.nanosecond.should eq(999_999_999)
   end
 
   it "initialize millisecond negative" do
@@ -43,9 +40,9 @@ describe Time do
     end
   end
 
-  it "initialize millisecond 1000" do
+  it "initialize nanoseconds 1_000_000_000" do
     Time.expect_invalid do
-      Time.new(9999, 12, 31, 23, 59, 59, 1000)
+      Time.new(9999, 12, 31, 23, 59, 59, 1_000_000_000)
     end
   end
 
@@ -68,13 +65,8 @@ describe Time do
     (time == time.clone).should be_true
   end
 
-  it "fields" do
-    Time::MaxValue.ticks.should eq(3155378975999999999)
-    Time::MinValue.ticks.should eq(0)
-  end
-
   it "add" do
-    t1 = Time.new TimeSpecTicks[1]
+    t1 = Time.new(2002, 2, 25, 15, 25, 13)
     span = Time::Span.new 3, 54, 1
     t2 = t1 + span
 
@@ -90,23 +82,23 @@ describe Time do
   end
 
   it "add out of range 1" do
-    t1 = Time.new TimeSpecTicks[1]
+    t1 = Time.new(9980, 2, 25, 15, 25, 13)
 
     expect_raises ArgumentError do
-      t1 + Time::Span::MaxValue
+      t1 + Time::Span.new(nanoseconds: Int64::MAX)
     end
   end
 
   it "add out of range 2" do
-    t1 = Time.new TimeSpecTicks[1]
+    t1 = Time.new(1, 2, 25, 15, 25, 13)
 
     expect_raises ArgumentError do
-      t1 + Time::Span::MinValue
+      t1 + Time::Span.new(nanoseconds: Int64::MIN)
     end
   end
 
   it "add days" do
-    t1 = Time.new TimeSpecTicks[1]
+    t1 = Time.new(2002, 2, 25, 15, 25, 13)
     t1 = t1 + 3.days
 
     t1.day.should eq(28)
@@ -128,14 +120,14 @@ describe Time do
   end
 
   it "add days out of range 1" do
-    t1 = Time.new TimeSpecTicks[1]
+    t1 = Time.new(2002, 2, 25, 15, 25, 13)
     expect_raises ArgumentError do
       t1 + 10000000.days
     end
   end
 
   it "add days out of range 2" do
-    t1 = Time.new TimeSpecTicks[1]
+    t1 = Time.new(2002, 2, 25, 15, 25, 13)
     expect_raises ArgumentError do
       t1 - 10000000.days
     end
@@ -173,7 +165,7 @@ describe Time do
   end
 
   it "add hours" do
-    t1 = Time.new TimeSpecTicks[1]
+    t1 = Time.new(2002, 2, 25, 15, 25, 13)
     t1 = t1 + 10.hours
 
     t1.day.should eq(26)
@@ -195,7 +187,7 @@ describe Time do
   end
 
   it "add milliseconds" do
-    t1 = Time.new TimeSpecTicks[1]
+    t1 = Time.new(2002, 2, 25, 15, 25, 13)
     t1 = t1 + 1e10.milliseconds
 
     t1.day.should eq(21)
@@ -273,9 +265,9 @@ describe Time do
   end
 
   it "formats" do
-    t = Time.new 2014, 1, 2, 3, 4, 5, 6
-    t2 = Time.new 2014, 1, 2, 15, 4, 5, 6
-    t3 = Time.new 2014, 1, 2, 12, 4, 5, 6
+    t = Time.new 2014, 1, 2, 3, 4, 5, 6_000_000
+    t2 = Time.new 2014, 1, 2, 15, 4, 5, 6_000_000
+    t3 = Time.new 2014, 1, 2, 12, 4, 5, 6_000_000
 
     t.to_s("%Y").should eq("2014")
     Time.new(1, 1, 2, 3, 4, 5, 6).to_s("%Y").should eq("0001")
@@ -578,14 +570,15 @@ describe Time do
   end
 
   it "does time span units" do
-    1.millisecond.ticks.should eq(Time::Span::TicksPerMillisecond)
-    1.milliseconds.ticks.should eq(Time::Span::TicksPerMillisecond)
-    1.second.ticks.should eq(Time::Span::TicksPerSecond)
-    1.seconds.ticks.should eq(Time::Span::TicksPerSecond)
-    1.minute.ticks.should eq(Time::Span::TicksPerMinute)
-    1.minutes.ticks.should eq(Time::Span::TicksPerMinute)
-    1.hour.ticks.should eq(Time::Span::TicksPerHour)
-    1.hours.ticks.should eq(Time::Span::TicksPerHour)
+    1.nanoseconds.should eq(Time::Span.new(nanoseconds: 1))
+    1.millisecond.should eq(1_000_000.nanoseconds)
+    1.milliseconds.should eq(1_000_000.nanoseconds)
+    1.second.should eq(1000.milliseconds)
+    1.seconds.should eq(1000.milliseconds)
+    1.minute.should eq(60.seconds)
+    1.minutes.should eq(60.seconds)
+    1.hour.should eq(60.minutes)
+    1.hours.should eq(60.minutes)
     1.week.should eq(7.days)
     2.weeks.should eq(14.days)
   end
