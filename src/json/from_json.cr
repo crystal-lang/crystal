@@ -67,8 +67,8 @@ def Bool.new(pull : JSON::PullParser)
 end
 
 {% for type in Int::Primitive.union_types %}
-  def {{type.id}}.new(pull : JSON::PullParser)
-    {{type.id}}.new(pull.read_int)
+  def {{type}}.new(pull : JSON::PullParser)
+    {{type}}.new(pull.read_int)
   end
 {% end %}
 

@@ -273,7 +273,7 @@ end
   {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying", "/" => "dividing"} %}
 
   {% for num in nums %}
-    struct {{num.id}}
+    struct {{num}}
       {% for name, type in {
                              to_i: Int32, to_u: UInt32, to_f: Float64,
                              to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64, to_i128: Int128,
@@ -297,7 +297,7 @@ end
                            } %}
           # Returns `true` if `self` is {{desc.id}} *other*.
           @[Primitive(:binary)]
-          def {{op.id}}(other : {{num2.id}}) : Bool
+          def {{op.id}}(other : {{num2}}) : Bool
           end
         {% end %}
       {% end %}
@@ -305,7 +305,7 @@ end
   {% end %}
 
   {% for int in ints %}
-    struct {{int.id}}
+    struct {{int}}
       # Returns a `Char` that has the unicode codepoint of `self`,
       # without checking if this integer is in the range valid for
       # chars (`0..0x10ffff`).
@@ -325,44 +325,44 @@ end
           {% if op != "/" %}
             # Returns the result of {{desc.id}} `self` and *other*.
             @[Primitive(:binary)]
-            def {{op.id}}(other : {{int2.id}}) : self
+            def {{op.id}}(other : {{int2}}) : self
             end
           {% end %}
         {% end %}
 
         # Returns the result of performing a bitwise OR of `self`'s and *other*'s bits.
         @[Primitive(:binary)]
-        def |(other : {{int2.id}}) : self
+        def |(other : {{int2}}) : self
         end
 
         # Returns the result of performing a bitwise AND of `self`'s and *other*'s bits.
         @[Primitive(:binary)]
-        def &(other : {{int2.id}}) : self
+        def &(other : {{int2}}) : self
         end
 
         # Returns the result of performing a bitwise XOR of `self`'s and *other*'s bits.
         @[Primitive(:binary)]
-        def ^(other : {{int2.id}}) : self
+        def ^(other : {{int2}}) : self
         end
 
         # :nodoc:
         @[Primitive(:binary)]
-        def unsafe_shl(other : {{int2.id}}) : self
+        def unsafe_shl(other : {{int2}}) : self
         end
 
         # :nodoc:
         @[Primitive(:binary)]
-        def unsafe_shr(other : {{int2.id}}) : self
+        def unsafe_shr(other : {{int2}}) : self
         end
 
         # :nodoc:
         @[Primitive(:binary)]
-        def unsafe_div(other : {{int2.id}}) : self
+        def unsafe_div(other : {{int2}}) : self
         end
 
         # :nodoc:
         @[Primitive(:binary)]
-        def unsafe_mod(other : {{int2.id}}) : self
+        def unsafe_mod(other : {{int2}}) : self
         end
       {% end %}
 
@@ -370,7 +370,7 @@ end
         {% for op, desc in binaries %}
           # Returns the result of {{desc.id}} `self` and *other*.
           @[Primitive(:binary)]
-          def {{op.id}}(other : {{float.id}}) : {{float.id}}
+          def {{op.id}}(other : {{float}}) : {{float}}
           end
         {% end %}
       {% end %}
@@ -378,12 +378,12 @@ end
   {% end %}
 
   {% for float in floats %}
-    struct {{float.id}}
+    struct {{float}}
       {% for num in nums %}
         {% for op, desc in binaries %}
           # Returns the result of {{desc.id}} `self` and *other*.
           @[Primitive(:binary)]
-          def {{op.id}}(other : {{num.id}}) : self
+          def {{op.id}}(other : {{num}}) : self
           end
         {% end %}
       {% end %}

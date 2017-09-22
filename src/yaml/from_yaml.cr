@@ -47,8 +47,8 @@ def Bool.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 end
 
 {% for type in Int::Primitive.union_types %}
-  def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-    {{type.id}}.new parse_scalar(ctx, node, Int64)
+  def {{type}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    {{type}}.new parse_scalar(ctx, node, Int64)
   end
 {% end %}
 
