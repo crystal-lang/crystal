@@ -267,9 +267,9 @@ end
 # unions.
 
 {% begin %}
-  {% ints = %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
-  {% floats = %w(Float32 Float64) %}
-  {% nums = %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128 Float32 Float64) %}
+  {% ints = Int::Primitive.union_types %}
+  {% floats = Float::Primitive.union_types %}
+  {% nums = Number::Primitive.union_types %}
   {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying", "/" => "dividing"} %}
 
   {% for num in nums %}
