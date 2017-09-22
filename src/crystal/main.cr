@@ -12,6 +12,10 @@ def _crystal_main(argc : Int32, argv : UInt8**)
 end
 
 module Crystal
+  @@stdin_is_blocking = false
+  @@stdout_is_blocking = false
+  @@stderr_is_blocking = false
+
   # Defines the main routine run by normal Crystal programs:
   #
   # - Initializes the GC
@@ -41,6 +45,8 @@ module Crystal
   def self.main(&block)
     GC.init
 
+    remember_blocking_state
+
     status =
       begin
         yield
@@ -53,6 +59,9 @@ module Crystal
     ex.inspect_with_backtrace STDERR if ex
     STDOUT.flush
     STDERR.flush
+
+    restore_blocking_state
+
     status
   end
 
@@ -100,6 +109,20 @@ module Crystal
   # more details.
   def self.main_user_code(argc : Int32, argv : UInt8**)
     _crystal_main(argc, argv)
+  end
+
+  # :nodoc:
+  def self.remember_blocking_state
+    @@stdin_is_blocking = IO::FileDescriptor.fcntl(0, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    @@stdout_is_blocking = IO::FileDescriptor.fcntl(1, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    @@stderr_is_blocking = IO::FileDescriptor.fcntl(2, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  # :nodoc:
+  def self.restore_blocking_state
+    STDIN.blocking = @@stdin_is_blocking
+    STDOUT.blocking = @@stdout_is_blocking
+    STDERR.blocking = @@stderr_is_blocking
   end
 end
 
