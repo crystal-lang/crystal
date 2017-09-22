@@ -124,7 +124,7 @@ module Benchmark
       t1.stime - t0.stime,
       t1.cutime - t0.cutime,
       t1.cstime - t0.cstime,
-      (r1.ticks - r0.ticks).to_f / Time::Span::TicksPerSecond,
+      (r1 - r0).total_seconds,
       label)
   end
 
