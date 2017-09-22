@@ -123,6 +123,9 @@ module Crystal
     # Whether to show error trace
     property? show_error_trace = false
 
+    # Whether to link statically
+    property? static = false
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -174,6 +177,7 @@ module Crystal
       program.target_machine = target_machine
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
+      program.flags << "static" if static?
       program.flags.concat @flags
       program.wants_doc = wants_doc?
       program.color = color?
@@ -208,9 +212,9 @@ module Crystal
       parser.wants_doc = wants_doc?
       parser.parse
     rescue ex : InvalidByteSequenceError
-      stdout.print colorize("Error: ").red.bold
-      stdout.print colorize("file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ").bold
-      stdout.puts ex.message
+      stderr.print colorize("Error: ").red.bold
+      stderr.print colorize("file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ").bold
+      stderr.puts ex.message
       exit 1
     end
 
@@ -228,7 +232,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
+        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit
       end
 
       if @cross_compile
@@ -250,11 +254,24 @@ module Crystal
         cross_compile program, units, output_filename
       else
         result = codegen program, units, output_filename, output_dir
+
+        {% if flag?(:darwin) %}
+          run_dsymutil(output_filename) unless debug.none?
+        {% end %}
       end
 
       CacheDir.instance.cleanup if @cleanup
 
       result
+    end
+
+    private def run_dsymutil(filename)
+      dsymutil = Process.find_executable("dsymutil")
+      return unless dsymutil
+
+      @progress_tracker.stage("dsymutil") do
+        Process.run(dsymutil, ["--flat", filename])
+      end
     end
 
     private def cross_compile(program, units, output_filename)
@@ -289,7 +306,11 @@ module Crystal
           object_name = %("${@}")
         end
 
-        %(#{CC} #{object_name} -o '#{output_filename}' #{@link_flags} -rdynamic #{program.lib_flags})
+        link_flags = @link_flags || ""
+        link_flags += " -rdynamic"
+        link_flags += " -static" if static?
+
+        %(#{CC} #{object_name} -o '#{output_filename}' #{link_flags} #{program.lib_flags})
       end
     end
 
@@ -427,21 +448,18 @@ module Crystal
 
     protected def target_machine
       @target_machine ||= begin
-        triple = @target_triple || LLVM.default_target_triple
+        triple = @target_triple || Crystal::Config.default_target_triple
         TargetMachine.create(triple, @mcpu || "", @mattr || "", @release)
       end
     rescue ex : ArgumentError
-      stdout.print colorize("Error: ").red.bold
-      stdout.print "llc: "
-      stdout.puts ex.message
+      stderr.print colorize("Error: ").red.bold
+      stderr.print "llc: "
+      stderr.puts ex.message
       exit 1
     end
 
     protected def optimize(llvm_mod)
       fun_pass_manager = llvm_mod.new_function_pass_manager
-      {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
-        fun_pass_manager.add_target_data target_machine.data_layout
-      {% end %}
       pass_manager_builder.populate fun_pass_manager
       fun_pass_manager.run llvm_mod
       module_pass_manager.run llvm_mod
@@ -452,9 +470,6 @@ module Crystal
     private def module_pass_manager
       @module_pass_manager ||= begin
         mod_pass_manager = LLVM::ModulePassManager.new
-        {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
-          mod_pass_manager.add_target_data target_machine.data_layout
-        {% end %}
         pass_manager_builder.populate mod_pass_manager
         mod_pass_manager
       end
@@ -546,54 +561,29 @@ module Crystal
         can_reuse_previous_compilation =
           !compiler.emit && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
 
-        {% if LibLLVM::IS_35 %}
-          # In LLVM 3.5 we can't write a bitcode to memory,
-          # so instead we write it to another file
-          bc_name_new = self.bc_name_new
-          llvm_mod.write_bitcode_to_file(bc_name_new)
+        memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
 
-          if can_reuse_previous_compilation
-            if FileUtils.cmp(bc_name, bc_name_new)
-              # If the user cancelled a previous compilation it might be that
-              # the .o file is empty
-              if File.size(object_name) > 0
-                File.delete bc_name_new
-                must_compile = false
-              end
-            end
-          end
+        if can_reuse_previous_compilation
+          memory_io = IO::Memory.new(memory_buffer.to_slice)
+          changed = File.open(bc_name) { |bc_file| !FileUtils.cmp(bc_file, memory_io) }
 
-          if must_compile
-            # Create/overwrite the .bc file (for next compilations)
-            File.rename(bc_name_new, bc_name)
-            compiler.optimize llvm_mod if compiler.release?
-            compiler.target_machine.emit_obj_to_file llvm_mod, object_name
-          end
-        {% else %}
-          memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
-
-          if can_reuse_previous_compilation
-            memory_io = IO::Memory.new(memory_buffer.to_slice)
-            changed = File.open(bc_name) { |bc_file| !FileUtils.cmp(bc_file, memory_io) }
-
-            # If the user cancelled a previous compilation
-            # it might be that the .o file is empty
-            if !changed && File.size(object_name) > 0
-              must_compile = false
-              memory_buffer.dispose
-              memory_buffer = nil
-            else
-              # We need to compile, so we'll write the memory buffer to file
-            end
-          end
-
-          # If there's a memory buffer, it means we must create a .o from it
-          if memory_buffer
-            # Create the .bc file (for next compilations)
-            File.write(bc_name, memory_buffer.to_slice)
+          # If the user cancelled a previous compilation
+          # it might be that the .o file is empty
+          if !changed && File.size(object_name) > 0
+            must_compile = false
             memory_buffer.dispose
+            memory_buffer = nil
+          else
+            # We need to compile, so we'll write the memory buffer to file
           end
-        {% end %}
+        end
+
+        # If there's a memory buffer, it means we must create a .o from it
+        if memory_buffer
+          # Create the .bc file (for next compilations)
+          File.write(bc_name, memory_buffer.to_slice)
+          memory_buffer.dispose
+        end
 
         if must_compile
           compiler.optimize llvm_mod if compiler.release?

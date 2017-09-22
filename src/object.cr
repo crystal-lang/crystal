@@ -58,13 +58,33 @@ class Object
     nil
   end
 
-  # Generates an `Int` hash value for this object.
+  # Appends this object's value to *hasher*, and returns the modified *hasher*.
+  #
+  # Usually the macro `def_hash` can be used to generate this method.
+  # Otherwise, invoke `hash(hasher)` on each object's instance variables to
+  # accumulate the result:
+  #
+  # ```
+  # def hash(hasher)
+  #   hasher = @some_ivar.hash(hasher)
+  #   hasher = @some_other_ivar.hash(hasher)
+  #   hasher
+  # end
+  # ```
+  abstract def hash(hasher)
+
+  # Generates an `UInt64` hash value for this object.
   #
   # This method must have the property that `a == b` implies `a.hash == b.hash`.
   #
   # The hash value is used along with `==` by the `Hash` class to determine if two objects
   # reference the same hash key.
-  abstract def hash
+  #
+  # Subclasses must not override this method. Instead, they must define `hash(hasher)`,
+  # though usually the macro `def_hash` can be used to generate this method.
+  def hash
+    hash(Crystal::Hasher.new).result
+  end
 
   # Returns a string representation of this object.
   #
@@ -1078,28 +1098,23 @@ class Object
     {% end %}
   end
 
-  # Defines a `hash` method computed from the given fields.
+  # Defines a `hash(hasher)` that will append a hash value for the given fields.
   #
   # ```
   # class Person
   #   def initialize(@name, @age)
   #   end
   #
-  #   # Define a hash method based on @name and @age
+  #   # Define a hash(hasher) method based on @name and @age
   #   def_hash @name, @age
   # end
   # ```
   macro def_hash(*fields)
-    def hash
-      {% if fields.size == 1 %}
-        {{fields[0]}}.hash
-      {% else %}
-        hash = 0
-        {% for field in fields %}
-          hash = 31 * hash + {{field}}.hash
-        {% end %}
-        hash
+    def hash(hasher)
+      {% for field in fields %}
+        hasher = {{field}}.hash(hasher)
       {% end %}
+      hasher
     end
   end
 

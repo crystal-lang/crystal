@@ -21,11 +21,12 @@ def Array.from_yaml(string_or_io)
 end
 
 def Nil.new(pull : YAML::PullParser)
+  location = pull.location
   value = pull.read_scalar
   if value.empty?
     nil
   else
-    raise YAML::ParseException.new("Expected nil, not #{value}", 0, 0)
+    raise YAML::ParseException.new("Expected nil, not #{value}", *location)
   end
 end
 
@@ -35,10 +36,11 @@ end
 
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   def {{type.id}}.new(pull : YAML::PullParser)
+    location = pull.location
     begin
       {{type.id}}.new(pull.read_scalar)
     rescue ex
-      raise YAML::ParseException.new(ex.message.not_nil!, 0, 0)
+      raise YAML::ParseException.new(ex.message.not_nil!, *location)
     end
   end
 {% end %}
@@ -88,7 +90,7 @@ def Hash.new(pull : YAML::PullParser)
 end
 
 def Tuple.new(pull : YAML::PullParser)
-  {% if true %}
+  {% begin %}
     pull.read_sequence_start
     value = Tuple.new(
       {% for i in 0...T.size %}
@@ -106,6 +108,8 @@ def NamedTuple.new(pull : YAML::PullParser)
       %var{key.id} = nil
     {% end %}
 
+    location = pull.location
+
     pull.read_mapping_start
     while pull.kind != YAML::EventKind::MAPPING_END
       key = pull.read_scalar
@@ -122,7 +126,7 @@ def NamedTuple.new(pull : YAML::PullParser)
 
     {% for key in T.keys %}
       if %var{key.id}.nil?
-        raise YAML::ParseException.new("Missing yaml attribute: {{key}}", 0, 0)
+        raise YAML::ParseException.new("Missing yaml attribute: {{key}}", *location)
       end
     {% end %}
 
@@ -144,6 +148,7 @@ def Enum.new(pull : YAML::PullParser)
 end
 
 def Union.new(pull : YAML::PullParser)
+  location = pull.location
   string = pull.read_raw
   {% for type in T %}
     begin
@@ -152,7 +157,7 @@ def Union.new(pull : YAML::PullParser)
       # Ignore
     end
   {% end %}
-  raise YAML::ParseException.new("Couldn't parse #{self} from #{string}", 0, 0)
+  raise YAML::ParseException.new("Couldn't parse #{self} from #{string}", *location)
 end
 
 def Time.new(pull : YAML::PullParser)

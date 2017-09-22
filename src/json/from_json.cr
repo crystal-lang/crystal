@@ -133,7 +133,7 @@ def Hash.new(pull : JSON::PullParser)
 end
 
 def Tuple.new(pull : JSON::PullParser)
-  {% if true %}
+  {% begin %}
     pull.read_begin_array
     value = Tuple.new(
       {% for i in 0...T.size %}
@@ -151,6 +151,8 @@ def NamedTuple.new(pull : JSON::PullParser)
       %var{key.id} = nil
     {% end %}
 
+    location = pull.location
+
     pull.read_object do |key|
       case key
         {% for key, type in T %}
@@ -164,7 +166,7 @@ def NamedTuple.new(pull : JSON::PullParser)
 
     {% for key in T.keys %}
       if %var{key.id}.nil?
-        raise JSON::ParseException.new("Missing json attribute: {{key}}", 0, 0)
+        raise JSON::ParseException.new("Missing json attribute: {{key}}", *location)
       end
     {% end %}
 
@@ -188,6 +190,8 @@ def Enum.new(pull : JSON::PullParser)
 end
 
 def Union.new(pull : JSON::PullParser)
+  location = pull.location
+
   # Optimization: use fast path for primitive types
   {% begin %}
     # Here we store types that are not primitive types
@@ -223,7 +227,7 @@ def Union.new(pull : JSON::PullParser)
       # Ignore
     end
   {% end %}
-  raise JSON::ParseException.new("Couldn't parse #{self} from #{string}", 0, 0)
+  raise JSON::ParseException.new("Couldn't parse #{self} from #{string}", *location)
 end
 
 def Time.new(pull : JSON::PullParser)

@@ -39,6 +39,10 @@ class Exception
     io << message
   end
 
+  def inspect(io : IO)
+    io << "#<" << self.class.name << ":" << message << ">"
+  end
+
   def inspect_with_backtrace
     String.build do |io|
       inspect_with_backtrace io
@@ -48,6 +52,7 @@ class Exception
   def inspect_with_backtrace(io : IO)
     io << message << " (" << self.class << ")\n"
     backtrace?.try &.each do |frame|
+      io.print "  from "
       io.puts frame
     end
     io.flush

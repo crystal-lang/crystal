@@ -141,6 +141,16 @@ module Crystal
     end
   end
 
+  class AliasType
+    def lookup_path_item(name : String, lookup_in_namespace, include_private, location)
+      if aliased_type = aliased_type?
+        aliased_type.lookup_path_item(name, lookup_in_namespace, include_private, location)
+      else
+        super
+      end
+    end
+  end
+
   class TypeDefType
     delegate lookup_path, to: typedef
   end

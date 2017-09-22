@@ -27,29 +27,42 @@ describe "Tuple" do
     a[i].should eq(1)
     i = 1
     a[i].should eq(2.5)
+    i = -1
+    a[i].should eq(2.5)
+    i = -2
+    a[i].should eq(1)
   end
 
   it "does [] raises index out of bounds" do
     a = {1, 2.5}
     i = 2
     expect_raises(IndexError) { a[i] }
-    i = -1
+    i = -3
     expect_raises(IndexError) { a[i] }
   end
 
   it "does []?" do
     a = {1, 2}
-    a[1]?.should eq(2)
-    a[2]?.should be_nil
+    i = 1
+    a[i]?.should eq(2)
+    i = -1
+    a[i]?.should eq(2)
+    i = 2
+    a[i]?.should be_nil
+    i = -3
+    a[i]?.should be_nil
   end
 
   it "does at" do
     a = {1, 2}
     a.at(1).should eq(2)
+    a.at(-1).should eq(2)
 
     expect_raises(IndexError) { a.at(2) }
+    expect_raises(IndexError) { a.at(-3) }
 
     a.at(2) { 3 }.should eq(3)
+    a.at(-3) { 3 }.should eq(3)
   end
 
   describe "values_at" do
@@ -270,7 +283,7 @@ describe "Tuple" do
 
   it "does types" do
     tuple = {1, 'a', "hello"}
-    tuple.types.to_s.should eq("Tuple(Int32, Char, String)")
+    tuple.class.types.to_s.should eq("{Int32, Char, String}")
   end
 
   it "does ===" do

@@ -61,4 +61,6 @@ module PartialComparable(T)
       false
     end
   end
+
+  abstract def <=>(other : T)
 end

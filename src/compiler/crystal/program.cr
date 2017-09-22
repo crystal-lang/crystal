@@ -258,7 +258,7 @@ module Crystal
 
     setter target_machine : LLVM::TargetMachine?
 
-    getter(target_machine) { TargetMachine.create(LLVM.default_target_triple) }
+    getter(target_machine) { TargetMachine.create(Crystal::Config.default_target_triple) }
 
     # Returns the `Type` for `Array(type)`
     def array_of(type)

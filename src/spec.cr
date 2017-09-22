@@ -83,8 +83,8 @@ OptionParser.parse! do |opts|
     if location =~ /\A(.+?)\:(\d+)\Z/
       Spec.add_location $1, $2.to_i
     else
-      puts "location #{location} must be file:line"
-      exit
+      STDERR.puts "location #{location} must be file:line"
+      exit 1
     end
   end
   opts.on("--junit_output OUTPUT_DIR", "generate JUnit XML output") do |output_dir|
@@ -106,7 +106,7 @@ OptionParser.parse! do |opts|
 end
 
 unless ARGV.empty?
-  puts "Error: unknown argument '#{ARGV.first}'"
+  STDERR.puts "Error: unknown argument '#{ARGV.first}'"
   exit 1
 end
 

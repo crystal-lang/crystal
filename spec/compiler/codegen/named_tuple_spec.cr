@@ -310,4 +310,27 @@ describe "Code gen: named tuple" do
       x = {a: 0, b: z}
       ))
   end
+
+  it "accesses T and creates instance from it" do
+    run("
+      struct NamedTuple
+        def named_args
+          T
+        end
+      end
+
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      t = {a: Foo.new(1)}
+      f = t.named_args[:a].new(2)
+      f.x
+      ").to_i.should eq(2)
+  end
 end

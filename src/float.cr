@@ -86,6 +86,11 @@ struct Float
     end
   end
 
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.float(self)
+  end
+
   # Writes this float to the given *io* in the given *format*.
   # See also: `IO#write_bytes`.
   def to_io(io : IO, format : IO::ByteFormat)
@@ -148,8 +153,9 @@ struct Float32
     Printer.print(self, io)
   end
 
-  def hash
-    unsafe_as(Int32)
+  def inspect(io)
+    to_s(io)
+    io << "_f32"
   end
 
   def clone
@@ -204,10 +210,6 @@ struct Float64
 
   def to_s(io : IO)
     Printer.print(self, io)
-  end
-
-  def hash
-    unsafe_as(Int64)
   end
 
   def clone

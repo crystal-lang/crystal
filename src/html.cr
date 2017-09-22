@@ -1,28 +1,15 @@
-# Handles encoding and decoding of HTML entities.
+# Provides HTML escaping and unescaping methods.
 module HTML
-  SUBSTITUTIONS = {
-    '!'      => "&#33;",
-    '"'      => "&quot;",
-    '$'      => "&#36;",
-    '%'      => "&#37;",
-    '&'      => "&amp;",
-    '\''     => "&#39;",
-    '('      => "&#40;",
-    ')'      => "&#41;",
-    '='      => "&#61;",
-    '>'      => "&gt;",
-    '<'      => "&lt;",
-    '+'      => "&#43;",
-    '@'      => "&#64;",
-    '['      => "&#91;",
-    ']'      => "&#93;",
-    '`'      => "&#96;",
-    '{'      => "&#123;",
-    '}'      => "&#125;",
-    '\u{a0}' => "&nbsp;",
+  private SUBSTITUTIONS = {
+    '&'  => "&amp;",
+    '<'  => "&lt;",
+    '>'  => "&gt;",
+    '"'  => "&quot;",
+    '\'' => "&#39;",
   }
 
-  # Encodes a string with HTML entity substitutions.
+  # Escapes special characters in HTML, namely
+  # `&`, `<`, `>`, `"` and `'`.
   #
   # ```
   # require "html"
@@ -33,25 +20,29 @@ module HTML
     string.gsub(SUBSTITUTIONS)
   end
 
-  # Encodes a string to HTML, but writes to the `IO` instance provided.
+  # Same as `escape(string)` but ouputs the result to
+  # the given *io*.
   #
   # ```
   # io = IO::Memory.new
   # HTML.escape("Crystal & You", io) # => nil
   # io.to_s                          # => "Crystal &amp; You"
   # ```
-  def self.escape(string : String, io : IO)
+  def self.escape(string : String, io : IO) : Nil
     string.each_char do |char|
       io << SUBSTITUTIONS.fetch(char, char)
     end
   end
 
-  # Decodes a string that contains HTML entities.
+  # Returns a string where some named and all numeric character references
+  # (e.g. &gt;, &#62;, &x3e;) in *string* are replaced with the corresponding
+  # unicode characters. Only these named entities are replaced:
+  # apos, amp, quot, gt, lt and nbsp.
   #
   # ```
   # HTML.unescape("Crystal &amp; You") # => "Crystal & You"
   # ```
-  def self.unescape(string : String)
+  def self.unescape(string : String) : String
     return string unless string.includes? '&'
 
     string.gsub(/&(apos|amp|quot|gt|lt|nbsp|\#[0-9]+|\#[xX][0-9A-Fa-f]+);/) do |string, _match|

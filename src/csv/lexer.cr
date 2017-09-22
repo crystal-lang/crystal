@@ -1,4 +1,4 @@
-require "./csv"
+require "csv"
 
 # A CSV lexer lets you consume a CSV token by token. You can use this to efficiently
 # parse a CSV without the need to allocate intermediate arrays.

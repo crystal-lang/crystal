@@ -84,23 +84,21 @@ class Crystal::Command
       exit(result == source ? 0 : 1) if check_files
 
       print result
-      STDOUT.flush
     rescue ex : InvalidByteSequenceError
-      print "Error: ".colorize.toggle(@color).red.bold
-      print "source is not a valid Crystal source file: ".colorize.toggle(@color).bold
-      puts ex.message
+      STDERR.print "Error: ".colorize.toggle(@color).red.bold
+      STDERR.print "source is not a valid Crystal source file: ".colorize.toggle(@color).bold
+      STDERR.puts ex.message
       exit 1
     rescue ex : Crystal::SyntaxException
       if @format == "json"
-        puts ex.to_json
+        STDERR.puts ex.to_json
       else
-        puts ex
+        STDERR.puts ex
       end
       exit 1
     rescue ex
       couldnt_format "STDIN"
       STDERR.puts
-      STDERR.flush
       exit 1
     end
   end
@@ -114,21 +112,20 @@ class Crystal::Command
 
       File.write(filename, result)
     rescue ex : InvalidByteSequenceError
-      print "Error: ".colorize.toggle(@color).red.bold
-      print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.toggle(@color).bold
-      puts ex.message
+      STDERR.print "Error: ".colorize.toggle(@color).red.bold
+      STDERR.print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.toggle(@color).bold
+      STDERR.puts ex.message
       exit 1
     rescue ex : Crystal::SyntaxException
       if @format == "json"
-        puts ex.to_json
+        STDERR.puts ex.to_json
       else
-        puts ex
+        STDERR.puts ex
       end
       exit 1
     rescue ex
       couldnt_format "'#{filename}'"
       STDERR.puts
-      STDERR.flush
       exit 1
     end
   end
@@ -168,15 +165,15 @@ class Crystal::Command
       if check_files
         check_files << FormatResult.new(filename, FormatResult::Code::INVALID_BYTE_SEQUENCE)
       else
-        print "Error: ".colorize.toggle(@color).red.bold
-        print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.toggle(@color).bold
-        puts ex.message
+        STDERR.print "Error: ".colorize.toggle(@color).red.bold
+        STDERR.print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.toggle(@color).bold
+        STDERR.puts ex.message
       end
     rescue ex : Crystal::SyntaxException
       if check_files
         check_files << FormatResult.new(filename, FormatResult::Code::SYNTAX)
       else
-        STDOUT << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
+        STDERR << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
       end
     rescue ex
       if check_files
@@ -184,7 +181,6 @@ class Crystal::Command
       else
         couldnt_format "'#{filename}'"
         STDERR.puts
-        STDERR.flush
       end
     end
   end

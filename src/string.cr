@@ -1590,6 +1590,11 @@ class String
   # ```
   def tr(from : String, to : String)
     return delete(from) if to.empty?
+
+    if from.bytesize == 1
+      return gsub(from.unsafe_byte_at(0).unsafe_chr, to)
+    end
+
     multi = nil
     table = StaticArray(Int32, 256).new(-1)
     reader = Char::Reader.new(to)
@@ -2005,10 +2010,31 @@ class String
   # "hello world".gsub('o', 'a') # => "hella warld"
   # ```
   def gsub(char : Char, replacement)
+    if replacement.is_a?(String) && replacement.bytesize == 1
+      return gsub(char, replacement.unsafe_byte_at(0).unsafe_chr)
+    end
+
     if includes?(char)
+      if replacement.is_a?(Char) && char.ascii? && replacement.ascii?
+        return gsub_ascii_char(char, replacement)
+      end
+
       gsub { |my_char| char == my_char ? replacement : my_char }
     else
       self
+    end
+  end
+
+  private def gsub_ascii_char(char, replacement)
+    String.new(bytesize) do |buffer|
+      each_char_with_index do |my_char, i|
+        buffer[i] = if my_char == char
+                      replacement.ord.to_u8
+                    else
+                      unsafe_byte_at(i)
+                    end
+      end
+      {bytesize, bytesize}
     end
   end
 
@@ -2094,7 +2120,11 @@ class String
   # "hello yellow".gsub("ll", "dd") # => "heddo yeddow"
   # ```
   def gsub(string : String, replacement)
-    gsub(string) { replacement }
+    if string.bytesize == 1
+      gsub(string.unsafe_byte_at(0).unsafe_chr, replacement)
+    else
+      gsub(string) { replacement }
+    end
   end
 
   # Returns a `String` where all occurrences of the given *string* are replaced
@@ -2827,16 +2857,46 @@ class String
     nil
   end
 
-  def byte_index(string : String, offset = 0)
+  def byte_index(search : String, offset = 0)
     offset += bytesize if offset < 0
-    return nil if offset < 0
+    return if offset < 0
 
-    end_pos = bytesize - string.bytesize
+    return bytesize < offset ? nil : offset if search.empty?
 
-    offset.upto(end_pos) do |pos|
-      if (to_unsafe + pos).memcmp(string.to_unsafe, string.bytesize) == 0
-        return pos
+    # Rabin-Karp algorithm
+    # https://en.wikipedia.org/wiki/Rabin%E2%80%93Karp_algorithm
+
+    # calculate a rolling hash of search text (needle)
+    search_hash = 0u32
+    search.each_byte do |b|
+      search_hash = search_hash * PRIME_RK + b
+    end
+    pow = PRIME_RK ** search.bytesize
+
+    # calculate a rolling hash of this text (haystack)
+    pointer = head_pointer = to_unsafe + offset
+    hash_end_pointer = pointer + search.bytesize
+    end_pointer = to_unsafe + bytesize
+    hash = 0u32
+    return if hash_end_pointer > end_pointer
+    while pointer < hash_end_pointer
+      hash = hash * PRIME_RK + pointer.value
+      pointer += 1
+    end
+
+    while true
+      # check hash equality and real string equality
+      if hash == search_hash && head_pointer.memcmp(search.to_unsafe, search.bytesize) == 0
+        return offset
       end
+
+      return if pointer >= end_pointer
+
+      # update a rolling hash of this text (haystack)
+      hash = hash * PRIME_RK + pointer.value - pow * head_pointer.value
+      pointer += 1
+      head_pointer += 1
+      offset += 1
     end
 
     nil
@@ -3899,15 +3959,9 @@ class String
     sprintf self, other
   end
 
-  # Returns a hash based on this string’s size and content.
-  #
-  # See also: `Object#hash`.
-  def hash
-    h = 0
-    each_byte do |c|
-      h = 31 * h + c
-    end
-    h
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.string(self)
   end
 
   # Returns the number of unicode codepoints in this string.

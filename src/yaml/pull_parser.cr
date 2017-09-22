@@ -41,7 +41,7 @@ class YAML::PullParser
 
   def value
     ptr = @event.data.scalar.value
-    ptr ? String.new(ptr) : nil
+    ptr ? String.new(ptr, @event.data.scalar.length) : nil
   end
 
   def anchor
@@ -77,12 +77,12 @@ class YAML::PullParser
     LibYAML.yaml_event_delete(pointerof(@event))
     LibYAML.yaml_parser_parse(@parser, pointerof(@event))
     if problem = problem?
+      msg = String.new(problem)
+      location = {problem_line_number, problem_column_number}
       if context = context?
-        msg = "#{String.new(problem)} at line #{problem_line_number}, column #{problem_column_number}, #{String.new(context)} at line #{context_line_number}, column #{context_column_number}"
-      else
-        msg = "#{String.new(problem)} at line #{problem_line_number}, column #{problem_column_number}"
+        context_info = {String.new(context), context_line_number, context_column_number}
       end
-      raise msg
+      raise msg, *location, context_info
     end
     kind
   end
@@ -242,21 +242,25 @@ class YAML::PullParser
     end
   end
 
+  # Note: YAML starts counting from 0, we want to count from 1
+
+  def location
+    {line_number, column_number}
+  end
+
   def line_number
-    @event.start_mark.line
+    @event.start_mark.line + 1
   end
 
   def column_number
-    @event.start_mark.column
+    @event.start_mark.column + 1
   end
 
-  def problem_line_number
-    # YAML starts counting from 0, we want to count from 1
+  private def problem_line_number
     (problem? ? problem_mark?.line : line_number) + 1
   end
 
-  def problem_column_number
-    # YAML starts counting from 0, we want to count from 1
+  private def problem_column_number
     (problem? ? problem_mark?.column : column_number) + 1
   end
 
@@ -306,7 +310,7 @@ class YAML::PullParser
     anchor ? String.new(anchor) : nil
   end
 
-  def raise(msg : String)
-    ::raise ParseException.new(msg, problem_line_number, problem_column_number)
+  def raise(msg : String, line_number = self.line_number, column_number = self.column_number, context_info = nil)
+    ::raise ParseException.new(msg, line_number, column_number, context_info)
   end
 end

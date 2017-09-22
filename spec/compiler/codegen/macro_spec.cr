@@ -1082,7 +1082,7 @@ describe "Code gen: macro" do
 
       bar
       ),
-      "dynamic constant assignment"
+      "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
   end
 
   it "finds macro from virtual type" do
@@ -1689,5 +1689,13 @@ describe "Code gen: macro" do
         1
       end
     ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(7)
+  end
+
+  it "resolves alias in macro" do
+    run(%(
+      alias Foo = Int32 | String
+
+      {{ Foo.union_types.size }}
+      )).to_i.should eq(2)
   end
 end

@@ -989,13 +989,13 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  describe "skip macro directive" do
+  describe "skip_file macro directive" do
     it "skips expanding the rest of the current file" do
       res = semantic(%(
         class A
         end
 
-        {% skip() %}
+        {% skip_file() %}
 
         class B
         end
@@ -1012,7 +1012,7 @@ describe "Semantic: macro" do
 
         {% if true %}
           class C; end
-          {% skip() %}
+          {% skip_file() %}
           class D; end
         {% end %}
 
@@ -1083,5 +1083,90 @@ describe "Semantic: macro" do
 
       Foo.new.main
       )) { tuple_of [int32, char] }
+  end
+
+  it "finds macro in included module at class level (#4639)" do
+    assert_type(%(
+      module Moo
+        macro foo
+          def self.bar
+            2
+          end
+        end
+      end
+
+      class Foo
+        include Moo
+
+        foo
+      end
+
+      Foo.bar
+      ), inject_primitives: false) { int32 }
+  end
+
+  it "finds macro in module in Object" do
+    assert_type(%(
+      class Object
+        macro foo
+          def self.bar
+            2
+          end
+        end
+      end
+
+      module Moo
+        foo
+      end
+
+      Moo.bar
+      ), inject_primitives: false) { int32 }
+  end
+
+  it "finds metaclass instance of instance method (#4739)" do
+    assert_type(%(
+      class Parent
+        macro foo
+          def self.bar
+            1
+          end
+        end
+      end
+
+      class Child < Parent
+        def foo
+        end
+      end
+
+      class GrandChild < Child
+        foo
+      end
+
+      GrandChild.bar
+    )) { int32 }
+  end
+
+  it "finds metaclass instance of instance method (#4639)" do
+    assert_type(%(
+      module Include
+        macro foo
+          def foo
+            1
+          end
+        end
+      end
+
+      class Parent
+        include Include
+
+        foo
+      end
+
+      class Foo < Parent
+        foo
+      end
+
+      Foo.new.foo
+    )) { int32 }
   end
 end
