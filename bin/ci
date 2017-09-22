@@ -170,6 +170,7 @@ with_build_env() {
     "$ARCH_CMD" /bin/bash -c "'$command'"
 
   on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
+    CRYSTAL_FLAGS="\"--link-flags -L/usr/local/opt/openssl/lib\"" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/bash -c "'$command'"
 
