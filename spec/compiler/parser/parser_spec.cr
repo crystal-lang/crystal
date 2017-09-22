@@ -307,6 +307,7 @@ describe("Parser") do
   it_parses "a.foo(&block)", Call.new("a".call, "foo", block_arg: "block".call)
 
   it_parses "foo(&.block)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
+  it_parses "bar.foo(&.block)", Call.new("bar".call, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
   it_parses "foo &.block", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
   it_parses "foo &./(1)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "/", 1.int32)))
   it_parses "foo &.%(1)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "%", 1.int32)))
@@ -359,20 +360,19 @@ describe("Parser") do
 
   it_parses "foo(a: 1, &block)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: 1, &block", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
-  it_parses "foo a: b(1) do\nend", Call.new(nil, "foo", named_args: [NamedArgument.new("a", Call.new(nil, "b", 1.int32))], block: Block.new)
+  it_parses "foo(a: b(1)) do\nend", Call.new(nil, "foo", named_args: [NamedArgument.new("a", Call.new(nil, "b", 1.int32))], block: Block.new)
 
-  it_parses "Foo.bar x.y do\nend", Call.new("Foo".path, "bar", args: [Call.new("x".call, "y")] of ASTNode, block: Block.new)
+  it_parses "Foo.bar(x.y) do\nend", Call.new("Foo".path, "bar", args: [Call.new("x".call, "y")] of ASTNode, block: Block.new)
 
-  it_parses "x = 1; foo x do\nend", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", ["x".var] of ASTNode, Block.new)]
-  it_parses "x = 1; foo x { }", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
-  it_parses "x = 1; foo x {\n}", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
-  it_parses "foo x do\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new)
-  it_parses "foo x, y do\nend", Call.new(nil, "foo", ["x".call, "y".call] of ASTNode, Block.new)
+  it_parses "x = 1; foo(x) do\nend", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", ["x".var] of ASTNode, Block.new)]
+  it_parses "x = 1; foo(x { })", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
+  it_parses "x = 1; foo(x {\n})", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
+  it_parses "foo(x) do\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new)
+  it_parses "foo(x, y) do\nend", Call.new(nil, "foo", ["x".call, "y".call] of ASTNode, Block.new)
   it_parses "1.x; foo do\nend", [Call.new(1.int32, "x"), Call.new(nil, "foo", block: Block.new)] of ASTNode
-  it_parses "x = 1; foo.bar x do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
+  it_parses "x = 1; foo.bar(x) do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
 
   it_parses "foo do\n//\nend", Call.new(nil, "foo", [] of ASTNode, Block.new(body: regex("")))
-  it_parses "foo x do\n//\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new(body: regex("")))
   it_parses "foo(x) do\n//\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new(body: regex("")))
 
   it_parses "foo !false", Call.new(nil, "foo", [Not.new(false.bool)] of ASTNode)
@@ -515,7 +515,7 @@ describe("Parser") do
   it_parses "foo { |a| 1 }", Call.new(nil, "foo", block: Block.new(["a".var], 1.int32))
   it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
   it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", block: Block.new(body: 1.int32))
-  it_parses "a b() {}", Call.new(nil, "a", Call.new(nil, "b", block: Block.new))
+  it_parses "a(b() {})", Call.new(nil, "a", Call.new(nil, "b", block: Block.new))
 
   it_parses "foo { |a, (b, c), (d, e)| a; b; c; d; e }", Call.new(nil, "foo",
     block: Block.new(["a".var, "__arg0".var, "__arg1".var],
@@ -823,7 +823,7 @@ describe("Parser") do
   it_parses "foo.nil?(  )", IsA.new("foo".call, Path.global("Nil"), nil_check: true)
 
   it_parses "foo &.nil?", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), Path.global("Nil"), nil_check: true)))
-  it_parses "foo &.baz.qux do\nend", Call.new(nil, "foo",
+  it_parses "foo(&.baz.qux do\nend)", Call.new(nil, "foo",
     block: Block.new(["__arg0".var],
       Call.new(Call.new("__arg0".var, "baz"), "qux", block: Block.new)
     )
@@ -1258,7 +1258,7 @@ describe("Parser") do
   assert_syntax_error %q(asm("nop" :::: "#{volatile}")), "interpolation not allowed in asm option"
 
   it_parses "foo begin\nbar do\nend\nend", Call.new(nil, "foo", Expressions.new([Call.new(nil, "bar", block: Block.new)] of ASTNode))
-  it_parses "foo 1.bar do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)
+  it_parses "foo(1.bar) do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)
   it_parses "return 1.bar do\nend", Return.new(Call.new(1.int32, "bar", block: Block.new))
 
   %w(begin nil true false yield with abstract def macro require case if unless include extend class struct module enum while
@@ -1300,7 +1300,7 @@ describe("Parser") do
 
   it_parses "1 if /x/", If.new(RegexLiteral.new("x".string), 1.int32)
 
-  it_parses "foo bar.baz(1) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
+  it_parses "foo(bar.baz(1)) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
 
   it_parses "1 rescue 2 if 3", If.new(3.int32, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
   it_parses "1 ensure 2 if 3", If.new(3.int32, ExceptionHandler.new(1.int32, ensure: 2.int32))

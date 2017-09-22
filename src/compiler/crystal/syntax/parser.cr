@@ -36,29 +36,6 @@ module Crystal
       @wants_doc = false
       @doc_enabled = false
       @no_type_declaration = 0
-
-      # This flags tells the parser where it has to consider a "do"
-      # as belonging to the current parsed call. For example when writing
-      #
-      # ```
-      # foo(bar) do
-      # end
-      # ```
-      #
-      # this flag will be set to false for `foo`, and when parsing
-      # `foo`'s arguments it will be set to true. When `bar` is parsed
-      # the `do` won't be considered as part of `bar`, and eventually
-      # be considered as part of `foo`.
-      #
-      # If `foo` is written with parentheses, for example:
-      #
-      # ```
-      # foo(bar do
-      # end)
-      # ```
-      #
-      # then this flag is set to `true` when parsing `foo`'s arguments.
-      @stop_on_do = false
       @assigned_vars = [] of String
     end
 
@@ -78,10 +55,6 @@ module Crystal
     end
 
     def parse_expressions
-      preserve_stop_on_do { parse_expressions_internal }
-    end
-
-    def parse_expressions_internal
       if end_token?
         return Nop.new
       end
@@ -672,7 +645,8 @@ module Crystal
               atomic = OpAssign.new(call, method, value).at(location)
               next
             else
-              call_args = preserve_stop_on_do { space_consumed ? parse_call_args_space_consumed : parse_call_args }
+              call_args = space_consumed ? parse_call_args_space_consumed : parse_call_args
+
               if call_args
                 args = call_args.args
                 block = call_args.block
@@ -683,7 +657,8 @@ module Crystal
               end
             end
 
-            block = parse_block(block, stop_on_do: @stop_on_do)
+            block = parse_block(call_args)
+
             if block || block_arg
               atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args, name_column_number: name_column_number
             else
@@ -707,7 +682,7 @@ module Crystal
 
           column_number = @token.column_number
           next_token_skip_space_or_newline
-          call_args = preserve_stop_on_do { parse_call_args_space_consumed check_plus_and_minus: false, allow_curly: true, end_token: :"]" }
+          call_args = parse_call_args_space_consumed check_plus_and_minus: false, allow_curly: true, end_token: :"]"
           skip_space_or_newline
           check :"]"
           @wants_regex = false
@@ -1416,9 +1391,6 @@ module Crystal
             call.args << exp
           end
         else
-          # At this point we want to attach the "do" to the next call
-          old_stop_on_do = @stop_on_do
-          @stop_on_do = false
           call = parse_var_or_call(force_call: true).at(location)
 
           if call.is_a?(Call)
@@ -1454,8 +1426,6 @@ module Crystal
               call.args << exp
             end
           end
-
-          @stop_on_do = old_stop_on_do
         end
 
         block = Block.new([Var.new(block_arg_name)], call).at(location)
@@ -1472,7 +1442,7 @@ module Crystal
         skip_space
       end
 
-      CallArgs.new args, block, block_arg, named_args, false, end_location, has_parentheses: check_paren
+      CallArgs.new(args, block, block_arg, named_args, end_location, has_parentheses: check_paren)
     end
 
     def parse_class_def(is_abstract = false, is_struct = false, doc = nil)
@@ -1663,7 +1633,7 @@ module Crystal
       elsif @token.type == :"{"
         next_token_skip_statement_end
         check_not_pipe_before_proc_literal_body
-        body = preserve_stop_on_do { parse_expressions }
+        body = parse_expressions
         end_location = token_end_location
         check :"}"
       else
@@ -1878,7 +1848,7 @@ module Crystal
           line_number = @token.line_number
           delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
-          exp = preserve_stop_on_do { parse_expression }
+          exp = parse_expression
 
           if exp.is_a?(StringLiteral)
             pieces << Piece.new(exp.value, line_number)
@@ -3054,10 +3024,6 @@ module Crystal
       @doc_enabled = false
       @def_nest += 1
 
-      # At this point we want to attach the "do" to calls inside the def,
-      # not to calls that might have this def as a macro argument.
-      @stop_on_do = false
-
       next_token
 
       case current_char
@@ -3666,7 +3632,7 @@ module Crystal
         @calls_previous_def = true
       end
 
-      call_args = preserve_stop_on_do(@stop_on_do) { parse_call_args stop_on_do_after_space: @stop_on_do }
+      call_args = parse_call_args
 
       if call_args
         args = call_args.args
@@ -3678,31 +3644,7 @@ module Crystal
         has_parentheses = false
       end
 
-      if call_args && call_args.stopped_on_do_after_space
-        # This is the case when we have:
-        #
-        #     x = 1
-        #     foo x do
-        #         ^~~~
-        #     end
-        #
-        # In this case, since x is a variable and the previous call (foo)
-        # doesn't have parentheses, we don't parse "x do end" as an invocation
-        # to a method x with a block. Instead, we just stop on x and we don't
-        # consume the block, leaving the block for 'foo' to consume.
-        block = parse_curly_block(block)
-      elsif @stop_on_do && call_args && call_args.has_parentheses
-        # This is the case when we have:
-        #
-        #    foo x(y) do
-        #        ^~~~~~~
-        #    end
-        #
-        # We don't want to attach the block to `x`, but to `foo`.
-        block = parse_curly_block(block)
-      else
-        block = parse_block(block)
-      end
+      block = parse_block(call_args)
 
       node =
         if block || block_arg || global
@@ -3741,35 +3683,23 @@ module Crystal
       node
     end
 
-    def preserve_stop_on_do(new_value = false)
-      old_stop_on_do = @stop_on_do
-      @stop_on_do = new_value
-      value = yield
-      @stop_on_do = old_stop_on_do
-      value
-    end
-
-    def parse_block(block, stop_on_do = false)
+    def parse_block(call_args)
       if @token.keyword?(:do)
-        return block if stop_on_do
-
-        raise "block already specified with &" if block
-        parse_block2 { check_ident :end }
+        curly_block = false
+      elsif @token.type == :"{"
+        curly_block = true
       else
-        parse_curly_block(block)
+        # Return the &.block shorthand if it exists
+        return call_args.try(&.block)
       end
-    end
 
-    def parse_curly_block(block)
-      if @token.type == :"{"
-        raise "block already specified with &" if block
-        parse_block2 { check :"}" }
-      else
-        block
+      raise "block already specified with &" if call_args && call_args.block
+
+      has_args = call_args && (!call_args.args.empty? || call_args.named_args)
+      if has_args && call_args && !call_args.has_parentheses
+        raise "calls with blocks must have their arguments parenthesized"
       end
-    end
 
-    def parse_block2
       location = @token.location
 
       block_args = [] of Var
@@ -3884,7 +3814,11 @@ module Crystal
 
       pop_def
 
-      yield
+      if curly_block
+        check :"}"
+      else
+        check_ident :end
+      end
 
       end_location = token_end_location
       slash_is_not_regex!
@@ -3894,20 +3828,17 @@ module Crystal
     end
 
     record CallArgs,
-      args : Array(ASTNode)?,
+      args : Array(ASTNode),
       block : Block?,
       block_arg : ASTNode?,
       named_args : Array(NamedArgument)?,
-      stopped_on_do_after_space : Bool,
       end_location : Location?,
       has_parentheses : Bool
 
-    def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false)
+    def parse_call_args(allow_curly = false, control = false)
       @call_args_nest += 1
 
       case @token.type
-      when :"{"
-        nil
       when :"("
         slash_is_regex!
 
@@ -3915,9 +3846,6 @@ module Crystal
         end_location = nil
 
         open("call") do
-          # We found a prentheses, so calls inside it will get the `do`
-          # attached to them
-          @stop_on_do = false
           found_double_splat = false
 
           next_token_skip_space_or_newline
@@ -3952,19 +3880,18 @@ module Crystal
           next_token_skip_space
         end
 
-        CallArgs.new args, nil, nil, nil, false, end_location, has_parentheses: true
+        CallArgs.new(args, block: nil, block_arg: nil, named_args: nil,
+          end_location: end_location, has_parentheses: true)
       when :SPACE
         slash_is_not_regex!
         end_location = token_end_location
         next_token
 
-        if stop_on_do_after_space && @token.keyword?(:do)
-          return CallArgs.new nil, nil, nil, nil, true, end_location, has_parentheses: false
-        end
-
         if control && @token.keyword?(:do)
           unexpected_token
         end
+
+        return nil if @token.keyword?(:do)
 
         parse_call_args_space_consumed check_plus_and_minus: true, allow_curly: allow_curly, control: control
       else
@@ -4016,20 +3943,6 @@ module Crystal
       args = [] of ASTNode
       end_location = nil
 
-      # On calls without parentheses we want to stop on `do`.
-      # The exception is when parsing `return`, `break`, `yield`
-      # and `next` arguments (marked with the `control` flag),
-      # because this:
-      #
-      # ```
-      # return foo do
-      # end
-      # ```
-      #
-      # must always be parsed as the block beloning to `foo`,
-      # never to `return`.
-      @stop_on_do = true unless control
-
       found_double_splat = false
 
       while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != end_token && @token.type != :":" && !end_token?
@@ -4062,7 +3975,8 @@ module Crystal
         end
       end
 
-      CallArgs.new args, nil, nil, nil, false, end_location, has_parentheses: false
+      CallArgs.new(args, block: nil, block_arg: nil, named_args: nil,
+        end_location: end_location, has_parentheses: false)
     ensure
       @call_args_nest -= 1
     end
@@ -4082,7 +3996,8 @@ module Crystal
       else
         skip_space
       end
-      return CallArgs.new args, nil, nil, named_args, false, end_location, has_parentheses: allow_newline
+      return CallArgs.new(args, block: nil, block_arg: nil, named_args: named_args,
+        end_location: end_location, has_parentheses: allow_newline)
     end
 
     def parse_named_args(location, first_name = nil, allow_newline = false)
@@ -4800,7 +4715,7 @@ module Crystal
       end_location = token_end_location
       next_token
 
-      call_args = preserve_stop_on_do { parse_call_args control: true }
+      call_args = parse_call_args control: true
 
       if call_args
         args = call_args.args
@@ -4831,7 +4746,7 @@ module Crystal
       end_location = token_end_location
       next_token
 
-      call_args = preserve_stop_on_do { parse_call_args allow_curly: true, control: true }
+      call_args = parse_call_args allow_curly: true, control: true
       args = call_args.args if call_args
 
       if args
