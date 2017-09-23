@@ -2247,27 +2247,21 @@ module Crystal
     end
 
     def visit(node : Primitive)
+      # If the method where this primitive is defined has a return type, use it
+      if return_type = typed_def.return_type
+        node.type = scope.lookup_type(return_type, free_vars: free_vars)
+        return false
+      end
+
       case node.name
-      when "binary"
-        visit_binary node
-      when "cast"
-        visit_cast node
       when "allocate"
         visit_allocate node
       when "pointer_malloc"
         visit_pointer_malloc node
       when "pointer_set"
         visit_pointer_set node
-      when "pointer_get"
-        visit_pointer_get node
-      when "pointer_address"
-        node.type = @program.uint64
       when "pointer_new"
         visit_pointer_new node
-      when "pointer_realloc"
-        node.type = scope
-      when "pointer_add"
-        node.type = scope
       when "argc"
         # Already typed
       when "argv"
@@ -2278,73 +2272,15 @@ module Crystal
         # Nothing to do
       when "external_var_get"
         # Nothing to do
-      when "object_id"
-        node.type = program.uint64
-      when "object_crystal_type_id"
-        node.type = program.int32
-      when "class_crystal_instance_type_id"
-        node.type = program.int32
-      when "symbol_to_s"
-        node.type = program.string
       when "class"
         node.type = scope.metaclass
-      when "proc_call"
-        node.type = scope.as(ProcInstanceType).return_type
-      when "pointer_diff"
-        node.type = program.int64
-      when "class_name"
-        node.type = program.string
       when "enum_value"
         # Nothing to do
       when "enum_new"
         # Nothing to do
-      when "cmpxchg"
-        node.type = program.tuple_of([typed_def.args[1].type, program.bool])
-      when "atomicrmw"
-        node.type = typed_def.args[2].type
-      when "fence"
-        node.type = program.nil_type
-      when "load_atomic"
-        node.type = typed_def.args.first.type.as(PointerInstanceType).element_type
-      when "store_atomic"
-        node.type = program.nil_type
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
-    end
-
-    def visit_binary(node)
-      case typed_def.name
-      when "+", "-", "*", "/", "unsafe_div"
-        t1 = scope.remove_typedef
-        t2 = typed_def.args[0].type
-        node.type = t1.is_a?(IntegerType) && t2.is_a?(FloatType) ? t2 : scope
-      when "==", "<", "<=", ">", ">=", "!="
-        node.type = @program.bool
-      when "%", "unsafe_shl", "unsafe_shr", "|", "&", "^", "unsafe_mod"
-        node.type = scope
-      else
-        raise "BUG: unknown binary operator #{typed_def.name}"
-      end
-    end
-
-    def visit_cast(node)
-      node.type =
-        case typed_def.name
-        when "to_i", "to_i32", "ord" then program.int32
-        when "to_i8"                 then program.int8
-        when "to_i16"                then program.int16
-        when "to_i64"                then program.int64
-        when "to_u", "to_u32"        then program.uint32
-        when "to_u8"                 then program.uint8
-        when "to_u16"                then program.uint16
-        when "to_u64"                then program.uint64
-        when "to_f", "to_f64"        then program.float64
-        when "to_f32"                then program.float32
-        when "unsafe_chr"            then program.char
-        else
-          raise "BUG: unknown cast operator #{typed_def.name}"
-        end
     end
 
     def visit_allocate(node)
@@ -2387,12 +2323,6 @@ module Crystal
 
       scope.var.bind_to value
       node.bind_to value
-    end
-
-    def visit_pointer_get(node)
-      scope = scope().remove_typedef.as(PointerInstanceType)
-
-      node.bind_to scope.var
     end
 
     def visit_pointer_new(node)
