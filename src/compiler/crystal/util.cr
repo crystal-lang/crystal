@@ -23,26 +23,6 @@ module Crystal
     exit(exit_code) if exit_code
   end
 
-  def self.timing(label, stats, delay = false, display_memory = true, padding_size = 34)
-    if stats
-      print "%-*s" % {padding_size, "#{label}:"} unless delay
-      time = Time.now
-      value = yield
-      elapsed_time = Time.now - time
-      LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
-      mb = heap_size / 1024.0 / 1024.0
-      print "%-*s" % {padding_size, "#{label}:"} if delay
-      if display_memory
-        puts " %s (%7.2fMB)" % {elapsed_time, mb}
-      else
-        puts " %s" % elapsed_time
-      end
-      value
-    else
-      yield
-    end
-  end
-
   def self.tempfile(basename)
     CacheDir.instance.join("crystal-run-#{basename}.tmp")
   end

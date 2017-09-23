@@ -1,3 +1,5 @@
+require "crystal/hasher"
+
 # A `Hash` represents a mapping of keys to values.
 #
 # See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
@@ -706,18 +708,20 @@ class Hash(K, V)
     true
   end
 
-  # See also: `Object#hash`.
-  #
-  # ```
-  # foo = {"foo" => "bar"}
-  # foo.hash # => 3247054
-  # ```
-  def hash
-    hash = size
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    # The hash value must be the same regardless of the
+    # order of the keys.
+    result = hasher.result
+
     each do |key, value|
-      hash += key.hash ^ value.hash
+      copy = hasher
+      copy = key.hash(copy)
+      copy = value.hash(copy)
+      result += copy.result
     end
-    hash
+
+    result.hash(hasher)
   end
 
   # Duplicates a `Hash`.
@@ -864,7 +868,7 @@ class Hash(K, V)
   end
 
   private def bucket_index(key)
-    key.hash.to_u32.remainder(@buckets_size).to_i
+    key.hash.remainder(@buckets_size).to_i
   end
 
   private def calculate_new_size(size)

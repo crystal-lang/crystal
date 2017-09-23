@@ -1082,7 +1082,7 @@ describe "Code gen: macro" do
 
       bar
       ),
-      "dynamic constant assignment"
+      "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
   end
 
   it "finds macro from virtual type" do
@@ -1601,6 +1601,30 @@ describe "Code gen: macro" do
       )).to_b.should be_false
   end
 
+  it "determines if method exists (true)" do
+    run(%(
+      class Foo
+        def foo
+          42
+        end
+      end
+
+      {{ Foo.has_method?(:foo) }}
+      )).to_b.should be_true
+  end
+
+  it "determines if method exists (false)" do
+    run(%(
+      class Foo
+        def foo
+          42
+        end
+      end
+
+      {{ Foo.has_method?(:bar) }}
+      )).to_b.should be_false
+  end
+
   it "forwards file location" do
     run(%(
       macro foo
@@ -1665,5 +1689,13 @@ describe "Code gen: macro" do
         1
       end
     ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(7)
+  end
+
+  it "resolves alias in macro" do
+    run(%(
+      alias Foo = Int32 | String
+
+      {{ Foo.union_types.size }}
+      )).to_i.should eq(2)
   end
 end

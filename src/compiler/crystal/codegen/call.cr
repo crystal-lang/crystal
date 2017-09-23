@@ -199,7 +199,7 @@ class Crystal::CodeGenVisitor
               call_arg = downcast(call_arg, def_arg.type, arg.type, true)
             else
               # Def argument might be missing if it's a variadic call
-              if arg.is_a?(NilLiteral)
+              if arg.type.nil_type?
                 call_arg = llvm_context.void_pointer.null
               end
             end
@@ -216,7 +216,7 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]
       case abi_arg_type.kind
       when LLVM::ABI::ArgKind::Direct
-        call_arg = codegen_direct_abi_call(call_arg, abi_arg_type) unless arg.is_a?(NilLiteral)
+        call_arg = codegen_direct_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
         call_args << call_arg
       when LLVM::ABI::ArgKind::Indirect
         # Pass argument as is (will be passed byval)
@@ -247,6 +247,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_with_block(node, block, self_type, call_args)
+    set_current_debug_location node if @debug.line_numbers?
+
     with_cloned_context do |old_block_context|
       context.vars = old_block_context.vars.dup
       context.closure_parent_context = old_block_context

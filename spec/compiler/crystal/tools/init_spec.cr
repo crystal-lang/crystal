@@ -1,5 +1,6 @@
 require "spec"
 require "yaml"
+require "ini"
 require "compiler/crystal/config"
 require "compiler/crystal/tools/init"
 
@@ -46,6 +47,19 @@ module Crystal
       gitignore.should contain("/.shards/")
       gitignore.should_not contain("/shard.lock")
       gitignore.should contain("/lib/")
+    end
+
+    ["example", "example_app", "example-lib", "camel_example-camel_lib"].each do |name|
+      describe_file "#{name}/.editorconfig" do |editorconfig|
+        parsed = INI.parse(editorconfig)
+        cr_ext = parsed["*.cr"]
+        cr_ext["charset"].should eq("utf-8")
+        cr_ext["end_of_line"].should eq("lf")
+        cr_ext["insert_final_newline"].should eq("true")
+        cr_ext["indent_style"].should eq("space")
+        cr_ext["indent_size"].should eq("2")
+        cr_ext["trim_trailing_whitespace"].should eq("true")
+      end
     end
 
     describe_file "example/LICENSE" do |license|
@@ -108,8 +122,9 @@ dependencies:
     describe_file "example/src/example.cr" do |example|
       example.should eq(%{require "./example/*"
 
+# TODO: Write documentation for `Example`
 module Example
-  # TODO Put your code here
+  # TODO: Put your code here
 end
 })
     end
@@ -149,7 +164,7 @@ end
     it "prints error if a directory already present" do
       Dir.mkdir_p("#{__DIR__}/tmp")
 
-      `bin/crystal init lib "#{__DIR__}/tmp" 2>/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
+      `bin/crystal init lib "#{__DIR__}/tmp" 2>&1 >/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
 
       `rm -rf #{__DIR__}/tmp`
     end
@@ -157,7 +172,7 @@ end
     it "prints error if a file already present" do
       File.open("#{__DIR__}/tmp", "w")
 
-      `bin/crystal init lib "#{__DIR__}/tmp" 2>/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
+      `bin/crystal init lib "#{__DIR__}/tmp" 2>&1 >/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
 
       File.delete("#{__DIR__}/tmp")
     end
@@ -165,11 +180,11 @@ end
     it "honors the custom set directory name" do
       Dir.mkdir_p("tmp")
 
-      `bin/crystal init lib tmp 2>/dev/null`.should contain("file or directory tmp already exists")
+      `bin/crystal init lib tmp 2>&1 >/dev/null`.should contain("file or directory tmp already exists")
 
-      `bin/crystal init lib tmp "#{__DIR__}/fresh-new-tmp" 2>/dev/null`.should_not contain("file or directory tmp already exists")
+      `bin/crystal init lib tmp "#{__DIR__}/fresh-new-tmp" 2>&1 >/dev/null`.should_not contain("file or directory tmp already exists")
 
-      `bin/crystal init lib tmp "#{__DIR__}/fresh-new-tmp" 2>/dev/null`.should contain("file or directory #{__DIR__}/fresh-new-tmp already exists")
+      `bin/crystal init lib tmp "#{__DIR__}/fresh-new-tmp" 2>&1 >/dev/null`.should contain("file or directory #{__DIR__}/fresh-new-tmp already exists")
 
       `rm -rf tmp #{__DIR__}/fresh-new-tmp`
     end

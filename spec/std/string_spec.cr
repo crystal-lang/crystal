@@ -469,6 +469,10 @@ describe "String" do
     it { "AEIİOU".downcase(Unicode::CaseOptions::Turkic).should eq("aeıiou") }
     it { "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII).should eq("ÁeÍoÚ") }
     it { "İ".downcase.should eq("i̇") }
+    it { "Baﬄe".downcase(Unicode::CaseOptions::Fold).should eq("baffle") }
+    it { "ﬀ".downcase(Unicode::CaseOptions::Fold).should eq("ff") }
+    it { "tschüß".downcase(Unicode::CaseOptions::Fold).should eq("tschüss") }
+    it { "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold).should eq("σίσυφοσfiæ") }
   end
 
   describe "upcase" do
@@ -793,7 +797,12 @@ describe "String" do
     it { "foo".byte_index('a'.ord).should be_nil }
 
     it "gets byte index of string" do
+      "hello world".byte_index("he").should eq(0)
       "hello world".byte_index("lo").should eq(3)
+      "hello world".byte_index("world", 7).should be_nil
+      "foo foo".byte_index("oo").should eq(1)
+      "foo foo".byte_index("oo", 2).should eq(5)
+      "こんにちは世界".byte_index("ちは").should eq(9)
     end
   end
 
@@ -984,10 +993,10 @@ describe "String" do
     end
 
     it "subs char with string" do
-      replaced = "foobar".sub { |char|
+      replaced = "foobar".sub do |char|
         char.should eq 'f'
         "some"
-      }
+      end
       replaced.bytesize.should eq(9)
       replaced.should eq("someoobar")
 
@@ -996,16 +1005,16 @@ describe "String" do
     end
 
     it "subs with regex and block" do
-      actual = "foo booor booooz".sub(/o+/) { |str|
+      actual = "foo booor booooz".sub(/o+/) do |str|
         "#{str}#{str.size}"
-      }
+      end
       actual.should eq("foo2 booor booooz")
     end
 
     it "subs with regex and block with group" do
-      actual = "foo booor booooz".sub(/(o+).*?(o+)/) { |str, match|
+      actual = "foo booor booooz".sub(/(o+).*?(o+)/) do |str, match|
         "#{match[1].size}#{match[2].size}"
-      }
+      end
       actual.should eq("f23r booooz")
     end
 
@@ -1053,10 +1062,10 @@ describe "String" do
     end
 
     it "subs with string and block" do
-      result = "foo boo".sub("oo") { |value|
+      result = "foo boo".sub("oo") do |value|
         value.should eq("oo")
         "a"
-      }
+      end
       result.should eq("fa boo")
     end
 
@@ -1195,6 +1204,11 @@ describe "String" do
       replaced = "foobar".gsub('o', "ex")
       replaced.bytesize.should eq(8)
       replaced.should eq("fexexbar")
+    end
+
+    it "gsubs char with string (nop)" do
+      s = "foobar"
+      s.gsub('x', "yz").should be(s)
     end
 
     it "gsubs char with string depending on the char" do
@@ -1672,6 +1686,10 @@ describe "String" do
     "C_".underscore.should eq("c_")
     "HTTP".underscore.should eq("http")
     "HTTP_CLIENT".underscore.should eq("http_client")
+    "CSS3".underscore.should eq("css3")
+    "HTTP1.1".underscore.should eq("http1.1")
+    "3.14IsPi".underscore.should eq("3.14_is_pi")
+    "I2C".underscore.should eq("i2_c")
   end
 
   it "does camelcase" do
@@ -1771,7 +1789,7 @@ describe "String" do
 
   it "matches empty string" do
     match = "".match(/.*/).not_nil!
-    match.size.should eq(0)
+    match.group_size.should eq(0)
     match[0].should eq("")
   end
 
@@ -2148,6 +2166,17 @@ describe "String" do
     "foo".compare("FOX", case_insensitive: true).should eq(-1)
     "fox".compare("FOO", case_insensitive: true).should eq(1)
     "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
+  end
+
+  it "builds with write_byte" do
+    string = String.build do |io|
+      255_u8.times do |byte|
+        io.write_byte(byte)
+      end
+    end
+    255.times do |i|
+      string.byte_at(i).should eq(i)
+    end
   end
 
   it "raises if String.build negative capacity" do

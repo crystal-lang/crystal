@@ -67,7 +67,7 @@ module Crystal
     def self.fetch_directory(args, project_name)
       directory = args.empty? ? project_name : args.shift
       if Dir.exists?(directory) || File.exists?(directory)
-        puts "file or directory #{directory} already exists"
+        STDERR.puts "file or directory #{directory} already exists"
         exit 1
       end
       directory
@@ -76,8 +76,8 @@ module Crystal
     def self.fetch_skeleton_type(opts, args)
       skeleton_type = fetch_required_parameter(opts, args, "TYPE")
       unless {"lib", "app"}.includes?(skeleton_type)
-        puts "invalid TYPE value: #{skeleton_type}"
-        puts opts
+        STDERR.puts "invalid TYPE value: #{skeleton_type}"
+        STDERR.puts opts
         exit 1
       end
       skeleton_type
@@ -85,8 +85,8 @@ module Crystal
 
     def self.fetch_required_parameter(opts, args, name)
       if args.empty?
-        puts "#{name} is missing"
-        puts opts
+        STDERR.puts "#{name} is missing"
+        STDERR.puts opts
         exit 1
       end
       args.shift
@@ -102,13 +102,14 @@ module Crystal
       property silent : Bool
 
       def initialize(
-                     @skeleton_type = "none",
-                     @name = "none",
-                     @dir = "none",
-                     @author = "none",
-                     @email = "none",
-                     @github_name = "none",
-                     @silent = false)
+        @skeleton_type = "none",
+        @name = "none",
+        @dir = "none",
+        @author = "none",
+        @email = "none",
+        @github_name = "none",
+        @silent = false
+      )
       end
     end
 
@@ -192,6 +193,7 @@ module Crystal
     end
 
     template GitignoreView, "gitignore.ecr", ".gitignore"
+    template EditorconfigView, "editorconfig.ecr", ".editorconfig"
     template LicenseView, "license.ecr", "LICENSE"
     template ReadmeView, "readme.md.ecr", "README.md"
     template TravisView, "travis.yml.ecr", ".travis.yml"

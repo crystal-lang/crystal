@@ -3,6 +3,9 @@ require "../program"
 
 module Crystal
   module TargetMachine
+    class Error < Crystal::LocationlessException
+    end
+
     def self.create(target_triple, cpu = "", features = "", release = false) : LLVM::TargetMachine
       case target_triple
       when /^(x86_64|i[3456]86|amd64)/
@@ -19,7 +22,7 @@ module Crystal
           features += "+vfp2"
         end
       else
-        raise "Unsupported arch for target triple: #{target_triple}"
+        raise TargetMachine::Error.new("Unsupported architecture for target triple: #{target_triple}")
       end
 
       opt_level = release ? LLVM::CodeGenOptLevel::Aggressive : LLVM::CodeGenOptLevel::None

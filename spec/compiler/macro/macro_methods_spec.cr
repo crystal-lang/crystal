@@ -1566,6 +1566,21 @@ describe "macro methods" do
     end
   end
 
+  describe "path methods" do
+    it "executes resolve" do
+      assert_macro "x", %({{x.resolve}}), [Path.new("String")] of ASTNode, %(String)
+
+      expect_raises(Crystal::TypeException, "undefined constant Foo") do
+        assert_macro "x", %({{x.resolve}}), [Path.new("Foo")] of ASTNode, %(Foo)
+      end
+    end
+
+    it "executes resolve?" do
+      assert_macro "x", %({{x.resolve?}}), [Path.new("String")] of ASTNode, %(String)
+      assert_macro "x", %({{x.resolve?}}), [Path.new("Foo")] of ASTNode, %(nil)
+    end
+  end
+
   describe "env" do
     it "has key" do
       ENV["FOO"] = "foo"

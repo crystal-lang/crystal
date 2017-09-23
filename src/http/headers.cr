@@ -9,13 +9,11 @@ struct HTTP::Headers
   record Key, name : String do
     forward_missing_to @name
 
-    def hash
-      h = 0
+    def hash(hasher)
       name.each_byte do |c|
-        c = normalize_byte(c)
-        h = 31 * h + c
+        hasher = normalize_byte(c).hash(hasher)
       end
-      h
+      hasher
     end
 
     def ==(key2)

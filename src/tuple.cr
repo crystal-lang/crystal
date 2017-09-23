@@ -89,7 +89,7 @@ struct Tuple
   # ```
   #
   # See also: `#from`.
-  def self.from(array : Array)
+  def self.from(array : Array) : self
     {% begin %}
     Tuple.new(*{{T}}).from(array)
     {% end %}
@@ -175,6 +175,7 @@ struct Tuple
   # tuple.at(3) { 10 } # => 10
   # ```
   def at(index : Int)
+    index += size if index < 0
     {% for i in 0...T.size %}
       return self[{{i}}] if {{i}} == index
     {% end %}
@@ -306,20 +307,17 @@ struct Tuple
     size <=> other.size
   end
 
-  # Returns a hash value based on this tuple's length and contents.
-  #
-  # See also: `Object#hash`.
-  def hash
-    hash = 31 * size
+  # See `Object#hash(hasher)`
+  def hash(hasher)
     {% for i in 0...T.size %}
-      hash = 31 * hash + self[{{i}}].hash
+      hasher = self[{{i}}].hash(hasher)
     {% end %}
-    hash
+    hasher
   end
 
   # Returns a tuple containing cloned elements of this tuple using the `clone` method.
   def clone
-    {% if true %}
+    {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
           self[{{i}}].clone,
@@ -363,14 +361,14 @@ struct Tuple
     {{T.size}}
   end
 
-  # Returns the types of this tuple.
+  # Returns the types of this tuple type.
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple.types # => Tuple(Int32, String, Char)
+  # tuple.class.types # => {Int32, String, Char}
   # ```
-  def types
-    T
+  def self.types
+    Tuple.new(*{{T}})
   end
 
   # Same as `to_s`.
@@ -401,7 +399,7 @@ struct Tuple
   # tuple.map &.to_s # => {"1", "2.5", "a"}
   # ```
   def map
-    {% if true %}
+    {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
           (yield self[{{i}}]),
@@ -417,7 +415,7 @@ struct Tuple
   # tuple.reverse # => {"a", 2.5, 1}
   # ```
   def reverse
-    {% if true %}
+    {% begin %}
       Tuple.new(
         {% for i in 1..T.size %}
           self[{{T.size - i}}],
@@ -486,7 +484,7 @@ struct Tuple
   # tuple.last # => 2.5
   # ```
   def last
-    {% if true %}
+    {% begin %}
       self[{{T.size - 1}}]
     {% end %}
   end

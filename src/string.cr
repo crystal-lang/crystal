@@ -731,8 +731,7 @@ class String
   # "hello"[1...-1] # "ell"
   # ```
   def [](range : Range(Int, Int))
-    from, size = range_to_index_and_size(range)
-    self[from, size]
+    self[*Indexable.range_to_index_and_count(range, size)]
   end
 
   # Returns a substring starting from the *start* character
@@ -1591,6 +1590,11 @@ class String
   # ```
   def tr(from : String, to : String)
     return delete(from) if to.empty?
+
+    if from.bytesize == 1
+      return gsub(from.unsafe_byte_at(0).unsafe_chr, to)
+    end
+
     multi = nil
     table = StaticArray(Int32, 256).new(-1)
     reader = Char::Reader.new(to)
@@ -1743,13 +1747,13 @@ class String
   # "hello".sub(/(he|l|o)/, {"l": "la"})             # => "hello"
   # ```
   def sub(pattern : Regex, hash : Hash(String, _) | NamedTuple)
-    sub(pattern) { |match|
+    sub(pattern) do |match|
       if hash.has_key?(match)
         hash[match]
       else
         return self
       end
-    }
+    end
   end
 
   # Returns a `String` where the first occurrences of the given *string* is replaced
@@ -1904,7 +1908,7 @@ class String
   end
 
   private def sub_range(range, replacement)
-    from, size = range_to_index_and_size(range)
+    from, size = Indexable.range_to_index_and_count(range, self.size)
 
     from_index = char_index_to_byte_index(from)
     raise IndexError.new unless from_index
@@ -2006,10 +2010,31 @@ class String
   # "hello world".gsub('o', 'a') # => "hella warld"
   # ```
   def gsub(char : Char, replacement)
+    if replacement.is_a?(String) && replacement.bytesize == 1
+      return gsub(char, replacement.unsafe_byte_at(0).unsafe_chr)
+    end
+
     if includes?(char)
+      if replacement.is_a?(Char) && char.ascii? && replacement.ascii?
+        return gsub_ascii_char(char, replacement)
+      end
+
       gsub { |my_char| char == my_char ? replacement : my_char }
     else
       self
+    end
+  end
+
+  private def gsub_ascii_char(char, replacement)
+    String.new(bytesize) do |buffer|
+      each_char_with_index do |my_char, i|
+        buffer[i] = if my_char == char
+                      replacement.ord.to_u8
+                    else
+                      unsafe_byte_at(i)
+                    end
+      end
+      {bytesize, bytesize}
     end
   end
 
@@ -2095,7 +2120,11 @@ class String
   # "hello yellow".gsub("ll", "dd") # => "heddo yeddow"
   # ```
   def gsub(string : String, replacement)
-    gsub(string) { replacement }
+    if string.bytesize == 1
+      gsub(string.unsafe_byte_at(0).unsafe_chr, replacement)
+    else
+      gsub(string) { replacement }
+    end
   end
 
   # Returns a `String` where all occurrences of the given *string* are replaced
@@ -2828,16 +2857,46 @@ class String
     nil
   end
 
-  def byte_index(string : String, offset = 0)
+  def byte_index(search : String, offset = 0)
     offset += bytesize if offset < 0
-    return nil if offset < 0
+    return if offset < 0
 
-    end_pos = bytesize - string.bytesize
+    return bytesize < offset ? nil : offset if search.empty?
 
-    offset.upto(end_pos) do |pos|
-      if (to_unsafe + pos).memcmp(string.to_unsafe, string.bytesize) == 0
-        return pos
+    # Rabin-Karp algorithm
+    # https://en.wikipedia.org/wiki/Rabin%E2%80%93Karp_algorithm
+
+    # calculate a rolling hash of search text (needle)
+    search_hash = 0u32
+    search.each_byte do |b|
+      search_hash = search_hash * PRIME_RK + b
+    end
+    pow = PRIME_RK ** search.bytesize
+
+    # calculate a rolling hash of this text (haystack)
+    pointer = head_pointer = to_unsafe + offset
+    hash_end_pointer = pointer + search.bytesize
+    end_pointer = to_unsafe + bytesize
+    hash = 0u32
+    return if hash_end_pointer > end_pointer
+    while pointer < hash_end_pointer
+      hash = hash * PRIME_RK + pointer.value
+      pointer += 1
+    end
+
+    while true
+      # check hash equality and real string equality
+      if hash == search_hash && head_pointer.memcmp(search.to_unsafe, search.bytesize) == 0
+        return offset
       end
+
+      return if pointer >= end_pointer
+
+      # update a rolling hash of this text (haystack)
+      hash = hash * PRIME_RK + pointer.value - pow * head_pointer.value
+      pointer += 1
+      head_pointer += 1
+      offset += 1
     end
 
     nil
@@ -3279,27 +3338,37 @@ class String
   # "DoesWhatItSaysOnTheTin".underscore # => "does_what_it_says_on_the_tin"
   # "PartyInTheUSA".underscore          # => "party_in_the_usa"
   # "HTTP_CLIENT".underscore            # => "http_client"
+  # "3.14IsPi".underscore               # => "3.14_is_pi"
   # ```
   def underscore
     first = true
     last_is_downcase = false
     last_is_upcase = false
+    last_is_digit = false
     mem = nil
 
     String.build(bytesize + 10) do |str|
       each_char do |char|
-        downcase = 'a' <= char <= 'z'
+        digit = '0' <= char <= '9'
+        downcase = 'a' <= char <= 'z' || digit
         upcase = 'A' <= char <= 'Z'
 
         if first
           str << char.downcase
         elsif last_is_downcase && upcase
+          if mem
+            # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
+            #                       ^
+            # because 'mem' is digit surely) before putting this char as downcase.
+            str << mem
+            mem = nil
+          end
           # This is the case of AbcDe, we need to put an underscore before the 'D'
           #                        ^
           str << '_'
           str << char.downcase
-        elsif last_is_upcase && upcase
-          # This is the case of 1) ABCde, 2) ABCDe or 3) ABC_de:if the next char is upcase (case 1) we need
+        elsif (last_is_upcase || last_is_digit) && (upcase || digit)
+          # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
           #                          ^         ^           ^
           # 1) we need to append this char as downcase
           # 2) we need to append an underscore and then the char as downcase, so we save this char
@@ -3314,7 +3383,7 @@ class String
           if mem
             if char == '_'
               # case 3
-            else
+            elsif last_is_upcase && downcase
               # case 1
               str << '_'
             end
@@ -3327,6 +3396,7 @@ class String
 
         last_is_downcase = downcase
         last_is_upcase = upcase
+        last_is_digit = digit
         first = false
       end
 
@@ -3889,15 +3959,9 @@ class String
     sprintf self, other
   end
 
-  # Returns a hash based on this string’s size and content.
-  #
-  # See also: `Object#hash`.
-  def hash
-    h = 0
-    each_byte do |c|
-      h = 31 * h + c
-    end
-    h
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.string(self)
   end
 
   # Returns the number of unicode codepoints in this string.
@@ -4071,20 +4135,6 @@ class String
     end
 
     {bytes, bytesize}
-  end
-
-  private def range_to_index_and_size(range)
-    from = range.begin
-    from += size if from < 0
-    raise IndexError.new if from < 0
-
-    to = range.end
-    to += size if to < 0
-    to -= 1 if range.excludes_end?
-    size = to - from + 1
-    size = 0 if size < 0
-
-    {from, size}
   end
 
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.

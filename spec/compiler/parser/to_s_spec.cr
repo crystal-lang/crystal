@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 private def expect_to_s(original, expected = original, emit_doc = false, file = __FILE__, line = __LINE__)
   it "does to_s of #{original.inspect}", file, line do
@@ -18,9 +18,9 @@ describe "ASTNode#to_s" do
   expect_to_s "1 && (a = 2)"
   expect_to_s "(a = 2) && 1"
   expect_to_s "foo(a.as(Int32))"
-  expect_to_s "(1 + 2).as(Int32)", "((1 + 2)).as(Int32)"
+  expect_to_s "(1 + 2).as(Int32)", "(1 + 2).as(Int32)"
   expect_to_s "a.as?(Int32)"
-  expect_to_s "(1 + 2).as?(Int32)", "((1 + 2)).as?(Int32)"
+  expect_to_s "(1 + 2).as?(Int32)", "(1 + 2).as?(Int32)"
   expect_to_s "@foo.bar"
   expect_to_s %(:foo)
   expect_to_s %(:"{")
@@ -47,7 +47,7 @@ describe "ASTNode#to_s" do
   expect_to_s %({% for foo in bar %}\n  {{ foo }}\n{% end %})
   expect_to_s %(macro foo\n  {% for foo in bar %}\n    {{ foo }}\n  {% end %}\nend)
   expect_to_s %[1.as(Int32)]
-  expect_to_s %[(1 || 1.1).as(Int32)], %[((1 || 1.1)).as(Int32)]
+  expect_to_s %[(1 || 1.1).as(Int32)], %[(1 || 1.1).as(Int32)]
   expect_to_s %[1 & 2 & (3 | 4)], %[(1 & 2) & (3 | 4)]
   expect_to_s %[(1 & 2) & (3 | 4)]
   expect_to_s "def foo(x : T = 1)\nend"
@@ -104,4 +104,8 @@ describe "ASTNode#to_s" do
   expect_to_s %(enum Foo\n  A = 0\n  B\nend)
   expect_to_s %(alias Foo = Void)
   expect_to_s %(type(Foo = Void))
+  expect_to_s %(return true ? 1 : 2), %(return begin\n  if true\n    1\n  else\n    2\n  end\nend)
+  expect_to_s %(1 <= 2 <= 3)
+  expect_to_s %((1 <= 2) <= 3)
+  expect_to_s %(1 <= (2 <= 3))
 end

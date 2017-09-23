@@ -48,7 +48,7 @@ class Dir
   # File.write("testdir/config.h", "")
   #
   # d = Dir.new("testdir")
-  # d.each { |x| puts "Got #{x}" }
+  # d.each_entry { |x| puts "Got #{x}" }
   # ```
   #
   # produces:
@@ -58,14 +58,60 @@ class Dir
   # Got ..
   # Got config.h
   # ```
-  def each : Nil
+  def each_entry : Nil
     while entry = read
       yield entry
     end
   end
 
-  def each
+  def each_entry
     EntryIterator.new(self)
+  end
+
+  # Returns an array containing all of the filenames in the given directory.
+  def entries : Array(String)
+    entries = [] of String
+    each_entry do |filename|
+      entries << filename
+    end
+    entries
+  end
+
+  # Calls the block once for each entry except for `.` and `..` in this directory,
+  # passing the filename of each entry as a parameter to the block.
+  #
+  # ```
+  # Dir.mkdir("testdir")
+  # File.write("testdir/config.h", "")
+  #
+  # d = Dir.new("testdir")
+  # d.each_entry { |x| puts "Got #{x}" }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # Got config.h
+  # ```
+  def each_child : Nil
+    excluded = {".", ".."}
+    while entry = read
+      yield entry unless excluded.includes?(entry)
+    end
+  end
+
+  def each_child
+    ChildIterator.new(self)
+  end
+
+  # Returns an array containing all of the filenames except for `.` and `..`
+  # in the given directory.
+  def children : Array(String)
+    entries = [] of String
+    each_child do |filename|
+      entries << filename
+    end
+    entries
   end
 
   # Reads the next entry from dir and returns it as a string. Returns `nil` at the end of the stream.
@@ -135,23 +181,36 @@ class Dir
     end
   end
 
-  # Calls the block once for each entry in the named directory,
-  # passing the filename of each entry as a parameter to the block.
-  def self.foreach(dirname)
+  # See `#each_entry`.
+  def self.each_entry(dirname)
     Dir.open(dirname) do |dir|
-      dir.each do |filename|
+      dir.each_entry do |filename|
         yield filename
       end
     end
   end
 
-  # Returns an array containing all of the filenames in the given directory.
+  # See `#entries`.
   def self.entries(dirname) : Array(String)
-    entries = [] of String
-    foreach(dirname) do |filename|
-      entries << filename
+    Dir.open(dirname) do |dir|
+      return dir.entries
     end
-    entries
+  end
+
+  # See `#each_child`.
+  def self.each_child(dirname)
+    Dir.open(dirname) do |dir|
+      dir.each_child do |filename|
+        yield filename
+      end
+    end
+  end
+
+  # See `#children`.
+  def self.children(dirname) : Array(String)
+    Dir.open(dirname) do |dir|
+      return dir.children
+    end
   end
 
   # Returns `true` if the given path exists and is a directory
@@ -178,8 +237,8 @@ class Dir
   def self.empty?(path) : Bool
     raise Errno.new("Error determining size of '#{path}'") unless exists?(path)
 
-    foreach(path) do |f|
-      return false unless {".", ".."}.includes?(f)
+    each_child(path) do |f|
+      return false
     end
     true
   end
@@ -243,6 +302,26 @@ class Dir
 
     def next
       @dir.read || stop
+    end
+
+    def rewind
+      @dir.rewind
+      self
+    end
+  end
+
+  private struct ChildIterator
+    include Iterator(String)
+
+    def initialize(@dir : Dir)
+    end
+
+    def next
+      excluded = {".", ".."}
+      while entry = @dir.read
+        return entry unless excluded.includes?(entry)
+      end
+      stop
     end
 
     def rewind

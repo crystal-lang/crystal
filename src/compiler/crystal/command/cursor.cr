@@ -51,7 +51,7 @@ class Crystal::Command
 
     file = File.expand_path(file)
 
-    result = Crystal.timing("Tool (#{command.split(' ')[1]})", @stats) do
+    result = @progress_tracker.stage("Tool (#{command.split(' ')[1]})") do
       yield Location.new(file, line_number, column_number), config, result
     end
 

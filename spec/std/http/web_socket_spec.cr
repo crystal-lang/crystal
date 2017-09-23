@@ -293,7 +293,86 @@ describe HTTP::WebSocket do
     end
   end
 
+  it "negotiates over HTTP correctly" do
+    port_chan = Channel(Int32).new
+
+    spawn do
+      http_ref = nil
+      ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+        ctx.request.path.should eq("/")
+
+        ws.on_message do |str|
+          ws.send("pong #{str}")
+        end
+
+        ws.on_close do
+          http_ref.not_nil!.close
+        end
+      end
+
+      http_server = http_ref = HTTP::Server.new(0, [ws_handler])
+      http_server.bind
+      port_chan.send(http_server.port)
+      http_server.listen
+    end
+
+    listen_port = port_chan.receive
+
+    ws2 = HTTP::WebSocket.new("ws://127.0.0.1:#{listen_port}")
+
+    random = SecureRandom.hex
+    ws2.on_message do |str|
+      str.should eq("pong #{random}")
+      ws2.close
+    end
+    ws2.send(random)
+
+    ws2.run
+  end
+
+  it "negotiates over HTTPS correctly" do
+    port_chan = Channel(Int32).new
+
+    spawn do
+      http_ref = nil
+      ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+        ctx.request.path.should eq("/")
+
+        ws.on_message do |str|
+          ws.send("pong #{str}")
+        end
+
+        ws.on_close do
+          http_ref.not_nil!.close
+        end
+      end
+
+      http_server = http_ref = HTTP::Server.new(0, [ws_handler])
+      tls = http_server.tls = OpenSSL::SSL::Context::Server.new
+      tls.certificate_chain = File.join(__DIR__, "../openssl/ssl/openssl.crt")
+      tls.private_key = File.join(__DIR__, "../openssl/ssl/openssl.key")
+      http_server.bind
+      port_chan.send(http_server.port)
+      http_server.listen
+    end
+
+    listen_port = port_chan.receive
+
+    client_context = OpenSSL::SSL::Context::Client.insecure
+    ws2 = HTTP::WebSocket.new("127.0.0.1", port: listen_port, path: "/", tls: client_context)
+
+    random = SecureRandom.hex
+    ws2.on_message do |str|
+      str.should eq("pong #{random}")
+      ws2.close
+    end
+    ws2.send(random)
+
+    ws2.run
+  end
+
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost")))
   typeof(HTTP::WebSocket.new("localhost", "/"))
   typeof(HTTP::WebSocket.new("ws://localhost"))
+  typeof(HTTP::WebSocket.new(URI.parse("ws://localhost"), headers: HTTP::Headers{"X-TEST_HEADER" => "some-text"}))
 end

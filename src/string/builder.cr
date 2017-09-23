@@ -53,6 +53,19 @@ class String::Builder
     nil
   end
 
+  def write_byte(byte : UInt8)
+    new_bytesize = real_bytesize + 1
+    if new_bytesize > @capacity
+      resize_to_capacity(Math.pw2ceil(new_bytesize))
+    end
+
+    @buffer[real_bytesize] = byte
+
+    @bytesize += 1
+
+    nil
+  end
+
   def buffer
     @buffer + String::HEADER_SIZE
   end

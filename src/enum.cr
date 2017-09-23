@@ -237,13 +237,6 @@ struct Enum
     value <=> other.value
   end
 
-  # TODO: Remove `#==` after release next version. It is no longer needed.
-
-  # :nodoc:
-  def ==(other)
-    false
-  end
-
   # Returns `true` if this enum member's value includes *other*. This
   # performs a logical "and" between this enum member's value and *other*'s,
   # so instead of writing:
@@ -281,9 +274,9 @@ struct Enum
     value == other.value
   end
 
-  # Returns a hash value. This is the hash of the underlying value.
-  def hash
-    value.hash
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.enum(self)
   end
 
   # Iterates each values in a Flags Enum.

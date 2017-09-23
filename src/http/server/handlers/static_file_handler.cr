@@ -14,9 +14,13 @@ class HTTP::StaticFileHandler
   # If *fallthrough* is `false`, this handler does not call next handler when
   # request method is neither GET or HEAD, then serves `405 Method Not Allowed`.
   # Otherwise, it calls next handler.
-  def initialize(public_dir : String, fallthrough = true)
+  #
+  # If *directory_listing* is `false`, directory listing is disabled. This means that
+  # paths matching directories are ignored and next handler is called.
+  def initialize(public_dir : String, fallthrough = true, directory_listing = true)
     @public_dir = File.expand_path public_dir
     @fallthrough = !!fallthrough
+    @directory_listing = !!directory_listing
   end
 
   def call(context)
@@ -49,16 +53,17 @@ class HTTP::StaticFileHandler
 
     file_path = File.join(@public_dir, expanded_path)
     is_dir = Dir.exists? file_path
+    is_file = !is_dir && File.exists?(file_path)
 
     if request_path != expanded_path || is_dir && !is_dir_path
       redirect_to context, "#{expanded_path}#{is_dir && !is_dir_path ? "/" : ""}"
       return
     end
 
-    if Dir.exists?(file_path)
+    if @directory_listing && is_dir
       context.response.content_type = "text/html"
       directory_listing(context.response, request_path, file_path)
-    elsif File.exists?(file_path)
+    elsif is_file
       context.response.content_type = mime_type(file_path)
       context.response.content_length = File.size(file_path)
       File.open(file_path) do |file|

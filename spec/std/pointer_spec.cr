@@ -52,6 +52,15 @@ describe "Pointer" do
     end
   end
 
+  describe "realloc" do
+    it "raises on negative count" do
+      p1 = Pointer(Int32).new(123)
+      expect_raises(ArgumentError) do
+        p1.realloc(-1)
+      end
+    end
+  end
+
   describe "copy_to" do
     it "performs" do
       p1 = Pointer.malloc(4) { |i| i }
@@ -196,6 +205,14 @@ describe "Pointer" do
     a[2].should eq(4)
   end
 
+  it "maps_with_index!" do
+    a = Pointer(Int32).malloc(3) { |i| i + 1 }
+    a.map_with_index!(3) { |e, i| e + i }
+    a[0].should eq(1)
+    a[1].should eq(3)
+    a[2].should eq(5)
+  end
+
   it "raises if mallocs negative size" do
     expect_raises(ArgumentError) { Pointer.malloc(-1, 0) }
   end
@@ -310,4 +327,30 @@ describe "Pointer" do
     ptr = Pointer(Int32).new(123)
     ptr.clone.should eq(ptr)
   end
+
+  {% if flag?(:bits32) %}
+    it "raises on copy_from with size bigger than UInt32::MAX" do
+      ptr = Pointer(Int32).new(123)
+
+      expect_raises(ArgumentError) do
+        ptr.copy_from(ptr, UInt32::MAX.to_u64 + 1)
+      end
+    end
+
+    it "raises on move_from with size bigger than UInt32::MAX" do
+      ptr = Pointer(Int32).new(123)
+
+      expect_raises(ArgumentError) do
+        ptr.move_from(ptr, UInt32::MAX.to_u64 + 1)
+      end
+    end
+
+    it "raises on clear with size bigger than UInt32::MAX" do
+      ptr = Pointer(Int32).new(123)
+
+      expect_raises(ArgumentError) do
+        ptr.clear(UInt32::MAX.to_u64 + 1)
+      end
+    end
+  {% end %}
 end

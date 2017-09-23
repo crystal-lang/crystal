@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 private def assert_token_column_number(lexer, type, column_number)
   token = lexer.next_token

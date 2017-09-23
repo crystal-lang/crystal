@@ -9,6 +9,7 @@ module Unicode
   # Most case conversions map a range to another range.
   # Here we store: {from, to, delta}
   @@upcase_ranges : Array({Int32, Int32, Int32})?
+
   private def self.upcase_ranges
     @@upcase_ranges ||= begin
       data = Array({Int32, Int32, Int32}).new(131)
@@ -150,6 +151,7 @@ module Unicode
   # Most case conversions map a range to another range.
   # Here we store: {from, to, delta}
   @@downcase_ranges : Array({Int32, Int32, Int32})?
+
   private def self.downcase_ranges
     @@downcase_ranges ||= begin
       data = Array({Int32, Int32, Int32}).new(115)
@@ -276,6 +278,7 @@ module Unicode
   # of uppercase/lowercase transformations
   # Here we store {from, to}
   @@alternate_ranges : Array({Int32, Int32})?
+
   private def self.alternate_ranges
     @@alternate_ranges ||= begin
       data = Array({Int32, Int32}).new(56)
@@ -349,6 +352,7 @@ module Unicode
   # The values are: 1..10, 11, 13, 15
 
   @@category_Lu : Array({Int32, Int32, Int32})?
+
   private def self.category_Lu
     @@category_Lu ||= begin
       data = Array({Int32, Int32, Int32}).new(138)
@@ -493,7 +497,9 @@ module Unicode
       data
     end
   end
+
   @@category_Ll : Array({Int32, Int32, Int32})?
+
   private def self.category_Ll
     @@category_Ll ||= begin
       data = Array({Int32, Int32, Int32}).new(150)
@@ -650,7 +656,9 @@ module Unicode
       data
     end
   end
+
   @@category_Lt : Array({Int32, Int32, Int32})?
+
   private def self.category_Lt
     @@category_Lt ||= begin
       data = Array({Int32, Int32, Int32}).new(7)
@@ -664,7 +672,9 @@ module Unicode
       data
     end
   end
+
   @@category_Mn : Array({Int32, Int32, Int32})?
+
   private def self.category_Mn
     @@category_Mn ||= begin
       data = Array({Int32, Int32, Int32}).new(250)
@@ -921,7 +931,9 @@ module Unicode
       data
     end
   end
+
   @@category_Mc : Array({Int32, Int32, Int32})?
+
   private def self.category_Mc
     @@category_Mc ||= begin
       data = Array({Int32, Int32, Int32}).new(136)
@@ -1064,7 +1076,9 @@ module Unicode
       data
     end
   end
+
   @@category_Me : Array({Int32, Int32, Int32})?
+
   private def self.category_Me
     @@category_Me ||= begin
       data = Array({Int32, Int32, Int32}).new(5)
@@ -1076,7 +1090,9 @@ module Unicode
       data
     end
   end
+
   @@category_Nd : Array({Int32, Int32, Int32})?
+
   private def self.category_Nd
     @@category_Nd ||= begin
       data = Array({Int32, Int32, Int32}).new(54)
@@ -1137,7 +1153,9 @@ module Unicode
       data
     end
   end
+
   @@category_Nl : Array({Int32, Int32, Int32})?
+
   private def self.category_Nl
     @@category_Nl ||= begin
       data = Array({Int32, Int32, Int32}).new(11)
@@ -1155,7 +1173,9 @@ module Unicode
       data
     end
   end
+
   @@category_No : Array({Int32, Int32, Int32})?
+
   private def self.category_No
     @@category_No ||= begin
       data = Array({Int32, Int32, Int32}).new(59)
@@ -1221,7 +1241,9 @@ module Unicode
       data
     end
   end
+
   @@category_Zs : Array({Int32, Int32, Int32})?
+
   private def self.category_Zs
     @@category_Zs ||= begin
       data = Array({Int32, Int32, Int32}).new(5)
@@ -1233,7 +1255,9 @@ module Unicode
       data
     end
   end
+
   @@category_Zl : Array({Int32, Int32, Int32})?
+
   private def self.category_Zl
     @@category_Zl ||= begin
       data = Array({Int32, Int32, Int32}).new(1)
@@ -1241,7 +1265,9 @@ module Unicode
       data
     end
   end
+
   @@category_Zp : Array({Int32, Int32, Int32})?
+
   private def self.category_Zp
     @@category_Zp ||= begin
       data = Array({Int32, Int32, Int32}).new(1)
@@ -1249,7 +1275,9 @@ module Unicode
       data
     end
   end
+
   @@category_Cc : Array({Int32, Int32, Int32})?
+
   private def self.category_Cc
     @@category_Cc ||= begin
       data = Array({Int32, Int32, Int32}).new(2)
@@ -1258,7 +1286,9 @@ module Unicode
       data
     end
   end
+
   @@category_Cf : Array({Int32, Int32, Int32})?
+
   private def self.category_Cf
     @@category_Cf ||= begin
       data = Array({Int32, Int32, Int32}).new(16)
@@ -1281,7 +1311,9 @@ module Unicode
       data
     end
   end
+
   @@category_Cs : Array({Int32, Int32, Int32})?
+
   private def self.category_Cs
     @@category_Cs ||= begin
       data = Array({Int32, Int32, Int32}).new(3)
@@ -1291,7 +1323,9 @@ module Unicode
       data
     end
   end
+
   @@category_Co : Array({Int32, Int32, Int32})?
+
   private def self.category_Co
     @@category_Co ||= begin
       data = Array({Int32, Int32, Int32}).new(3)
@@ -1301,10 +1335,682 @@ module Unicode
       data
     end
   end
+
   @@category_Cn : Array({Int32, Int32, Int32})?
+
   private def self.category_Cn
     @@category_Cn ||= begin
       data = Array({Int32, Int32, Int32}).new(0)
+      data
+    end
+  end
+
+  # Most casefold conversions map a range to another range.
+  # Here we store: {from, to, delta}
+  @@casefold_ranges : Array({Int32, Int32, Int32})?
+
+  private def self.casefold_ranges
+    @@casefold_ranges ||= begin
+      data = Array({Int32, Int32, Int32}).new(659)
+      put(data, 65, 90, 32)
+      put(data, 181, 181, 775)
+      put(data, 192, 214, 32)
+      put(data, 216, 222, 32)
+      put(data, 256, 256, 1)
+      put(data, 258, 258, 1)
+      put(data, 260, 260, 1)
+      put(data, 262, 262, 1)
+      put(data, 264, 264, 1)
+      put(data, 266, 266, 1)
+      put(data, 268, 268, 1)
+      put(data, 270, 270, 1)
+      put(data, 272, 272, 1)
+      put(data, 274, 274, 1)
+      put(data, 276, 276, 1)
+      put(data, 278, 278, 1)
+      put(data, 280, 280, 1)
+      put(data, 282, 282, 1)
+      put(data, 284, 284, 1)
+      put(data, 286, 286, 1)
+      put(data, 288, 288, 1)
+      put(data, 290, 290, 1)
+      put(data, 292, 292, 1)
+      put(data, 294, 294, 1)
+      put(data, 296, 296, 1)
+      put(data, 298, 298, 1)
+      put(data, 300, 300, 1)
+      put(data, 302, 302, 1)
+      put(data, 306, 306, 1)
+      put(data, 308, 308, 1)
+      put(data, 310, 310, 1)
+      put(data, 313, 313, 1)
+      put(data, 315, 315, 1)
+      put(data, 317, 317, 1)
+      put(data, 319, 319, 1)
+      put(data, 321, 321, 1)
+      put(data, 323, 323, 1)
+      put(data, 325, 325, 1)
+      put(data, 327, 327, 1)
+      put(data, 330, 330, 1)
+      put(data, 332, 332, 1)
+      put(data, 334, 334, 1)
+      put(data, 336, 336, 1)
+      put(data, 338, 338, 1)
+      put(data, 340, 340, 1)
+      put(data, 342, 342, 1)
+      put(data, 344, 344, 1)
+      put(data, 346, 346, 1)
+      put(data, 348, 348, 1)
+      put(data, 350, 350, 1)
+      put(data, 352, 352, 1)
+      put(data, 354, 354, 1)
+      put(data, 356, 356, 1)
+      put(data, 358, 358, 1)
+      put(data, 360, 360, 1)
+      put(data, 362, 362, 1)
+      put(data, 364, 364, 1)
+      put(data, 366, 366, 1)
+      put(data, 368, 368, 1)
+      put(data, 370, 370, 1)
+      put(data, 372, 372, 1)
+      put(data, 374, 374, 1)
+      put(data, 376, 376, -121)
+      put(data, 377, 377, 1)
+      put(data, 379, 379, 1)
+      put(data, 381, 381, 1)
+      put(data, 383, 383, -268)
+      put(data, 385, 385, 210)
+      put(data, 386, 386, 1)
+      put(data, 388, 388, 1)
+      put(data, 390, 390, 206)
+      put(data, 391, 391, 1)
+      put(data, 393, 394, 205)
+      put(data, 395, 395, 1)
+      put(data, 398, 398, 79)
+      put(data, 399, 399, 202)
+      put(data, 400, 400, 203)
+      put(data, 401, 401, 1)
+      put(data, 403, 403, 205)
+      put(data, 404, 404, 207)
+      put(data, 406, 406, 211)
+      put(data, 407, 407, 209)
+      put(data, 408, 408, 1)
+      put(data, 412, 412, 211)
+      put(data, 413, 413, 213)
+      put(data, 415, 415, 214)
+      put(data, 416, 416, 1)
+      put(data, 418, 418, 1)
+      put(data, 420, 420, 1)
+      put(data, 422, 422, 218)
+      put(data, 423, 423, 1)
+      put(data, 425, 425, 218)
+      put(data, 428, 428, 1)
+      put(data, 430, 430, 218)
+      put(data, 431, 431, 1)
+      put(data, 433, 434, 217)
+      put(data, 435, 435, 1)
+      put(data, 437, 437, 1)
+      put(data, 439, 439, 219)
+      put(data, 440, 440, 1)
+      put(data, 444, 444, 1)
+      put(data, 452, 452, 2)
+      put(data, 453, 453, 1)
+      put(data, 455, 455, 2)
+      put(data, 456, 456, 1)
+      put(data, 458, 458, 2)
+      put(data, 459, 459, 1)
+      put(data, 461, 461, 1)
+      put(data, 463, 463, 1)
+      put(data, 465, 465, 1)
+      put(data, 467, 467, 1)
+      put(data, 469, 469, 1)
+      put(data, 471, 471, 1)
+      put(data, 473, 473, 1)
+      put(data, 475, 475, 1)
+      put(data, 478, 478, 1)
+      put(data, 480, 480, 1)
+      put(data, 482, 482, 1)
+      put(data, 484, 484, 1)
+      put(data, 486, 486, 1)
+      put(data, 488, 488, 1)
+      put(data, 490, 490, 1)
+      put(data, 492, 492, 1)
+      put(data, 494, 494, 1)
+      put(data, 497, 497, 2)
+      put(data, 498, 498, 1)
+      put(data, 500, 500, 1)
+      put(data, 502, 502, -97)
+      put(data, 503, 503, -56)
+      put(data, 504, 504, 1)
+      put(data, 506, 506, 1)
+      put(data, 508, 508, 1)
+      put(data, 510, 510, 1)
+      put(data, 512, 512, 1)
+      put(data, 514, 514, 1)
+      put(data, 516, 516, 1)
+      put(data, 518, 518, 1)
+      put(data, 520, 520, 1)
+      put(data, 522, 522, 1)
+      put(data, 524, 524, 1)
+      put(data, 526, 526, 1)
+      put(data, 528, 528, 1)
+      put(data, 530, 530, 1)
+      put(data, 532, 532, 1)
+      put(data, 534, 534, 1)
+      put(data, 536, 536, 1)
+      put(data, 538, 538, 1)
+      put(data, 540, 540, 1)
+      put(data, 542, 542, 1)
+      put(data, 544, 544, -130)
+      put(data, 546, 546, 1)
+      put(data, 548, 548, 1)
+      put(data, 550, 550, 1)
+      put(data, 552, 552, 1)
+      put(data, 554, 554, 1)
+      put(data, 556, 556, 1)
+      put(data, 558, 558, 1)
+      put(data, 560, 560, 1)
+      put(data, 562, 562, 1)
+      put(data, 570, 570, 10795)
+      put(data, 571, 571, 1)
+      put(data, 573, 573, -163)
+      put(data, 574, 574, 10792)
+      put(data, 577, 577, 1)
+      put(data, 579, 579, -195)
+      put(data, 580, 580, 69)
+      put(data, 581, 581, 71)
+      put(data, 582, 582, 1)
+      put(data, 584, 584, 1)
+      put(data, 586, 586, 1)
+      put(data, 588, 588, 1)
+      put(data, 590, 590, 1)
+      put(data, 837, 837, 116)
+      put(data, 880, 880, 1)
+      put(data, 882, 882, 1)
+      put(data, 886, 886, 1)
+      put(data, 895, 895, 116)
+      put(data, 902, 902, 38)
+      put(data, 904, 906, 37)
+      put(data, 908, 908, 64)
+      put(data, 910, 911, 63)
+      put(data, 913, 929, 32)
+      put(data, 931, 939, 32)
+      put(data, 962, 962, 1)
+      put(data, 975, 975, 8)
+      put(data, 976, 976, -30)
+      put(data, 977, 977, -25)
+      put(data, 981, 981, -15)
+      put(data, 982, 982, -22)
+      put(data, 984, 984, 1)
+      put(data, 986, 986, 1)
+      put(data, 988, 988, 1)
+      put(data, 990, 990, 1)
+      put(data, 992, 992, 1)
+      put(data, 994, 994, 1)
+      put(data, 996, 996, 1)
+      put(data, 998, 998, 1)
+      put(data, 1000, 1000, 1)
+      put(data, 1002, 1002, 1)
+      put(data, 1004, 1004, 1)
+      put(data, 1006, 1006, 1)
+      put(data, 1008, 1008, -54)
+      put(data, 1009, 1009, -48)
+      put(data, 1012, 1012, -60)
+      put(data, 1013, 1013, -64)
+      put(data, 1015, 1015, 1)
+      put(data, 1017, 1017, -7)
+      put(data, 1018, 1018, 1)
+      put(data, 1021, 1023, -130)
+      put(data, 1024, 1039, 80)
+      put(data, 1040, 1071, 32)
+      put(data, 1120, 1120, 1)
+      put(data, 1122, 1122, 1)
+      put(data, 1124, 1124, 1)
+      put(data, 1126, 1126, 1)
+      put(data, 1128, 1128, 1)
+      put(data, 1130, 1130, 1)
+      put(data, 1132, 1132, 1)
+      put(data, 1134, 1134, 1)
+      put(data, 1136, 1136, 1)
+      put(data, 1138, 1138, 1)
+      put(data, 1140, 1140, 1)
+      put(data, 1142, 1142, 1)
+      put(data, 1144, 1144, 1)
+      put(data, 1146, 1146, 1)
+      put(data, 1148, 1148, 1)
+      put(data, 1150, 1150, 1)
+      put(data, 1152, 1152, 1)
+      put(data, 1162, 1162, 1)
+      put(data, 1164, 1164, 1)
+      put(data, 1166, 1166, 1)
+      put(data, 1168, 1168, 1)
+      put(data, 1170, 1170, 1)
+      put(data, 1172, 1172, 1)
+      put(data, 1174, 1174, 1)
+      put(data, 1176, 1176, 1)
+      put(data, 1178, 1178, 1)
+      put(data, 1180, 1180, 1)
+      put(data, 1182, 1182, 1)
+      put(data, 1184, 1184, 1)
+      put(data, 1186, 1186, 1)
+      put(data, 1188, 1188, 1)
+      put(data, 1190, 1190, 1)
+      put(data, 1192, 1192, 1)
+      put(data, 1194, 1194, 1)
+      put(data, 1196, 1196, 1)
+      put(data, 1198, 1198, 1)
+      put(data, 1200, 1200, 1)
+      put(data, 1202, 1202, 1)
+      put(data, 1204, 1204, 1)
+      put(data, 1206, 1206, 1)
+      put(data, 1208, 1208, 1)
+      put(data, 1210, 1210, 1)
+      put(data, 1212, 1212, 1)
+      put(data, 1214, 1214, 1)
+      put(data, 1216, 1216, 15)
+      put(data, 1217, 1217, 1)
+      put(data, 1219, 1219, 1)
+      put(data, 1221, 1221, 1)
+      put(data, 1223, 1223, 1)
+      put(data, 1225, 1225, 1)
+      put(data, 1227, 1227, 1)
+      put(data, 1229, 1229, 1)
+      put(data, 1232, 1232, 1)
+      put(data, 1234, 1234, 1)
+      put(data, 1236, 1236, 1)
+      put(data, 1238, 1238, 1)
+      put(data, 1240, 1240, 1)
+      put(data, 1242, 1242, 1)
+      put(data, 1244, 1244, 1)
+      put(data, 1246, 1246, 1)
+      put(data, 1248, 1248, 1)
+      put(data, 1250, 1250, 1)
+      put(data, 1252, 1252, 1)
+      put(data, 1254, 1254, 1)
+      put(data, 1256, 1256, 1)
+      put(data, 1258, 1258, 1)
+      put(data, 1260, 1260, 1)
+      put(data, 1262, 1262, 1)
+      put(data, 1264, 1264, 1)
+      put(data, 1266, 1266, 1)
+      put(data, 1268, 1268, 1)
+      put(data, 1270, 1270, 1)
+      put(data, 1272, 1272, 1)
+      put(data, 1274, 1274, 1)
+      put(data, 1276, 1276, 1)
+      put(data, 1278, 1278, 1)
+      put(data, 1280, 1280, 1)
+      put(data, 1282, 1282, 1)
+      put(data, 1284, 1284, 1)
+      put(data, 1286, 1286, 1)
+      put(data, 1288, 1288, 1)
+      put(data, 1290, 1290, 1)
+      put(data, 1292, 1292, 1)
+      put(data, 1294, 1294, 1)
+      put(data, 1296, 1296, 1)
+      put(data, 1298, 1298, 1)
+      put(data, 1300, 1300, 1)
+      put(data, 1302, 1302, 1)
+      put(data, 1304, 1304, 1)
+      put(data, 1306, 1306, 1)
+      put(data, 1308, 1308, 1)
+      put(data, 1310, 1310, 1)
+      put(data, 1312, 1312, 1)
+      put(data, 1314, 1314, 1)
+      put(data, 1316, 1316, 1)
+      put(data, 1318, 1318, 1)
+      put(data, 1320, 1320, 1)
+      put(data, 1322, 1322, 1)
+      put(data, 1324, 1324, 1)
+      put(data, 1326, 1326, 1)
+      put(data, 1329, 1366, 48)
+      put(data, 4256, 4293, 7264)
+      put(data, 4295, 4295, 7264)
+      put(data, 4301, 4301, 7264)
+      put(data, 5112, 5117, -8)
+      put(data, 7296, 7296, -6222)
+      put(data, 7297, 7297, -6221)
+      put(data, 7298, 7298, -6212)
+      put(data, 7299, 7300, -6210)
+      put(data, 7301, 7301, -6211)
+      put(data, 7302, 7302, -6204)
+      put(data, 7303, 7303, -6180)
+      put(data, 7304, 7304, 35267)
+      put(data, 7680, 7680, 1)
+      put(data, 7682, 7682, 1)
+      put(data, 7684, 7684, 1)
+      put(data, 7686, 7686, 1)
+      put(data, 7688, 7688, 1)
+      put(data, 7690, 7690, 1)
+      put(data, 7692, 7692, 1)
+      put(data, 7694, 7694, 1)
+      put(data, 7696, 7696, 1)
+      put(data, 7698, 7698, 1)
+      put(data, 7700, 7700, 1)
+      put(data, 7702, 7702, 1)
+      put(data, 7704, 7704, 1)
+      put(data, 7706, 7706, 1)
+      put(data, 7708, 7708, 1)
+      put(data, 7710, 7710, 1)
+      put(data, 7712, 7712, 1)
+      put(data, 7714, 7714, 1)
+      put(data, 7716, 7716, 1)
+      put(data, 7718, 7718, 1)
+      put(data, 7720, 7720, 1)
+      put(data, 7722, 7722, 1)
+      put(data, 7724, 7724, 1)
+      put(data, 7726, 7726, 1)
+      put(data, 7728, 7728, 1)
+      put(data, 7730, 7730, 1)
+      put(data, 7732, 7732, 1)
+      put(data, 7734, 7734, 1)
+      put(data, 7736, 7736, 1)
+      put(data, 7738, 7738, 1)
+      put(data, 7740, 7740, 1)
+      put(data, 7742, 7742, 1)
+      put(data, 7744, 7744, 1)
+      put(data, 7746, 7746, 1)
+      put(data, 7748, 7748, 1)
+      put(data, 7750, 7750, 1)
+      put(data, 7752, 7752, 1)
+      put(data, 7754, 7754, 1)
+      put(data, 7756, 7756, 1)
+      put(data, 7758, 7758, 1)
+      put(data, 7760, 7760, 1)
+      put(data, 7762, 7762, 1)
+      put(data, 7764, 7764, 1)
+      put(data, 7766, 7766, 1)
+      put(data, 7768, 7768, 1)
+      put(data, 7770, 7770, 1)
+      put(data, 7772, 7772, 1)
+      put(data, 7774, 7774, 1)
+      put(data, 7776, 7776, 1)
+      put(data, 7778, 7778, 1)
+      put(data, 7780, 7780, 1)
+      put(data, 7782, 7782, 1)
+      put(data, 7784, 7784, 1)
+      put(data, 7786, 7786, 1)
+      put(data, 7788, 7788, 1)
+      put(data, 7790, 7790, 1)
+      put(data, 7792, 7792, 1)
+      put(data, 7794, 7794, 1)
+      put(data, 7796, 7796, 1)
+      put(data, 7798, 7798, 1)
+      put(data, 7800, 7800, 1)
+      put(data, 7802, 7802, 1)
+      put(data, 7804, 7804, 1)
+      put(data, 7806, 7806, 1)
+      put(data, 7808, 7808, 1)
+      put(data, 7810, 7810, 1)
+      put(data, 7812, 7812, 1)
+      put(data, 7814, 7814, 1)
+      put(data, 7816, 7816, 1)
+      put(data, 7818, 7818, 1)
+      put(data, 7820, 7820, 1)
+      put(data, 7822, 7822, 1)
+      put(data, 7824, 7824, 1)
+      put(data, 7826, 7826, 1)
+      put(data, 7828, 7828, 1)
+      put(data, 7835, 7835, -58)
+      put(data, 7840, 7840, 1)
+      put(data, 7842, 7842, 1)
+      put(data, 7844, 7844, 1)
+      put(data, 7846, 7846, 1)
+      put(data, 7848, 7848, 1)
+      put(data, 7850, 7850, 1)
+      put(data, 7852, 7852, 1)
+      put(data, 7854, 7854, 1)
+      put(data, 7856, 7856, 1)
+      put(data, 7858, 7858, 1)
+      put(data, 7860, 7860, 1)
+      put(data, 7862, 7862, 1)
+      put(data, 7864, 7864, 1)
+      put(data, 7866, 7866, 1)
+      put(data, 7868, 7868, 1)
+      put(data, 7870, 7870, 1)
+      put(data, 7872, 7872, 1)
+      put(data, 7874, 7874, 1)
+      put(data, 7876, 7876, 1)
+      put(data, 7878, 7878, 1)
+      put(data, 7880, 7880, 1)
+      put(data, 7882, 7882, 1)
+      put(data, 7884, 7884, 1)
+      put(data, 7886, 7886, 1)
+      put(data, 7888, 7888, 1)
+      put(data, 7890, 7890, 1)
+      put(data, 7892, 7892, 1)
+      put(data, 7894, 7894, 1)
+      put(data, 7896, 7896, 1)
+      put(data, 7898, 7898, 1)
+      put(data, 7900, 7900, 1)
+      put(data, 7902, 7902, 1)
+      put(data, 7904, 7904, 1)
+      put(data, 7906, 7906, 1)
+      put(data, 7908, 7908, 1)
+      put(data, 7910, 7910, 1)
+      put(data, 7912, 7912, 1)
+      put(data, 7914, 7914, 1)
+      put(data, 7916, 7916, 1)
+      put(data, 7918, 7918, 1)
+      put(data, 7920, 7920, 1)
+      put(data, 7922, 7922, 1)
+      put(data, 7924, 7924, 1)
+      put(data, 7926, 7926, 1)
+      put(data, 7928, 7928, 1)
+      put(data, 7930, 7930, 1)
+      put(data, 7932, 7932, 1)
+      put(data, 7934, 7934, 1)
+      put(data, 7944, 7951, -8)
+      put(data, 7960, 7965, -8)
+      put(data, 7976, 7983, -8)
+      put(data, 7992, 7999, -8)
+      put(data, 8008, 8013, -8)
+      put(data, 8025, 8025, -8)
+      put(data, 8027, 8027, -8)
+      put(data, 8029, 8029, -8)
+      put(data, 8031, 8031, -8)
+      put(data, 8040, 8047, -8)
+      put(data, 8120, 8121, -8)
+      put(data, 8122, 8123, -74)
+      put(data, 8126, 8126, -7173)
+      put(data, 8136, 8139, -86)
+      put(data, 8152, 8153, -8)
+      put(data, 8154, 8155, -100)
+      put(data, 8168, 8169, -8)
+      put(data, 8170, 8171, -112)
+      put(data, 8172, 8172, -7)
+      put(data, 8184, 8185, -128)
+      put(data, 8186, 8187, -126)
+      put(data, 8486, 8486, -7517)
+      put(data, 8490, 8490, -8383)
+      put(data, 8491, 8491, -8262)
+      put(data, 8498, 8498, 28)
+      put(data, 8544, 8559, 16)
+      put(data, 8579, 8579, 1)
+      put(data, 9398, 9423, 26)
+      put(data, 11264, 11310, 48)
+      put(data, 11360, 11360, 1)
+      put(data, 11362, 11362, -10743)
+      put(data, 11363, 11363, -3814)
+      put(data, 11364, 11364, -10727)
+      put(data, 11367, 11367, 1)
+      put(data, 11369, 11369, 1)
+      put(data, 11371, 11371, 1)
+      put(data, 11373, 11373, -10780)
+      put(data, 11374, 11374, -10749)
+      put(data, 11375, 11375, -10783)
+      put(data, 11376, 11376, -10782)
+      put(data, 11378, 11378, 1)
+      put(data, 11381, 11381, 1)
+      put(data, 11390, 11391, -10815)
+      put(data, 11392, 11392, 1)
+      put(data, 11394, 11394, 1)
+      put(data, 11396, 11396, 1)
+      put(data, 11398, 11398, 1)
+      put(data, 11400, 11400, 1)
+      put(data, 11402, 11402, 1)
+      put(data, 11404, 11404, 1)
+      put(data, 11406, 11406, 1)
+      put(data, 11408, 11408, 1)
+      put(data, 11410, 11410, 1)
+      put(data, 11412, 11412, 1)
+      put(data, 11414, 11414, 1)
+      put(data, 11416, 11416, 1)
+      put(data, 11418, 11418, 1)
+      put(data, 11420, 11420, 1)
+      put(data, 11422, 11422, 1)
+      put(data, 11424, 11424, 1)
+      put(data, 11426, 11426, 1)
+      put(data, 11428, 11428, 1)
+      put(data, 11430, 11430, 1)
+      put(data, 11432, 11432, 1)
+      put(data, 11434, 11434, 1)
+      put(data, 11436, 11436, 1)
+      put(data, 11438, 11438, 1)
+      put(data, 11440, 11440, 1)
+      put(data, 11442, 11442, 1)
+      put(data, 11444, 11444, 1)
+      put(data, 11446, 11446, 1)
+      put(data, 11448, 11448, 1)
+      put(data, 11450, 11450, 1)
+      put(data, 11452, 11452, 1)
+      put(data, 11454, 11454, 1)
+      put(data, 11456, 11456, 1)
+      put(data, 11458, 11458, 1)
+      put(data, 11460, 11460, 1)
+      put(data, 11462, 11462, 1)
+      put(data, 11464, 11464, 1)
+      put(data, 11466, 11466, 1)
+      put(data, 11468, 11468, 1)
+      put(data, 11470, 11470, 1)
+      put(data, 11472, 11472, 1)
+      put(data, 11474, 11474, 1)
+      put(data, 11476, 11476, 1)
+      put(data, 11478, 11478, 1)
+      put(data, 11480, 11480, 1)
+      put(data, 11482, 11482, 1)
+      put(data, 11484, 11484, 1)
+      put(data, 11486, 11486, 1)
+      put(data, 11488, 11488, 1)
+      put(data, 11490, 11490, 1)
+      put(data, 11499, 11499, 1)
+      put(data, 11501, 11501, 1)
+      put(data, 11506, 11506, 1)
+      put(data, 42560, 42560, 1)
+      put(data, 42562, 42562, 1)
+      put(data, 42564, 42564, 1)
+      put(data, 42566, 42566, 1)
+      put(data, 42568, 42568, 1)
+      put(data, 42570, 42570, 1)
+      put(data, 42572, 42572, 1)
+      put(data, 42574, 42574, 1)
+      put(data, 42576, 42576, 1)
+      put(data, 42578, 42578, 1)
+      put(data, 42580, 42580, 1)
+      put(data, 42582, 42582, 1)
+      put(data, 42584, 42584, 1)
+      put(data, 42586, 42586, 1)
+      put(data, 42588, 42588, 1)
+      put(data, 42590, 42590, 1)
+      put(data, 42592, 42592, 1)
+      put(data, 42594, 42594, 1)
+      put(data, 42596, 42596, 1)
+      put(data, 42598, 42598, 1)
+      put(data, 42600, 42600, 1)
+      put(data, 42602, 42602, 1)
+      put(data, 42604, 42604, 1)
+      put(data, 42624, 42624, 1)
+      put(data, 42626, 42626, 1)
+      put(data, 42628, 42628, 1)
+      put(data, 42630, 42630, 1)
+      put(data, 42632, 42632, 1)
+      put(data, 42634, 42634, 1)
+      put(data, 42636, 42636, 1)
+      put(data, 42638, 42638, 1)
+      put(data, 42640, 42640, 1)
+      put(data, 42642, 42642, 1)
+      put(data, 42644, 42644, 1)
+      put(data, 42646, 42646, 1)
+      put(data, 42648, 42648, 1)
+      put(data, 42650, 42650, 1)
+      put(data, 42786, 42786, 1)
+      put(data, 42788, 42788, 1)
+      put(data, 42790, 42790, 1)
+      put(data, 42792, 42792, 1)
+      put(data, 42794, 42794, 1)
+      put(data, 42796, 42796, 1)
+      put(data, 42798, 42798, 1)
+      put(data, 42802, 42802, 1)
+      put(data, 42804, 42804, 1)
+      put(data, 42806, 42806, 1)
+      put(data, 42808, 42808, 1)
+      put(data, 42810, 42810, 1)
+      put(data, 42812, 42812, 1)
+      put(data, 42814, 42814, 1)
+      put(data, 42816, 42816, 1)
+      put(data, 42818, 42818, 1)
+      put(data, 42820, 42820, 1)
+      put(data, 42822, 42822, 1)
+      put(data, 42824, 42824, 1)
+      put(data, 42826, 42826, 1)
+      put(data, 42828, 42828, 1)
+      put(data, 42830, 42830, 1)
+      put(data, 42832, 42832, 1)
+      put(data, 42834, 42834, 1)
+      put(data, 42836, 42836, 1)
+      put(data, 42838, 42838, 1)
+      put(data, 42840, 42840, 1)
+      put(data, 42842, 42842, 1)
+      put(data, 42844, 42844, 1)
+      put(data, 42846, 42846, 1)
+      put(data, 42848, 42848, 1)
+      put(data, 42850, 42850, 1)
+      put(data, 42852, 42852, 1)
+      put(data, 42854, 42854, 1)
+      put(data, 42856, 42856, 1)
+      put(data, 42858, 42858, 1)
+      put(data, 42860, 42860, 1)
+      put(data, 42862, 42862, 1)
+      put(data, 42873, 42873, 1)
+      put(data, 42875, 42875, 1)
+      put(data, 42877, 42877, -35332)
+      put(data, 42878, 42878, 1)
+      put(data, 42880, 42880, 1)
+      put(data, 42882, 42882, 1)
+      put(data, 42884, 42884, 1)
+      put(data, 42886, 42886, 1)
+      put(data, 42891, 42891, 1)
+      put(data, 42893, 42893, -42280)
+      put(data, 42896, 42896, 1)
+      put(data, 42898, 42898, 1)
+      put(data, 42902, 42902, 1)
+      put(data, 42904, 42904, 1)
+      put(data, 42906, 42906, 1)
+      put(data, 42908, 42908, 1)
+      put(data, 42910, 42910, 1)
+      put(data, 42912, 42912, 1)
+      put(data, 42914, 42914, 1)
+      put(data, 42916, 42916, 1)
+      put(data, 42918, 42918, 1)
+      put(data, 42920, 42920, 1)
+      put(data, 42922, 42922, -42308)
+      put(data, 42923, 42923, -42319)
+      put(data, 42924, 42924, -42315)
+      put(data, 42925, 42925, -42305)
+      put(data, 42926, 42926, -42308)
+      put(data, 42928, 42928, -42258)
+      put(data, 42929, 42929, -42282)
+      put(data, 42930, 42930, -42261)
+      put(data, 42931, 42931, 928)
+      put(data, 42932, 42932, 1)
+      put(data, 42934, 42934, 1)
+      put(data, 43888, 43967, -38864)
+      put(data, 65313, 65338, 32)
+      put(data, 66560, 66599, 40)
+      put(data, 66736, 66771, 40)
+      put(data, 68736, 68786, 64)
+      put(data, 71840, 71871, 32)
+      put(data, 125184, 125217, 34)
       data
     end
   end
@@ -1313,6 +2019,7 @@ module Unicode
   # to multiple codepoints. The maximum transformation is always 3
   # codepoints, so we store them all as 3 codepoints and 0 means end.
   @@special_cases_downcase : Hash(Int32, {Int32, Int32, Int32})?
+
   private def self.special_cases_downcase
     @@special_cases_downcase ||= begin
       data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: 1)
@@ -1326,6 +2033,7 @@ module Unicode
   # to multiple codepoints. The maximum transformation is always 3
   # codepoints, so we store them all as 3 codepoints and 0 means end.
   @@special_cases_upcase : Hash(Int32, {Int32, Int32, Int32})?
+
   private def self.special_cases_upcase
     @@special_cases_upcase ||= begin
       data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: 102)
@@ -1436,9 +2144,126 @@ module Unicode
     end
   end
 
+  # Fold case transformation that involve mapping a codepoint
+  # to multiple codepoints. The maximum transformation is always 4
+  # codepoints, so we store them all as 4 codepoints and 0 means end.
+  @@fold_cases : Hash(Int32, {Int32, Int32, Int32, Int32})?
+
+  private def self.fold_cases
+    @@fold_cases ||= begin
+      data = Hash(Int32, {Int32, Int32, Int32, Int32}).new(initial_capacity: 104)
+      put(data, 223, 115, 115, 0, 0)
+      put(data, 304, 105, 775, 0, 0)
+      put(data, 329, 700, 110, 0, 0)
+      put(data, 496, 106, 780, 0, 0)
+      put(data, 912, 953, 776, 769, 0)
+      put(data, 944, 965, 776, 769, 0)
+      put(data, 1415, 1381, 1410, 0, 0)
+      put(data, 7830, 104, 817, 0, 0)
+      put(data, 7831, 116, 776, 0, 0)
+      put(data, 7832, 119, 778, 0, 0)
+      put(data, 7833, 121, 778, 0, 0)
+      put(data, 7834, 97, 702, 0, 0)
+      put(data, 7838, 115, 115, 0, 0)
+      put(data, 8016, 965, 787, 0, 0)
+      put(data, 8018, 965, 787, 768, 0)
+      put(data, 8020, 965, 787, 769, 0)
+      put(data, 8022, 965, 787, 834, 0)
+      put(data, 8064, 7936, 953, 0, 0)
+      put(data, 8065, 7937, 953, 0, 0)
+      put(data, 8066, 7938, 953, 0, 0)
+      put(data, 8067, 7939, 953, 0, 0)
+      put(data, 8068, 7940, 953, 0, 0)
+      put(data, 8069, 7941, 953, 0, 0)
+      put(data, 8070, 7942, 953, 0, 0)
+      put(data, 8071, 7943, 953, 0, 0)
+      put(data, 8072, 7936, 953, 0, 0)
+      put(data, 8073, 7937, 953, 0, 0)
+      put(data, 8074, 7938, 953, 0, 0)
+      put(data, 8075, 7939, 953, 0, 0)
+      put(data, 8076, 7940, 953, 0, 0)
+      put(data, 8077, 7941, 953, 0, 0)
+      put(data, 8078, 7942, 953, 0, 0)
+      put(data, 8079, 7943, 953, 0, 0)
+      put(data, 8080, 7968, 953, 0, 0)
+      put(data, 8081, 7969, 953, 0, 0)
+      put(data, 8082, 7970, 953, 0, 0)
+      put(data, 8083, 7971, 953, 0, 0)
+      put(data, 8084, 7972, 953, 0, 0)
+      put(data, 8085, 7973, 953, 0, 0)
+      put(data, 8086, 7974, 953, 0, 0)
+      put(data, 8087, 7975, 953, 0, 0)
+      put(data, 8088, 7968, 953, 0, 0)
+      put(data, 8089, 7969, 953, 0, 0)
+      put(data, 8090, 7970, 953, 0, 0)
+      put(data, 8091, 7971, 953, 0, 0)
+      put(data, 8092, 7972, 953, 0, 0)
+      put(data, 8093, 7973, 953, 0, 0)
+      put(data, 8094, 7974, 953, 0, 0)
+      put(data, 8095, 7975, 953, 0, 0)
+      put(data, 8096, 8032, 953, 0, 0)
+      put(data, 8097, 8033, 953, 0, 0)
+      put(data, 8098, 8034, 953, 0, 0)
+      put(data, 8099, 8035, 953, 0, 0)
+      put(data, 8100, 8036, 953, 0, 0)
+      put(data, 8101, 8037, 953, 0, 0)
+      put(data, 8102, 8038, 953, 0, 0)
+      put(data, 8103, 8039, 953, 0, 0)
+      put(data, 8104, 8032, 953, 0, 0)
+      put(data, 8105, 8033, 953, 0, 0)
+      put(data, 8106, 8034, 953, 0, 0)
+      put(data, 8107, 8035, 953, 0, 0)
+      put(data, 8108, 8036, 953, 0, 0)
+      put(data, 8109, 8037, 953, 0, 0)
+      put(data, 8110, 8038, 953, 0, 0)
+      put(data, 8111, 8039, 953, 0, 0)
+      put(data, 8114, 8048, 953, 0, 0)
+      put(data, 8115, 945, 953, 0, 0)
+      put(data, 8116, 940, 953, 0, 0)
+      put(data, 8118, 945, 834, 0, 0)
+      put(data, 8119, 945, 834, 953, 0)
+      put(data, 8124, 945, 953, 0, 0)
+      put(data, 8130, 8052, 953, 0, 0)
+      put(data, 8131, 951, 953, 0, 0)
+      put(data, 8132, 942, 953, 0, 0)
+      put(data, 8134, 951, 834, 0, 0)
+      put(data, 8135, 951, 834, 953, 0)
+      put(data, 8140, 951, 953, 0, 0)
+      put(data, 8146, 953, 776, 768, 0)
+      put(data, 8147, 953, 776, 769, 0)
+      put(data, 8150, 953, 834, 0, 0)
+      put(data, 8151, 953, 776, 834, 0)
+      put(data, 8162, 965, 776, 768, 0)
+      put(data, 8163, 965, 776, 769, 0)
+      put(data, 8164, 961, 787, 0, 0)
+      put(data, 8166, 965, 834, 0, 0)
+      put(data, 8167, 965, 776, 834, 0)
+      put(data, 8178, 8060, 953, 0, 0)
+      put(data, 8179, 969, 953, 0, 0)
+      put(data, 8180, 974, 953, 0, 0)
+      put(data, 8182, 969, 834, 0, 0)
+      put(data, 8183, 969, 834, 953, 0)
+      put(data, 8188, 969, 953, 0, 0)
+      put(data, 64256, 102, 102, 0, 0)
+      put(data, 64257, 102, 105, 0, 0)
+      put(data, 64258, 102, 108, 0, 0)
+      put(data, 64259, 102, 102, 105, 0)
+      put(data, 64260, 102, 102, 108, 0)
+      put(data, 64261, 115, 116, 0, 0)
+      put(data, 64262, 115, 116, 0, 0)
+      put(data, 64275, 1396, 1398, 0, 0)
+      put(data, 64276, 1396, 1381, 0, 0)
+      put(data, 64277, 1396, 1387, 0, 0)
+      put(data, 64278, 1406, 1398, 0, 0)
+      put(data, 64279, 1396, 1389, 0, 0)
+      data
+    end
+  end
+
   # TODO: this is needed to avoid generating lots of allocas
   # in LLVM, which makes LLVM really slow. The compiler should
   # try to avoid/reuse temporary allocas.
+  # Explanation: https://github.com/crystal-lang/crystal/issues/4516#issuecomment-306226171
   private def self.put(array : Array, *values) : Nil
     array << values
   end

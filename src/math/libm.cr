@@ -31,11 +31,10 @@ lib LibM
   fun log2_f64 = "llvm.log2.f64"(value : Float64) : Float64
   fun log10_f32 = "llvm.log10.f32"(value : Float32) : Float32
   fun log10_f64 = "llvm.log10.f64"(value : Float64) : Float64
-  # ## To be uncommented once LLVM is updated
-  # fun min_f32 = "llvm.minnum.f32"(value1 : Float32, value2 : Float32) : Float32
-  # fun min_f64 = "llvm.minnum.f64"(value1 : Float64, value2 : Float64) : Float64
-  # fun max_f32 = "llvm.maxnum.f32"(value1 : Float32, value2 : Float32) : Float32
-  # fun max_f64 = "llvm.maxnum.f64"(value1 : Float64, value2 : Float64) : Float64
+  fun min_f32 = "llvm.minnum.f32"(value1 : Float32, value2 : Float32) : Float32
+  fun min_f64 = "llvm.minnum.f64"(value1 : Float64, value2 : Float64) : Float64
+  fun max_f32 = "llvm.maxnum.f32"(value1 : Float32, value2 : Float32) : Float32
+  fun max_f64 = "llvm.maxnum.f64"(value1 : Float64, value2 : Float64) : Float64
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
   fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
@@ -86,6 +85,8 @@ lib LibM
   fun erf_f64 = erf(value : Float64) : Float64
   fun expm1_f32 = expm1f(value : Float32) : Float32
   fun expm1_f64 = expm1(value : Float64) : Float64
+  fun frexp_f32 = frexpf(value : Float32, exp : Int32*) : Float32
+  fun frexp_f64 = frexp(value : Float64, exp : Int32*) : Float64
   fun gamma_f32 = lgammaf(value : Float32) : Float32
   fun gamma_f64 = lgamma(value : Float64) : Float64
   fun hypot_f32 = hypotf(value1 : Float32, value2 : Float32) : Float32

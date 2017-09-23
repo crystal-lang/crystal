@@ -1861,7 +1861,7 @@ describe "Semantic: instance var" do
         @x : Int32
       end
       ),
-      "instance variable '@x' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@x' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   it "doesn't if declaring nilable instance var and turns out to be nilable" do
@@ -1884,7 +1884,7 @@ describe "Semantic: instance var" do
         @x : T
       end
       ),
-      "instance variable '@x' of Foo(T) was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@x' of Foo(T) was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   it "errors if declaring instance var and turns out to be nilable, in generic module type" do
@@ -1897,7 +1897,7 @@ describe "Semantic: instance var" do
         include Moo(Int32)
       end
       ),
-      "instance variable '@x' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@x' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   it "doesn't error if declaring instance var and doesn't out to be nilable, in generic module type" do
@@ -1932,7 +1932,7 @@ describe "Semantic: instance var" do
         include Moo(T)
       end
       ),
-      "instance variable '@x' of Foo(T) was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@x' of Foo(T) was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   it "doesn't error if not initializing variables but calling super" do
@@ -4467,7 +4467,7 @@ describe "Semantic: instance var" do
 
       Foo.new
       ),
-      "instance variable '@y' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@y' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   it "errors if finally not initialized in macro def" do
@@ -4684,5 +4684,99 @@ describe "Semantic: instance var" do
 
       {Foo.new.@never_nil, Bar.new.@never_nil}
     )) { tuple_of([int32, int32]) }
+  end
+
+  it "errors when assigning instance variable at top level block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        @foo = 1
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
+
+  it "errors when assigning instance variable at top level control block" do
+    assert_error %(
+      if true
+        @foo = 1
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
+
+  it "doesn't check call of non-self instance (#4830)" do
+    assert_type(%(
+      class Container
+        def initialize(other : Container, x)
+          initialize(other)
+          @foo = "x"
+        end
+
+        def initialize(other : Container)
+          @foo = other.foo
+        end
+
+        def initialize(@foo : String, bar)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      container = Container.new("foo", nil)
+      Container.new(container, "foo2")
+      )) { types["Container"] }
+  end
+
+  it "errors when assigning instance variable inside nested expression" do
+    assert_error %(
+      class Foo
+        if true
+          @foo = 1
+        end
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
+
+  it "doesn't find T in generic type that's not the current type (#4460)" do
+    assert_error %(
+      class Gen(T)
+        def self.new
+          Gen(T).new
+        end
+      end
+
+      class Foo
+        @x = Gen.new
+      end
+      ),
+      "can't use Gen(T) as the type of instance variable @x of Foo"
+  end
+
+  it "doesn't consider instance var as nilable if assigned before self access (#4981)" do
+    assert_type(%(
+      def f(x)
+      end
+
+      class A
+        def initialize
+          @a = 0
+          f(self)
+          @a = 0
+        end
+
+        def a
+          @a
+        end
+      end
+
+      A.new.a
+      )) { int32 }
   end
 end

@@ -373,29 +373,73 @@ module Crystal
     end
 
     def has_def?(name)
-      defs.try(&.has_key?(name)) || parents.try(&.any?(&.has_def?(name)))
+      has_def_without_parents?(name) || parents.try(&.any?(&.has_def?(name)))
     end
 
+    def has_def_without_parents?(name)
+      defs.try(&.has_key?(name))
+    end
+
+    record DefInMacroLookup
+
+    # Looks up a macro with the give name and matching the given args
+    # and named_args. Returns:
+    # - a `Macro`, if found
+    # - `nil`, if not found
+    # - `DefInMacroLookup` if not found and a Def was found instead
+    #
+    # In the case of `DefInMacroLookup`, it means that macros shouldn't
+    # be looked up in implicit enclosing scopes such as Object
+    # or the Program.
     def lookup_macro(name, args : Array, named_args)
-      if macros = self.macros.try &.[name]?
+      # Macros are always stored in a type's metaclass
+      macros_scope = self.metaclass? ? self : self.metaclass
+
+      if macros = macros_scope.macros.try &.[name]?
         match = macros.find &.matches?(args, named_args)
         return match if match
       end
 
+      # First check if there are defs at this scope with that name.
+      # If so, make that a priority in the lookup and don't consider
+      # macro matches.
+      if has_def_without_parents?(name)
+        return DefInMacroLookup.new
+      end
+
+      # We need to go through the instance type because of module
+      # inclusion and inheritance.
       instance_type.parents.try &.each do |parent|
-        parent_macro = parent.metaclass.lookup_macro(name, args, named_args)
+        # Make sure to start the search in the metaclass if we are a metaclass
+        parent = parent.metaclass if self.metaclass?
+        parent_macro = parent.lookup_macro(name, args, named_args)
         return parent_macro if parent_macro
       end
 
       nil
     end
 
+    # Looks up macros with the given name. Returns:
+    # - an Array of Macro if found
+    # - `nil` if not found
+    # - `DefInMacroLookup` if not found and some Defs were found instead
     def lookup_macros(name)
-      if macros = self.macros.try &.[name]?
+      # Macros are always stored in a type's metaclass
+      macros_scope = self.metaclass? ? self : self.metaclass
+
+      if macros = macros_scope.macros.try &.[name]?
         return macros
       end
 
-      parents.try &.each do |parent|
+      if has_def_without_parents?(name)
+        return DefInMacroLookup.new
+      end
+
+      # We need to go through the instance type because of module
+      # inclusion and inheritance.
+      instance_type.parents.try &.each do |parent|
+        # Make sure to start the search in the metaclass if we are a metaclass
+        parent = parent.metaclass if self.metaclass?
         parent_macros = parent.lookup_macros(name)
         return parent_macros if parent_macros
       end
@@ -540,6 +584,17 @@ module Crystal
     # Returns true if *name* if an unbound type variable in this (generic) type.
     def type_var?(name)
       false
+    end
+
+    # Returns the type that has to be used in sizeof and instance_sizeof computations
+    def sizeof_type
+      if struct?
+        # In the case of an abstract struct we want to consider the union type
+        # of all subtypes (if it's not abstract it's concrete and this will return self)
+        virtual_type.remove_indirection
+      else
+        devirtualize
+      end
     end
 
     def inspect(io)
@@ -693,6 +748,7 @@ module Crystal
           if ex_item.restriction_of?(item, self)
             list[i] = item
             a_def.previous = ex_item
+            a_def.doc ||= ex_item.def.doc
             ex_item.def.next = a_def
             return ex_item.def
           else
@@ -726,6 +782,7 @@ module Crystal
       array = (macros[a_def.name] ||= [] of Macro)
       index = array.index { |existing_macro| a_def.overrides?(existing_macro) }
       if index
+        a_def.doc ||= array[index].doc
         array[index] = a_def
       else
         array.push a_def
@@ -949,6 +1006,14 @@ module Crystal
 
     def vars?
       @vars
+    end
+
+    def metaclass?
+      true
+    end
+
+    def metaclass
+      self
     end
   end
 
@@ -2114,6 +2179,11 @@ module Crystal
       tuple_indexer(indexers, index)
     end
 
+    def tuple_metaclass_indexer(index)
+      indexers = @tuple_metaclass_indexers ||= {} of Int32 => Def
+      tuple_indexer(indexers, index)
+    end
+
     private def tuple_indexer(indexers, index)
       indexers[index] ||= begin
         body = index == -1 ? NilLiteral.new : TupleIndexer.new(index)
@@ -2305,7 +2375,9 @@ module Crystal
     def process_value
       return if @value_processed
       @value_processed = true
-      @aliased_type = namespace.lookup_type(@value, allow_typeof: false)
+      @aliased_type = namespace.lookup_type(@value,
+        allow_typeof: false,
+        find_root_generic_type_parameters: false)
     end
 
     def includes_type?(other)
@@ -2479,6 +2551,14 @@ module Crystal
 
     def class_var_owner
       instance_type
+    end
+
+    def filter_by_responds_to(name)
+      if instance_type.generic_type.metaclass.filter_by_responds_to(name)
+        self
+      else
+        nil
+      end
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
@@ -2898,6 +2978,10 @@ module Crystal
 
     def initialize(program, @instance_type)
       super(program)
+    end
+
+    def metaclass
+      program.class_type
     end
 
     def parents

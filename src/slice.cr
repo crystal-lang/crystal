@@ -248,7 +248,7 @@ struct Slice(T)
 
   # Copies the contents of this slice into *target*.
   #
-  # Raises if the desination slice cannot fit the data being transferred
+  # Raises `IndexError` if the desination slice cannot fit the data being transferred
   # e.g. dest.size < self.size.
   #
   # ```
@@ -266,7 +266,7 @@ struct Slice(T)
 
   # Copies the contents of *source* into this slice.
   #
-  # Truncates if the other slice doesn't fit. The same as `source.copy_to(self)`.
+  # Raises `IndexError` if the desination slice cannot fit the data being transferred.
   @[AlwaysInline]
   def copy_from(source : self)
     source.copy_to(self)
@@ -285,7 +285,7 @@ struct Slice(T)
   # Moves the contents of this slice into *target*. *target* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
-  # Raises if the desination slice cannot fit the data being transferred
+  # Raises `IndexError` if the desination slice cannot fit the data being transferred
   # e.g. `dest.size < self.size`.
   #
   # ```
@@ -306,7 +306,7 @@ struct Slice(T)
   # Moves the contents of *source* into this slice. *source* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
-  # Truncates if the other slice doesn't fit. The same as `source.move_to(self)`.
+  # Raises `IndexError` if the desination slice cannot fit the data being transferred.
   @[AlwaysInline]
   def move_from(source : self)
     source.move_to(self)
@@ -437,12 +437,16 @@ struct Slice(T)
   def to_s(io)
     if T == UInt8
       io << "Bytes"
+      io << "["
+      # Inspect using to_s because we know this is a UInt8.
+      join ", ", io, &.to_s(io)
+      io << "]"
     else
       io << "Slice"
+      io << "["
+      join ", ", io, &.inspect(io)
+      io << "]"
     end
-    io << "["
-    join ", ", io, &.inspect(io)
-    io << "]"
   end
 
   def pretty_print(pp) : Nil

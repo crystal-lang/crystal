@@ -1,4 +1,4 @@
-require "./csv"
+require "csv"
 
 class CSV
   # Raises when an error related to a CSV is found.

@@ -135,7 +135,7 @@ describe "NamedTuple" do
 
   it "computes a hash value" do
     tup1 = {a: 1, b: 'a'}
-    tup1.hash.should_not eq(0)
+    tup1.hash.should eq(tup1.dup.hash)
 
     tup2 = {b: 'a', a: 1}
     tup2.hash.should eq(tup1.hash)
@@ -295,5 +295,10 @@ describe "NamedTuple" do
   it "does values" do
     tup = {a: 1, b: 'a'}
     tup.values.should eq({1, 'a'})
+  end
+
+  it "does types" do
+    tuple = {a: 1, b: 'a', c: "hello"}
+    tuple.class.types.to_s.should eq("{a: Int32, b: Char, c: String}")
   end
 end

@@ -82,6 +82,24 @@ module Crystal
 
   class Program
     def lib_flags
+      has_flag?("windows") ? lib_flags_windows : lib_flags_posix
+    end
+
+    private def lib_flags_windows
+      String.build do |flags|
+        link_attributes.reverse_each do |attr|
+          if ldflags = attr.ldflags
+            flags << " " << ldflags
+          end
+
+          if libname = attr.lib
+            flags << " " << libname << ".lib"
+          end
+        end
+      end
+    end
+
+    private def lib_flags_posix
       library_path = ["/usr/lib", "/usr/local/lib"]
       has_pkg_config = nil
 
@@ -93,7 +111,7 @@ module Crystal
 
           if libname = attr.lib
             if has_pkg_config.nil?
-              has_pkg_config = Process.run("which", {"pkg-config"}, output: false).success?
+              has_pkg_config = Process.run("which", {"pkg-config"}, output: Process::Redirect::Close).success?
             end
 
             if has_pkg_config && (libflags = pkg_config_flags(libname, attr.static?, library_path))

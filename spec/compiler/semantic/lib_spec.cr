@@ -927,4 +927,29 @@ describe "Semantic: lib" do
       ),
       "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
   end
+
+  it "errors if assigning void lib call to var (#4414)" do
+    assert_error %(
+      lib LibFoo
+        fun foo
+      end
+
+      x = LibFoo.foo
+      ),
+      "assigning Void return value of lib fun call has no effect"
+  end
+
+  it "errors if passing void lib call to call argument (#4414)" do
+    assert_error %(
+      lib LibFoo
+        fun foo
+      end
+
+      def bar(x)
+      end
+
+      bar(LibFoo.foo)
+      ),
+      "passing Void return value of lib fun call has no effect"
+  end
 end

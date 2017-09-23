@@ -242,7 +242,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memcpy(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
+      Intrinsics.memcpy(self.as(Void*), source.as(Void*), bytesize(count), 0_u32, false)
     else
       while (count -= 1) >= 0
         self[count] = source[count]
@@ -255,7 +255,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memmove(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
+      Intrinsics.memmove(self.as(Void*), source.as(Void*), bytesize(count), 0_u32, false)
     else
       if source.address < address
         copy_from source, count
@@ -345,6 +345,10 @@ struct Pointer(T)
   # ptr # [1, 2, 3, 4, 0, 0, 0, 0]
   # ```
   def realloc(size : Int)
+    if size < 0
+      raise ArgumentError.new("Negative size")
+    end
+
     realloc(size.to_u64)
   end
 
@@ -375,6 +379,14 @@ struct Pointer(T)
     count.times do |i|
       self[i] = yield self[i]
     end
+  end
+
+  # Like `map!`, but yield 2 arugments, the element and it's index
+  def map_with_index!(count : Int, &block)
+    count.times do |i|
+      self[i] = yield self[i], i
+    end
+    self
   end
 
   # Returns a pointer whose memory address is zero. This doesn't allocate memory.
@@ -487,11 +499,22 @@ struct Pointer(T)
   # ptr.to_slice(6) # => Slice[0, 0, 0, 13, 14, 15]
   # ```
   def clear(count = 1)
-    ptr = self.as(Pointer(Void))
-    Intrinsics.memset(self.as(Void*), 0_u8, (count * sizeof(T)).to_u32, 0_u32, false)
+    Intrinsics.memset(self.as(Void*), 0_u8, bytesize(count), 0_u32, false)
   end
 
   def clone
     self
+  end
+
+  private def bytesize(count)
+    {% if flag?(:bits64) %}
+      count.to_u64 * sizeof(T)
+    {% else %}
+      if count > UInt32::MAX
+        raise ArgumentError.new("Given count is bigger than UInt32::MAX")
+      end
+
+      count.to_u32 * sizeof(T)
+    {% end %}
   end
 end

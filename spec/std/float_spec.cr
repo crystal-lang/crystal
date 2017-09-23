@@ -129,7 +129,7 @@ describe "Float" do
       0.65000000000000002.to_s.should eq("0.65")
       1.234001.to_s.should eq("1.234001")
       1.23499.to_s.should eq("1.23499")
-      1.23499999999999.to_s.should eq("1.235")
+      1.23499999999999999.to_s.should eq("1.235")
       1.2345.to_s.should eq("1.2345")
       1.23456.to_s.should eq("1.23456")
       1.234567.to_s.should eq("1.234567")
@@ -141,7 +141,7 @@ describe "Float" do
       1.23456789123.to_s.should eq("1.23456789123")
       9525365.25.to_s.should eq("9525365.25")
       12.9999.to_s.should eq("12.9999")
-      12.999999999999.to_s.should eq("13.0")
+      12.9999999999999999.to_s.should eq("13.0")
       1.0.to_s.should eq("1.0")
       2e20.to_s.should eq("2.0e+20")
       1e-10.to_s.should eq("1.0e-10")
@@ -164,7 +164,7 @@ describe "Float" do
       65432.1234567891e20.to_s.should eq("6.54321234567891e+24")
       (1.0/0.0).to_s.should eq("Infinity")
       (-1.0/0.0).to_s.should eq("-Infinity")
-      (0.99999999999999989).to_s.should eq("1.0")
+      (0.999999999999999989).to_s.should eq("1.0")
     end
 
     it "does to_s for f32" do
@@ -184,13 +184,33 @@ describe "Float" do
     end
   end
 
+  describe "#inspect" do
+    it "does inspect for f64" do
+      3.2.inspect.should eq("3.2")
+    end
+
+    it "does inspect for f32" do
+      3.2_f32.inspect.should eq("3.2_f32")
+    end
+
+    it "does inspect for f64 with IO" do
+      str = String.build { |io| 3.2.inspect(io) }
+      str.should eq("3.2")
+    end
+
+    it "does inspect for f32" do
+      str = String.build { |io| 3.2_f32.inspect(io) }
+      str.should eq("3.2_f32")
+    end
+  end
+
   describe "hash" do
     it "does for Float32" do
-      1.2_f32.hash.should_not eq(0)
+      1.2_f32.hash.should eq(1.2_f32.hash)
     end
 
     it "does for Float64" do
-      1.2.hash.should_not eq(0)
+      1.2.hash.should eq(1.2.hash)
     end
   end
 

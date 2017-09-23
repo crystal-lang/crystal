@@ -18,36 +18,26 @@ using namespace llvm;
 #define LLVM_VERSION_LE(major, minor) \
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
 
+#if LLVM_VERSION_LE(4, 0)
 typedef struct LLVMOpaqueDIBuilder *LLVMDIBuilderRef;
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(DIBuilder, LLVMDIBuilderRef)
 
-#if LLVM_VERSION_EQ(3, 5)
-typedef LLVMValueRef LLVMMetadataRef;
-typedef Value Metadata;
-#define DIBuilderRef LLVMDIBuilderRef
-
-#else /* LLVM != 3.5 */
 typedef struct LLVMOpaqueMetadata *LLVMMetadataRef;
 DEFINE_ISA_CONVERSION_FUNCTIONS(Metadata, LLVMMetadataRef)
 inline Metadata **unwrap(LLVMMetadataRef *Vals) {
   return reinterpret_cast<Metadata **>(Vals);
 }
-#endif /* LLVM == 3.5 */
+#endif
 
-#if LLVM_VERSION_LE(3, 6)
-template <typename T> T unwrapDIptr(LLVMMetadataRef v) {
-  return v ? T(unwrap<MDNode>(v)) : T();
-}
-#define DIBuilderRef LLVMDIBuilderRef
-
-#else /* LLVM > 3.6 */
 typedef DIBuilder *DIBuilderRef;
 #define DIArray DINodeArray
 template <typename T> T *unwrapDIptr(LLVMMetadataRef v) {
   return (T *)(v ? unwrap<MDNode>(v) : NULL);
 }
-#endif /* LLVM <= 3.6 */
 
+#if LLVM_VERSION_LE(3, 6)
+#define OperandBundleDef void
+#endif
 
 #define DIDescriptor DIScope
 #define unwrapDI unwrapDIptr
@@ -63,13 +53,7 @@ void LLVMDIBuilderFinalize(LLVMDIBuilderRef dref) { unwrap(dref)->finalize(); }
 
 LLVMMetadataRef LLVMDIBuilderCreateFile(DIBuilderRef Dref, const char *File,
                                         const char *Dir) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DIFile F = D->createFile(File, Dir);
-  return wrap(F);
-#else
   return wrap(Dref->createFile(File, Dir));
-#endif
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateCompileUnit(DIBuilderRef Dref, unsigned Lang,
@@ -79,20 +63,13 @@ LLVMMetadataRef LLVMDIBuilderCreateCompileUnit(DIBuilderRef Dref, unsigned Lang,
                                                int Optimized,
                                                const char *Flags,
                                                unsigned RuntimeVersion) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DICompileUnit CU = D->createCompileUnit(Lang, File, Dir, Producer, Optimized,
-                                          Flags, RuntimeVersion);
-  return wrap(CU);
-#else
-# if LLVM_VERSION_LE(3, 9)
+#if LLVM_VERSION_LE(3, 9)
   return wrap(Dref->createCompileUnit(Lang, File, Dir, Producer, Optimized,
                                       Flags, RuntimeVersion));
-# else
+#else
   DIFile *F = Dref->createFile(File, Dir);
   return wrap(Dref->createCompileUnit(Lang, F, Producer, Optimized,
                                       Flags, RuntimeVersion));
-# endif
 #endif
 }
 
@@ -108,19 +85,11 @@ LLVMMetadataRef LLVMDIBuilderCreateFunction(
 #endif
     bool IsOptimized,
     LLVMValueRef Func) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DISubprogram Sub = D->createFunction(
-      unwrapDI<DIDescriptor>(Scope), Name, LinkageName, unwrapDI<DIFile>(File),
-      Line, unwrapDI<DICompositeType>(CompositeType), IsLocalToUnit,
-      IsDefinition, ScopeLine, Flags, IsOptimized, unwrap<Function>(Func));
-#else
   DISubprogram *Sub = Dref->createFunction(
       unwrapDI<DIScope>(Scope), Name, LinkageName, unwrapDI<DIFile>(File), Line,
       unwrapDI<DISubroutineType>(CompositeType), IsLocalToUnit, IsDefinition,
       ScopeLine, Flags, IsOptimized);
   unwrap<Function>(Func)->setSubprogram(Sub);
-#endif
   return wrap(Sub);
 }
 
@@ -129,18 +98,8 @@ LLVMMetadataRef LLVMDIBuilderCreateLexicalBlock(DIBuilderRef Dref,
                                                 LLVMMetadataRef File,
                                                 unsigned Line,
                                                 unsigned Column) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-# if LLVM_VERSION_EQ(3, 5)
-  DILexicalBlock LB = D->createLexicalBlock(unwrapDI<DIDescriptor>(Scope), unwrapDI<DIFile>(File), Line, Column, 0);
-# else /* LLVM <= 3.6 && LLVM != 3.5 */
-  DILexicalBlock LB = D->createLexicalBlock(unwrapDI<DIDescriptor>(Scope), unwrapDI<DIFile>(File), Line, Column);
-# endif
-  return wrap(LB);
-#else /* LLVM > 3.6 */
   return wrap(Dref->createLexicalBlock(unwrapDI<DIDescriptor>(Scope),
                                        unwrapDI<DIFile>(File), Line, Column));
-#endif /* LLVM <= 3.6 */
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateBasicType(DIBuilderRef Dref,
@@ -148,71 +107,34 @@ LLVMMetadataRef LLVMDIBuilderCreateBasicType(DIBuilderRef Dref,
                                              uint64_t SizeInBits,
                                              uint64_t AlignInBits,
                                              unsigned Encoding) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DIBasicType T = D->createBasicType(Name, SizeInBits, AlignInBits, Encoding);
-  return wrap(T);
-#else
-# if LLVM_VERSION_LE(3, 9)
+#if LLVM_VERSION_LE(3, 9)
   return wrap(Dref->createBasicType(Name, SizeInBits, AlignInBits, Encoding));
-# else
+#else
   return wrap(Dref->createBasicType(Name, SizeInBits, Encoding));
-# endif
 #endif
 }
 
 LLVMMetadataRef LLVMDIBuilderGetOrCreateTypeArray(DIBuilderRef Dref,
                                                   LLVMMetadataRef *Data,
                                                   unsigned Length) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-# if LLVM_VERSION_EQ(3, 5)
-  Value **DataValue = unwrap(Data);
-  ArrayRef<Value *> Elements(DataValue, Length);
-  DIArray A = D->getOrCreateArray(Elements);
-# else /* LLVM <= 3.6 && LLVM != 3.5 */
-  Metadata **DataValue = unwrap(Data);
-  ArrayRef<Metadata *> Elements(DataValue, Length);
-  DITypeArray A = D->getOrCreateTypeArray(Elements);
-# endif
-  return wrap(A);
-#else /* LLVM > 3.6 */
   Metadata **DataValue = unwrap(Data);
   return wrap(
       Dref->getOrCreateTypeArray(ArrayRef<Metadata *>(DataValue, Length))
           .get());
-#endif /* LLVM <= 3.6 */
 }
 
 LLVMMetadataRef LLVMDIBuilderGetOrCreateArray(DIBuilderRef Dref,
                                               LLVMMetadataRef *Data,
                                               unsigned Length) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  ArrayRef<Metadata *> elements(unwrap(Data), Length);
-  DIArray a = D->getOrCreateArray(elements);
-
-  return wrap(a);
-#else
   Metadata **DataValue = unwrap(Data);
   return wrap(
       Dref->getOrCreateArray(ArrayRef<Metadata *>(DataValue, Length)).get());
-#endif
 }
 
 LLVMMetadataRef
 LLVMDIBuilderCreateSubroutineType(DIBuilderRef Dref, LLVMMetadataRef File,
                                   LLVMMetadataRef ParameterTypes) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-# if LLVM_VERSION_EQ(3, 5)
-  DICompositeType CT = D->createSubroutineType(unwrapDI<DIFile>(File), unwrapDI<DIArray>(ParameterTypes));
-# else /* LLVM <= 3.6 && LLVM != 3.5 */
-  DICompositeType CT = D->createSubroutineType(unwrapDI<DIFile>(File), unwrapDI<DITypeArray>(ParameterTypes));
-# endif
-#else /* LLVM > 3.6 */
   DISubroutineType *CT = Dref->createSubroutineType(DITypeRefArray(unwrap<MDTuple>(ParameterTypes)));
-#endif /* LLVM <= 3.6 */
   return wrap(CT);
 }
 
@@ -226,21 +148,14 @@ LLVMMetadataRef LLVMDIBuilderCreateAutoVariable(
     DINode::DIFlags Flags,
 #endif
     uint32_t AlignInBits) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DIVariable V = D->createLocalVariable(
-      llvm::dwarf::DW_TAG_auto_variable, unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
-      unwrapDI<DIType>(Ty), AlwaysPreserve, Flags, 0);
-#else
-# if LLVM_VERSION_LE(3, 9)
+#if LLVM_VERSION_LE(3, 9)
   DILocalVariable *V = Dref->createAutoVariable(
       unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       unwrapDI<DIType>(Ty), AlwaysPreserve, Flags);
-# else
+#else
   DILocalVariable *V = Dref->createAutoVariable(
       unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       unwrapDI<DIType>(Ty), AlwaysPreserve, Flags, AlignInBits);
-# endif
 #endif
   return wrap(V);
 }
@@ -255,18 +170,10 @@ LLVMMetadataRef LLVMDIBuilderCreateParameterVariable(
     DINode::DIFlags Flags
 #endif
     ) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DIVariable V = D->createLocalVariable(
-       llvm::dwarf::DW_TAG_arg_variable, unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
-       unwrapDI<DIType>(Ty), AlwaysPreserve, Flags, ArgNo);
-  return wrap(V);
-#else
   DILocalVariable *V = Dref->createParameterVariable
     (unwrapDI<DIDescriptor>(Scope), Name, ArgNo, unwrapDI<DIFile>(File), Line,
      unwrapDI<DIType>(Ty), AlwaysPreserve, Flags);
   return wrap(V);
-#endif
 }
 
 LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(DIBuilderRef Dref,
@@ -275,46 +182,17 @@ LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(DIBuilderRef Dref,
                                              LLVMMetadataRef Expr,
                                              LLVMValueRef DL,
                                              LLVMBasicBlockRef Block) {
-#if LLVM_VERSION_EQ(3, 5)
-  DIBuilder *D = unwrap(Dref);
-  Instruction *Instr =
-    D->insertDeclare(unwrap(Storage), unwrapDI<DIVariable>(VarInfo),
-                     unwrap(Block));
-  Instr->setDebugLoc(DebugLoc::getFromDILocation(cast<MDNode>(DL)));
-#endif
-
-#if LLVM_VERSION_EQ(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  Instruction *Instr =
-    D->insertDeclare(unwrap(Storage), unwrapDI<DIVariable>(VarInfo),
-                     unwrapDI<DIExpression>(Expr), unwrap(Block));
-  Instr->setDebugLoc(DebugLoc::getFromDILocation(cast<MDNode>(unwrap<MetadataAsValue>(DL)->getMetadata())));
-#endif
-
-#if LLVM_VERSION_GE(3, 7)
   Instruction *Instr =
     Dref->insertDeclare(unwrap(Storage), unwrap<DILocalVariable>(VarInfo),
                         unwrapDI<DIExpression>(Expr),
                         DebugLoc(cast<MDNode>(unwrap<MetadataAsValue>(DL)->getMetadata())),
                         unwrap(Block));
-#endif
-
   return wrap(Instr);
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateExpression(DIBuilderRef Dref, int64_t *Addr,
                                               size_t Length) {
-#if LLVM_VERSION_LE(3, 6)
-# if LLVM_VERSION_EQ(3, 5)
-  return nullptr;
-# else /* LLVM <= 3.6 && LLVM != 3.5 */
-  DIBuilder *D = unwrap(Dref);
-  DIExpression Expr = D->createExpression(ArrayRef<int64_t>(Addr, Length));
-  return wrap(Expr);
-# endif
-#else /* LLVM > 3.6 */
   return wrap(Dref->createExpression(ArrayRef<int64_t>(Addr, Length)));
-#endif
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateEnumerationType(
@@ -322,30 +200,16 @@ LLVMMetadataRef LLVMDIBuilderCreateEnumerationType(
     LLVMMetadataRef File, unsigned LineNumber, uint64_t SizeInBits,
     uint64_t AlignInBits, LLVMMetadataRef Elements,
     LLVMMetadataRef UnderlyingType) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DICompositeType enumType = D->createEnumerationType(
-      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), LineNumber,
-      SizeInBits, AlignInBits, unwrapDI<DIArray>(Elements),
-      unwrapDI<DIType>(UnderlyingType));
-#else
   DICompositeType *enumType = Dref->createEnumerationType(
       unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), LineNumber,
       SizeInBits, AlignInBits, DINodeArray(unwrapDI<MDTuple>(Elements)),
       unwrapDI<DIType>(UnderlyingType));
-#endif
   return wrap(enumType);
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateEnumerator(DIBuilderRef Dref,
                                               const char *Name, int64_t Value) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DIEnumerator e = D->createEnumerator(Name, Value);
-  return wrap(e);
-#else
   DIEnumerator *e = Dref->createEnumerator(Name, Value);
-#endif
   return wrap(e);
 }
 
@@ -364,22 +228,13 @@ LLVMDIBuilderCreateStructType(DIBuilderRef Dref,
 #endif
                               LLVMMetadataRef DerivedFrom,
                               LLVMMetadataRef Elements) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DICompositeType CT = D->createStructType(
-      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
-      SizeInBits, AlignInBits, Flags, unwrapDI<DIType>(DerivedFrom),
-      unwrapDI<DIArray>(Elements));
-#else
   DICompositeType *CT = Dref->createStructType(
       unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       SizeInBits, AlignInBits, Flags, unwrapDI<DIType>(DerivedFrom),
       DINodeArray(unwrapDI<MDTuple>(Elements)));
-#endif
   return wrap(CT);
 }
 
-#if LLVM_VERSION_GE(3, 8)
 LLVMMetadataRef
 LLVMDIBuilderCreateReplaceableCompositeType(DIBuilderRef Dref,
                                             LLVMMetadataRef Scope,
@@ -406,7 +261,6 @@ LLVMDIBuilderReplaceTemporary(DIBuilderRef Dref,
   llvm::TempMDNode fwd_decl(Node);
   Dref->replaceTemporary(std::move(fwd_decl), Type);
 }
-#endif
 
 LLVMMetadataRef
 LLVMDIBuilderCreateMemberType(DIBuilderRef Dref, LLVMMetadataRef Scope,
@@ -419,16 +273,9 @@ LLVMDIBuilderCreateMemberType(DIBuilderRef Dref, LLVMMetadataRef Scope,
                               DINode::DIFlags Flags,
 #endif
                               LLVMMetadataRef Ty) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DIDerivedType DT = D->createMemberType(
-      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
-      SizeInBits, AlignInBits, OffsetInBits, Flags, unwrapDI<DIType>(Ty));
-#else
   DIDerivedType *DT = Dref->createMemberType(
       unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       SizeInBits, AlignInBits, OffsetInBits, Flags, unwrapDI<DIType>(Ty));
-#endif
   return wrap(DT);
 }
 
@@ -437,39 +284,24 @@ LLVMMetadataRef LLVMDIBuilderCreatePointerType(DIBuilderRef Dref,
                                                uint64_t SizeInBits,
                                                uint64_t AlignInBits,
                                                const char *Name) {
-#if LLVM_VERSION_LE(3, 6)
-  DIBuilder *D = unwrap(Dref);
-  DIDerivedType T = D->createPointerType(unwrapDI<DIType>(PointeeType),
-                                         SizeInBits, AlignInBits, Name);
-#else
   DIDerivedType *T = Dref->createPointerType(unwrapDI<DIType>(PointeeType),
-                                             SizeInBits, AlignInBits, Name);
+                                             SizeInBits, AlignInBits,
+#if LLVM_VERSION_GE(5, 0)
+                                             None,
 #endif
+                                             Name);
   return wrap(T);
 }
 
 LLVMMetadataRef LLVMTemporaryMDNode(LLVMContextRef C, LLVMMetadataRef *MDs,
                                     unsigned Count) {
-#if LLVM_VERSION_LE(3, 6)
-  return wrap(MDNode::getTemporary(*unwrap(C),
-                                   ArrayRef<Metadata *>(unwrap(MDs), Count)));
-#else
   return wrap(MDTuple::getTemporary(*unwrap(C),
                                     ArrayRef<Metadata *>(unwrap(MDs), Count))
                   .release());
-#endif
 }
 
 void LLVMMetadataReplaceAllUsesWith(LLVMMetadataRef MD, LLVMMetadataRef New) {
-#if LLVM_VERSION_LE(3, 6)
-# if LLVM_VERSION_EQ(3, 5)
   auto *Node = unwrap<MDNode>(MD);
-# else /* LLVM <= 3.6 && LLVM != 3.5 */
-  auto *Node = unwrap<MDNodeFwdDecl>(MD);
-# endif
-#else /* LLVM > 3.6 */
-  auto *Node = unwrap<MDNode>(MD);
-#endif
   Node->replaceAllUsesWith(unwrap<MDNode>(New));
   MDNode::deleteTemporary(Node);
 }
@@ -497,6 +329,92 @@ void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering)
   if (LoadInst *LI = dyn_cast<LoadInst>(P))
     return LI->setOrdering(O);
   return cast<StoreInst>(P)->setOrdering(O);
+}
+
+LLVMValueRef LLVMExtBuildCatchPad(LLVMBuilderRef B, LLVMValueRef ParentPad,
+                                  unsigned ArgCount, LLVMValueRef *LLArgs, const char *Name) {
+#if LLVM_VERSION_GE(3, 8)
+  Value **Args = unwrap(LLArgs);
+  return wrap(unwrap(B)->CreateCatchPad(
+      unwrap(ParentPad), ArrayRef<Value *>(Args, ArgCount), Name));
+#else
+  return nullptr;
+#endif
+}
+
+LLVMValueRef LLVMExtBuildCatchRet(LLVMBuilderRef B,
+                                  LLVMValueRef Pad,
+                                  LLVMBasicBlockRef BB) {
+#if LLVM_VERSION_GE(3, 8)
+  return wrap(unwrap(B)->CreateCatchRet(cast<CatchPadInst>(unwrap(Pad)),
+                                              unwrap(BB)));
+#else
+  return nullptr;
+#endif
+}
+
+LLVMValueRef LLVMExtBuildCatchSwitch(LLVMBuilderRef B,
+                                     LLVMValueRef ParentPad,
+                                     LLVMBasicBlockRef BB,
+                                     unsigned NumHandlers,
+                                     const char *Name) {
+#if LLVM_VERSION_GE(3, 8)
+  if (ParentPad == nullptr) {
+    Type *Ty = Type::getTokenTy(unwrap(B)->getContext());
+    ParentPad = wrap(Constant::getNullValue(Ty));
+  }
+  return wrap(unwrap(B)->CreateCatchSwitch(unwrap(ParentPad), unwrap(BB),
+                                                 NumHandlers, Name));
+#else
+  return nullptr;
+#endif
+}
+
+void LLVMExtAddHandler(LLVMValueRef CatchSwitchRef,
+                       LLVMBasicBlockRef Handler) {
+#if LLVM_VERSION_GE(3, 8)
+  Value *CatchSwitch = unwrap(CatchSwitchRef);
+  cast<CatchSwitchInst>(CatchSwitch)->addHandler(unwrap(Handler));
+#endif
+}
+
+OperandBundleDef *LLVMExtBuildOperandBundleDef(const char *Name,
+                                                           LLVMValueRef *Inputs,
+                                                           unsigned NumInputs) {
+#if LLVM_VERSION_GE(3, 8)
+  return new OperandBundleDef(Name, makeArrayRef(unwrap(Inputs), NumInputs));
+#else
+  return nullptr;
+#endif
+}
+
+LLVMValueRef LLVMExtBuildCall(LLVMBuilderRef B, LLVMValueRef Fn,
+                                          LLVMValueRef *Args, unsigned NumArgs,
+                                          OperandBundleDef *Bundle,
+                                          const char *Name) {
+#if LLVM_VERSION_GE(3, 8)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateCall(
+      unwrap(Fn), makeArrayRef(unwrap(Args), NumArgs), Bundles, Name));
+#else
+  return LLVMBuildCall(B, Fn, Args, NumArgs, Name);
+#endif
+}
+
+LLVMValueRef LLVMExtBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef *Args,
+                    unsigned NumArgs, LLVMBasicBlockRef Then,
+                    LLVMBasicBlockRef Catch, OperandBundleDef *Bundle,
+                    const char *Name) {
+#if LLVM_VERSION_GE(3, 8)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateInvoke(unwrap(Fn), unwrap(Then), unwrap(Catch),
+                                      makeArrayRef(unwrap(Args), NumArgs),
+                                      Bundles, Name));
+#else
+  return LLVMBuildInvoke(B, Fn, Args, NumArgs, Then, Catch, Name);
+#endif
 }
 
 }

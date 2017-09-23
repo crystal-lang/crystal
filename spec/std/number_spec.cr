@@ -13,15 +13,15 @@ describe "Number" do
     end
 
     it "2 base " do
-      -1763.116.significant(2, base = 2).should eq(-1536.0)
-      753.155.significant(3, base = 2).should eq(768.0)
-      15.159.significant(1, base = 2).should eq(16.0)
+      -1763.116.significant(2, base: 2).should eq(-1536.0)
+      753.155.significant(3, base: 2).should eq(768.0)
+      15.159.significant(1, base: 2).should eq(16.0)
     end
 
     it "8 base " do
-      -1763.116.significant(2, base = 8).should eq(-1792.0)
-      753.155.significant(3, base = 8).should eq(752.0)
-      15.159.significant(1, base = 8).should eq(16.0)
+      -1763.116.significant(2, base: 8).should eq(-1792.0)
+      753.155.significant(3, base: 8).should eq(752.0)
+      15.159.significant(1, base: 8).should eq(16.0)
     end
 
     it "preserves type" do
@@ -38,20 +38,30 @@ describe "Number" do
     end
 
     it "2 base " do
-      -1763.116.round(2, base = 2).should eq(-1763.0)
-      753.155.round(2, base = 2).should eq(753.25)
-      15.159.round(2, base = 2).should eq(15.25)
+      -1763.116.round(2, base: 2).should eq(-1763.0)
+      753.155.round(2, base: 2).should eq(753.25)
+      15.159.round(2, base: 2).should eq(15.25)
     end
 
     it "8 base " do
-      -1763.116.round(2, base = 8).should eq(-1763.109375)
-      753.155.round(1, base = 8).should eq(753.125)
-      15.159.round(0, base = 8).should eq(15.0)
+      -1763.116.round(2, base: 8).should eq(-1763.109375)
+      753.155.round(1, base: 8).should eq(753.125)
+      15.159.round(0, base: 8).should eq(15.0)
     end
 
     it "preserves type" do
       123.round(2).should eq(123)
       123.round(2).should be_a(Int32)
+    end
+
+    it "accepts negative precision" do
+      123.round(-2).should eq(100)
+      123.round(-3).should eq(0)
+      523.round(-3).should eq(1000)
+
+      123.456.round(-2).should eq(100)
+      123_456.123456.round(-5).should eq(100_000)
+      753.155.round(-5, base: 2).should eq(768)
     end
   end
 
@@ -154,6 +164,15 @@ describe "Number" do
     ary[0].should eq(1)
     ary[1].should eq(2)
     ary[2].should eq(300.to_u8)
+  end
+
+  it "test zero?" do
+    0.zero?.should eq true
+    0.0.zero?.should eq true
+    0f32.zero?.should eq true
+    1.zero?.should eq false
+    1.0.zero?.should eq false
+    1f32.zero?.should eq false
   end
 
   describe "step" do

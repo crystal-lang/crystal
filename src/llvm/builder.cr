@@ -63,11 +63,11 @@ class LLVM::Builder
     Value.new LibLLVM.build_call(self, func, pointerof(value), 1, name)
   end
 
-  def call(func, args : Array(LLVM::Value), name : String = "")
+  def call(func, args : Array(LLVM::Value), name : String = "", bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null)
     # check_func(func)
     # check_values(args)
 
-    Value.new LibLLVM.build_call(self, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, name)
+    Value.new LibLLVMExt.build_call(self, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
   end
 
   def alloca(type, name = "")
@@ -87,19 +87,6 @@ class LLVM::Builder
     # check_value(ptr)
 
     Value.new LibLLVM.build_load(self, ptr, name)
-  end
-
-  def malloc(type, name = "")
-    # check_type("malloc", type)
-
-    Value.new LibLLVM.build_malloc(self, type, name)
-  end
-
-  def array_malloc(type, value, name = "")
-    # check_type("array_malloc", type)
-    # check_value(value)
-
-    Value.new LibLLVM.build_array_malloc(self, type, value, name)
   end
 
   {% for method_name in %w(gep inbounds_gep) %}
@@ -192,10 +179,30 @@ class LLVM::Builder
     Value.new lpad
   end
 
-  def invoke(fn, args : Array(LLVM::Value), a_then, a_catch, name = "")
+  def catch_switch(parent_pad, basic_block, num_handlers, name = "")
+    Value.new LibLLVMExt.build_catch_switch(self, parent_pad, basic_block, num_handlers, name)
+  end
+
+  def catch_pad(parent_pad, args : Array(LLVM::Value), name = "")
+    Value.new LibLLVMExt.build_catch_pad(self, parent_pad, args.size, args.to_unsafe.as(LibLLVM::ValueRef*), name)
+  end
+
+  def add_handler(catch_switch_ref, handler)
+    LibLLVMExt.add_handler catch_switch_ref, handler
+  end
+
+  def build_operand_bundle_def(name, values : Array(LLVM::Value))
+    LLVM::OperandBundleDef.new LibLLVMExt.build_operand_bundle_def(name, values.to_unsafe.as(LibLLVM::ValueRef*), values.size)
+  end
+
+  def build_catch_ret(pad, basic_block)
+    LibLLVMExt.build_catch_ret(self, pad, basic_block)
+  end
+
+  def invoke(fn, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null, name = "")
     # check_func(fn)
 
-    Value.new LibLLVM.build_invoke self, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, name
+    Value.new LibLLVMExt.build_invoke self, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
   end
 
   def switch(value, otherwise, cases)

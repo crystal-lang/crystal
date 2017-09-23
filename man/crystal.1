@@ -1,0 +1,241 @@
+.\"Crystal Programming Language
+.Dd
+.Dt CRYSTAL(1) "" "Crystal Compiler Command Line Reference Guide"
+.\".Dt CRYSTAL 1
+.Os UNIX
+.Sh NAME
+.Nm crystal
+.Nd Compiler for the Crystal language.
+.Sh SYNOPSYS
+.Nm
+command
+.Op switches
+programfile
+--
+.Op arguments
+.Sh DESCRIPTION
+Crystal is a statically type-checked programming language. It was created with the beauty of Ruby and the performance of C in mind.
+.Sh USAGE
+You can compile and run a program by invoking the compiler with a single filename:
+.Bd -offset indent-two
+.Nm
+some_program.cr
+.Ed
+
+Crystal files usually end with the .cr extension, though this is not mandatory.
+
+Alternatively you can use the run command:
+.Bd -offset indent-two
+.Nm
+run
+some_program.cr
+.Ed
+
+To create an executable use the build command:
+.Bd -offset indent-two
+.Nm
+build
+some_program.cr
+.Ed
+
+This will create an executable named "some_program".
+
+Note that by default the generated executables are not fully optimized.
+To turn optimizations on, use the --release flag:
+.Bd -offset indent-two
+.Nm
+build
+--release
+some_program.cr
+.Ed
+
+Make sure to always use --release for production-ready executables and when performing benchmarks.
+
+The optimizations are not turned on by default because the compile times are much faster without them and the performance of the program is still pretty good without them, so it allows to use the crystal command almost to be used as if it was an interpreter.
+
+.Bl -tag -width "12345678" -compact
+.Pp
+.Sh OPTIONS
+The crystal command accepts the following options 
+
+.Bl -tag -width "12345678" -compact
+.Pp
+.It 
+.Cm init
+TYPE
+NAME
+.Op DIR
+.Pp
+Generate a new project.
+.Pp
+TYPE is one of:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Sy lib
+Creates a library skeleton
+.It Sy app
+Creates an application skeleton
+.El
+
+This initializes the lib/app project folder as a git repository, with a license file, a readme file, a .travis.yml file for Travis CI integration, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
+.Bd -literal -offset
+NAME - name of project to be generated, eg: example
+.Pp
+DIR  - directory where project will be generated, default: NAME
+.Ed
+
+.Pp
+.It
+.Cm build
+.Op options
+programfile
+--
+.Op arguments
+.Pp
+Compile program.
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl -cross-compile
+Generate an object file for cross compilation and prints the command to build the executable.
+The object file should be copied to the target system and the printed command should be executed there. This flag mainly exists for porting the compiler to new platforms, where possible run the compiler on the target platform directly.
+.It Fl -d, Fl -debug
+Generate the output with symbolic debug symbols.
+These are read when debugging the built program with tools like lldb, gdb, valgrind etc. and provide mappings to the original source code for those tools.
+.It Fl D Ar FLAG, Fl -define Ar FLAG
+Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
+.It Fl -emit Op asm|llvm-bc|llvm-ir|obj
+Comma separated list of types of output for the compiler to emit. You can use this to see the generated LLVM IR, LLVM bitcode, assembly, and object files.
+.It Fl f Ar text|json, Fl -format Ar text|json
+Format of output. Defaults to text. The json format can be used to get a more parser-friendly output.
+.It Fl -ll
+Dump LLVM assembly file to output directory.
+.It Fl -link-flags FLAGS
+Pass additional flags to the linker. Though you can specify those flags on the source code, this is useful for passing environment specific information directly to the linker, like non-standard library paths or names. For more information on specifying linker flags on source, you can read the "C bindings" section of the documentation available on the official web site.
+.It Fl -mcpu CPU
+Specify the name of the processor. This will pass a -mcpu flag to LLVM, and is only intended to be used for cross-compilation.
+.It Fl -no-color
+Disable colored output.
+.It Fl -no-codegen
+Don't do code generation, just parse the file.
+.It Fl o
+Specify filename of output.
+.It Fl -prelude
+Specify prelude to use. The default one initializes the garbage collector. You can also use --prelude=empty to use no preludes. This can be useful for checking code generation for a specific source code file.
+.It Fl -release
+Turn on optimizations for the generated code, which are disabled by default.
+.It Fl -error-trace
+Show full stack trace. Disabled by default, as the full trace usually makes error messages less readable and not always deliver relevant information.
+.It Fl s, -stats
+Print runtime statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
+.It Fl -single-module
+Generate a single LLVM module.
+.It Fl -threads
+Maximum number of threads to use for code generation. The default is 8 threads.
+.It Fl -target Ar TRIPLE
+Enable target triple; intended to use for cross-compilation. See llvm documentation for more information about target triple.
+.It Fl -verbose
+Display the commands executed by the system.
+.It Fl -stdin-filename Ar FILENAME
+Source file name to be read from STDIN.
+.El
+
+.Pp
+.It
+.Cm deps
+.Op options
+.Ar <command>
+.Pp
+Alias for shards, the dependency manager for Crystal language.
+.Pp
+.It
+.Cm docs
+.Pp
+Generate documentation from comments using a subset of markdown. The output is saved in html format on the created doc/ folder. More information about documentation conventions can be found at https://crystal-lang.org/docs/conventions/documenting_code.html.
+.Pp
+.It Cm eval
+.Pp
+Evaluate code from arguments or, if no arguments are passed, from the standard input. Useful for experiments.
+It accepts the flags --stats, --release, and --help, as the build command does.
+.Pp
+.It
+.Cm play
+.Op options
+.Pp
+Starts the crystal playground server on port 8080, by default.
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl p Fl -port
+Run the playground on the specified port. Default is 8080.
+.It Fl b Ar HOST Fl -binding Ar HOST
+Bind the playground to the specified IP.
+.It Fl v Fl -verbose
+Display detailed information of the executed code.
+.It Fl h Fl -help
+Show a help message about play command options.
+.El
+.Pp
+.It
+.Cm run
+.Op options
+programfile
+--
+.Op arguments
+.Pp
+The default command. Compile and run program.
+.Pp
+Options:
+Same as the build options.
+.Pp
+.It
+.Cm spec
+.Pp
+Compile and run specs (in spec directory).
+.Pp
+.It
+.Cm tool
+.Op tool
+.Op switches
+programfile
+--
+.Op arguments
+.Pp
+Run a tool. The available tools are: context, format, hierarchy, implementations, and types.
+.Pp
+Tools:
+.Bl -tag -offset indent
+.It Cm context
+Show context for given location.
+.It Cm expand
+Show macro expansion for given location.
+.It Cm format
+Format project, directories and/or files with the coding style used in the standard library. You can use the
+.Fl -check
+flag to check whether the formatter would make any changes.
+.It Cm hierarchy
+Show hierarchy of types from file. Also show class and struct members, with type and size. Types can be filtered with a regex by using the
+.Fl e
+flag.
+.It Cm implementations
+Show implementations for a given call. Use
+.Fl -cursor
+to specify the cursor position. The format for the cursor position is file:line:column.
+.It Cm types
+Show type of main variables of file.
+.El
+.Pp
+.It Cm version, Fl -version, v
+.Pp
+Show version.
+.El
+.Sh SEE ALSO
+.Fn shards 1
+.Bl -hang -compact -width "https://github.com/crystal-lang/crystal/1234"
+.It https://crystal-lang.org/
+The official web site.
+.It https://github.com/crystal-lang/crystal
+Official Repository.
+.El

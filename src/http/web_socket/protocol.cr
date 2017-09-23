@@ -134,7 +134,7 @@ class HTTP::WebSocket::Protocol
     return @io.write(data) unless @masked
 
     key = Random::DEFAULT.next_int
-    mask_array = pointerof(key).as(Pointer(UInt8[4])).value
+    mask_array = key.unsafe_as(StaticArray(UInt8, 4))
     @io.write mask_array.to_slice
 
     data.each_with_index do |byte, index|
@@ -237,7 +237,7 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def self.new(host : String, path : String, port = nil, tls = false)
+  def self.new(host : String, path : String, port = nil, tls = false, headers = HTTP::Headers.new)
     {% if flag?(:without_openssl) %}
       if tls
         raise "WebSocket TLS is disabled because `-D without_openssl` was passed at compile time"
@@ -259,7 +259,6 @@ class HTTP::WebSocket::Protocol
       end
     {% end %}
 
-    headers = HTTP::Headers.new
     headers["Host"] = "#{host}:#{port}"
     headers["Connection"] = "Upgrade"
     headers["Upgrade"] = "websocket"
@@ -269,6 +268,7 @@ class HTTP::WebSocket::Protocol
     path = "/" if path.empty?
     handshake = HTTP::Request.new("GET", path, headers)
     handshake.to_io(socket)
+    socket.flush
     handshake_response = HTTP::Client::Response.from_io(socket)
     unless handshake_response.status_code == 101
       raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status_code}")
@@ -277,12 +277,12 @@ class HTTP::WebSocket::Protocol
     new(socket, masked: true)
   end
 
-  def self.new(uri : URI | String)
+  def self.new(uri : URI | String, headers = HTTP::Headers.new)
     uri = URI.parse(uri) if uri.is_a?(String)
 
     if (host = uri.host) && (path = uri.path)
       tls = uri.scheme == "https" || uri.scheme == "wss"
-      return new(host, path, uri.port, tls)
+      return new(host, path, uri.port, tls, headers)
     end
 
     raise ArgumentError.new("No host or path specified which are required.")

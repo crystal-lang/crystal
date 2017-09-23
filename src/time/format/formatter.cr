@@ -92,11 +92,13 @@ struct Time::Format
     end
 
     def hour_12_zero_padded
-      pad2 (time.hour % 12), '0'
+      h = (time.hour % 12)
+      pad2 (h == 0 ? 12 : h), '0'
     end
 
     def hour_12_blank_padded
-      pad2 (time.hour % 12), ' '
+      h = (time.hour % 12)
+      pad2 (h == 0 ? 12 : h), ' '
     end
 
     def minute

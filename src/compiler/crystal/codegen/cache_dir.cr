@@ -114,9 +114,7 @@ module Crystal
     end
 
     private def gather_cache_entries(dir)
-      Dir.entries(dir)
-         .reject { |name| name == "." || name == ".." }
-         .map! { |name| File.join(dir, name) }
+      Dir.children(dir).map! { |name| File.join(dir, name) }
     end
   end
 end

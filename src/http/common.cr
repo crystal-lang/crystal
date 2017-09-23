@@ -17,7 +17,11 @@ module HTTP
   def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
     headers = Headers.new
 
-    while line = io.gets
+    headers_size = 0
+    while line = io.gets(16_384, chomp: true)
+      headers_size += line.bytesize
+      break if headers_size > 16_384
+
       if line.empty?
         body = nil
         if body_type.prohibited?
@@ -224,6 +228,11 @@ module HTTP
     nil
   end
 
+  # Format a Time object as a String using the format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  #
+  # ```
+  # HTTP.rfc1123_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
+  # ```
   def self.rfc1123_date(time : Time) : String
     # TODO: GMT should come from the Time classes instead
     time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
@@ -291,10 +300,24 @@ module HTTP
   end
 
   # Returns the default status message of the given HTTP status code.
+  #
+  # Based on [Hypertext Transfer Protocol (HTTP) Status Code Registry](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml)
+  #
+  # Last Updated 2017-04-14
+  #
+  # HTTP Status Codes (source: [http-status-codes-1.csv](https://www.iana.org/assignments/http-status-codes/http-status-codes-1.csv))
+  #
+  # * 1xx: Informational - Request received, continuing process
+  # * 2xx: Success - The action was successfully received, understood, and accepted
+  # * 3xx: Redirection - Further action must be taken in order to complete the request
+  # * 4xx: Client Error - The request contains bad syntax or cannot be fulfilled
+  # * 5xx: Server Error - The server failed to fulfill an apparently valid request
+  #
   def self.default_status_message_for(status_code : Int) : String
     case status_code
     when 100 then "Continue"
     when 101 then "Switching Protocols"
+    when 102 then "Processing"
     when 200 then "OK"
     when 201 then "Created"
     when 202 then "Accepted"
@@ -302,6 +325,8 @@ module HTTP
     when 204 then "No Content"
     when 205 then "Reset Content"
     when 206 then "Partial Content"
+    when 207 then "Multi-Status"
+    when 208 then "Already Reported"
     when 226 then "IM Used"
     when 300 then "Multiple Choices"
     when 301 then "Moved Permanently"
@@ -324,13 +349,15 @@ module HTTP
     when 410 then "Gone"
     when 411 then "Length Required"
     when 412 then "Precondition Failed"
-    when 413 then "Request Entity Too Large"
-    when 414 then "Request-URI Too Long"
+    when 413 then "Payload Too Large"
+    when 414 then "URI Too Long"
     when 415 then "Unsupported Media Type"
-    when 416 then "Requested Range Not Satisfiable"
+    when 416 then "Range Not Satisfiable"
     when 417 then "Expectation Failed"
     when 421 then "Misdirected Request"
+    when 422 then "Unprocessable Entity"
     when 423 then "Locked"
+    when 424 then "Failed Dependency"
     when 426 then "Upgrade Required"
     when 428 then "Precondition Required"
     when 429 then "Too Many Requests"
@@ -343,7 +370,10 @@ module HTTP
     when 504 then "Gateway Timeout"
     when 505 then "HTTP Version Not Supported"
     when 506 then "Variant Also Negotiates"
+    when 507 then "Insufficient Storage"
+    when 508 then "Loop Detected"
     when 510 then "Not Extended"
+    when 511 then "Network Authentication Required"
     else          ""
     end
   end

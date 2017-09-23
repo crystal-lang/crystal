@@ -32,6 +32,18 @@ struct BitArray
     @bits = Pointer(UInt32).malloc(malloc_size, value)
   end
 
+  def ==(other : BitArray)
+    return false if size != other.size
+    # NOTE: If BitArray implements resizing, there may be more than 1 binary
+    # representation for equivalent BitArrays after a downsize as the discarded
+    # bits may not have been zeroed.
+    return LibC.memcmp(@bits, other.@bits, malloc_size) == 0
+  end
+
+  def ==(other)
+    false
+  end
+
   def unsafe_at(index : Int)
     bit_index, sub_index = index.divmod(32)
     (@bits[bit_index] & (1 << sub_index)) > 0
@@ -51,6 +63,109 @@ struct BitArray
       @bits[bit_index] |= 1 << sub_index
     else
       @bits[bit_index] &= ~(1 << sub_index)
+    end
+  end
+
+  # Returns all elements that are within the given range.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Additionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # ba = BitArray.new(5)
+  # ba[0] = true; ba[2] = true; ba[4] = true
+  # ba # => BitArray[10101]
+  #
+  # ba[1..3]    # => BitArray[010]
+  # ba[4..7]    # => BitArray[1]
+  # ba[6..10]   # raise IndexError
+  # ba[5..10]   # => BitArray[]
+  # ba[-2...-1] # => BitArray[0]
+  # ```
+  def [](range : Range(Int, Int))
+    self[*Indexable.range_to_index_and_count(range, size)]
+  end
+
+  # Returns count or less (if there aren't enough) elements starting at the
+  # given start index.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Additionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # ba = BitArray.new(5)
+  # ba[0] = true; ba[2] = true; ba[4] = true
+  # ba # => BitArray[10101]
+  #
+  # ba[-3, 3] # => BitArray[101]
+  # ba[6, 1]  # raise indexError
+  # ba[1, 2]  # => BitArray[01]
+  # ba[5, 1]  # => BitArray[]
+  # ```
+  def [](start : Int, count : Int)
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+
+    if start == size
+      return BitArray.new(0)
+    end
+
+    start += size if start < 0
+    raise IndexError.new unless 0 <= start <= size
+
+    if count == 0
+      return BitArray.new(0)
+    end
+
+    count = Math.min(count, size - start)
+
+    if size <= 32
+      # Result *and* original fit in a single int32, we can use only bitshifts
+      bits = @bits[0]
+
+      bits >>= start
+      bits &= (1 << count) - 1
+
+      BitArray.new(count).tap { |ba| ba.@bits[0] = bits }
+    elsif size <= 64
+      # Original fits in int64, we can use bitshifts
+      bits = @bits.as(UInt64*)[0]
+
+      bits >>= start
+      bits &= (1 << count) - 1
+
+      if count <= 32
+        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32 }
+      else
+        BitArray.new(count).tap { |ba| ba.@bits.as(UInt64*)[0] = bits }
+      end
+    else
+      ba = BitArray.new(count)
+      start_bit_index, start_sub_index = start.divmod(32)
+      end_bit_index = (start + count) / 32
+
+      i = 0
+      bits = @bits[start_bit_index]
+      while start_bit_index + i <= end_bit_index
+        low_bits = bits
+        low_bits >>= start_sub_index
+
+        bits = @bits[start_bit_index + i + 1]
+
+        high_bits = bits
+        high_bits &= (1 << start_sub_index) - 1
+        high_bits <<= 32 - start_sub_index
+
+        ba.@bits[i] = low_bits | high_bits
+        i += 1
+      end
+
+      ba
     end
   end
 

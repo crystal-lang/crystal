@@ -7,6 +7,10 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = ULong
 
+  alias IntPrimitiveSigned = Int8 | Int16 | Int32 | LibC::Long
+  alias IntPrimitiveUnsigned = UInt8 | UInt16 | UInt32 | LibC::ULong
+  alias IntPrimitive = IntPrimitiveSigned | IntPrimitiveUnsigned
+
   {% if flag?(:x86_64) || flag?(:aarch64) %}
     alias MpExp = Int64
   {% else %}
@@ -61,8 +65,15 @@ lib LibGMP
   fun fdiv_r = __gmpz_fdiv_r(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun fdiv_r_ui = __gmpz_fdiv_r_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
 
+  fun fdiv_qr = __gmpz_fdiv_qr(q : MPZ*, r : MPZ*, n : MPZ*, d : MPZ*)
+  fun fdiv_qr_ui = __gmpz_fdiv_qr_ui(q : MPZ*, r : MPZ*, n : MPZ*, d : ULong) : ULong
+
   fun tdiv_r = __gmpz_tdiv_r(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun tdiv_r_ui = __gmpz_tdiv_r_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
+  fun tdiv_ui = __gmpz_tdiv_ui(op1 : MPZ*, op2 : ULong) : ULong
+
+  fun tdiv_qr = __gmpz_tdiv_qr(q : MPZ*, r : MPZ*, n : MPZ*, d : MPZ*)
+  fun tdiv_qr_ui = __gmpz_tdiv_qr_ui(q : MPZ*, r : MPZ*, n : MPZ*, d : ULong) : ULong
 
   fun neg = __gmpz_neg(rop : MPZ*, op : MPZ*)
   fun abs = __gmpz_abs(rop : MPZ*, op : MPZ*)
@@ -89,6 +100,9 @@ lib LibGMP
   fun cmp_si = __gmpz_cmp_si(op1 : MPZ*, op2 : Long) : Int
   fun cmp_ui = __gmpz_cmp_ui(op1 : MPZ*, op2 : ULong) : Int
   fun cmp_d = __gmpz_cmp_d(op1 : MPZ*, op2 : Double) : Int
+
+  # # Conversion
+  fun get_d_2exp = __gmpz_get_d_2exp(exp : Long*, op : MPZ*) : Double
 
   # # Number Theoretic Functions
 
@@ -143,35 +157,47 @@ lib LibGMP
   fun mpf_init2 = __gmpf_init2(x : MPF*, prec : BitcntT)
   fun mpf_init_set_d = __gmpf_init_set_d(rop : MPF*, op : Double)
   fun mpf_init_set_str = __gmpf_init_set_str(rop : MPF*, str : UInt8*, base : Int) : Int
+  fun mpf_init_set_ui = __gmpf_init_set_ui(rop : MPF*, op : ULong)
+  fun mpf_init_set_si = __gmpf_init_set_si(rop : MPF*, op : Long)
 
   # # Precision
   fun mpf_set_default_prec = __gmpf_set_default_prec(prec : BitcntT)
   fun mpf_get_default_prec = __gmpf_get_default_prec : BitcntT
 
-  # # I/O
+  # # Conversion
   fun mpf_get_str = __gmpf_get_str(str : UInt8*, expptr : MpExp*, base : Int, n_digits : LibC::SizeT, op : MPF*) : UInt8*
   fun mpf_get_d = __gmpf_get_d(op : MPF*) : Double
   fun mpf_set_d = __gmpf_set_d(op : MPF*, op : Double)
+  fun mpf_set = __gmpf_set(op : MPF*, op : MPF*)
+  fun mpf_set_z = __gmpf_set_z(rop : MPF*, op : MPZ*)
+  fun mpf_set_q = __gmpf_set_q(rop : MPF*, op : MPQ*)
   fun mpf_get_si = __gmpf_get_si(op : MPF*) : Long
   fun mpf_get_ui = __gmpf_get_ui(op : MPF*) : ULong
-  fun mpf_ceil = __gmpf_ceil(rop : MPF*, op : MPF*)
-  fun mpf_floor = __gmpf_floor(rop : MPF*, op : MPF*)
+  fun mpf_get_d_2exp = __gmpf_get_d_2exp(exp : Long*, op : MPF*) : Double
 
   # # Arithmetic
   fun mpf_add = __gmpf_add(rop : MPF*, op1 : MPF*, op2 : MPF*)
   fun mpf_sub = __gmpf_sub(rop : MPF*, op1 : MPF*, op2 : MPF*)
   fun mpf_mul = __gmpf_mul(rop : MPF*, op1 : MPF*, op2 : MPF*)
   fun mpf_div = __gmpf_div(rop : MPF*, op1 : MPF*, op2 : MPF*)
+  fun mpf_div_ui = __gmpf_div_ui(rop : MPF*, op1 : MPF*, op2 : ULong)
   fun mpf_neg = __gmpf_neg(rop : MPF*, op : MPF*)
   fun mpf_abs = __gmpf_abs(rop : MPF*, op : MPF*)
   fun mpf_pow_ui = __gmpf_pow_ui(rop : MPF*, op1 : MPF*, op2 : ULong)
+  fun mpf_mul_2exp = __gmpf_mul_2exp(rop : MPF*, op1 : MPF*, op2 : BitcntT)
+  fun mpf_div_2exp = __gmpf_div_2exp(rop : MPF*, op1 : MPF*, op2 : BitcntT)
 
   # # Comparison
   fun mpf_cmp = __gmpf_cmp(op1 : MPF*, op2 : MPF*) : Int
   fun mpf_cmp_d = __gmpf_cmp_d(op1 : MPF*, op2 : Double) : Int
   fun mpf_cmp_ui = __gmpf_cmp_ui(op1 : MPF*, op2 : ULong) : Int
   fun mpf_cmp_si = __gmpf_cmp_si(op1 : MPF*, op2 : Long) : Int
+  fun mpf_cmp_z = __gmpf_cmp_z(op1 : MPF*, op2 : MPZ*) : Int
 
+  # # Miscellaneous
+  fun mpf_ceil = __gmpf_ceil(rop : MPF*, op : MPF*)
+  fun mpf_floor = __gmpf_floor(rop : MPF*, op : MPF*)
+  fun mpf_trunc = __gmpf_trunc(rop : MPF*, op : MPF*)
   fun mpf_integer_p = __gmpf_integer_p(op : MPF*) : Int
 
   # # Memory

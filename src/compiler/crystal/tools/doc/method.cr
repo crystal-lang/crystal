@@ -38,8 +38,41 @@ class Crystal::Doc::Method
     end
   end
 
+  def constructor?
+    return false unless @class_method
+    return true if name == "new"
+
+    return_type = self.return_type
+    if return_type.is_a?(Union)
+      if return_type.types.size == 2
+        if @type.nil_type?(return_type.types[0])
+          return_type = return_type.types[1]
+        elsif @type.nil_type?(return_type.types[1])
+          return_type = return_type.types[0]
+        end
+      end
+    end
+    {type.name, "self"}.includes?(return_type.to_s)
+  end
+
   def abstract?
     @def.abstract?
+  end
+
+  def return_type
+    return_type = @def.return_type
+
+    # If the def's body is a single instance variable, we include
+    # a return type since instance vars must have a fixed/guessed type,
+    # so docs will be better and easier to navigate.
+    if !return_type && (body = @def.body).is_a?(InstanceVar)
+      owner = type.type
+      if owner.is_a?(NonGenericClassType)
+        ivar = owner.lookup_instance_var?(body.name)
+        return_type = ivar.try &.type?
+      end
+    end
+    return_type
   end
 
   def kind
@@ -90,18 +123,7 @@ class Crystal::Doc::Method
   end
 
   def args_to_html(io, links = true)
-    return_type = @def.return_type
-
-    # If the def's body is a single instance variable, we include
-    # a return type since instance vars must have a fixed/guessed type,
-    # so docs will be better and easier to navigate.
-    if !return_type && (body = @def.body).is_a?(InstanceVar)
-      owner = type.type
-      if owner.is_a?(NonGenericClassType)
-        ivar = owner.lookup_instance_var?(body.name)
-        return_type = ivar.try &.type?
-      end
-    end
+    return_type = self.return_type
 
     return unless has_args? || return_type
 

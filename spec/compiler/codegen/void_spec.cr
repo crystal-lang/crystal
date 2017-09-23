@@ -84,7 +84,11 @@ describe "Code gen: void" do
       def bar(x)
       end
 
-      bar LibC.foo
+      def baz
+        LibC.foo
+      end
+
+      bar(baz)
     ))
   end
 

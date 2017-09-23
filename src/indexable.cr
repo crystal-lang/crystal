@@ -271,13 +271,13 @@ module Indexable(T)
     first { nil }
   end
 
-  # Returns a hash code based on `self`'s size and elements.
-  #
-  # See also: `Object#hash`.
-  def hash
-    reduce(31 * size) do |memo, elem|
-      31 * memo + elem.hash
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher = size.hash(hasher)
+    each do |elem|
+      hasher = elem.hash(hasher)
     end
+    hasher
   end
 
   # Returns the index of the first appearance of *value* in `self`
@@ -447,6 +447,21 @@ module Indexable(T)
     else
       yield
     end
+  end
+
+  # :nodoc:
+  def self.range_to_index_and_count(range, collection_size)
+    start_index = range.begin
+    start_index += collection_size if start_index < 0
+    raise IndexError.new if start_index < 0
+
+    end_index = range.end
+    end_index += collection_size if end_index < 0
+    end_index -= 1 if range.excludes_end?
+    count = end_index - start_index + 1
+    count = 0 if count < 0
+
+    {start_index, count}
   end
 
   private class ItemIterator(A, T)

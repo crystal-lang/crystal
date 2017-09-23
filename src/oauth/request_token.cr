@@ -5,7 +5,7 @@ class OAuth::RequestToken
   def initialize(@token : String, @secret : String)
   end
 
-  def self.from_response(response)
+  def self.from_response(response) : self
     token = nil
     secret = nil
 

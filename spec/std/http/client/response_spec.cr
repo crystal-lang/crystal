@@ -123,6 +123,16 @@ class HTTP::Client
       response.body.should eq("")
     end
 
+    it "parses long request lines" do
+      request = Response.from_io?(IO::Memory.new("HTTP/1.1 200 #{"OK" * 16000}\r\n\r\n"))
+      request.should eq(nil)
+    end
+
+    it "parses long headers" do
+      request = Response.from_io?(IO::Memory.new("HTTP/1.1 200 OK\r\n#{"X-Test-Header: A pretty log header value\r\n" * 1000}\r\n"))
+      request.should eq(nil)
+    end
+
     it "doesn't sets content length for 1xx, 204 or 304" do
       [100, 101, 204, 304].each do |status|
         response = Response.new(status)

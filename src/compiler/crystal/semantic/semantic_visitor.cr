@@ -220,8 +220,17 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
   end
 
-  def lookup_type(node : ASTNode, free_vars = nil, lazy_self = false)
-    current_type.lookup_type(node, free_vars: free_vars, allow_typeof: false, lazy_self: lazy_self)
+  def lookup_type(node : ASTNode,
+                  free_vars = nil,
+                  lazy_self = false,
+                  find_root_generic_type_parameters = true)
+    current_type.lookup_type(
+      node,
+      free_vars: free_vars,
+      allow_typeof: false,
+      lazy_self: lazy_self,
+      find_root_generic_type_parameters: find_root_generic_type_parameters
+    )
   end
 
   def check_outside_exp(node, op)
@@ -248,7 +257,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       macro_scope = macro_scope.remove_alias
 
       the_macro = macro_scope.metaclass.lookup_macro(node.name, node.args, node.named_args)
-      node.raise "private macro '#{node.name}' called for #{obj}" if the_macro && the_macro.visibility.private?
+      node.raise "private macro '#{node.name}' called for #{obj}" if the_macro.is_a?(Macro) && the_macro.visibility.private?
     when Nil
       return false if node.name == "super" || node.name == "previous_def"
       the_macro = node.lookup_macro
@@ -256,7 +265,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       return false
     end
 
-    return false unless the_macro
+    return false unless the_macro.is_a?(Macro)
 
     # If we find a macro outside a def/block and this is not the first pass it means that the
     # macro was defined before we first found this call, so it's an error
@@ -280,6 +289,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     @exp_nest += 1
 
     node.expanded = generated_nodes
+    node.expanded_macro = the_macro
     node.bind_to generated_nodes
 
     true

@@ -2,24 +2,45 @@ require "callstack"
 
 CallStack.skip(__FILE__)
 
+# Represents errors that occur during application execution.
+#
+# Exception and it's descendants are used to communicate between raise and
+# rescue statements in `begin ... end` blocks.
+# Exception objects carry information about the exception – its type (the
+# exception’s class name), an optional descriptive string, and
+# optional traceback information.
+# Exception subclasses may add additional information.
 class Exception
   getter message : String?
+  # Returns the previous exception at the time this exception was raised.
+  # This is useful for wrapping exceptions and retaining the original
+  # exception information.
   getter cause : Exception?
   property callstack : CallStack?
 
   def initialize(@message : String? = nil, @cause : Exception? = nil)
   end
 
+  # Returns any backtrace associated with the exception.
+  # The backtrace is an array of strings, each containing
+  # “0xAddress: Function at File Line Column”.
   def backtrace
     self.backtrace?.not_nil!
   end
 
+  # Returns any backtrace associated with the exception if the call stack exists.
+  # The backtrace is an array of strings, each containing
+  # “0xAddress: Function at File Line Column”.
   def backtrace?
     @callstack.try &.printable_backtrace
   end
 
   def to_s(io : IO)
     io << message
+  end
+
+  def inspect(io : IO)
+    io << "#<" << self.class.name << ":" << message << ">"
   end
 
   def inspect_with_backtrace
@@ -31,6 +52,7 @@ class Exception
   def inspect_with_backtrace(io : IO)
     io << message << " (" << self.class << ")\n"
     backtrace?.try &.each do |frame|
+      io.print "  from "
       io.puts frame
     end
     io.flush
@@ -86,6 +108,11 @@ end
 class KeyError < Exception
 end
 
+# Raised when attempting to divide an integer by 0.
+#
+# ```
+# 1 / 0 # raises DivisionByZero (Division by zero)
+# ```
 class DivisionByZero < Exception
   def initialize(message = "Division by zero")
     super(message)

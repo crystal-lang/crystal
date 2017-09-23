@@ -944,4 +944,20 @@ describe "Semantic: def overload" do
       ),
       "no overload matches"
   end
+
+  it "overloads with named argument (#4465)" do
+    assert_type(%(
+			def do_something(value : Int32)
+			  value + 1
+			  1.5
+			end
+
+			def do_something(value : Char)
+			  value.ord
+			  false
+			end
+
+			do_something value: 7.as(Int32 | Char)
+			)) { union_of float64, bool }
+  end
 end

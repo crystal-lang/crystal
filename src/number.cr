@@ -211,8 +211,13 @@ struct Number
   # ```
   def round(digits, base = 10)
     x = self.to_f
-    y = base ** digits
-    self.class.new((x * y).round / y)
+    if digits < 0
+      y = base ** (-digits)
+      self.class.new((x / y).round * y)
+    else
+      y = base ** digits
+      self.class.new((x * y).round / y)
+    end
   end
 
   # Clamps a value within *range*.
@@ -238,6 +243,16 @@ struct Number
     return max if self > max
     return min if self < min
     self
+  end
+
+  # Returns `true` if value is equal to zero.
+  #
+  # ```
+  # 0.zero? # => true
+  # 5.zero? # => false
+  # ```
+  def zero? : Bool
+    self == 0
   end
 
   private class StepIterator(T, L, B)

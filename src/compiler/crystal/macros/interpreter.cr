@@ -117,10 +117,25 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
-        @last = var
-      else
-        node.raise "undefined macro variable '#{node.name}'"
+        return @last = var
       end
+
+      # Try to consider the var as a top-level macro call.
+      #
+      # Note: this should really be done at the parser level. However,
+      # currently macro calls with blocks are possible, for example:
+      #
+      # some_macro_call do |arg|
+      #   {{arg}}
+      # end
+      #
+      # and in this case the parser has no idea about this, so the only
+      # solution is to do it now.
+      if value = interpret_top_level_call?(Call.new(nil, node.name))
+        return @last = value
+      end
+
+      node.raise "undefined macro variable '#{node.name}'"
     end
 
     def visit(node : StringInterpolation)
@@ -371,20 +386,24 @@ module Crystal
     end
 
     def resolve(node : Path)
+      resolve?(node) || node.raise_undefined_constant(@path_lookup)
+    end
+
+    def resolve?(node : Path)
       if node.names.size == 1 && (match = @free_vars.try &.[node.names.first]?)
         matched_type = match
       else
         matched_type = @path_lookup.lookup_path(node)
       end
 
-      unless matched_type
-        node.raise_undefined_constant(@path_lookup)
-      end
+      return unless matched_type
 
       case matched_type
       when Const
         matched_type.value
       when Type
+        matched_type = matched_type.remove_alias
+
         # If it's the T of a variadic generic type, produce tuple literals
         # or named tuple literals. The compiler has them as a type
         # (a tuple type, or a named tuple type) but the user should see

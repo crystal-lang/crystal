@@ -58,6 +58,7 @@ describe Markdown do
   assert_render "####### Hello", "<h6># Hello</h6>"
 
   assert_render "# Hello\nWorld", "<h1>Hello</h1>\n\n<p>World</p>"
+  assert_render "# Hello\n---", "<h1>Hello</h1>\n\n<hr/>"
 
   assert_render "    Hello", "<pre><code>Hello</code></pre>"
   assert_render "    Hello\n    World", "<pre><code>Hello\nWorld</code></pre>"
@@ -68,8 +69,10 @@ describe Markdown do
 
   assert_render "```crystal\nHello\nWorld\n```", "<pre><code class='language-crystal'>Hello\nWorld</code></pre>"
   assert_render "Hello\n```\nWorld\n```", "<p>Hello</p>\n\n<pre><code>World</code></pre>"
+  assert_render "```\n---\n```", "<pre><code>---</code></pre>"
 
   assert_render "> Hello World\n", "<blockquote>Hello World</blockquote>"
+  assert_render "> __Hello World__", "<blockquote><strong>Hello World</strong></blockquote>"
   assert_render "> This spawns\nmultiple\nlines\n\ntext", "<blockquote>This spawns\nmultiple\nlines</blockquote>\n\n<p>text</p>"
 
   assert_render "* Hello", "<ul><li>Hello</li></ul>"

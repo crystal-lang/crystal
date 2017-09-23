@@ -9,6 +9,7 @@ module Unicode
   # Most case conversions map a range to another range.
   # Here we store: {from, to, delta}
   @@upcase_ranges : Array({Int32, Int32, Int32})?
+
   private def self.upcase_ranges
     @@upcase_ranges ||= begin
       data = Array({Int32, Int32, Int32}).new(<%= upcase_ranges.size %>)
@@ -22,6 +23,7 @@ module Unicode
   # Most case conversions map a range to another range.
   # Here we store: {from, to, delta}
   @@downcase_ranges : Array({Int32, Int32, Int32})?
+
   private def self.downcase_ranges
     @@downcase_ranges ||= begin
       data = Array({Int32, Int32, Int32}).new(<%= downcase_ranges.size %>)
@@ -36,6 +38,7 @@ module Unicode
   # of uppercase/lowercase transformations
   # Here we store {from, to}
   @@alternate_ranges : Array({Int32, Int32})?
+
   private def self.alternate_ranges
     @@alternate_ranges ||= begin
       data = Array({Int32, Int32}).new(<%= alternate_ranges.size %>)
@@ -57,6 +60,7 @@ module Unicode
 
   <%- all_strides.each do |category, strides| -%>
     @@category_<%= category %> : Array({Int32, Int32, Int32})?
+
     private def self.category_<%= category %>
       @@category_<%= category %> ||= begin
         data = Array({Int32, Int32, Int32}).new(<%= strides.size %>)
@@ -68,10 +72,25 @@ module Unicode
     end
   <%- end %>
 
+  # Most casefold conversions map a range to another range.
+  # Here we store: {from, to, delta}
+  @@casefold_ranges : Array({Int32, Int32, Int32})?
+
+  private def self.casefold_ranges
+    @@casefold_ranges ||= begin
+      data = Array({Int32, Int32, Int32}).new(<%= casefold_ranges.size %>)
+      <%- casefold_ranges.each do |range| -%>
+        put(data, <%= range.low %>, <%= range.high %>, <%= range.delta %>)
+      <%- end -%>
+      data
+    end
+  end
+
   # Special downcase transformation that involve mapping a codepoint
   # to multiple codepoints. The maximum transformation is always 3
   # codepoints, so we store them all as 3 codepoints and 0 means end.
   @@special_cases_downcase : Hash(Int32, {Int32, Int32, Int32})?
+
   private def self.special_cases_downcase
     @@special_cases_downcase ||= begin
       data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_downcase.size %>)
@@ -86,6 +105,7 @@ module Unicode
   # to multiple codepoints. The maximum transformation is always 3
   # codepoints, so we store them all as 3 codepoints and 0 means end.
   @@special_cases_upcase : Hash(Int32, {Int32, Int32, Int32})?
+
   private def self.special_cases_upcase
     @@special_cases_upcase ||= begin
       data = Hash(Int32, {Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_upcase.size %>)
@@ -96,9 +116,24 @@ module Unicode
     end
   end
 
+  # Fold case transformation that involve mapping a codepoint
+  # to multiple codepoints. The maximum transformation is always 4
+  # codepoints, so we store them all as 4 codepoints and 0 means end.
+  @@fold_cases : Hash(Int32, {Int32, Int32, Int32, Int32})?
+  private def self.fold_cases
+    @@fold_cases ||= begin
+      data = Hash(Int32, {Int32, Int32, Int32, Int32}).new(initial_capacity: <%= special_cases_casefold.size %>)
+      <%- special_cases_casefold.each do |a_case| -%>
+        put(data, <%= a_case.codepoint %>, <%= a_case.value.join(", ") %>)
+      <%- end -%>
+      data
+    end
+  end
+
   # TODO: this is needed to avoid generating lots of allocas
   # in LLVM, which makes LLVM really slow. The compiler should
   # try to avoid/reuse temporary allocas.
+  # Explanation: https://github.com/crystal-lang/crystal/issues/4516#issuecomment-306226171
   private def self.put(array : Array, *values) : Nil
     array << values
   end

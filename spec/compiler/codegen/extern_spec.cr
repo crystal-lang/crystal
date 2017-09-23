@@ -143,6 +143,27 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(42)
   end
 
+  it "codegens extern proc call twice (#4982)" do
+    run(%(
+      @[Extern]
+      struct Data
+        def initialize(@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      f = ->(data : Data) { data.foo }
+
+      x = f.call(Data.new(1))
+      y = f.call(Data.new(2))
+
+      x + y
+      )).to_i.should eq(3)
+  end
+
   # These specs *should* also work for 32 bits, but for now we'll
   # make sure they work in 64 bits (they probably work in 32 bits too,
   # it's just that the specs need to be a bit different)

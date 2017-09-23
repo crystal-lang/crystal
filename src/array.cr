@@ -113,8 +113,8 @@ class Array(T)
     end
   end
 
-  # Creates a new `Array` of the given *size* and invokes the given block once for each index of `self`,
-  # assigning the block's value in that index.
+  # Creates a new `Array` of the given *size* and invokes the given block once
+  # for each index of `self`, assigning the block's value in that index.
   #
   # ```
   # Array.new(3) { |i| (i + 1) ** 2 } # => [1, 4, 9]
@@ -133,7 +133,7 @@ class Array(T)
     end
   end
 
-  # Creates a new Array, allocating an internal buffer with the given capacity,
+  # Creates a new `Array`, allocating an internal buffer with the given *capacity*,
   # and yielding that buffer. The given block must return the desired size of the array.
   #
   # This method is **unsafe**, but is usually used to initialize the buffer
@@ -144,7 +144,7 @@ class Array(T)
   #   LibSome.fill_buffer_and_return_number_of_elements_filled(buffer)
   # end
   # ```
-  def self.build(capacity : Int)
+  def self.build(capacity : Int) : self
     ary = Array(T).new(capacity)
     ary.size = (yield ary.to_unsafe).to_i
     ary
@@ -372,7 +372,7 @@ class Array(T)
   # a # => [1, 6, 2, 3, 4, 5]
   # ```
   def []=(range : Range(Int, Int), value : T)
-    self[*range_to_index_and_count(range)] = value
+    self[*Indexable.range_to_index_and_count(range, size)] = value
   end
 
   # Replaces a subrange with the elements of the given array.
@@ -434,7 +434,7 @@ class Array(T)
   # a # => [1, 6, 7, 8, 9, 10, 5]
   # ```
   def []=(range : Range(Int, Int), values : Array(T))
-    self[*range_to_index_and_count(range)] = values
+    self[*Indexable.range_to_index_and_count(range, size)] = values
   end
 
   # Returns all elements that are within the given range.
@@ -454,7 +454,7 @@ class Array(T)
   # a[-2...-1] # => ["d"]
   # ```
   def [](range : Range(Int, Int))
-    self[*range_to_index_and_count(range)]
+    self[*Indexable.range_to_index_and_count(range, size)]
   end
 
   # Returns count or less (if there aren't enough) elements starting at the
@@ -641,8 +641,8 @@ class Array(T)
   # a.delete_at(99..100) # raises IndexError
   # ```
   def delete_at(range : Range(Int, Int))
-    from, size = range_to_index_and_count(range)
-    delete_at(from, size)
+    index, count = Indexable.range_to_index_and_count(range, self.size)
+    delete_at(index, count)
   end
 
   # Removes *count* elements from `self` starting at *index*.
@@ -706,6 +706,8 @@ class Array(T)
   #
   # Negative values of *from* count from the end of the array.
   #
+  # Raises `IndexError` if *from* is outside the array range.
+  #
   # ```
   # a = [1, 2, 3, 4]
   # a.fill(2) { |i| i * i } # => [1, 2, 4, 9]
@@ -713,7 +715,7 @@ class Array(T)
   def fill(from : Int)
     from += size if from < 0
 
-    raise IndexError.new if from >= size
+    raise IndexError.new unless 0 <= from < size
 
     from.upto(size - 1) { |i| @buffer[i] = yield i }
 
@@ -725,21 +727,22 @@ class Array(T)
   #
   # Negative values of *from* count from the end of the array.
   #
+  # Raises `IndexError` if *from* is outside the array range.
+  #
+  # Has no effect if *count* is zero or negative.
+  #
   # ```
   # a = [1, 2, 3, 4, 5, 6]
   # a.fill(2, 2) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
   def fill(from : Int, count : Int)
-    return self if count < 0
+    return self if count <= 0
 
     from += size if from < 0
-    count += size if count < 0
 
-    raise IndexError.new if from >= size || count + from > size
+    raise IndexError.new unless 0 <= from < size && from + count <= size
 
-    count += from - 1
-
-    from.upto(count) { |i| @buffer[i] = yield i }
+    from.upto(from + count - 1) { |i| @buffer[i] = yield i }
 
     self
   end
@@ -752,7 +755,7 @@ class Array(T)
   # a.fill(2..3) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
   def fill(range : Range(Int, Int))
-    fill(*range_to_index_and_count(range)) do |i|
+    fill(*Indexable.range_to_index_and_count(range, size)) do |i|
       yield i
     end
   end
@@ -934,6 +937,12 @@ class Array(T)
   # Optimized version of `Enumerable#map_with_index`.
   def map_with_index(&block : T, Int32 -> U) forall U
     Array(U).new(size) { |i| yield @buffer[i], i }
+  end
+
+  # Like `map_with_index`, but mutates `self` instead of allocating a new object.
+  def map_with_index!(&block : (T, Int32) -> T)
+    to_unsafe.map_with_index!(size) { |e, i| yield e, i }
+    self
   end
 
   # Returns an `Array` with all possible permutations of *size*.
@@ -1445,7 +1454,7 @@ class Array(T)
   end
 
   # Removes the first value of `self`, at index 0. This method returns the removed value.
-  # Raises `IndexError` if array is of 0 size.
+  # If the array is empty, it raises `IndexError`.
   #
   # ```
   # a = ["a", "b", "c"]
@@ -1498,6 +1507,18 @@ class Array(T)
     ary
   end
 
+  # Removes the first value of `self`, at index 0. This method returns the removed value.
+  # If the array is empty, it returns `nil` without raising any error.
+  #
+  # ```
+  # a = ["a", "b"]
+  # a.shift? # => "a"
+  # a        # => ["b"]
+  # a.shift? # => "b"
+  # a        # => []
+  # a.shift? # => nil
+  # a        # => []
+  # ```
   def shift?
     shift { nil }
   end
@@ -1931,11 +1952,11 @@ class Array(T)
   protected def self.partition_for_quick_sort!(a, n, comp)
     v, l, r = a[n / 2], a + 1, a + n - 1
     loop do
-      while comp.call(l.value, v) < 0
+      while l < a + n && comp.call(l.value, v) < 0
         l += 1
       end
       r -= 1
-      while comp.call(v, r.value) < 0
+      while r >= a && comp.call(v, r.value) < 0
         r -= 1
       end
       return l unless l < r
@@ -1968,20 +1989,6 @@ class Array(T)
         h[key] = o
       end
     end
-  end
-
-  private def range_to_index_and_count(range)
-    from = range.begin
-    from += size if from < 0
-    raise IndexError.new if from < 0
-
-    to = range.end
-    to += size if to < 0
-    to -= 1 if range.excludes_end?
-    size = to - from + 1
-    size = 0 if size < 0
-
-    {from, size}
   end
 
   # :nodoc:

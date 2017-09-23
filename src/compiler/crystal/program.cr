@@ -110,8 +110,8 @@ module Crystal
     # The main filename of this program
     property filename : String?
 
-    # If `true`, prints time and memory stats to `stdout`.
-    property? wants_stats = false
+    # Set to a `ProgressTracker` object which tracks compilation progress.
+    property progress_tracker = ProgressTracker.new
 
     def initialize
       super(self, self, "main")
@@ -179,7 +179,6 @@ module Crystal
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      klass.metaclass = klass
       klass.allowed_in_generics = false
 
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
@@ -259,7 +258,7 @@ module Crystal
 
     setter target_machine : LLVM::TargetMachine?
 
-    getter(target_machine) { TargetMachine.create(LLVM.default_target_triple) }
+    getter(target_machine) { TargetMachine.create(Crystal::Config.default_target_triple) }
 
     # Returns the `Type` for `Array(type)`
     def array_of(type)

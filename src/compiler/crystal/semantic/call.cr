@@ -9,6 +9,7 @@ class Crystal::Call
   property! parent_visitor : MainVisitor
   property target_defs : Array(Def)?
   property expanded : ASTNode?
+  property expanded_macro : Macro?
   property? uses_with_scope = false
   getter? raises = false
 
@@ -213,7 +214,7 @@ class Crystal::Call
     end
 
     @uses_with_scope = true
-    instantiate matches, owner, self_type: nil, named_args_types: named_args_types
+    instantiate matches, owner, self_type: nil
   end
 
   def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents)
@@ -267,7 +268,7 @@ class Crystal::Call
       attach_subclass_observer instance_type.base_type
     end
 
-    instantiate matches, owner, self_type, named_args_types
+    instantiate matches, owner, self_type
   end
 
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true)
@@ -318,7 +319,7 @@ class Crystal::Call
     end
   end
 
-  def instantiate(matches, owner, self_type, named_args_types)
+  def instantiate(matches, owner, self_type)
     block = @block
 
     typed_defs = Array(Def).new(matches.size)
@@ -346,6 +347,7 @@ class Crystal::Call
       end
       match_owner = match.context.instantiated_type
       def_instance_owner = (self_type || match_owner).as(DefInstanceContainer)
+      named_args_types = match.named_arg_types
 
       def_instance_key = DefInstanceKey.new(match.def.object_id, lookup_arg_types, block_type, named_args_types)
       typed_def = def_instance_owner.lookup_def_instance def_instance_key if use_cache
@@ -438,9 +440,14 @@ class Crystal::Call
         instance_type.tuple_metaclass_indexer(index)
       end
     elsif owner.is_a?(NamedTupleInstanceType)
-      # Check named tuple inexer
+      # Check named tuple indexer
       named_tuple_indexer_helper(args, arg_types, owner, owner, nilable) do |instance_type, index|
         instance_type.tuple_indexer(index)
+      end
+    elsif owner.metaclass? && (instance_type = owner.instance_type).is_a?(NamedTupleInstanceType)
+      # Check named tuple metaclass indexer
+      named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable) do |instance_type, index|
+        instance_type.tuple_metaclass_indexer(index)
       end
     end
   end
@@ -449,6 +456,7 @@ class Crystal::Call
     arg = args.first
     if arg.is_a?(NumberLiteral) && arg.kind == :i32
       index = arg.value.to_i
+      index += instance_type.size if index < 0
       in_bounds = (0 <= index < instance_type.size)
       if nilable || in_bounds
         indexer_def = yield instance_type, (in_bounds ? index : -1)
@@ -457,7 +465,7 @@ class Crystal::Call
       elsif instance_type.size == 0
         raise "index '#{arg}' out of bounds for empty tuple"
       else
-        raise "index out of bounds for #{owner} (#{arg} not in 0..#{instance_type.size - 1})"
+        raise "index out of bounds for #{owner} (#{arg} not in #{-instance_type.size}..#{instance_type.size - 1})"
       end
     end
     nil
@@ -551,7 +559,7 @@ class Crystal::Call
       raise "there's no superclass in this scope"
     end
 
-    enclosing_def = enclosing_def()
+    enclosing_def = enclosing_def("super")
 
     # TODO: do this better
     lookup = enclosing_def.owner
@@ -594,7 +602,7 @@ class Crystal::Call
   end
 
   def lookup_previous_def_matches(arg_types, named_args_types)
-    enclosing_def = enclosing_def()
+    enclosing_def = enclosing_def("previous_def")
 
     previous_item = enclosing_def.previous
     unless previous_item
@@ -616,20 +624,25 @@ class Crystal::Call
       parent_visitor.check_self_closured
     end
 
-    typed_defs = instantiate matches, scope, self_type: nil, named_args_types: named_args_types
+    typed_defs = instantiate matches, scope, self_type: nil
     typed_defs.each do |typed_def|
       typed_def.next = parent_visitor.typed_def
     end
     typed_defs
   end
 
-  def enclosing_def
+  def enclosing_def(context)
     fun_literal_context = parent_visitor.fun_literal_context
     if fun_literal_context.is_a?(Def)
-      fun_literal_context
-    else
-      parent_visitor.untyped_def
+      return fun_literal_context
     end
+
+    untyped_def = parent_visitor.untyped_def?
+    if untyped_def
+      return untyped_def
+    end
+
+    raise "can't use '#{context}' outside method"
   end
 
   def on_new_subclass
@@ -637,23 +650,32 @@ class Crystal::Call
   end
 
   def lookup_macro
-    in_macro_target &.lookup_macro(name, args, named_args)
+    in_macro_target do |target|
+      result = target.lookup_macro(name, args, named_args)
+      case result
+      when Macro
+        return result
+      when Type::DefInMacroLookup
+        return nil
+      end
+    end
   end
 
   def in_macro_target
     if with_scope = @with_scope
-      with_scope = with_scope.metaclass unless with_scope.metaclass?
       macros = yield with_scope
       return macros if macros
     end
 
     node_scope = scope
     node_scope = node_scope.base_type if node_scope.is_a?(VirtualType)
-    node_scope = node_scope.metaclass unless node_scope.metaclass?
 
     macros = yield node_scope
-    if !macros && node_scope.metaclass? && node_scope.instance_type.module?
-      macros = yield program.object.metaclass
+
+    # If the scope is a module (through its instance type), lookup in Object too
+    # (so macros like `property` and others, defined in Object, work at the module level)
+    if !macros && node_scope.instance_type.module?
+      macros = yield program.object
     end
 
     macros ||= yield program
@@ -858,7 +880,7 @@ class Crystal::Call
           match.context.def_free_vars = match.def.free_vars
           matched = block_type.restrict(output, match.context)
           if (!matched || (matched && !block_type.implements?(matched))) && !void_return_type?(match.context, output)
-            if output.is_a?(ASTNode) && !output.is_a?(Underscore)
+            if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
               begin
                 block_type = lookup_node_type(match.context, output).virtual_type
               rescue ex : Crystal::Exception
@@ -905,7 +927,7 @@ class Crystal::Call
 
   private def void_return_type?(match_context, output)
     if output.is_a?(Path)
-      type = match_context.defining_type.lookup_path(output)
+      type = lookup_node_type(match_context, output)
     else
       type = output
     end

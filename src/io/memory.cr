@@ -101,7 +101,7 @@ class IO::Memory
     slice.copy_to(@buffer + @pos, count)
 
     if @pos > @bytesize
-      Intrinsics.memset((@buffer + @bytesize).as(Void*), 0_u8, (@pos - @bytesize).to_u32, 0_u32, false)
+      (@buffer + @bytesize).clear(@pos - @bytesize)
     end
 
     @pos += count
@@ -125,7 +125,7 @@ class IO::Memory
     (@buffer + @pos).value = byte
 
     if @pos > @bytesize
-      Intrinsics.memset((@buffer + @bytesize).as(Void*), 0_u8, (@pos - @bytesize).to_u32, 0_u32, false)
+      (@buffer + @bytesize).clear(@pos - @bytesize)
     end
 
     @pos += 1
@@ -225,7 +225,9 @@ class IO::Memory
     if pos == @bytesize
       ""
     else
-      String.new(@buffer + @pos, @bytesize - @pos)
+      String.new(@buffer + @pos, @bytesize - @pos).tap do
+        @pos = @bytesize
+      end
     end
   end
 

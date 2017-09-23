@@ -83,6 +83,7 @@
   </dl>
 <% end %>
 
+<%= MethodSummaryTemplate.new("Constructors", type.constructors) %>
 <%= MethodSummaryTemplate.new(type.program? ? "Method Summary" : "Class Method Summary", type.class_methods) %>
 <%= MethodSummaryTemplate.new("Instance Method Summary", type.instance_methods) %>
 <%= MethodSummaryTemplate.new("Macro Summary", type.macros) %>
@@ -90,10 +91,12 @@
 <div class="methods-inherited">
   <% type.ancestors.each do |ancestor| %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.instance_methods, "Instance") %>
+    <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.constructors, "Constructor") %>
     <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.class_methods, "Class") %>
   <% end %>
 </div>
 
+<%= MethodDetailTemplate.new("Constructor Detail", type.constructors) %>
 <%= MethodDetailTemplate.new(type.program? ? "Method Detail" : "Class Method Detail", type.class_methods) %>
 <%= MethodDetailTemplate.new("Instance Method Detail", type.instance_methods) %>
 <%= MethodDetailTemplate.new("Macro Detail", type.macros) %>

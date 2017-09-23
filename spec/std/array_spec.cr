@@ -561,10 +561,22 @@ describe "Array" do
       a.fill('x', -2).should eq(expected)
     end
 
+    it "raises when given big negative number (#4539)" do
+      expect_raises(IndexError) do
+        ['a', 'b', 'c'].fill('x', -4)
+      end
+    end
+
     it "replaces only values between negative index and size" do
       a = ['a', 'b', 'c']
       expected = ['a', 'b', 'x']
       a.fill('x', -1, 1).should eq(expected)
+    end
+
+    it "raises when given big negative number in from/count (#4539)" do
+      expect_raises(IndexError) do
+        ['a', 'b', 'c'].fill('x', -4, 1)
+      end
     end
 
     it "replaces only values in range" do
@@ -876,7 +888,7 @@ describe "Array" do
 
     it "sample with random" do
       x = [1, 2, 3]
-      x.sample(Random.new(1)).should eq(3)
+      x.sample(Random.new(1)).should eq(2)
     end
 
     it "gets sample of negative count elements raises" do
@@ -924,7 +936,7 @@ describe "Array" do
     it "gets sample of k elements out of n, with random" do
       a = [1, 2, 3, 4, 5]
       b = a.sample(3, Random.new(1))
-      b.should eq([4, 3, 5])
+      b.should eq([4, 3, 1])
     end
   end
 
@@ -983,13 +995,13 @@ describe "Array" do
     it "shuffle! with random" do
       a = [1, 2, 3]
       a.shuffle!(Random.new(1))
-      a.should eq([2, 1, 3])
+      a.should eq([1, 3, 2])
     end
 
     it "shuffle with random" do
       a = [1, 2, 3]
       b = a.shuffle(Random.new(1))
-      b.should eq([2, 1, 3])
+      b.should eq([1, 3, 2])
     end
   end
 
@@ -1025,6 +1037,12 @@ describe "Array" do
       a = ["foo", "a", "hello"]
       a.sort! { |x, y| x.size <=> y.size }
       a.should eq(["a", "foo", "hello"])
+    end
+
+    it "sorts with invalid block (#4379)" do
+      a = [1] * 17
+      b = a.sort { -1 }
+      a.should eq(b)
     end
   end
 
@@ -1317,6 +1335,15 @@ describe "Array" do
     ary = [1, 1, 2, 2]
     ary2 = ary.map_with_index { |e, i| e + i }
     ary2.should eq([1, 2, 4, 5])
+  end
+
+  it "does map_with_index!" do
+    ary = [0, 1, 2]
+    ary2 = ary.map_with_index! { |e, i| i * 2 }
+    ary[0].should eq(0)
+    ary[1].should eq(2)
+    ary[2].should eq(4)
+    ary2.should be(ary)
   end
 
   it "does + with different types (#568)" do

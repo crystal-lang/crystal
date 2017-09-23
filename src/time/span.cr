@@ -42,7 +42,8 @@ struct Time::Span
 
   include Comparable(self)
 
-  TicksPerMillisecond = 10_000_i64
+  TicksPerMicrosecond = 10_i64
+  TicksPerMillisecond = TicksPerMicrosecond * 1000
   TicksPerSecond      = TicksPerMillisecond * 1000
   TicksPerMinute      = TicksPerSecond * 60
   TicksPerHour        = TicksPerMinute * 60
@@ -52,7 +53,7 @@ struct Time::Span
   MinValue = new Int64::MIN
   Zero     = new 0
 
-  # 1 tick is a tenth of a millisecond
+  # 1 tick is a tenth of a microsecond
   @ticks : Int64
 
   getter ticks
@@ -275,7 +276,7 @@ struct Time::Span
     end
   end
 
-  def self.from(value, tick_multiplicator)
+  def self.from(value, tick_multiplicator) : self
     # TODO check nan
     # TODO check infinity and overflow
     value = value * (tick_multiplicator / TicksPerMillisecond)
@@ -285,6 +286,10 @@ struct Time::Span
 
   def self.zero
     new(0)
+  end
+
+  def zero?
+    @ticks == 0
   end
 end
 

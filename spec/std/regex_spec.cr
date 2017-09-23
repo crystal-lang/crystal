@@ -8,7 +8,7 @@ describe "Regex" do
 
   it "does =~" do
     (/foo/ =~ "bar foo baz").should eq(4)
-    $~.size.should eq(0)
+    $~.group_size.should eq(0)
   end
 
   it "does inspect" do
@@ -64,7 +64,7 @@ describe "Regex" do
 
   it "matches with =~ and captures" do
     ("fooba" =~ /f(o+)(bar?)/).should eq(0)
-    $~.size.should eq(2)
+    $~.group_size.should eq(2)
     $1.should eq("oo")
     $2.should eq("ba")
   end
@@ -77,7 +77,7 @@ describe "Regex" do
   it "matches with === and captures" do
     "foo" =~ /foo/
     (/f(o+)(bar?)/ === "fooba").should be_true
-    $~.size.should eq(2)
+    $~.group_size.should eq(2)
     $1.should eq("oo")
     $2.should eq("ba")
   end

@@ -5,6 +5,11 @@ require "semantic_version"
 module Crystal
   class MacroInterpreter
     def interpret_top_level_call(node)
+      interpret_top_level_call?(node) ||
+        node.raise("undefined macro method: '#{node.name}'")
+    end
+
+    def interpret_top_level_call?(node)
       # Please order method names in lexicographical order, because OCD
       case node.name
       when "compare_versions"
@@ -19,8 +24,8 @@ module Crystal
         interpret_puts(node)
       when "pp"
         interpret_pp(node)
-      when "skip"
-        interpret_skip(node)
+      when "skip_file"
+        interpret_skip_file(node)
       when "system", "`"
         interpret_system(node)
       when "raise"
@@ -28,7 +33,7 @@ module Crystal
       when "run"
         interpret_run(node)
       else
-        node.raise "undefined macro method: '#{node.name}'"
+        nil
       end
     end
 
@@ -133,7 +138,7 @@ module Crystal
       @last = Nop.new
     end
 
-    def interpret_skip(node)
+    def interpret_skip_file(node)
       raise SkipMacroException.new(@str.to_s)
     end
 
@@ -211,11 +216,48 @@ module Crystal
         run_args << @last.to_macro_id
       end
 
-      success, result = @program.macro_run(filename, run_args)
-      if success
-        @last = MacroId.new(result)
+      result = @program.macro_run(filename, run_args)
+      if result.status.success?
+        @last = MacroId.new(result.stdout)
       else
-        node.raise "Error executing run: #{original_filename} #{run_args.map(&.inspect).join " "}\n\nGot:\n\n#{result}\n"
+        command = "#{original_filename} #{run_args.map(&.inspect).join " "}"
+
+        message = IO::Memory.new
+        message << "Error executing run (exit code: #{result.status.exit_code}): #{command}\n"
+
+        if result.stdout.empty? && result.stderr.empty?
+          message << "\nGot no output."
+        else
+          Colorize.reset(message)
+
+          unless result.stdout.empty?
+            message.puts
+            message << "stdout:".colorize.mode(:bold)
+            message.puts
+            message.puts
+            result.stdout.each_line do |line|
+              message << "    "
+              message << line
+              message << '\n'
+            end
+            message << '\n'
+          end
+
+          unless result.stderr.empty?
+            message.puts
+            message << "stderr:".colorize.mode(:bold)
+            message.puts
+            message.puts
+            result.stderr.each_line do |line|
+              message << "    "
+              message << line
+              message << '\n'
+            end
+            message << '\n'
+          end
+        end
+
+        node.raise message.to_s
       end
     end
   end
@@ -433,14 +475,14 @@ module Crystal
         raise "undefined method '#{op}' for float literal: #{self}"
       end
 
-      NumberLiteral.new(bin_op(op, args) { |me, other|
+      NumberLiteral.new(bin_op(op, args) do |me, other|
         other_kind = args.first.as(NumberLiteral).kind
         if other_kind == :f32 || other_kind == :f64
           raise "argument to NumberLiteral##{op} can't be float literal: #{self}"
         end
 
         yield me.to_i, other.to_i
-      })
+      end)
     end
 
     def bin_op(op, args)
@@ -734,7 +776,7 @@ module Crystal
       when "values"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
       when "map"
-        interpret_argless_method(method, args) {
+        interpret_argless_method(method, args) do
           raise "map expects a block" unless block
 
           block_arg_key = block.args[0]?
@@ -745,7 +787,7 @@ module Crystal
             interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
             interpreter.accept block.body
           end
-        }
+        end
       when "double_splat"
         case args.size
         when 0
@@ -823,7 +865,7 @@ module Crystal
       when "values"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
       when "map"
-        interpret_argless_method(method, args) {
+        interpret_argless_method(method, args) do
           raise "map expects a block" unless block
 
           block_arg_key = block.args[0]?
@@ -834,7 +876,7 @@ module Crystal
             interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
             interpreter.accept block.body
           end
-        }
+        end
       when "double_splat"
         case args.size
         when 0
@@ -1346,6 +1388,11 @@ module Crystal
         end
       when "methods"
         interpret_argless_method(method, args) { TypeNode.methods(type) }
+      when "has_method?"
+        interpret_one_arg_method(method, args) do |arg|
+          value = arg.to_string("argument to 'TypeNode#has_method?'")
+          TypeNode.has_method?(type, value)
+        end
       when "has_attribute?"
         interpret_one_arg_method(method, args) do |arg|
           value = arg.to_string("argument to 'TypeNode#has_attribute?'")
@@ -1490,11 +1537,11 @@ module Crystal
     end
 
     def self.subclasses(type)
-      ArrayLiteral.map(type.subclasses) { |subtype| TypeNode.new(subtype) }
+      ArrayLiteral.map(type.devirtualize.subclasses) { |subtype| TypeNode.new(subtype) }
     end
 
     def self.all_subclasses(type)
-      ArrayLiteral.map(type.all_subclasses) { |subtype| TypeNode.new(subtype) }
+      ArrayLiteral.map(type.devirtualize.all_subclasses) { |subtype| TypeNode.new(subtype) }
     end
 
     def self.union_types(type)
@@ -1531,6 +1578,10 @@ module Crystal
         end
       end
       ArrayLiteral.new(defs)
+    end
+
+    def self.has_method?(type, name)
+      BoolLiteral.new(!!type.has_def?(name))
     end
 
     def self.overrides?(type, target, method)
@@ -1739,6 +1790,8 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(@global) }
       when "resolve"
         interpret_argless_method(method, args) { interpreter.resolve(self) }
+      when "resolve?"
+        interpret_argless_method(method, args) { interpreter.resolve?(self) || NilLiteral.new }
       else
         super
       end
@@ -2024,9 +2077,9 @@ end
 def filter(object, klass, block, interpreter, keep = true)
   block_arg = block.args.first?
 
-  klass.new(object.elements.select { |elem|
+  klass.new(object.elements.select do |elem|
     interpreter.define_var(block_arg.name, elem) if block_arg
     block_result = interpreter.accept(block.body).truthy?
     keep ? block_result : !block_result
-  })
+  end)
 end

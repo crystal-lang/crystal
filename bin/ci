@@ -84,7 +84,7 @@ prepare_system() {
 
 build() {
   with_build_env 'make std_spec clean'
-  with_build_env 'make crystal spec doc'
+  with_build_env 'make crystal std_spec compiler_spec doc'
   with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
   with_build_env './bin/crystal tool format --check samples spec src'
 }

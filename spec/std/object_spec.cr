@@ -333,4 +333,8 @@ describe Object do
       obj.property10?.should be_false
     end
   end
+
+  it "#unsafe_as" do
+    0x12345678.unsafe_as(Tuple(UInt8, UInt8, UInt8, UInt8)).should eq({0x78, 0x56, 0x34, 0x12})
+  end
 end

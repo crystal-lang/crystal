@@ -131,28 +131,26 @@ module Math
     log(numeric) / log(base)
   end
 
-  # ## To be uncommented once LLVM is updated
-  # def max(value1 : Float32, value2 : Float32)
-  #   LibM.max_f32(value1, value2)
-  # end
-  #
-  # def max(value1 : Float64, value2 : Float64)
-  #   LibM.max_f64(value1, value2)
-  # end
+  def max(value1 : Float32, value2 : Float32)
+    LibM.max_f32(value1, value2)
+  end
+
+  def max(value1 : Float64, value2 : Float64)
+    LibM.max_f64(value1, value2)
+  end
 
   # Returns the greater of *value1* and *value2*.
   def max(value1, value2)
     value1 >= value2 ? value1 : value2
   end
 
-  # ## To be uncommented once LLVM is updated
-  # def min(value1 : Float32, value2 : Float32)
-  #  LibM.min_f32(value1, value2)
-  # end
-  #
-  # def min(value1 : Float64, value2 : Float64)
-  #  LibM.min_f64(value1, value2)
-  # end
+  def min(value1 : Float32, value2 : Float32)
+    LibM.min_f32(value1, value2)
+  end
+
+  def min(value1 : Float64, value2 : Float64)
+    LibM.min_f64(value1, value2)
+  end
 
   # Returns the smaller of *value1* and *value2*.
   def min(value1, value2)
@@ -227,6 +225,23 @@ module Math
   # ditto
   def scalbln(value, exp)
     scalbln(value.to_f, exp.to_i64)
+  end
+
+  # Decomposes given floating point *value* into a normalized fraction and an integral power of two.
+  def frexp(value : Float32)
+    frac = LibM.frexp_f32(value, out exp)
+    {frac, exp}
+  end
+
+  # ditto
+  def frexp(value : Float64)
+    frac = LibM.frexp_f64(value, out exp)
+    {frac, exp}
+  end
+
+  # ditto
+  def frexp(value)
+    frexp(value.to_f)
   end
 
   # Computes the next highest power of 2 of *v*.

@@ -180,11 +180,11 @@ describe "Semantic: module" do
       class Foo::Bar
       end
       Foo
-      ") {
+      ") do
       foo = types["Foo"]
       foo.module?.should be_true
       foo.metaclass
-    }
+    end
   end
 
   it "declares module automatically if not previously declared when declaring a module" do
@@ -192,11 +192,11 @@ describe "Semantic: module" do
       module Foo::Bar
       end
       Foo
-      ") {
+      ") do
       foo = types["Foo"]
       foo.module?.should be_true
       foo.metaclass
-    }
+    end
   end
 
   it "includes generic module with another generic type" do
@@ -1241,5 +1241,22 @@ describe "Semantic: module" do
       mooer = Mooer.new(Bar(Int32).new)
       mooer.moo
       )) { union_of int32, char }
+  end
+
+  it "errors when extending module that defines instance vars (#4065)" do
+    assert_error %(
+      module Foo
+        @foo : Int32?
+
+        def foo
+          @foo
+        end
+      end
+
+      class Bar
+        extend Foo
+      end
+      ),
+      "can't declare instance variables in Bar:Class"
   end
 end

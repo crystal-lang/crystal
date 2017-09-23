@@ -176,7 +176,9 @@ describe Time::Span do
   end
 
   it "test hash code" do
-    Time::Span.new(77).hash.should eq(77)
+    t1 = Time::Span.new(77)
+    t2 = Time::Span.new(77)
+    t1.hash.should eq(t2.hash)
   end
 
   it "test subtract" do
@@ -239,5 +241,10 @@ describe Time::Span do
 
   it "should sum" do
     [1.second, 5.seconds].sum.should eq(6.seconds)
+  end
+
+  it "test zero?" do
+    Time::Span.new(0).zero?.should eq true
+    Time::Span.new(123456789).zero?.should eq false
   end
 end

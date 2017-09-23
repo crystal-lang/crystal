@@ -23,16 +23,8 @@ module Crystal
     end
 
     def lookup_method_missing
-      # method_missing is actually stored in the metaclass
-      method_missing = metaclass.lookup_macro("method_missing", ONE_ARG, nil)
-      return method_missing if method_missing
-
-      parents.try &.each do |parent|
-        method_missing = parent.lookup_method_missing
-        return method_missing if method_missing
-      end
-
-      nil
+      a_macro = lookup_macro("method_missing", ONE_ARG, nil)
+      a_macro.is_a?(Macro) ? a_macro : nil
     end
 
     def define_method_from_method_missing(method_missing, signature, original_call)
