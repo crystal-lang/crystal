@@ -56,8 +56,8 @@
 # 0xfe012d # == 16646445
 # ```
 struct Int
-  alias Signed = Int8 | Int16 | Int32 | Int64
-  alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64
+  alias Signed = Int8 | Int16 | Int32 | Int64 | Int128
+  alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64 | UInt128
   alias Primitive = Signed | Unsigned
 
   # Returns a `Char` that has the unicode codepoint of `self`.
@@ -430,10 +430,10 @@ struct Int
   end
 
   private def internal_to_s(base, upcase = false)
-    # Given sizeof(self) <= 64 bits, we need at most 64 bytes for a base 2
+    # Given sizeof(self) <= 128 bits, we need at most 128 bytes for a base 2
     # representation, plus one byte for the trailing 0.
-    chars = uninitialized UInt8[65]
-    ptr_end = chars.to_unsafe + 64
+    chars = uninitialized UInt8[129]
+    ptr_end = chars.to_unsafe + 128
     ptr = ptr_end
     num = self
 
@@ -458,15 +458,17 @@ struct Int
 
   def inspect(io)
     type = case self
-           when Int8   then "_i8"
-           when Int16  then "_i16"
-           when Int32  then ""
-           when Int64  then "_i64"
-           when UInt8  then "_u8"
-           when UInt16 then "_u16"
-           when UInt32 then "_u32"
-           when UInt64 then "_u64"
-           else             raise "BUG: impossible"
+           when Int8    then "_i8"
+           when Int16   then "_i16"
+           when Int32   then ""
+           when Int64   then "_i64"
+           when Int128  then "_i128"
+           when UInt8   then "_u8"
+           when UInt16  then "_u16"
+           when UInt32  then "_u32"
+           when UInt64  then "_u64"
+           when UInt128 then "_u128"
+           else              raise "BUG: impossible"
            end
 
     to_s(io)
@@ -663,6 +665,33 @@ struct Int64
   end
 end
 
+struct Int128
+  # TODO: eventually update to literals once UInt128 bit support is finished
+  MIN = new(1) << 127
+  MAX = ~MIN
+
+  # Returns an `Int128` by invoking `to_i128` on *value*.
+  def self.new(value)
+    value.to_i128
+  end
+
+  def -
+    # TODO: use 0_i128 - self
+    Int128.new(0) - self
+  end
+
+  def popcount
+    # TODO: use after Crystal 0.23.1
+    # Intrinsics.popcount128(self)
+    v1, v2 = self.unsafe_as({Int64, Int64})
+    Int128.new(v1.popcount + v2.popcount)
+  end
+
+  def clone
+    self
+  end
+end
+
 struct UInt8
   MIN =   0_u8
   MAX = 255_u8
@@ -744,6 +773,32 @@ struct UInt64
 
   def popcount
     Intrinsics.popcount64(self)
+  end
+
+  def clone
+    self
+  end
+end
+
+struct UInt128
+  # TODO: eventually update to literals once UInt128 bit support is finished
+  MIN = new 0
+  MAX = ~MIN
+
+  # Returns an `UInt128` by invoking `to_u128` on *value*.
+  def self.new(value)
+    value.to_u128
+  end
+
+  def abs
+    self
+  end
+
+  def popcount
+    # TODO: use after Crystal 0.23.1
+    # Intrinsics.popcount128(self)
+    v1, v2 = self.unsafe_as({UInt64, UInt64})
+    UInt128.new(v1.popcount + v2.popcount)
   end
 
   def clone

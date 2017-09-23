@@ -1615,7 +1615,16 @@ module Crystal
         @token.number_kind = :i8
         2
       when '1'
-        if next_char == '6'
+        case next_char
+        when '2'
+          if next_char == '8'
+            next_char
+            @token.number_kind = :i128
+            4
+          else
+            raise "invalid int suffix"
+          end
+        when '6'
           next_char
           @token.number_kind = :i16
           3
@@ -1650,7 +1659,16 @@ module Crystal
         @token.number_kind = :u8
         2
       when '1'
-        if next_char == '6'
+        case next_char
+        when '2'
+          if next_char == '8'
+            next_char
+            @token.number_kind = :u128
+            4
+          else
+            raise "invalid uint suffix"
+          end
+        when '6'
           next_char
           @token.number_kind = :u16
           3

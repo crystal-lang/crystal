@@ -53,6 +53,10 @@ private def it_lexes_i64(values)
   values.each { |value| it_lexes_number :i64, value }
 end
 
+private def it_lexes_i128(values)
+  values.each { |value| it_lexes_number :i128, value }
+end
+
 private def it_lexes_u64(values)
   values.each { |value| it_lexes_number :u64, value }
 end
@@ -151,6 +155,7 @@ describe "Lexer" do
   it_lexes_i32 ["1", ["0i32", "0"], ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234",
                 ["1.foo", "1"], ["1_000", "1000"], ["100_000", "100000"]]
   it_lexes_i64 [["1i64", "1"], ["1_i64", "1"], ["1i64hello", "1"], ["+1_i64", "+1"], ["-1_i64", "-1"]]
+  it_lexes_i128 [["1i128", "1"], ["1_i128", "1"], ["1i128hello", "1"], ["+1_i128", "+1"], ["-1_i128", "-1"]]
   it_lexes_f32 [["0f32", "0"], ["0_f32", "0"], ["1.0f32", "1.0"], ["1.0f32hello", "1.0"],
                 ["+1.0f32", "+1.0"], ["-1.0f32", "-1.0"], ["-0.0f32", "-0.0"], ["1_234.567_890_f32", "1234.567890"]]
   it_lexes_f64 ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0", ["1_234.567_890", "1234.567890"]]
@@ -180,6 +185,9 @@ describe "Lexer" do
 
   it_lexes_number :u64, ["1u64", "1"]
   it_lexes_number :u64, ["1_u64", "1"]
+
+  it_lexes_number :u128, ["1u128", "1"]
+  it_lexes_number :u128, ["1_u128", "1"]
 
   it_lexes_number :f32, ["1f32", "1"]
   it_lexes_number :f32, ["1.0f32", "1.0"]
