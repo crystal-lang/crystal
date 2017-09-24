@@ -1,8 +1,8 @@
 require "spec"
 require "http/server"
 
-describe HTTP::LogHandler do
-  it "logs" do
+describe(HTTP::LogHandler) do
+  it("logs") do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
@@ -17,7 +17,7 @@ describe HTTP::LogHandler do
     called.should be_true
   end
 
-  it "does log errors" do
+  it("does log errors") do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)

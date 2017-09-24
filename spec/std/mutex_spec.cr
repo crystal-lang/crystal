@@ -1,20 +1,20 @@
 require "spec"
 
-describe Mutex do
-  it "locks and unlocks" do
+describe(Mutex) do
+  it("locks and unlocks") do
     mutex = Mutex.new
     mutex.lock
     mutex.unlock
   end
 
-  it "raises if unlocks without lock" do
+  it("raises if unlocks without lock") do
     mutex = Mutex.new
     expect_raises(Exception, "Attempt to unlock a mutex which is not locked") do
       mutex.unlock
     end
   end
 
-  it "can be locked many times from the same fiber" do
+  it("can be locked many times from the same fiber") do
     mutex = Mutex.new
     mutex.lock
     mutex.lock
@@ -22,7 +22,7 @@ describe Mutex do
     mutex.unlock
   end
 
-  it "can lock and unlock from multiple fibers" do
+  it("can lock and unlock from multiple fibers") do
     mutex = Mutex.new
 
     a = 1

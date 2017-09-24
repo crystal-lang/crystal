@@ -17,13 +17,13 @@ module Crystal
       formatter.finish
     end
 
-    record AlignInfo,
+    record(AlignInfo,
       id : UInt64,
       line : Int32,
       start_column : Int32,
       middle_column : Int32,
       end_column : Int32,
-      number : Bool do
+      number : Bool) do
       def size
         end_column - start_column
       end
@@ -3867,13 +3867,13 @@ module Crystal
       end
 
       if inputs = node.inputs
-        visit_asm_parts inputs, colon_column, write_colon: false do |input|
+        visit_asm_parts(inputs, colon_column, write_colon: false) do |input|
           accept input
         end
       end
 
       if clobbers = node.clobbers
-        visit_asm_parts clobbers, colon_column, write_colon: true do |clobber|
+        visit_asm_parts(clobbers, colon_column, write_colon: true) do |clobber|
           accept StringLiteral.new(clobber)
         end
       end
@@ -3882,7 +3882,7 @@ module Crystal
         write_token @token.type
         skip_space_or_newline
         parts = [node.volatile?, node.alignstack?, node.intel?].select(&.itself)
-        visit_asm_parts parts, colon_column, write_colon: false do
+        visit_asm_parts(parts, colon_column, write_colon: false) do
           accept StringLiteral.new("")
         end
       end

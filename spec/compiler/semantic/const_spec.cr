@@ -1,22 +1,22 @@
 require "../../spec_helper"
 
-describe "Semantic: const" do
-  it "types a constant" do
+describe("Semantic: const") do
+  it("types a constant") do
     input = parse("CONST = 1").as(Assign)
     result = semantic input
     mod = result.program
     input.target.type?.should be_nil # Don't type value until needed
   end
 
-  it "types a constant reference" do
+  it("types a constant reference") do
     assert_type("CONST = 1; CONST") { int32 }
   end
 
-  it "types a nested constant" do
+  it("types a nested constant") do
     assert_type("class Foo; A = 1; end; Foo::A") { int32 }
   end
 
-  it "types a constant inside a def" do
+  it("types a constant inside a def") do
     assert_type("
       class Foo
         A = 1
@@ -30,7 +30,7 @@ describe "Semantic: const" do
       ") { int32 }
   end
 
-  it "finds nearest constant first" do
+  it("finds nearest constant first") do
     assert_type("
       CONST = 1
 
@@ -46,7 +46,7 @@ describe "Semantic: const" do
       ") { float64 }
   end
 
-  it "finds current type first" do
+  it("finds current type first") do
     assert_type("
       class Foo
         class Bar
@@ -64,7 +64,7 @@ describe "Semantic: const" do
       ") { int32 }
   end
 
-  it "types a global constant reference in method" do
+  it("types a global constant reference in method") do
     assert_type("
       FOO = 2.5
 
@@ -80,7 +80,7 @@ describe "Semantic: const" do
       ") { float64 }
   end
 
-  it "types a global constant reference in static method" do
+  it("types a global constant reference in static method") do
     assert_type("
       CONST = 2.5
 
@@ -96,12 +96,12 @@ describe "Semantic: const" do
       ") { int32 }
   end
 
-  it "doesn't share variables with global scope" do
+  it("doesn't share variables with global scope") do
     assert_error "a = 1; CONST = a; CONST",
       "undefined local variable or method 'a'"
   end
 
-  it "finds const from restriction" do
+  it("finds const from restriction") do
     assert_type("
       struct Int32
         FOO = 'a'
@@ -115,7 +115,7 @@ describe "Semantic: const" do
       ") { char }
   end
 
-  it "doesn't crash with const used in initialize (bug)" do
+  it("doesn't crash with const used in initialize (bug)") do
     assert_type("
       COCO = init_coco
 
@@ -135,7 +135,7 @@ describe "Semantic: const" do
       ") { int32 }
   end
 
-  it "finds constant in module that includes module (#205)" do
+  it("finds constant in module that includes module (#205)") do
     assert_type(%(
       module Foo
         CONSTANT = true
@@ -149,7 +149,7 @@ describe "Semantic: const" do
       )) { bool }
   end
 
-  it "finds constant in class that extends class (#205)" do
+  it("finds constant in class that extends class (#205)") do
     assert_type(%(
       class Foo
         CONSTANT = true
@@ -163,7 +163,7 @@ describe "Semantic: const" do
   end
 
   ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2", "1 + 2", "1 + ZED"].each do |node|
-    it "doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})" do
+    it("doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})") do
       semantic(%(
         ZED = 10
 
@@ -185,7 +185,7 @@ describe "Semantic: const" do
     end
   end
 
-  it "doesn't error if using c enum" do
+  it("doesn't error if using c enum") do
     assert_type(%(
       lib LibC
         enum Foo
@@ -197,7 +197,7 @@ describe "Semantic: const" do
       )) { types["LibC"].types["Foo"] }
   end
 
-  it "errors on dynamic constant assignment inside block" do
+  it("errors on dynamic constant assignment inside block") do
     assert_error %(
       def foo
         yield
@@ -210,7 +210,7 @@ describe "Semantic: const" do
       "can't declare constant dynamically"
   end
 
-  it "errors on dynamic constant assignment inside if" do
+  it("errors on dynamic constant assignment inside if") do
     assert_error %(
       if 1 == 1
         CONST = 1
@@ -219,7 +219,7 @@ describe "Semantic: const" do
       "can't declare constant dynamically"
   end
 
-  it "can use constant defined later (#2906)" do
+  it("can use constant defined later (#2906)") do
     assert_type(%(
       FOO = Foo.new
 
@@ -238,7 +238,7 @@ describe "Semantic: const" do
       )) { types["Foo"] }
   end
 
-  it "errors if can't infer constant type (#3240, #3948)" do
+  it("errors if can't infer constant type (#3240, #3948)") do
     assert_error %(
       A = A.b
       A
@@ -246,7 +246,7 @@ describe "Semantic: const" do
       "can't infer type of constant A"
   end
 
-  it "errors if using constant as generic type (#3240)" do
+  it("errors if using constant as generic type (#3240)") do
     assert_error %(
       Foo = Foo(Int32).new
       Foo
@@ -254,7 +254,7 @@ describe "Semantic: const" do
       "Foo is not a type, it's a constant"
   end
 
-  it "errors if using const in type declaration" do
+  it("errors if using const in type declaration") do
     assert_error %(
       A = 1
 
@@ -265,7 +265,7 @@ describe "Semantic: const" do
       "A is not a type, it's a constant"
   end
 
-  it "errors if using const in unintialized" do
+  it("errors if using const in unintialized") do
     assert_error %(
       A = 1
 
@@ -274,7 +274,7 @@ describe "Semantic: const" do
       "A is not a type, it's a constant"
   end
 
-  it "errors if using const in var declaration" do
+  it("errors if using const in var declaration") do
     assert_error %(
       A = 1
 
@@ -283,7 +283,7 @@ describe "Semantic: const" do
       "A is not a type, it's a constant"
   end
 
-  it "errors if using const in restriction" do
+  it("errors if using const in restriction") do
     assert_error %(
       A = 1
 

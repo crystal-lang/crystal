@@ -16,8 +16,8 @@ private def doc
 end
 
 module XML
-  describe XPathContext do
-    it "finds nodes" do
+  describe(XPathContext) do
+    it("finds nodes") do
       doc = doc()
 
       nodes = doc.xpath("//people/person").as(NodeSet)
@@ -33,7 +33,7 @@ module XML
       nodes.size.should eq(2)
     end
 
-    it "finds string" do
+    it("finds string") do
       doc = doc()
 
       id = doc.xpath("string(//people/person[1]/@id)").as(String)
@@ -43,7 +43,7 @@ module XML
       id.should eq("1")
     end
 
-    it "finds number" do
+    it("finds number") do
       doc = doc()
 
       count = doc.xpath("count(//people/person)").as(Float64)
@@ -53,7 +53,7 @@ module XML
       count.should eq(2)
     end
 
-    it "finds boolean" do
+    it("finds boolean") do
       doc = doc()
 
       id = doc.xpath("boolean(//people/person[1]/@id)").as(Bool)
@@ -63,19 +63,19 @@ module XML
       id.should be_true
     end
 
-    it "raises on invalid xpath" do
-      expect_raises XML::Error do
+    it("raises on invalid xpath") do
+      expect_raises(XML::Error) do
         doc = doc()
         doc.xpath("coco()")
       end
     end
 
-    it "returns nil with invalid xpath" do
+    it("returns nil with invalid xpath") do
       doc = doc()
       doc.xpath_node("//invalid").should be_nil
     end
 
-    it "finds with namespace" do
+    it("finds with namespace") do
       doc = XML.parse(%(\
         <?xml version="1.0" encoding="UTF-8"?>
         <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
@@ -89,7 +89,7 @@ module XML
       ns.prefix.should be_nil
     end
 
-    it "finds with root namespaces" do
+    it("finds with root namespaces") do
       doc = XML.parse(%(\
         <?xml version="1.0" encoding="UTF-8"?>
         <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
@@ -103,7 +103,7 @@ module XML
       ns.prefix.should be_nil
     end
 
-    it "finds with variable binding" do
+    it("finds with variable binding") do
       doc = XML.parse(%(\
         <?xml version="1.0" encoding="UTF-8"?>
         <feed>

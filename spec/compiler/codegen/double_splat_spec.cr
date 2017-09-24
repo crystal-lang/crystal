@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Codegen: double splat" do
-  it "double splats named argument into arguments (1)" do
+describe("Codegen: double splat") do
+  it("double splats named argument into arguments (1)") do
     run(%(
       def foo(x, y)
         x - y
@@ -12,7 +12,7 @@ describe "Codegen: double splat" do
       )).to_i.should eq(32 - 10)
   end
 
-  it "double splats named argument into arguments (2)" do
+  it("double splats named argument into arguments (2)") do
     run(%(
       def foo(x, y)
         x - y
@@ -23,7 +23,7 @@ describe "Codegen: double splat" do
       )).to_i.should eq(32 - 10)
   end
 
-  it "double splats named argument with positional arguments" do
+  it("double splats named argument with positional arguments") do
     run(%(
       def foo(x, y, z)
         x - y*z
@@ -34,7 +34,7 @@ describe "Codegen: double splat" do
       )).to_i.should eq(1000 - 20*30)
   end
 
-  it "double splats named argument with named args (1)" do
+  it("double splats named argument with named args (1)") do
     run(%(
       def foo(x, y, z)
         x - y*z
@@ -45,7 +45,7 @@ describe "Codegen: double splat" do
       )).to_i.should eq(1000 - 20*30)
   end
 
-  it "double splats named argument with named args (2)" do
+  it("double splats named argument with named args (2)") do
     run(%(
       def foo(x, y, z)
         x - y*z
@@ -56,7 +56,7 @@ describe "Codegen: double splat" do
       )).to_i.should eq(1000 - 20*30)
   end
 
-  it "double splats twice " do
+  it("double splats twice ") do
     run(%(
       def foo(x, y, z, w)
         (x - y*z) * w
@@ -68,7 +68,7 @@ describe "Codegen: double splat" do
       )).to_i.should eq((1000 - 20*30) * 40)
   end
 
-  it "matches double splat on method with named args" do
+  it("matches double splat on method with named args") do
     run(%(
       def foo(**options)
         options[:x] - options[:y]
@@ -78,7 +78,7 @@ describe "Codegen: double splat" do
       )).to_i.should eq(7)
   end
 
-  it "matches double splat on method with named args and regular args" do
+  it("matches double splat on method with named args and regular args") do
     run(%(
       def foo(x, **args)
         x - args[:y]*args[:z]
@@ -88,7 +88,7 @@ describe "Codegen: double splat" do
       )).to_i.should eq(1000 - 20*30)
   end
 
-  it "matches double splat with regular splat" do
+  it("matches double splat with regular splat") do
     run(%(
       def foo(*args, **options)
         (args[0] - args[1]*options[:z]) * options[:w]
@@ -98,7 +98,7 @@ describe "Codegen: double splat" do
       )).to_i.should eq((1000 - 20*30) * 40)
   end
 
-  it "evaluates double splat argument just once (#2677)" do
+  it("evaluates double splat argument just once (#2677)") do
     run(%(
       class Global
         @@x = 0

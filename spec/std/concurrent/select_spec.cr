@@ -1,7 +1,7 @@
 require "spec"
 
-describe "select" do
-  it "select many receviers" do
+describe("select") do
+  it("select many receviers") do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new
     res = [] of Int32
@@ -22,7 +22,7 @@ describe "select" do
     res.should eq (0...10).to_a
   end
 
-  it "select many senders" do
+  it("select many senders") do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new
     res = [] of Int32
@@ -43,7 +43,7 @@ describe "select" do
     res.should eq (0...10).to_a
   end
 
-  it "select many receivers, senders" do
+  it("select many receivers, senders") do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new
     res = [] of Int32
@@ -67,7 +67,7 @@ describe "select" do
     res.should eq (0...10).to_a
   end
 
-  it "select should work with send which started before receive, fixed #3862" do
+  it("select should work with send which started before receive, fixed #3862") do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new
 

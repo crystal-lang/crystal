@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: splat" do
-  it "splats" do
+describe("Code gen: splat") do
+  it("splats") do
     run(%(
       struct Tuple
         def size; {{T.size}}; end
@@ -15,7 +15,7 @@ describe "Code gen: splat" do
       )).to_i.should eq(3)
   end
 
-  it "splats with another arg" do
+  it("splats with another arg") do
     run(%(
       struct Tuple
         def size; {{T.size}}; end
@@ -29,7 +29,7 @@ describe "Code gen: splat" do
       )).to_i.should eq(12)
   end
 
-  it "splats on call" do
+  it("splats on call") do
     run(%(
       def foo(x, y)
         x + y
@@ -40,7 +40,7 @@ describe "Code gen: splat" do
       )).to_i.should eq(3)
   end
 
-  it "splats without args" do
+  it("splats without args") do
     run(%(
       struct Tuple
         def size; {{T.size}}; end
@@ -54,7 +54,7 @@ describe "Code gen: splat" do
       )).to_i.should eq(0)
   end
 
-  it "splats with default value" do
+  it("splats with default value") do
     run(%(
       struct Tuple
         def size; {{T.size}}; end
@@ -68,7 +68,7 @@ describe "Code gen: splat" do
       )).to_i.should eq(100)
   end
 
-  it "splats with default value (2)" do
+  it("splats with default value (2)") do
     run(%(
       struct Tuple
         def size; {{T.size}}; end
@@ -82,7 +82,7 @@ describe "Code gen: splat" do
       )).to_i.should eq(110)
   end
 
-  it "splats with default value (3)" do
+  it("splats with default value (3)") do
     run(%(
       struct Tuple
         def size; {{T.size}}; end
@@ -96,7 +96,7 @@ describe "Code gen: splat" do
       )).to_i.should eq(32)
   end
 
-  it "splats in initialize" do
+  it("splats in initialize") do
     run(%(
       class Foo
         @x : Int32
@@ -120,7 +120,7 @@ describe "Code gen: splat" do
       )).to_i.should eq(3)
   end
 
-  it "does #2407" do
+  it("does #2407") do
     codegen(%(
       lib LibC
         fun exit(Int32) : NoReturn
@@ -143,7 +143,7 @@ describe "Code gen: splat" do
       ))
   end
 
-  it "evaluates splat argument just once (#2677)" do
+  it("evaluates splat argument just once (#2677)") do
     run(%(
       class Global
         @@x = 0

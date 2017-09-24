@@ -1,7 +1,7 @@
 require "spec"
 
-describe Symbol do
-  it "inspects" do
+describe(Symbol) do
+  it("inspects") do
     :foo.inspect.should eq(%(:foo))
     :"{".inspect.should eq(%(:"{"))
     :"hi there".inspect.should eq(%(:"hi there"))
@@ -9,7 +9,7 @@ describe Symbol do
     # :かたな.inspect.should eq(%(:かたな))
   end
 
-  it "can be compared with another symbol" do
+  it("can be compared with another symbol") do
     (:foo > :bar).should be_true
     (:foo < :bar).should be_false
 
@@ -18,13 +18,13 @@ describe Symbol do
     a.sort.should eq(b)
   end
 
-  it "displays symbols that don't need quotes without quotes" do
+  it("displays symbols that don't need quotes without quotes") do
     a = %i(+ - * / == < <= > >= ! != =~ !~ & | ^ ~ ** >> << % [] <=> === []? []=)
     b = "[:+, :-, :*, :/, :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~, :&, :|, :^, :~, :**, :>>, :<<, :%, :[], :<=>, :===, :[]?, :[]=]"
     a.inspect.should eq(b)
   end
 
-  describe "clone" do
+  describe("clone") do
     it { :foo.clone.should eq(:foo) }
   end
 end

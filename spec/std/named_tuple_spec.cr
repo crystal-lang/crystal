@@ -1,11 +1,11 @@
 require "spec"
 
-describe "NamedTuple" do
-  it "does new" do
+describe("NamedTuple") do
+  it("does new") do
     NamedTuple.new(x: 1, y: 2).should eq({x: 1, y: 2})
   end
 
-  it "does NamedTuple.from" do
+  it("does NamedTuple.from") do
     t = NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :bar => 2})
     t.should eq({foo: 1, bar: 2})
     t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
@@ -18,11 +18,11 @@ describe "NamedTuple" do
     t.should eq({"foo bar": 1, "baz qux": 2})
     t.class.should eq(NamedTuple("foo bar": Int32, "baz qux": Int32))
 
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       NamedTuple(foo: Int32, bar: Int32).from({:foo => 1})
     end
 
-    expect_raises KeyError do
+    expect_raises(KeyError) do
       NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :baz => 2})
     end
 
@@ -31,7 +31,7 @@ describe "NamedTuple" do
     end
   end
 
-  it "does NamedTuple#from" do
+  it("does NamedTuple#from") do
     t = {foo: Int32, bar: Int32}.from({:foo => 1, :bar => 2})
     t.should eq({foo: 1, bar: 2})
     t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
@@ -40,11 +40,11 @@ describe "NamedTuple" do
     t.should eq({foo: 1, bar: 2})
     t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
 
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       {foo: Int32, bar: Int32}.from({:foo => 1})
     end
 
-    expect_raises KeyError do
+    expect_raises(KeyError) do
       {foo: Int32, bar: Int32}.from({:foo => 1, :baz => 2})
     end
 
@@ -53,11 +53,11 @@ describe "NamedTuple" do
     end
   end
 
-  it "gets size" do
+  it("gets size") do
     {a: 1, b: 3}.size.should eq(2)
   end
 
-  it "does [] with runtime key" do
+  it("does [] with runtime key") do
     tup = {a: 1, b: 'a'}
 
     key = :a
@@ -76,7 +76,7 @@ describe "NamedTuple" do
     end
   end
 
-  it "does []? with runtime key" do
+  it("does []? with runtime key") do
     tup = {a: 1, b: 'a'}
 
     key = :a
@@ -95,7 +95,7 @@ describe "NamedTuple" do
     typeof(val).should eq(Int32 | Char | Nil)
   end
 
-  it "does [] with string" do
+  it("does [] with string") do
     tup = {a: 1, b: 'a'}
 
     key = "a"
@@ -114,7 +114,7 @@ describe "NamedTuple" do
     end
   end
 
-  it "does []? with string" do
+  it("does []? with string") do
     tup = {a: 1, b: 'a'}
 
     key = "a"
@@ -133,7 +133,7 @@ describe "NamedTuple" do
     typeof(val).should eq(Int32 | Char | Nil)
   end
 
-  it "computes a hash value" do
+  it("computes a hash value") do
     tup1 = {a: 1, b: 'a'}
     tup1.hash.should eq(tup1.dup.hash)
 
@@ -141,7 +141,7 @@ describe "NamedTuple" do
     tup2.hash.should eq(tup1.hash)
   end
 
-  it "does each" do
+  it("does each") do
     tup = {a: 1, b: "hello"}
     i = 0
     tup.each do |key, value|
@@ -158,7 +158,7 @@ describe "NamedTuple" do
     i.should eq(2)
   end
 
-  it "does each_key" do
+  it("does each_key") do
     tup = {a: 1, b: "hello"}
     i = 0
     tup.each_key do |key|
@@ -173,7 +173,7 @@ describe "NamedTuple" do
     i.should eq(2)
   end
 
-  it "does each_value" do
+  it("does each_value") do
     tup = {a: 1, b: "hello"}
     i = 0
     tup.each_value do |value|
@@ -188,7 +188,7 @@ describe "NamedTuple" do
     i.should eq(2)
   end
 
-  it "does each_with_index" do
+  it("does each_with_index") do
     tup = {a: 1, b: "hello"}
     i = 0
     tup.each_with_index do |key, value, index|
@@ -207,41 +207,41 @@ describe "NamedTuple" do
     i.should eq(2)
   end
 
-  it "does has_key? with symbol" do
+  it("does has_key? with symbol") do
     tup = {a: 1, b: 'a'}
     tup.has_key?(:a).should be_true
     tup.has_key?(:b).should be_true
     tup.has_key?(:c).should be_false
   end
 
-  it "does has_key? with string" do
+  it("does has_key? with string") do
     tup = {a: 1, b: 'a'}
     tup.has_key?("a").should be_true
     tup.has_key?("b").should be_true
     tup.has_key?("c").should be_false
   end
 
-  it "does empty" do
+  it("does empty") do
     {a: 1}.empty?.should be_false
   end
 
-  it "does to_a" do
+  it("does to_a") do
     tup = {a: 1, b: 'a'}
     tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
   end
 
-  it "does key_index" do
+  it("does key_index") do
     tup = {a: 1, b: 'a'}
     tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
   end
 
-  it "does map" do
+  it("does map") do
     tup = {a: 1, b: 'a'}
     strings = tup.map { |k, v| "#{k.inspect}-#{v.inspect}" }
     strings.should eq([":a-1", ":b-'a'"])
   end
 
-  it "compares with same named tuple type" do
+  it("compares with same named tuple type") do
     tup1 = {a: 1, b: 'a'}
     tup2 = {b: 'a', a: 1}
     tup3 = {a: 1, b: 'b'}
@@ -249,7 +249,7 @@ describe "NamedTuple" do
     tup1.should_not eq(tup3)
   end
 
-  it "compares with other named tuple type" do
+  it("compares with other named tuple type") do
     tup1 = {a: 1, b: 'a'}
     tup2 = {b: 'a', a: 1.0}
     tup3 = {b: 'a', a: 1.1}
@@ -257,18 +257,18 @@ describe "NamedTuple" do
     tup1.should_not eq(tup3)
   end
 
-  it "does to_h" do
+  it("does to_h") do
     tup1 = {a: 1, b: "hello"}
     hash = tup1.to_h
     hash.should eq({:a => 1, :b => "hello"})
   end
 
-  it "does to_s" do
+  it("does to_s") do
     tup = {a: 1, b: "hello"}
     tup.to_s.should eq(%({a: 1, b: "hello"}))
   end
 
-  it "dups" do
+  it("dups") do
     tup1 = {a: 1, b: [1, 2, 3]}
     tup2 = tup1.dup
 
@@ -276,7 +276,7 @@ describe "NamedTuple" do
     tup2[:b].should be(tup1[:b])
   end
 
-  it "clones" do
+  it("clones") do
     tup1 = {a: 1, b: [1, 2, 3]}
     tup2 = tup1.clone
 
@@ -287,17 +287,17 @@ describe "NamedTuple" do
     tup2.clone.should eq(tup2)
   end
 
-  it "does keys" do
+  it("does keys") do
     tup = {a: 1, b: 2}
     tup.keys.should eq({:a, :b})
   end
 
-  it "does values" do
+  it("does values") do
     tup = {a: 1, b: 'a'}
     tup.values.should eq({1, 'a'})
   end
 
-  it "does types" do
+  it("does types") do
     tuple = {a: 1, b: 'a', c: "hello"}
     tuple.class.types.to_s.should eq("{a: Int32, b: Char, c: String}")
   end

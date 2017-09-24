@@ -1,8 +1,8 @@
 require "spec"
 require "openssl"
 
-describe "OpenSSL::X509::Name" do
-  it "parse" do
+describe("OpenSSL::X509::Name") do
+  it("parse") do
     name = OpenSSL::X509::Name.parse("CN=nobody/DC=example")
     name.to_a.should eq([{"CN", "nobody"}, {"DC", "example"}])
 
@@ -11,7 +11,7 @@ describe "OpenSSL::X509::Name" do
     end
   end
 
-  it "add_entry" do
+  it("add_entry") do
     name = OpenSSL::X509::Name.new
     name.to_a.size.should eq(0)
 

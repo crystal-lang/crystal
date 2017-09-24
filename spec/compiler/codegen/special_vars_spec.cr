@@ -1,8 +1,8 @@
 require "../../spec_helper"
 
-describe "Codegen: special vars" do
+describe("Codegen: special vars") do
   ["$~", "$?"].each do |name|
-    it "codegens #{name}" do
+    it("codegens #{name}") do
       run(%(
         class Object; def not_nil!; self; end; end
 
@@ -15,7 +15,7 @@ describe "Codegen: special vars" do
         )).to_string.should eq("hey")
     end
 
-    it "codegens #{name} with nilable (1)" do
+    it("codegens #{name} with nilable (1)") do
       run(%(
         require "prelude"
 
@@ -35,7 +35,7 @@ describe "Codegen: special vars" do
         )).to_string.should eq("ouch")
     end
 
-    it "codegens #{name} with nilable (2)" do
+    it("codegens #{name} with nilable (2)") do
       run(%(
         require "prelude"
 
@@ -56,7 +56,7 @@ describe "Codegen: special vars" do
     end
   end
 
-  it "codegens $~ two levels" do
+  it("codegens $~ two levels") do
     run(%(
       class Object; def not_nil!; self; end; end
 
@@ -74,7 +74,7 @@ describe "Codegen: special vars" do
       )).to_string.should eq("hey")
   end
 
-  it "works lazily" do
+  it("works lazily") do
     run(%(
       require "prelude"
 
@@ -101,7 +101,7 @@ describe "Codegen: special vars" do
       )).to_string.should eq("bar")
   end
 
-  it "codegens in block" do
+  it("codegens in block") do
     run(%(
       require "prelude"
 
@@ -120,7 +120,7 @@ describe "Codegen: special vars" do
       )).to_string.should eq("hey")
   end
 
-  it "codegens in block with nested block" do
+  it("codegens in block with nested block") do
     run(%(
       require "prelude"
 
@@ -145,7 +145,7 @@ describe "Codegen: special vars" do
       )).to_string.should eq("hey")
   end
 
-  it "codegens after block" do
+  it("codegens after block") do
     run(%(
       require "prelude"
 
@@ -162,7 +162,7 @@ describe "Codegen: special vars" do
       )).to_string.should eq("hey")
   end
 
-  it "codegens after block 2" do
+  it("codegens after block 2") do
     run(%(
       class Object; def not_nil!; self; end; end
 
@@ -181,7 +181,7 @@ describe "Codegen: special vars" do
       )).to_string.should eq("bye")
   end
 
-  it "codegens with default argument" do
+  it("codegens with default argument") do
     run(%(
       class Object; def not_nil!; self; end; end
 
@@ -194,7 +194,7 @@ describe "Codegen: special vars" do
       )).to_string.should eq("bye")
   end
 
-  it "preserves special vars in macro expansion with call with default arguments (#824)" do
+  it("preserves special vars in macro expansion with call with default arguments (#824)") do
     run(%(
       class Object; def not_nil!; self; end; end
 
@@ -211,7 +211,7 @@ describe "Codegen: special vars" do
       )).to_string.should eq("yes")
   end
 
-  it "allows with primitive" do
+  it("allows with primitive") do
     run(%(
       class Object; def not_nil!; self; end; end
 
@@ -226,7 +226,7 @@ describe "Codegen: special vars" do
     )).to_i.should eq(123)
   end
 
-  it "allows with struct" do
+  it("allows with struct") do
     run(%(
       class Object; def not_nil!; self; end; end
 
@@ -254,7 +254,7 @@ describe "Codegen: special vars" do
     )).to_i.should eq(123)
   end
 
-  it "preserves special vars if initialized inside block (#2194)" do
+  it("preserves special vars if initialized inside block (#2194)") do
     run(%(
       class Object; def not_nil!; self; end; end
 

@@ -1,23 +1,23 @@
 require "../../spec_helper"
 
-describe "Semantic: class" do
-  it "types Const#allocate" do
+describe("Semantic: class") do
+  it("types Const#allocate") do
     assert_type("class Foo; end; Foo.allocate") { types["Foo"].as(NonGenericClassType) }
   end
 
-  it "types Const#new" do
+  it("types Const#new") do
     assert_type("class Foo; end; Foo.new") { types["Foo"].as(NonGenericClassType) }
   end
 
-  it "types Const#new#method" do
+  it("types Const#new#method") do
     assert_type("class Foo; def coco; 1; end; end; Foo.new.coco") { int32 }
   end
 
-  it "types class inside class" do
+  it("types class inside class") do
     assert_type("class Foo; class Bar; end; end; Foo::Bar.allocate") { types["Foo"].types["Bar"] }
   end
 
-  it "types instance variable" do
+  it("types instance variable") do
     result = assert_type("
       class Foo(T)
         def set
@@ -34,7 +34,7 @@ describe "Semantic: class" do
     type.instance_vars["@coco"].type.should eq(mod.nilable(mod.int32))
   end
 
-  it "types generic of generic type" do
+  it("types generic of generic type") do
     result = assert_type("
       class Foo(T)
         def set
@@ -52,7 +52,7 @@ describe "Semantic: class" do
     end
   end
 
-  it "types instance variable" do
+  it("types instance variable") do
     input = parse "
       class Foo(T)
         def set(value : T)
@@ -78,7 +78,7 @@ describe "Semantic: class" do
     node[3].type.instance_vars["@coco"].type.should eq(mod.nilable(mod.float64))
   end
 
-  it "types instance variable on getter" do
+  it("types instance variable on getter") do
     input = parse("
       class Foo(T)
         def set(value : T)
@@ -105,7 +105,7 @@ describe "Semantic: class" do
     input.last.type.should eq(mod.nilable(mod.float64))
   end
 
-  it "types recursive type" do
+  it("types recursive type") do
     input = parse("
       class Node
         def add
@@ -129,7 +129,7 @@ describe "Semantic: class" do
     input.last.type.should eq(node)
   end
 
-  it "types self inside method call without obj" do
+  it("types self inside method call without obj") do
     assert_type("
       class Foo
         def foo
@@ -145,7 +145,7 @@ describe "Semantic: class" do
     ") { types["Foo"] }
   end
 
-  it "types type var union" do
+  it("types type var union") do
     assert_type("
       class Foo(T)
       end
@@ -154,7 +154,7 @@ describe "Semantic: class" do
       ") { generic_class "Foo", union_of(int32, float64) }
   end
 
-  it "types class and subclass as one type" do
+  it("types class and subclass as one type") do
     assert_type("
       class Foo
       end
@@ -166,7 +166,7 @@ describe "Semantic: class" do
       ") { types["Foo"].virtual_type }
   end
 
-  it "types class and subclass as one type" do
+  it("types class and subclass as one type") do
     assert_type("
       class Foo
       end
@@ -181,7 +181,7 @@ describe "Semantic: class" do
       ") { types["Foo"].virtual_type }
   end
 
-  it "types class and subclass as one type" do
+  it("types class and subclass as one type") do
     assert_type("
       class Foo
       end
@@ -196,7 +196,7 @@ describe "Semantic: class" do
       ") { types["Foo"].virtual_type }
   end
 
-  it "does automatic inference of new for generic types" do
+  it("does automatic inference of new for generic types") do
     result = assert_type("
       class Box(T)
         def initialize(value : T)
@@ -212,7 +212,7 @@ describe "Semantic: class" do
     type.instance_vars["@value"].type.should eq(mod.int32)
   end
 
-  it "does automatic type inference of new for generic types 2" do
+  it("does automatic type inference of new for generic types 2") do
     result = assert_type("
       class Box(T)
         def initialize(x, value : T)
@@ -229,7 +229,7 @@ describe "Semantic: class" do
     type.instance_vars["@value"].type.should eq(mod.bool)
   end
 
-  it "does automatic type inference of new for nested generic type" do
+  it("does automatic type inference of new for nested generic type") do
     nodes = parse("
       class Foo
         class Bar(T)
@@ -248,32 +248,32 @@ describe "Semantic: class" do
     type.instance_vars["@x"].type.should eq(mod.int32)
   end
 
-  it "reports uninitialized constant" do
+  it("reports uninitialized constant") do
     assert_error "Foo.new",
       "undefined constant Foo"
   end
 
-  it "reports undefined method when method inside a class" do
+  it("reports undefined method when method inside a class") do
     assert_error "struct Int; def foo; 1; end; end; foo",
       "undefined local variable or method 'foo'"
   end
 
-  it "reports undefined instance method" do
+  it("reports undefined instance method") do
     assert_error "1.foo",
       "undefined method 'foo' for Int"
   end
 
-  it "reports unknown class when extending" do
+  it("reports unknown class when extending") do
     assert_error "class Foo < Bar; end",
       "undefined constant Bar"
   end
 
-  it "reports superclass mismatch" do
+  it("reports superclass mismatch") do
     assert_error "class Foo; end; class Bar; end; class Foo < Bar; end",
       "superclass mismatch for class Foo (Bar for Reference)"
   end
 
-  it "reports wrong number of arguments for initialize" do
+  it("reports wrong number of arguments for initialize") do
     assert_error "
       class Foo
         def initialize(x, y)
@@ -285,7 +285,7 @@ describe "Semantic: class" do
       "wrong number of arguments"
   end
 
-  it "reports can't instantiate abstract class on new" do
+  it("reports can't instantiate abstract class on new") do
     assert_error "
       abstract class Foo; end
       Foo.new
@@ -293,7 +293,7 @@ describe "Semantic: class" do
       "can't instantiate abstract class Foo"
   end
 
-  it "reports can't instantiate abstract class on allocate" do
+  it("reports can't instantiate abstract class on allocate") do
     assert_error "
       abstract class Foo; end
       Foo.allocate
@@ -301,7 +301,7 @@ describe "Semantic: class" do
       "can't instantiate abstract class Foo"
   end
 
-  it "doesn't lookup new in supermetaclass" do
+  it("doesn't lookup new in supermetaclass") do
     assert_type("
       class Foo(T)
       end
@@ -311,12 +311,12 @@ describe "Semantic: class" do
       ") { generic_class "Foo", int32 }
   end
 
-  it "errors when wrong arguments for new" do
+  it("errors when wrong arguments for new") do
     assert_error "Reference.new 1",
       "wrong number of arguments"
   end
 
-  it "types virtual method of generic class" do
+  it("types virtual method of generic class") do
     assert_type("
       require \"char\"
 
@@ -340,7 +340,7 @@ describe "Semantic: class" do
       ") { int32 }
   end
 
-  it "allows defining classes inside modules or classes with ::" do
+  it("allows defining classes inside modules or classes with ::") do
     input = parse("
       class Foo
       end
@@ -353,7 +353,7 @@ describe "Semantic: class" do
     mod.types["Foo"].types["Bar"].as(NonGenericClassType)
   end
 
-  it "doesn't lookup type in parents' namespaces, and lookups and in program" do
+  it("doesn't lookup type in parents' namespaces, and lookups and in program") do
     code = "
       class Bar
       end
@@ -385,7 +385,7 @@ describe "Semantic: class" do
       ") { char }
   end
 
-  it "finds in global scope if includes module" do
+  it("finds in global scope if includes module") do
     assert_type("
       class Baz
       end
@@ -402,7 +402,7 @@ describe "Semantic: class" do
     ") { int32 }
   end
 
-  it "allows instantiating generic class with number" do
+  it("allows instantiating generic class with number") do
     assert_type("
       class Foo(T)
       end
@@ -411,7 +411,7 @@ describe "Semantic: class" do
       ") { generic_class "Foo", 1.int32 }
   end
 
-  it "uses number type var in class method" do
+  it("uses number type var in class method") do
     assert_type("
       class Foo(T)
         def self.foo
@@ -423,7 +423,7 @@ describe "Semantic: class" do
       ") { int32 }
   end
 
-  it "uses self as type var" do
+  it("uses self as type var") do
     assert_type("
       class Foo(T)
       end
@@ -438,7 +438,7 @@ describe "Semantic: class" do
       ") { generic_class "Foo", types["Bar"] }
   end
 
-  it "uses self as type var" do
+  it("uses self as type var") do
     assert_type("
       class Foo(T)
       end
@@ -456,7 +456,7 @@ describe "Semantic: class" do
       ") { generic_class "Foo", types["Baz"] }
   end
 
-  it "infers generic type after instance was created with explicit type" do
+  it("infers generic type after instance was created with explicit type") do
     assert_type("
       class Foo(T)
         def initialize(@x : T)
@@ -473,15 +473,15 @@ describe "Semantic: class" do
       ") { int32 }
   end
 
-  it "errors when creating Value" do
+  it("errors when creating Value") do
     assert_error "Value.allocate", "can't instantiate abstract struct Value"
   end
 
-  it "errors when creating Number" do
+  it("errors when creating Number") do
     assert_error "Number.allocate", "can't instantiate abstract struct Number"
   end
 
-  it "reads an object instance var" do
+  it("reads an object instance var") do
     assert_type(%(
       class Foo
         def initialize(@x : Int32)
@@ -493,7 +493,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "reads a virtual type instance var" do
+  it("reads a virtual type instance var") do
     assert_type(%(
       class Foo
         def initialize(@x : Int32)
@@ -508,7 +508,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "errors if reading non-existent ivar" do
+  it("errors if reading non-existent ivar") do
     assert_error %(
       class Foo
       end
@@ -519,14 +519,14 @@ describe "Semantic: class" do
       "Can't infer the type of instance variable '@y' of Foo"
   end
 
-  it "errors if reading ivar from non-ivar container" do
+  it("errors if reading ivar from non-ivar container") do
     assert_error %(
       1.@y
       ),
       "can't use instance variables inside primitive types (at Int32)"
   end
 
-  it "says that instance vars are not allowed in metaclass" do
+  it("says that instance vars are not allowed in metaclass") do
     assert_error %(
       module Foo
         def self.foo
@@ -539,7 +539,7 @@ describe "Semantic: class" do
       "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
   end
 
-  it "doesn't use initialize from base class" do
+  it("doesn't use initialize from base class") do
     assert_error %(
       class Foo
         def initialize(x)
@@ -556,7 +556,7 @@ describe "Semantic: class" do
       "wrong number of arguments for 'Bar.new' (given 1, expected 2)"
   end
 
-  it "doesn't use initialize from base class with virtual type" do
+  it("doesn't use initialize from base class with virtual type") do
     assert_error %(
       class Foo
         def initialize(x)
@@ -574,7 +574,7 @@ describe "Semantic: class" do
       "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)"
   end
 
-  it "errors if using underscore in generic class" do
+  it("errors if using underscore in generic class") do
     assert_error %(
       class Foo(T)
       end
@@ -583,7 +583,7 @@ describe "Semantic: class" do
       ), "can't use underscore as generic type argument"
   end
 
-  it "types bug #168 (it inherits instance var even if not mentioned in initialize)" do
+  it("types bug #168 (it inherits instance var even if not mentioned in initialize)") do
     assert_error "
       class Foo
         def foo
@@ -606,7 +606,7 @@ describe "Semantic: class" do
       "Can't infer the type of instance variable '@x' of Foo"
   end
 
-  it "doesn't mark instance variable as nilable if calling another initialize" do
+  it("doesn't mark instance variable as nilable if calling another initialize") do
     assert_type(%(
       class Foo
         def initialize(x, y)
@@ -626,7 +626,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "says wrong number of arguments for abstract class new" do
+  it("says wrong number of arguments for abstract class new") do
     assert_error %(
       abstract class Foo
       end
@@ -636,7 +636,7 @@ describe "Semantic: class" do
       "wrong number of arguments for 'Foo.new' (given 1, expected 0)"
   end
 
-  it "says wrong number of arguments for abstract class new (2)" do
+  it("says wrong number of arguments for abstract class new (2)") do
     assert_error %(
       abstract class Foo
         def initialize(x)
@@ -648,7 +648,7 @@ describe "Semantic: class" do
       "wrong number of arguments for 'Foo.new' (given 0, expected 1)"
   end
 
-  it "errors if reopening non-generic class as generic" do
+  it("errors if reopening non-generic class as generic") do
     assert_error %(
       class Foo
       end
@@ -659,7 +659,7 @@ describe "Semantic: class" do
       "Foo is not a generic class"
   end
 
-  it "errors if reopening generic class with different type vars" do
+  it("errors if reopening generic class with different type vars") do
     assert_error %(
       class Foo(T)
       end
@@ -670,7 +670,7 @@ describe "Semantic: class" do
       "type var must be T, not U"
   end
 
-  it "errors if reopening generic class with different type vars (2)" do
+  it("errors if reopening generic class with different type vars (2)") do
     assert_error %(
       class Foo(A, B)
       end
@@ -681,7 +681,7 @@ describe "Semantic: class" do
       "type vars must be A, B, not C"
   end
 
-  it "allows declaring a variable in an initialize and using it" do
+  it("allows declaring a variable in an initialize and using it") do
     assert_type(%(
       class Foo
         def initialize
@@ -698,7 +698,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "allows using self in class scope" do
+  it("allows using self in class scope") do
     assert_type(%(
       class Foo
         def self.foo
@@ -716,7 +716,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "cant't use implicit initialize if defined in parent" do
+  it("cant't use implicit initialize if defined in parent") do
     assert_error %(
       class Foo
         def initialize(x)
@@ -731,7 +731,7 @@ describe "Semantic: class" do
       "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
   end
 
-  it "doesn't error on new on abstract virtual type class" do
+  it("doesn't error on new on abstract virtual type class") do
     assert_type(%(
       abstract class Foo
       end
@@ -752,7 +752,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "says no overload matches for class new" do
+  it("says no overload matches for class new") do
     assert_error %(
       class Foo
         def self.new(x : Int32)
@@ -764,7 +764,7 @@ describe "Semantic: class" do
       "no overload matches"
   end
 
-  it "correctly types #680" do
+  it("correctly types #680") do
     assert_type(%(
       class Foo
         def initialize(@method : Int32?)
@@ -785,7 +785,7 @@ describe "Semantic: class" do
       )) { nilable int32 }
   end
 
-  it "correctly types #680 (2)" do
+  it("correctly types #680 (2)") do
     assert_error %(
       class Foo
         def initialize(@method : Int32)
@@ -807,7 +807,7 @@ describe "Semantic: class" do
       "instance variable '@method' of Foo must be Int32, not Nil"
   end
 
-  it "can invoke method on abstract type without subclasses nor instances" do
+  it("can invoke method on abstract type without subclasses nor instances") do
     assert_type(%(
       require "prelude"
 
@@ -820,7 +820,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "can invoke method on abstract generic type without subclasses nor instances" do
+  it("can invoke method on abstract generic type without subclasses nor instances") do
     assert_type(%(
       require "prelude"
 
@@ -833,7 +833,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "can invoke method on abstract generic type with subclasses but no instances" do
+  it("can invoke method on abstract generic type with subclasses but no instances") do
     assert_type(%(
       require "prelude"
 
@@ -851,7 +851,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "doesn't crash on instance variable assigned a proc, and never instantiated (#923)" do
+  it("doesn't crash on instance variable assigned a proc, and never instantiated (#923)") do
     assert_type(%(
       class Klass
         def f(arg)
@@ -862,7 +862,7 @@ describe "Semantic: class" do
       )) { nil_type }
   end
 
-  it "errors if declares class inside if" do
+  it("errors if declares class inside if") do
     assert_error %(
       if 1 == 2
         class Foo; end
@@ -871,7 +871,7 @@ describe "Semantic: class" do
       "can't declare class dynamically"
   end
 
-  it "can mark initialize as private" do
+  it("can mark initialize as private") do
     assert_error %(
       class Foo
         private def initialize
@@ -883,7 +883,7 @@ describe "Semantic: class" do
       "private method 'new' called for Foo"
   end
 
-  it "errors if creating instance before typing instance variable" do
+  it("errors if creating instance before typing instance variable") do
     assert_error %(
       class Foo
         Foo.new
@@ -898,7 +898,7 @@ describe "Semantic: class" do
       "instance variable '@x' of Foo must be Int32"
   end
 
-  it "errors if assigning superclass to declared instance var" do
+  it("errors if assigning superclass to declared instance var") do
     assert_error %(
       class Foo
       end
@@ -919,7 +919,7 @@ describe "Semantic: class" do
       "instance variable '@bar' of Main must be Bar"
   end
 
-  it "hoists instance variable initializer" do
+  it("hoists instance variable initializer") do
     assert_type(%(
       a = Foo.new.bar + 1
 
@@ -935,7 +935,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "doesn't mix classes on definition (#2352)" do
+  it("doesn't mix classes on definition (#2352)") do
     assert_type(%(
       class Baz
       end
@@ -950,7 +950,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "errors if using read-instance-var with non-typed variable" do
+  it("errors if using read-instance-var with non-typed variable") do
     assert_error %(
       class Foo
         def foo
@@ -964,7 +964,7 @@ describe "Semantic: class" do
       "Can't infer the type of instance variable '@foo' of Foo"
   end
 
-  it "doesn't crash with top-level initialize (#2601)" do
+  it("doesn't crash with top-level initialize (#2601)") do
     assert_type(%(
       def initialize
         1
@@ -974,7 +974,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "inherits self (#2890)" do
+  it("inherits self (#2890)") do
     assert_type(%(
       class Foo
         class Bar < self
@@ -985,7 +985,7 @@ describe "Semantic: class" do
       )) { types["Foo"].metaclass }
   end
 
-  it "inherits Gen(self) (#2890)" do
+  it("inherits Gen(self) (#2890)") do
     assert_type(%(
       class Gen(T)
         def self.t
@@ -1002,7 +1002,7 @@ describe "Semantic: class" do
       )) { types["Foo"].metaclass }
   end
 
-  it "errors if inheriting Gen(self) and there's no self (#2890)" do
+  it("errors if inheriting Gen(self) and there's no self (#2890)") do
     assert_error %(
       class Gen(T)
         def self.t
@@ -1018,7 +1018,7 @@ describe "Semantic: class" do
       "there's no self in this scope"
   end
 
-  it "preserves order of instance vars (#3050)" do
+  it("preserves order of instance vars (#3050)") do
     result = semantic("
       class Foo
         @x = uninitialized Int32
@@ -1032,7 +1032,7 @@ describe "Semantic: class" do
     instance_vars.should eq(%w(@x @y))
   end
 
-  it "errors if inherits from module" do
+  it("errors if inherits from module") do
     assert_error %(
       module Moo
       end
@@ -1043,7 +1043,7 @@ describe "Semantic: class" do
       "Moo is not a class, it's a module"
   end
 
-  it "can use short name for top-level type" do
+  it("can use short name for top-level type") do
     assert_type(%(
       class T
       end
@@ -1052,7 +1052,7 @@ describe "Semantic: class" do
       )) { types["T"] }
   end
 
-  it "errors on no method found on abstract class, class method (#2241)" do
+  it("errors on no method found on abstract class, class method (#2241)") do
     assert_error %(
       abstract class Foo
       end

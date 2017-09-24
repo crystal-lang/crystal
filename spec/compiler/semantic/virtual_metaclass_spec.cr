@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: virtual metaclass" do
-  it "types virtual metaclass" do
+describe("Semantic: virtual metaclass") do
+  it("types virtual metaclass") do
     assert_type("
       class Foo
       end
@@ -14,7 +14,7 @@ describe "Semantic: virtual metaclass" do
     ") { types["Foo"].virtual_type.metaclass }
   end
 
-  it "types virtual metaclass method" do
+  it("types virtual metaclass method") do
     assert_type("
       class Foo
         def self.foo
@@ -33,7 +33,7 @@ describe "Semantic: virtual metaclass" do
     ") { union_of(int32, float64) }
   end
 
-  it "allows allocating virtual type when base class is abstract" do
+  it("allows allocating virtual type when base class is abstract") do
     assert_type("
       abstract class Foo
       end
@@ -49,7 +49,7 @@ describe "Semantic: virtual metaclass" do
       ") { types["Foo"].virtual_type }
   end
 
-  it "yields virtual type in block arg if class is abstract" do
+  it("yields virtual type in block arg if class is abstract") do
     assert_type("
       require \"prelude\"
 
@@ -80,7 +80,7 @@ describe "Semantic: virtual metaclass" do
       ") { array_of(types["Foo"].virtual_type) }
   end
 
-  it "merges metaclass types" do
+  it("merges metaclass types") do
     assert_type("
       class Foo
       end
@@ -92,7 +92,7 @@ describe "Semantic: virtual metaclass" do
       ") { types["Foo"].virtual_type.metaclass }
   end
 
-  it "merges metaclass types with 3 types" do
+  it("merges metaclass types with 3 types") do
     assert_type("
       class Foo
       end
@@ -107,7 +107,7 @@ describe "Semantic: virtual metaclass" do
       ") { types["Foo"].virtual_type.metaclass }
   end
 
-  it "types metaclass node" do
+  it("types metaclass node") do
     assert_type("
       class Foo
       end
@@ -120,7 +120,7 @@ describe "Semantic: virtual metaclass" do
       ") { types["Foo"].virtual_type.metaclass }
   end
 
-  it "allows passing metaclass to virtual metaclass restriction" do
+  it("allows passing metaclass to virtual metaclass restriction") do
     assert_type("
       class Foo
       end
@@ -133,7 +133,7 @@ describe "Semantic: virtual metaclass" do
       ") { types["Foo"].metaclass }
   end
 
-  it "allows passing metaclass to virtual metaclass restriction" do
+  it("allows passing metaclass to virtual metaclass restriction") do
     assert_type("
       class Foo
       end

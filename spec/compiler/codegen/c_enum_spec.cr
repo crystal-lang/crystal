@@ -2,20 +2,20 @@ require "../../spec_helper"
 
 CodeGenCEnumString = "lib LibFoo; enum Bar; X, Y, Z = 10, W; end end"
 
-describe "Code gen: c enum" do
-  it "codegens enum value" do
+describe("Code gen: c enum") do
+  it("codegens enum value") do
     run("#{CodeGenCEnumString}; LibFoo::Bar::X").to_i.should eq(0)
   end
 
-  it "codegens enum value 2" do
+  it("codegens enum value 2") do
     run("#{CodeGenCEnumString}; LibFoo::Bar::Y").to_i.should eq(1)
   end
 
-  it "codegens enum value 3" do
+  it("codegens enum value 3") do
     run("#{CodeGenCEnumString}; LibFoo::Bar::Z").to_i.should eq(10)
   end
 
-  it "codegens enum value 4" do
+  it("codegens enum value 4") do
     run("#{CodeGenCEnumString}; LibFoo::Bar::W").to_i.should eq(11)
   end
 
@@ -31,7 +31,7 @@ describe "Code gen: c enum" do
     {"(1 + 2) * 3", 9},
     {"10 % 3", 1},
   ].each do |(code, expected)|
-    it "codegens enum with #{code} " do
+    it("codegens enum with #{code} ") do
       run("
         lib LibFoo
           enum Bar
@@ -44,7 +44,7 @@ describe "Code gen: c enum" do
     end
   end
 
-  it "codegens enum that refers to another enum constant" do
+  it("codegens enum that refers to another enum constant") do
     run("
       lib LibFoo
         enum Bar
@@ -58,7 +58,7 @@ describe "Code gen: c enum" do
       ").to_i.should eq(3)
   end
 
-  it "codegens enum that refers to another constant" do
+  it("codegens enum that refers to another constant") do
     run("
       lib LibFoo
         X = 10

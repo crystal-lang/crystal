@@ -13,7 +13,7 @@ private def abi
 end
 
 private def test(msg, &block : LLVM::ABI, LLVM::Context ->)
-  it msg do
+  it(msg) do
     abi = abi()
     ctx = LLVM::Context.new
     block.call(abi, ctx)
@@ -21,7 +21,7 @@ private def test(msg, &block : LLVM::ABI, LLVM::Context ->)
 end
 
 class LLVM::ABI
-  describe ARM do
+  describe(ARM) do
     {% if LibLLVM::BUILT_TARGETS.includes?(:arm) %}
     describe "align" do
       test "for integer" do |abi, ctx|

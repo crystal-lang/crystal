@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: magic constants" do
-  it "does __LINE__" do
+describe("Code gen: magic constants") do
+  it("does __LINE__") do
     run(%(
       def foo(x = __LINE__)
         x
@@ -11,7 +11,7 @@ describe "Code gen: magic constants" do
       ), inject_primitives: false).to_i.should eq(6)
   end
 
-  it "does __FILE__" do
+  it("does __FILE__") do
     run(%(
       def foo(x = __FILE__)
         x
@@ -21,7 +21,7 @@ describe "Code gen: magic constants" do
       ), filename: "/foo/bar/baz.cr").to_string.should eq("/foo/bar/baz.cr")
   end
 
-  it "does __DIR__" do
+  it("does __DIR__") do
     run(%(
       def foo(x = __DIR__)
         x
@@ -31,7 +31,7 @@ describe "Code gen: magic constants" do
       ), filename: "/foo/bar/baz.cr").to_string.should eq("/foo/bar")
   end
 
-  it "does __LINE__ with dispatch" do
+  it("does __LINE__ with dispatch") do
     run(%(
       def foo(z : Int32, x = __LINE__)
         x
@@ -46,7 +46,7 @@ describe "Code gen: magic constants" do
       ), inject_primitives: false).to_i.should eq(11)
   end
 
-  it "does __LINE__ when specifying one default arg with __FILE__" do
+  it("does __LINE__ when specifying one default arg with __FILE__") do
     run(%(
       def foo(x, file = __FILE__, line = __LINE__)
         line
@@ -56,7 +56,7 @@ describe "Code gen: magic constants" do
       ), inject_primitives: false).to_i.should eq(6)
   end
 
-  it "does __LINE__ when specifying one normal default arg" do
+  it("does __LINE__ when specifying one normal default arg") do
     run(%(
       require "primitives"
 
@@ -68,7 +68,7 @@ describe "Code gen: magic constants" do
       ), inject_primitives: false).to_i.should eq(28)
   end
 
-  it "does __LINE__ when specifying one middle argument" do
+  it("does __LINE__ when specifying one middle argument") do
     run(%(
       require "primitives"
 
@@ -80,7 +80,7 @@ describe "Code gen: magic constants" do
       ), inject_primitives: false).to_i.should eq(28)
   end
 
-  it "does __LINE__ in macro" do
+  it("does __LINE__ in macro") do
     run(%(
       macro foo(line = __LINE__)
         {{line}}
@@ -90,7 +90,7 @@ describe "Code gen: magic constants" do
       ), inject_primitives: false).to_i.should eq(6)
   end
 
-  it "does __FILE__ in macro" do
+  it("does __FILE__ in macro") do
     run(%(
       macro foo(file = __FILE__)
         {{file}}
@@ -100,7 +100,7 @@ describe "Code gen: magic constants" do
       ), filename: "/foo/bar/baz.cr").to_string.should eq("/foo/bar/baz.cr")
   end
 
-  it "does __DIR__ in macro" do
+  it("does __DIR__ in macro") do
     run(%(
       macro foo(dir = __DIR__)
         {{dir}}
@@ -110,7 +110,7 @@ describe "Code gen: magic constants" do
       ), filename: "/foo/bar/baz.cr").to_string.should eq("/foo/bar")
   end
 
-  it "does __END_LINE__ without block" do
+  it("does __END_LINE__ without block") do
     run(%(
       def foo(x = __END_LINE__)
         x
@@ -120,7 +120,7 @@ describe "Code gen: magic constants" do
       ), inject_primitives: false).to_i.should eq(6)
   end
 
-  it "does __END_LINE__ with block" do
+  it("does __END_LINE__ with block") do
     run(%(
       def foo(x = __END_LINE__)
         yield
@@ -133,7 +133,7 @@ describe "Code gen: magic constants" do
       ), inject_primitives: false).to_i.should eq(9)
   end
 
-  it "does __END_LINE__ in macro without block" do
+  it("does __END_LINE__ in macro without block") do
     run(%(
       macro foo(line = __END_LINE__)
         {{line}}
@@ -143,7 +143,7 @@ describe "Code gen: magic constants" do
       ), inject_primitives: false).to_i.should eq(6)
   end
 
-  it "does __END_LINE__ in macro with block" do
+  it("does __END_LINE__ in macro with block") do
     run(%(
       macro foo(line = __END_LINE__)
         {{line}}

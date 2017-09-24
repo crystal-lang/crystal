@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: macro" do
-  it "types macro" do
+describe("Semantic: macro") do
+  it("types macro") do
     assert_type(%(
       macro foo
         1
@@ -11,12 +11,12 @@ describe "Semantic: macro" do
     )) { int32 }
   end
 
-  it "errors if macro uses undefined variable" do
+  it("errors if macro uses undefined variable") do
     assert_error "macro foo(x) {{y}} end; foo(1)",
       "undefined macro variable 'y'"
   end
 
-  it "types macro def" do
+  it("types macro def") do
     assert_type(%(
       macro def foo : Int32
         1
@@ -26,17 +26,17 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "errors if macro def type not found" do
+  it("errors if macro def type not found") do
     assert_error "macro def foo : Foo; end; foo",
       "undefined constant Foo"
   end
 
-  it "errors if macro def type doesn't match found" do
+  it("errors if macro def type doesn't match found") do
     assert_error "macro def foo : Int32; 'a'; end; foo",
       "type must be Int32, not Char"
   end
 
-  it "allows subclasses of return type for macro def" do
+  it("allows subclasses of return type for macro def") do
     run(%{
       class Foo
         def foo
@@ -58,7 +58,7 @@ describe "Semantic: macro" do
     }).to_i.should eq(2)
   end
 
-  it "allows return values that include the return type of the macro def" do
+  it("allows return values that include the return type of the macro def") do
     run(%{
       module Foo
         def foo
@@ -82,7 +82,7 @@ describe "Semantic: macro" do
     }).to_i.should eq(2)
   end
 
-  it "allows generic return types for macro def" do
+  it("allows generic return types for macro def") do
     run(%{
       class Foo(T)
         def foo
@@ -115,7 +115,7 @@ describe "Semantic: macro" do
       inject_primitives: false
   end
 
-  it "allows union return types for macro def" do
+  it("allows union return types for macro def") do
     assert_type(%{
       macro def foo : String | Int32
         1
@@ -125,7 +125,7 @@ describe "Semantic: macro" do
     }) { int32 }
   end
 
-  it "types macro def that calls another method" do
+  it("types macro def that calls another method") do
     assert_type(%(
       def bar_baz
         1
@@ -141,7 +141,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "types macro def that calls another method inside a class" do
+  it("types macro def that calls another method inside a class") do
     assert_type(%(
       class Foo
         def bar_baz
@@ -159,7 +159,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "types macro def that calls another method inside a class" do
+  it("types macro def that calls another method inside a class") do
     assert_type(%(
       class Foo
         macro def foo : Int32
@@ -179,7 +179,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "types macro def with argument" do
+  it("types macro def with argument") do
     assert_type(%(
       macro def foo(x) : Int32
         x
@@ -189,7 +189,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "expands macro with block" do
+  it("expands macro with block") do
     assert_type(%(
       macro foo
         {{yield}}
@@ -205,7 +205,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "expands macro with block and argument to yield" do
+  it("expands macro with block and argument to yield") do
     assert_type(%(
       macro foo
         {{yield 1}}
@@ -221,7 +221,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "errors if find macros but wrong arguments" do
+  it("errors if find macros but wrong arguments") do
     assert_error %(
       macro foo
         1
@@ -231,7 +231,7 @@ describe "Semantic: macro" do
       ), "wrong number of arguments for macro 'foo' (given 1, expected 0)"
   end
 
-  it "executes raise inside macro" do
+  it("executes raise inside macro") do
     assert_error %(
       macro foo
         {{ raise "OH NO" }}
@@ -241,7 +241,7 @@ describe "Semantic: macro" do
       ), "OH NO"
   end
 
-  it "can specify tuple as return type" do
+  it("can specify tuple as return type") do
     assert_type(%(
       macro def foo : {Int32, Int32}
         {1, 2}
@@ -251,7 +251,7 @@ describe "Semantic: macro" do
       )) { tuple_of([int32, int32] of Type) }
   end
 
-  it "allows specifying self as macro def return type" do
+  it("allows specifying self as macro def return type") do
     assert_type(%(
       class Foo
         macro def foo : self
@@ -263,7 +263,7 @@ describe "Semantic: macro" do
       )) { types["Foo"] }
   end
 
-  it "allows specifying self as macro def return type (2)" do
+  it("allows specifying self as macro def return type (2)") do
     assert_type(%(
       class Foo
         macro def foo : self
@@ -278,7 +278,7 @@ describe "Semantic: macro" do
       )) { types["Bar"] }
   end
 
-  it "errors if non-existent named arg" do
+  it("errors if non-existent named arg") do
     assert_error %(
       macro foo(x = 1)
         {{x}} + 1
@@ -289,7 +289,7 @@ describe "Semantic: macro" do
       "no argument named 'y'"
   end
 
-  it "errors if named arg already specified" do
+  it("errors if named arg already specified") do
     assert_error %(
       macro foo(x = 1)
         {{x}} + 1
@@ -300,7 +300,7 @@ describe "Semantic: macro" do
       "argument 'x' already specified"
   end
 
-  it "finds macro in included module" do
+  it("finds macro in included module") do
     assert_type(%(
       module Moo
         macro bar
@@ -320,7 +320,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "errors when trying to define def inside def with macro expansion" do
+  it("errors when trying to define def inside def with macro expansion") do
     assert_error %(
       macro foo
         def bar; end
@@ -335,7 +335,7 @@ describe "Semantic: macro" do
       "can't define def inside def"
   end
 
-  it "gives precise location info when doing yield inside macro" do
+  it("gives precise location info when doing yield inside macro") do
     assert_error %(
       macro foo
         {{yield}}
@@ -348,7 +348,7 @@ describe "Semantic: macro" do
       "in line 7"
   end
 
-  it "transforms with {{yield}} and call" do
+  it("transforms with {{yield}} and call") do
     assert_type(%(
       macro foo
         bar({{yield}})
@@ -364,7 +364,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "can return class type in macro def" do
+  it("can return class type in macro def") do
     assert_type(%(
       macro def foo : Int32.class
         Int32
@@ -374,7 +374,7 @@ describe "Semantic: macro" do
       )) { types["Int32"].metaclass }
   end
 
-  it "can return virtual class type in macro def" do
+  it("can return virtual class type in macro def") do
     assert_type(%(
       class Foo
       end
@@ -390,7 +390,7 @@ describe "Semantic: macro" do
       )) { types["Foo"].metaclass.virtual_type }
   end
 
-  it "can't define new variables (#466)" do
+  it("can't define new variables (#466)") do
     nodes = parse(%(
       macro foo
         hello = 1
@@ -406,7 +406,7 @@ describe "Semantic: macro" do
     end
   end
 
-  it "finds macro in included generic module" do
+  it("finds macro in included generic module") do
     assert_type(%(
       module Moo(T)
         macro moo
@@ -426,7 +426,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "finds macro in inherited generic class" do
+  it("finds macro in inherited generic class") do
     assert_type(%(
       class Moo(T)
         macro moo
@@ -444,7 +444,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "doesn't die on && inside if (bug)" do
+  it("doesn't die on && inside if (bug)") do
     assert_type(%(
       macro foo
         1 && 2
@@ -454,7 +454,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "checks if macro expansion returns (#821)" do
+  it("checks if macro expansion returns (#821)") do
     assert_type(%(
       macro pass
         return :pass
@@ -469,7 +469,7 @@ describe "Semantic: macro" do
       )) { nilable symbol }
   end
 
-  it "errors if declares macro inside if" do
+  it("errors if declares macro inside if") do
     assert_error %(
       if 1 == 2
         macro foo; end
@@ -478,7 +478,7 @@ describe "Semantic: macro" do
       "can't declare macro dynamically"
   end
 
-  it "allows declaring class with macro if" do
+  it("allows declaring class with macro if") do
     assert_type(%(
       {% if true %}
         class Foo; end
@@ -488,7 +488,7 @@ describe "Semantic: macro" do
       )) { types["Foo"] }
   end
 
-  it "allows declaring class with macro for" do
+  it("allows declaring class with macro for") do
     assert_type(%(
       {% for i in 0..0 %}
         class Foo; end
@@ -498,7 +498,7 @@ describe "Semantic: macro" do
       )) { types["Foo"] }
   end
 
-  it "allows declaring class with macro expression" do
+  it("allows declaring class with macro expression") do
     assert_type(%(
       {{ `echo "class Foo; end"` }}
 
@@ -506,7 +506,7 @@ describe "Semantic: macro" do
       )) { types["Foo"] }
   end
 
-  it "errors if requires inside class through macro expansion" do
+  it("errors if requires inside class through macro expansion") do
     assert_error %(
       macro req
         require "bar"
@@ -519,7 +519,7 @@ describe "Semantic: macro" do
       "can't require inside type declarations"
   end
 
-  it "errors if requires inside if through macro expansion" do
+  it("errors if requires inside if through macro expansion") do
     assert_error %(
       macro req
         require "bar"
@@ -532,7 +532,7 @@ describe "Semantic: macro" do
       "can't require dynamically"
   end
 
-  it "can define constant via macro included" do
+  it("can define constant via macro included") do
     assert_type(%(
       module Mod
         macro included
@@ -547,7 +547,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "errors if applying protected modifier to macro" do
+  it("errors if applying protected modifier to macro") do
     assert_error %(
       class Foo
         protected macro foo
@@ -559,7 +559,7 @@ describe "Semantic: macro" do
     ), "can only use 'private' for macros"
   end
 
-  it "expands macro with break inside while (#1852)" do
+  it("expands macro with break inside while (#1852)") do
     assert_type(%(
       macro test
         foo = "bar"
@@ -572,7 +572,7 @@ describe "Semantic: macro" do
       )) { nil_type }
   end
 
-  it "can access variable inside macro expansion (#2057)" do
+  it("can access variable inside macro expansion (#2057)") do
     assert_type(%(
       macro foo
         x
@@ -588,7 +588,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "declares variable for macro with out" do
+  it("declares variable for macro with out") do
     assert_type(%(
       lib LibFoo
         fun foo(x : Int32*)
@@ -603,7 +603,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "show macro trace in errors (1)" do
+  it("show macro trace in errors (1)") do
     assert_error %(
       macro foo
         Bar
@@ -615,7 +615,7 @@ describe "Semantic: macro" do
       inject_primitives: false
   end
 
-  it "show macro trace in errors (2)" do
+  it("show macro trace in errors (2)") do
     assert_error %(
       {% begin %}
         Bar
@@ -625,7 +625,7 @@ describe "Semantic: macro" do
       inject_primitives: false
   end
 
-  it "errors if using macro that is defined later" do
+  it("errors if using macro that is defined later") do
     assert_error %(
       class Bar
         foo
@@ -637,7 +637,7 @@ describe "Semantic: macro" do
       "macro 'foo' must be defined before this point but is defined later"
   end
 
-  it "looks up argument types in macro owner, not in subclass (#2395)" do
+  it("looks up argument types in macro owner, not in subclass (#2395)") do
     assert_type(%(
       struct Nil
         def method(x : Problem)
@@ -670,7 +670,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "doesn't error when adding macro call to constant (#2457)" do
+  it("doesn't error when adding macro call to constant (#2457)") do
     assert_type(%(
       macro foo
       end
@@ -688,7 +688,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "errors if named arg matches single splat argument" do
+  it("errors if named arg matches single splat argument") do
     assert_error %(
       macro foo(*y)
       end
@@ -698,7 +698,7 @@ describe "Semantic: macro" do
       "no argument named 'x'"
   end
 
-  it "errors if named arg matches splat argument" do
+  it("errors if named arg matches splat argument") do
     assert_error %(
       macro foo(x, *y)
       end
@@ -708,7 +708,7 @@ describe "Semantic: macro" do
       "wrong number of arguments for macro 'foo' (given 0, expected 1+)"
   end
 
-  it "says missing argument because positional args don't match past splat" do
+  it("says missing argument because positional args don't match past splat") do
     assert_error %(
       macro foo(x, *y, z)
       end
@@ -718,7 +718,7 @@ describe "Semantic: macro" do
       "missing argument: z"
   end
 
-  it "allows named args after splat" do
+  it("allows named args after splat") do
     assert_type(%(
       macro foo(*y, x)
         { {{y}}, {{x}} }
@@ -728,7 +728,7 @@ describe "Semantic: macro" do
       )) { tuple_of([tuple_of([int32]), char]) }
   end
 
-  it "errors if missing one argument" do
+  it("errors if missing one argument") do
     assert_error %(
       macro foo(x, y, z)
       end
@@ -738,7 +738,7 @@ describe "Semantic: macro" do
       "missing argument: z"
   end
 
-  it "errors if missing two arguments" do
+  it("errors if missing two arguments") do
     assert_error %(
       macro foo(x, y, z)
       end
@@ -748,7 +748,7 @@ describe "Semantic: macro" do
       "missing arguments: x, z"
   end
 
-  it "doesn't include arguments with default values in missing arguments error" do
+  it("doesn't include arguments with default values in missing arguments error") do
     assert_error %(
 
       macro foo(x, z, y = 1)
@@ -759,7 +759,7 @@ describe "Semantic: macro" do
       "missing argument: z"
   end
 
-  it "finds generic type argument of included module" do
+  it("finds generic type argument of included module") do
     assert_type(%(
       module Bar(T)
         def t
@@ -775,7 +775,7 @@ describe "Semantic: macro" do
       )) { int32.metaclass }
   end
 
-  it "finds generic type argument of included module with self" do
+  it("finds generic type argument of included module with self") do
     assert_type(%(
       module Bar(T)
         def t
@@ -791,7 +791,7 @@ describe "Semantic: macro" do
       )) { generic_class("Foo", int32).metaclass }
   end
 
-  it "finds free type vars" do
+  it("finds free type vars") do
     assert_type(%(
       module Foo(T)
         def self.foo(foo : U) forall U
@@ -803,7 +803,7 @@ describe "Semantic: macro" do
     )) { tuple_of([int32.metaclass, string.metaclass]) }
   end
 
-  it "gets named arguments in double splat" do
+  it("gets named arguments in double splat") do
     assert_type(%(
       macro foo(**options)
         {{options}}
@@ -813,7 +813,7 @@ describe "Semantic: macro" do
       )) { named_tuple_of({"x": string, "y": bool}) }
   end
 
-  it "uses splat and double splat" do
+  it("uses splat and double splat") do
     assert_type(%(
       macro foo(*args, **options)
         { {{args}}, {{options}} }
@@ -823,7 +823,7 @@ describe "Semantic: macro" do
       )) { tuple_of([tuple_of([int32, char]), named_tuple_of({"x": string, "y": bool})]) }
   end
 
-  it "double splat and regular args" do
+  it("double splat and regular args") do
     assert_type(%(
       macro foo(x, y, **options)
         { {{x}}, {{y}}, {{options}} }
@@ -833,7 +833,7 @@ describe "Semantic: macro" do
       )) { tuple_of([int32, bool, named_tuple_of({"w": char, "z": string})]) }
   end
 
-  it "declares multi-assign vars for macro" do
+  it("declares multi-assign vars for macro") do
     assert_type(%(
       macro id(x, y)
         {{x}}
@@ -846,7 +846,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "declares rescue variable inside for macro" do
+  it("declares rescue variable inside for macro") do
     assert_type(%(
       macro id(x)
         {{x}}
@@ -861,7 +861,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "matches with default value after splat" do
+  it("matches with default value after splat") do
     assert_type(%(
       macro foo(x, *y, z = true)
         { {{x}}, {{y}}, {{z}} }
@@ -871,7 +871,7 @@ describe "Semantic: macro" do
       )) { tuple_of([int32, tuple_of([char]), bool]) }
   end
 
-  it "uses bare *" do
+  it("uses bare *") do
     assert_type(%(
       macro foo(x, *, y)
         { {{x}}, {{y}} }
@@ -881,7 +881,7 @@ describe "Semantic: macro" do
       )) { tuple_of([int32, char]) }
   end
 
-  it "uses bare *, doesn't let more args" do
+  it("uses bare *, doesn't let more args") do
     assert_error %(
       macro foo(x, *, y)
       end
@@ -891,7 +891,7 @@ describe "Semantic: macro" do
       "wrong number of arguments for macro 'foo' (given 2, expected 1)"
   end
 
-  it "uses bare *, doesn't let more args" do
+  it("uses bare *, doesn't let more args") do
     assert_error %(
       def foo(x, *, y)
       end
@@ -901,7 +901,7 @@ describe "Semantic: macro" do
       "no overload matches"
   end
 
-  it "finds macro through alias (#2706)" do
+  it("finds macro through alias (#2706)") do
     assert_type(%(
       module Moo
         macro bar
@@ -915,7 +915,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "can override macro (#2773)" do
+  it("can override macro (#2773)") do
     assert_type(%(
       macro foo
         1
@@ -929,7 +929,7 @@ describe "Semantic: macro" do
       )) { char }
   end
 
-  it "works inside proc literal (#2984)" do
+  it("works inside proc literal (#2984)") do
     assert_type(%(
       macro foo
         1
@@ -939,7 +939,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "finds var in proc for macros" do
+  it("finds var in proc for macros") do
     assert_type(%(
       macro foo(x)
         {{x}}
@@ -949,7 +949,7 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "applies visibility modifier only to first level" do
+  it("applies visibility modifier only to first level") do
     assert_type(%(
       macro foo
         class Foo
@@ -965,7 +965,7 @@ describe "Semantic: macro" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "gives correct error when method is invoked but macro exists at the same scope" do
+  it("gives correct error when method is invoked but macro exists at the same scope") do
     assert_error %(
       macro foo(x)
       end
@@ -978,7 +978,7 @@ describe "Semantic: macro" do
       "undefined method 'foo'"
   end
 
-  it "uses uninitialized variable with macros" do
+  it("uses uninitialized variable with macros") do
     assert_type(%(
       macro foo(x)
         {{x}}
@@ -989,8 +989,8 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  describe "skip_file macro directive" do
-    it "skips expanding the rest of the current file" do
+  describe("skip_file macro directive") do
+    it("skips expanding the rest of the current file") do
       res = semantic(%(
         class A
         end
@@ -1005,7 +1005,7 @@ describe "Semantic: macro" do
       res.program.types.has_key?("B").should be_false
     end
 
-    it "skips file inside an if macro expression" do
+    it("skips file inside an if macro expression") do
       res = semantic(%(
         class A
         end
@@ -1027,7 +1027,7 @@ describe "Semantic: macro" do
     end
   end
 
-  it "finds method before macro (#236)" do
+  it("finds method before macro (#236)") do
     assert_type(%(
       macro global
         1
@@ -1047,7 +1047,7 @@ describe "Semantic: macro" do
       )) { char }
   end
 
-  it "finds macro and method at the same scope" do
+  it("finds macro and method at the same scope") do
     assert_type(%(
       macro global(x)
         1
@@ -1061,7 +1061,7 @@ describe "Semantic: macro" do
       )) { tuple_of [int32, char] }
   end
 
-  it "finds macro and method at the same scope inside included module" do
+  it("finds macro and method at the same scope inside included module") do
     assert_type(%(
       module Moo
         macro global(x)
@@ -1085,7 +1085,7 @@ describe "Semantic: macro" do
       )) { tuple_of [int32, char] }
   end
 
-  it "finds macro in included module at class level (#4639)" do
+  it("finds macro in included module at class level (#4639)") do
     assert_type(%(
       module Moo
         macro foo
@@ -1105,7 +1105,7 @@ describe "Semantic: macro" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "finds macro in module in Object" do
+  it("finds macro in module in Object") do
     assert_type(%(
       class Object
         macro foo
@@ -1123,7 +1123,7 @@ describe "Semantic: macro" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "finds metaclass instance of instance method (#4739)" do
+  it("finds metaclass instance of instance method (#4739)") do
     assert_type(%(
       class Parent
         macro foo
@@ -1146,7 +1146,7 @@ describe "Semantic: macro" do
     )) { int32 }
   end
 
-  it "finds metaclass instance of instance method (#4639)" do
+  it("finds metaclass instance of instance method (#4639)") do
     assert_type(%(
       module Include
         macro foo

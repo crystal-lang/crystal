@@ -1,8 +1,8 @@
 require "../../spec_helper"
 require "tempfile"
 
-describe "Codegen: private" do
-  it "codegens private def in same file" do
+describe("Codegen: private") do
+  it("codegens private def in same file") do
     compiler = Compiler.new
     sources = [
       Compiler::Source.new("foo.cr", %(
@@ -22,7 +22,7 @@ describe "Codegen: private" do
     compiler.compile sources, output_filename
   end
 
-  it "codegens overloaded private def in same file" do
+  it("codegens overloaded private def in same file") do
     compiler = Compiler.new
     sources = [
       Compiler::Source.new("foo.cr", %(
@@ -47,7 +47,7 @@ describe "Codegen: private" do
     compiler.compile sources, output_filename
   end
 
-  it "doesn't include filename for private types" do
+  it("doesn't include filename for private types") do
     run(%(
       private class Foo
         def foo

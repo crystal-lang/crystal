@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Codegen: until" do
-  it "codegens until" do
+describe("Codegen: until") do
+  it("codegens until") do
     run(%(
       a = 1
       until a == 10

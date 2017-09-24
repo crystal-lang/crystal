@@ -1,8 +1,8 @@
 require "spec"
 require "tempfile"
 
-describe "Backtrace" do
-  it "prints file line:colunm" do
+describe("Backtrace") do
+  it("prints file line:colunm") do
     tempfile = Tempfile.new("compiler_spec_output")
     tempfile.close
     sample = "#{__DIR__}/data/backtrace_sample"
@@ -39,7 +39,7 @@ describe "Backtrace" do
     output.should_not match(/src\/raise\.cr/)
   end
 
-  it "prints exception backtrace to stderr" do
+  it("prints exception backtrace to stderr") do
     tempfile = Tempfile.new("compiler_spec_output")
     tempfile.close
     sample = "#{__DIR__}/data/exception_backtrace_sample"
@@ -55,7 +55,7 @@ describe "Backtrace" do
     error.to_s.should contain("IndexError")
   end
 
-  it "prints crash backtrace to stderr" do
+  it("prints crash backtrace to stderr") do
     tempfile = Tempfile.new("compiler_spec_output")
     tempfile.close
     sample = "#{__DIR__}/data/crash_backtrace_sample"

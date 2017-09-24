@@ -1,8 +1,8 @@
 require "spec"
 require "openssl/cipher"
 
-describe OpenSSL::Cipher do
-  it "encrypts/decrypts" do
+describe(OpenSSL::Cipher) do
+  it("encrypts/decrypts") do
     cipher = "aes-128-cbc"
     c1 = OpenSSL::Cipher.new(cipher)
     c2 = OpenSSL::Cipher.new(cipher)

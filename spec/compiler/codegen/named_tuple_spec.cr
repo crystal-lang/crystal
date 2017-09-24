@@ -1,42 +1,42 @@
 require "../../spec_helper"
 
-describe "Code gen: named tuple" do
-  it "codegens tuple index" do
+describe("Code gen: named tuple") do
+  it("codegens tuple index") do
     run(%(
       t = {x: 42, y: 'a'}
       t[:x]
       )).to_i.should eq(42)
   end
 
-  it "codegens tuple index another order" do
+  it("codegens tuple index another order") do
     run(%(
       t = {y: 'a', x: 42}
       t[:x]
       )).to_i.should eq(42)
   end
 
-  it "codegens tuple nilable index (1)" do
+  it("codegens tuple nilable index (1)") do
     run(%(
       t = {x: 42, y: 'a'}
       t[:x]? || 84
       )).to_i.should eq(42)
   end
 
-  it "codegens tuple nilable index (2)" do
+  it("codegens tuple nilable index (2)") do
     run(%(
       t = {x: 'a', y: 42}
       t[:y]? || 84
       )).to_i.should eq(42)
   end
 
-  it "codegens tuple nilable index (3)" do
+  it("codegens tuple nilable index (3)") do
     run(%(
       t = {x: 'a', y: 42}
       t[:z]? || 84
       )).to_i.should eq(84)
   end
 
-  it "passes named tuple to def" do
+  it("passes named tuple to def") do
     run("
       def foo(t)
         t[:x]
@@ -46,7 +46,7 @@ describe "Code gen: named tuple" do
       ").to_i.should eq(42)
   end
 
-  it "gets size at compile time" do
+  it("gets size at compile time") do
     run(%(
       struct NamedTuple
         def my_size
@@ -58,7 +58,7 @@ describe "Code gen: named tuple" do
       )).to_i.should eq(2)
   end
 
-  it "gets keys at compile time (1)" do
+  it("gets keys at compile time (1)") do
     run(%(
       struct NamedTuple
         def keys
@@ -70,7 +70,7 @@ describe "Code gen: named tuple" do
       )).to_string.should eq("x")
   end
 
-  it "gets keys at compile time (2)" do
+  it("gets keys at compile time (2)") do
     run(%(
       struct NamedTuple
         def keys
@@ -82,7 +82,7 @@ describe "Code gen: named tuple" do
       )).to_string.should eq("y")
   end
 
-  it "doesn't crash when overload doesn't match" do
+  it("doesn't crash when overload doesn't match") do
     codegen(%(
       struct NamedTuple
         def foo(other : self)
@@ -98,7 +98,7 @@ describe "Code gen: named tuple" do
       ))
   end
 
-  it "assigns named tuple to compatible named tuple" do
+  it("assigns named tuple to compatible named tuple") do
     run(%(
       ptr = Pointer({x: Int32, y: String}).malloc(1_u64)
 
@@ -110,7 +110,7 @@ describe "Code gen: named tuple" do
       )).to_i.should eq(42)
   end
 
-  it "upcasts named tuple inside compatible named tuple" do
+  it("upcasts named tuple inside compatible named tuple") do
     run(%(
       def foo
         if 1 == 2
@@ -126,7 +126,7 @@ describe "Code gen: named tuple" do
       )).to_string.should eq("Bar")
   end
 
-  it "assigns named tuple union to compatible named tuple" do
+  it("assigns named tuple union to compatible named tuple") do
     run(%(
       tup1 = {x: 1, y: "foo"}
       tup2 = {x: 3}
@@ -142,7 +142,7 @@ describe "Code gen: named tuple" do
       )).to_i.should eq(42)
   end
 
-  it "upcasts named tuple union to compatible named tuple" do
+  it("upcasts named tuple union to compatible named tuple") do
     run(%(
       def foo
         if 1 == 2
@@ -156,7 +156,7 @@ describe "Code gen: named tuple" do
       )).to_i.should eq(42)
   end
 
-  it "assigns named tuple inside union to union with compatible named tuple" do
+  it("assigns named tuple inside union to union with compatible named tuple") do
     run(%(
       tup1 = {x: 21, y: "foo"}
       tup2 = {x: 3}
@@ -178,7 +178,7 @@ describe "Code gen: named tuple" do
       )).to_i.should eq(42)
   end
 
-  it "upcasts named tuple inside union to union with compatible named tuple" do
+  it("upcasts named tuple inside union to union with compatible named tuple") do
     run(%(
       def foo
         if 1 == 2
@@ -201,7 +201,7 @@ describe "Code gen: named tuple" do
       )).to_i.should eq(42)
   end
 
-  it "allows named tuple covariance" do
+  it("allows named tuple covariance") do
     run(%(
        class Obj
          def initialize
@@ -234,7 +234,7 @@ describe "Code gen: named tuple" do
        )).to_i.should eq(42)
   end
 
-  it "merges two named tuple types with same keys but different types (1)" do
+  it("merges two named tuple types with same keys but different types (1)") do
     run(%(
        def foo
          if 1 == 2
@@ -249,7 +249,7 @@ describe "Code gen: named tuple" do
        )).to_i.should eq(20)
   end
 
-  it "merges two named tuple types with same keys but different types (2)" do
+  it("merges two named tuple types with same keys but different types (2)") do
     run(%(
        def foo
          if 1 == 1
@@ -264,7 +264,7 @@ describe "Code gen: named tuple" do
        )).to_i.should eq(10)
   end
 
-  it "codegens union of tuple of float with tuple of tuple of float" do
+  it("codegens union of tuple of float with tuple of tuple of float") do
     run(%(
       a = {x: 1.5}
       b = {x: {22.0, 20.0} }
@@ -278,7 +278,7 @@ describe "Code gen: named tuple" do
       )).to_i.should eq(42)
   end
 
-  it "provides T as a named tuple literal" do
+  it("provides T as a named tuple literal") do
     run(%(
       struct NamedTuple
         def self.foo
@@ -289,7 +289,7 @@ describe "Code gen: named tuple" do
       )).to_string.should eq("NamedTupleLiteral")
   end
 
-  it "assigns two same-size named tuple types to a same var (#3132)" do
+  it("assigns two same-size named tuple types to a same var (#3132)") do
     run(%(
       t = {x: true}
       t
@@ -298,7 +298,7 @@ describe "Code gen: named tuple" do
       )).to_i.should eq(2)
   end
 
-  it "downcasts union inside tuple to value (#3907)" do
+  it("downcasts union inside tuple to value (#3907)") do
     codegen(%(
       struct Foo
       end
@@ -311,7 +311,7 @@ describe "Code gen: named tuple" do
       ))
   end
 
-  it "accesses T and creates instance from it" do
+  it("accesses T and creates instance from it") do
     run("
       struct NamedTuple
         def named_args

@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: hooks" do
-  it "does inherited macro" do
+describe("Semantic: hooks") do
+  it("does inherited macro") do
     assert_type("
       class Foo
         macro inherited
@@ -18,7 +18,7 @@ describe "Semantic: hooks" do
       ") { int32 }
   end
 
-  it "does included macro" do
+  it("does included macro") do
     assert_type("
       module Foo
         macro included
@@ -36,7 +36,7 @@ describe "Semantic: hooks" do
       ") { int32 }
   end
 
-  it "does extended macro" do
+  it("does extended macro") do
     assert_type("
       module Foo
         macro extended
@@ -54,7 +54,7 @@ describe "Semantic: hooks" do
       ") { int32 }
   end
 
-  it "does added method macro" do
+  it("does added method macro") do
     assert_type("
       class Foo
         macro method_added(d)
@@ -70,7 +70,7 @@ describe "Semantic: hooks" do
       ") { int32 }
   end
 
-  it "errors if wrong inherited args size" do
+  it("errors if wrong inherited args size") do
     assert_error %(
       class Foo
         macro inherited(x)
@@ -79,7 +79,7 @@ describe "Semantic: hooks" do
       ), "macro 'inherited' must not have arguments"
   end
 
-  it "errors if wrong included args size" do
+  it("errors if wrong included args size") do
     assert_error %(
       module Foo
         macro included(x)
@@ -88,7 +88,7 @@ describe "Semantic: hooks" do
       ), "macro 'included' must not have arguments"
   end
 
-  it "errors if wrong extended args size" do
+  it("errors if wrong extended args size") do
     assert_error %(
       module Foo
         macro extended(x)
@@ -97,7 +97,7 @@ describe "Semantic: hooks" do
       ), "macro 'extended' must not have arguments"
   end
 
-  it "types initializer in inherited" do
+  it("types initializer in inherited") do
     assert_type(%(
       abstract class Foo
         macro inherited
@@ -122,7 +122,7 @@ describe "Semantic: hooks" do
       )) { string }
   end
 
-  it "errors if wrong extended args length" do
+  it("errors if wrong extended args length") do
     assert_error %(
       class Foo
         macro method_added
@@ -131,7 +131,7 @@ describe "Semantic: hooks" do
       ), "macro 'method_added' must have a argument"
   end
 
-  it "includes error message in included hook (#889)" do
+  it("includes error message in included hook (#889)") do
     assert_error %(
       module Doable
         macro included
@@ -148,7 +148,7 @@ describe "Semantic: hooks" do
       "undefined macro method 'MacroId#unknown'"
   end
 
-  it "does included macro for generic module" do
+  it("does included macro for generic module") do
     assert_type(%(
       module Mod(T)
         macro included
@@ -166,7 +166,7 @@ describe "Semantic: hooks" do
       )) { int32 }
   end
 
-  it "does inherited macro for generic class" do
+  it("does inherited macro for generic class") do
     assert_type(%(
       class Foo(T)
         macro inherited
@@ -183,7 +183,7 @@ describe "Semantic: hooks" do
       )) { int32 }
   end
 
-  it "types macro finished hook bug regarding initialize (#3964)" do
+  it("types macro finished hook bug regarding initialize (#3964)") do
     assert_type(%(
       class A1
         macro finished

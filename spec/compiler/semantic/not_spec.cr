@@ -1,13 +1,13 @@
 require "../../spec_helper"
 
-describe "Semantic: not" do
-  it "types not" do
+describe("Semantic: not") do
+  it("types not") do
     assert_type(%(
       !1
       )) { bool }
   end
 
-  it "types not as NoReturn if exp is NoReturn" do
+  it("types not as NoReturn if exp is NoReturn") do
     assert_type(%(
       lib LibC
         fun exit : NoReturn
@@ -17,7 +17,7 @@ describe "Semantic: not" do
       )) { no_return }
   end
 
-  it "filters types inside if" do
+  it("filters types inside if") do
     assert_type(%(
       a = 1 || nil
       z = nil
@@ -28,7 +28,7 @@ describe "Semantic: not" do
       )) { nil_type }
   end
 
-  it "filters types inside if/else" do
+  it("filters types inside if/else") do
     assert_type(%(
       a = 1 || nil
       z = 2
@@ -40,7 +40,7 @@ describe "Semantic: not" do
       )) { int32 }
   end
 
-  it "filters types with !is_a?" do
+  it("filters types with !is_a?") do
     assert_type(%(
       a = 1 == 2 ? "x" : 1
       z = 0
@@ -51,7 +51,7 @@ describe "Semantic: not" do
       )) { int32 }
   end
 
-  it "doesn't restrict and" do
+  it("doesn't restrict and") do
     assert_type(%(
       a = 1 || nil
       z = nil
@@ -62,7 +62,7 @@ describe "Semantic: not" do
       )) { nilable int32 }
   end
 
-  it "doesn't restrict and in while (#4243)" do
+  it("doesn't restrict and in while (#4243)") do
     assert_type(%(
       x = nil
       y = nil

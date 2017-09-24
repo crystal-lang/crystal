@@ -1,8 +1,8 @@
 require "spec"
 require "random/pcg32"
 
-describe "Random::PCG32" do
-  it "generates random numbers as generated official implementation" do
+describe("Random::PCG32") do
+  it("generates random numbers as generated official implementation") do
     numbers = [
       3152259133, 2489095755, 485973489, 739446704, 3084920751,
       2161564962, 2655557215, 4238523805, 4127884210, 1729992006,
@@ -213,7 +213,7 @@ describe "Random::PCG32" do
     end
   end
 
-  it "can jump ahead" do
+  it("can jump ahead") do
     seed = {123_u64, 456_u64}
 
     m1 = Random::PCG32.new(*seed)
@@ -222,7 +222,7 @@ describe "Random::PCG32" do
     m2.jump(10)
     m1.next_u.should eq m2.next_u
   end
-  it "can jump back" do
+  it("can jump back") do
     seed = {123_u64, 456_u64}
 
     m1 = Random::PCG32.new(*seed)
@@ -232,7 +232,7 @@ describe "Random::PCG32" do
     m1.next_u.should eq m2.next_u
   end
 
-  it "can be initialized without explicit seed" do
+  it("can be initialized without explicit seed") do
     Random::PCG32.new.should be_a Random::PCG32
   end
 end

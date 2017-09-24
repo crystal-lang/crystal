@@ -1,31 +1,31 @@
 require "../../spec_helper"
 
-describe "Code gen: tuple" do
-  it "codegens tuple [0]" do
+describe("Code gen: tuple") do
+  it("codegens tuple [0]") do
     run("{1, true}[0]").to_i.should eq(1)
   end
 
-  it "codegens tuple [1]" do
+  it("codegens tuple [1]") do
     run("{1, true}[1]").to_b.should be_true
   end
 
-  it "codegens tuple [1] (2)" do
+  it("codegens tuple [1] (2)") do
     run("{true, 3}[1]").to_i.should eq(3)
   end
 
-  it "codegens tuple [0]?" do
+  it("codegens tuple [0]?") do
     run("{42, 'a'}[0]? || 84").to_i.should eq(42)
   end
 
-  it "codegens tuple [1]?" do
+  it("codegens tuple [1]?") do
     run("{'a', 42}[1]? || 84").to_i.should eq(42)
   end
 
-  it "codegens tuple [2]?" do
+  it("codegens tuple [2]?") do
     run("{'a', 42}[2]? || 84").to_i.should eq(84)
   end
 
-  it "passed tuple to def" do
+  it("passed tuple to def") do
     run("
       def foo(t)
         t[1]
@@ -35,7 +35,7 @@ describe "Code gen: tuple" do
       ").to_i.should eq(2)
   end
 
-  it "accesses T and creates instance from it" do
+  it("accesses T and creates instance from it") do
     run("
       struct Tuple
         def type_args
@@ -58,7 +58,7 @@ describe "Code gen: tuple" do
       ").to_i.should eq(2)
   end
 
-  it "allows malloc pointer of tuple" do
+  it("allows malloc pointer of tuple") do
     run("
       struct Pointer
         def self.malloc(size : Int)
@@ -77,7 +77,7 @@ describe "Code gen: tuple" do
       ").to_i.should eq(3)
   end
 
-  it "codegens tuple union (bug because union size was computed incorrectly)" do
+  it("codegens tuple union (bug because union size was computed incorrectly)") do
     run(%(
       require "prelude"
       x = 1 == 1 ? {1, 1, 1} : {1}
@@ -86,7 +86,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(1)
   end
 
-  it "codegens tuple class" do
+  it("codegens tuple class") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -111,7 +111,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(2)
   end
 
-  it "gets size at compile time" do
+  it("gets size at compile time") do
     run(%(
       struct Tuple
         def my_size
@@ -123,7 +123,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(2)
   end
 
-  it "allows tuple covariance" do
+  it("allows tuple covariance") do
     run(%(
        class Obj
          def initialize
@@ -156,7 +156,7 @@ describe "Code gen: tuple" do
        )).to_i.should eq(42)
   end
 
-  it "merges two tuple types of same size (1)" do
+  it("merges two tuple types of same size (1)") do
     run(%(
        def foo
          if 1 == 2
@@ -171,7 +171,7 @@ describe "Code gen: tuple" do
        )).to_i.should eq(20)
   end
 
-  it "merges two tuple types of same size (2)" do
+  it("merges two tuple types of same size (2)") do
     run(%(
        def foo
          if 1 == 1
@@ -186,7 +186,7 @@ describe "Code gen: tuple" do
        )).to_i.should eq(10)
   end
 
-  it "assigns tuple to compatible tuple" do
+  it("assigns tuple to compatible tuple") do
     run(%(
       ptr = Pointer({Int32 | String, Bool | Char}).malloc(1_u64)
 
@@ -198,7 +198,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(42)
   end
 
-  it "upcasts tuple inside compatible tuple" do
+  it("upcasts tuple inside compatible tuple") do
     run(%(
       def foo
         if 1 == 2
@@ -213,7 +213,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(42)
   end
 
-  it "assigns tuple union to compatible tuple" do
+  it("assigns tuple union to compatible tuple") do
     run(%(
       tup1 = {"hello", false}
       tup2 = {3}
@@ -226,7 +226,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(42)
   end
 
-  it "upcasts tuple union to compatible tuple" do
+  it("upcasts tuple union to compatible tuple") do
     run(%(
       def foo
         if 1 == 2
@@ -241,7 +241,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(42)
   end
 
-  it "assigns tuple inside union to union with compatible tuple" do
+  it("assigns tuple inside union to union with compatible tuple") do
     run(%(
       tup1 = {"hello", false}
       tup2 = {3}
@@ -260,7 +260,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(42)
   end
 
-  it "upcasts tuple inside union to union with compatible tuple" do
+  it("upcasts tuple inside union to union with compatible tuple") do
     run(%(
       def foo
         if 1 == 2
@@ -281,7 +281,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(42)
   end
 
-  it "codegens union of tuple of float with tuple of tuple of float" do
+  it("codegens union of tuple of float with tuple of tuple of float") do
     run(%(
       a = {1.5}
       b = { {22.0, 20.0} }
@@ -295,7 +295,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(42)
   end
 
-  it "provides T as a tuple literal" do
+  it("provides T as a tuple literal") do
     run(%(
       struct Tuple
         def self.foo
@@ -306,7 +306,7 @@ describe "Code gen: tuple" do
       )).to_string.should eq("TupleLiteral")
   end
 
-  it "passes empty tuple and empty named tuple to a method (#2852)" do
+  it("passes empty tuple and empty named tuple to a method (#2852)") do
     codegen(%(
       def foo(*binds)
         baz(binds)
@@ -325,7 +325,7 @@ describe "Code gen: tuple" do
       ))
   end
 
-  it "assigns two same-size tuple types to a same var (#3132)" do
+  it("assigns two same-size tuple types to a same var (#3132)") do
     run(%(
       t = {true}
       t
@@ -334,7 +334,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(2)
   end
 
-  it "downcasts union to mixed tuple type" do
+  it("downcasts union to mixed tuple type") do
     run(%(
       t = {1} || 2 || {true}
       t = {1}
@@ -342,7 +342,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(1)
   end
 
-  it "downcasts union to mixed union with mixed tuple types" do
+  it("downcasts union to mixed union with mixed tuple types") do
     run(%(
       require "prelude"
 
@@ -352,7 +352,7 @@ describe "Code gen: tuple" do
       )).to_i.should eq(1)
   end
 
-  it "downcasts union inside tuple to value (#3907)" do
+  it("downcasts union inside tuple to value (#3907)") do
     codegen(%(
       struct Foo
       end

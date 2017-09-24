@@ -1,8 +1,8 @@
 require "spec"
 require "ecr/lexer"
 
-describe "ECR::Lexer" do
-  it "lexes without interpolation" do
+describe("ECR::Lexer") do
+  it("lexes without interpolation") do
     lexer = ECR::Lexer.new("hello")
 
     token = lexer.next_token
@@ -15,7 +15,7 @@ describe "ECR::Lexer" do
     token.type.should eq(:EOF)
   end
 
-  it "lexes with <% %>" do
+  it("lexes with <% %>") do
     lexer = ECR::Lexer.new("hello <% foo %> bar")
 
     token = lexer.next_token
@@ -42,7 +42,7 @@ describe "ECR::Lexer" do
     token.type.should eq(:EOF)
   end
 
-  it "lexes with <%- %>" do
+  it("lexes with <%- %>") do
     lexer = ECR::Lexer.new("<%- foo %>")
 
     token = lexer.next_token
@@ -54,7 +54,7 @@ describe "ECR::Lexer" do
     token.supress_trailing?.should be_false
   end
 
-  it "lexes with <% -%>" do
+  it("lexes with <% -%>") do
     lexer = ECR::Lexer.new("<% foo -%>")
 
     token = lexer.next_token
@@ -66,7 +66,7 @@ describe "ECR::Lexer" do
     token.supress_trailing?.should be_true
   end
 
-  it "lexes with -% inside string" do
+  it("lexes with -% inside string") do
     lexer = ECR::Lexer.new("<% \"-%\" %>")
 
     token = lexer.next_token
@@ -74,7 +74,7 @@ describe "ECR::Lexer" do
     token.value.should eq(" \"-%\" ")
   end
 
-  it "lexes with <%= %>" do
+  it("lexes with <%= %>") do
     lexer = ECR::Lexer.new("hello <%= foo %> bar")
 
     token = lexer.next_token
@@ -101,7 +101,7 @@ describe "ECR::Lexer" do
     token.type.should eq(:EOF)
   end
 
-  it "lexes with <%= -%>" do
+  it("lexes with <%= -%>") do
     lexer = ECR::Lexer.new("<%= foo -%>")
 
     token = lexer.next_token
@@ -113,7 +113,7 @@ describe "ECR::Lexer" do
     token.supress_trailing?.should be_true
   end
 
-  it "lexes with <%# %>" do
+  it("lexes with <%# %>") do
     lexer = ECR::Lexer.new("hello <%# foo %> bar")
 
     token = lexer.next_token
@@ -140,7 +140,7 @@ describe "ECR::Lexer" do
     token.type.should eq(:EOF)
   end
 
-  it "lexes with <%# -%>" do
+  it("lexes with <%# -%>") do
     lexer = ECR::Lexer.new("<%# foo -%>")
 
     token = lexer.next_token
@@ -152,7 +152,7 @@ describe "ECR::Lexer" do
     token.supress_trailing?.should be_true
   end
 
-  it "lexes with <%% %>" do
+  it("lexes with <%% %>") do
     lexer = ECR::Lexer.new("hello <%% foo %> bar")
 
     token = lexer.next_token
@@ -179,7 +179,7 @@ describe "ECR::Lexer" do
     token.type.should eq(:EOF)
   end
 
-  it "lexes with <%%= %>" do
+  it("lexes with <%%= %>") do
     lexer = ECR::Lexer.new("hello <%%= foo %> bar")
 
     token = lexer.next_token
@@ -206,7 +206,7 @@ describe "ECR::Lexer" do
     token.type.should eq(:EOF)
   end
 
-  it "lexes with <% %> and correct location info" do
+  it("lexes with <% %> and correct location info") do
     lexer = ECR::Lexer.new("hi\nthere <% foo\nbar %> baz")
 
     token = lexer.next_token

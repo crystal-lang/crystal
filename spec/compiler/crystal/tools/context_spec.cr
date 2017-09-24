@@ -51,8 +51,8 @@ end
 #
 #   ‸ marks location of the cursor to use
 #
-describe "context" do
-  it "includes args" do
+describe("context") do
+  it("includes args") do
     assert_context_includes %(
       def foo(a)
         ‸
@@ -63,7 +63,7 @@ describe "context" do
     ), "a", ["Int64"]
   end
 
-  it "consider different instances of def" do
+  it("consider different instances of def") do
     assert_context_includes %(
       def foo(a)
         ‸
@@ -75,7 +75,7 @@ describe "context" do
     ), "a", ["Int64", "String"]
   end
 
-  it "includes assignments" do
+  it("includes assignments") do
     assert_context_includes %(
       def foo(a)
         b = a
@@ -88,7 +88,7 @@ describe "context" do
     ), "b", ["Int64", "String"]
   end
 
-  it "includes block args" do
+  it("includes block args") do
     assert_context_includes %(
       def bar(x)
         yield x
@@ -107,7 +107,7 @@ describe "context" do
     ), "b", ["Int64", "String"]
   end
 
-  it "includes top level vars" do
+  it("includes top level vars") do
     assert_context_includes %(
       a = 0i64
       ‸
@@ -115,7 +115,7 @@ describe "context" do
     ), "a", ["Int64"]
   end
 
-  it "includes last call" do
+  it("includes last call") do
     assert_context_includes %(
       class Foo
         property lorem
@@ -131,7 +131,7 @@ describe "context" do
     ), "f.lorem", ["Int64"]
   end
 
-  it "does not includes temp variables" do
+  it("does not includes temp variables") do
     assert_context_keys %(
       a = 0i64
       ‸
@@ -139,7 +139,7 @@ describe "context" do
     ), "a"
   end
 
-  it "does includes regex special variables" do
+  it("does includes regex special variables") do
     assert_context_keys %(
       def foo
         s = "string"
@@ -152,7 +152,7 @@ describe "context" do
     ), "s", "$~"
   end
 
-  it "does includes self on classes" do
+  it("does includes self on classes") do
     assert_context_includes %(
       class Foo
         def foo
@@ -167,7 +167,7 @@ describe "context" do
     ), "self", ["Foo"]
   end
 
-  it "does includes args, instance vars, local variables and expressions on instance methods" do
+  it("does includes args, instance vars, local variables and expressions on instance methods") do
     assert_context_keys %(
       class Foo
         def foo(the_arg)
@@ -183,7 +183,7 @@ describe "context" do
     ), "self", "@ivar", "the_arg", "the_arg.foo(self)"
   end
 
-  it "can handle union types" do
+  it("can handle union types") do
     assert_context_includes %(
     a = if rand() > 0
       1i64
@@ -195,7 +195,7 @@ describe "context" do
     ), "a", ["(Int64 | String)"]
   end
 
-  it "can display text output" do
+  it("can display text output") do
     run_context_tool(%(
     a = if rand() > 0
       1i64
@@ -216,7 +216,7 @@ describe "context" do
     end
   end
 
-  it "can display json output" do
+  it("can display json output") do
     run_context_tool(%(
     a = if rand() > 0
       1i64
@@ -232,7 +232,7 @@ describe "context" do
     end
   end
 
-  it "can get context of empty def" do
+  it("can get context of empty def") do
     assert_context_includes %(
     def foo(a)
       ‸
@@ -242,7 +242,7 @@ describe "context" do
     ), "a", ["Int64"]
   end
 
-  it "can get context of empty yielded block" do
+  it("can get context of empty yielded block") do
     assert_context_includes %(
     def it_like
       yield
@@ -254,7 +254,7 @@ describe "context" do
     ), "a", ["Int64"]
   end
 
-  it "can get context of yielded block" do
+  it("can get context of yielded block") do
     assert_context_keys %(
     def foo(a)
       b = a + 1
@@ -267,7 +267,7 @@ describe "context" do
     ), "a", "b"
   end
 
-  it "can get context of nested yielded block" do
+  it("can get context of nested yielded block") do
     assert_context_keys %(
     def foo(a)
       b = a + 1
@@ -286,7 +286,7 @@ describe "context" do
     ), "a", "b"
   end
 
-  it "can get context inside a module" do
+  it("can get context inside a module") do
     assert_context_includes %(
     module Foo
       class Bar
@@ -300,7 +300,7 @@ describe "context" do
     ), "o", ["String"]
   end
 
-  it "can get context inside class methods" do
+  it("can get context inside class methods") do
     assert_context_includes %(
     class Bar
       def self.bar(o)
@@ -312,7 +312,7 @@ describe "context" do
     ), "o", ["String"]
   end
 
-  it "can get context inside initialize" do
+  it("can get context inside initialize") do
     assert_context_keys %(
     class Bar
       def initialize(@ivar : String)
@@ -324,7 +324,7 @@ describe "context" do
     ), "self", "@ivar", "ivar"
   end
 
-  it "can get context in generic class" do
+  it("can get context in generic class") do
     assert_context_keys %(
     class Foo(T, S)
       def foo(a)
@@ -346,7 +346,7 @@ describe "context" do
     ), "T", ["String"]
   end
 
-  it "can get context in contained class' class method" do
+  it("can get context in contained class' class method") do
     assert_context_keys %(
     module Baz
       class Bar(T)
@@ -362,7 +362,7 @@ describe "context" do
     ), "self", "a"
   end
 
-  it "use type filters from is_a?" do
+  it("use type filters from is_a?") do
     assert_context_includes %(
     def foo(c)
       if c.is_a?(String)
@@ -374,7 +374,7 @@ describe "context" do
     ), "c", ["String"]
   end
 
-  it "use type filters from if var" do
+  it("use type filters from if var") do
     assert_context_includes %(
     def foo(c)
       if c
@@ -386,7 +386,7 @@ describe "context" do
     ), "c", ["String"]
   end
 
-  it "can get context in file private method" do
+  it("can get context in file private method") do
     assert_context_keys %(
     private def foo(a)
       ‸
@@ -396,7 +396,7 @@ describe "context" do
     ), "a"
   end
 
-  it "can get context in file private module" do
+  it("can get context in file private module") do
     assert_context_keys %(
     private module Foo
       def self.foo(a)
@@ -408,12 +408,12 @@ describe "context" do
     ), "self", "a"
   end
 
-  it "can't get context from uncalled method" do
-    run_context_tool %(
+  it("can't get context from uncalled method") do
+    run_context_tool(%(
     def foo(value)
       ‸
     end
-    ) do |result|
+    )) do |result|
       result.status.should eq("failed")
       result.message.should match(/never called/)
     end

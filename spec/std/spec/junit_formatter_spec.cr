@@ -1,7 +1,7 @@
 require "spec"
 
-describe "JUnit Formatter" do
-  it "reports successful results" do
+describe("JUnit Formatter") do
+  it("reports successful results") do
     output = build_report do |f|
       f.report Spec::Result.new(:success, "should do something", "spec/some_spec.cr", 33, nil, nil)
       f.report Spec::Result.new(:success, "should do something else", "spec/some_spec.cr", 50, nil, nil)
@@ -18,7 +18,7 @@ describe "JUnit Formatter" do
     output.chomp.should eq(expected)
   end
 
-  it "reports failures" do
+  it("reports failures") do
     output = build_report do |f|
       f.report Spec::Result.new(:fail, "should do something", "spec/some_spec.cr", 33, nil, nil)
     end
@@ -35,7 +35,7 @@ describe "JUnit Formatter" do
     output.chomp.should eq(expected)
   end
 
-  it "reports errors" do
+  it("reports errors") do
     output = build_report do |f|
       f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, nil)
     end
@@ -52,7 +52,7 @@ describe "JUnit Formatter" do
     output.chomp.should eq(expected)
   end
 
-  it "reports mixed results" do
+  it("reports mixed results") do
     output = build_report do |f|
       f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, 2.seconds, nil)
       f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, 0.5.seconds, nil)
@@ -79,7 +79,7 @@ describe "JUnit Formatter" do
     output.chomp.should eq(expected)
   end
 
-  it "escapes spec names" do
+  it("escapes spec names") do
     output = build_report do |f|
       f.report Spec::Result.new(:success, "complicated \" <n>'&ame", __FILE__, __LINE__, nil, nil)
     end
@@ -88,7 +88,7 @@ describe "JUnit Formatter" do
     name.should eq("complicated \" <n>'&ame")
   end
 
-  it "report failure stacktrace if present" do
+  it("report failure stacktrace if present") do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
@@ -103,7 +103,7 @@ describe "JUnit Formatter" do
     backtrace.should eq(cause.backtrace.join("\n"))
   end
 
-  it "report error stacktrace if present" do
+  it("report error stacktrace if present") do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|

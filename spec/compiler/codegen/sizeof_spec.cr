@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
-describe "Code gen: sizeof" do
-  it "gets sizeof int" do
+describe("Code gen: sizeof") do
+  it("gets sizeof int") do
     run("sizeof(Int32)").to_i.should eq(4)
   end
 
-  it "gets sizeof struct" do
+  it("gets sizeof struct") do
     run("
       struct Foo
         def initialize(@x : Int32, @y : Int32, @z : Int32)
@@ -18,7 +18,7 @@ describe "Code gen: sizeof" do
       ").to_i.should eq(12)
   end
 
-  it "gets sizeof class" do
+  it("gets sizeof class") do
     # A class is represented as a pointer to its data
     run("
       class Foo
@@ -32,7 +32,7 @@ describe "Code gen: sizeof" do
       ").to_i.should eq(sizeof(Void*))
   end
 
-  it "gets sizeof union" do
+  it("gets sizeof union") do
     size = run("
       sizeof(Int32 | Float64)
       ").to_i
@@ -55,7 +55,7 @@ describe "Code gen: sizeof" do
     {% end %}
   end
 
-  it "gets instance_sizeof class" do
+  it("gets instance_sizeof class") do
     run("
       class Foo
         def initialize(@x : Int32, @y : Int32, @z : Int32)
@@ -68,21 +68,21 @@ describe "Code gen: sizeof" do
       ").to_i.should eq(16)
   end
 
-  it "gives error if using instance_sizeof on something that's not a class" do
+  it("gives error if using instance_sizeof on something that's not a class") do
     assert_error "instance_sizeof(Int32)", "Int32 is not a class, it's a struct"
   end
 
-  it "gets sizeof Void" do
+  it("gets sizeof Void") do
     # Same as the size of a byte
     run("sizeof(Void)").to_i.should eq(1)
   end
 
-  it "gets sizeof NoReturn" do
+  it("gets sizeof NoReturn") do
     # Same as the size of a byte
     run("sizeof(NoReturn)").to_i.should eq(1)
   end
 
-  it "can use sizeof in type argument (1)" do
+  it("can use sizeof in type argument (1)") do
     run(%(
       struct StaticArray
         def size
@@ -95,7 +95,7 @@ describe "Code gen: sizeof" do
       )).to_i.should eq(4)
   end
 
-  it "can use sizeof in type argument (2)" do
+  it("can use sizeof in type argument (2)") do
     run(%(
       struct StaticArray
         def size
@@ -108,7 +108,7 @@ describe "Code gen: sizeof" do
       )).to_i.should eq(8)
   end
 
-  it "can use sizeof of virtual type" do
+  it("can use sizeof of virtual type") do
     size = run(%(
       class Foo
         @x = 1
@@ -129,7 +129,7 @@ describe "Code gen: sizeof" do
     {% end %}
   end
 
-  it "can use instance_sizeof of virtual type" do
+  it("can use instance_sizeof of virtual type") do
     run(%(
       class Foo
         @x = 1
@@ -148,7 +148,7 @@ describe "Code gen: sizeof" do
       )).to_i.should eq(12)
   end
 
-  it "can use instance_sizeof in type argument" do
+  it("can use instance_sizeof in type argument") do
     run(%(
       struct StaticArray
         def size

@@ -1,8 +1,8 @@
 require "spec"
 require "openssl/pkcs5"
 
-describe OpenSSL::PKCS5 do
-  it "computes pbkdf2_hmac_sha1" do
+describe(OpenSSL::PKCS5) do
+  it("computes pbkdf2_hmac_sha1") do
     [
       {1, 16, "0c60c80f961f0e71f3a9b524af601206"},
       {1, 32, "0c60c80f961f0e71f3a9b524af6012062fe037a6e0f0eb94fe8fc46bdc637164"},

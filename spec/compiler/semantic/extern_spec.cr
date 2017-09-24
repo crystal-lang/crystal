@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: extern struct" do
-  it "declares extern struct with no constructor" do
+describe("Semantic: extern struct") do
+  it("declares extern struct with no constructor") do
     assert_type(%(
       @[Extern]
       struct Foo
@@ -16,7 +16,7 @@ describe "Semantic: extern struct" do
       )) { int32 }
   end
 
-  it "declares with constructor" do
+  it("declares with constructor") do
     assert_type(%(
       @[Extern]
       struct Foo
@@ -34,7 +34,7 @@ describe "Semantic: extern struct" do
       )) { int32 }
   end
 
-  it "overrides getter" do
+  it("overrides getter") do
     assert_type(%(
       @[Extern]
       struct Foo
@@ -49,7 +49,7 @@ describe "Semantic: extern struct" do
       )) { char }
   end
 
-  it "can be passed to C fun" do
+  it("can be passed to C fun") do
     assert_type(%(
       @[Extern]
       struct Foo
@@ -64,7 +64,7 @@ describe "Semantic: extern struct" do
       )) { float64 }
   end
 
-  it "can include module" do
+  it("can include module") do
     assert_type(%(
       module Moo
         @x = uninitialized Int32
@@ -83,7 +83,7 @@ describe "Semantic: extern struct" do
       )) { int32 }
   end
 
-  it "errors if using non-primitive for field type" do
+  it("errors if using non-primitive for field type") do
     assert_error %(
       class Bar
       end
@@ -96,7 +96,7 @@ describe "Semantic: extern struct" do
       "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
   end
 
-  it "errors if using non-primitive for field type via module" do
+  it("errors if using non-primitive for field type via module") do
     assert_error %(
       class Bar
       end
@@ -113,7 +113,7 @@ describe "Semantic: extern struct" do
       "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
   end
 
-  it "errors if using non-primitive type in constructor" do
+  it("errors if using non-primitive type in constructor") do
     assert_error %(
       class Bar
       end
@@ -128,7 +128,7 @@ describe "Semantic: extern struct" do
       "only primitive types, pointers, structs, unions, enums and tuples are allowed in extern struct declarations"
   end
 
-  it "declares extern union with no constructor" do
+  it("declares extern union with no constructor") do
     assert_type(%(
       @[Extern(union: true)]
       struct Foo
@@ -143,7 +143,7 @@ describe "Semantic: extern struct" do
       )) { int32 }
   end
 
-  it "can use extern struct in lib" do
+  it("can use extern struct in lib") do
     assert_type(%(
       @[Extern]
       struct Foo
@@ -158,7 +158,7 @@ describe "Semantic: extern struct" do
       )) { types["Foo"] }
   end
 
-  it "can new with named args" do
+  it("can new with named args") do
     assert_type(%(
       @[Extern]
       struct A

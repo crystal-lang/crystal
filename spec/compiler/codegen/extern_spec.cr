@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Codegen: extern struct" do
-  it "declares extern struct with no constructor" do
+describe("Codegen: extern struct") do
+  it("declares extern struct with no constructor") do
     run(%(
       @[Extern]
       struct Foo
@@ -16,7 +16,7 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(0)
   end
 
-  it "declares extern struct with no constructor, assigns var" do
+  it("declares extern struct with no constructor, assigns var") do
     run(%(
       @[Extern]
       struct Foo
@@ -36,7 +36,7 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(10)
   end
 
-  it "declares extern union with no constructor" do
+  it("declares extern union with no constructor") do
     run(%(
       @[Extern(union: true)]
       struct Foo
@@ -61,7 +61,7 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(1069547520)
   end
 
-  it "declares extern struct, sets and gets instance var" do
+  it("declares extern struct, sets and gets instance var") do
     run(%(
       @[Extern]
       struct Foo
@@ -78,7 +78,7 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(42)
   end
 
-  it "declares extern union, sets and gets instance var" do
+  it("declares extern union, sets and gets instance var") do
     run(%(
       @[Extern(union: true)]
       struct Foo
@@ -96,7 +96,7 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(1069547520)
   end
 
-  it "sets callback on extern struct" do
+  it("sets callback on extern struct") do
     run(%(
       require "prelude"
 
@@ -119,7 +119,7 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(42)
   end
 
-  it "sets callback on extern union" do
+  it("sets callback on extern union") do
     run(%(
       require "prelude"
 
@@ -143,7 +143,7 @@ describe "Codegen: extern struct" do
       )).to_i.should eq(42)
   end
 
-  it "codegens extern proc call twice (#4982)" do
+  it("codegens extern proc call twice (#4982)") do
     run(%(
       @[Extern]
       struct Data

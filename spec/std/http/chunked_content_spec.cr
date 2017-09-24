@@ -1,8 +1,8 @@
 require "spec"
 require "http/content"
 
-describe HTTP::ChunkedContent do
-  it "delays reading the next chunk as soon as one is consumed (#3270)" do
+describe(HTTP::ChunkedContent) do
+  it("delays reading the next chunk as soon as one is consumed (#3270)") do
     mem = IO::Memory.new("4\r\n123\n\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
     bytes = uninitialized UInt8[4]
@@ -12,14 +12,14 @@ describe HTTP::ChunkedContent do
     mem.pos.should eq(7) # only this chunk was read
   end
 
-  it "peeks" do
+  it("peeks") do
     mem = IO::Memory.new("4\r\n123\n\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
     content.peek.should eq("123\n".to_slice)
   end
 
-  it "peeks into next chunk" do
+  it("peeks into next chunk") do
     mem = IO::Memory.new("4\r\n123\n\r\n3\r\n456\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
@@ -28,7 +28,7 @@ describe HTTP::ChunkedContent do
     content.gets_to_end.should eq("456")
   end
 
-  it "skips" do
+  it("skips") do
     mem = IO::Memory.new("4\r\n123\n\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
@@ -40,7 +40,7 @@ describe HTTP::ChunkedContent do
     end
   end
 
-  it "skips (2)" do
+  it("skips (2)") do
     mem = IO::Memory.new("4\r\n123\n\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
@@ -48,7 +48,7 @@ describe HTTP::ChunkedContent do
     content.gets_to_end.should eq("3\n")
   end
 
-  it "skips (3)" do
+  it("skips (3)") do
     mem = IO::Memory.new("4\r\n123\n\r\n3\r\n456\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
 

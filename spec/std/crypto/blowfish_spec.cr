@@ -1,7 +1,7 @@
 require "spec"
 require "crypto/blowfish"
 
-describe "Crypto::Blowfish" do
+describe("Crypto::Blowfish") do
   vectors = [
     {UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], UInt32[0x00000000, 0x00000000], UInt32[0x4EF99745, 0x6198DD78]},
     {UInt8[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], UInt32[0xFFFFFFFF, 0xFFFFFFFF], UInt32[0x51866FD5, 0xB85ECB8A]},
@@ -39,7 +39,7 @@ describe "Crypto::Blowfish" do
     {UInt8[0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10], UInt32[0xFFFFFFFF, 0xFFFFFFFF], UInt32[0x6B5C5A9C, 0x5D9E0A5A]},
   ]
 
-  it "encrypt and decrypt pair" do
+  it("encrypt and decrypt pair") do
     vectors.each_with_index do |(key, text, cipher), index|
       bf = Crypto::Blowfish.new(16)
       bf.expand_key(key)

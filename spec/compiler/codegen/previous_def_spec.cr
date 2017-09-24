@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "codegen: previous_def" do
-  it "codegens previous def" do
+describe("codegen: previous_def") do
+  it("codegens previous def") do
     run(%(
       def foo
         1
@@ -15,7 +15,7 @@ describe "codegen: previous_def" do
       )).to_i.should eq(2)
   end
 
-  it "codeges previous def when inside fun and forwards args" do
+  it("codeges previous def when inside fun and forwards args") do
     run(%(
       def foo(z)
         z + 1
@@ -30,7 +30,7 @@ describe "codegen: previous_def" do
       )).to_i.should eq(6)
   end
 
-  it "codegens previous def when inside fun with self" do
+  it("codegens previous def when inside fun with self") do
     run(%(
       class Foo
         def initialize

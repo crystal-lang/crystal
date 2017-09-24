@@ -1,7 +1,7 @@
 require "spec"
 require "crypto/bcrypt"
 
-describe "Crypto::Bcrypt" do
+describe("Crypto::Bcrypt") do
   latin1_pound_sign = String.new(Bytes.new(1, 0xa3_u8))
   utf8_pound_sign = String.new(Bytes.new(2) { |i| i == 0 ? 0xc2_u8 : 0xa3_u8 })
   bit8_unicode_pound_sign = "\u00A3"
@@ -18,7 +18,7 @@ describe "Crypto::Bcrypt" do
     {5, bit8_unicode_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "CAzSxlf0FLW7g1A5q7W/ZCj1xsN6A.e"},
   ]
 
-  it "computes digest vectors" do
+  it("computes digest vectors") do
     vectors.each_with_index do |vector, index|
       cost, password, salt, digest = vector
       bc = Crypto::Bcrypt.new(password, salt, cost)
@@ -26,7 +26,7 @@ describe "Crypto::Bcrypt" do
     end
   end
 
-  it "validates salt size" do
+  it("validates salt size") do
     expect_raises(Crypto::Bcrypt::Error, /Invalid salt size/) do
       Crypto::Bcrypt.new("abcd", SecureRandom.hex(7))
     end
@@ -36,7 +36,7 @@ describe "Crypto::Bcrypt" do
     end
   end
 
-  it "validates cost" do
+  it("validates cost") do
     salt = SecureRandom.hex(8)
 
     expect_raises(Crypto::Bcrypt::Error, /Invalid cost/) do
@@ -48,7 +48,7 @@ describe "Crypto::Bcrypt" do
     end
   end
 
-  it "validates password size" do
+  it("validates password size") do
     salt = SecureRandom.random_bytes(16)
 
     expect_raises(Crypto::Bcrypt::Error, /Invalid password size/) do
@@ -61,7 +61,7 @@ describe "Crypto::Bcrypt" do
   end
 
   # Read http://lwn.net/Articles/448699/
-  it "doesn't have the sign expansion (high 8bit) security flaw" do
+  it("doesn't have the sign expansion (high 8bit) security flaw") do
     salt = "OK.fbVrR/bpIqNJ5ianF.C"
     hash1 = Crypto::Bcrypt.new("ab#{latin1_pound_sign}", salt, 5)
     hash2 = Crypto::Bcrypt.new(latin1_pound_sign, salt, 5)

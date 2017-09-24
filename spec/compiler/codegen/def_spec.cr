@@ -1,23 +1,23 @@
 require "../../spec_helper"
 
-describe "Code gen: def" do
-  it "codegens empty def" do
+describe("Code gen: def") do
+  it("codegens empty def") do
     run("def foo; end; foo")
   end
 
-  it "codegens call without args" do
+  it("codegens call without args") do
     run("def foo; 1; end; 2; foo").to_i.should eq(1)
   end
 
-  it "call functions defined in any order" do
+  it("call functions defined in any order") do
     run("def foo; bar; end; def bar; 1; end; foo").to_i.should eq(1)
   end
 
-  it "codegens call with args" do
+  it("codegens call with args") do
     run("def foo(x); x; end; foo 1").to_i.should eq(1)
   end
 
-  it "call external function 'putchar'" do
+  it("call external function 'putchar'") do
     run("
       lib LibC
         fun putchar(c : Char) : Char
@@ -26,11 +26,11 @@ describe "Code gen: def" do
       ").to_i.should eq(0)
   end
 
-  it "uses self" do
+  it("uses self") do
     run("struct Int; def foo; self + 1; end; end; 3.foo").to_i.should eq(4)
   end
 
-  it "uses var after external" do
+  it("uses var after external") do
     run("
       lib LibC
         fun putchar(c : Char) : Char
@@ -42,19 +42,19 @@ describe "Code gen: def" do
       ").to_i.should eq(1)
   end
 
-  it "allows to change argument values" do
+  it("allows to change argument values") do
     run("def foo(x); x = 1; x; end; foo(2)").to_i.should eq(1)
   end
 
-  it "runs empty def" do
+  it("runs empty def") do
     run("def foo; end; foo")
   end
 
-  it "builds infinite recursive function" do
+  it("builds infinite recursive function") do
     codegen "def foo; foo; end; foo"
   end
 
-  it "unifies all calls to same def" do
+  it("unifies all calls to same def") do
     run("
       require \"prelude\"
 
@@ -86,7 +86,7 @@ describe "Code gen: def" do
     ").to_i.should eq(1)
   end
 
-  it "codegens recursive type with union" do
+  it("codegens recursive type with union") do
     run("
       class Foo
         @next : Foo?
@@ -106,7 +106,7 @@ describe "Code gen: def" do
       ")
   end
 
-  it "codegens with related types" do
+  it("codegens with related types") do
     run("
       class Foo
         @next : Foo | Bar | Nil
@@ -150,7 +150,7 @@ describe "Code gen: def" do
       ")
   end
 
-  it "codegens and doesn't break if obj is int and there's a mutation" do
+  it("codegens and doesn't break if obj is int and there's a mutation") do
     run("
       require \"prelude\"
 
@@ -164,7 +164,7 @@ describe "Code gen: def" do
     ")
   end
 
-  it "codegens with and witout default arguments" do
+  it("codegens with and witout default arguments") do
     run("
       def foo(x = 1)
         x + 1
@@ -174,7 +174,7 @@ describe "Code gen: def" do
       ").to_i.should eq(5)
   end
 
-  it "codegens with and witout many default arguments" do
+  it("codegens with and witout many default arguments") do
     run("
       def foo(x = 1, y = 2, z = 3)
         x + y + z
@@ -184,7 +184,7 @@ describe "Code gen: def" do
       ").to_i.should eq(40)
   end
 
-  it "codegens with interesting default argument" do
+  it("codegens with interesting default argument") do
     run("
       class Foo
         def foo(x = self.bar)
@@ -202,7 +202,7 @@ describe "Code gen: def" do
       ").to_i.should eq(5)
   end
 
-  it "codegens dispatch on static method" do
+  it("codegens dispatch on static method") do
     run("
       def Object.foo(x)
         1
@@ -214,7 +214,7 @@ describe "Code gen: def" do
       ").to_i.should eq(1)
   end
 
-  it "use target def type as return type" do
+  it("use target def type as return type") do
     run("
       require \"prelude\"
 
@@ -228,7 +228,7 @@ describe "Code gen: def" do
     ").to_i.should eq(1)
   end
 
-  it "codegens recursive nasty code" do
+  it("codegens recursive nasty code") do
     codegen("
       class Foo
         def initialize(x)
@@ -264,7 +264,7 @@ describe "Code gen: def" do
       ")
   end
 
-  it "looks up matches in super classes and merges them with subclasses" do
+  it("looks up matches in super classes and merges them with subclasses") do
     run("
       class Foo
         def foo(other)
@@ -283,7 +283,7 @@ describe "Code gen: def" do
       ").to_i.should eq(2)
   end
 
-  it "codegens def which changes type of arg" do
+  it("codegens def which changes type of arg") do
     run("
       def foo(x)
         while x >= 0
@@ -296,7 +296,7 @@ describe "Code gen: def" do
     ").to_i.should eq(0)
   end
 
-  it "codegens return nil when nilable type (1)" do
+  it("codegens return nil when nilable type (1)") do
     run("
       def foo
         return if 1 == 1
@@ -307,7 +307,7 @@ describe "Code gen: def" do
       ").to_b.should be_true
   end
 
-  it "codegens return nil when nilable type (2)" do
+  it("codegens return nil when nilable type (2)") do
     run("
       def foo
         return nil if 1 == 1
@@ -318,7 +318,7 @@ describe "Code gen: def" do
       ").to_b.should be_true
   end
 
-  it "codegens dispatch with nilable reference union type" do
+  it("codegens dispatch with nilable reference union type") do
     run("
       struct Nil; def object_id; 0_u64; end; end
       class Foo; end
@@ -329,7 +329,7 @@ describe "Code gen: def" do
       ").to_i.should eq(0)
   end
 
-  it "codegens dispatch without obj, bug 1" do
+  it("codegens dispatch without obj, bug 1") do
     run("
       def coco(x : Int32)
         2
@@ -349,7 +349,7 @@ describe "Code gen: def" do
       ").to_i.should eq(2)
   end
 
-  it "codegens dispatch without obj, bug 1" do
+  it("codegens dispatch without obj, bug 1") do
     run("
       def coco(x : Int32)
         2
@@ -372,7 +372,7 @@ describe "Code gen: def" do
       ").to_i.should eq(2)
   end
 
-  it "codegens dispatch with single def when discarding unallocated ones (1)" do
+  it("codegens dispatch with single def when discarding unallocated ones (1)") do
     run("
       class Foo
         def bar
@@ -391,7 +391,7 @@ describe "Code gen: def" do
       ").to_i.should eq(1)
   end
 
-  it "codegens dispatch with single def when discarding unallocated ones (2)" do
+  it("codegens dispatch with single def when discarding unallocated ones (2)") do
     run("
       class Foo
       end
@@ -412,7 +412,7 @@ describe "Code gen: def" do
       ").to_i.should eq(1)
   end
 
-  it "codegens bug #119" do
+  it("codegens bug #119") do
     run(%(
       require "prelude"
 
@@ -421,7 +421,7 @@ describe "Code gen: def" do
       )).to_b.should be_false
   end
 
-  it "puts union before single type in matches preferences" do
+  it("puts union before single type in matches preferences") do
     run("
       abstract class Foo
       end
@@ -445,7 +445,7 @@ describe "Code gen: def" do
       ").to_i.should eq(1)
   end
 
-  it "dispatches on virtual type implementing generic module (related to bug #165)" do
+  it("dispatches on virtual type implementing generic module (related to bug #165)") do
     run("
       module Moo(T)
         def moo
@@ -476,7 +476,7 @@ describe "Code gen: def" do
       ").to_i.should eq(1)
   end
 
-  it "fixes #230: include original owner in mangled def" do
+  it("fixes #230: include original owner in mangled def") do
     run(%(
       class Base
         def some(other : self)
@@ -503,14 +503,14 @@ describe "Code gen: def" do
       )).to_b.should be_true
   end
 
-  it "doesn't crash on private def as last expression" do
+  it("doesn't crash on private def as last expression") do
     codegen(%(
       private def foo
       end
       ))
   end
 
-  it "uses previous argument in default value (#1062)" do
+  it("uses previous argument in default value (#1062)") do
     run(%(
       def foo(x = 123, y = x + 456)
         x + y
@@ -520,7 +520,7 @@ describe "Code gen: def" do
       )).to_i.should eq(123 * 2 + 456)
   end
 
-  it "can match N type argument of static array (#1203)" do
+  it("can match N type argument of static array (#1203)") do
     run(%(
       def fn(a : StaticArray(T, N)) forall T, N
         N
@@ -531,7 +531,7 @@ describe "Code gen: def" do
       )).to_i.should eq(10)
   end
 
-  it "uses dispatch call type for phi (#3529)" do
+  it("uses dispatch call type for phi (#3529)") do
     codegen(%(
       def foo(x : Int32)
         yield
@@ -549,7 +549,7 @@ describe "Code gen: def" do
       ), inject_primitives: false)
   end
 
-  it "codegens union to union assignment of mutable arg (#3691)" do
+  it("codegens union to union assignment of mutable arg (#3691)") do
     codegen(%(
       def foo(arg)
         arg = ""

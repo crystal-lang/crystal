@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: class var" do
-  it "declares class variable" do
+describe("Semantic: class var") do
+  it("declares class variable") do
     assert_error %(
       class Foo
         @@x : Int32
@@ -17,7 +17,7 @@ describe "Semantic: class var" do
       "class variable '@@x' of Foo must be Int32, not Bool"
   end
 
-  it "declares class variable (2)" do
+  it("declares class variable (2)") do
     assert_error %(
       class Foo
         @@x : Int32
@@ -31,7 +31,7 @@ describe "Semantic: class var" do
       ),
       "class variable '@@x' of Foo is not nilable (it's Int32) so it must have an initializer"
   end
-  it "types class var" do
+  it("types class var") do
     assert_type("
       class Foo
         @@foo = 1
@@ -45,7 +45,7 @@ describe "Semantic: class var" do
       ") { int32 }
   end
 
-  it "types class var as nil if not assigned at the top level" do
+  it("types class var as nil if not assigned at the top level") do
     assert_type("
       class Foo
         def self.foo
@@ -58,7 +58,7 @@ describe "Semantic: class var" do
       ") { nilable int32 }
   end
 
-  it "types class var inside instance method" do
+  it("types class var inside instance method") do
     assert_type("
       class Foo
         @@foo = 1
@@ -72,7 +72,7 @@ describe "Semantic: class var" do
       ") { int32 }
   end
 
-  it "types class var inside proc literal inside class" do
+  it("types class var inside proc literal inside class") do
     assert_type("
       class Foo
         @@foo = 1
@@ -82,7 +82,7 @@ describe "Semantic: class var" do
       ") { int32 }
   end
 
-  it "says illegal attribute for class var" do
+  it("says illegal attribute for class var") do
     assert_error %(
       class Foo
         @[Foo]
@@ -92,7 +92,7 @@ describe "Semantic: class var" do
       "illegal attribute"
   end
 
-  it "says illegal attribute for class var assignment" do
+  it("says illegal attribute for class var assignment") do
     assert_error %(
       class Foo
         @[Foo]
@@ -102,7 +102,7 @@ describe "Semantic: class var" do
       "illegal attribute"
   end
 
-  it "allows self.class as type var in class body (#537)" do
+  it("allows self.class as type var in class body (#537)") do
     assert_type(%(
       class Bar(T)
       end
@@ -119,7 +119,7 @@ describe "Semantic: class var" do
       )) { generic_class "Bar", types["Foo"].virtual_type.metaclass }
   end
 
-  it "errors if using self as type var but there's no self" do
+  it("errors if using self as type var but there's no self") do
     assert_error %(
       class Bar(T)
       end
@@ -129,7 +129,7 @@ describe "Semantic: class var" do
       "there's no self in this scope"
   end
 
-  it "allows class var in primitive types (#612)" do
+  it("allows class var in primitive types (#612)") do
     assert_type("
       struct Int64
         @@foo = 1
@@ -143,7 +143,7 @@ describe "Semantic: class var" do
       ") { int32 }
   end
 
-  it "declares class var in generic class" do
+  it("declares class var in generic class") do
     assert_type(%(
       class Foo(T)
         @@bar = 1
@@ -157,7 +157,7 @@ describe "Semantic: class var" do
       )) { int32 }
   end
 
-  it "declares class var in generic module" do
+  it("declares class var in generic module") do
     assert_type(%(
       module Foo(T)
         @@bar = 1
@@ -171,7 +171,7 @@ describe "Semantic: class var" do
       )) { int32 }
   end
 
-  it "types class var as nil if assigned for the first time inside method (#2059)" do
+  it("types class var as nil if assigned for the first time inside method (#2059)") do
     assert_type("
       class Foo
         def self.foo
@@ -184,7 +184,7 @@ describe "Semantic: class var" do
       ") { nilable int32 }
   end
 
-  it "redefines class variable type" do
+  it("redefines class variable type") do
     assert_type(%(
       class Foo
         @@x : Int32
@@ -200,7 +200,7 @@ describe "Semantic: class var" do
       )) { union_of int32, float64 }
   end
 
-  it "infers type from number literal" do
+  it("infers type from number literal") do
     assert_type(%(
       class Foo
         @@x = 1
@@ -214,7 +214,7 @@ describe "Semantic: class var" do
       )) { int32 }
   end
 
-  it "infers type from T.new" do
+  it("infers type from T.new") do
     assert_type(%(
       class Foo
         class Bar
@@ -231,7 +231,7 @@ describe "Semantic: class var" do
       )) { types["Foo"].types["Bar"] }
   end
 
-  it "says undefined class variable" do
+  it("says undefined class variable") do
     assert_error "
       class Foo
         def self.foo
@@ -244,7 +244,7 @@ describe "Semantic: class var" do
       "Can't infer the type of class variable '@@foo' of Foo"
   end
 
-  it "errors if using class variable at the top level" do
+  it("errors if using class variable at the top level") do
     assert_error "
       @@foo = 1
       @@foo
@@ -252,7 +252,7 @@ describe "Semantic: class var" do
       "can't use class variables at the top level"
   end
 
-  it "errors when typing a class variable inside a method" do
+  it("errors when typing a class variable inside a method") do
     assert_error %(
       def foo
         @@x : Int32
@@ -263,7 +263,7 @@ describe "Semantic: class var" do
       "declaring the type of a class variable must be done at the class level"
   end
 
-  it "errors if using local variable in initializer" do
+  it("errors if using local variable in initializer") do
     assert_error %(
       class Foo
         @@x : Int32
@@ -275,7 +275,7 @@ describe "Semantic: class var" do
       "undefined local variable or method 'a'"
   end
 
-  it "errors on undefined constant (1)" do
+  it("errors on undefined constant (1)") do
     assert_error %(
       class Foo
         def self.foo
@@ -288,7 +288,7 @@ describe "Semantic: class var" do
       "undefined constant Bar"
   end
 
-  it "errors on undefined constant (2)" do
+  it("errors on undefined constant (2)") do
     assert_error %(
       class Foo
         @@x = Bar.new
@@ -299,7 +299,7 @@ describe "Semantic: class var" do
       "undefined constant Bar"
   end
 
-  it "infers in multiple assign for tuple type (1)" do
+  it("infers in multiple assign for tuple type (1)") do
     assert_type(%(
       class Foo
         def self.foo
@@ -321,7 +321,7 @@ describe "Semantic: class var" do
       )) { nilable int32 }
   end
 
-  it "errors when using Class (#2605)" do
+  it("errors when using Class (#2605)") do
     assert_error %(
       class Foo
         def foo(@@class : Class)
@@ -331,7 +331,7 @@ describe "Semantic: class var" do
       "can't use Class as the type of class variable @@class of Foo, use a more specific type"
   end
 
-  it "gives correct error when trying to use Int as a class variable type" do
+  it("gives correct error when trying to use Int as a class variable type") do
     assert_error %(
       class Foo
         @@x : Int
@@ -340,7 +340,7 @@ describe "Semantic: class var" do
       "can't use Int as the type of a class variable yet, use a more specific type"
   end
 
-  it "can find class var in subclass" do
+  it("can find class var in subclass") do
     assert_type(%(
       class Foo
         @@var = 1
@@ -356,7 +356,7 @@ describe "Semantic: class var" do
       )) { int32 }
   end
 
-  it "can find class var through included module" do
+  it("can find class var through included module") do
     assert_type(%(
       module Moo
         @@var = 1
@@ -374,7 +374,7 @@ describe "Semantic: class var" do
       )) { int32 }
   end
 
-  it "errors if redefining class var type in subclass" do
+  it("errors if redefining class var type in subclass") do
     assert_error %(
       class Foo
         @@x : Int32
@@ -387,7 +387,7 @@ describe "Semantic: class var" do
       "class variable '@@x' of Bar is already defined as Int32 in Foo"
   end
 
-  it "errors if redefining class var type in subclass, with guess" do
+  it("errors if redefining class var type in subclass, with guess") do
     assert_error %(
       class Foo
         @@x = 1
@@ -400,7 +400,7 @@ describe "Semantic: class var" do
       "class variable '@@x' of Bar is already defined as Int32 in Foo"
   end
 
-  it "errors if redefining class var type in included module" do
+  it("errors if redefining class var type in included module") do
     assert_error %(
       module Moo
         @@x : Int32
@@ -415,7 +415,7 @@ describe "Semantic: class var" do
       "class variable '@@x' of Bar is already defined as Int32 in Moo"
   end
 
-  it "declares uninitialized (#2935)" do
+  it("declares uninitialized (#2935)") do
     assert_type(%(
       class Foo
         @@x = uninitialized Int32
@@ -429,7 +429,7 @@ describe "Semantic: class var" do
       )) { int32 }
   end
 
-  it "doesn't error if accessing class variable before defined (#2941)" do
+  it("doesn't error if accessing class variable before defined (#2941)") do
     assert_type(%(
       class Bar
         @@x : Baz = Foo.x
@@ -457,7 +457,7 @@ describe "Semantic: class var" do
       )) { int32 }
   end
 
-  it "doesn't error on recursive depdendency if var is nilable (#2943)" do
+  it("doesn't error on recursive depdendency if var is nilable (#2943)") do
     assert_type(%(
       class Foo
         @@foo : Int32?
@@ -476,7 +476,7 @@ describe "Semantic: class var" do
       )) { nilable int32 }
   end
 
-  it "types as nilable if doesn't have initializer" do
+  it("types as nilable if doesn't have initializer") do
     assert_type(%(
       class Foo
         def self.x
@@ -489,7 +489,7 @@ describe "Semantic: class var" do
       )) { nilable int32 }
   end
 
-  it "errors if class variable not nilable without initializer" do
+  it("errors if class variable not nilable without initializer") do
     assert_error %(
       class Foo
         @@foo : Int32
@@ -498,7 +498,7 @@ describe "Semantic: class var" do
       "class variable '@@foo' of Foo is not nilable (it's Int32) so it must have an initializer"
   end
 
-  it "can assign to class variable if this type can be up-casted to ancestors class variable type (#4869)" do
+  it("can assign to class variable if this type can be up-casted to ancestors class variable type (#4869)") do
     assert_type(%(
       class Foo
         @@x : Int32?

@@ -1,8 +1,8 @@
 require "spec"
 require "http/server"
 
-describe HTTP::CompressHandler do
-  it "doesn't deflates if doesn't have 'deflate' in Accept-Encoding header" do
+describe(HTTP::CompressHandler) do
+  it("doesn't deflates if doesn't have 'deflate' in Accept-Encoding header") do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
@@ -19,7 +19,7 @@ describe HTTP::CompressHandler do
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello")
   end
 
-  it "deflates if has deflate in 'deflate' Accept-Encoding header" do
+  it("deflates if has deflate in 'deflate' Accept-Encoding header") do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     request.headers["Accept-Encoding"] = "foo, deflate, other"
@@ -47,7 +47,7 @@ describe HTTP::CompressHandler do
     body.to_slice.should eq(io2.to_slice)
   end
 
-  it "deflates gzip if has deflate in 'deflate' Accept-Encoding header" do
+  it("deflates gzip if has deflate in 'deflate' Accept-Encoding header") do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     request.headers["Accept-Encoding"] = "foo, gzip, other"

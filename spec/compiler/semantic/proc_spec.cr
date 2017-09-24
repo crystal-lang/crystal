@@ -1,39 +1,39 @@
 require "../../spec_helper"
 
-describe "Semantic: proc" do
-  it "types empty proc literal" do
+describe("Semantic: proc") do
+  it("types empty proc literal") do
     assert_type("-> {}") { proc_of(nil_type) }
   end
 
-  it "types int proc literal" do
+  it("types int proc literal") do
     assert_type("-> { 1 }") { proc_of(int32) }
   end
 
-  it "types proc call" do
+  it("types proc call") do
     assert_type("x = -> { 1 }; x.call()") { int32 }
   end
 
-  it "types int -> int proc literal" do
+  it("types int -> int proc literal") do
     assert_type("->(x : Int32) { x }") { proc_of(int32, int32) }
   end
 
-  it "types int -> int proc call" do
+  it("types int -> int proc call") do
     assert_type("f = ->(x : Int32) { x }; f.call(1)") { int32 }
   end
 
-  it "types proc pointer" do
+  it("types proc pointer") do
     assert_type("def foo; 1; end; ->foo") { proc_of(int32) }
   end
 
-  it "types proc pointer with types" do
+  it("types proc pointer with types") do
     assert_type("def foo(x); x; end; ->foo(Int32)") { proc_of(int32, int32) }
   end
 
-  it "types a proc pointer with generic types" do
+  it("types a proc pointer with generic types") do
     assert_type("def foo(x); end; ->foo(Pointer(Int32))") { proc_of(pointer_of(int32), nil_type) }
   end
 
-  it "types proc pointer to instance method" do
+  it("types proc pointer to instance method") do
     assert_type("
       class Foo
         def initialize
@@ -50,11 +50,11 @@ describe "Semantic: proc" do
     ") { proc_of(int32) }
   end
 
-  it "types proc type spec" do
+  it("types proc type spec") do
     assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(proc_of(int32, int64)) }
   end
 
-  it "allows passing proc type if it is typedefed" do
+  it("allows passing proc type if it is typedefed") do
     assert_type("
       lib LibC
         type Callback = Int32 -> Int32
@@ -66,12 +66,12 @@ describe "Semantic: proc" do
       ") { float64 }
   end
 
-  it "errors when using local variable with proc argument name" do
+  it("errors when using local variable with proc argument name") do
     assert_error "->(a : Int32) { }; a",
       "undefined local variable or method 'a'"
   end
 
-  it "allows implicit cast of proc to return void in LibC function" do
+  it("allows implicit cast of proc to return void in LibC function") do
     assert_type("
       lib LibC
         fun atexit(fun : -> ) : Int32
@@ -81,7 +81,7 @@ describe "Semantic: proc" do
       ") { int32 }
   end
 
-  it "passes proc pointer as block" do
+  it("passes proc pointer as block") do
     assert_type("
       def foo
         yield
@@ -92,7 +92,7 @@ describe "Semantic: proc" do
       ") { int32 }
   end
 
-  it "passes proc pointer as block with arguments" do
+  it("passes proc pointer as block with arguments") do
     assert_type("
       def foo
         yield 1
@@ -103,7 +103,7 @@ describe "Semantic: proc" do
       ") { float64 }
   end
 
-  it "binds proc literal to arguments and body" do
+  it("binds proc literal to arguments and body") do
     assert_type("
       x = 1
       f = -> { x }
@@ -112,7 +112,7 @@ describe "Semantic: proc" do
     ") { proc_of(union_of(int32, char)) }
   end
 
-  it "has proc literal as restriction and works" do
+  it("has proc literal as restriction and works") do
     assert_type("
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -122,7 +122,7 @@ describe "Semantic: proc" do
       ") { float64 }
   end
 
-  it "has proc literal as restriction and works when output not specified" do
+  it("has proc literal as restriction and works when output not specified") do
     assert_type("
       def foo(x : Int32 -> )
         x.call(1)
@@ -132,7 +132,7 @@ describe "Semantic: proc" do
       ") { nil_type }
   end
 
-  it "has proc literal as restriction and errors if output is different" do
+  it("has proc literal as restriction and errors if output is different") do
     assert_error "
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -143,7 +143,7 @@ describe "Semantic: proc" do
       "no overload matches"
   end
 
-  it "has proc literal as restriction and errors if input is different" do
+  it("has proc literal as restriction and errors if input is different") do
     assert_error "
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -154,7 +154,7 @@ describe "Semantic: proc" do
       "no overload matches"
   end
 
-  it "has proc literal as restriction and errors if sizes are different" do
+  it("has proc literal as restriction and errors if sizes are different") do
     assert_error "
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -165,7 +165,7 @@ describe "Semantic: proc" do
       "no overload matches"
   end
 
-  it "allows passing nil as proc callback" do
+  it("allows passing nil as proc callback") do
     assert_type("
       lib LibC
         type Cb = Int32 ->
@@ -176,7 +176,7 @@ describe "Semantic: proc" do
       ") { int32 }
   end
 
-  it "disallows casting a proc type to one accepting more arguments" do
+  it("disallows casting a proc type to one accepting more arguments") do
     assert_error("
       f = ->(x : Int32) { x.to_f }
       f.as(Int32, Int32 -> Float64)
@@ -184,14 +184,14 @@ describe "Semantic: proc" do
       "can't cast")
   end
 
-  it "allows casting a proc type to one with void argument" do
+  it("allows casting a proc type to one with void argument") do
     assert_type("
       f = ->(x : Int32) { x.to_f }
       f.as(Int32 -> Void)
       ") { proc_of [int32, void] }
   end
 
-  it "disallows casting a proc type to one accepting less arguments" do
+  it("disallows casting a proc type to one accepting less arguments") do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f.as(-> Float64)
@@ -199,7 +199,7 @@ describe "Semantic: proc" do
       "can't cast Proc(Int32, Float64) to Proc(Float64)"
   end
 
-  it "disallows casting a proc type to one accepting same size argument but different output" do
+  it("disallows casting a proc type to one accepting same size argument but different output") do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f.as(Int32 -> Int32)
@@ -207,7 +207,7 @@ describe "Semantic: proc" do
       "can't cast Proc(Int32, Float64) to Proc(Int32, Int32)"
   end
 
-  it "disallows casting a proc type to one accepting same size argument but different input" do
+  it("disallows casting a proc type to one accepting same size argument but different input") do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f.as(Float64 -> Float64)
@@ -215,7 +215,7 @@ describe "Semantic: proc" do
       "can't cast Proc(Int32, Float64) to Proc(Float64, Float64)"
   end
 
-  it "types proc literal hard type inference (1)" do
+  it("types proc literal hard type inference (1)") do
     assert_type(%(
       require "prelude"
 
@@ -234,7 +234,7 @@ describe "Semantic: proc" do
       )) { proc_of(types["Foo"], tuple_of([types["Foo"], int32])) }
   end
 
-  it "allows implicit cast of proc to return void in non-generic restriction" do
+  it("allows implicit cast of proc to return void in non-generic restriction") do
     assert_type("
       def foo(x : ->)
         x
@@ -244,7 +244,7 @@ describe "Semantic: proc" do
       ") { proc_of(void) }
   end
 
-  it "allows implicit cast of proc to return void in generic restriction" do
+  it("allows implicit cast of proc to return void in generic restriction") do
     assert_type("
       class Foo(T)
         def foo(x : T)
@@ -257,12 +257,12 @@ describe "Semantic: proc" do
       ") { proc_of(void) }
   end
 
-  it "types nil or proc type" do
+  it("types nil or proc type") do
     result = assert_type("1 == 1 ? nil : ->{}") { nilable proc_of(nil_type) }
     result.node.type.should be_a(NilableProcType)
   end
 
-  it "allows passing NoReturn type for any return type (1)" do
+  it("allows passing NoReturn type for any return type (1)") do
     assert_type("
       lib LibC
         fun exit : NoReturn
@@ -276,7 +276,7 @@ describe "Semantic: proc" do
       ") { no_return }
   end
 
-  it "allows passing NoReturn type for any return type (2)" do
+  it("allows passing NoReturn type for any return type (2)") do
     assert_type("
       lib LibC
         fun exit : NoReturn
@@ -287,7 +287,7 @@ describe "Semantic: proc" do
       ") { int32 }
   end
 
-  it "allows passing NoReturn type for any return type (3)" do
+  it("allows passing NoReturn type for any return type (3)") do
     assert_type("
       lib LibC
         fun exit : NoReturn
@@ -302,14 +302,14 @@ describe "Semantic: proc" do
       ") { proc_of(int32) }
   end
 
-  it "allows new on proc type" do
+  it("allows new on proc type") do
     assert_type("
       alias Func = Int32 -> Int32
       Func.new { |x| x + 1 }
       ") { proc_of(int32, int32) }
   end
 
-  it "allows new on proc type that is a typedef" do
+  it("allows new on proc type that is a typedef") do
     assert_type("
       lib LibC
         type F = Int32 -> Int32
@@ -319,14 +319,14 @@ describe "Semantic: proc" do
       ") { proc_of(int32, int32) }
   end
 
-  it "allows new on proc type with less block args" do
+  it("allows new on proc type with less block args") do
     assert_type("
       alias Func = Int32 -> Int32
       Func.new { 1 }
       ") { proc_of(int32, int32) }
   end
 
-  it "says wrong number of block args in new on proc type" do
+  it("says wrong number of block args in new on proc type") do
     assert_error "
       alias Alias = Int32 -> Int32
       Alias.new { |x, y| }
@@ -334,7 +334,7 @@ describe "Semantic: proc" do
       "wrong number of block arguments for Proc(Int32, Int32)#new (given 2, expected 1)"
   end
 
-  it "says wrong return type in new on proc type" do
+  it("says wrong return type in new on proc type") do
     assert_error "
       alias Alias = Int32 -> Int32
       Alias.new &.to_f
@@ -342,12 +342,12 @@ describe "Semantic: proc" do
       "expected block to return Int32, not Float64"
   end
 
-  it "errors if missing argument type in proc literal" do
+  it("errors if missing argument type in proc literal") do
     assert_error "->(x) { x }",
       "function argument 'x' must have a type"
   end
 
-  it "allows passing function to LibC without specifying types" do
+  it("allows passing function to LibC without specifying types") do
     assert_type(%(
       lib LibC
         fun foo(x : Int32 -> Int32) : Float64
@@ -357,7 +357,7 @@ describe "Semantic: proc" do
       )) { float64 }
   end
 
-  it "allows passing function to LibC without specifying types, using a global method" do
+  it("allows passing function to LibC without specifying types, using a global method") do
     assert_type(%(
       lib LibC
         fun foo(x : Int32 -> Int32) : Float64
@@ -371,7 +371,7 @@ describe "Semantic: proc" do
       )) { float64 }
   end
 
-  it "allows passing function to LibC without specifying types, using a class method" do
+  it("allows passing function to LibC without specifying types, using a class method") do
     assert_type(%(
       lib LibC
         fun foo(x : Int32 -> Int32) : Float64
@@ -387,13 +387,13 @@ describe "Semantic: proc" do
       )) { float64 }
   end
 
-  it "allows writing a function type with Proc" do
+  it("allows writing a function type with Proc") do
     assert_type(%(
       Proc(Int32, Int32)
       )) { proc_of(int32, int32).metaclass }
   end
 
-  it "allows using Proc as restriction (1)" do
+  it("allows using Proc as restriction (1)") do
     assert_type(%(
       def foo(x : Proc(Int32, Int32))
         x.call(2)
@@ -403,7 +403,7 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  it "allows using Proc as restriction (2)" do
+  it("allows using Proc as restriction (2)") do
     assert_type(%(
       def foo(x : Proc)
         x.call(2)
@@ -413,7 +413,7 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  it "allows using Proc as restriction (3)" do
+  it("allows using Proc as restriction (3)") do
     assert_type(%(
       def foo(x : Proc(T, U)) forall T, U
         T
@@ -423,7 +423,7 @@ describe "Semantic: proc" do
       )) { int32.metaclass }
   end
 
-  it "forwards block and computes correct type (bug)" do
+  it("forwards block and computes correct type (bug)") do
     assert_type(%(
       def foo(&block : -> _)
         bar &block
@@ -438,7 +438,7 @@ describe "Semantic: proc" do
       )) { string }
   end
 
-  it "doesn't need to deduce type of block if return is void" do
+  it("doesn't need to deduce type of block if return is void") do
     assert_type(%(
       class Foo
         def initialize
@@ -460,7 +460,7 @@ describe "Semantic: proc" do
       )) { proc_of(types["Foo"], nil_type) }
   end
 
-  it "gives correct error message when proc return type is incorrect (#219)" do
+  it("gives correct error message when proc return type is incorrect (#219)") do
     assert_error %(
       lib LibFoo
         fun bar(f : Int32 -> Int32)
@@ -471,7 +471,7 @@ describe "Semantic: proc" do
       "argument 'f' of 'LibFoo#bar' must be a Proc returning Int32, not Float64"
   end
 
-  it "doesn't capture closured var if using typeof" do
+  it("doesn't capture closured var if using typeof") do
     assert_type(%(
       lib LibFoo
         fun foo(x : ->) : Int32
@@ -485,7 +485,7 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  it "types proc literal with a type that was never instantiated" do
+  it("types proc literal with a type that was never instantiated") do
     assert_type(%(
       require "prelude"
 
@@ -502,7 +502,7 @@ describe "Semantic: proc" do
       )) { proc_of(types["Foo"], int32) }
   end
 
-  it "types proc pointer with a type that was never instantiated" do
+  it("types proc pointer with a type that was never instantiated") do
     assert_type(%(
       require "prelude"
 
@@ -523,7 +523,7 @@ describe "Semantic: proc" do
       )) { proc_of(types["Foo"], types["Foo"]) }
   end
 
-  it "allows using proc arg name shadowing local variable" do
+  it("allows using proc arg name shadowing local variable") do
     assert_type(%(
       a = 1
       f = ->(a : String) { }
@@ -531,7 +531,7 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  it "uses array argument of proc arg (1)" do
+  it("uses array argument of proc arg (1)") do
     assert_type(%(
       require "prelude"
 
@@ -550,7 +550,7 @@ describe "Semantic: proc" do
       )) { nil_type }
   end
 
-  it "uses array argument of proc arg (2)" do
+  it("uses array argument of proc arg (2)") do
     assert_type(%(
       require "prelude"
 
@@ -570,7 +570,7 @@ describe "Semantic: proc" do
       )) { proc_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
   end
 
-  it "uses array argument of proc arg (3)" do
+  it("uses array argument of proc arg (3)") do
     assert_type(%(
       require "prelude"
 
@@ -594,7 +594,7 @@ describe "Semantic: proc" do
       )) { proc_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
   end
 
-  it "uses array argument of proc arg (4)" do
+  it("uses array argument of proc arg (4)") do
     assert_error %(
       require "prelude"
 
@@ -614,7 +614,7 @@ describe "Semantic: proc" do
       "expected block to return Foo, not Int32"
   end
 
-  it "doesn't let passing an non-covariant generic argument" do
+  it("doesn't let passing an non-covariant generic argument") do
     assert_error %(
       require "prelude"
 
@@ -634,7 +634,7 @@ describe "Semantic: proc" do
       "no overload matches"
   end
 
-  it "allows invoking a function with a generic subtype" do
+  it("allows invoking a function with a generic subtype") do
     assert_type(%(
       module Moo
         def foo
@@ -656,7 +656,7 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  it "gets pointer to lib fun without specifying types" do
+  it("gets pointer to lib fun without specifying types") do
     assert_type(%(
       lib LibFoo
         fun foo(x : Int32) : Float64
@@ -666,7 +666,7 @@ describe "Semantic: proc" do
       )) { proc_of(int32, float64) }
   end
 
-  it "allows passing union including module to proc" do
+  it("allows passing union including module to proc") do
     assert_type(%(
       module Moo
         def moo
@@ -689,7 +689,7 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  it "allows passing virtual type including module to proc" do
+  it("allows passing virtual type including module to proc") do
     assert_type(%(
       module Moo
         def moo
@@ -712,14 +712,14 @@ describe "Semantic: proc" do
   end
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
-    it "disallows #{type} in procs" do
+    it("disallows #{type} in procs") do
       assert_error %(
         ->(x : #{type}) { }
         ),
         "as a Proc argument type"
     end
 
-    it "disallows #{type} in captured block" do
+    it("disallows #{type} in captured block") do
       assert_error %(
         def foo(&block : #{type} ->)
         end
@@ -729,7 +729,7 @@ describe "Semantic: proc" do
         "as a Proc argument type"
     end
 
-    it "disallows #{type} in proc pointer" do
+    it("disallows #{type} in proc pointer") do
       assert_error %(
         def foo(x)
         end
@@ -740,7 +740,7 @@ describe "Semantic: proc" do
     end
   end
 
-  it "..." do
+  it("...") do
     assert_type(%(
       def foo
         ->{ a = 1; return 0 }.call
@@ -750,7 +750,7 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  it "doesn't crash on constant to proc pointer" do
+  it("doesn't crash on constant to proc pointer") do
     assert_type(%(
       lib LibC
         fun foo
@@ -761,13 +761,13 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  it "sets proc type as void if explicitly told so, when using new" do
+  it("sets proc type as void if explicitly told so, when using new") do
     assert_type(%(
       Proc(Int32, Void).new { 1 }
       )) { proc_of(int32, nil_type) }
   end
 
-  it "accesses T and R" do
+  it("accesses T and R") do
     assert_type(%(
       struct Proc
         def t
@@ -779,7 +779,7 @@ describe "Semantic: proc" do
       )) { tuple_of([tuple_of([int32]).metaclass, char.metaclass]) }
   end
 
-  it "can match *T in block argument" do
+  it("can match *T in block argument") do
     assert_type(%(
       struct Tuple
         def foo(&block : *T -> U) forall T, U
@@ -792,14 +792,14 @@ describe "Semantic: proc" do
       )) { bool.metaclass }
   end
 
-  it "says wrong number of arguments" do
+  it("says wrong number of arguments") do
     assert_error %(
       ->(x : Int32) { }.call
       ),
       "no overload matches"
   end
 
-  it "finds method of object" do
+  it("finds method of object") do
     assert_type(%(
       class Object
         def foo
@@ -811,7 +811,7 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  it "accesses T inside variadic generic" do
+  it("accesses T inside variadic generic") do
     assert_type(%(
       def foo(proc : Proc(*T, R)) forall T, R
         {T, R}
@@ -821,7 +821,7 @@ describe "Semantic: proc" do
       )) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
   end
 
-  it "accesses T inside variadic generic (2)" do
+  it("accesses T inside variadic generic (2)") do
     assert_type(%(
       def foo(proc : Proc(*T, R)) forall T, R
         {T, R}
@@ -831,7 +831,7 @@ describe "Semantic: proc" do
       )) { tuple_of([tuple_of([int32]).metaclass, char.metaclass]) }
   end
 
-  it "accesses T inside variadic generic, in proc notation" do
+  it("accesses T inside variadic generic, in proc notation") do
     assert_type(%(
       def foo(proc : *T -> R) forall T, R
         {T, R}
@@ -841,7 +841,7 @@ describe "Semantic: proc" do
       )) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
   end
 
-  it "declares an instance variable with splat in proc notation" do
+  it("declares an instance variable with splat in proc notation") do
     assert_type(%(
       class Foo
         @x : *{Int32, Char} -> String
@@ -859,7 +859,7 @@ describe "Semantic: proc" do
       )) { proc_of([int32, char, string]) }
   end
 
-  it "can assign NoReturn proc to other proc (#3032)" do
+  it("can assign NoReturn proc to other proc (#3032)") do
     assert_type(%(
       lib LibC
         fun exit : NoReturn

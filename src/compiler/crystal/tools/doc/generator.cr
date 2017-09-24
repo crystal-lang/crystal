@@ -254,7 +254,7 @@ class Crystal::Doc::Generator
   end
 
   def fetch_doc_lines(doc)
-    doc.gsub /\n+/ do |match|
+    doc.gsub(/\n+/) do |match|
       if match.size == 1
         " "
       else

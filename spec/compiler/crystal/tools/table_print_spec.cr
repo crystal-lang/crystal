@@ -11,19 +11,19 @@ private def assert_table(expected)
   actual.should eq(expected[1..-1])
 end
 
-describe Crystal::TablePrint do
-  it "single cell" do
-    assert_table %(
-| A |) do
+describe(Crystal::TablePrint) do
+  it("single cell") do
+    assert_table(%(
+| A |)) do
       row do
         cell "A"
       end
     end
   end
 
-  it "single row with separator" do
-    assert_table %(
-| A | B |) do
+  it("single row with separator") do
+    assert_table(%(
+| A | B |)) do
       row do
         cell "A"
         cell "B"
@@ -31,10 +31,10 @@ describe Crystal::TablePrint do
     end
   end
 
-  it "multiple rows with separator" do
-    assert_table %(
+  it("multiple rows with separator") do
+    assert_table(%(
 | A | B |
-| C | D |) do
+| C | D |)) do
       row do
         cell "A"
         cell "B"
@@ -46,11 +46,11 @@ describe Crystal::TablePrint do
     end
   end
 
-  it "rows with horizontal separators" do
-    assert_table %(
+  it("rows with horizontal separators") do
+    assert_table(%(
 | A | B |
 ---------
-| C | D |) do
+| C | D |)) do
       row do
         cell "A"
         cell "B"
@@ -63,11 +63,11 @@ describe Crystal::TablePrint do
     end
   end
 
-  it "aligns columns borders" do
-    assert_table %(
+  it("aligns columns borders") do
+    assert_table(%(
 | A   | Foo |
 -------------
-| Bar | D   |) do
+| Bar | D   |)) do
       row do
         cell "A"
         cell "Foo"
@@ -80,11 +80,11 @@ describe Crystal::TablePrint do
     end
   end
 
-  it "aligns cell content" do
-    assert_table %(
+  it("aligns cell content") do
+    assert_table(%(
 |  A  | Fooo |
 --------------
-| Bar |    D |) do
+| Bar |    D |)) do
       row do
         cell "A", align: :center
         cell "Fooo"
@@ -97,10 +97,10 @@ describe Crystal::TablePrint do
     end
   end
 
-  it "colspan a cell that fits the available size" do
-    assert_table %(
+  it("colspan a cell that fits the available size") do
+    assert_table(%(
 |   A   |
-| B | C |) do
+| B | C |)) do
       row do
         cell "A", align: :center, colspan: 2
       end

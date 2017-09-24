@@ -1,24 +1,24 @@
 require "../../spec_helper"
 
-describe "Semantic: return" do
-  it "infers return type" do
+describe("Semantic: return") do
+  it("infers return type") do
     assert_type("def foo; return 1; end; foo") { int32 }
   end
 
-  it "infers return type with many returns (1)" do
+  it("infers return type with many returns (1)") do
     assert_type("def foo; if true; return 1; end; 'a'; end; foo") { union_of(int32, char) }
   end
 
-  it "infers return type with many returns (2)" do
+  it("infers return type with many returns (2)") do
     assert_type("def foo; if 1 == 1; return 1; end; 'a'; end; foo") { union_of(int32, char) }
   end
 
-  it "errors on return in top level" do
+  it("errors on return in top level") do
     assert_error "return",
       "can't return from top level"
   end
 
-  it "types return if true" do
+  it("types return if true") do
     assert_type(%(
       def bar
         return if true
@@ -29,7 +29,7 @@ describe "Semantic: return" do
       )) { nilable int32 }
   end
 
-  it "can use type var as return type (#1226)" do
+  it("can use type var as return type (#1226)") do
     assert_type(%(
       module Moo(T)
       end
@@ -47,7 +47,7 @@ describe "Semantic: return" do
       )) { int32 }
   end
 
-  it "can use type var as return type with an included generic module" do
+  it("can use type var as return type with an included generic module") do
     assert_type(%(
       module Moo(T)
         def moo : T
@@ -66,7 +66,7 @@ describe "Semantic: return" do
       )) { float64 }
   end
 
-  it "can use type var as return type with an inherited generic class" do
+  it("can use type var as return type with an inherited generic class") do
     assert_type(%(
       class Moo(T)
         def moo : T
@@ -83,7 +83,7 @@ describe "Semantic: return" do
       )) { float64 }
   end
 
-  it "doesn't confuse return type from base class" do
+  it("doesn't confuse return type from base class") do
     assert_type(%(
       class Foo
         class Baz
@@ -106,7 +106,7 @@ describe "Semantic: return" do
       )) { int32 }
   end
 
-  it "allows returning NoReturn instead of the wanted type" do
+  it("allows returning NoReturn instead of the wanted type") do
     assert_type(%(
       lib LibC
         fun exit : NoReturn
@@ -133,7 +133,7 @@ describe "Semantic: return" do
       )) { int32 }
   end
 
-  it "types bug (#1823)" do
+  it("types bug (#1823)") do
     assert_type(%(
       def test
         b = nil
@@ -149,7 +149,7 @@ describe "Semantic: return" do
       test)) { nilable int32 }
   end
 
-  it "allows nilable return type to match subclasses (#1735)" do
+  it("allows nilable return type to match subclasses (#1735)") do
     assert_type(%(
       class Foo
       end
@@ -169,7 +169,7 @@ describe "Semantic: return" do
       )) { nilable types["Bar"] }
   end
 
-  it "can use free var in return type (#2492)" do
+  it("can use free var in return type (#2492)") do
     assert_type(%(
       def self.demo(a : A, &block : A -> B) : B forall A, B
         block.call(a)

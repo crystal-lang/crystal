@@ -1,8 +1,8 @@
 require "spec"
 require "gzip"
 
-describe Gzip do
-  it "writes and reads to memory" do
+describe(Gzip) do
+  it("writes and reads to memory") do
     io = IO::Memory.new
 
     time = Time.new(2016, 1, 2)

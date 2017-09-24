@@ -1,8 +1,8 @@
 require "spec"
 
-describe "IO::MultiWriter" do
-  describe "#write" do
-    it "writes to multiple IOs" do
+describe("IO::MultiWriter") do
+  describe("#write") do
+    it("writes to multiple IOs") do
       io1 = IO::Memory.new
       io2 = IO::Memory.new
 
@@ -15,8 +15,8 @@ describe "IO::MultiWriter" do
     end
   end
 
-  describe "#read" do
-    it "raises" do
+  describe("#read") do
+    it("raises") do
       writer = IO::MultiWriter.new(Array(IO).new)
 
       expect_raises(IO::Error, "Can't read from IO::MultiWriter") do
@@ -25,8 +25,8 @@ describe "IO::MultiWriter" do
     end
   end
 
-  describe "#close" do
-    it "stops reading" do
+  describe("#close") do
+    it("stops reading") do
       io = IO::Memory.new
       writer = IO::MultiWriter.new(io)
 
@@ -40,7 +40,7 @@ describe "IO::MultiWriter" do
       io.to_s.should eq("")
     end
 
-    it "closes the underlying stream if sync_close is true" do
+    it("closes the underlying stream if sync_close is true") do
       io = IO::Memory.new
       writer = IO::MultiWriter.new(io, sync_close: true)
 

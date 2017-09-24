@@ -2,28 +2,28 @@ require "../../spec_helper"
 
 CodeGenStructString = "lib LibFoo; struct Bar; x : Int32; y : Float32; end; end"
 
-describe "Code gen: struct" do
-  it "codegens struct property default value" do
+describe("Code gen: struct") do
+  it("codegens struct property default value") do
     run("#{CodeGenStructString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x").to_i.should eq(0)
   end
 
-  it "codegens struct property setter" do
+  it("codegens struct property setter") do
     run("#{CodeGenStructString}; bar = LibFoo::Bar.new; bar.y = 2.5_f32; bar.y").to_f32.should eq(2.5)
   end
 
-  it "codegens struct property setter via pointer" do
+  it("codegens struct property setter via pointer") do
     run("#{CodeGenStructString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.y = 2.5_f32; bar.value.y").to_f32.should eq(2.5)
   end
 
-  it "codegens struct property setter via pointer" do
+  it("codegens struct property setter via pointer") do
     run("#{CodeGenStructString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.y = 2.5_f32; bar.value.y").to_f32.should eq(2.5)
   end
 
-  it "codegens set struct value with constant" do
+  it("codegens set struct value with constant") do
     run("#{CodeGenStructString}; CONST = 1; bar = LibFoo::Bar.new; bar.x = CONST; bar.x").to_i.should eq(1)
   end
 
-  it "codegens union inside struct" do
+  it("codegens union inside struct") do
     run("
       lib LibFoo
         union Bar
@@ -42,7 +42,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(10)
   end
 
-  it "codegens struct get inside struct" do
+  it("codegens struct get inside struct") do
     run("
       lib LibC
         struct Bar
@@ -62,7 +62,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(2)
   end
 
-  it "codegens struct set inside struct" do
+  it("codegens struct set inside struct") do
     run("
       lib LibC
         struct Bar
@@ -84,7 +84,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(2)
   end
 
-  it "codegens pointer malloc of struct" do
+  it("codegens pointer malloc of struct") do
     run("
       lib LibC
         struct Foo
@@ -98,7 +98,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(1)
   end
 
-  it "passes struct to method (1)" do
+  it("passes struct to method (1)") do
     run("
       lib LibC
         struct Foo
@@ -120,7 +120,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(1)
   end
 
-  it "passes struct to method (2)" do
+  it("passes struct to method (2)") do
     run("
       lib LibC
         struct Foo
@@ -141,7 +141,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(2)
   end
 
-  it "codegens struct access with -> and then ." do
+  it("codegens struct access with -> and then .") do
     run("
       lib LibC
         struct ScalarEvent
@@ -162,7 +162,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(0)
   end
 
-  it "yields struct via ->" do
+  it("yields struct via ->") do
     run("
       lib LibC
         struct ScalarEvent
@@ -189,7 +189,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(0)
   end
 
-  it "codegens assign struct to union" do
+  it("codegens assign struct to union") do
     run("
       lib LibFoo
         struct Coco
@@ -203,7 +203,7 @@ describe "Code gen: struct" do
     ").to_b.should be_true
   end
 
-  it "codegens passing pointerof(struct) to fun" do
+  it("codegens passing pointerof(struct) to fun") do
     run("
       lib LibC
         struct Foo
@@ -222,7 +222,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(1)
   end
 
-  it "builds struct setter with fun type (1)" do
+  it("builds struct setter with fun type (1)") do
     codegen(%(
       require "prelude"
 
@@ -237,7 +237,7 @@ describe "Code gen: struct" do
       ))
   end
 
-  it "builds struct setter with fun type (2)" do
+  it("builds struct setter with fun type (2)") do
     codegen(%(
       require "prelude"
 
@@ -252,7 +252,7 @@ describe "Code gen: struct" do
       ))
   end
 
-  it "allows using named arguments for new" do
+  it("allows using named arguments for new") do
     run(%(
       lib LibC
         struct Point
@@ -265,7 +265,7 @@ describe "Code gen: struct" do
       )).to_i.should eq(3)
   end
 
-  it "does to_s" do
+  it("does to_s") do
     run(%(
       require "prelude"
 
@@ -280,7 +280,7 @@ describe "Code gen: struct" do
       )).to_string.should eq("LibFoo::Point(@x=1, @y=2)")
   end
 
-  it "can access instance var from the outside (#1092)" do
+  it("can access instance var from the outside (#1092)") do
     run(%(
       lib LibFoo
         struct Foo
@@ -293,7 +293,7 @@ describe "Code gen: struct" do
       )).to_i.should eq(123)
   end
 
-  it "automatically converts numeric type in struct field assignment" do
+  it("automatically converts numeric type in struct field assignment") do
     run(%(
       lib LibFoo
         struct Foo
@@ -307,7 +307,7 @@ describe "Code gen: struct" do
       )).to_i.should eq(123)
   end
 
-  it "automatically converts numeric union type in struct field assignment" do
+  it("automatically converts numeric union type in struct field assignment") do
     run(%(
       lib LibFoo
         struct Foo
@@ -323,7 +323,7 @@ describe "Code gen: struct" do
       )).to_i.should eq(57)
   end
 
-  it "automatically converts nil to pointer" do
+  it("automatically converts nil to pointer") do
     run(%(
       lib LibFoo
         struct Foo
@@ -338,7 +338,7 @@ describe "Code gen: struct" do
       )).to_i.should eq(0)
   end
 
-  it "automatically converts by invoking to_unsafe" do
+  it("automatically converts by invoking to_unsafe") do
     run(%(
       lib LibFoo
         struct Foo
@@ -358,7 +358,7 @@ describe "Code gen: struct" do
       )).to_i.should eq(123)
   end
 
-  it "sets instance var to proc" do
+  it("sets instance var to proc") do
     run(%(
       require "prelude"
 

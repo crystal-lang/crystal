@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: new" do
-  it "codegens instance method with allocate" do
+describe("Code gen: new") do
+  it("codegens instance method with allocate") do
     run(%(
       class Foo
         def coco
@@ -13,7 +13,7 @@ describe "Code gen: new" do
       )).to_i.should eq(1)
   end
 
-  it "codegens instance method with new and instance var" do
+  it("codegens instance method with new and instance var") do
     run(%(
       class Foo
         def initialize
@@ -31,7 +31,7 @@ describe "Code gen: new" do
       )).to_i.should eq(1)
   end
 
-  it "codegens instance method with new" do
+  it("codegens instance method with new") do
     run(%(
       class Foo
         def coco
@@ -43,13 +43,13 @@ describe "Code gen: new" do
       )).to_i.should eq(1)
   end
 
-  it "can create Reference" do
+  it("can create Reference") do
     run(%(
       Reference.new.object_id == 0
       )).to_b.should be_false
   end
 
-  it "inherits initialize" do
+  it("inherits initialize") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -67,7 +67,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "inherits initialize for generic type" do
+  it("inherits initialize for generic type") do
     run(%(
       class Foo(T)
         def initialize(@x : Int32)
@@ -84,7 +84,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "overloads new and initialize, 1 (#2489)" do
+  it("overloads new and initialize, 1 (#2489)") do
     run(%(
       class String
         def size
@@ -113,7 +113,7 @@ describe "Code gen: new" do
       )).to_i.should eq(10)
   end
 
-  it "overloads new and initialize, 2 (#2489)" do
+  it("overloads new and initialize, 2 (#2489)") do
     run(%(
       class Global
         @@x = 0
@@ -144,7 +144,7 @@ describe "Code gen: new" do
       )).to_i.should eq(6)
   end
 
-  it "overloads new and initialize, 3 (#2489)" do
+  it("overloads new and initialize, 3 (#2489)") do
     run(%(
       class Global
         @@x = 0
@@ -173,7 +173,7 @@ describe "Code gen: new" do
       )).to_i.should eq(6)
   end
 
-  it "defines new for module" do
+  it("defines new for module") do
     run(%(
       module Moo
         @x : Int32
@@ -195,7 +195,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "finds super in deep hierarchy" do
+  it("finds super in deep hierarchy") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -222,7 +222,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "finds new in superclass if no initialize is defined (1)" do
+  it("finds new in superclass if no initialize is defined (1)") do
     run(%(
       class Foo
         def self.new
@@ -237,7 +237,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "finds new in superclass if no initialize is defined (2)" do
+  it("finds new in superclass if no initialize is defined (2)") do
     run(%(
       class Foo
         def self.new
@@ -255,7 +255,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "finds new in superclass for Enum" do
+  it("finds new in superclass for Enum") do
     run(%(
       struct Enum
         def self.new(x : String)
@@ -274,7 +274,7 @@ describe "Code gen: new" do
       )).to_i.should eq(1)
   end
 
-  it "can create Tuple with Tuple.new" do
+  it("can create Tuple with Tuple.new") do
     run(%(
       require "prelude"
 
@@ -282,7 +282,7 @@ describe "Code gen: new" do
       )).to_i.should eq(0)
   end
 
-  it "evaluates initialize default value at the instance scope (1) (#731)" do
+  it("evaluates initialize default value at the instance scope (1) (#731)") do
     run(%(
       class Foo
         @x : Int32
@@ -303,7 +303,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "evaluates initialize default value at the instance scope (2) (#731)" do
+  it("evaluates initialize default value at the instance scope (2) (#731)") do
     run(%(
       class Foo
         @x : Int32
@@ -329,7 +329,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "evaluates initialize default value at the instance scope (3) (#731)" do
+  it("evaluates initialize default value at the instance scope (3) (#731)") do
     run(%(
       class Foo
         @x : Int32
@@ -357,7 +357,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "evaluates initialize default value at the instance scope (4) (#731)" do
+  it("evaluates initialize default value at the instance scope (4) (#731)") do
     run(%(
       class Foo
         @x : Int32

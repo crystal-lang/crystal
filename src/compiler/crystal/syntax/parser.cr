@@ -41,7 +41,7 @@ module Crystal
       # as belonging to the current parsed call. For example when writing
       #
       # ```
-      # foo bar do
+      # foo(bar) do
       # end
       # ```
       #

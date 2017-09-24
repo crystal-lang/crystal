@@ -1,23 +1,23 @@
 require "../../spec_helper"
 
-describe "Semantic: union" do
-  it "types union when obj is union" do
+describe("Semantic: union") do
+  it("types union when obj is union") do
     assert_type("struct Char; def +(other); self; end; end; a = 1 || 'a'; a + 1") { union_of(int32, char) }
   end
 
-  it "types union when arg is union" do
+  it("types union when arg is union") do
     assert_type("struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; 1 + a") { union_of(int32, char) }
   end
 
-  it "types union when both obj and arg are union" do
+  it("types union when both obj and arg are union") do
     assert_type("struct Char; def +(other); self; end; end; struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; a + a") { union_of(int32, char) }
   end
 
-  it "types union of classes" do
+  it("types union of classes") do
     assert_type("class Foo; end; class Bar; end; a = Foo.new || Bar.new; a") { union_of(types["Foo"], types["Bar"]) }
   end
 
-  it "assigns to union and keeps new union type in call" do
+  it("assigns to union and keeps new union type in call") do
     assert_type("
       def foo(x)
         while false
@@ -30,7 +30,7 @@ describe "Semantic: union" do
       ") { union_of(int32, bool, char) }
   end
 
-  it "looks up type in union type with free var" do
+  it("looks up type in union type with free var") do
     assert_type("
       class Bar(T)
       end
@@ -43,7 +43,7 @@ describe "Semantic: union" do
     ") { generic_class "Bar", union_of(int32, char) }
   end
 
-  it "supports macro if inside union" do
+  it("supports macro if inside union") do
     assert_type(%(
       lib LibC
         union Foo
@@ -59,19 +59,19 @@ describe "Semantic: union" do
       ), flags: "some_flag") { int32 }
   end
 
-  it "types union" do
+  it("types union") do
     assert_type(%(
       Union(Int32, String)
       )) { union_of(int32, string).metaclass }
   end
 
-  it "types union of same type" do
+  it("types union of same type") do
     assert_type(%(
       Union(Int32, Int32, Int32)
       )) { int32.metaclass }
   end
 
-  it "can reopen Union" do
+  it("can reopen Union") do
     assert_type(%(
       struct Union
         def self.foo
@@ -82,7 +82,7 @@ describe "Semantic: union" do
       )) { int32 }
   end
 
-  it "can reopen Union and access T" do
+  it("can reopen Union and access T") do
     assert_type(%(
       struct Union
         def self.types
@@ -93,7 +93,7 @@ describe "Semantic: union" do
       )) { tuple_of([int32, string]).metaclass }
   end
 
-  it "can iterate T" do
+  it("can iterate T") do
     assert_type(%(
       struct Union
         def self.types
@@ -110,14 +110,14 @@ describe "Semantic: union" do
       )) { tuple_of([int32.metaclass, string.metaclass]) }
   end
 
-  it "errors if instantiates union" do
+  it("errors if instantiates union") do
     assert_error %(
       Union(Int32, String).new
       ),
       "can't create instance of a union type"
   end
 
-  it "finds method in Object" do
+  it("finds method in Object") do
     assert_type(%(
       class Object
         def self.foo
@@ -129,7 +129,7 @@ describe "Semantic: union" do
       )) { int32 }
   end
 
-  it "finds method in Value" do
+  it("finds method in Value") do
     assert_type(%(
       struct Value
         def self.foo
@@ -141,7 +141,7 @@ describe "Semantic: union" do
       )) { int32 }
   end
 
-  it "merges types in the same hierarchy with Union" do
+  it("merges types in the same hierarchy with Union") do
     assert_type(%(
       class Foo; end
       class Bar < Foo; end
@@ -150,13 +150,13 @@ describe "Semantic: union" do
       )) { types["Foo"].virtual_type!.metaclass }
   end
 
-  it "treats void as nil in union" do
+  it("treats void as nil in union") do
     assert_type(%(
       nil.as(Void?)
       )) { nil_type }
   end
 
-  it "can use Union in type restriction (#2988)" do
+  it("can use Union in type restriction (#2988)") do
     assert_type(%(
       def foo(x : Union(Int32, String))
         x

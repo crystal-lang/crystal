@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: class" do
-  it "codegens call to same instance" do
+describe("Code gen: class") do
+  it("codegens call to same instance") do
     run(%(
       class Foo
         def foo
@@ -17,7 +17,7 @@ describe "Code gen: class" do
       )).to_i.should eq(1)
   end
 
-  it "codegens instance var" do
+  it("codegens instance var") do
     run("
       class Foo
         def initialize(@coco : Int32)
@@ -33,7 +33,7 @@ describe "Code gen: class" do
       ").to_i.should eq(42)
   end
 
-  it "codegens recursive type" do
+  it("codegens recursive type") do
     run("
       class Foo
         def next=(@next : Foo)
@@ -45,7 +45,7 @@ describe "Code gen: class" do
       ")
   end
 
-  it "codegens method call of instance var" do
+  it("codegens method call of instance var") do
     run("
       class List
         def initialize
@@ -63,7 +63,7 @@ describe "Code gen: class" do
       ").to_f64.should eq(1.0)
   end
 
-  it "codegens new which calls initialize" do
+  it("codegens new which calls initialize") do
     run("
       class Foo
         def initialize(value : Int32)
@@ -80,7 +80,7 @@ describe "Code gen: class" do
     ").to_i.should eq(1)
   end
 
-  it "codegens method from another method without obj and accesses instance vars" do
+  it("codegens method from another method without obj and accesses instance vars") do
     run("
       class Foo
         def foo
@@ -97,7 +97,7 @@ describe "Code gen: class" do
       ").to_i.should eq(1)
   end
 
-  it "codegens virtual call that calls another method" do
+  it("codegens virtual call that calls another method") do
     run("
       class Foo
         def foo
@@ -116,7 +116,7 @@ describe "Code gen: class" do
       ").to_i.should eq(1)
   end
 
-  it "codgens virtual method of generic class" do
+  it("codgens virtual method of generic class") do
     run("
       require \"char\"
 
@@ -140,7 +140,7 @@ describe "Code gen: class" do
       ").to_i.should eq(1)
   end
 
-  it "changes instance variable in method (ssa bug)" do
+  it("changes instance variable in method (ssa bug)") do
     run("
       class Foo
         def initialize
@@ -168,7 +168,7 @@ describe "Code gen: class" do
   #   program.run("Reference.object_id").to_i.should eq(program.reference.metaclass.type_id)
   # end
 
-  it "calls method on Class class" do
+  it("calls method on Class class") do
     run("
       class Class
         def foo
@@ -183,7 +183,7 @@ describe "Code gen: class" do
     ").to_i.should eq(1)
   end
 
-  it "uses number type var" do
+  it("uses number type var") do
     run("
       class Foo(T)
         def self.foo
@@ -195,7 +195,7 @@ describe "Code gen: class" do
       ").to_i.should eq(1)
   end
 
-  it "calls class method without self" do
+  it("calls class method without self") do
     run("
       class Foo
         def self.coco
@@ -208,7 +208,7 @@ describe "Code gen: class" do
       ").to_i.should eq(1)
   end
 
-  it "calls class method without self (2)" do
+  it("calls class method without self (2)") do
     run("
       class Foo
         def self.coco
@@ -231,7 +231,7 @@ describe "Code gen: class" do
       ").to_i.should eq(2)
   end
 
-  it "assigns type to reference union type" do
+  it("assigns type to reference union type") do
     run("
       class Foo
         def initialize(@x : Bar)
@@ -248,7 +248,7 @@ describe "Code gen: class" do
       ").to_i.should eq(1)
   end
 
-  it "does to_s for class" do
+  it("does to_s for class") do
     run(%(
       require "prelude"
 
@@ -256,7 +256,7 @@ describe "Code gen: class" do
       )).to_string.should eq("Reference")
   end
 
-  it "allows fixing an instance variable's type" do
+  it("allows fixing an instance variable's type") do
     run(%(
       class Foo
         @x : Bool
@@ -273,7 +273,7 @@ describe "Code gen: class" do
       )).to_b.should be_true
   end
 
-  it "codegens initialize with instance var" do
+  it("codegens initialize with instance var") do
     run(%(
       class Foo
         @x : Nil
@@ -288,7 +288,7 @@ describe "Code gen: class" do
       )).to_i.should eq(1)
   end
 
-  it "reads other instance var" do
+  it("reads other instance var") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -300,7 +300,7 @@ describe "Code gen: class" do
       )).to_i.should eq(1)
   end
 
-  it "reads a virtual type instance var" do
+  it("reads a virtual type instance var") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -315,7 +315,7 @@ describe "Code gen: class" do
       )).to_i.should eq(1)
   end
 
-  it "runs with nilable instance var" do
+  it("runs with nilable instance var") do
     run("
       struct Nil
         def to_i
@@ -340,7 +340,7 @@ describe "Code gen: class" do
       ").to_i.should eq(0)
   end
 
-  it "runs with nil instance var when inheriting" do
+  it("runs with nil instance var when inheriting") do
     run("
       struct Nil
         def to_i
@@ -370,7 +370,7 @@ describe "Code gen: class" do
       ").to_i.should eq(0)
   end
 
-  it "codegens bug #168" do
+  it("codegens bug #168") do
     run("
       class Foo
         @x : Foo?
@@ -394,7 +394,7 @@ describe "Code gen: class" do
       ").to_i.should eq(1)
   end
 
-  it "allows initializing var with constant" do
+  it("allows initializing var with constant") do
     run(%(
       class Foo
         A = 1
@@ -409,13 +409,13 @@ describe "Code gen: class" do
       )).to_i.should eq(1)
   end
 
-  it "codegens class method" do
+  it("codegens class method") do
     codegen(%(
       Int32.class
       ))
   end
 
-  it "codegens virtual class method" do
+  it("codegens virtual class method") do
     codegen(%(
       class Foo
       end
@@ -427,7 +427,7 @@ describe "Code gen: class" do
       ))
   end
 
-  it "allows using self in class scope" do
+  it("allows using self in class scope") do
     run(%(
       class Foo
         def self.foo
@@ -445,7 +445,7 @@ describe "Code gen: class" do
       )).to_i.should eq(1)
   end
 
-  it "allows using self in class scope" do
+  it("allows using self in class scope") do
     run(%(
       class Foo
         def self.foo
@@ -463,7 +463,7 @@ describe "Code gen: class" do
       )).to_i.should eq(1)
   end
 
-  it "makes .class always be a virtual type even if no subclasses" do
+  it("makes .class always be a virtual type even if no subclasses") do
     codegen(%(
       class Foo
       end
@@ -476,7 +476,7 @@ describe "Code gen: class" do
       ))
   end
 
-  it "does to_s for virtual metaclass type (1)" do
+  it("does to_s for virtual metaclass type (1)") do
     run(%(
       require "prelude"
 
@@ -489,7 +489,7 @@ describe "Code gen: class" do
       )).to_string.should eq("Foo")
   end
 
-  it "does to_s for virtual metaclass type (2)" do
+  it("does to_s for virtual metaclass type (2)") do
     run(%(
       require "prelude"
 
@@ -502,7 +502,7 @@ describe "Code gen: class" do
       )).to_string.should eq("Bar")
   end
 
-  it "does to_s for virtual metaclass type (3)" do
+  it("does to_s for virtual metaclass type (3)") do
     run(%(
       require "prelude"
 
@@ -515,7 +515,7 @@ describe "Code gen: class" do
       )).to_string.should eq("Baz")
   end
 
-  it "builds generic class bug" do
+  it("builds generic class bug") do
     codegen(%(
       abstract class Base
         def initialize
@@ -541,7 +541,7 @@ describe "Code gen: class" do
       ))
   end
 
-  it "resolves type declaration when accessing instance var (#348)" do
+  it("resolves type declaration when accessing instance var (#348)") do
     codegen(%(
       require "prelude"
 
@@ -559,7 +559,7 @@ describe "Code gen: class" do
       ))
   end
 
-  it "gets class of virtual type" do
+  it("gets class of virtual type") do
     run(%(
       class Foo
         def self.foo
@@ -578,7 +578,7 @@ describe "Code gen: class" do
       )).to_i.should eq(2)
   end
 
-  it "notifies superclass recursively on inheritance (#576)" do
+  it("notifies superclass recursively on inheritance (#576)") do
     run(%(
       class Class
         def name : String
@@ -611,7 +611,7 @@ describe "Code gen: class" do
       )).to_string.should eq("Qux")
   end
 
-  it "works with array in variable initializer in non-generic type (#855)" do
+  it("works with array in variable initializer in non-generic type (#855)") do
     run(%(
       require "prelude"
 
@@ -627,7 +627,7 @@ describe "Code gen: class" do
       )).to_i.should eq(6)
   end
 
-  it "works with array in variable initializer in generic type (#855)" do
+  it("works with array in variable initializer in generic type (#855)") do
     run(%(
       require "prelude"
 
@@ -643,7 +643,7 @@ describe "Code gen: class" do
       )).to_i.should eq(6)
   end
 
-  it "doesn't crash on instance variable assigned a proc, and never instantiated (#923)" do
+  it("doesn't crash on instance variable assigned a proc, and never instantiated (#923)") do
     codegen(%(
       class Klass
         def f(arg)
@@ -654,7 +654,7 @@ describe "Code gen: class" do
       ))
   end
 
-  it "does to_s on class" do
+  it("does to_s on class") do
     run(%(
       require "prelude"
 
@@ -665,7 +665,7 @@ describe "Code gen: class" do
       )).to_string.should eq("Class")
   end
 
-  it "invokes class method inside instance method (#1119)" do
+  it("invokes class method inside instance method (#1119)") do
     run(%(
       class Class
         def bar
@@ -684,7 +684,7 @@ describe "Code gen: class" do
       )).to_i.should eq(123)
   end
 
-  it "codegens method of class union including Int (#1476)" do
+  it("codegens method of class union including Int (#1476)") do
     run(%(
       class Class
         def foo
@@ -697,7 +697,7 @@ describe "Code gen: class" do
       )).to_i.should eq(1)
   end
 
-  it "can use a Main class (#1628)" do
+  it("can use a Main class (#1628)") do
     run(%(
       require "prelude"
 
@@ -711,7 +711,7 @@ describe "Code gen: class" do
       )).to_i.should eq(1)
   end
 
-  it "codegens singleton (#718)" do
+  it("codegens singleton (#718)") do
     run(%(
       class Singleton
         @@instance = new
@@ -733,7 +733,7 @@ describe "Code gen: class" do
       )).to_string.should eq("Hello")
   end
 
-  it "doesn't crash if not using undefined instance variable in superclass" do
+  it("doesn't crash if not using undefined instance variable in superclass") do
     run(%(
       class Foo
         def initialize(@x)
@@ -754,7 +754,7 @@ describe "Code gen: class" do
       )).to_i.should eq(42)
   end
 
-  it "codegens virtual metaclass union bug (#2597)" do
+  it("codegens virtual metaclass union bug (#2597)") do
     run(%(
 
       class Foo
@@ -797,7 +797,7 @@ describe "Code gen: class" do
       )).to_i.should eq(2)
   end
 
-  it "doesn't crash on #1216" do
+  it("doesn't crash on #1216") do
     codegen(%(
       class Foo
         def initialize(@ivar : Int32)
@@ -814,7 +814,7 @@ describe "Code gen: class" do
       ))
   end
 
-  it "doesn't crash on #1216 with pointerof" do
+  it("doesn't crash on #1216 with pointerof") do
     codegen(%(
       class Foo
         def initialize(@ivar : Int32)
@@ -831,7 +831,7 @@ describe "Code gen: class" do
       ))
   end
 
-  it "doesn't crash on #1216 (reduced)" do
+  it("doesn't crash on #1216 (reduced)") do
     codegen(%(
       class Foo
         def foo
@@ -849,7 +849,7 @@ describe "Code gen: class" do
       ))
   end
 
-  it "doesn't crash on abstract class never instantiated (#2840)" do
+  it("doesn't crash on abstract class never instantiated (#2840)") do
     codegen(%(
       require "prelude"
 
@@ -864,7 +864,7 @@ describe "Code gen: class" do
       ))
   end
 
-  it "can assign virtual metaclass to virtual metaclass (#3007)" do
+  it("can assign virtual metaclass to virtual metaclass (#3007)") do
     run(%(
       class Foo
         def self.foo
@@ -895,7 +895,7 @@ describe "Code gen: class" do
       )).to_i.should eq(2)
   end
 
-  it "transfers initializer from module to generic class" do
+  it("transfers initializer from module to generic class") do
     run(%(
       module Moo
         @x = 123
@@ -913,7 +913,7 @@ describe "Code gen: class" do
       )).to_i.should eq(123)
   end
 
-  it "transfers initializer from generic module to non-generic class" do
+  it("transfers initializer from generic module to non-generic class") do
     run(%(
       module Moo(T)
         @x = 123
@@ -931,7 +931,7 @@ describe "Code gen: class" do
       )).to_i.should eq(123)
   end
 
-  it "transfers initializer from generic module to generic class" do
+  it("transfers initializer from generic module to generic class") do
     run(%(
       module Moo(T)
         @x = 123
@@ -949,7 +949,7 @@ describe "Code gen: class" do
       )).to_i.should eq(123)
   end
 
-  it "doesn't skip false initializers (#3272)" do
+  it("doesn't skip false initializers (#3272)") do
     run(%(
       class Parent
         @foo = true
@@ -967,7 +967,7 @@ describe "Code gen: class" do
       )).to_i.should eq(20)
   end
 
-  it "doesn't skip zero initializers (#3272)" do
+  it("doesn't skip zero initializers (#3272)") do
     run(%(
       class Parent
         @foo = 123
@@ -985,7 +985,7 @@ describe "Code gen: class" do
       )).to_i.should eq(0)
   end
 
-  it "codegens virtual generic class instance metaclass (#3819)" do
+  it("codegens virtual generic class instance metaclass (#3819)") do
     run(%(
       module Core
       end
@@ -1010,7 +1010,7 @@ describe "Code gen: class" do
       )).to_string.should eq("Foo")
   end
 
-  it "codegens class with recursive tuple to class (#4520)" do
+  it("codegens class with recursive tuple to class (#4520)") do
     run(%(
       class Foo
         @foo : {Foo, Foo}?

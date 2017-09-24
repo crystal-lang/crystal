@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: nilable cast" do
-  it "does nilable cast (true)" do
+describe("Code gen: nilable cast") do
+  it("does nilable cast (true)") do
     run(%(
       x = 42 || "hello"
       y = x.as?(Int32)
@@ -9,7 +9,7 @@ describe "Code gen: nilable cast" do
       )).to_i.should eq(42)
   end
 
-  it "does nilable cast (false)" do
+  it("does nilable cast (false)") do
     run(%(
       x = "hello" || 42
       y = x.as?(Int32)
@@ -17,7 +17,7 @@ describe "Code gen: nilable cast" do
       )).to_i.should eq(84)
   end
 
-  it "does nilable cast (always true)" do
+  it("does nilable cast (always true)") do
     run(%(
       x = 42
       y = x.as?(Int32)
@@ -25,7 +25,7 @@ describe "Code gen: nilable cast" do
       )).to_i.should eq(42)
   end
 
-  it "does upcast" do
+  it("does upcast") do
     run(%(
       class Foo
         def bar
@@ -48,7 +48,7 @@ describe "Code gen: nilable cast" do
       )).to_i.should eq(2)
   end
 
-  it "does cast to nil (1)" do
+  it("does cast to nil (1)") do
     run(%(
       x = 1
       y = x.as?(Nil)
@@ -56,7 +56,7 @@ describe "Code gen: nilable cast" do
       )).to_i.should eq(3)
   end
 
-  it "does cast to nil (2)" do
+  it("does cast to nil (2)") do
     run(%(
       x = nil
       y = x.as?(Nil)
@@ -64,14 +64,14 @@ describe "Code gen: nilable cast" do
       )).to_i.should eq(3)
   end
 
-  it "types as? with wrong type (#2775)" do
+  it("types as? with wrong type (#2775)") do
     run(%(
       x = 1.as?(String)
       x ? 10 : 20
       )).to_i.should eq(20)
   end
 
-  it "codegens with NoReturn" do
+  it("codegens with NoReturn") do
     codegen(%(
       lib LibC
         fun exit : NoReturn
@@ -86,7 +86,7 @@ describe "Code gen: nilable cast" do
       ))
   end
 
-  it "upcasts type to virtual (#3304)" do
+  it("upcasts type to virtual (#3304)") do
     run(%(
       class Foo
         def foo
@@ -105,7 +105,7 @@ describe "Code gen: nilable cast" do
       )).to_i.should eq(1)
   end
 
-  it "upcasts type to virtual (2) (#3304)" do
+  it("upcasts type to virtual (2) (#3304)") do
     run(%(
       class Foo
         def foo
@@ -130,7 +130,7 @@ describe "Code gen: nilable cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts with block var that changes type (#3341)" do
+  it("casts with block var that changes type (#3341)") do
     codegen(%(
       require "prelude"
 

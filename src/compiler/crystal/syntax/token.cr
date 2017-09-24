@@ -15,14 +15,14 @@ module Crystal
     property raw : String
     property start : Int32
 
-    record MacroState,
+    record(MacroState,
       whitespace : Bool,
       nest : Int32,
       control_nest : Int32,
       delimiter_state : DelimiterState?,
       beginning_of_line : Bool,
       yields : Bool,
-      comment : Bool do
+      comment : Bool) do
       def self.default
         MacroState.new(true, 0, 0, nil, true, false, false)
       end
@@ -31,13 +31,13 @@ module Crystal
       setter control_nest
     end
 
-    record DelimiterState,
+    record(DelimiterState,
       kind : Symbol,
       nest : Char | String,
       end : Char | String,
       open_count : Int32,
       heredoc_indent : Int32,
-      allow_escapes : Bool do
+      allow_escapes : Bool) do
     end
 
     struct DelimiterState

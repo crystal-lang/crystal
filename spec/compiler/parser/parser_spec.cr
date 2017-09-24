@@ -5,7 +5,7 @@ private def regex(string, options = Regex::Options::None)
 end
 
 private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
-  it "parses #{string}", file, line do
+  it("parses #{string}", file, line) do
     parser = Parser.new(string)
     parser.filename = "/foo/bar/baz.cr"
     node = parser.parse
@@ -14,7 +14,7 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
 end
 
 private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__)
-  it "gets corrects end location for #{source.inspect}", file, line do
+  it("gets corrects end location for #{source.inspect}", file, line) do
     parser = Parser.new("#{source}; 1")
     node = parser.parse.as(Expressions).expressions[0]
     end_loc = node.end_location.not_nil!
@@ -23,7 +23,7 @@ private def assert_end_location(source, line_number = 1, column_number = source.
   end
 end
 
-describe "Parser" do
+describe("Parser") do
   it_parses "nil", NilLiteral.new
 
   it_parses "true", true.bool
@@ -1518,7 +1518,7 @@ describe "Parser" do
 
   assert_syntax_error %(def foo("bar");end), "expected argument internal name"
 
-  describe "end locations" do
+  describe("end locations") do
     assert_end_location "nil"
     assert_end_location "false"
     assert_end_location "123"
@@ -1578,14 +1578,14 @@ describe "Parser" do
     assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
     assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
 
-    it "gets corrects of ~" do
+    it("gets corrects of ~") do
       node = Parser.parse("\n  ~1")
       loc = node.location.not_nil!
       loc.line_number.should eq(2)
       loc.column_number.should eq(3)
     end
 
-    it "gets corrects end location for var" do
+    it("gets corrects end location for var") do
       parser = Parser.new("foo = 1\nfoo; 1")
       node = parser.parse.as(Expressions).expressions[1]
       end_loc = node.end_location.not_nil!
@@ -1593,7 +1593,7 @@ describe "Parser" do
       end_loc.column_number.should eq(3)
     end
 
-    it "gets corrects end location for block with { ... }" do
+    it("gets corrects end location for block with { ... }") do
       parser = Parser.new("foo { 1 + 2 }; 1")
       node = parser.parse.as(Expressions).expressions[0].as(Call)
       block = node.block.not_nil!
@@ -1603,7 +1603,7 @@ describe "Parser" do
       node.end_location.should eq(end_loc)
     end
 
-    it "gets corrects end location for block with do ... end" do
+    it("gets corrects end location for block with do ... end") do
       parser = Parser.new("foo do\n  1 + 2\nend; 1")
       node = parser.parse.as(Expressions).expressions[0].as(Call)
       block = node.block.not_nil!
@@ -1613,7 +1613,7 @@ describe "Parser" do
       node.end_location.should eq(end_loc)
     end
 
-    it "gets correct location after macro with yield" do
+    it("gets correct location after macro with yield") do
       parser = Parser.new(%(
         macro foo
           yield
@@ -1626,14 +1626,14 @@ describe "Parser" do
       loc.line_number.should eq(6)
     end
 
-    it "gets correct location with \r\n (#1558)" do
+    it("gets correct location with \r\n (#1558)") do
       nodes = Parser.parse("class Foo\r\nend\r\n\r\n1").as(Expressions)
       loc = nodes.last.location.not_nil!
       loc.line_number.should eq(4)
       loc.column_number.should eq(1)
     end
 
-    it "sets location of enum method" do
+    it("sets location of enum method") do
       parser = Parser.new("enum Foo; A; def bar; end; end")
       node = parser.parse.as(EnumDef).members[1].as(Def)
       loc = node.location.not_nil!
@@ -1641,7 +1641,7 @@ describe "Parser" do
       loc.column_number.should eq(14)
     end
 
-    it "gets correct location after macro with yield" do
+    it("gets correct location after macro with yield") do
       parser = Parser.new(%(\n  1 ? 2 : 3))
       node = parser.parse
       loc = node.location.not_nil!

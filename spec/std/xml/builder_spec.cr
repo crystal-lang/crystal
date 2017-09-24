@@ -8,19 +8,19 @@ private def assert_built(expected, quote_char = nil)
   string.should eq(expected)
 end
 
-describe XML::Builder do
-  it "writes document" do
+describe(XML::Builder) do
+  it("writes document") do
     assert_built(%[<?xml version=\"1.0\"?>\n\n]) do
     end
   end
 
-  it "writes element" do
+  it("writes element") do
     assert_built(%[<?xml version="1.0"?>\n<foo/>\n]) do
       element("foo") { }
     end
   end
 
-  it "writes nested element" do
+  it("writes nested element") do
     assert_built(%[<?xml version="1.0"?>\n<foo><bar/></foo>\n]) do
       element("foo") do
         element("bar") { }
@@ -28,19 +28,19 @@ describe XML::Builder do
     end
   end
 
-  it "writes element with namspace" do
+  it("writes element with namspace") do
     assert_built(%[<?xml version="1.0"?>\n<x:foo id="1" xmlns:x="http://foo.com"/>\n]) do
       element("x", "foo", "http://foo.com", id: 1) { }
     end
   end
 
-  it "writes element with namspace, without block" do
+  it("writes element with namspace, without block") do
     assert_built(%[<?xml version="1.0"?>\n<x:foo id="1" xmlns:x="http://foo.com"/>\n]) do
       element("x", "foo", "http://foo.com", id: 1)
     end
   end
 
-  it "writes attribute" do
+  it("writes attribute") do
     assert_built(%[<?xml version="1.0"?>\n<foo id="1"/>\n]) do
       element("foo") do
         attribute("id", 1)
@@ -48,7 +48,7 @@ describe XML::Builder do
     end
   end
 
-  it "writes attribute with namespace" do
+  it("writes attribute with namespace") do
     assert_built(%[<?xml version="1.0"?>\n<foo x:id="1" xmlns:x="http://ww.foo.com"/>\n]) do
       element("foo") do
         attribute("x", "id", "http://ww.foo.com", 1)
@@ -56,7 +56,7 @@ describe XML::Builder do
     end
   end
 
-  it "writes text" do
+  it("writes text") do
     assert_built(%[<?xml version="1.0"?>\n<foo>1 &lt; 2</foo>\n]) do
       element("foo") do
         text "1 < 2"
@@ -64,7 +64,7 @@ describe XML::Builder do
     end
   end
 
-  it "sets indent with string" do
+  it("sets indent with string") do
     assert_built("<?xml version=\"1.0\"?>\n<foo>\n\t<bar/>\n</foo>\n") do |xml|
       xml.indent = "\t"
       element("foo") do
@@ -73,7 +73,7 @@ describe XML::Builder do
     end
   end
 
-  it "sets indent with count" do
+  it("sets indent with count") do
     assert_built("<?xml version=\"1.0\"?>\n<foo>\n  <bar/>\n</foo>\n") do |xml|
       xml.indent = 2
       element("foo") do
@@ -82,7 +82,7 @@ describe XML::Builder do
     end
   end
 
-  it "sets quote char" do
+  it("sets quote char") do
     assert_built("<?xml version='1.0'?>\n<foo id='1'/>\n", quote_char: '\'') do |xml|
       element("foo") do
         attribute("id", 1)
@@ -90,13 +90,13 @@ describe XML::Builder do
     end
   end
 
-  it "writes element with attributes as named tuple" do
+  it("writes element with attributes as named tuple") do
     assert_built(%[<?xml version="1.0"?>\n<foo id="1" name="foo"/>\n]) do |xml|
       element("foo", id: 1, name: "foo")
     end
   end
 
-  it "writes element with attributes as named tuple, nesting" do
+  it("writes element with attributes as named tuple, nesting") do
     assert_built(%[<?xml version="1.0"?>\n<foo id="1" name="foo" baz="2"/>\n]) do |xml|
       element("foo", id: 1, name: "foo") do
         attribute "baz", 2
@@ -104,13 +104,13 @@ describe XML::Builder do
     end
   end
 
-  it "writes element with attributes as hash" do
+  it("writes element with attributes as hash") do
     assert_built(%[<?xml version="1.0"?>\n<foo id="1" name="foo"/>\n]) do |xml|
       element("foo", {"id" => 1, "name" => "foo"})
     end
   end
 
-  it "writes element with attributes as hash, nesting" do
+  it("writes element with attributes as hash, nesting") do
     assert_built(%[<?xml version="1.0"?>\n<foo id="1" name="foo" baz="2"/>\n]) do |xml|
       element("foo", {"id" => 1, "name" => "foo"}) do
         attribute "baz", 2
@@ -118,7 +118,7 @@ describe XML::Builder do
     end
   end
 
-  it "writes cdata" do
+  it("writes cdata") do
     assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
       element("foo") do
         cdata("hello")
@@ -126,7 +126,7 @@ describe XML::Builder do
     end
   end
 
-  it "writes cdata with block" do
+  it("writes cdata with block") do
     assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
       element("foo") do
         cdata do
@@ -136,7 +136,7 @@ describe XML::Builder do
     end
   end
 
-  it "writes comment" do
+  it("writes comment") do
     assert_built(%{<?xml version="1.0"?>\n<foo><!--hello--></foo>\n}) do |xml|
       element("foo") do
         comment("hello")
@@ -144,7 +144,7 @@ describe XML::Builder do
     end
   end
 
-  it "writes comment with block" do
+  it("writes comment with block") do
     assert_built(%{<?xml version="1.0"?>\n<foo><!--hello--></foo>\n}) do |xml|
       element("foo") do
         comment do
@@ -154,21 +154,21 @@ describe XML::Builder do
     end
   end
 
-  it "writes DTD" do
+  it("writes DTD") do
     assert_built(%{<?xml version="1.0"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" [subset]>\n}) do |xml|
       dtd "html", "-//W3C//DTD XHTML 1.0 Transitional//EN", "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd", "subset"
     end
   end
 
-  it "writes DTD with block" do
+  it("writes DTD with block") do
     assert_built(%{<?xml version="1.0"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" [subset]>\n}) do |xml|
-      dtd "html", "-//W3C//DTD XHTML 1.0 Transitional//EN", "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" do
+      dtd("html", "-//W3C//DTD XHTML 1.0 Transitional//EN", "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd") do
         text "subset"
       end
     end
   end
 
-  it "writes namespace" do
+  it("writes namespace") do
     assert_built(%{<?xml version="1.0"?>\n<foo x:xmlns="http://foo.com"/>\n}) do |xml|
       element("foo") do
         namespace "x", "http://foo.com"
@@ -176,7 +176,7 @@ describe XML::Builder do
     end
   end
 
-  it "writes to string" do
+  it("writes to string") do
     str = XML.build do |xml|
       xml.element("foo", id: 1) do
         xml.text "hello"
@@ -185,7 +185,7 @@ describe XML::Builder do
     str.should eq("<?xml version=\"1.0\"?>\n<foo id=\"1\">hello</foo>\n")
   end
 
-  it "writes to IO" do
+  it("writes to IO") do
     io = IO::Memory.new
     XML.build(io) do |xml|
       xml.element("foo", id: 1) do

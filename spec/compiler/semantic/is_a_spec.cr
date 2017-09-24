@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
-describe "Semantic: is_a?" do
-  it "is bool" do
+describe("Semantic: is_a?") do
+  it("is bool") do
     assert_type("1.is_a?(Bool)") { bool }
   end
 
-  it "restricts type inside if scope 1" do
+  it("restricts type inside if scope 1") do
     nodes = parse "
       a = 1 || 'a'
       if a.is_a?(Int)
@@ -17,7 +17,7 @@ describe "Semantic: is_a?" do
     nodes.last.as(If).then.type.should eq(mod.int32)
   end
 
-  it "restricts type inside if scope 2" do
+  it("restricts type inside if scope 2") do
     nodes = parse "
       module Bar
       end
@@ -39,7 +39,7 @@ describe "Semantic: is_a?" do
     nodes.last.as(If).then.type.should eq(foo.instantiate([mod.int32] of TypeVar))
   end
 
-  it "restricts type inside if scope 3" do
+  it("restricts type inside if scope 3") do
     nodes = parse "
       class Foo
         def initialize(@x : Int32)
@@ -57,7 +57,7 @@ describe "Semantic: is_a?" do
     nodes.last.as(If).then.type.should eq(mod.types["Foo"])
   end
 
-  it "restricts other types inside if else" do
+  it("restricts other types inside if else") do
     assert_type("
       a = 1 || 'a'
       if a.is_a?(Int32)
@@ -68,7 +68,7 @@ describe "Semantic: is_a?" do
       ") { int32 }
   end
 
-  it "applies filter inside block" do
+  it("applies filter inside block") do
     assert_type("
       lib LibC
         fun exit : NoReturn
@@ -96,7 +96,7 @@ describe "Semantic: is_a?" do
       ") { union_of(char, int32) }
   end
 
-  it "applies negative condition filter if then is no return" do
+  it("applies negative condition filter if then is no return") do
     assert_type("
       require \"prelude\"
 
@@ -120,7 +120,7 @@ describe "Semantic: is_a?" do
       ") { int32 }
   end
 
-  it "checks simple type with union" do
+  it("checks simple type with union") do
     assert_type("
       a = 1
       if a.is_a?(Int32 | Char)
@@ -131,7 +131,7 @@ describe "Semantic: is_a?" do
       ") { int32 }
   end
 
-  it "checks union with union" do
+  it("checks union with union") do
     assert_type("
       struct Char
         def +(other : Int32)
@@ -154,7 +154,7 @@ describe "Semantic: is_a?" do
       ") { union_of(int32, char) }
   end
 
-  it "restricts in assignment" do
+  it("restricts in assignment") do
     assert_type("
       a = 1 || 'a'
       if (b = a).is_a?(Int32)
@@ -165,7 +165,7 @@ describe "Semantic: is_a?" do
       ") { int32 }
   end
 
-  it "restricts type in else but lazily" do
+  it("restricts type in else but lazily") do
     assert_type("
       class Foo
         def initialize(@x : Int32)
@@ -188,7 +188,7 @@ describe "Semantic: is_a?" do
       ") { int32 }
   end
 
-  it "types if is_a? preceded by return if (preserves nops)" do
+  it("types if is_a? preceded by return if (preserves nops)") do
     assert_type(%(
       def coco
         return if 1 == 1
@@ -201,7 +201,7 @@ describe "Semantic: is_a?" do
       )) { nil_type }
   end
 
-  it "restricts type inside if else when used with module type" do
+  it("restricts type inside if else when used with module type") do
     assert_type(%(
       module Moo
       end

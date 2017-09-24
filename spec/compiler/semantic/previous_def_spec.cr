@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: previous_def" do
-  it "errors if there's no previous def" do
+describe("Semantic: previous_def") do
+  it("errors if there's no previous def") do
     assert_error %(
       def foo
         previous_def
@@ -11,7 +11,7 @@ describe "Semantic: previous_def" do
       ), "there is no previous definition of 'foo'"
   end
 
-  it "types previous def" do
+  it("types previous def") do
     assert_type(%(
       def foo
         1
@@ -25,7 +25,7 @@ describe "Semantic: previous_def" do
       )) { int32 }
   end
 
-  it "types previous def in generic class" do
+  it("types previous def in generic class") do
     assert_type(%(
       class Foo(T)
         def foo
@@ -41,7 +41,7 @@ describe "Semantic: previous_def" do
       )) { int32 }
   end
 
-  it "types previous def with arguments" do
+  it("types previous def with arguments") do
     assert_type(%(
       def foo(x)
         x
@@ -55,7 +55,7 @@ describe "Semantic: previous_def" do
       )) { float64 }
   end
 
-  it "types previous def with arguments but without parenthesis" do
+  it("types previous def with arguments but without parenthesis") do
     assert_type(%(
       def foo(x)
         x
@@ -69,7 +69,7 @@ describe "Semantic: previous_def" do
       )) { int32 }
   end
 
-  it "types previous def with restrictions" do
+  it("types previous def with restrictions") do
     assert_type(%(
       def foo(x : Int32)
         x
@@ -83,7 +83,7 @@ describe "Semantic: previous_def" do
       )) { int32 }
   end
 
-  it "types previous def when inside fun" do
+  it("types previous def when inside fun") do
     assert_type(%(
       def foo
         1
@@ -98,7 +98,7 @@ describe "Semantic: previous_def" do
       )) { int32 }
   end
 
-  it "types previous def when inside fun and forwards args" do
+  it("types previous def when inside fun and forwards args") do
     assert_type(%(
       def foo(z)
         z
@@ -113,7 +113,7 @@ describe "Semantic: previous_def" do
       )) { int32 }
   end
 
-  it "says wrong number of arguments for previous_def (#1223)" do
+  it("says wrong number of arguments for previous_def (#1223)") do
     assert_error %(
       class Foo
         def x

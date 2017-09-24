@@ -1,8 +1,8 @@
 require "spec"
 require "http"
 
-describe HTTP::FormData::Builder do
-  it "builds valid form-data messages" do
+describe(HTTP::FormData::Builder) do
+  it("builds valid form-data messages") do
     io = IO::Memory.new
     HTTP::FormData.build(io, "fixed-boundary") do |g|
       g.field("foo", "bar")
@@ -38,15 +38,15 @@ describe HTTP::FormData::Builder do
     generated.should eq(expected.gsub("\n", "\r\n"))
   end
 
-  describe "#content_type" do
-    it "calculates the content type" do
+  describe("#content_type") do
+    it("calculates the content type") do
       builder = HTTP::FormData::Builder.new(IO::Memory.new, "a delimiter string with a quote in \"")
       builder.content_type.should eq(%q(multipart/form-data; boundary="a\ delimiter\ string\ with\ a\ quote\ in\ \""))
     end
   end
 
-  describe "#file" do
-    it "fails after finish" do
+  describe("#file") do
+    it("fails after finish") do
       builder = HTTP::FormData::Builder.new(IO::Memory.new)
       builder.field("foo", "bar")
       builder.finish
@@ -56,8 +56,8 @@ describe HTTP::FormData::Builder do
     end
   end
 
-  describe "#finish" do
-    it "fails after finish" do
+  describe("#finish") do
+    it("fails after finish") do
       builder = HTTP::FormData::Builder.new(IO::Memory.new)
       builder.field("foo", "bar")
       builder.finish
@@ -66,7 +66,7 @@ describe HTTP::FormData::Builder do
       end
     end
 
-    it "fails when no body parts" do
+    it("fails when no body parts") do
       builder = HTTP::FormData::Builder.new(IO::Memory.new)
       expect_raises(HTTP::FormData::Error, "Cannot finish form-data: no body parts") do
         builder.finish

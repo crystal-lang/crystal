@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: c union" do
-  it "types c union" do
+describe("Semantic: c union") do
+  it("types c union") do
     result = assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; LibFoo::Bar") { types["LibFoo"].types["Bar"].metaclass }
     mod = result.program
     bar = mod.types["LibFoo"].types["Bar"].as(NonGenericClassType)
@@ -11,29 +11,29 @@ describe "Semantic: c union" do
     bar.instance_vars["@y"].type.should eq(mod.float64)
   end
 
-  it "types Union#new" do
+  it("types Union#new") do
     assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; LibFoo::Bar.new") do
       types["LibFoo"].types["Bar"]
     end
   end
 
-  it "types union setter" do
+  it("types union setter") do
     assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; bar = LibFoo::Bar.new; bar.x = 1") { int32 }
   end
 
-  it "types union getter" do
+  it("types union getter") do
     assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; bar = LibFoo::Bar.new; bar.x") { int32 }
   end
 
-  it "types union setter via pointer" do
+  it("types union setter via pointer") do
     assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x = 1") { int32 }
   end
 
-  it "types union getter via pointer" do
+  it("types union getter via pointer") do
     assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x") { int32 }
   end
 
-  it "errors if setting closure" do
+  it("errors if setting closure") do
     assert_error %(
       lib LibFoo
         union Bar
@@ -49,7 +49,7 @@ describe "Semantic: c union" do
       "can't set closure as C union member"
   end
 
-  it "errors on empty c union (#633)" do
+  it("errors on empty c union (#633)") do
     assert_error %(
       lib LibFoo
         union Struct
@@ -59,7 +59,7 @@ describe "Semantic: c union" do
       "empty unions are disallowed"
   end
 
-  it "errors if using void in union field type" do
+  it("errors if using void in union field type") do
     assert_error %(
       lib LibFoo
         union Struct
@@ -70,7 +70,7 @@ describe "Semantic: c union" do
       "can't use Void as a union field type"
   end
 
-  it "errors if using void via typedef in union field type" do
+  it("errors if using void via typedef in union field type") do
     assert_error %(
       lib LibFoo
         type MyVoid = Void

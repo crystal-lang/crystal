@@ -2,8 +2,8 @@ require "spec"
 require "zlib"
 
 module Zlib
-  describe Zlib do
-    it "write read should be inverse with random string" do
+  describe(Zlib) do
+    it("write read should be inverse with random string") do
       expected = String.build do |io|
         1_000_000.times { rand(2000).to_i.to_s(32, io) }
       end
@@ -19,7 +19,7 @@ module Zlib
       reader.gets_to_end.should eq(expected)
     end
 
-    it "write read should be inverse (utf-8)" do
+    it("write read should be inverse (utf-8)") do
       expected = "日本さん語日本さん語"
 
       io = IO::Memory.new

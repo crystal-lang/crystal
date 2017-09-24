@@ -259,7 +259,7 @@ class Crystal::Command
     end
   end
 
-  record CompilerConfig,
+  record(CompilerConfig,
     compiler : Compiler,
     sources : Array(Compiler::Source),
     output_filename : String,
@@ -268,7 +268,7 @@ class Crystal::Command
     specified_output : Bool,
     hierarchy_exp : String?,
     cursor_location : String?,
-    output_format : String? do
+    output_format : String?) do
     def compile(output_filename = self.output_filename)
       compiler.emit_base_filename = original_output_filename
       compiler.compile sources, output_filename

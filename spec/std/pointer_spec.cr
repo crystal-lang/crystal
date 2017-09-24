@@ -5,29 +5,29 @@ private def reset(p1, p2)
   p2.value = 20
 end
 
-describe "Pointer" do
-  it "does malloc with value" do
+describe("Pointer") do
+  it("does malloc with value") do
     p1 = Pointer.malloc(4, 1)
     4.times do |i|
       p1[i].should eq(1)
     end
   end
 
-  it "does malloc with value from block" do
+  it("does malloc with value from block") do
     p1 = Pointer.malloc(4) { |i| i }
     4.times do |i|
       p1[i].should eq(i)
     end
   end
 
-  it "does index with count" do
+  it("does index with count") do
     p1 = Pointer.malloc(4) { |i| i ** 2 }
     p1.to_slice(4).index(4).should eq(2)
     p1.to_slice(4).index(5).should be_nil
   end
 
-  describe "copy_from" do
-    it "performs" do
+  describe("copy_from") do
+    it("performs") do
       p1 = Pointer.malloc(4) { |i| i }
       p2 = Pointer.malloc(4) { 0 }
       p2.copy_from(p1, 4)
@@ -36,14 +36,14 @@ describe "Pointer" do
       end
     end
 
-    it "raises on negative count" do
+    it("raises on negative count") do
       p1 = Pointer.malloc(4, 0)
       expect_raises(ArgumentError, "Negative count") do
         p1.copy_from(p1, -1)
       end
     end
 
-    it "copies from union of pointers" do
+    it("copies from union of pointers") do
       p1 = Pointer.malloc(4, 1)
       p2 = Pointer.malloc(4, 1.5)
       p3 = Pointer.malloc(4, 0 || 0.0)
@@ -52,8 +52,8 @@ describe "Pointer" do
     end
   end
 
-  describe "realloc" do
-    it "raises on negative count" do
+  describe("realloc") do
+    it("raises on negative count") do
       p1 = Pointer(Int32).new(123)
       expect_raises(ArgumentError) do
         p1.realloc(-1)
@@ -61,8 +61,8 @@ describe "Pointer" do
     end
   end
 
-  describe "copy_to" do
-    it "performs" do
+  describe("copy_to") do
+    it("performs") do
       p1 = Pointer.malloc(4) { |i| i }
       p2 = Pointer.malloc(4) { 0 }
       p1.copy_to(p2, 4)
@@ -71,14 +71,14 @@ describe "Pointer" do
       end
     end
 
-    it "raises on negative count" do
+    it("raises on negative count") do
       p1 = Pointer.malloc(4, 0)
       expect_raises(ArgumentError, "Negative count") do
         p1.copy_to(p1, -1)
       end
     end
 
-    it "copies to union of pointers" do
+    it("copies to union of pointers") do
       p1 = Pointer.malloc(4, 1)
       p2 = Pointer.malloc(4, 0 || 1.5)
       p3 = Pointer.malloc(4, 0 || 'a')
@@ -87,8 +87,8 @@ describe "Pointer" do
     end
   end
 
-  describe "move_from" do
-    it "performs with overlap right to left" do
+  describe("move_from") do
+    it("performs with overlap right to left") do
       p1 = Pointer.malloc(4) { |i| i }
       (p1 + 1).move_from(p1 + 2, 2)
       p1[0].should eq(0)
@@ -97,7 +97,7 @@ describe "Pointer" do
       p1[3].should eq(3)
     end
 
-    it "performs with overlap left to right" do
+    it("performs with overlap left to right") do
       p1 = Pointer.malloc(4) { |i| i }
       (p1 + 2).move_from(p1 + 1, 2)
       p1[0].should eq(0)
@@ -106,14 +106,14 @@ describe "Pointer" do
       p1[3].should eq(2)
     end
 
-    it "raises on negative count" do
+    it("raises on negative count") do
       p1 = Pointer.malloc(4, 0)
       expect_raises(ArgumentError, "Negative count") do
         p1.move_from(p1, -1)
       end
     end
 
-    it "moves from union of pointers" do
+    it("moves from union of pointers") do
       p1 = Pointer.malloc(4, 1)
       p2 = Pointer.malloc(4, 1.5)
       p3 = Pointer.malloc(4, 0 || 0.0)
@@ -122,8 +122,8 @@ describe "Pointer" do
     end
   end
 
-  describe "move_to" do
-    it "performs with overlap right to left" do
+  describe("move_to") do
+    it("performs with overlap right to left") do
       p1 = Pointer.malloc(4) { |i| i }
       (p1 + 2).move_to(p1 + 1, 2)
       p1[0].should eq(0)
@@ -132,7 +132,7 @@ describe "Pointer" do
       p1[3].should eq(3)
     end
 
-    it "performs with overlap left to right" do
+    it("performs with overlap left to right") do
       p1 = Pointer.malloc(4) { |i| i }
       (p1 + 1).move_to(p1 + 2, 2)
       p1[0].should eq(0)
@@ -141,14 +141,14 @@ describe "Pointer" do
       p1[3].should eq(2)
     end
 
-    it "raises on negative count" do
+    it("raises on negative count") do
       p1 = Pointer.malloc(4, 0)
       expect_raises(ArgumentError, "Negative count") do
         p1.move_to(p1, -1)
       end
     end
 
-    it "moves to union of pointers" do
+    it("moves to union of pointers") do
       p1 = Pointer.malloc(4, 1)
       p2 = Pointer.malloc(4, 0 || 1.5)
       p3 = Pointer.malloc(4, 0 || 'a')
@@ -157,7 +157,7 @@ describe "Pointer" do
     end
   end
 
-  describe "memcmp" do
+  describe("memcmp") do
     it do
       p1 = Pointer.malloc(4) { |i| i }
       p2 = Pointer.malloc(4) { |i| i }
@@ -169,7 +169,7 @@ describe "Pointer" do
     end
   end
 
-  it "compares two pointers by address" do
+  it("compares two pointers by address") do
     p1 = Pointer(Int32).malloc(1)
     p2 = Pointer(Int32).malloc(1)
     p1.should eq(p1)
@@ -177,16 +177,16 @@ describe "Pointer" do
     p1.should_not eq(1)
   end
 
-  it "does to_s" do
+  it("does to_s") do
     Pointer(Int32).null.to_s.should eq("Pointer(Int32).null")
     Pointer(Int32).new(1234_u64).to_s.should eq("Pointer(Int32)@0x4d2")
   end
 
-  it "creates from int" do
+  it("creates from int") do
     Pointer(Int32).new(1234).address.should eq(1234)
   end
 
-  it "shuffles!" do
+  it("shuffles!") do
     a = Pointer(Int32).malloc(3) { |i| i + 1 }
     a.shuffle!(3)
 
@@ -197,7 +197,7 @@ describe "Pointer" do
     end
   end
 
-  it "maps!" do
+  it("maps!") do
     a = Pointer(Int32).malloc(3) { |i| i + 1 }
     a.map!(3) { |i| i + 1 }
     a[0].should eq(2)
@@ -205,7 +205,7 @@ describe "Pointer" do
     a[2].should eq(4)
   end
 
-  it "maps_with_index!" do
+  it("maps_with_index!") do
     a = Pointer(Int32).malloc(3) { |i| i + 1 }
     a.map_with_index!(3) { |e, i| e + i }
     a[0].should eq(1)
@@ -213,11 +213,11 @@ describe "Pointer" do
     a[2].should eq(5)
   end
 
-  it "raises if mallocs negative size" do
+  it("raises if mallocs negative size") do
     expect_raises(ArgumentError) { Pointer.malloc(-1, 0) }
   end
 
-  it "copies/move with different types" do
+  it("copies/move with different types") do
     p1 = Pointer(Int32).malloc(1)
     p2 = Pointer(Int32 | String).malloc(1)
 
@@ -280,8 +280,8 @@ describe "Pointer" do
     p2.value.should eq(20)
   end
 
-  describe "clear" do
-    it "clears one" do
+  describe("clear") do
+    it("clears one") do
       ptr = Pointer(Int32).malloc(2)
       ptr[0] = 10
       ptr[1] = 20
@@ -290,7 +290,7 @@ describe "Pointer" do
       ptr[1].should eq(20)
     end
 
-    it "clears many" do
+    it("clears many") do
       ptr = Pointer(Int32).malloc(4)
       ptr[0] = 10
       ptr[1] = 20
@@ -303,7 +303,7 @@ describe "Pointer" do
       ptr[3].should eq(40)
     end
 
-    it "clears with union" do
+    it("clears with union") do
       ptr = Pointer(Int32 | Nil).malloc(4)
       ptr[0] = 10
       ptr[1] = 20
@@ -318,12 +318,12 @@ describe "Pointer" do
     end
   end
 
-  it "does !" do
+  it("does !") do
     (!Pointer(Int32).null).should be_true
     (!Pointer(Int32).new(123)).should be_false
   end
 
-  it "clones" do
+  it("clones") do
     ptr = Pointer(Int32).new(123)
     ptr.clone.should eq(ptr)
   end

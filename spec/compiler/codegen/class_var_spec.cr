@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Codegen: class var" do
-  it "codegens class var" do
+describe("Codegen: class var") do
+  it("codegens class var") do
     run("
       class Foo
         @@foo = 1
@@ -15,7 +15,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(1)
   end
 
-  it "codegens class var as nil" do
+  it("codegens class var as nil") do
     run("
       struct Nil; def to_i; 0; end; end
 
@@ -31,7 +31,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(0)
   end
 
-  it "codegens class var inside instance method" do
+  it("codegens class var inside instance method") do
     run("
       class Foo
         @@foo = 1
@@ -45,7 +45,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(1)
   end
 
-  it "codegens class var as nil if assigned for the first time inside method" do
+  it("codegens class var as nil if assigned for the first time inside method") do
     run("
       struct Nil; def to_i; 0; end; end
 
@@ -60,7 +60,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(1)
   end
 
-  it "codegens class var inside module" do
+  it("codegens class var inside module") do
     run("
       module Foo
         @@foo = 1
@@ -74,7 +74,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(1)
   end
 
-  it "accesses class var from proc literal" do
+  it("accesses class var from proc literal") do
     run("
       class Foo
         @@a = 1
@@ -88,7 +88,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(1)
   end
 
-  it "reads class var before initializing it (hoisting)" do
+  it("reads class var before initializing it (hoisting)") do
     run(%(
       x = Foo.var
 
@@ -104,7 +104,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(42)
   end
 
-  it "uses var in class var initializer" do
+  it("uses var in class var initializer") do
     run(%(
       class Foo
         @@var : Int32
@@ -126,7 +126,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(6)
   end
 
-  it "reads simple class var before another complex one" do
+  it("reads simple class var before another complex one") do
     run(%(
       class Foo
         @@var2 : Int32
@@ -143,7 +143,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(42)
   end
 
-  it "initializes class var of union with single type" do
+  it("initializes class var of union with single type") do
     run(%(
       class Foo
         @@var : Int32 | String
@@ -163,7 +163,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(42)
   end
 
-  it "initializes class var with array literal" do
+  it("initializes class var with array literal") do
     run(%(
       require "prelude"
 
@@ -179,7 +179,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(3)
   end
 
-  it "codegens second class var initializer" do
+  it("codegens second class var initializer") do
     run(%(
       class Foo
         @@var = 1
@@ -194,7 +194,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(2)
   end
 
-  it "initializes dependent constant before class var" do
+  it("initializes dependent constant before class var") do
     run(%(
       def foo
         a = 1
@@ -217,7 +217,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(3)
   end
 
-  it "declares and initializes" do
+  it("declares and initializes") do
     run(%(
       class Foo
         @@x : Int32 = 42
@@ -231,7 +231,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(42)
   end
 
-  it "doesn't use nilable type for initializer" do
+  it("doesn't use nilable type for initializer") do
     run(%(
       class Foo
         @@foo : Int32?
@@ -249,7 +249,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(42)
   end
 
-  it "codegens class var with begin and vars" do
+  it("codegens class var with begin and vars") do
     run("
       class Foo
         @@foo : Int32
@@ -268,7 +268,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(3)
   end
 
-  it "codegens class var with type declaration begin and vars" do
+  it("codegens class var with type declaration begin and vars") do
     run("
       class Foo
         @@foo : Int32 = begin
@@ -286,7 +286,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(3)
   end
 
-  it "codegens class var with nilable reference type" do
+  it("codegens class var with nilable reference type") do
     run(%(
       class Foo
         @@foo : String? = nil
@@ -300,7 +300,7 @@ describe "Codegen: class var" do
       )).to_string.should eq("hello")
   end
 
-  it "initializes class var the moment it reaches it" do
+  it("initializes class var the moment it reaches it") do
     run(%(
       require "prelude"
 
@@ -320,7 +320,7 @@ describe "Codegen: class var" do
       )).to_string.should eq("BAR")
   end
 
-  it "gets pointerof class var" do
+  it("gets pointerof class var") do
     run(%(
       z = Foo.foo
 
@@ -336,7 +336,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(10)
   end
 
-  it "gets pointerof class var complex constant" do
+  it("gets pointerof class var complex constant") do
     run(%(
       z = Foo.foo
 
@@ -356,7 +356,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(10)
   end
 
-  it "doesn't inherit class var value in subclass" do
+  it("doesn't inherit class var value in subclass") do
     run(%(
       class Foo
         @@var = 1
@@ -378,7 +378,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(1)
   end
 
-  it "doesn't inherit class var value in module" do
+  it("doesn't inherit class var value in module") do
     run(%(
       module Moo
         @@var = 1
@@ -401,7 +401,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(1)
   end
 
-  it "reads class var from virtual type" do
+  it("reads class var from virtual type") do
     run(%(
       class Foo
         @@var = 1
@@ -429,7 +429,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(2)
   end
 
-  it "reads class var from virtual type metaclass" do
+  it("reads class var from virtual type metaclass") do
     run(%(
       class Foo
         @@var = 1
@@ -453,7 +453,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(2)
   end
 
-  it "writes class var from virtual type" do
+  it("writes class var from virtual type") do
     run(%(
       class Foo
         @@var = 1
@@ -480,7 +480,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(2)
   end
 
-  it "declares var as uninitialized and initializes it unsafely" do
+  it("declares var as uninitialized and initializes it unsafely") do
     run(%(
       class Foo
         @@x = uninitialized Int32
@@ -503,7 +503,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(10)
   end
 
-  it "doesn't crash with pointerof from another module" do
+  it("doesn't crash with pointerof from another module") do
     run(%(
       require "prelude"
 
@@ -526,7 +526,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(1)
   end
 
-  it "codegens generic class class var" do
+  it("codegens generic class class var") do
     run(%(
       class Foo(T)
         @@bar = 1

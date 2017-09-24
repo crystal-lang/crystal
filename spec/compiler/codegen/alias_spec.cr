@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: alias" do
-  it "invokes methods on empty array of recursive alias (1)" do
+describe("Code gen: alias") do
+  it("invokes methods on empty array of recursive alias (1)") do
     run(%(
       require "prelude"
 
@@ -12,7 +12,7 @@ describe "Code gen: alias" do
       )).to_string.should eq("")
   end
 
-  it "invokes methods on empty array of recursive alias (2)" do
+  it("invokes methods on empty array of recursive alias (2)") do
     run(%(
       require "prelude"
 
@@ -23,7 +23,7 @@ describe "Code gen: alias" do
       )).to_string.should eq("")
   end
 
-  it "invokes methods on empty array of recursive alias (3)" do
+  it("invokes methods on empty array of recursive alias (3)") do
     run(%(
       require "prelude"
 
@@ -34,7 +34,7 @@ describe "Code gen: alias" do
       )).to_string.should eq("")
   end
 
-  it "casts to recursive alias" do
+  it("casts to recursive alias") do
     run(%(
       require "prelude"
 
@@ -49,7 +49,7 @@ describe "Code gen: alias" do
       )).to_i.should eq(1)
   end
 
-  it "casts to recursive alias" do
+  it("casts to recursive alias") do
     run(%(
       class Bar(T)
         def self.new(&block : -> T)
@@ -74,7 +74,7 @@ describe "Code gen: alias" do
       )).to_i.should eq(1)
   end
 
-  it "doesn't break with alias for link attributes" do
+  it("doesn't break with alias for link attributes") do
     result = semantic(%(
       alias Foo = Int32
 
@@ -86,7 +86,7 @@ describe "Code gen: alias" do
     result.program.link_attributes
   end
 
-  it "doesn't crash on cast to as recursive alias (#639)" do
+  it("doesn't crash on cast to as recursive alias (#639)") do
     codegen(%(
       class Foo(T)
       end
@@ -101,7 +101,7 @@ describe "Code gen: alias" do
       ))
   end
 
-  it "lazyly solves aliases (#1346)" do
+  it("lazyly solves aliases (#1346)") do
     run(%(
       class Session; end
 
@@ -124,7 +124,7 @@ describe "Code gen: alias" do
       ))
   end
 
-  it "codegens cast to alias that includes bool" do
+  it("codegens cast to alias that includes bool") do
     run(%(
       alias Foo = Bool | Array(Foo)
 
@@ -137,7 +137,7 @@ describe "Code gen: alias" do
       )).to_i.should eq(2)
   end
 
-  it "overloads alias against generic (1) (#3261)" do
+  it("overloads alias against generic (1) (#3261)") do
     run(%(
       class Foo(T)
       end
@@ -156,7 +156,7 @@ describe "Code gen: alias" do
       ), inject_primitives: false).to_i.should eq(2)
   end
 
-  it "overloads alias against generic (2) (#3261)" do
+  it("overloads alias against generic (2) (#3261)") do
     run(%(
       class Foo(T)
       end

@@ -99,7 +99,7 @@ class Crystal::Program
     MacroRunResult.new(out_io.to_s, err_io.to_s, $?)
   end
 
-  record RequireWithTimestamp, filename : String, epoch : Int64 do
+  record(RequireWithTimestamp, filename : String, epoch : Int64) do
     JSON.mapping(filename: String, epoch: Int64)
   end
 

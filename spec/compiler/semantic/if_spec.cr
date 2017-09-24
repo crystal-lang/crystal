@@ -1,19 +1,19 @@
 require "../../spec_helper"
 
-describe "Semantic: if" do
-  it "types an if without else" do
+describe("Semantic: if") do
+  it("types an if without else") do
     assert_type("if 1 == 1; 1; end") { nilable int32 }
   end
 
-  it "types an if with else of same type" do
+  it("types an if with else of same type") do
     assert_type("if 1 == 1; 1; else; 2; end") { int32 }
   end
 
-  it "types an if with else of different type" do
+  it("types an if with else of different type") do
     assert_type("if 1 == 1; 1; else; 'a'; end") { union_of(int32, char) }
   end
 
-  it "types and if with and and assignment" do
+  it("types and if with and and assignment") do
     assert_type("
       struct Number
         def abs
@@ -34,7 +34,7 @@ describe "Semantic: if" do
       ") { nilable int32 }
   end
 
-  it "can invoke method on var that is declared on the right hand side of an and" do
+  it("can invoke method on var that is declared on the right hand side of an and") do
     assert_type("
       if 1 == 2 && (b = 1)
         b + 1
@@ -42,7 +42,7 @@ describe "Semantic: if" do
       ") { nilable int32 }
   end
 
-  it "errors if requires inside if" do
+  it("errors if requires inside if") do
     assert_error %(
       if 1 == 2
         require "foo"
@@ -51,7 +51,7 @@ describe "Semantic: if" do
       "can't require dynamically"
   end
 
-  it "correctly filters type of variable if there's a raise with an interpolation that can't be typed" do
+  it("correctly filters type of variable if there's a raise with an interpolation that can't be typed") do
     assert_type(%(
       require "prelude"
 
@@ -71,7 +71,7 @@ describe "Semantic: if" do
       )) { int32 }
   end
 
-  it "passes bug (related to #1729)" do
+  it("passes bug (related to #1729)") do
     assert_type(%(
       n = true ? 3 : 3.2
       if n.is_a?(Float64)
@@ -81,28 +81,28 @@ describe "Semantic: if" do
       )) { union_of(int32, float64) }
   end
 
-  it "restricts the type of the right hand side of an || when using is_a? (#1728)" do
+  it("restricts the type of the right hand side of an || when using is_a? (#1728)") do
     assert_type(%(
       n = 3 || "foobar"
       n.is_a?(String) || (n + 1 == 2)
       )) { bool }
   end
 
-  it "restricts type with !var and ||" do
+  it("restricts type with !var and ||") do
     assert_type(%(
       a = 1 == 1 ? 1 : nil
       !a || a + 2
       )) { union_of bool, int32 }
   end
 
-  it "restricts type with !var.is_a?(...) and ||" do
+  it("restricts type with !var.is_a?(...) and ||") do
     assert_type(%(
       a = 1 == 1 ? 1 : nil
       !a.is_a?(Int32) || a + 2
       )) { union_of bool, int32 }
   end
 
-  it "restricts with || (#2464)" do
+  it("restricts with || (#2464)") do
     assert_type(%(
       struct Int32
         def foo
@@ -125,7 +125,7 @@ describe "Semantic: if" do
       )) { int32 }
   end
 
-  it "doesn't restrict with || on different vars" do
+  it("doesn't restrict with || on different vars") do
     assert_error %(
       struct Int32
         def foo
@@ -148,7 +148,7 @@ describe "Semantic: if" do
       "undefined method"
   end
 
-  it "doesn't restrict with || on var and non-restricting condition" do
+  it("doesn't restrict with || on var and non-restricting condition") do
     assert_error %(
       struct Int32
         def foo
@@ -164,7 +164,7 @@ describe "Semantic: if" do
       "undefined method"
   end
 
-  it "restricts with || but doesn't unify types to base class" do
+  it("restricts with || but doesn't unify types to base class") do
     assert_type(%(
       class Foo
       end
@@ -190,7 +190,7 @@ describe "Semantic: if" do
       )) { union_of(nil_type, int32, char) }
   end
 
-  it "restricts with && always falsey" do
+  it("restricts with && always falsey") do
     assert_type(%(
       x = 1
       if (x.is_a?(String) && x.is_a?(String)) && x.is_a?(String)
@@ -201,7 +201,7 @@ describe "Semantic: if" do
       )) { union_of(bool, int32) }
   end
 
-  it "doesn't filter and recombine when variables don't change in if" do
+  it("doesn't filter and recombine when variables don't change in if") do
     assert_type(%(
       module Moo
       end
@@ -228,7 +228,7 @@ describe "Semantic: if" do
       )) { int32 }
   end
 
-  it "types variable after unreachable else of && (#3360)" do
+  it("types variable after unreachable else of && (#3360)") do
     assert_type(%(
       def test
         foo = 1 if 1
@@ -240,7 +240,7 @@ describe "Semantic: if" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "restricts || else (1) (#3266)" do
+  it("restricts || else (1) (#3266)") do
     assert_type(%(
       a = 1 || nil
       b = 1 || nil
@@ -252,7 +252,7 @@ describe "Semantic: if" do
       ), inject_primitives: false) { tuple_of([int32, int32]) }
   end
 
-  it "restricts || else (2) (#3266)" do
+  it("restricts || else (2) (#3266)") do
     assert_type(%(
       a = 1 || nil
       if !a || 1
@@ -263,7 +263,7 @@ describe "Semantic: if" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "restricts || else (3) (#3266)" do
+  it("restricts || else (3) (#3266)") do
     assert_type(%(
       a = 1 || nil
       if 1 || !a
@@ -274,7 +274,7 @@ describe "Semantic: if" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "doesn't restrict || else in sub && (right)" do
+  it("doesn't restrict || else in sub && (right)") do
     assert_type(%(
       def foo
         a = 1 || nil
@@ -290,7 +290,7 @@ describe "Semantic: if" do
       )) { nilable int32 }
   end
 
-  it "doesn't restrict || else in sub && (left)" do
+  it("doesn't restrict || else in sub && (left)") do
     assert_type(%(
       def foo
         a = 1 || nil
@@ -306,7 +306,7 @@ describe "Semantic: if" do
       )) { nilable int32 }
   end
 
-  it "doesn't restrict || else in sub || (right)" do
+  it("doesn't restrict || else in sub || (right)") do
     assert_type(%(
       def foo
         a = 1 || nil
@@ -322,7 +322,7 @@ describe "Semantic: if" do
       )) { nilable int32 }
   end
 
-  it "doesn't restrict || else in sub || (left)" do
+  it("doesn't restrict || else in sub || (left)") do
     assert_type(%(
       def foo
         a = 1 || nil

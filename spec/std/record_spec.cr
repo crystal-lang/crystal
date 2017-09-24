@@ -14,8 +14,8 @@ private module RecordSpec
     y = [2, 3]
 end
 
-describe "record" do
-  it "defines record with type declarations" do
+describe("record") do
+  it("defines record with type declarations") do
     ary = [2, 3]
     rec = RecordSpec::Record1.new(1, ary)
     rec.x.should eq(1)
@@ -27,7 +27,7 @@ describe "record" do
     cloned.y.should_not be(ary)
   end
 
-  it "defines record with type declaration and initialization" do
+  it("defines record with type declaration and initialization") do
     rec = RecordSpec::Record2.new
     rec.x.should eq(0)
     rec.y.should eq([2, 3])
@@ -38,7 +38,7 @@ describe "record" do
     cloned.y.should_not be(rec.y)
   end
 
-  it "defines record with assignments" do
+  it("defines record with assignments") do
     rec = RecordSpec::Record3.new
     rec.x.should eq(0)
     rec.y.should eq([2, 3])

@@ -9,12 +9,12 @@ private def with_color_wrap(*args)
   with_color(*args).toggle(true)
 end
 
-describe "colorize" do
-  it "colorizes without change" do
+describe("colorize") do
+  it("colorizes without change") do
     colorize("hello").to_s.should eq("hello")
   end
 
-  it "colorizes foreground" do
+  it("colorizes foreground") do
     colorize("hello").black.to_s.should eq("\e[30mhello\e[0m")
     colorize("hello").red.to_s.should eq("\e[31mhello\e[0m")
     colorize("hello").green.to_s.should eq("\e[32mhello\e[0m")
@@ -33,7 +33,7 @@ describe "colorize" do
     colorize("hello").white.to_s.should eq("\e[97mhello\e[0m")
   end
 
-  it "colorizes background" do
+  it("colorizes background") do
     colorize("hello").on_black.to_s.should eq("\e[40mhello\e[0m")
     colorize("hello").on_red.to_s.should eq("\e[41mhello\e[0m")
     colorize("hello").on_green.to_s.should eq("\e[42mhello\e[0m")
@@ -52,7 +52,7 @@ describe "colorize" do
     colorize("hello").on_white.to_s.should eq("\e[107mhello\e[0m")
   end
 
-  it "colorizes mode" do
+  it("colorizes mode") do
     colorize("hello").bold.to_s.should eq("\e[1mhello\e[0m")
     colorize("hello").bright.to_s.should eq("\e[1mhello\e[0m")
     colorize("hello").dim.to_s.should eq("\e[2mhello\e[0m")
@@ -62,50 +62,50 @@ describe "colorize" do
     colorize("hello").hidden.to_s.should eq("\e[8mhello\e[0m")
   end
 
-  it "colorizes mode combination" do
+  it("colorizes mode combination") do
     colorize("hello").bold.dim.underline.blink.reverse.hidden.to_s.should eq("\e[1;2;4;5;7;8mhello\e[0m")
   end
 
-  it "colorizes foreground with background" do
+  it("colorizes foreground with background") do
     colorize("hello").blue.on_green.to_s.should eq("\e[34;42mhello\e[0m")
   end
 
-  it "colorizes foreground with background with mode" do
+  it("colorizes foreground with background with mode") do
     colorize("hello").blue.on_green.bold.to_s.should eq("\e[34;42;1mhello\e[0m")
   end
 
-  it "colorizes foreground with symbol" do
+  it("colorizes foreground with symbol") do
     colorize("hello", :red).to_s.should eq("\e[31mhello\e[0m")
     colorize("hello").fore(:red).to_s.should eq("\e[31mhello\e[0m")
   end
 
-  it "colorizes mode with symbol" do
+  it("colorizes mode with symbol") do
     colorize("hello").mode(:bold).to_s.should eq("\e[1mhello\e[0m")
   end
 
-  it "raises on unknown foreground color" do
-    expect_raises ArgumentError, "Unknown color: brown" do
+  it("raises on unknown foreground color") do
+    expect_raises(ArgumentError, "Unknown color: brown") do
       colorize("hello", :brown)
     end
   end
 
-  it "raises on unknown background color" do
-    expect_raises ArgumentError, "Unknown color: brown" do
+  it("raises on unknown background color") do
+    expect_raises(ArgumentError, "Unknown color: brown") do
       colorize("hello").back(:brown)
     end
   end
 
-  it "raises on unknown mode" do
-    expect_raises ArgumentError, "Unknown mode: bad" do
+  it("raises on unknown mode") do
+    expect_raises(ArgumentError, "Unknown mode: bad") do
       colorize("hello").mode(:bad)
     end
   end
 
-  it "inspects" do
+  it("inspects") do
     colorize("hello", :red).inspect.should eq("\e[31m\"hello\"\e[0m")
   end
 
-  it "colorizes io with method" do
+  it("colorizes io with method") do
     io = IO::Memory.new
     with_color_wrap.red.surround(io) do
       io << "hello"
@@ -113,7 +113,7 @@ describe "colorize" do
     io.to_s.should eq("\e[31mhello\e[0m")
   end
 
-  it "colorizes io with symbol" do
+  it("colorizes io with symbol") do
     io = IO::Memory.new
     with_color_wrap(:red).surround(io) do
       io << "hello"
@@ -121,7 +121,7 @@ describe "colorize" do
     io.to_s.should eq("\e[31mhello\e[0m")
   end
 
-  it "colorizes with push and pop" do
+  it("colorizes with push and pop") do
     io = IO::Memory.new
     with_color_wrap.red.push(io) do
       io << "hello"
@@ -133,7 +133,7 @@ describe "colorize" do
     io.to_s.should eq("\e[31mhello\e[0;32mworld\e[0;31mbye\e[0m")
   end
 
-  it "colorizes with push and pop resets" do
+  it("colorizes with push and pop resets") do
     io = IO::Memory.new
     with_color_wrap.red.push(io) do
       io << "hello"
@@ -145,12 +145,12 @@ describe "colorize" do
     io.to_s.should eq("\e[31mhello\e[0;32;1mworld\e[0;31mbye\e[0m")
   end
 
-  it "toggles off" do
+  it("toggles off") do
     colorize("hello").black.toggle(false).to_s.should eq("hello")
     colorize("hello").toggle(false).black.to_s.should eq("hello")
   end
 
-  it "toggles off and on" do
+  it("toggles off and on") do
     colorize("hello").toggle(false).black.toggle(true).to_s.should eq("\e[30mhello\e[0m")
   end
 end

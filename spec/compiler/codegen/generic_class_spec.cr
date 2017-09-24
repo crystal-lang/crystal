@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: generic class type" do
-  it "codegens inherited generic class instance var" do
+describe("Code gen: generic class type") do
+  it("codegens inherited generic class instance var") do
     run(%(
       class Foo(T)
         def initialize(@x : T)
@@ -19,7 +19,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(2)
   end
 
-  it "instantiates generic class with default argument in initialize (#394)" do
+  it("instantiates generic class with default argument in initialize (#394)") do
     run(%(
       class Foo(T)
         def initialize(@x = 1)
@@ -34,7 +34,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(2)
   end
 
-  it "allows initializing instance variable (#665)" do
+  it("allows initializing instance variable (#665)") do
     run(%(
       class SomeType(T)
         @x = 1
@@ -48,7 +48,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(1)
   end
 
-  it "allows initializing instance variable in inherited generic type" do
+  it("allows initializing instance variable in inherited generic type") do
     run(%(
       class Foo(T)
         @x = 1
@@ -66,7 +66,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(1)
   end
 
-  it "declares instance var with virtual T (#1675)" do
+  it("declares instance var with virtual T (#1675)") do
     run(%(
       class Foo
         def foo
@@ -96,7 +96,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(1)
   end
 
-  it "codegens statis array size after instantiating" do
+  it("codegens statis array size after instantiating") do
     run(%(
       struct StaticArray(T, N)
         def size
@@ -111,7 +111,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(3)
   end
 
-  it "inherited instance var initialize from generic to concrete (#2128)" do
+  it("inherited instance var initialize from generic to concrete (#2128)") do
     run(%(
       class Foo(T)
         @x = 42
@@ -128,7 +128,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(42)
   end
 
-  it "inherited instance var initialize from generic to generic to concrete (#2128)" do
+  it("inherited instance var initialize from generic to generic to concrete (#2128)") do
     run(%(
       class Foo(T)
         @x = 10
@@ -154,7 +154,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(42)
   end
 
-  it "invokes super in generic class (#2354)" do
+  it("invokes super in generic class (#2354)") do
     run(%(
       class Global
         @@x = 1
@@ -186,7 +186,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(2)
   end
 
-  it "uses big integer as generic type argument (#2353)" do
+  it("uses big integer as generic type argument (#2353)") do
     run(%(
       require "prelude"
 
@@ -203,7 +203,7 @@ describe "Code gen: generic class type" do
       )).to_u64.should eq(2374623294237463578)
   end
 
-  it "doesn't use virtual + in type arguments (#2839)" do
+  it("doesn't use virtual + in type arguments (#2839)") do
     run(%(
       class Class
         def name : String
@@ -224,7 +224,7 @@ describe "Code gen: generic class type" do
       )).to_string.should eq("Gen(Foo)")
   end
 
-  it "doesn't use virtual + in type arguments for Tuple (#2839)" do
+  it("doesn't use virtual + in type arguments for Tuple (#2839)") do
     run(%(
       class Class
         def name : String
@@ -245,7 +245,7 @@ describe "Code gen: generic class type" do
       )).to_string.should eq("Tuple(Foo)")
   end
 
-  it "doesn't use virtual + in type arguments for NamedTuple (#2839)" do
+  it("doesn't use virtual + in type arguments for NamedTuple (#2839)") do
     run(%(
       class Class
         def name : String
@@ -266,7 +266,7 @@ describe "Code gen: generic class type" do
       )).to_string.should eq("NamedTuple(x: Foo)")
   end
 
-  it "codegens virtual generic metaclass macro method call" do
+  it("codegens virtual generic metaclass macro method call") do
     run(%(
       class Class
         def name : String

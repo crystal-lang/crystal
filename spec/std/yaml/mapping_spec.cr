@@ -96,15 +96,15 @@ private class YAMLWithPresence
   })
 end
 
-describe "YAML mapping" do
-  it "parses person" do
+describe("YAML mapping") do
+  it("parses person") do
     person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
     person.should be_a(YAMLPerson)
     person.name.should eq("John")
     person.age.should eq(30)
   end
 
-  it "parses person without age" do
+  it("parses person without age") do
     person = YAMLPerson.from_yaml("---\nname: John\n")
     person.should be_a(YAMLPerson)
     person.name.should eq("John")
@@ -112,7 +112,7 @@ describe "YAML mapping" do
     person.age.should be_nil
   end
 
-  it "parses person with blank age" do
+  it("parses person with blank age") do
     person = YAMLPerson.from_yaml("---\nname: John\nage:\n")
     person.should be_a(YAMLPerson)
     person.name.should eq("John")
@@ -120,22 +120,22 @@ describe "YAML mapping" do
     person.age.should be_nil
   end
 
-  it "parses array of people" do
+  it("parses array of people") do
     people = Array(YAMLPerson).from_yaml("---\n- name: John\n- name: Doe\n")
     people.size.should eq(2)
     people[0].name.should eq("John")
     people[1].name.should eq("Doe")
   end
 
-  it "parses person with unknown attributes" do
+  it("parses person with unknown attributes") do
     person = YAMLPerson.from_yaml("---\nname: John\nunknown: [1, 2, 3]\nage: 30\n")
     person.should be_a(YAMLPerson)
     person.name.should eq("John")
     person.age.should eq(30)
   end
 
-  it "parses strict person with unknown attributes" do
-    ex = expect_raises YAML::ParseException, "Unknown yaml attribute: foo" do
+  it("parses strict person with unknown attributes") do
+    ex = expect_raises(YAML::ParseException, "Unknown yaml attribute: foo") do
       StrictYAMLPerson.from_yaml <<-YAML
         ---
         name: John
@@ -146,19 +146,19 @@ describe "YAML mapping" do
     ex.location.should eq({3, 1})
   end
 
-  it "does to_yaml" do
+  it("does to_yaml") do
     person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
     person2 = YAMLPerson.from_yaml(person.to_yaml)
     person2.should eq(person)
   end
 
-  it "doesn't emit null when doing to_yaml" do
+  it("doesn't emit null when doing to_yaml") do
     person = YAMLPerson.from_yaml("---\nname: John\n")
     (person.to_yaml =~ /age/).should be_falsey
   end
 
-  it "raises if non-nilable attribute is nil" do
-    ex = expect_raises YAML::ParseException, "Missing yaml attribute: name" do
+  it("raises if non-nilable attribute is nil") do
+    ex = expect_raises(YAML::ParseException, "Missing yaml attribute: name") do
       YAMLPerson.from_yaml <<-YAML
         ---
         age: 30
@@ -167,12 +167,12 @@ describe "YAML mapping" do
     ex.location.should eq({2, 1})
   end
 
-  it "doesn't raises on false value when not-nil" do
+  it("doesn't raises on false value when not-nil") do
     yaml = YAMLWithBool.from_yaml("---\nvalue: false\n")
     yaml.value.should be_false
   end
 
-  it "parses yaml with Time::Format converter" do
+  it("parses yaml with Time::Format converter") do
     yaml = YAMLWithTime.from_yaml("---\nvalue: 2014-10-31 23:37:16\n")
     yaml.value.should be_a(Time)
     yaml.value.to_s.should eq("2014-10-31 23:37:16")
@@ -180,14 +180,14 @@ describe "YAML mapping" do
     yaml.to_yaml.should eq("---\nvalue: 2014-10-31 23:37:16\n")
   end
 
-  it "parses YAML with mapping key named 'key'" do
+  it("parses YAML with mapping key named 'key'") do
     yaml = YAMLWithKey.from_yaml("---\nkey: foo\nvalue: 1\npull: 2")
     yaml.key.should eq("foo")
     yaml.value.should eq(1)
     yaml.pull.should eq(2)
   end
 
-  it "allows small types of integer" do
+  it("allows small types of integer") do
     yaml = YAMLWithSmallIntegers.from_yaml(%({"foo": 21, "bar": 7}))
 
     yaml.foo.should eq(21)
@@ -197,8 +197,8 @@ describe "YAML mapping" do
     typeof(yaml.bar).should eq(Int8)
   end
 
-  describe "parses YAML with defaults" do
-    it "mixed" do
+  describe("parses YAML with defaults") do
+    it("mixed") do
       json = YAMLWithDefaults.from_yaml(%({"a":1,"b":"bla"}))
       json.a.should eq 1
       json.b.should eq "bla"
@@ -221,7 +221,7 @@ describe "YAML mapping" do
       # json.b.should eq "Haha"
     end
 
-    it "bool" do
+    it("bool") do
       json = YAMLWithDefaults.from_yaml(%({}))
       json.c.should eq true
       typeof(json.c).should eq Bool
@@ -239,7 +239,7 @@ describe "YAML mapping" do
       json.d.should eq true
     end
 
-    it "with nilable" do
+    it("with nilable") do
       json = YAMLWithDefaults.from_yaml(%({}))
 
       json.e.should eq false
@@ -263,7 +263,7 @@ describe "YAML mapping" do
       json.i.should eq("bla")
     end
 
-    it "create new array every time" do
+    it("create new array every time") do
       json = YAMLWithDefaults.from_yaml(%({}))
       json.h.should eq [1, 2, 3]
       json.h << 4
@@ -274,7 +274,7 @@ describe "YAML mapping" do
     end
   end
 
-  it "parses YAML with any" do
+  it("parses YAML with any") do
     yaml = YAMLWithAny.from_yaml("obj: hello")
     yaml.obj.as_s.should eq("hello")
 
@@ -285,12 +285,12 @@ describe "YAML mapping" do
     yaml.obj["foo"].as_s.should eq("bar")
   end
 
-  it "outputs with converter when nilable" do
+  it("outputs with converter when nilable") do
     yaml = YAMLWithNilableTime.new
     yaml.to_yaml.should eq("--- {}\n")
   end
 
-  it "uses Time::EpochConverter" do
+  it("uses Time::EpochConverter") do
     string = %({"value":1459859781})
     yaml = YAMLWithTimeEpoch.from_yaml(string)
     yaml.value.should be_a(Time)
@@ -298,7 +298,7 @@ describe "YAML mapping" do
     yaml.to_yaml.should eq("---\nvalue: 1459859781\n")
   end
 
-  it "uses Time::EpochMillisConverter" do
+  it("uses Time::EpochMillisConverter") do
     string = %({"value":1459860483856})
     yaml = YAMLWithTimeEpochMillis.from_yaml(string)
     yaml.value.should be_a(Time)
@@ -306,8 +306,8 @@ describe "YAML mapping" do
     yaml.to_yaml.should eq("---\nvalue: 1459860483856\n")
   end
 
-  describe "parses YAML with presence markers" do
-    it "parses person with absent attributes" do
+  describe("parses YAML with presence markers") do
+    it("parses person with absent attributes") do
       yaml = YAMLWithPresence.from_yaml("---\nfirst_name:\n")
       yaml.first_name.should be_nil
       yaml.first_name_present?.should be_true

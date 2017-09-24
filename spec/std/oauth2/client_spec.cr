@@ -1,27 +1,27 @@
 require "spec"
 require "oauth2"
 
-describe OAuth2::Client do
-  describe "authorization uri" do
-    it "gets with default endpoint" do
+describe(OAuth2::Client) do
+  describe("authorization uri") do
+    it("gets with default endpoint") do
       client = OAuth2::Client.new "localhost", "client_id", "client_secret", redirect_uri: "uri"
       uri = client.get_authorize_uri(scope: "foo bar")
       uri.should eq("https://localhost/oauth2/authorize?client_id=client_id&redirect_uri=uri&response_type=code&scope=foo+bar")
     end
 
-    it "gets with custom endpoint" do
+    it("gets with custom endpoint") do
       client = OAuth2::Client.new "localhost", "client_id", "client_secret", redirect_uri: "uri", authorize_uri: "/baz"
       uri = client.get_authorize_uri(scope: "foo bar")
       uri.should eq("https://localhost/baz?client_id=client_id&redirect_uri=uri&response_type=code&scope=foo+bar")
     end
 
-    it "gets with state" do
+    it("gets with state") do
       client = OAuth2::Client.new "localhost", "client_id", "client_secret", redirect_uri: "uri"
       uri = client.get_authorize_uri(scope: "foo bar", state: "xyz")
       uri.should eq("https://localhost/oauth2/authorize?client_id=client_id&redirect_uri=uri&response_type=code&scope=foo+bar&state=xyz")
     end
 
-    it "gets with block" do
+    it("gets with block") do
       client = OAuth2::Client.new "localhost", "client_id", "client_secret", redirect_uri: "uri"
       uri = client.get_authorize_uri(scope: "foo bar") do |form|
         form.add "baz", "qux"
@@ -29,7 +29,7 @@ describe OAuth2::Client do
       uri.should eq("https://localhost/oauth2/authorize?client_id=client_id&redirect_uri=uri&response_type=code&scope=foo+bar&baz=qux")
     end
 
-    it "gets with absolute uri" do
+    it("gets with absolute uri") do
       client = OAuth2::Client.new "localhost", "client_id", "client_secret",
         redirect_uri: "uri",
         authorize_uri: "https://example2.com:1234/foo?bar=baz"

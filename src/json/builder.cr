@@ -341,7 +341,7 @@ module JSON
   # string = JSON.build do |json|
   #   json.object do
   #     json.field "name", "foo"
-  #     json.field "values" do
+  #     json.field("values") do
   #       json.array do
   #         json.number 1
   #         json.number 2

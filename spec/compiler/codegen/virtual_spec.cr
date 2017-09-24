@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: virtual type" do
-  it "call base method" do
+describe("Code gen: virtual type") do
+  it("call base method") do
     run("
       class Foo
         def coco
@@ -18,7 +18,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(1)
   end
 
-  it "call overwritten method" do
+  it("call overwritten method") do
     run("
       class Foo
         def coco
@@ -38,7 +38,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(2)
   end
 
-  it "call base overwritten method" do
+  it("call base overwritten method") do
     run("
       class Foo
         def coco
@@ -58,7 +58,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(1)
   end
 
-  it "dispatch call with virtual type argument" do
+  it("dispatch call with virtual type argument") do
     run("
       class Foo
       end
@@ -80,7 +80,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(2)
   end
 
-  it "can belong to union" do
+  it("can belong to union") do
     run("
       class Foo
         def foo; 1; end
@@ -97,7 +97,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(2)
   end
 
-  it "lookup instance variables in parent types" do
+  it("lookup instance variables in parent types") do
     run("
       class Foo
         def initialize
@@ -119,7 +119,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(2)
   end
 
-  it "assign instance variable in virtual type" do
+  it("assign instance variable in virtual type") do
     run("
       class Foo
         def foo
@@ -135,7 +135,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(1)
   end
 
-  it "codegens non-virtual call that calls virtual call to another virtual call" do
+  it("codegens non-virtual call that calls virtual call to another virtual call") do
     run("
       class Foo
         def foo
@@ -158,7 +158,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(1)
   end
 
-  it "casts virtual type to base virtual type" do
+  it("casts virtual type to base virtual type") do
     run("
       class Object
         def bar
@@ -180,7 +180,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(1)
   end
 
-  it "codegens call to Object#to_s from virtual type" do
+  it("codegens call to Object#to_s from virtual type") do
     run("
       require \"prelude\"
 
@@ -195,7 +195,7 @@ describe "Code gen: virtual type" do
       ")
   end
 
-  it "codegens call to Object#to_s from nilable type" do
+  it("codegens call to Object#to_s from nilable type") do
     run("
       require \"prelude\"
 
@@ -207,7 +207,7 @@ describe "Code gen: virtual type" do
       ")
   end
 
-  it "codegens virtual call with explicit self" do
+  it("codegens virtual call with explicit self") do
     run("
       class Foo
         def foo
@@ -227,7 +227,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(1)
   end
 
-  it "codegens virtual call with explicit self and nilable type" do
+  it("codegens virtual call with explicit self and nilable type") do
     run("
       class Foo
         def foo
@@ -253,7 +253,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(1)
   end
 
-  it "initializes ivars to nil even if object never instantiated" do
+  it("initializes ivars to nil even if object never instantiated") do
     run("
       require \"prelude\"
 
@@ -291,7 +291,7 @@ describe "Code gen: virtual type" do
       ")
   end
 
-  it "doesn't lookup in Value+ when virtual type is Object+" do
+  it("doesn't lookup in Value+ when virtual type is Object+") do
     run(%(
       require "prelude"
 
@@ -309,7 +309,7 @@ describe "Code gen: virtual type" do
       )).to_b.should be_true
   end
 
-  it "correctly dispatch call with block when the obj is a virtual type" do
+  it("correctly dispatch call with block when the obj is a virtual type") do
     run("
       class Foo
         def each
@@ -336,7 +336,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(2)
   end
 
-  it "dispatch call with nilable virtual arg" do
+  it("dispatch call with nilable virtual arg") do
     run("
       class Foo
       end
@@ -361,7 +361,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(1)
   end
 
-  it "calls class method 1" do
+  it("calls class method 1") do
     run("
       class Foo
         def self.foo
@@ -379,7 +379,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(1)
   end
 
-  it "calls class method 2" do
+  it("calls class method 2") do
     run("
       class Foo
         def self.foo
@@ -397,7 +397,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(2)
   end
 
-  it "calls class method 3" do
+  it("calls class method 3") do
     run("
       class Base
         def self.foo
@@ -418,7 +418,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(1)
   end
 
-  it "dispatches on virtual metaclass (1)" do
+  it("dispatches on virtual metaclass (1)") do
     run("
       class Foo
         def self.coco
@@ -437,7 +437,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(1)
   end
 
-  it "dispatches on virtual metaclass (2)" do
+  it("dispatches on virtual metaclass (2)") do
     run("
       class Foo
         def self.coco
@@ -456,7 +456,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(2)
   end
 
-  it "dispatches on virtual metaclass (3)" do
+  it("dispatches on virtual metaclass (3)") do
     run("
       class Foo
         def self.coco
@@ -478,7 +478,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(2)
   end
 
-  it "codegens new for simple type, then for virtual" do
+  it("codegens new for simple type, then for virtual") do
     run("
       class Foo
         def initialize(@x : Int32)
@@ -498,7 +498,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(1)
   end
 
-  it "codegens new twice for virtual" do
+  it("codegens new twice for virtual") do
     run("
       class Foo
         def initialize(@x : Int32)
@@ -518,7 +518,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(1)
   end
 
-  it "codegens allocate for virtual type with custom new" do
+  it("codegens allocate for virtual type with custom new") do
     run("
       class Foo
         def self.new
@@ -541,7 +541,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(2)
   end
 
-  it "returns type with virtual type def type" do
+  it("returns type with virtual type def type") do
     run("
       class Foo
         def foo
@@ -564,7 +564,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(1)
   end
 
-  it "casts virtual type to union" do
+  it("casts virtual type to union") do
     run("
       class Foo
       end
@@ -594,7 +594,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(3)
   end
 
-  it "casts union to virtual" do
+  it("casts union to virtual") do
     run("
       module Moo
       end
@@ -625,7 +625,7 @@ describe "Code gen: virtual type" do
       ").to_b.should be_true
   end
 
-  it "codegens virtual method of abstract metaclass" do
+  it("codegens virtual method of abstract metaclass") do
     run(%(
       class Foo
         def self.foo
@@ -649,7 +649,7 @@ describe "Code gen: virtual type" do
       )).to_i.should eq(2)
   end
 
-  it "codegens new for virtual class with one type" do
+  it("codegens new for virtual class with one type") do
     run(%(
       abstract class Foo
       end
@@ -666,7 +666,7 @@ describe "Code gen: virtual type" do
       )).to_i.should eq(123)
   end
 
-  it "codegens new for virtual class with two types" do
+  it("codegens new for virtual class with two types") do
     run(%(
       abstract class Foo
       end

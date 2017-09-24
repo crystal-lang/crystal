@@ -1,8 +1,8 @@
 require "spec"
 require "zip"
 
-describe Zip do
-  it "writes and reads to memory" do
+describe(Zip) do
+  it("writes and reads to memory") do
     io = IO::Memory.new
 
     Zip::Writer.open(io) do |zip|
@@ -32,7 +32,7 @@ describe Zip do
     end
   end
 
-  it "writes entry" do
+  it("writes entry") do
     io = IO::Memory.new
 
     time = Time.new(2017, 1, 14, 2, 3, 4)
@@ -55,7 +55,7 @@ describe Zip do
     end
   end
 
-  it "writes entry uncompressed" do
+  it("writes entry uncompressed") do
     io = IO::Memory.new
 
     text = "contents of foo"
@@ -94,7 +94,7 @@ describe Zip do
     end
   end
 
-  it "adds a directory" do
+  it("adds a directory") do
     io = IO::Memory.new
 
     Zip::Writer.open(io) do |zip|
@@ -118,7 +118,7 @@ describe Zip do
     end
   end
 
-  it "writes string" do
+  it("writes string") do
     io = IO::Memory.new
 
     Zip::Writer.open(io) do |zip|
@@ -134,7 +134,7 @@ describe Zip do
     end
   end
 
-  it "writes bytes" do
+  it("writes bytes") do
     io = IO::Memory.new
 
     Zip::Writer.open(io) do |zip|
@@ -150,7 +150,7 @@ describe Zip do
     end
   end
 
-  it "writes io" do
+  it("writes io") do
     io = IO::Memory.new
     data = IO::Memory.new("contents of foo")
 
@@ -167,7 +167,7 @@ describe Zip do
     end
   end
 
-  it "writes file" do
+  it("writes file") do
     io = IO::Memory.new
     filename = "#{__DIR__}/../data/test_file.txt"
 

@@ -21,7 +21,7 @@ class Crystal::CodeGenVisitor
       @count = 0
     end
 
-    getter exit_block : LLVM::BasicBlock do
+    getter(exit_block : LLVM::BasicBlock) do
       @codegen.new_block "exit"
     end
 

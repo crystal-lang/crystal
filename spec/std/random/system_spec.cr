@@ -1,8 +1,8 @@
 require "spec"
 require "random/system"
 
-describe "Random::System" do
-  it "returns random number from the secure system source" do
+describe("Random::System") do
+  it("returns random number from the secure system source") do
     Random::System.next_u.should be_a(Int::Unsigned)
 
     x = Random::System.rand(123456...654321)

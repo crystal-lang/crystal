@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
-describe "Semantic: lib" do
-  it "types a varargs external" do
+describe("Semantic: lib") do
+  it("types a varargs external") do
     assert_type("lib LibFoo; fun bar(x : Int32, ...) : Int32; end; LibFoo.bar(1, 1.5, 'a')") { int32 }
   end
 
-  it "raises on undefined fun" do
+  it("raises on undefined fun") do
     assert_error %(
       lib LibC
       end
@@ -15,7 +15,7 @@ describe "Semantic: lib" do
       "undefined fun 'foo' for LibC"
   end
 
-  it "raises wrong number of arguments" do
+  it("raises wrong number of arguments") do
     assert_error %(
       lib LibC
         fun foo : Int32
@@ -26,7 +26,7 @@ describe "Semantic: lib" do
       "wrong number of arguments for 'LibC#foo' (given 1, expected 0)"
   end
 
-  it "raises wrong argument type" do
+  it("raises wrong argument type") do
     assert_error %(
       lib LibC
         fun foo(x : Int32) : Int32
@@ -37,7 +37,7 @@ describe "Semantic: lib" do
       "argument 'x' of 'LibC#foo' must be Int32, not Char"
   end
 
-  it "reports error when changing var type and something breaks" do
+  it("reports error when changing var type and something breaks") do
     assert_error %(
       class LibFoo
         def initialize
@@ -59,7 +59,7 @@ describe "Semantic: lib" do
       "undefined method '+' for Char"
   end
 
-  it "reports error when changing instance var type and something breaks" do
+  it("reports error when changing instance var type and something breaks") do
     assert_error "
       lib Lib
         fun bar(c : Char)
@@ -87,42 +87,42 @@ describe "Semantic: lib" do
       "argument 'c' of 'Lib#bar' must be Char"
   end
 
-  it "reports error on fun argument type not primitive like" do
+  it("reports error on fun argument type not primitive like") do
     assert_error "lib LibFoo; fun foo(x : Reference); end",
       "only primitive types"
   end
 
-  it "reports error on fun argument type not primitive like, Nil (#2994)" do
+  it("reports error on fun argument type not primitive like, Nil (#2994)") do
     assert_error "lib LibFoo; fun foo(x : Nil); end",
       "only primitive types"
   end
 
-  it "reports error on fun return type not primitive like" do
+  it("reports error on fun return type not primitive like") do
     assert_error "lib LibFoo; fun foo : Reference; end",
       "only primitive types"
   end
 
-  it "reports error on struct field type not primitive like" do
+  it("reports error on struct field type not primitive like") do
     assert_error "lib LibFoo; struct Foo; x : Reference; end; end",
       "only primitive types"
   end
 
-  it "reports error on typedef type not primitive like" do
+  it("reports error on typedef type not primitive like") do
     assert_error "lib LibFoo; type Foo = Reference; end",
       "only primitive types"
   end
 
-  it "reports error out can only be used with lib funs" do
+  it("reports error out can only be used with lib funs") do
     assert_error "foo(out x)",
       "out can only be used with lib funs"
   end
 
-  it "reports error out can only be used with lib funs in named argument" do
+  it("reports error out can only be used with lib funs in named argument") do
     assert_error "foo(x: out x)",
       "out can only be used with lib funs"
   end
 
-  it "reports error if using out with an already declared variable" do
+  it("reports error if using out with an already declared variable") do
     assert_error %(
       lib Lib
         fun foo(x : Int32*)
@@ -134,7 +134,7 @@ describe "Semantic: lib" do
       "variable 'x' is already defined, `out` must be used to define a variable, use another name"
   end
 
-  it "allows invoking out with underscore " do
+  it("allows invoking out with underscore ") do
     assert_type(%(
       lib Lib
         fun foo(x : Int32*) : Float64
@@ -144,7 +144,7 @@ describe "Semantic: lib" do
       )) { float64 }
   end
 
-  it "reports redefinition of fun with different signature" do
+  it("reports redefinition of fun with different signature") do
     assert_error "
       lib LibC
         fun foo : Int32
@@ -154,7 +154,7 @@ describe "Semantic: lib" do
       "fun redefinition with different signature"
   end
 
-  it "types lib var get" do
+  it("types lib var get") do
     assert_type("
       lib LibC
         $errno : Int32
@@ -164,7 +164,7 @@ describe "Semantic: lib" do
       ") { int32 }
   end
 
-  it "types lib var set" do
+  it("types lib var set") do
     assert_type("
       lib LibC
         $errno : Int32
@@ -174,7 +174,7 @@ describe "Semantic: lib" do
       ") { int32 }
   end
 
-  it "types lib var get with forward declaration" do
+  it("types lib var get with forward declaration") do
     assert_type("
       lib LibC
         $errno : A
@@ -186,7 +186,7 @@ describe "Semantic: lib" do
       ") { int32 }
   end
 
-  it "defined fun with aliased type" do
+  it("defined fun with aliased type") do
     assert_type("
       lib LibC
         alias SizeT = Int32
@@ -197,7 +197,7 @@ describe "Semantic: lib" do
       ") { int32 }
   end
 
-  it "overrides definition of fun" do
+  it("overrides definition of fun") do
     result = assert_type("
       lib LibC
         fun foo(x : Int32) : Float64
@@ -215,7 +215,7 @@ describe "Semantic: lib" do
     foo.real_name.should eq("bar")
   end
 
-  it "error if passing type to LibC with to_unsafe but type doesn't match" do
+  it("error if passing type to LibC with to_unsafe but type doesn't match") do
     assert_error "
       lib LibC
         fun foo(x : Int32) : Int32
@@ -231,7 +231,7 @@ describe "Semantic: lib" do
       ", "argument 'x' of 'LibC#foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
   end
 
-  it "error if passing non primitive type as varargs" do
+  it("error if passing non primitive type as varargs") do
     assert_error "
       lib LibC
         fun foo(x : Int32, ...)
@@ -244,7 +244,7 @@ describe "Semantic: lib" do
       ", "argument #2 of 'LibC#foo' is not a primitive type and no Foo#to_unsafe method found"
   end
 
-  it "error if passing non primitive type as varargs invoking to_unsafe" do
+  it("error if passing non primitive type as varargs invoking to_unsafe") do
     assert_error "
       lib LibC
         fun foo(x : Int32, ...)
@@ -263,7 +263,7 @@ describe "Semantic: lib" do
       ", "converted Foo invoking to_unsafe, but Bar is not a primitive type"
   end
 
-  it "allows passing splat to LibC fun" do
+  it("allows passing splat to LibC fun") do
     assert_type(%(
       lib LibC
         fun foo(x : Int32, y : Float64, ...) : Float64
@@ -274,7 +274,7 @@ describe "Semantic: lib" do
       )) { float64 }
   end
 
-  it "allows passing double splat to LibC fun" do
+  it("allows passing double splat to LibC fun") do
     assert_type(%(
       lib LibC
         fun foo(x : Int32, y : Float64) : Float64
@@ -285,7 +285,7 @@ describe "Semantic: lib" do
       )) { float64 }
   end
 
-  it "errors if applying wrong attribute" do
+  it("errors if applying wrong attribute") do
     assert_error %(
       @[Bar]
       lib LibFoo
@@ -294,7 +294,7 @@ describe "Semantic: lib" do
       "illegal attribute for lib, valid attributes are: Link"
   end
 
-  it "errors if missing link arguments" do
+  it("errors if missing link arguments") do
     assert_error %(
       @[Link]
       lib LibFoo
@@ -303,7 +303,7 @@ describe "Semantic: lib" do
       "missing link arguments: must at least specify a library name"
   end
 
-  it "errors if first argument is not a string" do
+  it("errors if first argument is not a string") do
     assert_error %(
       @[Link(1)]
       lib LibFoo
@@ -312,7 +312,7 @@ describe "Semantic: lib" do
       "'lib' link argument must be a String"
   end
 
-  it "errors if second argument is not a string" do
+  it("errors if second argument is not a string") do
     assert_error %(
       @[Link("foo", 1)]
       lib LibFoo
@@ -321,7 +321,7 @@ describe "Semantic: lib" do
       "'ldflags' link argument must be a String"
   end
 
-  it "errors if third argument is not a bool" do
+  it("errors if third argument is not a bool") do
     assert_error %(
       @[Link("foo", "bar", 1)]
       lib LibFoo
@@ -330,7 +330,7 @@ describe "Semantic: lib" do
       "'static' link argument must be a Bool"
   end
 
-  it "errors if foruth argument is not a bool" do
+  it("errors if foruth argument is not a bool") do
     assert_error %(
       @[Link("foo", "bar", true, 1)]
       lib LibFoo
@@ -339,7 +339,7 @@ describe "Semantic: lib" do
       "'framework' link argument must be a String"
   end
 
-  it "errors if too many link arguments" do
+  it("errors if too many link arguments") do
     assert_error %(
       @[Link("foo", "bar", true, "Cocoa", 1)]
       lib LibFoo
@@ -348,7 +348,7 @@ describe "Semantic: lib" do
       "wrong number of link arguments (given 5, expected 1..4)"
   end
 
-  it "errors if unknown named arg" do
+  it("errors if unknown named arg") do
     assert_error %(
       @[Link(boo: "bar")]
       lib LibFoo
@@ -357,7 +357,7 @@ describe "Semantic: lib" do
       "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
   end
 
-  it "errors if lib already specified with positional argument" do
+  it("errors if lib already specified with positional argument") do
     assert_error %(
       @[Link("foo", lib: "bar")]
       lib LibFoo
@@ -366,7 +366,7 @@ describe "Semantic: lib" do
       "'lib' link argument already specified"
   end
 
-  it "errors if lib named arg is not a String" do
+  it("errors if lib named arg is not a String") do
     assert_error %(
       @[Link(lib: 1)]
       lib LibFoo
@@ -375,7 +375,7 @@ describe "Semantic: lib" do
       "'lib' link argument must be a String"
   end
 
-  it "clears attributes after lib" do
+  it("clears attributes after lib") do
     assert_type(%(
       @[Link("foo")]
       lib LibFoo
@@ -385,7 +385,7 @@ describe "Semantic: lib" do
       )) { int32 }
   end
 
-  it "allows invoking lib call without obj inside lib" do
+  it("allows invoking lib call without obj inside lib") do
     assert_type(%(
       lib LibFoo
         fun foo : Int32
@@ -397,7 +397,7 @@ describe "Semantic: lib" do
       )) { int32 }
   end
 
-  it "errors if lib fun call is part of dispatch" do
+  it("errors if lib fun call is part of dispatch") do
     assert_error %(
       lib LibFoo
         fun foo : Int32
@@ -413,7 +413,7 @@ describe "Semantic: lib" do
       "lib fun call is not supported in dispatch"
   end
 
-  it "allows passing nil or pointer to arg expecting pointer" do
+  it("allows passing nil or pointer to arg expecting pointer") do
     assert_type(%(
       lib Foo
         fun foo(x : Int32*) : Int64
@@ -424,7 +424,7 @@ describe "Semantic: lib" do
       )) { int64 }
   end
 
-  it "correctly attached link flags if there's a macro if" do
+  it("correctly attached link flags if there's a macro if") do
     result = semantic(%(
       @[Link("SDL")]
       @[Link("SDLMain")]
@@ -444,7 +444,7 @@ describe "Semantic: lib" do
     attrs[1].lib.should eq("SDLMain")
   end
 
-  it "supports forward references (#399)" do
+  it("supports forward references (#399)") do
     assert_type(%(
       lib LibFoo
         fun foo() : Bar*
@@ -458,7 +458,7 @@ describe "Semantic: lib" do
       )) { pointer_of(types["LibFoo"].types["Bar"]) }
   end
 
-  it "supports forward references with struct inside struct (#399)" do
+  it("supports forward references with struct inside struct (#399)") do
     assert_type(%(
       lib LibFoo
         struct Bar
@@ -474,7 +474,7 @@ describe "Semantic: lib" do
       )) { pointer_of(types["LibFoo"].types["Foo"]) }
   end
 
-  it "errors if defines def on lib" do
+  it("errors if defines def on lib") do
     assert_error %(
       lib LibC
       end
@@ -485,7 +485,7 @@ describe "Semantic: lib" do
       "can't define method in lib LibC"
   end
 
-  it "reopens lib and adds more link attributes" do
+  it("reopens lib and adds more link attributes") do
     result = semantic(%(
       @[Link("SDL")]
       lib LibSDL
@@ -505,7 +505,7 @@ describe "Semantic: lib" do
     attrs[1].lib.should eq("SDLMain")
   end
 
-  it "reopens lib and adds same link attributes" do
+  it("reopens lib and adds same link attributes") do
     result = semantic(%(
       @[Link("SDL")]
       lib LibSDL
@@ -524,7 +524,7 @@ describe "Semantic: lib" do
     attrs[0].lib.should eq("SDL")
   end
 
-  it "gathers link attributes from macro expression" do
+  it("gathers link attributes from macro expression") do
     result = semantic(%(
       {% begin %}
         @[Link("SDL")]
@@ -541,7 +541,7 @@ describe "Semantic: lib" do
     attrs[0].lib.should eq("SDL")
   end
 
-  it "errors if using void as argument (related to #508)" do
+  it("errors if using void as argument (related to #508)") do
     assert_error %(
       lib LibFoo
         fun foo(x : Void)
@@ -550,7 +550,7 @@ describe "Semantic: lib" do
       "can't use Void as argument type"
   end
 
-  it "errors if using void via typedef as argument (related to #508)" do
+  it("errors if using void via typedef as argument (related to #508)") do
     assert_error %(
       lib LibFoo
         type Foo = Void
@@ -560,7 +560,7 @@ describe "Semantic: lib" do
       "can't use Void as argument type"
   end
 
-  it "can use tuple as fun return" do
+  it("can use tuple as fun return") do
     assert_type(%(
       lib LibC
         fun foo : {Int32, Int32}
@@ -570,7 +570,7 @@ describe "Semantic: lib" do
       )) { tuple_of([int32, int32] of TypeVar) }
   end
 
-  it "doesn't try to invoke unsafe for c struct/union (#1362)" do
+  it("doesn't try to invoke unsafe for c struct/union (#1362)") do
     assert_error %(
       lib LibFoo
         struct Bar
@@ -585,7 +585,7 @@ describe "Semantic: lib" do
       "argument 'x' of 'LibFoo#foo' must be Pointer(LibFoo::Bar), not LibFoo::Bar"
   end
 
-  it "passes int as another integer type in variable" do
+  it("passes int as another integer type in variable") do
     assert_type(%(
       lib LibFoo
         fun foo(x : Int32) : Float64
@@ -596,7 +596,7 @@ describe "Semantic: lib" do
       )) { float64 }
   end
 
-  it "passes float as another integer type in variable" do
+  it("passes float as another integer type in variable") do
     assert_type(%(
       lib LibFoo
         fun foo(x : Float32) : Int32
@@ -607,7 +607,7 @@ describe "Semantic: lib" do
       )) { int32 }
   end
 
-  it "passes int as another integer type with literal" do
+  it("passes int as another integer type with literal") do
     assert_type(%(
       lib LibFoo
         fun foo(x : Int32) : Float64
@@ -617,7 +617,7 @@ describe "Semantic: lib" do
       )) { float64 }
   end
 
-  it "errors if invoking to_i32 and got error in that call" do
+  it("errors if invoking to_i32 and got error in that call") do
     assert_error %(
       lib LibFoo
         fun foo(x : Int32) : Float64
@@ -634,7 +634,7 @@ describe "Semantic: lib" do
       "converting from Foo to Int32 by invoking 'to_i32'"
   end
 
-  it "errors if invoking to_i32 and got wrong type" do
+  it("errors if invoking to_i32 and got wrong type") do
     assert_error %(
       lib LibFoo
         fun foo(x : Int32) : Float64
@@ -651,7 +651,7 @@ describe "Semantic: lib" do
       "invoked 'to_i32' to convert from Foo to Int32, but got Char"
   end
 
-  it "defines lib funs before funs with body" do
+  it("defines lib funs before funs with body") do
     assert_type(%(
       fun foo : Int32
         LibX.x
@@ -665,7 +665,7 @@ describe "Semantic: lib" do
       )) { int32 }
   end
 
-  it "errors if using out with varargs" do
+  it("errors if using out with varargs") do
     assert_error %(
       lib LibX
         fun x(...)
@@ -676,7 +676,7 @@ describe "Semantic: lib" do
       "can't use out at varargs position: declare the variable with `z = uninitialized ...` and pass it with `pointerof(z)`"
   end
 
-  it "errors if using out with void pointer (#2424)" do
+  it("errors if using out with void pointer (#2424)") do
     assert_error %(
       lib LibFoo
         fun foo(x : Void*)
@@ -687,7 +687,7 @@ describe "Semantic: lib" do
       "can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
   end
 
-  it "errors if using out with void pointer through type" do
+  it("errors if using out with void pointer through type") do
     assert_error %(
       lib LibFoo
         type Foo = Void
@@ -699,7 +699,7 @@ describe "Semantic: lib" do
       "can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
   end
 
-  it "errors if using out with non-pointer" do
+  it("errors if using out with non-pointer") do
     assert_error %(
       lib LibFoo
         fun foo(x : Int32)
@@ -710,7 +710,7 @@ describe "Semantic: lib" do
       "argument 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
   end
 
-  it "errors if redefining fun with different signature (#2468)" do
+  it("errors if redefining fun with different signature (#2468)") do
     assert_error %(
       fun foo
       end
@@ -721,7 +721,7 @@ describe "Semantic: lib" do
       "fun redefinition with different signature"
   end
 
-  it "errors if using named args with variadic function" do
+  it("errors if using named args with variadic function") do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8, ...) : Int32
@@ -732,7 +732,7 @@ describe "Semantic: lib" do
       "can't use named args with variadic function"
   end
 
-  it "errors if using unknown named arg" do
+  it("errors if using unknown named arg") do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
@@ -743,7 +743,7 @@ describe "Semantic: lib" do
       "no argument named 'z'"
   end
 
-  it "errors if argument already specified" do
+  it("errors if argument already specified") do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
@@ -754,7 +754,7 @@ describe "Semantic: lib" do
       "argument 'x' already specified"
   end
 
-  it "errors if missing arugment" do
+  it("errors if missing arugment") do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
@@ -765,7 +765,7 @@ describe "Semantic: lib" do
       "missing argument: y"
   end
 
-  it "errors if missing arugments" do
+  it("errors if missing arugments") do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8, z: Int32) : Int32
@@ -776,7 +776,7 @@ describe "Semantic: lib" do
       "missing arguments: x, z"
   end
 
-  it "can use named args" do
+  it("can use named args") do
     assert_type(%(
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
@@ -786,7 +786,7 @@ describe "Semantic: lib" do
       )) { int32 }
   end
 
-  it "can use out with named args" do
+  it("can use out with named args") do
     assert_type(%(
       lib LibC
         fun foo(x : Int32*)
@@ -797,7 +797,7 @@ describe "Semantic: lib" do
       )) { int32 }
   end
 
-  it "types fun returning nothing as nil" do
+  it("types fun returning nothing as nil") do
     assert_type(%(
       lib LibFoo
         fun foo
@@ -807,7 +807,7 @@ describe "Semantic: lib" do
       )) { nil_type }
   end
 
-  it "types fun returning void as nil" do
+  it("types fun returning void as nil") do
     assert_type(%(
       lib LibFoo
         fun foo : Void
@@ -817,7 +817,7 @@ describe "Semantic: lib" do
       )) { nil_type }
   end
 
-  it "types fun returning nil as nil" do
+  it("types fun returning nil as nil") do
     assert_type(%(
       lib LibFoo
         fun foo : Nil
@@ -827,7 +827,7 @@ describe "Semantic: lib" do
       )) { nil_type }
   end
 
-  it "can use macros inside lib" do
+  it("can use macros inside lib") do
     assert_type(%(
       lib LibFoo
         {% begin %}
@@ -839,7 +839,7 @@ describe "Semantic: lib" do
       )) { int32 }
   end
 
-  it "can use macros inside struct" do
+  it("can use macros inside struct") do
     assert_type(%(
       lib LibFoo
         struct Foo
@@ -853,7 +853,7 @@ describe "Semantic: lib" do
       )) { int32 }
   end
 
-  it "errors if defining incompatible funs with the same name in the same lib (#3045)" do
+  it("errors if defining incompatible funs with the same name in the same lib (#3045)") do
     assert_error %(
       lib LibFoo
         fun foo1 = foo
@@ -863,7 +863,7 @@ describe "Semantic: lib" do
       "fun redefinition with different signature"
   end
 
-  it "errors if defining incompatible funs with the same name in different libs (#3045)" do
+  it("errors if defining incompatible funs with the same name in different libs (#3045)") do
     assert_error %(
       lib LibFoo1
         fun foo1 = foo
@@ -876,7 +876,7 @@ describe "Semantic: lib" do
       "fun redefinition with different signature"
   end
 
-  it "specifies a call convention" do
+  it("specifies a call convention") do
     result = semantic(%(
       lib LibFoo
         @[CallConvention("X86_StdCall")]
@@ -887,7 +887,7 @@ describe "Semantic: lib" do
     foo.call_convention.should eq(LLVM::CallConvention::X86_StdCall)
   end
 
-  it "specifies a call convention to a lib" do
+  it("specifies a call convention to a lib") do
     result = semantic(%(
       @[CallConvention("X86_StdCall")]
       lib LibFoo
@@ -898,7 +898,7 @@ describe "Semantic: lib" do
     foo.call_convention.should eq(LLVM::CallConvention::X86_StdCall)
   end
 
-  it "errors if wrong number of arguments for CallConvention" do
+  it("errors if wrong number of arguments for CallConvention") do
     assert_error %(
       lib LibFoo
         @[CallConvention("X86_StdCall", "bar")]
@@ -908,7 +908,7 @@ describe "Semantic: lib" do
       "wrong number of arguments for attribute CallConvention (given 2, expected 1)"
   end
 
-  it "errors if CallConvention argument is not a string" do
+  it("errors if CallConvention argument is not a string") do
     assert_error %(
       lib LibFoo
         @[CallConvention(1)]
@@ -918,7 +918,7 @@ describe "Semantic: lib" do
       "argument to CallConvention must be a string"
   end
 
-  it "errors if CallConvention argument is not a valid string" do
+  it("errors if CallConvention argument is not a valid string") do
     assert_error %(
       lib LibFoo
         @[CallConvention("foo")]
@@ -928,7 +928,7 @@ describe "Semantic: lib" do
       "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
   end
 
-  it "errors if assigning void lib call to var (#4414)" do
+  it("errors if assigning void lib call to var (#4414)") do
     assert_error %(
       lib LibFoo
         fun foo
@@ -939,7 +939,7 @@ describe "Semantic: lib" do
       "assigning Void return value of lib fun call has no effect"
   end
 
-  it "errors if passing void lib call to call argument (#4414)" do
+  it("errors if passing void lib call to call argument (#4414)") do
     assert_error %(
       lib LibFoo
         fun foo

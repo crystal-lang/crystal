@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: asm" do
-  it "codegens without inputs" do
+describe("Code gen: asm") do
+  it("codegens without inputs") do
     run(%(
       dst = uninitialized Int32
       asm("mov $$1234, $0" : "=r"(dst))
@@ -9,7 +9,7 @@ describe "Code gen: asm" do
       )).to_i.should eq(1234)
   end
 
-  it "codegens with one input" do
+  it("codegens with one input") do
     run(%(
       src = 1234
       dst = uninitialized Int32
@@ -18,7 +18,7 @@ describe "Code gen: asm" do
       )).to_i.should eq(1234)
   end
 
-  it "codegens with two inputs" do
+  it("codegens with two inputs") do
     run(%(
       c = uninitialized Int32
       a = 20

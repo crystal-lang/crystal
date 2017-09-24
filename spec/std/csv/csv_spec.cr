@@ -5,25 +5,25 @@ private def new_csv(headers = false, strip = false)
   CSV.new %(one, two\n1, 2\n3, 4\n5), headers: headers, strip: strip
 end
 
-describe CSV do
-  it "gets headers" do
+describe(CSV) do
+  it("gets headers") do
     csv = new_csv headers: true
     csv.headers.should eq(%w(one two))
   end
 
-  it "works without headers" do
+  it("works without headers") do
     csv = CSV.new("", headers: true)
     csv.headers.empty?.should be_true
   end
 
-  it "raises if trying to access before first row" do
+  it("raises if trying to access before first row") do
     csv = new_csv headers: true
     expect_raises(CSV::Error, "Before first row") do
       csv["one"]
     end
   end
 
-  it "gets row values with string" do
+  it("gets row values with string") do
     csv = new_csv headers: true
     csv.next.should be_true
     csv["one"].should eq("1")
@@ -48,7 +48,7 @@ describe CSV do
     end
   end
 
-  it "gets row values with integer" do
+  it("gets row values with integer") do
     csv = new_csv headers: true
     csv.next.should be_true
     csv[0].should eq("1")
@@ -70,7 +70,7 @@ describe CSV do
     csv[-1].should eq("")
   end
 
-  it "gets row values with regex" do
+  it("gets row values with regex") do
     csv = new_csv headers: true
     csv.next.should be_true
 
@@ -82,7 +82,7 @@ describe CSV do
     end
   end
 
-  it "gets current row" do
+  it("gets current row") do
     csv = new_csv headers: true
     csv.next.should be_true
 
@@ -96,7 +96,7 @@ describe CSV do
     row.to_h.should eq({"one" => "1", "two" => " 2"})
   end
 
-  it "strips" do
+  it("strips") do
     csv = new_csv headers: true, strip: true
     csv.next.should be_true
 
@@ -107,13 +107,13 @@ describe CSV do
     csv.row.to_h.should eq({"one" => "1", "two" => "2"})
   end
 
-  it "works without headers" do
+  it("works without headers") do
     csv = new_csv headers: false
     csv.next.should be_true
     csv[0].should eq("one")
   end
 
-  it "can do each" do
+  it("can do each") do
     csv = new_csv headers: true
     csv.each do
       csv["one"].should eq("1")
@@ -121,7 +121,7 @@ describe CSV do
     end.should be_nil
   end
 
-  it "can do new with block" do
+  it("can do new with block") do
     CSV.new(%(one, two\n1, 2\n3, 4\n5), headers: true, strip: true) do |csv|
       csv["one"].should eq("1")
       csv["two"].should eq("2")
@@ -129,28 +129,28 @@ describe CSV do
     end
   end
 
-  it "returns a Tuple(String, String) for current row with indices" do
+  it("returns a Tuple(String, String) for current row with indices") do
     CSV.new("John,20\nPeter,30") do |csv|
       csv.values_at(0, -1).should eq({"John", "20"})
       break
     end
   end
 
-  it "returns a Tuple(String, String) for current row with headers" do
+  it("returns a Tuple(String, String) for current row with headers") do
     CSV.new("Name,Age\nJohn,20\nPeter,30", headers: true) do |csv|
       csv.values_at("Name", "Age").should eq({"John", "20"})
       break
     end
   end
 
-  it "returns a Tuple(String, String) for this row with indices" do
+  it("returns a Tuple(String, String) for this row with indices") do
     CSV.new("John,20\nPeter,30") do |csv|
       csv.row.values_at(0, -1).should eq({"John", "20"})
       break
     end
   end
 
-  it "returns a Tuple(String, String) for this row with headers" do
+  it("returns a Tuple(String, String) for this row with headers") do
     CSV.new("Name,Age\nJohn,20\nPeter,30", headers: true) do |csv|
       csv.row.values_at("Name", "Age").should eq({"John", "20"})
       break

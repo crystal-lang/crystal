@@ -14,44 +14,44 @@ private def parse_set_cookie(header)
 end
 
 module HTTP
-  describe Cookie::Parser do
-    describe "parse_cookies" do
-      it "parses key=value" do
+  describe(Cookie::Parser) do
+    describe("parse_cookies") do
+      it("parses key=value") do
         cookie = parse_first_cookie("key=value")
         cookie.name.should eq("key")
         cookie.value.should eq("value")
         cookie.to_set_cookie_header.should eq("key=value; path=/")
       end
 
-      it "parses key=" do
+      it("parses key=") do
         cookie = parse_first_cookie("key=")
         cookie.name.should eq("key")
         cookie.value.should eq("")
         cookie.to_set_cookie_header.should eq("key=; path=/")
       end
 
-      it "parses key=key=value" do
+      it("parses key=key=value") do
         cookie = parse_first_cookie("key=key=value")
         cookie.name.should eq("key")
         cookie.value.should eq("key=value")
         cookie.to_set_cookie_header.should eq("key=key%3Dvalue; path=/")
       end
 
-      it "parses key=key%3Dvalue" do
+      it("parses key=key%3Dvalue") do
         cookie = parse_first_cookie("key=key%3Dvalue")
         cookie.name.should eq("key")
         cookie.value.should eq("key=value")
         cookie.to_set_cookie_header.should eq("key=key%3Dvalue; path=/")
       end
 
-      it "parses key%3Dvalue=value" do
+      it("parses key%3Dvalue=value") do
         cookie = parse_first_cookie("key%3Dvalue=value")
         cookie.name.should eq("key=value")
         cookie.value.should eq("value")
         cookie.to_set_cookie_header.should eq("key%3Dvalue=value; path=/")
       end
 
-      it "parses multiple cookies" do
+      it("parses multiple cookies") do
         cookies = Cookie::Parser.parse_cookies("foo=bar; foobar=baz")
         cookies.size.should eq(2)
         first, second = cookies
@@ -62,8 +62,8 @@ module HTTP
       end
     end
 
-    describe "parse_set_cookie" do
-      it "parses path" do
+    describe("parse_set_cookie") do
+      it("parses path") do
         cookie = parse_set_cookie("key=value; path=/test")
         cookie.name.should eq("key")
         cookie.value.should eq("value")
@@ -71,7 +71,7 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; path=/test")
       end
 
-      it "parses Secure" do
+      it("parses Secure") do
         cookie = parse_set_cookie("key=value; Secure")
         cookie.name.should eq("key")
         cookie.value.should eq("value")
@@ -79,7 +79,7 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; path=/; Secure")
       end
 
-      it "parses HttpOnly" do
+      it("parses HttpOnly") do
         cookie = parse_set_cookie("key=value; HttpOnly")
         cookie.name.should eq("key")
         cookie.value.should eq("value")
@@ -87,7 +87,7 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; path=/; HttpOnly")
       end
 
-      it "parses domain" do
+      it("parses domain") do
         cookie = parse_set_cookie("key=value; domain=www.example.com")
         cookie.name.should eq("key")
         cookie.value.should eq("value")
@@ -95,7 +95,7 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; domain=www.example.com; path=/")
       end
 
-      it "parses expires rfc1123" do
+      it("parses expires rfc1123") do
         cookie = parse_set_cookie("key=value; expires=Sun, 06 Nov 1994 08:49:37 GMT")
         time = Time.new(1994, 11, 6, 8, 49, 37)
 
@@ -104,7 +104,7 @@ module HTTP
         cookie.expires.should eq(time)
       end
 
-      it "parses expires rfc1036" do
+      it("parses expires rfc1036") do
         cookie = parse_set_cookie("key=value; expires=Sunday, 06-Nov-94 08:49:37 GMT")
         time = Time.new(1994, 11, 6, 8, 49, 37)
 
@@ -113,7 +113,7 @@ module HTTP
         cookie.expires.should eq(time)
       end
 
-      it "parses expires ansi c" do
+      it("parses expires ansi c") do
         cookie = parse_set_cookie("key=value; expires=Sun Nov  6 08:49:37 1994")
         time = Time.new(1994, 11, 6, 8, 49, 37)
 
@@ -122,12 +122,12 @@ module HTTP
         cookie.expires.should eq(time)
       end
 
-      it "parses expires ansi c, variant with zone" do
+      it("parses expires ansi c, variant with zone") do
         cookie = parse_set_cookie("bla=; expires=Thu, 01 Jan 1970 00:00:00 -0000")
         cookie.expires.should eq(Time.new(1970, 1, 1, 0, 0, 0))
       end
 
-      it "parses full" do
+      it("parses full") do
         cookie = parse_set_cookie("key=value; path=/test; domain=www.example.com; HttpOnly; Secure; expires=Sun, 06 Nov 1994 08:49:37 GMT")
         time = Time.new(1994, 11, 6, 8, 49, 37)
 
@@ -140,11 +140,11 @@ module HTTP
         cookie.expires.should eq(time)
       end
 
-      it "parse domain as IP" do
+      it("parse domain as IP") do
         parse_set_cookie("a=1; domain=127.0.0.1; path=/; HttpOnly").domain.should eq "127.0.0.1"
       end
 
-      it "parse max-age as seconds from Time.now" do
+      it("parse max-age as seconds from Time.now") do
         cookie = parse_set_cookie("a=1; max-age=10")
         delta = cookie.expires.not_nil! - Time.now
         delta.should be > 9.seconds
@@ -157,31 +157,31 @@ module HTTP
       end
     end
 
-    describe "expired?" do
-      it "by max-age=0" do
+    describe("expired?") do
+      it("by max-age=0") do
         parse_set_cookie("bla=1; max-age=0").expired?.should eq true
       end
 
-      it "by old date" do
+      it("by old date") do
         parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000").expired?.should eq true
       end
 
-      it "not expired" do
+      it("not expired") do
         parse_set_cookie("bla=1; max-age=1").expired?.should eq false
       end
 
-      it "not expired" do
+      it("not expired") do
         parse_set_cookie("bla=1; expires=Thu, 01 Jan 2020 00:00:00 -0000").expired?.should eq false
       end
 
-      it "not expired" do
+      it("not expired") do
         parse_set_cookie("bla=1").expired?.should eq false
       end
     end
   end
 
-  describe Cookies do
-    it "allows adding cookies and retrieving" do
+  describe(Cookies) do
+    it("allows adding cookies and retrieving") do
       cookies = Cookies.new
       cookies << Cookie.new("a", "b")
       cookies["c"] = Cookie.new("c", "d")
@@ -195,8 +195,8 @@ module HTTP
       cookies.has_key?("a").should be_true
     end
 
-    describe "adding request headers" do
-      it "overwrites a pre-existing Cookie header" do
+    describe("adding request headers") do
+      it("overwrites a pre-existing Cookie header") do
         headers = Headers.new
         headers["Cookie"] = "some_key=some_value"
 
@@ -210,7 +210,7 @@ module HTTP
         headers["Cookie"].should eq "a=b"
       end
 
-      it "merges multiple cookies into one Cookie header" do
+      it("merges multiple cookies into one Cookie header") do
         headers = Headers.new
         cookies = Cookies.new
         cookies << Cookie.new("a", "b")
@@ -221,8 +221,8 @@ module HTTP
         headers["Cookie"].should eq "a=b; c=d"
       end
 
-      describe "when no cookies are set" do
-        it "does not set a Cookie header" do
+      describe("when no cookies are set") do
+        it("does not set a Cookie header") do
           headers = Headers.new
           headers["Cookie"] = "a=b"
           cookies = Cookies.new
@@ -234,8 +234,8 @@ module HTTP
       end
     end
 
-    describe "adding response headers" do
-      it "overwrites all pre-existing Set-Cookie headers" do
+    describe("adding response headers") do
+      it("overwrites all pre-existing Set-Cookie headers") do
         headers = Headers.new
         headers.add("Set-Cookie", "a=b; path=/")
         headers.add("Set-Cookie", "c=d; path=/")
@@ -253,7 +253,7 @@ module HTTP
         headers.get("Set-Cookie")[0].should eq "x=y; path=/"
       end
 
-      it "sets one Set-Cookie header per cookie" do
+      it("sets one Set-Cookie header per cookie") do
         headers = Headers.new
         cookies = Cookies.new
         cookies << Cookie.new("a", "b")
@@ -267,8 +267,8 @@ module HTTP
         headers.get("Set-Cookie").includes?("c=d; path=/").should be_true
       end
 
-      describe "when no cookies are set" do
-        it "does not set a Set-Cookie header" do
+      describe("when no cookies are set") do
+        it("does not set a Set-Cookie header") do
           headers = Headers.new
           headers.add("Set-Cookie", "a=b; path=/")
           cookies = Cookies.new
@@ -280,15 +280,15 @@ module HTTP
       end
     end
 
-    it "disallows adding inconsistent state" do
+    it("disallows adding inconsistent state") do
       cookies = Cookies.new
 
-      expect_raises ArgumentError do
+      expect_raises(ArgumentError) do
         cookies["a"] = Cookie.new("b", "c")
       end
     end
 
-    it "allows to iterate over the cookies" do
+    it("allows to iterate over the cookies") do
       cookies = Cookies.new
       cookies["a"] = "b"
       cookies.each do |cookie|
@@ -300,7 +300,7 @@ module HTTP
       cookie.should eq Cookie.new("a", "b")
     end
 
-    it "allows transform to hash" do
+    it("allows transform to hash") do
       cookies = Cookies.new
       cookies << Cookie.new("a", "b")
       cookies["c"] = Cookie.new("c", "d")

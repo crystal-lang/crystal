@@ -1,15 +1,15 @@
 require "../../spec_helper"
 
-describe "Code gen: uninitialized" do
-  it "codegens declare var and read it" do
+describe("Code gen: uninitialized") do
+  it("codegens declare var and read it") do
     run("a = uninitialized Int32; a")
   end
 
-  it "codegens declare var and changes it" do
+  it("codegens declare var and changes it") do
     run("a = uninitialized Int32; while a != 10; a = 10; end; a").to_i.should eq(10)
   end
 
-  it "codegens declare instance var" do
+  it("codegens declare instance var") do
     run("
       class Foo
         def initialize
@@ -25,7 +25,7 @@ describe "Code gen: uninitialized" do
       ").to_i.should eq(0)
   end
 
-  it "codegens declare instance var with static array type" do
+  it("codegens declare instance var with static array type") do
     run("
       class Foo
         def initialize
@@ -42,7 +42,7 @@ describe "Code gen: uninitialized" do
       ")
   end
 
-  it "doesn't break on inherited declared var (#390)" do
+  it("doesn't break on inherited declared var (#390)") do
     run(%(
       class Foo
         def initialize
@@ -71,7 +71,7 @@ describe "Code gen: uninitialized" do
       )).to_i.should eq(3)
   end
 
-  it "works inside while/begin/rescue (bug inside #759)" do
+  it("works inside while/begin/rescue (bug inside #759)") do
     run(%(
       require "prelude"
 
@@ -88,7 +88,7 @@ describe "Code gen: uninitialized" do
       )).to_i.should eq(3)
   end
 
-  it "works with uninitialized NoReturn (#3314)" do
+  it("works with uninitialized NoReturn (#3314)") do
     codegen(%(
       def foo
         x = uninitialized NoReturn
@@ -106,7 +106,7 @@ describe "Code gen: uninitialized" do
       ), inject_primitives: false)
   end
 
-  it "codegens value (#3641)" do
+  it("codegens value (#3641)") do
     run(%(
       x = y = uninitialized Int32
       x == y

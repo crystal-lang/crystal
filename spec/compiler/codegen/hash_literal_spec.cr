@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: hash literal spec" do
-  it "creates custom non-generic hash" do
+describe("Code gen: hash literal spec") do
+  it("creates custom non-generic hash") do
     run(%(
       class Custom
         def initialize
@@ -28,7 +28,7 @@ describe "Code gen: hash literal spec" do
       )).to_i.should eq(90)
   end
 
-  it "creates custom generic hash" do
+  it("creates custom generic hash") do
     run(%(
       class Custom(K, V)
         def initialize
@@ -55,7 +55,7 @@ describe "Code gen: hash literal spec" do
       )).to_i.should eq(90)
   end
 
-  it "creates custom generic hash with type vars" do
+  it("creates custom generic hash with type vars") do
     run(%(
       class Custom(K, V)
         def initialize
@@ -82,7 +82,7 @@ describe "Code gen: hash literal spec" do
       )).to_i.should eq(90)
   end
 
-  it "creates custom generic hash via alias (1)" do
+  it("creates custom generic hash via alias (1)") do
     run(%(
       class Custom(K, V)
         def initialize
@@ -111,7 +111,7 @@ describe "Code gen: hash literal spec" do
       )).to_i.should eq(90)
   end
 
-  it "creates custom generic hash via alias (2)" do
+  it("creates custom generic hash via alias (2)") do
     run(%(
       class Custom(K, V)
         def initialize
@@ -140,7 +140,7 @@ describe "Code gen: hash literal spec" do
       )).to_i.should eq(90)
   end
 
-  it "doesn't crash on hash literal with proc pointer (#646)" do
+  it("doesn't crash on hash literal with proc pointer (#646)") do
     run(%(
       require "prelude"
 

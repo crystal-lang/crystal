@@ -1,19 +1,19 @@
 require "../../spec_helper"
 
-describe "Codegen: super" do
-  it "codegens super without arguments" do
+describe("Codegen: super") do
+  it("codegens super without arguments") do
     run("class Foo; def foo; 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo").to_i.should eq(1)
   end
 
-  it "codegens super without arguments but parent has arguments" do
+  it("codegens super without arguments but parent has arguments") do
     run("class Foo; def foo(x); x + 1; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)").to_i.should eq(2)
   end
 
-  it "codegens super without arguments and instance variable" do
+  it("codegens super without arguments and instance variable") do
     run("class Foo; def foo; @x = 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo").to_i.should eq(1)
   end
 
-  it "codegens super that calls subclass method" do
+  it("codegens super that calls subclass method") do
     run("
       class Foo
         def foo
@@ -40,7 +40,7 @@ describe "Codegen: super" do
       ").to_i.should eq(2)
   end
 
-  it "codegens super that calls subclass method 2" do
+  it("codegens super that calls subclass method 2") do
     run("
       class Foo
         def foo
@@ -67,7 +67,7 @@ describe "Codegen: super" do
       ").to_i.should eq(2)
   end
 
-  it "codegens super that calls subclass method 3" do
+  it("codegens super that calls subclass method 3") do
     run("
       class Foo
         def foo
@@ -94,7 +94,7 @@ describe "Codegen: super" do
       ").to_i.should eq(1)
   end
 
-  it "codegens super that calls subclass method 4" do
+  it("codegens super that calls subclass method 4") do
     run("
       class Foo
         def foo
@@ -121,7 +121,7 @@ describe "Codegen: super" do
       ").to_i.should eq(2)
   end
 
-  it "codegens super that calls subclass method 5" do
+  it("codegens super that calls subclass method 5") do
     run("
       module Mod
         def add_def
@@ -157,7 +157,7 @@ describe "Codegen: super" do
       ").to_i.should eq(2)
   end
 
-  it "codegens super that calls subclass method 6" do
+  it("codegens super that calls subclass method 6") do
     run("
       module Mod
         def add_def
@@ -193,7 +193,7 @@ describe "Codegen: super" do
       ").to_i.should eq(3)
   end
 
-  it "codegens super inside closure" do
+  it("codegens super inside closure") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -215,7 +215,7 @@ describe "Codegen: super" do
       )).to_i.should eq(1)
   end
 
-  it "codegens super inside closure forwarding args" do
+  it("codegens super inside closure forwarding args") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -237,7 +237,7 @@ describe "Codegen: super" do
       )).to_i.should eq(6)
   end
 
-  it "build super on generic class (bug)" do
+  it("build super on generic class (bug)") do
     codegen(%(
       class Base
         def foo(x)
@@ -255,7 +255,7 @@ describe "Codegen: super" do
       ))
   end
 
-  it "calls super in module method (#556)" do
+  it("calls super in module method (#556)") do
     run(%(
       class Parent
         def a
@@ -277,7 +277,7 @@ describe "Codegen: super" do
       )).to_i.should eq(1)
   end
 
-  it "calls super in generic module method" do
+  it("calls super in generic module method") do
     run(%(
       class Parent
         def a
@@ -299,7 +299,7 @@ describe "Codegen: super" do
       )).to_i.should eq(1)
   end
 
-  it "does super in virtual type including module" do
+  it("does super in virtual type including module") do
     run(%(
       module Bar
         def bar
@@ -326,7 +326,7 @@ describe "Codegen: super" do
       )).to_i.should eq(123)
   end
 
-  it "doesn't invoke super twice in inherited generic types (#942)" do
+  it("doesn't invoke super twice in inherited generic types (#942)") do
     run(%(
       class Global
         @@x = 0
@@ -358,7 +358,7 @@ describe "Codegen: super" do
       )).to_i.should eq(1)
   end
 
-  it "calls super in metaclass (#1522)" do
+  it("calls super in metaclass (#1522)") do
     # We include the prelude so this is codegened for real, because that's where the issue lies
     run(%(
       require "prelude"
@@ -392,7 +392,7 @@ describe "Codegen: super" do
       )).to_i.should eq(5)
   end
 
-  it "calls super with dispatch (#2318)" do
+  it("calls super with dispatch (#2318)") do
     run(%(
       class Foo
         def foo(x : Int32)
@@ -415,7 +415,7 @@ describe "Codegen: super" do
       )).to_i.should eq(3)
   end
 
-  it "calls super from virtual metaclass type (#2841)" do
+  it("calls super from virtual metaclass type (#2841)") do
     run(%(
       require "prelude"
 

@@ -1,8 +1,8 @@
 require "spec"
 require "yaml"
 
-describe "YAML" do
-  describe "parser" do
+describe("YAML") do
+  describe("parser") do
     it { YAML.parse("foo").should eq("foo") }
     it { YAML.parse("- foo\n- bar").should eq(["foo", "bar"]) }
     it { YAML.parse_all("---\nfoo\n---\nbar\n").should eq(["foo", "bar"]) }
@@ -10,12 +10,12 @@ describe "YAML" do
     it { YAML.parse("--- []\n").should eq([] of YAML::Type) }
     it { YAML.parse("---\n...").should eq("") }
 
-    it "parses recursive sequence" do
+    it("parses recursive sequence") do
       doc = YAML.parse("--- &foo\n- *foo\n")
       doc[0].raw.should be(doc.raw)
     end
 
-    it "parses recursive mapping" do
+    it("parses recursive mapping") do
       doc = YAML.parse(%(--- &1
         friends:
         - *1
@@ -23,14 +23,14 @@ describe "YAML" do
       doc["friends"][0].raw.should be(doc.raw)
     end
 
-    it "parses alias to scalar" do
+    it("parses alias to scalar") do
       doc = YAML.parse("---\n- &x foo\n- *x\n")
       doc.should eq(["foo", "foo"])
       doc[0].raw.should be(doc[1].raw)
     end
 
-    describe "merging with << key" do
-      it "merges other mapping" do
+    describe("merging with << key") do
+      it("merges other mapping") do
         doc = YAML.parse(%(---
           foo: bar
           <<:
@@ -39,7 +39,7 @@ describe "YAML" do
         doc["baz"]?.should eq("foobar")
       end
 
-      it "raises if merging with missing alias" do
+      it("raises if merging with missing alias") do
         expect_raises do
           YAML.parse(%(---
             foo:
@@ -48,7 +48,7 @@ describe "YAML" do
         end
       end
 
-      it "doesn't merge explicit string key <<" do
+      it("doesn't merge explicit string key <<") do
         doc = YAML.parse(%(---
           foo: &foo
             hello: world
@@ -58,7 +58,7 @@ describe "YAML" do
         doc.should eq({"foo" => {"hello" => "world"}, "bar" => {"<<" => {"hello" => "world"}}})
       end
 
-      it "doesn't merge empty mapping" do
+      it("doesn't merge empty mapping") do
         doc = YAML.parse(%(---
           foo: &foo
           bar:
@@ -67,7 +67,7 @@ describe "YAML" do
         doc["bar"].should eq({"<<" => ""})
       end
 
-      it "doesn't merge arrays" do
+      it("doesn't merge arrays") do
         doc = YAML.parse(%(---
           foo: &foo
             - 1
@@ -77,7 +77,7 @@ describe "YAML" do
         doc["bar"].should eq({"<<" => ["1"]})
       end
 
-      it "has correct line/number info (#2585)" do
+      it("has correct line/number info (#2585)") do
         begin
           YAML.parse <<-YAML
             ---
@@ -93,7 +93,7 @@ describe "YAML" do
         end
       end
 
-      it "has correct line/number info (2)" do
+      it("has correct line/number info (2)") do
         begin
           parser = YAML::PullParser.new <<-MSG
 
@@ -112,8 +112,8 @@ describe "YAML" do
         end
       end
 
-      it "has correct message (#4006)" do
-        expect_raises YAML::ParseException, "could not find expected ':' at line 4, column 1, while scanning a simple key at line 3, column 5" do
+      it("has correct message (#4006)") do
+        expect_raises(YAML::ParseException, "could not find expected ':' at line 4, column 1, while scanning a simple key at line 3, column 5") do
           YAML.parse <<-END
             a:
               - "b": >
@@ -122,18 +122,18 @@ describe "YAML" do
         end
       end
 
-      it "parses from IO" do
+      it("parses from IO") do
         YAML.parse(IO::Memory.new("- foo\n- bar")).should eq(["foo", "bar"])
       end
     end
   end
 
-  describe "dump" do
-    it "returns YAML as a string" do
+  describe("dump") do
+    it("returns YAML as a string") do
       YAML.dump(%w(1 2 3)).should eq("---\n- 1\n- 2\n- 3\n")
     end
 
-    it "writes YAML to a stream" do
+    it("writes YAML to a stream") do
       string = String.build do |str|
         YAML.dump(%w(1 2 3), str)
       end

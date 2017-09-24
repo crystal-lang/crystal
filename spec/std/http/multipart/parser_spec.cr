@@ -12,8 +12,8 @@ private def parse(delim, data, *, gsub = true)
   parsed
 end
 
-describe HTTP::Multipart::Parser do
-  it "parses basic multipart messages" do
+describe(HTTP::Multipart::Parser) do
+  it("parses basic multipart messages") do
     data = parse "AaB03x", <<-MULTIPART
       --AaB03x
       Content-Disposition: form-data; name="submit-name"
@@ -35,7 +35,7 @@ describe HTTP::Multipart::Parser do
     data[1][:headers]["Content-Type"].should eq("text/plain")
   end
 
-  it "parses messages with preambles and epilogues" do
+  it("parses messages with preambles and epilogues") do
     data = parse "AaB03x", <<-MULTIPART
       preamble
       AaB03x
@@ -59,7 +59,7 @@ describe HTTP::Multipart::Parser do
     data[1][:headers]["Content-Disposition"].should eq("form-data; name=\"bar\"")
   end
 
-  it "handles invalid multipart data" do
+  it("handles invalid multipart data") do
     expect_raises(HTTP::Multipart::Error, "EOF reading delimiter") do
       parse "AaB03x", "--AaB03x", gsub: false
     end
@@ -77,12 +77,12 @@ describe HTTP::Multipart::Parser do
     end
   end
 
-  it "handles padding" do
+  it("handles padding") do
     data = parse "AaB03x", "--AaB03x  \t\t  \r\n\r\n--AaB03x--", gsub: false
     data[0][:body].should eq("")
   end
 
-  it "raises calling #next after finished" do
+  it("raises calling #next after finished") do
     input = <<-MULTIPART
       --AaB03x
 
@@ -99,7 +99,7 @@ describe HTTP::Multipart::Parser do
     end
   end
 
-  it "raises calling #next after errored" do
+  it("raises calling #next after errored") do
     parser = HTTP::Multipart::Parser.new(IO::Memory.new("--AaB03x--"), "AaB03x")
 
     expect_raises(HTTP::Multipart::Error, "no parts") do
@@ -113,7 +113,7 @@ describe HTTP::Multipart::Parser do
     end
   end
 
-  it "handles break/next in blocks" do
+  it("handles break/next in blocks") do
     input = <<-MULTIPART
       --b
 

@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: method_missing" do
-  it "does method_missing macro without args" do
+describe("Code gen: method_missing") do
+  it("does method_missing macro without args") do
     run("
       class Foo
         def foo_something
@@ -17,7 +17,7 @@ describe "Code gen: method_missing" do
       ").to_i.should eq(1)
   end
 
-  it "does method_missing macro with args" do
+  it("does method_missing macro with args") do
     run(%(
       class Foo
         macro method_missing(call)
@@ -29,7 +29,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(6)
   end
 
-  it "does method_missing macro with block" do
+  it("does method_missing macro with block") do
     run(%(
       class Foo
         def foo_something
@@ -51,7 +51,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(6)
   end
 
-  it "does method_missing macro with block but not using it" do
+  it("does method_missing macro with block but not using it") do
     run(%(
       class Foo
         def foo_something
@@ -67,7 +67,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(3)
   end
 
-  it "does method_missing macro with virtual type (1)" do
+  it("does method_missing macro with virtual type (1)") do
     run(%(
       class Foo
         macro method_missing(call)
@@ -83,7 +83,7 @@ describe "Code gen: method_missing" do
       )).to_string.should eq("Foococo")
   end
 
-  it "does method_missing macro with virtual type (2)" do
+  it("does method_missing macro with virtual type (2)") do
     run(%(
       class Foo
         macro method_missing(call)
@@ -99,7 +99,7 @@ describe "Code gen: method_missing" do
       )).to_string.should eq("Barcoco")
   end
 
-  it "does method_missing macro with virtual type (3)" do
+  it("does method_missing macro with virtual type (3)") do
     run(%(
       class Foo
         def lala
@@ -119,7 +119,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(1)
   end
 
-  it "does method_missing macro with virtual type (4)" do
+  it("does method_missing macro with virtual type (4)") do
     run(%(
       class Foo
         macro method_missing(call)
@@ -138,7 +138,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(2)
   end
 
-  it "does method_missing macro with virtual type (5)" do
+  it("does method_missing macro with virtual type (5)") do
     run(%(
       class Foo
         macro method_missing(call)
@@ -163,7 +163,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(3)
   end
 
-  it "does method_missing macro with virtual type (6)" do
+  it("does method_missing macro with virtual type (6)") do
     run(%(
       abstract class Foo
       end
@@ -185,7 +185,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(2)
   end
 
-  it "does method_missing macro with virtual type (7)" do
+  it("does method_missing macro with virtual type (7)") do
     run(%(
       abstract class Foo
       end
@@ -207,7 +207,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(3)
   end
 
-  it "does method_missing macro with virtual type (8)" do
+  it("does method_missing macro with virtual type (8)") do
     run(%(
       class Foo
         macro method_missing(call)
@@ -226,7 +226,7 @@ describe "Code gen: method_missing" do
       )).to_string.should eq("Bar")
   end
 
-  it "does method_missing macro with module involved" do
+  it("does method_missing macro with module involved") do
     run("
       module Moo
         def lala
@@ -246,7 +246,7 @@ describe "Code gen: method_missing" do
       ").to_i.should eq(1)
   end
 
-  it "does method_missing macro with top level method involved" do
+  it("does method_missing macro with top level method involved") do
     run("
       def lala
         1
@@ -267,7 +267,7 @@ describe "Code gen: method_missing" do
       ").to_i.should eq(1)
   end
 
-  it "does method_missing macro with included module" do
+  it("does method_missing macro with included module") do
     run("
       module Moo
         macro method_missing(call)
@@ -283,7 +283,7 @@ describe "Code gen: method_missing" do
       ").to_string.should eq("Foo")
   end
 
-  it "does method_missing with assignment (bug)" do
+  it("does method_missing with assignment (bug)") do
     run(%(
       class Foo
         macro method_missing(call)
@@ -297,7 +297,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(1)
   end
 
-  it "does method_missing with assignment (2) (bug)" do
+  it("does method_missing with assignment (2) (bug)") do
     run(%(
       struct Nil
         def to_i
@@ -319,7 +319,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(1)
   end
 
-  it "does method_missing macro without args (with call)" do
+  it("does method_missing macro without args (with call)") do
     run("
       class Foo
         def foo_something
@@ -335,7 +335,7 @@ describe "Code gen: method_missing" do
       ").to_i.should eq(1)
   end
 
-  it "does method_missing macro with args (with call)" do
+  it("does method_missing macro with args (with call)") do
     run(%(
       class Foo
         macro method_missing(call)
@@ -347,7 +347,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(6)
   end
 
-  it "forwards" do
+  it("forwards") do
     run(%(
       class Wrapped
         def foo(x, y, z)
@@ -368,7 +368,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(6)
   end
 
-  it "does method_missing generating method" do
+  it("does method_missing generating method") do
     run(%(
       class Foo
         macro method_missing(call)
@@ -382,7 +382,7 @@ describe "Code gen: method_missing" do
       )).to_string.should eq("bar")
   end
 
-  it "works with named arguments, using names (#3654)" do
+  it("works with named arguments, using names (#3654)") do
     run(%(
       class A
         macro method_missing(call)
@@ -395,7 +395,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(3)
   end
 
-  it "works with named arguments, named args in call (#3654)" do
+  it("works with named arguments, named args in call (#3654)") do
     run(%(
       class A
         macro method_missing(call)
@@ -409,7 +409,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(3)
   end
 
-  it "finds method_missing with 'with ... yield'" do
+  it("finds method_missing with 'with ... yield'") do
     run(%(
       class Foo
         def initialize(@x : Int32)

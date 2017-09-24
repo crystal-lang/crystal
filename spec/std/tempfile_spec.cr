@@ -1,8 +1,8 @@
 require "spec"
 require "tempfile"
 
-describe Tempfile do
-  it "creates and writes" do
+describe(Tempfile) do
+  it("creates and writes") do
     tempfile = Tempfile.new "foo"
     tempfile.print "Hello!"
     tempfile.close
@@ -11,7 +11,7 @@ describe Tempfile do
     File.read(tempfile.path).should eq("Hello!")
   end
 
-  it "creates and deletes" do
+  it("creates and deletes") do
     tempfile = Tempfile.new "foo"
     tempfile.close
     tempfile.delete
@@ -19,14 +19,14 @@ describe Tempfile do
     File.exists?(tempfile.path).should be_false
   end
 
-  it "doesn't delete on open with block" do
+  it("doesn't delete on open with block") do
     tempfile = Tempfile.open("foo") do |f|
       f.print "Hello!"
     end
     File.exists?(tempfile.path).should be_true
   end
 
-  it "creates and writes with TMPDIR environment variable" do
+  it("creates and writes with TMPDIR environment variable") do
     old_tmpdir = ENV["TMPDIR"]?
     ENV["TMPDIR"] = "/tmp"
 
@@ -42,7 +42,7 @@ describe Tempfile do
     end
   end
 
-  it "is seekable" do
+  it("is seekable") do
     tempfile = Tempfile.new "foo"
     tempfile.puts "Hello!"
     tempfile.seek(0, IO::Seek::Set)
@@ -54,14 +54,14 @@ describe Tempfile do
     tempfile.close
   end
 
-  it "returns default directory for tempfiles" do
+  it("returns default directory for tempfiles") do
     old_tmpdir = ENV["TMPDIR"]?
     ENV.delete("TMPDIR")
     Tempfile.dirname.should eq("/tmp")
     ENV["TMPDIR"] = old_tmpdir if old_tmpdir
   end
 
-  it "returns configure directory for tempfiles" do
+  it("returns configure directory for tempfiles") do
     old_tmpdir = ENV["TMPDIR"]?
     ENV["TMPDIR"] = "/my/tmp"
     Tempfile.dirname.should eq("/my/tmp")

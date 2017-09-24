@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: struct" do
-  it "types struct" do
+describe("Semantic: struct") do
+  it("types struct") do
     result = assert_type("lib LibFoo; struct Bar; x : Int32; y : Float64; end; end; LibFoo::Bar") { types["LibFoo"].types["Bar"].metaclass }
     mod = result.program
 
@@ -12,21 +12,21 @@ describe "Semantic: struct" do
     bar.instance_vars["@y"].type.should eq(mod.float64)
   end
 
-  it "types Struct#new" do
+  it("types Struct#new") do
     assert_type("lib LibFoo; struct Bar; x : Int32; y : Float64; end; end; LibFoo::Bar.new") do
       types["LibFoo"].types["Bar"]
     end
   end
 
-  it "types struct setter" do
+  it("types struct setter") do
     assert_type("lib LibFoo; struct Bar; x : Int32; y : Float64; end; end; bar = LibFoo::Bar.new; bar.x = 1") { int32 }
   end
 
-  it "types struct getter" do
+  it("types struct getter") do
     assert_type("lib LibFoo; struct Bar; x : Int32; y : Float64; end; end; bar = LibFoo::Bar.new; bar.x") { int32 }
   end
 
-  it "types struct getter to struct" do
+  it("types struct getter to struct") do
     assert_type("
       lib LibFoo
         struct Baz
@@ -41,7 +41,7 @@ describe "Semantic: struct" do
     ") { types["LibFoo"].types["Baz"] }
   end
 
-  it "types struct getter multiple levels via new" do
+  it("types struct getter multiple levels via new") do
     assert_type("
       lib LibFoo
         struct Baz
@@ -56,30 +56,30 @@ describe "Semantic: struct" do
     ") { int32 }
   end
 
-  it "types struct getter with keyword name" do
+  it("types struct getter with keyword name") do
     assert_type("lib LibFoo; struct Bar; type : Int32; end; end; bar = LibFoo::Bar.new; bar.type") { int32 }
   end
 
-  it "errors on struct if no field" do
+  it("errors on struct if no field") do
     assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = LibFoo::Bar.new; f.y = 'a'",
       "undefined method 'y=' for LibFoo::Bar"
   end
 
-  it "errors on struct setter if different type" do
+  it("errors on struct setter if different type") do
     assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = LibFoo::Bar.new; f.x = 'a'",
       "field 'x' of struct LibFoo::Bar has type Int32, not Char"
   end
 
-  it "errors on struct setter if different type via new" do
+  it("errors on struct setter if different type via new") do
     assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = Pointer(LibFoo::Bar).malloc(1_u64); f.value.x = 'a'",
       "field 'x' of struct LibFoo::Bar has type Int32, not Char"
   end
 
-  it "types struct getter on pointer type" do
+  it("types struct getter on pointer type") do
     assert_type("lib LibFoo; struct Bar; x : Int32*; end; end; b = LibFoo::Bar.new; b.x") { pointer_of(int32) }
   end
 
-  it "errors if setting closure" do
+  it("errors if setting closure") do
     assert_error %(
       lib LibFoo
         struct Bar
@@ -95,7 +95,7 @@ describe "Semantic: struct" do
       "can't set closure as C struct member"
   end
 
-  it "errors if already defined" do
+  it("errors if already defined") do
     assert_error %(
       lib LibC
         struct Foo
@@ -109,7 +109,7 @@ describe "Semantic: struct" do
       "Foo is already defined"
   end
 
-  it "errors if already defined with another type" do
+  it("errors if already defined with another type") do
     assert_error %(
       lib LibC
         enum Foo
@@ -123,7 +123,7 @@ describe "Semantic: struct" do
       "Foo is already defined as enum"
   end
 
-  it "errors if already defined with another type (2)" do
+  it("errors if already defined with another type (2)") do
     assert_error %(
       lib LibC
         union Foo
@@ -137,7 +137,7 @@ describe "Semantic: struct" do
       "Foo is already defined as union"
   end
 
-  it "allows inline forward declaration" do
+  it("allows inline forward declaration") do
     assert_type(%(
       lib LibC
         struct Node
@@ -150,7 +150,7 @@ describe "Semantic: struct" do
       )) { pointer_of(types["LibC"].types["Node"]) }
   end
 
-  it "supports macro if inside struct" do
+  it("supports macro if inside struct") do
     assert_type(%(
       lib LibC
         struct Foo
@@ -166,7 +166,7 @@ describe "Semantic: struct" do
       ), flags: "some_flag") { int32 }
   end
 
-  it "includes another struct" do
+  it("includes another struct") do
     assert_type(%(
       lib LibC
         struct Foo
@@ -182,7 +182,7 @@ describe "Semantic: struct" do
       )) { int32 }
   end
 
-  it "errors if includes non-cstruct type" do
+  it("errors if includes non-cstruct type") do
     assert_error %(
       lib LibC
         union Foo
@@ -199,7 +199,7 @@ describe "Semantic: struct" do
       "can only include C struct, not union"
   end
 
-  it "errors if includes unknown type" do
+  it("errors if includes unknown type") do
     assert_error %(
       lib LibC
         struct Bar
@@ -212,7 +212,7 @@ describe "Semantic: struct" do
       "undefined constant Foo"
   end
 
-  it "errors if includes and field already exists" do
+  it("errors if includes and field already exists") do
     assert_error %(
       lib LibC
         struct Foo
@@ -230,7 +230,7 @@ describe "Semantic: struct" do
       "struct LibC::Foo has a field named 'a', which LibC::Bar already defines"
   end
 
-  it "errors if includes and field already exists, the other way around" do
+  it("errors if includes and field already exists, the other way around") do
     assert_error %(
       lib LibC
         struct Foo
@@ -248,7 +248,7 @@ describe "Semantic: struct" do
       "struct LibC::Bar already defines a field named 'a'"
   end
 
-  it "marks as packed" do
+  it("marks as packed") do
     result = semantic(%(
       lib LibFoo
         @[Packed]
@@ -261,7 +261,7 @@ describe "Semantic: struct" do
     foo_struct.packed?.should be_true
   end
 
-  it "errors on empty c struct (#633)" do
+  it("errors on empty c struct (#633)") do
     assert_error %(
       lib LibFoo
         struct Struct
@@ -271,7 +271,7 @@ describe "Semantic: struct" do
       "empty structs are disallowed"
   end
 
-  it "errors if using void in struct field type" do
+  it("errors if using void in struct field type") do
     assert_error %(
       lib LibFoo
         struct Struct
@@ -282,7 +282,7 @@ describe "Semantic: struct" do
       "can't use Void as a struct field type"
   end
 
-  it "errors if using void via typedef in struct field type" do
+  it("errors if using void via typedef in struct field type") do
     assert_error %(
       lib LibFoo
         type MyVoid = Void
@@ -295,7 +295,7 @@ describe "Semantic: struct" do
       "can't use Void as a struct field type"
   end
 
-  it "can access instance var from the outside (#1092)" do
+  it("can access instance var from the outside (#1092)") do
     assert_type(%(
       lib LibFoo
         struct Foo
@@ -308,7 +308,7 @@ describe "Semantic: struct" do
       )) { int32 }
   end
 
-  it "automatically converts numeric type in struct field assignment" do
+  it("automatically converts numeric type in struct field assignment") do
     assert_type(%(
       lib LibFoo
         struct Foo
@@ -322,7 +322,7 @@ describe "Semantic: struct" do
       )) { int32 }
   end
 
-  it "errors if invoking to_i32 and got error in that call" do
+  it("errors if invoking to_i32 and got error in that call") do
     assert_error %(
       lib LibFoo
         struct Foo
@@ -342,7 +342,7 @@ describe "Semantic: struct" do
       "converting from Foo to Int32 by invoking 'to_i32'"
   end
 
-  it "errors if invoking to_i32 and got wrong type" do
+  it("errors if invoking to_i32 and got wrong type") do
     assert_error %(
       lib LibFoo
         struct Foo
@@ -362,7 +362,7 @@ describe "Semantic: struct" do
       "invoked 'to_i32' to convert from Foo to Int32, but got Char"
   end
 
-  it "errors if invoking to_unsafe and got error in that call" do
+  it("errors if invoking to_unsafe and got error in that call") do
     assert_error %(
       lib LibFoo
         struct Foo
@@ -382,7 +382,7 @@ describe "Semantic: struct" do
       "no overload matches 'Int32#+' with type Char"
   end
 
-  it "errors if invoking to_unsafe and got different type" do
+  it("errors if invoking to_unsafe and got different type") do
     assert_error %(
       lib LibFoo
         struct Foo

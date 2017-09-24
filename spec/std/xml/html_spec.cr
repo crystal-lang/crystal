@@ -1,8 +1,8 @@
 require "spec"
 require "xml"
 
-describe XML do
-  it "parses HTML" do
+describe(XML) do
+  it("parses HTML") do
     doc = XML.parse_html(%(\
       <!doctype html>
       <html>
@@ -39,7 +39,7 @@ describe XML do
     attr.inner_text.should eq("large")
   end
 
-  it "parses HTML from IO" do
+  it("parses HTML from IO") do
     io = IO::Memory.new(%(\
       <!doctype html>
       <html>
@@ -57,20 +57,20 @@ describe XML do
     html.name.should eq("html")
   end
 
-  it "parses html5 (#1404)" do
+  it("parses html5 (#1404)") do
     html5 = "<html><body><nav>Test</nav></body></html>"
     xml = XML.parse_html(html5)
     xml.errors.should_not be_nil
     xml.xpath_node("//html/body/nav").should_not be_nil
   end
 
-  it "raises error when parsing empty string (#2752)" do
-    expect_raises XML::Error, "Document is empty" do
+  it("raises error when parsing empty string (#2752)") do
+    expect_raises(XML::Error, "Document is empty") do
       XML.parse_html("")
     end
   end
 
-  it "gets name of HTML document node (#4040)" do
+  it("gets name of HTML document node (#4040)") do
     doc = XML.parse_html(%(\
       <!doctype html>
       <html>

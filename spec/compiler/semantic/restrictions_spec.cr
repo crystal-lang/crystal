@@ -6,24 +6,24 @@ class Crystal::Program
   end
 end
 
-describe "Restrictions" do
-  describe "restrict" do
-    it "restricts type with same type" do
+describe("Restrictions") do
+  describe("restrict") do
+    it("restricts type with same type") do
       mod = Program.new
       mod.int32.restrict(mod.int32, MatchContext.new(mod, mod)).should eq(mod.int32)
     end
 
-    it "restricts type with another type" do
+    it("restricts type with another type") do
       mod = Program.new
       mod.int32.restrict(mod.int16, MatchContext.new(mod, mod)).should be_nil
     end
 
-    it "restricts type with superclass" do
+    it("restricts type with superclass") do
       mod = Program.new
       mod.int32.restrict(mod.value, MatchContext.new(mod, mod)).should eq(mod.int32)
     end
 
-    it "restricts type with included module" do
+    it("restricts type with included module") do
       mod = Program.new
       mod.semantic parse("
         module Mod
@@ -37,7 +37,7 @@ describe "Restrictions" do
       mod.types["Foo"].restrict(mod.types["Mod"], MatchContext.new(mod, mod)).should eq(mod.types["Foo"])
     end
 
-    it "restricts virtual type with included module 1" do
+    it("restricts virtual type with included module 1") do
       mod = Program.new
       mod.semantic parse("
         module Moo; end
@@ -47,7 +47,7 @@ describe "Restrictions" do
       mod.t("Foo+").restrict(mod.t("Moo"), MatchContext.new(mod, mod)).should eq(mod.t("Foo+"))
     end
 
-    it "restricts virtual type with included module 2" do
+    it("restricts virtual type with included module 2") do
       mod = Program.new
       mod.semantic parse("
         module Mxx; end
@@ -62,7 +62,7 @@ describe "Restrictions" do
     end
   end
 
-  it "self always matches instance type in restriction" do
+  it("self always matches instance type in restriction") do
     assert_type(%(
       class Foo
         def self.foo(x : self)
@@ -74,7 +74,7 @@ describe "Restrictions" do
       )) { types["Foo"] }
   end
 
-  it "self always matches instance type in return type" do
+  it("self always matches instance type in return type") do
     assert_type(%(
       class Foo
         macro def self.foo : self
@@ -85,7 +85,7 @@ describe "Restrictions" do
       )) { types["Foo"] }
   end
 
-  it "allows typeof as restriction" do
+  it("allows typeof as restriction") do
     assert_type(%(
       struct Int32
         def self.foo(x : typeof(self))
@@ -97,7 +97,7 @@ describe "Restrictions" do
       )) { int32 }
   end
 
-  it "passes #278" do
+  it("passes #278") do
     assert_error %(
       def bar(x : String, y : String = nil)
       end
@@ -107,7 +107,7 @@ describe "Restrictions" do
       "no overload matches"
   end
 
-  it "errors on T::Type that's union when used from type restriction" do
+  it("errors on T::Type that's union when used from type restriction") do
     assert_error %(
       def foo(x : T) forall T
         T::Baz
@@ -118,7 +118,7 @@ describe "Restrictions" do
       "undefined constant T::Baz"
   end
 
-  it "errors on T::Type that's a union when used from block type restriction" do
+  it("errors on T::Type that's a union when used from block type restriction") do
     assert_error %(
       class Foo(T)
         def self.foo(&block : T::Baz ->)
@@ -130,7 +130,7 @@ describe "Restrictions" do
       "undefined constant T::Baz"
   end
 
-  it "errors if can't find type on lookup" do
+  it("errors if can't find type on lookup") do
     assert_error %(
       def foo(x : Something)
       end
@@ -139,7 +139,7 @@ describe "Restrictions" do
       ), "undefined constant Something"
   end
 
-  it "errors if can't find type on lookup with nested type" do
+  it("errors if can't find type on lookup with nested type") do
     assert_error %(
       def foo(x : Foo::Bar)
       end
@@ -148,7 +148,7 @@ describe "Restrictions" do
       ), "undefined constant Foo::Bar"
   end
 
-  it "works with static array (#637)" do
+  it("works with static array (#637)") do
     assert_type(%(
       def foo(x : UInt8[1])
         1
@@ -163,7 +163,7 @@ describe "Restrictions" do
       )) { char }
   end
 
-  it "works with static array that uses underscore" do
+  it("works with static array that uses underscore") do
     assert_type(%(
       def foo(x : UInt8[_])
         'a'
@@ -174,7 +174,7 @@ describe "Restrictions" do
       )) { char }
   end
 
-  it "works with generic compared to fixed (primitive) type" do
+  it("works with generic compared to fixed (primitive) type") do
     assert_type(%(
       class Foo(T)
       end
@@ -189,7 +189,7 @@ describe "Restrictions" do
       )) { char }
   end
 
-  it "works with generic class metaclass vs. generic instance class metaclass" do
+  it("works with generic class metaclass vs. generic instance class metaclass") do
     assert_type(%(
       class Foo(T)
       end
@@ -202,7 +202,7 @@ describe "Restrictions" do
       )) { int32 }
   end
 
-  it "works with generic class metaclass vs. generic class metaclass" do
+  it("works with generic class metaclass vs. generic class metaclass") do
     assert_type(%(
       class Foo(T)
       end
@@ -215,7 +215,7 @@ describe "Restrictions" do
       )) { int32 }
   end
 
-  it "works with union against unions of generics" do
+  it("works with union against unions of generics") do
     assert_type(%(
       class Foo(T)
       end
@@ -228,7 +228,7 @@ describe "Restrictions" do
       )) { union_of(generic_class("Foo", int32), generic_class("Foo", float64)) }
   end
 
-  it "should not let GenericChild(Base) pass as a GenericBase(Child) (#1294)" do
+  it("should not let GenericChild(Base) pass as a GenericBase(Child) (#1294)") do
     assert_error %(
       class Base
       end
@@ -250,7 +250,7 @@ describe "Restrictions" do
       "no overload matches"
   end
 
-  it "allows passing recursive type to free var (#1076)" do
+  it("allows passing recursive type to free var (#1076)") do
     assert_type(%(
       class Foo(T)
       end
@@ -269,7 +269,7 @@ describe "Restrictions" do
       )) { char }
   end
 
-  it "restricts class union type to overloads with classes" do
+  it("restricts class union type to overloads with classes") do
     assert_type(%(
       def foo(x : Int32.class)
         1_u8
@@ -288,7 +288,7 @@ describe "Restrictions" do
       )) { union_of([uint8, uint16, uint32] of Type) }
   end
 
-  it "restricts class union type to overloads with classes (2)" do
+  it("restricts class union type to overloads with classes (2)") do
     assert_type(%(
       def foo(x : Int32.class)
         1_u8
@@ -307,7 +307,7 @@ describe "Restrictions" do
       )) { union_of([uint8, uint16] of Type) }
   end
 
-  it "makes metaclass subclass pass parent metaclass restriction (#2079)" do
+  it("makes metaclass subclass pass parent metaclass restriction (#2079)") do
     assert_type(%(
       class Foo; end
 
@@ -321,7 +321,7 @@ describe "Restrictions" do
       )) { types["Bar"].metaclass }
   end
 
-  it "matches virtual type against alias" do
+  it("matches virtual type against alias") do
     assert_type(%(
       module Moo
       end
@@ -346,7 +346,7 @@ describe "Restrictions" do
       )) { int32 }
   end
 
-  it "matches alias against alias in block type" do
+  it("matches alias against alias in block type") do
     assert_type(%(
       class Foo(T)
         def self.new(&block : -> T)
@@ -367,7 +367,7 @@ describe "Restrictions" do
       )) { types["Rec"].metaclass }
   end
 
-  it "matches free variable for type variable" do
+  it("matches free variable for type variable") do
     assert_type(%(
       class Foo(Type)
         def initialize(x : Type)
@@ -378,7 +378,7 @@ describe "Restrictions" do
       )) { generic_class "Foo", int32 }
   end
 
-  it "restricts virtual metaclass type against metaclass (#3438)" do
+  it("restricts virtual metaclass type against metaclass (#3438)") do
     assert_type(%(
       class Parent
       end
@@ -394,7 +394,7 @@ describe "Restrictions" do
       )) { types["Parent"].metaclass.virtual_type! }
   end
 
-  it "doesn't crash on invalid splat restriction (#3698)" do
+  it("doesn't crash on invalid splat restriction (#3698)") do
     assert_error %(
       def foo(arg : *String)
       end
@@ -404,7 +404,7 @@ describe "Restrictions" do
       "no overload matches"
   end
 
-  it "errors if using free var without forall" do
+  it("errors if using free var without forall") do
     assert_error %(
       def foo(x : T)
         T

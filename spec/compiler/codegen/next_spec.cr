@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: next" do
-  it "codegens next" do
+describe("Code gen: next") do
+  it("codegens next") do
     run("
       def foo
         yield
@@ -13,7 +13,7 @@ describe "Code gen: next" do
       ").to_i.should eq(1)
   end
 
-  it "codegens next conditionally" do
+  it("codegens next conditionally") do
     run("
       def foo
         yield 1
@@ -31,7 +31,7 @@ describe "Code gen: next" do
       ").to_i.should eq(4)
   end
 
-  it "codegens next conditionally with int type (2)" do
+  it("codegens next conditionally with int type (2)") do
     run("
       def foo
         x = 0
@@ -55,7 +55,7 @@ describe "Code gen: next" do
       ").to_i.should eq(100)
   end
 
-  it "codegens next with break (1)" do
+  it("codegens next with break (1)") do
     run("
       def foo
         yield 1
@@ -71,7 +71,7 @@ describe "Code gen: next" do
       ").to_i.should eq(20)
   end
 
-  it "codegens next with break (2)" do
+  it("codegens next with break (2)") do
     run("
       def foo
         a = 0
@@ -91,7 +91,7 @@ describe "Code gen: next" do
       ").to_i.should eq(40)
   end
 
-  it "codegens next with break (3)" do
+  it("codegens next with break (3)") do
     run("
       def foo
         a = 0
@@ -111,7 +111,7 @@ describe "Code gen: next" do
       ").to_i.should eq(20)
   end
 
-  it "codegens next with while inside block" do
+  it("codegens next with while inside block") do
     run("
       def foo
         a = 0
@@ -136,7 +136,7 @@ describe "Code gen: next" do
       ").to_i.should eq(30)
   end
 
-  it "codegens next without expressions" do
+  it("codegens next without expressions") do
     run("
       struct Nil; def to_i; 0; end; end
 

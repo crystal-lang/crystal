@@ -1,8 +1,8 @@
 require "spec"
 
-describe Concurrent::Future do
-  describe "delay" do
-    it "computes a value" do
+describe(Concurrent::Future) do
+  describe("delay") do
+    it("computes a value") do
       chan = Channel(Int32).new(1)
 
       d = delay(0.05) { chan.receive }
@@ -14,7 +14,7 @@ describe Concurrent::Future do
       d.completed?.should be_true
     end
 
-    it "cancels" do
+    it("cancels") do
       d = delay(1) { 42 }
       d.delayed?.should be_true
 
@@ -24,7 +24,7 @@ describe Concurrent::Future do
       expect_raises(Concurrent::CanceledError) { d.get }
     end
 
-    it "raises" do
+    it("raises") do
       d = delay(0.001) { raise IndexError.new("test error") }
 
       expect_raises(IndexError) { d.get }
@@ -32,8 +32,8 @@ describe Concurrent::Future do
     end
   end
 
-  describe "future" do
-    it "computes a value" do
+  describe("future") do
+    it("computes a value") do
       chan = Channel(Int32).new(1)
 
       f = future { chan.receive }
@@ -47,7 +47,7 @@ describe Concurrent::Future do
       f.completed?.should be_true
     end
 
-    it "can't cancel a completed computation" do
+    it("can't cancel a completed computation") do
       f = future { 42 }
       f.running?.should be_true
 
@@ -58,7 +58,7 @@ describe Concurrent::Future do
       f.canceled?.should be_false
     end
 
-    it "raises" do
+    it("raises") do
       f = future { raise IndexError.new("test error") }
       f.running?.should be_true
 
@@ -70,8 +70,8 @@ describe Concurrent::Future do
     end
   end
 
-  describe "lazy" do
-    it "computes a value" do
+  describe("lazy") do
+    it("computes a value") do
       chan = Channel(Int32).new(1)
 
       f = lazy { chan.receive }
@@ -85,7 +85,7 @@ describe Concurrent::Future do
       f.completed?.should be_true
     end
 
-    it "cancels" do
+    it("cancels") do
       l = lazy { 42 }
       l.idle?.should be_true
 
@@ -95,7 +95,7 @@ describe Concurrent::Future do
       expect_raises(Concurrent::CanceledError) { l.get }
     end
 
-    it "raises" do
+    it("raises") do
       f = lazy { raise IndexError.new("test error") }
       f.idle?.should be_true
 

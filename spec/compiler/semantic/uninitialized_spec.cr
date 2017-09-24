@@ -1,15 +1,15 @@
 require "../../spec_helper"
 
-describe "Semantic: uninitialized" do
-  it "declares as uninitialized" do
+describe("Semantic: uninitialized") do
+  it("declares as uninitialized") do
     assert_type("a = uninitialized Int32") { int32 }
   end
 
-  it "declares as uninitialized and reads it" do
+  it("declares as uninitialized and reads it") do
     assert_type("a = uninitialized Int32; a") { int32 }
   end
 
-  it "declares an instance variable in initialize as uninitialized" do
+  it("declares an instance variable in initialize as uninitialized") do
     assert_type("
       class Foo
         def initialize
@@ -25,7 +25,7 @@ describe "Semantic: uninitialized" do
       ") { int32 }
   end
 
-  it "errors if declaring generic type without type vars (with instance var)" do
+  it("errors if declaring generic type without type vars (with instance var)") do
     assert_error %(
       class Foo(T)
       end
@@ -41,7 +41,7 @@ describe "Semantic: uninitialized" do
       "can't declare variable of generic non-instantiated type Foo"
   end
 
-  it "errors if declaring generic type without type vars (with class var)" do
+  it("errors if declaring generic type without type vars (with class var)") do
     assert_error %(
       class Foo(T)
       end
@@ -55,7 +55,7 @@ describe "Semantic: uninitialized" do
       "can't declare variable of generic non-instantiated type Foo"
   end
 
-  it "errors if declares var and then assigns other type" do
+  it("errors if declares var and then assigns other type") do
     assert_error %(
       x = uninitialized Int32
       x = 1_i64
@@ -63,7 +63,7 @@ describe "Semantic: uninitialized" do
       "type must be Int32, not (Int32 | Int64)"
   end
 
-  it "errors if declaring variable multiple times with different types (#917)" do
+  it("errors if declaring variable multiple times with different types (#917)") do
     assert_error %(
       if 1 == 0
         buf = uninitialized Int32
@@ -74,7 +74,7 @@ describe "Semantic: uninitialized" do
       "variable 'buf' already declared with type Int32"
   end
 
-  it "can uninitialize variable outside initialize (#2828)" do
+  it("can uninitialize variable outside initialize (#2828)") do
     assert_type(%(
       class Foo
         @x = uninitialized Int32
@@ -88,7 +88,7 @@ describe "Semantic: uninitialized" do
       )) { int32 }
   end
 
-  it "can uninitialize variable outside initialize, generic (#2828)" do
+  it("can uninitialize variable outside initialize, generic (#2828)") do
     assert_type(%(
       class Foo(T)
         @x = uninitialized T
@@ -102,7 +102,7 @@ describe "Semantic: uninitialized" do
       )) { int32 }
   end
 
-  it "can use uninitialized with class type (#2940)" do
+  it("can use uninitialized with class type (#2940)") do
     assert_type(%(
       class Foo(U)
         def initialize
@@ -119,7 +119,7 @@ describe "Semantic: uninitialized" do
   end
 
   %w(Object Value Reference Number Int Float Struct Class Enum).each do |type|
-    it "disallows declaring var of type #{type}" do
+    it("disallows declaring var of type #{type}") do
       assert_error %(
         x = uninitialized #{type}
         ),
@@ -127,7 +127,7 @@ describe "Semantic: uninitialized" do
     end
   end
 
-  it "works with uninitialized NoReturn (#3314)" do
+  it("works with uninitialized NoReturn (#3314)") do
     assert_type(%(
       def foo
         x = uninitialized typeof(yield)
@@ -141,7 +141,7 @@ describe "Semantic: uninitialized" do
       )) { nil_type }
   end
 
-  it "has type (#3641)" do
+  it("has type (#3641)") do
     assert_type(%(
       x = uninitialized Int32
       )) { int32 }

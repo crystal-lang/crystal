@@ -208,8 +208,8 @@ require "uri"
 #     fragment, "frag"
 # end
 
-describe URI::Parser, "#run" do
-  it "runs for normal urls" do
+describe(URI::Parser, "#run") do
+  it("runs for normal urls") do
     uri = URI::Parser.new("http://user:pass@bitfission.com:8080/path?a=b#frag").run.uri
     uri.scheme.should eq("http")
     uri.user.should eq("user")
@@ -221,7 +221,7 @@ describe URI::Parser, "#run" do
     uri.fragment.should eq("frag")
   end
 
-  it "runs for schemelss urls" do
+  it("runs for schemelss urls") do
     uri = URI::Parser.new("//user:pass@bitfission.com:8080/path?a=b#frag").run.uri
     uri.scheme.should eq(nil)
     uri.user.should eq("user")
@@ -233,7 +233,7 @@ describe URI::Parser, "#run" do
     uri.fragment.should eq("frag")
   end
 
-  it "runs for path relative urls" do
+  it("runs for path relative urls") do
     uri = URI::Parser.new("/path?a=b#frag").run.uri
     uri.scheme.should eq(nil)
     uri.host.should eq(nil)
@@ -242,13 +242,13 @@ describe URI::Parser, "#run" do
     uri.fragment.should eq("frag")
   end
 
-  it "runs for path mailto" do
+  it("runs for path mailto") do
     uri = URI::Parser.new("mailto:user@example.com").run.uri
     uri.scheme.should eq("mailto")
     uri.opaque.should eq("user@example.com")
   end
 
-  it "runs for file wth and without host" do
+  it("runs for file wth and without host") do
     uri = URI::Parser.new("file://localhost/etc/fstab").run.uri
     uri.scheme.should eq("file")
     uri.host.should eq("localhost")
@@ -260,13 +260,13 @@ describe URI::Parser, "#run" do
     uri.path.should eq("/etc/fstab")
   end
 
-  it "runs for scheme and path only urls" do
+  it("runs for scheme and path only urls") do
     uri = URI::Parser.new("test:/test").run.uri
     uri.scheme.should eq("test")
     uri.path.should eq("/test")
   end
 
-  context "bad urls" do
+  context("bad urls") do
     it { expect_raises(URI::Error) { URI::Parser.new("http://some.com:8f80/path").run } }
   end
 end

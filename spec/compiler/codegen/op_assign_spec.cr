@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: op assign" do
-  it "evaluates exps once (#3398)" do
+describe("Code gen: op assign") do
+  it("evaluates exps once (#3398)") do
     run(%(
       class Global
         @@value = 0
@@ -34,7 +34,7 @@ describe "Code gen: op assign" do
       )).to_i.should eq(1)
   end
 
-  it "evaluates exps once, [] (#3398)" do
+  it("evaluates exps once, [] (#3398)") do
     run(%(
       class Global
         @@value = 0

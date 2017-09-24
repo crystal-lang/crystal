@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
-describe "Code gen: macro" do
-  it "expands macro" do
+describe("Code gen: macro") do
+  it("expands macro") do
     run("macro foo; 1 + 2; end; foo").to_i.should eq(3)
   end
 
-  it "expands macro with arguments" do
+  it("expands macro with arguments") do
     run(%(
       macro foo(n)
         {{n}} + 2
@@ -15,7 +15,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "expands macro that invokes another macro" do
+  it("expands macro that invokes another macro") do
     run(%(
       macro foo
         def x
@@ -32,7 +32,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "expands macro defined in class" do
+  it("expands macro defined in class") do
     run(%(
       class Foo
         macro foo
@@ -49,7 +49,7 @@ describe "Code gen: macro" do
     )).to_i.should eq(1)
   end
 
-  it "expands macro defined in base class" do
+  it("expands macro defined in base class") do
     run(%(
       class Object
         macro foo
@@ -68,14 +68,14 @@ describe "Code gen: macro" do
     )).to_i.should eq(1)
   end
 
-  it "expands inline macro" do
+  it("expands inline macro") do
     run(%(
       a = {{ 1 }}
       a
       )).to_i.should eq(1)
   end
 
-  it "expands inline macro for" do
+  it("expands inline macro for") do
     run(%(
       a = 0
       {% for i in [1, 2, 3] %}
@@ -85,7 +85,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(6)
   end
 
-  it "expands inline macro if (true)" do
+  it("expands inline macro if (true)") do
     run(%(
       a = 0
       {% if 1 == 1 %}
@@ -95,7 +95,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands inline macro if (false)" do
+  it("expands inline macro if (false)") do
     run(%(
       a = 0
       {% if 1 == 2 %}
@@ -105,7 +105,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(0)
   end
 
-  it "finds macro in class" do
+  it("finds macro in class") do
     run(%(
       class Foo
         macro foo
@@ -121,7 +121,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "expands def macro" do
+  it("expands def macro") do
     run(%(
       def bar_baz
         1
@@ -137,7 +137,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands def macro with var" do
+  it("expands def macro with var") do
     run(%(
       macro def foo : Int32
         a = {{ 1 }}
@@ -147,7 +147,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands def macro with @type.instance_vars" do
+  it("expands def macro with @type.instance_vars") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -163,7 +163,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("x")
   end
 
-  it "expands def macro with @type.instance_vars with subclass" do
+  it("expands def macro with @type.instance_vars with subclass") do
     run(%(
       class Reference
         def to_s : String
@@ -185,7 +185,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("y")
   end
 
-  it "expands def macro with @type.instance_vars with virtual" do
+  it("expands def macro with @type.instance_vars with virtual") do
     run(%(
       class Reference
         def to_s : String
@@ -207,7 +207,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("y")
   end
 
-  it "expands def macro with @type.name" do
+  it("expands def macro with @type.name") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -223,7 +223,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Foo")
   end
 
-  it "expands macro and resolves type correctly" do
+  it("expands macro and resolves type correctly") do
     run(%(
       class Foo
         macro def foo : Int32
@@ -239,7 +239,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands def macro with @type.name with virtual" do
+  it("expands def macro with @type.name with virtual") do
     run(%(
       class Reference
         def to_s : String
@@ -257,7 +257,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar")
   end
 
-  it "expands def macro with @type.name with virtual (2)" do
+  it("expands def macro with @type.name with virtual (2)") do
     run(%(
       class Reference
         def to_s : String
@@ -275,7 +275,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Foo")
   end
 
-  it "allows overriding macro definition when redefining base class" do
+  it("allows overriding macro definition when redefining base class") do
     run(%(
       class Foo
         def inspect : String
@@ -296,7 +296,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("OH NO")
   end
 
-  it "uses invocation context" do
+  it("uses invocation context") do
     run(%(
       macro foo
         def bar
@@ -312,7 +312,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Foo")
   end
 
-  it "allows macro with default arguments" do
+  it("allows macro with default arguments") do
     run(%(
       def bar
         2
@@ -326,7 +326,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "expands def macro with instance var and method call (bug)" do
+  it("expands def macro with instance var and method call (bug)") do
     run(%(
       struct Nil
         def to_i
@@ -347,7 +347,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands @type.name in virtual metaclass (1)" do
+  it("expands @type.name in virtual metaclass (1)") do
     run(%(
       class Class
         def to_s : String
@@ -368,7 +368,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Foo")
   end
 
-  it "expands @type.name in virtual metaclass (2)" do
+  it("expands @type.name in virtual metaclass (2)") do
     run(%(
       class Class
         def to_s : String
@@ -389,7 +389,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar")
   end
 
-  it "doesn't skip abstract classes when defining macro methods" do
+  it("doesn't skip abstract classes when defining macro methods") do
     run(%(
       class Object
         macro def foo : Int32
@@ -417,7 +417,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(2)
   end
 
-  it "doesn't reuse macro nodes (bug)" do
+  it("doesn't reuse macro nodes (bug)") do
     run(%(
       def foo(x)
         {% for y in [1, 2] %}
@@ -430,14 +430,14 @@ describe "Code gen: macro" do
       )).to_i.should eq(2)
   end
 
-  it "can use constants" do
+  it("can use constants") do
     run(%(
       CONST = 1
       {{ CONST }}
       )).to_i.should eq(1)
   end
 
-  it "can refer to types" do
+  it("can refer to types") do
     run(%(
       class Foo
         def initialize(@x : Int32, @y : Int32)
@@ -453,7 +453,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("y")
   end
 
-  it "runs macro with splat" do
+  it("runs macro with splat") do
     run(%(
       macro foo(*args)
         {{args.size}}
@@ -463,7 +463,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "runs macro with arg and splat" do
+  it("runs macro with arg and splat") do
     run(%(
       macro foo(name, *args)
         {{args.size}}
@@ -473,7 +473,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "expands macro that yields" do
+  it("expands macro that yields") do
     run(%(
       def foo
         {% for i in 0 .. 2 %}
@@ -489,7 +489,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "can refer to abstract (1)" do
+  it("can refer to abstract (1)") do
     run(%(
       class Foo
       end
@@ -498,7 +498,7 @@ describe "Code gen: macro" do
       )).to_b.should be_false
   end
 
-  it "can refer to abstract (2)" do
+  it("can refer to abstract (2)") do
     run(%(
       abstract class Foo
       end
@@ -507,7 +507,7 @@ describe "Code gen: macro" do
       )).to_b.should be_true
   end
 
-  it "can refer to @type" do
+  it("can refer to @type") do
     run(%(
       class Foo
         def foo : String
@@ -519,13 +519,13 @@ describe "Code gen: macro" do
       )).to_string.should eq("Foo")
   end
 
-  it "can refer to union (1)" do
+  it("can refer to union (1)") do
     run(%(
       {{Int32.union?}}
     )).to_b.should be_false
   end
 
-  it "can refer to union (2)" do
+  it("can refer to union (2)") do
     run(%(
       class Foo
         def initialize
@@ -539,7 +539,7 @@ describe "Code gen: macro" do
     )).to_b.should be_true
   end
 
-  it "can iterate union types" do
+  it("can iterate union types") do
     run(%(
       require "prelude"
       class Foo
@@ -554,7 +554,7 @@ describe "Code gen: macro" do
     )).to_string.should eq("Float64-Int32")
   end
 
-  it "can access type variables" do
+  it("can access type variables") do
     run(%(
       class Foo(T)
         def foo
@@ -565,7 +565,7 @@ describe "Code gen: macro" do
     )).to_string.should eq("Int32")
   end
 
-  it "can acccess type variables that are not types" do
+  it("can acccess type variables that are not types") do
     run(%(
       class Foo(T)
         def foo
@@ -576,7 +576,7 @@ describe "Code gen: macro" do
     )).to_b.should eq(true)
   end
 
-  it "can acccess type variables of a tuple" do
+  it("can acccess type variables of a tuple") do
     run(%(
       struct Tuple
         def foo
@@ -587,7 +587,7 @@ describe "Code gen: macro" do
     )).to_string.should eq("Int32")
   end
 
-  it "can access type variables of a generic type" do
+  it("can access type variables of a generic type") do
     run(%(
       require "prelude"
       class Foo(T, K)
@@ -599,7 +599,7 @@ describe "Code gen: macro" do
     )).to_string.should eq("T-K")
   end
 
-  it "receives &block" do
+  it("receives &block") do
     run(%(
       macro foo(&block)
         bar {{block}}
@@ -615,7 +615,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(2)
   end
 
-  it "executes with named arguments" do
+  it("executes with named arguments") do
     run(%(
       macro foo(x = 1)
         {{x}} + 1
@@ -625,7 +625,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "gets correct class name when there are classes in the middle" do
+  it("gets correct class name when there are classes in the middle") do
     run(%(
       class Foo
         def class_desc : String
@@ -648,7 +648,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Qux")
   end
 
-  it "transforms hooks (bug)" do
+  it("transforms hooks (bug)") do
     codegen(%(
       module GC
         def self.add_finalizer(object : T)
@@ -669,7 +669,7 @@ describe "Code gen: macro" do
       ))
   end
 
-  it "executes subclasses" do
+  it("executes subclasses") do
     run(%(
       require "prelude"
 
@@ -690,7 +690,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar-Baz")
   end
 
-  it "executes all_subclasses" do
+  it("executes all_subclasses") do
     run(%(
       require "prelude"
 
@@ -708,7 +708,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar-Baz")
   end
 
-  it "gets enum members with @type.constants" do
+  it("gets enum members with @type.constants") do
     run(%(
       enum Color
         Red
@@ -732,7 +732,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(0 + 1 + 2)
   end
 
-  it "gets enum members as constants" do
+  it("gets enum members as constants") do
     run(%(
       enum Color
         Red
@@ -744,7 +744,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Green")
   end
 
-  it "says that enum has Flags attribute" do
+  it("says that enum has Flags attribute") do
     run(%(
       @[Flags]
       enum Color
@@ -757,7 +757,7 @@ describe "Code gen: macro" do
       )).to_b.should be_true
   end
 
-  it "says that enum doesn't have Flags attribute" do
+  it("says that enum doesn't have Flags attribute") do
     run(%(
       enum Color
         Red
@@ -769,7 +769,7 @@ describe "Code gen: macro" do
       )).to_b.should be_false
   end
 
-  it "gets methods" do
+  it("gets methods") do
     run(%(
       class Foo
         def bar
@@ -785,7 +785,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("bar")
   end
 
-  it "copies base macro def to sub-subtype even after it was copied to a subtype (#448)" do
+  it("copies base macro def to sub-subtype even after it was copied to a subtype (#448)") do
     run(%(
       class Object
         def class_name : String
@@ -816,7 +816,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Baz")
   end
 
-  it "recalculates method when virtual metaclass type is added" do
+  it("recalculates method when virtual metaclass type is added") do
     run(%(
       require "prelude"
 
@@ -868,7 +868,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Test, RunnableTest")
   end
 
-  it "correctly recomputes call (bug)" do
+  it("correctly recomputes call (bug)") do
     run(%(
       class Object
         def in_object
@@ -903,7 +903,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Baz")
   end
 
-  it "doesn't override local variable when using macro variable" do
+  it("doesn't override local variable when using macro variable") do
     run(%(
       macro foo(x)
         %a = {{x}}
@@ -917,7 +917,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "doesn't override local variable when using macro variable (2)" do
+  it("doesn't override local variable when using macro variable (2)") do
     run(%(
       macro foo(x)
         %a = {{x}} + 10
@@ -931,7 +931,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(26)
   end
 
-  it "uses indexed macro variable" do
+  it("uses indexed macro variable") do
     run(%(
       macro foo(*elems)
         {% for elem, i in elems %}
@@ -952,7 +952,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(4 + 5 + 6 + 40 + 50 + 60)
   end
 
-  it "uses indexed macro variable with many keys" do
+  it("uses indexed macro variable with many keys") do
     run(%(
       macro foo(*elems)
         {% for elem, i in elems %}
@@ -971,7 +971,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(4 + 5 + 6)
   end
 
-  it "codegens macro def with splat (#496)" do
+  it("codegens macro def with splat (#496)") do
     run(%(
       class Foo
         macro def bar(*args) : Int32
@@ -983,7 +983,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(6)
   end
 
-  it "codegens macro def with default arg (similar to #496)" do
+  it("codegens macro def with default arg (similar to #496)") do
     run(%(
       class Foo
         macro def bar(foo = 1) : Int32
@@ -995,7 +995,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "expands macro with default arg and splat (#784)" do
+  it("expands macro with default arg and splat (#784)") do
     run(%(
       macro some_macro(a=5, *args)
         {{a.stringify}}
@@ -1005,7 +1005,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("5")
   end
 
-  it "expands macro with default arg and splat (2) (#784)" do
+  it("expands macro with default arg and splat (2) (#784)") do
     run(%(
       macro some_macro(a=5, *args)
         {{a.stringify}}
@@ -1015,7 +1015,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("1")
   end
 
-  it "expands macro with default arg and splat (3) (#784)" do
+  it("expands macro with default arg and splat (3) (#784)") do
     run(%(
       macro some_macro(a=5, *args)
         {{args.size}}
@@ -1025,7 +1025,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "checks if macro expansion returns (#821)" do
+  it("checks if macro expansion returns (#821)") do
     run(%(
       macro pass
         return 123
@@ -1040,7 +1040,7 @@ describe "Code gen: macro" do
       ), inject_primitives: false).to_i.should eq(123)
   end
 
-  it "passes #826" do
+  it("passes #826") do
     run(%(
       macro foo
         macro bar
@@ -1056,7 +1056,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(123)
   end
 
-  it "declares constant in macro (#838)" do
+  it("declares constant in macro (#838)") do
     run(%(
       macro foo
         {{yield}}
@@ -1070,7 +1070,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(123)
   end
 
-  it "errors if dynamic constant assignment after macro expansion" do
+  it("errors if dynamic constant assignment after macro expansion") do
     assert_error %(
       macro foo
         X = 123
@@ -1085,7 +1085,7 @@ describe "Code gen: macro" do
       "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
   end
 
-  it "finds macro from virtual type" do
+  it("finds macro from virtual type") do
     run(%(
       class Foo
         macro foo
@@ -1106,7 +1106,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(123)
   end
 
-  it "expands macro with escaped quotes (#895)" do
+  it("expands macro with escaped quotes (#895)") do
     run(%(
       macro foo(x)
         "{{x}}\\""
@@ -1116,7 +1116,7 @@ describe "Code gen: macro" do
       )).to_string.should eq(%(hello"))
   end
 
-  it "expands macro def with return (#1040)" do
+  it("expands macro def with return (#1040)") do
     run(%(
       macro def a : Int32
         return 123
@@ -1126,7 +1126,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(123)
   end
 
-  it "fixes empty types of macro expansions (#1379)" do
+  it("fixes empty types of macro expansions (#1379)") do
     run(%(
       macro lala(exp)
         {{exp}}
@@ -1146,7 +1146,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(123)
   end
 
-  it "expands macro as class method" do
+  it("expands macro as class method") do
     run(%(
       class Foo
         macro bar
@@ -1158,7 +1158,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands macro as class method and accesses @type" do
+  it("expands macro as class method and accesses @type") do
     run(%(
       class Foo
         macro bar
@@ -1170,7 +1170,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Foo")
   end
 
-  it "codegens macro with comment (bug) (#1396)" do
+  it("codegens macro with comment (bug) (#1396)") do
     run(%(
       macro my_macro
         # {{ 1 }}
@@ -1181,7 +1181,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "correctly resolves constant inside block in macro def" do
+  it("correctly resolves constant inside block in macro def") do
     run(%(
       def foo
         yield
@@ -1199,7 +1199,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(123)
   end
 
-  it "can access free variables" do
+  it("can access free variables") do
     run(%(
       def foo(x : T) forall T
         {{ T.stringify }}
@@ -1209,7 +1209,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Int32")
   end
 
-  it "types macro expansion bug (#1734)" do
+  it("types macro expansion bug (#1734)") do
     run(%(
       class Foo
         macro def foo : Int32
@@ -1225,7 +1225,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands Path with resolve method" do
+  it("expands Path with resolve method") do
     run(%(
       CONST = 1
 
@@ -1237,7 +1237,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "solves macro expression arguments before macro expansion (type)" do
+  it("solves macro expression arguments before macro expansion (type)") do
     run(%(
       macro name(x)
         {{x.name.stringify}}
@@ -1247,7 +1247,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("String")
   end
 
-  it "solves macro expression arguments before macro expansion (constant)" do
+  it("solves macro expression arguments before macro expansion (constant)") do
     run(%(
       CONST = 1
 
@@ -1259,7 +1259,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "can use macro inside array literal" do
+  it("can use macro inside array literal") do
     run(%(
       require "prelude"
 
@@ -1272,7 +1272,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(42)
   end
 
-  it "can use macro inside hash literal" do
+  it("can use macro inside hash literal") do
     run(%(
       require "prelude"
 
@@ -1285,7 +1285,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(42)
   end
 
-  it "executes with named arguments for positional arg (1)" do
+  it("executes with named arguments for positional arg (1)") do
     run(%(
       macro foo(x)
         {{x}} + 1
@@ -1295,7 +1295,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "executes with named arguments for positional arg (2)" do
+  it("executes with named arguments for positional arg (2)") do
     run(%(
       macro foo(x, y)
         {{x}} + {{y}} + 1
@@ -1305,7 +1305,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(6)
   end
 
-  it "executes with named arguments for positional arg (3)" do
+  it("executes with named arguments for positional arg (3)") do
     run(%(
       class String
         def bytesize
@@ -1321,7 +1321,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(6)
   end
 
-  it "stringifies type without virtual marker" do
+  it("stringifies type without virtual marker") do
     run(%(
       class Foo
         def foo_m : Int32
@@ -1343,7 +1343,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(2)
   end
 
-  it "uses tuple T in method with free vars" do
+  it("uses tuple T in method with free vars") do
     run(%(
       struct Tuple
         def foo(x : U) forall U
@@ -1355,7 +1355,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(2)
   end
 
-  it "implicitly marks method as macro def when using @type" do
+  it("implicitly marks method as macro def when using @type") do
     run(%(
       class Foo
         def method
@@ -1370,7 +1370,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar")
   end
 
-  it "doesn't replace %s in string (#2178)" do
+  it("doesn't replace %s in string (#2178)") do
     run(%(
       {% begin %}
         "hello %s"
@@ -1378,7 +1378,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("hello %s")
   end
 
-  it "doesn't replace %q() (#2178)" do
+  it("doesn't replace %q() (#2178)") do
     run(%(
       {% begin %}
         %q(hello)
@@ -1386,7 +1386,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("hello")
   end
 
-  it "replaces %s inside string inside interpolation (#2178)" do
+  it("replaces %s inside string inside interpolation (#2178)") do
     run(%(
       require "prelude"
 
@@ -1397,7 +1397,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("hello world")
   end
 
-  it "replaces %s inside string inside interpolation, with braces (#2178)" do
+  it("replaces %s inside string inside interpolation, with braces (#2178)") do
     run(%(
       require "prelude"
 
@@ -1408,7 +1408,7 @@ describe "Code gen: macro" do
       )).to_string.should eq(%(hello [{"world", "world"}, "world"]))
   end
 
-  it "retains original yield expression (#2923)" do
+  it("retains original yield expression (#2923)") do
     run(%(
       macro foo
         def bar(baz)
@@ -1424,7 +1424,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("hi")
   end
 
-  it "surrounds {{yield}} with begin/end" do
+  it("surrounds {{yield}} with begin/end") do
     run(%(
       macro foo
         a = {{yield}}
@@ -1439,7 +1439,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(2)
   end
 
-  it "initializes instance var in macro" do
+  it("initializes instance var in macro") do
     run(%(
       class Foo
         {% begin %}
@@ -1451,7 +1451,7 @@ describe "Code gen: macro" do
       ), inject_primitives: false).to_i.should eq(1)
   end
 
-  it "initializes class var in macro" do
+  it("initializes class var in macro") do
     run(%(
       class Foo
         {% begin %}
@@ -1467,7 +1467,7 @@ describe "Code gen: macro" do
       ), inject_primitives: false).to_i.should eq(1)
   end
 
-  it "expands @def in inline macro" do
+  it("expands @def in inline macro") do
     run(%(
       def foo
         {{@def.name.stringify}}
@@ -1477,7 +1477,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("foo")
   end
 
-  it "expands @def in macro" do
+  it("expands @def in macro") do
     run(%(
       macro foo
         {{@def.name.stringify}}
@@ -1491,7 +1491,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("bar")
   end
 
-  it "gets constant" do
+  it("gets constant") do
     run(%(
       class Foo
         Bar = 42
@@ -1501,7 +1501,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(42)
   end
 
-  it "determines if overrides (false)" do
+  it("determines if overrides (false)") do
     run(%(
       class Foo
         def foo
@@ -1516,7 +1516,7 @@ describe "Code gen: macro" do
       )).to_b.should be_false
   end
 
-  it "determines if overrides (true)" do
+  it("determines if overrides (true)") do
     run(%(
       class Foo
         def foo
@@ -1534,7 +1534,7 @@ describe "Code gen: macro" do
       )).to_b.should be_true
   end
 
-  it "determines if overrides, through another class (true)" do
+  it("determines if overrides, through another class (true)") do
     run(%(
       class Foo
         def foo
@@ -1555,7 +1555,7 @@ describe "Code gen: macro" do
       )).to_b.should be_true
   end
 
-  it "determines if overrides, through module (true)" do
+  it("determines if overrides, through module (true)") do
     run(%(
       class Foo
         def foo
@@ -1580,7 +1580,7 @@ describe "Code gen: macro" do
       )).to_b.should be_true
   end
 
-  it "determines if overrides, with macro method (false)" do
+  it("determines if overrides, with macro method (false)") do
     run(%(
       class Foo
         def foo
@@ -1601,7 +1601,7 @@ describe "Code gen: macro" do
       )).to_b.should be_false
   end
 
-  it "determines if method exists (true)" do
+  it("determines if method exists (true)") do
     run(%(
       class Foo
         def foo
@@ -1613,7 +1613,7 @@ describe "Code gen: macro" do
       )).to_b.should be_true
   end
 
-  it "determines if method exists (false)" do
+  it("determines if method exists (false)") do
     run(%(
       class Foo
         def foo
@@ -1625,7 +1625,7 @@ describe "Code gen: macro" do
       )).to_b.should be_false
   end
 
-  it "forwards file location" do
+  it("forwards file location") do
     run(%(
       macro foo
         bar
@@ -1639,7 +1639,7 @@ describe "Code gen: macro" do
       ), filename: "bar.cr").to_string.should eq("bar.cr")
   end
 
-  it "forwards dir location" do
+  it("forwards dir location") do
     run(%(
       macro foo
         bar
@@ -1653,7 +1653,7 @@ describe "Code gen: macro" do
       ), filename: "somedir/bar.cr").to_string.should eq("somedir")
   end
 
-  it "forwards line number" do
+  it("forwards line number") do
     run(%(
       macro foo
         bar
@@ -1667,7 +1667,7 @@ describe "Code gen: macro" do
       ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(10)
   end
 
-  it "keeps line number with no block" do
+  it("keeps line number with no block") do
     run(%(
       macro foo
         {{ yield }}
@@ -1678,7 +1678,7 @@ describe "Code gen: macro" do
     ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(7)
   end
 
-  it "keeps line number with a block" do
+  it("keeps line number with a block") do
     run(%(
       macro foo
         {{ yield }}
@@ -1691,7 +1691,7 @@ describe "Code gen: macro" do
     ), filename: "somedir/bar.cr", inject_primitives: false).to_i.should eq(7)
   end
 
-  it "resolves alias in macro" do
+  it("resolves alias in macro") do
     run(%(
       alias Foo = Int32 | String
 

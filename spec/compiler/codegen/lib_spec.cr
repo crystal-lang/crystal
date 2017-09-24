@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: lib" do
-  pending "codegens lib var set and get" do
+describe("Code gen: lib") do
+  pending("codegens lib var set and get") do
     run("
       lib LibC
         $errno : Int32
@@ -12,7 +12,7 @@ describe "Code gen: lib" do
       ").to_i.should eq(1)
   end
 
-  it "call to void function" do
+  it("call to void function") do
     run("
       lib LibC
         fun srandom(x : UInt32) : Void
@@ -26,7 +26,7 @@ describe "Code gen: lib" do
     ")
   end
 
-  it "allows passing type to LibC if it has a coverter with to_unsafe" do
+  it("allows passing type to LibC if it has a coverter with to_unsafe") do
     codegen("
       lib LibC
         fun foo(x : Int32) : Int32
@@ -42,7 +42,7 @@ describe "Code gen: lib" do
       ")
   end
 
-  it "allows passing type to LibC if it has a coverter with to_unsafe (bug)" do
+  it("allows passing type to LibC if it has a coverter with to_unsafe (bug)") do
     codegen(%(
       require "prelude"
 
@@ -58,7 +58,7 @@ describe "Code gen: lib" do
       ))
   end
 
-  it "allows setting/getting external variable as function pointer" do
+  it("allows setting/getting external variable as function pointer") do
     codegen(%(
       require "prelude"
 
@@ -71,7 +71,7 @@ describe "Code gen: lib" do
       ))
   end
 
-  it "can use enum as fun argument" do
+  it("can use enum as fun argument") do
     codegen(%(
       enum Foo
         A
@@ -85,7 +85,7 @@ describe "Code gen: lib" do
       ))
   end
 
-  it "can use enum as fun return" do
+  it("can use enum as fun return") do
     codegen(%(
       enum Foo
         A
@@ -99,7 +99,7 @@ describe "Code gen: lib" do
       ))
   end
 
-  it "can use tuple as fun return" do
+  it("can use tuple as fun return") do
     test_c(
       %(
         struct s {
@@ -122,7 +122,7 @@ describe "Code gen: lib" do
       ), &.to_i.should eq(3))
   end
 
-  it "get fun field from struct (#672)" do
+  it("get fun field from struct (#672)") do
     run(%(
       require "prelude"
 
@@ -138,7 +138,7 @@ describe "Code gen: lib" do
       )).to_i.should eq(10)
   end
 
-  it "get fun field from union (#672)" do
+  it("get fun field from union (#672)") do
     run(%(
       require "prelude"
 
@@ -154,7 +154,7 @@ describe "Code gen: lib" do
       )).to_i.should eq(10)
   end
 
-  it "refers to lib type (#960)" do
+  it("refers to lib type (#960)") do
     codegen(%(
       lib Thing
       end
@@ -163,7 +163,7 @@ describe "Code gen: lib" do
       ))
   end
 
-  it "allows invoking out with underscore " do
+  it("allows invoking out with underscore ") do
     codegen(%(
       lib Lib
         fun foo(x : Int32*) : Float64
@@ -173,7 +173,7 @@ describe "Code gen: lib" do
       ))
   end
 
-  it "passes int as another float type in literal" do
+  it("passes int as another float type in literal") do
     codegen(%(
       lib LibFoo
         fun foo(x : Int32)
@@ -183,7 +183,7 @@ describe "Code gen: lib" do
       ))
   end
 
-  it "passes nil to varargs (#1570)" do
+  it("passes nil to varargs (#1570)") do
     codegen(%(
       lib LibFoo
         fun foo(...)
@@ -193,7 +193,7 @@ describe "Code gen: lib" do
       ))
   end
 
-  it "casts C fun to Crystal proc when accessing instance var (#2515)" do
+  it("casts C fun to Crystal proc when accessing instance var (#2515)") do
     codegen(%(
       require "prelude"
 
@@ -207,7 +207,7 @@ describe "Code gen: lib" do
       ))
   end
 
-  it "doesn't crash when casting -1 to UInt32 (#3594)" do
+  it("doesn't crash when casting -1 to UInt32 (#3594)") do
     codegen(%(
       lib LibFoo
         fun foo(x : UInt32) : Nil
@@ -217,7 +217,7 @@ describe "Code gen: lib" do
       ))
   end
 
-  it "doesn't crash with nil and varargs (#4414)" do
+  it("doesn't crash with nil and varargs (#4414)") do
     codegen(%(
       lib LibFoo
         fun foo(Void*, ...)

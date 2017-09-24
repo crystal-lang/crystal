@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: method_missing" do
-  it "does error in method_missing macro with virtual type" do
+describe("Semantic: method_missing") do
+  it("does error in method_missing macro with virtual type") do
     assert_error %(
       abstract class Foo
       end
@@ -20,7 +20,7 @@ describe "Semantic: method_missing" do
       ), "undefined method 'lala' for Baz"
   end
 
-  it "does error in method_missing if wrong number of args" do
+  it("does error in method_missing if wrong number of args") do
     assert_error %(
       class Foo
         macro method_missing(call, foo)
@@ -29,7 +29,7 @@ describe "Semantic: method_missing" do
       ), "macro 'method_missing' expects 1 argument (call)"
   end
 
-  it "does method missing for generic type" do
+  it("does method missing for generic type") do
     assert_type(%(
       class Foo(T)
         macro method_missing(call)
@@ -41,7 +41,7 @@ describe "Semantic: method_missing" do
       )) { int32 }
   end
 
-  it "errors if method_missing expands to an incorrect method" do
+  it("errors if method_missing expands to an incorrect method") do
     assert_error %(
       class Foo
         macro method_missing(call)
@@ -56,7 +56,7 @@ describe "Semantic: method_missing" do
       "wrong method_missing expansion"
   end
 
-  it "errors if method_missing expands to multiple methods" do
+  it("errors if method_missing expands to multiple methods") do
     assert_error %(
       class Foo
         macro method_missing(call)
@@ -74,7 +74,7 @@ describe "Semantic: method_missing" do
       "wrong method_missing expansion"
   end
 
-  it "finds method_missing with 'with ... yield'" do
+  it("finds method_missing with 'with ... yield'") do
     assert_type(%(
       class Foo
         macro method_missing(call)

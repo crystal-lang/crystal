@@ -2,8 +2,8 @@ require "spec"
 require "zlib"
 
 module Zlib
-  describe Writer do
-    it "should be able to write" do
+  describe(Writer) do
+    it("should be able to write") do
       message = "this is a test string !!!!\n"
       io = IO::Memory.new
 
@@ -21,19 +21,19 @@ module Zlib
       reader.gets_to_end.should eq(message)
     end
 
-    it "can be closed without sync" do
+    it("can be closed without sync") do
       io = IO::Memory.new
       writer = Writer.new(io)
       writer.close
       writer.closed?.should be_true
       io.closed?.should be_false
 
-      expect_raises IO::Error, "Closed stream" do
+      expect_raises(IO::Error, "Closed stream") do
         writer.print "a"
       end
     end
 
-    it "can be closed with sync (1)" do
+    it("can be closed with sync (1)") do
       io = IO::Memory.new
       writer = Writer.new(io, sync_close: true)
       writer.close
@@ -41,7 +41,7 @@ module Zlib
       io.closed?.should be_true
     end
 
-    it "can be closed with sync (2)" do
+    it("can be closed with sync (2)") do
       io = IO::Memory.new
       writer = Writer.new(io)
       writer.sync_close = true
@@ -50,7 +50,7 @@ module Zlib
       io.closed?.should be_true
     end
 
-    it "can be flushed" do
+    it("can be flushed") do
       io = IO::Memory.new
       writer = Writer.new(io)
 

@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: debug" do
-  it "codegens abstract struct (#3578)" do
+describe("Code gen: debug") do
+  it("codegens abstract struct (#3578)") do
     codegen(%(
       abstract struct Base
       end
@@ -16,7 +16,7 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
-  it "inlines instance var access through getter in debug mode" do
+  it("inlines instance var access through getter in debug mode") do
     run(%(
       struct Bar
         @x = 1
@@ -48,7 +48,7 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All, filename: "foo.cr").to_i.should eq(2)
   end
 
-  it "codegens correct debug info for untyped expression (#4007 and #4008)" do
+  it("codegens correct debug info for untyped expression (#4007 and #4008)") do
     codegen(%(
       require "prelude"
 
@@ -64,7 +64,7 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
-  it "codegens correct debug info for new with custom allocate (#3945)" do
+  it("codegens correct debug info for new with custom allocate (#3945)") do
     codegen(%(
       class Foo
         def initialize
@@ -79,7 +79,7 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
-  it "correctly restores debug location after fun change (#4254)" do
+  it("correctly restores debug location after fun change (#4254)") do
     codegen(%(
       require "prelude"
 
@@ -105,7 +105,7 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
-  it "has correct debug location after constant initialization in call with block (#4719)" do
+  it("has correct debug location after constant initialization in call with block (#4719)") do
     codegen(%(
       fun __crystal_malloc_atomic(size : UInt32) : Void*
         x = uninitialized Void*

@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: def with default value" do
-  it "codegens def with one default value" do
+describe("Code gen: def with default value") do
+  it("codegens def with one default value") do
     run(%(
       def foo(x = 1)
         x
@@ -11,7 +11,7 @@ describe "Code gen: def with default value" do
       )).to_i.should eq(1)
   end
 
-  it "codegens def new with one default value" do
+  it("codegens def new with one default value") do
     run(%(
       class Foo
         def initialize(@x = 1)
@@ -26,7 +26,7 @@ describe "Code gen: def with default value" do
       )).to_i.should eq(1)
   end
 
-  it "considers first the one with more arguments" do
+  it("considers first the one with more arguments") do
     run(%(
       def foo(x, y = 1)
         1
@@ -40,7 +40,7 @@ describe "Code gen: def with default value" do
       )).to_i.should eq(2)
   end
 
-  it "considers first the one with a restriction" do
+  it("considers first the one with a restriction") do
     run(%(
       def foo(x : String, y = "")
         1
@@ -54,7 +54,7 @@ describe "Code gen: def with default value" do
       )).to_i.should eq(1)
   end
 
-  it "doesn't mix types of instance vars with initialize and new" do
+  it("doesn't mix types of instance vars with initialize and new") do
     assert_type(%(
       class Foo
         def initialize(x = 1)
@@ -76,7 +76,7 @@ describe "Code gen: def with default value" do
       )) { int32 }
   end
 
-  it "resolves expanded call to current type, not to virtual type" do
+  it("resolves expanded call to current type, not to virtual type") do
     assert_type(%(
       class Foo
         def foo(x = 1)

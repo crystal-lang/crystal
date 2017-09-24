@@ -2,8 +2,8 @@ require "../../spec_helper"
 
 include Crystal
 
-describe "Semantic: ssa" do
-  it "types a redefined variable" do
+describe("Semantic: ssa") do
+  it("types a redefined variable") do
     assert_type("
       a = 1
       a = 'a'
@@ -11,7 +11,7 @@ describe "Semantic: ssa" do
       ") { char }
   end
 
-  it "types a var inside an if without previous definition" do
+  it("types a var inside an if without previous definition") do
     assert_type("
       if 1 == 1
         a = 1
@@ -22,7 +22,7 @@ describe "Semantic: ssa" do
       ") { union_of(int32, char) }
   end
 
-  it "types a var inside an if with previous definition" do
+  it("types a var inside an if with previous definition") do
     assert_type(%(
       a = "hello"
       if 1 == 1
@@ -34,7 +34,7 @@ describe "Semantic: ssa" do
       )) { union_of(int32, char) }
   end
 
-  it "types a var inside an if without change in then" do
+  it("types a var inside an if without change in then") do
     assert_type(%(
       a = 1
       if 1 == 1
@@ -45,7 +45,7 @@ describe "Semantic: ssa" do
       )) { union_of(int32, char) }
   end
 
-  it "types a var inside an if without change in else" do
+  it("types a var inside an if without change in else") do
     assert_type(%(
       a = 1
       if 1 == 1
@@ -56,7 +56,7 @@ describe "Semantic: ssa" do
       )) { union_of(int32, char) }
   end
 
-  it "types a var inside an if without definition in else" do
+  it("types a var inside an if without definition in else") do
     assert_type(%(
       if 1 == 1
         a = 'a'
@@ -66,7 +66,7 @@ describe "Semantic: ssa" do
       )) { nilable char }
   end
 
-  it "types a var inside an if without definition in then" do
+  it("types a var inside an if without definition in then") do
     assert_type(%(
       if 1 == 1
       else
@@ -76,7 +76,7 @@ describe "Semantic: ssa" do
       )) { nilable char }
   end
 
-  it "types a var with an if but without change" do
+  it("types a var with an if but without change") do
     assert_type(%(
       a = 1
       if 1 == 1
@@ -86,7 +86,7 @@ describe "Semantic: ssa" do
       )) { int32 }
   end
 
-  it "types a var with an if with nested if" do
+  it("types a var with an if with nested if") do
     assert_type(%(
       if 1 == 2
         a = 1
@@ -99,7 +99,7 @@ describe "Semantic: ssa" do
       )) { int32 }
   end
 
-  it "types a var that is re-assigned in a block" do
+  it("types a var that is re-assigned in a block") do
     assert_type(%(
       def foo
         yield
@@ -113,7 +113,7 @@ describe "Semantic: ssa" do
       )) { union_of(int32, char) }
   end
 
-  it "types a var that is re-assigned in a while" do
+  it("types a var that is re-assigned in a while") do
     assert_type(%(
       a = 1
       while 1 == 2
@@ -123,7 +123,7 @@ describe "Semantic: ssa" do
       )) { union_of(int32, char) }
   end
 
-  it "types a var that is re-assigned in a while and used in condition" do
+  it("types a var that is re-assigned in a while and used in condition") do
     assert_type(%(
       a = 1
       while b = a
@@ -133,7 +133,7 @@ describe "Semantic: ssa" do
       )) { union_of(int32, char) }
   end
 
-  it "types a var that is re-assigned in a while in next and used in condition" do
+  it("types a var that is re-assigned in a while in next and used in condition") do
     assert_type(%(
       a = 1
       while b = a
@@ -147,7 +147,7 @@ describe "Semantic: ssa" do
       )) { union_of(int32, char) }
   end
 
-  it "types a var that is declared in a while" do
+  it("types a var that is declared in a while") do
     assert_type(%(
       while 1 == 2
         a = 1
@@ -156,7 +156,7 @@ describe "Semantic: ssa" do
       )) { nilable int32 }
   end
 
-  it "types a var that is re-assigned in a while condition" do
+  it("types a var that is re-assigned in a while condition") do
     assert_type(%(
       a = 1
       while a = 'a'
@@ -166,7 +166,7 @@ describe "Semantic: ssa" do
       )) { char }
   end
 
-  it "types a var that is declared in a while condition" do
+  it("types a var that is declared in a while condition") do
     assert_type(%(
       while a = 'a'
         a = "hello"
@@ -175,7 +175,7 @@ describe "Semantic: ssa" do
       )) { char }
   end
 
-  it "types a var that is declared in a while with out" do
+  it("types a var that is declared in a while with out") do
     assert_type(%(
       lib LibC
         fun foo(x : Int32*)
@@ -190,7 +190,7 @@ describe "Semantic: ssa" do
       )) { union_of(char, int32) }
   end
 
-  it "types a var after begin ensure as having last type" do
+  it("types a var after begin ensure as having last type") do
     assert_type(%(
       a = 1.5
       begin
@@ -203,7 +203,7 @@ describe "Semantic: ssa" do
       )) { string }
   end
 
-  it "types a var after begin ensure as having last type (2)" do
+  it("types a var after begin ensure as having last type (2)") do
     assert_type(%(
       begin
         a = 2
@@ -214,7 +214,7 @@ describe "Semantic: ssa" do
       )) { char }
   end
 
-  it "types a var after begin rescue as having all possible types and nil in begin if read (2)" do
+  it("types a var after begin rescue as having all possible types and nil in begin if read (2)") do
     assert_type(%(
       begin
         a = 2
@@ -225,7 +225,7 @@ describe "Semantic: ssa" do
       )) { union_of [int32, char, nil_type] of Type }
   end
 
-  it "types a var after begin rescue as having all possible types in begin and rescue" do
+  it("types a var after begin rescue as having all possible types in begin and rescue") do
     assert_type(%(
       a = 1.5
       begin
@@ -239,7 +239,7 @@ describe "Semantic: ssa" do
       )) { union_of [float64, int32, char, string, bool] of Type }
   end
 
-  it "types a var after begin rescue as having all possible types in begin and rescue (2)" do
+  it("types a var after begin rescue as having all possible types in begin and rescue (2)") do
     assert_type(%(
       b = 2
       begin
@@ -253,7 +253,7 @@ describe "Semantic: ssa" do
       )) { union_of [int32, char, string, nil_type] of Type }
   end
 
-  it "types a var after begin rescue with no-return in rescue" do
+  it("types a var after begin rescue with no-return in rescue") do
     assert_type(%(
       lib LibC
         fun exit : NoReturn
@@ -270,7 +270,7 @@ describe "Semantic: ssa" do
       )) { union_of [int32, char, string] of Type }
   end
 
-  it "types a var after rescue as being nilable" do
+  it("types a var after rescue as being nilable") do
     assert_type(%(
       begin
       rescue
@@ -280,7 +280,7 @@ describe "Semantic: ssa" do
       )) { nilable int32 }
   end
 
-  it "doesn't change type to nilable inside if" do
+  it("doesn't change type to nilable inside if") do
     assert_type("
       def foo
         yield
@@ -300,7 +300,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types if with return in then" do
+  it("types if with return in then") do
     assert_type("
       def foo
         if 1 == 1
@@ -315,7 +315,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types if with return in then with assign" do
+  it("types if with return in then with assign") do
     assert_type("
       def foo
         if 1 == 1
@@ -331,7 +331,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types if with return in else" do
+  it("types if with return in else") do
     assert_type("
       def foo
         if 1 == 1
@@ -346,7 +346,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types if with return in else with assign" do
+  it("types if with return in else with assign") do
     assert_type("
       def foo
         if 1 == 1
@@ -362,7 +362,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types if with return in both branches" do
+  it("types if with return in both branches") do
     assert_type("
       def foo
         if 1 == 1
@@ -383,7 +383,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types if with unreachable in then" do
+  it("types if with unreachable in then") do
     assert_type("
       lib LibC
         fun exit : NoReturn
@@ -400,7 +400,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types if with break in then" do
+  it("types if with break in then") do
     assert_type("
       b = 1
 
@@ -418,7 +418,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types if with next in then" do
+  it("types if with next in then") do
     assert_type("
       b = 1
 
@@ -436,7 +436,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types while with break" do
+  it("types while with break") do
     assert_type("
       a = 1
 
@@ -452,7 +452,7 @@ describe "Semantic: ssa" do
       ") { union_of(int32, char) }
   end
 
-  it "types while with break with new var" do
+  it("types while with break with new var") do
     assert_type("
       while 1 == 2
         if 1 == 1
@@ -465,7 +465,7 @@ describe "Semantic: ssa" do
       ") { nilable char }
   end
 
-  it "types while with break doesn't infect initial vas" do
+  it("types while with break doesn't infect initial vas") do
     assert_type("
       a = 1
       b = 1
@@ -483,7 +483,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types while with next" do
+  it("types while with next") do
     assert_type("
       a = 1
       b = 1
@@ -500,7 +500,7 @@ describe "Semantic: ssa" do
       ") { union_of(int32, char) }
   end
 
-  it "types block with break" do
+  it("types block with break") do
     assert_type("
       def foo
         yield
@@ -520,7 +520,7 @@ describe "Semantic: ssa" do
       ") { union_of(int32, char) }
   end
 
-  it "types block with break doesn't infect initial vars" do
+  it("types block with break doesn't infect initial vars") do
     assert_type("
       def foo
         yield
@@ -542,7 +542,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types block with next" do
+  it("types block with next") do
     assert_type("
       def foo
         yield
@@ -564,7 +564,7 @@ describe "Semantic: ssa" do
       ") { union_of(int32, char) }
   end
 
-  it "types if with restricted type in then" do
+  it("types if with restricted type in then") do
     assert_type("
       a = 1 || 'a'
       if a.is_a?(Int32)
@@ -576,7 +576,7 @@ describe "Semantic: ssa" do
       ") { char }
   end
 
-  it "types if with restricted type in else" do
+  it("types if with restricted type in else") do
     assert_type("
       a = 1 || 'a'
       if a.is_a?(Int32)
@@ -588,7 +588,7 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
-  it "types if/else with var (bug)" do
+  it("types if/else with var (bug)") do
     assert_type("
       a = 1 || nil
       d = nil
@@ -601,7 +601,7 @@ describe "Semantic: ssa" do
       ") { nilable int32 }
   end
 
-  it "types re-assign inside if (bug)" do
+  it("types re-assign inside if (bug)") do
     assert_type("
       struct Nil
         def to_i
@@ -622,7 +622,7 @@ describe "Semantic: ssa" do
       ") { nilable int32 }
   end
 
-  it "types re-assign inside while (bug)" do
+  it("types re-assign inside while (bug)") do
     assert_type("
       struct Nil
         def to_i
@@ -643,7 +643,7 @@ describe "Semantic: ssa" do
       ") { nilable int32 }
   end
 
-  it "preserves type filters after block (bug)" do
+  it("preserves type filters after block (bug)") do
     assert_type("
       def foo
         yield

@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
-describe "Semantic: super" do
-  it "types super without arguments" do
+describe("Semantic: super") do
+  it("types super without arguments") do
     assert_type("class Foo; def foo; 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo") { int32 }
   end
 
-  it "types super without arguments and instance variable" do
+  it("types super without arguments and instance variable") do
     result = assert_type("class Foo; def foo; @x = 1; end; end; class Bar < Foo; def foo; super; end; end; bar = Bar.new; bar.foo; bar") do
       types["Bar"]
     end
@@ -15,11 +15,11 @@ describe "Semantic: super" do
     superclass.instance_vars["@x"].type.should eq(mod.nilable(mod.int32))
   end
 
-  it "types super without arguments but parent has arguments" do
+  it("types super without arguments but parent has arguments") do
     assert_type("class Foo; def foo(x); x; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)") { int32 }
   end
 
-  it "types super when container method is defined in parent class" do
+  it("types super when container method is defined in parent class") do
     nodes = parse "
       class Foo
         def initialize
@@ -45,7 +45,7 @@ describe "Semantic: super" do
     superclass2.instance_vars["@x"].type.should eq(mod.int32)
   end
 
-  it "types super when container method is defined in parent class two levels up" do
+  it("types super when container method is defined in parent class two levels up") do
     assert_type("
       class Base
         def foo
@@ -66,7 +66,7 @@ describe "Semantic: super" do
       ") { int32 }
   end
 
-  it "types super when inside fun" do
+  it("types super when inside fun") do
     assert_type(%(
       class Foo
         def foo
@@ -85,7 +85,7 @@ describe "Semantic: super" do
       )) { int32 }
   end
 
-  it "types super when inside fun and forwards args" do
+  it("types super when inside fun and forwards args") do
     assert_type(%(
       class Foo
         def foo(z)
@@ -104,13 +104,13 @@ describe "Semantic: super" do
       )) { int32 }
   end
 
-  it "errors no superclass method in top-level" do
+  it("errors no superclass method in top-level") do
     assert_error %(
       super
       ), "there's no superclass in this scope"
   end
 
-  it "errors no superclass method in top-level def" do
+  it("errors no superclass method in top-level def") do
     assert_error %(
       def foo
         super
@@ -120,7 +120,7 @@ describe "Semantic: super" do
       ), "there's no superclass in this scope"
   end
 
-  it "errors no superclass method" do
+  it("errors no superclass method") do
     assert_error %(
       require "prelude"
 
@@ -134,7 +134,7 @@ describe "Semantic: super" do
       ), "undefined method 'foo'"
   end
 
-  it "finds super initialize if not explicitly defined in superclass, 1 (#273)" do
+  it("finds super initialize if not explicitly defined in superclass, 1 (#273)") do
     assert_type(%(
       class Foo
         def initialize
@@ -146,7 +146,7 @@ describe "Semantic: super" do
       )) { types["Foo"] }
   end
 
-  it "finds super initialize if not explicitly defined in superclass, 2 (#273)" do
+  it("finds super initialize if not explicitly defined in superclass, 2 (#273)") do
     assert_type(%(
       class Base
       end
@@ -161,7 +161,7 @@ describe "Semantic: super" do
       )) { types["Foo"] }
   end
 
-  it "says correct error message when no overload matches in super call (#272)" do
+  it("says correct error message when no overload matches in super call (#272)") do
     assert_error %(
       abstract class Foo
         def initialize(x : Char)
@@ -179,7 +179,7 @@ describe "Semantic: super" do
       "no overload matches 'Foo#initialize'"
   end
 
-  it "calls super in module method (1) (#556)" do
+  it("calls super in module method (1) (#556)") do
     assert_type(%(
       class Parent
         def a
@@ -201,7 +201,7 @@ describe "Semantic: super" do
       )) { int32 }
   end
 
-  it "calls super in module method (2) (#556)" do
+  it("calls super in module method (2) (#556)") do
     assert_type(%(
       class Parent
         def a
@@ -230,7 +230,7 @@ describe "Semantic: super" do
       )) { char }
   end
 
-  it "calls super in module method (3) (#556)" do
+  it("calls super in module method (3) (#556)") do
     assert_type(%(
       class Parent
         def a
@@ -256,7 +256,7 @@ describe "Semantic: super" do
       )) { int32 }
   end
 
-  it "errors if calling super on module method and not found" do
+  it("errors if calling super on module method and not found") do
     assert_error %(
       module Mod
         def a
@@ -273,7 +273,7 @@ describe "Semantic: super" do
       "undefined method 'a'"
   end
 
-  it "calls super in generic module method" do
+  it("calls super in generic module method") do
     assert_type(%(
       class Parent
         def a
@@ -295,7 +295,7 @@ describe "Semantic: super" do
       )) { int32 }
   end
 
-  it "doesn't error if invoking super and match isn't found in direct superclass (even though it's find in one superclass)" do
+  it("doesn't error if invoking super and match isn't found in direct superclass (even though it's find in one superclass)") do
     assert_type(%(
       class Foo
         def foo
@@ -319,7 +319,7 @@ describe "Semantic: super" do
       )) { int32 }
   end
 
-  it "errors if invoking super and match isn't found in direct superclass in initialize (even though it's find in one superclass)" do
+  it("errors if invoking super and match isn't found in direct superclass in initialize (even though it's find in one superclass)") do
     assert_error %(
       class Foo
         def initialize
@@ -341,7 +341,7 @@ describe "Semantic: super" do
       ), "wrong number of argument"
   end
 
-  it "gives correct error when calling super and target is abstract method (#2675)" do
+  it("gives correct error when calling super and target is abstract method (#2675)") do
     assert_error %(
       abstract class Base
         abstract def method
@@ -358,7 +358,7 @@ describe "Semantic: super" do
       "undefined method 'Base#method()'"
   end
 
-  it "errors on super outside method (#4481)" do
+  it("errors on super outside method (#4481)") do
     assert_error %(
       class Foo
         super
