@@ -29,7 +29,7 @@ class Object
 
   # :nodoc:
   @[Primitive(:object_crystal_type_id)]
-  def crystal_type_id
+  def crystal_type_id : Int32
   end
 end
 
@@ -54,7 +54,7 @@ end
 class Class
   # :nodoc:
   @[Primitive(:class_crystal_instance_type_id)]
-  def crystal_instance_type_id
+  def crystal_instance_type_id : Int32
   end
 end
 
