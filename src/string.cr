@@ -121,7 +121,7 @@ require "c/string"
 # "\377" # string with one byte with value 255
 #
 # # Hexadecimal escape sequences
-# "\x45" # # => "A"
+# "\x41" # # => "A"
 # "\xFF" # string with one byte with value 255
 # ```
 #
