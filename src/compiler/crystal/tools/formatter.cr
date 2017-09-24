@@ -2253,21 +2253,25 @@ module Crystal
         return false
       end
 
-      has_parentheses = false
       ends_with_newline = false
       has_args = !node.args.empty? || node.named_args
+
+      has_parentheses = false
+      force_parentheses = (block = node.block) && (has_args || node.block_arg) &&
+                          !block.args[0]?.try(&.name.starts_with? "__arg") &&
+                          @token.type != :"("
 
       column = @indent
       has_newlines = false
       found_comment = false
 
-      if @token.type == :"("
-        check :"("
+      if @token.type == :"(" || force_parentheses
+        check :"(" unless force_parentheses
         slash_is_regex!
         next_token
         if obj && !has_args && !node.block_arg && !node.block
           skip_space_or_newline
-          check :")"
+          check :")" unless force_parentheses
           next_token
           @dot_column = current_dot_column
           return false
@@ -2290,9 +2294,9 @@ module Crystal
       if block = node.block
         needs_space = !has_parentheses || has_args
         skip_space
-        if has_parentheses && @token.type == :")"
+        if has_parentheses && (@token.type == :")" || force_parentheses)
           write ")"
-          next_token_skip_space_or_newline
+          next_token_skip_space_or_newline unless force_parentheses
           format_block block, needs_space
           @dot_column = current_dot_column
           return false
@@ -2301,7 +2305,7 @@ module Crystal
       end
 
       if has_args || node.block_arg
-        finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, column)
+        finish_args(has_parentheses, force_parentheses, has_newlines, ends_with_newline, found_comment, column)
       elsif has_parentheses
         skip_space_or_newline
         write_token :")"
@@ -2437,7 +2441,7 @@ module Crystal
       has_newlines
     end
 
-    def finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, column)
+    def finish_args(has_parentheses, force_parentheses, has_newlines, ends_with_newline, found_comment, column)
       skip_space
 
       if has_parentheses
@@ -2455,7 +2459,7 @@ module Crystal
         elsif found_comment
           write_indent(column)
         end
-        check :")"
+        check :")" unless force_parentheses
 
         if ends_with_newline
           write_line
@@ -2472,7 +2476,7 @@ module Crystal
       has_newlines, found_comment, _ = format_args args, named_args: named_args
       skip_space
       ends_with_newline = @token.type == :NEWLINE
-      finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
+      finish_args(true, false, has_newlines, ends_with_newline, found_comment, @indent)
     end
 
     def visit(node : NamedArgument)
