@@ -2108,7 +2108,7 @@ module Crystal
               last_arg = args.pop
             end
 
-            has_newlines, found_comment, _ = format_args args, true, node.named_args
+            has_newlines, found_comment, _ = format_args args, node.named_args
             if @token.type == :"," || @token.type == :NEWLINE
               if has_newlines
                 write ","
@@ -2212,7 +2212,7 @@ module Crystal
       if (node.name == "[]" || node.name == "[]?") && @token.type == :"["
         write "["
         next_token_skip_space_or_newline
-        format_call_args(node, false)
+        format_call_args(node)
         write_token :"]"
         write_token :"?" if node.name == "[]?"
         return false
@@ -2240,7 +2240,7 @@ module Crystal
           has_parentheses = true
           slash_is_regex!
           next_token
-          format_call_args(node, true)
+          format_call_args(node)
           skip_space_or_newline
           write_token :")"
         else
@@ -2275,7 +2275,7 @@ module Crystal
 
         write "("
         has_parentheses = true
-        has_newlines, found_comment = format_call_args(node, true)
+        has_newlines, found_comment = format_call_args(node)
         found_comment ||= skip_space
         if @token.type == :NEWLINE
           ends_with_newline = true
@@ -2284,7 +2284,7 @@ module Crystal
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
-        has_newlines, found_comment = format_call_args(node, false)
+        has_newlines, found_comment = format_call_args(node)
       end
 
       if block = node.block
@@ -2311,11 +2311,11 @@ module Crystal
       false
     end
 
-    def format_call_args(node : ASTNode, has_parentheses)
-      format_args node.args, has_parentheses, node.named_args, node.block_arg
+    def format_call_args(node : ASTNode)
+      format_args node.args, node.named_args, node.block_arg
     end
 
-    def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = @indent + 2, do_consume_newlines = false)
+    def format_args(args : Array, named_args = nil, block_arg = nil, needed_indent = @indent + 2, do_consume_newlines = false)
       has_newlines = false
       found_comment = false
       @inside_call_or_assign += 1
@@ -2414,7 +2414,7 @@ module Crystal
         end
       end
 
-      format_args named_args, false, needed_indent: named_args_column, do_consume_newlines: true
+      format_args named_args, needed_indent: named_args_column, do_consume_newlines: true
     end
 
     def format_block_arg(block_arg, needed_indent)
@@ -2469,7 +2469,7 @@ module Crystal
     def format_parenthesized_args(args, named_args = nil)
       write "("
       next_token_skip_space
-      has_newlines, found_comment, _ = format_args args, true, named_args: named_args
+      has_newlines, found_comment, _ = format_args args, named_args: named_args
       skip_space
       ends_with_newline = @token.type == :NEWLINE
       finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
@@ -2539,7 +2539,7 @@ module Crystal
             when :"["
               write_token :"["
               skip_space_or_newline
-              format_call_args(call, false)
+              format_call_args(call)
               skip_space_or_newline
               write_token :"]"
               write_token :"?" if call.name == "[]?"
@@ -2549,7 +2549,7 @@ module Crystal
               if @token.type == :"("
                 write "("
                 next_token_skip_space_or_newline
-                format_call_args(call, true)
+                format_call_args(call)
                 skip_space_or_newline
                 write_token :")"
               end
@@ -2562,7 +2562,7 @@ module Crystal
               last_arg = call.args.pop
               write_token :"["
               skip_space_or_newline
-              format_call_args(call, false)
+              format_call_args(call)
               skip_space_or_newline
               write_token :"]"
               skip_space
@@ -2575,7 +2575,7 @@ module Crystal
               if @token.type == :"("
                 write "("
                 next_token_skip_space_or_newline
-                format_call_args(call, true)
+                format_call_args(call)
                 skip_space_or_newline
                 write_token :")"
               end
@@ -3155,7 +3155,7 @@ module Crystal
         skip_space
 
         if exp.is_a?(TupleLiteral) && @token.type != :"{"
-          format_args(exp.elements, has_parentheses)
+          format_args(exp.elements)
           skip_space if has_parentheses
         else
           indent(@indent, exp)
@@ -3183,7 +3183,7 @@ module Crystal
       else
         write " " unless node.exps.empty?
         skip_space
-        format_args node.exps, false
+        format_args node.exps
       end
 
       false
@@ -3435,7 +3435,7 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      format_unary(:typeof) { format_args node.expressions, true }
+      format_unary(:typeof) { format_args node.expressions }
     end
 
     def visit(node : SizeOf)
