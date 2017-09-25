@@ -1388,8 +1388,7 @@ class Array(T)
 
   def rotate!(n = 1)
     return self if size == 0
-    n %= size if n.abs >= size
-    n += size if n < 0
+    n %= size
     return self if n == 0
     if n <= size / 2
       tmp = self[0..n]
@@ -1405,8 +1404,7 @@ class Array(T)
 
   def rotate(n = 1)
     return self if size == 0
-    n %= size if n.abs >= size
-    n += size if n < 0
+    n %= size
     return self if n == 0
     res = Array(T).new(size)
     res.to_unsafe.copy_from(@buffer + n, size - n)
