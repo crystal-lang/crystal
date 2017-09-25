@@ -159,6 +159,31 @@ struct NamedTuple
     yield
   end
 
+  # Merges two named tuples into one, returning a new named tuple.
+  # If a key is defined in both tuples, the value and its type is used from *other*.
+  #
+  # ```
+  # a = {foo: "Hello", bar: "Old"}
+  # b = {bar: "New", baz: "Bye"}
+  # a.merge(b) # => {foo: "Hello", bar: "New", baz: "Bye"}
+  # ```
+  def merge(other : NamedTuple)
+    merge(**other)
+  end
+
+  # ditto
+  def merge(**other : **U) forall U
+    {% begin %}
+    {
+      {% for k in T %} {% unless U.keys.includes?(k) %} {{k.stringify}}: self[{{k.symbolize}}],{% end %} {% end %}
+      {% for k in U %} {{k.stringify}}: other[{{k.symbolize}}], {% end %}
+    }
+    {% end %}
+  end
+
+  # Returns a hash value based on this name tuple's size, keys and values.
+  #
+  # See also: `Object#hash`.
   # See `Object#hash(hasher)`
   def hash(hasher)
     {% for key in T.keys.sort %}
