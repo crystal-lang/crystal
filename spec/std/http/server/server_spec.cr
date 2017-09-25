@@ -46,15 +46,15 @@ end
 
 module HTTP
   class Server
-    describe Response do
-      it "closes" do
+    describe(Response) do
+      it("closes") do
         io = IO::Memory.new
         response = Response.new(io)
         response.close
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")
       end
 
-      it "prints less then buffer's size" do
+      it("prints less then buffer's size") do
         io = IO::Memory.new
         response = Response.new(io)
         response.print("Hello")
@@ -62,7 +62,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello")
       end
 
-      it "prints less then buffer's size to output" do
+      it("prints less then buffer's size to output") do
         io = IO::Memory.new
         response = Response.new(io)
         response.output.print("Hello")
@@ -70,7 +70,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello")
       end
 
-      it "prints more then buffer's size" do
+      it("prints more then buffer's size") do
         io = IO::Memory.new
         response = Response.new(io)
         str = "1234567890"
@@ -83,7 +83,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n1ffe\r\n#{first_chunk}\r\n712\r\n#{second_chunk}\r\n0\r\n\r\n")
       end
 
-      it "prints with content length" do
+      it("prints with content length") do
         io = IO::Memory.new
         response = Response.new(io)
         response.headers["Content-Length"] = "10"
@@ -93,7 +93,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\n1234567890")
       end
 
-      it "prints with content length (method)" do
+      it("prints with content length (method)") do
         io = IO::Memory.new
         response = Response.new(io)
         response.content_length = 10
@@ -103,7 +103,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\n1234567890")
       end
 
-      it "adds header" do
+      it("adds header") do
         io = IO::Memory.new
         response = Response.new(io)
         response.headers["Content-Type"] = "text/plain"
@@ -112,7 +112,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
       end
 
-      it "sets content type" do
+      it("sets content type") do
         io = IO::Memory.new
         response = Response.new(io)
         response.content_type = "text/plain"
@@ -121,7 +121,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
       end
 
-      it "changes status and others" do
+      it("changes status and others") do
         io = IO::Memory.new
         response = Response.new(io)
         response.status_code = 404
@@ -130,7 +130,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.0 404 Not Found\r\nContent-Length: 0\r\n\r\n")
       end
 
-      it "flushes" do
+      it("flushes") do
         io = IO::Memory.new
         response = Response.new(io)
         response.print("Hello")
@@ -140,7 +140,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n0\r\n\r\n")
       end
 
-      it "wraps output" do
+      it("wraps output") do
         io = IO::Memory.new
         response = Response.new(io)
         response.output = ReverseResponseOutput.new(response.output)
@@ -149,7 +149,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n4321")
       end
 
-      it "writes and flushes with HTTP 1.0" do
+      it("writes and flushes with HTTP 1.0") do
         io = IO::Memory.new
         response = Response.new(io, "HTTP/1.0")
         response.print("1234")
@@ -157,7 +157,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.0 200 OK\r\n\r\n1234")
       end
 
-      it "resets and clears headers and cookies" do
+      it("resets and clears headers and cookies") do
         io = IO::Memory.new
         response = Response.new(io)
         response.headers["Foo"] = "Bar"
@@ -167,7 +167,7 @@ module HTTP
         response.cookies.empty?.should be_true
       end
 
-      it "writes cookie headers" do
+      it("writes cookie headers") do
         io = IO::Memory.new
         response = Response.new(io)
         response.cookies["Bar"] = "Foo"
@@ -182,7 +182,7 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\nSet-Cookie: Bar=Foo; path=/\r\n\r\nHello")
       end
 
-      it "responds with an error" do
+      it("responds with an error") do
         io = IO::Memory.new
         response = Response.new(io)
         response.content_type = "text/html"
@@ -197,21 +197,21 @@ module HTTP
     end
   end
 
-  describe HTTP::Server do
-    it "re-sets special port zero after bind" do
+  describe(HTTP::Server) do
+    it("re-sets special port zero after bind") do
       server = Server.new(0) { |ctx| }
       server.bind
       server.port.should_not eq(0)
     end
 
-    it "re-sets port to zero after close" do
+    it("re-sets port to zero after close") do
       server = Server.new(0) { |ctx| }
       server.bind
       server.close
       server.port.should eq(0)
     end
 
-    it "doesn't raise on accept after close #2692" do
+    it("doesn't raise on accept after close #2692") do
       server = Server.new("0.0.0.0", 0) { }
 
       spawn do
@@ -222,7 +222,7 @@ module HTTP
       server.listen
     end
 
-    it "reuses the TCP port (SO_REUSEPORT)" do
+    it("reuses the TCP port (SO_REUSEPORT)") do
       s1 = Server.new(0) { |ctx| }
       s1.bind(reuse_port: true)
 
@@ -234,8 +234,8 @@ module HTTP
     end
   end
 
-  describe HTTP::Server::RequestProcessor do
-    it "works" do
+  describe(HTTP::Server::RequestProcessor) do
+    it("works") do
       processor = HTTP::Server::RequestProcessor.new do |context|
         context.response.content_type = "text/plain"
         context.response.print "Hello world"
@@ -256,7 +256,7 @@ module HTTP
       ))
     end
 
-    it "skips body between requests" do
+    it("skips body between requests") do
       processor = HTTP::Server::RequestProcessor.new do |context|
         context.response.content_type = "text/plain"
         context.response.puts "Hello world\r"
@@ -294,7 +294,7 @@ module HTTP
       ))
     end
 
-    it "handles Errno" do
+    it("handles Errno") do
       processor = HTTP::Server::RequestProcessor.new { }
       input = RaiseErrno.new(Errno::ECONNRESET)
       output = IO::Memory.new
@@ -302,7 +302,7 @@ module HTTP
       output.rewind.gets_to_end.empty?.should be_true
     end
 
-    it "catches raised error on handler" do
+    it("catches raised error on handler") do
       processor = HTTP::Server::RequestProcessor.new { raise "OH NO" }
       input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
       output = IO::Memory.new

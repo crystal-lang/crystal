@@ -1,8 +1,8 @@
 require "spec"
 require "http/server"
 
-describe HTTP::ErrorHandler do
-  it "rescues from exception" do
+describe(HTTP::ErrorHandler) do
+  it("rescues from exception") do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
@@ -21,7 +21,7 @@ describe HTTP::ErrorHandler do
     (response2.body =~ /ERROR: OH NO!/).should be_truthy
   end
 
-  it "can return a generic error message" do
+  it("can return a generic error message") do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)

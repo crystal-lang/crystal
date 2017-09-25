@@ -49,40 +49,40 @@ private class BufferedWrapper
   end
 end
 
-describe "IO::Buffered" do
-  it "does gets" do
+describe("IO::Buffered") do
+  it("does gets") do
     io = BufferedWrapper.new(IO::Memory.new("hello\r\nworld\n"))
     io.gets.should eq("hello")
     io.gets.should eq("world")
     io.gets.should be_nil
   end
 
-  it "does gets with chomp = false" do
+  it("does gets with chomp = false") do
     io = BufferedWrapper.new(IO::Memory.new("hello\nworld\n"))
     io.gets(chomp: false).should eq("hello\n")
     io.gets(chomp: false).should eq("world\n")
     io.gets(chomp: false).should be_nil
   end
 
-  it "does gets with big line" do
+  it("does gets with big line") do
     big_line = "a" * 20_000
     io = BufferedWrapper.new(IO::Memory.new("#{big_line}\nworld\n"))
     io.gets.should eq(big_line)
   end
 
-  it "does gets with big line and \\r\\n" do
+  it("does gets with big line and \\r\\n") do
     big_line = "a" * 20_000
     io = BufferedWrapper.new(IO::Memory.new("#{big_line}\r\nworld\n"))
     io.gets.should eq(big_line)
   end
 
-  it "does gets with big line and chomp = false" do
+  it("does gets with big line and chomp = false") do
     big_line = "a" * 20_000
     io = BufferedWrapper.new(IO::Memory.new("#{big_line}\nworld\n"))
     io.gets(chomp: false).should eq("#{big_line}\n")
   end
 
-  it "does gets with char delimiter" do
+  it("does gets with char delimiter") do
     io = BufferedWrapper.new(IO::Memory.new("hello world"))
     io.gets('w').should eq("hello w")
     io.gets('r').should eq("or")
@@ -90,14 +90,14 @@ describe "IO::Buffered" do
     io.gets('r').should be_nil
   end
 
-  it "does gets with unicode char delimiter" do
+  it("does gets with unicode char delimiter") do
     io = BufferedWrapper.new(IO::Memory.new("こんにちは"))
     io.gets('ち').should eq("こんにち")
     io.gets('ち').should eq("は")
     io.gets('ち').should be_nil
   end
 
-  it "does gets with limit" do
+  it("does gets with limit") do
     io = BufferedWrapper.new(IO::Memory.new("hello\nworld\n"))
     io.gets(3).should eq("hel")
     io.gets(10_000).should eq("lo\n")
@@ -105,7 +105,7 @@ describe "IO::Buffered" do
     io.gets(3).should be_nil
   end
 
-  it "does gets with char and limit" do
+  it("does gets with char and limit") do
     io = BufferedWrapper.new(IO::Memory.new("hello\nworld\n"))
     io.gets('o', 2).should eq("he")
     io.gets('w', 10_000).should eq("llo\nw")
@@ -113,32 +113,32 @@ describe "IO::Buffered" do
     io.gets('a', 3).should be_nil
   end
 
-  it "does gets with char and limit without off-by-one" do
+  it("does gets with char and limit without off-by-one") do
     io = BufferedWrapper.new(IO::Memory.new("test\nabc"))
     io.gets('a', 5).should eq("test\n")
     io = BufferedWrapper.new(IO::Memory.new("test\nabc"))
     io.gets('a', 6).should eq("test\na")
   end
 
-  it "does gets with char and limit when not found in buffer" do
+  it("does gets with char and limit when not found in buffer") do
     io = BufferedWrapper.new(IO::Memory.new(("a" * (IO::Buffered::BUFFER_SIZE + 10)) + "b"))
     io.gets('b', 2).should eq("aa")
   end
 
-  it "does gets with char and limit when not found in buffer (2)" do
+  it("does gets with char and limit when not found in buffer (2)") do
     base = "a" * (IO::Buffered::BUFFER_SIZE + 10)
     io = BufferedWrapper.new(IO::Memory.new(base + "aabaaa"))
     io.gets('b', IO::Buffered::BUFFER_SIZE + 11).should eq(base + "a")
   end
 
-  it "raises if invoking gets with negative limit" do
+  it("raises if invoking gets with negative limit") do
     io = BufferedWrapper.new(IO::Memory.new("hello\nworld\n"))
-    expect_raises ArgumentError, "Negative limit" do
+    expect_raises(ArgumentError, "Negative limit") do
       io.gets(-1)
     end
   end
 
-  it "writes bytes" do
+  it("writes bytes") do
     str = IO::Memory.new
     io = BufferedWrapper.new(str)
     10_000.times { io.write_byte 'a'.ord.to_u8 }
@@ -146,7 +146,7 @@ describe "IO::Buffered" do
     str.to_s.should eq("a" * 10_000)
   end
 
-  it "reads char" do
+  it("reads char") do
     io = BufferedWrapper.new(IO::Memory.new("hi 世界"))
     io.read_char.should eq('h')
     io.read_char.should eq('i')
@@ -173,7 +173,7 @@ describe "IO::Buffered" do
     end
   end
 
-  it "reads byte" do
+  it("reads byte") do
     io = BufferedWrapper.new(IO::Memory.new("hello"))
     io.read_byte.should eq('h'.ord)
     io.read_byte.should eq('e'.ord)
@@ -183,14 +183,14 @@ describe "IO::Buffered" do
     io.read_char.should be_nil
   end
 
-  it "does new with block" do
+  it("does new with block") do
     str = IO::Memory.new
     res = BufferedWrapper.new str, &.print "Hello"
     res.should be(str)
     str.to_s.should eq("Hello")
   end
 
-  it "rewinds" do
+  it("rewinds") do
     str = IO::Memory.new("hello\nworld\n")
     io = BufferedWrapper.new str
     io.gets.should eq("hello")
@@ -198,7 +198,7 @@ describe "IO::Buffered" do
     io.gets.should eq("hello")
   end
 
-  it "reads more than the buffer's internal capacity" do
+  it("reads more than the buffer's internal capacity") do
     s = String.build do |str|
       900.times do
         10.times do |i|
@@ -219,7 +219,7 @@ describe "IO::Buffered" do
     end
   end
 
-  it "writes more than the buffer's internal capacity" do
+  it("writes more than the buffer's internal capacity") do
     s = String.build do |str|
       900.times do
         10.times do |i|
@@ -235,7 +235,7 @@ describe "IO::Buffered" do
     strio.rewind.gets_to_end.should eq(s)
   end
 
-  it "does puts" do
+  it("does puts") do
     str = IO::Memory.new
     io = BufferedWrapper.new(str)
     io.puts "Hello"
@@ -244,7 +244,7 @@ describe "IO::Buffered" do
     str.to_s.should eq("Hello\n")
   end
 
-  it "does puts with big string" do
+  it("does puts with big string") do
     str = IO::Memory.new
     io = BufferedWrapper.new(str)
     s = "*" * 20_000
@@ -254,7 +254,7 @@ describe "IO::Buffered" do
     str.to_s.should eq("hello#{s}")
   end
 
-  it "does puts many times" do
+  it("does puts many times") do
     str = IO::Memory.new
     io = BufferedWrapper.new(str)
     10_000.times { io << "hello" }
@@ -262,7 +262,7 @@ describe "IO::Buffered" do
     str.to_s.should eq("hello" * 10_000)
   end
 
-  it "flushes on \n" do
+  it("flushes on \n") do
     str = IO::Memory.new
     io = BufferedWrapper.new(str)
     io.flush_on_newline = true
@@ -273,7 +273,7 @@ describe "IO::Buffered" do
     str.to_s.should eq("hello\nworld")
   end
 
-  it "doesn't write past count" do
+  it("doesn't write past count") do
     str = IO::Memory.new
     io = BufferedWrapper.new(str)
     io.flush_on_newline = true
@@ -284,7 +284,7 @@ describe "IO::Buffered" do
     str.to_s.should eq("abcd")
   end
 
-  it "syncs" do
+  it("syncs") do
     str = IO::Memory.new
 
     io = BufferedWrapper.new(str)
@@ -299,14 +299,14 @@ describe "IO::Buffered" do
     str.read_byte.should eq(1_u8)
   end
 
-  it "shouldn't call unbuffered read if reading to an empty slice" do
+  it("shouldn't call unbuffered read if reading to an empty slice") do
     str = IO::Memory.new("foo")
     io = BufferedWrapper.new(str)
     io.read(Bytes.new(0))
     io.called_unbuffered_read.should be_false
   end
 
-  it "peeks" do
+  it("peeks") do
     str = IO::Memory.new("foo")
     io = BufferedWrapper.new(str)
 
@@ -319,23 +319,23 @@ describe "IO::Buffered" do
     io.peek.should eq(Bytes.empty)
   end
 
-  it "skips" do
+  it("skips") do
     str = IO::Memory.new("123456789")
     io = BufferedWrapper.new(str)
     io.skip(3)
     io.read_char.should eq('4')
   end
 
-  it "skips big" do
+  it("skips big") do
     str = IO::Memory.new(("a" * 10_000) + "b")
     io = BufferedWrapper.new(str)
     io.skip(10_000)
     io.read_char.should eq('b')
   end
 
-  describe "encoding" do
-    describe "decode" do
-      it "gets_to_end" do
+  describe("encoding") do
+    describe("decode") do
+      it("gets_to_end") do
         str = "Hello world" * 200
         base_io = IO::Memory.new(str.encode("UCS-2LE"))
         io = BufferedWrapper.new(base_io)
@@ -343,7 +343,7 @@ describe "IO::Buffered" do
         io.gets_to_end.should eq(str)
       end
 
-      it "gets" do
+      it("gets") do
         str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
         base_io = IO::Memory.new(str.encode("UCS-2LE"))
         io = BufferedWrapper.new(base_io)
@@ -353,7 +353,7 @@ describe "IO::Buffered" do
         io.gets.should eq("Bar")
       end
 
-      it "gets with chomp = false" do
+      it("gets with chomp = false") do
         str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
         base_io = IO::Memory.new(str.encode("UCS-2LE"))
         io = BufferedWrapper.new(base_io)
@@ -363,7 +363,7 @@ describe "IO::Buffered" do
         io.gets(chomp: false).should eq("Bar\n")
       end
 
-      it "gets big string" do
+      it("gets big string") do
         str = "Hello\nWorld\n" * 10_000
         base_io = IO::Memory.new(str.encode("UCS-2LE"))
         io = BufferedWrapper.new(base_io)
@@ -374,7 +374,7 @@ describe "IO::Buffered" do
         end
       end
 
-      it "gets big GB2312 string" do
+      it("gets big GB2312 string") do
         str = ("你好我是人\n" * 1000).encode("GB2312")
         base_io = IO::Memory.new(str)
         io = BufferedWrapper.new(base_io)
@@ -384,7 +384,7 @@ describe "IO::Buffered" do
         end
       end
 
-      it "reads char" do
+      it("reads char") do
         str = "x\nHello world" + ("1234567890" * 1000)
         base_io = IO::Memory.new(str.encode("UCS-2LE"))
         io = BufferedWrapper.new(base_io)

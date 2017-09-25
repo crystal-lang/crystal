@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: void" do
-  it "codegens void assignment" do
+describe("Code gen: void") do
+  it("codegens void assignment") do
     run("
       fun foo : Void
       end
@@ -12,7 +12,7 @@ describe "Code gen: void" do
       ").to_i.should eq(1)
   end
 
-  it "codegens void assignment in case" do
+  it("codegens void assignment in case") do
     run("
       require \"prelude\"
 
@@ -33,7 +33,7 @@ describe "Code gen: void" do
       ").to_i.should eq(1)
   end
 
-  it "codegens void assignment in case with local variable" do
+  it("codegens void assignment in case with local variable") do
     run("
       require \"prelude\"
 
@@ -55,7 +55,7 @@ describe "Code gen: void" do
       ").to_i.should eq(1)
   end
 
-  it "codegens unreachable code" do
+  it("codegens unreachable code") do
     run(%(
       a = nil
       if a
@@ -64,7 +64,7 @@ describe "Code gen: void" do
       ))
   end
 
-  it "codegens no return assignment" do
+  it("codegens no return assignment") do
     codegen("
       lib LibC
         fun exit : NoReturn
@@ -75,7 +75,7 @@ describe "Code gen: void" do
       ")
   end
 
-  it "allows passing void as argument to method" do
+  it("allows passing void as argument to method") do
     codegen(%(
       lib LibC
         fun foo
@@ -92,7 +92,7 @@ describe "Code gen: void" do
     ))
   end
 
-  it "returns void from nil functions, doesn't crash when passing value" do
+  it("returns void from nil functions, doesn't crash when passing value") do
     run(%(
       def baz(x)
         1

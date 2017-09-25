@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: array literal spec" do
-  it "creates custom non-generic array" do
+describe("Code gen: array literal spec") do
+  it("creates custom non-generic array") do
     run(%(
       class Custom
         def initialize
@@ -22,7 +22,7 @@ describe "Code gen: array literal spec" do
       )).to_i.should eq(6)
   end
 
-  it "creates custom generic array" do
+  it("creates custom generic array") do
     run(%(
       class Custom(T)
         def initialize
@@ -43,7 +43,7 @@ describe "Code gen: array literal spec" do
       )).to_i.should eq(6)
   end
 
-  it "creates custom generic array with type var" do
+  it("creates custom generic array with type var") do
     run(%(
       class Custom(T)
         def initialize
@@ -64,7 +64,7 @@ describe "Code gen: array literal spec" do
       )).to_i.should eq(6)
   end
 
-  it "creates custom generic array via alias" do
+  it("creates custom generic array via alias") do
     run(%(
       class Custom(T)
         def initialize
@@ -87,7 +87,7 @@ describe "Code gen: array literal spec" do
       )).to_i.should eq(6)
   end
 
-  it "creates custom generic array via alias (2)" do
+  it("creates custom generic array via alias (2)") do
     run(%(
       class Custom(T)
         def initialize
@@ -110,7 +110,7 @@ describe "Code gen: array literal spec" do
       )).to_i.should eq(6)
   end
 
-  it "creates custom non-generic array in nested module" do
+  it("creates custom non-generic array in nested module") do
     run(%(
       class Foo::Custom
         def initialize

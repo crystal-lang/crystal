@@ -1,6 +1,6 @@
 require "../../support/syntax"
 
-describe "Parser doc" do
+describe("Parser doc") do
   [
     {"class", "class Foo\nend"},
     {"abstract class", "abstract class Foo\nend"},
@@ -18,7 +18,7 @@ describe "Parser doc" do
     {"attribute", "@[Some]"},
     {"private def", "private def foo\nend"},
   ].each do |(desc, code)|
-    it "includes doc for #{desc}" do
+    it("includes doc for #{desc}") do
       parser = Parser.new(%(
         # This is Foo.
         # Use it well.
@@ -30,7 +30,7 @@ describe "Parser doc" do
     end
   end
 
-  it "disables doc parsing inside defs" do
+  it("disables doc parsing inside defs") do
     parser = Parser.new(%(
       # doc 1
       def foo

@@ -7,9 +7,9 @@ private def assert_matches_pattern(url, **options)
   end
 end
 
-describe Crystal::Doc::Generator do
-  describe "GIT_REMOTE_PATTERNS" do
-    it "matches github repos" do
+describe(Crystal::Doc::Generator) do
+  describe("GIT_REMOTE_PATTERNS") do
+    it("matches github repos") do
       assert_matches_pattern "https://www.github.com/foo/bar", user: "foo", repo: "bar"
       assert_matches_pattern "http://www.github.com/foo/bar", user: "foo", repo: "bar"
       assert_matches_pattern "http://github.com/foo/bar", user: "foo", repo: "bar"
@@ -27,7 +27,7 @@ describe Crystal::Doc::Generator do
       assert_matches_pattern "https://github.com/foo_bar/_baz-buzz.cx", user: "foo_bar", repo: "_baz-buzz.cx"
     end
 
-    it "matches gitlab repos" do
+    it("matches gitlab repos") do
       assert_matches_pattern "https://www.gitlab.com/foo/bar", user: "foo", repo: "bar"
       assert_matches_pattern "http://www.gitlab.com/foo/bar", user: "foo", repo: "bar"
       assert_matches_pattern "http://gitlab.com/foo/bar", user: "foo", repo: "bar"

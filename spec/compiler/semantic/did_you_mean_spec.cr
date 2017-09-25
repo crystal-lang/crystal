@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: did you mean" do
-  it "says did you mean for one mistake in short word in instance method" do
+describe("Semantic: did you mean") do
+  it("says did you mean for one mistake in short word in instance method") do
     assert_error "
       class Foo
         def bar
@@ -13,7 +13,7 @@ describe "Semantic: did you mean" do
       "did you mean 'bar'"
   end
 
-  it "says did you mean for two mistakes in long word in instance method" do
+  it("says did you mean for two mistakes in long word in instance method") do
     assert_error "
       class Foo
         def barbara
@@ -25,7 +25,7 @@ describe "Semantic: did you mean" do
       "did you mean 'barbara'"
   end
 
-  it "says did you mean for global method with parenthesis" do
+  it("says did you mean for global method with parenthesis") do
     assert_error "
       def bar
       end
@@ -35,7 +35,7 @@ describe "Semantic: did you mean" do
       "did you mean 'bar'"
   end
 
-  it "says did you mean for global method without parenthesis" do
+  it("says did you mean for global method without parenthesis") do
     assert_error "
       def bar
       end
@@ -45,7 +45,7 @@ describe "Semantic: did you mean" do
       "did you mean 'bar'"
   end
 
-  it "says did you mean for variable" do
+  it("says did you mean for variable") do
     assert_error "
       bar = 1
       baz
@@ -53,7 +53,7 @@ describe "Semantic: did you mean" do
       "did you mean 'bar'"
   end
 
-  it "says did you mean for class" do
+  it("says did you mean for class") do
     assert_error "
       class Foo
       end
@@ -63,7 +63,7 @@ describe "Semantic: did you mean" do
       "did you mean 'Foo'"
   end
 
-  it "says did you mean for nested class" do
+  it("says did you mean for nested class") do
     assert_error "
       class Foo
         class Bar
@@ -75,7 +75,7 @@ describe "Semantic: did you mean" do
       "did you mean 'Foo::Bar'"
   end
 
-  it "says did you mean finds most similar in def" do
+  it("says did you mean finds most similar in def") do
     assert_error "
       def barbaza
       end
@@ -88,7 +88,7 @@ describe "Semantic: did you mean" do
       "did you mean 'barbara'"
   end
 
-  it "says did you mean finds most similar in type" do
+  it("says did you mean finds most similar in type") do
     assert_error "
       class Barbaza
       end
@@ -101,7 +101,7 @@ describe "Semantic: did you mean" do
       "did you mean 'Barbara'"
   end
 
-  it "doesn't suggest for operator" do
+  it("doesn't suggest for operator") do
     nodes = parse %(
       class Foo
         def +
@@ -118,7 +118,7 @@ describe "Semantic: did you mean" do
     end
   end
 
-  it "says did you mean for named argument" do
+  it("says did you mean for named argument") do
     assert_error "
       def foo(barbara = 1)
       end
@@ -128,7 +128,7 @@ describe "Semantic: did you mean" do
       "did you mean 'barbara'"
   end
 
-  it "says did you mean for instance var" do
+  it("says did you mean for instance var") do
     assert_error %(
       class Foo
         def initialize
@@ -145,7 +145,7 @@ describe "Semantic: did you mean" do
       "did you mean @barbara"
   end
 
-  it "says did you mean for instance var in subclass" do
+  it("says did you mean for instance var in subclass") do
     assert_error %(
       class Foo
         def initialize
@@ -164,14 +164,14 @@ describe "Semantic: did you mean" do
       "did you mean @barbara"
   end
 
-  it "doesn't suggest when declaring var with suffix if and using it (#946)" do
+  it("doesn't suggest when declaring var with suffix if and using it (#946)") do
     assert_error %(
       a if a = 1
       ),
       "If you declared 'a' in a suffix if, declare it in a regular if for this to work"
   end
 
-  it "doesn't suggest when declaring var inside macro (#466)" do
+  it("doesn't suggest when declaring var inside macro (#466)") do
     assert_error %(
       macro foo
         a = 1
@@ -183,7 +183,7 @@ describe "Semantic: did you mean" do
       "If the variable was declared in a macro it's not visible outside it"
   end
 
-  it "suggest that there might be a type for an initialize method" do
+  it("suggest that there might be a type for an initialize method") do
     assert_error %(
       class Foo
         def intialize(x)
@@ -195,7 +195,7 @@ describe "Semantic: did you mean" do
       "do you maybe have a typo in this 'intialize' method?"
   end
 
-  it "suggest that there might be a type for an initialize method in inherited class" do
+  it("suggest that there might be a type for an initialize method in inherited class") do
     assert_error %(
       class Foo
         def initialize
@@ -212,7 +212,7 @@ describe "Semantic: did you mean" do
       "do you maybe have a typo in this 'intialize' method?"
   end
 
-  it "suggest that there might be a type for an initialize method with overload" do
+  it("suggest that there might be a type for an initialize method with overload") do
     assert_error %(
       class Foo
         def initialize(x : Int32)
@@ -227,7 +227,7 @@ describe "Semantic: did you mean" do
       "do you maybe have a typo in this 'intialize' method?"
   end
 
-  it "suggests for class variable" do
+  it("suggests for class variable") do
     assert_error %(
       class Foo
         @@foobar = 1
@@ -236,7 +236,7 @@ describe "Semantic: did you mean" do
       ), "did you mean @@foobar"
   end
 
-  it "suggests a better alternative to logical operators (#2715)" do
+  it("suggests a better alternative to logical operators (#2715)") do
     message = "undefined method 'and'"
     message = " (did you mean '&&'?)".colorize.yellow.bold.to_s
     assert_error %(
@@ -255,7 +255,7 @@ describe "Semantic: did you mean" do
       ), message
   end
 
-  it "says did you mean in instance var declaration" do
+  it("says did you mean in instance var declaration") do
     assert_error %(
       class FooBar
       end

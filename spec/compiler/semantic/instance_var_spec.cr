@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: instance var" do
-  it "declares instance var" do
+describe("Semantic: instance var") do
+  it("declares instance var") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -20,7 +20,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "declares instance var multiple times, last one wins" do
+  it("declares instance var multiple times, last one wins") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -40,7 +40,7 @@ describe "Semantic: instance var" do
       )) { union_of(int32, float64) }
   end
 
-  it "doesn't error when redeclaring subclass variable with the same type" do
+  it("doesn't error when redeclaring subclass variable with the same type") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -63,7 +63,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "errors when redeclaring subclass variable with a different type" do
+  it("errors when redeclaring subclass variable with a different type") do
     assert_error %(
       class Foo
         @x : Int32
@@ -87,7 +87,7 @@ describe "Semantic: instance var" do
       "instance variable '@x' of Foo, with Bar < Foo, is already declared as Int32"
   end
 
-  it "declares instance var in module, inherits to type" do
+  it("declares instance var in module, inherits to type") do
     assert_type(%(
       module Moo
         @x : Int32
@@ -110,7 +110,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "declares instance var in module, inherits to type recursively" do
+  it("declares instance var in module, inherits to type recursively") do
     assert_type(%(
       module Moo
         @x : Int32
@@ -137,7 +137,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "declares instance var of generic type" do
+  it("declares instance var of generic type") do
     assert_type(%(
       class Foo(T)
         @x : T
@@ -154,7 +154,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "declares instance var of generic type, with no type parameter" do
+  it("declares instance var of generic type, with no type parameter") do
     assert_type(%(
       class Foo(T)
         @x : Int32
@@ -171,7 +171,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "declares instance var of generic type, with generic type" do
+  it("declares instance var of generic type, with generic type") do
     assert_type(%(
       class Gen(T)
       end
@@ -191,7 +191,7 @@ describe "Semantic: instance var" do
       )) { generic_class "Gen", int32 }
   end
 
-  it "declares instance var of generic type, with union" do
+  it("declares instance var of generic type, with union") do
     assert_type(%(
       class Foo(T)
         @x : T | Char
@@ -208,7 +208,7 @@ describe "Semantic: instance var" do
       )) { union_of int32, char }
   end
 
-  it "declares instance var of generic type, with proc" do
+  it("declares instance var of generic type, with proc") do
     assert_type(%(
       class Foo(T)
         @x : T, T -> Int32
@@ -225,7 +225,7 @@ describe "Semantic: instance var" do
       )) { proc_of([char, char, int32]) }
   end
 
-  it "declares instance var of generic type, with tuple" do
+  it("declares instance var of generic type, with tuple") do
     assert_type(%(
       class Foo(T)
         @x : {T, Int32, T}
@@ -242,7 +242,7 @@ describe "Semantic: instance var" do
       )) { tuple_of([char, int32, char]) }
   end
 
-  it "declares instance var of generic type, with metaclass" do
+  it("declares instance var of generic type, with metaclass") do
     assert_type(%(
       class Foo(T)
         @x : T.class
@@ -259,7 +259,7 @@ describe "Semantic: instance var" do
       )) { int32.metaclass }
   end
 
-  it "declares instance var of generic type, with virtual metaclass" do
+  it("declares instance var of generic type, with virtual metaclass") do
     assert_type(%(
       class Bar; end
       class Baz < Bar; end
@@ -279,7 +279,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"].virtual_type!.metaclass }
   end
 
-  it "declares instance var of generic type, with static array" do
+  it("declares instance var of generic type, with static array") do
     assert_type(%(
       class Foo(T)
         @x : UInt8[T]
@@ -297,7 +297,7 @@ describe "Semantic: instance var" do
       )) { static_array_of(uint8, 3) }
   end
 
-  it "declares instance var with self, on generic" do
+  it("declares instance var with self, on generic") do
     assert_type(%(
       class Foo(T)
         @x : self | Nil
@@ -311,7 +311,7 @@ describe "Semantic: instance var" do
       )) { nilable generic_class("Foo", int32) }
   end
 
-  it "errors if declaring variable with number" do
+  it("errors if declaring variable with number") do
     assert_error %(
       class Foo(T)
         @x : T
@@ -329,7 +329,7 @@ describe "Semantic: instance var" do
       "can't declare variable with NumberLiteral"
   end
 
-  it "declares instance var of generic type through module" do
+  it("declares instance var of generic type through module") do
     assert_type(%(
       module Moo
         @x : Int32
@@ -352,7 +352,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "declares instance var of generic type subclass" do
+  it("declares instance var of generic type subclass") do
     assert_type(%(
       class Foo(T)
         @x : T
@@ -372,7 +372,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "declares instance var of generic module" do
+  it("declares instance var of generic module") do
     assert_type(%(
       module Moo(T)
         @x : T
@@ -395,7 +395,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "declares instance var of generic module (2)" do
+  it("declares instance var of generic module (2)") do
     assert_type(%(
       module Moo(U)
         @x : U
@@ -418,7 +418,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "declares instance var of generic module from non-generic module" do
+  it("declares instance var of generic module from non-generic module") do
     assert_type(%(
       module Moo
         @x : Int32
@@ -449,7 +449,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from number literal" do
+  it("infers type from number literal") do
     assert_type(%(
       class Foo
         def initialize
@@ -465,7 +465,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from char literal" do
+  it("infers type from char literal") do
     assert_type(%(
       class Foo
         def initialize
@@ -481,7 +481,7 @@ describe "Semantic: instance var" do
       )) { char }
   end
 
-  it "infers type from bool literal" do
+  it("infers type from bool literal") do
     assert_type(%(
       class Foo
         def initialize
@@ -497,7 +497,7 @@ describe "Semantic: instance var" do
       )) { bool }
   end
 
-  it "infers type from string literal" do
+  it("infers type from string literal") do
     assert_type(%(
       class Foo
         def initialize
@@ -513,7 +513,7 @@ describe "Semantic: instance var" do
       )) { string }
   end
 
-  it "infers type from string interpolation" do
+  it("infers type from string interpolation") do
     assert_type(%(
       require "prelude"
 
@@ -531,7 +531,7 @@ describe "Semantic: instance var" do
       )) { string }
   end
 
-  it "infers type from symbol literal" do
+  it("infers type from symbol literal") do
     assert_type(%(
       class Foo
         def initialize
@@ -547,7 +547,7 @@ describe "Semantic: instance var" do
       )) { symbol }
   end
 
-  it "infers type from array literal with of" do
+  it("infers type from array literal with of") do
     assert_type(%(
       class Foo
         def initialize
@@ -563,7 +563,7 @@ describe "Semantic: instance var" do
       )) { array_of int32 }
   end
 
-  it "infers type from array literal with of metaclass" do
+  it("infers type from array literal with of metaclass") do
     assert_type(%(
       class Foo
         def initialize
@@ -579,7 +579,7 @@ describe "Semantic: instance var" do
       )) { array_of int32.metaclass }
   end
 
-  it "infers type from array literal from its literals" do
+  it("infers type from array literal from its literals") do
     assert_type(%(
       require "prelude"
 
@@ -597,7 +597,7 @@ describe "Semantic: instance var" do
       )) { array_of union_of(int32, char) }
   end
 
-  it "infers type from hash literal with of" do
+  it("infers type from hash literal with of") do
     assert_type(%(
       class Foo
         def initialize
@@ -613,7 +613,7 @@ describe "Semantic: instance var" do
       )) { hash_of int32, string }
   end
 
-  it "infers type from hash literal from elements" do
+  it("infers type from hash literal from elements") do
     assert_type(%(
       require "prelude"
 
@@ -631,7 +631,7 @@ describe "Semantic: instance var" do
       )) { hash_of(union_of(int32, char), union_of(string, bool)) }
   end
 
-  it "infers type from range literal" do
+  it("infers type from range literal") do
     assert_type(%(
       require "prelude"
 
@@ -649,7 +649,7 @@ describe "Semantic: instance var" do
       )) { range_of(int32, char) }
   end
 
-  it "infers type from regex literal" do
+  it("infers type from regex literal") do
     assert_type(%(
       require "prelude"
 
@@ -667,7 +667,7 @@ describe "Semantic: instance var" do
       )) { types["Regex"] }
   end
 
-  it "infers type from regex literal with interpolation" do
+  it("infers type from regex literal with interpolation") do
     assert_type(%(
       require "prelude"
 
@@ -685,7 +685,7 @@ describe "Semantic: instance var" do
       )) { types["Regex"] }
   end
 
-  it "infers type from tuple literal" do
+  it("infers type from tuple literal") do
     assert_type(%(
       require "prelude"
 
@@ -703,7 +703,7 @@ describe "Semantic: instance var" do
       )) { tuple_of([int32, string]) }
   end
 
-  it "infers type from named tuple literal" do
+  it("infers type from named tuple literal") do
     assert_type(%(
       require "prelude"
 
@@ -721,7 +721,7 @@ describe "Semantic: instance var" do
       )) { named_tuple_of({"x": int32, "y": string}) }
   end
 
-  it "infers type from new expression" do
+  it("infers type from new expression") do
     assert_type(%(
       class Bar
       end
@@ -740,7 +740,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "infers type from as" do
+  it("infers type from as") do
     assert_type(%(
       class Foo
         def initialize
@@ -756,7 +756,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from as?" do
+  it("infers type from as?") do
     assert_type(%(
       class Foo
         def initialize
@@ -772,7 +772,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type from argument restriction" do
+  it("infers type from argument restriction") do
     assert_type(%(
       class Foo
         def x=(@x : Int32)
@@ -787,7 +787,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type from argument default value" do
+  it("infers type from argument default value") do
     assert_type(%(
       class Foo
         def set(@x = 1)
@@ -802,7 +802,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type from lib fun call" do
+  it("infers type from lib fun call") do
     assert_type(%(
       lib LibFoo
         struct Bar
@@ -826,7 +826,7 @@ describe "Semantic: instance var" do
       )) { types["LibFoo"].types["Bar"] }
   end
 
-  it "infers type from lib variable" do
+  it("infers type from lib variable") do
     assert_type(%(
       lib LibFoo
         struct Bar
@@ -850,7 +850,7 @@ describe "Semantic: instance var" do
       )) { types["LibFoo"].types["Bar"] }
   end
 
-  it "infers type from ||" do
+  it("infers type from ||") do
     assert_type(%(
       class Foo
         def initialize
@@ -866,7 +866,7 @@ describe "Semantic: instance var" do
       )) { union_of(int32, bool) }
   end
 
-  it "infers type from &&" do
+  it("infers type from &&") do
     assert_type(%(
       class Foo
         def initialize
@@ -882,7 +882,7 @@ describe "Semantic: instance var" do
       )) { union_of(int32, bool) }
   end
 
-  it "infers type from ||=" do
+  it("infers type from ||=") do
     assert_type(%(
       class Foo
         def x
@@ -894,7 +894,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type from ||= inside another assignemnt" do
+  it("infers type from ||= inside another assignemnt") do
     assert_type(%(
       class Foo
         def x
@@ -906,7 +906,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type from if" do
+  it("infers type from if") do
     assert_type(%(
       class Foo
         def initialize
@@ -922,7 +922,7 @@ describe "Semantic: instance var" do
       )) { union_of(int32, bool) }
   end
 
-  it "infers type from case" do
+  it("infers type from case") do
     assert_type(%(
       require "prelude"
 
@@ -945,7 +945,7 @@ describe "Semantic: instance var" do
       )) { union_of(char, bool) }
   end
 
-  it "infers type from unless" do
+  it("infers type from unless") do
     assert_type(%(
       class Foo
         def initialize
@@ -965,7 +965,7 @@ describe "Semantic: instance var" do
       )) { union_of(int32, bool) }
   end
 
-  it "infers type from begin" do
+  it("infers type from begin") do
     assert_type(%(
       class Foo
         def initialize
@@ -984,7 +984,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from assign (1)" do
+  it("infers type from assign (1)") do
     assert_type(%(
       class Foo
         def initialize
@@ -1000,7 +1000,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from assign (2)" do
+  it("infers type from assign (2)") do
     assert_type(%(
       class Foo
         def initialize
@@ -1016,7 +1016,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from block argument" do
+  it("infers type from block argument") do
     assert_type(%(
       class Foo
         def set(&@x : Int32 -> Int32)
@@ -1031,7 +1031,7 @@ describe "Semantic: instance var" do
       )) { nilable proc_of(int32, int32) }
   end
 
-  it "infers type from block argument without restriction" do
+  it("infers type from block argument without restriction") do
     assert_type(%(
       class Foo
         def set(&@x)
@@ -1046,7 +1046,7 @@ describe "Semantic: instance var" do
       )) { nilable proc_of(void) }
   end
 
-  it "infers type from !" do
+  it("infers type from !") do
     assert_type(%(
       class Foo
         def initialize
@@ -1062,7 +1062,7 @@ describe "Semantic: instance var" do
       )) { bool }
   end
 
-  it "infers type from is_a?" do
+  it("infers type from is_a?") do
     assert_type(%(
       class Foo
         def initialize
@@ -1078,7 +1078,7 @@ describe "Semantic: instance var" do
       )) { bool }
   end
 
-  it "infers type from responds_to?" do
+  it("infers type from responds_to?") do
     assert_type(%(
       class Foo
         def initialize
@@ -1094,7 +1094,7 @@ describe "Semantic: instance var" do
       )) { bool }
   end
 
-  it "infers type from sizeof" do
+  it("infers type from sizeof") do
     assert_type(%(
       class Foo
         def initialize
@@ -1110,7 +1110,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from instance_sizeof" do
+  it("infers type from instance_sizeof") do
     assert_type(%(
       class Foo
         def initialize
@@ -1126,7 +1126,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from path that is a type" do
+  it("infers type from path that is a type") do
     assert_type(%(
       class Bar; end
       class Baz < Bar; end
@@ -1145,7 +1145,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"].virtual_type!.metaclass }
   end
 
-  it "infers type from path that is a constant" do
+  it("infers type from path that is a constant") do
     assert_type(%(
       CONST = 1
 
@@ -1163,7 +1163,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't infer type from redefined method" do
+  it("doesn't infer type from redefined method") do
     assert_type(%(
       class Foo
         def foo
@@ -1183,7 +1183,7 @@ describe "Semantic: instance var" do
       )) { nilable char }
   end
 
-  it "infers type from redefined method if calls previous_def" do
+  it("infers type from redefined method if calls previous_def") do
     assert_type(%(
       class Foo
         def foo
@@ -1204,7 +1204,7 @@ describe "Semantic: instance var" do
       )) { union_of(nil_type, int32, char) }
   end
 
-  it "infers type in multi assign" do
+  it("infers type in multi assign") do
     assert_type(%(
       class Foo
         def initialize
@@ -1224,7 +1224,7 @@ describe "Semantic: instance var" do
       )) { tuple_of([int32, char]) }
   end
 
-  it "infers type from enum member" do
+  it("infers type from enum member") do
     assert_type(%(
       enum Color
         Red, Green, Blue
@@ -1244,7 +1244,7 @@ describe "Semantic: instance var" do
       )) { types["Color"] }
   end
 
-  it "infers type from two literals" do
+  it("infers type from two literals") do
     assert_type(%(
       class Foo
         def initialize
@@ -1261,7 +1261,7 @@ describe "Semantic: instance var" do
       )) { union_of int32, float64 }
   end
 
-  it "infers type from literal outside def" do
+  it("infers type from literal outside def") do
     assert_type(%(
       class Foo
         @x = 1
@@ -1275,7 +1275,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from literal outside def with initialize and type restriction" do
+  it("infers type from literal outside def with initialize and type restriction") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -1293,7 +1293,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from lib out (1)" do
+  it("infers type from lib out (1)") do
     assert_type(%(
       lib LibFoo
         struct Bar
@@ -1317,7 +1317,7 @@ describe "Semantic: instance var" do
       )) { types["LibFoo"].types["Bar"] }
   end
 
-  it "infers type from lib out (2)" do
+  it("infers type from lib out (2)") do
     assert_type(%(
       lib LibFoo
         fun foo(x : Int32, y : Float64*) : Int32
@@ -1337,7 +1337,7 @@ describe "Semantic: instance var" do
       )) { float64 }
   end
 
-  it "infers type from lib out (3)" do
+  it("infers type from lib out (3)") do
     assert_type(%(
       lib LibFoo
         fun foo(x : Int32, y : Float64*) : Int32
@@ -1357,7 +1357,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from uninitialized" do
+  it("infers type from uninitialized") do
     assert_type(%(
       class Foo
         def initialize
@@ -1373,7 +1373,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't infer for subclass if assigns another type (1)" do
+  it("doesn't infer for subclass if assigns another type (1)") do
     assert_error %(
       class Foo
         def initialize
@@ -1396,7 +1396,7 @@ describe "Semantic: instance var" do
       "instance variable '@x' of Foo must be Int32, not Float64"
   end
 
-  it "doesn't infer for subclass if assigns another type (2)" do
+  it("doesn't infer for subclass if assigns another type (2)") do
     assert_error %(
       class Foo
       end
@@ -1422,7 +1422,7 @@ describe "Semantic: instance var" do
       "instance variable '@x' of Foo must be Int32, not Float64"
   end
 
-  it "infers type from included module" do
+  it("infers type from included module") do
     assert_type(%(
       module Moo
         def initialize
@@ -1442,7 +1442,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from included module, outside def" do
+  it("infers type from included module, outside def") do
     assert_type(%(
       module Moo
         @x = 1
@@ -1460,7 +1460,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type from included module recursively" do
+  it("infers type from included module recursively") do
     assert_type(%(
       module Moo
         def initialize
@@ -1484,7 +1484,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type for generic class, with literal" do
+  it("infers type for generic class, with literal") do
     assert_type(%(
       class Foo(T)
         def initialize
@@ -1500,7 +1500,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type for generic class, with T.new" do
+  it("infers type for generic class, with T.new") do
     assert_type(%(
       class Bar
       end
@@ -1519,7 +1519,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "infers type for generic class, with T.new and literal" do
+  it("infers type for generic class, with T.new and literal") do
     assert_type(%(
       class Bar
       end
@@ -1539,7 +1539,7 @@ describe "Semantic: instance var" do
       )) { union_of types["Bar"], int32 }
   end
 
-  it "infers type for generic class, with lib call" do
+  it("infers type for generic class, with lib call") do
     assert_type(%(
       lib LibFoo
         struct Bar
@@ -1563,7 +1563,7 @@ describe "Semantic: instance var" do
       )) { types["LibFoo"].types["Bar"] }
   end
 
-  it "infers type for generic class, with &&" do
+  it("infers type for generic class, with &&") do
     assert_type(%(
       class Foo
       end
@@ -1585,7 +1585,7 @@ describe "Semantic: instance var" do
       )) { union_of(types["Foo"], types["Bar"]) }
   end
 
-  it "infers type for generic class, with begin" do
+  it("infers type for generic class, with begin") do
     assert_type(%(
       class Foo
       end
@@ -1607,7 +1607,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "infers type for generic class, with if" do
+  it("infers type for generic class, with if") do
     assert_type(%(
       class Foo
       end
@@ -1629,7 +1629,7 @@ describe "Semantic: instance var" do
       )) { union_of(types["Foo"], types["Bar"]) }
   end
 
-  it "infers type for generic class, with case" do
+  it("infers type for generic class, with case") do
     assert_type(%(
       class Object
         def ===(other)
@@ -1660,7 +1660,7 @@ describe "Semantic: instance var" do
       )) { union_of(types["Foo"], types["Bar"]) }
   end
 
-  it "infers type for generic class, with assign (1)" do
+  it("infers type for generic class, with assign (1)") do
     assert_type(%(
       class Foo
       end
@@ -1679,7 +1679,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "infers type for generic class, with assign (2)" do
+  it("infers type for generic class, with assign (2)") do
     assert_type(%(
       class Foo
       end
@@ -1698,7 +1698,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "infers type for non-generic class, with assign" do
+  it("infers type for non-generic class, with assign") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -1717,7 +1717,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers type for generic module" do
+  it("infers type for generic module") do
     assert_type(%(
       class Foo
       end
@@ -1740,7 +1740,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "infers type to be nilable if not initialized" do
+  it("infers type to be nilable if not initialized") do
     assert_type(%(
       class Foo
         def x
@@ -1753,7 +1753,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type to be non-nilable if initialized in all initialize" do
+  it("infers type to be non-nilable if initialized in all initialize") do
     assert_type(%(
       class Foo
         def initialize
@@ -1772,7 +1772,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "errors if not initialized in all initialize" do
+  it("errors if not initialized in all initialize") do
     assert_error %(
       class Foo
         def initialize
@@ -1792,7 +1792,7 @@ describe "Semantic: instance var" do
       "this 'initialize' doesn't explicitly initialize instance variable '@x' of Foo, rendering it nilable"
   end
 
-  it "doesn't error if not initializes in all initialize because declared as nilable" do
+  it("doesn't error if not initializes in all initialize because declared as nilable") do
     assert_type(%(
       class Foo
         @x : Int32?
@@ -1813,7 +1813,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type from argument with restriction, in generic" do
+  it("infers type from argument with restriction, in generic") do
     assert_type(%(
       class Foo(T)
         def initialize(@x : T)
@@ -1828,7 +1828,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "says undefined instance variable on read" do
+  it("says undefined instance variable on read") do
     assert_error %(
       class Foo
         def x
@@ -1841,7 +1841,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@x' of Foo"
   end
 
-  it "says undefined instance variable on assign" do
+  it("says undefined instance variable on assign") do
     assert_error %(
       class Foo
         def x
@@ -1855,7 +1855,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@x' of Foo"
   end
 
-  it "errors if declaring instance var and turns out to be nilable" do
+  it("errors if declaring instance var and turns out to be nilable") do
     assert_error %(
       class Foo
         @x : Int32
@@ -1864,7 +1864,7 @@ describe "Semantic: instance var" do
       "instance variable '@x' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
-  it "doesn't if declaring nilable instance var and turns out to be nilable" do
+  it("doesn't if declaring nilable instance var and turns out to be nilable") do
     assert_type(%(
       class Foo
         @x : Int32?
@@ -1878,7 +1878,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "errors if declaring instance var and turns out to be nilable, in generic type" do
+  it("errors if declaring instance var and turns out to be nilable, in generic type") do
     assert_error %(
       class Foo(T)
         @x : T
@@ -1887,7 +1887,7 @@ describe "Semantic: instance var" do
       "instance variable '@x' of Foo(T) was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
-  it "errors if declaring instance var and turns out to be nilable, in generic module type" do
+  it("errors if declaring instance var and turns out to be nilable, in generic module type") do
     assert_error %(
       module Moo(T)
         @x : T
@@ -1900,7 +1900,7 @@ describe "Semantic: instance var" do
       "instance variable '@x' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
-  it "doesn't error if declaring instance var and doesn't out to be nilable, in generic module type" do
+  it("doesn't error if declaring instance var and doesn't out to be nilable, in generic module type") do
     assert_type(%(
       module Moo(T)
         @x : T
@@ -1922,7 +1922,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "errors if declaring instance var and turns out to be nilable, in generic module type in generic type" do
+  it("errors if declaring instance var and turns out to be nilable, in generic module type in generic type") do
     assert_error %(
       module Moo(T)
         @x : T
@@ -1935,7 +1935,7 @@ describe "Semantic: instance var" do
       "instance variable '@x' of Foo(T) was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
-  it "doesn't error if not initializing variables but calling super" do
+  it("doesn't error if not initializing variables but calling super") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -1959,7 +1959,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't error if not initializing variables but calling previous_def (#3210)" do
+  it("doesn't error if not initializing variables but calling previous_def (#3210)") do
     assert_type(%(
       class Some
         def initialize
@@ -1979,7 +1979,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't error if not initializing variables but calling previous_def (2) (#3210)" do
+  it("doesn't error if not initializing variables but calling previous_def (2) (#3210)") do
     assert_type(%(
       class Some
         def initialize
@@ -2005,7 +2005,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "errors if not initializing super variables" do
+  it("errors if not initializing super variables") do
     assert_error %(
       class Foo
         @x : Int32
@@ -2023,7 +2023,7 @@ describe "Semantic: instance var" do
       "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
   end
 
-  it "errors if not initializing super variables (2)" do
+  it("errors if not initializing super variables (2)") do
     assert_error %(
       class Foo
         @x : Int32
@@ -2042,7 +2042,7 @@ describe "Semantic: instance var" do
       "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
   end
 
-  it "errors if not initializing super variables (3)" do
+  it("errors if not initializing super variables (3)") do
     assert_error %(
       class Foo
         def initialize
@@ -2059,7 +2059,7 @@ describe "Semantic: instance var" do
       "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
   end
 
-  it "errors if not initializing super variable in generic" do
+  it("errors if not initializing super variable in generic") do
     assert_error %(
       class Foo(T)
         def initialize
@@ -2076,7 +2076,7 @@ describe "Semantic: instance var" do
       "this 'initialize' doesn't initialize instance variable '@x' of Foo(T), with Bar(T) < Foo(T), rendering it nilable"
   end
 
-  it "doesn't error if not calling super but initializing all variables" do
+  it("doesn't error if not calling super but initializing all variables") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -2100,7 +2100,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't error if not initializing variables but calling super in parent parent" do
+  it("doesn't error if not initializing variables but calling super in parent parent") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -2127,7 +2127,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't error if not initializing variables but calling super for module" do
+  it("doesn't error if not initializing variables but calling super for module") do
     assert_type(%(
       module Moo
         @x : Int32
@@ -2153,7 +2153,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't error if not initializing variables but calling super for generic module" do
+  it("doesn't error if not initializing variables but calling super for generic module") do
     assert_type(%(
       module Moo(T)
         @x : T
@@ -2178,7 +2178,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "ignores redefined initialize (#456)" do
+  it("ignores redefined initialize (#456)") do
     assert_type(%(
       class Foo
         def initialize
@@ -2204,7 +2204,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "ignores super module initialize (#456)" do
+  it("ignores super module initialize (#456)") do
     assert_type(%(
       module Moo
         def initialize
@@ -2234,7 +2234,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "obeys super module initialize (#456)" do
+  it("obeys super module initialize (#456)") do
     assert_type(%(
       module Moo
         def initialize
@@ -2264,7 +2264,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't error if initializing var in superclass, and then empty initialize" do
+  it("doesn't error if initializing var in superclass, and then empty initialize") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -2284,7 +2284,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't error if calling initialize from another initialize (1)" do
+  it("doesn't error if calling initialize from another initialize (1)") do
     assert_type(%(
       class Foo
         def initialize(@x : Int32)
@@ -2303,7 +2303,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't error if calling initialize from another initialize (2)" do
+  it("doesn't error if calling initialize from another initialize (2)") do
     assert_type(%(
       class Foo
         def initialize(@x : Int32)
@@ -2324,7 +2324,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers nilable instance var of generic type" do
+  it("infers nilable instance var of generic type") do
     assert_type(%(
       class Foo(T)
         def set
@@ -2341,7 +2341,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers nilable instance var of generic module" do
+  it("infers nilable instance var of generic module") do
     assert_type(%(
       module Moo(T)
         def set
@@ -2362,7 +2362,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type to be nilable if self is used before assigning to a variable" do
+  it("infers type to be nilable if self is used before assigning to a variable") do
     assert_type(%(
       class Foo
         def initialize
@@ -2379,7 +2379,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type to be nilable if self is used in same assign" do
+  it("infers type to be nilable if self is used in same assign") do
     assert_type(%(
       def foo(x)
       end
@@ -2398,7 +2398,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "doesn't infer type to be nilable if using self.class" do
+  it("doesn't infer type to be nilable if using self.class") do
     assert_type(%(
       class Foo
         def initialize
@@ -2415,7 +2415,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  pending "doesn't infer type to be nilable if using self.class in call in assign" do
+  pending("doesn't infer type to be nilable if using self.class in call in assign") do
     assert_type(%(
       def foo(x)
       end
@@ -2434,7 +2434,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't error if not initializing nilable var in subclass" do
+  it("doesn't error if not initializing nilable var in subclass") do
     assert_type(%(
       class Foo
         @x : Int32?
@@ -2456,7 +2456,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "considers var as assigned in multi-assign" do
+  it("considers var as assigned in multi-assign") do
     assert_type(%(
       def some
         {1, 2}
@@ -2484,7 +2484,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers from another instance var" do
+  it("infers from another instance var") do
     assert_type(%(
       class Foo
         def initialize
@@ -2501,7 +2501,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers from another instance var with type declaration" do
+  it("infers from another instance var with type declaration") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -2519,7 +2519,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers from another instance var in generic type" do
+  it("infers from another instance var in generic type") do
     assert_type(%(
       class Bar
       end
@@ -2539,7 +2539,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "infers from another instance var in generic type with type declaration" do
+  it("infers from another instance var in generic type with type declaration") do
     assert_type(%(
       class Bar
       end
@@ -2560,7 +2560,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "errors on udefined instance var and subclass calling super" do
+  it("errors on udefined instance var and subclass calling super") do
     assert_error %(
       class Foo
         def initialize(@x)
@@ -2584,7 +2584,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@x' of Bar"
   end
 
-  it "infers type from array literal in generic type" do
+  it("infers type from array literal in generic type") do
     assert_type(%(
       class Foo(T)
         def initialize
@@ -2600,7 +2600,7 @@ describe "Semantic: instance var" do
       )) { array_of(int32) }
   end
 
-  it "infers type from hash literal in generic type" do
+  it("infers type from hash literal in generic type") do
     assert_type(%(
       class Foo(T)
         def initialize
@@ -2616,7 +2616,7 @@ describe "Semantic: instance var" do
       )) { hash_of(int32, float64) }
   end
 
-  it "infers type from array literal with literals in generic type" do
+  it("infers type from array literal with literals in generic type") do
     assert_type(%(
       require "prelude"
 
@@ -2634,7 +2634,7 @@ describe "Semantic: instance var" do
       )) { array_of(int32) }
   end
 
-  it "infers type from hash literal with literals in generic type" do
+  it("infers type from hash literal with literals in generic type") do
     assert_type(%(
       require "prelude"
 
@@ -2652,7 +2652,7 @@ describe "Semantic: instance var" do
       )) { hash_of(int32, symbol) }
   end
 
-  it "infers from restriction using virtual type" do
+  it("infers from restriction using virtual type") do
     assert_type(%(
       class Foo; end
       class Bar < Foo; end
@@ -2670,7 +2670,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"].virtual_type! }
   end
 
-  it "doesn't duplicate instance var in subclass" do
+  it("doesn't duplicate instance var in subclass") do
     result = semantic(%(
       class Foo
         def initialize(@x : Int32)
@@ -2693,7 +2693,7 @@ describe "Semantic: instance var" do
     bar.instance_vars.empty?.should be_true
   end
 
-  it "infers type from custom array literal" do
+  it("infers type from custom array literal") do
     assert_type(%(
       class Foo
         def initialize
@@ -2717,7 +2717,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "infers type from custom generic array literal" do
+  it("infers type from custom generic array literal") do
     assert_type(%(
       class Foo(T)
         def initialize
@@ -2741,7 +2741,7 @@ describe "Semantic: instance var" do
       )) { generic_class "Foo", int32 }
   end
 
-  it "infers type from custom hash literal" do
+  it("infers type from custom hash literal") do
     assert_type(%(
       class Foo
         def initialize
@@ -2765,7 +2765,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "infers type from custom generic hash literal" do
+  it("infers type from custom generic hash literal") do
     assert_type(%(
       class Foo(K, V)
         def initialize
@@ -2789,7 +2789,7 @@ describe "Semantic: instance var" do
       )) { generic_class "Foo", int32, string }
   end
 
-  it "infers type from custom array literal in generic" do
+  it("infers type from custom array literal in generic") do
     assert_type(%(
       class Foo
         def initialize
@@ -2813,7 +2813,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "infers type from custom hash literal in generic" do
+  it("infers type from custom hash literal in generic") do
     assert_type(%(
       class Foo
         def initialize
@@ -2837,7 +2837,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "says can't infer type if only nil was assigned" do
+  it("says can't infer type if only nil was assigned") do
     assert_error %(
       class Foo
         def initialize
@@ -2854,7 +2854,7 @@ describe "Semantic: instance var" do
       "instance variable @x of Foo was inferred to be Nil, but Nil alone provides no information"
   end
 
-  it "says can't infer type if only nil was assigned, in generic type" do
+  it("says can't infer type if only nil was assigned, in generic type") do
     assert_error %(
       class Foo(T)
         def initialize
@@ -2871,7 +2871,7 @@ describe "Semantic: instance var" do
       "instance variable @x of Foo(T) was inferred to be Nil, but Nil alone provides no information"
   end
 
-  it "allows nil instance var because it's a generic type" do
+  it("allows nil instance var because it's a generic type") do
     assert_type(%(
       class Foo(T)
         def initialize(@x : T)
@@ -2886,7 +2886,7 @@ describe "Semantic: instance var" do
       )) { nil_type }
   end
 
-  it "uses virtual types in fun" do
+  it("uses virtual types in fun") do
     assert_type(%(
       class Node; end
       class SubNode < Node; end
@@ -2904,7 +2904,7 @@ describe "Semantic: instance var" do
       )) { proc_of(types["Node"].virtual_type, types["Node"].virtual_type) }
   end
 
-  it "uses virtual types in union" do
+  it("uses virtual types in union") do
     assert_type(%(
       class Node; end
       class SubNode < Node; end
@@ -2922,7 +2922,7 @@ describe "Semantic: instance var" do
       )) { union_of(types["Node"].virtual_type, int32) }
   end
 
-  it "uses virtual types in self" do
+  it("uses virtual types in self") do
     assert_type(%(
       class Node
         def initialize
@@ -2943,7 +2943,7 @@ describe "Semantic: instance var" do
       )) { nilable types["Node"].virtual_type }
   end
 
-  it "infers from Pointer.malloc" do
+  it("infers from Pointer.malloc") do
     assert_type(%(
       class Foo
         def initialize
@@ -2959,7 +2959,7 @@ describe "Semantic: instance var" do
       )) { pointer_of(int32) }
   end
 
-  it "infers from Pointer.malloc with two arguments" do
+  it("infers from Pointer.malloc with two arguments") do
     assert_type(%(
       require "prelude"
 
@@ -2977,7 +2977,7 @@ describe "Semantic: instance var" do
       )) { pointer_of(uint8) }
   end
 
-  it "infers from Pointer.null" do
+  it("infers from Pointer.null") do
     assert_type(%(
       require "prelude"
 
@@ -2995,7 +2995,7 @@ describe "Semantic: instance var" do
       )) { pointer_of(int32) }
   end
 
-  it "infers from Pointer.malloc in generic type" do
+  it("infers from Pointer.malloc in generic type") do
     assert_type(%(
       class Foo(T)
         def initialize
@@ -3011,7 +3011,7 @@ describe "Semantic: instance var" do
       )) { pointer_of(int32) }
   end
 
-  it "infers from Pointer.null in generic type" do
+  it("infers from Pointer.null in generic type") do
     assert_type(%(
       require "prelude"
 
@@ -3029,7 +3029,7 @@ describe "Semantic: instance var" do
       )) { pointer_of(int32) }
   end
 
-  it "infers from Pointer.malloc with two arguments in generic type" do
+  it("infers from Pointer.malloc with two arguments in generic type") do
     assert_type(%(
       require "prelude"
 
@@ -3047,7 +3047,7 @@ describe "Semantic: instance var" do
       )) { pointer_of(uint8) }
   end
 
-  it "doesn't infer generic type without type argument inside generic" do
+  it("doesn't infer generic type without type argument inside generic") do
     assert_error %(
       class Bar(T)
       end
@@ -3067,7 +3067,7 @@ describe "Semantic: instance var" do
       "can't use Bar(T) as the type of instance variable @bar of Foo(T), use a more specific type"
   end
 
-  it "doesn't crash on missing var on subclass, with superclass not specifying a type" do
+  it("doesn't crash on missing var on subclass, with superclass not specifying a type") do
     assert_error %(
       class Foo
         def initialize(@x)
@@ -3084,7 +3084,7 @@ describe "Semantic: instance var" do
       "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
   end
 
-  it "doesn't complain if not initliazed in one initialize, but has initializer (#2465)" do
+  it("doesn't complain if not initliazed in one initialize, but has initializer (#2465)") do
     assert_type(%(
       class Foo
         @x = 1
@@ -3104,7 +3104,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "can declare type even if included module has a guessed var" do
+  it("can declare type even if included module has a guessed var") do
     assert_type(%(
       module Moo
         def foo
@@ -3130,7 +3130,7 @@ describe "Semantic: instance var" do
       )) { union_of int32, float64 }
   end
 
-  it "doesn't complain if declared type is recursive alias that's nilable" do
+  it("doesn't complain if declared type is recursive alias that's nilable") do
     assert_type(%(
       class Bar(T)
       end
@@ -3149,7 +3149,7 @@ describe "Semantic: instance var" do
       )) { types["Rec"] }
   end
 
-  it "infers from assign to local var (#2467)" do
+  it("infers from assign to local var (#2467)") do
     assert_type(%(
       class Foo
         def initialize
@@ -3165,7 +3165,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers from assign to local var in generic type (#2467)" do
+  it("infers from assign to local var in generic type (#2467)") do
     assert_type(%(
       class Foo(T)
         def initialize
@@ -3181,7 +3181,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers from class method that has type annotation" do
+  it("infers from class method that has type annotation") do
     assert_type(%(
       class Bar
         def self.bar : Bar
@@ -3203,7 +3203,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "infers from class method that has type annotation, in generic class" do
+  it("infers from class method that has type annotation, in generic class") do
     assert_type(%(
       class Bar
         def self.bar : Bar
@@ -3225,7 +3225,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "infers from generic class method that has type annotation" do
+  it("infers from generic class method that has type annotation") do
     assert_type(%(
       class Bar(T)
         def self.bar : self
@@ -3247,7 +3247,7 @@ describe "Semantic: instance var" do
       )) { generic_class "Bar", int32 }
   end
 
-  it "infers from generic class method that has type annotation, without instantiating" do
+  it("infers from generic class method that has type annotation, without instantiating") do
     assert_type(%(
       class Bar(T)
         def self.bar : Int32
@@ -3269,7 +3269,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers from class method that has type annotation, with overload" do
+  it("infers from class method that has type annotation, with overload") do
     assert_type(%(
       class Baz
       end
@@ -3303,7 +3303,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "infers from class method that has type annotation, with multiple overloads matching, all with the same type" do
+  it("infers from class method that has type annotation, with multiple overloads matching, all with the same type") do
     assert_type(%(
       class Bar
         def self.bar(x : Int32) : Bar
@@ -3329,7 +3329,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "infers from new with return type" do
+  it("infers from new with return type") do
     assert_type(%(
       class Foo
         def self.new : Int32
@@ -3351,7 +3351,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers from new with return type in generic type" do
+  it("infers from new with return type in generic type") do
     assert_type(%(
       class Foo
         def self.new : Int32
@@ -3373,7 +3373,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers from new with return type returning generic" do
+  it("infers from new with return type returning generic") do
     assert_type(%(
       class Foo(T)
         def self.new : Bar(T)
@@ -3398,7 +3398,7 @@ describe "Semantic: instance var" do
       )) { generic_class "Bar", int32 }
   end
 
-  it "guesses from new on abstract class" do
+  it("guesses from new on abstract class") do
     assert_type(%(
       abstract class Foo
         def self.new : Bar
@@ -3425,7 +3425,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "errors on undefined constant" do
+  it("errors on undefined constant") do
     assert_error %(
       class Foo
         def initialize
@@ -3438,7 +3438,7 @@ describe "Semantic: instance var" do
       "undefined constant Bar"
   end
 
-  it "infers from class method that invokes new" do
+  it("infers from class method that invokes new") do
     assert_type(%(
       class Foo
         def initialize
@@ -3460,7 +3460,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "infers from class method that has number literal" do
+  it("infers from class method that has number literal") do
     assert_type(%(
       class Foo
         def initialize
@@ -3482,7 +3482,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "infers from class method that refers to constant" do
+  it("infers from class method that refers to constant") do
     assert_type(%(
       class Foo
         def initialize
@@ -3506,7 +3506,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "infer from class method with multiple statements and return" do
+  it("infer from class method with multiple statements and return") do
     assert_type(%(
       class Foo
         def initialize
@@ -3531,7 +3531,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "doesn't infer from class method with multiple statements and return, on non-easy return" do
+  it("doesn't infer from class method with multiple statements and return, on non-easy return") do
     assert_error %(
       class Foo
         def initialize
@@ -3558,7 +3558,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@x' of Foo"
   end
 
-  it "doesn't infer from class method with multiple statements and return, on non-easy return (2)" do
+  it("doesn't infer from class method with multiple statements and return, on non-easy return (2)") do
     assert_error %(
       class Foo
         def initialize
@@ -3586,7 +3586,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@x' of Foo"
   end
 
-  it "infer from class method where new is redefined" do
+  it("infer from class method where new is redefined") do
     assert_type(%(
       class Foo
         def initialize
@@ -3612,7 +3612,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't crash on recursive method call" do
+  it("doesn't crash on recursive method call") do
     assert_error %(
       class Foo
         def initialize
@@ -3639,7 +3639,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@x' of Foo"
   end
 
-  it "infers in multiple assign for tuple type (1)" do
+  it("infers in multiple assign for tuple type (1)") do
     assert_type(%(
       class Foo
         def initialize
@@ -3661,7 +3661,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "says can't infer (#2536)" do
+  it("says can't infer (#2536)") do
     assert_error %(
       require "prelude"
 
@@ -3685,7 +3685,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@foo' of Foo(Int32)"
   end
 
-  it "doesn't crash when inferring from new without matches (#2538)" do
+  it("doesn't crash when inferring from new without matches (#2538)") do
     assert_error %(
       class Foo
         @@default = Foo.new
@@ -3699,7 +3699,7 @@ describe "Semantic: instance var" do
       "wrong number of arguments for 'Foo.new'"
   end
 
-  it "guesses inside macro if" do
+  it("guesses inside macro if") do
     assert_type(%(
       {% if true %}
         class Foo
@@ -3717,7 +3717,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "guesses inside macro expression" do
+  it("guesses inside macro expression") do
     assert_type(%(
       {{ "class Foo; def initialize; @x = 1; end; def x; @x; end; end".id }}
 
@@ -3725,7 +3725,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "guesses inside macro for" do
+  it("guesses inside macro for") do
     assert_type(%(
       {% for name in %w(Foo) %}
         class {{name.id}}
@@ -3743,7 +3743,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "can't infer type from initializer" do
+  it("can't infer type from initializer") do
     assert_error %(
       class Foo
         @x = 1 + 2
@@ -3758,7 +3758,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@x' of Foo"
   end
 
-  it "can't infer type from initializer in non-generic module" do
+  it("can't infer type from initializer in non-generic module") do
     assert_error %(
       module Moo
         @x = 1 + 2
@@ -3777,7 +3777,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@x' of Moo"
   end
 
-  it "can't infer type from initializer in generic module type" do
+  it("can't infer type from initializer in generic module type") do
     assert_error %(
       module Moo(T)
         @x = 1 + 2
@@ -3796,7 +3796,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@x' of Moo(T)"
   end
 
-  it "can't infer type from initializer in generic class type" do
+  it("can't infer type from initializer in generic class type") do
     assert_error %(
       class Foo(T)
         @x = 1 + 2
@@ -3811,7 +3811,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@x' of Foo(T)"
   end
 
-  it "infers type from self (#2575)" do
+  it("infers type from self (#2575)") do
     assert_type(%(
       class Foo
         def initialize
@@ -3827,7 +3827,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "infers type from self as virtual type (#2575)" do
+  it("infers type from self as virtual type (#2575)") do
     assert_type(%(
       class Foo
         def initialize
@@ -3846,7 +3846,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"].virtual_type! }
   end
 
-  it "declares as named tuple" do
+  it("declares as named tuple") do
     assert_type(%(
       class Foo
         @x : NamedTuple(x: Int32, y: Char)
@@ -3865,7 +3865,7 @@ describe "Semantic: instance var" do
       )) { named_tuple_of({"x": int32, "y": char}) }
   end
 
-  it "doesn't complain in second part of #2575" do
+  it("doesn't complain in second part of #2575") do
     assert_type(%(
       class Foo
         @a : Int32
@@ -3890,7 +3890,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "guesses from as.(typeof(...))" do
+  it("guesses from as.(typeof(...))") do
     assert_type(%(
       class Foo
         def initialize(x : Int32)
@@ -3907,7 +3907,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "guesses from as.(typeof(...)) in generic type" do
+  it("guesses from as.(typeof(...)) in generic type") do
     assert_type(%(
       class Foo(T)
         def initialize(x : Int32)
@@ -3924,7 +3924,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "errors if can't find lib call, before erroring on instance var (#2579)" do
+  it("errors if can't find lib call, before erroring on instance var (#2579)") do
     assert_error %(
       lib LibFoo
       end
@@ -3940,7 +3940,7 @@ describe "Semantic: instance var" do
       "undefined fun 'nope' for LibFoo"
   end
 
-  it "errors when using Class (#2605)" do
+  it("errors when using Class (#2605)") do
     assert_error %(
       class Foo
         def initialize(@class : Class)
@@ -3950,7 +3950,7 @@ describe "Semantic: instance var" do
       "can't use Class as the type of instance variable @class of Foo, use a more specific type"
   end
 
-  it "errors when using Class in generic type" do
+  it("errors when using Class in generic type") do
     assert_error %(
       class Foo(T)
         def initialize(@class : Class)
@@ -3960,7 +3960,7 @@ describe "Semantic: instance var" do
       "can't use Class as the type of instance variable @class of Foo(T), use a more specific type"
   end
 
-  it "doesn't error when using Class but specifying type" do
+  it("doesn't error when using Class but specifying type") do
     assert_type(%(
       class Foo
         @x : Foo.class
@@ -3977,7 +3977,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"].metaclass }
   end
 
-  it "doesn't error when using generic because guessed elsewhere" do
+  it("doesn't error when using generic because guessed elsewhere") do
     assert_type(%(
       class Foo
         @x = Bar(Int32).new
@@ -4003,7 +4003,7 @@ describe "Semantic: instance var" do
       )) { generic_class "Bar", int32 }
   end
 
-  it "doesn't error when using generic in generic type because guessed elsewhere" do
+  it("doesn't error when using generic in generic type because guessed elsewhere") do
     assert_type(%(
       class Foo(T)
         @x = Bar(Int32).new
@@ -4030,7 +4030,7 @@ describe "Semantic: instance var" do
   end
 
   %w(Object Reference).each do |type|
-    it "errors if declaring var in #{type}" do
+    it("errors if declaring var in #{type}") do
       assert_error %(
         class #{type}
           @x : Int32?
@@ -4041,7 +4041,7 @@ describe "Semantic: instance var" do
   end
 
   %w(Value Number Int Float Int32).each do |type|
-    it "errors if declaring var in #{type}" do
+    it("errors if declaring var in #{type}") do
       assert_error %(
         struct #{type}
           @x : Int32?
@@ -4051,7 +4051,7 @@ describe "Semantic: instance var" do
     end
   end
 
-  it "errors if declaring instance variable in module included in Object" do
+  it("errors if declaring instance variable in module included in Object") do
     assert_error %(
       module Moo
         @x : Int32?
@@ -4064,7 +4064,7 @@ describe "Semantic: instance var" do
       "can't declare instance variables in Object"
   end
 
-  it "errors if adds instance variable to Object via guess" do
+  it("errors if adds instance variable to Object via guess") do
     assert_error %(
       class Object
         def foo(@foo : Int32)
@@ -4074,7 +4074,7 @@ describe "Semantic: instance var" do
       "can't declare instance variables in Object"
   end
 
-  it "errors if adds instance variable to Object via guess via included module" do
+  it("errors if adds instance variable to Object via guess via included module") do
     assert_error %(
       module Moo
         def foo(@foo : Int32)
@@ -4088,7 +4088,7 @@ describe "Semantic: instance var" do
       "can't declare instance variables in Object"
   end
 
-  it "gives correct error when trying to use Int as an instance variable type" do
+  it("gives correct error when trying to use Int as an instance variable type") do
     assert_error %(
       class Foo
         @x : Int
@@ -4097,7 +4097,7 @@ describe "Semantic: instance var" do
       "can't use Int as the type of an instance variable yet, use a more specific type"
   end
 
-  it "shouldn't error when accessing instance var in initialized that's always initialized (#2953)" do
+  it("shouldn't error when accessing instance var in initialized that's always initialized (#2953)") do
     assert_type(%(
       class Foo
         @baz = Baz.new
@@ -4134,7 +4134,7 @@ describe "Semantic: instance var" do
   # ||| OLD SPECS |||
   # vvv           vvv
 
-  it "declares instance var which appears in initialize" do
+  it("declares instance var which appears in initialize") do
     result = assert_type("
       class Foo
         @x : Int32
@@ -4153,7 +4153,7 @@ describe "Semantic: instance var" do
     foo.instance_vars["@x"].type.should eq(mod.int32)
   end
 
-  it "declares instance var of generic class" do
+  it("declares instance var of generic class") do
     result = assert_type("
       class Foo(T)
         @x : T
@@ -4171,7 +4171,7 @@ describe "Semantic: instance var" do
     end
   end
 
-  it "declares instance var of generic class after reopen" do
+  it("declares instance var of generic class after reopen") do
     result = assert_type("
       class Foo(T)
       end
@@ -4193,7 +4193,7 @@ describe "Semantic: instance var" do
     end
   end
 
-  it "declares instance var with initial value" do
+  it("declares instance var with initial value") do
     assert_type("
       class Foo
         @x = 0
@@ -4207,7 +4207,7 @@ describe "Semantic: instance var" do
       ") { int32 }
   end
 
-  it "declares instance var with initial value, with subclass" do
+  it("declares instance var with initial value, with subclass") do
     assert_type("
       class Foo
         @x = 0
@@ -4228,7 +4228,7 @@ describe "Semantic: instance var" do
       ") { int32 }
   end
 
-  it "errors if declaring generic type without type vars" do
+  it("errors if declaring generic type without type vars") do
     assert_error %(
       class Foo(T)
       end
@@ -4240,7 +4240,7 @@ describe "Semantic: instance var" do
       "can't declare variable of generic non-instantiated type Foo"
   end
 
-  it "errors when typing an instance variable inside a method" do
+  it("errors when typing an instance variable inside a method") do
     assert_error %(
       def foo
         @x : Int32
@@ -4251,7 +4251,7 @@ describe "Semantic: instance var" do
       "declaring the type of an instance variable must be done at the class level"
   end
 
-  it "declares instance var with union type with a virtual member" do
+  it("declares instance var with union type with a virtual member") do
     assert_type("
       class Parent; end
       class Child < Parent; end
@@ -4267,7 +4267,7 @@ describe "Semantic: instance var" do
       Foo.new.x") { nilable types["Parent"].virtual_type! }
   end
 
-  it "declares with `self`" do
+  it("declares with `self`") do
     assert_type(%(
       class Foo
         @foo : self
@@ -4285,7 +4285,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "guesses from array literal with of, with subclass" do
+  it("guesses from array literal with of, with subclass") do
     assert_type(%(
       class Foo(T)
       end
@@ -4305,7 +4305,7 @@ describe "Semantic: instance var" do
       )) { array_of(generic_class("Foo", int32).virtual_type!) }
   end
 
-  it "guesses from hash literal with of, with subclass" do
+  it("guesses from hash literal with of, with subclass") do
     assert_type(%(
       class Foo(T)
       end
@@ -4325,7 +4325,7 @@ describe "Semantic: instance var" do
       )) { hash_of(generic_class("Foo", int32).virtual_type!, generic_class("Foo", int32).virtual_type!) }
   end
 
-  it "guesses from splat (#3149)" do
+  it("guesses from splat (#3149)") do
     assert_type(%(
       class Args(*T)
         def initialize(*@args : *T)
@@ -4336,7 +4336,7 @@ describe "Semantic: instance var" do
       )) { generic_class "Args", int32, char }
   end
 
-  it "guesses from splat (2) (#3149)" do
+  it("guesses from splat (2) (#3149)") do
     assert_type(%(
       class Args(*T)
         def initialize(*@args : *T)
@@ -4351,7 +4351,7 @@ describe "Semantic: instance var" do
       )) { tuple_of([int32, char]) }
   end
 
-  it "transfers initializer from generic module to class" do
+  it("transfers initializer from generic module to class") do
     assert_type(%(
       module Moo(T)
         @x = 1
@@ -4369,7 +4369,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "transfers initializer from module to generic class" do
+  it("transfers initializer from module to generic class") do
     assert_type(%(
       module Moo
         @x = 1
@@ -4387,7 +4387,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "doesn't consider self.initialize as initializer (#3239)" do
+  it("doesn't consider self.initialize as initializer (#3239)") do
     assert_error %(
       class Foo
         def self.initialize
@@ -4404,7 +4404,7 @@ describe "Semantic: instance var" do
       "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
   end
 
-  it "doesn't crash on #3580" do
+  it("doesn't crash on #3580") do
     assert_error %(
       class Hoge
         @hoge_dir : String = "~/.hoge" ? "~/.hoge" : default_hoge_dir
@@ -4413,7 +4413,7 @@ describe "Semantic: instance var" do
       "undefined local variable or method"
   end
 
-  it "is more permissive with macro def initialize" do
+  it("is more permissive with macro def initialize") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -4429,7 +4429,7 @@ describe "Semantic: instance var" do
       ), inject_primitives: false) { types["Foo"] }
   end
 
-  it "is more permissive with macro def initialize, other initialize" do
+  it("is more permissive with macro def initialize, other initialize") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -4449,7 +4449,7 @@ describe "Semantic: instance var" do
       ), inject_primitives: false) { types["Foo"] }
   end
 
-  it "errors with macro def but another def doesn't initialize all" do
+  it("errors with macro def but another def doesn't initialize all") do
     assert_error %(
       class Foo
         @x : Int32
@@ -4470,7 +4470,7 @@ describe "Semantic: instance var" do
       "instance variable '@y' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
-  it "errors if finally not initialized in macro def" do
+  it("errors if finally not initialized in macro def") do
     assert_error %(
       class Foo
         @x : Int32
@@ -4486,7 +4486,7 @@ describe "Semantic: instance var" do
       "instance variable '@x' of Foo was not initialized in this 'initialize', rendering it nilable"
   end
 
-  it "doesn't error if initializes via super in macro def" do
+  it("doesn't error if initializes via super in macro def") do
     assert_type(%(
       class Foo
         def initialize(@x : Int32)
@@ -4505,7 +4505,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "doesn't error if uses typeof(@var)" do
+  it("doesn't error if uses typeof(@var)") do
     assert_type(%(
       struct Int32
         def self.zero
@@ -4525,7 +4525,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "doesn't error if not initiliazed in macro def but outside it" do
+  it("doesn't error if not initiliazed in macro def but outside it") do
     assert_type(%(
       class Foo
         @x = 1
@@ -4539,7 +4539,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "doesn't error if inheriting generic instance (#3635)" do
+  it("doesn't error if inheriting generic instance (#3635)") do
     assert_type(%(
       module Core(T)
         @a : Bool
@@ -4561,7 +4561,7 @@ describe "Semantic: instance var" do
       )) { bool }
   end
 
-  it "doesn't consider var as nilable if conditionally assigned inside initialize, but has initializer (#3669)" do
+  it("doesn't consider var as nilable if conditionally assigned inside initialize, but has initializer (#3669)") do
     assert_type(%(
       class Foo
         @x = 0
@@ -4579,7 +4579,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "types generic instance as virtual type if generic type has subclasses (#3805)" do
+  it("types generic instance as virtual type if generic type has subclasses (#3805)") do
     assert_type(%(
       class Foo(T)
       end
@@ -4602,7 +4602,7 @@ describe "Semantic: instance var" do
       )) { types["Qux"] }
   end
 
-  it "errors if unknown ivar through macro (#4050)" do
+  it("errors if unknown ivar through macro (#4050)") do
     assert_error %(
       class Foo
         def initialize(**attributes)
@@ -4626,7 +4626,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@bar' of Foo"
   end
 
-  it "can't infer type when using operation on const (#4054)" do
+  it("can't infer type when using operation on const (#4054)") do
     assert_error %(
       class Foo
         BAR = 5
@@ -4641,7 +4641,7 @@ describe "Semantic: instance var" do
       "Can't infer the type of instance variable '@baz' of Foo"
   end
 
-  it "instance variables initializers are used in class variables initialized objects (#3988)" do
+  it("instance variables initializers are used in class variables initialized objects (#3988)") do
     assert_type(%(
        class Foo
          @@foo = Foo.new
@@ -4659,7 +4659,7 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
-  it "allow usage of instance variable initializer from instance variable initializer" do
+  it("allow usage of instance variable initializer from instance variable initializer") do
     assert_type(%(
       class Foo
         @bar = Bar.new
@@ -4686,7 +4686,7 @@ describe "Semantic: instance var" do
     )) { tuple_of([int32, int32]) }
   end
 
-  it "errors when assigning instance variable at top level block" do
+  it("errors when assigning instance variable at top level block") do
     assert_error %(
       def foo
         yield
@@ -4699,7 +4699,7 @@ describe "Semantic: instance var" do
       "can't use instance variables at the top level"
   end
 
-  it "errors when assigning instance variable at top level control block" do
+  it("errors when assigning instance variable at top level control block") do
     assert_error %(
       if true
         @foo = 1
@@ -4708,7 +4708,7 @@ describe "Semantic: instance var" do
       "can't use instance variables at the top level"
   end
 
-  it "doesn't check call of non-self instance (#4830)" do
+  it("doesn't check call of non-self instance (#4830)") do
     assert_type(%(
       class Container
         def initialize(other : Container, x)
@@ -4733,7 +4733,7 @@ describe "Semantic: instance var" do
       )) { types["Container"] }
   end
 
-  it "errors when assigning instance variable inside nested expression" do
+  it("errors when assigning instance variable inside nested expression") do
     assert_error %(
       class Foo
         if true
@@ -4744,7 +4744,7 @@ describe "Semantic: instance var" do
       "can't use instance variables at the top level"
   end
 
-  it "doesn't find T in generic type that's not the current type (#4460)" do
+  it("doesn't find T in generic type that's not the current type (#4460)") do
     assert_error %(
       class Gen(T)
         def self.new
@@ -4759,7 +4759,7 @@ describe "Semantic: instance var" do
       "can't use Gen(T) as the type of instance variable @x of Foo"
   end
 
-  it "doesn't consider instance var as nilable if assigned before self access (#4981)" do
+  it("doesn't consider instance var as nilable if assigned before self access (#4981)") do
     assert_type(%(
       def f(x)
       end

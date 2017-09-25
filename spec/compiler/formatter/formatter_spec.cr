@@ -2,7 +2,7 @@ require "spec"
 require "../../../src/compiler/crystal/formatter"
 
 private def assert_format(input, output = input, strict = false, file = __FILE__, line = __LINE__)
-  it "formats #{input.inspect}", file, line do
+  it("formats #{input.inspect}", file, line) do
     output = "#{output}\n" unless strict
     result = Crystal.format(input)
     unless result == output
@@ -17,7 +17,7 @@ private def assert_format(input, output = input, strict = false, file = __FILE__
   end
 end
 
-describe Crystal::Formatter do
+describe(Crystal::Formatter) do
   assert_format "", "", strict: true
 
   assert_format "nil"
@@ -244,7 +244,7 @@ describe Crystal::Formatter do
   assert_format "foo(\n  1, 2, &block)", "foo(\n  1, 2, &block)"
   assert_format "foo(\n  1, 2,\n&block)", "foo(\n  1, 2,\n  &block)"
   assert_format "foo 1, a: 1,\nb: 2,\nc: 3,\n&block", "foo 1, a: 1,\n  b: 2,\n  c: 3,\n  &block"
-  assert_format "foo 1, do\n2\nend", "foo 1 do\n  2\nend"
+  assert_format "foo 1, do\n2\nend", "foo(1) do\n  2\nend"
   assert_format "a.b &.[c]?\n1"
   assert_format "a.b &.[c]\n1"
   assert_format "foo(1, 2,)", "foo(1, 2)"

@@ -1,8 +1,8 @@
 require "spec"
 require "logger"
 
-describe "Logger" do
-  it "logs messages" do
+describe("Logger") do
+  it("logs messages") do
     IO.pipe do |r, w|
       logger = Logger.new(w)
       logger.debug "debug:skip"
@@ -22,7 +22,7 @@ describe "Logger" do
     end
   end
 
-  it "logs any object" do
+  it("logs any object") do
     IO.pipe do |r, w|
       logger = Logger.new(w)
       logger.info 12345
@@ -31,7 +31,7 @@ describe "Logger" do
     end
   end
 
-  it "formats message" do
+  it("formats message") do
     IO.pipe do |r, w|
       logger = Logger.new(w)
       logger.progname = "crystal"
@@ -41,7 +41,7 @@ describe "Logger" do
     end
   end
 
-  it "uses custom formatter" do
+  it("uses custom formatter") do
     IO.pipe do |r, w|
       logger = Logger.new(w)
       logger.formatter = Logger::Formatter.new do |severity, datetime, progname, message, io|
@@ -53,7 +53,7 @@ describe "Logger" do
     end
   end
 
-  it "yields message" do
+  it("yields message") do
     IO.pipe do |r, w|
       logger = Logger.new(w)
       logger.error { "message" }
@@ -64,7 +64,7 @@ describe "Logger" do
     end
   end
 
-  it "yields message with progname" do
+  it("yields message with progname") do
     IO.pipe do |r, w|
       logger = Logger.new(w)
       logger.error("crystal") { "message" }
@@ -75,19 +75,19 @@ describe "Logger" do
     end
   end
 
-  it "can create a logger with nil (#3065)" do
+  it("can create a logger with nil (#3065)") do
     logger = Logger.new(nil)
     logger.error("ouch")
   end
 
-  it "doesn't yield to the block with nil" do
+  it("doesn't yield to the block with nil") do
     a = 0
     logger = Logger.new(nil)
     logger.info { a = 1 }
     a.should eq(0)
   end
 
-  it "closes" do
+  it("closes") do
     IO.pipe do |r, w|
       Logger.new(w).close
       w.closed?.should be_true

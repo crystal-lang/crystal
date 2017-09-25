@@ -23,7 +23,7 @@ module Crystal
 
       def visit(node : Call)
         if node_block = node.block
-          @instrumentor.ignoring_line_of_node node do
+          @instrumentor.ignoring_line_of_node(node) do
             node.block = node_block.transform(@instrumentor)
           end
         end
@@ -185,7 +185,7 @@ module Crystal
     end
 
     def transform(node : Def)
-      ignoring_line_of_node node do
+      ignoring_line_of_node(node) do
         node.body = node.body.transform(self)
         node
       end

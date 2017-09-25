@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Visibility modifiers" do
-  it "disallows invoking private method" do
+describe("Visibility modifiers") do
+  it("disallows invoking private method") do
     assert_error %(
       class Foo
         private def foo
@@ -14,7 +14,7 @@ describe "Visibility modifiers" do
       "private method 'foo' called for Foo"
   end
 
-  it "allows setting visibility modifier to macro" do
+  it("allows setting visibility modifier to macro") do
     assert_error %(
       class Object
         macro x
@@ -32,7 +32,7 @@ describe "Visibility modifiers" do
       "private method 'foo' called for Foo"
   end
 
-  it "allows setting visibility modifier to macro that generates many methods (1)" do
+  it("allows setting visibility modifier to macro that generates many methods (1)") do
     assert_error %(
       class Object
         macro x
@@ -53,7 +53,7 @@ describe "Visibility modifiers" do
       "private method 'foo' called for Foo"
   end
 
-  it "allows setting visibility modifier to macro that generates many methods (2)" do
+  it("allows setting visibility modifier to macro that generates many methods (2)") do
     assert_error %(
       class Object
         macro x
@@ -74,7 +74,7 @@ describe "Visibility modifiers" do
       "private method 'bar' called for Foo"
   end
 
-  it "allows invoking protected method from the same class" do
+  it("allows invoking protected method from the same class") do
     assert_type(%(
       class Foo
         protected def foo
@@ -90,7 +90,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "allows invoking protected method from subclass" do
+  it("allows invoking protected method from subclass") do
     assert_type(%(
       class Foo
         protected def foo
@@ -108,7 +108,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "allows invoking protected method from subclass (2)" do
+  it("allows invoking protected method from subclass (2)") do
     assert_type(%(
       class Foo
         protected def foo
@@ -129,7 +129,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "errors if invoking protected method from top-level" do
+  it("errors if invoking protected method from top-level") do
     assert_error %(
       class Foo
         protected def foo
@@ -141,7 +141,7 @@ describe "Visibility modifiers" do
       "protected method 'foo' called for Foo"
   end
 
-  it "errors if invoking protected method from non-subclass" do
+  it("errors if invoking protected method from non-subclass") do
     assert_error %(
       class Foo
         protected def foo
@@ -159,7 +159,7 @@ describe "Visibility modifiers" do
       "protected method 'foo' called for Foo"
   end
 
-  it "errors if invoking protected method from non-subclass, generated with macro that generates a macro" do
+  it("errors if invoking protected method from non-subclass, generated with macro that generates a macro") do
     assert_error %(
       class Object
         macro y
@@ -181,7 +181,7 @@ describe "Visibility modifiers" do
       "protected method 'foo' called for Foo"
   end
 
-  it "errors if applying visibility modifier to non-def or non-call" do
+  it("errors if applying visibility modifier to non-def or non-call") do
     assert_error %(
       class Foo
         private 1
@@ -190,7 +190,7 @@ describe "Visibility modifiers" do
       "can't apply visibility modifier"
   end
 
-  it "allows invoking protected from instance to class" do
+  it("allows invoking protected from instance to class") do
     assert_type(%(
       class Foo
         def instance_foo
@@ -206,7 +206,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "automatically makes initialize be protected" do
+  it("automatically makes initialize be protected") do
     assert_error %(
       class Foo
         def initialize(x)
@@ -219,7 +219,7 @@ describe "Visibility modifiers" do
       "protected method 'initialize' called for Foo"
   end
 
-  it "allows invoking private setter with self" do
+  it("allows invoking private setter with self") do
     assert_type(%(
       class Foo
         private def x=(x)
@@ -235,7 +235,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "allows invoking protected method from namespace to namespaced type" do
+  it("allows invoking protected method from namespace to namespaced type") do
     assert_type(%(
       class Foo
         def foo
@@ -253,7 +253,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "allows invoking protected method from namespaced type to namespace" do
+  it("allows invoking protected method from namespaced type to namespace") do
     assert_type(%(
       class Foo
         protected def foo
@@ -271,7 +271,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "allows invoking protected method between types in the same namespace" do
+  it("allows invoking protected method between types in the same namespace") do
     assert_type(%(
       module NS1
         class NS2
@@ -293,7 +293,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "allows invoking protected method between types in the same namespace when inheriting" do
+  it("allows invoking protected method between types in the same namespace when inheriting") do
     assert_type(%(
       module NS1
         class NS2
@@ -318,7 +318,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "allows invoking protected method from virtual type" do
+  it("allows invoking protected method from virtual type") do
     assert_type(%(
       abstract class Foo
         def foo
@@ -342,7 +342,7 @@ describe "Visibility modifiers" do
       )) { union_of int32, float64 }
   end
 
-  it "allows calling protected method from nested generic class (1)" do
+  it("allows calling protected method from nested generic class (1)") do
     assert_type(%(
       class Foo
         class Bar(U)
@@ -360,7 +360,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "allows calling protected method from nested generic class (2)" do
+  it("allows calling protected method from nested generic class (2)") do
     assert_type(%(
       class Foo(T)
         class Bar(U)
@@ -378,7 +378,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "gives correct error on unknown call (#2838)" do
+  it("gives correct error on unknown call (#2838)") do
     assert_error %(
       private foo
       ),

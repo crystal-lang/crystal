@@ -2,7 +2,7 @@ require "spec"
 require "yaml"
 
 private def assert_raw(string, expected = string, file = __FILE__, line = __LINE__)
-  it "parses raw #{string.inspect}", file, line do
+  it("parses raw #{string.inspect}", file, line) do
     pull = YAML::PullParser.new(string)
     pull.read_stream do
       pull.read_document do
@@ -13,15 +13,15 @@ private def assert_raw(string, expected = string, file = __FILE__, line = __LINE
 end
 
 module YAML
-  describe PullParser do
-    it "reads empty stream" do
+  describe(PullParser) do
+    it("reads empty stream") do
       parser = PullParser.new("")
       parser.kind.should eq(EventKind::STREAM_START)
       parser.read_next.should eq(EventKind::STREAM_END)
       parser.kind.should eq(EventKind::STREAM_END)
     end
 
-    it "reads an empty document" do
+    it("reads an empty document") do
       parser = PullParser.new("---\n...\n")
       parser.read_stream do
         parser.read_document do
@@ -30,7 +30,7 @@ module YAML
       end
     end
 
-    it "reads a scalar" do
+    it("reads a scalar") do
       parser = PullParser.new("--- foo\n...\n")
       parser.read_stream do
         parser.read_document do
@@ -39,7 +39,7 @@ module YAML
       end
     end
 
-    it "reads a scalar having a null character" do
+    it("reads a scalar having a null character") do
       parser = PullParser.new(%(--- "foo\\0bar"\n...\n))
       parser.read_stream do
         parser.read_document do
@@ -48,7 +48,7 @@ module YAML
       end
     end
 
-    it "reads a sequence" do
+    it("reads a sequence") do
       parser = PullParser.new("---\n- 1\n- 2\n- 3\n")
       parser.read_stream do
         parser.read_document do
@@ -61,7 +61,7 @@ module YAML
       end
     end
 
-    it "reads a scalar with an anchor" do
+    it("reads a scalar with an anchor") do
       parser = PullParser.new("--- &foo bar\n...\n")
       parser.read_stream do
         parser.read_document do
@@ -71,7 +71,7 @@ module YAML
       end
     end
 
-    it "reads a sequence with an anchor" do
+    it("reads a sequence with an anchor") do
       parser = PullParser.new("--- &foo []\n")
       parser.read_stream do
         parser.read_document do
@@ -82,7 +82,7 @@ module YAML
       end
     end
 
-    it "reads a mapping" do
+    it("reads a mapping") do
       parser = PullParser.new(%(---\nfoo: 1\nbar: 2\n))
       parser.read_stream do
         parser.read_document do
@@ -96,7 +96,7 @@ module YAML
       end
     end
 
-    it "reads a mapping with an anchor" do
+    it("reads a mapping with an anchor") do
       parser = PullParser.new(%(---\n&lala {}\n))
       parser.read_stream do
         parser.read_document do
@@ -107,7 +107,7 @@ module YAML
       end
     end
 
-    it "parses alias" do
+    it("parses alias") do
       parser = PullParser.new("--- *foo\n")
       parser.read_stream do
         parser.read_document do
@@ -122,7 +122,7 @@ module YAML
     assert_raw %(["hello","world"])
     assert_raw %({"hello":"world"})
 
-    it "raises exception at correct location" do
+    it("raises exception at correct location") do
       parser = PullParser.new("[1]")
       parser.read_stream do
         parser.read_document do

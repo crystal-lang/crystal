@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: type" do
-  it "can call methods of original type" do
+describe("Semantic: type") do
+  it("can call methods of original type") do
     assert_type("
       lib Lib
         type X = Void*
@@ -12,7 +12,7 @@ describe "Semantic: type" do
     ") { uint64 }
   end
 
-  it "can call methods of parent type" do
+  it("can call methods of parent type") do
     assert_error("
       lib Lib
         type X = Void*

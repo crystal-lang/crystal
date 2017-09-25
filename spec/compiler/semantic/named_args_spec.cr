@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: named args" do
-  it "errors if named arg not found" do
+describe("Semantic: named args") do
+  it("errors if named arg not found") do
     assert_error %(
       def foo(x, y = 1, z = 2)
       end
@@ -11,7 +11,7 @@ describe "Semantic: named args" do
       "no argument named 'w'"
   end
 
-  it "errors if named arg already specified" do
+  it("errors if named arg already specified") do
     assert_error %(
       def foo(x, y = 1, z = 2)
       end
@@ -21,7 +21,7 @@ describe "Semantic: named args" do
       "argument 'x' already specified"
   end
 
-  it "errors if named arg not found in new" do
+  it("errors if named arg not found in new") do
     assert_error %(
       class Foo
         def initialize(x, y = 1, z = 2)
@@ -33,7 +33,7 @@ describe "Semantic: named args" do
       "no argument named 'w'"
   end
 
-  it "errors if named arg already specified" do
+  it("errors if named arg already specified") do
     assert_error %(
       class Foo
         def initialize(x, y = 1, z = 2)
@@ -45,7 +45,7 @@ describe "Semantic: named args" do
       "argument 'x' already specified"
   end
 
-  it "errors if doesn't pass named arg restriction" do
+  it("errors if doesn't pass named arg restriction") do
     assert_error %(
       def foo(x : Int32 = 1)
       end
@@ -55,7 +55,7 @@ describe "Semantic: named args" do
       "no overload matches"
   end
 
-  it "errors if named arg already specified but in same position" do
+  it("errors if named arg already specified but in same position") do
     assert_error %(
       def foo(headers = nil)
       end
@@ -65,7 +65,7 @@ describe "Semantic: named args" do
       "argument 'headers' already specified"
   end
 
-  it "sends one regular argument as named argument" do
+  it("sends one regular argument as named argument") do
     assert_type(%(
       def foo(x)
         x
@@ -75,7 +75,7 @@ describe "Semantic: named args" do
       )) { int32 }
   end
 
-  it "sends two regular arguments as named arguments" do
+  it("sends two regular arguments as named arguments") do
     assert_type(%(
       def foo(x, y)
         x + y
@@ -85,7 +85,7 @@ describe "Semantic: named args" do
       )) { int32 }
   end
 
-  it "sends two regular arguments as named arguments in inverted position (1)" do
+  it("sends two regular arguments as named arguments in inverted position (1)") do
     assert_type(%(
       def foo(x, y)
         x
@@ -95,7 +95,7 @@ describe "Semantic: named args" do
       )) { string }
   end
 
-  it "sends two regular arguments as named arguments in inverted position (2)" do
+  it("sends two regular arguments as named arguments in inverted position (2)") do
     assert_type(%(
       def foo(x, y)
         y
@@ -105,7 +105,7 @@ describe "Semantic: named args" do
       )) { int32 }
   end
 
-  it "errors if named arg matches single splat argument" do
+  it("errors if named arg matches single splat argument") do
     assert_error %(
       def foo(*y)
       end
@@ -115,7 +115,7 @@ describe "Semantic: named args" do
       "no argument named 'x'"
   end
 
-  it "errors if named arg matches splat argument" do
+  it("errors if named arg matches splat argument") do
     assert_error %(
       def foo(x, *y)
       end
@@ -125,7 +125,7 @@ describe "Semantic: named args" do
       "no overload matches"
   end
 
-  it "allows named arg if there's a splat" do
+  it("allows named arg if there's a splat") do
     assert_type(%(
       def foo(*y, x)
         { x, y }
@@ -135,7 +135,7 @@ describe "Semantic: named args" do
       )) { tuple_of([char, tuple_of([int32])]) }
   end
 
-  it "errors if missing one argument" do
+  it("errors if missing one argument") do
     assert_error %(
       def foo(x, y, z)
       end
@@ -145,7 +145,7 @@ describe "Semantic: named args" do
       "missing argument: z"
   end
 
-  it "errors if missing two arguments" do
+  it("errors if missing two arguments") do
     assert_error %(
       def foo(x, y, z)
       end
@@ -155,7 +155,7 @@ describe "Semantic: named args" do
       "missing arguments: x, z"
   end
 
-  it "doesn't include arguments with default values in missing arguments error" do
+  it("doesn't include arguments with default values in missing arguments error") do
     assert_error %(
 
       def foo(x, z, y = 1)
@@ -166,7 +166,7 @@ describe "Semantic: named args" do
       "missing argument: z"
   end
 
-  it "says no overload matches with named arg" do
+  it("says no overload matches with named arg") do
     assert_error %(
       def foo(x, y)
       end
@@ -179,7 +179,7 @@ describe "Semantic: named args" do
       "no overload matches"
   end
 
-  it "gives correct error message for missing args after *" do
+  it("gives correct error message for missing args after *") do
     assert_error %(
       def foo(*, x, y)
       end
@@ -189,7 +189,7 @@ describe "Semantic: named args" do
       "missing arguments: x, y"
   end
 
-  it "overloads based on required named args" do
+  it("overloads based on required named args") do
     assert_type(%(
       def foo(x, *, y)
         1
@@ -206,7 +206,7 @@ describe "Semantic: named args" do
       )) { tuple_of([int32, char]) }
   end
 
-  it "overloads based on required named args, with restrictions" do
+  it("overloads based on required named args, with restrictions") do
     assert_type(%(
       def foo(x, *, z : Int32)
         1
@@ -223,7 +223,7 @@ describe "Semantic: named args" do
       )) { tuple_of([int32, char]) }
   end
 
-  it "uses bare splat in new" do
+  it("uses bare splat in new") do
     assert_type(%(
       class Foo
         def initialize(*, y = nil)
@@ -234,7 +234,7 @@ describe "Semantic: named args" do
       )) { types["Foo"] }
   end
 
-  it "passes #2696" do
+  it("passes #2696") do
     assert_type(%(
       class Bar
         def bar
@@ -253,7 +253,7 @@ describe "Semantic: named args" do
       )) { types["Bar"] }
   end
 
-  it "matches specific overload with named arguments (#2753)" do
+  it("matches specific overload with named arguments (#2753)") do
     assert_type(%(
       def foo(x : Nil, y)
         foo 1, y
@@ -269,7 +269,7 @@ describe "Semantic: named args" do
       )) { bool }
   end
 
-  it "matches specific overload with named arguments (2) (#2753)" do
+  it("matches specific overload with named arguments (2) (#2753)") do
     assert_type(%(
       def foo(x : Nil, y, z)
         foo 1, y, z
@@ -285,7 +285,7 @@ describe "Semantic: named args" do
       )) { bool }
   end
 
-  it "gives correct error message with external names (#3934)" do
+  it("gives correct error message with external names (#3934)") do
     assert_error %(
       def foo(*, arg a : String)
         a

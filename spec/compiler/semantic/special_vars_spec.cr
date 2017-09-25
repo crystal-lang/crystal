@@ -1,8 +1,8 @@
 require "../../spec_helper"
 
-describe "Semantic: special vars" do
+describe("Semantic: special vars") do
   ["$~", "$?"].each do |name|
-    it "infers #{name}" do
+    it("infers #{name}") do
       assert_type(%(
         class Object; def not_nil!; self; end; end
 
@@ -15,7 +15,7 @@ describe "Semantic: special vars" do
         )) { nilable string }
     end
 
-    it "types #{name} when not defined as no return" do
+    it("types #{name} when not defined as no return") do
       assert_type(%(
         require "prelude"
 
@@ -23,7 +23,7 @@ describe "Semantic: special vars" do
         )) { no_return }
     end
 
-    it "types #{name} when not defined as no return (2)" do
+    it("types #{name} when not defined as no return (2)") do
       assert_type(%(
         class Object; def not_nil!; self; end; end
 
@@ -36,7 +36,7 @@ describe "Semantic: special vars" do
         )) { nilable string }
     end
 
-    it "errors if assigning #{name} at top level" do
+    it("errors if assigning #{name} at top level") do
       assert_error %(
         #{name} = "hey"
         ),
@@ -44,7 +44,7 @@ describe "Semantic: special vars" do
     end
   end
 
-  it "infers when assigning inside block" do
+  it("infers when assigning inside block") do
     assert_type(%(
       class Object; def not_nil!; self; end; end
 
@@ -63,7 +63,7 @@ describe "Semantic: special vars" do
       )) { nilable string }
   end
 
-  it "infers in block" do
+  it("infers in block") do
     assert_type(%(
       class Object; def not_nil!; self; end; end
 
@@ -80,7 +80,7 @@ describe "Semantic: special vars" do
       )) { nilable string }
   end
 
-  it "infers in block with nested block" do
+  it("infers in block with nested block") do
     assert_type(%(
       class Object; def not_nil!; self; end; end
 
@@ -103,7 +103,7 @@ describe "Semantic: special vars" do
       )) { nilable string }
   end
 
-  it "infers after block" do
+  it("infers after block") do
     assert_type(%(
       class Object; def not_nil!; self; end; end
 

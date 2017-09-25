@@ -1,23 +1,23 @@
 require "../../spec_helper"
 
-describe "Semantic: nil" do
-  it "types empty" do
+describe("Semantic: nil") do
+  it("types empty") do
     assert_type("") { nil_type }
   end
 
-  it "types nil" do
+  it("types nil") do
     assert_type("nil") { nil_type }
   end
 
-  it "can call a fun with nil for pointer" do
+  it("can call a fun with nil for pointer") do
     assert_type("lib LibA; fun a(c : Char*) : Int32; end; LibA.a(nil)") { int32 }
   end
 
-  it "can call a fun with nil for typedef pointer" do
+  it("can call a fun with nil for typedef pointer") do
     assert_type("lib LibA; type Foo = Char*; fun a(c : Foo) : Int32; end; LibA.a(nil)") { int32 }
   end
 
-  it "marks instance variables as nil but doesn't explode on macros" do
+  it("marks instance variables as nil but doesn't explode on macros") do
     assert_type("
       require \"prelude\"
 
@@ -35,7 +35,7 @@ describe "Semantic: nil" do
     ") { int32 }
   end
 
-  it "marks instance variables as nil when not in initialize" do
+  it("marks instance variables as nil when not in initialize") do
     assert_type("
       class Foo
         def initialize
@@ -57,7 +57,7 @@ describe "Semantic: nil" do
       ") { nilable int32 }
   end
 
-  it "marks instance variables as nil when not in initialize 2" do
+  it("marks instance variables as nil when not in initialize 2") do
     assert_type("
       class Foo
         def initialize
@@ -83,7 +83,7 @@ describe "Semantic: nil" do
       ") { int32 }
   end
 
-  it "restricts type of 'if foo'" do
+  it("restricts type of 'if foo'") do
     assert_type("
       class Foo
         def bar
@@ -96,7 +96,7 @@ describe "Semantic: nil" do
       ") { int32 }
   end
 
-  it "restricts type of 'if foo' on assign" do
+  it("restricts type of 'if foo' on assign") do
     assert_type("
       class Foo
         def bar
@@ -112,7 +112,7 @@ describe "Semantic: nil" do
       ") { int32 }
   end
 
-  it "restricts type of 'while foo'" do
+  it("restricts type of 'while foo'") do
     assert_type("
       class Foo
         def bar
@@ -128,7 +128,7 @@ describe "Semantic: nil" do
       ") { int32 }
   end
 
-  it "restricts type of 'while foo' on assign" do
+  it("restricts type of 'while foo' on assign") do
     assert_type("
       class Foo
         def bar
@@ -143,7 +143,7 @@ describe "Semantic: nil" do
       ") { int32 }
   end
 
-  it "doesn't check return type for nil" do
+  it("doesn't check return type for nil") do
     assert_type(%(
       def foo : Nil
         1
@@ -153,7 +153,7 @@ describe "Semantic: nil" do
       )) { nil_type }
   end
 
-  it "doesn't check return type for void" do
+  it("doesn't check return type for void") do
     assert_type(%(
       def foo : Void
         1

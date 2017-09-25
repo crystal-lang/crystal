@@ -410,7 +410,7 @@ module Crystal
       end
     end
 
-    record RecordedRequire, filename : String, relative_to : String? do
+    record(RecordedRequire, filename : String, relative_to : String?) do
       JSON.mapping(filename: String, relative_to: String?)
     end
     property recorded_requires = [] of RecordedRequire

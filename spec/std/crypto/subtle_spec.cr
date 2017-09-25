@@ -1,8 +1,8 @@
 require "spec"
 require "crypto/subtle"
 
-describe "Subtle" do
-  it "compares constant times" do
+describe("Subtle") do
+  it("compares constant times") do
     data = [
       {"a" => Slice.new(1, 0x11), "b" => Slice.new(1, 0x11), "result" => true},
       {"a" => Slice.new(1, 0x12), "b" => Slice.new(1, 0x11), "result" => false},
@@ -15,7 +15,7 @@ describe "Subtle" do
     end
   end
 
-  it "compares constant time bytes on equality" do
+  it("compares constant time bytes on equality") do
     data = [
       {"a" => 0x00_u8, "b" => 0x00_u8, "result" => 1},
       {"a" => 0x00_u8, "b" => 0x01_u8, "result" => 0},
@@ -29,13 +29,13 @@ describe "Subtle" do
     end
   end
 
-  it "compares constant time bytes bug" do
+  it("compares constant time bytes bug") do
     h1 = "$2a$05$LEC1XBXgXECzKUO2LBDhKOa9lH9zigNKnksVaDwViFNgPU4WkrD53J"
     h2 = "$2a$05$LEC1XBXgXECzKUO2LBDhKOaHlSGFuDDwMuVg6gOzdxQ0xN4rFOwMUn"
     Crypto::Subtle.constant_time_compare(h1, h2).should eq(false)
   end
 
-  it "compares constant time and slices strings" do
+  it("compares constant time and slices strings") do
     h1 = "$2a$05$LEC1XBXgXECzKUO2LBDhKOa9lH9zigNKnksVaDwViFNgPU4WkrD53J"
     h2 = "$2a$05$LEC1XBXgXECzKUO2LBDhKOaHlSGFuDDwMuVg6gOzdxQ0xN4rFOwMUn"
 

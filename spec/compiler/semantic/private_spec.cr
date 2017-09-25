@@ -1,8 +1,8 @@
 require "../../spec_helper"
 
-describe "Semantic: private" do
-  it "doesn't find private def in another file" do
-    expect_raises Crystal::TypeException, "undefined local variable or method 'foo'" do
+describe("Semantic: private") do
+  it("doesn't find private def in another file") do
+    expect_raises(Crystal::TypeException, "undefined local variable or method 'foo'") do
       compiler = Compiler.new
       sources = [
         Compiler::Source.new("foo.cr", %(
@@ -20,7 +20,7 @@ describe "Semantic: private" do
     end
   end
 
-  it "finds private def in same file" do
+  it("finds private def in same file") do
     compiler = Compiler.new
     sources = [
       Compiler::Source.new("foo.cr", %(
@@ -36,7 +36,7 @@ describe "Semantic: private" do
     compiler.compile sources, "output"
   end
 
-  it "finds private def in same file that invokes another def" do
+  it("finds private def in same file that invokes another def") do
     compiler = Compiler.new
     sources = [
       Compiler::Source.new("foo.cr", %(
@@ -56,7 +56,7 @@ describe "Semantic: private" do
     compiler.compile sources, "output"
   end
 
-  it "types private def correctly" do
+  it("types private def correctly") do
     assert_type(%(
       private def foo
         1
@@ -70,8 +70,8 @@ describe "Semantic: private" do
       )) { int32 }
   end
 
-  it "doesn't find private macro in another file" do
-    expect_raises Crystal::TypeException, "undefined local variable or method 'foo'" do
+  it("doesn't find private macro in another file") do
+    expect_raises(Crystal::TypeException, "undefined local variable or method 'foo'") do
       compiler = Compiler.new
       sources = [
         Compiler::Source.new("foo.cr", %(
@@ -89,7 +89,7 @@ describe "Semantic: private" do
     end
   end
 
-  it "finds private macro in same file" do
+  it("finds private macro in same file") do
     compiler = Compiler.new
     sources = [
       Compiler::Source.new("foo.cr", %(
@@ -105,7 +105,7 @@ describe "Semantic: private" do
     compiler.compile sources, "output"
   end
 
-  it "finds private macro in same file, invoking from another macro (#1265)" do
+  it("finds private macro in same file, invoking from another macro (#1265)") do
     compiler = Compiler.new
     sources = [
       Compiler::Source.new("foo.cr", %(
@@ -125,7 +125,7 @@ describe "Semantic: private" do
     compiler.compile sources, "output"
   end
 
-  it "find module private macro inside the module" do
+  it("find module private macro inside the module") do
     assert_type(%(
       class Foo
         private macro foo
@@ -141,7 +141,7 @@ describe "Semantic: private" do
       )) { int32 }
   end
 
-  it "find module private macro inside a module, which is inherited by the module" do
+  it("find module private macro inside a module, which is inherited by the module") do
     assert_type(%(
       class Foo
         private macro foo
@@ -159,7 +159,7 @@ describe "Semantic: private" do
       )) { int32 }
   end
 
-  it "doesn't find module private macro outside the module" do
+  it("doesn't find module private macro outside the module") do
     assert_error %(
       class Foo
         private macro foo
@@ -171,7 +171,7 @@ describe "Semantic: private" do
     ), "private macro 'foo' called for Foo"
   end
 
-  it "finds private def when invoking from inside macro (#2082)" do
+  it("finds private def when invoking from inside macro (#2082)") do
     assert_type(%(
       private def foo
         42
@@ -183,8 +183,8 @@ describe "Semantic: private" do
       )) { int32 }
   end
 
-  it "doesn't find private class in another file" do
-    expect_raises Crystal::TypeException, "undefined constant Foo" do
+  it("doesn't find private class in another file") do
+    expect_raises(Crystal::TypeException, "undefined constant Foo") do
       compiler = Compiler.new
       sources = [
         Compiler::Source.new("foo.cr", %(
@@ -201,7 +201,7 @@ describe "Semantic: private" do
     end
   end
 
-  it "finds private type in same file" do
+  it("finds private type in same file") do
     compiler = Compiler.new
     sources = [
       Compiler::Source.new("foo.cr", %(
@@ -219,7 +219,7 @@ describe "Semantic: private" do
     compiler.compile sources, "output"
   end
 
-  it "can use types in private type" do
+  it("can use types in private type") do
     assert_type(%(
       private class Foo
         def initialize(@x : Int32)
@@ -234,7 +234,7 @@ describe "Semantic: private" do
       )) { int32 }
   end
 
-  it "can use class var initializer in private type" do
+  it("can use class var initializer in private type") do
     assert_type(%(
       private class Foo
         @@x = 1
@@ -248,7 +248,7 @@ describe "Semantic: private" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "can use instance var initializer in private type" do
+  it("can use instance var initializer in private type") do
     assert_type(%(
       private class Foo
         @x = 1
@@ -262,7 +262,7 @@ describe "Semantic: private" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "finds private class in macro expansion" do
+  it("finds private class in macro expansion") do
     assert_type(%(
       private class Foo
         @x = 1
@@ -280,7 +280,7 @@ describe "Semantic: private" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "doesn't find private class from outside namespace" do
+  it("doesn't find private class from outside namespace") do
     assert_error %(
       class Foo
         private class Bar
@@ -292,7 +292,7 @@ describe "Semantic: private" do
       "private constant Foo::Bar referenced"
   end
 
-  it "doesn't find private module from outside namespace" do
+  it("doesn't find private module from outside namespace") do
     assert_error %(
       class Foo
         private module Bar
@@ -304,7 +304,7 @@ describe "Semantic: private" do
       "private constant Foo::Bar referenced"
   end
 
-  it "doesn't find private enum from outside namespace" do
+  it("doesn't find private enum from outside namespace") do
     assert_error %(
       class Foo
         private enum Bar
@@ -317,7 +317,7 @@ describe "Semantic: private" do
       "private constant Foo::Bar referenced"
   end
 
-  it "doesn't find private alias from outside namespace" do
+  it("doesn't find private alias from outside namespace") do
     assert_error %(
       class Foo
         private alias Bar = Int32
@@ -328,7 +328,7 @@ describe "Semantic: private" do
       "private constant Foo::Bar referenced"
   end
 
-  it "doesn't find private lib from outside namespace" do
+  it("doesn't find private lib from outside namespace") do
     assert_error %(
       class Foo
         private lib LibBar
@@ -340,7 +340,7 @@ describe "Semantic: private" do
       "private constant Foo::LibBar referenced"
   end
 
-  it "doesn't find private constant from outside namespace" do
+  it("doesn't find private constant from outside namespace") do
     assert_error %(
       class Foo
         private Bar = 1
@@ -351,7 +351,7 @@ describe "Semantic: private" do
       "private constant Foo::Bar referenced"
   end
 
-  it "finds private type from inside namespace" do
+  it("finds private type from inside namespace") do
     assert_type(%(
       class Foo
         private class Bar
@@ -367,7 +367,7 @@ describe "Semantic: private" do
       )) { int32 }
   end
 
-  it "finds private type from inside namespace in subclass" do
+  it("finds private type from inside namespace in subclass") do
     assert_type(%(
       class Foo
         private class Bar
@@ -385,7 +385,7 @@ describe "Semantic: private" do
       )) { int32 }
   end
 
-  it "gives private constant error in macro" do
+  it("gives private constant error in macro") do
     assert_error %(
       class Foo
         private class Bar

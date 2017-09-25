@@ -18,7 +18,7 @@
 # An example with the block version:
 #
 # ```
-# record Person, first_name : String, last_name : String do
+# record(Person, first_name : String, last_name : String) do
 #   def full_name
 #     "#{first_name} #{last_name}"
 #   end

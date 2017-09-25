@@ -43,8 +43,8 @@ end
 #   ༓ marks the expected implementations to be found
 #   ‸ marks the method call which implementations wants to be found
 #
-describe "implementations" do
-  it "find top level method calls" do
+describe("implementations") do
+  it("find top level method calls") do
     assert_implementations %(
       ༓def foo
         1
@@ -54,7 +54,7 @@ describe "implementations" do
     )
   end
 
-  it "find implementors of different classes" do
+  it("find implementors of different classes") do
     assert_implementations %(
       class Foo
         ༓def foo
@@ -75,7 +75,7 @@ describe "implementations" do
     )
   end
 
-  it "find implementors of classes that are only used" do
+  it("find implementors of classes that are only used") do
     assert_implementations %(
       class Foo
         ༓def foo
@@ -96,7 +96,7 @@ describe "implementations" do
     )
   end
 
-  it "find method calls inside while" do
+  it("find method calls inside while") do
     assert_implementations %(
       ༓def foo
         1
@@ -108,7 +108,7 @@ describe "implementations" do
     )
   end
 
-  it "find method calls inside while cond" do
+  it("find method calls inside while cond") do
     assert_implementations %(
       ༓def foo
         1
@@ -120,7 +120,7 @@ describe "implementations" do
     )
   end
 
-  it "find method calls inside if" do
+  it("find method calls inside if") do
     assert_implementations %(
       ༓def foo
         1
@@ -132,7 +132,7 @@ describe "implementations" do
     )
   end
 
-  it "find method calls inside trailing if" do
+  it("find method calls inside trailing if") do
     assert_implementations %(
       ༓def foo
         1
@@ -142,7 +142,7 @@ describe "implementations" do
     )
   end
 
-  it "find method calls inside rescue" do
+  it("find method calls inside rescue") do
     assert_implementations %(
       ༓def foo
         1
@@ -156,7 +156,7 @@ describe "implementations" do
     )
   end
 
-  it "find implementation from macro expansions" do
+  it("find implementation from macro expansions") do
     assert_implementations %(
       macro foo
         def bar
@@ -172,7 +172,7 @@ describe "implementations" do
     )
   end
 
-  it "find full trace for macro expansions" do
+  it("find full trace for macro expansions") do
     visitor, result = processed_implementation_visitor(%(
       macro foo
         def bar
@@ -210,7 +210,7 @@ describe "implementations" do
     exp.filename.should eq(".")
   end
 
-  it "can display text output" do
+  it("can display text output") do
     visitor, result = processed_implementation_visitor(%(
       macro foo
         def bar
@@ -234,7 +234,7 @@ describe "implementations" do
 )
   end
 
-  it "can display json output" do
+  it("can display json output") do
     _, result = processed_implementation_visitor(%(
       macro foo
         def bar
@@ -254,7 +254,7 @@ describe "implementations" do
     end.should eq %({"status":"ok","message":"1 implementation found","implementations":[{"line":11,"column":7,"filename":".","expands":{"line":8,"column":9,"filename":".","macro":"baz","expands":{"line":3,"column":9,"filename":".","macro":"foo"}}}]})
   end
 
-  it "find implementation in class methods" do
+  it("find implementation in class methods") do
     assert_implementations %(
     ༓def foo
     end
@@ -268,7 +268,7 @@ describe "implementations" do
     Bar.bar)
   end
 
-  it "find implementation in generic class" do
+  it("find implementation in generic class") do
     assert_implementations %(
     class Foo
       ༓def self.foo
@@ -291,7 +291,7 @@ describe "implementations" do
     )
   end
 
-  it "find implementation in generic class methods" do
+  it("find implementation in generic class methods") do
     assert_implementations %(
     ༓def foo
     end
@@ -306,7 +306,7 @@ describe "implementations" do
     )
   end
 
-  it "find implementation inside a module class" do
+  it("find implementation inside a module class") do
     assert_implementations %(
     ༓def foo
     end
@@ -323,7 +323,7 @@ describe "implementations" do
     )
   end
 
-  it "find implementation inside contained class' class method" do
+  it("find implementation inside contained class' class method") do
     assert_implementations %(
     ༓def foo
 
@@ -341,7 +341,7 @@ describe "implementations" do
     )
   end
 
-  it "find implementation inside contained file private method" do
+  it("find implementation inside contained file private method") do
     assert_implementations %(
     private ༓def foo
     end
@@ -354,7 +354,7 @@ describe "implementations" do
     )
   end
 
-  it "find implementation inside contained file private class' class method" do
+  it("find implementation inside contained file private class' class method") do
     assert_implementations %(
     private ༓def foo
     end

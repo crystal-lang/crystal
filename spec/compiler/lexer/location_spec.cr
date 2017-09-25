@@ -6,8 +6,8 @@ private def assert_token_column_number(lexer, type, column_number)
   token.column_number.should eq(column_number)
 end
 
-describe "Lexer: location" do
-  it "stores line numbers" do
+describe("Lexer: location") do
+  it("stores line numbers") do
     lexer = Lexer.new "1\n2"
     token = lexer.next_token
     token.type.should eq(:NUMBER)
@@ -22,7 +22,7 @@ describe "Lexer: location" do
     token.line_number.should eq(2)
   end
 
-  it "stores column numbers" do
+  it("stores column numbers") do
     lexer = Lexer.new "1;  ident; def;\n4"
     assert_token_column_number lexer, :NUMBER, 1
     assert_token_column_number lexer, :";", 2
@@ -36,7 +36,7 @@ describe "Lexer: location" do
     assert_token_column_number lexer, :NUMBER, 1
   end
 
-  it "overrides location with pragma" do
+  it("overrides location with pragma") do
     lexer = Lexer.new %(1 + #<loc:"foo",12,34>2)
     lexer.filename = "bar"
 
@@ -68,7 +68,7 @@ describe "Lexer: location" do
     token.filename.should eq("foo")
   end
 
-  it "pushes and pops its location" do
+  it("pushes and pops its location") do
     lexer = Lexer.new %(#<loc:push>#<loc:"foo",12,34>1 + #<loc:pop>2)
     lexer.filename = "bar"
 
@@ -100,7 +100,7 @@ describe "Lexer: location" do
     token.filename.should eq("bar")
   end
 
-  it "uses two consecutive loc pragma " do
+  it("uses two consecutive loc pragma ") do
     lexer = Lexer.new %(1#<loc:"foo",12,34>#<loc:"foo",56,78>2)
     lexer.filename = "bar"
 
@@ -117,7 +117,7 @@ describe "Lexer: location" do
     token.filename.should eq("foo")
   end
 
-  it "assigns correct loc location to node" do
+  it("assigns correct loc location to node") do
     exps = Parser.parse(%[(#<loc:"foo.txt",2,3>1 + 2)]).as(Expressions)
     node = exps.expressions.first
     location = node.location.not_nil!
@@ -126,13 +126,13 @@ describe "Lexer: location" do
     location.filename.should eq("foo.txt")
   end
 
-  it "parses var/call right after loc (#491)" do
+  it("parses var/call right after loc (#491)") do
     exps = Parser.parse(%[(#<loc:"foo.txt",2,3>msg)]).as(Expressions)
     exp = exps.expressions.first.as(Call)
     exp.name.should eq("msg")
   end
 
-  it "locations in different files have no order" do
+  it("locations in different files have no order") do
     loc1 = Location.new("file1", 1, 1)
     loc2 = Location.new("file2", 2, 2)
 
@@ -143,7 +143,7 @@ describe "Lexer: location" do
     (loc1 >= loc2).should be_false
   end
 
-  it "locations in same files are comparable based on line" do
+  it("locations in same files are comparable based on line") do
     loc1 = Location.new("file1", 1, 1)
     loc2 = Location.new("file1", 2, 1)
     loc3 = Location.new("file1", 1, 1)
@@ -164,7 +164,7 @@ describe "Lexer: location" do
     (loc3 == loc1).should be_true
   end
 
-  it "locations with virtual files shoud be comparable" do
+  it("locations with virtual files shoud be comparable") do
     loc1 = Location.new("file1", 1, 1)
     loc2 = Location.new(VirtualFile.new(Macro.new("macro", [] of Arg, Nop.new), "", Location.new("f", 1, 1)), 2, 1)
     (loc1 < loc2).should be_false

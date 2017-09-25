@@ -6,7 +6,7 @@ struct HTTP::Headers
   include Enumerable({String, Array(String)})
 
   # :nodoc:
-  record Key, name : String do
+  record(Key, name : String) do
     forward_missing_to @name
 
     def hash(hasher)

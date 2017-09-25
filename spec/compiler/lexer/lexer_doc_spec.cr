@@ -1,7 +1,7 @@
 require "../../support/syntax"
 
-describe "Lexer doc" do
-  it "lexes without doc enabled" do
+describe("Lexer doc") do
+  it("lexes without doc enabled") do
     lexer = Lexer.new(%(1))
     lexer.doc_enabled = true
 
@@ -10,7 +10,7 @@ describe "Lexer doc" do
     token.doc.should be_nil
   end
 
-  it "lexes with doc enabled but without docs" do
+  it("lexes with doc enabled but without docs") do
     lexer = Lexer.new(%(1))
     lexer.doc_enabled = true
 
@@ -19,7 +19,7 @@ describe "Lexer doc" do
     token.doc.should be_nil
   end
 
-  it "lexes with doc enabled and docs" do
+  it("lexes with doc enabled and docs") do
     lexer = Lexer.new(%(# hello\n1))
     lexer.doc_enabled = true
 
@@ -32,7 +32,7 @@ describe "Lexer doc" do
     token.doc.should eq("hello")
   end
 
-  it "lexes with doc enabled and docs, two line comment" do
+  it("lexes with doc enabled and docs, two line comment") do
     lexer = Lexer.new(%(# hello\n# world\n1))
     lexer.doc_enabled = true
 
@@ -45,7 +45,7 @@ describe "Lexer doc" do
     token.doc.should eq("hello\nworld")
   end
 
-  it "lexes with doc enabled and docs, two line comment with leading whitespace" do
+  it("lexes with doc enabled and docs, two line comment with leading whitespace") do
     lexer = Lexer.new(%(# hello\n    # world\n1))
     lexer.doc_enabled = true
 
@@ -66,7 +66,7 @@ describe "Lexer doc" do
     token.doc.should eq("hello\nworld")
   end
 
-  it "lexes with doc enabled and docs, one line comment with two newlines and another comment" do
+  it("lexes with doc enabled and docs, one line comment with two newlines and another comment") do
     lexer = Lexer.new(%(# hello\n\n    # world\n1))
     lexer.doc_enabled = true
 
@@ -87,7 +87,7 @@ describe "Lexer doc" do
     token.doc.should eq("world")
   end
 
-  it "resets doc after non newline or space token" do
+  it("resets doc after non newline or space token") do
     lexer = Lexer.new(%(# hello\n1 2))
     lexer.doc_enabled = true
 

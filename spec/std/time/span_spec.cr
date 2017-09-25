@@ -1,13 +1,13 @@
 require "spec"
 
 private def expect_overflow
-  expect_raises ArgumentError, "Time::Span too big or too small" do
+  expect_raises(ArgumentError, "Time::Span too big or too small") do
     yield
   end
 end
 
-describe Time::Span do
-  it "initializes" do
+describe(Time::Span) do
+  it("initializes") do
     t1 = Time::Span.new 1234567890
     t1.to_s.should eq("00:02:03.4567890")
 
@@ -27,26 +27,26 @@ describe Time::Span do
     t1.to_s.should eq("1.01:00:00")
   end
 
-  it "days overflows" do
+  it("days overflows") do
     expect_overflow do
       days = (Int64::MAX / Time::Span::TicksPerDay).to_i32 + 1
       Time::Span.new days, 0, 0, 0, 0
     end
   end
 
-  it "max days" do
+  it("max days") do
     expect_overflow do
       Int32::MAX.days
     end
   end
 
-  it "min days" do
+  it("min days") do
     expect_overflow do
       Int32::MIN.days
     end
   end
 
-  it "max seconds" do
+  it("max seconds") do
     ts = Int32::MAX.seconds
     ts.days.should eq(24855)
     ts.hours.should eq(3)
@@ -56,7 +56,7 @@ describe Time::Span do
     ts.ticks.should eq(21474836470000000)
   end
 
-  it "min seconds" do
+  it("min seconds") do
     ts = Int32::MIN.seconds
     ts.days.should eq(-24855)
     ts.hours.should eq(-3)
@@ -66,7 +66,7 @@ describe Time::Span do
     ts.ticks.should eq(-21474836480000000)
   end
 
-  it "max milliseconds" do
+  it("max milliseconds") do
     ts = Int32::MAX.milliseconds
     ts.days.should eq(24)
     ts.hours.should eq(20)
@@ -76,7 +76,7 @@ describe Time::Span do
     ts.ticks.should eq(21474836470000)
   end
 
-  it "min milliseconds" do
+  it("min milliseconds") do
     ts = Int32::MIN.milliseconds
     ts.days.should eq(-24)
     ts.hours.should eq(-20)
@@ -86,7 +86,7 @@ describe Time::Span do
     ts.ticks.should eq(-21474836480000)
   end
 
-  it "negative timespan" do
+  it("negative timespan") do
     ts = Time::Span.new -23, -59, -59
     ts.days.should eq(0)
     ts.hours.should eq(-23)
@@ -96,7 +96,7 @@ describe Time::Span do
     ts.ticks.should eq(-863990000000)
   end
 
-  it "test properties" do
+  it("test properties") do
     t1 = Time::Span.new 1, 2, 3, 4, 5
     t2 = -t1
 
@@ -113,7 +113,7 @@ describe Time::Span do
     t2.milliseconds.should eq(-5)
   end
 
-  it "test add" do
+  it("test add") do
     t1 = Time::Span.new 2, 3, 4, 5, 6
     t2 = Time::Span.new 1, 2, 3, 4, 5
     t3 = t1 + t2
@@ -128,7 +128,7 @@ describe Time::Span do
     # TODO check overflow
   end
 
-  it "test compare" do
+  it("test compare") do
     t1 = Time::Span.new -1
     t2 = Time::Span.new 1
 
@@ -145,7 +145,7 @@ describe Time::Span do
     (t1 <= t2).should be_true
   end
 
-  it "test equals" do
+  it("test equals") do
     t1 = Time::Span.new 1
     t2 = Time::Span.new 2
 
@@ -154,7 +154,7 @@ describe Time::Span do
     (t1 == "hello").should be_false
   end
 
-  it "test float extension methods" do
+  it("test float extension methods") do
     12.345.days.to_s.should eq("12.08:16:48")
     12.345.hours.to_s.should eq("12:20:42")
     12.345.minutes.to_s.should eq("00:12:20.7000000")
@@ -167,7 +167,7 @@ describe Time::Span do
     0.0005.seconds.to_s.should eq("00:00:00.0010000")
   end
 
-  it "test negate and duration" do
+  it("test negate and duration") do
     (-Time::Span.new(12345)).to_s.should eq("-00:00:00.0012345")
     Time::Span.new(-12345).duration.to_s.should eq("00:00:00.0012345")
     Time::Span.new(-12345).abs.to_s.should eq("00:00:00.0012345")
@@ -175,13 +175,13 @@ describe Time::Span do
     (+Time::Span.new(77)).to_s.should eq("00:00:00.0000077")
   end
 
-  it "test hash code" do
+  it("test hash code") do
     t1 = Time::Span.new(77)
     t2 = Time::Span.new(77)
     t1.hash.should eq(t2.hash)
   end
 
-  it "test subtract" do
+  it("test subtract") do
     t1 = Time::Span.new 2, 3, 4, 5, 6
     t2 = Time::Span.new 1, 2, 3, 4, 5
     t3 = t1 - t2
@@ -191,7 +191,7 @@ describe Time::Span do
     # TODO check overflow
   end
 
-  it "test multiply" do
+  it("test multiply") do
     t1 = Time::Span.new 5, 4, 3, 2, 1
     t2 = t1 * 61
 
@@ -200,7 +200,7 @@ describe Time::Span do
     # TODO check overflow
   end
 
-  it "test divide" do
+  it("test divide") do
     t1 = Time::Span.new 3, 3, 3, 3, 3
     t2 = t1 / 2
 
@@ -209,7 +209,7 @@ describe Time::Span do
     # TODO check overflow
   end
 
-  it "divides by another Time::Span" do
+  it("divides by another Time::Span") do
     ratio = 20.minutes / 15.seconds
     ratio.should eq(80.0)
 
@@ -217,7 +217,7 @@ describe Time::Span do
     ratio2.should eq(0.75)
   end
 
-  it "test to_s" do
+  it("test to_s") do
     t1 = Time::Span.new 1, 2, 3, 4, 5
     t2 = -t1
 
@@ -228,7 +228,7 @@ describe Time::Span do
     Time::Span::Zero.to_s.should eq("00:00:00")
   end
 
-  it "test totals" do
+  it("test totals") do
     t1 = Time::Span.new 1, 2, 3, 4, 5
     t1.total_days.should be_close(1.08546, 1e-05)
     t1.total_hours.should be_close(26.0511, 1e-04)
@@ -239,11 +239,11 @@ describe Time::Span do
     t1.to_i.should eq(93784)
   end
 
-  it "should sum" do
+  it("should sum") do
     [1.second, 5.seconds].sum.should eq(6.seconds)
   end
 
-  it "test zero?" do
+  it("test zero?") do
     Time::Span.new(0).zero?.should eq true
     Time::Span.new(123456789).zero?.should eq false
   end

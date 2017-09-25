@@ -26,27 +26,27 @@ private class Foo
   end
 end
 
-describe WeakRef do
-  it "should get dereferenced object" do
+describe(WeakRef) do
+  it("should get dereferenced object") do
     foo = Foo.new :foo
     ref = WeakRef.new(foo)
     ref.should_not be_nil
     ref.value.should be(foo)
   end
 
-  it "should get dereferenced object in data section" do
+  it("should get dereferenced object in data section") do
     foo = "foo"
     ref = WeakRef.new(foo)
     ref.value.should be(foo)
   end
 
-  it "should not crash with object in data section during GC" do
+  it("should not crash with object in data section during GC") do
     foo = "foo"
     ref = WeakRef.new(foo)
     GC.collect
   end
 
-  it "State counts released objects" do
+  it("State counts released objects") do
     State.reset
     State.count(:foo).should eq 0
     10.times do
@@ -56,7 +56,7 @@ describe WeakRef do
     State.count(:foo).should be > 0
   end
 
-  it "Referenced object should not be released" do
+  it("Referenced object should not be released") do
     State.reset
     instances = [] of Foo
     State.count(:strong_foo_ref).should eq 0
@@ -67,7 +67,7 @@ describe WeakRef do
     State.count(:strong_foo_ref).should eq 0
   end
 
-  it "Weak referenced object should be released if no other reference" do
+  it("Weak referenced object should be released if no other reference") do
     State.reset
     instances = [] of WeakRef(Foo)
     last = nil

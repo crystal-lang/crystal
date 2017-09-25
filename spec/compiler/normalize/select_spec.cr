@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Normalize: case" do
-  it "normalizes select with call" do
+describe("Normalize: case") do
+  it("normalizes select with call") do
     assert_expand "select; when foo; body; when bar; baz; end", <<-CODE
       __temp_1, __temp_2 = ::Channel.select({foo_select_action, bar_select_action})
       case __temp_1
@@ -15,7 +15,7 @@ describe "Normalize: case" do
       CODE
   end
 
-  it "normalizes select with assign" do
+  it("normalizes select with assign") do
     assert_expand "select; when x = foo; x + 1; end", <<-CODE
       __temp_1, __temp_2 = ::Channel.select({foo_select_action})
       case __temp_1
@@ -28,7 +28,7 @@ describe "Normalize: case" do
       CODE
   end
 
-  it "normalizes select with else" do
+  it("normalizes select with else") do
     assert_expand "select; when foo; body; else; baz; end", <<-CODE
       __temp_1, __temp_2 = ::Channel.select({foo_select_action}, true)
       case __temp_1
@@ -40,7 +40,7 @@ describe "Normalize: case" do
       CODE
   end
 
-  it "normalizes select with assign and question method" do
+  it("normalizes select with assign and question method") do
     assert_expand "select; when x = foo?; x + 1; end", <<-CODE
       __temp_1, __temp_2 = ::Channel.select({foo_select_action?})
       case __temp_1
@@ -53,7 +53,7 @@ describe "Normalize: case" do
       CODE
   end
 
-  it "normalizes select with assign and bang method" do
+  it("normalizes select with assign and bang method") do
     assert_expand "select; when x = foo!; x + 1; end", <<-CODE
       __temp_1, __temp_2 = ::Channel.select({foo_select_action!})
       case __temp_1

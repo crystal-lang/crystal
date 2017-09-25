@@ -42,7 +42,7 @@ private def assert_expand(code, expected_result)
 end
 
 private def assert_expand(code, expected_result)
-  run_expand_tool code do |result|
+  run_expand_tool(code) do |result|
     result.status.should eq("ok")
     result.message.should eq("#{expected_result.size} expansion#{expected_result.size >= 2 ? "s" : ""} found")
     result.expansions.not_nil!.zip(expected_result) do |expansion, expected_result|
@@ -64,44 +64,44 @@ private def assert_expand_simple(code, expanded, original = code.gsub('‸', "")
 end
 
 private def assert_expand_fail(code, message = "no expansion found")
-  run_expand_tool code do |result|
+  run_expand_tool(code) do |result|
     result.status.should eq("failed")
     result.message.should eq(message)
   end
 end
 
-describe "expand" do
-  it "expands macro expression {{ ... }}" do
+describe("expand") do
+  it("expands macro expression {{ ... }}") do
     code = "‸{{ 1 + 2 }}"
 
     assert_expand_simple code, "3"
   end
 
-  it "expands macro expression {{ ... }} with cursor inside it" do
+  it("expands macro expression {{ ... }} with cursor inside it") do
     code = "{{ 1 ‸+ 2 }}"
 
     assert_expand_simple code, "3"
   end
 
-  it "expands macro expression {{ ... }} with cursor end of it" do
+  it("expands macro expression {{ ... }} with cursor end of it") do
     code = "{{ 1 + 2 }‸}"
 
     assert_expand_simple code, "3"
   end
 
-  it "expands macro expression {% ... %}" do
+  it("expands macro expression {% ... %}") do
     code = %(‸{% "test" %})
 
     assert_expand_simple code, ""
   end
 
-  it "expands macro expression {% ... %} with cursor at end of it" do
+  it("expands macro expression {% ... %} with cursor at end of it") do
     code = %({% "test" ‸%})
 
     assert_expand_simple code, ""
   end
 
-  it "expands macro control {% if %}" do
+  it("expands macro control {% if %}") do
     code = <<-CODE
     {%‸ if 1 == 1 %}
       true
@@ -111,7 +111,7 @@ describe "expand" do
     assert_expand_simple code, "true"
   end
 
-  it "expands macro control {% if %} with cursor inside it" do
+  it("expands macro control {% if %} with cursor inside it") do
     code = <<-CODE
     {% if 1 == 1 %}
       tr‸ue
@@ -121,7 +121,7 @@ describe "expand" do
     assert_expand_simple code, "true"
   end
 
-  it "expands macro control {% if %} with cursor at end of it" do
+  it("expands macro control {% if %} with cursor at end of it") do
     code = <<-CODE
     {% if 1 == 1 %}
       true
@@ -131,7 +131,7 @@ describe "expand" do
     assert_expand_simple code, "true"
   end
 
-  it "expands macro control {% if %} with indent" do
+  it("expands macro control {% if %} with indent") do
     code = <<-CODE
     begin
       {% if 1 == 1 %}
@@ -149,7 +149,7 @@ describe "expand" do
     assert_expand_simple code, original: original, expanded: "true"
   end
 
-  it "expands macro control {% for %}" do
+  it("expands macro control {% for %}") do
     code = <<-CODE
     {% f‸or x in 1..3 %}
       {{ x }}
@@ -159,7 +159,7 @@ describe "expand" do
     assert_expand_simple code, "1\n2\n3\n"
   end
 
-  it "expands macro control {% for %} with cursor inside it" do
+  it("expands macro control {% for %} with cursor inside it") do
     code = <<-CODE
     {% for x in 1..3 %}
      ‸ {{ x }}
@@ -169,7 +169,7 @@ describe "expand" do
     assert_expand_simple code, "1\n2\n3\n"
   end
 
-  it "expands macro control {% for %} with cursor at end of it" do
+  it("expands macro control {% for %} with cursor at end of it") do
     code = <<-CODE
     {% for x in 1..3 %}
       {{ x }}
@@ -179,7 +179,7 @@ describe "expand" do
     assert_expand_simple code, "1\n2\n3\n"
   end
 
-  it "expands macro control {% for %} with indent" do
+  it("expands macro control {% for %} with indent") do
     code = <<-CODE
     begin
       {% f‸or x in 1..3 %}
@@ -197,7 +197,7 @@ describe "expand" do
     assert_expand_simple code, original: original, expanded: "1\n2\n3\n"
   end
 
-  it "expands simple macro" do
+  it("expands simple macro") do
     code = <<-CODE
     macro foo
       1
@@ -206,7 +206,7 @@ describe "expand" do
     ‸foo
     CODE
 
-    assert_expand_simple code, original: "foo", expanded: "1" do |expansion|
+    assert_expand_simple(code, original: "foo", expanded: "1") do |expansion|
       expansion.expanded_macros.size.should eq(1)
       macros = expansion.expanded_macros[0]
       macros.size.should eq(1)
@@ -219,7 +219,7 @@ describe "expand" do
     end
   end
 
-  it "expands simple macro with cursor inside it" do
+  it("expands simple macro with cursor inside it") do
     code = <<-CODE
     macro foo
       1
@@ -231,7 +231,7 @@ describe "expand" do
     assert_expand_simple code, original: "foo", expanded: "1"
   end
 
-  it "expands simple macro with cursor at end of it" do
+  it("expands simple macro with cursor at end of it") do
     code = <<-CODE
     macro foo
       1
@@ -243,7 +243,7 @@ describe "expand" do
     assert_expand_simple code, original: "foo", expanded: "1"
   end
 
-  it "expands complex macro" do
+  it("expands complex macro") do
     code = <<-CODE
     macro foo
       {% if true %}
@@ -260,7 +260,7 @@ describe "expand" do
     assert_expand_simple code, original: "foo", expanded: %("if true"\n"1"\n"2"\n"3"\n)
   end
 
-  it "expands macros with 2 level" do
+  it("expands macros with 2 level") do
     code = <<-CODE
     macro foo
       :foo
@@ -274,7 +274,7 @@ describe "expand" do
     b‸ar
     CODE
 
-    assert_expand code, [["bar", "foo\n:bar\n", ":foo\n:bar\n"]] do |result|
+    assert_expand(code, [["bar", "foo\n:bar\n", ":foo\n:bar\n"]]) do |result|
       expansion = result.expansions.not_nil![0]
 
       macros = expansion.expanded_macros
@@ -296,7 +296,7 @@ describe "expand" do
     end
   end
 
-  it "expands macros with 3 level" do
+  it("expands macros with 3 level") do
     code = <<-CODE
     macro foo
       :foo
@@ -316,7 +316,7 @@ describe "expand" do
     ba‸z
     CODE
 
-    assert_expand code, [["baz", "foo\nbar\n:baz\n", ":foo\nfoo\n:bar\n:baz\n", ":foo\n:foo\n:bar\n:baz\n"]] do |result|
+    assert_expand(code, [["baz", "foo\nbar\n:baz\n", ":foo\nfoo\n:bar\n:baz\n", ":foo\n:foo\n:bar\n:baz\n"]]) do |result|
       expansion = result.expansions.not_nil![0]
 
       macros = expansion.expanded_macros
@@ -351,7 +351,7 @@ describe "expand" do
     end
   end
 
-  it "expands macro of module" do
+  it("expands macro of module") do
     code = <<-CODE
     module Foo
       macro foo
@@ -363,7 +363,7 @@ describe "expand" do
     Foo.f‸oo
     CODE
 
-    assert_expand_simple code, original: "Foo.foo", expanded: ":Foo\n:foo\n" do |expansion|
+    assert_expand_simple(code, original: "Foo.foo", expanded: ":Foo\n:foo\n") do |expansion|
       expansion.expanded_macros.size.should eq(1)
       macros = expansion.expanded_macros[0]
       macros.size.should eq(1)
@@ -376,7 +376,7 @@ describe "expand" do
     end
   end
 
-  it "expands macro of module with cursor at module name" do
+  it("expands macro of module with cursor at module name") do
     code = <<-CODE
     module Foo
       macro foo
@@ -391,7 +391,7 @@ describe "expand" do
     assert_expand_simple code, original: "Foo.foo", expanded: ":Foo\n:foo\n"
   end
 
-  it "expands macro of module with cursor at dot" do
+  it("expands macro of module with cursor at dot") do
     code = <<-CODE
     module Foo
       macro foo
@@ -406,7 +406,7 @@ describe "expand" do
     assert_expand_simple code, original: "Foo.foo", expanded: ":Foo\n:foo\n"
   end
 
-  it "expands macro of module inside module" do
+  it("expands macro of module inside module") do
     code = <<-CODE
     module Foo
       macro foo
@@ -422,7 +422,7 @@ describe "expand" do
   end
 
   %w(module class struct enum lib).each do |keyword|
-    it "expands macro expression inside #{keyword}" do
+    it("expands macro expression inside #{keyword}") do
       code = <<-CODE
       #{keyword} Foo
         ‸{{ "Foo = 1".id }}
@@ -432,7 +432,7 @@ describe "expand" do
       assert_expand_simple code, original: %({{ "Foo = 1".id }}), expanded: "Foo = 1"
     end
 
-    it "expands macro expression inside private #{keyword}" do
+    it("expands macro expression inside private #{keyword}") do
       code = <<-CODE
       private #{keyword} Foo
         ‸{{ "Foo = 1".id }}
@@ -443,7 +443,7 @@ describe "expand" do
     end
 
     unless keyword == "lib"
-      it "expands macro expression inside def of private #{keyword}" do
+      it("expands macro expression inside def of private #{keyword}") do
         code = <<-CODE
         private #{keyword} Foo
           Foo = 1
@@ -461,7 +461,7 @@ describe "expand" do
   end
 
   %w(struct union).each do |keyword|
-    it "expands macro expression inside C #{keyword}" do
+    it("expands macro expression inside C #{keyword}") do
       code = <<-CODE
       lib Foo
         #{keyword} Foo
@@ -473,7 +473,7 @@ describe "expand" do
       assert_expand_simple code, original: %({{ "Foo = 1".id }}), expanded: "Foo = 1"
     end
 
-    it "expands macro expression inside C #{keyword} of private lib" do
+    it("expands macro expression inside C #{keyword} of private lib") do
       code = <<-CODE
       private lib Foo
         #{keyword} Foo
@@ -487,7 +487,7 @@ describe "expand" do
   end
 
   ["", "private "].each do |prefix|
-    it "expands macro expression inside #{prefix}def" do
+    it("expands macro expression inside #{prefix}def") do
       code = <<-CODE
       #{prefix}def foo(x : T) forall T
         ‸{{ T }}
@@ -503,7 +503,7 @@ describe "expand" do
       ]
     end
 
-    it "expands macro expression inside def of #{prefix}module" do
+    it("expands macro expression inside def of #{prefix}module") do
       code = <<-CODE
       #{prefix}module Foo(T)
         def self.foo
@@ -523,7 +523,7 @@ describe "expand" do
       ]
     end
 
-    it "expands macro expression inside def of nested #{prefix}module" do
+    it("expands macro expression inside def of nested #{prefix}module") do
       code = <<-CODE
       #{prefix}module Foo
         #{prefix}module Bar(T)
@@ -546,7 +546,7 @@ describe "expand" do
     end
   end
 
-  it "expands macro expression inside fun" do
+  it("expands macro expression inside fun") do
     code = <<-CODE
     fun foo
       {{ :foo‸ }}
@@ -556,7 +556,7 @@ describe "expand" do
     assert_expand_simple code, original: "{{ :foo }}", expanded: ":foo"
   end
 
-  it "doesn't expand macro expression" do
+  it("doesn't expand macro expression") do
     code = <<-CODE
     {{ 1 + 2 }}
     ‸
@@ -565,7 +565,7 @@ describe "expand" do
     assert_expand_fail code
   end
 
-  it "doesn't expand macro expression with cursor out of end" do
+  it("doesn't expand macro expression with cursor out of end") do
     code = <<-CODE
     {{ 1 + 2 }}‸
     CODE
@@ -573,7 +573,7 @@ describe "expand" do
     assert_expand_fail code
   end
 
-  it "doesn't expand macro expression" do
+  it("doesn't expand macro expression") do
     code = <<-CODE
     ‸  {{ 1 + 2 }}
     CODE
@@ -581,7 +581,7 @@ describe "expand" do
     assert_expand_fail code
   end
 
-  it "doesn't expand normal call" do
+  it("doesn't expand normal call") do
     code = <<-CODE
     def foo
       1
@@ -593,7 +593,7 @@ describe "expand" do
     assert_expand_fail code, "no expansion found: foo may not be a macro"
   end
 
-  it "expands macro with doc" do
+  it("expands macro with doc") do
     code = <<-CODE
     macro foo(x)
       # string of {{ x }}

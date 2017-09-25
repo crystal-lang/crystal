@@ -1,8 +1,8 @@
 require "spec"
 require "http"
 
-describe HTTP::Multipart::Builder do
-  it "generates valid multipart messages" do
+describe(HTTP::Multipart::Builder) do
+  it("generates valid multipart messages") do
     io = IO::Memory.new
     builder = HTTP::Multipart::Builder.new(io, "fixed-boundary")
 
@@ -28,7 +28,7 @@ describe HTTP::Multipart::Builder do
     io.to_s.should eq(expected_message.gsub("\n", "\r\n"))
   end
 
-  it "generates valid multipart messages with preamble and epilogue" do
+  it("generates valid multipart messages with preamble and epilogue") do
     io = IO::Memory.new
     builder = HTTP::Multipart::Builder.new(io, "fixed-boundary")
 
@@ -62,15 +62,15 @@ describe HTTP::Multipart::Builder do
     io.to_s.should eq(expected_message.gsub("\n", "\r\n"))
   end
 
-  describe "#content_type" do
-    it "calculates the content type" do
+  describe("#content_type") do
+    it("calculates the content type") do
       builder = HTTP::Multipart::Builder.new(IO::Memory.new, "a delimiter string with a quote in \"")
       builder.content_type("alternative").should eq(%q(multipart/alternative; boundary="a\ delimiter\ string\ with\ a\ quote\ in\ \""))
     end
   end
 
-  describe ".preamble" do
-    it "accepts different data types" do
+  describe(".preamble") do
+    it("accepts different data types") do
       io = IO::Memory.new
       builder = HTTP::Multipart::Builder.new(io, "boundary")
 
@@ -102,7 +102,7 @@ describe HTTP::Multipart::Builder do
       generated_multipart.should eq(expected_multipart.gsub("\n", "\r\n"))
     end
 
-    it "raises when called after starting the body" do
+    it("raises when called after starting the body") do
       builder = HTTP::Multipart::Builder.new(IO::Memory.new)
 
       builder.body_part HTTP::Headers.new, "test"
@@ -112,8 +112,8 @@ describe HTTP::Multipart::Builder do
     end
   end
 
-  describe ".body_part" do
-    it "accepts different data types" do
+  describe(".body_part") do
+    it("accepts different data types") do
       io = IO::Memory.new
       builder = HTTP::Multipart::Builder.new(io, "boundary")
 
@@ -159,7 +159,7 @@ describe HTTP::Multipart::Builder do
       generated_multipart.should eq(expected_multipart.gsub("\n", "\r\n"))
     end
 
-    it "raises when called after finishing" do
+    it("raises when called after finishing") do
       builder = HTTP::Multipart::Builder.new(IO::Memory.new)
 
       builder.body_part HTTP::Headers.new, "test"
@@ -169,7 +169,7 @@ describe HTTP::Multipart::Builder do
       end
     end
 
-    it "raises when called after epilogue" do
+    it("raises when called after epilogue") do
       builder = HTTP::Multipart::Builder.new(IO::Memory.new)
 
       builder.body_part HTTP::Headers.new, "test"
@@ -180,8 +180,8 @@ describe HTTP::Multipart::Builder do
     end
   end
 
-  describe ".epilogue" do
-    it "accepts different data types" do
+  describe(".epilogue") do
+    it("accepts different data types") do
       io = IO::Memory.new
       builder = HTTP::Multipart::Builder.new(io, "boundary")
 
@@ -214,7 +214,7 @@ describe HTTP::Multipart::Builder do
       generated_multipart.should eq(expected_multipart.gsub("\n", "\r\n"))
     end
 
-    it "raises when called after finishing" do
+    it("raises when called after finishing") do
       builder = HTTP::Multipart::Builder.new(IO::Memory.new)
 
       builder.body_part HTTP::Headers.new, "test"
@@ -225,7 +225,7 @@ describe HTTP::Multipart::Builder do
       end
     end
 
-    it "raises when called with no body parts" do
+    it("raises when called with no body parts") do
       builder = HTTP::Multipart::Builder.new(IO::Memory.new)
 
       expect_raises(HTTP::Multipart::Error, "Cannot generate epilogue: no body parts") do
@@ -240,8 +240,8 @@ describe HTTP::Multipart::Builder do
     end
   end
 
-  describe ".finish" do
-    it "raises if no body exists" do
+  describe(".finish") do
+    it("raises if no body exists") do
       builder = HTTP::Multipart::Builder.new(IO::Memory.new)
 
       expect_raises(HTTP::Multipart::Error, "Cannot finish multipart: no body parts") do
@@ -255,7 +255,7 @@ describe HTTP::Multipart::Builder do
       end
     end
 
-    it "raises if already finished" do
+    it("raises if already finished") do
       builder = HTTP::Multipart::Builder.new(IO::Memory.new)
 
       builder.body_part HTTP::Headers.new, "test"

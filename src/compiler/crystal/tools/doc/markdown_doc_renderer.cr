@@ -45,13 +45,13 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     end
 
     # Check Type#method(...) or Type or #method(...)
-    text = text.gsub /\b
+    text = text.gsub(/\b
       ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)?(?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
         |
       ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)?)
         |
       ((?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
-      /x do |match_text, match|
+      /x) do |match_text, match|
       sharp_index = match_text.index('#')
       dot_index = match_text.index('.')
       kind = sharp_index ? :instance : :class

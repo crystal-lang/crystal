@@ -4,7 +4,7 @@
 # logic is in `crystal/tools/formatter.cr`.
 
 class Crystal::Command
-  record FormatResult, filename : String, code : Code do
+  record(FormatResult, filename : String, code : Code) do
     enum Code
       FORMAT
       SYNTAX

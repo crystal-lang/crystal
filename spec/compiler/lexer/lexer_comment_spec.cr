@@ -1,7 +1,7 @@
 require "../../support/syntax"
 
-describe "Lexer comments" do
-  it "lexes without comments enabled" do
+describe("Lexer comments") do
+  it("lexes without comments enabled") do
     lexer = Lexer.new(%(# Hello\n1))
 
     token = lexer.next_token
@@ -11,7 +11,7 @@ describe "Lexer comments" do
     token.type.should eq(:NUMBER)
   end
 
-  it "lexes with comments enabled" do
+  it("lexes with comments enabled") do
     lexer = Lexer.new(%(# Hello\n1))
     lexer.comments_enabled = true
 
@@ -26,7 +26,7 @@ describe "Lexer comments" do
     token.type.should eq(:NUMBER)
   end
 
-  it "lexes with comments enabled (2)" do
+  it("lexes with comments enabled (2)") do
     lexer = Lexer.new(%(1 # Hello))
     lexer.comments_enabled = true
 
@@ -44,7 +44,7 @@ describe "Lexer comments" do
     token.type.should eq(:EOF)
   end
 
-  it "lexes correct number of spaces" do
+  it("lexes correct number of spaces") do
     lexer = Lexer.new(%(1   2))
     lexer.count_whitespace = true
 

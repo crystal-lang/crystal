@@ -2,32 +2,32 @@ require "../../spec_helper"
 
 CodeGenUnionString = "lib LibFoo; union Bar; x : Int32; y : Int64; z : Float32; end; end"
 
-describe "Code gen: c union" do
-  it "codegens union property default value" do
+describe("Code gen: c union") do
+  it("codegens union property default value") do
     run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x").to_i.should eq(0)
   end
 
-  it "codegens union property default value 2" do
+  it("codegens union property default value 2") do
     run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.z").to_f32.should eq(0)
   end
 
-  it "codegens union property setter 1" do
+  it("codegens union property setter 1") do
     run("#{CodeGenUnionString}; bar = LibFoo::Bar.new; bar.x = 42; bar.x").to_i.should eq(42)
   end
 
-  it "codegens union property setter 2" do
+  it("codegens union property setter 2") do
     run("#{CodeGenUnionString}; bar = LibFoo::Bar.new; bar.z = 42.0_f32; bar.z").to_f32.should eq(42.0)
   end
 
-  it "codegens union property setter 1 via pointer" do
+  it("codegens union property setter 1 via pointer") do
     run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x = 42; bar.value.x").to_i.should eq(42)
   end
 
-  it "codegens union property setter 2 via pointer" do
+  it("codegens union property setter 2 via pointer") do
     run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.z = 42.0_f32; bar.value.z").to_f32.should eq(42.0)
   end
 
-  it "codegens struct inside union" do
+  it("codegens struct inside union") do
     run("
       lib LibFoo
         struct Baz
@@ -49,7 +49,7 @@ describe "Code gen: c union" do
       ").to_i.should eq(10)
   end
 
-  it "codegens assign c union to union" do
+  it("codegens assign c union to union") do
     run("
       lib LibFoo
         union Bar
@@ -68,7 +68,7 @@ describe "Code gen: c union" do
       ").to_i.should eq(10)
   end
 
-  it "builds union setter with fun type" do
+  it("builds union setter with fun type") do
     codegen(%(
       require "prelude"
 
@@ -83,7 +83,7 @@ describe "Code gen: c union" do
       ))
   end
 
-  it "does to_s" do
+  it("does to_s") do
     run(%(
       require "prelude"
 
@@ -98,7 +98,7 @@ describe "Code gen: c union" do
       )).to_string.should eq("LibNVG::Color(@array=0)")
   end
 
-  it "automatically converts numeric type in field assignment" do
+  it("automatically converts numeric type in field assignment") do
     run(%(
       lib LibFoo
         union Foo
@@ -114,7 +114,7 @@ describe "Code gen: c union" do
       )).to_i.should eq(57)
   end
 
-  it "automatically converts numeric union type in field assignment" do
+  it("automatically converts numeric union type in field assignment") do
     run(%(
       lib LibFoo
         union Foo
@@ -130,7 +130,7 @@ describe "Code gen: c union" do
       )).to_i.should eq(57)
   end
 
-  it "automatically converts by invoking to_unsafe" do
+  it("automatically converts by invoking to_unsafe") do
     run(%(
       lib LibFoo
         union Foo
@@ -150,7 +150,7 @@ describe "Code gen: c union" do
       )).to_i.should eq(123)
   end
 
-  it "aligns to the member with biggest align requirements" do
+  it("aligns to the member with biggest align requirements") do
     run(%(
       lib LibFoo
         union Foo
@@ -176,7 +176,7 @@ describe "Code gen: c union" do
       )).to_i.should eq(0x5858)
   end
 
-  it "fills union type to the max size" do
+  it("fills union type to the max size") do
     run(%(
       lib LibFoo
         union Foo
@@ -194,7 +194,7 @@ describe "Code gen: c union" do
       )).to_i.should eq(6)
   end
 
-  it "reads union instance var" do
+  it("reads union instance var") do
     run(%(
       lib LibFoo
         union Foo

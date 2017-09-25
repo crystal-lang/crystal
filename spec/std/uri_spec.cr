@@ -2,7 +2,7 @@ require "spec"
 require "uri"
 
 private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", query = nil, user = nil, password = nil, fragment = nil, opaque = nil)
-  it "parse #{string}" do
+  it("parse #{string}") do
     uri = URI.parse(string)
     uri.scheme.should eq(scheme)
     uri.host.should eq(host)
@@ -16,7 +16,7 @@ private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", 
   end
 end
 
-describe "URI" do
+describe("URI") do
   assert_uri("http://www.example.com", scheme: "http", host: "www.example.com")
   assert_uri("http://www.example.com:81", scheme: "http", host: "www.example.com", port: 81)
   assert_uri("http://www.example.com/foo", scheme: "http", host: "www.example.com", path: "/foo")
@@ -39,8 +39,8 @@ describe "URI" do
   it { URI.parse("http://www.example.com?q=1").full_path.should eq("/?q=1") }
   it { URI.parse("http://test.dev/a%3Ab").full_path.should eq("/a%3Ab") }
 
-  describe "normalize" do
-    it "removes dot notation from path" do
+  describe("normalize") do
+    it("removes dot notation from path") do
       cases = {
         "../bar"      => "bar",
         "./bar"       => "bar",
@@ -67,21 +67,21 @@ describe "URI" do
     end
   end
 
-  it "implements ==" do
+  it("implements ==") do
     URI.parse("http://example.com").should eq(URI.parse("http://example.com"))
   end
 
-  it "implements hash" do
+  it("implements hash") do
     URI.parse("http://example.com").hash.should eq(URI.parse("http://example.com").hash)
   end
 
-  describe "userinfo" do
+  describe("userinfo") do
     it { URI.parse("http://www.example.com").userinfo.should be_nil }
     it { URI.parse("http://foo@www.example.com").userinfo.should eq("foo") }
     it { URI.parse("http://foo:bar@www.example.com").userinfo.should eq("foo:bar") }
   end
 
-  describe "to_s" do
+  describe("to_s") do
     it { URI.new("http", "www.example.com").to_s.should eq("http://www.example.com") }
     it { URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com") }
     it do
@@ -106,7 +106,7 @@ describe "URI" do
     it { URI.new("mailto", opaque: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
   end
 
-  describe ".unescape" do
+  describe(".unescape") do
     {
       {"hello", "hello"},
       {"hello%20world", "hello world"},
@@ -120,31 +120,31 @@ describe "URI" do
       {"%e3%81%aa%e3%81%aa", "なな"},
       {"%27Stop%21%27+said+Fred", "'Stop!'+said+Fred"},
     }.each do |(from, to)|
-      it "unescapes #{from}" do
+      it("unescapes #{from}") do
         URI.unescape(from).should eq(to)
       end
 
-      it "unescapes #{from} to IO" do
+      it("unescapes #{from} to IO") do
         String.build do |str|
           URI.unescape(from, str)
         end.should eq(to)
       end
     end
 
-    it "unescapes plus to space" do
+    it("unescapes plus to space") do
       URI.unescape("hello+world", plus_to_space: true).should eq("hello world")
       String.build do |str|
         URI.unescape("hello+world", str, plus_to_space: true)
       end.should eq("hello world")
     end
 
-    it "does not unescape string when block returns true" do
+    it("does not unescape string when block returns true") do
       URI.unescape("hello%26world") { |byte| URI.reserved? byte }
          .should eq("hello%26world")
     end
   end
 
-  describe ".escape" do
+  describe(".escape") do
     [
       {"hello", "hello"},
       {"hello%20world", "hello world"},
@@ -157,59 +157,59 @@ describe "URI" do
       {"%27Stop%21%27%20said%20Fred", "'Stop!' said Fred"},
       {"%0A", "\n"},
     ].each do |(from, to)|
-      it "escapes #{to}" do
+      it("escapes #{to}") do
         URI.escape(to).should eq(from)
       end
 
-      it "escapes #{to} to IO" do
+      it("escapes #{to} to IO") do
         String.build do |str|
           URI.escape(to, str)
         end.should eq(from)
       end
     end
 
-    describe "invalid utf8 strings" do
+    describe("invalid utf8 strings") do
       input = String.new(1) { |buf| buf.value = 255_u8; {1, 0} }
 
-      it "escapes without failing" do
+      it("escapes without failing") do
         URI.escape(input).should eq("%FF")
       end
 
-      it "escapes to IO without failing" do
+      it("escapes to IO without failing") do
         String.build do |str|
           URI.escape(input, str)
         end.should eq("%FF")
       end
     end
 
-    it "escape space to plus when space_to_plus flag is true" do
+    it("escape space to plus when space_to_plus flag is true") do
       URI.escape("hello world", space_to_plus: true).should eq("hello+world")
       URI.escape("'Stop!' said Fred", space_to_plus: true).should eq("%27Stop%21%27+said+Fred")
     end
 
-    it "does not escape character when block returns true" do
+    it("does not escape character when block returns true") do
       URI.unescape("hello&world") { |byte| URI.reserved? byte }
          .should eq("hello&world")
     end
   end
 
-  describe "reserved?" do
+  describe("reserved?") do
     reserved_chars = Set.new([':', '/', '?', '#', '[', ']', '@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='])
 
     ('\u{00}'..'\u{7F}').each do |char|
       ok = reserved_chars.includes? char
-      it "should return #{ok} on given #{char}" do
+      it("should return #{ok} on given #{char}") do
         URI.reserved?(char.ord.to_u8).should eq(ok)
       end
     end
   end
 
-  describe "unreserved?" do
+  describe("unreserved?") do
     unreserved_chars = Set.new(('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a + ['_', '.', '-', '~'])
 
     ('\u{00}'..'\u{7F}').each do |char|
       ok = unreserved_chars.includes? char
-      it "should return #{ok} on given #{char}" do
+      it("should return #{ok} on given #{char}") do
         URI.unreserved?(char.ord.to_u8).should eq(ok)
       end
     end

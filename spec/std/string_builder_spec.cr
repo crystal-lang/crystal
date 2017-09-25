@@ -1,7 +1,7 @@
 require "spec"
 
-describe String::Builder do
-  it "builds" do
+describe(String::Builder) do
+  it("builds") do
     str = String::Builder.build do |builder|
       builder << 123
       builder << 456
@@ -11,7 +11,7 @@ describe String::Builder do
     str.bytesize.should eq(6)
   end
 
-  it "raises if invokes to_s twice" do
+  it("raises if invokes to_s twice") do
     builder = String::Builder.new
     builder << 123
     builder.to_s.should eq("123")
@@ -19,7 +19,7 @@ describe String::Builder do
     expect_raises { builder.to_s }
   end
 
-  it "goes back" do
+  it("goes back") do
     s = String::Builder.build do |str|
       str << 12
       str.back(1)
@@ -27,7 +27,7 @@ describe String::Builder do
     s.should eq("1")
   end
 
-  it "goes back all" do
+  it("goes back all") do
     s = String::Builder.build do |str|
       str << 12
       str.back(2)

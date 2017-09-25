@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: exception" do
-  it "type is union of main and rescue blocks" do
+describe("Semantic: exception") do
+  it("type is union of main and rescue blocks") do
     assert_type("
       begin
         1
@@ -11,7 +11,7 @@ describe "Semantic: exception" do
     ") { union_of(int32, char) }
   end
 
-  it "type union with empty main block" do
+  it("type union with empty main block") do
     assert_type("
       begin
       rescue
@@ -20,7 +20,7 @@ describe "Semantic: exception" do
     ") { nilable int32 }
   end
 
-  it "type union with empty rescue block" do
+  it("type union with empty rescue block") do
     assert_type("
       begin
         1
@@ -29,7 +29,7 @@ describe "Semantic: exception" do
     ") { nilable int32 }
   end
 
-  it "type for exception handler for explicit types" do
+  it("type for exception handler for explicit types") do
     assert_type("
       require \"prelude\"
 
@@ -44,7 +44,7 @@ describe "Semantic: exception" do
     ") { int32 }
   end
 
-  it "marks method calling method that raises as raises" do
+  it("marks method calling method that raises as raises") do
     result = assert_type("
       lib LibFoo
         @[Raises]
@@ -63,7 +63,7 @@ describe "Semantic: exception" do
     def_instance.not_nil!.raises?.should be_true
   end
 
-  it "marks method calling lib fun that raises as raises" do
+  it("marks method calling lib fun that raises as raises") do
     result = assert_type("
       @[Raises]
       fun some_fun : Int32; 1; end
@@ -80,7 +80,7 @@ describe "Semantic: exception" do
     def_instance.not_nil!.raises?.should be_true
   end
 
-  it "types exception var with no types" do
+  it("types exception var with no types") do
     assert_type("
       a = nil
       begin
@@ -91,7 +91,7 @@ describe "Semantic: exception" do
     ") { union_of(nil_type, exception.virtual_type) }
   end
 
-  it "types exception with type" do
+  it("types exception with type") do
     assert_type("
       class Ex < Exception
       end
@@ -105,7 +105,7 @@ describe "Semantic: exception" do
     ") { union_of(nil_type, types["Ex"].virtual_type) }
   end
 
-  it "types var as not nil if defined inside begin and defined inside rescue" do
+  it("types var as not nil if defined inside begin and defined inside rescue") do
     assert_type("
       begin
         a = 1
@@ -116,7 +116,7 @@ describe "Semantic: exception" do
       ") { int32 }
   end
 
-  it "types var as nialble if previously nilable (1)" do
+  it("types var as nialble if previously nilable (1)") do
     assert_type("
       if 1 == 2
         a = 1
@@ -130,7 +130,7 @@ describe "Semantic: exception" do
       ") { nilable int32 }
   end
 
-  it "types var as nialble if previously nilable (2)" do
+  it("types var as nialble if previously nilable (2)") do
     assert_type("
       if 1 == 2
         a = 1
@@ -144,11 +144,11 @@ describe "Semantic: exception" do
       ") { nilable int32 }
   end
 
-  it "errors if catched exception is not a subclass of Exception" do
+  it("errors if catched exception is not a subclass of Exception") do
     assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
   end
 
-  it "errors if catched exception is not a subclass of Exception without var" do
+  it("errors if catched exception is not a subclass of Exception without var") do
     assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
   end
 
@@ -161,7 +161,7 @@ describe "Semantic: exception" do
   assert_syntax_error "begin; else; 1; end",
     "'else' is useless without 'rescue'"
 
-  it "types code with abstract exception that delegates method" do
+  it("types code with abstract exception that delegates method") do
     assert_type(%(
       require "prelude"
 
@@ -193,7 +193,7 @@ describe "Semantic: exception" do
       )) { int32 }
   end
 
-  it "transform nodes in else block" do
+  it("transform nodes in else block") do
     assert_type(%(
       begin
       rescue
@@ -203,7 +203,7 @@ describe "Semantic: exception" do
     )) { nilable int32 }
   end
 
-  it "types var as nilable inside ensure (1)" do
+  it("types var as nilable inside ensure (1)") do
     result = assert_type(%(
       require "prelude"
 
@@ -222,7 +222,7 @@ describe "Semantic: exception" do
     call_p_n.args.first.type.should eq(mod.nilable(mod.int32))
   end
 
-  it "types var as nilable inside ensure (2)" do
+  it("types var as nilable inside ensure (2)") do
     result = assert_type(%(
       require "prelude"
 
@@ -240,7 +240,7 @@ describe "Semantic: exception" do
     call_p_n.args.first.type.should eq(mod.nilable(mod.int32))
   end
 
-  it "marks fun as raises" do
+  it("marks fun as raises") do
     result = assert_type(%(
       @[Raises]
       fun foo : Int32; 1; end
@@ -251,7 +251,7 @@ describe "Semantic: exception" do
     a_def.not_nil!.raises?.should be_true
   end
 
-  it "marks def as raises" do
+  it("marks def as raises") do
     result = assert_type(%(
       @[Raises]
       def foo
@@ -265,13 +265,13 @@ describe "Semantic: exception" do
     a_def.not_nil!.raises?.should be_true
   end
 
-  it "marks proc literal as raises" do
+  it("marks proc literal as raises") do
     result = assert_type("->{ 1 }.call", inject_primitives: true) { int32 }
     call = result.node.as(Expressions).last.as(Call)
     call.target_def.raises?.should be_true
   end
 
-  it "shadows local variable (1)" do
+  it("shadows local variable (1)") do
     assert_type(%(
       require "prelude"
 
@@ -285,7 +285,7 @@ describe "Semantic: exception" do
       )) { union_of(int32, types["Exception"].virtual_type) }
   end
 
-  it "remains nilable after rescue" do
+  it("remains nilable after rescue") do
     assert_type(%(
       require "prelude"
 
@@ -298,7 +298,7 @@ describe "Semantic: exception" do
       )) { nilable types["Exception"].virtual_type }
   end
 
-  it "doesn't consider vars as nilable inside else (#610)" do
+  it("doesn't consider vars as nilable inside else (#610)") do
     assert_type(%(
       require "prelude"
 
@@ -313,7 +313,7 @@ describe "Semantic: exception" do
       )) { int32 }
   end
 
-  it "types instance variable as nilable if assigned inside an exception handler (#1845)" do
+  it("types instance variable as nilable if assigned inside an exception handler (#1845)") do
     assert_error %(
       class Foo
         def initialize
@@ -334,7 +334,7 @@ describe "Semantic: exception" do
       "instance variable '@bar' of Foo must be Int32, not Nil"
   end
 
-  it "doesn't type instance variable as nilable if assigned inside an exception handler after being assigned" do
+  it("doesn't type instance variable as nilable if assigned inside an exception handler after being assigned") do
     assert_type(%(
       class Foo
         def initialize
@@ -355,7 +355,7 @@ describe "Semantic: exception" do
       )) { int32 }
   end
 
-  it "correctly types #1988" do
+  it("correctly types #1988") do
     assert_type(%(
       begin
         x = 1
@@ -370,7 +370,7 @@ describe "Semantic: exception" do
       )) { nilable int32 }
   end
 
-  it "doesn't crash on break inside rescue, in while (#2441)" do
+  it("doesn't crash on break inside rescue, in while (#2441)") do
     assert_type(%(
       while true
         begin
@@ -383,7 +383,7 @@ describe "Semantic: exception" do
       )) { nilable types["Exception"].virtual_type }
   end
 
-  it "types var assignment inside block inside exception handler (#3324)" do
+  it("types var assignment inside block inside exception handler (#3324)") do
     assert_type(%(
       def foo
         yield
@@ -400,7 +400,7 @@ describe "Semantic: exception" do
       )) { union_of(int32, string) }
   end
 
-  it "marks instance variable as nilable if assigned inside rescue inside initialize" do
+  it("marks instance variable as nilable if assigned inside rescue inside initialize") do
     assert_error %(
       require "prelude"
 
@@ -422,7 +422,7 @@ describe "Semantic: exception" do
       "instance variable '@x' of Foo must be Int32, not Nil"
   end
 
-  it "assigns var inside ensure (1) (#3919)" do
+  it("assigns var inside ensure (1) (#3919)") do
     assert_type(%(
       begin
       ensure
@@ -432,7 +432,7 @@ describe "Semantic: exception" do
       )) { int32 }
   end
 
-  it "assigns var inside ensure (2) (#3919)" do
+  it("assigns var inside ensure (2) (#3919)") do
     assert_type(%(
       a = true
       begin
@@ -443,7 +443,7 @@ describe "Semantic: exception" do
       )) { int32 }
   end
 
-  it "doesn't infect type to variable before handler (#4002)" do
+  it("doesn't infect type to variable before handler (#4002)") do
     assert_type(%(
       a = 1
       b = a
@@ -455,7 +455,7 @@ describe "Semantic: exception" do
       )) { int32 }
   end
 
-  it "detects reading nil-if-read variable after exception handler (#4723)" do
+  it("detects reading nil-if-read variable after exception handler (#4723)") do
     result = assert_type(%(
       if true
         foo = 42
@@ -477,7 +477,7 @@ describe "Semantic: exception" do
     program.vars["foo"].type.should be(program.nilable program.int32)
   end
 
-  it "can't return from ensure (#4470)" do
+  it("can't return from ensure (#4470)") do
     assert_error(%(
       def foo
         return 1
@@ -489,7 +489,7 @@ describe "Semantic: exception" do
     ), "can't return from ensure")
   end
 
-  it "can't return from block inside ensure (#4470)" do
+  it("can't return from block inside ensure (#4470)") do
     assert_error(%(
       def once
         yield
@@ -507,7 +507,7 @@ describe "Semantic: exception" do
     ), "can't return from ensure")
   end
 
-  it "can't return from while inside ensure (#4470)" do
+  it("can't return from while inside ensure (#4470)") do
     assert_error(%(
       def foo
         return 1
@@ -521,7 +521,7 @@ describe "Semantic: exception" do
     ), "can't return from ensure")
   end
 
-  it "can't use break inside while inside ensure (#4470)" do
+  it("can't use break inside while inside ensure (#4470)") do
     assert_error(%(
       while true
         begin
@@ -533,7 +533,7 @@ describe "Semantic: exception" do
     ), "can't use break inside ensure")
   end
 
-  it "can use break inside while inside ensure (#4470)" do
+  it("can use break inside while inside ensure (#4470)") do
     assert_type(%(
       while true
         begin
@@ -547,7 +547,7 @@ describe "Semantic: exception" do
     )) { nil_type }
   end
 
-  it "can't use break inside block inside ensure (#4470)" do
+  it("can't use break inside block inside ensure (#4470)") do
     assert_error(%(
       def loop
         while true
@@ -565,7 +565,7 @@ describe "Semantic: exception" do
     ), "can't use break inside ensure")
   end
 
-  it "can use break inside block inside ensure (#4470)" do
+  it("can use break inside block inside ensure (#4470)") do
     assert_type(%(
       def loop
         while true
@@ -585,7 +585,7 @@ describe "Semantic: exception" do
     )) { nil_type }
   end
 
-  it "can't use next inside while inside ensure (#4470)" do
+  it("can't use next inside while inside ensure (#4470)") do
     assert_error(%(
       while true
         begin
@@ -597,7 +597,7 @@ describe "Semantic: exception" do
     ), "can't use next inside ensure")
   end
 
-  it "can't use next inside block inside ensure (#4470)" do
+  it("can't use next inside block inside ensure (#4470)") do
     assert_error(%(
       def loop
         while true
@@ -615,7 +615,7 @@ describe "Semantic: exception" do
     ), "can't use next inside ensure")
   end
 
-  it "can use next inside while inside ensure (#4470)" do
+  it("can use next inside while inside ensure (#4470)") do
     assert_type(%(
       while true
         begin
@@ -631,7 +631,7 @@ describe "Semantic: exception" do
     )) { nil_type }
   end
 
-  it "can use next inside block inside ensure (#4470)" do
+  it("can use next inside block inside ensure (#4470)") do
     assert_type(%(
       def loop
         while true

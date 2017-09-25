@@ -1,8 +1,8 @@
 require "spec"
 require "oauth"
 
-describe OAuth::Params do
-  it "builds" do
+describe(OAuth::Params) do
+  it("builds") do
     params = OAuth::Params.new
     params.add "foo", "value1"
     params.add "bar", "a+b"

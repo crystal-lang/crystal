@@ -1,21 +1,21 @@
 require "spec"
 require "oauth"
 
-describe OAuth::Signature do
-  describe "key" do
-    it "gets when token secret is empty" do
+describe(OAuth::Signature) do
+  describe("key") do
+    it("gets when token secret is empty") do
       signature = OAuth::Signature.new "consumer_key", "consumer secret"
       signature.key.should eq("consumer%20secret&")
     end
 
-    it "gets when token secret is not empty" do
+    it("gets when token secret is not empty") do
       signature = OAuth::Signature.new "consumer_key", "consumer secret", token_shared_secret: "token secret"
       signature.key.should eq("consumer%20secret&token%20secret")
     end
   end
 
-  describe "base string" do
-    it "computes without port in host" do
+  describe("base string") do
+    it("computes without port in host") do
       request = HTTP::Request.new "POST", "/some/path"
       request.headers["Host"] = "some.host"
       tls = false
@@ -28,7 +28,7 @@ describe OAuth::Signature do
       base_string.should eq("POST&http%3A%2F%2Fsome.host%2Fsome%2Fpath&oauth_callback%3Dsome%252Bcallback%26oauth_consumer_key%3Dconsumer_key%26oauth_nonce%3Dnonce%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1234%26oauth_version%3D1.0")
     end
 
-    it "computes with port in host" do
+    it("computes with port in host") do
       request = HTTP::Request.new "POST", "/some/path"
       request.headers["Host"] = "some.host:5678"
       tls = false
@@ -41,7 +41,7 @@ describe OAuth::Signature do
       base_string.should eq("POST&http%3A%2F%2Fsome.host%3A5678%2Fsome%2Fpath&oauth_callback%3Dsome%252Bcallback%26oauth_consumer_key%3Dconsumer_key%26oauth_nonce%3Dnonce%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1234%26oauth_version%3D1.0")
     end
 
-    it "computes when TLS" do
+    it("computes when TLS") do
       request = HTTP::Request.new "POST", "/some/path"
       request.headers["Host"] = "some.host"
       tls = true
@@ -56,7 +56,7 @@ describe OAuth::Signature do
   end
 
   # https://dev.twitter.com/oauth/overview/creating-signatures
-  it "does twitter sample" do
+  it("does twitter sample") do
     request = HTTP::Request.new "POST", "/1/statuses/update.json?include_entities=true", body: "status=Hello%20Ladies%20%2b%20Gentlemen%2c%20a%20signed%20OAuth%20request%21"
     request.headers["Host"] = "api.twitter.com"
     request.headers["Content-type"] = "application/x-www-form-urlencoded"

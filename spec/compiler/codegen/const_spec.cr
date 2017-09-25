@@ -1,15 +1,15 @@
 require "../../spec_helper"
 
-describe "Codegen: const" do
-  it "define a constant" do
+describe("Codegen: const") do
+  it("define a constant") do
     run("CONST = 1; CONST").to_i.should eq(1)
   end
 
-  it "support nested constant" do
+  it("support nested constant") do
     run("class Foo; A = 1; end; Foo::A").to_i.should eq(1)
   end
 
-  it "support constant inside a def" do
+  it("support constant inside a def") do
     run("
       class Foo
         A = 1
@@ -23,7 +23,7 @@ describe "Codegen: const" do
     ").to_i.should eq(1)
   end
 
-  it "finds nearest constant first" do
+  it("finds nearest constant first") do
     run("
       CONST = 1
 
@@ -39,7 +39,7 @@ describe "Codegen: const" do
     ").to_f32.should eq(2.5)
   end
 
-  it "allows constants with same name" do
+  it("allows constants with same name") do
     run("
       CONST = 1
 
@@ -56,14 +56,14 @@ describe "Codegen: const" do
     ").to_f32.should eq(2.5)
   end
 
-  it "constants with expression" do
+  it("constants with expression") do
     run("
       CONST = 1 + 1
       CONST
     ").to_i.should eq(2)
   end
 
-  it "finds global constant" do
+  it("finds global constant") do
     run("
       CONST = 1
 
@@ -77,15 +77,15 @@ describe "Codegen: const" do
     ").to_i.should eq(1)
   end
 
-  it "define a constant in lib" do
+  it("define a constant in lib") do
     run("lib LibFoo; A = 1; end; LibFoo::A").to_i.should eq(1)
   end
 
-  it "invokes block in const" do
+  it("invokes block in const") do
     run("require \"prelude\"; CONST = [\"1\"].map { |x| x.to_i }; CONST[0]").to_i.should eq(1)
   end
 
-  it "declare constants in right order" do
+  it("declare constants in right order") do
     run(%(
       CONST1 = 1 + 1
       CONST2 = true ? CONST1 : 0
@@ -93,7 +93,7 @@ describe "Codegen: const" do
       )).to_i.should eq(2)
   end
 
-  it "uses correct types lookup" do
+  it("uses correct types lookup") do
     run("
       module Moo
         class B
@@ -113,7 +113,7 @@ describe "Codegen: const" do
       ").to_i.should eq(1)
   end
 
-  it "codegens variable assignment in const" do
+  it("codegens variable assignment in const") do
     run("
       class Foo
         def initialize(@x : Int32)
@@ -137,7 +137,7 @@ describe "Codegen: const" do
       ").to_i.should eq(1)
   end
 
-  it "declaring var" do
+  it("declaring var") do
     run("
       BAR = begin
         a = 1
@@ -156,7 +156,7 @@ describe "Codegen: const" do
       ").to_i.should eq(1)
   end
 
-  it "initialize const that might raise an exception" do
+  it("initialize const that might raise an exception") do
     run("
       require \"prelude\"
       CONST = (raise \"OH NO\" if 1 == 2)
@@ -170,7 +170,7 @@ describe "Codegen: const" do
     ").to_b.should be_true
   end
 
-  it "allows implicit self in constant, called from another class (bug)" do
+  it("allows implicit self in constant, called from another class (bug)") do
     run("
       module Foo
         def self.foo
@@ -190,7 +190,7 @@ describe "Codegen: const" do
       ").to_i.should eq(1)
   end
 
-  it "codegens two consts with same variable name" do
+  it("codegens two consts with same variable name") do
     run("
       CONST1 = begin
             a = 1
@@ -204,7 +204,7 @@ describe "Codegen: const" do
       ").to_i.should eq(3)
   end
 
-  it "works with variable declared inside if" do
+  it("works with variable declared inside if") do
     run(%(
       FOO = begin
         if 1 == 2
@@ -218,7 +218,7 @@ describe "Codegen: const" do
       )).to_i.should eq(4)
   end
 
-  it "codegens constant that refers to another constant that is a struct" do
+  it("codegens constant that refers to another constant that is a struct") do
     run(%(
       struct Foo
         X = Foo.new(1)
@@ -236,7 +236,7 @@ describe "Codegen: const" do
       )).to_i.should eq(1)
   end
 
-  it "codegens constant that is declared later because of virtual dispatch" do
+  it("codegens constant that is declared later because of virtual dispatch") do
     run(%(
       class Base
         def base
@@ -263,7 +263,7 @@ describe "Codegen: const" do
       )).to_i.should eq(1)
   end
 
-  it "doesn't crash if constant is used, but class is never instantiated (#1106)" do
+  it("doesn't crash if constant is used, but class is never instantiated (#1106)") do
     codegen(%(
       require "prelude"
 
@@ -279,7 +279,7 @@ describe "Codegen: const" do
       ))
   end
 
-  it "uses const before declaring it (hoisting)" do
+  it("uses const before declaring it (hoisting)") do
     run(%(
       x = CONST
 
@@ -295,7 +295,7 @@ describe "Codegen: const" do
       )).to_i.should eq(3)
   end
 
-  it "uses const before declaring it in another module" do
+  it("uses const before declaring it in another module") do
     run(%(
       require "prelude"
 
@@ -319,14 +319,14 @@ describe "Codegen: const" do
       )).to_i.should eq(3)
   end
 
-  it "initializes simple const" do
+  it("initializes simple const") do
     run(%(
       FOO = 10
       FOO
       )).to_i.should eq(10)
   end
 
-  it "initializes simple const via another const" do
+  it("initializes simple const via another const") do
     run(%(
       BAR = 10
       FOO = BAR
@@ -334,13 +334,13 @@ describe "Codegen: const" do
       )).to_i.should eq(10)
   end
 
-  it "initializes ARGC_UNSAFE" do
+  it("initializes ARGC_UNSAFE") do
     run(%(
       ARGC_UNSAFE
       )).to_i.should eq(0)
   end
 
-  it "gets pointerof constant" do
+  it("gets pointerof constant") do
     run(%(
       z = pointerof(FOO).value
       FOO = 10
@@ -348,7 +348,7 @@ describe "Codegen: const" do
       )).to_i.should eq(10)
   end
 
-  it "gets pointerof complex constant" do
+  it("gets pointerof complex constant") do
     run(%(
       z = pointerof(FOO).value
       FOO = begin
@@ -359,7 +359,7 @@ describe "Codegen: const" do
       )).to_i.should eq(10)
   end
 
-  it "gets pointerof constant inside class" do
+  it("gets pointerof constant inside class") do
     run(%(
       require "prelude"
 
@@ -381,7 +381,7 @@ describe "Codegen: const" do
       )).to_i.should eq(42)
   end
 
-  it "inlines simple const" do
+  it("inlines simple const") do
     mod = codegen(%(
       CONST = 1
       CONST
@@ -390,7 +390,7 @@ describe "Codegen: const" do
     mod.to_s.should_not contain("CONST")
   end
 
-  it "inlines enum value" do
+  it("inlines enum value") do
     mod = codegen(%(
       enum Foo
         CONST
@@ -402,7 +402,7 @@ describe "Codegen: const" do
     mod.to_s.should_not contain("CONST")
   end
 
-  it "inlines const with math" do
+  it("inlines const with math") do
     mod = codegen(%(
       CONST = (1 + 2) * 3
       ))
@@ -410,7 +410,7 @@ describe "Codegen: const" do
     mod.to_s.should_not contain("CONST")
   end
 
-  it "inlines const referencing another const" do
+  it("inlines const referencing another const") do
     mod = codegen(%(
       OTHER = 1
 
@@ -422,7 +422,7 @@ describe "Codegen: const" do
     mod.to_s.should_not contain("OTHER")
   end
 
-  it "inlines bool const" do
+  it("inlines bool const") do
     mod = codegen(%(
       CONST = true
       CONST
@@ -431,7 +431,7 @@ describe "Codegen: const" do
     mod.to_s.should_not contain("CONST")
   end
 
-  it "inlines char const" do
+  it("inlines char const") do
     mod = codegen(%(
       CONST = 'a'
       CONST

@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: initialize" do
-  it "types instance vars as nilable if doesn't invoke super in initialize" do
+describe("Semantic: initialize") do
+  it("types instance vars as nilable if doesn't invoke super in initialize") do
     assert_error %(
       class Foo
         def initialize
@@ -25,7 +25,7 @@ describe "Semantic: initialize" do
       "this 'initialize' doesn't initialize instance variable '@baz' of Foo, with Bar < Foo, rendering it nilable"
   end
 
-  it "types instance vars as nilable if doesn't invoke super in initialize with deep subclass" do
+  it("types instance vars as nilable if doesn't invoke super in initialize with deep subclass") do
     assert_error %(
       class Foo
         def initialize
@@ -55,7 +55,7 @@ describe "Semantic: initialize" do
       "this 'initialize' doesn't initialize instance variable '@baz' of Foo, with BarBar < Foo, rendering it nilable"
   end
 
-  it "types instance vars as nilable if doesn't invoke super with default arguments" do
+  it("types instance vars as nilable if doesn't invoke super with default arguments") do
     node = parse("
       class Foo
         def initialize
@@ -83,7 +83,7 @@ describe "Semantic: initialize" do
     foo.instance_vars["@another"].type.should eq(mod.int32)
   end
 
-  it "checks instance vars of included modules" do
+  it("checks instance vars of included modules") do
     assert_error %(
       module Lala
         def lala
@@ -110,7 +110,7 @@ describe "Semantic: initialize" do
       "instance variable '@x' of Foo must be (Char | Nil), not Int32"
   end
 
-  it "types instance var as nilable if not always assigned" do
+  it("types instance var as nilable if not always assigned") do
     assert_error %(
       class Foo
         def initialize
@@ -130,7 +130,7 @@ describe "Semantic: initialize" do
       "instance variable '@x' of Foo must be Int32, not Nil"
   end
 
-  it "types instance var as nilable if assigned in block" do
+  it("types instance var as nilable if assigned in block") do
     assert_error %(
       def bar
         yield if 1 == 2
@@ -154,7 +154,7 @@ describe "Semantic: initialize" do
       "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
-  it "types instance var as not-nilable if assigned in block but previosly assigned" do
+  it("types instance var as not-nilable if assigned in block but previosly assigned") do
     assert_type(%(
       def bar
         yield if 1 == 2
@@ -178,7 +178,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "types instance var as nilable if used before assignment" do
+  it("types instance var as nilable if used before assignment") do
     assert_error %(
       class Foo
         def initialize
@@ -197,7 +197,7 @@ describe "Semantic: initialize" do
       "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
-  it "types instance var as non-nilable if calls super and super defines it" do
+  it("types instance var as non-nilable if calls super and super defines it") do
     assert_type(%(
       class Parent
         def initialize
@@ -221,7 +221,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "types instance var as non-nilable if calls super and super defines it, with one level of indirection" do
+  it("types instance var as non-nilable if calls super and super defines it, with one level of indirection") do
     assert_type(%(
       class Parent
         def initialize
@@ -248,7 +248,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "doesn't type instance var as nilable if out" do
+  it("doesn't type instance var as nilable if out") do
     assert_type(%(
       lib LibC
         fun foo(x : Int32*)
@@ -270,7 +270,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "types instance var as nilable if used after method call that reads var" do
+  it("types instance var as nilable if used after method call that reads var") do
     assert_error %(
       class Foo
         def initialize
@@ -293,7 +293,7 @@ describe "Semantic: initialize" do
       "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
-  it "types instance var as nilable if used after method call that reads var (2)" do
+  it("types instance var as nilable if used after method call that reads var (2)") do
     assert_error %(
       class Bar
         def bar
@@ -321,7 +321,7 @@ describe "Semantic: initialize" do
       "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
-  it "doesn't type instance var as nilable if used after global method call" do
+  it("doesn't type instance var as nilable if used after global method call") do
     assert_type(%(
       def foo
       end
@@ -342,7 +342,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "doesn't type instance var as nilable if used after method call inside typeof" do
+  it("doesn't type instance var as nilable if used after method call inside typeof") do
     assert_type(%(
       class Foo
         def initialize
@@ -364,7 +364,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "doesn't type instance var as nilable if used after method call that doesn't read var" do
+  it("doesn't type instance var as nilable if used after method call that doesn't read var") do
     assert_type(%(
       class Foo
         def initialize
@@ -385,7 +385,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "types instance var as nilable if used after method call that reads var through other calls" do
+  it("types instance var as nilable if used after method call that reads var through other calls") do
     assert_error %(
       class Foo
         def initialize
@@ -420,7 +420,7 @@ describe "Semantic: initialize" do
       "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
-  it "doesn't type instance var as nilable if used after method call that assigns var" do
+  it("doesn't type instance var as nilable if used after method call that assigns var") do
     assert_type(%(
       class Foo
         def initialize
@@ -442,7 +442,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "finishes when analyzing recursive calls" do
+  it("finishes when analyzing recursive calls") do
     assert_type(%(
       class Foo
         def initialize
@@ -468,7 +468,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "doesn't type instance var as nilable if not used in method call" do
+  it("doesn't type instance var as nilable if not used in method call") do
     assert_type(%(
       class Foo
         def initialize
@@ -491,7 +491,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "types instance var as nilable if used in first of two method calls" do
+  it("types instance var as nilable if used in first of two method calls") do
     assert_error %(
       class Foo
         def initialize
@@ -514,7 +514,7 @@ describe "Semantic: initialize" do
       "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
-  it "doesn't type instance var as nilable if assigned before method call" do
+  it("doesn't type instance var as nilable if assigned before method call") do
     assert_type(%(
       class Foo
         def initialize
@@ -537,7 +537,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "marks instance variable as nilable in initialize if using self in method" do
+  it("marks instance variable as nilable in initialize if using self in method") do
     assert_error "
       class Foo
         def initialize
@@ -564,7 +564,7 @@ describe "Semantic: initialize" do
       "'self' was used before initializing instance variable '@foo', rendering it nilable"
   end
 
-  it "marks instance variable as nilable in initialize if using self" do
+  it("marks instance variable as nilable in initialize if using self") do
     assert_type("
       class Foo
         def initialize
@@ -586,7 +586,7 @@ describe "Semantic: initialize" do
       ") { nilable int32 }
   end
 
-  it "marks instance variable as nilable in initialize if assigning self" do
+  it("marks instance variable as nilable in initialize if assigning self") do
     assert_type(%(
       class Foo
         def initialize
@@ -608,7 +608,7 @@ describe "Semantic: initialize" do
       )) { nilable int32 }
   end
 
-  it "marks instance variable as nilable when using self in super" do
+  it("marks instance variable as nilable when using self in super") do
     assert_type("
       class Parent
         def initialize(foo)
@@ -630,7 +630,7 @@ describe "Semantic: initialize" do
       ") { nilable int32 }
   end
 
-  it "errors if found matches for initialize but doesn't cover all (bug #204)" do
+  it("errors if found matches for initialize but doesn't cover all (bug #204)") do
     assert_error "
       class Foo
         def initialize(x : Int32)
@@ -643,7 +643,7 @@ describe "Semantic: initialize" do
       "no overload matches"
   end
 
-  it "doesn't mark instance variable as nilable when using self.class" do
+  it("doesn't mark instance variable as nilable when using self.class") do
     assert_type("
       class Foo
         def initialize
@@ -663,7 +663,7 @@ describe "Semantic: initialize" do
       ") { int32 }
   end
 
-  it "doesn't mark instance variable as nilable when using self.class in method" do
+  it("doesn't mark instance variable as nilable when using self.class in method") do
     assert_type("
       class Foo
         def initialize
@@ -687,7 +687,7 @@ describe "Semantic: initialize" do
       ") { int32 }
   end
 
-  it "types initializer of recursive generic type" do
+  it("types initializer of recursive generic type") do
     assert_type(%(
       class Foo(T)
         @x = 1
@@ -703,7 +703,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "types initializer of generic type after instantiated" do
+  it("types initializer of generic type after instantiated") do
     assert_type(%(
       class Foo(T)
       end
@@ -722,7 +722,7 @@ describe "Semantic: initialize" do
       )) { int32 }
   end
 
-  it "errors on default new when using named arguments (#2245)" do
+  it("errors on default new when using named arguments (#2245)") do
     assert_error %(
       class Foo
       end
@@ -732,7 +732,7 @@ describe "Semantic: initialize" do
       "no argument named 'x'"
   end
 
-  it "doesn't type ivar as nilable if super call present and parent has already typed ivar (#4764)" do
+  it("doesn't type ivar as nilable if super call present and parent has already typed ivar (#4764)") do
     assert_type(%(
       class Foo
         def initialize(@a = 1)

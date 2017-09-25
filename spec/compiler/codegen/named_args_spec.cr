@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: named args" do
-  it "calls with named arg" do
+describe("Code gen: named args") do
+  it("calls with named arg") do
     run(%(
       def foo(y = 2)
         y
@@ -11,7 +11,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(10)
   end
 
-  it "calls with named arg and other args" do
+  it("calls with named arg and other args") do
     run(%(
       def foo(x, y = 2, z = 3)
         x + y + z
@@ -21,7 +21,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(13)
   end
 
-  it "calls with named arg as object method" do
+  it("calls with named arg as object method") do
     run(%(
       class Foo
         def foo(x, y = 2, z = 3)
@@ -33,7 +33,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(13)
   end
 
-  it "calls twice with different types" do
+  it("calls twice with different types") do
     run(%(
       def add(x, y = 1)
         x + y
@@ -46,7 +46,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(5)
   end
 
-  it "calls new with named arg" do
+  it("calls new with named arg") do
     run(%(
       class Foo
         @value : Int32
@@ -64,7 +64,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(13)
   end
 
-  it "uses named args in dispatch" do
+  it("uses named args in dispatch") do
     run(%(
       class Foo
         def foo(x, z = 2)
@@ -83,7 +83,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(22)
   end
 
-  it "sends one regular argument as named argument" do
+  it("sends one regular argument as named argument") do
     run(%(
       def foo(x)
         x
@@ -93,7 +93,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(42)
   end
 
-  it "sends two regular arguments as named arguments" do
+  it("sends two regular arguments as named arguments") do
     run(%(
       def foo(x, y)
         x + y
@@ -103,7 +103,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(42)
   end
 
-  it "sends two regular arguments as named arguments in inverted position (1)" do
+  it("sends two regular arguments as named arguments in inverted position (1)") do
     run(%(
       def foo(x, y)
         x
@@ -113,7 +113,7 @@ describe "Code gen: named args" do
       )).to_string.should eq("foo")
   end
 
-  it "sends two regular arguments as named arguments in inverted position (2)" do
+  it("sends two regular arguments as named arguments in inverted position (2)") do
     run(%(
       def foo(x, y)
         y
@@ -123,7 +123,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(42)
   end
 
-  it "overloads based on required named args" do
+  it("overloads based on required named args") do
     run(%(
       def foo(x, *, y)
         x + y
@@ -139,7 +139,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(10 + 20 + 30*40)
   end
 
-  it "overloads based on required named args, with restrictions" do
+  it("overloads based on required named args, with restrictions") do
     run(%(
       def foo(x, *, z : Int32)
         x + z
@@ -155,7 +155,7 @@ describe "Code gen: named args" do
       )).to_i.should eq(10 + 20 + 30*40)
   end
 
-  it "uses bare splat in new (2)" do
+  it("uses bare splat in new (2)") do
     run(%(
       class Foo
         def initialize(*, y = 22)

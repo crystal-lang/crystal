@@ -97,7 +97,7 @@ class HTTP::StaticFileHandler
     end
   end
 
-  record DirectoryListing, request_path : String, path : String do
+  record(DirectoryListing, request_path : String, path : String) do
     @escaped_request_path : String?
 
     def escaped_request_path

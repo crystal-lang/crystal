@@ -103,7 +103,7 @@ end
 def assert_error(str, message, inject_primitives = true)
   str = inject_primitives(str) if inject_primitives
   nodes = parse str
-  expect_raises TypeException, message do
+  expect_raises(TypeException, message) do
     semantic nodes
   end
 end

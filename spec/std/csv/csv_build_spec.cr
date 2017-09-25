@@ -1,9 +1,9 @@
 require "spec"
 require "csv"
 
-describe CSV do
-  describe "build" do
-    it "builds two rows" do
+describe(CSV) do
+  describe("build") do
+    it("builds two rows") do
       string = CSV.build do |csv|
         csv.row do |row|
           row << "one"
@@ -17,7 +17,7 @@ describe CSV do
       string.should eq("one,two\nthree,four\n")
     end
 
-    it "builds with numbers" do
+    it("builds with numbers") do
       string = CSV.build do |csv|
         csv.row do |row|
           row << 1
@@ -31,7 +31,7 @@ describe CSV do
       string.should eq("1,2\n3,4\n")
     end
 
-    it "builds with commas" do
+    it("builds with commas") do
       string = CSV.build do |csv|
         csv.row do |row|
           row << %(hello,world)
@@ -40,7 +40,7 @@ describe CSV do
       string.should eq(%("hello,world"\n))
     end
 
-    it "builds with quotes" do
+    it("builds with quotes") do
       string = CSV.build do |csv|
         csv.row do |row|
           row << %(he said "no")
@@ -49,21 +49,21 @@ describe CSV do
       string.should eq(%("he said ""no"""\n))
     end
 
-    it "builds row from enumerable" do
+    it("builds row from enumerable") do
       string = CSV.build do |csv|
         csv.row [1, 2, 3]
       end
       string.should eq("1,2,3\n")
     end
 
-    it "builds row from splat" do
+    it("builds row from splat") do
       string = CSV.build do |csv|
         csv.row 1, 2, 3
       end
       string.should eq("1,2,3\n")
     end
 
-    it "skips inside row" do
+    it("skips inside row") do
       string = CSV.build do |csv|
         csv.row do |row|
           row << 1
@@ -74,7 +74,7 @@ describe CSV do
       string.should eq("1,,2\n")
     end
 
-    it "concats enumerable to row" do
+    it("concats enumerable to row") do
       string = CSV.build do |csv|
         csv.row do |row|
           row << 1
@@ -85,7 +85,7 @@ describe CSV do
       string.should eq("1,2,3,4,5\n")
     end
 
-    it "concats splat to row" do
+    it("concats splat to row") do
       string = CSV.build do |csv|
         csv.row do |row|
           row << 1
@@ -96,7 +96,7 @@ describe CSV do
       string.should eq("1,2,3,4,5\n")
     end
 
-    it "builds with commas" do
+    it("builds with commas") do
       string = CSV.build do |csv|
         csv.row do |row|
           row << " , "

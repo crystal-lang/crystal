@@ -5,8 +5,8 @@ require "spec"
 # need condition variables.
 #
 # Also: review these specs!
-describe Thread::ConditionVariable do
-  pending "signals" do
+describe(Thread::ConditionVariable) do
+  pending("signals") do
     mutex = Thread::Mutex.new
     cond = Thread::ConditionVariable.new
     pcond = Thread::ConditionVariable.new
@@ -36,7 +36,7 @@ describe Thread::ConditionVariable do
     threads.map &.join
   end
 
-  pending "broadcasts" do
+  pending("broadcasts") do
     mutex = Thread::Mutex.new
     cond = Thread::ConditionVariable.new
     pcond = Thread::ConditionVariable.new
@@ -67,7 +67,7 @@ describe Thread::ConditionVariable do
     threads.map &.join
   end
 
-  pending "waits and send signal" do
+  pending("waits and send signal") do
     a = 0
     cv1 = Thread::ConditionVariable.new
     cv2 = Thread::ConditionVariable.new

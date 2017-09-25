@@ -1,7 +1,7 @@
 require "spec"
 require "openssl/hmac"
 
-describe OpenSSL::HMAC do
+describe(OpenSSL::HMAC) do
   [
     {:md4, "f3593b56f00b25c8af31d02ddef6d2d0"},
     {:md5, "0c7a250281315ab863549f66cd8a3a53"},
@@ -12,7 +12,7 @@ describe OpenSSL::HMAC do
     {:sha512, "114682914c5d017dfe59fdc804118b56a3a652a0b8870759cf9e792ed7426b08197076bf7d01640b1b0684df79e4b67e37485669e8ce98dbab60445f0db94fce"},
     {:ripemd160, "20d23140503df606c91bda9293f1ad4a23afe509"},
   ].each do |(algorithm, expected)|
-    it "computes #{algorithm}" do
+    it("computes #{algorithm}") do
       OpenSSL::HMAC.hexdigest(algorithm, "foo", "bar").should eq(expected)
     end
   end

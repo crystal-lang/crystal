@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
-describe "Semantic: responds_to?" do
-  it "is bool" do
+describe("Semantic: responds_to?") do
+  it("is bool") do
     assert_type("1.responds_to?(:foo)") { bool }
   end
 
-  it "restricts type inside if scope 1" do
+  it("restricts type inside if scope 1") do
     nodes = parse %(
       require "primitives"
 
@@ -19,7 +19,7 @@ describe "Semantic: responds_to?" do
     nodes.last.as(If).then.type.should eq(mod.int32)
   end
 
-  it "restricts other types inside if else" do
+  it("restricts other types inside if else") do
     assert_type("
       a = 1 || 'a'
       if a.responds_to?(:\"+\")
@@ -30,7 +30,7 @@ describe "Semantic: responds_to?" do
       ") { int32 }
   end
 
-  it "restricts in assignment" do
+  it("restricts in assignment") do
     assert_type("
       a = 1 || 'a'
       if (b = a).responds_to?(:abs)

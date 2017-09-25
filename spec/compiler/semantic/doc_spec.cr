@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: doc" do
-  it "stores doc for class" do
+describe("Semantic: doc") do
+  it("stores doc for class") do
     result = semantic %(
       # Hello
       class Foo
@@ -13,7 +13,7 @@ describe "Semantic: doc" do
     foo.locations.not_nil!.size.should eq(1)
   end
 
-  it "stores doc for abstract class" do
+  it("stores doc for abstract class") do
     result = semantic %(
       # Hello
       abstract class Foo
@@ -24,7 +24,7 @@ describe "Semantic: doc" do
     foo.doc.should eq("Hello")
   end
 
-  it "stores doc for struct" do
+  it("stores doc for struct") do
     result = semantic %(
       # Hello
       struct Foo
@@ -36,7 +36,7 @@ describe "Semantic: doc" do
     foo.locations.not_nil!.size.should eq(1)
   end
 
-  it "stores doc for module" do
+  it("stores doc for module") do
     result = semantic %(
       # Hello
       module Foo
@@ -48,7 +48,7 @@ describe "Semantic: doc" do
     foo.locations.not_nil!.size.should eq(1)
   end
 
-  it "stores doc for def" do
+  it("stores doc for def") do
     result = semantic %(
       class Foo
         # Hello
@@ -62,7 +62,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for def when using ditto" do
+  it("stores doc for def when using ditto") do
     result = semantic %(
       class Foo
         # Hello
@@ -80,7 +80,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for def with visibility" do
+  it("stores doc for def with visibility") do
     result = semantic %(
       class Foo
         # Hello
@@ -94,7 +94,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for def with attribute" do
+  it("stores doc for def with attribute") do
     result = semantic %(
       class Foo
         # Hello
@@ -109,7 +109,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for def with attribute" do
+  it("stores doc for def with attribute") do
     result = semantic %(
       # Hello
       @[AlwaysInline]
@@ -122,7 +122,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for abstract def" do
+  it("stores doc for abstract def") do
     result = semantic %(
       abstract class Foo
         # Hello
@@ -162,7 +162,7 @@ describe "Semantic: doc" do
     end
   {% end %}
 
-  it "stores doc for macro" do
+  it("stores doc for macro") do
     result = semantic %(
       class Foo
         # Hello
@@ -176,7 +176,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for fun def" do
+  it("stores doc for fun def") do
     result = semantic %(
       # Hello
       fun foo : Int32
@@ -188,7 +188,7 @@ describe "Semantic: doc" do
     foo.doc.should eq("Hello")
   end
 
-  it "stores doc for enum" do
+  it("stores doc for enum") do
     result = semantic %(
       # Hello
       enum Foo
@@ -201,7 +201,7 @@ describe "Semantic: doc" do
     foo.locations.not_nil!.size.should eq(1)
   end
 
-  it "stores doc for flags enum with base type" do
+  it("stores doc for flags enum with base type") do
     result = semantic %(
       # Hello
       @[Flags]
@@ -216,7 +216,7 @@ describe "Semantic: doc" do
     foo.locations.not_nil!.size.should eq(1)
   end
 
-  it "stores doc for enum and doesn't mix with value" do
+  it("stores doc for enum and doesn't mix with value") do
     result = semantic %(
       # Hello
       enum Foo
@@ -230,7 +230,7 @@ describe "Semantic: doc" do
     foo.locations.not_nil!.size.should eq(1)
   end
 
-  it "stores doc for enum with @[Flags]" do
+  it("stores doc for enum with @[Flags]") do
     result = semantic %(
       # Hello
       @[Flags]
@@ -243,7 +243,7 @@ describe "Semantic: doc" do
     foo.doc.should eq("Hello")
   end
 
-  it "stores doc for enum member" do
+  it("stores doc for enum member") do
     result = semantic %(
       enum Foo
         # Hello
@@ -257,7 +257,7 @@ describe "Semantic: doc" do
     a.locations.not_nil!.size.should eq(1)
   end
 
-  it "stores doc for constant" do
+  it("stores doc for constant") do
     result = semantic %(
       # Hello
       CONST = 1
@@ -268,7 +268,7 @@ describe "Semantic: doc" do
     a.locations.not_nil!.size.should eq(1)
   end
 
-  it "stores doc for alias" do
+  it("stores doc for alias") do
     result = semantic %(
       # Hello
       alias Alias = Int32
@@ -279,7 +279,7 @@ describe "Semantic: doc" do
     a.locations.not_nil!.size.should eq(1)
   end
 
-  it "stores doc for nodes defined in macro call" do
+  it("stores doc for nodes defined in macro call") do
     result = semantic %(
       class Object
         macro property(name)
@@ -307,7 +307,7 @@ describe "Semantic: doc" do
     bar_assign.doc.should eq("Hello")
   end
 
-  it "stores doc for nodes defined in macro call (2)" do
+  it("stores doc for nodes defined in macro call (2)") do
     result = semantic %(
       macro foo
         class Foo
@@ -359,7 +359,7 @@ describe "Semantic: doc" do
     end
   {% end %}
 
-  it "stores locations for auto-generated module" do
+  it("stores locations for auto-generated module") do
     result = semantic %(
       class Foo::Bar
       end

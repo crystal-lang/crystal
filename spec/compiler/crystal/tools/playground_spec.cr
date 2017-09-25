@@ -43,8 +43,8 @@ private class TestAgent < Playground::Agent
   end
 end
 
-describe Playground::Agent do
-  it "should send json messages and return inspected value" do
+describe(Playground::Agent) do
+  it("should send json messages and return inspected value") do
     agent = TestAgent.new(".", 32)
     agent.i(1) { 5 }.should eq(5)
     agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"5","value_type":"Int32"}))
@@ -54,8 +54,8 @@ describe Playground::Agent do
   end
 end
 
-describe Playground::AgentInstrumentorTransformer do
-  it "instrument literals" do
+describe(Playground::AgentInstrumentorTransformer) do
+  it("instrument literals") do
     assert_agent %(nil), %(_p.i(1) { nil })
     assert_agent %(5), %(_p.i(1) { 5 })
     assert_agent %(5.0), %(_p.i(1) { 5.0 })
@@ -67,60 +67,60 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %(/a/), %(_p.i(1) { /a/ })
   end
 
-  it "instrument literals with expression names" do
+  it("instrument literals with expression names") do
     assert_agent %({1, 2}), %(_p.i(1, ["1", "2"]) { {1, 2} })
     assert_agent %({x, x + y}), %(_p.i(1, ["x", "x + y"]) { {x, x + y} })
     assert_agent %(a = {x, x + y}), %(a = _p.i(1, ["x", "x + y"]) { {x, x + y} })
   end
 
-  it "instrument single variables expressions" do
+  it("instrument single variables expressions") do
     assert_agent %(x), %(_p.i(1) { x })
   end
 
-  it "instrument string interpolations" do
+  it("instrument string interpolations") do
     assert_agent %("lorem \#{a} \#{b}"), %(_p.i(1) { "lorem \#{a} \#{b}" })
   end
 
-  it "instrument assignments in the rhs" do
+  it("instrument assignments in the rhs") do
     assert_agent %(a = 4), %(a = _p.i(1) { 4 })
   end
 
-  it "do not instrument constants assignments" do
+  it("do not instrument constants assignments") do
     assert_agent %(A = 4), %(A = 4)
   end
 
-  it "instrument not expressions" do
+  it("instrument not expressions") do
     assert_agent %(!true), %(_p.i(1) { !true })
   end
 
-  it "instrument binary expressions" do
+  it("instrument binary expressions") do
     assert_agent %(a && b), %(_p.i(1) { a && b })
     assert_agent %(a || b), %(_p.i(1) { a || b })
   end
 
-  it "instrument chained comparisons (#4663)" do
+  it("instrument chained comparisons (#4663)") do
     assert_agent %(1 <= 2 <= 3), %(_p.i(1) { 1 <= 2 <= 3 })
   end
 
-  it "instrument unary expressions" do
+  it("instrument unary expressions") do
     assert_agent %(pointerof(x)), %(_p.i(1) { pointerof(x) })
   end
 
-  it "instrument is_a? expressions" do
+  it("instrument is_a? expressions") do
     assert_agent %(x.is_a?(Foo)), %(_p.i(1) { x.is_a?(Foo) })
   end
 
-  it "instrument ivar with obj" do
+  it("instrument ivar with obj") do
     assert_agent %(x.@foo), %(_p.i(1) { x.@foo })
   end
 
-  it "instrument multi assignments in the rhs" do
+  it("instrument multi assignments in the rhs") do
     assert_agent %(a, b = t), %(a, b = _p.i(1) { t })
     assert_agent %(a, b = d, f), %(a, b = _p.i(1, ["d", "f"]) { {d, f} })
     assert_agent %(a, b = {d, f}), %(a, b = _p.i(1, ["d", "f"]) { {d, f} })
   end
 
-  it "instrument puts with args" do
+  it("instrument puts with args") do
     assert_agent %(puts 3), %(puts(_p.i(1) { 3 }))
     assert_agent %(puts a, 2, b), %(puts(*_p.i(1, ["a", "2", "b"]) { {a, 2, b} }))
     assert_agent %(puts *{3}), %(puts(*_p.i(1, ["3"]) { {3} }))
@@ -128,13 +128,13 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent_eq %(puts), %(puts)
   end
 
-  it "instrument print with args" do
+  it("instrument print with args") do
     assert_agent %(print 3), %(print(_p.i(1) { 3 }))
     assert_agent %(print a, 2, b), %(print(*_p.i(1, ["a", "2", "b"]) { {a, 2, b} }))
     assert_agent_eq %(print), %(print)
   end
 
-  it "instrument single statement def" do
+  it("instrument single statement def") do
     assert_agent %(
     def foo
       4
@@ -145,7 +145,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument single statement var def" do
+  it("instrument single statement var def") do
     assert_agent %(
     def foo(x)
       x
@@ -156,7 +156,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument multi statement def" do
+  it("instrument multi statement def") do
     assert_agent %(
     def foo
       2
@@ -169,7 +169,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument returns inside def" do
+  it("instrument returns inside def") do
     assert_agent %(
     def foo
       return 4
@@ -180,7 +180,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument class defs" do
+  it("instrument class defs") do
     assert_agent %(
     class Foo
       def initialize
@@ -209,7 +209,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument instance variable and class variables reads and writes" do
+  it("instrument instance variable and class variables reads and writes") do
     assert_agent %(
     class Foo
       def initialize
@@ -238,7 +238,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "do not instrument class initializing arguments" do
+  it("do not instrument class initializing arguments") do
     assert_agent %(
     class Foo
       def initialize(@x, @y)
@@ -256,7 +256,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "allow visibility modifiers" do
+  it("allow visibility modifiers") do
     assert_agent %(
     class Foo
       private def bar
@@ -277,7 +277,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "do not instrument macro calls in class" do
+  it("do not instrument macro calls in class") do
     assert_agent %(
     class Foo
       property foo
@@ -288,7 +288,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument nested class defs" do
+  it("instrument nested class defs") do
     assert_agent %(
     class Bar
       class Foo
@@ -307,7 +307,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "do not instrument records class" do
+  it("do not instrument records class") do
     assert_agent %(
     record Foo, x, y
     ), <<-CR
@@ -315,7 +315,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "do not instrument top level macro calls" do
+  it("do not instrument top level macro calls") do
     assert_agent(<<-CR
     macro bar
       def foo
@@ -337,7 +337,7 @@ describe Playground::AgentInstrumentorTransformer do
     )
   end
 
-  it "do not instrument class/module declared macro" do
+  it("do not instrument class/module declared macro") do
     assert_agent(<<-CR
     module Bar
       macro bar
@@ -371,7 +371,7 @@ describe Playground::AgentInstrumentorTransformer do
     )
   end
 
-  it "instrument inside modules" do
+  it("instrument inside modules") do
     assert_agent %(
     module Bar
       class Baz
@@ -394,7 +394,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument if statement" do
+  it("instrument if statement") do
     assert_agent %(
     if a
       b
@@ -410,7 +410,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument unless statement" do
+  it("instrument unless statement") do
     assert_agent %(
     unless a
       b
@@ -426,7 +426,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument while statement" do
+  it("instrument while statement") do
     assert_agent %(
     while a
       b
@@ -440,7 +440,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument case statement" do
+  it("instrument case statement") do
     # mind multi cond cases and non-cond cases before instrumenting single-cond cases
     assert_agent %(
     case a
@@ -463,7 +463,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument blocks and single yields" do
+  it("instrument blocks and single yields") do
     assert_agent %(
     def foo(x)
       yield x
@@ -483,7 +483,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument blocks and but non multi yields" do
+  it("instrument blocks and but non multi yields") do
     assert_agent %(
     def foo(x)
       yield x, 1
@@ -503,7 +503,7 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument nested blocks unless in same line" do
+  it("instrument nested blocks unless in same line") do
     assert_agent %(
     a = foo do
       'a'
@@ -531,11 +531,11 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument typeof" do
+  it("instrument typeof") do
     assert_agent %(typeof(5)), %(_p.i(1) { typeof(5) })
   end
 
-  it "instrument exceptions" do
+  it("instrument exceptions") do
     assert_agent %(
     begin
       raise "The exception"
@@ -583,6 +583,6 @@ private def assert_compile(source)
   result = compiler.compile sources, "fake-no-build"
 end
 
-describe Playground::Session do
+describe(Playground::Session) do
   it { assert_compile %(puts "1") }
 end

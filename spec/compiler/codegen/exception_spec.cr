@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: exception" do
-  it "codegens rescue specific leaf exception" do
+describe("Code gen: exception") do
+  it("codegens rescue specific leaf exception") do
     run(%(
       require "prelude"
 
@@ -25,7 +25,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "codegens exception handler with return" do
+  it("codegens exception handler with return") do
     run(%(
       require "prelude"
 
@@ -41,7 +41,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "does ensure after rescue which returns (#171)" do
+  it("does ensure after rescue which returns (#171)") do
     run(%(
       require "prelude"
 
@@ -71,7 +71,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "executes body if nothing raised (1)" do
+  it("executes body if nothing raised (1)") do
     run(%(
       require "prelude"
 
@@ -85,7 +85,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(3)
   end
 
-  it "executes rescue if something is raised conditionally" do
+  it("executes rescue if something is raised conditionally") do
     run(%(
       require "prelude"
 
@@ -102,7 +102,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(8)
   end
 
-  it "executes rescue if something is raised unconditionally" do
+  it("executes rescue if something is raised unconditionally") do
     run(%(
       require "prelude"
 
@@ -118,7 +118,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(6)
   end
 
-  it "can result into union (1)" do
+  it("can result into union (1)") do
     run(%(
       require "prelude"
 
@@ -131,7 +131,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "can result into union (2)" do
+  it("can result into union (2)") do
     run(%(
       require "prelude"
 
@@ -144,7 +144,7 @@ describe "Code gen: exception" do
     )).to_i.should eq(2)
   end
 
-  it "handles nested exceptions" do
+  it("handles nested exceptions") do
     run(%(
       require "prelude"
 
@@ -164,7 +164,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(3)
   end
 
-  it "executes ensure when no exception is raised (1)" do
+  it("executes ensure when no exception is raised (1)") do
     run(%(
       require "prelude"
 
@@ -180,7 +180,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(10)
   end
 
-  it "executes ensure when no exception is raised (2)" do
+  it("executes ensure when no exception is raised (2)") do
     run(%(
       require "prelude"
 
@@ -196,7 +196,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "executes ensure when exception is raised (1)" do
+  it("executes ensure when exception is raised (1)") do
     run(%(
       require "prelude"
 
@@ -213,7 +213,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "executes ensure when exception is raised (2)" do
+  it("executes ensure when exception is raised (2)") do
     run(%(
       require "prelude"
 
@@ -230,7 +230,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(3)
   end
 
-  it "executes ensure when exception is unhandled (1)" do
+  it("executes ensure when exception is unhandled (1)") do
     run(%(
       require "prelude"
 
@@ -253,7 +253,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(3)
   end
 
-  it "executes ensure when exception is unhandled (2)" do
+  it("executes ensure when exception is unhandled (2)") do
     run(%(
       require "prelude"
 
@@ -276,7 +276,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(4)
   end
 
-  it "ensure without rescue" do
+  it("ensure without rescue") do
     run(%(
       require "prelude"
 
@@ -294,7 +294,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "executes ensure when the main block returns" do
+  it("executes ensure when the main block returns") do
     run(%(
       require "prelude"
 
@@ -313,7 +313,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(0)
   end
 
-  it "executes ensure when the main block returns" do
+  it("executes ensure when the main block returns") do
     run(%(
       require "prelude"
 
@@ -331,7 +331,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "executes ensure when the main block yields and returns" do
+  it("executes ensure when the main block yields and returns") do
     run(%(
       require "prelude"
 
@@ -355,7 +355,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "rescues with type" do
+  it("rescues with type") do
     run(%(
       require "prelude"
 
@@ -374,7 +374,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "rescues with types defaults to generic rescue" do
+  it("rescues with types defaults to generic rescue") do
     run(%(
       require "prelude"
 
@@ -395,7 +395,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(3)
   end
 
-  it "handles exception in outer block (1)" do
+  it("handles exception in outer block (1)") do
     run(%(
       require "prelude"
 
@@ -418,7 +418,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "handles exception in outer block (2)" do
+  it("handles exception in outer block (2)") do
     run(%(
       require "prelude"
 
@@ -441,7 +441,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(0)
   end
 
-  it "handles subclass" do
+  it("handles subclass") do
     run(%(
       require "prelude"
 
@@ -459,7 +459,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "handle multiple exception types (1)" do
+  it("handle multiple exception types (1)") do
     run(%(
       require "prelude"
 
@@ -476,7 +476,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "handle multiple exception types (2)" do
+  it("handle multiple exception types (2)") do
     run(%(
       require "prelude"
 
@@ -493,7 +493,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "receives exception object" do
+  it("receives exception object") do
     run(%(
       require "prelude"
 
@@ -514,7 +514,7 @@ describe "Code gen: exception" do
       )).to_string.should eq("Ex1")
   end
 
-  it "executes else if no exception is raised (1)" do
+  it("executes else if no exception is raised (1)") do
     run(%(
       require "prelude"
 
@@ -529,7 +529,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(3)
   end
 
-  it "executes else if no exception is raised (2)" do
+  it("executes else if no exception is raised (2)") do
     run(%(
       require "prelude"
 
@@ -544,7 +544,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(3)
   end
 
-  it "doesn't execute else if exception is raised (1)" do
+  it("doesn't execute else if exception is raised (1)") do
     run(%(
       require "prelude"
 
@@ -562,7 +562,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "doesn't execute else if exception is raised (2)" do
+  it("doesn't execute else if exception is raised (2)") do
     run(%(
       require "prelude"
 
@@ -580,7 +580,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "doesn't execute else if exception is raised conditionally (1)" do
+  it("doesn't execute else if exception is raised conditionally (1)") do
     run(%(
       require "prelude"
 
@@ -598,7 +598,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "doesn't execute else if exception is raised conditionally (2)" do
+  it("doesn't execute else if exception is raised conditionally (2)") do
     run(%(
       require "prelude"
 
@@ -616,7 +616,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "handle exception raised by proc literal" do
+  it("handle exception raised by proc literal") do
     run(%(
       require "prelude"
 
@@ -631,7 +631,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "codegens issue #118 (1)" do
+  it("codegens issue #118 (1)") do
     codegen(%(
       require "prelude"
 
@@ -644,7 +644,7 @@ describe "Code gen: exception" do
       ))
   end
 
-  it "codegens issue #118 (2)" do
+  it("codegens issue #118 (2)") do
     codegen(%(
       require "prelude"
 
@@ -658,7 +658,7 @@ describe "Code gen: exception" do
       ))
   end
 
-  it "captures exception thrown from proc" do
+  it("captures exception thrown from proc") do
     run(%(
       require "prelude"
 
@@ -676,7 +676,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "uses exception after rescue" do
+  it("uses exception after rescue") do
     run(%(
       require "prelude"
 
@@ -688,7 +688,7 @@ describe "Code gen: exception" do
       )).to_string.should eq("OH NO")
   end
 
-  it "doesn't codegen duplicated ensure if unreachable (#709)" do
+  it("doesn't codegen duplicated ensure if unreachable (#709)") do
     codegen(%(
       require "prelude"
 
@@ -710,7 +710,7 @@ describe "Code gen: exception" do
       ))
   end
 
-  it "executes ensure when raising inside rescue" do
+  it("executes ensure when raising inside rescue") do
     run(%(
       require "prelude"
 
@@ -731,7 +731,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "executes ensure of break inside while inside body" do
+  it("executes ensure of break inside while inside body") do
     run(%(
       require "prelude"
 
@@ -747,7 +747,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(123)
   end
 
-  it "executes ensure of break inside while inside body with nested handlers" do
+  it("executes ensure of break inside while inside body with nested handlers") do
     run(%(
       require "prelude"
 
@@ -769,7 +769,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "executes ensure of break inside while inside body with block" do
+  it("executes ensure of break inside while inside body with block") do
     run(%(
       require "prelude"
 
@@ -811,7 +811,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(0)
   end
 
-  it "executes ensure of break inside while inside rescue" do
+  it("executes ensure of break inside while inside rescue") do
     run(%(
       require "prelude"
 
@@ -829,7 +829,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(123)
   end
 
-  it "executes ensure of break inside while inside else" do
+  it("executes ensure of break inside while inside else") do
     run(%(
       require "prelude"
 
@@ -847,7 +847,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(123)
   end
 
-  it "executes ensure of next inside while inside body" do
+  it("executes ensure of next inside while inside body") do
     run(%(
       require "prelude"
 
@@ -865,7 +865,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(123)
   end
 
-  it "executes return inside rescue, executing ensure" do
+  it("executes return inside rescue, executing ensure") do
     run(%(
       require "prelude"
 
@@ -899,7 +899,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "executes ensure from return until target" do
+  it("executes ensure from return until target") do
     run(%(
       require "prelude"
 
@@ -920,7 +920,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "executes ensure from return until target" do
+  it("executes ensure from return until target") do
     run(%(
       require "prelude"
 
@@ -959,7 +959,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "executes ensure of next inside block" do
+  it("executes ensure of next inside block") do
     run(%(
       require "prelude"
 
@@ -987,7 +987,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "executes ensure of next inside block" do
+  it("executes ensure of next inside block") do
     run(%(
       require "prelude"
 
@@ -1035,7 +1035,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "executes ensure of break inside block" do
+  it("executes ensure of break inside block") do
     run(%(
       require "prelude"
 
@@ -1063,7 +1063,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
-  it "executes ensure of calling method when doing break inside block (#1233)" do
+  it("executes ensure of calling method when doing break inside block (#1233)") do
     run(%(
       require "prelude"
 
@@ -1092,7 +1092,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(123)
   end
 
-  it "propagates raise status (#2074)" do
+  it("propagates raise status (#2074)") do
     run(%(
       require "prelude"
 
@@ -1136,7 +1136,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "doesn't crash on #1988" do
+  it("doesn't crash on #1988") do
     run(%(
       require "prelude"
 
@@ -1153,7 +1153,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(42)
   end
 
-  it "runs #2441" do
+  it("runs #2441") do
     run(%(
       require "prelude"
 
@@ -1169,7 +1169,7 @@ describe "Code gen: exception" do
       )).to_string.should eq("foo")
   end
 
-  it "can rescue TypeCastError (#2607)" do
+  it("can rescue TypeCastError (#2607)") do
     run(%(
       require "prelude"
 
@@ -1184,7 +1184,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(42)
   end
 
-  it "can use argument in rescue (#2844)" do
+  it("can use argument in rescue (#2844)") do
     run(%(
       require "prelude"
 
@@ -1202,7 +1202,7 @@ describe "Code gen: exception" do
       )).to_string.should eq("foo")
   end
 
-  it "can use argument in rescue, with a different type (1) (#2844)" do
+  it("can use argument in rescue, with a different type (1) (#2844)") do
     run(%(
       require "prelude"
 
@@ -1220,7 +1220,7 @@ describe "Code gen: exception" do
       )).to_string.should eq("foo")
   end
 
-  it "can use argument in rescue, with a different type (2) (#2844)" do
+  it("can use argument in rescue, with a different type (2) (#2844)") do
     run(%(
       require "prelude"
 
@@ -1237,7 +1237,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(10)
   end
 
-  it "runs NoReturn ensure (#3082)" do
+  it("runs NoReturn ensure (#3082)") do
     run(%(
       require "prelude"
 
@@ -1256,7 +1256,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(123)
   end
 
-  it "catches exception thrown by as inside method (#4030)" do
+  it("catches exception thrown by as inside method (#4030)") do
     run(%(
       require "prelude"
 

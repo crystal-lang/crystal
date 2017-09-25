@@ -1,8 +1,8 @@
 require "spec"
 require "zip"
 
-describe Zip do
-  it "reads file from memory" do
+describe(Zip) do
+  it("reads file from memory") do
     io = IO::Memory.new
 
     Zip::Writer.open(io) do |zip|
@@ -35,7 +35,7 @@ describe Zip do
     end
   end
 
-  it "reads file from file system" do
+  it("reads file from file system") do
     filename = "#{__DIR__}/../data/file.zip"
 
     begin
@@ -74,7 +74,7 @@ describe Zip do
     end
   end
 
-  it "writes comment" do
+  it("writes comment") do
     io = IO::Memory.new
 
     Zip::Writer.open(io) do |zip|
@@ -89,7 +89,7 @@ describe Zip do
     end
   end
 
-  it "reads big file" do
+  it("reads big file") do
     io = IO::Memory.new
 
     Zip::Writer.open(io) do |zip|
@@ -105,7 +105,7 @@ describe Zip do
     end
   end
 
-  it "reads zip file with different extra in local file header and central directory header" do
+  it("reads zip file with different extra in local file header and central directory header") do
     Zip::File.open("#{__DIR__}/../data/test.zip") do |zip|
       zip.entries.size.should eq(2)
       zip["one.txt"].open(&.gets_to_end).should eq("One")
@@ -113,7 +113,7 @@ describe Zip do
     end
   end
 
-  it "reads zip comment" do
+  it("reads zip comment") do
     io = IO::Memory.new
 
     Zip::Writer.open(io) do |zip|

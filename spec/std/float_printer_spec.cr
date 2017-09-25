@@ -54,7 +54,7 @@ private def test_pair(v : Float64 | Float32, str, file = __FILE__, line = __LINE
   float_to_s(v).should eq(str), file, line
 end
 
-describe "#print Float64" do
+describe("#print Float64") do
   it { test_str "0.0" }
 
   it { test_str "Infinity" }
@@ -90,37 +90,37 @@ describe "#print Float64" do
   it { test_pair 1000000000000000.0, "1.0e+15" }
   it { test_pair 1111111111111111.0, "1.111111111111111e+15" }
 
-  it "min float64" do
+  it("min float64") do
     test_pair 5e-324, "5.0e-324"
   end
 
-  it "max float64" do
+  it("max float64") do
     test_pair 1.7976931348623157e308, "1.7976931348623157e+308"
   end
 
-  it "large number, rounded" do
+  it("large number, rounded") do
     test_pair 4.1855804968213567e298, "4.185580496821357e+298"
   end
 
-  it "small number, rounded" do
+  it("small number, rounded") do
     test_pair 5.5626846462680035e-309, "5.562684646268003e-309"
   end
 
-  it "falure case" do
+  it("falure case") do
     # grisu cannot do this number, so it should fall back to libc
     test_pair 3.5844466002796428e+298, "3.5844466002796428e+298"
   end
 
-  it "smallest normal" do
+  it("smallest normal") do
     test_pair 0x0010000000000000_u64, "2.2250738585072014e-308"
   end
 
-  it "largest denormal" do
+  it("largest denormal") do
     test_pair 0x000FFFFFFFFFFFFF_u64, "2.225073858507201e-308"
   end
 end
 
-describe "#print Float32" do
+describe("#print Float32") do
   it { test_pair 0_f32, "0.0" }
   it { test_pair -0_f32, "-0.0" }
   it { test_pair Float32::INFINITY, "Infinity" }
@@ -136,23 +136,23 @@ describe "#print Float32" do
   it { test_pair 1111111111111111.0_f32, "1.1111111e+15" }
   it { test_pair -3.9292015898194142585311918e-10_f32, "-3.9292017e-10" }
 
-  it "largest float" do
+  it("largest float") do
     test_pair 3.4028234e38_f32, "3.4028235e+38"
   end
 
-  it "largest normal" do
+  it("largest normal") do
     test_pair 0x7f7fffff_u32, "3.4028235e+38"
   end
 
-  it "smallest positive normal" do
+  it("smallest positive normal") do
     test_pair 0x00800000_u32, "1.1754944e-38"
   end
 
-  it "largest denormal" do
+  it("largest denormal") do
     test_pair 0x007fffff_u32, "1.1754942e-38"
   end
 
-  it "smallest positive denormal" do
+  it("smallest positive denormal") do
     test_pair 0x00000001_u32, "1.0e-45"
   end
 end

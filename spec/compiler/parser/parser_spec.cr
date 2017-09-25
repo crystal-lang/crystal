@@ -5,7 +5,7 @@ private def regex(string, options = Regex::Options::None)
 end
 
 private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
-  it "parses #{string}", file, line do
+  it("parses #{string}", file, line) do
     parser = Parser.new(string)
     parser.filename = "/foo/bar/baz.cr"
     node = parser.parse
@@ -14,7 +14,7 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
 end
 
 private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__)
-  it "gets corrects end location for #{source.inspect}", file, line do
+  it("gets corrects end location for #{source.inspect}", file, line) do
     parser = Parser.new("#{source}; 1")
     node = parser.parse.as(Expressions).expressions[0]
     end_loc = node.end_location.not_nil!
@@ -23,7 +23,7 @@ private def assert_end_location(source, line_number = 1, column_number = source.
   end
 end
 
-describe "Parser" do
+describe("Parser") do
   it_parses "nil", NilLiteral.new
 
   it_parses "true", true.bool
@@ -307,6 +307,7 @@ describe "Parser" do
   it_parses "a.foo(&block)", Call.new("a".call, "foo", block_arg: "block".call)
 
   it_parses "foo(&.block)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
+  it_parses "bar.foo(&.block)", Call.new("bar".call, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
   it_parses "foo &.block", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
   it_parses "foo &./(1)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "/", 1.int32)))
   it_parses "foo &.%(1)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "%", 1.int32)))
@@ -359,20 +360,19 @@ describe "Parser" do
 
   it_parses "foo(a: 1, &block)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: 1, &block", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
-  it_parses "foo a: b(1) do\nend", Call.new(nil, "foo", named_args: [NamedArgument.new("a", Call.new(nil, "b", 1.int32))], block: Block.new)
+  it_parses "foo(a: b(1)) do\nend", Call.new(nil, "foo", named_args: [NamedArgument.new("a", Call.new(nil, "b", 1.int32))], block: Block.new)
 
-  it_parses "Foo.bar x.y do\nend", Call.new("Foo".path, "bar", args: [Call.new("x".call, "y")] of ASTNode, block: Block.new)
+  it_parses "Foo.bar(x.y) do\nend", Call.new("Foo".path, "bar", args: [Call.new("x".call, "y")] of ASTNode, block: Block.new)
 
-  it_parses "x = 1; foo x do\nend", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", ["x".var] of ASTNode, Block.new)]
-  it_parses "x = 1; foo x { }", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
-  it_parses "x = 1; foo x {\n}", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
-  it_parses "foo x do\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new)
-  it_parses "foo x, y do\nend", Call.new(nil, "foo", ["x".call, "y".call] of ASTNode, Block.new)
+  it_parses "x = 1; foo(x) do\nend", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", ["x".var] of ASTNode, Block.new)]
+  it_parses "x = 1; foo(x { })", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
+  it_parses "x = 1; foo(x {\n})", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
+  it_parses "foo(x) do\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new)
+  it_parses "foo(x, y) do\nend", Call.new(nil, "foo", ["x".call, "y".call] of ASTNode, Block.new)
   it_parses "1.x; foo do\nend", [Call.new(1.int32, "x"), Call.new(nil, "foo", block: Block.new)] of ASTNode
-  it_parses "x = 1; foo.bar x do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
+  it_parses "x = 1; foo.bar(x) do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
 
   it_parses "foo do\n//\nend", Call.new(nil, "foo", [] of ASTNode, Block.new(body: regex("")))
-  it_parses "foo x do\n//\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new(body: regex("")))
   it_parses "foo(x) do\n//\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new(body: regex("")))
 
   it_parses "foo !false", Call.new(nil, "foo", [Not.new(false.bool)] of ASTNode)
@@ -515,7 +515,7 @@ describe "Parser" do
   it_parses "foo { |a| 1 }", Call.new(nil, "foo", block: Block.new(["a".var], 1.int32))
   it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
   it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", block: Block.new(body: 1.int32))
-  it_parses "a b() {}", Call.new(nil, "a", Call.new(nil, "b", block: Block.new))
+  it_parses "a(b() {})", Call.new(nil, "a", Call.new(nil, "b", block: Block.new))
 
   it_parses "foo { |a, (b, c), (d, e)| a; b; c; d; e }", Call.new(nil, "foo",
     block: Block.new(["a".var, "__arg0".var, "__arg1".var],
@@ -823,7 +823,7 @@ describe "Parser" do
   it_parses "foo.nil?(  )", IsA.new("foo".call, Path.global("Nil"), nil_check: true)
 
   it_parses "foo &.nil?", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), Path.global("Nil"), nil_check: true)))
-  it_parses "foo &.baz.qux do\nend", Call.new(nil, "foo",
+  it_parses "foo(&.baz.qux do\nend)", Call.new(nil, "foo",
     block: Block.new(["__arg0".var],
       Call.new(Call.new("__arg0".var, "baz"), "qux", block: Block.new)
     )
@@ -1258,7 +1258,7 @@ describe "Parser" do
   assert_syntax_error %q(asm("nop" :::: "#{volatile}")), "interpolation not allowed in asm option"
 
   it_parses "foo begin\nbar do\nend\nend", Call.new(nil, "foo", Expressions.new([Call.new(nil, "bar", block: Block.new)] of ASTNode))
-  it_parses "foo 1.bar do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)
+  it_parses "foo(1.bar) do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)
   it_parses "return 1.bar do\nend", Return.new(Call.new(1.int32, "bar", block: Block.new))
 
   %w(begin nil true false yield with abstract def macro require case if unless include extend class struct module enum while
@@ -1300,7 +1300,7 @@ describe "Parser" do
 
   it_parses "1 if /x/", If.new(RegexLiteral.new("x".string), 1.int32)
 
-  it_parses "foo bar.baz(1) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
+  it_parses "foo(bar.baz(1)) do\nend", Call.new(nil, "foo", args: [Call.new("bar".call, "baz", 1.int32)] of ASTNode, block: Block.new)
 
   it_parses "1 rescue 2 if 3", If.new(3.int32, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
   it_parses "1 ensure 2 if 3", If.new(3.int32, ExceptionHandler.new(1.int32, ensure: 2.int32))
@@ -1518,7 +1518,7 @@ describe "Parser" do
 
   assert_syntax_error %(def foo("bar");end), "expected argument internal name"
 
-  describe "end locations" do
+  describe("end locations") do
     assert_end_location "nil"
     assert_end_location "false"
     assert_end_location "123"
@@ -1578,14 +1578,14 @@ describe "Parser" do
     assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
     assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
 
-    it "gets corrects of ~" do
+    it("gets corrects of ~") do
       node = Parser.parse("\n  ~1")
       loc = node.location.not_nil!
       loc.line_number.should eq(2)
       loc.column_number.should eq(3)
     end
 
-    it "gets corrects end location for var" do
+    it("gets corrects end location for var") do
       parser = Parser.new("foo = 1\nfoo; 1")
       node = parser.parse.as(Expressions).expressions[1]
       end_loc = node.end_location.not_nil!
@@ -1593,7 +1593,7 @@ describe "Parser" do
       end_loc.column_number.should eq(3)
     end
 
-    it "gets corrects end location for block with { ... }" do
+    it("gets corrects end location for block with { ... }") do
       parser = Parser.new("foo { 1 + 2 }; 1")
       node = parser.parse.as(Expressions).expressions[0].as(Call)
       block = node.block.not_nil!
@@ -1603,7 +1603,7 @@ describe "Parser" do
       node.end_location.should eq(end_loc)
     end
 
-    it "gets corrects end location for block with do ... end" do
+    it("gets corrects end location for block with do ... end") do
       parser = Parser.new("foo do\n  1 + 2\nend; 1")
       node = parser.parse.as(Expressions).expressions[0].as(Call)
       block = node.block.not_nil!
@@ -1613,7 +1613,7 @@ describe "Parser" do
       node.end_location.should eq(end_loc)
     end
 
-    it "gets correct location after macro with yield" do
+    it("gets correct location after macro with yield") do
       parser = Parser.new(%(
         macro foo
           yield
@@ -1626,14 +1626,14 @@ describe "Parser" do
       loc.line_number.should eq(6)
     end
 
-    it "gets correct location with \r\n (#1558)" do
+    it("gets correct location with \r\n (#1558)") do
       nodes = Parser.parse("class Foo\r\nend\r\n\r\n1").as(Expressions)
       loc = nodes.last.location.not_nil!
       loc.line_number.should eq(4)
       loc.column_number.should eq(1)
     end
 
-    it "sets location of enum method" do
+    it("sets location of enum method") do
       parser = Parser.new("enum Foo; A; def bar; end; end")
       node = parser.parse.as(EnumDef).members[1].as(Def)
       loc = node.location.not_nil!
@@ -1641,7 +1641,7 @@ describe "Parser" do
       loc.column_number.should eq(14)
     end
 
-    it "gets correct location after macro with yield" do
+    it("gets correct location after macro with yield") do
       parser = Parser.new(%(\n  1 ? 2 : 3))
       node = parser.parse
       loc = node.location.not_nil!

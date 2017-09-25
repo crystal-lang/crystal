@@ -23,9 +23,9 @@ private def assert_packet(packet, opcode, size, final = false)
   packet.final.should eq(final)
 end
 
-describe HTTP::WebSocket do
-  describe "receive" do
-    it "can read a small text packet" do
+describe(HTTP::WebSocket) do
+  describe("receive") do
+    it("can read a small text packet") do
       data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
@@ -36,7 +36,7 @@ describe HTTP::WebSocket do
       String.new(buffer[0, result.size]).should eq("Hello")
     end
 
-    it "can read partial packets" do
+    it("can read partial packets") do
       data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
         0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
       io = IO::Memory.new(data)
@@ -55,7 +55,7 @@ describe HTTP::WebSocket do
       end
     end
 
-    it "can read masked text message" do
+    it("can read masked text message") do
       data = Bytes[0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58,
         0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58]
       io = IO::Memory.new(data)
@@ -74,7 +74,7 @@ describe HTTP::WebSocket do
       end
     end
 
-    it "can read fragmented packets" do
+    it("can read fragmented packets") do
       data = Bytes[0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f,
         0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f]
 
@@ -94,7 +94,7 @@ describe HTTP::WebSocket do
       end
     end
 
-    it "read ping packet" do
+    it("read ping packet") do
       data = Bytes[0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
@@ -105,7 +105,7 @@ describe HTTP::WebSocket do
       String.new(buffer[0, result.size]).should eq("Hello")
     end
 
-    it "read ping packet in between fragmented packet" do
+    it("read ping packet in between fragmented packet") do
       data = Bytes[0x01, 0x03, 0x48, 0x65, 0x6c,
         0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
         0x80, 0x02, 0x6c, 0x6f]
@@ -127,7 +127,7 @@ describe HTTP::WebSocket do
       String.new(buffer[0, 2]).should eq("lo")
     end
 
-    it "read long packet" do
+    it("read long packet") do
       data = File.read("#{__DIR__}/../data/websocket_longpacket.bin")
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
@@ -139,7 +139,7 @@ describe HTTP::WebSocket do
       String.new(buffer[0, 1023]).should eq("x" * 1023)
     end
 
-    it "read very long packet" do
+    it("read very long packet") do
       data = Bytes.new(10 + 0x010000)
 
       header = Bytes[0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x0]
@@ -154,7 +154,7 @@ describe HTTP::WebSocket do
       assert_binary_packet result, 0x010000, final: true
     end
 
-    it "can read a close packet" do
+    it("can read a close packet") do
       data = Bytes[0x88, 0x00]
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
@@ -165,8 +165,8 @@ describe HTTP::WebSocket do
     end
   end
 
-  describe "send" do
-    it "sends long data with correct header" do
+  describe("send") do
+    it("sends long data with correct header") do
       size = UInt16::MAX.to_u64 + 1
       big_string = "a" * size
       io = IO::Memory.new
@@ -183,7 +183,7 @@ describe HTTP::WebSocket do
       end
     end
 
-    it "sets binary opcode if used with slice" do
+    it("sets binary opcode if used with slice") do
       sent_bytes = uninitialized UInt8[4]
 
       io = IO::Memory.new
@@ -194,8 +194,8 @@ describe HTTP::WebSocket do
     end
   end
 
-  describe "stream" do
-    it "sends continuous data and splits it to frames" do
+  describe("stream") do
+    it("sends continuous data and splits it to frames") do
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.stream do |io| # default frame size of 1024
@@ -226,7 +226,7 @@ describe HTTP::WebSocket do
       end
     end
 
-    it "sets opcode of first frame to binary if stream is called with binary = true" do
+    it("sets opcode of first frame to binary if stream is called with binary = true") do
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.stream(binary: true) { |io| }
@@ -236,8 +236,8 @@ describe HTTP::WebSocket do
     end
   end
 
-  describe "send_masked" do
-    it "sends the data with a bitmask" do
+  describe("send_masked") do
+    it("sends the data with a bitmask") do
       sent_string = "hello"
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io, masked: true)
@@ -253,7 +253,7 @@ describe HTTP::WebSocket do
       (bytes[2] ^ bytes[10]).should eq('o'.ord)
     end
 
-    it "sends long data with correct header" do
+    it("sends long data with correct header") do
       size = UInt16::MAX.to_u64 + 1
       big_string = "a" * size
       io = IO::Memory.new
@@ -272,8 +272,8 @@ describe HTTP::WebSocket do
     end
   end
 
-  describe "close" do
-    it "closes with message" do
+  describe("close") do
+    it("closes with message") do
       message = "bye"
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
@@ -283,7 +283,7 @@ describe HTTP::WebSocket do
       String.new(bytes[2, bytes[1]]).should eq(message)
     end
 
-    it "closes without message" do
+    it("closes without message") do
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close
@@ -293,7 +293,7 @@ describe HTTP::WebSocket do
     end
   end
 
-  it "negotiates over HTTP correctly" do
+  it("negotiates over HTTP correctly") do
     port_chan = Channel(Int32).new
 
     spawn do
@@ -330,7 +330,7 @@ describe HTTP::WebSocket do
     ws2.run
   end
 
-  it "negotiates over HTTPS correctly" do
+  it("negotiates over HTTPS correctly") do
     port_chan = Channel(Int32).new
 
     spawn do

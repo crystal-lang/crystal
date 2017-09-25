@@ -1,6 +1,6 @@
 require "spec"
 
-describe PrettyPrint do
+describe(PrettyPrint) do
   assert_hello 0..6, <<-END
     hello
     a
@@ -225,7 +225,7 @@ describe PrettyPrint do
     abc def ghi jkl mno pqr stu
     END
 
-  it "tail group" do
+  it("tail group") do
     text = String.build do |io|
       PrettyPrint.format(io, 10) do |q|
         q.group do
@@ -417,7 +417,7 @@ private def fill(width)
 end
 
 private def assert_hello(range, expected)
-  it "pretty prints hello #{range}" do
+  it("pretty prints hello #{range}") do
     range.each do |width|
       hello(width).should eq(expected)
     end
@@ -425,7 +425,7 @@ private def assert_hello(range, expected)
 end
 
 private def assert_tree(range, expected)
-  it "pretty prints tree #{range}" do
+  it("pretty prints tree #{range}") do
     range.each do |width|
       tree(width).should eq(expected)
     end
@@ -433,7 +433,7 @@ private def assert_tree(range, expected)
 end
 
 private def assert_tree_alt(range, expected)
-  it "pretty prints tree alt #{range}" do
+  it("pretty prints tree alt #{range}") do
     range.each do |width|
       tree_alt(width).should eq(expected)
     end
@@ -441,7 +441,7 @@ private def assert_tree_alt(range, expected)
 end
 
 private def assert_strict_pretty(range, expected)
-  it "pretty prints strict pretty #{range}" do
+  it("pretty prints strict pretty #{range}") do
     range.each do |width|
       stritc_pretty(width).should eq(expected)
     end
@@ -449,7 +449,7 @@ private def assert_strict_pretty(range, expected)
 end
 
 private def assert_fill(range, expected)
-  it "pretty prints fill #{range}" do
+  it("pretty prints fill #{range}") do
     range.each do |width|
       fill(width).should eq(expected)
     end

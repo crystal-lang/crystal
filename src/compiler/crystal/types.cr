@@ -93,7 +93,7 @@ module Crystal
     end
 
     # Returns this type's metaclass, which holds class methods for this type.
-    getter metaclass : Type do
+    getter(metaclass : Type) do
       metaclass = MetaclassType.new(program, self)
       initialize_metaclass(metaclass)
       metaclass
@@ -672,11 +672,11 @@ module Crystal
   # - max_size: the maxinum number of arguments that can be passed to the method
   # - min_size: the minimum number of arguments that can be passed to the method
   # - yields: whether the method has a block
-  record DefWithMetadata,
+  record(DefWithMetadata,
     min_size : Int32,
     max_size : Int32,
     yields : Bool,
-    def : Def do
+    def : Def) do
     def self.new(a_def : Def)
       min_size, max_size = a_def.min_max_args_sizes
       new min_size, max_size, !!a_def.yields, a_def

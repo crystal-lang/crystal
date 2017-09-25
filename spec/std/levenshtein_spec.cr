@@ -1,7 +1,7 @@
 require "spec"
 require "levenshtein"
 
-describe "levenshtein" do
+describe("levenshtein") do
   it { Levenshtein.distance("algorithm", "altruistic").should eq(6) }
   it { Levenshtein.distance("1638452297", "444488444").should eq(9) }
   it { Levenshtein.distance("", "").should eq(0) }
@@ -15,7 +15,7 @@ describe "levenshtein" do
   it { Levenshtein.distance("hello", "hallo").should eq(1) }
   it { Levenshtein.distance("こんにちは", "こんちは").should eq(1) }
 
-  it "finds with finder" do
+  it("finds with finder") do
     finder = Levenshtein::Finder.new "hallo"
     finder.test "hay"
     finder.test "hall"
@@ -23,7 +23,7 @@ describe "levenshtein" do
     finder.best_match.should eq("hall")
   end
 
-  it "finds with finder and other values" do
+  it("finds with finder and other values") do
     finder = Levenshtein::Finder.new "hallo"
     finder.test "hay", "HAY"
     finder.test "hall", "HALL"

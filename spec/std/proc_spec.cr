@@ -1,14 +1,14 @@
 require "spec"
 
-describe "Proc" do
-  it "does to_s(io)" do
+describe("Proc") do
+  it("does to_s(io)") do
     str = IO::Memory.new
     f = ->(x : Int32) { x.to_f }
     f.to_s(str)
     str.to_s.should eq("#<Proc(Int32, Float64):0x#{f.pointer.address.to_s(16)}>")
   end
 
-  it "does to_s(io) when closured" do
+  it("does to_s(io) when closured") do
     str = IO::Memory.new
     a = 1.5
     f = ->(x : Int32) { x + a }
@@ -16,62 +16,62 @@ describe "Proc" do
     str.to_s.should eq("#<Proc(Int32, Float64):0x#{f.pointer.address.to_s(16)}:closure>")
   end
 
-  it "does to_s" do
+  it("does to_s") do
     str = IO::Memory.new
     f = ->(x : Int32) { x.to_f }
     f.to_s.should eq("#<Proc(Int32, Float64):0x#{f.pointer.address.to_s(16)}>")
   end
 
-  it "does to_s when closured" do
+  it("does to_s when closured") do
     str = IO::Memory.new
     a = 1.5
     f = ->(x : Int32) { x + a }
     f.to_s.should eq("#<Proc(Int32, Float64):0x#{f.pointer.address.to_s(16)}:closure>")
   end
 
-  it "gets pointer" do
+  it("gets pointer") do
     f = ->{ 1 }
     f.pointer.address.should be > 0
   end
 
-  it "gets closure data for non-closure" do
+  it("gets closure data for non-closure") do
     f = ->{ 1 }
     f.closure_data.address.should eq(0)
     f.closure?.should be_false
   end
 
-  it "gets closure data for closure" do
+  it("gets closure data for closure") do
     a = 1
     f = ->{ a }
     f.closure_data.address.should be > 0
     f.closure?.should be_true
   end
 
-  it "does new" do
+  it("does new") do
     a = 1
     f = ->(x : Int32) { x + a }
     f2 = Proc(Int32, Int32).new(f.pointer, f.closure_data)
     f2.call(3).should eq(4)
   end
 
-  it "does ==" do
+  it("does ==") do
     func = ->{ 1 }
     func.should eq(func)
     func2 = ->{ 1 }
     func2.should_not eq(func)
   end
 
-  it "clones" do
+  it("clones") do
     func = ->{ 1 }
     func.clone.should eq(func)
   end
 
-  it "#arity" do
+  it("#arity") do
     f = ->(x : Int32, y : Int32) {}
     f.arity.should eq(2)
   end
 
-  it "#partial" do
+  it("#partial") do
     f = ->(x : Int32, y : Int32, z : Int32) { x + y + z }
     f.call(1, 2, 3).should eq(6)
 

@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: cast" do
-  it "allows casting object to pointer and back" do
+describe("Code gen: cast") do
+  it("allows casting object to pointer and back") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -19,7 +19,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts from int to int" do
+  it("casts from int to int") do
     run(%(
       require "prelude"
 
@@ -29,7 +29,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts from union to single type" do
+  it("casts from union to single type") do
     run(%(
       require "prelude"
 
@@ -39,7 +39,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts from union to single type raises TypeCastError" do
+  it("casts from union to single type raises TypeCastError") do
     run(%(
       require "prelude"
 
@@ -53,7 +53,7 @@ describe "Code gen: cast" do
       )).to_b.should be_true
   end
 
-  it "casts from union to another union" do
+  it("casts from union to another union") do
     run(%(
       require "prelude"
 
@@ -63,7 +63,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts from union to another union raises TypeCastError" do
+  it("casts from union to another union raises TypeCastError") do
     run(%(
       require "prelude"
 
@@ -77,7 +77,7 @@ describe "Code gen: cast" do
       )).to_b.should be_true
   end
 
-  it "casts from virtual to single type" do
+  it("casts from virtual to single type") do
     run(%(
       require "prelude"
 
@@ -99,7 +99,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts from virtual to single type raises TypeCastError" do
+  it("casts from virtual to single type raises TypeCastError") do
     run(%(
       require "prelude"
 
@@ -125,7 +125,7 @@ describe "Code gen: cast" do
       )).to_b.should be_true
   end
 
-  it "casts from pointer to pointer" do
+  it("casts from pointer to pointer") do
     run(%(
       require "prelude"
 
@@ -134,7 +134,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts to module" do
+  it("casts to module") do
     run(%(
       require "prelude"
 
@@ -168,7 +168,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(2)
   end
 
-  it "casts from nilable to nil" do
+  it("casts from nilable to nil") do
     run(%(
       require "prelude"
 
@@ -178,7 +178,7 @@ describe "Code gen: cast" do
       )).to_b.should be_true
   end
 
-  it "casts from nilable to nil raises TypeCastError" do
+  it("casts from nilable to nil raises TypeCastError") do
     run(%(
       require "prelude"
 
@@ -192,7 +192,7 @@ describe "Code gen: cast" do
       )).to_b.should be_true
   end
 
-  it "casts to base class making it virtual" do
+  it("casts to base class making it virtual") do
     run(%(
       class Foo
         def foo
@@ -212,34 +212,34 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts to bigger union" do
+  it("casts to bigger union") do
     run(%(
       x = 1.5.as(Int32 | Float64)
       x.to_i
       )).to_i.should eq(1)
   end
 
-  it "allows casting nil to Void*" do
+  it("allows casting nil to Void*") do
     run(%(
       nil.as(Void*).address
       )).to_i.should eq(0)
   end
 
-  it "allows casting nilable type to Void* (1)" do
+  it("allows casting nilable type to Void* (1)") do
     run(%(
       a = 1 == 1 ? Reference.new : nil
       a.as(Void*).address
       )).to_i.should_not eq(0)
   end
 
-  it "allows casting nilable type to Void* (2)" do
+  it("allows casting nilable type to Void* (2)") do
     run(%(
       a = 1 == 2 ? Reference.new : nil
       a.as(Void*).address
       )).to_i.should eq(0)
   end
 
-  it "allows casting nilable type to Void* (3)" do
+  it("allows casting nilable type to Void* (3)") do
     run(%(
       class Foo
       end
@@ -248,7 +248,7 @@ describe "Code gen: cast" do
       )).to_i.should_not eq(0)
   end
 
-  it "casts (bug)" do
+  it("casts (bug)") do
     run(%(
       require "prelude"
       (1 || 1.1).as(Int32)
@@ -256,7 +256,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(123)
   end
 
-  it "can cast from Void* to virtual type (#3014)" do
+  it("can cast from Void* to virtual type (#3014)") do
     run(%(
       abstract class Foo
         abstract def hi
@@ -272,7 +272,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(42)
   end
 
-  it "upcasts from non-generic to generic" do
+  it("upcasts from non-generic to generic") do
     run(%(
       class Foo(T)
         def foo
@@ -290,7 +290,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(2)
   end
 
-  it "upcasts type to virtual (#3304)" do
+  it("upcasts type to virtual (#3304)") do
     run(%(
       class Foo
         def foo
@@ -308,7 +308,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "upcasts type to virtual (2) (#3304)" do
+  it("upcasts type to virtual (2) (#3304)") do
     run(%(
       class Foo
         def foo
@@ -332,7 +332,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts with block var that changes type (#3341)" do
+  it("casts with block var that changes type (#3341)") do
     codegen(%(
       require "prelude"
 
@@ -350,7 +350,7 @@ describe "Code gen: cast" do
       ))
   end
 
-  it "casts between union types, where union has a tuple type (#3377)" do
+  it("casts between union types, where union has a tuple type (#3377)") do
     codegen(%(
       require "prelude"
 
@@ -359,7 +359,7 @@ describe "Code gen: cast" do
       ))
   end
 
-  it "codegens class method when type id is available but not a virtual type (#3490)" do
+  it("codegens class method when type id is available but not a virtual type (#3490)") do
     run(%(
       class Class
         def name : String
@@ -390,7 +390,7 @@ describe "Code gen: cast" do
       )).to_string.should eq("A")
   end
 
-  it "casts from nilable type to virtual type (#3512)" do
+  it("casts from nilable type to virtual type (#3512)") do
     run(%(
       require "prelude"
 

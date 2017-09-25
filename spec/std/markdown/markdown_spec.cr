@@ -2,12 +2,12 @@ require "spec"
 require "markdown"
 
 private def assert_render(input, output, file = __FILE__, line = __LINE__)
-  it "renders #{input.inspect}", file, line do
+  it("renders #{input.inspect}", file, line) do
     Markdown.to_html(input).should eq(output), file, line
   end
 end
 
-describe Markdown do
+describe(Markdown) do
   assert_render "", ""
   assert_render "Hello", "<p>Hello</p>"
   assert_render "Hello\nWorld", "<p>Hello\nWorld</p>"

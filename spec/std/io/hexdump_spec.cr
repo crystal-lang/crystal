@@ -1,9 +1,9 @@
 require "spec"
 require "io/hexdump"
 
-describe IO::Hexdump do
-  describe "read" do
-    it "prints hexdump" do
+describe(IO::Hexdump) do
+  describe("read") do
+    it("prints hexdump") do
       ascii_table = <<-EOF
         00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
         00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
@@ -30,8 +30,8 @@ describe IO::Hexdump do
     end
   end
 
-  describe "write" do
-    it "prints hexdump" do
+  describe("write") do
+    it("prints hexdump") do
       ascii_table = <<-EOF
         00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
         00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?

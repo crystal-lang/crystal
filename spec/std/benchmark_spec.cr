@@ -8,8 +8,8 @@ typeof(begin
   end
 end)
 
-describe Benchmark::IPS::Job do
-  it "works in general / integration test" do
+describe(Benchmark::IPS::Job) do
+  it("works in general / integration test") do
     # test several things to avoid running a benchmark over and over again in
     # the specs
     j = Benchmark::IPS::Job.new(0.001, 0.001, interactive: false)
@@ -34,8 +34,8 @@ private def create_entry
   Benchmark::IPS::Entry.new("label", ->{ 1 + 1 })
 end
 
-describe Benchmark::IPS::Entry, "#set_cycles" do
-  it "sets the number of cycles needed to make 100ms" do
+describe(Benchmark::IPS::Entry, "#set_cycles") do
+  it("sets the number of cycles needed to make 100ms") do
     e = create_entry
     e.set_cycles(2.seconds, 100)
     e.cycles.should eq(5)
@@ -44,15 +44,15 @@ describe Benchmark::IPS::Entry, "#set_cycles" do
     e.cycles.should eq(1)
   end
 
-  it "sets the cycles to 1 no matter what" do
+  it("sets the cycles to 1 no matter what") do
     e = create_entry
     e.set_cycles(2.seconds, 1)
     e.cycles.should eq(1)
   end
 end
 
-describe Benchmark::IPS::Entry, "#calculate_stats" do
-  it "correctly caculates basic stats" do
+describe(Benchmark::IPS::Entry, "#calculate_stats") do
+  it("correctly caculates basic stats") do
     e = create_entry
     e.calculate_stats([2, 4, 4, 4, 5, 5, 7, 9])
 
@@ -67,7 +67,7 @@ private def h_mean(mean)
   create_entry.tap { |e| e.mean = mean }.human_mean
 end
 
-describe Benchmark::IPS::Entry, "#human_mean" do
+describe(Benchmark::IPS::Entry, "#human_mean") do
   it { h_mean(0.01234567890123).should eq("  0.01 ") }
   it { h_mean(0.12345678901234).should eq("  0.12 ") }
 
@@ -93,7 +93,7 @@ private def h_ips(seconds)
   create_entry.tap { |e| e.mean = mean }.human_iteration_time
 end
 
-describe Benchmark::IPS::Entry, "#human_iteration_time" do
+describe(Benchmark::IPS::Entry, "#human_iteration_time") do
   it { h_ips(1234.567_890_123).should eq("1234.57s ") }
   it { h_ips(123.456_789_012_3).should eq("123.46s ") }
   it { h_ips(12.345_678_901_23).should eq(" 12.35s ") }

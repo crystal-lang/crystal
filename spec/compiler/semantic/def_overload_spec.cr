@@ -1,15 +1,15 @@
 require "../../spec_helper"
 
-describe "Semantic: def overload" do
-  it "types a call with overload" do
+describe("Semantic: def overload") do
+  it("types a call with overload") do
     assert_type("def foo; 1; end; def foo(x); 2.5; end; foo") { int32 }
   end
 
-  it "types a call with overload with yield" do
+  it("types a call with overload with yield") do
     assert_type("def foo; yield; 1; end; def foo; 2.5; end; foo") { float64 }
   end
 
-  it "types a call with overload with yield after typing another call without yield" do
+  it("types a call with overload with yield after typing another call without yield") do
     assert_type("
       def foo; yield; 1; end
       def foo; 2.5; end
@@ -18,19 +18,19 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "types a call with overload with yield the other way" do
+  it("types a call with overload with yield the other way") do
     assert_type("def foo; yield; 1; end; def foo; 2.5; end; foo { 1 }") { int32 }
   end
 
-  it "types a call with overload type first overload" do
+  it("types a call with overload type first overload") do
     assert_type("def foo(x : Int); 2.5; end; def foo(x : Float); 1; end; foo(1)") { float64 }
   end
 
-  it "types a call with overload type second overload" do
+  it("types a call with overload type second overload") do
     assert_type("def foo(x : Int); 2.5; end; def foo(x : Float); 1; end; foo(1.5)") { int32 }
   end
 
-  it "types a call with overload Object type first overload" do
+  it("types a call with overload Object type first overload") do
     assert_type("
       class Foo
       end
@@ -50,11 +50,11 @@ describe "Semantic: def overload" do
       ") { float64 }
   end
 
-  it "types a call with overload selecting the most restrictive" do
+  it("types a call with overload selecting the most restrictive") do
     assert_type("def foo(x); 1; end; def foo(x : Float); 1.1; end; foo(1.5)") { float64 }
   end
 
-  it "types a call with overload selecting the most restrictive 2" do
+  it("types a call with overload selecting the most restrictive 2") do
     assert_type("
       def foo(x, y : Int)
         1
@@ -72,7 +72,7 @@ describe "Semantic: def overload" do
     ") { char }
   end
 
-  it "types a call with overload matches virtual" do
+  it("types a call with overload matches virtual") do
     assert_type("
       class Foo; end
 
@@ -84,7 +84,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "types a call with overload matches virtual 2" do
+  it("types a call with overload matches virtual 2") do
     assert_type("
       class Foo
       end
@@ -104,7 +104,7 @@ describe "Semantic: def overload" do
     ") { float64 }
   end
 
-  it "types a call with overload matches virtual 3" do
+  it("types a call with overload matches virtual 3") do
     assert_type("
       class Foo
       end
@@ -124,7 +124,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "types a call with overload self" do
+  it("types a call with overload self") do
     assert_type("
       class Foo
         def foo(x : self)
@@ -141,7 +141,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "types a call with overload self other match" do
+  it("types a call with overload self other match") do
     assert_type("
       class Foo
         def foo(x : self)
@@ -158,7 +158,7 @@ describe "Semantic: def overload" do
     ") { float64 }
   end
 
-  it "types a call with overload self in included module" do
+  it("types a call with overload self in included module") do
     assert_type("
       module Foo
         def foo(x : self)
@@ -181,7 +181,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "types a call with overload self in included module other type" do
+  it("types a call with overload self in included module other type") do
     assert_type("
       module Foo
         def foo(x : self)
@@ -204,7 +204,7 @@ describe "Semantic: def overload" do
     ") { float64 }
   end
 
-  it "types a call with overload self with inherited type" do
+  it("types a call with overload self with inherited type") do
     assert_type("
       class Foo
         def foo(x : self)
@@ -220,7 +220,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "matches types with free variables" do
+  it("matches types with free variables") do
     assert_type("
       require \"prelude\"
       def foo(x : Array(T), y : T) forall T
@@ -235,7 +235,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "prefers more specifc overload than one with free variables" do
+  it("prefers more specifc overload than one with free variables") do
     assert_type("
       require \"prelude\"
       def foo(x : Array(T), y : T)
@@ -250,7 +250,7 @@ describe "Semantic: def overload" do
     ") { float64 }
   end
 
-  it "accepts overload with nilable type restriction" do
+  it("accepts overload with nilable type restriction") do
     assert_type("
       def foo(x : Int?)
         1
@@ -260,7 +260,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "dispatch call to def with restrictions" do
+  it("dispatch call to def with restrictions") do
     assert_type("
       def foo(x : Value)
         1.1
@@ -275,7 +275,7 @@ describe "Semantic: def overload" do
     ") { union_of(int32, float64) }
   end
 
-  it "dispatch call to def with restrictions" do
+  it("dispatch call to def with restrictions") do
     assert_type("
       class Foo(T)
       end
@@ -288,7 +288,7 @@ describe "Semantic: def overload" do
     ") { generic_class "Foo", int32 }
   end
 
-  it "can call overload with generic restriction" do
+  it("can call overload with generic restriction") do
     assert_type("
       class Foo(T)
       end
@@ -301,7 +301,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "can call overload with aliased generic restriction" do
+  it("can call overload with aliased generic restriction") do
     assert_type("
       class Foo(T)
       end
@@ -316,7 +316,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "restrict matches to minimum necessary 1" do
+  it("restrict matches to minimum necessary 1") do
     assert_type("
       def coco(x : Int, y); 1; end
       def coco(x, y : Int); 1.5; end
@@ -326,7 +326,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "single type restriction wins over union" do
+  it("single type restriction wins over union") do
     assert_type("
       class Foo; end
       class Bar < Foo ;end
@@ -343,7 +343,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "compare self type with others" do
+  it("compare self type with others") do
     assert_type("
       class Foo
         def foo(x : Int)
@@ -359,7 +359,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "uses method defined in base class if the restriction doesn't match" do
+  it("uses method defined in base class if the restriction doesn't match") do
     assert_type("
       class Foo
         def foo(x)
@@ -377,7 +377,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "lookup matches in virtual type inside union" do
+  it("lookup matches in virtual type inside union") do
     assert_type("
       class Foo
         def foo
@@ -399,7 +399,7 @@ describe "Semantic: def overload" do
     ") { union_of(int32, char) }
   end
 
-  it "filter union type with virtual" do
+  it("filter union type with virtual") do
     assert_type("
       class Foo
       end
@@ -422,7 +422,7 @@ describe "Semantic: def overload" do
     ") { union_of(int32, float64) }
   end
 
-  it "restrict virtual type with virtual type" do
+  it("restrict virtual type with virtual type") do
     assert_type("
       def foo(x : T, y : T) forall T
         1
@@ -439,7 +439,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "restricts union to generic class" do
+  it("restricts union to generic class") do
     assert_type("
       class Foo(T)
       end
@@ -457,7 +457,7 @@ describe "Semantic: def overload" do
     ") { union_of(int32, char) }
   end
 
-  it "matches on partial union" do
+  it("matches on partial union") do
     assert_type("
       require \"prelude\"
 
@@ -475,7 +475,7 @@ describe "Semantic: def overload" do
     ") { union_of(int32, char) }
   end
 
-  pending "restricts on generic type with free type arg" do
+  pending("restricts on generic type with free type arg") do
     assert_type("
       require \"reference\"
 
@@ -496,7 +496,7 @@ describe "Semantic: def overload" do
       ") { union_of(bool, int32) }
   end
 
-  pending "restricts on generic type without type arg" do
+  pending("restricts on generic type without type arg") do
     assert_type("
       require \"reference\"
 
@@ -517,7 +517,7 @@ describe "Semantic: def overload" do
     ") { union_of(bool, int32) }
   end
 
-  it "matches generic class instance type with another one" do
+  it("matches generic class instance type with another one") do
     assert_type("
       require \"prelude\"
       class Foo
@@ -532,7 +532,7 @@ describe "Semantic: def overload" do
       ") { int32 }
   end
 
-  it "errors if generic type doesn't match" do
+  it("errors if generic type doesn't match") do
     assert_error "
       class Foo(T)
       end
@@ -545,7 +545,7 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
-  it "gets free variable from union restriction" do
+  it("gets free variable from union restriction") do
     assert_type("
       def foo(x : Nil | U) forall U
         U
@@ -555,7 +555,7 @@ describe "Semantic: def overload" do
       ") { int32.metaclass }
   end
 
-  it "gets free variable from union restriction (2)" do
+  it("gets free variable from union restriction (2)") do
     assert_type("
       def foo(x : Nil | U) forall U
         U
@@ -565,7 +565,7 @@ describe "Semantic: def overload" do
       ") { int32.metaclass }
   end
 
-  it "gets free variable from union restriction without a union" do
+  it("gets free variable from union restriction without a union") do
     assert_type("
       def foo(x : Nil | U) forall U
         U
@@ -575,7 +575,7 @@ describe "Semantic: def overload" do
       ") { int32.metaclass }
   end
 
-  it "matches a generic module argument" do
+  it("matches a generic module argument") do
     assert_type("
       module Bar(T)
       end
@@ -592,7 +592,7 @@ describe "Semantic: def overload" do
       ") { int32 }
   end
 
-  it "matches a generic module argument with free var" do
+  it("matches a generic module argument with free var") do
     assert_type("
       module Bar(T)
       end
@@ -609,7 +609,7 @@ describe "Semantic: def overload" do
       ") { int32.metaclass }
   end
 
-  it "matches a generic module argument with free var (2)" do
+  it("matches a generic module argument with free var (2)") do
     assert_type("
       module Bar(T)
       end
@@ -626,7 +626,7 @@ describe "Semantic: def overload" do
       ") { int32.metaclass }
   end
 
-  it "matches virtual type to union" do
+  it("matches virtual type to union") do
     assert_type("
       abstract class Foo
       end
@@ -646,7 +646,7 @@ describe "Semantic: def overload" do
       ") { int32 }
   end
 
-  it "doesn't match tuples of different sizes" do
+  it("doesn't match tuples of different sizes") do
     assert_error "
       def foo(x : {X, Y, Z})
         'a'
@@ -657,7 +657,7 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
-  it "matches tuples of different sizes" do
+  it("matches tuples of different sizes") do
     assert_type("
       def foo(x : {X, Y}) forall X, Y
         1
@@ -672,7 +672,7 @@ describe "Semantic: def overload" do
       ") { union_of(int32, char) }
   end
 
-  it "matches tuples and uses free var" do
+  it("matches tuples and uses free var") do
     assert_type("
       def foo(x : {X, Y}) forall X, Y
         Y
@@ -682,7 +682,7 @@ describe "Semantic: def overload" do
       ") { float64.metaclass }
   end
 
-  it "matches tuple with underscore" do
+  it("matches tuple with underscore") do
     assert_type("
       def foo(x : {_, _})
         x
@@ -692,7 +692,7 @@ describe "Semantic: def overload" do
       ") { tuple_of([int32, float64] of Type) }
   end
 
-  it "gives correct error message, looking up parent defs, when no overload matches" do
+  it("gives correct error message, looking up parent defs, when no overload matches") do
     assert_error %(
       class Foo
         def foo(x : Int32)
@@ -709,7 +709,7 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
-  it "doesn't match with wrong number of type arguments (#313)" do
+  it("doesn't match with wrong number of type arguments (#313)") do
     assert_error %(
       class Foo(A, B)
       end
@@ -722,7 +722,7 @@ describe "Semantic: def overload" do
       "wrong number of type vars for Foo(A, B) (given 1, expected 2)"
   end
 
-  it "includes splat symbol in error message" do
+  it("includes splat symbol in error message") do
     assert_error %(
       def foo(x : Int32, *bar)
       end
@@ -732,7 +732,7 @@ describe "Semantic: def overload" do
       "foo(x : Int32, *bar)"
   end
 
-  it "says `no overload matches` instead of `can't instantiate abstract class` on wrong argument in new method" do
+  it("says `no overload matches` instead of `can't instantiate abstract class` on wrong argument in new method") do
     assert_error %(
       abstract class Foo
         def self.new(x : Int)
@@ -744,7 +744,7 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
-  it "finds method after including module in generic module (#1201)" do
+  it("finds method after including module in generic module (#1201)") do
     assert_type(%(
       module Bar
         def foo
@@ -771,7 +771,7 @@ describe "Semantic: def overload" do
       )) { char }
   end
 
-  it "reports no overload matches with correct method owner (#2083)" do
+  it("reports no overload matches with correct method owner (#2083)") do
     assert_error %(
       class Foo
         def foo(x : Int32)
@@ -793,7 +793,7 @@ describe "Semantic: def overload" do
       MSG
   end
 
-  it "gives better error message with consecutive arguments sizes" do
+  it("gives better error message with consecutive arguments sizes") do
     assert_error %(
       def foo
       end
@@ -809,7 +809,7 @@ describe "Semantic: def overload" do
       "wrong number of arguments for 'foo' (given 3, expected 0..2)"
   end
 
-  it "errors if no overload matches on union against named arg (#2640)" do
+  it("errors if no overload matches on union against named arg (#2640)") do
     assert_error %(
       def f(a : Int32)
       end
@@ -820,7 +820,7 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
-  it "dispatches with named arg" do
+  it("dispatches with named arg") do
     assert_type(%(
       def f(a : Int32, b : Int32)
         true
@@ -835,7 +835,7 @@ describe "Semantic: def overload" do
       )) { union_of bool, char }
   end
 
-  it "uses long name when no overload matches and name is the same (#1030)" do
+  it("uses long name when no overload matches and name is the same (#1030)") do
     assert_error %(
       module Moo::String
         def self.foo(a : String, b : Bool)
@@ -848,7 +848,7 @@ describe "Semantic: def overload" do
       " - Moo::String.foo(a : Moo::String, b : Bool)"
   end
 
-  it "overloads on metaclass (#2916)" do
+  it("overloads on metaclass (#2916)") do
     assert_type(%(
       def foo(x : String.class)
         1
@@ -862,7 +862,7 @@ describe "Semantic: def overload" do
       )) { tuple_of([int32, char]) }
   end
 
-  it "overloads on metaclass (2) (#2916)" do
+  it("overloads on metaclass (2) (#2916)") do
     assert_type(%(
       def foo(x : String.class)
         1
@@ -876,7 +876,7 @@ describe "Semantic: def overload" do
       )) { char }
   end
 
-  it "overloads on metaclass (3) (#2916)" do
+  it("overloads on metaclass (3) (#2916)") do
     assert_type(%(
       class Foo
       end
@@ -896,7 +896,7 @@ describe "Semantic: def overload" do
       )) { tuple_of([char, int32]) }
   end
 
-  it "doesn't crash on unknown metaclass" do
+  it("doesn't crash on unknown metaclass") do
     assert_type(%(
       def foo(x : Foo.class)
       end
@@ -908,7 +908,7 @@ describe "Semantic: def overload" do
       )) { int32 }
   end
 
-  it "overloads union against non-union (#2904)" do
+  it("overloads union against non-union (#2904)") do
     assert_type(%(
       def foo(x : Int32?)
         true
@@ -922,7 +922,7 @@ describe "Semantic: def overload" do
       )) { tuple_of([char, bool]) }
   end
 
-  it "errors when binding free variable to different types" do
+  it("errors when binding free variable to different types") do
     assert_error %(
       def foo(x : T, y : T) forall T
       end
@@ -932,7 +932,7 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
-  it "errors when binding free variable to different types (2)" do
+  it("errors when binding free variable to different types (2)") do
     assert_error %(
       class Gen(T)
       end
@@ -945,7 +945,7 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
-  it "overloads with named argument (#4465)" do
+  it("overloads with named argument (#4465)") do
     assert_type(%(
 			def do_something(value : Int32)
 			  value + 1

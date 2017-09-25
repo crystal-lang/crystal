@@ -2013,7 +2013,7 @@ module Crystal
 
       @while_stack.push node
 
-      with_block_kind :while do
+      with_block_kind(:while) do
         node.body.accept self
       end
 
@@ -2573,7 +2573,7 @@ module Crystal
           merge_rescue_vars exception_handler_vars, all_rescue_vars
 
           # And then accept the ensure part
-          with_block_kind :ensure do
+          with_block_kind(:ensure) do
             node.ensure.try &.accept self
           end
         end
@@ -2595,7 +2595,7 @@ module Crystal
 
           before_ensure_vars = @vars.dup
 
-          with_block_kind :ensure do
+          with_block_kind(:ensure) do
             node_ensure.accept self
           end
 

@@ -1,7 +1,7 @@
 require "spec"
 require "readline"
 
-describe Readline do
+describe(Readline) do
   typeof(Readline.readline)
   typeof(Readline.readline("Hello", true))
   typeof(Readline.readline(prompt: "Hello"))
@@ -10,7 +10,7 @@ describe Readline do
   typeof(Readline.point)
   typeof(Readline.autocomplete { |s| %w(foo bar) })
 
-  it "gets prefix in bytesize between two strings" do
+  it("gets prefix in bytesize between two strings") do
     Readline.common_prefix_bytesize("", "foo").should eq(0)
     Readline.common_prefix_bytesize("foo", "").should eq(0)
     Readline.common_prefix_bytesize("a", "a").should eq(1)

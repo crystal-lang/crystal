@@ -1,7 +1,7 @@
 require "../../support/syntax"
 
 private def expect_to_s(original, expected = original, emit_doc = false, file = __FILE__, line = __LINE__)
-  it "does to_s of #{original.inspect}", file, line do
+  it("does to_s of #{original.inspect}", file, line) do
     str = IO::Memory.new expected.bytesize
     parser = Parser.new original
     parser.wants_doc = emit_doc
@@ -10,7 +10,7 @@ private def expect_to_s(original, expected = original, emit_doc = false, file = 
   end
 end
 
-describe "ASTNode#to_s" do
+describe("ASTNode#to_s") do
   expect_to_s "([] of T).foo"
   expect_to_s "({} of K => V).foo"
   expect_to_s "foo(bar)"

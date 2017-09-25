@@ -1,7 +1,7 @@
 require "spec"
 
-describe IO::ARGF do
-  it "reads from STDIN if ARGV isn't specified" do
+describe(IO::ARGF) do
+  it("reads from STDIN if ARGV isn't specified") do
     argv = [] of String
     stdin = IO::Memory.new("hello")
 
@@ -11,7 +11,7 @@ describe IO::ARGF do
     argf.read_byte.should be_nil
   end
 
-  it "reads from ARGV if specified" do
+  it("reads from ARGV if specified") do
     path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
     path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
     stdin = IO::Memory.new("")
@@ -38,8 +38,8 @@ describe IO::ARGF do
     str.should eq("12345")
   end
 
-  describe "gets" do
-    it "reads from STDIN if ARGV isn't specified" do
+  describe("gets") do
+    it("reads from STDIN if ARGV isn't specified") do
       argv = [] of String
       stdin = IO::Memory.new("hello\nworld\n")
 
@@ -49,7 +49,7 @@ describe IO::ARGF do
       argf.gets.should be_nil
     end
 
-    it "reads from STDIN if ARGV isn't specified, chomp = false" do
+    it("reads from STDIN if ARGV isn't specified, chomp = false") do
       argv = [] of String
       stdin = IO::Memory.new("hello\nworld\n")
 
@@ -59,7 +59,7 @@ describe IO::ARGF do
       argf.gets(chomp: false).should be_nil
     end
 
-    it "reads from ARGV if specified" do
+    it("reads from ARGV if specified") do
       path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
       path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
       stdin = IO::Memory.new("")
@@ -82,8 +82,8 @@ describe IO::ARGF do
     end
   end
 
-  describe "peek" do
-    it "peeks from STDIN if ARGV isn't specified" do
+  describe("peek") do
+    it("peeks from STDIN if ARGV isn't specified") do
       argv = [] of String
       stdin = IO::Memory.new("1234")
 
@@ -93,7 +93,7 @@ describe IO::ARGF do
       argf.gets_to_end.should eq("1234")
     end
 
-    it "peeks from ARGV if specified" do
+    it("peeks from ARGV if specified") do
       path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
       path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
       stdin = IO::Memory.new("")

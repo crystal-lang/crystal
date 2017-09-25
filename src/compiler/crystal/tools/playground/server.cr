@@ -75,7 +75,7 @@ module Crystal::Playground
         send_with_json_builder do |json|
           json.field "type", "bug"
           json.field "tag", tag
-          json.field "exception" do
+          json.field("exception") do
             append_exception json, ex
           end
         end
@@ -116,7 +116,7 @@ module Crystal::Playground
       send_with_json_builder do |json|
         json.field "type", "exception"
         json.field "tag", tag
-        json.field "exception" do
+        json.field("exception") do
           append_exception json, ex
         end
       end
@@ -126,7 +126,7 @@ module Crystal::Playground
       json.object do
         json.field "message", ex.to_s
         if ex.is_a?(Crystal::Exception)
-          json.field "payload" do
+          json.field("payload") do
             ex.to_json(json)
           end
         end
@@ -449,7 +449,7 @@ module Crystal::Playground
       views_dir = File.join(playground_dir, "views")
       public_dir = File.join(playground_dir, "public")
 
-      agent_ws = PathWebSocketHandler.new "/agent" do |ws, context|
+      agent_ws = PathWebSocketHandler.new("/agent") do |ws, context|
         match_data = context.request.path.not_nil!.match(/\/(\d+)\/(\d+)$/).not_nil!
         session_key = match_data[1]?.try(&.to_i)
         tag = match_data[2]?.try(&.to_i)
@@ -466,7 +466,7 @@ module Crystal::Playground
         end
       end
 
-      client_ws = PathWebSocketHandler.new "/client" do |ws, context|
+      client_ws = PathWebSocketHandler.new("/client") do |ws, context|
         origin = context.request.headers["Origin"]
         if !accept_request?(origin)
           @logger.warn "Invalid Request Origin: #{origin}"

@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: new" do
-  it "doesn't incorrectly redefines new for generic class" do
+describe("Semantic: new") do
+  it("doesn't incorrectly redefines new for generic class") do
     assert_type(%(
       class Foo(T)
         def self.new
@@ -13,7 +13,7 @@ describe "Semantic: new" do
       )) { int32 }
   end
 
-  it "evaluates initialize default value at the instance scope (1) (#731)" do
+  it("evaluates initialize default value at the instance scope (1) (#731)") do
     assert_type(%(
       class Foo
         def initialize(@x = self)
@@ -28,7 +28,7 @@ describe "Semantic: new" do
       )) { types["Foo"] }
   end
 
-  it "evaluates initialize default value at the instance scope (2) (#731)" do
+  it("evaluates initialize default value at the instance scope (2) (#731)") do
     assert_type(%(
       class Foo
         def initialize(@x = self, @y = 'a')
@@ -43,7 +43,7 @@ describe "Semantic: new" do
       )) { char }
   end
 
-  it "evaluates initialize default value at the instance scope (3) (#731)" do
+  it("evaluates initialize default value at the instance scope (3) (#731)") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -67,7 +67,7 @@ describe "Semantic: new" do
       )) { int32 }
   end
 
-  it "evaluates initialize default value at the instance scope (4) (#731)" do
+  it("evaluates initialize default value at the instance scope (4) (#731)") do
     assert_type(%(
       class Foo
         @x : Int32
@@ -90,7 +90,7 @@ describe "Semantic: new" do
       )) { int32 }
   end
 
-  it "evaluates initialize default value at the instance scope (5) (#731)" do
+  it("evaluates initialize default value at the instance scope (5) (#731)") do
     assert_type(%(
       class Foo(R)
         @x : Int32
@@ -111,7 +111,7 @@ describe "Semantic: new" do
       )) { int32 }
   end
 
-  it "evaluates initialize default value at the instance scope (6) (#731)" do
+  it("evaluates initialize default value at the instance scope (6) (#731)") do
     assert_type(%(
       class Foo(R)
         @x : Int32
@@ -132,7 +132,7 @@ describe "Semantic: new" do
       )) { int32 }
   end
 
-  it "errors if using self call in default argument (1)" do
+  it("errors if using self call in default argument (1)") do
     assert_error %(
       class My
         @name : String
@@ -153,7 +153,7 @@ describe "Semantic: new" do
       "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
-  it "errors if using self call in default argument (2)" do
+  it("errors if using self call in default argument (2)") do
     assert_error %(
       class My
         @name : String
@@ -173,7 +173,7 @@ describe "Semantic: new" do
       "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
-  it "errors if using self call in default argument (3)" do
+  it("errors if using self call in default argument (3)") do
     assert_error %(
       class My
         @name : String
@@ -192,7 +192,7 @@ describe "Semantic: new" do
       "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
-  it "inherits initialize and new methods if doesn't define new (#3238)" do
+  it("inherits initialize and new methods if doesn't define new (#3238)") do
     assert_type(%(
       class Foo(T)
         def initialize(x : Int32)
@@ -210,7 +210,7 @@ describe "Semantic: new" do
       )) { types["Bar"] }
   end
 
-  it "doesn't have default new for inherited class from generic type" do
+  it("doesn't have default new for inherited class from generic type") do
     assert_error %(
       class Foo(T)
         def initialize(x : Int32)

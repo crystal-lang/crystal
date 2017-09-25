@@ -7,8 +7,8 @@ private macro expect_splat(e_arg, e_arg_index, e_obj, e_obj_index)
   obj_index.should eq({{e_obj_index}})
 end
 
-describe "Semantic: splat" do
-  it "splats" do
+describe("Semantic: splat") do
+  it("splats") do
     assert_type(%(
       def foo(*args)
         args
@@ -18,7 +18,7 @@ describe "Semantic: splat" do
       )) { tuple_of([int32, float64, char] of Type) }
   end
 
-  it "errors on zero args with named arg and splat" do
+  it("errors on zero args with named arg and splat") do
     assert_error %(
       def foo(x, y = 1, *z)
       end
@@ -28,7 +28,7 @@ describe "Semantic: splat" do
       "wrong number of arguments"
   end
 
-  it "redefines method with splat (bug #248)" do
+  it("redefines method with splat (bug #248)") do
     assert_type(%(
       class Foo
         def bar(*x)
@@ -46,7 +46,7 @@ describe "Semantic: splat" do
       )) { char }
   end
 
-  it "errors if splatting union" do
+  it("errors if splatting union") do
     assert_error %(
       a = {1} || {1, 2}
       foo *a
@@ -54,14 +54,14 @@ describe "Semantic: splat" do
       "not yet supported"
   end
 
-  it "errors if splatting non-tuple type" do
+  it("errors if splatting non-tuple type") do
     assert_error %(
       foo *1
       ),
       "argument to splat must be a tuple, not Int32"
   end
 
-  it "forwards tuple with an extra argument" do
+  it("forwards tuple with an extra argument") do
     assert_type(%(
       def foo(*args)
         bar 1, *args
@@ -76,7 +76,7 @@ describe "Semantic: splat" do
       )) { tuple_of [int32] of TypeVar }
   end
 
-  it "can splat after type filter left it as a tuple (#442)" do
+  it("can splat after type filter left it as a tuple (#442)") do
     assert_type(%(
       def output(x, y)
         x + y
@@ -91,7 +91,7 @@ describe "Semantic: splat" do
       )) { int32 }
   end
 
-  it "errors if doesn't match splat with type restriction" do
+  it("errors if doesn't match splat with type restriction") do
     assert_error %(
       def foo(*args : Int32)
       end
@@ -101,7 +101,7 @@ describe "Semantic: splat" do
       "no overload matches"
   end
 
-  it "works if matches splat with type restriction" do
+  it("works if matches splat with type restriction") do
     assert_type(%(
       def foo(*args : Int32)
         args[0]
@@ -111,7 +111,7 @@ describe "Semantic: splat" do
       )) { int32 }
   end
 
-  it "overloads with type restriction and splat (1)" do
+  it("overloads with type restriction and splat (1)") do
     assert_type(%(
       def foo(arg : Int32)
         1
@@ -125,7 +125,7 @@ describe "Semantic: splat" do
       )) { int32 }
   end
 
-  it "overloads with type restriction and splat (2)" do
+  it("overloads with type restriction and splat (2)") do
     assert_type(%(
       def foo(arg : Int32)
         1
@@ -139,7 +139,7 @@ describe "Semantic: splat" do
       )) { char }
   end
 
-  it "errors if doesn't match splat with type restriction because of zero arguments" do
+  it("errors if doesn't match splat with type restriction because of zero arguments") do
     assert_error %(
       def foo(*args : Int32)
       end
@@ -149,7 +149,7 @@ describe "Semantic: splat" do
       "no overload matches"
   end
 
-  it "overloads with type restriction and splat (3)" do
+  it("overloads with type restriction and splat (3)") do
     assert_type(%(
       def foo(*args : Char)
         "hello"
@@ -163,7 +163,7 @@ describe "Semantic: splat" do
       )) { string }
   end
 
-  it "overloads with type restriction and splat (4)" do
+  it("overloads with type restriction and splat (4)") do
     assert_type(%(
       def foo(*args : Char)
         "hello"
@@ -177,7 +177,7 @@ describe "Semantic: splat" do
       )) { float64 }
   end
 
-  it "overloads with type restriction and splat (5)" do
+  it("overloads with type restriction and splat (5)") do
     assert_type(%(
       def foo(*args : Int32)
         "hello"
@@ -191,7 +191,7 @@ describe "Semantic: splat" do
       )) { string }
   end
 
-  it "overloads with type restriction and splat (6)" do
+  it("overloads with type restriction and splat (6)") do
     assert_type(%(
       def foo(*args : Int32)
         "hello"
@@ -205,7 +205,7 @@ describe "Semantic: splat" do
       )) { float64 }
   end
 
-  it "overloads with type restriction and splat (7)" do
+  it("overloads with type restriction and splat (7)") do
     assert_type(%(
       def foo(*args)
         foo args
@@ -219,7 +219,7 @@ describe "Semantic: splat" do
       )) { char }
   end
 
-  it "overloads with splat against method with two arguments (#986) (1)" do
+  it("overloads with splat against method with two arguments (#986) (1)") do
     assert_type(%(
       def foo(a, b)
         1
@@ -233,7 +233,7 @@ describe "Semantic: splat" do
       )) { int32 }
   end
 
-  it "overloads with splat against method with two arguments (#986) (2)" do
+  it("overloads with splat against method with two arguments (#986) (2)") do
     assert_type(%(
       def foo(a, b)
         1
@@ -247,7 +247,7 @@ describe "Semantic: splat" do
       )) { char }
   end
 
-  it "calls super with implicit splat arg (#1001)" do
+  it("calls super with implicit splat arg (#1001)") do
     assert_type(%(
       class Foo
         def foo(name)
@@ -265,7 +265,7 @@ describe "Semantic: splat" do
       )) { int32 }
   end
 
-  it "splats arg and splat against splat (1) (#1042)" do
+  it("splats arg and splat against splat (1) (#1042)") do
     assert_type(%(
       def foo(a : Bool, *b : Int32)
         1
@@ -279,7 +279,7 @@ describe "Semantic: splat" do
       )) { int32 }
   end
 
-  it "splats arg and splat against splat (2) (#1042)" do
+  it("splats arg and splat against splat (2) (#1042)") do
     assert_type(%(
       def foo(a : Bool, *b : Int32)
         1
@@ -293,7 +293,7 @@ describe "Semantic: splat" do
       )) { char }
   end
 
-  it "gives correct error when forwarding splat" do
+  it("gives correct error when forwarding splat") do
     assert_error %(
       def foo(x : Int)
       end
@@ -307,7 +307,7 @@ describe "Semantic: splat" do
       "wrong number of arguments for 'foo' (given 2, expected 1)"
   end
 
-  it "gives correct error when forwarding splat (2)" do
+  it("gives correct error when forwarding splat (2)") do
     assert_error %(
       def foo(x : Int, y : Int, z : Int, w : Int)
       end
@@ -321,7 +321,7 @@ describe "Semantic: splat" do
       "no overload matches 'foo' with types Char, Int32, String, Float64"
   end
 
-  it "doesn't crash on non-match (#2521)" do
+  it("doesn't crash on non-match (#2521)") do
     assert_error %(
       def test_func(a : String, *b, c, d)
       end
@@ -335,7 +335,7 @@ describe "Semantic: splat" do
       "missing arguments: c, d"
   end
 
-  it "says no overload matches on type restrictions past the splat arg" do
+  it("says no overload matches on type restrictions past the splat arg") do
     assert_error %(
       def foo(*z, a : String, b : String)
       end
@@ -345,7 +345,7 @@ describe "Semantic: splat" do
       "missing arguments: a, b"
   end
 
-  it "says missing argument because positional args don't match past splat" do
+  it("says missing argument because positional args don't match past splat") do
     assert_error %(
       def foo(x, *y, z)
       end
@@ -355,7 +355,7 @@ describe "Semantic: splat" do
       "missing argument: z"
   end
 
-  it "allows default value after splat index" do
+  it("allows default value after splat index") do
     assert_type(%(
       def foo(x, *y, z = 10)
         {x, y, z}
@@ -365,7 +365,7 @@ describe "Semantic: splat" do
       )) { tuple_of([char, tuple_of([bool, float64]), int32]) }
   end
 
-  it "uses bare *" do
+  it("uses bare *") do
     assert_type(%(
       def foo(x, *, y)
         {x, y}
@@ -375,7 +375,7 @@ describe "Semantic: splat" do
       )) { tuple_of([int32, char]) }
   end
 
-  it "uses bare *, doesn't let more args" do
+  it("uses bare *, doesn't let more args") do
     assert_error %(
       def foo(x, *, y)
       end
@@ -385,7 +385,7 @@ describe "Semantic: splat" do
       "no overload matches"
   end
 
-  it "uses splat restriction" do
+  it("uses splat restriction") do
     assert_type(%(
       def foo(*args : *T) forall T
         T
@@ -395,7 +395,7 @@ describe "Semantic: splat" do
       )) { tuple_of([int32, char, bool]).metaclass }
   end
 
-  it "uses splat restriction, matches empty" do
+  it("uses splat restriction, matches empty") do
     assert_type(%(
       def foo(*args : *T) forall T
         T
@@ -405,7 +405,7 @@ describe "Semantic: splat" do
       )) { tuple_of([] of Type).metaclass }
   end
 
-  it "uses splat restriction with concrete type" do
+  it("uses splat restriction with concrete type") do
     assert_error %(
       struct Tuple(T)
         def self.foo(*args : *T)
@@ -417,7 +417,7 @@ describe "Semantic: splat" do
       "no overload matches"
   end
 
-  it "method with splat and optional named argument matches zero args call (#2746)" do
+  it("method with splat and optional named argument matches zero args call (#2746)") do
     assert_type(%(
       def foo(*args, k1 = nil)
         args
@@ -427,7 +427,7 @@ describe "Semantic: splat" do
       )) { tuple_of([] of Type) }
   end
 
-  it "method with default arguments and splat matches call with one arg (#2766)" do
+  it("method with default arguments and splat matches call with one arg (#2766)") do
     assert_type(%(
       def foo(a = nil, b = nil, *, c = nil)
         a
@@ -437,7 +437,7 @@ describe "Semantic: splat" do
       )) { int32 }
   end
 
-  it "accesses T when empty, via module" do
+  it("accesses T when empty, via module") do
     assert_type(%(
       module Moo(T)
         def t
@@ -457,7 +457,7 @@ describe "Semantic: splat" do
       )) { no_return.metaclass }
   end
 
-  it "matches splat in geneic type" do
+  it("matches splat in geneic type") do
     assert_type(%(
       class Foo(*T)
       end
@@ -471,7 +471,7 @@ describe "Semantic: splat" do
       )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
   end
 
-  it "errors if using two splat indices on restriction" do
+  it("errors if using two splat indices on restriction") do
     assert_error %(
       class Foo(*T)
       end
@@ -486,7 +486,7 @@ describe "Semantic: splat" do
       "can't specify more than one splat in restriction"
   end
 
-  it "matches with splat" do
+  it("matches with splat") do
     assert_type(%(
     def foo(&block : *{Int32, Int32} -> U) forall U
       tup = {1, 2}
@@ -499,7 +499,7 @@ describe "Semantic: splat" do
     )) { tuple_of([int32, int32]) }
   end
 
-  it "matches typed before non-typed (1) (#3134)" do
+  it("matches typed before non-typed (1) (#3134)") do
     assert_type(%(
       def bar(*args)
         "free"
@@ -513,7 +513,7 @@ describe "Semantic: splat" do
       )) { tuple_of([int32, string]) }
   end
 
-  it "matches typed before non-typed (1) (#3134)" do
+  it("matches typed before non-typed (1) (#3134)") do
     assert_type(%(
       def bar(*args : Int32)
         1
@@ -527,8 +527,8 @@ describe "Semantic: splat" do
       )) { tuple_of([int32, string]) }
   end
 
-  describe Splat do
-    it "without splat" do
+  describe(Splat) do
+    it("without splat") do
       a_def = Def.new("foo", args: [Arg.new("x"), Arg.new("y")])
       objs = [10, 20]
 
@@ -549,7 +549,7 @@ describe "Semantic: splat" do
       end
     end
 
-    it "with splat" do
+    it("with splat") do
       a_def = Def.new("foo", args: [Arg.new("a1"), Arg.new("a2"), Arg.new("a3"), Arg.new("a4")], splat_index: 2)
       objs = [10, 20, 30, 40, 50, 60]
 

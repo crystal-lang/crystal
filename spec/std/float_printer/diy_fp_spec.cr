@@ -30,8 +30,8 @@ require "spec"
 
 private alias DiyFP = Float::Printer::DiyFP
 
-describe DiyFP do
-  it "multiply" do
+describe(DiyFP) do
+  it("multiply") do
     fp1 = DiyFP.new(3_u64, 0)
     fp2 = DiyFP.new(2_u64, 0)
     prod = fp1 * fp2
@@ -40,7 +40,7 @@ describe DiyFP do
     prod.exp.should eq 64
   end
 
-  it "multiply" do
+  it("multiply") do
     fp1 = DiyFP.new(0x8000000000000000, 11)
     fp2 = DiyFP.new(2_u64, 13)
     prod = fp1 * fp2
@@ -49,7 +49,7 @@ describe DiyFP do
     prod.exp.should eq 11 + 13 + 64
   end
 
-  it "multiply rounding" do
+  it("multiply rounding") do
     fp1 = DiyFP.new(0x8000000000000001_u64, 11)
     fp2 = DiyFP.new(1_u64, 13)
     prod = fp1 * fp2
@@ -58,7 +58,7 @@ describe DiyFP do
     prod.exp.should eq 11 + 13 + 64
   end
 
-  it "multiply rounding" do
+  it("multiply rounding") do
     fp1 = DiyFP.new(0x7fffffffffffffff_u64, 11)
     fp2 = DiyFP.new(1_u64, 13)
     prod = fp1 * fp2
@@ -67,7 +67,7 @@ describe DiyFP do
     prod.exp.should eq 11 + 13 + 64
   end
 
-  it "multiply big numbers" do
+  it("multiply big numbers") do
     fp1 = DiyFP.new(0xffffffffffffffff_u64, 11)
     fp2 = DiyFP.new(0xffffffffffffffff_u64, 13)
     prod = fp1 * fp2
@@ -76,7 +76,7 @@ describe DiyFP do
     prod.exp.should eq 11 + 13 + 64
   end
 
-  it "converts ordered 64" do
+  it("converts ordered 64") do
     ordered = 0x0123456789ABCDEF_u64
     f = ordered.unsafe_as(Float64)
     f.should eq 3512700564088504e-318 # ensure byte order
@@ -88,7 +88,7 @@ describe DiyFP do
     fp.frac.should eq 0x0013456789ABCDEF
   end
 
-  it "converts ordered 32" do
+  it("converts ordered 32") do
     ordered = 0x01234567_u32
     f = ordered.unsafe_as(Float32)
     f.should eq(2.9988165487136453e-38_f32)
@@ -101,7 +101,7 @@ describe DiyFP do
     fp.frac.should eq 0xA34567
   end
 
-  it "converts min f64" do
+  it("converts min f64") do
     min = 0x0000000000000001_u64
     f = min.unsafe_as(Float64)
     f.should eq 5e-324 # ensure byte order
@@ -113,7 +113,7 @@ describe DiyFP do
     fp.frac.should eq 1
   end
 
-  it "converts min f32" do
+  it("converts min f32") do
     min = 0x00000001_u32
     f = min.unsafe_as(Float32)
     fp = DiyFP.from_f(f)
@@ -123,7 +123,7 @@ describe DiyFP do
     fp.frac.should eq 1
   end
 
-  it "converts max f64" do
+  it("converts max f64") do
     max = 0x7fefffffffffffff_u64
     f = max.unsafe_as(Float64)
     f.should eq 1.7976931348623157e308 # ensure byte order
@@ -134,7 +134,7 @@ describe DiyFP do
     fp.frac.should eq 0x001fffffffffffff_u64
   end
 
-  it "converts max f32" do
+  it("converts max f32") do
     max = 0x7f7fffff_u64
     f = max.unsafe_as(Float32)
     f.should eq 3.4028234e38_f32 # ensure byte order
@@ -145,7 +145,7 @@ describe DiyFP do
     fp.frac.should eq 0x00ffffff_u64
   end
 
-  it "normalizes ordered" do
+  it("normalizes ordered") do
     ordered = 0x0123456789ABCDEF_u64
     f = ordered.unsafe_as(Float64)
 
@@ -155,7 +155,7 @@ describe DiyFP do
     fp.frac.should eq 0x0013456789ABCDEF_u64 << 11
   end
 
-  it "normalizes min f64" do
+  it("normalizes min f64") do
     min = 0x0000000000000001_u64
     f = min.unsafe_as(Float64)
 
@@ -166,7 +166,7 @@ describe DiyFP do
     fp.frac.should eq 0x8000000000000000
   end
 
-  it "normalizes max f64" do
+  it("normalizes max f64") do
     max = 0x7fefffffffffffff_u64
     f = max.unsafe_as(Float64)
 

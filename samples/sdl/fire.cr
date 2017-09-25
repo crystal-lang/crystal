@@ -234,7 +234,7 @@ class Points
   end
 end
 
-record Rectangle, x : Int32, y : Int32 do
+record(Rectangle, x : Int32, y : Int32) do
   def contains?(p)
     contains? p.x, p.y
   end

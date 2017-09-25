@@ -1,27 +1,27 @@
 require "../../spec_helper"
 
-describe "Semantic: NoReturn" do
-  it "types call to LibC.exit as NoReturn" do
+describe("Semantic: NoReturn") do
+  it("types call to LibC.exit as NoReturn") do
     assert_type("lib LibC; fun exit : NoReturn; end; LibC.exit") { no_return }
   end
 
-  it "types raise as NoReturn" do
+  it("types raise as NoReturn") do
     assert_type("require \"prelude\"; raise \"foo\"") { no_return }
   end
 
-  it "types union of NoReturn and something else" do
+  it("types union of NoReturn and something else") do
     assert_type("lib LibC; fun exit : NoReturn; end; 1 == 1 ? LibC.exit : 1") { int32 }
   end
 
-  it "types union of NoReturns" do
+  it("types union of NoReturns") do
     assert_type("lib LibC; fun exit : NoReturn; end; 1 == 2 ? LibC.exit : LibC.exit") { no_return }
   end
 
-  it "types with no return even if code follows" do
+  it("types with no return even if code follows") do
     assert_type("lib LibC; fun exit : NoReturn; end; LibC.exit; 1") { no_return }
   end
 
-  it "assumes if condition's type filters when else is no return" do
+  it("assumes if condition's type filters when else is no return") do
     assert_type("
       lib LibC
         fun exit : NoReturn
@@ -40,7 +40,7 @@ describe "Semantic: NoReturn" do
     ") { int32 }
   end
 
-  it "computes NoReturn in a lazy way inside if then (#314) (1)" do
+  it("computes NoReturn in a lazy way inside if then (#314) (1)") do
     assert_type(%(
       require "prelude"
 
@@ -62,7 +62,7 @@ describe "Semantic: NoReturn" do
       )) { union_of(int32, string) }
   end
 
-  it "computes NoReturn in a lazy way inside if then (#314) (2)" do
+  it("computes NoReturn in a lazy way inside if then (#314) (2)") do
     assert_type(%(
       require "prelude"
 
@@ -83,7 +83,7 @@ describe "Semantic: NoReturn" do
       )) { int32 }
   end
 
-  it "computes NoReturn in a lazy way inside if then (#314) (3)" do
+  it("computes NoReturn in a lazy way inside if then (#314) (3)") do
     assert_type(%(
       require "prelude"
 
@@ -109,7 +109,7 @@ describe "Semantic: NoReturn" do
       )) { nilable(string) }
   end
 
-  it "computes NoReturn in a lazy way inside if then (#314) (4)" do
+  it("computes NoReturn in a lazy way inside if then (#314) (4)") do
     assert_type(%(
       require "prelude"
 
@@ -134,7 +134,7 @@ describe "Semantic: NoReturn" do
       )) { nil_type }
   end
 
-  it "computes NoReturn in a lazy way inside if then (#314) (5)" do
+  it("computes NoReturn in a lazy way inside if then (#314) (5)") do
     assert_error %(
       require "prelude"
 
@@ -159,7 +159,7 @@ describe "Semantic: NoReturn" do
       "undefined method 'size' for Nil"
   end
 
-  it "computes NoReturn in a lazy way inside if else (#314) (1)" do
+  it("computes NoReturn in a lazy way inside if else (#314) (1)") do
     assert_type(%(
       require "prelude"
 
@@ -182,7 +182,7 @@ describe "Semantic: NoReturn" do
       )) { union_of(int32, string) }
   end
 
-  it "computes NoReturn in a lazy way inside if else (#314) (2)" do
+  it("computes NoReturn in a lazy way inside if else (#314) (2)") do
     assert_type(%(
       require "prelude"
 
@@ -204,7 +204,7 @@ describe "Semantic: NoReturn" do
       )) { int32 }
   end
 
-  it "computes NoReturn in a lazy way inside if else (#314) (3)" do
+  it("computes NoReturn in a lazy way inside if else (#314) (3)") do
     assert_type(%(
       require "prelude"
 
@@ -231,7 +231,7 @@ describe "Semantic: NoReturn" do
       )) { nilable(string) }
   end
 
-  it "computes NoReturn in a lazy way inside if else (#314) (4)" do
+  it("computes NoReturn in a lazy way inside if else (#314) (4)") do
     assert_type(%(
       require "prelude"
 
@@ -257,7 +257,7 @@ describe "Semantic: NoReturn" do
       )) { nil_type }
   end
 
-  it "computes NoReturn in a lazy way inside if else (#314) (5)" do
+  it("computes NoReturn in a lazy way inside if else (#314) (5)") do
     assert_error %(
       require "prelude"
 
@@ -282,7 +282,7 @@ describe "Semantic: NoReturn" do
       "undefined method 'size' for Nil"
   end
 
-  it "types exception handler as NoReturn if ensure is NoReturn" do
+  it("types exception handler as NoReturn if ensure is NoReturn") do
     assert_type(%(
       lib LibC
         fun foo : NoReturn
@@ -296,7 +296,7 @@ describe "Semantic: NoReturn" do
       )) { no_return }
   end
 
-  it "types as NoReturn even if Nil return type is forced (#3096)" do
+  it("types as NoReturn even if Nil return type is forced (#3096)") do
     assert_type(%(
       lib LibC
         fun exit(Int32) : NoReturn

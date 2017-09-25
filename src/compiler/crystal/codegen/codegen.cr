@@ -35,7 +35,7 @@ module Crystal
       main_return_type = llvm_context.void if node.type.nil_type?
 
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LLVM::Type, main_return_type) do |func|
-        func.basic_blocks.append "entry" do |builder|
+        func.basic_blocks.append("entry") do |builder|
           argc = llvm_context.int32.const_int(0)
           argv = llvm_context.void_pointer.pointer.null
           ret = builder.call(main, [argc, argv])

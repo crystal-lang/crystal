@@ -1,8 +1,8 @@
 require "../spec_helper"
 require "tempfile"
 
-describe "Compiler" do
-  it "compiles a file" do
+describe("Compiler") do
+  it("compiles a file") do
     tempfile = Tempfile.new "compiler_spec_output"
     tempfile.close
 
@@ -13,8 +13,8 @@ describe "Compiler" do
     `#{tempfile.path}`.should eq("Hello!")
   end
 
-  it "runs subcommand in preference to a filename " do
-    Dir.cd "#{__DIR__}/data/" do
+  it("runs subcommand in preference to a filename ") do
+    Dir.cd("#{__DIR__}/data/") do
       tempfile = Tempfile.new "compiler_spec_output"
       tempfile.close
 

@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
-describe "Code gen: var" do
-  it "codegens var" do
+describe("Code gen: var") do
+  it("codegens var") do
     run("a = 1; 1.5; a").to_i.should eq(1)
   end
 
-  it "codegens ivar assignment when not-nil type filter applies" do
+  it("codegens ivar assignment when not-nil type filter applies") do
     run("
       class Foo
         def foo
@@ -21,7 +21,7 @@ describe "Code gen: var" do
       ").to_i.should eq(2)
   end
 
-  it "codegens bug with instance vars and ssa" do
+  it("codegens bug with instance vars and ssa") do
     run("
       class Foo
         def initialize
@@ -42,7 +42,7 @@ describe "Code gen: var" do
       ").to_i.should eq(-1)
   end
 
-  it "codegens bug with var, while, if, break and ssa" do
+  it("codegens bug with var, while, if, break and ssa") do
     run("
       a = 1
       a = 2
@@ -59,7 +59,7 @@ describe "Code gen: var" do
       ").to_i.should eq(2)
   end
 
-  it "codegens bug with union of int, nil and string (1): assigning nil to union must fill all zeros" do
+  it("codegens bug with union of int, nil and string (1): assigning nil to union must fill all zeros") do
     run(%(
       struct Nil
         def foo
@@ -83,7 +83,7 @@ describe "Code gen: var" do
       )).to_i.should eq(1)
   end
 
-  it "codegens bug with union of int, nil and string (2): assigning nil to union must fill all zeros" do
+  it("codegens bug with union of int, nil and string (2): assigning nil to union must fill all zeros") do
     run(%(
       struct Nil
         def foo
@@ -107,7 +107,7 @@ describe "Code gen: var" do
       )).to_i.should eq(1)
   end
 
-  it "codegens assignment that can never be reached" do
+  it("codegens assignment that can never be reached") do
     codegen(%(
       require "prelude"
 
@@ -117,7 +117,7 @@ describe "Code gen: var" do
       ))
   end
 
-  it "works with typeof with assignment (#828)" do
+  it("works with typeof with assignment (#828)") do
     run(%(
       class String; def to_i; 0; end; end
 
@@ -127,7 +127,7 @@ describe "Code gen: var" do
       )).to_i.should eq(123)
   end
 
-  it "assigns to underscore" do
+  it("assigns to underscore") do
     run(%(
       _ = (b = 2)
       b

@@ -1,7 +1,7 @@
 require "../types"
 
 module Crystal
-  record NamedArgumentType, name : String, type : Type do
+  record(NamedArgumentType, name : String, type : Type) do
     def self.from_args(named_args : Array(NamedArgument)?)
       named_args.try &.map { |named_arg| new(named_arg.name, named_arg.value.type) }
     end

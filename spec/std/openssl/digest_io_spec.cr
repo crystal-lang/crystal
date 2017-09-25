@@ -1,8 +1,8 @@
 require "spec"
 require "../../../src/openssl"
 
-describe OpenSSL::DigestIO do
-  it "calculates digest from reading" do
+describe(OpenSSL::DigestIO) do
+  it("calculates digest from reading") do
     base_io = IO::Memory.new("foo")
     base_digest = OpenSSL::Digest.new("SHA256")
     io = OpenSSL::DigestIO.new(base_io, base_digest)
@@ -13,7 +13,7 @@ describe OpenSSL::DigestIO do
     io.digest.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae".hexbytes)
   end
 
-  it "calculates digest from multiple reads" do
+  it("calculates digest from multiple reads") do
     base_io = IO::Memory.new("foo")
     base_digest = OpenSSL::Digest.new("SHA256")
     io = OpenSSL::DigestIO.new(base_io, base_digest)
@@ -27,7 +27,7 @@ describe OpenSSL::DigestIO do
     io.digest.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae".hexbytes)
   end
 
-  it "does not calculate digest on read" do
+  it("does not calculate digest on read") do
     base_io = IO::Memory.new("foo")
     base_digest = OpenSSL::Digest.new("SHA256")
     empty_digest = OpenSSL::Digest.new("SHA256").digest
@@ -38,7 +38,7 @@ describe OpenSSL::DigestIO do
     io.digest.should eq(empty_digest)
   end
 
-  it "calculates digest from writing" do
+  it("calculates digest from writing") do
     base_io = IO::Memory.new
     base_digest = OpenSSL::Digest.new("SHA256")
     io = OpenSSL::DigestIO.new(base_io, base_digest, OpenSSL::DigestIO::DigestMode::Write)
@@ -48,7 +48,7 @@ describe OpenSSL::DigestIO do
     io.digest.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae".hexbytes)
   end
 
-  it "calculates digest from writing a string" do
+  it("calculates digest from writing a string") do
     base_io = IO::Memory.new
     base_digest = OpenSSL::Digest.new("SHA256")
     io = OpenSSL::DigestIO.new(base_io, base_digest, OpenSSL::DigestIO::DigestMode::Write)
@@ -58,7 +58,7 @@ describe OpenSSL::DigestIO do
     io.digest.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae".hexbytes)
   end
 
-  it "calculates digest from multiple writes" do
+  it("calculates digest from multiple writes") do
     base_io = IO::Memory.new
     base_digest = OpenSSL::Digest.new("SHA256")
     io = OpenSSL::DigestIO.new(base_io, base_digest, OpenSSL::DigestIO::DigestMode::Write)
@@ -69,7 +69,7 @@ describe OpenSSL::DigestIO do
     io.digest.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae".hexbytes)
   end
 
-  it "does not calculate digest on write" do
+  it("does not calculate digest on write") do
     base_io = IO::Memory.new
     base_digest = OpenSSL::Digest.new("SHA256")
     empty_digest = OpenSSL::Digest.new("SHA256").digest

@@ -13,8 +13,8 @@ enum AtomicEnumFlags
   Three
 end
 
-describe Atomic do
-  it "compares and sets with integer" do
+describe(Atomic) do
+  it("compares and sets with integer") do
     atomic = Atomic.new(1)
 
     atomic.compare_and_set(2, 3).should eq({1, false})
@@ -24,7 +24,7 @@ describe Atomic do
     atomic.get.should eq(3)
   end
 
-  it "compares and set with enum" do
+  it("compares and set with enum") do
     atomic = Atomic(AtomicEnum).new(AtomicEnum::One)
 
     atomic.compare_and_set(AtomicEnum::Two, AtomicEnum::Three).should eq({AtomicEnum::One, false})
@@ -34,7 +34,7 @@ describe Atomic do
     atomic.get.should eq(AtomicEnum::Three)
   end
 
-  it "compares and set with flags enum" do
+  it("compares and set with flags enum") do
     atomic = Atomic(AtomicEnumFlags).new(AtomicEnumFlags::One)
 
     atomic.compare_and_set(AtomicEnumFlags::Two, AtomicEnumFlags::Three).should eq({AtomicEnumFlags::One, false})
@@ -44,7 +44,7 @@ describe Atomic do
     atomic.get.should eq(AtomicEnumFlags::Three)
   end
 
-  it "compares and sets with nilable type" do
+  it("compares and sets with nilable type") do
     atomic = Atomic(String?).new(nil)
     string = "hello"
 
@@ -58,7 +58,7 @@ describe Atomic do
     atomic.get.should be_nil
   end
 
-  it "compares and sets with reference type" do
+  it("compares and sets with reference type") do
     str1 = "hello"
     str2 = "bye"
 
@@ -74,43 +74,43 @@ describe Atomic do
     atomic.get.should be(str1)
   end
 
-  it "#adds" do
+  it("#adds") do
     atomic = Atomic.new(1)
     atomic.add(2).should eq(1)
     atomic.get.should eq(3)
   end
 
-  it "#sub" do
+  it("#sub") do
     atomic = Atomic.new(1)
     atomic.sub(2).should eq(1)
     atomic.get.should eq(-1)
   end
 
-  it "#and" do
+  it("#and") do
     atomic = Atomic.new(5)
     atomic.and(3).should eq(5)
     atomic.get.should eq(1)
   end
 
-  it "#nand" do
+  it("#nand") do
     atomic = Atomic.new(5)
     atomic.nand(3).should eq(5)
     atomic.get.should eq(-2)
   end
 
-  it "#or" do
+  it("#or") do
     atomic = Atomic.new(5)
     atomic.or(2).should eq(5)
     atomic.get.should eq(7)
   end
 
-  it "#xor" do
+  it("#xor") do
     atomic = Atomic.new(5)
     atomic.xor(3).should eq(5)
     atomic.get.should eq(6)
   end
 
-  it "#max with signed" do
+  it("#max with signed") do
     atomic = Atomic.new(5)
     atomic.max(2).should eq(5)
     atomic.get.should eq(5)
@@ -118,7 +118,7 @@ describe Atomic do
     atomic.get.should eq(10)
   end
 
-  it "#max with unsigned" do
+  it("#max with unsigned") do
     atomic = Atomic.new(5_u32)
     atomic.max(2_u32).should eq(5_u32)
     atomic.get.should eq(5_u32)
@@ -126,7 +126,7 @@ describe Atomic do
     atomic.get.should eq(UInt32::MAX)
   end
 
-  it "#min with signed" do
+  it("#min with signed") do
     atomic = Atomic.new(5)
     atomic.min(10).should eq(5)
     atomic.get.should eq(5)
@@ -134,7 +134,7 @@ describe Atomic do
     atomic.get.should eq(2)
   end
 
-  it "#min with unsigned" do
+  it("#min with unsigned") do
     atomic = Atomic.new(UInt32::MAX)
     atomic.min(10_u32).should eq(UInt32::MAX)
     atomic.get.should eq(10_u32)
@@ -142,13 +142,13 @@ describe Atomic do
     atomic.get.should eq(10_u32)
   end
 
-  it "#set" do
+  it("#set") do
     atomic = Atomic.new(1)
     atomic.set(2).should eq(2)
     atomic.get.should eq(2)
   end
 
-  it "#set with nil (#4062)" do
+  it("#set with nil (#4062)") do
     atomic = Atomic(String?).new(nil)
 
     atomic.set("foo")
@@ -158,13 +158,13 @@ describe Atomic do
     atomic.get.should eq(nil)
   end
 
-  it "#lazy_set" do
+  it("#lazy_set") do
     atomic = Atomic.new(1)
     atomic.lazy_set(2).should eq(2)
     atomic.get.should eq(2)
   end
 
-  it "#swap" do
+  it("#swap") do
     atomic = Atomic.new(1)
     atomic.swap(2).should eq(1)
     atomic.get.should eq(2)

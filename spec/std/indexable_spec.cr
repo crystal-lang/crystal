@@ -14,28 +14,28 @@ private class SafeIndexable
   end
 end
 
-describe Indexable do
-  it "does index with big negative offset" do
+describe(Indexable) do
+  it("does index with big negative offset") do
     indexable = SafeIndexable.new(3)
     indexable.index(0, -100).should be_nil
   end
 
-  it "does index with big offset" do
+  it("does index with big offset") do
     indexable = SafeIndexable.new(3)
     indexable.index(0, 100).should be_nil
   end
 
-  it "does rindex with big negative offset" do
+  it("does rindex with big negative offset") do
     indexable = SafeIndexable.new(3)
     indexable.rindex(0, -100).should be_nil
   end
 
-  it "does rindex with big offset" do
+  it("does rindex with big offset") do
     indexable = SafeIndexable.new(3)
     indexable.rindex(0, 100).should be_nil
   end
 
-  it "does each" do
+  it("does each") do
     indexable = SafeIndexable.new(3)
     is = [] of Int32
     indexable.each do |i|
@@ -44,7 +44,7 @@ describe Indexable do
     is.should eq([0, 1, 2])
   end
 
-  it "does each_index" do
+  it("does each_index") do
     indexable = SafeIndexable.new(3)
     is = [] of Int32
     indexable.each_index do |i|

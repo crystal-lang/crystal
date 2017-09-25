@@ -1801,7 +1801,7 @@ class Array(T)
   end
 
   protected def self.heap_sort!(a, n)
-    (n / 2).downto 0 do |p|
+    (n / 2).downto(0) do |p|
       heapify!(a, p, n)
     end
     while n > 1
@@ -1899,7 +1899,7 @@ class Array(T)
   end
 
   protected def self.heap_sort!(a, n, comp)
-    (n / 2).downto 0 do |p|
+    (n / 2).downto(0) do |p|
       heapify!(a, p, n, comp)
     end
     while n > 1

@@ -1,7 +1,7 @@
 require "spec"
 require "crypto/bcrypt/base64"
 
-describe "Crypto::Bcrypt::Base64" do
+describe("Crypto::Bcrypt::Base64") do
   vectors = [
     {UInt8[0x25], "HO"},
     {UInt8[0x6b, 0x11], "YvC"},
@@ -28,14 +28,14 @@ describe "Crypto::Bcrypt::Base64" do
     {UInt8[0xe1, 0x2a, 0x52, 0x02, 0xeb, 0x8a, 0x40, 0x85, 0x5f, 0xba, 0xdb, 0x13, 0x1e, 0x94, 0x9b, 0xb9, 0x55, 0x54, 0xe9, 0x9c, 0x87, 0x9c, 0xbf], "2QnQ.ssIOGTdsrqRFnQZsTTS4XwFlJ6"},
   ]
 
-  it "encodes" do
+  it("encodes") do
     vectors.each do |vector|
       decoded, encoded = vector
       Crypto::Bcrypt::Base64.encode(decoded, decoded.size).should eq(encoded)
     end
   end
 
-  it "decodes" do
+  it("decodes") do
     vectors.each do |vector|
       decoded, encoded = vector
       Crypto::Bcrypt::Base64.decode(encoded, decoded.size).to_a.should eq(decoded)

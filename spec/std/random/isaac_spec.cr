@@ -1,8 +1,8 @@
 require "spec"
 require "random/isaac"
 
-describe "Random::ISAAC" do
-  it "generates random numbers as generated official implementation" do
+describe("Random::ISAAC") do
+  it("generates random numbers as generated official implementation") do
     numbers = [
       0xc9d3bc51, 0x5bc24339, 0x23e22e3a, 0x5659b89a, 0x21c6dcfd, 0x168e10a4, 0x1df755f6, 0x99d3a910,
       0xf48f0656, 0xe9431f57, 0x839c384b, 0x238bac78, 0xd3693e2a, 0x96e06a6f, 0x1358bb9e, 0x6872ff7f,
@@ -346,7 +346,7 @@ describe "Random::ISAAC" do
     end
   end
 
-  it "can be initialized without explicit seed" do
+  it("can be initialized without explicit seed") do
     Random::ISAAC.new.should be_a Random::ISAAC
   end
 end

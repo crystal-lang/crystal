@@ -1,23 +1,23 @@
 require "../../spec_helper"
 
-describe "Semantic: def" do
-  it "types a call with an int" do
+describe("Semantic: def") do
+  it("types a call with an int") do
     assert_type("def foo; 1; end; foo") { int32 }
   end
 
-  it "types a call with a float" do
+  it("types a call with a float") do
     assert_type("def foo; 2.3f32; end; foo") { float32 }
   end
 
-  it "types a call with a double" do
+  it("types a call with a double") do
     assert_type("def foo; 2.3; end; foo") { float64 }
   end
 
-  it "types a call with an argument" do
+  it("types a call with an argument") do
     assert_type("def foo(x); x; end; foo 1") { int32 }
   end
 
-  it "types a call with an argument" do
+  it("types a call with an argument") do
     input = parse "def foo(x); x; end; foo 1; foo 2.3"
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
@@ -26,70 +26,70 @@ describe "Semantic: def" do
     input[2].type.should eq(mod.float64)
   end
 
-  it "types a call with an argument uses a new scope" do
+  it("types a call with an argument uses a new scope") do
     assert_type("x = 2.3; def foo(x); x; end; foo 1; x") { float64 }
   end
 
-  it "assigns def owner" do
+  it("assigns def owner") do
     input = parse "struct Int; def foo; 2.5; end; end; 1.foo"
     result = semantic input
     mod, input = result.program, result.node.as(Expressions)
     input.last.as(Call).target_def.owner.should eq(mod.int32)
   end
 
-  it "types putchar with Char" do
+  it("types putchar with Char") do
     assert_type("lib LibC; fun putchar(c : Char) : Char; end; LibC.putchar 'a'") { char }
   end
 
-  it "types getchar with Char" do
+  it("types getchar with Char") do
     assert_type("lib LibC; fun getchar : Char; end; LibC.getchar") { char }
   end
 
-  it "allows recursion" do
+  it("allows recursion") do
     assert_type("def foo; foo; end; foo") { no_return }
   end
 
-  it "allows recursion with arg" do
+  it("allows recursion with arg") do
     assert_type("def foo(x); foo(x); end; foo 1") { no_return }
   end
 
-  it "types simple recursion" do
+  it("types simple recursion") do
     assert_type("def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)") { int32 }
   end
 
-  it "types simple recursion 2" do
+  it("types simple recursion 2") do
     assert_type("def foo(x); if x > 0; 1 + foo(x - 1); else; 1; end; end; foo(5)") { int32 }
   end
 
-  it "types mutual recursion" do
+  it("types mutual recursion") do
     assert_type("def foo(x); if 1 == 1; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)") { int32 }
   end
 
-  it "types empty body def" do
+  it("types empty body def") do
     assert_type("def foo; end; foo") { nil_type }
   end
 
-  it "types mutual infinite recursion" do
+  it("types mutual infinite recursion") do
     assert_type("def foo; bar; end; def bar; foo; end; foo") { no_return }
   end
 
-  it "types call with union argument" do
+  it("types call with union argument") do
     assert_type("def foo(x); x; end; a = 1 || 1.1; foo(a)") { union_of(int32, float64) }
   end
 
-  it "defines class method" do
+  it("defines class method") do
     assert_type("def Int.foo; 2.5; end; Int.foo") { float64 }
   end
 
-  it "defines class method with self" do
+  it("defines class method with self") do
     assert_type("struct Int; def self.foo; 2.5; end; end; Int.foo") { float64 }
   end
 
-  it "calls with default argument" do
+  it("calls with default argument") do
     assert_type("def foo(x = 1); x; end; foo") { int32 }
   end
 
-  it "do not use body for the def type" do
+  it("do not use body for the def type") do
     input = parse %(
       require "primitives"
 
@@ -109,12 +109,12 @@ describe "Semantic: def" do
     call.target_def.body.type.should eq(mod.nil)
   end
 
-  it "reports undefined method" do
+  it("reports undefined method") do
     assert_error "foo()",
       "undefined method 'foo'"
   end
 
-  it "reports no overload matches" do
+  it("reports no overload matches") do
     assert_error "
       def foo(x : Int)
       end
@@ -124,7 +124,7 @@ describe "Semantic: def" do
       "no overload matches"
   end
 
-  it "reports no overload matches 2" do
+  it("reports no overload matches 2") do
     assert_error "
       def foo(x : Int, y : Int)
       end
@@ -137,7 +137,7 @@ describe "Semantic: def" do
       "no overload matches"
   end
 
-  it "reports no block given" do
+  it("reports no block given") do
     assert_error "
       def foo
         yield
@@ -148,7 +148,7 @@ describe "Semantic: def" do
       "'foo' is expected to be invoked with a block, but no block was given"
   end
 
-  it "reports block given" do
+  it("reports block given") do
     assert_error "
       def foo
       end
@@ -158,7 +158,7 @@ describe "Semantic: def" do
       "'foo' is not expected to be invoked with a block, but a block was given"
   end
 
-  it "errors when calling two functions with nil type" do
+  it("errors when calling two functions with nil type") do
     assert_error "
       def bar
       end
@@ -171,7 +171,7 @@ describe "Semantic: def" do
       "undefined method"
   end
 
-  it "errors when default value is incompatible with type restriction" do
+  it("errors when default value is incompatible with type restriction") do
     assert_error "
       def foo(x : Int64 = 1)
       end
@@ -181,7 +181,7 @@ describe "Semantic: def" do
       "can't restrict Int32 to Int64"
   end
 
-  it "types call with global scope" do
+  it("types call with global scope") do
     assert_type("
       def bar
         1
@@ -201,7 +201,7 @@ describe "Semantic: def" do
       ") { int32 }
   end
 
-  it "lookups methods in super modules" do
+  it("lookups methods in super modules") do
     assert_type("
       require \"prelude\"
 
@@ -238,7 +238,7 @@ describe "Semantic: def" do
       ") { int32 }
   end
 
-  it "fixes bug #165" do
+  it("fixes bug #165") do
     assert_error %(
       abstract class Node
       end
@@ -252,7 +252,7 @@ describe "Semantic: def" do
       ), "no overload matches"
   end
 
-  it "says can only defined def on types and self" do
+  it("says can only defined def on types and self") do
     assert_error %(
       class Foo
       end
@@ -264,7 +264,7 @@ describe "Semantic: def" do
       "def receiver can only be a Type or self"
   end
 
-  it "errors if return type doesn't match" do
+  it("errors if return type doesn't match") do
     assert_error %(
       def foo : Int32
         'a'
@@ -275,7 +275,7 @@ describe "Semantic: def" do
       "type must be Int32, not Char"
   end
 
-  it "errors if return type doesn't match on instance method" do
+  it("errors if return type doesn't match on instance method") do
     assert_error %(
       class Foo
         def foo : Int32
@@ -288,7 +288,7 @@ describe "Semantic: def" do
       "type must be Int32, not Char"
   end
 
-  it "errors if return type doesn't match on class method" do
+  it("errors if return type doesn't match on class method") do
     assert_error %(
       class Foo
         def self.foo : Int32
@@ -301,7 +301,7 @@ describe "Semantic: def" do
       "type must be Int32, not Char"
   end
 
-  it "is ok if returns Int32? with explicit return" do
+  it("is ok if returns Int32? with explicit return") do
     assert_type(%(
       def foo : Int32?
         if 1 == 2
@@ -314,7 +314,7 @@ describe "Semantic: def" do
       )) { nilable int32 }
   end
 
-  it "says compile-time type on error" do
+  it("says compile-time type on error") do
     assert_error %(
       abstract class Foo
       end
@@ -334,7 +334,7 @@ describe "Semantic: def" do
       "compile-time type is Foo+"
   end
 
-  it "gives correct error for wrong number of arguments for program call inside type (#1024)" do
+  it("gives correct error for wrong number of arguments for program call inside type (#1024)") do
     assert_error %(
       def foo
       end
@@ -350,7 +350,7 @@ describe "Semantic: def" do
       "wrong number of arguments for 'foo' (given 1, expected 0)"
   end
 
-  it "gives correct error for wrong number of arguments for program call inside type (2) (#1024)" do
+  it("gives correct error for wrong number of arguments for program call inside type (2) (#1024)") do
     assert_error %(
       def foo(x : String)
       end
@@ -366,7 +366,7 @@ describe "Semantic: def" do
       "no overload matches 'foo'"
   end
 
-  it "errors if declares def inside if" do
+  it("errors if declares def inside if") do
     assert_error %(
       if 1 == 2
         def foo; end
@@ -375,7 +375,7 @@ describe "Semantic: def" do
       "can't declare def dynamically"
   end
 
-  it "accesses free var of default argument (#1101)" do
+  it("accesses free var of default argument (#1101)") do
     assert_type(%(
       def foo(x, y : U = nil) forall U
         U
@@ -385,7 +385,7 @@ describe "Semantic: def" do
       )) { nil_type.metaclass }
   end
 
-  it "clones regex literal value (#2384)" do
+  it("clones regex literal value (#2384)") do
     assert_type(%(
       require "prelude"
 
@@ -399,7 +399,7 @@ describe "Semantic: def" do
       )) { int32 }
   end
 
-  it "doesn't find type in namespace through free var" do
+  it("doesn't find type in namespace through free var") do
     assert_error %(
       def foo(x : T) forall T
         T::String
@@ -410,7 +410,7 @@ describe "Semantic: def" do
       "undefined constant T::String"
   end
 
-  it "errors if trying to declare method on generic class instance" do
+  it("errors if trying to declare method on generic class instance") do
     assert_error %(
       class Foo(T)
       end
@@ -423,7 +423,7 @@ describe "Semantic: def" do
       "can't define method in generic instance"
   end
 
-  it "uses free variable" do
+  it("uses free variable") do
     assert_type(%(
       def foo(x : Free) forall Free
         Free
@@ -433,7 +433,7 @@ describe "Semantic: def" do
       )) { int32.metaclass }
   end
 
-  it "uses free variable with metaclass" do
+  it("uses free variable with metaclass") do
     assert_type(%(
       def foo(x : Free.class) forall Free
         Free
@@ -443,7 +443,7 @@ describe "Semantic: def" do
       )) { int32.metaclass }
   end
 
-  it "uses free variable with metaclass and default value" do
+  it("uses free variable with metaclass and default value") do
     assert_type(%(
       def foo(x : Free.class = Int32) forall Free
         Free
@@ -453,7 +453,7 @@ describe "Semantic: def" do
       )) { int32.metaclass }
   end
 
-  it "uses free variable as block return type" do
+  it("uses free variable as block return type") do
     assert_type(%(
       def foo(&block : -> Free) forall Free
         yield
@@ -464,7 +464,7 @@ describe "Semantic: def" do
       )) { int32.metaclass }
   end
 
-  it "uses free variable and doesn't conflict with top-level type" do
+  it("uses free variable and doesn't conflict with top-level type") do
     assert_type(%(
       class Free
       end

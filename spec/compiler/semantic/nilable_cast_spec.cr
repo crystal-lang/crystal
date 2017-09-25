@@ -1,25 +1,25 @@
 require "../../spec_helper"
 
-describe "Semantic: nilable cast" do
-  it "types as?" do
+describe("Semantic: nilable cast") do
+  it("types as?") do
     assert_type(%(
       1.as?(Float64)
       )) { nilable float64 }
   end
 
-  it "types as? with union" do
+  it("types as? with union") do
     assert_type(%(
       (1 || 'a').as?(Int32)
       )) { nilable int32 }
   end
 
-  it "types as? with nil" do
+  it("types as? with nil") do
     assert_type(%(
       1.as?(Nil)
       )) { nil_type }
   end
 
-  it "does upcast" do
+  it("does upcast") do
     assert_type(%(
       class Foo
         def bar

@@ -1,8 +1,8 @@
 require "spec"
 require "http/server"
 
-describe HTTP::WebSocketHandler do
-  it "returns not found if the request is not an websocket upgrade" do
+describe(HTTP::WebSocketHandler) do
+  it("returns not found if the request is not an websocket upgrade") do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
@@ -18,7 +18,7 @@ describe HTTP::WebSocketHandler do
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello")
   end
 
-  it "returns not found if the request Upgrade is invalid" do
+  it("returns not found if the request Upgrade is invalid") do
     io = IO::Memory.new
 
     headers = HTTP::Headers{
@@ -67,7 +67,7 @@ describe HTTP::WebSocketHandler do
     end
   {% end %}
 
-  it "gives upgrade response for case-insensitive 'WebSocket' upgrade request" do
+  it("gives upgrade response for case-insensitive 'WebSocket' upgrade request") do
     io = IO::Memory.new
     headers = HTTP::Headers{
       "Upgrade"           => "WebSocket",

@@ -1,8 +1,8 @@
 require "spec"
 require "xml"
 
-describe XML do
-  it "parses" do
+describe(XML) do
+  it("parses") do
     doc = XML.parse(<<-XML
       <?xml version='1.0' encoding='UTF-8'?>
       <people>
@@ -76,7 +76,7 @@ describe XML do
     name.parent.should eq(person)
   end
 
-  it "parses from io" do
+  it("parses from io") do
     io = IO::Memory.new(<<-XML
       <?xml version='1.0' encoding='UTF-8'?>
       <people>
@@ -96,13 +96,13 @@ describe XML do
     person["id"].should eq("1")
   end
 
-  it "raises exception on empty string" do
-    expect_raises XML::Error, "Document is empty" do
+  it("raises exception on empty string") do
+    expect_raises(XML::Error, "Document is empty") do
       XML.parse("")
     end
   end
 
-  it "does to_s" do
+  it("does to_s") do
     string = <<-XML
       <?xml version='1.0' encoding='UTF-8'?>\
       <people>
@@ -124,7 +124,7 @@ describe XML do
     )
   end
 
-  it "navigates in tree" do
+  it("navigates in tree") do
     doc = XML.parse(<<-XML
       <?xml version='1.0' encoding='UTF-8'?>
       <people>
@@ -157,7 +157,7 @@ describe XML do
     person2.previous_element.should eq(person)
   end
 
-  it "handles errors" do
+  it("handles errors") do
     xml = XML.parse(%(<people>))
     xml.root.not_nil!.name.should eq("people")
     errors = xml.errors.not_nil!
@@ -167,7 +167,7 @@ describe XML do
     errors[0].to_s.should eq("Premature end of data in tag people line 1")
   end
 
-  it "gets root namespaces scopes" do
+  it("gets root namespaces scopes") do
     doc = XML.parse(<<-XML
       <?xml version="1.0" encoding="UTF-8"?>
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
@@ -183,7 +183,7 @@ describe XML do
     namespaces[1].prefix.should eq("openSearch")
   end
 
-  it "returns empty array if no namespaces scopes exists" do
+  it("returns empty array if no namespaces scopes exists") do
     doc = XML.parse(<<-XML
       <?xml version='1.0' encoding='UTF-8'?>
       <name>John</name>
@@ -194,7 +194,7 @@ describe XML do
     namespaces.size.should eq(0)
   end
 
-  it "gets root namespaces as hash" do
+  it("gets root namespaces as hash") do
     doc = XML.parse(<<-XML
       <?xml version="1.0" encoding="UTF-8"?>
       <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
@@ -208,14 +208,14 @@ describe XML do
     })
   end
 
-  it "reads big xml file (#1455)" do
+  it("reads big xml file (#1455)") do
     content = "." * 20_000
     string = %(<?xml version="1.0"?><root>#{content}</root>)
     parsed = XML.parse(IO::Memory.new(string))
     parsed.root.not_nil!.children[0].text.should eq(content)
   end
 
-  it "sets node text/content" do
+  it("sets node text/content") do
     doc = XML.parse(<<-XML
       <?xml version='1.0' encoding='UTF-8'?>
       <name>John</name>
@@ -229,12 +229,12 @@ describe XML do
     root.content.should eq("Foo")
   end
 
-  it "gets empty content" do
+  it("gets empty content") do
     doc = XML.parse("<foo/>")
     doc.children.first.content.should eq("")
   end
 
-  it "sets node name" do
+  it("sets node name") do
     doc = XML.parse(<<-XML
       <?xml version='1.0' encoding='UTF-8'?>
       <name>John</name>
@@ -245,7 +245,7 @@ describe XML do
     root.name.should eq("last-name")
   end
 
-  it "gets encoding" do
+  it("gets encoding") do
     doc = XML.parse(<<-XML
         <?xml version='1.0' encoding='UTF-8'?>
         <people>
@@ -255,7 +255,7 @@ describe XML do
     doc.encoding.should eq("UTF-8")
   end
 
-  it "gets encoding when nil" do
+  it("gets encoding when nil") do
     doc = XML.parse(<<-XML
         <?xml version='1.0'>
         <people>
@@ -265,7 +265,7 @@ describe XML do
     doc.encoding.should be_nil
   end
 
-  it "gets version" do
+  it("gets version") do
     doc = XML.parse(<<-XML
         <?xml version='1.0' encoding='UTF-8'?>
         <people>
@@ -275,7 +275,7 @@ describe XML do
     doc.version.should eq("1.0")
   end
 
-  it "unlinks nodes" do
+  it("unlinks nodes") do
     xml = <<-XML
         <person id="1">
           <firstname>Jane</firstname>
@@ -290,7 +290,7 @@ describe XML do
     document.xpath_node("//lastname").should eq(nil)
   end
 
-  it "does to_s with correct encoding (#2319)" do
+  it("does to_s with correct encoding (#2319)") do
     xml_str = <<-XML
     <?xml version='1.0' encoding='UTF-8'?>
     <person>
@@ -302,21 +302,21 @@ describe XML do
     doc.root.to_s.should eq("<person>\n  <name>たろう</name>\n</person>")
   end
 
-  describe "escape" do
-    it "does not change a safe string" do
+  describe("escape") do
+    it("does not change a safe string") do
       str = XML.escape("safe_string")
 
       str.should eq("safe_string")
     end
 
-    it "escapes dangerous characters from a string" do
+    it("escapes dangerous characters from a string") do
       str = XML.escape("< & >")
 
       str.should eq("&lt; &amp; &gt;")
     end
   end
 
-  it "sets an attribute" do
+  it("sets an attribute") do
     doc = XML.parse(%{<foo />})
     root = doc.root.not_nil!
 
@@ -325,7 +325,7 @@ describe XML do
     root.to_s.should eq(%{<foo bar="baz"/>})
   end
 
-  it "changes an attribute" do
+  it("changes an attribute") do
     doc = XML.parse(%{<foo bar="baz"></foo>})
     root = doc.root.not_nil!
 

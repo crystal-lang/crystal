@@ -283,7 +283,7 @@ module Crystal
     def print_subtypes(types, json)
       types = types.sort_by &.to_s
 
-      json.field "sub_types" do
+      json.field("sub_types") do
         json.array do
           types.each_with_index do |type, index|
             if must_print? type
@@ -322,7 +322,7 @@ module Crystal
       instance_vars = type.instance_vars
       return if instance_vars.empty?
 
-      json.field "instance_vars" do
+      json.field("instance_vars") do
         json.array do
           instance_vars.each do |name, var|
             json.object do
@@ -339,7 +339,7 @@ module Crystal
       return if instance_vars.empty?
 
       instance_vars = instance_vars.values
-      json.field "instance_vars" do
+      json.field("instance_vars") do
         json.array do
           instance_vars.each do |instance_var|
             if ivar_type = instance_var.type?

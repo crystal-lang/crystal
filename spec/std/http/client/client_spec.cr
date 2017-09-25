@@ -23,7 +23,7 @@ private class TestServer < TCPServer
 end
 
 module HTTP
-  describe Client do
+  describe(Client) do
     typeof(Client.new("host"))
     typeof(Client.new("host", port: 8080))
     typeof(Client.new("host", tls: true))
@@ -54,8 +54,8 @@ module HTTP
     typeof(Client.post("http://www.example.com", body: Bytes[65]))
     typeof(Client.new("host").post("/", body: Bytes[65]))
 
-    describe "from URI" do
-      it "has sane defaults" do
+    describe("from URI") do
+      it("has sane defaults") do
         cl = Client.new(URI.parse("http://example.com"))
         cl.tls?.should be_nil
         cl.port.should eq(80)
@@ -94,34 +94,34 @@ module HTTP
         end
       {% end %}
 
-      it "raises error if not http schema" do
+      it("raises error if not http schema") do
         expect_raises(ArgumentError, "Unsupported scheme: ssh") do
           Client.new(URI.parse("ssh://example.com"))
         end
       end
 
-      it "raises error if URI is missing host" do
+      it("raises error if URI is missing host") do
         expect_raises(ArgumentError, "must have host") do
           Client.new(URI.parse("http:/"))
         end
       end
 
-      it "yields to a block" do
+      it("yields to a block") do
         Client.new(URI.parse("http://example.com")) do |client|
           typeof(client)
         end
       end
     end
 
-    context "from a host" do
-      it "yields to a block" do
+    context("from a host") do
+      it("yields to a block") do
         Client.new("example.com") do |client|
           typeof(client)
         end
       end
     end
 
-    it "doesn't read the body if request was HEAD" do
+    it("doesn't read the body if request was HEAD") do
       resp_get = TestServer.open("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         break client.get("/")
@@ -135,19 +135,19 @@ module HTTP
       end
     end
 
-    it "raises if URI is missing scheme" do
+    it("raises if URI is missing scheme") do
       expect_raises(ArgumentError, "Missing scheme") do
         HTTP::Client.get URI.parse("www.example.com")
       end
     end
 
-    it "raises if URI is missing host" do
+    it("raises if URI is missing host") do
       expect_raises(ArgumentError, "must have host") do
         HTTP::Client.get URI.parse("http://")
       end
     end
 
-    it "tests read_timeout" do
+    it("tests read_timeout") do
       TestServer.open("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.read_timeout = 1.second
@@ -163,7 +163,7 @@ module HTTP
       end
     end
 
-    it "tests connect_timeout" do
+    it("tests connect_timeout") do
       TestServer.open("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.connect_timeout = 0.5

@@ -1,16 +1,16 @@
 require "../../spec_helper"
 
-describe "Semantic: module" do
-  it "includes but not a module" do
+describe("Semantic: module") do
+  it("includes but not a module") do
     assert_error "class Foo; end; class Bar; include Foo; end",
       "Foo is not a module"
   end
 
-  it "includes module in a class" do
+  it("includes module in a class") do
     assert_type("module Foo; def foo; 1; end; end; class Bar; include Foo; end; Bar.new.foo") { int32 }
   end
 
-  it "includes module in a module" do
+  it("includes module in a module") do
     assert_type("
       module Moo
         def foo
@@ -30,7 +30,7 @@ describe "Semantic: module" do
       ") { int32 }
   end
 
-  it "finds in module when included" do
+  it("finds in module when included") do
     assert_type("
       module Moo
         class B
@@ -44,7 +44,7 @@ describe "Semantic: module" do
     ") { int32 }
   end
 
-  it "includes generic module with type" do
+  it("includes generic module with type") do
     assert_type("
       module Foo(T)
         def foo(x : T)
@@ -60,7 +60,7 @@ describe "Semantic: module" do
       ") { int32 }
   end
 
-  it "includes generic module and errors in call" do
+  it("includes generic module and errors in call") do
     assert_error "
       module Foo(T)
         def foo(x : T)
@@ -77,7 +77,7 @@ describe "Semantic: module" do
       "no overload matches"
   end
 
-  it "includes module but not generic" do
+  it("includes module but not generic") do
     assert_error "
       module Foo
       end
@@ -89,7 +89,7 @@ describe "Semantic: module" do
       "Foo is not a generic type"
   end
 
-  it "includes module but wrong number of arguments" do
+  it("includes module but wrong number of arguments") do
     assert_error "
       module Foo(T, U)
       end
@@ -101,7 +101,7 @@ describe "Semantic: module" do
       "wrong number of type vars for Foo(T, U) (given 1, expected 2)"
   end
 
-  it "includes generic module but wrong number of arguments 2" do
+  it("includes generic module but wrong number of arguments 2") do
     assert_error "
       module Foo(T)
       end
@@ -113,7 +113,7 @@ describe "Semantic: module" do
       "wrong number of type vars for Foo(T) (given 0, expected 1)"
   end
 
-  it "includes generic module explicitly" do
+  it("includes generic module explicitly") do
     assert_type("
       module Foo(T)
         def foo(x : T)
@@ -129,7 +129,7 @@ describe "Semantic: module" do
       ") { int32 }
   end
 
-  it "includes generic module explicitly and errors" do
+  it("includes generic module explicitly and errors") do
     assert_error "
       module Foo(T)
         def foo(x : T)
@@ -146,12 +146,12 @@ describe "Semantic: module" do
       "no overload matches"
   end
 
-  it "reports can't use instance variables inside module" do
+  it("reports can't use instance variables inside module") do
     assert_error "def foo; @a = 1; end; foo",
       "can't use instance variables at the top level"
   end
 
-  it "works with int including enumerable" do
+  it("works with int including enumerable") do
     assert_type("
       require \"prelude\"
 
@@ -168,14 +168,14 @@ describe "Semantic: module" do
       ") { array_of(float64) }
   end
 
-  it "works with range and map" do
+  it("works with range and map") do
     assert_type("
       require \"prelude\"
       (1..3).map { |x| x * 0.5 }
       ") { array_of(float64) }
   end
 
-  it "declares module automatically if not previously declared when declaring a class" do
+  it("declares module automatically if not previously declared when declaring a class") do
     assert_type("
       class Foo::Bar
       end
@@ -187,7 +187,7 @@ describe "Semantic: module" do
     end
   end
 
-  it "declares module automatically if not previously declared when declaring a module" do
+  it("declares module automatically if not previously declared when declaring a module") do
     assert_type("
       module Foo::Bar
       end
@@ -199,7 +199,7 @@ describe "Semantic: module" do
     end
   end
 
-  it "includes generic module with another generic type" do
+  it("includes generic module with another generic type") do
     assert_type("
       module Foo(T)
         def foo
@@ -218,7 +218,7 @@ describe "Semantic: module" do
       ") { generic_class("Baz", int32).metaclass }
   end
 
-  it "includes generic module with self" do
+  it("includes generic module with self") do
     assert_type("
       module Foo(T)
         def foo
@@ -234,7 +234,7 @@ describe "Semantic: module" do
       ") { generic_class("Bar", int32).metaclass }
   end
 
-  it "includes generic module with self, and inherits it" do
+  it("includes generic module with self, and inherits it") do
     assert_type("
       module Foo(T)
         def foo
@@ -253,7 +253,7 @@ describe "Semantic: module" do
       ") { types["Baz"].metaclass }
   end
 
-  it "includes generic module with self (check argument type, success)" do
+  it("includes generic module with self (check argument type, success)") do
     assert_type("
       module Foo(T)
         def foo(x : T)
@@ -269,7 +269,7 @@ describe "Semantic: module" do
       ") { generic_class("Bar", int32) }
   end
 
-  it "includes generic module with self (check argument superclass type, success)" do
+  it("includes generic module with self (check argument superclass type, success)") do
     assert_type("
       module Foo(T)
         def foo(x : T)
@@ -288,7 +288,7 @@ describe "Semantic: module" do
       ") { types["Baz"] }
   end
 
-  it "includes generic module with self (check argument type, error)" do
+  it("includes generic module with self (check argument type, error)") do
     assert_error "
       module Foo(T)
         def foo(x : T)
@@ -310,7 +310,7 @@ describe "Semantic: module" do
       ", "no overload matches"
   end
 
-  it "includes generic module with self (check argument superclass type, error)" do
+  it("includes generic module with self (check argument superclass type, error)") do
     assert_error "
       module Foo(T)
         def foo(x : T)
@@ -329,7 +329,7 @@ describe "Semantic: module" do
       ", "no overload matches"
   end
 
-  it "includes generic module with self (check return type, success)" do
+  it("includes generic module with self (check return type, success)") do
     assert_type("
       module Foo(T)
         def foo : T
@@ -345,7 +345,7 @@ describe "Semantic: module" do
       ") { generic_class("Bar", int32) }
   end
 
-  it "includes generic module with self (check return subclass type, success)" do
+  it("includes generic module with self (check return subclass type, success)") do
     assert_type("
       module Foo(T)
         def foo : T
@@ -364,7 +364,7 @@ describe "Semantic: module" do
       ") { types["Baz"] }
   end
 
-  it "includes generic module with self (check return type, error)" do
+  it("includes generic module with self (check return type, error)") do
     assert_error "
       module Foo(T)
         def foo : T
@@ -383,7 +383,7 @@ describe "Semantic: module" do
       ", "type must be Baz, not Bar(Int32)"
   end
 
-  it "includes generic module with self (check return subclass type, error)" do
+  it("includes generic module with self (check return subclass type, error)") do
     assert_error "
       module Foo(T)
         def foo : T
@@ -405,7 +405,7 @@ describe "Semantic: module" do
       ", "type must be Baz1, not Baz2"
   end
 
-  it "includes module but can't access metaclass methods" do
+  it("includes module but can't access metaclass methods") do
     assert_error "
       module Foo
         def self.foo
@@ -421,7 +421,7 @@ describe "Semantic: module" do
       ", "undefined method 'foo'"
   end
 
-  it "extends a module" do
+  it("extends a module") do
     assert_type("
       module Foo
         def foo
@@ -437,7 +437,7 @@ describe "Semantic: module" do
       ") { int32 }
   end
 
-  it "extends self" do
+  it("extends self") do
     assert_type("
       module Foo
         extend self
@@ -451,7 +451,7 @@ describe "Semantic: module" do
       ") { int32 }
   end
 
-  it "gives error when including self" do
+  it("gives error when including self") do
     assert_error "
       module Foo
         include self
@@ -459,7 +459,7 @@ describe "Semantic: module" do
       ", "cyclic include detected"
   end
 
-  it "gives error with cyclic include" do
+  it("gives error with cyclic include") do
     assert_error "
       module Foo
       end
@@ -474,7 +474,7 @@ describe "Semantic: module" do
       ", "cyclic include detected"
   end
 
-  it "finds types close to included module" do
+  it("finds types close to included module") do
     assert_type("
       module Foo
         class T
@@ -496,7 +496,7 @@ describe "Semantic: module" do
       ") { types["Foo"].types["T"].metaclass }
   end
 
-  it "finds nested type inside method in block inside module" do
+  it("finds nested type inside method in block inside module") do
     assert_type("
       def foo
         yield
@@ -517,7 +517,7 @@ describe "Semantic: module" do
       ") { types["Foo"].types["Bar"].metaclass }
   end
 
-  it "finds class method in block" do
+  it("finds class method in block") do
     assert_type("
       def foo
         yield
@@ -540,7 +540,7 @@ describe "Semantic: module" do
       ") { int32 }
   end
 
-  it "types pointer of module" do
+  it("types pointer of module") do
     assert_type("
       module Moo
       end
@@ -559,7 +559,7 @@ describe "Semantic: module" do
       ") { types["Moo"] }
   end
 
-  it "types pointer of module with method" do
+  it("types pointer of module with method") do
     assert_type("
       module Moo
       end
@@ -578,7 +578,7 @@ describe "Semantic: module" do
       ") { int32 }
   end
 
-  it "types pointer of module with method with two including types" do
+  it("types pointer of module with method with two including types") do
     assert_type("
       module Moo
       end
@@ -606,7 +606,7 @@ describe "Semantic: module" do
       ") { union_of(int32, char) }
   end
 
-  it "types pointer of module with generic type" do
+  it("types pointer of module with generic type") do
     assert_type("
       module Moo
       end
@@ -625,7 +625,7 @@ describe "Semantic: module" do
       ") { int32 }
   end
 
-  it "types pointer of module with generic type" do
+  it("types pointer of module with generic type") do
     assert_type("
       module Moo
       end
@@ -660,7 +660,7 @@ describe "Semantic: module" do
       ") { union_of(int32, char) }
   end
 
-  it "allows overloading with included generic module" do
+  it("allows overloading with included generic module") do
     assert_type(%(
       module Foo(T)
         def foo(x : T)
@@ -685,7 +685,7 @@ describe "Semantic: module" do
       )) { union_of(int32, string) }
   end
 
-  it "finds constant in generic module included in another module" do
+  it("finds constant in generic module included in another module") do
     assert_type(%(
       module Foo(T)
         def foo
@@ -705,7 +705,7 @@ describe "Semantic: module" do
       )) { int32.metaclass }
   end
 
-  it "calls super on included generic module" do
+  it("calls super on included generic module") do
     assert_type(%(
       module Foo(T)
         def foo
@@ -725,7 +725,7 @@ describe "Semantic: module" do
       )) { int32 }
   end
 
-  it "calls super on included generic module and finds type var" do
+  it("calls super on included generic module and finds type var") do
     assert_type(%(
       module Foo(T)
         def foo
@@ -745,7 +745,7 @@ describe "Semantic: module" do
       )) { int32.metaclass }
   end
 
-  it "calls super on included generic module and finds type var (2)" do
+  it("calls super on included generic module and finds type var (2)") do
     assert_type(%(
       module Foo(T)
         def foo
@@ -769,7 +769,7 @@ describe "Semantic: module" do
       )) { int32.metaclass }
   end
 
-  it "types union of module and class that includes it" do
+  it("types union of module and class that includes it") do
     assert_type(%(
       module Moo
         def self.foo
@@ -789,7 +789,7 @@ describe "Semantic: module" do
       )) { union_of(types["Bar"].metaclass, types["Moo"].metaclass) }
   end
 
-  it "works ok in a case where a typed-def type has un underlying type that has an included generic module (bug)" do
+  it("works ok in a case where a typed-def type has un underlying type that has an included generic module (bug)") do
     assert_type(%(
       lib LibC
         type X = Void*
@@ -817,7 +817,7 @@ describe "Semantic: module" do
       )) { int32 }
   end
 
-  it "finds inner class from inherited one (#476)" do
+  it("finds inner class from inherited one (#476)") do
     assert_type(%(
       class Foo
         class Bar
@@ -833,7 +833,7 @@ describe "Semantic: module" do
       )) { types["Foo"].types["Bar"].types["Baz"].metaclass }
   end
 
-  it "correctly types type var in included module, with a restriction with a free var (bug)" do
+  it("correctly types type var in included module, with a restriction with a free var (bug)") do
     assert_type(%(
       module Moo(T)
       end
@@ -850,7 +850,7 @@ describe "Semantic: module" do
       )) { int32.metaclass }
   end
 
-  it "types proc of module after type changes" do
+  it("types proc of module after type changes") do
     assert_type(%(
       module Moo
       end
@@ -868,7 +868,7 @@ describe "Semantic: module" do
       )) { int32 }
   end
 
-  it "types proc of module with generic class" do
+  it("types proc of module with generic class") do
     assert_type(%(
       module Moo
       end
@@ -886,7 +886,7 @@ describe "Semantic: module" do
       )) { char }
   end
 
-  it "errors if declares module inside if" do
+  it("errors if declares module inside if") do
     assert_error %(
       if 1 == 2
         module Foo; end
@@ -895,7 +895,7 @@ describe "Semantic: module" do
       "can't declare module dynamically"
   end
 
-  it "uses :Module name for modules in errors" do
+  it("uses :Module name for modules in errors") do
     assert_error %(
       module Moo; end
 
@@ -904,7 +904,7 @@ describe "Semantic: module" do
       "undefined method 'new' for Moo:Module"
   end
 
-  it "uses type declaration inside module" do
+  it("uses type declaration inside module") do
     assert_type(%(
       module Moo
         @x : Int32
@@ -926,7 +926,7 @@ describe "Semantic: module" do
       )) { int32 }
   end
 
-  it "uses type declaration inside module and gives error" do
+  it("uses type declaration inside module and gives error") do
     assert_error %(
       module Moo
         @x : Int32
@@ -953,7 +953,7 @@ describe "Semantic: module" do
       "instance variable '@x' of Foo must be Int32, not Bool"
   end
 
-  it "uses type declaration inside module, recursive, and gives error" do
+  it("uses type declaration inside module, recursive, and gives error") do
     assert_error %(
       module Moo
         @x : Int32
@@ -984,7 +984,7 @@ describe "Semantic: module" do
       "instance variable '@x' of Foo must be Int32"
   end
 
-  it "initializes variable in module" do
+  it("initializes variable in module") do
     assert_type(%(
       module Moo
         @x = 1
@@ -1002,7 +1002,7 @@ describe "Semantic: module" do
       )) { int32 }
   end
 
-  it "initializes variable in module, recursive" do
+  it("initializes variable in module, recursive") do
     assert_type(%(
       module Moo
         @x = 1
@@ -1024,7 +1024,7 @@ describe "Semantic: module" do
       )) { int32 }
   end
 
-  it "inherits instance var type annotation from generic to concrete" do
+  it("inherits instance var type annotation from generic to concrete") do
     assert_type(%(
       module Foo(T)
         @x : Int32?
@@ -1042,7 +1042,7 @@ describe "Semantic: module" do
       )) { nilable int32 }
   end
 
-  it "inherits instance var type annotation from generic to concrete with T" do
+  it("inherits instance var type annotation from generic to concrete with T") do
     assert_type(%(
       module Foo(T)
         @x : T?
@@ -1060,7 +1060,7 @@ describe "Semantic: module" do
       )) { nilable int32 }
   end
 
-  it "inherits instance var type annotation from generic to generic to concrete" do
+  it("inherits instance var type annotation from generic to generic to concrete") do
     assert_type(%(
       module Foo(T)
         @x : Int32?
@@ -1082,7 +1082,7 @@ describe "Semantic: module" do
       )) { nilable int32 }
   end
 
-  it "declares and includes generic module" do
+  it("declares and includes generic module") do
     assert_type(%(
       module Moo(*T)
         def t
@@ -1098,7 +1098,7 @@ describe "Semantic: module" do
       )) { tuple_of([int32, char]).metaclass }
   end
 
-  it "declares and includes generic module, more args" do
+  it("declares and includes generic module, more args") do
     assert_type(%(
       module Moo(A, *T, B)
         def t
@@ -1114,7 +1114,7 @@ describe "Semantic: module" do
       )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
   end
 
-  it "includes module with Union(T*)" do
+  it("includes module with Union(T*)") do
     assert_type(%(
       module Foo(U)
         def u
@@ -1130,7 +1130,7 @@ describe "Semantic: module" do
       )) { union_of(int32, char).metaclass }
   end
 
-  it "doesn't lookup type in ancestor when matches in current type (#2982)" do
+  it("doesn't lookup type in ancestor when matches in current type (#2982)") do
     assert_error %(
       module Foo
         module Qux
@@ -1149,7 +1149,7 @@ describe "Semantic: module" do
       "undefined constant Qux::Bar"
   end
 
-  it "can restrict module with module (#3029)" do
+  it("can restrict module with module (#3029)") do
     assert_type(%(
       module Foo
       end
@@ -1165,7 +1165,7 @@ describe "Semantic: module" do
       )) { int32 }
   end
 
-  it "can instantiate generic module" do
+  it("can instantiate generic module") do
     assert_type(%(
       module Foo(T)
       end
@@ -1174,7 +1174,7 @@ describe "Semantic: module" do
       )) { generic_module("Foo", int32).metaclass }
   end
 
-  it "can use generic module as instance variable type" do
+  it("can use generic module as instance variable type") do
     assert_type(%(
       module Moo(T)
         def foo
@@ -1208,7 +1208,7 @@ describe "Semantic: module" do
       )) { union_of int32, char }
   end
 
-  it "can use generic module as instance variable type (2)" do
+  it("can use generic module as instance variable type (2)") do
     assert_type(%(
       module Moo(T)
         def foo
@@ -1243,7 +1243,7 @@ describe "Semantic: module" do
       )) { union_of int32, char }
   end
 
-  it "errors when extending module that defines instance vars (#4065)" do
+  it("errors when extending module that defines instance vars (#4065)") do
     assert_error %(
       module Foo
         @foo : Int32?

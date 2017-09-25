@@ -29,28 +29,28 @@ private module StructSpec
   end
 end
 
-describe "Struct" do
-  it "does to_s" do
+describe("Struct") do
+  it("does to_s") do
     s = StructSpec::TestClass.new(1, "hello")
     s.to_s.should eq(%(StructSpec::TestClass(@x=1, @y="hello")))
   end
 
-  it "does ==" do
+  it("does ==") do
     s = StructSpec::TestClass.new(1, "hello")
     s.should eq(s)
   end
 
-  it "does hash" do
+  it("does hash") do
     s = StructSpec::TestClass.new(1, "hello")
     s.hash.should eq(s.dup.hash)
   end
 
-  it "does hash for struct wrapper (#1940)" do
+  it("does hash for struct wrapper (#1940)") do
     s = StructSpec::BigIntWrapper.new(BigInt.new(0))
     s.hash.should eq(s.dup.hash)
   end
 
-  it "does dup" do
+  it("does dup") do
     original = StructSpec::DupCloneStruct.new
     duplicate = original.dup
     duplicate.x.should eq(original.x)
@@ -60,7 +60,7 @@ describe "Struct" do
     duplicate.x.should_not eq(10)
   end
 
-  it "clones with def_clone" do
+  it("clones with def_clone") do
     original = StructSpec::DupCloneStruct.new
     clone = original.clone
     clone.x.should eq(original.x)

@@ -8,14 +8,14 @@ private def assert_built(expected)
   string.should eq(expected)
 end
 
-describe YAML::Builder do
-  it "writes scalar" do
+describe(YAML::Builder) do
+  it("writes scalar") do
     assert_built("--- 1\n...\n") do
       scalar(1)
     end
   end
 
-  it "writes sequence" do
+  it("writes sequence") do
     assert_built("---\n- 1\n- 2\n- 3\n") do
       sequence do
         scalar(1)
@@ -25,7 +25,7 @@ describe YAML::Builder do
     end
   end
 
-  it "writes mapping" do
+  it("writes mapping") do
     assert_built("---\nfoo: 1\nbar: 2\n") do
       mapping do
         scalar("foo")

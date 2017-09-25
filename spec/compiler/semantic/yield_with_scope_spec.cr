@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: yield with scope" do
-  it "infer type of empty block body" do
+describe("Semantic: yield with scope") do
+  it("infer type of empty block body") do
     assert_type("
       def foo; with 1 yield; end
 
@@ -10,7 +10,7 @@ describe "Semantic: yield with scope" do
     ") { nil_type }
   end
 
-  it "infer type of block body" do
+  it("infer type of block body") do
     input = parse "
       def foo; with 1 yield; end
 
@@ -25,7 +25,7 @@ describe "Semantic: yield with scope" do
     assign.target.type.should eq(mod.int32)
   end
 
-  it "infer type of block body with yield scope" do
+  it("infer type of block body with yield scope") do
     input = parse %(
       require "primitives"
 
@@ -40,7 +40,7 @@ describe "Semantic: yield with scope" do
     input.last.as(Call).block.not_nil!.body.type.should eq(mod.int64)
   end
 
-  it "infer type of block body with yield scope and arguments" do
+  it("infer type of block body with yield scope and arguments") do
     input = parse %(
       require "primitives"
 
@@ -55,7 +55,7 @@ describe "Semantic: yield with scope" do
     input.last.as(Call).block.not_nil!.body.type.should eq(mod.float64)
   end
 
-  it "passes #229" do
+  it("passes #229") do
     assert_type(%(
       class Foo
         def foo
@@ -74,7 +74,7 @@ describe "Semantic: yield with scope" do
       )) { int32 }
   end
 
-  it "invokes nested calls" do
+  it("invokes nested calls") do
     assert_type(%(
       class Foo
         def x
@@ -101,7 +101,7 @@ describe "Semantic: yield with scope" do
       )) { int32 }
   end
 
-  it "finds macro" do
+  it("finds macro") do
     assert_type(%(
       class Foo
         def x
@@ -124,7 +124,7 @@ describe "Semantic: yield with scope" do
       )) { int32 }
   end
 
-  it "errors if using instance variable at top level" do
+  it("errors if using instance variable at top level") do
     assert_error %(
       class Foo
         def foo
@@ -139,7 +139,7 @@ describe "Semantic: yield with scope" do
       "can't use instance variables at the top level"
   end
 
-  it "uses instance variable of enclosing scope" do
+  it("uses instance variable of enclosing scope") do
     assert_type(%(
       class Foo
         def foo
@@ -163,7 +163,7 @@ describe "Semantic: yield with scope" do
       )) { int32 }
   end
 
-  it "uses method of enclosing scope" do
+  it("uses method of enclosing scope") do
     assert_type(%(
       class Foo
         def foo

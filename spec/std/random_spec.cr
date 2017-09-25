@@ -24,8 +24,8 @@ private RNG_DATA_64 = [148763248732657823u64, 18446744073709551615u64, 0u64,
                        32456325635673576u64, 2456245614625u64, 32452456246u64, 3956529762u64,
                        9823674982364u64, 234253464546456u64, 14345435645646u64]
 
-describe "Random" do
-  it "limited number" do
+describe("Random") do
+  it("limited number") do
     rand(1).should eq(0)
 
     x = rand(2)
@@ -40,35 +40,35 @@ describe "Random" do
     rand(0).should eq 0
   end
 
-  it "float number" do
+  it("float number") do
     x = rand
     x.should be >= 0
     x.should be <= 1
   end
 
-  it "limited float number" do
+  it("limited float number") do
     x = rand(3.5)
     x.should be >= 0
     x.should be < 3.5
   end
 
-  it "float number 0.0" do
+  it("float number 0.0") do
     rand(0.0).should eq 0.0
   end
 
-  it "raises on invalid number" do
-    expect_raises ArgumentError, "Invalid bound for rand: -1" do
+  it("raises on invalid number") do
+    expect_raises(ArgumentError, "Invalid bound for rand: -1") do
       rand(-1)
     end
   end
 
-  it "raises on invalid float number" do
-    expect_raises ArgumentError, "Invalid bound for rand: -1.0" do
+  it("raises on invalid float number") do
+    expect_raises(ArgumentError, "Invalid bound for rand: -1.0") do
       rand(-1.0)
     end
   end
 
-  it "does with inclusive range" do
+  it("does with inclusive range") do
     [1..1, 1..3, 0u8..255u8, -1..1, Int64::MIN..7i64,
      -7i64..Int64::MAX, 0u64..0u64].each do |range|
       x = rand(range)
@@ -77,7 +77,7 @@ describe "Random" do
     end
   end
 
-  it "does with exclusive range" do
+  it("does with exclusive range") do
     [1...2, 1...4, 0u8...255u8, -1...1, Int64::MIN...7i64,
      -7i64...Int64::MAX, -1i8...0i8].each do |range|
       x = rand(range)
@@ -86,41 +86,41 @@ describe "Random" do
     end
   end
 
-  it "does with inclusive range of floats" do
+  it("does with inclusive range of floats") do
     rand(1.0..1.0).should eq(1.0)
     x = rand(1.8..3.2)
     x.should be >= 1.8
     x.should be <= 3.2
   end
 
-  it "does with exclusive range of floats" do
+  it("does with exclusive range of floats") do
     x = rand(1.8...3.3)
     x.should be >= 1.8
     x.should be < 3.3
   end
 
-  it "raises on invalid range" do
-    expect_raises ArgumentError, "Invalid range for rand: 1...1" do
+  it("raises on invalid range") do
+    expect_raises(ArgumentError, "Invalid range for rand: 1...1") do
       rand(1...1)
     end
-    expect_raises ArgumentError, "Invalid range for rand: 1..0" do
+    expect_raises(ArgumentError, "Invalid range for rand: 1..0") do
       rand(1..0)
     end
-    expect_raises ArgumentError, "Invalid range for rand: 1.0...1.0" do
+    expect_raises(ArgumentError, "Invalid range for rand: 1.0...1.0") do
       rand(1.0...1.0)
     end
-    expect_raises ArgumentError, "Invalid range for rand: 1.0..0.0" do
+    expect_raises(ArgumentError, "Invalid range for rand: 1.0..0.0") do
       rand(1.0..0.0)
     end
   end
 
-  it "allows creating a new default random" do
+  it("allows creating a new default random") do
     rand = Random.new
     value = rand.rand
     (0 <= value < 1).should be_true
   end
 
-  it "allows creating a new default random with a seed" do
+  it("allows creating a new default random with a seed") do
     values = Array.new(2) do
       rand = Random.new(1234)
       {rand.rand, rand.rand(0xffffffffffffffff), rand.rand(2), rand.rand(-5i8..5i8)}
@@ -129,11 +129,11 @@ describe "Random" do
     values[0].should eq values[1]
   end
 
-  it "gets a random bool" do
+  it("gets a random bool") do
     Random::DEFAULT.next_bool.should be_a(Bool)
   end
 
-  it "generates by accumulation" do
+  it("generates by accumulation") do
     rng = TestRNG.new([234u8, 153u8, 0u8, 0u8, 127u8, 128u8, 255u8, 255u8])
     rng.rand(65536).should eq 60057    # 234*0x100 + 153
     rng.rand(60000).should eq 0        # 0*0x100 + 0
@@ -145,7 +145,7 @@ describe "Random" do
     rng.rand(32768u16).should eq 27289 # (234*0x100 + 153) % 32768
   end
 
-  it "generates by truncation" do
+  it("generates by truncation") do
     rng = TestRNG.new([31541451u32, 0u32, 1u32, 234u32, 342475672u32])
     rng.rand(1).should eq 0
     rng.rand(10).should eq 0
@@ -157,14 +157,14 @@ describe "Random" do
     rng.rand(0x7fffffff).should eq 0
   end
 
-  it "generates full-range" do
+  it("generates full-range") do
     rng = TestRNG.new(RNG_DATA_64)
     RNG_DATA_64.each do |a|
       rng.rand(UInt64::MIN..UInt64::MAX).should eq a
     end
   end
 
-  it "generates full-range by accumulation" do
+  it("generates full-range by accumulation") do
     rng = TestRNG.new(RNG_DATA_8)
     RNG_DATA_8.each_slice(2) do |(a, b)|
       expected = a.to_u16 * 0x100u16 + b.to_u16
@@ -172,7 +172,7 @@ describe "Random" do
     end
   end
 
-  it "generates full-range by truncation" do
+  it("generates full-range by truncation") do
     rng = TestRNG.new(RNG_DATA_32)
     RNG_DATA_32.each do |a|
       expected = a % 0x10000
@@ -180,7 +180,7 @@ describe "Random" do
     end
   end
 
-  it "generates full-range by negation" do
+  it("generates full-range by negation") do
     rng = TestRNG.new(RNG_DATA_8)
     RNG_DATA_8.each do |a|
       expected = a.to_i

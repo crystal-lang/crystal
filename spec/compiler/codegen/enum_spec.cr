@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: enum" do
-  it "codegens enum" do
+describe("Code gen: enum") do
+  it("codegens enum") do
     run(%(
       enum Foo
         A = 1
@@ -11,7 +11,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(1)
   end
 
-  it "codegens enum without explicit value" do
+  it("codegens enum without explicit value") do
     run(%(
       enum Foo
         A
@@ -23,7 +23,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(2)
   end
 
-  it "codegens enum value" do
+  it("codegens enum value") do
     run(%(
       enum Foo
         A = 1
@@ -33,7 +33,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(1)
   end
 
-  it "creates enum from value" do
+  it("creates enum from value") do
     run(%(
       enum Foo
         A
@@ -44,7 +44,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(1)
   end
 
-  it "codegens enum bitflags (1)" do
+  it("codegens enum bitflags (1)") do
     run(%(
       @[Flags]
       enum Foo
@@ -55,7 +55,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(1)
   end
 
-  it "codegens enum bitflags (2)" do
+  it("codegens enum bitflags (2)") do
     run(%(
       @[Flags]
       enum Foo
@@ -67,7 +67,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(2)
   end
 
-  it "codegens enum bitflags (4)" do
+  it("codegens enum bitflags (4)") do
     run(%(
       @[Flags]
       enum Foo
@@ -80,7 +80,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(4)
   end
 
-  it "codegens enum bitflags None" do
+  it("codegens enum bitflags None") do
     run(%(
       @[Flags]
       enum Foo
@@ -91,7 +91,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(0)
   end
 
-  it "codegens enum bitflags All" do
+  it("codegens enum bitflags All") do
     run(%(
       @[Flags]
       enum Foo
@@ -104,7 +104,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(1 + 2 + 4)
   end
 
-  it "codegens enum None redefined" do
+  it("codegens enum None redefined") do
     run(%(
       lib Lib
         @[Flags]
@@ -118,7 +118,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(10)
   end
 
-  it "codegens enum All redefined" do
+  it("codegens enum All redefined") do
     run(%(
       lib Lib
         @[Flags]
@@ -132,7 +132,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(10)
   end
 
-  it "allows class vars in enum" do
+  it("allows class vars in enum") do
     run(%(
       enum Foo
         A
@@ -148,7 +148,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(1)
   end
 
-  it "automatically defines question method for each enum member (false case)" do
+  it("automatically defines question method for each enum member (false case)") do
     run(%(
       struct Enum
         def ==(other : self)
@@ -166,7 +166,7 @@ describe "Code gen: enum" do
       )).to_b.should be_false
   end
 
-  it "automatically defines question method for each enum member (true case)" do
+  it("automatically defines question method for each enum member (true case)") do
     run(%(
       struct Enum
         def ==(other : self)
@@ -184,7 +184,7 @@ describe "Code gen: enum" do
       )).to_b.should be_true
   end
 
-  it "automatically defines question method for each enum member (flags, false case)" do
+  it("automatically defines question method for each enum member (flags, false case)") do
     run(%(
       struct Enum
         def includes?(other : self)
@@ -204,7 +204,7 @@ describe "Code gen: enum" do
       )).to_b.should be_false
   end
 
-  it "automatically defines question method for each enum member (flags, true case)" do
+  it("automatically defines question method for each enum member (flags, true case)") do
     run(%(
       struct Enum
         def includes?(other : self)
@@ -224,7 +224,7 @@ describe "Code gen: enum" do
       )).to_b.should be_true
   end
 
-  it "does ~ at compile time for enum member" do
+  it("does ~ at compile time for enum member") do
     run(%(
       enum Foo
         Bar = ~1
@@ -234,7 +234,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(~1)
   end
 
-  it "uses enum value before declaration (hoisting)" do
+  it("uses enum value before declaration (hoisting)") do
     run(%(
       x = Bar.bar
 
@@ -252,7 +252,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(1)
   end
 
-  it "casts All value to base type" do
+  it("casts All value to base type") do
     run(%(
       @[Flags]
       enum Foo
@@ -264,7 +264,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(-1073741824)
   end
 
-  it "can use macro calls inside enum value (#424)" do
+  it("can use macro calls inside enum value (#424)") do
     run(%(
       enum Foo
         macro bar
@@ -278,7 +278,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(30)
   end
 
-  it "can use macro calls inside enum value, macro defined outside enum (#424)" do
+  it("can use macro calls inside enum value, macro defined outside enum (#424)") do
     run(%(
       macro bar
         10 + 20
@@ -292,7 +292,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(30)
   end
 
-  it "can use macro calls inside enum value, with receiver (#424)" do
+  it("can use macro calls inside enum value, with receiver (#424)") do
     run(%(
       module Moo
         macro bar
@@ -308,7 +308,7 @@ describe "Code gen: enum" do
       )).to_i.should eq(30)
   end
 
-  it "adds a none? method to flags enum" do
+  it("adds a none? method to flags enum") do
     run(%(
       @[Flags]
       enum Foo

@@ -1,8 +1,8 @@
 require "spec"
 require "semantic_version"
 
-describe SemanticVersion do
-  it "compares <" do
+describe(SemanticVersion) do
+  it("compares <") do
     sversions = %w(
       1.2.3-2
       1.2.3-10
@@ -26,7 +26,7 @@ describe SemanticVersion do
     end
   end
 
-  it "compares build equivalence" do
+  it("compares build equivalence") do
     sversions = [
       "1.2.3+1",
       "1.2.3+999",

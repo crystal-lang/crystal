@@ -1,25 +1,25 @@
 require "../../spec_helper"
 
-describe "Semantic: reflection" do
-  it "types Object class" do
+describe("Semantic: reflection") do
+  it("types Object class") do
     assert_type("Object") { types["Object"].metaclass }
   end
 
-  it "types Class class" do
+  it("types Class class") do
     assert_type("Class") { types["Class"] }
   end
 
-  it "types Object and Class metaclases" do
+  it("types Object and Class metaclases") do
     assert_type("Object.class") { types["Class"] }
     assert_type("Class.class") { types["Class"] }
   end
 
-  it "types Reference metaclass" do
+  it("types Reference metaclass") do
     assert_type("Reference") { types["Reference"].metaclass }
     assert_type("Reference.class") { types["Class"] }
   end
 
-  it "types metaclass parent" do
+  it("types metaclass parent") do
     input = parse("
       class Foo; end
       class Bar < Foo; end

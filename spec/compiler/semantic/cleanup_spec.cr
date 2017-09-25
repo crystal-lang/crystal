@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
-describe "cleanup" do
-  it "errors if assigning var to itself" do
+describe("cleanup") do
+  it("errors if assigning var to itself") do
     assert_error "a = 1; a = a", "expression has no effect"
   end
 
-  it "errors if assigning instance var to itself" do
+  it("errors if assigning instance var to itself") do
     assert_error %(
       class Foo
         def initialize

@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: struct" do
-  it "types struct declaration" do
+describe("Semantic: struct") do
+  it("types struct declaration") do
     assert_type("
       struct Foo
       end
@@ -13,7 +13,7 @@ describe "Semantic: struct" do
     end
   end
 
-  it "types generic struct declaration" do
+  it("types generic struct declaration") do
     assert_type("
       struct Foo(T)
       end
@@ -28,7 +28,7 @@ describe "Semantic: struct" do
     end
   end
 
-  it "allows struct to participate in virtual" do
+  it("allows struct to participate in virtual") do
     assert_type("
       abstract struct Foo
       end
@@ -44,7 +44,7 @@ describe "Semantic: struct" do
   end
 
   %w(Value Struct Int Float).each do |type|
-    it "doesn't make virtual for #{type}" do
+    it("doesn't make virtual for #{type}") do
       assert_type("
         struct Foo < #{type}
         end
@@ -57,7 +57,7 @@ describe "Semantic: struct" do
     end
   end
 
-  it "can't be nilable" do
+  it("can't be nilable") do
     assert_type("
       struct Foo
       end
@@ -70,14 +70,14 @@ describe "Semantic: struct" do
     end
   end
 
-  it "can't extend struct from class" do
+  it("can't extend struct from class") do
     assert_error "
       struct Foo < Reference
       end
       ", "can't make struct 'Foo' inherit class 'Reference'"
   end
 
-  it "can't extend class from struct" do
+  it("can't extend class from struct") do
     assert_error "
       struct Foo
       end
@@ -87,7 +87,7 @@ describe "Semantic: struct" do
       ", "can't make class 'Bar' inherit struct 'Foo'"
   end
 
-  it "can't reopen as different type" do
+  it("can't reopen as different type") do
     assert_error "
       struct Foo
       end
@@ -97,7 +97,7 @@ describe "Semantic: struct" do
       ", "Foo is not a class, it's a struct"
   end
 
-  it "errors on recursive struct" do
+  it("errors on recursive struct") do
     assert_error %(
       struct Test
         def initialize(@test : Test?)
@@ -109,7 +109,7 @@ describe "Semantic: struct" do
       "recursive struct Test detected: `@test : (Test | Nil)`"
   end
 
-  it "errors on recursive struct inside module" do
+  it("errors on recursive struct inside module") do
     assert_error %(
       struct Foo::Test
         def initialize(@test : Foo::Test?)
@@ -121,7 +121,7 @@ describe "Semantic: struct" do
       "recursive struct Foo::Test detected: `@test : (Foo::Test | Nil)`"
   end
 
-  it "errors on recursive generic struct inside module" do
+  it("errors on recursive generic struct inside module") do
     assert_error %(
       struct Foo::Test(T)
         def initialize(@test : Foo::Test(T)?)
@@ -133,7 +133,7 @@ describe "Semantic: struct" do
       "recursive struct Foo::Test(T) detected: `@test : (Foo::Test(T) | Nil)`"
   end
 
-  it "errors on mutually recursive struct" do
+  it("errors on mutually recursive struct") do
     assert_error %(
       struct Foo
         def initialize(@bar : Bar?)
@@ -151,7 +151,7 @@ describe "Semantic: struct" do
       "recursive struct Foo detected: `@bar : (Bar | Nil)` -> `@foo : (Foo | Nil)`"
   end
 
-  it "can't extend struct from non-abstract struct" do
+  it("can't extend struct from non-abstract struct") do
     assert_error %(
       struct Foo
       end
@@ -162,7 +162,7 @@ describe "Semantic: struct" do
       "can't extend non-abstract struct Foo"
   end
 
-  it "unifies type to virtual type" do
+  it("unifies type to virtual type") do
     assert_type(%(
       abstract struct Foo
       end
@@ -176,7 +176,7 @@ describe "Semantic: struct" do
       )) { types["Foo"].virtual_type! }
   end
 
-  it "doesn't error if method is not found in abstract type" do
+  it("doesn't error if method is not found in abstract type") do
     assert_type(%(
       abstract struct Foo
       end
@@ -200,7 +200,7 @@ describe "Semantic: struct" do
       )) { union_of(int32, char) }
   end
 
-  it "can cast to base abstract struct" do
+  it("can cast to base abstract struct") do
     assert_type(%(
       abstract struct Foo
       end
@@ -215,7 +215,7 @@ describe "Semantic: struct" do
       )) { types["Foo"].virtual_type! }
   end
 
-  it "detects recursive struct through module" do
+  it("detects recursive struct through module") do
     assert_error %(
       module Moo
       end
@@ -230,7 +230,7 @@ describe "Semantic: struct" do
       "recursive struct Foo detected: `@moo : Moo` -> `Moo` -> `Foo`"
   end
 
-  it "detects recursive struct through inheritance (#3071)" do
+  it("detects recursive struct through inheritance (#3071)") do
     assert_error %(
       abstract struct Foo
       end
@@ -242,7 +242,7 @@ describe "Semantic: struct" do
       "recursive struct Bar detected: `@value : Foo` -> `Foo` -> `Bar`"
   end
 
-  it "errors if defining finalize for struct (#3840)" do
+  it("errors if defining finalize for struct (#3840)") do
     assert_error %(
       struct Foo
         def finalize

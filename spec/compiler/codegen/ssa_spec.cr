@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: ssa" do
-  it "codegens a redefined var" do
+describe("Code gen: ssa") do
+  it("codegens a redefined var") do
     run("
       a = 1.5
       a = 1
@@ -9,7 +9,7 @@ describe "Code gen: ssa" do
       ").to_i.should eq(1)
   end
 
-  it "codegens a redefined var inside method" do
+  it("codegens a redefined var inside method") do
     run("
       def foo
         a = 1.5
@@ -21,7 +21,7 @@ describe "Code gen: ssa" do
       ").to_i.should eq(1)
   end
 
-  it "codegens a redefined var inside method with argument" do
+  it("codegens a redefined var inside method with argument") do
     run("
       def foo(a)
         a = 1
@@ -32,7 +32,7 @@ describe "Code gen: ssa" do
       ").to_i.should eq(1)
   end
 
-  it "codegens declaration of var inside then when false" do
+  it("codegens declaration of var inside then when false") do
     run("
       struct Nil
         def to_i
@@ -47,7 +47,7 @@ describe "Code gen: ssa" do
       ").to_i.should eq(0)
   end
 
-  it "codegens declaration of var inside then when true" do
+  it("codegens declaration of var inside then when true") do
     run("
       struct Nil
         def to_i
@@ -62,7 +62,7 @@ describe "Code gen: ssa" do
       ").to_i.should eq(2)
   end
 
-  it "codegens a var that is re-assigned in a block" do
+  it("codegens a var that is re-assigned in a block") do
     run(%(
       struct Char
         def to_i
@@ -82,7 +82,7 @@ describe "Code gen: ssa" do
       )).to_i.should eq(10)
   end
 
-  it "codegens a var that is re-assigned in a block (1)" do
+  it("codegens a var that is re-assigned in a block (1)") do
     run(%(
       struct Char
         def to_i
@@ -98,7 +98,7 @@ describe "Code gen: ssa" do
       )).to_i.should eq(10)
   end
 
-  it "codegens a var that is re-assigned in a block (2)" do
+  it("codegens a var that is re-assigned in a block (2)") do
     run(%(
       struct Char
         def to_i
@@ -114,7 +114,7 @@ describe "Code gen: ssa" do
       )).to_i.should eq(1)
   end
 
-  it "codegens a var that is declared in a block (1)" do
+  it("codegens a var that is declared in a block (1)") do
     run(%(
       struct Nil
         def to_i
@@ -129,7 +129,7 @@ describe "Code gen: ssa" do
       )).to_i.should eq(0)
   end
 
-  it "codegens a var that is declared in a block (2)" do
+  it("codegens a var that is declared in a block (2)") do
     run(%(
       struct Nil
         def to_i
@@ -146,7 +146,7 @@ describe "Code gen: ssa" do
       )).to_i.should eq(1)
   end
 
-  it "codegens ssa bug with if/else on var" do
+  it("codegens ssa bug with if/else on var") do
     run(%(
       a = 1 || nil
       if a && false
@@ -160,7 +160,7 @@ describe "Code gen: ssa" do
       )).to_i.should eq(3)
   end
 
-  it "codegens ssa bug (1)" do
+  it("codegens ssa bug (1)") do
     run(%(
       struct Nil
         def to_i
@@ -185,7 +185,7 @@ describe "Code gen: ssa" do
       )).to_i.should eq(1)
   end
 
-  it "codegens ssa bug (2)" do
+  it("codegens ssa bug (2)") do
     # This shows a bug where a block variable (coconio in this case)
     # wasn't reset to nil before each block iteration.
     run(%(

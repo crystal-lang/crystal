@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: abstract def" do
-  it "errors if using abstract def on subclass" do
+describe("Semantic: abstract def") do
+  it("errors if using abstract def on subclass") do
     assert_error %(
       abstract class Foo
         abstract def foo
@@ -20,8 +20,8 @@ describe "Semantic: abstract def" do
       ), "abstract `def Foo#foo()` must be implemented by Baz"
   end
 
-  it "works on abstract method on abstract class" do
-    assert_type %(
+  it("works on abstract method on abstract class") do
+    assert_type(%(
       abstract class Foo
         abstract def foo
       end
@@ -40,10 +40,10 @@ describe "Semantic: abstract def" do
 
       b = Bar.new || Baz.new
       b.foo
-      ) { int32 }
+      )) { int32 }
   end
 
-  it "works on abstract def on sub-subclass" do
+  it("works on abstract def on sub-subclass") do
     assert_type(%(
       abstract class Foo
         abstract def foo
@@ -65,7 +65,7 @@ describe "Semantic: abstract def" do
       )) { int32 }
   end
 
-  it "errors if using abstract def on subclass that also defines it as abstract" do
+  it("errors if using abstract def on subclass that also defines it as abstract") do
     assert_error %(
       abstract class Foo
         abstract def foo
@@ -80,7 +80,7 @@ describe "Semantic: abstract def" do
       ), "abstract `def Foo#foo()` must be implemented by Baz"
   end
 
-  it "gives correct error when no overload matches, when an abstract method is implemented (#1406)" do
+  it("gives correct error when no overload matches, when an abstract method is implemented (#1406)") do
     assert_error %(
       abstract class Foo
         abstract def foo(x : Int32)
@@ -97,7 +97,7 @@ describe "Semantic: abstract def" do
       "no overload matches"
   end
 
-  it "errors if using abstract def on non-abstract class" do
+  it("errors if using abstract def on non-abstract class") do
     assert_error %(
       class Foo
         abstract def foo
@@ -106,7 +106,7 @@ describe "Semantic: abstract def" do
       "can't define abstract def on non-abstract class"
   end
 
-  it "errors if using abstract def on metaclass" do
+  it("errors if using abstract def on metaclass") do
     assert_error %(
       class Foo
         abstract def self.foo
@@ -115,7 +115,7 @@ describe "Semantic: abstract def" do
       "can't define abstract def on metaclass"
   end
 
-  it "errors if abstract method is not implemented by subclass" do
+  it("errors if abstract method is not implemented by subclass") do
     assert_error %(
       abstract class Foo
         abstract def foo
@@ -127,7 +127,7 @@ describe "Semantic: abstract def" do
       "abstract `def Foo#foo()` must be implemented by Bar"
   end
 
-  it "errors if abstract method with arguments is not implemented by subclass" do
+  it("errors if abstract method with arguments is not implemented by subclass") do
     assert_error %(
       abstract class Foo
         abstract def foo(x, y)
@@ -139,7 +139,7 @@ describe "Semantic: abstract def" do
       "abstract `def Foo#foo(x, y)` must be implemented by Bar"
   end
 
-  it "errors if abstract method with arguments is not implemented by subclass (wrong number of arguments)" do
+  it("errors if abstract method with arguments is not implemented by subclass (wrong number of arguments)") do
     assert_error %(
       abstract class Foo
         abstract def foo(x)
@@ -153,7 +153,7 @@ describe "Semantic: abstract def" do
       "abstract `def Foo#foo(x)` must be implemented by Bar"
   end
 
-  it "errors if abstract method with arguments is not implemented by subclass (wrong type)" do
+  it("errors if abstract method with arguments is not implemented by subclass (wrong type)") do
     assert_error %(
       abstract class Foo
         abstract def foo(x, y : Int32)
@@ -167,7 +167,7 @@ describe "Semantic: abstract def" do
       "abstract `def Foo#foo(x, y : Int32)` must be implemented by Bar"
   end
 
-  it "errors if abstract method with arguments is not implemented by subclass (block difference)" do
+  it("errors if abstract method with arguments is not implemented by subclass (block difference)") do
     assert_error %(
       abstract class Foo
         abstract def foo
@@ -182,7 +182,7 @@ describe "Semantic: abstract def" do
       "abstract `def Foo#foo()` must be implemented by Bar"
   end
 
-  it "doesn't error if abstract method is implemented by subclass" do
+  it("doesn't error if abstract method is implemented by subclass") do
     semantic %(
       abstract class Foo
         abstract def foo
@@ -195,7 +195,7 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "doesn't error if abstract method with args is implemented by subclass" do
+  it("doesn't error if abstract method with args is implemented by subclass") do
     semantic %(
       abstract class Foo
         abstract def foo(x, y)
@@ -208,7 +208,7 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "doesn't error if abstract method with args is implemented by subclass (restriction -> no restriction)" do
+  it("doesn't error if abstract method with args is implemented by subclass (restriction -> no restriction)") do
     semantic %(
       abstract class Foo
         abstract def foo(x, y : Int32)
@@ -221,7 +221,7 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "doesn't error if abstract method with args is implemented by subclass (don't check subclasses)" do
+  it("doesn't error if abstract method with args is implemented by subclass (don't check subclasses)") do
     semantic %(
       abstract class Foo
         abstract def foo
@@ -237,7 +237,7 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "errors if abstract method is not implemented by subclass of subclass" do
+  it("errors if abstract method is not implemented by subclass of subclass") do
     assert_error %(
       abstract class Foo
         abstract def foo
@@ -252,7 +252,7 @@ describe "Semantic: abstract def" do
       "abstract `def Foo#foo()` must be implemented by Baz"
   end
 
-  it "doesn't error if abstract method is implemented by subclass via module inclusion" do
+  it("doesn't error if abstract method is implemented by subclass via module inclusion") do
     semantic %(
       abstract class Foo
         abstract def foo
@@ -269,7 +269,7 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "errors if abstract method is not implemented by including class" do
+  it("errors if abstract method is not implemented by including class") do
     assert_error %(
       module Foo
         abstract def foo
@@ -282,7 +282,7 @@ describe "Semantic: abstract def" do
       "abstract `def Foo#foo()` must be implemented by Bar"
   end
 
-  it "doesn't error if abstract method is implemented by including class" do
+  it("doesn't error if abstract method is implemented by including class") do
     semantic %(
       module Foo
         abstract def foo
@@ -297,7 +297,7 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "doesn't error if abstract method is not implemented by including module" do
+  it("doesn't error if abstract method is not implemented by including module") do
     semantic %(
       module Foo
         abstract def foo
@@ -309,7 +309,7 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "errors if abstract method is not implemented by subclass (nested in module)" do
+  it("errors if abstract method is not implemented by subclass (nested in module)") do
     assert_error %(
       module Moo
         abstract class Foo
@@ -323,7 +323,7 @@ describe "Semantic: abstract def" do
       "abstract `def Moo::Foo#foo()` must be implemented by Bar"
   end
 
-  it "doesn't error if abstract method with args is implemented by subclass (with one default arg)" do
+  it("doesn't error if abstract method with args is implemented by subclass (with one default arg)") do
     semantic %(
       abstract class Foo
         abstract def foo(x)
@@ -336,7 +336,7 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "doesn't error if implements with parent class" do
+  it("doesn't error if implements with parent class") do
     semantic %(
       class Parent; end
       class Child < Parent; end
@@ -352,7 +352,7 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "doesn't error if implements with parent module" do
+  it("doesn't error if implements with parent module") do
     semantic %(
       module Moo
       end
@@ -376,7 +376,7 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "finds implements in included module in disorder (#4052)" do
+  it("finds implements in included module in disorder (#4052)") do
     semantic %(
       module B
         abstract def x

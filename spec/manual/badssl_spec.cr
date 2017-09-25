@@ -13,7 +13,7 @@ ensure
   socket.close if socket
 end
 
-describe "OpenSSL::SSL::Context has sane client defaults" do
+describe("OpenSSL::SSL::Context has sane client defaults") do
   {
     "expired.badssl.com",
     "wrong.host.badssl.com",
@@ -24,13 +24,13 @@ describe "OpenSSL::SSL::Context has sane client defaults" do
     "dsdtestprovider.badssl.com",
     "subdomain.preloaded-hsts.badssl.com",
   }.each do |host|
-    it "shouldn't connect to #{host}" do
+    it("shouldn't connect to #{host}") do
       expect_raises(OpenSSL::SSL::Error) do
         connect_to(host)
       end
     end
 
-    it "should connect to #{host} with verification disabled" do
+    it("should connect to #{host} with verification disabled") do
       context = OpenSSL::SSL::Context::Client.new
       context.verify_mode = OpenSSL::SSL::VerifyMode::NONE
       connect_to(host, context).should be_true
@@ -42,13 +42,13 @@ describe "OpenSSL::SSL::Context has sane client defaults" do
     "10000-sans.badssl.com",
     "dh480.badssl.com",
   }.each do |host|
-    it "shouldn't connect to #{host}" do
+    it("shouldn't connect to #{host}") do
       expect_raises(OpenSSL::SSL::Error) do
         connect_to(host)
       end
     end
 
-    it "shouldn't connect to #{host} with verification disabled" do
+    it("shouldn't connect to #{host} with verification disabled") do
       context = OpenSSL::SSL::Context::Client.new
       context.verify_mode = OpenSSL::SSL::VerifyMode::NONE
 
@@ -81,7 +81,7 @@ describe "OpenSSL::SSL::Context has sane client defaults" do
     "upgrade.badssl.com",
     "preloaded-hsts.badssl.com",
   }.each do |host|
-    it "should connect to #{host} successfully" do
+    it("should connect to #{host} successfully") do
       connect_to(host).should be_true
     end
   end

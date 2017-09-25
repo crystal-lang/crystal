@@ -7,13 +7,13 @@ private TimeSpecTicks = [
 ]
 
 def Time.expect_invalid
-  expect_raises ArgumentError, "Invalid time" do
+  expect_raises(ArgumentError, "Invalid time") do
     yield
   end
 end
 
-describe Time do
-  it "initialize" do
+describe(Time) do
+  it("initialize") do
     t1 = Time.new 2002, 2, 25
     t1.ticks.should eq(TimeSpecTicks[0])
 
@@ -33,47 +33,47 @@ describe Time do
     t3.ticks.should eq(TimeSpecTicks[2])
   end
 
-  it "initialize max" do
+  it("initialize max") do
     Time.new(9999, 12, 31, 23, 59, 59, 999).ticks.should eq(3155378975999990000)
   end
 
-  it "initialize millisecond negative" do
+  it("initialize millisecond negative") do
     Time.expect_invalid do
       Time.new(9999, 12, 31, 23, 59, 59, -1)
     end
   end
 
-  it "initialize millisecond 1000" do
+  it("initialize millisecond 1000") do
     Time.expect_invalid do
       Time.new(9999, 12, 31, 23, 59, 59, 1000)
     end
   end
 
-  it "initialize with .epoch" do
+  it("initialize with .epoch") do
     seconds = 1439404155
     time = Time.epoch(seconds)
     time.should eq(Time.new(2015, 8, 12, 18, 29, 15, kind: Time::Kind::Utc))
     time.epoch.should eq(seconds)
   end
 
-  it "initialize with .epoch_ms" do
+  it("initialize with .epoch_ms") do
     milliseconds = 1439404155000
     time = Time.epoch_ms(milliseconds)
     time.should eq(Time.new(2015, 8, 12, 18, 29, 15, kind: Time::Kind::Utc))
     time.epoch_ms.should eq(milliseconds)
   end
 
-  it "clones" do
+  it("clones") do
     time = Time.now
     (time == time.clone).should be_true
   end
 
-  it "fields" do
+  it("fields") do
     Time::MaxValue.ticks.should eq(3155378975999999999)
     Time::MinValue.ticks.should eq(0)
   end
 
-  it "add" do
+  it("add") do
     t1 = Time.new TimeSpecTicks[1]
     span = Time::Span.new 3, 54, 1
     t2 = t1 + span
@@ -89,23 +89,23 @@ describe Time do
     t1.second.should eq(13)
   end
 
-  it "add out of range 1" do
+  it("add out of range 1") do
     t1 = Time.new TimeSpecTicks[1]
 
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       t1 + Time::Span::MaxValue
     end
   end
 
-  it "add out of range 2" do
+  it("add out of range 2") do
     t1 = Time.new TimeSpecTicks[1]
 
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       t1 + Time::Span::MinValue
     end
   end
 
-  it "add days" do
+  it("add days") do
     t1 = Time.new TimeSpecTicks[1]
     t1 = t1 + 3.days
 
@@ -127,21 +127,21 @@ describe Time do
     t1.second.should eq(13)
   end
 
-  it "add days out of range 1" do
+  it("add days out of range 1") do
     t1 = Time.new TimeSpecTicks[1]
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       t1 + 10000000.days
     end
   end
 
-  it "add days out of range 2" do
+  it("add days out of range 2") do
     t1 = Time.new TimeSpecTicks[1]
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       t1 - 10000000.days
     end
   end
 
-  it "add months" do
+  it("add months") do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t2 = t + 1.month
     t2.to_s.should eq("2014-11-30 21:18:13")
@@ -162,7 +162,7 @@ describe Time do
     t2.to_s.should eq("2015-04-30 21:18:13")
   end
 
-  it "add years" do
+  it("add years") do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t2 = t + 1.year
     t2.to_s.should eq("2015-10-30 21:18:13")
@@ -172,7 +172,7 @@ describe Time do
     t2.to_s.should eq("2012-10-30 21:18:13")
   end
 
-  it "add hours" do
+  it("add hours") do
     t1 = Time.new TimeSpecTicks[1]
     t1 = t1 + 10.hours
 
@@ -194,7 +194,7 @@ describe Time do
     t1.second.should eq(8)
   end
 
-  it "add milliseconds" do
+  it("add milliseconds") do
     t1 = Time.new TimeSpecTicks[1]
     t1 = t1 + 1e10.milliseconds
 
@@ -216,22 +216,22 @@ describe Time do
     t1.second.should eq(13)
   end
 
-  it "gets time of day" do
+  it("gets time of day") do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t.time_of_day.should eq(Time::Span.new(21, 18, 13))
   end
 
-  it "gets day of week" do
+  it("gets day of week") do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t.day_of_week.should eq(Time::DayOfWeek::Thursday)
   end
 
-  it "gets day of year" do
+  it("gets day of year") do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t.day_of_year.should eq(303)
   end
 
-  it "compares" do
+  it("compares") do
     t1 = Time.new 2014, 10, 30, 21, 18, 13
     t2 = Time.new 2014, 10, 30, 21, 18, 14
 
@@ -240,19 +240,19 @@ describe Time do
     (t1 < t2).should be_true
   end
 
-  it "gets unix epoch seconds" do
+  it("gets unix epoch seconds") do
     t1 = Time.new 2014, 10, 30, 21, 18, 13, 0, Time::Kind::Utc
     t1.epoch.should eq(1414703893)
     t1.epoch_f.should be_close(1414703893, 1e-01)
   end
 
-  it "gets unix epoch seconds at GMT" do
+  it("gets unix epoch seconds at GMT") do
     t1 = Time.now
     t1.epoch.should eq(t1.to_utc.epoch)
     t1.epoch_f.should be_close(t1.to_utc.epoch_f, 1e-01)
   end
 
-  it "to_s" do
+  it("to_s") do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t.to_s.should eq("2014-10-30 21:18:13")
 
@@ -272,7 +272,7 @@ describe Time do
     t.to_s.should eq("2014-10-30 21:18:01")
   end
 
-  it "formats" do
+  it("formats") do
     t = Time.new 2014, 1, 2, 3, 4, 5, 6
     t2 = Time.new 2014, 1, 2, 15, 4, 5, 6
     t3 = Time.new 2014, 1, 2, 12, 4, 5, 6
@@ -367,7 +367,7 @@ describe Time do
     t.to_s("%s").should eq("1388631845")
   end
 
-  it "parses empty" do
+  it("parses empty") do
     t = Time.parse("", "")
     t.year.should eq(1)
     t.month.should eq(1)
@@ -471,53 +471,53 @@ describe Time do
     time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
   end
 
-  it "parses microseconds" do
+  it("parses microseconds") do
     time = Time.parse("2016-09-09T17:03:28.456789+01:00", "%FT%T.%L%z").to_utc
     time.to_s.should eq("2016-09-09 16:03:28 UTC")
     time.millisecond.should eq(456)
   end
 
-  it "parses the correct amount of digits (#853)" do
+  it("parses the correct amount of digits (#853)") do
     time = Time.parse("20150624", "%Y%m%d")
     time.year.should eq(2015)
     time.month.should eq(6)
     time.day.should eq(24)
   end
 
-  it "parses month blank padded" do
+  it("parses month blank padded") do
     time = Time.parse("2015 624", "%Y%_m%d")
     time.year.should eq(2015)
     time.month.should eq(6)
     time.day.should eq(24)
   end
 
-  it "parses day of month blank padded" do
+  it("parses day of month blank padded") do
     time = Time.parse("201506 4", "%Y%m%e")
     time.year.should eq(2015)
     time.month.should eq(6)
     time.day.should eq(4)
   end
 
-  it "parses hour 24 blank padded" do
+  it("parses hour 24 blank padded") do
     time = Time.parse(" 31112", "%k%M%S")
     time.hour.should eq(3)
     time.minute.should eq(11)
     time.second.should eq(12)
   end
 
-  it "parses hour 12 blank padded" do
+  it("parses hour 12 blank padded") do
     time = Time.parse(" 31112", "%l%M%S")
     time.hour.should eq(3)
     time.minute.should eq(11)
     time.second.should eq(12)
   end
 
-  it "can parse in UTC" do
+  it("can parse in UTC") do
     time = Time.parse("2014-10-31 11:12:13", "%F %T", Time::Kind::Utc)
     time.kind.should eq(Time::Kind::Utc)
   end
 
-  it "at" do
+  it("at") do
     t1 = Time.new 2014, 11, 25, 10, 11, 12, 13
     t2 = Time.new 2014, 6, 25, 10, 11, 12, 13
 
@@ -577,7 +577,7 @@ describe Time do
     t2.at_end_of_semester.to_s.should eq("2014-06-30 23:59:59")
   end
 
-  it "does time span units" do
+  it("does time span units") do
     1.millisecond.ticks.should eq(Time::Span::TicksPerMillisecond)
     1.milliseconds.ticks.should eq(Time::Span::TicksPerMillisecond)
     1.second.ticks.should eq(Time::Span::TicksPerSecond)
@@ -590,14 +590,14 @@ describe Time do
     2.weeks.should eq(14.days)
   end
 
-  it "preserves kind when adding" do
+  it("preserves kind when adding") do
     time = Time.utc_now
     time.kind.should eq(Time::Kind::Utc)
 
     (time + 5.minutes).kind.should eq(Time::Kind::Utc)
   end
 
-  it "asks for day name" do
+  it("asks for day name") do
     7.times do |i|
       time = Time.new(2015, 2, 15 + i)
       time.sunday?.should eq(i == 0)
@@ -610,12 +610,12 @@ describe Time do
     end
   end
 
-  it "compares different kinds" do
+  it("compares different kinds") do
     time = Time.now
     (time.to_utc <=> time).should eq(0)
   end
 
-  it %(changes timezone with ENV["TZ"]) do
+  it(%(changes timezone with ENV["TZ"])) do
     old_tz = ENV["TZ"]?
 
     begin
@@ -631,7 +631,7 @@ describe Time do
     end
   end
 
-  it "does diff of utc vs local time" do
+  it("does diff of utc vs local time") do
     local = Time.now
     utc = local.to_utc
     (utc - local).should eq(0.seconds)

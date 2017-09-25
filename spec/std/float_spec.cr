@@ -1,7 +1,7 @@
 require "spec"
 
-describe "Float" do
-  describe "**" do
+describe("Float") do
+  describe("**") do
     it { (2.5_f32 ** 2_i32).should be_close(6.25_f32, 0.0001) }
     it { (2.5_f32 ** 2).should be_close(6.25_f32, 0.0001) }
     it { (2.5_f32 ** 2.5_f32).should be_close(9.882117688026186_f32, 0.0001) }
@@ -12,14 +12,14 @@ describe "Float" do
     it { (2.5_f64 ** 2.5).should be_close(9.882117688026186_f64, 0.001) }
   end
 
-  describe "%" do
-    it "uses modulo behavior, not remainder behavior" do
+  describe("%") do
+    it("uses modulo behavior, not remainder behavior") do
       it { ((-11.5) % 4.0).should eq(0.5) }
     end
   end
 
-  describe "modulo" do
-    it "raises when mods by zero" do
+  describe("modulo") do
+    it("raises when mods by zero") do
       expect_raises(DivisionByZero) { 1.2.modulo 0.0 }
     end
 
@@ -33,8 +33,8 @@ describe "Float" do
     it { (-11.5.modulo -4.0).should eq(-3.5) }
   end
 
-  describe "remainder" do
-    it "raises when mods by zero" do
+  describe("remainder") do
+    it("raises when mods by zero") do
       expect_raises(DivisionByZero) { 1.2.remainder 0.0 }
     end
 
@@ -47,23 +47,23 @@ describe "Float" do
     it { (-11.5.remainder 4.0).should eq(-3.5) }
     it { (-11.5.remainder -4.0).should eq(-3.5) }
 
-    it "preserves type" do
+    it("preserves type") do
       r = 1.5_f32.remainder(1)
       typeof(r).should eq(Float32)
     end
   end
 
-  describe "round" do
+  describe("round") do
     it { 2.5.round.should eq(3) }
     it { 2.4.round.should eq(2) }
   end
 
-  describe "floor" do
+  describe("floor") do
     it { 2.1.floor.should eq(2) }
     it { 2.9.floor.should eq(2) }
   end
 
-  describe "ceil" do
+  describe("ceil") do
     it { 2.0_f32.ceil.should eq(2) }
     it { 2.0.ceil.should eq(2) }
 
@@ -74,7 +74,7 @@ describe "Float" do
     it { 2.9.ceil.should eq(3) }
   end
 
-  describe "fdiv" do
+  describe("fdiv") do
     it { 1.0.fdiv(1).should eq 1.0 }
     it { 1.0.fdiv(2).should eq 0.5 }
     it { 1.0.fdiv(0.5).should eq 2.0 }
@@ -82,7 +82,7 @@ describe "Float" do
     it { 1.0.fdiv(0).should eq 1.0/0.0 }
   end
 
-  describe "divmod" do
+  describe("divmod") do
     it { 1.2.divmod(0.3)[0].should eq(4) }
     it { 1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
 
@@ -120,8 +120,8 @@ describe "Float" do
     it { -1.4.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
   end
 
-  describe "to_s" do
-    it "does to_s for f64" do
+  describe("to_s") do
+    it("does to_s for f64") do
       12.34.to_s.should eq("12.34")
       1.2.to_s.should eq("1.2")
       1.23.to_s.should eq("1.23")
@@ -167,7 +167,7 @@ describe "Float" do
       (0.999999999999999989).to_s.should eq("1.0")
     end
 
-    it "does to_s for f32" do
+    it("does to_s for f32") do
       12.34_f32.to_s.should eq("12.34")
       1.2_f32.to_s.should eq("1.2")
       1.23_f32.to_s.should eq("1.23")
@@ -184,37 +184,37 @@ describe "Float" do
     end
   end
 
-  describe "#inspect" do
-    it "does inspect for f64" do
+  describe("#inspect") do
+    it("does inspect for f64") do
       3.2.inspect.should eq("3.2")
     end
 
-    it "does inspect for f32" do
+    it("does inspect for f32") do
       3.2_f32.inspect.should eq("3.2_f32")
     end
 
-    it "does inspect for f64 with IO" do
+    it("does inspect for f64 with IO") do
       str = String.build { |io| 3.2.inspect(io) }
       str.should eq("3.2")
     end
 
-    it "does inspect for f32" do
+    it("does inspect for f32") do
       str = String.build { |io| 3.2_f32.inspect(io) }
       str.should eq("3.2_f32")
     end
   end
 
-  describe "hash" do
-    it "does for Float32" do
+  describe("hash") do
+    it("does for Float32") do
       1.2_f32.hash.should eq(1.2_f32.hash)
     end
 
-    it "does for Float64" do
+    it("does for Float64") do
       1.2.hash.should eq(1.2.hash)
     end
   end
 
-  it "casts" do
+  it("casts") do
     Float32.new(1_f64).should be_a(Float32)
     Float32.new(1_f64).should eq(1)
 
@@ -222,12 +222,12 @@ describe "Float" do
     Float64.new(1_f32).should eq(1)
   end
 
-  it "does nan?" do
+  it("does nan?") do
     1.5.nan?.should be_false
     (0.0 / 0.0).nan?.should be_true
   end
 
-  it "does infinite?" do
+  it("does infinite?") do
     (0.0).infinite?.should be_nil
     (-1.0/0.0).infinite?.should eq(-1)
     (1.0/0.0).infinite?.should eq(1)
@@ -237,7 +237,7 @@ describe "Float" do
     (1.0_f32/0.0_f32).infinite?.should eq(1)
   end
 
-  it "does finite?" do
+  it("does finite?") do
     0.0.finite?.should be_true
     1.5.finite?.should be_true
     (1.0/0.0).finite?.should be_false
@@ -245,7 +245,7 @@ describe "Float" do
     (-0.0/0.0).finite?.should be_false
   end
 
-  it "does unary -" do
+  it("does unary -") do
     f = -(1.5)
     f.should eq(-1.5)
     f.should be_a(Float64)
@@ -255,7 +255,7 @@ describe "Float" do
     f.should be_a(Float32)
   end
 
-  it "clones" do
+  it("clones") do
     1.0.clone.should eq(1.0)
     1.0_f32.clone.should eq(1.0_f32)
   end

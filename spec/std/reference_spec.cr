@@ -37,8 +37,8 @@ private module ReferenceSpec
   end
 end
 
-describe "Reference" do
-  it "compares reference to other reference" do
+describe("Reference") do
+  it("compares reference to other reference") do
     o1 = Reference.new
     o2 = Reference.new
     (o1 == o1).should be_true
@@ -46,42 +46,42 @@ describe "Reference" do
     (o1 == 1).should be_false
   end
 
-  it "should not be nil" do
+  it("should not be nil") do
     Reference.new.nil?.should be_false
   end
 
-  it "should be false when negated" do
+  it("should be false when negated") do
     (!Reference.new).should be_false
   end
 
-  it "does inspect" do
+  it("does inspect") do
     r = ReferenceSpec::TestClass.new(1, "hello")
     r.inspect.should eq(%(#<ReferenceSpec::TestClass:0x#{r.object_id.to_s(16)} @x=1, @y="hello">))
   end
 
-  it "does to_s" do
+  it("does to_s") do
     r = ReferenceSpec::TestClass.new(1, "hello")
     r.to_s.should eq(%(#<ReferenceSpec::TestClass:0x#{r.object_id.to_s(16)}>))
   end
 
-  it "does inspect for class" do
+  it("does inspect for class") do
     String.inspect.should eq("String")
   end
 
-  it "does to_s for class" do
+  it("does to_s for class") do
     String.to_s.should eq("String")
   end
 
-  it "does to_s for class if virtual" do
+  it("does to_s for class if virtual") do
     [ReferenceSpec::TestClassBase, ReferenceSpec::TestClassSubclass].to_s.should eq("[ReferenceSpec::TestClassBase, ReferenceSpec::TestClassSubclass]")
   end
 
-  it "returns itself" do
+  it("returns itself") do
     x = "hello"
     x.itself.should be(x)
   end
 
-  it "dups" do
+  it("dups") do
     original = ReferenceSpec::DupCloneClass.new
     duplicate = original.dup
     duplicate.should_not be(original)
@@ -89,7 +89,7 @@ describe "Reference" do
     duplicate.y.should be(original.y)
   end
 
-  it "can dup class that inherits abstract class" do
+  it("can dup class that inherits abstract class") do
     original = ReferenceSpec::Concrete.new(2).as(ReferenceSpec::Abstract)
     duplicate = original.dup
     duplicate.should be_a(ReferenceSpec::Concrete)
@@ -97,7 +97,7 @@ describe "Reference" do
     duplicate.x.should eq(original.x)
   end
 
-  it "clones with def_clone" do
+  it("clones with def_clone") do
     original = ReferenceSpec::DupCloneClass.new
     clone = original.clone
     clone.should_not be(original)
@@ -106,7 +106,7 @@ describe "Reference" do
     clone.y.should eq(original.y)
   end
 
-  it "pretty_print" do
+  it("pretty_print") do
     ReferenceSpec::TestClassBase.new.pretty_inspect.should match(/\A#<ReferenceSpec::TestClassBase:0x[0-9a-f]+>\Z/)
     ReferenceSpec::TestClass.new(42, "foo").pretty_inspect.should match(/\A#<ReferenceSpec::TestClass:0x[0-9a-f]+ @x=42, @y="foo">\Z/)
   end

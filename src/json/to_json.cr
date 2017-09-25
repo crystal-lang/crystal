@@ -80,7 +80,7 @@ class Hash
   def to_json(json : JSON::Builder)
     json.object do
       each do |key, value|
-        json.field key do
+        json.field(key) do
           value.to_json(json)
         end
       end

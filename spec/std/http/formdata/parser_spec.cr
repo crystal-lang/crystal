@@ -1,8 +1,8 @@
 require "spec"
 require "http"
 
-describe HTTP::FormData::Parser do
-  it "parses formdata" do
+describe(HTTP::FormData::Parser) do
+  it("parses formdata") do
     formdata = <<-FORMDATA
       -----------------------------735323031399963166993862150
       Content-Disposition: form-data; name="text"

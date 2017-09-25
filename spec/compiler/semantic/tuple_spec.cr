@@ -1,80 +1,80 @@
 require "../../spec_helper"
 
-describe "Semantic: tuples" do
-  it "types tuple of one element" do
+describe("Semantic: tuples") do
+  it("types tuple of one element") do
     assert_type("{1}") { tuple_of([int32] of TypeVar) }
   end
 
-  it "types tuple of three elements" do
+  it("types tuple of three elements") do
     assert_type("{1, 2.5, 'a'}") { tuple_of([int32, float64, char] of TypeVar) }
   end
 
-  it "types tuple of one element and then two elements" do
+  it("types tuple of one element and then two elements") do
     assert_type("{1}; {1, 2}") { tuple_of([int32, int32] of TypeVar) }
   end
 
-  it "types tuple [0]" do
+  it("types tuple [0]") do
     assert_type("{1, 'a'}[0]") { int32 }
   end
 
-  it "types tuple [1]" do
+  it("types tuple [1]") do
     assert_type("{1, 'a'}[1]") { char }
   end
 
-  it "types tuple [-1]" do
+  it("types tuple [-1]") do
     assert_type("{1, 'a'}[-1]") { char }
   end
 
-  it "types tuple [-2]" do
+  it("types tuple [-2]") do
     assert_type("{1, 'a'}[-2]") { int32 }
   end
 
-  it "types tuple [0]?" do
+  it("types tuple [0]?") do
     assert_type("{1, 'a'}[0]?") { int32 }
   end
 
-  it "types tuple [1]?" do
+  it("types tuple [1]?") do
     assert_type("{1, 'a'}[1]?") { char }
   end
 
-  it "types tuple [2]?" do
+  it("types tuple [2]?") do
     assert_type("{1, 'a'}[2]?") { nil_type }
   end
 
-  it "types tuple [-1]?" do
+  it("types tuple [-1]?") do
     assert_type("{1, 'a'}[-1]?") { char }
   end
 
-  it "types tuple [-2]?" do
+  it("types tuple [-2]?") do
     assert_type("{1, 'a'}[-2]?") { int32 }
   end
 
-  it "types tuple [-3]?" do
+  it("types tuple [-3]?") do
     assert_type("{1, 'a'}[-3]?") { nil_type }
   end
 
-  it "types tuple metaclass [0]" do
+  it("types tuple metaclass [0]") do
     assert_type("{1, 'a'}.class[0]") { int32.metaclass }
   end
 
-  it "types tuple metaclass [1]" do
+  it("types tuple metaclass [1]") do
     assert_type("{1, 'a'}.class[1]") { char.metaclass }
   end
 
-  it "types tuple metaclass [-1]" do
+  it("types tuple metaclass [-1]") do
     assert_type("{1, 'a'}.class[-1]") { char.metaclass }
   end
 
-  it "types tuple metaclass [-2]" do
+  it("types tuple metaclass [-2]") do
     assert_type("{1, 'a'}.class[-2]") { int32.metaclass }
   end
 
-  it "gives error when indexing out of range" do
+  it("gives error when indexing out of range") do
     assert_error "{1, 'a'}[2]",
       "index out of bounds for Tuple(Int32, Char) (2 not in -2..1)"
   end
 
-  it "gives error when indexing out of range on empty tuple" do
+  it("gives error when indexing out of range on empty tuple") do
     assert_error %(
       def tuple(*args)
         args
@@ -85,11 +85,11 @@ describe "Semantic: tuples" do
       "index '0' out of bounds for empty tuple"
   end
 
-  it "can name a tuple type" do
+  it("can name a tuple type") do
     assert_type("Tuple(Int32, Float64)") { tuple_of([int32, float64]).metaclass }
   end
 
-  it "types T as a tuple of metaclasses" do
+  it("types T as a tuple of metaclasses") do
     assert_type("
       struct Tuple
         def type_args
@@ -106,7 +106,7 @@ describe "Semantic: tuples" do
     end
   end
 
-  it "errors on recursive splat expansion (#218)" do
+  it("errors on recursive splat expansion (#218)") do
     assert_error %(
       def foo(*a)
         foo(a)
@@ -120,7 +120,7 @@ describe "Semantic: tuples" do
       "recursive splat expansion"
   end
 
-  it "errors on recusrive splat expansion (1) (#361)" do
+  it("errors on recusrive splat expansion (1) (#361)") do
     assert_error %(
       require "prelude"
 
@@ -133,7 +133,7 @@ describe "Semantic: tuples" do
       "recursive splat expansion"
   end
 
-  it "errors on recursive splat expansion (2) (#361)" do
+  it("errors on recursive splat expansion (2) (#361)") do
     assert_error %(
       class Foo(T)
       end
@@ -147,7 +147,7 @@ describe "Semantic: tuples" do
       "recursive splat expansion"
   end
 
-  it "allows tuple covariance" do
+  it("allows tuple covariance") do
     assert_type(%(
       class Obj
         def initialize
@@ -174,7 +174,7 @@ describe "Semantic: tuples" do
       )) { tuple_of [types["Foo"].virtual_type!] }
   end
 
-  it "merges two tuple types of same size" do
+  it("merges two tuple types of same size") do
     assert_type(%(
       def foo
         if 1 == 2
@@ -188,7 +188,7 @@ describe "Semantic: tuples" do
       )) { tuple_of [string, nilable(int32)] }
   end
 
-  it "accept tuple in type restriction" do
+  it("accept tuple in type restriction") do
     assert_type(%(
       class Foo
       end
@@ -204,7 +204,7 @@ describe "Semantic: tuples" do
       )) { tuple_of [types["Bar"]] }
   end
 
-  it "accepts tuple covariance in array" do
+  it("accepts tuple covariance in array") do
     assert_type(%(
       require "prelude"
 
@@ -220,7 +220,7 @@ describe "Semantic: tuples" do
       )) { tuple_of [types["Foo"].virtual_type!, types["Foo"].virtual_type!] }
   end
 
-  it "can iterate T" do
+  it("can iterate T") do
     assert_type(%(
       struct Tuple
         def self.types
@@ -237,7 +237,7 @@ describe "Semantic: tuples" do
       )) { tuple_of([int32.metaclass, string.metaclass]) }
   end
 
-  it "can call [] on T" do
+  it("can call [] on T") do
     assert_type(%(
       struct Tuple
         def self.types
@@ -248,7 +248,7 @@ describe "Semantic: tuples" do
       )) { nil_type.metaclass }
   end
 
-  it "matches tuple with splat (#2932)" do
+  it("matches tuple with splat (#2932)") do
     assert_type(%(
       def foo(x : Tuple(*T)) forall T
         T
@@ -258,7 +258,7 @@ describe "Semantic: tuples" do
       )) { tuple_of([int32, char]).metaclass }
   end
 
-  it "matches tuple with splat (2) (#2932)" do
+  it("matches tuple with splat (2) (#2932)") do
     assert_type(%(
       def foo(x : Tuple(A, *B, C)) forall A, B, C
         {A, B, C}
@@ -268,7 +268,7 @@ describe "Semantic: tuples" do
       )) { tuple_of([int32.metaclass, tuple_of([char, bool]).metaclass, float64.metaclass]) }
   end
 
-  it "errors if using two splat indices on restriction" do
+  it("errors if using two splat indices on restriction") do
     assert_error %(
       def foo(x : Tuple(*A, *B)) forall A, B
       end
@@ -278,7 +278,7 @@ describe "Semantic: tuples" do
       "can't specify more than one splat in restriction"
   end
 
-  it "errors on tuple too big (#3816)" do
+  it("errors on tuple too big (#3816)") do
     assert_error %(
       require "prelude"
 

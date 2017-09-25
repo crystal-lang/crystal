@@ -3879,7 +3879,7 @@ class String
   end
 
   private def inspect_char(char, error, io)
-    dump_or_inspect_char char, error, io do
+    dump_or_inspect_char(char, error, io) do
       char.ascii_control?
     end
   end

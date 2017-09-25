@@ -59,7 +59,7 @@ module Crystal
             row do
               cell expr
               ctxs.each do |ctx|
-                cell align: :center do |io|
+                cell(align: :center) do |io|
                   PrettyTypeNameJsonConverter.pretty_type_name(ctx[expr], io)
                 end
               end

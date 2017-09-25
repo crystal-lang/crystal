@@ -86,14 +86,14 @@ class JSON::PullParser
   end
 
   def assert_error
-    expect_raises JSON::ParseException do
+    expect_raises(JSON::ParseException) do
       read_next
     end
   end
 end
 
 private def assert_pull_parse(string)
-  it "parses #{string}" do
+  it("parses #{string}") do
     parser = JSON::PullParser.new string
     parser.assert JSON.parse(string).raw
     parser.kind.should eq(:EOF)
@@ -101,8 +101,8 @@ private def assert_pull_parse(string)
 end
 
 private def assert_pull_parse_error(string)
-  it "errors on #{string}" do
-    expect_raises JSON::ParseException do
+  it("errors on #{string}") do
+    expect_raises(JSON::ParseException) do
       parser = JSON::PullParser.new string
       while parser.kind != :EOF
         parser.read_next
@@ -112,13 +112,13 @@ private def assert_pull_parse_error(string)
 end
 
 private def assert_raw(string, file = __FILE__, line = __LINE__)
-  it "parses raw #{string.inspect}", file, line do
+  it("parses raw #{string.inspect}", file, line) do
     pull = JSON::PullParser.new(string)
     pull.read_raw.should eq(string)
   end
 end
 
-describe JSON::PullParser do
+describe(JSON::PullParser) do
   assert_pull_parse "null"
   assert_pull_parse "false"
   assert_pull_parse "true"
@@ -162,9 +162,9 @@ describe JSON::PullParser do
   assert_pull_parse_error %({"name": "John", "age", 1})
   assert_pull_parse_error %({"name": "John", "age": "foo", "bar"})
 
-  it "prevents stack overflow for arrays" do
+  it("prevents stack overflow for arrays") do
     parser = JSON::PullParser.new(("[" * 513) + ("]" * 513))
-    expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
+    expect_raises(JSON::ParseException, "Nesting of 513 is too deep") do
       while true
         break if parser.kind == :EOF
         parser.read_next
@@ -172,9 +172,9 @@ describe JSON::PullParser do
     end
   end
 
-  it "prevents stack overflow for hashes" do
+  it("prevents stack overflow for hashes") do
     parser = JSON::PullParser.new((%({"x": ) * 513) + ("}" * 513))
-    expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
+    expect_raises(JSON::ParseException, "Nesting of 513 is too deep") do
       while true
         break if parser.kind == :EOF
         parser.read_next
@@ -186,7 +186,7 @@ describe JSON::PullParser do
   assert_pull_parse_error(("[" * 513) + ("]" * 513))
   assert_pull_parse_error(("{" * 513) + ("}" * 513))
 
-  describe "skip" do
+  describe("skip") do
     [
       {"null", "null"},
       {"bool", "false"},
@@ -196,7 +196,7 @@ describe JSON::PullParser do
       {"array", %([10, 20, [30], [40]])},
       {"object", %({"foo": [1, 2], "bar": {"baz": [3]}})},
     ].each do |(desc, obj)|
-      it "skips #{desc}" do
+      it("skips #{desc}") do
         pull = JSON::PullParser.new("[1, #{obj}, 2]")
         pull.read_array do
           pull.read_int.should eq(1)
@@ -207,27 +207,27 @@ describe JSON::PullParser do
     end
   end
 
-  it "reads bool or null" do
+  it("reads bool or null") do
     JSON::PullParser.new("null").read_bool_or_null.should be_nil
     JSON::PullParser.new("false").read_bool_or_null.should be_false
   end
 
-  it "reads int or null" do
+  it("reads int or null") do
     JSON::PullParser.new("null").read_int_or_null.should be_nil
     JSON::PullParser.new("1").read_int_or_null.should eq(1)
   end
 
-  it "reads float or null" do
+  it("reads float or null") do
     JSON::PullParser.new("null").read_float_or_null.should be_nil
     JSON::PullParser.new("1.5").read_float_or_null.should eq(1.5)
   end
 
-  it "reads string or null" do
+  it("reads string or null") do
     JSON::PullParser.new("null").read_string_or_null.should be_nil
     JSON::PullParser.new(%("hello")).read_string_or_null.should eq("hello")
   end
 
-  it "reads array or null" do
+  it("reads array or null") do
     JSON::PullParser.new("null").read_array_or_null { fail "expected block not to be called" }
 
     pull = JSON::PullParser.new(%([1]))
@@ -236,7 +236,7 @@ describe JSON::PullParser do
     end
   end
 
-  it "reads object or null" do
+  it("reads object or null") do
     JSON::PullParser.new("null").read_object_or_null { fail "expected block not to be called" }
 
     pull = JSON::PullParser.new(%({"foo": 1}))
@@ -246,8 +246,8 @@ describe JSON::PullParser do
     end
   end
 
-  describe "on key" do
-    it "finds key" do
+  describe("on key") do
+    it("finds key") do
       pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
       bar = nil
@@ -258,7 +258,7 @@ describe JSON::PullParser do
       bar.should eq(2)
     end
 
-    it "finds key" do
+    it("finds key") do
       pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
       bar = nil
@@ -269,7 +269,7 @@ describe JSON::PullParser do
       bar.should eq(2)
     end
 
-    it "doesn't find key" do
+    it("doesn't find key") do
       pull = JSON::PullParser.new(%({"foo": 1, "baz": 2}))
 
       bar = nil
@@ -280,7 +280,7 @@ describe JSON::PullParser do
       bar.should be_nil
     end
 
-    it "finds key with bang" do
+    it("finds key with bang") do
       pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
       bar = nil
@@ -291,16 +291,16 @@ describe JSON::PullParser do
       bar.should eq(2)
     end
 
-    it "doesn't find key with bang" do
+    it("doesn't find key with bang") do
       pull = JSON::PullParser.new(%({"foo": 1, "baz": 2}))
 
-      expect_raises Exception, "JSON key not found: bar" do
+      expect_raises(Exception, "JSON key not found: bar") do
         pull.on_key!("bar") do
         end
       end
     end
 
-    it "reads float when it is an int" do
+    it("reads float when it is an int") do
       pull = JSON::PullParser.new(%(1))
       f = pull.read_float
       f.should be_a(Float64)
@@ -308,7 +308,7 @@ describe JSON::PullParser do
     end
 
     ["1", "[1]", %({"x": [1]})].each do |value|
-      it "yields all keys when skipping #{value}" do
+      it("yields all keys when skipping #{value}") do
         pull = JSON::PullParser.new(%({"foo": #{value}, "bar": 2}))
         pull.read_object do |key|
           key.should_not eq("")
@@ -318,7 +318,7 @@ describe JSON::PullParser do
     end
   end
 
-  describe "raw" do
+  describe("raw") do
     assert_raw "null"
     assert_raw "true"
     assert_raw "false"

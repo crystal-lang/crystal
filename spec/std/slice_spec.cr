@@ -1,14 +1,14 @@
 require "spec"
 
-describe "Slice" do
-  it "gets pointer and size" do
+describe("Slice") do
+  it("gets pointer and size") do
     pointer = Pointer.malloc(1, 0)
     slice = Slice.new(pointer, 1)
     slice.pointer(0).should eq(pointer)
     slice.size.should eq(1)
   end
 
-  it "does []" do
+  it("does []") do
     slice = Slice.new(3) { |i| i + 1 }
     3.times do |i|
       slice[i].should eq(i + 1)
@@ -21,7 +21,7 @@ describe "Slice" do
     expect_raises(IndexError) { slice[3] }
   end
 
-  it "does []=" do
+  it("does []=") do
     slice = Slice.new(3, 0)
     slice[0] = 1
     slice[0].should eq(1)
@@ -30,7 +30,7 @@ describe "Slice" do
     expect_raises(IndexError) { slice[3] = 1 }
   end
 
-  it "does +" do
+  it("does +") do
     slice = Slice.new(3) { |i| i + 1 }
 
     slice1 = slice + 1
@@ -45,7 +45,7 @@ describe "Slice" do
     expect_raises(IndexError) { slice + (-1) }
   end
 
-  it "does [] with start and count" do
+  it("does [] with start and count") do
     slice = Slice.new(4) { |i| i + 1 }
     slice1 = slice[1, 2]
     slice1.size.should eq(2)
@@ -58,32 +58,32 @@ describe "Slice" do
     expect_raises(IndexError) { slice[3, -1] }
   end
 
-  it "does empty?" do
+  it("does empty?") do
     Slice.new(0, 0).empty?.should be_true
     Slice.new(1, 0).empty?.should be_false
   end
 
-  it "raises if size is negative on new" do
+  it("raises if size is negative on new") do
     expect_raises(ArgumentError) { Slice.new(-1, 0) }
   end
 
-  it "does to_s" do
+  it("does to_s") do
     slice = Slice.new(4) { |i| i + 1 }
     slice.to_s.should eq("Slice[1, 2, 3, 4]")
   end
 
-  it "does to_s for bytes" do
+  it("does to_s for bytes") do
     slice = Bytes[1, 2, 3]
     slice.to_s.should eq("Bytes[1, 2, 3]")
   end
 
-  it "gets pointer" do
+  it("gets pointer") do
     slice = Slice.new(4, 0)
     expect_raises(IndexError) { slice.pointer(5) }
     expect_raises(IndexError) { slice.pointer(-1) }
   end
 
-  it "does copy_from pointer" do
+  it("does copy_from pointer") do
     pointer = Pointer.malloc(4) { |i| i + 1 }
     slice = Slice.new(4, 0)
     slice.copy_from(pointer, 4)
@@ -92,7 +92,7 @@ describe "Slice" do
     expect_raises(IndexError) { slice.copy_from(pointer, 5) }
   end
 
-  it "does copy_to pointer" do
+  it("does copy_to pointer") do
     pointer = Pointer.malloc(4, 0)
     slice = Slice.new(4) { |i| i + 1 }
     slice.copy_to(pointer, 4)
@@ -101,8 +101,8 @@ describe "Slice" do
     expect_raises(IndexError) { slice.copy_to(pointer, 5) }
   end
 
-  describe ".copy_to(Slice)" do
-    it "copies bytes" do
+  describe(".copy_to(Slice)") do
+    it("copies bytes") do
       src = Slice.new(4) { 'a' }
       dst = Slice.new(4) { 'b' }
 
@@ -110,14 +110,14 @@ describe "Slice" do
       dst.should eq(src)
     end
 
-    it "raises if dst is smaller" do
+    it("raises if dst is smaller") do
       src = Slice.new(8) { 'a' }
       dst = Slice.new(4) { 'b' }
 
       expect_raises(IndexError) { src.copy_to(dst) }
     end
 
-    it "copies at most src.size" do
+    it("copies at most src.size") do
       src = Slice.new(4) { 'a' }
       dst = Slice.new(8) { 'b' }
 
@@ -126,8 +126,8 @@ describe "Slice" do
     end
   end
 
-  describe ".copy_from(Slice)" do
-    it "copies bytes" do
+  describe(".copy_from(Slice)") do
+    it("copies bytes") do
       src = Slice.new(4) { 'a' }
       dst = Slice.new(4) { 'b' }
 
@@ -135,14 +135,14 @@ describe "Slice" do
       dst.should eq(src)
     end
 
-    it "raises if dst is smaller" do
+    it("raises if dst is smaller") do
       src = Slice.new(8) { 'a' }
       dst = Slice.new(4) { 'b' }
 
       expect_raises(IndexError) { dst.copy_from(src) }
     end
 
-    it "copies at most src.size" do
+    it("copies at most src.size") do
       src = Slice.new(4) { 'a' }
       dst = Slice.new(8) { 'b' }
 
@@ -151,8 +151,8 @@ describe "Slice" do
     end
   end
 
-  describe ".move_to(Slice)" do
-    it "moves bytes" do
+  describe(".move_to(Slice)") do
+    it("moves bytes") do
       src = Slice.new(4) { 'a' }
       dst = Slice.new(4) { 'b' }
 
@@ -160,14 +160,14 @@ describe "Slice" do
       dst.should eq(src)
     end
 
-    it "raises if dst is smaller" do
+    it("raises if dst is smaller") do
       src = Slice.new(8) { 'a' }
       dst = Slice.new(4) { 'b' }
 
       expect_raises(IndexError) { src.move_to(dst) }
     end
 
-    it "moves most src.size" do
+    it("moves most src.size") do
       src = Slice.new(4) { 'a' }
       dst = Slice.new(8) { 'b' }
 
@@ -175,7 +175,7 @@ describe "Slice" do
       dst.should eq(Slice['a', 'a', 'a', 'a', 'b', 'b', 'b', 'b'])
     end
 
-    it "handles intersecting ranges" do
+    it("handles intersecting ranges") do
       # Test with ranges offset by 0 to 8 bytes
       (0..8).each do |offset|
         buf = Slice.new(16) { |i| 'a' + i }
@@ -190,8 +190,8 @@ describe "Slice" do
     end
   end
 
-  describe ".move_from(Slice)" do
-    it "moves bytes" do
+  describe(".move_from(Slice)") do
+    it("moves bytes") do
       src = Slice.new(4) { 'a' }
       dst = Slice.new(4) { 'b' }
 
@@ -199,14 +199,14 @@ describe "Slice" do
       dst.should eq(src)
     end
 
-    it "raises if dst is smaller" do
+    it("raises if dst is smaller") do
       src = Slice.new(8) { 'a' }
       dst = Slice.new(4) { 'b' }
 
       expect_raises(IndexError) { dst.move_from(src) }
     end
 
-    it "moves at most src.size" do
+    it("moves at most src.size") do
       src = Slice.new(4) { 'a' }
       dst = Slice.new(8) { 'b' }
 
@@ -214,7 +214,7 @@ describe "Slice" do
       dst.should eq(Slice['a', 'a', 'a', 'a', 'b', 'b', 'b', 'b'])
     end
 
-    it "handles intersecting ranges" do
+    it("handles intersecting ranges") do
       # Test with ranges offset by 0 to 8 bytes
       (0..8).each do |offset|
         buf = Slice.new(16) { |i| 'a' + i }
@@ -229,16 +229,16 @@ describe "Slice" do
     end
   end
 
-  it "does hexstring" do
+  it("does hexstring") do
     slice = Bytes.new(4) { |i| i.to_u8 + 1 }
     slice.hexstring.should eq("01020304")
   end
 
-  it "does hexdump for empty slice" do
+  it("does hexdump for empty slice") do
     Bytes.empty.hexdump.should eq("")
   end
 
-  it "does hexdump" do
+  it("does hexdump") do
     ascii_table = <<-EOF
       00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
       00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
@@ -265,7 +265,7 @@ describe "Slice" do
     plus.hexdump.should eq(ascii_table_plus)
   end
 
-  it "does iterator" do
+  it("does iterator") do
     slice = Slice(Int32).new(3) { |i| i + 1 }
     iter = slice.each
     iter.next.should eq(1)
@@ -280,7 +280,7 @@ describe "Slice" do
     iter.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
   end
 
-  it "does reverse iterator" do
+  it("does reverse iterator") do
     slice = Slice(Int32).new(3) { |i| i + 1 }
     iter = slice.reverse_each
     iter.next.should eq(3)
@@ -292,7 +292,7 @@ describe "Slice" do
     iter.next.should eq(3)
   end
 
-  it "does index iterator" do
+  it("does index iterator") do
     slice = Slice(Int32).new(2) { |i| i + 1 }
     iter = slice.each_index
     iter.next.should eq(0)
@@ -303,24 +303,24 @@ describe "Slice" do
     iter.next.should eq(0)
   end
 
-  it "does to_a" do
+  it("does to_a") do
     slice = Slice.new(3) { |i| i }
     ary = slice.to_a
     ary.should eq([0, 1, 2])
   end
 
-  it "does rindex" do
+  it("does rindex") do
     slice = "foobar".to_slice
     slice.rindex('o'.ord.to_u8).should eq(2)
     slice.rindex('z'.ord.to_u8).should be_nil
   end
 
-  it "does bytesize" do
+  it("does bytesize") do
     slice = Slice(Int32).new(2)
     slice.bytesize.should eq(8)
   end
 
-  it "does ==" do
+  it("does ==") do
     a = Slice.new(3) { |i| i }
     b = Slice.new(3) { |i| i }
     c = Slice.new(3) { |i| i + 1 }
@@ -328,7 +328,7 @@ describe "Slice" do
     a.should_not eq(c)
   end
 
-  it "does macro []" do
+  it("does macro []") do
     slice = Slice[1, 'a', "foo"]
     slice.should be_a(Slice(Int32 | Char | String))
     slice.size.should eq(3)
@@ -337,37 +337,37 @@ describe "Slice" do
     slice[2].should eq("foo")
   end
 
-  it "does macro [] with numbers (#3055)" do
+  it("does macro [] with numbers (#3055)") do
     slice = Bytes[1, 2, 3]
     slice.should be_a(Bytes)
     slice.to_a.should eq([1, 2, 3])
   end
 
-  it "uses percent vars in [] macro (#2954)" do
+  it("uses percent vars in [] macro (#2954)") do
     slices = itself(Slice[1, 2], Slice[3])
     slices[0].to_a.should eq([1, 2])
     slices[1].to_a.should eq([3])
   end
 
-  it "reverses" do
+  it("reverses") do
     slice = Bytes[1, 2, 3]
     slice.reverse!
     slice.to_a.should eq([3, 2, 1])
   end
 
-  it "shuffles" do
+  it("shuffles") do
     a = Bytes[1, 2, 3]
     a.shuffle!
     b = [1, 2, 3]
     3.times { a.includes?(b.shift).should be_true }
   end
 
-  it "creates empty slice" do
+  it("creates empty slice") do
     slice = Slice(Int32).empty
     slice.empty?.should be_true
   end
 
-  it "creates read-only slice" do
+  it("creates read-only slice") do
     slice = Slice.new(3, 0, read_only: true)
     expect_raises { slice[0] = 1 }
     expect_raises { slice.copy_from(slice) }

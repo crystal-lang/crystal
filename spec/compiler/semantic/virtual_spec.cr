@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Semantic: virtual" do
-  it "types two classes without a shared virtual" do
+describe("Semantic: virtual") do
+  it("types two classes without a shared virtual") do
     assert_type("
       class Foo
       end
@@ -13,7 +13,7 @@ describe "Semantic: virtual" do
       ") { union_of(types["Foo"], types["Bar"]) }
   end
 
-  it "types class and subclass as one type" do
+  it("types class and subclass as one type") do
     assert_type("
       class Foo
       end
@@ -25,7 +25,7 @@ describe "Semantic: virtual" do
       ") { types["Foo"].virtual_type }
   end
 
-  it "types two subclasses" do
+  it("types two subclasses") do
     assert_type("
       class Foo
       end
@@ -40,7 +40,7 @@ describe "Semantic: virtual" do
       ") { types["Foo"].virtual_type }
   end
 
-  it "types class and two subclasses" do
+  it("types class and two subclasses") do
     assert_type("
       class Foo
       end
@@ -55,7 +55,7 @@ describe "Semantic: virtual" do
       ") { types["Foo"].virtual_type }
   end
 
-  it "types method call of virtual type" do
+  it("types method call of virtual type") do
     assert_type("
       class Foo
         def foo
@@ -71,7 +71,7 @@ describe "Semantic: virtual" do
       ") { int32 }
   end
 
-  it "types method call of virtual type with override" do
+  it("types method call of virtual type with override") do
     assert_type("
       class Foo
         def foo
@@ -90,7 +90,7 @@ describe "Semantic: virtual" do
       ") { union_of(int32, float64) }
   end
 
-  it "dispatches virtual method" do
+  it("dispatches virtual method") do
     nodes = parse("
       class Foo
         def foo
@@ -111,7 +111,7 @@ describe "Semantic: virtual" do
     nodes.last.as(Call).target_defs.not_nil!.size.should eq(1)
   end
 
-  it "dispatches virtual method with overload" do
+  it("dispatches virtual method with overload") do
     nodes = parse("
       class Foo
         def foo
@@ -134,7 +134,7 @@ describe "Semantic: virtual" do
     nodes.last.as(Call).target_defs.not_nil!.size.should eq(2)
   end
 
-  it "works with restriction alpha" do
+  it("works with restriction alpha") do
     nodes = parse("
       require \"prelude\"
 
@@ -158,7 +158,7 @@ describe "Semantic: virtual" do
     semantic nodes
   end
 
-  it "doesn't check cover for subclasses" do
+  it("doesn't check cover for subclasses") do
     assert_type("
       class Foo
         def foo(other)
@@ -177,7 +177,7 @@ describe "Semantic: virtual" do
       ") { union_of(int32, float64) }
   end
 
-  it "removes instance var from subclasses" do
+  it("removes instance var from subclasses") do
     nodes = parse "
       class Base
       end
@@ -208,7 +208,7 @@ describe "Semantic: virtual" do
     base.instance_vars["@x"].type.should eq(mod.nilable(mod.int32))
   end
 
-  it "types inspect" do
+  it("types inspect") do
     assert_type("
       require \"prelude\"
 
@@ -219,7 +219,7 @@ describe "Semantic: virtual" do
       ") { string }
   end
 
-  it "reports no matches for virtual type" do
+  it("reports no matches for virtual type") do
     assert_error "
       class Foo
       end
@@ -235,7 +235,7 @@ describe "Semantic: virtual" do
       "undefined method 'foo' for Foo"
   end
 
-  it "doesn't check methods on abstract classes" do
+  it("doesn't check methods on abstract classes") do
     assert_type("
       abstract class Foo
       end
@@ -257,7 +257,7 @@ describe "Semantic: virtual" do
       ") { union_of(int32, float64) }
   end
 
-  it "doesn't check methods on abstract classes 2" do
+  it("doesn't check methods on abstract classes 2") do
     assert_type("
       abstract class Foo
       end
@@ -288,7 +288,7 @@ describe "Semantic: virtual" do
       ") { union_of(int32, float64, char) }
   end
 
-  it "reports undefined method in subclass of abstract class" do
+  it("reports undefined method in subclass of abstract class") do
     assert_error "
       abstract class Foo
       end
@@ -317,7 +317,7 @@ describe "Semantic: virtual" do
       "undefined method 'foo' for Bar3"
   end
 
-  it "doesn't check cover for abstract classes" do
+  it("doesn't check cover for abstract classes") do
     assert_type("
       abstract class Foo
         def foo(other)
@@ -354,7 +354,7 @@ describe "Semantic: virtual" do
       ") { union_of(int32, float64, char) }
   end
 
-  it "reports missing cover for subclass of abstract class" do
+  it("reports missing cover for subclass of abstract class") do
     assert_error "
       abstract class Foo
         def foo(other)
@@ -388,7 +388,7 @@ describe "Semantic: virtual" do
       "no overload matches"
   end
 
-  it "checks cover in every concrete subclass" do
+  it("checks cover in every concrete subclass") do
     assert_type("
       abstract class Foo
       end
@@ -419,7 +419,7 @@ describe "Semantic: virtual" do
       ") { nil_type }
   end
 
-  it "checks cover in every concrete subclass 2" do
+  it("checks cover in every concrete subclass 2") do
     assert_error "
       abstract class Foo
       end
@@ -450,7 +450,7 @@ describe "Semantic: virtual" do
       "no overload matches"
   end
 
-  it "checks cover in every concrete subclass 3" do
+  it("checks cover in every concrete subclass 3") do
     assert_type("
       abstract class Foo
       end
@@ -478,7 +478,7 @@ describe "Semantic: virtual" do
       ") { nil_type }
   end
 
-  it "checks method in every concrete subclass but method in Object" do
+  it("checks method in every concrete subclass but method in Object") do
     assert_type("
       class Object
         def foo
@@ -529,7 +529,7 @@ describe "Semantic: virtual" do
   #     ") { union_of(nil_type, int32, char) }
   # end
 
-  it "finds overloads of union of virtual, class and nil" do
+  it("finds overloads of union of virtual, class and nil") do
     assert_type("
       class Foo
       end
@@ -550,7 +550,7 @@ describe "Semantic: virtual" do
       ") { union_of(int32, float64) }
   end
 
-  it "finds overloads of union of virtual, class and nil with abstract class" do
+  it("finds overloads of union of virtual, class and nil with abstract class") do
     assert_type("
       abstract class Foo
       end
@@ -574,7 +574,7 @@ describe "Semantic: virtual" do
       ") { union_of(int32, float64) }
   end
 
-  it "restricts with union and doesn't merge to super type" do
+  it("restricts with union and doesn't merge to super type") do
     assert_type("
       abstract class Foo
       end
@@ -607,7 +607,7 @@ describe "Semantic: virtual" do
       ") { union_of(int32, char, string) }
   end
 
-  it "uses virtual type as generic type if class is abstract" do
+  it("uses virtual type as generic type if class is abstract") do
     result = assert_type("
       abstract class Foo
       end
@@ -619,7 +619,7 @@ describe "Semantic: virtual" do
       ") { generic_class "Bar", types["Foo"].virtual_type }
   end
 
-  it "uses virtual type as generic type if class is abstract even in union" do
+  it("uses virtual type as generic type if class is abstract even in union") do
     result = assert_type("
       abstract class Foo
       end
@@ -634,7 +634,7 @@ describe "Semantic: virtual" do
       ") { generic_class "Bar", union_of(types["Foo"].virtual_type, int32) }
   end
 
-  it "automatically does virtual for generic type if there are subclasses" do
+  it("automatically does virtual for generic type if there are subclasses") do
     assert_type("
       class Foo; end
       class Bar < Foo; end
@@ -643,7 +643,7 @@ describe "Semantic: virtual" do
       ") { pointer_of(types["Foo"].virtual_type) }
   end
 
-  it "types instance var as virtual when using type declaration and has subclasses" do
+  it("types instance var as virtual when using type declaration and has subclasses") do
     assert_type(%(
       class Foo
       end

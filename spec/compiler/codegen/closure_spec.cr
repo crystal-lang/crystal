@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
-describe "Code gen: closure" do
-  it "codegens simple closure at global scope" do
+describe("Code gen: closure") do
+  it("codegens simple closure at global scope") do
     run("
       a = 1
       foo = ->{ a }
@@ -9,7 +9,7 @@ describe "Code gen: closure" do
     ").to_i.should eq(1)
   end
 
-  it "codegens simple closure in function" do
+  it("codegens simple closure in function") do
     run("
       def foo
         a = 1
@@ -20,7 +20,7 @@ describe "Code gen: closure" do
     ").to_i.should eq(1)
   end
 
-  it "codegens simple closure in function with argument" do
+  it("codegens simple closure in function with argument") do
     run("
       def foo(a)
         ->{ a }
@@ -30,7 +30,7 @@ describe "Code gen: closure" do
     ").to_i.should eq(1)
   end
 
-  it "codegens simple closure in block" do
+  it("codegens simple closure in block") do
     run("
       def foo
         yield
@@ -45,7 +45,7 @@ describe "Code gen: closure" do
     ").to_i.should eq(1)
   end
 
-  it "codegens closured nested in block" do
+  it("codegens closured nested in block") do
     run("
       def foo
         yield
@@ -60,7 +60,7 @@ describe "Code gen: closure" do
     ").to_i.should eq(3)
   end
 
-  it "codegens closured nested in block with a call with a closure with same names" do
+  it("codegens closured nested in block with a call with a closure with same names") do
     run("
       def foo
         a = 3
@@ -76,7 +76,7 @@ describe "Code gen: closure" do
     ").to_i.should eq(4)
   end
 
-  it "codegens closure with block that declares same var" do
+  it("codegens closure with block that declares same var") do
     run("
       def foo
         a = 1
@@ -91,7 +91,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(3)
   end
 
-  it "codegens closure with def that has an if" do
+  it("codegens closure with def that has an if") do
     run("
       def foo
         yield 1 if 1
@@ -105,7 +105,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "codegens multiple nested blocks" do
+  it("codegens multiple nested blocks") do
     run("
       def foo
         yield 1
@@ -125,7 +125,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(9)
   end
 
-  it "codegens closure with nested context without new closured vars" do
+  it("codegens closure with nested context without new closured vars") do
     run("
       def foo
         yield
@@ -139,7 +139,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(1)
   end
 
-  it "codegens closure with nested context without new closured vars" do
+  it("codegens closure with nested context without new closured vars") do
     run("
       def foo
         yield
@@ -160,7 +160,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "codegens closure with nested context without new closured vars but with block arg" do
+  it("codegens closure with nested context without new closured vars but with block arg") do
     run("
       def foo
         yield
@@ -182,7 +182,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "unifies types of closured var" do
+  it("unifies types of closured var") do
     run("
       a = 1
       f = -> { a }
@@ -191,7 +191,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "codegens closure with block" do
+  it("codegens closure with block") do
     run("
       def foo
         yield
@@ -202,7 +202,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(1)
   end
 
-  it "codegens closure with self and var" do
+  it("codegens closure with self and var") do
     run("
       class Foo
         def initialize(@x : Int32)
@@ -222,7 +222,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(3)
   end
 
-  it "codegens closure with implicit self and var" do
+  it("codegens closure with implicit self and var") do
     run("
       class Foo
         def initialize(@x : Int32)
@@ -242,7 +242,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(3)
   end
 
-  it "codegens closure with instance var and var" do
+  it("codegens closure with instance var and var") do
     run("
       class Foo
         def initialize(@x : Int32)
@@ -258,7 +258,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(3)
   end
 
-  it "codegens closure with instance var" do
+  it("codegens closure with instance var") do
     run("
       class Foo
         def initialize(@x : Int32)
@@ -273,7 +273,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(1)
   end
 
-  it "codegens closure with instance var and block" do
+  it("codegens closure with instance var and block") do
     run("
       def bar
         yield
@@ -295,7 +295,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(3)
   end
 
-  it "codegen closure in instance method without self closured" do
+  it("codegen closure in instance method without self closured") do
     run("
       class Foo
         def foo
@@ -307,7 +307,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(1)
   end
 
-  it "codegens closure inside initialize inside block with self" do
+  it("codegens closure inside initialize inside block with self") do
     run("
       def foo
         yield
@@ -325,7 +325,7 @@ describe "Code gen: closure" do
       ")
   end
 
-  it "doesn't free closure memory (bug)" do
+  it("doesn't free closure memory (bug)") do
     run(%(
       require "prelude"
 
@@ -351,21 +351,21 @@ describe "Code gen: closure" do
       )).to_i.should eq(1249975000_i64)
   end
 
-  it "codegens nested closure" do
+  it("codegens nested closure") do
     run(%(
       a = 1
       ->{ ->{ a } }.call.call
       )).to_i.should eq(1)
   end
 
-  it "codegens super nested closure" do
+  it("codegens super nested closure") do
     run(%(
       a = 1
       ->{ ->{ -> { -> { a } } } }.call.call.call.call
       )).to_i.should eq(1)
   end
 
-  it "codegens nested closure with block (1)" do
+  it("codegens nested closure with block (1)") do
     run(%(
       def foo
         yield
@@ -376,7 +376,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(1)
   end
 
-  it "codegens nested closure with block (2)" do
+  it("codegens nested closure with block (2)") do
     run(%(
       def foo
         yield
@@ -387,7 +387,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(1)
   end
 
-  it "codegens nested closure with nested closured variable" do
+  it("codegens nested closure with nested closured variable") do
     run(%(
       a = 1
       ->{
@@ -397,7 +397,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(3)
   end
 
-  it "codegens super nested closure with nested closured variable" do
+  it("codegens super nested closure with nested closured variable") do
     run(%(
       def foo
         yield 4
@@ -422,7 +422,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(10)
   end
 
-  it "codegens proc literal with struct" do
+  it("codegens proc literal with struct") do
     run(%(
       struct Foo
         def initialize(@x : Int32)
@@ -440,7 +440,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(2)
   end
 
-  it "codegens closure with struct" do
+  it("codegens closure with struct") do
     run(%(
       struct Foo
         def initialize(@x : Int32)
@@ -461,7 +461,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(3)
   end
 
-  it "codegens closure with self and arguments" do
+  it("codegens closure with self and arguments") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -481,7 +481,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(3)
   end
 
-  it "codegens nested closure that mentions var in both contexts" do
+  it("codegens nested closure that mentions var in both contexts") do
     run(%(
       a = 1
       f = ->{
@@ -492,7 +492,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(1)
   end
 
-  it "transforms block to proc literal" do
+  it("transforms block to proc literal") do
     run("
       def foo(&block : Int32 -> Int32)
         block.call(1)
@@ -505,7 +505,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "transforms block to proc literal with free var" do
+  it("transforms block to proc literal with free var") do
     run("
       def foo(&block : Int32 -> U) forall U
         block
@@ -518,7 +518,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(10)
   end
 
-  it "allows passing block as proc literal to new and to initialize" do
+  it("allows passing block as proc literal to new and to initialize") do
     run("
       class Foo
         def initialize(&block : Int32 -> Float64)
@@ -536,7 +536,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "allows giving less block args when transforming block to proc literal" do
+  it("allows giving less block args when transforming block to proc literal") do
     run("
       def foo(&block : Int32 -> U) forall U
         block.call(1)
@@ -550,7 +550,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "allows passing proc literal to def that captures block with &" do
+  it("allows passing proc literal to def that captures block with &") do
     run("
       def foo(&block : Int32 -> Int32)
         block.call(1)
@@ -562,7 +562,7 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
-  it "allows mixing yield and block.call" do
+  it("allows mixing yield and block.call") do
     run(%(
       def foo(&block : Int32 ->)
         yield 1
@@ -575,7 +575,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(3)
   end
 
-  it "closures struct self" do
+  it("closures struct self") do
     run(%(
       struct Foo
         def initialize(@x : Int32)
@@ -590,7 +590,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(1)
   end
 
-  it "doesn't form a closure if invoking class method" do
+  it("doesn't form a closure if invoking class method") do
     run(%(
       require "prelude"
 
@@ -607,7 +607,7 @@ describe "Code gen: closure" do
       )).to_b.should be_false
   end
 
-  it "doesn't form a closure if invoking class method with self" do
+  it("doesn't form a closure if invoking class method with self") do
     run(%(
       require "prelude"
 
@@ -624,7 +624,7 @@ describe "Code gen: closure" do
       )).to_b.should be_false
   end
 
-  it "captures block and accesses local variable (#2050)" do
+  it("captures block and accesses local variable (#2050)") do
     run(%(
       require "prelude"
 
@@ -640,7 +640,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(1)
   end
 
-  it "codegens closured self in block (#3388)" do
+  it("codegens closured self in block (#3388)") do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -662,7 +662,7 @@ describe "Code gen: closure" do
       )).to_i.should eq(42)
   end
 
-  it "doesn't incorrectly consider local as closured (#4948)" do
+  it("doesn't incorrectly consider local as closured (#4948)") do
     codegen(%(
       arg = 1
 
