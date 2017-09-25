@@ -302,7 +302,7 @@ describe "NamedTuple" do
     b = {two: "Two", three: true, "new one": "ok"}
     c = a.merge(b).merge(four: "Four").should eq({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
   end
-  
+
   it "does types" do
     tuple = {a: 1, b: 'a', c: "hello"}
     tuple.class.types.to_s.should eq("{a: Int32, b: Char, c: String}")
