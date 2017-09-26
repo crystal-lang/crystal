@@ -1,5 +1,4 @@
 require "base64"
-require "crystal/system/random"
 
 # The `SecureRandom` module is an interface for creating cryptography secure
 # random values in different formats.
@@ -74,7 +73,7 @@ module SecureRandom
   # slice                            # => [217, 118, 38, 196]
   # ```
   def self.random_bytes(buf : Bytes) : Nil
-    Crystal::System::Random.random_bytes(buf)
+    Random::System.random_bytes(buf)
   end
 
   # Generates a UUID (Universally Unique Identifier).

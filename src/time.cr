@@ -1,5 +1,3 @@
-require "crystal/system/time"
-
 # `Time` represents an instance in time. Here are some examples:
 #
 # ### Basic Usage
@@ -599,12 +597,25 @@ struct Time
   end
 
   private def self.compute_offset(second)
-    Crystal::System::Time.compute_utc_offset(second) / 60 * Span::TicksPerMinute
+    compute_utc_offset(second) / 60 * Span::TicksPerMinute
   end
 
   private def self.compute_second_and_tenth_microsecond
-    Crystal::System::Time.compute_utc_second_and_tenth_microsecond
+    compute_utc_second_and_tenth_microsecond
+  end
+
+  # Returns the number of seconds that you must add to UTC to get local time.
+  # *seconds* are measured from `0001-01-01 00:00:00`.
+  private def self.compute_utc_offset(seconds : Int64) : Int64
+    {% raise "Not implemented for this system" %}
+  end
+
+  # Returns the current UTC time measured in `{seconds, tenth_microsecond}`
+  # since `0001-01-01 00:00:00`.
+  private def self.compute_utc_second_and_tenth_microsecond : {Int64, Int64}
+    {% raise "Not implemented for this system" %}
   end
 end
 
 require "./time/**"
+require "platform_specific/time"

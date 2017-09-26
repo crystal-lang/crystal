@@ -3,7 +3,7 @@
 require "c/unistd"
 require "c/sys/syscall"
 
-module Crystal::System::Random
+module Random::System
   @@initialized = false
   @@getrandom_available = false
   @@urandom : File?
@@ -23,8 +23,8 @@ module Crystal::System::Random
     end
   end
 
-  # Reads n random bytes using the Linux `getrandom(2)` syscall.
   def self.random_bytes(buf : Bytes) : Nil
+    # Reads n random bytes using the Linux `getrandom(2)` syscall.
     init unless @@initialized
 
     if @@getrandom_available

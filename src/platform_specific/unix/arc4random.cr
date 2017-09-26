@@ -2,11 +2,11 @@
 
 require "c/stdlib"
 
-module Crystal::System::Random
-  # Fills *buffer* with random bytes using arc4random.
-  #
-  # NOTE: only secure on OpenBSD and CloudABI
+module Random::System
   def self.random_bytes(buffer : Bytes) : Nil
+    # Fills *buffer* with random bytes using arc4random.
+    #
+    # NOTE: only secure on OpenBSD and CloudABI
     LibC.arc4random_buf(buffer.to_unsafe.as(Void*), buffer.size)
   end
 
