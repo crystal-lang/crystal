@@ -67,7 +67,7 @@ class HTTP::StaticFileHandler
       last_modified = File.stat(file_path).mtime
       context.response.headers["Last-Modified"] = HTTP.rfc1123_date(last_modified)
 
-      if if_modified_since = context.request.headers.fetch("If-Modified-Since", nil)
+      if if_modified_since = context.request.headers["If-Modified-Since"]?
         # TODO: Use a more generalized time format parser for better compatibility to RFC 7232
         header_time = Time.parse(if_modified_since, "%a, %d %b %Y %H:%M:%S GMT")
 
