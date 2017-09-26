@@ -1322,10 +1322,6 @@ module Crystal
 
       write_keyword :abstract, " " if node.abstract?
 
-      if node.macro_def? && @token.keyword?(:macro)
-        write_keyword :macro, " "
-      end
-
       write_keyword :def, " ", skip_space_or_newline: false
 
       if receiver = node.receiver
