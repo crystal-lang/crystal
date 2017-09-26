@@ -1,4 +1,4 @@
-require "random/system"
+require "random/secure"
 
 # This is a Crystal conversion of basic C PCG implementation
 #
@@ -40,7 +40,7 @@ class Random::PCG32
   @inc : UInt64
 
   def self.new
-    new(Random::System.rand(UInt64::MIN..UInt64::MAX), Random::System.rand(UInt64::MIN..UInt64::MAX))
+    new(Random::Secure.rand(UInt64::MIN..UInt64::MAX), Random::Secure.rand(UInt64::MIN..UInt64::MAX))
   end
 
   def initialize(initstate : UInt64, initseq = 0_u64)
@@ -51,7 +51,7 @@ class Random::PCG32
   end
 
   def new_seed
-    new_seed(Random::System.rand(UInt64::MIN..UInt64::MAX), Random::System.rand(UInt64::MIN..UInt64::MAX))
+    new_seed(Random::Secure.rand(UInt64::MIN..UInt64::MAX), Random::Secure.rand(UInt64::MIN..UInt64::MAX))
   end
 
   def new_seed(initstate : UInt64, initseq = 0_u64)

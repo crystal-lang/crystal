@@ -1,4 +1,4 @@
-require "secure_random"
+require "random/secure"
 require "./subtle"
 
 # Pure Crystal implementation of the Bcrypt algorithm by Niels Provos and David
@@ -46,7 +46,7 @@ class Crypto::Bcrypt
   def self.hash_secret(password, cost = DEFAULT_COST) : String
     # We make a clone here to we don't keep a mutable reference to the original string
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
-    saltb = SecureRandom.random_bytes(SALT_SIZE)
+    saltb = Random::Secure.random_bytes(SALT_SIZE)
     new(passwordb, saltb, cost).to_s
   end
 

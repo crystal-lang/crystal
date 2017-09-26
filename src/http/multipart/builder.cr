@@ -1,5 +1,3 @@
-require "secure_random"
-
 module HTTP::Multipart
   # Builds a multipart MIME message.
   #
