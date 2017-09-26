@@ -95,11 +95,14 @@ class HTTP::Request
     return BadRequest.new unless parts.size == 3
 
     method, resource, http_version = parts
-    HTTP.parse_headers_and_body(io) do |headers, body|
-      return new method, resource, headers, body, http_version
+    begin
+      HTTP.parse_headers_and_body(io) do |headers, body|
+        return new method, resource, headers, body, http_version
+      end
+    rescue ex : ArgumentError
     end
 
-    # Unexpected end of http request
+    # Malformed or unexpectedly ended http request
     BadRequest.new
   end
 
