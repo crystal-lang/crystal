@@ -1578,6 +1578,18 @@ describe "Parser" do
     assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
     assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
 
+    assert_syntax_error "case x; when nil; 2; when nil; end", "duplicate when nil in case"
+    assert_syntax_error "case x; when true; 2; when true; end", "duplicate when true in case"
+    assert_syntax_error "case x; when 1; 2; when 1; end", "duplicate when 1 in case"
+    assert_syntax_error "case x; when 'a'; 2; when 'a'; end", "duplicate when 'a' in case"
+    assert_syntax_error %(case x; when "a"; 2; when "a"; end), %(duplicate when "a" in case)
+    assert_syntax_error %(case x; when :a; 2; when :a; end), "duplicate when :a in case"
+    assert_syntax_error %(case x; when {1, 2}; 2; when {1, 2}; end), "duplicate when {1, 2} in case"
+    assert_syntax_error %(case x; when [1, 2]; 2; when [1, 2]; end), "duplicate when [1, 2] in case"
+    assert_syntax_error %(case x; when 1..2; 2; when 1..2; end), "duplicate when 1..2 in case"
+    assert_syntax_error %(case x; when /x/; 2; when /x/; end), "duplicate when /x/ in case"
+    assert_syntax_error %(case x; when X; 2; when X; end), "duplicate when X in case"
+
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")
       loc = node.location.not_nil!

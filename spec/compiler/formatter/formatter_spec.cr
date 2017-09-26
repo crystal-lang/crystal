@@ -373,7 +373,8 @@ describe Crystal::Formatter do
   assert_format "while / /\nend"
   assert_format "[/ /, / /]"
   assert_format "{/ / => / /, / / => / /}"
-  assert_format "case / /\nwhen / /, / /\n  / /\nend"
+  assert_format "case / /\nwhen / /, /x/\n  / /\nend"
+  assert_format "case / /\nwhen /x/, / /\n  / /\nend"
   assert_format "/\#{1}/imx"
 
   assert_format "`foo`"

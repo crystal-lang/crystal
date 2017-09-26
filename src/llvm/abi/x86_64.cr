@@ -297,7 +297,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
     def sse?
       case self
-      when SSEFs, SSEFv, SSEDs, SSEDs
+      when SSEFs, SSEFv, SSEDs
         true
       else
         false

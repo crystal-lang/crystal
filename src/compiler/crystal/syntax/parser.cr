@@ -2368,6 +2368,9 @@ module Crystal
       whens = [] of When
       a_else = nil
 
+      # All when expressions, so we can detect duplicates
+      when_exps = Set(ASTNode).new
+
       while true
         case @token.type
         when :IDENT
@@ -2403,11 +2406,14 @@ module Crystal
 
                   tuple = TupleLiteral.new(tuple_elements).at(curly_location)
                   when_conds << tuple
+                  add_when_exp(when_exps, tuple)
 
                   check :"}"
                   next_token_skip_space
                 else
-                  when_conds << parse_when_expression(cond)
+                  exp = parse_when_expression(cond)
+                  when_conds << exp
+                  add_when_exp(when_exps, exp)
                   skip_space
                 end
 
@@ -2415,7 +2421,9 @@ module Crystal
               end
             else
               while true
-                when_conds << parse_when_expression(cond)
+                exp = parse_when_expression(cond)
+                when_conds << exp
+                add_when_exp(when_exps, exp)
                 skip_space
                 break if when_expression_end
               end
@@ -2449,6 +2457,40 @@ module Crystal
       end
 
       Case.new(cond, whens, a_else)
+    end
+
+    # Add an expression to all when expressions and error on duplicates
+    def add_when_exp(when_exps, exp)
+      return unless when_exp_constant?(exp)
+
+      if when_exps.includes?(exp)
+        raise "duplicate when #{exp} in case", exp.location.not_nil!
+      end
+
+      when_exps << exp
+    end
+
+    # Only error on constant values, because calls might have side-effects:
+    # a first call might return one value and not match the case
+    # value, but the second same call returns something different
+    # and matches it.
+    def when_exp_constant?(exp)
+      case exp
+      when NilLiteral, BoolLiteral, CharLiteral, NumberLiteral,
+           StringLiteral, SymbolLiteral, Path
+        true
+      when ArrayLiteral
+        exp.elements.all? { |e| when_exp_constant?(e) }
+      when TupleLiteral
+        exp.elements.all? { |e| when_exp_constant?(e) }
+      when RegexLiteral
+        when_exp_constant?(exp.value)
+      when RangeLiteral
+        when_exp_constant?(exp.from) &&
+          when_exp_constant?(exp.to)
+      else
+        false
+      end
     end
 
     def when_expression_end
@@ -3992,7 +4034,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__END_LINE__, :__FILE__, :__DIR__, :UNDERSCORE
+      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"~", :"->", :"{{", :__LINE__, :__END_LINE__, :__FILE__, :__DIR__, :UNDERSCORE
         # Nothing
       when :"*", :"**"
         if current_char.ascii_whitespace?

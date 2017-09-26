@@ -153,8 +153,6 @@ module HTTP::FormData
         modification_time = HTTP.parse_time value
       when "read-date"
         read_time = HTTP.parse_time value
-      when "creation-date"
-        creation_time = HTTP.parse_time value
       when "size"
         size = value.to_u64
       when "name"
