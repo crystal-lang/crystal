@@ -2605,7 +2605,7 @@ module Crystal
       doc ||= @token.doc
 
       prepare_parse_def
-      a_def = parse_def_helper is_abstract: is_abstract, is_macro_def: is_macro_def
+      a_def = parse_def_helper is_abstract: is_abstract
 
       a_def.calls_super = @calls_super
       a_def.calls_initialize = @calls_initialize
@@ -2649,13 +2649,6 @@ module Crystal
         @token.column_number += 1
       else
         skip_space_or_newline
-
-        if @token.keyword?(:def)
-          a_def = parse_def_helper is_macro_def: true
-          a_def.doc = doc
-          return a_def
-        end
-
         check DefOrMacroCheck1
       end
 
@@ -3049,7 +3042,7 @@ module Crystal
     DefOrMacroCheck1 = [:IDENT, :CONST, :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>"]
 
-    def parse_def_helper(is_abstract = false, is_macro_def = false)
+    def parse_def_helper(is_abstract = false)
       push_def
       @doc_enabled = false
       @def_nest += 1
@@ -3266,7 +3259,7 @@ module Crystal
       @doc_enabled = !!@wants_doc
       pop_def
 
-      node = Def.new name, args, body, receiver, block_arg, return_type, (is_macro_def || @is_macro_def), @yields, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
+      node = Def.new name, args, body, receiver, block_arg, return_type, @is_macro_def, @yields, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
       node.name_column_number = name_column_number
       set_visibility node
       node.end_location = end_location

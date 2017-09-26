@@ -77,7 +77,8 @@ describe "Restrictions" do
   it "self always matches instance type in return type" do
     assert_type(%(
       class Foo
-        macro def self.foo : self
+        def self.foo : self
+          {{ @type }}
           Foo.new
         end
       end

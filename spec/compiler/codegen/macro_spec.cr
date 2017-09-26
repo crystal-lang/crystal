@@ -139,11 +139,14 @@ describe "Code gen: macro" do
 
   it "expands def macro with var" do
     run(%(
-      macro def foo : Int32
-        a = {{ 1 }}
+      class Foo
+        def foo : Int32
+          {{ @type }}
+          a = {{ 1 }}
+        end
       end
 
-      foo
+      Foo.new.foo
       )).to_i.should eq(1)
   end
 
@@ -226,7 +229,8 @@ describe "Code gen: macro" do
   it "expands macro and resolves type correctly" do
     run(%(
       class Foo
-        macro def foo : Int32
+        def foo : Int32
+          {{ @type }}
           1
         end
       end
@@ -337,7 +341,8 @@ describe "Code gen: macro" do
       class Foo
         @name : Int32?
 
-        macro def foo : Int32
+        def foo : Int32
+          {{ @type }}
           name = 1
           @name = name
         end
@@ -392,7 +397,8 @@ describe "Code gen: macro" do
   it "doesn't skip abstract classes when defining macro methods" do
     run(%(
       class Object
-        macro def foo : Int32
+        def foo : Int32
+          {{ @type }}
           1
         end
       end
@@ -443,7 +449,8 @@ describe "Code gen: macro" do
         def initialize(@x : Int32, @y : Int32)
         end
 
-        macro def foo : String
+        def foo : String
+          {{ @type }}
           {{ Foo.instance_vars.last.name.stringify }}
         end
 
@@ -974,7 +981,8 @@ describe "Code gen: macro" do
   it "codegens macro def with splat (#496)" do
     run(%(
       class Foo
-        macro def bar(*args) : Int32
+        def bar(*args) : Int32
+          {{ @type }}
           args[0] + args[1] + args[2]
         end
       end
@@ -986,7 +994,8 @@ describe "Code gen: macro" do
   it "codegens macro def with default arg (similar to #496)" do
     run(%(
       class Foo
-        macro def bar(foo = 1) : Int32
+        def bar(foo = 1) : Int32
+          {{ @type }}
           foo + 2
         end
       end
@@ -1118,11 +1127,14 @@ describe "Code gen: macro" do
 
   it "expands macro def with return (#1040)" do
     run(%(
-      macro def a : Int32
-        return 123
+      class Foo
+        def a : Int32
+          {{ @type }}
+          return 123
+        end
       end
 
-      a
+      Foo.new.a
       )).to_i.should eq(123)
   end
 
@@ -1190,7 +1202,8 @@ describe "Code gen: macro" do
       class Foo
         Const = 123
 
-        macro def self.bar : Int32
+        def self.bar : Int32
+          {{ @type }}
           foo { Const }
         end
       end
@@ -1212,7 +1225,8 @@ describe "Code gen: macro" do
   it "types macro expansion bug (#1734)" do
     run(%(
       class Foo
-        macro def foo : Int32
+        def foo : Int32
+          {{ @type }}
           1 || 2
         end
       end
