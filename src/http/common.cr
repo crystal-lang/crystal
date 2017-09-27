@@ -59,11 +59,8 @@ module HTTP
       end
 
       name, value = parse_header(line)
-      begin
-        headers.add(name, value)
-      rescue ex : ArgumentError
-        break
-      end
+      break unless headers.valid_value?(value)
+      headers.add(name, value)
     end
   end
 

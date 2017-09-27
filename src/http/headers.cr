@@ -254,6 +254,15 @@ struct HTTP::Headers
     end
   end
 
+  def valid_value?(value)
+    value.each_byte do |byte|
+      unless valid_char?(char = byte.unsafe_chr)
+        return false
+      end
+    end
+    true
+  end
+
   forward_missing_to @hash
 
   private def wrap(key)
@@ -280,15 +289,21 @@ struct HTTP::Headers
   end
 
   private def check_invalid_header_content(value)
-    # According to RFC 7230, characters accepted as HTTP header
-    # are '\t', ' ', all US-ASCII printable characters and
-    # range from '\x80' to '\xff' (but the last is obsoleted.)
     value.each_byte do |byte|
-      char = byte.unsafe_chr
-      next if char == '\t'
-      if char < ' ' || char > '\u{ff}' || char == '\u{7f}'
+      unless valid_char?(char = byte.unsafe_chr)
         raise ArgumentError.new("Header content contains invalid character #{char.inspect}")
       end
     end
+  end
+
+  private def valid_char?(char)
+    # According to RFC 7230, characters accepted as HTTP header
+    # are '\t', ' ', all US-ASCII printable characters and
+    # range from '\x80' to '\xff' (but the last is obsoleted.)
+    return true if char == '\t'
+    if char < ' ' || char > '\u{ff}' || char == '\u{7f}'
+      return false
+    end
+    true
   end
 end
