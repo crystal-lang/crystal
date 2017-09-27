@@ -3908,7 +3908,7 @@ module Crystal
         end_location = nil
 
         open("call") do
-          # We found a prentheses, so calls inside it will get the `do`
+          # We found a parentheses, so calls inside it will get the `do`
           # attached to them
           @stop_on_do = false
           found_double_splat = false
