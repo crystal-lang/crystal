@@ -2147,15 +2147,6 @@ module Crystal
           elsif !delimiter_state && whitespace && (keyword = lookahead { check_macro_opening_keyword(beginning_of_line) })
             char = current_char
 
-            if keyword == :macro && char.ascii_whitespace?
-              old_pos = @reader.pos
-              if next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(peek_next_char)
-                char = next_char
-              else
-                @reader.pos = old_pos
-              end
-            end
-
             nest += 1 unless keyword == :abstract_def
             whitespace = true
             beginning_of_line = false
