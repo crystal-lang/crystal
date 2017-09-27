@@ -6,7 +6,7 @@ describe "Normalize: expressions" do
   end
 
   it "normalizes an expression" do
-    assert_normalize "(1 < 2).as(Bool)", "((1 < 2)).as(Bool)"
+    assert_normalize "(1 < 2).as(Bool)", "(1 < 2).as(Bool)"
   end
 
   it "normalizes expressions" do
