@@ -59,7 +59,11 @@ module HTTP
       end
 
       name, value = parse_header(line)
-      headers.add(name, value)
+      begin
+        headers.add(name, value)
+      rescue ex : ArgumentError
+        break
+      end
     end
   end
 
