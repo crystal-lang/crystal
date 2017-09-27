@@ -2494,7 +2494,7 @@ class String
   #
   # ```
   # "Developers! " * 4
-  # # => "Developers! Developers! Developers! Developers!"
+  # # => "Developers! Developers! Developers! Developers! "
   # ```
   def *(times : Int)
     raise ArgumentError.new "Negative argument" if times < 0
