@@ -1,6 +1,6 @@
 <ul>
   <% types.each do |type| %>
-  <li class="<%= (type.program? || type.types.empty?) ? "" : ("parent" + (type.parents_of?(current_type) ? " open" : "")) %> <%= type.current?(current_type) ? "current" : "" %>" data-id="<%= type.html_id %>" data-name="<%= type.full_name.downcase %>">
+  <li class="<%= (type.program? || type.types.empty?) ? "" : ("parent" + (type.current?(current_type) || type.parents_of?(current_type) ? " open" : "")) %> <%= type.current?(current_type) ? "current" : "" %>" data-id="<%= type.html_id %>" data-name="<%= type.full_name.downcase %>">
       <a href="<%= type.path_from(current_type) %>"><%= type.name %></a>
       <% unless type.program? || type.types.empty? %>
         <%= ListItemsTemplate.new(type.types, current_type) %>
