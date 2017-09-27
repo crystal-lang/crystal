@@ -255,12 +255,7 @@ struct HTTP::Headers
   end
 
   def valid_value?(value)
-    value.each_byte do |byte|
-      unless valid_char?(char = byte.unsafe_chr)
-        return false
-      end
-    end
-    true
+    return invalid_value_char(value).nil?
   end
 
   forward_missing_to @hash
@@ -289,10 +284,8 @@ struct HTTP::Headers
   end
 
   private def check_invalid_header_content(value)
-    value.each_byte do |byte|
-      unless valid_char?(char = byte.unsafe_chr)
-        raise ArgumentError.new("Header content contains invalid character #{char.inspect}")
-      end
+    if char = invalid_value_char(value)
+      raise ArgumentError.new("Header content contains invalid character #{char.inspect}")
     end
   end
 
@@ -305,5 +298,13 @@ struct HTTP::Headers
       return false
     end
     true
+  end
+
+  private def invalid_value_char(value)
+    value.each_byte do |byte|
+      unless valid_char?(char = byte.unsafe_chr)
+        return char
+      end
+    end
   end
 end

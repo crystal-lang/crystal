@@ -184,4 +184,10 @@ describe HTTP::Headers do
     value = (32..126).map(&.chr).join
     headers.add("foo", value)
   end
+
+  it "can validate content" do
+    headers = HTTP::Headers.new
+    headers.valid_value?("foo").should be_true
+    headers.valid_value?("\r\nLocation: http://example.com").should be_false
+  end
 end
