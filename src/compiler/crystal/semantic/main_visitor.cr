@@ -1846,7 +1846,7 @@ module Crystal
       # block is when the condition is a Var (in the else it must be
       # nil), IsA (in the else it's not that type), RespondsTo
       # (in the else it doesn't respond to that message) or Not.
-      case cond = node.cond
+      case cond = single_expression(node.cond) || node.cond
       when Var, IsA, RespondsTo, Not
         filter_vars cond_type_filters, &.not
       when Or
@@ -2022,8 +2022,10 @@ module Crystal
         node.body.accept self
       end
 
-      endless_while = node.cond.true_literal?
-      merge_while_vars node.cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
+      cond = single_expression(node.cond) || node.cond
+
+      endless_while = cond.true_literal?
+      merge_while_vars cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
       @block = old_block
@@ -2187,9 +2189,13 @@ module Crystal
     end
 
     def single_expression(node)
-      if node.is_a?(Expressions) && node.expressions.size == 1
-        node[0]
+      result = nil
+
+      while node.is_a?(Expressions) && node.expressions.size == 1
+        result = node = node[0]
       end
+
+      result
     end
 
     def end_visit(node : Break)

@@ -7,13 +7,13 @@ def fannkuch(n)
   q = w.dup
   s = w.dup
 
-  while true
+  while (true)
     # Copy and flip.
     q1 = w[1] # Cache 1st element.
     if q1 != 1
       q = w.dup
       flips = 1
-      while true
+      while (true)
         qq = q[q1]
         if qq == 1 # ... until 1st element is 1.
           sum = sum + sign * flips
