@@ -102,7 +102,9 @@ struct HTTP::Headers
   end
 
   def add(key, value : String)
-    add(key, [value])
+    check_invalid_header_content value
+    unsafe_add(key, value)
+    self
   end
 
   def add(key, value : Array(String))
@@ -112,7 +114,9 @@ struct HTTP::Headers
   end
 
   def add?(key, value : String)
-    add?(key, [value])
+    return false unless valid_value?(value)
+    unsafe_add(key, value)
+    true
   end
 
   def add?(key, value : Array(String))
@@ -253,6 +257,16 @@ struct HTTP::Headers
   end
 
   forward_missing_to @hash
+
+  private def unsafe_add(key, value : String)
+    key = wrap(key)
+    existing = @hash[key]?
+    if existing
+      existing << value
+    else
+      @hash[key] = [value]
+    end
+  end
 
   private def unsafe_add(key, value : Array(String))
     key = wrap(key)
