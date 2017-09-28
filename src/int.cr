@@ -456,6 +456,35 @@ struct Int
     yield ptr, count
   end
 
+  # Returns the ordinal for this number.
+  #
+  # ```
+  # 3.ordinal  # => "rd"
+  # 14.ordinal # => "th"
+  # ```
+  def ordinal : String
+    case self % 100
+    when 11, 12, 13 then "th"
+    else
+      case self % 10
+      when 1 then "st"
+      when 2 then "nd"
+      when 3 then "rd"
+      else        "th"
+      end
+    end
+  end
+
+  # Returns the number as a string with its ordinal appended.
+  #
+  # ```
+  # 3.to_ordinal  # => "3rd"
+  # 14.to_ordinal # => "14th"
+  # ```
+  def to_ordinal : String
+    "#{to_s}#{ordinal}"
+  end
+
   def inspect(io)
     type = case self
            when Int8   then "_i8"
