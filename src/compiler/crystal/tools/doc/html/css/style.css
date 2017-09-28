@@ -57,6 +57,7 @@ body {
 
 .sidebar {
   width: 30em;
+  max-width: 20%; /* limit width on small screen sizes */
   color: #F8F4FD;
   background-color: #2E1052;
   padding: 0 0 30px;
