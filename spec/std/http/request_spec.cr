@@ -174,6 +174,8 @@ module HTTP
     it "handles malformed request" do
       request = Request.from_io(IO::Memory.new("nonsense"))
       request.should be_a(Request::BadRequest)
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nX-Test-Header: \u{0}\r\n"))
+      request.should be_a(Request::BadRequest)
     end
 
     it "handles long request lines" do

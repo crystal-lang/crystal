@@ -103,28 +103,26 @@ struct HTTP::Headers
 
   def add(key, value : String)
     check_invalid_header_content value
-
-    key = wrap(key)
-    existing = @hash[key]?
-    if existing
-      existing << value
-    else
-      @hash[key] = [value]
-    end
+    unsafe_add(key, value)
     self
   end
 
   def add(key, value : Array(String))
     value.each { |val| check_invalid_header_content val }
-
-    key = wrap(key)
-    existing = @hash[key]?
-    if existing
-      existing.concat value
-    else
-      @hash[key] = value
-    end
+    unsafe_add(key, value)
     self
+  end
+
+  def add?(key, value : String)
+    return false unless valid_value?(value)
+    unsafe_add(key, value)
+    true
+  end
+
+  def add?(key, value : Array(String))
+    value.each { |val| return false unless valid_value?(val) }
+    unsafe_add(key, value)
+    true
   end
 
   def fetch(key)
@@ -254,7 +252,31 @@ struct HTTP::Headers
     end
   end
 
+  def valid_value?(value)
+    return invalid_value_char(value).nil?
+  end
+
   forward_missing_to @hash
+
+  private def unsafe_add(key, value : String)
+    key = wrap(key)
+    existing = @hash[key]?
+    if existing
+      existing << value
+    else
+      @hash[key] = [value]
+    end
+  end
+
+  private def unsafe_add(key, value : Array(String))
+    key = wrap(key)
+    existing = @hash[key]?
+    if existing
+      existing.concat value
+    else
+      @hash[key] = value
+    end
+  end
 
   private def wrap(key)
     key.is_a?(Key) ? key : Key.new(key)
@@ -280,14 +302,26 @@ struct HTTP::Headers
   end
 
   private def check_invalid_header_content(value)
+    if char = invalid_value_char(value)
+      raise ArgumentError.new("Header content contains invalid character #{char.inspect}")
+    end
+  end
+
+  private def valid_char?(char)
     # According to RFC 7230, characters accepted as HTTP header
     # are '\t', ' ', all US-ASCII printable characters and
     # range from '\x80' to '\xff' (but the last is obsoleted.)
+    return true if char == '\t'
+    if char < ' ' || char > '\u{ff}' || char == '\u{7f}'
+      return false
+    end
+    true
+  end
+
+  private def invalid_value_char(value)
     value.each_byte do |byte|
-      char = byte.unsafe_chr
-      next if char == '\t'
-      if char < ' ' || char > '\u{ff}' || char == '\u{7f}'
-        raise ArgumentError.new("Header content contains invalid character #{char.inspect}")
+      unless valid_char?(char = byte.unsafe_chr)
+        return char
       end
     end
   end
