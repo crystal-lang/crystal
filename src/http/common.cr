@@ -59,8 +59,7 @@ module HTTP
       end
 
       name, value = parse_header(line)
-      break unless headers.valid_value?(value)
-      headers.add(name, value)
+      break unless headers.add?(name, value)
     end
   end
 

@@ -102,29 +102,23 @@ struct HTTP::Headers
   end
 
   def add(key, value : String)
-    check_invalid_header_content value
-
-    key = wrap(key)
-    existing = @hash[key]?
-    if existing
-      existing << value
-    else
-      @hash[key] = [value]
-    end
-    self
+    add(key, [value])
   end
 
   def add(key, value : Array(String))
     value.each { |val| check_invalid_header_content val }
-
-    key = wrap(key)
-    existing = @hash[key]?
-    if existing
-      existing.concat value
-    else
-      @hash[key] = value
-    end
+    unsafe_add(key, value)
     self
+  end
+
+  def add?(key, value : String)
+    add?(key, [value])
+  end
+
+  def add?(key, value : Array(String))
+    value.each { |val| return false unless valid_value?(val) }
+    unsafe_add(key, value)
+    true
   end
 
   def fetch(key)
@@ -259,6 +253,16 @@ struct HTTP::Headers
   end
 
   forward_missing_to @hash
+
+  private def unsafe_add(key, value : Array(String))
+    key = wrap(key)
+    existing = @hash[key]?
+    if existing
+      existing.concat value
+    else
+      @hash[key] = value
+    end
+  end
 
   private def wrap(key)
     key.is_a?(Key) ? key : Key.new(key)
