@@ -295,8 +295,11 @@ describe Time do
     t.to_s("%h").should eq("Jan")
     t.to_s("%^h").should eq("JAN")
     t.to_s("%d").should eq("02")
+    t.to_s("%d+").should eq("02nd")
     t.to_s("%-d").should eq("2")
+    t.to_s("%-d+").should eq("2nd")
     t.to_s("%e").should eq(" 2")
+    t.to_s("%e+").should eq(" 2nd")
     t.to_s("%j").should eq("002")
     t.to_s("%H").should eq("03")
 
