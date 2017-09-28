@@ -354,6 +354,13 @@ body {
 .source-link {
   font-weight: bold;
   text-decoration: none;
+  font-size: 85%;
+}
+.source-link:link {
+  color: #3f5784;
+}
+.source-link:visited {
+  color: #314467;
 }
 .source-link::before,
 .source-link::after {
