@@ -17,7 +17,9 @@ module HTML
   # HTML.escape("Crystal & You") # => "Crystal &amp; You"
   # ```
   def self.escape(string : String) : String
-    string.gsub(SUBSTITUTIONS)
+    io = IO::Memory.new
+    escape(string, io)
+    io.to_s
   end
 
   # Same as `escape(string)` but ouputs the result to
