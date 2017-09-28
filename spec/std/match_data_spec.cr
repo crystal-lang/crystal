@@ -14,14 +14,19 @@ describe "Regex::MatchData" do
   end
 
   it "does pretty_print" do
-    /f(o)(x)/.match("the fox").pretty_inspect.should eq(%(#<Regex::MatchData "fox" 1:"o" 2:"x">))
-    /(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o))))/.match("fooooo").pretty_inspect.should eq(%(#<Regex::MatchData
- "foooo"
- first:"f"
- second:"oooo"
- third:"ooo"
- fourth:"oo"
- fifth:"o">))
+    /f(o)(x)?/.match("the fo").pretty_inspect.should eq(%(#<Regex::MatchData "fo" 1:"o" 2:nil>))
+
+    expected = <<-REGEX
+      #<Regex::MatchData
+       "foooo"
+       first:"f"
+       second:"oooo"
+       third:"ooo"
+       fourth:"oo"
+       fifth:"o">
+      REGEX
+
+    /(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o))))/.match("fooooo").pretty_inspect.should eq(expected)
   end
 
   it "does size" do
