@@ -7,12 +7,68 @@ class Markdown::Parser
   def initialize(text : String, @renderer : Renderer)
     @lines = text.lines
     @line = 0
+
+    @references = Hash(String, Tuple(String, String)).new
   end
 
   def parse
+    process_for_references
+
     while @line < @lines.size
       process_paragraph
     end
+  end
+
+  def process_for_references
+    # analyze and add
+    while @line < @lines.size
+      if add_reference_line(@lines[@line])
+        # if current line was reference definition remove them
+        @lines.delete_at(@line)
+      else
+        @line += 1
+      end
+    end
+
+    @line = 0
+
+    # replace existing referenced links to regular ones
+    # it is easier to integrate with current processor
+    while @line < @lines.size
+      # two params reference
+      result = @lines[@line].scan(/\[([^\]]+)\]\[([^\]]+)\]/)
+      unless result.empty?
+        match = result.first
+        key = match[2]
+        if @references[key]?
+          text = match[1].to_s
+          url = @references[key][0]
+          origin = match[0]
+
+          @lines[@line] = @lines[@line].gsub(origin, "[#{text}](#{url})")
+
+          next
+        end
+      end
+
+      # one param reference
+      result = @lines[@line].scan(/\[([^\]]+)\][^\[\(]/)
+      unless result.empty?
+        match = result.first
+        key = match[1]
+        if @references[key]?
+          text = @references[key][1]
+          url = @references[key][0]
+          origin = match[0][0..-2]
+
+          @lines[@line] = @lines[@line].gsub(origin, "[#{text}](#{url})")
+        end
+      end
+
+      @line += 1
+    end
+
+    @line = 0
   end
 
   def process_paragraph
@@ -42,6 +98,19 @@ class Markdown::Parser
     else
       render_paragraph
     end
+  end
+
+  def add_reference_line(line)
+    regexp = /^\[([^\n\]]+)\]:[ \t]*(\S+)\s*(\S*)?$/
+    res = line.scan(regexp)
+    if res.size > 0
+      match = res[0]
+      if match.as?(Regex::MatchData) && false == match[1].blank? && false == match[2].blank?
+        @references[match[1].to_s] = {match[2].to_s, match[3].to_s}
+        return true
+      end
+    end
+    return false
   end
 
   def classify(line)
@@ -399,8 +468,21 @@ class Markdown::Parser
           @renderer.text line.byte_slice(cursor, pos - cursor)
           @renderer.end_link
 
-          paren_idx = (str + pos + 1).to_slice(bytesize - pos - 1).index(')'.ord).not_nil!
-          pos += paren_idx + 1
+          # in case of url with parenthesis
+          paren_count = 0
+          while pos < bytesize
+            case str[pos].unsafe_chr
+            when '('
+              paren_count += 1
+            when ')'
+              paren_count -= 1
+              if paren_count == 0
+                break
+              end
+            end
+            pos += 1
+          end
+
           cursor = pos + 1
           in_link = false
         end
@@ -450,10 +532,26 @@ class Markdown::Parser
 
     return nil unless str[bracket_idx + 1] === '('
 
-    paren_idx = (str + bracket_idx + 1).to_slice(bytesize - bracket_idx - 1).index ')'.ord
-    return nil unless paren_idx
-
-    String.new(Slice.new(str + bracket_idx + 2, paren_idx - 1))
+    pos += 1
+    paren_count = 0
+    paren_start_idx = -1
+    paren_end_idx = -1
+    while pos < bytesize
+      case str[pos].unsafe_chr
+      when '('
+        paren_start_idx = pos if paren_start_idx < 0
+        paren_count += 1
+      when ')'
+        paren_count -= 1
+        if paren_count == 0
+          paren_end_idx = pos
+          s = String.new(Slice.new(str + paren_start_idx + 1, paren_end_idx - paren_start_idx - 1))
+          return s
+          break
+        end
+      end
+      pos += 1
+    end
   end
 
   def next_line_is_all?(char)

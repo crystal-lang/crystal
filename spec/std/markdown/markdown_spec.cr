@@ -105,6 +105,9 @@ describe Markdown do
   assert_render "Hello [world](http://example.com)", %(<p>Hello <a href="http://example.com">world</a></p>)
   assert_render "Hello [world](http://example.com)!", %(<p>Hello <a href="http://example.com">world</a>!</p>)
   assert_render "Hello [world **2**](http://example.com)!", %(<p>Hello <a href="http://example.com">world <strong>2</strong></a>!</p>)
+  assert_render "[world]: http://example.com\nHello [world][world]!", %(<p>Hello <a href="http://example.com">world</a>!</p>)
+  assert_render "[parenthesis_link]: http://wikipedia.com/Town(blue_voivodeship)\nWelcome to [Town][parenthesis_link]!", %(<p>Welcome to <a href="http://wikipedia.com/Town(blue_voivodeship)">Town</a>!</p>)
+  assert_render "[country]: http://example.com Country\nHello [country]!", %(<p>Hello <a href="http://example.com">Country</a>!</p>)
 
   assert_render "Hello ![world](http://example.com)", %(<p>Hello <img src="http://example.com" alt="world"/></p>)
   assert_render "Hello ![world](http://example.com)!", %(<p>Hello <img src="http://example.com" alt="world"/>!</p>)
