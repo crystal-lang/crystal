@@ -1737,6 +1737,9 @@ module Crystal
       when Assign
         target = exp.target
         return target if target.is_a?(Var)
+      when Expressions
+        return unless exp = single_expression(exp)
+        return get_expression_var(exp)
       end
       nil
     end
@@ -1843,15 +1846,17 @@ module Crystal
       # block is when the condition is a Var (in the else it must be
       # nil), IsA (in the else it's not that type), RespondsTo
       # (in the else it doesn't respond to that message) or Not.
-      case cond = node.cond
+      case cond = single_expression(node.cond) || node.cond
       when Var, IsA, RespondsTo, Not
         filter_vars cond_type_filters, &.not
       when Or
         # Try to apply boolean logic: `!(a || b)` is `!a && !b`
+        cond_left = single_expression(cond.left) || cond.left
+        cond_right = single_expression(cond.right) || cond.right
 
         #  We can't deduce anything for sub && or || expressions
-        or_left_type_filters = nil if cond.left.is_a?(And) || cond.left.is_a?(Or)
-        or_right_type_filters = nil if cond.right.is_a?(And) || cond.right.is_a?(Or)
+        or_left_type_filters = nil if cond_left.is_a?(And) || cond_left.is_a?(Or)
+        or_right_type_filters = nil if cond_right.is_a?(And) || cond_right.is_a?(Or)
 
         # No need to deduce anything for temp vars created by the compiler (won't be used by a user)
         or_left_type_filters = nil if or_left_type_filters && or_left_type_filters.temp_var?
@@ -2017,8 +2022,10 @@ module Crystal
         node.body.accept self
       end
 
-      endless_while = node.cond.true_literal?
-      merge_while_vars node.cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
+      cond = single_expression(node.cond) || node.cond
+
+      endless_while = cond.true_literal?
+      merge_while_vars cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
       @block = old_block
@@ -2146,6 +2153,9 @@ module Crystal
         end
       when Call
         return get_while_cond_assign_target(node.obj)
+      when Expressions
+        return unless node = single_expression(node)
+        return get_while_cond_assign_target(node)
       end
 
       nil
@@ -2176,6 +2186,16 @@ module Crystal
         filtered_var.bind_to(existing_var.filtered_by(yield filter))
         @vars[name] = filtered_var
       end
+    end
+
+    def single_expression(node)
+      result = nil
+
+      while node.is_a?(Expressions) && node.expressions.size == 1
+        result = node = node[0]
+      end
+
+      result
     end
 
     def end_visit(node : Break)
