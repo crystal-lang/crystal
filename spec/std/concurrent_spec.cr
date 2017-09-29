@@ -41,4 +41,41 @@ describe "concurrent" do
     spawn method_named("foo"), name: "foo"
     Fiber.yield
   end
+
+  it "runs something every X time" do
+    counter = 0
+
+    spawn do
+      every(20.milliseconds) do |i|
+        sleep 5.milliseconds
+        counter = i
+      end
+    end
+
+    sleep 40.milliseconds
+    counter.should eq(1)
+
+    sleep 20.milliseconds
+    counter.should eq(2)
+
+    sleep 40.milliseconds
+    counter.should eq(4)
+
+    sleep 40.milliseconds
+    counter.should eq(6)
+  end
+
+  it "runs something every X time even if the task takes longer than that" do
+    spawn do
+      counter = 0
+
+      every(10.milliseconds) do |i|
+        sleep 20.milliseconds
+        counter = i
+      end
+
+      sleep 25.milliseconds
+      counter.should eq(1)
+    end
+  end
 end
