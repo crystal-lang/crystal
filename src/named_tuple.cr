@@ -144,6 +144,30 @@ struct NamedTuple
     {% end %}
     yield
   end
+  
+  macro fetch_trie_expand(keys, index, size)
+    {% if keys.size < 16 %}
+      {% for key in keys %}
+        return self[{{key}}] if {{key}} == key
+      {% end %}
+    {% else %}
+      {% chars = keys.map {|key| key.chars[index] }.uniq %}
+      case key[{{index}}]
+      {% for char in chars %}
+      when {{char}}
+        {% subkeys = keys.select {|key| key.chars[index] == char } %}
+        {% if index+1 == size %}
+          {% ans = subkeys[0] %}
+          {% if ans %}
+            return self[{{ans.id.symbolize}}]
+          {% end %}
+        {% else %}
+          fetch_trie_expand({{subkeys}}, {{index+1}}, {{size}})
+        {% end %}
+      {% end %}
+      end
+    {% end %}
+  end
 
   # Returns the value for the given *key*, if there's such key, otherwise the value returned by the block.
   #
@@ -153,8 +177,15 @@ struct NamedTuple
   # tuple.fetch("other") { 0 }        # => 0
   # ```
   def fetch(key : String, &block)
-    {% for key in T %}
-      return self[{{key.symbolize}}] if {{key.stringify}} == key
+    {% begin %}
+      {% keys = T.keys.map(&.stringify) %}
+      {% sizes = keys.map(&.size).uniq %}
+      case key.size
+      {% for size in sizes %}
+      when {{size}}
+        fetch_trie_expand({{ keys.select {|key| key.size == size} }}, 0, {{size}})
+      {% end %}
+      end
     {% end %}
     yield
   end
