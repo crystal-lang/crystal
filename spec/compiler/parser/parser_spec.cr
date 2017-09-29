@@ -37,6 +37,9 @@ describe "Parser" do
   it_parses "+1_i64", 1.int64
   it_parses "-1_i64", -1.int64
 
+  it_parses "1_u128", 1.uint128
+  it_parses "1_i128", 1.int128
+
   it_parses "1.0", 1.0.float64
   it_parses "+1.0", 1.0.float64
   it_parses "-1.0", -1.0.float64

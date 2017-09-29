@@ -422,10 +422,18 @@ module Crystal
         @last = int64(node.value.to_i64)
       when :u64
         @last = int64(node.value.to_u64)
+      when :i128
+        # TODO: implement String#to_i128 and use it
+        @last = int128(node.value.to_i64)
+      when :u128
+        # TODO: implement String#to_u128 and use it
+        @last = int128(node.value.to_u64)
       when :f32
         @last = llvm_context.float.const_float(node.value)
       when :f64
         @last = llvm_context.double.const_double(node.value)
+      else
+        node.raise "Bug: unhandled number kind: #{node.kind}"
       end
     end
 
