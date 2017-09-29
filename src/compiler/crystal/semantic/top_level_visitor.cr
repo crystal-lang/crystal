@@ -331,11 +331,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     if is_instance_method
       # If it's an initialize method, we define a `self.new` for
-      # the type, initially empty. We will fill it once we know if
+      # the class type, initially empty. We will fill it once we know if
       # a type defines a `finalize` method, but defining it now
       # allows `previous_def` for a next `def self.new` definition
       # to find this method.
-      if node.name == "initialize"
+      if node.name == "initialize" && target_type.is_a?(ClassType)
         new_method = node.expand_new_signature_from_initialize(target_type)
         target_type.metaclass.as(ModuleType).add_def(new_method)
 
