@@ -119,4 +119,10 @@ class Markdown::HTMLRenderer
   def horizontal_rule
     @io << "<hr/>"
   end
+
+  def checkbox(checked)
+    @io << %(<input type="checkbox")
+    @io << " checked" if checked
+    @io << %( disabled>)
+  end
 end

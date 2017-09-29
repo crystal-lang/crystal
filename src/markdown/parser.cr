@@ -307,6 +307,7 @@ class Markdown::Parser
     two_underscores = false
     one_backtick = false
     in_link = false
+    in_checkbox = false
     last_is_space = true
 
     while pos < bytesize
@@ -387,11 +388,17 @@ class Markdown::Parser
       when '['
         unless in_link
           link = check_link str, (pos + 1), bytesize
+          checkbox = check_checkbox str, (pos + 1), bytesize
           if link
             @renderer.text line.byte_slice(cursor, pos - cursor)
             cursor = pos + 1
             @renderer.begin_link link
             in_link = true
+          elsif checkbox
+            in_checkbox = true
+            checked = str[pos + 1].unsafe_chr == 'x'
+            cursor = pos + 1
+            @renderer.checkbox(checked)
           end
         end
       when ']'
@@ -403,6 +410,9 @@ class Markdown::Parser
           pos += paren_idx + 1
           cursor = pos + 1
           in_link = false
+        elsif in_checkbox
+          cursor = pos + 1
+          in_checkbox = false
         end
       end
       last_is_space = pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
@@ -454,6 +464,27 @@ class Markdown::Parser
     return nil unless paren_idx
 
     String.new(Slice.new(str + bracket_idx + 2, paren_idx - 1))
+  end
+
+  # Checks if the following sequence of characters is a checkbox.
+  # A valid checkbox is made up of 3 characters and looks like
+  # this `[ ]` or this `[x]` with the latter being a checked one.
+  def check_checkbox(str, pos, bytesize)
+    return false unless pos + 3 < bytesize
+
+    return false unless str[pos] == '['.ord
+    return false unless str[pos + 1] == ' '.ord || str[pos + 1] == 'x'.ord
+    return false unless str[pos + 2] == ']'.ord
+
+    true
+  end
+
+    # If the char count is greater than 1 then the checkbox is not valid
+    if char_count != 1
+      return false
+    end
+
+    return true
   end
 
   def next_line_is_all?(char)

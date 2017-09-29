@@ -24,4 +24,5 @@ module Markdown::Renderer
   abstract def image(url, alt)
   abstract def text(text)
   abstract def horizontal_rule
+  abstract def checkbox(checked)
 end
