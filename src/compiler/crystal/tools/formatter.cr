@@ -2287,6 +2287,10 @@ module Crystal
         needs_space = !has_parentheses || has_args
         skip_space
         if has_parentheses && @token.type == :")"
+          if ends_with_newline
+            write_line unless found_comment
+            write_indent
+          end
           write ")"
           next_token_skip_space_or_newline
           format_block block, needs_space
