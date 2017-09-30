@@ -74,7 +74,7 @@ describe "HTML" do
       str.should eq("limit &#1114111;")
     end
 
-    it "unescapes characters above Char::MAX_CODEPOINT" do
+    it "does not unescape characters above Char::MAX_CODEPOINT" do
       str = HTML.unescape("limit &#x110000;")
       str.should eq("limit \uFFFD")
 
