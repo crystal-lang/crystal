@@ -134,22 +134,26 @@ module HTML
 
   # see https://html.spec.whatwg.org/multipage/parsing.html#numeric-character-reference-end-state
   private def self.decode_codepoint(codepoint)
-    if 0x80 <= codepoint <= 0x9F
+    case codepoint
+    when 0x80..0x9F
       # Replace characters from Windows-1252 with UTF-8 equivalents.
       CHARACTER_REPLACEMENTS[codepoint - 0x80].to_s
-    elsif codepoint == 0 ||
-          codepoint > Char::MAX_CODEPOINT ||
-          0xD800 <= codepoint <= 0xDFFF # unicode surrogat characters
+    when 0,
+         .>(Char::MAX_CODEPOINT),
+         0xD800..0xDFFF                         # unicode surrogat characters
       # Replace invalid characters with replacement character.
       "\uFFFD"
-    elsif 0xFDD0 <= codepoint <= 0xFDEF ||                                                    # unicode noncharacters
- codepoint & 0xFFFF >= 0xFFFE ||                                                              # last two of each plane (nonchars) disallowed
- (codepoint < 0x0020 && codepoint != 0x0009 && codepoint != 0x000A && codepoint != 0x000C) || # unicode control characters
- codepoint == 0x007F
+    when 0xFDD0..0xFDEF,                        # unicode noncharacters
+         0x007F,
+         0x0000..0x0008, 0x000B, 0x000D..0x001F # unicode control characters
       # these codepoints should not be replaced, therefore return nil
       nil
     else
-      codepoint.unsafe_chr
+      if codepoint & 0xFFFF >= 0xFFFE          # last two of each plane (nonchars) disallowed
+        nil
+      else
+        codepoint.unsafe_chr
+      end
     end
   end
 end

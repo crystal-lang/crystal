@@ -98,7 +98,7 @@ describe "HTML" do
       str.should eq("\u00BE")
     end
 
-    it "does not escape unicode control charachters except space characters" do
+    it "does not escape unicode control characters except space characters" do
       string = "&#x0001;-&#x001F; &#x000D; &#x007F;"
       HTML.unescape(string).should eq(string)
 
@@ -113,7 +113,7 @@ describe "HTML" do
       string.should eq("  \t\n\f")
     end
 
-    it "does not escape noncharachter codepoints" do
+    it "does not escape noncharacter codepoints" do
       # noncharacters http://www.unicode.org/faq/private_use.html
       string = "&#xFDD0;-&#xFDEF; &#xFFFE; &#FFFF; &#x1FFFE; &#x1FFFF; &#x2FFFE; &#x10FFFF;"
       HTML.unescape(string).should eq(string)
