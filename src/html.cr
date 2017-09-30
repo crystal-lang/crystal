@@ -140,18 +140,18 @@ module HTML
       CHARACTER_REPLACEMENTS[codepoint - 0x80].to_s
     when 0,
          .>(Char::MAX_CODEPOINT),
-         0xD800..0xDFFF                         # unicode surrogat characters
+         0xD800..0xDFFF # unicode surrogate characters
       # Replace invalid characters with replacement character.
       "\uFFFD"
-    when 0xFDD0..0xFDEF,                        # unicode noncharacters
-         0x007F,
-         0x0000..0x0008, 0x000B, 0x000D..0x001F # unicode control characters
-      # these codepoints should not be replaced, therefore return nil
-      nil
     else
-      if codepoint & 0xFFFF >= 0xFFFE          # last two of each plane (nonchars) disallowed
-        nil
-      else
+      # don't replace disallowed codepoints
+      unless codepoint == 0x007F ||
+             # unicode noncharacters
+             (0xFDD0..0xFDEF).includes?(codepoint) ||
+             # last two of each plane (nonchars) disallowed
+             codepoint & 0xFFFF >= 0xFFFE ||
+             # unicode control characters expect space
+             (codepoint < 0x0020 && !{0x0009, 0x000A, 0x000C}.includes?(codepoint))
         codepoint.unsafe_chr
       end
     end
