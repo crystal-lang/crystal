@@ -38,7 +38,8 @@ module HTML
 
   # Returns a string where named and numeric character references
   # (e.g. &gt;, &#62;, &x3e;) in *string* are replaced with the corresponding
-  # unicode characters.
+  # unicode characters. This method decodes all HTML5 entities including those
+  # without a trailing semicolon (such as `&copy`).
   #
   # ```
   # HTML.unescape("Crystal &amp; You") # => "Crystal & You"
