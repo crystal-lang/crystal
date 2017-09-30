@@ -77,5 +77,10 @@ describe "HTML" do
       str = HTML.unescape("&amphello")
       str.should eq("&hello")
     end
+
+    it "unescapes named character reference with numerical characters" do
+      str = HTML.unescape("&frac34;")
+      str.should eq("\u00BE")
+    end
   end
 end

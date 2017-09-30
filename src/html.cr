@@ -45,7 +45,7 @@ module HTML
   # HTML.unescape("Crystal &amp; You") # => "Crystal & You"
   # ```
   def self.unescape(string : String) : String
-    string.gsub(/&(?:([a-zA-Z]{2,32};?)|\#([0-9]+);?|\#[xX]([0-9A-Fa-f]+);?)/) do |string, match|
+    string.gsub(/&(?:([a-zA-Z0-9]{2,32};?)|\#([0-9]+);?|\#[xX]([0-9A-Fa-f]+);?)/) do |string, match|
       if code = match[1]?
         # Try to find the code
         value = named_entity(code)
