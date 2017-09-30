@@ -138,7 +138,7 @@ module HTML
          .>(Char::MAX_CODEPOINT),
          0xD800..0xDFFF # unicode surrogate characters
       # Replace invalid characters with replacement character.
-      "\uFFFD"
+      '\uFFFD'
     else
       # don't replace disallowed codepoints
       unless codepoint == 0x007F ||
