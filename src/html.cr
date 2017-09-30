@@ -89,9 +89,8 @@ module HTML
       if code = match[1]?
         # Try to find the code
         value = named_entity(code)
-        if value
-          value
-        elsif !code.ends_with?(';')
+
+        unless value || code.ends_with?(';')
           # If we can't find it and it doesn't end with ';',
           # we need to find each prefix of it.
           # We start from the largest prefix.
@@ -108,14 +107,11 @@ module HTML
               break
             end
           end
-
-          # We either found the code or not,
-          # in which case we need to return the original string
-          value || string
-        else
-          # return invalid entity code
-          string
         end
+
+        # We either found the code or not,
+        # in which case we need to return the original string
+        value || string
       elsif code = match[2]?
         # Find by decimal code
         decode_codepoint(code.to_i) || string
