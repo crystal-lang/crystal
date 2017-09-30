@@ -23,7 +23,7 @@ describe "HTML" do
       str.should eq("safe_string")
     end
 
-    it "unescapes dangerous characters from a string" do
+    it "unescapes html special characters" do
       str = HTML.unescape("&lt; &amp; &gt;")
 
       str.should eq("< & >")
@@ -42,9 +42,9 @@ describe "HTML" do
     end
 
     it "unescapes with invalid entities" do
-      str = HTML.unescape("&&lt;&amp&gt;&quot&abcdefghijklmn")
+      str = HTML.unescape("&&lt;&amp&gt;&quot&abcdefghijklmn &ThisIsNotAnEntitiy;")
 
-      str.should eq("&<&>\"&abcdefghijklmn")
+      str.should eq("&<&>\"&abcdefghijklmn &ThisIsNotAnEntitiy;")
     end
 
     it "unescapes hex encoded chars" do
@@ -73,7 +73,7 @@ describe "HTML" do
       str.should eq(" ⊐̸ ")
     end
 
-    it "unescapes &ampd" do
+    it "unescapes entities without trailing semicolon" do
       str = HTML.unescape("&amphello")
       str.should eq("&hello")
     end

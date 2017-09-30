@@ -72,6 +72,9 @@ module HTML
           # We either found the code or not,
           # in which case we need to return the original string
           value || string
+        else
+          # return invalid entity code
+          string
         end
       elsif code = match[2]?
         # Find by decimal code
