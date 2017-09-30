@@ -48,6 +48,21 @@ describe "Regex::MatchData" do
       $~["g2"].should eq("ba")
     end
 
+    it "captures duplicated named group" do
+      re = /(?:(?<g1>foo)|(?<g1>bar))*/
+      ("foo" =~ re).should eq(0)
+      $~["g1"].should eq("foo")
+
+      ("bar" =~ re).should eq(0)
+      $~["g1"].should eq("bar")
+
+      ("foobar" =~ re).should eq(0)
+      $~["g1"].should eq("bar")
+
+      ("barfoo" =~ re).should eq(0)
+      $~["g1"].should eq("foo")
+    end
+
     it "can use negative index" do
       "foo" =~ /(f)(oo)/
       $~[-1].should eq("oo")
@@ -96,6 +111,21 @@ describe "Regex::MatchData" do
       ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
       $~["g1"]?.should eq("oo")
       $~["g2"]?.should eq("ba")
+    end
+
+    it "captures duplicated named group" do
+      re = /(?:(?<g1>foo)|(?<g1>bar))*/
+      ("foo" =~ re).should eq(0)
+      $~["g1"]?.should eq("foo")
+
+      ("bar" =~ re).should eq(0)
+      $~["g1"]?.should eq("bar")
+
+      ("foobar" =~ re).should eq(0)
+      $~["g1"]?.should eq("bar")
+
+      ("barfoo" =~ re).should eq(0)
+      $~["g1"]?.should eq("foo")
     end
 
     it "can use negative index" do
@@ -167,6 +197,10 @@ describe "Regex::MatchData" do
       "Crystal".match(/(?<name1>Cr)(?<name2>s)?/).not_nil!.named_captures.should eq({"name1" => "Cr", "name2" => nil})
       "Crystal".match(/(Cr)(?<name1>s)?(t)?(?<name2>al)?/).not_nil!.named_captures.should eq({"name1" => nil, "name2" => nil})
     end
+
+    it "gets a hash of named captures with duplicated name" do
+      "Crystal".match(/(?<name>Cr)y(?<name>s)/).not_nil!.named_captures.should eq({"name" => "s"})
+    end
   end
 
   describe "#to_a" do
@@ -209,6 +243,15 @@ describe "Regex::MatchData" do
         "name1" => nil,
               3 => "yst",
         "name2" => "al",
+      })
+    end
+
+    it "converts into a hash with duplicated names" do
+      "Crystal".match(/(Cr)(?<name>s)?(yst)?(?<name>al)?/).not_nil!.to_h.should eq({
+             0 => "Crystal",
+             1 => "Cr",
+        "name" => "al",
+             3 => "yst",
       })
     end
   end

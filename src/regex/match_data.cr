@@ -157,10 +157,24 @@ class Regex
     # "Crystal".match(/r(?<ok>ys)/).not_nil!["ok"]? # => "ys"
     # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"]? # => nil
     # ```
+    #
+    # When there are capture groups having same name, it returns the lastest
+    # matched capture group.
+    #
+    # ```
+    # "Crystal".match(/(?<ok>Cr)|(?<ok>al)/).not_nil!["ok"]? # => "al"
+    # ```
     def []?(group_name : String)
-      ret = LibPCRE.get_stringnumber(@code, group_name)
-      return if ret < 0
-      self[ret]?
+      max_start = -1
+      match = nil
+      named_capture_number(group_name) do |n|
+        start = @ovector[n * 2]
+        if start > max_start
+          max_start = start
+          match = self[n]?
+        end
+      end
+      match
     end
 
     # Returns the match of the capture group named by *group_name*, or
@@ -170,17 +184,38 @@ class Regex
     # "Crystal".match(/r(?<ok>ys)/).not_nil!["ok"] # => "ys"
     # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises KeyError
     # ```
+    #
+    # When there are capture groups having same name, it returns the lastest
+    # matched capture group.
+    #
+    # ```
+    # "Crystal".match(/(?<ok>Cr)|(?<ok>al)/).not_nil!["ok"] # => "al"
+    # ```
     def [](group_name : String)
       match = self[group_name]?
       unless match
-        ret = LibPCRE.get_stringnumber(@code, group_name)
-        if ret < 0
-          raise KeyError.new("Capture group '#{group_name}' does not exist")
-        else
+        named_capture_number(group_name) do
           raise KeyError.new("Capture group '#{group_name}' was not matched")
         end
+        raise KeyError.new("Capture group '#{group_name}' does not exist")
       end
       match
+    end
+
+    private def named_capture_number(group_name)
+      first = Pointer(UInt8).null
+      last = Pointer(UInt8).null
+      name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, pointerof(first), pointerof(last))
+      return if name_entry_size < 0
+
+      while first <= last
+        capture_number = (first[0].to_u16 << 8) | first[1].to_u16
+        yield capture_number
+
+        first += name_entry_size
+      end
+
+      nil
     end
 
     # Returns the part of the original string before the match. If the match
@@ -243,8 +278,8 @@ class Regex
 
       caps = {} of String => String?
       (1...size).each do |i|
-        if name = name_table[i]?
-          caps[name] = self[i]?
+        if (name = name_table[i]?) && !caps.has_key?(name)
+          caps[name] = self[name]?
         end
       end
 
@@ -282,7 +317,11 @@ class Regex
 
       hash = {} of (String | Int32) => String?
       (0...size).each do |i|
-        hash[name_table.fetch(i, i)] = self[i]?
+        if name = name_table[i]?
+          hash[name] = self[name]? unless hash.has_key?(name)
+        else
+          hash[i] = self[i]?
+        end
       end
 
       hash
