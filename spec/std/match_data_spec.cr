@@ -49,7 +49,9 @@ describe "Regex::MatchData" do
     end
 
     it "captures duplicated named group" do
-      re = /(?:(?<g1>foo)|(?<g1>bar))*/
+      # TODO: replace with regexp literal after next version release
+      re = Regex.new "(?:(?<g1>foo)|(?<g1>bar))*"
+
       ("foo" =~ re).should eq(0)
       $~["g1"].should eq("foo")
 
@@ -114,7 +116,9 @@ describe "Regex::MatchData" do
     end
 
     it "captures duplicated named group" do
-      re = /(?:(?<g1>foo)|(?<g1>bar))*/
+      # TODO: replace with regexp literal after next version release
+      re = Regex.new "(?:(?<g1>foo)|(?<g1>bar))*"
+
       ("foo" =~ re).should eq(0)
       $~["g1"]?.should eq("foo")
 
@@ -199,7 +203,8 @@ describe "Regex::MatchData" do
     end
 
     it "gets a hash of named captures with duplicated name" do
-      "Crystal".match(/(?<name>Cr)y(?<name>s)/).not_nil!.named_captures.should eq({"name" => "s"})
+      # TODO: replace with regexp literal after next version release
+      "Crystal".match(Regex.new "(?<name>Cr)y(?<name>s)").not_nil!.named_captures.should eq({"name" => "s"})
     end
   end
 
@@ -247,7 +252,8 @@ describe "Regex::MatchData" do
     end
 
     it "converts into a hash with duplicated names" do
-      "Crystal".match(/(Cr)(?<name>s)?(yst)?(?<name>al)?/).not_nil!.to_h.should eq({
+      # TODO: replace with regexp literal after next version release
+      "Crystal".match(Regex.new "(Cr)(?<name>s)?(yst)?(?<name>al)?").not_nil!.to_h.should eq({
              0 => "Crystal",
              1 => "Cr",
         "name" => "al",
