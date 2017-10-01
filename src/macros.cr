@@ -131,7 +131,7 @@ end
 
 macro assert(exp, file = __FILE__, line = __LINE__)
   {% if !flag?(:release) %}
-    unless {{exp}}
+    unless %exp = {{exp}}
       raise "Assertion failed in #{{{file}}}:#{{{line}}}"
     end
   {% end %}
