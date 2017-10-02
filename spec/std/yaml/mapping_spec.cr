@@ -20,6 +20,13 @@ private class StrictYAMLPerson
   }, true)
 end
 
+private class YAMLPersonWithExtras
+  YAML.mapping({
+    name: {type: String},
+    age:  {type: Int32, nilable: true},
+  }, extra: "extras")
+end
+
 private class YAMLWithBool
   YAML.mapping value: Bool
 end
@@ -144,6 +151,15 @@ describe "YAML mapping" do
         YAML
     end
     ex.location.should eq({3, 1})
+  end
+  it "parses person with extra attributes" do
+    person = YAMLPersonWithExtras.from_yaml("---\nname: John\nunknown: [1, 2, 3]\nage: 30\n")
+    person.should be_a(YAMLPersonWithExtras)
+    person.name.should eq("John")
+    person.age.should eq(30)
+    person.extras.should be_a(Hash(String, YAML::Any))
+    person.extras["unknown"].should be_a(YAML::Any)
+    person.extras["unknown"].size.should eq(3)
   end
 
   it "does to_yaml" do

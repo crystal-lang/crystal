@@ -67,7 +67,11 @@ module YAML
   # it and initializes this type's instance variables.
   #
   # This macro also declares instance variables of the types given in the mapping.
-  macro mapping(properties, strict = false)
+  macro mapping(properties, strict = false, extra = nil)
+    {% if extra && properties.keys.includes? extra.id %}
+      {{ raise "Name for extra property already in use: #{extra.id}" }}
+    {% end %}
+
     {% for key, value in properties %}
       {% properties[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
@@ -96,10 +100,22 @@ module YAML
       {% end %}
     {% end %}
 
+    {% if extra %}
+      @{{extra.id}} : Hash(String, ::YAML::Any)
+
+      def {{extra.id}}
+        @{{extra.id}}
+      end
+    {% end %}
+
     def initialize(%pull : ::YAML::PullParser)
       {% for key, value in properties %}
         %var{key.id} = nil
         %found{key.id} = false
+      {% end %}
+
+      {% if extra %}
+        @{{extra.id}} = Hash(String, ::YAML::Any).new
       {% end %}
 
       %mapping_location = %pull.location
@@ -129,6 +145,8 @@ module YAML
         else
           {% if strict %}
             raise ::YAML::ParseException.new("Unknown yaml attribute: #{key}", *%key_location)
+          {% elsif extra %}
+            @{{extra.id}}[key] = ::YAML::Any.new(%pull)
           {% else %}
             %pull.skip
           {% end %}
@@ -180,6 +198,14 @@ module YAML
             {% else %}
               _{{key.id}}.to_yaml(%yaml)
             {% end %}
+          end
+        {% end %}
+        {% if extra %}
+          _{{extra.id}} = @{{extra.id}}
+
+          unless _{{extra.id}}.nil?
+            "{{extra.id}}".to_yaml(%yaml)
+            _{{extra.id}}.to_yaml(%yaml)
           end
         {% end %}
       end
