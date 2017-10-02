@@ -34,7 +34,7 @@ describe Time do
     time.nanosecond.should eq(999_999_999)
   end
 
-  it "initialize millisecond negative" do
+  it "initialize nanosecond negative" do
     Time.expect_invalid do
       Time.new(9999, 12, 31, 23, 59, 59, -1)
     end

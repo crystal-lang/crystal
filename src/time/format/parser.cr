@@ -166,14 +166,27 @@ struct Time::Format
     def milliseconds
       # Consume more than 3 digits (12 seems a good maximum),
       # and later just use the first 3 digits because Time
-      # only has microsecond precision.
+      # need millisecond precision.
       pos = @reader.pos
-      millisecond = consume_number(12)
+      millisecond = consume_number_i64(12)
       digits = @reader.pos - pos
       if digits > 3
         millisecond /= 10 ** (digits - 3)
       end
-      @nanosecond = millisecond * Time::NANOSECONDS_PER_MILLISECOND
+      @nanosecond = (millisecond * Time::NANOSECONDS_PER_MILLISECOND).to_i
+    end
+
+    def nanoseconds
+      # Consume more than 9 digits (12 seems a good maximum),
+      # and later just use the first 9 digits because Time
+      # only has nanosecond precision.
+      pos = @reader.pos
+      nanosecond = consume_number(12)
+      digits = @reader.pos - pos
+      if digits > 9
+        nanosecond /= 10 ** (digits - 9)
+      end
+      @nanosecond = nanosecond
     end
 
     def am_pm

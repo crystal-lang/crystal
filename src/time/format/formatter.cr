@@ -113,6 +113,10 @@ struct Time::Format
       pad3 time.millisecond, '0'
     end
 
+    def nanoseconds
+      pad9 time.nanosecond, '0'
+    end
+
     def am_pm
       io << (time.hour < 12 ? "am" : "pm")
     end
@@ -215,6 +219,15 @@ struct Time::Format
     def pad4(value, padding)
       io.write_byte padding.ord.to_u8 if value < 1000
       pad3 value, padding
+    end
+
+    def pad9(value, padding)
+      io.write_byte padding.ord.to_u8 if value < 100000000
+      io.write_byte padding.ord.to_u8 if value < 10000000
+      io.write_byte padding.ord.to_u8 if value < 1000000
+      io.write_byte padding.ord.to_u8 if value < 100000
+      io.write_byte padding.ord.to_u8 if value < 10000
+      pad4 value, padding
     end
   end
 end
