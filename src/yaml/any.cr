@@ -163,6 +163,54 @@ struct YAML::Any
     as_s if @raw.is_a?(String)
   end
 
+  # Checks that the underlying value is `Int64`, and returns its value.
+  # Raises otherwise.
+  def as_i64 : Int64
+    @raw.as(Int64)
+  end
+
+  # Checks that the underlying value is `Int64`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_i64? : Int64?
+    as_i64 if @raw.is_a? Int64
+  end
+
+  # Checks that the underlying value is `Int64`, and returns its value as `Int32`.
+  # Raises otherwise.
+  def as_i : Int32
+    @raw.as(Int64).to_i32
+  end
+
+  # Checks that the underlying value is `Int64`, and returns its value as `Int32`.
+  # Returns `nil` otherwise.
+  def as_i? : Int32?
+    as_i if @raw.is_a? Int64
+  end
+
+  # Checks that the underlying value is `Float64`, and returns its value.
+  # Raises otherwise.
+  def as_f : Float64
+    @raw.as(Float64)
+  end
+
+  # Checks that the underlying value is `Float64`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_f? : Float64?
+    as_f if @raw.is_a? Float64
+  end
+
+  # Checks that the underlying value is `Time`, and returns its value.
+  # Raises otherwise.
+  def as_time : Time
+    @raw.as(Time)
+  end
+
+  # Checks that the underlying value is `Time`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_time? : Time?
+    as_time if @raw.is_a? Time
+  end
+
   # Checks that the underlying value is `Array`, and returns its value.
   # Raises otherwise.
   def as_a : Array(Type)

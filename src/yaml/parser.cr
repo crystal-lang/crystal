@@ -51,7 +51,7 @@ class YAML::Parser
   def parse_node
     case @pull_parser.kind
     when EventKind::SCALAR
-      anchor @pull_parser.value, @pull_parser.scalar_anchor
+      anchor @pull_parser.read_value(advance: false), @pull_parser.scalar_anchor
     when EventKind::ALIAS
       @anchors[@pull_parser.alias_anchor]
     when EventKind::SEQUENCE_START

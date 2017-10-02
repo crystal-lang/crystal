@@ -21,40 +21,38 @@ def Array.from_yaml(string_or_io)
 end
 
 def Nil.new(pull : YAML::PullParser)
-  location = pull.location
-  value = pull.read_scalar
-  if value.empty?
-    nil
-  else
-    raise YAML::ParseException.new("Expected nil, not #{value}", *location)
-  end
+  pull.read_null
 end
 
 def Bool.new(pull : YAML::PullParser)
-  pull.read_scalar == "true"
+  pull.read_bool
 end
 
-{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
-  def {{type.id}}.new(pull : YAML::PullParser)
-    location = pull.location
-    begin
-      {{type.id}}.new(pull.read_scalar)
-    rescue ex
-      raise YAML::ParseException.new(ex.message.not_nil!, *location)
-    end
+# TODO: Ideally, it may be beter to use `for type in Int::Primitive.union_types`
+# but it is currently broken due to: https://github.com/crystal-lang/crystal/issues/4301
+{% for bits in [8, 16, 32, 64] %}
+  def Int{{bits}}.new(pull : YAML::PullParser)
+     pull.read_int.to_i{{bits}}
+  end
+
+  def UInt{{bits}}.new(pull : YAML::PullParser)
+   pull.read_int.to_u{{bits}}
   end
 {% end %}
 
+{% for bits in [32, 64] %}
+  def Float{{bits}}.new(pull : YAML::PullParser)
+    pull.read_float.to_f{{bits}}
+  end
+{% end %}
+
+# TODO: Implement a Time parser that supports all the YAML formats
+def Time.new(pull : YAML::PullParser)
+  pull.read_timestamp
+end
+
 def String.new(pull : YAML::PullParser)
-  pull.read_scalar
-end
-
-def Float32.new(pull : YAML::PullParser)
-  pull.read_scalar.to_f32
-end
-
-def Float64.new(pull : YAML::PullParser)
-  pull.read_scalar.to_f64
+  pull.read_string
 end
 
 def Array.new(pull : YAML::PullParser)
@@ -158,10 +156,6 @@ def Union.new(pull : YAML::PullParser)
     end
   {% end %}
   raise YAML::ParseException.new("Couldn't parse #{self} from #{string}", *location)
-end
-
-def Time.new(pull : YAML::PullParser)
-  Time::Format::ISO_8601_DATE_TIME.parse(pull.read_scalar)
 end
 
 struct Time::Format

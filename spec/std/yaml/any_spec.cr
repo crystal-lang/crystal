@@ -94,7 +94,7 @@ describe YAML::Any do
   end
 
   it "can compare with ===" do
-    ("1" === YAML.parse("1")).should be_truthy
+    (1_i64 === YAML.parse("1")).should be_truthy
   end
 
   it "exposes $~ when doing Regex#===" do
@@ -106,7 +106,7 @@ describe YAML::Any do
     nums = YAML.parse("[1, 2, 3]")
     nums.each_with_index do |x, i|
       x.should be_a(YAML::Any)
-      x.raw.should eq((i + 1).to_s)
+      x.raw.should eq(i + 1)
     end
   end
 end

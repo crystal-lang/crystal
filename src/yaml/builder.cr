@@ -60,9 +60,9 @@ class YAML::Builder
   end
 
   # Emits a scalar value.
-  def scalar(value)
+  def scalar(value, style = LibYAML::ScalarStyle::ANY)
     string = value.to_s
-    emit scalar, nil, nil, string, string.bytesize, 1, 1, LibYAML::ScalarStyle::ANY
+    emit scalar, nil, nil, string, string.bytesize, 1, 1, style
   end
 
   # Starts a sequence.

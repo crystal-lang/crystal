@@ -60,6 +60,23 @@ require "./yaml/*"
 # File.open("foo.yml", "w") { |f| {hello: "world"}.to_yaml(f) } # writes it to the file
 # ```
 module YAML
+  NULL_VALUES     = {"", "~", "null", "Null", "NULL"}
+  TRUE_VALUES     = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"}
+  FALSE_VALUES    = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"}
+  BOOL_VALUES     = TRUE_VALUES + FALSE_VALUES
+  INFINITY_VALUES = {".inf", ".Inf", ".INF"}
+  NAN_VALUES      = {".nan", ".NaN", ".NAN"}
+  FLOAT_VALUES    = INFINITY_VALUES + INFINITY_VALUES.map { |v| "-#{v}" } + INFINITY_VALUES.map { |v| "+#{v}" } + NAN_VALUES
+  RESERVED_VALUES = NULL_VALUES + BOOL_VALUES + FLOAT_VALUES
+
+  @[Flags]
+  private enum ScalarHint
+    Any
+    Int
+    Float
+    Date
+  end
+
   class Error < Exception
   end
 
@@ -85,7 +102,7 @@ module YAML
   end
 
   # All valid YAML types.
-  alias Type = String | Hash(Type, Type) | Array(Type) | Nil
+  alias Type = String | Bool | Int64 | Float64 | Nil | Time | Hash(Type, Type) | Array(Type)
   alias EventKind = LibYAML::EventType
 
   # Deserializes a YAML document.
@@ -146,5 +163,24 @@ module YAML
   # Serializes an object to YAML, writing it to *io*.
   def self.dump(object, io : IO)
     object.to_yaml(io)
+  end
+
+  # Checks to see if the value is reserved
+  def self.reserved_value?(value)
+    return true if YAML::RESERVED_VALUES.includes?(value)
+    case {value[0]?, value[1]?, value[2]?, value[3]?, value[4]?}
+    when {.try(&.ascii_number?), .try(&.ascii_number?), .try(&.ascii_number?), .try(&.ascii_number?), '-'}
+      !!Time::Format::ISO_8601_DATE_TIME.parse(value) rescue false
+    when {.try(&.ascii_number?), _, _, _, _},
+         {'-', .try(&.ascii_number?), _, _, _},
+         {'+', .try(&.ascii_number?), _, _, _},
+         {'.', .try(&.ascii_number?), _, _, _},
+         {'-', '.', .try(&.ascii_number?), _, _},
+         {'+', '.', .try(&.ascii_number?), _, _}
+      clean_value = value.gsub('_', "")
+      !!clean_value.to_f64? || !!clean_value.to_i64?(prefix: true)
+    else
+      false
+    end
   end
 end

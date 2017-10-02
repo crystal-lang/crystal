@@ -52,7 +52,7 @@ end
 
 class String
   def to_yaml(yaml : YAML::Builder)
-    yaml.scalar self
+    yaml.scalar self, YAML.reserved_value?(self) ? LibYAML::ScalarStyle::DOUBLE_QUOTED : LibYAML::ScalarStyle::PLAIN
   end
 end
 
@@ -61,6 +61,23 @@ struct Number
     yaml.scalar self
   end
 end
+
+{% for type in %w(Float32 Float64) %}
+  struct {{type.id}}
+    def to_yaml(yaml : YAML::Builder)
+      case self
+      when INFINITY
+        yaml.scalar ".inf", LibYAML::ScalarStyle::PLAIN
+      when -INFINITY
+        yaml.scalar "-.inf", LibYAML::ScalarStyle::PLAIN
+      when .nan?
+        yaml.scalar ".nan", LibYAML::ScalarStyle::PLAIN
+      else
+        yaml.scalar self
+      end
+    end
+  end
+{% end %}
 
 struct Nil
   def to_yaml(yaml : YAML::Builder)
@@ -102,7 +119,7 @@ end
 
 struct Time::Format
   def to_yaml(value : Time, yaml : YAML::Builder)
-    format(value).to_yaml(yaml)
+    yaml.scalar format(value)
   end
 end
 
