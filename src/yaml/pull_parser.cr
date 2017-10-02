@@ -176,47 +176,51 @@ class YAML::PullParser
   end
 
   def read_raw
-    case kind
-    when EventKind::SCALAR
-      self.value.not_nil!.tap { read_next }
-    when EventKind::SEQUENCE_START, EventKind::MAPPING_START
-      String.build { |io| read_raw(io) }
-    else
-      raise "Unexpected kind: #{kind}"
-    end
+    String.build { |io| read_raw(io) }
   end
 
   def read_raw(io)
-    case kind
-    when EventKind::SCALAR
-      self.value.not_nil!.inspect(io)
-      read_next
-    when EventKind::SEQUENCE_START
-      io << "["
-      read_next
-      first = true
-      while kind != EventKind::SEQUENCE_END
-        io << "," unless first
-        read_raw(io)
-        first = false
+    Builder.new(io) do |builder|
+      builder.start_stream
+      builder.start_document
+      case kind
+      when EventKind::SCALAR
+        builder.scalar(value.not_nil!)
+        depth = 0
+      when EventKind::MAPPING_START
+        builder.start_mapping
+        depth = 1
+      when EventKind::SEQUENCE_START
+        builder.start_sequence
+        depth = 1
+      else
+        raise "Unexpected kind: #{kind}"
       end
-      io << "]"
       read_next
-    when EventKind::MAPPING_START
-      io << "{"
-      read_next
-      first = true
-      while kind != EventKind::MAPPING_END
-        io << "," unless first
-        read_raw(io)
-        io << ":"
-        read_raw(io)
-        first = false
+
+      while depth > 0
+        case kind
+        when EventKind::MAPPING_START
+          depth += 1
+          builder.start_mapping
+        when EventKind::MAPPING_END
+          depth -= 1
+          builder.end_mapping
+        when EventKind::SEQUENCE_START
+          depth += 1
+          builder.start_sequence
+        when EventKind::SEQUENCE_END
+          depth -= 1
+          builder.end_sequence
+        when EventKind::SCALAR
+          builder.scalar(value.not_nil!)
+        else # TODO handle anchors
+          raise "Unexpected kind: #{kind}"
+        end
+        read_next
       end
-      io << "}"
-      read_next
-    else
-      raise "Unexpected kind: #{kind}"
+      builder.end_document
+      builder.end_stream
     end
   end
 
