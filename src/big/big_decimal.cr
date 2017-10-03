@@ -73,12 +73,14 @@ struct BigDecimal
     initialize(num.to_big_i, 0)
   end
 
-  # Creating a `BigDecimal` from `Float` is not recommended due to precision loss risks.
+  # Creating a `BigDecimal` from `Float`.
+  #
+  # NOTE: Floats are fundamentally less precise than BigDecimals, which makes initialization from them risky.
   def initialize(num : Float)
     initialize num.to_s
   end
 
-  # Creates a new `BigDecimal` from `BigInt`/`UInt64`, which matches the internal representation
+  # Creates a new `BigDecimal` from `BigInt`/`UInt64`, which matches the internal representation.
   def initialize(@value : BigInt, @scale : UInt64)
   end
 
@@ -259,7 +261,7 @@ end
 struct Int
   include Comparable(BigDecimal)
 
-  # Convert `Int` to `BigDecimal`
+  # Convert `Int` to `BigDecimal`.
   def to_big_d
     BigDecimal.new(self)
   end
@@ -272,14 +274,14 @@ end
 class String
   include Comparable(BigDecimal)
 
-  # Convert `String` to `BigDecimal`
+  # Convert `String` to `BigDecimal`.
   def to_big_d
     BigDecimal.new(self)
   end
 end
 
 struct Float
-  # Casting from `Float` is not recommended due to precision loss risks.
+  # NOTE: Floats are fundamentally less precise than BigDecimals, which makes initialization from them risky.
   def to_big_d
     BigDecimal.new(self)
   end
