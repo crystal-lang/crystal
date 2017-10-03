@@ -140,7 +140,7 @@ struct Time
     new(seconds: seconds + offset, nanoseconds: nanoseconds, kind: Kind::Local)
   end
 
-  def self.new(year, month, day, hour = 0, minute = 0, second = 0, nanosecond = 0, kind = Kind::Unspecified)
+  def self.new(year, month, day, hour = 0, minute = 0, second = 0, *, nanosecond = 0, kind = Kind::Unspecified)
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
@@ -500,7 +500,7 @@ struct Time
     end
   end
 
-  def_at(end_of_year) { Time.new(year, 12, 31, 23, 59, 59, 999, kind: kind) }
+  def_at(end_of_year) { Time.new(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
 
   def at_end_of_semester
     year, month = year_month_day_day_year
@@ -509,7 +509,7 @@ struct Time
     else
       month, day = 12, 31
     end
-    Time.new(year, month, day, 23, 59, 59, 999, kind: kind)
+    Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, kind: kind)
   end
 
   def at_end_of_quarter
@@ -523,10 +523,10 @@ struct Time
     else
       month, day = 12, 31
     end
-    Time.new(year, month, day, 23, 59, 59, 999, kind: kind)
+    Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, kind: kind)
   end
 
-  def_at(end_of_month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, 999, kind: kind) }
+  def_at(end_of_month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
 
   def at_end_of_week
     dow = day_of_week.value
@@ -537,10 +537,10 @@ struct Time
     end
   end
 
-  def_at(end_of_day) { Time.new(year, month, day, 23, 59, 59, 999, kind: kind) }
-  def_at(end_of_hour) { Time.new(year, month, day, hour, 59, 59, 999, kind: kind) }
-  def_at(end_of_minute) { Time.new(year, month, day, hour, minute, 59, 999, kind: kind) }
-  def_at(midday) { Time.new(year, month, day, 12, 0, 0, 0, kind: kind) }
+  def_at(end_of_day) { Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
+  def_at(end_of_hour) { Time.new(year, month, day, hour, 59, 59, nanosecond: 999_999_999, kind: kind) }
+  def_at(end_of_minute) { Time.new(year, month, day, hour, minute, 59, nanosecond: 999_999_999, kind: kind) }
+  def_at(midday) { Time.new(year, month, day, 12, 0, 0, nanosecond: 0, kind: kind) }
 
   {% for name, index in %w(sunday monday tuesday wednesday thursday friday saturday) %}
     def {{name.id}}?

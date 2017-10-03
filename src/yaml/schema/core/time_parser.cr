@@ -109,7 +109,7 @@ struct YAML::Schema::Core::TimeParser
 
     return nil if @reader.has_next?
 
-    time = new_time(year, month, day, hour, minute, second, millisecond)
+    time = new_time(year, month, day, hour, minute, second, nanosecond: millisecond * 1_000_000)
     if time && tz_offset
       time = time - tz_offset.minutes
     end
@@ -191,8 +191,8 @@ struct YAML::Schema::Core::TimeParser
     true
   end
 
-  def new_time(*args)
-    Time.new(*args, kind: Time::Kind::Utc)
+  def new_time(*args, **named_args)
+    Time.new(*args, **named_args, kind: Time::Kind::Utc)
   rescue
     nil
   end

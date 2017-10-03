@@ -13,7 +13,7 @@ describe Time do
     t1.month.should eq(2)
     t1.day.should eq(25)
 
-    t2 = Time.new 2002, 2, 25, 15, 25, 13, 8
+    t2 = Time.new 2002, 2, 25, 15, 25, 13, nanosecond: 8
     t2.year.should eq(2002)
     t2.month.should eq(2)
     t2.day.should eq(25)
@@ -24,7 +24,7 @@ describe Time do
   end
 
   it "initialize max" do
-    time = Time.new(9999, 12, 31, 23, 59, 59, 999_999_999)
+    time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
     time.year.should eq(9999)
     time.month.should eq(12)
     time.day.should eq(31)
@@ -34,15 +34,15 @@ describe Time do
     time.nanosecond.should eq(999_999_999)
   end
 
-  it "initialize millisecond negative" do
+  it "fail initialize with negative nanosecond" do
     Time.expect_invalid do
-      Time.new(9999, 12, 31, 23, 59, 59, -1)
+      Time.new(9999, 12, 31, 23, 59, 59, nanosecond: -1)
     end
   end
 
-  it "initialize nanoseconds 1_000_000_000" do
+  it "fail initialize with 1_000_000_000 nanoseconds" do
     Time.expect_invalid do
-      Time.new(9999, 12, 31, 23, 59, 59, 1_000_000_000)
+      Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 1_000_000_000)
     end
   end
 
@@ -233,7 +233,7 @@ describe Time do
   end
 
   it "gets unix epoch seconds" do
-    t1 = Time.new 2014, 10, 30, 21, 18, 13, 0, Time::Kind::Utc
+    t1 = Time.new 2014, 10, 30, 21, 18, 13, nanosecond: 0, kind: Time::Kind::Utc
     t1.epoch.should eq(1414703893)
     t1.epoch_f.should be_close(1414703893, 1e-01)
   end
@@ -265,12 +265,12 @@ describe Time do
   end
 
   it "formats" do
-    t = Time.new 2014, 1, 2, 3, 4, 5, 6_000_000
-    t2 = Time.new 2014, 1, 2, 15, 4, 5, 6_000_000
-    t3 = Time.new 2014, 1, 2, 12, 4, 5, 6_000_000
+    t = Time.new 2014, 1, 2, 3, 4, 5, nanosecond: 6_000_000
+    t2 = Time.new 2014, 1, 2, 15, 4, 5, nanosecond: 6_000_000
+    t3 = Time.new 2014, 1, 2, 12, 4, 5, nanosecond: 6_000_000
 
     t.to_s("%Y").should eq("2014")
-    Time.new(1, 1, 2, 3, 4, 5, 6).to_s("%Y").should eq("0001")
+    Time.new(1, 1, 2, 3, 4, 5, nanosecond: 6).to_s("%Y").should eq("0001")
 
     t.to_s("%C").should eq("20")
     t.to_s("%y").should eq("14")
@@ -355,7 +355,7 @@ describe Time do
 
     t.to_s("%Y-%m-hello").should eq("2014-01-hello")
 
-    t = Time.new 2014, 1, 2, 3, 4, 5, 6, kind: Time::Kind::Utc
+    t = Time.new 2014, 1, 2, 3, 4, 5, nanosecond: 6, kind: Time::Kind::Utc
     t.to_s("%s").should eq("1388631845")
   end
 
@@ -510,8 +510,8 @@ describe Time do
   end
 
   it "at" do
-    t1 = Time.new 2014, 11, 25, 10, 11, 12, 13
-    t2 = Time.new 2014, 6, 25, 10, 11, 12, 13
+    t1 = Time.new 2014, 11, 25, 10, 11, 12, nanosecond: 13
+    t2 = Time.new 2014, 6, 25, 10, 11, 12, nanosecond: 13
 
     t1.at_beginning_of_year.to_s.should eq("2014-01-01 00:00:00")
 
