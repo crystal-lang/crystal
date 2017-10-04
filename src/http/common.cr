@@ -235,13 +235,13 @@ module HTTP
   # timezone `GMT` (interpreted as `UTC`).
   #
   # ```
-  # HTTP.format_http_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
+  # HTTP.format_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
   # ```
   def self.format_date(time : Time) : String
     time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
   end
 
-  # DEPRECATED: Use `HTTP.format_http_date` instead.
+  # DEPRECATED: Use `HTTP.format_date` instead.
   def self.rfc1123_date(time : Time) : String
     format_date(time)
   end
