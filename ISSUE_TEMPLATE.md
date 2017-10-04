@@ -1,3 +1,10 @@
+# Precheck
+
+* Do not use the issues tracker for help or support (try Crystal Google Groups, Stack Overflow, Gitter, IRC, etc.)
+* For proposing a new feature, please start a discussion on the Crystal Google Groups mailing list
+* For bugs, do a quick search and make sure the bug has not yet been reported
+* Finally, be nice and have fun!
+
 # Submitting bugs
 
 Make sure to review these points before submitting issues - thank you!
