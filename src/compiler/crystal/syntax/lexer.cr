@@ -606,11 +606,15 @@ module Crystal
             @token.value = '\t'
           when 'v'
             @token.value = '\v'
+          when 'x'
+            value = consume_string_hex_escape
+            @token.value = value.chr
           when 'u'
             value = consume_char_unicode_escape
             @token.value = value.chr
-          when '0'
-            @token.value = '\0'
+          when '0', '1', '2', '3', '4', '5', '6', '7'
+            value = consume_octal_escape(char2)
+            @token.value = value.chr
           when '\0'
             raise "unterminated char literal", line, column
           else

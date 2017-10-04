@@ -238,6 +238,8 @@ describe "Lexer" do
   it_lexes_char "'\\r'", '\r'
   it_lexes_char "'\\0'", '\0'
   it_lexes_char "'\\0'", '\0'
+  it_lexes_char "'\\x40'", '@'
+  it_lexes_char "'\\100'", '@'
   it_lexes_char "'\\''", '\''
   it_lexes_char "'\\\\'", '\\'
   assert_syntax_error "'", "unterminated char literal"
@@ -475,7 +477,7 @@ describe "Lexer" do
   assert_syntax_error "'\\u{110000}'", "invalid unicode codepoint (too large)"
   assert_syntax_error ":+1", "unexpected token"
 
-  assert_syntax_error "'\\1'", "invalid char escape sequence"
+  assert_syntax_error "'\\9'", "invalid char escape sequence"
 
   it_lexes_string %("\\1"), String.new(Bytes[1])
   it_lexes_string %("\\4"), String.new(Bytes[4])
