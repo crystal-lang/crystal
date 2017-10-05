@@ -305,7 +305,7 @@ describe "YAML serialization" do
     end
 
     it "does for utc time with milliseconds" do
-      time = Time.new(2010, 11, 12, 1, 2, 3, 456_000_000, kind: Time::Kind::Utc)
+      time = Time.new(2010, 11, 12, 1, 2, 3, nanosecond: 456_000_000, kind: Time::Kind::Utc)
       time.to_yaml.should eq("--- 2010-11-12 01:02:03.456\n...\n")
     end
 
