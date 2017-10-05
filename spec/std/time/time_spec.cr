@@ -313,6 +313,7 @@ describe Time do
     t.to_s("%M").to_s.should eq("04")
     t.to_s("%S").to_s.should eq("05")
     t.to_s("%L").to_s.should eq("006")
+    t.to_s("%N").to_s.should eq("006000000")
 
     Time.utc_now.to_s("%z").should eq("+0000")
     Time.utc_now.to_s("%:z").should eq("+00:00")
@@ -399,6 +400,7 @@ describe Time do
   it { Time.parse("09", "%M").minute.should eq(9) }
   it { Time.parse("09", "%S").second.should eq(9) }
   it { Time.parse("123", "%L").millisecond.should eq(123) }
+  it { Time.parse("321", "%N").nanosecond.should eq(321) }
   it { Time.parse("Fri Oct 31 23:00:24 2014", "%c").to_s.should eq("2014-10-31 23:00:24") }
   it { Time.parse("10/31/14", "%D").to_s.should eq("2014-10-31 00:00:00") }
   it { Time.parse("10/31/69", "%D").to_s.should eq("1969-10-31 00:00:00") }
