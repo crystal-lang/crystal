@@ -65,10 +65,7 @@ class Crystal::Command
     when "init".starts_with?(command)
       options.shift
       init
-    when "build".starts_with?(command), "compile".starts_with?(command)
-      if "compile".starts_with?(command)
-        STDERR.puts "Deprecation: The compile command was renamed to build and will be removed in a future version."
-      end
+    when "build".starts_with?(command)
       options.shift
       build
     when "play".starts_with?(command)
