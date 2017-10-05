@@ -75,13 +75,13 @@ struct YAML::Schema::Core::TimeParser
       return new_time(year, month, day, hour, minute, second)
     end
 
-    millisecond = 0
+    nanosecond = 0
 
     if current_char == '.'
       next_char
 
-      millisecond = parse_milliseconds
-      return nil unless millisecond
+      nanosecond = parse_nanoseconds
+      return nil unless nanosecond
     end
 
     skip_space
@@ -109,22 +109,22 @@ struct YAML::Schema::Core::TimeParser
 
     return nil if @reader.has_next?
 
-    time = new_time(year, month, day, hour, minute, second, nanosecond: millisecond * 1_000_000)
+    time = new_time(year, month, day, hour, minute, second, nanosecond: nanosecond)
     if time && tz_offset
       time = time - tz_offset.minutes
     end
     time
   end
 
-  def parse_milliseconds
+  def parse_nanoseconds
     return nil unless current_char.ascii_number?
 
-    multiplier = 100
+    multiplier = Time::NANOSECONDS_PER_SECOND / 10
     number = current_char.to_i
 
     next_char
 
-    2.times do
+    8.times do
       break unless current_char.ascii_number?
 
       number *= 10
