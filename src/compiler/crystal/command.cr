@@ -58,58 +58,53 @@ class Crystal::Command
 
   def run
     command = options.first?
-
-    if command
-      case
-      when "init".starts_with?(command)
-        options.shift
-        init
-      when "build".starts_with?(command), "compile".starts_with?(command)
-        if "compile".starts_with?(command)
-          STDERR.puts "Deprecation: The compile command was renamed to build and will be removed in a future version."
-        end
-        options.shift
-        build
-      when "play".starts_with?(command)
-        options.shift
-        playground
-      when "deps".starts_with?(command)
-        options.shift
-        deps
-      when "docs".starts_with?(command)
-        options.shift
-        docs
-      when command == "env"
-        options.shift
-        env
-      when command == "eval"
-        options.shift
-        eval
-      when "run".starts_with?(command)
-        options.shift
-        run_command(single_file: false)
-      when "spec/".starts_with?(command)
-        options.shift
-        spec
-      when "tool".starts_with?(command)
-        options.shift
-        tool
-      when "help".starts_with?(command), "--help" == command, "-h" == command
-        puts USAGE
-        exit
-      when "version".starts_with?(command), "--version" == command, "-v" == command
-        puts Crystal::Config.description
-        exit
-      else
-        if File.file?(command)
-          run_command(single_file: true)
-        else
-          error "unknown command: #{command}"
-        end
-      end
-    else
+    case
+    when !command
       puts USAGE
       exit
+    when "init".starts_with?(command)
+      options.shift
+      init
+    when "build".starts_with?(command), "compile".starts_with?(command)
+      if "compile".starts_with?(command)
+        STDERR.puts "Deprecation: The compile command was renamed to build and will be removed in a future version."
+      end
+      options.shift
+      build
+    when "play".starts_with?(command)
+      options.shift
+      playground
+    when "deps".starts_with?(command)
+      options.shift
+      deps
+    when "docs".starts_with?(command)
+      options.shift
+      docs
+    when command == "env"
+      options.shift
+      env
+    when command == "eval"
+      options.shift
+      eval
+    when "run".starts_with?(command)
+      options.shift
+      run_command(single_file: false)
+    when "spec/".starts_with?(command)
+      options.shift
+      spec
+    when "tool".starts_with?(command)
+      options.shift
+      tool
+    when "help".starts_with?(command), "--help" == command, "-h" == command
+      puts USAGE
+      exit
+    when "version".starts_with?(command), "--version" == command, "-v" == command
+      puts Crystal::Config.description
+      exit
+    when File.file?(command)
+      run_command(single_file: true)
+    else
+      error "unknown command: #{command}"
     end
   rescue ex : Crystal::LocationlessException
     error ex.message
@@ -134,35 +129,33 @@ class Crystal::Command
 
   private def tool
     tool = options.first?
-    if tool
-      case
-      when "context".starts_with?(tool)
-        options.shift
-        context
-      when "format".starts_with?(tool)
-        options.shift
-        format
-      when "expand".starts_with?(tool)
-        options.shift
-        expand
-      when "hierarchy".starts_with?(tool)
-        options.shift
-        hierarchy
-      when "implementations".starts_with?(tool)
-        options.shift
-        implementations
-      when "types".starts_with?(tool)
-        options.shift
-        types
-      when "--help" == tool, "-h" == tool
-        puts COMMANDS_USAGE
-        exit
-      else
-        error "unknown tool: #{tool}"
-      end
-    else
+    case
+    when !tool
       puts COMMANDS_USAGE
       exit
+    when "context".starts_with?(tool)
+      options.shift
+      context
+    when "format".starts_with?(tool)
+      options.shift
+      format
+    when "expand".starts_with?(tool)
+      options.shift
+      expand
+    when "hierarchy".starts_with?(tool)
+      options.shift
+      hierarchy
+    when "implementations".starts_with?(tool)
+      options.shift
+      implementations
+    when "types".starts_with?(tool)
+      options.shift
+      types
+    when "--help" == tool, "-h" == tool
+      puts COMMANDS_USAGE
+      exit
+    else
+      error "unknown tool: #{tool}"
     end
   end
 
