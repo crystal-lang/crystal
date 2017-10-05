@@ -26,7 +26,7 @@ struct Time::Format
         return Time.epoch(epoch)
       end
 
-      time = Time.new @year, @month, @day, @hour, @minute, @second, @nanosecond, time_kind
+      time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, kind: time_kind
 
       if offset_in_minutes = @offset_in_minutes
         time -= offset_in_minutes.minutes if offset_in_minutes != 0

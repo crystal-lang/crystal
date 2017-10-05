@@ -69,9 +69,9 @@ describe HTTP::FormData do
 
       name.should eq("foo")
       meta.filename.should eq(%q(foo"\bar baz\))
-      meta.creation_time.should eq(Time.new(1997, 2, 12, 21, 29, 51, 0, kind: Time::Kind::Utc))
-      meta.modification_time.should eq(Time.new(1997, 2, 12, 21, 29, 51, 0, kind: Time::Kind::Utc))
-      meta.read_time.should eq(Time.new(1997, 2, 12, 21, 29, 51, 0, kind: Time::Kind::Utc))
+      meta.creation_time.should eq(Time.new(1997, 2, 12, 21, 29, 51, nanosecond: 0, kind: Time::Kind::Utc))
+      meta.modification_time.should eq(Time.new(1997, 2, 12, 21, 29, 51, nanosecond: 0, kind: Time::Kind::Utc))
+      meta.read_time.should eq(Time.new(1997, 2, 12, 21, 29, 51, nanosecond: 0, kind: Time::Kind::Utc))
       meta.size.should eq(432334)
     end
   end

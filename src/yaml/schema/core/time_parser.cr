@@ -191,8 +191,8 @@ struct YAML::Schema::Core::TimeParser
     true
   end
 
-  def new_time(*args)
-    Time.new(*args, kind: Time::Kind::Utc)
+  def new_time(*args, **named_args)
+    Time.new(*args, **named_args, kind: Time::Kind::Utc)
   rescue
     nil
   end
