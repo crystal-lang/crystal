@@ -23,6 +23,10 @@ module Time::Format
       io << time.year / 100
     end
 
+    def full_or_short_year
+      year
+    end
+
     def month
       io << time.month
     end
@@ -79,6 +83,12 @@ module Time::Format
       io << get_short_day_name.upcase
     end
 
+    def short_day_name_with_comma?
+      short_day_name
+      char ','
+      whitespace
+    end
+
     def day_of_year_zero_padded
       pad3 time.day_of_year, '0'
     end
@@ -117,6 +127,12 @@ module Time::Format
       pad9 time.nanosecond, '0'
     end
 
+    def second_fraction?
+      if time.millisecond != 0
+        milliseconds
+      end
+    end
+
     def am_pm
       io << (time.hour < 12 ? "am" : "pm")
     end
@@ -144,13 +160,33 @@ module Time::Format
       when Time::Kind::Utc, Time::Kind::Unspecified
         io << "+0000"
       when Time::Kind::Local
-        negative, hours, minutes = local_time_zone_info
-        io << (negative ? "-" : "+")
-        io << "0" if hours < 10
-        io << hours
-        io << "0" if minutes < 10
-        io << minutes
+        time_zone_offset
       end
+    end
+
+    def time_zone_z_or_offset(**options)
+      case time.kind
+      when Time::Kind::Utc
+        io << 'Z'
+      when Time::Kind::Local
+        time_zone_offset
+      else
+        raise "invalid timezone"
+      end
+    end
+
+    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true)
+      if time.kind == Time::Kind::Local
+        negative, hours, minutes = local_time_zone_info
+      else
+        negative, hours, minutes = false, 0, 0
+      end
+      io << (negative ? "-" : "+")
+      io << "0" if hours < 10
+      io << hours
+      io << ':' if force_colon
+      io << "0" if minutes < 10
+      io << minutes
     end
 
     def time_zone_colon
@@ -186,8 +222,35 @@ module Time::Format
       {negative, hours, minutes}
     end
 
-    def char(char)
+    def time_zone_gmt
+      io << "GMT"
+    end
+
+    def time_zone_rfc2822
+      time_zone_offset(allow_colon: false)
+    end
+
+    def time_zone_gmt_or_rfc2822(**options)
+      case time.kind
+      when Time::Kind::Utc
+        time_zone_gmt
+      when Time::Kind::Local
+        time_zone_rfc2822
+      else
+        raise "invalid timezone"
+      end
+    end
+
+    def char(char, *alternatives)
       io << char
+    end
+
+    def char?(char, *alternatives)
+      char(char, *alternatives)
+    end
+
+    def whitespace
+      io << ' '
     end
 
     def get_month_name

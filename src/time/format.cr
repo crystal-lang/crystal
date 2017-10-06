@@ -1,3 +1,6 @@
+require "./format/formatter"
+require "./format/parser"
+
 # Specifies the format to convert a `Time` to and from a `String`.
 #
 # The pattern of a format is a `String` with directives. Directives
@@ -50,16 +53,10 @@
 # * **%:z**: time zone as hour and minute offset from UTC with a colon (+09:00)
 # * **%::z**: time zone as hour, minute and second offset from UTC with a colon (+09:00:00)
 module Time::Format
-  # The ISO 8601 date format. This is just `"%F"`.
-  ISO_8601_DATE = new "%F"
-
-  # The ISO 8601 datetime format. This is just `"%FT%X%z"`.
-  ISO_8601_DATE_TIME = new "%FT%X%z"
-
   # :nodoc:
   MONTH_NAMES = %w(January February March April May June July August September October November December)
   # :nodoc:
-  DAY_NAMES   = %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday)
+  DAY_NAMES = %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday)
 
   # Parses a string into a `Time`.
   abstract def parse(string, kind = @kind) : Time
@@ -83,4 +80,38 @@ module Time::Format
   def self.new(pattern : String, kind = Time::Kind::Unspecified)
     Format::Pattern.new(pattern, kind)
   end
+
+  macro extended
+    # Parses a string into a `Time`.
+    def self.parse(string, kind = Time::Kind::Unspecified) : Time
+      parser = Parser.new(string)
+      parser.visit
+      parser.time(kind)
+    end
+
+    # Formats a `Time` into the given *io*.
+    def self.format(time : Time, io : IO)
+      formatter = Formatter.new(time, io)
+      formatter.visit
+      io
+    end
+
+    # :nodoc:
+    module Visitor
+    end
+
+    # :nodoc:
+    struct Parser
+      include Visitor
+      include Time::Format::Parser
+    end
+
+    # :nodoc:
+    struct Formatter
+      include Visitor
+      include Time::Format::Formatter
+    end
+  end
 end
+
+require "./format/custom/*"

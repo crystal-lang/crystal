@@ -4,6 +4,21 @@ module Time::Format
   # :nodoc:
   module Parser
     include CompositeTerms
+
+    # :nodoc:
+    RFC_2822_ZONES = {
+      "UT"  => 0,
+      "GMT" => 0,
+      "EST" => -5,
+      "EDT" => -4,
+      "CST" => -6,
+      "CDT" => -5,
+      "MST" => -7,
+      "MDT" => -6,
+      "PST" => -8,
+      "PDT" => -7,
+    }
+
     @epoch : Int64?
 
     def initialize(string)
@@ -59,6 +74,17 @@ module Time::Format
       @year = consume_number(2) * 100
     end
 
+    def full_or_short_year
+      @year = case year = consume_number(4)
+              when 0..49
+                year + 2000
+              when 50..999
+                year + 1900
+              else
+                year
+              end
+    end
+
     def month
       @month = consume_number(2)
     end
@@ -91,7 +117,18 @@ module Time::Format
     end
 
     def short_month_name
-      month_name
+      string = consume_string
+      if string.size != 3
+        raise "Invalid month"
+      end
+
+      string = string.capitalize
+      index = MONTH_NAMES.index &.starts_with?(string)
+      if index
+        @month = 1 + index
+      else
+        raise "Invalid month"
+      end
     end
 
     def short_month_name_upcase
@@ -133,6 +170,14 @@ module Time::Format
 
     def short_day_name_upcase
       day_name
+    end
+
+    def short_day_name_with_comma?
+      return unless current_char.ascii_letter?
+
+      short_day_name
+      char ','
+      whitespace
     end
 
     def day_of_year_zero_padded
@@ -190,6 +235,13 @@ module Time::Format
       @nanosecond = nanosecond
     end
 
+    def second_fraction?
+      if current_char == '.'
+        next_char
+        milliseconds
+      end
+    end
+
     def am_pm
       string = consume_string
       case string.downcase
@@ -230,9 +282,7 @@ module Time::Format
     def time_zone
       case char = current_char
       when 'Z'
-        @offset_in_minutes = 0
-        @kind = Time::Kind::Utc
-        next_char
+        time_zone_z
       when 'U'
         if next_char == 'T' && next_char == 'C'
           @offset_in_minutes = 0
@@ -242,38 +292,68 @@ module Time::Format
           raise "Invalid timezone"
         end
       when '-', '+'
-        sign = char == '-' ? -1 : 1
+        time_zone_offset
+      else
+        raise "Invalid timezone"
+      end
+    end
 
+    def time_zone_z_or_offset(**options)
+      case char = current_char
+      when 'Z', 'z'
+        time_zone_z
+      when '-', '+'
+        time_zone_offset(**options)
+      else
+        raise "Invalid timezone: #{current_char.inspect} (#{@reader.pos}) #{self.inspect}"
+      end
+    end
+
+    def time_zone_z
+      raise "Invalid timezone" unless {'Z', 'z'}.includes? current_char
+
+      @offset_in_minutes = 0
+      @kind = Time::Kind::Utc
+      next_char
+    end
+
+    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true)
+      sign = current_char == '-' ? -1 : 1
+
+      char = next_char
+      raise "Invalid timezone" unless char.ascii_number?
+      hours = char.to_i
+
+      char = next_char
+      raise "Invalid timezone" unless char.ascii_number?
+      hours = 10*hours + char.to_i
+
+      char = next_char
+      if char == ':'
+        raise "Invalid timezone" unless allow_colon
         char = next_char
-        raise "Invalid timezone" unless char.ascii_number?
-        hours = char.to_i
+      elsif force_colon
+        raise "Invalid timezone"
+      end
+      raise "Invalid timezone" unless char.ascii_number?
+      minutes = char.to_i
 
-        char = next_char
-        raise "Invalid timezone" unless char.ascii_number?
-        hours = 10*hours + char.to_i
+      char = next_char
+      raise "Invalid timezone" unless char.ascii_number?
+      minutes = 10*minutes + char.to_i
 
-        char = next_char
-        char = next_char if char == ':'
-        raise "Invalid timezone" unless char.ascii_number?
-        minutes = char.to_i
+      @offset_in_minutes = sign * (60*hours + minutes)
+      @kind = Time::Kind::Utc
+      char = next_char
 
-        char = next_char
-        raise "Invalid timezone" unless char.ascii_number?
-        minutes = 10*minutes + char.to_i
-
-        @offset_in_minutes = sign * (60*hours + minutes)
-        @kind = Time::Kind::Utc
-        char = next_char
-
-        if @reader.has_next?
-          pos = @reader.pos
-          if char == ':' && next_char.ascii_number? && @reader.has_next? && next_char.ascii_number?
-            next_char
-          elsif char.ascii_number? && next_char.ascii_number?
-            next_char
-          else
-            @reader.pos = pos
-          end
+      if @reader.has_next? && allow_seconds
+        pos = @reader.pos
+        if char == ':' && next_char.ascii_number? && @reader.has_next? && next_char.ascii_number?
+          next_char
+        elsif char.ascii_number? && next_char.ascii_number?
+          next_char
+        else
+          @reader.pos = pos
         end
       end
     end
@@ -286,12 +366,41 @@ module Time::Format
       time_zone
     end
 
-    def char(char)
-      if current_char == char
-        next_char
+    def time_zone_gmt
+      consume_string == "GMT" || raise "Invalid timezone"
+      @kind = Time::Kind::Utc
+      @offset_in_minutes = 0
+    end
+
+    def time_zone_rfc2822
+      case char = current_char
+      when '-', '+'
+        time_zone_offset(allow_colon: false)
       else
-        raise "Unexpected char: #{char.inspect} (#{@reader.pos})"
+        zone = consume_string
+        @offset_in_minutes = (RFC_2822_ZONES[zone]? || 0) * 60
+        @kind = Time::Kind::Utc
       end
+    end
+
+    def time_zone_gmt_or_rfc2822(**options)
+      time_zone_rfc2822
+    end
+
+    def char(char, *alternatives, raise do_raise = true)
+      if current_char == char || alternatives.includes?(current_char)
+        next_char
+        true
+      else
+        if do_raise
+          raise "Unexpected char: #{current_char.inspect} (#{@reader.pos})"
+        end
+        false
+      end
+    end
+
+    def char?(char, *alternatives)
+      char(char, *alternatives, raise: false)
     end
 
     def consume_number(max_digits)
@@ -339,6 +448,13 @@ module Time::Format
 
     def skip_space
       next_char if current_char.ascii_whitespace?
+    end
+
+    def whitespace
+      unless current_char.ascii_whitespace?
+        raise "Unexpected char: #{current_char.inspect} (#{@reader.pos})"
+      end
+      next_char
     end
 
     def current_char
