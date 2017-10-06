@@ -1,9 +1,9 @@
-require "./pattern"
+require "./composite_terms"
 
-struct Time::Format
+module Time::Format
   # :nodoc:
-  struct Formatter
-    include Pattern
+  module Formatter
+    include CompositeTerms
 
     getter io : IO
     getter time : Time

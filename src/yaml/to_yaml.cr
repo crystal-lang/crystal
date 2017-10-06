@@ -124,7 +124,7 @@ struct Time
   end
 end
 
-struct Time::Format
+module Time::Format
   def to_yaml(value : Time, yaml : YAML::Nodes::Builder)
     yaml.scalar format(value)
   end

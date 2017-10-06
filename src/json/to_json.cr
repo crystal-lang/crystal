@@ -110,7 +110,7 @@ struct NamedTuple
   end
 end
 
-struct Time::Format
+module Time::Format
   def to_json(value : Time, json : JSON::Builder)
     format(value).to_json(json)
   end

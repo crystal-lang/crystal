@@ -1,8 +1,9 @@
-struct Time::Format
-  # :nodoc:
-  struct Parser
-    include Pattern
+require "./composite_terms"
 
+module Time::Format
+  # :nodoc:
+  module Parser
+    include CompositeTerms
     @epoch : Int64?
 
     def initialize(string)
@@ -44,10 +45,10 @@ struct Time::Format
     end
 
     def year_modulo_100
-      year = consume_number(2)
-      if 69 <= year <= 99
+      case year = consume_number(2)
+      when 69..99
         @year = year + 1900
-      elsif 0 <= year
+      when .>(0)
         @year = year + 2000
       else
         raise "Invalid year"

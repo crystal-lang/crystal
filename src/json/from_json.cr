@@ -234,7 +234,7 @@ def Time.new(pull : JSON::PullParser)
   Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
 end
 
-struct Time::Format
+module Time::Format
   def from_json(pull : JSON::PullParser)
     string = pull.read_string
     parse(string)
