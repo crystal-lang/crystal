@@ -833,6 +833,8 @@ class Hash(K, V)
   end
 
   protected def find_entry(key)
+    return nil if empty?
+
     index = bucket_index key
     entry = @buckets[index]
     find_entry_in_bucket entry, key
