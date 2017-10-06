@@ -59,7 +59,7 @@ module HTTP
       end
 
       name, value = parse_header(line)
-      headers.add(name, value)
+      break unless headers.add?(name, value)
     end
   end
 

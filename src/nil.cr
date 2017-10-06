@@ -67,9 +67,9 @@ struct Nil
     false
   end
 
-  # Returns `0`.
-  def hash
-    0
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.nil
   end
 
   # Returns an empty string.

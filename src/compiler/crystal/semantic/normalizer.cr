@@ -51,8 +51,6 @@ module Crystal
       case exps.size
       when 0
         Nop.new
-      when 1
-        exps[0]
       else
         node.expressions = exps
         node

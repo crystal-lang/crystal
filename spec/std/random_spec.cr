@@ -36,6 +36,8 @@ describe "Random" do
     5.times do
       rand(Int64::MAX).should be >= 0
     end
+
+    rand(0).should eq 0
   end
 
   it "float number" do
@@ -50,9 +52,19 @@ describe "Random" do
     x.should be < 3.5
   end
 
+  it "float number 0.0" do
+    rand(0.0).should eq 0.0
+  end
+
   it "raises on invalid number" do
-    expect_raises ArgumentError, "Invalid bound for rand: 0" do
-      rand(0)
+    expect_raises ArgumentError, "Invalid bound for rand: -1" do
+      rand(-1)
+    end
+  end
+
+  it "raises on invalid float number" do
+    expect_raises ArgumentError, "Invalid bound for rand: -1.0" do
+      rand(-1.0)
     end
   end
 
@@ -174,6 +186,85 @@ describe "Random" do
       expected = a.to_i
       expected -= 0x100 if a >= 0x80
       rng.rand(Int8::MIN..Int8::MAX).should eq expected
+    end
+  end
+
+  describe "random_bytes" do
+    it "generates random bytes" do
+      rng = TestRNG.new([0xfa19443eu32, 1u32, 0x12345678u32])
+      rng.random_bytes(9).should eq Bytes[0x3e, 0x44, 0x19, 0xfa, 1, 0, 0, 0, 0x78]
+      rng.random_bytes(1).should eq Bytes[0x3e]
+      rng.random_bytes(4).should eq Bytes[1, 0, 0, 0]
+      rng.random_bytes(3).should eq Bytes[0x78, 0x56, 0x34]
+      rng.random_bytes(0).should eq Bytes.new(0)
+
+      rng = TestRNG.new([12u8, 255u8, 11u8, 5u8, 122u8, 200u8, 192u8])
+      rng.random_bytes(7).should eq Bytes[12, 255, 11, 5, 122, 200, 192]
+    end
+
+    it "gets random bytes with default number of digits" do
+      bytes = TestRNG.new(RNG_DATA_32).random_bytes
+      bytes.size.should eq(16)
+    end
+
+    it "gets random bytes with requested number of digits" do
+      bytes = TestRNG.new(RNG_DATA_32).random_bytes(50)
+      bytes.size.should eq(50)
+    end
+
+    it "fills given buffer with random bytes" do
+      bytes = Bytes.new(2000)
+      TestRNG.new(RNG_DATA_32).random_bytes(bytes)
+      bytes.size.should eq 2000
+      bytes[1990, 10].should eq(UInt8.slice(0, 0, 1, 0, 0, 0, 234, 0, 0, 0))
+    end
+  end
+
+  describe "base64" do
+    it "gets base64 with default number of digits" do
+      base64 = TestRNG.new(RNG_DATA_32).base64
+      base64.should eq("y0jhAQAAAAABAAAA6gAAAA==")
+    end
+
+    it "gets base64 with requested number of digits" do
+      base64 = TestRNG.new(RNG_DATA_64).base64(50)
+      base64.should eq("n9hX9GKDEAL//////////wAAAAAAAAAA6I06MNtOcwAhuKXjOwIAADYvUY4HAAAAYto=")
+    end
+  end
+
+  describe "urlsafe_base64" do
+    it "gets urlsafe base64 with default number of digits" do
+      base64 = TestRNG.new(RNG_DATA_32).urlsafe_base64
+      base64.should eq("y0jhAQAAAAABAAAA6gAAAA")
+    end
+
+    it "gets urlsafe base64 with requested number of digits" do
+      base64 = TestRNG.new(RNG_DATA_64).urlsafe_base64(50)
+      base64.should eq("n9hX9GKDEAL__________wAAAAAAAAAA6I06MNtOcwAhuKXjOwIAADYvUY4HAAAAYto")
+    end
+
+    it "keeps padding" do
+      base64 = TestRNG.new(RNG_DATA_32).urlsafe_base64(padding: true)
+      base64.should eq("y0jhAQAAAAABAAAA6gAAAA==")
+    end
+  end
+
+  describe "hex" do
+    it "gets hex with default number of digits" do
+      hex = TestRNG.new(RNG_DATA_32).hex
+      hex.should eq("cb48e1010000000001000000ea000000")
+    end
+
+    it "gets hex with requested number of digits" do
+      hex = TestRNG.new(RNG_DATA_64).hex(50)
+      hex.should eq("9fd857f462831002ffffffffffffffff0000000000000000e88d3a30db4e730021b8a5e33b020000362f518e0700000062da")
+    end
+  end
+
+  describe "uuid" do
+    it "gets uuid" do
+      uuid = TestRNG.new(RNG_DATA_8).uuid
+      uuid.should eq("ea990000-7f80-4fff-aa99-00007f80ffff")
     end
   end
 end

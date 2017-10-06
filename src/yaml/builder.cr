@@ -3,6 +3,21 @@
 # A `YAML::Error` is raised if attempting to generate
 # an invalid YAML (for example, if invoking `end_sequence`
 # without a matching `start_sequence`)
+#
+# ```
+# require "yaml"
+#
+# string = YAML.build do |yaml|
+#   yaml.mapping do
+#     yaml.scalar "foo"
+#     yaml.sequence do
+#       yaml.scalar 1
+#       yaml.scalar 2
+#     end
+#   end
+# end
+# string # => "---\nfoo:\n- 1\n- 2\n"
+# ```
 class YAML::Builder
   @box : Void*
 
@@ -60,14 +75,16 @@ class YAML::Builder
   end
 
   # Emits a scalar value.
-  def scalar(value)
+  def scalar(value, anchor : String? = nil, tag : String? = nil, style : YAML::ScalarStyle = YAML::ScalarStyle::ANY)
     string = value.to_s
-    emit scalar, nil, nil, string, string.bytesize, 1, 1, LibYAML::ScalarStyle::ANY
+    implicit = tag ? 0 : 1
+    emit scalar, get_anchor(anchor), string_to_unsafe(tag), string, string.bytesize, implicit, implicit, style
   end
 
   # Starts a sequence.
-  def start_sequence
-    emit sequence_start, nil, nil, 0, LibYAML::SequenceStyle::ANY
+  def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY)
+    implicit = tag ? 0 : 1
+    emit sequence_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
   end
 
   # Ends a sequence.
@@ -76,14 +93,15 @@ class YAML::Builder
   end
 
   # Starts a sequence, invokes the block, and the ends it.
-  def sequence
-    start_sequence
+  def sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY)
+    start_sequence(anchor, tag, style)
     yield.tap { end_sequence }
   end
 
   # Starts a mapping.
-  def start_mapping
-    emit mapping_start, nil, nil, 0, LibYAML::MappingStyle::ANY
+  def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY)
+    implicit = tag ? 0 : 1
+    emit mapping_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
   end
 
   # Ends a mapping.
@@ -92,9 +110,14 @@ class YAML::Builder
   end
 
   # Starts a mapping, invokes the block, and then ends it.
-  def mapping
-    start_mapping
+  def mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY)
+    start_mapping(anchor, tag, style)
     yield.tap { end_mapping }
+  end
+
+  def alias(anchor : String)
+    LibYAML.yaml_alias_event_initialize(pointerof(@event), anchor)
+    yaml_emit("alias")
   end
 
   # Flushes any pending data to the underlying `IO`.
@@ -111,6 +134,14 @@ class YAML::Builder
   def close
     finalize
     @closed = true
+  end
+
+  private def get_anchor(anchor)
+    string_to_unsafe(anchor)
+  end
+
+  private def string_to_unsafe(tag)
+    tag.try(&.to_unsafe) || Pointer(UInt8).null
   end
 
   private macro emit(event_name, *args)

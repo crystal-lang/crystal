@@ -2,12 +2,12 @@
 lib LibLLVM
   LLVM_CONFIG = {{
                   `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
+                   command -v llvm-config-4.0 || command -v llvm-config40 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-3.9 || command -v llvm-config39 || \
                    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-3.8 || command -v llvm-config38 || \
                    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-3.6 || command -v llvm-config36 || \
-                   command -v llvm-config-3.5 || command -v llvm-config35 || \
                    command -v llvm-config
                   `.chomp.stringify
                 }}
@@ -16,7 +16,11 @@ end
 
 {% begin %}
   @[Link("stdc++")]
-  @[Link(ldflags: "`{{LibLLVM::LLVM_CONFIG.id}} --libs --system-libs --ldflags 2> /dev/null`")]
+  {% if flag?(:static) %}
+    @[Link(ldflags: "`{{LibLLVM::LLVM_CONFIG.id}} --libs --system-libs --ldflags --link-static 2> /dev/null`")]
+  {% else %}
+    @[Link(ldflags: "`{{LibLLVM::LLVM_CONFIG.id}} --libs --system-libs --ldflags 2> /dev/null`")]
+  {% end %}
   lib LibLLVM
     VERSION = {{`#{LibLLVM::LLVM_CONFIG} --version`.chomp.stringify}}
     BUILT_TARGETS = {{ `#{LibLLVM::LLVM_CONFIG} --targets-built`.strip.downcase.split(' ').map(&.id.symbolize) }}
@@ -25,11 +29,10 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_50 = {{LibLLVM::VERSION.starts_with?("5.0")}}
     IS_40 = {{LibLLVM::VERSION.starts_with?("4.0")}}
     IS_39 = {{LibLLVM::VERSION.starts_with?("3.9")}}
     IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
-    IS_36 = {{LibLLVM::VERSION.starts_with?("3.6")}}
-    IS_35 = {{LibLLVM::VERSION.starts_with?("3.5")}}
   end
 {% end %}
 
@@ -279,9 +282,7 @@ lib LibLLVM
   fun set_alignment = LLVMSetAlignment(value : ValueRef, bytes : UInt32)
   fun get_return_type = LLVMGetReturnType(TypeRef) : TypeRef
 
-  {% unless LibLLVM::IS_35 %}
-    fun write_bitcode_to_memory_buffer = LLVMWriteBitcodeToMemoryBuffer(mod : ModuleRef) : MemoryBufferRef
-  {% end %}
+  fun write_bitcode_to_memory_buffer = LLVMWriteBitcodeToMemoryBuffer(mod : ModuleRef) : MemoryBufferRef
 
   fun dispose_memory_buffer = LLVMDisposeMemoryBuffer(buf : MemoryBufferRef) : Void
   fun get_buffer_start = LLVMGetBufferStart(buf : MemoryBufferRef) : UInt8*
@@ -289,26 +290,22 @@ lib LibLLVM
 
   fun write_bitcode_to_fd = LLVMWriteBitcodeToFD(mod : ModuleRef, fd : LibC::Int, should_close : LibC::Int, unbuffered : LibC::Int) : LibC::Int
 
-  {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
-    fun add_target_data = LLVMAddTargetData(td : TargetDataRef, pm : PassManagerRef)
-  {% end %}
-
-  {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+  {% if LibLLVM::IS_38 %}
     fun copy_string_rep_of_target_data = LLVMCopyStringRepOfTargetData(data : TargetDataRef) : UInt8*
     fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
     fun set_data_layout = LLVMSetDataLayout(mod : ModuleRef, data : UInt8*)
-  {% else %}
+  {% else %} # LLVM >= 3.9
     fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
     fun set_module_data_layout = LLVMSetModuleDataLayout(mod : ModuleRef, data : TargetDataRef)
   {% end %}
 
-  {% if LibLLVM::IS_38 || LibLLVM::IS_36 || LibLLVM::IS_35 %}
+  {% if LibLLVM::IS_38 %}
     fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : LLVM::Attribute)
     fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : LLVM::Attribute)
     fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : LLVM::Attribute)
     fun get_function_attr = LLVMGetFunctionAttr(fn : ValueRef) : LLVM::Attribute
     fun get_attribute = LLVMGetAttribute(arg : ValueRef) : LLVM::Attribute
-  {% else %}
+  {% else %} # LLVM >= 3.9
     type AttributeRef = Void*
     alias AttributeIndex = UInt
 

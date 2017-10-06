@@ -1,4 +1,4 @@
-require "./csv"
+require "csv"
 
 # A CSV Builder writes CSV to an `IO`.
 #

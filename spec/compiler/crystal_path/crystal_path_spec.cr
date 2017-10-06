@@ -90,4 +90,9 @@ describe Crystal::CrystalPath do
   assert_doesnt_find "test_folder/*", relative_to: "#{__DIR__}/test_files/file_one.cr"
   assert_doesnt_find "test_files/missing_file.cr"
   assert_doesnt_find __FILE__[1..-1], path: ":"
+
+  # Don't find in CRYSTAL_PATH if the path is relative (#4742)
+  assert_doesnt_find "./crystal_path_spec", relative_to: "test_files/file_one.cr"
+  assert_doesnt_find "./crystal_path_spec.cr", relative_to: "test_files/file_one.cr"
+  assert_doesnt_find "../crystal_path/test_files/file_one"
 end

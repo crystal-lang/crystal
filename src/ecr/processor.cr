@@ -1,4 +1,4 @@
-require "./ecr/lexer"
+require "./lexer"
 
 module ECR
   extend self

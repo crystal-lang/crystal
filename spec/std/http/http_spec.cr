@@ -39,7 +39,7 @@ describe HTTP do
 
   describe "generates HTTP date" do
     it "without time zone" do
-      time = Time.new(1994, 11, 6, 8, 49, 37, 0, Time::Kind::Utc)
+      time = Time.new(1994, 11, 6, 8, 49, 37, kind: Time::Kind::Utc)
       HTTP.format_date(time).should eq("Sun, 06 Nov 1994 08:49:37 GMT")
     end
 
@@ -48,7 +48,7 @@ describe HTTP do
       ENV["TZ"] = "Europe/Berlin"
       LibC.tzset
       begin
-        time = Time.new(1994, 11, 6, 8, 49, 37, 0, Time::Kind::Local)
+        time = Time.new(1994, 11, 6, 8, 49, 37, kind: Time::Kind::Local)
         HTTP.format_date(time).should eq(time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT"))
       ensure
         ENV["TZ"] = tz

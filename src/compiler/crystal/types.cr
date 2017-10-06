@@ -407,7 +407,11 @@ module Crystal
         return DefInMacroLookup.new
       end
 
-      parents.try &.each do |parent|
+      # We need to go through the instance type because of module
+      # inclusion and inheritance.
+      instance_type.parents.try &.each do |parent|
+        # Make sure to start the search in the metaclass if we are a metaclass
+        parent = parent.metaclass if self.metaclass?
         parent_macro = parent.lookup_macro(name, args, named_args)
         return parent_macro if parent_macro
       end
@@ -431,7 +435,11 @@ module Crystal
         return DefInMacroLookup.new
       end
 
-      parents.try &.each do |parent|
+      # We need to go through the instance type because of module
+      # inclusion and inheritance.
+      instance_type.parents.try &.each do |parent|
+        # Make sure to start the search in the metaclass if we are a metaclass
+        parent = parent.metaclass if self.metaclass?
         parent_macros = parent.lookup_macros(name)
         return parent_macros if parent_macros
       end
@@ -740,6 +748,7 @@ module Crystal
           if ex_item.restriction_of?(item, self)
             list[i] = item
             a_def.previous = ex_item
+            a_def.doc ||= ex_item.def.doc
             ex_item.def.next = a_def
             return ex_item.def
           else
@@ -773,6 +782,7 @@ module Crystal
       array = (macros[a_def.name] ||= [] of Macro)
       index = array.index { |existing_macro| a_def.overrides?(existing_macro) }
       if index
+        a_def.doc ||= array[index].doc
         array[index] = a_def
       else
         array.push a_def
@@ -2169,6 +2179,11 @@ module Crystal
       tuple_indexer(indexers, index)
     end
 
+    def tuple_metaclass_indexer(index)
+      indexers = @tuple_metaclass_indexers ||= {} of Int32 => Def
+      tuple_indexer(indexers, index)
+    end
+
     private def tuple_indexer(indexers, index)
       indexers[index] ||= begin
         body = index == -1 ? NilLiteral.new : TupleIndexer.new(index)
@@ -2360,7 +2375,9 @@ module Crystal
     def process_value
       return if @value_processed
       @value_processed = true
-      @aliased_type = namespace.lookup_type(@value, allow_typeof: false)
+      @aliased_type = namespace.lookup_type(@value,
+        allow_typeof: false,
+        find_root_generic_type_parameters: false)
     end
 
     def includes_type?(other)

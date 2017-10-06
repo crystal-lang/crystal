@@ -1388,8 +1388,7 @@ class Array(T)
 
   def rotate!(n = 1)
     return self if size == 0
-    n %= size if n.abs >= size
-    n += size if n < 0
+    n %= size
     return self if n == 0
     if n <= size / 2
       tmp = self[0..n]
@@ -1405,8 +1404,7 @@ class Array(T)
 
   def rotate(n = 1)
     return self if size == 0
-    n %= size if n.abs >= size
-    n += size if n < 0
+    n %= size
     return self if n == 0
     res = Array(T).new(size)
     res.to_unsafe.copy_from(@buffer + n, size - n)
@@ -1454,7 +1452,7 @@ class Array(T)
   end
 
   # Removes the first value of `self`, at index 0. This method returns the removed value.
-  # Raises `IndexError` if array is of 0 size.
+  # If the array is empty, it raises `IndexError`.
   #
   # ```
   # a = ["a", "b", "c"]
@@ -1507,6 +1505,18 @@ class Array(T)
     ary
   end
 
+  # Removes the first value of `self`, at index 0. This method returns the removed value.
+  # If the array is empty, it returns `nil` without raising any error.
+  #
+  # ```
+  # a = ["a", "b"]
+  # a.shift? # => "a"
+  # a        # => ["b"]
+  # a.shift? # => "b"
+  # a        # => []
+  # a.shift? # => nil
+  # a        # => []
+  # ```
   def shift?
     shift { nil }
   end

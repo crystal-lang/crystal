@@ -1,5 +1,6 @@
 require "spec"
 require "crypto/bcrypt"
+require "random/secure"
 
 describe "Crypto::Bcrypt" do
   latin1_pound_sign = String.new(Bytes.new(1, 0xa3_u8))
@@ -28,16 +29,16 @@ describe "Crypto::Bcrypt" do
 
   it "validates salt size" do
     expect_raises(Crypto::Bcrypt::Error, /Invalid salt size/) do
-      Crypto::Bcrypt.new("abcd", SecureRandom.hex(7))
+      Crypto::Bcrypt.new("abcd", Random::Secure.hex(7))
     end
 
     expect_raises(Crypto::Bcrypt::Error, /Invalid salt size/) do
-      Crypto::Bcrypt.new("abcd", SecureRandom.hex(9))
+      Crypto::Bcrypt.new("abcd", Random::Secure.hex(9))
     end
   end
 
   it "validates cost" do
-    salt = SecureRandom.hex(8)
+    salt = Random::Secure.hex(8)
 
     expect_raises(Crypto::Bcrypt::Error, /Invalid cost/) do
       Crypto::Bcrypt.new("abcd", salt, 3)
@@ -49,7 +50,7 @@ describe "Crypto::Bcrypt" do
   end
 
   it "validates password size" do
-    salt = SecureRandom.random_bytes(16)
+    salt = Random::Secure.random_bytes(16)
 
     expect_raises(Crypto::Bcrypt::Error, /Invalid password size/) do
       Crypto::Bcrypt.new("".to_slice, salt)

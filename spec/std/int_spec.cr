@@ -184,6 +184,27 @@ describe "Int" do
     end
   end
 
+  describe "#inspect" do
+    it "appends the type" do
+      23.inspect.should eq("23")
+      23_i8.inspect.should eq("23_i8")
+      23_i16.inspect.should eq("23_i16")
+      -23_i64.inspect.should eq("-23_i64")
+      23_u8.inspect.should eq("23_u8")
+      23_u16.inspect.should eq("23_u16")
+      23_u32.inspect.should eq("23_u32")
+      23_u64.inspect.should eq("23_u64")
+    end
+
+    it "appends the type using IO" do
+      str = String.build { |io| 23.inspect(io) }
+      str.should eq("23")
+
+      str = String.build { |io| -23_i64.inspect(io) }
+      str.should eq("-23_i64")
+    end
+  end
+
   describe "bit" do
     it { 5.bit(0).should eq(1) }
     it { 5.bit(1).should eq(0) }
@@ -395,6 +416,16 @@ describe "Int" do
 
     iter.rewind
     iter.next.should eq(0)
+  end
+
+  it "gets times iterator for UInt32 (#5019)" do
+    iter = 4_u32.times
+    iter.next.should be_a(UInt32)
+
+    iter.rewind
+    ary = iter.to_a
+    ary.should be_a(Array(UInt32))
+    ary.should eq([0, 1, 2, 3])
   end
 
   it "does %" do

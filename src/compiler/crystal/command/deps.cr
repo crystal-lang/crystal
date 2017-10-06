@@ -8,7 +8,7 @@ class Crystal::Command
       error "`shards` executable is missing. Please install shards: https://github.com/crystal-lang/shards"
     end
 
-    status = Process.run(path_to_shards, args: options, output: true, error: true)
+    status = Process.run(path_to_shards, args: options, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit)
     exit status.exit_code unless status.success?
   end
 end

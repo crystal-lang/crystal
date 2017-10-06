@@ -84,7 +84,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "oveloads new and initialize, 1 (#2489)" do
+  it "overloads new and initialize, 1 (#2489)" do
     run(%(
       class String
         def size
@@ -113,7 +113,7 @@ describe "Code gen: new" do
       )).to_i.should eq(10)
   end
 
-  it "oveloads new and initialize, 2 (#2489)" do
+  it "overloads new and initialize, 2 (#2489)" do
     run(%(
       class Global
         @@x = 0
@@ -144,7 +144,7 @@ describe "Code gen: new" do
       )).to_i.should eq(6)
   end
 
-  it "oveloads new and initialize, 3 (#2489)" do
+  it "overloads new and initialize, 3 (#2489)" do
     run(%(
       class Global
         @@x = 0

@@ -159,16 +159,48 @@ struct NamedTuple
     yield
   end
 
+  # Merges two named tuples into one, returning a new named tuple.
+  # If a key is defined in both tuples, the value and its type is used from *other*.
+  #
+  # ```
+  # a = {foo: "Hello", bar: "Old"}
+  # b = {bar: "New", baz: "Bye"}
+  # a.merge(b) # => {foo: "Hello", bar: "New", baz: "Bye"}
+  # ```
+  def merge(other : NamedTuple)
+    merge(**other)
+  end
+
+  # ditto
+  def merge(**other : **U) forall U
+    {% begin %}
+    {
+      {% for k in T %} {% unless U.keys.includes?(k) %} {{k.stringify}}: self[{{k.symbolize}}],{% end %} {% end %}
+      {% for k in U %} {{k.stringify}}: other[{{k.symbolize}}], {% end %}
+    }
+    {% end %}
+  end
+
   # Returns a hash value based on this name tuple's size, keys and values.
   #
   # See also: `Object#hash`.
-  def hash
-    hash = 31 * size
+  # See `Object#hash(hasher)`
+  def hash(hasher)
     {% for key in T.keys.sort %}
-      hash = 31 * hash + {{key.symbolize}}.hash
-      hash = 31 * hash + self[{{key.symbolize}}].hash
+      hasher = {{key.symbolize}}.hash(hasher)
+      hasher = self[{{key.symbolize}}].hash(hasher)
     {% end %}
-    hash
+    hasher
+  end
+
+  # Returns the types of this named tuple type.
+  #
+  # ```
+  # tuple = {a: 1, b: "hello", c: 'x'}
+  # tuple.class.types # => {a: Int32, b: String, c: Char}
+  # ```
+  def self.types
+    NamedTuple.new(**{{T}})
   end
 
   # Same as `to_s`.

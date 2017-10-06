@@ -555,18 +555,6 @@ module Crystal
 
         # From:
         #
-        #     a = 1, 2, 3
-        #
-        # To:
-        #
-        #     a = [1, 2, 3]
-      elsif node.targets.size == 1
-        target = node.targets.first
-        array = ArrayLiteral.new(node.values)
-        exps = transform_multi_assign_target(target, array)
-
-        # From:
-        #
         #     a, b = c, d
         #
         # To:
@@ -576,6 +564,8 @@ module Crystal
         #     a = temp1
         #     b = temp2
       else
+        raise "BUG: multiple assignment count mismatch" unless node.targets.size == node.values.size
+
         temp_vars = node.values.map { new_temp_var }
 
         assign_to_temps = [] of ASTNode

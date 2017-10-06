@@ -98,7 +98,7 @@ module Crystal
     end
 
     @c_calling_convention : Bool? = nil
-    setter c_calling_convention
+    property c_calling_convention
 
     # Returns `self` as an `External` if this Def is an External
     # that must respect the C calling convention.

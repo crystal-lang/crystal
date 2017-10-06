@@ -146,7 +146,7 @@ describe "Hash" do
     end
 
     it "works with mixed types" do
-      {1 => :a, "a" => 1, 1.0 => "a", :a => 1.0}.values_at(1, "a", 1.0, :a).should eq({:a, 1, "a", 1.0})
+      {1 => :a, "a" => 1, 2.0 => "a", :a => 1.0}.values_at(1, "a", 2.0, :a).should eq({:a, 1, "a", 1.0})
     end
   end
 
@@ -542,14 +542,13 @@ describe "Hash" do
   end
 
   it "computes hash" do
-    h = { {1 => 2} => {3 => 4} }
-    h.hash.should_not eq(h.object_id)
-
+    h1 = { {1 => 2} => {3 => 4} }
     h2 = { {1 => 2} => {3 => 4} }
-    h.hash.should eq(h2.hash)
+    h1.hash.should eq(h2.hash)
 
     h3 = {1 => 2, 3 => 4}
     h4 = {3 => 4, 1 => 2}
+
     h3.hash.should eq(h4.hash)
   end
 

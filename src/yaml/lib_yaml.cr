@@ -1,3 +1,5 @@
+require "./enums"
+
 @[Link("yaml")]
 lib LibYAML
   alias Int = LibC::Int
@@ -42,27 +44,6 @@ lib LibYAML
     prefix : UInt8*
   end
 
-  enum ScalarStyle
-    ANY
-    PLAIN
-    SINGLE_QUOTED
-    DOUBLE_QUOTED
-    LITERAL
-    FOLDED
-  end
-
-  enum SequenceStyle
-    ANY
-    BLOCK
-    FLOW
-  end
-
-  enum MappingStyle
-    ANY
-    BLOCK
-    FLOW
-  end
-
   struct StreamStartEvent
     encoding : Int32
   end
@@ -89,21 +70,21 @@ lib LibYAML
     length : LibC::SizeT
     plain_implicit : Int
     quoted_implicit : Int
-    style : ScalarStyle
+    style : YAML::ScalarStyle
   end
 
   struct SequenceStartEvent
     anchor : UInt8*
     tag : UInt8*
     implicit : Int
-    style : SequenceStyle
+    style : YAML::SequenceStyle
   end
 
   struct MappingStartEvent
     anchor : UInt8*
     tag : UInt8*
     implicit : Int
-    style : MappingStyle
+    style : YAML::MappingStyle
   end
 
   union EventData
@@ -116,20 +97,6 @@ lib LibYAML
     mapping_start : MappingStartEvent
   end
 
-  enum EventType
-    NONE
-    STREAM_START
-    STREAM_END
-    DOCUMENT_START
-    DOCUMENT_END
-    ALIAS
-    SCALAR
-    SEQUENCE_START
-    SEQUENCE_END
-    MAPPING_START
-    MAPPING_END
-  end
-
   struct Mark
     index : LibC::SizeT
     line : LibC::SizeT
@@ -137,7 +104,7 @@ lib LibYAML
   end
 
   struct Event
-    type : EventType
+    type : YAML::EventKind
     data : EventData
     start_mark : Mark
     end_mark : Mark
@@ -167,11 +134,11 @@ lib LibYAML
   fun yaml_document_end_event_initialize(event : Event*, implicit : Int) : Int
   fun yaml_scalar_event_initialize(event : Event*, anchor : LibC::Char*,
                                    tag : LibC::Char*, value : LibC::Char*, length : Int,
-                                   plain_implicit : Int, quoted_implicit : Int, style : ScalarStyle) : Int
+                                   plain_implicit : Int, quoted_implicit : Int, style : YAML::ScalarStyle) : Int
   fun yaml_alias_event_initialize(event : Event*, anchor : LibC::Char*) : Int
-  fun yaml_sequence_start_event_initialize(event : Event*, anchor : LibC::Char*, tag : LibC::Char*, implicit : Int, style : SequenceStyle) : Int
+  fun yaml_sequence_start_event_initialize(event : Event*, anchor : LibC::Char*, tag : LibC::Char*, implicit : Int, style : YAML::SequenceStyle) : Int
   fun yaml_sequence_end_event_initialize(event : Event*)
-  fun yaml_mapping_start_event_initialize(event : Event*, anchor : LibC::Char*, tag : LibC::Char*, implicit : Int, style : MappingStyle) : Int
+  fun yaml_mapping_start_event_initialize(event : Event*, anchor : LibC::Char*, tag : LibC::Char*, implicit : Int, style : YAML::MappingStyle) : Int
   fun yaml_mapping_end_event_initialize(event : Event*) : Int
   fun yaml_emitter_emit(emitter : Emitter*, event : Event*) : Int
   fun yaml_emitter_delete(emitter : Emitter*)

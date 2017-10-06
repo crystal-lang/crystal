@@ -797,7 +797,12 @@ describe "String" do
     it { "foo".byte_index('a'.ord).should be_nil }
 
     it "gets byte index of string" do
+      "hello world".byte_index("he").should eq(0)
       "hello world".byte_index("lo").should eq(3)
+      "hello world".byte_index("world", 7).should be_nil
+      "foo foo".byte_index("oo").should eq(1)
+      "foo foo".byte_index("oo", 2).should eq(5)
+      "こんにちは世界".byte_index("ちは").should eq(9)
     end
   end
 
@@ -1199,6 +1204,11 @@ describe "String" do
       replaced = "foobar".gsub('o', "ex")
       replaced.bytesize.should eq(8)
       replaced.should eq("fexexbar")
+    end
+
+    it "gsubs char with string (nop)" do
+      s = "foobar"
+      s.gsub('x', "yz").should be(s)
     end
 
     it "gsubs char with string depending on the char" do
@@ -2156,6 +2166,17 @@ describe "String" do
     "foo".compare("FOX", case_insensitive: true).should eq(-1)
     "fox".compare("FOO", case_insensitive: true).should eq(1)
     "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
+  end
+
+  it "builds with write_byte" do
+    string = String.build do |io|
+      255_u8.times do |byte|
+        io.write_byte(byte)
+      end
+    end
+    255.times do |i|
+      string.byte_at(i).should eq(i)
+    end
   end
 
   it "raises if String.build negative capacity" do

@@ -142,7 +142,7 @@ describe Enum do
   end
 
   it "has hash" do
-    SpecEnum::Two.hash.should eq(1.hash)
+    SpecEnum::Two.hash.should_not eq(SpecEnum::Three.hash)
   end
 
   it "parses" do

@@ -92,11 +92,13 @@ struct Time::Format
     end
 
     def hour_12_zero_padded
-      pad2 (time.hour % 12), '0'
+      h = (time.hour % 12)
+      pad2 (h == 0 ? 12 : h), '0'
     end
 
     def hour_12_blank_padded
-      pad2 (time.hour % 12), ' '
+      h = (time.hour % 12)
+      pad2 (h == 0 ? 12 : h), ' '
     end
 
     def minute
@@ -109,6 +111,10 @@ struct Time::Format
 
     def milliseconds
       pad3 time.millisecond, '0'
+    end
+
+    def nanoseconds
+      pad9 time.nanosecond, '0'
     end
 
     def am_pm
@@ -213,6 +219,15 @@ struct Time::Format
     def pad4(value, padding)
       io.write_byte padding.ord.to_u8 if value < 1000
       pad3 value, padding
+    end
+
+    def pad9(value, padding)
+      io.write_byte padding.ord.to_u8 if value < 100000000
+      io.write_byte padding.ord.to_u8 if value < 10000000
+      io.write_byte padding.ord.to_u8 if value < 1000000
+      io.write_byte padding.ord.to_u8 if value < 100000
+      io.write_byte padding.ord.to_u8 if value < 10000
+      pad4 value, padding
     end
   end
 end
