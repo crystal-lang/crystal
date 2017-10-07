@@ -210,6 +210,12 @@ describe "Tuple" do
     tuple2.should eq({"1", "2.5", "a"})
   end
 
+  it "does map_with_index" do
+    tuple = {1, 1, 2, 2}
+    tuple2 = tuple.map_with_index { |e, i| e + i }
+    tuple2.should eq({1, 2, 4, 5})
+  end
+
   it "does reverse" do
     {1, 2.5, "a", 'c'}.reverse.should eq({'c', "a", 2.5, 1})
   end

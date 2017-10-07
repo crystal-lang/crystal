@@ -408,6 +408,22 @@ struct Tuple
    {% end %}
   end
 
+  # Like `map`, but the block gets passed both the element and its index.
+  #
+  # ```
+  # tuple = {1, 2.5, "a"}
+  # tuple.map_with_index { |e, i| "tuple[#{i}]: #{e}" } # => {"tuple[0]: 1", "tuple[1]: 2.5", "tuple[2]: a"}
+  # ```
+  def map_with_index
+    {% begin %}
+      Tuple.new(
+        {% for i in 0...T.size %}
+          (yield self[{{i}}], {{i}}),
+        {% end %}
+      )
+    {% end %}
+  end
+
   # Returns a new tuple where the elements are in reverse order.
   #
   # ```
