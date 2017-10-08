@@ -67,6 +67,26 @@ module Crystal
     property is_initialize : Bool
     property exception_handler_vars : MetaVars? = nil
 
+    # It means the last block kind, that is one of `block`, `while` and
+    # `ensure`. It is used to detect `break` or `next` from `ensure`.
+    #
+    # ```
+    # begin
+    #   # `last_block_kind == nil`
+    # ensure
+    #   # `last_block_kind == :ensure`
+    #   while true
+    #     # `last_block_kind == :while`
+    #   end
+    #   loop do
+    #     # `last_block_kind == :block`
+    #   end
+    #   # `last_block_kind == :ensure`
+    # end
+    # ```
+    property last_block_kind : Symbol?
+    property? inside_ensure : Bool = false
+
     @unreachable = false
     @is_initialize = false
     @in_type_args = 0
@@ -817,15 +837,20 @@ module Crystal
           simple_var.bind_to(target)
         end
 
-        used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
-        if (found_self = @found_self_in_initialize_call) || (used_ivars_node = used_ivars_in_calls_in_initialize.try(&.[var_name]?)) || (@block_nest > 0 && !@vars.has_key?(var_name))
-          ivar = scope.lookup_instance_var(var_name)
-          if found_self
-            ivar.nil_reason = NilReason.new(var_name, :used_self_before_initialized, found_self)
-          else
-            ivar.nil_reason = NilReason.new(var_name, :used_before_initialized, used_ivars_node)
+        # Check if an instance variable is being assigned (for the first time)
+        # and self, or that same instance variable, was used (read) before that.
+        unless @vars.has_key?(var_name)
+          if (found_self = @found_self_in_initialize_call) ||
+             (used_ivars_node = @used_ivars_in_calls_in_initialize.try(&.[var_name]?)) ||
+             (@block_nest > 0)
+            ivar = scope.lookup_instance_var(var_name)
+            if found_self
+              ivar.nil_reason = NilReason.new(var_name, :used_self_before_initialized, found_self)
+            else
+              ivar.nil_reason = NilReason.new(var_name, :used_before_initialized, used_ivars_node)
+            end
+            ivar.bind_to program.nil_var
           end
-          ivar.bind_to program.nil_var
         end
 
         if simple_var
@@ -1025,6 +1050,9 @@ module Crystal
       block_visitor.block = node
       block_visitor.path_lookup = path_lookup || current_type
       block_visitor.block_nest = @block_nest
+
+      block_visitor.last_block_kind = :block
+      block_visitor.inside_ensure = inside_ensure?
 
       node.body.accept block_visitor
 
@@ -1623,6 +1651,10 @@ module Crystal
     end
 
     def visit(node : Return)
+      if inside_ensure?
+        node.raise "can't return from ensure"
+      end
+
       typed_def = @typed_def || node.raise("can't return from top level")
 
       if typed_def.captured_block?
@@ -1705,6 +1737,9 @@ module Crystal
       when Assign
         target = exp.target
         return target if target.is_a?(Var)
+      when Expressions
+        return unless exp = single_expression(exp)
+        return get_expression_var(exp)
       end
       nil
     end
@@ -1811,15 +1846,17 @@ module Crystal
       # block is when the condition is a Var (in the else it must be
       # nil), IsA (in the else it's not that type), RespondsTo
       # (in the else it doesn't respond to that message) or Not.
-      case cond = node.cond
+      case cond = single_expression(node.cond) || node.cond
       when Var, IsA, RespondsTo, Not
         filter_vars cond_type_filters, &.not
       when Or
         # Try to apply boolean logic: `!(a || b)` is `!a && !b`
+        cond_left = single_expression(cond.left) || cond.left
+        cond_right = single_expression(cond.right) || cond.right
 
         #  We can't deduce anything for sub && or || expressions
-        or_left_type_filters = nil if cond.left.is_a?(And) || cond.left.is_a?(Or)
-        or_right_type_filters = nil if cond.right.is_a?(And) || cond.right.is_a?(Or)
+        or_left_type_filters = nil if cond_left.is_a?(And) || cond_left.is_a?(Or)
+        or_right_type_filters = nil if cond_right.is_a?(And) || cond_right.is_a?(Or)
 
         # No need to deduce anything for temp vars created by the compiler (won't be used by a user)
         or_left_type_filters = nil if or_left_type_filters && or_left_type_filters.temp_var?
@@ -1980,10 +2017,15 @@ module Crystal
       @block, old_block = nil, @block
 
       @while_stack.push node
-      node.body.accept self
 
-      endless_while = node.cond.true_literal?
-      merge_while_vars node.cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
+      with_block_kind :while do
+        node.body.accept self
+      end
+
+      cond = single_expression(node.cond) || node.cond
+
+      endless_while = cond.true_literal?
+      merge_while_vars cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
       @block = old_block
@@ -2111,6 +2153,9 @@ module Crystal
         end
       when Call
         return get_while_cond_assign_target(node.obj)
+      when Expressions
+        return unless node = single_expression(node)
+        return get_while_cond_assign_target(node)
       end
 
       nil
@@ -2143,7 +2188,21 @@ module Crystal
       end
     end
 
+    def single_expression(node)
+      result = nil
+
+      while node.is_a?(Expressions) && node.expressions.size == 1
+        result = node = node[0]
+      end
+
+      result
+    end
+
     def end_visit(node : Break)
+      if last_block_kind == :ensure
+        node.raise "can't use break inside ensure"
+      end
+
       if block = @block
         node.target = block.call.not_nil!
 
@@ -2169,6 +2228,10 @@ module Crystal
     end
 
     def end_visit(node : Next)
+      if last_block_kind == :ensure
+        node.raise "can't use next inside ensure"
+      end
+
       if block = @block
         node.target = block
 
@@ -2195,28 +2258,30 @@ module Crystal
       @unreachable = true
     end
 
+    def with_block_kind(kind)
+      old_block_kind, @last_block_kind = last_block_kind, kind
+      old_inside_ensure, @inside_ensure = @inside_ensure, @inside_ensure || kind == :ensure
+      yield
+      @last_block_kind = old_block_kind
+      @inside_ensure = old_inside_ensure
+    end
+
     def visit(node : Primitive)
+      # If the method where this primitive is defined has a return type, use it
+      if return_type = typed_def.return_type
+        node.type = scope.lookup_type(return_type, free_vars: free_vars)
+        return false
+      end
+
       case node.name
-      when "binary"
-        visit_binary node
-      when "cast"
-        visit_cast node
       when "allocate"
         visit_allocate node
       when "pointer_malloc"
         visit_pointer_malloc node
       when "pointer_set"
         visit_pointer_set node
-      when "pointer_get"
-        visit_pointer_get node
-      when "pointer_address"
-        node.type = @program.uint64
       when "pointer_new"
         visit_pointer_new node
-      when "pointer_realloc"
-        node.type = scope
-      when "pointer_add"
-        node.type = scope
       when "argc"
         # Already typed
       when "argv"
@@ -2227,75 +2292,15 @@ module Crystal
         # Nothing to do
       when "external_var_get"
         # Nothing to do
-      when "object_id"
-        node.type = program.uint64
-      when "object_crystal_type_id"
-        node.type = program.int32
-      when "class_crystal_instance_type_id"
-        node.type = program.int32
-      when "symbol_to_s"
-        node.type = program.string
       when "class"
         node.type = scope.metaclass
-      when "proc_call"
-        node.type = scope.as(ProcInstanceType).return_type
-      when "pointer_diff"
-        node.type = program.int64
-      when "class_name"
-        node.type = program.string
       when "enum_value"
         # Nothing to do
       when "enum_new"
         # Nothing to do
-      when "cmpxchg"
-        node.type = program.tuple_of([typed_def.args[1].type, program.bool])
-      when "atomicrmw"
-        node.type = typed_def.args[2].type
-      when "fence"
-        node.type = program.nil_type
-      when "load_atomic"
-        node.type = typed_def.args.first.type.as(PointerInstanceType).element_type
-      when "store_atomic"
-        node.type = program.nil_type
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
-    end
-
-    def visit_binary(node)
-      case typed_def.name
-      when "+", "-", "*", "/", "unsafe_div"
-        t1 = scope.remove_typedef
-        t2 = typed_def.args[0].type
-        node.type = t1.is_a?(IntegerType) && t2.is_a?(FloatType) ? t2 : scope
-      when "==", "<", "<=", ">", ">=", "!="
-        node.type = @program.bool
-      when "%", "unsafe_shl", "unsafe_shr", "|", "&", "^", "unsafe_mod"
-        node.type = scope
-      else
-        raise "BUG: unknown binary operator #{typed_def.name}"
-      end
-    end
-
-    def visit_cast(node)
-      node.type =
-        case typed_def.name
-        when "to_i", "to_i32", "ord" then program.int32
-        when "to_i8"                 then program.int8
-        when "to_i16"                then program.int16
-        when "to_i32"                then program.int32
-        when "to_i64"                then program.int64
-        when "to_u", "to_u32"        then program.uint32
-        when "to_u8"                 then program.uint8
-        when "to_u16"                then program.uint16
-        when "to_u32"                then program.uint32
-        when "to_u64"                then program.uint64
-        when "to_f", "to_f64"        then program.float64
-        when "to_f32"                then program.float32
-        when "unsafe_chr"            then program.char
-        else
-          raise "BUG: unknown cast operator #{typed_def.name}"
-        end
     end
 
     def visit_allocate(node)
@@ -2338,12 +2343,6 @@ module Crystal
 
       scope.var.bind_to value
       node.bind_to value
-    end
-
-    def visit_pointer_get(node)
-      scope = scope().remove_typedef.as(PointerInstanceType)
-
-      node.bind_to scope.var
     end
 
     def visit_pointer_new(node)
@@ -2594,7 +2593,9 @@ module Crystal
           merge_rescue_vars exception_handler_vars, all_rescue_vars
 
           # And then accept the ensure part
-          node.ensure.try &.accept self
+          with_block_kind :ensure do
+            node.ensure.try &.accept self
+          end
         end
       end
 
@@ -2614,7 +2615,9 @@ module Crystal
 
           before_ensure_vars = @vars.dup
 
-          node_ensure.accept self
+          with_block_kind :ensure do
+            node_ensure.accept self
+          end
 
           @vars = after_handler_vars
 
@@ -2703,8 +2706,12 @@ module Crystal
         node.type = scope.tuple_types[node.index].as(Type)
       elsif scope.is_a?(NamedTupleInstanceType)
         node.type = scope.entries[node.index].type
-      elsif scope
-        node.type = (scope.instance_type.as(TupleInstanceType).tuple_types[node.index].as(Type)).metaclass
+      elsif scope && (instance_type = scope.instance_type).is_a?(TupleInstanceType)
+        node.type = instance_type.tuple_types[node.index].as(Type).metaclass
+      elsif scope && (instance_type = scope.instance_type).is_a?(NamedTupleInstanceType)
+        node.type = instance_type.entries[node.index].type.metaclass
+      else
+        node.raise "unsupported TupleIndexer scope"
       end
       false
     end

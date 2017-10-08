@@ -2179,6 +2179,11 @@ module Crystal
       tuple_indexer(indexers, index)
     end
 
+    def tuple_metaclass_indexer(index)
+      indexers = @tuple_metaclass_indexers ||= {} of Int32 => Def
+      tuple_indexer(indexers, index)
+    end
+
     private def tuple_indexer(indexers, index)
       indexers[index] ||= begin
         body = index == -1 ? NilLiteral.new : TupleIndexer.new(index)
@@ -2370,7 +2375,9 @@ module Crystal
     def process_value
       return if @value_processed
       @value_processed = true
-      @aliased_type = namespace.lookup_type(@value, allow_typeof: false)
+      @aliased_type = namespace.lookup_type(@value,
+        allow_typeof: false,
+        find_root_generic_type_parameters: false)
     end
 
     def includes_type?(other)

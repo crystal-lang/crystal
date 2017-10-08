@@ -96,6 +96,34 @@ private class YAMLWithPresence
   })
 end
 
+class YAMLRecursive
+  YAML.mapping({
+    name:  String,
+    other: YAMLRecursive,
+  })
+end
+
+class YAMLRecursiveNilable
+  YAML.mapping({
+    name:  String,
+    other: YAMLRecursiveNilable?,
+  })
+end
+
+class YAMLRecursiveArray
+  YAML.mapping({
+    name:  String,
+    other: Array(YAMLRecursiveArray),
+  })
+end
+
+class YAMLRecursiveHash
+  YAML.mapping({
+    name:  String,
+    other: Hash(String, YAMLRecursiveHash),
+  })
+end
+
 describe "YAML mapping" do
   it "parses person" do
     person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
@@ -125,6 +153,35 @@ describe "YAML mapping" do
     people.size.should eq(2)
     people[0].name.should eq("John")
     people[1].name.should eq("Doe")
+  end
+
+  it "parses array of people with merge" do
+    yaml = <<-YAML
+      - &1
+        name: foo
+        age: 1
+      -
+        <<: *1
+        age: 2
+      YAML
+
+    people = Array(YAMLPerson).from_yaml(yaml)
+    people[1].name.should eq("foo")
+    people[1].age.should eq(2)
+  end
+
+  it "parses array of people with merge, doesn't hang on infinite recursion" do
+    yaml = <<-YAML
+      - &1
+        name: foo
+        <<: *1
+        <<: [ *1, *1 ]
+        age: 1
+      YAML
+
+    people = Array(YAMLPerson).from_yaml(yaml)
+    people[0].name.should eq("foo")
+    people[0].age.should eq(1)
   end
 
   it "parses person with unknown attributes" do
@@ -197,6 +254,68 @@ describe "YAML mapping" do
     typeof(yaml.bar).should eq(Int8)
   end
 
+  it "parses recursive" do
+    yaml = <<-YAML
+      --- &1
+      name: foo
+      other: *1
+      YAML
+
+    rec = YAMLRecursive.from_yaml(yaml)
+    rec.name.should eq("foo")
+    rec.other.should be(rec)
+  end
+
+  it "parses recursive nilable (1)" do
+    yaml = <<-YAML
+      --- &1
+      name: foo
+      other: *1
+      YAML
+
+    rec = YAMLRecursiveNilable.from_yaml(yaml)
+    rec.name.should eq("foo")
+    rec.other.should be(rec)
+  end
+
+  it "parses recursive nilable (2)" do
+    yaml = <<-YAML
+      --- &1
+      name: foo
+      YAML
+
+    rec = YAMLRecursiveNilable.from_yaml(yaml)
+    rec.name.should eq("foo")
+    rec.other.should be_nil
+  end
+
+  it "parses recursive array" do
+    yaml = <<-YAML
+      ---
+      name: foo
+      other: &1
+        - name: bar
+          other: *1
+      YAML
+
+    rec = YAMLRecursiveArray.from_yaml(yaml)
+    rec.other[0].other.should be(rec.other)
+  end
+
+  it "parses recursive hash" do
+    yaml = <<-YAML
+      ---
+      name: foo
+      other: &1
+        foo:
+          name: bar
+          other: *1
+      YAML
+
+    rec = YAMLRecursiveHash.from_yaml(yaml)
+    rec.other["foo"].other.should be(rec.other)
+  end
+
   describe "parses YAML with defaults" do
     it "mixed" do
       json = YAMLWithDefaults.from_yaml(%({"a":1,"b":"bla"}))
@@ -214,11 +333,22 @@ describe "YAML mapping" do
       json = YAMLWithDefaults.from_yaml(%({}))
       json.a.should eq 11
       json.b.should eq "Haha"
+    end
 
-      # There's no "null" in YAML? Maybe we should support this eventually
-      # json = YAMLWithDefaults.from_yaml(%({"a":null,"b":null}))
-      # json.a.should eq 11
-      # json.b.should eq "Haha"
+    it "mixes with all defaults (#2873)" do
+      yaml = YAMLWithDefaults.from_yaml("")
+      yaml.a.should eq 11
+      yaml.b.should eq "Haha"
+    end
+
+    it "raises when not a mapping or empty scalar" do
+      expect_raises(YAML::ParseException) do
+        YAMLWithDefaults.from_yaml("1")
+      end
+
+      expect_raises(YAML::ParseException) do
+        YAMLWithDefaults.from_yaml("[1]")
+      end
     end
 
     it "bool" do

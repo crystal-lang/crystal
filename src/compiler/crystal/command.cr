@@ -285,6 +285,8 @@ class Crystal::Command
     compiler = Compiler.new
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
+    filenames = [] of String
+    has_stdin_filename = false
     opt_filenames = nil
     opt_arguments = nil
     opt_output_filename = nil
@@ -417,6 +419,11 @@ class Crystal::Command
         end
       end
 
+      opts.on("--stdin-filename ", "Source file name to be read from STDIN") do |stdin_filename|
+        has_stdin_filename = true
+        filenames << stdin_filename
+      end
+
       opts.unknown_args do |before, after|
         opt_filenames = before
         opt_arguments = after
@@ -426,7 +433,7 @@ class Crystal::Command
     compiler.link_flags = link_flags.join(" ") unless link_flags.empty?
 
     output_filename = opt_output_filename
-    filenames = opt_filenames.not_nil!
+    filenames += opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
     if single_file && filenames.size > 1
@@ -439,7 +446,11 @@ class Crystal::Command
       exit 1
     end
 
-    sources = gather_sources(filenames)
+    sources = [] of Compiler::Source
+    if has_stdin_filename
+      sources << Compiler::Source.new(filenames.shift, STDIN.gets_to_end)
+    end
+    sources += gather_sources(filenames)
     first_filename = sources.first.filename
     first_file_ext = File.extname(first_filename)
     original_output_filename = File.basename(first_filename, first_file_ext)

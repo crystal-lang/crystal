@@ -99,7 +99,7 @@ class HTTP::Request
       return new method, resource, headers, body, http_version
     end
 
-    # Unexpected end of http request
+    # Malformed or unexpectedly ended http request
     BadRequest.new
   end
 

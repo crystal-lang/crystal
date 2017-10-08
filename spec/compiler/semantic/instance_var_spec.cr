@@ -4743,4 +4743,40 @@ describe "Semantic: instance var" do
       ),
       "can't use instance variables at the top level"
   end
+
+  it "doesn't find T in generic type that's not the current type (#4460)" do
+    assert_error %(
+      class Gen(T)
+        def self.new
+          Gen(T).new
+        end
+      end
+
+      class Foo
+        @x = Gen.new
+      end
+      ),
+      "can't use Gen(T) as the type of instance variable @x of Foo"
+  end
+
+  it "doesn't consider instance var as nilable if assigned before self access (#4981)" do
+    assert_type(%(
+      def f(x)
+      end
+
+      class A
+        def initialize
+          @a = 0
+          f(self)
+          @a = 0
+        end
+
+        def a
+          @a
+        end
+      end
+
+      A.new.a
+      )) { int32 }
+  end
 end

@@ -317,7 +317,7 @@ class Regex
               pp.text "#{name_table.fetch(i, i)}:"
               pp.nest do
                 pp.breakable ""
-                self[i].pretty_print pp
+                self[i]?.pretty_print pp
               end
             end
           end

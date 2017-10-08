@@ -216,7 +216,7 @@ module Crystal
 
     def to_lhs(exp)
       if exp.is_a?(Path) && inside_def?
-        raise "dynamic constant assignment"
+        raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
       end
 
       if exp.is_a?(Call) && !exp.obj && exp.args.empty?
@@ -324,7 +324,7 @@ module Crystal
             break unless can_be_assigned?(atomic)
 
             if atomic.is_a?(Path) && inside_def?
-              raise "dynamic constant assignment"
+              raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
             end
 
             if atomic.is_a?(Var) && atomic.name == "self"
@@ -2368,6 +2368,9 @@ module Crystal
       whens = [] of When
       a_else = nil
 
+      # All when expressions, so we can detect duplicates
+      when_exps = Set(ASTNode).new
+
       while true
         case @token.type
         when :IDENT
@@ -2403,11 +2406,14 @@ module Crystal
 
                   tuple = TupleLiteral.new(tuple_elements).at(curly_location)
                   when_conds << tuple
+                  add_when_exp(when_exps, tuple)
 
                   check :"}"
                   next_token_skip_space
                 else
-                  when_conds << parse_when_expression(cond)
+                  exp = parse_when_expression(cond)
+                  when_conds << exp
+                  add_when_exp(when_exps, exp)
                   skip_space
                 end
 
@@ -2415,7 +2421,9 @@ module Crystal
               end
             else
               while true
-                when_conds << parse_when_expression(cond)
+                exp = parse_when_expression(cond)
+                when_conds << exp
+                add_when_exp(when_exps, exp)
                 skip_space
                 break if when_expression_end
               end
@@ -2449,6 +2457,40 @@ module Crystal
       end
 
       Case.new(cond, whens, a_else)
+    end
+
+    # Add an expression to all when expressions and error on duplicates
+    def add_when_exp(when_exps, exp)
+      return unless when_exp_constant?(exp)
+
+      if when_exps.includes?(exp)
+        raise "duplicate when #{exp} in case", exp.location.not_nil!
+      end
+
+      when_exps << exp
+    end
+
+    # Only error on constant values, because calls might have side-effects:
+    # a first call might return one value and not match the case
+    # value, but the second same call returns something different
+    # and matches it.
+    def when_exp_constant?(exp)
+      case exp
+      when NilLiteral, BoolLiteral, CharLiteral, NumberLiteral,
+           StringLiteral, SymbolLiteral, Path
+        true
+      when ArrayLiteral
+        exp.elements.all? { |e| when_exp_constant?(e) }
+      when TupleLiteral
+        exp.elements.all? { |e| when_exp_constant?(e) }
+      when RegexLiteral
+        when_exp_constant?(exp.value)
+      when RangeLiteral
+        when_exp_constant?(exp.from) &&
+          when_exp_constant?(exp.to)
+      else
+        false
+      end
     end
 
     def when_expression_end
@@ -2605,7 +2647,7 @@ module Crystal
       doc ||= @token.doc
 
       prepare_parse_def
-      a_def = parse_def_helper is_abstract: is_abstract, is_macro_def: is_macro_def
+      a_def = parse_def_helper is_abstract: is_abstract
 
       a_def.calls_super = @calls_super
       a_def.calls_initialize = @calls_initialize
@@ -2649,13 +2691,6 @@ module Crystal
         @token.column_number += 1
       else
         skip_space_or_newline
-
-        if @token.keyword?(:def)
-          a_def = parse_def_helper is_macro_def: true
-          a_def.doc = doc
-          return a_def
-        end
-
         check DefOrMacroCheck1
       end
 
@@ -3049,7 +3084,7 @@ module Crystal
     DefOrMacroCheck1 = [:IDENT, :CONST, :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>"]
 
-    def parse_def_helper(is_abstract = false, is_macro_def = false)
+    def parse_def_helper(is_abstract = false)
       push_def
       @doc_enabled = false
       @def_nest += 1
@@ -3266,7 +3301,7 @@ module Crystal
       @doc_enabled = !!@wants_doc
       pop_def
 
-      node = Def.new name, args, body, receiver, block_arg, return_type, (is_macro_def || @is_macro_def), @yields, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
+      node = Def.new name, args, body, receiver, block_arg, return_type, @is_macro_def, @yields, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
       node.name_column_number = name_column_number
       set_visibility node
       node.end_location = end_location
@@ -3327,6 +3362,10 @@ module Crystal
         return ArgExtras.new(block_arg, false, false, false)
       end
 
+      if found_double_splat
+        raise "only block argument is allowed after double splat"
+      end
+
       splat = false
       double_splat = false
       arg_location = @token.location
@@ -3342,10 +3381,6 @@ module Crystal
         allow_external_name = false
         next_token_skip_space
       when :"**"
-        if found_double_splat
-          unexpected_token
-        end
-
         double_splat = true
         allow_external_name = false
         next_token_skip_space
@@ -3915,9 +3950,10 @@ module Crystal
         end_location = nil
 
         open("call") do
-          # We found a prentheses, so calls inside it will get the `do`
+          # We found a parentheses, so calls inside it will get the `do`
           # attached to them
           @stop_on_do = false
+          found_double_splat = false
 
           next_token_skip_space_or_newline
           while @token.type != :")"
@@ -3928,11 +3964,12 @@ module Crystal
             if @token.type == :IDENT && current_char == ':'
               return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: true)
             else
-              arg = parse_call_arg
+              arg = parse_call_arg(found_double_splat)
               if @token.type == :":" && arg.is_a?(StringLiteral)
                 return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: true)
               else
                 args << arg
+                found_double_splat = arg.is_a?(DoubleSplat)
               end
             end
 
@@ -3990,7 +4027,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__END_LINE__, :__FILE__, :__DIR__, :UNDERSCORE
+      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"~", :"->", :"{{", :__LINE__, :__END_LINE__, :__FILE__, :__DIR__, :UNDERSCORE
         # Nothing
       when :"*", :"**"
         if current_char.ascii_whitespace?
@@ -4028,6 +4065,8 @@ module Crystal
       # never to `return`.
       @stop_on_do = true unless control
 
+      found_double_splat = false
+
       while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != end_token && @token.type != :":" && !end_token?
         if call_block_arg_follows?
           return parse_call_block_arg(args, false)
@@ -4036,11 +4075,12 @@ module Crystal
         if @token.type == :IDENT && current_char == ':'
           return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: false)
         else
-          arg = parse_call_arg
+          arg = parse_call_arg(found_double_splat)
           if @token.type == :":" && arg.is_a?(StringLiteral)
             return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: false)
           else
             args << arg
+            found_double_splat = arg.is_a?(DoubleSplat)
           end
           end_location = arg.end_location
         end
@@ -4126,14 +4166,22 @@ module Crystal
       named_args
     end
 
-    def parse_call_arg
+    def parse_call_arg(found_double_splat = false)
       if @token.keyword?(:out)
+        if found_double_splat
+          raise "out argument not allowed after double splat"
+        end
+
         parse_out
       else
         splat = nil
         case @token.type
         when :"*"
           unless current_char.ascii_whitespace?
+            if found_double_splat
+              raise "splat not allowed after double splat"
+            end
+
             splat = :single
             next_token
           end
@@ -4145,6 +4193,10 @@ module Crystal
         end
 
         arg = parse_op_assign_no_control
+
+        if found_double_splat && splat != :double
+          raise "argument not allowed after double splat", arg.location.not_nil!
+        end
 
         case splat
         when :single

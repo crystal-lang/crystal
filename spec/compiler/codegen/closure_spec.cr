@@ -661,4 +661,24 @@ describe "Code gen: closure" do
       foo2.call.x
       )).to_i.should eq(42)
   end
+
+  it "doesn't incorrectly consider local as closured (#4948)" do
+    codegen(%(
+      arg = 1
+
+      f1 = ->{
+        # Here 'local' isn't to be confused with
+        # the outer closured 'local'
+        local = 1
+        local + arg
+      }
+
+      arg = 2
+
+      local = 4_i64
+      f2 = ->{ local.to_i }
+
+      f1.call + f2.call
+    ))
+  end
 end

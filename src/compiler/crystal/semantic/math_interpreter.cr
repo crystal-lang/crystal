@@ -8,7 +8,7 @@ struct Crystal::MathInterpreter
 
   def interpret(node : NumberLiteral, target_type = nil)
     case node.kind
-    when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64, :i64
+    when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64
       target_kind = target_type.try(&.kind) || node.kind
       case target_kind
       when :i8  then node.value.to_i8? || node.raise "invalid Int8: #{node.value}"

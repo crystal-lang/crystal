@@ -14,10 +14,11 @@ lib LibLLVMExt
   fun di_builder_finalize = LLVMDIBuilderFinalize(DIBuilder)
 
   fun di_builder_create_function = LLVMDIBuilderCreateFunction(
-                                                               builder : DIBuilder, scope : Metadata, name : Char*,
-                                                               linkage_name : Char*, file : Metadata, line : UInt,
-                                                               composite_type : Metadata, is_local_to_unit : Bool, is_definition : Bool,
-                                                               scope_line : UInt, flags : LLVM::DIFlags, is_optimized : Bool, func : LibLLVM::ValueRef) : Metadata
+    builder : DIBuilder, scope : Metadata, name : Char*,
+    linkage_name : Char*, file : Metadata, line : UInt,
+    composite_type : Metadata, is_local_to_unit : Bool, is_definition : Bool,
+    scope_line : UInt, flags : LLVM::DIFlags, is_optimized : Bool, func : LibLLVM::ValueRef
+  ) : Metadata
 
   fun di_builder_create_file = LLVMDIBuilderCreateFile(builder : DIBuilder, file : Char*, dir : Char*) : Metadata
   fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit(builder : DIBuilder,

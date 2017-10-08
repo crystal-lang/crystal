@@ -49,6 +49,8 @@ struct Time::Format
           hour_12_blank_padded
         when 'L'
           milliseconds
+        when 'N'
+          nanoseconds
         when 'm'
           month_zero_padded
         when 'M'

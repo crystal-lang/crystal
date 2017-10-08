@@ -210,6 +210,12 @@ describe "Tuple" do
     tuple2.should eq({"1", "2.5", "a"})
   end
 
+  it "does map_with_index" do
+    tuple = {1, 1, 2, 2}
+    tuple2 = tuple.map_with_index { |e, i| e + i }
+    tuple2.should eq({1, 2, 4, 5})
+  end
+
   it "does reverse" do
     {1, 2.5, "a", 'c'}.reverse.should eq({'c', "a", 2.5, 1})
   end
@@ -283,7 +289,7 @@ describe "Tuple" do
 
   it "does types" do
     tuple = {1, 'a', "hello"}
-    tuple.types.to_s.should eq("Tuple(Int32, Char, String)")
+    tuple.class.types.to_s.should eq("{Int32, Char, String}")
   end
 
   it "does ===" do

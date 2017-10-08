@@ -14,6 +14,26 @@ describe "Code gen: primitives" do
     run("1_i64").to_i.should eq(1)
   end
 
+  it "codegens int128" do
+    # LLVM's JIT doesn't seem to support 128
+    # bit integers well regarding GenericValue
+    run(%(
+      require "prelude"
+
+      1_i128.to_i
+      )).to_i.should eq(1)
+  end
+
+  it "codegens uint128" do
+    # LLVM's JIT doesn't seem to support 128
+    # bit integers well regarding GenericValue
+    run(%(
+      require "prelude"
+
+      1_u128.to_i
+      )).to_i.should eq(1)
+  end
+
   it "codegens char" do
     run("'a'").to_i.should eq('a'.ord)
   end

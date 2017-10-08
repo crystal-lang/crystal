@@ -402,6 +402,8 @@ module Crystal
       when Const
         matched_type.value
       when Type
+        matched_type = matched_type.remove_alias
+
         # If it's the T of a variadic generic type, produce tuple literals
         # or named tuple literals. The compiler has them as a type
         # (a tuple type, or a named tuple type) but the user should see

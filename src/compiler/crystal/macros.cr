@@ -153,6 +153,14 @@ module Crystal::Macros
     def stringify : StringLiteral
     end
 
+    # Returns a `SymbolLiteral` that contains this node's textual representation.
+    #
+    # ```
+    # {{ "foo".id.symbolize }} # => :foo
+    # ```
+    def symbolize : SymbolLiteral
+    end
+
     # Returns a `StringLiteral` that contains this node's name.
     #
     # ```

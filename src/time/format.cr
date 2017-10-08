@@ -28,6 +28,7 @@
 # * **%k**: hour of the day, 24-hour clock, blank padded (" 0", " 1", ..., "24")
 # * **%l**: hour of the day, 12-hour clock, blank padded (" 0", " 1", ..., "12")
 # * **%L**: milliseconds, zero padded (000, 001, ..., 999)
+# * **%N**: nanoseconds, zero padded (000000000, 000000001, ..., 999999999)
 # * **%m**: month number, zero padded (01, 02, ..., 12)
 # * **%_m**: month number, blank padded (" 1", " 2", ..., "12")
 # * **%-m**: month number (1, 2, ..., 12)

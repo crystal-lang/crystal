@@ -124,7 +124,20 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         free_vars = nil
       end
 
-      superclass = lookup_type(node_superclass, free_vars: free_vars)
+      # find_root_generic_type_parameters is false because
+      # we don't want to find T in this case:
+      #
+      # class A(T)
+      #   class B < T
+      #   end
+      # end
+      #
+      # We search for a superclass starting from the current
+      # type, A(T) in this case, but we don't want to find
+      # type parameters because they will always be unbound.
+      superclass = lookup_type(node_superclass,
+        free_vars: free_vars,
+        find_root_generic_type_parameters: false)
       case superclass
       when GenericClassType
         node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"

@@ -24,6 +24,67 @@ describe YAML::Any do
       YAML.parse("foo: bar").as_h?.should eq({"foo" => "bar"})
       YAML.parse("foo: bar")["foo"].as_h?.should be_nil
     end
+
+    it "gets int64" do
+      value = YAML.parse("1").as_i64
+      value.should eq(1)
+      value.should be_a(Int64)
+
+      value = YAML.parse("1").as_i64?
+      value.should eq(1)
+      value.should be_a(Int64)
+
+      value = YAML.parse("true").as_i64?
+      value.should be_nil
+    end
+
+    it "gets int32" do
+      value = YAML.parse("1").as_i
+      value.should eq(1)
+      value.should be_a(Int32)
+
+      value = YAML.parse("1").as_i?
+      value.should eq(1)
+      value.should be_a(Int32)
+
+      value = YAML.parse("true").as_i?
+      value.should be_nil
+    end
+
+    it "gets float64" do
+      value = YAML.parse("1.2").as_f
+      value.should eq(1.2)
+      value.should be_a(Float64)
+
+      value = YAML.parse("1.2").as_f?
+      value.should eq(1.2)
+      value.should be_a(Float64)
+
+      value = YAML.parse("true").as_f?
+      value.should be_nil
+    end
+
+    it "gets time" do
+      value = YAML.parse("2010-01-02").as_time
+      value.should eq(Time.new(2010, 1, 2, kind: Time::Kind::Utc))
+
+      value = YAML.parse("2010-01-02").as_time?
+      value.should eq(Time.new(2010, 1, 2, kind: Time::Kind::Utc))
+
+      value = YAML.parse("hello").as_time?
+      value.should be_nil
+    end
+
+    it "gets bytes" do
+      value = YAML.parse("!!binary aGVsbG8=").as_bytes
+      value.should eq("hello".to_slice)
+
+      value = YAML.parse("!!binary aGVsbG8=").as_bytes?
+      value.should eq("hello".to_slice)
+
+      value = YAML.parse("1").as_bytes?
+      value.should be_nil
+    end
   end
 
   describe "#size" do
@@ -44,6 +105,10 @@ describe YAML::Any do
     it "of hash" do
       YAML.parse("foo: bar")["foo"].raw.should eq("bar")
     end
+
+    it "of hash with integer keys" do
+      YAML.parse("1: bar")[1].raw.should eq("bar")
+    end
   end
 
   describe "#[]?" do
@@ -55,6 +120,11 @@ describe YAML::Any do
     it "of hash" do
       YAML.parse("foo: bar")["foo"]?.not_nil!.raw.should eq("bar")
       YAML.parse("foo: bar")["fox"]?.should be_nil
+    end
+
+    it "of hash with integer keys" do
+      YAML.parse("1: bar")[1]?.not_nil!.raw.should eq("bar")
+      YAML.parse("1: bar")[2]?.should be_nil
     end
   end
 
@@ -94,7 +164,7 @@ describe YAML::Any do
   end
 
   it "can compare with ===" do
-    ("1" === YAML.parse("1")).should be_truthy
+    (1 === YAML.parse("1")).should be_truthy
   end
 
   it "exposes $~ when doing Regex#===" do
@@ -106,7 +176,7 @@ describe YAML::Any do
     nums = YAML.parse("[1, 2, 3]")
     nums.each_with_index do |x, i|
       x.should be_a(YAML::Any)
-      x.raw.should eq((i + 1).to_s)
+      x.raw.should eq(i + 1)
     end
   end
 end

@@ -440,9 +440,14 @@ class Crystal::Call
         instance_type.tuple_metaclass_indexer(index)
       end
     elsif owner.is_a?(NamedTupleInstanceType)
-      # Check named tuple inexer
+      # Check named tuple indexer
       named_tuple_indexer_helper(args, arg_types, owner, owner, nilable) do |instance_type, index|
         instance_type.tuple_indexer(index)
+      end
+    elsif owner.metaclass? && (instance_type = owner.instance_type).is_a?(NamedTupleInstanceType)
+      # Check named tuple metaclass indexer
+      named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable) do |instance_type, index|
+        instance_type.tuple_metaclass_indexer(index)
       end
     end
   end

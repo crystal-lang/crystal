@@ -24,9 +24,10 @@ module Event
     end
 
     def add(timeout : Time::Span)
-      seconds, remainder_ticks = timeout.ticks.divmod(Time::Span::TicksPerSecond)
-      timeval = LibC::Timeval.new(tv_sec: seconds, tv_usec: remainder_ticks / Time::Span::TicksPerMicrosecond)
-      add(timeval)
+      add LibC::Timeval.new(
+        tv_sec: timeout.total_seconds.to_i,
+        tv_usec: timeout.nanoseconds / 1_000
+      )
     end
 
     def free

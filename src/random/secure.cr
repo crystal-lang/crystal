@@ -1,21 +1,25 @@
 require "crystal/system/random"
 
-# Generates random numbers from a secure source of the system.
+# Generates random numbers from a secure source provided by the system.
 #
 # For example `arc4random` is used on OpenBSD, whereas on Linux it uses
 # `getrandom` (if the kernel supports it) and fallbacks on reading from
 # `/dev/urandom` on UNIX systems.
 #
 # ```
-# Random::System.rand(6)            # => 4
-# [1, 5, 6].shuffle(Random::System) # => [6, 1, 5]
+# Random::Secure.rand(6)            # => 4
+# [1, 5, 6].shuffle(Random::Secure) # => [6, 1, 5]
 # ```
-module Random::System
+module Random::Secure
   extend Random
   extend self
 
   def next_u
     Crystal::System::Random.next_u
+  end
+
+  def random_bytes(buf : Bytes)
+    Crystal::System::Random.random_bytes(buf)
   end
 
   {% for type in [UInt8, UInt16, UInt32, UInt64] %}
@@ -34,13 +38,13 @@ module Random::System
 
       if needed_bytes < sizeof({{type}})
         bytes = Slice.new(buf.to_unsafe, needed_bytes)
-        Crystal::System::Random.random_bytes(bytes)
+        random_bytes(bytes)
 
         bytes.reduce({{type}}.new(0)) do |result, byte|
           (result << 8) | byte
         end
       else
-        Crystal::System::Random.random_bytes(buf.to_slice)
+        random_bytes(buf.to_slice)
         buf.to_unsafe.as({{type}}*).value
       end
     end

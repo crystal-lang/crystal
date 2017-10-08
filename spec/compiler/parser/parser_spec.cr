@@ -37,6 +37,9 @@ describe "Parser" do
   it_parses "+1_i64", 1.int64
   it_parses "-1_i64", -1.int64
 
+  it_parses "1_u128", 1.uint128
+  it_parses "1_i128", 1.int128
+
   it_parses "1.0", 1.0.float64
   it_parses "+1.0", 1.0.float64
   it_parses "-1.0", -1.0.float64
@@ -237,7 +240,9 @@ describe "Parser" do
   it_parses "def foo(**args : Foo)\n1\nend", Def.new("foo", body: 1.int32, double_splat: Arg.new("args", restriction: "Foo".path))
   it_parses "def foo(**args : **Foo)\n1\nend", Def.new("foo", body: 1.int32, double_splat: Arg.new("args", restriction: DoubleSplat.new("Foo".path)))
 
-  assert_syntax_error "def foo(**args, **args2)"
+  assert_syntax_error "def foo(**args, **args2); end", "only block argument is allowed after double splat"
+  assert_syntax_error "def foo(**args, x); end", "only block argument is allowed after double splat"
+  assert_syntax_error "def foo(**args, *x); end", "only block argument is allowed after double splat"
 
   it_parses "def foo(x y); y; end", Def.new("foo", args: [Arg.new("y", external_name: "x")], body: "y".var)
   it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
@@ -257,6 +262,8 @@ describe "Parser" do
   it_parses "macro foo(**args)\n1\nend", Macro.new("foo", body: MacroLiteral.new("1\n"), double_splat: "args".arg)
 
   assert_syntax_error "macro foo(x, *); 1; end", "named arguments must follow bare *"
+  assert_syntax_error "macro foo(**x, **y)", "only block argument is allowed after double splat"
+  assert_syntax_error "macro foo(**x, y)", "only block argument is allowed after double splat"
 
   it_parses "abstract def foo", Def.new("foo", abstract: true)
   it_parses "abstract def foo; 1", [Def.new("foo", abstract: true), 1.int32]
@@ -765,9 +772,8 @@ describe "Parser" do
   it_parses "macro foo;bar{% for x in y %}\\  \n   body{% end %}\\   baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroFor.new(["x".var], "y".var, "body".macro_literal), "baz;".macro_literal] of ASTNode))
   it_parses "macro foo; 1 + 2 {{foo}}\\ 3 + 4; end", Macro.new("foo", [] of Arg, Expressions.from([" 1 + 2 ".macro_literal, MacroExpression.new("foo".var), "3 + 4; ".macro_literal] of ASTNode))
 
-  it_parses "macro def foo : String; 1; end", Def.new("foo", body: 1.int32, return_type: "String".path, macro_def: true)
-  it_parses "macro def foo(x) : String; 1; end", Def.new("foo", ["x".arg], 1.int32, return_type: "String".path, macro_def: true)
-  it_parses "macro def foo; 1; end", Def.new("foo", body: 1.int32, macro_def: true)
+  assert_syntax_error "macro def foo : String; 1; end"
+
   it_parses "def foo;{{@type}};end", Def.new("foo", body: Expressions.from([MacroExpression.new("@type".instance_var)] of ASTNode), macro_def: true)
 
   it_parses "macro foo;bar{% begin %}body{% end %}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new(true.bool, "body".macro_literal), "baz;".macro_literal] of ASTNode))
@@ -1120,8 +1126,14 @@ describe "Parser" do
   it_parses "foo 1, **bar, &block", Call.new(nil, "foo", args: [1.int32, DoubleSplat.new("bar".call)], block_arg: "block".call)
   it_parses "foo(1, **bar, &block)", Call.new(nil, "foo", args: [1.int32, DoubleSplat.new("bar".call)], block_arg: "block".call)
 
-  # assert_syntax_error "foo **bar, 1"
-  # assert_syntax_error "foo(**bar, 1)"
+  assert_syntax_error "foo **bar, 1", "argument not allowed after double splat"
+  assert_syntax_error "foo(**bar, 1)", "argument not allowed after double splat"
+
+  assert_syntax_error "foo **bar, *x", "splat not allowed after double splat"
+  assert_syntax_error "foo(**bar, *x)", "splat not allowed after double splat"
+
+  assert_syntax_error "foo **bar, out x", "out argument not allowed after double splat"
+  assert_syntax_error "foo(**bar, out x)", "out argument not allowed after double splat"
 
   it_parses "private def foo; end", VisibilityModifier.new(Visibility::Private, Def.new("foo"))
   it_parses "protected def foo; end", VisibilityModifier.new(Visibility::Protected, Def.new("foo"))
@@ -1396,7 +1408,7 @@ describe "Parser" do
 
   assert_syntax_error "/foo)/", "invalid regex"
   assert_syntax_error "def =\nend"
-  assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment"
+  assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
   assert_syntax_error "{1, ->{ |x| x } }", "unexpected token '|'"
   assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token '|'"
 
@@ -1567,6 +1579,18 @@ describe "Parser" do
 
     assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
     assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
+
+    assert_syntax_error "case x; when nil; 2; when nil; end", "duplicate when nil in case"
+    assert_syntax_error "case x; when true; 2; when true; end", "duplicate when true in case"
+    assert_syntax_error "case x; when 1; 2; when 1; end", "duplicate when 1 in case"
+    assert_syntax_error "case x; when 'a'; 2; when 'a'; end", "duplicate when 'a' in case"
+    assert_syntax_error %(case x; when "a"; 2; when "a"; end), %(duplicate when "a" in case)
+    assert_syntax_error %(case x; when :a; 2; when :a; end), "duplicate when :a in case"
+    assert_syntax_error %(case x; when {1, 2}; 2; when {1, 2}; end), "duplicate when {1, 2} in case"
+    assert_syntax_error %(case x; when [1, 2]; 2; when [1, 2]; end), "duplicate when [1, 2] in case"
+    assert_syntax_error %(case x; when 1..2; 2; when 1..2; end), "duplicate when 1..2 in case"
+    assert_syntax_error %(case x; when /x/; 2; when /x/; end), "duplicate when /x/ in case"
+    assert_syntax_error %(case x; when X; 2; when X; end), "duplicate when X in case"
 
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")

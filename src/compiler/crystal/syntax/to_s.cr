@@ -618,7 +618,6 @@ module Crystal
 
     def visit(node : Def)
       @str << "abstract " if node.abstract?
-      @str << "macro " if node.macro_def?
       @str << keyword("def")
       @str << " "
       if node_receiver = node.receiver
@@ -1247,9 +1246,7 @@ module Crystal
 
     def visit_cast(node, keyword)
       need_parens = need_parens(node.obj)
-      @str << "(" if need_parens
-      accept_with_maybe_begin_end node.obj
-      @str << ")" if need_parens
+      in_parenthesis(need_parens, node.obj)
       @str << "."
       @str << keyword(keyword)
       @str << "("

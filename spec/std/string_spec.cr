@@ -1206,6 +1206,11 @@ describe "String" do
       replaced.should eq("fexexbar")
     end
 
+    it "gsubs char with string (nop)" do
+      s = "foobar"
+      s.gsub('x', "yz").should be(s)
+    end
+
     it "gsubs char with string depending on the char" do
       replaced = "foobar".gsub do |char|
         case char

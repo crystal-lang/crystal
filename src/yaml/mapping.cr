@@ -96,50 +96,78 @@ module YAML
       {% end %}
     {% end %}
 
-    def initialize(%pull : ::YAML::PullParser)
+    def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+      ctx.read_alias(node, \{{@type}}) do |obj|
+        return obj
+      end
+
+      instance = allocate
+
+      ctx.record_anchor(node, instance)
+
+      instance.initialize(ctx, node, nil)
+      instance
+    end
+
+    # `new` and `initialize` with just `pull` as an argument collide
+    # and the compiler just sees the last one. This is why we add a
+    # dummy argument.
+    #
+    # FIXME: remove the dummy argument if we ever fix this.
+
+    def initialize(ctx : YAML::ParseContext, node : ::YAML::Nodes::Node, _dummy : Nil)
       {% for key, value in properties %}
         %var{key.id} = nil
         %found{key.id} = false
       {% end %}
 
-      %mapping_location = %pull.location
+      case node
+      when YAML::Nodes::Mapping
+        YAML::Schema::Core.each(node) do |key_node, value_node|
+          unless key_node.is_a?(YAML::Nodes::Scalar)
+            key_node.raise "Expected scalar as key for mapping"
+          end
 
-      %pull.read_mapping_start
-      while %pull.kind != ::YAML::EventKind::MAPPING_END
-        %key_location = %pull.location
-        key = %pull.read_scalar.not_nil!
-        case key
-        {% for key, value in properties %}
-          when {{value[:key] || key.id.stringify}}
-            %found{key.id} = true
+          key = key_node.value
 
-            %var{key.id} =
-              {% if value[:nilable] || value[:default] != nil %} %pull.read_null_or { {% end %}
+          case key
+          {% for key, value in properties %}
+            when {{value[:key] || key.id.stringify}}
+              %found{key.id} = true
 
-              {% if value[:converter] %}
-                {{value[:converter]}}.from_yaml(%pull)
-              {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                {{value[:type]}}.new(%pull)
-              {% else %}
-                ::Union({{value[:type]}}).new(%pull)
-              {% end %}
+              %var{key.id} =
+                {% if value[:nilable] || value[:default] != nil %} YAML::Schema::Core.parse_null_or(value_node) { {% end %}
 
-            {% if value[:nilable] || value[:default] != nil %} } {% end %}
-        {% end %}
-        else
-          {% if strict %}
-            raise ::YAML::ParseException.new("Unknown yaml attribute: #{key}", *%key_location)
-          {% else %}
-            %pull.skip
+                {% if value[:converter] %}
+                  {{value[:converter]}}.from_yaml(ctx, value_node)
+                {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
+                  {{value[:type]}}.new(ctx, value_node)
+                {% else %}
+                  ::Union({{value[:type]}}).new(ctx, value_node)
+                {% end %}
+
+                {% if value[:nilable] || value[:default] != nil %} } {% end %}
           {% end %}
+          else
+            {% if strict %}
+              key_node.raise "Unknown yaml attribute: #{key}"
+            {% end %}
+          end
         end
+      when YAML::Nodes::Scalar
+        if node.value.empty? && node.style.plain? && !node.tag
+          # We consider an empty scalar as an empty mapping
+        else
+          node.raise "Expected mapping, not #{node.class}"
+        end
+      else
+        node.raise "Expected mapping, not #{node.class}"
       end
-      %pull.read_next
 
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
-            raise ::YAML::ParseException.new("Missing yaml attribute: {{(value[:key] || key).id}}", *%mapping_location)
+            node.raise "Missing yaml attribute: {{(value[:key] || key).id}}"
           end
         {% end %}
       {% end %}
@@ -165,8 +193,8 @@ module YAML
       {% end %}
     end
 
-    def to_yaml(%yaml : ::YAML::Builder)
-      %yaml.mapping do
+    def to_yaml(%yaml : ::YAML::Nodes::Builder)
+      %yaml.mapping(reference: self) do
         {% for key, value in properties %}
           _{{key.id}} = @{{key.id}}
 

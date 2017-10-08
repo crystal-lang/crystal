@@ -50,7 +50,7 @@ module OAuth
 
   private def self.oauth_header(client, request, token, token_secret, consumer_key, consumer_secret, extra_params)
     ts = Time.now.epoch.to_s
-    nonce = SecureRandom.hex
+    nonce = Random::Secure.hex
 
     signature = Signature.new consumer_key, consumer_secret, token, token_secret, extra_params
     signature.authorization_header request, client.tls?, ts, nonce
