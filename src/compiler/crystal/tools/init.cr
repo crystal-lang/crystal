@@ -102,14 +102,13 @@ module Crystal
       property silent : Bool
 
       def initialize(
-        @skeleton_type = "none",
-        @name = "none",
-        @dir = "none",
-        @author = "none",
-        @email = "none",
-        @github_name = "none",
-        @silent = false
-      )
+                     @skeleton_type = "none",
+                     @name = "none",
+                     @dir = "none",
+                     @author = "none",
+                     @email = "none",
+                     @github_name = "none",
+                     @silent = false)
       end
     end
 
