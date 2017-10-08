@@ -1,5 +1,3 @@
-require "secure_random"
-
 # Universally Unique IDentifier.
 # Supports [RFC4122](https://www.ietf.org/rfc/rfc4122.txt) UUIDs and custom
 struct UUID
@@ -26,7 +24,7 @@ struct UUID
   # Generates RFC 4122 v4 UUID.
   def initialize
     @bytes = uninitialized UInt8[16]
-    @bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
+    @bytes.to_unsafe.copy_from Random::Secure.random_bytes(16).pointer(16), 16
 
     variant = Variant::RFC4122
     version = Version::V4
@@ -57,7 +55,7 @@ struct UUID
 
   def initialize(version : Version)
     @bytes = uninitialized UInt8[16]
-    @bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
+    @bytes.to_unsafe.copy_from Random::Secure.random_bytes(16).pointer(16), 16
 
     variant = Variant::RFC4122
     version = version
@@ -71,7 +69,7 @@ struct UUID
 
   def initialize(variant : Variant)
     @bytes = uninitialized UInt8[16]
-    @bytes.to_unsafe.copy_from SecureRandom.random_bytes(16).pointer(16), 16
+    @bytes.to_unsafe.copy_from Random::Secure.random_bytes(16).pointer(16), 16
 
     variant = variant
     version = Version::V4
