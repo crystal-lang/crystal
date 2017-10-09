@@ -260,11 +260,4 @@ describe "Random" do
       hex.should eq("9fd857f462831002ffffffffffffffff0000000000000000e88d3a30db4e730021b8a5e33b020000362f518e0700000062da")
     end
   end
-
-  describe "uuid" do
-    it "gets uuid" do
-      uuid = TestRNG.new(RNG_DATA_8).uuid
-      uuid.should eq("ea990000-7f80-4fff-aa99-00007f80ffff")
-    end
-  end
 end
