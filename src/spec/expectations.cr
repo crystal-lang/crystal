@@ -200,52 +200,71 @@ module Spec
     end
   end
 
+  # This module defines a number of methods to create expectations, which are
+  # automatically included into the top level namespace.
   module Expectations
+    # Creates an `Expectation` that passes if actual equals *value* (`==`).
     def eq(value)
       Spec::EqualExpectation.new value
     end
 
+    # Creates an `Expectation` that passes if actual and *value* are identical (`.same?`).
     def be(value)
       Spec::BeExpectation.new value
     end
 
+    # Creates an `Expectation` that passes if actual is true (`== true`).
     def be_true
       eq true
     end
 
+    # Creates an `Expectation` that passes if actual is false (`== false`).
     def be_false
       eq false
     end
 
+    # Creates an `Expectation` that passes if actual is truthy (neither `nil` nor `false`).
     def be_truthy
       Spec::BeTruthyExpectation.new
     end
 
+    # Creates an `Expectation` that passes if actual is falsy (`nil` or `false`).
     def be_falsey
       Spec::BeFalseyExpectation.new
     end
 
+    # Creates an `Expectation` that passes if actual is nil (`== nil`).
     def be_nil
       Spec::BeNilExpectation.new
     end
 
+    # Creates an `Expectation` that passes if actual is within *delta* of *expected*.
     def be_close(expected, delta)
       Spec::CloseExpectation.new(expected, delta)
     end
 
+    # Returns a factory to create a comparison `Expectation` that:
+    #
+    # * passes if actual is lesser than *value*: `be.<(value)`
+    # * passes if actual is lesser than or equal *value*: `be.<=(value)`
+    # * passes if actual is greater than *value*: `be.>(value)`
+    # * passes if actual is greater than or equal *value*: `be.>=(value)`
     def be
       Spec::Be
     end
 
+    # Creates an `Expectation` that passes if actual matches *value* (`=~`).
     def match(value)
       Spec::MatchExpectation.new(value)
     end
 
-    # Passes if actual includes *expected*. Works on collections and `String`.
+    # Creates an `Expectation` that  passes if actual includes *expected* (`.includes?`).
+    # Works on collections and `String`.
     def contain(expected)
       Spec::ContainExpectation.new(expected)
     end
 
+    # Creates an `Expectation` that passes if actual is of type *type* (`is_a?`).
     macro be_a(type)
       Spec::BeAExpectation({{type}}).new
     end
@@ -256,6 +275,7 @@ module Spec
       end
     end
 
+    # Creates an `Expectation` that passes if the block raises an exception of type *klass* and the error message contains *message*.
     macro expect_raises(klass, message, file = __FILE__, line = __LINE__)
       %failed = false
       begin
