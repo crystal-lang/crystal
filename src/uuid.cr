@@ -53,18 +53,18 @@ struct UUID
     decode value
   end
 
+  # Creates UUID from bytes, applying *version* and *variant* to the UUID.
+  def initialize(@bytes : StaticArray(UInt8, 16), variant : Variant, version : Version)
+    self.variant = variant
+    self.version = version
+  end
+
   def initialize(version : Version)
     @bytes = uninitialized UInt8[16]
     @bytes.to_unsafe.copy_from Random::Secure.random_bytes(16).pointer(16), 16
 
     variant = Variant::RFC4122
     version = version
-  end
-
-  # Creates UUID from bytes, applying *version* and *variant* to the UUID.
-  def initialize(@bytes : StaticArray(UInt8, 16), variant : Variant, version : Version)
-    self.variant = variant
-    self.version = version
   end
 
   def initialize(variant : Variant)
@@ -137,7 +137,6 @@ struct UUID
   end
 
   def self.empty
-    # new StaticArray(UInt8, 16).new(0_u8)
     new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
   end
 
@@ -162,31 +161,8 @@ struct UUID
   end
 
   # Returns `true` if `other` 16-byte slice represents the same UUID, `false` otherwise.
-  def ==(other : Slice(UInt8))
-    to_slice == other
-  end
-
-  # Returns `true` if `other` static 16 bytes represent the same UUID, `false` otherwise.
-  def ==(other : StaticArray(UInt8, 16))
-    self.==(Slice(UInt8).new other.to_unsafe, 16)
-  end
-
-  # Same as `UUID#decode(value : String)`, returns `self`.
-  def <<(value : String)
-    decode value
-    self
-  end
-
-  # Same as `UUID#variant=(value : Variant)`, returns `self`.
-  def <<(value : Variant)
-    variant = value
-    self
-  end
-
-  # Same as `UUID#version=(value : Version)`, returns `self`.
-  def <<(value : Version)
-    version = value
-    self
+  def ==(other : UUID)
+    to_slice == other.to_slice
   end
 
   # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex digit followed by another hex digit.

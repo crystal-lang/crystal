@@ -2,7 +2,7 @@ require "spec"
 require "uuid"
 
 describe "UUID" do
-  it "has working zero UUID" do
+  it "initializes zeroed UUID" do
     UUID.empty.should eq UUID.new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
     UUID.empty.to_s.should eq "00000000-0000-4000-0000-000000000000"
     UUID.empty.variant.should eq UUID::Variant::NCS
