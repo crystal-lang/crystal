@@ -8,6 +8,12 @@ private class SpecException < Exception
   end
 end
 
+private class NilMimicker
+  def ==(nil : Nil)
+    true
+  end
+end
+
 describe "Spec matchers" do
   describe "should be_truthy" do
     it "passes for true" do
@@ -46,6 +52,16 @@ describe "Spec matchers" do
 
     it "passes for some non-nil, non-false value" do
       42.should_not be_falsey
+    end
+  end
+
+  describe "be_nil" do
+    it "passes for nil" do
+      nil.should be_nil
+    end
+
+    it "does not pass for overwritten `==`" do
+      NilMimicker.new.should_not be_nil
     end
   end
 
