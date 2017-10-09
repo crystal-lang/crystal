@@ -72,6 +72,21 @@ module Spec
   end
 
   # :nodoc:
+  struct BeNilExpectation
+    def match(actual_value)
+      actual_value.nil?
+    end
+
+    def failure_message(actual_value)
+      "Expected: #{actual_value.inspect} to be nil"
+    end
+
+    def negative_failure_message(actual_value)
+      "Expected: #{actual_value.inspect} not to be nil"
+    end
+  end
+
+  # :nodoc:
   struct CloseExpectation(T, D)
     def initialize(@expected_value : T, @delta : D)
     end
@@ -211,7 +226,7 @@ module Spec
     end
 
     def be_nil
-      eq nil
+      Spec::BeNilExpectation.new
     end
 
     def be_close(expected, delta)
