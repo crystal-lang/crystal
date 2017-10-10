@@ -1,7 +1,7 @@
 require "spec"
 
 def Time.expect_invalid
-  expect_raises ArgumentError, "Invalid time" do
+  expect_raises(ArgumentError, "Invalid time") do
     yield
   end
 end
@@ -84,7 +84,7 @@ describe Time do
   it "add out of range 1" do
     t1 = Time.new(9980, 2, 25, 15, 25, 13)
 
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       t1 + Time::Span.new(nanoseconds: Int64::MAX)
     end
   end
@@ -92,7 +92,7 @@ describe Time do
   it "add out of range 2" do
     t1 = Time.new(1, 2, 25, 15, 25, 13)
 
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       t1 + Time::Span.new(nanoseconds: Int64::MIN)
     end
   end
@@ -121,14 +121,14 @@ describe Time do
 
   it "add days out of range 1" do
     t1 = Time.new(2002, 2, 25, 15, 25, 13)
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       t1 + 10000000.days
     end
   end
 
   it "add days out of range 2" do
     t1 = Time.new(2002, 2, 25, 15, 25, 13)
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       t1 - 10000000.days
     end
   end

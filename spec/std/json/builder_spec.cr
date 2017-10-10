@@ -42,7 +42,7 @@ describe JSON::Builder do
   it "errors on nan" do
     json = JSON::Builder.new(IO::Memory.new)
     json.start_document
-    expect_raises JSON::Error, "NaN not allowed in JSON" do
+    expect_raises(JSON::Error, "NaN not allowed in JSON") do
       json.number(0.0/0.0)
     end
   end
@@ -50,7 +50,7 @@ describe JSON::Builder do
   it "errors on infinity" do
     json = JSON::Builder.new(IO::Memory.new)
     json.start_document
-    expect_raises JSON::Error, "Infinity not allowed in JSON" do
+    expect_raises(JSON::Error, "Infinity not allowed in JSON") do
       json.number(1.0/0.0)
     end
   end
@@ -69,7 +69,7 @@ describe JSON::Builder do
 
   it "errors if writing before document start" do
     json = JSON::Builder.new(IO::Memory.new)
-    expect_raises JSON::Error, "Write before start_document" do
+    expect_raises(JSON::Error, "Write before start_document") do
       json.number(1)
     end
   end
@@ -78,7 +78,7 @@ describe JSON::Builder do
     json = JSON::Builder.new(IO::Memory.new)
     json.start_document
     json.number(1)
-    expect_raises JSON::Error, "Write past end_document and before start_document" do
+    expect_raises(JSON::Error, "Write past end_document and before start_document") do
       json.number(2)
     end
   end
@@ -235,7 +235,7 @@ describe JSON::Builder do
   it "raises if nothing written" do
     json = JSON::Builder.new(IO::Memory.new)
     json.start_document
-    expect_raises JSON::Error, "Empty JSON" do
+    expect_raises(JSON::Error, "Empty JSON") do
       json.end_document
     end
   end
@@ -244,7 +244,7 @@ describe JSON::Builder do
     json = JSON::Builder.new(IO::Memory.new)
     json.start_document
     json.start_array
-    expect_raises JSON::Error, "Unterminated JSON array" do
+    expect_raises(JSON::Error, "Unterminated JSON array") do
       json.end_document
     end
   end
@@ -253,7 +253,7 @@ describe JSON::Builder do
     json = JSON::Builder.new(IO::Memory.new)
     json.start_document
     json.start_object
-    expect_raises JSON::Error, "Unterminated JSON object" do
+    expect_raises(JSON::Error, "Unterminated JSON object") do
       json.end_document
     end
   end

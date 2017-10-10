@@ -78,7 +78,7 @@ module HTTP
 
       it "raises KeyError when there is no such param" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        expect_raises KeyError do
+        expect_raises(KeyError) do
           params["non_existent_param"]
         end
       end
@@ -133,7 +133,7 @@ module HTTP
 
       it "raises KeyError when there is no such param" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
-        expect_raises KeyError do
+        expect_raises(KeyError) do
           params.fetch("non_existent_param")
         end
       end
@@ -233,7 +233,7 @@ module HTTP
         params.fetch_all("foo").should eq(["baz"])
 
         params.delete("baz").should eq("qux")
-        expect_raises KeyError do
+        expect_raises(KeyError) do
           params.fetch("baz")
         end
       end
@@ -244,7 +244,7 @@ module HTTP
         params = Params.parse("foo=bar&foo=baz&baz=qux")
 
         params.delete_all("foo").should eq(["bar", "baz"])
-        expect_raises KeyError do
+        expect_raises(KeyError) do
           params.fetch("foo")
         end
       end

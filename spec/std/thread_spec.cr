@@ -10,7 +10,7 @@ describe Thread do
 
   it "raises inside thread and gets it on join" do
     thread = Thread.new { raise "OH NO" }
-    expect_raises Exception, "OH NO" do
+    expect_raises(Exception, "OH NO") do
       thread.join
     end
   end

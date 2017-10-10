@@ -19,7 +19,7 @@ describe HTTP::Headers do
   end
 
   it "raises an error if header value contains invalid character" do
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       headers = HTTP::Headers{"invalid-header" => "\r\nLocation: http://example.com"}
     end
   end

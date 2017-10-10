@@ -114,31 +114,31 @@ describe "Base64" do
     end
 
     it "raise error when \n in incorrect place" do
-      expect_raises Base64::Error do
+      expect_raises(Base64::Error) do
         Base64.decode("aG\nFoYWjiipnik6fiipk=")
       end
 
-      expect_raises Base64::Error do
+      expect_raises(Base64::Error) do
         Base64.decode_string("aG\nFoYWjiipnik6fiipk=")
       end
     end
 
     it "raise error when incorrect symbol" do
-      expect_raises Base64::Error do
+      expect_raises(Base64::Error) do
         Base64.decode("()")
       end
 
-      expect_raises Base64::Error do
+      expect_raises(Base64::Error) do
         Base64.decode_string("()")
       end
     end
 
     it "raise error when incorrect size" do
-      expect_raises Base64::Error do
+      expect_raises(Base64::Error) do
         Base64.decode("a")
       end
 
-      expect_raises Base64::Error do
+      expect_raises(Base64::Error) do
         Base64.decode_string("a")
       end
     end

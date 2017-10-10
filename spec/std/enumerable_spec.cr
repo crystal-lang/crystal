@@ -405,7 +405,7 @@ describe "Enumerable" do
     end
 
     it "raises if enumerable empty" do
-      expect_raises Enumerable::EmptyError do
+      expect_raises(Enumerable::EmptyError) do
         (1...1).first
       end
     end
@@ -472,7 +472,7 @@ describe "Enumerable" do
     it { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
 
     it "raises argument error if size is less than 0" do
-      expect_raises ArgumentError, "Size must be positive" do
+      expect_raises(ArgumentError, "Size must be positive") do
         [1, 2, 3].in_groups_of(0)
       end
     end
@@ -552,7 +552,7 @@ describe "Enumerable" do
     it { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }
 
     it "raises if empty" do
-      expect_raises Enumerable::EmptyError do
+      expect_raises(Enumerable::EmptyError) do
         ([] of Int32).reduce { |memo, i| memo + i }
       end
     end
@@ -615,7 +615,7 @@ describe "Enumerable" do
     it { [1, 2, 3].max.should eq(3) }
 
     it "raises if empty" do
-      expect_raises Enumerable::EmptyError do
+      expect_raises(Enumerable::EmptyError) do
         ([] of Int32).max
       end
     end
@@ -651,7 +651,7 @@ describe "Enumerable" do
     it { [1, 2, 3].min.should eq(1) }
 
     it "raises if empty" do
-      expect_raises Enumerable::EmptyError do
+      expect_raises(Enumerable::EmptyError) do
         ([] of Int32).min
       end
     end
@@ -687,7 +687,7 @@ describe "Enumerable" do
     it { [1, 2, 3].minmax.should eq({1, 3}) }
 
     it "raises if empty" do
-      expect_raises Enumerable::EmptyError do
+      expect_raises(Enumerable::EmptyError) do
         ([] of Int32).minmax
       end
     end

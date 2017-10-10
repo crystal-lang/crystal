@@ -128,7 +128,7 @@ describe "Hash" do
 
     it "fetches and raises" do
       a = {1 => 2}
-      expect_raises KeyError, "Missing hash key: 2" do
+      expect_raises(KeyError, "Missing hash key: 2") do
         a.fetch(2)
       end
     end
@@ -140,7 +140,7 @@ describe "Hash" do
     end
 
     it "raises when passed an invalid key" do
-      expect_raises KeyError do
+      expect_raises(KeyError) do
         {"a" => 1}.values_at("b")
       end
     end
@@ -158,7 +158,7 @@ describe "Hash" do
     end
 
     it "raises when no key pairs with the given value" do
-      expect_raises KeyError do
+      expect_raises(KeyError) do
         {"foo" => "bar"}.key("qux")
       end
     end

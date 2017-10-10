@@ -183,13 +183,13 @@ describe "JSON serialization" do
     end
 
     it "raises if Float is NaN" do
-      expect_raises JSON::Error, "NaN not allowed in JSON" do
+      expect_raises(JSON::Error, "NaN not allowed in JSON") do
         (0.0/0.0).to_json
       end
     end
 
     it "raises if Float is infinity" do
-      expect_raises JSON::Error, "Infinity not allowed in JSON" do
+      expect_raises(JSON::Error, "Infinity not allowed in JSON") do
         Float64::INFINITY.to_json
       end
     end

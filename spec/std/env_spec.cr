@@ -2,7 +2,7 @@ require "spec"
 
 describe "ENV" do
   it "gets non existent key raises" do
-    expect_raises KeyError, "Missing ENV key: \"NON-EXISTENT\"" do
+    expect_raises(KeyError, "Missing ENV key: \"NON-EXISTENT\"") do
       ENV["NON-EXISTENT"]
     end
   end
@@ -70,7 +70,7 @@ describe "ENV" do
 
     it "fetches and raises" do
       ENV["1"] = "2"
-      expect_raises KeyError, "Missing ENV key: \"2\"" do
+      expect_raises(KeyError, "Missing ENV key: \"2\"") do
         ENV.fetch("2")
       end
     end

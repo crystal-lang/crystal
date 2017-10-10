@@ -18,11 +18,11 @@ describe "NamedTuple" do
     t.should eq({"foo bar": 1, "baz qux": 2})
     t.class.should eq(NamedTuple("foo bar": Int32, "baz qux": Int32))
 
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       NamedTuple(foo: Int32, bar: Int32).from({:foo => 1})
     end
 
-    expect_raises KeyError do
+    expect_raises(KeyError) do
       NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :baz => 2})
     end
 
@@ -40,11 +40,11 @@ describe "NamedTuple" do
     t.should eq({foo: 1, bar: 2})
     t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
 
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       {foo: Int32, bar: Int32}.from({:foo => 1})
     end
 
-    expect_raises KeyError do
+    expect_raises(KeyError) do
       {foo: Int32, bar: Int32}.from({:foo => 1, :baz => 2})
     end
 

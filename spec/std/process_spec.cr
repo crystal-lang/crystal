@@ -90,7 +90,7 @@ describe Process do
   end
 
   it "disallows passing arguments to nowhere" do
-    expect_raises ArgumentError, /args.+@/ do
+    expect_raises(ArgumentError, /args.+@/) do
       Process.run("foo bar", {"baz"}, shell: true)
     end
   end

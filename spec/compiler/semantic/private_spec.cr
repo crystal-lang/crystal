@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: private" do
   it "doesn't find private def in another file" do
-    expect_raises Crystal::TypeException, "undefined local variable or method 'foo'" do
+    expect_raises(Crystal::TypeException, "undefined local variable or method 'foo'") do
       compiler = Compiler.new
       sources = [
         Compiler::Source.new("foo.cr", %(
@@ -71,7 +71,7 @@ describe "Semantic: private" do
   end
 
   it "doesn't find private macro in another file" do
-    expect_raises Crystal::TypeException, "undefined local variable or method 'foo'" do
+    expect_raises(Crystal::TypeException, "undefined local variable or method 'foo'") do
       compiler = Compiler.new
       sources = [
         Compiler::Source.new("foo.cr", %(
@@ -184,7 +184,7 @@ describe "Semantic: private" do
   end
 
   it "doesn't find private class in another file" do
-    expect_raises Crystal::TypeException, "undefined constant Foo" do
+    expect_raises(Crystal::TypeException, "undefined constant Foo") do
       compiler = Compiler.new
       sources = [
         Compiler::Source.new("foo.cr", %(

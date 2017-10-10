@@ -97,7 +97,7 @@ describe XML do
   end
 
   it "raises exception on empty string" do
-    expect_raises XML::Error, "Document is empty" do
+    expect_raises(XML::Error, "Document is empty") do
       XML.parse("")
     end
   end

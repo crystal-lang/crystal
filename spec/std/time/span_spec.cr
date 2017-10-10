@@ -1,7 +1,7 @@
 require "spec"
 
 private def expect_overflow
-  expect_raises ArgumentError, "Time::Span too big or too small" do
+  expect_raises(ArgumentError, "Time::Span too big or too small") do
     yield
   end
 end

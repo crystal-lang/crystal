@@ -260,7 +260,7 @@ describe "Deque" do
 
     it "deletes out of bounds" do
       a = Deque{1, 2, 3, 4}
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         a.delete_at(4)
       end
     end
@@ -319,7 +319,7 @@ describe "Deque" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         Deque(Int32).new.first
       end
     end
@@ -367,7 +367,7 @@ describe "Deque" do
     it "inserts out of range" do
       a = Deque{1, 3, 4}
 
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         a.insert(4, 1)
       end
     end
@@ -384,7 +384,7 @@ describe "Deque" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         Deque(Int32).new.last
       end
     end
@@ -408,7 +408,7 @@ describe "Deque" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         Deque(Int32).new.pop
       end
     end
@@ -427,7 +427,7 @@ describe "Deque" do
 
     it "pops negative count raises" do
       a = Deque{1, 2}
-      expect_raises ArgumentError do
+      expect_raises(ArgumentError) do
         a.pop(-1)
       end
     end
@@ -482,7 +482,7 @@ describe "Deque" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         Deque(Int32).new.shift
       end
     end
@@ -501,7 +501,7 @@ describe "Deque" do
 
     it "shifts negative count raises" do
       a = Deque{1, 2}
-      expect_raises ArgumentError do
+      expect_raises(ArgumentError) do
         a.shift(-1)
       end
     end
@@ -522,14 +522,14 @@ describe "Deque" do
 
     it "swaps but raises out of bounds on left" do
       a = Deque{1, 2, 3}
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         a.swap(3, 0)
       end
     end
 
     it "swaps but raises out of bounds on right" do
       a = Deque{1, 2, 3}
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         a.swap(0, 3)
       end
     end

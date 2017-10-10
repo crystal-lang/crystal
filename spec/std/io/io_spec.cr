@@ -268,7 +268,7 @@ describe IO do
 
     it "raises if invoking gets with negative limit" do
       io = SimpleIOMemory.new("hello\nworld\n")
-      expect_raises ArgumentError, "Negative limit" do
+      expect_raises(ArgumentError, "Negative limit") do
         io.gets(-1)
       end
     end
@@ -390,7 +390,7 @@ describe IO do
       str = SimpleIOMemory.new("hello")
       str.read_line.should eq("hello")
 
-      expect_raises IO::EOFError, "End of file reached" do
+      expect_raises(IO::EOFError, "End of file reached") do
         str.read_line
       end
     end
@@ -400,7 +400,7 @@ describe IO do
       str.read_line('e').should eq("he")
       str.read_line('e').should eq("llo")
 
-      expect_raises IO::EOFError, "End of file reached" do
+      expect_raises(IO::EOFError, "End of file reached") do
         str.read_line
       end
     end
@@ -650,7 +650,7 @@ describe IO do
       it "raises on incomplete byte sequence" do
         io = SimpleIOMemory.new("好".byte_slice(0, 1))
         io.set_encoding("GB2312")
-        expect_raises ArgumentError, "Incomplete multibyte sequence" do
+        expect_raises(ArgumentError, "Incomplete multibyte sequence") do
           io.read_char
         end
       end
@@ -658,7 +658,7 @@ describe IO do
       it "says invalid byte sequence" do
         io = SimpleIOMemory.new(Slice.new(1, 140_u8))
         io.set_encoding("GB2312")
-        expect_raises ArgumentError, "Invalid multibyte sequence" do
+        expect_raises(ArgumentError, "Invalid multibyte sequence") do
           io.read_char
         end
       end
@@ -678,7 +678,7 @@ describe IO do
 
       it "says invalid 'invalid' option" do
         io = SimpleIOMemory.new
-        expect_raises ArgumentError, "Valid values for `invalid` option are `nil` and `:skip`, not :foo" do
+        expect_raises(ArgumentError, "Valid values for `invalid` option are `nil` and `:skip`, not :foo") do
           io.set_encoding("GB2312", invalid: :foo)
         end
       end
@@ -686,7 +686,7 @@ describe IO do
       it "says invalid encoding" do
         io = SimpleIOMemory.new("foo")
         io.set_encoding("FOO")
-        expect_raises ArgumentError, "Invalid encoding: FOO" do
+        expect_raises(ArgumentError, "Invalid encoding: FOO") do
           io.gets_to_end
         end
       end
@@ -808,7 +808,7 @@ describe IO do
       it "raises on invalid byte sequence" do
         io = SimpleIOMemory.new
         io.set_encoding("GB2312")
-        expect_raises ArgumentError, "Invalid multibyte sequence" do
+        expect_raises(ArgumentError, "Invalid multibyte sequence") do
           io.print "ñ"
         end
       end
@@ -823,7 +823,7 @@ describe IO do
       it "raises on incomplete byte sequence" do
         io = SimpleIOMemory.new
         io.set_encoding("GB2312")
-        expect_raises ArgumentError, "Incomplete multibyte sequence" do
+        expect_raises(ArgumentError, "Incomplete multibyte sequence") do
           io.print "好".byte_slice(0, 1)
         end
       end
@@ -831,7 +831,7 @@ describe IO do
       it "says invalid encoding" do
         io = SimpleIOMemory.new
         io.set_encoding("FOO")
-        expect_raises ArgumentError, "Invalid encoding: FOO" do
+        expect_raises(ArgumentError, "Invalid encoding: FOO") do
           io.puts "a"
         end
       end

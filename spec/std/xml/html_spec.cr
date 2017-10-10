@@ -65,7 +65,7 @@ describe XML do
   end
 
   it "raises error when parsing empty string (#2752)" do
-    expect_raises XML::Error, "Document is empty" do
+    expect_raises(XML::Error, "Document is empty") do
       XML.parse_html("")
     end
   end

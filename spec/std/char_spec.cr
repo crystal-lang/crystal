@@ -211,13 +211,13 @@ describe "Char" do
   end
 
   it "to_i rejects unsupported base (1)" do
-    expect_raises ArgumentError, "Invalid base 1" do
+    expect_raises(ArgumentError, "Invalid base 1") do
       '0'.to_i(1)
     end
   end
 
   it "to_i rejects unsupported base (37)" do
-    expect_raises ArgumentError, "Invalid base 37" do
+    expect_raises(ArgumentError, "Invalid base 37") do
       '0'.to_i(37)
     end
   end
@@ -282,7 +282,7 @@ describe "Char" do
     end
 
     it "raises on codepoint bigger than 0x10ffff" do
-      expect_raises InvalidByteSequenceError do
+      expect_raises(InvalidByteSequenceError) do
         (0x10ffff + 1).unsafe_chr.bytesize
       end
     end
@@ -333,7 +333,7 @@ describe "Char" do
   end
 
   it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
-    expect_raises InvalidByteSequenceError do
+    expect_raises(InvalidByteSequenceError) do
       (0x10ffff + 1).unsafe_chr.each_byte { |b| }
     end
   end
@@ -365,7 +365,7 @@ describe "Char" do
       ("0123456789".chars.includes?(chr) == chr.ascii_number?(10)).should be_true
       ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".includes?(chr) == chr.ascii_number?(36)).should be_true
       unless 2 <= i <= 36
-        expect_raises ArgumentError do
+        expect_raises(ArgumentError) do
           '0'.ascii_number?(i)
         end
       end

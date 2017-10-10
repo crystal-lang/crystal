@@ -96,7 +96,7 @@ describe "BitArray" do
     it "gets on range with start higher than end" do
       from_int(3, 0b101)[2..1].should eq(BitArray.new(0))
       from_int(3, 0b101)[3..1].should eq(BitArray.new(0))
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         from_int(3, 0b101)[4..1]
       end
     end
@@ -107,7 +107,7 @@ describe "BitArray" do
     end
 
     it "raises on index out of bounds with range" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         from_int(3, 0b111)[4..6]
       end
     end
@@ -125,32 +125,32 @@ describe "BitArray" do
     end
 
     it "raises on index out of bounds with start and count" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         from_int(3, 0b101)[4, 0]
       end
     end
 
     it "raises on negative count" do
-      expect_raises ArgumentError do
+      expect_raises(ArgumentError) do
         from_int(3, 0b101)[3, -1]
       end
     end
 
     it "raises on index out of bounds" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         from_int(3, 0b101)[-4, 2]
       end
     end
 
     it "raises on negative count" do
-      expect_raises ArgumentError, /Negative count: -1/ do
+      expect_raises(ArgumentError, "Negative count: -1") do
         from_int(3, 0b101)[1, -1]
       end
     end
 
     it "raises on negative count on empty Array" do
       ba = BitArray.new(0)
-      expect_raises ArgumentError, /Negative count: -1/ do
+      expect_raises(ArgumentError, "Negative count: -1") do
         ba[0, -1]
       end
     end
@@ -175,7 +175,7 @@ describe "BitArray" do
     end
 
     it "raises on too negative left bound" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         from_int(3, 0b101)[-4..0]
       end
     end
@@ -247,7 +247,7 @@ describe "BitArray" do
 
   it "raises when out of bounds" do
     ary = BitArray.new(10)
-    expect_raises IndexError do
+    expect_raises(IndexError) do
       ary[10] = true
     end
   end

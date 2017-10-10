@@ -129,7 +129,7 @@ describe "Array" do
     it "gets on range with start higher than end" do
       [1, 2, 3][2..1].should eq([] of Int32)
       [1, 2, 3][3..1].should eq([] of Int32)
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         [1, 2, 3][4..1]
       end
     end
@@ -140,7 +140,7 @@ describe "Array" do
     end
 
     it "raises on index out of bounds with range" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         [1, 2, 3][4..6]
       end
     end
@@ -158,31 +158,31 @@ describe "Array" do
     end
 
     it "raises on index out of bounds with start and count" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         [1, 2, 3][4, 0]
       end
     end
 
     it "raises on negative count" do
-      expect_raises ArgumentError do
+      expect_raises(ArgumentError) do
         [1, 2, 3][3, -1]
       end
     end
 
     it "raises on index out of bounds" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         [1, 2, 3][-4, 2]
       end
     end
 
     it "raises on negative count" do
-      expect_raises ArgumentError, /Negative count: -1/ do
+      expect_raises(ArgumentError, "Negative count: -1") do
         [1, 2, 3][1, -1]
       end
     end
 
     it "raises on negative count on empty Array" do
-      expect_raises ArgumentError, /Negative count: -1/ do
+      expect_raises(ArgumentError, "Negative count: -1") do
         Array(Int32).new[0, -1]
       end
     end
@@ -216,7 +216,7 @@ describe "Array" do
     end
 
     it "raises on too negative left bound" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         [1, 2, 3][-4..0]
       end
     end
@@ -260,7 +260,7 @@ describe "Array" do
       a[1, 3] = 6
       a.should eq([1, 6, 5, 6, 7, 8])
 
-      expect_raises ArgumentError, "Negative count" do
+      expect_raises(ArgumentError, "Negative count") do
         [1, 2, 3][0, -1]
       end
 
@@ -310,7 +310,7 @@ describe "Array" do
     end
 
     it "raises when passed an invalid index" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         ["a"].values_at(10)
       end
     end
@@ -482,16 +482,16 @@ describe "Array" do
     end
 
     it "deletes out of bounds" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         [1].delete_at(2)
       end
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         [1].delete_at(2, 1)
       end
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         [1].delete_at(2..3)
       end
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         [1].delete_at(-2..-1)
       end
     end
@@ -602,7 +602,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         ([] of Int32).first
       end
     end
@@ -660,7 +660,7 @@ describe "Array" do
     end
 
     it "raises if out of bounds" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         [1, 2, 3][4]
       end
     end
@@ -691,7 +691,7 @@ describe "Array" do
     it "inserts out of range" do
       a = [1, 3, 4]
 
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         a.insert(4, 1)
       end
     end
@@ -708,7 +708,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         ([] of Int32).last
       end
     end
@@ -753,7 +753,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         ([] of Int32).pop
       end
     end
@@ -774,7 +774,7 @@ describe "Array" do
 
     it "pops negative count raises" do
       a = [1, 2]
-      expect_raises ArgumentError do
+      expect_raises(ArgumentError) do
         a.pop(-1)
       end
     end
@@ -892,7 +892,7 @@ describe "Array" do
     end
 
     it "gets sample of negative count elements raises" do
-      expect_raises ArgumentError do
+      expect_raises(ArgumentError) do
         [1].sample(-1)
       end
     end
@@ -948,7 +948,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         ([] of Int32).shift
       end
     end
@@ -969,7 +969,7 @@ describe "Array" do
 
     it "shifts negative count raises" do
       a = [1, 2]
-      expect_raises ArgumentError do
+      expect_raises(ArgumentError) do
         a.shift(-1)
       end
     end
@@ -1092,14 +1092,14 @@ describe "Array" do
 
     it "swaps but raises out of bounds on left" do
       a = [1, 2, 3]
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         a.swap(3, 0)
       end
     end
 
     it "swaps but raises out of bounds on right" do
       a = [1, 2, 3]
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         a.swap(0, 3)
       end
     end

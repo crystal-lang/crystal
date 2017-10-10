@@ -23,7 +23,7 @@ private def expect_doesnt_capture_option(args, option)
 end
 
 private def expect_missing_option(option)
-  expect_raises OptionParser::MissingOption do
+  expect_raises(OptionParser::MissingOption) do
     OptionParser.parse([] of String) do |opts|
       opts.on(option, "some flag") do |flag_value|
       end
@@ -32,7 +32,7 @@ private def expect_missing_option(option)
 end
 
 private def expect_missing_option(args, option, flag)
-  expect_raises OptionParser::MissingOption, "Missing option: #{flag}" do
+  expect_raises(OptionParser::MissingOption, "Missing option: #{flag}") do
     OptionParser.parse(args) do |opts|
       opts.on(option, "some flag") do |flag_value|
       end
@@ -215,7 +215,7 @@ describe "OptionParser" do
   end
 
   it "raises on invalid option" do
-    expect_raises OptionParser::InvalidOption, "Invalid option: -j" do
+    expect_raises(OptionParser::InvalidOption, "Invalid option: -j") do
       OptionParser.parse(["-f", "-j"]) do |opts|
         opts.on("-f", "some flag") { }
       end
@@ -423,15 +423,15 @@ describe "OptionParser" do
 
   it "raises if flag doesn't start with dash (#4001)" do
     OptionParser.parse([] of String) do |opts|
-      expect_raises ArgumentError, %(Argument 'flag' ("foo") must start with a dash) do
+      expect_raises(ArgumentError, %(Argument 'flag' ("foo") must start with a dash)) do
         opts.on("foo", "") { }
       end
 
-      expect_raises ArgumentError, %(Argument 'short_flag' ("foo") must start with a dash) do
+      expect_raises(ArgumentError, %(Argument 'short_flag' ("foo") must start with a dash)) do
         opts.on("foo", "bar", "baz") { }
       end
 
-      expect_raises ArgumentError, %(Argument 'long_flag' ("bar") must start with a dash) do
+      expect_raises(ArgumentError, %(Argument 'long_flag' ("bar") must start with a dash)) do
         opts.on("-foo", "bar", "baz") { }
       end
 

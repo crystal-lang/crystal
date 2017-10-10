@@ -231,7 +231,7 @@ describe "Lexer string" do
     token = lexer.next_token
     state = token.delimiter_state
 
-    expect_raises Crystal::SyntaxException, /unterminated heredoc/ do
+    expect_raises(Crystal::SyntaxException, "unterminated heredoc") do
       loop do
         token = lexer.next_string_token state
         break if token.type == :DELIMITER_END
@@ -242,7 +242,7 @@ describe "Lexer string" do
   it "raises on invalid heredoc identifier (<<-HERE A)" do
     lexer = Lexer.new("<<-HERE A\ntest\nHERE\n")
 
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
+    expect_raises(Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/) do
       lexer.next_token
     end
   end
@@ -250,7 +250,7 @@ describe "Lexer string" do
   it "raises on invalid heredoc identifier (<<-HERE\\n)" do
     lexer = Lexer.new("<<-HERE\\ntest\nHERE\n")
 
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
+    expect_raises(Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/) do
       lexer.next_token
     end
   end
@@ -258,7 +258,7 @@ describe "Lexer string" do
   it "raises when identifier doesn't start with a leter" do
     lexer = Lexer.new("<<-123\\ntest\n123\n")
 
-    expect_raises Crystal::SyntaxException, /heredoc identifier starts with invalid character/ do
+    expect_raises(Crystal::SyntaxException, "heredoc identifier starts with invalid character") do
       lexer.next_token
     end
   end
@@ -266,7 +266,7 @@ describe "Lexer string" do
   it "raises when identifier contains a character not for identifier" do
     lexer = Lexer.new("<<-aaa.bbb?\\ntest\naaa.bbb?\n")
 
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
+    expect_raises(Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/) do
       lexer.next_token
     end
   end
@@ -274,7 +274,7 @@ describe "Lexer string" do
   it "raises when identifier contains spaces" do
     lexer = Lexer.new("<<-aaa  bbb\\ntest\naaabbb\n")
 
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
+    expect_raises(Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/) do
       lexer.next_token
     end
   end
@@ -282,7 +282,7 @@ describe "Lexer string" do
   it "raises on unexpected EOF while lexing heredoc" do
     lexer = Lexer.new("<<-aaa")
 
-    expect_raises Crystal::SyntaxException, /unexpected EOF on heredoc identifier/ do
+    expect_raises(Crystal::SyntaxException, "unexpected EOF on heredoc identifier") do
       lexer.next_token
     end
   end

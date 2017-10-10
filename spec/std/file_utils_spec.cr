@@ -284,7 +284,7 @@ describe "FileUtils" do
     end
 
     it "raises an error if non correct arguments" do
-      expect_raises Errno do
+      expect_raises(Errno) do
         FileUtils.mv("/tmp/crystal_mv_test/a", "/tmp/crystal_mv_test/b")
       end
     end
@@ -313,7 +313,7 @@ describe "FileUtils" do
     end
 
     it "raises an error if dest is non correct" do
-      expect_raises ArgumentError do
+      expect_raises(ArgumentError) do
         FileUtils.mv(["/tmp/crystal_mv_test/a", "/tmp/crystal_mv_test/b"], "/tmp/crystal_not_here")
       end
     end
@@ -363,16 +363,16 @@ describe "FileUtils" do
   end
 
   it "tests mkdir with an existing path" do
-    expect_raises Errno do
+    expect_raises(Errno) do
       Dir.mkdir(__DIR__, 0o700)
     end
   end
 
   it "tests mkdir with multiples existing paths" do
-    expect_raises Errno do
+    expect_raises(Errno) do
       FileUtils.mkdir([__DIR__, __DIR__], 0o700)
     end
-    expect_raises Errno do
+    expect_raises(Errno) do
       FileUtils.mkdir(["/tmp/crystal_mkdir_test_#{Process.pid}/", __DIR__], 0o700)
     end
   end
@@ -401,38 +401,38 @@ describe "FileUtils" do
 
   it "tests mkdir_p with an existing path" do
     FileUtils.mkdir_p(__DIR__).should be_nil
-    expect_raises Errno do
+    expect_raises(Errno) do
       FileUtils.mkdir_p(__FILE__)
     end
   end
 
   it "tests mkdir_p with multiple existing path" do
     FileUtils.mkdir_p([__DIR__, __DIR__]).should be_nil
-    expect_raises Errno do
+    expect_raises(Errno) do
       FileUtils.mkdir_p([__FILE__, "/tmp/crystal_mkdir_ptest_#{Process.pid}/"])
     end
   end
 
   it "tests rmdir with an non existing path" do
-    expect_raises Errno do
+    expect_raises(Errno) do
       FileUtils.rmdir("/tmp/crystal_mkdir_test_#{Process.pid}/tmp/")
     end
   end
 
   it "tests rmdir with multiple non existing path" do
-    expect_raises Errno do
+    expect_raises(Errno) do
       FileUtils.rmdir(["/tmp/crystal_mkdir_test_#{Process.pid}/tmp/", "/tmp/crystal_mkdir_test_#{Process.pid + 1}/tmp/"])
     end
   end
 
   it "tests rmdir with a path that cannot be removed" do
-    expect_raises Errno do
+    expect_raises(Errno) do
       FileUtils.rmdir(__DIR__)
     end
   end
 
   it "tests rmdir with multiple path that cannot be removed" do
-    expect_raises Errno do
+    expect_raises(Errno) do
       FileUtils.rmdir([__DIR__, __DIR__])
     end
   end
@@ -445,7 +445,7 @@ describe "FileUtils" do
   end
 
   it "tests rm with non existing path" do
-    expect_raises Errno do
+    expect_raises(Errno) do
       FileUtils.rm("/tmp/crystal_rm_test_#{Process.pid}")
     end
   end
@@ -461,7 +461,7 @@ describe "FileUtils" do
   end
 
   it "tests rm with some non existing paths" do
-    expect_raises Errno do
+    expect_raises(Errno) do
       path1 = "/tmp/crystal_rm_test_#{Process.pid}"
       path2 = "/tmp/crystal_rm_test_#{Process.pid + 1}"
       File.write(path1, "")

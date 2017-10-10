@@ -9,7 +9,7 @@ end
 
 private def it_raises_on_parse(string, file = __FILE__, line = __LINE__)
   it "raises on parse #{string}", file, line do
-    expect_raises JSON::ParseException do
+    expect_raises(JSON::ParseException) do
       JSON.parse(string)
     end
   end
@@ -63,13 +63,13 @@ describe JSON::Parser do
   it_raises_on_parse "1\u{0}"
 
   it "prevents stack overflow for arrays" do
-    expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
+    expect_raises(JSON::ParseException, "Nesting of 513 is too deep") do
       JSON.parse(("[" * 513) + ("]" * 513))
     end
   end
 
   it "prevents stack overflow for hashes" do
-    expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
+    expect_raises(JSON::ParseException, "Nesting of 513 is too deep") do
       JSON.parse((%({"x": ) * 513) + ("}" * 513))
     end
   end

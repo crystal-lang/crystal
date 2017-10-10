@@ -142,7 +142,7 @@ class HTTP::Client
 
     it "raises when creating 1xx, 204 or 304 with body" do
       [100, 101, 204, 304].each do |status|
-        expect_raises ArgumentError do
+        expect_raises(ArgumentError) do
           Response.new(status, "hello")
         end
       end

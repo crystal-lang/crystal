@@ -104,7 +104,7 @@ describe IO::Memory do
 
   it "raises if invoking gets with negative limit" do
     io = IO::Memory.new("hello\nworld\n")
-    expect_raises ArgumentError, "Negative limit" do
+    expect_raises(ArgumentError, "Negative limit") do
       io.gets(-1)
     end
   end

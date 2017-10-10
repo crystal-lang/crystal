@@ -235,7 +235,7 @@ describe UNIXServer do
     File.exists?(path).should be_true
 
     begin
-      expect_raises Errno, /(already|Address) in use/ do
+      expect_raises(Errno, /(already|Address) in use/) do
         UNIXServer.new(path)
       end
 
@@ -416,7 +416,7 @@ describe TCPServer do
   it "fails when port is in use" do
     port = free_udp_socket_port
 
-    expect_raises Errno, /(already|Address) in use/ do
+    expect_raises(Errno, /(already|Address) in use/) do
       sock = Socket.tcp(Socket::Family::INET6)
       sock.bind(Socket::IPAddress.new("::1", port))
 
