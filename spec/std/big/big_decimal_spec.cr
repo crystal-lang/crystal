@@ -239,6 +239,9 @@ describe BigDecimal do
 
     (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 9)).to_s.should eq "36122.824080384"
     (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 14)).to_s.should eq "36122.82408038468790"
+
+    BigDecimal.new(1, 2).to_s.should eq "0.01"
+    BigDecimal.new(100, 4).to_s.should eq "0.01"
   end
 
   it "hashes" do
