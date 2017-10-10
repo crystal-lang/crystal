@@ -1,4 +1,4 @@
-require "crystal/system/random"
+require "random/secure"
 
 # :nodoc:
 struct Crystal::Hasher
@@ -10,7 +10,7 @@ struct Crystal::Hasher
   # another algorithm like SipHash or FNV.
 
   @@seed = uninitialized UInt64
-  Crystal::System::Random.random_bytes(Slice.new(pointerof(@@seed).as(UInt8*), 8))
+  Random::Secure.random_bytes(Slice.new(pointerof(@@seed).as(UInt8*), 8))
 
   property result : UInt64 = @@seed
 
