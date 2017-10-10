@@ -245,10 +245,10 @@ module Spec
 
     # Returns a factory to create a comparison `Expectation` that:
     #
-    # * passes if actual is lesser than *value*: `be.<(value)`
-    # * passes if actual is lesser than or equal *value*: `be.<=(value)`
-    # * passes if actual is greater than *value*: `be.>(value)`
-    # * passes if actual is greater than or equal *value*: `be.>=(value)`
+    # * passes if actual is lesser than *value*: `be < value`
+    # * passes if actual is lesser than or equal *value*: `be <= value`
+    # * passes if actual is greater than *value*: `be > value`
+    # * passes if actual is greater than or equal *value*: `be >= value`
     def be
       Spec::Be
     end
@@ -275,7 +275,7 @@ module Spec
       end
     end
 
-    # Creates an `Expectation` that passes if the block raises an exception of type *klass* and the error message contains *message*.
+    # Runs the block and passes if it raises an exception of type *klass* and the error message contains *message*.
     macro expect_raises(klass, message, file = __FILE__, line = __LINE__)
       %failed = false
       begin
