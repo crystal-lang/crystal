@@ -561,7 +561,7 @@ module Crystal
         bc_name = self.bc_name
         object_name = self.object_name
 
-        {% if LibLLVM::IS_40 %}
+        {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
         if compiler.thin_lto
           @llvm_mod.write_bitcode_with_summary_to_file(object_name)
           @reused_previous_compilation = false

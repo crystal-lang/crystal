@@ -57,7 +57,7 @@ class LLVM::Module
     LibLLVM.write_bitcode_to_file self, filename
   end
 
-  {% if LibLLVM::IS_40 %}
+  {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
     def write_bitcode_with_summary_to_file(filename : String)
       LibLLVMExt.write_bitcode_with_summary_to_file self, filename
     end
