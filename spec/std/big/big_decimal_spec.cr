@@ -240,4 +240,45 @@ describe BigDecimal do
     (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 9)).to_s.should eq "36122.824080384"
     (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 14)).to_s.should eq "36122.82408038468790"
   end
+
+  it "hashes" do
+    bd1 = BigDecimal.new("123.456")
+    bd2 = BigDecimal.new("0.12345")
+    bd3 = BigDecimal.new("1.23456")
+    bd4 = BigDecimal.new("123456")
+    bd5 = BigDecimal.new("0")
+
+    hash = {} of BigDecimal => String
+    hash[bd1] = "bd1"
+    hash[bd2] = "bd2"
+    hash[bd3] = "bd3"
+    hash[bd4] = "bd4"
+    hash[bd5] = "bd5"
+
+    # regular cases
+    hash[BigDecimal.new("123.456")].should eq "bd1"
+    hash[BigDecimal.new("0.12345")].should eq "bd2"
+    hash[BigDecimal.new("1.23456")].should eq "bd3"
+    hash[BigDecimal.new("123456")].should eq "bd4"
+    hash[BigDecimal.new("0")].should eq "bd5"
+
+    # not found
+    expect_raises(KeyError) do
+      hash[BigDecimal.new("4")]
+    end
+  end
+
+  it "upkeeps hashing contract" do
+    # a == b <=> h[a] == h[b]
+    bd1 = BigDecimal.new(1, 2)
+    bd2 = BigDecimal.new(100, 4)
+
+    bd1.should eq(bd2)
+
+    h = {} of BigDecimal => String
+    h[bd1] = "bd1"
+    h[bd2] = "bd2"
+
+    h[bd1].should eq(h[bd2])
+  end
 end
