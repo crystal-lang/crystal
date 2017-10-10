@@ -257,6 +257,20 @@ struct BigDecimal
     end
   end
 
+  # Factors out any extra powers of ten in the internal representation.
+  # For instance, value=100 scale=2 => value=1 scale=0
+  def factor_powers_of_ten
+    while @scale > 0
+      quotient, remainder = value.divmod(TEN)
+      if remainder == 0
+        @value = quotient
+        @scale = @scale - 1
+      else
+        break
+      end
+    end
+  end
+
   def hash(hasher)
     hasher.string(self.to_s)
   end
