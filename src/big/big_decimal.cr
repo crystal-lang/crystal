@@ -256,6 +256,10 @@ struct BigDecimal
       quotient
     end
   end
+
+  def hash(hasher)
+    hasher.string(self.to_s)
+  end
 end
 
 struct Int
