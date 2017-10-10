@@ -285,19 +285,6 @@ describe BigDecimal do
     h[bd1].should eq(h[bd2])
   end
 
-  it "factor powers of ten away" do
-    bd1 = BigDecimal.new(100, 4)
-    bd2 = BigDecimal.new(12301238900, 12)
-
-    bd1.factor_powers_of_ten
-    bd1.value.should eq 1
-    bd1.scale.should eq 2
-
-    bd2.factor_powers_of_ten
-    bd2.value.should eq 123012389
-    bd2.scale.should eq 10
-  end
-
   it "can normalize quotient" do
     positive_one = BigDecimal.new("1.0")
     negative_one = BigDecimal.new("-1.0")

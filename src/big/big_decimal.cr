@@ -240,12 +240,8 @@ struct BigDecimal
     self
   end
 
-  private def check_division_by_zero(bd : BigDecimal)
-    raise DivisionByZero.new if bd.value == 0
-  end
-
-  private def power_ten_to(x : Int) : Int
-    TEN ** x
+  def hash(hasher)
+    hasher.string(self.to_s)
   end
 
   # Returns the quotient as absolutely negative if self and other have different signs,
@@ -258,22 +254,24 @@ struct BigDecimal
     end
   end
 
-  # Factors out any extra powers of ten in the internal representation.
-  # For instance, value=100 scale=2 => value=1 scale=0
-  def factor_powers_of_ten
-    while @scale > 0
-      quotient, remainder = value.divmod(TEN)
-      if remainder == 0
-        @value = quotient
-        @scale = @scale - 1
-      else
-        break
-      end
-    end
+  private def check_division_by_zero(bd : BigDecimal)
+    raise DivisionByZero.new if bd.value == 0
   end
 
-  def hash(hasher)
-    hasher.string(self.to_s)
+  private def power_ten_to(x : Int) : Int
+    TEN ** x
+  end
+
+  # Factors out any extra powers of ten in the internal representation.
+  # For instance, value=100 scale=2 => value=1 scale=0
+  private def factor_powers_of_ten
+    while @scale > 0
+      quotient, remainder = value.divmod(TEN)
+      break if remainder != 0
+
+      @value = quotient
+      @scale = @scale - 1
+    end
   end
 end
 
