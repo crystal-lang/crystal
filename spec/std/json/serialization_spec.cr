@@ -94,7 +94,7 @@ describe "JSON serialization" do
     it "does for Enum with number" do
       JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
 
-      expect_raises do
+      expect_raises(Exception, "Unknown enum JSONSpecEnum value: 3") do
         JSONSpecEnum.from_json("3")
       end
     end
@@ -102,7 +102,7 @@ describe "JSON serialization" do
     it "does for Enum with string" do
       JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
 
-      expect_raises do
+      expect_raises(ArgumentError, "Unknown enum JSONSpecEnum value: Three") do
         JSONSpecEnum.from_json(%("Three"))
       end
     end

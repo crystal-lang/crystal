@@ -40,7 +40,7 @@ describe "YAML" do
       end
 
       it "raises if merging with missing alias" do
-        expect_raises do
+        expect_raises(YAML::ParseException, "Unknown anchor 'bar'") do
           YAML.parse(%(---
             foo:
               <<: *bar

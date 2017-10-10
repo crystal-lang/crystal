@@ -133,14 +133,14 @@ describe "String" do
 
     it "gets with a string" do
       "FooBar"["Bar"].should eq "Bar"
-      expect_raises { "FooBar"["Baz"] }
+      expect_raises(Exception, "Nil assertion failed") { "FooBar"["Baz"] }
       "FooBar"["Bar"]?.should eq "Bar"
       "FooBar"["Baz"]?.should be_nil
     end
 
     it "gets with a char" do
       "foo/bar"['/'].should eq '/'
-      expect_raises { "foo/bar"['-'] }
+      expect_raises(Exception, "Nil assertion failed") { "foo/bar"['-'] }
       "foo/bar"['/']?.should eq '/'
       "foo/bar"['-']?.should be_nil
     end
@@ -331,7 +331,7 @@ describe "String" do
     it { expect_raises(ArgumentError, "Invalid base 1") { "12ab".to_i(1) } }
     it { expect_raises(ArgumentError, "Invalid base 37") { "12ab".to_i(37) } }
 
-    it { expect_raises { "1Y2P0IJ32E8E7".to_i(36) } }
+    it { expect_raises(ArgumentError, "Invalid Int32") { "1Y2P0IJ32E8E7".to_i(36) } }
     it { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }
   end
 
