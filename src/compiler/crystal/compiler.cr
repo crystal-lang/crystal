@@ -304,12 +304,13 @@ module Crystal
         %(#{CL} #{object_name} "/Fe#{output_filename}" #{program.lib_flags} #{link_flags})
       else
         if thin_lto
+          clang = ENV["CLANG"]? || "clang"
           lto_cache_dir = "#{output_dir}/lto.cache"
           Dir.mkdir_p(lto_cache_dir)
           {% if flag?(:darwin) %}
-            cc = ENV["CC"]? || "clang-4.0 -flto=thin -Wl,-mllvm,-threads=#{n_threads},-cache_path_lto,#{lto_cache_dir},#{@release ? "-mllvm,-O2" : "-mllvm,-O0"}"
+            cc = ENV["CC"]? || "#{clang} -flto=thin -Wl,-mllvm,-threads=#{n_threads},-cache_path_lto,#{lto_cache_dir},#{@release ? "-mllvm,-O2" : "-mllvm,-O0"}"
           {% else %}
-            cc = ENV["CC"]? || "clang-4.0 -flto=thin -Wl,-plugin-opt,jobs=#{n_threads},-plugin-opt,cache-dir=#{lto_cache_dir} #{@release ? "-O2" : "-O0"}"
+            cc = ENV["CC"]? || "#{clang} -flto=thin -Wl,-plugin-opt,jobs=#{n_threads},-plugin-opt,cache-dir=#{lto_cache_dir} #{@release ? "-O2" : "-O0"}"
           {% end %}
         else
           cc = CC
