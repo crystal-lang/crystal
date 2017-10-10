@@ -210,6 +210,7 @@ struct BigDecimal
   end
 
   def to_s(io : IO)
+    factor_powers_of_ten
     s = @value.to_s
 
     if @scale == 0
