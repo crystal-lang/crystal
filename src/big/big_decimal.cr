@@ -249,7 +249,7 @@ struct BigDecimal
 
   # Returns the quotient as absolutely negative if self and other have different signs,
   # otherwise returns the quotient.
-  private def normalize_quotient(other : BigDecimal, quotient : BigInt) : BigInt
+  def normalize_quotient(other : BigDecimal, quotient : BigInt) : BigInt
     if (@value < 0 && other.value > 0) || (other.value < 0 && @value > 0)
       -quotient.abs
     else

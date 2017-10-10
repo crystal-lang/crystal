@@ -297,4 +297,24 @@ describe BigDecimal do
     bd2.value.should eq 123012389
     bd2.scale.should eq 10
   end
+
+  it "can normalize quotient" do
+    positive_one = BigDecimal.new("1.0")
+    negative_one = BigDecimal.new("-1.0")
+
+    positive_ten = BigInt.new(10)
+    negative_ten = BigInt.new(-10)
+
+    positive_one.normalize_quotient(positive_one, positive_ten).should eq(positive_ten)
+    positive_one.normalize_quotient(positive_one, negative_ten).should eq(negative_ten)
+
+    positive_one.normalize_quotient(negative_one, positive_ten).should eq(negative_ten)
+    positive_one.normalize_quotient(negative_one, negative_ten).should eq(negative_ten)
+
+    negative_one.normalize_quotient(positive_one, positive_ten).should eq(negative_ten)
+    negative_one.normalize_quotient(positive_one, negative_ten).should eq(negative_ten)
+
+    negative_one.normalize_quotient(negative_one, positive_ten).should eq(positive_ten)
+    negative_one.normalize_quotient(negative_one, negative_ten).should eq(negative_ten)
+  end
 end
