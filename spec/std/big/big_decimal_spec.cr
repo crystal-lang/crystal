@@ -226,10 +226,10 @@ describe BigDecimal do
     BigDecimal.new(1).to_s.should eq "1"
     BigDecimal.new(-1).to_s.should eq "-1"
     BigDecimal.new("0.01").to_s.should eq "0.01"
-    BigDecimal.new("1.0").to_s.should eq "1.0"
-    BigDecimal.new("-1.0").to_s.should eq "-1.0"
-    BigDecimal.new("1.000").to_s.should eq "1.000"
-    BigDecimal.new("-1.000").to_s.should eq "-1.000"
+    BigDecimal.new("1.0").to_s.should eq "1"
+    BigDecimal.new("-1.0").to_s.should eq "-1"
+    BigDecimal.new("1.000").to_s.should eq "1"
+    BigDecimal.new("-1.000").to_s.should eq "-1"
     BigDecimal.new("1.0001").to_s.should eq "1.0001"
     BigDecimal.new("-1.0001").to_s.should eq "-1.0001"
 
@@ -238,7 +238,7 @@ describe BigDecimal do
     (BigDecimal.new(1).div(BigDecimal.new(3000), 9)).to_s.should eq "0.000333333"
 
     (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 9)).to_s.should eq "36122.824080384"
-    (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 14)).to_s.should eq "36122.82408038468790"
+    (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 14)).to_s.should eq "36122.8240803846879"
 
     BigDecimal.new(1, 2).to_s.should eq "0.01"
     BigDecimal.new(100, 4).to_s.should eq "0.01"
