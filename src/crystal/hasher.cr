@@ -1,18 +1,44 @@
 require "random/secure"
 
+# TODO: use flag?(:bits64) for Crystal > 0.23.1
+{% if flag?(:x86_64) || flag?(:aarch64) %}
+  require "digest/siphash"
+{% else %}
+  require "digest/halfsiphash"
+{% end %}
+
 # :nodoc:
 struct Crystal::Hasher
   # Implementation of a Hasher to compute a fast and safe hash
   # value for primitive and basic Crystal objects. All other
   # hashes are computed based on these.
   #
-  # TODO: the implementation is naive and should probably use
-  # another algorithm like SipHash or FNV.
+  # Relies on the SipHash family of pseudo random functions. Since we never
+  # disclose the result of the hashes, we don't need the cryptographically
+  # verified siphash-2-4, but can use the faster siphash-1-3 alternative.
+  #
+  # On 32-bit systems, we prefer the halfsiphash-1-3 alternative (32-bit hashes)
+  # that should perform better than siphash-1-3 (64-bit hashes).
 
-  @@seed = uninitialized UInt64
-  Random::Secure.random_bytes(Slice.new(pointerof(@@seed).as(UInt8*), 8))
+  # TODO: use flag?(:bits64) for Crystal > 0.23.1
+  {% if flag?(:x86_64) || flag?(:aarch64) %}
+    alias SipHash = Digest::SipHash
+    alias HashType = UInt64
+  {% else %}
+    alias SipHash = Digest::HalfSipHash
+    alias HashType = UInt32
+  {% end %}
 
-  property result : UInt64 = @@seed
+  @@seed = uninitialized SipHash::Key
+  Random::Secure.random_bytes(@@seed.to_slice)
+
+  def initialize
+    @siphash = SipHash(1, 3).new(@@seed)
+  end
+
+  def result : HashType
+    @siphash.result
+  end
 
   def nil
     self
@@ -23,12 +49,15 @@ struct Crystal::Hasher
   end
 
   def int(value)
-    @result = @result * 31 + value.to_u64
+    # FIXME: 128-bit integers
+    v = value.to_u64
+    @siphash.update Bytes.new(pointerof(v).as(UInt8*), 8)
     self
   end
 
   def float(value)
-    @result = @result * 31 + value.to_f64.unsafe_as(UInt64)
+    v = value.to_f64.unsafe_as(UInt64)
+    @siphash.update Bytes.new(pointerof(v).as(UInt8*), 8)
     self
   end
 
@@ -45,12 +74,12 @@ struct Crystal::Hasher
   end
 
   def reference(value)
-    @result = @result * 31 + value.object_id.to_u64
-    self
+    value.object_id.to_u64.hash(self)
   end
 
   def string(value)
-    value.to_slice.hash(self)
+    @siphash.update(value)
+    self
   end
 
   def class(value)

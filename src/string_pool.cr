@@ -178,6 +178,6 @@ class StringPool
     hasher = Crystal::Hasher.new
     hasher = str.to_slice(len).hash(hasher)
     # hash should be non-zero, so `or` it with high bit
-    hasher.result | 0x8000000000000000_u64
+    hasher.result.to_u64 | 0x8000_0000_0000_0000_u64
   end
 end
