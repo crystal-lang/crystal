@@ -91,7 +91,7 @@ class Crystal::RecursiveStructChecker
       end
     end
 
-    if type.is_a?(NonGenericModuleType)
+    if type.is_a?(NonGenericModuleType) || type.is_a?(GenericModuleInstanceType)
       path.push type
       # Check if the module is composed, recursively, of the target struct
       type.raw_including_types.try &.each do |module_type|
@@ -140,6 +140,6 @@ class Crystal::RecursiveStructChecker
   end
 
   def struct?(type)
-    type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.is_a?(ProcInstanceType) && !type.is_a?(GenericClassType) && !type.abstract?
+    type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.is_a?(ProcInstanceType) && !type.abstract?
   end
 end
