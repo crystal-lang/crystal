@@ -230,6 +230,34 @@ describe "Semantic: struct" do
       "recursive struct Foo detected: `@moo : Moo` -> `Moo` -> `Foo`"
   end
 
+  it "detects recursive generic struct through module (#4720)" do
+    assert_error %(
+      module Bar
+      end
+
+      struct Foo(T)
+        include Bar
+        def initialize(@base : Bar?)
+        end
+      end
+      ),
+      "recursive struct Foo(T) detected: `@base : (Bar | Nil)` -> `Bar` -> `Foo(T)`"
+  end
+
+  it "detects recursive generic struct through generic module (#4720)" do
+    assert_error %(
+      module Bar(T)
+      end
+
+      struct Foo(T)
+        include Bar(T)
+        def initialize(@base : Bar(T)?)
+        end
+      end
+      ),
+      "recursive struct Foo(T) detected: `@base : (Bar(T) | Nil)` -> `Bar(T)` -> `Foo(T)`"
+  end
+
   it "detects recursive struct through inheritance (#3071)" do
     assert_error %(
       abstract struct Foo
