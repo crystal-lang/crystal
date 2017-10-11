@@ -226,6 +226,13 @@ struct BitArray
     Slice.new(@bits.as(Pointer(UInt8)), (@size / 8.0).ceil.to_i)
   end
 
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher = size.hash(hasher)
+    hasher = to_slice.hash(hasher)
+    hasher
+  end
+
   private def bit_index_and_sub_index(index)
     bit_index_and_sub_index(index) { raise IndexError.new }
   end
