@@ -580,11 +580,15 @@ module Crystal
 
     def visit(node : ProcLiteral)
       @str << "->"
-      if node.def.args.size > 0
+      if !node.def.args.empty? || node.varargs?
         @str << "("
         node.def.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           arg.accept self
+        end
+        if node.varargs?
+          @str << ", " unless node.def.args.empty?
+          @str << "..."
         end
         @str << ")"
       end

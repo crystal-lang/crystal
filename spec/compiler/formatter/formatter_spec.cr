@@ -619,6 +619,8 @@ describe Crystal::Formatter do
   assert_format "->() do x end", "->do x end"
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
+  assert_format "->(...) {}"
+  assert_format "->(x, ...) {}"
 
   {:+, :-, :*, :/, :^, :>>, :<<, :|, :&}.each do |sym|
     assert_format ":#{sym}"

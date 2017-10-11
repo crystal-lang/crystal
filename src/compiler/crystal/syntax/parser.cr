@@ -1634,9 +1634,17 @@ module Crystal
       end
 
       args = [] of Arg
+      varargs = false
       if @token.type == :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
+          if @token.type == :"..."
+            next_token_skip_space_or_newline
+            check :")"
+
+            varargs = true
+            break
+          end
           location = @token.location
           arg = parse_fun_literal_arg.at(location)
           if args.any? &.name.==(arg.name)
@@ -1674,7 +1682,7 @@ module Crystal
 
       next_token_skip_space
 
-      ProcLiteral.new(Def.new("->", args, body)).at_end(end_location)
+      ProcLiteral.new(Def.new("->", args, body), varargs).at_end(end_location)
     end
 
     def check_not_pipe_before_proc_literal_body

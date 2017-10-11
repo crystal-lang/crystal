@@ -3675,9 +3675,10 @@ module Crystal
       skip_space_or_newline
 
       a_def = node.def
+      needs_paren = !a_def.args.empty? || node.varargs?
 
       if @token.type == :"("
-        write "(" unless a_def.args.empty?
+        write "(" if needs_paren
         next_token_skip_space_or_newline
 
         a_def.args.each_with_index do |arg, i|
@@ -3689,12 +3690,18 @@ module Crystal
           end
         end
 
+        if node.varargs?
+          write ", " unless a_def.args.empty?
+          write_token :"..."
+          skip_space_or_newline
+        end
+
         check :")"
-        write ")" unless a_def.args.empty?
+        write ")" if needs_paren
         next_token_skip_space_or_newline
       end
 
-      write " " unless a_def.args.empty?
+      write " " if needs_paren
 
       is_do = false
       if @token.keyword?(:do)

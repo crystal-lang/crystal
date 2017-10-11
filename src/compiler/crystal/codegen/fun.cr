@@ -79,7 +79,7 @@ class Crystal::CodeGenVisitor
 
       args = codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
 
-      needs_body = !target_def.is_a?(External) || is_exported_fun
+      needs_body = !target_def.is_a?(External) || is_exported_fun || is_fun_literal
       if needs_body
         emit_def_debug_metadata target_def unless @debug.none?
 
