@@ -56,6 +56,8 @@ struct Digest::HalfSipHash(CROUNDS, DROUNDS)
     @v2 ^= k0
     @v1 ^= k1
     @v0 ^= k0
+
+    @v1 ^= 0xee
   end
 
   def update(data : String) : Nil
@@ -116,13 +118,13 @@ struct Digest::HalfSipHash(CROUNDS, DROUNDS)
   end
 
   def result
-    output = uninitialized UInt32
+    output = uninitialized UInt64
     result(@buf.to_unsafe, @buf_index, pointerof(output).as(UInt8*))
     output
   end
 
   def result(output : Bytes) : Nil
-    raise ArgumentError.new("Digest::HalfSipHash can only generate 4 bytes hashes.") unless output.size == 4
+    raise ArgumentError.new("Digest::HalfSipHash can only generate 8 bytes hashes.") unless output.size == 8
     result(@buf.to_unsafe, @buf_index, output.to_unsafe)
   end
 
@@ -147,12 +149,19 @@ struct Digest::HalfSipHash(CROUNDS, DROUNDS)
     CROUNDS.times { sipround }
 
     v0 ^= b
-    v2 ^= 0xff
+    v2 ^= 0xee
 
     DROUNDS.times { sipround }
 
     b = v1 ^ v3
     u32to8_le(output, b)
+
+    v1 ^= 0xdd
+
+    DROUNDS.times { sipround }
+
+    b = v1 ^ v3
+    u32to8_le(output + 4, b)
   end
 
   private def rotl(x, b)

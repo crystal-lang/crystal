@@ -23,10 +23,8 @@ struct Crystal::Hasher
   # TODO: use flag?(:bits64) for Crystal > 0.23.1
   {% if flag?(:x86_64) || flag?(:aarch64) %}
     alias SipHash = Digest::SipHash
-    alias HashType = UInt64
   {% else %}
     alias SipHash = Digest::HalfSipHash
-    alias HashType = UInt32
   {% end %}
 
   @@seed = uninitialized SipHash::Key
@@ -36,7 +34,7 @@ struct Crystal::Hasher
     @siphash = SipHash(1, 3).new(@@seed)
   end
 
-  def result : HashType
+  def result : UInt64
     @siphash.result
   end
 
