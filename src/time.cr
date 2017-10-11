@@ -51,6 +51,12 @@ require "crystal/system/time"
 # span       # => 01:00:00
 # span.class # => Time::Span
 # span.hours # => 1
+#
+# ### Realtime clock
+#
+# `Time` uses a realtime clock, and is thus affected by time fluctuations (e.g.
+# leap seconds or manually changing the system clock). For a monotonic clock and
+# measuring durations, you should refer to `Clock` instead.
 # ```
 struct Time
   include Comparable(self)
