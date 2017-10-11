@@ -19,6 +19,9 @@ lib Intrinsics
 
   # TODO: uncomment and use in int.cr after Crystal 0.23.1
   # fun popcount128 = "llvm.ctpop.i128"(src : Int128) : Int128
+
+  fun va_start = "llvm.va_start"(ap : Void*)
+  fun va_end = "llvm.va_end"(ap : Void*)
 end
 
 macro debugger
