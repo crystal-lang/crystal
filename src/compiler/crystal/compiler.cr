@@ -559,17 +559,26 @@ module Crystal
       end
 
       def compile
+        if compiler.thin_lto
+          compile_to_thin_lto
+        else
+          compile_to_object
+        end
+      end
+
+      private def compile_to_thin_lto
+        {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
+          llvm_mod.write_bitcode_with_summary_to_file(object_name)
+          @reused_previous_compilation = false
+          dump_llvm_ir
+        {% else %}
+          raise {{ "ThinLTO is not available in LLVM #{LibLLVM::VERSION}".stringify }}
+        {% end %}
+      end
+
+      private def compile_to_object
         bc_name = self.bc_name
         object_name = self.object_name
-
-        {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-        if compiler.thin_lto
-          @llvm_mod.write_bitcode_with_summary_to_file(object_name)
-          @reused_previous_compilation = false
-          llvm_mod.print_to_file ll_name if compiler.dump_ll?
-          return
-        end
-        {% end %}
 
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
@@ -617,6 +626,10 @@ module Crystal
           @reused_previous_compilation = true
         end
 
+        dump_llvm_ir
+      end
+
+      private def dump_llvm_ir
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
