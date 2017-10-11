@@ -203,14 +203,14 @@ struct Time
     self
   end
 
-  # Returns a `Time` that is later by this `Time::Span`.
-  def +(other : Time::Span) : Time
-    add_span other.to_i, other.nanoseconds
+  # Returns a `Time` that is later than this `Time` by the `Time::Span` *span*.
+  def +(span : Time::Span) : Time
+    add_span span.to_i, span.nanoseconds
   end
 
-  # Returns a `Time` that is earlier by this `Time::Span`.
-  def -(other : Time::Span) : Time
-    add_span -other.to_i, -other.nanoseconds
+  # Returns a `Time` that is earlier than this `Time` by the `Time::Span` *span*.
+  def -(span : Time::Span) : Time
+    add_span -span.to_i, -span.nanoseconds
   end
 
   # Adds a number of months specified by *other*'s value.
