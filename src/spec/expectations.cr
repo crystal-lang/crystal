@@ -202,6 +202,8 @@ module Spec
 
   # This module defines a number of methods to create expectations, which are
   # automatically included into the top level namespace.
+  #
+  # Expectations are used by `Spec::ObjectExtensions#should` and `Spec::ObjectExtensions#should_not`.
   module Expectations
     # Creates an `Expectation` that passes if actual equals *value* (`==`).
     def eq(value)
@@ -269,13 +271,21 @@ module Spec
       Spec::BeAExpectation({{type}}).new
     end
 
+    # Runs the block and passes if it raises an exception of type *klass*.
+    #
+    # It returns the rescued exception.
     macro expect_raises(klass)
       expect_raises({{klass}}, nil) do
         {{yield}}
       end
     end
 
-    # Runs the block and passes if it raises an exception of type *klass* and the error message contains *message*.
+    # Runs the block and passes if it raises an exception of type *klass* and the error message matches.
+    #
+    # If *message* is a string, it matches if the exception's error message contains that string.
+    # If *message* is a regular expression, it is used to match the error message.
+    #
+    # It returns the rescued exception.
     macro expect_raises(klass, message, file = __FILE__, line = __LINE__)
       %failed = false
       begin
@@ -317,12 +327,18 @@ module Spec
   end
 
   module ObjectExtensions
+    # Validates an expectation and fails the example if it does not match.
+    #
+    # See `Spec::Expecations` for available expectations.
     def should(expectation, file = __FILE__, line = __LINE__)
       unless expectation.match self
         fail(expectation.failure_message(self), file, line)
       end
     end
 
+    # Validates an expectation and fails the example if it matches.
+    #
+    # See `Spec::Expecations` for available expectations.
     def should_not(expectation, file = __FILE__, line = __LINE__)
       if expectation.match self
         fail(expectation.negative_failure_message(self), file, line)
