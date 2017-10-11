@@ -169,6 +169,11 @@ describe "Complex" do
     c.clone.should eq(c)
   end
 
+  it "hashes real without imag like real only" do
+    c = Complex.new(4, 0)
+    c.hash.should eq(4_f64.hash)
+  end
+
   it "test zero?" do
     Complex.new(0, 0).zero?.should eq true
     Complex.new(0, 3.4).zero?.should eq false

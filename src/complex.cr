@@ -219,6 +219,13 @@ struct Complex
     self
   end
 
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher = real.hash(hasher)
+    hasher = imag.hash(hasher) unless imag.zero?
+    hasher
+  end
+
   # Returns the number `0` in complex form.
   def self.zero : Complex
     new 0, 0
