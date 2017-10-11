@@ -35,7 +35,7 @@ struct UUID
     raise ArgumentError.new "Invalid bytes length #{@bytes.size}, expected 16." unless slice.size == 16
 
     @bytes = uninitialized UInt8[16]
-    @bytes.to_unsafe.copy_from(slice)
+    slice.copy_to(@bytes.to_slice)
 
     variant = Variant::RFC4122
     version = Version::V4
