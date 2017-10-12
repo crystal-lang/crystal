@@ -194,10 +194,9 @@ struct UUID
   end
 
   def urn
-    String.new(45) do |buffer|
-      buffer.copy_from "urn:uuid:".to_unsafe, 9
-      (buffer + 9).copy_from to_s.to_unsafe, 36
-      {45, 45}
+    String.build(45) do |str|
+      str << "urn:uuid:"
+      to_s(str)
     end
   end
 
