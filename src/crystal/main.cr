@@ -32,9 +32,10 @@ module Crystal
   # ```
   # fun main(argc : Int32, argv : UInt8**) : Int32
   #   Crystal.main do
-  #     time = Time.now
-  #     Crystal.main_user_code(argc, argv)
-  #     puts "Time to execute program: #{Time.now - time}"
+  #     elapsed = Time.measure do
+  #       Crystal.main_user_code(argc, argv)
+  #     end
+  #     puts "Time to execute program: #{elapsed}"
   #   end
   # end
   # ```

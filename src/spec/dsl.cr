@@ -166,9 +166,9 @@ module Spec
 
   # :nodoc:
   def self.run
-    start_time = Time.now
+    start_time = Time.monotonic
     at_exit do
-      elapsed_time = Time.now - start_time
+      elapsed_time = Time.monotonic - start_time
       Spec::RootContext.print_results(elapsed_time)
       exit 1 unless Spec::RootContext.succeeded
     end

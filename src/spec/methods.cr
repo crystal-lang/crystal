@@ -12,16 +12,16 @@ module Spec::Methods
 
     Spec.formatters.each(&.before_example(description))
 
-    start = Time.now
+    start = Time.monotonic
     begin
       Spec.run_before_each_hooks
       block.call
-      Spec::RootContext.report(:success, description, file, line, Time.now - start)
+      Spec::RootContext.report(:success, description, file, line, Time.monotonic - start)
     rescue ex : Spec::AssertionFailed
-      Spec::RootContext.report(:fail, description, file, line, Time.now - start, ex)
+      Spec::RootContext.report(:fail, description, file, line, Time.monotonic - start, ex)
       Spec.abort! if Spec.fail_fast?
     rescue ex
-      Spec::RootContext.report(:error, description, file, line, Time.now - start, ex)
+      Spec::RootContext.report(:error, description, file, line, Time.monotonic - start, ex)
       Spec.abort! if Spec.fail_fast?
     ensure
       Spec.run_after_each_hooks

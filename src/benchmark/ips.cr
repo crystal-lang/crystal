@@ -60,18 +60,17 @@ module Benchmark
         @items.each do |item|
           GC.collect
 
-          before = Time.now
-          target = Time.now + @warmup_time
           count = 0
+          elapsed = Time.measure do
+            target = Time.monotonic + @warmup_time
 
-          while Time.now < target
-            item.call
-            count += 1
+            while Time.monotonic < target
+              item.call
+              count += 1
+            end
           end
 
-          after = Time.now
-
-          item.set_cycles(after - before, count)
+          item.set_cycles(elapsed, count)
         end
       end
 
@@ -80,19 +79,13 @@ module Benchmark
           GC.collect
 
           measurements = [] of Time::Span
-          target = Time.now + @calculation_time
+          target = Time.monotonic + @calculation_time
 
           loop do
-            before = Time.now
-            item.call_for_100ms
-            after = Time.now
-
-            measurements << after - before
-
-            break if Time.now >= target
+            elapsed = Time.measure { item.call_for_100ms }
+            measurements << elapsed
+            break if Time.monotonic >= target
           end
-
-          final_time = Time.now
 
           ips = measurements.map { |m| item.cycles.to_f / m.total_seconds }
           item.calculate_stats(ips)
