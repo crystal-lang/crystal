@@ -2,6 +2,85 @@ require "spec"
 require "uuid"
 
 describe "UUID" do
+  describe "default initialize" do
+  end
+
+  describe "initialize with slice" do
+    it "initialize with slice only" do
+      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8))
+      subject.to_s.should eq "00000000-0000-4000-8000-000000000000"
+      subject.variant.should eq UUID::Variant::RFC4122
+      subject.version.should eq UUID::Version::V4
+    end
+
+    it "initialize with slice and variant" do
+      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), variant: UUID::Variant::NCS)
+      subject.to_s.should eq "00000000-0000-4000-0000-000000000000"
+      subject.variant.should eq UUID::Variant::NCS
+      subject.version.should eq UUID::Version::V4
+    end
+
+    it "initialize with slice and version" do
+      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), version: UUID::Version::V3)
+      subject.to_s.should eq "00000000-0000-3000-8000-000000000000"
+      subject.variant.should eq UUID::Variant::RFC4122
+      subject.version.should eq UUID::Version::V3
+    end
+  end
+
+  describe "initialize with static array" do
+    it "initialize with static array only" do
+      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8))
+      subject.to_s.should eq "00000000-0000-4000-8000-000000000000"
+      subject.variant.should eq UUID::Variant::RFC4122
+      subject.version.should eq UUID::Version::V4
+    end
+
+    it "initialize with static array and variant" do
+      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), variant: UUID::Variant::NCS)
+      subject.to_s.should eq "00000000-0000-4000-0000-000000000000"
+      subject.variant.should eq UUID::Variant::NCS
+      subject.version.should eq UUID::Version::V4
+    end
+
+    it "initialize with static array and version" do
+      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), version: UUID::Version::V3)
+      subject.to_s.should eq "00000000-0000-3000-8000-000000000000"
+      subject.variant.should eq UUID::Variant::RFC4122
+      subject.version.should eq UUID::Version::V3
+    end
+  end
+
+  describe "initialize with String" do
+    it "initialize with static array only" do
+      subject = UUID.new("00000000-0000-0000-0000-000000000000")
+      subject.to_s.should eq "00000000-0000-4000-8000-000000000000"
+      subject.variant.should eq UUID::Variant::RFC4122
+      subject.version.should eq UUID::Version::V4
+    end
+
+    it "initialize with static array and variant" do
+      subject = UUID.new("00000000-0000-0000-0000-000000000000", variant: UUID::Variant::NCS)
+      subject.to_s.should eq "00000000-0000-4000-0000-000000000000"
+      subject.variant.should eq UUID::Variant::NCS
+      subject.version.should eq UUID::Version::V4
+    end
+
+    it "initialize with static array and version" do
+      subject = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V3)
+      subject.to_s.should eq "00000000-0000-3000-8000-000000000000"
+      subject.variant.should eq UUID::Variant::RFC4122
+      subject.version.should eq UUID::Version::V3
+    end
+
+    it "can be built from strings" do
+      UUID.new("c20335c3-7f46-4126-aae9-f665434ad12b").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+      UUID.new("c20335c37f464126aae9f665434ad12b").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+      UUID.new("C20335C3-7F46-4126-AAE9-F665434AD12B").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+      UUID.new("C20335C37F464126AAE9F665434AD12B").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+    end
+  end
+
   it "initializes zeroed UUID" do
     UUID.empty.should eq UUID.new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
     UUID.empty.to_s.should eq "00000000-0000-4000-0000-000000000000"
@@ -9,32 +88,28 @@ describe "UUID" do
     UUID.empty.version.should eq UUID::Version::V4
   end
 
-  it "can be built from strings" do
-    UUID.new("c20335c3-7f46-4126-aae9-f665434ad12b").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
-    UUID.new("c20335c37f464126aae9f665434ad12b").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
-    UUID.new("C20335C3-7F46-4126-AAE9-F665434AD12B").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
-    UUID.new("C20335C37F464126AAE9F665434AD12B").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
-  end
+  describe "supports different string formats" do
+    it "normal output" do
+      UUID.new("ee843b2656d8472bb3430b94ed9077ff").to_s.should eq "ee843b26-56d8-472b-b343-0b94ed9077ff"
+    end
 
-  it "should have correct variant and version" do
-    UUID.new("C20335C37F464126AAE9F665434AD12B").variant.should eq UUID::Variant::RFC4122
-    UUID.new("C20335C37F464126AAE9F665434AD12B").version.should eq UUID::Version::V4
-  end
+    it "hexstring" do
+      UUID.new("3e806983-eca4-4fc5-b581-f30fb03ec9e5").hexstring.should eq "3e806983eca44fc5b581f30fb03ec9e5"
+    end
 
-  it "supports different string formats" do
-    UUID.new("ee843b2656d8472bb3430b94ed9077ff").to_s.should eq "ee843b26-56d8-472b-b343-0b94ed9077ff"
-    UUID.new("3e806983-eca4-4fc5-b581-f30fb03ec9e5").hexstring.should eq "3e806983eca44fc5b581f30fb03ec9e5"
-    UUID.new("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").urn.should eq "urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892"
-  end
+    it "urn" do
+      UUID.new("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").urn.should eq "urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892"
+    end
 
-  it "compares to strings" do
-    uuid = UUID.new "c3b46146eb794e18877b4d46a10d1517"
-    uuid.should eq("c3b46146eb794e18877b4d46a10d1517")
-    uuid.should eq("c3b46146-eb79-4e18-877b-4d46a10d1517")
-    uuid.should eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
-    uuid.should eq("urn:uuid:C3B46146-EB79-4E18-877B-4D46A10D1517")
-    uuid.should eq("urn:uuid:c3b46146-eb79-4e18-877b-4d46a10d1517")
-    (UUID.new).should_not eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
+    it "compares to strings" do
+      uuid = UUID.new "c3b46146eb794e18877b4d46a10d1517"
+      uuid.should eq("c3b46146eb794e18877b4d46a10d1517")
+      uuid.should eq("c3b46146-eb79-4e18-877b-4d46a10d1517")
+      uuid.should eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
+      uuid.should eq("urn:uuid:C3B46146-EB79-4E18-877B-4D46A10D1517")
+      uuid.should eq("urn:uuid:c3b46146-eb79-4e18-877b-4d46a10d1517")
+      (UUID.new).should_not eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
+    end
   end
 
   it "fails on invalid arguments when creating" do
