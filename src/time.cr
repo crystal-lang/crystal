@@ -135,6 +135,26 @@ struct Time
   @nanoseconds : Int32
   @kind : Kind
 
+  # Returns a clock from an unspecified starting point, but strictly linearly
+  # increasing. This clock should be independent from discontinuous jumps in the
+  # system time, such as leap seconds, time zone adjustments or manual changes
+  # to the computer's time.
+  #
+  # For example, the monotonic clock must always be used to measure an elapsed
+  # time.
+  def self.monotonic : Time::Span
+    seconds, nanoseconds = Crystal::System::Time.monotonic
+    Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+  end
+
+  # Measures how long the block took to run. Relies on `monotonic` to not be
+  # affected by time fluctuations.
+  def self.measure : Time::Span
+    start = monotonic
+    yield
+    monotonic - start
+  end
+
   def self.new
     seconds, nanoseconds, offset = Time.compute_seconds_nanoseconds_and_offset
     new(seconds: seconds + offset, nanoseconds: nanoseconds, kind: Kind::Local)

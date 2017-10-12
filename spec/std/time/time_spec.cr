@@ -60,6 +60,19 @@ describe Time do
     time.epoch_ms.should eq(milliseconds)
   end
 
+  it "returns always increasing monotonic clock" do
+    clock = Time.monotonic
+    Time.monotonic.should be >= clock
+  end
+
+  it "measures elapsed time" do
+    # NOTE: On some systems, the sleep may not always wait for 1ms and the fiber
+    #       be resumed early. We thus merely test that the method returns a
+    #       positive time span.
+    elapsed = Time.measure { sleep 1.millisecond }
+    elapsed.should be >= 0.seconds
+  end
+
   it "clones" do
     time = Time.now
     (time == time.clone).should be_true
