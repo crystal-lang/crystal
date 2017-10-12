@@ -208,13 +208,14 @@ class Crystal::Command
     time? = @time && !@progress_tracker.stats?
     status, elapsed_time = @progress_tracker.stage("Execute") do
       begin
-        start_time = Time.now
-        Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
-          # Ignore the signal so we don't exit the running process
-          # (the running process can still handle this signal)
-          Signal::INT.ignore # do
+        elapsed = Time.measure do
+          Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
+            # Ignore the signal so we don't exit the running process
+            # (the running process can still handle this signal)
+            Signal::INT.ignore # do
+          end
         end
-        {$?, Time.now - start_time}
+        {$?, elapsed}
       ensure
         File.delete(output_filename) rescue nil
 

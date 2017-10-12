@@ -18,9 +18,9 @@ module Crystal
       print_stats
       print_progress
 
-      start_time = Time.now
+      time_start = Time.monotonic
       retval = yield
-      time_taken = Time.now - start_time
+      time_taken = Time.monotonic - time_start
 
       print_stats(time_taken)
       print_progress

@@ -8,9 +8,7 @@ class HTTP::LogHandler
   end
 
   def call(context)
-    time = Time.now
-    call_next(context)
-    elapsed = Time.now - time
+    elapsed = Time.measure { call_next(context) }
     elapsed_text = elapsed_text(elapsed)
 
     @io.puts "#{context.request.method} #{context.request.resource} - #{context.response.status_code} (#{elapsed_text})"
