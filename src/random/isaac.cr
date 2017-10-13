@@ -55,8 +55,8 @@ class Random::ISAAC
              end
       x = @mm[i]
       @aa = @mm[(i + 128) % 256] + aa
-      @mm[i] = y = @mm[(x >> 2) % 256] + aa + bb
-      @rsl[i] = @bb = @mm[(y >> 10) % 256] + x
+      @mm[i] = y = @mm[((x >> 2) | (x << 30) & 0xFFFFFFFF) % 256] + aa ^ bb
+      @rsl[i] = @bb = aa ^ @mm[((y >> 10) | (y << 22) & 0xFFFFFFFF) % 256] + x
     end
   end
 
