@@ -742,16 +742,9 @@ module Crystal
     end
 
     def transform(node : TypeOf)
-      # When the expression inside `typeof` node is untyped, that is
-      # `typeof(raise("").foo)` for example, then `node` is untyped also.
-      # This may crash the compiler, but the below prevents it.
-      unless node.type?
-        call = untyped_expression node
-        node.bind_to call
-        call
-      else
-        node
-      end
+      node = super
+      node.bind_to node.expressions
+      node
     end
 
     @false_literal : BoolLiteral?
