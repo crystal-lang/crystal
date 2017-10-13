@@ -474,7 +474,7 @@ struct Time
     epoch.to_f + nanosecond.to_f / 1e9
   end
 
-  # Converts this time to UTC.
+  # Returns a copy of this `Time` converted to UTC.
   def to_utc : Time
     if utc?
       self
@@ -487,7 +487,7 @@ struct Time
     end
   end
 
-  # Converts this time to local time zone.
+  # Returns a copy of this `Time` converted to the local time zone.
   def to_local : Time
     if local?
       self
