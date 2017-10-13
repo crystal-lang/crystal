@@ -1658,21 +1658,19 @@ module Crystal
         next_token_skip_statement_end
         check_not_pipe_before_proc_literal_body
         body = parse_expressions
-        end_location = token_end_location
-        check_ident :"end"
+        body, end_location = parse_exception_handler body, implicit: true
       elsif @token.type == :"{"
         next_token_skip_statement_end
         check_not_pipe_before_proc_literal_body
         body = preserve_stop_on_do { parse_expressions }
         end_location = token_end_location
         check :"}"
+        next_token_skip_space
       else
         unexpected_token
       end
 
       pop_def
-
-      next_token_skip_space
 
       ProcLiteral.new(Def.new("->", args, body)).at_end(end_location)
     end
@@ -3789,7 +3787,9 @@ module Crystal
         return block if stop_on_do
 
         raise "block already specified with &" if block
-        parse_block2 { check_ident :end }
+        parse_block2 do |body|
+          parse_exception_handler body, implicit: true
+        end
       else
         parse_curly_block(block)
       end
@@ -3798,7 +3798,13 @@ module Crystal
     def parse_curly_block(block)
       if @token.type == :"{"
         raise "block already specified with &" if block
-        parse_block2 { check :"}" }
+        parse_block2 do |body|
+          check :"}"
+          end_location = token_end_location
+          slash_is_not_regex!
+          next_token_skip_space
+          {body, end_location}
+        end
       else
         block
       end
@@ -3919,11 +3925,7 @@ module Crystal
 
       pop_def
 
-      yield
-
-      end_location = token_end_location
-      slash_is_not_regex!
-      next_token_skip_space
+      block_body, end_location = yield block_body
 
       Block.new(block_args, block_body, splat_index).at(location).at_end(end_location)
     end
