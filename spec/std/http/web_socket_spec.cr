@@ -300,7 +300,9 @@ describe HTTP::WebSocket do
     spawn do
       http_ref = nil
       ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
-        ctx.request.path.should eq("/")
+        ctx.request.path.should eq("/foo/bar")
+        ctx.request.query_params["query"].should eq("arg")
+        ctx.request.query_params["yes"].should eq("please")
 
         ws.on_message do |str|
           ws.send("pong #{str}")
@@ -319,7 +321,7 @@ describe HTTP::WebSocket do
 
     listen_port = port_chan.receive
 
-    ws2 = HTTP::WebSocket.new("ws://127.0.0.1:#{listen_port}")
+    ws2 = HTTP::WebSocket.new("ws://127.0.0.1:#{listen_port}/foo/bar?query=arg&yes=please")
 
     random = Random::Secure.hex
     ws2.on_message do |str|
