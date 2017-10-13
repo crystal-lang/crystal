@@ -183,6 +183,7 @@ lib LibGMP
   fun mpf_div_ui = __gmpf_div_ui(rop : MPF*, op1 : MPF*, op2 : ULong)
   fun mpf_neg = __gmpf_neg(rop : MPF*, op : MPF*)
   fun mpf_abs = __gmpf_abs(rop : MPF*, op : MPF*)
+  fun mpf_sqrt = __gmpf_sqrt(rop : MPF*, op : MPF*)
   fun mpf_pow_ui = __gmpf_pow_ui(rop : MPF*, op1 : MPF*, op2 : ULong)
   fun mpf_mul_2exp = __gmpf_mul_2exp(rop : MPF*, op1 : MPF*, op2 : BitcntT)
   fun mpf_div_2exp = __gmpf_div_2exp(rop : MPF*, op1 : MPF*, op2 : BitcntT)
