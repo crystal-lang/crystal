@@ -176,7 +176,7 @@ describe BigRational do
   end
 end
 
-describe "BigInt Math" do
+describe "BigRational Math" do
   it "sqrt" do
     Math.sqrt(BigRational.new(BigInt.new("1" + "0"*48), 1)).should eq(BigFloat.new("1" + "0"*24))
   end
