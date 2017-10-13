@@ -148,7 +148,7 @@ struct Time::Span
     s
   end
 
-  # Returns the number of full days.
+  # Returns the number of full days in this time span.
   #
   # ```
   # (5.days + 25.hours).days # => 6_i64
@@ -157,32 +157,33 @@ struct Time::Span
     to_i.tdiv(SECONDS_PER_DAY)
   end
 
-  # Returns the number of full hours of the day (`0...24`).
+  # Returns the number of full hours of the day (`0...24`) in this time span.
   def hours : Int32
     to_i.remainder(SECONDS_PER_DAY)
         .tdiv(SECONDS_PER_HOUR)
         .to_i
   end
 
-  # Returns the number of full minutes of the hour (`0...60`).
+  # Returns the number of full minutes of the hour (`0...60`) in this time span.
   def minutes : Int32
     to_i.remainder(SECONDS_PER_HOUR)
         .tdiv(SECONDS_PER_MINUTE)
         .to_i
   end
 
-  # Returns the number of full seconds of the minute (`0...60`).
+  # Returns the number of full seconds of the minute (`0...60`) in this time span.
   def seconds : Int32
     to_i.remainder(SECONDS_PER_MINUTE)
         .to_i
   end
 
-  # Returns the number of milliseconds of the second (`0...1000`).
+  # Returns the number of milliseconds of the second (`0...1000`) in this time span.
   def milliseconds : Int32
     nanoseconds / NANOSECONDS_PER_MILLISECOND
   end
 
-  # Returns the number of nanoseconds of the second (`0...1_000_000_000`).
+  # Returns the number of nanoseconds of the second (`0...1_000_000_000`)
+  # in this time span.
   def nanoseconds : Int32
     @nanoseconds
   end
@@ -245,7 +246,8 @@ struct Time::Span
     abs
   end
 
-  # Returns a non-negative `Time::Span` by removing the sign from this one.
+  # Returns the absolute (non-negative) amount of time this `Time::Span`
+  # represents by removing the sign.
   def abs : Time::Span
     Span.new(seconds: to_i.abs, nanoseconds: nanoseconds.abs)
   end

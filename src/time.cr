@@ -281,7 +281,7 @@ struct Time
     end
   end
 
-  # Returns the current time in the current time zone.
+  # Returns the current time in the local time zone.
   def self.now : Time
     new
   end
@@ -297,7 +297,7 @@ struct Time
     Time.new(year, month, day, kind: kind)
   end
 
-  # Returns the year number (Common Era).
+  # Returns the year number (in the Common Era).
   def year : Int32
     year_month_day_day_year[0]
   end
@@ -307,7 +307,7 @@ struct Time
     year_month_day_day_year[1]
   end
 
-  # Returns the day number of the month (`0..31`).
+  # Returns the day number of the month (`1..31`).
   def day : Int32
     year_month_day_day_year[2]
   end
@@ -348,7 +348,7 @@ struct Time
     DayOfWeek.new value.to_i
   end
 
-  # Returns the day number of the year (`1..366`).
+  # Returns the day number of the year (`1..365`, or `1..366` on leap years).
   def day_of_year : Int32
     year_month_day_day_year[3]
   end
