@@ -337,3 +337,9 @@ describe "BigInt" do
     x.clone.should eq(x)
   end
 end
+
+describe "BigInt Math" do
+  it "sqrt" do
+    Math.sqrt(BigInt.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
+  end
+end

@@ -1,5 +1,4 @@
 require "spec"
-require "big"
 
 describe "Math" do
   describe "Mathematical constants" do
@@ -41,18 +40,6 @@ describe "Math" do
       Math.sqrt(5.2).should be_close(2.280350850198276, 1e-7)
       Math.sqrt(4_f32).should eq(2)
       Math.sqrt(4).should eq(2)
-    end
-
-    it "sqrt for BigFloat" do
-      Math.sqrt(BigFloat.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
-    end
-
-    it "sqrt for BigInt" do
-      Math.sqrt(BigInt.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
-    end
-
-    it "sqrt for BigRational" do
-      Math.sqrt(BigRational.new(BigInt.new("1" + "0"*48), 1)).should eq(BigFloat.new("1" + "0"*24))
     end
   end
 
