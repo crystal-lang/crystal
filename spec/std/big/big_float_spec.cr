@@ -1,5 +1,5 @@
 require "spec"
-require "big_float"
+require "big"
 
 describe "BigFloat" do
   describe "new" do

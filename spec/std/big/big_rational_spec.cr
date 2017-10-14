@@ -1,5 +1,5 @@
 require "spec"
-require "big_rational"
+require "big"
 
 private def br(n, d)
   BigRational.new(n, d)
