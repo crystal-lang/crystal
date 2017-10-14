@@ -829,8 +829,11 @@ describe "String" do
 
     describe "by char" do
       it { "".split(',').should eq([""]) }
+      it { "".split(',', remove_empty: true).should eq([] of String) }
       it { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz", ""]) }
+      it { "foo,bar,,baz,".split(',', remove_empty: true).should eq(["foo", "bar", "baz"]) }
       it { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
+      it { "foo,bar,,baz".split(',', remove_empty: true).should eq(["foo", "bar", "baz"]) }
       it { "foo".split(',').should eq(["foo"]) }
       it { "foo".split(' ').should eq(["foo"]) }
       it { "   foo".split(' ').should eq(["", "", "", "foo"]) }
@@ -850,12 +853,15 @@ describe "String" do
       it { "a=".split('=').should eq(["a", ""]) }
       it { "=b".split('=').should eq(["", "b"]) }
       it { "=".split('=', 2).should eq(["", ""]) }
+      it { "=".split('=', 2, remove_empty: true).should eq([] of String) }
     end
 
     describe "by string" do
       it { "".split(",").should eq([""]) }
       it { "".split(":-").should eq([""]) }
+      it { "".split(":-", remove_empty: true).should eq([] of String) }
       it { "foo:-bar:-:-baz:-".split(":-").should eq(["foo", "bar", "", "baz", ""]) }
+      it { "foo:-bar:-:-baz:-".split(":-", remove_empty: true).should eq(["foo", "bar", "baz"]) }
       it { "foo:-bar:-:-baz".split(":-").should eq(["foo", "bar", "", "baz"]) }
       it { "foo".split(":-").should eq(["foo"]) }
       it { "foo".split("").should eq(["f", "o", "o"]) }
@@ -868,11 +874,14 @@ describe "String" do
       it { "a=".split("=").should eq(["a", ""]) }
       it { "=b".split("=").should eq(["", "b"]) }
       it { "=".split("=", 2).should eq(["", ""]) }
+      it { "=".split("=", 2, remove_empty: true).should eq([] of String) }
     end
 
     describe "by regex" do
-      it { "".split(/\n\t/).should eq([""] of String) }
+      it { "".split(/\n\t/).should eq([""]) }
+      it { "".split(/\n\t/, remove_empty: true).should eq([] of String) }
       it { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
+      it { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/, remove_empty: true).should eq(["foo", "bar", "baz"]) }
       it { "foo\n\tbar\n\t\n\tbaz".split(/(?:\n\t)+/).should eq(["foo", "bar", "baz"]) }
       it { "foo,bar".split(/,/, 1).should eq(["foo,bar"]) }
       it { "foo,bar,".split(/,/).should eq(["foo", "bar", ""]) }
@@ -891,6 +900,7 @@ describe "String" do
       it { "a=".split(/\=/).should eq(["a", ""]) }
       it { "=b".split(/\=/).should eq(["", "b"]) }
       it { "=".split(/\=/, 2).should eq(["", ""]) }
+      it { "=".split(/\=/, 2, remove_empty: true).should eq([] of String) }
       it { ",".split(/(?:(x)|(,))/).should eq(["", ",", ""]) }
 
       it "keeps groups" do
