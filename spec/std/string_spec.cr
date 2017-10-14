@@ -820,6 +820,13 @@ describe "String" do
   end
 
   describe "split" do
+    describe "by whitespace" do
+      it { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
+      it { "   foo   bar\n\t  baz   ".split(1).should eq(["   foo   bar\n\t  baz   "]) }
+      it { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
+      it { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
+    end
+
     describe "by char" do
       it { "".split(',').should eq([""]) }
       it { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz", ""]) }
@@ -830,9 +837,6 @@ describe "String" do
       it { "foo   ".split(' ').should eq(["foo", "", "", ""]) }
       it { "   foo  bar".split(' ').should eq(["", "", "", "foo", "", "bar"]) }
       it { "   foo   bar\n\t  baz   ".split(' ').should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
-      it { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
-      it { "   foo   bar\n\t  baz   ".split(1).should eq(["   foo   bar\n\t  baz   "]) }
-      it { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
       it { "   foo   bar\n\t  baz   ".split(" ").should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
       it { "foo,bar,baz,qux".split(',', 1).should eq(["foo,bar,baz,qux"]) }
       it { "foo,bar,baz,qux".split(',', 3).should eq(["foo", "bar", "baz,qux"]) }
@@ -841,7 +845,6 @@ describe "String" do
       it { "foo bar baz qux".split(' ', 3).should eq(["foo", "bar", "baz qux"]) }
       it { "foo bar baz qux".split(' ', 30).should eq(["foo", "bar", "baz", "qux"]) }
       it { "a,b,".split(',', 3).should eq(["a", "b", ""]) }
-      it { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
       it { "日本ん語日本ん語".split('ん').should eq(["日本", "語日本", "語"]) }
       it { "=".split('=').should eq(["", ""]) }
       it { "a=".split('=').should eq(["a", ""]) }
