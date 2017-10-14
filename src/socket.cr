@@ -5,7 +5,7 @@ require "c/netinet/tcp"
 require "c/sys/socket"
 require "c/sys/un"
 
-class Socket
+class Socket < IO
   include IO::Buffered
   include IO::Syscall
 

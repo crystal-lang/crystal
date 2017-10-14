@@ -5,9 +5,7 @@ require "base64"
 # This is a non-optimized version of IO::Memory so we can test
 # raw IO. Optimizations for specific IOs are tested separately
 # (for example in buffered_io_spec)
-private class SimpleIOMemory
-  include IO
-
+private class SimpleIOMemory < IO
   getter buffer : UInt8*
   getter bytesize : Int32
   @capacity : Int32

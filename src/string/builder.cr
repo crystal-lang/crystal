@@ -3,9 +3,7 @@ require "io"
 # Similar to `IO::Memory`, but optimized for building a single string.
 #
 # You should never have to deal with this class. Instead, use `String.build`.
-class String::Builder
-  include IO
-
+class String::Builder < IO
   getter bytesize : Int32
   getter capacity : Int32
   getter buffer : Pointer(UInt8)
