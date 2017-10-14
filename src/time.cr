@@ -312,27 +312,27 @@ struct Time
     year_month_day_day_year[2]
   end
 
-  # Returns the hour of the day (`0...24`).
+  # Returns the hour of the day (`0..23`).
   def hour : Int32
     ((total_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR).to_i
   end
 
-  # Returns the minute of the hour (`0...60`).
+  # Returns the minute of the hour (`0..59`).
   def minute : Int32
     ((total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE).to_i
   end
 
-  # Returns the second of the minute (`0...60`).
+  # Returns the second of the minute (`0..59`).
   def second : Int32
     (total_seconds % SECONDS_PER_MINUTE).to_i
   end
 
-  # Returns the millisecond of the second (`0...1000`).
+  # Returns the millisecond of the second (`0..999`).
   def millisecond : Int32
     nanosecond / NANOSECONDS_PER_MILLISECOND
   end
 
-  # Returns the nanosecond of the second (`0...1_000_000_000`).
+  # Returns the nanosecond of the second (`0..999_999_999`).
   def nanosecond : Int32
     @nanoseconds
   end
