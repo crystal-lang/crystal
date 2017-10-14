@@ -360,6 +360,14 @@ describe Time do
     t.to_s("%s").should eq("1388631845")
   end
 
+  it "formats standard formats" do
+    time = Time.new(2016, 2, 15, kind: Time::Kind::Utc)
+    time.to_rfc3339.should eq "2016-02-15T00:00:00+00:00"
+    Time.parse_rfc3339(time.to_rfc3339).should eq time
+    time.to_rfc2822.should eq "Mon, 15 Feb 2016 00:00:00 +0000"
+    Time.parse_rfc2822(time.to_rfc2822).should eq time
+  end
+
   it "parses empty" do
     t = Time.parse("", "")
     t.year.should eq(1)
