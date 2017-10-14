@@ -347,5 +347,33 @@ module HTTP
         request.host_with_port.should eq("host.example.org:3000")
       end
     end
+
+    it "doesn't raise on request with multiple Content_length headers" do
+      io = IO::Memory.new <<-REQ
+        GET / HTTP/1.1
+        Host: host
+        Content-Length: 5
+        Content-Length: 5
+        Content-Type: text/plain
+
+        abcde
+        REQ
+      HTTP::Request.from_io(io)
+    end
+
+    it "raises if request has multiple and differing content-length headers" do
+      io = IO::Memory.new <<-REQ
+        GET / HTTP/1.1
+        Host: host
+        Content-Length: 5
+        Content-Length: 6
+        Content-Type: text/plain
+
+        abcde
+        REQ
+      expect_raises(ArgumentError) do
+        HTTP::Request.from_io(io)
+      end
+    end
   end
 end
