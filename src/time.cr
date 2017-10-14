@@ -268,6 +268,8 @@ struct Time
   end
 
   # Returns the amount of time between *other* and `self`.
+  #
+  # The amount can be negative if `self` is a `Time` that happens before *other*.
   def -(other : Time) : Time::Span
     if local? && other.utc?
       self - other.to_local
