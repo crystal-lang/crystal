@@ -271,3 +271,9 @@ struct Float
     -(other <=> self)
   end
 end
+
+module Math
+  def sqrt(value : BigRational)
+    sqrt(value.to_big_f)
+  end
+end

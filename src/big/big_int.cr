@@ -546,3 +546,9 @@ class String
     BigInt.new(self, base)
   end
 end
+
+module Math
+  def sqrt(value : BigInt)
+    sqrt(value.to_big_f)
+  end
+end
