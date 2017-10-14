@@ -135,15 +135,15 @@ describe "Int" do
     it { 3843.to_s(62).should eq("ZZ") }
 
     it "raises on base 1" do
-      expect_raises { 123.to_s(1) }
+      expect_raises(ArgumentError, "Invalid base 1") { 123.to_s(1) }
     end
 
     it "raises on base 37" do
-      expect_raises { 123.to_s(37) }
+      expect_raises(ArgumentError, "Invalid base 37") { 123.to_s(37) }
     end
 
     it "raises on base 62 with upcase" do
-      expect_raises { 123.to_s(62, upcase: true) }
+      expect_raises(ArgumentError, "upcase must be false for base 62") { 123.to_s(62, upcase: true) }
     end
 
     it { to_s_with_io(12, 2).should eq("1100") }
@@ -172,15 +172,15 @@ describe "Int" do
     it { to_s_with_io(3843, 62).should eq("ZZ") }
 
     it "raises on base 1 with io" do
-      expect_raises { to_s_with_io(123, 1) }
+      expect_raises(ArgumentError, "Invalid base 1") { to_s_with_io(123, 1) }
     end
 
     it "raises on base 37 with io" do
-      expect_raises { to_s_with_io(123, 37) }
+      expect_raises(ArgumentError, "Invalid base 37") { to_s_with_io(123, 37) }
     end
 
     it "raises on base 62 with upcase with io" do
-      expect_raises { to_s_with_io(12, 62, upcase: true) }
+      expect_raises(ArgumentError, "upcase must be false for base 62") { to_s_with_io(12, 62, upcase: true) }
     end
   end
 

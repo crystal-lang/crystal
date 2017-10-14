@@ -162,7 +162,7 @@ describe Object do
   describe "getter!" do
     it "uses getter!" do
       obj = TestObject.new
-      expect_raises do
+      expect_raises(Exception, "Nil assertion failed") do
         obj.getter5
       end
       obj.getter5 = 5
@@ -173,7 +173,7 @@ describe Object do
 
     it "uses getter! with type declaration" do
       obj = TestObject.new
-      expect_raises do
+      expect_raises(Exception, "Nil assertion failed") do
         obj.getter6
       end
       obj.getter6 = 6
@@ -287,7 +287,7 @@ describe Object do
   describe "property!" do
     it "uses property!" do
       obj = TestObject.new
-      expect_raises do
+      expect_raises(Exception, "Nil assertion failed") do
         obj.property5
       end
       obj.property5 = 5
@@ -296,7 +296,7 @@ describe Object do
 
     it "uses property! with type declaration" do
       obj = TestObject.new
-      expect_raises do
+      expect_raises(Exception, "Nil assertion failed") do
         obj.property6
       end
       obj.property6 = 6

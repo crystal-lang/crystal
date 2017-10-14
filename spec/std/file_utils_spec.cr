@@ -33,7 +33,7 @@ describe "FileUtils" do
     end
 
     it "raises" do
-      expect_raises do
+      expect_raises(Errno, "No such file or directory") do
         FileUtils.cd("/nope")
       end
     end

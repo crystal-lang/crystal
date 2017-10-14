@@ -27,7 +27,7 @@ describe HTTP::LogHandler do
     log_io = IO::Memory.new
     handler = HTTP::LogHandler.new(log_io)
     handler.next = ->(ctx : HTTP::Server::Context) { raise "foo" }
-    expect_raises do
+    expect_raises(Exception, "foo") do
       handler.call(context)
     end
     (log_io.to_s =~ %r(GET / - Unhandled exception:)).should be_truthy

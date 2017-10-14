@@ -250,12 +250,6 @@ module Spec
       Spec::BeAExpectation({{type}}).new
     end
 
-    macro expect_raises
-      expect_raises(Exception, nil) do
-        {{yield}}
-      end
-    end
-
     macro expect_raises(klass)
       expect_raises({{klass}}, nil) do
         {{yield}}

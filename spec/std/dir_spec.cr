@@ -214,7 +214,7 @@ describe "Dir" do
     end
 
     it "raises" do
-      expect_raises do
+      expect_raises(Errno, "No such file or directory") do
         Dir.cd("/nope")
       end
     end

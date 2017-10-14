@@ -88,7 +88,7 @@ module HTTP
         end
       {% else %}
         it "raises when trying to activate TLS" do
-          expect_raises do
+          expect_raises(Exception, "TLS is disabled") do
             Client.new "example.org", 443, tls: true
           end
         end
