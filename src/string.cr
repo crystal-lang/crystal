@@ -3053,13 +3053,16 @@ class String
   # If *limit* is present, up to *limit* new strings will be created,
   # with the entire remainder added to the last string.
   #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
   # ```
-  # "foo,bar,baz".split(',')    # => ["foo", "bar", "baz"]
-  # "foo,bar,baz".split(',', 2) # => ["foo", "bar,baz"]
+  # "foo,,bar,baz".split(',')                     # => ["foo", "", "bar", "baz"]
+  # "foo,,bar,baz".split(',', remove_empty: true) # => ["foo", "bar", "baz"]
+  # "foo,bar,baz".split(',', 2)                   # => ["foo", "bar,baz"]
   # ```
-  def split(separator : Char, limit = nil)
+  def split(separator : Char, limit = nil, *, remove_empty = false)
     ary = Array(String).new
-    split(separator, limit) do |string|
+    split(separator, limit, remove_empty: remove_empty) do |string|
       ary << string
     end
     ary
@@ -3070,18 +3073,29 @@ class String
   # If *limit* is present, up to *limit* new strings will be created,
   # with the entire remainder added to the last string.
   #
+  # If *remove_empty* is `true`, any empty strings are not yielded.
+  #
   # ```
   # ary = [] of String
   #
-  # "foo,bar,baz".split(',') { |string| ary << string }
+  # "foo,,bar,baz".split(',') { |string| ary << string }
+  # ary # => ["foo", "", "bar", "baz"]
+  # ary.clear
+  #
+  # "foo,,bar,baz".split(',', remove_empty: true) { |string| ary << string }
   # ary # => ["foo", "bar", "baz"]
   # ary.clear
   #
   # "foo,bar,baz".split(',', 2) { |string| ary << string }
   # ary # => ["foo", "bar,baz"]
   # ```
-  def split(separator : Char, limit = nil, &block : String -> _)
-    if empty? || limit && limit <= 1
+  def split(separator : Char, limit = nil, *, remove_empty = false, &block : String -> _)
+    if empty?
+      yield "" unless remove_empty
+      return
+    end
+
+    if limit && limit <= 1
       yield self
       return
     end
@@ -3093,7 +3107,7 @@ class String
     reader.each do |char|
       if char == separator
         piece_bytesize = reader.pos - byte_offset
-        yield String.new(to_unsafe + byte_offset, piece_bytesize)
+        yield String.new(to_unsafe + byte_offset, piece_bytesize) unless remove_empty && piece_bytesize == 0
         yielded += 1
         byte_offset = reader.pos + reader.current_char_width
         break if limit && yielded + 1 == limit
@@ -3101,6 +3115,7 @@ class String
     end
 
     piece_bytesize = bytesize - byte_offset
+    return if remove_empty && piece_bytesize == 0
     yield String.new(to_unsafe + byte_offset, piece_bytesize)
   end
 
@@ -3111,15 +3126,18 @@ class String
   #
   # If *separator* is an empty string (`""`), the string will be separated into one-character strings.
   #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
   # ```
   # long_river_name = "Mississippi"
-  # long_river_name.split("ss") # => ["Mi", "i", "ippi"]
-  # long_river_name.split("i")  # => ["M", "ss", "ss", "pp", ""]
-  # long_river_name.split("")   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # long_river_name.split("ss")                    # => ["Mi", "i", "ippi"]
+  # long_river_name.split("i")                     # => ["M", "ss", "ss", "pp", ""]
+  # long_river_name.split("i", remove_empty: true) # => ["M", "ss", "ss", "pp"]
+  # long_river_name.split("")                      # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : String, limit = nil)
+  def split(separator : String, limit = nil, *, remove_empty = false)
     ary = Array(String).new
-    split(separator, limit) do |string|
+    split(separator, limit, remove_empty: remove_empty) do |string|
       ary << string
     end
     ary
@@ -3131,6 +3149,8 @@ class String
   # the final item will contain the remainder of the string.
   #
   # If *separator* is an empty string (`""`), the string will be separated into one-character strings.
+  #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
   #
   # ```
   # ary = [] of String
@@ -3144,11 +3164,20 @@ class String
   # ary # => ["M", "ss", "ss", "pp", ""]
   # ary.clear
   #
+  # long_river_name.split("i", remove_empty: true) { |s| ary << s }
+  # ary # => ["M", "ss", "ss", "pp"]
+  # ary.clear
+  #
   # long_river_name.split("") { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : String, limit = nil, &block : String -> _)
-    if empty? || (limit && limit <= 1)
+  def split(separator : String, limit = nil, *, remove_empty = false, &block : String -> _)
+    if empty?
+      yield "" unless remove_empty
+      return
+    end
+
+    if limit && limit <= 1
       yield self
       return
     end
@@ -3172,7 +3201,9 @@ class String
       if (to_unsafe + i).memcmp(separator.to_unsafe, separator_bytesize) == 0
         piece_bytesize = i - byte_offset
         piece_size = single_byte_optimizable ? piece_bytesize : 0
-        yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        unless remove_empty && piece_bytesize == 0
+          yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        end
         yielded += 1
         byte_offset = i + separator_bytesize
         i += separator_bytesize - 1
@@ -3182,6 +3213,7 @@ class String
     end
 
     piece_bytesize = bytesize - byte_offset
+    return if remove_empty && piece_bytesize == 0
     piece_size = single_byte_optimizable ? piece_bytesize : 0
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
@@ -3192,6 +3224,8 @@ class String
   # the final item will contain the remainder of the string.
   #
   # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
   #
   # ```
   # ary = [] of String
@@ -3204,9 +3238,9 @@ class String
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil)
+  def split(separator : Regex, limit = nil, *, remove_empty = false)
     ary = Array(String).new
-    split(separator, limit) do |string|
+    split(separator, limit, remove_empty: remove_empty) do |string|
       ary << string
     end
     ary
@@ -3219,13 +3253,20 @@ class String
   #
   # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
   #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
   # ```
   # long_river_name = "Mississippi"
   # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
   # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, &block : String -> _)
-    if empty? || (limit && limit <= 1)
+  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
+    if empty?
+      yield "" unless remove_empty
+      return
+    end
+
+    if limit && limit <= 1
       yield self
       return
     end
@@ -3250,7 +3291,7 @@ class String
       else
         slice_size = index - slice_offset
 
-        yield byte_slice(slice_offset, slice_size)
+        yield byte_slice(slice_offset, slice_size) unless remove_empty && slice_size == 0
         count += 1
 
         1.upto(match.size) do |i|
@@ -3266,7 +3307,7 @@ class String
       break if match_offset >= bytesize
     end
 
-    yield byte_slice(slice_offset)
+    yield byte_slice(slice_offset) unless remove_empty && slice_offset == bytesize
   end
 
   private def split_by_empty_separator(limit, &block : String -> _)
