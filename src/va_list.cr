@@ -1,6 +1,6 @@
 require "c/stdarg"
 
-class VaList
+struct VaList
   # :nodoc:
   getter to_unsafe
 
