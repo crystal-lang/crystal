@@ -1,9 +1,31 @@
-struct Time::Format
-  # :nodoc:
-  module Pattern
-    MONTH_NAMES = %w(January February March April May June July August September October November December)
-    DAY_NAMES   = %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday)
+# Specifies the format to convert a `Time` to and from a `String`.
+struct Time::Format::Pattern
+  include Time::Format
 
+  # Returns the string pattern of this format.
+  getter pattern : String
+
+  # Creates a new `Time::Format` with the given *pattern*. The given time
+  # *kind* will be used when parsing a `Time` and no time zone is found in it.
+  def initialize(@pattern : String, @kind = Time::Kind::Unspecified)
+  end
+
+  # Parses a string into a `Time`.
+  def parse(string, kind = @kind) : Time
+    parser = Parser.new(string)
+    parser.visit(pattern)
+    parser.time(kind)
+  end
+
+  # Formats a `Time` into the given *io*.
+  def format(time : Time, io : IO)
+    formatter = Formatter.new(time, io)
+    formatter.visit(pattern)
+    io
+  end
+
+  # :nodoc:
+  module Visitor
     def visit(pattern)
       reader = Char::Reader.new(pattern)
       while reader.has_next?
@@ -36,7 +58,7 @@ struct Time::Format
         when 'e'
           day_of_month_blank_padded
         when 'F'
-          iso_8601_date
+          year_month_day
         when 'H'
           hour_24_zero_padded
         when 'I'
@@ -49,12 +71,12 @@ struct Time::Format
           hour_12_blank_padded
         when 'L'
           milliseconds
-        when 'N'
-          nanoseconds
         when 'm'
           month_zero_padded
         when 'M'
           minute
+        when 'N'
+          nanoseconds
         when 'p'
           am_pm
         when 'P'
@@ -144,57 +166,17 @@ struct Time::Format
       end
       reader
     end
+  end
 
-    def date_and_time
-      short_day_name
-      char ' '
-      short_month_name
-      char ' '
-      day_of_month_blank_padded
-      char ' '
-      twenty_four_hour_time_with_seconds
-      char ' '
-      year
-    end
+  # :nodoc:
+  struct Parser
+    include Visitor
+    include Time::Format::Parser
+  end
 
-    def date
-      month_zero_padded
-      char '/'
-      day_of_month_zero_padded
-      char '/'
-      year_modulo_100
-    end
-
-    def iso_8601_date
-      year
-      char '-'
-      month_zero_padded
-      char '-'
-      day_of_month_zero_padded
-    end
-
-    def twelve_hour_time
-      hour_12_zero_padded
-      char ':'
-      minute
-      char ':'
-      second
-      char ' '
-      am_pm_upcase
-    end
-
-    def twenty_four_hour_time
-      hour_24_zero_padded
-      char ':'
-      minute
-    end
-
-    def twenty_four_hour_time_with_seconds
-      hour_24_zero_padded
-      char ':'
-      minute
-      char ':'
-      second
-    end
+  # :nodoc:
+  struct Formatter
+    include Visitor
+    include Time::Format::Formatter
   end
 end

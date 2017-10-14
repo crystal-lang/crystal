@@ -4,8 +4,6 @@
 {% end %}
 
 module HTTP
-  private DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
-
   # :nodoc:
   enum BodyType
     OnDemand
@@ -222,15 +220,16 @@ module HTTP
     ComputedContentTypeHeader.new(content_type.strip, nil)
   end
 
+  # Parse a time string using the formats specified by [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1)
+  #
+  # ```
+  # HTTP.parse_time("Sun, 14 Feb 2016 21:00:00 GMT")  # => "2016-02-14 21:00:00 UTC"
+  # HTTP.parse_time("Sunday, 14-Feb-16 21:00:00 GMT") # => "2016-02-14 21:00:00 UTC"
+  # HTTP.parse_time("Sun Feb 14 21:00:00 2016")       # => "2016-02-14 21:00:00 UTC"
+  # ```
   def self.parse_time(time_str : String) : Time?
-    DATE_PATTERNS.each do |pattern|
-      begin
-        return Time.parse(time_str, pattern, kind: Time::Kind::Utc)
-      rescue Time::Format::Error
-      end
-    end
-
-    nil
+    HTTP_DATE.parse(time_str)
+  rescue Time::Format::Error
   end
 
   # Format a Time object as a String using the format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
@@ -239,8 +238,7 @@ module HTTP
   # HTTP.rfc1123_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
   # ```
   def self.rfc1123_date(time : Time) : String
-    # TODO: GMT should come from the Time classes instead
-    time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
+    HTTP_DATE.format(time)
   end
 
   # Dequotes an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)

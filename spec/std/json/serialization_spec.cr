@@ -312,7 +312,7 @@ describe "JSON serialization" do
     end
 
     it "does for time" do
-      Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc).to_json.should eq(%("2016-11-16T12:55:48+0000"))
+      Time.new(2016, 11, 16, 12, 55, 48, kind: Time::Kind::Utc).to_json.should eq(%("2016-11-16T12:55:48Z"))
     end
   end
 end
