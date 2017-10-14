@@ -2951,11 +2951,11 @@ class String
     !!index(search)
   end
 
-  # Makes an array by splitting the string on any ASCII whitespace characters
-  # (and removing that whitespace).
+  # Makes an array by splitting the string on any amount of ASCII whitespace
+  # characters (and removing that whitespace).
   #
-  # If *limit* is present, up to *limit* new strings will be created,
-  # with the entire remainder added to the last string.
+  # If *limit* is present, up to *limit* new strings will be created, with the
+  # entire remainder added to the last string.
   #
   # ```
   # old_pond = "
@@ -2974,10 +2974,11 @@ class String
     ary
   end
 
-  # Splits the string after any ASCII whitespace character and yields each part to a block.
+  # Splits the string after any amount of ASCII whitespace characters and yields
+  # each non-whitespace part to a block.
   #
-  # If *limit* is present, up to *limit* new strings will be created,
-  # with the entire remainder added to the last string.
+  # If *limit* is present, up to *limit* new strings will be created, with the
+  # entire remainder added to the last string.
   #
   # ```
   # ary = [] of String
