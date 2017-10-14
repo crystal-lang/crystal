@@ -158,7 +158,7 @@ class Regex
     # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"]? # => nil
     # ```
     #
-    # When there are capture groups having same name, it returns the lastest
+    # When there are capture groups having same name, it returns the last
     # matched capture group.
     #
     # ```
@@ -185,7 +185,7 @@ class Regex
     # "Crystal".match(/r(?<ok>ys)/).not_nil!["ng"] # raises KeyError
     # ```
     #
-    # When there are capture groups having same name, it returns the lastest
+    # When there are capture groups having same name, it returns the last
     # matched capture group.
     #
     # ```
