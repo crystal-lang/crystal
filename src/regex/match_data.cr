@@ -203,9 +203,7 @@ class Regex
     end
 
     private def named_capture_number(group_name)
-      first = Pointer(UInt8).null
-      last = Pointer(UInt8).null
-      name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, pointerof(first), pointerof(last))
+      name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, out first, out last)
       return if name_entry_size < 0
 
       while first <= last
