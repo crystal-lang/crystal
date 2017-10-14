@@ -210,6 +210,8 @@ class Regex
     UTF_8 = 0x00000800
     # :nodoc:
     NO_UTF8_CHECK = 0x00002000
+    # :nodoc:
+    DUPNAMES = 0x00080000
   end
 
   # Return a `Regex::Options` representing the optional flags applied to this `Regex`.
@@ -240,7 +242,7 @@ class Regex
     source = source.gsub('\u{0}', "\\0")
     @source = source
 
-    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK), out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
     @extra = LibPCRE.study(@re, 0, out studyerrptr)
     raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
@@ -255,7 +257,7 @@ class Regex
   # Regex.error?("(foo|bar")  # => "missing ) at 8"
   # ```
   def self.error?(source)
-    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK), out errptr, out erroffset, nil)
+    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
     if re
       nil
     else
@@ -285,9 +287,8 @@ class Regex
     end
   end
 
-  # Union. Returns a `Regex` that matches any of *patterns*. If any pattern
-  # contains a named capture group using the same name as a named capture
-  # group in any other pattern, an ArgumentError will be raised at runtime.
+  # Union. Returns a `Regex` that matches any of *patterns*.
+  #
   # All capture groups in the patterns after the first one will have their
   # indexes offset.
   #
@@ -303,9 +304,8 @@ class Regex
     new patterns.map { |pattern| union_part pattern }.join("|")
   end
 
-  # Union. Returns a `Regex` that matches any of *patterns*. If any pattern
-  # contains a named capture group using the same name as a named capture
-  # group in any other pattern, an ArgumentError will be raised at runtime.
+  # Union. Returns a `Regex` that matches any of *patterns*.
+  #
   # All capture groups in the patterns after the first one will have their
   # indexes offset.
   #
@@ -326,10 +326,9 @@ class Regex
     escape pattern
   end
 
-  # Union. Returns a `Regex` that matches either of the operands. If either
-  # operand contains a named capture groups using the same name as a named
-  # capture group in the other operand, an ArgumentError will be raised at
-  # runtime. All capture groups in the second operand will have their indexes
+  # Union. Returns a `Regex` that matches either of the operands.
+  #
+  # All capture groups in the second operand will have their indexes
   # offset.
   #
   # ```
