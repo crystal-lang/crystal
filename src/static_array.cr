@@ -165,10 +165,25 @@ struct StaticArray(T, N)
     self
   end
 
-  # Like `map`, but the block gets passed both the element and its index.
+  # Returns a new static array where elements are mapped by the given block.
+  #
+  # ```
+  # array = StaticArray[1, 2.5, "a"]
+  # tuple.map &.to_s # => StaticArray["1", "2.5", "a"]
+  # ```
+  def map(&block : T -> U) forall U
+    StaticArray(U, N).new { |i| yield to_unsafe[i] }
+  end
+
+  # Like `map!`, but the block gets passed both the element and its index.
   def map_with_index!(&block : (T, Int32) -> T)
     to_unsafe.map_with_index!(size) { |e, i| yield e, i }
     self
+  end
+
+  # Like `map`, but the block gets passed both the element and its index.
+  def map_with_index(&block : (T, Int32) -> U) forall U
+    StaticArray(U, N).new { |i| yield to_unsafe[i], i }
   end
 
   # Reverses the elements of this array in-place, then returns `self`.

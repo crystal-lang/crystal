@@ -362,6 +362,32 @@ describe "Slice" do
     3.times { a.includes?(b.shift).should be_true }
   end
 
+  it "does map" do
+    a = Slice[1, 2, 3]
+    b = a.map { |x| x * 2 }
+    b.should eq(Slice[2, 4, 6])
+  end
+
+  it "does map!" do
+    a = Slice[1, 2, 3]
+    b = a.map! { |x| x * 2 }
+    a.should eq(Slice[2, 4, 6])
+    a.to_unsafe.should eq(b.to_unsafe)
+  end
+
+  it "does map_with_index" do
+    a = Slice[1, 1, 2, 2]
+    b = a.map_with_index { |e, i| e + i }
+    b.should eq(Slice[1, 2, 4, 5])
+  end
+
+  it "does map_with_index!" do
+    a = Slice[1, 1, 2, 2]
+    b = a.map_with_index! { |e, i| e + i }
+    a.should eq(Slice[1, 2, 4, 5])
+    a.to_unsafe.should eq(b.to_unsafe)
+  end
+
   it "creates empty slice" do
     slice = Slice(Int32).empty
     slice.empty?.should be_true
