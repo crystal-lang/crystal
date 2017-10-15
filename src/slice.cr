@@ -236,6 +236,44 @@ struct Slice(T)
     @pointer.shuffle!(size, random)
   end
 
+  # Invokes the given block for each element of `self`, replacing the element
+  # with the value returned by the block. Returns `self`.
+  #
+  # ```
+  # slice = Slice[1, 2, 3]
+  # slice.map! { |x| x * x }
+  # slice # => Slice[1, 4, 9]
+  # ```
+  def map!
+    check_writable
+
+    @pointer.map!(size) { |e| yield e }
+    self
+  end
+
+  # Returns a new slice where elements are mapped by the given block.
+  #
+  # ```
+  # slice = Slice[1, 2.5, "a"]
+  # slice.map &.to_s # => Slice["1", "2.5", "a"]
+  # ```
+  def map(*, read_only = false, &block : T -> U) forall U
+    Slice.new(size, read_only: read_only) { |i| yield @pointer[i] }
+  end
+
+  # Like `map!`, but the block gets passed both the element and its index.
+  def map_with_index!(&block : (T, Int32) -> T)
+    check_writable
+
+    @pointer.map_with_index!(size) { |e, i| yield e, i }
+    self
+  end
+
+  # Like `map`, but the block gets passed both the element and its index.
+  def map_with_index(*, read_only = false, &block : (T, Int32) -> U) forall U
+    Slice.new(size, read_only: read_only) { |i| yield @pointer[i], i }
+  end
+
   def copy_from(source : Pointer(T), count)
     check_writable
 
