@@ -1,7 +1,7 @@
 require "./spec/dsl"
 
-# Crystal's built-in testing library. It provides the structure for writing executable examples
-# of how your code should behave. A domain specific language allows to write them similar to natural language.
+# Crystal's built-in testing library. It provides a structure for writing executable examples
+# of how your code should behave. A domain specific language allows you to write them in a way similar to natural language.
 #
 # The Crystal compiler has a `spec` command with tools to constrain which examples get run and tailor the output.
 #
