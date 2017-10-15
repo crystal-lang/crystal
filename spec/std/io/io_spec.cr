@@ -1,5 +1,5 @@
 require "spec"
-require "big_int"
+require "big"
 require "base64"
 
 # This is a non-optimized version of IO::Memory so we can test

@@ -1,5 +1,5 @@
 require "spec"
-require "big_int"
+require "big"
 
 describe "BigInt" do
   it "creates with a value of zero" do

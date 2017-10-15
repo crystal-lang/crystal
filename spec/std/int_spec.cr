@@ -1,5 +1,5 @@
 require "spec"
-require "big_int"
+require "big"
 
 private def to_s_with_io(num)
   String.build { |str| num.to_s(str) }

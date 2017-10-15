@@ -1,5 +1,5 @@
 require "spec"
-require "big_int"
+require "big"
 
 private module StructSpec
   struct TestClass
