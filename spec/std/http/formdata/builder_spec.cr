@@ -38,6 +38,26 @@ describe HTTP::FormData::Builder do
     generated.should eq(expected.gsub("\n", "\r\n"))
   end
 
+  describe "#field" do
+    it "converts value to a string" do
+      io = IO::Memory.new
+      HTTP::FormData.build(io, "fixed-boundary") do |g|
+        g.field("foo", 12)
+      end
+
+      generated = io.to_s
+      expected = <<-'MULTIPART'
+        --fixed-boundary
+        Content-Disposition: form-data; name="foo"
+
+        12
+        --fixed-boundary--
+        MULTIPART
+
+      generated.should eq(expected.gsub("\n", "\r\n"))
+    end
+  end
+
   describe "#content_type" do
     it "calculates the content type" do
       builder = HTTP::FormData::Builder.new(IO::Memory.new, "a delimiter string with a quote in \"")
