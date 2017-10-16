@@ -222,12 +222,18 @@ struct BigDecimal
       io << "0." << s
     elsif @scale == s.size && @value < 0
       io << "-0.0" << s[1..-1]
-    elsif @scale > s.size
+    elsif @scale > s.size && @value >= 0
       io << "0."
       (@scale - s.size).times do
         io << '0'
       end
       io << s
+    elsif @scale > s.size && @value < 0
+      io << "-0.0"
+      (@scale - s.size).times do
+        io << '0'
+      end
+      io << s[1..-1]
     else
       offset = s.size - @scale
       io << s[0...offset] << '.' << s[offset..-1]
@@ -239,16 +245,23 @@ struct BigDecimal
   end
 
   def to_i
-    puts self.to_s
-    to_s.to_i
+    if @value >= 0
+      (@value / TEN ** @scale)
+    else
+      -(@value.abs / TEN ** @scale)
+    end.to_i
   end
 
   def to_u
-    to_s.to_u
+    if @value >= 0
+      (@value / TEN ** @scale)
+    else
+      -(@value.abs / TEN ** @scale)
+    end.to_u
   end
 
   def to_f
-    to_s.to_u
+    to_s.to_f
   end
 
   def clone
