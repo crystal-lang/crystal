@@ -79,12 +79,6 @@ class Crystal::FixMissingTypes < Crystal::Visitor
     end
   end
 
-  def visit(node : TypeOf)
-    node.expressions.each &.accept self
-    node.type = @program.no_return.metaclass unless node.type?
-    false
-  end
-
   def visit(node : ASTNode)
     true
   end

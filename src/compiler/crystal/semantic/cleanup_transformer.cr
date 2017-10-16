@@ -741,6 +741,12 @@ module Crystal
       node
     end
 
+    def transform(node : TypeOf)
+      node = super
+      node.bind_to node.expressions
+      node
+    end
+
     @false_literal : BoolLiteral?
 
     def false_literal
