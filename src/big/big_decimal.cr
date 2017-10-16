@@ -218,8 +218,10 @@ struct BigDecimal
       return
     end
 
-    if @scale == s.size
+    if @scale == s.size && @value >= 0
       io << "0." << s
+    elsif @scale == s.size && @value < 0
+      io << "-0.0" << s[1..-1]
     elsif @scale > s.size
       io << "0."
       (@scale - s.size).times do
@@ -234,6 +236,19 @@ struct BigDecimal
 
   def to_big_d
     self
+  end
+
+  def to_i
+    puts self.to_s
+    to_s.to_i
+  end
+
+  def to_u
+    to_s.to_u
+  end
+
+  def to_f
+    to_s.to_u
   end
 
   def clone
