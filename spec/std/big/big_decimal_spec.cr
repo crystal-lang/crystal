@@ -296,18 +296,12 @@ describe BigDecimal do
     end
   end
 
-  it "upkeeps hashing contract" do
-    # a == b <=> h[a] == h[b]
+  it "upkeeps hashing invariant" do
+    # a == b => h[a] == h[b]
     bd1 = BigDecimal.new(1, 2)
     bd2 = BigDecimal.new(100, 4)
 
-    bd1.should eq(bd2)
-
-    h = {} of BigDecimal => String
-    h[bd1] = "bd1"
-    h[bd2] = "bd2"
-
-    h[bd1].should eq(h[bd2])
+    bd1.hash.should eq bd2.hash
   end
 
   it "can normalize quotient" do
