@@ -81,7 +81,7 @@ class Crystal::FixMissingTypes < Crystal::Visitor
 
   def visit(node : TypeOf)
     node.expressions.each &.accept self
-    node.type = @program.no_return.metaclass unless node.type?
+    node.type = @program.no_return unless node.type?
     false
   end
 
