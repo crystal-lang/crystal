@@ -244,6 +244,7 @@ struct BigDecimal
     self
   end
 
+  # Converts to integer. Truncates anything on the right side of the decimal point.
   def to_i
     if @value >= 0
       (@value / TEN ** @scale)
@@ -252,12 +253,10 @@ struct BigDecimal
     end.to_i
   end
 
+  # Converts to unsigned integer. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
   def to_u
-    if @value >= 0
-      (@value / TEN ** @scale)
-    else
-      -(@value.abs / TEN ** @scale)
-    end.to_u
+    (@value.abs / TEN ** @scale).to_u
   end
 
   def to_f
