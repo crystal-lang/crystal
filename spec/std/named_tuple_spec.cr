@@ -257,6 +257,16 @@ describe "NamedTuple" do
     tup1.should_not eq(tup3)
   end
 
+  it "compares with named tuple union (#5131)" do
+    tup1 = {a: 1, b: 'a'}
+    tup2 = {a: 1, c: 'b'}
+    u = tup1 || tup2
+    u.should eq(u)
+
+    v = tup2 || tup1
+    u.should_not eq(v)
+  end
+
   it "does to_h" do
     tup1 = {a: 1, b: "hello"}
     hash = tup1.to_h
