@@ -245,6 +245,28 @@ describe BigDecimal do
     BigDecimal.new(100, 4).to_s.should eq "0.01"
   end
 
+  it "converts to other number types" do
+    bd1 = BigDecimal.new(123, 5)
+    bd2 = BigDecimal.new(-123, 5)
+    bd3 = BigDecimal.new(123, 0)
+    bd4 = BigDecimal.new(-123, 0)
+
+    bd1.to_i.should eq "4"
+    bd2.to_i.should eq "4"
+    bd3.to_i.should eq "4"
+    bd4.to_i.should eq "4"
+
+    bd1.to_u.should eq "4"
+    bd2.to_u.should eq "4"
+    bd3.to_u.should eq "4"
+    bd4.to_u.should eq "4"
+
+    bd1.to_f.should eq "4"
+    bd2.to_f.should eq "4"
+    bd3.to_f.should eq "4"
+    bd4.to_f.should eq "4"
+  end
+
   it "hashes" do
     bd1 = BigDecimal.new("123.456")
     bd2 = BigDecimal.new("0.12345")
