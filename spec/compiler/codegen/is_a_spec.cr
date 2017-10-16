@@ -727,4 +727,22 @@ describe "Codegen: is_a?" do
       Class.is_a?(Class.class.class)
     ").to_b.should be_true
   end
+
+  it "codegens is_a? with generic module including module (#" do
+    run(%(
+      module A
+      end
+
+      module B(T)
+        include A
+      end
+
+      class C
+        include B(Int32)
+      end
+
+      c = C.new.as(A)
+      c.is_a?(C)
+      ), inject_primitives: false).to_b.should be_true
+  end
 end
