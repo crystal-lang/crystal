@@ -1,4 +1,4 @@
-require "big_int"
+require "big"
 
 # A `BigDecimal` represents arbitrary precision decimals.
 #
