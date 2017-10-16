@@ -743,7 +743,12 @@ module Crystal
 
     def transform(node : TypeOf)
       node = super
-      node.bind_to node.expressions
+
+      unless node.type?
+        node.unbind_from node.dependencies
+        node.bind_to node.expressions
+      end
+
       node
     end
 
