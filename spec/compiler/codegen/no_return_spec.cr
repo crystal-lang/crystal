@@ -81,4 +81,12 @@ describe "Code gen: no return" do
       end
       ))
   end
+
+  it "codegens untyped typeof (#5105)" do
+    codegen(%(
+      require "prelude"
+
+      typeof(raise("").foo)
+      ))
+  end
 end
