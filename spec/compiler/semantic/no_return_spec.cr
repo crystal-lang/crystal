@@ -325,6 +325,6 @@ describe "Semantic: NoReturn" do
       require "prelude"
 
       typeof(raise("").foo)
-      )) { no_return }
+      )) { no_return.metaclass }
   end
 end
