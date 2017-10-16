@@ -247,10 +247,10 @@ struct BigDecimal
   # Converts to integer. Truncates anything on the right side of the decimal point.
   def to_i
     if @value >= 0
-      (@value / TEN ** @scale)
+      (@value / TEN ** @scale).to_i
     else
-      -(@value.abs / TEN ** @scale)
-    end.to_i
+      -(@value.abs / TEN ** @scale).to_i
+    end
   end
 
   # Converts to unsigned integer. Truncates anything on the right side of the decimal point,
