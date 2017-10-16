@@ -218,17 +218,13 @@ struct BigDecimal
       return
     end
 
-    if @scale == s.size && @value >= 0
-      io << "0." << s
-    elsif @scale == s.size && @value < 0
-      io << "-0.0" << s[1..-1]
-    elsif @scale > s.size && @value >= 0
+    if @scale >= s.size && @value >= 0
       io << "0."
       (@scale - s.size).times do
         io << '0'
       end
       io << s
-    elsif @scale > s.size && @value < 0
+    elsif @scale >= s.size && @value < 0
       io << "-0.0"
       (@scale - s.size).times do
         io << '0'
