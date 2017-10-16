@@ -226,6 +226,7 @@ describe BigDecimal do
     BigDecimal.new(1).to_s.should eq "1"
     BigDecimal.new(-1).to_s.should eq "-1"
     BigDecimal.new("0.01").to_s.should eq "0.01"
+    BigDecimal.new("-0.01").to_s.should eq "-0.01"
     BigDecimal.new("1.0").to_s.should eq "1"
     BigDecimal.new("-1.0").to_s.should eq "-1"
     BigDecimal.new("1.000").to_s.should eq "1"
