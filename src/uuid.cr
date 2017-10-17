@@ -112,17 +112,12 @@ struct UUID
 
   # Returns 16-byte slice.
   def to_slice
-    Slice(UInt8).new to_unsafe, 16
+    @bytes.to_slice
   end
 
   # Returns unsafe pointer to 16-bytes.
   def to_unsafe
     @bytes.to_unsafe
-  end
-
-  # Writes hyphenated format string to the *io*.
-  def to_s(io : IO)
-    io << to_s
   end
 
   # Returns `true` if `other` string represents the same UUID, `false` otherwise.
@@ -187,6 +182,11 @@ struct UUID
       slice[10, 6].hexstring(buffer + 24)
       {36, 36}
     end
+  end
+
+  # Writes hyphenated format string to the *io*.
+  def to_s(io : IO)
+    io << to_s
   end
 
   def hexstring
