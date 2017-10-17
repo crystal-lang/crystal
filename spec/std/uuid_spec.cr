@@ -3,6 +3,23 @@ require "uuid"
 
 describe "UUID" do
   describe "default initialize" do
+    it "initialize with no options" do
+      subject = UUID.new
+      subject.variant.should eq UUID::Variant::RFC4122
+      subject.version.should eq UUID::Version::V4
+    end
+
+    it "initialize with variant" do
+      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), variant: UUID::Variant::NCS)
+      subject.variant.should eq UUID::Variant::NCS
+      subject.version.should eq UUID::Version::V4
+    end
+
+    it "initialize with slice and version" do
+      subject = UUID.new(version: UUID::Version::V3)
+      subject.variant.should eq UUID::Variant::RFC4122
+      subject.version.should eq UUID::Version::V3
+    end
   end
 
   describe "initialize with slice" do
