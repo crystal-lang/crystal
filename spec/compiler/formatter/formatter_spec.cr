@@ -197,6 +197,8 @@ describe Crystal::Formatter do
   assert_format "def foo\n  1 #\nrescue\nend"
   assert_format "def foo\n  1\n  #\n\n\nrescue\nend", "def foo\n  1\n  #\n\nrescue\nend"
 
+  assert_format "loop do\n  1\nrescue\n  2\nend"
+
   assert_format "foo"
   assert_format "foo()"
   assert_format "foo(  )", "foo()"
