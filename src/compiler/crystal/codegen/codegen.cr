@@ -1407,7 +1407,7 @@ module Crystal
             exp_value = exp_values.first[0]
             exp_type.tuple_types.each_with_index do |tuple_type, i|
               arg = block.args[i]?
-              if arg
+              if arg && arg.name != "_"
                 t_type = tuple_type
                 t_value = codegen_tuple_indexer(exp_type, exp_value, i)
                 block_var = block_context.vars[arg.name]
@@ -1416,7 +1416,7 @@ module Crystal
             end
           else
             exp_values.each_with_index do |(exp_value, exp_type), i|
-              if arg = block.args[i]?
+              if (arg = block.args[i]?) && arg.name != "_"
                 block_var = block_context.vars[arg.name]
                 assign block_var.pointer, block_var.type, exp_type, exp_value
               end
