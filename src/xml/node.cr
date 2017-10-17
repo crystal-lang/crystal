@@ -490,7 +490,7 @@ struct XML::Node
   # doc.xpath_bool("count(//person) > 0") # => true
   # ```
   def xpath_bool(path, namespaces = nil, variables = nil)
-    xpath(path, namespaces).as(Bool)
+    xpath(path, namespaces, variables).as(Bool)
   end
 
   # Searches this node for XPath *path* and restricts the return type to `Float64`.
@@ -499,7 +499,7 @@ struct XML::Node
   # doc.xpath_float("count(//person)") # => 1.0
   # ```
   def xpath_float(path, namespaces = nil, variables = nil)
-    xpath(path, namespaces).as(Float64)
+    xpath(path, namespaces, variables).as(Float64)
   end
 
   # Searches this node for XPath *path* and restricts the return type to `NodeSet`.
@@ -510,7 +510,7 @@ struct XML::Node
   # nodes.map(&.name) # => ["person"]
   # ```
   def xpath_nodes(path, namespaces = nil, variables = nil)
-    xpath(path, namespaces).as(NodeSet)
+    xpath(path, namespaces, variables).as(NodeSet)
   end
 
   # Searches this node for XPath *path* for nodes and returns the first one.
@@ -521,7 +521,7 @@ struct XML::Node
   # doc.xpath_node("//invalid") # => nil
   # ```
   def xpath_node(path, namespaces = nil, variables = nil)
-    xpath_nodes(path, namespaces).first?
+    xpath_nodes(path, namespaces, variables).first?
   end
 
   # Searches this node for XPath *path* and restricts the return type to `String`.
@@ -530,7 +530,7 @@ struct XML::Node
   # doc.xpath_string("string(/persons/person[1])")
   # ```
   def xpath_string(path, namespaces = nil, variables = nil)
-    xpath(path, namespaces).as(String)
+    xpath(path, namespaces, variables).as(String)
   end
 
   # :nodoc:
