@@ -129,6 +129,20 @@ module Crystal
       node
     end
 
+    def transform(node : ProcLiteral)
+      if node.varargs?
+        a_def = node.def
+
+        external = External.new(a_def.name, a_def.args, a_def.body, a_def.name)
+        external.varargs = true
+        external.fun_def = FunDef.new(a_def.name, a_def.args, varargs: true, body: a_def.body)
+
+        node.def = external
+      end
+
+      super
+    end
+
     def transform(node : If)
       node.cond = node.cond.transform(self)
 

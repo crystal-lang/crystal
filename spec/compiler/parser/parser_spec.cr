@@ -1021,6 +1021,8 @@ describe "Parser" do
   it_parses "->(x : Int32) { }", ProcLiteral.new(Def.new("->", [Arg.new("x", restriction: "Int32".path)]))
   it_parses "->(x : Int32) { x }", ProcLiteral.new(Def.new("->", [Arg.new("x", restriction: "Int32".path)], "x".var))
   it_parses "->(x) { x }", ProcLiteral.new(Def.new("->", [Arg.new("x")], "x".var))
+  it_parses "->(...) { }", ProcLiteral.new(varargs: true)
+  it_parses "->(x, ...) { x }", ProcLiteral.new(Def.new("->", [Arg.new("x")], "x".var), varargs: true)
   it_parses "x = 1; ->{ x }", [Assign.new("x".var, 1.int32), ProcLiteral.new(Def.new("->", body: "x".var))]
   it_parses "f ->{ a do\n end\n }", Call.new(nil, "f", ProcLiteral.new(Def.new("->", body: Call.new(nil, "a", block: Block.new))))
 

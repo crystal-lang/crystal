@@ -1482,8 +1482,9 @@ module Crystal
 
   class ProcLiteral < ASTNode
     property def : Def
+    property? varargs : Bool
 
-    def initialize(@def = Def.new("->"))
+    def initialize(@def = Def.new("->"), @varargs = false)
     end
 
     def accept_children(visitor)
@@ -1491,10 +1492,10 @@ module Crystal
     end
 
     def clone_without_location
-      ProcLiteral.new(@def.clone)
+      ProcLiteral.new(@def.clone, @varargs)
     end
 
-    def_equals_and_hash @def
+    def_equals_and_hash @def, @varargs
   end
 
   class ProcPointer < ASTNode
