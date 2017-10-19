@@ -50,7 +50,14 @@ struct Crystal::Hasher
   end
 
   def string(value)
-    value.to_slice.hash(self)
+    string(value.to_slice)
+  end
+
+  def string(value : Bytes)
+    value.each do |b|
+      @result = @result * 31  + b.to_u64
+    end
+    self
   end
 
   def class(value)
