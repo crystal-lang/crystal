@@ -17,8 +17,8 @@ struct Crystal::Hasher
   # disclose the result of the hashes, we don't need the cryptographically
   # verified siphash-2-4, but can use the faster siphash-1-3 alternative.
   #
-  # On 32-bit systems, we prefer the halfsiphash-1-3 alternative (32-bit hashes)
-  # that should perform better than siphash-1-3 (64-bit hashes).
+  # On 32-bit systems, we prefer the halfsiphash-1-3 alternative (32-bit
+  # computations) that performs better than siphash-1-3 (64-bit computations).
 
   # TODO: use flag?(:bits64) for Crystal > 0.23.1
   {% if flag?(:x86_64) || flag?(:aarch64) %}
@@ -76,6 +76,11 @@ struct Crystal::Hasher
   end
 
   def string(value)
+    @siphash.update(value)
+    self
+  end
+
+  def slice(value : Bytes)
     @siphash.update(value)
     self
   end
