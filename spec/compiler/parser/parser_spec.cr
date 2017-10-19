@@ -997,6 +997,9 @@ describe "Parser" do
 
   it_parses "def foo(); 1; rescue; 2; end", Def.new("foo", body: ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
 
+  it_parses "1.tap do; 1; rescue; 2; end", Call.new(1.int32, "tap", block: Block.new(body: ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])))
+  it_parses "-> do; 1; rescue; 2; end", ProcLiteral.new(Def.new("->", body: ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])))
+
   it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
   it_parses "x = 1 rescue 2", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
   it_parses "x = 1 ensure 2", Assign.new("x".var, ExceptionHandler.new(1.int32, ensure: 2.int32))
