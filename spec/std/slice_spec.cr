@@ -404,6 +404,14 @@ describe "Slice" do
     slice = Bytes[1, 2, 3, read_only: true]
     expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 0_u8 }
   end
+
+  it "hashes each item in collection" do
+    Slice[1, 2, 3].hash.should eq(Slice[1_u64, 2_u64, 3_u64].hash)
+  end
+
+  it "optimizes hash for Bytes" do
+    Bytes[1, 2, 3].hash.should_not eq(Slice[1, 2, 3].hash)
+  end
 end
 
 private def itself(*args)
