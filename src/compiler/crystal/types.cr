@@ -908,13 +908,15 @@ module Crystal
 
       # No meta vars means this initializer came from a generic type,
       # so we must type it now that we are defining it in a concrete type
-      unless meta_vars
+      if !meta_vars && !self.is_a?(GenericType)
         meta_vars = MetaVars.new
         visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
         visitor.scope = self
         value = value.clone
         value.accept visitor
       end
+
+      meta_vars ||= MetaVars.new
 
       unless self.is_a?(GenericType)
         instance_var = lookup_instance_var(name)
