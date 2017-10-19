@@ -60,6 +60,7 @@ class Array(T)
     @size = 0
     @capacity = 0
     @buffer = Pointer(T).null
+    @allocation = @buffer
   end
 
   # Creates a new empty `Array` backed by a buffer that is initially
@@ -86,6 +87,7 @@ class Array(T)
     else
       @buffer = Pointer(T).malloc(initial_capacity)
     end
+    @allocation = @buffer
   end
 
   # Creates a new `Array` of the given *size* filled with the same *value* in each position.
@@ -111,6 +113,7 @@ class Array(T)
     else
       @buffer = Pointer(T).malloc(size, value)
     end
+    @allocation = @buffer
   end
 
   # Creates a new `Array` of the given *size* and invokes the given block once
@@ -509,6 +512,8 @@ class Array(T)
   def clear
     @buffer.clear(@size)
     @size = 0
+    @capacity += @buffer - @allocation
+    @buffer = @allocation
     self
   end
 
@@ -682,7 +687,7 @@ class Array(T)
   # ary2 # => [[5, 2], [3, 4], [7, 8]]
   # ```
   def dup
-    Array(T).build(@capacity) do |buffer|
+    Array(T).build(@size) do |buffer|
       buffer.copy_from(@buffer, size)
       size
     end
@@ -1469,8 +1474,9 @@ class Array(T)
     else
       value = @buffer[0]
       @size -= 1
-      @buffer.move_from(@buffer + 1, @size)
-      (@buffer + @size).clear
+      @capacity -= 1
+      @buffer.clear
+      @buffer += 1
       value
     end
   end
@@ -1498,9 +1504,10 @@ class Array(T)
     n = Math.min(n, @size)
     ary = Array(T).new(n) { |i| @buffer[i] }
 
-    @buffer.move_from(@buffer + n, @size - n)
+    @buffer.clear(n)
+    @buffer += n
+    @capacity -= n
     @size -= n
-    (@buffer + @size).clear(n)
 
     ary
   end
@@ -1768,16 +1775,28 @@ class Array(T)
   end
 
   private def double_capacity
-    resize_to_capacity(@capacity == 0 ? 3 : (@capacity * 2))
+    if @capacity == 0
+      capacity = 2
+    else
+      capacity = Math.pw2ceil(@capacity + 1)
+    end
+    resize_to_capacity(capacity)
   end
 
   private def resize_to_capacity(capacity)
-    @capacity = capacity
-    if @buffer
-      @buffer = @buffer.realloc(@capacity)
-    else
-      @buffer = Pointer(T).malloc(@capacity)
+    if @buffer != @allocation
+      @capacity += @buffer - @allocation
+      @allocation.move_from(@buffer, @size)
     end
+    if @capacity != capacity
+      @capacity = capacity
+      if @allocation
+        @allocation = @allocation.realloc(@capacity)
+      else
+        @allocation = Pointer(T).malloc(@capacity)
+      end
+    end
+    @buffer = @allocation
   end
 
   protected def self.intro_sort!(a, n)
