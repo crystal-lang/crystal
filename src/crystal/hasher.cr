@@ -72,11 +72,11 @@ struct Crystal::Hasher
   end
 
   def string(value)
-    string(value.to_slice)
+    bytes(value.to_slice)
   end
 
   @[NoInline]
-  def string(value : Bytes)
+  def bytes(value)
     bsz = value.size
     v = bsz.to_u64 << 56
     u = value.to_unsafe
