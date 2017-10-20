@@ -415,4 +415,16 @@ describe "Restrictions" do
       ),
       "undefined constant T"
   end
+
+  it "sets number as free variable (#2699)" do
+    assert_error %(
+      def foo(x : T[N], y : T[N]) forall T, N
+      end
+
+      x = uninitialized UInt8[10]
+      y = uninitialized UInt8[11]
+      foo(x, y)
+      ),
+      "no overload matches"
+  end
 end
