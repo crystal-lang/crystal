@@ -91,7 +91,7 @@ struct Crystal::Hasher
       # force correct unaligned read
       t4 = uninitialized UInt32
       pointerof(t4).as(UInt8*).copy_from(u, 4)
-      v |= t4 << 24
+      v |= t4.to_u64 << 24
       u += 4
     end
     if (r = bsz & 3) != 0
