@@ -109,4 +109,16 @@ describe "Semantic: recursive struct check" do
       ),
       "recursive struct Bar detected: `@value : Foo` -> `Foo` -> `Bar`"
   end
+
+  it "errors on recursive struct through tuple" do
+    assert_error %(
+      struct Foo
+        @x : {Foo}
+
+        def initialize(@x)
+        end
+      end
+      ),
+      "recursive struct Foo detected: `@x : Tuple(Foo)`"
+  end
 end
