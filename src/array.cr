@@ -1777,8 +1777,10 @@ class Array(T)
   private def double_capacity
     if @capacity == 0
       capacity = 2
+    elsif @capacity < 3
+      capacity = 4
     else
-      capacity = Math.pw2ceil(@capacity + 1)
+      capacity = Math.pw2ceil(@capacity + @capacity/2 + 1)
     end
     resize_to_capacity(capacity)
   end
