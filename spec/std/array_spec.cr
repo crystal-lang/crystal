@@ -697,6 +697,44 @@ describe "Array" do
     end
   end
 
+  describe "sorted_insert" do
+    it "inserts value sorted relative to values inside" do
+      a = [1, 3, 4]
+      expected = [1, 2, 3, 4]
+      a.sorted_insert(2).should eq(expected)
+      a.should eq(expected)
+    end
+
+    it "inserts smallest value at head" do
+      a = [1, 3, 4]
+      expected = [0, 1, 3, 4]
+      a.sorted_insert(0).should eq(expected)
+      a.should eq(expected)
+    end
+
+    it "inserts largest value at tail" do
+      a = [1, 3, 4]
+      expected = [1, 3, 4, 5]
+      a.sorted_insert(5).should eq(expected)
+      a.should eq(expected)
+    end
+
+    it "inserts object according to provided block" do
+      a = ["a", "aaa", "aaaa"]
+      expected = ["a", "aa", "aaa", "aaaa"]
+      val = "aa"
+      a.sorted_insert(val) { |x| x.size >= val.size }.should eq(expected)
+      a.should eq(expected)
+    end
+
+    it "inserts values sorted into an empty array" do
+      a = [] of Int32
+      expected = [0, 1, 2, 3, 6, 9]
+      expected.shuffle.each { |x| a.sorted_insert x }
+      a.should eq(expected)
+    end
+  end
+
   describe "inspect" do
     it { [1, 2, 3].inspect.should eq("[1, 2, 3]") }
   end

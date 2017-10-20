@@ -845,6 +845,44 @@ class Array(T)
     self
   end
 
+  # Insert *object* before the first element where the passed block returns true.
+  # Returns `self`.
+  #
+  # Array must be sorted or empty prior to invoking this method.
+  #
+  # ```
+  # var = "aa"
+  # a = ["a", "aaa", "aaaa"]
+  # a.sorted_insert(var) { |x| x.size >= var.size } # => ["a", "aa", "aaa", "aaaa"]
+  # ```
+  #
+  # See also: `Indexable#bsearch_index`.
+  def sorted_insert(object : T)
+    index = bsearch_index { |x, i| yield x, i }
+    if index
+      insert index, object
+    else
+      push object
+    end
+  end
+
+  # Insert *object* to preserve ordering.
+  # Returns `self`.
+  #
+  # Array must be sorted or empty prior to invoking this method.
+  #
+  # ```
+  # a = [1, 3, 4]
+  # a.sorted_insert(2) # => [1, 2, 3, 4]
+  # a.sorted_insert(0) # => [0, 1, 2, 3, 4]
+  # a.sorted_insert(5) # => [0, 1, 2, 3, 4, 5]
+  # ```
+  #
+  # See also: `Indexable#bsearch_index`.
+  def sorted_insert(object : T)
+    sorted_insert(object) { |x| x >= object }
+  end
+
   # :nodoc:
   def inspect(io : IO)
     to_s io
