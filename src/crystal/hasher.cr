@@ -75,7 +75,6 @@ struct Crystal::Hasher
     bytes(value.to_slice)
   end
 
-  @[NoInline]
   def bytes(value)
     bsz = value.size
     v = bsz.to_u64 << 56
