@@ -10,7 +10,7 @@ describe "Semantic: recursive struct check" do
 
       Test.new(Test.new(nil))
       ),
-      "recursive struct Test detected: `@test : (Test | Nil)`"
+      "recursive struct Test detected:\n\n  `@test : (Test | Nil)`"
   end
 
   it "errors on recursive struct inside module" do
@@ -22,7 +22,7 @@ describe "Semantic: recursive struct check" do
 
       Foo::Test.new(Foo::Test.new(nil))
       ),
-      "recursive struct Foo::Test detected: `@test : (Foo::Test | Nil)`"
+      "recursive struct Foo::Test detected:\n\n  `@test : (Foo::Test | Nil)`"
   end
 
   it "errors on recursive generic struct inside module" do
@@ -34,7 +34,7 @@ describe "Semantic: recursive struct check" do
 
       Foo::Test(Int32).new(Foo::Test(Int32).new(nil))
       ),
-      "recursive struct Foo::Test(T) detected: `@test : (Foo::Test(T) | Nil)`"
+      "recursive struct Foo::Test(T) detected:\n\n  `@test : (Foo::Test(T) | Nil)`"
   end
 
   it "errors on mutually recursive struct" do
@@ -52,7 +52,7 @@ describe "Semantic: recursive struct check" do
       Foo.new(Bar.new(nil))
       Bar.new(Foo.new(nil))
       ),
-      "recursive struct Foo detected: `@bar : (Bar | Nil)` -> `@foo : (Foo | Nil)`"
+      "recursive struct Foo detected:\n\n  `@bar : (Bar | Nil)` -> `(Bar | Nil)` -> `Bar` -> `@foo : (Foo | Nil)`"
   end
 
   it "detects recursive struct through module" do
@@ -67,7 +67,7 @@ describe "Semantic: recursive struct check" do
         end
       end
       ),
-      "recursive struct Foo detected: `@moo : Moo` -> `Moo` -> `Foo`"
+      "recursive struct Foo detected:\n\n  `@moo : Moo` -> `Moo` -> `Foo`"
   end
 
   it "detects recursive generic struct through module (#4720)" do
@@ -81,7 +81,7 @@ describe "Semantic: recursive struct check" do
         end
       end
       ),
-      "recursive struct Foo(T) detected: `@base : (Bar | Nil)` -> `Bar` -> `Foo(T)`"
+      "recursive struct Foo(T) detected:\n\n  `@base : (Bar | Nil)` -> `(Bar | Nil)` -> `Bar` -> `Foo(T)`"
   end
 
   it "detects recursive generic struct through generic module (#4720)" do
@@ -95,7 +95,7 @@ describe "Semantic: recursive struct check" do
         end
       end
       ),
-      "recursive struct Foo(T) detected: `@base : (Bar(T) | Nil)` -> `Bar(T)` -> `Foo(T)`"
+      "recursive struct Foo(T) detected:\n\n  `@base : (Bar(T) | Nil)` -> `(Bar(T) | Nil)` -> `Bar(T)` -> `Foo(T)`"
   end
 
   it "detects recursive struct through inheritance (#3071)" do
@@ -107,7 +107,7 @@ describe "Semantic: recursive struct check" do
         @value = uninitialized Foo
       end
       ),
-      "recursive struct Bar detected: `@value : Foo` -> `Foo` -> `Bar`"
+      "recursive struct Bar detected:\n\n  `@value : Foo` -> `Foo` -> `Bar`"
   end
 
   it "errors on recursive struct through tuple" do
@@ -119,7 +119,7 @@ describe "Semantic: recursive struct check" do
         end
       end
       ),
-      "recursive struct Foo detected: `@x : Tuple(Foo)`"
+      "recursive struct Foo detected:\n\n  `@x : Tuple(Foo)`"
   end
 
   it "errors on recursive struct through named tuple" do
@@ -131,6 +131,18 @@ describe "Semantic: recursive struct check" do
         end
       end
       ),
-      "recursive struct Foo detected: `@x : NamedTuple(x: Foo)`"
+      "recursive struct Foo detected:\n\n  `@x : NamedTuple(x: Foo)`"
+  end
+
+  it "errors on recursive struct through recursive alias (#4454) (#4455)" do
+    assert_error %(
+      struct Bar(T)
+        def initialize(@x : T)
+        end
+      end
+
+      alias Foo = Int32 | Bar(Foo)
+      ),
+      "recursive struct Foo detected (recursive aliases are structs):\n\n  `(Bar(Foo) | Int32)` -> `Bar(Foo)` -> `@x : Foo`"
   end
 end
