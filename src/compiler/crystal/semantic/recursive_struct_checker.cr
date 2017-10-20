@@ -119,6 +119,12 @@ class Crystal::RecursiveStructChecker
         check_recursive(target, tuple_type, checked, path)
       end
     end
+
+    if type.is_a?(NamedTupleInstanceType)
+      type.entries.each do |entry|
+        check_recursive(target, entry.type, checked, path)
+      end
+    end
   end
 
   def check_recursive_instance_var_container(target, type, checked, path)
