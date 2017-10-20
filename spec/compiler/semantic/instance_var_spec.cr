@@ -4801,4 +4801,21 @@ describe "Semantic: instance var" do
       Foo.new.@foo
     )) { generic_class "Gen", union_of(int32, types["A"]) }
   end
+
+  it "uses T.new (#4291)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Gen(T)
+        @x = T.new
+
+        def x
+          @x
+        end
+      end
+
+      Gen(Foo).new.x
+      )) { types["Foo"] }
+  end
 end
