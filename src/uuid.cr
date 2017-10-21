@@ -200,7 +200,6 @@ struct UUID
   end
 
   {% for v in %w(1 2 3 4 5) %}
-
     # Returns `true` if UUID looks is a V{{ v.id }}, `false` otherwise
     def v{{ v.id }}?
       variant == Variant::RFC4122 && version == RFC4122::Version::V{{ v.id }}
@@ -214,6 +213,5 @@ struct UUID
         true
       end
     end
-
   {% end %}
 end
