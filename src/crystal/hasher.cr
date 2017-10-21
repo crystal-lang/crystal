@@ -28,10 +28,10 @@ struct Crystal::Hasher
   # and then combines them with addition. It greatly reduce
   # possibility of state deduction.
   #
-  # Note, it provides good protection from HashDos iif:
+  # Note, it provides good protection from HashDos if and only if:
   # - seed is securely random and not exposed to attacker,
   # - hash result is also not exposed to attacker in a way other
-  #   than effect of using it Hash implementation.
+  #   than effect of using it in Hash implementation.
   # Do not output calculated hash value to user's console/form/
   # html/api response, etc. Use some from digest package instead.
 
