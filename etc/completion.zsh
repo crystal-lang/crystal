@@ -147,6 +147,7 @@ _crystal-run() {
 
 _crystal-spec() {
   _arguments \
+    $programfile \
     $help_args \
     $no_color_args \
     $exec_args \
