@@ -42,6 +42,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   record FinishedHook, scope : ModuleType, macro : Macro
   @finished_hooks = [] of FinishedHook
 
+  @method_added_running = false
+
   @last_doc : String?
 
   def visit(node : ClassDef)
@@ -343,7 +345,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         new_expansions << {original: node, expanded: new_method}
       end
 
-      run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
+      unless @method_added_running
+        @method_added_running = true
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
+        @method_added_running = false
+      end
     end
 
     false
