@@ -18,10 +18,10 @@ struct UUID
     V5      = 5 # SHA1 hash and namespace.
   end
 
-  # Internal representation
+  # Internal representation.
   @bytes : StaticArray(UInt8, 16)
 
-  # Generates RFC 4122 v4 UUID
+  # Generates RFC 4122 v4 UUID.
   def initialize(variant = Variant::RFC4122, version = Version::V4)
     @bytes = uninitialized UInt8[16]
     Random::Secure.random_bytes(@bytes.to_slice)
@@ -30,7 +30,7 @@ struct UUID
     self.version = version
   end
 
-  # Creates UUID from 16-bytes slice
+  # Creates UUID from 16-bytes slice.
   def initialize(slice : Slice(UInt8), variant = Variant::RFC4122, version = Version::V4)
     raise ArgumentError.new "Invalid bytes length #{@bytes.size}, expected 16" unless slice.size == 16
 
@@ -41,13 +41,13 @@ struct UUID
     self.version = version
   end
 
-  # Generates UUID from static 16-`bytes`, applying *version* and *variant* to the UUID
+  # Generates UUID from static 16-`bytes`, applying *version* and *variant* to the UUID.
   def initialize(@bytes : StaticArray(UInt8, 16), variant : UUID::Variant = Variant::RFC4122, version : UUID::Version = Version::V4)
     self.variant = variant
     self.version = version
   end
 
-  # Creates UUID from string `value`. See `UUID#decode(value : String)` for details on supported string formats
+  # Creates UUID from string `value`. See `UUID#decode(value : String)` for details on supported string formats.
   def initialize(value : String, variant = Variant::RFC4122, version = Version::V4)
     @bytes = uninitialized UInt8[16]
     decode value
@@ -56,7 +56,7 @@ struct UUID
     self.version = version
   end
 
-  # Returns UUID variant
+  # Returns UUID variant.
   def variant
     case
     when @bytes[8] & 0x80 == 0x00
@@ -72,7 +72,7 @@ struct UUID
     end
   end
 
-  # Sets UUID variant to specified *value*
+  # Sets UUID variant to specified *value*.
   def variant=(value : Variant)
     case value
     when Variant::NCS
@@ -88,7 +88,7 @@ struct UUID
     end
   end
 
-  # Returns version based on RFC4122 format. See also `#variant`
+  # Returns version based on RFC4122 format. See also `#variant`.
   def version
     case @bytes[6] >> 4
     when 1 then Version::V1
@@ -100,7 +100,7 @@ struct UUID
     end
   end
 
-  # Sets `version`. Doesn't set variant (see `#variant=`)
+  # Sets `version`. Doesn't set variant (see `#variant=`).
   def version=(value : Version)
     raise ArgumentError.new "Can't set unknown version" if value.unknown?
     @bytes[6] = (@bytes[6] & 0xf) | (value.to_u8 << 4)
@@ -110,27 +110,27 @@ struct UUID
     new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
   end
 
-  # Returns 16-byte slice
+  # Returns 16-byte slice.
   def to_slice
     @bytes.to_slice
   end
 
-  # Returns unsafe pointer to 16-bytes
+  # Returns unsafe pointer to 16-bytes.
   def to_unsafe
     @bytes.to_unsafe
   end
 
-  # Returns `true` if `other` string represents the same UUID, `false` otherwise
+  # Returns `true` if `other` string represents the same UUID, `false` otherwise.
   def ==(other : String)
     self == UUID.new other
   end
 
-  # Returns `true` if `other` 16-byte slice represents the same UUID, `false` otherwise
+  # Returns `true` if `other` 16-byte slice represents the same UUID, `false` otherwise.
   def ==(other : UUID)
     to_slice == other.to_slice
   end
 
-  # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex digit followed by another hex digit
+  # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex digit followed by another hex digit.
   def self.string_has_hex_pair_at!(value : String, i)
     unless value[i, 2].to_u8(16, whitespace: false, underscore: false, prefix: false)
       raise ArgumentError.new [
@@ -141,7 +141,8 @@ struct UUID
   end
 
   # Creates new UUID by decoding `value` string from hyphenated (ie. `ba714f86-cac6-42c7-8956-bcf5105e1b81`),
-  # hexstring (ie. `89370a4ab66440c8add39e06f2bb6af6`) or URN (ie. `urn:uuid:3f9eaf9e-cdb0-45cc-8ecb-0e5b2bfb0c20`) format
+  # hexstring (ie. `89370a4ab66440c8add39e06f2bb6af6`) or URN (ie. `urn:uuid:3f9eaf9e-cdb0-45cc-8ecb-0e5b2bfb0c20`)
+  # format.
   def decode(value : String)
     case value.size
     when 36 # Hyphenated
@@ -183,7 +184,7 @@ struct UUID
     end
   end
 
-  # Writes hyphenated format string to the *io*
+  # Writes hyphenated format string to the *io*.
   def to_s(io : IO)
     io << to_s
   end
@@ -200,12 +201,12 @@ struct UUID
   end
 
   {% for v in %w(1 2 3 4 5) %}
-    # Returns `true` if UUID looks is a V{{ v.id }}, `false` otherwise
+    # Returns `true` if UUID looks is a V{{ v.id }}, `false` otherwise.
     def v{{ v.id }}?
       variant == Variant::RFC4122 && version == RFC4122::Version::V{{ v.id }}
     end
 
-    # Returns `true` if UUID looks is a V{{ v.id }}, raises `Error` otherwise
+    # Returns `true` if UUID looks is a V{{ v.id }}, raises `Error` otherwise.
     def v{{ v.id }}!
       unless v{{ v.id }}?
         raise Error.new("Invalid UUID variant #{variant} version #{version}, expected RFC 4122 V{{ v.id }}")
