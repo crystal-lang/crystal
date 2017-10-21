@@ -6,8 +6,34 @@ struct Crystal::Hasher
   # value for primitive and basic Crystal objects. All other
   # hashes are computed based on these.
   #
-  # TODO: the implementation is naive and should probably use
-  # another algorithm like SipHash or FNV.
+  # The algorithm bases on https://github.com/funny-falcon/funny_hash
+  #
+  # It is two multiply-rotate 64bit hash functions, combined
+  # within finalizer.
+  #
+  # Both hash functions combines previous state with a block value
+  # before multiplication. One function multiplies new state
+  # as is (and then rotates state), other multiplies new state
+  # already rotated by 32 bits.
+  #
+  # This way algorithm ensures that every block bit affects at
+  # least 1 bit of every state, and certainly many bits of some
+  # state. So effect of this bit could not be easily canceled
+  # with following blocks. (Cause next blocks have to cancel
+  # bits on non-intersecting positions in both states).
+  # Rotation by 32bit with multiplication also provides good
+  # inter-block avalanche.
+  #
+  # Finalizer performs murmur-like finalization on both functions,
+  # and then combines them with addition. It greatly reduce
+  # possibility of state deduction.
+  #
+  # Note, it provides good protection from HashDos iif:
+  # - seed is securely random and not exposed to attacker,
+  # - hash result is also not exposed to attacker in a way other
+  #   than effect of using it Hash implementation.
+  # Do not output calculated hash value to user's console/form/
+  # html/api response, etc. Use some from digest package instead.
 
   @@seed = uninitialized UInt64[2]
   Random::Secure.random_bytes(Slice.new(pointerof(@@seed).as(UInt8*), sizeof(typeof(@@seed))))
