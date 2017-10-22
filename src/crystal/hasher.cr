@@ -45,7 +45,7 @@ struct Crystal::Hasher
   private C2 = 0x6956abd6ed268a3d_u64
 
   private def rotl32(v : UInt64)
-    v.unsafe_shl(32) | v.unsafe_shr(32)
+    (v << 32) | (v >> 32)
   end
 
   private def permute(v : UInt64)
@@ -56,12 +56,12 @@ struct Crystal::Hasher
 
   def result
     a, b = @a, @b
-    a ^= a >> 33
-    b ^= b >> 32
+    a ^= (a >> 23) ^ (a >> 40)
+    b ^= (b >> 23) ^ (b >> 40)
     a *= C1
     b *= C2
     a ^= a >> 32
-    b ^= b >> 33
+    b ^= b >> 32
     a + b
   end
 
@@ -101,27 +101,44 @@ struct Crystal::Hasher
     bytes(value.to_slice)
   end
 
+  private def readu24(u, r)
+    u[0].to_u64 | (u[r/2].to_u64 << 8) | (u[r - 1].to_u64 << 16)
+  end
+
+  private def readu32(u)
+    # force correct unaligned read
+    t4 = uninitialized UInt32
+    pointerof(t4).as(UInt8*).copy_from(u, 4)
+    t4.to_u64
+  end
+
+  private def readu64(u)
+    # force correct unaligned read
+    t8 = uninitialized UInt64
+    pointerof(t8).as(UInt8*).copy_from(u, 8)
+    t8
+  end
+
   def bytes(value)
     bsz = value.size
-    v = bsz.to_u64 << 56
     u = value.to_unsafe
-    bsz.unsafe_div(8).downto(1) do
-      # force correct unaligned read
-      t8 = uninitialized UInt64
-      pointerof(t8).as(UInt8*).copy_from(u, 8)
-      permute(t8)
-      u += 8
+    if bsz == 0
+      v = 0_u64
+    elsif bsz <= 3
+      v = readu24(u, bsz)
+    elsif bsz <= 7
+      v = readu32(u)
+      v |= readu32(u + (bsz&3)) << 32
+    else
+      while bsz >= 8
+        permute(readu64(u))
+        u += 8
+        bsz -= 8
+      end
+      v = readu64(u-(8-bsz))
     end
-    if (bsz & 4) != 0
-      # force correct unaligned read
-      t4 = uninitialized UInt32
-      pointerof(t4).as(UInt8*).copy_from(u, 4)
-      v |= t4.to_u64 << 24
-      u += 4
-    end
-    if (r = bsz & 3) != 0
-      v |= u[0].to_u64 | (u[r/2].to_u64 << 8) | (u[r - 1].to_u64 << 16)
-    end
+    @a ^= bsz
+    @b ^= bsz
     permute(v)
     self
   end
