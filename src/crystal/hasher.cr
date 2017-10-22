@@ -128,14 +128,14 @@ struct Crystal::Hasher
       v = readu24(u, bsz)
     elsif bsz <= 7
       v = readu32(u)
-      v |= readu32(u + (bsz&3)) << 32
+      v |= readu32(u + (bsz & 3)) << 32
     else
       while bsz >= 8
         permute(readu64(u))
         u += 8
         bsz -= 8
       end
-      v = readu64(u-(8-bsz))
+      v = readu64(u - (8 - bsz))
     end
     @a ^= bsz
     @b ^= bsz
