@@ -4779,4 +4779,43 @@ describe "Semantic: instance var" do
       A.new.a
       )) { int32 }
   end
+
+  it "doesn't combine union of Number and Number subclass (#5073)" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      struct A < Number
+        def hash(hasher)
+          hasher
+        end
+
+        def to_s(io : IO)
+        end
+      end
+
+      class Foo
+        @foo = Gen(Int32 | A).new
+      end
+
+      Foo.new.@foo
+    )) { generic_class "Gen", union_of(int32, types["A"]) }
+  end
+
+  it "uses T.new (#4291)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Gen(T)
+        @x = T.new
+
+        def x
+          @x
+        end
+      end
+
+      Gen(Foo).new.x
+      )) { types["Foo"] }
+  end
 end

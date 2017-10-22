@@ -1,5 +1,5 @@
 require "spec"
-require "big_int"
+require "big"
 
 struct RangeSpecIntWrapper
   include Comparable(self)

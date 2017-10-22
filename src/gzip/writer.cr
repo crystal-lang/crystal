@@ -21,9 +21,7 @@
 #   end
 # end
 # ```
-class Gzip::Writer
-  include IO
-
+class Gzip::Writer < IO
   # Whether to close the enclosed `IO` when closing this writer.
   property? sync_close = false
 

@@ -181,7 +181,7 @@ struct Time
   # ```
   # Time.epoch(981173106) # => 2001-02-03 04:05:06 UTC
   # ```
-  def self.epoch(seconds : Int) : self
+  def self.epoch(seconds : Int) : Time
     new(seconds: UNIX_SECONDS + seconds, nanoseconds: 0, kind: Kind::Utc)
   end
 
@@ -192,30 +192,34 @@ struct Time
   # time = Time.epoch_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
   # time.millisecond                   # => 789
   # ```
-  def self.epoch_ms(milliseconds : Int) : self
+  def self.epoch_ms(milliseconds : Int) : Time
     milliseconds = milliseconds.to_i64
     seconds = UNIX_SECONDS + (milliseconds / 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
     new(seconds: seconds, nanoseconds: nanoseconds.to_i, kind: Kind::Utc)
   end
 
-  def clone
+  def clone : self
     self
   end
 
-  def +(other : Span)
-    add_span other.to_i, other.nanoseconds
+  # Returns a `Time` that is later than this `Time` by the `Time::Span` *span*.
+  def +(span : Time::Span) : Time
+    add_span span.to_i, span.nanoseconds
   end
 
-  def -(other : Span)
-    add_span -other.to_i, -other.nanoseconds
+  # Returns a `Time` that is earlier than this `Time` by the `Time::Span` *span*.
+  def -(span : Time::Span) : Time
+    add_span -span.to_i, -span.nanoseconds
   end
 
-  def +(other : MonthSpan)
+  # Adds a number of months specified by *other*'s value.
+  def +(other : Time::MonthSpan) : Time
     add_months other.value
   end
 
-  def -(other : MonthSpan)
+  # Subtracts a number of months specified by *other*'s value.
+  def -(other : Time::MonthSpan) : Time
     add_months -other.value
   end
 
@@ -241,7 +245,8 @@ struct Time
     temp + time_of_day
   end
 
-  def add_span(seconds, nanoseconds)
+  # Returns a `Time` that is this number of *seconds* and *nanoseconds* later.
+  def add_span(seconds : Int, nanoseconds : Int) : Time
     seconds = total_seconds + seconds
     nanoseconds = self.nanosecond.to_i64 + nanoseconds
 
@@ -262,7 +267,10 @@ struct Time
     Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i, kind: kind)
   end
 
-  def -(other : Time)
+  # Returns the amount of time between *other* and `self`.
+  #
+  # The amount can be negative if `self` is a `Time` that happens before *other*.
+  def -(other : Time) : Time::Span
     if local? && other.utc?
       self - other.to_local
     elsif utc? && other.local?
@@ -275,76 +283,90 @@ struct Time
     end
   end
 
-  def self.now : self
+  # Returns the current time in the local time zone.
+  def self.now : Time
     new
   end
 
-  def self.utc_now : self
+  # Returns the current time in UTC time zone.
+  def self.utc_now : Time
     seconds, nanoseconds = compute_seconds_and_nanoseconds
     new(seconds: seconds, nanoseconds: nanoseconds, kind: Kind::Utc)
   end
 
-  def date
+  # Returns a copy of `self` with time-of-day components (hour, minute, ...) set to zero.
+  def date : Time
     Time.new(year, month, day, kind: kind)
   end
 
-  def year
+  # Returns the year number (in the Common Era).
+  def year : Int32
     year_month_day_day_year[0]
   end
 
-  def month
+  # Returns the month number of the year (`1..12`).
+  def month : Int32
     year_month_day_day_year[1]
   end
 
-  def day
+  # Returns the day number of the month (`1..31`).
+  def day : Int32
     year_month_day_day_year[2]
   end
 
-  def hour
+  # Returns the hour of the day (`0..23`).
+  def hour : Int32
     ((total_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR).to_i
   end
 
-  def minute
+  # Returns the minute of the hour (`0..59`).
+  def minute : Int32
     ((total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE).to_i
   end
 
-  def second
+  # Returns the second of the minute (`0..59`).
+  def second : Int32
     (total_seconds % SECONDS_PER_MINUTE).to_i
   end
 
-  def millisecond
+  # Returns the millisecond of the second (`0..999`).
+  def millisecond : Int32
     nanosecond / NANOSECONDS_PER_MILLISECOND
   end
 
-  def nanosecond
+  # Returns the nanosecond of the second (`0..999_999_999`).
+  def nanosecond : Int32
     @nanoseconds
   end
 
-  def time_of_day
+  # Returns how much time has passed since midnight of this day.
+  def time_of_day : Time::Span
     Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (total_seconds % SECONDS_PER_DAY) + nanosecond)
   end
 
-  def day_of_week
+  # Returns the day of the week (`Sunday..Saturday`).
+  def day_of_week : Time::DayOfWeek
     value = ((total_seconds / SECONDS_PER_DAY) + 1) % 7
     DayOfWeek.new value.to_i
   end
 
-  def day_of_year
+  # Returns the day number of the year (`1..365`, or `1..366` on leap years).
+  def day_of_year : Int32
     year_month_day_day_year[3]
   end
 
-  # Returns `Kind` of the instance.
-  def kind
+  # Returns `Kind` (UTC/local) of the instance.
+  def kind : Kind
     @kind
   end
 
   # Returns `true` if `Kind` is set to *Utc*.
-  def utc?
+  def utc? : Bool
     kind == Kind::Utc
   end
 
   # Returns `true` if `Kind` is set to *Local*.
-  def local?
+  def local? : Bool
     kind == Kind::Local
   end
 
@@ -362,7 +384,8 @@ struct Time
 
   def_hash total_seconds, nanosecond
 
-  def self.days_in_month(year, month) : Int32
+  # Returns how many days this *month* (`1..12`) of this *year* has (28, 29, 30 or 31).
+  def self.days_in_month(year : Int, month : Int) : Int32
     unless 1 <= month <= 12
       raise ArgumentError.new "Invalid month"
     end
@@ -375,7 +398,8 @@ struct Time
     days[month]
   end
 
-  def self.leap_year?(year) : Bool
+  # Returns whether this *year* is leap (February has one more day).
+  def self.leap_year?(year : Int) : Bool
     unless 1 <= year <= 9999
       raise ArgumentError.new "Invalid year"
     end
@@ -407,7 +431,7 @@ struct Time
 
   # Formats this time using the given format (see `Time::Format`)
   # into the given *io*.
-  def to_s(format : String, io : IO)
+  def to_s(format : String, io : IO) : Nil
     Format.new(format).format(self, io)
   end
 
@@ -417,7 +441,7 @@ struct Time
   # ```
   # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00
   # ```
-  def self.parse(time : String, pattern : String, kind = Time::Kind::Unspecified) : self
+  def self.parse(time : String, pattern : String, kind = Time::Kind::Unspecified) : Time
     Format.new(pattern, kind).parse(time)
   end
 
@@ -452,7 +476,8 @@ struct Time
     epoch.to_f + nanosecond.to_f / 1e9
   end
 
-  def to_utc
+  # Returns a copy of this `Time` converted to UTC.
+  def to_utc : Time
     if utc?
       self
     else
@@ -464,7 +489,8 @@ struct Time
     end
   end
 
-  def to_local
+  # Returns a copy of this `Time` converted to the local time zone.
+  def to_local : Time
     if local?
       self
     else
@@ -476,22 +502,32 @@ struct Time
     end
   end
 
-  private macro def_at(name)
-    def at_{{name.id}}
+  private macro def_at_beginning(interval)
+    # Returns the time when the {{interval.id}} that contains `self` starts.
+    def at_beginning_of_{{interval.id}} : Time
       year, month, day, day_year = year_month_day_day_year
       {{yield}}
     end
   end
 
-  def_at(beginning_of_year) { Time.new(year, 1, 1, kind: kind) }
-  def_at(beginning_of_semester) { Time.new(year, ((month - 1) / 6) * 6 + 1, 1, kind: kind) }
-  def_at(beginning_of_quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1, kind: kind) }
-  def_at(beginning_of_month) { Time.new(year, month, 1, kind: kind) }
-  def_at(beginning_of_day) { Time.new(year, month, day, kind: kind) }
-  def_at(beginning_of_hour) { Time.new(year, month, day, hour, kind: kind) }
-  def_at(beginning_of_minute) { Time.new(year, month, day, hour, minute, kind: kind) }
+  private macro def_at_end(interval)
+    # Returns the time when the {{interval.id}} that includes `self` ends.
+    def at_end_of_{{interval.id}} : Time
+      year, month, day, day_year = year_month_day_day_year
+      {{yield}}
+    end
+  end
 
-  def at_beginning_of_week
+  def_at_beginning(year) { Time.new(year, 1, 1, kind: kind) }
+  def_at_beginning(semester) { Time.new(year, ((month - 1) / 6) * 6 + 1, 1, kind: kind) }
+  def_at_beginning(quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1, kind: kind) }
+  def_at_beginning(month) { Time.new(year, month, 1, kind: kind) }
+  def_at_beginning(day) { Time.new(year, month, day, kind: kind) }
+  def_at_beginning(hour) { Time.new(year, month, day, hour, kind: kind) }
+  def_at_beginning(minute) { Time.new(year, month, day, hour, minute, kind: kind) }
+
+  # Returns the time when the week that includes `self` starts.
+  def at_beginning_of_week : Time
     dow = day_of_week.value
     if dow == 0
       (self - 6.days).at_beginning_of_day
@@ -500,9 +536,10 @@ struct Time
     end
   end
 
-  def_at(end_of_year) { Time.new(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
+  def_at_end(year) { Time.new(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
 
-  def at_end_of_semester
+  # Returns the time when the half-year that includes `self` ends.
+  def at_end_of_semester : Time
     year, month = year_month_day_day_year
     if month <= 6
       month, day = 6, 30
@@ -512,7 +549,8 @@ struct Time
     Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, kind: kind)
   end
 
-  def at_end_of_quarter
+  # Returns the time when the quarter-year that includes `self` ends.
+  def at_end_of_quarter : Time
     year, month = year_month_day_day_year
     if month <= 3
       month, day = 3, 31
@@ -526,9 +564,10 @@ struct Time
     Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, kind: kind)
   end
 
-  def_at(end_of_month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
+  def_at_end(month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
 
-  def at_end_of_week
+  # Returns the time when the week that includes `self` ends.
+  def at_end_of_week : Time
     dow = day_of_week.value
     if dow == 0
       at_end_of_day
@@ -537,13 +576,19 @@ struct Time
     end
   end
 
-  def_at(end_of_day) { Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
-  def_at(end_of_hour) { Time.new(year, month, day, hour, 59, 59, nanosecond: 999_999_999, kind: kind) }
-  def_at(end_of_minute) { Time.new(year, month, day, hour, minute, 59, nanosecond: 999_999_999, kind: kind) }
-  def_at(midday) { Time.new(year, month, day, 12, 0, 0, nanosecond: 0, kind: kind) }
+  def_at_end(day) { Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
+  def_at_end(hour) { Time.new(year, month, day, hour, 59, 59, nanosecond: 999_999_999, kind: kind) }
+  def_at_end(minute) { Time.new(year, month, day, hour, minute, 59, nanosecond: 999_999_999, kind: kind) }
 
-  {% for name, index in %w(sunday monday tuesday wednesday thursday friday saturday) %}
-    def {{name.id}}?
+  # Returns the midday (12:00) of the day represented by `self`.
+  def at_midday : Time
+    year, month, day = year_month_day_day_year
+    Time.new(year, month, day, 12, 0, 0, nanosecond: 0, kind: kind)
+  end
+
+  {% for name, index in %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday) %}
+    # Does `self` happen on {{name.id}}?
+    def {{name.id.downcase}}? : Bool
       day_of_week.value == {{index}}
     end
   {% end %}

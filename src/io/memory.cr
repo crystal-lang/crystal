@@ -2,9 +2,7 @@
 #
 # The internal buffer can be resizeable and/or writeable depending
 # on how an `IO::Memory` is constructed.
-class IO::Memory
-  include IO
-
+class IO::Memory < IO
   # Returns the internal buffer as a `Pointer(UInt8)`.
   getter buffer : Pointer(UInt8)
 
@@ -288,11 +286,6 @@ class IO::Memory
     @bytesize
   end
 
-  # Same as `pos`.
-  def tell
-    @pos
-  end
-
   # Seeks to a given *offset* (in bytes) according to the *whence* argument.
   #
   # ```
@@ -327,7 +320,7 @@ class IO::Memory
   # io.pos     # => 2
   # ```
   def pos
-    tell
+    @pos
   end
 
   # Sets the current position (in bytes) of this `IO`.

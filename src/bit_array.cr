@@ -35,8 +35,8 @@ struct BitArray
   def ==(other : BitArray)
     return false if size != other.size
     # NOTE: If BitArray implements resizing, there may be more than 1 binary
-    # representation for equivalent BitArrays after a downsize as the discarded
-    # bits may not have been zeroed.
+    # representation and their hashes for equivalent BitArrays after a downsize as the
+    # discarded bits may not have been zeroed.
     return LibC.memcmp(@bits, other.@bits, malloc_size) == 0
   end
 
@@ -224,6 +224,13 @@ struct BitArray
   # It's useful for reading and writing a bit array from a byte buffer directly.
   def to_slice : Bytes
     Slice.new(@bits.as(Pointer(UInt8)), (@size / 8.0).ceil.to_i)
+  end
+
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher = size.hash(hasher)
+    hasher = to_slice.hash(hasher)
+    hasher
   end
 
   private def bit_index_and_sub_index(index)

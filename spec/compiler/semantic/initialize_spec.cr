@@ -750,4 +750,22 @@ describe "Semantic: initialize" do
       Bar.new
     )) { types["Bar"] }
   end
+
+  it "doesn't type ivar having initializer as nilable even if it is used before assigned inside initialize (#5112)" do
+    assert_type(%(
+      class Foo
+        @x = 42
+
+        def initialize
+          @x = x
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
 end

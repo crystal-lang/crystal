@@ -2,7 +2,7 @@ require "./syscall"
 require "c/fcntl"
 
 # An `IO` over a file descriptor.
-class IO::FileDescriptor
+class IO::FileDescriptor < IO
   include IO::Buffered
   include IO::Syscall
 
@@ -97,11 +97,6 @@ class IO::FileDescriptor
     ensure
       seek(original_pos)
     end
-  end
-
-  # Same as `pos`.
-  def tell
-    pos
   end
 
   # Returns the current position (in bytes) in this `IO`.

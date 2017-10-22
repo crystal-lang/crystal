@@ -5,7 +5,7 @@ STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.
 STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
-ARGV         = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
+ARGV         = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 ARGF         = IO::ARGF.new(ARGV, STDIN)
 
 # Repeatedly executes the block, passing an incremental `Int32`

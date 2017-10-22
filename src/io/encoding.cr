@@ -1,4 +1,4 @@
-module IO
+class IO
   # Has the `name` and the `invalid` option.
   struct EncodingOptions
     getter name : String

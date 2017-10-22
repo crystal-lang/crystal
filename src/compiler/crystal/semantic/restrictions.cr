@@ -641,7 +641,16 @@ module Crystal
           end
         when Path
           if other_type_var.names.size == 1
-            context.set_free_var(other_type_var.names.first, type_var)
+            name = other_type_var.names.first
+
+            # If the free variable is already set to another
+            # number, there's no match
+            existing = context.get_free_var(name)
+            if existing && existing != type_var
+              return nil
+            end
+
+            context.set_free_var(name, type_var)
             return type_var
           end
         end

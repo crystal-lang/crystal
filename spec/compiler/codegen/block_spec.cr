@@ -1509,4 +1509,13 @@ describe "Code gen: block" do
       a + b
       )).to_i.should eq(3)
   end
+
+  it "codegens block with repeated underscore and different types (#4711)" do
+    codegen(%(
+      def foo
+        yield('0', 0)
+      end
+      foo{|_, _| }
+      ))
+  end
 end

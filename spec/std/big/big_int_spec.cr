@@ -1,5 +1,5 @@
 require "spec"
-require "big_int"
+require "big"
 
 describe "BigInt" do
   it "creates with a value of zero" do
@@ -335,5 +335,11 @@ describe "BigInt" do
   it "clones" do
     x = 1.to_big_i
     x.clone.should eq(x)
+  end
+end
+
+describe "BigInt Math" do
+  it "sqrt" do
+    Math.sqrt(BigInt.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
   end
 end

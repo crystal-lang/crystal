@@ -133,14 +133,14 @@ describe "String" do
 
     it "gets with a string" do
       "FooBar"["Bar"].should eq "Bar"
-      expect_raises { "FooBar"["Baz"] }
+      expect_raises(Exception, "Nil assertion failed") { "FooBar"["Baz"] }
       "FooBar"["Bar"]?.should eq "Bar"
       "FooBar"["Baz"]?.should be_nil
     end
 
     it "gets with a char" do
       "foo/bar"['/'].should eq '/'
-      expect_raises { "foo/bar"['-'] }
+      expect_raises(Exception, "Nil assertion failed") { "foo/bar"['-'] }
       "foo/bar"['/']?.should eq '/'
       "foo/bar"['-']?.should be_nil
     end
@@ -331,7 +331,7 @@ describe "String" do
     it { expect_raises(ArgumentError, "Invalid base 1") { "12ab".to_i(1) } }
     it { expect_raises(ArgumentError, "Invalid base 37") { "12ab".to_i(37) } }
 
-    it { expect_raises { "1Y2P0IJ32E8E7".to_i(36) } }
+    it { expect_raises(ArgumentError, "Invalid Int32") { "1Y2P0IJ32E8E7".to_i(36) } }
     it { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }
   end
 
@@ -820,19 +820,26 @@ describe "String" do
   end
 
   describe "split" do
+    describe "by whitespace" do
+      it { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
+      it { "   foo   bar\n\t  baz   ".split(1).should eq(["   foo   bar\n\t  baz   "]) }
+      it { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
+      it { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
+    end
+
     describe "by char" do
       it { "".split(',').should eq([""]) }
+      it { "".split(',', remove_empty: true).should eq([] of String) }
       it { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz", ""]) }
+      it { "foo,bar,,baz,".split(',', remove_empty: true).should eq(["foo", "bar", "baz"]) }
       it { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
+      it { "foo,bar,,baz".split(',', remove_empty: true).should eq(["foo", "bar", "baz"]) }
       it { "foo".split(',').should eq(["foo"]) }
       it { "foo".split(' ').should eq(["foo"]) }
       it { "   foo".split(' ').should eq(["", "", "", "foo"]) }
       it { "foo   ".split(' ').should eq(["foo", "", "", ""]) }
       it { "   foo  bar".split(' ').should eq(["", "", "", "foo", "", "bar"]) }
       it { "   foo   bar\n\t  baz   ".split(' ').should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
-      it { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
-      it { "   foo   bar\n\t  baz   ".split(1).should eq(["   foo   bar\n\t  baz   "]) }
-      it { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
       it { "   foo   bar\n\t  baz   ".split(" ").should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
       it { "foo,bar,baz,qux".split(',', 1).should eq(["foo,bar,baz,qux"]) }
       it { "foo,bar,baz,qux".split(',', 3).should eq(["foo", "bar", "baz,qux"]) }
@@ -841,18 +848,20 @@ describe "String" do
       it { "foo bar baz qux".split(' ', 3).should eq(["foo", "bar", "baz qux"]) }
       it { "foo bar baz qux".split(' ', 30).should eq(["foo", "bar", "baz", "qux"]) }
       it { "a,b,".split(',', 3).should eq(["a", "b", ""]) }
-      it { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
       it { "日本ん語日本ん語".split('ん').should eq(["日本", "語日本", "語"]) }
       it { "=".split('=').should eq(["", ""]) }
       it { "a=".split('=').should eq(["a", ""]) }
       it { "=b".split('=').should eq(["", "b"]) }
       it { "=".split('=', 2).should eq(["", ""]) }
+      it { "=".split('=', 2, remove_empty: true).should eq([] of String) }
     end
 
     describe "by string" do
       it { "".split(",").should eq([""]) }
       it { "".split(":-").should eq([""]) }
+      it { "".split(":-", remove_empty: true).should eq([] of String) }
       it { "foo:-bar:-:-baz:-".split(":-").should eq(["foo", "bar", "", "baz", ""]) }
+      it { "foo:-bar:-:-baz:-".split(":-", remove_empty: true).should eq(["foo", "bar", "baz"]) }
       it { "foo:-bar:-:-baz".split(":-").should eq(["foo", "bar", "", "baz"]) }
       it { "foo".split(":-").should eq(["foo"]) }
       it { "foo".split("").should eq(["f", "o", "o"]) }
@@ -865,11 +874,14 @@ describe "String" do
       it { "a=".split("=").should eq(["a", ""]) }
       it { "=b".split("=").should eq(["", "b"]) }
       it { "=".split("=", 2).should eq(["", ""]) }
+      it { "=".split("=", 2, remove_empty: true).should eq([] of String) }
     end
 
     describe "by regex" do
-      it { "".split(/\n\t/).should eq([""] of String) }
+      it { "".split(/\n\t/).should eq([""]) }
+      it { "".split(/\n\t/, remove_empty: true).should eq([] of String) }
       it { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
+      it { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/, remove_empty: true).should eq(["foo", "bar", "baz"]) }
       it { "foo\n\tbar\n\t\n\tbaz".split(/(?:\n\t)+/).should eq(["foo", "bar", "baz"]) }
       it { "foo,bar".split(/,/, 1).should eq(["foo,bar"]) }
       it { "foo,bar,".split(/,/).should eq(["foo", "bar", ""]) }
@@ -888,6 +900,7 @@ describe "String" do
       it { "a=".split(/\=/).should eq(["a", ""]) }
       it { "=b".split(/\=/).should eq(["", "b"]) }
       it { "=".split(/\=/, 2).should eq(["", ""]) }
+      it { "=".split(/\=/, 2, remove_empty: true).should eq([] of String) }
       it { ",".split(/(?:(x)|(,))/).should eq(["", ",", ""]) }
 
       it "keeps groups" do

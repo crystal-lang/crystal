@@ -1,5 +1,4 @@
 require "c/string"
-require "big"
 
 # A `BigInt` can represent arbitrarily large integers.
 #
@@ -544,5 +543,11 @@ class String
   # Raises `ArgumentError` if this string doesn't denote a valid integer.
   def to_big_i(base = 10) : BigInt
     BigInt.new(self, base)
+  end
+end
+
+module Math
+  def sqrt(value : BigInt)
+    sqrt(value.to_big_f)
   end
 end

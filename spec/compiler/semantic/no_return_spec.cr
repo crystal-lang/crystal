@@ -319,4 +319,12 @@ describe "Semantic: NoReturn" do
       baz
       )) { int32 }
   end
+
+  it "types as NoReturn if typeof(exp)'s exp is NoReturn" do
+    assert_type(%(
+      require "prelude"
+
+      typeof(raise("").foo)
+      )) { no_return.metaclass }
+  end
 end

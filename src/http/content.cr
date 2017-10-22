@@ -17,8 +17,7 @@ module HTTP
   end
 
   # :nodoc:
-  class UnknownLengthContent
-    include IO
+  class UnknownLengthContent < IO
     include Content
 
     def initialize(@io : IO)
@@ -46,8 +45,7 @@ module HTTP
   end
 
   # :nodoc:
-  class ChunkedContent
-    include IO
+  class ChunkedContent < IO
     include Content
     @chunk_remaining : Int32
 

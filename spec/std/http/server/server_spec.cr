@@ -1,11 +1,9 @@
 require "spec"
 require "http/server"
 
-private class RaiseErrno
+private class RaiseErrno < IO
   def initialize(@value : Int32)
   end
-
-  include IO
 
   def read(slice : Bytes)
     Errno.value = @value
@@ -17,9 +15,7 @@ private class RaiseErrno
   end
 end
 
-private class ReverseResponseOutput
-  include IO
-
+private class ReverseResponseOutput < IO
   @output : IO
 
   def initialize(@output : IO)

@@ -1,5 +1,5 @@
 require "spec"
-require "big_float"
+require "big"
 
 describe "BigFloat" do
   describe "new" do
@@ -178,5 +178,9 @@ end
 describe "BigFloat Math" do
   it "frexp" do
     Math.frexp(0.2.to_big_f).should eq({0.8, -2})
+  end
+
+  it "sqrt" do
+    Math.sqrt(BigFloat.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
   end
 end

@@ -1,7 +1,5 @@
 # :nodoc:
-class IO::ARGF
-  include IO
-
+class IO::ARGF < IO
   @path : String?
   @current_io : IO?
 

@@ -16,7 +16,7 @@ describe String::Builder do
     builder << 123
     builder.to_s.should eq("123")
 
-    expect_raises { builder.to_s }
+    expect_raises(Exception, "Can only invoke 'to_s' once on String::Builder") { builder.to_s }
   end
 
   it "goes back" do

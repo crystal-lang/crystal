@@ -26,8 +26,7 @@ module HTTP
         body = nil
         if body_type.prohibited?
           body = nil
-        elsif content_length = headers["Content-Length"]?
-          content_length = content_length.to_u64
+        elsif content_length = content_length(headers)
           if content_length != 0
             # Don't create IO for Content-Length == 0
             body = FixedLengthContent.new(io, content_length)
@@ -166,7 +165,13 @@ module HTTP
 
   # :nodoc:
   def self.content_length(headers)
-    headers["Content-Length"]?.try &.to_u64?
+    length_headers = headers.get? "Content-Length"
+    return nil unless length_headers
+    first_header = length_headers[0]
+    if length_headers.size > 1 && length_headers.any? { |header| header != first_header }
+      raise ArgumentError.new("Multiple Content-Length headers received did not match: #{length_headers}")
+    end
+    first_header.to_u64
   end
 
   # :nodoc:

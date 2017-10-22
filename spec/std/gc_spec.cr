@@ -6,7 +6,7 @@ describe "GC" do
   end
 
   it "raises if calling enable when not disabled" do
-    expect_raises do
+    expect_raises(Exception, "GC is not disabled") do
       GC.enable
     end
   end

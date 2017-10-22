@@ -839,7 +839,7 @@ module Crystal
 
         # Check if an instance variable is being assigned (for the first time)
         # and self, or that same instance variable, was used (read) before that.
-        unless @vars.has_key?(var_name)
+        unless @vars.has_key?(var_name) || scope.has_instance_var_initializer?(var_name)
           if (found_self = @found_self_in_initialize_call) ||
              (used_ivars_node = @used_ivars_in_calls_in_initialize.try(&.[var_name]?)) ||
              (@block_nest > 0)

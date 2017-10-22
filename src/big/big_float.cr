@@ -1,5 +1,4 @@
 require "c/string"
-require "big"
 
 # A `BigFloat` can represent arbitrarily large floats.
 #
@@ -288,5 +287,9 @@ module Math
       end
     end
     {frac, exp}
+  end
+
+  def sqrt(value : BigFloat)
+    BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }
   end
 end

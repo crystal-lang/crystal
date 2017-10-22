@@ -1,5 +1,5 @@
 require "spec"
-require "big_rational"
+require "big"
 
 private def br(n, d)
   BigRational.new(n, d)
@@ -173,5 +173,11 @@ describe BigRational do
   it "clones" do
     x = br(10, 3)
     x.clone.should eq(x)
+  end
+end
+
+describe "BigRational Math" do
+  it "sqrt" do
+    Math.sqrt(BigRational.new(BigInt.new("1" + "0"*48), 1)).should eq(BigFloat.new("1" + "0"*24))
   end
 end

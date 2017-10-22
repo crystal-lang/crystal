@@ -224,6 +224,16 @@ struct NamedTuple
     {% end %}
   end
 
+  protected def sorted_keys
+    {% begin %}
+      Tuple.new(
+        {% for key in T.keys.sort %}
+          {{key.symbolize}},
+        {% end %}
+      )
+    {% end %}
+  end
+
   # Returns a `Tuple` with the values in this named tuple.
   #
   # ```
@@ -484,19 +494,13 @@ struct NamedTuple
 
   # ditto
   def ==(other : NamedTuple)
-    compare_with_other_named_tuple(other)
-  end
+    return false unless sorted_keys == other.sorted_keys
 
-  private def compare_with_other_named_tuple(other : U) forall U
-    {% if T.keys.sort == U.keys.sort %}
-      {% for key in T %}
-        return false unless self[{{key.symbolize}}] == other[{{key.symbolize}}]
-      {% end %}
-
-      true
-    {% else %}
-      false
+    {% for key in T %}
+      return false unless self[{{key.symbolize}}] == other[{{key.symbolize}}]?
     {% end %}
+
+    return true
   end
 
   # Returns a named tuple with the same keys but with cloned values, using the `clone` method.

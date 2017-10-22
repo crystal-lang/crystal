@@ -64,6 +64,7 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %('c'), %(_p.i(1) { 'c' })
     assert_agent %(:foo), %(_p.i(1) { :foo })
     assert_agent %([1, 2]), %(_p.i(1) { [1, 2] })
+    assert_agent %({} of Int32 => Int32), %(_p.i(1) { {} of Int32 => Int32 })
     assert_agent %(/a/), %(_p.i(1) { /a/ })
   end
 

@@ -432,7 +432,8 @@ module Crystal
           end
         end
       when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
-           StringInterpolation, Path, Generic, InstanceVar, ClassVar, Global
+           StringInterpolation, Path, Generic, InstanceVar, ClassVar, Global,
+           ImplicitObj
         false
       when ArrayLiteral
         !!obj.of
