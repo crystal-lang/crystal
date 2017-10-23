@@ -122,7 +122,7 @@ struct Crystal::Hasher
   def bytes(value)
     bsz = value.size
     u = value.to_unsafe
-    if bsz == 0
+    if bsz <= 0
       v = 0_u64
     elsif bsz <= 3
       v = read_u24(u, bsz)
