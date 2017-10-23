@@ -633,6 +633,13 @@ describe Time do
     (local - utc).should eq(0.seconds)
   end
 
+  it "days in year with year" do
+    Time.days_in_year(2005).should eq(365)
+    Time.days_in_year(2004).should eq(366)
+    Time.days_in_year(2000).should eq(366)
+    Time.days_in_year(1990).should eq(365)
+  end
+
   typeof(Time.now.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)

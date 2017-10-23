@@ -398,6 +398,16 @@ struct Time
     days[month]
   end
 
+  # Returns number of days in *year*.
+  #
+  # ```
+  # Time.days_in_year(1990) # => 365
+  # Time.days_in_year(2004) # => 366
+  # ```
+  def self.days_in_year(year : Int) : Int32
+    leap_year?(year) ? 366 : 365
+  end
+
   # Returns whether this *year* is leap (February has one more day).
   def self.leap_year?(year : Int) : Bool
     unless 1 <= year <= 9999
