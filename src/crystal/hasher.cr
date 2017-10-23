@@ -101,45 +101,45 @@ struct Crystal::Hasher
     bytes(value.to_slice)
   end
 
-  private def read_u24(u, r)
-    u[0].to_u64 | (u[r/2].to_u64 << 8) | (u[r - 1].to_u64 << 16)
+  private def read_u24(ptr, rest)
+    ptr[0].to_u64 | (ptr[rest/2].to_u64 << 8) | (ptr[rest - 1].to_u64 << 16)
   end
 
-  private def read_u32(u)
+  private def read_u32(ptr)
     # force correct unaligned read
     t4 = uninitialized UInt32
-    pointerof(t4).as(UInt8*).copy_from(u, 4)
+    pointerof(t4).as(UInt8*).copy_from(ptr, 4)
     t4.to_u64
   end
 
-  private def read_u64(u)
+  private def read_u64(ptr)
     # force correct unaligned read
     t8 = uninitialized UInt64
-    pointerof(t8).as(UInt8*).copy_from(u, 8)
+    pointerof(t8).as(UInt8*).copy_from(ptr, 8)
     t8
   end
 
   def bytes(value)
-    bsz = value.size
-    u = value.to_unsafe
-    if bsz <= 0
-      v = 0_u64
-    elsif bsz <= 3
-      v = read_u24(u, bsz)
-    elsif bsz <= 7
-      v = read_u32(u)
-      v |= read_u32(u + (bsz & 3)) << 32
+    size = value.size
+    ptr = value.to_unsafe
+    if size <= 0
+      last = 0_u64
+    elsif size <= 3
+      last = read_u24(ptr, size)
+    elsif size <= 7
+      last = read_u32(ptr)
+      last |= read_u32(ptr + (size & 3)) << 32
     else
-      while bsz >= 8
-        permute(read_u64(u))
-        u += 8
-        bsz -= 8
+      while size >= 8
+        permute(read_u64(ptr))
+        ptr += 8
+        size -= 8
       end
-      v = read_u64(u - (8 - bsz))
+      last = read_u64(ptr - (8 - size))
     end
-    @a ^= bsz
-    @b ^= bsz
-    permute(v)
+    @a ^= size
+    @b ^= size
+    permute(last)
     self
   end
 
