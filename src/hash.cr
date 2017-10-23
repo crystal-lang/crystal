@@ -574,7 +574,7 @@ class Hash(K, V)
   # hash.compact # => {"hello" => "world"}
   # ```
   def compact
-    each_with_object({} of K => typeof(self.first_value.not_nil!)) do |(key, value), memo|
+    each_with_object({} of K => typeof(self.first_value)) do |(key, value), memo|
       memo[key] = value unless value.nil?
     end
   end
