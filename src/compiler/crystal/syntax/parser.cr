@@ -3923,9 +3923,9 @@ module Crystal
         block_body = Expressions.from exps
       end
 
-      pop_def
-
       block_body, end_location = yield block_body
+
+      pop_def
 
       Block.new(block_args, block_body, splat_index).at(location).at_end(end_location)
     end
