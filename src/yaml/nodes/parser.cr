@@ -67,4 +67,20 @@ class YAML::Nodes::Parser < YAML::Parser
 
   def process_tag(tag, &block)
   end
+
+  def add_to_documents(documents, document)
+    documents << document
+  end
+
+  def add_to_document(document, node)
+    document << node
+  end
+
+  def add_to_sequence(sequence, node)
+    sequence << node
+  end
+
+  def add_to_mapping(mapping, key, value)
+    mapping[key] = value
+  end
 end

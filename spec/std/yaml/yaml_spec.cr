@@ -7,12 +7,12 @@ describe "YAML" do
     it { YAML.parse("- foo\n- bar").should eq(["foo", "bar"]) }
     it { YAML.parse_all("---\nfoo\n---\nbar\n").should eq(["foo", "bar"]) }
     it { YAML.parse("foo: bar").should eq({"foo" => "bar"}) }
-    it { YAML.parse("--- []\n").should eq([] of YAML::Type) }
+    it { YAML.parse("--- []\n").should eq([] of YAML::Any) }
     it { YAML.parse("---\n...").should eq nil }
 
     it "parses recursive sequence" do
       doc = YAML.parse("--- &foo\n- *foo\n")
-      doc[0].raw.as(Array).should be(doc.raw.as(Array))
+      doc[0].as_a.should be(doc.raw.as(Array))
     end
 
     it "parses recursive mapping" do
@@ -20,13 +20,13 @@ describe "YAML" do
         friends:
         - *1
         ))
-      doc["friends"][0].raw.as(Hash).should be(doc.raw.as(Hash))
+      doc["friends"][0].as_h.should be(doc.as_h)
     end
 
     it "parses alias to scalar" do
       doc = YAML.parse("---\n- &x foo\n- *x\n")
       doc.should eq(["foo", "foo"])
-      doc[0].raw.as(String).should be(doc[1].raw.as(String))
+      doc[0].as_s.should be(doc[1].as_s)
     end
 
     describe "merging with << key" do
