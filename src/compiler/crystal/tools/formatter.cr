@@ -62,7 +62,7 @@ module Crystal
     @inside_lib : Int32
     @inside_struct_or_union : Int32
     @dot_column : Int32?
-    @def_indent : Int32
+    @implicit_exception_handler_indent : Int32
     @last_write : String
     @exp_needs_indent : Bool
     @inside_def : Int32
@@ -100,7 +100,7 @@ module Crystal
       @inside_lib = 0
       @inside_struct_or_union = 0
       @dot_column = nil
-      @def_indent = 0
+      @implicit_exception_handler_indent = 0
       @last_write = ""
       @exp_needs_indent = true
       @inside_def = 0
@@ -1317,7 +1317,7 @@ module Crystal
     end
 
     def visit(node : Def)
-      @def_indent = @indent
+      @implicit_exception_handler_indent = @indent
       @inside_def += 1
 
       write_keyword :abstract, " " if node.abstract?
@@ -2500,7 +2500,9 @@ module Crystal
         write " do"
         next_token_skip_space
         body = format_block_args node.args, node
+        old_implicit_exception_handler_indent, @implicit_exception_handler_indent = @implicit_exception_handler_indent, @indent
         format_nested_with_end body
+        @implicit_exception_handler_indent = old_implicit_exception_handler_indent
       elsif @token.type == :"{"
         write "," if needs_comma
         write " {"
@@ -3525,7 +3527,7 @@ module Crystal
         accept node.body
         write_line unless skip_space_or_newline last: true
         implicit_handler = true
-        column = @def_indent
+        column = @implicit_exception_handler_indent
       else
         if node.suffix
           accept node.body
