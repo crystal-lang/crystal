@@ -306,6 +306,62 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Matches *path* against *pattern*.
+  #
+  # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
+  #
+  # * `*` matches an unlimited number of arbitrary characters.
+  #   * `"*"` matches all regular files.
+  #   * `"c*"` matches all files beginning with `c`.
+  #   * `"*c"` matches all files ending with `c`.
+  #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
+  # * `?` matches any one charachter.
+  def self.fnmatch(pattern, path)
+    # linear-time algorithm adapted from https://research.swtch.com/glob
+    preader = Char::Reader.new(pattern)
+    sreader = Char::Reader.new(path)
+    next_ppos = 0
+    next_spos = 0
+    strlen = path.bytesize
+
+    while true
+      pnext? = preader.current_char != Char::ZERO
+      snext? = sreader.current_char != Char::ZERO
+
+      return true unless pnext? || snext?
+
+      if pnext?
+        case pchar = preader.current_char
+        when '?'
+          if snext?
+            preader.next_char
+            sreader.next_char
+            next
+          end
+        when '*'
+          next_ppos = preader.pos
+          next_spos = sreader.pos + sreader.current_char_width
+          preader.next_char
+          next
+        else
+          if snext? && sreader.current_char == pchar
+            preader.next_char
+            sreader.next_char
+            next
+          end
+        end
+      end
+
+      if 0 < next_spos <= strlen
+        preader.pos = next_ppos
+        sreader.pos = next_spos
+        next
+      end
+
+      return false
+    end
+  end
+
   # Resolves the real path of *path* by following symbolic links.
   def self.real_path(path) : String
     Crystal::System::File.real_path(path)

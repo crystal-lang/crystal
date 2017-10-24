@@ -1,266 +1,369 @@
 class Dir
+  # Returns an array of all files that match against any of *patterns*.
+  #
+  # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
+  #
+  # * `*` matches an unlimited number of arbitrary characters.
+  #   * `"*"` matches all regular files.
+  #   * `"c*"` matches all files beginning with `c`.
+  #   * `"*c"` matches all files ending with `c`.
+  #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
+  # * `**` matches directories recursively or files expansively.
+  # * `?` matches any one character.
+  # * `{a,b}` matches subpattern `a` or `b`.
+  #
+  # NOTE: Path separator in patterns is `/` even on Windows. The returned file names use system-specific path separators.
   def self.[](*patterns) : Array(String)
     glob(patterns)
   end
 
+  # ditto
   def self.[](patterns : Enumerable(String)) : Array(String)
     glob(patterns)
   end
 
-  def self.glob(*patterns) : Array(String)
-    glob(patterns)
+  # Returns an array of all files that match against any of *patterns*.
+  #
+  # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
+  #
+  # * `*` matches an unlimited number of arbitrary characters.
+  #   * `"*"` matches all regular files.
+  #   * `"c*"` matches all files beginning with `c`.
+  #   * `"*c"` matches all files ending with `c`.
+  #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
+  # * `**` matches directories recursively or files expansively.
+  # * `?` matches any one character.
+  # * `{a,b}` matches subpattern `a` or `b`.
+  #
+  # **options:**
+  # * *allow_dots*: Match hidden files if `true` (default: `false`).
+  #
+  # NOTE: Path separator in patterns is `/` even on Windows. The returned file names use system-specific path separators.
+  def self.glob(*patterns, **options) : Array(String)
+    glob(patterns, **options)
   end
 
-  def self.glob(*patterns)
-    glob(patterns) do |pattern|
-      yield pattern
-    end
-  end
-
-  def self.glob(patterns : Enumerable(String)) : Array(String)
+  # ditto
+  def self.glob(patterns : Enumerable(String), **options) : Array(String)
     paths = [] of String
-    glob(patterns) do |path|
+    glob(patterns, **options) do |path|
       paths << path
     end
     paths
   end
 
-  def self.glob(patterns : Enumerable(String))
-    special = {'*', '?', '{', '}'}
-    cwd = self.current
-    root = File::SEPARATOR_STRING
-    patterns.each do |ptrn|
-      next if ptrn.empty?
-
-      starts_with_path_separator = ptrn.starts_with?(File::SEPARATOR)
-
-      # If the pattern ends with a file separator we only want leaf
-      # directories: regex is the same as the one without that last char
-      wants_dir = false
-      if ptrn.ends_with?(File::SEPARATOR)
-        ptrn = ptrn.rchop
-        wants_dir = true
-      end
-
-      recursion_depth = ptrn.count(File::SEPARATOR)
-
-      if starts_with_path_separator
-        dir = root
-      else
-        dir = cwd
-      end
-
-      if ptrn.includes? "**"
-        recursion_depth = Int32::MAX
-      end
-
-      # optimize the glob by starting with the directory
-      # which is as nested as possible:
-      lastidx = 0
-      depth = 0
-      escaped = false
-      last_is_file_separator = false
-      count = 0
-      nested_path = String.build do |str|
-        ptrn.each_char_with_index do |c, i|
-          if c == '\\'
-            escaped = true
-            last_is_file_separator = false
-            next
-          elsif c == File::SEPARATOR
-            unless last_is_file_separator
-              depth += 1
-              str << c
-              count += 1
-            end
-            lastidx = count
-            last_is_file_separator = true
-          elsif !escaped && special.includes? c
-            break
-          else
-            last_is_file_separator = false
-            str << c
-            count += 1
-          end
-          escaped = false
-        end
-      end
-      nested_path = nested_path[0...lastidx]
-
-      recursion_depth -= depth if recursion_depth != Int32::MAX
-      dir = File.join(dir, nested_path)
-      if !nested_path.empty? && nested_path[0] == File::SEPARATOR
-        nested_path = nested_path[1..-1]
-      end
-
-      regex = glob2regex(ptrn)
-
-      scandir(dir, nested_path, regex, 0, recursion_depth, wants_dir) do |path|
-        if starts_with_path_separator
-          yield File::SEPARATOR + path
-        else
-          yield path
-        end
-      end
+  # Yields all files that match against any of *patterns*.
+  #
+  # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
+  #
+  # * `*` matches an unlimited number of arbitrary characters.
+  #   * `"*"` matches all regular files.
+  #   * `"c*"` matches all files beginning with `c`.
+  #   * `"*c"` matches all files ending with `c`.
+  #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
+  # * `**` matches directories recursively or files expansively.
+  # * `?` matches any one character.
+  # * `{a,b}` matches subpattern `a` or `b`.
+  #
+  # **options:**
+  # * *allow_dots*: Match hidden files if `true` (default: `false`).
+  #
+  # NOTE: Path separator in patterns is `/` even on Windows. The returned file names use system-specific path separators.
+  def self.glob(*patterns, **options, &block : String -> _)
+    glob(patterns, **options) do |path|
+      yield path
     end
   end
 
-  private def self.glob2regex(pattern)
-    if pattern.size == 0 || pattern == File::SEPARATOR
-      raise ArgumentError.new "Empty glob pattern"
+  # ditto
+  def self.glob(patterns : Enumerable(String), **options, &block : String -> _)
+    Globber.new(**options).glob(patterns) do |path|
+      yield path
+    end
+  end
+
+  # :nodoc:
+  struct Globber
+    record DirectoriesOnly
+    record ConstantEntry, path : String
+    record EntryMatch, pattern : String do
+      def matches?(string)
+        File.fnmatch(pattern, string)
+      end
+    end
+    record StartRecursiveDirectories
+    record RecursiveDirectories
+    record ConstantDirectory, path : String
+    record RootDirectory
+    record DirectoryMatch, pattern : String do
+      def matches?(string)
+        File.fnmatch(pattern, string)
+      end
+    end
+    alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | StartRecursiveDirectories | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
+
+    property? allow_dots
+
+    def initialize(@allow_dots = false)
     end
 
-    # characters which are escapable by a backslash in a glob pattern;
-    # Windows paths must have double backslashes:
-    escapable = {'?', '{', '}', '*', ',', '\\'}
-    # characters which must be escaped in a PCRE regex:
-    escaped = {'$', '(', ')', '+', '.', '[', '^', '|', '/'}
+    def glob(patterns : Enumerable(String), &block : String -> _)
+      patterns.each do |pattern|
+        sequences = compile(pattern)
 
-    last_is_file_separator = false
+        sequences.each do |sequence|
+          run(sequence) do |match|
+            yield match
+          end
+        end
+      end
+    end
 
-    regex_pattern = String.build do |str|
-      str << "\\A"
-      idx = 0
+    private def compile(pattern, patterns = [] of Array(PatternType))
+      reader = Char::Reader.new(pattern)
+
+      lbrace = nil
+      rbrace = nil
+      alt_start = nil
+
+      alternatives = [] of String
+
       nest = 0
-
-      idx = 1 if pattern[0] == File::SEPARATOR
-      size = pattern.size
-
-      while idx < size
-        char = pattern[idx]
-
-        if last_is_file_separator && char == File::SEPARATOR
-          idx += 1
-          next
-        end
-
-        last_is_file_separator = char == File::SEPARATOR
-
-        if char == '\\'
-          if idx + 1 < size && escapable.includes?(peek = pattern[idx + 1])
-            str << '\\'
-            str << peek
-            idx += 2
-            next
-          end
-        elsif char == '*'
-          if idx + 2 < size &&
-             pattern[idx + 1] == '*' &&
-             pattern[idx + 2] == File::SEPARATOR
-            str << "(?:.*\\" << File::SEPARATOR << ")?"
-            idx += 3
-            next
-          elsif idx + 1 < pattern.size && pattern[idx + 1] == '*'
-            str << "[^\\" << File::SEPARATOR << "]*"
-            idx += 2
-            next
-          else
-            str << "[^\\" << File::SEPARATOR << "]*"
-          end
-        elsif escaped.includes? char
-          str << "\\"
-          str << char
-        elsif char == '?'
-          str << "[^\\" << File::SEPARATOR << "]"
-        elsif char == '{'
-          str << "(?:"
+      while char = reader.current_char
+        case char
+        when Char::ZERO
+          break
+        when '{'
+          lbrace = reader.pos if nest == 0
           nest += 1
-        elsif char == '}'
-          str << ")"
+        when '}'
           nest -= 1
-        elsif char == ',' && nest > 0
-          str << "|"
-        else
-          str << char
+
+          if nest == 0
+            rbrace = reader.pos
+            start = (alt_start || lbrace).not_nil! + 1
+            alternatives << pattern.byte_slice(start, reader.pos - start)
+            break
+          end
+        when ','
+          if nest == 1
+            start = (alt_start || lbrace).not_nil! + 1
+            alternatives << pattern.byte_slice(start, reader.pos - start)
+            alt_start = reader.pos
+          end
         end
-        idx += 1
+
+        reader.next_char
       end
-      str << "\\z"
+
+      if lbrace && rbrace
+        front = pattern.byte_slice(0, lbrace)
+        back = pattern.byte_slice(rbrace + 1)
+
+        alternatives.each do |alt|
+          brace_pattern = [front, alt, back].join
+
+          compile brace_pattern, patterns
+        end
+      else
+        patterns << single_compile pattern
+      end
+
+      patterns
     end
 
-    Regex.new(regex_pattern)
-  end
+    private def single_compile(glob)
+      list = [] of PatternType
+      return list if glob.empty?
 
-  private def self.scandir(dir_path, rel_path, regex, level, max_level, wants_dir)
-    dir_path_stack = [dir_path]
-    rel_path_stack = [rel_path]
-    level_stack = [level]
-    dir_stack = [] of Dir
-    recurse = true
-    until dir_path_stack.empty?
-      if recurse
-        begin
-          dir = Dir.new(dir_path)
-        rescue e
-          dir_path_stack.pop
-          rel_path_stack.pop
-          level_stack.pop
-          break if dir_path_stack.empty?
-          dir_path = dir_path_stack.last
-          rel_path = rel_path_stack.last
-          level = level_stack.last
-          next
-        ensure
-          recurse = false
+      parts = glob.split('/', remove_empty: true)
+
+      if glob.ends_with?('/')
+        list << DirectoriesOnly.new
+      else
+        file = parts.pop
+        if /^[a-zA-Z0-9._]+$/.match(file)
+          list << ConstantEntry.new file
+        elsif !file.empty?
+          list << EntryMatch.new file
         end
-        dir_stack.push dir
       end
-      begin
-        f = dir.read if dir
-      rescue e
-        f = nil
-      end
-      if f
-        fullpath = File.join dir_path, f
-        if rel_path.empty?
-          relpath = f
+
+      while !parts.empty?
+        dir = parts.pop
+
+        case dir
+        when "**"
+          if parts.empty?
+            list << StartRecursiveDirectories.new
+          else
+            list << RecursiveDirectories.new
+          end
+        when /^[^\*\?\]]+$/
+          case last = list[-1]
+          when ConstantDirectory
+            list[-1] = ConstantDirectory.new File.join(dir, last.path)
+          when ConstantEntry
+            list[-1] = ConstantEntry.new File.join(dir, last.path)
+          else
+            list << ConstantDirectory.new dir
+          end
+        when .empty?
         else
-          relpath = File.join rel_path, f
+          list << DirectoryMatch.new dir
         end
-        begin
-          stat = File.stat(fullpath)
-          isdir = stat.directory? && !stat.symlink?
-        rescue e
-          isdir = false
-        end
-        if isdir
-          if f != "." && f != ".." && (level <= max_level || max_level == Int32::MAX)
-            if relpath =~ regex
-              if wants_dir
-                yield relpath + File::SEPARATOR
-              else
-                yield relpath
+      end
+
+      if glob.starts_with?('/')
+        list << RootDirectory.new
+      end
+
+      list
+    end
+
+    private def run(sequence, &block : String -> _)
+      return if sequence.empty?
+
+      path_stack = [] of Tuple(Int32, String?)
+      path_stack << {sequence.size - 1, nil}
+
+      while !path_stack.empty?
+        pos, path = path_stack.pop
+        cmd = sequence[pos]
+
+        next_pos = pos - 1
+        case cmd
+        when RootDirectory
+          raise "unreachable" if path
+          path_stack << {next_pos, root}
+        when DirectoriesOnly
+          raise "unreachable" unless path
+          fullpath = path == File::SEPARATOR_STRING ? path : path + File::SEPARATOR
+          yield fullpath if dir?(fullpath)
+        when EntryMatch
+          return if sequence[pos + 1]?.is_a?(RecursiveDirectories | StartRecursiveDirectories)
+          each_child(path) do |entry|
+            yield join(path, entry) if cmd.matches?(entry)
+          end
+        when DirectoryMatch
+          next_cmd = sequence[next_pos]?
+
+          each_child(path) do |entry|
+            if cmd.matches?(entry)
+              fullpath = join(path, entry)
+              if dir?(fullpath)
+                path_stack << {next_pos, fullpath}
               end
             end
+          end
+        when ConstantEntry
+          return if sequence[pos + 1]?.is_a?(RecursiveDirectories | StartRecursiveDirectories)
+          full = join(path, cmd.path)
+          yield full if File.exists?(full)
+        when ConstantDirectory
+          path_stack << {next_pos, join(path, cmd.path)}
+          # Don't check if full exists. It just costs us time
+          # and the downstream node will be able to check properly.
+        when RecursiveDirectories, StartRecursiveDirectories
+          path_stack << {next_pos, path}
+          next_cmd = sequence[next_pos]?
 
-            if level < max_level
-              dir_path_stack.push fullpath
-              rel_path_stack.push relpath
-              level_stack.push level + 1
+          dir_path = path || ""
+          dir_stack = [] of Dir
+          dir_path_stack = [dir_path]
+          begin
+            dir = Dir.new(path || ".")
+            dir_stack << dir
+          rescue Errno
+            return
+          end
+          recurse = false
+
+          until dir_path_stack.empty?
+            if recurse
+              begin
+                dir = Dir.new(dir_path)
+              rescue Errno
+                dir_path_stack.pop
+                break if dir_path_stack.empty?
+                dir_path = dir_path_stack.last
+                next
+              ensure
+                recurse = false
+              end
+              dir_stack.push dir
+            end
+
+            if entry = dir.try(&.read)
+              next if {".", ".."}.includes?(entry)
+              next if entry[0] == '.' && !allow_dots?
+
+              if dir_path.bytesize == 0
+                fullpath = entry
+              else
+                fullpath = File.join(dir_path, entry)
+              end
+
+              case next_cmd
+              when ConstantEntry
+                yield fullpath if next_cmd.path == entry
+              when EntryMatch
+                yield fullpath if next_cmd.matches?(entry)
+              end
+
+              if dir?(fullpath)
+                path_stack << {next_pos, fullpath}
+
+                dir_path_stack.push fullpath
+                dir_path = dir_path_stack.last
+                recurse = true
+                next
+              end
+            else
+              dir.try(&.close)
+              dir_path_stack.pop
+              dir_stack.pop
+              break if dir_path_stack.empty?
               dir_path = dir_path_stack.last
-              rel_path = rel_path_stack.last
-              level = level_stack.last
-              recurse = true
-              next
+              dir = dir_stack.last
             end
           end
         else
-          if !wants_dir && (level <= max_level || max_level == Int32::MAX)
-            yield relpath if relpath =~ regex
-          end
+          raise "unreachable"
         end
-      else
-        dir.close if dir
-        dir_path_stack.pop
-        rel_path_stack.pop
-        level_stack.pop
-        dir_stack.pop
-        break if dir_path_stack.empty?
-        dir_path = dir_path_stack.last
-        rel_path = rel_path_stack.last
-        level = level_stack.last
-        dir = dir_stack.last
       end
+    end
+
+    private def root
+      # TODO: better implementation for windows?
+      {% if flag?(:windows) %}
+      "C:\\"
+      {% else %}
+      File::SEPARATOR_STRING
+      {% end %}
+    end
+
+    private def dir?(path)
+      return true unless path
+      stat = File.lstat(path)
+      stat.directory? && !stat.symlink?
+    rescue Errno
+      false
+    end
+
+    private def join(path, entry)
+      return entry unless path
+      return "#{root}#{entry}" if path == File::SEPARATOR_STRING
+
+      File.join(path, entry)
+    end
+
+    private def each_child(path)
+      Dir.each_child(path || Dir.current) do |entry|
+        yield entry
+      end
+    rescue exc : Errno
+      raise exc unless exc.errno == Errno::ENOENT
     end
   end
 end

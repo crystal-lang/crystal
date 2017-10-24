@@ -1032,4 +1032,26 @@ describe "File" do
       end
     end
   end
+
+  describe ".fnmatch" do
+    it "matches basics" do
+      File.fnmatch("abc", "abc").should be_true
+      File.fnmatch("*", "abc").should be_true
+      File.fnmatch("*c", "abc").should be_true
+      File.fnmatch("a*", "a").should be_true
+      File.fnmatch("a*", "abc").should be_true
+      File.fnmatch("a*/b", "abc/b").should be_true
+      File.fnmatch("*x", "xxx").should be_true
+    end
+    it "matches multiple expansions" do
+      File.fnmatch("a*b*c*d*e*/f", "axbxcxdxe/f").should be_true
+      File.fnmatch("a*b*c*d*e*/f", "axbxcxdxexxx/f").should be_true
+      File.fnmatch("a*b?c*x", "abxbbxdbxebxczzx").should be_true
+      File.fnmatch("a*b?c*x", "abxbbxdbxebxczzy").should be_false
+    end
+    it "matches unicode characters" do
+      File.fnmatch("a?b", "a☺b").should be_true
+      File.fnmatch("a???b", "a☺b").should be_false
+    end
+  end
 end
