@@ -9,8 +9,12 @@ require "./unix_socket"
 # require "socket"
 #
 # server = UNIXServer.new("/tmp/myapp.sock")
-# message = server.gets
-# server.puts message
+# loop do
+#   server.accept do |client|
+#     message = client.gets
+#     client << message # echo the message back
+#   end
+# end
 # ```
 class UNIXServer < UNIXSocket
   include Socket::Server
