@@ -31,7 +31,7 @@ private def it_parses_scalar_from_pull(string, expected, file = __FILE__, line =
   end
 end
 
-private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__, &block : YAML::Type ->)
+private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__, &block : YAML::Any::Type ->)
   it "parses #{string.inspect}", file, line do
     pull = YAML::PullParser.new(%(value: #{string}))
     pull.read_stream_start
@@ -39,7 +39,7 @@ private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__,
     pull.read_mapping_start
     pull.read_scalar # key
 
-    block.call(YAML::Schema::Core.parse_scalar(pull).as(YAML::Type))
+    block.call(YAML::Schema::Core.parse_scalar(pull).as(YAML::Any::Type))
   end
 end
 

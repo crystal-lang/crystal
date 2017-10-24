@@ -2,22 +2,19 @@
 # fail-safe schema, as specified in http://www.yaml.org/spec/1.2/spec.html#id2802346,
 # where all scalar values are considered strings.
 module YAML::Schema::FailSafe
-  # All possible types according to the failsafe schema
-  alias Type = String | Hash(Type, Type) | Array(Type) | Nil
-
   # Deserializes a YAML document.
-  def self.parse(data : String | IO) : Type
+  def self.parse(data : String | IO) : Any
     Parser.new data, &.parse
   end
 
   # Deserializes multiple YAML documents.
-  def self.parse_all(data : String | IO) : Type
+  def self.parse_all(data : String | IO) : Any
     Parser.new data, &.parse_all
   end
 
   # :nodoc:
   class Parser < YAML::Parser
-    @anchors = {} of String => Type
+    @anchors = {} of String => Any
 
     def put_anchor(anchor, value)
       @anchors[anchor] = value
@@ -30,27 +27,43 @@ module YAML::Schema::FailSafe
     end
 
     def new_documents
-      [] of Type
+      [] of Any
     end
 
     def new_document
-      [] of Type
+      Any.new([] of Any)
     end
 
     def cast_document(doc)
-      doc.first?
+      doc.first? || Any.new(nil)
     end
 
     def new_sequence
-      [] of Type
+      Any.new([] of Any)
     end
 
     def new_mapping
-      {} of Type => Type
+      Any.new({} of Any => Any)
     end
 
     def new_scalar
-      @pull_parser.value
+      Any.new(@pull_parser.value)
+    end
+
+    def add_to_documents(documents, document)
+      documents << document
+    end
+
+    def add_to_document(document, node)
+      document.as_a << node
+    end
+
+    def add_to_sequence(sequence, node)
+      sequence.as_a << node
+    end
+
+    def add_to_mapping(mapping, key, value)
+      mapping.as_h[key] = value
     end
   end
 end

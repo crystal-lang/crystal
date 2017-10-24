@@ -83,9 +83,6 @@ module YAML
     end
   end
 
-  # All valid YAML core schema types.
-  alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(Type) | Hash(Type, Type) | Set(Type)
-
   # Deserializes a YAML document according to the core schema.
   #
   # ```yaml
