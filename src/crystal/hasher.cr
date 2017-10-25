@@ -119,9 +119,6 @@ struct Crystal::Hasher
     t8
   end
 
-  # Fast hash for `Bytes`.
-  # It treats `Bytes` as binary data, and not as "an array of small numbers".
-  # `Bytes#hash(hasher)` (ie `Slice(UInt8)#hash(hasher)`) calls this method.
   def bytes(value : Bytes)
     size = value.size
     ptr = value.to_unsafe

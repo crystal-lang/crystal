@@ -534,8 +534,6 @@ struct Slice(T)
   end
 
   # See `Object#hash(hasher)`
-  # Be awary: `Slice(UInt8)` is hashed as binary data, and not as "an array of small
-  # numbers".
   def hash(hasher)
     {% if T == UInt8 %}
       hasher.bytes(self)
