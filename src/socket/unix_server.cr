@@ -8,12 +8,14 @@ require "./unix_socket"
 # ```
 # require "socket"
 #
+# def handle_client(client)
+#   message = client.gets
+#   client.puts message
+# end
+#
 # server = UNIXServer.new("/tmp/myapp.sock")
-# loop do
-#   server.accept do |client|
-#     message = client.gets
-#     client << message # echo the message back
-#   end
+# while client = server.accept?
+#   spawn handle_client(client)
 # end
 # ```
 class UNIXServer < UNIXSocket
