@@ -646,6 +646,32 @@ describe Time do
     (local - utc).should eq(0.seconds)
   end
 
+  describe "days in month" do
+    it "returns days for valid month and year" do
+      Time.days_in_month(2016, 2).should eq(29)
+      Time.days_in_month(1990, 4).should eq(30)
+    end
+
+    it "raises exception for invalid month" do
+      expect_raises(ArgumentError, "Invalid month") do
+        Time.days_in_month(2016, 13)
+      end
+    end
+
+    it "raises exception for invalid year" do
+      expect_raises(ArgumentError, "Invalid year") do
+        Time.days_in_month(10000, 11)
+      end
+    end
+  end
+
+  it "days in year with year" do
+    Time.days_in_year(2005).should eq(365)
+    Time.days_in_year(2004).should eq(366)
+    Time.days_in_year(2000).should eq(366)
+    Time.days_in_year(1990).should eq(365)
+  end
+
   typeof(Time.now.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)

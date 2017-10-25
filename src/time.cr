@@ -405,6 +405,11 @@ struct Time
   def_hash total_seconds, nanosecond
 
   # Returns how many days this *month* (`1..12`) of this *year* has (28, 29, 30 or 31).
+  #
+  # ```
+  # Time.days_in_month(2016, 2) # => 29
+  # Time.days_in_month(1990, 4) # => 30
+  # ```
   def self.days_in_month(year : Int, month : Int) : Int32
     unless 1 <= month <= 12
       raise ArgumentError.new "Invalid month"
@@ -416,6 +421,16 @@ struct Time
 
     days = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
     days[month]
+  end
+
+  # Returns number of days in *year*.
+  #
+  # ```
+  # Time.days_in_year(1990) # => 365
+  # Time.days_in_year(2004) # => 366
+  # ```
+  def self.days_in_year(year : Int) : Int32
+    leap_year?(year) ? 366 : 365
   end
 
   # Returns whether this *year* is leap (February has one more day).
