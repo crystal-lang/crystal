@@ -385,6 +385,11 @@ struct Time
   def_hash total_seconds, nanosecond
 
   # Returns how many days this *month* (`1..12`) of this *year* has (28, 29, 30 or 31).
+  #
+  # ```
+  # Time.days_in_month(2016, 2) # => 29
+  # Time.days_in_month(1990, 4) # => 30
+  # ```
   def self.days_in_month(year : Int, month : Int) : Int32
     unless 1 <= month <= 12
       raise ArgumentError.new "Invalid month"
