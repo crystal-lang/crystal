@@ -60,12 +60,12 @@ module JSON
   # If *strict* is `true`, unknown properties in the JSON
   # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
-  macro mapping(properties, strict = false)
-    {% for key, value in properties %}
-      {% properties[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
+  macro mapping(_properties_, strict = false)
+    {% for key, value in _properties_ %}
+      {% _properties_[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
 
-    {% for key, value in properties %}
+    {% for key, value in _properties_ %}
       @{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
 
       {% if value[:setter] == nil ? true : value[:setter] %}
@@ -90,7 +90,7 @@ module JSON
     {% end %}
 
     def initialize(%pull : ::JSON::PullParser)
-      {% for key, value in properties %}
+      {% for key, value in _properties_ %}
         %var{key.id} = nil
         %found{key.id} = false
       {% end %}
@@ -101,7 +101,7 @@ module JSON
         %key_location = %pull.location
         key = %pull.read_object_key
         case key
-        {% for key, value in properties %}
+        {% for key, value in _properties_ %}
           when {{value[:key] || key.id.stringify}}
             %found{key.id} = true
 
@@ -137,7 +137,7 @@ module JSON
       end
       %pull.read_next
 
-      {% for key, value in properties %}
+      {% for key, value in _properties_ %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
             raise ::JSON::ParseException.new("Missing json attribute: {{(value[:key] || key).id}}", *%location)
@@ -145,7 +145,7 @@ module JSON
         {% end %}
       {% end %}
 
-      {% for key, value in properties %}
+      {% for key, value in _properties_ %}
         {% if value[:nilable] %}
           {% if value[:default] != nil %}
             @{{key.id}} = %found{key.id} ? %var{key.id} : {{value[:default]}}
@@ -159,7 +159,7 @@ module JSON
         {% end %}
       {% end %}
 
-      {% for key, value in properties %}
+      {% for key, value in _properties_ %}
         {% if value[:presence] %}
           @{{key.id}}_present = %found{key.id}
         {% end %}
@@ -168,7 +168,7 @@ module JSON
 
     def to_json(json : ::JSON::Builder)
       json.object do
-        {% for key, value in properties %}
+        {% for key, value in _properties_ %}
           _{{key.id}} = @{{key.id}}
 
           {% unless value[:emit_null] %}
@@ -216,7 +216,7 @@ module JSON
 
   # This is a convenience method to allow invoking `JSON.mapping`
   # with named arguments instead of with a hash/named-tuple literal.
-  macro mapping(**properties)
-    ::JSON.mapping({{properties}})
+  macro mapping(**_properties_)
+    ::JSON.mapping({{_properties_}})
   end
 end
