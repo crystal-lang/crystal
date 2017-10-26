@@ -184,6 +184,46 @@ describe "Int" do
     end
   end
 
+  describe "#ordinal" do
+    it "returns the correct suffix" do
+      1.ordinal.should eq("st")
+      2.ordinal.should eq("nd")
+      3.ordinal.should eq("rd")
+      4.ordinal.should eq("th")
+      5.ordinal.should eq("th")
+      10.ordinal.should eq("th")
+      11.ordinal.should eq("th")
+      12.ordinal.should eq("th")
+      13.ordinal.should eq("th")
+      21.ordinal.should eq("st")
+      22.ordinal.should eq("nd")
+      23.ordinal.should eq("rd")
+      122.ordinal.should eq("nd")
+      123.ordinal.should eq("rd")
+      1322.ordinal.should eq("nd")
+      1323.ordinal.should eq("rd")
+    end
+
+    it "appends the correct suffix" do
+      1.to_ordinal.should eq("1st")
+      2.to_ordinal.should eq("2nd")
+      3.to_ordinal.should eq("3rd")
+      4.to_ordinal.should eq("4th")
+      5.to_ordinal.should eq("5th")
+      10.to_ordinal.should eq("10th")
+      11.to_ordinal.should eq("11th")
+      12.to_ordinal.should eq("12th")
+      13.to_ordinal.should eq("13th")
+      21.to_ordinal.should eq("21st")
+      22.to_ordinal.should eq("22nd")
+      23.to_ordinal.should eq("23rd")
+      122.to_ordinal.should eq("122nd")
+      123.to_ordinal.should eq("123rd")
+      1322.to_ordinal.should eq("1322nd")
+      1323.to_ordinal.should eq("1323rd")
+    end
+  end
+
   describe "#inspect" do
     it "appends the type" do
       23.inspect.should eq("23")

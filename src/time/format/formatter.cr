@@ -62,6 +62,18 @@ struct Time::Format
     def day_of_month_blank_padded
       pad2 time.day, ' '
     end
+    
+    def day_of_month_ordinal
+      io << time.day.to_ordinal
+    end
+
+    def day_of_month_zero_padded_ordinal
+      pad4 time.day.to_ordinal, '0'
+    end
+
+    def day_of_month_blank_padded_ordinal
+      pad4 time.day.to_ordinal, ' '
+    end
 
     def day_name
       io << get_day_name

@@ -30,11 +30,21 @@ struct Time::Format
         when 'C'
           year_divided_by_100
         when 'd'
-          day_of_month_zero_padded
+          case char = reader.next_char
+          when '+'
+            day_of_month_zero_padded_ordinal
+          else
+            day_of_month_zero_padded
+          end
         when 'D', 'x'
           date
         when 'e'
-          day_of_month_blank_padded
+          case char = reader.next_char
+          when '+'
+            day_of_month_blank_padded_ordinal
+          else
+            day_of_month_blank_padded
+          end
         when 'F'
           iso_8601_date
         when 'H'
@@ -91,7 +101,12 @@ struct Time::Format
         when '-'
           case char = reader.next_char
           when 'd'
-            day_of_month
+            case char = reader.next_char
+            when '+'
+              day_of_month_ordinal
+            else
+              day_of_month
+            end
           when 'm'
             month
           else
