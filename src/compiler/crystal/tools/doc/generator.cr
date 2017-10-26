@@ -28,8 +28,8 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
-    @base_dir = `pwd`.chomp
+  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String)
+    @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
     @is_crystal_repo = false
@@ -37,7 +37,7 @@ class Crystal::Doc::Generator
   end
 
   def run
-    Dir.mkdir_p @dir
+    Dir.mkdir_p @output_dir
 
     types = collect_subtypes(@program)
 
@@ -55,7 +55,7 @@ class Crystal::Doc::Generator
 
   def generate_docs(program_type, types)
     copy_files
-    generate_types_docs types, @dir, types
+    generate_types_docs types, @output_dir, types
     generate_readme program_type, types
   end
 
@@ -72,23 +72,23 @@ class Crystal::Doc::Generator
       body = ""
     end
 
-    File.write "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
+    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name)
   end
 
   def copy_files
-    Dir.mkdir_p "#{@dir}/css"
-    Dir.mkdir_p "#{@dir}/js"
+    Dir.mkdir_p File.join(@output_dir, "css")
+    Dir.mkdir_p File.join(@output_dir, "js")
 
-    File.write "#{@dir}/css/style.css", StyleTemplate.new
-    File.write "#{@dir}/js/doc.js", JsTypeTemplate.new
+    File.write File.join(@output_dir, "css", "style.css"), StyleTemplate.new
+    File.write File.join(@output_dir, "js", "doc.js"), JsTypeTemplate.new
   end
 
   def generate_types_docs(types, dir, all_types)
     types.each do |type|
       if type.program?
-        filename = "#{dir}/toplevel.html"
+        filename = File.join(dir, "toplevel.html")
       else
-        filename = "#{dir}/#{type.name}.html"
+        filename = File.join(dir, "#{type.name}.html")
       end
 
       File.write filename, TypeTemplate.new(type, all_types)
@@ -97,7 +97,7 @@ class Crystal::Doc::Generator
 
       subtypes = type.types
       if subtypes && !subtypes.empty?
-        dirname = "#{dir}/#{type.name}"
+        dirname = File.join(dir, type.name)
         Dir.mkdir_p dirname
         generate_types_docs subtypes, dirname, all_types
       end
