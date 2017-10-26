@@ -1,13 +1,16 @@
 require "./spec/dsl"
 
-# Crystal's built-in testing library.
+# Crystal's built-in testing library. It provides a structure for writing executable examples
+# of how your code should behave. A domain specific language allows you to write them in a way similar to natural language.
+#
+# The Crystal compiler has a `spec` command with tools to constrain which examples get run and tailor the output.
 #
 # A basic spec looks something like this:
 #
 # ```
 # require "spec"
 #
-# describe "Array" do
+# describe Array do
 #   describe "#size" do
 #     it "correctly reports the number of elements in the Array" do
 #       [1, 2, 3].size.should eq 3
@@ -45,21 +48,19 @@ require "./spec/dsl"
 # returned. See the example above for details.
 #
 # By convention, specs live in the `spec` directory of a project. You can compile
-# and run the specs of a project by running:
+# and run the specs of a project by running `crystal spec`.
 #
 # ```shell
+# # Run  all specs in files matching spec/**/*_spec.cr
 # crystal spec
-# ```
 #
-# You can also compile and run individual spec files by providing their path:
+# # Run all specs in files matching spec/my/test/**/*_spec.cr
+# crystal spec spec/my/test/
 #
-# ```shell
+# # Run all specs in spec/my/test/file_spec.cr
 # crystal spec spec/my/test/file_spec.cr
-# ```
 #
-# In addition, you may run individual specs by providing a line number:
-#
-# ```shell
+# # Run the spec or group defined in line 14 of spec/my/test/file_spec.cr
 # crystal spec spec/my/test/file_spec.cr:14
 # ```
 module Spec
