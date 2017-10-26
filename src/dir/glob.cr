@@ -88,19 +88,18 @@ class Dir
     record ConstantEntry, path : String
     record EntryMatch, pattern : String do
       def matches?(string)
-        File.fnmatch(pattern, string)
+        File.match?(pattern, string)
       end
     end
-    record StartRecursiveDirectories
     record RecursiveDirectories
     record ConstantDirectory, path : String
     record RootDirectory
     record DirectoryMatch, pattern : String do
       def matches?(string)
-        File.fnmatch(pattern, string)
+        File.match?(pattern, string)
       end
     end
-    alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | StartRecursiveDirectories | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
+    alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
 
     property? allow_dots
 
@@ -129,10 +128,8 @@ class Dir
       alternatives = [] of String
 
       nest = 0
-      while char = reader.current_char
+      reader.each do |char|
         case char
-        when Char::ZERO
-          break
         when '{'
           lbrace = reader.pos if nest == 0
           nest += 1
@@ -152,8 +149,6 @@ class Dir
             alt_start = reader.pos
           end
         end
-
-        reader.next_char
       end
 
       if lbrace && rbrace
@@ -161,7 +156,7 @@ class Dir
         back = pattern.byte_slice(rbrace + 1)
 
         alternatives.each do |alt|
-          brace_pattern = [front, alt, back].join
+          brace_pattern = {front, alt, back}.join
 
           compile brace_pattern, patterns
         end
@@ -182,24 +177,19 @@ class Dir
         list << DirectoriesOnly.new
       else
         file = parts.pop
-        if /^[a-zA-Z0-9._]+$/.match(file)
+        if constant_entry?(file)
           list << ConstantEntry.new file
         elsif !file.empty?
           list << EntryMatch.new file
         end
       end
 
-      while !parts.empty?
-        dir = parts.pop
-
-        case dir
-        when "**"
-          if parts.empty?
-            list << StartRecursiveDirectories.new
-          else
-            list << RecursiveDirectories.new
-          end
-        when /^[^\*\?\]]+$/
+      parts.reverse_each do |dir|
+        case
+        when dir == "**"
+          list << RecursiveDirectories.new
+        when dir.empty?
+        when constant_entry?(dir)
           case last = list[-1]
           when ConstantDirectory
             list[-1] = ConstantDirectory.new File.join(dir, last.path)
@@ -208,7 +198,6 @@ class Dir
           else
             list << ConstantDirectory.new dir
           end
-        when .empty?
         else
           list << DirectoryMatch.new dir
         end
@@ -219,6 +208,14 @@ class Dir
       end
 
       list
+    end
+
+    private def constant_entry?(file)
+      file.each_char do |char|
+        return false if char == '*' || char == '?'
+      end
+
+      true
     end
 
     private def run(sequence, &block : String -> _)
@@ -241,7 +238,7 @@ class Dir
           fullpath = path == File::SEPARATOR_STRING ? path : path + File::SEPARATOR
           yield fullpath if dir?(fullpath)
         when EntryMatch
-          return if sequence[pos + 1]?.is_a?(RecursiveDirectories | StartRecursiveDirectories)
+          return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
             yield join(path, entry) if cmd.matches?(entry)
           end
@@ -257,14 +254,14 @@ class Dir
             end
           end
         when ConstantEntry
-          return if sequence[pos + 1]?.is_a?(RecursiveDirectories | StartRecursiveDirectories)
+          return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           full = join(path, cmd.path)
           yield full if File.exists?(full)
         when ConstantDirectory
           path_stack << {next_pos, join(path, cmd.path)}
           # Don't check if full exists. It just costs us time
           # and the downstream node will be able to check properly.
-        when RecursiveDirectories, StartRecursiveDirectories
+        when RecursiveDirectories
           path_stack << {next_pos, path}
           next_cmd = sequence[next_pos]?
 

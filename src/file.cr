@@ -316,7 +316,7 @@ class File < IO::FileDescriptor
   #   * `"*c"` matches all files ending with `c`.
   #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
   # * `?` matches any one charachter.
-  def self.fnmatch(pattern, path)
+  def self.match?(pattern : String, path : String)
     # linear-time algorithm adapted from https://research.swtch.com/glob
     preader = Char::Reader.new(pattern)
     sreader = Char::Reader.new(path)
@@ -325,15 +325,15 @@ class File < IO::FileDescriptor
     strlen = path.bytesize
 
     while true
-      pnext? = preader.current_char != Char::ZERO
-      snext? = sreader.current_char != Char::ZERO
+      pnext = preader.has_next?
+      snext = sreader.has_next?
 
-      return true unless pnext? || snext?
+      return true unless pnext || snext
 
-      if pnext?
+      if pnext
         case pchar = preader.current_char
         when '?'
-          if snext?
+          if snext
             preader.next_char
             sreader.next_char
             next
@@ -344,7 +344,7 @@ class File < IO::FileDescriptor
           preader.next_char
           next
         else
-          if snext? && sreader.current_char == pchar
+          if snext && sreader.current_char == pchar
             preader.next_char
             sreader.next_char
             next
