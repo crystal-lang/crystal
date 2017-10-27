@@ -148,4 +148,9 @@ struct Crystal::Hasher
   def class(value)
     value.crystal_type_id.hash(self)
   end
+
+  def inspect(io)
+    io << "#{self.class}(hidden_state)"
+    nil
+  end
 end

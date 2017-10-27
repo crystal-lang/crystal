@@ -205,4 +205,28 @@ describe "Crystal::Hasher" do
       hasher2.result.should eq(0x2908fdd2bb81fbed_u64)
     end
   end
+
+  describe "to_s" do
+    it "should not expose internal data" do
+      hasher = THasher.new(1_u64, 2_u64)
+      hasher.to_s.should_not contain('1')
+      hasher.to_s.should_not contain(hasher.@a.to_s)
+      hasher.to_s.should_not contain(hasher.@a.to_s(16))
+      hasher.to_s.should_not contain('2')
+      hasher.to_s.should_not contain(hasher.@b.to_s)
+      hasher.to_s.should_not contain(hasher.@b.to_s(16))
+    end
+  end
+
+  describe "inspect" do
+    it "should not expose internal data" do
+      hasher = THasher.new(1_u64, 2_u64)
+      hasher.inspect.should_not contain('1')
+      hasher.inspect.should_not contain(hasher.@a.to_s)
+      hasher.inspect.should_not contain(hasher.@a.to_s(16))
+      hasher.inspect.should_not contain('2')
+      hasher.inspect.should_not contain(hasher.@b.to_s)
+      hasher.inspect.should_not contain(hasher.@b.to_s(16))
+    end
+  end
 end
