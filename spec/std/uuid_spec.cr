@@ -1,5 +1,6 @@
 require "spec"
 require "uuid"
+require "benchmark"
 
 describe "UUID" do
   describe "default initialize" do

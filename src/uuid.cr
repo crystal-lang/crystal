@@ -24,7 +24,7 @@ struct UUID
   # Generates RFC 4122 v4 UUID.
   def initialize(variant = Variant::RFC4122, version = Version::V4)
     @bytes = uninitialized UInt8[16]
-    Random::Secure.random_bytes(@bytes.to_slice)
+    Random.new.random_bytes(@bytes.to_slice)
 
     self.variant = variant
     self.version = version
