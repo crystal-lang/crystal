@@ -2390,8 +2390,8 @@ module Crystal
                 write " "
               end
             end
-            skip_space_or_newline
           end
+          skip_space_or_newline
         end
       end
 
