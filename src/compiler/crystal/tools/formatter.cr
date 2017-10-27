@@ -2293,11 +2293,11 @@ module Crystal
           end
           write ")"
           next_token_skip_space_or_newline
-          format_block block, needs_space
+          format_block block, needs_space, newline_indent
           @dot_column = current_dot_column
           return false
         end
-        format_block block, needs_space
+        format_block block, needs_space, newline_indent
       end
 
       if has_args || node.block_arg
@@ -2485,11 +2485,13 @@ module Crystal
       false
     end
 
-    def format_block(node, needs_space)
+    def format_block(node, needs_space, indent)
       needs_comma = false
       @dot_column = nil
       old_inside_call_or_assign = @inside_call_or_assign
       @inside_call_or_assign = 0
+
+      old_indent, @indent = @indent, indent if indent
 
       if @token.type == :","
         needs_comma = true
@@ -2629,6 +2631,7 @@ module Crystal
       end
 
       @inside_call_or_assign = old_inside_call_or_assign
+      @indent = old_indent if old_indent
     end
 
     def clear_object(node)
