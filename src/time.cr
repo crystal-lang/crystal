@@ -103,6 +103,29 @@ struct Time
   # :nodoc:
   MAX_SECONDS = 315537897599_i64
 
+  # `DayOfWeek` represents the day.
+  #
+  # ```
+  # time = Time.new(2016, 2, 15)
+  # time.day_of_week # => Monday
+  # ```
+  #
+  # Alternatively, you can use question methods:
+  #
+  # ```
+  # time.friday? # => false
+  # time.monday? # => true
+  # ```
+  enum DayOfWeek
+    Sunday
+    Monday
+    Tuesday
+    Wednesday
+    Thursday
+    Friday
+    Saturday
+  end
+
   # `Kind` represents a specified time zone.
   #
   # Initializing a `Time` instance with specified `Kind`:
@@ -621,10 +644,10 @@ struct Time
     Time.new(year, month, day, 12, 0, 0, nanosecond: 0, kind: kind)
   end
 
-  {% for name, index in %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday) %}
+  {% for name in DayOfWeek.constants %}
     # Does `self` happen on {{name.id}}?
     def {{name.id.downcase}}? : Bool
-      day_of_week.value == {{index}}
+      day_of_week.{{name.id.downcase}}?
     end
   {% end %}
 
