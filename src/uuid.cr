@@ -22,12 +22,11 @@ struct UUID
   @bytes : StaticArray(UInt8, 16)
 
   # Generates RFC 4122 v4 UUID.
-  def initialize(variant = Variant::RFC4122, version = Version::V4)
-    @bytes = uninitialized UInt8[16]
-    Random::Secure.random_bytes(@bytes.to_slice)
+  def self.random(variant = Variant::RFC4122, version = Version::V4)
+    new_bytes = uninitialized UInt8[16]
+    Random.new.random_bytes(new_bytes.to_slice)
 
-    self.variant = variant
-    self.version = version
+    new(new_bytes, variant, version)
   end
 
   # Creates UUID from 16-bytes slice.

@@ -2,21 +2,21 @@ require "spec"
 require "uuid"
 
 describe "UUID" do
-  describe "default initialize" do
-    it "initialize with no options" do
-      subject = UUID.new
+  describe "random initialize" do
+    it "random initialize with no options" do
+      subject = UUID.random
       subject.variant.should eq UUID::Variant::RFC4122
       subject.version.should eq UUID::Version::V4
     end
 
-    it "initialize with variant" do
-      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), variant: UUID::Variant::NCS)
+    it "random initialize with variant" do
+      subject = UUID.random(variant: UUID::Variant::NCS)
       subject.variant.should eq UUID::Variant::NCS
       subject.version.should eq UUID::Version::V4
     end
 
-    it "initialize with slice and version" do
-      subject = UUID.new(version: UUID::Version::V3)
+    it "random initialize with version" do
+      subject = UUID.random(version: UUID::Version::V3)
       subject.variant.should eq UUID::Variant::RFC4122
       subject.version.should eq UUID::Version::V3
     end
@@ -125,43 +125,15 @@ describe "UUID" do
       uuid.should eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
       uuid.should eq("urn:uuid:C3B46146-EB79-4E18-877B-4D46A10D1517")
       uuid.should eq("urn:uuid:c3b46146-eb79-4e18-877b-4d46a10d1517")
-      (UUID.new).should_not eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
     end
   end
 
   it "fails on invalid arguments when creating" do
-    expect_raises(ArgumentError) { UUID.new "" }
     expect_raises(ArgumentError) { UUID.new "25d6f843?cf8e-44fb-9f84-6062419c4330" }
     expect_raises(ArgumentError) { UUID.new "67dc9e24-0865 474b-9fe7-61445bfea3b5" }
     expect_raises(ArgumentError) { UUID.new "5942cde5-10d1-416b+85c4-9fc473fa1037" }
     expect_raises(ArgumentError) { UUID.new "0f02a229-4898-4029-926f=94be5628a7fd" }
     expect_raises(ArgumentError) { UUID.new "cda08c86-6413-474f-8822-a6646e0fb19G" }
     expect_raises(ArgumentError) { UUID.new "2b1bfW06368947e59ac07c3ffdaf514c" }
-  end
-
-  it "fails when comparing to invalid strings" do
-    expect_raises(ArgumentError) { UUID.new == "" }
-    expect_raises(ArgumentError) { UUID.new == "d1fb9189-7013-4915-a8b1-07cfc83bca3U" }
-    expect_raises(ArgumentError) { UUID.new == "2ab8ffc8f58749e197eda3e3d14e0 6c" }
-    expect_raises(ArgumentError) { UUID.new == "2ab8ffc8f58749e197eda3e3d14e 06c" }
-    expect_raises(ArgumentError) { UUID.new == "2ab8ffc8f58749e197eda3e3d14e-76c" }
-  end
-
-  it "should handle variant" do
-    uuid = UUID.new
-    expect_raises(ArgumentError) { uuid.variant = UUID::Variant::Unknown }
-    {% for variant in %w(NCS RFC4122 Microsoft Future) %}
-      uuid.variant = UUID::Variant::{{ variant.id }}
-      uuid.variant.should eq UUID::Variant::{{ variant.id }}
-    {% end %}
-  end
-
-  it "should handle version" do
-    uuid = UUID.new
-    expect_raises(ArgumentError) { uuid.version = UUID::Version::Unknown }
-    {% for version in %w(1 2 3 4 5) %}
-      uuid.version = UUID::Version::V{{ version.id }}
-      uuid.version.should eq UUID::Version::V{{ version.id }}
-    {% end %}
   end
 end
