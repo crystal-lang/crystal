@@ -104,7 +104,7 @@ class Crystal::Program
   end
 
   def macro_compile(filename)
-    time = Time.now
+    time = Time.monotonic
 
     source = File.read(filename)
 
@@ -127,7 +127,7 @@ class Crystal::Program
     File.utime(now, now, program_dir)
 
     if can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
-      elapsed_time = Time.now - time
+      elapsed_time = Time.monotonic - time
       return CompiledMacroRun.new(executable_path, elapsed_time, true)
     end
 
@@ -166,7 +166,7 @@ class Crystal::Program
       requires_with_timestamps.to_json(file)
     end
 
-    elapsed_time = Time.now - time
+    elapsed_time = Time.monotonic - time
     CompiledMacroRun.new(executable_path, elapsed_time, false)
   end
 

@@ -147,6 +147,7 @@ _crystal-run() {
 
 _crystal-spec() {
   _arguments \
+    $programfile \
     $help_args \
     $no_color_args \
     $exec_args \
@@ -185,6 +186,7 @@ _crystal-tool() {
       case $line[1] in
         (context)
           _arguments \
+            $programfile \
             $help_args \
             $no_color_args \
             $exec_args \
@@ -195,6 +197,7 @@ _crystal-tool() {
 
         (expand)
           _arguments \
+            $programfile \
             $help_args \
             $no_color_args \
             $exec_args \
@@ -205,14 +208,16 @@ _crystal-tool() {
 
         (format)
           _arguments \
-              $help_args \
-              $no_color_args \
-              $format_args \
-              '(--check)--check[checks that formatting code produces no changes]'
+            $programfile \
+            $help_args \
+            $no_color_args \
+            $format_args \
+            '(--check)--check[checks that formatting code produces no changes]' \
         ;;
 
         (hierarchy)
           _arguments \
+            $programfile \
             $help_args \
             $no_color_args \
             $exec_args \
@@ -223,6 +228,7 @@ _crystal-tool() {
 
         (implementations)
           _arguments \
+            $programfile \
             $help_args \
             $no_color_args \
             $exec_args \
@@ -233,6 +239,7 @@ _crystal-tool() {
 
         (types)
           _arguments \
+            $programfile \
             $help_args \
             $no_color_args \
             $exec_args \

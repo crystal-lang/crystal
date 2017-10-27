@@ -60,6 +60,19 @@ describe Time do
     time.epoch_ms.should eq(milliseconds)
   end
 
+  it "returns always increasing monotonic clock" do
+    clock = Time.monotonic
+    Time.monotonic.should be >= clock
+  end
+
+  it "measures elapsed time" do
+    # NOTE: On some systems, the sleep may not always wait for 1ms and the fiber
+    #       be resumed early. We thus merely test that the method returns a
+    #       positive time span.
+    elapsed = Time.measure { sleep 1.millisecond }
+    elapsed.should be >= 0.seconds
+  end
+
   it "clones" do
     time = Time.now
     (time == time.clone).should be_true
@@ -631,6 +644,32 @@ describe Time do
     utc = local.to_utc
     (utc - local).should eq(0.seconds)
     (local - utc).should eq(0.seconds)
+  end
+
+  describe "days in month" do
+    it "returns days for valid month and year" do
+      Time.days_in_month(2016, 2).should eq(29)
+      Time.days_in_month(1990, 4).should eq(30)
+    end
+
+    it "raises exception for invalid month" do
+      expect_raises(ArgumentError, "Invalid month") do
+        Time.days_in_month(2016, 13)
+      end
+    end
+
+    it "raises exception for invalid year" do
+      expect_raises(ArgumentError, "Invalid year") do
+        Time.days_in_month(10000, 11)
+      end
+    end
+  end
+
+  it "days in year with year" do
+    Time.days_in_year(2005).should eq(365)
+    Time.days_in_year(2004).should eq(366)
+    Time.days_in_year(2000).should eq(366)
+    Time.days_in_year(1990).should eq(365)
   end
 
   typeof(Time.now.year)

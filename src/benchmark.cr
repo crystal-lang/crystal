@@ -117,9 +117,9 @@ module Benchmark
 
   # Returns the time used to execute the given block.
   def measure(label = "") : BM::Tms
-    t0, r0 = Process.times, Time.now
+    t0, r0 = Process.times, Time.monotonic
     yield
-    t1, r1 = Process.times, Time.now
+    t1, r1 = Process.times, Time.monotonic
     BM::Tms.new(t1.utime - t0.utime,
       t1.stime - t0.stime,
       t1.cutime - t0.cutime,
@@ -134,8 +134,6 @@ module Benchmark
   # Benchmark.realtime { "a" * 100_000 } # => 00:00:00.0005840
   # ```
   def realtime : Time::Span
-    r0 = Time.now
-    yield
-    Time.now - r0
+    Time.measure { yield }
   end
 end

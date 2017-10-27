@@ -103,6 +103,29 @@ struct Time
   # :nodoc:
   MAX_SECONDS = 315537897599_i64
 
+  # `DayOfWeek` represents the day.
+  #
+  # ```
+  # time = Time.new(2016, 2, 15)
+  # time.day_of_week # => Monday
+  # ```
+  #
+  # Alternatively, you can use question methods:
+  #
+  # ```
+  # time.friday? # => false
+  # time.monday? # => true
+  # ```
+  enum DayOfWeek
+    Sunday
+    Monday
+    Tuesday
+    Wednesday
+    Thursday
+    Friday
+    Saturday
+  end
+
   # `Kind` represents a specified time zone.
   #
   # Initializing a `Time` instance with specified `Kind`:
@@ -134,6 +157,26 @@ struct Time
   @seconds : Int64
   @nanoseconds : Int32
   @kind : Kind
+
+  # Returns a clock from an unspecified starting point, but strictly linearly
+  # increasing. This clock should be independent from discontinuous jumps in the
+  # system time, such as leap seconds, time zone adjustments or manual changes
+  # to the computer's time.
+  #
+  # For example, the monotonic clock must always be used to measure an elapsed
+  # time.
+  def self.monotonic : Time::Span
+    seconds, nanoseconds = Crystal::System::Time.monotonic
+    Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+  end
+
+  # Measures how long the block took to run. Relies on `monotonic` to not be
+  # affected by time fluctuations.
+  def self.measure : Time::Span
+    start = monotonic
+    yield
+    monotonic - start
+  end
 
   def self.new
     seconds, nanoseconds, offset = Time.compute_seconds_nanoseconds_and_offset
@@ -385,6 +428,11 @@ struct Time
   def_hash total_seconds, nanosecond
 
   # Returns how many days this *month* (`1..12`) of this *year* has (28, 29, 30 or 31).
+  #
+  # ```
+  # Time.days_in_month(2016, 2) # => 29
+  # Time.days_in_month(1990, 4) # => 30
+  # ```
   def self.days_in_month(year : Int, month : Int) : Int32
     unless 1 <= month <= 12
       raise ArgumentError.new "Invalid month"
@@ -396,6 +444,16 @@ struct Time
 
     days = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
     days[month]
+  end
+
+  # Returns number of days in *year*.
+  #
+  # ```
+  # Time.days_in_year(1990) # => 365
+  # Time.days_in_year(2004) # => 366
+  # ```
+  def self.days_in_year(year : Int) : Int32
+    leap_year?(year) ? 366 : 365
   end
 
   # Returns whether this *year* is leap (February has one more day).
@@ -586,10 +644,10 @@ struct Time
     Time.new(year, month, day, 12, 0, 0, nanosecond: 0, kind: kind)
   end
 
-  {% for name, index in %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday) %}
+  {% for name in DayOfWeek.constants %}
     # Does `self` happen on {{name.id}}?
     def {{name.id.downcase}}? : Bool
-      day_of_week.value == {{index}}
+      day_of_week.{{name.id.downcase}}?
     end
   {% end %}
 

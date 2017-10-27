@@ -55,6 +55,12 @@ private class JSONWithNilableTimeEmittingNull
   end
 end
 
+private class JSONWithPropertiesKey
+  JSON.mapping(
+    properties: Hash(String, String),
+  )
+end
+
 private class JSONWithSimpleMapping
   JSON.mapping({name: String, age: Int32})
 end
@@ -250,6 +256,14 @@ describe "JSON mapping" do
   it "outputs with converter when nilable when emit_null is true" do
     json = JSONWithNilableTimeEmittingNull.new
     json.to_json.should eq(%({"value":null}))
+  end
+
+  it "outputs JSON with properties key" do
+    input = {
+      properties: {"foo" => "bar"},
+    }.to_json
+    json = JSONWithPropertiesKey.from_json(input)
+    json.to_json.should eq(input)
   end
 
   it "parses json with keywords" do
