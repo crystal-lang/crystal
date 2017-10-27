@@ -13,12 +13,12 @@ enum TestHasherEnum
   B
 end
 
-alias THasher = Crystal::Hasher
+alias TestHasher = Crystal::Hasher
 
 describe "Crystal::Hasher" do
   context "behavior" do
     it "#nil should change hasher state" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher1 = nil.hash(hasher)
       hasher2 = nil.hash(hasher1)
       hasher1.result.should_not eq(hasher.result)
@@ -27,7 +27,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#bool should change state and differ" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher_true = true.hash(hasher)
       hasher_false = false.hash(hasher)
       hasher.result.should_not eq(hasher_true.result)
@@ -36,7 +36,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#int should change state and differ" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher1 = 1.hash(hasher)
       hasher2 = 2.hash(hasher)
       hasher12 = 2.hash(hasher1)
@@ -52,7 +52,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#float should change state and differ" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher1 = 1.0.hash(hasher)
       hasher2 = 2.0.hash(hasher)
       hasher12 = 2.0.hash(hasher1)
@@ -63,7 +63,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#char should change state and differ" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher1 = 'a'.hash(hasher)
       hasher2 = 'b'.hash(hasher)
       hasher12 = 'b'.hash(hasher1)
@@ -74,7 +74,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#enum should change state and differ" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher1 = TestHasherEnum::A.hash(hasher)
       hasher2 = TestHasherEnum::B.hash(hasher)
       hasher12 = TestHasherEnum::B.hash(hasher1)
@@ -85,7 +85,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#symbol should change state and differ" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher1 = :A.hash(hasher)
       hasher2 = :B.hash(hasher)
       hasher12 = :B.hash(hasher1)
@@ -96,7 +96,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#reference should change state and differ" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       a, b = Reference.new, Reference.new
       hasher1 = a.hash(hasher)
       hasher2 = b.hash(hasher)
@@ -108,7 +108,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#string should change state and differ" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher1 = "a".hash(hasher)
       hasher2 = "b".hash(hasher)
       hasher12 = "b".hash(hasher1)
@@ -119,8 +119,8 @@ describe "Crystal::Hasher" do
     end
 
     it "#class should change state and differ" do
-      hasher = THasher.for_test
-      hasher1 = THasher.hash(hasher)
+      hasher = TestHasher.for_test
+      hasher1 = TestHasher.hash(hasher)
       hasher2 = TestHasherEnum.hash(hasher)
       hasher12 = TestHasherEnum.hash(hasher1)
       [hasher, hasher1, hasher2, hasher12]
@@ -130,7 +130,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#bytes should change state and differ" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       a = Bytes[1, 2, 3]
       b = Bytes[2, 3, 4]
       hasher1 = a.hash(hasher)
@@ -145,26 +145,26 @@ describe "Crystal::Hasher" do
 
   context "funny_hash" do
     it "result should work" do
-      hasher = THasher.new(1_u64, 1_u64)
+      hasher = TestHasher.new(1_u64, 1_u64)
       typeof(hasher.result).should eq(UInt64)
       hasher.result.should eq(0x162c591a100060e5_u64)
 
-      hasher = THasher.new(1_u64, 2_u64)
+      hasher = TestHasher.new(1_u64, 2_u64)
       hasher.result.should eq(0x7f8304f0947082d1_u64)
 
-      hasher = THasher.new(2_u64, 1_u64)
+      hasher = TestHasher.new(2_u64, 1_u64)
       hasher.result.should eq(0xc302065c9b909fdf_u64)
 
-      hasher = THasher.new(0x123456789abcdef0_u64, 0x016fcd2b89e745a3_u64)
+      hasher = TestHasher.new(0x123456789abcdef0_u64, 0x016fcd2b89e745a3_u64)
       hasher.result.should eq(0x54258afe17b6a4bb_u64)
 
       # "bad seed"
-      hasher = THasher.new(0_u64, 0_u64)
+      hasher = TestHasher.new(0_u64, 0_u64)
       hasher.result.should eq(0_u64)
     end
 
     it "#nil should match test vectors" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher1 = nil.hash(hasher)
       hasher2 = nil.hash(hasher1)
       hasher1.result.should eq(0x2c58b2332000c1cb_u64)
@@ -172,7 +172,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#bool should match test vectors" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher_true = true.hash(hasher)
       hasher_false = false.hash(hasher)
       hasher_true.result.should eq(0x94e4534c12903881_u64)
@@ -180,7 +180,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#int should match test vectors" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher1 = 1.hash(hasher)
       hasher2 = 2.hash(hasher)
       hasher1.result.should eq(0x94e4534c12903881_u64)
@@ -188,7 +188,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#float should match test vectors" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher1 = 1.0.hash(hasher)
       hasher2 = 2.0.hash(hasher)
       hasher1.result.should eq(0xecfbe7798e8f67f2_u64)
@@ -196,7 +196,7 @@ describe "Crystal::Hasher" do
     end
 
     it "#string should match test vectors" do
-      hasher = THasher.for_test
+      hasher = TestHasher.for_test
       hasher0 = "".hash(hasher)
       hasher1 = "1".hash(hasher)
       hasher2 = "2.0".hash(hasher)
@@ -208,7 +208,7 @@ describe "Crystal::Hasher" do
 
   describe "to_s" do
     it "should not expose internal data" do
-      hasher = THasher.new(1_u64, 2_u64)
+      hasher = TestHasher.new(1_u64, 2_u64)
       hasher.to_s.should_not contain('1')
       hasher.to_s.should_not contain(hasher.@a.to_s)
       hasher.to_s.should_not contain(hasher.@a.to_s(16))
@@ -220,7 +220,7 @@ describe "Crystal::Hasher" do
 
   describe "inspect" do
     it "should not expose internal data" do
-      hasher = THasher.new(1_u64, 2_u64)
+      hasher = TestHasher.new(1_u64, 2_u64)
       hasher.inspect.should_not contain('1')
       hasher.inspect.should_not contain(hasher.@a.to_s)
       hasher.inspect.should_not contain(hasher.@a.to_s(16))
