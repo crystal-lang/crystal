@@ -323,8 +323,7 @@ module Crystal
     end
 
     def restrict(other : TypeOf, context)
-      lookup_type = self.lookup_type(other, self_type: context.instantiated_type.instance_type)
-      restrict lookup_type, context
+      other.raise "can't use typeof in type restrictions"
     end
 
     def restrict(other : UnionType, context)
