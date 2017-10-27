@@ -47,9 +47,7 @@ describe "Crystal::Hasher" do
       [hasher, hasher1, hasher2, hasher12]
         .map(&.result)
         .combinations(2)
-        .each do |(a, b)|
-        a.should_not eq(b)
-      end
+        .each { |(a, b)| a.should_not eq(b) }
     end
 
     it "#int should be equal for different types" do
@@ -65,9 +63,7 @@ describe "Crystal::Hasher" do
       [hasher, hasher1, hasher2, hasher12]
         .map(&.result)
         .combinations(2)
-        .each do |(a, b)|
-        a.should_not eq(b)
-      end
+        .each { |(a, b)| a.should_not eq(b) }
     end
 
     it "#char should change state and differ" do
@@ -78,9 +74,7 @@ describe "Crystal::Hasher" do
       [hasher, hasher1, hasher2, hasher12]
         .map(&.result)
         .combinations(2)
-        .each do |(a, b)|
-        a.should_not eq(b)
-      end
+        .each { |(a, b)| a.should_not eq(b) }
     end
 
     it "#enum should change state and differ" do
@@ -91,9 +85,7 @@ describe "Crystal::Hasher" do
       [hasher, hasher1, hasher2, hasher12]
         .map(&.result)
         .combinations(2)
-        .each do |(a, b)|
-        a.should_not eq(b)
-      end
+        .each { |(a, b)| a.should_not eq(b) }
     end
 
     it "#symbol should change state and differ" do
@@ -104,9 +96,7 @@ describe "Crystal::Hasher" do
       [hasher, hasher1, hasher2, hasher12]
         .map(&.result)
         .combinations(2)
-        .each do |(a, b)|
-        a.should_not eq(b)
-      end
+        .each { |(a, b)| a.should_not eq(b) }
     end
 
     it "#reference should change state and differ" do
@@ -118,9 +108,7 @@ describe "Crystal::Hasher" do
       [hasher, hasher1, hasher2, hasher12]
         .map(&.result)
         .combinations(2)
-        .each do |(a, b)|
-        a.should_not eq(b)
-      end
+        .each { |(a, b)| a.should_not eq(b) }
     end
 
     it "#string should change state and differ" do
@@ -131,9 +119,7 @@ describe "Crystal::Hasher" do
       [hasher, hasher1, hasher2, hasher12]
         .map(&.result)
         .combinations(2)
-        .each do |(a, b)|
-        a.should_not eq(b)
-      end
+        .each { |(a, b)| a.should_not eq(b) }
     end
 
     it "#class should change state and differ" do
@@ -144,9 +130,7 @@ describe "Crystal::Hasher" do
       [hasher, hasher1, hasher2, hasher12]
         .map(&.result)
         .combinations(2)
-        .each do |(a, b)|
-        a.should_not eq(b)
-      end
+        .each { |(a, b)| a.should_not eq(b) }
     end
 
     it "#bytes should change state and differ" do
@@ -159,9 +143,7 @@ describe "Crystal::Hasher" do
       [hasher, hasher1, hasher2, hasher12]
         .map(&.result)
         .combinations(2)
-        .each do |(a, b)|
-        a.should_not eq(b)
-      end
+        .each { |(a, b)| a.should_not eq(b) }
     end
   end
 
