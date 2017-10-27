@@ -186,7 +186,7 @@ class Crystal::Command
   end
 
   private def couldnt_format(file, ex = nil)
-    STDERR << "Error:".colorize(:red).toggle(@color) << ", "
+    STDERR << "Error: ".colorize(:red).toggle(@color)
 
     if ex
       STDERR.puts "couldn't format #{file}, please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
