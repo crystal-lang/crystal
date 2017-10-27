@@ -115,7 +115,7 @@ describe "String" do
     end
 
     it "raises on too negative left bound" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         "foo"[-4..0]
       end
     end
@@ -2109,11 +2109,11 @@ describe "String" do
     end
 
     it "throws an error when the key is not found" do
-      expect_raises KeyError do
+      expect_raises(KeyError) do
         "change %{this}" % {"that" => "wrong key"}
       end
 
-      expect_raises KeyError do
+      expect_raises(KeyError) do
         "change %{this}" % {that: "wrong key"}
       end
     end
@@ -2211,19 +2211,19 @@ describe "String" do
     end
 
     it "raises if wrong encoding" do
-      expect_raises ArgumentError, "Invalid encoding: FOO" do
+      expect_raises(ArgumentError, "Invalid encoding: FOO") do
         "Hello".encode("FOO")
       end
     end
 
     it "raises if wrong encoding with skip" do
-      expect_raises ArgumentError, "Invalid encoding: FOO" do
+      expect_raises(ArgumentError, "Invalid encoding: FOO") do
         "Hello".encode("FOO", invalid: :skip)
       end
     end
 
     it "raises if illegal byte sequence" do
-      expect_raises ArgumentError, "Invalid multibyte sequence" do
+      expect_raises(ArgumentError, "Invalid multibyte sequence") do
         "ñ".encode("GB2312")
       end
     end
@@ -2233,7 +2233,7 @@ describe "String" do
     end
 
     it "raises if incomplete byte sequence" do
-      expect_raises ArgumentError, "Incomplete multibyte sequence" do
+      expect_raises(ArgumentError, "Incomplete multibyte sequence") do
         "好".byte_slice(0, 1).encode("GB2312")
       end
     end
@@ -2330,7 +2330,7 @@ describe "String" do
   end
 
   it "raises on String.new if returned bytesize is greater than capacity" do
-    expect_raises ArgumentError, "Bytesize out of capacity bounds" do
+    expect_raises(ArgumentError, "Bytesize out of capacity bounds") do
       String.new(123) do |buffer|
         {124, 0}
       end

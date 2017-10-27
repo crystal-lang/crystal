@@ -283,7 +283,7 @@ module HTTP
     it "disallows adding inconsistent state" do
       cookies = Cookies.new
 
-      expect_raises ArgumentError do
+      expect_raises(ArgumentError) do
         cookies["a"] = Cookie.new("b", "c")
       end
     end

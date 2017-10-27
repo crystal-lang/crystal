@@ -71,7 +71,7 @@ describe "Tuple" do
     end
 
     it "raises when passed an invalid index" do
-      expect_raises IndexError do
+      expect_raises(IndexError) do
         {"a"}.values_at(10)
       end
     end
@@ -164,7 +164,7 @@ describe "Tuple" do
     t.should eq({1_i32, 2.0_f64})
     t.class.should eq(Tuple(Int32, Float64))
 
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       Tuple(Int32).from([1, 2])
     end
 
@@ -178,7 +178,7 @@ describe "Tuple" do
     t.should eq({1_i32, 2.0_f64})
     t.class.should eq(Tuple(Int32, Float64))
 
-    expect_raises ArgumentError do
+    expect_raises(ArgumentError) do
       {Int32}.from([1, 2])
     end
 

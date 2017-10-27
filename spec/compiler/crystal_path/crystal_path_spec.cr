@@ -14,7 +14,7 @@ private def assert_doesnt_find(search, relative_to = nil, path = __DIR__, file =
   it "doesn't finds #{search.inspect}", file, line do
     crystal_path = Crystal::CrystalPath.new(path)
     relative_to = "#{__DIR__}/#{relative_to}" if relative_to
-    expect_raises Exception, /can't find file/ do
+    expect_raises(Exception, "can't find file") do
       crystal_path.find search, relative_to: relative_to
     end
   end

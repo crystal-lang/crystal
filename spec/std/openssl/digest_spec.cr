@@ -15,7 +15,7 @@ describe OpenSSL::Digest do
   end
 
   it "raises a UnsupportedError if digest is unsupported" do
-    expect_raises OpenSSL::Digest::UnsupportedError do
+    expect_raises(OpenSSL::Digest::UnsupportedError) do
       OpenSSL::Digest.new("unsupported")
     end
   end

@@ -64,7 +64,7 @@ module XML
     end
 
     it "raises on invalid xpath" do
-      expect_raises XML::Error do
+      expect_raises(XML::Error) do
         doc = doc()
         doc.xpath("coco()")
       end

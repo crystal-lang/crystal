@@ -16,7 +16,7 @@ describe "Char::Reader" do
     reader.error.should be_nil
     reader.has_next?.should be_false
 
-    expect_raises IndexError do
+    expect_raises(IndexError) do
       reader.next_char
     end
   end
@@ -29,7 +29,7 @@ describe "Char::Reader" do
     reader.next_char.ord.should eq(0)
     reader.has_next?.should be_false
 
-    expect_raises IndexError do
+    expect_raises(IndexError) do
       reader.next_char
     end
   end
@@ -53,7 +53,7 @@ describe "Char::Reader" do
     reader.next_char.ord.should eq(0)
     reader.has_next?.should be_false
 
-    expect_raises IndexError do
+    expect_raises(IndexError) do
       reader.next_char
     end
   end
@@ -105,7 +105,7 @@ describe "Char::Reader" do
     reader.previous_char.should eq('h')
     reader.has_previous?.should be_false
 
-    expect_raises IndexError do
+    expect_raises(IndexError) do
       reader.previous_char
     end
   end

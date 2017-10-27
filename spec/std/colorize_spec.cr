@@ -84,19 +84,19 @@ describe "colorize" do
   end
 
   it "raises on unknown foreground color" do
-    expect_raises ArgumentError, "Unknown color: brown" do
+    expect_raises(ArgumentError, "Unknown color: brown") do
       colorize("hello", :brown)
     end
   end
 
   it "raises on unknown background color" do
-    expect_raises ArgumentError, "Unknown color: brown" do
+    expect_raises(ArgumentError, "Unknown color: brown") do
       colorize("hello").back(:brown)
     end
   end
 
   it "raises on unknown mode" do
-    expect_raises ArgumentError, "Unknown mode: bad" do
+    expect_raises(ArgumentError, "Unknown mode: bad") do
       colorize("hello").mode(:bad)
     end
   end
