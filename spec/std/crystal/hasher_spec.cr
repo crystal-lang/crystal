@@ -3,10 +3,6 @@ require "bit_array"
 require "random/secure"
 
 struct Crystal::Hasher
-  def initialize(a, b : UInt64)
-    @hasher = FunnyHash64.new(a, b)
-  end
-
   def self.for_test
     new(1_u64, 1_u64)
   end
@@ -204,9 +200,6 @@ describe "Crystal::Hasher" do
       hasher0 = "".hash(hasher)
       hasher1 = "1".hash(hasher)
       hasher2 = "2.0".hash(hasher)
-      puts "#{hasher0.result.to_s(16)}"
-      puts "#{hasher1.result.to_s(16)}"
-      puts "#{hasher2.result.to_s(16)}"
       hasher0.result.should eq(0x15cf71e56618745b_u64)
       hasher1.result.should eq(0x70ef623beff8c213_u64)
       hasher2.result.should eq(0x2908fdd2bb81fbed_u64)

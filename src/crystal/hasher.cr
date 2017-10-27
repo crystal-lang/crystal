@@ -38,30 +38,49 @@ struct Crystal::Hasher
   @@seed = uninitialized UInt64[2]
   Random::Secure.random_bytes(Slice.new(pointerof(@@seed).as(UInt8*), sizeof(typeof(@@seed))))
 
-  def initialize
-    @hasher = FunnyHash64.new(@@seed[0], @@seed[1])
+  def initialize(@a : UInt64 = @@seed[0], @b : UInt64 = @@seed[1])
+  end
+
+  private C1 = 0xacd5ad43274593b9_u64
+  private C2 = 0x6956abd6ed268a3d_u64
+
+  private def rotl32(v : UInt64)
+    (v << 32) | (v >> 32)
+  end
+
+  private def permute(v : UInt64)
+    @a = rotl32(@a ^ v) * C1
+    @b = (rotl32(@b) ^ v) * C2
+    self
   end
 
   def result
-    @hasher.result
+    a, b = @a, @b
+    a ^= (a >> 23) ^ (a >> 40)
+    b ^= (b >> 23) ^ (b >> 40)
+    a *= C1
+    b *= C2
+    a ^= a >> 32
+    b ^= b >> 32
+    a + b
   end
 
   def nil
-    @hasher.permute_nil
+    @a += @b
+    @b += 1
     self
   end
 
   def bool(value)
-    (value ? 1_u64 : 0_u64).hash(self)
+    (value ? 1 : 0).hash(self)
   end
 
   def int(value)
-    @hasher.permute(value.to_u64)
-    self
+    permute(value.to_u64)
   end
 
   def float(value)
-    value.to_f64.unsafe_as(UInt64).hash(self)
+    permute(value.to_f64.unsafe_as(UInt64))
   end
 
   def char(value)
@@ -77,95 +96,56 @@ struct Crystal::Hasher
   end
 
   def reference(value)
-    value.object_id.to_u64.hash(self)
+    permute(value.object_id.to_u64)
   end
 
   def string(value)
-    @hasher.permute(value.to_slice)
+    bytes(value.to_slice)
+  end
+
+  private def read_u24(ptr, rest)
+    ptr[0].to_u64 | (ptr[rest/2].to_u64 << 8) | (ptr[rest - 1].to_u64 << 16)
+  end
+
+  private def read_u32(ptr)
+    # force correct unaligned read
+    t4 = uninitialized UInt32
+    pointerof(t4).as(UInt8*).copy_from(ptr, 4)
+    t4.to_u64
+  end
+
+  private def read_u64(ptr)
+    # force correct unaligned read
+    t8 = uninitialized UInt64
+    pointerof(t8).as(UInt8*).copy_from(ptr, 8)
+    t8
+  end
+
+  def bytes(value : Bytes)
+    size = value.size
+    ptr = value.to_unsafe
+    if size <= 0
+      last = 0_u64
+    elsif size <= 3
+      last = read_u24(ptr, size)
+    elsif size <= 7
+      last = read_u32(ptr)
+      last |= read_u32(ptr + (size & 3)) << 32
+    else
+      while size >= 8
+        permute(read_u64(ptr))
+        ptr += 8
+        size -= 8
+      end
+      last = read_u64(ptr - (8 - size))
+    end
+    @a ^= size
+    @b ^= size
+    permute(last)
     self
   end
 
   def class(value)
     value.crystal_type_id.hash(self)
-  end
-
-  def bytes(value : Bytes)
-    @hasher.permute(value)
-    self
-  end
-
-  # :nodoc:
-  struct FunnyHash64
-    def initialize(@a : UInt64, @b : UInt64)
-    end
-
-    private C1 = 0xacd5ad43274593b9_u64
-    private C2 = 0x6956abd6ed268a3d_u64
-
-    def permute_nil
-      @a += @b
-      @b += 1
-    end
-
-    def permute(value : UInt64)
-      @a = rotl32(@a ^ value) * C1
-      @b = (rotl32(@b) ^ value) * C2
-    end
-
-    def permute(value : Bytes)
-      size = value.size
-      ptr = value.to_unsafe
-      if size <= 0
-        last = 0_u64
-      elsif size <= 3
-        last = read_u24(ptr, size)
-      elsif size <= 7
-        last = read_u32(ptr)
-        last |= read_u32(ptr + (size & 3)) << 32
-      else
-        while size >= 8
-          permute(read_u64(ptr))
-          ptr += 8
-          size -= 8
-        end
-        last = read_u64(ptr - (8 - size))
-      end
-      @a ^= size
-      @b ^= size
-      permute(last)
-    end
-
-    def result
-      a, b = @a, @b
-      a ^= (a >> 23) ^ (a >> 40)
-      b ^= (b >> 23) ^ (b >> 40)
-      a *= C1
-      b *= C2
-      a ^= a >> 32
-      b ^= b >> 32
-      a + b
-    end
-
-    private def rotl32(v : UInt64)
-      (v << 32) | (v >> 32)
-    end
-
-    private def read_u24(ptr, rest)
-      ptr[0].to_u64 | (ptr[rest/2].to_u64 << 8) | (ptr[rest - 1].to_u64 << 16)
-    end
-
-    private def read_u32(ptr)
-      # force correct unaligned read
-      t4 = uninitialized UInt32
-      pointerof(t4).as(UInt8*).copy_from(ptr, 4)
-      t4.to_u64
-    end
-
-    private def read_u64(ptr)
-      # force correct unaligned read
-      t8 = uninitialized UInt64
-      pointerof(t8).as(UInt8*).copy_from(ptr, 8)
-      t8
-    end
   end
 end
