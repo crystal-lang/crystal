@@ -29,6 +29,10 @@ struct UUID
     new(new_bytes, variant, version)
   end
 
+  def self.empty
+    new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
+  end
+
   # Creates UUID from 16-bytes slice.
   def initialize(slice : Slice(UInt8), variant = Variant::RFC4122, version = Version::V4)
     raise ArgumentError.new "Invalid bytes length #{@bytes.size}, expected 16" unless slice.size == 16
@@ -103,10 +107,6 @@ struct UUID
   def version=(value : Version)
     raise ArgumentError.new "Can't set unknown version" if value.unknown?
     @bytes[6] = (@bytes[6] & 0xf) | (value.to_u8 << 4)
-  end
-
-  def self.empty
-    new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
   end
 
   # Returns 16-byte slice.
