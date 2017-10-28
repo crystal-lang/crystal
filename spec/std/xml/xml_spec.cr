@@ -225,8 +225,20 @@ describe XML do
     root.text = "Peter"
     root.text.should eq("Peter")
 
-    root.content = "Foo"
-    root.content.should eq("Foo")
+    root.content = "Foo 👌"
+    root.content.should eq("Foo 👌")
+  end
+
+  it "doesn't set invalid node content" do
+    doc = XML.parse(<<-XML
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      XML
+    )
+    root = doc.root.not_nil!
+    expect_raises(Exception, "Cannot escape") do
+      root.content = "\0"
+    end
   end
 
   it "gets empty content" do
