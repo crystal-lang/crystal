@@ -257,6 +257,31 @@ describe XML do
     root.name.should eq("last-name")
   end
 
+  it "doesn't set invalid node name" do
+    doc = XML.parse(<<-XML
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      XML
+    )
+    root = doc.root.not_nil!
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = " foo bar"
+    end
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = "foo bar"
+    end
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = "1foo"
+    end
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = "\0foo"
+    end
+  end
+
   it "gets encoding" do
     doc = XML.parse(<<-XML
         <?xml version='1.0' encoding='UTF-8'?>

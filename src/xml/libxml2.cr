@@ -294,6 +294,8 @@ lib LibXML
   fun xmlGetNsList(doc : Doc*, node : Node*) : NS**
 
   fun xmlSetProp(node : Node*, name : UInt8*, value : UInt8*) : Attr*
+
+  fun xmlValidateNameValue(value : UInt8*) : Int
 end
 
 LibXML.xmlGcMemSetup(

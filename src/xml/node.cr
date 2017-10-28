@@ -274,7 +274,18 @@ struct XML::Node
     if document? || text? || cdata? || fragment?
       raise XML::Error.new("Can't set name of XML #{type}", 0)
     end
-    LibXML.xmlNodeSetName(self, name.to_s)
+
+    name = name.to_s
+
+    if name.includes? '\0'
+      raise XML::Error.new("Invalid node name: #{name.inspect} (contains null character)", 0)
+    end
+
+    if LibXML.xmlValidateNameValue(name) == 0
+      raise XML::Error.new("Invalid node name: #{name.inspect}", 0)
+    end
+
+    LibXML.xmlNodeSetName(self, name)
   end
 
   # Returns the namespace for this node or `nil` if not found.
