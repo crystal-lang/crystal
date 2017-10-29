@@ -1197,6 +1197,30 @@ describe "macro methods" do
     end
   end
 
+  describe "proc notation methods" do
+    it "gets single input" do
+      assert_macro "x", %({{x.inputs}}), [ProcNotation.new([Path.new("SomeType")] of ASTNode, Path.new("SomeResult"))] of ASTNode, "[SomeType]"
+    end
+
+    it "gets single output" do
+      assert_macro "x", %({{x.output}}), [ProcNotation.new([Path.new("SomeType")] of ASTNode, Path.new("SomeResult"))] of ASTNode, "SomeResult"
+    end
+
+    it "gets multiple inputs" do
+      assert_macro "x", %({{x.inputs}}), [ProcNotation.new([Path.new("SomeType"), Path.new("OtherType")] of ASTNode)] of ASTNode, "[SomeType, OtherType]"
+    end
+
+    it "gets empty output" do
+      assert_macro "x", %({{x.output}}), [ProcNotation.new([Path.new("SomeType")] of ASTNode)] of ASTNode, "nil"
+    end
+  end
+
+  describe "proc literal methods" do
+    it "gets def of proc" do
+      assert_macro "x", %({{x.method.body}}), [ProcLiteral.new(Def.new("->", body: 1.int32))] of ASTNode, "1"
+    end
+  end
+
   describe "def methods" do
     it "executes name" do
       assert_macro "x", %({{x.name}}), [Def.new("some_def")] of ASTNode, "some_def"
