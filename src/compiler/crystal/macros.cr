@@ -961,8 +961,15 @@ module Crystal::Macros
     end
   end
 
-  # class ProcNotation < ASTNode
-  # end
+  class ProcNotation < ASTNode
+    # Returns the argument types, or an empty list if no arguments.
+    def inputs : ArrayLiteral(ASTNode)
+    end
+
+    # Returns the output type, or nil if there is no return type.
+    def output : ASTNode | NilLiteral
+    end
+  end
 
   # A method definition.
   class Def < ASTNode
@@ -1232,8 +1239,12 @@ module Crystal::Macros
   # class ExceptionHandler < ASTNode
   # end
 
-  # class ProcLiteral < ASTNode
-  # end
+  class ProcLiteral < ASTNode
+    # Return the function declaration for this proc.
+    # The name of the function will be "->"
+    def method : Def
+    end
+  end
 
   # class ProcPointer < ASTNode
   # end

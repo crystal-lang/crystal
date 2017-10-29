@@ -1084,6 +1084,30 @@ module Crystal
     end
   end
 
+  class ProcNotation
+    def interpret(method, args, block, interpreter)
+      case method
+      when "inputs"
+        interpret_argless_method(method, args) { ArrayLiteral.new(@inputs || [] of ASTNode) }
+      when "output"
+        interpret_argless_method(method, args) { @output || NilLiteral.new }
+      else
+        super
+      end
+    end
+  end
+
+  class ProcLiteral
+    def interpret(method, args, block, interpreter)
+      case method
+      when "method"
+        interpret_argless_method(method, args) { @def }
+      else
+        super
+      end
+    end
+  end
+
   class Expressions
     def interpret(method, args, block, interpreter)
       case method
