@@ -1100,8 +1100,8 @@ module Crystal
   class ProcLiteral
     def interpret(method, args, block, interpreter)
       case method
-      when "method"
-        interpret_argless_method(method, args) { @def }
+      when "args", "body"
+        @def.interpret(method, args, block, interpreter)
       else
         super
       end

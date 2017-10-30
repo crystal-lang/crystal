@@ -1240,9 +1240,17 @@ module Crystal::Macros
   # end
 
   class ProcLiteral < ASTNode
-    # Return the function declaration for this proc.
-    # The name of the function will be "->"
-    def method : Def
+    # Returns the arguments of this proc.
+    def args : ArrayLiteral(Arg)
+    end
+
+    # Returns the body of this proc.
+    def body : ASTNode
+    end
+
+    # Returns the receiver (for example `self`) of this proc,
+    # or `Nop` if not specified.
+    def receiver : ASTNode | Nop
     end
   end
 

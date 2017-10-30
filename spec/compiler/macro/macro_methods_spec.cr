@@ -1216,8 +1216,16 @@ describe "macro methods" do
   end
 
   describe "proc literal methods" do
-    it "gets def of proc" do
-      assert_macro "x", %({{x.method.body}}), [ProcLiteral.new(Def.new("->", body: 1.int32))] of ASTNode, "1"
+    it "executes body" do
+      assert_macro "x", %({{x.body}}), [ProcLiteral.new(Def.new("->", body: 1.int32))] of ASTNode, "1"
+    end
+
+    it "executes args" do
+      assert_macro "x", %({{x.args}}), [ProcLiteral.new(Def.new("->", args: [Arg.new("z")]))] of ASTNode, "[z]"
+    end
+
+    it "executes receiver" do
+      assert_macro "x", %({{x.receiver}}), [ProcLiteral.new(Def.new("->", receiver: Var.new("self")))] of ASTNode, "self"
     end
   end
 
