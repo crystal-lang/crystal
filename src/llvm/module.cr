@@ -57,6 +57,12 @@ class LLVM::Module
     LibLLVM.write_bitcode_to_file self, filename
   end
 
+  {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
+    def write_bitcode_with_summary_to_file(filename : String)
+      LibLLVMExt.write_bitcode_with_summary_to_file self, filename
+    end
+  {% end %}
+
   def write_bitcode_to_memory_buffer
     MemoryBuffer.new(LibLLVM.write_bitcode_to_memory_buffer self)
   end
