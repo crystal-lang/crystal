@@ -6,6 +6,8 @@
 #include <llvm/IR/DebugLoc.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Metadata.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/FileSystem.h>
 
 using namespace llvm;
 
@@ -17,6 +19,11 @@ using namespace llvm;
 
 #define LLVM_VERSION_LE(major, minor) \
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
+
+#if LLVM_VERSION_GE(4, 0)
+#include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/Analysis/ModuleSummaryAnalysis.h>
+#endif
 
 #if LLVM_VERSION_LE(4, 0)
 typedef struct LLVMOpaqueDIBuilder *LLVMDIBuilderRef;
@@ -414,6 +421,20 @@ LLVMValueRef LLVMExtBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef 
                                       Bundles, Name));
 #else
   return LLVMBuildInvoke(B, Fn, Args, NumArgs, Then, Catch, Name);
+#endif
+}
+
+void LLVMWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) {
+#if LLVM_VERSION_GE(4, 0)
+  // https://github.com/ldc-developers/ldc/pull/1840/files
+  Module *m = unwrap(mref);
+
+  std::error_code EC;
+  raw_fd_ostream OS(File, EC, sys::fs::F_None);
+  if (EC) return;
+
+  llvm::ModuleSummaryIndex moduleSummaryIndex = llvm::buildModuleSummaryIndex(*m, nullptr, nullptr);
+  llvm::WriteBitcodeToFile(m, OS, true, &moduleSummaryIndex, true);
 #endif
 }
 

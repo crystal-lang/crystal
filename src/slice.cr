@@ -533,6 +533,15 @@ struct Slice(T)
     nil
   end
 
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    {% if T == UInt8 %}
+      hasher.bytes(self)
+    {% else %}
+      super hasher
+    {% end %}
+  end
+
   protected def check_writable
     raise "Can't write to read-only Slice" if @read_only
   end

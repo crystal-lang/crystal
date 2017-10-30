@@ -882,6 +882,7 @@ describe "Parser" do
   it_parses "foo(/ /)", Call.new(nil, "foo", regex(" "))
   it_parses "foo(/ /, / /)", Call.new(nil, "foo", [regex(" "), regex(" ")] of ASTNode)
   it_parses "foo a, / /", Call.new(nil, "foo", ["a".call, regex(" ")] of ASTNode)
+  it_parses "foo /;/", Call.new(nil, "foo", regex(";"))
 
   it_parses "$?", Global.new("$?")
   it_parses "$?.foo", Call.new(Global.new("$?"), "foo")

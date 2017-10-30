@@ -68,7 +68,7 @@ class Crystal::Command
           when .invalid_byte_sequence?
             error "'#{result.filename}' is not a valid Crystal source file", exit_code: nil
           when .bug?
-            error "there's a bug formatting '#{result.filename}', please report it including the contents of the file: https://github.com/crystal-lang/crystal/issues", exit_code: nil
+            error "there's a bug formatting '#{result.filename}', to show more information, please run:\n\n  $ crystal tool format '#{result.filename}'", exit_code: nil
           end
         end
         exit 1
@@ -97,7 +97,7 @@ class Crystal::Command
       end
       exit 1
     rescue ex
-      couldnt_format "STDIN"
+      couldnt_format "STDIN", ex
       STDERR.puts
       exit 1
     end
@@ -124,7 +124,7 @@ class Crystal::Command
       end
       exit 1
     rescue ex
-      couldnt_format "'#{filename}'"
+      couldnt_format "'#{filename}'", ex
       STDERR.puts
       exit 1
     end
@@ -185,8 +185,19 @@ class Crystal::Command
     end
   end
 
-  private def couldnt_format(file)
-    STDERR << "Error:".colorize(:red).toggle(@color) << ", " <<
-      "couldn't format " << file << ", please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
+  private def couldnt_format(file, ex = nil)
+    STDERR << "Error: ".colorize(:red).toggle(@color)
+
+    if ex
+      STDERR.puts "couldn't format #{file}, please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
+      STDERR.puts
+
+      ex.inspect_with_backtrace STDERR
+    else
+      STDERR << "there's a bug formatting #{file}, to show more information, please run:\n\n  $ crystal tool format #{file}"
+    end
+
+    STDERR.puts
+    STDERR.flush
   end
 end
