@@ -1963,6 +1963,30 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
       raise "reject expects a block" unless block
       filter(object, klass, block, interpreter, keep: false)
     end
+  when "reduce"
+    raise "reduce expects a block" unless block
+    accumulate_arg = block.args.first?
+    value_arg = block.args[1]?
+    case args.size
+    when 0
+      object.interpret_argless_method(method, args) do
+        object.elements.reduce do |accumulate, elem|
+          interpreter.define_var(accumulate_arg.name, accumulate) if accumulate_arg
+          interpreter.define_var(value_arg.name, elem) if value_arg
+          interpreter.accept block.body
+        end
+      end
+    when 1
+      object.interpret_one_arg_method(method, args) do |arg|
+        object.elements.reduce(arg) do |accumulate, elem|
+          interpreter.define_var(accumulate_arg.name, accumulate) if accumulate_arg
+          interpreter.define_var(value_arg.name, elem) if value_arg
+          interpreter.accept block.body
+        end
+      end
+    else
+      raise "only 0 or 1 args expected for reduce, got #{args.size}"
+    end
   when "shuffle"
     klass.new(object.elements.shuffle)
   when "sort"

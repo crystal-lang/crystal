@@ -555,6 +555,14 @@ describe "macro methods" do
       assert_macro "", %({{[1, 2, 3].map { |e| e == 2 }}}), [] of ASTNode, "[false, true, false]"
     end
 
+    it "executes reduce with no initial value" do
+      assert_macro "", %({{[1, 2, 3].reduce { |acc, val| acc * val }}}), [] of ASTNode, "6"
+    end
+
+    it "executes reduce with initial value" do
+      assert_macro "", %({{[1, 2, 3].reduce(4) { |acc, val| acc * val }}}), [] of ASTNode, "24"
+    end
+
     it "executes map with constants" do
       assert_macro "x", %({{x.map { |e| e.id }}}), [ArrayLiteral.new([Path.new("Foo"), Path.new("Bar")] of ASTNode)] of ASTNode, "[Foo, Bar]"
     end
