@@ -3558,7 +3558,7 @@ module Crystal
 
       if node_rescues = node.rescues
         node_rescues.each_with_index do |node_rescue, i|
-          skip_space_or_newline
+          skip_space_or_newline(column + 2, last: true)
           write_indent(column)
           write_keyword :rescue
 
@@ -3594,21 +3594,21 @@ module Crystal
       end
 
       if node_else = node.else
-        skip_space_or_newline
+        skip_space_or_newline(column + 2, last: true)
         write_indent(column)
         write_keyword :else
         format_nested(node_else, column)
       end
 
       if node_ensure = node.ensure
-        skip_space_or_newline
+        skip_space_or_newline(column + 2, last: true)
         write_indent(column)
         write_keyword :ensure
         format_nested(node_ensure, column)
       end
 
       unless implicit_handler
-        skip_space_or_newline
+        skip_space_or_newline(column + 2, last: true)
         check_end
         write_indent(column)
         write "end"
