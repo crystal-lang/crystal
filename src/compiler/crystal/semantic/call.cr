@@ -217,7 +217,7 @@ class Crystal::Call
     instantiate matches, owner, self_type: nil
   end
 
-  def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents)
+  def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true)
     signature = CallSignature.new(def_name, arg_types, block, named_args_types)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
@@ -225,7 +225,7 @@ class Crystal::Call
 
     # If we didn't find a match and this call doesn't have a receiver,
     # and we are not at the top level, let's try searching the top-level
-    if matches.empty? && !obj && owner != program
+    if matches.empty? && !obj && owner != program && search_in_toplevel
       program_matches = lookup_matches_with_signature(program, signature, search_in_parents)
       matches = program_matches unless program_matches.empty?
     end
@@ -592,10 +592,10 @@ class Crystal::Call
     if parents && parents.size > 0
       parents.each_with_index do |parent, i|
         if parent.lookup_first_def(enclosing_def.name, block)
-          return lookup_matches_in_type(parent, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize)
+          return lookup_matches_in_type(parent, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false)
         end
       end
-      lookup_matches_in_type(parents.last, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize)
+      lookup_matches_in_type(parents.last, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false)
     else
       raise "there's no superclass in this scope"
     end
