@@ -277,7 +277,7 @@ module Crystal
           @token.type = :DELIMITER_START
           @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/')
           @token.raw = "/"
-        elsif char.ascii_whitespace? || char == '\0' || char == ';'
+        elsif char.ascii_whitespace? || char == '\0'
           @token.type = :"/"
         elsif @wants_regex
           @token.type = :DELIMITER_START
