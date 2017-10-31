@@ -61,7 +61,7 @@ module Crystal
     @inside_cond : Int32
     @inside_lib : Int32
     @inside_struct_or_union : Int32
-    @dot_column : Int32?
+    @multiline_call_indent : Int32?
     @implicit_exception_handler_indent : Int32
     @last_write : String
     @exp_needs_indent : Bool
@@ -99,7 +99,7 @@ module Crystal
       @inside_cond = 0
       @inside_lib = 0
       @inside_struct_or_union = 0
-      @dot_column = nil
+      @multiline_call_indent = nil
       @implicit_exception_handler_indent = 0
       @last_write = ""
       @exp_needs_indent = true
@@ -234,7 +234,7 @@ module Crystal
         else
           accept exp
         end
-        @dot_column = nil
+        @multiline_call_indent = nil
 
         found_comment = skip_space
 
@@ -2082,6 +2082,7 @@ module Crystal
         end
 
         accept obj
+        obj_width = @column - @indent
 
         passed_backslash_newline = @token.passed_backslash_newline
 
@@ -2093,18 +2094,18 @@ module Crystal
 
         skip_space
 
-        @dot_column = nil unless obj.is_a?(Call)
+        @multiline_call_indent = nil unless obj.is_a?(Call)
 
         # It's something like `foo.bar\n
         #                         .baz`
         if (@token.type == :NEWLINE) || @wrote_newline
-          newline_indent = @dot_column || @indent + 2
+          newline_indent = @multiline_call_indent || @indent + 2
           indent(newline_indent) { consume_newlines }
           write_indent(newline_indent)
         end
 
         if @token.type != :"."
-          old_dot_column = @dot_column
+          old_multiline_call_indent = @multiline_call_indent
 
           # It's an operator
           if @token.type == :"["
@@ -2148,7 +2149,7 @@ module Crystal
               accept_assign_value_after_equals last_arg
             end
 
-            @dot_column = old_dot_column
+            @multiline_call_indent = old_multiline_call_indent
             return false
           elsif @token.type == :"[]"
             write "[]"
@@ -2163,7 +2164,7 @@ module Crystal
               end
             end
 
-            @dot_column = old_dot_column
+            @multiline_call_indent = old_multiline_call_indent
             return false
           else
             write " " if needs_space && !passed_backslash_newline
@@ -2199,19 +2200,19 @@ module Crystal
             end
           end
 
-          @dot_column = old_dot_column
+          @multiline_call_indent = old_multiline_call_indent
           return false
         end
 
         next_token
         skip_space
         if (@token.type == :NEWLINE) || @wrote_newline
-          newline_indent = @dot_column || @indent + 2
+          newline_indent = @multiline_call_indent || @indent + 2
           indent(newline_indent) { consume_newlines }
           write_indent(newline_indent)
         end
 
-        @dot_column = @column
+        @multiline_call_indent = newline_indent if newline_indent
         write "."
 
         skip_space_or_newline
@@ -2227,7 +2228,7 @@ module Crystal
         return false
       end
 
-      current_dot_column = @dot_column
+      current_multiline_call_indent = @multiline_call_indent
 
       assignment = node.name.ends_with?('=') && node.name.chars.any?(&.ascii_letter?)
 
@@ -2258,7 +2259,7 @@ module Crystal
           accept_assign_value_after_equals node.args.last
         end
 
-        @dot_column = current_dot_column
+        @multiline_call_indent = current_multiline_call_indent
         return false
       end
 
@@ -2278,7 +2279,7 @@ module Crystal
           skip_space_or_newline
           check :")"
           next_token
-          @dot_column = current_dot_column
+          @multiline_call_indent = current_multiline_call_indent
           return false
         end
 
@@ -2298,6 +2299,7 @@ module Crystal
 
       if block = node.block
         needs_space = !has_parentheses || has_args
+        block_indent = @multiline_call_indent || @indent
         skip_space
         if has_parentheses && @token.type == :")"
           if ends_with_newline
@@ -2306,11 +2308,11 @@ module Crystal
           end
           write ")"
           next_token_skip_space_or_newline
-          format_block block, needs_space
-          @dot_column = current_dot_column
+          indent(block_indent) { format_block block, needs_space }
+          @multiline_call_indent = current_multiline_call_indent
           return false
         end
-        format_block block, needs_space
+        indent(block_indent) { format_block block, needs_space }
       end
 
       if has_args || node.block_arg
@@ -2320,7 +2322,7 @@ module Crystal
         write_token :")"
       end
 
-      @dot_column = current_dot_column
+      @multiline_call_indent = current_multiline_call_indent
       false
     end
 
@@ -2507,7 +2509,7 @@ module Crystal
 
     def format_block(node, needs_space)
       needs_comma = false
-      @dot_column = nil
+      @multiline_call_indent = nil
       old_inside_call_or_assign = @inside_call_or_assign
       @inside_call_or_assign = 0
 
