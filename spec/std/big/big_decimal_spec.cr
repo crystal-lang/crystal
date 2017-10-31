@@ -4,67 +4,67 @@ require "big"
 describe BigDecimal do
   it "initializes from valid input" do
     BigDecimal.new
-              .should eq(BigDecimal.new(BigInt.new(0)))
+      .should eq(BigDecimal.new(BigInt.new(0)))
 
     BigDecimal.new("41.0123")
-              .should eq(BigDecimal.new(BigInt.new(410123), 4))
+      .should eq(BigDecimal.new(BigInt.new(410123), 4))
 
     BigDecimal.new(1)
-              .should eq(BigDecimal.new(BigInt.new(1)))
+      .should eq(BigDecimal.new(BigInt.new(1)))
 
     BigDecimal.new(-1)
-              .should eq(BigDecimal.new(BigInt.new(-1)))
+      .should eq(BigDecimal.new(BigInt.new(-1)))
 
     BigDecimal.new(0)
-              .should eq(BigDecimal.new(BigInt.new(0)))
+      .should eq(BigDecimal.new(BigInt.new(0)))
 
     BigDecimal.new("42.0123")
-              .should eq(BigDecimal.new(BigInt.new(420123), 4))
+      .should eq(BigDecimal.new(BigInt.new(420123), 4))
 
     BigDecimal.new("0.0")
-              .should eq(BigDecimal.new(BigInt.new(0)))
+      .should eq(BigDecimal.new(BigInt.new(0)))
 
     BigDecimal.new(".2")
-              .should eq(BigDecimal.new(BigInt.new(2), 1))
+      .should eq(BigDecimal.new(BigInt.new(2), 1))
 
     BigDecimal.new("2.")
-              .should eq(BigDecimal.new(BigInt.new(2)))
+      .should eq(BigDecimal.new(BigInt.new(2)))
 
     BigDecimal.new("-.2")
-              .should eq(BigDecimal.new(BigInt.new(-2), 1))
+      .should eq(BigDecimal.new(BigInt.new(-2), 1))
 
     BigDecimal.new("-2.")
-              .should eq(BigDecimal.new(BigInt.new(-2)))
+      .should eq(BigDecimal.new(BigInt.new(-2)))
 
     BigDecimal.new("-0.1")
-              .should eq(BigDecimal.new(BigInt.new(-1), 1))
+      .should eq(BigDecimal.new(BigInt.new(-1), 1))
 
     BigDecimal.new("-1.1")
-              .should eq(BigDecimal.new(BigInt.new(-11), 1))
+      .should eq(BigDecimal.new(BigInt.new(-11), 1))
 
     BigDecimal.new("123871293879123790874230984702938470917238971298379127390182739812739817239087123918273098.1029387192083710928371092837019283701982370918237")
-              .should eq(BigDecimal.new(BigInt.new("1238712938791237908742309847029384709172389712983791273901827398127398172390871239182730981029387192083710928371092837019283701982370918237".to_big_i), 49))
+      .should eq(BigDecimal.new(BigInt.new("1238712938791237908742309847029384709172389712983791273901827398127398172390871239182730981029387192083710928371092837019283701982370918237".to_big_i), 49))
 
     BigDecimal.new("-123871293879123790874230984702938470917238971298379127390182739812739817239087123918273098.1029387192083710928371092837019283701982370918237")
-              .should eq(BigDecimal.new(BigInt.new("-1238712938791237908742309847029384709172389712983791273901827398127398172390871239182730981029387192083710928371092837019283701982370918237".to_big_i), 49))
+      .should eq(BigDecimal.new(BigInt.new("-1238712938791237908742309847029384709172389712983791273901827398127398172390871239182730981029387192083710928371092837019283701982370918237".to_big_i), 49))
 
     BigDecimal.new("-0.1029387192083710928371092837019283701982370918237")
-              .should eq(BigDecimal.new(BigInt.new("-1029387192083710928371092837019283701982370918237".to_big_i), 49))
+      .should eq(BigDecimal.new(BigInt.new("-1029387192083710928371092837019283701982370918237".to_big_i), 49))
 
     BigDecimal.new("2")
-              .should eq(BigDecimal.new(BigInt.new(2)))
+      .should eq(BigDecimal.new(BigInt.new(2)))
 
     BigDecimal.new("-1")
-              .should eq(BigDecimal.new(BigInt.new(-1)))
+      .should eq(BigDecimal.new(BigInt.new(-1)))
 
     BigDecimal.new("0")
-              .should eq(BigDecimal.new(BigInt.new(0)))
+      .should eq(BigDecimal.new(BigInt.new(0)))
 
     BigDecimal.new("-0")
-              .should eq(BigDecimal.new(BigInt.new(0)))
+      .should eq(BigDecimal.new(BigInt.new(0)))
 
     BigDecimal.new(BigDecimal.new(2))
-              .should eq(BigDecimal.new(2.to_big_i))
+      .should eq(BigDecimal.new(2.to_big_i))
   end
 
   it "raises InvalidBigDecimalException when initializing from invalid input" do

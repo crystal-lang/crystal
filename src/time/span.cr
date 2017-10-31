@@ -160,21 +160,21 @@ struct Time::Span
   # Returns the number of full hours of the day (`0..23`) in this time span.
   def hours : Int32
     to_i.remainder(SECONDS_PER_DAY)
-        .tdiv(SECONDS_PER_HOUR)
-        .to_i
+      .tdiv(SECONDS_PER_HOUR)
+      .to_i
   end
 
   # Returns the number of full minutes of the hour (`0..59`) in this time span.
   def minutes : Int32
     to_i.remainder(SECONDS_PER_HOUR)
-        .tdiv(SECONDS_PER_MINUTE)
-        .to_i
+      .tdiv(SECONDS_PER_MINUTE)
+      .to_i
   end
 
   # Returns the number of full seconds of the minute (`0..59`) in this time span.
   def seconds : Int32
     to_i.remainder(SECONDS_PER_MINUTE)
-        .to_i
+      .to_i
   end
 
   # Returns the number of milliseconds of the second (`0..999`) in this time span.
