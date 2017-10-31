@@ -88,9 +88,9 @@ std_spec: $(O)/std_spec ## Run standard library specs
 compiler_spec: $(O)/compiler_spec ## Run compiler specs
 	$(O)/compiler_spec $(SPEC_FLAGS)
 
-.PHONY: doc
-doc: ## Generate standard library documentation
-	$(BUILD_PATH) ./bin/crystal doc src/docs_main.cr
+.PHONY: docs
+docs: ## Generate standard library documentation
+	$(BUILD_PATH) ./bin/crystal docs src/docs_main.cr
 
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler

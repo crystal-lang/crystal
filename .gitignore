@@ -10,7 +10,7 @@ coverage/
 /Makefile.local
 all_spec
 /tmp
-/doc/
+/docs/
 /src/llvm/ext/llvm_ext.o
 /src/llvm/ext/llvm_ext.dwo
 /src/ext/*.o
