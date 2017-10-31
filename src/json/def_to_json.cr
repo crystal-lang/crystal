@@ -1,9 +1,25 @@
 module JSON
   # The `def_to_json` macro generates a `to_json(json : JSON::Builder)` method based on provided *mappings*.
   #
-  # It is a lightweight alternative to `JSON.mapping` if you don't need to declare instance variables and a parser.
+  # It is a lightweight read-only alternative to `JSON.mapping` reducing boilerplate code from manually writing to a `JSON::Builder`.
   #
-  # The generated method invoks `to_json(JSON::Builder)` on each of the values returned by the *value* expression,
+  # ### Usage
+  #
+  # `JSON.def_to_json` receives *mappings* as a series of named arguments, a `NamedTupleLiteral`, or a `HashLiteral`,
+  # whose keys will define JSON properties.
+  #
+  # The value of each key can be a hash or `NamedTupleLiteral` with the following options:
+  # * **value**: the Crystal expression to determine the value. By default it is equal to the property name of the current  *key*
+  #   on the Crystal object (as opposed to the key in the JSON document)
+  # * **emit_null**: if `true`, emits a `null` value if the *value* is `nil` (by default nulls are not emitted)
+  # * **converter**: specify an alternate type for generation. The converter must define `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
+  # * **root**: assume the value is inside a JSON object with a given key
+  #
+  # If it is not a hash or `NamedTupleLiteral`, the expression will be interpreted as `value` parameter. As a shortcut `_` represents
+  # a call to a method of the same name as `key`: so `location: _`, ``location: location` and `location: { value: location }` are equivalent.
+  # This macro receives a from JSON keys to their value.
+  #
+  # The generated method invokes `to_json(JSON::Builder)` on each of the values returned by the *value* expression,
   # or - if a converter is specified - `to_json(value, JSON::Builder)` on the converter.
   #
   # ### Example
@@ -12,7 +28,7 @@ module JSON
   # require "json"
   #
   # record Location, lat : Float64, long : Float64 do
-  #   JSON.def_to_json([lat, long])
+  #   JSON.def_to_json({lat: _, long: _})
   # end
   #
   # record House, street : String, street_number : Int32, location : Location do
@@ -35,21 +51,6 @@ module JSON
   # house = House.new("Crystal Road", 1234, Location.new(12.3, 34.5))
   # house.to_json # => %({"address":"Crystal Road 1234","loc":{"lat":12.3,"long":34.5},"empty_field":null,"next_number":1235})
   # ```
-  #
-  # ### Usage
-  #
-  # `JSON.def_to_json` must receive a series of named arguments, or a named tuple literal, or a hash literal,
-  # whose keys will define JSON properties.
-  #
-  # The value of each key can be a hash or named tuple literal with the following options:
-  # * **value**: the Crystal expression to determine the value. By default it is equal to the property name of the current  *key*
-  #   on the Crystal object (as opposed to the key in the JSON document)
-  # * **emit_null**: if `true`, emits a `null` value if the *value* is `nil` (by default nulls are not emitted)
-  # * **converter**: specify an alternate type for generation. The converter must define `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
-  # * **root**: assume the value is inside a JSON object with a given key
-  #
-  # If it is not a hash or named tuple literal, the expression will be interpreted as `value` parameter. As a shortcut `_` represents
-  # a call to a method of the same name as `key`: so `location: _`, ``location: location` and `location: { value: location }` are equivalent.
   macro def_to_json(mappings)
     def to_json(json : ::JSON::Builder)
       json.object do
@@ -78,6 +79,8 @@ module JSON
   # In contrast to the `to_json(JSON::Builder)` method defined by `def_to_json(mapping)` the values for this JSON generator
   # are retrieved from calling a method on the object provided as the first argument whose type is declared as first argument
   # to this macro.
+  #
+  # ### Example
   #
   # ```
   # require "json"
