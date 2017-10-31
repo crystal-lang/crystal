@@ -25,7 +25,7 @@ end
 describe BigRational do
   it "initialize" do
     BigRational.new(BigInt.new(10), BigInt.new(3))
-               .should eq(BigRational.new(10, 3))
+      .should eq(BigRational.new(10, 3))
 
     expect_raises(DivisionByZeroError) do
       BigRational.new(BigInt.new(2), BigInt.new(0))

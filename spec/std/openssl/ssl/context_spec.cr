@@ -107,10 +107,10 @@ describe OpenSSL::SSL::Context do
     default_options = context.options       # options we can't unset
 
     context.add_options(OpenSSL::SSL::Options::ALL)
-           .should eq(default_options | OpenSSL::SSL::Options::ALL)
+      .should eq(default_options | OpenSSL::SSL::Options::ALL)
 
     context.add_options(OpenSSL::SSL::Options.flags(NO_SSL_V2, NO_SSL_V3))
-           .should eq(OpenSSL::SSL::Options.flags(ALL, NO_SSL_V2, NO_SSL_V3))
+      .should eq(OpenSSL::SSL::Options.flags(ALL, NO_SSL_V2, NO_SSL_V3))
   end
 
   it "removes options" do
@@ -131,7 +131,7 @@ describe OpenSSL::SSL::Context do
     context = OpenSSL::SSL::Context::Client.insecure
     context.add_modes(OpenSSL::SSL::Modes::AUTO_RETRY).should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
     context.add_modes(OpenSSL::SSL::Modes::RELEASE_BUFFERS)
-           .should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+      .should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
   end
 
   it "removes modes" do
