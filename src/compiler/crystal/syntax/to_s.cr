@@ -201,13 +201,7 @@ module Crystal
       if @inside_macro > 0
         node.expressions.each &.accept self
       else
-        node.expressions.each do |exp|
-          unless exp.nop?
-            append_indent
-            exp.accept self
-            newline
-          end
-        end
+        accept_with_maybe_begin_end node
       end
       false
     end
@@ -1504,7 +1498,17 @@ module Crystal
 
     def accept_with_indent(node : Expressions)
       with_indent do
-        node.accept self
+        if @inside_macro > 0
+          node.expressions.each &.accept self
+        else
+          node.expressions.each do |exp|
+            unless exp.nop?
+              append_indent
+              exp.accept self
+              newline
+            end
+          end
+        end
       end
     end
 
