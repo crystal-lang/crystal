@@ -92,4 +92,19 @@ class Crystal::Doc::Macro
   def must_be_included?
     @generator.must_include? @macro
   end
+
+  def to_json(builder : JSON::Builder)
+    builder.object do
+      builder.field "id", id
+      builder.field "html_id", html_id
+      builder.field "name", name
+      builder.field "doc", doc
+      builder.field "summary", formatted_summary
+      builder.field "abstract", abstract?
+      builder.field "args", args
+      builder.field "args_string", args_to_s
+      builder.field "source_link", source_link
+      builder.field "def", self.macro
+    end
+  end
 end
