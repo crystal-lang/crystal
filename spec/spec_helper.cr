@@ -71,7 +71,7 @@ def assert_normalize(from, to, flags = nil)
   normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip)
+  to_nodes.to_s(toplevel_expressions: true).strip.should eq(to.strip)
 end
 
 def assert_expand(from : String, to)
@@ -80,7 +80,7 @@ end
 
 def assert_expand(from_nodes : ASTNode, to)
   to_nodes = LiteralExpander.new(Program.new).expand(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip)
+  to_nodes.to_s(toplevel_expressions: true).strip.should eq(to.strip)
 end
 
 def assert_expand_second(from : String, to)
@@ -97,7 +97,7 @@ def assert_after_cleanup(before, after)
   # before = inject_primitives(before)
   node = Parser.parse(before)
   result = semantic node
-  result.node.to_s.strip.should eq(after.strip)
+  result.node.to_s(toplevel_expressions: true).strip.should eq(after.strip)
 end
 
 def assert_error(str, message, inject_primitives = true)
@@ -168,7 +168,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     call = Call.new(nil, "print", Var.new("__tempvar"))
     exps = Expressions.new([assign, call] of ASTNode)
     ast.expressions[-1] = exps
-    code = ast.to_s
+    code = ast.to_s(toplevel_expressions: true)
 
     output_filename = Crystal.tempfile("crystal-spec-output")
 

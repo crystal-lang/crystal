@@ -80,7 +80,7 @@ module Crystal
       end
 
       private def self.ast_to_s(node)
-        source = String.build { |io| node.to_s(io, emit_doc: true) }
+        source = node.to_s(emit_doc: true, toplevel_expressions: true)
 
         # Re-indentation is needed for `MacroIf` and `MacroFor`, because they have
         # `MacroBody`, which is sub string of source code, in other words they may

@@ -60,7 +60,12 @@ module Crystal
       @str.puts
       @str << "# " << node.filename
       @str.puts
-      node.node.accept self
+      case body = node.node
+      when Expressions
+        body.expressions.each &.accept self
+      else
+        body.accept self
+      end
       false
     end
 

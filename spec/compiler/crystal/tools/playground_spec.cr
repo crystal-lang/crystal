@@ -3,12 +3,12 @@ require "../../../spec_helper"
 private def instrument(source)
   ast = Parser.new(source).parse
   instrumented = Playground::AgentInstrumentorTransformer.transform ast
-  instrumented.to_s
+  instrumented.to_s(toplevel_expressions: true)
 end
 
 private def assert_agent(source, expected)
   # parse/to_s expected so block syntax and spaces do not bother
-  expected = Parser.new(expected).parse.to_s
+  expected = Parser.new(expected).parse.to_s(toplevel_expressions: true)
 
   instrument(source).should contain(expected)
 
@@ -18,7 +18,7 @@ end
 
 private def assert_agent_eq(source, expected)
   # parse/to_s expected so block syntax and spaces do not bother
-  expected = Parser.new(expected).parse.to_s
+  expected = Parser.new(expected).parse.to_s(toplevel_expressions: true)
   instrument(source).should eq(expected)
 end
 

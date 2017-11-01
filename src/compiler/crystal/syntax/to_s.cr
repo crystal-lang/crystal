@@ -7,8 +7,12 @@ module Crystal
       to_s(io)
     end
 
-    def to_s(io, emit_loc_pragma = false, emit_doc = false)
-      visitor = ToSVisitor.new(io, emit_loc_pragma: emit_loc_pragma, emit_doc: emit_doc)
+    def to_s(**args)
+      String.build { |io| to_s io, **args }
+    end
+
+    def to_s(io, emit_loc_pragma = false, emit_doc = false, toplevel_expressions = false)
+      visitor = ToSVisitor.new(io, emit_loc_pragma: emit_loc_pragma, emit_doc: emit_doc, toplevel_expressions: toplevel_expressions)
       self.accept visitor
     end
   end
@@ -16,13 +20,15 @@ module Crystal
   class ToSVisitor < Visitor
     @str : IO
 
-    def initialize(@str = IO::Memory.new, @emit_loc_pragma = false, @emit_doc = false)
+    def initialize(@str = IO::Memory.new, @emit_loc_pragma = false, @emit_doc = false, @toplevel_expressions = false)
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
     end
 
     def visit_any(node)
+      @toplevel_expressions = false unless node.is_a?(Expressions)
+
       if @emit_doc && (doc = node.doc) && !doc.empty?
         doc.each_line(chomp: false) do |line|
           append_indent
@@ -201,13 +207,7 @@ module Crystal
       if @inside_macro > 0
         node.expressions.each &.accept self
       else
-        node.expressions.each do |exp|
-          unless exp.nop?
-            append_indent
-            exp.accept self
-            newline
-          end
-        end
+        accept_with_maybe_begin_end node
       end
       false
     end
@@ -1502,9 +1502,23 @@ module Crystal
       @indent -= 1
     end
 
+    def accept_expressions(node)
+      if @inside_macro > 0
+        node.expressions.each &.accept self
+      else
+        node.expressions.each do |exp|
+          unless exp.nop?
+            append_indent
+            exp.accept self
+            newline
+          end
+        end
+      end
+    end
+
     def accept_with_indent(node : Expressions)
       with_indent do
-        node.accept self
+        accept_expressions node
       end
     end
 
@@ -1522,16 +1536,20 @@ module Crystal
     def accept_with_maybe_begin_end(node)
       case node
       when Expressions
-        if node.expressions.size == 1
-          @str << "("
-          node.expressions.first.accept self
-          @str << ")"
+        if @toplevel_expressions
+          accept_expressions node
         else
-          @str << keyword("begin")
-          newline
-          accept_with_indent(node)
-          append_indent
-          @str << keyword("end")
+          if node.expressions.size == 1
+            @str << "("
+            node.expressions.first.accept self
+            @str << ")"
+          else
+            @str << keyword("begin")
+            newline
+            accept_with_indent(node)
+            append_indent
+            @str << keyword("end")
+          end
         end
       when If, Unless, While, Until
         @str << keyword("begin")
