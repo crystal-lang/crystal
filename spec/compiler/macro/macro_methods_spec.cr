@@ -1223,9 +1223,27 @@ describe "macro methods" do
     it "executes args" do
       assert_macro "x", %({{x.args}}), [ProcLiteral.new(Def.new("->", args: [Arg.new("z")]))] of ASTNode, "[z]"
     end
+  end
 
-    it "executes receiver" do
-      assert_macro "x", %({{x.receiver}}), [ProcLiteral.new(Def.new("->", receiver: Var.new("self")))] of ASTNode, "self"
+  describe "proc pointer methods" do
+    it "executes obj when present" do
+      assert_macro "x", %({{x.obj}}), [ProcPointer.new(Var.new("some_object"), "method", [] of ASTNode)] of ASTNode, "some_object"
+    end
+
+    it "executes obj when absent" do
+      assert_macro "x", %({{x.obj}}), [ProcPointer.new(NilLiteral.new, "method", [] of ASTNode)] of ASTNode, "nil"
+    end
+
+    it "executes name" do
+      assert_macro "x", %({{x.name}}), [ProcPointer.new(Var.new("some_object"), "method", [] of ASTNode)] of ASTNode, "method"
+    end
+
+    it "executes args when empty" do
+      assert_macro "x", %({{x.args}}), [ProcPointer.new(Var.new("some_object"), "method", [] of ASTNode)] of ASTNode, "[]"
+    end
+
+    it "executes args when not empty" do
+      assert_macro "x", %({{x.args}}), [ProcPointer.new(Var.new("some_object"), "method", [Path.new("SomeType"), Path.new("OtherType")] of ASTNode)] of ASTNode, "[SomeType, OtherType]"
     end
   end
 
