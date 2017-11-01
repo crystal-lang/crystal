@@ -202,6 +202,14 @@ describe "FileUtils" do
     end
   end
 
+  describe "chown_r" do
+    it "change the owner of the directory recursively" do
+      # changing owners requires special privileges, so we test that method calls do compile
+      typeof(FileUtils.chown_r("/tmp/test"))
+      typeof(FileUtils.chown_r("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
+    end
+  end
+
   describe "rm_r" do
     it "deletes a directory recursively" do
       data_path = File.join(__DIR__, "data")
