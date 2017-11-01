@@ -6,19 +6,26 @@
   <link href="css/style.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="js/doc.js"></script>
   <title>README - <%= repository_name %></title>
+  <script type="text/javascript">
+  CrystalDoc.base_path = "";
+  </script>
 </head>
 <body>
 
 <div id="types-list">
   <div id="search-box">
-    <input type="search" id="search-input" placeholder="Search...">
+    <input type="search" id="search-input" placeholder="Search..." spellcheck="false">
   </div>
 
-  <ul>
-    <li class="current"><a href="index.html">README</a></li>
-  </ul>
+  <a href="index.html">README</a>
 
-  <%= ListItemsTemplate.new(types, nil) %>
+  <div class="search-results" class="hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <%= ListItemsTemplate.new(types, nil) %>
+  </div>
 </div>
 
 <div id="main-content">

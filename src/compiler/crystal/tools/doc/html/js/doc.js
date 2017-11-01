@@ -1,3 +1,10 @@
+window.CrystalDoc = (window.CrystalDoc || {});
+
+CrystalDoc.base_path = (CrystalDoc.base_path || "");
+
+<%= JsSearchTemplate.new %>
+<%= JsNavigatorTemplate.new %>
+
 document.addEventListener('DOMContentLoaded', function() {
   var sessionStorage;
   try {
@@ -37,53 +44,67 @@ document.addEventListener('DOMContentLoaded', function() {
     if(sessionStorage.getItem(_parent.getAttribute('data-id')) == '1') {
       _parent.className += ' open';
     }
-  };
+  }
 
-  var childMatch = function(type, regexp){
-    var types = type.querySelectorAll("ul li");
-    for (var j = 0; j < types.length; j ++) {
-      var t = types[j];
-      if(regexp.exec(t.getAttribute('data-name'))){ return true; };
-    };
-    return false;
-  };
+  var navigator = new Navigator(document.querySelector('#types-list'), searchInput, document.querySelector(".search-results"));
 
+  CrystalDoc.loadIndex();
   var searchTimeout;
+  var lastSearchText = false;
   var performSearch = function() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(function() {
       var text = searchInput.value;
-      var types = document.querySelectorAll('#types-list li');
-      var words = text.toLowerCase().split(/\s+/).filter(function(word) {
-        return word.length > 0;
-      });
-      var regexp = new RegExp(words.join('|'));
 
-      for(var i = 0; i < types.length; i++) {
-        var type = types[i];
-        if(words.length == 0 || regexp.exec(type.getAttribute('data-name')) || childMatch(type, regexp)) {
-          type.className = type.className.replace(/ +hide/g, '');
-          var is_parent     =   new RegExp("parent").exec(type.className);
-          var is_not_opened = !(new RegExp("open").exec(type.className));
-          if(childMatch(type,regexp) && is_parent && is_not_opened){
-            type.className += " open";
-          };
-        } else {
-          if(type.className.indexOf('hide') == -1) {
-            type.className += ' hide';
-          };
-        };
-        if(words.length == 0){
-          type.className = type.className.replace(/ +open/g, '');
-        };
+      if(text == "") {
+        CrystalDoc.toggleResultsList(false);
+      }else if(text != lastSearchText){
+        CrystalDoc.search(text);
+        navigator.highlightFirst();
+        searchInput.focus();
       }
+      lastSearchText = text;
+      sessionStorage.setItem(repositoryName + '::search-input:value', text);
     }, 200);
   };
-  if (searchInput.value.length > 0) {
-    performSearch();
+
+  if(location.hash.length > 3 && location.hash.substring(0,3) == "#q="){
+    // allows directly linking a search query which is then executed on the client
+    // this comes handy for establishing a custom browser search engine with https://crystal-lang.org/api/#q=%s as a search URL
+    // TODO: Add OpenSearch description
+    var searchQuery = location.hash.substring(3);
+    history.pushState({searchQuery: searchQuery}, "Search for " + searchQuery, location.href.replace(/#q=.*/, ""));
+    searchInput.value = searchQuery;
   }
+
+  if (searchInput.value.length > 0) {
+    document.addEventListener('CrystalDoc:loaded', performSearch);
+  }else {
+    var searchText = sessionStorage.getItem(repositoryName + '::search-input:value');
+    if(searchText){
+      searchInput.value = searchText;
+      document.addEventListener('CrystalDoc:loaded', performSearch);
+    }
+  }
+  searchInput.focus();
   searchInput.addEventListener('keyup', performSearch);
   searchInput.addEventListener('input', performSearch);
+
+  function handleShortkeys(event) {
+    switch(event.key) {
+      case "?":
+        // TODO: Show usage popup
+        break;
+
+      case "s":
+      case "/":
+        event.stopPropagation();
+        searchInput.focus();
+        break;
+    }
+  }
+
+  document.addEventListener('keyup', handleShortkeys);
 
   typesList.onscroll = function() {
     var y = typesList.scrollTop;
