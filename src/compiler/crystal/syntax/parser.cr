@@ -429,7 +429,7 @@ module Crystal
         false_val = parse_question_colon
         @no_type_declaration -= 1
 
-        cond = If.new(cond, true_val, false_val).at(cond).at_end(false_val)
+        cond = If.new(cond, true_val, false_val, ternary: true).at(cond).at_end(false_val)
       end
 
       cond
