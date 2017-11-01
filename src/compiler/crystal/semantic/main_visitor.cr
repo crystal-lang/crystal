@@ -341,6 +341,10 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
+        if var.type?.is_a?(Program) && node.name == "self"
+          node.raise "there's no self in this scope"
+        end
+
         meta_var = @meta_vars[node.name]
         check_closured meta_var
 
