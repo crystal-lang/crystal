@@ -14,7 +14,7 @@
       <br/>
       <div>
         <% if source_link = method.source_link %>
-          <a href="<%= source_link %>" class="source-link" target="_blank">View source</a>
+          <a href="<%= source_link %>" class="source-link" target="_blank" title="Open source file on <%= method.generator.repository_host %>">View source</a>
         <% end %>
       </div>
     </div>

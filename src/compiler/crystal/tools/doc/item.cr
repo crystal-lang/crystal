@@ -1,4 +1,6 @@
 module Crystal::Doc::Item
+  getter generator : Crystal::Doc::Generator
+
   def formatted_doc
     @generator.doc(self)
   end
