@@ -63,7 +63,10 @@ body {
   box-shadow: inset -3px 0 4px rgba(0,0,0,.35);
 }
 
-.sidebar .search-box {
+.sidebar-header {
+  box-shadow: 0 5px 10px rgba(0,0,0,.1);
+  margin-bottom: 12px;
+  background-color: #3b1e5c;
   padding: 8px 9px;
 }
 
