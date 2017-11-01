@@ -146,6 +146,29 @@ module FileUtils
     end
   end
 
+  # Changes the permissions of the directories and files recursively at the given *path*
+  #
+  # Symlinks are dereferenced, so that only the permissions of the symlink
+  # destination are changed, never the permissions of the symlink itself.
+  #
+  # ```
+  # File.chmod_r("foo", 0o755)
+  # File.stat("foo").perm # => 0o755
+  #
+  # File.chmod_r("foo", 0o700)
+  # File.stat("foo").perm # => 0o700
+  # ```
+  def chmod_r(path, mode : Int)
+    File.chmod(path, mode)
+    if Dir.exists?(path)
+      Dir.each_child(path) do |entry|
+        src = File.join(path, entry)
+        File.chmod(src, mode)
+        chmod_r(src, mode)
+      end
+    end
+  end
+
   # Creates a new directory at the given *path*. The linux-style permission *mode*
   # can be specified, with a default of 777 (0o777).
   #
