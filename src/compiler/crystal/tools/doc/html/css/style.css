@@ -222,6 +222,7 @@ body {
 .superclass-hierarchy .superclass + .superclass::before {
   content: "<";
   margin-right: 7px;
+  font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
 }
 
 .other-types-list li {
