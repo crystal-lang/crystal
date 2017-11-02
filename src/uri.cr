@@ -427,8 +427,9 @@ class URI
     end
   end
 
-  @@DEFAULT_PORTS = {
+  DEFAULT_PORTS = {
     "ftp"    => 21,
+    "ftps"   => 990,
     "gopher" => 70,
     "http"   => 80,
     "https"  => 443,
@@ -442,6 +443,6 @@ class URI
   }
 
   private def is_default_port?
-    return port.nil? || port == @@DEFAULT_PORTS[scheme]?
+    return port.nil? || port == DEFAULT_PORTS[scheme]?
   end
 end
