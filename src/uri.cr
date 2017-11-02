@@ -149,7 +149,7 @@ class URI
     if host
       io << host
     end
-    unless is_default_port?
+    unless port.nil? || default_port?
       io << ':'
       io << port
     end
@@ -442,7 +442,7 @@ class URI
     "telnet" => 23,
   }
 
-  private def is_default_port?
-    return port.nil? || port == DEFAULT_PORTS[scheme]?
+  private def default_port?
+    return port == DEFAULT_PORTS[scheme]?
   end
 end
