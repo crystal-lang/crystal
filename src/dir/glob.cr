@@ -1,18 +1,9 @@
 class Dir
   # Returns an array of all files that match against any of *patterns*.
   #
-  # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
+  # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
-  # * `*` matches an unlimited number of arbitrary characters.
-  #   * `"*"` matches all regular files.
-  #   * `"c*"` matches all files beginning with `c`.
-  #   * `"*c"` matches all files ending with `c`.
-  #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches directories recursively or files expansively.
-  # * `?` matches any one character.
-  # * `{a,b}` matches subpattern `a` or `b`.
-  #
-  # NOTE: Path separator in patterns is `/` even on Windows. The returned file names use system-specific path separators.
+  # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
   def self.[](*patterns) : Array(String)
     glob(patterns)
   end
@@ -24,21 +15,12 @@ class Dir
 
   # Returns an array of all files that match against any of *patterns*.
   #
-  # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
-  #
-  # * `*` matches an unlimited number of arbitrary characters.
-  #   * `"*"` matches all regular files.
-  #   * `"c*"` matches all files beginning with `c`.
-  #   * `"*c"` matches all files ending with `c`.
-  #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches directories recursively or files expansively.
-  # * `?` matches any one character.
-  # * `{a,b}` matches subpattern `a` or `b`.
+  # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # **options:**
   # * *allow_dots*: Match hidden files if `true` (default: `false`).
   #
-  # NOTE: Path separator in patterns is `/` even on Windows. The returned file names use system-specific path separators.
+  # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
   def self.glob(*patterns, **options) : Array(String)
     glob(patterns, **options)
   end
@@ -54,21 +36,12 @@ class Dir
 
   # Yields all files that match against any of *patterns*.
   #
-  # The pattern syntax is similar to shell filename globbing. It may contain the following metacharacters:
-  #
-  # * `*` matches an unlimited number of arbitrary characters.
-  #   * `"*"` matches all regular files.
-  #   * `"c*"` matches all files beginning with `c`.
-  #   * `"*c"` matches all files ending with `c`.
-  #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches directories recursively or files expansively.
-  # * `?` matches any one character.
-  # * `{a,b}` matches subpattern `a` or `b`.
+  # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # **options:**
   # * *allow_dots*: Match hidden files if `true` (default: `false`).
   #
-  # NOTE: Path separator in patterns is `/` even on Windows. The returned file names use system-specific path separators.
+  # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
   def self.glob(*patterns, **options, &block : String -> _)
     glob(patterns, **options) do |path|
       yield path
@@ -118,53 +91,13 @@ class Dir
       end
     end
 
-    private def compile(pattern, patterns = [] of Array(PatternType))
-      reader = Char::Reader.new(pattern)
+    private def compile(pattern)
+      expanded_patterns = [] of String
+      File.expand_brace_pattern(pattern, expanded_patterns)
 
-      lbrace = nil
-      rbrace = nil
-      alt_start = nil
-
-      alternatives = [] of String
-
-      nest = 0
-      reader.each do |char|
-        case char
-        when '{'
-          lbrace = reader.pos if nest == 0
-          nest += 1
-        when '}'
-          nest -= 1
-
-          if nest == 0
-            rbrace = reader.pos
-            start = (alt_start || lbrace).not_nil! + 1
-            alternatives << pattern.byte_slice(start, reader.pos - start)
-            break
-          end
-        when ','
-          if nest == 1
-            start = (alt_start || lbrace).not_nil! + 1
-            alternatives << pattern.byte_slice(start, reader.pos - start)
-            alt_start = reader.pos
-          end
-        end
+      expanded_patterns.map do |expanded_pattern|
+        single_compile expanded_pattern
       end
-
-      if lbrace && rbrace
-        front = pattern.byte_slice(0, lbrace)
-        back = pattern.byte_slice(rbrace + 1)
-
-        alternatives.each do |alt|
-          brace_pattern = {front, alt, back}.join
-
-          compile brace_pattern, patterns
-        end
-      else
-        patterns << single_compile pattern
-      end
-
-      patterns
     end
 
     private def single_compile(glob)
