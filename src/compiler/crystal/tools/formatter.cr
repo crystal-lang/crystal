@@ -1175,6 +1175,19 @@ module Crystal
     end
 
     def visit(node : If)
+      if node.ternary?
+        accept node.cond
+        skip_space_or_newline
+        write_token " ", :"?", " "
+        skip_space_or_newline
+        accept node.then
+        skip_space_or_newline
+        write_token " ", :":", " "
+        skip_space_or_newline
+        accept node.else
+        return false
+      end
+
       visit_if_or_unless node, :if
     end
 
@@ -1190,20 +1203,6 @@ module Crystal
         inside_cond do
           indent(@column, node.cond)
         end
-        return false
-      end
-
-      # This is the case of `cond ? exp1 : exp2`
-      if keyword == :if && !@token.keyword?(:if)
-        accept node.cond
-        skip_space_or_newline
-        write_token " ", :"?", " "
-        skip_space_or_newline
-        accept node.then
-        skip_space_or_newline
-        write_token " ", :":", " "
-        skip_space_or_newline
-        accept node.else
         return false
       end
 

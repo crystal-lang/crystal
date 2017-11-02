@@ -587,8 +587,9 @@ module Crystal
     property cond : ASTNode
     property then : ASTNode
     property else : ASTNode
+    property? ternary : Bool
 
-    def initialize(@cond, a_then = nil, a_else = nil)
+    def initialize(@cond, a_then = nil, a_else = nil, @ternary = false)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
     end
@@ -600,7 +601,7 @@ module Crystal
     end
 
     def clone_without_location
-      If.new(@cond.clone, @then.clone, @else.clone)
+      If.new(@cond.clone, @then.clone, @else.clone, @ternary)
     end
 
     def_equals_and_hash @cond, @then, @else

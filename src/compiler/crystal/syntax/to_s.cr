@@ -198,21 +198,52 @@ module Crystal
     end
 
     def visit(node : Expressions)
+      parens = node.keyword == :"("
+      begin_end = node.keyword == :begin
+
+      case
+      when parens
+        @str << "("
+      when begin_end
+        @str << "begin"
+        @indent += 1
+        newline
+      end
+
       if @inside_macro > 0
         node.expressions.each &.accept self
       else
-        node.expressions.each do |exp|
+        node.expressions.each_with_index do |exp, i|
           unless exp.nop?
             append_indent
             exp.accept self
-            newline
+            newline unless parens && i == node.expressions.size - 1
           end
         end
       end
+
+      case
+      when parens
+        @str << ")"
+      when begin_end
+        @indent -= 1
+        append_indent
+        @str << "end"
+      end
+
       false
     end
 
     def visit(node : If)
+      if node.ternary?
+        node.cond.accept self
+        @str << " ? "
+        node.then.accept self
+        @str << " : "
+        node.else.accept self
+        return false
+      end
+
       visit_if_or_unless "if", node
     end
 
@@ -526,14 +557,14 @@ module Crystal
     def visit(node : Assign)
       node.target.accept self
       @str << " = "
-      accept_with_maybe_begin_end node.value
+      node.value.accept self
       false
     end
 
     def visit(node : OpAssign)
       node.target.accept self
       @str << " " << node.op << "=" << " "
-      accept_with_maybe_begin_end node.value
+      node.value.accept self
       false
     end
 
@@ -963,7 +994,7 @@ module Crystal
       @str << keyword(keyword)
       if exp = node.exp
         @str << " "
-        accept_with_maybe_begin_end exp
+        exp.accept self
       end
       false
     end
@@ -1517,31 +1548,6 @@ module Crystal
         node.accept self
       end
       newline
-    end
-
-    def accept_with_maybe_begin_end(node)
-      case node
-      when Expressions
-        if node.expressions.size == 1
-          @str << "("
-          node.expressions.first.accept self
-          @str << ")"
-        else
-          @str << keyword("begin")
-          newline
-          accept_with_indent(node)
-          append_indent
-          @str << keyword("end")
-        end
-      when If, Unless, While, Until
-        @str << keyword("begin")
-        newline
-        accept_with_indent(node)
-        append_indent
-        @str << keyword("end")
-      else
-        node.accept self
-      end
     end
 
     def inside_macro
