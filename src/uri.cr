@@ -149,7 +149,7 @@ class URI
     if host
       io << host
     end
-    if port && !((scheme == "http" && port == 80) || (scheme == "https" && port == 443))
+    unless is_default_port?
       io << ':'
       io << port
     end
@@ -425,5 +425,23 @@ class URI
       io << ':'
       URI.escape(password, io)
     end
+  end
+
+  @@DEFAULT_PORTS = {
+    "ftp"    => 21,
+    "gopher" => 70,
+    "http"   => 80,
+    "https"  => 443,
+    "ldap"   => 389,
+    "ldaps"  => 636,
+    "nntp"   => 119,
+    "scp"    => 22,
+    "sftp"   => 22,
+    "ssh"    => 22,
+    "telnet" => 23,
+  }
+
+  private def is_default_port?
+    return port.nil? || port == @@DEFAULT_PORTS[scheme]?
   end
 end
