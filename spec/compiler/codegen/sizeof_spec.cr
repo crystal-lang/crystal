@@ -72,6 +72,21 @@ describe "Code gen: sizeof" do
     assert_error "instance_sizeof(Int32)", "Int32 is not a class, it's a struct"
   end
 
+  it "gives error if using instance_sizeof on a generic type without type vars" do
+    assert_error "instance_sizeof(Array)", "can't calculate instance_sizeof of generic class"
+  end
+
+  it "gets instance_sizeof a generic type with type vars" do
+    run(%(
+      class Foo(T)
+        def initialize(@x : T)
+        end
+      end
+
+      instance_sizeof(Foo(Int32))
+      )).to_i.should eq(8)
+  end
+
   it "gets sizeof Void" do
     # Same as the size of a byte
     run("sizeof(Void)").to_i.should eq(1)
