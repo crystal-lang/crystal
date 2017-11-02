@@ -496,6 +496,12 @@ CrystalDoc.loadIndex = function() {
     xobj.send(null);
   }
 
+  function loadScript(file) {
+    script = document.createElement("script");
+    script.src = file;
+    document.body.appendChild(script);
+  }
+
   function parseJSON(json) {
     CrystalDoc.initializeIndex(JSON.parse(json));
   }
@@ -503,10 +509,22 @@ CrystalDoc.loadIndex = function() {
   for(var i = 0; i < document.scripts.length; i++){
     var script = document.scripts[i];
     if (script.src && script.src.indexOf("js/doc.js") >= 0) {
-      var jsonPath = script.src.replace("js/doc.js", "index.json");
-      loadJSON(jsonPath, parseJSON);
-      return;
+      if (script.src.indexOf("file://") == 0) {
+        // We need to support JSONP files for the search to work on local file system.
+        var jsonPath = script.src.replace("js/doc.js", "index.jsonp");
+        loadScript(jsonPath);
+        return;
+      } else {
+        var jsonPath = script.src.replace("js/doc.js", "index.json");
+        loadJSON(jsonPath, parseJSON);
+        return;
+      }
     }
   }
   console.error("Could not find location of js/doc.js");
 };
+
+// Callback for jsonp
+function crystal_doc_search_index_callback(data) {
+  CrystalDoc.initializeIndex(data);
+}
