@@ -1466,6 +1466,7 @@ module Crystal
       end_location = token_end_location
 
       if check_paren
+        skip_space_or_newline
         check :")"
         next_token_skip_space
       else
