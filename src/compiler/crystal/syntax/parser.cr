@@ -2049,8 +2049,8 @@ module Crystal
         when :STRING_ARRAY_END
           next_token
           break
-        when :EOF
-          raise "Unterminated symbol array literal"
+        else
+          raise "Unterminated #{elements_type} array literal"
         end
       end
 

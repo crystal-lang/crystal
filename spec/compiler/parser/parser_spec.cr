@@ -1598,6 +1598,9 @@ describe "Parser" do
     assert_syntax_error %(case x; when /x/; 2; when /x/; end), "duplicate when /x/ in case"
     assert_syntax_error %(case x; when X; 2; when X; end), "duplicate when X in case"
 
+    assert_syntax_error "%w(", "Unterminated String array literal"
+    assert_syntax_error "%i(", "Unterminated Symbol array literal"
+
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")
       loc = node.location.not_nil!
