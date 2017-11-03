@@ -443,6 +443,6 @@ class URI
   }
 
   private def default_port?
-    return port == DEFAULT_PORTS[scheme]?
+    port == DEFAULT_PORTS[scheme]?
   end
 end
