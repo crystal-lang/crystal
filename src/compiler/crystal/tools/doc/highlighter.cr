@@ -32,12 +32,7 @@ module Crystal::Doc::Highlighter
       when :CHAR
         highlight token.raw, "s", io
       when :SYMBOL
-        sym = token.value.to_s
-        if Symbol.needs_quotes?(sym)
-          highlight HTML.escape(%(:#{sym.inspect})), "n", io
-        else
-          highlight ":#{sym}", "n", io
-        end
+        highlight HTML.escape(token.raw), "n", io
       when :CONST, :"::"
         highlight token, "t", io
       when :DELIMITER_START
