@@ -2438,6 +2438,11 @@ module Crystal
         next_char
       end
 
+      if start == current_pos
+        @token.type = :EOF
+        return @token
+      end
+
       @token.type = :STRING
       @token.value = string_range(start)
       set_token_raw_from_start(start)
