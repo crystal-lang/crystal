@@ -1,8 +1,9 @@
 class URI
-  # Global registry for URI scheme default ports.
+  # Registry for URI scheme default ports.
   private class DefaultPort
-    # Well-known schemes and their respective default ports.
-    @@default_port = {
+    # A map of schemes and their respective default ports, seeded
+    # with some well-known schemes.
+    @default_port = {
       "ftp"    => 21,
       "ftps"   => 990,
       "gopher" => 70,
@@ -27,7 +28,7 @@ class URI
     # ```
     def [](scheme : String?) : Int32?
       return nil if scheme.nil?
-      @@default_port[scheme.downcase]?
+      @default_port[normalize(scheme)]?
     end
 
     # Registers the default `port` for the given `scheme`.
@@ -38,12 +39,26 @@ class URI
     # default_port["ponzi"] = 9999
     # default_port["ponzi"] # => 9999
     # ```
-    def []=(scheme : String, port : Int32?)
-      if port
-        @@default_port[scheme.downcase] = port
-      else
-        @@default_port.delete scheme.downcase
-      end
+    def []=(scheme : String, port : Int32)
+      @default_port[normalize(scheme)] = port
+    end
+
+    # Unregisters the default `port` for the given `scheme`,
+    # returning the previously registered default `port`, or
+    # `nil` if no default `port` was registered.
+    #
+    # ```
+    # default_port = DefaultPort.new
+    # default_port.delete "http" # => 80
+    # default_port["http"]       # => nil
+    # ```
+    def delete(scheme : String) : Int32?
+      @default_port.delete normalize(scheme)
+    end
+
+    # Normalizes the given scheme to lowercase.
+    private def normalize(scheme : String) : String
+      scheme.downcase
     end
   end
 end

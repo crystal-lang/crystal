@@ -435,7 +435,7 @@ class URI
   # default ports.
   #
   # The registry can then be used to query the default `port` for a
-  # given `scheme`.
+  # given `scheme`:
   #
   # ```
   # URI.default_port["http"]  # => 80
@@ -443,7 +443,7 @@ class URI
   # ```
   #
   # Or it can be used to register the default `port` for a given
-  # `scheme`.
+  # `scheme`:
   #
   # ```
   # URI.default_port["ponzi"] = 9999
@@ -451,12 +451,11 @@ class URI
   # ```
   #
   # Or it can be used to unregister the default `port` for a given
-  # `scheme`.
+  # `scheme`:
   #
   # ```
-  # URI.default_port["ftp"] # => 21
-  # URI.default_port["ftp"] = nil
-  # URI.default_port["ftp"] # => nil
+  # URI.default_port.delete "ftp" # => 21
+  # URI.default_port["ftp"]       # => nil
   # ```
   def self.default_port
     @@default_port

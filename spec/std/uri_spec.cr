@@ -146,8 +146,7 @@ describe "URI" do
     end
 
     it "unregisters port for scheme" do
-      URI.default_port["ftp"].should eq(21)
-      URI.default_port["ftp"] = nil
+      URI.default_port.delete("ftp").should eq(21)
       URI.default_port["ftp"].should eq(nil)
     end
   end
