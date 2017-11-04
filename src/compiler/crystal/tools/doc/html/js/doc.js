@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(function() {
       var text = searchInput.value;
+      navigator.removeHighlight();
 
       if(text == "") {
         CrystalDoc.toggleResultsList(false);

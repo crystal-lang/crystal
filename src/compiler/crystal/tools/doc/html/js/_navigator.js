@@ -43,9 +43,7 @@ Navigator = function(sidebar, searchInput, list){
     if(!elem){
       return;
     }
-    if(this.current){
-      this.current.classList.remove("current");
-    }
+    this.removeHighlight();
 
     this.current = elem;
     this.current.classList.add("current");
@@ -54,6 +52,19 @@ Navigator = function(sidebar, searchInput, list){
   this.highlightFirst = function(){
     this.highlight(this.list.querySelector('li:first-child'));
   };
+
+  this.removeHighlight = function() {
+    if(this.current){
+      this.current.classList.remove("current");
+    }
+    this.current = null;
+  }
+
+  this.openSelectedResult = function() {
+    if(this.current) {
+      this.current.click();
+    }
+  }
 
   function handleKeyUp(event) {
     switch(event.key) {
@@ -76,14 +87,14 @@ Navigator = function(sidebar, searchInput, list){
     switch(event.key) {
       case "Enter":
         event.stopPropagation();
-        self.current.click();
+        self.openSelectedResult();
         break;
       case "Escape":
         event.stopPropagation();
         CrystalDoc.toggleResultsList(false);
         sessionStorage.setItem(repositoryName + '::search-input:value', "");
         break;
-      case "i":
+      case "j":
       case "c":
       case "ArrowUp":
         if(event.ctrlKey || event.key == "ArrowUp") {
@@ -92,7 +103,7 @@ Navigator = function(sidebar, searchInput, list){
           startMoveTimeout(true);
         }
         break;
-      case "j":
+      case "k":
       case "h":
       case "ArrowDown":
         if(event.ctrlKey || event.key == "ArrowDown") {
@@ -132,7 +143,7 @@ Navigator = function(sidebar, searchInput, list){
     switch(event.key) {
       case "Enter":
         event.stopPropagation();
-        self.current.click();
+        self.openSelectedResult();
         break;
       case "Escape":
         event.stopPropagation();
