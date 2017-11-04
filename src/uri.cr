@@ -444,8 +444,8 @@ class URI
     "telnet" => 23,
   }
 
-  # Returns the default port for the given scheme if known, otherwise
-  # returns nil.
+  # Returns the default port for the given *scheme* if known, otherwise
+  # returns `nil`.
   #
   # ```
   # URI.default_port "http" # => 80
@@ -454,10 +454,10 @@ class URI
     @@default_ports[scheme.downcase]?
   end
 
-  # Registers the default port for the given scheme.
+  # Registers the default port for the given *scheme*.
   #
-  # If port is nil, the existing default port for the scheme, if any,
-  # will be unregistered.
+  # If *port* is `nil`, the existing default port for the *scheme*, if
+  # any, will be unregistered.
   #
   # ```
   # URI.set_default_port "ponzi" = 9999
@@ -470,8 +470,8 @@ class URI
     end
   end
 
-  # Returns true if this URI's port is the default port for its scheme.
+  # Returns `true` if this URI's *port* is the default port for its *scheme*.
   private def default_port?
-    port == @@default_ports[scheme]?
+    port == @@default_ports[scheme.downcase]?
   end
 end
