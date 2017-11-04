@@ -163,11 +163,6 @@ CrystalDoc.rankResults = function(results, query) {
     var aHasDocs = b.matched_fields.includes("doc");
     var bHasDocs = b.matched_fields.includes("doc");
 
-    if (matchedTermsDiff != 0 || (aHasDocs != bHasDocs)) {
-      if(CrystalDoc.DEBUG) { console.log("matchedTermsDiff: " + matchedTermsDiff, aHasDocs, bHasDocs); }
-      return matchedTermsDiff;
-    }
-
     var aOnlyDocs = aHasDocs && a.matched_fields.length == 1;
     var bOnlyDocs = bHasDocs && b.matched_fields.length == 1;
 
@@ -180,13 +175,15 @@ CrystalDoc.rankResults = function(results, query) {
     }
     if (a.matched_fields.includes("name")) {
       if (b.matched_fields.includes("name")) {
-        var a_name = CrystalDoc.prefixForType(a.result_type) + a.result_type == "type" ? a.full_name : a.name;
-        var b_name = CrystalDoc.prefixForType(b.result_type) + b.result_type == "type" ? b.full_name : b.name;
-        for(var i = 0; i < query.terms.length; i++) {
-          var term = query.terms[i];
-          term = term.replace(/^::?|::?$/, "");
+        var a_name = (CrystalDoc.prefixForType(a.result_type) || "") + ((a.result_type == "type") ? a.full_name : a.name);
+        var b_name = (CrystalDoc.prefixForType(b.result_type) || "") + ((b.result_type == "type") ? b.full_name : b.name);
+        a_name = a_name.toLowerCase();
+        b_name = b_name.toLowerCase();
+        for(var i = 0; i < query.normalizedTerms.length; i++) {
+          var term = query.terms[i].replace(/^::?|::?$/, "");
           var a_orig_index = a_name.indexOf(term);
           var b_orig_index = b_name.indexOf(term);
+          if(CrystalDoc.DEBUG) { console.log("term: " + term + " a: " + a_name + " b: " + b_name); }
           if(CrystalDoc.DEBUG) { console.log(a_orig_index, b_orig_index, a_orig_index - b_orig_index); }
           if (a_orig_index >= 0) {
             if (b_orig_index >= 0) {
@@ -215,6 +212,11 @@ CrystalDoc.rankResults = function(results, query) {
       return 1;
     }
 
+    if (matchedTermsDiff != 0 || (aHasDocs != bHasDocs)) {
+      if(CrystalDoc.DEBUG) { console.log("matchedTermsDiff: " + matchedTermsDiff, aHasDocs, bHasDocs); }
+      return matchedTermsDiff;
+    }
+
     var matchedFieldsDiff = b.matched_fields.length - a.matched_fields.length;
     if (matchedFieldsDiff != 0) {
       if(CrystalDoc.DEBUG) { console.log("matched to different number of fields: " + matchedFieldsDiff); }
@@ -223,7 +225,7 @@ CrystalDoc.rankResults = function(results, query) {
 
     var nameCompare = a.name.localeCompare(b.name);
     if(nameCompare != 0){
-      if(CrystalDoc.DEBUG) { console.log("nameCompare resulted in: " + nameCompare); }
+      if(CrystalDoc.DEBUG) { console.log("nameCompare resulted in: " + a.name + "<=>" + b.name + ": " + nameCompare); }
       return nameCompare > 0 ? 1 : -1;
     }
 
@@ -361,18 +363,11 @@ CrystalDoc.toggleResultsList = function(visible) {
 CrystalDoc.Query = function(string) {
   this.original = string;
   this.terms = string.split(/\s+/).filter(function(word) {
-    switch (word[0]) {
-      case "#":
-      case ".":
-        return word.length > 1;
-
-      default:
-        return word.length > 0;
-    }
+    return CrystalDoc.Query.stripModifiers(word).length > 0;
   });
 
   var normalized = this.terms.map(CrystalDoc.Query.normalizeTerm);
-  this.normalized = normalized;
+  this.normalizedTerms = normalized;
 
   function runMatcher(field, matcher) {
     if (!field) {
@@ -457,7 +452,7 @@ CrystalDoc.Query = function(string) {
       return s.replace(/[.*+?\^${}()|\[\]\\]/g, "\\$&").replace(/^[#\.:]+/, "");
     }
     return string.replace(
-      new RegExp("(" + this.normalized.map(escapeRegExp).join("|") + ")", "gi"),
+      new RegExp("(" + this.normalizedTerms.map(escapeRegExp).join("|") + ")", "gi"),
       "<mark>$1</mark>"
     );
   };
@@ -465,6 +460,17 @@ CrystalDoc.Query = function(string) {
 CrystalDoc.Query.normalizeTerm = function(term) {
   return term.toLowerCase();
 };
+CrystalDoc.Query.stripModifiers = function(term) {
+  switch (term[0]) {
+    case "#":
+    case ".":
+    case ":":
+      return term.substr(1);
+
+    default:
+      return term;
+  }
+}
 
 CrystalDoc.search = function(string) {
   if(!CrystalDoc.searchIndex) {
