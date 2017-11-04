@@ -1,3 +1,4 @@
+require "./uri/uri_default_ports"
 require "./uri/uri_parser"
 
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
@@ -427,22 +428,41 @@ class URI
     end
   end
 
-  DEFAULT_PORTS = {
-    "ftp"    => 21,
-    "ftps"   => 990,
-    "gopher" => 70,
-    "http"   => 80,
-    "https"  => 443,
-    "ldap"   => 389,
-    "ldaps"  => 636,
-    "nntp"   => 119,
-    "scp"    => 22,
-    "sftp"   => 22,
-    "ssh"    => 22,
-    "telnet" => 23,
-  }
+  # The global registry for URI scheme default ports.
+  @@default_ports = DefaultPorts.new
 
+  # Returns the global registry for URI schemes and their respective
+  # default ports.
+  #
+  # The registry can then be used to query the default port for a
+  # given scheme.
+  #
+  # ```
+  # URI.default_ports["http"]  # => 80
+  # URI.default_ports["ponzi"] # => nil
+  # ```
+  #
+  # Or it can be used to register the default port for a given
+  # scheme.
+  #
+  # ```
+  # URI.default_ports["ponzi"] = 9999
+  # URI.default_ports["ponzi"] # => 9999
+  # ```
+  #
+  # Or it can be used to unregister the default port for a given
+  # scheme.
+  #
+  # ```
+  # URI.default_ports["ponzi"] = nil
+  # URI.default_ports["ponzi"] # => nil
+  # ```
+  def self.default_ports
+    @@default_ports
+  end
+
+  # Returns true if this URI's port is the default port for its scheme.
   private def default_port?
-    port == DEFAULT_PORTS[scheme]?
+    port == @@default_ports[scheme]
   end
 end
