@@ -509,6 +509,6 @@ class URI
 
   # Returns `true` if this URI's *port* is the default port for its *scheme*.
   private def default_port?
-    port == @@default_ports[scheme.downcase]?
+    port == @@default_ports[scheme.try &.downcase]?
   end
 end
