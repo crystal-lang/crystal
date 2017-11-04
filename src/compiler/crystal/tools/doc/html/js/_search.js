@@ -511,7 +511,7 @@ CrystalDoc.loadIndex = function() {
     if (script.src && script.src.indexOf("js/doc.js") >= 0) {
       if (script.src.indexOf("file://") == 0) {
         // We need to support JSONP files for the search to work on local file system.
-        var jsonPath = script.src.replace("js/doc.js", "index.jsonp");
+        var jsonPath = script.src.replace("js/doc.js", "search-index.js");
         loadScript(jsonPath);
         return;
       } else {
