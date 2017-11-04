@@ -1,4 +1,3 @@
-require "./uri/uri_default_port"
 require "./uri/uri_parser"
 
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
@@ -428,52 +427,51 @@ class URI
     end
   end
 
-  # The global registry for URI scheme default ports.
-  @@default_port = DefaultPort.new
+  # A map of schemes and their respective default ports, seeded
+  # with some well-known schemes.
+  @@default_ports = {
+    "ftp"    => 21,
+    "ftps"   => 990,
+    "gopher" => 70,
+    "http"   => 80,
+    "https"  => 443,
+    "ldap"   => 389,
+    "ldaps"  => 636,
+    "nntp"   => 119,
+    "scp"    => 22,
+    "sftp"   => 22,
+    "ssh"    => 22,
+    "telnet" => 23,
+  }
 
-  # Returns the global registry for URI schemes and their respective
-  # default ports.
-  #
-  # The registry can then be used to query the default `port` for a
-  # given `scheme`:
+  # Returns the default port for the given scheme if known, otherwise
+  # returns nil.
   #
   # ```
-  # URI.default_port["http"]  # => 80
-  # URI.default_port["ponzi"] # => nil
-  # ```
-  #
-  # Or it can be used to register the default `port` for a given
-  # `scheme`:
-  #
-  # ```
-  # URI.default_port["ponzi"] = 9999
-  # URI.default_port["ponzi"] # => 9999
-  # ```
-  #
-  # Or it can be used to unregister the default `port` for a given
-  # `scheme`:
-  #
-  # ```
-  # URI.default_port.delete "ftp" # => 21
-  # URI.default_port["ftp"]       # => nil
-  # ```
-  def self.default_port
-    @@default_port
-  end
-
-  # Returns the default `port` for the given `scheme` if known, otherwise
-  # returns `nil`.
-  #
-  # ```
-  # URI.default_port "http"  # => 80
-  # URI.default_port "ponzi" # => nil
+  # URI.default_port "http" # => 80
   # ```
   def self.default_port(scheme : String) : Int32?
-    @@default_port[scheme]
+    @@default_ports[scheme.downcase]?
   end
 
-  # Returns `true` if this URI's `port` is the default `port` for its `scheme`.
+  # Registers the default port for the given scheme.
+  #
+  # If port is nil, the existing default port for the scheme, if any,
+  # will be unregistered.
+  #
+  # ```
+  # URI.set_default_port "ponzi" = 9999
+  # ```
+  def self.set_default_port(scheme : String, port : Int32?)
+    if port
+      @@default_ports[scheme.downcase] = port
+    else
+      @@default_ports.delete scheme.downcase
+    end
+  end
+
+  # Returns true if this URI's port is the default port for its scheme.
   private def default_port?
-    port == @@default_port[scheme]
+    port == @@default_ports[scheme]?
   end
 end

@@ -130,24 +130,22 @@ describe "URI" do
 
   describe ".default_port" do
     it "returns default port for well known schemes" do
-      URI.default_port["http"].should eq(80)
       URI.default_port("http").should eq(80)
-      URI.default_port["https"].should eq(443)
       URI.default_port("https").should eq(443)
     end
 
     it "returns nil for unknown schemes" do
-      URI.default_port["xyz"].should eq(nil)
+      URI.default_port("xyz").should eq(nil)
     end
 
     it "registers port for scheme" do
-      URI.default_port["ponzi"] = 9999
-      URI.default_port["ponzi"].should eq(9999)
+      URI.set_default_port("ponzi", 9999)
+      URI.default_port("ponzi").should eq(9999)
     end
 
     it "unregisters port for scheme" do
-      URI.default_port.delete("ftp").should eq(21)
-      URI.default_port["ftp"].should eq(nil)
+      URI.set_default_port("ftp", nil)
+      URI.default_port("ftp").should eq(nil)
     end
   end
 
