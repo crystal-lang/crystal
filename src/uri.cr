@@ -461,6 +461,16 @@ class URI
     @@default_ports
   end
 
+  # Returns the default `port` for the given `scheme` if known, otherwise
+  # returns `nil`.
+  #
+  # ```
+  # URI.default_port "http" # => 80
+  # ```
+  def self.default_port(scheme : String) : Int32?
+    @@default_ports[scheme]
+  end
+
   # Returns true if this URI's port is the default port for its scheme.
   private def default_port?
     port == @@default_ports[scheme]
