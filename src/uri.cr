@@ -434,24 +434,24 @@ class URI
   # Returns the global registry for URI schemes and their respective
   # default ports.
   #
-  # The registry can then be used to query the default port for a
-  # given scheme.
+  # The registry can then be used to query the default `port` for a
+  # given `scheme`.
   #
   # ```
   # URI.default_port["http"]  # => 80
   # URI.default_port["ponzi"] # => nil
   # ```
   #
-  # Or it can be used to register the default port for a given
-  # scheme.
+  # Or it can be used to register the default `port` for a given
+  # `scheme`.
   #
   # ```
   # URI.default_port["ponzi"] = 9999
   # URI.default_port["ponzi"] # => 9999
   # ```
   #
-  # Or it can be used to unregister the default port for a given
-  # scheme.
+  # Or it can be used to unregister the default `port` for a given
+  # `scheme`.
   #
   # ```
   # URI.default_port["ftp"] # => 21
@@ -473,7 +473,7 @@ class URI
     @@default_port[scheme]
   end
 
-  # Returns true if this URI's port is the default port for its scheme.
+  # Returns `true` if this URI's `port` is the default `port` for its `scheme`.
   private def default_port?
     port == @@default_port[scheme]
   end
