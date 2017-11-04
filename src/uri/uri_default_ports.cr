@@ -30,7 +30,7 @@ class URI
       @@default_ports[scheme.downcase]?
     end
 
-    # Globally registers the default `port` for the given `scheme`.
+    # Registers the default `port` for the given `scheme`.
     #
     # ```
     # default_ports = DefaultPorts.new
@@ -42,7 +42,7 @@ class URI
       if port
         @@default_ports[scheme.downcase] = port
       else
-        @@default_ports.delete scheme
+        @@default_ports.delete scheme.downcase
       end
     end
   end
