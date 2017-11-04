@@ -195,4 +195,22 @@ describe XML::Builder do
     io.rewind
     io.to_s.should eq("<?xml version=\"1.0\"?>\n<foo id=\"1\">hello</foo>\n")
   end
+
+  it "errors on null byte" do
+    expect_raises(XML::Error, "String cannot contain null character") do
+      XML.build do |xml|
+        xml.element("example", number: "1") do
+          xml.text "foo\0bar"
+        end
+      end
+    end
+
+    expect_raises(XML::Error, "String cannot contain null character") do
+      XML.build do |xml|
+        xml.element("exam\0ple", number: "1") do
+          xml.text "foobar"
+        end
+      end
+    end
+  end
 end

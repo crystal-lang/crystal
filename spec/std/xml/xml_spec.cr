@@ -225,8 +225,20 @@ describe XML do
     root.text = "Peter"
     root.text.should eq("Peter")
 
-    root.content = "Foo"
-    root.content.should eq("Foo")
+    root.content = "Foo 👌"
+    root.content.should eq("Foo 👌")
+  end
+
+  it "doesn't set invalid node content" do
+    doc = XML.parse(<<-XML
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      XML
+    )
+    root = doc.root.not_nil!
+    expect_raises(Exception, "Cannot escape") do
+      root.content = "\0"
+    end
   end
 
   it "gets empty content" do
@@ -243,6 +255,31 @@ describe XML do
     root = doc.root.not_nil!
     root.name = "last-name"
     root.name.should eq("last-name")
+  end
+
+  it "doesn't set invalid node name" do
+    doc = XML.parse(<<-XML
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      XML
+    )
+    root = doc.root.not_nil!
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = " foo bar"
+    end
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = "foo bar"
+    end
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = "1foo"
+    end
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = "\0foo"
+    end
   end
 
   it "gets encoding" do

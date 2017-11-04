@@ -97,7 +97,8 @@ struct XML::Node
   # Sets the Node's content to a Text node containing string.
   # The string gets XML escaped, not interpreted as markup.
   def content=(content)
-    LibXML.xmlNodeSetContent(self, content.to_s)
+    content = escape(content.to_s)
+    LibXML.xmlNodeSetContent(self, content)
   end
 
   # Gets the document for this Node as a `XML::Node`.
@@ -273,7 +274,18 @@ struct XML::Node
     if document? || text? || cdata? || fragment?
       raise XML::Error.new("Can't set name of XML #{type}", 0)
     end
-    LibXML.xmlNodeSetName(self, name.to_s)
+
+    name = name.to_s
+
+    if name.includes? '\0'
+      raise XML::Error.new("Invalid node name: #{name.inspect} (contains null character)", 0)
+    end
+
+    if LibXML.xmlValidateNameValue(name) == 0
+      raise XML::Error.new("Invalid node name: #{name.inspect}", 0)
+    end
+
+    LibXML.xmlNodeSetName(self, name)
   end
 
   # Returns the namespace for this node or `nil` if not found.
@@ -543,5 +555,21 @@ struct XML::Node
   def errors
     ptr = @node.value._private
     ptr ? (ptr.as(Array(XML::Error))) : nil
+  end
+
+  private SUBSTITUTIONS = {
+    '>'  => "&gt;",
+    '<'  => "&lt;",
+    '"'  => "&quot;",
+    '\'' => "&apos;",
+    '&'  => "&amp;",
+  }
+
+  private def escape(string)
+    if string.includes? '\0'
+      raise XML::Error.new("Cannot escape string containing null character", 0)
+    end
+
+    string.gsub(SUBSTITUTIONS)
   end
 end
