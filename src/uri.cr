@@ -427,65 +427,19 @@ class URI
     end
   end
 
-  # A subclass of Hash with case-insensitive keys seeded with
-  # well-known schemes and their respective default ports.
+  # A subclass of Hash(String, Int32) with case-insensitive keys.
   private class DefaultPortHash < Hash(String, Int32)
-    private DEFAULT_PORT_SEEDS = {
-      "acap"     => 674,
-      "afp"      => 548,
-      "dict"     => 2628,
-      "dns"      => 53,
-      "ftp"      => 21,
-      "ftps"     => 990,
-      "git"      => 9418,
-      "gopher"   => 70,
-      "http"     => 80,
-      "https"    => 443,
-      "imap"     => 143,
-      "ipp"      => 631,
-      "ipps"     => 631,
-      "irc"      => 194,
-      "ircs"     => 6697,
-      "ldap"     => 389,
-      "ldaps"    => 636,
-      "mms"      => 1755,
-      "msrp"     => 2855,
-      "mtqp"     => 1038,
-      "nfs"      => 111,
-      "nntp"     => 119,
-      "nntps"    => 563,
-      "pop"      => 110,
-      "prospero" => 1525,
-      "redis"    => 6379,
-      "rsync"    => 873,
-      "rtsp"     => 554,
-      "rtsps"    => 322,
-      "rtspu"    => 5005,
-      "scp"      => 22,
-      "sftp"     => 22,
-      "smb"      => 445,
-      "snmp"     => 161,
-      "ssh"      => 22,
-      "svn"      => 3690,
-      "telnet"   => 23,
-      "ventrilo" => 3784,
-      "vnc"      => 5900,
-      "wais"     => 210,
-      "ws"       => 80,
-      "wss"      => 443,
-    }
-
-    def initialize
-      super nil, DEFAULT_PORT_SEEDS.size
-      merge! DEFAULT_PORT_SEEDS
+    def initialize(seeds : Hash(String, Int32))
+      super nil, seeds.size
+      merge! seeds
     end
 
     def []=(key : String, value : Int32)
-      super(normalize(key), value)
+      super normalize(key), value
     end
 
     def fetch(key)
-      super(normalize(key))
+      super normalize(key)
     end
 
     private def normalize(key : String) : String
@@ -502,7 +456,50 @@ class URI
   # [1]: https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml
   # [2]: https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
   # [3]: https://gist.github.com/mahmoud/2fe281a8daaff26cfe9c15d2c5bf5c8b
-  @@default_ports = DefaultPortHash.new
+  @@default_ports = DefaultPortHash.new({
+    "acap"     => 674,
+    "afp"      => 548,
+    "dict"     => 2628,
+    "dns"      => 53,
+    "ftp"      => 21,
+    "ftps"     => 990,
+    "git"      => 9418,
+    "gopher"   => 70,
+    "http"     => 80,
+    "https"    => 443,
+    "imap"     => 143,
+    "ipp"      => 631,
+    "ipps"     => 631,
+    "irc"      => 194,
+    "ircs"     => 6697,
+    "ldap"     => 389,
+    "ldaps"    => 636,
+    "mms"      => 1755,
+    "msrp"     => 2855,
+    "mtqp"     => 1038,
+    "nfs"      => 111,
+    "nntp"     => 119,
+    "nntps"    => 563,
+    "pop"      => 110,
+    "prospero" => 1525,
+    "redis"    => 6379,
+    "rsync"    => 873,
+    "rtsp"     => 554,
+    "rtsps"    => 322,
+    "rtspu"    => 5005,
+    "scp"      => 22,
+    "sftp"     => 22,
+    "smb"      => 445,
+    "snmp"     => 161,
+    "ssh"      => 22,
+    "svn"      => 3690,
+    "telnet"   => 23,
+    "ventrilo" => 3784,
+    "vnc"      => 5900,
+    "wais"     => 210,
+    "ws"       => 80,
+    "wss"      => 443,
+  })
 
   # Returns the registry for URI schemes and their respective
   # default ports.
