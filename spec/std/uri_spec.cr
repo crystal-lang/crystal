@@ -126,6 +126,10 @@ describe "URI" do
       URI.new("xyz", "www.example.com").to_s.should eq("xyz://www.example.com")
       URI.new("xyz", "www.example.com", 1234).to_s.should eq("xyz://www.example.com:1234")
     end
+
+    it "preserves port for nil scheme" do
+      URI.new(nil, "www.example.com", 1234).to_s.should eq("www.example.com:1234")
+    end
   end
 
   describe ".default_ports" do
