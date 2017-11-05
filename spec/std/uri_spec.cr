@@ -145,6 +145,8 @@ describe "URI" do
       URI.default_ports["unknown"].should eq(1234)
       URI.default_ports["Unknown"].should eq(1234)
       URI.default_ports["UNKNOWN"].should eq(1234)
+      URI.default_ports.has_key?("LDAP").should eq(true)
+      URI.default_ports.delete("LDAP").should eq(389)
     end
 
     it "returns nil for unknown schemes" do

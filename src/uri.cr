@@ -430,7 +430,7 @@ class URI
   # A subclass of Hash(String, Int32) with case-insensitive keys.
   private class DefaultPortHash < Hash(String, Int32)
     def initialize(seeds : Hash(String, Int32))
-      super nil, seeds.size
+      super nil, initial_capacity: seeds.size
       merge! seeds
     end
 
@@ -438,12 +438,16 @@ class URI
       super normalize(key), value
     end
 
-    def fetch(key)
+    def delete(key, &block)
+      super normalize(key), &block
+    end
+
+    protected def find_entry(key)
       super normalize(key)
     end
 
-    private def normalize(key : String) : String
-      key.downcase
+    private def normalize(key : String?) : String?
+      key.try &.downcase
     end
   end
 
