@@ -477,9 +477,7 @@ class URI
 
     def initialize
       super
-      DEFAULT_PORT_SEEDS.each do |key, value|
-        self[key] = value
-      end
+      merge! DEFAULT_PORT_SEEDS
     end
 
     def []=(key : String, value : Int32)
