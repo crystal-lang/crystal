@@ -427,84 +427,113 @@ class URI
     end
   end
 
-  # A map of schemes and their respective default ports, seeded
-  # with some well-known schemes sourced from the IANA
-  # [Uniform Resource Identifier (URI) Schemes][1] and
-  # [Service Name and Transport Protocol Port Number Registry][2]
-  # via Mahmoud's [scheme_port_map.json][3].
-  #
-  # [1]: <https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml>
-  # [2]: <https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml>
-  # [3]: <https://gist.github.com/mahmoud/2fe281a8daaff26cfe9c15d2c5bf5c8b>
-  @@default_ports = {
-    "acap"     => 674,
-    "afp"      => 548,
-    "dict"     => 2628,
-    "dns"      => 53,
-    "ftp"      => 21,
-    "ftps"     => 990,
-    "git"      => 9418,
-    "gopher"   => 70,
-    "http"     => 80,
-    "https"    => 443,
-    "imap"     => 143,
-    "ipp"      => 631,
-    "ipps"     => 631,
-    "irc"      => 194,
-    "ircs"     => 6697,
-    "ldap"     => 389,
-    "ldaps"    => 636,
-    "mms"      => 1755,
-    "msrp"     => 2855,
-    "mtqp"     => 1038,
-    "nfs"      => 111,
-    "nntp"     => 119,
-    "nntps"    => 563,
-    "pop"      => 110,
-    "prospero" => 1525,
-    "redis"    => 6379,
-    "rsync"    => 873,
-    "rtsp"     => 554,
-    "rtsps"    => 322,
-    "rtspu"    => 5005,
-    "scp"      => 22,
-    "sftp"     => 22,
-    "smb"      => 445,
-    "snmp"     => 161,
-    "ssh"      => 22,
-    "svn"      => 3690,
-    "telnet"   => 23,
-    "ventrilo" => 3784,
-    "vnc"      => 5900,
-    "wais"     => 210,
-    "ws"       => 80,
-    "wss"      => 443,
-  }
+  # A subclass of Hash with case-insensitive keys seeded with
+  # well-known schemes and their respective default ports.
+  private class DefaultPortHash < Hash(String, Int32)
+    private DEFAULT_PORT_SEEDS = {
+      "acap"     => 674,
+      "afp"      => 548,
+      "dict"     => 2628,
+      "dns"      => 53,
+      "ftp"      => 21,
+      "ftps"     => 990,
+      "git"      => 9418,
+      "gopher"   => 70,
+      "http"     => 80,
+      "https"    => 443,
+      "imap"     => 143,
+      "ipp"      => 631,
+      "ipps"     => 631,
+      "irc"      => 194,
+      "ircs"     => 6697,
+      "ldap"     => 389,
+      "ldaps"    => 636,
+      "mms"      => 1755,
+      "msrp"     => 2855,
+      "mtqp"     => 1038,
+      "nfs"      => 111,
+      "nntp"     => 119,
+      "nntps"    => 563,
+      "pop"      => 110,
+      "prospero" => 1525,
+      "redis"    => 6379,
+      "rsync"    => 873,
+      "rtsp"     => 554,
+      "rtsps"    => 322,
+      "rtspu"    => 5005,
+      "scp"      => 22,
+      "sftp"     => 22,
+      "smb"      => 445,
+      "snmp"     => 161,
+      "ssh"      => 22,
+      "svn"      => 3690,
+      "telnet"   => 23,
+      "ventrilo" => 3784,
+      "vnc"      => 5900,
+      "wais"     => 210,
+      "ws"       => 80,
+      "wss"      => 443,
+    }
 
-  # Returns the default port for the given *scheme* if known, otherwise
-  # returns `nil`.
-  #
-  # ```
-  # URI.default_port "http" # => 80
-  # ```
-  def self.default_port(scheme : String) : Int32?
-    @@default_ports[scheme.downcase]?
+    def initialize
+      super
+      DEFAULT_PORT_SEEDS.each do |key, value|
+        self[key] = value
+      end
+    end
+
+    def []=(key : String, value : Int32)
+      super(normalize(key), value)
+    end
+
+    def fetch(key)
+      super(normalize(key))
+    end
+
+    private def normalize(key : String) : String
+      key.downcase
+    end
   end
 
-  # Registers the default port for the given *scheme*.
+  # A map of schemes and their respective default ports, seeded
+  # with some well-known schemes sourced from the IANA [Uniform
+  # Resource Identifier (URI) Schemes][1] and [Service Name and
+  # Transport Protocol Port Number Registry][2] via Mahmoud
+  # Hashemi's [scheme_port_map.json][3].
   #
-  # If *port* is `nil`, the existing default port for the *scheme*, if
-  # any, will be unregistered.
+  # [1]: https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml
+  # [2]: https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
+  # [3]: https://gist.github.com/mahmoud/2fe281a8daaff26cfe9c15d2c5bf5c8b
+  @@default_ports = DefaultPortHash.new
+
+  # Returns the registry for URI schemes and their respective
+  # default ports.
+  #
+  # The registry can then be used to query the default port for
+  # a given scheme.
   #
   # ```
-  # URI.set_default_port "ponzi" = 9999
+  # URI.default_ports["http"]?  # => 80
+  # URI.default_ports["ponzi"]? # => nil
   # ```
-  def self.set_default_port(scheme : String, port : Int32?)
-    if port
-      @@default_ports[scheme.downcase] = port
-    else
-      @@default_ports.delete scheme.downcase
-    end
+  #
+  # Or it can be used to register the default port for a given
+  # scheme.
+  #
+  # ```
+  # URI.default_ports["ponzi"] = 9999
+  # URI.default_ports["ponzi"]? # => 9999
+  # ```
+  #
+  # Or it can be used to unregister the default port for a given
+  # scheme.
+  #
+  # ```
+  # URI.default_ports.delete("ponzi") # => 9999
+  # URI.default_ports["ponzi"]?       # => nil
+  # ```
+  def self.default_ports : Hash(String, Int32)
+    @@default_ports
   end
 
   # Returns `true` if this URI's *port* is the default port for its *scheme*.
