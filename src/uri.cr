@@ -495,7 +495,7 @@ class URI
   # Registers the default port for the given *scheme*.
   #
   # If *port* is `nil`, the existing default port for the
-  # scheme, if any, will be unregistered.
+  # *scheme*, if any, will be unregistered.
   #
   # ```
   # URI.set_default_port "ponzi", 9999
