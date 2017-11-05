@@ -51,7 +51,7 @@ module Crystal
         next if vars.has_key?(macro_arg.name)
 
         default_value = default_value.expand_node(call.location, call.end_location) if default_value.is_a?(MagicConstant)
-        vars[macro_arg.name] = default_value
+        vars[macro_arg.name] = default_value.clone
       end
 
       # The named arguments

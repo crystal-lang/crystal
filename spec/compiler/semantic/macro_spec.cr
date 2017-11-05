@@ -1223,4 +1223,19 @@ describe "Semantic: macro" do
       Foo.new.foo
     )) { int32 }
   end
+
+  it "clones default value before expanding" do
+    assert_type(%(
+      FOO = {} of String => String?
+
+      macro foo(x = {} of String => String)
+        {% FOO["foo"] = x["foo"] %}
+        {% x["foo"] = "foo" %}
+      end
+
+      foo
+      foo
+      {{ FOO["foo"] }}
+    )) { nil_type }
+  end
 end
