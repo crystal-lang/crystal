@@ -476,7 +476,7 @@ class URI
     }
 
     def initialize
-      super
+      super nil, DEFAULT_PORT_SEEDS.size
       merge! DEFAULT_PORT_SEEDS
     end
 
@@ -534,8 +534,9 @@ class URI
     @@default_ports
   end
 
-  # Returns `true` if this URI's *port* is the default port for its *scheme*.
+  # Returns `true` if this URI's *port* is the default port for
+  # its *scheme*.
   private def default_port?
-    port == @@default_ports[scheme.try &.downcase]?
+    port == @@default_ports[scheme]?
   end
 end
