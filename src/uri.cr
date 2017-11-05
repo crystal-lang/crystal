@@ -498,7 +498,7 @@ class URI
   # scheme, if any, will be unregistered.
   #
   # ```
-  # URI.set_default_port "ponzi" = 9999
+  # URI.set_default_port "ponzi", 9999
   # ```
   def self.set_default_port(scheme : String, port : Int32?)
     if port
