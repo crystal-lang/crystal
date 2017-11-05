@@ -485,8 +485,8 @@ class URI
   # otherwise returns `nil`.
   #
   # ```
-  # URI.default_port "http"   # => 80
-  # URI.default_ports "ponzi" # => nil
+  # URI.default_port "http"  # => 80
+  # URI.default_port "ponzi" # => nil
   # ```
   def self.default_port(scheme : String) : Int32?
     @@default_ports[scheme.downcase]?
