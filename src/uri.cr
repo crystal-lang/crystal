@@ -427,30 +427,6 @@ class URI
     end
   end
 
-  # A subclass of Hash(String, Int32) with case-insensitive keys.
-  private class DefaultPortHash < Hash(String, Int32)
-    def initialize(seeds : Hash(String, Int32))
-      super nil, initial_capacity: seeds.size
-      merge! seeds
-    end
-
-    def []=(key : String, value : Int32)
-      super normalize(key), value
-    end
-
-    def delete(key, &block)
-      super normalize(key), &block
-    end
-
-    protected def find_entry(key)
-      super normalize(key)
-    end
-
-    private def normalize(key : String?) : String?
-      key.try &.downcase
-    end
-  end
-
   # A map of schemes and their respective default ports, seeded
   # with some well-known schemes sourced from the IANA [Uniform
   # Resource Identifier (URI) Schemes][1] and [Service Name and
@@ -460,7 +436,7 @@ class URI
   # [1]: https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml
   # [2]: https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
   # [3]: https://gist.github.com/mahmoud/2fe281a8daaff26cfe9c15d2c5bf5c8b
-  @@default_ports = DefaultPortHash.new({
+  @@default_ports = {
     "acap"     => 674,
     "afp"      => 548,
     "dict"     => 2628,
@@ -503,41 +479,38 @@ class URI
     "wais"     => 210,
     "ws"       => 80,
     "wss"      => 443,
-  })
+  }
 
-  # Returns the registry for URI schemes and their respective
-  # default ports.
-  #
-  # The registry can then be used to query the default port for
-  # a given scheme.
+  # Returns the default port for the given *scheme* if known,
+  # otherwise returns `nil`.
   #
   # ```
-  # URI.default_ports["http"]?  # => 80
-  # URI.default_ports["ponzi"]? # => nil
+  # URI.default_port "http"   # => 80
+  # URI.default_ports "ponzi" # => nil
   # ```
+  def self.default_port(scheme : String) : Int32?
+    @@default_ports[scheme.downcase]?
+  end
+
+  # Registers the default port for the given *scheme*.
   #
-  # Or it can be used to register the default port for a given
-  # scheme.
-  #
-  # ```
-  # URI.default_ports["ponzi"] = 9999
-  # URI.default_ports["ponzi"]? # => 9999
-  # ```
-  #
-  # Or it can be used to unregister the default port for a given
-  # scheme.
+  # If *port* is `nil`, the existing default port for the
+  # scheme, if any, will be unregistered.
   #
   # ```
-  # URI.default_ports.delete("ponzi") # => 9999
-  # URI.default_ports["ponzi"]?       # => nil
+  # URI.set_default_port "ponzi" = 9999
   # ```
-  def self.default_ports : Hash(String, Int32)
-    @@default_ports
+  def self.set_default_port(scheme : String, port : Int32?)
+    if port
+      @@default_ports[scheme.downcase] = port
+    else
+      @@default_ports.delete scheme.downcase
+    end
   end
 
   # Returns `true` if this URI's *port* is the default port for
   # its *scheme*.
   private def default_port?
-    port == @@default_ports[scheme]?
+    scheme && port && port == URI.default_port(scheme.not_nil!)
   end
 end

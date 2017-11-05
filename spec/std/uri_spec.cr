@@ -132,35 +132,36 @@ describe "URI" do
     end
   end
 
-  describe ".default_ports" do
+  describe ".default_port" do
     it "returns default port for well known schemes" do
-      URI.default_ports["http"].should eq(80)
-      URI.default_ports["https"].should eq(443)
-    end
-
-    it "treats scheme as case insensitive" do
-      URI.default_ports["Http"].should eq(80)
-      URI.default_ports["HTTP"].should eq(80)
-      URI.default_ports["UNKNOWN"] = 1234
-      URI.default_ports["unknown"].should eq(1234)
-      URI.default_ports["Unknown"].should eq(1234)
-      URI.default_ports["UNKNOWN"].should eq(1234)
-      URI.default_ports.has_key?("LDAP").should eq(true)
-      URI.default_ports.delete("LDAP").should eq(389)
+      URI.default_port("http").should eq(80)
+      URI.default_port("https").should eq(443)
     end
 
     it "returns nil for unknown schemes" do
-      URI.default_ports["xyz"]?.should eq(nil)
+      URI.default_port("xyz").should eq(nil)
     end
 
+    it "treats scheme case insensitively" do
+      URI.default_port("Http").should eq(80)
+      URI.default_port("HTTP").should eq(80)
+    end
+  end
+
+  describe ".set_default_port" do
     it "registers port for scheme" do
-      URI.default_ports["ponzi"] = 9999
-      URI.default_ports["ponzi"].should eq(9999)
+      URI.set_default_port("ponzi", 9999)
+      URI.default_port("ponzi").should eq(9999)
     end
 
     it "unregisters port for scheme" do
-      URI.default_ports.delete("ftp").should eq(21)
-      URI.default_ports["ftp"]?.should eq(nil)
+      URI.set_default_port("ftp", nil)
+      URI.default_port("ftp").should eq(nil)
+    end
+
+    it "treats scheme case insensitively" do
+      URI.set_default_port("UNKNOWN", 1234)
+      URI.default_port("unknown").should eq(1234)
     end
   end
 
