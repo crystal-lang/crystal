@@ -21,7 +21,7 @@ class IO::FileDescriptor < IO
   # This will prevent displaying back to the user what they enter on the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   def noecho!
-    if LibC.tcgetattr(fd, out mode) != 0
+    if LibC.tcgetattr(@handle.platform_specific, out mode) != 0
       raise Errno.new "can't set IO#noecho!"
     end
     noecho_from_tc_mode!
@@ -29,7 +29,7 @@ class IO::FileDescriptor < IO
 
   macro noecho_from_tc_mode!
     mode.c_lflag &= ~(Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL).value)
-    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    LibC.tcsetattr(@handle.platform_specific, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
   # Enable character processing for the duration of the given block.
@@ -50,7 +50,7 @@ class IO::FileDescriptor < IO
   # the program on a newline.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   def cooked!
-    if LibC.tcgetattr(fd, out mode) != 0
+    if LibC.tcgetattr(@handle.platform_specific, out mode) != 0
       raise Errno.new "can't set IO#cooked!"
     end
     cooked_from_tc_mode!
@@ -69,7 +69,7 @@ class IO::FileDescriptor < IO
                     Termios::LocalMode::ICANON |
                     Termios::LocalMode::ISIG   |
                     Termios::LocalMode::IEXTEN).value
-    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    LibC.tcsetattr(@handle.platform_specific, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
   # Enable raw mode for the duration of the given block.
@@ -88,7 +88,7 @@ class IO::FileDescriptor < IO
   # is done by the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   def raw!
-    if LibC.tcgetattr(fd, out mode) != 0
+    if LibC.tcgetattr(@handle.platform_specific, out mode) != 0
       raise Errno.new "can't set IO#raw!"
     end
 
@@ -97,18 +97,18 @@ class IO::FileDescriptor < IO
 
   macro raw_from_tc_mode!
     LibC.cfmakeraw(pointerof(mode))
-    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    LibC.tcsetattr(@handle.platform_specific, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
   private def preserving_tc_mode(msg)
-    if LibC.tcgetattr(fd, out mode) != 0
+    if LibC.tcgetattr(@handle.platform_specific, out mode) != 0
       raise Errno.new msg
     end
     before = mode
     begin
       yield mode
     ensure
-      LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(before))
+      LibC.tcsetattr(@handle.platform_specific, Termios::LineControl::TCSANOW, pointerof(before))
     end
   end
 end

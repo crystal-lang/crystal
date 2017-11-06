@@ -13,6 +13,7 @@ lib LibC
   fun chown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
   fun close(x0 : Int) : Int
   fun dup2(x0 : Int, x1 : Int) : Int
+  fun dup3(fd : Int, fd2 : Int, flags : Int) : Int
   fun _exit(x0 : Int) : NoReturn
   fun execvp(x0 : Char*, x1 : Char**) : Int
   @[ReturnsTwice]
