@@ -134,12 +134,12 @@ struct BigDecimal
     div other
   end
 
-  # Divides self with another `BigDecimal`, with a optionally configurable max_div_iterations, which
+  # Divides self with another `BigDecimal`, with a optionally configurable *max_div_iterations*, which
   # defines a maximum number of iterations in case the division is not exact.
   #
   # ```
-  # BigDecimal(1).div(BigDecimal(2)) => BigDecimal(@value=5, @scale=2)
-  # BigDecimal(1).div(BigDecimal(3), 5) => BigDecimal(@value=33333, @scale=5)
+  # BigDecimal(1).div(BigDecimal(2))    # => BigDecimal(@value=5, @scale=2)
+  # BigDecimal(1).div(BigDecimal(3), 5) # => BigDecimal(@value=33333, @scale=5)
   # ```
   def div(other : BigDecimal, max_div_iterations = DEFAULT_MAX_DIV_ITERATIONS) : BigDecimal
     check_division_by_zero other
@@ -267,8 +267,8 @@ struct BigDecimal
     hasher.string(self.to_s)
   end
 
-  # Returns the quotient as absolutely negative if self and other have different signs,
-  # otherwise returns the quotient.
+  # Returns the *quotient* as absolutely negative if self and other have different signs,
+  # otherwise returns the *quotient*.
   def normalize_quotient(other : BigDecimal, quotient : BigInt) : BigInt
     if (@value < 0 && other.value > 0) || (other.value < 0 && @value > 0)
       -quotient.abs
