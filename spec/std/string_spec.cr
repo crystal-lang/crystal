@@ -62,6 +62,12 @@ describe "String" do
       "há日本語"[5, 10].should eq("")
     end
 
+    it "raises IndexError if pointing after last char which is non-ASCII" do
+      expect_raises(IndexError) do
+        "ß"[1]
+      end
+    end
+
     it "raises index out of bound on index out of range with range" do
       expect_raises(IndexError) do
         "foo"[4..1]
@@ -150,6 +156,10 @@ describe "String" do
       "hello"[5]?.should be_nil
       "hello"[-1]?.should eq('o')
       "hello"[-6]?.should be_nil
+    end
+
+    it "returns nil with []? if pointing after last char which is non-ASCII" do
+      "ß"[1]?.should be_nil
     end
   end
 

@@ -837,7 +837,7 @@ class String
     index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
-    if byte_index
+    if byte_index && byte_index < @bytesize
       reader = Char::Reader.new(self, pos: byte_index)
       return reader.current_char
     else
