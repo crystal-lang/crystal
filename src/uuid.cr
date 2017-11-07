@@ -1,5 +1,4 @@
-# Universally Unique IDentifier.
-# Supports [RFC4122](https://www.ietf.org/rfc/rfc4122.txt) UUIDs and custom
+# Represents a UUID (Universally Unique IDentifier).
 struct UUID
   enum Variant # variants with 16 bytes.
     Unknown    # Unknown (ie. custom, your own).
@@ -18,10 +17,10 @@ struct UUID
     V5      = 5 # SHA1 hash and namespace.
   end
 
-  # Internal representation.
   @bytes : StaticArray(UInt8, 16)
 
-  # Generates UUID from static 16-`bytes`, applying *version* and *variant* to the UUID if present.
+  # Generates UUID from *bytes*, applying *version* and *variant* to the UUID if
+  # present.
   def initialize(@bytes : StaticArray(UInt8, 16), variant : UUID::Variant? = nil, version : UUID::Version? = nil)
     case variant
     when nil
@@ -44,7 +43,8 @@ struct UUID
     end
   end
 
-  # Creates UUID from 16-bytes slice. See `#initialize`
+  # Creates UUID from 16-bytes slice. Raises if *slice* isn't 16 bytes long. See
+  # `#initialize` for *variant* and *version*.
   def self.new(slice : Slice(UInt8), variant = nil, version = nil)
     raise ArgumentError.new "Invalid bytes length #{slice.size}, expected 16" unless slice.size == 16
 
@@ -89,7 +89,8 @@ struct UUID
     new(bytes, variant, version)
   end
 
-  # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex digit followed by another hex digit.
+  # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex
+  # digit followed by another hex digit.
   private def self.string_has_hex_pair_at!(value : String, i)
     unless value[i, 2].to_u8(16, whitespace: false, underscore: false, prefix: false)
       raise ArgumentError.new [
@@ -100,6 +101,9 @@ struct UUID
   end
 
   # Generates RFC 4122 v4 UUID.
+  #
+  # It is strongly recommended to use a cryptographically random source for
+  # *random*, such as `Random::Secure`.
   def self.random(random = Random::Secure, variant = Variant::RFC4122, version = Version::V4)
     new_bytes = uninitialized UInt8[16]
     random.random_bytes(new_bytes.to_slice)
