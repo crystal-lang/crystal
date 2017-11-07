@@ -27,6 +27,15 @@ private module StructSpec
 
     def_clone
   end
+
+  abstract struct GeneralStruct
+  end
+
+  struct FooStruct < GeneralStruct
+  end
+
+  struct BarStruct < GeneralStruct
+  end
 end
 
 describe "Struct" do
@@ -69,5 +78,13 @@ describe "Struct" do
 
     original.x = 10
     clone.x.should_not eq(10)
+  end
+
+  it "should retrieve multiple descendants from hashed data structure" do
+    foo = StructSpec::FooStruct.new
+    bar = StructSpec::BarStruct.new
+    set = Set{foo, bar}
+    set.includes?(foo).should be_true
+    set.includes?(bar).should be_true
   end
 end
