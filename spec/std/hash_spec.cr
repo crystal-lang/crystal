@@ -806,18 +806,25 @@ describe "Hash" do
 
   it "creates with initial capacity" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234)
-    hash.@buckets_size.should eq(1234)
+    hash.capacity.should eq(1536_u32)
   end
 
   it "creates with initial capacity and default value" do
     hash = Hash(Int32, Int32).new(default_value: 3, initial_capacity: 1234)
     hash[1].should eq(3)
-    hash.@buckets_size.should eq(1234)
+    hash.capacity.should eq(1536_u32)
   end
 
   it "creates with initial capacity and block" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 3 }
     hash[1].should eq(3)
-    hash.@buckets_size.should eq(1234)
+    hash.capacity.should eq(1536_u32)
+  end
+end
+
+class Hash(K, V)
+  # :nodoc:
+  def capacity
+    nentries(@sz)
   end
 end

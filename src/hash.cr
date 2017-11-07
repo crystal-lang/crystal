@@ -8,19 +8,28 @@ class Hash(K, V)
   include Iterable({K, V})
 
   getter size : Int32
-  @buckets_size : Int32
-  @first : Entry(K, V)?
-  @last : Entry(K, V)?
+  @sz : UInt8
+  @rebuild_num : UInt16
+  @first : UInt32
+  @last : UInt32
+  @index : Pointer(UInt32)
+  @hashes : Pointer(UInt64)
+  @entries : Pointer(Entry(K, V))
   @block : (self, K -> V)?
 
   def initialize(block : (Hash(K, V), K -> V)? = nil, initial_capacity = nil)
-    initial_capacity ||= 11
-    initial_capacity = 11 if initial_capacity < 11
-    initial_capacity = initial_capacity.to_i
-    @buckets = Pointer(Entry(K, V)?).malloc(initial_capacity)
-    @buckets_size = initial_capacity
     @size = 0
+    @sz = 0_u8
+    @rebuild_num = 0_u16
+    @first = 0_u32
+    @last = 0_u32
+    @index = Pointer(UInt32).new(0)
+    @hashes = Pointer(UInt64).new(0)
+    @entries = Pointer(Entry(K, V)).new(0)
     @block = block
+    unless initial_capacity.nil?
+      resize_data(calculate_new_size(initial_capacity))
+    end
   end
 
   def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
@@ -38,22 +47,15 @@ class Hash(K, V)
   # h["foo"] = "bar"
   # h["foo"] # => "bar"
   # ```
-  def []=(key : K, value : V)
-    rehash if @size > 5 * @buckets_size
-
-    index = bucket_index key
-    entry = insert_in_bucket index, key, value
-    return value unless entry
-
-    @size += 1
-
-    if last = @last
-      last.fore = entry
-      entry.back = last
+  def []=(key, value)
+    hash = hash_key(key)
+    entry, _ = find_entry(hash, key)
+    if entry.null?
+      idx = push_entry(hash, key, value)
+      insert_index_reuse(idx)
+    else
+      entry.value.value = value
     end
-
-    @last = entry
-    @first = entry unless @first
     value
   end
 
@@ -85,7 +87,9 @@ class Hash(K, V)
   # h.has_key?("bar") # => false
   # ```
   def has_key?(key)
-    !!find_entry(key)
+    hash = hash_key(key)
+    entry, _ = find_entry(hash, key)
+    !entry.null?
   end
 
   # Returns `true` when value given by *value* exists, otherwise `false`.
@@ -148,8 +152,9 @@ class Hash(K, V)
   # h.fetch("bar") { |key| key.upcase } # => "BAR"
   # ```
   def fetch(key)
-    entry = find_entry(key)
-    entry ? entry.value : yield key
+    hash = hash_key(key)
+    entry, _ = find_entry(hash, key)
+    entry ? entry.value.value : yield key
   end
 
   # Returns a tuple populated with the elements at the given *indexes*.
@@ -220,43 +225,15 @@ class Hash(K, V)
   # h.delete("baz") { |key| "#{key} not found" } # => "baz not found"
   # ```
   def delete(key)
-    index = bucket_index(key)
-    entry = @buckets[index]
-
-    previous_entry = nil
-    while entry
-      if entry.key == key
-        back_entry = entry.back
-        fore_entry = entry.fore
-        if fore_entry
-          if back_entry
-            back_entry.fore = fore_entry
-            fore_entry.back = back_entry
-          else
-            @first = fore_entry
-            fore_entry.back = nil
-          end
-        else
-          if back_entry
-            back_entry.fore = nil
-            @last = back_entry
-          else
-            @first = nil
-            @last = nil
-          end
-        end
-        if previous_entry
-          previous_entry.next = entry.next
-        else
-          @buckets[index] = entry.next
-        end
-        @size -= 1
-        return entry.value
-      end
-      previous_entry = entry
-      entry = entry.next
+    hash = hash_key(key)
+    entry, idx = find_entry(hash, key)
+    unless entry.null?
+      value = entry.value.value
+      delete_idx(idx)
+      value
+    else
+      yield key
     end
-    yield key
   end
 
   # Deletes each key-value pair for which the given block returns `true`.
@@ -267,12 +244,10 @@ class Hash(K, V)
   # h # => { "bar" => "qux" }
   # ```
   def delete_if
-    keys_to_delete = [] of K
-    each do |key, value|
-      keys_to_delete << key if yield(key, value)
-    end
-    keys_to_delete.each do |key|
-      delete(key)
+    iter_entries do |entry, idx|
+      if yield(entry.value.pair)
+        delete_idx(idx)
+      end
     end
     self
   end
@@ -305,10 +280,8 @@ class Hash(K, V)
   # end
   # ```
   def each : Nil
-    current = @first
-    while current
-      yield({current.key, current.value})
-      current = current.fore
+    iter_entries do |entry, _|
+      yield(entry.value.pair)
     end
   end
 
@@ -323,7 +296,7 @@ class Hash(K, V)
   # iterator.next # => {"baz", "qux"}
   # ```
   def each
-    EntryIterator(K, V).new(self, @first)
+    EntryIterator(K, V).new(self, @first, @rebuild_num)
   end
 
   # Calls the given block for each key-value pair and passes in the key.
@@ -354,7 +327,7 @@ class Hash(K, V)
   # key # => "baz"
   # ```
   def each_key
-    KeyIterator(K, V).new(self, @first)
+    KeyIterator(K, V).new(self, @first, @rebuild_num)
   end
 
   # Calls the given block for each key-value pair and passes in the value.
@@ -385,7 +358,7 @@ class Hash(K, V)
   # value # => "qux"
   # ```
   def each_value
-    ValueIterator(K, V).new(self, @first)
+    ValueIterator(K, V).new(self, @first, @rebuild_num)
   end
 
   # Returns a new `Array` with all the keys.
@@ -421,10 +394,19 @@ class Hash(K, V)
   # h.key_index("qux") # => nil
   # ```
   def key_index(key)
-    each_with_index do |(my_key, my_value), index|
-      return index if key == my_key
+    hash = hash_key(key)
+    entry, idx = find_entry(hash, key)
+    if entry.null?
+      nil
+    elsif @last - @first == @size
+      (idx - @first).to_i
+    else
+      index = 0
+      @first.upto(idx) do |i|
+        index += 1 if @hashes[i] != 0_u64
+      end
+      index
     end
-    nil
   end
 
   # Returns a new `Hash` with the keys and values of this hash and *other* combined.
@@ -504,11 +486,9 @@ class Hash(K, V)
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather that returning a new one. Returns `nil` if no changes were made.
-  def reject!(&block : K, V -> _)
+  def reject!
     num_entries = size
-    each do |key, value|
-      delete(key) if yield(key, value)
-    end
+    delete_if { |k, v| yield k, v }
     num_entries == size ? nil : self
   end
 
@@ -606,7 +586,8 @@ class Hash(K, V)
 
   # Returns the first key in the hash.
   def first_key
-    @first.not_nil!.key
+    nil.not_nil! if empty?
+    @entries[@first].key
   end
 
   # Returns the first key if it exists, or returns `nil`.
@@ -618,17 +599,26 @@ class Hash(K, V)
   # hash.first_key? # => nil
   # ```
   def first_key?
-    @first.try &.key
+    unless empty?
+      @entries[@first].key
+    else
+      nil
+    end
   end
 
   # Returns the first value in the hash.
   def first_value
-    @first.not_nil!.value
+    nil.not_nil! if empty?
+    @entries[@first].value
   end
 
   # Similar to `#first_key?`, but returns its value.
   def first_value?
-    @first.try &.value
+    unless empty?
+      @entries[@first].value
+    else
+      nil
+    end
   end
 
   # Deletes and returns the first key-value pair in the hash,
@@ -673,10 +663,11 @@ class Hash(K, V)
   # hash                # => {}
   # ```
   def shift
-    first = @first
-    if first
-      delete first.key
-      {first.key, first.value}
+    unless empty?
+      idx = @first
+      res = @entries[idx].pair
+      delete_idx(idx)
+      res
     else
       yield
     end
@@ -689,21 +680,21 @@ class Hash(K, V)
   # hash.clear # => {}
   # ```
   def clear
-    @buckets_size.times do |i|
-      @buckets[i] = nil
-    end
+    resize_data(0_u8)
+    @rebuild_num += 1_u16
     @size = 0
-    @first = nil
-    @last = nil
+    @first = 0_u32
+    @last = 0_u32
     self
   end
 
   # Compares with *other*. Returns `true` if all key-value pairs are the same.
   def ==(other : Hash)
     return false unless size == other.size
-    each do |key, value|
-      entry = other.find_entry(key)
-      return false unless entry && entry.value == value
+    iter_entries do |entry, idx|
+      other_entry, _ = other.find_entry(@hashes[idx], entry.value.key)
+      return false unless other_entry
+      return false unless other_entry.value.value == entry.value.value
     end
     true
   end
@@ -733,11 +724,20 @@ class Hash(K, V)
   # hash_a # => {"foo" => "bar"}
   # ```
   def dup
-    hash = Hash(K, V).new(initial_capacity: @buckets_size)
-    each do |key, value|
-      hash[key] = value
-    end
-    hash
+    copy = super
+    copy.init_dup(self)
+  end
+
+  protected def init_dup(original)
+    index = nindex(@sz)
+    entries = nentries(@sz)
+    @index = Pointer(UInt32).malloc(index)
+    @hashes = Pointer(UInt64).malloc(entries)
+    @entries = Pointer(Entry(K, V)).malloc(entries)
+    @index.copy_from(original.@index, index)
+    @hashes.copy_from(original.@hashes, entries)
+    @entries.copy_from(original.@entries, entries)
+    self
   end
 
   # Similar to `#dup`, but duplicates the values as well.
@@ -749,11 +749,16 @@ class Hash(K, V)
   # hash_a # => {"foobar" => {"foo" => "bar"}}
   # ```
   def clone
-    hash = Hash(K, V).new(initial_capacity: @buckets_size)
-    each do |key, value|
-      hash[key] = value.clone
+    copy = dup
+    copy.init_clone
+  end
+
+  protected def init_clone
+    iter_entries do |entry, _|
+      entry.value.key = entry.value.key.clone
+      entry.value.value = entry.value.value.clone
     end
-    hash
+    self
   end
 
   def inspect(io : IO)
@@ -804,20 +809,6 @@ class Hash(K, V)
     self
   end
 
-  def rehash
-    new_size = calculate_new_size(@size)
-    @buckets = @buckets.realloc(new_size)
-    new_size.times { |i| @buckets[i] = nil }
-    @buckets_size = new_size
-    entry = @last
-    while entry
-      index = bucket_index entry.key
-      entry.next = @buckets[index]
-      @buckets[index] = entry
-      entry = entry.back
-    end
-  end
-
   # Inverts keys and values. If there are duplicated values, the last key becomes the new value.
   #
   # ```
@@ -825,92 +816,249 @@ class Hash(K, V)
   # {"foo" => "bar", "baz" => "bar"}.invert # => {"bar" => "baz"}
   # ```
   def invert
-    hash = Hash(V, K).new(initial_capacity: @buckets_size)
+    hash = Hash(V, K).new(initial_capacity: @size)
     self.each do |k, v|
       hash[v] = k
     end
     hash
   end
 
-  protected def find_entry(key)
-    return nil if empty?
-
-    index = bucket_index key
-    entry = @buckets[index]
-    find_entry_in_bucket entry, key
+  @[AlwaysInline]
+  private def iter_entries
+    return if empty?
+    rnum = @rebuild_num
+    @first.upto(@last - 1) do |idx|
+      if @hashes[idx] != 0_u64
+        yield (@entries + idx), idx
+        raise "Hash modified during iteration" unless rnum == @rebuild_num
+      end
+    end
   end
 
-  private def insert_in_bucket(index, key, value)
-    entry = @buckets[index]
-    if entry
-      while entry
-        if entry.key == key
-          entry.value = value
-          return nil
-        end
-        if entry.next
-          entry = entry.next
-        else
-          return entry.next = Entry(K, V).new(key, value)
-        end
+  @[AlwaysInline]
+  protected def iter_index(hash : UInt64)
+    mask = indexmask(@sz)
+    pos = hash & mask
+    mix = hash
+    d = 1_u64
+    while true
+      yield pos.to_u32
+      pos = (pos + d) & mask
+      mix >>= 8
+      d += (1_u64 + mix) & mask
+    end
+  end
+
+  @[AlwaysInline]
+  private def iter_search(hash, key)
+    return if empty?
+    if indexmask(@sz) == 0
+      @first.upto(@last - 1) do |idx|
+        yield idx unless @hashes[idx] == 0
       end
     else
-      return @buckets[index] = Entry(K, V).new(key, value)
-    end
-  end
-
-  private def find_entry_in_bucket(entry, key)
-    while entry
-      if entry.key == key
-        return entry
+      iter_index(hash) do |pos|
+        idx = @index[pos]
+        break if idx == 0
+        idx -= 1
+        yield idx unless @hashes[idx] == 0
       end
-      entry = entry.next
     end
-    nil
   end
 
-  private def bucket_index(key)
-    key.hash.remainder(@buckets_size).to_i
+  protected def find_entry(hash, key) : {Pointer(Entry(K, V)), UInt32}
+    iter_search(hash, key) do |idx|
+      if @hashes[idx] == hash && @entries[idx].key == key
+        return @entries + idx, idx
+      end
+    end
+    {Pointer(Entry(K, V)).new(0), 0_u32}
+  end
+
+  def rehash
+    @rebuild_num += 1_u16
+    if need_shrink(@size, @sz)
+      reclaim_without_index
+      if need_shrink(@size, @sz - 1)
+        resize_data(@sz - 1)
+      end
+      if indexmask(@sz) != 0
+        fix_index
+      end
+    elsif nentries(@sz + 1) == 0
+      raise "Hash table too big"
+    else
+      resize_data(@sz + 1)
+      if indexmask(@sz) != indexmask(@sz - 1)
+        reclaim_without_index
+        fix_index
+      end
+    end
+  end
+
+  private def resize_data(newsz)
+    oldsz = @sz
+    old_nindex = nindex(oldsz)
+    new_nindex = nindex(newsz)
+    old_nentries = nentries(oldsz)
+    new_nentries = nentries(newsz)
+    @hashes = @hashes.realloc(new_nentries)
+    @entries = @entries.realloc(new_nentries)
+    if new_nindex != old_nindex
+      @index = @index.realloc(new_nindex)
+    end
+    if new_nentries > old_nentries
+      (@entries + old_nentries).clear(new_nentries - old_nentries)
+    end
+    @sz = newsz
+  end
+
+  private def need_shrink(size : Int32, sz : UInt8) : Bool
+    sz > 1 && size < nentries(sz)/2
+  end
+
+  private def reclaim_without_index
+    @rebuild_num += 1_u16
+    pos = 0_u32
+    unless empty?
+      idx = @first
+      if @first == 0_u32
+        if @last == @size
+          pos = idx = @last
+        else
+          while @hashes[idx] != 0_u64
+            idx += 1
+          end
+          pos = idx
+        end
+      end
+      idx.upto(@last - 1) do |idx|
+        unless @hashes[idx] == 0_u64
+          @entries[pos] = @entries[idx]
+          @hashes[pos] = @hashes[idx]
+          pos += 1
+        end
+      end
+    end
+    (@entries + pos).clear(@last - pos)
+    @first = 0_u32
+    @last = pos
+  end
+
+  private def fix_index
+    @index.clear(nindex(@sz))
+    return if empty?
+    @first.upto(@last - 1) do |idx|
+      insert_index_simple(idx)
+    end
+  end
+
+  private def push_entry(hash : UInt64, key, val) : UInt32
+    if @last == nentries(@sz)
+      rehash
+    end
+    idx = @last
+    @hashes[idx] = hash
+    entry = @entries + idx
+    entry.value.key = key
+    entry.value.value = val
+    @last += 1
+    @size += 1
+    idx
+  end
+
+  protected def insert_index_simple(idx : UInt32)
+    iter_index(@hashes[idx]) do |pos|
+      if @index[pos] == 0
+        @index[pos] = idx + 1
+        break
+      end
+    end
+  end
+
+  protected def insert_index_reuse(idx : UInt32)
+    return if indexmask(@sz) == 0
+    reuse = @size != @last
+    iter_index(@hashes[idx]) do |pos|
+      oidx = @index[pos]
+      if oidx == 0 || (reuse && @hashes[oidx - 1] == 0_u64)
+        @index[pos] = idx + 1
+        break
+      end
+    end
+  end
+
+  private def delete_idx(idx)
+    @hashes[idx] = 0_u64
+    (@entries + idx).clear
+    @size -= 1
+    if @first == idx
+      if @size == 0
+        @first = @last
+      else
+        idx += 1
+        while @hashes[idx] == 0_u64
+          idx += 1
+        end
+        @first = idx
+      end
+    end
+  end
+
+  def hash_key(key)
+    h = key.hash.to_u64
+    (h >> 1) + 1
+  end
+
+  private def nindex(sz)
+    mask = SIZES[sz].indexmask
+    mask + (mask != 0 ? 1 : 0)
+  end
+
+  private def indexmask(sz)
+    SIZES[sz].indexmask
+  end
+
+  private def nentries(sz)
+    SIZES[sz].nentries
   end
 
   private def calculate_new_size(size)
-    new_size = 8
-    HASH_PRIMES.each do |hash_size|
-      return hash_size if new_size > size
-      new_size <<= 1
+    (1...SIZES.size).each do |i|
+      return i.to_u8 if SIZES[i].nentries >= size
     end
     raise "Hash table too big"
   end
 
-  private class Entry(K, V)
-    getter key : K
+  private struct Entry(K, V)
+    property key : K
     property value : V
 
-    # Next in the linked list of each bucket
-    property next : self?
-
-    # Next in the ordered sense of hash
-    property fore : self?
-
-    # Previous in the ordered sense of hash
-    property back : self?
-
     def initialize(@key : K, @value : V)
+    end
+
+    def pair : {K, V}
+      {@key, @value}
     end
   end
 
   private module BaseIterator
-    def initialize(@hash, @current)
+    def initialize(@hash, @current, @rebuild_num)
     end
 
     def base_next
-      if current = @current
-        value = yield current
-        @current = current.fore
-        value
-      else
-        stop
+      if @hash.@rebuild_num != @rebuild_num
+        raise "Hash modified during iteration"
       end
+      while @current < @hash.@last
+        if @hash.@hashes[@current] != 0_u64
+          value = yield (@hash.@entries + @current)
+          @current += 1_u32
+          return value
+        end
+        @current += 1_u32
+      end
+      stop
     end
 
     def rewind
@@ -923,10 +1071,11 @@ class Hash(K, V)
     include Iterator({K, V})
 
     @hash : Hash(K, V)
-    @current : Entry(K, V)?
+    @current : UInt32
+    @rebuild_num : UInt16
 
     def next
-      base_next { |entry| {entry.key, entry.value} }
+      base_next { |entry| {entry.value.key, entry.value.value} }
     end
   end
 
@@ -935,10 +1084,11 @@ class Hash(K, V)
     include Iterator(K)
 
     @hash : Hash(K, V)
-    @current : Entry(K, V)?
+    @current : UInt32
+    @rebuild_num : UInt16
 
     def next
-      base_next &.key
+      base_next &.value.key
     end
   end
 
@@ -947,43 +1097,27 @@ class Hash(K, V)
     include Iterator(V)
 
     @hash : Hash(K, V)
-    @current : Entry(K, V)?
+    @current : UInt32
+    @rebuild_num : UInt16
 
     def next
-      base_next &.value
+      base_next &.value.value
     end
   end
 
   # :nodoc:
-  HASH_PRIMES = [
-    8 + 3,
-    16 + 3,
-    32 + 5,
-    64 + 3,
-    128 + 3,
-    256 + 27,
-    512 + 9,
-    1024 + 9,
-    2048 + 5,
-    4096 + 3,
-    8192 + 27,
-    16384 + 43,
-    32768 + 3,
-    65536 + 45,
-    131072 + 29,
-    262144 + 3,
-    524288 + 21,
-    1048576 + 7,
-    2097152 + 17,
-    4194304 + 15,
-    8388608 + 9,
-    16777216 + 43,
-    33554432 + 35,
-    67108864 + 15,
-    134217728 + 29,
-    268435456 + 3,
-    536870912 + 11,
-    1073741824 + 85,
-    0,
-  ]
+  record SizeItem, nentries : UInt32, indexmask : UInt32
+  {% begin %}
+  # :nodoc:
+  SIZES = StaticArray[
+      SizeItem.new(0_u32, 0_u32),
+      SizeItem.new(8_u32, 0_u32),
+  {% for i in 4..30 %}
+      {% p = 1 << i %}
+      SizeItem.new({{p}}_u32, {{p*2 - 1}}_u32),
+      SizeItem.new({{p + p/2}}_u32, {{p*2 - 1}}_u32),
+  {% end %}
+      SizeItem.new(0_u32, 0_u32),
+    ]
+{% end %}
 end
