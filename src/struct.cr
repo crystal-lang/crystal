@@ -64,6 +64,7 @@ struct Struct
   # p1 == p3 # => false
   # ```
   def ==(other) : Bool
+    # TODO: This is a workaround for https://github.com/crystal-lang/crystal/issues/5249
     if other.is_a?(self)
       {% for ivar in @type.instance_vars %}
         return false unless @{{ivar.id}} == other.@{{ivar.id}}
