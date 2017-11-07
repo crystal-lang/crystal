@@ -16,7 +16,7 @@ module Spec::Methods
     Spec::RootContext.describe(description.to_s, file, line, &block)
   end
 
-  # Defines an example group that establishes a specifc context,
+  # Defines an example group that establishes a specific context,
   # like *empty array* versus *array with elements*.
   # Inside *&block* examples are defined by `#it` or `#pending`.
   #
