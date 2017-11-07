@@ -1,5 +1,5 @@
 require "spec"
-require "big_decimal"
+require "big"
 
 describe BigDecimal do
   it "initializes from valid input" do
