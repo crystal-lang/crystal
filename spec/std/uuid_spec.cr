@@ -3,91 +3,74 @@ require "uuid"
 
 describe "UUID" do
   describe "random initialize" do
-    it "random initialize with no options" do
+    it "works with no options" do
       subject = UUID.random
       subject.variant.should eq UUID::Variant::RFC4122
       subject.version.should eq UUID::Version::V4
     end
 
-    it "random initialize with variant" do
+    it "works with variant" do
       subject = UUID.random(variant: UUID::Variant::NCS)
       subject.variant.should eq UUID::Variant::NCS
       subject.version.should eq UUID::Version::V4
     end
 
-    it "random initialize with version" do
+    it "works with version" do
       subject = UUID.random(version: UUID::Version::V3)
       subject.variant.should eq UUID::Variant::RFC4122
       subject.version.should eq UUID::Version::V3
     end
   end
 
-  describe "initialize with slice" do
-    it "initialize with slice only" do
-      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8))
-      subject.to_s.should eq "00000000-0000-4000-8000-000000000000"
-      subject.variant.should eq UUID::Variant::RFC4122
-      subject.version.should eq UUID::Version::V4
-    end
-
-    it "initialize with slice and variant" do
-      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), variant: UUID::Variant::NCS)
-      subject.to_s.should eq "00000000-0000-4000-0000-000000000000"
-      subject.variant.should eq UUID::Variant::NCS
-      subject.version.should eq UUID::Version::V4
-    end
-
-    it "initialize with slice and version" do
-      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), version: UUID::Version::V3)
-      subject.to_s.should eq "00000000-0000-3000-8000-000000000000"
-      subject.variant.should eq UUID::Variant::RFC4122
-      subject.version.should eq UUID::Version::V3
-    end
+  it "initializes with slice" do
+    subject = UUID.new(Slice(UInt8).new(16, 0_u8), variant: UUID::Variant::RFC4122, version: UUID::Version::V4)
+    subject.to_s.should eq "00000000-0000-4000-8000-000000000000"
+    subject.variant.should eq UUID::Variant::RFC4122
+    subject.version.should eq UUID::Version::V4
   end
 
-  describe "initialize with static array" do
-    it "initialize with static array only" do
+  describe "initialize from static array" do
+    it "works with static array only" do
       subject = UUID.new(StaticArray(UInt8, 16).new(0_u8))
-      subject.to_s.should eq "00000000-0000-4000-8000-000000000000"
+      subject.to_s.should eq "00000000-0000-0000-0000-000000000000"
+    end
+
+    it "works with static array and variant" do
+      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), variant: UUID::Variant::RFC4122)
+      subject.to_s.should eq "00000000-0000-0000-8000-000000000000"
       subject.variant.should eq UUID::Variant::RFC4122
-      subject.version.should eq UUID::Version::V4
     end
 
-    it "initialize with static array and variant" do
-      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), variant: UUID::Variant::NCS)
-      subject.to_s.should eq "00000000-0000-4000-0000-000000000000"
-      subject.variant.should eq UUID::Variant::NCS
-      subject.version.should eq UUID::Version::V4
-    end
-
-    it "initialize with static array and version" do
+    it "works with static array and version" do
       subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), version: UUID::Version::V3)
-      subject.to_s.should eq "00000000-0000-3000-8000-000000000000"
-      subject.variant.should eq UUID::Variant::RFC4122
+      subject.to_s.should eq "00000000-0000-3000-0000-000000000000"
+      subject.version.should eq UUID::Version::V3
+    end
+
+    it "works with static array, variant and version" do
+      subject = UUID.new(StaticArray(UInt8, 16).new(0_u8), variant: UUID::Variant::Microsoft, version: UUID::Version::V3)
+      subject.to_s.should eq "00000000-0000-3000-c000-000000000000"
+      subject.variant.should eq UUID::Variant::Microsoft
       subject.version.should eq UUID::Version::V3
     end
   end
 
   describe "initialize with String" do
-    it "initialize with static array only" do
+    it "works with static array only" do
       subject = UUID.new("00000000-0000-0000-0000-000000000000")
-      subject.to_s.should eq "00000000-0000-4000-8000-000000000000"
-      subject.variant.should eq UUID::Variant::RFC4122
-      subject.version.should eq UUID::Version::V4
+      subject.to_s.should eq "00000000-0000-0000-0000-000000000000"
     end
 
-    it "initialize with static array and variant" do
-      subject = UUID.new("00000000-0000-0000-0000-000000000000", variant: UUID::Variant::NCS)
-      subject.to_s.should eq "00000000-0000-4000-0000-000000000000"
-      subject.variant.should eq UUID::Variant::NCS
-      subject.version.should eq UUID::Version::V4
+    it "works with static array and variant" do
+      subject = UUID.new("00000000-0000-0000-0000-000000000000", variant: UUID::Variant::Future)
+      subject.to_s.should eq "00000000-0000-0000-e000-000000000000"
+      subject.variant.should eq UUID::Variant::Future
     end
 
-    it "initialize with static array and version" do
-      subject = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V3)
-      subject.to_s.should eq "00000000-0000-3000-8000-000000000000"
-      subject.variant.should eq UUID::Variant::RFC4122
-      subject.version.should eq UUID::Version::V3
+    it "works with static array and version" do
+      subject = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
+      subject.to_s.should eq "00000000-0000-5000-0000-000000000000"
+      subject.version.should eq UUID::Version::V5
     end
 
     it "can be built from strings" do
@@ -95,6 +78,7 @@ describe "UUID" do
       UUID.new("c20335c37f464126aae9f665434ad12b").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
       UUID.new("C20335C3-7F46-4126-AAE9-F665434AD12B").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
       UUID.new("C20335C37F464126AAE9F665434AD12B").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+      UUID.new("urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").should eq("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892")
     end
   end
 
