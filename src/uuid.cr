@@ -157,12 +157,7 @@ struct UUID
     @bytes.to_unsafe
   end
 
-  # Returns `true` if `other` string represents the same UUID, `false` otherwise.
-  def ==(other : String)
-    self == UUID.new other
-  end
-
-  # Returns `true` if `other` 16-byte slice represents the same UUID, `false` otherwise.
+  # Returns `true` if `other` UUID represents the same UUID, `false` otherwise.
   def ==(other : UUID)
     to_slice == other.to_slice
   end

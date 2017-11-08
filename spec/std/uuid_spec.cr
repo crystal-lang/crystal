@@ -74,11 +74,11 @@ describe "UUID" do
     end
 
     it "can be built from strings" do
-      UUID.new("c20335c3-7f46-4126-aae9-f665434ad12b").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
-      UUID.new("c20335c37f464126aae9f665434ad12b").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
-      UUID.new("C20335C3-7F46-4126-AAE9-F665434AD12B").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
-      UUID.new("C20335C37F464126AAE9F665434AD12B").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
-      UUID.new("urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").should eq("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892")
+      UUID.new("c20335c3-7f46-4126-aae9-f665434ad12b").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+      UUID.new("c20335c37f464126aae9f665434ad12b").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+      UUID.new("C20335C3-7F46-4126-AAE9-F665434AD12B").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+      UUID.new("C20335C37F464126AAE9F665434AD12B").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+      UUID.new("urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").to_s.should eq("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892")
     end
   end
 
@@ -108,15 +108,6 @@ describe "UUID" do
 
     it "urn" do
       UUID.new("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").urn.should eq "urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892"
-    end
-
-    it "compares to strings" do
-      uuid = UUID.new "c3b46146eb794e18877b4d46a10d1517"
-      uuid.should eq("c3b46146eb794e18877b4d46a10d1517")
-      uuid.should eq("c3b46146-eb79-4e18-877b-4d46a10d1517")
-      uuid.should eq("C3B46146-EB79-4E18-877B-4D46A10D1517")
-      uuid.should eq("urn:uuid:C3B46146-EB79-4E18-877B-4D46A10D1517")
-      uuid.should eq("urn:uuid:c3b46146-eb79-4e18-877b-4d46a10d1517")
     end
   end
 
