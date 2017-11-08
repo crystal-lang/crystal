@@ -54,6 +54,8 @@ struct UUID
     new(bytes, variant, version)
   end
 
+  # Creates another `UUID` which is a copy of *uuid*, but allows overriding
+  # *variant* or *version*.
   def self.new(uuid : UUID, variant = nil, version = nil)
     new(uuid.bytes, variant, version)
   end
