@@ -22,13 +22,6 @@ describe "UUID" do
     end
   end
 
-  it "initializes with slice" do
-    subject = UUID.new(Slice(UInt8).new(16, 0_u8), variant: UUID::Variant::RFC4122, version: UUID::Version::V4)
-    subject.to_s.should eq "00000000-0000-4000-8000-000000000000"
-    subject.variant.should eq UUID::Variant::RFC4122
-    subject.version.should eq UUID::Version::V4
-  end
-
   describe "initialize from static array" do
     it "works with static array only" do
       subject = UUID.new(StaticArray(UInt8, 16).new(0_u8))
@@ -53,6 +46,13 @@ describe "UUID" do
       subject.variant.should eq UUID::Variant::Microsoft
       subject.version.should eq UUID::Version::V3
     end
+  end
+
+  it "initializes with slice" do
+    subject = UUID.new(Slice(UInt8).new(16, 0_u8), variant: UUID::Variant::RFC4122, version: UUID::Version::V4)
+    subject.to_s.should eq "00000000-0000-4000-8000-000000000000"
+    subject.variant.should eq UUID::Variant::RFC4122
+    subject.version.should eq UUID::Version::V4
   end
 
   describe "initialize with String" do
@@ -80,6 +80,14 @@ describe "UUID" do
       UUID.new("C20335C37F464126AAE9F665434AD12B").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
       UUID.new("urn:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892").should eq("1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892")
     end
+  end
+
+  it "initializes from UUID" do
+    uuid = UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93")
+    uuid = UUID.new(uuid, version: UUID::Version::V2, variant: UUID::Variant::Microsoft)
+    uuid.version.should eq UUID::Version::V2
+    uuid.variant.should eq UUID::Variant::Microsoft
+    uuid.to_s.should eq "50a11da6-377b-2bdf-d9f0-076f9db61c93"
   end
 
   it "initializes zeroed UUID" do

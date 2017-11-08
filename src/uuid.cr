@@ -17,7 +17,7 @@ struct UUID
     V5      = 5 # SHA1 hash and namespace.
   end
 
-  @bytes : StaticArray(UInt8, 16)
+  protected getter bytes : StaticArray(UInt8, 16)
 
   # Generates UUID from *bytes*, applying *version* and *variant* to the UUID if
   # present.
@@ -52,6 +52,10 @@ struct UUID
     slice.copy_to(bytes.to_slice)
 
     new(bytes, variant, version)
+  end
+
+  def self.new(uuid : UUID, variant = nil, version = nil)
+    new(uuid.bytes, variant, version)
   end
 
   # Creates new UUID by decoding `value` string from hyphenated (ie. `ba714f86-cac6-42c7-8956-bcf5105e1b81`),
