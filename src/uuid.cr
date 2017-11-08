@@ -166,9 +166,9 @@ struct UUID
     slice = to_slice
 
     buffer = uninitialized UInt8[36]
-    buffer[8] = buffer[13] = buffer[18] = buffer[23] = '-'.ord.to_u8
-
     buffer_ptr = buffer.to_unsafe
+
+    buffer_ptr[8] = buffer_ptr[13] = buffer_ptr[18] = buffer_ptr[23] = '-'.ord.to_u8
     slice[0, 4].hexstring(buffer_ptr + 0)
     slice[4, 2].hexstring(buffer_ptr + 9)
     slice[6, 2].hexstring(buffer_ptr + 14)
