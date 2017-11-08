@@ -119,7 +119,7 @@ module Crystal::Doc::Highlighter
       case token.type
       when :STRING
         io << " " unless first
-        io << token.value
+        HTML.escape(token.raw, io)
         first = false
       when :STRING_ARRAY_END
         io << ")"
