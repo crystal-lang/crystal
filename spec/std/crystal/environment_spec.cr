@@ -18,6 +18,11 @@ describe "Crystal.env" do
 end
 
 describe "Crystal::Environment" do
+  it "returns name of the module in #inspect and #to_s" do
+    Crystal::Environment.inspect.should eq("Crystal::Environment")
+    Crystal::Environment.to_s.should eq("Crystal::Environment")
+  end
+
   it "returns \"#{Crystal::Environment::ENV_DEFAULT}\" as default #name when #{Crystal::Environment::ENV_KEY} variable is not set" do
     with_env(nil) do
       Crystal::Environment.name.should eq Crystal::Environment::ENV_DEFAULT

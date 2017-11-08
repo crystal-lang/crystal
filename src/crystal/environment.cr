@@ -13,6 +13,10 @@ module Crystal
 
     extend self
 
+    def to_s(io)
+      io << {{ @type.name.stringify }}
+    end
+
     {% for env in ENV_VALUES %}
       def {{ env.id }}?
         name == {{ env.id.stringify }}
