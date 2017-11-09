@@ -178,14 +178,23 @@ module Crystal
       base_indent = old_indent
       next_needs_indent = false
 
+      has_newline = false
       has_paren = false
       has_begin = false
 
       if node.keyword == :"(" && @token.type == :"("
         write "("
         next_needs_indent = false
-        next_token
         has_paren = true
+        wrote_newline = next_token_skip_space
+        if @token.type == :NEWLINE || wrote_newline
+          @indent += 2
+          write_line unless wrote_newline
+          next_token_skip_space_or_newline
+          base_indent = @indent
+          next_needs_indent = true
+          has_newline = true
+        end
       elsif node.keyword == :begin && @token.keyword?(:begin)
         write "begin"
         @indent += 2
@@ -197,6 +206,7 @@ module Crystal
         has_begin = true
         base_indent = @indent
         next_needs_indent = true
+        has_newline = true
       end
 
       last_aligned_assign = nil
@@ -271,6 +281,11 @@ module Crystal
 
       @indent = old_indent
 
+      if has_newline
+        write_line
+        write_indent
+      end
+
       if has_paren
         write_token :")"
       end
@@ -278,8 +293,6 @@ module Crystal
       if has_begin
         check_end
         next_token
-        write_line
-        write_indent
         write "end"
       end
 

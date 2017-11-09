@@ -142,6 +142,7 @@ describe Crystal::Formatter do
 
   assert_format "(1)"
   assert_format "  (  1;  2;   3  )  ", "(1; 2; 3)"
+  assert_format "(\n  a = 1\n  a\n)"
   assert_format "begin; 1; end", "begin\n  1\nend"
   assert_format "begin\n1\n2\n3\nend", "begin\n  1\n  2\n  3\nend"
   assert_format "begin\n1 ? 2 : 3\nend", "begin\n  1 ? 2 : 3\nend"
