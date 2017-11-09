@@ -11,6 +11,11 @@ describe Tempfile do
     File.read(tempfile.path).should eq("Hello!")
   end
 
+  it "has given extension if passed to constructor" do
+    tempfile = Tempfile.new "foo", ".pdf"
+    File.extname(tempfile.path).should eq(".pdf")
+  end
+
   it "creates and deletes" do
     tempfile = Tempfile.new "foo"
     tempfile.close
@@ -24,6 +29,11 @@ describe Tempfile do
       f.print "Hello!"
     end
     File.exists?(tempfile.path).should be_true
+  end
+
+  it "has given extension if passed to open" do
+    tempfile = Tempfile.open("foo", ".pdf") { |f| }
+    File.extname(tempfile.path).should eq(".pdf")
   end
 
   it "creates and writes with TMPDIR environment variable" do

@@ -31,12 +31,24 @@ require "c/stdlib"
 # tempfile = Tempfile.new("foo")
 # tempfile.unlink
 # ```
+#
+# The optional `extension` argument can be used to force the resulting filename
+# to end with the given extension.
+#
+# ```
+# Tempfile.new("foo", ".png").path # => "/tmp/foo.ulBCPS.png"
+# ```
 class Tempfile < IO::FileDescriptor
-  # Creates a `Tempfile` with the given filename.
-  def initialize(name)
+  # Creates a `Tempfile` with the given filename and extension.
+  def initialize(name, extension = nil)
     tmpdir = self.class.dirname + File::SEPARATOR
-    @path = "#{tmpdir}#{name}.XXXXXX"
-    fileno = LibC.mkstemp(@path)
+    @path = "#{tmpdir}#{name}.XXXXXX#{extension}"
+    fileno = if extension
+               LibC.mkstemps(@path, extension.bytesize)
+             else
+               LibC.mkstemp(@path)
+             end
+
     if fileno == -1
       raise Errno.new("mkstemp")
     end
@@ -50,8 +62,8 @@ class Tempfile < IO::FileDescriptor
   # ```
   getter path : String
 
-  # Creates a file with *filename*, and yields it to the given block.
-  # It is closed and returned at the end of this method call.
+  # Creates a file with *filename* and *extension*, and yields it to the given
+  # block. It is closed and returned at the end of this method call.
   #
   # ```
   # tempfile = Tempfile.open("foo") do |file|
@@ -59,8 +71,8 @@ class Tempfile < IO::FileDescriptor
   # end
   # File.read(tempfile.path) # => "bar"
   # ```
-  def self.open(filename)
-    tempfile = Tempfile.new(filename)
+  def self.open(filename, extension = nil)
+    tempfile = Tempfile.new(filename, extension)
     begin
       yield tempfile
     ensure
