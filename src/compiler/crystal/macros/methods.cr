@@ -753,6 +753,11 @@ module Crystal
         interpret_argless_method(method, args) { @of || Nop.new }
       when "type"
         interpret_argless_method(method, args) { @name || Nop.new }
+      when "clear"
+        interpret_argless_method(method, args) do
+          elements.clear
+          self
+        end
       else
         value = intepret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
         value || super
@@ -837,6 +842,11 @@ module Crystal
         interpret_argless_method(method, args) { @of.try(&.value) || Nop.new }
       when "type"
         interpret_argless_method(method, args) { @name || Nop.new }
+      when "clear"
+        interpret_argless_method(method, args) do
+          entries.clear
+          self
+        end
       else
         super
       end
