@@ -276,6 +276,13 @@ struct Set(T)
     same?(other) || @hash == other.@hash
   end
 
+  # Alias to `#includes?`.
+  #
+  # It is for convenience with using on `case` statement.
+  def ===(object : T)
+    includes? object
+  end
+
   # Returns a new `Set` with all of the same elements.
   def dup
     Set.new(self)
