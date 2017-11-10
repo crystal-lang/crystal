@@ -183,6 +183,33 @@ describe "FileUtils" do
     end
   end
 
+  describe "chmod_r" do
+    it "changes the permissions of the directory recursively" do
+      data_path = File.join(__DIR__, "data")
+      path = File.join(data_path, "chmod_r_test")
+
+      begin
+        Dir.mkdir(path)
+        Dir.mkdir(File.join(path, "a"))
+        File.write(File.join(path, "a/b"), "")
+
+        FileUtils.chmod_r(path, 0o775)
+        File.stat(File.join(path, "a")).perm.should eq(0o775)
+        File.stat(File.join(path, "a/b")).perm.should eq(0o775)
+      ensure
+        FileUtils.rm_r(path)
+      end
+    end
+  end
+
+  describe "chown_r" do
+    it "change the owner of the directory recursively" do
+      # changing owners requires special privileges, so we test that method calls do compile
+      typeof(FileUtils.chown_r("/tmp/test"))
+      typeof(FileUtils.chown_r("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
+    end
+  end
+
   describe "rm_r" do
     it "deletes a directory recursively" do
       data_path = File.join(__DIR__, "data")

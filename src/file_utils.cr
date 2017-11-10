@@ -146,6 +146,56 @@ module FileUtils
     end
   end
 
+  # Changes the permissions of the directories and files recursively at the given *path*
+  #
+  # Symlinks are dereferenced, so that only the permissions of the symlink
+  # destination are changed, never the permissions of the symlink itself.
+  #
+  # ```
+  # File.chmod_r("foo", 0o755)
+  # File.stat("foo").perm # => 0o755
+  #
+  # File.chmod_r("foo", 0o700)
+  # File.stat("foo").perm # => 0o700
+  # ```
+  def chmod_r(path, mode : Int)
+    File.chmod(path, mode)
+    if Dir.exists?(path)
+      Dir.each_child(path) do |entry|
+        src = File.join(path, entry)
+        File.chmod(src, mode)
+        chmod_r(src, mode)
+      end
+    end
+  end
+
+  # Changes the owner of the directories and files recursively at the given *path*
+  #
+  # ```
+  # File.chown_r("/foo/bar", 1001, 100)
+  # ```
+  #
+  # Unless *follow_symlinks* is set to `true`, then the owner symlink itself will
+  # be changed, otherwise the owner of the symlink destination file will be
+  # changed. For example, assuming symlinks as `foo -> bar -> baz`:
+  #
+  # ```
+  # File.chown_r("foo", gid: 100)                        # changes foo's gid
+  # File.chown_r("foo", gid: 100, follow_symlinks: true) # changes baz's gid
+  # ```
+  #
+  # This applies recursively for all subfiles and sudirectories at the given *path*.
+  def chown_r(path, uid : Int? = -1, gid : Int = -1, follow_symlinks = false)
+    File.chown(path, uid, gid, follow_symlinks)
+    if Dir.exists?(path)
+      Dir.each_child(path) do |entry|
+        src = File.join(path, entry)
+        File.chown(src, uid, gid, follow_symlinks)
+        chown_r(src, uid, gid, follow_symlinks)
+      end
+    end
+  end
+
   # Creates a new directory at the given *path*. The linux-style permission *mode*
   # can be specified, with a default of 777 (0o777).
   #
