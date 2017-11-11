@@ -58,7 +58,7 @@ module HTTP
           if key
             yield key.not_nil!, value
           else
-            yield value, ""
+            yield value, "" unless value.empty?
           end
 
           key = nil
@@ -72,7 +72,7 @@ module HTTP
       if key
         yield key.not_nil!, buffer.to_s
       else
-        yield buffer.to_s, ""
+        yield buffer.to_s, "" unless buffer.empty?
       end
     end
 
