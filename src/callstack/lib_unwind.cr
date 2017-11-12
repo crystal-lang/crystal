@@ -1,3 +1,6 @@
+{% if flag?(:openbsd) %}
+  @[Link("stdc++")]
+{% end %}
 lib LibUnwind
   @[Flags]
   enum Action
