@@ -13,8 +13,7 @@ class Hash(K, V)
   @first : UInt32
   @last : UInt32
   @index : Pointer(UInt32)
-  @hashes : Pointer(UInt64)
-  @entries : Pointer(Entry(K, V))
+  @entries : Pointer(Void)
   @block : (self, K -> V)?
 
   def initialize(block : (Hash(K, V), K -> V)? = nil, initial_capacity = nil)
@@ -24,8 +23,7 @@ class Hash(K, V)
     @first = 0_u32
     @last = 0_u32
     @index = Pointer(UInt32).new(0)
-    @hashes = Pointer(UInt64).new(0)
-    @entries = Pointer(Entry(K, V)).new(0)
+    @entries = Pointer(Void).new(0)
     @block = block
     unless initial_capacity.nil?
       resize_data(calculate_new_size(initial_capacity))
@@ -49,10 +47,10 @@ class Hash(K, V)
   # ```
   def []=(key, value)
     hash = hash_key(key)
-    entry, _ = find_entry(hash, key)
+    entry = find_entry(hash, key)
     if entry.null?
       idx = push_entry(hash, key, value)
-      insert_index_reuse(idx)
+      insert_index_reuse(idx, hash)
     else
       entry.value.value = value
     end
@@ -88,7 +86,7 @@ class Hash(K, V)
   # ```
   def has_key?(key)
     hash = hash_key(key)
-    entry, _ = find_entry(hash, key)
+    entry = find_entry(hash, key)
     !entry.null?
   end
 
@@ -153,7 +151,7 @@ class Hash(K, V)
   # ```
   def fetch(key)
     hash = hash_key(key)
-    entry, _ = find_entry(hash, key)
+    entry = find_entry(hash, key)
     entry ? entry.value.value : yield key
   end
 
@@ -226,10 +224,11 @@ class Hash(K, V)
   # ```
   def delete(key)
     hash = hash_key(key)
-    entry, idx = find_entry(hash, key)
+    entry = find_entry(hash, key)
     unless entry.null?
       value = entry.value.value
-      delete_idx(idx)
+      entry.clear
+      @size -= 1
       value
     else
       yield key
@@ -244,9 +243,10 @@ class Hash(K, V)
   # h # => { "bar" => "qux" }
   # ```
   def delete_if
-    each_entry do |entry, idx|
+    each_entry do |entry|
       if yield(entry.value.pair)
-        delete_idx(idx)
+        entry.clear
+        @size -= 1
       end
     end
     self
@@ -280,7 +280,7 @@ class Hash(K, V)
   # end
   # ```
   def each : Nil
-    each_entry do |entry, _|
+    each_entry do |entry|
       yield(entry.value.pair)
     end
   end
@@ -395,18 +395,12 @@ class Hash(K, V)
   # ```
   def key_index(key)
     hash = hash_key(key)
-    entry, idx = find_entry(hash, key)
-    if entry.null?
-      nil
-    elsif @last - @first == @size
-      (idx - @first).to_i
-    else
-      index = 0
-      @first.upto(idx) do |i|
-        index += 1 if @hashes[i] != 0_u64
-      end
-      index
+    index = 0
+    each_entry do |entry|
+      return index if entry.value.hashsum == hash && entry.value.key == key
+      index += 1
     end
+    nil
   end
 
   # Returns a new `Hash` with the keys and values of this hash and *other* combined.
@@ -539,8 +533,7 @@ class Hash(K, V)
   # h # => {"a" => 1, "c" => 3}
   # ```
   def select!(keys : Array | Tuple)
-    each { |k, v| delete(k) unless keys.includes?(k) }
-    self
+    delete_if { |k, v| !keys.includes?(k) }
   end
 
   def select!(*keys)
@@ -586,8 +579,7 @@ class Hash(K, V)
 
   # Returns the first key in the hash.
   def first_key
-    nil.not_nil! if empty?
-    @entries[@first].key
+    first_entry.not_nil!.value.key
   end
 
   # Returns the first key if it exists, or returns `nil`.
@@ -599,26 +591,17 @@ class Hash(K, V)
   # hash.first_key? # => nil
   # ```
   def first_key?
-    unless empty?
-      @entries[@first].key
-    else
-      nil
-    end
+    first_entry.try &.value.key
   end
 
   # Returns the first value in the hash.
   def first_value
-    nil.not_nil! if empty?
-    @entries[@first].value
+    first_entry.not_nil!.value.value
   end
 
   # Similar to `#first_key?`, but returns its value.
   def first_value?
-    unless empty?
-      @entries[@first].value
-    else
-      nil
-    end
+    first_entry.try &.value.value
   end
 
   # Deletes and returns the first key-value pair in the hash,
@@ -663,10 +646,11 @@ class Hash(K, V)
   # hash                # => {}
   # ```
   def shift
-    unless empty?
-      idx = @first
-      res = @entries[idx].pair
-      delete_idx(idx)
+    entry = first_entry
+    if entry
+      res = entry.value.pair
+      entry.clear
+      @size -= 1
       res
     else
       yield
@@ -691,9 +675,9 @@ class Hash(K, V)
   # Compares with *other*. Returns `true` if all key-value pairs are the same.
   def ==(other : Hash)
     return false unless size == other.size
-    each_entry do |entry, idx|
-      other_entry, _ = other.find_entry(@hashes[idx], entry.value.key)
-      return false unless other_entry
+    each_entry do |entry|
+      other_entry = other.find_entry(entry.value.hashsum, entry.value.key)
+      return false if other_entry.null?
       return false unless other_entry.value.value == entry.value.value
     end
     true
@@ -705,11 +689,10 @@ class Hash(K, V)
     # order of the keys.
     result = hasher.result
 
-    each do |key, value|
+    each_entry do |entry|
       copy = hasher
-      copy = key.hash(copy)
-      copy = value.hash(copy)
-      result += copy.result
+      copy = entry.value.value.hash(copy)
+      result += copy.result ^ entry.value.hashsum
     end
 
     result.hash(hasher)
@@ -730,13 +713,27 @@ class Hash(K, V)
 
   protected def init_dup(original)
     index = nindex(@format)
-    entries = nentries(@format)
+    nchunks = nentries(@format) / CHUNK
     @index = Pointer(UInt32).malloc(index)
-    @hashes = Pointer(UInt64).malloc(entries)
-    @entries = Pointer(Entry(K, V)).malloc(entries)
     @index.copy_from(original.@index, index)
-    @hashes.copy_from(original.@hashes, entries)
-    @entries.copy_from(original.@entries, entries)
+
+    if nchunks > 1
+      new_chunks = Pointer(Pointer(Entry(K, V))).malloc(nchunks)
+      @entries = new_chunks.as(Pointer(Void))
+      old_chunks = original.@entries.as(Pointer(Pointer(Entry(K, V))))
+    else
+      new_chunks = pointerof(@entries).as(Pointer(Pointer(Entry(K, V))))
+      old_chunks = pointerof(original.@entries).as(Pointer(Pointer(Entry(K, V))))
+    end
+    new_chunks.clear(nchunks)
+    if !empty?
+      last_chunkn = (@last - 1) / CHUNK
+      0.upto(last_chunkn) do |i|
+        chunk = Pointer(Entry(K, V)).malloc(CHUNK)
+        chunk.copy_from(old_chunks[i], CHUNK)
+        new_chunks[i] = chunk
+      end
+    end
     self
   end
 
@@ -754,7 +751,7 @@ class Hash(K, V)
   end
 
   protected def init_clone
-    each_entry do |entry, _|
+    each_entry do |entry|
       entry.value.key = entry.value.key.clone
       entry.value.value = entry.value.value.clone
     end
@@ -823,16 +820,46 @@ class Hash(K, V)
     hash
   end
 
+  # Implementation
+
+  CHUNK = 8_u32
+
+  @[AlwaysInline]
+  private def chunks_ptr
+    capa = nentries(@format)
+    if capa <= CHUNK
+      pointerof(@entries).as(Pointer(Pointer(Entry(K, V))))
+    else
+      @entries.as(Pointer(Pointer(Entry(K, V))))
+    end
+  end
+
+  protected def entry_at(i)
+    chunks = chunks_ptr
+    chunks[i / CHUNK] + i % CHUNK
+  end
+
   @[AlwaysInline]
   private def each_entry
     return if empty?
     rnum = @rebuild_num
-    @first.upto(@last - 1) do |idx|
-      if @hashes[idx] != 0_u64
-        yield (@entries + idx), idx
+    chunks = chunks_ptr
+    @first.upto(@last-1) do |i|
+      chunk = chunks[i / CHUNK]
+      entry = chunk + i % CHUNK
+      if entry.value.hashsum != 0_u64
+        yield entry
         raise "Hash modified during iteration" unless rnum == @rebuild_num
+      elsif @first == i
+        @first += 1
       end
     end
+    nil
+  end
+
+  @[AlwaysInline]
+  private def first_entry
+    each_entry{|entry| break entry }
   end
 
   @[AlwaysInline]
@@ -852,34 +879,38 @@ class Hash(K, V)
   @[AlwaysInline]
   private def iter_search(hash, key)
     return if empty?
+    chunks = chunks_ptr
     if indexmask(@format) == 0
-      @first.upto(@last - 1) do |idx|
-        yield idx unless @hashes[idx] == 0
+      @first.upto(@last - 1) do |i|
+        chunk = chunks[i / CHUNK]
+        yield chunk + i % CHUNK
       end
     else
       iter_index(hash) do |pos|
         idx = @index[pos]
         break if idx == 0
         idx -= 1
-        yield idx unless @hashes[idx] == 0
+        yield chunks[idx / CHUNK] + idx % CHUNK
       end
     end
   end
 
-  protected def find_entry(hash, key) : {Pointer(Entry(K, V)), UInt32}
-    iter_search(hash, key) do |idx|
-      if @hashes[idx] == hash && @entries[idx].key == key
-        return @entries + idx, idx
+  protected def find_entry(hash, key) : Pointer(Entry(K, V))
+    iter_search(hash, key) do |entry|
+      if entry.value.hashsum == hash && entry.value.key == key
+        return entry
       end
     end
-    {Pointer(Entry(K, V)).new(0), 0_u32}
+    Pointer(Entry(K, V)).new(0)
   end
 
   def rehash
     @rebuild_num += 1_u16
     if needs_shrink(@size, @format)
       reclaim_without_index
-      if needs_shrink(@size, @format - 1)
+      # attention: be careful for @format underflow
+      # currently it is safe because of `format > 1` in needs_shrink
+      if needs_shrink(@size, @format - 2)
         resize_data(@format - 1)
       end
       if indexmask(@format) != 0
@@ -900,47 +931,79 @@ class Hash(K, V)
     oldsz = @format
     old_nindex = nindex(oldsz)
     new_nindex = nindex(newsz)
-    old_nentries = nentries(oldsz)
-    new_nentries = nentries(newsz)
-    @hashes = @hashes.realloc(new_nentries)
-    @entries = @entries.realloc(new_nentries)
     if new_nindex != old_nindex
       @index = @index.realloc(new_nindex)
     end
-    if new_nentries > old_nentries
-      (@entries + old_nentries).clear(new_nentries - old_nentries)
+
+    old_nchunks = nentries(oldsz) / CHUNK
+    new_nchunks = nentries(newsz) / CHUNK
+    if new_nchunks > 1
+      new_chunks = Pointer(Pointer(Entry(K, V))).malloc(new_nchunks)
+    else
+      new_chunks = pointerof(@entries).as(Pointer(Pointer(Entry(K, V))))
+    end
+    if old_nchunks > 1
+      old_chunks = @entries.as(Pointer(Pointer(Entry(K, V))))
+    else
+      old_chunks = pointerof(@entries).as(Pointer(Pointer(Entry(K, V))))
+    end
+    if old_nchunks < new_nchunks
+      old_chunks.copy_to(new_chunks, old_nchunks)
+      (new_chunks + old_nchunks).clear(new_nchunks - old_nchunks)
+    else
+      old_chunks.copy_to(new_chunks, new_nchunks)
+    end
+    if old_nchunks > 1
+      old_chunks.realloc(0)
+    end
+    if new_nchunks > 1
+      @entries = new_chunks.as(Pointer(Void))
     end
     @format = newsz
   end
 
-  private def needs_shrink(size : Int32, sz : UInt8) : Bool
-    sz > 1 && size < nentries(sz)/2
+  private def needs_shrink(size : Int32, format : UInt8) : Bool
+    format > 1 && size < nentries(format - 1)
   end
 
   private def reclaim_without_index
     @rebuild_num += 1_u16
     pos = 0_u32
+    chunks = chunks_ptr
     unless empty?
       idx = @first
       if @first == 0_u32
         if @last == @size
           pos = idx = @last
         else
-          while @hashes[idx] != 0_u64
+          while true
+            chunk = chunks[idx / CHUNK]
+            entry = chunk + idx % CHUNK
+            break if entry.value.hashsum == 0_u64
             idx += 1
           end
           pos = idx
         end
       end
-      idx.upto(@last - 1) do |idx|
-        unless @hashes[idx] == 0_u64
-          @entries[pos] = @entries[idx]
-          @hashes[pos] = @hashes[idx]
+      idx.upto(@last - 1) do |i|
+        chunk = chunks[i / CHUNK]
+        entry = chunk + i % CHUNK
+        unless entry.value.hashsum == 0_u64
+          copychunk = chunks[pos / CHUNK]
+          copychunk[pos % CHUNK] = entry.value
           pos += 1
         end
       end
     end
-    (@entries + pos).clear(@last - pos)
+    # clean tail to help garbage collector
+    chunkn = (pos - 1) / CHUNK
+    if (chpos = pos % CHUNK) != 0
+      chunk = chunks[chunkn]
+      (chunk + chpos).clear(CHUNK - chpos)
+    end
+    ((pos + CHUNK-1) / CHUNK).upto((@last-1) / CHUNK) do |i|
+      chunks[i].clear(CHUNK)
+    end
     @first = 0_u32
     @last = pos
   end
@@ -948,8 +1011,11 @@ class Hash(K, V)
   private def fix_index
     @index.clear(nindex(@format))
     return if empty?
-    @first.upto(@last - 1) do |idx|
-      insert_index_simple(idx)
+    chunks = chunks_ptr
+    0_u32.upto(@last-1) do |i|
+      chunk = chunks[i / CHUNK]
+      entry = chunk + i % CHUNK
+      insert_index_simple(i, entry.value.hashsum)
     end
   end
 
@@ -958,8 +1024,15 @@ class Hash(K, V)
       rehash
     end
     idx = @last
-    @hashes[idx] = hash
-    entry = @entries + idx
+    chunks = chunks_ptr
+    chunk = chunks[idx / CHUNK]
+    if chunk.null?
+      chunk = Pointer(Entry(K,V)).malloc(CHUNK)
+      chunk.clear(CHUNK)
+      chunks[idx / CHUNK] = chunk
+    end
+    entry = chunk + idx % CHUNK
+    entry.value.hashsum = hash
     entry.value.key = key
     entry.value.value = val
     @last += 1
@@ -967,8 +1040,8 @@ class Hash(K, V)
     idx
   end
 
-  protected def insert_index_simple(idx : UInt32)
-    iter_index(@hashes[idx]) do |pos|
+  protected def insert_index_simple(idx : UInt32, hash)
+    iter_index(hash) do |pos|
       if @index[pos] == 0
         @index[pos] = idx + 1
         break
@@ -976,31 +1049,14 @@ class Hash(K, V)
     end
   end
 
-  protected def insert_index_reuse(idx : UInt32)
+  protected def insert_index_reuse(idx, hash)
     return if indexmask(@format) == 0
     reuse = @size != @last
-    iter_index(@hashes[idx]) do |pos|
+    iter_index(hash) do |pos|
       oidx = @index[pos]
-      if oidx == 0 || (reuse && @hashes[oidx - 1] == 0_u64)
+      if oidx == 0 || (reuse && entry_at(oidx - 1).value.hashsum == 0_u64)
         @index[pos] = idx + 1
         break
-      end
-    end
-  end
-
-  private def delete_idx(idx)
-    @hashes[idx] = 0_u64
-    (@entries + idx).clear
-    @size -= 1
-    if @first == idx
-      if @size == 0
-        @first = @last
-      else
-        idx += 1
-        while @hashes[idx] == 0_u64
-          idx += 1
-        end
-        @first = idx
       end
     end
   end
@@ -1033,9 +1089,9 @@ class Hash(K, V)
   private struct Entry(K, V)
     property key : K
     property value : V
-    property hash : UInt64
+    property hashsum : UInt64
 
-    def initialize(@key : K, @value : V, @hash : UInt64)
+    def initialize(@key : K, @value : V, @hashsum : UInt64)
     end
 
     def pair : {K, V}
@@ -1052,8 +1108,9 @@ class Hash(K, V)
         raise "Hash modified during iteration"
       end
       while @current < @hash.@last
-        if @hash.@hashes[@current] != 0_u64
-          value = yield (@hash.@entries + @current)
+        entry = @hash.entry_at(@current)
+        if entry.value.hashsum != 0_u64
+          value = yield entry
           @current += 1_u32
           return value
         end

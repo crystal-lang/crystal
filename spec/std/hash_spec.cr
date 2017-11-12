@@ -825,6 +825,6 @@ end
 class Hash(K, V)
   # :nodoc:
   def capacity
-    nentries(@sz)
+    nentries(@format)
   end
 end
