@@ -844,7 +844,7 @@ class Hash(K, V)
     return if empty?
     rnum = @rebuild_num
     chunks = chunks_ptr
-    @first.upto(@last-1) do |i|
+    @first.upto(@last - 1) do |i|
       chunk = chunks[i / CHUNK]
       entry = chunk + i % CHUNK
       if entry.value.hashsum != 0_u64
@@ -859,7 +859,7 @@ class Hash(K, V)
 
   @[AlwaysInline]
   private def first_entry
-    each_entry{|entry| break entry }
+    each_entry { |entry| break entry }
   end
 
   @[AlwaysInline]
@@ -1001,7 +1001,7 @@ class Hash(K, V)
       chunk = chunks[chunkn]
       (chunk + chpos).clear(CHUNK - chpos)
     end
-    ((pos + CHUNK-1) / CHUNK).upto((@last-1) / CHUNK) do |i|
+    ((pos + CHUNK - 1) / CHUNK).upto((@last - 1) / CHUNK) do |i|
       chunks[i].clear(CHUNK)
     end
     @first = 0_u32
@@ -1012,7 +1012,7 @@ class Hash(K, V)
     @index.clear(nindex(@format))
     return if empty?
     chunks = chunks_ptr
-    0_u32.upto(@last-1) do |i|
+    0_u32.upto(@last - 1) do |i|
       chunk = chunks[i / CHUNK]
       entry = chunk + i % CHUNK
       insert_index_simple(i, entry.value.hashsum)
@@ -1027,7 +1027,7 @@ class Hash(K, V)
     chunks = chunks_ptr
     chunk = chunks[idx / CHUNK]
     if chunk.null?
-      chunk = Pointer(Entry(K,V)).malloc(CHUNK)
+      chunk = Pointer(Entry(K, V)).malloc(CHUNK)
       chunk.clear(CHUNK)
       chunks[idx / CHUNK] = chunk
     end
