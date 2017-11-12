@@ -216,8 +216,8 @@ struct Crystal::Hasher
   end
 
   def float(value : Float)
-    frac, exp = Math.frexp value
     permute(float_normalize_wrap(value) do |value|
+      frac, exp = Math.frexp value
       float_normalize_reference(value, frac, exp)
     end)
   end
