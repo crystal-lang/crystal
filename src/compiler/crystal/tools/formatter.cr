@@ -762,22 +762,28 @@ module Crystal
       end
 
       elements.each_with_index do |element, i|
-        # This is to prevent writing `{{`
         current_element = element
         if current_element.is_a?(HashLiteral::Entry)
           current_element = current_element.key
         end
 
-        if prefix == :"{" && i == 0 && !wrote_newline && (
-             current_element.is_a?(TupleLiteral) ||
+        if prefix == :"{" && i == 0 && !wrote_newline
+          # This is to prevent writing `{{`
+          if current_element.is_a?(TupleLiteral) ||
              current_element.is_a?(NamedTupleLiteral) ||
              current_element.is_a?(HashLiteral) ||
              current_element.is_a?(MacroExpression) ||
              current_element.is_a?(MacroIf) ||
              current_element.is_a?(MacroFor)
-           )
-          write " "
-          write_space_at_end = true
+            write " "
+            write_space_at_end = true
+          end
+
+          # This is to prevent writing `{%`
+          if @token.raw.starts_with?("%")
+            write " "
+            write_space_at_end = true
+          end
         end
 
         if next_needs_indent
