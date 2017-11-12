@@ -8,7 +8,7 @@ class Hash(K, V)
   include Iterable({K, V})
 
   getter size : Int32
-  @sz : UInt8
+  @format : UInt8
   @rebuild_num : UInt16
   @first : UInt32
   @last : UInt32
@@ -19,7 +19,7 @@ class Hash(K, V)
 
   def initialize(block : (Hash(K, V), K -> V)? = nil, initial_capacity = nil)
     @size = 0
-    @sz = 0_u8
+    @format = 0_u8
     @rebuild_num = 0_u16
     @first = 0_u32
     @last = 0_u32
@@ -244,7 +244,7 @@ class Hash(K, V)
   # h # => { "bar" => "qux" }
   # ```
   def delete_if
-    iter_entries do |entry, idx|
+    each_entry do |entry, idx|
       if yield(entry.value.pair)
         delete_idx(idx)
       end
@@ -280,7 +280,7 @@ class Hash(K, V)
   # end
   # ```
   def each : Nil
-    iter_entries do |entry, _|
+    each_entry do |entry, _|
       yield(entry.value.pair)
     end
   end
@@ -691,7 +691,7 @@ class Hash(K, V)
   # Compares with *other*. Returns `true` if all key-value pairs are the same.
   def ==(other : Hash)
     return false unless size == other.size
-    iter_entries do |entry, idx|
+    each_entry do |entry, idx|
       other_entry, _ = other.find_entry(@hashes[idx], entry.value.key)
       return false unless other_entry
       return false unless other_entry.value.value == entry.value.value
@@ -729,8 +729,8 @@ class Hash(K, V)
   end
 
   protected def init_dup(original)
-    index = nindex(@sz)
-    entries = nentries(@sz)
+    index = nindex(@format)
+    entries = nentries(@format)
     @index = Pointer(UInt32).malloc(index)
     @hashes = Pointer(UInt64).malloc(entries)
     @entries = Pointer(Entry(K, V)).malloc(entries)
@@ -754,7 +754,7 @@ class Hash(K, V)
   end
 
   protected def init_clone
-    iter_entries do |entry, _|
+    each_entry do |entry, _|
       entry.value.key = entry.value.key.clone
       entry.value.value = entry.value.value.clone
     end
@@ -824,7 +824,7 @@ class Hash(K, V)
   end
 
   @[AlwaysInline]
-  private def iter_entries
+  private def each_entry
     return if empty?
     rnum = @rebuild_num
     @first.upto(@last - 1) do |idx|
@@ -837,7 +837,7 @@ class Hash(K, V)
 
   @[AlwaysInline]
   protected def iter_index(hash : UInt64)
-    mask = indexmask(@sz)
+    mask = indexmask(@format)
     pos = hash & mask
     mix = hash
     d = 1_u64
@@ -852,7 +852,7 @@ class Hash(K, V)
   @[AlwaysInline]
   private def iter_search(hash, key)
     return if empty?
-    if indexmask(@sz) == 0
+    if indexmask(@format) == 0
       @first.upto(@last - 1) do |idx|
         yield idx unless @hashes[idx] == 0
       end
@@ -877,19 +877,19 @@ class Hash(K, V)
 
   def rehash
     @rebuild_num += 1_u16
-    if need_shrink(@size, @sz)
+    if needs_shrink(@size, @format)
       reclaim_without_index
-      if need_shrink(@size, @sz - 1)
-        resize_data(@sz - 1)
+      if needs_shrink(@size, @format - 1)
+        resize_data(@format - 1)
       end
-      if indexmask(@sz) != 0
+      if indexmask(@format) != 0
         fix_index
       end
-    elsif nentries(@sz + 1) == 0
+    elsif nentries(@format + 1) == 0
       raise "Hash table too big"
     else
-      resize_data(@sz + 1)
-      if indexmask(@sz) != indexmask(@sz - 1)
+      resize_data(@format + 1)
+      if indexmask(@format) != indexmask(@format - 1)
         reclaim_without_index
         fix_index
       end
@@ -897,7 +897,7 @@ class Hash(K, V)
   end
 
   private def resize_data(newsz)
-    oldsz = @sz
+    oldsz = @format
     old_nindex = nindex(oldsz)
     new_nindex = nindex(newsz)
     old_nentries = nentries(oldsz)
@@ -910,10 +910,10 @@ class Hash(K, V)
     if new_nentries > old_nentries
       (@entries + old_nentries).clear(new_nentries - old_nentries)
     end
-    @sz = newsz
+    @format = newsz
   end
 
-  private def need_shrink(size : Int32, sz : UInt8) : Bool
+  private def needs_shrink(size : Int32, sz : UInt8) : Bool
     sz > 1 && size < nentries(sz)/2
   end
 
@@ -946,7 +946,7 @@ class Hash(K, V)
   end
 
   private def fix_index
-    @index.clear(nindex(@sz))
+    @index.clear(nindex(@format))
     return if empty?
     @first.upto(@last - 1) do |idx|
       insert_index_simple(idx)
@@ -954,7 +954,7 @@ class Hash(K, V)
   end
 
   private def push_entry(hash : UInt64, key, val) : UInt32
-    if @last == nentries(@sz)
+    if @last == nentries(@format)
       rehash
     end
     idx = @last
@@ -977,7 +977,7 @@ class Hash(K, V)
   end
 
   protected def insert_index_reuse(idx : UInt32)
-    return if indexmask(@sz) == 0
+    return if indexmask(@format) == 0
     reuse = @size != @last
     iter_index(@hashes[idx]) do |pos|
       oidx = @index[pos]
@@ -1011,21 +1011,21 @@ class Hash(K, V)
   end
 
   private def nindex(sz)
-    mask = SIZES[sz].indexmask
+    mask = FORMATS[sz].indexmask
     mask + (mask != 0 ? 1 : 0)
   end
 
   private def indexmask(sz)
-    SIZES[sz].indexmask
+    FORMATS[sz].indexmask
   end
 
   private def nentries(sz)
-    SIZES[sz].nentries
+    FORMATS[sz].nentries
   end
 
   private def calculate_new_size(size)
-    (1...SIZES.size).each do |i|
-      return i.to_u8 if SIZES[i].nentries >= size
+    (1...FORMATS.size).each do |i|
+      return i.to_u8 if FORMATS[i].nentries >= size
     end
     raise "Hash table too big"
   end
@@ -1033,8 +1033,9 @@ class Hash(K, V)
   private struct Entry(K, V)
     property key : K
     property value : V
+    property hash : UInt64
 
-    def initialize(@key : K, @value : V)
+    def initialize(@key : K, @value : V, @hash : UInt64)
     end
 
     def pair : {K, V}
@@ -1106,18 +1107,18 @@ class Hash(K, V)
   end
 
   # :nodoc:
-  record SizeItem, nentries : UInt32, indexmask : UInt32
+  record Format, nentries : UInt32, indexmask : UInt32
   {% begin %}
   # :nodoc:
-  SIZES = StaticArray[
-      SizeItem.new(0_u32, 0_u32),
-      SizeItem.new(8_u32, 0_u32),
+  FORMATS = StaticArray[
+      Format.new(0_u32, 0_u32),
+      Format.new(8_u32, 0_u32),
   {% for i in 4..30 %}
       {% p = 1 << i %}
-      SizeItem.new({{p}}_u32, {{p*2 - 1}}_u32),
-      SizeItem.new({{p + p/2}}_u32, {{p*2 - 1}}_u32),
+      Format.new({{p}}_u32, {{p*2 - 1}}_u32),
+      Format.new({{p + p/2}}_u32, {{p*2 - 1}}_u32),
   {% end %}
-      SizeItem.new(0_u32, 0_u32),
+      Format.new(0_u32, 0_u32),
     ]
 {% end %}
 end
