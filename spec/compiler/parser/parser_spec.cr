@@ -744,6 +744,8 @@ describe "Parser" do
   it_parses "{% if 1; 2; end %}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
   it_parses "{% unless 1; 2; end %}", MacroExpression.new(If.new(1.int32, Nop.new, 2.int32), output: false)
   it_parses "{%\n1\n2\n3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
+  it_parses %q({% begin %}"\#{{foo}}"{% end %}), MacroIf.new(true.bool, Expressions.new(["\"\\#".macro_literal, MacroExpression.new("foo".var), "\"".macro_literal]))
+  it_parses %q({% begin %}"\\#{{foo}}"{% end %}), MacroIf.new(true.bool, Expressions.new([%q("\\#{).macro_literal, %q({foo}}").macro_literal] of ASTNode))
 
   it_parses "[] of Int", ([] of ASTNode).array_of("Int".path)
   it_parses "[1, 2] of Int", ([1.int32, 2.int32] of ASTNode).array_of("Int".path)
