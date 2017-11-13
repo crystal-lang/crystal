@@ -4818,4 +4818,40 @@ describe "Semantic: instance var" do
       Gen(Foo).new.x
       )) { types["Foo"] }
   end
+
+  it "can type ivar from module included by generic class (#5281)" do
+    assert_type(%(
+      module Foo
+        def initialize(@x = "foo")
+        end
+      end
+
+      class Bar(T)
+        include Foo
+
+        @y = 42
+      end
+
+      class Baz < Bar(String); end
+
+      Baz.new
+      )) { types["Baz"] }
+  end
+
+  it "can type ivar from class inherited by generic class (#5281)" do
+    assert_type(%(
+      class Foo
+        def initialize(@x = "foo")
+        end
+      end
+
+      class Bar(T) < Foo
+        @y = 42
+      end
+
+      class Baz < Bar(String); end
+
+      Baz.new
+      )) { types["Baz"] }
+  end
 end

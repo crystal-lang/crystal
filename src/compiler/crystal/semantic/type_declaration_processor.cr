@@ -524,6 +524,7 @@ struct Crystal::TypeDeclarationProcessor
     end
 
     owner.ancestors.any? do |ancestor|
+      ancestor = uninstantiate(ancestor)
       @instance_vars_outside[ancestor]?.try &.includes?(name)
     end
   end
