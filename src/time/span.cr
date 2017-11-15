@@ -293,24 +293,12 @@ struct Time::Span
   # Returns a `Time::Span` that is *number* times longer.
   def *(number : Number) : Time::Span
     # TODO check overflow
-    Span.new(
-      seconds: to_i.to_i64 * number,
-      nanoseconds: nanoseconds.to_i64 * number,
-    )
+    (total_nanoseconds * number).nanoseconds
   end
 
   def /(number : Number) : Time::Span
-    seconds = to_i.tdiv(number)
-    nanoseconds = self.nanoseconds.tdiv(number)
-
-    remainder = to_i.remainder(number)
-    nanoseconds += (remainder * NANOSECONDS_PER_SECOND) / number
-
     # TODO check overflow
-    Span.new(
-      seconds: seconds,
-      nanoseconds: nanoseconds,
-    )
+    (total_nanoseconds / number).nanoseconds
   end
 
   def /(other : self) : Float64
