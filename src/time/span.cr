@@ -296,6 +296,7 @@ struct Time::Span
     (total_nanoseconds * number).nanoseconds
   end
 
+  # Return a `Time::Span` that is divided by *number*.
   def /(number : Number) : Time::Span
     # TODO check overflow
     (total_nanoseconds / number).nanoseconds
