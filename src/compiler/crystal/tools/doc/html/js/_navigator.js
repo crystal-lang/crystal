@@ -1,4 +1,4 @@
-Navigator = function(sidebar, searchInput, list){
+Navigator = function(sidebar, searchInput, list, leaveSearchScope){
   this.list = list;
   var self = this;
 
@@ -66,6 +66,12 @@ Navigator = function(sidebar, searchInput, list){
     }
   }
 
+  this.focus = function() {
+    searchInput.focus();
+    searchInput.select();
+    this.highlightFirst();
+  }
+
   function handleKeyUp(event) {
     switch(event.key) {
       case "ArrowUp":
@@ -87,12 +93,14 @@ Navigator = function(sidebar, searchInput, list){
     switch(event.key) {
       case "Enter":
         event.stopPropagation();
+        event.preventDefault();
+        leaveSearchScope();
         self.openSelectedResult();
         break;
       case "Escape":
         event.stopPropagation();
-        CrystalDoc.toggleResultsList(false);
-        sessionStorage.setItem(repositoryName + '::search-input:value', "");
+        event.preventDefault();
+        leaveSearchScope();
         break;
       case "j":
       case "c":
@@ -135,6 +143,8 @@ Navigator = function(sidebar, searchInput, list){
     switch(event.key) {
       case "ArrowUp":
       case "ArrowDown":
+      event.stopPropagation();
+      event.preventDefault();
       clearMoveTimeout();
     }
   }
@@ -143,12 +153,15 @@ Navigator = function(sidebar, searchInput, list){
     switch(event.key) {
       case "Enter":
         event.stopPropagation();
+        event.preventDefault();
         self.openSelectedResult();
+        leaveSearchScope();
         break;
       case "Escape":
         event.stopPropagation();
         event.preventDefault();
         // remove focus from search input
+        leaveSearchScope();
         sidebar.focus();
         break;
       case "ArrowUp":

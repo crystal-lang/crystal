@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', function() {
   var searchInput = document.getElementById('search-input');
   var parents = document.querySelectorAll('#types-list li.parent');
 
+  var setPersistentSearchQuery = function(value){
+    sessionStorage.setItem(repositoryName + '::search-input:value', value);
+  }
+
   for(var i = 0; i < parents.length; i++) {
     var _parent = parents[i];
     _parent.addEventListener('click', function(e) {
@@ -46,7 +50,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  var navigator = new Navigator(document.querySelector('#types-list'), searchInput, document.querySelector(".search-results"));
+  var leaveSearchScope = function(){
+    CrystalDoc.toggleResultsList(false);
+    window.focus();
+  }
+
+  var navigator = new Navigator(document.querySelector('#types-list'), searchInput, document.querySelector(".search-results"), leaveSearchScope);
 
   CrystalDoc.loadIndex();
   var searchTimeout;
@@ -55,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(function() {
       var text = searchInput.value;
-      navigator.removeHighlight();
 
       if(text == "") {
         CrystalDoc.toggleResultsList(false);
@@ -65,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.focus();
       }
       lastSearchText = text;
-      sessionStorage.setItem(repositoryName + '::search-input:value', text);
+      setPersistentSearchQuery(text);
     }, 200);
   };
 
@@ -76,15 +84,13 @@ document.addEventListener('DOMContentLoaded', function() {
     var searchQuery = location.hash.substring(3);
     history.pushState({searchQuery: searchQuery}, "Search for " + searchQuery, location.href.replace(/#q=.*/, ""));
     searchInput.value = searchQuery;
+    document.addEventListener('CrystalDoc:loaded', performSearch);
   }
 
-  if (searchInput.value.length > 0) {
-    document.addEventListener('CrystalDoc:loaded', performSearch);
-  }else {
+  if (searchInput.value.length == 0) {
     var searchText = sessionStorage.getItem(repositoryName + '::search-input:value');
     if(searchText){
       searchInput.value = searchText;
-      document.addEventListener('CrystalDoc:loaded', performSearch);
     }
   }
   searchInput.focus();
@@ -100,7 +106,8 @@ document.addEventListener('DOMContentLoaded', function() {
       case "s":
       case "/":
         event.stopPropagation();
-        searchInput.focus();
+        navigator.focus();
+        performSearch();
         break;
     }
   }
