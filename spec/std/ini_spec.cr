@@ -34,4 +34,21 @@ describe "INI" do
       })
     end
   end
+
+  describe "build from Hash(String, Hash(String, String)" do
+    it "build file" do
+      INI.build({
+        "general" => {
+          "log_level" => "DEBUG",
+        },
+        "section1" => {
+          "foo" => "1",
+          "bar" => "2",
+        },
+        "section2" => {
+          "x.y.z" => "coco lala",
+        },
+      }, " ").should eq(File.read "#{__DIR__}/data/test_file.ini")
+    end
+  end
 end

@@ -19,4 +19,27 @@ class INI
     end
     ini
   end
+
+  # Generates an INI-style configuration from a given hash.
+  #
+  # ```
+  # INI.build({"foo" => {"a" => "1"}}, " ") # => "[foo]\na = 1\n\n"
+  # ```
+  def self.build(ini : Hash(String, Hash(String, String)), space : String = "") : String
+    String.build do |str|
+      build str, ini, space
+    end
+  end
+
+  # Appends INI data to the given IO.
+  #
+  def self.build(io : IO, ini : Hash(String, Hash(String, String)), space : String = "")
+    ini.each do |section, contents|
+      io << '[' << section << "]\n"
+      contents.each do |key, value|
+        io << key << space << '=' << space << value << '\n'
+      end
+      io.puts
+    end
+  end
 end
