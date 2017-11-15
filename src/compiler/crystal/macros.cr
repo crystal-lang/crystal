@@ -1365,7 +1365,7 @@ module Crystal::Macros
   # for the string's content. Similarly, invoking ID on a `SymbolLiteral`, `Call`, `Var` and `Path`
   # return MacroIds for the node's content.
   #
-  # This allows you to treat strings, symbols, variables and calls unifomly. For example:
+  # This allows you to treat strings, symbols, variables and calls uniformly. For example:
   #
   # ```text
   # macro getter(name)
