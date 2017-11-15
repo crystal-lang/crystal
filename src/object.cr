@@ -978,10 +978,6 @@ class Object
     #   def {{method_prefix}}happy?
     #     {{var_prefix}}happy
     #   end
-    #
-    #   def {{method_prefix}}happy
-    #     {{var_prefix}}happy.not_nil!
-    #   end
     # end
     # ```
     #
