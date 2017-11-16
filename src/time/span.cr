@@ -60,13 +60,25 @@ struct Time::Span
   def self.new(days : Int, hours : Int, minutes : Int, seconds : Int, nanoseconds : Int = 0)
     new(
       seconds: compute_seconds!(days, hours, minutes, seconds),
-      nanoseconds: nanoseconds.to_i64,
+      nanoseconds: nanoseconds,
     )
   end
 
   def initialize(*, seconds : Int, nanoseconds : Int)
+    # check for possible overflow
+    # seconds could be too big
+    if Int64::MIN > seconds || seconds > Int64::MAX
+      raise ArgumentError.new "Time::Span too big or too small"
+    else
+      seconds = seconds.to_i64
+    end
     # Normalize nanoseconds in the range 0...1_000_000_000
-    seconds += nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
+    sec = nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
+    if ((seconds > Int64::MAX - sec) && (sec > 0)) || ((sec < 0) && (seconds < Int64::MIN - sec))
+      raise ArgumentError.new "Time::Span too big or too small"
+    else
+      seconds += sec
+    end
     nanoseconds = nanoseconds.remainder(NANOSECONDS_PER_SECOND)
 
     # Make sure that if seconds is positive, nanoseconds is
@@ -86,8 +98,8 @@ struct Time::Span
 
   def self.new(*, nanoseconds : Int)
     new(
-      seconds: nanoseconds.to_i64.tdiv(NANOSECONDS_PER_SECOND),
-      nanoseconds: nanoseconds.to_i64.remainder(NANOSECONDS_PER_SECOND),
+      seconds: 0,
+      nanoseconds: nanoseconds,
     )
   end
 
