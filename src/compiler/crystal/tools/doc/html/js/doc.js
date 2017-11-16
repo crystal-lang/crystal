@@ -98,6 +98,12 @@ document.addEventListener('DOMContentLoaded', function() {
   searchInput.addEventListener('input', performSearch);
 
   function handleShortkeys(event) {
+    var element = event.target || event.srcElement;
+
+    if(element.tagName == "INPUT" || element.tagName == "TEXTAREA" || element.parentElement.tagName == "TEXTAREA"){
+      return;
+    }
+
     switch(event.key) {
       case "?":
         // TODO: Show usage popup
