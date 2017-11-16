@@ -194,6 +194,10 @@ def raise(message : String) : NoReturn
   raise Exception.new(message)
 end
 
+def raise(exception : Exception.class, message : String) : NoReturn
+  raise exception.new(message)
+end
+
 # :nodoc:
 fun __crystal_raise_string(message : UInt8*)
   raise String.new(message)

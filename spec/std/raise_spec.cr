@@ -1,11 +1,20 @@
 require "spec"
 
+private class ThrowException < ArgumentError; end
+
 describe "raise" do
   callstack_on_rescue = nil
 
   it "should set exception's callstack" do
     exception = expect_raises Exception, "without callstack" do
       raise "without callstack"
+    end
+    exception.callstack.should_not be_nil
+  end
+
+  it "should set exception with class and message" do
+    exception = expect_raises ThrowException, "raise with class and message" do
+      raise ThrowException, "raise with class and message"
     end
     exception.callstack.should_not be_nil
   end
