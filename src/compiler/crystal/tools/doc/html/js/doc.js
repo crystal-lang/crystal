@@ -4,6 +4,7 @@ CrystalDoc.base_path = (CrystalDoc.base_path || "");
 
 <%= JsSearchTemplate.new %>
 <%= JsNavigatorTemplate.new %>
+<%= JsUsageModal.new %>
 
 document.addEventListener('DOMContentLoaded', function() {
   var sessionStorage;
@@ -97,6 +98,47 @@ document.addEventListener('DOMContentLoaded', function() {
   searchInput.addEventListener('keyup', performSearch);
   searchInput.addEventListener('input', performSearch);
 
+  var usageModal = new UsageModal('Keyboard Shortcuts', '' +
+      '<ul class="usage-list">' +
+      '  <li>' +
+      '    <span class="usage-key">' +
+      '      <kbd>s</kbd>,' +
+      '      <kbd>/</kbd>' +
+      '    </span>' +
+      '    Search' +
+      '  </li>' +
+      '  <li>' +
+      '    <kbd class="usage-key">Esc</kbd>' +
+      '    Abort search / Close modal' +
+      '  </li>' +
+      '  <li>' +
+      '    <span class="usage-key">' +
+      '      <kbd>⇨</kbd>,' +
+      '      <kbd>Enter</kbd>' +
+      '    </span>' +
+      '    Open highlighted result' +
+      '  </li>' +
+      '  <li>' +
+      '    <span class="usage-key">' +
+      '      <kbd>⇧</kbd>,' +
+      '      <kbd>Ctrl+j</kbd>' +
+      '    </span>' +
+      '    Select previous result' +
+      '  </li>' +
+      '  <li>' +
+      '    <span class="usage-key">' +
+      '      <kbd>⇩</kbd>,' +
+      '      <kbd>Ctrl+k</kbd>' +
+      '    </span>' +
+      '    Select next result' +
+      '  </li>' +
+      '  <li>' +
+      '    <kbd class="usage-key">?</kbd>' +
+      '    Show usage info' +
+      '  </li>' +
+      '</ul>'
+    );
+
   function handleShortkeys(event) {
     var element = event.target || event.srcElement;
 
@@ -106,11 +148,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     switch(event.key) {
       case "?":
-        // TODO: Show usage popup
+        usageModal.show();
+        break;
+
+      case "Escape":
+        usageModal.hide();
         break;
 
       case "s":
       case "/":
+        if(usageModal.isVisible()) {
+          return;
+        }
         event.stopPropagation();
         navigator.focus();
         performSearch();

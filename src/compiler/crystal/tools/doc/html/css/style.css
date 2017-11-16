@@ -524,3 +524,87 @@ span.flag.purple {
   line-height: 1.2em;
   max-height: 2.4em;
 }
+
+.js-modal-visible .modal-background {
+  display: flex;
+}
+#types-list,
+#main-content {
+  filter: blur(0);
+  transition: filter 200ms;
+}
+.js-modal-visible #types-list,
+.js-modal-visible #main-content {
+  filter: blur(2px);
+}
+.modal-background {
+  position: absolute;
+  display: none;
+  height: 100%;
+  width: 100%;
+  background: rgba(120,120,120,.4);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+.usage-modal {
+  max-width: 90%;
+  background: #fff;
+  border: 2px solid #ccc;
+  border-radius: 9px;
+  padding: 5px 15px 20px;
+  min-width: 50%;
+  color: #555;
+  position: relative;
+  transform: scale(.5);
+  transition: transform 200ms;
+}
+.js-modal-visible .usage-modal {
+  transform: scale(1);
+}
+.usage-modal > .close-button {
+  position: absolute;
+  right: 15px;
+  top: 8px;
+  color: #aaa;
+  font-size: 27px;
+  cursor: pointer;
+}
+.usage-modal > .close-button:hover {
+  text-shadow: 2px 2px 2px #ccc;
+  color: #999;
+}
+.modal-title {
+  margin: 0;
+  text-align: center;
+  font-weight: normal;
+  color: #666;
+  border-bottom: 2px solid #ddd;
+  padding: 10px;
+}
+.usage-list {
+  padding: 0;
+  margin: 13px;
+}
+.usage-list > li {
+  padding: 5px 2px;
+  overflow: auto;
+  padding-left: 100px;
+  min-width: 12em;
+}
+.usage-modal kbd {
+  background: #eee;
+  border: 1px solid #ccc;
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-family: monospace;
+  margin-right: 2px;
+  display: inline-block;
+}
+.usage-key {
+  float: left;
+  clear: left;
+  margin-left: -100px;
+  margin-right: 12px;
+}
