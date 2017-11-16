@@ -22,10 +22,10 @@ describe "INI" do
     it "parse file" do
       INI.parse(File.read "#{__DIR__}/data/test_file.ini").should eq({
         "general" => {
-          "log_level" => "DEBUG",
+          "log_level" => "D",
         },
         "section1" => {
-          "foo" => "1",
+          "foo" => "1.1",
           "bar" => "2",
         },
         "section2" => {
@@ -35,18 +35,32 @@ describe "INI" do
     end
   end
 
-  describe "build from Hash(String, Hash(String, String)" do
-    it "build file" do
+  describe "build to an INI-formatted output" do
+    it "build from a Hash" do
       INI.build({
         "general" => {
-          "log_level" => "DEBUG",
+          "log_level" => 'D',
         },
         "section1" => {
-          "foo" => "1",
-          "bar" => "2",
+          "foo" => 1.1,
+          "bar" => 2,
         },
         "section2" => {
           "x.y.z" => "coco lala",
+        },
+      }, " ").should eq(File.read "#{__DIR__}/data/test_file.ini")
+    end
+    it "build from a NamedTuple" do
+      INI.build({
+        "general": {
+          "log_level": 'D',
+        },
+        "section1": {
+          "foo": 1.1,
+          "bar": 2,
+        },
+        "section2": {
+          "x.y.z": "coco lala",
         },
       }, " ").should eq(File.read "#{__DIR__}/data/test_file.ini")
     end
