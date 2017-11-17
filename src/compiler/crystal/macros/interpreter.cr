@@ -3,7 +3,7 @@ module Crystal
     getter last : ASTNode
     property free_vars : Hash(String, TypeVar)?
 
-    def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call, a_def : Def? = nil)
+    def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call, a_def : Def? = nil, in_macro = false)
       vars = {} of String => ASTNode
       splat_index = a_macro.splat_index
       double_splat = a_macro.double_splat
@@ -68,14 +68,15 @@ module Crystal
         vars[macro_block_arg.name] = call_block || Nop.new
       end
 
-      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def)
+      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def, in_macro)
     end
 
     record MacroVarKey, name : String, exps : Array(ASTNode)?
 
     def initialize(@program : Program,
                    @scope : Type, @path_lookup : Type, @location : Location?,
-                   @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil)
+                   @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
+                   @in_macro = false)
       @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug()}}
       @last = Nop.new
     end
@@ -362,6 +363,10 @@ module Crystal
     end
 
     def visit(node : Yield)
+      unless @in_macro
+        node.raise "can't use `{{yield}}` outside a macro"
+      end
+
       if block = @block
         if node.exps.empty?
           @last = block.body.clone
