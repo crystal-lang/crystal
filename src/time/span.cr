@@ -290,7 +290,10 @@ struct Time::Span
   end
 
   def +(other : self) : Time::Span
-    # TODO check overflow
+    # check seconds for possible integer overflow
+    if ((other.to_i > 0) && (to_i > Int64::MAX - other.to_i)) || ((other.to_i < 0) && (to_i < Int64::MIN - other.to_i))
+      raise ArgumentError.new "Overflow: Time::Span too big or too small"
+    end
     Span.new(
       seconds: to_i + other.to_i,
       nanoseconds: nanoseconds + other.nanoseconds,
