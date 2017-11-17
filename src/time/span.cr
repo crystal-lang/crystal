@@ -67,11 +67,10 @@ struct Time::Span
   def initialize(*, seconds : Int, nanoseconds : Int)
     # check for possible overflow
     # seconds could be too big
-    if Int64::MIN > seconds || seconds > Int64::MAX
+    unless Int64::MIN <= seconds <= Int64::MAX
       raise ArgumentError.new "Time::Span too big or too small"
-    else
-      seconds = seconds.to_i64
     end
+    seconds = seconds.to_i64
     # Normalize nanoseconds in the range 0...1_000_000_000
     sec = nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
     if ((seconds > Int64::MAX - sec) && (sec > 0)) || ((sec < 0) && (seconds < Int64::MIN - sec))
