@@ -297,7 +297,7 @@ end
 # :nodoc:
 struct Crystal::Hasher
   def float(value : BigFloat)
-    permute(float_normalize_wrap(value) do |value|
+    normalized_hash = float_normalize_wrap(value) do |value|
       # more exact version of `Math.frexp`
       LibGMP.mpf_get_d_2exp(out exp, value)
       frac = BigFloat.new do |mpf|
@@ -308,6 +308,7 @@ struct Crystal::Hasher
         end
       end
       float_normalize_reference(value, frac, exp)
-    end)
+    end
+    permute(normalized_hash)
   end
 end
