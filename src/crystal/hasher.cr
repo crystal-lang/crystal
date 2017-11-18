@@ -177,7 +177,7 @@ struct Crystal::Hasher
   end
 
   def float(value : Float32)
-    norm_hash = float_normalize_wrap(value) do |value|
+    normalized_hash = float_normalize_wrap(value) do |value|
       # This optimized version works on every architecture where endianess
       # of Float32 and Int32 matches and float is IEEE754. All supported
       # architectures fall into this category.
@@ -193,11 +193,11 @@ struct Crystal::Hasher
       end
       {mantissa.to_i64, exp}
     end
-    permute(norm_hash)
+    permute(normalized_hash)
   end
 
   def float(value : Float64)
-    norm_hash = float_normalize_wrap(value) do |value|
+    normalized_hash = float_normalize_wrap(value) do |value|
       # This optimized version works on every architecture where endianess
       # of Float64 and Int64 matches and float is IEEE754. All supported
       # architectures fall into this category.
@@ -214,15 +214,15 @@ struct Crystal::Hasher
 
       {mantissa.to_i64, exp}
     end
-    permute(norm_hash)
+    permute(normalized_hash)
   end
 
   def float(value : Float)
-    norm_hash = float_normalize_wrap(value) do |value|
+    normalized_hash = float_normalize_wrap(value) do |value|
       frac, exp = Math.frexp value
       float_normalize_reference(value, frac, exp)
     end
-    permute(norm_hash)
+    permute(normalized_hash)
   end
 
   def char(value)
