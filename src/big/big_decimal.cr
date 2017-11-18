@@ -1,5 +1,3 @@
-require "big"
-
 # A `BigDecimal` represents arbitrary precision decimals.
 #
 # It is internally represented by a pair of `BigInt` and `UInt64`: value and scale.
@@ -15,7 +13,7 @@ class InvalidBigDecimalException < Exception
   end
 end
 
-struct BigDecimal
+struct BigDecimal < Number
   ZERO                       = BigInt.new(0)
   TEN                        = BigInt.new(10)
   DEFAULT_MAX_DIV_ITERATIONS = 100_u64
