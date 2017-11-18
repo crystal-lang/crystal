@@ -108,11 +108,7 @@ module Crystal::Doc::Highlighter
 
   private def highlight_string_array(lexer, token, io)
     start_highlight_class "s", io
-    if token.type == :STRING_ARRAY_START
-      io << "%w("
-    else
-      io << "%i("
-    end
+    HTML.escape(token.raw, io)
     first = true
     while true
       lexer.next_string_array_token
@@ -122,7 +118,7 @@ module Crystal::Doc::Highlighter
         HTML.escape(token.raw, io)
         first = false
       when :STRING_ARRAY_END
-        io << ")"
+        HTML.escape(token.raw, io)
         end_highlight_class io
         break
       when :EOF
