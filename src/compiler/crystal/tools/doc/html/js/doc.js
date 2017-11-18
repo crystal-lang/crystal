@@ -94,7 +94,6 @@ document.addEventListener('DOMContentLoaded', function() {
       searchInput.value = searchText;
     }
   }
-  searchInput.focus();
   searchInput.addEventListener('keyup', performSearch);
   searchInput.addEventListener('input', performSearch);
 
