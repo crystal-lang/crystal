@@ -582,6 +582,10 @@ module Crystal::Macros
     def reject(&block) : ArrayLiteral
     end
 
+    # Similar to `Enumerable#reduce`
+    def reduce(&block) : ASTNode
+    end
+
     # Similar to `Array#shuffle`
     def shuffle : ArrayLiteral
     end
