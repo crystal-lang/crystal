@@ -22,13 +22,14 @@ class IO::FileDescriptor < IO
   end
 
   def blocking=(value)
-    flags = fcntl(LibC::F_GETFL)
+    current_flags = fcntl(LibC::F_GETFL)
+    new_flags = current_flags
     if value
-      flags &= ~LibC::O_NONBLOCK
+      new_flags &= ~LibC::O_NONBLOCK
     else
-      flags |= LibC::O_NONBLOCK
+      new_flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::F_SETFL, flags)
+    fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
   end
 
   def close_on_exec?
