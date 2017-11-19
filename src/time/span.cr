@@ -74,7 +74,7 @@ struct Time::Span
     end
     seconds += sec
     nanoseconds = nanoseconds.remainder(NANOSECONDS_PER_SECOND)
-
+    
     # Make sure that if seconds is positive, nanoseconds is
     # positive too. Likewise, if seconds is negative, make
     # sure that nanoseconds is negative too.
@@ -278,6 +278,7 @@ struct Time::Span
     Time.now - self
   end
 
+  # Returns the result of subtracting `self` and *other*.
   def -(other : self) : Time::Span
     # TODO check overflow
     Span.new(
@@ -287,13 +288,13 @@ struct Time::Span
   end
 
   def - : Time::Span
-    # TODO check overflow
     Span.new(
       seconds: -to_i,
       nanoseconds: -nanoseconds,
     )
   end
 
+  # Returns the result of adding `self` and *other*.
   def +(other : self) : Time::Span
     # check seconds for possible integer overflow
     if ((other.to_i > 0) && (to_i > Int64::MAX - other.to_i)) || ((other.to_i < 0) && (to_i < Int64::MIN - other.to_i))
@@ -305,6 +306,7 @@ struct Time::Span
     )
   end
 
+  # Returns self.
   def + : self
     self
   end
@@ -465,6 +467,7 @@ struct Int
 
   # Returns a `Time::Span` of `self` milliseconds.
   def milliseconds : Time::Span
+    # this might overflow
     Time::Span.new 0, 0, 0, 0, (self.to_i64 * Time::NANOSECONDS_PER_MILLISECOND)
   end
 
@@ -475,7 +478,7 @@ struct Int
 
   # Returns a `Time::Span` of `self` nanoseconds.
   def nanoseconds : Time::Span
-    Time::Span.new(nanoseconds: self.to_i64)
+    Time::Span.new(nanoseconds: self)
   end
 end
 
@@ -497,14 +500,17 @@ struct Float
 
   # Returns a `Time::Span` of `self` seconds.
   def seconds : Time::Span
-    seconds = self.to_i64
+    seconds = self.trunc
     nanoseconds = (self - seconds) * Time::NANOSECONDS_PER_SECOND
 
     # round away from zero
     nanoseconds = (nanoseconds < 0 ? (nanoseconds - 0.5) : (nanoseconds + 0.5)).to_i64
 
+    # check if seconds fits inside Int64
+    raise ArgumentError.new "Float too big or too small for Time::Span" unless Int64::MIN <= seconds <= Int64::MAX
+
     Time::Span.new(
-      seconds: seconds,
+      seconds: seconds.to_i64,
       nanoseconds: nanoseconds,
     )
   end
@@ -516,14 +522,17 @@ struct Float
 
   # Returns a `Time::Span` of `self` nanoseconds.
   def nanoseconds : Time::Span
-    seconds = (self / Time::NANOSECONDS_PER_SECOND).to_i64
+    seconds = (self / Time::NANOSECONDS_PER_SECOND).trunc
     nanoseconds = self.remainder(Time::NANOSECONDS_PER_SECOND)
 
     # round away from zero
     nanoseconds = (nanoseconds < 0 ? (nanoseconds - 0.5) : (nanoseconds + 0.5)).to_i64
 
+    # check if seconds fits inside Int64
+    raise ArgumentError.new "Float too big or too small for Time::Span" unless Int64::MIN <= seconds <= Int64::MAX
+
     Time::Span.new(
-      seconds: seconds,
+      seconds: seconds.to_i64,
       nanoseconds: nanoseconds,
     )
   end
