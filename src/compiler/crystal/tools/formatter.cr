@@ -2061,7 +2061,7 @@ module Crystal
       column = @column
 
       # Special case: $1, $2, ...
-      if @token.type == :GLOBAL_MATCH_DATA_INDEX && node.name == "[]" && obj.is_a?(Global)
+      if @token.type == :GLOBAL_MATCH_DATA_INDEX && (node.name == "[]" || node.name == "[]?") && obj.is_a?(Global)
         write "$"
         write @token.value
         next_token
