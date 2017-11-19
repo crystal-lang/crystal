@@ -414,6 +414,7 @@ describe Crystal::Formatter do
   assert_format "$1.bar", "$1.bar"
   assert_format "$0", "$0"
   assert_format "$0.bar", "$0.bar"
+  assert_format "$1?"
 
   assert_format "foo . is_a? ( Bar )", "foo.is_a?(Bar)"
   assert_format "foo . responds_to?( :bar )", "foo.responds_to?(:bar)"
