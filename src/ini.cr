@@ -23,21 +23,18 @@ class INI
   # Generates an INI-style configuration from a given hash.
   #
   # ```
-  # INI.build({"foo" => {"a" => "1"}}, " ") # => "[foo]\na = 1\n\n"
+  # INI.build({"foo" => {"a" => "1"}}, true) # => "[foo]\na = 1\n\n"
   # ```
-  def self.build(ini, space : String = "") : String
-    String.build do |str|
-      build str, ini, space
-    end
+  def self.build(ini, space : Bool = false) : String
+    String.build { |str| build str, ini, space }
   end
 
   # Appends INI data to the given IO.
-  #
-  def self.build(io : IO, ini, space : String = "")
+  def self.build(io : IO, ini, space : Bool = false)
     ini.each do |section, contents|
       io << '[' << section << "]\n"
       contents.each do |key, value|
-        io << key << space << '=' << space << value << '\n'
+        io << key << (space ? " = " : '=') << value << '\n'
       end
       io.puts
     end
