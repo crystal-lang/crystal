@@ -74,7 +74,7 @@ struct Time::Span
     end
     seconds += sec
     nanoseconds = nanoseconds.remainder(NANOSECONDS_PER_SECOND)
-    
+
     # Make sure that if seconds is positive, nanoseconds is
     # positive too. Likewise, if seconds is negative, make
     # sure that nanoseconds is negative too.
@@ -296,10 +296,7 @@ struct Time::Span
 
   # Returns the result of adding `self` and *other*.
   def +(other : self) : Time::Span
-    # check seconds for possible integer overflow
-    if ((other.to_i > 0) && (to_i > Int64::MAX - other.to_i)) || ((other.to_i < 0) && (to_i < Int64::MIN - other.to_i))
-      raise ArgumentError.new "Overflow: Time::Span too big or too small"
-    end
+    # TODO check overflow
     Span.new(
       seconds: to_i + other.to_i,
       nanoseconds: nanoseconds + other.nanoseconds,
