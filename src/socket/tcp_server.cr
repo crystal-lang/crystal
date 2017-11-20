@@ -11,7 +11,7 @@ require "./tcp_socket"
 #   client.puts message
 # end
 #
-# server = TCPServer.new("localhost", 1234)
+# server = TCPServer.new("127.0.0.1", 1234)
 # while client = server.accept?
 #   spawn handle_client(client)
 # end
