@@ -49,7 +49,8 @@ struct Char
 
     # If there was an error decoding the current char because
     # of an invalid UTF-8 byte sequence, returns the byte
-    # that produced the invalid encoding. Otherwise returns `nil`.
+    # that produced the invalid encoding. Returns `0` if the char would've been
+    # out of bounds. Otherwise returns `nil`.
     getter error : UInt8?
 
     # Creates a reader with the specified *string* positioned at
@@ -184,7 +185,7 @@ struct Char
     end
 
     private def decode_char_at(pos)
-      first = byte_at(pos)
+      first = byte_at?(pos) || 0u32
       if first < 0x80
         return yield first, 1, nil
       end
@@ -193,8 +194,8 @@ struct Char
         invalid_byte_sequence 1
       end
 
-      second = byte_at(pos + 1)
-      if (second & 0xc0) != 0x80
+      second = byte_at?(pos + 1)
+      if second.nil? || (second & 0xc0) != 0x80
         invalid_byte_sequence 1
       end
 
@@ -202,8 +203,8 @@ struct Char
         return yield (first << 6) + (second - 0x3080), 2, nil
       end
 
-      third = byte_at(pos + 2)
-      if (third & 0xc0) != 0x80
+      third = byte_at?(pos + 2)
+      if third.nil? || (third & 0xc0) != 0x80
         invalid_byte_sequence 2
       end
 
@@ -227,8 +228,10 @@ struct Char
         invalid_byte_sequence 3
       end
 
-      fourth = byte_at(pos + 3)
-      if (fourth & 0xc0) != 0x80
+      fourth = byte_at?(pos + 3)
+      if fourth.nil?
+        invalid_byte_sequence 3
+      elsif (fourth & 0xc0) != 0x80
         invalid_byte_sequence 4
       end
 
@@ -271,7 +274,11 @@ struct Char
     end
 
     private def byte_at(i)
-      @string.unsafe_byte_at(i).to_u32
+      @string.byte_at(i).to_u32
+    end
+
+    private def byte_at?(i)
+      @string.byte_at?(i).try(&.to_u32)
     end
   end
 end
