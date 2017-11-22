@@ -37,13 +37,13 @@ class Crystal::Program
   end
 
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
-    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def
+    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def, in_macro: true
     a_macro.body.accept interpreter
     interpreter.to_s
   end
 
   def expand_macro(node : ASTNode, scope : Type, path_lookup : Type? = nil, free_vars = nil, a_def : Def? = nil)
-    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, node.location, def: a_def
+    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, node.location, def: a_def, in_macro: false
     interpreter.free_vars = free_vars
     node.accept interpreter
     interpreter.to_s

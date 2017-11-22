@@ -152,4 +152,8 @@ describe "MacroExpander" do
   it "does not expand when macro expression is {% ... %}" do
     assert_macro "", %({% 1 %}), [] of ASTNode, ""
   end
+
+  it "can't use `yield` outside a macro" do
+    assert_error %({{yield}}), "can't use `{{yield}}` outside a macro"
+  end
 end
