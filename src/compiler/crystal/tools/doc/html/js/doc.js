@@ -62,13 +62,17 @@ document.addEventListener('DOMContentLoaded', function() {
   var searchTimeout;
   var lastSearchText = false;
   var performSearch = function() {
+    document.dispatchEvent(new Event("CrystalDoc:searchDebounceStarted"));
+
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(function() {
       var text = searchInput.value;
 
       if(text == "") {
         CrystalDoc.toggleResultsList(false);
-      }else if(text != lastSearchText){
+      }else if(text == lastSearchText){
+        document.dispatchEvent(new Event("CrystalDoc:searchDebounceStopped"));
+      }else{
         CrystalDoc.search(text);
         navigator.highlightFirst();
         searchInput.focus();

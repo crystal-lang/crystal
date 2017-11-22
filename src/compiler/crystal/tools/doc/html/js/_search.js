@@ -477,10 +477,15 @@ CrystalDoc.search = function(string) {
     console.error("CrystalDoc search index not initialized.");
     return;
   }
+
+  document.dispatchEvent(new Event("CrystalDoc:searchStarted"));
+
   var query = new CrystalDoc.Query(string);
   var results = CrystalDoc.runQuery(query);
   results = CrystalDoc.rankResults(results, query);
   CrystalDoc.displaySearchResults(results, query);
+
+  document.dispatchEvent(new Event("CrystalDoc:searchPerformed"));
 };
 
 CrystalDoc.initializeIndex = function(data) {
