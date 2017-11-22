@@ -56,7 +56,7 @@ Navigator = function(sidebar, searchInput, list, leaveSearchScope){
     var next = upwards ? this.current.previousElementSibling : this.current.nextElementSibling;
     if(next && next.classList) {
       this.highlight(next);
-      next.scrollIntoViewIfNeeded();
+      next.scrollIntoView({behaviour: 'smooth', block: 'center'});
       return true;
     }
     return false;
