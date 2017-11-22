@@ -474,7 +474,12 @@ CrystalDoc.Query.stripModifiers = function(term) {
 
 CrystalDoc.search = function(string) {
   if(!CrystalDoc.searchIndex) {
-    console.error("CrystalDoc search index not initialized.");
+    console.log("CrystalDoc search index not initialized, delaying search");
+
+    document.addEventListener("CrystalDoc:loaded", function listener(){
+      document.removeEventListener("CrystalDoc:loaded", listener);
+      CrystalDoc.search(string);
+    });
     return;
   }
 
