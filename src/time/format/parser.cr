@@ -172,6 +172,8 @@ struct Time::Format
       digits = @reader.pos - pos
       if digits > 3
         millisecond /= 10 ** (digits - 3)
+      elsif digits < 3
+        millisecond *= 10 ** (3 - digits)
       end
       @nanosecond = (millisecond * Time::NANOSECONDS_PER_MILLISECOND).to_i
     end
@@ -185,6 +187,8 @@ struct Time::Format
       digits = @reader.pos - pos
       if digits > 9
         nanosecond /= 10 ** (digits - 9)
+      elsif digits < 9
+        nanosecond *= 10 ** (9 - digits)
       end
       @nanosecond = nanosecond
     end

@@ -413,7 +413,9 @@ describe Time do
   it { Time.parse("09", "%M").minute.should eq(9) }
   it { Time.parse("09", "%S").second.should eq(9) }
   it { Time.parse("123", "%L").millisecond.should eq(123) }
-  it { Time.parse("321", "%N").nanosecond.should eq(321) }
+  it { Time.parse("1", "%L").millisecond.should eq(100) }
+  it { Time.parse("000000321", "%N").nanosecond.should eq(321) }
+  it { Time.parse("321", "%N").nanosecond.should eq(321000000) }
   it { Time.parse("Fri Oct 31 23:00:24 2014", "%c").to_s.should eq("2014-10-31 23:00:24") }
   it { Time.parse("10/31/14", "%D").to_s.should eq("2014-10-31 00:00:00") }
   it { Time.parse("10/31/69", "%D").to_s.should eq("1969-10-31 00:00:00") }
@@ -478,10 +480,31 @@ describe Time do
     time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
   end
 
-  it "parses microseconds" do
+  it "parses centiseconds" do
+    time = Time.parse("2016-09-09T17:03:28.45+01:00", "%FT%T.%L%z").to_utc
+    time.to_s.should eq("2016-09-09 16:03:28 UTC")
+    time.millisecond.should eq(450)
+    time.nanosecond.should eq(450000000)
+  end
+
+  it "parses milliseconds" do
     time = Time.parse("2016-09-09T17:03:28.456789+01:00", "%FT%T.%L%z").to_utc
     time.to_s.should eq("2016-09-09 16:03:28 UTC")
     time.millisecond.should eq(456)
+    time.nanosecond.should eq(456000000)
+  end
+
+  it "parses microseconds" do
+    time = Time.parse("2016-09-09T17:03:28.456789+01:00", "%FT%T.%N%z").to_utc
+    time.to_s.should eq("2016-09-09 16:03:28 UTC")
+    time.millisecond.should eq(456)
+    time.nanosecond.should eq(456789000)
+  end
+
+  it "parses nanoseconds" do
+    time = Time.parse("2016-09-09T17:03:28.456789123+01:00", "%FT%T.%N%z").to_utc
+    time.to_s.should eq("2016-09-09 16:03:28 UTC")
+    time.nanosecond.should eq(456789123)
   end
 
   it "parses the correct amount of digits (#853)" do
