@@ -172,16 +172,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   document.addEventListener('keyup', handleShortkeys);
 
-  typesList.onscroll = function() {
-    var y = typesList.scrollTop;
-    sessionStorage.setItem(repositoryName + '::types-list:scrollTop', y);
-  };
-
-  var initialY = parseInt(sessionStorage.getItem(repositoryName + '::types-list:scrollTop') + "", 10);
-  if(initialY > 0) {
-    typesList.scrollTop = initialY;
-  }
-
   var scrollToEntryFromLocationHash = function() {
     var hash = window.location.hash;
     if (hash) {
