@@ -472,7 +472,7 @@ struct Time
     when utc?
       io << " UTC"
     when local?
-      Format.new(" %:z").format(self, io) if local?
+      Format.new(" %:z").format(self, io)
     end
     io
   end
