@@ -27,13 +27,13 @@ describe HTTP do
   it "parses and is UTC (#2744)" do
     date = "Mon, 09 Sep 2011 23:36:00 GMT"
     parsed_time = HTTP.parse_time(date).not_nil!
-    parsed_time.kind.should eq(Time::Kind::Utc)
+    parsed_time.utc?.should be_true
   end
 
   it "parses and is local (#2744)" do
     date = "Mon, 09 Sep 2011 23:36:00 -0300"
     parsed_time = HTTP.parse_time(date).not_nil!
-    parsed_time.kind.should eq(Time::Kind::Local)
+    parsed_time.local?.should be_true
     parsed_time.to_utc.to_s.should eq("2011-09-10 02:36:00 UTC")
   end
 

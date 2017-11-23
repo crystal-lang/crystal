@@ -521,7 +521,7 @@ describe Time do
 
   it "can parse in UTC" do
     time = Time.parse("2014-10-31 11:12:13", "%F %T", Time::Kind::Utc)
-    time.kind.should eq(Time::Kind::Utc)
+    time.utc?.should be_true
   end
 
   it "at" do
@@ -600,9 +600,9 @@ describe Time do
 
   it "preserves kind when adding" do
     time = Time.utc_now
-    time.kind.should eq(Time::Kind::Utc)
+    time.utc?.should be_true
 
-    (time + 5.minutes).kind.should eq(Time::Kind::Utc)
+    (time + 5.minutes).utc?.should be_true
   end
 
   it "asks for day name" do
