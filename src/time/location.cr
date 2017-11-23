@@ -89,6 +89,16 @@ class Time::Location
   property name : String
   property zones : Array(Zone)
 
+  # Most lookups will be for the current time.
+  # To avoid the binary search through tx, keep a
+  # static one-element cache that gives the correct
+  # zone for the time when the Location was created.
+  # The units for @cached_range are seconds
+  # since January 1, 1970 UTC, to match the argument
+  # to `#lookup`.
+  @cached_range : Tuple(Int64, Int64)
+  @cached_zone : Zone
+
   # Creates a `Location` instance named *name* with fixed *offset*.
   def self.fixed(name : String, offset : Int32)
     new name, [Zone.new(name, offset, false)]
@@ -172,6 +182,8 @@ class Time::Location
 
   # :nodoc:
   def initialize(@name : String, @zones : Array(Zone), @transitions = [] of ZoneTransition)
+    @cached_zone = lookup_first_zone
+    @cached_range = {Int64::MIN, @zones.size <= 1 ? Int64::MAX : Int64::MIN}
   end
 
   protected def transitions
@@ -197,7 +209,11 @@ class Time::Location
 
   # Returns the time zone in use at `epoch` (time in seconds since UNIX epoch).
   def lookup(epoch : Int) : Zone
-    lookup_with_boundaries(epoch).first
+    unless @cached_range[0] <= epoch < @cached_range[1]
+      @cached_zone, @cached_range = lookup_with_boundaries(epoch)
+    end
+
+    @cached_zone
   end
 
   # :nodoc:

@@ -2,6 +2,18 @@ require "spec"
 require "./spec_helper"
 
 class Time::Location
+  def __cached_range
+    @cached_range
+  end
+
+  def __cached_zone
+    @cached_zone
+  end
+
+  def __cached_zone=(zone)
+    @cached_zone = zone
+  end
+
   describe Time::Location do
     describe ".load" do
       it "loads Europe/Berlin" do
@@ -238,6 +250,32 @@ class Time::Location
             zone2.name.should eq "+13"
             zone2.offset.should eq 13 * SECONDS_PER_HOUR
           end
+        end
+      end
+
+      it "caches last zone" do
+        with_zoneinfo do
+          location = Location.load("Europe/Berlin")
+          location.__cached_range.should eq({Int64::MIN, Int64::MIN})
+          location.__cached_zone.should eq Zone.new("LMT", 3208, false)
+
+          expected_zone = Zone.new("CET", 3600, false)
+
+          location.lookup(Time.utc(2017, 11, 23, 22, 6, 12)).should eq expected_zone
+
+          location.__cached_range.should eq({1509238800_i64, 1521939600_i64})
+          location.__cached_zone.should eq expected_zone
+        end
+      end
+
+      it "reads from cache" do
+        with_zoneinfo do
+          location = Location.load("Europe/Berlin")
+          location.lookup(Time.utc(2017, 11, 23, 22, 6, 12)).should eq Zone.new("CET", 3600, false)
+          cached_zone = Zone.new("MyZone", 1234, true)
+          location.__cached_zone = cached_zone
+
+          location.lookup(Time.utc(2017, 11, 23, 22, 6, 12)).should eq cached_zone
         end
       end
     end
