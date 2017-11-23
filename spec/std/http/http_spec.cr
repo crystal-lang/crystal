@@ -39,7 +39,7 @@ describe HTTP do
 
   describe "generates RFC 1123" do
     it "without time zone" do
-      time = Time.new(1994, 11, 6, 8, 49, 37, nanosecond: 0, kind: Time::Kind::Utc)
+      time = Time.utc(1994, 11, 6, 8, 49, 37, nanosecond: 0)
       HTTP.rfc1123_date(time).should eq("Sun, 06 Nov 1994 08:49:37 GMT")
     end
 

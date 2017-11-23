@@ -192,7 +192,7 @@ struct YAML::Schema::Core::TimeParser
   end
 
   def new_time(*args, **named_args)
-    Time.new(*args, **named_args, kind: Time::Kind::Utc)
+    Time.utc(*args, **named_args)
   rescue
     nil
   end
