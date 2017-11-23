@@ -283,6 +283,7 @@ abstract class JSON::Lexer
       integer *= 10
       integer += char - '0'
       divisor *= 10
+      digits += 1
       char = next_char
     end
     float = integer.to_f64 / divisor
