@@ -679,7 +679,7 @@ abstract class IO
       return string
     end
 
-    # We didn't find the delimiter, so we append to a String::Builde
+    # We didn't find the delimiter, so we append to a String::Builder
     # until we find it or we reach the limit, appending what we have
     # in the peek buffer and peeking again.
     String.build do |buffer|
