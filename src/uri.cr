@@ -511,6 +511,6 @@ class URI
   # Returns `true` if this URI's *port* is the default port for
   # its *scheme*.
   private def default_port?
-    scheme && port && port == URI.default_port(scheme.not_nil!)
+    (scheme = @scheme) && (port = @port) && port == URI.default_port(scheme)
   end
 end
