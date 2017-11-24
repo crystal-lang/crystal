@@ -373,34 +373,6 @@ module Random
     random_bytes(n).hexstring
   end
 
-  # Generates a UUID (Universally Unique Identifier).
-  #
-  # It generates a random v4 UUID. See
-  # [RFC 4122 Section 4.4](https://tools.ietf.org/html/rfc4122#section-4.4)
-  # for the used algorithm and its implications.
-  #
-  # ```
-  # Random::Secure.uuid # => "a4e319dd-a778-4a51-804e-66a07bc63358"
-  # ```
-  #
-  # It is recommended to use the secure `Random::Secure` as a source or another
-  # cryptographically quality PRNG such as `Random::ISAAC` or ChaCha20.
-  def uuid : String
-    bytes = random_bytes(16)
-    bytes[6] = (bytes[6] & 0x0f) | 0x40
-    bytes[8] = (bytes[8] & 0x3f) | 0x80
-
-    String.new(36) do |buffer|
-      buffer[8] = buffer[13] = buffer[18] = buffer[23] = 45_u8
-      bytes[0, 4].hexstring(buffer + 0)
-      bytes[4, 2].hexstring(buffer + 9)
-      bytes[6, 2].hexstring(buffer + 14)
-      bytes[8, 2].hexstring(buffer + 19)
-      bytes[10, 6].hexstring(buffer + 24)
-      {36, 36}
-    end
-  end
-
   # See `#rand`.
   def self.rand : Float64
     DEFAULT.rand
