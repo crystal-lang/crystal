@@ -1,5 +1,6 @@
 require "spec"
 require "bit_array"
+require "big"
 require "random/secure"
 
 struct Crystal::Hasher
@@ -49,6 +50,15 @@ describe "Crystal::Hasher" do
     it "#int should be equal for different types" do
       1.hash.should eq(1_u64.hash)
       2.hash.should eq(2_u64.hash)
+    end
+
+    it "Big i64 numbers should be hashed ok" do
+      Int64::MAX.hash.should eq(Int64::MAX.hash)
+    end
+
+    pending "128bit types should be hashed ok" do
+      1.to_i128.hash.should eq(1_i8.hash)
+      1.to_u128.hash.should eq(1_u8.hash)
     end
 
     it "#float should change state and differ" do
@@ -191,8 +201,8 @@ describe "Crystal::Hasher" do
       hasher = TestHasher.for_test
       hasher1 = 1.0.hash(hasher)
       hasher2 = 2.0.hash(hasher)
-      hasher1.result.should eq(0xecfbe7798e8f67f2_u64)
-      hasher2.result.should eq(0x72847386c9572c30_u64)
+      hasher1.result.should eq(10728791798497425537_u64)
+      hasher2.result.should eq(12628815283865879015_u64)
     end
 
     it "#string should match test vectors" do
@@ -227,6 +237,24 @@ describe "Crystal::Hasher" do
       hasher.inspect.should_not contain('2')
       hasher.inspect.should_not contain(hasher.@b.to_s)
       hasher.inspect.should_not contain(hasher.@b.to_s(16))
+    end
+  end
+
+  describe "normalization of numbers" do
+    it "should 1_i32 and 1_f64 hashes equal" do
+      1_i32.hash.should eq(1_f64.hash)
+    end
+
+    it "should 1_f32 and 1.to_big_f hashes equal" do
+      1_f32.hash.should eq(1.to_big_f.hash)
+    end
+
+    it "should 1_f32 and 1.to_big_r hashes equal" do
+      1_f32.hash.should eq(1.to_big_r.hash)
+    end
+
+    it "should 1_f32 and 1.to_big_i hashes equal" do
+      1_f32.hash.should eq(1.to_big_i.hash)
     end
   end
 end

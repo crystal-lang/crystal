@@ -293,3 +293,22 @@ module Math
     BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }
   end
 end
+
+# :nodoc:
+struct Crystal::Hasher
+  def float(value : BigFloat)
+    normalized_hash = float_normalize_wrap(value) do |value|
+      # more exact version of `Math.frexp`
+      LibGMP.mpf_get_d_2exp(out exp, value)
+      frac = BigFloat.new do |mpf|
+        if exp >= 0
+          LibGMP.mpf_div_2exp(mpf, value, exp)
+        else
+          LibGMP.mpf_mul_2exp(mpf, value, -exp)
+        end
+      end
+      float_normalize_reference(value, frac, exp)
+    end
+    permute(normalized_hash)
+  end
+end
