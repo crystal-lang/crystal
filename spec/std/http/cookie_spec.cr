@@ -97,7 +97,7 @@ module HTTP
 
       it "parses expires rfc1123" do
         cookie = parse_set_cookie("key=value; expires=Sun, 06 Nov 1994 08:49:37 GMT")
-        time = Time.new(1994, 11, 6, 8, 49, 37)
+        time = Time.utc(1994, 11, 6, 8, 49, 37)
 
         cookie.name.should eq("key")
         cookie.value.should eq("value")
@@ -106,7 +106,7 @@ module HTTP
 
       it "parses expires rfc1036" do
         cookie = parse_set_cookie("key=value; expires=Sunday, 06-Nov-94 08:49:37 GMT")
-        time = Time.new(1994, 11, 6, 8, 49, 37)
+        time = Time.utc(1994, 11, 6, 8, 49, 37)
 
         cookie.name.should eq("key")
         cookie.value.should eq("value")
@@ -115,7 +115,7 @@ module HTTP
 
       it "parses expires ansi c" do
         cookie = parse_set_cookie("key=value; expires=Sun Nov  6 08:49:37 1994")
-        time = Time.new(1994, 11, 6, 8, 49, 37)
+        time = Time.utc(1994, 11, 6, 8, 49, 37)
 
         cookie.name.should eq("key")
         cookie.value.should eq("value")
@@ -124,12 +124,12 @@ module HTTP
 
       it "parses expires ansi c, variant with zone" do
         cookie = parse_set_cookie("bla=; expires=Thu, 01 Jan 1970 00:00:00 -0000")
-        cookie.expires.should eq(Time.new(1970, 1, 1, 0, 0, 0))
+        cookie.expires.should eq(Time.utc(1970, 1, 1, 0, 0, 0))
       end
 
       it "parses full" do
         cookie = parse_set_cookie("key=value; path=/test; domain=www.example.com; HttpOnly; Secure; expires=Sun, 06 Nov 1994 08:49:37 GMT")
-        time = Time.new(1994, 11, 6, 8, 49, 37)
+        time = Time.utc(1994, 11, 6, 8, 49, 37)
 
         cookie.name.should eq("key")
         cookie.value.should eq("value")

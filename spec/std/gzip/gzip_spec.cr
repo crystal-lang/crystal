@@ -5,7 +5,7 @@ describe Gzip do
   it "writes and reads to memory" do
     io = IO::Memory.new
 
-    time = Time.new(2016, 1, 2)
+    time = Time.utc(2016, 1, 2)
     os = 4_u8
     extra = Bytes[1, 2, 3]
     name = "foo.txt"
