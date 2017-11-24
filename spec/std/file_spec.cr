@@ -1033,8 +1033,8 @@ describe "File" do
       filename = "#{__DIR__}/data/temp_write.txt"
       File.write(filename, "")
 
-      atime = Time.new(2000, 1, 2)
-      mtime = Time.new(2000, 3, 4)
+      atime = Time.utc(2000, 1, 2)
+      mtime = Time.utc(2000, 3, 4)
 
       File.utime(atime, mtime, filename)
 
@@ -1046,8 +1046,8 @@ describe "File" do
     end
 
     it "raises if file not found" do
-      atime = Time.new(2000, 1, 2)
-      mtime = Time.new(2000, 3, 4)
+      atime = Time.utc(2000, 1, 2)
+      mtime = Time.utc(2000, 3, 4)
 
       expect_raises Errno, "Error setting time to file" do
         File.utime(atime, mtime, "#{__DIR__}/nonexistent_file")
@@ -1069,7 +1069,7 @@ describe "File" do
 
     it "sets file times to given time" do
       filename = "#{__DIR__}/data/temp_touch.txt"
-      time = Time.new(2000, 3, 4)
+      time = Time.utc(2000, 3, 4)
       begin
         File.touch(filename, time)
 

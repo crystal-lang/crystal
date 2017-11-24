@@ -11,14 +11,6 @@ module Crystal::System::Time
   NANOSECONDS_PER_SECOND    = 1_000_000_000
   FILETIME_TICKS_PER_SECOND = NANOSECONDS_PER_SECOND / NANOSECONDS_PER_FILETIME_TICK
 
-  # TODO: For now, this method returns the UTC offset currently in place, ignoring *seconds*.
-  def self.compute_utc_offset(seconds : Int64) : Int32
-    ret = LibC.GetTimeZoneInformation(out zone_information)
-    raise WinError.new("GetTimeZoneInformation") if ret == -1
-
-    zone_information.bias.to_i32 * -60
-  end
-
   def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
     # TODO: Needs a check if `GetSystemTimePreciseAsFileTime` is actually available (only >= Windows 8)
     # and use `GetSystemTimeAsFileTime` as fallback.
