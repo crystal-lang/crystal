@@ -31,6 +31,19 @@ struct CallStack
     dir
   end
 
+  # ANSI color and formatting escape codes
+  RED = "\e[31m"
+  GREEN = "\e[32m"
+  YELLOW = "\e[33m"
+  CYAN = "\e[36m"
+
+  BOLD = "\e[1m"
+
+  RESET_COLOR = "\e[39;49m"
+
+  # ANSI command to clear the current state of colors and formatting
+  CLEAR = "\e[0m"
+
   @@skip = [] of String
 
   def self.skip(filename)
@@ -166,7 +179,7 @@ struct CallStack
         # Turn to relative to the current dir, if possible
         file = file.lchop(CURRENT_DIR)
 
-        file_line_column = "#{file}:#{line}:#{column}"
+        file_line_column = "#{GREEN}#{file}#{CLEAR}:#{YELLOW}#{line}:#{column}#{CLEAR}"
       end
 
       if name = CallStack.decode_function_name(pc)
@@ -197,16 +210,16 @@ struct CallStack
       if file_line_column
         if show_full_info && (frame = CallStack.decode_frame(ip))
           _, sname = frame
-          line = "#{file_line_column} in '#{String.new(sname)}'"
+          line = "#{file_line_column} in '#{CYAN}#{String.new(sname)}#{CLEAR}'"
         else
-          line = "#{file_line_column} in '#{function}'"
+          line = "#{file_line_column} in '#{CYAN}#{function}#{CLEAR}'"
         end
       else
         line = function
       end
 
       if show_full_info
-        line = "#{line} at 0x#{ip.address.to_s(16)}"
+        line = "#{line} at #{CYAN}0x#{ip.address.to_s(16)}#{CLEAR}"
       end
 
       line

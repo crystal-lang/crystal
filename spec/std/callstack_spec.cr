@@ -2,7 +2,7 @@ require "spec"
 require "tempfile"
 
 describe "Backtrace" do
-  it "prints file line:colunm" do
+  it "prints file line:column" do
     tempfile = Tempfile.new("compiler_spec_output")
     tempfile.close
     sample = "#{__DIR__}/data/backtrace_sample"
