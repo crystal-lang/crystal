@@ -179,7 +179,7 @@ struct CallStack
         # Turn to relative to the current dir, if possible
         file = file.lchop(CURRENT_DIR)
 
-        file_line_column = "#{GREEN}#{file}#{CLEAR}:#{YELLOW}#{line}:#{column}#{CLEAR}"
+        file_line_column = "#{CYAN}#{BOLD}#{file}#{CLEAR}#{CYAN}:#{line}:#{column}#{CLEAR}"
       end
 
       if name = CallStack.decode_function_name(pc)
@@ -210,16 +210,16 @@ struct CallStack
       if file_line_column
         if show_full_info && (frame = CallStack.decode_frame(ip))
           _, sname = frame
-          line = "#{file_line_column} in '#{CYAN}#{String.new(sname)}#{CLEAR}'"
+          line = "#{file_line_column} in '#{GREEN}#{String.new(sname)}#{CLEAR}'"
         else
-          line = "#{file_line_column} in '#{CYAN}#{function}#{CLEAR}'"
+          line = "#{file_line_column} in '#{GREEN}#{function}#{CLEAR}'"
         end
       else
         line = function
       end
 
       if show_full_info
-        line = "#{line} at #{CYAN}0x#{ip.address.to_s(16)}#{CLEAR}"
+        line = "#{line} at #{GREEN}0x#{ip.address.to_s(16)}#{CLEAR}"
       end
 
       line

@@ -50,7 +50,7 @@ class Exception
   end
 
   def inspect_with_backtrace(io : IO)
-    io << message << " (\e[31m" << self.class << "\e[0m)\n"
+    io << "\e[1m\e[31m" << self.class << ": \e[0m\e[31m" << message << "\e[0m\n"
     backtrace?.try &.each do |frame|
       io.print "  from "
       io.puts frame
