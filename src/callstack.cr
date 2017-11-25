@@ -34,12 +34,9 @@ struct CallStack
   # ANSI color and formatting escape codes
   RED = "\e[31m"
   GREEN = "\e[32m"
-  YELLOW = "\e[33m"
   CYAN = "\e[36m"
 
   BOLD = "\e[1m"
-
-  RESET_COLOR = "\e[39;49m"
 
   # ANSI command to clear the current state of colors and formatting
   CLEAR = "\e[0m"
