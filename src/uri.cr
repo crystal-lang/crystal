@@ -500,7 +500,7 @@ class URI
   # ```
   # URI.set_default_port "ponzi", 9999
   # ```
-  def self.set_default_port(scheme : String, port : Int32?)
+  def self.set_default_port(scheme : String, port : Int32?) : Nil
     if port
       @@default_ports[scheme.downcase] = port
     else
