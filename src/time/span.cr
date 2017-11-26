@@ -278,7 +278,6 @@ struct Time::Span
     Time.now - self
   end
 
-  # Returns the result of subtracting `self` and *other*.
   def -(other : self) : Time::Span
     # TODO check overflow
     Span.new(
@@ -294,7 +293,6 @@ struct Time::Span
     )
   end
 
-  # Returns the result of adding `self` and *other*.
   def +(other : self) : Time::Span
     # TODO check overflow
     Span.new(
@@ -303,7 +301,6 @@ struct Time::Span
     )
   end
 
-  # Returns self.
   def + : self
     self
   end
@@ -464,7 +461,6 @@ struct Int
 
   # Returns a `Time::Span` of `self` milliseconds.
   def milliseconds : Time::Span
-    # this might overflow
     Time::Span.new 0, 0, 0, 0, (self.to_i64 * Time::NANOSECONDS_PER_MILLISECOND)
   end
 
