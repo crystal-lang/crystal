@@ -661,13 +661,15 @@ class Hash(K, V)
   # hash.clear # => {}
   # ```
   def clear
-    resize_data(0_u8)
+    #resize_data(0_u8)
     # have to explicitely clear @index cause it is reused as UInt32
-    @index = Pointer(UInt32).null
-    @rebuild_num += 1_u16
+    #@index = Pointer(UInt32).null
+    #@rebuild_num += 1_u16
+    #@first = 0_u32
+    #@last = 0_u32
     @size = 0
-    @first = 0_u32
-    @last = 0_u32
+    @first = @last
+    rehash
     self
   end
 
@@ -915,9 +917,9 @@ class Hash(K, V)
       reclaim_without_index
       # attention: be careful for @format underflow
       # currently it is safe because of `format > 1` in needs_shrink
-      if needs_shrink(@size, @format - 2)
-        resize_data(@format - 1)
-      end
+      #if needs_shrink(@size, @format - 2)
+      #  resize_data(@format - 1)
+      #end
       fix_index
     elsif nentries(@format + 1) == 0
       raise "Hash table too big"
