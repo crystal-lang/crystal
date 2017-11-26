@@ -936,10 +936,11 @@ class Hash(K, V)
     new_nindex = nindex(newsz)
     if new_nindex != old_nindex
       if old_nindex == 0
-        # explicitely alloc because index is reused as UInt32
+        # explicitely alloc because index was reused as UInt32
         @index = Pointer(UInt32).malloc(new_nindex)
       elsif new_nindex == 0
         @index.realloc(0)
+        # explicitely clear because index will be reused as UInt32
         @index = Pointer(UInt32).null
       else
         @index = @index.realloc(new_nindex)
@@ -1094,9 +1095,9 @@ class Hash(K, V)
   end
 
   private struct Entry(K, V)
-    property key : K
     property hashsum : UInt32
     property next : UInt32
+    property key : K
     property value : V
 
     def initialize(@key : K, @value : V, @hashsum : UInt32, @next : UInt32)
@@ -1125,7 +1126,7 @@ class Hash(K, V)
       end
       while @current < @hash.@last
         entry = @hash.entry_at(@current)
-        if entry.value.hashsum != 0_u64
+        unless entry.value.empty?
           value = yield entry
           @current += 1_u32
           return value
@@ -1187,17 +1188,21 @@ class Hash(K, V)
       Format.new(0_u32, 0_u32),
       Format.new(8_u32, 0_u32),
   {% if flag?(:bits32) %}
-  {%   for i in 4..26 %}
+
+  {% for i in 4..26 %}
       {% p = 1 << i %}
       Format.new({{p}}_u32, {{p/2 - 1}}_u32),
       Format.new({{p + p/2}}_u32, {{p/2 - 1}}_u32),
-  {%   end %}
+  {% end %}
+
   {% else %}
-  {%   for i in 4..30 %}
+
+  {% for i in 4..30 %}
       {% p = 1 << i %}
       Format.new({{p}}_u32, {{p - 1}}_u32),
       Format.new({{p + p/2}}_u32, {{p - 1}}_u32),
-  {%   end %}
+  {% end %}
+
   {% end %}
       Format.new(0_u32, 0_u32),
     ]
