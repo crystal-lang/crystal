@@ -162,6 +162,14 @@ struct CallStack
     end
   end
 
+  private def colorize_address(address)
+    {% if flag?(:raw_err) %}
+      address
+    {% else %}
+      "#{GREEN}#{address}#{CLEAR}"
+    {% end %}
+  end
+
   private def decode_backtrace
     show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
 
@@ -176,7 +184,11 @@ struct CallStack
         # Turn to relative to the current dir, if possible
         file = file.lchop(CURRENT_DIR)
 
-        file_line_column = "#{CYAN}#{BOLD}#{file}#{CLEAR}#{CYAN}:#{line}:#{column}#{CLEAR}"
+        file_line_column = {% if flag?(:raw_err) %}
+                             "#{file}:#{line}:#{column}"
+                           {% else %}
+                             "#{CYAN}#{BOLD}#{file}#{CLEAR}#{CYAN}:#{line}:#{column}#{CLEAR}"
+                           {% end %}
       end
 
       if name = CallStack.decode_function_name(pc)
@@ -207,16 +219,16 @@ struct CallStack
       if file_line_column
         if show_full_info && (frame = CallStack.decode_frame(ip))
           _, sname = frame
-          line = "#{file_line_column} in '#{GREEN}#{String.new(sname)}#{CLEAR}'"
+          line = "#{file_line_column} in '#{colorize_address(String.new(sname))}'"
         else
-          line = "#{file_line_column} in '#{GREEN}#{function}#{CLEAR}'"
+          line = "#{file_line_column} in '#{colorize_address(function)}'"
         end
       else
         line = function
       end
 
       if show_full_info
-        line = "#{line} at #{GREEN}0x#{ip.address.to_s(16)}#{CLEAR}"
+        line = "#{line} at 0x#{colorize_address(ip.address.to_s(16))}"
       end
 
       line

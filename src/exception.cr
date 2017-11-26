@@ -49,8 +49,22 @@ class Exception
     end
   end
 
+  private def colorized_backtrace
+    if message.nil?
+      "\e[1m\e[31m" + self.class.name + "\e[0m"
+    else
+      "\e[1m\e[31m" + self.class.name + ": \e[0m\e[31m" + message.not_nil! + "\e[0m"
+    end
+  end
+
   def inspect_with_backtrace(io : IO)
-    io << "\e[1m\e[31m" << self.class << ": \e[0m\e[31m" << message << "\e[0m\n"
+    trace = {% if flag?(:raw_err) %}
+      self.class.name + (message.nil? ? "" : ": #{message}")
+    {% else %}
+      colorized_backtrace
+    {% end %}
+
+    io << trace << "\n"
     backtrace?.try &.each do |frame|
       io.print "  from "
       io.puts frame
