@@ -89,7 +89,7 @@ struct Time::Span
       nanoseconds -= NANOSECONDS_PER_SECOND
     end
 
-    @seconds = seconds
+    @seconds = seconds.to_i64
     @nanoseconds = nanoseconds.to_i32
   end
 
