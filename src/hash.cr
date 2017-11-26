@@ -1064,7 +1064,7 @@ class Hash(K, V)
     {% if flag?(:bits32) %}
       h | 0xC0000000_u32
     {% else %}
-      h != 0 ? h : 1_u32
+      h | 0x80000000_u32
     {% end %}
   end
 
@@ -1197,10 +1197,15 @@ class Hash(K, V)
 
   {% else %}
 
-  {% for i in 4..30 %}
+  {% for i in 4..10 %}
       {% p = 1 << i %}
       Format.new({{p}}_u32, {{p - 1}}_u32),
       Format.new({{p + p/2}}_u32, {{p - 1}}_u32),
+  {% end %}
+  {% for i in 11..30 %}
+      {% p = 1 << i %}
+      Format.new({{p}}_u32, {{p*2 - 1}}_u32),
+      Format.new({{p + p/2}}_u32, {{p*2 - 1}}_u32),
   {% end %}
 
   {% end %}
