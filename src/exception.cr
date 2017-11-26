@@ -53,7 +53,7 @@ class Exception
     if message.nil?
       "\e[1m\e[31m" + self.class.name + "\e[0m"
     else
-      "\e[1m\e[31m" + self.class.name + ": \e[0m\e[31m" + message.not_nil! + "\e[0m"
+      "\e[1m\e[31m" + self.class.name + ": \e[0m\e[1m" + message.not_nil! + "\e[0m"
     end
   end
 
