@@ -31,12 +31,7 @@ class HTTP::WebSocketHandler
         return
       end
 
-      accept_code =
-        {% if flag?(:without_openssl) %}
-          Digest::SHA1.base64digest("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
-        {% else %}
-          Base64.strict_encode(OpenSSL::SHA1.hash("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
-        {% end %}
+      accept_code = WebSocket::Protocol.key_challenge(key)
 
       response.status_code = 101
       response.headers["Upgrade"] = "websocket"
