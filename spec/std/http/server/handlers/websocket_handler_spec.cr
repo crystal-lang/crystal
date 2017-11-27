@@ -91,4 +91,23 @@ describe HTTP::WebSocketHandler do
 
     io.to_s.should eq("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-Websocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n\r\n")
   end
+
+  it "returns bad request if Sec-WebSocket-Key is missing" do
+    io = IO::Memory.new
+
+    headers = HTTP::Headers{
+      "Upgrade"           => "websocket",
+      "Connection"        => "Upgrade",
+    }
+    request = HTTP::Request.new("GET", "/", headers: headers)
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::WebSocketHandler.new { }
+    handler.call context
+
+    response.close
+
+    io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n")
+  end
 end
