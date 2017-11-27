@@ -257,11 +257,13 @@ class HTTP::WebSocket::Protocol
       end
     {% end %}
 
+    random_key = Base64.strict_encode(StaticArray(UInt8, 16).new { rand(256).to_u8 })
+
     headers["Host"] = "#{host}:#{port}"
     headers["Connection"] = "Upgrade"
     headers["Upgrade"] = "websocket"
     headers["Sec-WebSocket-Version"] = VERSION.to_s
-    headers["Sec-WebSocket-Key"] = Base64.strict_encode(StaticArray(UInt8, 16).new { rand(256).to_u8 })
+    headers["Sec-WebSocket-Key"] = random_key
 
     path = "/" if path.empty?
     handshake = HTTP::Request.new("GET", path, headers)
@@ -269,7 +271,12 @@ class HTTP::WebSocket::Protocol
     socket.flush
     handshake_response = HTTP::Client::Response.from_io(socket)
     unless handshake_response.status_code == 101
-      raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status_code}")
+      raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status_code}.")
+    end
+
+    challenge_response = Protocol.key_challenge(random_key)
+    unless handshake_response.headers["Sec-WebSocket-Accept"]? == challenge_response
+      raise Socket::Error.new("Handshake got denied. Server did not verify WebSocket challenge.")
     end
 
     new(socket, masked: true)
@@ -284,5 +291,13 @@ class HTTP::WebSocket::Protocol
     end
 
     raise ArgumentError.new("No host or path specified which are required.")
+  end
+
+  def self.key_challenge(key)
+    {% if flag?(:without_openssl) %}
+      Digest::SHA1.base64digest("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
+    {% else %}
+      Base64.strict_encode(OpenSSL::SHA1.hash("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
+    {% end %}
   end
 end
