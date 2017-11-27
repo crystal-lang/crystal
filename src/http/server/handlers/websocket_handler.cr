@@ -15,7 +15,12 @@ class HTTP::WebSocketHandler
 
   def call(context)
     if websocket_upgrade_request? context.request
-      key = context.request.headers["Sec-Websocket-Key"]
+      key = context.request.headers["Sec-WebSocket-Key"]?
+
+      unless key
+        context.response.status_code = 400
+        return
+      end
 
       accept_code =
         {% if flag?(:without_openssl) %}
