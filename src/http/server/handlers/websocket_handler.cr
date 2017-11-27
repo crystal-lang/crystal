@@ -17,6 +17,13 @@ class HTTP::WebSocketHandler
     if websocket_upgrade_request? context.request
       response = context.response
 
+      version = context.request.headers["Sec-WebSocket-Version"]?
+      unless version == WebSocket::Protocol::VERSION.to_s
+        response.status_code = 426
+        response.headers["Sec-WebSocket-Version"] = WebSocket::Protocol::VERSION.to_s
+        return
+      end
+
       key = context.request.headers["Sec-WebSocket-Key"]?
 
       unless key
