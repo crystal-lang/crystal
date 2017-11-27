@@ -276,9 +276,25 @@ struct Set(T)
     same?(other) || @hash == other.@hash
   end
 
-  # Alias to `#includes?`.
+  # Same as `#includes?`.
   #
   # It is for convenience with using on `case` statement.
+  #
+  # ```
+  # red_like = Set{"red", "pink", "violet"}
+  # blue_like = Set{"blue", "azure", "violet"}
+  #
+  # case "violet"
+  # when red_like & blue_like
+  #   puts "red & blue like color!"
+  # when red_like
+  #   puts "red like color!"
+  # when blue_like
+  #   puts "blue like color!"
+  # end
+  # ```
+  #
+  # See also: `Object#===`.
   def ===(object : T)
     includes? object
   end
