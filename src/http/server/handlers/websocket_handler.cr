@@ -15,10 +15,12 @@ class HTTP::WebSocketHandler
 
   def call(context)
     if websocket_upgrade_request? context.request
+      response = context.response
+
       key = context.request.headers["Sec-WebSocket-Key"]?
 
       unless key
-        context.response.status_code = 400
+        response.status_code = 400
         return
       end
 
@@ -29,11 +31,10 @@ class HTTP::WebSocketHandler
           Base64.strict_encode(OpenSSL::SHA1.hash("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
         {% end %}
 
-      response = context.response
       response.status_code = 101
       response.headers["Upgrade"] = "websocket"
       response.headers["Connection"] = "Upgrade"
-      response.headers["Sec-Websocket-Accept"] = accept_code
+      response.headers["Sec-WebSocket-Accept"] = accept_code
       response.upgrade do |io|
         ws_session = WebSocket.new(io)
         @proc.call(ws_session, context)
