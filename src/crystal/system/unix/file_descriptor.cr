@@ -61,7 +61,7 @@ module Crystal::System::FileDescriptor
     if LibC.fstat(@fd, out stat) != 0
       raise Errno.new("Unable to get stat")
     end
-    File::Stat.new(stat)
+    ::File::Stat.new(stat)
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil

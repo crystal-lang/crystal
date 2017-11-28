@@ -3,12 +3,12 @@
 
 module Crystal::System::Random
   @@initialized = false
-  @@urandom : File?
+  @@urandom : ::File?
 
   private def self.init
     @@initialized = true
 
-    urandom = File.open("/dev/urandom", "r")
+    urandom = ::File.open("/dev/urandom", "r")
     return unless urandom.stat.chardev?
 
     urandom.close_on_exec = true
