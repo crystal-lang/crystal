@@ -181,15 +181,19 @@ class Socket
   #
   # You may also declare an abstract UNIX address, that is a virtual file
   # that will never be created on the filesystem. An abstract UNIX address
-  # path has a NUL byte (`\0`) prefix.
-  # NOTE: abstract UNIX addresses are supported only on some Linux systems.
+  # path is prefixed by a `@` character.
+  #
+  # NOTE:
+  # - Abstract UNIX addresses are supported only on some Linux systems.
+  # - If you want to use a non-abstract UNIX address starting with a `@`,
+  # prefix it with `./`, like `./@foo`.
   #
   # Example:
   # ```
   # Socket::UNIXAddress.new("/tmp/my.sock")
   #
   # # Abstract UNIX socket on Linux only
-  # Socket::UNIXAddress.new("\0/my.sock")
+  # Socket::UNIXAddress.new("@/my.sock")
   # ```
   struct UNIXAddress < Address
     getter path : String
@@ -203,12 +207,12 @@ class Socket
         raise ArgumentError.new("Path size exceeds the maximum size of #{MAX_PATH_SIZE} bytes")
       end
 
-      if path[0]? == '\0'
+      if path[0]? == '@'
         {% if flag?(:linux) %}
           @abstract = true
           @path = path[1..-1]
         {% else %}
-          raise ArgumentError.new("Unsupported: abstract UNIX socket are not supported on non-Linux")
+          raise ArgumentError.new("Unsupported: cannot use abstract UNIX socket on non-Linux")
         {% end %}
       else
         @abstract = false
@@ -233,7 +237,7 @@ class Socket
           @abstract = true
           @path = String.new(path.to_unsafe + 1)
         {% else %}
-          raise ArgumentError.new("Unsupported: abstract UNIX socket are not supported on non-Linux")
+          raise ArgumentError.new("Unsupported: cannot use abstract UNIX socket on non-Linux")
         {% end %}
       else
         @abstract = false

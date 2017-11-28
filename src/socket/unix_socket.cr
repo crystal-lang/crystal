@@ -94,7 +94,7 @@ class UNIXSocket < Socket
 
   def local_address
     if abstract?
-      UNIXAddress.new('\0' + @path.to_s)
+      UNIXAddress.new('@' + @path.to_s)
     else
       UNIXAddress.new(@path.to_s)
     end
@@ -102,7 +102,7 @@ class UNIXSocket < Socket
 
   def remote_address
     if abstract?
-      UNIXAddress.new('\0' + @path.to_s)
+      UNIXAddress.new('@' + @path.to_s)
     else
       UNIXAddress.new(@path.to_s)
     end
