@@ -187,6 +187,9 @@ class Socket
   # Example:
   # ```
   # Socket::UNIXAddress.new("/tmp/my.sock")
+  #
+  # # Abstract UNIX socket on Linux only
+  # Socket::UNIXAddress.new("\0/my.sock")
   # ```
   struct UNIXAddress < Address
     getter path : String
@@ -199,13 +202,19 @@ class Socket
       if path.bytesize + 1 > MAX_PATH_SIZE
         raise ArgumentError.new("Path size exceeds the maximum size of #{MAX_PATH_SIZE} bytes")
       end
+
       if path[0]? == '\0'
-        @abstract = true
-        @path = path[1..-1]
+        {% if flag?(:linux) %}
+          @abstract = true
+          @path = path[1..-1]
+        {% else %}
+          raise ArgumentError.new("Unsupported: abstract UNIX socket are not supported on non-Linux")
+        {% end %}
       else
         @abstract = false
         @path = path
       end
+
       @family = Family::UNIX
       @size = sizeof(LibC::SockaddrUn)
     end
@@ -220,8 +229,12 @@ class Socket
 
       path = sockaddr.value.sun_path
       if path[0]? == 0
-        @abstract = true
-        @path = String.new(path.to_unsafe + 1)
+        {% if flag?(:linux) %}
+          @abstract = true
+          @path = String.new(path.to_unsafe + 1)
+        {% else %}
+          raise ArgumentError.new("Unsupported: abstract UNIX socket are not supported on non-Linux")
+        {% end %}
       else
         @abstract = false
         @path = String.new(path.to_unsafe)
