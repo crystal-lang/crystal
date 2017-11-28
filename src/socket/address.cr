@@ -180,7 +180,9 @@ class Socket
   # connection (e.g. `Socket#local_address`, `Socket#receive`).
   #
   # You may also declare an abstract UNIX address, that is a virtual file
-  # that will never be created on the filesystem.
+  # that will never be created on the filesystem. An abstract UNIX address
+  # path has a NUL byte (`\0`) prefix.
+  # NOTE: abstract UNIX addresses are supported only on some Linux systems.
   #
   # Example:
   # ```
@@ -193,9 +195,16 @@ class Socket
     # :nodoc:
     MAX_PATH_SIZE = LibC::SockaddrUn.new.sun_path.size - 1
 
-    def initialize(@path : String, @abstract = false)
-      if @path.bytesize + 1 > MAX_PATH_SIZE
+    def initialize(path : String)
+      if path.bytesize + 1 > MAX_PATH_SIZE
         raise ArgumentError.new("Path size exceeds the maximum size of #{MAX_PATH_SIZE} bytes")
+      end
+      if path[0]? == '\0'
+        @abstract = true
+        @path = path[1..-1]
+      else
+        @abstract = false
+        @path = path
       end
       @family = Family::UNIX
       @size = sizeof(LibC::SockaddrUn)
@@ -210,7 +219,7 @@ class Socket
       @family = Family::UNIX
 
       path = sockaddr.value.sun_path
-      if path[0] == 0
+      if path[0]? == 0
         @abstract = true
         @path = String.new(path.to_unsafe + 1)
       else
@@ -226,6 +235,9 @@ class Socket
     end
 
     def to_s(io)
+      if abstract?
+        io << '@'
+      end
       io << path
     end
 

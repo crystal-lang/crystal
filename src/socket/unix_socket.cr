@@ -15,11 +15,14 @@ class UNIXSocket < Socket
   getter path : String?
   getter? abstract : Bool
 
-  # Connects a named UNIX socket, bound to a filesystem.
-  def initialize(@path : String, type : Type = Type::STREAM, @abstract = false)
+  # Connects a named UNIX socket, bound to a path.
+  def initialize(path : String, type : Type = Type::STREAM)
     super(Family::UNIX, type, Protocol::IP)
 
-    connect(UNIXAddress.new(path, @abstract)) do |error|
+    addr = UNIXAddress.new(path)
+    @abstract = addr.abstract?
+    @path = addr.path
+    connect(addr) do |error|
       close
       raise error
     end
@@ -37,8 +40,8 @@ class UNIXSocket < Socket
   # eventually closes the socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM, abstract is_abstract = false)
-    sock = new(path, type, is_abstract)
+  def self.open(path, type : Type = Type::STREAM)
+    sock = new(path, type)
     begin
       yield sock
     ensure
@@ -90,11 +93,19 @@ class UNIXSocket < Socket
   end
 
   def local_address
-    UNIXAddress.new(path.to_s, @abstract)
+    if abstract?
+      UNIXAddress.new('\0' + @path.to_s)
+    else
+      UNIXAddress.new(@path.to_s)
+    end
   end
 
   def remote_address
-    UNIXAddress.new(path.to_s, @abstract)
+    if abstract?
+      UNIXAddress.new('\0' + @path.to_s)
+    else
+      UNIXAddress.new(@path.to_s)
+    end
   end
 
   def receive

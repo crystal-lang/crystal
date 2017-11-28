@@ -32,10 +32,13 @@ class UNIXServer < UNIXSocket
   # ```
   # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
   # ```
-  def initialize(@path : String, type : Type = Type::STREAM, backlog = 128, abstract is_abstract = false)
-    super(Family::UNIX, type, is_abstract)
+  def initialize(path : String, type : Type = Type::STREAM, backlog = 128)
+    super(Family::UNIX, type)
 
-    bind(UNIXAddress.new(path, is_abstract)) do |error|
+    addr = UNIXAddress.new(path)
+    @abstract = addr.abstract?
+    @path = addr.path
+    bind(addr) do |error|
       close(delete: false)
       raise error
     end
@@ -50,8 +53,8 @@ class UNIXServer < UNIXSocket
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM, backlog = 128, abstract is_abstract = false)
-    server = new(path, type, backlog, is_abstract)
+  def self.open(path, type : Type = Type::STREAM, backlog = 128)
+    server = new(path, type, backlog)
     begin
       yield server
     ensure
