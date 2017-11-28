@@ -161,7 +161,7 @@ describe "YAML serialization" do
     end
 
     it "deserializes time" do
-      Time.from_yaml("2010-11-12").should eq(Time.new(2010, 11, 12, kind: Time::Kind::Utc))
+      Time.from_yaml("2010-11-12").should eq(Time.utc(2010, 11, 12))
     end
 
     it "deserializes bytes" do
@@ -295,17 +295,17 @@ describe "YAML serialization" do
     end
 
     it "does for utc time" do
-      time = Time.new(2010, 11, 12, 1, 2, 3, kind: Time::Kind::Utc)
+      time = Time.utc(2010, 11, 12, 1, 2, 3)
       time.to_yaml.should eq("--- 2010-11-12 01:02:03\n...\n")
     end
 
     it "does for time at date" do
-      time = Time.new(2010, 11, 12, kind: Time::Kind::Utc)
+      time = Time.utc(2010, 11, 12)
       time.to_yaml.should eq("--- 2010-11-12\n...\n")
     end
 
     it "does for utc time with nanoseconds" do
-      time = Time.new(2010, 11, 12, 1, 2, 3, nanosecond: 456_000_000, kind: Time::Kind::Utc)
+      time = Time.utc(2010, 11, 12, 1, 2, 3, nanosecond: 456_000_000)
       time.to_yaml.should eq("--- 2010-11-12 01:02:03.456\n...\n")
     end
 

@@ -19,7 +19,10 @@ require "crystal/system/time"
 # Time.new(2016, 2, 15) # => 2016-02-15 00:00:00
 #
 # # Specifying a time
-# Time.new(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 UTC
+# Time.new(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30
+#
+# # Creating a time instance in UTC
+# Time.utc(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 UTC
 # ```
 #
 # ### Formatting Time
@@ -225,7 +228,7 @@ struct Time
   # Time.epoch(981173106) # => 2001-02-03 04:05:06 UTC
   # ```
   def self.epoch(seconds : Int) : Time
-    new(seconds: UNIX_SECONDS + seconds, nanoseconds: 0, kind: Kind::Utc)
+    utc(seconds: UNIX_SECONDS + seconds, nanoseconds: 0)
   end
 
   # Returns a new `Time` instance that corresponds to the number
@@ -239,7 +242,17 @@ struct Time
     milliseconds = milliseconds.to_i64
     seconds = UNIX_SECONDS + (milliseconds / 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
-    new(seconds: seconds, nanoseconds: nanoseconds.to_i, kind: Kind::Utc)
+    utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
+  end
+
+  # Returns a new `Time` instance at the specified time in UTC time zone.
+  def self.utc(year, month, day, hour = 0, minute = 0, second = 0, *, nanosecond = 0) : Time
+    new(year, month, day, hour, minute, second, nanosecond: nanosecond, kind: Kind::Utc)
+  end
+
+  # Returns a new `Time` instance at the specified time in UTC time zone.
+  def self.utc(*, seconds : Int64, nanoseconds : Int32) : Time
+    new(seconds: seconds, nanoseconds: nanoseconds, kind: Kind::Utc)
   end
 
   def clone : self
@@ -334,7 +347,7 @@ struct Time
   # Returns the current time in UTC time zone.
   def self.utc_now : Time
     seconds, nanoseconds = compute_seconds_and_nanoseconds
-    new(seconds: seconds, nanoseconds: nanoseconds, kind: Kind::Utc)
+    utc(seconds: seconds, nanoseconds: nanoseconds)
   end
 
   # Returns a copy of `self` with time-of-day components (hour, minute, ...) set to zero.
@@ -539,10 +552,9 @@ struct Time
     if utc?
       self
     else
-      Time.new(
+      Time.utc(
         seconds: total_seconds - Time.compute_offset,
-        nanoseconds: nanosecond,
-        kind: Kind::Utc,
+        nanoseconds: nanosecond
       )
     end
   end

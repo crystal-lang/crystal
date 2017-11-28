@@ -49,14 +49,14 @@ describe Time do
   it "initialize with .epoch" do
     seconds = 1439404155
     time = Time.epoch(seconds)
-    time.should eq(Time.new(2015, 8, 12, 18, 29, 15, kind: Time::Kind::Utc))
+    time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
     time.epoch.should eq(seconds)
   end
 
   it "initialize with .epoch_ms" do
     milliseconds = 1439404155000
     time = Time.epoch_ms(milliseconds)
-    time.should eq(Time.new(2015, 8, 12, 18, 29, 15, kind: Time::Kind::Utc))
+    time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
     time.epoch_ms.should eq(milliseconds)
   end
 
@@ -246,7 +246,7 @@ describe Time do
   end
 
   it "gets unix epoch seconds" do
-    t1 = Time.new 2014, 10, 30, 21, 18, 13, nanosecond: 0, kind: Time::Kind::Utc
+    t1 = Time.utc 2014, 10, 30, 21, 18, 13, nanosecond: 0
     t1.epoch.should eq(1414703893)
     t1.epoch_f.should be_close(1414703893, 1e-01)
   end
@@ -369,7 +369,7 @@ describe Time do
 
     t.to_s("%Y-%m-hello").should eq("2014-01-hello")
 
-    t = Time.new 2014, 1, 2, 3, 4, 5, nanosecond: 6, kind: Time::Kind::Utc
+    t = Time.utc 2014, 1, 2, 3, 4, 5, nanosecond: 6
     t.to_s("%s").should eq("1388631845")
   end
 
@@ -521,7 +521,7 @@ describe Time do
 
   it "can parse in UTC" do
     time = Time.parse("2014-10-31 11:12:13", "%F %T", Time::Kind::Utc)
-    time.kind.should eq(Time::Kind::Utc)
+    time.utc?.should be_true
   end
 
   it "at" do
@@ -600,9 +600,9 @@ describe Time do
 
   it "preserves kind when adding" do
     time = Time.utc_now
-    time.kind.should eq(Time::Kind::Utc)
+    time.utc?.should be_true
 
-    (time + 5.minutes).kind.should eq(Time::Kind::Utc)
+    (time + 5.minutes).utc?.should be_true
   end
 
   it "asks for day name" do

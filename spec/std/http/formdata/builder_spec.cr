@@ -9,7 +9,7 @@ describe HTTP::FormData::Builder do
       g.field("baz", "qux", HTTP::Headers{"X-Testing" => "headers"})
 
       body = IO::Memory.new "file content"
-      time = Time.new(2016, 1, 1, 12, 0, 0, kind: Time::Kind::Utc)
+      time = Time.utc(2016, 1, 1, 12, 0, 0)
       metadata = HTTP::FormData::FileMetadata.new("filename.txt \"", time, time, time, 12_u64)
       headers = HTTP::Headers{"Foo" => "Bar", "Baz" => "Qux"}
       g.file("file-test", body, metadata, headers)

@@ -66,10 +66,10 @@ describe YAML::Any do
 
     it "gets time" do
       value = YAML.parse("2010-01-02").as_time
-      value.should eq(Time.new(2010, 1, 2, kind: Time::Kind::Utc))
+      value.should eq(Time.utc(2010, 1, 2))
 
       value = YAML.parse("2010-01-02").as_time?
-      value.should eq(Time.new(2010, 1, 2, kind: Time::Kind::Utc))
+      value.should eq(Time.utc(2010, 1, 2))
 
       value = YAML.parse("hello").as_time?
       value.should be_nil
