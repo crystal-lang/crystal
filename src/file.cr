@@ -22,6 +22,13 @@ class File < IO::FileDescriptor
   # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
 
+  # This constructor is provided for subclasses to be able to initialize an
+  # `IO::FileDescriptor` with a *path* and *fd*.
+  private def initialize(@path, fd, blocking = false, encoding = nil, invalid = nil)
+    self.set_encoding(encoding, invalid: invalid) if encoding
+    super(fd, blocking)
+  end
+
   def initialize(filename : String, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
     oflag = open_flag(mode) | LibC::O_CLOEXEC
 

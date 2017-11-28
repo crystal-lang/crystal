@@ -38,21 +38,23 @@ require "c/stdlib"
 # ```
 # Tempfile.new("foo", ".png").path # => "/tmp/foo.ulBCPS.png"
 # ```
-class Tempfile < IO::FileDescriptor
+class Tempfile < File
   # Creates a `Tempfile` with the given filename and extension.
-  def initialize(name, extension = nil)
+  #
+  # *encoding* and *invalid* are passed to `IO#set_encoding`.
+  def initialize(name, extension = nil, encoding = nil, invalid = nil)
     tmpdir = self.class.dirname + File::SEPARATOR
-    @path = "#{tmpdir}#{name}.XXXXXX#{extension}"
-    fileno = if extension
-               LibC.mkstemps(@path, extension.bytesize)
-             else
-               LibC.mkstemp(@path)
-             end
+    path = "#{tmpdir}#{name}.XXXXXX#{extension}"
 
-    if fileno == -1
-      raise Errno.new("mkstemp")
+    if extension
+      fileno = LibC.mkstemps(path, extension.bytesize)
+    else
+      fileno = LibC.mkstemp(path)
     end
-    super(fileno, blocking: true)
+
+    raise Errno.new("mkstemp") if fileno == -1
+
+    super(path, fileno, blocking: true, encoding: encoding, invalid: invalid)
   end
 
   # Retrieves the full path of a this tempfile.
