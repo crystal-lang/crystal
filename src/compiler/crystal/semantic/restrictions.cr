@@ -667,7 +667,7 @@ module Crystal
       elsif context.strict?
         type_var == other_type_var
       else
-        # To prevent infinity recursion, it checks equality between
+        # To prevent infinite recursion, it checks equality between
         # `type_var` and `other_type_var` directly before try to restrict
         # `type_var` by `other_type_var`.
         type_var == other_type_var || type_var.restrict(other_type_var, context) == type_var

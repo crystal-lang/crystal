@@ -298,7 +298,7 @@ describe "Semantic: alias" do
       "undefined constant T"
   end
 
-  it "doesn't crash by infinity recustion against type alias and generics (#5329)" do
+  it "doesn't crash by infinite recursion against type alias and generics (#5329)" do
     assert_error %(
       class Foo(T)
         def initialize(@foo : T)
