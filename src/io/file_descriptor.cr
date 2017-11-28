@@ -1,15 +1,16 @@
 require "./syscall"
-require "c/fcntl"
+require "crystal/system/file_descriptor"
 
 # An `IO` over a file descriptor.
 class IO::FileDescriptor < IO
+  include Crystal::System::FileDescriptor
   include IO::Buffered
-  include IO::Syscall
 
-  @read_event : Event::Event?
-  @write_event : Event::Event?
+  # The raw file-descriptor. It is defined to be an `Int`, but it's size is
+  # platform-specific.
+  getter fd
 
-  def initialize(@fd : Int32, blocking = false)
+  def initialize(@fd, blocking = false)
     @closed = false
 
     unless blocking
@@ -18,45 +19,33 @@ class IO::FileDescriptor < IO
   end
 
   def blocking
-    fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    system_blocking?
   end
 
   def blocking=(value)
-    current_flags = fcntl(LibC::F_GETFL)
-    new_flags = current_flags
-    if value
-      new_flags &= ~LibC::O_NONBLOCK
-    else
-      new_flags |= LibC::O_NONBLOCK
-    end
-    fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
+    self.system_blocking = value
   end
 
   def close_on_exec?
-    flags = fcntl(LibC::F_GETFD)
-    (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
+    system_close_on_exec?
   end
 
-  def close_on_exec=(arg : Bool)
-    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
-    arg
+  def close_on_exec=(value : Bool)
+    self.system_close_on_exec = value
   end
 
-  def self.fcntl(fd, cmd, arg = 0)
-    r = LibC.fcntl fd, cmd, arg
-    raise Errno.new("fcntl() failed") if r == -1
-    r
-  end
+  {% unless flag?(:win32) %}
+    def self.fcntl(fd, cmd, arg = 0)
+      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
+    end
 
-  def fcntl(cmd, arg = 0)
-    self.class.fcntl @fd, cmd, arg
-  end
+    def fcntl(cmd, arg = 0)
+      Crystal::System::FileDescriptor.fcntl(@fd, cmd, arg)
+    end
+  {% end %}
 
   def stat
-    if LibC.fstat(@fd, out stat) != 0
-      raise Errno.new("Unable to get stat")
-    end
-    File::Stat.new(stat)
+    system_stat
   end
 
   # Seeks to a given *offset* (in bytes) according to the *whence* argument.
@@ -77,11 +66,8 @@ class IO::FileDescriptor < IO
 
     flush
     offset -= @in_buffer_rem.size if whence.current?
-    seek_value = LibC.lseek(@fd, offset, whence)
 
-    if seek_value == -1
-      raise Errno.new "Unable to seek"
-    end
+    system_seek(offset, whence)
 
     @in_buffer_rem = Bytes.empty
 
@@ -113,10 +99,7 @@ class IO::FileDescriptor < IO
   def pos
     check_open
 
-    seek_value = LibC.lseek(@fd, 0, Seek::Current)
-    raise Errno.new "Unable to tell" if seek_value == -1
-
-    seek_value - @in_buffer_rem.size
+    system_pos - @in_buffer_rem.size
   end
 
   # Sets the current position (in bytes) in this `IO`.
@@ -133,10 +116,6 @@ class IO::FileDescriptor < IO
     value
   end
 
-  def fd
-    @fd
-  end
-
   def finalize
     return if closed?
 
@@ -148,16 +127,11 @@ class IO::FileDescriptor < IO
   end
 
   def tty?
-    LibC.isatty(fd) == 1
+    system_tty?
   end
 
   def reopen(other : IO::FileDescriptor)
-    if LibC.dup2(other.fd, self.fd) == -1
-      raise Errno.new("Could not reopen file descriptor")
-    end
-
-    # flag is lost after dup
-    self.close_on_exec = true
+    system_reopen(other)
 
     other
   end
@@ -177,63 +151,14 @@ class IO::FileDescriptor < IO
     pp.text inspect
   end
 
-  private def unbuffered_read(slice : Bytes)
-    read_syscall_helper(slice, "Error reading file") do
-      # `to_i32` is acceptable because `Slice#size` is a Int32
-      LibC.read(@fd, slice, slice.size).to_i32
-    end
-  end
-
-  private def unbuffered_write(slice : Bytes)
-    write_syscall_helper(slice, "Error writing file") do |slice|
-      LibC.write(@fd, slice, slice.size).tap do |return_code|
-        if return_code == -1 && Errno.value == Errno::EBADF
-          raise IO::Error.new "File not open for writing"
-        end
-      end
-    end
-  end
-
-  private def add_read_event(timeout = @read_timeout)
-    event = @read_event ||= Scheduler.create_fd_read_event(self)
-    event.add timeout
-    nil
-  end
-
-  private def add_write_event(timeout = @write_timeout)
-    event = @write_event ||= Scheduler.create_fd_write_event(self)
-    event.add timeout
-    nil
-  end
-
   private def unbuffered_rewind
-    seek(0, IO::Seek::Set)
-    self
+    self.pos = 0
   end
 
   private def unbuffered_close
     return if @closed
 
-    err = nil
-    if LibC.close(@fd) != 0
-      case Errno.value
-      when Errno::EINTR, Errno::EINPROGRESS
-        # ignore
-      else
-        err = Errno.new("Error closing file")
-      end
-    end
-
-    @closed = true
-
-    @read_event.try &.free
-    @read_event = nil
-    @write_event.try &.free
-    @write_event = nil
-
-    reschedule_waiting
-
-    raise err if err
+    system_close ensure @closed = true
   end
 
   private def unbuffered_flush
