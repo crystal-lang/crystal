@@ -6,7 +6,7 @@ require "c/sys/syscall"
 module Crystal::System::Random
   @@initialized = false
   @@getrandom_available = false
-  @@urandom : File?
+  @@urandom : ::File?
 
   private def self.init
     @@initialized = true
@@ -14,7 +14,7 @@ module Crystal::System::Random
     if sys_getrandom(Bytes.new(16)) >= 0
       @@getrandom_available = true
     else
-      urandom = File.open("/dev/urandom", "r")
+      urandom = ::File.open("/dev/urandom", "r")
       return unless urandom.stat.chardev?
 
       urandom.close_on_exec = true

@@ -1,8 +1,4 @@
-require "c/fcntl"
-require "c/stdio"
-require "c/stdlib"
-require "c/sys/stat"
-require "c/unistd"
+require "crystal/system/file"
 
 class File < IO::FileDescriptor
   # The file/directory separator character. `'/'` in Unix, `'\\'` in Windows.
@@ -22,6 +18,8 @@ class File < IO::FileDescriptor
   # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
 
+  include Crystal::System::File
+
   # This constructor is provided for subclasses to be able to initialize an
   # `IO::FileDescriptor` with a *path* and *fd*.
   private def initialize(@path, fd, blocking = false, encoding = nil, invalid = nil)
@@ -29,56 +27,9 @@ class File < IO::FileDescriptor
     super(fd, blocking)
   end
 
-  def initialize(filename : String, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
-    oflag = open_flag(mode) | LibC::O_CLOEXEC
-
-    fd = LibC.open(filename.check_no_null_byte, oflag, perm)
-    if fd < 0
-      raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
-    end
-
-    @path = filename
-    self.set_encoding(encoding, invalid: invalid) if encoding
-    super(fd, blocking: true)
-  end
-
-  protected def open_flag(mode)
-    if mode.size == 0
-      raise "Invalid access mode #{mode}"
-    end
-
-    m = 0
-    o = 0
-    case mode[0]
-    when 'r'
-      m = LibC::O_RDONLY
-    when 'w'
-      m = LibC::O_WRONLY
-      o = LibC::O_CREAT | LibC::O_TRUNC
-    when 'a'
-      m = LibC::O_WRONLY
-      o = LibC::O_CREAT | LibC::O_APPEND
-    else
-      raise "Invalid access mode #{mode}"
-    end
-
-    case mode.size
-    when 1
-      # Nothing
-    when 2
-      case mode[1]
-      when '+'
-        m = LibC::O_RDWR
-      when 'b'
-        # Nothing
-      else
-        raise "Invalid access mode #{mode}"
-      end
-    else
-      raise "Invalid access mode #{mode}"
-    end
-
-    oflag = m | o
+  def self.new(filename : String, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
+    fd = Crystal::System::File.open(filename, mode, perm)
+    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
   end
 
   getter path : String
@@ -93,10 +44,7 @@ class File < IO::FileDescriptor
   # File.stat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.stat(path) : Stat
-    if LibC.stat(path.check_no_null_byte, out stat) != 0
-      raise Errno.new("Unable to get stat for '#{path}'")
-    end
-    Stat.new(stat)
+    Crystal::System::File.stat(path)
   end
 
   # Returns a `File::Stat` object for the file given by *path* or raises
@@ -109,10 +57,7 @@ class File < IO::FileDescriptor
   # File.lstat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.lstat(path) : Stat
-    if LibC.lstat(path.check_no_null_byte, out stat) != 0
-      raise Errno.new("Unable to get lstat for '#{path}'")
-    end
-    Stat.new(stat)
+    Crystal::System::File.lstat(path)
   end
 
   # Returns `true` if *path* exists else returns `false`
@@ -124,7 +69,7 @@ class File < IO::FileDescriptor
   # File.exists?("foo") # => true
   # ```
   def self.exists?(path) : Bool
-    accessible?(path, LibC::F_OK)
+    Crystal::System::File.exists?(path)
   end
 
   # Returns `true` if the file at *path* is empty, otherwise returns `false`.
@@ -137,11 +82,7 @@ class File < IO::FileDescriptor
   # File.empty?("foo") # => false
   # ```
   def self.empty?(path) : Bool
-    begin
-      stat(path).size == 0
-    rescue Errno
-      raise Errno.new("Error determining size of '#{path}'")
-    end
+    Crystal::System::File.empty?(path)
   end
 
   # Returns `true` if *path* is readable by the real user id of this process else returns `false`.
@@ -151,7 +92,7 @@ class File < IO::FileDescriptor
   # File.readable?("foo") # => true
   # ```
   def self.readable?(path) : Bool
-    accessible?(path, LibC::R_OK)
+    Crystal::System::File.readable?(path)
   end
 
   # Returns `true` if *path* is writable by the real user id of this process else returns `false`.
@@ -161,7 +102,7 @@ class File < IO::FileDescriptor
   # File.writable?("foo") # => true
   # ```
   def self.writable?(path) : Bool
-    accessible?(path, LibC::W_OK)
+    Crystal::System::File.writable?(path)
   end
 
   # Returns `true` if *path* is executable by the real user id of this process else returns `false`.
@@ -171,12 +112,7 @@ class File < IO::FileDescriptor
   # File.executable?("foo") # => false
   # ```
   def self.executable?(path) : Bool
-    accessible?(path, LibC::X_OK)
-  end
-
-  # Convenience method to avoid code on LibC.access calls. Not meant to be called by users of this class.
-  private def self.accessible?(path, flag)
-    LibC.access(path.check_no_null_byte, flag) == 0
+    Crystal::System::File.executable?(path)
   end
 
   # Returns `true` if given *path* exists and is a file.
@@ -189,14 +125,7 @@ class File < IO::FileDescriptor
   # File.file?("foobar") # => false
   # ```
   def self.file?(path) : Bool
-    if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT
-        return false
-      else
-        raise Errno.new("stat")
-      end
-    end
-    File::Stat.new(stat).file?
+    Crystal::System::File.file?(path)
   end
 
   # Returns `true` if the given *path* exists and is a directory.
@@ -280,13 +209,8 @@ class File < IO::FileDescriptor
   # File.chown("foo", gid: 100)                        # changes foo's gid
   # File.chown("foo", gid: 100, follow_symlinks: true) # changes baz's gid
   # ```
-  def self.chown(path, uid : Int? = -1, gid : Int = -1, follow_symlinks = false)
-    ret = if !follow_symlinks && symlink?(path)
-            LibC.lchown(path, uid, gid)
-          else
-            LibC.chown(path, uid, gid)
-          end
-    raise Errno.new("Error changing owner of '#{path}'") if ret == -1
+  def self.chown(path, uid : Int = -1, gid : Int = -1, follow_symlinks = false)
+    Crystal::System::File.chown(path, uid, gid, follow_symlinks)
   end
 
   # Changes the permissions of the specified file.
@@ -302,9 +226,7 @@ class File < IO::FileDescriptor
   # File.stat("foo").perm # => 0o700
   # ```
   def self.chmod(path, mode : Int)
-    if LibC.chmod(path, mode) == -1
-      raise Errno.new("Error changing permissions of '#{path}'")
-    end
+    Crystal::System::File.chmod(path, mode)
   end
 
   # Delete the file at *path*. Deleting non-existent file will raise an exception.
@@ -315,10 +237,7 @@ class File < IO::FileDescriptor
   # File.delete("./bar") # raises Errno (No such file or directory)
   # ```
   def self.delete(path)
-    err = LibC.unlink(path.check_no_null_byte)
-    if err == -1
-      raise Errno.new("Error deleting file '#{path}'")
-    end
+    Crystal::System::File.delete(path)
   end
 
   # Returns *filename*'s extension, or an empty string if it has no extension.
@@ -389,36 +308,23 @@ class File < IO::FileDescriptor
 
   # Resolves the real path of *path* by following symbolic links.
   def self.real_path(path) : String
-    real_path_ptr = LibC.realpath(path, nil)
-    raise Errno.new("Error resolving real path of #{path}") unless real_path_ptr
-    String.new(real_path_ptr).tap { LibC.free(real_path_ptr.as(Void*)) }
+    Crystal::System::File.real_path(path)
   end
 
   # Creates a new link (also known as a hard link) at *new_path* to an existing file
   # given by *old_path*.
   def self.link(old_path, new_path)
-    ret = LibC.link(old_path.check_no_null_byte, new_path.check_no_null_byte)
-    raise Errno.new("Error creating link from #{old_path} to #{new_path}") if ret != 0
-    ret
+    Crystal::System::File.link(old_path, new_path)
   end
 
   # Creates a symbolic link at *new_path* to an existing file given by *old_path.
   def self.symlink(old_path, new_path)
-    ret = LibC.symlink(old_path.check_no_null_byte, new_path.check_no_null_byte)
-    raise Errno.new("Error creating symlink from #{old_path} to #{new_path}") if ret != 0
-    ret
+    Crystal::System::File.symlink(old_path, new_path)
   end
 
   # Returns `true` if the *path* is a symbolic link.
   def self.symlink?(path) : Bool
-    if LibC.lstat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT
-        return false
-      else
-        raise Errno.new("stat")
-      end
-    end
-    (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
+    Crystal::System::File.symlink?(path)
   end
 
   # Opens the file named by *filename*. If a file is being created, its initial
@@ -583,23 +489,13 @@ class File < IO::FileDescriptor
   # File.exists?("afile")    # => false
   # File.exists?("afile.cr") # => true
   # ```
-  def self.rename(old_filename, new_filename)
-    code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
-    if code != 0
-      raise Errno.new("Error renaming file '#{old_filename}' to '#{new_filename}'")
-    end
-    code
+  def self.rename(old_filename, new_filename) : Nil
+    Crystal::System::File.rename(old_filename, new_filename)
   end
 
   # Sets the access and modification times of *filename*.
   def self.utime(atime : Time, mtime : Time, filename : String) : Nil
-    timevals = uninitialized LibC::Timeval[2]
-    timevals[0] = to_timeval(atime)
-    timevals[1] = to_timeval(mtime)
-    ret = LibC.utimes(filename, timevals)
-    if ret != 0
-      raise Errno.new("Error setting time to file '#{filename}'")
-    end
+    Crystal::System::File.utime(atime, mtime, filename)
   end
 
   # Attempts to set the access and modification times of the file named
@@ -611,13 +507,6 @@ class File < IO::FileDescriptor
     utime time, time, filename
   end
 
-  private def self.to_timeval(time : Time)
-    t = uninitialized LibC::Timeval
-    t.tv_sec = typeof(t.tv_sec).new(time.to_local.epoch)
-    t.tv_usec = typeof(t.tv_usec).new(0)
-    t
-  end
-
   # Return the size in bytes of the currently opened file.
   def size
     stat.size
@@ -625,13 +514,9 @@ class File < IO::FileDescriptor
 
   # Truncates the file to the specified *size*. Requires that the current file is opened
   # for writing.
-  def truncate(size = 0)
+  def truncate(size = 0) : Nil
     flush
-    code = LibC.ftruncate(fd, size)
-    if code != 0
-      raise Errno.new("Error truncating file '#{path}'")
-    end
-    code
+    system_truncate(size)
   end
 
   # Yields an `IO` to read a section inside this file.
@@ -660,6 +545,44 @@ class File < IO::FileDescriptor
     io << " (closed)" if closed?
     io << ">"
     io
+  end
+
+  # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
+  # TODO: always use non-blocking locks, yield fiber until resource becomes available
+
+  def flock_shared(blocking = true)
+    flock_shared blocking
+    begin
+      yield
+    ensure
+      flock_unlock
+    end
+  end
+
+  # Place a shared advisory lock. More than one process may hold a shared lock for a given file at a given time.
+  # `Errno::EWOULDBLOCK` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
+  def flock_shared(blocking = true)
+    system_flock_shared(blocking)
+  end
+
+  def flock_exclusive(blocking = true)
+    flock_exclusive blocking
+    begin
+      yield
+    ensure
+      flock_unlock
+    end
+  end
+
+  # Place an exclusive advisory lock. Only one process may hold an exclusive lock for a given file at a given time.
+  # `Errno::EWOULDBLOCK` is raised if *blocking* is set to `false` and any existing lock is set.
+  def flock_exclusive(blocking = true)
+    system_flock_exclusive(blocking)
+  end
+
+  # Remove an existing advisory lock held by this process.
+  def flock_unlock
+    system_flock_unlock
   end
 end
 

@@ -43,17 +43,7 @@ class Tempfile < File
   #
   # *encoding* and *invalid* are passed to `IO#set_encoding`.
   def initialize(name, extension = nil, encoding = nil, invalid = nil)
-    tmpdir = self.class.dirname + File::SEPARATOR
-    path = "#{tmpdir}#{name}.XXXXXX#{extension}"
-
-    if extension
-      fileno = LibC.mkstemps(path, extension.bytesize)
-    else
-      fileno = LibC.mkstemp(path)
-    end
-
-    raise Errno.new("mkstemp") if fileno == -1
-
+    fileno, path = Crystal::System::File.mktemp(name, extension)
     super(path, fileno, blocking: true, encoding: encoding, invalid: invalid)
   end
 
@@ -89,11 +79,7 @@ class Tempfile < File
   # Tempfile.dirname # => "/tmp"
   # ```
   def self.dirname : String
-    unless tmpdir = ENV["TMPDIR"]?
-      tmpdir = "/tmp"
-    end
-    tmpdir = tmpdir + File::SEPARATOR unless tmpdir.ends_with? File::SEPARATOR
-    File.dirname(tmpdir)
+    Crystal::System::File.tempdir
   end
 
   # Deletes this tempfile.
