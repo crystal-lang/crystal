@@ -178,7 +178,7 @@ describe Socket::UNIXAddress do
     end
   {% else %}
     it "raises for abstract UNIX address on non-Linux" do
-      expect_raises(ArgumentError, "not supported") do
+      expect_raises(ArgumentError, "Unsupported") do
         Socket::UNIXAddress.new("@/abstract.sock")
       end
     end
