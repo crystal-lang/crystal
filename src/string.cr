@@ -1,5 +1,4 @@
 require "c/stdlib"
-require "c/stdio"
 require "c/string"
 
 # A `String` represents an immutable sequence of UTF-8 characters.

@@ -1,7 +1,4 @@
-require "c/fcntl"
 require "c/stdio"
-require "c/sys/select"
-require "c/sys/wait"
 require "c/errno"
 require "c/unistd"
 
