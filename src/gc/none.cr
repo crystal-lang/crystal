@@ -1,6 +1,8 @@
-@[Link("pthread")]
-lib LibC
-end
+{% unless flag?(:win32) %}
+  @[Link("pthread")]
+  lib LibC
+  end
+{% end %}
 
 module GC
   def self.init
@@ -46,22 +48,24 @@ module GC
     Stats.new(zero, zero, zero, zero, zero)
   end
 
-  # :nodoc:
-  def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
-    LibC.pthread_create(thread, attr, start, arg)
-  end
+  {% unless flag?(:win32) %}
+    # :nodoc:
+    def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
+      LibC.pthread_create(thread, attr, start, arg)
+    end
 
-  # :nodoc:
-  def self.pthread_join(thread : LibC::PthreadT) : Void*
-    ret = LibC.pthread_join(thread, out value)
-    raise Errno.new("pthread_join") unless ret == 0
-    value
-  end
+    # :nodoc:
+    def self.pthread_join(thread : LibC::PthreadT) : Void*
+      ret = LibC.pthread_join(thread, out value)
+      raise Errno.new("pthread_join") unless ret == 0
+      value
+    end
 
-  # :nodoc:
-  def self.pthread_detach(thread : LibC::PthreadT)
-    LibC.pthread_detach(thread)
-  end
+    # :nodoc:
+    def self.pthread_detach(thread : LibC::PthreadT)
+      LibC.pthread_detach(thread)
+    end
+  {% end %}
 
   @@stack_bottom = Pointer(Void).null
 

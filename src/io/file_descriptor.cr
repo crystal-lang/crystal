@@ -13,7 +13,7 @@ class IO::FileDescriptor < IO
   def initialize(@fd, blocking = false)
     @closed = false
 
-    unless blocking
+    unless blocking || {{flag?(:win32)}}
       self.blocking = false
     end
   end

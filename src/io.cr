@@ -1,6 +1,8 @@
 require "c/stdio"
 require "c/errno"
-require "c/unistd"
+{% unless flag?(:win32) %}
+  require "c/unistd"
+{% end %}
 
 # The `IO` class is the basis for all input and output in Crystal.
 #
@@ -71,6 +73,10 @@ abstract class IO
     End = 2
   end
 
+  @encoding : EncodingOptions?
+  @encoder : Encoder?
+  @decoder : Decoder?
+
   # Raised when an `IO` operation times out.
   #
   # ```
@@ -128,52 +134,54 @@ abstract class IO
   def flush
   end
 
-  # Creates a pair of pipe endpoints (connected to each other)
-  # and returns them as a two-element `Tuple`.
-  #
-  # ```
-  # reader, writer = IO.pipe
-  # writer.puts "hello"
-  # writer.puts "world"
-  # reader.gets # => "hello"
-  # reader.gets # => "world"
-  # ```
-  def self.pipe(read_blocking = false, write_blocking = false)
-    pipe_fds = uninitialized StaticArray(LibC::Int, 2)
-    if LibC.pipe(pipe_fds) != 0
-      raise Errno.new("Could not create pipe")
+  {% unless flag?(:win32) %}
+    # Creates a pair of pipe endpoints (connected to each other)
+    # and returns them as a two-element `Tuple`.
+    #
+    # ```
+    # reader, writer = IO.pipe
+    # writer.puts "hello"
+    # writer.puts "world"
+    # reader.gets # => "hello"
+    # reader.gets # => "world"
+    # ```
+    def self.pipe(read_blocking = false, write_blocking = false)
+      pipe_fds = uninitialized StaticArray(LibC::Int, 2)
+      if LibC.pipe(pipe_fds) != 0
+        raise Errno.new("Could not create pipe")
+      end
+
+      r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
+      w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
+      r.close_on_exec = true
+      w.close_on_exec = true
+      w.sync = true
+
+      {r, w}
     end
 
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    r.close_on_exec = true
-    w.close_on_exec = true
-    w.sync = true
-
-    {r, w}
-  end
-
-  # Creates a pair of pipe endpoints (connected to each other) and passes them
-  # to the given block. Both endpoints are closed after the block.
-  #
-  # ```
-  # IO.pipe do |reader, writer|
-  #   writer.puts "hello"
-  #   writer.puts "world"
-  #   reader.gets # => "hello"
-  #   reader.gets # => "world"
-  # end
-  # ```
-  def self.pipe(read_blocking = false, write_blocking = false)
-    r, w = IO.pipe(read_blocking, write_blocking)
-    begin
-      yield r, w
-    ensure
-      w.flush
-      r.close
-      w.close
+    # Creates a pair of pipe endpoints (connected to each other) and passes them
+    # to the given block. Both endpoints are closed after the block.
+    #
+    # ```
+    # IO.pipe do |reader, writer|
+    #   writer.puts "hello"
+    #   writer.puts "world"
+    #   reader.gets # => "hello"
+    #   reader.gets # => "world"
+    # end
+    # ```
+    def self.pipe(read_blocking = false, write_blocking = false)
+      r, w = IO.pipe(read_blocking, write_blocking)
+      begin
+        yield r, w
+      ensure
+        w.flush
+        r.close
+        w.close
+      end
     end
-  end
+  {% end %}
 
   # Writes the given object into this `IO`.
   # This ends up calling `to_s(io)` on the object.

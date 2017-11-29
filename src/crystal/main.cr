@@ -114,9 +114,15 @@ module Crystal
 
   # :nodoc:
   def self.remember_blocking_state
-    @@stdin_is_blocking = IO::FileDescriptor.fcntl(0, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
-    @@stdout_is_blocking = IO::FileDescriptor.fcntl(1, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
-    @@stderr_is_blocking = IO::FileDescriptor.fcntl(2, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    {% if flag?(:win32) %}
+      @@stdin_is_blocking = true
+      @@stdout_is_blocking = true
+      @@stderr_is_blocking = true
+    {% else %}
+      @@stdin_is_blocking = IO::FileDescriptor.fcntl(0, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+      @@stdout_is_blocking = IO::FileDescriptor.fcntl(1, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+      @@stderr_is_blocking = IO::FileDescriptor.fcntl(2, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    {% end %}
   end
 
   # :nodoc:
