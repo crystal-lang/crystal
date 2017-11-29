@@ -118,3 +118,13 @@ class DivisionByZeroError < Exception
     super(message)
   end
 end
+
+# Raised when a method is not implemented.
+#
+# This can be used either to stub out method bodies, or when the method is not
+# implemented on the current platform.
+class NotImplementedError < Exception
+  def initialize(item)
+    super("Not Implemented: #{item}")
+  end
+end
