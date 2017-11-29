@@ -208,12 +208,14 @@ struct Time
     new(seconds: seconds, nanoseconds: nanosecond.to_i, kind: kind)
   end
 
-  # :nodoc:
-  def self.new(time : LibC::Timespec, kind = Kind::Unspecified)
-    seconds = UNIX_SECONDS + time.tv_sec
-    nanoseconds = time.tv_nsec.to_i
-    new(seconds: seconds, nanoseconds: nanoseconds, kind: kind)
-  end
+  {% unless flag?(:win32) %}
+    # :nodoc:
+    def self.new(time : LibC::Timespec, kind = Kind::Unspecified)
+      seconds = UNIX_SECONDS + time.tv_sec
+      nanoseconds = time.tv_nsec.to_i
+      new(seconds: seconds, nanoseconds: nanoseconds, kind: kind)
+    end
+  {% end %}
 
   def initialize(*, @seconds : Int64, @nanoseconds : Int32, @kind : Kind)
     unless 0 <= @nanoseconds < NANOSECONDS_PER_SECOND
