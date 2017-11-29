@@ -207,7 +207,7 @@ class Socket
         raise ArgumentError.new("Path size exceeds the maximum size of #{MAX_PATH_SIZE} bytes")
       end
 
-      if path[0]? == '@'
+      if path.starts_with?('@')
         {% if flag?(:linux) %}
           @abstract = true
           @path = path[1..-1]
@@ -232,7 +232,7 @@ class Socket
       @family = Family::UNIX
 
       path = sockaddr.value.sun_path
-      if path[0]? == 0
+      if path[0]? == 0_u8
         {% if flag?(:linux) %}
           @abstract = true
           @path = String.new(path.to_unsafe + 1)

@@ -178,20 +178,20 @@ describe Socket::UNIXAddress do
     end
   {% else %}
     it "raises for abstract UNIX address on non-Linux" do
-      expect_raises(ArgumentError, /not supported/) do
+      expect_raises(ArgumentError, "not supported") do
         Socket::UNIXAddress.new("@/abstract.sock")
       end
     end
-
-    it "is not abstract on non-Linux" do
-      path = "/tmp/unix.sock"
-      addr = Socket::UNIXAddress.new(path)
-      addr.abstract?.should be_false
-      addr.path.should eq(path)
-    end
   {% end %}
 
-  it "can create a non-abstract UNIX address starting with @" do
+  it "is not abstract for a non-abstract address" do
+    path = "/tmp/unix.sock"
+    addr = Socket::UNIXAddress.new(path)
+    addr.abstract?.should be_false
+    addr.path.should eq(path)
+  end
+
+  it "creates a non-abstract UNIX address starting with @" do
     path = "./@non-abstract.sock"
     addr = Socket::UNIXAddress.new(path)
     addr.abstract?.should be_false
@@ -284,11 +284,12 @@ describe UNIXServer do
   end
 
   it "creates the socket file with path starting with @" do
-    path = "./@crystal-test-unix-sock-starting-with-at-symbol"
+    path = "@crystal-test-unix-sock-starting-with-at-symbol"
+    forced_non_abstract_path = "./#{path}"
 
     File.exists?(path).should be_false
 
-    UNIXServer.open(path) do
+    UNIXServer.open(forced_non_abstract_path) do
       File.exists?(path).should be_true
     end
 
@@ -298,11 +299,14 @@ describe UNIXServer do
   {% if flag?(:linux) %}
     it "does not create any file for abstract server" do
       path = "/tmp/crystal-test-unix-abstract-sock"
+      abstract_path = '@' + path
 
       File.exists?(path).should be_false
+      File.exists?(abstract_path).should be_false
 
-      UNIXServer.open('@' + path) do
+      UNIXServer.open(abstract_path) do
         File.exists?(path).should be_false
+        File.exists?(abstract_path).should be_false
       end
     end
   {% end %}
