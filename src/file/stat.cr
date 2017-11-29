@@ -2,34 +2,51 @@ require "c/sys/stat"
 
 class File
   struct Stat
-    def initialize(filename : String)
-      if LibC.stat(filename, out @stat) != 0
-        raise Errno.new("Unable to get stat for '#{filename}'")
-      end
+    def self.new(filename : String)
+      File.stat(filename)
     end
 
-    def initialize(@stat : LibC::Stat)
-    end
+    {% if flag?(:win32) %}
+      # :nodoc:
+      def initialize(@stat : LibC::Stat64)
+      end
+    {% else %}
+      # :nodoc:
+      def initialize(@stat : LibC::Stat)
+      end
+    {% end %}
 
     def atime
       {% if flag?(:darwin) %}
         time @stat.st_atimespec
+      {% elsif flag?(:win32) %}
+        time @stat.st_atime
       {% else %}
         time @stat.st_atim
       {% end %}
     end
 
     def blksize
-      @stat.st_blksize
+      {% if flag?(:win32) %}
+        raise NotImplementedError.new("File::Stat#blksize")
+      {% else %}
+        @stat.st_blksize
+      {% end %}
     end
 
     def blocks
-      @stat.st_blocks
+      {% if flag?(:win32) %}
+        raise NotImplementedError.new("File::Stat#blocks")
+      {% else %}
+        @stat.st_blocks
+      {% end %}
     end
 
     def ctime
       {% if flag?(:darwin) %}
         time @stat.st_ctimespec
+      {% elsif flag?(:win32) %}
+        time @stat.st_ctime
       {% else %}
         time @stat.st_ctim
       {% end %}
@@ -59,6 +76,8 @@ class File
     def mtime
       {% if flag?(:darwin) %}
         time @stat.st_mtimespec
+      {% elsif flag?(:win32) %}
+        time @stat.st_mtime
       {% else %}
         time @stat.st_mtim
       {% end %}
@@ -93,8 +112,11 @@ class File
       io << ", rdev=0x"
       rdev.to_s(16, io)
       io << ", size=" << size
-      io << ", blksize=" << blksize
-      io << ", blocks=" << blocks
+      {% unless flag?(:win32) %}
+        # These two getters raise NotImplementedError on windows.
+        io << ", blksize=" << blksize
+        io << ", blocks=" << blocks
+      {% end %}
       io << ", atime=" << atime
       io << ", mtime=" << mtime
       io << ", ctime=" << ctime
@@ -119,10 +141,13 @@ class File
         pp.comma
         pp.text "size=#{size}"
         pp.comma
-        pp.text "blksize=#{blksize}"
-        pp.comma
-        pp.text "blocks=#{blocks}"
-        pp.comma
+        {% unless flag?(:win32) %}
+          # These two getters raise NotImplementedError on windows.
+          pp.text "blksize=#{blksize}"
+          pp.comma
+          pp.text "blocks=#{blocks}"
+          pp.comma
+        {% end %}
         pp.text "atime=#{atime}"
         pp.comma
         pp.text "mtime=#{mtime}"
@@ -171,8 +196,14 @@ class File
       (@stat.st_mode & LibC::S_IFMT) == LibC::S_ISVTX
     end
 
-    private def time(value)
-      Time.new value, Time::Kind::Utc
-    end
+    {% if flag?(:win32) %}
+      private def time(value)
+        Time.epoch(value)
+      end
+    {% else %}
+      private def time(value)
+        Time.new value, Time::Kind::Utc
+      end
+    {% end %}
   end
 end
