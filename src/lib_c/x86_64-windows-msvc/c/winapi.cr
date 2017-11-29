@@ -22,12 +22,10 @@ lib LibC
   FILE_FLAG_OVERLAPPED = 0x40000000
 
   # source https://msdn.microsoft.com/en-us/library/windows/desktop/aa383751(v=vs.85).aspx
-  alias Long = Int32
   alias Word = UInt16
   alias WChar = UInt16
   alias DWord = UInt32
   alias Handle = Void*
-  alias SizeT = UInt64
   alias BOOL = Int32 # FIXME maybe it need to be removed because it can be confused with Bool
 
   INVALID_HANDLE_VALUE = Pointer(Void).new((-1).to_u64)
@@ -219,10 +217,10 @@ lib LibC
   struct TIME_ZONE_INFORMATION
     _Bias : Long
     _StandardName : StaticArray(WChar, 32)
-    _StandardDate : SYSTEMTIME
+    _StandardDate : SystemTime
     _StandardBias : Long
     _DaylightName : StaticArray(WChar, 32)
-    _DaylightDate : SYSTEMTIME
+    _DaylightDate : SystemTime
     _DaylightBias : Long
   end
 
