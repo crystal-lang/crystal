@@ -1,5 +1,5 @@
 {% if flag?(:openbsd) %}
-  @[Link("stdc++")]
+  @[Link("c++abi")]
 {% end %}
 lib LibUnwind
   @[Flags]
