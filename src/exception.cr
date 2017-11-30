@@ -55,7 +55,7 @@ class Exception
     end
   end
 
-  def Exception.colorize(io, class_name, message)
+  def Exception.colorize_backtrace(io, class_name, message)
     if @@colorize
       if message.nil?
         io << "\e[1m\e[31m" << class_name << "\e[0m\n"
@@ -68,7 +68,7 @@ class Exception
   end
 
   def inspect_with_backtrace(io : IO)
-    Exception.colorize(io, self.class.name, message)
+    Exception.colorize_backtrace(io, self.class.name, message)
 
     backtrace?.try &.each do |frame|
       io.print "  from "
