@@ -1,3 +1,7 @@
+require "exception"
+
+Exception.colorize = false
+
 class Kls
   def callee1
     puts caller.join('\n')

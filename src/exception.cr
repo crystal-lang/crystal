@@ -11,6 +11,8 @@ CallStack.skip(__FILE__)
 # optional traceback information.
 # Exception subclasses may add additional information.
 class Exception
+  class_getter colorize = true
+  
   getter message : String?
   # Returns the previous exception at the time this exception was raised.
   # This is useful for wrapping exceptions and retaining the original
@@ -19,6 +21,10 @@ class Exception
   property callstack : CallStack?
 
   def initialize(@message : String? = nil, @cause : Exception? = nil)
+  end
+
+  def self.colorize=(@@colorize)
+    CallStack.colorize = @@colorize
   end
 
   # Returns any backtrace associated with the exception.
@@ -49,22 +55,21 @@ class Exception
     end
   end
 
-  private def colorized_backtrace
-    if message.nil?
-      "\e[1m\e[31m" + self.class.name + "\e[0m"
+  def Exception.colorize(io, class_name, message)
+    if @@colorize
+      if message.nil?
+        io << "\e[1m\e[31m" << class_name << "\e[0m\n"
+      else
+        io << "\e[1m\e[31m" << class_name << ": \e[0m\e[1m" << message.not_nil! << "\e[0m\n"
+      end
     else
-      "\e[1m\e[31m" + self.class.name + ": \e[0m\e[1m" + message.not_nil! + "\e[0m"
+      io << class_name << (message.nil? ? "\n" : ": #{message}\n")
     end
   end
 
   def inspect_with_backtrace(io : IO)
-    trace = {% if flag?(:raw_err) %}
-      self.class.name + (message.nil? ? "" : ": #{message}")
-    {% else %}
-      colorized_backtrace
-    {% end %}
+    Exception.colorize(io, self.class.name, message)
 
-    io << trace << "\n"
     backtrace?.try &.each do |frame|
       io.print "  from "
       io.puts frame

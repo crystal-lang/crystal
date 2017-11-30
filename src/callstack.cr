@@ -41,6 +41,8 @@ struct CallStack
   # ANSI command to clear the current state of colors and formatting
   CLEAR = "\e[0m"
 
+  class_property colorize = true
+
   @@skip = [] of String
 
   def self.skip(filename)
@@ -163,11 +165,11 @@ struct CallStack
   end
 
   private def colorize_address(address)
-    {% if flag?(:raw_err) %}
-      address
-    {% else %}
+    if @@colorize
       "#{GREEN}#{address}#{CLEAR}"
-    {% end %}
+    else
+      address
+    end
   end
 
   private def decode_backtrace
@@ -184,11 +186,11 @@ struct CallStack
         # Turn to relative to the current dir, if possible
         file = file.lchop(CURRENT_DIR)
 
-        file_line_column = {% if flag?(:raw_err) %}
-                             "#{file}:#{line}:#{column}"
-                           {% else %}
+        file_line_column = if @@colorize
                              "#{CYAN}#{BOLD}#{file}#{CLEAR}#{CYAN}:#{line}:#{column}#{CLEAR}"
-                           {% end %}
+                           else
+                             "#{file}:#{line}:#{column}"
+                           end
       end
 
       if name = CallStack.decode_function_name(pc)
