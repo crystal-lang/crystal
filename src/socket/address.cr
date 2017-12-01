@@ -262,12 +262,13 @@ class Socket
       sockaddr = Pointer(LibC::SockaddrUn).malloc
       sockaddr.value.sun_family = family
 
-      destination = sockaddr.value.sun_path.to_unsafe
+      destination = sockaddr.value.sun_path.to_slice
       if @abstract
         destination[0] = 0_u8
         destination += 1
       end
-      destination.copy_from(@path.to_unsafe, @path.bytesize + 1)
+      destination.copy_from(@path.to_unsafe, @path.bytesize)
+      destination[@path.bytesize] = 0_u8
 
       sockaddr.as(LibC::Sockaddr*)
     end
