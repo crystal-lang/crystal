@@ -359,13 +359,7 @@ class Crystal::Command
         end
       end
 
-      opts.on("--color", "Enable colored output") do
-        Colorize.enabled = true
-      end
-
-      opts.on("--no-color", "Disable colored output") do
-        Colorize.enabled = false
-      end
+      color_option opts
 
       unless no_codegen
         opts.on("--no-codegen", "Don't do code generation") do
@@ -512,12 +506,7 @@ class Crystal::Command
       puts opts
       exit
     end
-    opts.on("--color", "Enable colored output") do
-      Colorize.enabled = true
-    end
-    opts.on("--no-color", "Disable colored output") do
-      Colorize.enabled = false
-    end
+    color_option opts
     opts.invalid_option { }
   end
 
@@ -530,6 +519,26 @@ class Crystal::Command
     values
   end
 
+  private def color_option(opts)
+    opts.on("--color [auto|always|never]", "Enable colored output") do |color|
+      color = "always" if color.empty?
+      case color
+      when "auto"
+        Colorize.on_tty_only!
+      when "always"
+        Colorize.enabled = true
+      when "never"
+        Colorize.enabled = false
+      else
+        error "invalid color option: #{color}"
+      end
+    end
+
+    opts.on("--no-color", "Disable colored output") do
+      Colorize.enabled = false
+    end
+  end
+
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
     ARGV.each do |arg|
@@ -538,7 +547,7 @@ class Crystal::Command
         break
       when "--color"
         Colorize.enabled = true
-      when "--no-color"
+      when "--no-color", "--color=never"
         Colorize.enabled = false
       end
     end
