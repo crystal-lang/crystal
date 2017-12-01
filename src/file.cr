@@ -424,7 +424,7 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter. Then given block will be passed the opened
   # file as an argument, the file will be automatically closed when the block returns.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
-    file = File.new filename, mode, perm, encoding, invalid
+    file = new filename, mode, perm, encoding, invalid
     begin
       yield file
     ensure
