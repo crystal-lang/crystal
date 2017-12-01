@@ -47,7 +47,7 @@ module Crystal::System::Time
     {% end %}
   end
 
-  def self.monotonic
+  def self.monotonic : {Int64, Int32}
     {% if flag?(:darwin) %}
       info = mach_timebase_info
       total_nanoseconds = LibC.mach_absolute_time * info.numer / info.denom
