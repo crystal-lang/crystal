@@ -520,8 +520,7 @@ class Crystal::Command
   end
 
   private def color_option(opts)
-    opts.on("--color [auto|always|never]", "Enable colored output") do |color|
-      color = "always" if color.empty?
+    opts.on("--color auto|always|never", "Enable colored output") do |color|
       case color
       when "auto"
         Colorize.on_tty_only!
