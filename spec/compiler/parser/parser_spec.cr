@@ -302,7 +302,9 @@ describe "Parser" do
   it_parses "foo +1.0", Call.new(nil, "foo", 1.float64)
   it_parses "foo +1_i64", Call.new(nil, "foo", 1.int64)
   it_parses "foo = 1; foo +1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, "+", 1.int32)]
+  it_parses "foo = 1; foo(+1)", [Assign.new("foo".var, 1.int32), Call.new(nil, "foo", 1.int32)]
   it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, "-", 1.int32)]
+  it_parses "foo = 1; foo(-1)", [Assign.new("foo".var, 1.int32), Call.new(nil, "foo", -1.int32)]
 
   it_parses "foo(&block)", Call.new(nil, "foo", block_arg: "block".call)
   it_parses "foo &block", Call.new(nil, "foo", block_arg: "block".call)
@@ -941,6 +943,7 @@ describe "Parser" do
   it_parses "case a\nwhen b\n/ /\n\nelse\n/ /\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, RegexLiteral.new(StringLiteral.new(" ")))], RegexLiteral.new(StringLiteral.new(" ")))
   assert_syntax_error "case {1, 2}; when {3}; 4; end", "wrong number of tuple elements (given 1, expected 2)", 1, 19
   assert_syntax_error "case 1; end", "unexpected token: end (expecting when or else)", 1, 9
+  it_parses "a = 1\ncase 1\nwhen a then 1\nend", [Assign.new("a".var, 1.int32), Case.new(1.int32, [When.new(["a".var] of ASTNode, 1.int32)])] of ASTNode
 
   it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
   it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
