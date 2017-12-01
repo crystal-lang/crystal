@@ -439,7 +439,7 @@ class File < IO::FileDescriptor
   # File.read("bar") # => "foo"
   # ```
   def self.read(filename, encoding = nil, invalid = nil) : String
-    File.open(filename, "r") do |file|
+    open(filename, "r") do |file|
       if encoding
         file.set_encoding(encoding, invalid: invalid)
         file.gets_to_end
@@ -468,7 +468,7 @@ class File < IO::FileDescriptor
   # array # => ["foo", "bar"]
   # ```
   def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
-    File.open(filename, "r", encoding: encoding, invalid: invalid) do |file|
+    open(filename, "r", encoding: encoding, invalid: invalid) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
       end
@@ -477,7 +477,7 @@ class File < IO::FileDescriptor
 
   # Returns an `Iterator` for each line in *filename*.
   def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
-    File.open(filename, "r", encoding: encoding, invalid: invalid).each_line(chomp: chomp)
+    open(filename, "r", encoding: encoding, invalid: invalid).each_line(chomp: chomp)
   end
 
   # Returns all lines in *filename* as an array of strings.
@@ -507,7 +507,7 @@ class File < IO::FileDescriptor
   # Otherwise, the string representation of *content* will be written
   # (the result of invoking `to_s` on *content*).
   def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
-    File.open(filename, "w", perm, encoding: encoding, invalid: invalid) do |file|
+    open(filename, "w", perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes
         file.write(content)
