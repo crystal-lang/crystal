@@ -32,12 +32,20 @@ describe "URI" do
   assert_uri("/foo?q=1", path: "/foo", query: "q=1")
   assert_uri("mailto:foo@example.org", scheme: "mailto", path: nil, opaque: "foo@example.org")
 
-  it { URI.parse("http://www.example.com/foo").full_path.should eq("/foo") }
-  it { URI.parse("http://www.example.com").full_path.should eq("/") }
-  it { URI.parse("http://www.example.com/foo?q=1").full_path.should eq("/foo?q=1") }
-  it { URI.parse("http://www.example.com/?q=1").full_path.should eq("/?q=1") }
-  it { URI.parse("http://www.example.com?q=1").full_path.should eq("/?q=1") }
-  it { URI.parse("http://test.dev/a%3Ab").full_path.should eq("/a%3Ab") }
+  describe "full_path" do
+    it { URI.parse("http://www.example.com/foo").full_path.should eq("/foo") }
+    it { URI.parse("http://www.example.com").full_path.should eq("/") }
+    it { URI.parse("http://www.example.com/foo?q=1").full_path.should eq("/foo?q=1") }
+    it { URI.parse("http://www.example.com/?q=1").full_path.should eq("/?q=1") }
+    it { URI.parse("http://www.example.com?q=1").full_path.should eq("/?q=1") }
+    it { URI.parse("http://test.dev/a%3Ab").full_path.should eq("/a%3Ab") }
+
+    it "does not add '?' to the end if the query params are empty" do
+      uri = URI.parse("http://www.example.com/foo")
+      uri.query = ""
+      uri.full_path.should eq("/foo")
+    end
+  end
 
   describe "normalize" do
     it "removes dot notation from path" do
