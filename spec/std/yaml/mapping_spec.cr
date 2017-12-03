@@ -131,6 +131,22 @@ class YAMLRecursiveHash
   })
 end
 
+private class YAMLWithQueryAttributes
+  YAML.mapping({
+    foo?: Bool,
+    bar?: {type: Bool, default: false, presence: true, key: "is_bar"},
+  })
+end
+
+private class YAMLWithOverwritingQueryAttributes
+  property foo : Symbol?
+  property bar : Symbol?
+  YAML.mapping({
+    foo?: Bool,
+    bar?: {type: Bool, default: false, presence: true, key: "is_bar"},
+  })
+end
+
 private class YAMLWithFinalize
   YAML.mapping({
     value: YAML::Any,
@@ -472,6 +488,42 @@ describe "YAML mapping" do
       yaml.first_name_present?.should be_true
       yaml.last_name.should be_nil
       yaml.last_name_present?.should be_false
+    end
+  end
+
+  describe "with query attributes" do
+    it "defines query getter" do
+      yaml = YAMLWithQueryAttributes.from_yaml(%({"foo": true}))
+      yaml.foo?.should be_true
+      yaml.bar?.should be_false
+    end
+
+    it "defines non-query setter and presence methods" do
+      yaml = YAMLWithQueryAttributes.from_yaml(%({"foo": false}))
+      yaml.bar_present?.should be_false
+      yaml.bar = true
+      yaml.bar?.should be_true
+    end
+
+    it "maps non-query attributes" do
+      yaml = YAMLWithQueryAttributes.from_yaml(%({"foo": false, "is_bar": false}))
+      yaml.bar_present?.should be_true
+      yaml.bar?.should be_false
+      yaml.bar = true
+      yaml.to_yaml.should eq(%(---\nfoo: false\nis_bar: true\n))
+    end
+
+    it "raises if non-nilable attribute is nil" do
+      ex = expect_raises YAML::ParseException, "Missing yaml attribute: foo" do
+        YAMLWithQueryAttributes.from_yaml(%({"is_bar": true}))
+      end
+      ex.location.should eq({1, 1})
+    end
+
+    it "overwrites non-query attributes" do
+      yaml = YAMLWithOverwritingQueryAttributes.from_yaml(%({"foo": true}))
+      typeof(yaml.@foo).should eq(Bool)
+      typeof(yaml.@bar).should eq(Bool)
     end
   end
 
