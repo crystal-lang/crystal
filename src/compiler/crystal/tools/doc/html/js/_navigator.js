@@ -48,6 +48,12 @@ Navigator = function(sidebar, searchInput, list, leaveSearchScope){
     self.moveTimeout = setTimeout(go, 800);*/
   }
 
+  function scrollCenter(element) {
+    var rect = element.getBoundingClientRect();
+    var middle = sidebar.clientHeight / 2;
+    sidebar.scrollTop += rect.top + rect.height / 2 - middle;
+  }
+
   var move = this.move = function(upwards){
     if(!this.current){
       this.highlightFirst();
@@ -56,7 +62,7 @@ Navigator = function(sidebar, searchInput, list, leaveSearchScope){
     var next = upwards ? this.current.previousElementSibling : this.current.nextElementSibling;
     if(next && next.classList) {
       this.highlight(next);
-      next.scrollIntoView({behaviour: 'smooth', block: 'center'});
+      scrollCenter(next);
       return true;
     }
     return false;
