@@ -42,7 +42,7 @@ module Crystal::System::Random
     if @@getrandom_available
       buf = uninitialized UInt8[1]
       getrandom(buf.to_slice)
-      buf.to_unsafe.as(UInt8*).value
+      buf.unsafe_as(UInt8)
     elsif urandom = @@urandom
       urandom.read_byte.not_nil!
     else
