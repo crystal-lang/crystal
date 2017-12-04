@@ -1,5 +1,3 @@
-require "zip"
-
 class Time::Location
   class InvalidTZDataError < Exception
     def self.initialize(message : String? = "Malformed time zone information", cause : Exception? = nil)
@@ -25,10 +23,8 @@ class Time::Location
   def self.load_from_dir_or_zip(name : String, source : String)
     if source.ends_with?(".zip")
       return nil unless File.exists?(source)
-      Zip::File.open(source) do |zip|
-        entry = zip[name]?
-        return nil unless entry
-        entry.open do |io|
+      File.open(source) do |file|
+        read_zip_file(name, file) do |io|
           return read_zoneinfo(name, io)
         end
       end
@@ -137,5 +133,78 @@ class Time::Location
     buffer = Bytes.new(size)
     io.read_fully(buffer)
     IO::Memory.new(buffer)
+  end
+
+  # :nodoc:
+  CENTRAL_DIRECTORY_HEADER_SIGNATURE = 0x02014b50
+  # :nodoc:
+  END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE = 0x06054b50
+  # :nodoc:
+  ZIP_TAIL_SIZE = 22
+  # :nodoc:
+  LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50
+  # :nodoc:
+  COMPRESSION_METHOD_UNCOMPRESSED = 0_i16
+
+  # This method loads an entry from an uncompressed zip file.
+  # See http://www.onicos.com/staff/iz/formats/zip.html for ZIP format layout
+  private def self.read_zip_file(name : String, file : IO::FileDescriptor)
+    file.seek -ZIP_TAIL_SIZE, IO::Seek::End
+
+    if file.read_bytes(Int32, IO::ByteFormat::LittleEndian) != END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE
+      raise InvalidTZDataError.new("corrupt zip file")
+    end
+
+    file.skip 6
+    num_entries = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
+    file.skip 4
+
+    file.pos = file.read_bytes(Int32, IO::ByteFormat::LittleEndian)
+
+    num_entries.times do
+      break if file.read_bytes(Int32, IO::ByteFormat::LittleEndian) != CENTRAL_DIRECTORY_HEADER_SIGNATURE
+
+      file.skip 6
+      compression_method = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
+      file.skip 12
+      uncompressed_size = file.read_bytes(Int32, IO::ByteFormat::LittleEndian)
+      filename_length = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
+      extra_field_length = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
+      file_comment_length = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
+      file.skip 8
+      local_file_header_pos = file.read_bytes(Int32, IO::ByteFormat::LittleEndian)
+      filename = file.read_string(filename_length)
+
+      unless filename == name
+        file.skip extra_field_length + file_comment_length
+        next
+      end
+
+      unless compression_method == COMPRESSION_METHOD_UNCOMPRESSED
+        raise InvalidTZDataError.new("Unsupported compression for #{name}")
+      end
+
+      file.pos = local_file_header_pos
+
+      unless file.read_bytes(Int32, IO::ByteFormat::LittleEndian) == LOCAL_FILE_HEADER_SIGNATURE
+        raise InvalidTZDataError.new("Invalid Zip file")
+      end
+      file.skip 4
+      unless file.read_bytes(Int16, IO::ByteFormat::LittleEndian) == COMPRESSION_METHOD_UNCOMPRESSED
+        raise InvalidTZDataError.new("Invalid Zip file")
+      end
+      file.skip 16
+      unless file.read_bytes(Int16, IO::ByteFormat::LittleEndian) == filename_length
+        raise InvalidTZDataError.new("Invalid Zip file")
+      end
+      extra_field_length = file.read_bytes(Int16, IO::ByteFormat::LittleEndian)
+      unless file.gets(filename_length) == name
+        raise InvalidTZDataError.new("Invalid Zip file")
+      end
+
+      file.skip extra_field_length
+
+      yield file
+    end
   end
 end
