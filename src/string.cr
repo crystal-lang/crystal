@@ -2014,7 +2014,7 @@ class String
     end
 
     if includes?(char)
-      if replacement.is_a?(Char) && char.ascii? && replacement.ascii?
+      if replacement.is_a?(Char) && char.ascii? && replacement.ascii? && ascii_only?
         return gsub_ascii_char(char, replacement)
       end
 
