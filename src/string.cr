@@ -2014,7 +2014,7 @@ class String
     end
 
     if includes?(char)
-      if replacement.is_a?(Char) && char.ascii? && replacement.ascii? && ascii_only?
+      if replacement.is_a?(Char) && char.ascii? && replacement.ascii?
         return gsub_ascii_char(char, replacement)
       end
 
@@ -2026,11 +2026,11 @@ class String
 
   private def gsub_ascii_char(char, replacement)
     String.new(bytesize) do |buffer|
-      each_char_with_index do |my_char, i|
-        buffer[i] = if my_char == char
+      to_slice.each_with_index do |byte, i|
+        buffer[i] = if char === byte
                       replacement.ord.to_u8
                     else
-                      unsafe_byte_at(i)
+                      byte
                     end
       end
       {bytesize, bytesize}
