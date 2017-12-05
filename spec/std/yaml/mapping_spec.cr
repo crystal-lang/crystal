@@ -38,6 +38,12 @@ private class YAMLWithKey
   })
 end
 
+private class YAMLWithPropertiesKey
+  YAML.mapping(
+    properties: Hash(String, String),
+  )
+end
+
 private class YAMLWithDefaults
   YAML.mapping({
     a: {type: Int32, default: 11},
@@ -242,6 +248,14 @@ describe "YAML mapping" do
     yaml.key.should eq("foo")
     yaml.value.should eq(1)
     yaml.pull.should eq(2)
+  end
+
+  it "outputs YAML with properties key" do
+    input = {
+      properties: {"foo" => "bar"},
+    }.to_yaml
+    yaml = YAMLWithPropertiesKey.from_yaml(input)
+    yaml.to_yaml.should eq(input)
   end
 
   it "allows small types of integer" do
