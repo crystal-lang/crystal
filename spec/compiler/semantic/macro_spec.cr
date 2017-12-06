@@ -1223,4 +1223,46 @@ describe "Semantic: macro" do
       Foo.new.foo
     )) { int32 }
   end
+
+  it "can lookup type parameter when macro is called inside class (#5343)" do
+    assert_type(%(
+      class Foo(T)
+        macro foo
+          {{T}}
+        end
+      end
+
+      alias FooInt32 = Foo(Int32)
+
+      class Bar
+        def self.foo
+          FooInt32.foo
+        end
+      end
+
+      Bar.foo
+    )) { int32.metaclass }
+  end
+
+  it "cannot lookup type defined in caller class" do
+    assert_error %(
+      class Foo
+        macro foo
+          {{Baz}}
+        end
+      end
+
+      class Bar
+        def self.foo
+          Foo.foo
+        end
+
+        class Baz
+        end
+      end
+
+      Bar.foo
+      ),
+      "undefined constant Baz"
+  end
 end
