@@ -1,3 +1,60 @@
+# 0.24.1 (TBA)
+
+## New features
+- Add ThinLTO support for faster release builds in LLVM 4.0 and above. ([#4367])
+- **(breaking-change)** Add `UUID` type. `Random::Secure.uuid` has been replaced with `UUID.random`. ([#4453])
+- Add a `BigDecimal` class for arbitrary precision, exact, decimal numbers. ([#4876]) and ([#5255])
+- Allow `Set` to work as a case condition, which matches when the case variable is inside the set. ([#5269])
+- Add `Time.utc`, an alias of `Time.new` which shortens creating UTC times. ([#5321])
+- Add custom extension support to `Tempfile`. ([#5264])
+- Add `reduce` method to `TupleLiteral` and `ArrayLiteral` when using macros. ([#5294])
+- Export a JSON representation of the documentation in the generated output. ([#4746]) and ([#5228])
+- Make `gc/none` garbage collection compile again and allow it to be enbled using `-Dgc_none` compiler flag. ([#5314])
+
+## Standard library bugs fixed
+- Make `String#[]` unable to read out-of-bounds when the string ends in a unicode character. ([#5257])
+- Fix incorrect parsing of long JSON floating point values. ([#5323])
+- Replace the default hash function with one resistant to hash DoS. ([#5146])
+- Ensure equal numbers always have the same hashcode. ([#5276])
+- Fix struct equality when two structs descend from the same abstract struct. ([#5249])
+- Fix `URI#full_path` not to append a `?` unless the query params are nonempty. ([#5340])
+- Fix `HTTP::Params.parse` to parse `&&` correctly. ([#5273])
+- Disallow null bytes in `ENV` keys and values. ([#5216])
+- Disallow null bytes in `XML::Node` names and content. ([#5200])
+- Fix `IO#blocking=` on OpenBSD. ([#5283])
+- Fix linking programs in OpenBSD. ([#5282])
+
+## Compiler bugs fixed
+- Stop incorrectly finding top-level methods when searching for a `super` method. ([#5202])
+- Fix parsing regex literals starting with a `;` directly after a call (ex `p /;/`). ([#5208])
+- Correct a case where `Expressions#to_s` could produce invalid output, causing macro expansion to fail. ([#5226])
+- Give error instead of crashing when `self` is used at the top level. ([#5227])
+- Give error instead of crashing when using `instance_sizeof` on a generic type without providing it's type arguments. ([#5209])
+- Fix parsing calls when short block syntax (`&.foo`) is followed by a newline. ([#5237])
+- Give error instead of crashing when an unterminated string array literal (`%w()`) sits at the end of a file. ([#5241])
+- Give error when attempting to use macro yield (`{{yield}}`) outside a macro. ([#5307])
+- Fix error related to generic inheritance. ([#5284])
+- Fix compiler crash when using recursive alias and generics. ([#5330])
+- Fix parsing `foo(+1)` as `foo + 1` instead of `foo(1)` where `foo` was a local variable. ([#5336])
+- Documentation generator: Keep quoted symbol literals quoted when syntax highlighting code blocks in documentation output. ([#5238])
+- Documentation generator: Keep the original delimiter used when syntax highlighting string array literals. ([#5297])
+- Documentation generator: Fix XSS vulnerability when syntax highlighting string array literals. ([#5259])
+- Formatter: fix indentation of the last comment in a `begin`/`end` block. ([#5198])
+- Formatter: fix formatting parentheses with multiple lines in. ([#5268])
+- Formatter: fix formatting `$1?`. ([#5313])
+- Formatter: ensure to insert a space between `{` and `%` characters to avoid forming `{%` macros. ([#5278])
+
+## Documentation fixes
+- Fix typo in `Spec::Methods#context` documentation. ([#5253])
+- Remove bad example in `property?` macro documentation. ([#5296])
+- Fix typo in `Crystal::Macros::MacroId` documentation. ([#5300])
+- Fix typo in `IO` documentation. ([#5322])
+
+## Misc
+- Fix `Makefile`, CI, and gitignore to use the new documentation path after [#4937]. ([#5217])
+- Refactor to remove currently useless suffix condition in `Time#inspect`. ([#5318])
+- Refactor miscellaneous code which can be shortened by using `unsafe_as`. ([#5341])
+
 # 0.24.0 (30-10-2017)
 
 - **(breaking-change)** HTTP::Client#post_form is now HTTP::Client.post(form: ...)
