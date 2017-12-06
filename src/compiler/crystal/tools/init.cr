@@ -44,24 +44,27 @@ module Crystal
     end
 
     def self.fetch_author
-      default = "your-name-here"
-      return default unless system(WHICH_GIT_COMMAND)
-      user_name = `git config --get user.name`.strip
-      user_name.empty? ? default : user_name
+      if system(WHICH_GIT_COMMAND)
+        user_name = `git config --get user.name`.strip
+        user_name = nil if user_name.empty?
+      end
+      user_name || "your-name-here"
     end
 
     def self.fetch_email
-      default = "your-email-here"
-      return default unless system(WHICH_GIT_COMMAND)
-      user_email = `git config --get user.email`.strip
-      user_email.empty? ? default : user_email
+      if system(WHICH_GIT_COMMAND)
+        user_email = `git config --get user.email`.strip
+        user_email = nil if user_email.empty?
+      end
+      user_email || "your-email-here"
     end
 
     def self.fetch_github_name
-      default = "your-github-name"
-      return default unless system(WHICH_GIT_COMMAND)
-      github_user = `git config --get github.user`.strip
-      github_user.empty? ? default : github_user
+      if system(WHICH_GIT_COMMAND)
+        github_name = `git config --get github.name`.strip
+        github_name = nil if github_name.empty?
+      end
+      github_name || "your-github-here"
     end
 
     def self.fetch_name(opts, args)
