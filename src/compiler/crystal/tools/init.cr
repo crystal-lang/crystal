@@ -5,8 +5,6 @@ require "option_parser"
 
 module Crystal
   module Init
-    WHICH_GIT_COMMAND = "which git >/dev/null"
-
     def self.run(args)
       config = Config.new
 
@@ -43,19 +41,27 @@ module Crystal
       InitProject.new(config).run
     end
 
+    def self.which_git_command
+      system("which git >/dev/null")
+    end
+
     def self.fetch_author
-      return "[your-name-here]" unless system(WHICH_GIT_COMMAND)
-      `git config --get user.name`.strip
+      default = "[your-name-here]"
+      return default unless self.which_git_command
+      user_name = `git config --get user.name`.strip
+      user_name.empty? ? default : user_name
     end
 
     def self.fetch_email
-      return "[your-email-here]" unless system(WHICH_GIT_COMMAND)
-      `git config --get user.email`.strip
+      default = "[your-email-here]"
+      return default unless which_git_command
+      user_email = `git config --get user.email`.strip
+      user_email.empty? ? default : user_email
     end
 
     def self.fetch_github_name
       default = "[your-github-name]"
-      return default unless system(WHICH_GIT_COMMAND)
+      return default unless which_git_command
       github_user = `git config --get github.user`.strip
       github_user.empty? ? default : github_user
     end
