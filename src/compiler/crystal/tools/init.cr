@@ -46,22 +46,22 @@ module Crystal
     end
 
     def self.fetch_author
-      default = "[your-name-here]"
+      default = "your-name-here"
       return default unless self.which_git_command
       user_name = `git config --get user.name`.strip
       user_name.empty? ? default : user_name
     end
 
     def self.fetch_email
-      default = "[your-email-here]"
-      return default unless which_git_command
+      default = "your-email-here"
+      return default unless self.which_git_command
       user_email = `git config --get user.email`.strip
       user_email.empty? ? default : user_email
     end
 
     def self.fetch_github_name
-      default = "[your-github-name]"
-      return default unless which_git_command
+      default = "your-github-name"
+      return default unless self.which_git_command
       github_user = `git config --get github.user`.strip
       github_user.empty? ? default : github_user
     end
@@ -171,7 +171,7 @@ module Crystal
 
     class GitInitView < View
       def render
-        return unless system(WHICH_GIT_COMMAND)
+        return unless self.which_git_command
         return command if config.silent
         puts command
       end
