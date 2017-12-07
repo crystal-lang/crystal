@@ -64,7 +64,7 @@ module Crystal
         github_name = `git config --get github.name`.strip
         github_name = nil if github_name.empty?
       end
-      github_name || "your-github-here"
+      github_name || "your-github-name"
     end
 
     def self.fetch_name(opts, args)
