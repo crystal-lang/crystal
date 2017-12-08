@@ -11,7 +11,7 @@ CallStack.skip(__FILE__)
 # optional traceback information.
 # Exception subclasses may add additional information.
 class Exception
-  class_getter colorize : Bool = {% if flag?(:release) %} STDERR.tty? {% else %} false {% end %}
+  class_getter colorize : Bool = {% if flag?(:release) %} false {% else %} STDERR.tty? {% end %}
   
   getter message : String?
   # Returns the previous exception at the time this exception was raised.
@@ -21,7 +21,6 @@ class Exception
   property callstack : CallStack?
 
   def initialize(@message : String? = nil, @cause : Exception? = nil)
-    CallStack.colorize = @@colorize
   end
 
   def self.colorize=(@@colorize)

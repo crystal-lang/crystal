@@ -41,7 +41,7 @@ struct CallStack
   # ANSI command to clear the current state of colors and formatting
   CLEAR = "\e[0m"
 
-  class_property colorize = true
+  class_property colorize : Bool = {% if flag?(:release) %} false {% else %} STDERR.tty? {% end %}
 
   @@skip = [] of String
 
