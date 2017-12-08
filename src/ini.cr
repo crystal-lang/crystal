@@ -8,7 +8,7 @@ class INI
     ini = {} of String => Hash(String, String)
 
     section = ""
-    str.lines.each do |line|
+    str.each_line do |line|
       if line =~ /\s*(.*[^\s])\s*=\s*(.*[^\s])/
         ini[section] ||= {} of String => String if section == ""
         ini[section][$1] = $2
