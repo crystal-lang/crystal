@@ -176,18 +176,15 @@ struct Time::Format
     end
 
     private def second_decimals(precision)
-      # Consume more than *precision* digits (12 seems a good maximum),
-      # and later just use the first *precision* digits because Time
-      # only has nanosecond precision.
       pos = @reader.pos
-      decimals = consume_number_i64(12)
+      # Consume at most *precision* digits as i64
+      decimals = consume_number_i64(precision)
+      # Multiply the parsed value if does not match the expected precision
       digits = @reader.pos - pos
-      if digits > precision
-        decimals /= 10 ** (digits - precision)
-      elsif digits < precision
-        decimals *= 10 ** (precision - digits)
-      end
-      @nanosecond = (decimals * 10 ** (9 - precision)).to_i
+      precision_shift = digits < precision ? precision - digits : 0
+      # Adjust to nanoseconds
+      nanoseconds_shift = 9 - precision
+      @nanosecond = (decimals * 10 ** (precision_shift + nanoseconds_shift)).to_i
     end
 
     def am_pm

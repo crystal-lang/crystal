@@ -535,6 +535,10 @@ describe Time do
 
     time = Time.parse("2016-09-09T17:03:28.456789123999+01:00", "%FT%T.%9N%z").to_utc
     time.nanosecond.should eq(456789123)
+
+    time = Time.parse("4567892016-09-09T17:03:28+01:00", "%6N%FT%T%z").to_utc
+    time.year.should eq(2016)
+    time.nanosecond.should eq(456789000)
   end
 
   it "parses if some decimals are missing" do
