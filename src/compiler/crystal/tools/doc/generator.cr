@@ -320,6 +320,10 @@ class Crystal::Doc::Generator
     @repository_name = info[:repo_name] % {user: user, repo: repo}
   end
 
+  def repository_host
+    @repository_name.partition('/').first
+  end
+
   def source_link(node)
     location = relative_location node
     return unless location

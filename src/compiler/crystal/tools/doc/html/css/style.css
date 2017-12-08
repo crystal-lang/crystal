@@ -19,6 +19,10 @@ a {
 a:visited {
   color: #112750;
 }
+a:hover,
+a:focus {
+  color: #522050;
+}
 
 h1, h2, h3, h4, h5, h6 {
   margin: 35px 0 25px;
@@ -35,30 +39,39 @@ h1.type-name {
 }
 
 h2 {
-  border-bottom: 1px solid #E6E6E6;
+  border-bottom: 3px solid #E6E6E6;
   padding-bottom: 5px;
 }
 
-#types-list, #main-content {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+p {
+  max-width: 55em;
+}
+
+body {
+  display: flex;
+}
+
+.sidebar, .main-content {
   overflow: auto;
 }
 
-#types-list {
-  left: 0;
-  width: 20%;
+.sidebar {
+  width: 30em;
+  max-width: 20%; /* limit width on small screen sizes */
+  color: #F8F4FD;
   background-color: #2E1052;
   padding: 0 0 30px;
   box-shadow: inset -3px 0 4px rgba(0,0,0,.35);
 }
 
-#types-list #search-box {
+.sidebar-header {
+  box-shadow: 0 5px 10px rgba(0,0,0,.1);
+  margin-bottom: 12px;
+  background-color: #3b1e5c;
   padding: 8px 9px;
 }
 
-#types-list input {
+.sidebar input {
   display: block;
   box-sizing: border-box;
   margin: 0;
@@ -74,79 +87,84 @@ h2 {
   transition: box-shadow .12s;
 }
 
-#types-list input:focus {
+.sidebar input:focus {
   box-shadow: 0px 5px 6px rgba(0,0,0,.5);
 }
 
-#types-list input::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+.sidebar input::-webkit-input-placeholder { /* Chrome/Opera/Safari */
   color: #C8C8C8;
   font-size: 14px;
   text-indent: 2px;
 }
 
-#types-list input::-moz-placeholder { /* Firefox 19+ */
+.sidebar input::-moz-placeholder { /* Firefox 19+ */
   color: #C8C8C8;
   font-size: 14px;
   text-indent: 2px;
 }
 
-#types-list input:-ms-input-placeholder { /* IE 10+ */
+.sidebar input:-ms-input-placeholder { /* IE 10+ */
   color: #C8C8C8;
   font-size: 14px;
   text-indent: 2px;
 }
 
-#types-list input:-moz-placeholder { /* Firefox 18- */
+.sidebar input:-moz-placeholder { /* Firefox 18- */
   color: #C8C8C8;
   font-size: 14px;
   text-indent: 2px;
 }
 
-#types-list ul {
+.sidebar ul {
   margin: 0;
   padding: 0;
   list-style: none outside;
 }
 
-#types-list li {
+.sidebar li {
   display: block;
   position: relative;
 }
 
-#types-list li.hide {
+.types-list li.hide {
   display: none;
 }
 
-#types-list a {
-  display: block;
-  padding: 5px 15px 5px 30px;
+.sidebar a {
   text-decoration: none;
-  color: #F8F4FD;
+  color: inherit;
   transition: color .14s;
 }
 
-#types-list a:focus {
+.types-list a {
+  display: block;
+}
+
+.types-list a {
+  padding: 5px 15px 5px 30px;
+}
+
+.types-list a:focus {
   outline: 1px solid #D1B7F1;
 }
 
-#types-list .current > a,
-#types-list a:hover {
+.sidebar .current > a,
+.sidebar a:hover {
   color: #866BA6;
 }
 
-#types-list li ul {
+.types-list li ul {
   overflow: hidden;
   height: 0;
   max-height: 0;
   transition: 1s ease-in-out;
 }
 
-
-#types-list li.parent {
+.types-list li.parent {
   padding-left: 30px;
 }
 
-#types-list li.parent::before {
+.types-list li.parent::before {
   box-sizing: border-box;
   content: "▼";
   display: block;
@@ -165,23 +183,22 @@ h2 {
 }
 
 
-#types-list li.parent > a {
+.types-list li.parent > a {
   padding-left: 0;
 }
 
-#types-list li.parent.open::before {
+.types-list li.parent.open::before {
   transform: rotateZ(0);
 }
 
-#types-list li.open > ul {
+.types-list li.open > ul {
   height: auto;
   max-height: 1000em;
 }
 
-#main-content {
+.main-content {
   padding: 0 30px 30px 30px;
-  left: 20%;
-  right: 0;
+  width: 100%;
 }
 
 .kind {
@@ -205,6 +222,7 @@ h2 {
 .superclass-hierarchy .superclass + .superclass::before {
   content: "<";
   margin-right: 7px;
+  font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
 }
 
 .other-types-list li {
@@ -220,6 +238,7 @@ h2 {
 
 .entry-const {
   font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+  margin: 5px 0;
 }
 
 .entry-summary {
@@ -333,6 +352,30 @@ h2 {
     color: #47266E;
 }
 
+.source-link {
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 85%;
+}
+.source-link:link {
+  color: #3f5784;
+}
+.source-link:visited {
+  color: #314467;
+}
+.source-link::before,
+.source-link::after {
+  color: #bbbbbb;
+}
+.source-link::before {
+  content: "[";
+  padding-right: 2px;
+}
+.source-link::after {
+  content: "]";
+  padding-left: 2px;
+}
+
 pre {
   padding: 10px 20px;
   margin-top: 4px;
@@ -343,10 +386,22 @@ pre {
   background: #fdfdfd;
   font-size: 14px;
   border: 1px solid #eee;
+  max-width: 55em;
 }
 
 code {
   font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+  background-color: rgba(0,0,0,.01);
+  border-radius: .2em;
+  padding: 0 .15em;
+  border: 1px solid rgba(0,0,0,.07);
+}
+
+pre code {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
 }
 
 span.flag {

@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  var repositoryName = document.getElementById('repository-name').getAttribute('content');
-  var typesList = document.getElementById('types-list');
-  var searchInput = document.getElementById('search-input');
-  var parents = document.querySelectorAll('#types-list li.parent');
+  var repositoryName = document.querySelector('#repository-name').getAttribute('content');
+  var typesList = document.querySelector('.types-list');
+  var searchInput = document.querySelector('.search-input');
+  var parents = document.querySelectorAll('.types-list li.parent');
 
   for(var i = 0; i < parents.length; i++) {
     var _parent = parents[i];
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(function() {
       var text = searchInput.value;
-      var types = document.querySelectorAll('#types-list li');
+      var types = document.querySelectorAll('.types-list li');
       var words = text.toLowerCase().split(/\s+/).filter(function(word) {
         return word.length > 0;
       });
