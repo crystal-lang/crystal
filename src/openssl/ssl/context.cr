@@ -178,6 +178,7 @@ abstract class OpenSSL::SSL::Context
   protected def self.insecure(method : LibSSL::SSLMethod)
     obj = allocate
     obj._initialize_insecure(method)
+    GC.add_finalizer(obj)
     obj
   end
 

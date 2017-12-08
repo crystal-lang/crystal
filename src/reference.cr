@@ -46,6 +46,7 @@ class Reference
     {% else %}
       dup = self.class.allocate
       dup.as(Void*).copy_from(self.as(Void*), instance_sizeof(self))
+      GC.add_finalizer(dup) if dup.responds_to?(:finalize)
       dup
     {% end %}
   end

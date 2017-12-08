@@ -1,4 +1,5 @@
 require "spec"
+require "../support/finalize"
 
 private module ReferenceSpec
   class TestClass
@@ -33,6 +34,16 @@ private module ReferenceSpec
     property x
 
     def initialize(@x : Int32)
+    end
+  end
+
+  class TestClassWithFinalize
+    property key : Symbol?
+
+    def finalize
+      if key = self.key
+        State.inc(key)
+      end
     end
   end
 end
@@ -109,5 +120,10 @@ describe "Reference" do
   it "pretty_print" do
     ReferenceSpec::TestClassBase.new.pretty_inspect.should match(/\A#<ReferenceSpec::TestClassBase:0x[0-9a-f]+>\Z/)
     ReferenceSpec::TestClass.new(42, "foo").pretty_inspect.should match(/\A#<ReferenceSpec::TestClass:0x[0-9a-f]+ @x=42, @y="foo">\Z/)
+  end
+
+  it "calls #finalize on #dup'ed objects" do
+    obj = ReferenceSpec::TestClassWithFinalize.new
+    assert_finalizes(:clone) { obj.dup }
   end
 end

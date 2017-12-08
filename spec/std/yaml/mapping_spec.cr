@@ -1,5 +1,6 @@
 require "spec"
 require "yaml"
+require "../../support/finalize"
 
 private class YAMLPerson
   YAML.mapping({
@@ -122,6 +123,20 @@ class YAMLRecursiveHash
     name:  String,
     other: Hash(String, YAMLRecursiveHash),
   })
+end
+
+private class YAMLWithFinalize
+  YAML.mapping({
+    value: YAML::Any,
+  })
+
+  property key : Symbol?
+
+  def finalize
+    if key = self.key
+      State.inc(key)
+    end
+  end
 end
 
 describe "YAML mapping" do
@@ -444,5 +459,9 @@ describe "YAML mapping" do
       yaml.last_name.should be_nil
       yaml.last_name_present?.should be_false
     end
+  end
+
+  it "calls #finalize" do
+    assert_finalizes(:yaml) { YAMLWithFinalize.from_yaml("---\nvalue: 1\n") }
   end
 end
