@@ -423,6 +423,7 @@ describe Time do
   it { Time.parse("000321999", "%6N").nanosecond.should eq(321000) }
   it { Time.parse("000000321999", "%9N").nanosecond.should eq(321) }
   it { Time.parse("321", "%9N").nanosecond.should eq(321000000) }
+  it { Time.parse("3214569879999", "%N").nanosecond.should eq(321456987) }
   it { Time.parse("Fri Oct 31 23:00:24 2014", "%c").to_s.should eq("2014-10-31 23:00:24") }
   it { Time.parse("10/31/14", "%D").to_s.should eq("2014-10-31 00:00:00") }
   it { Time.parse("10/31/69", "%D").to_s.should eq("1969-10-31 00:00:00") }
@@ -534,6 +535,10 @@ describe Time do
     time.nanosecond.should eq(456789000)
 
     time = Time.parse("2016-09-09T17:03:28.456789123999+01:00", "%FT%T.%9N%z").to_utc
+    time.nanosecond.should eq(456789123)
+
+    time = Time.parse("2016-09-09T17:03:28.456789123999999+01:00", "%FT%T.%N%z").to_utc
+    time.to_s.should eq("2016-09-09 16:03:28 UTC")
     time.nanosecond.should eq(456789123)
 
     time = Time.parse("4567892016-09-09T17:03:28+01:00", "%6N%FT%T%z").to_utc

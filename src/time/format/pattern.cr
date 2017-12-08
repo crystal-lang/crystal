@@ -50,7 +50,7 @@ struct Time::Format
         when 'L'
           milliseconds
         when 'N'
-          nanoseconds
+          second_fraction
         when 'm'
           month_zero_padded
         when 'M'

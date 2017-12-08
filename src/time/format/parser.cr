@@ -175,6 +175,14 @@ struct Time::Format
       second_decimals 9
     end
 
+    def second_fraction
+      second_decimals 9
+      # consume trailing numbers
+      while current_char.ascii_number?
+        next_char
+      end
+    end
+
     private def second_decimals(precision)
       pos = @reader.pos
       # Consume at most *precision* digits as i64

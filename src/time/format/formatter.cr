@@ -121,6 +121,10 @@ struct Time::Format
       pad9 time.nanosecond, '0'
     end
 
+    def second_fraction
+      nanoseconds
+    end
+
     def am_pm
       io << (time.hour < 12 ? "am" : "pm")
     end
