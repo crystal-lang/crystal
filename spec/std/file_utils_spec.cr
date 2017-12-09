@@ -367,34 +367,47 @@ describe "FileUtils" do
   end
 
   it "tests mkdir with multiples existing paths" do
-    expect_raises Errno do
-      FileUtils.mkdir([__DIR__, __DIR__], 0o700)
-    end
-    expect_raises Errno do
-      FileUtils.mkdir(["/tmp/crystal_mkdir_test_#{Process.pid}/", __DIR__], 0o700)
+    path = "/tmp/crystal_mkdir_test_#{Process.pid}/"
+    begin
+      expect_raises Errno do
+        FileUtils.mkdir([__DIR__, __DIR__], 0o700)
+      end
+      expect_raises Errno do
+        FileUtils.mkdir([path, __DIR__], 0o700)
+      end
+    ensure
+      FileUtils.rmdir(path)
     end
   end
 
   it "tests mkdir_p with a new path" do
-    path = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
-    FileUtils.mkdir_p(path).should be_nil
-    Dir.exists?(path).should be_true
-    path = File.join({path, "a", "b", "c"})
-    FileUtils.mkdir_p(path).should be_nil
-    Dir.exists?(path).should be_true
+    path1 = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
+    begin
+      FileUtils.mkdir_p(path1).should be_nil
+      Dir.exists?(path1).should be_true
+      path2 = File.join({path1, "a", "b", "c"})
+      FileUtils.mkdir_p(path2).should be_nil
+      Dir.exists?(path2).should be_true
+    ensure
+      FileUtils.rm_rf(path1)
+    end
   end
 
   it "tests mkdir_p with multiples new path" do
     path1 = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
     path2 = "/tmp/crystal_mkdir_ptest_#{Process.pid + 1}"
-    FileUtils.mkdir_p([path1, path2]).should be_nil
-    Dir.exists?(path1).should be_true
-    Dir.exists?(path2).should be_true
-    path1 = File.join({path1, "a", "b", "c"})
-    path2 = File.join({path2, "a", "b", "c"})
-    FileUtils.mkdir_p([path1, path2]).should be_nil
-    Dir.exists?(path1).should be_true
-    Dir.exists?(path2).should be_true
+    begin
+      FileUtils.mkdir_p([path1, path2]).should be_nil
+      Dir.exists?(path1).should be_true
+      Dir.exists?(path2).should be_true
+      path3 = File.join({path1, "a", "b", "c"})
+      path4 = File.join({path2, "a", "b", "c"})
+      FileUtils.mkdir_p([path3, path4]).should be_nil
+      Dir.exists?(path3).should be_true
+      Dir.exists?(path4).should be_true
+    ensure
+      FileUtils.rm_rf([path1, path2])
+    end
   end
 
   it "tests mkdir_p with an existing path" do
