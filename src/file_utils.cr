@@ -146,6 +146,104 @@ module FileUtils
     end
   end
 
+  # Creates a hard link *dest_path* which points to *src_path*.
+  # If *dest_path* already exists and is a directory, creates a link *dest_path/src_path*.
+  #
+  # ```
+  # # Create a hard link, pointing from /usr/bin/emacs to /usr/bin/vim
+  # FileUtils.ln("/usr/bin/vim", "/usr/bin/emacs")
+  # # Create a hard link, pointing from /tmp/foo.c to foo.c
+  # FileUtils.ln("foo.c", "/tmp")
+  # ```
+  def ln(src_path : String, dest_path : String)
+    if Dir.exists?(dest_path)
+      File.link(src_path, File.join(dest_path, File.basename(src_path)))
+    else
+      File.link(src_path, dest_path)
+    end
+  end
+
+  # Creates a hard link to each path in *src_paths* inside the *dest_dir* directory.
+  # If *dest_dir* is not a directory, raises an `ArgumentError`.
+  #
+  # ```
+  # # Create /usr/bin/vim, /usr/bin/emacs, and /usr/bin/nano as hard links
+  # FileUtils.ln(["vim", "emacs", "nano"], "/usr/bin")
+  # ```
+  def ln(src_paths : Enumerable(String), dest_dir : String)
+    raise ArgumentError.new("No such directory : #{dest_dir}") unless Dir.exists?(dest_dir)
+
+    src_paths.each do |path|
+      ln(path, dest_dir)
+    end
+  end
+
+  # Creates a symbolic link *dest_path* which points to *src_path*.
+  # If *dest_path* already exists and is a directory, creates a link *dest_path/src_path*.
+  #
+  # ```
+  # # Create a symbolic link pointing from logs to /var/log
+  # FileUtils.ln_s("/var/log", "logs")
+  # # Create a symbolic link pointing from /tmp/src to src
+  # FileUtils.ln_s("src", "/tmp")
+  # ```
+  def ln_s(src_path : String, dest_path : String)
+    if Dir.exists?(dest_path)
+      File.symlink(src_path, File.join(dest_path, File.basename(src_path)))
+    else
+      File.symlink(src_path, dest_path)
+    end
+  end
+
+  # Creates a symbolic link to each path in *src_paths* inside the *dest_dir* directory.
+  # If *dest_dir* is not a directory, raises an `ArgumentError`.
+  #
+  # ```
+  # # Create symbolic links in src/ pointing to every .c file in the current directory
+  # FileUtils.ln_s(Dir["*.c"], "src")
+  # ```
+  def ln_s(src_paths : Enumerable(String), dest_dir : String)
+    raise ArgumentError.new("No such directory : #{dest_dir}") unless Dir.exists?(dest_dir)
+
+    src_paths.each do |path|
+      ln_s(path, dest_dir)
+    end
+  end
+
+  # Like `#ln_s(String, String)`, but overwrites `dest_path` if it exists and is not a directory
+  # or if `dest_path/src_path` exists.
+  #
+  # ```
+  # # Create a symbolic link pointing from bar.c to foo.c, even if bar.c already exists
+  # FileUtils.ln_sf("foo.c", "bar.c")
+  # ```
+  def ln_sf(src_path : String, dest_path : String)
+    if File.directory?(dest_path)
+      dest_path = File.join(dest_path, File.basename(src_path))
+    end
+
+    File.delete(dest_path) if File.file?(dest_path)
+    File.symlink(src_path, dest_path)
+  end
+
+  # Creates a symbolic link to each path in *src_paths* inside the *dest_dir* directory,
+  # ignoring any overwritten paths.
+  #
+  # If *dest_dir* is not a directory, raises an `ArgumentError`.
+  #
+  # ```
+  # # Create symbolic links in src/ pointing to every .c file in the current directory,
+  # # even if it means overwriting files in src/
+  # FileUtils.ln_sf(Dir["*.c"], "src")
+  # ```
+  def ln_sf(src_paths : Enumerable(String), dest_dir : String)
+    raise ArgumentError.new("No such directory : #{dest_dir}") unless Dir.exists?(dest_dir)
+
+    src_paths.each do |path|
+      ln_sf(path, dest_dir)
+    end
+  end
+
   # Creates a new directory at the given *path*. The linux-style permission *mode*
   # can be specified, with a default of 777 (0o777).
   #
