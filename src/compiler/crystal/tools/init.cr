@@ -61,10 +61,10 @@ module Crystal
 
     def self.fetch_github_name
       if system(WHICH_GIT_COMMAND)
-        github_name = `git config --get github.name`.strip
-        github_name = nil if github_name.empty?
+        github_user = `git config --get github.user`.strip
+        github_user = nil if github_user.empty?
       end
-      github_name || "your-github-name"
+      github_user || "your-github-user"
     end
 
     def self.fetch_name(opts, args)
