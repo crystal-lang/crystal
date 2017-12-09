@@ -30,7 +30,7 @@ module Crystal::Doc::Highlighter
       when :NUMBER
         highlight token.raw, "n", io
       when :CHAR
-        highlight token.raw, "s", io
+        highlight HTML.escape(token.raw), "s", io
       when :SYMBOL
         highlight HTML.escape(token.raw), "n", io
       when :CONST, :"::"
@@ -51,9 +51,9 @@ module Crystal::Doc::Highlighter
                :class, :module, :include, :extend,
                :while, :until, :do, :yield, :return, :unless, :next, :break, :begin,
                :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-               :case, :when, :then, :of, :abstract, :rescue, :ensure, :is_a?,
-               :alias, :pointerof, :sizeof, :instance_sizeof, :as, :typeof, :for, :in,
-               :undef, :with, :self, :super, :private, :protected, "new"
+               :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
+               :alias, :pointerof, :sizeof, :instance_sizeof, :as, :as?, :typeof, :for, :in,
+               :undef, :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new"
             highlight token, "k", io
           when :true, :false, :nil
             highlight token, "n", io
@@ -62,7 +62,7 @@ module Crystal::Doc::Highlighter
           end
         end
       when :"+", :"-", :"*", :"/", :"=", :"==", :"<", :"<=", :">", :">=", :"!", :"!=", :"=~", :"!~", :"&", :"|", :"^", :"~", :"**", :">>", :"<<", :"%", :"[]", :"[]?", :"[]=", :"<=>", :"==="
-        highlight token, "o", io
+        highlight HTML.escape(token.to_s), "o", io
       when :"}"
         if break_on_rcurly
           break
@@ -94,10 +94,9 @@ module Crystal::Doc::Highlighter
       when :INTERPOLATION_START
         end_highlight_class io
         highlight "\#{", "i", io
-        end_highlight_class io
         highlight_normal_state lexer, io, break_on_rcurly: true
-        start_highlight_class "s", io
         highlight "}", "i", io
+        start_highlight_class "s", io
       when :EOF
         break
       else
@@ -109,20 +108,35 @@ module Crystal::Doc::Highlighter
   private def highlight_string_array(lexer, token, io)
     start_highlight_class "s", io
     HTML.escape(token.raw, io)
-    first = true
     while true
-      lexer.next_string_array_token
+      consume_space_or_newline(lexer, io)
+      token = lexer.next_string_array_token
       case token.type
       when :STRING
-        io << " " unless first
         HTML.escape(token.raw, io)
-        first = false
       when :STRING_ARRAY_END
         HTML.escape(token.raw, io)
         end_highlight_class io
         break
       when :EOF
         raise "Unterminated symbol array literal"
+      end
+    end
+  end
+
+  def consume_space_or_newline(lexer, io)
+    while true
+      char = lexer.current_char
+      case char
+      when '\n'
+        lexer.next_char
+        lexer.incr_line_number 1
+        io.puts
+      when .ascii_whitespace?
+        lexer.next_char
+        io << char
+      else
+        break
       end
     end
   end
