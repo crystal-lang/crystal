@@ -5,6 +5,7 @@
 - **(breaking-change)** Add `UUID` type. `Random::Secure.uuid` has been replaced with `UUID.random`. ([#4453](https://github.com/crystal-lang/crystal/issues/4453), thanks @wontruefree)
 - Add a `BigDecimal` class for arbitrary precision, exact, decimal numbers. ([#4876](https://github.com/crystal-lang/crystal/issues/4876) and [#5255](https://github.com/crystal-lang/crystal/issues/5255), thanks @vegai and @Sija)
 - Allow `Set` to work as a case condition, which matches when the case variable is inside the set. ([#5269](https://github.com/crystal-lang/crystal/issues/5269), thanks @MakeNowJust)
+- **(breaking-change)** Change `Time::Format` codes to allow more robust options for parsing sub-second precision times. ([#5317](https://github.com/crystal-lang/crystal/issues/5317), thanks @bcardiff)
 - Add `Time.utc`, an alias of `Time.new` which shortens creating UTC times. ([#5321](https://github.com/crystal-lang/crystal/issues/5321), thanks @straight-shoota)
 - Add custom extension support to `Tempfile`. ([#5264](https://github.com/crystal-lang/crystal/issues/5264), thanks @jreinert)
 - Add `reduce` method to `TupleLiteral` and `ArrayLiteral` when using macros. ([#5294](https://github.com/crystal-lang/crystal/issues/5294), thanks @javanut13)
@@ -44,16 +45,11 @@
 - Formatter: fix formatting `$1?`. ([#5313](https://github.com/crystal-lang/crystal/issues/5313), thanks @MakeNowJust)
 - Formatter: ensure to insert a space between `{` and `%` characters to avoid forming `{%` macros. ([#5278](https://github.com/crystal-lang/crystal/issues/5278), thanks @MakeNowJust)
 
-## Documentation fixes
-- Fix typo in `Spec::Methods#context` documentation. ([#5253](https://github.com/crystal-lang/crystal/issues/5253), thanks @arcage)
-- Remove bad example in `property?` macro documentation. ([#5296](https://github.com/crystal-lang/crystal/issues/5296), thanks @icyleaf)
-- Fix typo in `Crystal::Macros::MacroId` documentation. ([#5300](https://github.com/crystal-lang/crystal/issues/5300), thanks @straight-shoota)
-- Fix typo in `IO` documentation. ([#5322](https://github.com/crystal-lang/crystal/issues/5322), thanks @bew)
-
 ## Misc
 - Fix `Makefile`, CI, and gitignore to use the new documentation path after [#4937](https://github.com/crystal-lang/crystal/issues/4937). ([#5217](https://github.com/crystal-lang/crystal/issues/5217), thanks @straight-shoota)
-- Refactor to remove currently useless suffix condition in `Time#inspect`. ([#5318](https://github.com/crystal-lang/crystal/issues/5318), thanks @bew)
-- Refactor miscellaneous code which can be shortened by using `unsafe_as`. ([#5341](https://github.com/crystal-lang/crystal/issues/5341), thanks @bew)
+- Miscellaneous code cleanups. ([#5318](https://github.com/crystal-lang/crystal/issues/5318), [#5341](https://github.com/crystal-lang/crystal/issues/5341) and [#5366](https://github.com/crystal-lang/crystal/issues/5366), thanks @bew and @mig-hub)
+- Documentation fixes. ([#5253](https://github.com/crystal-lang/crystal/issues/5253), [#5296](https://github.com/crystal-lang/crystal/issues/5296), [#5300](https://github.com/crystal-lang/crystal/issues/5300) and [#5322](https://github.com/crystal-lang/crystal/issues/5322), thanks @arcage, @icyleaf, @straight-shoota and @bew)
+- Fix the in-repository changelog to include 0.24.0. ([#5331](https://github.com/crystal-lang/crystal/pull/5331), thanks @sdogruyol)
 
 # 0.24.0 (30-10-2017)
 
