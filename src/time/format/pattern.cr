@@ -50,7 +50,7 @@ struct Time::Format
         when 'L'
           milliseconds
         when 'N'
-          nanoseconds
+          second_fraction
         when 'm'
           month_zero_padded
         when 'M'
@@ -131,6 +131,23 @@ struct Time::Format
           else
             char '%'
             char ':'
+            reader = check_char reader, char
+          end
+        when '3', '6', '9'
+          digit_char = char
+          case char = reader.next_char
+          when 'N'
+            case digit_char
+            when '3'
+              milliseconds
+            when '6'
+              microseconds
+            when '9'
+              nanoseconds
+            end
+          else
+            char '%'
+            char digit_char
             reader = check_char reader, char
           end
         when '%'
