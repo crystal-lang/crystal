@@ -65,26 +65,74 @@ module Event
       LibEvent2.event_base_loopbreak(@base)
     end
 
-    def new_dns_base(init = true)
-      DnsBase.new LibEvent2.evdns_base_new(@base, init ? 1 : 0)
+    def to_unsafe
+      @base
     end
   end
 
-  struct DnsBase
-    def initialize(@dns_base : LibEvent2::DnsBase)
-    end
+  # :nodoc:
+  class DnsBase
+    # :nodoc:
+    # TODO: consider using a struct & pass pointer
+    class Response
+      property result : Int32?
+      property addrinfo : Pointer(LibEvent2::EvutilAddrinfo)?
 
-    def getaddrinfo(nodename, servname, hints, data, &callback : LibEvent2::DnsGetAddrinfoCallback)
-      request = LibEvent2.evdns_getaddrinfo(@dns_base, nodename, servname, hints, callback, data.as(Void*))
-      GetAddrInfoRequest.new request if request
-    end
-
-    struct GetAddrInfoRequest
-      def initialize(@request : LibEvent2::DnsGetAddrinfoRequest)
+      def initialize(@fiber : Fiber)
       end
 
-      def cancel
-        LibEvent2.evdns_getaddrinfo_cancel(@request)
+      def resume
+        @fiber.resume
+      end
+
+      def cancelled?
+        @result == LibEvent2::EVUTIL_EAI_CANCEL
+      end
+    end
+
+    def initialize(base : Base)
+      @dns_base = LibEvent2.evdns_base_new(base, 1)
+    end
+
+    def finalize
+      LibEvent2.evdns_base_free(@dns_base, 1)
+    end
+
+    def getaddrinfo(domain, service, hints, timeout = nil, &block)
+      response = Response.new(Fiber.current)
+
+      request = LibEvent2.evdns_getaddrinfo(@dns_base, domain, service, hints, ->(result, addrinfo, data) {
+        r = Box(Response).unbox(data)
+        r.result = result
+        r.addrinfo = addrinfo
+        r.resume
+      }, Box.box(response))
+
+      # evdns returns a request only if the request is pending, otherwise the
+      # callback was already called.
+      if request
+        # TODO: consider configuring DNS timeout globally: evdns_base_set_option("timeout", "5")
+        if timeout
+          spawn do
+            sleep timeout.not_nil!
+            LibEvent2.evdns_getaddrinfo_cancel(request)
+          end
+        end
+
+        sleep # until explicitly resumed
+      end
+
+      if addrinfo = response.addrinfo
+        yield addrinfo
+      elsif response.cancelled?
+        raise IO::Timeout.new("Failed to resolve #{domain} in #{timeout} seconds")
+      else
+        error = response.result.not_nil!
+        raise Socket::Error.new("evdns_getaddrinfo: #{error}")
+      end
+    ensure
+      if addrinfo = response.try(&.addrinfo)
+        LibEvent2.evutil_freeaddrinfo(addrinfo)
       end
     end
   end

@@ -95,21 +95,15 @@ class Scheduler
     event
   end
 
-  @@dns_base : Event::DnsBase?
-
-  private def self.dns_base
-    @@dns_base ||= @@eb.new_dns_base
-  end
-
-  def self.create_dns_request(nodename, servname, hints, data, &callback : LibEvent2::DnsGetAddrinfoCallback)
-    dns_base.getaddrinfo(nodename, servname, hints, data, &callback)
-  end
-
   def self.enqueue(fiber : Fiber)
     @@runnables << fiber
   end
 
   def self.enqueue(fibers : Enumerable(Fiber))
     @@runnables.concat fibers
+  end
+
+  def self.new_dns_base
+    Event::DnsBase.new(@@eb)
   end
 end
