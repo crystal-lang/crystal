@@ -87,7 +87,7 @@ module Crystal
     end
 
     # Returns all macros defines in this type, indexed by their name.
-    # This does not inlcude methods defined in ancestors.
+    # This does not include methods defined in ancestors.
     def macros : Hash(String, Array(Macro))?
       nil
     end
