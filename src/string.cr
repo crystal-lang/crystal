@@ -2027,11 +2027,11 @@ class String
   private def gsub_ascii_char(char, replacement)
     String.new(bytesize) do |buffer|
       to_slice.each_with_index do |byte, i|
-        buffer[i] = if char === byte
-                      replacement.ord.to_u8
-                    else
-                      byte
-                    end
+        if char.ord == byte
+          buffer[i] = replacement.ord.to_u8
+        else
+          buffer[i] = byte
+        end
       end
       {bytesize, bytesize}
     end
