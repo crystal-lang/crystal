@@ -15,3 +15,5 @@ all_spec
 /src/llvm/ext/llvm_ext.dwo
 /src/ext/*.o
 /src/ext/libcrystal.a
+/.shards/
+/lib/

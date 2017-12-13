@@ -27,6 +27,7 @@ static ?=       ## Enable static linking
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
+SHARD_FILES := lib shard.yml shard.lock $(shell test -d lib && find lib -type f)
 FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
 EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
@@ -96,12 +97,12 @@ docs: ## Generate standard library documentation
 crystal: $(O)/crystal ## Build the compiler
 
 .PHONY: deps llvm_ext libcrystal
-deps: $(DEPS) ## Build dependencies
+deps: $(DEPS) $(SHARD_FILES) ## Build dependencies
 
 llvm_ext: $(LLVM_EXT_OBJ)
 libcrystal: $(LIB_CRYSTAL_TARGET)
 
-$(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES) $(SHARD_FILES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/all_spec.cr
 
@@ -109,11 +110,11 @@ $(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/std_spec.cr
 
-$(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES) $(SHARD_FILES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/compiler_spec.cr
 
-$(O)/crystal: $(DEPS) $(SOURCES)
+$(O)/crystal: $(DEPS) $(SOURCES) $(SHARD_FILES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) $(EXPORTS) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
@@ -122,6 +123,9 @@ $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 
 $(LIB_CRYSTAL_TARGET): $(LIB_CRYSTAL_OBJS)
 	$(AR) -rcs $@ $^
+
+$(SHARD_FILES):
+	shards install
 
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
