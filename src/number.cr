@@ -209,7 +209,7 @@ struct Number
   # ```
   # -1763.116.round(2) # => -1763.12
   # ```
-  def round(digits, base = 10)
+  def round(digits = 0, base = 10)
     x = self.to_f
     if digits < 0
       y = base ** (-digits)
