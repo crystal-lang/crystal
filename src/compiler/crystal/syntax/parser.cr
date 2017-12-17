@@ -1231,11 +1231,13 @@ module Crystal
       rescues = nil
       a_else = nil
       a_ensure = nil
+      begin_location = exp.location
 
       if @token.keyword?(:rescue)
         rescues = [] of Rescue
         found_catch_all = false
         while true
+          begin_location ||= @token.location
           location = @token.location
           a_rescue = parse_rescue
           if a_rescue.types
@@ -1258,12 +1260,14 @@ module Crystal
           raise "'else' is useless without 'rescue'", @token, 4
         end
 
+        begin_location ||= @token.location
         next_token_skip_statement_end
         a_else = parse_expressions
         skip_statement_end
       end
 
       if @token.keyword?(:ensure)
+        begin_location ||= @token.location
         next_token_skip_statement_end
         a_ensure = parse_expressions
         skip_statement_end
@@ -1276,7 +1280,7 @@ module Crystal
 
       if rescues || a_ensure
         ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at(exp).at_end(end_location)
-        ex.at(exp.location || rescues.try(&.first?).try(&.location) || a_ensure.try(&.location))
+        ex.at(begin_location)
         ex.implicit = true if implicit
         {ex, end_location}
       else
