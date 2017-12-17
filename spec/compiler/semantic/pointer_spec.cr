@@ -169,4 +169,14 @@ describe "Semantic: pointer" do
       ),
       "can't create instance of a pointer type"
   end
+
+  it "takes pointerof lib external var" do
+    assert_type(%(
+      lib LibFoo
+        $extern : Int32
+      end
+
+      pointerof(LibFoo.extern)
+      )) { pointer_of(int32) }
+  end
 end
