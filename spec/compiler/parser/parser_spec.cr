@@ -1674,5 +1674,12 @@ describe "Parser" do
       loc.line_number.should eq(2)
       loc.column_number.should eq(3)
     end
+
+    it "gets correct location of empty exception handler inside def" do
+      parser = Parser.new("def foo\nensure\nend")
+      node = parser.parse.as(Def).body
+      loc = node.location.not_nil!
+      loc.line_number.should eq(2)
+    end
   end
 end
