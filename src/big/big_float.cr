@@ -125,7 +125,7 @@ struct BigFloat < Float
   end
 
   def /(other : Number)
-    raise DivisionByZero.new if other == 0
+    raise DivisionByZeroError.new if other == 0
     if other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
       BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, other) }
     else
