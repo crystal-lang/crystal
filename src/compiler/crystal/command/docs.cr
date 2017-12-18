@@ -1,7 +1,7 @@
 # Implementation of the `crystal docs` command
 #
 # This is just the command-line part. Everything else
-# is in `crystal/tools/doc.cr`
+# is in `crystal/tools/doc/`
 
 class Crystal::Command
   private def docs
