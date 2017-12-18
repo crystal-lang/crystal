@@ -457,7 +457,7 @@ struct BigInt < Int
 
   private def check_division_by_zero(value)
     if value == 0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     end
   end
 

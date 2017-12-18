@@ -379,7 +379,7 @@ describe "Int" do
   end
 
   it "raises when divides by zero" do
-    expect_raises(DivisionByZero) { 1 / 0 }
+    expect_raises(DivisionByZeroError) { 1 / 0 }
     (4 / 2).should eq(2)
   end
 
@@ -393,7 +393,7 @@ describe "Int" do
   end
 
   it "raises when mods by zero" do
-    expect_raises(DivisionByZero) { 1 % 0 }
+    expect_raises(DivisionByZeroError) { 1 % 0 }
     (4 % 2).should eq(0)
   end
 

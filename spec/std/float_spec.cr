@@ -20,7 +20,7 @@ describe "Float" do
 
   describe "modulo" do
     it "raises when mods by zero" do
-      expect_raises(DivisionByZero) { 1.2.modulo 0.0 }
+      expect_raises(DivisionByZeroError) { 1.2.modulo 0.0 }
     end
 
     it { (13.0.modulo 4.0).should eq(1.0) }
@@ -35,7 +35,7 @@ describe "Float" do
 
   describe "remainder" do
     it "raises when mods by zero" do
-      expect_raises(DivisionByZero) { 1.2.remainder 0.0 }
+      expect_raises(DivisionByZeroError) { 1.2.remainder 0.0 }
     end
 
     it { (13.0.remainder 4.0).should eq(1.0) }

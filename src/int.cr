@@ -135,7 +135,7 @@ struct Int
 
   private def check_div_argument(other)
     if other == 0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     end
 
     {% begin %}
@@ -156,7 +156,7 @@ struct Int
   # See `Int#/` for more details.
   def %(other : Int)
     if other == 0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     elsif (self ^ other) >= 0
       self.unsafe_mod(other)
     else
@@ -172,7 +172,7 @@ struct Int
   # See `Int#div` for more details.
   def remainder(other : Int)
     if other == 0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     else
       unsafe_mod other
     end

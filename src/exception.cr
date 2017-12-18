@@ -111,10 +111,10 @@ end
 # Raised when attempting to divide an integer by 0.
 #
 # ```
-# 1 / 0 # raises DivisionByZero (Division by zero)
+# 1 / 0 # raises DivisionByZero (Division by 0)
 # ```
-class DivisionByZero < Exception
-  def initialize(message = "Division by zero")
+class DivisionByZeroError < Exception
+  def initialize(message = "Division by 0")
     super(message)
   end
 end

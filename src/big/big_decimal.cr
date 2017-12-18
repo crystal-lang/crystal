@@ -276,7 +276,7 @@ struct BigDecimal < Number
   end
 
   private def check_division_by_zero(bd : BigDecimal)
-    raise DivisionByZero.new if bd.value == 0
+    raise DivisionByZeroError.new if bd.value == 0
   end
 
   private def power_ten_to(x : Int) : Int

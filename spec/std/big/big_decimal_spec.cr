@@ -132,13 +132,13 @@ describe BigDecimal do
     BigDecimal.new("1.2621466432").should eq(BigDecimal.new("1.12345") * BigDecimal.new("1.123456"))
     BigDecimal.new("1.2621466432").should eq(BigDecimal.new("1.123456") * BigDecimal.new("1.12345"))
 
-    expect_raises(DivisionByZero) do
+    expect_raises(DivisionByZeroError) do
       BigDecimal.new(0) / BigDecimal.new(0)
     end
-    expect_raises(DivisionByZero) do
+    expect_raises(DivisionByZeroError) do
       BigDecimal.new(1) / BigDecimal.new(0)
     end
-    expect_raises(DivisionByZero) do
+    expect_raises(DivisionByZeroError) do
       BigDecimal.new(-1) / BigDecimal.new(0)
     end
     BigDecimal.new(1).should eq(BigDecimal.new(1) / BigDecimal.new(1))

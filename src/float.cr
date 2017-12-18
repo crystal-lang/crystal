@@ -67,7 +67,7 @@ struct Float
 
   def modulo(other)
     if other == 0.0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     else
       self - other * self.fdiv(other).floor
     end
@@ -75,7 +75,7 @@ struct Float
 
   def remainder(other)
     if other == 0.0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     else
       mod = self % other
       return self.class.zero if mod == 0.0
