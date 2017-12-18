@@ -472,6 +472,18 @@ describe "Deque" do
       a.rotate!(8)
       a.should eq(Deque{4, 1, 2, 3})
     end
+
+    it "rotates with size=0" do
+      a = Deque(Int32).new
+      a.rotate!
+      a.should eq(Deque(Int32).new)
+    end
+
+    it "rotates with size=1" do
+      a = Deque{1}
+      a.rotate!
+      a.should eq(Deque{1})
+    end
   end
 
   describe "shift" do
