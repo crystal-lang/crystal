@@ -131,4 +131,4 @@ clean: clean_crystal ## Clean up built directories and files
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files
 	rm -rf $(O)
-	rm -rf ./doc
+	rm -rf ./docs
