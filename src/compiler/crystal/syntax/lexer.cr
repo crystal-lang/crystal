@@ -183,7 +183,7 @@ module Crystal
               when ident_part?(char)
                 here << char
               when char == '\0'
-                raise "unexpected EOF on heredoc identifier"
+                raise "Unexpected EOF on heredoc identifier"
               else
                 if char == '\'' && has_single_quote
                   found_closing_single_quote = true
@@ -1729,7 +1729,7 @@ module Crystal
 
       case current_char
       when '\0'
-        raise_unterminated_quoted string_end
+        raise_unterminated_quoted delimiter_state
       when string_end
         next_char
         if string_open_count == 0
@@ -1801,7 +1801,7 @@ module Crystal
                 char = next_char
                 case char
                 when '\0'
-                  raise_unterminated_quoted string_end
+                  raise_unterminated_quoted delimiter_state
                 when '\n'
                   incr_line_number
                   @token.line_number = @line_number
@@ -1919,12 +1919,14 @@ module Crystal
       @token
     end
 
-    def raise_unterminated_quoted(string_end)
-      msg = case string_end
-            when '`'    then "unterminated command"
-            when '/'    then "unterminated regular expression"
-            when String then "unterminated heredoc"
-            else             "unterminated string literal"
+    def raise_unterminated_quoted(delimiter_state)
+      msg = case delimiter_state.kind
+            when :command then "Unterminated command literal"
+            when :regex   then "Unterminated regular expression"
+            when :heredoc then "Unterminated heredoc"
+            when :string  then "Unterminated string literal"
+            else
+              ::raise "unreachable"
             end
       raise msg, @line_number, @column_number
     end
