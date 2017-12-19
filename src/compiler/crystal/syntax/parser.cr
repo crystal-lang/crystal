@@ -2054,7 +2054,7 @@ module Crystal
           next_token
           break
         else
-          raise "Unterminated #{elements_type} array literal"
+          raise "Unterminated #{elements_type.downcase} array literal"
         end
       end
 
