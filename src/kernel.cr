@@ -123,24 +123,31 @@ end
 
 # :nodoc:
 module AtExitHandlers
-  @@running = false
-
   def self.add(handler)
     handlers = @@handlers ||= [] of Int32 ->
     handlers << handler
   end
 
-  def self.run(status)
-    return if @@running
-    @@running = true
+  @@handler_iterator : Iterator(Int32 ->)?
 
-    @@handlers.try &.reverse_each do |handler|
+  def self.run(status)
+    return status unless handlers = @@handlers
+
+    # Each handlers must be called only once, even when an handler calls `exit` by itself.
+    # To do that we save the handler iterator in `@@handler_iterator` to resume iteration
+    # on subsequent calls.
+    handler_iterator = @@handler_iterator ||= handlers.reverse_each
+
+    handler_iterator.each do |handler|
       begin
         handler.call status
       rescue handler_ex
         STDERR.puts "Error running at_exit handler: #{handler_ex}"
+        status = 1 if status.zero?
       end
     end
+
+    status
   end
 end
 
@@ -171,7 +178,7 @@ end
 #
 # Registered `at_exit` procs are executed.
 def exit(status = 0) : NoReturn
-  AtExitHandlers.run status
+  status = AtExitHandlers.run status
   STDOUT.flush
   STDERR.flush
   Crystal.restore_blocking_state
