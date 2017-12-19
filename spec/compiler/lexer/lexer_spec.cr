@@ -366,7 +366,7 @@ describe "Lexer" do
     token.type.should eq(:EOF)
   end
 
-  assert_syntax_error "/foo", "unterminated regular expression"
+  assert_syntax_error "/foo", "Unterminated regular expression"
   assert_syntax_error ":\"foo", "unterminated quoted symbol"
 
   it "lexes utf-8 char" do
