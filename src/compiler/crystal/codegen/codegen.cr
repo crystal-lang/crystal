@@ -492,6 +492,11 @@ module Crystal
               when ReadInstanceVar
                 node_exp.obj.accept self
                 instance_var_ptr (node_exp.obj.type), node_exp.name, @last
+              when Call
+                # lib external var
+                extern = node_exp.dependencies.first.as(External)
+                var = get_external_var(extern)
+                check_c_fun extern.type, var
               else
                 raise "BUG: #{node}"
               end
