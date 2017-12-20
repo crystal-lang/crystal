@@ -1431,10 +1431,10 @@ class Array(T)
     when 0
       return [] of T
     when 1
-      return [sample] of T
+      return [sample(random)] of T
     else
       if n >= size
-        return dup.shuffle!
+        return dup.shuffle!(random)
       end
 
       ary = Array(T).new(n) { |i| @buffer[i] }
