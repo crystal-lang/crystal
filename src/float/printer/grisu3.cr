@@ -125,7 +125,6 @@ module Float::Printer::Grisu3
     # Conceptually rest ~= too_high - buffer
     # We need to do the following tests in this order to avoid over- and
     # underflows.
-    _invariant rest <= unsafe_interval
     while (
             rest < small_distance &&    # Negated condition 1
  unsafe_interval - rest >= ten_kappa && # Negated condition 2
@@ -199,9 +198,6 @@ module Float::Printer::Grisu3
   # imprecision.
   def digit_gen(low : DiyFP, w : DiyFP, high : DiyFP, buffer_p) : {Bool, Int32, Int32}
     buffer = buffer_p.to_slice(128)
-    _invariant low.exp == w.exp && w.exp == high.exp
-    _invariant low.frac + 1 <= high.frac - 1
-    _invariant CachedPowers::MIN_TARGET_EXP <= w.exp && w.exp <= CachedPowers::MAX_TARGET_EXP
     # low, w and high are imprecise, but by less than one ulp (unit in the last
     # place).
     # If we remove (resp. add) 1 ulp from low (resp. high) we are certain that
@@ -245,7 +241,6 @@ module Float::Printer::Grisu3
     while kappa > 0
       digit = integrals / divisor
       # pp [digit, kappa]
-      _invariant digit <= 9
       buffer[length] = 48_u8 + digit
       length += 1
       integrals %= divisor
@@ -273,15 +268,11 @@ module Float::Printer::Grisu3
     # data (like the interval or 'unit'), too.
     # Note that the multiplication by 10 does not overflow, because w.e >= -60
     # and thus one.e >= -60.
-    _invariant one.exp >= -60
-    _invariant fractionals < one.frac
-    _invariant 0xFFFFFFFFFFFFFFFF / 10 >= one.frac
     loop do
       fractionals *= 10
       unit *= 10
       unsafe_interval = DiyFP.new(unsafe_interval.frac * 10, unsafe_interval.exp)
       digit = (fractionals >> -one.exp).to_i
-      _invariant digit <= 9
       buffer[length] = 48_u8 + digit
       length += 1
       fractionals &= one.frac - 1
@@ -317,7 +308,6 @@ module Float::Printer::Grisu3
     # boundary_minus and boundary_plus will round to v when convert to a float.
     # Grisu3 will never output representations that lie exactly on a boundary.
     boundaries = IEEE.normalized_boundaries(v)
-    _invariant boundaries[:plus].exp == w.exp
 
     ten_mk, mk = CachedPowers.get_cached_power_for_binary_exponent(w.exp)
 
@@ -331,7 +321,6 @@ module Float::Printer::Grisu3
     # In other words: let f = scaled_w.f() and e = scaled_w.e(), then
     #           (f-1) * 2^e < w*10^k < (f+1) * 2^e
     scaled_w = w * ten_mk
-    _invariant scaled_w.exp == boundaries[:plus].exp + ten_mk.exp + DiyFP::SIGNIFICAND_SIZE
 
     # In theory it would be possible to avoid some recomputations by computing
     # the difference between w and boundary_minus/plus (a power of 2) and to
@@ -351,13 +340,5 @@ module Float::Printer::Grisu3
 
     decimal_exponent = -mk + kappa
     return result, decimal_exponent, length
-  end
-
-  private macro _invariant(exp, file = __FILE__, line = __LINE__)
-    {% if !flag?(:release) %}
-      unless {{exp}}
-        raise "Assertion Failed #{{{file}}}:#{{{line}}}"
-      end
-    {% end %}
   end
 end

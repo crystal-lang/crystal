@@ -159,16 +159,6 @@ module Float::Printer::CachedPowers
     k = ((min_exp + DiyFP::SIGNIFICAND_SIZE - 1) * D_1_LOG2_10).ceil
     index = ((CACHED_POWER_OFFSET + k.to_i - 1) / CACHED_EXP_STEP) + 1
     pow = PowCache[index]
-    _invariant min_exp <= pow.binary_exp
-    _invariant pow.binary_exp <= max_exp
     return DiyFP.new(pow.significand, pow.binary_exp), pow.decimal_exp.to_i
-  end
-
-  private macro _invariant(exp, file = __FILE__, line = __LINE__)
-    {% if !flag?(:release) %}
-      unless {{exp}}
-        raise "Assertion Failed #{{{file}}}:#{{{line}}}"
-      end
-    {% end %}
   end
 end
