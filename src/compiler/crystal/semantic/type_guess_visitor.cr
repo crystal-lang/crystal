@@ -703,7 +703,7 @@ module Crystal
         defs = [defs.first]
       end
 
-      # Only use teturn type if all matching defs have a return type
+      # Only use return type if all matching defs have a return type
       if defs.all? &.return_type
         # We can only infer the type if all overloads return
         # the same type (because we can't know the call
