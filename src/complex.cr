@@ -9,7 +9,7 @@
 # Complex.new(1, 0)   # => 1.0 + 0.0i
 # Complex.new(5, -12) # => 5.0 - 12.0i
 # ```
-struct Complex
+struct Complex < Number
   # Returns the real part of self.
   getter real : Float64
 
