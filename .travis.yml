@@ -15,7 +15,7 @@ matrix:
       os: linux
 
 before_install:
-  - echo -e "{\n  \"ipv6\": true,\n  \"fixed-cidr-v6\": \"2001:db8:1::/64\"\n}" | sudo tee /etc/docker/daemon.json
+  - echo -e "{\n  \"ipv6\":true,\n  \"fixed-cidr-v6\":\"2001:db8:1::/64\"\n}" | sudo tee /etc/docker/daemon.json
   - sudo service docker restart
   - bin/ci prepare_system
 
