@@ -2228,6 +2228,31 @@ module Crystal
         return false
       end
 
+      # This is for foo.[bar] = baz
+      if node.name == "[]=" && @token.type == :"["
+        write "["
+        next_token_skip_space_or_newline
+        args = node.args
+        last_arg = args.pop
+        format_args args, true, node.named_args
+        write_token :"]"
+        skip_space_or_newline
+        write " ="
+        next_token_skip_space
+        accept_assign_value_after_equals last_arg
+        return false
+      end
+
+      # This is for foo.[] = bar
+      if node.name == "[]=" && @token.type == :"[]"
+        write_token :"[]"
+        next_token_skip_space_or_newline
+        write " ="
+        next_token_skip_space
+        accept_assign_value_after_equals node.args.last
+        return false
+      end
+
       current_multiline_call_indent = @multiline_call_indent
 
       assignment = node.name.ends_with?('=') && node.name.chars.any?(&.ascii_letter?)
