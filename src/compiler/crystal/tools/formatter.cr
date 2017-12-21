@@ -1530,7 +1530,7 @@ module Crystal
     def visit(node : FunDef)
       write_keyword :fun, " "
 
-      check :IDENT
+      check :IDENT, :CONST
       write node.name
       next_token_skip_space
 
@@ -4573,8 +4573,10 @@ module Crystal
       raise "expecting keyword #{keywords.join " or "}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless keywords.any? { |k| @token.keyword?(k) }
     end
 
-    def check(token_type)
-      raise "expecting #{token_type}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless @token.type == token_type
+    def check(*token_types)
+      unless token_types.includes? @token.type
+        raise "expecting #{token_types.join " or "}, not `#{@token.type}, #{@token.value}`, at #{@token.location}"
+      end
     end
 
     def check_end
