@@ -147,18 +147,11 @@ dependencies:
       end
 
       describe_file "example/src/example.cr" do |example|
-        example.should eq(%{require "./example/*"
-
-# TODO: Write documentation for `Example`
+        example.should eq(%{# TODO: Write documentation for `Example`
 module Example
-  # TODO: Put your code here
-end
-})
-      end
+  VERSION = {{ `shards version \#{__DIR__}`.chomp.stringify }}
 
-      describe_file "example/src/example/version.cr" do |version|
-        version.should eq(%{module Example
-  VERSION = "0.1.0"
+  # TODO: Put your code here
 end
 })
       end

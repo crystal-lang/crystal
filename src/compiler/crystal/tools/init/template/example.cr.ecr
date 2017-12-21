@@ -1,6 +1,6 @@
-require "./<%= config.name %>/*"
-
 # TODO: Write documentation for `<%= module_name %>`
 module <%= module_name %>
+  VERSION = {{ `shards version #{__DIR__}`.chomp.stringify }}
+
   # TODO: Put your code here
 end
