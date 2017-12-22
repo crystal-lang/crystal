@@ -606,6 +606,9 @@ describe Crystal::Formatter do
   assert_format "lib Foo\nstruct Foo\nx  ,  y  , z :  Int32\nend\nend", "lib Foo\n  struct Foo\n    x, y, z : Int32\n  end\nend"
   assert_format "lib Foo\nunion Foo\nend\nend", "lib Foo\n  union Foo\n  end\nend"
 
+  assert_format "SomeLib.UppercasedFunCall"
+  assert_format "SomeLib.UppercasedFunCall 1, 2"
+
   assert_format "enum Foo\nend"
   assert_format "enum Foo\nA  \nend", "enum Foo\n  A\nend"
   assert_format "enum Foo\nA = 1\nend", "enum Foo\n  A = 1\nend"
