@@ -25,7 +25,7 @@ class UNIXServer < UNIXSocket
   #
   # Always deletes any existing filesystam pathname first, in order to cleanup
   #
-  # Note: An abstract UNIX server act on virtual files, thus not creating nor deleting anything.
+  # NOTE: An abstract UNIX server act on virtual files, thus not creating nor deleting anything.
   #
   # The server is of stream type by default, but this can be changed for
   # another type. For example datagram messages:
