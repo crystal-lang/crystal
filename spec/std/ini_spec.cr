@@ -12,7 +12,7 @@ describe "INI" do
     end
 
     it "parses sections" do
-      INI.parse("[section]\na = 1").should eq({"section" => {"a" => "1"}})
+      INI.parse("[section]\na = 1").should eq({"section" => {"a" => 1}})
     end
 
     it "empty section" do
@@ -25,11 +25,18 @@ describe "INI" do
           "log_level" => "DEBUG",
         },
         "section1" => {
-          "foo" => "1",
-          "bar" => "2",
+          "foo" => 1,
+          "bar" => 2,
         },
         "section2" => {
           "x.y.z" => "coco lala",
+        },
+        "section3" => {
+          "float" => 3.14,
+        },
+        "section4" => {
+          "bool1" => true,
+          "bool2" => false,
         },
       })
     end

@@ -55,10 +55,10 @@ module Crystal
         cr_ext = parsed["*.cr"]
         cr_ext["charset"].should eq("utf-8")
         cr_ext["end_of_line"].should eq("lf")
-        cr_ext["insert_final_newline"].should eq("true")
+        cr_ext["insert_final_newline"].should be_true
         cr_ext["indent_style"].should eq("space")
-        cr_ext["indent_size"].should eq("2")
-        cr_ext["trim_trailing_whitespace"].should eq("true")
+        cr_ext["indent_size"].should eq(2)
+        cr_ext["trim_trailing_whitespace"].should be_true
       end
     end
 
