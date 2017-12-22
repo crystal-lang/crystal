@@ -36,6 +36,48 @@ struct Complex < Number
     false
   end
 
+  # Returns `self`.
+  def to_c
+    self
+  end
+
+  # Returns the value as a `Float64` if possible (the imaginary part should be exactly zero),
+  # raises otherwise.
+  def to_f64
+    unless @imag.zero?
+      raise Exception.new "Complex number with non-zero imaginary part can't be converted to real number"
+    end
+    @real
+  end
+
+  # Returns the value as a `Float32` if possible (the imaginary part should be exactly zero),
+  # raises otherwise.
+  def to_f32
+    to_f64.to_f32
+  end
+
+  # See `#to_f64`.
+  def to_f
+    to_f64
+  end
+
+  # Returns the value as an `Int64` if possible (the imaginary part should be exactly zero),
+  # raises otherwise.
+  def to_i64
+    to_f64.to_i64
+  end
+
+  # Returns the value as a `Int32` if possible (the imaginary part should be exactly zero),
+  # raises otherwise.
+  def to_i32
+    to_i64.to_i32
+  end
+
+  # See `#to_i64`.
+  def to_i
+    to_i64
+  end
+
   # Writes this complex object to an *io*.
   #
   # ```
