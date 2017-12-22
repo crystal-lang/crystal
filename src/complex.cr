@@ -8,12 +8,15 @@
 #
 # Complex.new(1, 0)   # => 1.0 + 0.0i
 # Complex.new(5, -12) # => 5.0 - 12.0i
+#
+# 1.to_c # => 1.0 + 0.0i
+# 1.i    # => 0.0 + 1.0i
 # ```
 struct Complex < Number
-  # Returns the real part of self.
+  # Returns the real part.
   getter real : Float64
 
-  # Returns the image part of self.
+  # Returns the imaginary part.
   getter imag : Float64
 
   def initialize(real : Number, imag : Number)
@@ -125,12 +128,12 @@ struct Complex < Number
     self / abs
   end
 
-  # Returns the phase of self.
+  # Returns the phase of `self`.
   def phase
     Math.atan2(@imag, @real)
   end
 
-  # Returns a tuple with the abs value and the phase.
+  # Returns a `Tuple` with the `abs` value and the `phase`.
   #
   # ```
   # Complex.new(42, 2).polar # => {42.047592083257278, 0.047583103276983396}
@@ -139,7 +142,7 @@ struct Complex < Number
     {abs, phase}
   end
 
-  # Returns the conjugate of self.
+  # Returns the conjugate of `self`.
   #
   # ```
   # Complex.new(42, 2).conj  # => 42.0 - 2.0i
@@ -149,7 +152,7 @@ struct Complex < Number
     Complex.new(@real, -@imag)
   end
 
-  # Returns the inverse of self.
+  # Returns the inverse of `self`.
   def inv
     conj / abs2
   end
@@ -172,14 +175,10 @@ struct Complex < Number
            @imag.abs / Math.sqrt(2 * (r + @real))
          end
 
-    if @imag >= 0
-      Complex.new(re, im)
-    else
-      Complex.new(re, -im)
-    end
+    Complex.new(re, @imag >= 0 ? im : -im)
   end
 
-  # Calculates the exp of self.
+  # Calculates the exp of `self`.
   #
   # ```
   # Complex.new(4, 2).exp # => -22.720847417619233 + 49.645957334580565i
@@ -189,17 +188,17 @@ struct Complex < Number
     Complex.new(r * Math.cos(@imag), r * Math.sin(@imag))
   end
 
-  # Calculates the log of self.
+  # Calculates the log of `self`.
   def log
     Complex.new(Math.log(abs), phase)
   end
 
-  # Calculates the log2 of self.
+  # Calculates the log2 of `self`.
   def log2
     log / Math::LOG2
   end
 
-  # Calculates the log10 of self.
+  # Calculates the log10 of `self`.
   def log10
     log / Math::LOG10
   end
@@ -214,12 +213,12 @@ struct Complex < Number
     Complex.new(@real + other, @imag)
   end
 
-  # Returns the opposite of self.
+  # Returns the opposite of `self`.
   def -
     Complex.new(-@real, -@imag)
   end
 
-  # Removes the value from *other* to self.
+  # Removes the value of *other* from `self`.
   def -(other : Complex)
     Complex.new(@real - other.real, @imag - other.imag)
   end
