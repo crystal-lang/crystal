@@ -150,7 +150,7 @@ describe "Hash" do
     end
   end
 
-  describe "key" do
+  describe "key_for" do
     it "returns the first key with the given value" do
       hash = {"foo" => "bar", "baz" => "qux"}
       hash.key_for("bar").should eq("foo")
@@ -176,7 +176,7 @@ describe "Hash" do
     end
   end
 
-  describe "key?" do
+  describe "key_for?" do
     it "returns the first key with the given value" do
       hash = {"foo" => "bar", "baz" => "qux"}
       hash.key_for?("bar").should eq("foo")
