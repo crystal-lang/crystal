@@ -72,13 +72,13 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Client.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
-    def initialize(method : LibSSL::SSLMethod = Context.default_method)
-      super(method)
-
-      self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
+    def self.new(method : LibSSL::SSLMethod = Context.default_method)
+      context = new(method, secure: true)
+      context.verify_mode = OpenSSL::SSL::VerifyMode::PEER
       {% if LibSSL::OPENSSL_102 %}
-      self.default_verify_param = "ssl_client"
+      context.default_verify_param = "ssl_client"
       {% end %}
+      context
     end
 
     # Returns a new TLS client context with only the given method set.
@@ -86,7 +86,7 @@ abstract class OpenSSL::SSL::Context
     # For everything else this uses the defaults of your OpenSSL.
     # Use this only if undoing the defaults that `new` sets is too much hassle.
     def self.insecure(method : LibSSL::SSLMethod = Context.default_method)
-      super(method)
+      new(method, secure: false)
     end
 
     # Wraps the original certificate verification to also validate the
@@ -125,13 +125,13 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Server.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
-    def initialize(method : LibSSL::SSLMethod = Context.default_method)
-      super(method)
-
-      add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
+    def self.new(method : LibSSL::SSLMethod = Context.default_method)
+      context = new(method, secure: true)
+      context.add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
       {% if LibSSL::OPENSSL_102 %}
-      self.default_verify_param = "ssl_server"
+      context.default_verify_param = "ssl_server"
       {% end %}
+      context
     end
 
     # Returns a new TLS server context with only the given method set.
@@ -139,46 +139,34 @@ abstract class OpenSSL::SSL::Context
     # For everything else this uses the defaults of your OpenSSL.
     # Use this only if undoing the defaults that `new` sets is too much hassle.
     def self.insecure(method : LibSSL::SSLMethod = Context.default_method)
-      super(method)
+      new method, secure: false
     end
   end
 
-  protected def initialize(method : LibSSL::SSLMethod)
-    @handle = LibSSL.ssl_ctx_new(method)
-    raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
+  protected def self.new(method : LibSSL::SSLMethod, secure : Bool)
+    handle = LibSSL.ssl_ctx_new(method)
+    raise OpenSSL::Error.new("SSL_CTX_new") if handle.null?
+    context = new(handle)
 
-    set_default_verify_paths
+    if secure
+      context.set_default_verify_paths
+      context.add_options(OpenSSL::SSL::Options.flags(
+        ALL,
+        NO_SSL_V2,
+        NO_SSL_V3,
+        NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
+        SINGLE_ECDH_USE,
+        SINGLE_DH_USE
+      ))
+      context.add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+      context.ciphers = CIPHERS
+      context.set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
+    end
 
-    add_options(OpenSSL::SSL::Options.flags(
-      ALL,
-      NO_SSL_V2,
-      NO_SSL_V3,
-      NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
-      SINGLE_ECDH_USE,
-      SINGLE_DH_USE
-    ))
-
-    add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
-
-    self.ciphers = CIPHERS
-
-    set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
+    context
   end
 
-  # Overriding initialize or new in the child classes as public methods,
-  # makes it either impossible to access the parent versions or makes the parent
-  # versions public too. So to provide insecure in the child classes, we need
-  # a second constructor that we call from there without getting the
-  # overridden ones of the childs.
-  protected def _initialize_insecure(method : LibSSL::SSLMethod)
-    @handle = LibSSL.ssl_ctx_new(method)
-    raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
-  end
-
-  protected def self.insecure(method : LibSSL::SSLMethod)
-    obj = allocate
-    obj._initialize_insecure(method)
-    obj
+  protected def initialize(@handle : LibSSL::SSLContext)
   end
 
   def finalize
