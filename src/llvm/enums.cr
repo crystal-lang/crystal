@@ -134,7 +134,7 @@ module LLVM
       end
 
       def self.from_kind(kind)
-        @@kind_ids.key(kind)
+        @@kind_ids.key_for(kind)
       end
     end
   {% else %}
