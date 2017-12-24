@@ -581,6 +581,9 @@ describe Crystal::Formatter do
   assert_format "lib Foo\nend"
   assert_format "lib Foo\ntype  Foo  =   Bar\nend", "lib Foo\n  type Foo = Bar\nend"
   assert_format "lib Foo\nfun foo\nend", "lib Foo\n  fun foo\nend"
+  assert_format "lib Foo\n  fun Bar\nend"
+  assert_format "lib Foo\n  fun bar = Bar\nend"
+  assert_format "lib Foo\n  fun Foo = Bar\nend"
   assert_format "lib Foo\nfun foo  :  Int32\nend", "lib Foo\n  fun foo : Int32\nend"
   assert_format "lib Foo\nfun foo()  :  Int32\nend", "lib Foo\n  fun foo : Int32\nend"
   assert_format "lib Foo\nfun foo ()  :  Int32\nend", "lib Foo\n  fun foo : Int32\nend"
@@ -602,6 +605,9 @@ describe Crystal::Formatter do
   assert_format "lib Foo\nstruct Foo\nx  ,  y  :  Int32\nend\nend", "lib Foo\n  struct Foo\n    x, y : Int32\n  end\nend"
   assert_format "lib Foo\nstruct Foo\nx  ,  y  , z :  Int32\nend\nend", "lib Foo\n  struct Foo\n    x, y, z : Int32\n  end\nend"
   assert_format "lib Foo\nunion Foo\nend\nend", "lib Foo\n  union Foo\n  end\nend"
+
+  assert_format "SomeLib.UppercasedFunCall"
+  assert_format "SomeLib.UppercasedFunCall 1, 2"
 
   assert_format "enum Foo\nend"
   assert_format "enum Foo\nA  \nend", "enum Foo\n  A\nend"

@@ -104,7 +104,7 @@ class Process
         yield
         LibC._exit 0
       rescue ex
-        ex.inspect STDERR
+        ex.inspect_with_backtrace STDERR
         STDERR.flush
         LibC._exit 1
       ensure

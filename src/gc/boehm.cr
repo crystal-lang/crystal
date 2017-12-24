@@ -1,4 +1,7 @@
-@[Link("pthread")]
+{% unless flag?(:win32) %}
+  @[Link("pthread")]
+{% end %}
+
 {% if flag?(:freebsd) %}
   @[Link("gc-threaded")]
 {% else %}
@@ -54,10 +57,12 @@ lib LibGC
 
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
-  # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
-  fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
-  fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
-  fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
+  {% unless flag?(:win32) %}
+    # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
+    fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
+    fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
+    fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
+  {% end %}
 end
 
 module GC
@@ -77,7 +82,9 @@ module GC
   end
 
   def self.init
-    LibGC.set_handle_fork(1)
+    {% unless flag?(:win32) %}
+      LibGC.set_handle_fork(1)
+    {% end %}
     LibGC.init
   end
 
@@ -146,22 +153,24 @@ module GC
     )
   end
 
-  # :nodoc:
-  def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
-    LibGC.pthread_create(thread, attr, start, arg)
-  end
+  {% unless flag?(:win32) %}
+    # :nodoc:
+    def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
+      LibGC.pthread_create(thread, attr, start, arg)
+    end
 
-  # :nodoc:
-  def self.pthread_join(thread : LibC::PthreadT) : Void*
-    ret = LibGC.pthread_join(thread, out value)
-    raise Errno.new("pthread_join") unless ret == 0
-    value
-  end
+    # :nodoc:
+    def self.pthread_join(thread : LibC::PthreadT) : Void*
+      ret = LibGC.pthread_join(thread, out value)
+      raise Errno.new("pthread_join") unless ret == 0
+      value
+    end
 
-  # :nodoc:
-  def self.pthread_detach(thread : LibC::PthreadT)
-    LibGC.pthread_detach(thread)
-  end
+    # :nodoc:
+    def self.pthread_detach(thread : LibC::PthreadT)
+      LibGC.pthread_detach(thread)
+    end
+  {% end %}
 
   # :nodoc:
   def self.stack_bottom

@@ -2286,6 +2286,16 @@ module Crystal
       add_def getter
     end
 
+    def lookup_var(name)
+      a_def = lookup_first_def(name, false)
+      return nil unless a_def
+
+      body = a_def.body
+      return nil unless body.is_a?(Primitive) && body.name == "external_var_get"
+
+      a_def
+    end
+
     def type_desc
       "lib"
     end

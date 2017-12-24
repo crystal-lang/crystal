@@ -2400,32 +2400,46 @@ module Crystal
     end
 
     def visit(node : PointerOf)
-      var = case node_exp = node.exp
-            when Var
-              meta_var = @meta_vars[node_exp.name]
-              meta_var.assigned_to = true
-              meta_var
-            when InstanceVar
-              lookup_instance_var node_exp
-            when ClassVar
-              visit_class_var node_exp
-            when Global
-              visit_global node_exp
-            when Path
-              node_exp.accept self
-              if const = node_exp.target_const
-                const.value
-              else
-                node_exp.raise "can't take address of #{node_exp}"
-              end
-            when ReadInstanceVar
-              visit_read_instance_var(node_exp)
-              node_exp
-            else
-              node_exp.raise "can't take address of #{node_exp}"
-            end
+      var = pointerof_var(node)
+      node.exp.raise "can't take address of #{node.exp}" unless var
       node.bind_to var
       true
+    end
+
+    def pointerof_var(node)
+      case exp = node.exp
+      when Var
+        meta_var = @meta_vars[exp.name]
+        meta_var.assigned_to = true
+        meta_var
+      when InstanceVar
+        lookup_instance_var exp
+      when ClassVar
+        visit_class_var exp
+      when Global
+        visit_global exp
+      when Path
+        exp.accept self
+        if const = exp.target_const
+          const.value
+        end
+      when ReadInstanceVar
+        visit_read_instance_var(exp)
+        exp
+      when Call
+        # Check lib external var
+        return unless exp.args.empty? && !exp.named_args && !exp.block && !exp.block_arg
+
+        obj = exp.obj
+        return unless obj
+
+        obj.accept(self)
+
+        obj_type = obj.type?
+        return unless obj_type.is_a?(LibType)
+
+        obj_type.lookup_var(exp.name)
+      end
     end
 
     def visit(node : TypeOf)
