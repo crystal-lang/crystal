@@ -18,17 +18,17 @@ class Dir
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # **options:**
-  # * *allow_dots*: Match hidden files if `true` (default: `false`).
+  # * *match_hidden*: Match hidden files if `true` (default: `false`).
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns, **options) : Array(String)
-    glob(patterns, **options)
+  def self.glob(*patterns, match_hidden = false) : Array(String)
+    glob(patterns, match_hidden: match_hidden)
   end
 
   # ditto
-  def self.glob(patterns : Enumerable(String), **options) : Array(String)
+  def self.glob(patterns : Enumerable(String), match_hidden = false) : Array(String)
     paths = [] of String
-    glob(patterns, **options) do |path|
+    glob(patterns, match_hidden: match_hidden) do |path|
       paths << path
     end
     paths
@@ -39,18 +39,18 @@ class Dir
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # **options:**
-  # * *allow_dots*: Match hidden files if `true` (default: `false`).
+  # * *match_hidden*: Match hidden files if `true` (default: `false`).
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns, **options, &block : String -> _)
-    glob(patterns, **options) do |path|
+  def self.glob(*patterns, match_hidden = false, &block : String -> _)
+    glob(patterns, match_hidden: match_hidden) do |path|
       yield path
     end
   end
 
   # ditto
-  def self.glob(patterns : Enumerable(String), **options, &block : String -> _)
-    Globber.new(**options).glob(patterns) do |path|
+  def self.glob(patterns : Enumerable(String), match_hidden = false, &block : String -> _)
+    Globber.new(match_hidden: match_hidden).glob(patterns) do |path|
       yield path
     end
   end
@@ -74,9 +74,9 @@ class Dir
     end
     alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
 
-    property? allow_dots
+    property? match_hidden
 
-    def initialize(@allow_dots = false)
+    def initialize(@match_hidden = false)
     end
 
     def glob(patterns : Enumerable(String), &block : String -> _)
@@ -226,7 +226,7 @@ class Dir
 
             if entry = dir.try(&.read)
               next if {".", ".."}.includes?(entry)
-              next if entry[0] == '.' && !allow_dots?
+              next if entry[0] == '.' && !match_hidden?
 
               if dir_path.bytesize == 0
                 fullpath = entry

@@ -294,9 +294,9 @@ describe "Dir" do
       ]
     end
 
-    context "allow_dots: true" do
+    context "match_hidden: true" do
       it "matches hidden files" do
-        Dir.glob("#{__DIR__}/data/dir/dots/**/*", allow_dots: true).sort.should eq [
+        Dir.glob("#{__DIR__}/data/dir/dots/**/*", match_hidden: true).sort.should eq [
           File.join(__DIR__, "data", "dir", "dots", ".dot.hidden"),
           File.join(__DIR__, "data", "dir", "dots", ".hidden"),
           File.join(__DIR__, "data", "dir", "dots", ".hidden", "f1.txt"),
