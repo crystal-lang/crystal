@@ -47,7 +47,9 @@ describe "Dir" do
       ex = expect_raises(Errno, /Error determining size of/) do
         Dir.empty?(datapath("dir", "f1.txt", "/"))
       end
-      ex.errno.should eq(Errno::ENOTDIR)
+      {% unless flag?(:win32) %}
+        ex.errno.should eq(Errno::ENOTDIR)
+      {% end %}
     end
   end
 
@@ -230,15 +232,18 @@ describe "Dir" do
     end
 
     it "tests with relative path (starts with ..)" do
-      base_path = File.join("..", File.basename(Dir.current), "spec", "std", "data", "dir")
-      Dir["../#{File.basename(Dir.current)}/#{datapath}/dir/*/"].sort.should eq [
-        File.join(base_path, "dots", ""),
-        File.join(base_path, "subdir", ""),
-        File.join(base_path, "subdir2", ""),
-      ].sort
+      Dir.cd(datapath) do
+        base_path = "../../../spec/std/data/dir"
+        Dir["#{base_path}/*/"].sort.should eq [
+          File.join(base_path, "dots", ""),
+          File.join(base_path, "subdir", ""),
+          File.join(base_path, "subdir2", ""),
+        ].sort
+      end
     end
 
-    it "tests with relative path starting recursive" do
+    # TODO: This spec is broken on win32 because of `raise` weirdness on windows
+    pending_win32 "tests with relative path starting recursive" do
       Dir["**/dir/*/"].sort.should eq [
         datapath("dir", "dots", ""),
         datapath("dir", "subdir", ""),
@@ -268,14 +273,8 @@ describe "Dir" do
       Dir[""].should eq [] of String
     end
 
-    it "root pattern" do
-      Dir["/"].should eq [
-        {% if flag?(:windows) %}
-          "C:\\"
-        {% else %}
-          "/"
-        {% end %},
-      ]
+    pending_win32 "root pattern" do
+      Dir["/"].should eq ["/"]
     end
 
     it "pattern ending with .." do

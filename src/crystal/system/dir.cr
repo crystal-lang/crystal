@@ -29,6 +29,8 @@ end
 
 {% if flag?(:unix) %}
   require "./unix/dir"
+{% elsif flag?(:win32) %}
+  require "./win32/dir"
 {% else %}
   {% raise "No implementation of Crystal::System::Dir available" %}
 {% end %}

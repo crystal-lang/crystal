@@ -39,4 +39,6 @@ lib LibC
   ENOTEMPTY    = 41
   EILSEQ       = 42
   STRUNCATE    = 80
+
+  alias ErrnoT = Int
 end
