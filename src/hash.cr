@@ -357,6 +357,38 @@ class Hash(K, V)
     KeyIterator(K, V).new(self, @first)
   end
 
+  # Calls the given block for each matching value and passes in the key.
+  #
+  # ```
+  # h = {"foo" => "bar", "baz" => "qux"}
+  # h.each_key_for("qux") do |key|
+  #   key # => "baz"
+  # end
+  # # Note that "foo" is not included.
+  # ```
+  def each_key_for(value)
+    each do |k, v|
+      yield k if v == value
+    end
+  end
+
+  # Returns an iterator over the keys with a value matching the input value.
+  # Which behaves like an `Iterator` consisting of the key's types.
+  #
+  # ```
+  # h = {"one" => 1, "two" => 2, "dos" => 2}
+  # iterator = h.each_key_for(2)
+  #
+  # key = iterator.next
+  # key # => "two"
+  #
+  # key = iterator.next
+  # key # => "dos"
+  # ```
+  def each_key_for(value)
+    self.select { |k, v| v == value }.each_key
+  end
+
   # Calls the given block for each key-value pair and passes in the value.
   #
   # ```

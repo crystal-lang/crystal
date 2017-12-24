@@ -634,6 +634,69 @@ describe "Hash" do
     iter.next.should eq(1)
   end
 
+  describe "each_key_for" do
+    context "when no block is given" do
+      it "returns an Iterator" do
+        hash = {"one" => 1, "two" => 2, "dos" => 2}
+        hash.each_key_for(0).should be_a(Iterator(String))
+        hash.each_key_for(1).should be_a(Iterator(String))
+        hash.each_key_for(2).should be_a(Iterator(String))
+      end
+
+      it "gets each matching key iterator" do
+        iter = {"one" => 1, "two" => 2, "dos" => 2}.each_key_for(2)
+        iter.next.should eq("two")
+        iter.next.should eq("dos")
+        iter.next.should be_a(Iterator::Stop)
+
+        iter.rewind
+        iter.next.should eq("two")
+      end
+    end
+
+    context "when a block is given" do
+      it "returns nil" do
+        hash = {"one" => 1, "two" => 2, "dos" => 2}
+        hash.each_key do |key|
+          key
+        end.should be_nil
+      end
+    end
+
+    it "works for zero results" do
+      hash = {"one" => 1, "two" => 2, "dos" => 2}
+      input, expected = 0, [] of String
+      results = [] of String
+      hash.each_key_for(input) do |key|
+        results << key
+      end.should be_nil
+      results.should eq expected
+      hash.each_key_for(input).to_a.should eq expected
+    end
+
+    it "works for one result" do
+      hash = {"one" => 1, "two" => 2, "dos" => 2}
+      input, expected = 1, ["one"]
+      results = [] of String
+      hash.each_key_for(input) do |key|
+        results << key
+      end.should be_nil
+      results.should eq expected
+      hash.each_key_for(input).to_a.should eq expected
+    end
+
+    it "works for multiple results" do
+      hash = {"one" => 1, "two" => 2, "dos" => 2}
+      input, expected = 2, ["two", "dos"]
+      results = [] of String
+      hash.each_key_for(input) do |key|
+        results << key
+      end.should be_nil
+      results.should eq expected
+      hash.each_key_for(input).to_a.should eq expected
+    end
+  end
+
   describe "each_with_index" do
     it "pass key, value, index values into block" do
       hash = {2 => 4, 5 => 10, 7 => 14}
