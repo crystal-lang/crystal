@@ -17,8 +17,7 @@ class Dir
   #
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
-  # **options:**
-  # * *match_hidden*: Match hidden files if `true` (default: `false`).
+  # If *match_hidden* is `true` the pattern will match hidden files and folders.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
   def self.glob(*patterns, match_hidden = false) : Array(String)
@@ -38,8 +37,7 @@ class Dir
   #
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
-  # **options:**
-  # * *match_hidden*: Match hidden files if `true` (default: `false`).
+  # If *match_hidden* is `true` the pattern will match hidden files and folders.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
   def self.glob(*patterns, match_hidden = false, &block : String -> _)
