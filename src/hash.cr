@@ -386,7 +386,7 @@ class Hash(K, V)
   # key # => "dos"
   # ```
   def each_key_for(value)
-    self.select { |k, v| v == value }.each_key
+    each.select { |(k, v)| v == value }.map &.first
   end
 
   # Calls the given block for each key-value pair and passes in the value.
