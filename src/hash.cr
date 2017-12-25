@@ -976,7 +976,7 @@ class Hash(K, V)
 
   private class KeyForValueIterator(K, V) < KeyIterator(K, V)
     @value : V
-    
+
     def initialize(@hash, @current, @value)
     end
 
