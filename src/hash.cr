@@ -386,7 +386,7 @@ class Hash(K, V)
   # key # => "dos"
   # ```
   def each_key_for(value)
-    each.select { |(k, v)| v == value }.map &.first
+    KeyForValueIterator(K, V).new(self, @first, value)
   end
 
   # Calls the given block for each key-value pair and passes in the value.
@@ -971,6 +971,27 @@ class Hash(K, V)
 
     def next
       base_next &.key
+    end
+  end
+
+  private class KeyForValueIterator(K, V) < KeyIterator(K, V)
+    @value : V
+    
+    def initialize(@hash, @current, @value)
+    end
+
+    def next
+      current = @current
+      while current
+        if current.value == @value
+          @current = current.fore
+          return current.key
+        else
+          current = current.fore
+        end
+      end
+      @current = current
+      stop
     end
   end
 
