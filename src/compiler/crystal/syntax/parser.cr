@@ -1595,6 +1595,7 @@ module Crystal
 
     def parse_parenthesized_expression
       location = @token.location
+      slash_is_regex!
       next_token_skip_space_or_newline
 
       if @token.type == :")"
