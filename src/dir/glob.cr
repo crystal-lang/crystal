@@ -48,13 +48,13 @@ class Dir
 
   # ditto
   def self.glob(patterns : Enumerable(String), match_hidden = false, &block : String -> _)
-    Globber.new(match_hidden: match_hidden).glob(patterns) do |path|
+    Globber.glob(patterns, match_hidden: match_hidden) do |path|
       yield path
     end
   end
 
   # :nodoc:
-  struct Globber
+  module Globber
     record DirectoriesOnly
     record ConstantEntry, path : String
     record EntryMatch, pattern : String do
@@ -72,24 +72,19 @@ class Dir
     end
     alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
 
-    property? match_hidden
-
-    def initialize(@match_hidden = false)
-    end
-
-    def glob(patterns : Enumerable(String), &block : String -> _)
+    def self.glob(patterns : Enumerable(String), **options, &block : String -> _)
       patterns.each do |pattern|
         sequences = compile(pattern)
 
         sequences.each do |sequence|
-          run(sequence) do |match|
+          run(sequence, options) do |match|
             yield match
           end
         end
       end
     end
 
-    private def compile(pattern)
+    private def self.compile(pattern)
       expanded_patterns = [] of String
       File.expand_brace_pattern(pattern, expanded_patterns)
 
@@ -98,7 +93,7 @@ class Dir
       end
     end
 
-    private def single_compile(glob)
+    private def self.single_compile(glob)
       list = [] of PatternType
       return list if glob.empty?
 
@@ -141,7 +136,7 @@ class Dir
       list
     end
 
-    private def constant_entry?(file)
+    private def self.constant_entry?(file)
       file.each_char do |char|
         return false if char == '*' || char == '?'
       end
@@ -149,7 +144,7 @@ class Dir
       true
     end
 
-    private def run(sequence, &block : String -> _)
+    private def self.run(sequence, options, &block : String -> _)
       return if sequence.empty?
 
       path_stack = [] of Tuple(Int32, String?)
@@ -224,7 +219,7 @@ class Dir
 
             if entry = dir.try(&.read)
               next if {".", ".."}.includes?(entry)
-              next if entry[0] == '.' && !match_hidden?
+              next if entry[0] == '.' && !options[:match_hidden]
 
               if dir_path.bytesize == 0
                 fullpath = entry
@@ -262,7 +257,7 @@ class Dir
       end
     end
 
-    private def root
+    private def self.root
       # TODO: better implementation for windows?
       {% if flag?(:windows) %}
       "C:\\"
@@ -271,7 +266,7 @@ class Dir
       {% end %}
     end
 
-    private def dir?(path)
+    private def self.dir?(path)
       return true unless path
       stat = File.lstat(path)
       stat.directory? && !stat.symlink?
@@ -279,14 +274,14 @@ class Dir
       false
     end
 
-    private def join(path, entry)
+    private def self.join(path, entry)
       return entry unless path
       return "#{root}#{entry}" if path == File::SEPARATOR_STRING
 
       File.join(path, entry)
     end
 
-    private def each_child(path)
+    private def self.each_child(path)
       Dir.each_child(path || Dir.current) do |entry|
         yield entry
       end
