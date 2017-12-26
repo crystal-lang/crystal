@@ -32,7 +32,7 @@ module Spec
         attributes = {
           tests:  @results.size,
           errors: @summary[:error]? || 0,
-          failed: @summary[:fail]? || 0,
+          failures: @summary[:fail]? || 0,
         }
 
         xml.element("testsuite", attributes) do
