@@ -164,7 +164,7 @@ with_build_env() {
     -u $(id -u) \
     -v $(pwd):/mnt \
     -w /mnt \
-    -e LIBRARY_PATH="/opt/crystal/embedded/lib/" \
+    -e LIBRARY_PATH="${ARCH_LIBRARY_PATH:-/usr/lib/crystal/lib/}" \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     "jhass/crystal-build-$ARCH" \
     "$ARCH_CMD" /bin/bash -c "'$command'"
