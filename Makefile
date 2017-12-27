@@ -29,8 +29,8 @@ SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
-EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
-SHELL = bash
+EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=$PWD/src)
+SHELL = sh
 LLVM_CONFIG_FINDER := \
   [ -n "$(LLVM_CONFIG)" ] && command -v "$(LLVM_CONFIG)" || \
   command -v llvm-config-4.0 || command -v llvm-config40 || \
@@ -118,7 +118,7 @@ $(O)/crystal: $(DEPS) $(SOURCES)
 	$(BUILD_PATH) $(EXPORTS) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
-	$(CXX) -c $(CXXFLAGS) -o $@ $< `$(LLVM_CONFIG) --cxxflags`
+	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
 
 $(LIB_CRYSTAL_TARGET): $(LIB_CRYSTAL_OBJS)
 	$(AR) -rcs $@ $^

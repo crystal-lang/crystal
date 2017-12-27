@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 fail() {
   echo "${@}" >&2
@@ -90,8 +90,8 @@ build() {
 }
 
 deploy() {
-  export CURRENT_TAG=`git describe --tags --exact-match 2> /dev/null`
-  export GIT_VERSION=`git describe --tags --long --always 2>/dev/null`
+  export CURRENT_TAG=$(git describe --tags --exact-match 2> /dev/null)
+  export GIT_VERSION=$(git describe --tags --long --always 2>/dev/null)
   on_deploy 'echo $GIT_VERSION > docs/revision.txt'
 
   on_deploy aws s3 sync docs/ s3://crystal-api/api/$TRAVIS_BRANCH
@@ -162,32 +162,34 @@ with_build_env() {
   on_linux docker run \
     --rm -t \
     -u $(id -u) \
-    -v $(pwd):/mnt \
+    -v $PWD:/mnt \
     -w /mnt \
     -e LIBRARY_PATH="${ARCH_LIBRARY_PATH:-/usr/lib/crystal/lib/}" \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     "jhass/crystal-build-$ARCH" \
-    "$ARCH_CMD" /bin/bash -c "'$command'"
+    "$ARCH_CMD" /bin/sh -c "'$command'"
 
   on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
-    /bin/bash -c "'$command'"
+    /bin/sh -c "'$command'"
 
 }
 
 usage() {
-  echo -e "bin/ci [-h|--help] command [parameter ...]"
-  echo -e ""
-  echo -e "Helper script to prepare and run the testsuite on Travis CI."
-  echo -e ""
-  echo -e "Commands:"
-  echo -e "  prepare_system          setup any necessaries repositories etc."
-  echo -e "  prepare_build           download and extract any dependencies needed for the build"
-  echo -e "  build                   run specs, build crystal, run format check, build samples, build the docs"
-  echo -e "  deploy                  deploy the docs"
-  echo -e "  with_build_env command  run command in the build environment"
-  echo -e "  help                    display this"
-  echo -e ""
+  cat <<EOF
+bin/ci [-h|--help] command [parameter ...]
+
+Helper script to prepare and run the testsuite on Travis CI.
+
+Commands:
+  prepare_system          setup any necessaries repositories etc.
+  prepare_build           download and extract any dependencies needed for the build
+  build                   run specs, build crystal, run format check, build samples, build the docs
+  deploy                  deploy the docs
+  with_build_env command  run command in the build environment
+  help                    display this
+
+EOF
 }
 
 command="$1"
