@@ -2140,6 +2140,10 @@ module Crystal
     @instantiations = {} of Array(NamedArgumentType) => Type
 
     def instantiate(type_vars)
+      if type_vars.size == 1 && (param = type_vars.first?).is_a?(TypeParameter) && param.name == "T"
+        return self
+      end
+
       raise "can't instantiate NamedTuple type yet"
     end
 
