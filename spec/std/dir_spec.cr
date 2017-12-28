@@ -234,7 +234,7 @@ describe "Dir" do
     filenames = [] of String
 
     dir = Dir.new(__DIR__)
-    dir.each_entry do |filename|
+    dir.each do |filename|
       filenames << filename
     end.should be_nil
     dir.close
@@ -246,7 +246,7 @@ describe "Dir" do
     filenames = [] of String
 
     Dir.open(__DIR__) do |dir|
-      dir.each_entry do |filename|
+      dir.each do |filename|
         filenames << filename
       end.should be_nil
     end
@@ -272,7 +272,7 @@ describe "Dir" do
   it "gets dir iterator" do
     filenames = [] of String
 
-    iter = Dir.new(__DIR__).each_entry
+    iter = Dir.new(__DIR__).each
     iter.each do |filename|
       filenames << filename
     end
