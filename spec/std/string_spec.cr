@@ -925,6 +925,8 @@ describe "String" do
     it { "foobar".starts_with?("").should be_true }
     it { "foobar".starts_with?("foobarbaz").should be_false }
     it { "foobar".starts_with?("foox").should be_false }
+    it { "foobar".starts_with?(/foo/).should be_true }
+    it { "foobar".starts_with?(/bar/).should be_false }
     it { "foobar".starts_with?('f').should be_true }
     it { "foobar".starts_with?('g').should be_false }
     it { "よし".starts_with?('よ').should be_true }
