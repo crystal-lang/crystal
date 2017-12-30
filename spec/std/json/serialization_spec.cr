@@ -162,6 +162,13 @@ describe "JSON serialization" do
         end
         ex.location.should eq({2, 3})
       end
+
+      it "shows which attribute causes an exception" do
+        ex = expect_raises(JSON::ParseException) do
+          NamedTuple(foo: Int32, bar: String).from_json(%({"foo":1,"bar":42}))
+        end
+        ex.message.should eq "Error parsing attribute bar of NamedTuple(foo: Int32, bar: String): Expected string but was int at 1:18"
+      end
     end
   end
 

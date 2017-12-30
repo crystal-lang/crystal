@@ -154,13 +154,17 @@ def NamedTuple.new(pull : JSON::PullParser)
     location = pull.location
 
     pull.read_object do |key|
-      case key
-        {% for key, type in T %}
-          when {{key.stringify}}
-            %var{key.id} = {{type}}.new(pull)
-        {% end %}
-      else
-        pull.skip
+      begin
+        case key
+          {% for key, type in T %}
+            when {{key.stringify}}
+              %var{key.id} = {{type}}.new(pull)
+          {% end %}
+        else
+          pull.skip
+        end
+      rescue ex : JSON::ParseException
+        raise ::JSON::ParseException.new("Error parsing attribute #{key} of #{self}: #{ex.message}", *location, false)
       end
     end
 

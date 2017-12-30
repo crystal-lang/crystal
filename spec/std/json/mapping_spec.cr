@@ -3,8 +3,9 @@ require "json"
 
 private class JSONPerson
   JSON.mapping({
-    name: {type: String},
-    age:  {type: Int32, nilable: true},
+    name:    {type: String},
+    age:     {type: Int32, nilable: true},
+    user_id: {type: Int32 | String, nilable: true},
   })
 
   def_equals name, age
@@ -464,6 +465,45 @@ describe "JSON mapping" do
       json.first_name_present?.should be_true
       json.last_name.should be_nil
       json.last_name_present?.should be_false
+    end
+  end
+
+  describe "parses JSON with unexpected types" do
+    it "raises exception when String is expected but Int32 is given" do
+      ex = expect_raises JSON::ParseException do
+        JSONPerson.from_json <<-JSON
+          {
+            "name": 42,
+            "age": 30,
+          }
+          JSON
+      end
+      ex.message.should eq "Error parsing attribute JSONPerson.name: Expected string but was int at 2:13"
+    end
+
+    it "raises exception when Int32 is expected but String is given" do
+      ex = expect_raises JSON::ParseException do
+        JSONPerson.from_json <<-JSON
+          {
+            "name": "John",
+            "age": "30",
+          }
+          JSON
+      end
+      ex.message.should eq "Error parsing attribute JSONPerson.age: Expected int but was string at 3:14"
+    end
+
+    it "raises exception when (Int32 | String) is expected but Bool is given" do
+      ex = expect_raises JSON::ParseException do
+        JSONPerson.from_json <<-JSON
+          {
+            "name": "John",
+            "age": 30,
+            "user_id": true
+          }
+          JSON
+      end
+      ex.message.should eq "Error parsing attribute JSONPerson.user_id: Couldn't parse (Int32 | String) from true at 4:14"
     end
   end
 end
