@@ -169,10 +169,22 @@ module Crystal
 
     private def cant_find_file(filename, relative_to)
       if relative_to
-        raise Error.new("can't find file '#{filename}' relative to '#{relative_to}'")
+        error = "can't find file '#{filename}' relative to '#{relative_to}'"
       else
-        raise Error.new("can't find file '#{filename}'")
+        error = "can't find file '#{filename}'"
       end
+
+      unless filename.starts_with? '.'
+        error = <<-NOTE
+          #{error}
+
+          Looks like you're trying to require a shard.
+          - Did you remember to run `shards install`?
+          - Did you make sure you're running the compiler in the same directory as your shard.yml?
+          NOTE
+      end
+
+      raise Error.new(error)
     end
   end
 end
