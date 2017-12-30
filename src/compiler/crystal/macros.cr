@@ -100,13 +100,13 @@ module Crystal::Macros
 
   # Skips the rest of the file from which it is executed.
   # Typical usage is to skip files that have platform specific code,
-  # without having to surround the most relevant code in `{% if flag %} ... {% end %}` macro blocks.
+  # without having to surround the most relevant code in `{% if flag?(...) %} ... {% end %}` macro blocks.
   #
   # Example:
   #
   # ```
   # # sth_for_osx.cr
-  # {% skip_file unless flag?(:darwin) %}
+  # {% skip_file() unless flag?(:darwin) %}
   #
   # # Class FooForMac will only be defined if we're compiling on OS X
   # class FooForMac
