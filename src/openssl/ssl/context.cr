@@ -132,6 +132,8 @@ abstract class OpenSSL::SSL::Context
       {% if LibSSL::OPENSSL_102 %}
       self.default_verify_param = "ssl_server"
       {% end %}
+
+      set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
     end
 
     # Returns a new TLS server context with only the given method set.
@@ -161,8 +163,6 @@ abstract class OpenSSL::SSL::Context
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
 
     self.ciphers = CIPHERS
-
-    set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
   end
 
   # Overriding initialize or new in the child classes as public methods,
