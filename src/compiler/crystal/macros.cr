@@ -106,7 +106,7 @@ module Crystal::Macros
   #
   # ```
   # # sth_for_osx.cr
-  # {% skip_file() unless flag?(:darwin) %}
+  # {% skip_file unless flag?(:darwin) %}
   #
   # # Class FooForMac will only be defined if we're compiling on OS X
   # class FooForMac
