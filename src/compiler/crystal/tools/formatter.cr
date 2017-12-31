@@ -2457,13 +2457,20 @@ module Crystal
         if @token.type == :","
           next_token
           found_comment |= skip_space(column + 2, write_comma: true)
-          found_comment |= skip_space_or_newline(column + 2)
-          if has_newlines
-            unless found_comment
-              write ","
-              write_line
-            end
+          if @token.type == :NEWLINE && has_newlines
+            write ","
+            write_line
             write_indent(column)
+            skip_space_or_newline(column + 2)
+          else
+            found_comment |= skip_space_or_newline(column + 2)
+            if has_newlines
+              unless found_comment
+                write ","
+                write_line
+              end
+              write_indent(column)
+            end
           end
         elsif found_comment
           write_indent(column)
