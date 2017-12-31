@@ -1173,9 +1173,23 @@ describe "String" do
       string.bytesize.should eq("あいのえお".bytesize)
     end
 
+    it "subs at negative index with char" do
+      string = "abc".sub(-1, 'd')
+      string.should eq("abd")
+      string = string.sub(-2, 'n')
+      string.should eq("and")
+    end
+
     it "subs at index with string" do
       string = "hello".sub(1, "eee")
       string.should eq("heeello")
+      string.bytesize.should eq(7)
+      string.size.should eq(7)
+    end
+
+    it "subs at negative index with string" do
+      string = "hello".sub(-1, "ooo")
+      string.should eq("hellooo")
       string.bytesize.should eq(7)
       string.size.should eq(7)
     end

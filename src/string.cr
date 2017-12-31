@@ -1857,7 +1857,7 @@ class String
   end
 
   private def sub_index(index, replacement)
-    index += size + 1 if index < 0
+    index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
     raise IndexError.new unless byte_index
