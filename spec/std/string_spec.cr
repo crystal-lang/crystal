@@ -2361,7 +2361,7 @@ describe "String" do
     end
   end
 
-  describe "invalide utf-8 byte sequence" do
+  describe "invalid UTF-8 byte sequence" do
     it "gets size" do
       string = String.new(Bytes[255, 0, 0, 0, 65])
       string.size.should eq(5)
