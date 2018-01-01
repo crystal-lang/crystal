@@ -1248,6 +1248,10 @@ describe "String" do
       s.gsub('x', "yz").should be(s)
     end
 
+    it "gsubs char with char in non-ascii string" do
+      "/ä".gsub('/', '-').should eq("-ä")
+    end
+
     it "gsubs char with string depending on the char" do
       replaced = "foobar".gsub do |char|
         case char
