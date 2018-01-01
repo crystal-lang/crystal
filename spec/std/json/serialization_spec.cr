@@ -91,6 +91,18 @@ describe "JSON serialization" do
       big.should eq(BigFloat.new("1234"))
     end
 
+    it "does for BigDecimal from int" do
+      big = BigDecimal.from_json("1234")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234"))
+    end
+
+    it "does for BigDecimal from int" do
+      big = BigDecimal.from_json("1234.05")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234.05"))
+    end
+
     it "does for Enum with number" do
       JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
 
