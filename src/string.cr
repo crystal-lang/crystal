@@ -4065,44 +4065,29 @@ class String
     result ? result.to_s : self
   end
 
+  # Returns the bytesize of an UTF-8 sequence starting at byte_index,
+  # see https://en.wikipedia.org/wiki/UTF-8#Description for bit patterns.
+  # Returns 1 if there is no valid UTF-8 sequence starting at byte_index.
   protected def char_bytesize_at(byte_index)
-    first = unsafe_byte_at(byte_index)
-
-    if first < 0x80
-      return 1
+    case unsafe_byte_at(byte_index)
+    when 0b0_0000000..0b0_1111111
+      1
+    when 0b110_00000..0b110_11111
+      subsequent_utf8_byte_at?(byte_index + 1) ? 2 : 1
+    when 0b1110_0000..0b1110_1111
+      subsequent_utf8_byte_at?(byte_index + 1) &&
+        subsequent_utf8_byte_at?(byte_index + 2) ? 3 : 1
+    when 0b11110_000..0b11110_111
+      subsequent_utf8_byte_at?(byte_index + 1) &&
+        subsequent_utf8_byte_at?(byte_index + 2) &&
+        subsequent_utf8_byte_at?(byte_index + 3) ? 4 : 1
+    else
+      1
     end
+  end
 
-    if first < 0xc2
-      return 1
-    end
-
-    second = unsafe_byte_at(byte_index + 1)
-    if (second & 0xc0) != 0x80
-      return 1
-    end
-
-    if first < 0xe0
-      return 2
-    end
-
-    third = unsafe_byte_at(byte_index + 2)
-    if (third & 0xc0) != 0x80
-      return 2
-    end
-
-    if first < 0xf0
-      return 3
-    end
-
-    if first == 0xf0 && second < 0x90
-      return 3
-    end
-
-    if first == 0xf4 && second >= 0x90
-      return 3
-    end
-
-    return 4
+  private def subsequent_utf8_byte_at?(byte_index)
+    0b10_000000 <= unsafe_byte_at(byte_index) <= 0b10_111111
   end
 
   protected def size_known?
