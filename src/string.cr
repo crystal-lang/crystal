@@ -4150,11 +4150,11 @@ class String
     pointerof(@c)
   end
 
-  def unsafe_byte_slice(byte_offset, count)
+  protected def unsafe_byte_slice(byte_offset, count)
     Slice.new(to_unsafe + byte_offset, count, read_only: true)
   end
 
-  def unsafe_byte_slice(byte_offset)
+  protected def unsafe_byte_slice(byte_offset)
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset, read_only: true)
   end
 

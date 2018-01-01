@@ -469,7 +469,7 @@ class File < IO::FileDescriptor
           byte_count -= 1
         end
 
-        str.write part.unsafe_byte_slice(byte_start, byte_count)
+        str.write part.to_slice[byte_start, byte_count]
       end
     end
   end
