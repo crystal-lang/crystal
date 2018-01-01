@@ -900,7 +900,7 @@ class String
     end
   end
 
-  def unsafe_byte_at(index)
+  protected def unsafe_byte_at(index)
     to_unsafe[index]
   end
 

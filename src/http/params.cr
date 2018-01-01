@@ -38,7 +38,7 @@ module HTTP
       first_equal = true
       bytesize = query.bytesize
       while i < bytesize
-        byte = query.unsafe_byte_at(i)
+        byte = query.to_unsafe[i]
         char = byte.unsafe_chr
 
         case char
