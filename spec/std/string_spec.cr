@@ -1679,6 +1679,7 @@ describe "String" do
       "hello".tr("helo", "1212").should eq("12112")
       "this".tr("this", "ⓧ").should eq("ⓧⓧⓧⓧ")
       "über".tr("ü", "u").should eq("uber")
+      "foo bär".tr(" ", "-").should eq("foo-bär")
     end
 
     context "given no replacement characters" do
