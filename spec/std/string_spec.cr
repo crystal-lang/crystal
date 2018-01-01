@@ -1636,6 +1636,12 @@ describe "String" do
     "hello".byte_at?(5).should be_nil
   end
 
+  describe "unsafe_byte_at" do
+    it "returns the byte at the given index" do
+      "hello".unsafe_byte_at(1).should eq('e'.ord)
+    end
+  end
+
   it "does chars" do
     "ぜんぶ".chars.should eq(['ぜ', 'ん', 'ぶ'])
   end
