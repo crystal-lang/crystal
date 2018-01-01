@@ -195,7 +195,7 @@ describe "String" do
     end
   end
 
-  describe "i" do
+  describe "to_i" do
     it { "1234".to_i.should eq(1234) }
     it { "   +1234   ".to_i.should eq(1234) }
     it { "   -1234   ".to_i.should eq(-1234) }
