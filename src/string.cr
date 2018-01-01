@@ -4069,23 +4069,23 @@ class String
   # see https://en.wikipedia.org/wiki/UTF-8#Description for bit patterns.
   # Returns 1 if there is no valid UTF-8 sequence starting at byte_index.
   protected def char_bytesize_at(byte_index)
-    case unsafe_byte_at(byte_index)
-    when 0b0_0000000..0b0_1111111
-      1
-    when 0b110_00000..0b110_11111
-      subsequent_utf8_byte_at?(byte_index + 1) ? 2 : 1
-    when 0b1110_0000..0b1110_1111
-      subsequent_utf8_byte_at?(byte_index + 1) &&
-        subsequent_utf8_byte_at?(byte_index + 2) ? 3 : 1
-    when 0b11110_000..0b11110_111
-      subsequent_utf8_byte_at?(byte_index + 1) &&
-        subsequent_utf8_byte_at?(byte_index + 2) &&
-        subsequent_utf8_byte_at?(byte_index + 3) ? 4 : 1
-    else
-      1
-    end
+    byte = unsafe_byte_at(byte_index)
+
+    return 1 if 0b0_0000000 <= byte <= 0b0_1111111
+
+    return 1 unless subsequent_utf8_byte_at?(byte_index + 1)
+    return 2 if 0b110_00000 <= byte <= 0b110_11111
+
+    return 1 unless subsequent_utf8_byte_at?(byte_index + 2)
+    return 3 if 0b1110_0000 <= byte <= 0b1110_1111
+
+    return 1 unless subsequent_utf8_byte_at?(byte_index + 3)
+    return 4 if 0b11110_000 <= byte <= 0b11110_111
+
+    return 1
   end
 
+  @[AlwaysInline]
   private def subsequent_utf8_byte_at?(byte_index)
     0b10_000000 <= unsafe_byte_at(byte_index) <= 0b10_111111
   end
