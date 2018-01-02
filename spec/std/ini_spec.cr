@@ -57,16 +57,50 @@ describe "INI" do
     it "parses a file" do
       INI.parse(File.read "#{__DIR__}/data/test_file.ini").should eq({
         "general" => {
-          "log_level" => "DEBUG",
+          "log_level" => "D",
         },
         "section1" => {
-          "foo" => "1",
+          "foo" => "1.1",
           "bar" => "2",
         },
         "section2" => {
           "x.y.z" => "coco lala",
         },
       })
+    end
+  end
+
+  describe "build to an INI-formatted output" do
+    it "build from a Hash" do
+      INI.build({
+        "general" => {
+          "log_level" => 'D',
+        },
+        "section1" => {
+          "foo" => 1.1,
+          "bar" => 2,
+        },
+        "section2" => {
+          "x.y.z" => "coco lala",
+        },
+      }, true).should eq(File.read "#{__DIR__}/data/test_file.ini")
+    end
+    it "build from a NamedTuple" do
+      INI.build({
+        "general": {
+          "log_level": 'D',
+        },
+        "section1": {
+          "foo": 1.1,
+          "bar": 2,
+        },
+        "section2": {
+          "x.y.z": "coco lala",
+        },
+      }, true).should eq(File.read "#{__DIR__}/data/test_file.ini")
+    end
+    it "build with no spaces around `=`" do
+      INI.build({"foo" => {"a" => "1"}}, false).should eq("[foo]\na=1\n\n")
     end
   end
 end
