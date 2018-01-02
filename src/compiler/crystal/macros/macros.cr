@@ -38,6 +38,10 @@ class Crystal::Program
 
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
     interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def, in_macro: true
+    if scope.is_a?(GenericInstanceType)
+      interpreter.free_vars = macro_free_vars_for_type(scope)
+    end
+
     a_macro.body.accept interpreter
     interpreter.to_s
   end
@@ -47,6 +51,24 @@ class Crystal::Program
     interpreter.free_vars = free_vars
     node.accept interpreter
     interpreter.to_s
+  end
+
+  # Cache of free_vars of GenericInstanceType for macro expansion.
+  @free_vars_cache = {} of GenericInstanceType => Hash(String, TypeVar)
+
+  private def macro_free_vars_for_type(type)
+    @free_vars_cache[type] ||= begin
+      free_vars = {} of String => TypeVar
+      type.type_vars.each do |(name, node)|
+        case node
+        when Var
+          free_vars[name] = node.type
+        else
+          free_vars[name] = node
+        end
+      end
+      free_vars
+    end
   end
 
   def parse_macro_source(generated_source, the_macro, node, vars, inside_def = false, inside_type = false, inside_exp = false, mode : MacroExpansionMode = MacroExpansionMode::Normal)
