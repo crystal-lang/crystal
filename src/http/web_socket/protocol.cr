@@ -26,7 +26,7 @@ class HTTP::WebSocket::Protocol
   end
 
   MASK_BIT = 128_u8
-  VERSION  =     13
+  VERSION  = "13"
 
   record PacketInfo,
     opcode : Opcode,
@@ -262,7 +262,7 @@ class HTTP::WebSocket::Protocol
     headers["Host"] = "#{host}:#{port}"
     headers["Connection"] = "Upgrade"
     headers["Upgrade"] = "websocket"
-    headers["Sec-WebSocket-Version"] = VERSION.to_s
+    headers["Sec-WebSocket-Version"] = VERSION
     headers["Sec-WebSocket-Key"] = random_key
 
     path = "/" if path.empty?
