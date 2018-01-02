@@ -215,6 +215,19 @@ describe "JSON serialization" do
       "\u{19}".to_json.should eq("\"\\u0019\"")
     end
 
+    it "does for String with control codes in a few places" do
+      "\fab".to_json.should eq(%q("\fab"))
+      "ab\f".to_json.should eq(%q("ab\f"))
+      "ab\fcd".to_json.should eq(%q("ab\fcd"))
+      "ab\fcd\f".to_json.should eq(%q("ab\fcd\f"))
+      "ab\fcd\fe".to_json.should eq(%q("ab\fcd\fe"))
+      "\u{19}ab".to_json.should eq(%q("\u0019ab"))
+      "ab\u{19}".to_json.should eq(%q("ab\u0019"))
+      "ab\u{19}cd".to_json.should eq(%q("ab\u0019cd"))
+      "ab\u{19}cd\u{19}".to_json.should eq(%q("ab\u0019cd\u0019"))
+      "ab\u{19}cd\u{19}e".to_json.should eq(%q("ab\u0019cd\u0019e"))
+    end
+
     it "does for Array" do
       [1, 2, 3].to_json.should eq("[1,2,3]")
     end

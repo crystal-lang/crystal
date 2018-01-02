@@ -94,35 +94,53 @@ class JSON::Builder
   # This method can also be used to write the name of an object field.
   def string(value)
     string = value.to_s
+
     scalar(string: true) do
       io << '"'
-      string.each_char do |char|
-        case char
+
+      start_pos = 0
+      reader = Char::Reader.new(string)
+
+      while reader.has_next?
+        case char = reader.current_char
         when '\\'
-          io << "\\\\"
+          escape = "\\\\"
         when '"'
-          io << "\\\""
+          escape = "\\\""
         when '\b'
-          io << "\\b"
+          escape = "\\b"
         when '\f'
-          io << "\\f"
+          escape = "\\f"
         when '\n'
-          io << "\\n"
+          escape = "\\n"
         when '\r'
-          io << "\\r"
+          escape = "\\r"
         when '\t'
-          io << "\\t"
+          escape = "\\t"
         when .ascii_control?
+          io.write string.to_slice[start_pos, reader.pos - start_pos]
           io << "\\u"
           ord = char.ord
           io << '0' if ord < 0x1000
           io << '0' if ord < 0x100
           io << '0' if ord < 0x10
           ord.to_s(16, io)
+          reader.next_char
+          start_pos = reader.pos
+          next
         else
-          io << char
+          reader.next_char
+          next
         end
+
+        io.write string.to_slice[start_pos, reader.pos - start_pos]
+        io << escape
+        reader.next_char
+        start_pos = reader.pos
       end
+
+      io.write string.to_slice[start_pos, reader.pos - start_pos]
+
       io << '"'
     end
   end
