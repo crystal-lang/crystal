@@ -1,22 +1,58 @@
 class INI
+  # Exception thrown on an INI parse error.
+  class ParseException < Exception
+    getter line_number : Int32
+    getter column_number : Int32
+
+    def initialize(message, @line_number, @column_number)
+      super "#{message} at #{@line_number}:#{@column_number}"
+    end
+
+    def location
+      {line_number, column_number}
+    end
+  end
+
   # Parses INI-style configuration from the given string.
+  # Raises a `ParseException` on any errors.
   #
   # ```
   # INI.parse("[foo]\na = 1") # => {"foo" => {"a" => "1"}}
   # ```
   def self.parse(str) : Hash(String, Hash(String, String))
-    ini = {} of String => Hash(String, String)
+    ini = Hash(String, Hash(String, String)).new
+    current_section = ini[""] = Hash(String, String).new
+    lineno = 0
 
-    section = ""
     str.each_line do |line|
-      if line =~ /\s*(.*[^\s])\s*=\s*(.*[^\s])/
-        ini[section] ||= {} of String => String if section == ""
-        ini[section][$1] = $2
-      elsif line =~ /\[(.*)\]/
-        section = $1
-        ini[section] = {} of String => String
+      lineno += 1
+      next if line.empty?
+
+      offset = 0
+      line.each_char do |char|
+        break unless char.ascii_whitespace?
+        offset += 1
+      end
+
+      case line[offset]
+      when '#', ';'
+        next
+      when '['
+        end_idx = line.index(']', offset)
+        raise ParseException.new("unterminated section", lineno, line.size) unless end_idx
+        raise ParseException.new("data after section", lineno, end_idx + 1) unless end_idx == line.size - 1
+
+        current_section_name = line[offset + 1...end_idx]
+        current_section = ini[current_section_name] ||= Hash(String, String).new
+      else
+        key, eq, value = line.partition('=')
+        raise ParseException.new("expected declaration", lineno, key.size) if eq != "="
+
+        current_section[key.strip] = value.strip
       end
     end
+
+    ini.delete_if { |_, v| v.empty? }
     ini
   end
 end
