@@ -1,12 +1,4 @@
-{% if flag?(:win32) %}
-  struct CallStack
-    def self.skip(*args)
-      # do nothing
-    end
-  end
-
-  {% skip_file() %}
-{% end %}
+{% skip_file() if flag?(:win32) %}
 
 require "c/dlfcn"
 require "c/stdio"
