@@ -89,7 +89,7 @@ struct UUID
         bytes[i] = value[offset, 2].to_u8(16)
       end
     else
-      raise ArgumentError.new "Invalid string length #{value.size} for UUID, expected 32 (hexstring), 36 (hyphenated) or 46 (urn)"
+      raise ArgumentError.new "Invalid string length #{value.size} for UUID, expected 32 (hexstring), 36 (hyphenated) or 45 (urn)"
     end
 
     new(bytes, variant, version)
