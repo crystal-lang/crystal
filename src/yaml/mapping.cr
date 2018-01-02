@@ -106,6 +106,7 @@ module YAML
       ctx.record_anchor(node, instance)
 
       instance.initialize(ctx, node, nil)
+      GC.add_finalizer(instance) if instance.responds_to?(:finalize)
       instance
     end
 

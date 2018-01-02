@@ -1182,6 +1182,7 @@ class Object
     def clone
       clone = \{{@type}}.allocate
       clone.initialize_copy(self)
+      GC.add_finalizer(clone) if clone.responds_to?(:finalize)
       clone
     end
 

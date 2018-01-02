@@ -1,5 +1,18 @@
 require "spec"
 require "openssl"
+require "../../../support/finalize"
+
+class OpenSSL::SSL::Context
+  property key : Symbol?
+
+  def finalize
+    if key = self.key
+      State.inc(key)
+    end
+
+    previous_def
+  end
+end
 
 describe OpenSSL::SSL::Context do
   it "new for client" do
@@ -147,4 +160,12 @@ describe OpenSSL::SSL::Context do
     context.alpn_protocol = "h2"
   end
   {% end %}
+
+  it "calls #finalize on insecure client context" do
+    assert_finalizes(:insecure_client_ctx) { OpenSSL::SSL::Context::Client.insecure }
+  end
+
+  it "calls #finalize on insecure server context" do
+    assert_finalizes(:insecure_server_ctx) { OpenSSL::SSL::Context::Server.insecure }
+  end
 end
