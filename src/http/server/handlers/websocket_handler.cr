@@ -18,9 +18,9 @@ class HTTP::WebSocketHandler
       response = context.response
 
       version = context.request.headers["Sec-WebSocket-Version"]?
-      unless version == WebSocket::Protocol::VERSION.to_s
+      unless version == WebSocket::Protocol::VERSION
         response.status_code = 426
-        response.headers["Sec-WebSocket-Version"] = WebSocket::Protocol::VERSION.to_s
+        response.headers["Sec-WebSocket-Version"] = WebSocket::Protocol::VERSION
         return
       end
 
