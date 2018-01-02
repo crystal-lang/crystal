@@ -938,6 +938,8 @@ describe "String" do
     it { "foobar".ends_with?("").should be_true }
     it { "foobar".ends_with?("foobarbaz").should be_false }
     it { "foobar".ends_with?("xbar").should be_false }
+    it { "foobar".ends_with?(/bar/).should be_true }
+    it { "foobar".ends_with?(/foo|baz/).should be_false }
     it { "foobar".ends_with?('r').should be_true }
     it { "foobar".ends_with?('x').should be_false }
     it { "よし".ends_with?('し').should be_true }

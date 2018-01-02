@@ -3995,6 +3995,10 @@ class String
     true
   end
 
+  def ends_with?(re : Regex)
+    !!($~ = /#{re}\z/.match(self))
+  end
+
   # Interpolates *other* into the string using `Kernel#sprintf`.
   #
   # ```
