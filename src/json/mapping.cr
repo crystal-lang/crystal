@@ -31,12 +31,13 @@ module JSON
   # `JSON.mapping` must receive a series of named arguments, or a named tuple literal, or a hash literal,
   # whose keys will define Crystal properties.
   #
-  # The value of each key can be a single type (not a union type). Primitive types (numbers, string, boolean and nil)
+  # The value of each key can be a type. Primitive types (numbers, string, boolean and nil)
   # are supported, as well as custom objects which use `JSON.mapping` or define a `new` method
-  # that accepts a `JSON::PullParser` and returns an object from it.
+  # that accepts a `JSON::PullParser` and returns an object from it. Union types are supported,
+  # if multiple types in the union can be mapped from the JSON, it is undefined which one will be chosen.
   #
   # The value can also be another hash literal with the following options:
-  # * **type**: (required) the single type described above (you can use `JSON::Any` too)
+  # * **type**: (required) the type described above (you can use `JSON::Any` too)
   # * **key**: the property name in the JSON document (as opposed to the property name in the Crystal code)
   # * **nilable**: if `true`, the property can be `Nil`. Passing `T?` as a type has the same effect.
   # * **default**: value to use if the property is missing in the JSON document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a JSON document is parsed.
