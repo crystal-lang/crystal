@@ -108,10 +108,69 @@ describe "URI" do
     end
     it { URI.new("http", "www.example.com", user: "@al:ce", password: "s/cr3t").to_s.should eq("http://%40al%3Ace:s%2Fcr3t@www.example.com") }
     it { URI.new("http", "www.example.com", fragment: "top").to_s.should eq("http://www.example.com#top") }
-    it { URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234") }
     it { URI.new("http", "www.example.com", 80, "/hello").to_s.should eq("http://www.example.com/hello") }
     it { URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s.should eq("http://www.example.com/hello?a=1") }
     it { URI.new("mailto", opaque: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
+
+    it "removes default port" do
+      URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com")
+      URI.new("https", "www.example.com", 443).to_s.should eq("https://www.example.com")
+      URI.new("ftp", "www.example.com", 21).to_s.should eq("ftp://www.example.com")
+      URI.new("sftp", "www.example.com", 22).to_s.should eq("sftp://www.example.com")
+      URI.new("ldap", "www.example.com", 389).to_s.should eq("ldap://www.example.com")
+      URI.new("ldaps", "www.example.com", 636).to_s.should eq("ldaps://www.example.com")
+    end
+
+    it "preserves non-default port" do
+      URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234")
+      URI.new("https", "www.example.com", 1234).to_s.should eq("https://www.example.com:1234")
+      URI.new("ftp", "www.example.com", 1234).to_s.should eq("ftp://www.example.com:1234")
+      URI.new("sftp", "www.example.com", 1234).to_s.should eq("sftp://www.example.com:1234")
+      URI.new("ldap", "www.example.com", 1234).to_s.should eq("ldap://www.example.com:1234")
+      URI.new("ldaps", "www.example.com", 1234).to_s.should eq("ldaps://www.example.com:1234")
+    end
+
+    it "preserves port for unknown scheme" do
+      URI.new("xyz", "www.example.com").to_s.should eq("xyz://www.example.com")
+      URI.new("xyz", "www.example.com", 1234).to_s.should eq("xyz://www.example.com:1234")
+    end
+
+    it "preserves port for nil scheme" do
+      URI.new(nil, "www.example.com", 1234).to_s.should eq("www.example.com:1234")
+    end
+  end
+
+  describe ".default_port" do
+    it "returns default port for well known schemes" do
+      URI.default_port("http").should eq(80)
+      URI.default_port("https").should eq(443)
+    end
+
+    it "returns nil for unknown schemes" do
+      URI.default_port("xyz").should eq(nil)
+    end
+
+    it "treats scheme case insensitively" do
+      URI.default_port("Http").should eq(80)
+      URI.default_port("HTTP").should eq(80)
+    end
+  end
+
+  describe ".set_default_port" do
+    it "registers port for scheme" do
+      URI.set_default_port("ponzi", 9999)
+      URI.default_port("ponzi").should eq(9999)
+    end
+
+    it "unregisters port for scheme" do
+      URI.set_default_port("ftp", nil)
+      URI.default_port("ftp").should eq(nil)
+    end
+
+    it "treats scheme case insensitively" do
+      URI.set_default_port("UNKNOWN", 1234)
+      URI.default_port("unknown").should eq(1234)
+    end
   end
 
   describe ".unescape" do
