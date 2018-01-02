@@ -34,7 +34,7 @@ module JSON
   # The value of each key can be a type. Primitive types (numbers, string, boolean and nil)
   # are supported, as well as custom objects which use `JSON.mapping` or define a `new` method
   # that accepts a `JSON::PullParser` and returns an object from it. Union types are supported,
-  # the types are attempted in alphabetical order, the first one to successfully parse the value is returned.
+  # if multiple types in the union can be mapped from the JSON, it is undefined which one will be chosen.
   #
   # The value can also be another hash literal with the following options:
   # * **type**: (required) the type described above (you can use `JSON::Any` too)
