@@ -2,6 +2,20 @@ require "spec"
 require "tempfile"
 
 describe Tempfile do
+  describe "tempname" do
+    it "creates a path without creating the file" do
+      path = Tempfile.tempname
+
+      File.exists?(path).should be_false
+    end
+
+    it "has the given extension" do
+      path = Tempfile.tempname ".sock"
+
+      File.extname(path).should eq(".sock")
+    end
+  end
+
   it "creates and writes" do
     tempfile = Tempfile.new "foo"
     tempfile.print "Hello!"

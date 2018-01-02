@@ -54,6 +54,25 @@ class Tempfile < File
   # ```
   getter path : String
 
+  # Returns a fully-qualified path to a temporary file without actually
+  # creating the file.
+  #
+  # ```
+  # Tempfile.tempname # => "/tmp/20171206-1234-449386"
+  # ```
+  #
+  # The optional `extension` argument can be used to make the resulting
+  # filename to end with the given extension.
+  #
+  # ```
+  # Tempfile.tempname(".sock") # => "/tmp/20171206-1234-449386.sock"
+  # ```
+  def self.tempname(extension = nil)
+    time = Time.now.to_s("%Y%m%d")
+    rand = Random.rand(0x100000000).to_s(36)
+    File.join(dirname, "#{time}-#{Process.pid}-#{rand}#{extension}")
+  end
+
   # Creates a file with *filename* and *extension*, and yields it to the given
   # block. It is closed and returned at the end of this method call.
   #
