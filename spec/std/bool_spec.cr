@@ -31,6 +31,11 @@ describe "Bool" do
     it { true.hash.should_not eq(false.hash) }
   end
 
+  describe "to_unsafe" do
+    it { true.to_unsafe.should eq(1) }
+    it { false.to_unsafe.should eq(0) }
+  end
+
   describe "to_s" do
     it { true.to_s.should eq("true") }
     it { false.to_s.should eq("false") }
