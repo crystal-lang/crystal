@@ -83,13 +83,13 @@ struct UUID
         bytes[i] = value[i * 2, 2].to_u8(16)
       end
     when 45 # URN
-      raise ArgumentError.new "Invalid URN UUID format, expected string starting with \":urn:uuid:\"" unless value.starts_with? "urn:uuid:"
+      raise ArgumentError.new "Invalid URN UUID format, expected string starting with \"urn:uuid:\"" unless value.starts_with? "urn:uuid:"
       [9, 11, 13, 15, 18, 20, 23, 25, 28, 30, 33, 35, 37, 39, 41, 43].each_with_index do |offset, i|
         string_has_hex_pair_at! value, offset
         bytes[i] = value[offset, 2].to_u8(16)
       end
     else
-      raise ArgumentError.new "Invalid string length #{value.size} for UUID, expected 32 (hexstring), 36 (hyphenated) or 46 (urn)"
+      raise ArgumentError.new "Invalid string length #{value.size} for UUID, expected 32 (hexstring), 36 (hyphenated) or 45 (urn)"
     end
 
     new(bytes, variant, version)
