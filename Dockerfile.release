@@ -11,4 +11,4 @@ RUN \
 
 WORKDIR /opt/crystal
 
-CMD ["bash"]
+CMD ["sh"]
