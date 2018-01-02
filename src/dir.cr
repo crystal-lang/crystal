@@ -1,6 +1,4 @@
-require "c/dirent"
-require "c/unistd"
-require "c/sys/stat"
+require "crystal/system/dir"
 
 # Objects of class `Dir` are directory streams representing directories in the underlying file system.
 # They provide a variety of ways to list directories and their contents.
@@ -17,10 +15,7 @@ class Dir
 
   # Returns a new directory object for the named directory.
   def initialize(@path)
-    @dir = LibC.opendir(@path.check_no_null_byte)
-    unless @dir
-      raise Errno.new("Error opening directory '#{@path}'")
-    end
+    @dir = Crystal::System::Dir.open(@path)
     @closed = false
   end
 
@@ -125,47 +120,30 @@ class Dir
   # array.sort # => [".", "..", "config.h"]
   # ```
   def read
-    # readdir() returns NULL for failure and sets errno or returns NULL for EOF but leaves errno as is.  wtf.
-    Errno.value = 0
-    ent = LibC.readdir(@dir)
-    if ent
-      String.new(ent.value.d_name.to_unsafe)
-    elsif Errno.value != 0
-      raise Errno.new("readdir")
-    else
-      nil
-    end
+    Crystal::System::Dir.next(@dir)
   end
 
   # Repositions this directory to the first entry.
   def rewind
-    LibC.rewinddir(@dir)
+    Crystal::System::Dir.rewind(@dir)
     self
   end
 
   # Closes the directory stream.
   def close
     return if @closed
-    if LibC.closedir(@dir) != 0
-      raise Errno.new("closedir")
-    end
+    Crystal::System::Dir.close(@dir)
     @closed = true
   end
 
   # Returns the current working directory.
   def self.current : String
-    if dir = LibC.getcwd(nil, 0)
-      String.new(dir).tap { LibC.free(dir.as(Void*)) }
-    else
-      raise Errno.new("getcwd")
-    end
+    Crystal::System::Dir.current
   end
 
   # Changes the current working directory of the process to the given string.
   def self.cd(path)
-    if LibC.chdir(path.check_no_null_byte) != 0
-      raise Errno.new("Error while changing directory to #{path.inspect}")
-    end
+    Crystal::System::Dir.current = path
   end
 
   # Changes the current working directory of the process to the given string
@@ -215,14 +193,7 @@ class Dir
 
   # Returns `true` if the given path exists and is a directory
   def self.exists?(path) : Bool
-    if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT || Errno.value == Errno::ENOTDIR
-        return false
-      else
-        raise Errno.new("stat")
-      end
-    end
-    File::Stat.new(stat).directory?
+    Crystal::System::Dir.exists? path
   end
 
   # Returns `true` if the directory at *path* is empty, otherwise returns `false`.
@@ -246,10 +217,7 @@ class Dir
   # Creates a new directory at the given path. The linux-style permission mode
   # can be specified, with a default of 777 (0o777).
   def self.mkdir(path, mode = 0o777)
-    if LibC.mkdir(path.check_no_null_byte, mode) == -1
-      raise Errno.new("Unable to create directory '#{path}'")
-    end
-    0
+    Crystal::System::Dir.create(path, mode)
   end
 
   # Creates a new directory at the given path, including any non-existing
@@ -276,10 +244,7 @@ class Dir
 
   # Removes the directory at the given path.
   def self.rmdir(path)
-    if LibC.rmdir(path.check_no_null_byte) == -1
-      raise Errno.new("Unable to remove directory '#{path}'")
-    end
-    0
+    Crystal::System::Dir.delete(path)
   end
 
   def to_s(io)
