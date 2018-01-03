@@ -2066,10 +2066,6 @@ module Crystal
   end
 
   class Program
-    def sprintf(llvm_mod, llvm_context)
-      llvm_mod.functions["sprintf"]? || llvm_mod.functions.add("sprintf", [llvm_context.void_pointer], llvm_context.int32, true)
-    end
-
     def printf(llvm_mod, llvm_context)
       llvm_mod.functions["printf"]? || llvm_mod.functions.add("printf", [llvm_context.void_pointer], llvm_context.int32, true)
     end
