@@ -1,4 +1,5 @@
 require "c/win_nt"
+require "c/win_def"
 require "c/int_safe"
 
 lib LibC
@@ -13,4 +14,37 @@ lib LibC
 
   fun FormatMessageA(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
                      lpBuffer : LPSTR, nSize : DWORD, arguments : Void*) : DWORD
+
+  struct FILETIME
+    dwLowDateTime : DWORD
+    dwHighDateTime : DWORD
+  end
+
+  struct SYSTEMTIME
+    wYear : WORD
+    wMonth : WORD
+    wDayOfWeek : WORD
+    wDay : WORD
+    wHour : WORD
+    wMinute : WORD
+    wSecond : WORD
+    wMilliseconds : WORD
+  end
+
+  struct TIME_ZONE_INFORMATION
+    bias : LONG
+    standardName : StaticArray(WCHAR, 32)
+    standardDate : SYSTEMTIME
+    standardBias : LONG
+    daylightName : StaticArray(WCHAR, 32)
+    daylightDate : SYSTEMTIME
+    daylightBias : LONG
+  end
+
+  fun GetTimeZoneInformation(tz_info : TIME_ZONE_INFORMATION*) : DWORD
+  fun GetSystemTimeAsFileTime(time : FILETIME*)
+  fun GetSystemTimePreciseAsFileTime(time : FILETIME*)
+
+  fun QueryPerformanceCounter(performance_count : Int64*) : BOOL
+  fun QueryPerformanceFrequency(frequency : Int64*) : BOOL
 end
