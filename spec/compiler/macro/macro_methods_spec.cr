@@ -1205,6 +1205,56 @@ describe "macro methods" do
     end
   end
 
+  describe "proc notation methods" do
+    it "gets single input" do
+      assert_macro "x", %({{x.inputs}}), [ProcNotation.new([Path.new("SomeType")] of ASTNode, Path.new("SomeResult"))] of ASTNode, "[SomeType]"
+    end
+
+    it "gets single output" do
+      assert_macro "x", %({{x.output}}), [ProcNotation.new([Path.new("SomeType")] of ASTNode, Path.new("SomeResult"))] of ASTNode, "SomeResult"
+    end
+
+    it "gets multiple inputs" do
+      assert_macro "x", %({{x.inputs}}), [ProcNotation.new([Path.new("SomeType"), Path.new("OtherType")] of ASTNode)] of ASTNode, "[SomeType, OtherType]"
+    end
+
+    it "gets empty output" do
+      assert_macro "x", %({{x.output}}), [ProcNotation.new([Path.new("SomeType")] of ASTNode)] of ASTNode, "nil"
+    end
+  end
+
+  describe "proc literal methods" do
+    it "executes body" do
+      assert_macro "x", %({{x.body}}), [ProcLiteral.new(Def.new("->", body: 1.int32))] of ASTNode, "1"
+    end
+
+    it "executes args" do
+      assert_macro "x", %({{x.args}}), [ProcLiteral.new(Def.new("->", args: [Arg.new("z")]))] of ASTNode, "[z]"
+    end
+  end
+
+  describe "proc pointer methods" do
+    it "executes obj when present" do
+      assert_macro "x", %({{x.obj}}), [ProcPointer.new(Var.new("some_object"), "method", [] of ASTNode)] of ASTNode, "some_object"
+    end
+
+    it "executes obj when absent" do
+      assert_macro "x", %({{x.obj}}), [ProcPointer.new(NilLiteral.new, "method", [] of ASTNode)] of ASTNode, "nil"
+    end
+
+    it "executes name" do
+      assert_macro "x", %({{x.name}}), [ProcPointer.new(Var.new("some_object"), "method", [] of ASTNode)] of ASTNode, "method"
+    end
+
+    it "executes args when empty" do
+      assert_macro "x", %({{x.args}}), [ProcPointer.new(Var.new("some_object"), "method", [] of ASTNode)] of ASTNode, "[]"
+    end
+
+    it "executes args when not empty" do
+      assert_macro "x", %({{x.args}}), [ProcPointer.new(Var.new("some_object"), "method", [Path.new("SomeType"), Path.new("OtherType")] of ASTNode)] of ASTNode, "[SomeType, OtherType]"
+    end
+  end
+
   describe "def methods" do
     it "executes name" do
       assert_macro "x", %({{x.name}}), [Def.new("some_def")] of ASTNode, "some_def"
