@@ -14,6 +14,26 @@ class Process
     LibC.exit(status)
   end
 
+  # Returns the effective group ID of the current process.
+  def self.egid : LibC::GidT
+    LibC.getegid
+  end
+
+  # Returns the real group ID of the current process.
+  def self.gid : LibC::GidT
+    LibC.getgid
+  end
+
+  # Returns the effective user ID of the current process.
+  def self.euid : LibC::GidT
+    LibC.geteuid
+  end
+
+  # Returns the real user ID of the current process.
+  def self.uid : LibC::GidT
+    LibC.getuid
+  end
+  
   # Returns the process identifier of the current process.
   def self.pid : LibC::PidT
     LibC.getpid
