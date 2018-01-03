@@ -24,6 +24,10 @@ lib LibC
   fun getpgid(pid : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
+  fun getegid : GidT
+  fun getgid : GidT
+  fun geteuid : UidT
+  fun getuid : UidT 
   fun isatty(fd : Int) : Int
   fun lchown(file : Char*, owner : UidT, group : GidT) : Int
   fun link(from : Char*, to : Char*) : Int
