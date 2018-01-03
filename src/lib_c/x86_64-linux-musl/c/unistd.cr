@@ -27,7 +27,7 @@ lib LibC
   fun getegid : GidT
   fun getgid : GidT
   fun geteuid : UidT
-  fun getuid : UidT  
+  fun getuid : UidT
   fun isatty(x0 : Int) : Int
   fun lchown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
   fun link(x0 : Char*, x1 : Char*) : Int
