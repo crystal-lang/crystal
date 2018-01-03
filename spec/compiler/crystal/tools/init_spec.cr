@@ -1,18 +1,47 @@
-require "spec"
-require "yaml"
-require "ini"
 require "compiler/crystal/config"
 require "compiler/crystal/tools/init"
+require "file_utils"
+require "ini"
+require "spec"
+require "yaml"
+
+PROJECT_ROOT_DIR = "#{__DIR__}/../../../.."
+BIN_CRYSTAL      = File.expand_path("#{PROJECT_ROOT_DIR}/bin/crystal")
+
+private def exec_init(project_name, project_dir = nil, type = "lib")
+  args = ["init", type, project_name]
+  args << project_dir if project_dir
+
+  process = Process.new(BIN_CRYSTAL, args, shell: true, error: Process::Redirect::Pipe)
+  stderr = process.error.gets_to_end
+  status = process.wait
+  $? = status
+  stderr
+end
+
+# Creates a temporary directory, cd to it and run the block inside it.
+# The directory and its content is deleted when the block return.
+private def within_temporary_directory
+  tmp_path = "#{PROJECT_ROOT_DIR}/tmp/init_spec_tmp_dir-#{Process.pid}"
+  Dir.mkdir_p(tmp_path)
+  begin
+    Dir.cd(tmp_path) do
+      yield
+    end
+  ensure
+    FileUtils.rm_rf(tmp_path)
+  end
+end
 
 private def describe_file(name, &block : String ->)
   describe name do
     it "has proper contents" do
-      block.call(File.read("tmp/#{name}"))
+      block.call(File.read(name))
     end
   end
 end
 
-private def run_init_project(skeleton_type, name, dir, author, email, github_name)
+private def run_init_project(skeleton_type, name, author, email, github_name, dir = name)
   Crystal::Init::InitProject.new(
     Crystal::Init::Config.new(skeleton_type, name, dir, author, email, github_name, true)
   ).run
@@ -20,130 +49,128 @@ end
 
 module Crystal
   describe Init::InitProject do
-    `[ -d tmp/example ] && rm -r tmp/example`
-    `[ -d tmp/example_app ] && rm -r tmp/example_app`
+    within_temporary_directory do
+      run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith")
+      run_init_project("app", "example_app", "John Smith", "john@smith.com", "jsmith")
+      run_init_project("lib", "example-lib", "John Smith", "john@smith.com", "jsmith")
+      run_init_project("lib", "camel_example-camel_lib", "John Smith", "john@smith.com", "jsmith")
+      run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith", dir: "other-example-directory")
 
-    run_init_project("lib", "example", "tmp/example", "John Smith", "john@smith.com", "jsmith")
-    run_init_project("app", "example_app", "tmp/example_app", "John Smith", "john@smith.com", "jsmith")
-    run_init_project("lib", "example-lib", "tmp/example-lib", "John Smith", "john@smith.com", "jsmith")
-    run_init_project("lib", "camel_example-camel_lib", "tmp/camel_example-camel_lib", "John Smith", "john@smith.com", "jsmith")
-    run_init_project("lib", "example", "tmp/other-example-directory", "John Smith", "john@smith.com", "jsmith")
-
-    describe_file "example-lib/src/example-lib.cr" do |file|
-      file.should contain("Example::Lib")
-    end
-
-    describe_file "camel_example-camel_lib/src/camel_example-camel_lib.cr" do |file|
-      file.should contain("CamelExample::CamelLib")
-    end
-
-    describe_file "example/.gitignore" do |gitignore|
-      gitignore.should contain("/.shards/")
-      gitignore.should contain("/shard.lock")
-      gitignore.should contain("/lib/")
-    end
-
-    describe_file "example_app/.gitignore" do |gitignore|
-      gitignore.should contain("/.shards/")
-      gitignore.should_not contain("/shard.lock")
-      gitignore.should contain("/lib/")
-    end
-
-    ["example", "example_app", "example-lib", "camel_example-camel_lib"].each do |name|
-      describe_file "#{name}/.editorconfig" do |editorconfig|
-        parsed = INI.parse(editorconfig)
-        cr_ext = parsed["*.cr"]
-        cr_ext["charset"].should eq("utf-8")
-        cr_ext["end_of_line"].should eq("lf")
-        cr_ext["insert_final_newline"].should eq("true")
-        cr_ext["indent_style"].should eq("space")
-        cr_ext["indent_size"].should eq("2")
-        cr_ext["trim_trailing_whitespace"].should eq("true")
+      describe_file "example-lib/src/example-lib.cr" do |file|
+        file.should contain("Example::Lib")
       end
-    end
 
-    describe_file "example/LICENSE" do |license|
-      license.should match %r{Copyright \(c\) \d+ John Smith}
-    end
+      describe_file "camel_example-camel_lib/src/camel_example-camel_lib.cr" do |file|
+        file.should contain("CamelExample::CamelLib")
+      end
 
-    describe_file "example/README.md" do |readme|
-      readme.should contain("# example")
+      describe_file "example/.gitignore" do |gitignore|
+        gitignore.should contain("/.shards/")
+        gitignore.should contain("/shard.lock")
+        gitignore.should contain("/lib/")
+      end
 
-      readme.should contain(%{```yaml
+      describe_file "example_app/.gitignore" do |gitignore|
+        gitignore.should contain("/.shards/")
+        gitignore.should_not contain("/shard.lock")
+        gitignore.should contain("/lib/")
+      end
+
+      {"example", "example_app", "example-lib", "camel_example-camel_lib"}.each do |name|
+        describe_file "#{name}/.editorconfig" do |editorconfig|
+          parsed = INI.parse(editorconfig)
+          cr_ext = parsed["*.cr"]
+          cr_ext["charset"].should eq("utf-8")
+          cr_ext["end_of_line"].should eq("lf")
+          cr_ext["insert_final_newline"].should eq("true")
+          cr_ext["indent_style"].should eq("space")
+          cr_ext["indent_size"].should eq("2")
+          cr_ext["trim_trailing_whitespace"].should eq("true")
+        end
+      end
+
+      describe_file "example/LICENSE" do |license|
+        license.should match %r{Copyright \(c\) \d+ John Smith}
+      end
+
+      describe_file "example/README.md" do |readme|
+        readme.should contain("# example")
+
+        readme.should contain(%{```yaml
 dependencies:
   example:
     github: jsmith/example
 ```})
 
-      readme.should contain(%{TODO: Write a description here})
-      readme.should_not contain(%{TODO: Write installation instructions here})
-      readme.should contain(%{require "example"})
-      readme.should contain(%{1. Fork it ( https://github.com/jsmith/example/fork )})
-      readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
-    end
+        readme.should contain(%{TODO: Write a description here})
+        readme.should_not contain(%{TODO: Write installation instructions here})
+        readme.should contain(%{require "example"})
+        readme.should contain(%{1. Fork it ( https://github.com/jsmith/example/fork )})
+        readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
+      end
 
-    describe_file "example_app/README.md" do |readme|
-      readme.should contain("# example")
+      describe_file "example_app/README.md" do |readme|
+        readme.should contain("# example")
 
-      readme.should_not contain(%{```yaml
+        readme.should_not contain(%{```yaml
 dependencies:
   example:
     github: jsmith/example
 ```})
 
-      readme.should contain(%{TODO: Write a description here})
-      readme.should contain(%{TODO: Write installation instructions here})
-      readme.should_not contain(%{require "example"})
-      readme.should contain(%{1. Fork it ( https://github.com/jsmith/example_app/fork )})
-      readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
-    end
+        readme.should contain(%{TODO: Write a description here})
+        readme.should contain(%{TODO: Write installation instructions here})
+        readme.should_not contain(%{require "example"})
+        readme.should contain(%{1. Fork it ( https://github.com/jsmith/example_app/fork )})
+        readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
+      end
 
-    describe_file "example/shard.yml" do |shard_yml|
-      parsed = YAML.parse(shard_yml)
-      parsed["name"].should eq("example")
-      parsed["version"].should eq("0.1.0")
-      parsed["authors"].should eq(["John Smith <john@smith.com>"])
-      parsed["license"].should eq("MIT")
-      parsed["crystal"].should eq(Crystal::Config.version)
-      parsed["targets"]?.should be_nil
-    end
+      describe_file "example/shard.yml" do |shard_yml|
+        parsed = YAML.parse(shard_yml)
+        parsed["name"].should eq("example")
+        parsed["version"].should eq("0.1.0")
+        parsed["authors"].should eq(["John Smith <john@smith.com>"])
+        parsed["license"].should eq("MIT")
+        parsed["crystal"].should eq(Crystal::Config.version)
+        parsed["targets"]?.should be_nil
+      end
 
-    describe_file "example_app/shard.yml" do |shard_yml|
-      parsed = YAML.parse(shard_yml)
-      parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
-    end
+      describe_file "example_app/shard.yml" do |shard_yml|
+        parsed = YAML.parse(shard_yml)
+        parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
+      end
 
-    describe_file "example/.travis.yml" do |travis|
-      parsed = YAML.parse(travis)
+      describe_file "example/.travis.yml" do |travis|
+        parsed = YAML.parse(travis)
 
-      parsed["language"].should eq("crystal")
-    end
+        parsed["language"].should eq("crystal")
+      end
 
-    describe_file "example/src/example.cr" do |example|
-      example.should eq(%{require "./example/*"
+      describe_file "example/src/example.cr" do |example|
+        example.should eq(%{require "./example/*"
 
 # TODO: Write documentation for `Example`
 module Example
   # TODO: Put your code here
 end
 })
-    end
+      end
 
-    describe_file "example/src/example/version.cr" do |version|
-      version.should eq(%{module Example
+      describe_file "example/src/example/version.cr" do |version|
+        version.should eq(%{module Example
   VERSION = "0.1.0"
 end
 })
-    end
+      end
 
-    describe_file "example/spec/spec_helper.cr" do |example|
-      example.should eq(%{require "spec"
+      describe_file "example/spec/spec_helper.cr" do |example|
+        example.should eq(%{require "spec"
 require "../src/example"
 })
-    end
+      end
 
-    describe_file "example/spec/example_spec.cr" do |example|
-      example.should eq(%{require "./spec_helper"
+      describe_file "example/spec/example_spec.cr" do |example|
+        example.should eq(%{require "./spec_helper"
 
 describe Example do
   # TODO: Write tests
@@ -153,40 +180,38 @@ describe Example do
   end
 end
 })
+      end
+
+      describe_file "example/.git/config" { }
+
+      describe_file "other-example-directory/.git/config" { }
     end
-
-    describe_file "example/.git/config" { }
-
-    describe_file "other-example-directory/.git/config" { }
   end
 
-  describe Init do
-    it "prints error if a directory already present" do
-      Dir.mkdir_p("#{__DIR__}/tmp")
+  describe "Init invocation" do
+    it "prints error if a directory or a file is already present" do
+      within_temporary_directory do
+        existing_dir = "existing-dir"
+        Dir.mkdir(existing_dir)
+        exec_init(existing_dir).should contain("file or directory #{existing_dir} already exists")
 
-      `bin/crystal init lib "#{__DIR__}/tmp" 2>&1 >/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
-
-      `rm -rf #{__DIR__}/tmp`
-    end
-
-    it "prints error if a file already present" do
-      File.open("#{__DIR__}/tmp", "w")
-
-      `bin/crystal init lib "#{__DIR__}/tmp" 2>&1 >/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
-
-      File.delete("#{__DIR__}/tmp")
+        existing_file = "existing-file"
+        File.touch(existing_file)
+        exec_init(existing_file).should contain("file or directory #{existing_file} already exists")
+      end
     end
 
     it "honors the custom set directory name" do
-      Dir.mkdir_p("tmp")
+      within_temporary_directory do
+        project_name = "my_project"
+        project_dir = "project_dir"
 
-      `bin/crystal init lib tmp 2>&1 >/dev/null`.should contain("file or directory tmp already exists")
+        Dir.mkdir(project_name)
 
-      `bin/crystal init lib tmp "#{__DIR__}/fresh-new-tmp" 2>&1 >/dev/null`.should_not contain("file or directory tmp already exists")
+        exec_init(project_name, project_dir).should_not contain("file or directory #{project_name} already exists")
 
-      `bin/crystal init lib tmp "#{__DIR__}/fresh-new-tmp" 2>&1 >/dev/null`.should contain("file or directory #{__DIR__}/fresh-new-tmp already exists")
-
-      `rm -rf tmp #{__DIR__}/fresh-new-tmp`
+        exec_init(project_name, project_dir).should contain("file or directory #{project_dir} already exists")
+      end
     end
   end
 end
