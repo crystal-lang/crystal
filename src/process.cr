@@ -33,7 +33,7 @@ class Process
   def self.uid : LibC::UidT
     LibC.getuid
   end
-  
+
   # Returns the process identifier of the current process.
   def self.pid : LibC::PidT
     LibC.getpid
