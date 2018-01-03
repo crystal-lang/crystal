@@ -238,11 +238,7 @@ module Crystal
         program.codegen node, debug: debug, single_module: @single_module || (!@thin_lto && @release) || @cross_compile || @emit
       end
 
-      if @cross_compile
-        output_dir = "."
-      else
-        output_dir = CacheDir.instance.directory_for(sources)
-      end
+      output_dir = CacheDir.instance.directory_for(sources)
 
       bc_flags_changed = bc_flags_changed? output_dir
       target_triple = target_machine.triple
