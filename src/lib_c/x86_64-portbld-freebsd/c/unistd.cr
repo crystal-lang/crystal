@@ -23,6 +23,10 @@ lib LibC
   fun getpgid(pid : PidT) : Int
   fun getpid : PidT
   fun getppid : PidT
+  fun getegid : GidT
+  fun getgid : GidT
+  fun geteuid : UidT
+  fun getuid : UidT  
   fun isatty(x0 : Int) : Int
   fun lchown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
   fun link(x0 : Char*, x1 : Char*) : Int
