@@ -25,12 +25,12 @@ class Process
   end
 
   # Returns the effective user ID of the current process.
-  def self.euid : LibC::GidT
+  def self.euid : LibC::UidT
     LibC.geteuid
   end
 
   # Returns the real user ID of the current process.
-  def self.uid : LibC::GidT
+  def self.uid : LibC::UidT
     LibC.getuid
   end
   
