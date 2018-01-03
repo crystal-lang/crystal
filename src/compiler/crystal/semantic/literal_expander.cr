@@ -208,11 +208,7 @@ module Crystal
     #       temp
     #     end
     def expand(node : And)
-      left = node.left
-
-      if left.is_a?(Expressions) && left.expressions.size == 1
-        left = left.expressions.first
-      end
+      left = node.left.single_expression
 
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
                    If.new(left, node.right, left.clone)
@@ -245,11 +241,7 @@ module Crystal
     #       b
     #     end
     def expand(node : Or)
-      left = node.left
-
-      if left.is_a?(Expressions) && left.expressions.size == 1
-        left = left.expressions.first
-      end
+      left = node.left.single_expression
 
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
                    If.new(left, left.clone, node.right)
@@ -390,7 +382,7 @@ module Crystal
 
         assigns = [] of ASTNode
         temp_vars = conds.map do |cond|
-          case cond
+          case cond = cond.single_expression
           when Var, InstanceVar
             temp_var = cond
           when Assign
