@@ -23,7 +23,7 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; path=/")
       end
       
-      it "parse_set_cookie with space"
+      it "parse_set_cookie with space" do
         cookie = parse_set_cookie("key=value; path=/test")
         parse_set_cookie("key=value;path=/test").should eq cookie
         parse_set_cookie("key=value;  \t\npath=/test").should eq cookie
