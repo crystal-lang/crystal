@@ -4,18 +4,24 @@ require "ecr/macros"
 require "option_parser"
 
 module Crystal
-  class Init
+  module Init
     WHICH_GIT_COMMAND = "which git >/dev/null"
 
-    def self.run(args, *, stderr = STDERR)
-      config = new(stderr).parse_args(args)
+    class Error < ::Exception
+    end
+
+    class ArgError < Error
+      def self.new(message, opts : OptionParser)
+        new("#{message}\n#{opts}\n")
+      end
+    end
+
+    def self.run(args)
+      config = parse_args(args)
       InitProject.new(config).run
     end
 
-    def initialize(@stderr : IO)
-    end
-
-    def parse_args(args)
+    def self.parse_args(args)
       config = Config.new
 
       OptionParser.parse(args) do |opts|
@@ -51,7 +57,7 @@ module Crystal
       config
     end
 
-    def fetch_author
+    def self.fetch_author
       if system(WHICH_GIT_COMMAND)
         user_name = `git config --get user.name`.strip
         user_name = nil if user_name.empty?
@@ -59,7 +65,7 @@ module Crystal
       user_name || "your-name-here"
     end
 
-    def fetch_email
+    def self.fetch_email
       if system(WHICH_GIT_COMMAND)
         user_email = `git config --get user.email`.strip
         user_email = nil if user_email.empty?
@@ -67,7 +73,7 @@ module Crystal
       user_email || "your-email-here"
     end
 
-    def fetch_github_name
+    def self.fetch_github_name
       if system(WHICH_GIT_COMMAND)
         github_user = `git config --get github.user`.strip
         github_user = nil if github_user.empty?
@@ -75,34 +81,29 @@ module Crystal
       github_user || "your-github-user"
     end
 
-    def fetch_name(opts, args)
+    def self.fetch_name(opts, args)
       fetch_required_parameter(opts, args, "NAME")
     end
 
-    def fetch_directory(args, project_name)
+    def self.fetch_directory(args, project_name)
       directory = args.empty? ? project_name : args.shift
       if Dir.exists?(directory) || File.exists?(directory)
-        @stderr.puts "file or directory #{directory} already exists"
-        exit 1
+        raise Error.new "file or directory #{directory} already exists"
       end
       directory
     end
 
-    def fetch_skeleton_type(opts, args)
+    def self.fetch_skeleton_type(opts, args)
       skeleton_type = fetch_required_parameter(opts, args, "TYPE")
       unless {"lib", "app"}.includes?(skeleton_type)
-        @stderr.puts "invalid TYPE value: #{skeleton_type}"
-        @stderr.puts opts
-        exit 1
+        raise ArgError.new "invalid TYPE value: #{skeleton_type}", opts
       end
       skeleton_type
     end
 
-    def fetch_required_parameter(opts, args, name)
+    def self.fetch_required_parameter(opts, args, name)
       if args.empty?
-        @stderr.puts "#{name} is missing"
-        @stderr.puts opts
-        exit 1
+        raise ArgError.new "#{name} is missing", opts
       end
       args.shift
     end

@@ -8,12 +8,12 @@ require "yaml"
 PROJECT_ROOT_DIR = "#{__DIR__}/../../../.."
 
 private def exec_init(project_name, project_dir = nil, type = "lib")
-  args = ["init", type, project_name]
+  args = [type, project_name]
   args << project_dir if project_dir
 
-  err_io = IO::Memory.new
-  Crystal::Init.run(args, stderr: err_io)
-  err_io.to_s
+  config = Crystal::Init.parse_args(args)
+  config.silent = true
+  Crystal::Init::InitProject.new(config).run
 end
 
 # Creates a temporary directory, cd to it and run the block inside it.
@@ -190,11 +190,16 @@ end
       within_temporary_directory do
         existing_dir = "existing-dir"
         Dir.mkdir(existing_dir)
-        exec_init(existing_dir).should contain("file or directory #{existing_dir} already exists")
+
+        expect_raises(Crystal::Init::Error, "file or directory #{existing_dir} already exists") do
+          exec_init(existing_dir)
+        end
 
         existing_file = "existing-file"
         File.touch(existing_file)
-        exec_init(existing_file).should contain("file or directory #{existing_file} already exists")
+        expect_raises(Crystal::Init::Error, "file or directory #{existing_file} already exists") do
+          exec_init(existing_file)
+        end
       end
     end
 
@@ -205,9 +210,11 @@ end
 
         Dir.mkdir(project_name)
 
-        exec_init(project_name, project_dir).should_not contain("file or directory #{project_name} already exists")
+        exec_init(project_name, project_dir)
 
-        exec_init(project_name, project_dir).should contain("file or directory #{project_dir} already exists")
+        expect_raises(Crystal::Init::Error, "file or directory #{project_dir} already exists") do
+          exec_init(project_name, project_dir)
+        end
       end
     end
   end
