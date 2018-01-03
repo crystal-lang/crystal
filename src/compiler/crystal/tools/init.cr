@@ -7,7 +7,7 @@ module Crystal
   module Init
     WHICH_GIT_COMMAND = "which git >/dev/null"
 
-    def self.run(args)
+    def self.run(args, *, stderr = STDERR)
       config = Config.new
 
       OptionParser.parse(args) do |opts|
@@ -31,9 +31,9 @@ module Crystal
         end
 
         opts.unknown_args do |args, after_dash|
-          config.skeleton_type = fetch_skeleton_type(opts, args)
-          config.name = fetch_name(opts, args)
-          config.dir = fetch_directory(args, config.name)
+          config.skeleton_type = fetch_skeleton_type(opts, args, stderr)
+          config.name = fetch_name(opts, args, stderr)
+          config.dir = fetch_directory(args, config.name, stderr)
         end
       end
 
@@ -67,33 +67,33 @@ module Crystal
       github_user || "your-github-user"
     end
 
-    def self.fetch_name(opts, args)
-      fetch_required_parameter(opts, args, "NAME")
+    def self.fetch_name(opts, args, stderr)
+      fetch_required_parameter(opts, args, "NAME", stderr)
     end
 
-    def self.fetch_directory(args, project_name)
+    def self.fetch_directory(args, project_name, stderr)
       directory = args.empty? ? project_name : args.shift
       if Dir.exists?(directory) || File.exists?(directory)
-        STDERR.puts "file or directory #{directory} already exists"
+        stderr.puts "file or directory #{directory} already exists"
         exit 1
       end
       directory
     end
 
-    def self.fetch_skeleton_type(opts, args)
-      skeleton_type = fetch_required_parameter(opts, args, "TYPE")
+    def self.fetch_skeleton_type(opts, args, stderr)
+      skeleton_type = fetch_required_parameter(opts, args, "TYPE", stderr)
       unless {"lib", "app"}.includes?(skeleton_type)
-        STDERR.puts "invalid TYPE value: #{skeleton_type}"
-        STDERR.puts opts
+        stderr.puts "invalid TYPE value: #{skeleton_type}"
+        stderr.puts opts
         exit 1
       end
       skeleton_type
     end
 
-    def self.fetch_required_parameter(opts, args, name)
+    def self.fetch_required_parameter(opts, args, name, stderr)
       if args.empty?
-        STDERR.puts "#{name} is missing"
-        STDERR.puts opts
+        stderr.puts "#{name} is missing"
+        stderr.puts opts
         exit 1
       end
       args.shift

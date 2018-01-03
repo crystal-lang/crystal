@@ -6,17 +6,14 @@ require "spec"
 require "yaml"
 
 PROJECT_ROOT_DIR = "#{__DIR__}/../../../.."
-BIN_CRYSTAL      = File.expand_path("#{PROJECT_ROOT_DIR}/bin/crystal")
 
 private def exec_init(project_name, project_dir = nil, type = "lib")
   args = ["init", type, project_name]
   args << project_dir if project_dir
 
-  process = Process.new(BIN_CRYSTAL, args, shell: true, error: Process::Redirect::Pipe)
-  stderr = process.error.gets_to_end
-  status = process.wait
-  $? = status
-  stderr
+  err_io = IO::Memory.new
+  Crystal::Init.run(args, stderr: err_io)
+  err_io.to_s
 end
 
 # Creates a temporary directory, cd to it and run the block inside it.
