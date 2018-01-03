@@ -278,11 +278,15 @@ module Crystal
     end
 
     private def cross_compile(program, units, output_filename)
-      llvm_mod = units.first.llvm_mod
+      unit = units.first
+      llvm_mod = unit.llvm_mod
       object_name = "#{output_filename}.o"
 
       optimize llvm_mod if @release
-      llvm_mod.print_to_file object_name.gsub(/\.o/, ".ll") if dump_ll?
+
+      if emit = @emit
+        unit.emit(emit, emit_base_filename || output_filename)
+      end
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
