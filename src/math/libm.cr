@@ -37,8 +37,10 @@ lib LibM
   fun max_f64 = "llvm.maxnum.f64"(value1 : Float64, value2 : Float64) : Float64
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
-  fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
-  fun powi_f64 = "llvm.powi.f64"(value : Float64, power : Int32) : Float64
+  {% unless flag?(:win32) %}
+    fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
+    fun powi_f64 = "llvm.powi.f64"(value : Float64, power : Int32) : Float64
+  {% end %}
   fun round_f32 = "llvm.round.f32"(value : Float32) : Float32
   fun round_f64 = "llvm.round.f64"(value : Float64) : Float64
   fun sin_f32 = "llvm.sin.f32"(value : Float32) : Float32
