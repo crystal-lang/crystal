@@ -16,9 +16,7 @@ lib Intrinsics
   fun popcount16 = "llvm.ctpop.i16"(src : Int16) : Int16
   fun popcount32 = "llvm.ctpop.i32"(src : Int32) : Int32
   fun popcount64 = "llvm.ctpop.i64"(src : Int64) : Int64
-
-  # TODO: uncomment and use in int.cr after Crystal 0.23.1
-  # fun popcount128 = "llvm.ctpop.i128"(src : Int128) : Int128
+  fun popcount128 = "llvm.ctpop.i128"(src : Int128) : Int128
 
   fun va_start = "llvm.va_start"(ap : Void*)
   fun va_end = "llvm.va_end"(ap : Void*)

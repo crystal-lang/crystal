@@ -681,10 +681,7 @@ struct Int128
   end
 
   def popcount
-    # TODO: use after Crystal 0.23.1
-    # Intrinsics.popcount128(self)
-    v1, v2 = self.unsafe_as({Int64, Int64})
-    Int128.new(v1.popcount + v2.popcount)
+    Intrinsics.popcount128(self)
   end
 
   def clone
@@ -795,10 +792,7 @@ struct UInt128
   end
 
   def popcount
-    # TODO: use after Crystal 0.23.1
-    # Intrinsics.popcount128(self)
-    v1, v2 = self.unsafe_as({UInt64, UInt64})
-    UInt128.new(v1.popcount + v2.popcount)
+    Intrinsics.popcount128(self)
   end
 
   def clone
