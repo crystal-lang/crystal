@@ -249,7 +249,7 @@ class Crystal::Type
         end
 
         # Check the case of T resolving to a number
-        if type_var.is_a?(Path) && type_var.names.size == 1
+        if type_var.is_a?(Path)
           type = @root.lookup_path(type_var)
           case type
           when Const
