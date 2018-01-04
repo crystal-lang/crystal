@@ -1,9 +1,15 @@
+require "c/ntsecapi"
+
 module Crystal::System::Random
   def self.random_bytes(buf : Bytes) : Nil
-    raise NotImplementedError.new("Crystal::System::Random.random_bytes")
+    if LibC.RtlGenRandom(buf, buf.size) == 0
+      raise WinError.new("RtlGenRandom")
+    end
   end
 
   def self.next_u : UInt8
-    raise NotImplementedError.new("Crystal::System::Random.next_u")
+    buf = uninitialized UInt8[1]
+    random_bytes(buf.to_slice)
+    buf.unsafe_as(UInt8)
   end
 end
