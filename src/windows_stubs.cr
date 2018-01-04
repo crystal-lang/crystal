@@ -53,3 +53,9 @@ abstract class IO
     end
   end
 end
+
+class Process
+  def self.exit(status = 0)
+    LibC.exit(status)
+  end
+end
