@@ -191,13 +191,13 @@ end
         existing_dir = "existing-dir"
         Dir.mkdir(existing_dir)
 
-        expect_raises(Crystal::Init::Error, "file or directory #{existing_dir} already exists") do
+        expect_raises(Crystal::Init::Error, "File or directory #{existing_dir} already exists") do
           exec_init(existing_dir)
         end
 
         existing_file = "existing-file"
         File.touch(existing_file)
-        expect_raises(Crystal::Init::Error, "file or directory #{existing_file} already exists") do
+        expect_raises(Crystal::Init::Error, "File or directory #{existing_file} already exists") do
           exec_init(existing_file)
         end
       end
@@ -212,7 +212,7 @@ end
 
         exec_init(project_name, project_dir)
 
-        expect_raises(Crystal::Init::Error, "file or directory #{project_dir} already exists") do
+        expect_raises(Crystal::Init::Error, "File or directory #{project_dir} already exists") do
           exec_init(project_name, project_dir)
         end
       end

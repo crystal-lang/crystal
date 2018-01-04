@@ -88,7 +88,7 @@ module Crystal
     def self.fetch_directory(args, project_name)
       directory = args.empty? ? project_name : args.shift
       if Dir.exists?(directory) || File.exists?(directory)
-        raise Error.new "file or directory #{directory} already exists"
+        raise Error.new "File or directory #{directory} already exists"
       end
       directory
     end
@@ -96,14 +96,14 @@ module Crystal
     def self.fetch_skeleton_type(opts, args)
       skeleton_type = fetch_required_parameter(opts, args, "TYPE")
       unless {"lib", "app"}.includes?(skeleton_type)
-        raise ArgError.new "invalid TYPE value: #{skeleton_type}", opts
+        raise ArgError.new "Invalid TYPE value: #{skeleton_type}", opts
       end
       skeleton_type
     end
 
     def self.fetch_required_parameter(opts, args, name)
       if args.empty?
-        raise ArgError.new "#{name} is missing", opts
+        raise ArgError.new "Argument #{name} is missing", opts
       end
       args.shift
     end
