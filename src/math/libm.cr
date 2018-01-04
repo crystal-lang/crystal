@@ -3,15 +3,6 @@
 {% end %}
 
 lib LibM
-  # ## To be uncommented once LLVM is updated
-  # LLVM binary operations
-  # fun div_i32 = "llvm.sdiv"(value1 : Int32, value2 : Int32) : Int32
-  # fun div_f32 = "llvm.fdiv"(value1 : Float32, value2 : Float32) : Float32
-  # fun div_f64 = "llvm.fdiv"(value1 : Float64, value2 : Float64) : Float64
-  # fun rem_i32 = "llvm.srem"(value1 : Int32, value2 : Int32) : Int32
-  # fun rem_f32 = "llvm.frem"(value1 : Float32, value2 : Float32) : Float32
-  # fun rem_f64 = "llvm.frem"(value1 : Float64, value2 : Float64) : Float64
-
   # LLVM standard C library intrinsics
   fun ceil_f32 = "llvm.ceil.f32"(value : Float32) : Float32
   fun ceil_f64 = "llvm.ceil.f64"(value : Float64) : Float64
