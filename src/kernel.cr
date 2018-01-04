@@ -128,17 +128,10 @@ module AtExitHandlers
     handlers << handler
   end
 
-  @@handler_iterator : Iterator(Int32 ->)?
-
   def self.run(status)
     return status unless handlers = @@handlers
 
-    # Each handlers must be called only once, even when an handler calls `exit` by itself.
-    # To do that we save the handler iterator in `@@handler_iterator` to resume iteration
-    # on subsequent calls.
-    handler_iterator = @@handler_iterator ||= handlers.reverse_each
-
-    handler_iterator.each do |handler|
+    while handler = handlers.pop?
       begin
         handler.call status
       rescue handler_ex
