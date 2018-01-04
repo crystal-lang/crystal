@@ -344,6 +344,7 @@ describe Crystal::Formatter do
   assert_format "a = case 1\nwhen 2\n3\nelse\n4\nend", "a = case 1\n    when 2\n      3\n    else\n      4\n    end"
   assert_format "a = \nif 1\n2\nend", "a =\n  if 1\n    2\n  end"
   assert_format "a, b = \nif 1\n2\nend", "a, b =\n  if 1\n    2\n  end"
+  assert_format "a = b = 1\na, b =\n  b, a"
 
   assert_format %(require   "foo"), %(require "foo")
 

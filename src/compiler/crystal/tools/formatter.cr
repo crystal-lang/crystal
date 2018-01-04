@@ -3510,14 +3510,19 @@ module Crystal
 
       write_token " ", :"="
       skip_space
-      if @token.type == :NEWLINE && node.values.size == 1
+      if @token.type == :NEWLINE
         next_token_skip_space_or_newline
         write_line
-        write_indent(@indent + 2, node.values.first)
+        if node.values.size == 1
+          write_indent(@indent + 2, node.values.first)
+          return false
+        else
+          write_indent(@indent + 2)
+        end
       else
         write " "
-        format_mutli_assign_values node.values
       end
+      format_mutli_assign_values node.values
 
       false
     end
