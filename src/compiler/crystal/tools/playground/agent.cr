@@ -55,10 +55,7 @@ class Crystal::Playground::Agent
   end
 
   def to_html_value(value)
-    value
-      .pretty_inspect
-      .gsub("&", "&amp;") # HTML-sanitize
-      .gsub("<", "&lt;")
+    HTML.escape(value.pretty_inspect)
   end
 
   private def send(message_type)
