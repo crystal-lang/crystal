@@ -193,4 +193,15 @@ describe "at_exit" do
                        OUTPUT
     error.should eq "Error running at_exit handler: Raised from at_exit handler!\n"
   end
+
+  it "errors when used in an at_exit handler" do
+    status, output, error = build_and_run <<-CODE
+      at_exit do
+        at_exit {}
+      end
+    CODE
+
+    status.success?.should be_false
+    error.should eq "Error running at_exit handler: Cannot use at_exit from an at_exit handler\n"
+  end
 end

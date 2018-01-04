@@ -123,13 +123,18 @@ end
 
 # :nodoc:
 module AtExitHandlers
+  @@running = false
+
   def self.add(handler)
+    raise "Cannot use at_exit from an at_exit handler" if @@running
+
     handlers = @@handlers ||= [] of Int32 ->
     handlers << handler
   end
 
   def self.run(status)
     return status unless handlers = @@handlers
+    @@running = true
 
     while handler = handlers.pop?
       begin
