@@ -128,6 +128,10 @@ module Crystal
     end
 
     def transform(node : Expressions)
+      if exp = node.single_expression?
+        return exp.transform(self)
+      end
+
       exps = [] of ASTNode
 
       node.expressions.each_with_index do |exp, i|
@@ -144,6 +148,7 @@ module Crystal
     end
 
     def flatten_collect(exp, exps)
+      exp = exp.single_expression
       if exp.is_a?(Expressions)
         exp.expressions.each do |subexp|
           return true if flatten_collect(subexp, exps)

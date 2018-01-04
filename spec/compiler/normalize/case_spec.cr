@@ -53,6 +53,10 @@ describe "Normalize: case" do
     assert_expand "case x = 1; when 2; 3; end", "x = 1\nif 2 === x\n  3\nend"
   end
 
+  it "normalizes case with assignment wrapped by paren" do
+    assert_expand "case (x = 1); when 2; 3; end", "x = 1\nif 2 === x\n  3\nend"
+  end
+
   it "normalizes case without value" do
     assert_expand "case when 2; 3; when 4; 5; end", "if 2\n  3\nelse\n  if 4\n    5\n  end\nend"
   end

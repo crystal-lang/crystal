@@ -89,6 +89,18 @@ module Crystal
     def pretty_print(pp)
       pp.text to_s
     end
+
+    # It yields itself for any node, but `Expressions` yields first node
+    # if it holds only a node.
+    def single_expression
+      single_expression? || self
+    end
+
+    # It yields `nil` always.
+    # (It is overrided by `Expressions` to implement `#single_expression`.)
+    def single_expression?
+      nil
+    end
   end
 
   class Nop < ASTNode
@@ -144,6 +156,13 @@ module Crystal
 
     def end_location
       @end_location || @expressions.last?.try &.end_location
+    end
+
+    # It yields first node if this holds only one node, or yields `nil`.
+    def single_expression?
+      return @expressions.first.single_expression if @expressions.size == 1
+
+      nil
     end
 
     def accept_children(visitor)
