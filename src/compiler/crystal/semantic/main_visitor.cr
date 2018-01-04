@@ -1742,7 +1742,7 @@ module Crystal
         target = exp.target
         return target if target.is_a?(Var)
       when Expressions
-        return unless exp = single_expression(exp)
+        return unless exp = exp.single_expression?
         return get_expression_var(exp)
       end
       nil
@@ -1850,13 +1850,13 @@ module Crystal
       # block is when the condition is a Var (in the else it must be
       # nil), IsA (in the else it's not that type), RespondsTo
       # (in the else it doesn't respond to that message) or Not.
-      case cond = single_expression(node.cond) || node.cond
+      case cond = node.cond.single_expression
       when Var, IsA, RespondsTo, Not
         filter_vars cond_type_filters, &.not
       when Or
         # Try to apply boolean logic: `!(a || b)` is `!a && !b`
-        cond_left = single_expression(cond.left) || cond.left
-        cond_right = single_expression(cond.right) || cond.right
+        cond_left = cond.left.single_expression
+        cond_right = cond.right.single_expression
 
         #  We can't deduce anything for sub && or || expressions
         or_left_type_filters = nil if cond_left.is_a?(And) || cond_left.is_a?(Or)
@@ -2026,7 +2026,7 @@ module Crystal
         node.body.accept self
       end
 
-      cond = single_expression(node.cond) || node.cond
+      cond = node.cond.single_expression
 
       endless_while = cond.true_literal?
       merge_while_vars cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
@@ -2158,7 +2158,7 @@ module Crystal
       when Call
         return get_while_cond_assign_target(node.obj)
       when Expressions
-        return unless node = single_expression(node)
+        return unless node = node.single_expression?
         return get_while_cond_assign_target(node)
       end
 
@@ -2190,16 +2190,6 @@ module Crystal
         filtered_var.bind_to(existing_var.filtered_by(yield filter))
         @vars[name] = filtered_var
       end
-    end
-
-    def single_expression(node)
-      result = nil
-
-      while node.is_a?(Expressions) && node.expressions.size == 1
-        result = node = node[0]
-      end
-
-      result
     end
 
     def end_visit(node : Break)
