@@ -2,6 +2,8 @@
 lib LibLLVM
   LLVM_CONFIG = {{
                   `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
+                   command -v llvm-config-5.0 || command -v llvm-config50 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-4.0 || command -v llvm-config40 || \
                    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-3.9 || command -v llvm-config39 || \
