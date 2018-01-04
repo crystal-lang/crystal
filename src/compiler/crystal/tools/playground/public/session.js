@@ -297,7 +297,8 @@ Playground.Session = function(options) {
   this.editor._playgroundSession = this;
 
   this.connect = function() {
-    this.ws = new WebSocket("ws://" + location.host + "/client");
+    var socketProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+    this.ws = new WebSocket(socketProtocol + "//" + location.host + "/client");
 
     this.ws.onopen = function() {
       this._triggerReady();
