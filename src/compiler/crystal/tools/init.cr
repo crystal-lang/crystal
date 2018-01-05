@@ -8,9 +8,6 @@ module Crystal
     WHICH_GIT_COMMAND = "which git >/dev/null"
 
     class Error < ::Exception
-    end
-
-    class ArgError < Error
       def self.new(message, opts : OptionParser)
         new("#{message}\n#{opts}\n")
       end
@@ -96,14 +93,14 @@ module Crystal
     def self.fetch_skeleton_type(opts, args)
       skeleton_type = fetch_required_parameter(opts, args, "TYPE")
       unless {"lib", "app"}.includes?(skeleton_type)
-        raise ArgError.new "Invalid TYPE value: #{skeleton_type}", opts
+        raise Error.new "Invalid TYPE value: #{skeleton_type}", opts
       end
       skeleton_type
     end
 
     def self.fetch_required_parameter(opts, args, name)
       if args.empty?
-        raise ArgError.new "Argument #{name} is missing", opts
+        raise Error.new "Argument #{name} is missing", opts
       end
       args.shift
     end
