@@ -14,7 +14,7 @@ _crystal()
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="init build deps docs eval play run spec tool help version --help --version"
+    commands="init build docs eval play run spec tool help version --help --version"
 
     case "${cmd}" in
         init)
@@ -30,19 +30,6 @@ _crystal()
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             else
                 COMPREPLY=($(_crystal_compgen_files $cur))
-            fi
-            ;;
-        deps)
-            if [[ ${cur} == -* ]] ; then
-                local opts="--no-color --version --production"
-                COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            else
-                if [[ "${prev}" == "deps" ]] ; then
-                    local subcommands="check install list update"
-                    COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
-                else
-                    COMPREPLY=($(_crystal_compgen_files $cur))
-                fi
             fi
             ;;
         run)
