@@ -2,7 +2,6 @@ require "./sys/types"
 require "./stdint"
 
 lib LibC
-  SC_CLK_TCK =    3
   F_OK       =    0  # test for existence of file
   X_OK       = 0x01  # test for execute or search permission
   W_OK       = 0x02  # test for write permission
@@ -15,6 +14,7 @@ lib LibC
   fun dup2(x0 : Int, x1 : Int) : Int
   fun _exit(x0 : Int) : NoReturn
   fun execvp(x0 : Char*, x1 : Char**) : Int
+  SC_CLK_TCK =    3
   @[ReturnsTwice]
   fun fork : PidT
   fun ftruncate(x0 : Int, x1 : OffT) : Int
