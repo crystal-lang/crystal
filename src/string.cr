@@ -4272,5 +4272,4 @@ class String
   end
 end
 
-require "./string/formatter"
-require "./string/builder"
+require "./string/*"
