@@ -93,7 +93,6 @@ module Float::Printer::IEEE
   # exponent as m_plus.
   # Precondition: the value encoded by this Flaot must be greater than 0.
   def normalized_boundaries(v : Float64)
-    _invariant v > 0
     w = DiyFP.from_f(v)
     m_plus = DiyFP.new((w.frac << 1) + 1, w.exp - 1).normalize
 
@@ -122,7 +121,6 @@ module Float::Printer::IEEE
   end
 
   def normalized_boundaries(v : Float32)
-    _invariant v > 0
     w = DiyFP.from_f(v)
     m_plus = DiyFP.new((w.frac << 1) + 1, w.exp - 1).normalize
 
@@ -144,7 +142,6 @@ module Float::Printer::IEEE
 
   def frac_and_exp(v : Float64)
     d64 = to_uint(v)
-    _invariant (d64 & EXPONENT_MASK_64) != EXPONENT_MASK_64
 
     if (d64 & EXPONENT_MASK_64) == 0 # denormal float
       frac = d64 & SIGNIFICAND_MASK_64
@@ -159,7 +156,6 @@ module Float::Printer::IEEE
 
   def frac_and_exp(v : Float32)
     d32 = to_uint(v)
-    _invariant (d32 & EXPONENT_MASK_32) != EXPONENT_MASK_32
 
     if (d32 & EXPONENT_MASK_32) == 0 # denormal float
       frac = d32 & SIGNIFICAND_MASK_32
@@ -190,13 +186,5 @@ module Float::Printer::IEEE
     return DENORMAL_EXPONENT_32 if denormal?(d32)
     baised_e = ((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32).to_i
     baised_e - EXPONENT_BIAS_32
-  end
-
-  private macro _invariant(exp, file = __FILE__, line = __LINE__)
-    {% if !flag?(:release) %}
-      unless {{exp}}
-        raise "Assertion Failed #{{{file}}}:#{{{line}}}"
-      end
-    {% end %}
   end
 end
