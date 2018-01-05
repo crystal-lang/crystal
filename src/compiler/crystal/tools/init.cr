@@ -7,7 +7,18 @@ module Crystal
   module Init
     WHICH_GIT_COMMAND = "which git >/dev/null"
 
+    class Error < ::Exception
+      def self.new(message, opts : OptionParser)
+        new("#{message}\n#{opts}\n")
+      end
+    end
+
     def self.run(args)
+      config = parse_args(args)
+      InitProject.new(config).run
+    end
+
+    def self.parse_args(args)
       config = Config.new
 
       OptionParser.parse(args) do |opts|
@@ -40,7 +51,7 @@ module Crystal
       config.author = fetch_author
       config.email = fetch_email
       config.github_name = fetch_github_name
-      InitProject.new(config).run
+      config
     end
 
     def self.fetch_author
@@ -74,8 +85,7 @@ module Crystal
     def self.fetch_directory(args, project_name)
       directory = args.empty? ? project_name : args.shift
       if Dir.exists?(directory) || File.exists?(directory)
-        STDERR.puts "file or directory #{directory} already exists"
-        exit 1
+        raise Error.new "File or directory #{directory} already exists"
       end
       directory
     end
@@ -83,18 +93,14 @@ module Crystal
     def self.fetch_skeleton_type(opts, args)
       skeleton_type = fetch_required_parameter(opts, args, "TYPE")
       unless {"lib", "app"}.includes?(skeleton_type)
-        STDERR.puts "invalid TYPE value: #{skeleton_type}"
-        STDERR.puts opts
-        exit 1
+        raise Error.new "Invalid TYPE value: #{skeleton_type}", opts
       end
       skeleton_type
     end
 
     def self.fetch_required_parameter(opts, args, name)
       if args.empty?
-        STDERR.puts "#{name} is missing"
-        STDERR.puts opts
-        exit 1
+        raise Error.new "Argument #{name} is missing", opts
       end
       args.shift
     end
