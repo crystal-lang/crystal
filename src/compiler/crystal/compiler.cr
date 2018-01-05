@@ -361,7 +361,21 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          system(linker_command(program, nil, output_filename, output_dir), object_names)
+          linker_command = linker_command(program, nil, output_filename, output_dir)
+
+          process_wrapper(linker_command, object_names) do |command, args|
+            Process.run(command, args, shell: true,
+              input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
+              process.error.each_line(chomp: false) do |line|
+                hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
+                line = line.gsub(/cannot find -l(\w+)/, "cannot find -l\\1 #{hint_string}")
+                line = line.gsub(/unable to find library -l(\w+)/, "unable to find library -l\\1 #{hint_string}")
+                line = line.gsub(/library not found for -l(\w+)/, "library not found for -l\\1 #{hint_string}")
+                STDERR << line
+              end
+            end
+            $?
+          end
         end
       end
 
@@ -507,12 +521,20 @@ module Crystal
     end
 
     private def system(command, args = nil)
+      process_wrapper(command, args) do
+        ::system(command, args)
+        $?
+      end
+    end
+
+    private def process_wrapper(command, args = nil)
       stdout.puts "#{command} #{args.join " "}" if verbose?
 
-      ::system(command, args)
-      unless $?.success?
-        msg = $?.normal_exit? ? "code: #{$?.exit_code}" : "signal: #{$?.exit_signal} (#{$?.exit_signal.value})"
-        code = $?.normal_exit? ? $?.exit_code : 1
+      status = yield command, args
+
+      unless status.success?
+        msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
+        code = status.normal_exit? ? status.exit_code : 1
         error "execution of command failed with #{msg}: `#{command}`", exit_code: code
       end
     end
