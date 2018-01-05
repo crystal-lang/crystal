@@ -73,25 +73,29 @@ module YAML
     {% end %}
 
     {% for key, value in _properties_ %}
-      @{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
+      {% _properties_[key][:key_id] = key.id.gsub(/\?$/, "") %}
+    {% end %}
+
+    {% for key, value in _properties_ %}
+      @{{value[:key_id]}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
 
       {% if value[:setter] == nil ? true : value[:setter] %}
-        def {{key.id}}=(_{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
-          @{{key.id}} = _{{key.id}}
+        def {{value[:key_id]}}=(_{{value[:key_id]}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
+          @{{value[:key_id]}} = _{{value[:key_id]}}
         end
       {% end %}
 
       {% if value[:getter] == nil ? true : value[:getter] %}
         def {{key.id}}
-          @{{key.id}}
+          @{{value[:key_id]}}
         end
       {% end %}
 
       {% if value[:presence] %}
-        @{{key.id}}_present : Bool = false
+        @{{value[:key_id]}}_present : Bool = false
 
-        def {{key.id}}_present?
-          @{{key.id}}_present
+        def {{value[:key_id]}}_present?
+          @{{value[:key_id]}}_present
         end
       {% end %}
     {% end %}
@@ -133,7 +137,7 @@ module YAML
 
           case key
           {% for key, value in _properties_ %}
-            when {{value[:key] || key.id.stringify}}
+            when {{value[:key] || value[:key_id].stringify}}
               %found{key.id} = true
 
               %var{key.id} =
@@ -168,28 +172,24 @@ module YAML
       {% for key, value in _properties_ %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
-            node.raise "Missing yaml attribute: {{(value[:key] || key).id}}"
+            node.raise "Missing yaml attribute: {{(value[:key] || value[:key_id]).id}}"
           end
         {% end %}
-      {% end %}
 
-      {% for key, value in _properties_ %}
         {% if value[:nilable] %}
           {% if value[:default] != nil %}
-            @{{key.id}} = %found{key.id} ? %var{key.id} : {{value[:default]}}
+            @{{value[:key_id]}} = %found{key.id} ? %var{key.id} : {{value[:default]}}
           {% else %}
-            @{{key.id}} = %var{key.id}
+            @{{value[:key_id]}} = %var{key.id}
           {% end %}
         {% elsif value[:default] != nil %}
-          @{{key.id}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
+          @{{value[:key_id]}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
         {% else %}
-          @{{key.id}} = %var{key.id}.as({{value[:type]}})
+          @{{value[:key_id]}} = %var{key.id}.as({{value[:type]}})
         {% end %}
-      {% end %}
 
-      {% for key, value in _properties_ %}
         {% if value[:presence] %}
-          @{{key.id}}_present = %found{key.id}
+          @{{value[:key_id]}}_present = %found{key.id}
         {% end %}
       {% end %}
     end
@@ -197,17 +197,17 @@ module YAML
     def to_yaml(%yaml : ::YAML::Nodes::Builder)
       %yaml.mapping(reference: self) do
         {% for key, value in _properties_ %}
-          _{{key.id}} = @{{key.id}}
+          _{{value[:key_id]}} = @{{value[:key_id]}}
 
-          unless _{{key.id}}.nil?
+          unless _{{value[:key_id]}}.nil?
             # Key
-            {{value[:key] || key.id.stringify}}.to_yaml(%yaml)
+            {{value[:key] || value[:key_id].stringify}}.to_yaml(%yaml)
 
             # Value
             {% if value[:converter] %}
-              {{ value[:converter] }}.to_yaml(_{{key.id}}, %yaml)
+              {{ value[:converter] }}.to_yaml(_{{value[:key_id]}}, %yaml)
             {% else %}
-              _{{key.id}}.to_yaml(%yaml)
+              _{{value[:key_id]}}.to_yaml(%yaml)
             {% end %}
           end
         {% end %}

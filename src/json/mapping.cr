@@ -67,25 +67,29 @@ module JSON
     {% end %}
 
     {% for key, value in _properties_ %}
-      @{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
+      {% _properties_[key][:key_id] = key.id.gsub(/\?$/, "") %}
+    {% end %}
+
+    {% for key, value in _properties_ %}
+      @{{value[:key_id]}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
 
       {% if value[:setter] == nil ? true : value[:setter] %}
-        def {{key.id}}=(_{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
-          @{{key.id}} = _{{key.id}}
+        def {{value[:key_id]}}=(_{{value[:key_id]}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
+          @{{value[:key_id]}} = _{{value[:key_id]}}
         end
       {% end %}
 
       {% if value[:getter] == nil ? true : value[:getter] %}
         def {{key.id}}
-          @{{key.id}}
+          @{{value[:key_id]}}
         end
       {% end %}
 
       {% if value[:presence] %}
-        @{{key.id}}_present : Bool = false
+        @{{value[:key_id]}}_present : Bool = false
 
-        def {{key.id}}_present?
-          @{{key.id}}_present
+        def {{value[:key_id]}}_present?
+          @{{value[:key_id]}}_present
         end
       {% end %}
     {% end %}
@@ -103,7 +107,7 @@ module JSON
         key = %pull.read_object_key
         case key
         {% for key, value in _properties_ %}
-          when {{value[:key] || key.id.stringify}}
+          when {{value[:key] || value[:key_id].stringify}}
             %found{key.id} = true
 
             %var{key.id} =
@@ -141,28 +145,24 @@ module JSON
       {% for key, value in _properties_ %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
-            raise ::JSON::ParseException.new("Missing json attribute: {{(value[:key] || key).id}}", *%location)
+            raise ::JSON::ParseException.new("Missing json attribute: {{(value[:key] || value[:key_id]).id}}", *%location)
           end
         {% end %}
-      {% end %}
 
-      {% for key, value in _properties_ %}
         {% if value[:nilable] %}
           {% if value[:default] != nil %}
-            @{{key.id}} = %found{key.id} ? %var{key.id} : {{value[:default]}}
+            @{{value[:key_id]}} = %found{key.id} ? %var{key.id} : {{value[:default]}}
           {% else %}
-            @{{key.id}} = %var{key.id}
+            @{{value[:key_id]}} = %var{key.id}
           {% end %}
         {% elsif value[:default] != nil %}
-          @{{key.id}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
+          @{{value[:key_id]}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
         {% else %}
-          @{{key.id}} = (%var{key.id}).as({{value[:type]}})
+          @{{value[:key_id]}} = (%var{key.id}).as({{value[:type]}})
         {% end %}
-      {% end %}
 
-      {% for key, value in _properties_ %}
         {% if value[:presence] %}
-          @{{key.id}}_present = %found{key.id}
+          @{{value[:key_id]}}_present = %found{key.id}
         {% end %}
       {% end %}
     end
@@ -170,16 +170,16 @@ module JSON
     def to_json(json : ::JSON::Builder)
       json.object do
         {% for key, value in _properties_ %}
-          _{{key.id}} = @{{key.id}}
+          _{{value[:key_id]}} = @{{value[:key_id]}}
 
           {% unless value[:emit_null] %}
-            unless _{{key.id}}.nil?
+            unless _{{value[:key_id]}}.nil?
           {% end %}
 
-            json.field({{value[:key] || key.id.stringify}}) do
+            json.field({{value[:key] || value[:key_id].stringify}}) do
               {% if value[:root] %}
                 {% if value[:emit_null] %}
-                  if _{{key.id}}.nil?
+                  if _{{value[:key_id]}}.nil?
                     nil.to_json(json)
                   else
                 {% end %}
@@ -189,13 +189,13 @@ module JSON
               {% end %}
 
               {% if value[:converter] %}
-                if _{{key.id}}
-                  {{ value[:converter] }}.to_json(_{{key.id}}, json)
+                if _{{value[:key_id]}}
+                  {{ value[:converter] }}.to_json(_{{value[:key_id]}}, json)
                 else
                   nil.to_json(json)
                 end
               {% else %}
-                _{{key.id}}.to_json(json)
+                _{{value[:key_id]}}.to_json(json)
               {% end %}
 
               {% if value[:root] %}

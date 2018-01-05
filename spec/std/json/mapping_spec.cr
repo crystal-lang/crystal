@@ -159,6 +159,22 @@ private class JSONWithPresence
   })
 end
 
+private class JSONWithQueryAttributes
+  JSON.mapping({
+    foo?: Bool,
+    bar?: {type: Bool, default: false, presence: true, key: "is_bar"},
+  })
+end
+
+private class JSONWithOverwritingQueryAttributes
+  property foo : Symbol?
+  property bar : Symbol?
+  JSON.mapping({
+    foo?: Bool,
+    bar?: {type: Bool, default: false, presence: true, key: "is_bar"},
+  })
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -464,6 +480,42 @@ describe "JSON mapping" do
       json.first_name_present?.should be_true
       json.last_name.should be_nil
       json.last_name_present?.should be_false
+    end
+  end
+
+  describe "with query attributes" do
+    it "defines query getter" do
+      json = JSONWithQueryAttributes.from_json(%({"foo": true}))
+      json.foo?.should be_true
+      json.bar?.should be_false
+    end
+
+    it "defines non-query setter and presence methods" do
+      json = JSONWithQueryAttributes.from_json(%({"foo": false}))
+      json.bar_present?.should be_false
+      json.bar = true
+      json.bar?.should be_true
+    end
+
+    it "maps non-query attributes" do
+      json = JSONWithQueryAttributes.from_json(%({"foo": false, "is_bar": false}))
+      json.bar_present?.should be_true
+      json.bar?.should be_false
+      json.bar = true
+      json.to_json.should eq(%({"foo":false,"is_bar":true}))
+    end
+
+    it "raises if non-nilable attribute is nil" do
+      ex = expect_raises JSON::ParseException, "Missing json attribute: foo" do
+        JSONWithQueryAttributes.from_json(%({"is_bar": true}))
+      end
+      ex.location.should eq({1, 1})
+    end
+
+    it "overwrites non-query attributes" do
+      json = JSONWithOverwritingQueryAttributes.from_json(%({"foo": true}))
+      typeof(json.@foo).should eq(Bool)
+      typeof(json.@bar).should eq(Bool)
     end
   end
 end
