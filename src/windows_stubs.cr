@@ -24,6 +24,10 @@ abstract class IO
       raise NotImplementedError.new("IO::Decoder.new")
     end
 
+    def out_slice : Bytes
+      raise NotImplementedError.new("IO::Decoder#out_slice")
+    end
+
     def read(io)
       raise NotImplementedError.new("IO::Decoder#read")
     end
