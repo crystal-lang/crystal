@@ -265,6 +265,10 @@ struct Number
     other * self
   end
 
+  def /(other : BigFloat)
+    to_big_f / other
+  end
+
   def to_big_f
     BigFloat.new(self)
   end
