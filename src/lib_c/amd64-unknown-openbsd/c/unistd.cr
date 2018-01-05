@@ -2,11 +2,11 @@ require "./sys/types"
 require "./stdint"
 
 lib LibC
-  F_OK       =    0
-  R_OK       = 0x04
-  W_OK       = 0x02
-  X_OK       = 0x01
   SC_CLK_TCK =    3
+  F_OK       =    0  # test for existence of file
+  X_OK       = 0x01  # test for execute or search permission
+  W_OK       = 0x02  # test for write permission
+  R_OK       = 0x04  # test for read permission
 
   fun access(x0 : Char*, x1 : Int) : Int
   fun chdir(x0 : Char*) : Int
