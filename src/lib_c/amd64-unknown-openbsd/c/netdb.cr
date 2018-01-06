@@ -33,7 +33,7 @@ lib LibC
     ai_socktype : Int     # socket type
     ai_protocol : Int     # protocol for socket
     ai_addrlen : SocklenT # length of socket-address
-    ai_addr : Void*       # socket-address for socket
+    ai_addr : Sockaddr*   # socket-address for socket
     ai_canonname : Char*  # canonical name for service location (iff req)
     ai_next : Addrinfo*   # pointer to next in list
   end
