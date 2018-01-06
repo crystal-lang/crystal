@@ -166,5 +166,5 @@ lib LibC
   fun setsockopt(s : Int, level : Int, optname : Int, optval : Void*, optlen : SocklenT) : Int
   fun shutdown(s : Int, how : Int) : Int
   fun socket(domain : Int, type : Int, protocol : Int) : Int
-  fun socketpair(d : Int, type : Int, protocol : Int, sv : Int*) : Int
+  fun socketpair(d : Int, type : Int, protocol : Int, sv : StaticArray(Int, 2)) : Int
 end
