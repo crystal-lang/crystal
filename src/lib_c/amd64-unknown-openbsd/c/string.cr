@@ -8,4 +8,5 @@ lib LibC
   fun strlen(x0 : Char*) : SizeT
   fun strncmp(s1 : Char*, s2 : Char*, len : SizeT) : Int
   fun strnlen(s : Char*, maxlen SizeT) : SizeT
+  fun explicit_bzero(b : Void*, len : SizeT) : Void
 end
