@@ -11,7 +11,6 @@ lib LibC
   fun pthread_detach(x0 : PthreadT) : Int
   fun pthread_equal(x0 : PthreadT, x1 : PthreadT) : Int
   fun pthread_join(x0 : PthreadT, x1 : Void**) : Int
-  fun pthread_main_np : Int
   fun pthread_mutex_destroy(x0 : PthreadMutexT*) : Int
   fun pthread_mutex_init(x0 : PthreadMutexT*, x1 : PthreadMutexattrT*) : Int
   fun pthread_mutex_lock(x0 : PthreadMutexT*) : Int
