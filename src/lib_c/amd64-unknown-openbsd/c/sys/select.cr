@@ -8,5 +8,5 @@ lib LibC
     fds_bits : StaticArray(UInt32T, 32)
   end
 
-  fun select(x0 : Int, x1 : FdSet*, x2 : FdSet*, x3 : FdSet*, x4 : Timeval*) : Int
+  fun select(nfds : Int, readfds : FdSet*, writefds : FdSet*, exceptfds : FdSet*, timeout : Timeval*) : Int
 end

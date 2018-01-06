@@ -2,10 +2,6 @@ require "./types"
 
 lib LibC
 
-  fun mmap(x0 : Void*, x1 : SizeT, x2 : Int, x3 : Int, x4 : Int, x5 : OffT) : Void*
-  fun mprotect(x0 : Void*, x1 : SizeT, x2 : Int) : Int
-  fun munmap(x0 : Void*, x1 : SizeT) : Int
-  fun madvise(x0 : Void*, x1 : SizeT, x2 : Int) : Int
   # Protections are chosen from these bits, or-ed together
   PROT_NONE   = 0x00  # no permissions
   PROT_READ   = 0x01  # pages can be read
@@ -37,4 +33,8 @@ lib LibC
   MADV_SPACEAVAIL = 5  # insure that resources are reserved
   MADV_FREE       = 6  # pages are empty, free them
 
+  fun mmap(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : OffT) : Void*
+  fun mprotect(addr : Void*, len : SizeT, prot : Int) : Int
+  fun munmap(addr : Void*, len : SizeT) : Int
+  fun madvise(addr : Void*, len : SizeT, behav : Int) : Int
 end
