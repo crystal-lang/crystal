@@ -45,11 +45,11 @@ lib LibC
 
 
   struct Flock
-    l_start : OffT
-    l_len : OffT
-    l_pid : PidT
-    l_type : Short
-    l_whence : Short
+    l_start : OffT    # starting offset
+    l_len : OffT      # len = 0 means until end of file
+    l_pid : PidT      # lock owner
+    l_type : Short    # lock type: read/write, etc.
+    l_whence : Short  # type of l_start
   end
 
   fun fcntl(x0 : Int, x1 : Int, ...) : Int
