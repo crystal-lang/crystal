@@ -43,7 +43,6 @@ lib LibC
   F_UNLCK           =  2  # unlock
   F_WRLCK           =  3  # exclusive or write lock
 
-
   struct Flock
     l_start : OffT    # starting offset
     l_len : OffT      # len = 0 means until end of file
@@ -52,6 +51,15 @@ lib LibC
     l_whence : Short  # type of l_start
   end
 
-  fun fcntl(fd : Int, cmd : Int, ...) : Int
+  @[Flags]
+  enum FlockOp
+    SH = 0x1
+    EX = 0x2
+    NB = 0x4
+    UN = 0x8
+  end
+
   fun open(path : Char*, x1 : flags, ...) : Int
+  fun fcntl(fd : Int, cmd : Int, ...) : Int
+  fun flock(fd : Int, op : FlockOp) : Int
 end
