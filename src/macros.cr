@@ -128,3 +128,11 @@ macro assert_responds_to(var, method)
     raise "Expected {{var}} to respond to :{{method}}, not #{ {{var}} }"
   end
 end
+
+macro assert(exp, file = __FILE__, line = __LINE__)
+  {% if !flag?(:release) %}
+    unless %exp = {{exp}}
+      raise "Assertion failed in #{{{file}}}:#{{{line}}}"
+    end
+  {% end %}
+end
