@@ -1,5 +1,7 @@
 require "spec"
 require "json"
+require "uuid"
+require "uuid/json"
 
 private class JSONPerson
   JSON.mapping({
@@ -29,6 +31,10 @@ end
 
 private class JSONWithBool
   JSON.mapping value: Bool
+end
+
+private class JSONWithUUID
+  JSON.mapping value: UUID
 end
 
 private class JSONWithTime
@@ -242,6 +248,12 @@ describe "JSON mapping" do
   it "doesn't raises on false value when not-nil" do
     json = JSONWithBool.from_json(%({"value": false}))
     json.value.should be_false
+  end
+
+  it "parses UUID" do
+    uuid = JSONWithUUID.from_json(%({"value": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
+    uuid.should be_a(JSONWithUUID)
+    uuid.value.should eq(UUID.new("ba714f86-cac6-42c7-8956-bcf5105e1b81"))
   end
 
   it "parses json with Time::Format converter" do
