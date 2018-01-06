@@ -2,10 +2,10 @@ require "./types"
 
 lib LibC
   struct Tms
-    tms_utime : ClockT
-    tms_stime : ClockT
-    tms_cutime : ClockT
-    tms_cstime : ClockT
+    tms_utime : ClockT  # User CPU time
+    tms_stime : ClockT  # System CPU time
+    tms_cutime : ClockT # User CPU time of terminated child procs
+    tms_cstime : ClockT # System CPU time of terminated child procs
   end
 
   fun times(x0 : Tms*) : ClockT
