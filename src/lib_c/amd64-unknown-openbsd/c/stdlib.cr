@@ -8,6 +8,7 @@ lib LibC
   end
 
   fun arc4random : UInt32
+  fun arc4random_uniform(upper_bound : UInt32) : UInt32
   fun arc4random_buf(x0 : Void*, x1 : SizeT) : Void
   fun atof(x0 : Char*) : Double
   fun div(x0 : Int, x1 : Int) : DivT
