@@ -52,6 +52,6 @@ lib LibC
     l_whence : Short  # type of l_start
   end
 
-  fun fcntl(x0 : Int, x1 : Int, ...) : Int
-  fun open(x0 : Char*, x1 : Int, ...) : Int
+  fun fcntl(fd : Int, cmd : Int, ...) : Int
+  fun open(path : Char*, x1 : flags, ...) : Int
 end

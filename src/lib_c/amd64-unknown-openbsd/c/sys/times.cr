@@ -8,5 +8,5 @@ lib LibC
     tms_cstime : ClockT # System CPU time of terminated child procs
   end
 
-  fun times(x0 : Tms*) : ClockT
+  fun times(tp : Tms*) : ClockT
 end

@@ -104,9 +104,6 @@ lib LibC
     c_ospeed : Int                # output speed
   end
 
-  fun tcgetattr(x0 : Int, x1 : Termios*) : Int
-  fun tcsetattr(x0 : Int, x1 : Int, x2 : Termios*) : Int
-  fun cfmakeraw(x0 : Termios*) : Void
   # Commands passed to tcsetattr() for setting the termios structure.
   TCSANOW     =          0  # make change immediate
   TCSADRAIN   =          1  # drain output, then change
@@ -148,4 +145,7 @@ lib LibC
   TCIOFF      =          3
   TCION       =          4
 
+  fun tcgetattr(fd : Int, tp : Termios*) : Int
+  fun tcsetattr(fd : Int, action : Int, tp : Termios*) : Int
+  fun cfmakeraw(tp : Termios*) : Void
 end

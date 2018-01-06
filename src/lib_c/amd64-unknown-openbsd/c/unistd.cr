@@ -7,34 +7,35 @@ lib LibC
   W_OK       = 0x02  # test for write permission
   R_OK       = 0x04  # test for read permission
 
-  fun access(x0 : Char*, x1 : Int) : Int
-  fun chdir(x0 : Char*) : Int
-  fun chown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
-  fun close(x0 : Int) : Int
-  fun dup2(x0 : Int, x1 : Int) : Int
-  fun _exit(x0 : Int) : NoReturn
-  fun execvp(x0 : Char*, x1 : Char**) : Int
   SC_CLK_TCK =    3
+
+  fun access(path : Char*, amode : Int) : Int
+  fun chdir(path : Char*) : Int
+  fun chown(path : Char*, owner : UidT, group : GidT) : Int
+  fun close(d : Int) : Int
+  fun dup2(oldd : Int, newd : Int) : Int
+  fun _exit(status : Int) : NoReturn
+  fun execvp(file : Char*, argv : Char**) : Int
   @[ReturnsTwice]
   fun fork : PidT
-  fun ftruncate(x0 : Int, x1 : OffT) : Int
-  fun getcwd(x0 : Char*, x1 : SizeT) : Char*
-  fun gethostname(x0 : Char*, x1 : SizeT) : Int
-  fun getpgid(x0 : PidT) : PidT
+  fun ftruncate(fd : Int, length : OffT) : Int
+  fun getcwd(buf : Char*, size : SizeT) : Char*
+  fun gethostname(name : Char*, namelen : SizeT) : Int
+  fun getpgid(pid : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
-  fun isatty(x0 : Int) : Int
-  fun lchown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
-  fun link(x0 : Char*, x1 : Char*) : Int
-  fun lockf(x0 : Int, x1 : Int, x2 : OffT) : Int
-  fun lseek(x0 : Int, x1 : OffT, x2 : Int) : OffT
-  fun pipe(x0 : Int*) : Int
-  fun read(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
-  fun pread(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
-  fun rmdir(x0 : Char*) : Int
-  fun symlink(x0 : Char*, x1 : Char*) : Int
-  fun syscall(x0 : Int, ...) : Int
-  fun sysconf(x0 : Int) : Long
-  fun unlink(x0 : Char*) : Int
-  fun write(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
+  fun isatty(fd : Int) : Int
+  fun lchown(path : Char*, owner : UidT, group : GidT) : Int
+  fun link(name1 : Char*, name2 : Char*) : Int
+  fun lockf(filedes : Int, function : Int, off_t : OffT) : Int
+  fun lseek(filedes : Int, offset : OffT, whence : Int) : OffT
+  fun pipe(fildes : Int*) : Int
+  fun read(d : Int, buf : Void*, nbytes : SizeT) : SSizeT
+  fun pread(d : Int, buf : Void*, nbytes : SizeT, offset : OffT) : SSizeT
+  fun rmdir(path : Char*) : Int
+  fun symlink(name1 : Char*, name2 : Char*) : Int
+  fun syscall(number : Int, ...) : Int
+  fun sysconf(name : Int) : Long
+  fun unlink(path : Char*) : Int
+  fun write(d : Int, buf : Void*, nbytes : SizeT) : SSizeT
 end

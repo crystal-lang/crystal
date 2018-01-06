@@ -152,19 +152,19 @@ lib LibC
   SHUT_RDWR     = 2
   SHUT_WR       = 1
 
-  fun accept(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*) : Int
-  fun bind(x0 : Int, x1 : Sockaddr*, x2 : SocklenT) : Int
-  fun connect(x0 : Int, x1 : Sockaddr*, x2 : SocklenT) : Int
-  fun getpeername(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*) : Int
-  fun getsockname(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*) : Int
-  fun getsockopt(x0 : Int, x1 : Int, x2 : Int, x3 : Void*, x4 : SocklenT*) : Int
-  fun listen(x0 : Int, x1 : Int) : Int
-  fun recv(x0 : Int, x1 : Void*, x2 : SizeT, x3 : Int) : SSizeT
-  fun recvfrom(x0 : Int, x1 : Void*, x2 : SizeT, x3 : Int, x4 : Sockaddr*, x5 : SocklenT*) : SSizeT
-  fun send(x0 : Int, x1 : Void*, x2 : SizeT, x3 : Int) : SSizeT
-  fun sendto(x0 : Int, x1 : Void*, x2 : SizeT, x3 : Int, x4 : Sockaddr*, x5 : SocklenT) : SSizeT
-  fun setsockopt(x0 : Int, x1 : Int, x2 : Int, x3 : Void*, x4 : SocklenT) : Int
-  fun shutdown(x0 : Int, x1 : Int) : Int
-  fun socket(x0 : Int, x1 : Int, x2 : Int) : Int
-  fun socketpair(x0 : Int, x1 : Int, x2 : Int, x3 : Int*) : Int
+  fun accept(s : Int, addr : Sockaddr*, addrlen : SocklenT*) : Int
+  fun bind(s : Int, name : Sockaddr*, namelen : SocklenT) : Int
+  fun connect(a : Int, name : Sockaddr*, namelen : SocklenT) : Int
+  fun getpeername(s : Int, name : Sockaddr*, namelen : SocklenT*) : Int
+  fun getsockname(s : Int, name : Sockaddr*, namelen : SocklenT*) : Int
+  fun getsockopt(s : Int, level : Int, optname : Int, optval : Void*, optlen : SocklenT*) : Int
+  fun listen(s : Int, backlog : Int) : Int
+  fun recv(s : Int, buf : Void*, len : SizeT, flags : Int) : SSizeT
+  fun recvfrom(s : Int, buf : Void*, len : SizeT, flags : Int, from : Sockaddr*, fromlen : SocklenT*) : SSizeT
+  fun send(s : Int, msg : Void*, len : SizeT, flags : Int) : SSizeT
+  fun sendto(s : Int, msg : Void*, len : SizeT, flags : Int, to : Sockaddr*, tolen : SocklenT) : SSizeT
+  fun setsockopt(s : Int, level : Int, optname : Int, optval : Void*, optlen : SocklenT) : Int
+  fun shutdown(s : Int, how : Int) : Int
+  fun socket(domain : Int, type : Int, protocol : Int) : Int
+  fun socketpair(d : Int, type : Int, protocol : Int, sv : Int*) : Int
 end

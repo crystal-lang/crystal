@@ -11,6 +11,6 @@ lib LibC
     tz_dsttime : Int      # type of dst correction
   end
 
-  fun gettimeofday(x0 : Timeval*, x1 : Timezone*) : Int
+  fun gettimeofday(tp : Timeval*, tzp : Timezone*) : Int
   fun utimes(path : Char*, times : Timeval[2]) : Int
 end

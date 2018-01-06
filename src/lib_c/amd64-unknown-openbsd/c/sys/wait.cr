@@ -6,5 +6,5 @@ lib LibC
   WUNTRACED   = 2
   WCONTINUED  = 8
 
-  fun waitpid(x0 : PidT, x1 : Int*, x2 : Int) : PidT
+  fun waitpid(wpid : PidT, status : Int*, options : Int) : PidT
 end

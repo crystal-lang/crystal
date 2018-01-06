@@ -36,6 +36,6 @@ lib LibC
   SIGUSR2   = 31  # user defined signal 2
   SIGTHR    = 32	# thread library AST
 
-  fun kill(x0 : PidT, x1 : Int) : Int
-  fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void
+  fun kill(pid : PidT, sig : Int) : Int
+  fun signal(sigcatch : Int, callback : Int -> Void) : Int -> Void
 end

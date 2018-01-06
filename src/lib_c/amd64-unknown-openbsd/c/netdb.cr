@@ -38,8 +38,8 @@ lib LibC
     ai_next : Addrinfo*   # pointer to next in list
   end
 
-  fun freeaddrinfo(x0 : Addrinfo*) : Void
-  fun gai_strerror(x0 : Int) : Char*
-  fun getaddrinfo(x0 : Char*, x1 : Char*, x2 : Addrinfo*, x3 : Addrinfo**) : Int
-  fun getnameinfo(x0 : Void*, x1 : SocklenT, x2 : Char*, x3 : SizeT, x4 : Char*, x5 : SizeT, x6 : Int) : Int
+  fun getaddrinfo(hostname : Char*, servname : Char*, hints : Addrinfo*, res : Addrinfo**) : Int
+  fun freeaddrinfo(ai : Addrinfo*) : Void
+  fun getnameinfo(sa : Void*, salen : SocklenT, host : Char*, hostlen : SizeT, serv : Char*, servlen : SizeT, flags : Int) : Int
+  fun gai_strerror(ecode : Int) : Char*
 end

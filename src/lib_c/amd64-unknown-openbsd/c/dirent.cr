@@ -13,8 +13,8 @@ lib LibC
     d_name : StaticArray(Char, 256)         # name must be no longer than this
   end
 
-  fun closedir(x0 : DIR*) : Int
-  fun opendir(x0 : Char*) : DIR*
-  fun readdir(x0 : DIR*) : Dirent*
-  fun rewinddir(x0 : DIR*) : Void
+  fun opendir(filename : Char*) : DIR*
+  fun readdir(dirp : DIR*) : Dirent*
+  fun rewinddir(dirp : DIR*) : Void
+  fun closedir(dirp : DIR*) : Int
 end

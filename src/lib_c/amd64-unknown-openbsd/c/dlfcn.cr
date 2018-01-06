@@ -16,9 +16,9 @@ lib LibC
     dli_saddr : Void*  # Address of nearest symbol.
   end
 
-  fun dlclose(x0 : Void*) : Int
+  fun dlopen(path : Char*, mode : Int) : Void*
+  fun dlclose(handle : Void*) : Int
+  fun dlsym(handle : Void*, symbol : Char*) : Void*
   fun dlerror : Char*
-  fun dlopen(x0 : Char*, x1 : Int) : Void*
-  fun dlsym(x0 : Void*, x1 : Char*) : Void*
-  fun dladdr(x0 : Void*, x1 : DlInfo*) : Int
+  fun dladdr(addr : Void*, info : DlInfo*) : Int
 end

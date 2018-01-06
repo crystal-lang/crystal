@@ -22,14 +22,6 @@ lib LibC
     __st_birthtim : Timespec  # time of file creation
   end
 
-  fun chmod(x0 : Char*, x1 : ModeT) : Int
-  fun fstat(x0 : Int, x1 : Stat*) : Int
-  fun lstat(x0 : Char*, x1 : Stat*) : Int
-  fun mkdir(x0 : Char*, x1 : ModeT) : Int
-  fun mkfifo(x0 : Char*, x1 : ModeT) : Int
-  fun mknod(x0 : Char*, x1 : ModeT, x2 : DevT) : Int
-  fun stat(x0 : Char*, x1 : Stat*) : Int
-  fun umask(x0 : ModeT) : ModeT
   S_ISUID   = 0o004000  # set user id on execution
   S_ISGID   = 0o002000  # set group id on execution
   S_ISTXT   = 0o001000  # sticky bit
@@ -63,4 +55,12 @@ lib LibC
   S_IFSOCK  = 0o140000  # socket
   S_ISVTX   = 0o001000  # save swapped text even after use
 
+  fun chmod(path : Char*, mode : ModeT) : Int
+  fun fstat(fd : Int, sb : Stat*) : Int
+  fun mknod(path : Char*, mode : ModeT, dev : DevT) : Int
+  fun mkdir(path : Char*, mode : ModeT) : Int
+  fun mkfifo(path : Char*, mode : ModeT) : Int
+  fun stat(path : Char*, sb : Stat*) : Int
+  fun umask(numask : ModeT) : ModeT
+  fun lstat(path : Char*, sb : Stat*) : Int
 end
