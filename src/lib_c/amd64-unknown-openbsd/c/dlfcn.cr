@@ -10,10 +10,10 @@ lib LibC
   RTLD_SELF    = Pointer(Void).new(-3)  # Search the caller itself.
 
   struct DlInfo
-    dli_fname : Char*
-    dli_fbase : Void*
-    dli_sname : Char*
-    dli_saddr : Void*
+    dli_fname : Char*  # Pathname of shared object.
+    dli_fbase : Void*  # Base address of shared object.
+    dli_sname : Char*  # Name of nearest symbol.
+    dli_saddr : Void*  # Address of nearest symbol.
   end
 
   fun dlclose(x0 : Void*) : Int
