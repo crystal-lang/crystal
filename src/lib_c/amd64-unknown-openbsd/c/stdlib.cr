@@ -3,8 +3,8 @@ require "./sys/wait"
 
 lib LibC
   struct DivT
-    quot : Int
-    rem : Int
+    quot : Int  # quotient
+    rem : Int   # remainder
   end
 
   fun arc4random : UInt32
