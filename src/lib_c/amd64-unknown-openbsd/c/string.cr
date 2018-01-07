@@ -7,6 +7,6 @@ lib LibC
   fun strncmp(s1 : Char*, s2 : Char*, len : SizeT) : Int
   fun strerror(errnum : Int) : Char*
   fun strlen(s : Char*) : SizeT
-  fun strnlen(s : Char*, maxlen SizeT) : SizeT
+  fun strnlen(s : Char*, maxlen : SizeT) : SizeT
   fun explicit_bzero(b : Void*, len : SizeT) : Void
 end

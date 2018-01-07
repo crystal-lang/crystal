@@ -59,7 +59,7 @@ lib LibC
     UN = 0x8
   end
 
-  fun open(path : Char*, x1 : flags, ...) : Int
+  fun open(path : Char*, flags : Int, ...) : Int
   fun fcntl(fd : Int, cmd : Int, ...) : Int
   fun flock(fd : Int, op : FlockOp) : Int
 end
