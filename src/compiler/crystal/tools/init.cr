@@ -22,8 +22,21 @@ module Crystal
     end
 
     def self.run(args)
-      config = parse_args(args)
-      InitProject.new(config).run
+      begin
+        config = parse_args(args)
+        InitProject.new(config).run
+      rescue ex : Init::FilesConflictError
+        STDERR.puts "Cannot initialize Crystal project, the following files would be overwritten:"
+        ex.conflicting_files.each do |path|
+          STDERR.puts "   #{"file".colorize(:red)} #{path} #{"already exist".colorize(:red)}"
+        end
+        STDERR.puts "You can use --force to overwrite those files,"
+        STDERR.puts "or --skip-existing to skip existing files and generate the others."
+        exit 1
+      rescue ex : Init::Error
+        STDERR.puts "Cannot initialize Crystal project: #{ex}"
+        exit 1
+      end
     end
 
     def self.parse_args(args)
