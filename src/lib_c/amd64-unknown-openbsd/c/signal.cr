@@ -8,7 +8,7 @@ lib LibC
   SIGILL    =  4  # illegal instruction (not reset when caught)
   SIGTRAP   =  5  # trace trap (not reset when caught)
   SIGABRT   =  6  # abort()
-  SIGIOT    = SIGABRT # compatibility
+  SIGIOT    = LibC::SIGABRT # compatibility
   SIGEMT    =  7	# EMT instruction
   SIGFPE    =  8  # floating point exception
   SIGKILL   =  9  # kill (cannot be caught or ignored)
