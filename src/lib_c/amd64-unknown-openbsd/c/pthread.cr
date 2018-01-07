@@ -1,4 +1,5 @@
 require "./sys/types"
+require "./pthread_np"
 
 @[Link("pthread")]
 lib LibC
