@@ -30,7 +30,7 @@ lib LibC
     sin_family : SaFamilyT
     sin_port : InPortT
     sin_addr : InAddr
-    sin_zero : StaticArray(Char, 8)
+    sin_zero : StaticArray(Int8T, 8)
   end
 
   struct SockaddrIn6
