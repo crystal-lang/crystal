@@ -156,12 +156,7 @@ class Crystal::Command
   end
 
   private def init
-    begin
-      Init.run(options)
-    rescue ex : Init::Error
-      STDERR.puts ex
-      exit 1
-    end
+    Init.run(options)
   end
 
   private def build

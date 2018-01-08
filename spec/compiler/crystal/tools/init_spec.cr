@@ -7,9 +7,11 @@ require "yaml"
 
 PROJECT_ROOT_DIR = "#{__DIR__}/../../../.."
 
-private def exec_init(project_name, project_dir = nil, type = "lib")
+private def exec_init(project_name, project_dir = nil, type = "lib", force = false, skip_existing = false)
   args = [type, project_name]
   args << project_dir if project_dir
+  args << "--force" if force
+  args << "--skip-existing" if skip_existing
 
   config = Crystal::Init.parse_args(args)
   config.silent = true
@@ -186,18 +188,11 @@ end
   end
 
   describe "Init invocation" do
-    it "prints error if a directory or a file is already present" do
+    it "prints error if a file is already present" do
       within_temporary_directory do
-        existing_dir = "existing-dir"
-        Dir.mkdir(existing_dir)
-
-        expect_raises(Crystal::Init::Error, "File or directory #{existing_dir} already exists") do
-          exec_init(existing_dir)
-        end
-
         existing_file = "existing-file"
         File.touch(existing_file)
-        expect_raises(Crystal::Init::Error, "File or directory #{existing_file} already exists") do
+        expect_raises(Crystal::Init::Error, "#{existing_file.inspect} is a file") do
           exec_init(existing_file)
         end
       end
@@ -209,12 +204,46 @@ end
         project_dir = "project_dir"
 
         Dir.mkdir(project_name)
+        File.write("README.md", "content before init")
 
         exec_init(project_name, project_dir)
 
-        expect_raises(Crystal::Init::Error, "File or directory #{project_dir} already exists") do
-          exec_init(project_name, project_dir)
+        File.read("README.md").should eq("content before init")
+        File.exists?(File.join(project_dir, "README.md")).should be_true
+      end
+    end
+
+    it "errors if files will be overwritten by a generated file" do
+      within_temporary_directory do
+        File.touch("README.md")
+
+        ex = expect_raises(Crystal::Init::FilesConflictError) do
+          exec_init("my_lib", ".")
         end
+        ex.conflicting_files.should contain("./README.md")
+      end
+    end
+
+    it "doesn't error if files will be overwritten by a generated file and --force is used" do
+      within_temporary_directory do
+        File.write("README.md", "content before init")
+        File.exists?("README.md").should be_true
+
+        exec_init("my_lib", ".", force: true)
+
+        File.read("README.md").should_not eq("content before init")
+        File.exists?("LICENSE").should be_true
+      end
+    end
+
+    it "doesn't error when asked to skip existing files" do
+      within_temporary_directory do
+        File.write("README.md", "content before init")
+
+        exec_init("my_lib", ".", skip_existing: true)
+
+        File.read("README.md").should eq("content before init")
+        File.exists?("LICENSE").should be_true
       end
     end
   end

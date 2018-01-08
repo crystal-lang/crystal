@@ -13,9 +13,30 @@ module Crystal
       end
     end
 
+    class FilesConflictError < Error
+      getter conflicting_files : Array(String)
+
+      def initialize(@conflicting_files)
+        super("Some files would be overwritten: #{conflicting_files.join(", ")}")
+      end
+    end
+
     def self.run(args)
-      config = parse_args(args)
-      InitProject.new(config).run
+      begin
+        config = parse_args(args)
+        InitProject.new(config).run
+      rescue ex : Init::FilesConflictError
+        STDERR.puts "Cannot initialize Crystal project, the following files would be overwritten:"
+        ex.conflicting_files.each do |path|
+          STDERR.puts "   #{"file".colorize(:red)} #{path} #{"already exist".colorize(:red)}"
+        end
+        STDERR.puts "You can use --force to overwrite those files,"
+        STDERR.puts "or --skip-existing to skip existing files and generate the others."
+        exit 1
+      rescue ex : Init::Error
+        STDERR.puts "Cannot initialize Crystal project: #{ex}"
+        exit 1
+      end
     end
 
     def self.parse_args(args)
@@ -36,9 +57,17 @@ module Crystal
 
           USAGE
 
-        opts.on("--help", "show this help") do
+        opts.on("-h", "--help", "show this help") do
           puts opts
           exit
+        end
+
+        opts.on("-f", "--force", "force overwrite existing files") do
+          config.force = true
+        end
+
+        opts.on("-s", "--skip-existing", "skip existing files") do
+          config.skip_existing = true
         end
 
         opts.unknown_args do |args, after_dash|
@@ -46,6 +75,10 @@ module Crystal
           config.name = fetch_name(opts, args)
           config.dir = fetch_directory(args, config.name)
         end
+      end
+
+      if config.force && config.skip_existing
+        raise Error.new "Cannot use --force and --skip-existing together"
       end
 
       config.author = fetch_author
@@ -84,9 +117,11 @@ module Crystal
 
     def self.fetch_directory(args, project_name)
       directory = args.empty? ? project_name : args.shift
-      if Dir.exists?(directory) || File.exists?(directory)
-        raise Error.new "File or directory #{directory} already exists"
+
+      if File.file?(directory)
+        raise Error.new "#{directory.inspect} is a file"
       end
+
       directory
     end
 
@@ -113,6 +148,8 @@ module Crystal
       property email : String
       property github_name : String
       property silent : Bool
+      property force : Bool
+      property skip_existing : Bool
 
       def initialize(
         @skeleton_type = "none",
@@ -121,7 +158,9 @@ module Crystal
         @author = "none",
         @email = "none",
         @github_name = "none",
-        @silent = false
+        @silent = false,
+        @force = false,
+        @skip_existing = false
       )
       end
     end
@@ -143,13 +182,19 @@ module Crystal
       end
 
       def render
+        overwriting = File.exists?(full_path)
+
         Dir.mkdir_p(File.dirname(full_path))
         File.write(full_path, to_s)
-        puts log_message unless config.silent
+        puts log_message(overwriting) unless config.silent
       end
 
-      def log_message
-        "      #{"create".colorize(:light_green)}  #{full_path}"
+      def log_message(overwriting = false)
+        if overwriting
+          " #{"overwrite".colorize(:light_green)}  #{full_path}"
+        else
+          "    #{"create".colorize(:light_green)}  #{full_path}"
+        end
       end
 
       def module_name
@@ -161,18 +206,34 @@ module Crystal
 
     class InitProject
       getter config : Config
+      getter views : Array(View)?
 
       def initialize(@config : Config)
       end
 
-      def run
-        views.each do |view|
-          view.new(config).render
+      def overwrite_checks
+        overwriting_files = views.compact_map do |view|
+          path = view.full_path
+          File.exists?(path) ? path : nil
+        end
+
+        if overwriting_files.any?
+          if config.skip_existing
+            views.reject! { |view| File.exists?(view.full_path) }
+          else
+            raise FilesConflictError.new overwriting_files
+          end
         end
       end
 
+      def run
+        overwrite_checks unless config.force
+
+        views.each &.render
+      end
+
       def views
-        View.views
+        @views ||= View.views.map(&.new(config))
       end
     end
 
