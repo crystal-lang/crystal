@@ -97,7 +97,7 @@ describe "JSON serialization" do
       big.should eq(BigDecimal.new("1234"))
     end
 
-    it "does for BigDecimal from int" do
+    it "does for BigDecimal from float" do
       big = BigDecimal.from_json("1234.05")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234.05"))
