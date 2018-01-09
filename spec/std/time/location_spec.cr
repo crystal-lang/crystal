@@ -14,6 +14,10 @@ class Time::Location
     @cached_zone = zone
   end
 
+  def self.__clear_location_cache
+    @@location_cache.clear
+  end
+
   describe Time::Location do
     describe ".load" do
       it "loads Europe/Berlin" do
@@ -114,6 +118,36 @@ class Time::Location
             expect_raises(InvalidLocationNameError) do
               Location.load("Europe/Berlin")
             end
+          end
+        end
+
+        it "caches result" do
+          with_zoneinfo do
+            location = Location.load("Europe/Berlin")
+            Location.load("Europe/Berlin").should be location
+          end
+        end
+
+        it "loads new data if file was changed" do
+          zoneinfo_path = File.join(__DIR__, "..", "data", "zoneinfo")
+          with_zoneinfo(zoneinfo_path) do
+            location1 = Location.load("Foo/Bar")
+            File.touch(File.join(zoneinfo_path, "Foo/Bar"))
+            location2 = Location.load("Foo/Bar")
+
+            location1.should eq location2
+            location1.should_not be location2
+          end
+        end
+
+        it "loads new data if ZIP file was changed" do
+          with_zoneinfo(ZONEINFO_ZIP) do
+            location1 = Location.load("Europe/Berlin")
+            File.touch(ZONEINFO_ZIP)
+            location2 = Location.load("Europe/Berlin")
+
+            location1.should eq location2
+            location1.should_not be location2
           end
         end
       end
@@ -255,7 +289,8 @@ class Time::Location
 
       it "caches last zone" do
         with_zoneinfo do
-          location = Location.load("Europe/Berlin")
+          location = Time::Location.load("Europe/Berlin")
+
           location.__cached_range.should eq({Int64::MIN, Int64::MIN})
           location.__cached_zone.should eq Zone.new("LMT", 3208, false)
 

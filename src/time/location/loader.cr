@@ -1,4 +1,6 @@
 class Time::Location
+  @@location_cache = {} of String => NamedTuple(time: Time, location: Location)
+
   class InvalidTZDataError < Exception
     def self.initialize(message : String? = "Malformed time zone information", cause : Exception? = nil)
       super(message, cause)
@@ -22,17 +24,33 @@ class Time::Location
   # :nodoc:
   def self.load_from_dir_or_zip(name : String, source : String)
     if source.ends_with?(".zip")
-      return nil unless File.exists?(source)
-      File.open(source) do |file|
+      open_file_cached(name, source) do |file|
         read_zip_file(name, file) do |io|
-          return read_zoneinfo(name, io)
+          read_zoneinfo(name, io)
         end
       end
     else
       path = File.expand_path(name, source)
-      return nil unless File.exists?(path)
+      open_file_cached(name, path) do |file|
+        read_zoneinfo(name, file)
+      end
+    end
+  end
+
+  private def self.open_file_cached(name : String, path : String)
+    return nil unless File.exists?(path)
+
+    mtime = File.stat(path).mtime
+    if (cache = @@location_cache[name]?) && cache[:time] == mtime
+      return cache[:location]
+    else
       File.open(path) do |file|
-        return read_zoneinfo(name, file)
+        location = yield file
+        if location
+          @@location_cache[name] = {time: mtime, location: location}
+
+          return location
+        end
       end
     end
   end
@@ -204,7 +222,7 @@ class Time::Location
 
       file.skip extra_field_length
 
-      yield file
+      return yield file
     end
   end
 end

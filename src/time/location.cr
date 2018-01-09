@@ -125,6 +125,9 @@ class Time::Location
   # * `"UTC"` and empty string `""` return `Location::UTC`
   # * `"Local"` returns `Location.local`
   #
+  # This method caches files based on the modification time, so subsequent loads
+  # of the same location name will return the same instance of `Location` unless
+  # the timezone database has been updated in between.
   #
   # Example:
   # `ZONEFILE=/path/to/zoneinfo.zip crystal eval 'pp Location.load("Custom/Location")'`

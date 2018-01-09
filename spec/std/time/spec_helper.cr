@@ -12,6 +12,8 @@ ZONEINFO_ZIP = File.join(__DIR__, "..", "data", "zoneinfo.zip")
 
 def with_zoneinfo(path = ZONEINFO_ZIP)
   with_env("ZONEINFO", path) do
+    Time::Location.__clear_location_cache
+
     yield
   end
 end
