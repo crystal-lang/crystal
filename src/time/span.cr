@@ -304,7 +304,7 @@ struct Time::Span
     (total_nanoseconds * number).nanoseconds
   end
 
-  # Return a `Time::Span` that is divided by *number*.
+  # Returns a `Time::Span` that is divided by *number*.
   def /(number : Int) : Time::Span
     seconds = to_i.tdiv(number)
     nanoseconds = self.nanoseconds.tdiv(number)
