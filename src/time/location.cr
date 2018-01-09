@@ -119,7 +119,7 @@ class Time::Location
   #
   # The first timezone data matching the given name that is successfully loaded
   # and parsed is returned.
-  # A custom lookup path can be set as environment variable `ZONEFILE`.
+  # A custom lookup path can be set as environment variable `ZONEINFO`.
   #
   # Special names:
   # * `"UTC"` and empty string `""` return `Location::UTC`
@@ -130,7 +130,7 @@ class Time::Location
   # the timezone database has been updated in between.
   #
   # Example:
-  # `ZONEFILE=/path/to/zoneinfo.zip crystal eval 'pp Location.load("Custom/Location")'`
+  # `ZONEINFO=/path/to/zoneinfo.zip crystal eval 'pp Location.load("Custom/Location")'`
   def self.load(name : String) : Location
     case name
     when "", "UTC"
