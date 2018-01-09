@@ -15,11 +15,12 @@ require "crystal/system/time"
 # time.second  # => 30
 # time.monday? # => true
 #
-# # Creating a time instance with a date only
-# Time.new(2016, 2, 15) # => 2016-02-15 00:00:00
+# # Creating a time instance with a date only in local timezone `Time::Location.local`.
+# # The examples show an offset of `+01:00` but that can vary depending on
+# Time.new(2016, 2, 15) # => 2016-02-15 00:00:00 +01:00
 #
 # # Specifying a time
-# Time.new(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30
+# Time.new(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 +01:00
 #
 # # Creating a time instance in UTC
 # Time.utc(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 UTC
@@ -39,7 +40,7 @@ require "crystal/system/time"
 # ### Calculation
 #
 # ```
-# Time.new(2015, 10, 10) - 5.days # => 2015-10-05 00:00:00
+# Time.new(2015, 10, 10) - 5.days # => 2015-10-05 00:00:00 +01:00
 #
 # # Time calculation returns a Time::Span instance
 # span = Time.new(2015, 10, 10) - Time.new(2015, 9, 10)
@@ -499,7 +500,7 @@ struct Time
   # `Time::Format`).
   #
   # ```
-  # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00
+  # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00 +01:00
   # ```
   def self.parse(time : String, pattern : String, location = nil) : Time
     Format.new(pattern, location).parse(time)
