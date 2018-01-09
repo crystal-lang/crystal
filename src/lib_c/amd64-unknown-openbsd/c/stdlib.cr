@@ -3,8 +3,8 @@ require "./sys/wait"
 
 lib LibC
   struct DivT
-    quot : Int  # quotient
-    rem : Int   # remainder
+    quot : Int # quotient
+    rem : Int  # remainder
   end
 
   fun atof(nptr : Char*) : Double

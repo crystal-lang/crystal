@@ -2,12 +2,12 @@ require "./sys/types"
 require "./stdint"
 
 lib LibC
-  F_OK       =    0  # test for existence of file
-  X_OK       = 0x01  # test for execute or search permission
-  W_OK       = 0x02  # test for write permission
-  R_OK       = 0x04  # test for read permission
+  F_OK =    0 # test for existence of file
+  X_OK = 0x01 # test for execute or search permission
+  W_OK = 0x02 # test for write permission
+  R_OK = 0x04 # test for read permission
 
-  SC_CLK_TCK =    3
+  SC_CLK_TCK = 3
 
   fun access(path : Char*, amode : Int) : Int
   fun chdir(path : Char*) : Int
