@@ -34,7 +34,7 @@ lib LibC
   EDOM            = 33  # Numerical argument out of domain
   ERANGE          = 34  # Result too large
   EAGAIN          = 35  # Resource temporarily unavailable
-  EWOULDBLOCK     = EAGAIN  # Operation would block
+  EWOULDBLOCK     = LibC::EAGAIN  # Operation would block
   EINPROGRESS     = 36  # Operation now in progress
   EALREADY        = 37  # Operation already in progress
   ENOTSOCK        = 38  # Socket operation on non-socket

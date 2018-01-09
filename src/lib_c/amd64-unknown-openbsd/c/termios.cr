@@ -65,10 +65,10 @@ lib LibC
   HUPCL       = 0x00004000  # hang up on last close
   CLOCAL      = 0x00008000  # ignore modem status lines
   CRTSCTS     = 0x00010000  # RTS/CTS full-duplex flow control
-  CRTS_IFLOW  = CRTSCTS     # XXX compat
-  CCTS_OFLOW  = CRTSCTS     # XXX compat
+  CRTS_IFLOW  = LibC::CRTSCTS  # XXX compat
+  CCTS_OFLOW  = LibC::CRTSCTS     # XXX compat
   MDMBUF      = 0x00100000  # DTR/DCD hardware flow control
-  CHWFLOW     = (MDMBUF|CRTSCTS)  # all types of hw flow control
+  CHWFLOW     = (LibC::MDMBUF|LibC::CRTSCTS)  # all types of hw flow control
 
   # "Local" flags
   ECHOKE      = 0x00000001  # visual erase for line kill

@@ -18,8 +18,8 @@ lib LibC
   O_CREAT     = 0x000200  # create if nonexistent
   O_TRUNC     = 0x000400  # truncate to zero length
   O_EXCL      = 0x000800  # error if already exists
-  O_DSYNC     = O_SYNC    # synchronous data writes
-  O_RSYNC     = O_SYNC    # synchronous reads
+  O_DSYNC     = LibC::O_SYNC  # synchronous data writes
+  O_RSYNC     = LibC::O_SYNC  # synchronous reads
   O_NOCTTY    = 0x008000  # don't assign controlling terminal
   O_CLOEXEC   = 0x010000  # atomically set FD_CLOEXEC
   O_DIRECTORY = 0x020000  # fail if not a directory

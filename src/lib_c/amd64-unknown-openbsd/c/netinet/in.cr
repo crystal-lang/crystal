@@ -8,12 +8,12 @@ lib LibC
 
   # Protocols
   IPPROTO_IP        =   0  # dummy for IP
-  IPPROTO_HOPOPTS   = IPPROTO_IP  # Hop-by-hop option header
+  IPPROTO_HOPOPTS   = LibC::IPPROTO_IP  # Hop-by-hop option header
   IPPROTO_ICMP      =   1  # control message protocol
   IPPROTO_IGMP      =   2  # group mgmt protocol
   IPPROTO_GGP       =   3  # gateway^2 (deprecated)
   IPPROTO_IPIP      =   4  # IP inside IP
-  IPPROTO_IPV4      = IPPROTO_IPIP  # IP inside IP
+  IPPROTO_IPV4      = LibC::IPPROTO_IPIP  # IP inside IP
   IPPROTO_TCP       =   6  # tcp
   IPPROTO_EGP       =   8  # exterior gateway protocol
   IPPROTO_PUP       =  12  # pup

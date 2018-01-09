@@ -10,7 +10,7 @@ lib LibC
   AI_NUMERICSERV  =  16 # don't ever try servname lookup
   AI_FQDN         =  32 # return the FQDN that was resolved
   AI_ADDRCONFIG   =  64 # return configured address families only
-  AI_MASK         = (AI_PASSIVE|AI_CANONNAME|AI_NUMERICHOST|AI_NUMERICSERV|AI_FQDN|AI_ADDRCONFIG)
+  AI_MASK         = (LibC::AI_PASSIVE|LibC::AI_CANONNAME|LibC::AI_NUMERICHOST|LibC::AI_NUMERICSERV|LibC::AI_FQDN|LibC::AI_ADDRCONFIG)
 
   EAI_BADFLAGS    =  -1 # invalid value for ai_flags
   EAI_NONAME      =  -2 # name or service is not known
