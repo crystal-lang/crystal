@@ -60,13 +60,22 @@ struct Time::Span
   def self.new(days : Int, hours : Int, minutes : Int, seconds : Int, nanoseconds : Int = 0)
     new(
       seconds: compute_seconds!(days, hours, minutes, seconds),
-      nanoseconds: nanoseconds.to_i64,
+      nanoseconds: nanoseconds,
     )
   end
 
-  def initialize(*, seconds : Int, nanoseconds : Int)
+  def initialize(*, seconds : Int, nanoseconds : Int = 0)
+    unless Int64::MIN <= seconds <= Int64::MAX
+      raise ArgumentError.new "Time::Span too big or too small"
+    end
+    seconds = seconds.to_i64
     # Normalize nanoseconds in the range 0...1_000_000_000
-    seconds += nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
+    # check for possible overflow seconds could become too big
+    sec = nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
+    if ((seconds > Int64::MAX - sec) && (sec > 0)) || ((sec < 0) && (seconds < Int64::MIN - sec))
+      raise ArgumentError.new "Time::Span too big or too small"
+    end
+    seconds += sec
     nanoseconds = nanoseconds.remainder(NANOSECONDS_PER_SECOND)
 
     # Make sure that if seconds is positive, nanoseconds is
@@ -86,8 +95,8 @@ struct Time::Span
 
   def self.new(*, nanoseconds : Int)
     new(
-      seconds: nanoseconds.to_i64.tdiv(NANOSECONDS_PER_SECOND),
-      nanoseconds: nanoseconds.to_i64.remainder(NANOSECONDS_PER_SECOND),
+      seconds: 0_i64,
+      nanoseconds: nanoseconds,
     )
   end
 
@@ -271,7 +280,6 @@ struct Time::Span
   end
 
   def - : Time::Span
-    # TODO check overflow
     Span.new(
       seconds: -to_i,
       nanoseconds: -nanoseconds,
@@ -291,15 +299,21 @@ struct Time::Span
   end
 
   # Returns a `Time::Span` that is *number* times longer.
-  def *(number : Number) : Time::Span
+  def *(number : Int) : Time::Span
     # TODO check overflow
     Span.new(
-      seconds: to_i.to_i64 * number,
+      seconds: to_i * number,
       nanoseconds: nanoseconds.to_i64 * number,
     )
   end
 
-  def /(number : Number) : Time::Span
+  # Returns a `Time::Span` that is *number* times longer.
+  def *(number : Float) : Time::Span
+    (total_nanoseconds * number).nanoseconds
+  end
+
+  # Return a `Time::Span` that is divided by *number*.
+  def /(number : Int) : Time::Span
     seconds = to_i.tdiv(number)
     nanoseconds = self.nanoseconds.tdiv(number)
 
@@ -311,6 +325,11 @@ struct Time::Span
       seconds: seconds,
       nanoseconds: nanoseconds,
     )
+  end
+
+  # Returns a `Time::Span` that is divided by *number*.
+  def /(number : Float) : Time::Span
+    (total_nanoseconds / number).nanoseconds
   end
 
   def /(other : self) : Float64
@@ -445,7 +464,7 @@ struct Int
 
   # Returns a `Time::Span` of `self` nanoseconds.
   def nanoseconds : Time::Span
-    Time::Span.new(nanoseconds: self.to_i64)
+    Time::Span.new(nanoseconds: self)
   end
 end
 
@@ -467,14 +486,17 @@ struct Float
 
   # Returns a `Time::Span` of `self` seconds.
   def seconds : Time::Span
-    seconds = self.to_i64
+    seconds = self.trunc
     nanoseconds = (self - seconds) * Time::NANOSECONDS_PER_SECOND
 
     # round away from zero
     nanoseconds = (nanoseconds < 0 ? (nanoseconds - 0.5) : (nanoseconds + 0.5)).to_i64
 
+    # check if seconds fits inside Int64
+    raise ArgumentError.new "Float too big or too small for Time::Span" unless Int64::MIN <= seconds <= Int64::MAX
+
     Time::Span.new(
-      seconds: seconds,
+      seconds: seconds.to_i64,
       nanoseconds: nanoseconds,
     )
   end
@@ -486,14 +508,17 @@ struct Float
 
   # Returns a `Time::Span` of `self` nanoseconds.
   def nanoseconds : Time::Span
-    seconds = (self / Time::NANOSECONDS_PER_SECOND).to_i64
+    seconds = (self / Time::NANOSECONDS_PER_SECOND).trunc
     nanoseconds = self.remainder(Time::NANOSECONDS_PER_SECOND)
 
     # round away from zero
     nanoseconds = (nanoseconds < 0 ? (nanoseconds - 0.5) : (nanoseconds + 0.5)).to_i64
 
+    # check if seconds fits inside Int64
+    raise ArgumentError.new "Float too big or too small for Time::Span" unless Int64::MIN <= seconds <= Int64::MAX
+
     Time::Span.new(
-      seconds: seconds,
+      seconds: seconds.to_i64,
       nanoseconds: nanoseconds,
     )
   end
