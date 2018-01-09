@@ -2,6 +2,9 @@ def with_env(name, value)
   previous = ENV[name]?
   begin
     ENV[name] = value
+
+    # Reset local time zone
+    Time::Location.local = Time::Location.load_local
     yield
   ensure
     ENV[name] = previous

@@ -158,15 +158,21 @@ class Time::Location
     end
   end
 
-  # Returns the location used in the current system environment.
+  # Returns the location representing the local time zone.
   #
-  # It consults the environment variable `TZ` to find the time zone to use.
-  # * `UTC` and empty string return `UTC`
-  # * `Foo/Bar` tries to load the zoneinfo from known system locations such as `/usr/share/zoneinfo/Foo/Bar`,
-  # `/usr/share/lib/zoneinfo/Foo/Bar` or `/usr/lib/locale/TZ/Foo/Bar` on unix-based operating systems.
-  # * If `TZ` is not set, the system's local timezone data (`/etc/localtime` on unix-based systems) will be used.
-  # * If no time zone data is found, `UTC` is returned.
-  def self.local
+  # The value is loaded on first access based on the current application environment  (see `.load_local` for details).
+  class_property(local : Location) { load_local }
+
+  # Loads the local location described by the the current application environment.
+  #
+  # It consults the environment variable `ENV["TZ"]` to find the time zone to use.
+  # * `"UTC"` and empty string `""` return `Location::UTC`
+  # * `"Foo/Bar"` tries to load the zoneinfo from known system locations - such as `/usr/share/zoneinfo/Foo/Bar`,
+  #   `/usr/share/lib/zoneinfo/Foo/Bar` or `/usr/lib/locale/TZ/Foo/Bar` on unix-based operating systems.
+  #   See `Location.load` for details.
+  # * If `ENV["TZ"]` is not set, the system's local timezone data will be used (`/etc/localtime` on unix-based systems).
+  # * If no time zone data could be found, `Location::UTC` is returned.
+  def self.load_local : Location
     case tz = ENV["TZ"]?
     when "", "UTC"
       UTC
@@ -277,11 +283,7 @@ class Time::Location
     self == UTC
   end
 
-  # Returns `true` if this location equals to the current local location
-  # as returned by `Location.local`.
-  #
-  # Since the system's settings may change during a programm's runtime,
-  # the result may not be identical between different invocations.
+  # Returns `true` if this location equals to `Location.local`.
   def local? : Bool
     self == Location.local
   end

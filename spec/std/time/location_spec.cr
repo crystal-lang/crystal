@@ -172,14 +172,23 @@ class Time::Location
     end
 
     it ".local" do
+      Location.local.should eq Location.load_local
+
+      Location.local = Location::UTC
+      Location.local.should be Location::UTC
+    end
+
+    it ".load_local" do
       with_env("TZ", nil) do
-        Location.local.name.should eq "Local"
+        Location.load_local.name.should eq "Local"
       end
-      with_env("TZ", "Europe/Berlin") do
-        Location.local.name.should eq "Europe/Berlin"
+      with_zoneinfo do
+        with_env("TZ", "Europe/Berlin") do
+          Location.load_local.name.should eq "Europe/Berlin"
+        end
       end
       with_env("TZ", "") do
-        Location.local.utc?.should be_true
+        Location.load_local.utc?.should be_true
       end
     end
 
