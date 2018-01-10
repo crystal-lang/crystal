@@ -86,7 +86,7 @@ class JSON::PullParser
   end
 
   def assert_error
-    expect_raises JSON::ParseException do
+    expect_raises JSON::ParseError do
       read_next
     end
   end
@@ -102,7 +102,7 @@ end
 
 private def assert_pull_parse_error(string)
   it "errors on #{string}" do
-    expect_raises JSON::ParseException do
+    expect_raises JSON::ParseError do
       parser = JSON::PullParser.new string
       while parser.kind != :EOF
         parser.read_next
@@ -164,7 +164,7 @@ describe JSON::PullParser do
 
   it "prevents stack overflow for arrays" do
     parser = JSON::PullParser.new(("[" * 513) + ("]" * 513))
-    expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
+    expect_raises JSON::ParseError, "Nesting of 513 is too deep" do
       while true
         break if parser.kind == :EOF
         parser.read_next
@@ -174,7 +174,7 @@ describe JSON::PullParser do
 
   it "prevents stack overflow for hashes" do
     parser = JSON::PullParser.new((%({"x": ) * 513) + ("}" * 513))
-    expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
+    expect_raises JSON::ParseError, "Nesting of 513 is too deep" do
       while true
         break if parser.kind == :EOF
         parser.read_next

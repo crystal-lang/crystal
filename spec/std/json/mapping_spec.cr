@@ -215,7 +215,7 @@ describe "JSON mapping" do
   end
 
   it "parses strict person with unknown attributes" do
-    ex = expect_raises JSON::ParseException, "Unknown json attribute: foo" do
+    ex = expect_raises JSON::ParseError, "Unknown json attribute: foo" do
       StrictJSONPerson.from_json <<-JSON
         {
           "name": "John",
@@ -228,7 +228,7 @@ describe "JSON mapping" do
   end
 
   it "raises if non-nilable attribute is nil" do
-    ex = expect_raises JSON::ParseException, "Missing json attribute: name" do
+    ex = expect_raises JSON::ParseError, "Missing json attribute: name" do
       JSONPerson.from_json(%({"age": 30}))
     end
     ex.location.should eq({1, 1})
@@ -511,7 +511,7 @@ describe "JSON mapping" do
     end
 
     it "raises if non-nilable attribute is nil" do
-      ex = expect_raises JSON::ParseException, "Missing json attribute: foo" do
+      ex = expect_raises JSON::ParseError, "Missing json attribute: foo" do
         JSONWithQueryAttributes.from_json(%({"is_bar": true}))
       end
       ex.location.should eq({1, 1})

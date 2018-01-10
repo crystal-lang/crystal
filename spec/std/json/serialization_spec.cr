@@ -154,7 +154,7 @@ describe "JSON serialization" do
 
     describe "parse exceptions" do
       it "has correct location when raises in NamedTuple#from_json" do
-        ex = expect_raises(JSON::ParseException) do
+        ex = expect_raises(JSON::ParseError) do
           Array({foo: Int32, bar: String}).from_json <<-JSON
             [
               {"foo": 1}
@@ -165,7 +165,7 @@ describe "JSON serialization" do
       end
 
       it "has correct location when raises in Union#from_json" do
-        ex = expect_raises(JSON::ParseException) do
+        ex = expect_raises(JSON::ParseError) do
           Array(Int32 | Bool).from_json <<-JSON
             [
               {"foo": "bar"}

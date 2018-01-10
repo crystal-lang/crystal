@@ -515,7 +515,7 @@ class JSON::PullParser
   end
 
   private def parse_exception(msg)
-    raise ParseException.new(msg, token.line_number, token.column_number)
+    raise ParseError.new(msg, token.line_number, token.column_number)
   end
 
   private def push_in_object_stack(symbol)
