@@ -1115,7 +1115,7 @@ abstract class IO
   # The `IO` class raises on this method, but some subclasses, notable
   # `File` and `IO::Memory` implement it.
   #
-  # Mutliple sections can be read concurrently.
+  # Multiple sections can be read concurrently.
   def read_at(offset, bytesize, &block)
     raise Error.new "Unable to read_at"
   end

@@ -520,7 +520,7 @@ class File < IO::FileDescriptor
   end
 
   # Yields an `IO` to read a section inside this file.
-  # Mutliple sections can be read concurrently.
+  # Multiple sections can be read concurrently.
   def read_at(offset, bytesize, &block)
     self_bytesize = self.size
 

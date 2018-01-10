@@ -2,6 +2,7 @@ require "spec"
 require "json"
 require "uuid"
 require "uuid/json"
+require "big/json"
 
 private class JSONPerson
   JSON.mapping({
@@ -35,6 +36,10 @@ end
 
 private class JSONWithUUID
   JSON.mapping value: UUID
+end
+
+private class JSONWithBigDecimal
+  JSON.mapping value: BigDecimal
 end
 
 private class JSONWithTime
@@ -528,6 +533,28 @@ describe "JSON mapping" do
       json = JSONWithOverwritingQueryAttributes.from_json(%({"foo": true}))
       typeof(json.@foo).should eq(Bool)
       typeof(json.@bar).should eq(Bool)
+    end
+  end
+
+  describe "BigDecimal" do
+    it "parses json string with BigDecimal" do
+      json = JSONWithBigDecimal.from_json(%({"value": "10.05"}))
+      json.value.should eq(BigDecimal.new("10.05"))
+    end
+
+    it "parses large json ints with BigDecimal" do
+      json = JSONWithBigDecimal.from_json(%({"value": 9223372036854775808}))
+      json.value.should eq(BigDecimal.new("9223372036854775808"))
+    end
+
+    it "parses json float with BigDecimal" do
+      json = JSONWithBigDecimal.from_json(%({"value": 10.05}))
+      json.value.should eq(BigDecimal.new("10.05"))
+    end
+
+    it "parses large precision json floats with BigDecimal" do
+      json = JSONWithBigDecimal.from_json(%({"value": 0.00045808999999999997}))
+      json.value.should eq(BigDecimal.new("0.00045808999999999997"))
     end
   end
 end

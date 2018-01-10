@@ -18,7 +18,6 @@ class Crystal::Command
     Command:
         init                     generate a new project
         build                    build an executable
-        deps                     install project dependencies
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
@@ -72,8 +71,8 @@ class Crystal::Command
       options.shift
       playground
     when "deps".starts_with?(command)
-      options.shift
-      deps
+      STDERR.puts "Please use 'shards': 'crystal deps' has been removed"
+      exit 1
     when "docs".starts_with?(command)
       options.shift
       docs
@@ -157,12 +156,7 @@ class Crystal::Command
   end
 
   private def init
-    begin
-      Init.run(options)
-    rescue ex : Init::Error
-      STDERR.puts ex
-      exit 1
-    end
+    Init.run(options)
   end
 
   private def build

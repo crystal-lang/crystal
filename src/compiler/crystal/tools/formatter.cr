@@ -2405,8 +2405,8 @@ module Crystal
                 write " "
               end
             end
-            skip_space_or_newline
           end
+          skip_space_or_newline
         end
       end
 
@@ -3522,12 +3522,12 @@ module Crystal
       else
         write " "
       end
-      format_mutli_assign_values node.values
+      format_multi_assign_values node.values
 
       false
     end
 
-    def format_mutli_assign_values(values)
+    def format_multi_assign_values(values)
       if values.size == 1
         accept_assign_value values.first
       else

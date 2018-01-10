@@ -110,6 +110,18 @@ describe "JSON serialization" do
       uuid.should be_a(UUID)
       uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
     end
+    
+    it "does for BigDecimal from int" do
+      big = BigDecimal.from_json("1234")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234"))
+    end
+
+    it "does for BigDecimal from float" do
+      big = BigDecimal.from_json("1234.05")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234.05"))
+    end
 
     it "does for Enum with number" do
       JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)

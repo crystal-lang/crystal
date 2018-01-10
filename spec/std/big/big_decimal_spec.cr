@@ -159,6 +159,19 @@ describe BigDecimal do
 
     BigDecimal.new(3333333.to_big_i, 7_u64).should eq(BigDecimal.new(1).div(BigDecimal.new(3), 7))
     BigDecimal.new(3333.to_big_i, 7_u64).should eq(BigDecimal.new(1).div(BigDecimal.new(3000), 7))
+
+    (-BigDecimal.new(3)).should eq(BigDecimal.new(-3))
+  end
+
+  it "performs arithmetic with other number types" do
+    (1.to_big_d + 2).should eq(BigDecimal.new("3.0"))
+    (2 + 1.to_big_d).should eq(BigDecimal.new("3.0"))
+    (2.to_big_d - 1).should eq(BigDecimal.new("1.0"))
+    (2 - 1.to_big_d).should eq(BigDecimal.new("1.0"))
+    (1.to_big_d * 2).should eq(BigDecimal.new("2.0"))
+    (1 * 2.to_big_d).should eq(BigDecimal.new("2.0"))
+    (3.to_big_d / 2).should eq(BigDecimal.new("1.5"))
+    (3 / 2.to_big_d).should eq(BigDecimal.new("1.5"))
   end
 
   it "can be converted from other types" do
@@ -166,11 +179,14 @@ describe BigDecimal do
     "1.5".to_big_d.should eq (BigDecimal.new(15, 1))
     BigInt.new(15).to_big_d.should eq (BigDecimal.new(15, 0))
     1.5.to_big_d.should eq (BigDecimal.new(15, 1))
+    1.5.to_big_f.to_big_d.should eq (BigDecimal.new(15, 1))
   end
 
   it "is comparable with other types" do
     BigDecimal.new("1.0").should eq BigDecimal.new("1")
     BigDecimal.new("1").should eq BigDecimal.new("1.0")
+    1.should_not eq BigDecimal.new("-1.0")
+    1.should_not eq BigDecimal.new("0.1")
     BigDecimal.new(1, 10).should eq BigDecimal.new(10, 11)
     BigDecimal.new(10, 11).should eq BigDecimal.new(1, 10)
 
@@ -178,8 +194,6 @@ describe BigDecimal do
     (BigDecimal.new("1.00000000000000000000000000000000000001") > BigDecimal.new(1)).should be_true
     (BigDecimal.new("0.99999999999999999999999999999999999999") > BigDecimal.new(1)).should be_false
     BigDecimal.new("1.00000000000000000000000000000000000000").should eq BigDecimal.new(1)
-
-    (1 < BigDecimal.new(1)).should be_false
 
     (1 < BigDecimal.new(1)).should be_false
     (BigDecimal.new(1) < 1).should be_false
@@ -198,6 +212,14 @@ describe BigDecimal do
 
     (1 <= BigDecimal.new(1)).should be_true
     (0 <= BigDecimal.new(1)).should be_true
+
+    (BigDecimal.new("6.5") < 6.6).should be_true
+    (6.6 > BigDecimal.new("6.5")).should be_true
+    (BigDecimal.new("7.5") > 6.6).should be_true
+    (6.6 < BigDecimal.new("7.5")).should be_true
+
+    BigDecimal.new("6.6").should eq(6.6)
+    6.6.should eq(BigDecimal.new("6.6"))
 
     (BigDecimal.new("6.5") > 7).should be_false
     (BigDecimal.new("7.5") > 6).should be_true
