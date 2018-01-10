@@ -779,7 +779,7 @@ end
 
 struct UInt128
   # TODO: eventually update to literals once UInt128 bit support is finished
-  MIN = new 0
+  MIN = 0_u128
   MAX = ~MIN
 
   # Returns an `UInt128` by invoking `to_u128` on *value*.

@@ -462,6 +462,38 @@ class String
     gen_to_ u64
   end
 
+  ### to_i128/to_u128
+
+  # Same as `#to_i` but returns an `Int128`.
+  def to_i128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int128
+    to_i128(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid Int128: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an `Int128` or `nil`.
+  def to_i128?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int128?
+    to_i128(base, whitespace, underscore, prefix, strict) { nil }
+  end
+
+  # Same as `#to_i` but returns an `Int128` or the block's value.
+  def to_i128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    gen_to_ i128, ((1<<127)-1).to_u128, (1<<127).to_u128
+  end
+
+  # Same as `#to_i` but returns an `UInt128`.
+  def to_u128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt128
+    to_u128(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid UInt128: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an `UInt128` or `nil`.
+  def to_u128?(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt128?
+    to_u128(base, whitespace, underscore, prefix, strict) { nil }
+  end
+
+  # Same as `#to_i` but returns an `UInt128` or the block's value.
+  def to_u128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    gen_to_ u128
+  end
+
   # :nodoc:
   CHAR_TO_DIGIT = begin
     table = StaticArray(Int8, 256).new(-1_i8)
@@ -485,13 +517,13 @@ class String
   end
 
   # :nodoc:
-  record ToU64Info,
-    value : UInt64,
+  record ToU128Info,
+    value : UInt128,
     negative : Bool,
     invalid : Bool
 
   private macro gen_to_(method, max_positive = nil, max_negative = nil)
-    info = to_u64_info(base, whitespace, underscore, prefix, strict)
+    info = to_u128_info(base, whitespace, underscore, prefix, strict)
     return yield if info.invalid
 
     if info.negative
@@ -509,7 +541,7 @@ class String
     end
   end
 
-  private def to_u64_info(base, whitespace, underscore, prefix, strict)
+  private def to_u128_info(base, whitespace, underscore, prefix, strict)
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
 
     ptr = to_unsafe
@@ -523,7 +555,7 @@ class String
 
     negative = false
     found_digit = false
-    mul_overflow = ~0_u64 / base
+    mul_overflow = ~0_u128 / base
 
     # Check + and -
     case ptr.value.unsafe_chr
@@ -555,7 +587,7 @@ class String
       end
     end
 
-    value = 0_u64
+    value = 0_u128
     last_is_underscore = true
     invalid = false
 
@@ -608,7 +640,7 @@ class String
       invalid = true
     end
 
-    ToU64Info.new value, negative, invalid
+    ToU128Info.new value, negative, invalid
   end
 
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).

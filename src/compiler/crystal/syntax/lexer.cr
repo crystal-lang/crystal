@@ -1557,7 +1557,7 @@ module Crystal
     def scan_hex_number(start, negative = false)
       next_char
 
-      num = 0_u64
+      num = 0_u128
       while true
         char = next_char
         if char == '_'
@@ -1576,7 +1576,7 @@ module Crystal
 
     def finish_scan_prefixed_number(num, negative, start)
       if negative
-        string_value = (num.to_i64 * -1).to_s
+        string_value = (num.to_i128 * -1).to_s
       else
         string_value = num.to_s
       end

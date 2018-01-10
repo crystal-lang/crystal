@@ -21,7 +21,7 @@ module Crystal
     end
 
     def int128(n)
-      llvm_context.int128.const_int(n)
+      llvm_context.int128.const_int_of_string(n.to_s)
     end
 
     def int(n)
