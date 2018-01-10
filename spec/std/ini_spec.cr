@@ -4,23 +4,23 @@ require "ini"
 describe "INI" do
   describe "parse from string" do
     it "fails on malformed section" do
-      expect_raises(INI::ParseException, "unterminated section") do
+      expect_raises(INI::ParseError, "unterminated section") do
         INI.parse("[section")
       end
     end
 
     it "fails on data after section" do
-      expect_raises(INI::ParseException, "data after section") do
+      expect_raises(INI::ParseError, "data after section") do
         INI.parse("[section] foo  ")
       end
     end
 
     it "fails on malformed declaration" do
-      expect_raises(INI::ParseException, "expected declaration") do
+      expect_raises(INI::ParseError, "expected declaration") do
         INI.parse("foobar")
       end
 
-      expect_raises(INI::ParseException, "expected declaration") do
+      expect_raises(INI::ParseError, "expected declaration") do
         INI.parse("foo: bar")
       end
     end
