@@ -45,7 +45,7 @@ describe "YAML serialization" do
     end
 
     it "raises on reserved string" do
-      expect_raises(YAML::ParseException) do
+      expect_raises(YAML::ParseError) do
         String.from_yaml(%(1.2))
       end
     end
@@ -170,7 +170,7 @@ describe "YAML serialization" do
 
     describe "parse exceptions" do
       it "has correct location when raises in Nil#from_yaml" do
-        ex = expect_raises(YAML::ParseException) do
+        ex = expect_raises(YAML::ParseError) do
           Array(Nil).from_yaml <<-YAML
             [
               1
@@ -182,7 +182,7 @@ describe "YAML serialization" do
       end
 
       it "has correct location when raises in Int32#from_yaml" do
-        ex = expect_raises(YAML::ParseException) do
+        ex = expect_raises(YAML::ParseError) do
           Array(Int32).from_yaml <<-YAML
             [
               "hello"
@@ -193,7 +193,7 @@ describe "YAML serialization" do
       end
 
       it "has correct location when raises in NamedTuple#from_yaml" do
-        ex = expect_raises(YAML::ParseException) do
+        ex = expect_raises(YAML::ParseError) do
           Array({foo: Int32, bar: String}).from_yaml <<-YAML
             [
               {"foo": 1}
@@ -204,7 +204,7 @@ describe "YAML serialization" do
       end
 
       it "has correct location when raises in Union#from_yaml" do
-        ex = expect_raises(YAML::ParseException) do
+        ex = expect_raises(YAML::ParseError) do
           Array(Int32 | Bool).from_yaml <<-YAML
             [
               {"foo": "bar"}

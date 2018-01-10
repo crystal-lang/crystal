@@ -40,7 +40,7 @@ describe "YAML" do
       end
 
       it "raises if merging with missing alias" do
-        expect_raises(YAML::ParseException, "Unknown anchor 'bar'") do
+        expect_raises(YAML::ParseError, "Unknown anchor 'bar'") do
           YAML.parse(%(---
             foo:
               <<: *bar
@@ -110,7 +110,7 @@ describe "YAML" do
                  one: "broken"
             YAML
           fail "expected YAML.parse to raise"
-        rescue ex : YAML::ParseException
+        rescue ex : YAML::ParseError
           ex.line_number.should eq(4)
           ex.column_number.should eq(4)
         end
@@ -129,14 +129,14 @@ describe "YAML" do
               parser.read_scalar
             end
           end
-        rescue ex : YAML::ParseException
+        rescue ex : YAML::ParseError
           ex.line_number.should eq(2)
           ex.column_number.should eq(3)
         end
       end
 
       it "has correct message (#4006)" do
-        expect_raises YAML::ParseException, "could not find expected ':' at line 4, column 1, while scanning a simple key at line 3, column 5" do
+        expect_raises YAML::ParseError, "could not find expected ':' at line 4, column 1, while scanning a simple key at line 3, column 5" do
           YAML.parse <<-END
             a:
               - "b": >

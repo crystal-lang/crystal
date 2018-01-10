@@ -219,7 +219,7 @@ module YAML::Schema::Core
   protected def self.parse_binary(string, location) : Bytes
     Base64.decode(string)
   rescue ex : Base64::Error
-    raise YAML::ParseException.new("Error decoding Base64: #{ex.message}", *location)
+    raise YAML::ParseError.new("Error decoding Base64: #{ex.message}", *location)
   end
 
   protected def self.parse_bool(string, location) : Bool
@@ -228,18 +228,18 @@ module YAML::Schema::Core
       return value
     end
 
-    raise YAML::ParseException.new("Invalid bool", *location)
+    raise YAML::ParseError.new("Invalid bool", *location)
   end
 
   protected def self.parse_int(string, location) : Int64
     string.to_i64?(underscore: true, prefix: true) ||
-      raise(YAML::ParseException.new("Invalid int", *location))
+      raise(YAML::ParseError.new("Invalid int", *location))
   end
 
   protected def self.parse_float(string, location) : Float64
     parse_float_infinity_and_nan?(string) ||
       parse_float?(string) ||
-      raise(YAML::ParseException.new("Invalid float", *location))
+      raise(YAML::ParseError.new("Invalid float", *location))
   end
 
   protected def self.parse_null(string, location) : Nil
@@ -247,12 +247,12 @@ module YAML::Schema::Core
       return nil
     end
 
-    raise YAML::ParseException.new("Invalid null", *location)
+    raise YAML::ParseError.new("Invalid null", *location)
   end
 
   protected def self.parse_time(string, location) : Time
     parse_time?(string) ||
-      raise(YAML::ParseException.new("Invalid timestamp", *location))
+      raise(YAML::ParseError.new("Invalid timestamp", *location))
   end
 
   protected def self.process_scalar_tag(scalar)

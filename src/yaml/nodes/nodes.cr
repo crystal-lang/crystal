@@ -24,10 +24,10 @@ module YAML::Nodes
       {start_line, start_column}
     end
 
-    # Raises a `YAML::ParseException` with the given message
+    # Raises a `YAML::ParseError` with the given message
     # located at this node's `location`.
     def raise(message)
-      ::raise YAML::ParseException.new(message, *location)
+      ::raise YAML::ParseError.new(message, *location)
     end
   end
 

@@ -25,13 +25,13 @@ module YAML
   # ```
   #
   # Attributes not mapped with `YAML.mapping` are not defined as properties.
-  # Also, missing attributes raise a `ParseException`.
+  # Also, missing attributes raise a `ParseError`.
   #
   # ```
   # employee = Employee.from_yaml("title: Manager\nname: John\nage: 30")
   # employee.age # undefined method 'age'. (compile error)
   #
-  # Employee.from_yaml("title: Manager") # raises YAML::ParseException
+  # Employee.from_yaml("title: Manager") # raises YAML::ParseError
   # ```
   #
   # You can also define attributes for each property.

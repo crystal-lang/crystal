@@ -9,7 +9,7 @@ end
 
 private def it_raises_on_parse(string, message, file = __FILE__, line = __LINE__)
   it "raises on parse #{string.inspect}", file, line do
-    expect_raises(YAML::ParseException, message) do
+    expect_raises(YAML::ParseError, message) do
       YAML::Schema::Core.parse(string)
     end
   end

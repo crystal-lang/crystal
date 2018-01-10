@@ -229,7 +229,7 @@ describe "YAML mapping" do
   end
 
   it "parses strict person with unknown attributes" do
-    ex = expect_raises YAML::ParseException, "Unknown yaml attribute: foo" do
+    ex = expect_raises YAML::ParseError, "Unknown yaml attribute: foo" do
       StrictYAMLPerson.from_yaml <<-YAML
         ---
         name: John
@@ -252,7 +252,7 @@ describe "YAML mapping" do
   end
 
   it "raises if non-nilable attribute is nil" do
-    ex = expect_raises YAML::ParseException, "Missing yaml attribute: name" do
+    ex = expect_raises YAML::ParseError, "Missing yaml attribute: name" do
       YAMLPerson.from_yaml <<-YAML
         ---
         age: 30
@@ -387,11 +387,11 @@ describe "YAML mapping" do
     end
 
     it "raises when not a mapping or empty scalar" do
-      expect_raises(YAML::ParseException) do
+      expect_raises(YAML::ParseError) do
         YAMLWithDefaults.from_yaml("1")
       end
 
-      expect_raises(YAML::ParseException) do
+      expect_raises(YAML::ParseError) do
         YAMLWithDefaults.from_yaml("[1]")
       end
     end
@@ -514,7 +514,7 @@ describe "YAML mapping" do
     end
 
     it "raises if non-nilable attribute is nil" do
-      ex = expect_raises YAML::ParseException, "Missing yaml attribute: foo" do
+      ex = expect_raises YAML::ParseError, "Missing yaml attribute: foo" do
         YAMLWithQueryAttributes.from_yaml(%({"is_bar": true}))
       end
       ex.location.should eq({1, 1})
