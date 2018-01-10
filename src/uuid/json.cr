@@ -18,6 +18,7 @@ require "uuid"
 #
 # uuid = UUID.new("87b3042b-9b9a-41b7-8b15-a93d3f17025e")
 # uuid.to_json # => "87b3042b-9b9a-41b7-8b15-a93d3f17025e"
+# ```
 struct UUID
   def self.new(pull : JSON::PullParser)
     new(pull.read_string)
