@@ -9,6 +9,11 @@ describe "UUID" do
       subject.version.should eq UUID::Version::V4
     end
 
+    it "does inspect" do
+      subject = UUID.random
+      subject.inspect.should eq "UUID(#{subject})"
+    end
+
     it "works with variant" do
       subject = UUID.random(variant: UUID::Variant::NCS)
       subject.variant.should eq UUID::Variant::NCS
