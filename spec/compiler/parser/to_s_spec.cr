@@ -3,17 +3,23 @@ require "../../support/syntax"
 private def expect_to_s(original, expected = original, emit_doc = false, file = __FILE__, line = __LINE__)
   it "does to_s of #{original.inspect}", file, line do
     str = IO::Memory.new expected.bytesize
-    parser = Parser.new original
-    parser.wants_doc = emit_doc
-    node = parser.parse
-    node.to_s(str, emit_doc: emit_doc)
-    str.to_s.should eq(expected), file, line
 
-    # Check keeping information for `to_s` on clone
-    cloned = node.clone
-    str.clear
-    cloned.to_s(str, emit_doc: emit_doc)
-    str.to_s.should eq(expected), file, line
+    source = original
+    if source.is_a?(String)
+      parser = Parser.new source
+      parser.wants_doc = emit_doc
+      node = parser.parse
+      node.to_s(str, emit_doc: emit_doc)
+      str.to_s.should eq(expected), file, line
+
+      # Check keeping information for `to_s` on clone
+      cloned = node.clone
+      str.clear
+      cloned.to_s(str, emit_doc: emit_doc)
+      str.to_s.should eq(expected), file, line
+    else
+      source.to_s.should eq(expected), file, line
+    end
   end
 end
 
@@ -132,4 +138,5 @@ describe "ASTNode#to_s" do
   expect_to_s %q(`\n\0`), %q(`\n\u0000`)
   expect_to_s %q(`#{1}\n\0`), %q(`#{1}\n\u0000`)
   expect_to_s "macro foo\n{% verbatim do %}1{% end %}\nend"
+  expect_to_s Assign.new("x".var, Expressions.new([1.int32, 2.int32] of ASTNode)), "x = (1\n2\n)"
 end
