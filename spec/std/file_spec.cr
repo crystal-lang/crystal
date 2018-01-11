@@ -1032,4 +1032,118 @@ describe "File" do
       end
     end
   end
+
+  describe ".match?" do
+    it "matches basics" do
+      File.match?("abc", "abc").should be_true
+      File.match?("*", "abc").should be_true
+      File.match?("*c", "abc").should be_true
+      File.match?("a*", "a").should be_true
+      File.match?("a*", "abc").should be_true
+      File.match?("a*/b", "abc/b").should be_true
+      File.match?("*x", "xxx").should be_true
+    end
+    it "matches multiple expansions" do
+      File.match?("a*b*c*d*e*/f", "axbxcxdxe/f").should be_true
+      File.match?("a*b*c*d*e*/f", "axbxcxdxexxx/f").should be_true
+      File.match?("a*b?c*x", "abxbbxdbxebxczzx").should be_true
+      File.match?("a*b?c*x", "abxbbxdbxebxczzy").should be_false
+    end
+    it "matches unicode characters" do
+      File.match?("a?b", "a☺b").should be_true
+      File.match?("a???b", "a☺b").should be_false
+    end
+    it "* don't match /" do
+      File.match?("a*", "ab/c").should be_false
+      File.match?("a*/b", "a/c/b").should be_false
+      File.match?("a*b*c*d*e*/f", "axbxcxdxe/xxx/f").should be_false
+      File.match?("a*b*c*d*e*/f", "axbxcxdxexxx/fff").should be_false
+    end
+    it "** matches /" do
+      File.match?("a**", "ab/c").should be_true
+      File.match?("a**/b", "a/c/b").should be_true
+      File.match?("a*b*c*d*e**/f", "axbxcxdxe/xxx/f").should be_true
+      File.match?("a*b*c*d*e**/f", "axbxcxdxexxx/f").should be_true
+      File.match?("a*b*c*d*e**/f", "axbxcxdxexxx/fff").should be_false
+    end
+    it "classes" do
+      File.match?("ab[c]", "abc").should be_true
+      File.match?("ab[b-d]", "abc").should be_true
+      File.match?("ab[d-b]", "abc").should be_false
+      File.match?("ab[e-g]", "abc").should be_false
+      File.match?("ab[e-gc]", "abc").should be_true
+      File.match?("ab[^c]", "abc").should be_false
+      File.match?("ab[^b-d]", "abc").should be_false
+      File.match?("ab[^e-g]", "abc").should be_true
+      File.match?("a[^a]b", "a☺b").should be_true
+      File.match?("a[^a][^a][^a]b", "a☺b").should be_false
+      File.match?("[a-ζ]*", "α").should be_true
+      File.match?("*[a-ζ]", "A").should be_false
+    end
+    it "escape" do
+      File.match?("a\\*b", "a*b").should be_true
+      File.match?("a\\*b", "ab").should be_false
+      File.match?("a\\**b", "a*bb").should be_true
+      File.match?("a\\**b", "abb").should be_false
+      File.match?("a*\\*b", "ab*b").should be_true
+      File.match?("a*\\*b", "abb").should be_false
+    end
+    it "special chars" do
+      File.match?("a?b", "a/b").should be_false
+      File.match?("a*b", "a/b").should be_false
+    end
+    it "classes escapes" do
+      File.match?("[\\]a]", "]").should be_true
+      File.match?("[\\-]", "-").should be_true
+      File.match?("[x\\-]", "x").should be_true
+      File.match?("[x\\-]", "-").should be_true
+      File.match?("[x\\-]", "z").should be_false
+      File.match?("[\\-x]", "x").should be_true
+      File.match?("[\\-x]", "-").should be_true
+      File.match?("[\\-x]", "a").should be_false
+      expect_raises(File::BadPatternError, "empty character set") do
+        File.match?("[]a]", "]")
+      end
+      expect_raises(File::BadPatternError, "missing range start") do
+        File.match?("[-]", "-")
+      end
+      expect_raises(File::BadPatternError, "missing range end") do
+        File.match?("[x-]", "x")
+      end
+      expect_raises(File::BadPatternError, "missing range start") do
+        File.match?("[-x]", "x")
+      end
+      expect_raises(File::BadPatternError, "Empty escape character") do
+        File.match?("\\", "a")
+      end
+      expect_raises(File::BadPatternError, "missing range start") do
+        File.match?("[a-b-c]", "a")
+      end
+      expect_raises(File::BadPatternError, "unterminated character set") do
+        File.match?("[", "a")
+      end
+      expect_raises(File::BadPatternError, "unterminated character set") do
+        File.match?("[^", "a")
+      end
+      expect_raises(File::BadPatternError, "unterminated character set") do
+        File.match?("[^bc", "a")
+      end
+      expect_raises(File::BadPatternError, "unterminated character set") do
+        File.match?("a[", "a")
+      end
+    end
+    it "alternates" do
+      File.match?("{abc,def}", "abc").should be_true
+      File.match?("ab{c,}", "abc").should be_true
+      File.match?("ab{c,}", "ab").should be_true
+      File.match?("ab{d,e}", "abc").should be_false
+      File.match?("ab{*,/cde}", "abcde").should be_true
+      File.match?("ab{*,/cde}", "ab/cde").should be_true
+      File.match?("ab{?,/}de", "abcde").should be_true
+      File.match?("ab{?,/}de", "ab/de").should be_true
+      File.match?("ab{{c,d}ef,}", "ab").should be_true
+      File.match?("ab{{c,d}ef,}", "abcef").should be_true
+      File.match?("ab{{c,d}ef,}", "abdef").should be_true
+    end
+  end
 end

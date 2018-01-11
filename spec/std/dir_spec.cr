@@ -1,10 +1,5 @@
 require "spec"
 
-private def assert_dir_glob(expected_result, *patterns)
-  result = Dir[*patterns]
-  result.sort.should eq(expected_result.sort)
-end
-
 private def it_raises_on_null_byte(operation, &block)
   it "errors on #{operation}" do
     expect_raises(ArgumentError, "String contains null byte") do
@@ -92,20 +87,20 @@ describe "Dir" do
 
   describe "glob" do
     it "tests glob with a single pattern" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-      ], "#{__DIR__}/data/dir/*.txt"
+      Dir["#{__DIR__}/data/dir/*.txt"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "g2.txt"),
+      ].sort
     end
 
     it "tests glob with multiple patterns" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-      ], "#{__DIR__}/data/dir/*.txt", "#{__DIR__}/data/dir/subdir/*.txt"
+      Dir["#{__DIR__}/data/dir/*.txt", "#{__DIR__}/data/dir/subdir/*.txt"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "g2.txt"),
+        File.join(__DIR__, "data", "dir", "subdir", "f1.txt"),
+      ].sort
     end
 
     it "tests glob with a single pattern with block" do
@@ -114,93 +109,199 @@ describe "Dir" do
         result << filename
       end
       result.sort.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "g2.txt"),
       ].sort)
     end
 
     it "tests a recursive glob" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-        "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
-      ], "#{__DIR__}/data/dir/**/*.txt"
+      Dir["#{__DIR__}/data/dir/**/*.txt"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "g2.txt"),
+        File.join(__DIR__, "data", "dir", "subdir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
     end
 
     it "tests a recursive glob with '?'" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-      ], "#{__DIR__}/data/dir/f?.tx?"
+      Dir["#{__DIR__}/data/dir/f?.tx?"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "f3.txx"),
+      ].sort
     end
 
     it "tests a recursive glob with alternation" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-      ], "#{__DIR__}/data/{dir,dir/subdir}/*.txt"
+      Dir["#{__DIR__}/data/{dir,dir/subdir}/*.txt"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "g2.txt"),
+        File.join(__DIR__, "data", "dir", "subdir", "f1.txt"),
+      ].sort
     end
 
     it "tests a glob with recursion inside alternation" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-        "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
-      ], "#{__DIR__}/data/dir/{**/*.txt,**/*.txx}"
+      Dir["#{__DIR__}/data/dir/{**/*.txt,**/*.txx}"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "f3.txx"),
+        File.join(__DIR__, "data", "dir", "g2.txt"),
+        File.join(__DIR__, "data", "dir", "subdir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
     end
 
     it "tests a recursive glob with nested alternations" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-      ], "#{__DIR__}/data/dir/{?1.*,{f,g}2.txt}"
+      Dir["#{__DIR__}/data/dir/{?1.*,{f,g}2.txt}"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "g2.txt"),
+      ].sort
     end
 
     it "tests with *" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir",
-        "#{__DIR__}/data/dir/subdir2",
-      ], "#{__DIR__}/data/dir/*"
+      Dir["#{__DIR__}/data/dir/*"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "dots"),
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "f3.txx"),
+        File.join(__DIR__, "data", "dir", "g2.txt"),
+        File.join(__DIR__, "data", "dir", "subdir"),
+        File.join(__DIR__, "data", "dir", "subdir2"),
+      ].sort
     end
 
     it "tests with ** (same as *)" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir",
-        "#{__DIR__}/data/dir/subdir2",
-      ], "#{__DIR__}/data/dir/**"
+      Dir["#{__DIR__}/data/dir/**"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "dots"),
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "f3.txx"),
+        File.join(__DIR__, "data", "dir", "g2.txt"),
+        File.join(__DIR__, "data", "dir", "subdir"),
+        File.join(__DIR__, "data", "dir", "subdir2"),
+      ].sort
     end
 
     it "tests with */" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/subdir/",
-        "#{__DIR__}/data/dir/subdir2/",
-      ], "#{__DIR__}/data/dir/*/"
+      Dir["#{__DIR__}/data/dir/*/"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "dots", ""),
+        File.join(__DIR__, "data", "dir", "subdir", ""),
+        File.join(__DIR__, "data", "dir", "subdir2", ""),
+      ].sort
     end
 
     it "tests glob with a single pattern with extra slashes" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-      ], "#{__DIR__}////data////dir////*.txt"
+      Dir["#{__DIR__}////data////dir////*.txt"].sort.should eq [
+        File.join(__DIR__, "data", "dir", "f1.txt"),
+        File.join(__DIR__, "data", "dir", "f2.txt"),
+        File.join(__DIR__, "data", "dir", "g2.txt"),
+      ].sort
+    end
+
+    it "tests with relative path" do
+      Dir["spec/std/data/dir/*/"].sort.should eq [
+        File.join("spec", "std", "data", "dir", "dots", ""),
+        File.join("spec", "std", "data", "dir", "subdir", ""),
+        File.join("spec", "std", "data", "dir", "subdir2", ""),
+      ].sort
+    end
+
+    it "tests with relative path (starts with .)" do
+      Dir["./spec/std/data/dir/*/"].sort.should eq [
+        File.join(".", "spec", "std", "data", "dir", "dots", ""),
+        File.join(".", "spec", "std", "data", "dir", "subdir", ""),
+        File.join(".", "spec", "std", "data", "dir", "subdir2", ""),
+      ].sort
+    end
+
+    it "tests with relative path (starts with ..)" do
+      base_path = File.join("..", File.basename(File.dirname(File.dirname(__DIR__))), "spec", "std", "data", "dir")
+      Dir["../#{File.basename(File.dirname(File.dirname(__DIR__)))}/spec/std/data/dir/*/"].sort.should eq [
+        File.join(base_path, "dots", ""),
+        File.join(base_path, "subdir", ""),
+        File.join(base_path, "subdir2", ""),
+      ].sort
+    end
+
+    it "tests with relative path starting recursive" do
+      Dir["**/dir/*/"].sort.should eq [
+        File.join("spec", "std", "data", "dir", "dots", ""),
+        File.join("spec", "std", "data", "dir", "subdir", ""),
+        File.join("spec", "std", "data", "dir", "subdir2", ""),
+      ].sort
+    end
+
+    it "matches symlinks" do
+      link = File.join(__DIR__, "data", "f1_link.txt")
+      non_link = File.join(__DIR__, "data", "non_link.txt")
+
+      File.symlink(File.join(__DIR__, "data", "dir", "f1.txt"), link)
+      File.symlink(File.join(__DIR__, "data", "dir", "nonexisting"), non_link)
+
+      begin
+        Dir["#{__DIR__}/data/*_link.txt"].sort.should eq [
+          File.join(__DIR__, "data", "f1_link.txt"),
+          File.join(__DIR__, "data", "non_link.txt"),
+        ].sort
+      ensure
+        File.delete link
+        File.delete non_link
+      end
+    end
+
+    it "empty pattern" do
+      Dir[""].should eq [] of String
+    end
+
+    it "root pattern" do
+      Dir["/"].should eq [
+        {% if flag?(:windows) %}
+          "C:\\"
+        {% else %}
+          "/"
+        {% end %},
+      ]
+    end
+
+    it "pattern ending with .." do
+      Dir["#{__DIR__}/data/dir/.."].sort.should eq [
+        File.join(__DIR__, "data", "dir", ".."),
+      ]
+    end
+
+    it "pattern ending with */.." do
+      Dir["#{__DIR__}/data/dir/*/.."].sort.should eq [
+        File.join(__DIR__, "data", "dir", "dots", ".."),
+        File.join(__DIR__, "data", "dir", "subdir", ".."),
+        File.join(__DIR__, "data", "dir", "subdir2", ".."),
+      ]
+    end
+
+    it "pattern ending with ." do
+      Dir["#{__DIR__}/data/dir/."].sort.should eq [
+        File.join(__DIR__, "data", "dir", "."),
+      ]
+    end
+
+    it "pattern ending with */." do
+      Dir["#{__DIR__}/data/dir/*/."].sort.should eq [
+        File.join(__DIR__, "data", "dir", "dots", "."),
+        File.join(__DIR__, "data", "dir", "subdir", "."),
+        File.join(__DIR__, "data", "dir", "subdir2", "."),
+      ]
+    end
+
+    context "match_hidden: true" do
+      it "matches hidden files" do
+        Dir.glob("#{__DIR__}/data/dir/dots/**/*", match_hidden: true).sort.should eq [
+          File.join(__DIR__, "data", "dir", "dots", ".dot.hidden"),
+          File.join(__DIR__, "data", "dir", "dots", ".hidden"),
+          File.join(__DIR__, "data", "dir", "dots", ".hidden", "f1.txt"),
+        ].sort
+      end
     end
   end
 
