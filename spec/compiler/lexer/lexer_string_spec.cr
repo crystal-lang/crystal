@@ -161,6 +161,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("Hello, mom! I am HERE.")
     tester.next_string_token_should_be("\nHER dress is beautiful.")
     tester.next_string_token_should_be("\nHE is OK.")
@@ -173,6 +174,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("foo")
     tester.next_string_token_should_be("\n")
     tester.string_should_end_correctly
@@ -183,6 +185,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("foo")
     tester.next_string_token_should_be("\r\n")
     tester.string_should_end_correctly
@@ -193,6 +196,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("foo")
     tester.string_should_end_correctly
   end
@@ -203,6 +207,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("Hello, mom! I am HERE.")
     tester.token_should_be_at(line: 2)
     tester.next_string_token_should_be("\nHER dress is beautiful.")
@@ -221,6 +226,7 @@ describe "Lexer string" do
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
+    tester.next_token_should_be(:NEWLINE)
     tester.next_string_token_should_be("abc")
     tester.string_should_have_an_interpolation_of("foo")
     tester.string_should_end_correctly
@@ -239,42 +245,10 @@ describe "Lexer string" do
     end
   end
 
-  it "raises on invalid heredoc identifier (<<-HERE A)" do
-    lexer = Lexer.new("<<-HERE A\ntest\nHERE\n")
-
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
-      lexer.next_token
-    end
-  end
-
-  it "raises on invalid heredoc identifier (<<-HERE\\n)" do
-    lexer = Lexer.new("<<-HERE\\ntest\nHERE\n")
-
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
-      lexer.next_token
-    end
-  end
-
-  it "raises when identifier doesn't start with a leter" do
-    lexer = Lexer.new("<<-123\\ntest\n123\n")
+  it "raises when identifier doesn't start with a leter or number" do
+    lexer = Lexer.new("<<-!!!\\ntest\n!!!\n")
 
     expect_raises Crystal::SyntaxException, /heredoc identifier starts with invalid character/ do
-      lexer.next_token
-    end
-  end
-
-  it "raises when identifier contains a character not for identifier" do
-    lexer = Lexer.new("<<-aaa.bbb?\\ntest\naaa.bbb?\n")
-
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
-      lexer.next_token
-    end
-  end
-
-  it "raises when identifier contains spaces" do
-    lexer = Lexer.new("<<-aaa  bbb\\ntest\naaabbb\n")
-
-    expect_raises Crystal::SyntaxException, /invalid character '.+' for heredoc identifier/ do
       lexer.next_token
     end
   end

@@ -375,5 +375,16 @@ module Crystal
         Assign.new(target.clone, call).at(node)
       end
     end
+
+    def transform(node : StringInterpolation)
+      # If the interpolation has just one string literal inside it,
+      # return that instead of an interpolation
+      if node.expressions.size == 1
+        first = node.expressions.first
+        return first if first.is_a?(StringLiteral)
+      end
+
+      super
+    end
   end
 end
