@@ -74,7 +74,7 @@ describe "Normalize: case" do
   end
 
   it "normalizes case with multiple expressions and types" do
-    assert_expand_second "x, y = 1, 2; case {x, y}; when {Int32, Float64}; 4; end", "if (x.is_a?(Int32)) && (y.is_a?(Float64))\n  4\nend"
+    assert_expand_second "x, y = 1, 2; case {x, y}; when {Int32, Float64}; 4; end", "if x.is_a?(Int32) && y.is_a?(Float64)\n  4\nend"
   end
 
   it "normalizes case with multiple expressions and implicit obj" do
@@ -98,6 +98,6 @@ describe "Normalize: case" do
   end
 
   it "normalizes case with multiple expressions and non-tuple" do
-    assert_expand_second "x, y = 1, 2; case {x, y}; when 1; 4; end", "if 1 === ({x, y})\n  4\nend"
+    assert_expand_second "x, y = 1, 2; case {x, y}; when 1; 4; end", "if 1 === {x, y}\n  4\nend"
   end
 end

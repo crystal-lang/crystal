@@ -1794,4 +1794,23 @@ describe "Code gen: macro" do
       a
     )).to_i.should eq(1)
   end
+
+  it "expands macro with op assign inside assign (#5568)" do
+    run(%(
+      require "prelude"
+
+      macro expand
+        {{ yield }}
+      end
+
+      def foo
+        {:foo => 1}
+      end
+
+      expand do
+        x = foo[:foo] += 1
+        puts x
+      end
+    )).to_string.chomp.should eq("2")
+  end
 end
