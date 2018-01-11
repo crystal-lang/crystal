@@ -745,6 +745,29 @@ describe Time do
     Time.days_in_year(1990).should eq(365)
   end
 
+  it "knows which years are leap_year?" do
+    {1900 => false,
+     1965 => false,
+     1968 => true,
+     1972 => true,
+     1999 => false,
+     2000 => true,
+     2001 => false,
+     2004 => true,
+     2018 => false,
+     2019 => false,
+     2020 => true,
+     2021 => false,
+     2099 => false,
+     2100 => false,
+     2101 => false,
+     2200 => false,
+     2400 => true,
+    }.each do |year, is_leap|
+      Time.leap_year?(year).should eq(is_leap)
+    end
+  end
+
   typeof(Time.now.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)
