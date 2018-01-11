@@ -464,7 +464,7 @@ module Crystal
         end
       when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
            StringInterpolation, Path, Generic, InstanceVar, ClassVar, Global,
-           ImplicitObj
+           ImplicitObj, TupleLiteral, NamedTupleLiteral, IsA
         false
       when ArrayLiteral
         !!obj.of
@@ -557,7 +557,10 @@ module Crystal
     def visit(node : Assign)
       node.target.accept self
       @str << " = "
-      node.value.accept self
+
+      need_parens = node.value.is_a?(Expressions)
+      in_parenthesis(need_parens, node.value)
+
       false
     end
 
