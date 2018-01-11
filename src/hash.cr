@@ -162,38 +162,38 @@ class Hash(K, V)
     indexes.map { |index| self[index] }
   end
 
-  # Returns the first key with the given *value*, else raises `KeyError`.
+  # Returns a key with the given *value*, else raises `KeyError`.
   #
   # ```
   # hash = {"foo" => "bar", "baz" => "qux"}
-  # hash.key("bar")    # => "foo"
-  # hash.key("qux")    # => "baz"
-  # hash.key("foobar") # raises KeyError (Missing hash key for value: foobar)
+  # hash.key_for("bar")    # => "foo"
+  # hash.key_for("qux")    # => "baz"
+  # hash.key_for("foobar") # raises KeyError (Missing hash key for value: foobar)
   # ```
-  def key(value)
-    key(value) { raise KeyError.new "Missing hash key for value: #{value}" }
+  def key_for(value)
+    key_for(value) { raise KeyError.new "Missing hash key for value: #{value}" }
   end
 
-  # Returns the first key with the given *value*, else `nil`.
+  # Returns a key with the given *value*, else `nil`.
   #
   # ```
   # hash = {"foo" => "bar", "baz" => "qux"}
-  # hash.key?("bar")    # => "foo"
-  # hash.key?("qux")    # => "baz"
-  # hash.key?("foobar") # => nil
+  # hash.key_for?("bar")    # => "foo"
+  # hash.key_for?("qux")    # => "baz"
+  # hash.key_for?("foobar") # => nil
   # ```
-  def key?(value)
-    key(value) { nil }
+  def key_for?(value)
+    key_for(value) { nil }
   end
 
-  # Returns the first key with the given *value*, else yields *value* with the given block.
+  # Returns a key with the given *value*, else yields *value* with the given block.
   #
   # ```
   # hash = {"foo" => "bar"}
-  # hash.key("bar") { |value| value.upcase } # => "foo"
-  # hash.key("qux") { |value| value.upcase } # => "QUX"
+  # hash.key_for("bar") { |value| value.upcase } # => "foo"
+  # hash.key_for("qux") { |value| value.upcase } # => "QUX"
   # ```
-  def key(value)
+  def key_for(value)
     each do |k, v|
       return k if v == value
     end
