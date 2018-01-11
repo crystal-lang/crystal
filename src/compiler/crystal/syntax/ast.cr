@@ -170,7 +170,7 @@ module Crystal
     end
 
     def clone_without_location
-      Expressions.new(@expressions.clone)
+      Expressions.new(@expressions.clone).tap &.keyword = keyword
     end
 
     def_equals_and_hash expressions
