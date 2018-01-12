@@ -745,26 +745,29 @@ describe Time do
     Time.days_in_year(1990).should eq(365)
   end
 
-  it "knows which years are leap_year?" do
-    {1900 => false,
-     1965 => false,
-     1968 => true,
-     1972 => true,
-     1999 => false,
-     2000 => true,
-     2001 => false,
-     2004 => true,
-     2018 => false,
-     2019 => false,
-     2020 => true,
-     2021 => false,
-     2099 => false,
-     2100 => false,
-     2101 => false,
-     2200 => false,
-     2400 => true,
-    }.each do |year, is_leap|
-      Time.leap_year?(year).should eq(is_leap)
+  describe ".leap_year?" do
+    it "knows that 400-year centuries are leap years" do
+      {1600, 2000, 2400}.each do |year|
+        Time.leap_year?(year).should be_true
+      end
+    end
+
+    it "knows that 100-year centuries are normal years" do
+      {1700, 1800, 1900, 2100, 2200, 2300}.each do |year|
+        Time.leap_year?(year).should be_false
+      end
+    end
+
+    it "knows that typical non-century leap years are divisibly by 4" do
+      {1968, 1972, 2004, 2020}.each do |year|
+        Time.leap_year?(year).should be_true
+      end
+    end
+
+    it "knows years *not* divisible by 4 are normal" do
+      {1965, 1999, 2001, 2018, 2019, 2021, 2099, 2101}.each do |year|
+        Time.leap_year?(year).should be_false
+      end
     end
   end
 
