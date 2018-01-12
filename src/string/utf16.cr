@@ -4,6 +4,10 @@ class String
   # Invalid chars (in the range U+D800..U+DFFF) are encoded with the
   # unicode replacement char value `0xfffd`.
   #
+  # The byte following the end of this slice (but not included in it) is defined
+  # to be zero. This allows passing the result of this function into C functions
+  # that expect a null-terminated `UInt16*`.
+  #
   # ```
   # "hi 𐂥".to_utf16 # => Slice[104_u16, 105_u16, 32_u16, 55296_u16, 56485_u16]
   # ```
@@ -13,7 +17,7 @@ class String
       size += char.ord < 0x10000 ? 1 : 2
     end
 
-    slice = Slice(UInt16).new(size)
+    slice = Slice(UInt16).new(size + 1)
 
     i = 0
     each_char do |char|
@@ -34,7 +38,10 @@ class String
       i += 1
     end
 
-    slice
+    # Append null byte
+    slice[i] = 0_u16
+
+    slice[0, size]
   end
 
   # Decodes the given *slice* UTF-16 sequence into a String.
