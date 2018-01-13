@@ -224,11 +224,13 @@ describe "File" do
 
   describe "link" do
     it "creates a hard link" do
+      in_path = "#{__DIR__}/data/test_file.txt"
       out_path = "#{__DIR__}/data/test_file_link.txt"
       begin
-        File.link("#{__DIR__}/data/test_file.txt", out_path)
+        File.link(in_path, out_path)
         File.exists?(out_path).should be_true
         File.symlink?(out_path).should be_false
+        File.info(in_path).should eq(File.info(out_path))
       ensure
         File.delete(out_path) if File.exists?(out_path)
       end
@@ -237,10 +239,12 @@ describe "File" do
 
   describe "symlink" do
     it "creates a symbolic link" do
+      in_path = "#{__DIR__}/data/test_file.txt"
       out_path = "#{__DIR__}/data/test_file_symlink.txt"
       begin
-        File.symlink("#{__DIR__}/data/test_file.txt", out_path)
+        File.symlink(in_path, out_path)
         File.symlink?(out_path).should be_true
+        File.info(in_path).should eq(File.info(out_path))
       ensure
         File.delete(out_path) if File.exists?(out_path)
       end
@@ -325,7 +329,7 @@ describe "File" do
       begin
         File.write(path, "")
         File.chmod(path, 0o775)
-        File.stat(path).perm.should eq(0o775)
+        File.info(path).permissions.should eq(File::Permissions.new(0o775))
       ensure
         File.delete(path) if File.exists?(path)
       end
@@ -336,9 +340,20 @@ describe "File" do
       begin
         Dir.mkdir(path, 0o775)
         File.chmod(path, 0o664)
-        File.stat(path).perm.should eq(0o664)
+        File.info(path).permissions.should eq(File::Permissions.new(0o664))
       ensure
         Dir.rmdir(path) if Dir.exists?(path)
+      end
+    end
+
+    it "can take File::Permissions" do
+      path = "#{__DIR__}/data/chmod.txt"
+      begin
+        File.write(path, "")
+        File.chmod(path, File::Permissions.flags(OwnerAll, GroupAll, OtherExecute, OtherRead))
+        File.info(path).permissions.should eq(File::Permissions.new(0o775))
+      ensure
+        File.delete(path) if File.exists?(path)
       end
     end
 
@@ -349,7 +364,7 @@ describe "File" do
         File.write(path, "")
         File.symlink(path, link)
         File.chmod(link, 0o775)
-        File.stat(link).perm.should eq(0o775)
+        File.info(link).permissions.should eq(File::Permissions.new(0o775))
       ensure
         File.delete(path) if File.exists?(path)
         File.delete(link) if File.symlink?(link)
@@ -363,80 +378,71 @@ describe "File" do
     end
   end
 
-  it "gets stat for this file" do
-    stat = File.stat(__FILE__)
-    stat.blockdev?.should be_false
-    stat.chardev?.should be_false
-    stat.directory?.should be_false
-    stat.file?.should be_true
-    stat.symlink?.should be_false
-    stat.socket?.should be_false
+  it "gets info for this file" do
+    info = File.info(__FILE__)
+    info.type.should eq(File::Type::File)
   end
 
-  it "gets stat for this directory" do
-    stat = File.stat(__DIR__)
-    stat.blockdev?.should be_false
-    stat.chardev?.should be_false
-    stat.directory?.should be_true
-    stat.file?.should be_false
-    stat.symlink?.should be_false
-    stat.socket?.should be_false
+  it "gets info for this directory" do
+    info = File.info(__DIR__)
+    info.type.should eq(File::Type::Directory)
   end
 
-  it "gets stat for a character device" do
-    stat = File.stat("/dev/null")
-    stat.blockdev?.should be_false
-    stat.chardev?.should be_true
-    stat.directory?.should be_false
-    stat.file?.should be_false
-    stat.symlink?.should be_false
-    stat.socket?.should be_false
+  it "gets info for a character device" do
+    info = File.info("/dev/null")
+    info.type.should eq(File::Type::CharacterDevice)
   end
 
-  it "gets stat for a symlink" do
-    stat = File.lstat("#{__DIR__}/data/symlink.txt")
-    stat.blockdev?.should be_false
-    stat.chardev?.should be_false
-    stat.directory?.should be_false
-    stat.file?.should be_false
-    stat.symlink?.should be_true
-    stat.socket?.should be_false
+  it "gets info for a symlink" do
+    info = File.info("#{__DIR__}/data/symlink.txt", follow_symlinks: false)
+    info.type.should eq(File::Type::Symlink)
   end
 
-  it "gets stat for open file" do
+  it "gets info for open file" do
     File.open(__FILE__, "r") do |file|
-      stat = file.stat
-      stat.blockdev?.should be_false
-      stat.chardev?.should be_false
-      stat.directory?.should be_false
-      stat.file?.should be_true
-      stat.symlink?.should be_false
-      stat.socket?.should be_false
-      stat.pipe?.should be_false
+      info = file.info
+      info.type.should eq(File::Type::File)
     end
   end
 
-  it "gets stat for pipe" do
+  it "gets info for pipe" do
     IO.pipe do |r, w|
-      r.stat.pipe?.should be_true
-      w.stat.pipe?.should be_true
+      r.info.type.should eq(File::Type::Pipe)
+      w.info.type.should eq(File::Type::Pipe)
     end
   end
 
-  it "gets stat for non-existent file and raises" do
+  it "gets info for non-existent file and raises" do
     expect_raises Errno do
-      File.stat("non-existent")
+      File.info("non-existent")
     end
   end
 
-  it "gets stat mtime for new file" do
+  it "gets info mtime for new file" do
     tmp = Tempfile.new "tmp"
     begin
-      (tmp.stat.atime - Time.utc_now).total_seconds.should be < 5
-      (tmp.stat.ctime - Time.utc_now).total_seconds.should be < 5
-      (tmp.stat.mtime - Time.utc_now).total_seconds.should be < 5
+      tmp.info.modification_time.should be_close(Time.now, 5.seconds)
+      File.info(tmp.path).modification_time.should be_close(Time.now, 5.seconds)
     ensure
       tmp.delete
+    end
+  end
+
+  describe "File::Info" do
+    it "tests equal for the same file" do
+      File.info(__FILE__).should eq(File.info(__FILE__))
+    end
+
+    it "tests equal for the same directory" do
+      File.info(__DIR__).should eq(File.info(__DIR__))
+    end
+
+    it "tests unequal for different files" do
+      File.info(__FILE__).should_not eq(File.info("#{__DIR__}/data/test_file.txt"))
+    end
+
+    it "tests unequal for file and directory" do
+      File.info(__DIR__).should_not eq(File.info("#{__DIR__}/data/test_file.txt"))
     end
   end
 
@@ -713,11 +719,20 @@ describe "File" do
     end
   end
 
-  it "opens with perm" do
+  it "opens with perm (int)" do
     filename = "#{__DIR__}/data/temp_write.txt"
     perm = 0o600
     File.open(filename, "w", perm) do |file|
-      file.stat.perm.should eq(perm)
+      file.info.permissions.should eq(File::Permissions.new(perm))
+    end
+    File.delete filename
+  end
+
+  it "opens with perm (File::Permissions)" do
+    filename = "#{__DIR__}/data/temp_write.txt"
+    perm = File::Permissions.flags(OwnerRead, OwnerWrite)
+    File.open(filename, "w", perm) do |file|
+      file.info.permissions.should eq(perm)
     end
     File.delete filename
   end
@@ -920,12 +935,12 @@ describe "File" do
       File.rename("baz", "foo\0bar")
     end
 
-    it_raises_on_null_byte "stat" do
-      File.stat("foo\0bar")
+    it_raises_on_null_byte "info" do
+      File.info("foo\0bar")
     end
 
-    it_raises_on_null_byte "lstat" do
-      File.lstat("foo\0bar")
+    it_raises_on_null_byte "info?" do
+      File.info?("foo\0bar")
     end
 
     it_raises_on_null_byte "exists?" do
@@ -1071,9 +1086,8 @@ describe "File" do
 
       File.utime(atime, mtime, filename)
 
-      stat = File.stat(filename)
-      stat.atime.should eq(atime)
-      stat.mtime.should eq(mtime)
+      info = File.info(filename)
+      info.modification_time.should eq(mtime)
 
       File.delete filename
     end
@@ -1106,9 +1120,8 @@ describe "File" do
       begin
         File.touch(filename, time)
 
-        stat = File.stat(filename)
-        stat.atime.should eq(time)
-        stat.mtime.should eq(time)
+        info = File.info(filename)
+        info.modification_time.should eq(time)
       ensure
         File.delete filename
       end
@@ -1120,9 +1133,8 @@ describe "File" do
       begin
         File.touch(filename)
 
-        stat = File.stat(filename)
-        stat.atime.should be_close(time, 1.second)
-        stat.mtime.should be_close(time, 1.second)
+        info = File.info(filename)
+        info.modification_time.should be_close(time, 1.second)
       ensure
         File.delete filename
       end
@@ -1252,6 +1264,15 @@ describe "File" do
       File.match?("ab{{c,d}ef,}", "ab").should be_true
       File.match?("ab{{c,d}ef,}", "abcef").should be_true
       File.match?("ab{{c,d}ef,}", "abdef").should be_true
+    end
+  end
+
+  describe File::Permissions do
+    it "does to_s" do
+      perm = File::Permissions.flags(OwnerAll, GroupRead, GroupWrite, OtherRead)
+      perm.to_s.should eq("rwxrw-r-- (0o764)")
+      perm.inspect.should eq("rwxrw-r-- (0o764)")
+      perm.pretty_inspect.should eq("rwxrw-r-- (0o764)")
     end
   end
 end

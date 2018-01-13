@@ -11,10 +11,10 @@ require "c/stdlib"
 #   file.print("foobar")
 # end
 #
-# File.size(tempfile.path)       # => 6
-# File.stat(tempfile.path).mtime # => 2015-10-20 13:11:12 UTC
-# File.exists?(tempfile.path)    # => true
-# File.read_lines(tempfile.path) # => ["foobar"]
+# File.size(tempfile.path)                   # => 6
+# File.info(tempfile.path).modification_time # => 2015-10-20 13:11:12 UTC
+# File.exists?(tempfile.path)                # => true
+# File.read_lines(tempfile.path)             # => ["foobar"]
 # ```
 #
 # Files created from this class are stored in a directory that handles

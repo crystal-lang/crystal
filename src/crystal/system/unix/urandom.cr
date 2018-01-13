@@ -8,7 +8,7 @@ module Crystal::System::Random
     @@initialized = true
 
     urandom = ::File.open("/dev/urandom", "r")
-    return unless urandom.stat.chardev?
+    return unless urandom.info.type.character_device?
 
     urandom.close_on_exec = true
     urandom.sync = true # don't buffer bytes
