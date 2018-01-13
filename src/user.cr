@@ -10,15 +10,12 @@ class User
     MAX_UID = 0xFFFF
   {% end %}
 
-  alias UserID = LibC::UidT
-
   # Converts user ID into a username.
   #
   # Returns: The username for the given user ID.
   #
   # ```
-  # User.name(0)
-  # => root
+  # User.name(0) # => root
   # ```
   def self.name(uid : Int) : String
     check_uid_in_bounds(uid)
@@ -33,8 +30,7 @@ class User
   # Raises: User::NotFound error if no user exists with the given username.
   #
   # ```
-  # User.uid("root")
-  # => 0
+  # User.uid("root") # => 0
   # ```
   def self.uid(user : String) : Int
     user_struct = LibC.getpwnam(user.check_no_null_byte)
@@ -47,10 +43,8 @@ class User
   # Returns: `true` if the user exists.
   #
   # ```
-  # User.exists?("root")
-  # => true
-  # User.exists?("nonexistant_user")
-  # => false
+  # User.exists?("root") # => true
+  # User.exists?("nonexistant_user") # => false
   # ```
   def self.exists?(uid : Int) : Bool
     return !LibC.getpwuid(int_to_uid(uid)).null?
@@ -61,10 +55,8 @@ class User
   # Returns: `true` if the user exists.
   #
   # ```
-  # User.exists?(0)
-  # => true
-  # User.exists?(32766)
-  # => false
+  # User.exists?(0) # => true
+  # User.exists?(32766) # => false
   # ```
   def self.exists?(user : String) : Bool
     return !LibC.getpwnam(user.check_no_null_byte).null?
@@ -86,29 +78,24 @@ class User
     return new(username)
   end
 
-  # Returns the user specified by the user ID.
-  # ```
-  # User.new(0)
-  # ```
-  def self.new(uid : Int) : User
+  # Initializes a user by the given user ID.
+  def self.initialize(uid : Int) : User
     check_uid_in_bounds(uid)
     user_struct = LibC.getpwuid(int_to_uid(uid))
     raise NotFound.new("User with uid '#{uid}', was not found.") if ( user_struct.null? )
-    return new(user_struct.value)
+    nit_from_struct(user_struct)
   end
 
-  # Returns the user specified by the username.
-  # ```
-  # User.new("root")
-  # ```
-  def self.new(username : String) : User
+  # Initializes a user by the given username.
+  def self.initialize(username : String) : User
     user_struct = LibC.getpwnam(username.check_no_null_byte)
     raise NotFound.new("User with name '#{user}', was not found.") if ( user_struct.null? )
-    return new(user_struct.value)
+    init_from_struct(user_struct)
   end
 
   # :nodoc:
-  def initialize(user_struct : LibC::Passwd)
+  macro init_from_struct(user_struct)
+    user_struct = user_struct.value
     @name = String.new(user_struct.pw_name)
     @uid = user_struct.pw_uid
     @gid = user_struct.pw_gid
@@ -117,42 +104,79 @@ class User
     @info = String.new(user_struct.pw_gecos)
   end
 
-
-  # Properties
-
+  # Returns the users name.
+  #
+  # ```
+  # User[0].name # => "root"
+  # ```
   getter(name : String)
-  getter(uid :  UserID)
-  getter(gid :  UInt32)
+
+  # Returns the users ID.
+  #
+  # ```
+  # User["root"].uid # => 0
+  # ```
+  getter(uid :  Int)
+
+  # Returns the users group ID.
+  #
+  # ```
+  # User["root"].gid # => 0
+  # ```
+  getter(gid :  Int)
+
+  # Returns the path for the users home.
+  #
+  # ```
+  # User["root"].home # => "/root"
+  # ```
   getter(home : String)
+
+  # Returns the path for the users shell.
+  #
+  # ```
+  # User["root"].shell # => "/bin/ksh"
+  # ```
   getter(shell : String)
+
+  # Returns additional information about the user.
+  #
+  # ```
+  # User["root"].info # => "Charlie Root"
+  # ```
   getter(info : String)
 
-
+  # Returns the primary group for the user.
+  #
+  # ```
+  # User["root"].group # => Group[0]
+  # ```
   def group()
     return Group[@gid]
   end
 
-
-  # Comparison
-
-  def hash()
-    return @uid.hash
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    return @uid.hash(hasher)
   end
 
+  # Returns `true` if `self` is equal to *other*.
   def ==(other : User) : Bool
     return (@uid == other.uid)
   end
 
-  def eql?(other : User) : Bool
+  # Optimized version of `equals?`, passed through to comparison of user ID's.
+  def equals?(other : User) : Bool
     return @uid.eql?(other.uid)
   end
 
+  # Compares this user with *other*, returning `-1`, `0` or `+1` depending if the
+  # user ID is less, equal or greater than the *other* user ID.
   def <=>(other : User) : Int
     return (@uid <=> other.uid)
   end
 
-
-  # Appends the groupname to the given `IO`.
+  # Appends the username to the given `IO`.
   def to_s(io : IO)
   	io << @name
   end

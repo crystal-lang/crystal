@@ -10,8 +10,6 @@ class Group
     MAX_GID = 0xFFFF
   {% end %}
 
-  alias GroupID = LibC::GidT
-
   # Converts group ID into a groupname.
   #
   # Returns: The groupname for the given group ID.
@@ -86,78 +84,102 @@ class Group
     return new(groupname)
   end
 
-  # Returns the group specified by the group ID.
-  # ```
-  # Group.new(0)
-  # ```
-  def self.new(gid : Int) : Group
-    check_gid_in_bounds(uid)
+  # Initializes a group by the given group ID.
+  def self.initialize(gid : Int)
+    check_gid_in_bounds(gid)
     group_struct = LibC.getgrgid(int_to_gid(gid))
     raise NotFound.new("Group with gid '#{gid}', was not found.") if ( group_struct.null? )
-    return new(group_struct.value)
+    nit_from_struct(group_struct)
   end
 
-  # Returns the group specified by the groupname.
-  # ```
-  # Group.new("root")
-  # ```
-  def self.new(groupname : String) : Group
+  # Initializes a group by the given groupname.
+  def self.initialize(groupname : String)
     group_struct = LibC.getgrnam(groupname.check_no_null_byte)
     raise NotFound.new("Group with name '#{group}', was not found.") if ( group_struct.null? )
-    return new(group_struct.value)
+    init_from_struct(group_struct)
   end
 
-
   # :nodoc:
-  def initialize(group_struct : LibC::Group)
+  macro init_from_struct(group_struct)
+    group_struct = group_struct.value
     @name = String.new(group_struct.gr_name)
     @gid = group_struct.gr_gid
     @member_names = Array(String).new(group_struct.gr_mem)
   end
 
 
-  # Properties
-
+  # Returns the groups name.
+  #
+  # ```
+  # Group[0].name # => "root"
+  # ```
   getter(name : String)
-  getter(gid : GroupID)
+
+  # Returns the group ID.
+  #
+  # ```
+  # Group["root"].gid # => 0
+  # ```
+  getter(gid : Int)
+
+  # Returns an array of the groups members names.
+  #
+  # ```
+  # Group["root"].member_names
+  # ```
   getter(member_names : Array(String))
 
-
+  # Yields the groups members names.
+  #
+  # ```
+  # Group["root"].member_names() { |name| puts names }
+  # ```
   def member_names(&block) : Nil
     @members.each() { |member| yield(member) }
   end
 
+  # Returns an array of the groups members.
+  #
+  # ```
+  # Group["root"].members
+  # ```
   def members() : Array(User)
     return @members.map() { |member| next User[member] }
   end
 
+  # Yields the groups members.
+  #
+  # ```
+  # Group["root"].members() { |user| puts user.name }
+  # ```
   def members(&block) : Nil
     @members.each() { |member|
       next yield(User[member])
     }
   end
 
-
-  # Comparison
-
-  def hash()
-    return @gid.hash
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    return @gid.hash(hasher)
   end
 
+  # Returns `true` if `self` is equal to *other*.
   def ==(other : Group) : Bool
     return (@gid == other.gid)
   end
 
-  def eql?(other : Group) : Bool
+  # Optimized version of `equals?`, passed through to comparison of group ID's.
+  def equals?(other : Group) : Bool
     return @gid.eql?(other.gid)
   end
 
+  # Compares this group with *other*, returning `-1`, `0` or `+1` depending if the
+  # group ID is less, equal or greater than the *other* group ID.
   def <=>(other : Group) : Int
     return (@gid <=> other.gid)
   end
 
-
-  # Appends the groupname to the given `IO`.
+  # Appends the username to the given `IO`.
   def to_s(io : IO)
   	io << @name
   end
