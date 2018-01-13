@@ -54,6 +54,10 @@ module Crystal
       @builder.insert_block
     end
 
+    def build_operand_bundle_def(name, values : Array(LLVM::Value))
+      @builder.build_operand_bundle_def(name, values)
+    end
+
     def to_unsafe
       @builder.to_unsafe
     end

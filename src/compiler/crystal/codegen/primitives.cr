@@ -69,6 +69,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_load_atomic call, node, target_def, call_args
             when "store_atomic"
               codegen_primitive_store_atomic call, node, target_def, call_args
+            when "throw_info"
+              @llvm_mod.globals["_TI1PEAX"]
             else
               raise "BUG: unhandled primitive in codegen: #{node.name}"
             end

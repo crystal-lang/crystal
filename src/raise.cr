@@ -39,6 +39,7 @@ end
 
 {% if flag?(:win32) %}
   require "callstack/lib_unwind"
+  require "c/throw"
 
   # Raises the *exception*.
   #
@@ -46,17 +47,15 @@ end
   # Re-raising a previously catched exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
     exception.inspect_with_backtrace(STDERR)
-    LibC.exit(1)
-  end
-
-  fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
-    LibUnwind::ReasonCode::NO_REASON
+    __crystal_raise(pointerof(exception).as(Void*))
   end
 
   # :nodoc:
   @[Raises]
-  fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
-    LibC.printf("EXITING: __crystal_raise called")
+  fun __crystal_raise(unwind_ex : Void*) : NoReturn
+    ti = WindowsExt.throw_info.as(Pointer({Int32, Int32, Int32, Int32}))
+    LibC._CxxThrowException(unwind_ex, ti)
+    LibC.printf "Failed to raise an exception: \n"
     LibC.exit(1)
   end
 {% elsif flag?(:arm) %}

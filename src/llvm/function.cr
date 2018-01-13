@@ -75,4 +75,8 @@ struct LLVM::Function
   def params
     ParameterCollection.new self
   end
+
+  def personality_function=(fn)
+    LibLLVM.set_personality_fn(self, fn)
+  end
 end
