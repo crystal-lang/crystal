@@ -70,26 +70,26 @@ module Crystal::System::File
     tmpdir.rchop(::File::SEPARATOR)
   end
 
-  def self.stat(path)
+  def self.stat?(path : String) : ::File::Stat?
     if LibC.stat(path.check_no_null_byte, out stat) != 0
-      raise Errno.new("Unable to get stat for '#{path}'")
+      if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
+        return nil
+      else
+        raise Errno.new("Unable to get stat for '#{path}'")
+      end
     end
     ::File::Stat.new(stat)
   end
 
-  def self.lstat(path)
+  def self.lstat?(path : String) : ::File::Stat?
     if LibC.lstat(path.check_no_null_byte, out stat) != 0
-      raise Errno.new("Unable to get lstat for '#{path}'")
+      if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
+        return nil
+      else
+        raise Errno.new("Unable to get lstat for '#{path}'")
+      end
     end
     ::File::Stat.new(stat)
-  end
-
-  def self.empty?(path)
-    begin
-      stat(path).size == 0
-    rescue Errno
-      raise Errno.new("Error determining size of '#{path}'")
-    end
   end
 
   def self.exists?(path)
@@ -112,19 +112,8 @@ module Crystal::System::File
     LibC.access(path.check_no_null_byte, flag) == 0
   end
 
-  def self.file?(path) : Bool
-    if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT
-        return false
-      else
-        raise Errno.new("stat")
-      end
-    end
-    ::File::Stat.new(stat).file?
-  end
-
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)
-    ret = if !follow_symlinks && symlink?(path)
+    ret = if !follow_symlinks && ::File.symlink?(path)
             LibC.lchown(path, uid, gid)
           else
             LibC.chown(path, uid, gid)
@@ -161,17 +150,6 @@ module Crystal::System::File
     ret = LibC.symlink(old_path.check_no_null_byte, new_path.check_no_null_byte)
     raise Errno.new("Error creating symlink from #{old_path} to #{new_path}") if ret != 0
     ret
-  end
-
-  def self.symlink?(path)
-    if LibC.lstat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT
-        return false
-      else
-        raise Errno.new("stat")
-      end
-    end
-    (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
   end
 
   def self.rename(old_filename, new_filename)

@@ -193,7 +193,11 @@ class Dir
 
   # Returns `true` if the given path exists and is a directory
   def self.exists?(path) : Bool
-    Crystal::System::Dir.exists? path
+    if stat = File.stat?(path)
+      stat.directory?
+    else
+      false
+    end
   end
 
   # Returns `true` if the directory at *path* is empty, otherwise returns `false`.

@@ -37,9 +37,16 @@ describe "Dir" do
     end
 
     it "tests empty? on nonexistent directory" do
-      expect_raises Errno do
+      expect_raises(Errno, /Error determining size of/) do
         Dir.empty?(File.join([__DIR__, "/foo/bar/"]))
       end
+    end
+
+    it "tests empty? on a directory path to a file" do
+      ex = expect_raises(Errno, /Error determining size of/) do
+        Dir.empty?("#{__FILE__}/")
+      end
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 

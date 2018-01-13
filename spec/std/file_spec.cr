@@ -116,9 +116,17 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = "#{__DIR__}/data/non_existing_file.txt"
-      expect_raises Errno do
+      expect_raises(Errno, /Error determining size/) do
         File.empty?(filename)
       end
+    end
+
+    it "raises an error when a component of the path is a file" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      ex = expect_raises(Errno, /Error determining size/) do
+        File.empty?("#{__FILE__}/")
+      end
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
@@ -130,11 +138,23 @@ describe "File" do
     it "gives false" do
       File.exists?("#{__DIR__}/data/non_existing_file.txt").should be_false
     end
+
+    it "gives false when a component of the path is a file" do
+      File.exists?("#{__FILE__}/").should be_false
+    end
   end
 
   describe "executable?" do
     it "gives false" do
       File.executable?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+
+    it "gives false when the file doesn't exist" do
+      File.executable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.executable?("#{__FILE__}/").should be_false
     end
   end
 
@@ -142,11 +162,27 @@ describe "File" do
     it "gives true" do
       File.readable?("#{__DIR__}/data/test_file.txt").should be_true
     end
+
+    it "gives false when the file doesn't exist" do
+      File.readable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.readable?("#{__FILE__}/").should be_false
+    end
   end
 
   describe "writable?" do
     it "gives true" do
       File.writable?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+
+    it "gives false when the file doesn't exist" do
+      File.writable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.writable?("#{__FILE__}/").should be_false
     end
   end
 
@@ -158,6 +194,14 @@ describe "File" do
     it "gives false" do
       File.file?("#{__DIR__}/data").should be_false
     end
+
+    it "gives false when the file doesn't exist" do
+      File.file?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.file?("#{__FILE__}/").should be_false
+    end
   end
 
   describe "directory?" do
@@ -167,6 +211,14 @@ describe "File" do
 
     it "gives false" do
       File.directory?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+
+    it "gives false when the directory doesn't exist" do
+      File.directory?("#{__DIR__}/data/non_existing").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.directory?("#{__FILE__}/").should be_false
     end
   end
 
@@ -203,6 +255,14 @@ describe "File" do
     it "gives false" do
       File.symlink?("#{__DIR__}/data/test_file.txt").should be_false
       File.symlink?("#{__DIR__}/data/unknown_file.txt").should be_false
+    end
+
+    it "gives false when the symlink doesn't exist" do
+      File.symlink?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.symlink?("#{__FILE__}/").should be_false
     end
   end
 
@@ -375,6 +435,21 @@ describe "File" do
       File.open("#{__DIR__}/data/test_file.txt", "r") do |file|
         file.size.should eq(240)
       end
+    end
+
+    it "raises an error when the file does not exist" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      expect_raises(Errno, /Error determining size/) do
+        File.size(filename)
+      end
+    end
+
+    it "raises an error when a component of the path is a file" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      ex = expect_raises(Errno, /Error determining size/) do
+        File.size("#{__FILE__}/")
+      end
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
