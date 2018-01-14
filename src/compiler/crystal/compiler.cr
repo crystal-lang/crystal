@@ -590,7 +590,9 @@ module Crystal
 
       private def compile_to_thin_lto
         {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-          llvm_mod.write_bitcode_with_summary_to_file(object_name)
+          # Here too, we first compile to a temporary file and then rename it
+          llvm_mod.write_bitcode_with_summary_to_file(temporary_object_name)
+          File.rename(temporary_object_name, object_name)
           @reused_previous_compilation = false
           dump_llvm_ir
         {% else %}
@@ -601,6 +603,7 @@ module Crystal
       private def compile_to_object
         bc_name = self.bc_name
         object_name = self.object_name
+        temporary_object_name = self.temporary_object_name
 
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
@@ -612,6 +615,14 @@ module Crystal
         # `.bc` file is exactly the same as the old one. In that case
         # the `.o` file will also be the same, so we simply reuse the
         # old one. Generating an `.o` file is what takes most time.
+        #
+        # However, instead of directly generating the final `.o` file
+        # from the `.bc` file, we generate it to a termporary name (`.o.tmp`)
+        # and then we rename that file to `.o`. We do this because the compiler
+        # could be interrupted while the `.o` file is being generated, leading
+        # to a corrupted file that later would cause compilation issues.
+        # Moving a file is an atomic operation so no corrupted `.o` file should
+        # be generated.
 
         must_compile = true
         can_reuse_previous_compilation =
@@ -643,7 +654,8 @@ module Crystal
 
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
-          compiler.target_machine.emit_obj_to_file llvm_mod, object_name
+          compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
+          File.rename(temporary_object_name, object_name)
         else
           @reused_previous_compilation = true
         end
@@ -680,6 +692,10 @@ module Crystal
 
       def object_filename
         "#{@name}.o"
+      end
+
+      def temporary_object_name
+        Crystal.relative_filename("#{@output_dir}/#{object_filename}.tmp")
       end
 
       def bc_name
