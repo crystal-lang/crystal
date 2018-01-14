@@ -79,52 +79,42 @@ struct BigDecimal < Number
       end
     end
 
-    case
-    when exponent_index
+    decimal_end_index = (exponent_index || str.bytesize) - 1
+    if decimal_index
+      decimal_count = decimal_end_index - decimal_index
+
+      value_str = String.build do |builder|
+        # We know this is ASCII, so we can slice by index
+        builder.write(str.to_slice[0, decimal_index])
+        builder.write(str.to_slice[decimal_index + 1, decimal_count])
+      end
+      @value = value_str.to_big_i
+    else
+      decimal_count = 0
+      @value = str[0..decimal_end_index].to_big_i
+    end
+
+    if exponent_index
       exponent_postfix = str[exponent_index + 1]
       case exponent_postfix
       when '+', '-'
         exponent_positive = exponent_postfix == '+'
-        exponent = str[exponent_index + 2..-1].to_u64
+        exponent = str[(exponent_index + 2)..-1].to_u64
       else
         exponent_positive = true
-        exponent = str[exponent_index + 1..-1].to_u64
+        exponent = str[(exponent_index + 1)..-1].to_u64
       end
-      if decimal_index
-        decimals = (exponent_index - decimal_index - 1).to_u64
-        value_str = String.build do |builder|
-          # We know this is ASCII, so we can slice by index
-          builder.write(str.to_slice[0, decimal_index])
-          builder.write(str.to_slice[decimal_index + 1, decimals])
-        end
-        @value = value_str.to_big_i
-        @scale = exponent
-        if exponent_positive
-          @scale -= decimals
-          @value *= 10.to_big_i ** @scale
-          @scale = 0_u64
-        else
-          @scale += decimals
-        end
+
+      @scale = exponent
+      if exponent_positive
+        @scale -= decimal_count
+        @value *= 10.to_big_i ** @scale
+        @scale = 0_u64
       else
-        @value = str[0...exponent_index].to_big_i
-        @scale = exponent
-        if exponent_positive
-          @value *= 10.to_big_i ** @scale
-          @scale = 0_u64
-        end
+        @scale += decimal_count
       end
-    when decimal_index
-      value_str = String.build do |builder|
-        # We know this is ASCII, so we can slice by index
-        builder.write(str.to_slice[0, decimal_index])
-        builder.write(str.to_slice[decimal_index + 1, str.bytesize - decimal_index - 1])
-      end
-      @value = value_str.to_big_i
-      @scale = (str.bytesize - decimal_index - 1).to_u64
     else
-      @value = str.to_big_i
-      @scale = 0_u64
+      @scale = decimal_count.to_u64
     end
   end
 
