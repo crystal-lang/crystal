@@ -190,7 +190,7 @@ Playground.Inspector = function(session, line) {
       row.append($("<td>").text(message.data[labels[j]]));
     }
 
-    row.append($("<td>").text(message.value));
+    row.append($("<td>").html("<pre><code>" + message.html_value + "</code></pre>"));
     row.append($("<td>").text(message.value_type));
     tableBody.append(row);
   }
