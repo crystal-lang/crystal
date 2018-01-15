@@ -81,7 +81,7 @@ struct BigDecimal < Number
 
     decimal_end_index = (exponent_index || str.bytesize) - 1
     if decimal_index
-      decimal_count = decimal_end_index - decimal_index
+      decimal_count = (decimal_end_index - decimal_index).to_u64
 
       value_str = String.build do |builder|
         # We know this is ASCII, so we can slice by index
@@ -90,7 +90,7 @@ struct BigDecimal < Number
       end
       @value = value_str.to_big_i
     else
-      decimal_count = 0
+      decimal_count = 0_u64
       @value = str[0..decimal_end_index].to_big_i
     end
 
@@ -107,7 +107,9 @@ struct BigDecimal < Number
 
       @scale = exponent
       if exponent_positive
-        unless @scale < decimal_count
+        if @scale < decimal_count
+          @scale = decimal_count - @scale
+        else
           @scale -= decimal_count
           @value *= 10.to_big_i ** @scale
           @scale = 0_u64
@@ -116,7 +118,7 @@ struct BigDecimal < Number
         @scale += decimal_count
       end
     else
-      @scale = decimal_count.to_u64
+      @scale = decimal_count
     end
   end
 
