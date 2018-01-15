@@ -177,6 +177,7 @@ describe BigDecimal do
   it "can be converted from other types" do
     1.to_big_d.should eq (BigDecimal.new(1))
     "1.5".to_big_d.should eq (BigDecimal.new(15, 1))
+    "+1.5".to_big_d.should eq (BigDecimal.new(15, 1))
     BigInt.new(15).to_big_d.should eq (BigDecimal.new(15, 0))
     1.5.to_big_d.should eq (BigDecimal.new(15, 1))
     1.5.to_big_f.to_big_d.should eq (BigDecimal.new(15, 1))
