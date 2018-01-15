@@ -183,6 +183,8 @@ describe BigDecimal do
   end
 
   it "can be converted from scientific notation" do
+    "10.01e1".to_big_d.should eq (BigDecimal.new("100.1"))
+    "10.01e-1".to_big_d.should eq (BigDecimal.new("1.001"))
     "-0.123e12".to_big_d.should eq (BigDecimal.new("-123000000000"))
     "0.123e12".to_big_d.should eq (BigDecimal.new("123000000000"))
     "0.123e+12".to_big_d.should eq (BigDecimal.new("123000000000"))
