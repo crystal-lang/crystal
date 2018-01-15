@@ -462,7 +462,6 @@ class Crystal::CodeGenVisitor
               else
                 LLVM::OperandBundleDef.null
               end
-    funclet = LLVM::OperandBundleDef.null
 
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"

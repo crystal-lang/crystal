@@ -46,7 +46,7 @@ end
   # This will set the exception's callstack if it hasn't been already.
   # Re-raising a previously catched exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
-    exception.inspect_with_backtrace(STDERR)
+    #exception.inspect_with_backtrace(STDERR)
     __crystal_raise(pointerof(exception).as(Void*))
   end
 
