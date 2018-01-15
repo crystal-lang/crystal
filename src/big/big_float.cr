@@ -13,6 +13,8 @@ struct BigFloat < Float
   end
 
   def initialize(str : String)
+    # Strip leading '+' char to smooth out cases with strings like "+123"
+    str = str.lchop('+')
     LibGMP.mpf_init_set_str(out @mpf, str, 10)
   end
 
