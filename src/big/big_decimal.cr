@@ -107,9 +107,11 @@ struct BigDecimal < Number
 
       @scale = exponent
       if exponent_positive
-        @scale -= decimal_count
-        @value *= 10.to_big_i ** @scale
-        @scale = 0_u64
+        unless @scale < decimal_count
+          @scale -= decimal_count
+          @value *= 10.to_big_i ** @scale
+          @scale = 0_u64
+        end
       else
         @scale += decimal_count
       end
