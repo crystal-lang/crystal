@@ -2738,12 +2738,11 @@ class String
   end
 
   # ditto
-  def rindex(search : Regex, offset = 0)
-    offset += size if offset < 0
+  def rindex(search : Regex, offset = size - 1)
     return nil unless 0 <= offset <= size
 
     match_result = nil
-    self[0, self.size - offset].scan(search) do |match_data|
+    self[0..offset].scan(search) do |match_data|
       match_result = match_data
     end
 
