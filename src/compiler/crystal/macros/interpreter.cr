@@ -149,7 +149,7 @@ module Crystal
             @last.to_s(str)
           end
         end
-      end)
+      end).at(node)
       false
     end
 
