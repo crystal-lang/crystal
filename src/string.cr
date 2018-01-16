@@ -2739,14 +2739,16 @@ class String
 
   # ditto
   def rindex(search : Regex, offset = size - 1)
+    offset += size if offset < 0
     return nil unless 0 <= offset <= size
 
     match_result = nil
-    self[0..offset].scan(search) do |match_data|
+    scan(search) do |match_data|
+      break if (index = match_data.begin) && index > offset
       match_result = match_data
     end
 
-    match_result.try &.begin(0)
+    match_result.try &.begin
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns

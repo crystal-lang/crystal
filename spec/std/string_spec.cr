@@ -718,6 +718,9 @@ describe "String" do
         it { "abbbb".rindex('b', 0).should be_nil }
         it { "abbbb".rindex('b', 1).should eq(1) }
         it { "abbbb".rindex('a', 0).should eq(0) }
+        it { "bbbb".rindex('b', -2).should eq(2) }
+        it { "bbbb".rindex('b', -5).should be_nil }
+        it { "bbbb".rindex('b', -4).should eq(0) }
         it { "faobar".rindex('a', 3).should eq(1) }
         it { "faobarbaz".rindex('a', -3).should eq(4) }
         it { "日本語日本語".rindex('本', 3).should eq(1) }
@@ -735,6 +738,9 @@ describe "String" do
         it { "abbbb".rindex("b", 0).should be_nil }
         it { "abbbb".rindex("b", 1).should eq(1) }
         it { "abbbb".rindex("a", 0).should eq(0) }
+        it { "bbbb".rindex("b", -2).should eq(2) }
+        it { "bbbb".rindex("b", -5).should be_nil }
+        it { "bbbb".rindex("b", -4).should eq(0) }
         it { "foo baro baz".rindex("o b", 6).should eq(2) }
         it { "foo".rindex("", 3).should eq(3) }
         it { "foo".rindex("", 4).should eq(3) }
@@ -751,6 +757,9 @@ describe "String" do
         it { "bbbb".rindex(/b/, 2).should eq(2) }
         it { "abbbb".rindex(/b/, 0).should be_nil }
         it { "abbbb".rindex(/a/, 0).should eq(0) }
+        it { "bbbb".rindex(/b/, -2).should eq(2) }
+        it { "bbbb".rindex(/b/, -5).should be_nil }
+        it { "bbbb".rindex(/b/, -4).should eq(0) }
         it { "日本語日本語".rindex(/日本/, 2).should eq(0) }
       end
     end
