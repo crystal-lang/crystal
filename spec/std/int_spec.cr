@@ -315,6 +315,13 @@ describe "Int" do
     end
   end
 
+  describe "digits" do
+    it "return the digits of a number" do
+      123.digits.should eq([1, 2, 3])
+      -123.digits.should eq([1, 2, 3])
+    end
+  end
+
   describe "step" do
     it "steps through limit" do
       passed = false

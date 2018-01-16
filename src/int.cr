@@ -456,6 +456,10 @@ struct Int
     yield ptr, count
   end
 
+  def digits
+    self.to_s.gsub('-', "").each_char.map(&.to_i).to_a
+  end
+
   def inspect(io)
     type = case self
            when Int8    then "_i8"
