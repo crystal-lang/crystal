@@ -433,6 +433,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type.struct = true
       type.extern = true
       type.extern_union = node.union?
+
+      if location = node.location
+        type.add_location(location)
+      end
+
       current_type.types[node.name] = type
     end
 

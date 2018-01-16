@@ -19,7 +19,7 @@ class Crystal::CodeGenVisitor
       constraints << "," unless constraints.empty?
 
       inputs.each_with_index do |input, i|
-        input.exp.accept self
+        accept input.exp
         input_types << llvm_type(input.exp.type)
         input_values << @last
         constraints << "," if i > 0
@@ -45,7 +45,7 @@ class Crystal::CodeGenVisitor
     asm_value = call value, input_values
 
     if ptrof
-      ptrof.accept self
+      accept ptrof
       store asm_value, @last
     end
 
