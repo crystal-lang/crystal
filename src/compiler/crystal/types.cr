@@ -1511,10 +1511,7 @@ module Crystal
       super
       if generic_args
         io << "("
-        type_vars.each_with_index do |type_var, i|
-          io << ", " if i > 0
-          type_var.to_s(io)
-        end
+        type_vars.join(", ", io, &.to_s(io))
         io << ")"
       end
     end
@@ -1574,10 +1571,7 @@ module Crystal
       super
       if generic_args
         io << "("
-        type_vars.each_with_index do |type_var, i|
-          io << ", " if i > 0
-          type_var.to_s(io)
-        end
+        type_vars.join(", ", io, &.to_s(io))
         io << ")"
       end
     end
@@ -1703,14 +1697,12 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       generic_type.append_full_name(io)
       io << "("
-      i = 0
-      type_vars.each_value do |type_var|
+      type_vars.each_value.with_index do |type_var, i|
         io << ", " if i > 0
         if type_var.is_a?(Var)
           if i == splat_index
             tuple = type_var.type.as(TupleInstanceType)
-            tuple.tuple_types.each_with_index do |tuple_type, j|
-              io << ", " if j > 0
+            tuple.tuple_types.join(", ", io) do |tuple_type|
               tuple_type = tuple_type.devirtualize unless codegen
               tuple_type.to_s_with_options(io, codegen: codegen)
             end
@@ -1722,7 +1714,6 @@ module Crystal
         else
           type_var.to_s(io)
         end
-        i += 1
       end
       io << ")"
     end
@@ -2007,7 +1998,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << "Proc("
-      arg_types.each_with_index do |type, i|
+      arg_types.each do |type|
         type = type.devirtualize unless codegen
         type.to_s_with_options(io, codegen: codegen)
         io << ", "
@@ -2120,8 +2111,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << "Tuple("
-      @tuple_types.each_with_index do |tuple_type, i|
-        io << ", " if i > 0
+      @tuple_types.join(", ", io) do |tuple_type|
         tuple_type = tuple_type.devirtualize unless codegen
         tuple_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
       end
@@ -2234,8 +2224,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << "NamedTuple("
-      @entries.each_with_index do |entry, i|
-        io << ", " if i > 0
+      @entries.join(", ", io) do |entry|
         if Symbol.needs_quotes?(entry.name)
           entry.name.inspect(io)
         else
@@ -2749,8 +2738,7 @@ module Crystal
         union_types = @union_types.dup
         union_types << union_types.delete_at(nil_type_index)
       end
-      union_types.each_with_index do |type, i|
-        io << " | " if i > 0
+      union_types.join(" | ", io) do |type|
         type = type.devirtualize unless codegen
         type.to_s_with_options(io, codegen: codegen)
       end

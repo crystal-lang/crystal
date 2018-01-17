@@ -128,10 +128,7 @@ module Crystal
         @str << "["
       end
 
-      node.elements.each_with_index do |exp, i|
-        @str << ", " if i > 0
-        exp.accept self
-      end
+      node.elements.join(", ", @str, &.accept self)
 
       if name
         @str << "}"
@@ -183,8 +180,7 @@ module Crystal
 
     def visit(node : NamedTupleLiteral)
       @str << "{"
-      node.entries.each_with_index do |entry, i|
-        @str << ", " if i > 0
+      node.entries.join(", ", @str) do |entry|
         visit_named_arg_name(entry.key)
         @str << ": "
         entry.value.accept self
@@ -375,10 +371,7 @@ module Crystal
         if node.name.ends_with?('=') && node.name[0].ascii_letter?
           @str << decorate_call(node, node.name.rchop)
           @str << " = "
-          node.args.each_with_index do |arg, i|
-            @str << ", " if i > 0
-            arg.accept self
-          end
+          node.args.join(", ", @str, &.accept self)
         else
           @str << decorate_call(node, node.name)
 
@@ -569,15 +562,9 @@ module Crystal
     end
 
     def visit(node : MultiAssign)
-      node.targets.each_with_index do |target, i|
-        @str << ", " if i > 0
-        target.accept self
-      end
+      node.targets.join(", ", @str, &.accept self)
       @str << " = "
-      node.values.each_with_index do |value, i|
-        @str << ", " if i > 0
-        value.accept self
-      end
+      node.values.join(", ", @str, &.accept self)
       false
     end
 
@@ -614,10 +601,7 @@ module Crystal
       @str << "->"
       if node.def.args.size > 0
         @str << "("
-        node.def.args.each_with_index do |arg, i|
-          @str << ", " if i > 0
-          arg.accept self
-        end
+        node.def.args.join(", ", @str, &.accept self)
         @str << ")"
       end
       @str << " "
@@ -639,10 +623,7 @@ module Crystal
 
       if node.args.size > 0
         @str << "("
-        node.args.each_with_index do |arg, i|
-          @str << ", " if i > 0
-          arg.accept self
-        end
+        node.args.join(", ", @str, &.accept self)
         @str << ")"
       end
       false
@@ -765,10 +746,7 @@ module Crystal
 
     def visit(node : MacroFor)
       @str << "{% for "
-      node.vars.each_with_index do |var, i|
-        @str << ", " if i > 0
-        var.accept self
-      end
+      node.vars.join(", ", @str, &.accept self)
       @str << " in "
       node.exp.accept self
       @str << " %}"
@@ -784,10 +762,7 @@ module Crystal
       @str << node.name
       if exps = node.exps
         @str << '{'
-        exps.each_with_index do |exp, i|
-          @str << ", " if i > 0
-          exp.accept self
-        end
+        exps.join(", ", @str, &.accept self)
         @str << '}'
       end
       false
@@ -838,10 +813,7 @@ module Crystal
     def visit(node : ProcNotation)
       @str << "("
       if inputs = node.inputs
-        inputs.each_with_index do |input, i|
-          @str << ", " if i > 0
-          input.accept self
-        end
+        inputs.join(", ", @str, &.accept self)
         @str << " "
       end
       @str << "-> "
@@ -857,10 +829,8 @@ module Crystal
     end
 
     def visit(node : Path)
-      node.names.each_with_index do |name, i|
-        @str << "::" if i > 0 || node.global?
-        @str << name
-      end
+      @str << "::" if node.global?
+      node.names.join("::", @str)
     end
 
     def visit(node : Generic)
@@ -886,8 +856,7 @@ module Crystal
       printed_arg = false
 
       @str << "("
-      node.type_vars.each_with_index do |var, i|
-        @str << ", " if i > 0
+      node.type_vars.join(", ", @str) do |var|
         var.accept self
         printed_arg = true
       end
@@ -932,10 +901,7 @@ module Crystal
     end
 
     def visit(node : Union)
-      node.types.each_with_index do |ident, i|
-        @str << " | " if i > 0
-        ident.accept self
-      end
+      node.types.join(" | ", @str, &.accept self)
       false
     end
 
@@ -970,10 +936,7 @@ module Crystal
       @str << keyword("yield")
       if node.exps.size > 0
         @str << " "
-        node.exps.each_with_index do |exp, i|
-          @str << ", " if i > 0
-          exp.accept self
-        end
+        node.exps.join(", ", @str, &.accept self)
       end
       false
     end
@@ -1020,10 +983,7 @@ module Crystal
       first = node.elements.first?
       space = first.is_a?(TupleLiteral) || first.is_a?(NamedTupleLiteral) || first.is_a?(HashLiteral)
       @str << " " if space
-      node.elements.each_with_index do |exp, i|
-        @str << ", " if i > 0
-        exp.accept self
-      end
+      node.elements.join(", ", @str, &.accept self)
       @str << " " if space
       @str << "}"
       false
@@ -1147,8 +1107,7 @@ module Crystal
       end
       if node.args.size > 0
         @str << "("
-        node.args.each_with_index do |arg, i|
-          @str << ", " if i > 0
+        node.args.join(", ", @str) do |arg|
           if arg_name = arg.name
             @str << arg_name << " : "
           end
@@ -1328,10 +1287,7 @@ module Crystal
       append_indent
       @str << keyword("when")
       @str << " "
-      node.conds.each_with_index do |cond, i|
-        @str << ", " if i > 0
-        cond.accept self
-      end
+      node.conds.join(", ", @str, &.accept self)
       newline
       accept_with_indent node.body
       false
@@ -1401,10 +1357,7 @@ module Crystal
           @str << " :"
         end
         @str << " "
-        types.each_with_index do |type, i|
-          @str << " | " if i > 0
-          type.accept self
-        end
+        types.join(" | ", @str, &.accept self)
       end
       newline
       accept_with_indent node.body
@@ -1423,10 +1376,7 @@ module Crystal
     def visit(node : TypeOf)
       @str << keyword("typeof")
       @str << "("
-      node.expressions.each_with_index do |exp, i|
-        @str << ", " if i > 0
-        exp.accept self
-      end
+      node.expressions.join(", ", @str, &.accept self)
       @str << ")"
       false
     end
@@ -1437,8 +1387,7 @@ module Crystal
       if !node.args.empty? || node.named_args
         @str << "("
         printed_arg = false
-        node.args.each_with_index do |arg, i|
-          @str << ", " if i > 0
+        node.args.join(", ", @str) do |arg|
           arg.accept self
           printed_arg = true
         end
@@ -1472,17 +1421,11 @@ module Crystal
       @str << ":"
       if inputs = node.inputs
         @str << " "
-        inputs.each_with_index do |input, i|
-          @str << ", " if i > 0
-          input.accept self
-        end
+        inputs.join(", ", @str, &.accept self)
       end
       if clobbers = node.clobbers
         @str << " : "
-        clobbers.each_with_index do |clobber, i|
-          @str << ", " if i > 0
-          clobber.inspect(@str)
-        end
+        clobbers.join(", ", @str, &.inspect @str)
       end
       if node.volatile? || node.alignstack? || node.intel?
         @str << " : "
