@@ -456,8 +456,13 @@ struct Int
     yield ptr, count
   end
 
-  def digits
-    self.to_s.gsub('-', "").each_char.map(&.to_i).to_a
+  def digits(base = 10)
+    quotient = self.abs.tdiv(base)
+    remainder = self.abs.remainder(base)
+    if quotient == 0
+      return [remainder]
+    end
+    quotient.digits << remainder
   end
 
   def inspect(io)
