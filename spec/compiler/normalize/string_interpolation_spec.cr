@@ -10,4 +10,8 @@ describe "Normalize: string interpolation" do
     assert_expand "\"foo\#{bar}#{s}\"",
       "((((::String::Builder.new(218)) << \"foo\") << bar) << \"#{s}\").to_s"
   end
+
+  it "normalizes heredoc" do
+    assert_normalize "<<-FOO\nhello\nFOO", %("hello")
+  end
 end
