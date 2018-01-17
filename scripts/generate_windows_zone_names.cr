@@ -7,7 +7,7 @@ require "xml"
 require "../src/compiler/crystal/formatter"
 
 WINDOWS_ZONE_NAMES_SOURCE = "http://unicode.org/cldr/data/common/supplemental/windowsZones.xml"
-TARGET_FILE = File.join(__DIR__, "..", "src", "crystal", "system", "win32", "zone_names.cr")
+TARGET_FILE               = File.join(__DIR__, "..", "src", "crystal", "system", "win32", "zone_names.cr")
 
 response = HTTP::Client.get(WINDOWS_ZONE_NAMES_SOURCE)
 

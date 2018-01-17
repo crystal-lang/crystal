@@ -64,7 +64,7 @@ module Crystal::System::Time
 
     zones = [
       ::Time::Location::Zone.new(stdname, (info.bias + info.standardBias) * BIAS_TO_OFFSET_FACTOR, false),
-      ::Time::Location::Zone.new(dstname, (info.bias + info.daylightBias) * BIAS_TO_OFFSET_FACTOR, true)
+      ::Time::Location::Zone.new(dstname, (info.bias + info.daylightBias) * BIAS_TO_OFFSET_FACTOR, true),
     ]
 
     first_date = info.standardDate
@@ -127,7 +127,7 @@ module Crystal::System::Time
 
     time += (day - 1).days
 
-    return time.epoch
+    time.epoch
   end
 
   # Normalizes the names of the standard and dst zones.
@@ -155,6 +155,6 @@ module Crystal::System::Time
   # and returns the English name.
   private def self.translate_zone_name(stdname, dstname)
     # TODO: Needs implementation once there is access to the registry.
-    return nil
+    nil
   end
 end

@@ -23,18 +23,22 @@ class Time::Location
 
   # :nodoc:
   def self.load_from_dir_or_zip(name : String, source : String)
-    if source.ends_with?(".zip")
-      open_file_cached(name, source) do |file|
-        read_zip_file(name, file) do |io|
-          read_zoneinfo(name, io)
+    {% if flag?(:win32) %}
+      raise NotImplementedError.new("Time::Location.load_from_dir_or_zip")
+    {% else %}
+      if source.ends_with?(".zip")
+        open_file_cached(name, source) do |file|
+          read_zip_file(name, file) do |io|
+            read_zoneinfo(name, io)
+          end
+        end
+      else
+        path = File.expand_path(name, source)
+        open_file_cached(name, path) do |file|
+          read_zoneinfo(name, file)
         end
       end
-    else
-      path = File.expand_path(name, source)
-      open_file_cached(name, path) do |file|
-        read_zoneinfo(name, file)
-      end
-    end
+    {% end %}
   end
 
   private def self.open_file_cached(name : String, path : String)
@@ -57,14 +61,18 @@ class Time::Location
 
   # :nodoc:
   def self.find_zoneinfo_file(name : String, sources : Enumerable(String))
-    sources.each do |source|
-      if source.ends_with?(".zip")
-        return source if File.exists?(source)
-      else
-        path = File.expand_path(name, source)
-        return source if File.exists?(path)
+    {% if flag?(:win32) %}
+      raise NotImplementedError.new("Time::Location.find_zoneinfo_file")
+    {% else %}
+      sources.each do |source|
+        if source.ends_with?(".zip")
+          return source if File.exists?(source)
+        else
+          path = File.expand_path(name, source)
+          return source if File.exists?(path)
+        end
       end
-    end
+    {% end %}
   end
 
   # Parse "zoneinfo" time zone file.
