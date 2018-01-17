@@ -82,11 +82,11 @@ module Crystal
           right = Call.new(middle.clone, node.name, node.args).at(middle)
         else
           temp_var = program.new_temp_var
-          temp_assign = Assign.new(temp_var.clone, middle)
+          temp_assign = Assign.new(temp_var.clone, middle).at(middle)
           left = Call.new(obj.obj, obj.name, temp_assign).at(obj.obj)
           right = Call.new(temp_var.clone, node.name, node.args).at(node)
         end
-        node = And.new(left, right)
+        node = And.new(left, right).at(left)
         node = node.transform self
       else
         node = super

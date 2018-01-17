@@ -1633,6 +1633,8 @@ module Crystal
     end
 
     def parse_fun_literal
+      location = @token.location
+
       next_token_skip_space_or_newline
 
       unless @token.type == :"{" || @token.type == :"(" || @token.keyword?(:do)
@@ -1678,7 +1680,8 @@ module Crystal
 
       pop_def
 
-      ProcLiteral.new(Def.new("->", args, body)).at_end(end_location)
+      a_def = Def.new("->", args, body).at(location).at_end(end_location)
+      ProcLiteral.new(a_def).at(location).at_end(end_location)
     end
 
     def check_not_pipe_before_proc_literal_body
@@ -1783,7 +1786,7 @@ module Crystal
 
     def parse_delimiter(want_skip_space = true)
       if @token.type == :STRING
-        return node_and_next_token StringLiteral.new(@token.value.to_s)
+        return node_and_next_token StringLiteral.new(@token.value.to_s).at(@token.location)
       end
 
       location = @token.location
@@ -3053,6 +3056,8 @@ module Crystal
     end
 
     def parse_macro_if(start_line, start_column, macro_state, check_end = true)
+      location = @token.location
+
       next_token_skip_space
 
       @in_macro_expression = true
@@ -3060,7 +3065,7 @@ module Crystal
       @in_macro_expression = false
 
       if @token.type != :"%}" && check_end
-        an_if = parse_if_after_condition cond, true
+        an_if = parse_if_after_condition cond, location, true
         return MacroExpression.new(an_if, output: false).at_end(token_end_location)
       end
 
@@ -3636,14 +3641,16 @@ module Crystal
     end
 
     def parse_if(check_end = true)
+      location = @token.location
+
       slash_is_regex!
       next_token_skip_space_or_newline
 
       cond = parse_op_assign_no_control allow_suffix: false
-      parse_if_after_condition cond, check_end
+      parse_if_after_condition cond, location, check_end
     end
 
-    def parse_if_after_condition(cond, check_end)
+    def parse_if_after_condition(cond, location, check_end)
       slash_is_regex!
       skip_statement_end
 
@@ -3667,7 +3674,7 @@ module Crystal
         next_token_skip_space
       end
 
-      If.new(cond, a_then, a_else).at_end(end_location)
+      If.new(cond, a_then, a_else).at(location).at_end(end_location)
     end
 
     def parse_unless
