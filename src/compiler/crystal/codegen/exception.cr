@@ -64,11 +64,11 @@ class Crystal::CodeGenVisitor
 
       # .PEAX is void*
       void_ptr_type_descriptor = @llvm_mod.globals.add(
-            llvm_context.struct([
-              llvm_context.void_pointer.pointer,
-              llvm_context.void_pointer,
-              llvm_context.int8.array(6)
-            ]), "\u{1}??_R0PEAX@8")
+        llvm_context.struct([
+          llvm_context.void_pointer.pointer,
+          llvm_context.void_pointer,
+          llvm_context.int8.array(6),
+        ]), "\u{1}??_R0PEAX@8")
       void_ptr_type_descriptor.initializer = llvm_context.const_struct [
         base_type_descriptor,
         llvm_context.void_pointer.null,
@@ -86,24 +86,24 @@ class Crystal::CodeGenVisitor
         int32(0),
         int32(8),
         int32(0),
-        ]
+      ]
 
       catchable_type_array = llvm_context.struct([llvm_context.int32, llvm_context.int32.array(1)])
       catchable_void_ptr = @llvm_mod.globals.add(
         catchable_type_array, "_CTA1PEAX")
       catchable_void_ptr.initializer = llvm_context.const_struct [
         int32(1),
-        llvm_context.int32.const_array([sub_image_base(void_ptr_catchable_type)])
+        llvm_context.int32.const_array([sub_image_base(void_ptr_catchable_type)]),
       ]
 
-      eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, ])
+      eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
       void_ptr_throwinfo = @llvm_mod.globals.add(
         eh_throwinfo, "_TI1PEAX")
       void_ptr_throwinfo.initializer = llvm_context.const_struct [
         int32(0),
         int32(0),
         int32(0),
-        sub_image_base(catchable_void_ptr)
+        sub_image_base(catchable_void_ptr),
       ]
 
       if node_rescues
@@ -371,6 +371,6 @@ class Crystal::CodeGenVisitor
       @builder.sub(
         @builder.ptr2int(value, llvm_context.int64),
         @builder.ptr2int(image_base, llvm_context.int64)),
-        llvm_context.int32)
+      llvm_context.int32)
   end
 end
