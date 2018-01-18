@@ -73,7 +73,7 @@ class Markdown::Parser
       return UnorderedList.new('-')
     end
 
-    if starts_with_backticks? line
+    if starts_with_code_fence? line
       return :fenced_code
     end
 
@@ -178,7 +178,7 @@ class Markdown::Parser
           break
         end
 
-        if starts_with_backticks? @lines[@line]
+        if starts_with_code_fence? @lines[@line]
           @line += 1
           break
         end
@@ -472,11 +472,6 @@ class Markdown::Parser
     true
   end
 
-  def next_line_starts_with_backticks?
-    return false unless @line + 1 < @lines.size
-    starts_with_backticks? @lines[@line + 1]
-  end
-
   def count_pounds(line)
     bytesize = line.bytesize
     str = line.to_unsafe
@@ -531,8 +526,8 @@ class Markdown::Parser
     !next_line.starts_with?("  ")
   end
 
-  def starts_with_backticks?(line)
-    line.starts_with? "```"
+  def starts_with_code_fence?(line)
+    line.starts_with?("```") && !line.index('`', 3)
   end
 
   def starts_with_digits_dot?(line)
