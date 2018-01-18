@@ -28,7 +28,7 @@ module Crystal
           body.transform(self),
           [Rescue.new(Expressions.from([
             ensure_body,
-            Call.global("raise", Var.new(var_name)),
+            Call.global("raise", Var.new(var_name)).at(node),
           ] of ASTNode), nil, var_name)])
         tap_block = Block.new(@args = [] of Var, ensure_body.clone)
         return Expressions.from [Call.new(new_handler, "tap", [] of ASTNode, tap_block)] of ASTNode
@@ -37,7 +37,7 @@ module Crystal
       if rescues
         if rescues.size > 1
           var_name = next_var
-          rescue_body = Call.global("raise", Var.new(var_name))
+          rescue_body = Call.global("raise", Var.new(var_name)).at(node)
 
           rescues.reverse_each do |rescue_node|
             typed_var_name, restriction_type, body = split_rescue rescue_node
@@ -58,7 +58,7 @@ module Crystal
           if restriction_type
             rescue_body = If.new(
               IsA.new(Var.new(typed_var_name), restriction_type),
-              body, Call.global("raise", Var.new(var_name)))
+              body, Call.global("raise", Var.new(var_name)).at(node))
           else
             rescue_body = body
           end
