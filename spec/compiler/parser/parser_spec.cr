@@ -1193,6 +1193,10 @@ describe "Parser" do
   it_parses "<<-SOME\n  Sa\n  Se\n  SOME", "Sa\nSe".string_interpolation
   it_parses "<<-HERE\n  \#{1} \#{2}\n  HERE", StringInterpolation.new([1.int32, " ".string, 2.int32] of ASTNode)
   it_parses "<<-HERE\n  \#{1} \\n \#{2}\n  HERE", StringInterpolation.new([1.int32, " \n ".string, 2.int32] of ASTNode)
+  it_parses "<<-HERE\nHERE", "".string_interpolation
+  it_parses "<<-HERE1; <<-HERE2\nHERE1\nHERE2", ["".string_interpolation, "".string_interpolation] of ASTNode
+  it_parses "<<-HERE1; <<-HERE2\nhere1\nHERE1\nHERE2", ["here1".string_interpolation, "".string_interpolation] of ASTNode
+  it_parses "<<-HERE1; <<-HERE2\nHERE1\nhere2\nHERE2", ["".string_interpolation, "here2".string_interpolation] of ASTNode
   assert_syntax_error "<<-HERE\n   One\nwrong\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
   assert_syntax_error "<<-HERE\n   One\n wrong\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
   assert_syntax_error "<<-HERE\n   One\n \#{1}\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
