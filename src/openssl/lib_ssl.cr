@@ -7,7 +7,7 @@ require "./lib_crypto"
   end
 {% end %}
 
-@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs libssl || printf %s '-lssl -lcrypto'`")]
+@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
 lib LibSSL
   alias Int = LibC::Int
   alias Char = LibC::Char
