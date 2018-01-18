@@ -110,6 +110,7 @@ class HTTP::StaticFileHandler
     when ".htm", ".html" then "text/html"
     when ".css"          then "text/css"
     when ".js"           then "application/javascript"
+    when ".svg"          then "image/svg+xml"
     else                      "application/octet-stream"
     end
   end
