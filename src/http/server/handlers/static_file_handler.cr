@@ -64,6 +64,23 @@ class HTTP::StaticFileHandler
       context.response.content_type = "text/html"
       directory_listing(context.response, request_path, file_path)
     elsif is_file
+      last_modified = File.stat(file_path).mtime
+      context.response.headers["Last-Modified"] = HTTP.rfc1123_date(last_modified)
+
+      if if_modified_since = context.request.headers["If-Modified-Since"]?
+        # TODO: Use a more generalized time format parser for better compatibility to RFC 7232
+        header_time = Time.parse(if_modified_since, "%a, %d %b %Y %H:%M:%S GMT")
+
+        # File mtime probably has a higher resolution than the header value.
+        # An exact comparison might be slightly off, so we add 1s padding.
+        # Static files should generally not be modified in subsecond intervals, so this is perfectly safe.
+        # This might replaced by a more sophisticated time comparison when it becomes available.
+        if last_modified <= header_time + 1.second
+          context.response.status_code = 304
+          return
+        end
+      end
+
       context.response.content_type = mime_type(file_path)
       context.response.content_length = File.size(file_path)
       File.open(file_path) do |file|
