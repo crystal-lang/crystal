@@ -1,6 +1,6 @@
 require "crystal/system/time"
 
-# `Time` represents an instance in time. Here are some examples:
+# `Time` represents an instance in incremental time. Here are some examples:
 #
 # ### Basic Usage
 #
@@ -15,11 +15,12 @@ require "crystal/system/time"
 # time.second  # => 30
 # time.monday? # => true
 #
-# # Creating a time instance with a date only
-# Time.new(2016, 2, 15) # => 2016-02-15 00:00:00
+# # Creating a time instance with a date only in local timezone `Time::Location.local`.
+# # The examples show an offset of `+01:00` but that can vary depending on
+# Time.new(2016, 2, 15) # => 2016-02-15 00:00:00 +01:00
 #
 # # Specifying a time
-# Time.new(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30
+# Time.new(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 +01:00
 #
 # # Creating a time instance in UTC
 # Time.utc(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 UTC
@@ -39,7 +40,7 @@ require "crystal/system/time"
 # ### Calculation
 #
 # ```
-# Time.new(2015, 10, 10) - 5.days # => 2015-10-05 00:00:00
+# Time.new(2015, 10, 10) - 5.days # => 2015-10-05 00:00:00 +01:00
 #
 # # Time calculation returns a Time::Span instance
 # span = Time.new(2015, 10, 10) - Time.new(2015, 9, 10)
@@ -56,6 +57,9 @@ require "crystal/system/time"
 # span.hours # => 1
 # ```
 struct Time
+  class FloatingTimeConversionError < Exception
+  end
+
   include Comparable(self)
 
   # :nodoc:
@@ -129,37 +133,9 @@ struct Time
     Saturday
   end
 
-  # `Kind` represents a specified time zone.
-  #
-  # Initializing a `Time` instance with specified `Kind`:
-  #
-  # ```
-  # time = Time.new(2016, 2, 15, 21, 1, 10, 0, Time::Kind::Local)
-  # ```
-  #
-  # Alternatively, you can switch the `Kind` for any instance:
-  #
-  # ```
-  # time.to_utc   # => 2016-02-15 21:00:00 UTC
-  # time.to_local # => 2016-02-16 05:01:10 +0800
-  # ```
-  #
-  # Inspection:
-  #
-  # ```
-  # time.local? # => true
-  # time.utc?   # => false
-  # ```
-  #
-  enum Kind
-    Unspecified = 0
-    Utc         = 1
-    Local       = 2
-  end
-
   @seconds : Int64
   @nanoseconds : Int32
-  @kind : Kind
+  @location : Location
 
   # Returns a clock from an unspecified starting point, but strictly linearly
   # increasing. This clock should be independent from discontinuous jumps in the
@@ -181,12 +157,12 @@ struct Time
     monotonic - start
   end
 
-  def self.new
-    seconds, nanoseconds, offset = Time.compute_seconds_nanoseconds_and_offset
-    new(seconds: seconds + offset, nanoseconds: nanoseconds, kind: Kind::Local)
+  def self.new(location = Location.local)
+    seconds, nanoseconds = Crystal::System::Time.compute_utc_seconds_and_nanoseconds
+    new(seconds: seconds, nanoseconds: nanoseconds, location: location)
   end
 
-  def self.new(year, month, day, hour = 0, minute = 0, second = 0, *, nanosecond = 0, kind = Kind::Unspecified)
+  def self.new(year, month, day, hour = 0, minute = 0, second = 0, *, nanosecond = 0, location = Location.local)
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
@@ -205,19 +181,22 @@ struct Time
               SECONDS_PER_MINUTE * minute +
               second
 
-    new(seconds: seconds, nanoseconds: nanosecond.to_i, kind: kind)
+    # Normalize internal representation to UTC
+    seconds = seconds - zone_offset_at(seconds, location)
+
+    new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
   end
 
   {% unless flag?(:win32) %}
     # :nodoc:
-    def self.new(time : LibC::Timespec, kind = Kind::Unspecified)
+    def self.new(time : LibC::Timespec, location = Location.local)
       seconds = UNIX_SECONDS + time.tv_sec
       nanoseconds = time.tv_nsec.to_i
-      new(seconds: seconds, nanoseconds: nanoseconds, kind: kind)
+      new(seconds: seconds, nanoseconds: nanoseconds, location: location)
     end
   {% end %}
 
-  def initialize(*, @seconds : Int64, @nanoseconds : Int32, @kind : Kind)
+  def initialize(*, @seconds : Int64, @nanoseconds : Int32, @location : Location)
     unless 0 <= @nanoseconds < NANOSECONDS_PER_SECOND
       raise ArgumentError.new "Invalid time: nanoseconds out of range"
     end
@@ -249,12 +228,12 @@ struct Time
 
   # Returns a new `Time` instance at the specified time in UTC time zone.
   def self.utc(year, month, day, hour = 0, minute = 0, second = 0, *, nanosecond = 0) : Time
-    new(year, month, day, hour, minute, second, nanosecond: nanosecond, kind: Kind::Utc)
+    new(year, month, day, hour, minute, second, nanosecond: nanosecond, location: Location::UTC)
   end
 
   # Returns a new `Time` instance at the specified time in UTC time zone.
   def self.utc(*, seconds : Int64, nanoseconds : Int32) : Time
-    new(seconds: seconds, nanoseconds: nanoseconds, kind: Kind::Utc)
+    new(seconds: seconds, nanoseconds: nanoseconds, location: Location::UTC)
   end
 
   def clone : self
@@ -299,7 +278,7 @@ struct Time
       day = maxday
     end
 
-    temp = Time.new(year, month, day, kind: kind)
+    temp = Time.new(year, month, day, location: location)
     temp + time_of_day
   end
 
@@ -322,39 +301,33 @@ struct Time
       raise ArgumentError.new "Invalid time"
     end
 
-    Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i, kind: kind)
+    Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i, location: location)
   end
 
   # Returns the amount of time between *other* and `self`.
   #
   # The amount can be negative if `self` is a `Time` that happens before *other*.
   def -(other : Time) : Time::Span
-    if local? && other.utc?
-      self - other.to_local
-    elsif utc? && other.local?
-      self - other.to_utc
-    else
-      Span.new(
-        seconds: total_seconds - other.total_seconds,
-        nanoseconds: nanosecond - other.nanosecond,
-      )
-    end
+    Span.new(
+      seconds: total_seconds - other.total_seconds,
+      nanoseconds: nanosecond - other.nanosecond,
+    )
   end
 
-  # Returns the current time in the local time zone.
-  def self.now : Time
-    new
+  # Returns the current time in the time zone currently observed in *location*,
+  # using local time zone by default.
+  def self.now(location = Location.local) : Time
+    new(location)
   end
 
   # Returns the current time in UTC time zone.
   def self.utc_now : Time
-    seconds, nanoseconds = compute_seconds_and_nanoseconds
-    utc(seconds: seconds, nanoseconds: nanoseconds)
+    now(Location::UTC)
   end
 
   # Returns a copy of `self` with time-of-day components (hour, minute, ...) set to zero.
   def date : Time
-    Time.new(year, month, day, kind: kind)
+    Time.new(year, month, day, location: location)
   end
 
   # Returns the year number (in the Common Era).
@@ -374,17 +347,17 @@ struct Time
 
   # Returns the hour of the day (`0..23`).
   def hour : Int32
-    ((total_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR).to_i
+    ((offset_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR).to_i
   end
 
   # Returns the minute of the hour (`0..59`).
   def minute : Int32
-    ((total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE).to_i
+    ((offset_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE).to_i
   end
 
   # Returns the second of the minute (`0..59`).
   def second : Int32
-    (total_seconds % SECONDS_PER_MINUTE).to_i
+    (offset_seconds % SECONDS_PER_MINUTE).to_i
   end
 
   # Returns the millisecond of the second (`0..999`).
@@ -399,12 +372,12 @@ struct Time
 
   # Returns how much time has passed since midnight of this day.
   def time_of_day : Time::Span
-    Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (total_seconds % SECONDS_PER_DAY) + nanosecond)
+    Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (offset_seconds % SECONDS_PER_DAY) + nanosecond)
   end
 
   # Returns the day of the week (`Sunday..Saturday`).
   def day_of_week : Time::DayOfWeek
-    value = ((total_seconds / SECONDS_PER_DAY) + 1) % 7
+    value = ((offset_seconds / SECONDS_PER_DAY) + 1) % 7
     DayOfWeek.new value.to_i
   end
 
@@ -413,31 +386,43 @@ struct Time
     year_month_day_day_year[3]
   end
 
-  # Returns `Kind` (UTC/local) of the instance.
-  def kind : Kind
-    @kind
+  # Returns `Location` of the instance.
+  def location : Location
+    @location
   end
 
-  # Returns `true` if `Kind` is set to *Utc*.
+  # Returns the time zone in effect in `location` at this point in time.
+  def zone
+    location.lookup(self)
+  end
+
+  # Returns the offset from UTC (in seconds) in `location` at this point in time.
+  def offset : Int32
+    zone.offset
+  end
+
+  # Returns `true` if `#location` equals to `Location::UTC`.
   def utc? : Bool
-    kind == Kind::Utc
+    location.utc?
   end
 
-  # Returns `true` if `Kind` is set to *Local*.
+  # Returns `true` if this time's `#location` equals to the current
+  # local location as returned by `Location.local`.
+  #
+  # Since the system's settings may change during a programm's runtime,
+  # the result may not be identical between different invocations.
   def local? : Bool
-    kind == Kind::Local
+    location.local?
   end
 
   def <=>(other : self)
-    if utc? && other.local?
-      self <=> other.to_utc
-    elsif local? && other.utc?
-      to_utc <=> other
-    else
-      cmp = total_seconds <=> other.total_seconds
-      cmp = nanosecond <=> other.nanosecond if cmp == 0
-      cmp
-    end
+    cmp = total_seconds <=> other.total_seconds
+    cmp = nanosecond <=> other.nanosecond if cmp == 0
+    cmp
+  end
+
+  def ==(other : self)
+    total_seconds == other.total_seconds && nanosecond == other.nanosecond
   end
 
   def_hash total_seconds, nanosecond
@@ -481,13 +466,16 @@ struct Time
   end
 
   def inspect(io : IO)
-    Format.new("%F %T").format(self, io)
-
     case
     when utc?
-      io << " UTC"
-    when local?
-      Format.new(" %:z").format(self, io)
+      to_s "%F %T UTC", io
+    else
+      if offset % 60 == 0
+        to_s "%F %T %:z", io
+      else
+        to_s "%F %T %::z", io
+      end
+      io << ' ' << location.name unless location.fixed? || location.name == "Local"
     end
     io
   end
@@ -512,10 +500,10 @@ struct Time
   # `Time::Format`).
   #
   # ```
-  # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00
+  # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00 +01:00
   # ```
-  def self.parse(time : String, pattern : String, kind = Time::Kind::Unspecified) : Time
-    Format.new(pattern, kind).parse(time)
+  def self.parse(time : String, pattern : String, location = nil) : Time
+    Format.new(pattern, location).parse(time)
   end
 
   # Returns the number of seconds since the Epoch for this time.
@@ -525,7 +513,7 @@ struct Time
   # time.epoch # => 1452567845
   # ```
   def epoch : Int64
-    (to_utc.total_seconds - UNIX_SECONDS).to_i64
+    (total_seconds - UNIX_SECONDS).to_i64
   end
 
   # Returns the number of milliseconds since the Epoch for this time.
@@ -549,13 +537,31 @@ struct Time
     epoch.to_f + nanosecond.to_f / 1e9
   end
 
+  # Retuns this instance of time represented in `Location` *location*.
+  #
+  # ```
+  # time = Time.new(2018, 1, 7, 15, 51, location: Time::Location.load("Europe/Berlin"))
+  # time # => 2018-01-07 15:51:00 +01:00 Europe/Berlin
+  # time = time.in(Time::Location.load("Australia/Sydney"))
+  # time # => 2018-01-08 01:51:00 +11:00 Australia/Sydney
+  # ```
+  def in(location : Location) : Time
+    return self if location == self.location
+
+    Time.new(
+      seconds: total_seconds,
+      nanoseconds: nanosecond,
+      location: location
+    )
+  end
+
   # Returns a copy of this `Time` converted to UTC.
   def to_utc : Time
     if utc?
       self
     else
       Time.utc(
-        seconds: total_seconds - Time.compute_offset,
+        seconds: total_seconds,
         nanoseconds: nanosecond
       )
     end
@@ -566,11 +572,7 @@ struct Time
     if local?
       self
     else
-      Time.new(
-        seconds: total_seconds + Time.compute_offset,
-        nanoseconds: nanosecond,
-        kind: Kind::Local,
-      )
+      in(Location.local)
     end
   end
 
@@ -590,13 +592,13 @@ struct Time
     end
   end
 
-  def_at_beginning(year) { Time.new(year, 1, 1, kind: kind) }
-  def_at_beginning(semester) { Time.new(year, ((month - 1) / 6) * 6 + 1, 1, kind: kind) }
-  def_at_beginning(quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1, kind: kind) }
-  def_at_beginning(month) { Time.new(year, month, 1, kind: kind) }
-  def_at_beginning(day) { Time.new(year, month, day, kind: kind) }
-  def_at_beginning(hour) { Time.new(year, month, day, hour, kind: kind) }
-  def_at_beginning(minute) { Time.new(year, month, day, hour, minute, kind: kind) }
+  def_at_beginning(year) { Time.new(year, 1, 1, location: location) }
+  def_at_beginning(semester) { Time.new(year, ((month - 1) / 6) * 6 + 1, 1, location: location) }
+  def_at_beginning(quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1, location: location) }
+  def_at_beginning(month) { Time.new(year, month, 1, location: location) }
+  def_at_beginning(day) { Time.new(year, month, day, location: location) }
+  def_at_beginning(hour) { Time.new(year, month, day, hour, location: location) }
+  def_at_beginning(minute) { Time.new(year, month, day, hour, minute, location: location) }
 
   # Returns the time when the week that includes `self` starts.
   def at_beginning_of_week : Time
@@ -608,7 +610,7 @@ struct Time
     end
   end
 
-  def_at_end(year) { Time.new(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
+  def_at_end(year) { Time.new(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location) }
 
   # Returns the time when the half-year that includes `self` ends.
   def at_end_of_semester : Time
@@ -618,7 +620,7 @@ struct Time
     else
       month, day = 12, 31
     end
-    Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, kind: kind)
+    Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location)
   end
 
   # Returns the time when the quarter-year that includes `self` ends.
@@ -633,10 +635,10 @@ struct Time
     else
       month, day = 12, 31
     end
-    Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, kind: kind)
+    Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location)
   end
 
-  def_at_end(month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
+  def_at_end(month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, nanosecond: 999_999_999, location: location) }
 
   # Returns the time when the week that includes `self` ends.
   def at_end_of_week : Time
@@ -648,14 +650,14 @@ struct Time
     end
   end
 
-  def_at_end(day) { Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, kind: kind) }
-  def_at_end(hour) { Time.new(year, month, day, hour, 59, 59, nanosecond: 999_999_999, kind: kind) }
-  def_at_end(minute) { Time.new(year, month, day, hour, minute, 59, nanosecond: 999_999_999, kind: kind) }
+  def_at_end(day) { Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location) }
+  def_at_end(hour) { Time.new(year, month, day, hour, 59, 59, nanosecond: 999_999_999, location: location) }
+  def_at_end(minute) { Time.new(year, month, day, hour, minute, 59, nanosecond: 999_999_999, location: location) }
 
   # Returns the midday (12:00) of the day represented by `self`.
   def at_midday : Time
     year, month, day = year_month_day_day_year
-    Time.new(year, month, day, 12, 0, 0, nanosecond: 0, kind: kind)
+    Time.new(year, month, day, 12, 0, 0, nanosecond: 0, location: location)
   end
 
   {% for name in DayOfWeek.constants %}
@@ -682,11 +684,15 @@ struct Time
     @seconds
   end
 
+  protected def offset_seconds
+    @seconds + offset
+  end
+
   private def year_month_day_day_year
     m = 1
 
     days = DAYS_MONTH
-    totaldays = total_seconds / SECONDS_PER_DAY
+    totaldays = offset_seconds / SECONDS_PER_DAY
 
     num400 = totaldays / DAYS_PER_400_YEARS
     totaldays -= num400 * DAYS_PER_400_YEARS
@@ -726,35 +732,20 @@ struct Time
     {year.to_i, month.to_i, day.to_i, day_year.to_i}
   end
 
-  # Returns the local time offset in minutes relative to GMT.
-  #
-  # ```
-  # # Assume in Argentina, where it's GMT-3
-  # Time.local_offset_in_minutes # => -180
-  # ```
-  def self.local_offset_in_minutes
-    compute_offset / SECONDS_PER_MINUTE
-  end
+  protected def self.zone_offset_at(seconds, location)
+    unix = seconds - UNIX_SECONDS
+    zone, range = location.lookup_with_boundaries(unix)
 
-  # Returns `seconds, nanoseconds, offset` where
-  # `offset` is the number of seconds for now's timezone offset.
-  protected def self.compute_seconds_nanoseconds_and_offset
-    seconds, nanoseconds = compute_seconds_and_nanoseconds
-    offset = compute_offset(seconds)
-    {seconds, nanoseconds, offset}
-  end
+    if zone.offset != 0
+      case utc = unix - zone.offset
+      when .<(range[0])
+        zone = location.lookup(range[0] - 1)
+      when .>=(range[1])
+        zone = location.lookup(range[1])
+      end
+    end
 
-  protected def self.compute_offset
-    seconds, nanoseconds = compute_seconds_and_nanoseconds
-    compute_offset(seconds)
-  end
-
-  private def self.compute_offset(seconds)
-    Crystal::System::Time.compute_utc_offset(seconds)
-  end
-
-  private def self.compute_seconds_and_nanoseconds
-    Crystal::System::Time.compute_utc_seconds_and_nanoseconds
+    zone.offset
   end
 end
 

@@ -213,7 +213,7 @@ struct Time::Format
       node.raise "Expected scalar, not #{node.class}"
     end
 
-    parse(node.value)
+    parse(node.value, Time::Location::UTC)
   end
 end
 

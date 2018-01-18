@@ -252,7 +252,7 @@ describe "JSON mapping" do
   it "parses json with Time::Format converter" do
     json = JSONWithTime.from_json(%({"value": "2014-10-31 23:37:16"}))
     json.value.should be_a(Time)
-    json.value.to_s.should eq("2014-10-31 23:37:16")
+    json.value.to_s.should eq("2014-10-31 23:37:16 UTC")
     json.to_json.should eq(%({"value":"2014-10-31 23:37:16"}))
   end
 
