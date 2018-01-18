@@ -1751,6 +1751,14 @@ module Crystal
       string_nest = delimiter_state.nest
       string_open_count = delimiter_state.open_count
 
+      # For empty heredocs:
+      if @token.type == :NEWLINE && delimiter_state.kind == :heredoc
+        if check_heredoc_end delimiter_state
+          set_token_raw_from_start start
+          return @token
+        end
+      end
+
       case current_char
       when '\0'
         raise_unterminated_quoted delimiter_state
@@ -1877,69 +1885,78 @@ module Crystal
         @token.column_number = @column_number
 
         if delimiter_state.kind == :heredoc
-          string_end = string_end.to_s
-          old_pos = current_pos
-          old_column = @column_number
-
-          while current_char == ' ' || current_char == '\t'
-            next_char
-          end
-
-          indent = @column_number - 1
-
-          if string_end.starts_with?(current_char)
-            reached_end = false
-
-            string_end.each_char do |c|
-              unless c == current_char
-                reached_end = false
-                break
-              end
-              next_char
-              reached_end = true
-            end
-
-            if reached_end &&
-               (current_char == '\n' || current_char == '\0' ||
-               (current_char == '\r' && peek_next_char == '\n' && next_char))
-              @token.type = :DELIMITER_END
-              @token.delimiter_state = delimiter_state.with_heredoc_indent(indent)
-            else
-              @reader.pos = old_pos
-              @column_number = old_column
-              @token.column_number = @column_number
-              next_string_token delimiter_state
-              @token.value = (is_slash_r ? "\r\n" : '\n') + @token.value.to_s
-            end
-          else
-            @reader.pos = old_pos
-            @column_number = old_column
-            @token.column_number = @column_number
-            @token.type = :STRING
-            @token.value = is_slash_r ? "\r\n" : "\n"
+          unless check_heredoc_end delimiter_state
+            next_string_token_noescape delimiter_state
+            @token.value = string_range(start)
           end
         else
           @token.type = :STRING
           @token.value = is_slash_r ? "\r\n" : "\n"
         end
       else
-        while current_char != string_end &&
-              current_char != string_nest &&
-              current_char != '\0' &&
-              current_char != '\\' &&
-              current_char != '#' &&
-              current_char != '\r' &&
-              current_char != '\n'
-          next_char
-        end
-
-        @token.type = :STRING
+        next_string_token_noescape delimiter_state
         @token.value = string_range(start)
       end
 
       set_token_raw_from_start(start)
 
       @token
+    end
+
+    def next_string_token_noescape(delimiter_state)
+      string_end = delimiter_state.end
+      string_nest = delimiter_state.nest
+
+      while current_char != string_end &&
+            current_char != string_nest &&
+            current_char != '\0' &&
+            current_char != '\\' &&
+            current_char != '#' &&
+            current_char != '\r' &&
+            current_char != '\n'
+        next_char
+      end
+
+      @token.type = :STRING
+    end
+
+    def check_heredoc_end(delimiter_state)
+      string_end = delimiter_state.end.to_s
+      old_pos = current_pos
+      old_column = @column_number
+
+      while current_char == ' ' || current_char == '\t'
+        next_char
+      end
+
+      indent = @column_number - 1
+
+      if string_end.starts_with?(current_char)
+        reached_end = false
+
+        string_end.each_char do |c|
+          unless c == current_char
+            reached_end = false
+            break
+          end
+          next_char
+          reached_end = true
+        end
+
+        if reached_end &&
+           (current_char == '\n' || current_char == '\0' ||
+           (current_char == '\r' && peek_next_char == '\n' && next_char))
+          @token.type = :DELIMITER_END
+          @token.delimiter_state = delimiter_state.with_heredoc_indent(indent)
+          return true
+        end
+      end
+
+      @reader.pos = old_pos
+      @column_number = old_column
+      @token.column_number = @column_number
+
+      false
     end
 
     def raise_unterminated_quoted(delimiter_state)
