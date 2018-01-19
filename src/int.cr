@@ -457,12 +457,16 @@ struct Int
   end
 
   def digits(base = 10)
-    quotient = self.abs.tdiv(base)
-    remainder = self.abs.remainder(base)
-    if quotient == 0
-      return [remainder]
+    arr = Array(typeof(self)).new(Math.log10(self.abs).ceil.to_i)
+    num = self
+
+    while num != 0
+      arr << num.remainder(base).abs
+      num = num.tdiv(base)
     end
-    quotient.digits << remainder
+
+    arr.reverse!
+    arr
   end
 
   def inspect(io)
