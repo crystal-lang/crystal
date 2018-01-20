@@ -1049,7 +1049,7 @@ describe "Semantic: macro" do
         class A
         end
 
-        {% skip_file() %}
+        {% skip_file %}
 
         class B
         end
@@ -1066,7 +1066,7 @@ describe "Semantic: macro" do
 
         {% if true %}
           class C; end
-          {% skip_file() %}
+          {% skip_file %}
           class D; end
         {% end %}
 

@@ -1,4 +1,4 @@
-{% skip_file() if flag?(:win32) %}
+{% skip_file if flag?(:win32) %}
 
 module IO::Syscall
   @read_timed_out = false

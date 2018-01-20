@@ -15,7 +15,7 @@ class IO
     end
   end
 
-  {% skip_file() if flag?(:win32) %}
+  {% skip_file if flag?(:win32) %}
 
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)
