@@ -33,7 +33,7 @@ class Exception
   # “0xAddress: Function at File Line Column”.
   def backtrace?
     {% if flag?(:win32) %}
-      nil
+      Array(String).new
     {% else %}
       @callstack.try &.printable_backtrace
     {% end %}
