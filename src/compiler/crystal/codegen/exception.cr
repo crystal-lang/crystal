@@ -31,9 +31,9 @@ class Crystal::CodeGenVisitor
       accept node.body
       @rescue_block = old_rescue_block
 
-      #   # 2)
-      #   # If there's an else, we take the value from it.
-      #   # Otherwise, the value is taken from the body.
+      # 2)
+      # If there's an else, we take the value from it.
+      # Otherwise, the value is taken from the body.
       if node_else
         accept node_else
         phi.add @last, node_else.type?
@@ -42,11 +42,6 @@ class Crystal::CodeGenVisitor
       end
 
       position_at_end rescue_block
-
-      #   # lp_ret_type = llvm_typer.landing_pad_type
-      #   # lp = builder.landing_pad lp_ret_type, main_fun(self.personality_name), [] of LLVM::Value
-      #   # unwind_ex_obj = extract_value lp, 0
-      #   # ex_type_id = extract_value lp, 1
 
       catch_body = new_block "catch.body"
       # if @catch_pad is not nil then this rescue block is inner
@@ -107,18 +102,11 @@ class Crystal::CodeGenVisitor
       ]
 
       if node_rescues
-        # if node_ensure
-        #   rescue_ensure_block = new_block "rescue_ensure"
-        # end
-
         # 3)
         # Make sure the rescue knows about the current ensure
         # and the previous catch block
         old_rescue_block = @rescue_block
         @rescue_block = rescue_ensure_block || @rescue_block
-
-        # node_rescues.each do |a_rescue|
-        # end
 
         a_rescue = node_rescues[0]
         var = context.vars[a_rescue.name]
