@@ -1,17 +1,47 @@
+defaults:
+  environment: &env
+    TRAVIS_BRANCH: $CIRCLE_BRANCH
+    TRAVIS_PULL_REQUEST: $CI_PULL_REQUEST || "false"
+  steps: &ci_steps
+    - checkout
+    - run: bin/ci prepare_system
+    - run: bin/ci prepare_build
+    - run: bin/ci build
+
 version: 2
 
 jobs:
-  build:
+  build_linux:
+    machine: true
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    steps: *ci_steps
+
+  build_linux32:
+    machine: true
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: i386
+      ARCH_CMD: linux32
+      ARCH_LIBRARY_PATH: /opt/crystal/embedded/lib/
+    steps: *ci_steps
+
+  build_osx:
     macos:
       xcode: "9.0"
-
     environment:
-      TRAVIS_BRANCH: $CIRCLE_BRANCH
+      <<: *env
       TRAVIS_OS_NAME: osx
-      TRAVIS_PULL_REQUEST: $CI_PULL_REQUEST || "false"
+    steps: *ci_steps
 
-    steps:
-      - checkout
-      - run: bin/ci prepare_system
-      - run: bin/ci prepare_build
-      - run: bin/ci build
+workflows:
+  version: 2
+  build_all_platforms:
+    jobs:
+      - build_linux
+      - build_linux32
+      - build_osx
