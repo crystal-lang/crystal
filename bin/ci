@@ -78,6 +78,9 @@ on_osx() {
 }
 
 prepare_system() {
+  on_linux 'echo '"'"'{"ipv6":true, "fixed-cidr-v6":"2001:db8:1::/64"}'"'"' | sudo tee /etc/docker/daemon.json'
+  on_linux sudo service docker restart
+
   on_osx brew update
   on_deploy sudo pip install awscli
 }
