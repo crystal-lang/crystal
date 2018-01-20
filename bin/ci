@@ -169,6 +169,7 @@ with_build_env() {
     "jhass/crystal-build-$ARCH" \
     "$ARCH_CMD" /bin/bash -c "'$command'"
 
+  on_osx sudo systemsetup -settimezone $TZ
   on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/bash -c "'$command'"
