@@ -542,6 +542,10 @@ module Crystal::Macros
     def splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
+    # Similar to `Array#clear`
+    def clear : ArrayLiteral
+    end
+
     # Similar to `Array#empty?`
     def empty? : BoolLiteral
     end
@@ -625,6 +629,10 @@ module Crystal::Macros
 
   # A hash literal.
   class HashLiteral < ASTNode
+    # Similar to `Hash#clear`
+    def clear : HashLiteral
+    end
+
     # Similar to `Hash#empty?`
     def empty? : BoolLiteral
     end
