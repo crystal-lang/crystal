@@ -5,6 +5,10 @@ require "./subtle"
 # Mazières, as [presented at USENIX in
 # 1999](https://www.usenix.org/legacy/events/usenix99/provos/provos_html/index.html).
 #
+# The algorithm has a maximum password length limit of 71 characters (see
+# [this comment](https://security.stackexchange.com/questions/39849/does-bcrypt-have-a-maximum-password-length#answer-39851)
+# on stackoverflow).
+#
 # Refer to `Crypto::Bcrypt::Password` for a higher level interface.
 #
 # About the Cost
@@ -31,7 +35,7 @@ class Crypto::Bcrypt
 
   DEFAULT_COST   = 11
   COST_RANGE     = 4..31
-  PASSWORD_RANGE = 1..51
+  PASSWORD_RANGE = 1..72
   SALT_SIZE      = 16
 
   private BLOWFISH_ROUNDS = 16
