@@ -117,7 +117,7 @@ module Debug
     end
 
     def abi64?
-      cputype.value & ABI64 == ABI64
+      cputype.value.bits_set? ABI64
     end
 
     def endianness
@@ -292,11 +292,11 @@ module Debug
         end
 
         def pext?
-          (value & PEXT) == PEXT
+          value.bits_set? PEXT
         end
 
         def ext?
-          (value & EXT) == EXT
+          value.bits_set? EXT
         end
 
         {% for flag in %w(UNDF ABS SECT PBUD INDR) %}

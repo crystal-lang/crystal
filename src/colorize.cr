@@ -318,7 +318,7 @@ struct Colorize::Object(T)
       unless mode_is_default
         # Can't reuse MODES constant because it has bold/bright duplicated
         {% for name in %w(bold dim underline blink reverse hidden) %}
-          if (@mode & MODE_{{name.upcase.id}}_FLAG) != 0
+          if @mode.bits_set? MODE_{{name.upcase.id}}_FLAG
             io << ";" if printed
             io << MODE_{{name.upcase.id}}
             printed = true

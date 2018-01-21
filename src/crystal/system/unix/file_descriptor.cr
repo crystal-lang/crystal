@@ -27,7 +27,8 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_blocking?
-    fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    flags = fcntl(LibC::F_GETFL)
+    !flags.bits_set? LibC::O_NONBLOCK
   end
 
   private def system_blocking=(value)
@@ -43,7 +44,7 @@ module Crystal::System::FileDescriptor
 
   private def system_close_on_exec?
     flags = fcntl(LibC::F_GETFD)
-    (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
+    flags.bits_set? LibC::FD_CLOEXEC
   end
 
   private def system_close_on_exec=(arg : Bool)
