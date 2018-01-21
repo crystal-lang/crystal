@@ -464,15 +464,15 @@ class String
 
   # :nodoc:
   CHAR_TO_DIGIT = begin
-    table = StaticArray(Int8, 256).new(-1_i8)
+    table = Pointer.malloc(256, -1_i8)
     10_i8.times do |i|
-      table.to_unsafe[48 + i] = i
+      table[48 + i] = i
     end
     26_i8.times do |i|
-      table.to_unsafe[65 + i] = i + 10
-      table.to_unsafe[97 + i] = i + 10
+      table[65 + i] = i + 10
+      table[97 + i] = i + 10
     end
-    table
+    table.to_slice(256)
   end
 
   # :nodoc:
