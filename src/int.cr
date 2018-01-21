@@ -458,7 +458,7 @@ struct Int
 
   def digits(base = 10)
     num = abs
-    arr = Array(typeof(self)).new((Math.log(num)/Math.log(base)).ceil.to_i)
+    arr = Array(typeof(self)).new((Math.log(num) / Math.log(base)).ceil.to_i)
 
     while num != 0
       arr << num.remainder(base).abs
