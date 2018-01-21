@@ -13,6 +13,9 @@ describe "BigFloat" do
       bigfloat_of_float_value.to_s.should eq(string_of_float_value)
       BigFloat.new("+#{string_of_integer_value}").to_s.should eq(string_of_integer_value)
       BigFloat.new("-#{string_of_integer_value}").to_s.should eq("-#{string_of_integer_value}")
+      BigFloat.new("   #{string_of_integer_value}").to_s.should eq(string_of_integer_value)
+      BigFloat.new("#{string_of_integer_value}   ").to_s.should eq(string_of_integer_value)
+      BigFloat.new("   #{string_of_integer_value}   ").to_s.should eq(string_of_integer_value)
     end
 
     it "new(BigInt)" do

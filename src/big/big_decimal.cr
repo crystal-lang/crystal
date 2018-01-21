@@ -46,7 +46,7 @@ struct BigDecimal < Number
   # Allows only valid number strings with an optional negative sign.
   def initialize(str : String)
     # Strip leading '+' char to smooth out cases with strings like "+123"
-    str = str.lchop('+')
+    str = str.strip.lchop('+')
 
     raise InvalidBigDecimalException.new(str, "Zero size") if str.bytesize == 0
 

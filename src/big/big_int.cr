@@ -29,7 +29,7 @@ struct BigInt < Int
   # ```
   def initialize(str : String, base = 10)
     # Strip leading '+' char to smooth out cases with strings like "+123"
-    str = str.lchop('+')
+    str = str.strip.lchop('+')
     err = LibGMP.init_set_str(out @mpz, str, base)
     if err == -1
       raise ArgumentError.new("Invalid BigInt: #{str}")
