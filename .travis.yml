@@ -19,6 +19,14 @@ before_install:
   - sudo service docker restart
   - bin/ci prepare_system
 
+before_script:
+  # Add an IPv6 config - see the corresponding Travis issue
+  # https://github.com/travis-ci/travis-ci/issues/8361
+  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      bash -c 'echo $TRAVIS_OS_NAME'
+      sudo sh -c 'echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6';
+    fi
+
 install:
   - bin/ci prepare_build
 
