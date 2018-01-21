@@ -42,6 +42,17 @@ workflows:
   version: 2
   build_all_platforms:
     jobs:
-      - build_linux
-      - build_linux32
-      - build_osx
+      - build_linux:
+          filters: &ci_filter
+            branches:
+              only:
+                - master
+                - /release\/.+/
+                - /.*\bci\b.*/
+            tags:
+              only: /.*/
+      - build_linux32:
+          filters: *ci_filter
+      - build_osx:
+          filters: *ci_filter
+
