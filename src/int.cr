@@ -456,6 +456,12 @@ struct Int
     yield ptr, count
   end
 
+  # Returns the digits of a number.
+  #
+  # ```
+  # 123.digits  # => [1, 2, 3]
+  # -123.digits # => [1, 2, 3]
+  # ```
   def digits(base = 10)
     num = abs
     arr = Array(typeof(self)).new((Math.log(num) / Math.log(base)).ceil.to_i)
