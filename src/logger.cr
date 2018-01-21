@@ -18,6 +18,9 @@
 # log = Logger.new(STDOUT)
 # log.level = Logger::WARN
 #
+# # or
+# log = Logger.new(STDOUT, level: Logger::WARN)
+#
 # log.debug("Created logger")
 # log.info("Program started")
 # log.warn("Nothing to do!")
@@ -107,10 +110,7 @@ class Logger
 
   # Creates a new logger that will log to the given *io*.
   # If *io* is `nil` then all log calls will be silently ignored.
-  def initialize(@io : IO?)
-    @level = Severity::INFO
-    @formatter = DEFAULT_FORMATTER
-    @progname = ""
+  def initialize(@io : IO?, @level = Severity::INFO, @formatter = DEFAULT_FORMATTER, @progname = "")
     @closed = false
     @mutex = Mutex.new
   end
