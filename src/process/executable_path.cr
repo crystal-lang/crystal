@@ -2,14 +2,10 @@
 # - https://github.com/gpakosz/whereami/blob/master/src/whereami.c
 # - http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe
 
+require "crystal/system/process"
+
 class Process
   PATH_DELIMITER = {% if flag?(:windows) %} ';' {% else %} ':' {% end %}
-
-  # :nodoc:
-  INITIAL_PATH = ENV["PATH"]?
-
-  # :nodoc:
-  INITIAL_PWD = Dir.current
 
   # Returns an absolute path to the executable file of the currently running
   # program. This is in opposition to `PROGRAM_NAME` which may be a relative or
@@ -20,7 +16,7 @@ class Process
   #
   # Returns `nil` if the file can't be found.
   def self.executable_path
-    if executable = executable_path_impl
+    if executable = System::Process.executable_path_impl
       begin
         File.real_path(executable)
       rescue Errno
@@ -50,53 +46,3 @@ class Process
     nil
   end
 end
-
-{% if flag?(:darwin) %}
-  lib LibC
-    PATH_MAX = 1024
-    fun _NSGetExecutablePath(buf : Char*, bufsize : UInt32*) : Int
-  end
-
-  class Process
-    private def self.executable_path_impl
-      buf = GC.malloc_atomic(LibC::PATH_MAX).as(UInt8*)
-      size = LibC::PATH_MAX.to_u32
-
-      if LibC._NSGetExecutablePath(buf, pointerof(size)) == -1
-        buf = GC.malloc_atomic(size).as(UInt8*)
-        return nil if LibC._NSGetExecutablePath(buf, pointerof(size)) == -1
-      end
-
-      String.new(buf)
-    end
-  end
-
-{% elsif flag?(:freebsd) %}
-  require "c/sysctl"
-
-  class Process
-    private def self.executable_path_impl
-      mib = Int32[LibC::CTL_KERN, LibC::KERN_PROC, LibC::KERN_PROC_PATHNAME, -1]
-      buf = GC.malloc_atomic(LibC::PATH_MAX).as(UInt8*)
-      size = LibC::SizeT.new(LibC::PATH_MAX)
-
-      if LibC.sysctl(mib, 4, buf, pointerof(size), nil, 0) == 0
-        String.new(buf, size - 1)
-      end
-    end
-  end
-
-{% elsif flag?(:linux) %}
-  class Process
-    private def self.executable_path_impl
-      "/proc/self/exe"
-    end
-  end
-
-{% else %} # openbsd, ...
-  class Process
-    private def self.executable_path_impl
-      find_executable(PROGRAM_NAME, INITIAL_PATH, INITIAL_PWD)
-    end
-  end
-{% end %}

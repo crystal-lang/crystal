@@ -2,6 +2,8 @@ require "spec"
 require "process"
 require "tempfile"
 
+DIR_CURRENT = Dir.current
+
 describe Process do
   it "runs true" do
     process = Process.new("true")
@@ -215,7 +217,7 @@ describe Process do
   end
 
   describe "find_executable" do
-    pwd = Process::INITIAL_PWD
+    pwd = DIR_CURRENT
     crystal_path = File.join(pwd, "bin", "crystal")
 
     it "resolves absolute executable" do
