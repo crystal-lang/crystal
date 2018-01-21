@@ -319,6 +319,8 @@ describe "Int" do
     it "return the digits of a number" do
       123.digits.should eq([1, 2, 3])
       -123.digits.should eq([1, 2, 3])
+      123_u64.digits.should be_a(Array(UInt64))
+      123_u64.digits.should eq([1, 2, 3])
     end
   end
 
