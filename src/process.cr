@@ -415,6 +415,72 @@ class Process
   private def close_io(io)
     io.close if io
   end
+
+  # Sets the real, effective, and saved user to the one specified.
+  def self.become(user : System::User) : Nil
+    return if LibC.setuid(user.uid) == 0
+    Errno.new("The calling process was not privileged.")
+  end
+
+  # Sets the real, effective, and saved group to the one specified.
+  def self.become(group : System::Group) : Nil
+    return if LibC.setgid(group.gid) == 0
+    Errno.new("The calling process was not privileged.")
+  end
+
+  # Sets the real, effective, and saved user and group to the ones specified.
+  def self.become(user : System::User, group : System::Group) : Nil
+    become(group)
+    become(user)
+  end
+
+  # Returns the current process's user.
+  def self.user : System::User
+    System::User.get(LibC.getuid)
+  end
+
+  # Returns the current process's group.
+  def self.group : System::Group
+    System::Group.get(LibC.getgid)
+  end
+
+  # Returns the current process's effective user.
+  def self.effective_user : System::User
+    System::User.get(LibC.geteuid)
+  end
+
+  # Returns the current process's effective group.
+  def self.effective_group : System::Group
+    System::Group.get(LibC.getegid)
+  end
+
+  # Returns the current process's saved user.
+  #
+  # Note: Not all Unix and Unix deriviatives support a saved user.
+  def self.saved_user : System::User
+    {% if flag?(:openbsd) || flag?(:freebsd) || flag?(:linux) %}
+      suid = uninitialized LibC::UidT
+      return System::User.get(suid) if LibC.getresuid(out ruid, out euid, pointerof(suid)) == 0
+
+      raise Errno.new("Failed to get saved user")
+    {% else %}
+      raise NotImplementedError.new("Process.saved_user")
+    {% end %}
+  end
+
+  # Returns the current process's saved group.
+  #
+  # Note: Not all Unix and Unix deriviatives support a saved group.
+  def self.saved_group : System::Group
+    {% if flag?(:openbsd) || flag?(:freebsd) || flag?(:linux) %}
+      sgid = uninitialized LibC::GidT
+      return System::Group.get(sgid) if LibC.getresuid(out rgid, out egid, pointerof(sgid)) == 0
+
+      raise Errno.new("Failed to get saved group")
+    {% else %}
+      raise NotImplementedError.new("Process.saved_group")
+    {% end %}
+  end
 end
 
 # Executes the given command in a subshell.
