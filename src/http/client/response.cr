@@ -9,6 +9,8 @@ class HTTP::Client::Response
   getter! body_io : IO
   @cookies : Cookies?
 
+  SUPPORTED_HTTP_VERSIONS = {"HTTP/0.9", "HTTP/1.0", "HTTP/1.1"}
+
   def initialize(@status_code, @body : String? = nil, @headers : Headers = Headers.new, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
     @status_message = status_message || HTTP.default_status_message_for(@status_code)
 
@@ -120,8 +122,17 @@ class HTTP::Client::Response
     return yield nil unless line
 
     pieces = line.split(3)
+    raise "Invalid HTTP response" if pieces.size < 2
+
     http_version = pieces[0]
-    status_code = pieces[1].to_i
+    raise "Unsupported HTTP version: #{http_version}" unless SUPPORTED_HTTP_VERSIONS.includes?(http_version)
+
+    status_code = pieces[1].to_i?
+
+    unless status_code && 100 <= status_code < 1000
+      raise "Invalid HTTP status code: #{pieces[1]}"
+    end
+
     status_message = pieces[2]? ? pieces[2].chomp : ""
 
     body_type = HTTP::BodyType::OnDemand
