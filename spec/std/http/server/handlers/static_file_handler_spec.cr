@@ -124,4 +124,13 @@ describe HTTP::StaticFileHandler do
       response.status_code.should eq(400)
     end
   end
+
+  it "handles invalid redirect path" do
+    response = handle HTTP::Request.new("GET", "test.txt%0A")
+    response.status_code.should eq(302)
+    response.headers["Location"].should eq "/test.txt%0A"
+
+    response = handle HTTP::Request.new("GET", "/test.txt%0A")
+    response.status_code.should eq(404)
+  end
 end

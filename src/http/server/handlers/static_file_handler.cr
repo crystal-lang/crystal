@@ -99,7 +99,7 @@ class HTTP::StaticFileHandler
   private def redirect_to(context, url)
     context.response.status_code = 302
 
-    url = URI.escape(url) { |b| URI.unreserved?(b) || b != '/' }
+    url = URI.escape(url) { |byte| URI.unreserved?(byte) || byte.chr == '/' }
     context.response.headers.add "Location", url
   end
 
