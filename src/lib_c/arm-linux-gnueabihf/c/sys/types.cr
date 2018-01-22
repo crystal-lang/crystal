@@ -7,7 +7,7 @@ lib LibC
   alias ClockT = Long
   alias ClockidT = Int
   alias DevT = ULongLong
-  alias GidT = UInt
+  alias GidT = UInt32T
   alias IdT = UInt
   alias InoT = ULong
   alias ModeT = UInt
@@ -57,5 +57,5 @@ lib LibC
   alias SSizeT = Int
   alias SusecondsT = Long
   alias TimeT = Long
-  alias UidT = UInt
+  alias UidT = UInt32
 end

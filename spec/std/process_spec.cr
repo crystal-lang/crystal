@@ -237,4 +237,42 @@ describe Process do
       Process.find_executable("some_very_unlikely_file_to_exist").should be_nil
     end
   end
+
+  # This doesnt work in the linux test environment due to the test environment
+  # FIXME: Discover the reason why `LibC.getgrgid(2000)` does not return a user.
+  {% if !flag?(:linux) %}
+    it "has a user" do
+      user = Process.user
+      user.should be_a(System::User)
+    end
+
+    it "has an effective user" do
+      user = Process.effective_user
+      user.should be_a(System::User)
+    end
+
+    {% if flag?(:openbsd) || flag?(:freebsd) || flag?(:linux) %}
+      it "has a saved user" do
+        user = Process.saved_user
+        user.should be_a(System::User)
+      end
+    {% end %}
+
+    it "has a group" do
+      group = Process.group
+      group.should be_a(System::Group)
+    end
+
+    it "has an effective group" do
+      group = Process.effective_group
+      group.should be_a(System::Group)
+    end
+
+    {% if flag?(:openbsd) || flag?(:freebsd) || flag?(:linux) %}
+      it "has a saved group" do
+        group = Process.saved_group
+        group.should be_a(System::Group)
+      end
+    {% end %}
+  {% end %}
 end

@@ -491,6 +491,31 @@ struct Pointer(T)
     Slice.new(self, size)
   end
 
+  # Returns a `Slice` from a given null-terminated pointer array, with an optional,
+  # though recommended, limit.
+  #
+  # ```
+  # ptr = LibC.getgrnam("wheel").value.gr_mem
+  # slice = ptr.to_null_terminated_slice(LibC::NGROUP_MAX)
+  # ```
+  def to_slice_null_terminated(limit : Int)
+    count = 0
+    until self[count].null?
+      raise("Limit reached without NULL terminator.") if (count > limit)
+      count += 1
+    end
+    to_slice(count)
+  end
+
+  # ditto
+  def to_slice_null_terminated
+    count = 0
+    until self[count].null?
+      count += 1
+    end
+    to_slice(count)
+  end
+
   # Clears (sets to "zero" bytes) a number of values pointed by this pointer.
   #
   # ```

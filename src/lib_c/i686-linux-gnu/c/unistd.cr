@@ -38,4 +38,12 @@ lib LibC
   fun sysconf(name : Int) : Long
   fun unlink(name : Char*) : Int
   fun write(fd : Int, buf : Void*, n : SizeT) : SSizeT
+  fun getuid : UidT
+  fun geteuid : UidT
+  fun getresuid(ruid : UidT*, euid : UidT*, suid : UidT*) : Int
+  fun setuid(uid : UidT) : Int
+  fun getgid : GidT
+  fun getegid : GidT
+  fun getresgid(rgid : GidT*, egid : GidT*, sgid : GidT*) : Int
+  fun setgid(gid : GidT) : Int
 end

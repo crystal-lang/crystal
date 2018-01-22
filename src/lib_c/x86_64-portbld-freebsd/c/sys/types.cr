@@ -7,7 +7,7 @@ lib LibC
   alias ClockT = Int
   alias ClockidT = Int
   alias DevT = UInt
-  alias GidT = UInt
+  alias GidT = UInt32T
   alias IdT = Long
   {% if flag?(:"freebsd12.0") %}
     alias InoT = ULong
@@ -31,5 +31,5 @@ lib LibC
   alias SSizeT = Long
   alias SusecondsT = Long
   alias TimeT = Long
-  alias UidT = UInt
+  alias UidT = UInt32
 end
