@@ -1326,30 +1326,30 @@ class Array(T)
     self.each { |a| enumerable.each { |b| yield a, b } }
   end
 
-  # Append. Pushes one value to the end of `self`, given that the type of the value is *T*
+  # Append. Adds *obj* to the end of `self`, given that the type of the value is *T*
   # (which might be a single type or a union of types).
   # This method returns `self`, so several calls can be chained.
-  # See `pop` for the opposite effect.
   #
   # ```
   # a = ["a", "b"]
-  # a.push("c") # => ["a", "b", "c"]
-  # a.push(1)   # Errors, because the array only accepts String.
+  # a.append("c") # => ["a", "b", "c"]
+  # a.append(1)   # Errors, because the array only accepts String.
   #
   # a = ["a", "b"] of (Int32 | String)
-  # a.push("c") # => ["a", "b", "c"]
-  # a.push(1)   # => ["a", "b", "c", 1]
+  # a.append("c") # => ["a", "b", "c"]
+  # a.append(1)   # => ["a", "b", "c", 1]
   # ```
-  def push(value : T)
+  def append(obj : T)
     check_needs_resize
-    @buffer[@size] = value
+    @buffer[@size] = obj
     @size += 1
     self
   end
 
-  # ditto
-  def append(value : T)
-    return push(value)
+  # See `append`.
+  # See `pop` for the opposite effect.
+  def push(obj : T)
+    return append(obj)
   end
 
   # Append multiple values. The same as `push`, but takes an arbitrary number
@@ -1359,7 +1359,7 @@ class Array(T)
   # a = ["a"]
   # a.push("b", "c") # => ["a", "b", "c"]
   # ```
-  def push(*values : T)
+  def append(*values : T)
     new_size = @size + values.size
     resize_to_capacity(Math.pw2ceil(new_size)) if new_size > @capacity
     values.each_with_index do |value, i|
@@ -1370,8 +1370,8 @@ class Array(T)
   end
 
   # ditto
-  def append(*values : T)
-    return push(*values)
+  def push(*values : T)
+    return append(*values)
   end
 
   def replace(other : Array)
@@ -1739,30 +1739,29 @@ class Array(T)
   # Prepend. Adds *obj* to the beginning of `self`, given that the type of the value is *T*
   # (which might be a single type or a union of types).
   # This method returns `self`, so several calls can be chained.
-  # See `shift` for the opposite effect.
   #
   # ```
   # a = ["a", "b"]
-  # a.unshift("c") # => ["c", "a", "b"]
-  # a.unshift(1)   # Errors, because the array only accepts String.
+  # a.prepend("c") # => ["c", "a", "b"]
+  # a.prepend(1)   # Errors, because the array only accepts String.
   #
   # a = ["a", "b"] of (Int32 | String)
-  # a.unshift("c") # => ["c", "a", "b"]
-  # a.unshift(1)   # => [1, "c", "a", "b"]
+  # a.prepend("c") # => ["c", "a", "b"]
+  # a.prepend(1)   # => [1, "c", "a", "b"]
   # ```
-  def unshift(obj : T)
+  def prepend(obj : T)
     insert 0, obj
   end
 
-  # ditto
-  def prepend(obj : T)
-    return unshift(obj)
+  # See `prepend`.
+  # See `shift` for the opposite effect.
+  def unshift(obj : T)
+    return prepend(obj)
   end
 
-
-  # Prepend multiple values. The same as `unshift`, but takes an arbitrary number
+  # Prepend multiple values. The same as `prepend`, but takes an arbitrary number
   # of values to add to the array. Returns `self`.
-  def unshift(*values : T)
+  def prepend(*values : T)
     new_size = @size + values.size
     resize_to_capacity(Math.pw2ceil(new_size)) if new_size > @capacity
     move_value = values.size
@@ -1776,8 +1775,8 @@ class Array(T)
   end
 
   # ditto
-  def prepend(*obj : T)
-    return unshift(*obj)
+  def unshift(*obj : T)
+    return prepend(*obj)
   end
 
   def update(index : Int)
