@@ -1347,6 +1347,11 @@ class Array(T)
     self
   end
 
+  # ditto
+  def append(value : T)
+    return push(value)
+  end
+
   # Append multiple values. The same as `push`, but takes an arbitrary number
   # of values to push into `self`. Returns `self`.
   #
@@ -1362,6 +1367,11 @@ class Array(T)
     end
     @size = new_size
     self
+  end
+
+  # ditto
+  def append(*values : T)
+    return push(*values)
   end
 
   def replace(other : Array)
@@ -1744,6 +1754,12 @@ class Array(T)
     insert 0, obj
   end
 
+  # ditto
+  def prepend(obj : T)
+    return unshift(obj)
+  end
+
+
   # Prepend multiple values. The same as `unshift`, but takes an arbitrary number
   # of values to add to the array. Returns `self`.
   def unshift(*values : T)
@@ -1757,6 +1773,11 @@ class Array(T)
     end
     @size = new_size
     self
+  end
+
+  # ditto
+  def prepend(*obj : T)
+    return unshift(*obj)
   end
 
   def update(index : Int)
