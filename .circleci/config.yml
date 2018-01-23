@@ -46,7 +46,7 @@ jobs:
           cd ~/distribution-scripts
           git checkout params
           cd x86_64
-          make CRYSTAL_VERSION=nightly CRYSTAL_SHA1=$CIRCLE_SHA1
+          make CRYSTAL_VERSION=nightly CRYSTAL_SHA1=$CIRCLE_SHA1 release=true
       - store_artifacts:
           path: ~/distribution-scripts/x86_64/build
           destination: dist_packages
