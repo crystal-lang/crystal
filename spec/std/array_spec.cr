@@ -10,6 +10,16 @@ private class BadSortingClass
   end
 end
 
+private class DummyType
+  def to_s(io)
+    io << "to_s"
+  end
+
+  def inspect(io)
+    io << "inspect"
+  end
+end
+
 describe "Array" do
   describe "new" do
     it "creates with default value" do
@@ -35,6 +45,18 @@ describe "Array" do
       expect_raises(ArgumentError, "Negative array size") do
         Array(Int32).new(-1)
       end
+    end
+  end
+
+  describe "to_s" do
+    it "calls to_s on all elements" do
+      [DummyType.new].to_s.should eq "[to_s]"
+    end
+  end
+
+  describe "inspect" do
+    it "calls inspect on all elements" do
+      [DummyType.new].inspect.should eq "[inspect]"
     end
   end
 

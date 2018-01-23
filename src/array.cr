@@ -847,7 +847,12 @@ class Array(T)
 
   # :nodoc:
   def inspect(io : IO)
-    to_s io
+    executed = exec_recursive(:inspect) do
+      io << "["
+      join ", ", io, &.inspect(io)
+      io << "]"
+    end
+    io << "[...]" unless executed
   end
 
   # Returns the last *n* elements of the array.
@@ -1605,7 +1610,7 @@ class Array(T)
   def to_s(io : IO)
     executed = exec_recursive(:to_s) do
       io << "["
-      join ", ", io, &.inspect(io)
+      join ", ", io, &.to_s(io)
       io << "]"
     end
     io << "[...]" unless executed
