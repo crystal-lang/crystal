@@ -30,7 +30,7 @@ jobs:
       ARCH_LIBRARY_PATH: /opt/crystal/embedded/lib/
     steps: *ci_steps
 
-  build_osx:
+  build_darwin:
     macos:
       xcode: "9.0"
     environment:
@@ -51,26 +51,62 @@ jobs:
           path: ~/distribution-scripts/x86_64/build
           destination: dist_packages
 
+  dist_packages_darwin:
+    macos:
+      xcode: "9.0"
+    shell: /bin/bash --login -eo pipefail
+    steps:
+      - run:
+          name: Setup environment
+          command: |
+            echo "2.4.2" > ~/.ruby-version
+
+            brew install pkgconfig libtool
+
+            sudo mkdir -p /opt/crystal
+            sudo chown $(whoami) /opt/crystal/
+            sudo mkdir -p /var/cache
+            sudo chown $(whoami) /var/cache
+      - run:
+          no_output_timeout: 40m
+          command: |
+            git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
+            cd ~/distribution-scripts
+            git checkout params
+            cd omnibus
+            bundle check || bundle install --binstubs
+            cd ../x86_64
+            make darwin CRYSTAL_VERSION=nightly CRYSTAL_SHA1=$CIRCLE_SHA1 release=true
+      - store_artifacts:
+          path: ~/distribution-scripts/x86_64/build
+          destination: dist_packages
+
 workflows:
   version: 2
   build_all_platforms:
     jobs:
-      - build_linux:
-          filters: &ci_filter
-            branches:
-              only:
-                - master
-                - /release\/.+/
-                - /.*\bci\b.*/
-            tags:
-              only: /.*/
-      - build_linux32:
-          filters: *ci_filter
-      - build_osx:
-          filters: *ci_filter
-      - dist_packages_linux:
-          filters:
+      # - build_linux:
+      #     filters: &ci_filter
+      #       branches:
+      #         only:
+      #           - master
+      #           - /release\/.+/
+      #           - /.*\bci\b.*/
+      #       tags:
+      #         only: /.*/
+      # - build_linux32:
+      #     filters: *ci_filter
+      # - build_darwin:
+      #     filters: *ci_filter
+      # - dist_packages_linux:
+      #     filters: &nightly_filter
+      #       branches:
+      #         only:
+      #           - ci/nightly
+      - dist_packages_darwin:
+          filters: &nightly_filter
             branches:
               only:
                 - ci/nightly
+          # filters: *nightly_filter
 
