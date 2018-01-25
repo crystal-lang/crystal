@@ -47,9 +47,10 @@ jobs:
           git checkout params
           cd x86_64
           make CRYSTAL_VERSION=nightly CRYSTAL_SHA1=$CIRCLE_SHA1 release=true
-      - store_artifacts:
-          path: ~/distribution-scripts/x86_64/build
-          destination: dist_packages
+      - persist_to_workspace:
+          root: ../distribution-scripts/x86_64/
+          paths:
+            - build
 
   dist_packages_darwin:
     macos:
@@ -77,36 +78,48 @@ jobs:
             bundle check || bundle install --binstubs
             cd ../x86_64
             make darwin CRYSTAL_VERSION=nightly CRYSTAL_SHA1=$CIRCLE_SHA1 release=true
+      - persist_to_workspace:
+          root: ../distribution-scripts/x86_64/
+          paths:
+            - build
+
+  dist_packages_collect:
+    docker:
+      - image: buildpack-deps:trusty
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - store_artifacts:
-          path: ~/distribution-scripts/x86_64/build
+          path: /tmp/workspace/build
           destination: dist_packages
 
 workflows:
   version: 2
   build_all_platforms:
     jobs:
-      # - build_linux:
-      #     filters: &ci_filter
-      #       branches:
-      #         only:
-      #           - master
-      #           - /release\/.+/
-      #           - /.*\bci\b.*/
-      #       tags:
-      #         only: /.*/
-      # - build_linux32:
-      #     filters: *ci_filter
-      # - build_darwin:
-      #     filters: *ci_filter
-      # - dist_packages_linux:
-      #     filters: &nightly_filter
-      #       branches:
-      #         only:
-      #           - ci/nightly
-      - dist_packages_darwin:
+      - build_linux:
+          filters: &ci_filter
+            branches:
+              only:
+                - master
+                - /release\/.+/
+                - /.*\bci\b.*/
+            tags:
+              only: /.*/
+      - build_linux32:
+          filters: *ci_filter
+      - build_darwin:
+          filters: *ci_filter
+      - dist_packages_linux:
           filters: &nightly_filter
             branches:
               only:
                 - ci/nightly
-          # filters: *nightly_filter
+      - dist_packages_darwin:
+          filters: *nightly_filter
+      - dist_packages_collect:
+          filters: *nightly_filter
+          requires:
+            - dist_packages_linux
+            - dist_packages_darwin
 
