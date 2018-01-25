@@ -1620,6 +1620,17 @@ class Array(T)
     self
   end
 
+  # Swaps the elements at the given `index0` and `index1` and returns `self`.
+  # Raises an `IndexError` if an index given is out of bounds.
+  #
+  # ```
+  # a = ["first", "second", "third"]
+  # a.swap(1, 2)  #=> ["first", "third", "second"]
+  # a             #=> ["first", "third", "second"]
+  # a.swap(0, -1) #=> ["second", "third", "first"]
+  # a             #=> ["second", "third", "first"]
+  # a.swap(2, 3)  #=> raises "Index out of bounds (IndexError)"
+  # ```
   def swap(index0, index1)
     index0 += size if index0 < 0
     index1 += size if index1 < 0
