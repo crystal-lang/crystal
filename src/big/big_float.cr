@@ -15,7 +15,9 @@ struct BigFloat < Float
   def initialize(str : String)
     # Strip leading '+' char to smooth out cases with strings like "+123"
     str = str.lchop('+')
-    LibGMP.mpf_init_set_str(out @mpf, str, 10)
+    if LibGMP.mpf_init_set_str(out @mpf, str, 10) == -1
+      raise ArgumentError.new("Invalid BigFloat: #{str.inspect}")
+    end
   end
 
   def initialize(num : BigInt)
