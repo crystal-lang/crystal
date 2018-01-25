@@ -18,7 +18,9 @@ require "lib_c"
 require "macros"
 require "object"
 require "comparable"
-require "windows_stubs"
+{% if flag?(:win32) %}
+  require "windows_stubs"
+{% end %}
 require "exception"
 require "iterable"
 require "iterator"
