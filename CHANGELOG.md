@@ -1,4 +1,15 @@
-# 0.24.1 (TBA)
+# 0.24.2 (2018-01-25)
+
+- Fixed an `Index out of bounds` raised during `at_exit` (#5224, #5565, thanks @ysbaddaden)
+- Re-add `Dir#each` so it complies with `Enumerable` (#5458, thanks @bcardiff)
+- Fixed `SSL::Context` bug verifying certificates (#5266, #5601, thanks @waj)
+- Fixed UUID documentation that was missing (#5478, #5542, thanks @asterite)
+- Fixed a bug with single expressions in parenthesis (#5482, #5511, #5513, thanks @MakeNowJust)
+- Fixed `skip_file` macro docs (#5488, thanks @straight-shoota)
+- Fixed CI `build` script's `LIBRARY_PATH` (#5457, #5461, thanks @bcardiff)
+- Fixed formatter bug with upper-cased `fun` names (#5432, #5434, thanks @bew)
+
+# 0.24.1 (2017-12-23)
 
 ## New features
 - Add ThinLTO support for faster release builds in LLVM 4.0 and above. ([#4367](https://github.com/crystal-lang/crystal/issues/4367), thanks @bcardiff)
