@@ -104,7 +104,7 @@ dependencies:
         readme.should contain(%{TODO: Write a description here})
         readme.should_not contain(%{TODO: Write installation instructions here})
         readme.should contain(%{require "example"})
-        readme.should contain(%{1. Fork it ( https://github.com/jsmith/example/fork )})
+        readme.should contain(%{1. Fork it (<https://github.com/jsmith/example/fork>)})
         readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
       end
 
@@ -120,7 +120,7 @@ dependencies:
         readme.should contain(%{TODO: Write a description here})
         readme.should contain(%{TODO: Write installation instructions here})
         readme.should_not contain(%{require "example"})
-        readme.should contain(%{1. Fork it ( https://github.com/jsmith/example_app/fork )})
+        readme.should contain(%{1. Fork it (<https://github.com/jsmith/example_app/fork>)})
         readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
       end
 
