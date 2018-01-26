@@ -1512,8 +1512,9 @@ module Crystal
             raise "TypeNode##{method} expects TypeNode, not #{arg.class_desc}"
           end
 
-          self_type = self.type
-          other_type = arg.type
+          self_type = self.type.devirtualize
+          other_type = arg.type.devirtualize
+
           case method
           when "<"
             value = self_type != other_type && self_type.implements?(other_type)
