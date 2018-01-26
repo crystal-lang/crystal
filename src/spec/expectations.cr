@@ -289,21 +289,23 @@ module Spec
       case message
       when Regex
         unless (ex_to_s =~ message)
-          backtrace = ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-          fail "Expected #{klass} with message matching #{message.inspect}, got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+          backtrace = ex.backtrace.join("\n") { |f| "  # #{f}" }
+          fail "Expected #{klass} with message matching #{message.inspect}, " \
+               "got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
       when String
         unless ex_to_s.includes?(message)
-          backtrace = ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-          fail "Expected #{klass} with #{message.inspect}, got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+          backtrace = ex.backtrace.join("\n") { |f| "  # #{f}" }
+          fail "Expected #{klass} with #{message.inspect}, got #<#{ex.class}: " \
+               "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
       end
 
       ex
     rescue ex
-      ex_to_s = ex.to_s
-      backtrace = ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-      fail "Expected #{klass}, got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+      backtrace = ex.backtrace.join("\n") { |f| "  # #{f}" }
+      fail "Expected #{klass}, got #<#{ex.class}: #{ex.to_s}> with backtrace:\n" \
+           "#{backtrace}", file, line
     else
       fail "Expected #{klass} but nothing was raised", file, line
     end
