@@ -278,11 +278,8 @@ module Spec
     #
     # It returns the rescued exception.
     def expect_raises(klass : T.class, message = nil, file = __FILE__, line = __LINE__) forall T
-      failed = false
       begin
         yield
-        failed = true
-        fail "Expected #{klass} but nothing was raised", file, line
       rescue ex : T
         # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
         if ex.is_a?(Spec::AssertionFailed) && klass != Spec::AssertionFailed
@@ -305,13 +302,11 @@ module Spec
 
         ex
       rescue ex
-        if failed
-          raise ex
-        else
-          ex_to_s = ex.to_s
-          backtrace = ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-          fail "Expected #{klass}, got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
-        end
+        ex_to_s = ex.to_s
+        backtrace = ex.backtrace.map { |f| "  # #{f}" }.join "\n"
+        fail "Expected #{klass}, got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+      else
+        fail "Expected #{klass} but nothing was raised", file, line
       end
     end
   end
