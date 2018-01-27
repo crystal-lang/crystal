@@ -1203,6 +1203,7 @@ describe "Parser" do
   assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\n  HERE", "heredoc line must have an indent greater or equal than 2", 4, 1
   assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\#{1}\n  HERE", "heredoc line must have an indent greater or equal than 2", 4, 1
   assert_syntax_error "<<-HERE\n One\n  \#{1}\n  HERE", "heredoc line must have an indent greater or equal than 2", 2, 1
+  assert_syntax_error %("\#{<<-HERE}"\nHERE), "heredoc cannot be used inside interpolation"
   assert_syntax_error %("foo" "bar")
 
   it_parses "<<-'HERE'\n  hello \\n world\n  \#{1}\n  HERE", "hello \\n world\n\#{1}".string_interpolation

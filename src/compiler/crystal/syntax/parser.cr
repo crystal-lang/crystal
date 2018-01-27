@@ -37,6 +37,7 @@ module Crystal
       @doc_enabled = false
       @no_type_declaration = 0
       @consuming_heredocs = false
+      @inside_interpolation = false
 
       # This flags tells the parser where it has to consider a "do"
       # as belonging to the current parsed call. For example when writing
@@ -1795,6 +1796,9 @@ module Crystal
       check :DELIMITER_START
 
       if delimiter_state.kind == :heredoc
+        if @inside_interpolation
+          raise "heredoc cannot be used inside interpolation", location
+        end
         node = StringInterpolation.new([] of ASTNode).at(location)
         @heredocs << {delimiter_state, node}
         next_token
@@ -1900,6 +1904,8 @@ module Crystal
           line_number = @token.line_number
           delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
+          old_inside_interpolation = @inside_interpolation
+          @inside_interpolation = true
           exp = preserve_stop_on_do { parse_expression }
 
           if exp.is_a?(StringLiteral)
@@ -1916,6 +1922,7 @@ module Crystal
 
           @token.delimiter_state = delimiter_state
           next_string_token(delimiter_state)
+          @inside_interpolation = old_inside_interpolation
           delimiter_state = @token.delimiter_state
         end
       end
