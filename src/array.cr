@@ -1542,11 +1542,6 @@ class Array(T)
   # a.sort # => [1, 2, 3]
   # a      # => [3, 1, 2]
   # ```
-  #
-  # Optionally, a block may be given that must implement a comparison between
-  # two elements *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
-  # and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
   def sort : Array(T)
     dup.sort!
   end
@@ -1576,11 +1571,6 @@ class Array(T)
   # a.sort!
   # a # => [1, 2, 3]
   # ```
-  #
-  # Optionally, a block may be given that must implement a comparison between
-  # two elements *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
-  # and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
   def sort! : Array(T)
     Array.intro_sort!(@buffer, @size)
     self
