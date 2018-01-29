@@ -83,6 +83,20 @@ jobs:
           paths:
             - build
 
+  dist_packages_docs:
+    machine: true
+    steps:
+      - run: |
+          git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
+          cd ~/distribution-scripts
+          git checkout params
+          cd docs
+          make CRYSTAL_VERSION=nightly CRYSTAL_SHA1=$CIRCLE_SHA1 release=true
+      - persist_to_workspace:
+          root: ../distribution-scripts/docs/
+          paths:
+            - build
+
   dist_packages_collect:
     docker:
       - image: buildpack-deps:trusty
@@ -117,9 +131,12 @@ workflows:
                 - ci/nightly
       - dist_packages_darwin:
           filters: *nightly_filter
+      - dist_packages_docs:
+          filters: *nightly_filter
       - dist_packages_collect:
           filters: *nightly_filter
           requires:
             - dist_packages_linux
             - dist_packages_darwin
+            - dist_packages_docs
 
