@@ -3346,9 +3346,9 @@ module Crystal
             write ","
             slash_is_regex!
             next_token
-            skip_space
-            if @token.type == :NEWLINE
-              write_line
+            found_comment = skip_space
+            if found_comment || @token.type == :NEWLINE
+              write_line unless found_comment
               skip_space_or_newline
               next_needs_indent = true
             else
