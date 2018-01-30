@@ -97,6 +97,22 @@ jobs:
           paths:
             - build
 
+  dist_docker:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
+          cd ~/distribution-scripts
+          git checkout params
+          cd docker
+          export CRYSTAL_VERSION=nightly
+          cp /tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb crystal.deb
+          docker build -t crystallang/crystal:nightly --build-arg crystal_deb=crystal.deb .
+          docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+          docker push crystallang/crystal:nightly
+
   dist_packages_collect:
     docker:
       - image: buildpack-deps:trusty
@@ -133,6 +149,10 @@ workflows:
           filters: *nightly_filter
       - dist_packages_docs:
           filters: *nightly_filter
+      - dist_docker:
+          filters: *nightly_filter
+          requires:
+            - dist_packages_linux
       - dist_packages_collect:
           filters: *nightly_filter
           requires:
