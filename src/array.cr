@@ -1535,7 +1535,8 @@ class Array(T)
     self
   end
 
-  # Returns a new array with all elements sorted.
+  # Returns a new array with all elements sorted based on the return value of
+  # their comparison method `#<=>`
   #
   # ```
   # a = [3, 1, 2]
@@ -1546,8 +1547,8 @@ class Array(T)
     dup.sort!
   end
 
-  # Returns a new array with all elements sorted based on the return value of
-  # the block given.
+  # Returns a new array with all elements sorted based on the comparator in the
+  # given block.
   #
   # The block must implement a comparison between two elements *a* and *b*,
   # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
@@ -1564,7 +1565,8 @@ class Array(T)
     dup.sort! &block
   end
 
-  # Modifies `self` by sorting all elements.
+  # Modifies `self` by sorting all elements based on the return value of their
+  # comparison method `#<=>`
   #
   # ```
   # a = [3, 1, 2]
@@ -1576,8 +1578,8 @@ class Array(T)
     self
   end
 
-  # Modifies `self` by sorting all elements based on the return value of the
-  # block given.
+  # Modifies `self` by sorting all elements based on the comparator in the given
+  # block.
   #
   # The given block must implement a comparison between two elements
   # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
@@ -1594,8 +1596,9 @@ class Array(T)
     self
   end
 
-  # Returns a new array with all elements sorted based on the return value of
-  # the block given, for each element.
+  # Returns a new array with all elements sorted. The given block is called for
+  # each element, then the comparison method #<=> is called on the object
+  # returned from the block to determine sort order.
   #
   # ```
   # a = %w(apple pear fig)
@@ -1607,8 +1610,9 @@ class Array(T)
     dup.sort_by! { |e| yield(e) }
   end
 
-  # Modifies `self` by sorting all elements based on the return value of
-  # the block given, for each element.
+  # Modifies `self` by sorting all elements. The given block is called for
+  # each element, then the comparison method #<=> is called on the object
+  # returned from the block to determine sort order.
   #
   # ```
   # a = %w(apple pear fig)
