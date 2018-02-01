@@ -1452,15 +1452,17 @@ describe "String" do
     "\t".dump.should eq("\"\\t\"")
     "\v".dump.should eq("\"\\v\"")
     "\#{".dump.should eq("\"\\\#{\"")
-    "á".dump.should eq("\"\\u00e1\"")
+    "á".dump.should eq("\"\\u00E1\"")
     "\u{81}".dump.should eq("\"\\u0081\"")
+    "\u{1F48E}".dump.should eq %("\\u{1F48E}")
   end
 
   it "dumps unquoted" do
     "a".dump_unquoted.should eq("a")
     "\\".dump_unquoted.should eq("\\\\")
-    "á".dump_unquoted.should eq("\\u00e1")
+    "á".dump_unquoted.should eq("\\u00E1")
     "\u{81}".dump_unquoted.should eq("\\u0081")
+    "\u{1F48E}".dump_unquoted.should eq "\\u{1F48E}"
   end
 
   it "inspects" do
@@ -1477,6 +1479,7 @@ describe "String" do
     "\#{".inspect.should eq("\"\\\#{\"")
     "á".inspect.should eq("\"á\"")
     "\u{81}".inspect.should eq("\"\\u0081\"")
+    "\u{1F48E}".inspect.should eq %("\u{1F48E}")
   end
 
   it "inspects unquoted" do
@@ -1484,6 +1487,7 @@ describe "String" do
     "\\".inspect_unquoted.should eq("\\\\")
     "á".inspect_unquoted.should eq("á")
     "\u{81}".inspect_unquoted.should eq("\\u0081")
+    "\u{1F48E}".inspect_unquoted.should eq "\u{1F48E}"
   end
 
   it "does *" do
