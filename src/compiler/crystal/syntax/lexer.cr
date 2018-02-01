@@ -2477,7 +2477,40 @@ module Crystal
       end
 
       start = current_pos
-      while !current_char.ascii_whitespace? && current_char != '\0' && current_char != @token.delimiter_state.end
+      sub_start = start
+      value = String::Builder.new
+
+      escaped = false
+      while true
+        case current_char
+        when Char::ZERO
+          break # raise is handled by parser
+        when @token.delimiter_state.end
+          unless escaped
+            if @token.delimiter_state.open_count == 0
+              break
+            else
+              @token.delimiter_state = @token.delimiter_state.with_open_count_delta(-1)
+            end
+          end
+        when @token.delimiter_state.nest
+          unless escaped
+            @token.delimiter_state = @token.delimiter_state.with_open_count_delta(+1)
+          end
+        when .ascii_whitespace?
+          break unless escaped
+        else
+          if escaped
+            value << '\\'
+          end
+        end
+
+        escaped = current_char == '\\'
+        if escaped
+          value.write @reader.string.to_slice[sub_start, current_pos - sub_start]
+          sub_start = current_pos + 1
+        end
+
         next_char
       end
 
@@ -2486,8 +2519,10 @@ module Crystal
         return @token
       end
 
+      value.write @reader.string.to_slice[sub_start, current_pos - sub_start]
+
       @token.type = :STRING
-      @token.value = string_range(start)
+      @token.value = value.to_s
       set_token_raw_from_start(start)
 
       @token

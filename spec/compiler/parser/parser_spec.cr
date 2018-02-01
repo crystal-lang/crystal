@@ -1615,8 +1615,26 @@ describe "Parser" do
     assert_syntax_error %(case x; when /x/; 2; when /x/; end), "duplicate when /x/ in case"
     assert_syntax_error %(case x; when X; 2; when X; end), "duplicate when X in case"
 
+    it_parses "%w{one  two}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{one\ntwo}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{one\ttwo}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{\n}", ([] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{one\\ two}", (["one two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{one{} two}", (["one{}".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{\\{one}", (["{one".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{one\\}}", (["one}".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%i(one\\ two)", (["one two".symbol] of ASTNode).array_of(Path.global("Symbol"))
+    it_parses "%i{(one two)}", (["(one".symbol, "two)".symbol] of ASTNode).array_of(Path.global("Symbol"))
+    it_parses "%i((one two))", (["(one".symbol, "two)".symbol] of ASTNode).array_of(Path.global("Symbol"))
+    it_parses "%i(foo(bar) baz)", (["foo(bar)".symbol, "baz".symbol] of ASTNode).array_of(Path.global("Symbol"))
+    it_parses "%i{foo\\nbar baz}", (["foo\\nbar".symbol, "baz".symbol] of ASTNode).array_of(Path.global("Symbol"))
+
     assert_syntax_error "%w(", "Unterminated string array literal"
+    assert_syntax_error "%w{one}}", "expecting token 'EOF', not '}'"
+    assert_syntax_error "%w{{one}", "Unterminated string array literal"
     assert_syntax_error "%i(", "Unterminated symbol array literal"
+    assert_syntax_error "%i{one}}", "expecting token 'EOF', not '}'"
+    assert_syntax_error "%i{{one}", "Unterminated symbol array literal"
     assert_syntax_error "%x(", "Unterminated command literal"
     assert_syntax_error "%r(", "Unterminated regular expression"
     assert_syntax_error "%q(", "Unterminated string literal"
