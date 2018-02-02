@@ -160,13 +160,7 @@ module Crystal
     end
 
     def interpret_raise(node)
-      msg = node.args.map do |arg|
-        arg.accept self
-        @last.to_macro_id
-      end
-      msg = msg.join " "
-
-      node.raise msg, exception_type: MacroRaiseException
+      macro_raise(node, node.args, self)
     end
 
     def interpret_run(node)
@@ -299,9 +293,7 @@ module Crystal
       when "class_name"
         interpret_argless_method("class_name", args) { class_name }
       when "raise"
-        interpret_one_arg_method(method, args) do |arg|
-          raise arg.to_s
-        end
+        macro_raise self, args, interpreter
       when "filename"
         interpret_argless_method("filename", args) do
           filename = location.try &.original_filename
@@ -2146,6 +2138,16 @@ private def visibility_to_symbol(visibility)
       "public"
     end
   Crystal::SymbolLiteral.new(visibility_name)
+end
+
+private def macro_raise(node, args, interpreter)
+  msg = args.map do |arg|
+    arg.accept interpreter
+    interpreter.last.to_macro_id
+  end
+  msg = msg.join " "
+
+  node.raise msg, exception_type: Crystal::MacroRaiseException
 end
 
 def filter(object, klass, block, interpreter, keep = true)
