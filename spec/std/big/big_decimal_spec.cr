@@ -65,6 +65,9 @@ describe BigDecimal do
 
     BigDecimal.new(BigDecimal.new(2))
       .should eq(BigDecimal.new(2.to_big_i))
+
+    BigDecimal.new(BigRational.new(1, 2))
+      .should eq(BigDecimal.new(BigInt.new(5), 1))
   end
 
   it "raises InvalidBigDecimalException when initializing from invalid input" do
@@ -181,6 +184,7 @@ describe BigDecimal do
     BigInt.new(15).to_big_d.should eq (BigDecimal.new(15, 0))
     1.5.to_big_d.should eq (BigDecimal.new(15, 1))
     1.5.to_big_f.to_big_d.should eq (BigDecimal.new(15, 1))
+    1.5.to_big_r.to_big_d.should eq(BigDecimal.new(15, 1))
   end
 
   it "can be converted from scientific notation" do
@@ -243,6 +247,12 @@ describe BigDecimal do
 
     (BigDecimal.new("6.5") > 7).should be_false
     (BigDecimal.new("7.5") > 6).should be_true
+
+    BigDecimal.new("0.5").should eq(BigRational.new(1, 2))
+    BigDecimal.new("0.25").should eq(BigDecimal.new("0.25"))
+
+    BigRational.new(1, 2).should eq(BigDecimal.new("0.5"))
+    BigRational.new(1, 4).should eq(BigDecimal.new("0.25"))
   end
 
   it "keeps precision" do
