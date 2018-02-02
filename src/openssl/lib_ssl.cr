@@ -2,8 +2,8 @@ require "./lib_crypto"
 
 {% begin %}
   lib LibSSL
-    OPENSSL_110 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.1.0 libssl || printf %s false`.stringify != "false" }}
-    OPENSSL_102 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libssl || printf %s false`.stringify != "false" }}
+    OPENSSL_110 = {{ LibCrypto::OPENSSL_110 }}
+    OPENSSL_102 = {{ LibCrypto::OPENSSL_102 }}
   end
 {% end %}
 
