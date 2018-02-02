@@ -75,7 +75,7 @@ module Spec
             puts "#{(i + 1).to_s.rjust(3, ' ')}) #{fail.description}"
 
             if ex.is_a?(AssertionFailed)
-              source_line = Spec.read_line(ex.file, ex.line)
+              source_line = read_line(ex.file, ex.line)
               if source_line
                 puts Spec.color("     Failure/Error: #{source_line.strip}", :error)
               end
@@ -141,6 +141,10 @@ module Spec
           puts Spec.color(" # #{fail.description}", :comment)
         end
       end
+    end
+
+    private def read_line(file, line)
+      Spec.read_line(file, line)
     end
 
     @@instance = RootContext.new
