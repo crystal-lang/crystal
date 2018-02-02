@@ -3950,11 +3950,12 @@ class String
 
   private def dump_unicode(char, io)
     io << "\\u"
+    io << '{' if char.ord > 65535
     io << "0" if char.ord < 4096
     io << "0" if char.ord < 256
     io << "0" if char.ord < 16
-    char.ord.to_s(16, io)
-    io << ""
+    char.ord.to_s(16, io, upcase: true)
+    io << '}' if char.ord > 65535
   end
 
   def starts_with?(str : String)
