@@ -19,11 +19,25 @@ struct BigDecimal < Number
   DEFAULT_MAX_DIV_ITERATIONS = 100_u64
 
   include Comparable(Int)
-  include Comparable(BigDecimal)
   include Comparable(Float)
+  include Comparable(BigRational)
+  include Comparable(BigDecimal)
 
   getter value : BigInt
   getter scale : UInt64
+
+  # Creates a new `BigDecimal` from `Float`.
+  #
+  # NOTE: Floats are fundamentally less precise than BigDecimals,
+  # which makes initialization from them risky.
+  def self.new(num : Float)
+    new(num.to_s)
+  end
+
+  # Creates a new `BigDecimal` from `BigRational`.
+  def self.new(num : BigRational)
+    num.numerator.to_big_d / num.denominator.to_big_d
+  end
 
   # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
   # being a `Number`.
@@ -125,14 +139,6 @@ struct BigDecimal < Number
     end
   end
 
-  # Creates a new `BigDecimal` from `Float`.
-  #
-  # NOTE: Floats are fundamentally less precise than BigDecimals,
-  # which makes initialization from them risky.
-  def initialize(num : Float)
-    initialize(num.to_s)
-  end
-
   def - : BigDecimal
     BigDecimal.new(-@value, @scale)
   end
@@ -225,15 +231,16 @@ struct BigDecimal < Number
     end
   end
 
-  def <=>(other : Int | Float)
+  def <=>(other : Int | Float | BigRational)
     self <=> BigDecimal.new(other)
   end
 
   def ==(other : BigDecimal) : Bool
-    if @scale > other.scale
+    case @scale
+    when .>(other.scale)
       scaled = other.value * power_ten_to(@scale - other.scale)
       @value == scaled
-    elsif @scale < other.scale
+    when .<(other.scale)
       scaled = @value * power_ten_to(other.scale - @scale)
       scaled == other.value
     else
@@ -453,6 +460,19 @@ struct Float
   #
   # NOTE: Floats are fundamentally less precise than BigDecimals,
   # which makes conversion to them risky.
+  def to_big_d
+    BigDecimal.new(self)
+  end
+end
+
+struct BigRational
+  include Comparable(BigDecimal)
+
+  def <=>(other : BigDecimal)
+    to_big_d <=> other
+  end
+
+  # Converts `self` to `BigDecimal`.
   def to_big_d
     BigDecimal.new(self)
   end
