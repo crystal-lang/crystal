@@ -2,8 +2,8 @@
   lib LibCrypto
     # An extra zero is appended to the output of LIBRESSL_VERSION to make it 0 when LibreSSL does not exist on the system.
     # Any comparisons to it should be affixed with an extra zero as well e.g. `(LIBRESSL_VERSION_NUMBER >= 0x2050500F0)`.
-    LIBRESSL_VERSION = {{ system("echo \"#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER\" | " + (env("CC") || "cc") + " -E -").chomp.split('\n').last.split('L').first.id + "0" }}
-    OPENSSL_VERSION = {{ system("echo \"#include <openssl/opensslv.h>\nOPENSSL_VERSION_NUMBER\" | " + (env("CC") || "cc") + " -E -").chomp.split('\n').last.split('L').first.id }}
+    LIBRESSL_VERSION = {{ system("echo \"#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER\" | " + (env("CC") || "cc") + (flag?(:darwin) ? " -I/usr/local/opt/openssl/include" : "") + " -E -").chomp.split('\n').last.split('L').first.id + "0" }}
+    OPENSSL_VERSION = {{ system("echo \"#include <openssl/opensslv.h>\nOPENSSL_VERSION_NUMBER\" | " + (env("CC") || "cc") + (flag?(:darwin) ? " -I/usr/local/opt/openssl/include" : "") + " -E -").chomp.split('\n').last.split('L').first.id }}
   end
 {% end %}
 
