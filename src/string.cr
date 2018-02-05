@@ -3829,58 +3829,91 @@ class String
     Array.new(bytesize) { |i| to_unsafe[i] }
   end
 
-  def inspect(io)
+  # Pretty prints `self` into the given printer.
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.text(inspect)
+  end
+
+  # Returns a representation of `self` using character escapes for special characters and wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".inspect # => %("\u{1E48E} - à la carte\\n")
+  # ```
+  def inspect : String
+    super
+  end
+
+  # Appends `self` to the given `IO` object using character escapes for special characters and wrapped in double quotes.
+  def inspect(io : IO) : Nil
     dump_or_inspect(io) do |char, error|
       inspect_char(char, error, io)
     end
   end
 
-  def pretty_print(pp)
-    pp.text(inspect)
-  end
-
-  def inspect_unquoted
+  # Returns a representation of `self` using character escapes for special characters but not wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".inspect_unquoted # => %(\u{1E48E} - à la carte\\n)
+  # ```
+  def inspect_unquoted : String
     String.build do |io|
       inspect_unquoted(io)
     end
   end
 
-  def inspect_unquoted(io)
+  # Appends `self` to the given `IO` object using character escapes for special characters but not wrapped in quotes.
+  def inspect_unquoted(io : IO) : Nil
     dump_or_inspect_unquoted(io) do |char, error|
       inspect_char(char, error, io)
     end
   end
 
-  def dump
+  # Returns a representation of `self` using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".dump # => %("\\u1f48e - \\u00e0 la carte\\n")
+  # ```
+  def dump : String
     String.build do |io|
       dump io
     end
   end
 
-  def dump(io)
+  # Appends `self` to the given `IO` object using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
+  def dump(io : IO) : Nil
     dump_or_inspect(io) do |char, error|
       dump_char(char, error, io)
     end
   end
 
-  def dump_unquoted
+  # Returns a representation of `self` using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".dump_unquoted # => %(\\u1f48e - \\u00e0 la carte\\n)
+  # ```
+  def dump_unquoted : String
     String.build do |io|
       dump_unquoted(io)
     end
   end
 
-  def dump_unquoted(io)
+  # Appends `self` to the given `IO` object using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
+  def dump_unquoted(io : IO) : Nil
     dump_or_inspect_unquoted(io) do |char, error|
       dump_char(char, error, io)
     end
   end
 
   private def dump_or_inspect(io)
-    io << "\""
+    io << '"'
     dump_or_inspect_unquoted(io) do |char, error|
       yield char, error
     end
-    io << "\""
+    io << '"'
   end
 
   private def dump_or_inspect_unquoted(io)
@@ -3927,7 +3960,7 @@ class String
   end
 
   private def dump_char(char, error, io)
-    dump_or_inspect_char(char, error, io) do
+    dump_or_inspect_char char, error, io do
       char.ascii_control? || char.ord >= 0x80
     end
   end
@@ -3942,20 +3975,20 @@ class String
     end
   end
 
-  private def dump_hex(error, io)
+  private def dump_hex(char, io)
     io << "\\x"
-    io << "0" if error < 16
-    error.to_s(16, io, upcase: true)
+    io << '0' if char < 0x0F
+    char.to_s(16, io, upcase: true)
   end
 
   private def dump_unicode(char, io)
     io << "\\u"
-    io << '{' if char.ord > 65535
-    io << "0" if char.ord < 4096
-    io << "0" if char.ord < 256
-    io << "0" if char.ord < 16
+    io << '{' if char.ord > 0xFFFF
+    io << '0' if char.ord < 0x1000
+    io << '0' if char.ord < 0x0100
+    io << '0' if char.ord < 0x0010
     char.ord.to_s(16, io, upcase: true)
-    io << '}' if char.ord > 65535
+    io << '}' if char.ord > 0xFFFF
   end
 
   def starts_with?(str : String)

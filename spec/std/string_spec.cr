@@ -1440,54 +1440,58 @@ describe "String" do
     str.should eq("ooooo")
   end
 
-  it "dumps" do
-    "a".dump.should eq("\"a\"")
-    "\\".dump.should eq("\"\\\\\"")
-    "\"".dump.should eq("\"\\\"\"")
-    "\b".dump.should eq("\"\\b\"")
-    "\e".dump.should eq("\"\\e\"")
-    "\f".dump.should eq("\"\\f\"")
-    "\n".dump.should eq("\"\\n\"")
-    "\r".dump.should eq("\"\\r\"")
-    "\t".dump.should eq("\"\\t\"")
-    "\v".dump.should eq("\"\\v\"")
-    "\#{".dump.should eq("\"\\\#{\"")
-    "á".dump.should eq("\"\\u00E1\"")
-    "\u{81}".dump.should eq("\"\\u0081\"")
+  it "#dump" do
+    "a".dump.should eq %("a")
+    "\\".dump.should eq %("\\\\")
+    "\"".dump.should eq %("\\\"")
+    "\b".dump.should eq %("\\b")
+    "\e".dump.should eq %("\\e")
+    "\f".dump.should eq %("\\f")
+    "\n".dump.should eq %("\\n")
+    "\r".dump.should eq %("\\r")
+    "\t".dump.should eq %("\\t")
+    "\v".dump.should eq %("\\v")
+    "\#{".dump.should eq %("\\\#{")
+    "á".dump.should eq %("\\u00E1")
+    "\u{81}".dump.should eq %("\\u0081")
     "\u{1F48E}".dump.should eq %("\\u{1F48E}")
+    "\u{1f48e}".dump.should eq %("\\u{1F48E}")
   end
 
-  it "dumps unquoted" do
-    "a".dump_unquoted.should eq("a")
-    "\\".dump_unquoted.should eq("\\\\")
-    "á".dump_unquoted.should eq("\\u00E1")
-    "\u{81}".dump_unquoted.should eq("\\u0081")
-    "\u{1F48E}".dump_unquoted.should eq "\\u{1F48E}"
+  it "#dump_unquoted" do
+    "a".dump_unquoted.should eq %(a)
+    "\\".dump_unquoted.should eq %(\\\\)
+    "á".dump_unquoted.should eq %(\\u00E1)
+    "\u{81}".dump_unquoted.should eq %(\\u0081)
+    "\u{1F48E}".dump_unquoted.should eq %(\\u{1F48E})
+    "\u{1f48e}".dump_unquoted.should eq %(\\u{1F48E})
   end
 
-  it "inspects" do
-    "a".inspect.should eq("\"a\"")
-    "\\".inspect.should eq("\"\\\\\"")
-    "\"".inspect.should eq("\"\\\"\"")
-    "\b".inspect.should eq("\"\\b\"")
-    "\e".inspect.should eq("\"\\e\"")
-    "\f".inspect.should eq("\"\\f\"")
-    "\n".inspect.should eq("\"\\n\"")
-    "\r".inspect.should eq("\"\\r\"")
-    "\t".inspect.should eq("\"\\t\"")
-    "\v".inspect.should eq("\"\\v\"")
-    "\#{".inspect.should eq("\"\\\#{\"")
-    "á".inspect.should eq("\"á\"")
-    "\u{81}".inspect.should eq("\"\\u0081\"")
+  it "#inspect" do
+    "a".inspect.should eq %("a")
+    "\\".inspect.should eq %("\\\\")
+    "\"".inspect.should eq %("\\\"")
+    "\b".inspect.should eq %("\\b")
+    "\e".inspect.should eq %("\\e")
+    "\f".inspect.should eq %("\\f")
+    "\n".inspect.should eq %("\\n")
+    "\r".inspect.should eq %("\\r")
+    "\t".inspect.should eq %("\\t")
+    "\v".inspect.should eq %("\\v")
+    "\#{".inspect.should eq %("\\\#{")
+    "á".inspect.should eq %("á")
+    "\u{81}".inspect.should eq %("\\u0081")
     "\u{1F48E}".inspect.should eq %("\u{1F48E}")
+    "\u{1f48e}".inspect.should eq %("\u{1F48E}")
   end
 
-  it "inspects unquoted" do
-    "a".inspect_unquoted.should eq("a")
-    "\\".inspect_unquoted.should eq("\\\\")
-    "á".inspect_unquoted.should eq("á")
-    "\u{81}".inspect_unquoted.should eq("\\u0081")
-    "\u{1F48E}".inspect_unquoted.should eq "\u{1F48E}"
+  it "#inspect_unquoted" do
+    "a".inspect_unquoted.should eq %(a)
+    "\\".inspect_unquoted.should eq %(\\\\)
+    "á".inspect_unquoted.should eq %(á)
+    "\u{81}".inspect_unquoted.should eq %(\\u0081)
+    "\u{1F48E}".inspect_unquoted.should eq %(\u{1F48E})
+    "\u{1f48e}".inspect_unquoted.should eq %(\u{1F48E})
   end
 
   it "does *" do
