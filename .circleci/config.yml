@@ -83,21 +83,7 @@ jobs:
           paths:
             - build
 
-  dist_packages_docs:
-    machine: true
-    steps:
-      - run: |
-          git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
-          cd ~/distribution-scripts
-          git checkout params
-          cd docs
-          make CRYSTAL_VERSION=nightly CRYSTAL_SHA1=$CIRCLE_SHA1 release=true
-      - persist_to_workspace:
-          root: ../distribution-scripts/docs/
-          paths:
-            - build
-
-  dist_docker:
+  dist_docker_build:
     machine: true
     steps:
       - attach_workspace:
@@ -109,9 +95,43 @@ jobs:
           cd docker
           export CRYSTAL_VERSION=nightly
           cp /tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb crystal.deb
-          docker build -t crystallang/crystal:nightly --build-arg crystal_deb=crystal.deb .
+          make CRYSTAL_VERSION=${CRYSTAL_VERSION} CRYSTAL_DEB=crystal.deb
+      - persist_to_workspace:
+          root: ../distribution-scripts/docker/
+          paths:
+            - build
+
+  dist_docker_publish:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          export CRYSTAL_VERSION=nightly
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
           docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-          docker push crystallang/crystal:nightly
+          docker push crystallang/crystal:${CRYSTAL_VERSION}
+          docker push crystallang/crystal:${CRYSTAL_VERSION}-build
+
+  dist_packages_docs:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
+          cd ~/distribution-scripts
+          git checkout params
+          cd docs
+
+          export CRYSTAL_VERSION=nightly
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
+          make CRYSTAL_VERSION=${CRYSTAL_VERSION} CRYSTAL_SHA1=$CIRCLE_SHA1 CRYSTAL_DOCKER_IMAGE=crystallang/crystal:${CRYSTAL_VERSION}-build
+      - persist_to_workspace:
+          root: ../distribution-scripts/docs/
+          paths:
+            - build
 
   dist_packages_collect:
     docker:
@@ -149,14 +169,20 @@ workflows:
           filters: *nightly_filter
       - dist_packages_docs:
           filters: *nightly_filter
-      - dist_docker:
+          requires:
+            - dist_docker_build
+      - dist_docker_build:
           filters: *nightly_filter
           requires:
             - dist_packages_linux
+      - dist_docker_publish:
+          filters: *nightly_filter
+          requires:
+            - dist_docker_build
       - dist_packages_collect:
           filters: *nightly_filter
           requires:
             - dist_packages_linux
             - dist_packages_darwin
+            - dist_docker_build
             - dist_packages_docs
-
