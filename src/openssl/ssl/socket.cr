@@ -119,7 +119,7 @@ abstract class OpenSSL::SSL::Socket < IO
     @bio.io.flush
   end
 
-  {% if LibSSL::OPENSSL_102 %}
+  {% if LibSSL::OPENSSL_102 || LibSSL::LIBRESSL_250 %}
   # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
   # negotiated.
   def alpn_protocol
