@@ -38,17 +38,41 @@ jobs:
       TRAVIS_OS_NAME: osx
     steps: *ci_steps
 
-  dist_packages_linux:
-    machine: true
+  prepare_dist:
+    docker:
+      - image: docker:stable-git
     steps:
+      # checkout specific distribution-scripts version to perform releases and nightly
       - run: |
           git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
           git checkout params
-          cd x86_64
-          make CRYSTAL_VERSION=nightly CRYSTAL_SHA1=$CIRCLE_SHA1 release=true
+      # persist relevant information for build process in different environments.
+      # determine is the build is nightly or a tagged release
+      - run: |
+          cd ~/distribution-scripts
+          touch build.env
+          echo "export CRYSTAL_VERSION=nightly" >> build.env
+          echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
+
+          cat build.env
       - persist_to_workspace:
-          root: ../distribution-scripts/x86_64/
+          root: ../
+          paths:
+            - distribution-scripts
+
+  dist_packages_linux:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+          source build.env
+          cd x86_64
+          make release=true
+      - persist_to_workspace:
+          root: /tmp/workspace/distribution-scripts/x86_64/
           paths:
             - build
 
@@ -60,26 +84,26 @@ jobs:
       - run:
           name: Setup environment
           command: |
-            echo "2.4.2" > ~/.ruby-version
-
             brew install pkgconfig libtool
 
             sudo mkdir -p /opt/crystal
             sudo chown $(whoami) /opt/crystal/
             sudo mkdir -p /var/cache
             sudo chown $(whoami) /var/cache
+      - attach_workspace:
+          at: /tmp/workspace
       - run:
           no_output_timeout: 40m
           command: |
-            git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
-            cd ~/distribution-scripts
-            git checkout params
+            echo "2.4.2" > /tmp/workspace/distribution-scripts/.ruby-version
+            cd /tmp/workspace/distribution-scripts
+            source build.env
             cd omnibus
             bundle check || bundle install --binstubs
             cd ../x86_64
-            make darwin CRYSTAL_VERSION=nightly CRYSTAL_SHA1=$CIRCLE_SHA1 release=true
+            make darwin release=true
       - persist_to_workspace:
-          root: ../distribution-scripts/x86_64/
+          root: /tmp/workspace/distribution-scripts/x86_64/
           paths:
             - build
 
@@ -89,15 +113,13 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - run: |
-          git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
-          cd ~/distribution-scripts
-          git checkout params
+          cd /tmp/workspace/distribution-scripts
+          source build.env
           cd docker
-          export CRYSTAL_VERSION=nightly
           cp /tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb crystal.deb
-          make CRYSTAL_VERSION=${CRYSTAL_VERSION} CRYSTAL_DEB=crystal.deb
+          make CRYSTAL_DEB=crystal.deb
       - persist_to_workspace:
-          root: ../distribution-scripts/docker/
+          root: /tmp/workspace/distribution-scripts/docker/
           paths:
             - build
 
@@ -107,7 +129,8 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - run: |
-          export CRYSTAL_VERSION=nightly
+          cd /tmp/workspace/distribution-scripts
+          source ./build.env
           gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}.tar.gz | docker image load
           gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
           docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
@@ -120,22 +143,19 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - run: |
-          git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
-          cd ~/distribution-scripts
-          git checkout params
+          cd /tmp/workspace/distribution-scripts
+          source build.env
           cd docs
-
-          export CRYSTAL_VERSION=nightly
           gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
-          make CRYSTAL_VERSION=${CRYSTAL_VERSION} CRYSTAL_SHA1=$CIRCLE_SHA1 CRYSTAL_DOCKER_IMAGE=crystallang/crystal:${CRYSTAL_VERSION}-build
+          make CRYSTAL_VERSION=${CRYSTAL_VERSION} CRYSTAL_DOCKER_IMAGE=crystallang/crystal:${CRYSTAL_VERSION}-build
       - persist_to_workspace:
-          root: ../distribution-scripts/docs/
+          root: /tmp/workspace/distribution-scripts/docs/
           paths:
             - build
 
   dist_packages_collect:
     docker:
-      - image: buildpack-deps:trusty
+      - image: buildpack-deps:xenial
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -160,13 +180,19 @@ workflows:
           filters: *ci_filter
       - build_darwin:
           filters: *ci_filter
-      - dist_packages_linux:
+      - prepare_dist:
           filters: &nightly_filter
             branches:
               only:
                 - ci/nightly
+      - dist_packages_linux:
+          filters: *nightly_filter
+          requires:
+            - prepare_dist
       - dist_packages_darwin:
           filters: *nightly_filter
+          requires:
+            - prepare_dist
       - dist_packages_docs:
           filters: *nightly_filter
           requires:
