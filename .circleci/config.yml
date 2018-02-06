@@ -52,8 +52,20 @@ jobs:
       - run: |
           cd ~/distribution-scripts
           touch build.env
-          echo "export CRYSTAL_VERSION=nightly" >> build.env
+          echo "export DOCKER_REPOSITORY=crystallang/crystal" >> build.env
+
+          # What to build
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
+
+          # Which previous version use
+          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/v0.24.1/crystal-0.24.1-2"
+          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
+          echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
+
+          # How to brand it
+          echo "export CRYSTAL_VERSION=nightly" >> build.env
+          echo "export PACKAGE_ITERATION=$CIRCLE_BUILD_NUM" >> build.env
+          echo "export DOCKER_TAG=nightly" >> build.env
 
           cat build.env
       - persist_to_workspace:
@@ -116,7 +128,7 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docker
-          cp /tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb crystal.deb
+          cp /tmp/workspace/build/crystal_${CRYSTAL_VERSION}-${PACKAGE_ITERATION}_amd64.deb crystal.deb
           make CRYSTAL_DEB=crystal.deb
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docker/
@@ -134,8 +146,8 @@ jobs:
           gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}.tar.gz | docker image load
           gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
           docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-          docker push crystallang/crystal:${CRYSTAL_VERSION}
-          docker push crystallang/crystal:${CRYSTAL_VERSION}-build
+          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}
+          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
 
   dist_packages_docs:
     machine: true
@@ -147,7 +159,7 @@ jobs:
           source build.env
           cd docs
           gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
-          make CRYSTAL_VERSION=${CRYSTAL_VERSION} CRYSTAL_DOCKER_IMAGE=crystallang/crystal:${CRYSTAL_VERSION}-build
+          make CRYSTAL_DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docs/
           paths:
