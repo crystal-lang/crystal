@@ -10,7 +10,11 @@ require "./lib_crypto"
 
 # Check for brew's openssl libs on OS X
 {% if flag?(:darwin) && !flag?(:OPENSSL_NOBREW) %}
-  @[Link(ldflags: "`(echo '-L'; command -v brew > /dev/null && brew --prefix openssl; echo '/lib') | tr -d '\n'`")]
+  {% if flag?(:LIBRESSL_BREW) %}
+    @[Link(ldflags: "`(echo '-L'; command -v brew > /dev/null && brew --prefix libressl; echo '/lib') | tr -d '\n'`")]
+  {% else %}
+    @[Link(ldflags: "`(echo '-L'; command -v brew > /dev/null && brew --prefix openssl; echo '/lib') | tr -d '\n'`")]
+  {% end %}
 {% end %}
 @[Link("crypto")]
 @[Link("ssl")]
