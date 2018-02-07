@@ -2795,19 +2795,16 @@ module Crystal
 
         case type
         when GenericClassType
-          type_name = type.name.split "::"
-
-          path = Path.global(type_name).at(node.location)
+          generic_type = TypeNode.new(type).at(node.location)
           type_of = TypeOf.new(node.elements).at(node.location)
-          generic = Generic.new(path, type_of).at(node.location)
+
+          generic = Generic.new(generic_type, type_of).at(node.location)
 
           node.name = generic
         when GenericClassInstanceType
           # Nothing
         else
-          type_name = type.to_s.split "::"
-          path = Path.global(type_name).at(node.location)
-          node.name = path
+          node.name = TypeNode.new(name.type).at(node.location)
         end
 
         expand_named(node)
@@ -2823,22 +2820,16 @@ module Crystal
 
         case type
         when GenericClassType
-          type_name = type.name.split "::"
-
-          path = Path.global(type_name).at(node.location)
+          generic_type = TypeNode.new(type).at(node.location)
           type_of_keys = TypeOf.new(node.entries.map { |x| x.key.as(ASTNode) }).at(node.location)
           type_of_values = TypeOf.new(node.entries.map { |x| x.value.as(ASTNode) }).at(node.location)
-          generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode).at(node.location)
+          generic = Generic.new(generic_type, [type_of_keys, type_of_values] of ASTNode).at(node.location)
 
           node.name = generic
         when GenericClassInstanceType
           # Nothing
         else
-          type_name = type.to_s.split "::"
-
-          path = Path.global(type_name).at(node.location)
-
-          node.name = path
+          node.name = TypeNode.new(name.type).at(node.location)
         end
 
         expand_named(node)
