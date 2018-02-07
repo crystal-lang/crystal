@@ -133,7 +133,7 @@ module HTTP::FormData
 
     parts = content_disposition.split(';')
     type = parts[0]
-  raise Error.new("Invalid Content-Disposition: not form-data or file") unless ["form-data", "file"].includes?(type)
+    raise Error.new("Invalid Content-Disposition: not form-data or file") unless {"form-data", "file"}.includes?(type)
     (1...parts.size).each do |i|
       part = parts[i]
 
