@@ -11,7 +11,7 @@ defaults:
 version: 2
 
 jobs:
-  build_linux:
+  test_linux:
     machine: true
     environment:
       <<: *env
@@ -20,7 +20,7 @@ jobs:
       ARCH_CMD: linux64
     steps: *ci_steps
 
-  build_linux32:
+  test_linux32:
     machine: true
     environment:
       <<: *env
@@ -30,7 +30,7 @@ jobs:
       ARCH_LIBRARY_PATH: /opt/crystal/embedded/lib/
     steps: *ci_steps
 
-  build_darwin:
+  test_darwin:
     macos:
       xcode: "9.0"
     environment:
@@ -73,7 +73,7 @@ jobs:
           paths:
             - distribution-scripts
 
-  dist_packages_linux:
+  dist_linux:
     machine: true
     steps:
       - attach_workspace:
@@ -88,7 +88,7 @@ jobs:
           paths:
             - build
 
-  dist_packages_darwin:
+  dist_darwin:
     macos:
       xcode: "9.0"
     shell: /bin/bash --login -eo pipefail
@@ -119,7 +119,7 @@ jobs:
           paths:
             - build
 
-  dist_docker_build:
+  dist_docker:
     machine: true
     steps:
       - attach_workspace:
@@ -135,7 +135,7 @@ jobs:
           paths:
             - build
 
-  dist_docker_publish:
+  publish_docker:
     machine: true
     steps:
       - attach_workspace:
@@ -149,7 +149,7 @@ jobs:
           docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}
           docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
 
-  dist_packages_docs:
+  dist_docs:
     machine: true
     steps:
       - attach_workspace:
@@ -165,7 +165,7 @@ jobs:
           paths:
             - build
 
-  dist_packages_collect:
+  dist_artifacts:
     docker:
       - image: buildpack-deps:xenial
     steps:
@@ -179,7 +179,7 @@ workflows:
   version: 2
   build_all_platforms:
     jobs:
-      - build_linux:
+      - test_linux:
           filters: &ci_filter
             branches:
               only:
@@ -188,39 +188,39 @@ workflows:
                 - /.*\bci\b.*/
             tags:
               only: /.*/
-      - build_linux32:
+      - test_linux32:
           filters: *ci_filter
-      - build_darwin:
+      - test_darwin:
           filters: *ci_filter
       - prepare_dist:
           filters: &nightly_filter
             branches:
               only:
                 - ci/nightly
-      - dist_packages_linux:
+      - dist_linux:
           filters: *nightly_filter
           requires:
             - prepare_dist
-      - dist_packages_darwin:
+      - dist_darwin:
           filters: *nightly_filter
           requires:
             - prepare_dist
-      - dist_packages_docs:
+      - dist_docs:
           filters: *nightly_filter
           requires:
-            - dist_docker_build
-      - dist_docker_build:
+            - dist_docker
+      - dist_docker:
           filters: *nightly_filter
           requires:
-            - dist_packages_linux
-      - dist_docker_publish:
+            - dist_linux
+      - publish_docker:
           filters: *nightly_filter
           requires:
-            - dist_docker_build
-      - dist_packages_collect:
+            - dist_docker
+      - dist_artifacts:
           filters: *nightly_filter
           requires:
-            - dist_packages_linux
-            - dist_packages_darwin
-            - dist_docker_build
-            - dist_packages_docs
+            - dist_linux
+            - dist_darwin
+            - dist_docker
+            - dist_docs
