@@ -1052,7 +1052,7 @@ module Crystal
     end
 
     def visit(node : Generic)
-      name = node.name
+      name = node.name.as(Path)
       first_name = name.global? && name.names.size == 1 && name.names.first
 
       if name.global? && @token.type == :"::"

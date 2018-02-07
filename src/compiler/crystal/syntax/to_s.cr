@@ -834,8 +834,10 @@ module Crystal
     end
 
     def visit(node : Generic)
-      if @inside_lib && node.name.names.size == 1
-        case node.name.names.first
+      name = node.name
+
+      if @inside_lib && (name.is_a?(Path) && name.names.size == 1)
+        case name.names.first
         when "Pointer"
           node.type_vars.first.accept self
           @str << "*"
