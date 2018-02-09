@@ -1,3 +1,5 @@
+require "./to_yaml"
+
 module YAML
   annotation Field
   end
