@@ -9,7 +9,9 @@ class Crystal::Case
     scope.program
   end
 
-  alias Pattern = Nil | Bool | Type
+  # `Pattern` represents patterns in `when` condition.
+  # NOTE: it is `Type` alias only but it is for extensibility.
+  alias Pattern = Type
 
   # Run exhaustiveness-check and fix up expanded node.
   #
@@ -102,12 +104,12 @@ class Crystal::Case
   # end
   # ```
   def check_exhaustiveness_tuple(case_tuple)
-    all_enum_or_union = true
+    all_multiple = true
     element_patterns = case_tuple.elements.map do |case_cond|
       patterns = [] of Pattern
-      enum_or_union = calculate_patterns(case_cond) { |pattern| patterns << pattern }
-      return false if enum_or_union.nil?
-      all_enum_or_union &&= enum_or_union
+      multiple = calculate_patterns(case_cond) { |pattern| patterns << pattern }
+      return false if multiple.nil?
+      all_multiple &&= multiple
       patterns
     end
 
@@ -139,36 +141,16 @@ class Crystal::Case
     end
 
     return true if tuple_patterns.empty?
-    return false unless all_enum_or_union
+    return false unless all_multiple
 
     message = String.build do |builder|
       builder << "found non-exhaustive pattern#{tuple_patterns.size > 1 ? "s" : ""}: "
 
-      sorted_tuple_patterns = tuple_patterns.to_a.sort_by do |tuple_pattern|
-        tuple_pattern.map do |pattern|
-          case pattern
-          when nil
-            "0"
-          when true
-            "1"
-          when false
-            "2"
-          else
-            pattern.to_s
-          end
-        end
-      end
+      sorted_tuple_patterns = tuple_patterns.to_a.sort_by &.to_s
 
       sorted_tuple_patterns.join(", ", builder) do |tuple_pattern|
         builder << "{"
-        tuple_pattern.join(", ", builder) do |pattern|
-          case pattern
-          when Const
-            builder << pattern
-          when nil, Bool, Type
-            builder << pattern.inspect
-          end
-        end
+        tuple_pattern.join(", ", builder, &.inspect builder)
         builder << "}"
       end
     end
@@ -190,8 +172,8 @@ class Crystal::Case
   # ```
   def check_exhaustiveness_simple(case_cond)
     patterns = Set(Pattern).new
-    enum_or_union = calculate_patterns(case_cond) { |pattern| patterns << pattern }
-    return false if enum_or_union.nil?
+    multiple = calculate_patterns(case_cond) { |pattern| patterns << pattern }
+    return false if multiple.nil?
 
     self.whens.each &.conds.each do |when_cond|
       check_exhaustiveness_step(patterns, when_cond) do |pattern|
@@ -201,35 +183,15 @@ class Crystal::Case
 
     return true if patterns.empty?
 
-    union = case_cond.type.is_a?(UnionType)
-
-    # Types which are neither enum nor union types cannot check exhaustiveness.
-    return false unless enum_or_union
+    # Types which are not union types cannot check exhaustiveness.
+    return false unless multiple
 
     message = String.build do |builder|
       builder << "found non-exhaustive pattern#{patterns.size > 1 ? "s" : ""}: "
 
-      sorted_patterns = patterns.to_a.sort_by do |pattern|
-        case pattern
-        when nil
-          "0"
-        when true
-          "1"
-        when false
-          "2"
-        else
-          pattern.to_s
-        end
-      end
+      sorted_patterns = patterns.to_a.sort_by &.to_s
 
-      sorted_patterns.join(", ", builder) do |pattern|
-        case pattern
-        when Const
-          builder << (union ? pattern : pattern.name)
-        when nil, Bool, Type
-          builder << pattern.inspect
-        end
-      end
+      sorted_patterns.join(", ", builder, &.inspect builder)
     end
 
     case_cond.raise message
@@ -245,56 +207,26 @@ class Crystal::Case
 
     case case_cond_type
     when UnionType
-      enum_or_union = true
+      multiple = true
       # 'dup' is important to prevent changing this array value by mutable methods.
       types = case_cond_type.union_types.dup
-    when EnumType
-      # A @[Flags] enum means a set of flags, so exhaustiveness check does not make sense.
-      enum_or_union = !case_cond_type.flags?
-      types = [case_cond_type] of Type
-    when program.bool, program.nil_type
-      enum_or_union = true
-      types = [case_cond_type] of Type
     else
-      enum_or_union = false
+      multiple = false
       types = [case_cond_type] of Type
     end
 
     types.each do |type|
-      case type
-      when EnumType
-        # A @[Flags] enum means a set of flags, so exhaustiveness check does not make sense.
-        if type.flags?
-          yield type
-        else
-          type.types.each_value do |t|
-            yield t if t.is_a?(Const)
-          end
-        end
-      when program.nil_type
-        yield nil
-      when program.bool
-        yield true
-        yield false
-      else
-        yield type
-      end
+      yield type
     end
 
-    enum_or_union
+    multiple
   end
 
   def check_exhaustiveness_step(patterns, when_cond)
     case when_cond
     when Path
       type_or_const = scope.lookup_type_var?(when_cond, free_vars: parent_visitor.free_vars)
-      if type_or_const.is_a?(Const)
-        patterns.each do |const|
-          if const.is_a?(Const) && const == type_or_const
-            yield const
-          end
-        end
-      elsif type_or_const.is_a?(Type)
+      if type_or_const.is_a?(Type)
         check_exhaustiveness_step_type(patterns, type_or_const) { |pattern| yield pattern }
       end
     when Generic
@@ -307,21 +239,6 @@ class Crystal::Case
           check_exhaustiveness_step_type(patterns, type) { |pattern| yield pattern }
         end
       end
-    when Call
-      if when_cond.obj.is_a?(ImplicitObj)
-        name = when_cond.name[0..-2] # strip '?'
-        patterns.each do |const|
-          next unless const.is_a?(Const)
-          type = const.namespace.as(EnumType)
-          next unless const.name.underscore == name && type.question_methods.includes?(when_cond.name)
-          yield const
-        end
-      end
-    when NilLiteral
-      yield nil if patterns.includes?(nil)
-    when BoolLiteral
-      value = when_cond.value
-      yield value if patterns.includes?(value)
     when Underscore
       patterns.each { |pattern| yield pattern }
     else
@@ -330,20 +247,8 @@ class Crystal::Case
   end
 
   def check_exhaustiveness_step_type(patterns, type)
-    case type
-    when EnumType
-      patterns.each do |const|
-        yield const if const.is_a?(Const) && const.namespace == type
-      end
-    when program.bool
-      yield true if patterns.includes?(true)
-      yield false if patterns.includes?(false)
-    when program.nil_type
-      yield nil if patterns.includes?(nil)
-    else
-      patterns.each do |case_type|
-        yield case_type if case_type.is_a?(Type) && case_type.implements?(type)
-      end
+    patterns.each do |case_type|
+      yield case_type if case_type.is_a?(Type) && case_type.implements?(type)
     end
   end
 end

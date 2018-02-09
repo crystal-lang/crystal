@@ -282,6 +282,8 @@ module YAML::Schema::Core
       yield source.value
     when "tag:yaml.org,2002:timestamp"
       yield parse_time(source.value, source.location)
+    else
+      # nothing
     end
   end
 

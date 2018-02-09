@@ -232,6 +232,8 @@ class Dir
                 yield fullpath if next_cmd.path == entry
               when EntryMatch
                 yield fullpath if next_cmd.matches?(entry)
+              else
+                # nothing
               end
 
               if dir?(fullpath)
