@@ -79,6 +79,10 @@ module YAML::Schema::Core
          .starts_with?("-0x")
       value = string.to_i64?(base: 16, prefix: true)
       return value || string
+    when .starts_with?("0."),
+         .starts_with?('.')
+      value = parse_float?(string)
+      return value || string
     when .starts_with?('0')
       value = string.to_i64?(base: 8, prefix: true)
       return value || string
