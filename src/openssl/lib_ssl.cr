@@ -8,16 +8,7 @@ require "./lib_crypto"
   end
 {% end %}
 
-# Check for brew's openssl libs on OS X
-{% if flag?(:darwin) && !flag?(:OPENSSL_NOBREW) %}
-  {% if flag?(:LIBRESSL_BREW) %}
-    @[Link(ldflags: "`(echo '-L'; command -v brew > /dev/null && brew --prefix libressl; echo '/lib') | tr -d '\n'`")]
-  {% else %}
-    @[Link(ldflags: "`(echo '-L'; command -v brew > /dev/null && brew --prefix openssl; echo '/lib') | tr -d '\n'`")]
-  {% end %}
-{% end %}
-@[Link("crypto")]
-@[Link("ssl")]
+@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
 lib LibSSL
   alias Int = LibC::Int
   alias Char = LibC::Char

@@ -2,14 +2,10 @@
   lib LibCrypto
     # An extra zero is appended to the output of LIBRESSL_VERSION to make it 0 when LibreSSL does not exist on the system.
     # Any comparisons to it should be affixed with an extra zero as well e.g. `(LIBRESSL_VERSION_NUMBER >= 0x2050500F0)`.
-    # On newer OS X systems, the OpenSSL/LibreSSL library supplied by the system may be newer than homebrew ones. If you wish to use them, set the compilation flag OPENSSL_NOBREW.
-    # Also on OS X, set the compilation flag LIBRESSL_BREW to use the libressl provided by homebrew.
-    LIBRESSL_VERSION = {{ system("echo \"#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER\" | " + (env("CC") || "cc") +
-                                 ((flag?(:darwin) && !flag?(:OPENSSL_NOBREW)) ? (" -I" + system("command -v brew > /dev/null && brew --prefix " + (flag?(:LIBRESSL_BREW) ? "libressl" : "openssl")).chomp.stringify + "/include") : "") +
-                                 " -E -").chomp.split('\n').last.split('L').first.id + "0" }}
-    OPENSSL_VERSION = {{ system("echo \"#include <openssl/opensslv.h>\nOPENSSL_VERSION_NUMBER\" | " + (env("CC") || "cc") +
-                                ((flag?(:darwin) && !flag?(:OPENSSL_NOBREW)) ? (" -I" + system("command -v brew > /dev/null && brew --prefix " + (flag?(:LIBRESSL_BREW) ? "libressl" : "openssl")).chomp.stringify + "/include") : "") +
-                                " -E -").chomp.split('\n').last.split('L').first.id }}
+    LIBRESSL_VERSION = {{ system("echo \"#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER\" | " +
+                                 (env("CC") || "cc") + " " + `pkg-config --cflags --silence-errors libssl || true`.chomp.stringify + " -E -").chomp.split('\n').last.split('L').first.id + "0" }}
+    OPENSSL_VERSION = {{ system("echo \"#include <openssl/opensslv.h>\nOPENSSL_VERSION_NUMBER\" | " +
+                                (env("CC") || "cc") + " " + `pkg-config --cflags --silence-errors libssl || true`.chomp.stringify + " -E -").chomp.split('\n').last.split('L').first.id }}
   end
 {% end %}
 
@@ -21,15 +17,7 @@
   end
 {% end %}
 
-# Check for brew's openssl libs on OS X
-{% if flag?(:darwin) && !flag?(:OPENSSL_NOBREW) %}
-  {% if flag?(:LIBRESSL_BREW) %}
-    @[Link(ldflags: "`(echo '-L'; command -v brew > /dev/null && brew --prefix libressl; echo '/lib') | tr -d '\n'`")]
-  {% else %}
-    @[Link(ldflags: "`(echo '-L'; command -v brew > /dev/null && brew --prefix openssl; echo '/lib') | tr -d '\n'`")]
-  {% end %}
-{% end %}
-@[Link("crypto")]
+@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s ' -lcrypto'`")]
 lib LibCrypto
   alias Char = LibC::Char
   alias Int = LibC::Int
