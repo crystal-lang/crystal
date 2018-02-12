@@ -16,7 +16,7 @@ struct Atomic(T)
 
   # Creates an Atomic with the given initial value
   def self.new(value : T)
-    new pointerof(value)
+    new pointerof(value).as(T*)
   end
 
   # Compares this atomic's value with *cmp*:
