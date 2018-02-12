@@ -3,8 +3,8 @@
 # Only primitive integer types, reference types or nilable reference types
 # can be used with an Atomic type.
 struct Atomic(T)
-  # Creates an Atomic with the given initial value.
-  def initialize(@value : T)
+  # Creates an Atomic with the given pointer
+  def initialize(@ptr : T*)
     {% if !T.union? && (T == Char || T < Int::Primitive || T < Enum) %}
       # Support integer types, enum types, or char (because it's represented as an integer)
     {% elsif T < Reference || (T.union? && T.union_types.all? { |t| t == Nil || t < Reference }) %}
@@ -12,6 +12,11 @@ struct Atomic(T)
     {% else %}
       {{ raise "Can only create Atomic with primitive integer types, reference types or nilable reference types, not #{T}" }}
     {% end %}
+  end
+
+  # Creates an Atomic with the given initial value
+  def self.new(value : T)
+    new pointerof(value).as(T*)
   end
 
   # Compares this atomic's value with *cmp*:
@@ -32,16 +37,16 @@ struct Atomic(T)
     # Check if it's a nilable reference type
     {% if T.union? && T.union_types.all? { |t| t == Nil || t < Reference } %}
       # If so, use addresses because LLVM < 3.9 doesn't support cmpxchg with pointers
-      address, success = Ops.cmpxchg(pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(cmp.as(T).object_id), LibC::SizeT.new(new.as(T).object_id), :sequentially_consistent, :sequentially_consistent)
+      address, success = Ops.cmpxchg(@ptr.as(LibC::SizeT*), LibC::SizeT.new(cmp.as(T).object_id), LibC::SizeT.new(new.as(T).object_id), :sequentially_consistent, :sequentially_consistent)
       {address == 0 ? nil : Pointer(T).new(address).as(T), success}
     # Check if it's a reference type
     {% elsif T < Reference %}
       # Use addresses again (but this can't return nil)
-      address, success = Ops.cmpxchg(pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(cmp.as(T).object_id), LibC::SizeT.new(new.as(T).object_id), :sequentially_consistent, :sequentially_consistent)
+      address, success = Ops.cmpxchg(@ptr.as(LibC::SizeT*), LibC::SizeT.new(cmp.as(T).object_id), LibC::SizeT.new(new.as(T).object_id), :sequentially_consistent, :sequentially_consistent)
       {Pointer(T).new(address).as(T), success}
     {% else %}
       # Otherwise, this is an integer type
-      Ops.cmpxchg(pointerof(@value), cmp, new, :sequentially_consistent, :sequentially_consistent)
+      Ops.cmpxchg(@ptr, cmp, new, :sequentially_consistent, :sequentially_consistent)
     {% end %}
   end
 
@@ -53,7 +58,7 @@ struct Atomic(T)
   # atomic.get    # => 3
   # ```
   def add(value : T)
-    Ops.atomicrmw(:add, pointerof(@value), value, :sequentially_consistent, false)
+    Ops.atomicrmw(:add, @ptr, value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value -= value`. Returns the old value.
@@ -64,7 +69,7 @@ struct Atomic(T)
   # atomic.get    # => 7
   # ```
   def sub(value : T)
-    Ops.atomicrmw(:sub, pointerof(@value), value, :sequentially_consistent, false)
+    Ops.atomicrmw(:sub, @ptr, value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value &= value`. Returns the old value.
@@ -75,7 +80,7 @@ struct Atomic(T)
   # atomic.get    # => 1
   # ```
   def and(value : T)
-    Ops.atomicrmw(:and, pointerof(@value), value, :sequentially_consistent, false)
+    Ops.atomicrmw(:and, @ptr, value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value = ~(atomic_value & value)`. Returns the old value.
@@ -86,7 +91,7 @@ struct Atomic(T)
   # atomic.get     # => -2
   # ```
   def nand(value : T)
-    Ops.atomicrmw(:nand, pointerof(@value), value, :sequentially_consistent, false)
+    Ops.atomicrmw(:nand, @ptr, value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value |= value`. Returns the old value.
@@ -97,7 +102,7 @@ struct Atomic(T)
   # atomic.get   # => 7
   # ```
   def or(value : T)
-    Ops.atomicrmw(:or, pointerof(@value), value, :sequentially_consistent, false)
+    Ops.atomicrmw(:or, @ptr, value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value ^= value`. Returns the old value.
@@ -108,7 +113,7 @@ struct Atomic(T)
   # atomic.get    # => 6
   # ```
   def xor(value : T)
-    Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
+    Ops.atomicrmw(:xor, @ptr, value, :sequentially_consistent, false)
   end
 
   # Performs `atomic_value = max(atomic_value, value)`. Returns the old value.
@@ -124,9 +129,9 @@ struct Atomic(T)
   # ```
   def max(value : T)
     {% if T < Int::Signed %}
-      Ops.atomicrmw(:max, pointerof(@value), value, :sequentially_consistent, false)
+      Ops.atomicrmw(:max, @ptr, value, :sequentially_consistent, false)
     {% else %}
-      Ops.atomicrmw(:umax, pointerof(@value), value, :sequentially_consistent, false)
+      Ops.atomicrmw(:umax, @ptr, value, :sequentially_consistent, false)
     {% end %}
   end
 
@@ -143,9 +148,9 @@ struct Atomic(T)
   # ```
   def min(value : T)
     {% if T < Int::Signed %}
-      Ops.atomicrmw(:min, pointerof(@value), value, :sequentially_consistent, false)
+      Ops.atomicrmw(:min, @ptr, value, :sequentially_consistent, false)
     {% else %}
-      Ops.atomicrmw(:umin, pointerof(@value), value, :sequentially_consistent, false)
+      Ops.atomicrmw(:umin, @ptr, value, :sequentially_consistent, false)
     {% end %}
   end
 
@@ -157,7 +162,7 @@ struct Atomic(T)
   # atomic.get      # => 10
   # ```
   def swap(value : T)
-    Ops.atomicrmw(:xchg, pointerof(@value), value, :sequentially_consistent, false)
+    Ops.atomicrmw(:xchg, @ptr, value, :sequentially_consistent, false)
   end
 
   # Atomically sets this atomic's value to *value*. Returns the **new** value.
@@ -168,7 +173,7 @@ struct Atomic(T)
   # atomic.get     # => 10
   # ```
   def set(value : T)
-    Ops.store(pointerof(@value), value.as(T), :sequentially_consistent, true)
+    Ops.store(@ptr, value.as(T), :sequentially_consistent, true)
     value
   end
 
@@ -179,17 +184,18 @@ struct Atomic(T)
   # atomic.lazy_set(10) # => 10
   # atomic.get          # => 10
   # ```
-  def lazy_set(@value : T)
+  def lazy_set(value : T)
+    @ptr.value = value
   end
 
   # Atomically returns this atomic's value.
   def get
-    Ops.load(pointerof(@value), :sequentially_consistent, true)
+    Ops.load(@ptr, :sequentially_consistent, true)
   end
 
   # **Non-atomically** returns this atomic's value.
   def lazy_get
-    @value
+    @ptr.value
   end
 
   # :nodoc:
