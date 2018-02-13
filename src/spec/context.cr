@@ -42,15 +42,15 @@ module Spec
       @results[result.kind] << result
     end
 
-    def self.print_results(elapsed_time)
-      @@instance.print_results(elapsed_time)
+    def self.print_results(elapsed_time, aborted = false)
+      @@instance.print_results(elapsed_time, aborted)
     end
 
     def self.succeeded
       @@instance.succeeded
     end
 
-    def print_results(elapsed_time)
+    def print_results(elapsed_time, aborted = false)
       Spec.formatters.each(&.finish)
 
       pendings = @results[:pending]
@@ -124,11 +124,13 @@ module Spec
       total = pendings.size + failures.size + errors.size + success.size
 
       final_status = case
+                     when aborted                           then :error
                      when (failures.size + errors.size) > 0 then :fail
                      when pendings.size > 0                 then :pending
                      else                                        :success
                      end
 
+      puts "Aborted!".colorize.red if aborted
       puts "Finished in #{Spec.to_human(elapsed_time)}"
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
 
