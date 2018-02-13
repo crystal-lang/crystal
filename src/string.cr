@@ -900,10 +900,6 @@ class String
     end
   end
 
-  def unsafe_byte_at(index)
-    to_unsafe[index]
-  end
-
   # Returns a new `String` with each uppercase letter replaced with its lowercase
   # counterpart.
   #
@@ -1591,7 +1587,7 @@ class String
     return delete(from) if to.empty?
 
     if from.bytesize == 1
-      return gsub(from.unsafe_byte_at(0).unsafe_chr, to)
+      return gsub(from.to_unsafe[0].unsafe_chr, to)
     end
 
     multi = nil
@@ -2010,7 +2006,7 @@ class String
   # ```
   def gsub(char : Char, replacement)
     if replacement.is_a?(String) && replacement.bytesize == 1
-      return gsub(char, replacement.unsafe_byte_at(0).unsafe_chr)
+      return gsub(char, replacement.to_unsafe[0].unsafe_chr)
     end
 
     if includes?(char)
@@ -2120,7 +2116,7 @@ class String
   # ```
   def gsub(string : String, replacement)
     if string.bytesize == 1
-      gsub(string.unsafe_byte_at(0).unsafe_chr, replacement)
+      gsub(string.to_unsafe[0].unsafe_chr, replacement)
     else
       gsub(string) { replacement }
     end
@@ -4101,7 +4097,7 @@ class String
   end
 
   protected def char_bytesize_at(byte_index)
-    first = unsafe_byte_at(byte_index)
+    first = to_unsafe[byte_index]
 
     if first < 0x80
       return 1
@@ -4111,7 +4107,7 @@ class String
       return 1
     end
 
-    second = unsafe_byte_at(byte_index + 1)
+    second = to_unsafe[byte_index + 1]
     if (second & 0xc0) != 0x80
       return 1
     end
@@ -4120,7 +4116,7 @@ class String
       return 2
     end
 
-    third = unsafe_byte_at(byte_index + 2)
+    third = to_unsafe[byte_index + 2]
     if (third & 0xc0) != 0x80
       return 2
     end
@@ -4185,11 +4181,11 @@ class String
     pointerof(@c)
   end
 
-  def unsafe_byte_slice(byte_offset, count)
+  protected def unsafe_byte_slice(byte_offset, count)
     Slice.new(to_unsafe + byte_offset, count, read_only: true)
   end
 
-  def unsafe_byte_slice(byte_offset)
+  protected def unsafe_byte_slice(byte_offset)
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset, read_only: true)
   end
 
