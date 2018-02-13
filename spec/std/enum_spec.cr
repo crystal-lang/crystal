@@ -142,6 +142,22 @@ describe Enum do
     end
   end
 
+  describe "valid?" do
+    it "for simple enum" do
+      SpecEnum.valid?(SpecEnum::One).should be_true
+      SpecEnum.valid?(SpecEnum::Two).should be_true
+      SpecEnum.valid?(SpecEnum::Three).should be_true
+      SpecEnum.valid?(SpecEnum.new(3i8)).should be_false
+    end
+
+    it "for flags eunm" do
+      SpecEnumFlags.valid?(SpecEnumFlags::One).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags::Two).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags::One | SpecEnumFlags::Two).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags.new(8)).should be_false
+    end
+  end
+
   it "has hash" do
     SpecEnum::Two.hash.should_not eq(SpecEnum::Three.hash)
   end

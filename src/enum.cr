@@ -373,6 +373,21 @@ struct Enum
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
   end
 
+  # Returns `true` if the given *value* is the enum member, or returns
+  # `false` if not member.
+  #
+  # ```
+  # Color.valid?(Color::Red)   # => true
+  # Color.valid?(Color.new(4)) # => false
+  # ```
+  #
+  # NOTE: this is a class method, not an instance method because
+  # an instance method `valid?` is defined by the language when a user
+  # defines an enum member named `Valid`.
+  def self.valid?(value : self) : Bool
+    !!from_value?(value.to_i)
+  end
+
   # def self.to_h : Hash(String, self)
   #   {
   #     {% for member in @type.constants %}
