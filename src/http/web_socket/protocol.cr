@@ -253,7 +253,7 @@ class HTTP::WebSocket::Protocol
         else
           context = tls
         end
-        socket = OpenSSL::SSL::Socket::Client.new(socket, context: context, sync_close: true)
+        socket = OpenSSL::SSL::Socket::Client.new(socket, context: context, sync_close: true, hostname: host)
       end
     {% end %}
 
