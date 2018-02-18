@@ -2,7 +2,9 @@ CodeMirror.keyMap.macDefault["Cmd-/"] = "toggleComment";
 CodeMirror.keyMap.pcDefault["Ctrl-/"] = "toggleComment";
 
 CodeMirror.keyMap.macDefault["Cmd-Enter"] = "runCode";
+CodeMirror.keyMap.macDefault["Cmd-S"] = "runCode";
 CodeMirror.keyMap.pcDefault["Ctrl-Enter"] = "runCode";
+CodeMirror.keyMap.pcDefault["Ctrl-S"] = "runCode";
 
 CodeMirror.commands.runCode = function(editor) {
   if (editor._playgroundSession) {
