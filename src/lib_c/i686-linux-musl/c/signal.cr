@@ -35,6 +35,10 @@ lib LibC
   SIGSTKFLT = 16
   SIGUNUSED = LibC::SIGSYS
 
+  alias SighandlerT = Int ->
+  SIG_DFL = SighandlerT.new(Pointer(Void).new(0_u64), Pointer(Void).null)
+  SIG_IGN = SighandlerT.new(Pointer(Void).new(1_u64), Pointer(Void).null)
+
   fun kill(x0 : PidT, x1 : Int) : Int
   fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void
 end

@@ -145,7 +145,7 @@ abstract class IO
     # reader.gets # => "hello"
     # reader.gets # => "world"
     # ```
-    def self.pipe(read_blocking = false, write_blocking = false)
+    def self.pipe(read_blocking = false, write_blocking = false) : {IO::FileDescriptor, IO::FileDescriptor}
       pipe_fds = uninitialized StaticArray(LibC::Int, 2)
       if LibC.pipe(pipe_fds) != 0
         raise Errno.new("Could not create pipe")
