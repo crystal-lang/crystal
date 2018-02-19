@@ -503,25 +503,85 @@ module Indexable(T)
     indexes.map { |index| self[index] }
   end
 
-  def zip(other : Indexable)
+  # Calls the given block for each index in `self`, passing in the elements
+  # `{self[i], other[i]}` for each index.
+  #
+  # Raises an `IndexError` if `other` is shorter than `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b", "c"]
+  #
+  # a.zip(b) { |x, y| puts "#{x} -- #{y}" }
+  # ```
+  #
+  # The above produces:
+  #
+  # ```text
+  # 1 --- a
+  # 2 --- b
+  # 3 --- c
+  # ```
+  def zip(other : Indexable(U), &block : T, U ->) forall U
     each_with_index do |elem, i|
       yield elem, other[i]
     end
   end
 
-  def zip(other : Indexable(U)) forall U
+  # Returns an `Array` of tuples populated with the *i*th indexed element from
+  # `self` followed by the *i*th indexed element from `other`.
+  #
+  # Raises an `IndexError` if `other` is shorter than `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b", "c"]
+  #
+  # a.zip(b) # => [{1, "a"}, {2, "b"}, {3, "c"}]
+  # ```
+  def zip(other : Indexable(U)) : Array({T, U}) forall U
     pairs = Array({T, U}).new(size)
     zip(other) { |x, y| pairs << {x, y} }
     pairs
   end
 
-  def zip?(other : Indexable)
+  # Calls the given block for each index in `self`, passing in the elements
+  # `{self[i], other[i]}` for each index.
+  #
+  # If `other` is shorter than `self`, missing values are filled up with `nil`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b"]
+  #
+  # a.zip?(b) { |x, y| puts "#{x} -- #{y}" }
+  # ```
+  #
+  # The above produces:
+  #
+  # ```text
+  # 1 --- a
+  # 2 --- b
+  # 3 ---
+  # ```
+  def zip?(other : Indexable(U), &block : T, U? ->) forall U
     each_with_index do |elem, i|
       yield elem, other[i]?
     end
   end
 
-  def zip?(other : Indexable(U)) forall U
+  # Returns an `Array` of tuples populated with the *i*th indexed element from
+  # `self` followed by the *i*th indexed element from `other`.
+  #
+  # If `other` is shorter than `self`, missing values are filled up with `nil`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b"]
+  #
+  # a.zip?(b) # => [{1, "a"}, {2, "b"}, {3, nil}]
+  # ```
+  def zip?(other : Indexable(U)) : Array({T, U?}) forall U
     pairs = Array({T, U?}).new(size)
     zip?(other) { |x, y| pairs << {x, y} }
     pairs
