@@ -163,7 +163,7 @@ class Time::Location
   # The value is loaded on first access based on the current application environment  (see `.load_local` for details).
   class_property(local : Location) { load_local }
 
-  # Loads the local location described by the the current application environment.
+  # Loads the local location described by the current application environment.
   #
   # It consults the environment variable `ENV["TZ"]` to find the time zone to use.
   # * `"UTC"` and empty string `""` return `Location::UTC`
