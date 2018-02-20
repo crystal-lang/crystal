@@ -1,9 +1,12 @@
 require "./stddef"
 
 lib LibC
-  fun memchr(x0 : Void*, c : Int, n : SizeT) : Void*
-  fun memcmp(x0 : Void*, x1 : Void*, x2 : SizeT) : Int
-  fun strcmp(x0 : Char*, x1 : Char*) : Int
-  fun strerror(x0 : Int) : Char*
-  fun strlen(x0 : Char*) : ULong
+  fun memchr(b : Void*, c : Int, len : SizeT) : Void*
+  fun memcmp(b1 : Void*, b2 : Void*, len : SizeT) : Int
+  fun strcmp(s1 : Char*, s2 : Char*) : Int
+  fun strncmp(s1 : Char*, s2 : Char*, len : SizeT) : Int
+  fun strerror(errnum : Int) : Char*
+  fun strlen(s : Char*) : SizeT
+  fun strnlen(s : Char*, maxlen : SizeT) : SizeT
+  fun explicit_bzero(b : Void*, len : SizeT) : Void
 end
