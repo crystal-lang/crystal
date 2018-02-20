@@ -241,8 +241,12 @@ class Process
       end
     end
 
+    parent_sock, child_sock = IO.pipe
+
     @pid = Process.fork_internal(run_hooks: false) do
       begin
+        parent_sock.close
+        child_sock.close_on_exec = true
         Process.exec_internal(
           command,
           argv,
@@ -253,11 +257,22 @@ class Process
           fork_error || error,
           chdir
         )
+      rescue ex : Errno
+        value = ex.errno
+        child_sock.write(Bytes.new(pointerof(value).as(UInt8*), 4))
       rescue ex
         ex.inspect_with_backtrace STDERR
       ensure
         LibC._exit 127
       end
+    end
+
+    child_sock.close
+    slice = Bytes.new(4)
+    if parent_sock.read(slice) == 4
+      parent_sock.close
+      Errno.value = slice.pointer(4).as(Int32*).value
+      raise Errno.new("execvp")
     end
 
     @waitpid_future = Event::SignalChildHandler.instance.waitpid(pid)
