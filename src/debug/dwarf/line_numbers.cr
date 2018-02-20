@@ -75,11 +75,11 @@ module Debug
         # the decoded matrix) isn't meaningful.
         property end_sequence : Bool
 
-        # Indicates the the instruction is one where execution should be
+        # Indicates the instruction is one where execution should be
         # suspended (for an entry breakpoint).
         property prologue_end : Bool
 
-        # Indicates the the instruction is one where execution should be
+        # Indicates the instruction is one where execution should be
         # suspended (for an exit breakpoint).
         property epilogue_begin : Bool
 
