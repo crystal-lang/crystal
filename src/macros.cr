@@ -46,6 +46,15 @@
 # Point.new      # => #<Point(@x=0, @y=0)>
 # Point.new y: 2 # => #<Point(@x=0, @y=2)>
 # ```
+#
+# An example of creating a copy of a record with some properties changed:
+#
+# ```
+# record Point, x = 0, y = 0
+#
+# p = Point.new y: 2 # => #<Point(@x=0, @y=2)>
+# p.copy x: 3 # => #<Point(@x=3, @y=2)>
+# ```
 macro record(name, *properties)
   struct {{name.id}}
     {% for property in properties %}
@@ -66,6 +75,30 @@ macro record(name, *properties)
     end
 
     {{yield}}
+
+    def copy({{
+               *properties.map do |property|
+                 if property.is_a?(Assign)
+                   "#{property.target.id} _#{property.target.id} = @#{property.target.id}".id
+                 elsif property.is_a?(TypeDeclaration)
+                   "#{property.var.id} _#{property.var.id} = @#{property.var.id}".id
+                 else
+                   "#{property.id} _#{property.id} = @#{property.id}".id
+                 end
+               end
+             }})
+      {{name.id}}.new({{
+                        *properties.map do |property|
+                          if property.is_a?(Assign)
+                            "_#{property.target.id}".id
+                          elsif property.is_a?(TypeDeclaration)
+                            "_#{property.var.id}".id
+                          else
+                            "_#{property.id}".id
+                          end
+                        end
+                      }})
+    end
 
     def clone
       {{name.id}}.new({{
