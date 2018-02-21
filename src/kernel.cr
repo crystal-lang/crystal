@@ -189,18 +189,14 @@ class Process
   def self.after_fork_child_callbacks
     @@after_fork_child_callbacks ||= [
       ->Scheduler.after_fork,
-      ->Event::SignalHandler.after_fork,
-      ->{ Event::SignalChildHandler.instance.after_fork },
+      ->Crystal::Signal.after_fork,
+      ->Crystal::SignalChildHandler.after_fork,
       ->Random::DEFAULT.new_seed,
     ] of -> Nil
   end
 end
 
 {% unless flag?(:win32) %}
-  Signal.setup_default_handlers
-
-  at_exit { Event::SignalHandler.close }
-
   # Background loop to cleanup unused fiber stacks.
   spawn do
     loop do
@@ -208,4 +204,7 @@ end
       Fiber.stack_pool_collect
     end
   end
+
+  Signal.setup_default_handlers
+  LibExt.setup_sigfault_handler
 {% end %}
