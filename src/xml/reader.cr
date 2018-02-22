@@ -25,6 +25,14 @@ struct XML::Reader
     LibXML.xmlTextReaderRead(@reader) == 1
   end
 
+  def next
+    LibXML.xmlTextReaderNext(@reader) == 1
+  end
+
+  def next_sibling
+    LibXML.xmlTextReaderNextSibling(@reader) == 1
+  end
+
   def node_type
     LibXML.xmlTextReaderNodeType(@reader)
   end
@@ -51,6 +59,38 @@ struct XML::Reader
 
   def move_to_next_attribute
     LibXML.xmlTextReaderMoveToNextAttribute(@reader) == 1
+  end
+
+  def move_to_attribute(name)
+    LibXML.xmlTextReaderMoveToAttribute(@reader, name.to_s) == 1
+  end
+
+  def attribute(name)
+    value = LibXML.xmlTextReaderGetAttribute(@reader, name.to_s)
+    String.new(value) if value
+  end
+
+  def move_to_element
+    LibXML.xmlTextReaderMoveToElement(@reader) == 1
+  end
+
+  def depth
+    LibXML.xmlTextReaderDepth(@reader)
+  end
+
+  def read_inner_xml
+    xml = LibXML.xmlTextReaderReadInnerXml(@reader)
+    String.new(xml) if xml
+  end
+
+  def read_outer_xml
+    xml = LibXML.xmlTextReaderReadOuterXml(@reader)
+    String.new(xml) if xml
+  end
+
+  def expand
+    xml = LibXML.xmlTextReaderExpand(@reader)
+    XML::Node.new(xml) if xml
   end
 
   def value
