@@ -307,6 +307,20 @@ struct Enum
     {% end %}
   end
 
+  # Returns the number of enum members.
+  #
+  # ```
+  # Color.size  # => 3
+  # IOMode.size # => 3
+  # ```
+  def self.size : Int32
+    {% if @type.has_attribute?("Flags") %}
+      {{ @type.constants.size - 2 }}
+    {% else %}
+      {{ @type.constants.size }}
+    {% end %}
+  end
+
   # Returns all enum members as an `Array(String)`.
   #
   # ```

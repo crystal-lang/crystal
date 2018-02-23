@@ -88,6 +88,16 @@ describe Enum do
     end
   end
 
+  describe "size" do
+    it "for simple enum" do
+      SpecEnum.size.should eq 3
+    end
+
+    it "for flags enum" do
+      SpecEnumFlags.size.should eq 3
+    end
+  end
+
   describe "names" do
     it "for simple enum" do
       SpecEnum.names.should eq(%w(One Two Three))
