@@ -3831,7 +3831,23 @@ class String
 
   # Pretty prints `self` into the given printer.
   def pretty_print(pp : PrettyPrint) : Nil
-    pp.text(inspect)
+    printed_bytesize = 0
+    pp.group do
+      split('\n') do |part|
+        printed_bytesize += part.bytesize
+        if printed_bytesize != bytesize
+          printed_bytesize += 1 # == "\n".bytesize
+          pp.text("\"")
+          pp.text(part.inspect_unquoted)
+          pp.text("\\n\"")
+          break if printed_bytesize == bytesize
+          pp.text(" +")
+          pp.breakable
+        else
+          pp.text(part.inspect)
+        end
+      end
+    end
   end
 
   # Returns a representation of `self` using character escapes for special characters and wrapped in quotes.
