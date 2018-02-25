@@ -23,6 +23,7 @@ lib LibC
   AF_UNIX        = LibC::PF_UNIX
   AF_UNSPEC      = LibC::PF_UNSPEC
   AF_LOCAL       = LibC::PF_LOCAL
+  AF_BLUETOOTH   = 31_u8
   SHUT_RD        =      0
   SHUT_RDWR      =      2
   SHUT_WR        =      1

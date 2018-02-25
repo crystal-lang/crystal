@@ -25,6 +25,7 @@ class Socket < IO
     UDP  = LibC::IPPROTO_UDP
     RAW  = LibC::IPPROTO_RAW
     ICMP = LibC::IPPROTO_ICMP
+    RFCOMM = LibC::BTPROTO_RFCOMM
   end
 
   enum Family : LibC::SaFamilyT
@@ -32,6 +33,7 @@ class Socket < IO
     UNIX   = LibC::AF_UNIX
     INET   = LibC::AF_INET
     INET6  = LibC::AF_INET6
+    BLUETOOTH = LibC::AF_BLUETOOTH
   end
 
   # :nodoc:

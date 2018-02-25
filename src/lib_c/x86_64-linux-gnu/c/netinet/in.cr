@@ -7,6 +7,7 @@ lib LibC
   IPPROTO_RAW  = 255
   IPPROTO_TCP  =   6
   IPPROTO_UDP  =  17
+  BTPROTO_RFCOMM = 3
 
   alias InPortT = UInt16T
   alias InAddrT = UInt32T
