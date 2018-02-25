@@ -20,18 +20,20 @@ class Socket < IO
   end
 
   enum Protocol
-    IP   = LibC::IPPROTO_IP
-    TCP  = LibC::IPPROTO_TCP
-    UDP  = LibC::IPPROTO_UDP
-    RAW  = LibC::IPPROTO_RAW
-    ICMP = LibC::IPPROTO_ICMP
+    IP     = LibC::IPPROTO_IP
+    TCP    = LibC::IPPROTO_TCP
+    UDP    = LibC::IPPROTO_UDP
+    RAW    = LibC::IPPROTO_RAW
+    ICMP   = LibC::IPPROTO_ICMP
+    RFCOMM = LibC::BTPROTO_RFCOMM
   end
 
   enum Family : LibC::SaFamilyT
-    UNSPEC = LibC::AF_UNSPEC
-    UNIX   = LibC::AF_UNIX
-    INET   = LibC::AF_INET
-    INET6  = LibC::AF_INET6
+    UNSPEC    = LibC::AF_UNSPEC
+    UNIX      = LibC::AF_UNIX
+    INET      = LibC::AF_INET
+    INET6     = LibC::AF_INET6
+    BLUETOOTH = LibC::AF_BLUETOOTH
   end
 
   # :nodoc:

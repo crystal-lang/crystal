@@ -2,11 +2,12 @@ require "../sys/socket"
 require "../stdint"
 
 lib LibC
-  IPPROTO_IP   =   0
-  IPPROTO_ICMP =   1
-  IPPROTO_RAW  = 255
-  IPPROTO_TCP  =   6
-  IPPROTO_UDP  =  17
+  IPPROTO_IP     =   0
+  IPPROTO_ICMP   =   1
+  IPPROTO_RAW    = 255
+  IPPROTO_TCP    =   6
+  IPPROTO_UDP    =  17
+  BTPROTO_RFCOMM =   3
 
   alias InPortT = UShort
   alias InAddrT = UInt
