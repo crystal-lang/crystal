@@ -18,10 +18,11 @@ lib LibC
   PF_UNIX        = LibC::PF_LOCAL
   PF_UNSPEC      = LibC::AF_UNSPEC
   PF_LOCAL       = LibC::AF_LOCAL
-  AF_INET        =  2
-  AF_INET6       = 30
-  AF_UNIX        =  1
-  AF_UNSPEC      =  0
+  AF_BLUETOOTH   = 31_u8
+  AF_INET        =     2
+  AF_INET6       =    30
+  AF_UNIX        =     1
+  AF_UNSPEC      =     0
   AF_LOCAL       = LibC::AF_UNIX
   SHUT_RD        = 0
   SHUT_RDWR      = 2
