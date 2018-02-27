@@ -164,15 +164,33 @@ abstract class OpenSSL::SSL::Context
     getter ctxbox
     getter! sni
 
-    def add_sni_hostnames(hostnames : Array(String), context : Server)
-      hostnames.each { |hostname| add_sni_hostname(hostname, context) }
-    end
-
+    # To support SNI as a server via OpenSSL, create a default server context.
+    # This context will be used directly if you don't _require SNI from clients, and they don't provide a configured hostname.
+    # Otherwise, it will act as a jumping-off-point for your SNI-enabled certificates.
+    # ctx=OpenSSL::SSL::Context::Server.new
+    # add a key and certificate chain.
+    # ctx.private_key="server.key"
+    # ctx.certificate_chain="server.pem"
+    # Now, create a context for each hostname or set of hostnames you want to accept.
+    # Assume you want to except example.com and *.example.com.
+    # sniCtx=OpenSSL::SSL::Context::Server.new
+    # Add the SNI specific key and certificate chain.
+    # sniCtx.private_key="example.com.key"
+    # sniCtx.certificate_chain="example.com.pem"
+    # Now attach the SNI context to the default context.
+    # ctx.add_sni_hostname(["example.com","*.example.com"],sniCtx)
+    # If you want to require clients to present SNI hostnames, enable sni_fail_hard.
+    # ctx.sni_fail_hard=true
+    # Now pass ctx to your OpenSSL server, and clients will be handed the correct certificate for the SNI hostname they pass in.
     def add_sni_hostname(hostname : String, context : Server)
       unless @sni
         set_tlsext_servername_callback
       end
       sni[hostname] = context
+    end
+
+    def add_sni_hostnames(hostnames : Array(String), context : Server)
+      hostnames.each { |hostname| add_sni_hostname(hostname, context) }
     end
 
     # Generates a new TLS server context with sane defaults for a server connection.
