@@ -1,5 +1,3 @@
-require "weak_ref"
-
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
@@ -165,6 +163,10 @@ abstract class OpenSSL::SSL::Context
     property sni_fail_hard
     getter ctxbox
     getter! sni
+
+    def add_sni_hostnames(hostnames : Array(String), context : Server)
+      hostnames.each { |hostname| add_sni_hostname(hostname, context) }
+    end
 
     def add_sni_hostname(hostname : String, context : Server)
       unless @sni

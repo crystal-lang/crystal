@@ -120,4 +120,11 @@ describe OpenSSL::SSL::Socket::Server do
     serverContext.add_sni_hostname "localhost", sniContext
     run_client port: port, server_context: serverContext, hostname: "localhost"
   end
+  it "adds multiple hostnames for a context" do
+    serverContext = OpenSSL::SSL::Context::Server.new
+    sniContext = new_server_context
+    serverContext.add_sni_hostnames ["somehost", "localhost"], sniContext
+    serverContext.sni_fail_hard = true
+    run_client port: port, server_context: serverContext, hostname: "localhost"
+  end
 end
