@@ -18,6 +18,7 @@ lib LibSSL
   type SSLContext = Void*
   type SSL = Void*
 
+  alias SSLCtxCtrlCallback = (SSL, Int, Void*) -> Int
   alias VerifyCallback = (Int, LibCrypto::X509_STORE_CTX) -> Int
   alias CertVerifyCallback = (LibCrypto::X509_STORE_CTX, Void*) -> Int
 
@@ -47,7 +48,9 @@ lib LibSSL
   end
 
   enum SSLCtrl : Int
-    SET_TLSEXT_HOSTNAME = 55
+    SET_TLSEXT_SERVERNAME_CB  = 53
+    SET_TLSEXT_SERVERNAME_ARG = 54
+    SET_TLSEXT_HOSTNAME       = 55
   end
 
   enum TLSExt : Long
@@ -149,6 +152,9 @@ lib LibSSL
   fun ssl_select_next_proto = SSL_select_next_proto(output : Char**, output_len : Char*, input : Char*, input_len : Int, client : Char*, client_len : Int) : Int
   fun ssl_ctrl = SSL_ctrl(handle : SSL, cmd : Int, larg : Long, parg : Void*) : Long
   fun ssl_free = SSL_free(handle : SSL)
+  fun ssl_get_servername = SSL_get_servername(ssl : SSL, type : TLSExt) : Char*
+  fun ssl_set_ssl_ctx = SSL_set_SSL_CTX(ssl : SSL, ctx : SSLContext) : SSLContext
+  fun ssl_get_ssl_ctx = SSL_get_SSL_CTX(ssl : SSL) : SSLContext
 
   @[Raises]
   fun ssl_new = SSL_new(context : SSLContext) : SSL
@@ -177,6 +183,7 @@ lib LibSSL
   fun ssl_ctx_set_verify = SSL_CTX_set_verify(ctx : SSLContext, mode : VerifyMode, callback : VerifyCallback)
   fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
   fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
+  fun ssl_ctx_callback_ctrl = SSL_CTX_callback_ctrl(ctx : SSLContext, cmd : Int, fp : SSLCtxCtrlCallback) : ULong
 
   {% if OPENSSL_110 %}
     fun ssl_ctx_get_options = SSL_CTX_get_options(ctx : SSLContext) : ULong

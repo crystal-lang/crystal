@@ -1,3 +1,5 @@
+require "weak_ref"
+
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
@@ -109,6 +111,68 @@ abstract class OpenSSL::SSL::Context
   end
 
   class Server < Context
+    protected def set_tlsext_servername_callback
+      cb = ->(ssl : LibSSL::SSL, cmd : LibC::Int, ctxptr : Void*) {
+        ctx = Box(Server).unbox(ctxptr)
+        if ctx.sni_fail_hard
+          ret = LibSSL::SSL_TLSEXT_ERR_OK
+        else
+          ret = LibSSL::SSL_TLSEXT_ERR_NOACK
+        end
+        hostname_ptr = LibSSL.ssl_get_servername(ssl, LibSSL::TLSExt::NAMETYPE_host_name)
+        hostname = if hostname_ptr
+                     String.new(hostname_ptr)
+                   else
+                     nil
+                   end
+        if hostname
+          if sniCtx = ctx.sni[hostname]?
+            LibSSL.ssl_set_ssl_ctx(ssl, sniCtx)
+            ret = LibSSL::SSL_TLSEXT_ERR_OK
+          else
+            ctx.sni.each do |sni, sniCtx|
+              if HostnameValidation.matches_hostname?(sni, hostname)
+                LibSSL.ssl_set_ssl_ctx(ssl, sniCtx)
+                ret = LibSSL::SSL_TLSEXT_ERR_OK
+                break
+              end
+            end
+          end
+        end
+        ret
+      }
+      unless @sni
+        @ctxbox = ctxbox = Box(Server).box(self)
+        @sni = Hash(String, Server).new
+        LibSSL.ssl_ctx_callback_ctrl @handle, LibSSL::SSLCtrl::SET_TLSEXT_SERVERNAME_CB, cb
+        LibSSL.ssl_ctx_ctrl @handle, LibSSL::SSLCtrl::SET_TLSEXT_SERVERNAME_ARG, 0, ctxbox
+      end
+    end
+
+    # Holds references to SNI certificates.
+    # If this is the owner context, it will hold a hash of SNI names to contexts.
+    # If it is a SNI context itself, @sni should be nil.
+    @sni : Hash(String, Server)? = nil
+
+    # Whether to fail hard (disconnect) a client with an invalid SNI.
+    # This is set to false by default, so consumers of TLS contexts will have to check the SNI value.
+    # If this is akin to an HTTP host header, then by default it should be left up to Context consumers to fail hard.
+    @sni_fail_hard = false
+
+    # Holds the boxed version of this context.
+    @ctxbox : Pointer(Void)? = nil
+
+    property sni_fail_hard
+    getter ctxbox
+    getter! sni
+
+    def add_sni(hostname : String, context : Server)
+      unless @sni
+        set_tlsext_servername_callback
+      end
+      sni[hostname] = context
+    end
+
     # Generates a new TLS server context with sane defaults for a server connection.
     #
     # Defaults to `TLS_method` or `SSLv23_method` (depending on OpenSSL version)
