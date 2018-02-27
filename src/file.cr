@@ -664,18 +664,23 @@ class File < IO::FileDescriptor
 
   # Write the given *content* to *filename*.
   #
-  # An existing file will be overwritten, else a file will be created.
+  # The *mode* parameter can be used to change the file's `open` mode, e.g. to `"a"` for appending.
+  #
+  # By default, an existing file will be overwritten.
+  #
+  # *filename* will be created if it does not already exist.
   #
   # ```
   # File.write("foo", "bar")
+  # File.write("foo", "baz", mode: "a")
   # ```
   #
   # NOTE: If the content is a `Slice(UInt8)`, those bytes will be written.
   # If it's an `IO`, all bytes from the `IO` will be written.
   # Otherwise, the string representation of *content* will be written
   # (the result of invoking `to_s` on *content*).
-  def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
-    open(filename, "w", perm, encoding: encoding, invalid: invalid) do |file|
+  def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil, mode = "w")
+    open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes
         file.write(content)
