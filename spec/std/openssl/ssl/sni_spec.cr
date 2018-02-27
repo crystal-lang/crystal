@@ -6,6 +6,7 @@ To regenerate keys, run:
 openssl genrsa -out server.key 2048
 openssl req -sha256 -new -key server.key -out server.csr -subj '/CN=localhost'
 openssl x509 -req -sha256 -days 3650 -in server.csr -signkey server.key -out server.crt
+rm server.csr
 EOC
 
 # create a server context with private key and certificate chain set
@@ -88,14 +89,14 @@ describe OpenSSL::SSL::Socket::Server do
     serverContext = new_server_context
     sniContext = new_server_context
     serverContext.sni_fail_hard = false
-    serverContext.add_sni "invalid_hostname", sniContext
+    serverContext.add_sni_hostname "invalid_hostname", sniContext
     run_client port: port, server_context: serverContext
   end
   it "raises when no SNI hostname is submitted but SNI is required" do
     serverContext = OpenSSL::SSL::Context::Server.new
     sniContext = new_server_context
     serverContext.sni_fail_hard = true
-    serverContext.add_sni "invalid_hostname", sniContext
+    serverContext.add_sni_hostname "invalid_hostname", sniContext
     expect_raises OpenSSL::SSL::Error, /get_server_hello/i do
       run_client port: port, server_context: serverContext
     end
@@ -104,7 +105,7 @@ describe OpenSSL::SSL::Socket::Server do
     serverContext = OpenSSL::SSL::Context::Server.new
     sniContext = new_server_context
     serverContext.sni_fail_hard = true
-    serverContext.add_sni "localhost", sniContext
+    serverContext.add_sni_hostname "localhost", sniContext
     clientContext = new_client_context
     # disable peer verification so we can be sure error is coming from SNI
     clientContext.verify_mode = OpenSSL::SSL::VerifyMode::NONE
@@ -116,7 +117,7 @@ describe OpenSSL::SSL::Socket::Server do
     serverContext = OpenSSL::SSL::Context::Server.new
     sniContext = new_server_context
     serverContext.sni_fail_hard = true
-    serverContext.add_sni "localhost", sniContext
+    serverContext.add_sni_hostname "localhost", sniContext
     run_client port: port, server_context: serverContext, hostname: "localhost"
   end
 end

@@ -166,7 +166,7 @@ abstract class OpenSSL::SSL::Context
     getter ctxbox
     getter! sni
 
-    def add_sni(hostname : String, context : Server)
+    def add_sni_hostname(hostname : String, context : Server)
       unless @sni
         set_tlsext_servername_callback
       end
