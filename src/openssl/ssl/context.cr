@@ -145,13 +145,15 @@ abstract class OpenSSL::SSL::Context
     end
 
     # Holds references to SNI certificates.
+    #
     # If this is the owner context, it will hold a hash of SNI names to contexts.
     # If this is a SNI context itself, @sni should be nil.
     getter! sni : Hash(String, Server)
 
     # Whether to fail hard (disconnect) a client with an invalid SNI.
+    #
     # This is set to false by default, so consumers of TLS contexts will have to check the SNI value.
-    # If this is akin to an HTTP host header, then by default it should be left up to Context consumers to fail hard.
+    # Like an HTTP host header, it is left up to users of this context to configure it to fail hard.
     getter sni_fail_hard = false
 
     @ctxbox : Pointer(Void)?
@@ -159,31 +161,45 @@ abstract class OpenSSL::SSL::Context
     property sni_fail_hard
     getter! sni
 
+    # Adds a Server context that will be returned to clients who request `hostname` via SNI.
+    #
+    # If you provide a wildcard hostname like `*.example.com`,
+    # and an exact match like `www.example.com`,
+    # `www.example.com` will win over `*.example.com`.
+    # If you add a duplicate hostname, it will override a previously defined hostname.
+    #
     # To support SNI as a server via OpenSSL, create a default server context.
     # This context will be used directly if you don't _require SNI from clients, and they don't provide a configured hostname.
     # Otherwise, it will act as a jumping-off-point for your SNI-enabled certificates.
-    # ctx=OpenSSL::SSL::Context::Server.new
-    # add a key and certificate chain.
-    # ctx.private_key="server.key"
-    # ctx.certificate_chain="server.pem"
-    # Now, create a context for each hostname or set of hostnames you want to accept.
-    # Assume you want to except example.com and *.example.com.
-    # sniCtx=OpenSSL::SSL::Context::Server.new
-    # Add the SNI specific key and certificate chain.
-    # sniCtx.private_key="example.com.key"
-    # sniCtx.certificate_chain="example.com.pem"
-    # Now attach the SNI context to the default context.
-    # ctx.add_sni_hostname(["example.com","*.example.com"],sniCtx)
-    # If you want to require clients to present SNI hostnames, enable sni_fail_hard.
-    # ctx.sni_fail_hard=true
-    # Now pass ctx to your OpenSSL server, and clients will be handed the correct certificate for the SNI hostname they pass in.
+    #
+    # To use SNI, the steps are as follows:
+    # * Create a default context for non-SNI clients, and clients supplying non-matching hostnames.
+    # * Add a key and certificate chain to the default host.
+    # * Create a SNI context for each hostname or set of hostnames you want to accept.
+    # * Add the SNI context specific key and certificate chain.
+    # * Enable sni_fail_hard if you want to _require clients to use SNI.
+    # * Attach the SNI context to the default context.
+    # * Pass the default context to `OpenSSL::SSL::Socket::Server`.
+    # `*.example.com` and `www.example.com` are assumed in the below example.
+    #
+    # Example:
+    # ```
+    # default_ctx = OpenSSL::SSL::Context::Server.new
+    # default_ctx.private_key = "server.key"
+    # default_ctx.certificate_chain = "server.pem"
+    # sni_ctx = OpenSSL::SSL::Context::Server.new
+    # sni_ctx.private_key = "example.com.key"
+    # sni_ctx.certificate_chain = "example.com.pem"
+    # default_ctx.add_sni_hostnames(["example.com", "*.example.com"], sni_ctx)
+    # ctx.sni_fail_hard = true
+    # ```
     def add_sni_hostname(hostname : String, context : Server)
       set_tlsext_servername_callback
       sni[hostname] = context
     end
 
     # Adds a SNI entry for each hostname in hostnames.
-    def add_sni_hostnames(hostnames : Array(String), context : Server)
+    def add_sni_hostnames(hostnames : Enumerable(String), context : Server)
       hostnames.each { |hostname| add_sni_hostname(hostname, context) }
     end
 
