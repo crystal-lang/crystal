@@ -136,12 +136,10 @@ abstract class OpenSSL::SSL::Context
         end
         ret
       }
-      unless @sni
-        @ctxbox = ctxbox = Box(Server).box(self)
-        @sni = Hash(String, Server).new
-        LibSSL.ssl_ctx_callback_ctrl @handle, LibSSL::SSLCtrl::SET_TLSEXT_SERVERNAME_CB, cb
-        LibSSL.ssl_ctx_ctrl @handle, LibSSL::SSLCtrl::SET_TLSEXT_SERVERNAME_ARG, 0, ctxbox
-      end
+      @ctxbox = ctxbox = Box(Server).box(self)
+      @sni = Hash(String, Server).new
+      LibSSL.ssl_ctx_callback_ctrl @handle, LibSSL::SSLCtrl::SET_TLSEXT_SERVERNAME_CB, cb
+      LibSSL.ssl_ctx_ctrl @handle, LibSSL::SSLCtrl::SET_TLSEXT_SERVERNAME_ARG, 0, ctxbox
     end
 
     # Holds references to SNI certificates.
