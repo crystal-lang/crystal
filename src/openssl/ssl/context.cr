@@ -110,6 +110,7 @@ abstract class OpenSSL::SSL::Context
 
   class Server < Context
     protected def set_tlsext_servername_callback
+      return if @sni
       cb = ->(ssl : LibSSL::SSL, cmd : LibC::Int, ctxptr : Void*) {
         ctx = Box(Server).unbox(ctxptr)
         ret = if ctx.sni_fail_hard
@@ -145,16 +146,15 @@ abstract class OpenSSL::SSL::Context
 
     # Holds references to SNI certificates.
     # If this is the owner context, it will hold a hash of SNI names to contexts.
-    # If it is a SNI context itself, @sni should be nil.
-    @sni : Hash(String, Server)? = nil
+    # If this is a SNI context itself, @sni should be nil.
+    getter! sni : Hash(String, Server)
 
     # Whether to fail hard (disconnect) a client with an invalid SNI.
     # This is set to false by default, so consumers of TLS contexts will have to check the SNI value.
     # If this is akin to an HTTP host header, then by default it should be left up to Context consumers to fail hard.
-    @sni_fail_hard = false
+    getter sni_fail_hard = false
 
-    # Holds the boxed version of this context.
-    @ctxbox : Pointer(Void)? = nil
+    @ctxbox : Pointer(Void)?
 
     property sni_fail_hard
     getter! sni
@@ -178,12 +178,11 @@ abstract class OpenSSL::SSL::Context
     # ctx.sni_fail_hard=true
     # Now pass ctx to your OpenSSL server, and clients will be handed the correct certificate for the SNI hostname they pass in.
     def add_sni_hostname(hostname : String, context : Server)
-      unless @sni
-        set_tlsext_servername_callback
-      end
+      set_tlsext_servername_callback
       sni[hostname] = context
     end
 
+    # Adds a SNI entry for each hostname in hostnames.
     def add_sni_hostnames(hostnames : Array(String), context : Server)
       hostnames.each { |hostname| add_sni_hostname(hostname, context) }
     end
