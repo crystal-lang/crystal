@@ -27,30 +27,31 @@ end
 # run an ssl server with the supplied server context and port
 def run_server(q, port, tls = nil)
   q.send "start"
-  tcpServer = TCPServer.new port
+  tcp_server = TCPServer.new port
   while 1
-    if io = tcpServer.accept?
+    if io = tcp_server.accept?
       context = if tls
                   tls
                 else
                   new_server_context
                 end
       begin
-        sslServer = OpenSSL::SSL::Socket::Server.new io, context
+        ssl_server = OpenSSL::SSL::Socket::Server.new io, context
       rescue e
         # Errors will occur here if SNI doesn't return SSL_ERR_OK.
         # Other errors are possible, but this spec tests SNI assuming other components are functional.
         break
       end
-      sslServer = sslServer.not_nil!
-      msg = sslServer.gets
-      sslServer.puts msg
-      sslServer.close
+      ssl_server = ssl_server.not_nil!
+      msg = ssl_server.gets
+      ssl_server.puts msg
+      ssl_server.flush
+      ssl_server.close
       io.close
       break
     end
   end
-  tcpServer.close
+  tcp_server.close
   q.send "done"
 end
 
@@ -61,19 +62,19 @@ def run_client(port, hostname = nil, client_context = nil, server_context = nil)
   spawn do
     run_server q, port, server_context
   end
-  clientCtx = if client_context
-                client_context
-              else
-                new_client_context
-              end
+  client_ctx = if client_context
+                 client_context
+               else
+                 new_client_context
+               end
   q.receive
-  tcpClient = TCPSocket.new "localhost", port
-  sslClient = OpenSSL::SSL::Socket::Client.new io: tcpClient, context: clientCtx.not_nil!, hostname: hostname
-  sslClient.puts "abcde"
-  sslClient.flush
-  sslClient.gets.should eq "abcde"
-  sslClient.close
-  tcpClient.close
+  tcp_client = TCPSocket.new "localhost", port
+  ssl_client = OpenSSL::SSL::Socket::Client.new io: tcp_client, context: client_ctx.not_nil!, hostname: hostname
+  ssl_client.puts "abcde"
+  ssl_client.flush
+  ssl_client.gets.should eq "abcde"
+  ssl_client.close
+  tcp_client.close
   q.receive
 end
 
@@ -85,46 +86,47 @@ describe OpenSSL::SSL::Socket::Server do
   it "connects with provided sni hostname" do
     run_client port, "localhost", nil, nil
   end
-  it "functions with non-existing hostname when SNI is checked but not required" do
-    serverContext = new_server_context
-    sniContext = new_server_context
-    serverContext.sni_fail_hard = false
-    serverContext.add_sni_hostname "invalid_hostname", sniContext
-    run_client port: port, server_context: serverContext
+  it "functions when no hostname is submitted and when SNI is checked but not required" do
+    server_context = new_server_context
+    sni_context = new_server_context
+    server_context.sni_fail_hard = false
+    server_context.add_sni_hostname "invalid_hostname", sni_context
+    run_client port: port, server_context: server_context
   end
   it "raises when no SNI hostname is submitted but SNI is required" do
-    serverContext = OpenSSL::SSL::Context::Server.new
-    sniContext = new_server_context
-    serverContext.sni_fail_hard = true
-    serverContext.add_sni_hostname "invalid_hostname", sniContext
+    server_context = new_server_context
+    sni_context = new_server_context
+    server_context.sni_fail_hard = true
+    server_context.add_sni_hostname "invalid_hostname", sni_context
     expect_raises OpenSSL::SSL::Error, /get_server_hello/i do
-      run_client port: port, server_context: serverContext
+      run_client port: port, server_context: server_context
     end
   end
   it "raises when invalid SNI hostname is submitted and SNI is required" do
-    serverContext = OpenSSL::SSL::Context::Server.new
-    sniContext = new_server_context
-    serverContext.sni_fail_hard = true
-    serverContext.add_sni_hostname "localhost", sniContext
-    clientContext = new_client_context
+    server_context = new_server_context
+    sni_context = new_server_context
+    server_context.sni_fail_hard = true
+    server_context.add_sni_hostname "localhost", sni_context
+    client_context = new_client_context
     # disable peer verification so we can be sure error is coming from SNI
-    clientContext.verify_mode = OpenSSL::SSL::VerifyMode::NONE
+    client_context.verify_mode = OpenSSL::SSL::VerifyMode::NONE
     expect_raises OpenSSL::SSL::Error, /get_server_hello/i do
-      run_client port: port, server_context: serverContext, hostname: "client_supplied_invalid_hostname"
+      run_client port: port, server_context: server_context, hostname: "client_supplied_invalid_hostname"
     end
   end
   it "functions when SNI is required and valid SNI is supplied" do
-    serverContext = OpenSSL::SSL::Context::Server.new
-    sniContext = new_server_context
-    serverContext.sni_fail_hard = true
-    serverContext.add_sni_hostname "localhost", sniContext
-    run_client port: port, server_context: serverContext, hostname: "localhost"
+    server_context = new_server_context
+    sni_context = new_server_context
+    server_context.sni_fail_hard = true
+    server_context.add_sni_hostname "localhost", sni_context
+    run_client port: port, server_context: server_context, hostname: "localhost"
   end
   it "adds multiple hostnames for a context" do
-    serverContext = OpenSSL::SSL::Context::Server.new
-    sniContext = new_server_context
-    serverContext.add_sni_hostnames ["somehost", "localhost"], sniContext
-    serverContext.sni_fail_hard = true
-    run_client port: port, server_context: serverContext, hostname: "localhost"
+    server_context = new_server_context
+    sni_context = new_server_context
+    server_context.add_sni_hostnames ["somehost", "localhost"], sni_context
+    server_context.sni_fail_hard = true
+    run_client port: port, server_context: server_context, hostname: "localhost"
   end
 end
+GC.collect

@@ -112,18 +112,14 @@ abstract class OpenSSL::SSL::Context
     protected def set_tlsext_servername_callback
       cb = ->(ssl : LibSSL::SSL, cmd : LibC::Int, ctxptr : Void*) {
         ctx = Box(Server).unbox(ctxptr)
-        if ctx.sni_fail_hard
-          ret = LibSSL::SSL_TLSEXT_ERR_OK
-        else
-          ret = LibSSL::SSL_TLSEXT_ERR_NOACK
-        end
+        ret = if ctx.sni_fail_hard
+                LibSSL::SSL_TLSEXT_ERR_ALERT_FATAL
+              else
+                LibSSL::SSL_TLSEXT_ERR_OK
+              end
         hostname_ptr = LibSSL.ssl_get_servername(ssl, LibSSL::TLSExt::NAMETYPE_host_name)
-        hostname = if hostname_ptr
-                     String.new(hostname_ptr)
-                   else
-                     nil
-                   end
-        if hostname
+        if hostname_ptr
+          hostname = String.new hostname_ptr
           if sniCtx = ctx.sni[hostname]?
             LibSSL.ssl_set_ssl_ctx(ssl, sniCtx)
             ret = LibSSL::SSL_TLSEXT_ERR_OK
@@ -161,7 +157,6 @@ abstract class OpenSSL::SSL::Context
     @ctxbox : Pointer(Void)? = nil
 
     property sni_fail_hard
-    getter ctxbox
     getter! sni
 
     # To support SNI as a server via OpenSSL, create a default server context.
