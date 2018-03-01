@@ -81,10 +81,10 @@ jobs:
       - run: |
           cd /tmp/workspace/distribution-scripts
           source build.env
-          cd x86_64
+          cd linux
           make release=true
       - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/x86_64/
+          root: /tmp/workspace/distribution-scripts/linux/
           paths:
             - build
 
@@ -112,10 +112,10 @@ jobs:
             source build.env
             cd omnibus
             bundle check || bundle install --binstubs
-            cd ../x86_64
-            make darwin release=true
+            cd ../darwin
+            make
       - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/x86_64/
+          root: /tmp/workspace/distribution-scripts/darwin/
           paths:
             - build
 
