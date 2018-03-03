@@ -45,13 +45,13 @@ module Screen
       input = String.new(buffer[0, bytes_read])
 
       case input
-      when "\e[A", "w"
+      when "\e[A", "w", "W"
         :up
-      when "\e[B", "s"
+      when "\e[B", "s", "S"
         :down
-      when "\e[C", "d"
+      when "\e[C", "d", "D"
         :right
-      when "\e[D", "a"
+      when "\e[D", "a", "A"
         :left
       when "\e"
         :escape
