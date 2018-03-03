@@ -1,46 +1,25 @@
 require "spec"
 require "spec/cli"
 
+class SpecRunnerCLI < Spec::CLI
+  property! exited : Int32
+
+  private def display(message)
+    stdout.puts message
+    @exited = 0
+  end
+
+  private def terminate(message, status = 1)
+    stderr.puts message
+    @exited = status
+  end
+end
+
 private def prepare_cli(argv, **kargs)
-  cli = Spec::CLI.new(argv, **kargs)
+  cli = SpecRunnerCLI.new(argv, **kargs)
   cli.prepare
 
   {cli, cli.options}
-end
-
-# override and capture exit calls
-module Spec
-  class CLI
-    property! exited : Int32
-    property? testing = false
-
-    def testing
-      @testing = true
-      yield
-    ensure
-      @testing = false
-    end
-
-    private def display(message)
-      stdout.puts message
-
-      if testing?
-        @exited = 0
-      else
-        exit
-      end
-    end
-
-    private def terminate(message, status = 1)
-      stderr.puts message
-
-      if testing?
-        @exited = status
-      else
-        exit status
-      end
-    end
-  end
 end
 
 describe Spec::CLI do
@@ -98,12 +77,9 @@ describe Spec::CLI do
       it "aborts on incorrect location format" do
         io = IO::Memory.new
 
-        cli = Spec::CLI.new %w(--location missing.cr), stderr: io
-        cli.testing do
-          cli.prepare
-        end
+        cli, options = prepare_cli %w(--location missing.cr), stderr: io
+        options.locations.size.should eq(0)
 
-        cli.options.locations.size.should eq(0)
         cli.exited?.should be_truthy
         cli.exited.should eq(1)
 
@@ -121,10 +97,7 @@ describe Spec::CLI do
     it "displays help options" do
       io = IO::Memory.new
 
-      cli = Spec::CLI.new %w(--help), stdout: io
-      cli.testing do
-        cli.prepare
-      end
+      cli, _ = prepare_cli %w(--help), stdout: io
 
       cli.exited?.should be_truthy
       cli.exited.should eq(0)
@@ -165,11 +138,7 @@ describe Spec::CLI do
 
     it "aborts execution with unknown arguments" do
       io = IO::Memory.new
-      cli = Spec::CLI.new %w(unknown), stderr: io
-
-      cli.testing do
-        cli.prepare
-      end
+      cli, _ = prepare_cli %w(unknown), stderr: io
 
       cli.exited?.should be_truthy
       cli.exited.should eq(1)
