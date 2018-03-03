@@ -107,8 +107,7 @@ describe Spec::CLI do
         cli.exited?.should be_truthy
         cli.exited.should eq(1)
 
-        io.rewind
-        io.gets_to_end.should contain("location missing.cr must be file:line")
+        io.to_s.should contain("location missing.cr must be file:line")
       end
     end
 
@@ -130,8 +129,7 @@ describe Spec::CLI do
       cli.exited?.should be_truthy
       cli.exited.should eq(0)
 
-      io.rewind
-      output = io.gets_to_end
+      output = io.to_s
       output.should contain("crystal spec runner")
       output.should contain("show this help")
     end
@@ -176,8 +174,7 @@ describe Spec::CLI do
       cli.exited?.should be_truthy
       cli.exited.should eq(1)
 
-      io.rewind
-      io.gets_to_end.should contain("Error: unknown argument 'unknown'")
+      io.to_s.should contain("Error: unknown argument 'unknown'")
     end
   end
 end
