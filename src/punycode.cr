@@ -12,8 +12,6 @@
 # Internationalized Domain Names in Application
 # https://www.ietf.org/rfc/rfc5980.txt
 module Punycode
-  class Error < Exception; end
-
   BASE         =  36
   TMIN         =   1
   TMAX         =  26
@@ -79,13 +77,13 @@ module Punycode
       next if m == prev
       prev = m
 
-      raise Error.new("overflow") if m.ord - n > (Int32::MAX - delta) / h
+      raise Exception.new("Overflow: input needs wider integers to process") if m.ord - n > (Int32::MAX - delta) / h
       delta += (m.ord - n) * h
       n = m.ord + 1
 
       chars.each do |c|
         if c < m
-          raise Error.new("overflow") if delta > Int32::MAX - 1
+          raise Exception.new("Overflow: input needs wider integers to process") if delta > Int32::MAX - 1
           delta += 1
         elsif c == m
           q = delta
@@ -152,7 +150,7 @@ module Punycode
       end
     end
 
-    raise Error.new "invalid input" unless init
+    raise ArgumentError.new("Invalid input") unless init
 
     output.join
   end
