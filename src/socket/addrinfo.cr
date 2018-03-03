@@ -1,3 +1,5 @@
+require "uri/punycode"
+
 class Socket
   # Domain name resolver.
   struct Addrinfo
@@ -76,6 +78,12 @@ class Socket
     end
 
     private def self.getaddrinfo(domain, service, family, type, protocol, timeout)
+      # RFC 3986 says:
+      # > When a non-ASCII registered name represents an internationalized domain name
+      # > intended for resolution via the DNS, the name must be transformed to the IDNA
+      # > encoding [RFC3490] prior to name lookup.
+      domain = URI::Punycode.to_ascii domain
+
       hints = LibC::Addrinfo.new
       hints.ai_family = (family || Family::UNSPEC).to_i32
       hints.ai_socktype = type
