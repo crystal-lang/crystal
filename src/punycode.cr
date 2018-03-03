@@ -130,8 +130,15 @@ module Punycode
         init = false
       end
 
-      digit = 'a' <= c && c <= 'z' ? c.ord - 0x61 : 'A' <= c && c <= 'z' ? c.ord - 0x41 : '0' <= c && c <= '9' ? c.ord - 0x30 + 26 : -1
-      raise Error.new("invalid input") if digit == -1
+      digit = if 'a' <= c && c <= 'z'
+                c.ord - 0x61
+              elsif 'A' <= c && c <= 'Z'
+                c.ord - 0x41
+              elsif '0' <= c && c <= '9'
+                c.ord - 0x30 + 26
+              else
+                raise ArgumentError.new("Invalid input")
+              end
 
       i += digit * w
       t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
