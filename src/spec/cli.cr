@@ -47,7 +47,7 @@ module Spec
     end
 
     def run
-      prepare unless prepared?
+      prepare
       apply_options
 
       Signal::INT.trap { Spec.abort! }
