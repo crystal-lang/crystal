@@ -9,12 +9,12 @@ module Spec
       property formatters = Array(Spec::Formatter).new
       property locations = Array({String, Int32}).new
 
-      property? default_formatter : Spec::Formatter? = nil
+      property? default_formatter : Spec::Formatter?
       property? fail_fast : Bool = false
-      property? line : Int32? = nil
+      property? line : Int32?
       property? no_color : Bool = false
-      property? pattern : String? = nil
-      property? slowest : Int32? = nil
+      property? pattern : String?
+      property? slowest : Int32?
     end
 
     getter options : Options

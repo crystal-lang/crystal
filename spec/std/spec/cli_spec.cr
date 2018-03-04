@@ -2,7 +2,7 @@ require "spec"
 require "spec/cli"
 
 class SpecRunnerCLI < Spec::CLI
-  property? exited : Int32? = nil
+  property? exited : Int32?
 
   private def display(message)
     stdout.puts message
