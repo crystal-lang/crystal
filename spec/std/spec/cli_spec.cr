@@ -27,34 +27,43 @@ describe Spec::CLI do
     it "captures provided example pattern" do
       _, options = prepare_cli %w(-e Foo)
       options.pattern?.should be_truthy
-      options.pattern.should eq("Foo")
+      options.pattern?.should eq("Foo")
 
       _, options = prepare_cli %w(--example Bar)
       options.pattern?.should be_truthy
-      options.pattern.should eq("Bar")
+      options.pattern?.should eq("Bar")
     end
 
     it "captures provided line number" do
+      _, options = prepare_cli %w()
+      options.line?.should be_falsey
+
       _, options = prepare_cli %w(-l 10)
       options.line?.should be_truthy
-      options.line.should eq(10)
+      options.line?.should eq(10)
 
       _, options = prepare_cli %w(--line 10)
       options.line?.should be_truthy
-      options.line.should eq(10)
+      options.line?.should eq(10)
     end
 
     it "enables slowest mode" do
+      _, options = prepare_cli %w()
+      options.slowest?.should be_falsey
+
       _, options = prepare_cli %w(-p)
       options.slowest?.should be_truthy
-      options.slowest.should eq(10)
+      options.slowest?.should eq(10)
 
       _, options = prepare_cli %w(--profile)
       options.slowest?.should be_truthy
-      options.slowest.should eq(10)
+      options.slowest?.should eq(10)
     end
 
     it "enables fail-fast mode" do
+      _, options = prepare_cli %w()
+      options.fail_fast?.should be_false
+
       _, options = prepare_cli %w(--fail-fast)
       options.fail_fast?.should be_true
     end
@@ -112,12 +121,12 @@ describe Spec::CLI do
       options.default_formatter?.should be_falsey
 
       _, options = prepare_cli %w(-v)
-      options.default_formatter.should be_truthy
-      options.default_formatter.should be_a(Spec::VerboseFormatter)
+      options.default_formatter?.should be_truthy
+      options.default_formatter?.should be_a(Spec::VerboseFormatter)
 
       _, options = prepare_cli %w(--verbose)
-      options.default_formatter.should be_truthy
-      options.default_formatter.should be_a(Spec::VerboseFormatter)
+      options.default_formatter?.should be_truthy
+      options.default_formatter?.should be_a(Spec::VerboseFormatter)
     end
 
     it "changes default formatter using SPEC_VERBOSE" do
@@ -125,8 +134,8 @@ describe Spec::CLI do
       ENV["SPEC_VERBOSE"] = "1"
 
       _, options = prepare_cli %w()
-      options.default_formatter.should be_truthy
-      options.default_formatter.should be_a(Spec::VerboseFormatter)
+      options.default_formatter?.should be_truthy
+      options.default_formatter?.should be_a(Spec::VerboseFormatter)
     ensure
       ENV["SPEC_VERBOSE"] = old_env
     end

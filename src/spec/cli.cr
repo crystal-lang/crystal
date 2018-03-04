@@ -9,12 +9,12 @@ module Spec
       property formatters = Array(Spec::Formatter).new
       property locations = Array({String, Int32}).new
 
-      property! default_formatter : Spec::Formatter
-      property! fail_fast : Bool
-      property! line : Int32
-      property! no_color : Bool
-      property! pattern : String
-      property! slowest : Int32
+      property? default_formatter : Spec::Formatter? = nil
+      property? fail_fast : Bool = false
+      property? line : Int32? = nil
+      property? no_color : Bool = false
+      property? pattern : String? = nil
+      property? slowest : Int32? = nil
     end
 
     getter options : Options
@@ -56,11 +56,23 @@ module Spec
     end
 
     private def apply_options
-      Spec.pattern = options.pattern if options.pattern?
-      Spec.line = options.line if options.line?
-      Spec.slowest = options.slowest if options.slowest?
-      Spec.fail_fast = options.fail_fast if options.fail_fast?
-      Spec.use_colors = false if options.no_color?
+      if pattern = options.pattern?
+        Spec.pattern = pattern
+      end
+
+      if line = options.line?
+        Spec.line = line
+      end
+
+      if slowest = options.slowest?
+        Spec.slowest = slowest
+      end
+
+      Spec.fail_fast = options.fail_fast?
+
+      if options.no_color?
+        Spec.use_colors = false
+      end
 
       options.locations.each do |file, line|
         Spec.add_location file, line
