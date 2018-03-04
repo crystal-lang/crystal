@@ -281,12 +281,12 @@ abstract class IO
     nil
   end
 
-  # Returns the string resulting from applying `format_string` to
+   # Writes to this `IO` the string resulting from applying `format_string` to
    # any additional arguments.
-   # Within the format string, any characters
-   # other than format sequences are copied to the result.
+   # Within the format string, any characters other than format sequences
+   # are copied to the result.
    #
-   # The syntax for a format sequence should be like:
+   # The syntax for a format sequence is:
    #
    # ```
    # %[flags][width][.precision]type
@@ -334,7 +334,7 @@ abstract class IO
    #     ------+--------------------------------------------------------------
    #       c   | Argument is the numeric code for a single character or
    #           | a single character string itself.
-   #       p   | The valuing of argument.inspect.
+   #       p   | The value of argument.inspect.
    #       s   | Argument is a string to be substituted.  If the format
    #           | sequence contains a precision, at most that many characters
    #           | will be copied.
@@ -365,7 +365,7 @@ abstract class IO
    #            | aAeEfgG       | For `o`, `x`, `X`, `b`, radix-1
    #            | (numeric fmt) | is used for negative numbers formatted as
    #            |               | complements.
-
+   #
    #
    # Examples of flags:
    #
