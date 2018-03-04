@@ -2,7 +2,7 @@ require "spec"
 require "spec/cli"
 
 class SpecRunnerCLI < Spec::CLI
-  property! exited : Int32
+  property? exited : Int32? = nil
 
   private def display(message)
     stdout.puts message
@@ -90,7 +90,7 @@ describe Spec::CLI do
         options.locations.size.should eq(0)
 
         cli.exited?.should be_truthy
-        cli.exited.should eq(1)
+        cli.exited?.should eq(1)
 
         io.to_s.should contain("location missing.cr must be file:line")
       end
@@ -109,7 +109,7 @@ describe Spec::CLI do
       cli, _ = prepare_cli %w(--help), stdout: io
 
       cli.exited?.should be_truthy
-      cli.exited.should eq(0)
+      cli.exited?.should eq(0)
 
       output = io.to_s
       output.should contain("crystal spec runner")
@@ -150,7 +150,7 @@ describe Spec::CLI do
       cli, _ = prepare_cli %w(unknown), stderr: io
 
       cli.exited?.should be_truthy
-      cli.exited.should eq(1)
+      cli.exited?.should eq(1)
 
       io.to_s.should contain("Error: unknown argument 'unknown'")
     end
