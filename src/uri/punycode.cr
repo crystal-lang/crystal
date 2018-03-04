@@ -13,17 +13,17 @@
 # https://www.ietf.org/rfc/rfc5980.txt
 class URI
   class Punycode
-    BASE         =  36
-    TMIN         =   1
-    TMAX         =  26
-    SKEW         =  38
-    DAMP         = 700
-    INITIAL_BIAS =  72
-    INITIAL_N    = 128
+    private BASE         =  36
+    private TMIN         =   1
+    private TMAX         =  26
+    private SKEW         =  38
+    private DAMP         = 700
+    private INITIAL_BIAS =  72
+    private INITIAL_N    = 128
 
-    DELIMITER = '-'
+    private DELIMITER = '-'
 
-    BASE36 = "abcdefghijklmnopqrstuvwxyz0123456789"
+    private BASE36 = "abcdefghijklmnopqrstuvwxyz0123456789"
 
     private def self.adapt(delta, numpoints, firsttime)
       delta /= firsttime ? DAMP : 2
