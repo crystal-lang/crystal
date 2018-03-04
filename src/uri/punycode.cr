@@ -36,19 +36,13 @@ class URI
       k + (((BASE - TMIN + 1) * delta) / (delta + SKEW))
     end
 
-    def self.encode(string : String)
-      encode string.chars
+    def self.encode(string)
+      String.build { |io| encode string, io }
     end
 
-    def self.encode(chars)
-      String.build { |io| encode chars, io }
-    end
+    def self.encode(string, io)
+      chars = string.each_char
 
-    def self.encode(string : String, io)
-      encode string.chars, io
-    end
-
-    def self.encode(chars, io)
       h = 0
       all = true
       others = [] of Char
@@ -82,7 +76,7 @@ class URI
         delta += (m.ord - n) * h
         n = m.ord + 1
 
-        chars.each do |c|
+        chars.rewind.each do |c|
           if c < m
             raise Exception.new("Overflow: input needs wider integers to process") if delta > Int32::MAX - 1
             delta += 1
