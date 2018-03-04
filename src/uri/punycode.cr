@@ -162,7 +162,7 @@ class URI
 
       String.build do |io|
         first = true
-        string.split('.').each do |part|
+        string.split('.') do |part|
           unless first
             io << "."
           end
