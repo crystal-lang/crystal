@@ -125,11 +125,12 @@ class URI
           init = false
         end
 
-        digit = if 'a' <= c && c <= 'z'
+        digit = case c
+                when .ascii_lowercase?
                   c.ord - 0x61
-                elsif 'A' <= c && c <= 'Z'
+                when .ascii_uppercase?
                   c.ord - 0x41
-                elsif '0' <= c && c <= '9'
+                when .ascii_number?
                   c.ord - 0x30 + 26
                 else
                   raise ArgumentError.new("Invalid input")
