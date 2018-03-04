@@ -41,13 +41,11 @@ class URI
     end
 
     def self.encode(string, io)
-      chars = string.each_char
-
       h = 0
       all = true
       others = [] of Char
 
-      chars.each do |c|
+      string.each_char do |c|
         if c < '\u0080'
           h += 1
           io << c
@@ -76,7 +74,7 @@ class URI
         delta += (m.ord - n) * h
         n = m.ord + 1
 
-        chars.rewind.each do |c|
+        string.each_char do |c|
           if c < m
             raise Exception.new("Overflow: input needs wider integers to process") if delta > Int32::MAX - 1
             delta += 1
