@@ -30,7 +30,7 @@ module Spec
       setup
     end
 
-    def prepare
+    def prepare : Nil
       return if prepared?
 
       parser.parse(argv)
@@ -42,7 +42,7 @@ module Spec
       if ENV["SPEC_VERBOSE"]? == "1"
         options.default_formatter = Spec::VerboseFormatter.new
       end
-    ensure
+
       @prepared = true
     end
 
