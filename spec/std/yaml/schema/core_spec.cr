@@ -94,17 +94,21 @@ describe YAML::Schema::Core do
   end
 
   # integer (base 10)
+  it_parses_scalar "0", 0
   it_parses_scalar "123", 123
   it_parses_scalar "+123", 123
   it_parses_scalar "-123", -123
 
   # integer (binary)
+  it_parses_scalar "0b0", 0
   it_parses_scalar "0b10110", 0b10110
 
   # integer (octal)
+  it_parses_scalar "00", 0
   it_parses_scalar "0123", 0o123
 
   # integer (hex)
+  it_parses_scalar "0x0", 0
   it_parses_scalar "0x123abc", 0x123abc
   it_parses_scalar "-0x123abc", -0x123abc
 

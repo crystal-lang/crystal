@@ -84,6 +84,7 @@ module YAML::Schema::Core
       value = parse_float?(string)
       return value || string
     when .starts_with?('0')
+      return 0_i64 if string.size == 1
       value = string.to_i64?(base: 8, prefix: true)
       return value || string
     when .starts_with?('-'),
