@@ -64,7 +64,7 @@ jobs:
 
           # How to brand it
           echo "export CRYSTAL_VERSION=nightly" >> build.env
-          echo "export PACKAGE_ITERATION=$CIRCLE_BUILD_NUM" >> build.env
+          echo "export PACKAGE_ITERATION=$(date '+%Y%m%d')$CIRCLE_BUILD_NUM" >> build.env
           echo "export DOCKER_TAG=nightly" >> build.env
 
           cat build.env
