@@ -38,7 +38,7 @@ jobs:
       TRAVIS_OS_NAME: osx
     steps: *ci_steps
 
-  prepare_dist:
+  prepare_common:
     docker:
       - image: docker:stable-git
     steps:
@@ -47,8 +47,7 @@ jobs:
           git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
           git checkout params
-      # persist relevant information for build process in different environments.
-      # determine is the build is nightly or a tagged release
+      # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
           touch build.env
@@ -62,6 +61,43 @@ jobs:
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
 
+          cat build.env
+      - persist_to_workspace:
+          root: ../
+          paths:
+            - distribution-scripts
+
+  # prepare build for tagged releases
+  prepare_tagged:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+
+          # How to brand it
+          echo "export CRYSTAL_VERSION=$CIRCLE_TAG" >> build.env
+          echo "export PACKAGE_ITERATION=1" >> build.env
+          echo "export DOCKER_TAG=$CIRCLE_TAG" >> build.env
+
+          cat build.env
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - distribution-scripts
+
+  # prepare build for nightly releases
+  prepare_nightly:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+
           # How to brand it
           echo "export CRYSTAL_VERSION=nightly" >> build.env
           echo "export PACKAGE_ITERATION=$(date '+%Y%m%d')$CIRCLE_BUILD_NUM" >> build.env
@@ -69,7 +105,28 @@ jobs:
 
           cat build.env
       - persist_to_workspace:
-          root: ../
+          root: /tmp/workspace
+          paths:
+            - distribution-scripts
+
+  # prepare build for manual triggered releases like ci branches, maintenance releases, etc.
+  prepare_maintenance:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+
+          # How to brand it
+          echo "export CRYSTAL_VERSION=$CIRCLE_BRANCH" >> build.env
+          echo "export PACKAGE_ITERATION=$CIRCLE_BUILD_NUM" >> build.env
+          echo "export DOCKER_TAG=${CIRCLE_BRANCH/\//-}-dev" >> build.env
+
+          cat build.env
+      - persist_to_workspace:
+          root: /tmp/workspace
           paths:
             - distribution-scripts
 
@@ -177,50 +234,150 @@ jobs:
 
 workflows:
   version: 2
-  build_all_platforms:
+  test_all_platforms:
+    jobs:
+      - test_linux
+      - test_linux32
+      - test_darwin
+
+  tagged_release:
     jobs:
       - test_linux:
-          filters: &ci_filter
+          filters: &per_tag
             branches:
-              only:
-                - master
-                - /release\/.+/
-                - /.*\bci\b.*/
+              ignore: /.*/
             tags:
               only: /.*/
       - test_linux32:
-          filters: *ci_filter
+          filters: *per_tag
       - test_darwin:
-          filters: *ci_filter
-      - prepare_dist:
-          filters: &nightly_filter
-            branches:
-              only:
-                - ci/nightly
+          filters: *per_tag
+      - prepare_common:
+          filters: *per_tag
+          requires:
+            - test_linux
+            - test_linux32
+            - test_darwin
+      - prepare_tagged:
+          filters: *per_tag
+          requires:
+            - prepare_common
       - dist_linux:
-          filters: *nightly_filter
+          filters: *per_tag
           requires:
-            - prepare_dist
+            - prepare_tagged
       - dist_darwin:
-          filters: *nightly_filter
+          filters: *per_tag
           requires:
-            - prepare_dist
-      - dist_docs:
-          filters: *nightly_filter
-          requires:
-            - dist_docker
+            - prepare_tagged
       - dist_docker:
-          filters: *nightly_filter
+          filters: *per_tag
           requires:
             - dist_linux
-      - publish_docker:
-          filters: *nightly_filter
+      # Tagged release do not publish docker images since they are unsigned
+      # publish_docker:
+      - dist_docs:
+          filters: *per_tag
           requires:
             - dist_docker
       - dist_artifacts:
-          filters: *nightly_filter
+          filters: *per_tag
           requires:
             - dist_linux
             - dist_darwin
             - dist_docker
             - dist_docs
+
+  nightly_release:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                # TODO change to master
+                - ci/nightly
+    jobs:
+      - test_linux
+      - test_linux32
+      - test_darwin
+      - prepare_common:
+          requires:
+            - test_linux
+            - test_linux32
+            - test_darwin
+      - prepare_nightly:
+          requires:
+            - prepare_common
+      - dist_linux:
+          requires:
+            - prepare_nightly
+      - dist_darwin:
+          requires:
+            - prepare_nightly
+      - dist_docker:
+          requires:
+            - dist_linux
+      - publish_docker:
+          requires:
+            - dist_docker
+      - dist_docs:
+          requires:
+            - dist_docker
+      - dist_artifacts:
+          requires:
+            - dist_linux
+            - dist_darwin
+            - dist_docker
+            - dist_docs
+
+  maintenance_release:
+    jobs:
+      - test_linux:
+          filters: &maintenance
+            branches:
+              only:
+                - /release\/.+/
+                - /.*\bci\b.*/
+      - test_linux32:
+          filters: *maintenance
+      - test_darwin:
+          filters: *maintenance
+      - prepare_common:
+          filters: *maintenance
+          requires:
+            - test_linux
+            - test_linux32
+            - test_darwin
+      - prepare_maintenance:
+          filters: *maintenance
+          requires:
+            - prepare_common
+      - dist_linux:
+          filters: *maintenance
+          requires:
+            - prepare_maintenance
+      - dist_darwin:
+          filters: *maintenance
+          requires:
+            - prepare_maintenance
+      - dist_docker:
+          filters: *maintenance
+          requires:
+            - dist_linux
+      - publish_docker:
+          filters: *maintenance
+          requires:
+            - dist_docker
+      - dist_docs:
+          filters: *maintenance
+          requires:
+            - dist_docker
+      - dist_artifacts:
+          filters: *maintenance
+          requires:
+            - dist_linux
+            - dist_darwin
+            - dist_docker
+            - dist_docs
+
