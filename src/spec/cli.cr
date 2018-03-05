@@ -8,13 +8,12 @@ module Spec
     class Options
       property formatters = Array(Spec::Formatter).new
       property locations = Array({String, Int32}).new
-
-      property? default_formatter : Spec::Formatter?
+      property default_formatter : Spec::Formatter?
       property? fail_fast : Bool = false
-      property? line : Int32?
+      property line : Int32?
       property? no_color : Bool = false
-      property? pattern : String?
-      property? slowest : Int32?
+      property pattern : String?
+      property slowest : Int32?
     end
 
     getter options : Options
@@ -56,15 +55,15 @@ module Spec
     end
 
     private def apply_options
-      if pattern = options.pattern?
+      if pattern = options.pattern
         Spec.pattern = pattern
       end
 
-      if line = options.line?
+      if line = options.line
         Spec.line = line
       end
 
-      if slowest = options.slowest?
+      if slowest = options.slowest
         Spec.slowest = slowest
       end
 
@@ -82,7 +81,7 @@ module Spec
         Spec.add_formatter formatter
       end
 
-      if formatter = options.default_formatter?
+      if formatter = options.default_formatter
         Spec.override_default_formatter formatter
       end
     end
