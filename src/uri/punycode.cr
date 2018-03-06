@@ -101,13 +101,8 @@ class URI
     end
 
     def self.decode(string)
-      if delim = string.rindex(DELIMITER)
-        output = string[0...delim].chars
-        delim += 1
-      else
-        output = [] of Char
-        delim = 0
-      end
+      output, _, rest = string.rpartition(DELIMITER)
+      output = output.chars
 
       n = INITIAL_N
       bias = INITIAL_BIAS
@@ -115,7 +110,7 @@ class URI
       init = true
       w = oldi = k = 0
 
-      string[delim..-1].each_char do |c|
+      rest.each_char do |c|
         if init
           w = 1
           oldi = i
