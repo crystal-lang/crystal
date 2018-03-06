@@ -55,9 +55,7 @@ def print(*objects : _) : Nil
   STDOUT.flush
 end
 
-# Prints a formatted string to `STDOUT`.
-#
-# See also: `sprintf`.
+# ditto
 def printf(format_string, *args) : Nil
   printf format_string, args
 end
