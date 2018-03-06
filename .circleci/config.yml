@@ -103,6 +103,9 @@ jobs:
           echo "export PACKAGE_ITERATION=$(date '+%Y%m%d')$CIRCLE_BUILD_NUM" >> build.env
           echo "export DOCKER_TAG=nightly" >> build.env
 
+          # Build from working directory (needed for omnibus and when version does not match branch/tag)
+          echo "export FORCE_GIT_TAGGED=0" >> build.env
+
           cat build.env
       - persist_to_workspace:
           root: /tmp/workspace
@@ -120,9 +123,14 @@ jobs:
           cd /tmp/workspace/distribution-scripts
 
           # How to brand it
-          echo "export CRYSTAL_VERSION=$CIRCLE_BRANCH" >> build.env
+          export VERSION=${CIRCLE_BRANCH/release\//}
+          export VERSION=${VERSION/\//-}-dev
+          echo "export CRYSTAL_VERSION=$VERSION" >> build.env
           echo "export PACKAGE_ITERATION=$CIRCLE_BUILD_NUM" >> build.env
-          echo "export DOCKER_TAG=${CIRCLE_BRANCH/\//-}-dev" >> build.env
+          echo "export DOCKER_TAG=$VERSION" >> build.env
+
+          # Build from working directory (needed for omnibus and when version does not match branch/tag)
+          echo "export FORCE_GIT_TAGGED=0" >> build.env
 
           cat build.env
       - persist_to_workspace:
@@ -291,7 +299,8 @@ workflows:
   nightly_release:
     triggers:
       - schedule:
-          cron: "0 0 * * *"
+          # TODO change
+          cron: "30 * * * *"
           filters:
             branches:
               only:
