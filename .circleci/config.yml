@@ -79,7 +79,6 @@ jobs:
 
           # How to brand it
           echo "export CRYSTAL_VERSION=$CIRCLE_TAG" >> build.env
-          echo "export PACKAGE_ITERATION=1" >> build.env
           echo "export DOCKER_TAG=$CIRCLE_TAG" >> build.env
 
           cat build.env
@@ -99,9 +98,9 @@ jobs:
           cd /tmp/workspace/distribution-scripts
 
           # How to brand it
-          echo "export CRYSTAL_VERSION=nightly" >> build.env
-          echo "export PACKAGE_ITERATION=$(date '+%Y%m%d')$CIRCLE_BUILD_NUM" >> build.env
-          echo "export DOCKER_TAG=nightly" >> build.env
+          export VERSION=nightly-$(date '+%Y%m%d')
+          echo "export CRYSTAL_VERSION=$VERSION" >> build.env
+          echo "export DOCKER_TAG=$VERSION" >> build.env
 
           # Build from working directory (needed for omnibus and when version does not match branch/tag)
           echo "export FORCE_GIT_TAGGED=0" >> build.env
@@ -126,7 +125,6 @@ jobs:
           export VERSION=${CIRCLE_BRANCH/release\//}
           export VERSION=${VERSION/\//-}-dev
           echo "export CRYSTAL_VERSION=$VERSION" >> build.env
-          echo "export PACKAGE_ITERATION=$CIRCLE_BUILD_NUM" >> build.env
           echo "export DOCKER_TAG=$VERSION" >> build.env
 
           # Build from working directory (needed for omnibus and when version does not match branch/tag)
@@ -193,8 +191,7 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docker
-          cp /tmp/workspace/build/crystal_${CRYSTAL_VERSION}-${PACKAGE_ITERATION}_amd64.deb crystal.deb
-          make CRYSTAL_DEB=crystal.deb
+          make CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docker/
           paths:
