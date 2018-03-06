@@ -1072,6 +1072,7 @@ class Object
   #   delegate downcase, to: @string
   #   delegate gsub, to: @string
   #   delegate empty?, capitalize, to: @string
+  #   delegate :[], to: @string
   # end
   #
   # wrapper = StringWrapper.new "HELLO"
