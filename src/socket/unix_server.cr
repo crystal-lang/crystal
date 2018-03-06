@@ -64,7 +64,7 @@ class UNIXServer < UNIXSocket
   # this method.
   def accept? : UNIXSocket?
     if client_fd = accept_impl
-      sock = UNIXSocket.new(client_fd, type)
+      sock = UNIXSocket.new(client_fd, type, @path)
       sock.sync = sync?
       sock
     end

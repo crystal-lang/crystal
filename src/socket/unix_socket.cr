@@ -28,7 +28,7 @@ class UNIXSocket < Socket
     super family, type, Protocol::IP
   end
 
-  protected def initialize(fd : Int32, type : Type)
+  protected def initialize(fd : Int32, type : Type, @path : String? = nil)
     super fd, Family::UNIX, type, Protocol::IP
   end
 
