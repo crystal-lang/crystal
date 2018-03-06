@@ -41,15 +41,11 @@ class URI
     end
 
     def self.encode(string, io)
-      h = 0
-      all = true
       others = [] of Char
 
       string.each_char do |c|
         if c < '\u0080'
-          h += 1
           io << c
-          all = false
         else
           others.push c
         end
@@ -57,15 +53,16 @@ class URI
 
       return if others.empty?
       others.sort!
-      io << DELIMITER unless all
 
+      h = string.size - others.size + 1
       delta = 0_u32
       n = INITIAL_N
       bias = INITIAL_BIAS
       firsttime = true
       prev = nil
 
-      h += 1
+      io << DELIMITER if h > 1
+
       others.each do |m|
         next if m == prev
         prev = m
