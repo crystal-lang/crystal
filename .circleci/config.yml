@@ -296,8 +296,7 @@ workflows:
   nightly_release:
     triggers:
       - schedule:
-          # TODO change
-          cron: "30 * * * *"
+          cron: "0 0 * * *"
           filters:
             branches:
               only:
