@@ -1,3 +1,6 @@
+require "./format/formatter"
+require "./format/parser"
+
 # Specifies the format to convert a `Time` to and from a `String`.
 #
 # The pattern of a format is a `String` with directives. Directives
@@ -53,12 +56,6 @@
 # * **%:z**: time zone as hour and minute offset from UTC with a colon (+09:00)
 # * **%::z**: time zone as hour, minute and second offset from UTC with a colon (+09:00:00)
 struct Time::Format
-  # The ISO 8601 date format. This is just `"%F"`.
-  ISO_8601_DATE = new "%F"
-
-  # The ISO 8601 datetime format. This is just `"%FT%X%z"`.
-  ISO_8601_DATE_TIME = new "%FT%X%z"
-
   # :nodoc:
   MONTH_NAMES = %w(January February March April May June July August September October November December)
 
@@ -98,3 +95,5 @@ struct Time::Format
     io
   end
 end
+
+require "./format/custom/*"

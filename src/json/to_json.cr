@@ -124,7 +124,7 @@ end
 
 struct Time
   def to_json(json : JSON::Builder)
-    json.string(Time::Format::ISO_8601_DATE_TIME.format(self))
+    json.string(Time::Format::RFC_3339.format(self))
   end
 end
 

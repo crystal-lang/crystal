@@ -631,6 +631,11 @@ describe Time do
     time.offset.should eq 4 * 3600 + 12 * 60 + 39
     time.utc?.should be_false
     time.location.fixed?.should be_true
+
+    time = Time.parse("-04:12:39", "%::z")
+    time.offset.should eq -1 * (4 * 3600 + 12 * 60 + 39)
+    time.utc?.should be_false
+    time.location.fixed?.should be_true
   end
 
   # TODO %Z
