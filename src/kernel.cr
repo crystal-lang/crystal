@@ -155,12 +155,14 @@ end
 #
 # Examples of flags:
 #
+# Decimal number conversion
 # ```
 # sprintf "%d", 123  # => "123"
 # sprintf "%+d", 123 # => "+123"
 # sprintf "% d", 123 # => " 123"
 # ```
 #
+# Octal number conversion
 # ```
 # sprintf "%o", 123   # => "173"
 # sprintf "%+o", 123  # => "+173"
@@ -168,6 +170,7 @@ end
 # sprintf "%+o", -123 # => "-173"
 # ```
 #
+# Hexadecimal number conversion
 # ```
 # sprintf "%x", 123   # => "7b"
 # sprintf "%+x", 123  # => "+7b"
@@ -180,6 +183,7 @@ end
 # sprintf "%#X", -123 # => "-7B"
 # ```
 #
+# Binary number conversion
 # ```
 # sprintf "%b", 123    # => "1111011"
 # sprintf "%+b", 123   # => "+1111011"
@@ -192,11 +196,13 @@ end
 # sprintf "%+ b", -123 # => "-1111011"
 # ```
 #
+# Floating point conversion
 # ```
 # sprintf "%a", 123 # => "0x1.ecp+6"
 # sprintf "%A", 123 # => "0X1.ECP+6"
 # ```
 #
+# Exponential form conversion
 # ```
 # sprintf "%g", 123.4          # => "123.4"
 # sprintf "%g", 123.4567       # => "123.457"
@@ -261,6 +267,7 @@ end
 # ```
 # sprintf "%20.8f", 1234.56789 # => "       1234.56789000"
 # ```
+#
 # precision for `g` is number of
 # significant digits
 # ```
@@ -268,13 +275,14 @@ end
 # sprintf "%20.8g", 123456789  # => "       1.2345679e+08"
 # sprintf "%-20.8g", 123456789 # => "1.2345679e+08       "
 # ```
+#
 # precision for `s` is
 # maximum number of characters
 # ```
 # sprintf "%20.8s", "string test" # => "            string t"
 # ```
-# Examples:
 #
+# Additional examples:
 # ```
 # sprintf "%d %04x", 123, 123             # => "123 007b"
 # sprintf "%08b '%4s'", 123, 123          # => "01111011 ' 123'"
