@@ -1,8 +1,8 @@
 require "spec"
 require "spec/cli"
 
-class SpecRunnerCLI < Spec::CLI
-  property exit_code : Int32?
+private class SpecRunnerCLI < Spec::CLI
+  getter exit_code : Int32?
 
   private def display(message)
     stdout.puts message
