@@ -5,8 +5,8 @@ struct Time::Format
 
     # :nodoc:
     RFC_2822_LOCATIONS = {
-      "UT"  => Location.fixed("UT", 0),
-      "GMT" => Location.fixed("GMT", 0),
+      "UT"  => Location::UTC,
+      "GMT" => Location::UTC,
       "EST" => Location.fixed("EST", -5 * 3600),
       "EDT" => Location.fixed("EDT", -4 * 3600),
       "CST" => Location.fixed("CST", -6 * 3600),
@@ -317,7 +317,7 @@ struct Time::Format
       next_char
     end
 
-    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true)
+    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true, force_zero_padding = true, force_minutes = true)
       case current_char
       when '-'
         sign = -1
@@ -332,24 +332,37 @@ struct Time::Format
       hours = char.to_i
 
       char = next_char
-      raise "Invalid timezone" unless char.ascii_number?
-      hours = hours * 10 + char.to_i
+      if char.ascii_number?
+        hours = hours * 10 + char.to_i
 
-      char = next_char
+        char = next_char
+      elsif force_zero_padding
+        raise "Invalid timezone"
+      end
+
       if char == ':'
         raise "Invalid timezone" unless allow_colon
         char = next_char
       elsif force_colon
         raise "Invalid timezone"
       end
-      raise "Invalid timezone" unless char.ascii_number?
-      minutes = char.to_i
 
-      char = next_char
-      raise "Invalid timezone" unless char.ascii_number?
-      minutes = minutes * 10 + char.to_i
+      if char.ascii_number?
+        minutes = char.to_i
 
-      char = next_char
+        char = next_char
+        if char.ascii_number?
+          minutes = minutes * 10 + char.to_i
+
+          char = next_char
+        elsif force_zero_padding
+          raise "Invalid timezone"
+        end
+      elsif force_minutes
+        raise "Invalid timezone"
+      else
+        minutes = 0
+      end
 
       seconds = 0
       if @reader.has_next? && allow_seconds
@@ -424,7 +437,15 @@ struct Time::Format
       consume_number_i64(max_digits).to_i
     end
 
+    def consume_number?(max_digits)
+      consume_number_i64?(max_digits).try(&.to_i)
+    end
+
     def consume_number_i64(max_digits)
+      consume_number_i64?(max_digits) || raise "Invalid number"
+    end
+
+    def consume_number_i64?(max_digits)
       n = 0_i64
       char = current_char
 
@@ -432,7 +453,7 @@ struct Time::Format
         n = (char - '0').to_i64
         char = next_char
       else
-        raise "Expecting number"
+        return nil
       end
 
       max_digits -= 1
@@ -465,6 +486,12 @@ struct Time::Format
 
     def skip_space
       next_char if current_char.ascii_whitespace?
+    end
+
+    def skip_spaces
+      while current_char.ascii_whitespace?
+        next_char
+      end
     end
 
     def whitespace

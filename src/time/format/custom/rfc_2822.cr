@@ -26,7 +26,7 @@ struct Time::Format
   end
 
   module Pattern
-    def rfc_2822
+    def rfc_2822(time_zone_gmt = false)
       cfws?
       short_day_name_with_comma?
       day_of_month
@@ -48,7 +48,11 @@ struct Time::Format
 
       folding_white_space
 
-      time_zone_rfc2822
+      if time_zone_gmt
+        time_zone_gmt_or_rfc2822
+      else
+        time_zone_rfc2822
+      end
 
       cfws?
     end
