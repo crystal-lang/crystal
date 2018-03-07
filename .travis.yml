@@ -11,12 +11,10 @@ matrix:
   include:
     - env: ARCH=i386 ARCH_CMD=linux32 ARCH_LIBRARY_PATH=/opt/crystal/embedded/lib/
       os: linux
-    - env: ARCH=x86_64 ARCH_CMD=linux64 DEPLOY=true
+    - env: ARCH=x86_64 ARCH_CMD=linux64
       os: linux
 
 before_install:
-  - echo '{"ipv6":true, "fixed-cidr-v6":"2001:db8:1::/64"}' | sudo tee /etc/docker/daemon.json
-  - sudo service docker restart
   - bin/ci prepare_system
 
 install:
@@ -25,13 +23,11 @@ install:
 script:
   - bin/ci build
 
-after_success:
-  - bin/ci deploy
-
 branches:
   only:
     - master
     - /\Arelease\/.+\z/
+    - /.*\bci\b.*/
 
 env:
   global:
