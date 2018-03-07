@@ -230,8 +230,12 @@ def Union.new(pull : JSON::PullParser)
   raise JSON::ParseException.new("Couldn't parse #{self} from #{string}", *location)
 end
 
+# Reads a string from JSON parser as a time formated according to [RFC 3339](https://tools.ietf.org/html/rfc3339).
+#
+# The JSON format itself does not specify a time data type, this method just assumes that a string holding a time
+# format matching RFC 3339 can be interpreted as a time value.
 def Time.new(pull : JSON::PullParser)
-  Time::Format::ISO_8601_DATE_TIME.parse(pull.read_string)
+  Time::Format::RFC_3339.parse(pull.read_string)
 end
 
 struct Time::Format
