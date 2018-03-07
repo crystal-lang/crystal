@@ -300,8 +300,7 @@ workflows:
           filters:
             branches:
               only:
-                # TODO change to master
-                - ci/nightly
+                - master
     jobs:
       - test_linux
       - test_linux32
