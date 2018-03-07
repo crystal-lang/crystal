@@ -44,9 +44,9 @@ jobs:
     steps:
       # checkout specific distribution-scripts version to perform releases and nightly
       - run: |
-          git clone https://github.com/bcardiff/distribution-scripts.git ~/distribution-scripts
+          git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout params
+          git checkout 839e8ce63e5c48393faa0c126dd2f42aa5c798aa
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
