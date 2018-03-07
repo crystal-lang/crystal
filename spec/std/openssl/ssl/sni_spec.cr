@@ -98,7 +98,8 @@ describe OpenSSL::SSL::Socket::Server do
     sni_context = new_server_context
     server_context.sni_fail_hard = true
     server_context.add_sni_hostname "invalid_hostname", sni_context
-    expect_raises OpenSSL::SSL::Error, /get_server_hello/i do
+    # get_client_hello shows up on OpenSSL <1.0.1f
+    expect_raises OpenSSL::SSL::Error, /get_server_hello|get_client_hello/i do
       run_client port: port, server_context: server_context
     end
   end
@@ -110,7 +111,7 @@ describe OpenSSL::SSL::Socket::Server do
     client_context = new_client_context
     # disable peer verification so we can be sure error is coming from SNI
     client_context.verify_mode = OpenSSL::SSL::VerifyMode::NONE
-    expect_raises OpenSSL::SSL::Error, /get_server_hello/i do
+    expect_raises OpenSSL::SSL::Error, /get_server_hello|get_client_hello/i do
       run_client port: port, server_context: server_context, hostname: "client_supplied_invalid_hostname"
     end
   end
