@@ -306,7 +306,7 @@ describe "YAML serialization" do
 
     it "does for utc time with nanoseconds" do
       time = Time.utc(2010, 11, 12, 1, 2, 3, nanosecond: 456_000_000)
-      time.to_yaml.should eq("--- 2010-11-12 01:02:03.456\n...\n")
+      time.to_yaml.should eq("--- 2010-11-12 01:02:03.456000000\n...\n")
     end
 
     it "does for bytes" do

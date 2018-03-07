@@ -136,7 +136,10 @@ struct Time::Format
     end
 
     def second_fraction?
-      second_fraction unless time.nanosecond == 0
+      unless time.nanosecond == 0
+        char '.'
+        second_fraction
+      end
     end
 
     def am_pm

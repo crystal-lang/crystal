@@ -108,20 +108,7 @@ end
 
 struct Time
   def to_yaml(yaml : YAML::Nodes::Builder)
-    case
-    when utc?
-      if hour == 0 && minute == 0 && second == 0 && millisecond == 0
-        yaml.scalar Time::Format.new("%F").format(self)
-      elsif millisecond == 0
-        yaml.scalar Time::Format.new("%F %X").format(self)
-      else
-        yaml.scalar Time::Format.new("%F %X.%L").format(self)
-      end
-    when millisecond == 0
-      yaml.scalar Time::Format.new("%F %X %:z").format(self)
-    else
-      yaml.scalar Time::Format.new("%F %X.%L %:z").format(self)
-    end
+    yaml.scalar Time::Format::YAML_DATE.format(self)
   end
 end
 
