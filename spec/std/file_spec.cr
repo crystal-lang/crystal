@@ -291,6 +291,7 @@ describe "File" do
     File.extname("/foo/bar/.profile.sh").should eq(".sh")
     File.extname("/foo/bar/foo.").should eq("")
     File.extname("test").should eq("")
+    File.extname("/foo.bar/baz").should eq("")
   end
 
   it "constructs a path from parts" do

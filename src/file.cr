@@ -294,12 +294,12 @@ class File < IO::FileDescriptor
   # File.extname("foo.cr") # => ".cr"
   # ```
   def self.extname(filename) : String
-    filename.check_no_null_byte
+    filename = basename(filename)
 
     dot_index = filename.rindex('.')
 
-    if dot_index && dot_index != filename.size - 1 && filename[dot_index - 1] != SEPARATOR
-      filename[dot_index, filename.size - dot_index]
+    if dot_index && dot_index != 0 && dot_index != filename.size - 1
+      filename[dot_index..-1]
     else
       ""
     end
