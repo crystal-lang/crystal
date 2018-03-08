@@ -283,7 +283,13 @@ struct Time
   end
 
   # Returns a `Time` that is this number of *seconds* and *nanoseconds* later.
+  #
+  # Negative values are subtracted, meaning an earlier point in time.
   def add_span(seconds : Int, nanoseconds : Int) : Time
+    if seconds == 0 && nanoseconds == 0
+      return self
+    end
+
     seconds = total_seconds + seconds
     nanoseconds = self.nanosecond.to_i64 + nanoseconds
 
