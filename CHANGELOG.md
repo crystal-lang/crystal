@@ -1,4 +1,4 @@
-# 0.24.1 (TBA)
+# 0.24.1 (23-12-2017)
 
 ## New features
 - Add ThinLTO support for faster release builds in LLVM 4.0 and above. ([#4367](https://github.com/crystal-lang/crystal/issues/4367), thanks @bcardiff)
