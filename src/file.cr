@@ -297,8 +297,9 @@ class File < IO::FileDescriptor
     filename.check_no_null_byte
 
     dot_index = filename.rindex('.')
+    separator_index = filename.rindex(SEPARATOR)
 
-    if dot_index && dot_index != filename.size - 1 && filename[dot_index - 1] != SEPARATOR
+    if dot_index && dot_index > separator_index && dot_index != filename.size - 1 && filename[dot_index - 1] != SEPARATOR
       filename[dot_index, filename.size - dot_index]
     else
       ""
