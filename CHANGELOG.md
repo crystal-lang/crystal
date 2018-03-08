@@ -1,4 +1,4 @@
-# 0.24.2 (2018-01-25)
+# 0.24.2 (2018-03-08)
 
 - Fixed an `Index out of bounds` raised during `at_exit` (#5224, #5565, thanks @ysbaddaden)
 - Re-add `Dir#each` so it complies with `Enumerable` (#5458, thanks @bcardiff)
