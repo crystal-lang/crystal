@@ -1022,7 +1022,7 @@
 * Added `Def#visibility` in macros (thanks @ysbaddaden)
 * Added `String#codepoints` and `String#each_codepoint` (thanks @jhass)
 * `Char#to_i(base)` now supports bases from 2 to 36
-# `Set#|` now correctly accepts a set of a possible different type (thanks @yui-knk)
+* `Set#|` now correctly accepts a set of a possible different type (thanks @yui-knk)
 * Flush `STDERR` on exit (thanks @jbbarth)
 * `HTTP::Client` methods accept an optional block, which will yield an `HTTP::Response` with a non-nil `body_io` property to consume the response's IO
 * Document `URI`, `UDPSocket` (thanks @davydovanton)
