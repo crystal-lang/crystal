@@ -18,32 +18,77 @@ struct BigDecimal < Number
   TEN                        = BigInt.new(10)
   DEFAULT_MAX_DIV_ITERATIONS = 100_u64
 
-  include Comparable(Number)
+  include Comparable(Int)
+  include Comparable(Float)
+  include Comparable(BigRational)
   include Comparable(BigDecimal)
 
   getter value : BigInt
   getter scale : UInt64
 
+  # Creates a new `BigDecimal` from `Float`.
+  #
+  # NOTE: Floats are fundamentally less precise than BigDecimals,
+  # which makes initialization from them risky.
+  def self.new(num : Float)
+    new(num.to_s)
+  end
+
+  # Creates a new `BigDecimal` from `BigRational`.
+  def self.new(num : BigRational)
+    num.numerator.to_big_d / num.denominator.to_big_d
+  end
+
+  # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
+  # being a `Number`.
+  def self.new(num : BigDecimal)
+    num
+  end
+
+  # Creates a new `BigDecimal` from `BigInt` *value* and `UInt64` *scale*,
+  # which matches the internal representation.
+  def initialize(@value : BigInt, @scale : UInt64)
+  end
+
+  # Creates a new `BigDecimal` from `Int`.
+  def initialize(num : Int = 0, scale : Int = 0)
+    initialize(num.to_big_i, scale.to_u64)
+  end
+
   # Creates a new `BigDecimal` from a `String`.
   #
   # Allows only valid number strings with an optional negative sign.
   def initialize(str : String)
+    # Strip leading '+' char to smooth out cases with strings like "+123"
+    str = str.lchop('+')
+
     raise InvalidBigDecimalException.new(str, "Zero size") if str.bytesize == 0
 
-    # Check str's validity and find index of .
+    # Check str's validity and find index of '.'
     decimal_index = nil
+    # Check str's validity and find index of 'e'
+    exponent_index = nil
+
     str.each_char_with_index do |char, index|
       case char
       when '-'
-        if index != 0
+        unless index == 0 || exponent_index == index - 1
           raise InvalidBigDecimalException.new(str, "Unexpected '-' character")
+        end
+      when '+'
+        unless exponent_index == index - 1
+          raise InvalidBigDecimalException.new(str, "Unexpected '+' character")
         end
       when '.'
         if decimal_index
           raise InvalidBigDecimalException.new(str, "Unexpected '.' character")
         end
-
         decimal_index = index
+      when 'e', 'E'
+        if exponent_index
+          raise InvalidBigDecimalException.new(str, "Unexpected #{char.inspect} character")
+        end
+        exponent_index = index
       when '0'..'9'
         # Pass
       else
@@ -51,53 +96,51 @@ struct BigDecimal < Number
       end
     end
 
+    decimal_end_index = (exponent_index || str.bytesize) - 1
     if decimal_index
+      decimal_count = (decimal_end_index - decimal_index).to_u64
+
       value_str = String.build do |builder|
         # We know this is ASCII, so we can slice by index
         builder.write(str.to_slice[0, decimal_index])
-        builder.write(str.to_slice[decimal_index + 1, str.bytesize - decimal_index - 1])
+        builder.write(str.to_slice[decimal_index + 1, decimal_count])
+      end
+      @value = value_str.to_big_i
+    else
+      decimal_count = 0_u64
+      @value = str[0..decimal_end_index].to_big_i
+    end
+
+    if exponent_index
+      exponent_postfix = str[exponent_index + 1]
+      case exponent_postfix
+      when '+', '-'
+        exponent_positive = exponent_postfix == '+'
+        exponent = str[(exponent_index + 2)..-1].to_u64
+      else
+        exponent_positive = true
+        exponent = str[(exponent_index + 1)..-1].to_u64
       end
 
-      @value = value_str.to_big_i
-      @scale = (str.bytesize - decimal_index - 1).to_u64
+      @scale = exponent
+      if exponent_positive
+        if @scale < decimal_count
+          @scale = decimal_count - @scale
+        else
+          @scale -= decimal_count
+          @value *= 10.to_big_i ** @scale
+          @scale = 0_u64
+        end
+      else
+        @scale += decimal_count
+      end
     else
-      @value = str.to_big_i
-      @scale = 0_u64
+      @scale = decimal_count
     end
   end
 
-  # Creates an new `BigDecimal` from `Int`.
-  def initialize(num : Int)
-    initialize(num.to_big_i, 0)
-  end
-
-  # Creating a `BigDecimal` from `Float`.
-  #
-  # NOTE: Floats are fundamentally less precise than BigDecimals, which makes initialization from them risky.
-  def initialize(num : Float)
-    initialize num.to_s
-  end
-
-  # Creates a new `BigDecimal` from `BigInt`/`UInt64`, which matches the internal representation.
-  def initialize(@value : BigInt, @scale : UInt64)
-  end
-
-  def initialize(value : Int, scale : Int)
-    initialize(value.to_big_i, scale.to_u64)
-  end
-
-  def initialize(value : BigInt)
-    initialize(value, 0u64)
-  end
-
-  def initialize
-    initialize(0)
-  end
-
-  # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
-  # being a `Number`.
-  def self.new(num : BigDecimal)
-    num
+  def - : BigDecimal
+    BigDecimal.new(-@value, @scale)
   end
 
   def +(other : BigDecimal) : BigDecimal
@@ -112,6 +155,10 @@ struct BigDecimal < Number
     end
   end
 
+  def +(other : Int)
+    self + BigDecimal.new(other)
+  end
+
   def -(other : BigDecimal) : BigDecimal
     if @scale > other.scale
       scaled = other.scale_to(self)
@@ -124,15 +171,27 @@ struct BigDecimal < Number
     end
   end
 
+  def -(other : Int)
+    self - BigDecimal.new(other)
+  end
+
   def *(other : BigDecimal) : BigDecimal
     BigDecimal.new(@value * other.value, @scale + other.scale)
+  end
+
+  def *(other : Int)
+    self * BigDecimal.new(other)
   end
 
   def /(other : BigDecimal) : BigDecimal
     div other
   end
 
-  # Divides self with another `BigDecimal`, with a optionally configurable *max_div_iterations*, which
+  def /(other : Int)
+    self / BigDecimal.new(other)
+  end
+
+  # Divides `self` with another `BigDecimal`, with a optionally configurable *max_div_iterations*, which
   # defines a maximum number of iterations in case the division is not exact.
   #
   # ```
@@ -151,7 +210,6 @@ struct BigDecimal < Number
     end
 
     remainder = remainder * TEN
-
     i = 0
     while remainder != ZERO && i < max_div_iterations
       inner_quotient, inner_remainder = remainder.divmod(denominator)
@@ -173,15 +231,16 @@ struct BigDecimal < Number
     end
   end
 
-  def <=>(other : Int)
+  def <=>(other : Int | Float | BigRational)
     self <=> BigDecimal.new(other)
   end
 
   def ==(other : BigDecimal) : Bool
-    if @scale > other.scale
+    case @scale
+    when .>(other.scale)
       scaled = other.value * power_ten_to(@scale - other.scale)
       @value == scaled
-    elsif @scale < other.scale
+    when .<(other.scale)
       scaled = @value * power_ten_to(other.scale - @scale)
       scaled == other.value
     else
@@ -209,8 +268,8 @@ struct BigDecimal < Number
 
   def to_s(io : IO)
     factor_powers_of_ten
-    s = @value.to_s
 
+    s = @value.to_s
     if @scale == 0
       io << s
       return
@@ -234,27 +293,92 @@ struct BigDecimal < Number
     end
   end
 
+  def inspect(io)
+    to_s(io)
+    io << "_big_d"
+  end
+
   def to_big_d
     self
   end
 
-  # Converts to integer. Truncates anything on the right side of the decimal point.
-  def to_i
+  # Converts to `Int64`. Truncates anything on the right side of the decimal point.
+  def to_i64
     if @value >= 0
-      (@value / TEN ** @scale).to_i
+      (@value / TEN ** @scale).to_i64
     else
-      -(@value.abs / TEN ** @scale).to_i
+      -(@value.abs / TEN ** @scale).to_i64
     end
   end
 
-  # Converts to unsigned integer. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
-  def to_u
-    (@value.abs / TEN ** @scale).to_u
+  # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  def to_i32
+    to_i64.to_i32
   end
 
+  # Converts to `Int16`. Truncates anything on the right side of the decimal point.
+  def to_i16
+    to_i64.to_i16
+  end
+
+  # Converts to `Int8`. Truncates anything on the right side of the decimal point.
+  def to_i8
+    to_i64.to_i8
+  end
+
+  # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  def to_i
+    to_i32
+  end
+
+  # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  def to_u64
+    (@value.abs / TEN ** @scale).to_u64
+  end
+
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  def to_u32
+    to_u64.to_u32
+  end
+
+  # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  def to_u16
+    to_u64.to_u16
+  end
+
+  # Converts to `UInt8`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  def to_u8
+    to_u64.to_u8
+  end
+
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  def to_u
+    to_u32
+  end
+
+  # Converts to `Float64`.
+  def to_f64
+    to_s.to_f64
+  end
+
+  # Converts to `Float32`.
+  def to_f32
+    to_f64.to_f32
+  end
+
+  # Converts to `Float64`.
   def to_f
-    to_s.to_f
+    to_f64
+  end
+
+  # Converts to `BigFloat`.
+  def to_big_f
+    BigFloat.new(to_s)
   end
 
   def clone
@@ -262,11 +386,11 @@ struct BigDecimal < Number
   end
 
   def hash(hasher)
-    hasher.string(self.to_s)
+    hasher.string(to_s)
   end
 
-  # Returns the *quotient* as absolutely negative if self and other have different signs,
-  # otherwise returns the *quotient*.
+  # Returns the *quotient* as absolutely negative if `self` and *other* have
+  # different signs, otherwise returns the *quotient*.
   def normalize_quotient(other : BigDecimal, quotient : BigInt) : BigInt
     if (@value < 0 && other.value > 0) || (other.value < 0 && @value > 0)
       -quotient.abs
@@ -276,7 +400,7 @@ struct BigDecimal < Number
   end
 
   private def check_division_by_zero(bd : BigDecimal)
-    raise DivisionByZero.new if bd.value == 0
+    raise DivisionByZeroError.new if bd.value == 0
   end
 
   private def power_ten_to(x : Int) : Int
@@ -299,27 +423,63 @@ end
 struct Int
   include Comparable(BigDecimal)
 
-  # Convert `Int` to `BigDecimal`.
+  # Converts `self` to `BigDecimal`.
   def to_big_d
     BigDecimal.new(self)
   end
 
   def <=>(other : BigDecimal)
-    self <=> other.value
+    to_big_d <=> other
+  end
+
+  def +(other : BigDecimal)
+    other + self
+  end
+
+  def -(other : BigDecimal)
+    to_big_d - other
+  end
+
+  def *(other : BigDecimal)
+    other * self
+  end
+
+  def /(other : BigDecimal)
+    to_big_d / other
   end
 end
 
-class String
+struct Float
   include Comparable(BigDecimal)
 
-  # Convert `String` to `BigDecimal`.
+  def <=>(other : BigDecimal)
+    to_big_d <=> other
+  end
+
+  # Converts `self` to `BigDecimal`.
+  #
+  # NOTE: Floats are fundamentally less precise than BigDecimals,
+  # which makes conversion to them risky.
   def to_big_d
     BigDecimal.new(self)
   end
 end
 
-struct Float
-  # NOTE: Floats are fundamentally less precise than BigDecimals, which makes initialization from them risky.
+struct BigRational
+  include Comparable(BigDecimal)
+
+  def <=>(other : BigDecimal)
+    to_big_d <=> other
+  end
+
+  # Converts `self` to `BigDecimal`.
+  def to_big_d
+    BigDecimal.new(self)
+  end
+end
+
+class String
+  # Converts `self` to `BigDecimal`.
   def to_big_d
     BigDecimal.new(self)
   end

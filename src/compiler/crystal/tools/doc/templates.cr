@@ -33,6 +33,18 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/js/doc.js"
   end
 
+  struct JsSearchTemplate
+    ECR.def_to_s "#{__DIR__}/html/js/_search.js"
+  end
+
+  struct JsNavigatorTemplate
+    ECR.def_to_s "#{__DIR__}/html/js/_navigator.js"
+  end
+
+  struct JsUsageModal
+    ECR.def_to_s "#{__DIR__}/html/js/_usage-modal.js"
+  end
+
   struct StyleTemplate
     ECR.def_to_s "#{__DIR__}/html/css/style.css"
   end

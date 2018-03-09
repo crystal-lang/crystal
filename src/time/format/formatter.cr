@@ -147,51 +147,51 @@ struct Time::Format
       io << time.epoch
     end
 
-    def time_zone
-      case time.kind
-      when Time::Kind::Utc, Time::Kind::Unspecified
-        io << "+0000"
-      when Time::Kind::Local
-        negative, hours, minutes = local_time_zone_info
-        io << (negative ? "-" : "+")
-        io << "0" if hours < 10
-        io << hours
-        io << "0" if minutes < 10
-        io << minutes
+    def time_zone(with_seconds = false)
+      negative, hours, minutes, seconds = local_time_zone_info
+      io << (negative ? '-' : '+')
+      io << '0' if hours < 10
+      io << hours
+      io << '0' if minutes < 10
+      io << minutes
+      if with_seconds
+        io << '0' if seconds < 10
+        io << seconds
       end
     end
 
-    def time_zone_colon
-      case time.kind
-      when Time::Kind::Utc, Time::Kind::Unspecified
-        io << "+00:00"
-      when Time::Kind::Local
-        negative, hours, minutes = local_time_zone_info
-        io << (negative ? "-" : "+")
-        io << "0" if hours < 10
-        io << hours
-        io << ":"
-        io << "0" if minutes < 10
-        io << minutes
+    def time_zone_colon(with_seconds = false)
+      negative, hours, minutes, seconds = local_time_zone_info
+      io << (negative ? '-' : '+')
+      io << '0' if hours < 10
+      io << hours
+      io << ':'
+      io << '0' if minutes < 10
+      io << minutes
+      if with_seconds
+        io << ':'
+        io << '0' if seconds < 10
+        io << seconds
       end
     end
 
     def time_zone_colon_with_seconds
-      time_zone_colon
-      io << ":00"
+      time_zone_colon(with_seconds: true)
     end
 
     def local_time_zone_info
-      minutes = Time.local_offset_in_minutes
-      if minutes < 0
-        minutes = -minutes
+      offset = time.offset
+      if offset < 0
+        offset = -offset
         negative = true
       else
         negative = false
       end
+      seconds = offset % 60
+      minutes = offset / 60
       hours = minutes / 60
       minutes = minutes % 60
-      {negative, hours, minutes}
+      {negative, hours, minutes, seconds}
     end
 
     def char(char)

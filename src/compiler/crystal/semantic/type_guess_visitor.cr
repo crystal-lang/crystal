@@ -597,7 +597,8 @@ module Crystal
       end
 
       # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
-      if obj.is_a?(Generic) && obj.name.single?("Pointer") &&
+      if obj.is_a?(Generic) &&
+         (name = obj.name).is_a?(Path) && name.single?("Pointer") &&
          (node.name == "malloc" || node.name == "null")
         type = lookup_type?(obj)
         return type if type.is_a?(PointerInstanceType)
@@ -703,7 +704,7 @@ module Crystal
         defs = [defs.first]
       end
 
-      # Only use teturn type if all matching defs have a return type
+      # Only use return type if all matching defs have a return type
       if defs.all? &.return_type
         # We can only infer the type if all overloads return
         # the same type (because we can't know the call

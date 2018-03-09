@@ -238,11 +238,7 @@ module Crystal
         program.codegen node, debug: debug, single_module: @single_module || (!@thin_lto && @release) || @cross_compile || @emit
       end
 
-      if @cross_compile
-        output_dir = "."
-      else
-        output_dir = CacheDir.instance.directory_for(sources)
-      end
+      output_dir = CacheDir.instance.directory_for(sources)
 
       bc_flags_changed = bc_flags_changed? output_dir
       target_triple = target_machine.triple
@@ -278,11 +274,15 @@ module Crystal
     end
 
     private def cross_compile(program, units, output_filename)
-      llvm_mod = units.first.llvm_mod
+      unit = units.first
+      llvm_mod = unit.llvm_mod
       object_name = "#{output_filename}.o"
 
       optimize llvm_mod if @release
-      llvm_mod.print_to_file object_name.gsub(/\.o/, ".ll") if dump_ll?
+
+      if emit = @emit
+        unit.emit(emit, emit_base_filename || output_filename)
+      end
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
@@ -361,7 +361,21 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          system(linker_command(program, nil, output_filename, output_dir), object_names)
+          linker_command = linker_command(program, nil, output_filename, output_dir)
+
+          process_wrapper(linker_command, object_names) do |command, args|
+            Process.run(command, args, shell: true,
+              input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
+              process.error.each_line(chomp: false) do |line|
+                hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
+                line = line.gsub(/cannot find -l(\w+)/, "cannot find -l\\1 #{hint_string}")
+                line = line.gsub(/unable to find library -l(\w+)/, "unable to find library -l\\1 #{hint_string}")
+                line = line.gsub(/library not found for -l(\w+)/, "library not found for -l\\1 #{hint_string}")
+                STDERR << line
+              end
+            end
+            $?
+          end
         end
       end
 
@@ -507,12 +521,20 @@ module Crystal
     end
 
     private def system(command, args = nil)
+      process_wrapper(command, args) do
+        ::system(command, args)
+        $?
+      end
+    end
+
+    private def process_wrapper(command, args = nil)
       stdout.puts "#{command} #{args.join " "}" if verbose?
 
-      ::system(command, args)
-      unless $?.success?
-        msg = $?.normal_exit? ? "code: #{$?.exit_code}" : "signal: #{$?.exit_signal} (#{$?.exit_signal.value})"
-        code = $?.normal_exit? ? $?.exit_code : 1
+      status = yield command, args
+
+      unless status.success?
+        msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
+        code = status.normal_exit? ? status.exit_code : 1
         error "execution of command failed with #{msg}: `#{command}`", exit_code: code
       end
     end
@@ -568,7 +590,9 @@ module Crystal
 
       private def compile_to_thin_lto
         {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-          llvm_mod.write_bitcode_with_summary_to_file(object_name)
+          # Here too, we first compile to a temporary file and then rename it
+          llvm_mod.write_bitcode_with_summary_to_file(temporary_object_name)
+          File.rename(temporary_object_name, object_name)
           @reused_previous_compilation = false
           dump_llvm_ir
         {% else %}
@@ -579,6 +603,7 @@ module Crystal
       private def compile_to_object
         bc_name = self.bc_name
         object_name = self.object_name
+        temporary_object_name = self.temporary_object_name
 
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
@@ -590,6 +615,14 @@ module Crystal
         # `.bc` file is exactly the same as the old one. In that case
         # the `.o` file will also be the same, so we simply reuse the
         # old one. Generating an `.o` file is what takes most time.
+        #
+        # However, instead of directly generating the final `.o` file
+        # from the `.bc` file, we generate it to a termporary name (`.o.tmp`)
+        # and then we rename that file to `.o`. We do this because the compiler
+        # could be interrupted while the `.o` file is being generated, leading
+        # to a corrupted file that later would cause compilation issues.
+        # Moving a file is an atomic operation so no corrupted `.o` file should
+        # be generated.
 
         must_compile = true
         can_reuse_previous_compilation =
@@ -621,7 +654,8 @@ module Crystal
 
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
-          compiler.target_machine.emit_obj_to_file llvm_mod, object_name
+          compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
+          File.rename(temporary_object_name, object_name)
         else
           @reused_previous_compilation = true
         end
@@ -658,6 +692,10 @@ module Crystal
 
       def object_filename
         "#{@name}.o"
+      end
+
+      def temporary_object_name
+        Crystal.relative_filename("#{@output_dir}/#{object_filename}.tmp")
       end
 
       def bc_name

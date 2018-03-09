@@ -13,7 +13,11 @@ struct BigFloat < Float
   end
 
   def initialize(str : String)
-    LibGMP.mpf_init_set_str(out @mpf, str, 10)
+    # Strip leading '+' char to smooth out cases with strings like "+123"
+    str = str.lchop('+')
+    if LibGMP.mpf_init_set_str(out @mpf, str, 10) == -1
+      raise ArgumentError.new("Invalid BigFloat: #{str.inspect}")
+    end
   end
 
   def initialize(num : BigInt)
@@ -125,7 +129,7 @@ struct BigFloat < Float
   end
 
   def /(other : Number)
-    raise DivisionByZero.new if other == 0
+    raise DivisionByZeroError.new if other == 0
     if other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
       BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, other) }
     else
@@ -263,6 +267,10 @@ struct Number
 
   def *(other : BigFloat)
     other * self
+  end
+
+  def /(other : BigFloat)
+    to_big_f / other
   end
 
   def to_big_f

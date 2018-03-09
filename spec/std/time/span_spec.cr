@@ -198,8 +198,10 @@ describe Time::Span do
   it "test multiply" do
     t1 = Time::Span.new 5, 4, 3, 2, 1_000_000
     t2 = t1 * 61
+    t3 = t1 * 0.5
 
     t2.should eq(Time::Span.new 315, 7, 5, 2, 61_000_000)
+    t3.should eq(Time::Span.new 2, 14, 1, 31, 500_000)
 
     # TODO check overflow
   end
@@ -207,8 +209,10 @@ describe Time::Span do
   it "test divide" do
     t1 = Time::Span.new 3, 3, 3, 3, 3_000_000
     t2 = t1 / 2
+    t3 = t1 / 1.5
 
     t2.should eq(Time::Span.new(1, 13, 31, 31, 501_000_000) + Time::Span.new(nanoseconds: 500_000))
+    t3.should eq(Time::Span.new 2, 2, 2, 2, 2_000_000)
 
     # TODO check overflow
   end

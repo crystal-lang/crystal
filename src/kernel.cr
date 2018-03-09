@@ -1,8 +1,14 @@
-require "c/unistd"
+{% if flag?(:win32) %}
+  STDIN  = IO::FileDescriptor.new(0)
+  STDOUT = (IO::FileDescriptor.new(1)).tap { |f| f.flush_on_newline = true }
+  STDERR = (IO::FileDescriptor.new(2)).tap { |f| f.flush_on_newline = true }
+{% else %}
+  require "c/unistd"
 
-STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
-STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
-STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
+  STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
+  STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
+  STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
+{% end %}
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 ARGV         = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
@@ -183,21 +189,22 @@ class Process
   def self.after_fork_child_callbacks
     @@after_fork_child_callbacks ||= [
       ->Scheduler.after_fork,
-      ->Event::SignalHandler.after_fork,
-      ->{ Event::SignalChildHandler.instance.after_fork },
+      ->Crystal::Signal.after_fork,
+      ->Crystal::SignalChildHandler.after_fork,
       ->Random::DEFAULT.new_seed,
     ] of -> Nil
   end
 end
 
-Signal.setup_default_handlers
-
-at_exit { Event::SignalHandler.close }
-
-# Background loop to cleanup unused fiber stacks.
-spawn do
-  loop do
-    sleep 5
-    Fiber.stack_pool_collect
+{% unless flag?(:win32) %}
+  # Background loop to cleanup unused fiber stacks.
+  spawn do
+    loop do
+      sleep 5
+      Fiber.stack_pool_collect
+    end
   end
-end
+
+  Signal.setup_default_handlers
+  LibExt.setup_sigfault_handler
+{% end %}

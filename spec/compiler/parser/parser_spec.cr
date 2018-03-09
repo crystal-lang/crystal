@@ -867,6 +867,7 @@ describe "Parser" do
   it_parses "a()/3", Call.new("a".call, "/", 3.int32)
   it_parses "a() /3", Call.new("a".call, "/", 3.int32)
   it_parses "a.b() /3", Call.new(Call.new("a".call, "b"), "/", 3.int32)
+  it_parses "def foo(x = / /); end", Def.new("foo", [Arg.new("x", regex(" "))])
 
   it_parses "1 =~ 2", Call.new(1.int32, "=~", 2.int32)
   it_parses "1.=~(2)", Call.new(1.int32, "=~", 2.int32)
@@ -1179,18 +1180,23 @@ describe "Parser" do
   it_parses %("hello " \\\n "world"), StringLiteral.new("hello world")
   it_parses %("hello "\\\n"world"), StringLiteral.new("hello world")
   it_parses %("hello \#{1}" \\\n "\#{2} world"), StringInterpolation.new(["hello ".string, 1.int32, 2.int32, " world".string] of ASTNode)
-  it_parses "<<-HERE\nHello, mom! I am HERE.\nHER dress is beautiful.\nHE is OK.\n  HERESY\nHERE", "Hello, mom! I am HERE.\nHER dress is beautiful.\nHE is OK.\n  HERESY".string
-  it_parses "<<-HERE\n   One\n  Zero\n  HERE", " One\nZero".string
-  it_parses "<<-HERE\n   One \\n Two\n  Zero\n  HERE", " One \n Two\nZero".string
-  it_parses "<<-HERE\n   One\n\n  Zero\n  HERE", " One\n\nZero".string
-  it_parses "<<-HERE\n   One\n \n  Zero\n  HERE", " One\n\nZero".string
+  it_parses "<<-HERE\nHello, mom! I am HERE.\nHER dress is beautiful.\nHE is OK.\n  HERESY\nHERE",
+    "Hello, mom! I am HERE.\nHER dress is beautiful.\nHE is OK.\n  HERESY".string_interpolation
+  it_parses "<<-HERE\n   One\n  Zero\n  HERE", " One\nZero".string_interpolation
+  it_parses "<<-HERE\n   One \\n Two\n  Zero\n  HERE", " One \n Two\nZero".string_interpolation
+  it_parses "<<-HERE\n   One\n\n  Zero\n  HERE", " One\n\nZero".string_interpolation
+  it_parses "<<-HERE\n   One\n \n  Zero\n  HERE", " One\n\nZero".string_interpolation
   it_parses "<<-HERE\n   \#{1}One\n  \#{2}Zero\n  HERE", StringInterpolation.new([" ".string, 1.int32, "One\n".string, 2.int32, "Zero".string] of ASTNode)
   it_parses "<<-HERE\n  foo\#{1}bar\n   baz\n  HERE", StringInterpolation.new(["foo".string, 1.int32, "bar\n baz".string] of ASTNode)
-  it_parses "<<-HERE\r\n   One\r\n  Zero\r\n  HERE", " One\r\nZero".string
-  it_parses "<<-HERE\r\n   One\r\n  Zero\r\n  HERE\r\n", " One\r\nZero".string
-  it_parses "<<-SOME\n  Sa\n  Se\n  SOME", "Sa\nSe".string
+  it_parses "<<-HERE\r\n   One\r\n  Zero\r\n  HERE", " One\r\nZero".string_interpolation
+  it_parses "<<-HERE\r\n   One\r\n  Zero\r\n  HERE\r\n", " One\r\nZero".string_interpolation
+  it_parses "<<-SOME\n  Sa\n  Se\n  SOME", "Sa\nSe".string_interpolation
   it_parses "<<-HERE\n  \#{1} \#{2}\n  HERE", StringInterpolation.new([1.int32, " ".string, 2.int32] of ASTNode)
   it_parses "<<-HERE\n  \#{1} \\n \#{2}\n  HERE", StringInterpolation.new([1.int32, " \n ".string, 2.int32] of ASTNode)
+  it_parses "<<-HERE\nHERE", "".string_interpolation
+  it_parses "<<-HERE1; <<-HERE2\nHERE1\nHERE2", ["".string_interpolation, "".string_interpolation] of ASTNode
+  it_parses "<<-HERE1; <<-HERE2\nhere1\nHERE1\nHERE2", ["here1".string_interpolation, "".string_interpolation] of ASTNode
+  it_parses "<<-HERE1; <<-HERE2\nHERE1\nhere2\nHERE2", ["".string_interpolation, "here2".string_interpolation] of ASTNode
   assert_syntax_error "<<-HERE\n   One\nwrong\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
   assert_syntax_error "<<-HERE\n   One\n wrong\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
   assert_syntax_error "<<-HERE\n   One\n \#{1}\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
@@ -1199,16 +1205,24 @@ describe "Parser" do
   assert_syntax_error "<<-HERE\n One\n  \#{1}\n  HERE", "heredoc line must have an indent greater or equal than 2", 2, 1
   assert_syntax_error %("foo" "bar")
 
-  it_parses "<<-'HERE'\n  hello \\n world\n  \#{1}\n  HERE", StringLiteral.new("hello \\n world\n\#{1}")
+  it_parses "<<-'HERE'\n  hello \\n world\n  \#{1}\n  HERE", "hello \\n world\n\#{1}".string_interpolation
   assert_syntax_error "<<-'HERE\n", "expecting closing single quote"
 
-  it_parses "<<-FOO\n1\nFOO.bar", Call.new("1".string, "bar")
-  it_parses "<<-FOO\n1\nFOO + 2", Call.new("1".string, "+", 2.int32)
+  it_parses "<<-'HERE COMES HEREDOC'\n  hello \\n world\n  \#{1}\n  HERE COMES HEREDOC", "hello \\n world\n\#{1}".string_interpolation
 
-  it_parses "<<-FOO\n\t1\n\tFOO", StringLiteral.new("1")
-  it_parses "<<-FOO\n \t1\n \tFOO", StringLiteral.new("1")
-  it_parses "<<-FOO\n \t 1\n \t FOO", StringLiteral.new("1")
-  it_parses "<<-FOO\n\t 1\n\t FOO", StringLiteral.new("1")
+  assert_syntax_error "<<-FOO\n1\nFOO.bar", "Unterminated heredoc: can't find \"FOO\" anywhere before the end of file"
+  assert_syntax_error "<<-FOO\n1\nFOO + 2", "Unterminated heredoc: can't find \"FOO\" anywhere before the end of file"
+
+  it_parses "<<-FOO\n\t1\n\tFOO", "1".string_interpolation
+  it_parses "<<-FOO\n \t1\n \tFOO", "1".string_interpolation
+  it_parses "<<-FOO\n \t 1\n \t FOO", "1".string_interpolation
+  it_parses "<<-FOO\n\t 1\n\t FOO", "1".string_interpolation
+
+  it_parses "x, y = <<-FOO, <<-BAR\nhello\nFOO\nworld\nBAR",
+    MultiAssign.new(["x".var, "y".var] of ASTNode, ["hello".string_interpolation, "world".string_interpolation] of ASTNode)
+
+  it_parses "x, y, z = <<-FOO, <<-BAR, <<-BAZ\nhello\nFOO\nworld\nBAR\n!\nBAZ",
+    MultiAssign.new(["x".var, "y".var, "z".var] of ASTNode, ["hello".string_interpolation, "world".string_interpolation, "!".string_interpolation] of ASTNode)
 
   it_parses "enum Foo; A\nB, C\nD = 1; end", EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)
   it_parses "enum Foo; A = 1, B; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)
@@ -1601,8 +1615,32 @@ describe "Parser" do
     assert_syntax_error %(case x; when /x/; 2; when /x/; end), "duplicate when /x/ in case"
     assert_syntax_error %(case x; when X; 2; when X; end), "duplicate when X in case"
 
-    assert_syntax_error "%w(", "Unterminated String array literal"
-    assert_syntax_error "%i(", "Unterminated Symbol array literal"
+    it_parses "%w{one  two}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{one\ntwo}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{one\ttwo}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{\n}", ([] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{one\\ two}", (["one two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{one{} two}", (["one{}".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{\\{one}", (["{one".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%w{one\\}}", (["one}".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%i(one\\ two)", (["one two".symbol] of ASTNode).array_of(Path.global("Symbol"))
+    it_parses "%i{(one two)}", (["(one".symbol, "two)".symbol] of ASTNode).array_of(Path.global("Symbol"))
+    it_parses "%i((one two))", (["(one".symbol, "two)".symbol] of ASTNode).array_of(Path.global("Symbol"))
+    it_parses "%i(foo(bar) baz)", (["foo(bar)".symbol, "baz".symbol] of ASTNode).array_of(Path.global("Symbol"))
+    it_parses "%i{foo\\nbar baz}", (["foo\\nbar".symbol, "baz".symbol] of ASTNode).array_of(Path.global("Symbol"))
+
+    assert_syntax_error "%w(", "Unterminated string array literal"
+    assert_syntax_error "%w{one}}", "expecting token 'EOF', not '}'"
+    assert_syntax_error "%w{{one}", "Unterminated string array literal"
+    assert_syntax_error "%i(", "Unterminated symbol array literal"
+    assert_syntax_error "%i{one}}", "expecting token 'EOF', not '}'"
+    assert_syntax_error "%i{{one}", "Unterminated symbol array literal"
+    assert_syntax_error "%x(", "Unterminated command literal"
+    assert_syntax_error "%r(", "Unterminated regular expression"
+    assert_syntax_error "%q(", "Unterminated string literal"
+    assert_syntax_error "%Q(", "Unterminated string literal"
+    assert_syntax_error "<<-HEREDOC", "Unexpected EOF on heredoc identifier"
+    assert_syntax_error "<<-HEREDOC\n", "Unterminated heredoc"
 
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")
@@ -1673,6 +1711,13 @@ describe "Parser" do
       loc = node.location.not_nil!
       loc.line_number.should eq(2)
       loc.column_number.should eq(3)
+    end
+
+    it "gets correct location of empty exception handler inside def" do
+      parser = Parser.new("def foo\nensure\nend")
+      node = parser.parse.as(Def).body
+      loc = node.location.not_nil!
+      loc.line_number.should eq(2)
     end
   end
 end

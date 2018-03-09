@@ -46,6 +46,11 @@ struct Bool
     hasher.bool(self)
   end
 
+  # Returns `1` for `true` and `0` for `false`.
+  def to_unsafe
+    self ? 1 : 0
+  end
+
   # Returns `"true"` for `true` and `"false"` for `false`.
   def to_s
     self ? "true" : "false"

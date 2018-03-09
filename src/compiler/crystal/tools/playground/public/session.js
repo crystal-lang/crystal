@@ -2,7 +2,9 @@ CodeMirror.keyMap.macDefault["Cmd-/"] = "toggleComment";
 CodeMirror.keyMap.pcDefault["Ctrl-/"] = "toggleComment";
 
 CodeMirror.keyMap.macDefault["Cmd-Enter"] = "runCode";
+CodeMirror.keyMap.macDefault["Cmd-S"] = "runCode";
 CodeMirror.keyMap.pcDefault["Ctrl-Enter"] = "runCode";
+CodeMirror.keyMap.pcDefault["Ctrl-S"] = "runCode";
 
 CodeMirror.commands.runCode = function(editor) {
   if (editor._playgroundSession) {
@@ -190,7 +192,7 @@ Playground.Inspector = function(session, line) {
       row.append($("<td>").text(message.data[labels[j]]));
     }
 
-    row.append($("<td>").text(message.value));
+    row.append($("<td>").html("<pre><code>" + message.html_value + "</code></pre>"));
     row.append($("<td>").text(message.value_type));
     tableBody.append(row);
   }
@@ -297,7 +299,8 @@ Playground.Session = function(options) {
   this.editor._playgroundSession = this;
 
   this.connect = function() {
-    this.ws = new WebSocket("ws://" + location.host + "/client");
+    var socketProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+    this.ws = new WebSocket(socketProtocol + "//" + location.host + "/client");
 
     this.ws.onopen = function() {
       this._triggerReady();

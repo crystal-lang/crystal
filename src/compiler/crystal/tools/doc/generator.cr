@@ -78,6 +78,7 @@ class Crystal::Doc::Generator
 
     main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
     File.write File.join(@output_dir, "index.json"), main_index
+    File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
   end
 
   def copy_files

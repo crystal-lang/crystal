@@ -32,7 +32,11 @@ class Exception
   # The backtrace is an array of strings, each containing
   # “0xAddress: Function at File Line Column”.
   def backtrace?
-    @callstack.try &.printable_backtrace
+    {% if flag?(:win32) %}
+      Array(String).new
+    {% else %}
+      @callstack.try &.printable_backtrace
+    {% end %}
   end
 
   def to_s(io : IO)
@@ -111,10 +115,20 @@ end
 # Raised when attempting to divide an integer by 0.
 #
 # ```
-# 1 / 0 # raises DivisionByZero (Division by zero)
+# 1 / 0 # raises DivisionByZero (Division by 0)
 # ```
-class DivisionByZero < Exception
-  def initialize(message = "Division by zero")
+class DivisionByZeroError < Exception
+  def initialize(message = "Division by 0")
     super(message)
+  end
+end
+
+# Raised when a method is not implemented.
+#
+# This can be used either to stub out method bodies, or when the method is not
+# implemented on the current platform.
+class NotImplementedError < Exception
+  def initialize(item)
+    super("Not Implemented: #{item}")
   end
 end

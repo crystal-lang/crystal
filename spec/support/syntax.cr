@@ -90,6 +90,10 @@ class String
     StringLiteral.new self
   end
 
+  def string_interpolation
+    StringInterpolation.new([self.string] of ASTNode)
+  end
+
   def float32
     NumberLiteral.new self, :f32
   end

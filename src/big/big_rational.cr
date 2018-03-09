@@ -224,7 +224,7 @@ struct BigRational < Number
   end
 
   private def check_division_by_zero(value)
-    raise DivisionByZero.new if value == 0
+    raise DivisionByZeroError.new if value == 0
   end
 end
 

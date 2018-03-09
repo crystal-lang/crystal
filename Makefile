@@ -27,12 +27,14 @@ static ?=       ## Enable static linking
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
-FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )
+FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
-EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
-SHELL = bash
+EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src")
+SHELL = sh
 LLVM_CONFIG_FINDER := \
   [ -n "$(LLVM_CONFIG)" ] && command -v "$(LLVM_CONFIG)" || \
+  command -v llvm-config-5.0 || command -v llvm-config50 || \
+    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
   command -v llvm-config-4.0 || command -v llvm-config40 || \
     (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
   command -v llvm-config-3.9 || command -v llvm-config39 || \
@@ -118,7 +120,7 @@ $(O)/crystal: $(DEPS) $(SOURCES)
 	$(BUILD_PATH) $(EXPORTS) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
-	$(CXX) -c $(CXXFLAGS) -o $@ $< `$(LLVM_CONFIG) --cxxflags`
+	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
 
 $(LIB_CRYSTAL_TARGET): $(LIB_CRYSTAL_OBJS)
 	$(AR) -rcs $@ $^
@@ -131,4 +133,4 @@ clean: clean_crystal ## Clean up built directories and files
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files
 	rm -rf $(O)
-	rm -rf ./doc
+	rm -rf ./docs

@@ -502,7 +502,7 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Generic, io, links = true)
-    match = lookup_path(node.name)
+    match = lookup_path(node.name.as(Path))
     if match
       if match.must_be_included?
         if links

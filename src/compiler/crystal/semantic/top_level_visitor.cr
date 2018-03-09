@@ -137,7 +137,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # type parameters because they will always be unbound.
       superclass = lookup_type(node_superclass,
         free_vars: free_vars,
-        find_root_generic_type_parameters: false)
+        find_root_generic_type_parameters: false).devirtualize
       case superclass
       when GenericClassType
         node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
@@ -433,6 +433,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type.struct = true
       type.extern = true
       type.extern_union = node.union?
+
+      if location = node.location
+        type.add_location(location)
+      end
+
       current_type.types[node.name] = type
     end
 

@@ -116,9 +116,17 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = "#{__DIR__}/data/non_existing_file.txt"
-      expect_raises Errno do
+      expect_raises(Errno, /Error determining size/) do
         File.empty?(filename)
       end
+    end
+
+    it "raises an error when a component of the path is a file" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      ex = expect_raises(Errno, /Error determining size/) do
+        File.empty?("#{__FILE__}/")
+      end
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
@@ -130,11 +138,23 @@ describe "File" do
     it "gives false" do
       File.exists?("#{__DIR__}/data/non_existing_file.txt").should be_false
     end
+
+    it "gives false when a component of the path is a file" do
+      File.exists?("#{__FILE__}/").should be_false
+    end
   end
 
   describe "executable?" do
     it "gives false" do
       File.executable?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+
+    it "gives false when the file doesn't exist" do
+      File.executable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.executable?("#{__FILE__}/").should be_false
     end
   end
 
@@ -142,11 +162,27 @@ describe "File" do
     it "gives true" do
       File.readable?("#{__DIR__}/data/test_file.txt").should be_true
     end
+
+    it "gives false when the file doesn't exist" do
+      File.readable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.readable?("#{__FILE__}/").should be_false
+    end
   end
 
   describe "writable?" do
     it "gives true" do
       File.writable?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+
+    it "gives false when the file doesn't exist" do
+      File.writable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.writable?("#{__FILE__}/").should be_false
     end
   end
 
@@ -158,6 +194,14 @@ describe "File" do
     it "gives false" do
       File.file?("#{__DIR__}/data").should be_false
     end
+
+    it "gives false when the file doesn't exist" do
+      File.file?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.file?("#{__FILE__}/").should be_false
+    end
   end
 
   describe "directory?" do
@@ -167,6 +211,14 @@ describe "File" do
 
     it "gives false" do
       File.directory?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+
+    it "gives false when the directory doesn't exist" do
+      File.directory?("#{__DIR__}/data/non_existing").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.directory?("#{__FILE__}/").should be_false
     end
   end
 
@@ -204,6 +256,14 @@ describe "File" do
       File.symlink?("#{__DIR__}/data/test_file.txt").should be_false
       File.symlink?("#{__DIR__}/data/unknown_file.txt").should be_false
     end
+
+    it "gives false when the symlink doesn't exist" do
+      File.symlink?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.symlink?("#{__FILE__}/").should be_false
+    end
   end
 
   it "gets dirname" do
@@ -230,6 +290,12 @@ describe "File" do
     File.extname("/foo/bar/.profile").should eq("")
     File.extname("/foo/bar/.profile.sh").should eq(".sh")
     File.extname("/foo/bar/foo.").should eq("")
+    File.extname("/foo.bar/baz").should eq("")
+    File.extname("test.cr").should eq(".cr")
+    File.extname("test.cr.cz").should eq(".cz")
+    File.extname(".test").should eq("")
+    File.extname(".test.cr").should eq(".cr")
+    File.extname(".test.cr.cz").should eq(".cz")
     File.extname("test").should eq("")
   end
 
@@ -375,6 +441,21 @@ describe "File" do
       File.open("#{__DIR__}/data/test_file.txt", "r") do |file|
         file.size.should eq(240)
       end
+    end
+
+    it "raises an error when the file does not exist" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      expect_raises(Errno, /Error determining size/) do
+        File.size(filename)
+      end
+    end
+
+    it "raises an error when a component of the path is a file" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      ex = expect_raises(Errno, /Error determining size/) do
+        File.size("#{__FILE__}/")
+      end
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
@@ -958,8 +1039,8 @@ describe "File" do
       filename = "#{__DIR__}/data/temp_write.txt"
       File.write(filename, "")
 
-      atime = Time.new(2000, 1, 2)
-      mtime = Time.new(2000, 3, 4)
+      atime = Time.utc(2000, 1, 2)
+      mtime = Time.utc(2000, 3, 4)
 
       File.utime(atime, mtime, filename)
 
@@ -971,8 +1052,8 @@ describe "File" do
     end
 
     it "raises if file not found" do
-      atime = Time.new(2000, 1, 2)
-      mtime = Time.new(2000, 3, 4)
+      atime = Time.utc(2000, 1, 2)
+      mtime = Time.utc(2000, 3, 4)
 
       expect_raises Errno, "Error setting time to file" do
         File.utime(atime, mtime, "#{__DIR__}/nonexistent_file")
@@ -994,7 +1075,7 @@ describe "File" do
 
     it "sets file times to given time" do
       filename = "#{__DIR__}/data/temp_touch.txt"
-      time = Time.new(2000, 3, 4)
+      time = Time.utc(2000, 3, 4)
       begin
         File.touch(filename, time)
 
@@ -1030,6 +1111,120 @@ describe "File" do
       expect_raises Errno, "Operation not permitted" do
         File.touch("/bin/ls")
       end
+    end
+  end
+
+  describe ".match?" do
+    it "matches basics" do
+      File.match?("abc", "abc").should be_true
+      File.match?("*", "abc").should be_true
+      File.match?("*c", "abc").should be_true
+      File.match?("a*", "a").should be_true
+      File.match?("a*", "abc").should be_true
+      File.match?("a*/b", "abc/b").should be_true
+      File.match?("*x", "xxx").should be_true
+    end
+    it "matches multiple expansions" do
+      File.match?("a*b*c*d*e*/f", "axbxcxdxe/f").should be_true
+      File.match?("a*b*c*d*e*/f", "axbxcxdxexxx/f").should be_true
+      File.match?("a*b?c*x", "abxbbxdbxebxczzx").should be_true
+      File.match?("a*b?c*x", "abxbbxdbxebxczzy").should be_false
+    end
+    it "matches unicode characters" do
+      File.match?("a?b", "a☺b").should be_true
+      File.match?("a???b", "a☺b").should be_false
+    end
+    it "* don't match /" do
+      File.match?("a*", "ab/c").should be_false
+      File.match?("a*/b", "a/c/b").should be_false
+      File.match?("a*b*c*d*e*/f", "axbxcxdxe/xxx/f").should be_false
+      File.match?("a*b*c*d*e*/f", "axbxcxdxexxx/fff").should be_false
+    end
+    it "** matches /" do
+      File.match?("a**", "ab/c").should be_true
+      File.match?("a**/b", "a/c/b").should be_true
+      File.match?("a*b*c*d*e**/f", "axbxcxdxe/xxx/f").should be_true
+      File.match?("a*b*c*d*e**/f", "axbxcxdxexxx/f").should be_true
+      File.match?("a*b*c*d*e**/f", "axbxcxdxexxx/fff").should be_false
+    end
+    it "classes" do
+      File.match?("ab[c]", "abc").should be_true
+      File.match?("ab[b-d]", "abc").should be_true
+      File.match?("ab[d-b]", "abc").should be_false
+      File.match?("ab[e-g]", "abc").should be_false
+      File.match?("ab[e-gc]", "abc").should be_true
+      File.match?("ab[^c]", "abc").should be_false
+      File.match?("ab[^b-d]", "abc").should be_false
+      File.match?("ab[^e-g]", "abc").should be_true
+      File.match?("a[^a]b", "a☺b").should be_true
+      File.match?("a[^a][^a][^a]b", "a☺b").should be_false
+      File.match?("[a-ζ]*", "α").should be_true
+      File.match?("*[a-ζ]", "A").should be_false
+    end
+    it "escape" do
+      File.match?("a\\*b", "a*b").should be_true
+      File.match?("a\\*b", "ab").should be_false
+      File.match?("a\\**b", "a*bb").should be_true
+      File.match?("a\\**b", "abb").should be_false
+      File.match?("a*\\*b", "ab*b").should be_true
+      File.match?("a*\\*b", "abb").should be_false
+    end
+    it "special chars" do
+      File.match?("a?b", "a/b").should be_false
+      File.match?("a*b", "a/b").should be_false
+    end
+    it "classes escapes" do
+      File.match?("[\\]a]", "]").should be_true
+      File.match?("[\\-]", "-").should be_true
+      File.match?("[x\\-]", "x").should be_true
+      File.match?("[x\\-]", "-").should be_true
+      File.match?("[x\\-]", "z").should be_false
+      File.match?("[\\-x]", "x").should be_true
+      File.match?("[\\-x]", "-").should be_true
+      File.match?("[\\-x]", "a").should be_false
+      expect_raises(File::BadPatternError, "empty character set") do
+        File.match?("[]a]", "]")
+      end
+      expect_raises(File::BadPatternError, "missing range start") do
+        File.match?("[-]", "-")
+      end
+      expect_raises(File::BadPatternError, "missing range end") do
+        File.match?("[x-]", "x")
+      end
+      expect_raises(File::BadPatternError, "missing range start") do
+        File.match?("[-x]", "x")
+      end
+      expect_raises(File::BadPatternError, "Empty escape character") do
+        File.match?("\\", "a")
+      end
+      expect_raises(File::BadPatternError, "missing range start") do
+        File.match?("[a-b-c]", "a")
+      end
+      expect_raises(File::BadPatternError, "unterminated character set") do
+        File.match?("[", "a")
+      end
+      expect_raises(File::BadPatternError, "unterminated character set") do
+        File.match?("[^", "a")
+      end
+      expect_raises(File::BadPatternError, "unterminated character set") do
+        File.match?("[^bc", "a")
+      end
+      expect_raises(File::BadPatternError, "unterminated character set") do
+        File.match?("a[", "a")
+      end
+    end
+    it "alternates" do
+      File.match?("{abc,def}", "abc").should be_true
+      File.match?("ab{c,}", "abc").should be_true
+      File.match?("ab{c,}", "ab").should be_true
+      File.match?("ab{d,e}", "abc").should be_false
+      File.match?("ab{*,/cde}", "abcde").should be_true
+      File.match?("ab{*,/cde}", "ab/cde").should be_true
+      File.match?("ab{?,/}de", "abcde").should be_true
+      File.match?("ab{?,/}de", "ab/de").should be_true
+      File.match?("ab{{c,d}ef,}", "ab").should be_true
+      File.match?("ab{{c,d}ef,}", "abcef").should be_true
+      File.match?("ab{{c,d}ef,}", "abdef").should be_true
     end
   end
 end

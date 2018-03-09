@@ -100,7 +100,7 @@ struct Enum
         found = false
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
-            if {{@type}}::{{member}}.value != 0 && (value & {{@type}}::{{member}}.value) == {{@type}}::{{member}}.value
+            if {{@type}}::{{member}}.value != 0 && value.bits_set? {{@type}}::{{member}}.value
               io << " | " if found
               io << {{member.stringify}}
               found = true

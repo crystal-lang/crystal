@@ -95,7 +95,7 @@ class Crystal::Program
 
     out_io = IO::Memory.new
     err_io = IO::Memory.new
-    Process.run(compiled_file, args: args, shell: true, output: out_io, error: err_io)
+    Process.run(compiled_file, args: args, output: out_io, error: err_io)
     MacroRunResult.new(out_io.to_s, err_io.to_s, $?)
   end
 

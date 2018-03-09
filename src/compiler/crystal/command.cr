@@ -18,7 +18,6 @@ class Crystal::Command
     Command:
         init                     generate a new project
         build                    build an executable
-        deps                     install project dependencies
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
@@ -72,8 +71,8 @@ class Crystal::Command
       options.shift
       playground
     when "deps".starts_with?(command)
-      options.shift
-      deps
+      STDERR.puts "Please use 'shards': 'crystal deps' has been removed"
+      exit 1
     when "docs".starts_with?(command)
       options.shift
       docs
@@ -212,7 +211,7 @@ class Crystal::Command
           Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
             # Ignore the signal so we don't exit the running process
             # (the running process can still handle this signal)
-            Signal::INT.ignore # do
+            ::Signal::INT.ignore # do
           end
         end
         {$?, elapsed}
@@ -236,11 +235,11 @@ class Crystal::Command
       exit status.exit_code
     else
       case status.exit_signal
-      when Signal::KILL
+      when ::Signal::KILL
         STDERR.puts "Program was killed"
-      when Signal::SEGV
+      when ::Signal::SEGV
         STDERR.puts "Program exited because of a segmentation fault (11)"
-      when Signal::INT
+      when ::Signal::INT
         # OK, bubbled from the sub-program
       else
         STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"

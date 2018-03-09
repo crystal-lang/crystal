@@ -544,14 +544,14 @@ describe Iterator do
     end
   end
 
-  describe "integreation" do
+  describe "integration" do
     it "combines many iterators" do
       (1..100).each
-              .select { |x| 50 <= x < 60 }
-              .map { |x| x * 2 }
-              .first(3)
-              .to_a
-              .should eq([100, 102, 104])
+        .select { |x| 50 <= x < 60 }
+        .map { |x| x * 2 }
+        .first(3)
+        .to_a
+        .should eq([100, 102, 104])
     end
   end
 

@@ -542,6 +542,10 @@ module Crystal::Macros
     def splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
+    # Similar to `Array#clear`
+    def clear : ArrayLiteral
+    end
+
     # Similar to `Array#empty?`
     def empty? : BoolLiteral
     end
@@ -625,6 +629,10 @@ module Crystal::Macros
 
   # A hash literal.
   class HashLiteral < ASTNode
+    # Similar to `Hash#clear`
+    def clear : HashLiteral
+    end
+
     # Similar to `Hash#empty?`
     def empty? : BoolLiteral
     end
@@ -965,8 +973,16 @@ module Crystal::Macros
     end
   end
 
-  # class ProcNotation < ASTNode
-  # end
+  # The type of a proc or block argument, like `String -> Int32`.
+  class ProcNotation < ASTNode
+    # Returns the argument types, or an empty list if no arguments.
+    def inputs : ArrayLiteral(ASTNode)
+    end
+
+    # Returns the output type, or nil if there is no return type.
+    def output : ASTNode | NilLiteral
+    end
+  end
 
   # A method definition.
   class Def < ASTNode
@@ -1236,11 +1252,36 @@ module Crystal::Macros
   # class ExceptionHandler < ASTNode
   # end
 
-  # class ProcLiteral < ASTNode
-  # end
+  # A proc method, written like:
+  # ```
+  # ->(arg : String) {
+  #   puts arg
+  # }
+  # ```
+  class ProcLiteral < ASTNode
+    # Returns the arguments of this proc.
+    def args : ArrayLiteral(Arg)
+    end
 
-  # class ProcPointer < ASTNode
-  # end
+    # Returns the body of this proc.
+    def body : ASTNode
+    end
+  end
+
+  # A proc pointer, like `->my_var.some_method(String)`
+  class ProcPointer < ASTNode
+    # Returns the types of the arguments of the proc.
+    def args : ArrayLiteral(ASTNode)
+    end
+
+    # Returns the receiver of the proc, or nil if the proc is not attached to an object.
+    def obj : ASTNode | NilLiteral
+    end
+
+    # Returns the name of the method this proc points to.
+    def name : MacroId
+    end
+  end
 
   # A type union, like `(Int32 | String)`.
   class Union < ASTNode

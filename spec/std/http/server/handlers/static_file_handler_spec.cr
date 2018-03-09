@@ -1,7 +1,7 @@
 require "spec"
 require "http/server"
 
-private def handle(request, fallthrough = true, directory_listing = true)
+private def handle(request, fallthrough = true, directory_listing = true, ignore_body = false)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
@@ -9,7 +9,7 @@ private def handle(request, fallthrough = true, directory_listing = true)
   handler.call context
   response.close
   io.rewind
-  HTTP::Client::Response.from_io(io)
+  HTTP::Client::Response.from_io(io, ignore_body)
 end
 
 describe HTTP::StaticFileHandler do
@@ -19,6 +19,33 @@ describe HTTP::StaticFileHandler do
     response = handle HTTP::Request.new("GET", "/test.txt")
     response.status_code.should eq(200)
     response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
+  end
+
+  context "with header If-Modified-Since" do
+    it "should return 304 Not Modified if file mtime is equal" do
+      headers = HTTP::Headers.new
+      headers["If-Modified-Since"] = HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime)
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
+      response.status_code.should eq(304)
+      response.headers["Last-Modified"].should eq(HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime))
+    end
+
+    it "should return 304 Not Modified if file mtime is older" do
+      headers = HTTP::Headers.new
+      headers["If-Modified-Since"] = HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime + 1.hour)
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
+      response.status_code.should eq(304)
+      response.headers["Last-Modified"].should eq(HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime))
+    end
+
+    it "should serve file if file mtime is younger" do
+      headers = HTTP::Headers.new
+      headers["If-Modified-Since"] = HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime - 1.hour)
+      response = handle HTTP::Request.new("GET", "/test.txt")
+      response.status_code.should eq(200)
+      response.headers["Last-Modified"].should eq(HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime))
+      response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
+    end
   end
 
   it "should list directory's entries" do

@@ -170,7 +170,7 @@ module Crystal
     end
 
     def clone_without_location
-      Expressions.new(@expressions.clone)
+      Expressions.new(@expressions.clone).tap &.keyword = keyword
     end
 
     def_equals_and_hash expressions
@@ -1351,7 +1351,9 @@ module Crystal
   end
 
   class Generic < ASTNode
-    property name : Path
+    # Usually a Path, but can also be a TypeNode in the case of a
+    # custom array/hash-like literal.
+    property name : ASTNode
     property type_vars : Array(ASTNode)
     property named_args : Array(NamedArgument)?
 

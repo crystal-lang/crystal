@@ -114,9 +114,11 @@ module Crystal
               has_pkg_config = Process.run("which", {"pkg-config"}, output: Process::Redirect::Close).success?
             end
 
-            if has_pkg_config && (libflags = pkg_config_flags(libname, attr.static?, library_path))
+            static = has_flag?("static") || attr.static?
+
+            if has_pkg_config && (libflags = pkg_config_flags(libname, static, library_path))
               flags << " " << libflags
-            elsif attr.static? && (static_lib = find_static_lib(libname, library_path))
+            elsif static && (static_lib = find_static_lib(libname, library_path))
               flags << " " << static_lib
             else
               flags << " -l" << libname

@@ -41,4 +41,8 @@ describe "concurrent" do
     spawn method_named("foo"), name: "foo"
     Fiber.yield
   end
+
+  it "accepts method call with receiver" do
+    typeof(spawn String.new)
+  end
 end

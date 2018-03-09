@@ -5,7 +5,14 @@ private def expect_to_s(original, expected = original, emit_doc = false, file = 
     str = IO::Memory.new expected.bytesize
     parser = Parser.new original
     parser.wants_doc = emit_doc
-    parser.parse.to_s(str, emit_doc: emit_doc)
+    node = parser.parse
+    node.to_s(str, emit_doc: emit_doc)
+    str.to_s.should eq(expected), file, line
+
+    # Check keeping information for `to_s` on clone
+    cloned = node.clone
+    str.clear
+    cloned.to_s(str, emit_doc: emit_doc)
     str.to_s.should eq(expected), file, line
   end
 end
@@ -116,4 +123,5 @@ describe "ASTNode#to_s" do
   expect_to_s %([(1 + 2)] of Int32)
   expect_to_s %(foo(1, (2 + 3), bar: (4 + 5)))
   expect_to_s %(if (1 + 2\n3)\n  4\nend)
+  expect_to_s "%x(whoami)", "`whoami`"
 end

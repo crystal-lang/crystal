@@ -160,13 +160,7 @@ module Crystal
     end
 
     def interpret_raise(node)
-      msg = node.args.map do |arg|
-        arg.accept self
-        @last.to_macro_id
-      end
-      msg = msg.join " "
-
-      node.raise msg, exception_type: MacroRaiseException
+      macro_raise(node, node.args, self)
     end
 
     def interpret_run(node)
@@ -299,9 +293,7 @@ module Crystal
       when "class_name"
         interpret_argless_method("class_name", args) { class_name }
       when "raise"
-        interpret_one_arg_method(method, args) do |arg|
-          raise arg.to_s
-        end
+        macro_raise self, args, interpreter
       when "filename"
         interpret_argless_method("filename", args) do
           filename = location.try &.original_filename
@@ -753,6 +745,11 @@ module Crystal
         interpret_argless_method(method, args) { @of || Nop.new }
       when "type"
         interpret_argless_method(method, args) { @name || Nop.new }
+      when "clear"
+        interpret_argless_method(method, args) do
+          elements.clear
+          self
+        end
       else
         value = intepret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
         value || super
@@ -837,6 +834,11 @@ module Crystal
         interpret_argless_method(method, args) { @of.try(&.value) || Nop.new }
       when "type"
         interpret_argless_method(method, args) { @name || Nop.new }
+      when "clear"
+        interpret_argless_method(method, args) do
+          entries.clear
+          self
+        end
       else
         super
       end
@@ -1078,6 +1080,45 @@ module Crystal
         interpret_argless_method(method, args) do
           @splat_index ? NumberLiteral.new(@splat_index.not_nil!) : NilLiteral.new
         end
+      else
+        super
+      end
+    end
+  end
+
+  class ProcNotation
+    def interpret(method, args, block, interpreter)
+      case method
+      when "inputs"
+        interpret_argless_method(method, args) { ArrayLiteral.new(@inputs || [] of ASTNode) }
+      when "output"
+        interpret_argless_method(method, args) { @output || NilLiteral.new }
+      else
+        super
+      end
+    end
+  end
+
+  class ProcLiteral
+    def interpret(method, args, block, interpreter)
+      case method
+      when "args", "body"
+        @def.interpret(method, args, block, interpreter)
+      else
+        super
+      end
+    end
+  end
+
+  class ProcPointer
+    def interpret(method, args, block, interpreter)
+      case method
+      when "obj"
+        interpret_argless_method(method, args) { @obj || NilLiteral.new }
+      when "name"
+        interpret_argless_method(method, args) { MacroId.new(@name) }
+      when "args"
+        interpret_argless_method(method, args) { ArrayLiteral.new(@args) }
       else
         super
       end
@@ -1463,8 +1504,9 @@ module Crystal
             raise "TypeNode##{method} expects TypeNode, not #{arg.class_desc}"
           end
 
-          self_type = self.type
-          other_type = arg.type
+          self_type = self.type.devirtualize
+          other_type = arg.type.devirtualize
+
           case method
           when "<"
             value = self_type != other_type && self_type.implements?(other_type)
@@ -2096,6 +2138,16 @@ private def visibility_to_symbol(visibility)
       "public"
     end
   Crystal::SymbolLiteral.new(visibility_name)
+end
+
+private def macro_raise(node, args, interpreter)
+  msg = args.map do |arg|
+    arg.accept interpreter
+    interpreter.last.to_macro_id
+  end
+  msg = msg.join " "
+
+  node.raise msg, exception_type: Crystal::MacroRaiseException
 end
 
 def filter(object, klass, block, interpreter, keep = true)

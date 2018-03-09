@@ -22,6 +22,8 @@ describe "BigInt" do
 
   it "creates from string" do
     BigInt.new("12345678").to_s.should eq("12345678")
+    BigInt.new("+12345678").to_s.should eq("12345678")
+    BigInt.new("-12345678").to_s.should eq("-12345678")
   end
 
   it "raises if creates from string but invalid" do
@@ -208,29 +210,29 @@ describe "BigInt" do
   end
 
   it "raises if divides by zero" do
-    expect_raises DivisionByZero do
+    expect_raises DivisionByZeroError do
       10.to_big_i / 0.to_big_i
     end
 
-    expect_raises DivisionByZero do
+    expect_raises DivisionByZeroError do
       10.to_big_i / 0
     end
 
-    expect_raises DivisionByZero do
+    expect_raises DivisionByZeroError do
       10 / 0.to_big_i
     end
   end
 
   it "raises if mods by zero" do
-    expect_raises DivisionByZero do
+    expect_raises DivisionByZeroError do
       10.to_big_i % 0.to_big_i
     end
 
-    expect_raises DivisionByZero do
+    expect_raises DivisionByZeroError do
       10.to_big_i % 0
     end
 
-    expect_raises DivisionByZero do
+    expect_raises DivisionByZeroError do
       10 % 0.to_big_i
     end
   end

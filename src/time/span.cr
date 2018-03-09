@@ -160,21 +160,21 @@ struct Time::Span
   # Returns the number of full hours of the day (`0..23`) in this time span.
   def hours : Int32
     to_i.remainder(SECONDS_PER_DAY)
-        .tdiv(SECONDS_PER_HOUR)
-        .to_i
+      .tdiv(SECONDS_PER_HOUR)
+      .to_i
   end
 
   # Returns the number of full minutes of the hour (`0..59`) in this time span.
   def minutes : Int32
     to_i.remainder(SECONDS_PER_HOUR)
-        .tdiv(SECONDS_PER_MINUTE)
-        .to_i
+      .tdiv(SECONDS_PER_MINUTE)
+      .to_i
   end
 
   # Returns the number of full seconds of the minute (`0..59`) in this time span.
   def seconds : Int32
     to_i.remainder(SECONDS_PER_MINUTE)
-        .to_i
+      .to_i
   end
 
   # Returns the number of milliseconds of the second (`0..999`) in this time span.
@@ -291,15 +291,21 @@ struct Time::Span
   end
 
   # Returns a `Time::Span` that is *number* times longer.
-  def *(number : Number) : Time::Span
+  def *(number : Int) : Time::Span
     # TODO check overflow
     Span.new(
-      seconds: to_i.to_i64 * number,
+      seconds: to_i * number,
       nanoseconds: nanoseconds.to_i64 * number,
     )
   end
 
-  def /(number : Number) : Time::Span
+  # Returns a `Time::Span` that is *number* times longer.
+  def *(number : Float) : Time::Span
+    (total_nanoseconds * number).nanoseconds
+  end
+
+  # Returns a `Time::Span` that is divided by *number*.
+  def /(number : Int) : Time::Span
     seconds = to_i.tdiv(number)
     nanoseconds = self.nanoseconds.tdiv(number)
 
@@ -311,6 +317,11 @@ struct Time::Span
       seconds: seconds,
       nanoseconds: nanoseconds,
     )
+  end
+
+  # Returns a `Time::Span` that is divided by *number*.
+  def /(number : Float) : Time::Span
+    (total_nanoseconds / number).nanoseconds
   end
 
   def /(other : self) : Float64

@@ -1,5 +1,6 @@
 require "spec"
 require "yaml"
+require "../../support/finalize"
 
 private class YAMLPerson
   YAML.mapping({
@@ -36,6 +37,12 @@ private class YAMLWithKey
     value: Int32,
     pull:  Int32,
   })
+end
+
+private class YAMLWithPropertiesKey
+  YAML.mapping(
+    properties: Hash(String, String),
+  )
 end
 
 private class YAMLWithDefaults
@@ -122,6 +129,36 @@ class YAMLRecursiveHash
     name:  String,
     other: Hash(String, YAMLRecursiveHash),
   })
+end
+
+private class YAMLWithQueryAttributes
+  YAML.mapping({
+    foo?: Bool,
+    bar?: {type: Bool, default: false, presence: true, key: "is_bar"},
+  })
+end
+
+private class YAMLWithOverwritingQueryAttributes
+  property foo : Symbol?
+  property bar : Symbol?
+  YAML.mapping({
+    foo?: Bool,
+    bar?: {type: Bool, default: false, presence: true, key: "is_bar"},
+  })
+end
+
+private class YAMLWithFinalize
+  YAML.mapping({
+    value: YAML::Any,
+  })
+
+  property key : Symbol?
+
+  def finalize
+    if key = self.key
+      State.inc(key)
+    end
+  end
 end
 
 describe "YAML mapping" do
@@ -232,8 +269,8 @@ describe "YAML mapping" do
   it "parses yaml with Time::Format converter" do
     yaml = YAMLWithTime.from_yaml("---\nvalue: 2014-10-31 23:37:16\n")
     yaml.value.should be_a(Time)
-    yaml.value.to_s.should eq("2014-10-31 23:37:16")
-    yaml.value.should eq(Time.new(2014, 10, 31, 23, 37, 16))
+    yaml.value.to_s.should eq("2014-10-31 23:37:16 UTC")
+    yaml.value.should eq(Time.utc(2014, 10, 31, 23, 37, 16))
     yaml.to_yaml.should eq("---\nvalue: 2014-10-31 23:37:16\n")
   end
 
@@ -242,6 +279,14 @@ describe "YAML mapping" do
     yaml.key.should eq("foo")
     yaml.value.should eq(1)
     yaml.pull.should eq(2)
+  end
+
+  it "outputs YAML with properties key" do
+    input = {
+      properties: {"foo" => "bar"},
+    }.to_yaml
+    yaml = YAMLWithPropertiesKey.from_yaml(input)
+    yaml.to_yaml.should eq(input)
   end
 
   it "allows small types of integer" do
@@ -444,5 +489,45 @@ describe "YAML mapping" do
       yaml.last_name.should be_nil
       yaml.last_name_present?.should be_false
     end
+  end
+
+  describe "with query attributes" do
+    it "defines query getter" do
+      yaml = YAMLWithQueryAttributes.from_yaml(%({"foo": true}))
+      yaml.foo?.should be_true
+      yaml.bar?.should be_false
+    end
+
+    it "defines non-query setter and presence methods" do
+      yaml = YAMLWithQueryAttributes.from_yaml(%({"foo": false}))
+      yaml.bar_present?.should be_false
+      yaml.bar = true
+      yaml.bar?.should be_true
+    end
+
+    it "maps non-query attributes" do
+      yaml = YAMLWithQueryAttributes.from_yaml(%({"foo": false, "is_bar": false}))
+      yaml.bar_present?.should be_true
+      yaml.bar?.should be_false
+      yaml.bar = true
+      yaml.to_yaml.should eq(%(---\nfoo: false\nis_bar: true\n))
+    end
+
+    it "raises if non-nilable attribute is nil" do
+      ex = expect_raises YAML::ParseException, "Missing yaml attribute: foo" do
+        YAMLWithQueryAttributes.from_yaml(%({"is_bar": true}))
+      end
+      ex.location.should eq({1, 1})
+    end
+
+    it "overwrites non-query attributes" do
+      yaml = YAMLWithOverwritingQueryAttributes.from_yaml(%({"foo": true}))
+      typeof(yaml.@foo).should eq(Bool)
+      typeof(yaml.@bar).should eq(Bool)
+    end
+  end
+
+  it "calls #finalize" do
+    assert_finalizes(:yaml) { YAMLWithFinalize.from_yaml("---\nvalue: 1\n") }
   end
 end

@@ -150,43 +150,43 @@ describe "Hash" do
     end
   end
 
-  describe "key" do
+  describe "key_for" do
     it "returns the first key with the given value" do
       hash = {"foo" => "bar", "baz" => "qux"}
-      hash.key("bar").should eq("foo")
-      hash.key("qux").should eq("baz")
+      hash.key_for("bar").should eq("foo")
+      hash.key_for("qux").should eq("baz")
     end
 
     it "raises when no key pairs with the given value" do
       expect_raises KeyError do
-        {"foo" => "bar"}.key("qux")
+        {"foo" => "bar"}.key_for("qux")
       end
     end
 
     describe "if block is given," do
       it "returns the first key with the given value" do
         hash = {"foo" => "bar", "baz" => "bar"}
-        hash.key("bar") { |value| value.upcase }.should eq("foo")
+        hash.key_for("bar") { |value| value.upcase }.should eq("foo")
       end
 
       it "yields the argument if no hash key pairs with the value" do
         hash = {"foo" => "bar"}
-        hash.key("qux") { |value| value.upcase }.should eq("QUX")
+        hash.key_for("qux") { |value| value.upcase }.should eq("QUX")
       end
     end
   end
 
-  describe "key?" do
+  describe "key_for?" do
     it "returns the first key with the given value" do
       hash = {"foo" => "bar", "baz" => "qux"}
-      hash.key?("bar").should eq("foo")
-      hash.key?("qux").should eq("baz")
+      hash.key_for?("bar").should eq("foo")
+      hash.key_for?("qux").should eq("baz")
     end
 
     it "returns nil if no key pairs with the given value" do
       hash = {"foo" => "bar", "baz" => "qux"}
-      hash.key?("foobar").should eq nil
-      hash.key?("bazqux").should eq nil
+      hash.key_for?("foobar").should eq nil
+      hash.key_for?("bazqux").should eq nil
     end
   end
 
