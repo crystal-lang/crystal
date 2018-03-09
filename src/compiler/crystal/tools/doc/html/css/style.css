@@ -10,6 +10,7 @@ html, body {
 body {
   font-family: "Avenir", "Tahoma", "Lucida Sans", "Lucida Grande", Verdana, Arial, sans-serif;
   color: #333;
+  line-height: 1.5;
 }
 
 a {
@@ -350,6 +351,13 @@ pre {
 
 code {
   font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+}
+
+:not(pre) > code {
+  background-color: rgba(40,35,30,0.05);
+  padding: 0.2em 0.4em;
+  font-size: 85%;
+  border-radius: 3px;
 }
 
 span.flag {
