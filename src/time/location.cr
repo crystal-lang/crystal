@@ -61,10 +61,14 @@ class Time::Location
     end
 
     def inspect(io : IO)
-      io << "Time::Zone<"
+      io << "#<Time::Location::Zone "
       io << offset
-      io << ", " << name
-      io << " (DST)" if dst?
+      io << name << ' '
+      if dst?
+        io << " DST"
+      else
+        io << "STD"
+      end
       io << '>'
     end
   end
@@ -74,11 +78,15 @@ class Time::Location
     getter? standard, utc
 
     def inspect(io : IO)
-      io << "Time::ZoneTransition<"
-      io << '#' << index << ", "
+      io << "#<Time::Location::ZoneTransition "
+      io << '#' << index << ' '
       Time.epoch(self.when).to_s("%F %T", io)
-      io << ", STD" if standard?
-      io << ", UTC" if utc?
+      if standard?
+        io << " STD"
+      else
+        io << " DST"
+      end
+      io << " UTC" if utc?
       io << '>'
     end
   end
@@ -204,7 +212,7 @@ class Time::Location
   end
 
   def inspect(io : IO)
-    io << "Time::Location<"
+    io << "#<Time::Location "
     to_s(io)
     io << '>'
   end
