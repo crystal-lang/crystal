@@ -27,7 +27,6 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: i386
       ARCH_CMD: linux32
-      ARCH_LIBRARY_PATH: /opt/crystal/embedded/lib/
     steps: *ci_steps
 
   test_darwin:
@@ -57,7 +56,7 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/v0.24.1/crystal-0.24.1-2"
+          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.24.2/crystal-0.24.2-1"
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
 
