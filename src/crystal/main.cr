@@ -56,7 +56,11 @@ module Crystal
         1
       end
 
-    ex.inspect_with_backtrace STDERR if ex
+    # This will run after all at_exit handlers, to make sure the user sees the exception.
+    AtExitHandlers.do_last ->(code : Int32) do
+      exception = ex
+      exception.inspect_with_backtrace STDERR if exception
+    end
 
     status = AtExitHandlers.run status
     STDOUT.flush

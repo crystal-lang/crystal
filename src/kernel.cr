@@ -125,11 +125,17 @@ end
 module AtExitHandlers
   @@running = false
 
+  private class_getter(handlers) { [] of Int32 -> }
+
   def self.add(handler)
     raise "Cannot use at_exit from an at_exit handler" if @@running
 
-    handlers = @@handlers ||= [] of Int32 ->
     handlers << handler
+  end
+
+  def self.do_last(handler)
+    # prepend the given handler, to run it last
+    handlers.unshift handler
   end
 
   def self.run(status)
