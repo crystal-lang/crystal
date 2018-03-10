@@ -27,7 +27,6 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: i386
       ARCH_CMD: linux32
-      ARCH_LIBRARY_PATH: /opt/crystal/embedded/lib/
     steps: *ci_steps
 
   test_darwin:

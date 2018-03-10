@@ -94,14 +94,25 @@ with_build_env() {
   export TZ="America/New_York"
 
   on_linux verify_linux_environment
+
+  export DOCKER_TEST_PREFIX="crystallang/crystal:0.24.2"
+
+  case $ARCH in
+    x86_64)
+      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
+      ;;
+    i386)
+      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-i386-build"
+      ;;
+  esac
+
   on_linux docker run \
     --rm -t \
     -u $(id -u) \
     -v $PWD:/mnt \
     -w /mnt \
-    -e LIBRARY_PATH="${ARCH_LIBRARY_PATH:-/usr/lib/crystal/lib/}" \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
-    "jhass/crystal-build-$ARCH" \
+    "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
   on_osx sudo systemsetup -settimezone $TZ
