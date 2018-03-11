@@ -23,6 +23,8 @@ describe Tempfile do
 
     File.exists?(tempfile.path).should be_true
     File.read(tempfile.path).should eq("Hello!")
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "has given extension if passed to constructor" do
@@ -36,6 +38,8 @@ describe Tempfile do
     tempfile.delete
 
     File.exists?(tempfile.path).should be_false
+  ensure
+    File.delete(tempfile.path) if tempfile && File.exists?(tempfile.path)
   end
 
   it "doesn't delete on open with block" do
@@ -43,27 +47,30 @@ describe Tempfile do
       f.print "Hello!"
     end
     File.exists?(tempfile.path).should be_true
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "has given extension if passed to open" do
     tempfile = Tempfile.open("foo", ".pdf") { |f| }
     File.extname(tempfile.path).should eq(".pdf")
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "creates and writes with TMPDIR environment variable" do
     old_tmpdir = ENV["TMPDIR"]?
     ENV["TMPDIR"] = "/tmp"
 
-    begin
-      tempfile = Tempfile.new "foo"
-      tempfile.print "Hello!"
-      tempfile.close
+    tempfile = Tempfile.new "foo"
+    tempfile.print "Hello!"
+    tempfile.close
 
-      File.exists?(tempfile.path).should be_true
-      File.read(tempfile.path).should eq("Hello!")
-    ensure
-      ENV["TMPDIR"] = old_tmpdir if old_tmpdir
-    end
+    File.exists?(tempfile.path).should be_true
+    File.read(tempfile.path).should eq("Hello!")
+  ensure
+    ENV["TMPDIR"] = old_tmpdir if old_tmpdir
+    File.delete(tempfile.path) if tempfile
   end
 
   it "is seekable" do
@@ -76,12 +83,15 @@ describe Tempfile do
     tempfile.pos = 0
     tempfile.gets(chomp: false).should eq("Hello!\n")
     tempfile.close
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "returns default directory for tempfiles" do
     old_tmpdir = ENV["TMPDIR"]?
     ENV.delete("TMPDIR")
     Tempfile.dirname.should eq("/tmp")
+  ensure
     ENV["TMPDIR"] = old_tmpdir if old_tmpdir
   end
 
@@ -89,6 +99,7 @@ describe Tempfile do
     old_tmpdir = ENV["TMPDIR"]?
     ENV["TMPDIR"] = "/my/tmp"
     Tempfile.dirname.should eq("/my/tmp")
+  ensure
     ENV["TMPDIR"] = old_tmpdir if old_tmpdir
   end
 end

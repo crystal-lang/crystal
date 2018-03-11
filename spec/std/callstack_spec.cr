@@ -33,6 +33,8 @@ describe "Backtrace" do
     output.should_not match(/src\/callstack\.cr/)
     output.should_not match(/src\/exception\.cr/)
     output.should_not match(/src\/raise\.cr/)
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "prints exception backtrace to stderr" do
@@ -49,6 +51,8 @@ describe "Backtrace" do
 
     output.to_s.empty?.should be_true
     error.to_s.should contain("IndexError")
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "prints crash backtrace to stderr" do
@@ -65,5 +69,7 @@ describe "Backtrace" do
 
     output.to_s.empty?.should be_true
     error.to_s.should contain("Invalid memory access")
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 end
