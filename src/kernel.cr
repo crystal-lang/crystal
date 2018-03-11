@@ -133,9 +133,10 @@ module AtExitHandlers
     handlers << handler
   end
 
-  def self.do_last(handler)
-    # prepend the given handler, to run it last
-    handlers.unshift handler
+  def self.add_exception(ex : Exception)
+    # Prepend a handler for this exception. It will run after all at_exit
+    # handlers, to make sure the user sees the exception if any.
+    handlers.unshift ->(status : Int32) { ex.inspect_with_backtrace(STDERR) }
   end
 
   def self.run(status)
