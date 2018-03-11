@@ -195,12 +195,35 @@ module Crystal
 
   class Macro
     def overrides?(other : Macro)
-      # For now we consider that a macro overrides another macro
-      # if it has the same number of arguments, splat index and
-      # named arguments.
-      args.size == other.args.size &&
-        splat_index == other.splat_index &&
-        !!double_splat == !!other.double_splat
+      # If they have different number of arguments, splat index or presence of
+      # double splat, no override.
+      unless args.size == other.args.size &&
+             splat_index == other.splat_index &&
+             !!double_splat == !!other.double_splat
+        return false
+      end
+
+      self_named_args = self.required_named_arguments
+      other_named_args = other.required_named_arguments
+
+      # If one has required named args and the other doesn't, no override.
+      return false unless self_named_args && other_named_args
+
+      self_names = self_named_args.map(&.external_name)
+      other_names = other_named_args.map(&.external_name)
+
+      # If different named arguments names, no override.
+      return false unless self_names == other_names
+
+      true
+    end
+
+    def required_named_arguments
+      if (splat_index = self.splat_index) && splat_index != args.size - 1
+        args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by &.external_name
+      else
+        nil
+      end
     end
   end
 
