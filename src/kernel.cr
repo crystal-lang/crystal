@@ -135,7 +135,7 @@ module AtExitHandlers
 
   def self.add_exception(ex : Exception)
     # Prepend a handler for this exception. It will run after all at_exit
-    # handlers, to make sure the user sees the exception if any.
+    # handlers, to make sure the user sees the exception.
     handlers.unshift ->(status : Int32) { ex.inspect_with_backtrace(STDERR) }
   end
 
