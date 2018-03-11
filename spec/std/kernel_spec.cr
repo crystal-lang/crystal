@@ -107,7 +107,7 @@ describe "at_exit" do
                        OUTPUT
   end
 
-  it "allow handlers to change the exit code with explicit `exit` call" do
+  it "allows handlers to change the exit code with explicit `exit` call" do
     status, output = build_and_run <<-'CODE'
       at_exit do |exit_code|
         puts "first handler code, exit code: #{exit_code}"
@@ -135,7 +135,7 @@ describe "at_exit" do
                        OUTPUT
   end
 
-  it "allow handlers to change the exit code with explicit `exit` call (2)" do
+  it "allows handlers to change the exit code with explicit `exit` call (2)" do
     status, output = build_and_run <<-'CODE'
       at_exit do |exit_code|
         puts "first handler code, exit code: #{exit_code}"
@@ -165,7 +165,7 @@ describe "at_exit" do
                        OUTPUT
   end
 
-  it "change final exit code when an handler raises an error" do
+  it "changes final exit code when an handler raises an error" do
     status, output, error = build_and_run <<-'CODE'
       at_exit do |exit_code|
         puts "first handler code, exit code: #{exit_code}"
@@ -203,5 +203,26 @@ describe "at_exit" do
 
     status.success?.should be_false
     error.should eq "Error running at_exit handler: Cannot use at_exit from an at_exit handler\n"
+  end
+
+  it "shows unhandled exceptions after at_exit handlers" do
+    status, _, error = build_and_run <<-CODE
+      at_exit do
+        STDERR.puts "first handler code"
+      end
+
+      at_exit do
+        STDERR.puts "second handler code"
+      end
+
+      raise "Kaboom!"
+    CODE
+
+    status.success?.should be_false
+    error.should contain <<-OUTPUT
+                           second handler code
+                           first handler code
+                           Unhandled exception: Kaboom!
+                           OUTPUT
   end
 end

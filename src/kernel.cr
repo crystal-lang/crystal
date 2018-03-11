@@ -126,6 +126,7 @@ module AtExitHandlers
   @@running = false
 
   private class_getter(handlers) { [] of Int32 -> }
+  private class_getter(exceptions) { [] of Exception }
 
   def self.add(handler)
     raise "Cannot use at_exit from an at_exit handler" if @@running
@@ -134,15 +135,17 @@ module AtExitHandlers
   end
 
   def self.add_exception(ex : Exception)
-    # Prepend a handler for this exception. It will run after all at_exit
-    # handlers, to make sure the user sees the exception.
-    handlers.unshift ->(status : Int32) { ex.inspect_with_backtrace(STDERR) }
+    # at_exit handlers can't be cleared now, but might in the future.
+    # The exceptions are stored in a separate list to make sure it won't be cleared.
+
+    exceptions << ex
   end
 
   def self.run(status)
     return status unless handlers = @@handlers
     @@running = true
 
+    # Run the registered handlers in reverse order
     while handler = handlers.pop?
       begin
         handler.call status
@@ -150,6 +153,13 @@ module AtExitHandlers
         STDERR.puts "Error running at_exit handler: #{handler_ex}"
         status = 1 if status.zero?
       end
+    end
+
+    # Print the registered exception(s) after all at_exit handlers, to make sure
+    # the user sees them.
+    while ex = exceptions.pop?
+      STDERR.print "Unhandled exception: "
+      ex.inspect_with_backtrace(STDERR)
     end
 
     status
