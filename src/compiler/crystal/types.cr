@@ -746,17 +746,21 @@ module Crystal
       list.each_with_index do |ex_item, i|
         if item.restriction_of?(ex_item, self)
           if ex_item.restriction_of?(item, self)
+            # The two defs have the same signature so item overrides ex_item.
             list[i] = item
             a_def.previous = ex_item
             a_def.doc ||= ex_item.def.doc
             ex_item.def.next = a_def
             return ex_item.def
           else
+            # item has a new signature, stricter than ex_item.
             list.insert(i, item)
             return nil
           end
         end
       end
+
+      # item has a new signature, less strict than the existing defs with same name.
       list << item
 
       nil
@@ -782,9 +786,11 @@ module Crystal
       array = (macros[a_def.name] ||= [] of Macro)
       index = array.index { |existing_macro| a_def.overrides?(existing_macro) }
       if index
+        # a_macro has the same signature of an existing macro, we override it.
         a_def.doc ||= array[index].doc
         array[index] = a_def
       else
+        # a_macro has a new signature, add it with the others.
         array.push a_def
       end
     end

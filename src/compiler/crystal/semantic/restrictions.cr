@@ -66,6 +66,8 @@ module Crystal
 
   struct DefWithMetadata
     def restriction_of?(other : DefWithMetadata, owner)
+      # This is how multiple defs are sorted by 'restrictions' (?)
+
       # If one yields and the other doesn't, none is stricter than the other
       return false unless yields == other.yields
 
