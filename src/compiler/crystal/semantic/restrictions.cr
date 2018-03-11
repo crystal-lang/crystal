@@ -206,6 +206,9 @@ module Crystal
       self_named_args = self.required_named_arguments
       other_named_args = other.required_named_arguments
 
+      # If both don't have named arguments, override.
+      return true if !self_named_args && !other_named_args
+
       # If one has required named args and the other doesn't, no override.
       return false unless self_named_args && other_named_args
 
