@@ -142,24 +142,27 @@ module AtExitHandlers
   end
 
   def self.run(status)
-    return status unless handlers = @@handlers
     @@running = true
 
-    # Run the registered handlers in reverse order
-    while handler = handlers.pop?
-      begin
-        handler.call status
-      rescue handler_ex
-        STDERR.puts "Error running at_exit handler: #{handler_ex}"
-        status = 1 if status.zero?
+    if handlers = @@handlers
+      # Run the registered handlers in reverse order
+      while handler = handlers.pop?
+        begin
+          handler.call status
+        rescue handler_ex
+          STDERR.puts "Error running at_exit handler: #{handler_ex}"
+          status = 1 if status.zero?
+        end
       end
     end
 
-    # Print the registered exception(s) after all at_exit handlers, to make sure
-    # the user sees them.
-    while ex = exceptions.pop?
-      STDERR.print "Unhandled exception: "
-      ex.inspect_with_backtrace(STDERR)
+    if exceptions = @@exceptions
+      # Print the registered exception(s) after all at_exit handlers, to make sure
+      # the user sees them.
+      while ex = exceptions.pop?
+        STDERR.print "Unhandled exception: "
+        ex.inspect_with_backtrace(STDERR)
+      end
     end
 
     status
