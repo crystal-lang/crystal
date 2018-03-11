@@ -25,8 +25,8 @@ describe "Compiler" do
       File.exists?(tempfile.path).should be_true
 
       `#{tempfile.path}`.should eq("Hello!")
+    ensure
+      File.delete(tempfile.path) if tempfile
     end
-  ensure
-    File.delete(tempfile.path) if tempfile
   end
 end
