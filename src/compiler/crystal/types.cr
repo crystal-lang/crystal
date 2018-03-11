@@ -382,7 +382,7 @@ module Crystal
 
     record DefInMacroLookup
 
-    # Looks up a macro with the give name and matching the given args
+    # Looks up a macro with the given name and matching the given args
     # and named_args. Returns:
     # - a `Macro`, if found
     # - `nil`, if not found
