@@ -286,12 +286,14 @@ module Crystal
       @in_type_args -= 1
 
       if inputs = node.inputs
+        return false unless inputs.all? &.type?
         types = inputs.map &.type.instance_type.virtual_type
       else
         types = [] of Type
       end
 
       if output = node.output
+        return false unless output.type?
         types << output.type.instance_type.virtual_type
       else
         types << program.void
@@ -306,6 +308,8 @@ module Crystal
       @in_type_args += 1
       node.types.each &.accept self
       @in_type_args -= 1
+
+      return false unless node.types.all? &.type?
 
       old_in_is_a, @in_is_a = @in_is_a, false
 

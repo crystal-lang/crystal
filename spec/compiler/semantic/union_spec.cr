@@ -165,4 +165,14 @@ describe "Semantic: union" do
       {foo(1), foo("hi")}
       )) { tuple_of([int32, string]) }
   end
+
+  it "does not raise an error if union contains untyped" do
+    assert_type(%(
+      x = 1
+      if x.is_a?(String)
+        [] of typeof(x) | typeof(1)
+      end
+      x
+      )) { int32 }
+  end
 end

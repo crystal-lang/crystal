@@ -880,4 +880,14 @@ describe "Semantic: proc" do
       Foo.new.x
       )) { proc_of(int32) }
   end
+
+  it "does not raise an error if proc notation contains untyped" do
+    assert_type(%(
+      x = 1
+      if x.is_a?(String)
+        [] of typeof(x) ->
+      end
+      x
+      )) { int32 }
+  end
 end
