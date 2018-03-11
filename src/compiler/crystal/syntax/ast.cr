@@ -911,10 +911,6 @@ module Crystal
   #     'def' [ receiver '.' ] name '(' [ arg [ ',' arg ]* ] ')'
   #       body
   #     'end'
-  #   |
-  #     'def' [ receiver '.' ] name arg [ ',' arg ]*
-  #       body
-  #     'end'
   #
   class Def < ASTNode
     property free_vars : Array(String)?
