@@ -62,7 +62,7 @@
 - Documentation fixes. ([#5253](https://github.com/crystal-lang/crystal/issues/5253), [#5296](https://github.com/crystal-lang/crystal/issues/5296), [#5300](https://github.com/crystal-lang/crystal/issues/5300) and [#5322](https://github.com/crystal-lang/crystal/issues/5322), thanks @arcage, @icyleaf, @straight-shoota and @bew)
 - Fix the in-repository changelog to include 0.24.0. ([#5331](https://github.com/crystal-lang/crystal/pull/5331), thanks @sdogruyol)
 
-# 0.24.0 (30-10-2017)
+# 0.24.0 (2017-10-30)
 
 - **(breaking-change)** HTTP::Client#post_form is now HTTP::Client.post(form: ...)
 - **(breaking-change)** Array#reject!, Array#compact! and Array#select! now return self ([#5154](https://github.com/crystal-lang/crystal/pull/5154))
@@ -113,7 +113,7 @@
 - Support LLVM 5.0 ([#4821](https://github.com/crystal-lang/crystal/pull/4821))
 - [Lots of bugs fixed](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.24.0)
 
-# 0.23.1 (01-07-2017)
+# 0.23.1 (2017-07-01)
 
 * Added `Random::PCG32` generator (See #4536, thanks @konovod)
 * WebSocket should compare "Upgrade" header value with case insensitive (See #4617, thanks @MakeNowJust)
@@ -121,7 +121,7 @@
 * Explained "crystal tool expand" in crystal(1) man page (See #4643, thanks @MakeNowJust)
 * Explained how to detect end of file in `IO` (See #4661, thanks @oprypin)
 
-# 0.23.0 (27-06-2017)
+# 0.23.0 (2017-06-27)
 
 * **(breaking-change)** `Logger#formatter` takes a `Severity` instead of a `String` (See #4355, #4369, thanks @Sija)
 * **(breaking-change)** Removed `IO.select` (See #4392, thanks @RX14)
@@ -173,7 +173,7 @@
 * Fixed "SSL_shutdown: Operation now in progress" error by retrying (See #3168, thanks @akzhan)
 * Fixed WebSocket negotiation (See #4386, thanks @RX14)
 
-# 0.22.0 (20-04-2017)
+# 0.22.0 (2017-04-20)
 
 * **(breaking-change)** Removed `Process.new(pid)` is now private (See #4197)
 * **(breaking-change)** IO#peek now returns an empty slice on EOF (See #4240, #4261)
@@ -211,7 +211,7 @@
 * Fixed honor `--no-color` option in spec (See #4306, thanks @luislavena)
 * [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.22.0)
 
-# 0.21.1 (06-03-2017)
+# 0.21.1 (2017-03-06)
 
 * Improved lookup of abstract def implementors (see #4052)
 * Improved allocation of objects without pointer instance variables using `malloc_atomic` (see #4081)
@@ -223,7 +223,7 @@
 * Fixed `ASTNode#to_s` for `Attribute` (see #4098, thanks @olbat)
 * [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.21.1)
 
-# 0.21.0 (20-02-2017)
+# 0.21.0 (2017-02-20)
 
 * **(breaking-change)** The compiler now reuses previous macro run compilations so `{{ run(...) }}` is only re-run if the code changes
 * **(breaking-change)** Spec: `assert { ... }` is now `it { ... }` (thanks @TheLonelyGhost)
@@ -257,7 +257,7 @@
 * Updated CONTRIBUTING.md guidelines
 * [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.21.0)
 
-# 0.20.5 (20-01-2017)
+# 0.20.5 (2017-01-20)
 
 * Improved performance in `String#index`, `String#rindex` due to Rabin-Karp algorithm (thanks @MakeNowJust).
 * Improved performance in `Crypto::Bcrypt` (see #3880, thanks @ysbaddaden).
@@ -271,7 +271,7 @@
 * `crystal doc` recognizes `crystal-lang/crystal` in any remote (thanks @MaxLap).
 * [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.5)
 
-# 0.20.4 (06-01-2017)
+# 0.20.4 (2017-01-06)
 
 * **(breaking change)** A type that wants to convert itself to JSON now must override `to_json(builder : JSON::Builder)` instead of `to_json(io : IO)`. The same is true for custom JSON converters. If you are using `JSON.mapping` then your code will continue to work without changes.
 * **(breaking change)** Defining a `finalize` method on a struct now gives a compile error
@@ -301,7 +301,7 @@
 * Lots of improvements and applied consistencies to doc comments (thanks @Sija and @maiha)
 * [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.4)
 
-## 0.20.3 (23-12-2016)
+## 0.20.3 (2016-12-23)
 
 * **(breaking change)** `IO#gets`, `IO#each_line`, `String#lines`, `String#each_line`, etc. now chomp lines by default. You can pass `chomp: false` to prevent automatic chomping. Note that `chomp` is `true` by default for argless `IO#gets` (read line) but `false` if args are given.
 * **(breaking change)** `HTTP::Handler` is now a module instead of a class (thanks @andrewhamon)
@@ -326,7 +326,7 @@
 * The `:debug` flag is now present when compiled with `--debug`, useful for doing `flag?(:debug)` in macros (thanks @luislavena)
 * [Many bug fixes and performance improvements](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.3)
 
-## 0.20.1 (05-12-2016)
+## 0.20.1 (2016-12-05)
 
 * **(breaking change)** `Set#merge` as renamed to `Set#merge!`
 * **(breaking change)** `Slice.new(size)` no longer works with non primitive integers and floats
@@ -344,7 +344,7 @@
 * Support double splat in macros (`{{**...}}`)
 * [Some bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.1)
 
-## 0.20.0 (22-11-2016)
+## 0.20.0 (2016-11-22)
 
 * **(breaking change)** Removed `ifdef` from the language
 * **(breaking change)** Removed `PointerIO`
@@ -378,7 +378,7 @@
 * Optimized `Array#sort` by using introsort (thanks @c910335)
 * [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.0)
 
-## 0.19.4  (07-10-2016)
+## 0.19.4  (2016-10-07)
 
 * Added support for OpenBSD (thanks @wmoxam and @ysbaddaden)
 * More iconv fixes for FreeBSD (thanks @ysbaddaden)
@@ -389,7 +389,7 @@
 * Added `Char#+(Int)` and `Char#-(Int)`
 * [A few bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.4)
 
-## 0.19.3  (30-09-2016)
+## 0.19.3  (2016-09-30)
 
 * `crystal eval` now accepts some flags like `--stats`, `--release` and `--help`
 * Added `File.chown` and `File.chmod` (thanks @ysbaddaden)
@@ -397,7 +397,7 @@
 * Added docs to `OAuth` and `OAuth2`
 * [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.3)
 
-## 0.19.2  (16-09-2016)
+## 0.19.2  (2016-09-16)
 
 * Generic type variables no longer need to be single-letter names (for example `class Gen(Foo)` is now possible)
 * Added syntax to denote free variables: `def foo(x : T) forall T`. The old rule of single-letter name still applies but will be removed in the future.
@@ -412,13 +412,13 @@
 * Error messages no longer include a type trace by default, pass `--error-trace` to show the full trace (the trace is often useless and makes it harder to understand error messages)
 * [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.2)
 
-## 0.19.1  (09-09-2016)
+## 0.19.1  (2016-09-09)
 
 * Types (class, module, etc.) can now be marked as `private`.
 * Added `WeakRef`  (thanks @bcardiff)
 * [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.1)
 
-## 0.19.0  (02-09-2016)
+## 0.19.0  (2016-09-02)
 
 * **(breaking change)** Added `select` keyword
 * **(breaking change)** Removed $global variables. Use @@class variables instead.
@@ -461,47 +461,47 @@
 * Unified String and Char to integer/float conversion API (thanks @jhass)
 * [Lots of bug fixes](https://github.com/crystal-lang/crystal/milestone/5?closed=1)
 
-## 0.18.7 (03-07-2016)
+## 0.18.7 (2016-07-03)
 
 * The `compile` command was renamed back to `build`. The `compile` command is deprecated and will be removed in a future version
 * Fibers now can be spawned with a name
 * ECR macros can now be required with just `require "ecr"`
 * [Several bugs fixes and enhancements](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.7+is%3Aclosed)
 
-## 0.18.6 (28-06-2016)
+## 0.18.6 (2016-06-28)
 
 * `T?` is now parsed as `Union(T, Nil)` outside the type grammar
 * Added `String#sub` overloads for replacing an index or range with a char or string
 * [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.6+is%3Aclosed)
 
-## 0.18.5 (27-06-2016)
+## 0.18.5 (2016-06-27)
 
 * Added `OpenSSL::SSL::Socket#alpn_protocol`
 * Added `IO#copy(src, desc, limit)` (thanks @jreinert)
 * Added `TypeNode#instance` macro method
 * [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.5+is%3Aclosed)
 
-## 0.18.4 (21-06-2016)
+## 0.18.4 (2016-06-21)
 
 * Fixed [#2887](https://github.com/crystal-lang/crystal/issues/2887)
 * Fix broken specs
 
-## 0.18.3 (21-06-2016)
+## 0.18.3 (2016-06-21)
 
 * `TypeNode`: added `<`, `<=`, `>` and `>=` macro methods
 * [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.3+is%3Aclosed)
 
-## 0.18.2 (16-06-2016)
+## 0.18.2 (2016-06-16)
 
 * Fixed building Crystal from the source tarball
 
-## 0.18.1 (16-06-2016)
+## 0.18.1 (2016-06-16)
 
 * Spec: passing `--profile` shows the slowest 10 specs (thanks @mperham)
 * Added `StringLiteral#>` and `StringLiteral#<` in macros
 * [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.1+is%3Aclosed)
 
-## 0.18.0 (14-06-2016)
+## 0.18.0 (2016-06-14)
 
 * **(breaking change)** `IniFile` was renamed to `INI`, and its method `load` renamed to `parse`
 * **(breaking change)** `Process.getpgid` was renamed to `Process.pgid`
