@@ -175,4 +175,25 @@ describe "Semantic: union" do
       x
       )) { int32 }
   end
+
+  it "updates union type after loop" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(@foo : T)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      x = 1
+      while true
+        y = Foo(typeof(x) | Int32).new(x)
+        x = "foo"
+        break
+      end
+      y.foo
+      )) { union_of(int32, string) }
+  end
 end

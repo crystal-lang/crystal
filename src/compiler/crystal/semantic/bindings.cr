@@ -490,6 +490,50 @@ module Crystal
     end
   end
 
+  class ProcNotation
+    property! program : Program
+
+    def update(from = nil)
+      if inputs = self.inputs
+        return false unless inputs.all? &.type?
+        types = inputs.map &.type.instance_type.virtual_type
+      else
+        types = [] of Type
+      end
+
+      if output = self.output
+        return false unless output.type?
+        types << output.type.instance_type.virtual_type
+      else
+        types << program.void
+      end
+
+      self.type = program.proc_of(types)
+    end
+  end
+
+  class Union
+    property! in_is_a : Bool
+
+    def update(from = nil)
+      return unless types.all? &.type?
+
+      types = types().map do |subtype|
+        instance_type = subtype.type
+        unless instance_type.allowed_in_generics?
+          subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
+        end
+        instance_type.virtual_type
+      end
+
+      if in_is_a
+        self.type = types.first.program.type_merge_union_of(types)
+      else
+        self.type = types.first.program.type_merge(types)
+      end
+    end
+  end
+
   class TupleLiteral
     property! program : Program
 

@@ -285,21 +285,10 @@ module Crystal
       node.output.try &.accept(self)
       @in_type_args -= 1
 
-      if inputs = node.inputs
-        return false unless inputs.all? &.type?
-        types = inputs.map &.type.instance_type.virtual_type
-      else
-        types = [] of Type
-      end
-
-      if output = node.output
-        return false unless output.type?
-        types << output.type.instance_type.virtual_type
-      else
-        types << program.void
-      end
-
-      node.type = program.proc_of(types)
+      node.program = @program
+      node.inputs.try &.each &.add_observer(node)
+      node.output.try &.add_observer(node)
+      node.update
 
       false
     end
@@ -309,25 +298,9 @@ module Crystal
       node.types.each &.accept self
       @in_type_args -= 1
 
-      return false unless node.types.all? &.type?
-
-      old_in_is_a, @in_is_a = @in_is_a, false
-
-      types = node.types.map do |subtype|
-        instance_type = subtype.type
-        unless instance_type.allowed_in_generics?
-          subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
-        end
-        instance_type.virtual_type
-      end
-
-      @in_is_a = old_in_is_a
-
-      if @in_is_a
-        node.type = @program.type_merge_union_of(types)
-      else
-        node.type = @program.type_merge(types)
-      end
+      node.in_is_a = @in_is_a
+      node.types.each &.add_observer(node)
+      node.update
 
       false
     end

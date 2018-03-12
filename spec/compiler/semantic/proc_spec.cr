@@ -890,4 +890,46 @@ describe "Semantic: proc" do
       x
       )) { int32 }
   end
+
+  it "updates proc input type after loop" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(@foo : T? = nil)
+        end
+
+        def foo
+          @foo || (while true; end)
+        end
+      end
+
+      x = 1
+      while true
+        y = Foo(typeof(x) ->).new
+        x = "foo"
+        break
+      end
+      y.foo
+      )) { proc_of(union_of(int32, string), nil_type) }
+  end
+
+  it "updates proc output type after loop" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(@foo : T? = nil)
+        end
+
+        def foo
+          @foo || (while true; end)
+        end
+      end
+
+      x = 1
+      while true
+        y = Foo(-> typeof(x)).new
+        x = "foo"
+        break
+      end
+      y.foo.call
+      )) { union_of(int32, string) }
+  end
 end
