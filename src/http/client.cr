@@ -326,7 +326,7 @@ class HTTP::Client
     before_request << callback
   end
 
-  {% for method in %w(get post put head delete patch) %}
+  {% for method in %w(get post put head delete patch options) %}
     # Executes a {{method.id.upcase}} request.
     # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
     #
