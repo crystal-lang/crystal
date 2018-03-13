@@ -197,6 +197,10 @@ struct Time
   {% end %}
 
   def initialize(*, @seconds : Int64, @nanoseconds : Int32, @location : Location)
+    unless 0 <= offset_seconds <= MAX_SECONDS
+      raise ArgumentError.new "Invalid time: seconds out of range"
+    end
+
     unless 0 <= @nanoseconds < NANOSECONDS_PER_SECOND
       raise ArgumentError.new "Invalid time: nanoseconds out of range"
     end
@@ -301,10 +305,6 @@ struct Time
     if nanoseconds < 0
       seconds -= 1
       nanoseconds += NANOSECONDS_PER_SECOND
-    end
-
-    unless 0 <= seconds <= MAX_SECONDS
-      raise ArgumentError.new "Invalid time"
     end
 
     Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i, location: location)

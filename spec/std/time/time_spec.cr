@@ -53,6 +53,28 @@ describe Time do
     end
   end
 
+  it "#initialize checks boundary at time min" do
+    {-5 * 3600, -1, 0, 1, 5 * 3600}.each do |offset|
+      seconds = -offset.to_i64
+      Time.new(seconds: seconds + 1, nanoseconds: 0, location: Time::Location.fixed(offset))
+      Time.new(seconds: seconds, nanoseconds: 0, location: Time::Location.fixed(offset))
+      Time.expect_invalid do
+        Time.new(seconds: seconds - 1, nanoseconds: 0, location: Time::Location.fixed(offset))
+      end
+    end
+  end
+
+  it "#initialize checks boundary at time max" do
+    {-5 * 3600, -1, 0, 1, 5 * 3600}.each do |offset|
+      seconds = Time::MAX_SECONDS - offset.to_i64
+      Time.new(seconds: seconds - 1, nanoseconds: 0, location: Time::Location.fixed(offset))
+      Time.new(seconds: seconds, nanoseconds: 0, location: Time::Location.fixed(offset))
+      Time.expect_invalid do
+        Time.new(seconds: seconds + 1, nanoseconds: 0, location: Time::Location.fixed(offset))
+      end
+    end
+  end
+
   it "initialize with .epoch" do
     seconds = 1439404155
     time = Time.epoch(seconds)
@@ -119,6 +141,37 @@ describe Time do
     expect_raises ArgumentError do
       t1 + Time::Span.new(nanoseconds: Int64::MIN)
     end
+  end
+
+  it "#add_span checks boundary at time min" do
+    {5 * 3600, 1, 0, -1, -5 * 3600}.each do |offset|
+      location = Time::Location.fixed(offset)
+
+      time = Time.new(1, 1, 1, location: location)
+      time.add_span(0, 1).should eq Time.new(1, 1, 1, nanosecond: 1, location: location)
+      time.add_span(0, 0).should eq time
+      expect_raises(ArgumentError) do
+        time.add_span(0, -1)
+      end
+    end
+  end
+
+  it "#add_span checks boundary at time max" do
+    {5 * 3600, 1, 0, -1, -5 * 3600}.each do |offset|
+      location = Time::Location.fixed(offset)
+
+      time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location)
+      time.add_span(0, -1).should eq Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_998, location: location)
+      time.add_span(0, 0).should eq time
+      expect_raises(ArgumentError) do
+        time.add_span(0, 1)
+      end
+    end
+  end
+
+  it "adds zero span" do
+    time = Time.now
+    time.add_span(0, 0).should eq time
   end
 
   it "add days" do
