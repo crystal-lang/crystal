@@ -20,10 +20,9 @@ require "crystal/system/time"
 # current time:
 #
 # ```crystal
-# Time.utc_now # returns the current time in UTC
-# Time.now Time::Location.load("Europe/Berlin")
-#              # returns the current time in time zone Europe/Berlin
-# Time.now     # returns the current time in current time zone
+# Time.utc_now                                  # returns the current time in UTC
+# Time.now Time::Location.load("Europe/Berlin") # returns the current time in time zone Europe/Berlin
+# Time.now                                      # returns the current time in current time zone
 # ```
 #
 # It is generally recommended to keep instances in UTC and only apply a
@@ -75,20 +74,20 @@ require "crystal/system/time"
 #
 # ```
 # time = Time.new(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
-# time              # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
-# time.location     # => #<Time::Location Europe/Berlin>
-# time.zone         # => #<Time::Location::Zone CET +01:00 (3600s) STD>
-# time.offset       # => 3600
+# time          # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
+# time.location # => #<Time::Location Europe/Berlin>
+# time.zone     # => #<Time::Location::Zone CET +01:00 (3600s) STD>
+# time.offset   # => 3600
 # ```
 #
 # Using `.utc`, the location is `Time::Location::UTC`:
 #
 # ```
 # time = Time.utc(2018, 3, 8, 22, 5, 13)
-# time              # => 2016-02-15 10:20:30 UTC
-# time.location     # => #<Time::Location UTC>
-# time.zone         # => #<Time::Location::Zone UTC +00:00 (0s) STD>
-# time.offset       # => 0
+# time          # => 2016-02-15 10:20:30 UTC
+# time.location # => #<Time::Location UTC>
+# time.zone     # => #<Time::Location::Zone UTC +00:00 (0s) STD>
+# time.offset   # => 0
 # ```
 #
 # A `Time` instance can be transformed to a different time zone while retaining
@@ -97,8 +96,8 @@ require "crystal/system/time"
 # ```
 # time_de = Time.new(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
 # time_ar = time_de.in Time::Location.load("America/Buenos_Aires")
-# time_de            # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
-# time_ar            # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
+# time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
+# time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
 # ```
 #
 # Both `Time` instances show a different local date-time, but they represent
@@ -114,8 +113,8 @@ require "crystal/system/time"
 # There are also two special methods for converting to UTC and local time zone:
 #
 # ```
-# time.to_utc        # equals time.in(Location::UTC)
-# time.to_local      # equals time.in(Location.local)
+# time.to_utc   # equals time.in(Location::UTC)
+# time.to_local # equals time.in(Location.local)
 # ```
 #
 # ### Formatting and Parsing Time
@@ -298,7 +297,7 @@ struct Time
   # ```
   # start = Time.monotonic
   # # operation that takes 20 milliseconds
-  # elapsed = Time.monotonic - start       # => 20.milliseconds (approximately)
+  # elapsed = Time.monotonic - start # => 20.milliseconds (approximately)
   # # operation that takes 50 milliseconds
   # elapsed_total = Time.monotonic - start # => 70.milliseconds (approximately)
   # ```
@@ -350,7 +349,7 @@ struct Time
   #
   # ```
   # time = Time.new(2016, 2, 15, 10, 20, 30, location: Time::Location.load("Europe/Berlin"))
-  # time.to_s        # => 2016-02-15 10:20:30 +01:00 Europe/Berlin
+  # time.to_s # => 2016-02-15 10:20:30 +01:00 Europe/Berlin
   # ```
   #
   # Valid value ranges for the individual fields:
@@ -367,7 +366,7 @@ struct Time
   #
   # ```
   # time = Time.new(2016, 2, 15)
-  # time.to_s        # => 2016-02-15 00:00:00 +00:00 Local
+  # time.to_s # => 2016-02-15 00:00:00 +00:00 Local
   # ```
   #
   # The local date-time representation is resolved to a single instant based on
@@ -411,7 +410,7 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 2, 15, 10, 20, 30)
-  # time.to_s        # => 2016-02-15 10:20:30 UTC
+  # time.to_s # => 2016-02-15 10:20:30 UTC
   # ```
   #
   # Valid value ranges for the individual fields:
@@ -428,7 +427,7 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 2, 15)
-  # time.to_s        # => 2016-02-15 00:00:00 UTC
+  # time.to_s # => 2016-02-15 00:00:00 UTC
   # ```
   #
   # Since UTC does not have any time zone transitions, each date-time is
@@ -749,8 +748,8 @@ struct Time
   # time_de == time_ar # => true
   #
   # # both times represent the same instant:
-  # time_de.to_utc     # => 2018-03-08 21:05:13 UTC
-  # time_ar.to_utc     # => 2018-03-08 21:05:13 UTC
+  # time_de.to_utc # => 2018-03-08 21:05:13 UTC
+  # time_ar.to_utc # => 2018-03-08 21:05:13 UTC
   # ```
   def ==(other : Time) : Bool
     total_seconds == other.total_seconds && nanosecond == other.nanosecond
@@ -924,8 +923,8 @@ struct Time
   # ```
   # time_de = Time.new(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
   # time_ar = time_de.in Time::Location.load("America/Buenos_Aires")
-  # time_de  # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
-  # time_ar  # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
+  # time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
+  # time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
   # ```
   def in(location : Location) : Time
     return self if location == self.location
