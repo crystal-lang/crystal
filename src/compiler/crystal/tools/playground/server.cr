@@ -503,11 +503,13 @@ module Crystal::Playground
         HTTP::StaticFileHandler.new(public_dir),
       ]
 
+      server = HTTP::Server.new handlers
+
       host = @host
       if host
-        server = HTTP::Server.new host, @port, handlers
+        server.bind host, @port
       else
-        server = HTTP::Server.new @port, handlers
+        server.bind @port
         host = "localhost"
       end
 

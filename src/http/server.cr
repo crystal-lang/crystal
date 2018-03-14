@@ -33,11 +33,12 @@ require "./common"
 # ```
 # require "http/server"
 #
-# server = HTTP::Server.new(8080) do |context|
+# server = HTTP::Server.new do |context|
 #   context.response.content_type = "text/plain"
 #   context.response.print "Hello world!"
 # end
 #
+# server.bind 8080
 # puts "Listening on http://127.0.0.1:8080"
 # server.listen
 # ```
@@ -47,11 +48,12 @@ require "./common"
 # ```
 # require "http/server"
 #
-# server = HTTP::Server.new("0.0.0.0", 8080) do |context|
+# server = HTTP::Server.new do |context|
 #   context.response.content_type = "text/plain"
 #   context.response.print "Hello world!"
 # end
 #
+# server.bind "0.0.0.0", 8080
 # puts "Listening on http://0.0.0.0:8080"
 # server.listen
 # ```
@@ -63,12 +65,15 @@ require "./common"
 # ```
 # require "http/server"
 #
-# HTTP::Server.new("127.0.0.1", 8080, [
+# server = HTTP::Server.new([
 #   HTTP::ErrorHandler.new,
 #   HTTP::LogHandler.new,
 #   HTTP::CompressHandler.new,
 #   HTTP::StaticFileHandler.new("."),
-# ]).listen
+# ])
+#
+# server.bind "127.0.0.1", 8080
+# server.listen
 # ```
 #
 # ### Add handlers and block
@@ -78,15 +83,15 @@ require "./common"
 # ```
 # require "http/server"
 #
-# server = HTTP::Server.new("0.0.0.0", 8080,
-#   [
-#     HTTP::ErrorHandler.new,
-#     HTTP::LogHandler.new,
-#   ]) do |context|
+# server = HTTP::Server.new([
+#   HTTP::ErrorHandler.new,
+#   HTTP::LogHandler.new,
+# ]) do |context|
 #   context.response.content_type = "text/plain"
 #   context.response.print "Hello world!"
 # end
 #
+# server.bind "0.0.0.0", 8080
 # server.listen
 # ```
 class HTTP::Server
@@ -95,73 +100,93 @@ class HTTP::Server
   {% end %}
 
   @wants_close = false
+  @sockets = [] of Socket::Server
 
-  def self.new(port, &handler : Context ->)
-    new("127.0.0.1", port, &handler)
+  # Creates a new HTTP server with the given block as handler.
+  def self.new(&handler : HTTP::Handler::Proc) : self
+    new(handler)
   end
 
-  def self.new(port, handlers : Array(HTTP::Handler), &handler : Context ->)
-    new("127.0.0.1", port, handlers, &handler)
+  # Creates a new HTTP server with a handler chain constructed from the *handlers*
+  # array and the given block.
+  def self.new(handlers : Array(HTTP::Handler), &handler : HTTP::Handler::Proc) : self
+    new(HTTP::Server.build_middleware(handlers, handler))
   end
 
-  def self.new(port, handlers : Array(HTTP::Handler))
-    new("127.0.0.1", port, handlers)
+  # Creates a new HTTP server with the *handlers* array as handler chain.
+  def self.new(handlers : Array(HTTP::Handler)) : self
+    new(HTTP::Server.build_middleware(handlers))
   end
 
-  def self.new(port, handler)
-    new("127.0.0.1", port, handler)
-  end
-
-  def initialize(@host : String, @port : Int32, &handler : Context ->)
+  # Creates a new HTTP server with the given *handler*.
+  def initialize(handler : HTTP::Handler | HTTP::Handler::Proc)
     @processor = RequestProcessor.new(handler)
   end
 
-  def initialize(@host : String, @port : Int32, handlers : Array(HTTP::Handler), &handler : Context ->)
-    handler = HTTP::Server.build_middleware handlers, handler
-    @processor = RequestProcessor.new(handler)
-  end
-
-  def initialize(@host : String, @port : Int32, handlers : Array(HTTP::Handler))
-    handler = HTTP::Server.build_middleware handlers
-    @processor = RequestProcessor.new(handler)
-  end
-
-  def initialize(@host : String, @port : Int32, handler : HTTP::Handler | HTTP::Handler::Proc)
-    @processor = RequestProcessor.new(handler)
-  end
-
-  # Returns the TCP port the server is connected to.
+  # Returns the TCP port of the first socket the server is bound to.
   #
   # For example you may let the system choose a port, then report it:
   # ```
-  # server = HTTP::Server.new(0) { }
-  # server.bind
+  # server = HTTP::Server.new { }
+  # server.bind 0
   # server.port # => 12345
   # ```
-  def port
-    if server = @server
-      server.local_address.port.to_i
-    else
-      @port
+  def port : Int32?
+    @sockets.each do |socket|
+      if socket.is_a?(TCPServer)
+        return socket.local_address.port.to_i
+      end
     end
   end
 
-  # Creates the underlying `TCPServer` if the doesn't already exist.
+  # Creates a `TCPServer` and adds it as a socket, returning the local address
+  # and port the server listens on.
+  #
+  # If *port* is `0`, a random, free port will be chosen.
+  #
+  # You may set *reuse_port* to `true` to enable the `SO_REUSEPORT` socket option,
+  # which allows multiple processes to bind to the same port.
+  def bind(host : String, port : Int32, reuse_port : Bool = false) : Socket::IPAddress
+    tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
+    bind(tcp_server)
+    tcp_server.local_address
+  end
+
+  # Creates a `TCPServer` listenting on `127.0.0.1` and adds it as a socket,
+  # returning the local address and port the server listens on.
+  #
+  # If *port* is `0`, a random, free port will be chosen.
   #
   # You may set *reuse_port* to true to enable the `SO_REUSEPORT` socket option,
   # which allows multiple processes to bind to the same port.
-  def bind(reuse_port = false)
-    @server ||= TCPServer.new(@host, @port, reuse_port: reuse_port)
+  def bind(port : Int32, reuse_port : Bool = false) : Socket::IPAddress
+    bind "127.0.0.1", port, reuse_port
+  end
+
+  # Adds a `Socket::Server` *socket* to this server.
+  def bind(socket : Socket::Server) : Socket::Server
+    @sockets << socket
+
+    socket
   end
 
   # Starts the server. Blocks until the server is closed.
-  #
-  # See `#bind` for details on the *reuse_port* argument.
-  def listen(reuse_port = false)
-    server = bind(reuse_port)
-    until @wants_close
-      spawn handle_client(server.accept?)
+  def listen
+    raise "Can't start server with not sockets to listen to" if @sockets.empty?
+
+    done = Channel(Nil).new
+
+    @sockets.each do |socket|
+      spawn do
+        until @wants_close
+          spawn handle_client(socket.accept? || break)
+        end
+
+        done.send nil
+      end
     end
+
+    @sockets.size.times { done.receive }
   end
 
   # Gracefully terminates the server. It will process currently accepted
@@ -169,16 +194,17 @@ class HTTP::Server
   def close
     @wants_close = true
     @processor.close
-    if server = @server
-      server.close
-      @server = nil
+
+    @sockets.each do |socket|
+      socket.close
+    rescue
+      # ignore exception on close
     end
+
+    @sockets.clear
   end
 
-  private def handle_client(io)
-    # nil means the server was closed
-    return unless io
-
+  private def handle_client(io : IO)
     io.sync = false
 
     {% if !flag?(:without_openssl) %}

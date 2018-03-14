@@ -313,9 +313,9 @@ describe HTTP::WebSocket do
         end
       end
 
-      http_server = http_ref = HTTP::Server.new(0, [ws_handler])
-      http_server.bind
-      port_chan.send(http_server.port)
+      http_server = http_ref = HTTP::Server.new([ws_handler])
+      http_server.bind 0
+      port_chan.send(http_server.port.not_nil!)
       http_server.listen
     end
 
@@ -350,12 +350,12 @@ describe HTTP::WebSocket do
         end
       end
 
-      http_server = http_ref = HTTP::Server.new(0, [ws_handler])
+      http_server = http_ref = HTTP::Server.new([ws_handler])
       tls = http_server.tls = OpenSSL::SSL::Context::Server.new
       tls.certificate_chain = File.join(__DIR__, "../openssl/ssl/openssl.crt")
       tls.private_key = File.join(__DIR__, "../openssl/ssl/openssl.key")
-      http_server.bind
-      port_chan.send(http_server.port)
+      http_server.bind 0
+      port_chan.send(http_server.port.not_nil!)
       http_server.listen
     end
 
