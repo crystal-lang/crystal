@@ -194,22 +194,19 @@ module HTTP
   end
 
   describe HTTP::Server do
-    it "re-sets special port zero after bind" do
+    it "binds to unused port" do
       server = Server.new { |ctx| }
-      server.bind 0
-      server.port.should_not eq(0)
-    end
+      address = server.bind_unused_port
+      address.port.should_not eq(0)
 
-    it "re-sets port to nil after close" do
       server = Server.new { |ctx| }
-      server.bind 0
-      server.close
-      server.port.should be_nil
+      port = server.bind(0).port
+      port.should_not eq(0)
     end
 
     it "doesn't raise on accept after close #2692" do
       server = Server.new { }
-      server.bind "0.0.0.0", 0
+      server.bind_unused_port
 
       spawn do
         server.close
@@ -221,34 +218,35 @@ module HTTP
 
     it "reuses the TCP port (SO_REUSEPORT)" do
       s1 = Server.new { |ctx| }
-      s1.bind(0, reuse_port: true)
+      address = s1.bind_unused_port(reuse_port: true)
 
       s2 = Server.new { |ctx| }
-      s2.bind(s1.port.not_nil!, reuse_port: true)
+      s2.bind(address.port, reuse_port: true)
 
       s1.close
       s2.close
     end
 
-    it "binds to different interfaces" do
+    it "binds to different ports" do
       server = Server.new do |context|
         context.response.print "Test Server (#{context.request.headers["Host"]?})"
       end
 
-      address1 = server.bind(0)
-      address2 = server.bind(0)
+      tcp_server = TCPServer.new("127.0.0.1", 0)
+      server.bind tcp_server
+      address1 = tcp_server.local_address
 
-      port1 = address1.port
-      port2 = address2.port
-      port1.should_not eq port2
+      address2 = server.bind_unused_port
+
+      address1.should_not eq address2
 
       spawn { server.listen }
 
       Fiber.yield
 
-      HTTP::Client.get("http://127.0.0.1:#{port2}/").body.should eq "Test Server (127.0.0.1:#{port2})"
-      HTTP::Client.get("http://127.0.0.1:#{port1}/").body.should eq "Test Server (127.0.0.1:#{port1})"
-      HTTP::Client.get("http://127.0.0.1:#{port1}/").body.should eq "Test Server (127.0.0.1:#{port1})"
+      HTTP::Client.get("http://#{address2}/").body.should eq "Test Server (#{address2})"
+      HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
+      HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
     end
   end
 

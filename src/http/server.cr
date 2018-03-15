@@ -123,22 +123,6 @@ class HTTP::Server
     @processor = RequestProcessor.new(handler)
   end
 
-  # Returns the TCP port of the first socket the server is bound to.
-  #
-  # For example you may let the system choose a port, then report it:
-  # ```
-  # server = HTTP::Server.new { }
-  # server.bind 0
-  # server.port # => 12345
-  # ```
-  def port : Int32?
-    @sockets.each do |socket|
-      if socket.is_a?(TCPServer)
-        return socket.local_address.port.to_i
-      end
-    end
-  end
-
   # Creates a `TCPServer` and adds it as a socket, returning the local address
   # and port the server listens on.
   #
@@ -161,6 +145,18 @@ class HTTP::Server
   # which allows multiple processes to bind to the same port.
   def bind(port : Int32, reuse_port : Bool = false) : Socket::IPAddress
     bind "127.0.0.1", port, reuse_port
+  end
+
+  # Creates a `TCPServer` listening on an unused port and adds it as a socket.
+  #
+  # Returns the `Socket::IPAddress` with the determined port number.
+  #
+  # ```
+  # server = HTTP::Server.new { }
+  # server.bind_unused_port # => Socket::IPAddress.new("127.0.0.1", 12345)
+  # ```
+  def bind_unused_port(host : String = "127.0.0.1", reuse_port : Bool = false) : Socket::IPAddress
+    bind host, 0, reuse_port
   end
 
   # Adds a `Socket::Server` *socket* to this server.
