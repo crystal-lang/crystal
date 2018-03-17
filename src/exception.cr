@@ -59,6 +59,12 @@ class Exception
       io.print "  from "
       io.puts frame
     end
+
+    if cause = @cause
+      io << "Caused by: "
+      cause.inspect_with_backtrace(io)
+    end
+
     io.flush
   end
 end
