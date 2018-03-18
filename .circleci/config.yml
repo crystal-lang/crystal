@@ -99,7 +99,7 @@ jobs:
           # How to brand it
           export VERSION=nightly-$(date '+%Y%m%d')
           echo "export CRYSTAL_VERSION=$VERSION" >> build.env
-          echo "export DOCKER_TAG=$VERSION" >> build.env
+          echo "export DOCKER_TAG=nightly" >> build.env
 
           # Build from working directory (needed for omnibus and when version does not match branch/tag)
           echo "export FORCE_GIT_TAGGED=0" >> build.env
