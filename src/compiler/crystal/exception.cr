@@ -3,8 +3,6 @@ require "colorize"
 
 module Crystal
   abstract class Exception < ::Exception
-    property? color = false
-
     @filename : String | VirtualFile | Nil
 
     def to_s(io)
@@ -44,14 +42,6 @@ module Crystal
 
     def relative_filename(filename)
       Crystal.relative_filename(filename)
-    end
-
-    def colorize(obj)
-      obj.colorize.toggle(@color)
-    end
-
-    def with_color
-      ::with_color.toggle(@color)
     end
 
     def replace_leading_tabs_with_spaces(line)

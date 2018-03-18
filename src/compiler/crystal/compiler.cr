@@ -58,9 +58,6 @@ module Crystal
     # Sets the mattr (features). Check LLVM docs to learn about this.
     property mattr : String?
 
-    # If `false`, color won't be used in output messages.
-    property? color = true
-
     # If `true`, skip cleanup process on semantic analysis.
     property? no_cleanup = false
 
@@ -183,7 +180,6 @@ module Crystal
       program.flags << "static" if static?
       program.flags.concat @flags
       program.wants_doc = wants_doc?
-      program.color = color?
       program.stdout = stdout
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
@@ -215,8 +211,8 @@ module Crystal
       parser.wants_doc = wants_doc?
       parser.parse
     rescue ex : InvalidByteSequenceError
-      stderr.print colorize("Error: ").red.bold
-      stderr.print colorize("file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ").bold
+      stderr.print "Error: ".colorize.red.bold
+      stderr.print "file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ".colorize.bold
       stderr.puts ex.message
       exit 1
     end
@@ -482,7 +478,7 @@ module Crystal
         TargetMachine.create(triple, @mcpu || "", @mattr || "", @release)
       end
     rescue ex : ArgumentError
-      stderr.print colorize("Error: ").red.bold
+      stderr.print "Error: ".colorize.red.bold
       stderr.print "llc: "
       stderr.puts ex.message
       exit 1
@@ -540,11 +536,7 @@ module Crystal
     end
 
     private def error(msg, exit_code = 1)
-      Crystal.error msg, @color, exit_code, stderr: stderr
-    end
-
-    private def colorize(obj)
-      obj.colorize.toggle(@color)
+      Crystal.error msg, exit_code, stderr: stderr
     end
 
     # An LLVM::Module with information to compile it.

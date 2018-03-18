@@ -51,11 +51,12 @@ class Crystal::Command
   private getter options
 
   def initialize(@options : Array(String))
-    @color = true
     @progress_tracker = ProgressTracker.new
   end
 
   def run
+    Colorize.on_tty_only!
+
     command = options.first?
     case
     when !command
@@ -105,7 +106,6 @@ class Crystal::Command
   rescue ex : Crystal::LocationlessException
     error ex.message
   rescue ex : Crystal::Exception
-    ex.color = @color
     if @config.try(&.output_format) == "json"
       STDERR.puts ex.to_json
     else
@@ -358,10 +358,7 @@ class Crystal::Command
         end
       end
 
-      opts.on("--no-color", "Disable colored output") do
-        @color = false
-        compiler.color = false
-      end
+      color_option opts
 
       unless no_codegen
         opts.on("--no-codegen", "Don't do code generation") do
@@ -508,10 +505,7 @@ class Crystal::Command
       puts opts
       exit
     end
-    opts.on("--no-color", "Disable colored output") do
-      @color = false
-      compiler.color = false
-    end
+    color_option opts
     opts.invalid_option { }
   end
 
@@ -524,9 +518,38 @@ class Crystal::Command
     values
   end
 
+  private def color_option(opts)
+    opts.on("--color auto|always|never", "Enable colored output") do |color|
+      case color
+      when "auto"
+        Colorize.on_tty_only!
+      when "always"
+        Colorize.enabled = true
+      when "never"
+        Colorize.enabled = false
+      else
+        error "invalid color option: #{color}"
+      end
+    end
+
+    opts.on("--no-color", "Disable colored output") do
+      Colorize.enabled = false
+    end
+  end
+
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color")
-    Crystal.error msg, @color, exit_code: exit_code
+    ARGV.each do |arg|
+      case arg
+      when "--"
+        break
+      when "--color"
+        Colorize.enabled = true
+      when "--no-color", "--color=never"
+        Colorize.enabled = false
+      end
+    end
+
+    Crystal.error msg, exit_code: exit_code
   end
 end

@@ -111,12 +111,14 @@ Comma separated list of types of output for the compiler to emit. You can use th
 Format of output. Defaults to text. The json format can be used to get a more parser-friendly output.
 .It Fl -ll
 Dump LLVM assembly file to output directory.
-.It Fl -link-flags FLAGS
+.It Fl -link-flags Ar FLAGS
 Pass additional flags to the linker. Though you can specify those flags on the source code, this is useful for passing environment specific information directly to the linker, like non-standard library paths or names. For more information on specifying linker flags on source, you can read the "C bindings" section of the documentation available on the official web site.
-.It Fl -mcpu CPU
-Specify the name of the processor. This will pass a -mcpu flag to LLVM, and is only intended to be used for cross-compilation.
+.It Fl -mcpu Ar CPU
+Specify the name of the processor. This will pass a --mcpu flag to LLVM, and is only intended to be used for cross-compilation.
+.It Fl -color Ar auto|always|never
+Enable colored output.
 .It Fl -no-color
-Disable colored output.
+Disable colored output. It is the same as --color=never.
 .It Fl -no-codegen
 Don't do code generation, just parse the file.
 .It Fl o

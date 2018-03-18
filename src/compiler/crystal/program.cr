@@ -67,9 +67,6 @@ module Crystal
     # If `true`, doc comments are attached to types and methods.
     property? wants_doc = false
 
-    # If `true`, error messages can be colorized
-    property? color = true
-
     # All required files. The set stores absolute files. This way
     # files loaded by `require` nodes are only processed once.
     getter requires = Set(String).new
@@ -499,12 +496,6 @@ module Crystal
     def new_temp_var_name
       @temp_var_counter += 1
       "__temp_#{@temp_var_counter}"
-    end
-
-    # Colorizes the given object, depending on whether this program
-    # is configured to use colors.
-    def colorize(obj)
-      obj.colorize.toggle(@color)
     end
 
     private def abstract_value_type(type)

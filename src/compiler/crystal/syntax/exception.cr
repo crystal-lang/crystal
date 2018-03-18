@@ -27,9 +27,9 @@ module Crystal
 
     def append_to_s(source, io)
       if @filename
-        io << "Syntax error in #{relative_filename(@filename)}:#{@line_number}: #{colorize(@message).bold}"
+        io << "Syntax error in #{relative_filename(@filename)}:#{@line_number}: #{@message.colorize.bold}"
       else
-        io << "Syntax error in line #{@line_number}: #{colorize(@message).bold}"
+        io << "Syntax error in line #{@line_number}: #{@message.colorize.bold}"
       end
 
       source = fetch_source(source)
