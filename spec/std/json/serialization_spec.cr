@@ -2,6 +2,8 @@ require "spec"
 require "json"
 require "big"
 require "big/json"
+require "uuid"
+require "uuid/json"
 
 enum JSONSpecEnum
   Zero
@@ -89,6 +91,24 @@ describe "JSON serialization" do
       big = BigFloat.from_json("1234")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234"))
+    end
+
+    it "does for UUID (hyphenated)" do
+      uuid = UUID.from_json("\"ee843b26-56d8-472b-b343-0b94ed9077ff\"")
+      uuid.should be_a(UUID)
+      uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
+    end
+
+    it "does for UUID (hex)" do
+      uuid = UUID.from_json("\"ee843b2656d8472bb3430b94ed9077ff\"")
+      uuid.should be_a(UUID)
+      uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
+    end
+
+    it "does for UUID (urn)" do
+      uuid = UUID.from_json("\"urn:uuid:ee843b26-56d8-472b-b343-0b94ed9077ff\"")
+      uuid.should be_a(UUID)
+      uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
     end
 
     it "does for BigDecimal from int" do
@@ -280,6 +300,11 @@ describe "JSON serialization" do
     it "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       big.to_json.should eq("1234.567891011121314")
+    end
+
+    it "does for UUID" do
+      uuid = UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff")
+      uuid.to_json.should eq("\"ee843b26-56d8-472b-b343-0b94ed9077ff\"")
     end
   end
 
