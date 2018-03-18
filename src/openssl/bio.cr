@@ -34,6 +34,24 @@ struct OpenSSL::BIO
       LibCrypto::Long.new(val)
     end
 
+    crystal_bio.bgets = LibCrypto::BioMethodGets.new do |bio, buffer, len|
+      io = Box(IO).unbox(bio.value.ptr)
+      io.flush
+
+      position = io.pos
+
+      line = io.gets(len, false)
+
+      if line.nil?
+        return 0
+      end
+
+      io.seek(position)
+      bytes = io.read(Slice.new(buffer, line.bytesize)).to_i
+
+      bytes - 1
+    end
+
     crystal_bio.create = LibCrypto::BioMethodCreate.new do |bio|
       bio.value.shutdown = 1
       bio.value.init = 1
