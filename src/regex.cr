@@ -519,12 +519,18 @@ class Regex
   end
 
   private def append_source(io)
-    source.each_char do |char|
-      if char == '/'
+    reader = Char::Reader.new(source)
+    while reader.has_next?
+      case char = reader.current_char
+      when '\\'
+        io << '\\'
+        io << reader.next_char
+      when '/'
         io << "\\/"
       else
         io << char
       end
+      reader.next_char
     end
   end
 

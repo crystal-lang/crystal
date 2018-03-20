@@ -33,10 +33,12 @@ describe "Regex" do
 
   it "does inspect with slash" do
     %r(/).inspect.should eq("/\\//")
+    %r(\/).inspect.should eq("/\\//")
   end
 
   it "does to_s with slash" do
     %r(/).to_s.should eq("(?-imsx:\\/)")
+    %r(\/).to_s.should eq("(?-imsx:\\/)")
   end
 
   it "doesn't crash when PCRE tries to free some memory (#771)" do
