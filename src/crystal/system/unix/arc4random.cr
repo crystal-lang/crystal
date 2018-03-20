@@ -3,6 +3,9 @@
 require "c/stdlib"
 
 module Crystal::System::Random
+  def self.after_fork
+  end
+
   # Fills *buffer* with random bytes using arc4random.
   #
   # NOTE: only secure on OpenBSD and CloudABI

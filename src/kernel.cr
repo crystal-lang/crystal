@@ -192,6 +192,7 @@ class Process
       ->Scheduler.after_fork,
       ->Crystal::Signal.after_fork,
       ->Crystal::SignalChildHandler.after_fork,
+      ->Crystal::System::Random.after_fork,
       ->Random::DEFAULT.new_seed,
     ] of -> Nil
   end
