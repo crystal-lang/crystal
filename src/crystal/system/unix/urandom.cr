@@ -15,6 +15,10 @@ module Crystal::System::Random
     @@urandom = urandom
   end
 
+  def self.after_fork
+    @@initialized = false
+  end
+
   def self.random_bytes(buf : Bytes) : Nil
     init unless @@initialized
 

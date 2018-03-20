@@ -23,6 +23,10 @@ module Crystal::System::Random
     end
   end
 
+  def self.after_fork
+    @@initialized = false
+  end
+
   # Reads n random bytes using the Linux `getrandom(2)` syscall.
   def self.random_bytes(buf : Bytes) : Nil
     init unless @@initialized

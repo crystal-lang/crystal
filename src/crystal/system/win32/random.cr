@@ -1,6 +1,9 @@
 require "c/ntsecapi"
 
 module Crystal::System::Random
+  def self.after_fork
+  end
+
   def self.random_bytes(buf : Bytes) : Nil
     if LibC.RtlGenRandom(buf, buf.size) == 0
       raise WinError.new("RtlGenRandom")
