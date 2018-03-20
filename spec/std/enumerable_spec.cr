@@ -547,6 +547,30 @@ describe "Enumerable" do
     end
   end
 
+  describe "last" do
+    it "gets last" do
+      (1..3).last.should eq 3
+    end
+
+    it "raises if enumerable empty" do
+      expect_raises Enumerable::EmptyError do
+        (1...1).last
+      end
+    end
+
+    it { [-1, -2, -3].last.should eq -3 }
+  end
+
+  describe "last?" do
+    it "gets last?" do
+      (1..3).last?.should eq 3
+    end
+
+    it "returns nil if enumerable empty" do
+      (1...1).last?.should be_nil
+    end
+  end
+
   describe "reduce" do
     it { [1, 2, 3].reduce { |memo, i| memo + i }.should eq(6) }
     it { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }

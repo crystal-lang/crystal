@@ -575,6 +575,34 @@ module Enumerable(T)
     hash
   end
 
+  # Returns the last element in the collection. Raises `Enumerable::EmptyError`
+  # if the collection is empty.
+  def last
+    last = uninitialized T
+    found = false
+
+    each do |e|
+      last = e
+      found = true
+    end
+
+    found ? last : raise Enumerable::EmptyError.new
+  end
+
+  # Returns the last element in the collection.
+  # When the collection is empty, returns `nil`.
+  def last?
+    last = uninitialized T
+    found = false
+
+    each do |e|
+      last = e
+      found = true
+    end
+
+    found ? last : nil
+  end
+
   # Combines all elements in the collection by applying a binary operation, specified by a block, so as
   # to reduce them to a single value.
   #
