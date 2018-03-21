@@ -980,21 +980,7 @@ module Crystal
     end
 
     def escape_regex(s)
-      String.build do |io|
-        reader = Char::Reader.new(s)
-        while reader.has_next?
-          case char = reader.current_char
-          when '\\'
-            io << '\\'
-            io << reader.next_char
-          when '/'
-            io << "\\/"
-          else
-            io << char
-          end
-          reader.next_char
-        end
-      end
+      String.build { |io| Regex.append_source s, io }
     end
 
     def visit(node : TupleLiteral)
