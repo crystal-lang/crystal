@@ -1,25 +1,18 @@
 {% skip_file unless flag?(:linux) %}
 
+require "./urandom"
 require "c/unistd"
 require "c/sys/syscall"
 
 module Crystal::System::Random
   @@initialized = false
   @@getrandom_available = false
-  @@urandom : ::File?
 
   private def self.init
     @@initialized = true
 
     if sys_getrandom(Bytes.new(16)) >= 0
       @@getrandom_available = true
-    else
-      urandom = ::File.open("/dev/urandom", "r")
-      return unless urandom.stat.chardev?
-
-      urandom.close_on_exec = true
-      urandom.sync = true # don't buffer bytes
-      @@urandom = urandom
     end
   end
 
@@ -29,25 +22,15 @@ module Crystal::System::Random
 
     if @@getrandom_available
       getrandom(buf)
-    elsif urandom = @@urandom
-      urandom.read_fully(buf)
     else
-      raise "Failed to access secure source to generate random bytes!"
+      Crystal::System::Urandom.random_bytes(buf)
     end
   end
 
   def self.next_u : UInt8
-    init unless @@initialized
-
-    if @@getrandom_available
-      buf = uninitialized UInt8[1]
-      getrandom(buf.to_slice)
-      buf.unsafe_as(UInt8)
-    elsif urandom = @@urandom
-      urandom.read_byte.not_nil!
-    else
-      raise "Failed to access secure source to generate random bytes!"
-    end
+    buf = uninitialized UInt8[1]
+    random_bytes(buf.to_slice)
+    buf.unsafe_at(0)
   end
 
   # Reads n random bytes using the Linux `getrandom(2)` syscall.

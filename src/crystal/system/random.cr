@@ -15,7 +15,7 @@ end
 {% elsif flag?(:openbsd) %}
   require "./unix/arc4random"
 {% elsif flag?(:unix) %}
-  require "./unix/urandom"
+  require "./unix/random"
 {% elsif flag?(:win32) %}
   require "./win32/random"
 {% else %}
