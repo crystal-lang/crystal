@@ -519,7 +519,7 @@ class Regex
   end
 
   # :nodoc:
-  def self.append_source(source, io)
+  def self.append_source(source, io) : Nil
     reader = Char::Reader.new(source)
     while reader.has_next?
       case char = reader.current_char

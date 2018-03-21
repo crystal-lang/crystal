@@ -970,17 +970,13 @@ module Crystal
       when StringLiteral
         Regex.append_source exp.value, @str
       when StringInterpolation
-        visit_interpolation(exp) { |s| escape_regex s }
+        visit_interpolation(exp) { |s| Regex.append_source s, @str }
       end
       @str << '/'
       @str << 'i' if node.options.includes? Regex::Options::IGNORE_CASE
       @str << 'm' if node.options.includes? Regex::Options::MULTILINE
       @str << 'x' if node.options.includes? Regex::Options::EXTENDED
       false
-    end
-
-    def escape_regex(s)
-      String.build { |io| Regex.append_source s, io }
     end
 
     def visit(node : TupleLiteral)
