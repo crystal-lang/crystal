@@ -968,7 +968,7 @@ module Crystal
       @str << '/'
       case exp = node.value
       when StringLiteral
-        @str << escape_regex exp.value
+        Regex.append_source exp.value, @str
       when StringInterpolation
         visit_interpolation(exp) { |s| escape_regex s }
       end
