@@ -52,7 +52,7 @@ class IO::Sized < IO
     return Bytes.empty if @read_remaining == 0 # EOF
 
     peek = @io.peek
-    return nil unless peek
+    return unless peek
 
     if @read_remaining < peek.size
       peek = peek[0, @read_remaining]

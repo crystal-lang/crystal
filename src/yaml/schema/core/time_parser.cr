@@ -24,17 +24,17 @@ struct YAML::Schema::Core::TimeParser
 
   def parse
     year = parse_number(4)
-    return nil unless year
+    return unless year
 
-    return nil unless dash?
+    return unless dash?
 
     month = parse_number_1_or_2
-    return nil unless month
+    return unless month
 
-    return nil unless dash?
+    return unless dash?
 
     day = parse_number_1_or_2
-    return nil unless day
+    return unless day
 
     case current_char
     when 'T', 't'
@@ -59,17 +59,17 @@ struct YAML::Schema::Core::TimeParser
 
   def parse_after_date(year, month, day)
     hour = parse_number_1_or_2
-    return nil unless hour
+    return unless hour
 
-    return nil unless colon?
+    return unless colon?
 
     minute = parse_number(2)
-    return nil unless minute
+    return unless minute
 
-    return nil unless colon?
+    return unless colon?
 
     second = parse_number(2)
-    return nil unless second
+    return unless second
 
     unless @reader.has_next?
       return new_time(year, month, day, hour, minute, second)
@@ -81,7 +81,7 @@ struct YAML::Schema::Core::TimeParser
       next_char
 
       nanosecond = parse_nanoseconds
-      return nil unless nanosecond
+      return unless nanosecond
     end
 
     skip_space
@@ -94,11 +94,11 @@ struct YAML::Schema::Core::TimeParser
       next_char
 
       tz_hour = parse_number_1_or_2
-      return nil unless tz_hour
+      return unless tz_hour
 
       if colon?
         tz_minute = parse_number(2)
-        return nil unless tz_minute
+        return unless tz_minute
       else
         tz_minute = parse_number(2)
         tz_minute = 0 unless tz_minute
@@ -107,7 +107,7 @@ struct YAML::Schema::Core::TimeParser
       tz_offset = tz_sign * (tz_hour * 60 + tz_minute)
     end
 
-    return nil if @reader.has_next?
+    return if @reader.has_next?
 
     time = new_time(year, month, day, hour, minute, second, nanosecond: nanosecond)
     if time && tz_offset
@@ -117,7 +117,7 @@ struct YAML::Schema::Core::TimeParser
   end
 
   def parse_nanoseconds
-    return nil unless current_char.ascii_number?
+    return unless current_char.ascii_number?
 
     multiplier = Time::NANOSECONDS_PER_SECOND / 10
     number = current_char.to_i
@@ -145,7 +145,7 @@ struct YAML::Schema::Core::TimeParser
     number = 0
 
     n.times do
-      return nil unless current_char.ascii_number?
+      return unless current_char.ascii_number?
 
       number *= 10
       number += current_char.to_i
@@ -157,7 +157,7 @@ struct YAML::Schema::Core::TimeParser
   end
 
   def parse_number_1_or_2
-    return nil unless current_char.ascii_number?
+    return unless current_char.ascii_number?
 
     number = current_char.to_i
     next_char

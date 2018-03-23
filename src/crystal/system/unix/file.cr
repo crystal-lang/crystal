@@ -73,7 +73,7 @@ module Crystal::System::File
   def self.stat?(path : String) : ::File::Stat?
     if LibC.stat(path.check_no_null_byte, out stat) != 0
       if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
-        return nil
+        return
       else
         raise Errno.new("Unable to get stat for '#{path}'")
       end
@@ -84,7 +84,7 @@ module Crystal::System::File
   def self.lstat?(path : String) : ::File::Stat?
     if LibC.lstat(path.check_no_null_byte, out stat) != 0
       if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
-        return nil
+        return
       else
         raise Errno.new("Unable to get lstat for '#{path}'")
       end

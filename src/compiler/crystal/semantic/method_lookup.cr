@@ -135,13 +135,13 @@ module Crystal
 
       # If yieldness isn't the same there's no match
       if def_metadata.yields != !!signature.block
-        return nil
+        return
       end
 
       # If there are more positional arguments than those required, there's no match
       # (if there's less they might be matched with named arguments)
       if signature.arg_types.size > def_metadata.max_size
-        return nil
+        return
       end
 
       a_def = def_metadata.def
@@ -156,7 +156,7 @@ module Crystal
       # unless all args past it have default values
       if splat_index && a_def.args.size > splat_index + 1 && !named_args
         unless (splat_index + 1...a_def.args.size).all? { |i| a_def.args[i].default_value }
-          return nil
+          return
         end
       end
 
@@ -166,7 +166,7 @@ module Crystal
         mandatory_args = BitArray.new(a_def.args.size)
       elsif signature.arg_types.size < def_metadata.min_size
         # Otherwise, they must be matched by positional arguments
-        return nil
+        return
       end
 
       matched_arg_types = nil
@@ -177,7 +177,7 @@ module Crystal
       if splat_index && splat_restriction &&
          !splat_restriction.is_a?(Splat) &&
          Splat.size(a_def, arg_types) == 0
-        return nil
+        return
       end
 
       if splat_restriction.is_a?(Splat)
@@ -197,7 +197,7 @@ module Crystal
           matched_arg_types.push match_arg_type
           mandatory_args[arg_index] = true if mandatory_args
         else
-          return nil
+          return
         end
       end
 
@@ -206,7 +206,7 @@ module Crystal
         tuple_type = context.instantiated_type.program.tuple_of(splat_arg_types)
         match_arg_type = tuple_type.restrict(splat_restriction.exp, context)
         unless match_arg_type
-          return nil
+          return
         end
       end
 
@@ -224,24 +224,24 @@ module Crystal
           if found_index
             # A named arg can't target the splat index
             if found_index == splat_index
-              return nil
+              return
             end
 
             # Check whether the named arg refers to an argument that was already specified
             if mandatory_args
               if mandatory_args[found_index]
-                return nil
+                return
               end
               mandatory_args[found_index] = true
             else
               if found_index < min_index
-                return nil
+                return
               end
             end
 
             match_arg_type = named_arg.type.restrict(a_def.args[found_index], context)
             unless match_arg_type
-              return nil
+              return
             end
 
             matched_named_arg_types ||= [] of NamedArgumentType
@@ -258,7 +258,7 @@ module Crystal
                 else
                   match_arg_type = named_arg.type.restrict(double_splat_restriction, context)
                   unless match_arg_type
-                    return nil
+                    return
                   end
                 end
               end
@@ -270,7 +270,7 @@ module Crystal
               next
             end
 
-            return nil
+            return
           end
         end
       end
@@ -280,7 +280,7 @@ module Crystal
         named_tuple_type = context.instantiated_type.program.named_tuple_of(double_splat_entries)
         value = named_tuple_type.restrict(double_splat_restriction.exp, context)
         unless value
-          return nil
+          return
         end
       end
 
@@ -289,7 +289,7 @@ module Crystal
       if mandatory_args
         a_def.args.each_with_index do |arg, index|
           if index != splat_index && !arg.default_value && !mandatory_args[index]
-            return nil
+            return
           end
         end
       end
@@ -297,7 +297,7 @@ module Crystal
       # If there's a restriction on a double splat, zero matching named arguments don't matc
       if double_splat && double_splat_restriction &&
          !double_splat_restriction.is_a?(DoubleSplat) && !found_unmatched_named_arg
-        return nil
+        return
       end
 
       # We reuse a match context without free vars, but we create

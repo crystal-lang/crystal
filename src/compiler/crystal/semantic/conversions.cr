@@ -7,7 +7,7 @@ module Crystal::Conversions
       convert_call.accept visitor
     rescue ex : Crystal::Exception
       if ex.message.try(&.includes?("undefined method '#{convert_call_name}'"))
-        return nil
+        return
       end
 
       node.raise "converting from #{actual_type} to #{expected_type} by invoking '#{convert_call_name}'", ex
@@ -25,7 +25,7 @@ module Crystal::Conversions
       unless to_unsafe_lookup_failed?(ex)
         node.raise ex.message, ex
       end
-      return nil
+      return
     end
     if unsafe_call.type? != expected_type
       node.raise "invoked 'to_unsafe' to convert from #{actual_type} to #{expected_type}, but got #{unsafe_call.type?}"

@@ -55,7 +55,7 @@ module Readline
 
   def line_buffer
     line = LibReadline.rl_line_buffer
-    return nil unless line
+    return unless line
 
     String.new(line)
   end

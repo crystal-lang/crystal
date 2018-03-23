@@ -38,7 +38,7 @@ module Crystal
     end
 
     def lookup_similar_def(name, args_size, block)
-      return nil unless name =~ SuggestableDefName
+      return unless name =~ SuggestableDefName
 
       if (defs = self.defs)
         best_def = nil

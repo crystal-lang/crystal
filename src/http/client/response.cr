@@ -97,7 +97,7 @@ class HTTP::Client::Response
         response.consume_body_io
         return response
       else
-        return nil
+        return
       end
     end
   end

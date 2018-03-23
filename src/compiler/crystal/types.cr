@@ -753,7 +753,7 @@ module Crystal
             return ex_item.def
           else
             list.insert(i, item)
-            return nil
+            return
           end
         end
       end
@@ -2187,14 +2187,14 @@ module Crystal
 
     def implements?(other)
       if other.is_a?(NamedTupleInstanceType)
-        return nil unless self.size == other.size
+        return unless self.size == other.size
 
         self_entries = self.entries.sort_by &.name
         other_entries = other.entries.sort_by &.name
 
         self_entries.zip(other_entries) do |self_entry, other_entry|
-          return nil unless self_entry.name == other_entry.name
-          return nil unless self_entry.type.implements?(other_entry.type)
+          return unless self_entry.name == other_entry.name
+          return unless self_entry.type.implements?(other_entry.type)
         end
 
         self
@@ -2277,10 +2277,10 @@ module Crystal
 
     def lookup_var(name)
       a_def = lookup_first_def(name, false)
-      return nil unless a_def
+      return unless a_def
 
       body = a_def.body
-      return nil unless body.is_a?(Primitive) && body.name == "external_var_get"
+      return unless body.is_a?(Primitive) && body.name == "external_var_get"
 
       a_def
     end

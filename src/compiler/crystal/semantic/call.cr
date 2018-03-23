@@ -656,7 +656,7 @@ class Crystal::Call
       when Macro
         return result
       when Type::DefInMacroLookup
-        return nil
+        return
       end
     end
   end

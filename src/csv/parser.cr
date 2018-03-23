@@ -35,7 +35,7 @@ class CSV::Parser
   def next_row : Array(String) | Nil
     token = @lexer.next_token
     if token.kind == Token::Kind::Eof
-      return nil
+      return
     end
 
     row = Array(String).new(@max_row_size)
@@ -47,7 +47,7 @@ class CSV::Parser
   def next_row(array : Array(String)) : Array(String) | Nil
     token = @lexer.next_token
     if token.kind == Token::Kind::Eof
-      return nil
+      return
     end
 
     next_row_internal(token, array)

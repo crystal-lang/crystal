@@ -44,7 +44,7 @@ abstract class Channel(T)
   end
 
   def receive?
-    receive_impl { return nil }
+    receive_impl { return }
   end
 
   def inspect(io)

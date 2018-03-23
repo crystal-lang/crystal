@@ -620,7 +620,7 @@ module Crystal
     def lookup_similar_instance_variable_name(node, owner)
       case owner
       when NonGenericModuleType, GenericClassType, GenericModuleType
-        return nil
+        return
       end
 
       Levenshtein.find(node.name) do |finder|

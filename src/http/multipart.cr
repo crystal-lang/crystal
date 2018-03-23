@@ -37,7 +37,7 @@ module HTTP::Multipart
   def self.parse_boundary(content_type)
     # TODO: remove regex
     match = content_type.match(/\Amultipart\/.*boundary="?([^";,]+)"?/i)
-    return nil unless match
+    return unless match
     HTTP.dequote_string(match[1])
   end
 
@@ -61,10 +61,10 @@ module HTTP::Multipart
   # See: `Multipart::Parser`
   def self.parse(request : HTTP::Request)
     boundary = parse_boundary(request.headers["Content-Type"])
-    return nil unless boundary
+    return unless boundary
 
     body = request.body
-    return nil unless body
+    return unless body
     parse(body, boundary) { |headers, io| yield headers, io }
   end
 

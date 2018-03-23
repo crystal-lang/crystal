@@ -326,7 +326,7 @@ abstract class IO
     # If so, this will be faster than reading byte per byte.
     if !decoder && (peek = self.peek)
       if peek.empty?
-        return nil
+        return
       else
         return read_char_with_bytesize_peek(peek)
       end
@@ -362,7 +362,7 @@ abstract class IO
 
   private def read_char_with_bytesize_slow
     first = read_utf8_byte
-    return nil unless first
+    return unless first
 
     first = first.to_u32
     return first.unsafe_chr, 1 if first < 0x80
@@ -539,7 +539,7 @@ abstract class IO
     count = slice.size
     while slice.size > 0
       read_bytes = read slice
-      return nil if read_bytes == 0
+      return if read_bytes == 0
       slice += read_bytes
     end
     count
@@ -705,7 +705,7 @@ abstract class IO
 
         if !peek || peek.empty?
           if buffer.bytesize == 0
-            return nil
+            return
           else
             break
           end

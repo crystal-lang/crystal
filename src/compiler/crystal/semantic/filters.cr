@@ -124,11 +124,11 @@ module Crystal
     end
 
     def apply(other)
-      return nil unless other
+      return unless other
 
       case other
       when NilType
-        return nil
+        return
       when UnionType
         return Type.merge(other.union_types.reject &.nil_type?)
       else

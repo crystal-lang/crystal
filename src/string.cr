@@ -2555,7 +2555,7 @@ class String
     end
 
     offset += size if offset < 0
-    return nil if offset < 0
+    return if offset < 0
 
     each_char_with_index do |char, i|
       if i >= offset && char == search
@@ -2640,7 +2640,7 @@ class String
   # ditto
   def index(search : Regex, offset = 0)
     offset += size if offset < 0
-    return nil unless 0 <= offset <= size
+    return unless 0 <= offset <= size
 
     self.match(search, offset).try &.begin
   end
@@ -2662,7 +2662,7 @@ class String
     end
 
     offset += size if offset < 0
-    return nil if offset < 0
+    return if offset < 0
 
     if offset == size - 1
       reader = Char::Reader.new(at_end: self)
@@ -2679,7 +2679,7 @@ class String
         reader.previous_char
         offset -= 1
       else
-        return nil
+        return
       end
     end
   end
@@ -2740,7 +2740,7 @@ class String
   # ditto
   def rindex(search : Regex, offset = size - 1)
     offset += size if offset < 0
-    return nil unless 0 <= offset <= size
+    return unless 0 <= offset <= size
 
     match_result = nil
     scan(search) do |match_data|

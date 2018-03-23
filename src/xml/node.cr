@@ -292,7 +292,7 @@ struct XML::Node
   def namespace
     case type
     when Type::DOCUMENT_NODE, Type::ATTRIBUTE_DECL, Type::DTD_NODE, Type::ELEMENT_DECL
-      return nil
+      return
     end
 
     ns = @node.value.ns

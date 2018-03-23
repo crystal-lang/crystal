@@ -160,7 +160,7 @@ class IO
 
     def gets(io, delimiter : UInt8, limit : Int, chomp)
       read(io)
-      return nil if @out_slice.empty?
+      return if @out_slice.empty?
 
       index = @out_slice.index(delimiter)
       if index

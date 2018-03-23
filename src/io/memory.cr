@@ -149,7 +149,7 @@ class IO::Memory < IO
       end
     else
       index = @bytesize - @pos
-      return nil if index == 0
+      return if index == 0
 
       if index >= limit
         index = limit
