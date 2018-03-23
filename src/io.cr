@@ -496,16 +496,12 @@ abstract class IO
   private def encoder
     if encoding = @encoding
       @encoder ||= Encoder.new(encoding)
-    else
-      nil
     end
   end
 
   private def decoder
     if encoding = @encoding
       @decoder ||= Decoder.new(encoding)
-    else
-      nil
     end
   end
 
