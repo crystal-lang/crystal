@@ -317,16 +317,16 @@ describe "IO::Buffered" do
     end
 
     it "works with IO#read (already buffered)" do
-      str = IO::Memory.new "abc"
+      str = IO::Memory.new "#{"a" * IO::Buffered::BUFFER_SIZE}bcde"
 
       io = BufferedWrapper.new(str)
       io.sync?.should be_false
 
-      byte = Bytes.new(1)
-      io.read_fully(byte)
-      byte[0].should eq('a'.ord.to_u8)
-
-      str.gets_to_end.should eq("")
+      IO::Buffered::BUFFER_SIZE.times do
+        byte = Bytes.new(1)
+        io.read_fully(byte)
+        byte[0].should eq('a'.ord.to_u8)
+      end
 
       io.sync = true
       io.sync?.should be_true
@@ -334,6 +334,8 @@ describe "IO::Buffered" do
       byte = Bytes.new(1)
       io.read_fully(byte)
       byte[0].should eq('b'.ord.to_u8)
+
+      str.gets_to_end.should eq("cde")
     end
 
     it "works with IO#read_byte" do
@@ -351,18 +353,21 @@ describe "IO::Buffered" do
     end
 
     it "works with IO#read (already buffered)" do
-      str = IO::Memory.new "abc"
+      str = IO::Memory.new "#{"a" * IO::Buffered::BUFFER_SIZE}bcde"
 
       io = BufferedWrapper.new(str)
       io.sync?.should be_false
 
-      io.read_byte.should eq('a'.ord.to_u8)
-      str.gets_to_end.should eq("")
+      IO::Buffered::BUFFER_SIZE.times do
+        io.read_byte.should eq('a'.ord.to_u8)
+      end
 
       io.sync = true
       io.sync?.should be_true
 
       io.read_byte.should eq('b'.ord.to_u8)
+
+      str.gets_to_end.should eq("cde")
     end
   end
 
