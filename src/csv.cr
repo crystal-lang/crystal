@@ -350,7 +350,7 @@ class CSV
 
       value = @row[column]?
       value ||= "" if 0 <= column < size
-      value ? maybe_strip(value) : nil
+      maybe_strip(value) if value
     end
 
     # Returns this row's value corresponding to the given *header_pattern*.

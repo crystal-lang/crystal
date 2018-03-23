@@ -7,8 +7,9 @@ struct LLVM::InstructionCollection
   end
 
   def first?
-    value = llvm_first
-    value ? Value.new(value) : nil
+    if value = llvm_first
+      Value.new(value)
+    end
   end
 
   def first

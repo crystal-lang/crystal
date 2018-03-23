@@ -120,8 +120,9 @@ struct XML::Node
   # Returns the encoding of this node's document.
   def encoding
     if document?
-      encoding = @node.as(LibXML::Doc*).value.encoding
-      encoding ? String.new(encoding) : nil
+      if encoding = @node.as(LibXML::Doc*).value.encoding
+        String.new(encoding)
+      end
     else
       document.encoding
     end
@@ -130,8 +131,9 @@ struct XML::Node
   # Returns the version of this node's document.
   def version
     if document?
-      version = @node.as(LibXML::Doc*).value.version
-      version ? String.new(version) : nil
+      if version = @node.as(LibXML::Doc*).value.version
+        String.new(version)
+      end
     else
       document.version
     end
@@ -231,8 +233,9 @@ struct XML::Node
 
   # Returns the next sibling node or `nil` if not found.
   def next
-    next_node = @node.value.next
-    next_node ? Node.new(next_node) : nil
+    if next_node = @node.value.next
+      Node.new(next_node)
+    end
   end
 
   # ditto
@@ -295,8 +298,9 @@ struct XML::Node
       return
     end
 
-    ns = @node.value.ns
-    ns ? Namespace.new(document, ns) : nil
+    if ns = @node.value.ns
+      Namespace.new(document, ns)
+    end
   end
 
   # Returns namespaces in scope for self – those defined on self element
@@ -355,14 +359,16 @@ struct XML::Node
 
   # Returns the parent node or `nil` if not found.
   def parent
-    parent = @node.value.parent
-    parent ? Node.new(parent) : nil
+    if parent = @node.value.parent
+      Node.new(parent)
+    end
   end
 
   # Returns the previous sibling node or `nil` if not found.
   def previous
-    prev_node = @node.value.prev
-    prev_node ? Node.new(prev_node) : nil
+    if prev_node = @node.value.prev
+      Node.new(prev_node)
+    end
   end
 
   # Returns the previous sibling node that is an element or `nil` if not found.
@@ -390,8 +396,9 @@ struct XML::Node
 
   # Returns the root node for this document or `nil`.
   def root
-    root = LibXML.xmlDocGetRootElement(@node.value.doc)
-    root ? Node.new(root) : nil
+    if root = LibXML.xmlDocGetRootElement(@node.value.doc)
+      Node.new(root)
+    end
   end
 
   # Same as `#content`.
@@ -553,8 +560,9 @@ struct XML::Node
   # Returns the list of `XML::Error` found when parsing this document.
   # Returns `nil` if no errors were found.
   def errors
-    ptr = @node.value._private
-    ptr ? (ptr.as(Array(XML::Error))) : nil
+    if ptr = @node.value._private
+      ptr.as(Array(XML::Error))
+    end
   end
 
   private SUBSTITUTIONS = {

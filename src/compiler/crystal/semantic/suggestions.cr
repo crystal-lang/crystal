@@ -34,7 +34,9 @@ module Crystal
         return match if match
       end
 
-      lookup_in_namespace && self != program ? namespace.lookup_similar_path(names) : nil
+      if lookup_in_namespace && self != program
+        namespace.lookup_similar_path(names)
+      end
     end
 
     def lookup_similar_def(name, args_size, block)

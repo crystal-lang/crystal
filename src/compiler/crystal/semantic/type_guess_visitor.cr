@@ -757,8 +757,9 @@ module Crystal
     end
 
     def guess_type(node : NilableCast)
-      type = lookup_type?(node.to)
-      type ? @program.nilable(type) : nil
+      if type = lookup_type?(node.to)
+        @program.nilable(type)
+      end
     end
 
     def guess_type(node : UninitializedVar)
@@ -856,7 +857,7 @@ module Crystal
         end
       end
 
-      types ? Type.merge!(types) : nil
+      Type.merge!(types) if types
     end
 
     def guess_type(node : Path)
@@ -882,8 +883,9 @@ module Crystal
     end
 
     def guess_type(node : Expressions)
-      last = node.expressions.last?
-      last ? guess_type(last) : nil
+      if last = node.expressions.last?
+        guess_type(last)
+      end
     end
 
     def guess_type_in_method_body(node : Expressions)
@@ -911,7 +913,7 @@ module Crystal
       end
 
       type_var = process_assign(node)
-      type_var.is_a?(Type) ? type_var : nil
+      type_var if type_var.is_a?(Type)
     end
 
     def guess_type(node : Not)

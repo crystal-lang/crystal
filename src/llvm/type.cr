@@ -69,8 +69,9 @@ struct LLVM::Type
   def struct_name : String?
     raise "not a Struct" unless kind == Kind::Struct
 
-    name = LibLLVM.get_struct_name(self)
-    name ? String.new(name) : nil
+    if name = LibLLVM.get_struct_name(self)
+      String.new(name)
+    end
   end
 
   def struct_element_types

@@ -327,18 +327,18 @@ module Crystal
 
     def restrict(other : UnionType, context)
       restricted = other.union_types.any? { |union_type| restrict(union_type, context) }
-      restricted ? self : nil
+      self if restricted
     end
 
     def restrict(other : VirtualType, context)
-      implements?(other.base_type) ? self : nil
+      self if implements?(other.base_type)
     end
 
     def restrict(other : Union, context)
       types = other.types.compact_map do |ident|
         restrict(ident, context).as(Type?)
       end
-      types.size > 0 ? program.type_merge_union_of(types) : nil
+      program.type_merge_union_of(types) if types.size > 0
     end
 
     def restrict(other : Path, context)
@@ -729,7 +729,7 @@ module Crystal
     end
 
     def restrict(other : TupleInstanceType, context)
-      self.implements?(other) ? self : nil
+      self if implements?(other)
     end
   end
 
@@ -768,7 +768,7 @@ module Crystal
     end
 
     def restrict(other : NamedTupleInstanceType, context)
-      self.implements?(other) ? self : nil
+      self if implements?(other)
     end
   end
 
@@ -790,8 +790,9 @@ module Crystal
         end
         program.type_merge types
       elsif other.is_a?(VirtualType)
-        result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
-        result ? result.virtual_type : nil
+        if result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
+          result.virtual_type
+        end
       elsif other.implements?(base_type)
         other.virtual_type
       elsif base_type.implements?(other)
@@ -918,12 +919,12 @@ module Crystal
   class MetaclassType
     def restrict(other : Metaclass, context)
       restricted = instance_type.restrict(other.name, context)
-      instance_type == restricted ? self : nil
+      self if instance_type == restricted
     end
 
     def restrict(other : VirtualMetaclassType, context)
       restricted = instance_type.restrict(other.instance_type.base_type, context)
-      restricted ? self : nil
+      self if restricted
     end
 
     def restriction_of?(other : VirtualMetaclassType, owner)
@@ -934,28 +935,28 @@ module Crystal
   class GenericClassInstanceMetaclassType
     def restrict(other : Metaclass, context)
       restricted = instance_type.restrict(other.name, context)
-      instance_type == restricted ? self : nil
+      self if instance_type == restricted
     end
 
     def restrict(other : MetaclassType, context)
       return self if instance_type.generic_type.metaclass == other
 
       restricted = instance_type.restrict(other.instance_type, context)
-      restricted ? self : nil
+      self if restricted
     end
   end
 
   class GenericModuleInstanceMetaclassType
     def restrict(other : Metaclass, context)
       restricted = instance_type.restrict(other.name, context)
-      instance_type == restricted ? self : nil
+      self if instance_type == restricted
     end
 
     def restrict(other : MetaclassType, context)
       return self if instance_type.generic_type.metaclass == other
 
       restricted = instance_type.restrict(other.instance_type, context)
-      restricted ? self : nil
+      self if restricted
     end
   end
 
@@ -1015,7 +1016,7 @@ module Crystal
     end
 
     def restrict(other : ProcInstanceType, context)
-      compatible_with?(other) ? other : nil
+      other if compatible_with?(other)
     end
 
     def restrict(other : Generic, context)

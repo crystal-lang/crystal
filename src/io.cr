@@ -315,8 +315,9 @@ abstract class IO
   # io.read_char # => nil
   # ```
   def read_char : Char?
-    info = read_char_with_bytesize
-    info ? info[0] : nil
+    if info = read_char_with_bytesize
+      info[0]
+    end
   end
 
   private def read_char_with_bytesize

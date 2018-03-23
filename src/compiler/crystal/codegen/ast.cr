@@ -107,7 +107,7 @@ module Crystal
         @c_calling_convention = compute_c_calling_convention
       end
 
-      @c_calling_convention ? self : nil
+      self if @c_calling_convention
     end
 
     private def compute_c_calling_convention

@@ -67,8 +67,9 @@ struct HTTP::Headers
   end
 
   def []?(key)
-    values = @hash[wrap(key)]?
-    values ? concat(values) : nil
+    if values = @hash[wrap(key)]?
+      concat(values)
+    end
   end
 
   # Returns if among the headers for *key* there is some that contains *word* as a value.
@@ -148,8 +149,9 @@ struct HTTP::Headers
   end
 
   def delete(key)
-    values = @hash.delete wrap(key)
-    values ? concat(values) : nil
+    if values = @hash.delete wrap(key)
+      concat(values)
+    end
   end
 
   def merge!(other)

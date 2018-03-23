@@ -22,8 +22,9 @@ struct LLVM::FunctionCollection
   end
 
   def []?(name)
-    func = LibLLVM.get_named_function(@mod, name)
-    func ? Function.new(func) : nil
+    if func = LibLLVM.get_named_function(@mod, name)
+      Function.new(func)
+    end
   end
 
   def each : Nil

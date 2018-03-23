@@ -795,7 +795,7 @@ class String
   end
 
   def []?(str : String | Char)
-    includes?(str) ? str : nil
+    str if includes?(str)
   end
 
   def []?(regex : Regex)

@@ -804,7 +804,7 @@ module Crystal
     end
 
     def filter_by_responds_to(name)
-      has_def?(name) ? self : nil
+      self if has_def?(name)
     end
 
     def include(mod)
@@ -1772,7 +1772,7 @@ module Crystal
       splat_index, double_variadic?, to: @generic_type
 
     def filter_by_responds_to(name)
-      @generic_type.filter_by_responds_to(name) ? self : nil
+      self if @generic_type.filter_by_responds_to(name)
     end
 
     def class?
@@ -1854,7 +1854,7 @@ module Crystal
     end
 
     def filter_by_responds_to(name)
-      @generic_type.filter_by_responds_to(name) ? self : nil
+      self if @generic_type.filter_by_responds_to(name)
     end
 
     def module?

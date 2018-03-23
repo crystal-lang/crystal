@@ -731,7 +731,7 @@ module Enumerable(T)
   # Like `max_by` but returns `nil` if the collection is empty.
   def max_by?(&block : T -> U) forall U
     found, value = max_by_internal { |value| yield value }
-    found ? value : nil
+    value if found
   end
 
   private def max_by_internal(&block : T -> U) forall U
@@ -765,7 +765,7 @@ module Enumerable(T)
   # Like `max_of` but returns `nil` if the collection is empty.
   def max_of?(&block : T -> U) forall U
     found, value = max_of_internal { |value| yield value }
-    found ? value : nil
+    value if found
   end
 
   private def max_of_internal(&block : T -> U) forall U
@@ -820,7 +820,7 @@ module Enumerable(T)
   # Like `min_by` but returns `nil` if the collection is empty.
   def min_by?(&block : T -> U) forall U
     found, value = min_by_internal { |value| yield value }
-    found ? value : nil
+    value if found
   end
 
   private def min_by_internal(&block : T -> U) forall U
@@ -854,7 +854,7 @@ module Enumerable(T)
   # Like `min_of` but returns `nil` if the collection is empty.
   def min_of?(&block : T -> U) forall U
     found, value = min_of_internal { |value| yield value }
-    found ? value : nil
+    value if found
   end
 
   private def min_of_internal(&block : T -> U) forall U
