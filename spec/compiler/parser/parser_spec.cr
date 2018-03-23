@@ -222,6 +222,11 @@ describe "Parser" do
   it_parses "def foo(@@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
   it_parses "def foo(&@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: Arg.new("block"), yields: 0)
 
+  it_parses "def foo(\n&block\n); end", Def.new("foo", block_arg: Arg.new("block"), yields: 0)
+  it_parses "def foo(&block \n: Int ->); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
+  it_parses "def foo(&block :\n Int ->); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
+  it_parses "def foo(&block : Int ->\n); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
+
   it_parses "def foo(a, &block : *Int -> ); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path.splat] of ASTNode)), yields: 1)
 
   it_parses "def foo(x, *args, y = 2); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32)], body: 1.int32, splat_index: 1)
