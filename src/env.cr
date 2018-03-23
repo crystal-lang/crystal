@@ -97,8 +97,6 @@ module ENV
     if value = self[key]?
       LibC.unsetenv(key)
       value
-    else
-      nil
     end
   end
 

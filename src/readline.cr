@@ -45,8 +45,6 @@ module Readline
     if line
       LibReadline.add_history(line) if add_history
       String.new(line).tap { LibC.free(line.as(Void*)) }
-    else
-      nil
     end
   end
 

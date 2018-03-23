@@ -328,8 +328,6 @@ class CSV
       index = csv.indices[header]?
       if index
         maybe_strip(@row[index]? || "")
-      else
-        nil
       end
     end
 

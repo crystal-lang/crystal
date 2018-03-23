@@ -97,8 +97,6 @@ class Crystal::Type
 
       if @raise
         raise_undefined_constant(node)
-      else
-        nil
       end
     end
 
@@ -108,8 +106,6 @@ class Crystal::Type
 
       if @raise
         raise_undefined_constant(node)
-      else
-        nil
       end
     end
 

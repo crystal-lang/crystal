@@ -4073,8 +4073,6 @@ module Crystal
         end
 
         parse_call_args_space_consumed check_plus_and_minus: true, allow_curly: allow_curly, control: control
-      else
-        nil
       end
     ensure
       @call_args_nest -= 1

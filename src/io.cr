@@ -303,8 +303,6 @@ abstract class IO
     byte = uninitialized UInt8
     if read(Slice.new(pointerof(byte), 1)) == 1
       byte
-    else
-      nil
     end
   end
 

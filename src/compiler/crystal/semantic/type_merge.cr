@@ -172,8 +172,6 @@ module Crystal
     def common_ancestor(other : Type)
       if other.implements?(self)
         self
-      else
-        nil
       end
     end
   end
@@ -182,8 +180,6 @@ module Crystal
     def common_ancestor(other : Type)
       if other.implements?(self)
         self
-      else
-        nil
       end
     end
   end
@@ -192,8 +188,6 @@ module Crystal
     def common_ancestor(other : Type)
       if other.implements?(self)
         self
-      else
-        nil
       end
     end
   end

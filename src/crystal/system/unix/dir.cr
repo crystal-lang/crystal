@@ -15,8 +15,6 @@ module Crystal::System::Dir
       String.new(entry.value.d_name.to_unsafe)
     elsif Errno.value != 0
       raise Errno.new("readdir")
-    else
-      nil
     end
   end
 

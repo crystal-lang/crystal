@@ -184,8 +184,6 @@ module Crystal
       when 0
         if @filter.is_a?(TruthyFilter)
           other
-        else
-          nil
         end
       when 1
         resulting_types.first
@@ -298,8 +296,6 @@ module Crystal
           end
         end
         new_filters
-      else
-        nil
       end
     end
 

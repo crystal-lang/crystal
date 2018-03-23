@@ -285,7 +285,6 @@ class Crystal::Call
     when "and"; "&&"
     when "or" ; "||"
     when "not"; "!"
-    else        nil
     end
   end
 
@@ -609,8 +608,6 @@ class Crystal::Call
                   type.namespace
                 when GenericClassInstanceType
                   type.namespace
-                else
-                  nil
                 end
     case namespace
     when Program

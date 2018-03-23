@@ -41,8 +41,6 @@ class IO::Sized < IO
       byte = @io.read_byte
       @read_remaining -= 1 if byte
       byte
-    else
-      nil
     end
   end
 

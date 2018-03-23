@@ -63,8 +63,6 @@ module Crystal
 
       if f.is_a?(VirtualFile)
         f.expanded_location
-      else
-        nil
       end
     end
 

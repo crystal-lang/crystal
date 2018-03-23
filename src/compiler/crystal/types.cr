@@ -490,8 +490,6 @@ module Crystal
           index = instance_vars.key_index(name)
           if index
             superclass.all_instance_vars_count + index
-          else
-            nil
           end
         end
       else
@@ -962,8 +960,6 @@ module Crystal
         all_types = Array(Type).new(including_types.size)
         add_to_including_types(all_types)
         program.type_merge_union_of(all_types)
-      else
-        nil
       end
     end
 
@@ -1830,8 +1826,6 @@ module Crystal
         all_types = Array(Type).new(including_types.size)
         add_to_including_types(all_types)
         program.type_merge_union_of(all_types)
-      else
-        nil
       end
     end
 
@@ -2330,8 +2324,6 @@ module Crystal
       process_value
       if aliased_type = @aliased_type
         aliased_type.types?
-      else
-        nil
       end
     end
 
@@ -2557,8 +2549,6 @@ module Crystal
     def filter_by_responds_to(name)
       if instance_type.generic_type.metaclass.filter_by_responds_to(name)
         self
-      else
-        nil
       end
     end
 

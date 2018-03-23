@@ -116,8 +116,6 @@ struct YAML::Any
     when Array
       if index_or_key.is_a?(Int)
         object[index_or_key]?
-      else
-        nil
       end
     when Hash
       object[index_or_key]?

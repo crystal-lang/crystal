@@ -205,8 +205,6 @@ module Unicode
     value = haystack.bsearch { |low, high, delta| needle <= high }
     if value && value[0] <= needle <= value[1]
       value[2]
-    else
-      nil
     end
   end
 
@@ -214,8 +212,6 @@ module Unicode
     value = haystack.bsearch { |low, high| needle <= high }
     if value && value[0] <= needle <= value[1]
       value[0]
-    else
-      nil
     end
   end
 

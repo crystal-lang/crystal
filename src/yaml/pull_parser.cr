@@ -81,8 +81,6 @@ class YAML::PullParser
       read_anchor @event.data.mapping_start.anchor
     when .alias?
       read_anchor @event.data.alias.anchor
-    else
-      nil
     end
   end
 

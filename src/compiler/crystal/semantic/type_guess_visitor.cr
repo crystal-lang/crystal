@@ -520,8 +520,6 @@ module Crystal
 
       if from_type && to_type
         program.range_of(from_type, to_type)
-      else
-        nil
       end
     end
 
@@ -541,8 +539,6 @@ module Crystal
 
       if element_types
         program.tuple_of(element_types)
-      else
-        nil
       end
     end
 
@@ -558,8 +554,6 @@ module Crystal
 
       if entries
         program.named_tuple_of(entries)
-      else
-        nil
       end
     end
 
@@ -822,8 +816,6 @@ module Crystal
       info = @guessed_instance_vars[current_type]?.try &.[node.name]?
       if info
         info.type
-      else
-        nil
       end
     end
 
@@ -910,8 +902,6 @@ module Crystal
 
       if types
         Type.merge!(types)
-      else
-        nil
       end
     end
 
