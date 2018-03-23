@@ -99,11 +99,11 @@ module IO::Syscall
     end
   end
 
-  private def wait_readable(timeout = @read_timeout)
+  private def wait_readable(timeout = @read_timeout) : Nil
     wait_readable(timeout: timeout) { |err| raise err }
   end
 
-  private def wait_readable(timeout = @read_timeout)
+  private def wait_readable(timeout = @read_timeout) : Nil
     readers = (@readers ||= Deque(Fiber).new)
     readers << Fiber.current
     add_read_event(timeout)
@@ -113,17 +113,15 @@ module IO::Syscall
       @read_timed_out = false
       yield Timeout.new("Read timed out")
     end
-
-    nil
   end
 
   private abstract def add_read_event(timeout = @read_timeout)
 
-  private def wait_writable(timeout = @write_timeout)
+  private def wait_writable(timeout = @write_timeout) : Nil
     wait_writable(timeout: timeout) { |err| raise err }
   end
 
-  private def wait_writable(timeout = @write_timeout)
+  private def wait_writable(timeout = @write_timeout) : Nil
     writers = (@writers ||= Deque(Fiber).new)
     writers << Fiber.current
     add_write_event(timeout)
@@ -133,8 +131,6 @@ module IO::Syscall
       @write_timed_out = false
       yield Timeout.new("Write timed out")
     end
-
-    nil
   end
 
   private abstract def add_write_event(timeout = @write_timeout)

@@ -194,6 +194,5 @@ struct YAML::Schema::Core::TimeParser
   def new_time(*args, **named_args)
     Time.utc(*args, **named_args)
   rescue
-    nil
   end
 end

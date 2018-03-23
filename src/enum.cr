@@ -112,7 +112,6 @@ struct Enum
     {% else %}
       io << to_s
     {% end %}
-    nil
   end
 
   # Returns a `String` representation of this enum member.
@@ -349,7 +348,6 @@ struct Enum
         return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
       {% end %}
     {% end %}
-    nil
   end
 
   # Returns the enum member that has the given value, or raises
@@ -408,8 +406,6 @@ struct Enum
         when {{member.stringify.camelcase.downcase}}
           {{@type}}::{{member}}
       {% end %}
-      else
-        nil
       end
     {% end %}
   end

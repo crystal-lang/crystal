@@ -206,7 +206,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   # Returns free variables
   def free_vars : Hash(String, TypeVar)?
-    nil
   end
 
   def nesting_exp?(node)

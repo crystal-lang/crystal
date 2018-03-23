@@ -333,7 +333,7 @@ module Crystal
     # to arguments before a def's splat index, matching the given objects.
     # If there are more objects than arguments in the method, they are not yielded.
     # If splat index is `nil`, all args and objects (with their indices) are yielded.
-    def self.before(a_def, objects, &block)
+    def self.before(a_def, objects, &block) : Nil
       splat = a_def.splat_index || a_def.args.size
       splat.times do |i|
         obj = objects[i]?
@@ -342,14 +342,13 @@ module Crystal
         yield a_def.args[i], i, obj, i
         i += 1
       end
-      nil
     end
 
     # Yields `arg, arg_index, object, object_index` corresponding
     # to arguments at a def's splat index, matching the given objects.
     # If there are more objects than arguments in the method, they are not yielded.
     # If splat index is `nil`, all args and objects (with their indices) are yielded.
-    def self.at(a_def, objects, &block)
+    def self.at(a_def, objects, &block) : Nil
       splat_index = a_def.splat_index
       return unless splat_index
 
@@ -361,8 +360,6 @@ module Crystal
 
         yield a_def.args[splat_index], splat_index, obj, obj_index
       end
-
-      nil
     end
 
     # Returns the splat size of this def matching the given objects.

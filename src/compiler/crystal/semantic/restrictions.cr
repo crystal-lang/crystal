@@ -304,8 +304,6 @@ module Crystal
       if parents.try &.any? &.restriction_of?(other, context.instantiated_type)
         return self
       end
-
-      nil
     end
 
     def restrict(other : AliasType, context)
@@ -409,11 +407,9 @@ module Crystal
     end
 
     def restrict(other : Metaclass, context)
-      nil
     end
 
     def restrict(other : ProcNotation, context)
-      nil
     end
 
     def restrict(other : Underscore, context)
@@ -425,11 +421,9 @@ module Crystal
     end
 
     def restrict(other : NumberLiteral, context)
-      nil
     end
 
     def restrict(other : Splat, context)
-      nil
     end
 
     def restrict(other : ASTNode, context)

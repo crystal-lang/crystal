@@ -424,7 +424,6 @@ class Hash(K, V)
     each_with_index do |(my_key, my_value), index|
       return index if key == my_key
     end
-    nil
   end
 
   # Returns a new `Hash` with the keys and values of this hash and *other* combined.
@@ -866,7 +865,6 @@ class Hash(K, V)
       end
       entry = entry.next
     end
-    nil
   end
 
   private def bucket_index(key)

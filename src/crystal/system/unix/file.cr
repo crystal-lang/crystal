@@ -196,13 +196,11 @@ module Crystal::System::File
     flock LibC::FlockOp::UN
   end
 
-  private def flock(op : LibC::FlockOp, blocking : Bool = true)
+  private def flock(op : LibC::FlockOp, blocking : Bool = true) : Nil
     op |= LibC::FlockOp::NB unless blocking
 
     if LibC.flock(@fd, op) != 0
       raise Errno.new("flock")
     end
-
-    nil
   end
 end

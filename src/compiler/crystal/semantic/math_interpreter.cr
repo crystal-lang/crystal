@@ -95,10 +95,8 @@ struct Crystal::MathInterpreter
     end
 
     if visitor.expand_macro(node, raise_on_missing_const: false, first_pass: true)
-      return interpret(node.expanded.not_nil!, target_type)
+      interpret(node.expanded.not_nil!, target_type)
     end
-
-    nil
   end
 
   def interpret(node : Path, target_type = nil)

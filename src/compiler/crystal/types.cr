@@ -11,12 +11,10 @@ module Crystal
 
     # Returns any doc comments associated to this type.
     def doc : String?
-      nil
     end
 
     # Returns all locations where this type is declared
     def locations : Array(Location)?
-      nil
     end
 
     # Returns `true` if this type has the give attribute.
@@ -83,13 +81,11 @@ module Crystal
     # Returns the methods defined in this type, indexed by their name.
     # This does not include methods defined in ancestors.
     def defs : Hash(String, Array(DefWithMetadata))?
-      nil
     end
 
     # Returns all macros defines in this type, indexed by their name.
     # This does not inlcude methods defined in ancestors.
     def macros : Hash(String, Array(Macro))?
-      nil
     end
 
     # Returns this type's metaclass, which holds class methods for this type.
@@ -275,7 +271,6 @@ module Crystal
     end
 
     def filter_by_responds_to(name)
-      nil
     end
 
     def add_instance_var_initializer(name, value, meta_vars)
@@ -296,11 +291,9 @@ module Crystal
     end
 
     def types?
-      nil
     end
 
     def parents
-      nil
     end
 
     def ancestors
@@ -318,7 +311,6 @@ module Crystal
 
     # Returns this type's superclass, or `nil` if it doesn't have one
     def superclass : Type?
-      nil
     end
 
     def lookup_defs(name : String, lookup_ancestors_for_new : Bool = false)
@@ -415,8 +407,6 @@ module Crystal
         parent_macro = parent.lookup_macro(name, args, named_args)
         return parent_macro if parent_macro
       end
-
-      nil
     end
 
     # Looks up macros with the given name. Returns:
@@ -443,8 +433,6 @@ module Crystal
         parent_macros = parent.lookup_macros(name)
         return parent_macros if parent_macros
       end
-
-      nil
     end
 
     def add_including_type(mod)
@@ -507,7 +495,6 @@ module Crystal
     end
 
     def lookup_class_var?(name)
-      nil
     end
 
     def lookup_class_var(name)
@@ -561,7 +548,6 @@ module Crystal
     end
 
     def splat_index
-      nil
     end
 
     def type_vars
@@ -2939,10 +2925,8 @@ module Crystal
         var.initializer = class_var.initializer
         var.bind_to(class_var)
         self.class_vars[name] = var
-        return var
+        var
       end
-
-      nil
     end
 
     def replace_type_parameters(instance)
@@ -3005,10 +2989,8 @@ module Crystal
         var.initializer = class_var.initializer
         var.bind_to(class_var)
         self.class_vars[name] = var
-        return var
+        var
       end
-
-      nil
     end
 
     def implements?(other : VirtualMetaclassType)

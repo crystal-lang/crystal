@@ -55,7 +55,6 @@ class Object
   # Overridden by descendants (notably `Regex` and `String`) to provide meaningful
   # pattern-match semantics.
   def =~(other)
-    nil
   end
 
   # Appends this object's value to *hasher*, and returns the modified *hasher*.

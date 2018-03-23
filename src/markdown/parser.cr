@@ -92,8 +92,6 @@ class Markdown::Parser
     if next_line_is_all?('-')
       return :header2
     end
-
-    nil
   end
 
   def render_prefix_header(level, line)

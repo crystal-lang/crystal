@@ -164,7 +164,6 @@ module Crystal
     end
 
     def common_ancestor(other)
-      nil
     end
   end
 
@@ -244,7 +243,6 @@ module Crystal
 
   class PrimitiveType
     def common_ancestor(other)
-      nil
     end
   end
 
@@ -270,8 +268,6 @@ module Crystal
       if other.return_type.no_return? && arg_types == other.arg_types
         return self
       end
-
-      nil
     end
   end
 
@@ -330,19 +326,15 @@ private def class_common_ancestor(t1, t2)
     t2_superclass = t2.superclass
 
     if t1_superclass && t2_superclass
-      return t1_superclass.common_ancestor(t2_superclass)
+      t1_superclass.common_ancestor(t2_superclass)
     end
   elsif t1.depth > t2.depth
-    t1_superclass = t1.superclass
-    if t1_superclass
-      return t1_superclass.common_ancestor(t2)
+    if t1_superclass = t1.superclass
+      t1_superclass.common_ancestor(t2)
     end
   elsif t1.depth < t2.depth
-    t2_superclass = t2.superclass
-    if t2_superclass
-      return t1.common_ancestor(t2_superclass)
+    if t2_superclass = t2.superclass
+      t1.common_ancestor(t2_superclass)
     end
   end
-
-  nil
 end

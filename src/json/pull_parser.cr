@@ -92,10 +92,9 @@ class JSON::PullParser
     read_end_object
   end
 
-  def read_null
+  def read_null : Nil
     expect_kind :null
     read_next
-    nil
   end
 
   def read_bool

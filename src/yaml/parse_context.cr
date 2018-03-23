@@ -57,7 +57,5 @@ class YAML::ParseContext
 
       raise("Error deserailizing alias") if raise_on_alias
     end
-
-    nil
   end
 end

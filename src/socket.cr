@@ -538,16 +538,14 @@ class Socket < IO
     end
   end
 
-  private def add_read_event(timeout = @read_timeout)
+  private def add_read_event(timeout = @read_timeout) : Nil
     event = @read_event ||= Scheduler.create_fd_read_event(self)
     event.add timeout
-    nil
   end
 
-  private def add_write_event(timeout = @write_timeout)
+  private def add_write_event(timeout = @write_timeout) : Nil
     event = @write_event ||= Scheduler.create_fd_write_event(self)
     event.add timeout
-    nil
   end
 
   private def unbuffered_rewind

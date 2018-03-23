@@ -209,7 +209,6 @@ abstract class IO
   # ```
   def print(obj) : Nil
     self << obj
-    nil
   end
 
   # Writes the given objects into this `IO` by invoking `to_s(io)`
@@ -224,7 +223,6 @@ abstract class IO
     objects.each do |obj|
       print obj
     end
-    nil
   end
 
   # Writes the given string to this `IO` followed by a newline character
@@ -239,7 +237,6 @@ abstract class IO
   def puts(string : String) : Nil
     self << string
     puts unless string.ends_with?('\n')
-    nil
   end
 
   # Writes the given object to this `IO` followed by a newline character.
@@ -264,7 +261,6 @@ abstract class IO
   # ```
   def puts : Nil
     print '\n'
-    nil
   end
 
   # Writes the given objects, each followed by a newline character.
@@ -278,7 +274,6 @@ abstract class IO
     objects.each do |obj|
       puts obj
     end
-    nil
   end
 
   def printf(format_string, *args) : Nil
@@ -288,7 +283,6 @@ abstract class IO
   # ditto
   def printf(format_string, args : Array | Tuple) : Nil
     String::Formatter(typeof(args)).new(format_string, args, self).format
-    nil
   end
 
   # Reads a single byte from this `IO`. Returns `nil` if there is no more
@@ -480,17 +474,15 @@ abstract class IO
   # that provide buffering or wrap other IOs should override
   # this method.
   def peek : Bytes?
-    nil
   end
 
   # Writes a slice of UTF-8 encoded bytes to this `IO`, using the current encoding.
-  def write_utf8(slice : Bytes)
+  def write_utf8(slice : Bytes) : Nil
     if encoder = encoder()
       encoder.write(self, slice)
     else
       write(slice)
     end
-    nil
   end
 
   private def encoder
@@ -1028,7 +1020,7 @@ abstract class IO
   #
   # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
   # `printf`) will use this encoding.
-  def set_encoding(encoding : String, invalid : Symbol? = nil)
+  def set_encoding(encoding : String, invalid : Symbol? = nil) : Nil
     if (encoding == "UTF-8") && (invalid != :skip)
       @encoding = nil
     else
@@ -1038,7 +1030,6 @@ abstract class IO
     @decoder.try &.close
     @encoder = nil
     @decoder = nil
-    nil
   end
 
   # Returns this `IO`'s encoding. The default is `UTF-8`.

@@ -94,7 +94,6 @@ module Crystal
     end
 
     def call_convention
-      nil
     end
 
     @c_calling_convention : Bool? = nil

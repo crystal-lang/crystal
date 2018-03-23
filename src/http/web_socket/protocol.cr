@@ -49,7 +49,7 @@ class HTTP::WebSocket::Protocol
       @pos = 0
     end
 
-    def write(slice : Bytes)
+    def write(slice : Bytes) : Nil
       count = Math.min(@buffer.size - @pos, slice.size)
       (@buffer + @pos).copy_from(slice.pointer(count), count)
       @pos += count
@@ -61,8 +61,6 @@ class HTTP::WebSocket::Protocol
       if count < slice.size
         write(slice + count)
       end
-
-      nil
     end
 
     def read(slice : Bytes)

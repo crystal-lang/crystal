@@ -202,7 +202,7 @@ class Regex
       match
     end
 
-    private def named_capture_number(group_name)
+    private def named_capture_number(group_name) : Nil
       name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, out first, out last)
       return if name_entry_size < 0
 
@@ -212,8 +212,6 @@ class Regex
 
         first += name_entry_size
       end
-
-      nil
     end
 
     # Returns the part of the original string before the match. If the match

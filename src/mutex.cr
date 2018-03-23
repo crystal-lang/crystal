@@ -8,7 +8,7 @@ class Mutex
     @lock_count = 0
   end
 
-  def lock
+  def lock : Nil
     mutex_fiber = @mutex_fiber
     current_fiber = Fiber.current
 
@@ -21,11 +21,9 @@ class Mutex
       queue << current_fiber
       Scheduler.reschedule
     end
-
-    nil
   end
 
-  def unlock
+  def unlock : Nil
     unless @mutex_fiber == Fiber.current
       raise "Attempt to unlock a mutex which is not locked"
     end
@@ -41,8 +39,6 @@ class Mutex
     else
       @mutex_fiber = nil
     end
-
-    nil
   end
 
   def synchronize

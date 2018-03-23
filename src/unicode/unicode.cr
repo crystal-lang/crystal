@@ -62,22 +62,20 @@ module Unicode
   private def self.check_upcase_ascii(char, options)
     if (char.ascii? && options.none?) || options.ascii?
       if char.ascii_lowercase?
-        return (char.ord - 32).unsafe_chr
+        (char.ord - 32).unsafe_chr
       else
-        return char
+        char
       end
     end
-    nil
   end
 
   private def self.check_upcase_turkic(char, options)
     if options.turkic?
       case char
-      when 'ı'; return 'I'
-      when 'i'; return 'İ'
+      when 'ı' then 'I'
+      when 'i' then 'İ'
       end
     end
-    nil
   end
 
   private def self.check_upcase_ranges(char)
@@ -134,41 +132,39 @@ module Unicode
   private def self.check_downcase_ascii(char, options)
     if (char.ascii? && options.none?) || options.ascii?
       if char.ascii_uppercase?
-        return (char.ord + 32).unsafe_chr
+        (char.ord + 32).unsafe_chr
       else
-        return char
+        char
       end
     end
-
-    nil
   end
 
   private def self.check_downcase_turkic(char, options)
     if options.turkic?
       case char
-      when 'I'; return 'ı'
-      when 'İ'; return 'i'
+      when 'I' then 'ı'
+      when 'İ' then 'i'
       end
     end
-    nil
   end
 
   private def self.check_downcase_fold(char, options)
     if options.fold?
-      result = search_ranges(casefold_ranges, char.ord)
-      return {char.ord + result} if result
-
+      if result = search_ranges(casefold_ranges, char.ord)
+        return {char.ord + result}
+      end
       return fold_cases[char.ord]?
     end
-    nil
   end
 
   private def self.check_downcase_ranges(char)
-    result = search_ranges(downcase_ranges, char.ord)
-    return char + result if result
+    if result = search_ranges(downcase_ranges, char.ord)
+      return char + result
+    end
 
-    result = search_alternate(alternate_ranges, char.ord)
-    return char + 1 if result && (char.ord - result).even?
+    if result = search_alternate(alternate_ranges, char.ord)
+      return char + 1 if (char.ord - result).even?
+    end
 
     char
   end

@@ -371,7 +371,6 @@ class CSV
           return maybe_strip(@row[i]? || "")
         end
       end
-      nil
     end
 
     # Returns the number of columns in this row, regardless of the number

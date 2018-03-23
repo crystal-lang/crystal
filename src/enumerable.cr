@@ -311,11 +311,11 @@ module Enumerable(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_slice(count : Int, reuse = false)
+  def each_slice(count : Int, reuse = false) : Nil
     each_slice_internal(count, Array(T), reuse) { |slice| yield slice }
   end
 
-  private def each_slice_internal(count : Int, type, reuse)
+  private def each_slice_internal(count : Int, type, reuse) : Nil
     if reuse
       unless reuse.is_a?(Array)
         reuse = type.new(count)
@@ -339,7 +339,6 @@ module Enumerable(T)
       end
     end
     yield slice unless slice.empty?
-    nil
   end
 
   # Iterates over the collection, yielding both the elements and their index.

@@ -24,7 +24,6 @@ module Spec
     end
 
     def parent
-      nil
     end
 
     def succeeded

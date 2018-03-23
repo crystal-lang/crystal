@@ -376,7 +376,7 @@ struct Slice(T)
   end
 
   # :nodoc:
-  def hexstring(buffer)
+  def hexstring(buffer) : Nil
     self.as(Slice(UInt8))
 
     offset = 0
@@ -385,8 +385,6 @@ struct Slice(T)
       buffer[offset + 1] = to_hex(v & 0x0f)
       offset += 2
     end
-
-    nil
   end
 
   # Returns a hexdump of this slice, assuming it's a `Slice(UInt8)`.
@@ -528,13 +526,10 @@ struct Slice(T)
   def fast_index(object, offset)
     offset += size if offset < 0
     if 0 <= offset < size
-      result = LibC.memchr(to_unsafe + offset, object, size - offset)
-      if result
+      if result = LibC.memchr(to_unsafe + offset, object, size - offset)
         return (result - to_unsafe.as(Void*)).to_i32
       end
     end
-
-    nil
   end
 
   # See `Object#hash(hasher)`

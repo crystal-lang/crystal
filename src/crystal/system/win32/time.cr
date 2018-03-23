@@ -155,6 +155,5 @@ module Crystal::System::Time
   # and returns the English name.
   private def self.translate_zone_name(stdname, dstname)
     # TODO: Needs implementation once there is access to the registry.
-    nil
   end
 end

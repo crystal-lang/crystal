@@ -56,12 +56,11 @@ class Concurrent::Future(R)
     @state == State::Idle
   end
 
-  def cancel(msg = "Future canceled, you reached the [End of Time]")
+  def cancel(msg = "Future canceled, you reached the [End of Time]") : Nil
     return if @state >= State::Completed
     @state = State::Canceled
     @cancel_msg = msg
     @channel.close
-    nil
   end
 
   private def compute

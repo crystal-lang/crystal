@@ -1737,15 +1737,16 @@ module Crystal
     def get_expression_var(exp)
       case exp
       when Var
-        return exp
+        exp
       when Assign
-        target = exp.target
-        return target if target.is_a?(Var)
+        if (target = exp.target).is_a?(Var)
+          target
+        end
       when Expressions
-        return unless exp = exp.single_expression?
-        return get_expression_var(exp)
+        if exp = exp.single_expression?
+          get_expression_var(exp)
+        end
       end
-      nil
     end
 
     def visit(node : Cast | NilableCast)
@@ -2145,24 +2146,22 @@ module Crystal
     def get_while_cond_assign_target(node)
       case node
       when Assign
-        target = node.target
-        if target.is_a?(Var)
-          return target
+        if (target = node.target).is_a?(Var)
+          target
         end
       when And
-        return get_while_cond_assign_target(node.left)
+        get_while_cond_assign_target(node.left)
       when If
         if node.and?
-          return get_while_cond_assign_target(node.cond)
+          get_while_cond_assign_target(node.cond)
         end
       when Call
-        return get_while_cond_assign_target(node.obj)
+        get_while_cond_assign_target(node.obj)
       when Expressions
-        return unless node = node.single_expression?
-        return get_while_cond_assign_target(node)
+        if node = node.single_expression?
+          get_while_cond_assign_target(node)
+        end
       end
-
-      nil
     end
 
     # If we have:
@@ -2915,8 +2914,6 @@ module Crystal
           return type_filters.not
         end
       end
-
-      nil
     end
 
     def visit(node : VisibilityModifier)

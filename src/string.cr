@@ -2447,7 +2447,6 @@ class String
 
   # ditto
   def =~(other)
-    nil
   end
 
   # Concatenates *str* and *other*.
@@ -2562,8 +2561,6 @@ class String
         return i
       end
     end
-
-    nil
   end
 
   # ditto
@@ -2854,7 +2851,6 @@ class String
         return i
       end
     end
-    nil
   end
 
   def byte_index(search : String, offset = 0)
@@ -2898,8 +2894,6 @@ class String
       head_pointer += 1
       offset += 1
     end
-
-    nil
   end
 
   # Returns the byte index of a char index, or `nil` if out of bounds.
@@ -2921,8 +2915,7 @@ class String
     size = each_byte_index_and_char_index do |byte_index, char_index|
       return byte_index if index == char_index
     end
-    return @bytesize if index == size
-    nil
+    @bytesize if index == size
   end
 
   # Returns the char index of a byte index, or `nil` if out of bounds.
@@ -2937,8 +2930,7 @@ class String
     size = each_byte_index_and_char_index do |byte_index, char_index|
       return char_index if index == byte_index
     end
-    return size if index == @bytesize
-    nil
+    size if index == @bytesize
   end
 
   # Returns `true` if the string contains *search*.
@@ -3798,11 +3790,10 @@ class String
   # end
   # array # => [97, 98, 226, 152, 131]
   # ```
-  def each_byte
+  def each_byte : Nil
     to_slice.each do |byte|
       yield byte
     end
-    nil
   end
 
   # Returns an `Iterator` over each byte in the string.

@@ -207,8 +207,6 @@ module Debug
             end
           end
         end
-
-        nil
       end
 
       # Decodes the compressed matrix of addresses to line numbers.

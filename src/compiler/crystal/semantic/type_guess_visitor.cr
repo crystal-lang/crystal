@@ -432,26 +432,21 @@ module Crystal
       if name = node.name
         type = lookup_type_no_check?(name)
         if type.is_a?(GenericClassType)
-          element_types = guess_array_literal_element_types(node)
-          if element_types
+          if element_types = guess_array_literal_element_types(node)
             return type.instantiate([Type.merge!(element_types)] of TypeVar)
           end
         else
           return check_allowed_in_generics(node, type)
         end
       elsif node_of = node.of
-        type = lookup_type?(node_of)
-        if type
+        if type = lookup_type?(node_of)
           return program.array_of(type.virtual_type)
         end
       else
-        element_types = guess_array_literal_element_types(node)
-        if element_types
+        if element_types = guess_array_literal_element_types(node)
           return program.array_of(Type.merge!(element_types))
         end
       end
-
-      nil
     end
 
     def guess_array_literal_element_types(node)
@@ -491,8 +486,6 @@ module Crystal
           return program.hash_of(Type.merge!(key_types), Type.merge!(value_types))
         end
       end
-
-      nil
     end
 
     def guess_hash_literal_key_value_types(node : HashLiteral)
@@ -606,8 +599,6 @@ module Crystal
 
       type = guess_type_call_with_type_annotation(node)
       return type if type
-
-      nil
     end
 
     # If it's Pointer.malloc(size, value), infer element type from value
@@ -619,13 +610,11 @@ module Crystal
          obj.single?("Pointer") && node.name == "malloc"
         type = lookup_type_no_check?(obj)
         if type.is_a?(PointerType)
-          element_type = guess_type(node.args[1])
-          if element_type
+          if element_type = guess_type(node.args[1])
             return @program.pointer_of(element_type)
           end
         end
       end
-      nil
     end
 
     def guess_type_call_lib_fun(node)
@@ -649,7 +638,6 @@ module Crystal
           return external_type
         end
       end
-      nil
     end
 
     # Guess type from T.method, where T is a Path and
@@ -777,8 +765,7 @@ module Crystal
 
       if args = @args
         # Find an argument with the same name as this variable
-        arg = args.find { |arg| arg.name == node.name }
-        if arg
+        if arg = args.find { |arg| arg.name == node.name }
           # If the argument has a restriction, guess the type from it
           if restriction = arg.restriction
             type = lookup_type?(restriction)
@@ -794,8 +781,7 @@ module Crystal
 
       # Try to guess type from a block argument with the same name
       if (block_arg = @block_arg) && block_arg.name == node.name
-        restriction = block_arg.restriction
-        if restriction
+        if restriction = block_arg.restriction
           type = lookup_type?(restriction)
           return type if type
         else
@@ -803,8 +789,6 @@ module Crystal
           return @program.proc_of([@program.void] of Type)
         end
       end
-
-      nil
     end
 
     def guess_type(node : InstanceVar)
@@ -953,7 +937,6 @@ module Crystal
     end
 
     def guess_type(node : ASTNode)
-      nil
     end
 
     def check_has_self(node)
