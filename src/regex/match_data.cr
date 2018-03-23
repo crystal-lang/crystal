@@ -332,21 +332,20 @@ class Regex
     def to_s(io : IO)
       name_table = @regex.name_table
 
-      io << "#<Regex::MatchData"
+      io << "Regex::MatchData("
       size.times do |i|
-        io << ' '
-        io << name_table.fetch(i, i) << ':' if i > 0
+        io << ' ' << name_table.fetch(i, i) << ':' if i > 0
         self[i]?.inspect(io)
       end
-      io << '>'
+      io << ')'
     end
 
     def pretty_print(pp) : Nil
       name_table = @regex.name_table
 
-      pp.surround("#<Regex::MatchData", ">", left_break: nil, right_break: nil) do
+      pp.surround("Regex::MatchData(", ")", left_break: nil, right_break: nil) do
         size.times do |i|
-          pp.breakable
+          pp.breakable if i > 0
           pp.group do
             if i == 0
               self[i].pretty_print pp
