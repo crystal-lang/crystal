@@ -1444,6 +1444,7 @@ describe "String" do
     "a".dump.should eq %("a")
     "\\".dump.should eq %("\\\\")
     "\"".dump.should eq %("\\\"")
+    "\a".dump.should eq %("\\a")
     "\b".dump.should eq %("\\b")
     "\e".dump.should eq %("\\e")
     "\f".dump.should eq %("\\f")
@@ -1471,6 +1472,7 @@ describe "String" do
     "a".inspect.should eq %("a")
     "\\".inspect.should eq %("\\\\")
     "\"".inspect.should eq %("\\\"")
+    "\a".inspect.should eq %("\\a")
     "\b".inspect.should eq %("\\b")
     "\e".inspect.should eq %("\\e")
     "\f".inspect.should eq %("\\f")
@@ -1649,6 +1651,7 @@ describe "String" do
   end
 
   it "escapes chars" do
+    "\a"[0].should eq('\a')
     "\b"[0].should eq('\b')
     "\t"[0].should eq('\t')
     "\n"[0].should eq('\n')
