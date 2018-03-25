@@ -494,7 +494,7 @@ module Crystal
             when '\\'
               case char = next_char
               when 'a'
-                io << "\x07"
+                io << "\u{7}"
               when 'b'
                 io << "\u{8}"
               when 'n'
@@ -1794,7 +1794,7 @@ module Crystal
           else
             case char = next_char
             when 'a'
-              string_token_escape_value "\x07"
+              string_token_escape_value "\u{7}"
             when 'b'
               string_token_escape_value "\u{8}"
             when 'n'
