@@ -36,6 +36,7 @@ class Crystal::Program
 
     flags.add "unix" if codegen_target.unix?
     flags.add "win32" if codegen_target.win32?
+    flags.add "musl" if codegen_target.musl?
 
     flags.add "darwin" if codegen_target.macos?
     if codegen_target.freebsd?
