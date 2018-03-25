@@ -493,6 +493,8 @@ module Crystal
             case char
             when '\\'
               case char = next_char
+              when 'a'
+                io << "\x07"
               when 'b'
                 io << "\u{8}"
               when 'n'
@@ -611,6 +613,8 @@ module Crystal
             @token.value = '\\'
           when '\''
             @token.value = '\''
+          when 'a'
+            @token.value = '\a'
           when 'b'
             @token.value = '\b'
           when 'e'
@@ -1789,6 +1793,8 @@ module Crystal
             end
           else
             case char = next_char
+            when 'a'
+              string_token_escape_value "\x07"
             when 'b'
               string_token_escape_value "\u{8}"
             when 'n'
