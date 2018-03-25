@@ -18,7 +18,7 @@ module Crystal
         # Enable most conservative FPU for hard-float capable targets, unless a
         # CPU is defined (it will most certainly enable a better FPU) or
         # features contains a floating-point definition.
-        if cpu.empty? && !features.includes?("fp") && target_triple =~ /-gnueabihf/
+        if cpu.empty? && !features.includes?("fp") && target_triple =~ /-(gnu|musl)eabihf/
           features += "+vfp2"
         end
       else
