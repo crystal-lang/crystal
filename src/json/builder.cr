@@ -107,6 +107,8 @@ class JSON::Builder
           escape = "\\\\"
         when '"'
           escape = "\\\""
+        when '\a'
+          escape = "\\a"
         when '\b'
           escape = "\\b"
         when '\f'
