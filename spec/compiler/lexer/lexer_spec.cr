@@ -230,6 +230,7 @@ describe "Lexer" do
   it_lexes_number :i8, ["0i8", "0"]
 
   it_lexes_char "'a'", 'a'
+  it_lexes_char "'\\a'", '\a'
   it_lexes_char "'\\b'", 8.chr
   it_lexes_char "'\\n'", '\n'
   it_lexes_char "'\\t'", '\t'
