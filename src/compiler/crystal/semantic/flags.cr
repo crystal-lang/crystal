@@ -36,6 +36,7 @@ class Crystal::Program
     set.add "x86_64" if set.any?(&.starts_with?("amd64"))
     set.add "i686" if set.any? { |flag| %w(i586 i486 i386).includes?(flag) }
 
+    set.add "gnu" if set.includes?("gnueabihf")
     set.add "musl" if set.includes?("musleabihf")
 
     if set.any?(&.starts_with?("arm"))
