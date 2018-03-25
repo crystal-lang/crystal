@@ -33,9 +33,11 @@ class Crystal::Program
 
     flags.add "unix" if codegen_target.unix?
     flags.add "win32" if codegen_target.win32?
+    flags.add "darwin" if codegen_target.macos?
+
+    flags.add "gnu" if codegen_target.gnu?
     flags.add "musl" if codegen_target.musl?
 
-    flags.add "darwin" if codegen_target.macos?
     if codegen_target.freebsd?
       flags.add "freebsd"
       flags.add "freebsd#{codegen_target.freebsd_version}"
