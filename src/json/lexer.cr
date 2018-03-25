@@ -177,6 +177,8 @@ abstract class JSON::Lexer
     case char = next_char
     when '\\', '"', '/'
       char
+    when 'a'
+      '\a'
     when 'b'
       '\b'
     when 'f'
