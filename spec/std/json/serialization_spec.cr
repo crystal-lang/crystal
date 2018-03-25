@@ -239,6 +239,7 @@ describe "JSON serialization" do
     end
 
     it "does for String with control codes" do
+      "\a".to_json.should eq("\"\\a\"")
       "\b".to_json.should eq("\"\\b\"")
       "\f".to_json.should eq("\"\\f\"")
       "\n".to_json.should eq("\"\\n\"")
