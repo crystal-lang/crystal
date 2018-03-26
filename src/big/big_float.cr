@@ -8,10 +8,23 @@ struct BigFloat < Float
   include Comparable(BigFloat)
   include Comparable(Float)
 
+  # Creates a `BigFloat` with the value zero.
+  #
+  # ```
+  # require "big"
+  # BigFloat.new # => 0
+  # ```
   def initialize
     LibGMP.mpf_init(out @mpf)
   end
 
+  # Creates a `BigFloat` with the value denoted by *str*.
+  #
+  # Raises `ArgumentError` if the string doesn't denote a valid float.
+  #
+  # ```
+  # BigFloat.new("-0.123456789101101987654321") # => -0.123456789101101987654321
+  # ```
   def initialize(str : String)
     # Strip leading '+' char to smooth out cases with strings like "+123"
     str = str.lchop('+')
@@ -20,29 +33,35 @@ struct BigFloat < Float
     end
   end
 
+  # Creates a `BigFloat` from the given *num*.
   def initialize(num : BigInt)
     LibGMP.mpf_init(out @mpf)
     LibGMP.mpf_set_z(self, num)
   end
 
+  # ditto
   def initialize(num : BigRational)
     LibGMP.mpf_init(out @mpf)
     LibGMP.mpf_set_q(self, num)
   end
 
+  # ditto
   def initialize(num : BigFloat)
     LibGMP.mpf_init(out @mpf)
     LibGMP.mpf_set(self, num)
   end
 
+  # ditto
   def initialize(num : Int8 | Int16 | Int32)
     LibGMP.mpf_init_set_si(out @mpf, num)
   end
 
+  # ditto
   def initialize(num : UInt8 | UInt16 | UInt32)
     LibGMP.mpf_init_set_ui(out @mpf, num)
   end
 
+  # ditto
   def initialize(num : Int64)
     if LibGMP::Long == Int64
       LibGMP.mpf_init_set_si(out @mpf, num)
@@ -52,6 +71,7 @@ struct BigFloat < Float
     end
   end
 
+  # ditto
   def initialize(num : UInt64)
     if LibGMP::ULong == UInt64
       LibGMP.mpf_init_set_ui(out @mpf, num)
@@ -61,18 +81,22 @@ struct BigFloat < Float
     end
   end
 
+  # ditto
   def initialize(num : Number)
     LibGMP.mpf_init_set_d(out @mpf, num.to_f64)
   end
 
+  # Creates a `BigFloat` from the given *num*, with the `BigFloat` precision set to at least *precision* bits.
   def initialize(num : Float, precision : Int)
     LibGMP.mpf_init2(out @mpf, precision.to_u64)
     LibGMP.mpf_set_d(self, num.to_f64)
   end
 
+  # :nodoc:
   def initialize(@mpf : LibGMP::MPF)
   end
 
+  # :nodoc:
   def self.new
     LibGMP.mpf_init(out mpf)
     yield pointerof(mpf)
@@ -82,10 +106,12 @@ struct BigFloat < Float
   # TODO: improve this
   def_hash to_f64
 
+  # Returns the default precision actually in use.
   def self.default_precision
     LibGMP.mpf_get_default_prec
   end
 
+  # Sets the default precision to be at least *prec* bits.
   def self.default_precision=(prec : Int)
     LibGMP.mpf_set_default_prec(prec.to_u64)
   end
@@ -217,11 +243,21 @@ struct BigFloat < Float
     mpf
   end
 
+  # Returns a human-readable representation of `self`.
+  #
+  # ```
+  # BigFloat.new("0.123456789101101987654321").inspect # => 0.123456789101101987654321_big_f
+  # ```
   def inspect(io)
     to_s(io)
     io << "_big_f"
   end
 
+  # Returns a string representation (base 10) of `self`.
+  #
+  # ```
+  # BigFloat.new("0.123456789101101987654321").to_s # => 0.123456789101101987654321
+  # ```
   def to_s(io : IO)
     cstr = LibGMP.mpf_get_str(nil, out expptr, 10, 0, self)
     length = LibC.strlen(cstr)
