@@ -248,6 +248,16 @@ module HTTP
       HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
       HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
     end
+
+    it "lists addresses" do
+      server = Server.new { }
+
+      tcp_server = TCPServer.new("127.0.0.1", 0)
+      addresses = [server.bind_unused_port, server.bind_unused_port, tcp_server.local_address]
+      server.bind tcp_server
+
+      server.addresses.should eq addresses
+    end
   end
 
   describe HTTP::Server::RequestProcessor do

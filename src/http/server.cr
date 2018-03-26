@@ -164,6 +164,21 @@ class HTTP::Server
     socket
   end
 
+  # Enumerates all addresses this server is bound to.
+  def each_address(&block : Socket::Address ->)
+    @sockets.each do |socket|
+      yield socket.local_address
+    end
+  end
+
+  def addresses : Array(Socket::Address)
+    array = [] of Socket::Address
+    each_address do |address|
+      array << address
+    end
+    array
+  end
+
   # Creates a `TCPServer` listenting on `127.0.0.1:port`, adds it as a socket
   # and starts the server. Blocks until the server is closed.
   #
