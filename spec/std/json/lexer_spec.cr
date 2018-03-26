@@ -83,6 +83,7 @@ describe JSON::Lexer do
   it_lexes_string "\"hello\\\"world\"", "hello\"world"
   it_lexes_string "\"hello\\\\world\"", "hello\\world"
   it_lexes_string "\"hello\\/world\"", "hello/world"
+  it_lexes_string "\"hello\\aworld\"", "hello\aworld"
   it_lexes_string "\"hello\\bworld\"", "hello\bworld"
   it_lexes_string "\"hello\\fworld\"", "hello\fworld"
   it_lexes_string "\"hello\\nworld\"", "hello\nworld"
