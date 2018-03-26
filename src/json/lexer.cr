@@ -178,7 +178,7 @@ abstract class JSON::Lexer
     when '\\', '"', '/'
       char
     when 'a'
-      7.chr #TODO: use \a
+      7.chr # TODO: use \a
     when 'b'
       '\b'
     when 'f'
