@@ -614,7 +614,7 @@ module Crystal
           when '\''
             @token.value = '\''
           when 'a'
-            @token.value = '\a'
+            @token.value = 7.chr # TODO: use \a
           when 'b'
             @token.value = '\b'
           when 'e'
